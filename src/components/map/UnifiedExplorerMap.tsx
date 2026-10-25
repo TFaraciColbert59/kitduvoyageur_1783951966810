@@ -1,0 +1,1757 @@
+'use client';
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import {
+  LngLatBounds,
+  Map as MapLibreMap,
+  Marker,
+  Popup,
+  setWorkerUrl,
+  type GeoJSONSource,
+  type MapLayerMouseEvent,
+  type MapMouseEvent,
+} from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import Icon from '@/components/ui/Icon';
+import { Badge, Button, Card, IconButton, Spinner, Tabs } from '@/components/ui';
+import type { MapTrail } from '@/components/explorer/types';
+import { getDifficultyColor, isValidLatLng, sanitizeGeoJSON } from '@/components/explorer/types';
+import type { UnifiedPOI } from '@/lib/queries/pois';
+import { ATLAS_TILES, createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
+import {
+  OPENFREEMAP_STYLE_URL,
+  baseCredits,
+  createFallbackCounter,
+  isOpenFreeMapError,
+  markOpenFreeMapFailed,
+  openFreeMapFailed,
+  prepareVectorBase,
+  standardProvider,
+  tileVisibility,
+  type VectorBaseState,
+} from './engine/standardBase';
+import {
+  computeCountryFlight,
+  prefersReducedMotion,
+  easeToTarget,
+  flyToTarget,
+  syncGlobeInteractionHandlers,
+} from './engine/camera';
+import { resolveCountryName, resolveIsoA2 } from './engine/geo';
+import { registerAtlasMapImages } from './engine/icons';
+import { getPoiColor, getZoomTier, MAP_COLORS, type ZoomTier } from './engine/mapTheme';
+import { buildPoiTooltipModel, formatPoiStepLabel } from './engine/poiTooltip';
+import {
+  getPoiPopupPanCorrection,
+  getPoiPopupPanOffset,
+  type PoiPopupInsets,
+} from './engine/poiPopupPlacement';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { buildCountryDensityFC, buildRegionDensityFC } from './layers/densityLayers';
+import type { CountryDensityRow, RegionDensityCell } from './layers/densityLayers';
+import { useViewportData } from './hooks/useViewportData';
+import type { ViewportQuery } from './hooks/viewportData';
+import {
+  buildMemberPositionsGeoJSON,
+  type MemberPositionInput,
+} from '@/features/tribu/lib/memberPositions';
+
+/**
+ * CHANTIER ATLAS — moteur cartographique unique (MapLibre GL, projection globe).
+ *
+ * Un seul canvas : carte plate en zoom local → bascule native en globe 3D en
+ * dézoomant. Aucune dépendance nouvelle (maplibre-gl déjà installé).
+ * Mobile-first : contrôles glass 44px, gestes natifs, reduced-motion respecté.
+ */
+
+export interface UnifiedViewportBbox {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+  zoom: number;
+}
+
+export interface UnifiedExplorerMapProps {
+  trails?: MapTrail[];
+  pois?: UnifiedPOI[];
+  selectedTrailId?: string | null;
+  /** Sentier sélectionné (avec son `geojson` exact une fois chargé) — tracé affiché comme avant. */
+  selectedTrail?: MapTrail | null;
+  onTrailClick?: (trail: MapTrail) => void;
+  onPoiClick?: (poi: UnifiedPOI) => void;
+  /** POI courant — piloté par le Hub pour surligner le marqueur et ouvrir son tooltip. */
+  selectedPoiId?: string | null;
+  /** Fermeture du tooltip (croix, clic carte ou second tap). */
+  onPoiDismiss?: () => void;
+  /** Tap libre sur la carte (hors couche POI) — permet de poser un point. */
+  onMapClick?: (lat: number, lng: number) => void;
+  /**
+   * Masque le rail de controles interne (globe, zoom, recentrage, fond).
+   *
+   * Le preparateur de voyage pose ses propres boutons en verre au-dessus de la
+   * carte : sans ce drapeau, deux jeux se superposent au meme endroit et la
+   * carte devient illisible. Un seul jeu, celui de l hote.
+   */
+  hideBuiltInControls?: boolean;
+  userLocation?: [number, number] | null;
+  onMapReady?: () => void;
+  onLocationUpdate?: (loc: [number, number]) => void;
+  onViewportChange?: (bbox: UnifiedViewportBbox) => void;
+  /** Données réelles du viewport courant (sentiers + POI), remontées à la page. */
+  onViewportData?: (data: { trails: MapTrail[]; pois: UnifiedPOI[] }) => void;
+  /** Densité par pays (matview Phase 1) — palier continent. */
+  countryDensity?: CountryDensityRow[];
+  /** Densité par cellule geohash-5 (matview Phase 1) — palier région. */
+  regionDensity?: RegionDensityCell[];
+  /** Positions live des membres du groupe (session ouverte, TRIBU Phase 7). */
+  memberPositions?: MemberPositionInput[];
+  safeControls?: boolean;
+  compact?: boolean;
+  /**
+   * Fond de carte piloté par l'hôte (Relief, Plan, Satellite : ArcGIS Location Platform, voir
+   * `createMapStyle`). Absent : le fond reste celui que choisit le sélecteur interne (Explorer).
+   */
+  tileMode?: AtlasTileMode;
+  /**
+   * `false` : un point touché n'ouvre pas l'infobulle de la carte, l'hôte affiche son propre encart
+   * (`onPoiClick`). Défaut `true` : comportement d'origine.
+   */
+  poiPopup?: boolean;
+  /** Pastilles d'étape (D, 1, 2, A…) posées sur la carte en éléments DOM : MapLibre n'a pas de glyphes ici. */
+  stepBadges?: MapStepBadge[];
+  /** Toucher une pastille d'étape (son `id`). */
+  onStepBadgeClick?: (id: string) => void;
+}
+
+export interface MapStepBadge {
+  id: string;
+  lat: number;
+  lng: number;
+  /** Texte de la pastille : « D », « A » ou le numéro de l'étape. */
+  text: string;
+  variant: 'start' | 'end' | 'mid';
+  /** Nom accessible : « Départ : Gavarnie ». */
+  label: string;
+}
+
+// MapLibre attend [lng, lat] (contrairement à Leaflet [lat, lng]).
+const DEFAULT_CENTER: [number, number] = [6.8694, 45.9237];
+const COUNTRIES_GEOJSON_URL = '/data/countries-110m.geojson';
+const VIEWPORT_BUFFER = 0.25;
+/** Zoom minimal : le globe reste cadré et exploitable (pas de bille minuscule). */
+const GLOBE_MIN_ZOOM = 1.2;
+const TILE_MODES: AtlasTileMode[] = ['topo', 'osm', 'satellite'];
+/** Fond « Clair » : ArcGIS (défaut) ou OpenFreeMap (`NEXT_PUBLIC_MAP_STANDARD=openfreemap`). */
+const STANDARD_PROVIDER = standardProvider();
+
+/** Clé de la dernière position GPS mémorisée (écrite à chaque fix réussi). */
+const LAST_LOCATION_STORAGE_KEY = 'lkdv_last_location';
+
+/**
+ * Dernière position connue mémorisée par le parent (`ExplorerClient`) lors d'un
+ * fix GPS réussi. Jamais inventée : `null` si absente ou invalide.
+ */
+function readLastKnownLocation(): { lat: number; lng: number } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(LAST_LOCATION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { lat?: unknown; lng?: unknown };
+    const lat = Number(parsed?.lat);
+    const lng = Number(parsed?.lng);
+    return isValidLatLng(lat, lng) ? { lat, lng } : null;
+  } catch {
+    return null;
+  }
+}
+
+function buildTrailsFeatureCollection(trails: MapTrail[]) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: trails
+      .filter((trail) => isValidLatLng(trail.lat, trail.lng))
+      .map((trail) => ({
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [Number(trail.lng), Number(trail.lat)],
+        },
+        properties: {
+          id: trail.id,
+          name: trail.name,
+          difficulty: trail.difficulty ?? '',
+          color: getDifficultyColor(trail.difficulty),
+        },
+      })),
+  };
+}
+
+/** Étend des bounds MapLibre à partir d'une structure de coordonnées GeoJSON. */
+function extendBoundsFromCoordinates(bounds: LngLatBounds, coordinates: unknown): void {
+  if (!Array.isArray(coordinates)) return;
+  if (typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
+    const lng = Number(coordinates[0]);
+    const lat = Number(coordinates[1]);
+    if (Number.isFinite(lng) && Number.isFinite(lat)) bounds.extend([lng, lat]);
+    return;
+  }
+  for (const child of coordinates) extendBoundsFromCoordinates(bounds, child);
+}
+
+/** Feature de tracé à partir du geojson exact d'un sentier (nettoyé, jamais inventé). */
+function buildTrailTrackFeature(trail: MapTrail | null | undefined) {
+  if (!trail) return null;
+  const geometry = sanitizeGeoJSON(trail.geojson);
+  if (!geometry) return null;
+  return {
+    type: 'Feature' as const,
+    properties: { id: String(trail.id) },
+    geometry,
+  };
+}
+
+function buildPoisFeatureCollection(pois: UnifiedPOI[], selectedPoiId: string | null = null) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: pois
+      .filter((poi) => isValidLatLng(poi.lat, poi.lng))
+      .map((poi) => ({
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [Number(poi.lng), Number(poi.lat)],
+        },
+        properties: {
+          id: poi.id,
+          name: poi.name,
+          category: poi.category,
+          altitude: poi.altitude_m ?? null,
+          description: poi.description ?? poi.details ?? '',
+          visited: poi.is_visited === true,
+          stepLabel: formatPoiStepLabel(poi.step_id),
+          verified: poi.is_verified === true,
+          color: getPoiColor(poi.category),
+          selected: poi.id === selectedPoiId,
+        },
+      })),
+  };
+}
+
+function resolvePoiPopupInsets(map: MapLibreMap, popupHeight: number): PoiPopupInsets {
+  const mapRect = map.getCanvas().getBoundingClientRect();
+  const card = map.getContainer().closest('.hub-map-card');
+  const rail = card?.querySelector('.hub-globe-poi-rail');
+  const panel = card?.querySelector('.hub-map-card__panel');
+
+  const top = rail instanceof HTMLElement
+    ? Math.max(16, rail.getBoundingClientRect().bottom - mapRect.top + 8)
+    : 16;
+  const panelBottomInset = panel instanceof HTMLElement
+    ? Math.max(16, mapRect.bottom - panel.getBoundingClientRect().top + 12)
+    : 16;
+  const maxBottomInset = Math.max(16, mapRect.height - top - popupHeight - 16);
+
+  return {
+    top,
+    right: 16,
+    bottom: Math.min(panelBottomInset, maxBottomInset),
+    left: 16,
+  };
+}
+
+function keepPoiPopupVisible(map: MapLibreMap, popup: Popup): void {
+  const element = popup.getElement();
+  if (!element) return;
+
+  const popupRect = element.getBoundingClientRect();
+  const correction = getPoiPopupPanCorrection(
+    map.getCanvas().getBoundingClientRect(),
+    popupRect,
+    resolvePoiPopupInsets(map, popupRect.height)
+  );
+  if (correction.x === 0 && correction.y === 0) return;
+
+  const panOffset = getPoiPopupPanOffset(correction);
+  map.panBy([panOffset.x, panOffset.y], {
+    duration: prefersReducedMotion() ? 0 : 240,
+  });
+}
+
+/**
+ * Popup POI construit en DOM (textContent) — jamais de setHTML avec données
+ * serveur (anti-XSS). Contenu : nom + catégorie + altitude réels, ou rien.
+ */
+function openPoiPopup(
+  map: MapLibreMap,
+  properties: Record<string, unknown>,
+  coordinates: [number, number],
+  popupRef: React.MutableRefObject<Popup | null>,
+  onDismiss?: () => void
+): void {
+  const model = buildPoiTooltipModel(properties);
+  const container = document.createElement('div');
+  container.className = 'hub-map-poi-tooltip';
+  const color =
+    typeof properties.color === 'string' ? properties.color : 'rgba(255, 255, 255, 0.9)';
+  container.style.setProperty('--poi-color', color);
+
+  const header = document.createElement('div');
+  header.className = 'hub-map-poi-tooltip__header';
+
+  const glyph = document.createElement('span');
+  glyph.className = 'hub-map-poi-tooltip__glyph';
+  glyph.setAttribute('aria-hidden', 'true');
+  header.append(glyph);
+
+  const title = document.createElement('p');
+  title.className = 'hub-map-poi-tooltip__title';
+  title.textContent = model.title;
+  header.append(title);
+  container.append(header);
+
+  const meta = document.createElement('p');
+  meta.className = 'hub-map-poi-tooltip__meta';
+  meta.textContent = [model.categoryLabel, model.altitudeLabel].filter(Boolean).join(' · ');
+  container.append(meta);
+
+  if (model.description) {
+    const description = document.createElement('p');
+    description.className = 'hub-map-poi-tooltip__description';
+    description.textContent = model.description;
+    container.append(description);
+  }
+
+  if (model.badges.length > 0) {
+    const badges = document.createElement('div');
+    badges.className = 'hub-map-poi-tooltip__badges';
+    for (const label of model.badges) {
+      const badge = document.createElement('span');
+      badge.className = 'hub-map-poi-tooltip__badge';
+      badge.textContent = label;
+      badges.append(badge);
+    }
+    container.append(badges);
+  }
+
+  const previousPopup = popupRef.current;
+  popupRef.current = null;
+  previousPopup?.remove();
+
+  const safeInsets = resolvePoiPopupInsets(map, 176);
+  const popup = new Popup({
+    closeButton: true,
+    closeOnClick: true,
+    focusAfterOpen: false,
+    maxWidth: 'none',
+    offset: 12,
+    padding: safeInsets,
+    anchor: 'top',
+    className: 'atlas-poi-popup hub-map-poi-popup',
+  })
+    .setLngLat(coordinates)
+    .setDOMContent(container)
+    .addTo(map);
+  popupRef.current = popup;
+  keepPoiPopupVisible(map, popup);
+  popup.on('close', () => {
+    if (popupRef.current !== popup) return;
+    popupRef.current = null;
+    onDismiss?.();
+  });
+}
+
+export default function UnifiedExplorerMap({
+  trails,
+  pois,
+  selectedTrailId = null,
+  selectedTrail = null,
+  onTrailClick,
+  onPoiClick,
+  selectedPoiId = null,
+  onPoiDismiss,
+  onMapClick,
+  hideBuiltInControls = false,
+  userLocation,
+  onMapReady,
+  onLocationUpdate,
+  onViewportChange,
+  onViewportData,
+  countryDensity,
+  regionDensity,
+  memberPositions,
+  safeControls = false,
+  compact = false,
+  tileMode: tileModeProp,
+  poiPopup = true,
+  stepBadges,
+  onStepBadgeClick,
+}: UnifiedExplorerMapProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  /** Racine du composant : porte `data-atlas-flying` pendant tout geste caméra. */
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<MapLibreMap | null>(null);
+  const trailsRef = useRef<MapTrail[]>([]);
+  const poisRef = useRef<UnifiedPOI[]>([]);
+  const poiPopupRef = useRef<Popup | null>(null);
+  const countryDensityRef = useRef<CountryDensityRow[]>([]);
+  const callbacksRef = useRef({
+    onTrailClick,
+    onPoiClick,
+    onPoiDismiss,
+    onMapClick,
+    onMapReady,
+    onLocationUpdate,
+    onViewportChange,
+    onViewportData,
+  });
+
+  // FLUIDITÉ F2 : retour haptique `selection` au franchissement de palier de
+  // zoom (world/continent/region/local), débouncé pour ne jamais vibrer en
+  // rafale. La référence garde le hook stable pour l'effet de création carte.
+  const { haptic } = useHapticFeedback();
+  const hapticRef = useRef(haptic);
+  hapticRef.current = haptic;
+
+  const [ready, setReady] = useState(false);
+  const [tileModeState, setTileMode] = useState<AtlasTileMode>('topo');
+  const tileMode = tileModeProp ?? tileModeState;
+  const tileModeRef = useRef(tileMode);
+  tileModeRef.current = tileMode;
+  // Plan 1.6 : fond « Clair » sur OpenFreeMap si l'interrupteur est allumé (engine/standardBase).
+  const [vectorBase, setVectorBase] = useState<VectorBaseState>(() =>
+    STANDARD_PROVIDER === 'openfreemap' && !openFreeMapFailed() ? 'pending' : 'off'
+  );
+  const vectorLayerIdsRef = useRef<string[]>([]);
+  const poiPopupRef2 = useRef(poiPopup);
+  poiPopupRef2.current = poiPopup;
+  const badgeClickRef = useRef(onStepBadgeClick);
+  badgeClickRef.current = onStepBadgeClick;
+  // Mention complète des fournisseurs (Esri l'exige), dépliée depuis la pastille.
+  const [creditsOpen, setCreditsOpen] = useState(false);
+  const [viewport, setViewport] = useState<ViewportQuery | null>(null);
+  const [viewMode, setViewMode] = useState<'local' | 'globe'>('globe');
+  const [globeNotice, setGlobeNotice] = useState<string | null>(null);
+  const globeNoticeTimerRef = useRef<number | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<{
+    iso: string;
+    name: string;
+    count: number | null;
+  } | null>(null);
+
+  callbacksRef.current = {
+    onTrailClick,
+    onPoiClick,
+    onPoiDismiss,
+    onMapClick,
+    onMapReady,
+    onLocationUpdate,
+    onViewportChange,
+    onViewportData,
+  };
+  trailsRef.current = trails ?? [];
+  poisRef.current = pois ?? [];
+  countryDensityRef.current = countryDensity ?? [];
+
+  // Fetch viewport débouncé + annulation des requêtes obsolètes (Phase 3).
+  const viewportData = useViewportData(viewport, true);
+
+  useEffect(() => {
+    // Ne jamais écraser les données initiales avant une première réponse réseau
+    // (succès ou échec explicite) — ATLAS-R9.
+    if (!viewportData.hasFetched) return;
+    if (viewportData.error) {
+      console.error('[UnifiedExplorerMap] données viewport indisponibles', {
+        error: viewportData.error,
+      });
+    }
+    callbacksRef.current.onViewportData?.(viewportData.data);
+  }, [viewportData.data, viewportData.hasFetched, viewportData.error]);
+
+  const initialView = useMemo(() => {
+    if (userLocation && isValidLatLng(userLocation[0], userLocation[1])) {
+      return {
+        center: [Number(userLocation[1]), Number(userLocation[0])] as [number, number],
+        zoom: 12,
+      };
+    }
+    const first = (trails ?? []).find((trail) => isValidLatLng(trail.lat, trail.lng));
+    if (first) {
+      return {
+        center: [Number(first.lng), Number(first.lat)] as [number, number],
+        zoom: 11,
+      };
+    }
+    return { center: DEFAULT_CENTER, zoom: 6 };
+    // Vue initiale volontairement figée au montage (la caméra est ensuite pilotée par l'utilisateur).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Initialisation du canvas unique ─────────────────────────────────────────
+  // Création différée dans le tick suivant : en React StrictMode (dev), le
+  // premier montage est immédiatement démonté ; sans ce différé, un canvas est
+  // construit puis détruit pendant le chargement du style, ce qui bloque le
+  // worker du style pour l'instance suivante.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let cancelled = false;
+    let map: MapLibreMap | null = null;
+    let countriesAbort: AbortController | null = null;
+    let tierHapticTimer: number | null = null;
+
+    const startTimer = window.setTimeout(() => {
+      if (cancelled || !containerRef.current) return;
+
+      // Worker servi depuis /public : le calcul par défaut via import.meta.url
+      // pointe vers un chunk inexistant une fois bundlé (aucune source GeoJSON
+      // rendue). Voir scripts/atlas/copy-maplibre-worker.mjs.
+      setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+
+      // Vérification sécurisée du support WebGL pour éviter tout crash critique
+      const hasWebGL = (() => {
+        try {
+          const testCanvas = document.createElement('canvas');
+          return !!(window.WebGLRenderingContext && (testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl')));
+        } catch {
+          return false;
+        }
+      })();
+
+      if (!hasWebGL) {
+        console.warn('[UnifiedExplorerMap] WebGL non supporté sur ce terminal/navigateur. Mode liste activé.');
+        setReady(true);
+        callbacksRef.current.onMapReady?.();
+        callbacksRef.current.onViewportData?.({ trails: trailsRef.current, pois: poisRef.current });
+        return;
+      }
+
+      let instance: MapLibreMap;
+      try {
+        instance = new MapLibreMap({
+          container,
+          style: createMapStyle('topo'),
+          // Départ « façon Google Earth » : on ouvre sur le globe, puis on
+          // plonge vers la vue locale après le chargement du style.
+          center: initialView.center,
+          zoom: 1.6,
+          minZoom: GLOBE_MIN_ZOOM,
+          renderWorldCopies: false,
+          attributionControl: false,
+          dragRotate: true,
+          pitchWithRotate: true,
+          // Nom du canevas pour les lecteurs d'écran (MapLibre dit « Map »).
+          locale: { 'Map.Title': 'Carte' },
+        });
+      } catch (caught) {
+        // Jamais de spinner infini : erreur journalisée avec contexte, UI débloquée.
+        console.error("[UnifiedExplorerMap] échec d'initialisation MapLibre", caught);
+        setReady(true);
+        callbacksRef.current.onMapReady?.();
+        // Fallback viewport data pour débloquer la vue liste
+        callbacksRef.current.onViewportData?.({ trails: trailsRef.current, pois: poisRef.current });
+        return;
+      }
+      map = instance;
+      mapRef.current = instance;
+
+      // Handle async WebGL context errors (e.g. GPUInitializationError)
+      instance.on('webglcontextlost', () => {
+        console.error("[UnifiedExplorerMap] WebGL context lost");
+        callbacksRef.current.onViewportData?.({ trails: trailsRef.current, pois: poisRef.current });
+      });
+
+      // FLUIDITÉ F2 : inertie de pan guidée (valeurs officielles du README/d.ts
+      // maplibre : linearity 0.3, maxSpeed 1400, deceleration 2500) — le monde
+      // « glisse » après le geste au lieu de s'arrêter net.
+      if (instance.dragPan && typeof instance.dragPan.enable === 'function') {
+        instance.dragPan.enable({ linearity: 0.3, maxSpeed: 1400, deceleration: 2500 });
+      }
+
+      // MapLibre v6 (projection globe) n'applique pas `minZoom` au dézoom
+      // molette/pince : sans ce verrou, l'utilisateur descend sous le seuil et
+      // le monde se déplie en bandes répétées (plus de globe). On reclampe.
+      instance.setMinZoom(GLOBE_MIN_ZOOM);
+      let lastTier: ZoomTier | null = null;
+      let pendingTier: ZoomTier | null = null;
+      instance.on('zoom', () => {
+        if (cancelled) return;
+        if (instance.getZoom() < GLOBE_MIN_ZOOM) {
+          instance.setZoom(GLOBE_MIN_ZOOM);
+          return;
+        }
+        // Haptique palier : déclenche après 300 ms de stabilisation dans le
+        // nouveau palier ; un aller-retour rapide sur la borne n'émet rien.
+        const tier = getZoomTier(instance.getZoom());
+        if (lastTier === null) {
+          lastTier = tier;
+          return;
+        }
+        if (tier === lastTier) {
+          pendingTier = null;
+          if (tierHapticTimer !== null) {
+            window.clearTimeout(tierHapticTimer);
+            tierHapticTimer = null;
+          }
+          return;
+        }
+        pendingTier = tier;
+        if (tierHapticTimer !== null) window.clearTimeout(tierHapticTimer);
+        tierHapticTimer = window.setTimeout(() => {
+          tierHapticTimer = null;
+          if (!cancelled && pendingTier !== null && pendingTier !== lastTier) {
+            lastTier = pendingTier;
+            hapticRef.current('selection');
+          }
+          pendingTier = null;
+        }, 300);
+      });
+
+      // Hook de test (dev uniquement) : permet aux e2e/visuels de projeter des
+      // coordonnées écran pour cliquer précisément sur un marqueur.
+      if (process.env.NODE_ENV !== 'production') {
+        (window as unknown as { __atlasTestMap?: MapLibreMap }).__atlasTestMap = instance;
+      }
+
+      const emitViewport = () => {
+        const bounds = instance.getBounds();
+        const padLng = (bounds.getEast() - bounds.getWest()) * VIEWPORT_BUFFER;
+        const padLat = (bounds.getNorth() - bounds.getSouth()) * VIEWPORT_BUFFER;
+        const buffered = {
+          minLat: Math.max(-85, bounds.getSouth() - padLat),
+          maxLat: Math.min(85, bounds.getNorth() + padLat),
+          minLng: Math.max(-180, bounds.getWest() - padLng),
+          maxLng: Math.min(180, bounds.getEast() + padLng),
+          zoom: instance.getZoom(),
+        };
+        setViewport(buffered);
+        setViewMode(instance.getZoom() > 4 ? 'local' : 'globe');
+        callbacksRef.current.onViewportChange?.(buffered);
+      };
+
+      // Readiness sur `style.load` (déterministe) plutôt que `load` : le rendu
+      // complet dépend du chargement des tuiles et du premier frame GPU, ce qui
+      // rend `load` fragile en CI/headless. La carte est interactive dès que le
+      // style est chargé ; les tuiles continuent en streaming.
+      instance.on('style.load', () => {
+        if (cancelled) return;
+
+        // Atmosphère sage appliquée après le load : en v6.4.1, un `sky` déclaré
+        // dans le style racine bloque tout le pipeline de style (écart documenté).
+        try {
+          instance.setSky({
+            'sky-color': MAP_COLORS.sageLight,
+            'horizon-color': MAP_COLORS.background,
+            'fog-color': MAP_COLORS.background,
+            'sky-horizon-blend': 0.6,
+            'atmosphere-blend': 0.9,
+          });
+        } catch (error) {
+          console.error('[UnifiedExplorerMap] setSky indisponible:', error);
+        }
+
+        try {
+          registerAtlasMapImages(instance);
+
+          instance.addSource('atlas-trails', {
+            type: 'geojson',
+            data: buildTrailsFeatureCollection(trailsRef.current),
+          });
+          instance.addLayer({
+            id: 'atlas-trails-selected',
+            type: 'circle',
+            source: 'atlas-trails',
+            filter: ['==', ['get', 'id'], '__none__'],
+            paint: {
+              'circle-radius': 12,
+              'circle-color': 'rgba(0,0,0,0)',
+              'circle-stroke-color': MAP_COLORS.ink,
+              'circle-stroke-width': 3,
+            },
+          });
+          instance.addLayer({
+            id: 'atlas-trails-points',
+            type: 'circle',
+            source: 'atlas-trails',
+            paint: {
+              'circle-color': ['get', 'color'],
+              'circle-radius': 6,
+              'circle-stroke-color': MAP_COLORS.white,
+              'circle-stroke-width': 2,
+            },
+          });
+
+          instance.on('click', 'atlas-trails-points', (event: MapLayerMouseEvent) => {
+            const id = event.features?.[0]?.properties?.id;
+            const trail = trailsRef.current.find((t) => t.id === String(id));
+            if (trail) callbacksRef.current.onTrailClick?.(trail);
+          });
+          // Tap libre sur la carte (pas sur un trail/POI) : latitude/longitude.
+          // Utile au preparateur pour poser un point a l'endroit touche.
+          instance.on('click', (event: MapMouseEvent) => {
+            const features = instance.queryRenderedFeatures(event.point, {
+              layers: ['atlas-trails-points'],
+            });
+            if (features.length > 0) return;
+            const handleMapClick = callbacksRef.current.onMapClick;
+            if (!handleMapClick) return;
+            const lng = event.lngLat.lng;
+            const lat = event.lngLat.lat;
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+            handleMapClick(lat, lng);
+          });
+          instance.on('mouseenter', 'atlas-trails-points', () => {
+            instance.getCanvas().style.cursor = 'pointer';
+          });
+          instance.on('mouseleave', 'atlas-trails-points', () => {
+            instance.getCanvas().style.cursor = '';
+          });
+        } catch (caught) {
+          // Les couches ATLAS peuvent échouer (images/canvas) : on journalise avec
+          // contexte et on débloque l'UI plutôt que de laisser un spinner infini.
+          console.error("[UnifiedExplorerMap] échec d'initialisation des couches", caught);
+        }
+
+        setReady(true);
+        callbacksRef.current.onMapReady?.();
+        emitViewport();
+      });
+
+      instance.on('moveend', emitViewport);
+      instance.on('zoomend', emitViewport);
+      // FLUIDITÉ F3 : bascule DOM (sans re-render React) pendant tout
+      // mouvement caméra — le CSS coupe alors le backdrop-filter des panneaux
+      // secondaires (le flou animé coûte cher au GPU mobile).
+      instance.on('movestart', () => {
+        if (rootRef.current) rootRef.current.dataset.atlasFlying = 'true';
+      });
+      instance.on('moveend', () => {
+        if (rootRef.current) rootRef.current.dataset.atlasFlying = 'false';
+      });
+      instance.on('error', (event) => {
+        console.error('[UnifiedExplorerMap] MapLibre error', event?.error ?? event);
+      });
+
+    // Couche monde : polygones pays (GeoJSON statique réel, déjà utilisé par les fiches pays).
+    // La géométrie est enrichie côté client avec `atlas_iso`/`atlas_name` normalisés
+    // (même résolution que le référentiel countries_geo) pour filtres et interactions.
+    countriesAbort = new AbortController();
+    const countriesTimeout = window.setTimeout(() => countriesAbort?.abort(), 4_000);
+    fetch(COUNTRIES_GEOJSON_URL, { signal: countriesAbort.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((geojson) => {
+        if (cancelled || !mapRef.current) return;
+        if (!Array.isArray(geojson?.features)) {
+          throw new Error('GeoJSON pays invalide : propriété "features" absente');
+        }
+        const current = mapRef.current;
+        // Le GeoJSON peut arriver avant la fin du chargement du style :
+        // addSource lèverait « Style is not done loading » et la couche pays
+        // manquerait. On attend que le style soit prêt.
+        const apply = () => {
+          if (cancelled || current.getSource('atlas-countries')) return;
+          const beforeId = current.getLayer('atlas-trails-selected')
+            ? 'atlas-trails-selected'
+            : undefined;
+          const collection = {
+            type: 'FeatureCollection',
+            features: (geojson.features ?? []).map(
+              (feature: { properties?: Record<string, unknown> } & Record<string, unknown>) => ({
+                ...feature,
+                properties: {
+                  ...(feature.properties ?? {}),
+                  atlas_iso: resolveIsoA2(feature.properties) ?? '',
+                  atlas_name: resolveCountryName(feature.properties),
+                },
+              })
+            ),
+          };
+          current.addSource('atlas-countries', {
+            type: 'geojson',
+            data: collection as unknown as GeoJSON.GeoJSON,
+          });
+          current.addLayer(
+            {
+              id: 'atlas-country-fill',
+              type: 'fill',
+              source: 'atlas-countries',
+              paint: { 'fill-color': MAP_COLORS.sageLight, 'fill-opacity': 0.16 },
+            },
+            beforeId
+          );
+          current.addLayer(
+            {
+              id: 'atlas-country-line',
+              type: 'line',
+              source: 'atlas-countries',
+              paint: {
+                'line-color': MAP_COLORS.inkSecondary,
+                'line-opacity': 0.35,
+                'line-width': 0.6,
+              },
+            },
+            beforeId
+          );
+          current.addLayer(
+            {
+              id: 'atlas-country-selected',
+              type: 'line',
+              source: 'atlas-countries',
+              filter: ['==', ['get', 'atlas_iso'], '__none__'],
+              paint: {
+                'line-color': MAP_COLORS.ink,
+                'line-opacity': 0.9,
+                'line-width': 1.8,
+              },
+            },
+            beforeId
+          );
+
+          current.on('click', 'atlas-country-fill', (event: MapLayerMouseEvent) => {
+            // La sélection pays est un geste de vue monde/continent : on l'ignore
+            // en vue locale et dès qu'un sentier/POI est sous le doigt (évite
+            // d'ouvrir la carte pays en tapant un tracé).
+            if (current.getZoom() > 8) return;
+            const hitsInteractiveLayer = current.queryRenderedFeatures(event.point, {
+              layers: ['atlas-trails-points', 'atlas-pois-points', 'atlas-pois-clusters'],
+            });
+            if (hitsInteractiveLayer.length > 0) return;
+
+            const feature = event.features?.[0];
+            const iso = String(feature?.properties?.atlas_iso ?? '');
+            if (!iso) return;
+            const density = countryDensityRef.current.find(
+              (row) => String(row.iso_a2 ?? '').toUpperCase() === iso
+            );
+            setSelectedCountry({
+              iso,
+              name:
+                String(feature?.properties?.atlas_name ?? '') ||
+                String(density?.name ?? '') ||
+                iso,
+              count:
+                density && Number.isFinite(Number(density.trail_count))
+                  ? Number(density.trail_count)
+                  : null,
+            });
+            // FLUIDITÉ F1 : toute sélection pays déclenche désormais le vol
+            // courbe (avant, seuls les pays avec centroïde densité — FR/BE —
+            // bougeaient la caméra ; les autres ouvraient la carte sans vol).
+            // Centroïde densité en priorité (cadrage constant), sinon le point
+            // tapé. Un seul appel caméra.
+            const target: [number, number] =
+              density && isValidLatLng(density.centroid_lat, density.centroid_lng)
+                ? [Number(density.centroid_lng), Number(density.centroid_lat)]
+                : [event.lngLat.lng, event.lngLat.lat];
+            const currentCenter = current.getCenter();
+            const flight = computeCountryFlight(
+              {
+                center: [currentCenter.lng, currentCenter.lat],
+                zoom: current.getZoom(),
+              },
+              { center: target, zoom: 4.6 },
+              {
+                isMobile:
+                  typeof window !== 'undefined' && window.innerWidth < 768,
+              }
+            );
+            flyToTarget(current, {
+              center: target,
+              zoom: 4.6,
+              ...flight,
+            });
+          });
+          current.on('mouseenter', 'atlas-country-fill', () => {
+            current.getCanvas().style.cursor = 'pointer';
+          });
+          current.on('mouseleave', 'atlas-country-fill', () => {
+            current.getCanvas().style.cursor = '';
+          });
+        };
+        if (current.isStyleLoaded()) {
+          apply();
+        } else {
+          const whenReady = () => {
+            if (!current.isStyleLoaded()) return;
+            current.off('styledata', whenReady);
+            apply();
+          };
+          current.on('styledata', whenReady);
+        }
+      })
+      .catch((error: unknown) => {
+        if ((error as Error)?.name !== 'AbortError') {
+          // Un Error se sérialise en « {} » : nom et message sont journalisés à part.
+          console.error('[UnifiedExplorerMap] GeoJSON pays indisponible', {
+            url: COUNTRIES_GEOJSON_URL,
+            name: (error as Error)?.name ?? null,
+            message: (error as Error)?.message ?? String(error),
+          });
+        }
+      })
+      .finally(() => window.clearTimeout(countriesTimeout));
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(startTimer);
+      if (tierHapticTimer !== null) window.clearTimeout(tierHapticTimer);
+      countriesAbort?.abort();
+      if (map) {
+        try {
+          map.remove();
+        } catch (e) {
+          console.warn('[UnifiedExplorerMap] map.remove() safely caught:', e);
+        }
+        mapRef.current = null;
+      }
+      setReady(false);
+    };
+  }, [initialView.center, initialView.zoom]);
+
+  // Les gestures 3D suivent exactement le mode affiché : rotation/pitch actifs
+  // sur le globe, neutralisés en vue locale pour garder le nord stable.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    syncGlobeInteractionHandlers(map, viewMode);
+  }, [ready, viewMode]);
+
+  // ── Synchronisation des sentiers (props → source GeoJSON) ───────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const source = map.getSource('atlas-trails') as GeoJSONSource | undefined;
+    source?.setData(buildTrailsFeatureCollection(trails ?? []));
+  }, [trails, ready]);
+
+  // ── Surbrillance du sentier sélectionné ─────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !map.getLayer('atlas-trails-selected')) return;
+    map.setFilter('atlas-trails-selected', ['==', ['get', 'id'], selectedTrailId ?? '__none__']);
+  }, [selectedTrailId, ready]);
+
+  // ── Tracé exact du sentier sélectionné (parité legacy : glow + ligne + cadrage) ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    const feature = buildTrailTrackFeature(selectedTrail);
+    const data = {
+      type: 'FeatureCollection' as const,
+      features: feature ? [feature] : [],
+    };
+
+    const source = map.getSource('atlas-trail-track') as GeoJSONSource | undefined;
+    if (source) {
+      source.setData(data as unknown as GeoJSON.GeoJSON);
+    } else {
+      map.addSource('atlas-trail-track', {
+        type: 'geojson',
+        data: data as unknown as GeoJSON.GeoJSON,
+      });
+      map.addLayer({
+        id: 'atlas-trail-track-glow',
+        type: 'line',
+        source: 'atlas-trail-track',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': MAP_COLORS.sageLight,
+          'line-width': 10,
+          'line-opacity': 0.45,
+        },
+      });
+      map.addLayer({
+        id: 'atlas-trail-track-line',
+        type: 'line',
+        source: 'atlas-trail-track',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': MAP_COLORS.ink,
+          'line-width': 5.5,
+          'line-opacity': 0.95,
+        },
+      });
+    }
+
+    // Cadrage identique au legacy : padding 60, zoom max 15.
+    if (feature) {
+      const bounds = new LngLatBounds();
+      extendBoundsFromCoordinates(bounds, feature.geometry.coordinates);
+      if (!bounds.isEmpty()) {
+        const duration = prefersReducedMotion() ? 0 : 700;
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        const box = map.getContainer().getBoundingClientRect();
+        try {
+          // Un seul lieu (sortie courte) ou une carte trop petite pour la marge :
+          // MapLibre calcule alors un cadrage NaN et la page entière tombait.
+          if ((sw.lng === ne.lng && sw.lat === ne.lat) || box.width <= 140 || box.height <= 140) {
+            map.easeTo({ center: bounds.getCenter(), zoom: Math.min(map.getZoom() > 3 ? map.getZoom() : 13, 15), duration });
+          } else {
+            map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration });
+          }
+        } catch (err) {
+          console.warn('[map] cadrage impossible, carte laissée telle quelle', err);
+        }
+      }
+    }
+  }, [selectedTrail, ready]);
+
+  // ── POI (clustering natif MapLibre) ─────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    const data = buildPoisFeatureCollection(pois ?? [], selectedPoiId);
+    const source = map.getSource('atlas-pois') as GeoJSONSource | undefined;
+    if (source) {
+      source.setData(data);
+      return;
+    }
+
+    map.addSource('atlas-pois', {
+      type: 'geojson',
+      data,
+      cluster: true,
+      clusterRadius: 46,
+      clusterMaxZoom: 15,
+    });
+    map.addLayer({
+      id: 'atlas-pois-clusters',
+      type: 'circle',
+      source: 'atlas-pois',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': MAP_COLORS.ink,
+        'circle-opacity': 0.92,
+        'circle-radius': ['step', ['get', 'point_count'], 14, 10, 18, 50, 24],
+        'circle-stroke-color': MAP_COLORS.white,
+        'circle-stroke-width': 2.5,
+      },
+    });
+    map.addLayer({
+      id: 'atlas-pois-points',
+      type: 'circle',
+      source: 'atlas-pois',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': ['get', 'color'],
+        'circle-radius': ['case', ['==', ['get', 'selected'], true], 8, 6],
+        'circle-stroke-color': MAP_COLORS.white,
+        'circle-stroke-width': ['case', ['==', ['get', 'selected'], true], 3.5, 2],
+      },
+    });
+    map.addLayer({
+      id: 'atlas-poi-selected-halo',
+      type: 'circle',
+      source: 'atlas-pois',
+      filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
+      paint: {
+        'circle-color': 'rgba(255, 255, 255, 0.16)',
+        'circle-radius': 13,
+        'circle-stroke-color': ['get', 'color'],
+        'circle-stroke-width': 3,
+      },
+    });
+
+    map.on('click', 'atlas-pois-clusters', (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      if (!feature || feature.geometry.type !== 'Point') return;
+      const clusterId = feature.properties?.cluster_id;
+      const poiSource = map.getSource('atlas-pois') as GeoJSONSource;
+      const coordinates = feature.geometry.coordinates as [number, number];
+      void poiSource
+        .getClusterExpansionZoom(clusterId)
+        .then((zoom) => {
+          map.easeTo({
+            center: coordinates,
+            zoom,
+            ...(prefersReducedMotion() ? { duration: 0 } : { duration: 400 }),
+          });
+        })
+        .catch((error: unknown) =>
+          console.error('[UnifiedExplorerMap] expansion cluster:', error)
+        );
+    });
+
+    map.on('click', 'atlas-pois-points', (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      if (!feature || feature.geometry.type !== 'Point') return;
+      const id = String(feature.properties?.id ?? '');
+      const poi = poisRef.current.find((candidate) => candidate.id === id);
+      const coordinates = feature.geometry.coordinates as [number, number];
+      if (poiPopupRef2.current)
+        openPoiPopup(
+          map,
+          (feature.properties ?? {}) as Record<string, unknown>,
+          coordinates,
+          poiPopupRef,
+          callbacksRef.current.onPoiDismiss
+        );
+      if (poi) callbacksRef.current.onPoiClick?.(poi);
+    });
+
+    const setPointer = () => {
+      map.getCanvas().style.cursor = 'pointer';
+    };
+    const clearPointer = () => {
+      map.getCanvas().style.cursor = '';
+    };
+    for (const layer of ['atlas-pois-clusters', 'atlas-pois-points']) {
+      map.on('mouseenter', layer, setPointer);
+      map.on('mouseleave', layer, clearPointer);
+    }
+  }, [pois, ready, selectedPoiId]);
+
+  // Le Hub pilote aussi la selection depuis ses chips : le tooltip doit donc
+  // s'ouvrir meme quand le tap initial ne vient pas de la couche MapLibre.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !poiPopup) return;
+
+    if (!selectedPoiId) {
+      const popup = poiPopupRef.current;
+      poiPopupRef.current = null;
+      popup?.remove();
+      return;
+    }
+
+    const poi = poisRef.current.find((candidate) => candidate.id === selectedPoiId);
+    if (!poi || !isValidLatLng(poi.lat, poi.lng)) return;
+
+    const properties: Record<string, unknown> = {
+      id: poi.id,
+      name: poi.name,
+      category: poi.category,
+      altitude: poi.altitude_m ?? null,
+      description: poi.description ?? poi.details ?? '',
+      visited: poi.is_visited === true,
+      stepLabel: formatPoiStepLabel(poi.step_id),
+      verified: poi.is_verified === true,
+      color: getPoiColor(poi.category),
+    };
+    openPoiPopup(
+      map,
+      properties,
+      [Number(poi.lng), Number(poi.lat)],
+      poiPopupRef,
+      callbacksRef.current.onPoiDismiss
+    );
+  }, [ready, selectedPoiId, poiPopup]);
+
+  // ── Pastilles d'étape (D, 1, 2, A…) : éléments DOM, une commande par étape ──────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !stepBadges?.length) return;
+    const markers = stepBadges
+      .filter((b) => isValidLatLng(b.lat, b.lng))
+      .map((b) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `cp-pin cp-pin--${b.variant}`;
+        button.setAttribute('aria-label', b.label);
+        const disc = document.createElement('span');
+        disc.className = 'cp-pin__disc';
+        disc.setAttribute('aria-hidden', 'true');
+        disc.textContent = b.text;
+        button.append(disc);
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          badgeClickRef.current?.(b.id);
+        });
+        return new Marker({ element: button, anchor: 'center' })
+          .setLngLat([Number(b.lng), Number(b.lat)])
+          .addTo(map);
+      });
+    return () => {
+      for (const m of markers) m.remove();
+    };
+  }, [stepBadges, ready]);
+
+  // ── Densités matérialisées : continent (pays) + région (geohash5) ───────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    const countryData = buildCountryDensityFC(countryDensity ?? []);
+    const regionData = buildRegionDensityFC(regionDensity ?? []);
+
+    const countrySource = map.getSource('atlas-country-density') as GeoJSONSource | undefined;
+    if (countrySource) {
+      countrySource.setData(countryData as unknown as GeoJSON.GeoJSON);
+    } else {
+      map.addSource('atlas-country-density', {
+        type: 'geojson',
+        data: countryData as unknown as GeoJSON.GeoJSON,
+      });
+      map.addLayer({
+        id: 'atlas-country-density-circles',
+        type: 'circle',
+        source: 'atlas-country-density',
+        minzoom: 2.4,
+        maxzoom: 8.2,
+        paint: {
+          'circle-color': MAP_COLORS.ink,
+          'circle-radius': ['interpolate', ['linear'], ['get', 'count'], 1, 4, 100, 10, 1000, 16],
+          'circle-opacity': ['interpolate', ['linear'], ['zoom'], 2.4, 0, 3.6, 0.65, 6.5, 0.65, 8.2, 0],
+          'circle-stroke-color': MAP_COLORS.white,
+          'circle-stroke-width': 1,
+        },
+      });
+    }
+
+    const regionSource = map.getSource('atlas-region-density') as GeoJSONSource | undefined;
+    if (regionSource) {
+      regionSource.setData(regionData as unknown as GeoJSON.GeoJSON);
+    } else {
+      map.addSource('atlas-region-density', {
+        type: 'geojson',
+        data: regionData as unknown as GeoJSON.GeoJSON,
+      });
+      map.addLayer({
+        id: 'atlas-region-density-circles',
+        type: 'circle',
+        source: 'atlas-region-density',
+        minzoom: 6.8,
+        maxzoom: 14.4,
+        paint: {
+          'circle-color': MAP_COLORS.sage,
+          'circle-radius': ['interpolate', ['linear'], ['get', 'count'], 1, 3.5, 65, 11],
+          'circle-opacity': ['interpolate', ['linear'], ['zoom'], 6.8, 0, 8.5, 0.8, 13, 0.8, 14.4, 0],
+          'circle-stroke-color': MAP_COLORS.white,
+          'circle-stroke-width': 1,
+        },
+      });
+    }
+  }, [countryDensity, regionDensity, ready]);
+
+  // ── Pays sélectionné : contour + carte ──────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !map.getLayer('atlas-country-selected')) return;
+    map.setFilter('atlas-country-selected', [
+      '==',
+      ['get', 'atlas_iso'],
+      selectedCountry?.iso ?? '__none__',
+    ]);
+  }, [selectedCountry, ready]);
+
+  // ── Position utilisateur ────────────────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const valid = userLocation && isValidLatLng(userLocation[0], userLocation[1]);
+    const data = {
+      type: 'FeatureCollection' as const,
+      features: valid
+        ? [
+            {
+              type: 'Feature' as const,
+              geometry: {
+                type: 'Point' as const,
+                coordinates: [Number(userLocation![1]), Number(userLocation![0])],
+              },
+              properties: {},
+            },
+          ]
+        : [],
+    };
+    const source = map.getSource('atlas-user') as GeoJSONSource | undefined;
+    if (source) {
+      source.setData(data);
+      return;
+    }
+    map.addSource('atlas-user', { type: 'geojson', data });
+    map.addLayer({
+      id: 'atlas-user-halo',
+      type: 'circle',
+      source: 'atlas-user',
+      paint: { 'circle-radius': 12, 'circle-color': MAP_COLORS.info, 'circle-opacity': 0.18 },
+    });
+    map.addLayer({
+      id: 'atlas-user-point',
+      type: 'circle',
+      source: 'atlas-user',
+      paint: {
+        'circle-radius': 5,
+        'circle-color': MAP_COLORS.info,
+        'circle-stroke-color': MAP_COLORS.white,
+        'circle-stroke-width': 2,
+      },
+    });
+  }, [userLocation, ready]);
+
+  // ── Positions des membres (session live, TRIBU Phase 7) ─────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const data = buildMemberPositionsGeoJSON(memberPositions);
+
+    const source = map.getSource('atlas-members') as GeoJSONSource | undefined;
+    if (source) {
+      source.setData(data as unknown as GeoJSON.GeoJSON);
+      return;
+    }
+
+    map.addSource('atlas-members', { type: 'geojson', data: data as unknown as GeoJSON.GeoJSON });
+    map.addLayer({
+      id: 'atlas-members-circles',
+      type: 'circle',
+      source: 'atlas-members',
+      paint: {
+        'circle-radius': 13,
+        'circle-color': MAP_COLORS.white,
+        'circle-stroke-width': 2.5,
+        'circle-stroke-color': MAP_COLORS.sage,
+        'circle-opacity': 0.96,
+      },
+    });
+    map.addLayer({
+      id: 'atlas-members-labels',
+      type: 'symbol',
+      source: 'atlas-members',
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-size': 10,
+        'text-offset': [0, 1.9],
+        'text-anchor': 'top',
+      },
+      paint: {
+        'text-color': MAP_COLORS.ink,
+        'text-halo-color': MAP_COLORS.white,
+        'text-halo-width': 1,
+      },
+    });
+  }, [memberPositions, ready]);
+
+  // ── Fond standard OpenFreeMap (plan 1.6) : posé sous les couches du site, repli unique sur ArcGIS ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || STANDARD_PROVIDER !== 'openfreemap' || openFreeMapFailed()) return;
+    let cancelled = false;
+    const added = { layers: [] as string[], sources: [] as string[] };
+    const counter = createFallbackCounter();
+    const fallBack = (why: unknown) => {
+      if (cancelled) return;
+      console.warn('[UnifiedExplorerMap] OpenFreeMap indisponible : repli sur le fond ArcGIS standard', why);
+      markOpenFreeMapFailed();
+      vectorLayerIdsRef.current = [];
+      try {
+        for (const id of added.layers) if (map.getLayer(id)) map.removeLayer(id);
+        for (const id of added.sources) if (map.getSource(id)) map.removeSource(id);
+      } catch (caught) {
+        console.error('[UnifiedExplorerMap] retrait du fond OpenFreeMap', caught);
+      }
+      setVectorBase('failed');
+    };
+    const onError = (event: unknown) => {
+      if (isOpenFreeMapError(event) && counter.report()) fallBack((event as { error?: unknown }).error ?? event);
+    };
+    map.on('error', onError);
+    const abort = new AbortController();
+    const timer = window.setTimeout(() => abort.abort(), 6_000);
+    fetch(OPENFREEMAP_STYLE_URL, { signal: abort.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((style: unknown) => {
+        if (cancelled) return;
+        const plan = prepareVectorBase(style, tileModeRef.current === 'osm');
+        if (!plan) throw new Error('style OpenFreeMap illisible');
+        if (plan.glyphs && !map.getGlyphs()) map.setGlyphs(plan.glyphs);
+        if (plan.sprite && map.getSprite().length === 0) map.setSprite(plan.sprite);
+        for (const [id, source] of Object.entries(plan.sources)) {
+          map.addSource(id, source);
+          added.sources.push(id);
+        }
+        // Juste au-dessus du raster « Clair » d'ArcGIS, sous tout le reste (tracés, points, pays).
+        const beforeId = map.getLayer('atlas-tile-satellite') ? 'atlas-tile-satellite' : undefined;
+        for (const layer of plan.layers) {
+          map.addLayer(layer, beforeId);
+          added.layers.push(layer.id);
+        }
+        vectorLayerIdsRef.current = added.layers.slice();
+        setVectorBase('active');
+      })
+      .catch((caught) => fallBack(caught))
+      .finally(() => window.clearTimeout(timer));
+    return () => {
+      cancelled = true;
+      abort.abort();
+      window.clearTimeout(timer);
+      map.off('error', onError);
+      vectorLayerIdsRef.current = [];
+      // Carte recréée : le fond sera reposé sur la nouvelle instance.
+      setVectorBase((state) => (state === 'active' ? 'pending' : state));
+    };
+  }, [ready]);
+
+  // ── Fond de carte (topo / osm / satellite) ──────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const visible = tileVisibility(tileMode, vectorBase);
+    for (const mode of TILE_MODES) {
+      const layerId = `atlas-tile-${mode}`;
+      const shown = mode === 'osm' ? visible.arcgisOsm : mode === tileMode;
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, 'visibility', shown ? 'visible' : 'none');
+      }
+    }
+    for (const layerId of vectorLayerIdsRef.current) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, 'visibility', visible.openfreemap ? 'visible' : 'none');
+      }
+    }
+  }, [tileMode, ready, vectorBase]);
+
+  // ── Contrôles glass ─────────────────────────────────────────────────────────
+  const animateOptions = useCallback(
+    (duration: number) => (prefersReducedMotion() ? { duration: 0 } : { duration }),
+    []
+  );
+
+  const handleZoomIn = useCallback(() => {
+    mapRef.current?.zoomIn({ ...animateOptions(200) });
+  }, [animateOptions]);
+
+  const handleZoomOut = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const center = map.getCenter();
+    const nextZoom = Math.max(map.getZoom() - 1, GLOBE_MIN_ZOOM);
+    easeToTarget(map, { center: [center.lng, center.lat], zoom: nextZoom, duration: 200 });
+  }, []);
+
+  const handleRecenter = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (userLocation && isValidLatLng(userLocation[0], userLocation[1])) {
+      map.flyTo({
+        center: [Number(userLocation[1]), Number(userLocation[0])],
+        zoom: Math.max(map.getZoom(), 13),
+        ...animateOptions(600),
+      });
+      callbacksRef.current.onLocationUpdate?.([Number(userLocation[0]), Number(userLocation[1])]);
+    }
+  }, [userLocation, animateOptions]);
+
+  /** Message non bloquant : aucune position connue pour « Explorer ma zone ». */
+  const showGlobeNotice = useCallback(() => {
+    setGlobeNotice('Position indisponible — déplacez la carte ou activez la localisation');
+    if (globeNoticeTimerRef.current !== null) window.clearTimeout(globeNoticeTimerRef.current);
+    globeNoticeTimerRef.current = window.setTimeout(() => {
+      globeNoticeTimerRef.current = null;
+      setGlobeNotice(null);
+    }, 6_000);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (globeNoticeTimerRef.current !== null) window.clearTimeout(globeNoticeTimerRef.current);
+    },
+    []
+  );
+
+  /** Bascule globe ⇄ vue locale. Sans position connue : reste sur le globe + message. */
+  const handleToggleGlobe = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (viewMode === 'globe') {
+      // « Explorer ma zone » : position utilisateur si connue, sinon dernière
+      // position mémorisée (`lkdv_last_location`, écrite à chaque fix réussi).
+      // Jamais de plongée vers la vue Chamonix par défaut (bbox sans sentier) :
+      // sans position, on reste sur le globe et on informe sans bloquer.
+      const hasUserLocation = Boolean(userLocation && isValidLatLng(userLocation[0], userLocation[1]));
+      const lastKnown = hasUserLocation ? null : readLastKnownLocation();
+      if (!hasUserLocation && !lastKnown) {
+        showGlobeNotice();
+        return;
+      }
+      const targetCenter: [number, number] = hasUserLocation
+        ? [Number(userLocation![1]), Number(userLocation![0])]
+        : [lastKnown!.lng, lastKnown!.lat];
+      flyToTarget(map, { center: targetCenter, zoom: 12, duration: 1_600 });
+      if (!hasUserLocation) {
+        // Position résolue depuis le stockage : remontée au parent pour que le
+        // viewport requêté soit bien centré sur elle (bbox non vide) + marqueur.
+        callbacksRef.current.onLocationUpdate?.([targetCenter[1], targetCenter[0]]);
+      }
+      setViewMode('local');
+    } else {
+      const center = map.getCenter();
+      flyToTarget(map, { center: [center.lng, center.lat], zoom: 1.6, duration: 1_100 });
+      setViewMode('globe');
+    }
+  }, [viewMode, userLocation, showGlobeNotice]);
+
+  // E1 — `--explorer-carousel-height` est publiée par le carrousel mobile quand
+  // il est visible : les contrôles bas (CTA + zoom) remontent au-dessus de lui.
+  // Absente (desktop, zéro sentier) ⇒ 0px, positions historiques inchangées.
+  // P1 — offsets canoniques via --nav-offset (= --safe-bottom + 60px) : pixels
+  // identiques à safe+96, formule unique, jamais de calc ad hoc.
+  const bottomControlsOffset = compact
+    ? 'bottom-[calc(var(--safe-bottom)+10.5rem)]'
+    : safeControls
+      ? 'bottom-[calc(var(--nav-offset)+14px+var(--explorer-carousel-height,0px))]'
+      : 'bottom-4';
+  const rightControlsPosition = compact
+    ? 'right-[68px] top-[calc(var(--safe-top)+112px)]'
+    : `${bottomControlsOffset} right-14 md:right-3`;
+
+  // Crédit du fond réellement affiché (OpenFreeMap, ou ArcGIS en repli).
+  const credits = baseCredits(tileMode, vectorBase, ATLAS_TILES);
+  const attributionPosition = compact
+    ? 'right-3 top-[calc(var(--safe-top)+174px)]'
+    : 'left-3.5 bottom-[calc(var(--nav-offset)+2px+var(--explorer-carousel-height,0px))] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto';
+
+  const desktopTilesOffset = safeControls
+    ? 'md:bottom-[calc(var(--nav-offset)+36px)]'
+    : 'md:bottom-4';
+
+  // P1 — ORDRE DES 5 COUCHES absolute (z-index canoniques --z-*) :
+  // L0 canvas carte (z auto / base, parent MapPageLayout `fixed inset-0 z-base`) ;
+  // L1 voile de chargement (z-sticky) ;
+  // L2 pastille attribution (z-sticky, pointer-events-none) ;
+  // L3 contrôles carte + tuiles + légende + carte pays (z-fab) ;
+  // L4 toast globeNotice (z-toast, topmost).
+  // CTA (L3) et toasts (L4) ne sont jamais masqués par la carte (L0/L1).
+  // Moteur MapLibre (hex internes engine/mapTheme, createMapStyle, camera) :
+  // non touché, documenté seulement (interdit P1). Aucun `bg-dark-bg` dans le
+  // scope Explorer/carte (fonds déjà tokenisés glass-bg-medium).
+
+  return (
+    <div
+      ref={rootRef}
+      className="relative w-full h-full"
+      data-testid="unified-explorer-map"
+      data-atlas-ready={ready ? 'true' : 'false'}
+      data-atlas-compact={compact ? 'true' : 'false'}
+    >
+      <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+
+      {!ready && (
+        <div className="absolute inset-0 z-[var(--z-sticky)] flex items-center justify-center bg-[color:var(--glass-bg-medium)]">
+          <Spinner size="lg" label="Chargement de la carte" />
+        </div>
+      )}
+
+      {/* Contrôles mobiles simplifiés :
+          - une action centrale « Explorer ma zone » / « Vue globe » ;
+          - zoom compact à droite (pincer pour zoomer reste natif) ;
+          - fond de carte en haut à gauche, icônes seules.
+          ⚠️ Les classes `.glass-*` imposent leur `display` : les bascules
+          responsives passent par des wrappers, jamais directement dessus. */}
+
+      {/* Action principale — mobile Explorer uniquement. Le Hub compact garde
+          son rail globe en haut à droite, sans CTA central superposé. */}
+      {!compact && (
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 ${bottomControlsOffset} z-[var(--z-fab)] md:hidden`}
+          data-atlas-primary-cta="mobile"
+        >
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleToggleGlobe}
+            className="h-11 px-3.5 shadow-lg backdrop-blur-[var(--blur-xl)]"
+            aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+            aria-pressed={viewMode === 'globe'}
+          >
+            <Icon name="compass" size={14} />
+            <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">
+              {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+            </span>
+          </Button>
+        </div>
+      )}
+
+      {/* Repli sans GPS — message non bloquant (la carte reste interactive).
+          P1 — TOAST : formule de position UNIQUE via --nav-offset (les 2 autres
+          formules supprimées : `bottom-[152px]` ad hoc et `md:bottom-24`).
+          Centré à nav+164 : au-dessus du CTA carte (nav+36) et du CTA sortie
+          (nav+100), jamais superposé. z-toast : jamais masqué. */}
+      {globeNotice && (
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 z-[var(--z-toast)] pointer-events-none w-max max-w-[calc(100vw-32px)] ${compact ? 'bottom-[calc(var(--safe-bottom)+15.5rem)]' : 'bottom-[calc(var(--nav-offset)+164px+var(--explorer-carousel-height,0px))]'}`}
+          data-atlas-geoloc-notice="true"
+          role="status"
+          aria-live="polite"
+        >
+          <Card variant="compact" tone="warn" className="text-center">{globeNotice}</Card>
+        </div>
+      )}
+
+      {/* Contrôles cartographiques — Hub compact : rail horizontal entre les
+          poignées Points et État, sans recouvrement des tiroirs ni du panneau
+          bas ; Explorer : colonne de zoom historique. */}
+      {!hideBuiltInControls && (
+      <div
+        className={`absolute z-[var(--z-fab)] flex ${compact ? 'flex-row' : 'flex-col'} gap-2 ${rightControlsPosition}`}
+        data-atlas-controls="right"
+        data-atlas-globe-rail={compact ? 'compact' : undefined}
+      >
+        {compact ? (
+          <>
+            <IconButton
+              variant="glass"
+              size="lg"
+              onClick={handleToggleGlobe}
+              className="hub-map-rail-control shadow-lg"
+              aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+              title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+              aria-pressed={viewMode === 'globe'}
+            >
+              <Icon name="compass" size={19} />
+            </IconButton>
+            <span className="h-6 w-px self-center bg-white/30" aria-hidden="true" />
+          </>
+        ) : null}
+
+        <IconButton
+          variant="glass"
+          size="lg"
+          onClick={handleZoomIn}
+          className={compact ? 'hub-map-rail-control shadow-lg' : 'shadow-lg'}
+          aria-label="Zoom avant"
+          title="Zoom avant"
+        >
+          <Icon name="plus" size={17} />
+        </IconButton>
+        <IconButton
+          variant="glass"
+          size="lg"
+          onClick={handleZoomOut}
+          className={compact ? 'hub-map-rail-control shadow-lg' : 'shadow-lg'}
+          aria-label="Zoom arrière"
+          title="Zoom arrière"
+        >
+          <Icon name="minus" size={17} />
+        </IconButton>
+
+        {!compact && (
+          <div className="hidden md:contents">
+            <IconButton
+              variant="glass"
+              size="lg"
+              onClick={handleRecenter}
+              className="shadow-lg"
+              aria-label="Me recentrer"
+              title="Me recentrer"
+            >
+              <Icon name="navigation" size={16} />
+            </IconButton>
+            <Button
+              variant="secondary"
+              onClick={handleToggleGlobe}
+              className="min-h-[44px] px-3 shadow-lg"
+              aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+              title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+              aria-pressed={viewMode === 'globe'}
+            >
+              <Icon name="compass" size={14} />
+              <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">
+                {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+              </span>
+            </Button>
+          </div>
+        )}
+      </div>
+      )}
+
+      {/* Légende densité — desktop uniquement (simplicité mobile).
+          P1 — formule UNIQUE via --nav-offset (nav+156 : au-dessus du badge
+          live nav+100 et des tuiles nav+36, jamais superposée). */}
+      {!compact && viewport && viewport.zoom > 2.4 && viewport.zoom < 14.4 && (
+        <div
+          className="hidden md:block absolute left-3 bottom-[calc(var(--nav-offset)+156px)] z-[var(--z-fab)] pointer-events-none"
+          data-atlas-density-legend="true"
+        >
+          <Badge tone="stone" className="font-semibold" data-atlas-glass="secondary">
+            ● Densité de sentiers — taille ∝ nombre
+          </Badge>
+        </div>
+      )}
+
+      {/* Fond de carte — mobile : icônes compactes en haut à gauche ; desktop : libellés en bas à gauche */}
+      {!compact && (
+      <div
+        className={`absolute left-3.5 top-[calc(var(--safe-top)+14px)] md:top-auto ${desktopTilesOffset} z-[var(--z-fab)]`}
+        data-atlas-controls="tiles"
+      >
+        <Tabs
+          variant="segmented"
+          ariaLabel="Fond de carte"
+          options={TILE_MODES.map((mode) => ({
+            id: mode,
+            label: mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite',
+            icon: <Icon name={mode === 'topo' ? 'mountain' : mode === 'osm' ? 'map' : 'layers'} size={15} />,
+          }))}
+          value={tileMode}
+          onChange={(id) => setTileMode(id as AtlasTileMode)}
+          className="shadow-lg max-w-[105px] sm:max-w-none [&_button]:px-2.5 sm:[&_button]:px-[var(--space-4)] [&_button>span]:hidden sm:[&_button>span]:inline"
+        />
+      </div>
+      )}
+
+      {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre.
+          P1 — compteur lisible : token caption-2 (11px), jamais text-[9px]. */}
+      <button
+        type="button"
+        aria-expanded={creditsOpen}
+        aria-label={creditsOpen ? 'Masquer les sources de la carte' : 'Sources de la carte'}
+        onClick={() => setCreditsOpen((v) => !v)}
+        className={`absolute z-[var(--z-sticky)] max-w-[min(320px,calc(100vw-24px))] rounded-[var(--lkv-radius-sm)] bg-[color:var(--card-tint-strong)] px-2 py-1 text-left text-[length:var(--lkv-text-caption-2)] leading-tight text-[color:var(--lkv-text-muted)] ${attributionPosition}`}
+      >
+        {creditsOpen ? credits.credits : `${credits.short} ⓘ`}
+      </button>
+
+      {/* Sélection pays (couche monde) — données réelles, jamais inventées. */}
+      {!compact && selectedCountry && (
+        <div
+          className="absolute left-3 top-[calc(var(--safe-top)+72px)] md:left-auto md:right-3 md:top-20 z-[var(--z-fab)] w-[236px]"
+          data-atlas-country-card="true"
+        >
+          <Card variant="featured" className="p-3.5" data-atlas-glass="secondary">
+            <p className="text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
+              Pays
+            </p>
+            <h3 className="mt-0.5 font-display text-[15px] font-bold text-[color:var(--lkv-text-primary)]">
+              {selectedCountry.name || selectedCountry.iso}
+            </h3>
+            <p className="mt-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+              {selectedCountry.count != null
+                ? `${selectedCountry.count} itinéraire${selectedCountry.count > 1 ? 's' : ''} référencé${selectedCountry.count > 1 ? 's' : ''}`
+                : 'Densité non disponible'}
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <Link
+                href={`/pays/${selectedCountry.iso.toLowerCase()}`}
+                className="inline-flex min-h-[44px] flex-1 select-none items-center justify-center whitespace-nowrap rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-center text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:brightness-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+              >
+                Explorer le pays
+              </Link>
+              <IconButton
+                variant="glass"
+                size="lg"
+                onClick={() => setSelectedCountry(null)}
+                className="shrink-0"
+                aria-label="Fermer la sélection pays"
+              >
+                ×
+              </IconButton>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}

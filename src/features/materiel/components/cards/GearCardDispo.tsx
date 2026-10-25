@@ -1,0 +1,98 @@
+﻿'use client';
+import Icon from '@/components/ui/Icon';
+import Link from 'next/link';
+import { ClockIcon as Clock } from '@/components/icons/clock';
+import { Card } from '@/components/ui';
+import { Badge } from '@/components/ui/Badge';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+
+interface DispoData {
+  unavailableCount: number;
+  total: number;
+  hasConflict: boolean;
+  nextReturnLabel: string | null;
+  availableCount?: number;
+}
+
+export function GearCardDispo({ data, className }: { data: DispoData; className?: string }) {
+  const available =
+    data.availableCount !== undefined
+      ? data.availableCount
+      : Math.max(0, data.total - data.unavailableCount);
+  const availablePct = data.total > 0 ? Math.round((available / data.total) * 100) : 100;
+  const tone = availablePct === 100 ? 'sage' : data.unavailableCount <= 2 ? 'warn' : 'danger';
+
+  return (
+    <Card as="article" variant="interactive" ariaLabelledBy="dispo-title" className={className}>
+      <div className="p-2.5 sm:p-5 flex flex-col justify-between h-full gap-1.5 sm:gap-4">
+        {/* Header with Title & KPIs */}
+        <div className="flex items-start justify-between pr-7 md:pr-10 gap-1.5">
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <h2
+              id="dispo-title"
+              className="text-[12px] sm:text-[18px] font-display font-bold text-[color:var(--lkv-text-primary)] leading-tight truncate"
+            >
+              Dispo parc
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-1 shrink-0">
+            <div className="glass-sub-card px-1.5 py-0.5 flex items-center gap-0.5">
+              <Icon name="check-circle2" size={10} className="text-[color:var(--lkv-text-primary)]" />
+              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
+                {available}
+              </span>
+            </div>
+            <div className="glass-sub-card px-1.5 py-0.5 flex items-center gap-0.5">
+              <Clock size={10} className="text-[var(--lkv-warning)]" />
+              <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[var(--lkv-warning)]">
+                {data.unavailableCount}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-0.5 sm:space-y-1">
+          <div className="flex items-center justify-between text-[9.5px] sm:text-xs font-semibold text-[color:var(--lkv-text-secondary)]">
+            <span>Dispo</span>
+            <span className="font-mono text-[color:var(--lkv-text-primary)]">{availablePct}%</span>
+          </div>
+          <ProgressBar value={availablePct} label="Équipement disponible" tone={tone} />
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-0.5">
+          <div className="flex items-center gap-1 min-w-0">
+            {data.hasConflict ? (
+              <Badge tone="danger">
+                <span className="flex items-center gap-0.5 text-[8.5px] sm:text-[9px]">
+                  <Icon name="alert-circle" size={9} />
+                  <span>Conflit</span>
+                </span>
+              </Badge>
+            ) : (
+              <Badge tone="sage">
+                <span className="flex items-center gap-0.5 text-[8.5px] sm:text-[9px]">
+                  <Icon name="check-circle2" size={9} />
+                  <span>0 conflit</span>
+                </span>
+              </Badge>
+            )}
+            <span className="text-[9.5px] sm:text-xs text-[var(--lkv-text-muted)] hidden sm:inline truncate">
+              {data.nextReturnLabel ?? 'À jour'}
+            </span>
+          </div>
+
+          <Link
+            href="/hub/disponibilite"
+            className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0"
+          >
+            <span>Prêts</span>
+            <Icon name="arrow-right" size={10} />
+          </Link>
+        </div>
+      </div>
+    </Card>
+  );
+}

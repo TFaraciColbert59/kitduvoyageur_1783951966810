@@ -1,0 +1,7 @@
+{
+  "core": {
+    "title": { "fr": "Compas · {title}", "en": "Compas · {title}", "es": "Compas · {title}", "de": "Compas · {title}", "it": "Compas · {title}" },
+    "undo": { "fr": "Annuler", "en": "Undo", "es": "Deshacer", "de": "Rückgängig", "it": "Annulla" },
+    "close": { "fr": "Fermer", "en": "Close", "es": "Cerrar", "de": "Schließen", "it": "Chiudi" }
+  }
+}

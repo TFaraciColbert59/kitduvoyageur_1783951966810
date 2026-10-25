@@ -1,0 +1,1615 @@
+# MISSION LOG — LKDV
+
+## 2026-10-06 — Compas : 20 parcours complets aléatoires (preview), corrigés en boucle
+
+- **Méthode** : 20 phrases tirées au hasard (graine 2026) dans un pool de 30, chacune jouée de bout en bout sur la preview (`/compas?nouvelle=1`, phrase de départ, préremplissage complet), puis contrôlée en base (ancre, dates, activité, étapes et coordonnées, objets, dépenses, conseils). Quatre tours de reprise sur les parcours encore imparfaits.
+- **Lecture de la phrase** : « sur la Dordogne », « autour du lac d'Annecy », « traversée des Pyrénées », « in the Swiss Alps », « dans les calanques de Marseille » ; « Maroc dans l'Atlas » → Maroc + envie Atlas ; « Jura dimanche » → Jura ; GR20, chemin de l'Inca, Tour du Mont-Blanc → trek et envie ; « bivouac 1 nuit » → bivouac ; « 4 jours » n'est plus un groupe de 4 (Dolomites chiffrées pour 4) ; envies qui redisent la destination ou l'activité écartées.
+- **Lieux** : « Vietnam » donnait le Vietnam Veterans Memorial (Washington) → nom sans espaces (« Viêt Nam »), nom plus long réservé aux villes et régions ; « Le Tour » (Chamonix) placé dans le Var → recherche biaisée vers une destination compacte ; « Cusco » donnait une maison isolée du nord du Pérou → ville avant hameau avant maison, Cuzco = Cusco ; nom d'étape pris sur la carte quand le nom proposé n'existe pas ou porte un commentaire.
+- **Itinéraire** : on avance chaque jour, une traversée va d'un bout à l'autre, un grand massif n'est pas figé sur un pays ; itinéraire figé (> 3 jours au même lieu) ou à moitié inventé redemandé à la visite suivante sans relire le partagé.
+- **Trajet, kit, conseils** : trajet estimé en voiture à moins de 900 km quand le calcul de route échoue (plus de vol pour les Dolomites) ; préparation relancée seule après la limite de fréquence (Chamonix, Jura restaient vides) ; échelle « Journée/Sortie » au lieu de « Raid » pour un jour ; kit d'une sortie courte allégé ; gants selon la latitude et l'hémisphère, crampons selon saison et activité ; conseils accentués, vrais depuis la France (pas d'adaptateur en Europe, passeport hors Schengen, pas de permis inventé).
+- **Tours 4 à 6** : « Cusco » donnait encore une maison isolée → la province avant la maison isolée, un nom plus long seulement pour un bourg, recherches de lieux relues avec leur taille (cache v2), nom exact préféré (Pisac, pas Pisaca) ; jamais un hôtel comme nom d'étape approché ; pas de crampons à 4 300 m sous les tropiques. Vérifié : Pérou → Cusco, Pisac, Chinchero ; Chamonix et Vietnam inchangés.
+- **Limite connue** : la qualité de l'itinéraire dépend du modèle (traversée des Pyrénées encore en allers-retours côté français) ; un itinéraire figé ou inventé est redemandé à la visite suivante.
+- **Laissé tel quel (choix documentés)** : pas de période proposée sous les tropiques (Pérou, Vietnam : « Dates à choisir ») ; « en octobre » ce mois-ci part d'aujourd'hui.
+- Preuves : tsc et eslint propres ; tests Compas et kit 1340/1340 ; parcours rejoués sur la preview après chaque correction.
+
+## 2026-10-06 — Résa : clés partenaires reliées, diagnostics affichés
+
+- Variables Vercel « Shared » reliées au projet par Tony ; vérifié en direct sur la preview : RouteStack (sandbox) répond — hôtels de test sans nom ni prix, voitures en erreur du bac à sable ; Viator (sandbox) accepte la clé (3 394 destinations lues) mais sa recherche d'activités ne répond pas en 15 s.
+- Résa nomme désormais la cause d'un échec, sans jamais de clé : variable manquante, code et statut du partenaire, message, cause (délai, réseau, format).
+- Viator : le lieu du champ « Où » (pré-rempli) passe par la carte → destination Viator la plus proche (Rome → 511) ; repli sur l'identifiant du pays, jamais Paris pour une autre région de France. Délai de recherche Viator 15 s par défaut.
+- Décision de Tony : RouteStack reste en sandbox ; Viator passe en `full` pour la recherche (lecture seule, réservation verrouillée par `VIATOR_BOOKING_ENABLED`).
+
+## 2026-10-06 — Compas : phrase de départ, points sur place, Résa
+
+- **Phrase de départ** : elle ne vivait que dans l'onglet (sessionStorage), effacée dès la lecture ; quitter la page trop tôt la perdait. Elle est maintenant gardée sur le voyage (`metadata.compas.start_say`), reprise à chaque ouverture et effacée seulement une fois appliquée (`compasClearStartSayAction`). Tests : appliquée puis oubliée ; écriture en échec → gardée.
+- **Points sur place** : la carte n'avait que `trail_pois` (~1 800 points, parcours du catalogue seulement). Désormais, autour de chaque lieu d'étape (1,5 km, 8 lieux) : restos et cafés, commerces, pharmacie et soins, eau, hébergements, refuges, campings, gares et bus, toilettes, points de vue, sommets, parkings (OpenStreetMap via Overpass, ODbL). Une requête par lieu avec un plafond par catégorie, deux nouveaux lieux par appel, cache partagé d'une semaine par lieu, réponse coupée jamais gardée, chargement après l'affichage et au fil des appels. Nouvelles couches de carte et onglet « Sur place ». Vérifié sur la preview : Japon 332 points, Ardèche 128, Rome 56, Annecy 59.
+- **Résa · Activités** : Viator recevait le nom tapé (« Rome », « Vercors »), que sa table ne connaît pas. La destination Viator est maintenant la plus proche du lieu du voyage (liste officielle `GET /destinations`, ville ou région à moins de 120 km ; jamais Paris par défaut pour le Vercors).
+- **Résa · raison affichée** : un partenaire inactif nomme la variable qui manque (noms seulement, jamais une valeur). Constaté sur la preview : ni `VIATOR_MODE` + `VIATOR_SANDBOX_API_KEY` ni `VIATOR_API_KEY` ; ni `ROUTESTACK_MODE` + `ROUTESTACK_SANDBOX_API_KEY` ni `ROUTESTACK_API_KEY`. Même « non activé » en production.
+- Preuves : tsc, eslint propres ; tests Compas 1320/1320 ; essais réels sur la preview.
+
+## 2026-10-06 — Compas : essais aléatoires réels (preview Vercel) et corrections
+
+- **Essais** : 960 phrases aléatoires (graine fixe, `__tests__/fuzz.test.ts`) puis 15 voyages tirés au hasard créés pour de vrai sur la preview (Écosse, Népal, Vercors, Ardèche, Rome, ski Alpes, Crète, trail, Japon, rando 3 h, Islande, Mont Blanc, Corse, Norvège, Fontainebleau), contrôlés en base (étapes, objets, dépenses, fin du préremplissage).
+- **Trouvé et corrigé** :
+  - phase « nuits, kit, budget » au-delà des 60 s de Vercel → budgets de temps par appel IA, verrou 65 s, reprise automatique côté écran ;
+  - étapes rejetées « introuvables » (Népal : 6 sur 6) : nom transcrit (« Kathmandu » / « Katmandou », squelette consonantique), localité connue seulement en écriture locale (devanagari), tronçon « Syabru Besi to Gatlang » → étape du soir ;
+  - itinéraire de secours (« Jour N · Japon ») quand l'IA ne répond pas à temps (latence NVIDIA de 2 à 45 s) → retenté à l'ouverture suivante, au plus 2 fois, seulement s'il n'a pas été retouché ;
+  - reprise d'une préparation déjà comptée bloquée par la limite « 6 par 10 min » → la reprise n'est plus comptée ;
+  - départ d'une sortie nommé « Chantier Hotel de Ville » : ancien cache de géocodage inverse sans la localité → clé versionnée (Annecy) ;
+  - course et trail d'un jour sans heure (« trail de 25 km samedi ») traités comme une sortie (position, pas de nuit) ;
+  - « 3 nuits sous tente en Ardèche » sans durée → 4 jours (un projet qui a déjà sa durée la garde) ;
+  - « bivouac 2 nuits » : l'IA lisait 2 jours → la durée lue par les règles prime (3 jours) ;
+  - géocodage inverse muet depuis Vercel (« Autour de toi ») → secours Nominatim, commune du point.
+- Second passage réel sur la preview (déploiement `ea903694`) : Népal, Japon 14 j, Ardèche, trail, Vercors, Corse → 6/6 préparés en 43 à 130 s, itinéraires réels (Kathmandu → Syabru Besi ; Tokyo → Nikko → … → Kyoto → Nara), sac et budget écrits, aucun itinéraire de secours.
+- Preuves : tsc, eslint propres ; tests Compas 1305/1305.
+
+## 2026-10-06 — Compas copilote, lot 3 : meilleure période sans date
+
+- **`engine/period.ts`** (pur, testé) : sans date, un mois conseillé selon l'activité, l'hémisphère, la latitude et la fréquentation (Allemagne en randonnée → septembre, Norvège → juillet, ski → février, ville → mai, Patagonie → mars) ; départ un samedi, au moins trois semaines devant ; sous les tropiques, rien plutôt qu'une fausse certitude.
+- Le préremplissage pose ces dates (séjour seulement), l'annonce (« Période proposée : septembre (sentiers déneigés, moins de monde qu’en août). Change-la dans « Quand » ») ; « Annuler » les retire.
+- Preuves : tsc, eslint propres ; tests Compas 334/334.
+
+## 2026-10-06 — Compas copilote, lot 2 : réadaptation ciblée
+
+- **`engine/dependencies.ts`** (pur, testé) : le préremplissage garde l'empreinte des réglages qui l'ont produit (`basis` : lieu arrondi à ~1 km, jours, heures, mois, activité, personnes, nuits, nuits dehors, autonomie, priorité, rythme, niveau, terrain, distance). Un changement → seules les parties qui en dépendent : 7 → 10 jours refait itinéraire, nuits, trajet, sac, budget ; une personne de plus : trajet, sac, budget (pas l'itinéraire) ; « 3 nuits dehors » : nuits, sac, budget.
+- **`compasRefreshAutofillAction`** : retire seulement ce que le préremplissage avait écrit ET que personne n'a touché depuis (`updated_at` tenu par trigger, marge 5 s) ; ce qui a été retouché (étape renommée, objet coché, ligne de budget modifiée, nuit choisie) est gardé et compté ; le préremplissage repasse et ne réécrit que ce qui manque (pas de doublon de ligne de budget).
+- **Écran** : le changement est détecté au chargement (`autofillStale`), la réadaptation se lance seule une fois, l'îlot dit « Itinéraire, nuits et budget réadaptés » et ce qui a été gardé. Verdict et Kit suivent sans recalcul (dérivés).
+- Preuves : tsc, eslint propres ; tests Compas 327/327 (11 nouveaux).
+
+## 2026-10-06 — Compas copilote, lot 1 : contexte projet unique
+
+- Analyse d'architecture et plan : `docs/compas/COPILOTE.md` (source de vérité = `trips` + `metadata.compas`, profil jamais recopié, ordre phrase > projet > Compas > profil > défaut, dépendances, portée des modules).
+- **`resolveProjectContext`** (`engine/projectContext.ts`, pur, testé) : chaque valeur porte sa source ; une valeur héritée du profil qui ne tient pas pour CE projet est adaptée et dite (« Habituellement tu préfères l’itinérance en autonomie, mais pour ce projet : les sorties à la journée ») ; un choix du projet n'est jamais changé en silence.
+- **Personnalisations projet** (`metadata.compas.prefs`) : niveau, autonomie, priorité, terrain, poids max du sac, nuits dehors, distance visée. Affichées dans Préférences avec leur source, modifiables, « comme mon profil » en retirant le réglage.
+- **Dis-le** comprend « dormir dehors 3 nuits » (contrainte, plus une durée), « rester sous 12 kg », « surtout de la montagne », « je débute », « trail de 20 km », « courir 1h » (aujourd’hui par défaut, décochable), « cet après-midi ».
+- **Course à pied et trail** : nouvelles activités (enum appliqué en prod, migration `20261006080449`), matériel propre (pas de couchage ni de cuisine), sortie sans lieu → autour de la position partagée, parcours du catalogue choisi à la distance attendue (durée × vitesse, ou distance dite), pas de trajet ni de nuit pour une sortie de quelques heures.
+- **Préremplissage** : nuits, rythme, niveau, terrain et distance viennent du contexte résolu (hiver en altitude : un toit plutôt que le bivouac du profil « budget »), nuits dehors placées d'abord là où aucun refuge n'est connu. **Verdict** : sac au-dessus du poids max du projet.
+- Preuves : tsc, eslint propres ; garde identité OK ; tests 24 nouveaux, Compas 316/316 ; suite complète 21 échecs, tous préexistants.
+
+## 2026-10-06 — Accessibilité du Compas (WCAG 2.2 AA)
+
+- Audit axe-core (7 écrans réels, compte démo) + contraste mesuré au pixel sur le verre + parcours clavier : rapport complet dans `docs/compas/ACCESSIBILITE.md`.
+- Avant : 47 textes sous le seuil de contraste (verre à 19 % sur carte sombre), bannière cookies blanc sur clair, ARIA sur `div` sans rôle, identifiants en double sur `/connexion`, poignée 64×22, arrêts de tabulation vides (framer-motion), deux liens d'évitement, pas de `h1`, carte « Map ».
+- Après : 0 violation axe, 0 contraste sous le seuil, clavier propre. Verre par défaut 60 % (réglage ☀ inchangé).
+- Preuves : tsc, eslint propres ; tests 364/364 (Compas + composants) ; suite complète 21 échecs, tous préexistants.
+
+## 2026-10-06 — Essais en production (lien Vercel) : deux corrections
+
+- Production testée de bout en bout avec le compte démo (mot de passe réinitialisé) : Islande, Patagonie, randonnée en anglais ; itinéraire, dates, nuits, kit, budget et conseils de l'IA NVIDIA OK, météo MET Norway OK.
+- **« 7 jours en juillet » donnait 8 jours** : une date de FIN de l'IA était acceptée dès que le mois était dit, et écrasait la durée. Le mois seul n'ancre plus que le départ.
+- **Destination à cheval sur une frontière** (Patagonie lue argentine → étapes chiliennes écartées, trek parti vers El Calafate) : une étape introuvable dans le pays est cherchée chez le voisin, à 300 km au plus de la précédente.
+- **Lieu précis ignoré** (« Trek en Patagonie, Torres del Paine » partait côté argentin, El Chaltén) : le lieu en majuscule qui suit la destination après une virgule devient une envie transmise au spécialiste de l'itinéraire, sans resserrer la destination.
+- **« Puerto Natales » devenait « Puerto Madryn »** (1 100 km, Argentine) : la correspondance par mot commun passait avant la recherche chez le voisin. Ordre désormais : nom exact dans le pays → nom exact chez le voisin → correspondances approchées ; mots génériques (Puerto, Base, Refugio, Cerro…) exclus. Patagonie : Puerto Natales → Glaciar Grey → Los Cuernos → Base Torres → Paine Grande.
+- Vérifié sur l'aperçu Vercel de la PR : bouton « Connexion démo » OK (identifiants posés dans Vercel), Islande 7 j → 1–7 juil.
+- Preuves : tsc, eslint propres ; tests Compas 292/292.
+
+## 2026-10-05 — Itinéraire : plus de zigzag, plus d'étape à l'autre bout du pays
+
+- **`untangleStages`** (`src/features/compas/engine/stageOrder.ts`, pur, testé) : quand l'IA propose un circuit motorisé qui zigzague (Rennes → Brest → Saint-Malo → Quimper…), les séjours intermédiaires (lieu + nuits consécutives + notes) sont remis dans l'ordre le plus court ; arrivée et départ inchangés, jours renumérotés. Appliqué seulement si le gain est net (≥ 20 % et ≥ 15 km), jamais sur un trek ou un circuit à vélo (le tracé prime). Annoncé dans les notes (« environ N km de route en moins »).
+- **Étape mal placée sur la carte** (matrice d'essais réels) : « Glen Coe » devenait le village anglais « Corby Glen » à 650 km (un village passait devant le lieu au nom exact), « Isle of Skye » une carrière près de Sheffield, « Departure from Glasgow » un lieu au hasard. `pickPlace` : le nom exact d'abord (un nom plus long seulement pour une localité : « Chamonix » → « Chamonix-Mont-Blanc ») ; sinon un mot distinctif en commun, sinon aucune étape plutôt qu'un lieu sans rapport. `stagePlaceName` retire « Départ de », « Retour à », « Departure from »…
+- **Itinéraire figé sur un lieu** : Nemotron rend parfois un JSON cassé (`{"day1": "[", …}`) → 10 jours à Édimbourg, gardé une semaine dans le cache. Désormais un circuit (road trip, van, trek, vélo, ≥ 4 j) doit compter au moins 3 lieux, sinon on redemande (3 essais, arrêt à 20 s) ; seul un itinéraire exploitable est partagé (cache `stages` des étapes nettoyées, plus la réponse brute).
+- Essais réels : road trip Bretagne 8 j (déjà cohérent, laissé tel quel) ; van Écosse 10 j (Glasgow → Loch Lomond → Fort William → Glen Coe 33 km → Mallaig → Skye → Inverness → Édimbourg) ; road trip Islande 10 j ; trek Annapurna 14 j ; kayak Ardèche 3 j à quatre (gilet, sac étanche).
+- **Mois seul ignoré** : « 8 jours en janvier », « 10 jours en juin », « une semaine en juillet » ne posaient aucune date (ni météo ni réservation) ; « week-end de 3 jours en mai » partait CE week-end. Désormais « en <mois> » → début du mois (« mi » le 15, « fin » le 22, ce mois-ci : aujourd'hui, mois passé : l'an prochain), un week-end dans ce mois → son premier samedi ; une date de l'IA dans le mois dit est ancrée. La destination s'arrête avant « une semaine », « fin mai »… (« Crète une semaine » → « Crète »).
+- **Trek qui tombait** : « à pied » de Puerto Natales au parc (100 km de bus) dépassait la portée à pied → 6 étapes sur 8 écartées. Hors de portée à pied/vélo, un lieu à moins de 250 km reste l'étape, rejointe en véhicule. Patagonie 8 j : Puerto Natales → Los Cuernos → Grey → Paine Grande → Puerto Natales, 1–8 janv. Étape introuvable journalisée (`[compas] étape introuvable`) pour les suivre en production.
+- **« Mont Blanc » au Québec** : le sommet (type « other » chez Photon) était écarté comme une ferme, la base proposée ensuite tombait au Québec. Un lieu géographique nommé (sommet, vallée, lac, massif, île, parc, région) est désormais une vraie destination ; une ferme ou un lieu-dit du même nom, jamais. Essai : Les Houches → Refuge du Couvercle → Tête Rousse, 1–4 juil., 3 525 m max, lunettes cat. 4.
+- **« Loire » = le département de Saint-Étienne** : la 1re étape (Orléans) sortait du rayon et tout l'itinéraire tombait (6 j sur « Loire »). La 1re étape est acceptée jusqu'à 400 km de la destination lue (même pays, nom exact). Essai : Orléans → Beaugency → Blois → Amboise → Saumur → Nantes, 1–6 mai.
+- Autres essais : week-end city trip Rome fin mars à deux (27–28 mars) ; 3 semaines au Pérou en août (1–21 août, Lima → Cusco → Vallée sacrée → Machu Picchu → Huaraz).
+- **Titre figé sur « Mixte »** : une aventure créée par une phrase gardait « Mixte · Lyon » après le choix de l'activité ; le titre posé par le Compas suit maintenant l'activité (« Bivouac · Lyon »).
+- **IA qui ajoute ce qui n'est pas dit** : « rythme normal » et « nuits en bivouac » étaient acceptés sans contrôle ; ils doivent désormais figurer dans la phrase.
+- **Durée affichée** : sans date, l'en-tête montrait le temps de marche du tracé (« 7 j 18 h ») au lieu des 5 jours dits.
+- **Anglais** : « 5 days », « 2 weeks », « in July » compris par les règles.
+- **Bivouac / rando près d'une grande ville** : consigne au spécialiste de choisir un espace naturel à moins de 80 km, jamais le centre-ville (Lyon : Sathonay-Camp, Gleizé au lieu de Lyon/Villeurbanne).
+- Revue Codex : « Départ des Alpes » laissait « s Alpes » (prépositions de la plus longue à la plus courte, espace obligatoire) ; la remise en ordre n'a lieu que si l'itinéraire n'emploie qu'un moyen de transport (un vol ou un ferry reste lié à l'étape d'avant).
+- Note : en local sans `SUPABASE_SERVICE_ROLE_KEY`, le cache partagé reste en mémoire ; sur Vercel la clé est posée.
+- Preuves : tsc, eslint propres ; tests Compas 289/289 ; suite complète 21 échecs, tous préexistants.
+
+## 2026-10-05 — Météo et relief libres partout ; deux bugs trouvés en essai réel
+
+- **Plus aucun appel Open-Meteo** (usage non commercial seulement) : pont MET Norway → format Open-Meteo (`src/lib/weather`), route `/api/weather/point` pour le cockpit, page Pays, Matériel, Hub, Adventure Intelligence, « Partir librement » (prévisions MET Norway, altitudes Terrain Tiles, géocodage Photon → Nominatim). Probabilité de pluie facultative partout (null hors Scandinavie), millimètres en relais. Chaque série nomme sa vraie source.
+- **Bug « Chamonix »** : le Compas retenait le seul lieu portant EXACTEMENT ce nom… une ferme d'Afrique du Sud, et toutes les étapes partaient au Cap. `pickDestination` : nom exact ou commençant par la requête, ordre de pertinence de la carte, jamais une ferme/lieu-dit/bâtiment. Essai : Chamonix-Mont-Blanc, Argentière, Le Tour.
+- **Bug activité** : « ski de rando » devenait « alpinisme » (l'IA passait devant la règle) et le kit oubliait le DVA. L'activité dite en toutes lettres prime désormais.
+- **Essais réels** : ski Chamonix 5 j (51 s, DVA), vélo Bretagne 7 j (39 s, casque), city trip Lisbonne 4 j (36 s, Sintra).
+- Preuves : tsc propre ; suite complète 21 échecs, tous préexistants ; build OK.
+
+## 2026-10-05 — Lot 1 : tout type de sortie
+
+- **8 activités ajoutées** (enum `trip_activity_type`, migration additive appliquée) : vélo, ski, alpinisme, escalade, eau (kayak, canoë, voile, plongée), city trip, plage, van. « Mixte » couvre « autre ».
+- **« Dis-le »** les reconnaît (« ski de rando » → ski, « via ferrata » → escalade, « camping-car » → van…), l'IA aussi (liste de son schéma).
+- **Kit propre à l'activité** (avant les règles générales) : DVA/pelle/sonde au ski, crampons/piolet/baudrier/casque/lunettes cat. 4 en alpinisme, baudrier/casque/assurage en escalade, gilet et sac étanche sur l'eau, casque/réparation/éclairage à vélo, couchage en van. Les règles montagne sont filtrées en ville, à la plage et en van.
+- **Nuits** : sous un toit par défaut en ville, à la plage, en van et au ski (la préférence dite prime). **Itinéraires** : consignes par activité au spécialiste (vélo 50 à 100 km/j, base fixe pour ski/alpi/escalade/plage, côte ou rivière pour l'eau).
+- **Écran de départ** : 7 activités courantes + « Plus » (toutes, « Mixte » en dernier) ; la carte défile au lieu d'être coupée ; la pastille « La carte se remplit… » ne sort plus de l'écran à gauche.
+- Preuves : tsc, eslint propres ; tests Compas + IA + trips + hub 425/426 (`TEST-REG-01` préexistant) ; captures 390 px vérifiées.
+
+## 2026-10-05 — Lot 0 (suite) : Explorer intégré, préremplissage en deux temps, cache partagé, relief libre
+
+- **Explorer** : `feat/explorer-mobile-osm` fusionnée (OSM mondial, POI, fiche sentier enrichie). Seul conflit : registre IA, les deux côtés gardés.
+- **Préremplissage en deux temps** (`phase: 'steps' | 'rest'`) : l'itinéraire part tout de suite (sans attendre la position) et s'affiche dès qu'il est écrit ; nuits, trajet, kit et budget suivent. Chaque appel reste loin des 60 s. Une préparation interrompue entre les deux est reprise ou annulée proprement (`autofill_pending`). Essai réel : Japon 12 jours, itinéraire en 17 s, reste en 16 s, chiffrage IA compris.
+- **Bug corrigé** : une demande de localisation laissée sans réponse bloquait le préremplissage pour toujours (le délai du navigateur ne court qu'après l'accord). Minuteur de 8 s : on prépare sans la position.
+- **« Dis-le »** : l'IA est bornée à 12 s (le signal d'annulation traverse enfin `askAI`) ; au-delà, les règles appliquent la phrase. Avant : jusqu'à 30 s d'attente.
+- **Cache partagé** `geo_cache` (Supabase, clé service seule, RLS sans policy, purge horaire) : recherches de lieux (7 j), lieu d'un point GPS (30 j), tronçons routés (30 j). L'itinéraire de base du spécialiste est partagé 7 j via le cache IA existant. Une panne n'est jamais gardée.
+- **Relief libre** : altitudes du Compas depuis les Terrain Tiles (AWS Open Data, usage commercial permis), décodées avec `sharp`. Mesures : Mont Blanc 4 779 m, camp de base de l'Everest 5 302 m, Chamonix 1 041 m. Open-Meteo n'est plus appelé par le Compas.
+- **Base** : migration `geo_cache` appliquée ; historique complété pour `trip_invitations_flow` et `hiking_route_sources_and_revisions` (objets déjà en place, vérifiés).
+- Preuves : tsc propre ; eslint propre (hors `console.log` préexistant de `askAI.ts`) ; tests Compas + IA 392/394 (`TEST-REG-01` préexistant ; « Annuler » passe 3/3 seul, lent sous charge).
+
+## 2026-10-05 — IA NVIDIA en direct, météo gratuite usage commercial (lot 0, PR 1)
+
+Décisions de Tony : services 100 % gratuits, NVIDIA en direct au lieu d'OpenRouter, météo MET Norway, Vercel conservé.
+
+- **IA** : Nemotron 3.5 Lightning 30B-A3B sur les deux tiers, chaîne `nvidia → noop` (OpenRouter n'est plus appelé). Mesures du jour : 0,7 s sans raisonnement sur une question courte, 4 à 30 s sur un itinéraire, ~50 s avec raisonnement. Délai `fast` porté à 30 s.
+- **Formats** : Lightning ne respecte pas la clé demandée (« jours », objets indexés par jour, une ligne par objet, cases en trop). `json: true` (response_format json_object) garantit un JSON lisible ; `sanitizeStages` et `extractIntentJson` lisent toutes les variantes observées. Le schéma JSON strict marche mais coûte 42 s : écarté.
+- **Chiffrage** : sans raisonnement, lancé seulement si moins de 25 s sont passées (25 + 30 < 60 s) ; sinon les règles. Essai réel Islande 10 j : itinéraire IA en 5 s, chiffrage IA tombé à 30 s, règles en relais, 54 s au total. Le préremplissage en tâche de fond (suite du lot 0) supprimera cette course contre la limite.
+- **Météo** : MET Norway (`locationforecast/2.0/complete`, CC BY 4.0, usage commercial permis) pour la prévision ~9 jours, à l'heure locale du lieu (fuseau hors ligne `@photostructure/tz-lookup`) ; NASA POWER (domaine public) pour la tendance sur 5 ans, en un seul appel. Lever et coucher, jour ou nuit : SunCalc. Isotherme 0 °C estimée (altitude du point + gradient 6,5 °C/km). Probabilité de pluie et rafales : `null` hors des zones où MET les publie, jamais comblées ; le verdict lit alors les millimètres annoncés.
+- **Reste à migrer hors Compas** (suite du lot 0) : Open-Meteo dans `/api/pays/[code]/weather`, `materiel/getWeather`, `hiking/WeatherService`, `adventure-prep` (prévisions, géocodage, altitudes), `adventure-intelligence`, et les altitudes du Compas (`server/elevation.ts`).
+- Preuves : tsc propre ; eslint propre sur les fichiers touchés ; tests Compas + IA 386/387 (seul `TEST-REG-01`, préexistant) ; `npm run build` OK.
+
+## 2026-10-05 — Compas : retours de revue (PR #66)
+
+- « 20 jours » dit sans départ, puis un départ seul : la durée retenue est reprise (`ApplyCurrent.plannedDays`), plus de voyage d'un jour.
+- Préremplissage d'un itinéraire déjà saisi : les trajets bus/train/bateau/vol et voiture des étapes existantes comptent dans les transports sur place et la location (`movesFromSteps`).
+- Preuves : tests Compas 233/233, tsc et eslint propres.
+
+## 2026-10-03 — Compas : préremplissage pour n'importe quelle destination
+
+- **Dis-le comprend la destination** (« au Népal », « en Islande », « à Chamonix », « dans le Vercors ») : `set_destination`, retrouvée sur la carte (Photon/OSM : nom, code pays ISO, emprise) par `compasSetDestinationAction` ; refusée si la carte ne la connaît pas. Durée sans date de départ gardée (`compasSetSpanAction`, « 20 jours »). La phrase du départ s'écrit directement (annulable). Une date proposée par l'IA et refusée ne masque plus la bonne lecture des règles.
+- **Itinéraire jour par jour** : Nemotron propose un lieu de nuit et un moyen de déplacement par jour (format compact, sans raisonnement : ~7 s), chaque lieu est retrouvé sur la carte dans le pays, à une distance plausible de la veille, village de préférence ; distances mesurées (marche, vélo, route), altitude réelle (Open-Meteo) → acclimatation et kit d'altitude.
+- **Venir et se déplacer** : route mesurée sous 900 km, sinon vol (estimation IA, à confirmer dans Résa · Vols) ; carburant sur place mesuré et location de voiture (road trip après un vol) ; transports sur place (bus, train, vol intérieur).
+- **Étranger** : visa, permis (TIMS, parcs…), assurance rapatriement chiffrés par l'IA, toujours « estimation ». Kit et nuits selon l'activité (culturel : sous un toit, ni bâtons ni sifflet).
+- **Destinations que la carte ne nomme pas** (massifs, parcs, sentiers : « Vercors ») : le spécialiste donne la ville de base réelle (Villard-de-Lans), vérifiée sur la carte dans le bon pays ; arrêts de bus, routes, commerces et bâtiments écartés des résultats. **Carte de secours** : si Photon ne répond pas, Nominatim (même OpenStreetMap, 1 requête/s, User-Agent identifié) prend le relais automatiquement.
+- Vérifié de bout en bout sur le compte démo : Vercors 3 j à 4 (Villard-de-Lans → Gresse → Saint-Nizier, 1 650 km de route mesurés, Photon en panne → Nominatim), Népal 20 j (camp de base de l'Everest, Lukla en avion, 5 164 m, permis), Islande 7 j en road trip (Ring Road, 1 261 km mesurés, location), Japon 10 j culturel (Tokyo → Kyoto → Nara → Osaka → Hiroshima → Miyajima → Hakone, 4 objets au kit).
+- Preuves : `tsc` 0 ; `eslint` 0 ; Compas 223 tests.
+
+## 2026-10-02 — Compas : gestes instantanés, Parcours autour de moi, invitations d'équipe, préremplissage
+
+- **Fluidité** : plus de `revalidatePath` dans les actions du Compas (pages dynamiques) ; l'îlot s'affiche au geste, l'enregistrement et le rafraîchissement suivent en arrière-plan ; chargements en parallèle ; droits vérifiés en une lecture (#62).
+- **Choisir un parcours** : un parcours tenu par un brouillon vide est libéré ; sinon le message nomme l'aventure concernée (#62).
+- **Parcours « Autour · 50 km »** : position GPS (repli : départ du voyage), parcours du catalogue à moins de 50 km, du plus proche au plus loin.
+- **Activités partenaires dans Parcours** : Viator (dont sorties guidées) mélangées aux parcours (`engine/parcoursMix.ts`, une activité après chaque paire de parcours), badge discret « Partenaire », lien `sponsored nofollow`, mention d'affiliation. Partenaire non activé (pas de clés Viator ; le bac à sable RouteStack n'expose pas d'activités) : rien n'est affiché, aucun exemple présenté comme réel.
+- **Invitations** (`trip_invitations`, `respond_trip_invitation`) : « Inviter » remplace l'ajout direct ; l'invité accède au voyage seulement après avoir accepté. Notification créée par déclencheur en base (`notify`), lue dès la réponse. Accepter / Refuser sur place (alertes du hub, départ du Compas), puis « Voir » sans redirection forcée. Lien d'invitation réutilisable 30 jours (`/invitation/[token]`, à coller dans un message, un club, un groupe, un commentaire ou hors de l'app ; copier / partager). Compteur « présents · en attente · places libres · total ». « Annuler » un retrait n'est possible que pour une personne ayant déjà accepté.
+- **Préremplissage** (`compasAutofillAction`, moteur pur `engine/autofill.ts`) : dès que lieu et dates sont connus, une fois, il ÉCRIT dans le voyage — étapes (parcours du catalogue le plus proche, sinon une étape par jour sur le lieu), nuits selon préférence > profil `user_orientation` > terrain (refuges `map_refuges`/`places` à moins de 12 km), trajet depuis la position GPS (voiture mesurée OSRM/Valhalla puis marche jusqu'au départ, carburant 6,5 L/100 km à 1,80 €/L, péages non comptés), kit (règles contextuelles + couchage selon les nuits ; inventaire → prêts → location au prix/jour → achat boutique, nom complet exigé en boutique), repas et budget complet en dépenses prévues, chaque ligne avec sa source (base / mesure / estimation). Nemotron (`compas-autofill`, NVIDIA) chiffre repas et hébergement sans prix et laisse 0 à 3 conseils, bornés par `sanitizeAdvice` ; repli déterministe sans IA. Annulation exacte (`compasUndoAutofillAction`), ligne « Prérempli par le Compas · Annuler » dans Où, « Tout préparer pour moi » après annulation. Vérifié sur le compte démo : 3 jours près de Lille, Nemotron 3,2 s, 352 €, annulation qui retire tout sauf le parcours choisi.
+- Base : migrations `20261002150000_trip_invitations`, `20261002160000_trip_invitations_flow` appliquées sur icxyvwzfjbflcbqukpfz ; parcours vérifié en transaction annulée (notification → liste de l'invité → acceptation → membre, notification lue, seconde réponse refusée).
+- Preuves : `tsc` 0 ; `eslint` 0 ; Compas 212 tests ; suite complète 5 618 passés, 21 échecs = référence ; page du lien et « Voir » vérifiés dans Chromium.
+
+## 2026-10-02 — Compas : retours de l'essai réel (10 points)
+
+- **Mention partenaires** réduite à une ligne « Liens partenaires ⓘ » (`AffiliateDisclosure compact`, `<details>`) : la mention DGCCRF reste visible au-dessus des liens, le texte complet s'ouvre au toucher.
+- **Plateau des jours** (Tout / J1 / J2…) retiré au-dessus de la barre d'onglets sur `/compas` (`dayFocusStore` : surface `/hub` seulement).
+- **Carte** : 48 % de l'écran (au lieu de 40 %) ; la poignée est un vrai bouton (glisser ↑ agrandit, ↓ réduit, toucher bascule, clavier) ; accessoire épuré : « 243 m max » + profil, ou « D+ · km ».
+- **Annonces** : elles sortent de l'îlot en haut de l'écran (carte noire, titre + détail, « Annuler ») ; transform/opacité seulement, `prefers-reduced-motion` respecté.
+- **Quand** : le calendrier est le sélecteur — toucher un jour enregistre le départ (durée conservée), plage et qualité de la fenêtre affichées sous la grille et dans l'îlot ; annulable sans redécoupage.
+- **Kit · Mes kits** : « Créer mon kit » enregistre le kit du voyage comme kit réutilisable privé (`compasCreateKitFromTripAction`, en-tête retiré si les objets échouent). Compte démo : deux kits.
+- **Vrais produits** : un objet à trouver est illustré par le produit du catalogue `shop_products` qui lui correspond (`engine/shopMatch.ts`, au moins un mot du nom en commun, achat seulement) avec son prix.
+- **Nous · Qui** : chercher un voyageur par nom (profils publics, jamais par e-mail), personnes suivies proposées, ajout avec rôle, changement de rôle et retrait (organisateur) — plus aucun lien vers le Hub dans le Compas. Les membres = équipage + personnes ajoutées au voyage.
+- **Nous · Bouteille** : tiroir complet — où (pays du voyage), à qui (confiance minimale ≥ 50, mixité, places), quand, message, majorité certifiée ; mêmes règles que la page pays (confiance 65 pour lancer, 3 annonces max) ; candidatures acceptées (rejoint le groupe et le voyage en lecture seule) ou refusées, bouteille retirable.
+- **Résa** : Activités (Viator), Vols et Trajets (RouteStack) cherchés en direct dans le Compas (`compasSearchOffersAction`, lecture seule, aucun lien de paiement) ; partenaire non activé → exemples étiquetés « Exemple », sans prix ni lien ; Extras = offres partenaires. Essai local : RouteStack joint, son bac à sable renvoie une erreur pour ces trajets ; Viator sans clés.
+- Preuves : `tsc` 0 ; `eslint src/features/compas` 0 ; Compas 190 tests ; suite complète 5 596 passés, 21 échecs = référence ; `next build` OK ; parcours vérifiés dans Chromium 390×844 avec le compte démo.
+
+## 2026-10-02 — Le Compas, préparateur unique (décision de Tony)
+
+- **Compas vide** (`CompasStart`) sans aventure ou avec `?nouvelle=1` : capsule d'étapes, Dis-le, tuiles d'activité, lignes Où « Non renseigné ». Premier geste → `compasCreateTripAction` (brouillon, propriétaire vérifié, aventure active) → Compas complet ; la phrase Dis-le est reprise dans le tiroir Où.
+- **Thème clair forcé sur /compas** (script d'init + `CompasLightTheme`) : la maquette est claire uniquement.
+- **Supprimé** : ancien flux de création en 3 étapes et son store/hooks/enregistrement, `/api/adventure/commit`, assistant en 5 étapes + génération IA (`/hub/nouveau`), `/api/trips/autogen`, `features/preparator`, `features/preparation`, `src/app/prepare/actions.ts`. Redirections vers `/compas?nouvelle=1` et `/compas?etape=kit` (table dans `CLAUDE.md`). Tests des écrans supprimés retirés avec eux (dont m4, m5, qui faisaient partie des échecs de référence).
+- Preuves : `tsc` 0 ; suite complète 5 589 tests passés, 21 échecs = référence (audit/design Playwright absent, trajectoire, registre IA, m53, n7) ; `ci_invariants`, `icon-names` OK ; écran de départ vérifié dans Chromium 390×844.
+
+## 2026-10-02 — Compas : double-touche et annulation à deux doigts
+
+- **Double-touche** (maquette : « Double-touche une offre ou un produit pour le choisir ») : sur une ligne produit, déclenche « Choisir » / « Ajouter » comme le bouton ; sur une offre d'hébergement, « Noter » (ne réserve rien). Un lien partenaire n'est jamais ouvert par ce geste. `useDoubleTap` / `DoubleTapRow` (320 ms, les boutons de la ligne gardent leur sens).
+- **Annuler à deux doigts** : glisser deux doigts vers la gauche (> 60 px) lance la même annulation que « Annuler » et Ctrl/⌘+Z.
+- **Résa, six catégories** (Randos, Activités, Nuits, Vols, Trajets, Extras) : badge = réservations réelles ; une catégorie sans réservation ni offre est grisée (« aucune offre pour cette destination ») ; Offres s'ouvre filtré sur la catégorie touchée, réservations de la catégorie en tête.
+- **Nous · Budget** : « + Ajouter une dépense » (maquette) via l'action budget existante (permission `canManageBudget` vérifiée côté serveur) ; « Par pers. » = montant × taille réelle du groupe, total affiché avant d'enregistrer ; prévue ou payée.
+- **Nous · Annonce** : pont vers la Bouteille à la mer du pays (seuil de confiance, majorité, frais annoncés, chaque candidat validé) et vers `/hub/groupe` ; rien n'est publié depuis le Compas. La page Pays accepte `?section=communaute` (lu au montage côté client : la page reste statique).
+- **Carte · Personnaliser** : panneau de calques réels (`engine/mapLayers.ts`) avec le nombre de points ; calque sans donnée grisé ; « Carte nue » / « Tout afficher » ; le calque Profil masque l'accessoire ; réglage retenu sur l'appareil (`localStorage`, try/catch). Styles de fond (Relief/Satellite) non proposés : la carte n'en a qu'un.
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 183 tests.
+
+## 2026-10-01 — Compas : Verdict Météo et Veille, activités en tuiles, tiroir « Préparer »
+
+- **Verdict, onglet Météo** : un bloc par jour du voyage (ciel, min/max, pluie, rafales, isotherme 0 °C), tiré des prévisions Open-Meteo déjà chargées aux points réels ; source et horizon affichés. Jour hors horizon : « non renseigné ».
+- **Verdict, onglet Veille** : `engine/watch.ts` liste les seuils réels du moteur de danger (`DANGER_THRESHOLDS`, jamais recopiés à la main) avec ce que chacun a déclenché sur ce voyage. Décalage proposé seulement si les jours de **prévision** (jamais la tendance) donnent, à ±3 jours, une fenêtre sans jour « mauvais » ; rien ne change sans le geste « Décaler ». Onglet « Raisons » renommé « Risques » (maquette).
+- **Où** : tiroir intitulé « Préparer » ; activités en tuiles (grille 4 colonnes) ; onglet « Sac » (Mes kits) ; piste de la règle de durée remplie (elle était invisible : `--lkv-secondary` forcé clair par la couche iOS 27).
+- **Kit, onglet Eau** : besoin par personne et par jour (0,5 L par heure de marche, 0,75 L au-delà de 25 °C prévus), contenants du kit comptés seulement au volume écrit dans leur nom (`engine/water.ts`), comparaison avec la journée la plus longue pour tout le groupe, points d'eau OSM du tracé. Rien n'est supposé : une marche inconnue ou un volume non écrit reste « non renseigné ».
+- **Résa** : tiroir intitulé « Mes réservations » ; onglet « États » (réservations réelles comptées par état, nuits à trouver ; « un clic vers un partenaire ne confirme jamais une réservation »).
+- **Kit, onglet Inventaire** : inventaire réel par catégorie ; un objet déjà dans le kit ouvre sa fiche, les autres s'ajoutent d'un geste ; prêté, entretien dû et périmé affichés.
+- **Accessoire de la carte** : altitude max et profil réel du tracé (API d'élévation Open-Meteo, modèle Copernicus GLO-90, 80 points échantillonnés, cache 30 jours) ; glisser sur la courbe ou flèches du clavier pour lire l'altitude au km ; aucune altitude interpolée, sans réponse : D+ et distance. Mesuré : 80 points, 765 à 1 811 m sur un tracé du Vercors.
+- **Barre d'onglets réduite** : défiler un tiroir vers le bas ne laisse que l'onglet actif (maquette `.tabmin`) ; remonter ou fermer la rend entière. Portée Compas seulement (`.compas[data-tabmin]`), changement instantané (aucune animation de largeur).
+- **Annuler** : l'annonce d'une écriture propose « Annuler » (6 s) et Ctrl/⌘+Z la déclenche hors champ de saisie. L'inverse est calculé sur l'état réel d'avant (`inverseOps`) : activité, préférences, enveloppe, dates sans redécoupage ; un ajout d'objet, un nombre de personnes ou des dates redécoupées ne sont pas annulables (rien n'est rétabli à l'aveugle).
+- **Capsule d'étapes** : la lentille suit le doigt (glisser au-delà de 8 px), l'étape sous elle est choisie au relâchement ; le toucher simple reste inchangé.
+- **Glisser à gauche sur un objet du kit** : « Retirer » apparaît ; le retrait demande ce second geste (jamais le seul glissement). Tests : polyfill `PointerEvent` (absent de jsdom) — sans lui, le test de la lentille passait sans coordonnées ; garde `Number.isFinite` ajoutée côté code.
+- Suivi : `docs/compas/ECARTS_MAQUETTE.md` (écarts restants, écarts volontaires).
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0 src/features/compas` 0 ; Compas 172 tests (dont 6 Veille, 9 Eau, 1 États, 1 Inventaire, 6 profil d'altitude) ; Météo vérifiée dans Chromium sur données réelles.
+
+## 2026-10-01 — Compas aligné sur la maquette finale (LKDV_Compas.html, reçue de Tony)
+
+Maquette rendue dans Chromium (390×844, les 5 étapes et le tiroir Où), comparée au Compas réel. Écarts corrigés :
+- « Dis-le » sur la carte Où (la phrase ouvre le tiroir Où, qui la comprend ; rien n'est appliqué sans coche) ; libellé « Préférences » (au lieu d'« Envies ») ; activités `cultural` / `mixed` en français.
+- Tiroir : fermer à gauche, titre centré, plein écran à droite ; pied Retour · Dis-le · Suivant (ordre de la maquette) ; plus d'anneau de focus autour du verre ; inset de 8 px.
+- Barres posées sur le paysage (capsule d'étapes, ☰, ☀) : couche lumineuse de la maquette. Barre d'onglets en verre clair sur le Compas et la création (onglet actif vert forêt). Pastilles de la carte en verre clair.
+- Kit : « 100 % » sur une ligne ; Verdict : l'état d'un axe sous son nom (il le recouvrait) ; Résa : tuiles au remplissage de la maquette.
+- **Écarts volontaires** (règles du projet) : pas de jauge « 56 sur 100 » au Verdict (« pas de score magique ») ; pas de paliers de budget « Serré / Confort / Libre » (ils inventeraient des montants) ; exemple de « Dis-le » réellement compris par le moteur (« petit budget » sans montant ne donnerait rien) ; carte réelle (tuiles OSM/IGN) au lieu du fond topographique dessiné ; onglets de l'application inchangés (Explorer / Compas / Matériel / Hub / Recherche dans la maquette) : changer la navigation de toute l'app est une décision à part.
+- Preuves : `tsc` 0 ; `eslint --max-warnings=0` sur `src/features/compas` et `src/app/compas` ; Compas 143 tests + matériau 7 ; `ci_invariants`, `icon-names` OK ; captures avant/après.
+
+## 2026-10-01 — La création d'aventure prend le matériau du Compas (carte blanche de Tony)
+
+- `prep-compas.css` (portée `.prep-material-compas`, thème clair) : capsule d'étapes avec lentille et icônes, cartes en verre dépoli, lignes à tuile sage, boutons en verre teinté doux, tiroirs clairs, rail des jours clair, bandeau d'échec et notes ambrés, génération en verre dépoli. Aucune couleur littérale (primitives `--lkv-*` + `color-mix`).
+- Trouvé en mesurant : le fondu `mask-image` du corps empêchait le flou des panneaux de voir la photo (racine d'arrière-plan) → retiré dans cette portée. Plus aucun texte à nu sur la photo (inventaire automatique dans Chromium).
+- Textes : accents rendus au tiroir « Ajouter une étape » ; libellés de budget corrompus (« nuces », « transport staking ») réécrits.
+- Non fait : comparaison pixel à pixel avec la maquette v8 (fichier absent du dépôt et des envois) ; référence prise = le Compas, qui l'implémente. Version ordinateur : reportée (demande de Tony).
+- Preuves : `tsc` 0 ; `eslint` 0 erreur ; adventure-prep 2727+7 tests, 10 échecs = base de référence ; `tests/design` + `tests/responsive` identiques à avant (2 échecs de référence) ; `ci_invariants`, `icon-names`, `identity_compliance` OK ; captures 390×844 du catalogue, des étapes 1 à 3, de la génération et de six tiroirs ; `/partir-librement` et thème sombre inchangés.
+
+## 2026-10-01 — Création d'aventure (`/compas?nouvelle=1`) : départ, bandeau, champ du nom
+
+Trois défauts relevés pendant le test réel, corrigés et vérifiés dans Chromium (`a8a0170`, `2e351c8`) :
+
+- **Départ écrit dans la phrase** : « au départ de Villard-de-Lans », « depuis Chamonix »… ne servait à rien alors que l'écran promettait « L'IA complètera : lieu de départ ». `engine/briefDeparture.ts` lit le nom (nom propre seulement), le cherche comme commune au clic sur « Créer mon parcours » (homonymes départagés par l'arrivée, sinon rien n'est posé). Le résumé dit désormais « L'IA proposera : … » (arrivée, date, durée) et « Départ lu dans ta phrase : X » ou « Sans lieu de départ, la carte et les distances resteront à vérifier ». Mesuré : départ Villard-de-Lans (45.07, 5.56) posé, parcours construit depuis ce point.
+- **Bandeau « Échec » périmé** : changer le départ, la phrase, la date ou l'activité jetait le parcours mais gardait le verdict précédent (« Échec : Météo » au-dessus de « Générer mon parcours », sans parcours). La génération est remise à zéro avec le parcours (une génération en cours est laissée à son run) ; « Créer mon parcours » relance la génération.
+- **Champ « Nom de l'aventure »** : blanc sur tiroir sombre (classe de conteneur posée sur l'input) → `.prep-text-input`, matériau des champs du tiroir Matériel.
+- **Limite d'environnement** : Overpass (lieux réels) est coupé depuis le conteneur ; sans lieux, les étapes restent sur le départ et les distances ne se calculent pas (« Échec : Calcul des distances »). Les routeurs (BRouter, OSRM, Valhalla) répondent. À revérifier sur Vercel.
+- **Reste** : l'écran de création garde l'ancien style sombre (pas encore le matériau du Compas).
+- Preuves : `tsc` 0 ; `eslint` 0 erreur (avertissements identiques avant/après) ; adventure-prep 2727 tests, 10 échecs = base de référence (m4, m5, n7, m53) ; 15 tests départ + 7 tests bandeau (4 échouent sans le correctif).
+
+## 2026-10-01 — Compas : test réel complet (Chromium, compte démo, base de production)
+
+Check-list `docs/compas/TEST_REEL.md` déroulée de bout en bout sur un voyage créé par l'interface ; tableau des résultats dans ce fichier. Corrections poussées (`d18dac8` → dernier commit de la branche) :
+
+- **Bloquant production** : `/api/adventure/commit` échouait à chaque enregistrement (insertion `owner` refusée par la policy, déjà posée par le trigger) → la route relit la ligne du trigger ; doubles de test alignés sur la base réelle (trigger, policy, cascade). Retour sur `/compas` après l'enregistrement.
+- **Contraste** : la couche globale `liquid-ios27` forçait `--lkv-text-*` en blanc → encre du Compas sur les primitives `--lkv-ink-*` / `--lkv-sage-500` (thème clair).
+- **Données honnêtes** : « RAS partiel » + liste de ce qui n'est pas vérifié ; sac vide plus jamais « prêt » ; plus de « Complet » ni de « ★ 0 » ; libellé de repli RouteStack jamais noté comme lieu ; nuit notée ≠ réservée ; offres partenaires filtrées par pays ; enveloppe par jour et par personne calculée sur l'enveloppe.
+- **Alertes officielles** (Lot 4) : Météo-France via Meteoalarm, champs structurés seulement, mise à jour à fenêtre nulle = alerte « à vérifier », statut explicite (lues / publiées la veille / hors France / indisponibles). Département par Nominatim (UA de l'application, coordonnées arrondies).
+- **Ergonomie** : tiroirs (ligne qui débordait, onglet actif hors champ, résumé de carte sous le verre), « Ajouter » depuis un conseil filtré sur le besoin, tuile de nuit ouvrant la bonne nuit, échelle unique (maquette v8).
+- **Carte partagée** : couche pays ajoutée avant la fin du style (« Style is not done loading ») → attend le style ; trouvé avec **browser-harness** (Chromium piloté par CDP, télémétrie et enregistrements désactivés).
+- **Non testable ici** : « Qui doit quoi » (deux comptes membres), conversion de devise (voyage en euros), explication IA du verdict (non faite). Catalogue de parcours : quasi uniquement le Nord ; un parcours de test E2E visible en production.
+- **agentmemory** : installation refusée par le mode d'autorisation automatique (exécution d'un binaire externe) ; non installé.
+- Preuves : `tsc` 0 ; `eslint` 0 erreur sur les fichiers touchés ; Compas 137 tests ; booking 133 ; suite complète 25 échecs = 24 de la base de référence + 1 test de performance (2 ms) qui passe seul 3/3 ; `identity_compliance` OK.
+
+## 2026-10-01 — Le Compas devient la référence design (décision de Tony)
+
+- `docs/compas/DESIGN_REFERENCE.md` : matériau, structure d'écran, tiroirs à trois hauteurs, lignes, règles de contenu, accessibilité mesurée, **dette connue** (variables `--cp-*` limitées à `.compas` et ~90 valeurs `rgb()` littérales, classes non extraites en primitives, primitives canoniques non alignées, tests de gouvernance qui ne couvrent pas `compas.css`, maquette v8 non comparée).
+- `DESIGN_SYSTEM.md` §0 et `CLAUDE.md` : le Compas prévaut sur `/materiel` pour tout nouvel écran ; jetons toujours `--lkv-*` ; `/compte` reste la référence des patterns utilisateur.
+- Documentation seule : aucun code modifié. `ci_invariants` OK ; les 2 échecs de `tests/design/task-2a-contrast.spec.ts` sont dans la base de référence.
+
+## 2026-10-01 — Compas, Lot 3 (suite) : recherche d'hébergement par nuit
+
+- `engine/stays.ts` : dates d'arrivée/départ de la nuit du jour N, simplification des offres (prix et devise jamais devinés : sans devise confirmée, « Prix non confirmé » ; seuls les liens `https` sont gardés).
+- Action `compasSearchStaysAction` : éditeur connecté, limite de débit partagée avec `/api/booking/search` (30 requêtes / 10 min, échec fermé), fournisseur via `createBookingProvider` (RouteStack), **lecture seule**. Mode test signalé (« ce ne sont pas de vraies offres »). Aucune commande, aucun `checkoutUrl`, aucun paiement.
+- UI (étape Résa › Nuits) : choisir la nuit, « Chercher », puis « Noter » (repère, sans réserver) ou « Voir l'offre » (lien partenaire `sponsored nofollow`, ouvert par l'utilisateur). Affichée seulement si le fournisseur est actif, sinon le message « active dès que les clés sont posées ».
+- **Non testé en réel** : réponse RouteStack (réseau fermé dans le conteneur) ; testé avec un fournisseur simulé. Les clés RouteStack sont uniquement dans `.env.local` du conteneur, pas dans Vercel.
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 137 tests, build OK.
+
+## 2026-10-01 — Compas : accessibilité (axe) et trois hauteurs de tiroir (Lot 7, partie)
+
+- **Audit axe-core** (WCAG 2 A/AA, Chromium 390×844, données de test) sur l'écran et 6 tiroirs (Où/Sur le tracé, Nous/Budget, Résa/Nuits, Verdict/Signaux, Kit/Conseils) : 1 violation critique trouvée (`aria-required-children` sur `TallList`, `role="list"` sans éléments de liste) → corrigée (`role="group"`). Résultat : 0 violation. Limite : fond de page de test, contrastes non représentatifs ; pas de test sur le tiroir « Mes kits » (action serveur).
+- **Trois hauteurs de tiroir** : petit (≈ moitié de la zone haute, 340 px max, le contenu défile), moyen, grand. Poignée : tirer vers le haut agrandit, vers le bas réduit puis ferme depuis « petit » ; toucher = petit → moyen → grand → moyen. Vérifié au pointeur réel dans Chromium (hauteurs mesurées 340 / 498 / 629 px) et par test automatisé.
+- **Reste du Lot 7 (non fait, à valider sur téléphone)** : lentille au doigt, barre d'onglets qui se réduit, appui long avec aperçu de l'effet, îlot dynamique « Annuler ».
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 126 tests, build OK.
+
+## 2026-10-01 — `/compas` remplace `/prepare` à 100 % (décision de Tony)
+
+- `/compas` : sans aventure active ou avec `?nouvelle=1` → flux de création d'aventure (`AdventurePrepScreen`) ; `?etape=` ouvre une étape (nouvelle prop `initialStep`).
+- `/prepare` devient une passerelle 308 : `?nouvelle=1` → `/compas?nouvelle=1`, `?tab=equipement` → `/compas?etape=kit`, le reste → `/compas`. Vérifié sur le build (`next start`) : `/prepare`, `/prepare?tab=equipement`, `/prepare?nouvelle=1`, `/configurateur` (308), `/ai-configurator`, `/rapport-kit`, `/preparer` (307) atterrissent bien sur `/compas`.
+- ~25 liens internes mis à jour (navigation, pied de page, pays, carnet, groupes, outils, assistants de création de voyage, registre de routes, redirections legacy). `loading.tsx` de `/prepare` supprimé.
+- **Perte assumée** : les paramètres `country` et `groupId` des liens « configurateur » ne sont plus transmis (le Compas ne les lit pas).
+- **Gardé volontairement** : `src/app/prepare/actions.ts` (utilisé par le flux de création) et `src/features/preparator/` (code mort, référence pour porter la recherche de réservation RouteStack dans le Compas, Lot 3).
+- Tests adaptés : `hubRedirects`, `preparatorFusion`, `hub-adventures-drawer`. Suite complète : 7 046 tests, 24 en échec, **identiques à la base de référence** (0 nouvel échec, 0 résolu). `tsc` 0, invariants OK, build OK.
+
+## 2026-10-01 — Compas, contrôle visuel mobile (Chromium 390×844) et corrections
+
+- Page de test temporaire (supprimée, non commitée) avec des données de test : onglets Kit/Où/Résa/Verdict/Nous ouverts dans Chromium. 0 débordement horizontal de page. Seules erreurs console : tuiles de carte bloquées par le réseau du conteneur.
+- Trois défauts réels des Lots 3 à 6 corrigés : (1) 5 à 6 onglets de tiroir qui se chevauchaient → capsule défilante, onglets à largeur de contenu ; (2) champ d'hébergement qui recouvrait la pastille « À trouver » → champ stylé et contenu dans la ligne ; (3) texte des conseils et des kits tronqué par la hauteur fixe des lignes → lignes de hauteur libre (`TallList`), le tiroir défile.
+- Limite : le fond de la page de test n'est pas celui de `AppShell` ; contrastes de couleur non jugés, uniquement la mise en page.
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 125 tests, build OK.
+
+## 2026-10-01 — Compas, Lot 8 « Échelles » (version sobre)
+
+- `engine/scale.ts` : Sortie (< 8 h) → Journée (≤ 1 j) → Raid (2 à 4 j) → Expédition (5 à 30 j) → Monde (> 30 j). Convention de l'application, fondée sur la seule durée choisie ; sans durée, aucune échelle n'est affichée. Affichée dans l'en-tête de la carte Où.
+- **Non fait volontairement** : « grain des étapes » par échelle, sac type, pays et formalités pour « Monde » : aucune source de données fiable dans le dépôt (visas, vaccins) et rien à inventer.
+- **En attente de décision de Tony** : `/compas` remplace `/prepare` (changement de route) ; nettoyage des mocks `EXAMPLE_TRAIL` / « Marceline » (présents hors Compas : `CreateCarnetView`, `src/lib/mock/*`).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, 125 tests, build OK.
+
+## 2026-10-01 — Compas, Lot 6 « Carte » (points sur le tracé)
+
+- Migration appliquée sur `icxyvwzfjbflcbqukpfz` : `20261001100000_compas_route_pois.sql` (fonction `compas_route_pois`, lecture seule, SECURITY INVOKER : eau, abris, camping, vues, sommets, parkings à moins de 1 km du tracé, 20 par catégorie, avec coordonnées et points sans nom). Testée sur un vrai parcours du catalogue.
+- `engine/routePois.ts` : lecture défensive des lignes (catégorie inconnue ou coordonnées hors limites écartées) ; un point sans nom garde sa catégorie, jamais un nom inventé.
+- UI : onglet « Sur le tracé » (étape Où), filtre par catégorie, avertissement « source tarie / refuge fermé », crédit © OpenStreetMap (ODbL) ; les points s'ajoutent à la carte.
+- Le décompte des points d'eau du tracé alimente désormais le conseil d'eau du kit (avant : valeur du hub, souvent absente).
+- **Volontairement non fait** : couches Tribu / Amis (positions d'autres personnes : demande consentement explicite et conception vie privée, pas de construction à l'aveugle) ; profil d'altitude (aucune altitude fiable le long du tracé dans les données du Compas).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 115 tests, build OK.
+
+## 2026-10-01 — Compas, Lot 5 « Kit » (conseils météo, mes kits)
+
+- `engine/kitRules.ts` : conseils de kit (pluie, froid, gel → gants/bonnet, chaleur → soleil, marche > jour → frontale, repère d'eau 0,5 L/h). Chaque conseil cite jour, valeur et source ; « couvert » = un objet du kit porte un nom qui correspond. Seuils exportés (`KIT_THRESHOLDS`). Aucun conseil sans prévision.
+- `engine/kitApply.ts` + actions `compasListMyKitsAction` / `compasApplyKitAction` : appliquer un de ses kits (`materiel_kits`) ajoute uniquement les objets absents (même nom, accents/casse ignorés), personnels, non emballés ; rien n'est retiré. Compatibilité = deux décomptes (conseils couverts, objets déjà présents), **pas de score**.
+- UI : onglets Kit « Conseils » et « Mes kits », bouton de synthèse sur la carte Kit.
+- Vérifié sur la base réelle (transaction annulée) : l'insertion `trip_items` de l'action passe (colonnes, types, lien d'inventaire).
+- Non fait : emprunt dans le groupe depuis ce flux, eau par point d'eau réel du tracé (donnée absente → « non renseignés »), test réel avec le compte démo (réseau).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 111 tests, build OK.
+
+## 2026-10-01 — Compas, Lot 4 « Verdict » (partie sans réseau)
+
+- `engine/danger.ts` : danger en **trois axes** (physique, technique, conjoncturel), **sans score**. Chaque signal porte sa source et sa date. Un axe sans donnée est « non évalué », jamais « RAS » (le technique l'est tant que cotation et altitude manquent). Seuils par défaut exportés (`DANGER_THRESHOLDS`), à valider. Blocage seulement pour rafales ≥ 90 km/h et alerte officielle rouge.
+- `mergeDangerIntoVerdict` : le danger s'ajoute au verdict existant sans jamais l'adoucir.
+- UI : pastilles des trois axes sur la carte Verdict ; tiroir Signaux avec date et axes non évalués.
+- **Reste (bloqué : réseau du conteneur)** : lecture des alertes officielles (Meteoalarm, flux ouvert, sans clé) et explication IA avec validateur de nombres. Les hôtes sont refusés par la politique réseau du conteneur (403, y compris Open-Meteo) : aucune réponse réelle n'a pu être testée, donc rien n'est branché à l'aveugle (`alerts: []` dans `getCompasData`).
+- Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants OK, 99 tests, build OK.
+
+## 2026-10-01 — Compas, Lot 3 « Réserver » (périmètre sans paiement)
+
+- Flux **Nuits** (étape Résa) : une ligne par nuit, hébergement noté par l'éditeur (`compasSetStayAction` → `trip_steps.accommodation_name`, 0 ligne = échec). **Noter ne réserve rien** ; aucune commande, aucun paiement, aucun lien de paiement.
+- Offres partenaires : composant obligatoire `AffiliateDisclosure` (DGCCRF) ajouté aux Offres et aux hébergements, `rel="sponsored nofollow noopener"` (avant : `noopener sponsored`).
+- Conversion Frankfurter (BCE, sans clé, revalidée 12 h) : `engine/currency.ts` + `server/rates.ts`. Total des réservations affiché en euros puis converti avec le taux et sa date ; sans taux, « conversion indisponible », jamais d'estimation.
+- RouteStack reste en mode désactivé tant que les clés manquent (message inchangé, rien de simulé). Viator : pas de changement.
+- La tuile « nuit à trouver » de la carte Résa ouvre désormais Nuits (avant : Parcours).
+- Aucune migration. Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants CI/identité/icônes OK, 90 tests (`src/features/compas` + `src/lib/ai`), `npm run build` OK.
+- Non fait : recherche d'hébergements en direct (attend les clés RouteStack), liens Viator par activité, test réel sur le compte démo.
+
+## 2026-10-01 — Compas, Lot 2 « Nous »
+
+- Moteur pur `engine/crew.ts` : `settleExpenses` (soldes + remboursements simplifiés ; `equal` partagé entre membres, `individual` à la charge du payeur, **`custom` exclu et signalé, jamais deviné**, prévues ignorées) et `crewPace` (rythme du plus lent, « x sur y connues »).
+- Modèle : `crew.guests` (personnes sans compte), `crew.pace`, `crew.settlement`, allure/niveau par membre.
+- UI : tiroir Équipe (nombre de personnes ± pour les éditeurs, allure et niveau par membre — « non renseigné » sinon, rythme du groupe), « Qui doit quoi » dans le budget, résumé de la carte Nous. Invitations et rôles : renvoi vers `/hub/groupe` uniquement.
+- Aucune migration. Preuves : `tsc` 0, `eslint src/features/compas` 0, invariants CI/identité/icônes OK, 81 tests (dont 7 nouveaux), `npm run build` OK.
+- Non couvert : test UI du stepper (action déjà testée via « Dis-le »), test réel avec données du compte démo.
+
+## 2026-10-01 — Compas, Lot 1 « Où et quand » (commit `c299cab`)
+
+- Météo des vrais jours du voyage (Open-Meteo, heure par heure, isotherme, calendrier 6 semaines prévision puis tendance), heure de départ conseillée, règle de durée modifiable, choix du parcours (catalogue, mes randos, communauté) avec redécoupage non destructif, activité, envies, « Dis-le » (IA `compas-intent` + règles, ancrage des nombres).
+- Migration appliquée sur `icxyvwzfjbflcbqukpfz` : `20261001090000_compas_routes.sql` (RPC `compas_search_routes`, `compas_route_stages`).
+- Preuves bac à sable : `tsc` 0, `eslint src/features/compas` 0, invariants CI OK, 74 tests (`src/features/compas` + `src/lib/ai`), harnais Chromium 12 états sans débordement ni erreur console.
+- Reprise Claude Code (conteneur cloud) : `npm run build` OK (Next 15.5), `tsc` 0, `eslint src/features/compas` 0, invariants CI/identité/icônes OK, 74 tests OK.
+- Correctif : « Dis-le » passe le tiroir en grande hauteur quand il affiche des propositions (débordement de 12 px en hauteur moyenne).
+- **Reste** : test réel sur `localhost:4000/compas` avec le compte démo (réseau Open-Meteo, base, clé IA) — non faisable depuis le conteneur (identifiants et `.env.local` sur le PC de Tony). Voir `docs/compas/REPRISE_CLAUDE_CODE.md`, §4.
+
+## 2026-10-01 — Compas (préparateur ultime) : écran branché sur les données réelles
+
+- **Branche** : `feat/compas-preparateur` · **Route** : `/compas` (validation) — `/prepare` inchangée jusqu'à validation.
+- **Projet Supabase** : `icxyvwzfjbflcbqukpfz` (lectures de schéma et de politiques RLS uniquement). **Aucune migration** : tout s'appuie sur des colonnes existantes.
+- **Design** : portage fidèle de la maquette v8 validée (capsule d'étapes = barre d'onglets, ≡ et ☀ en haut, carte 40 % sous la barre flottante, tiroirs qui s'arrêtent au-dessus de la carte, carte agrandie sans zoom avec carte-titre réduite).
+
+### Livré
+1. `src/features/compas/engine/` : `compasModel.ts` (modèle pur : parcours, dates, lumière, météo, kit, sacs, budget, réservations, verdict sans score, prochaine décision), `sun.ts` (lever/coucher NOAA), `format.ts`.
+2. `src/features/compas/server/getCompasData.ts` : un seul chargeur (aventure active du hub + inventaire, réservations, boutique active, liens affiliés `/go`, mode des fournisseurs).
+3. `src/features/compas/server/compasActions.ts` : porteur (propriétaire, collaborateurs, équipage actif), produit précis relié au kit + panier, produit boutique → kit, objet → inventaire (poids jamais inventé), objet prêté récupéré, enveloppe du voyage. Zod + session + droit d'édition + RLS (0 ligne = échec).
+4. Actions existantes réutilisées : `togglePackedAction` (optimiste), `deleteTripItemAction`, `addInventoryItemToTripAction`, `addCustomTripItemAction`.
+5. `src/features/compas/components/*` + `compas.css` + `src/app/compas/page.tsx` ; `/compas` rattachée à l'onglet Hub.
+
+### Preuves
+- `npx tsc --noEmit` : 0 erreur.
+- `npx eslint --max-warnings=0 src/features/compas src/app/compas` : 0.
+- `node scripts/verify/ci_invariants.mjs` : SUCCÈS (icônes du registre, aucun jeton --role-*).
+- `npx vitest run src/features/compas` : 28/28 (moteur, formats, écran réel en jsdom : décision → tiroir → fiche → achat relié au panier, emballage optimiste et annulation sur refus RLS, porteur, récupération d'un prêt, enveloppe).
+- Suite complète : aucun nouvel échec par rapport à `main` (24 échecs préexistants, identiques avec et sans la branche).
+- Harnais navigateur (Chromium 390×844, 375×667, 430×932, clair et sombre) : 23 états audités, 0 débordement, 0 tiroir sur la carte, 0 erreur console.
+- `npm run build` : non exécutable dans le bac à sable (Google Fonts bloqué par le proxy réseau) — à lancer en CI ou en local.
+
+---
+
+## 2026-09-05 — Programme Intégral « Module Voyage » (Chantiers C0 à C8 + Recette Finale RF)
+
+### Synthèse Globale
+- **Branche de Release** : `release/voyage-v1`
+- **Commit de Release** : `961c1a9` (consolidé)
+- **Objectif d'Exécution** : Exécution intégrale et autonome du programme défini dans `ROADMAP_VOYAGE.md` de C0 à C8 jusqu'à la recette finale prouvée.
+- **Résultat Technique** : **572/572 tests Vitest réussis (87 suites)**, `npx tsc --noEmit` code 0, `npm run lint` code 0, `npm run verify:invariants` code 0, `npm run build` code 0 (App Router Next.js 15.5.18).
+- **Sécurité Supabase** : 100% des 20 tables du module protégées par Row-Level Security vérifiées sur `icxyvwzfjbflcbqukpfz`.
+
+### Chantiers Exécutés & Validés
+1. **Chantier 0 — Unification Messagerie ↔ Groupes** : Résolution de la fragmentation des fils de discussion et rattachement au `trip_id`.
+2. **Chantier 1 — Fondations Entité Trip** : Schéma SQL, RLS, service layer `queries-trips.ts`, Cockpit Liquid Glass Apple HIG.
+3. **Chantier 2 — Wizard de Création & Moteur Déterministe** : 5 étapes synchronisées URL/local, moteur de répartition kilométrique sans appel LLM, 5 pays pilotes (FR, NP, PE, IS, MA).
+4. **Chantier 3 — Planificateur d'Itinéraire** : Dual-view tactile sticky Apple HIG, 8 Server Actions sécurisées, réordonnancement 2-phases anti-collision.
+5. **Chantier 4 — Lieux Communautaires** : 42 lieux réels qualifiés, scoring bayésien avec preuve terrain x2, floutage éthique serveur (~500m / 2 décimales).
+6. **Chantier 5 — Affiliation Travelpayouts** : Transparence DGCCRF `<AffiliateDisclosure />`, hachage SHA-256 salé RGPD sans IP en clair, postbacks HMAC timing-safe.
+7. **Chantier 6 — Sac Contextuel & Boutique LKDV** : Moteur de Gear Gap, règles de sécurité montagne (> 2400m), maillage boutique LKDV à marge pleine via Stripe.
+8. **Chantier 7 — Collaboration, Partage, Offline & Budget** : Équilibrage glouton `simplifyDebts`, documents d'identité chiffrés avec alerte 180j, export GPX 1.1 et mode hors-ligne.
+9. **Chantier 8 — Rétrospective & Publication Carnet** : Conversion voyage -> carnet public sans fuite de données, soumission d'avis certifiés terrain (`has_field_proof = true`).
+10. **Recette Finale (RF)** : Consolidation master sur `release/voyage-v1`, rapports complets `RAPPORT_FINAL_VOYAGE.md` et `PROGRESS_VOYAGE.md`.
+
+---
+
+# MISSION LOG — Enrichissement Massif des Pages Pays par IA (Architecture Multi-Tiers 1 à 4)
+
+**Date :** 4 septembre 2026  
+**Branche Git :** `feat/orientation-empreinte`  
+**Projet Supabase :** `icxyvwzfjbflcbqukpfz` (eu-west-3 — Région officielle LKDV, jamais `lwrmuggefbmboikjgudc`)  
+**Modèle IA :** `nvidia/nemotron-3.5-lightning:free` via OpenRouter (Tier `fast` exclusif avec plugin web search)
+
+---
+
+## 1. Vue d'Ensemble & Objectif Étendu
+
+La mission initiale consistant à combler 6 cartes statiques a été étendue à un **système éditorial complet et massif pour les pages pays (`/pays/[code]`)**. L'objectif est de transformer chaque fiche pays en un véritable guide de terrain actionnable, immersif et hautement qualifié pour le voyageur outdoor, le randonneur en autonomie et le bivouac.
+
+### 4 Tiers de Criticité & Durées de Fraîcheur :
+1. **Tier 1 — Safety-Critical** (`formalites` [30j], `securite_alertes` [7j]) :
+   - Recherche web en direct via OpenRouter plugin (`plugins: [{ id: 'web', max_results: 5 }]`).
+   - Gating strict : `needs_human_review = true` et `reviewed_at = null` par défaut.
+   - **Invisibilité publique garantie par la RLS** tant qu'une validation humaine n'a pas été effectuée.
+2. **Tier 2 — Factuel Utile** (`transport` [90j], `budget` [90j], `sante` [90j], `etiquette` [90j]) :
+   - Informations logistiques concrètes, coûts réels, eau/secours et principes *Leave No Trace*.
+   - Auto-publié (`needs_human_review = false`).
+3. **Tier 3 — Éditorial & Inspirationnel** (`vue_ensemble` [365j], `meilleure_periode_activite` [365j], `itineraires_suggeres` [180j], `spots_incontournables` [180j], `niveau_difficulte` [365j], `faq` [180j]) :
+   - Contenus immersifs enrichis avec structures JSON (`content_json`) pour les itinéraires avec étapes, fenêtres météo par activité, spots sauvages et FAQ interactive.
+4. **Tier 4 — Contextuel Catalogue Réel** (`recommandations_kit` [30j]) :
+   - Tool-calling direct sur la table `public.kits` et `kit_items`.
+   - **Zéro hallucination** : l'IA argumente sur des kits réels existants (`Kit Minimaliste Weekend`, `Kit Trek Confort`), avec liens directs vers `/kits/[slug]` et `/ai-configurator?country=[code]`.
+
+---
+
+## 2. Preuves SQL & RLS
+
+### A. Création de la table `public.country_content_blocks`
+Migration `supabase/migrations/20260904040000_country_content_blocks.sql` appliquée avec succès sur `icxyvwzfjbflcbqukpfz`.
+
+```sql
+create table if not exists public.country_content_blocks (
+  id uuid primary key default gen_random_uuid(),
+  country_code text not null references public.countries_geo(iso_a2) on delete cascade,
+  block_type text not null check (block_type in (
+    'formalites', 'securite_alertes',
+    'transport', 'budget', 'sante', 'etiquette',
+    'vue_ensemble', 'meilleure_periode_activite', 'itineraires_suggeres', 'spots_incontournables', 'niveau_difficulte', 'faq',
+    'recommandations_kit'
+  )),
+  tier smallint not null check (tier in (1, 2, 3, 4)),
+  content_md text not null,
+  content_json jsonb,
+  sources jsonb not null default '[]'::jsonb,
+  model_used text not null,
+  generated_at timestamptz not null default now(),
+  stale_after timestamptz not null,
+  degraded boolean not null default false,
+  needs_human_review boolean not null default false,
+  reviewed_at timestamptz,
+  reviewed_by uuid references auth.users(id),
+  unique (country_code, block_type)
+);
+```
+
+### B. Preuve de la Politique RLS
+Audit SQL exécuté via Supabase MCP :
+```sql
+select c.relname, c.relrowsecurity, p.polname, p.polcmd, p.polqual 
+from pg_class c 
+join pg_namespace n on n.oid = c.relnamespace 
+left join pg_policy p on p.polrelid = c.oid 
+where c.relname = 'country_content_blocks' and n.nspname = 'public';
+```
+**Résultat réel retourné :**
+```json
+[
+  {
+    "relname": "country_content_blocks",
+    "relrowsecurity": true,
+    "polname": "country_content_blocks_public_read",
+    "polcmd": "r",
+    "polqual": "(((needs_human_review = false) OR (reviewed_at IS NOT NULL)) AND (degraded = false))"
+  },
+  {
+    "relname": "country_content_blocks",
+    "relrowsecurity": true,
+    "polname": "country_content_blocks_service_write",
+    "polcmd": "*",
+    "polqual": null
+  }
+]
+```
+
+### C. Preuve du Workflow de Review Humaine Tier 1
+1. **Avant approbation :** Le bloc `formalites` et `securite_alertes` pour le Portugal est inséré avec `needs_human_review: true` et `reviewed_at: null`.
+   - Requête publique `GET /api/ai/country-guide/PT` :
+     ```
+     Visible blocks: ['transport', 'sante', 'meilleure_periode_activite', 'budget', 'recommandations_kit']
+     Formalites in blocks: false
+     Securite in blocks: false
+     ```
+2. **Action d'approbation :** Exécution de `reviewContentBlock(blockId, reviewerId)` posant `reviewed_at = now()`.
+3. **Après approbation :**
+   - Requête publique `GET /api/ai/country-guide/PT` :
+     ```
+     Visible blocks: ['transport', 'sante', 'meilleure_periode_activite', 'budget', 'securite_alertes', 'recommandations_kit', 'formalites']
+     Formalites in blocks: true
+     Securite in blocks: true
+     ```
+
+---
+
+## 3. Architecture des Fichiers & Services
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── ai/country-guide/[code]/route.ts   # Route GET multi-tiers filtrée par RLS + rétrocompatibilité
+│   │   ├── cron/refresh-country-guides/route.ts # Cron supportant les scopes 'safety-alertes' (7j) et 'blocks'
+│   │   └── dev/generate-country-blocks/route.ts # Endpoint interne de test et revue administrative
+│   └── pays/[code]/
+│       ├── page.tsx                           # Page serveur avec métadonnées et Schema.org
+│       └── CountryDetailClient.tsx            # Cockpit desktop & Shell mobile
+├── components/
+│   └── pays/
+│       ├── PaysPratiqueView.tsx              # Rendu 5-sections : Identité, Vue d'ensemble, À savoir, Pratique, Inspiration, Kits
+│       └── MobileCountryDetailView.tsx       # Intégration mobile unifiée sans duplication de code
+├── hooks/
+│   └── useCountryPracticalGuide.ts          # Hook React Query typé avec BlockGuideData
+└── lib/
+    └── ai/
+        ├── askAI.ts                         # Support natif des plugins OpenRouter
+        ├── providers/
+        │   ├── openrouter.ts                # Forwarding plugins web + timeout calibré à 45s
+        │   └── types.ts                     # Définition AIPluginConfig dans AIRequest
+        └── country-content/
+            ├── contentBlocksTypes.ts        # Enums, constantes, schémas Zod résilients
+            ├── generateContentBlock.ts      # Génération Tiers 2 & 3 éditoriaux
+            ├── generateSafetyCriticalBlock.ts # Génération Tier 1 + workflow de review
+            ├── recommendCountryKits.ts      # Recommandation Tier 4 basée sur public.kits
+            └── contentBatchService.ts       # Service d'orchestration par lots et cron
+supabase/
+└── migrations/
+    └── 20260904040000_country_content_blocks.sql # Table multi-tiers + RLS + trigger
+tests/
+└── ai/
+    ├── country-content-blocks.spec.ts       # 6 tests unitaires des invariants multi-tiers
+    └── country-guide.spec.ts                # 8 tests unitaires guides pratiques
+```
+
+---
+
+## 4. Preuves de Validation Technique
+
+### A. TypeScript Type-Check (`npm run type-check`)
+```
+> kitduvoyageur@0.1.0 type-check
+> tsc --noEmit
+
+Exit code: 0 (0 error)
+```
+
+### B. Suite de Tests Vitest (`npx vitest run tests/ai/`)
+```
+ RUN  v4.1.11 C:/Users/Tony/Downloads/LKDV/kitduvoyageur_1783951966810
+
+ ✓ tests/ai/configuratorCore.spec.ts (6 tests)
+ ✓ tests/ai/pushNotify.spec.ts (4 tests)
+ ✓ tests/ai/trailNarrative.spec.ts (5 tests)
+ ✓ tests/ai/requestMode.spec.ts (12 tests)
+ ✓ tests/ai/providers.spec.ts (9 tests)
+ ✓ tests/ai/kitConfigurator.spec.ts (10 tests)
+ ✓ tests/ai/responseStore.spec.ts (5 tests)
+ ✓ tests/ai/registry.spec.ts (4 tests)
+ ✓ tests/ai/countryGuides.spec.ts (9 tests)
+ ✓ tests/ai/askAI.spec.ts (10 tests)
+ ✓ tests/ai/country-content-blocks.spec.ts (6 tests)
+ ✓ tests/ai/country-guide.spec.ts (8 tests)
+
+ Test Files  12 passed (12)
+      Tests  88 passed (88)
+   Duration  5.50s
+```
+
+### C. Invariants CI Anti-Dérive (`npm run verify:invariants`)
+```
+=== VÉRIFICATION DES INVARIANTS CI LKDV ===
+
+✓ Invariant 1a : Aucun token parallèle --role-* dans src/
+✓ user_orientation absent de tout composant public (hors identity)
+✓ features/kits ne lit jamais user_orientation
+✓ aucun token de couleur parallèle --role-*
+✓ palette du chantier vérifiée (identity)
+✓ Invariant 1b : Conformité palette identity vérifiée
+✓ Invariant 2 : Aucun terme monétaire dans le calcul de score kit_trust_scores
+✓ Invariant 3 : Aucun compteur de partage dans les composants UI de kits
+✓ Invariant 4a : Aucune migration d'attribution présente dans supabase/migrations/
+✓ Invariant 4b : Migration 20260903050000_kit_attributions.sql isolée
+✓ Invariant 4c : Route /api/kits/my-royalties verrouillée à 404
+✓ Invariant 5a : Aucun fichier .env stagé
+✓ Invariant 5b : Aucun secret en dur détecté dans src/
+
+✓ SUCCÈS : Tous les invariants CI anti-dérive sont validés.
+```
+
+### D. État Réel des 3 Pays Pilotes en BDD (`public.country_content_blocks`)
+Requête SQL exécutée sur `icxyvwzfjbflcbqukpfz` :
+```sql
+SELECT country_code, count(*) as total_blocks, 
+       count(*) filter (where degraded = false) as valid_blocks, 
+       count(*) filter (where needs_human_review = false OR reviewed_at IS NOT NULL) as publicly_visible_blocks 
+FROM country_content_blocks 
+GROUP BY country_code 
+ORDER BY country_code;
+```
+**Résultat réel retourné :**
+```json
+[
+  {"country_code": "NP", "total_blocks": 13, "valid_blocks": 13, "publicly_visible_blocks": 13},
+  {"country_code": "PT", "total_blocks": 13, "valid_blocks": 13, "publicly_visible_blocks": 13},
+  {"country_code": "ST", "total_blocks": 13, "valid_blocks": 13, "publicly_visible_blocks": 13}
+]
+```
+- **Total :** 39/39 blocs générés et validés (100% de succès, 0 dégradé).
+- **Routes SSR testées :** `/pays/pt` (200), `/pays/np` (200), `/pays/st` (200).
+
+---
+
+## 5. Les 4 Extraits Réels Générés en BDD
+
+### Extrait 1 : Formalités & Sécurité (Tier 1 — Safety-Critical)
+*Généré avec recherche web en direct et validé par review humaine :*
+
+```json
+{
+  "country_code": "PT",
+  "block_type": "securite_alertes",
+  "tier": 1,
+  "model_used": "nvidia/nemotron-3.5-lightning:free",
+  "stale_after": "2026-09-11 13:29:36.678+00",
+  "content_md": "Le Portugal fait l'objet d'une vigilance accrue en 2026. En raison du déclenchement d'une **situation d'alerte** face au risque d'incendies de forêt (jusqu'au 6 juillet 2026) sur tout le territoire continental, l'accès aux zones forestières est restreint et des sanctions allant jusqu'à 300 € sont prévues pour le non-respect des consignes. Par ailleurs, **des températures caniculaires** sont prévues, notamment dans les régions de Lisbonne et Setúbal (jusqu'à 44°C), avec une vigilance rouge étendue à Leiria et Coimbra. Côté sécurité courante, les **vols à la tire** sont en forte augmentation dans les zones touristiques et les transports en commun (métro et tramway à Lisbonne). Enfin, le pays reste en **vigilance sismique** (risque accru dans la partie sud et les Açores). **Dernière vérification des consignes : 04 septembre 2026**.",
+  "sources": [
+    {
+      "url": "https://www.diplomatie.gouv.fr/fr/information-par-pays/portugal/conseils-aux-voyageurs-securite",
+      "title": "France Diplomatie - Conseils aux voyageurs Portugal"
+    },
+    {
+      "url": "https://www.diplomatie.gouv.fr/fr/information-par-pays/portugal/dernieres-minutes-et-alertes",
+      "title": "France Diplomatie - Dernières minutes et alertes Portugal"
+    }
+  ]
+}
+```
+
+### Extrait 2 : Guide Pratique Terrain (Tier 2 — Factuel Utile)
+*Savoir-vivre, bivouac et respect de la nature (Leave No Trace) :*
+
+```json
+{
+  "country_code": "PT",
+  "block_type": "etiquette",
+  "tier": 2,
+  "model_used": "nvidia/nemotron-3.5-lightning:free",
+  "stale_after": "2026-12-03 13:31:10.745+00",
+  "content_md": "Au Portugal, l'hospitalité chaleureuse se vit avec modestie. En randonnée, privilégiez les sentiers balisés et respectez la signalisation. Dans les villages et sur les marchés, saluez toujours par un bonjour (« Olá ») et un merci (« Obrigado/a »). Les églises et monastères exigent une tenue couverte (pas de shorts ou débardeurs). Pour le bivouac, privilégiez les zones désignées ; ailleurs, respectez le principe *Leave No Trace* : partez laissez aucune trace, emportez vos déchets et évitez de déranger la faune locale, notamment les oiseaux marins sur la côte. Adoptez une attitude discrète pour profiter pleinement de la nature préservée.",
+  "sources": [
+    {
+      "url": "https://www.parquesnaturais.pt",
+      "title": "Règlements parcs naturels Portugal & Guide du voyageur responsable"
+    }
+  ]
+}
+```
+
+### Extrait 3 : Itinéraires & Terrains Outdoor (Tier 3 — Inspirationnel)
+*Itinéraires de grande randonnée avec variété de reliefs et de côtes sauvages :*
+
+```json
+{
+  "country_code": "PT",
+  "block_type": "itineraires_suggeres",
+  "tier": 3,
+  "model_used": "nvidia/nemotron-3.5-lightning:free",
+  "stale_after": "2027-03-03 13:31:57.01+00",
+  "content_md": "**Le Portugal offre une diversité de paysages époustouflante, des montagnes escarpées du Nord aux côtes sauvages du Sud.** Pour le voyageur autonome avide d'aventure, trois itinéraires incontournables s'offrent à vous. Le sentier des Fajãs de São Jorge vous mène à la découverte de falaises vertigineuses et de cultures en terrasses accessibles uniquement à pied. En Alentejo, la Via Alentejana traverse des étendues de liège et de chênes-lièges, idéale pour un bivouac sous un ciel d'une pureté rare. Enfin, dans le Nord, le parc national de Peneda-Gerês réserve des sentiers de montagne où se mêlent villages traditionnels et eaux cristallines de rivières sauvages. Tous ces parcours invitent à la rencontre d'un Portugal authentique, loin des sentiers battus touristiques classiques.",
+  "sources": []
+}
+```
+
+### Extrait 4 : Recommandation Kit Catalogue Réel (Tier 4 — Contextuel Marchand)
+*Recommandation issue du catalogue réel `public.kits` avec vérification stricte anti-hallucination :*
+
+```json
+{
+  "country_code": "PT",
+  "block_type": "recommandations_kit",
+  "tier": 4,
+  "model_used": "nvidia/nemotron-3.5-lightning:free",
+  "stale_after": "2026-10-04 13:28:51.707+00",
+  "content_md": "Pour un voyage au Portugal, il faut anticiper une météo méditerranéenne chaleureuse, un terrain accidenté entre côtes sauvages et montagnes (Serra da Estrela), et une forte exposition solaire. L'équipement doit privilégier la respirabilité, la légèreté pour le portage sur de longues distances et une protection efficace contre l'humidité nocturne et le soleil. La capacité à s'adapter du littoral aux sentiers escarpés est clé.",
+  "content_json": [
+    {
+      "kit_id": "2c5a9c77-f93b-427b-837b-9990dca4aaae",
+      "kit_slug": "kit-minimaliste",
+      "kit_nom": "Kit Minimaliste Weekend",
+      "prix_eur": 717,
+      "poids_g": 3500,
+      "argumentaire": "Idéal pour les randonnées estivales sur terrain sec et ensoleillé.",
+      "equipements_clefs": [
+        "Osprey Exos 58",
+        "MSR Hubba Hubba NX 2P",
+        "Sea to Summit Spark SP1"
+      ]
+    },
+    {
+      "kit_id": "e907beea-b34e-49bc-a255-8d46428f3c8e",
+      "kit_slug": "kit-trek-complet",
+      "kit_nom": "Kit Trek Confort",
+      "prix_eur": 1186,
+      "poids_g": 4600,
+      "argumentaire": "Polyvalent pour affronter les variations climatiques des 3 saisons et les terrains rocheux.",
+      "equipements_clefs": [
+        "Osprey Atmos AG 65",
+        "Big Agnes Copper Spur HV UL2",
+        "Cumulus Panyam 450"
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## 6. Conformité UX & Design System
+- **Apple Human Interface Guidelines :** Typographie SF Pro, hiérarchie par le poids et le corps de texte plutôt que par la surcharge de couleurs, safe-areas respectées (`env(safe-area-inset-bottom)`), touch targets $\ge 44 \times 44$ px.
+- **Aura Interaction Design :** Transitions douces avec Framer Motion, feedback tactile haptique sur chaque action interactive (`triggerHaptic`), accordéon FAQ fluide.
+- **Design Tokens :** Palette Ink (`#17402C`), Sage (`#5B7F55`), Stone (`#FBFAF6`), zéro token orange (`#E4501C` banni).
+- **Masquage Strict :** Tout bloc absent ou dégradé est totalement omis de l'interface utilisateur.
+
+## Chantier Y — Hub Voyage Unique (débuté 07/09/2026)
+
+- **Y-pré** ✅ : 46 fichiers de session commités en 4 commits atomiques (6581a6ec →
+  c1c981cb), portes G1/G2/G3 vertes, poussés sur chantier/x-design-unique.
+- **Y0.0** 🔄 : inventaire + docs de gouvernance (agent), G4 build baseline OK
+  (exit 0 ; /voyages/[slug] 529 kB First Load — cible Y8.2 < 250 kB), ci_invariants OK.
+- **Y0.1** ⛔ B1 : fusion PR #31 impossible (gh indisponible) → clic manuel Tony
+  (docs/Y_BLOCKERS.md). Sous-phases indépendantes poursuivies sur la branche X (§7.4).
+- **Y0.2** ✅ : 6 arbitrages tranchés par preuves → docs/Y_DECISIONS.md
+  (ConfiguratorWizard VIVANT ; planner éditeur + onglet lecteur ; autoGen hors hub ;
+  ResumeActiveTripCard conservé (accueil) ; carte = mode ; no-scrollbar canonique).
+- **Y0.3** ✅ : docs/Y_HUB_SPEC.md (valeurs revérifiées dans tokens.css).
+- **Y0.4** ✅ : seed:y — 8 voyages y-* déterministes, preuve requête 8/8 compteurs exacts.
+- **Y0.5** 🔄 : helper prepareVisualPage (horloge figée, masques nommés), contact-sheet
+  + visual:sheet, tests/a11y/e2e + test:a11y (axe, 3 viewports), projet ipad —
+  conversion des 10 specs + rebase G5 inspecté (agent en cours).
+- **Y0.6** ✅ : workflow CI étendu (invariants, G6 a11y, G5 visuel artefact).
+- **Y0.7** ✅ : docs/Y_SECURITY.md — R7 confirmé et corrigé (localStorage assaini),
+  montants publics retirés, migration RLS écrite non appliquée.
+- **Y1** ✅ (tag y1-done) : tripProfileEngine TDD 53 tests, registres sections (10) +
+  widgets (12) 13 tests — 1008/1008 ; garde-fou Y-D80 12 règles, 510 violations
+  inventoriées (docs/Y_VIOLATIONS.md, rouge documenté, G3=12/12 attendu fin Y3.5).
+- **Y2** ✅ (tag y2-done) : layout unique du hub voyage — `layout.tsx` de segment
+  (charge le voyage une fois, phase + profil), `TripHubShell` unique (colonnes
+  gauche 260px / droite 300px / centre + mobile), `TripSidebarLeft` pilotée par le
+  registre (10 sections, Link/tripSectionHref, actif par pathname, permissions
+  budget+docs, déclencheur picker), `TripSidebarRight` générique (registre widgets,
+  tri priorité, repli hauteur) + widgets Countdown/OfflineToggle, 6 routes nouvelles
+  (equipage, budget, documents, checklist, securite, journal), overview via
+  `TripOverviewClient` (?phase=), shell locaux retirés de kit/itineraire/export,
+  BottomTabBar navigation URL. Y-D80 501 violations (−9).
+  Portes : G1 OK · G2 1009/1020 (Y-D80 rouge documenté) · G3 rouge attendu.
+- **Y3** ✅ (tag y3-done) : dédoublonnage complet du hub voyage 7 sous-phases :
+  Y3.1 sidebars gauches supprimées (règle 10) · Y3.2 TripNetworkStatus unique
+  (règle 8, abstraction réseau unifiée) · Y3.3 ActiveTripSwitcher (cmdk +
+  GlassSheet) remplace ActiveTripBanner, contexte étendu + /api/voyages/mine ·
+  Y3.4 en-têtes (3 cartes métriques → widgets, CountryCard) · **Y3.5 jalon G3
+  ATTEINT : garde-fou Y-D80 12/12 vert, 475 violations → 0** (tokenisation
+  complète, ConfirmDialog, tripPaths, print dédié) · Y3.6 code mort supprimé
+  (ItinerarySidebarRight + KitSidebarRight, 5512 o) · Y3.7 fin.
+  Portes : G1 OK · G2 **1020/1020** · G3 **12/12**.
+- **Y4** ✅ (tag y4-done) : audit et harmonisation complète des 11 sections du Hub Voyage Unique :
+  Y4.1 overview (dé-imbrication <main>) · Y4.2 itinerary (TripItineraryTab EmptyState + retrait CTA régénérer toolbar, ItineraryPlannerClient h2) ·
+  Y4.3 gear (TripKitView EmptyState sur catégorie vide) · Y4.4 team (TripTeamView EmptyState équipage vide) ·
+  Y4.5 budget (page.tsx check canManageBudget server-side, EmptyState dépenses, métrique part par voyageur si groupe) ·
+  Y4.6 docs (page.tsx check canViewDocuments server-side, EmptyState docs) · Y4.7 checklist (validé) ·
+  Y4.8 safety (validé) · Y4.9 journal (TripNotesView EmptyState avec CTA rédaction) ·
+  Y4.10 export (ExportClientView h2, suppression code mort renderSidebarLeft, masquage section budget si !canManageBudget) ·
+  Y4.11 convergence (tests/a11y/e2e étendu aux 11 sections avec session démo SSR, tests/visual/voyages-y-profiles-visual.spec.ts créé, contact-sheet régénérée 38 captures).
+  Portes : G1 OK (`npm run type-check`) · G2 OK (1020/1020, 137 suites) · G3 OK (12/12 règles Y-D80).
+- **Y5** ✅ (tag y5-done) : navigation globale, filtres profil, mémoire de section et retour natif Android :
+  Y5.1 liste /voyages enrichie (ActiveTripSwitcher desktop + mobile, filtres scale/party, TripCard badge profil dérivé + réouverture section mémorisée) ·
+  Y5.2 mémoire de section (persistance activeSection par slug via useActiveTrip().setLastSection, restauration automatique dans switcher et card) ·
+  Y5.3 navigation mobile hub (TripMobileSectionsSheet GlassSheet avec haptique triggerHaptic('selection'), touch targets ≥ 44px, BottomTabBar 10 sections) ·
+  Y5.4 retour matériel Android (useAndroidTripBackNav via @capacitor/app, remontée section → aperçu → liste, zéro sortie accidentelle d'app).
+  Portes : G1 OK (`npm run type-check`) · G2 OK (**1023/1023**, +3 tests) · G3 OK (12/12 règles Y-D80).
+- **Y6** ✅ (tag y6-done) : fusion des modules kit, configurateur IA et inventaire matériel :
+  Y6.1 configurateur en panneau depuis gear : `KitConfiguratorWizard` invocable depuis `TripKitView`, préchargé via `tripContext` (activité, durée civile/échelle, météo altitude, style de portage), contournement des questions déjà résolues par le voyage, bouton d'application directe au sac du voyage via `applyConfiguratorKitToTripAction` ·
+  Y6.2 route `/ai-configurator` : conservée intacte en mode découverte sans voyage, zéro violation token Y-D80 ·
+  Y6.3 pont matériel (inventaire -> voyage) : sélecteur « Importer depuis Mon Matériel » dans `TripKitView` avec notice explicite que le stock n'est jamais consommé ni modifié (seulement référencé via `inventory_item_id`), action serveur `addInventoryItemToTripAction`, 7 sous-routes de `/materiel` vérifiées et fonctionnelles ·
+  Y6.4 pont groupes : liaison bidirectionnelle entre `travel_groups` et `trips` via `group_id`, bannière/bouton Apple-grade « Expédition LKDV associée : Ouvrir le Cockpit Voyage → » dans `/groupes/[groupId]` (desktop & `MobileGroupeView`) ·
+  Y6.5 pont pays : `CountryCardWidget` reliant le voyage à `/pays/[code]` opérationnel dans la sidebar droite.
+  Portes : G1 OK (`npm run type-check`) · G2 OK (**1029/1029**, +6 tests, 138 suites) · G3 OK (12/12 règles Y-D80) · G4 OK (`npm run build` sans `.env.local`) · G5 OK (`visual:sheet`, 38 captures) · G6 OK (`test:a11y`, 39/39 tests passés).
+- **Y7** ✅ (tag y7-done) : optimisations app-first, cibles tactiles Apple HIG, haptique & offline Dexie :
+  Y7.1 zones sûres : vérification d'absence totale de calcul manuel `env(safe-area-inset-*)` dans `src/features/trips/`, délégation exclusive à `AppShell` / `MobilePageShell` pour portrait et paysage (4 côtés) ·
+  Y7.2 cibles tactiles : garantie de dimensionnement minimal ≥ 44px (Apple HIG) sur l'ensemble des éléments interactifs du hub (`TripSidebarLeft`, `TripMobileSectionsSheet`, `OfflineToggleWidget`, `TripSafetyView`, `TripChecklistView`) ·
+  Y7.3 haptique : `triggerNativeHaptic` enrichi avec respect strict de `prefers-reduced-motion: reduce` ; intégration du retour haptique sur validation, suppression, pointage de sécurité, pack toggle et changement de section (`TripKitView`, `TripBudgetView`, `TripDocumentsView`, `TripNotesView`, `TripSafetyView`, `TripTeamView`, `OfflineToggleWidget`, `TripSidebarLeft`) ·
+  Y7.4 hors-ligne complet Dexie & RGPD : consolidation de `tripOfflineStorage.ts` et `tripOfflineSyncQueue.ts` avec Dexie IndexedDB (`TripDexieDatabase`, `TripSyncDexieDatabase`) ; assainissement strict `sanitizeTripForOffline` (exclusion totale des pièces d'identité / documents, share_token et dépenses financières conformément à l'audit Y0.7 / R7) ; moteur de résolution de conflits LWW (Last-Write-Wins) avec journalisation immuable d'audit ·
+  Y7.5 barre d'état et splash screen natifs : configuration `@capacitor/status-bar` accordée aux tokens (`applyLKDVStatusBarTheme` vert forêt `#17402C`, style dark, overlay) appliquée au montage du hub dans `TripHubShell` ; cohérence avec `capacitor.config.ts`.
+  Portes : G1 OK (`npm run type-check`) · G2 OK (**1042/1042**, +13 tests, 139 suites) · G3 OK (12/12 règles Y-D80) · G4 OK (`npm run build` sans `.env.local`, First Load routes ~163-184 kB) · G5 OK (`visual:sheet`, 38 captures, 12 surfaces) · G6 OK (`test:a11y`, 39/39 tests passés).
+
+- **Icons Phase 1** ✅ : unification du système d'icônes derrière une primitive canonique, à comportement strictement identique (aucun changement visuel) :
+  I1.1 création de `src/components/ui/Icon/` (`Icon.tsx`, `types.ts`, `registry.ts`, `index.ts`) — primitive unique, axes SF-style (`weight`, `scale`, `renderingMode`) et résolution `auto|pack|animated|hero` ; les composants animés sont injectés par l'adaptateur (jamais importés par la primitive) pour préserver le bundle ;
+  I1.2 `AppIcon` (128 fichiers) et `LkvIcon` (14 fichiers) convertis en adaptateurs minces sur `Icon` — zéro modification des appels, APIs publiques conservées ;
+  I1.3 garde-fou `scripts/verify/icon-names.mjs` (559 usages statiques, 95 glyphes pack + 27 animés) câblé en **Invariant 6** de `verify:invariants` (import-aware, ignore les `Icon` locaux type `./PreparationIcons`) ;
+  I1.4 `src/lib/icons.ts` conservé tel quel (couvert par `tests/design-system/icons.spec.ts`) ; repurposing prévu en Phase 2 (migration lucide).
+  Portes : G1 OK (`npm run type-check`) · G2 OK (`vitest run tests/design-system/icons.spec.ts` 3/3, `npm run verify:invariants` SUCCÈS) · G3 OK (`npm run build`) — **First Load JS shared 104 kB et Middleware 98.5 kB strictement inchangés avant/après** (mesure par stash/build/pop) · ESLint 0 erreur sur les fichiers modifiés.
+
+- **Icons Phases 2–3** ✅ : migration Lucide → primitive canonique + adoption d'un set SF-inspired licence-safe (aucun asset Apple) :
+  I2.1 codemod AST `scripts/icons/codemod-lucide-to-icon.mjs` (TypeScript compiler API, pas de regex) : import `lucide-react` → `import Icon from '@/components/ui/Icon'` + JSX `<MapPin/>` → `<Icon name="map-pin"/>` ; conversion `width/height`→`size`, purge des props SVG-only, conservation des usages-valeurs et des types `LucideIcon` ;
+  I2.2 **144 fichiers migrés sur 172**, `tsc --noEmit` 0 erreur, **1425/1425 tests** verts (188 suites) ; les **28 fichiers restants** ont `jsx=0` (registries de données mappant des composants-icônes : `hubSectionRegistry`, `tripSectionRegistry`, `getWeatherIcon`, menus…), conservés en `lucide-react` conformément à `MISSION_ICONS_LUCIDE_ANIMATED.md` (icônes statiques/dynamiques) — aucune régression possible sans refactor des consommateurs ;
+  I3.1 set SF-inspired généré depuis **Phosphor Icons (MIT)** via `scripts/icons/build-sprite.mjs` → `public/icons/sf/*.svg` (**157 glyphes**) + manifeste `registry.generated.ts` ; la primitive résout `animated → SVG mask → PNG pack → Heroicons` ;
+  I3.2 rendu par **mask monochrome** (réutilise l'architecture PNG existante) → aucun JS d'icône par route ; `@phosphor-icons/core@2.1.1` ajouté en **devDependency build-time uniquement**, hook `prebuild`, attribution MIT dans `public/icons/sf/LICENSE.txt` ;
+  I3.3 axes `weight`/`scale`/`renderingMode` exposés (API SF-`SymbolConfiguration`-like), résolution `regular` par défaut, variantes de poids extensibles via `icon-set.json` ;
+  I4.1 **SF Symbols Apple non embarqués** (interdiction de licence hors plateformes Apple) ; l'app Capacitor est un webview pur sans couche native → aucune surface native où les utiliser légalement.
+   Portes : G1 OK (`tsc --noEmit`) · G2 OK (**1425/1425**, 188 suites ; `verify:invariants` SUCCÈS, Invariant 6 résout 1198 usages) · G3 OK (`npm run build`) — **First Load JS shared 104 kB et Middleware 98.5 kB inchangés, aucune route ±1 kB** (diff des tables de build) · ESLint `src` 0 erreur (warnings préexistants uniquement).
+
+## 2026-09-12 — CHANTIER ATLAS Phase 0 — Amorçage (branche `chantier/atlas-0-fondations`)
+
+### Livrables
+- `scripts/atlas/install-opencode-agents.mjs` : copie (jamais déplacement) des 8 agents du pack `SkillsForOpenCode` + `pays-conformite-lg` vers `.opencode/agent/`, avec conversion de frontmatter Claude Code (`name`/`model: opus`/`tools`) → OpenCode (`description` + `mode: subagent`), corps inchangé.
+- Agents chantier créés : `.opencode/agent/atlas-data-layer.md`, `atlas-globe-engine.md`, `atlas-conformite-lg.md`.
+- `opencode.json` : `"instructions": ["AGENTS.md"]` ajouté ; bloc plugin `omniroute` inchangé.
+- `docs/architecture/CHANTIER_ATLAS_PLAN.md` écrit (format `writing-plans`, phases 0-8, tâches cochables).
+- Branche `chantier/atlas-0-fondations` créée depuis `main` (`181658d9`).
+
+### Preuves brutes
+```
+$ opencode agent list | listé par nom (subagents)
+build (primary) / plan (primary) / compaction (primary) / summary (primary) / title (primary)
+explore (subagent) / general (subagent)
+a11y-architect (subagent)
+architect (subagent)
+atlas-conformite-lg (subagent)
+atlas-data-layer (subagent)
+atlas-globe-engine (subagent)
+code-reviewer (subagent)
+database-reviewer (subagent)
+pays-conformite-lg (subagent)
+performance-optimizer (subagent)
+security-reviewer (subagent)
+silent-failure-hunter (subagent)
+```
+```
+$ supabase migration list --linked   (projet icxyvwzfjbflcbqukpfz, linked: true)
+[dernières lignes] local=20260911570000 remote=20260911570000
+                  local=20260911561000 remote=20260911561000
+                  local=20260810000000 remote=20260810000000
+$ supabase db push --dry-run --linked
+DRY RUN: migrations will *not* be pushed to the database.
+Remote database is up to date.
+```
+
+### Écarts constatés vs `CHANTIER_ATLAS.md` (documentés, non silencieux)
+1. **Pas de MCP Supabase dans OpenCode ici** → remplacé par Supabase CLI 2.109.1 (authentifié, projet lié) + RPC debug temporaires service-role-only pour `EXPLAIN ANALYZE` et `pg_policies` (créées puis droppées par migration explicite en Phase 1).
+2. **Skills déjà découvertes nativement** depuis `.agents/skills/**` (les 10 skills du chantier invocables dans cette session) → aucune copie de skills (pas de duplication) ; seuls les agents manquaient, ils sont installés.
+3. **`gh` CLI absent** → PR GitHub non automatisable : décision utilisateur = branche par phase + merge `--no-ff` local + push `main` après gates verts (traçable, rollback possible).
+4. **`/explorer` existe déjà** (page Aventures live, `ExplorerClient` + `ExplorerMap` Leaflet + React Query viewport + `TrailDetailPanel`) → cible d'intégration du moteur unifié ; `/carte-interactive` et `/pays` restent fonctionnelles jusqu'à Phase 8 (ATLAS-R10).
+5. **Leaflet utilisé par 11 fichiers hors périmètre** (carnet, hub, groupes, terrain-live, préparer-randonnée…) → `leaflet` conservé ; seul `react-globe.gl` + `three` seront retirés en Phase 5 après remplacement de `CountryGlobe` par un globe MapLibre compatible props.
+6. **CTA "Créer mon aventure avec l'IA"** : présent uniquement dans du code mort sans listener ; le CTA vivant est `/hub/depart?id=none&route=<id>` (`src/components/map/InteractiveMap.tsx:1014-1019`) — c'est lui qui est conservé.
+7. **`trail_metadata`/`trail_scores`** : drift entre migrations (stand-ins) et prod (PK `id` + FK `trail_id`) → RPC jointes sur `trail_id`.
+8. **`MISSION_LOG.md` racine** utilisé pour les rapports de phase (le plus récent).
+9. `@omniroute/opencode-plugin` injoignable (`localhost:20128` ConnectionRefused) — non bloquant pour l'exécution (modèle de session opérationnel), à signaler.
+
+### Prochaine phase
+Phase 1 — Vérité base de données (`chantier/atlas-1-data-layer`) : RPC `trails_in_viewport`, matviews densité, import polygones pays, preuve `EXPLAIN ANALYZE` sur `idx_hiking_routes_geom`.
+
+## 2026-09-12 — CHANTIER ATLAS Phase 1 — Vérité base de données (branche `chantier/atlas-1-data-layer`)
+
+### Migrations appliquées en production (`icxyvwzfjbflcbqukpfz`, via `supabase db push --linked`)
+- `20260912000000_atlas_debug_observability.sql` — fonctions temporaires service-role : `atlas_debug_explain`, `atlas_debug_policies`, `atlas_debug_rls_status`, `atlas_set_country_geometry`.
+- `20260912010000_atlas_trails_viewport.sql` — index expression `idx_hiking_routes_startpoint`, RPC `trails_in_viewport`, matviews `country_centroids` / `country_trail_density` / `trail_density_geohash5` (+ index uniques, grants lecture), `refresh_atlas_density()` (CONCURRENTLY + fallback).
+- `20260912015000_atlas_fix_viewport_inline.sql` — RPC réécrite sans CTE (inlinable) + `atlas_debug_explain(text, boolean)` avec `enable_seqscan=off`.
+- `20260912020000_atlas_drop_debug_functions.sql` — suppression des fonctions temporaires après capture des preuves.
+
+### Preuves brutes (archive complète : `docs/atlas/phase1-proof-20260912.txt`)
+
+RLS réelle (`relrowsecurity`, jamais l'historique de migration) :
+```
+hiking_routes : rls_enabled=true, rls_forced=false
+trail_metadata: rls_enabled=true, rls_forced=false
+trail_scores  : rls_enabled=true, rls_forced=false
+```
+Policies (toutes SELECT public, aucune écriture anon/authenticated) :
+```
+hiking_routes : "Public read hiking_routes" / "public_read_hiking_routes"  -> SELECT, roles={public}, qual=true
+trail_metadata: "Public read trail_metadata"                               -> SELECT, roles={public}, qual=true
+trail_scores  : "Public read trail_scores"                                 -> SELECT, roles={public}, qual=true
+```
+
+`EXPLAIN ANALYZE` — requête viewport (bbox Chamonix z14), plan par défaut :
+```
+Limit  (cost=27.38..27.38 rows=1) (actual time=0.231..0.232 rows=0)
+  ->  Sort  Sort Key: distance_km DESC NULLS LAST
+        ->  Index Scan using idx_hiking_routes_geom on hiking_routes r
+              Index Cond: ((geom IS NOT NULL) AND (geom && '...'::geometry) AND (geom && '...'::geometry))
+              Filter: st_intersects(geom, '...'::geometry)
+Execution Time: 0.318 ms
+```
+→ l'index GIST `idx_hiking_routes_geom` est bien choisi naturellement par le planner ; `enable_seqscan=off` (plan B) confirme la même Index Scan (0.037 ms).
+
+Import polygones pays (`scripts/atlas/import_country_polygons.mjs`) :
+```
+features GeoJSON: 177 ; features indexées: A2=175, A3=177
+cibles (geometry NULL): 196 / 196
+appariées: 166 ; mises à jour: 166
+NON APPARIÉES (30): AD, AG, BB, BH, CV, DM, FM, GD, KI, KM, KN, LC, LI, MC, MH, MT, MU, MV, NR, NU, PW, SC, SG, SM, ST, TO, TV, VA, VC, WS
+refresh_atlas_density(): OK — countries_geo restant sans géométrie: 30
+```
+Comptes finaux : `country_centroids=166`, `country_trail_density=166` (top : FR=962 sentiers / 4226 km, BE=172 / 1188 km), `trail_density_geohash5=329`.
+
+Vérification post-cleanup (`scripts/atlas/verify-phase1-cleanup.mjs`) :
+```
+OK  trails_in_viewport répond — 5 lignes
+OK  matview country_centroids lisible — 166 lignes
+OK  matview country_trail_density lisible — 166 lignes
+OK  matview trail_density_geohash5 lisible — 329 lignes
+OK  fonction atlas_debug_rls_status supprimée
+OK  fonction atlas_debug_policies supprimée
+OK  fonction atlas_set_country_geometry supprimée
+[verify] SUCCÈS
+```
+
+### Tests & build
+- TDD : `tests/queries/trails-viewport.spec.ts` — rouge (4/4 échecs « supabase.from is not a function ») puis vert (4/4) après migration de `getTrails` vers la RPC.
+- `npx tsc --noEmit` → code 0.
+- `npm run lint` → code 0 (warnings préexistants uniquement).
+- `npm test` → **2246 passed / 23 skipped / 4 suites en échec préexistantes** (`tests/ops/a14-healthcheck.spec.ts`, `tests/ops/a15-rollout.spec.ts`, `tests/ops/phase10-capacity.spec.ts`, `tests/adventure-intelligence/a13-backtest-export.spec.ts` — `SyntaxError: Invalid or unexpected token`). Preuve d'indépendance : `git diff --stat HEAD -- tests/ops tests/adventure-intelligence/a13-backtest-export.spec.ts scripts/ops scripts/ai` → **aucun diff** ; ces suites échouent déjà sur `main` sans les changements du chantier.
+
+### Écarts constatés (documentés, non silencieux)
+1. **Volumétrie réelle** : `hiking_routes` contient **1 169 lignes** en prod (pas 115 000) et les données sont concentrées France nord / Belgique (geohash `u11*`), **0 sentier à Chamonix** — la bbox par défaut de `/explorer` (Chamonix) affiche donc une zone vide. L'architecture indexée reste valide pour la montée en charge mondiale ; à traiter en Phase 2/3 pour le centrage initial (géolocalisation utilisateur déjà en place).
+2. **30 micro-états** (Andorre, Monaco, Malte, Singapour…) sont absents du GeoJSON 110m : pas de polygone → pas de centroïde matview. Le fallback existant `getCountryCoordinates` (table statique réelle, 180 pays) reste utilisé — aucune donnée inventée (ATLAS-R9).
+3. **Policies dupliquées** sur `hiking_routes` (`Public read hiking_routes` + `public_read_hiking_routes`, toutes deux SELECT `true`) : sans impact sécurité, nettoyage non inclus (plus petit diff).
+4. `countries_geo` contient **196 lignes** (pas 195).
+
+### Prochaine phase
+Phase 2 — Moteur cartographique unique (`chantier/atlas-2-engine`) : suppression du code mort, `UnifiedExplorerMap` MapLibre globe, style Liquid Glass, captures 390/1440.
+
+## 2026-09-12 — CHANTIER ATLAS Phase 2 — Moteur cartographique unique (branche `chantier/atlas-2-engine`)
+
+### Livrables
+- **Suppression du code mort** : `src/app/carte-interactive/components/InteractiveMap.tsx` (346 l., `return null`) et `AdventureGenerator.tsx` (5 l.) — vérifiés sans consommateur (`rg` = 0) avant suppression.
+- **Moteur unique** `src/components/map/UnifiedExplorerMap.tsx` : MapLibre GL v6, `projection: globe`, style construit depuis la palette, couche monde pays (GeoJSON 110m réel), sentiers (points colorés palette DS), position utilisateur, contrôles glass 44 px (zoom/recentrage/capsule fond de carte), attribution, `prefers-reduced-motion` respecté.
+- **Engine** : `src/components/map/engine/mapTheme.ts` (palette, 4 paliers de zoom 0-3/4-7/8-13/14+, LOD 0/60/150/300, tolérances de simplification), `createMapStyle.ts` (tuiles OSM France/Topo Esri/Satellite Esri, fond stone), `icons.ts` (images canvas : points, dot utilisateur, clusters 5/10/25/50/100).
+- **Intégration `/explorer`** derrière `?atlas=1` (switch interne, remplacé par le feature flag en Phase 7) : `src/app/explorer/page.tsx` (searchParams Next 15) + `ExplorerClient.tsx` (rendu conditionnel, logique liste/filtres/panneau intacte).
+- **Correctif conformité** : `getDifficultyColor` (`src/components/explorer/types.ts`) migré des palettes Tailwind bannies (`#22c55e`, `#f97316`, `#ef4444`, `#7c3aed`, `#6b7280`) vers la palette DS (`#5B7F55`, `#C89A3B`, `#A8443A`, `#17402C`, `#5A7064`) — TDD.
+- **Worker MapLibre** : `scripts/atlas/copy-maplibre-worker.mjs` + `public/maplibre/maplibre-gl-worker.mjs` + `maplibre-gl-shared.mjs` (versionnés, convention `public/icons`) + hooks `predev`/`prebuild` + `setWorkerUrl()` avant création de carte.
+- **Captures** : `tests/visual/atlas-explorer.spec.ts` (protocole `prepareVisualPage`, SW neutralisé, consentement pré-posé, timeout 120 s) → `docs/atlas/captures/atlas-explorer-{desktop-chrome,iphone-14-pro,ipad-portrait}.png`.
+
+### Preuves brutes
+```
+$ npx tsc --noEmit
+TSC_EXIT=0
+
+$ npx vitest run tests/map tests/design-system/atlas-difficulty-colors.spec.ts tests/queries/trails-viewport.spec.ts
+Test Files  3 passed (3) | Tests  11 passed (11)
+
+$ npm test
+Test Files  4 failed | 318 passed | 4 skipped (326)   # 4 suites préexistantes (ops/a13), cf. Phase 1
+Tests  2253 passed | 23 skipped (2276)                # +7 tests vs Phase 1
+
+$ npm run lint
+LINT_EXIT=0 (warnings préexistants uniquement)
+
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts
+ok 1 [desktop-chrome]  (22.4s)
+ok 2 [iphone-14-pro]   (19.3s)
+ok 3 [ipad-portrait]   (19.2s)
+3 passed (1.2m)
+```
+
+### Écarts MapLibre v6.4.1 découverts et corrigés (diagnostic sur preuves, pas de contournement silencieux)
+1. **`sky` en racine de style bloque tout le pipeline de style** : aucun `style.load`/`load`, aucune source chargée (vérifié par compteurs d'événements : 0 / 15 s avec sky, tous les événements actifs sans). → sky retiré du style ; atmosphère sage appliquée via `map.setSky()` après `style.load` (rendu vérifié : 12 frames / 5 s).
+2. **Worker par défaut cassé sous bundler** : `import.meta.url` pointe vers un chunk inexistant → `new Worker(404)` silencieux → **toutes les sources GeoJSON invisibles** (`tileManagers` `loaded:false`, raster OK). Preuve : `renderedTrailPoints: 0` → après correctif `renderedTrailPoints: 4`. → worker servi depuis `/public/maplibre` + `setWorkerUrl`.
+3. **StrictMode** : un canvas créé puis détruit pendant le chargement du style bloquait le worker suivant → création de carte différée (timer 0, annulé au cleanup du premier montage).
+4. **Readiness sur `style.load`** (déterministe) au lieu de `load` (dépend du premier frame GPU/tuiles) — fixture de flakiness CI mobile.
+5. **Inversion `[lat,lng]` → `[lng,lat]`** attrapée par les captures (caméra sur l'océan Indien) : `DEFAULT_CENTER` et `initialView` corrigés en convention MapLibre.
+
+### Écarts de scope (documentés)
+- `leaflet`/`react-leaflet`/`leaflet.markercluster` non touchés (11 consommateurs hors périmètre, cf. Phase 0).
+- Le panneau mobile existant d'`ExplorerClient` (carrousel) prime visuellement sur les contrôles carte en mobile : polish de stacking prévu en Phase 3.
+
+### Prochaine phase
+Phase 3 — Palier local (`chantier/atlas-3-local`) : `useViewportData` (debounce 200 ms + AbortController + React Query bbox/zoom + LOD), clustering natif POI, panneau détail réutilisé, e2e pan/zoom/selection + preuve d'annulation des requêtes.
+
+## 2026-09-12 — CHANTIER ATLAS Phase 3 — Palier local (branche `chantier/atlas-3-local`)
+
+### Livrables
+- **`src/components/map/hooks/viewportData.ts`** : construction pure des requêtes viewport — `/api/hikes` (LOD 300/150/60/0 par palier), `/api/pois` (LOD aligné serveur 150/80/40/0), clé de viewport stable (3 décimales + zoom entier), aucun fetch au palier monde.
+- **`src/components/map/hooks/useViewportData.ts`** : debounce 200 ms, `AbortController` annulant toute requête en vol au changement de viewport/unmount, gestion d'erreur explicite sans donnée inventée (ATLAS-R9).
+- **`UnifiedExplorerMap`** : émission du viewport réel → hook ; remontée des données (`onViewportData`) vers la page ; **clustering POI natif MapLibre** (`cluster: true`, radius 46, maxZoom 15) avec expansion au tap, popup POI construit en DOM (`textContent`, anti-XSS), points POI colorés palette DS (`getPoiColor`).
+- **`ExplorerClient`** : en mode unifié, la liste et les filtres consomment les données viewport du moteur (sources uniques) ; les React Query legacy sont désactivées (`enabled: !unifiedMap`) ; la restriction spatiale `queriedBbox` ne s'applique plus (le serveur borne déjà) ; carte compacte « Préparer » + fiche complète (`TrailDetailPanel`) inchangées.
+- **Tests** : `tests/map/viewportData.spec.ts` (5, TDD rouge→vert), extension `tests/map/mapTheme.spec.ts` (couleurs POI DS), `scripts/e2e/atlas-explorer.spec.ts` (2), `tests/visual/atlas-explorer.spec.ts` (+ clic direct carte, desktop-only explicite).
+
+### Preuves brutes
+```
+$ npx tsc --noEmit
+TSC_EXIT=0
+
+$ npm test
+Test Files  4 failed | 319 passed | 4 skipped (327)   # 4 suites préexistantes (ops/a13), cf. Phase 1
+Tests  2259 passed | 23 skipped (2282)                # +6 tests vs Phase 2
+
+$ npm run lint
+LINT_EXIT=0 (warnings préexistants uniquement)
+
+$ PW_BASE_URL=http://localhost:4000 npx playwright test --config=playwright.config.ts scripts/e2e/atlas-explorer.spec.ts
+ok 1  pan/zoom annule les requêtes viewport obsolètes (10.4s)
+REQUÊTES ANNULÉES: ["net::ERR_ABORTED","net::ERR_ABORTED","net::ERR_ABORTED","net::ERR_ABORTED","net::ERR_ABORTED"]
+ok 2  la sélection réutilise le panneau de détail existant (CTA /hub/depart) (5.3s)
+2 passed (11.1s)
+
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts
+ok 1 [desktop-chrome] rendu + zéro pageerror (11.1s)
+ok 2 [desktop-chrome] clic direct carte → panneau détail (9.3s)
+ok 3 [iphone-14-pro] rendu + zéro pageerror (11.8s)
+ok 5 [ipad-portrait] rendu + zéro pageerror (12.1s)
+2 skipped (test clic-carte desktop-only : en mobile le carrousel recouvre la zone centrale,
+           la sélection y est couverte par l'e2e via la liste)
+4 passed, 2 skipped (47.1s)
+```
+
+### Notes
+- Le palier local (z14-18) est branché sur la RPC indexée de la Phase 1 ; les paliers région/continent/monde restent au rendu pays actuel (Phase 4).
+- Popup POI : aucune donnée inventée — nom/catégorie/altitude réels, ligne omise si absente.
+
+### Prochaine phase
+Phase 4 — Paliers Région/Continent/Monde (`chantier/atlas-4-tiers`) : couche fill pays interactive, densités (matviews Phase 1), chorégraphie caméra `flyTo`/`easeTo`, `focusPoint` réparé par `country_centroids`.
+
+## 2026-09-12 — CHANTIER ATLAS Phase 4 — Paliers Région / Continent / Monde (branche `chantier/atlas-4-tiers`)
+
+### Livrables
+- **Couche monde interactive** : GeoJSON pays enrichi client (`atlas_iso`/`atlas_name`, même résolution que `countries_geo`), clic → sélection + contour + **carte pays glass** (nom, densité réelle ou « Densité non disponible », lien `/pays/[code]`), `flyTo` vers le centroïde (`country_centroids` Phase 1).
+- **Paliers densité** : `atlas-country-density-circles` (matview `country_trail_density`, z2.4→8.2, rayon ∝ count) et `atlas-region-density-circles` (matview `trail_density_geohash5`, z6.8→14.4) avec fades d'opacité par zoom (interpolations natives, aucune animation JS maison).
+- **SSR** : `src/lib/queries/atlas.ts` (`getAtlasDensity`, cache 60 s, listes vides en cas d'erreur — jamais de donnée inventée) branché dans `src/app/explorer/page.tsx` → `ExplorerClient` → moteur, uniquement en mode unifié.
+- **Engine** : `engine/camera.ts` (`flyToTarget`/`easeToTarget`, reduced-motion → durée 0), `engine/geo.ts` (`resolveIsoA2` porté fidèlement de `CountryGlobe`, `resolveCountryName`), `layers/densityLayers.ts` (constructeurs purs FeatureCollection).
+- **Correctif design** : la classe `.glass` porte `position: relative` — la carte pays est désormais enveloppée dans un wrapper positionné (détecté par mesure `getBoundingClientRect` : carte hors écran à x=-12 en position relative).
+- **Tests** : `tests/map/densityLayers.spec.ts` (4, TDD), `tests/map/camera.spec.ts` (3 : durées reduced-motion + résolution ISO/nom), extension du spec visuel (séquence continent → sélection France → globe) + captures `atlas-continent-desktop.png`, `atlas-france-selected.png`, `atlas-globe-desktop.png`.
+
+### Preuves brutes
+```
+$ npx tsc --noEmit
+TSC_EXIT=0
+
+$ npm test
+Test Files  4 failed | 321 passed | 4 skipped (329)   # 4 suites préexistantes (ops/a13)
+Tests  2266 passed | 23 skipped (2289)                # +7 tests vs Phase 3
+
+$ npm run lint
+LINT_EXIT=0 (warnings préexistants uniquement)
+
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts
+ok 1 [desktop-chrome] rendu + zéro pageerror
+ok 2 [desktop-chrome] clic direct carte → panneau détail
+ok 3 [desktop-chrome] paliers continent → globe : densité, sélection pays, chorégraphie caméra
+   (carte pays vérifiée : « France » + « 962 itinéraires référencés » — densité matview réelle)
+ok 4,7 rendus iphone-14-pro / ipad-portrait
+4 skipped (tests desktop-only)
+5 passed, 4 skipped (1.5m)
+```
+
+### Notes / écarts
+- Densités : seuls les pays avec `trail_count > 0` sont rendus (aujourd'hui France 962 et Belgique 172) — réalité des données de prod, aucun remplissage fictif.
+- `/pays` legacy (`CountryGlobe`, `focusPoint`) reste inchangé : il sera remplacé en Phase 5 par le globe MapLibre compatible props qui consommera les centroïdes.
+- Le point sombre observé sur le globe côté Niger a été identifié par `queryRenderedFeatures` comme un artefact des tuiles raster Esri (aucune de nos couches) — pas un bug.
+
+### Prochaine phase
+Phase 5 — Nettoyage & durcissement (`chantier/atlas-5-hardening`) : rate limiting `/api/hikes` + `/api/pois`, retrait `react-globe.gl`/`three` après remplacement de `CountryGlobe`, audit `silent-failure-hunter`, accessibilité, budget bundle.
+
+## 2026-09-12 — CHANTIER ATLAS Phase 5 — Nettoyage & durcissement (branche `chantier/atlas-5-hardening`)
+
+### Livrables
+- **Rate limiting + plafond serveur** : `VIEWPORT_RATE_LIMIT` (120 req/min/IP, `failMode: 'open'` — repli mémoire dégradé journalisé) sur `/api/hikes` et `/api/pois` via l'infra existante `enforceRateLimit` + `clientIpFromHeaders` ; bbox validée/plafonnée à 20°/axe (`parseOptionalBbox`, en-tête `x-lkdv-bbox-clamped: 1`) ; paramètres numériques stricts (NaN/vide ⇒ 400, jamais transmis à la RPC) ; tests `tests/security/atlas-abuse.spec.ts` (9, TDD rouge→vert).
+- **Globe pays MapLibre** : `src/components/map/UnifiedCountryGlobe.tsx` avec la même API de props que `CountryGlobe` (clic, sélection, focusPoint/focusCode, uniform, spinner « Chargement des pays… », erreur explicite, `[data-visual-mask]` conservé) ; monté sur `/pays` (EarthPageClient) et `PaysRightSidebar` ; auto-rotation retirée (écart volontaire, reduced-motion friendly). `CountryGlobe.tsx` supprimé, `react-globe.gl`, `three`, `@types/three` retirés de `package.json`, `transpilePackages` nettoyé.
+- **Accessibilité** : sélecteur de pays `sr-only` focusable (révélé au focus) sur `/pays` — alternative clavier/lecteur d'écran au clic globe (WCAG 2.1.1) ; contrôles carte 44 px avec `aria-label`/`aria-pressed`.
+- **Audit `silent-failure-hunter`** (rapport complet : 2 critiques, 4 hauts, 6 moyens, 11 bas) et **corrections appliquées** :
+  - `useViewportData` : échec journalisé avec contexte (URL/viewportKey), clé mémorisée uniquement en cas de succès (retry autorisé), `hasFetched` pour ne plus écraser les données initiales par un `EMPTY`.
+  - `getTrails` : plus d'« empty success » — cache servi explicitement avec log d'âge, sinon erreur propagée (route 5xx, pas de `Cache-Control` fabriqué) ; nom honnête « Sans nom » (plus de `Randonnée #id` fabriqué) ; coordonnées non finies ignorées + warn.
+  - `getPois` : erreurs des 5 sources journalisées avec bbox ; si toutes échouent, erreur propagée (pas de cache d'un résultat dégradé).
+  - `getAtlasDensity` : sources traitées indépendamment (une matview en échec n'efface plus l'autre), pas de cache partiel.
+  - `UnifiedExplorerMap`/`UnifiedCountryGlobe` : gardes d'initialisation MapLibre (jamais de spinner infini), timeout 4 s sur le GeoJSON pays, validation `features` tableau, logs d'erreur complets, validation centroïde avant `flyTo`.
+
+### Preuves brutes
+```
+$ npx tsc --noEmit
+TSC_EXIT=0
+
+$ npm test
+Test Files  4 failed | 322 passed | 4 skipped (330)   # 4 suites préexistantes (ops/a13)
+Tests  2276 passed | 23 skipped (2299)                # +10 tests vs Phase 4
+
+$ npm run lint
+LINT_EXIT=0 (warnings préexistants uniquement)
+
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts --project=desktop-chrome -g "rend le canvas"
+ok 1 explorateur unifié rendu + zéro pageerror (14.7s)
+```
+
+### Bundle avant/après (builds réels, même machine)
+```
+AVANT (main 8ee3ab3d, worktree + junction node_modules, .env copiés)
+  /pays               9.03 kB   342 kB First Load JS
+  /explorer           16.4 kB   266 kB
+  /carte-interactive   3.44 kB  325 kB
+  chunks JS totaux    10 370 KB (359 fichiers)
+
+APRÈS (chantier/atlas-5-hardening)
+  /pays               9.04 kB   342 kB
+  /explorer           16.4 kB   265 kB
+  /carte-interactive   3.45 kB  325 kB
+  chunks JS totaux     7 697 KB (352 fichiers)   → -2 673 KB (-25,8 %)
+```
+Le First Load JS des routes est inchangé (three/react-globe étaient chargés en chunks lazy) : le gain est de **2,7 Mo de JS retirés du build** (chunks three/react-globe supprimés). Budget ATLAS-R5 : /explorer 265 kB First Load JS — au-dessus de la cible 170 kB (héritage app partagé 104 kB + shell explorer), écart documenté pour l'optimisation transverse.
+
+### Tests visuels /pays — échecs préexistants prouvés
+12 échecs constatés (`communaute`, `carte-interactive`, `pays-fr`, `pays-skeleton-loading` × 3 devices). **Tous rejoués sur l'état AVANT (worktree `8ee3ab3d` + dev dédié) : mêmes échecs.** Aucune baseline modifiée (les masquer serait cacher une dérive antérieure au chantier).
+
+### Restes de l'audit (documentés, non bloquants)
+- `ExplorerClient` legacy : `if (!res.ok) return []` + géoloc silencieuse (hors scope ATLAS, à traiter séparément).
+- `mapTheme` zoom non fini → palier monde silencieux ; `densityLayers` lignes écartées sans compteur (low).
+- `refresh-atlas-density` : log complet ajouté, pas de timeout RPC (supabase-js ne propage pas de signal) — surveillé par le fail du cron.
+
+### Prochaine phase
+Phase 6 — Conformité design & QA (`chantier/atlas-6-conformite`) : agent `atlas-conformite-lg`, greps couleurs bannies, `tsc`/`lint`/`build`, revues multi-perspectives Icon Agents.
+
+## 2026-09-12 — CHANTIER ATLAS Phase 6 — Conformité design & QA multi-perspective (branche `chantier/atlas-6-conformite`)
+
+### Conformité Liquid Glass (sorties brutes)
+```
+$ rg -n "#E4501C|#1C2620|#2D5A3D|#0B1F17|#0F2A22|#08150F|#A8C4A2|#C89A5A|#E4C695" src/components/map src/app/explorer src/app/carte-interactive
+GREP_COLORS_EXIT=1 (1 = 0 occurrence)   # après reformulation d'un commentaire qui citait l'orange banni
+
+$ rg -n "bg-gradient-to-b from-\[#17402C\]" src/components/map src/app/explorer
+GREP_GRADIENT_EXIT=1
+
+$ Get-ChildItem src -Recurse -Include *.bak,*.old,*_OLD*  → aucun
+$ npx tsc --noEmit        → TSC_EXIT=0
+$ npm run lint            → LINT_EXIT=0 (warnings préexistants)
+$ npm run build           → ✓ Compiled successfully in 34.4s · BUILD_EXIT=0
+    /explorer 16.3 kB / 265 kB First Load JS · /pays 9.28 kB / 342 kB · shared 104 kB
+```
+
+### Revues Icon Agents (exécutées via sous-agents, faute de harness Claude Code — écart documenté ; protocoles des commandes `.claude/commands/icon-*` suivis à la lettre)
+- **Design** : PASS WITH WARNINGS · **Programming** : PASS WITH WARNINGS · **Platform & Operations** : PASS WITH WARNINGS (bloqué pour rollout mondial sur 3 points) · **Security** : BLOCKED à la remise, **débloqué par les correctifs ci-dessous**.
+- Correctifs issus des revues, appliqués dans cette phase :
+  1. **S1 (sécurité, high)** — `20260912030000_atlas_refresh_and_grants_hardening.sql` : `REVOKE ALL ... FROM PUBLIC, anon, authenticated` + `GRANT service_role` sur `refresh_atlas_density` ; preuve brute `has_function_privilege` capturée (`docs/atlas/atlas-function-grants-20260912.txt`) :
+     `OK refresh_atlas_density / anon: can_execute=false · authenticated: false · service_role: true` — sonde supprimée par `20260912040000`.
+  2. **S2 (sécurité, high)** — `/api/trails` legacy désormais rate-limité (même garde) : invariant « toute voie vers `trails_in_viewport` est bornée » ; test dédié.
+  3. **S3 (sécurité, medium)** — bornes **dans le SQL** (`20260912050000_atlas_rpc_internal_clamp.sql`) : clamp 20°/axe + `LEFT(p_search,100)` / `LEFT(p_difficulty,40)` — les appels PostgREST directs sont bornés même hors Next.
+  4. **S4/S5 (sécurité, medium)** — bornes de plage strictes des paramètres publics (`limit 1..300`, `zoom 0..22`, distances `0..1000`) : 400 explicite, tests ajoutés.
+  5. **S6 (sécurité, low)** — les routes ATLAS ne renvoient plus `error.message` au client (message générique, détail uniquement serveur).
+  6. **O1 (ops, high)** — palier continent = densité seule (trails LOD `0`), conformément au tableau du chantier : plus de troncature silencieuse par le clamp 20° sur les vues continent.
+  7. **O2 (ops, medium-high)** — `refresh_atlas_density` durci : single-flight (`pg_try_advisory_lock`), `statement_timeout=60s`, fallback non-concurrent **journalisé** (`RAISE WARNING`), déverrouillage garanti.
+  8. **Design HIGH** — cibles tactiles 44 px (segments de fond de carte, CTA/fermeture carte pays) ; surfaces bannies supprimées d'`ExplorerClient` (`bg-white/60`, `bg-white/95`, gradient DIY → `.glass-capsule-btn`) ; bouton « Rechercher dans cette zone » masqué en mode unifié (no-op trompeur) ; recolor du globe pays au changement de filtre continent ; légende densité « taille ∝ nombre » ; fumée `/pays` (canvas MapLibre + combobox clavier + zéro pageerror) ajoutée au spec visuel.
+  9. **Programming HIGH** — `useViewportData.isFetching` ne peut plus rester bloqué à `true` (branche early-return corrigée) ; specs visuels CI-safe (skip explicite des tests à hook dev absent en build prod) ; dependance `unifiedMap` ajoutée au `useMemo` ; code mort retiré (`SIMPLIFY_TOLERANCE`).
+- Bloqueurs restants **documentés** (décisions assumées, à traiter avant/à l'ouverture du rollout) : backfill des 30 micro-états absents du GeoJSON 110m (données absentes — nécessite un jeu 50m/10m, aucune invention) ; contrat de tuiles production + CSP (MapLibre worker/tuiles) ; planificateur externe du cron de densité (fonction durcie, déclencheur toujours externe) ; alternative clavier de sélection sur `/explorer` (le chemin `/pays` existe) ; e2e ATLAS à inclure dans Gate 5 CI ; `O3` : le plan de la RPC montre un `Function Scan` (non inlinable) — la preuve GIST reste la requête de base équivalente ; `O4` non retenu (clamp query-layer refusé pour ne pas tronquer les pays immenses type Russie sur `/pays/[code]`, chemin SSR indexé) ; gouvernance tokens (`docs/Design-tokens.md` vs `tokens.css`) à unifier.
+
+### Preuves brutes (extraits)
+```
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts
+ok 1 [desktop-chrome] rendu + zéro pageerror
+ok 2 [desktop-chrome] clic direct carte → panneau détail
+ok 3 [desktop-chrome] paliers continent → globe : densité, sélection pays, chorégraphie caméra
+ok 4 [iphone-14-pro] rendu · ok 7 [ipad-portrait] rendu
+ok smoke /pays : canvas MapLibre + combobox « Choisir un pays à afficher » + zéro pageerror
+5 passed / 4 skipped (desktop-only explicites)
+
+$ node scripts/atlas/verify-function-grants.mjs
+OK   trails_in_viewport / anon: can_execute=true
+OK   trails_in_viewport / authenticated: can_execute=true
+OK   refresh_atlas_density / anon: can_execute=false
+OK   refresh_atlas_density / authenticated: can_execute=false
+OK   refresh_atlas_density / service_role: can_execute=true
+[grants] SUCCÈS
+
+$ npx vitest run tests/map tests/security/atlas-abuse.spec.ts tests/queries/trails-viewport.spec.ts tests/design-system/atlas-difficulty-colors.spec.ts
+Test Files 7 passed · Tests 35 passed
+
+$ npm test
+Test Files 4 failed | 322 passed | 4 skipped (330)   # 4 suites préexistantes (ops/a13)
+Tests 2277 passed | 23 skipped (2300)
+```
+
+### Prochaine phase
+Phase 7 — Rollout mondial progressif (`chantier/atlas-7-rollout`) : flag `explorer_unified_map_enabled` (système existant + cohortes 5 %/25 %/100 %), gating serveur de `/explorer`, preuves de palier et rollback.
+
+## 2026-09-12 — CHANTIER ATLAS Phase 7 — Rollout mondial progressif (branche `chantier/atlas-7-rollout`)
+
+### Livrables
+- **Migration `20260912060000_atlas_rollout_flag.sql`** : flag `explorer_unified_map_enabled` (global, `false` = palier sûr), cohorte `feature_flag_cohorts` à 0 % (prête pour 5/25/100), et `GRANT EXECUTE ON current_feature_flags() TO anon` (le SSR de `/explorer` doit lire le flag sans session — données non sensibles).
+- **Lecture par cohortes** : `currentFeatureFlags()` (`src/features/hub/server/featureFlags.ts`) utilise `current_feature_flags_for(p_user_id)` quand une session existe (paliers 5 %/25 % pour les connectés, pattern adventure-intelligence existant), sinon les flags globaux ; fail-safe inchangé (`DEFAULT_FLAGS`).
+- **Gating serveur `/explorer`** : `resolveUnifiedMapEnabled({ flagEnabled, atlasParam })` (`src/lib/atlas/rollout.ts`, pur, testé) — `?atlas=1` = switch interne (tests/équipe), sinon flag global ; tout ce qui n'est pas exactement `true` garde le moteur legacy (**rollback instantané** sans redéploiement).
+- **Opération des paliers** (sans redéploiement) :
+  ```sql
+  -- 5 %
+  UPDATE public.feature_flag_cohorts SET percentage = 5 WHERE flag_id = 'explorer_unified_map_enabled';
+  -- 25 %
+  UPDATE public.feature_flag_cohorts SET percentage = 25 WHERE flag_id = 'explorer_unified_map_enabled';
+  -- 100 % (global, tous visiteurs)
+  UPDATE public.feature_flags SET enabled = true, updated_at = now() WHERE id = 'explorer_unified_map_enabled';
+  -- Rollback immédiat : repasser enabled = false (les pages legacy sont intactes, ATLAS-R10).
+  ```
+
+### Preuves brutes
+```
+$ supabase db push --linked
+Applying migration 20260912060000_atlas_rollout_flag.sql...  Finished supabase db push.
+
+$ node scripts/atlas/verify-rollout-flag.mjs   (archive : docs/atlas/rollout-flag-20260912.txt)
+anon: {"id":"explorer_unified_map_enabled","enabled":false}
+service_role: {"id":"explorer_unified_map_enabled","enabled":false}
+[rollout] SUCCÈS (flag présent, lecture anonyme opérationnelle)
+
+$ npx tsc --noEmit → TSC_EXIT=0
+$ npm test → Tests 2281 passed | 23 skipped (2304)   # 4 suites préexistantes (ops/a13)
+$ npm run lint → LINT_EXIT=0
+
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts --project=desktop-chrome
+ok 1 rendu + zéro pageerror
+ok 2 clic direct carte → panneau détail
+ok 3 paliers continent → globe (densité, sélection pays)
+ok 4 globe pays MapLibre (Earth) + combobox clavier + zéro pageerror
+ok 5 sans flag ni switch : moteur legacy conservé (rollback instantané) — .leaflet-container visible, 0 unified
+5 passed (1.4m)
+```
+
+### Notes
+- Le palier public reste à **0 %** (flag global false) : le système est armé, l'avancement 5 % → 25 % → 100 % est une décision d'exploitation fondée sur la surveillance (aucun monitoring de trafic automatisé disponible ici — décision non prise à l'aveugle, conforme au chantier).
+
+### Prochaine phase
+Phase 8 — Décommissionnement (après 100 % stable) : redirections `/carte-interactive`/`/pays` → `/explorer`, retrait des composants legacy, décision Leaflet séparée.
+
+## 2026-09-12 — CHANTIER ATLAS — Clôture des phases 0-7 (branche `chantier/atlas-8-cloture`)
+
+### État : phases 0 à 7 livrées, vérifiées et mergées sur `main`. Phase 8 **conditionnée** (voir ci-dessous).
+
+### Definition of Done — revue factuelle
+- [x] **4 paliers dans un seul canvas MapLibre, sans coupure visuelle** : moteur `UnifiedExplorerMap` (globe natif) ; séquence capturée continent → sélection pays → globe (`docs/atlas/captures/atlas-continent-desktop.png`, `atlas-france-selected.png`, `atlas-globe-desktop.png`).
+- [x] **`EXPLAIN ANALYZE` prouve l'usage de l'index GIST** : plan `Index Scan using idx_hiking_routes_geom` (Index Cond `geom && envelope`, Filter `st_intersects`) — `docs/atlas/phase1-proof-20260912.txt`. Écart documenté : la RPC n'étant pas inlinable (Function Scan), la preuve porte sur la requête de base équivalente.
+- [x] **RLS explicite vérifiée** : `relrowsecurity=true` sur `hiking_routes`/`trail_metadata`/`trail_scores`, policies SELECT publiques uniquement, écritures verrouillées (même fichier).
+- [x] **0 couleur bannie, `tsc`/`lint`/`build` à 0** : Phase 6, sorties brutes (greps exit 1 = 0 occurrence, TSC_EXIT=0, LINT_EXIT=0, BUILD_EXIT=0).
+- [~] **First Load JS ≤ 170 Ko et LCP ≤ 2.0 s mobile** : **non atteint pour /explorer (265 Ko)** — héritage app partagé 104 Ko + shell explorer ; le retrait three/react-globe a supprimé **2 673 Ko de JS du build** (chunks lazy) mais le First Load des routes est inchangé. Écart documenté, optimisation transverse (hors périmètre cartographique) requise. LCP non mesuré en conditions réelles (pas d'accès aux métriques de terrain).
+- [x] **Rate limiting `/api/hikes` et `/api/pois`** (+ legacy `/api/trails`) : 120 req/min/IP, fail-open journalisé, bbox ≤ 20°/axe, paramètres bornés, borne SQL interne — tests `tests/security/atlas-abuse.spec.ts` (11).
+- [x] **Flag `explorer_unified_map_enabled` créé, rollout documenté, rollback possible** : paliers par cohortes (5 %/25 %) puis global 100 %, rollback instantané à `false` ; preuve de rollback (legacy Leaflet toujours fonctionnel sans flag) dans le spec visuel ; lecture anonyme du flag vérifiée (`docs/atlas/rollout-flag-20260912.txt`).
+- [x] **Synthèse Icon Agents sans blocage critique non résolu** : Security initialement BLOCKED → S1/S2/S3/S4/S5/S6 corrigés et prouvés (grants service-role, clamp SQL, gardes legacy, bornes) ; restent des avertissements de mise à l'échelle documentés (tuiles production/CSP, scheduler du cron, backfill 30 micro-états, a11y carte `/explorer`, First Load JS).
+- [ ] **Anciennes pages Leaflet/react-globe supprimées après 100 % stable** : **condition volontairement non remplie** — le flag est à 0 % public ; supprimer maintenant violerait ATLAS-R10 et le rollback.
+
+### Phase 8 — condition d'exécution
+Déclencher Phase 8 (redirections + suppression `carte-interactive`/moteur Leaflet legacy + décision Leaflet des 11 consommateurs) **uniquement après** : flag à 100 % pendant une période stable (erreurs/perf surveillées), puis :
+1. redirections 308 `/carte-interactive` → `/explorer` et `/pays` (racine) → `/explorer` — `/pays/[code]` conservé ;
+2. suppression `src/components/map/InteractiveMap.tsx`, `src/app/carte-interactive/**`, `ExplorerMap`/`TrailLayer` legacy si plus référencés, docs/redirections SEO ;
+3. décision Leaflet : migrer les consommateurs restants (carnet, hub, groupes, rando, terrain-live…) avant tout retrait de `leaflet`.
+Aucune de ces étapes ne doit être improvisée sans le palier 100 % — c'est le mécanisme de sécurité du chantier.
+
+### Livrable d'exécution continu (pour l'exploitant)
+- Avancer le rollout (SQL prêt, section Phase 7), surveiller les erreurs, puis ouvrir Phase 8.
+- Bloqueurs de mise à l'échelle restants listés en Phase 6, section « Bloqueurs restants documentés ».
+
+### Mise à jour d'exploitation — 2026-09-12 (décision propriétaire, « tout en prod direct »)
+- **Flag `explorer_unified_map_enabled` basculé à `true` (global, 100 %)** via `scripts/atlas/set-rollout-flag.mjs --enabled true` (avant : `false` / cohorte 0 % ; après : `true`).
+- Vérification : `/explorer` **sans paramètre** sert le moteur unifié — `{"unified":1,"legacy":0,"errors":[]}` (capture `docs/atlas/captures/atlas-explorer-flag-on-desktop.png`).
+- Rollback instantané toujours disponible : `node scripts/atlas/set-rollout-flag.mjs --enabled false` (moteur legacy intact, test visuel adaptatif « jamais d'écran blanc »).
+- Test visuel de rollback rendu flag-aware (le moteur attendu dépend de l'état du flag).
+- **Redirection `/carte-interactive` → `/explorer`** (307 temporaire, `next.config.mjs`) : la page historique mène désormais au nouvel explorateur — anticipation de l'étape 1 de la Phase 8 à la demande du propriétaire (« tout en prod direct »). Vérifié : `{"url":"/explorer","unified":1,"legacy":0,"errors":[]}`. Rollback = retirer l'entrée de redirection (l'ancien moteur Leaflet est intact). `/carte` pointe aussi directement vers `/explorer`.
+- **Incident local (non prod)** : le dev-server tournait encore avec la config chargée avant la redirection (rechargée pendant les opérations git) — le propriétaire voyait donc l'ancienne carte Leaflet sur `/carte-interactive`. Diagnostic reproductible en headless (`legacy:2`, `unified:0`), puis redémarrage propre de toute la chaîne de process : `307` confirmé, moteur unifié servi.
+- **UX globe rendue évidente** (retour propriétaire « pas de globe ») : arrivée « façon Google Earth » (ouverture sur le globe z1.6 → plongée 1,8 s vers la vue locale, saut immédiat si reduced-motion), **bouton « Vue globe »** (compass) qui bascule globe ⇄ dernière vue locale, `minZoom = 1.2` (le dézoom s'arrête sur un globe cadré, plus de bille minuscule — vérifié : zoom final 1.2 après 12 clics).
+  Preuves : `test-results/diag-2-globe.png` (globe cadré), état `{"zoom":1.6,"projection":"globe"}`, e2e inchangé (`6 × net::ERR_ABORTED`).
+- **Bug MapLibre v6 corrigé (retour propriétaire « bandes répétées, plus de globe »)** : avec `projection: globe`, MapLibre **n'applique pas `minZoom` au dézoom molette/pince** — reproduit en headless (`minZoom=1.2` configuré, zoom réel `−0.77` → monde déplié en bandes). Correctif : verrou applicatif sur l'événement `zoom` (`setZoom` dès que < 1.2), `setMinZoom` explicite, `renderWorldCopies: false`. Preuve : après 20 crans de molette `{"zoom":1.2,"projection":"globe"}` + capture `test-results/wheel-zoom-out.png` (globe plein cadre). Test de régression permanent ajouté (spec visuel desktop, 6/6 verts).
+- **Hydratation cassée côté navigateur propriétaire (mismatch classes/ancienne UI)** : le HTML servi était **périmé** (anciennes classes `bg-white/60`/gradient, `unifiedMap={false}`) tandis que le JS client était à jour — cause : **service worker résiduel d'un ancien run production** servant le HTML en cache pendant les redémarrages du serveur, aggravé par des onglets ouverts à travers les hot-reloads. Correctif : en dev (`layout.tsx`), **désinscription automatique des service workers + purge des caches** ; l'enregistrement SW reste production-only. Vérifié sur chargement propre : `{"cleanupPresent":1,"swRegistrations":0,"problems":[]}` (zéro erreur d'hydratation), `tsc`/`lint` 0.
+- **Investigation systématique « /explorer n'affiche que la carte plate » (diagnostic complet propriétaire)** :
+  - Vérifié : une seule route `/explorer` (`page/layout/loading/error`), aucun middleware/rewrite concurrent, aucune page cachée ; le serveur sert bien le moteur unifié (SSR + DOM + hook).
+  - **Cause racine expérimentale** : le globe du chantier était **pratiquement invisible** — la plongée d'ouverture durait ~1 s et en `prefers-reduced-motion` elle **sautait le globe entièrement** (reproduit : `reduced-motion → zoom 6 immédiat`), puis à l'échelle locale l'interface ressemble légitimement à une carte plate. Les captures du chantier montraient le globe, mais jamais l'usage réel.
+  - **Correctif racine** : `/explorer` **ouvre sur le globe et y reste** (plus d'auto-plongée) ; bouton libellé **« Explorer ma zone »** (44 px, à droite) qui plonge vers la position utilisateur (sinon dernière vue locale/vue initiale) ; « Vue globe » pour remonter ; `prefers-reduced-motion` → globe conservé, plongée non animée.
+  - Preuves : `docs/atlas/captures/atlas-explorer-globe-default.png` + état `{"zoom":1.6,"projection":"globe"}` ; suites visuelles 6/6, e2e 2/2 (`3 × net::ERR_ABORTED`), `tsc` 0.
+- **Simplification UX mobile de l'explorateur (demande propriétaire « simplicité maximale comme avant », globe inchangé)** — skill `ux-mobile` + `apple-ui-designer` + `interaction-design` appliqués :
+  - **Une seule action principale** centrée au-dessus de la tab bar : « Explorer ma zone » (globe) ⇄ « Vue globe » (local), 48 px.
+  - **Zoom compact** : 2 boutons (−/+) à droite ; bouton « me recentrer » retiré en mobile (l'action principale recentre ; pincer reste natif). Colonne complete conservée en desktop.
+  - **Fond de carte** : capsule d'icônes 48 px en haut à gauche (relief/map/layers, `aria-label`), libellés texte conservés en desktop.
+  - **Densité : légende desktop-only** ; **attribution** déplacée en haut à droite en mobile (lisible, plus cachée derrière la tab bar).
+  - Inventaire mesuré avant/après (éléments flottants z≥100) : avant = légende 243 px + capsule 255 px + pile 103×190 px + attribution sous la tab bar ; après = tuiles 162×54 (haut), CTA 109×48 (centre bas), zoom 44×96 (droite), attribution 145×17 (haut droite) — aucun chevauchement à 360 et 430 px.
+  - **Piège CSS documenté** : les classes `.glass-*` imposent `display`/`min-width`/`min-height` (comme `.glass` imposait `position: relative`) — toute bascule responsive ou taille passe par un wrapper ou un utilitaire `!important` (jamais `hidden`/`w-11` directement sur un élément glass).
+  - Preuves : captures `test-results/mobile-iphone-14-pro-{globe,local}.png`, suites visuelles 8 passés / 10 skips desktop-only (globe + mobile + /pays), e2e 2/2, `tsc` 0.
+- **Tracés exacts des randonnées restaurés + nettoyage chrome/routes (demande propriétaire)** :
+  - **Parité legacy `TrailLayer`** : le sentier sélectionné affiche son **tracé exact** (source `atlas-trail-track` + couches `atlas-trail-track-glow`/`-line`, nettoyage `sanitizeGeoJSON`, cadrage `fitBounds` padding 60 / maxZoom 15, durée 0 si reduced-motion) ; alimenté par `/api/hikes/[id]` (geojson réel, jamais inventé) via la prop `selectedTrail` d'`ExplorerClient`. Les autres sentiers restent des points, comme avant.
+  - **Fix chevauchement** : cliquer un sentier/POI n'ouvre plus la carte pays (sélection pays ignorée en zoom > 8 et si une couche interactive est sous le doigt).
+  - Preuves : test visuel renforcé (`atlas-trail-track-line` présente + `features > 0`), capture `docs/atlas/captures/atlas-trail-track-desktop.png` (zoom cadré 14.98), 6/6 visuel desktop, e2e 2/2.
+  - **Routes nettoyées** : liens morts `/carte-interactive` remplacés (`MobileDrawer`, `TerrainHub`, `QuickGrid` → `/explorer`), `PrefetchRoutes` dédupliqué + clé morte supprimée, `BottomTabBar` matchPaths nettoyé, `robots.ts` (3 listes) et `sitemap.ts` sans `/carte-interactive` (canonique = `/explorer`). Redirection 307 conservée et fichiers legacy gardés pour rollback.
+  - **Header / bottom bar / footer** : aucun footer sur `/explorer` (vérifié), pas de doublon de header (desktop uniquement, design existant), bottom bar déjà épurée à l'étape précédente — rien de mort restant côté navigation.
+- **« Earth » retiré de partout, remplacé par « Explorer » (demande propriétaire)** :
+  - **Redirection** `/pays` (racine globe) → `/explorer` (307 réversible) ; les **fiches `/pays/[code]` restent servies** (`/pays/fr` → HTTP 200, sidebar globe intacte).
+  - **Écrans Earth supprimés** : `src/app/pays/page.tsx`, `EarthPageClient.tsx`, `components/EarthMobileHeader.tsx`, `components/EarthCountrySheet.tsx`, `styles/earth.css` (le dossier `components/` vidé a été retiré).
+  - **Label « Earth » éliminé de toute l'UI** : Header desktop + mobile, Footer global, footer d'accueil, sidebar pays (« Earth LKDV / Earth v2.0 » → « Carte LKDV / Pays v2.0 »), recherche globale (destinations pointant vers les **vraies fiches** `/pays/is|no|np|ch`, plus de lien racine), tab bar mobile (**onglet Earth supprimé**, « Aventures » renommé « **Explorer** »).
+  - **Routes/SEO** : `/pays` retiré du `sitemap.ts` (canonique = `/explorer`, fiches pays conservées), entrées mortes retirées de `PrefetchRoutes` (clé `/pays` + doublon), `robots.ts` conserve `/pays` pour les fiches.
+  - Preuves : `pays: HTTP 307`, `pays/fr: HTTP 200` ; suites : **2281 tests**, visuel desktop **6/6** (dont « /pays redirige vers /explorer, /pays/fr garde son globe »), e2e **2/2**, `tsc` 0.
+  - Rollback : retirer les deux entrées de redirection (`/pays`, `/carte-interactive`) ; les fichiers supprimés restent récupérables via git.
+
+## 2026-09-12 — AUDIT PERFORMANCE MOBILE — phases P0-P4 (branche `chantier/atlas-perf-mobile`)
+
+> Périmètre GEL respecté : aucun changement caméra, aucun changement de paliers de zoom, flag `explorer_unified_map_enabled` intouché.
+
+### P0 — Prefetch mort supprimé + garde réseau (TDD)
+- **Deux émetteurs trouvés et corrigés** : `PrefetchRoutes.tsx` (blocs `queries ["hikes"]` sur `/` et `/explorer`) **et** `BottomTabBar.tsx` (`prefetchData` sur `onPointerEnter`/`onTouchStart` refaisait le même fetch non paramétré). La clé exacte `['hikes']` n'était lue par aucun `useQuery` → requête 100 % gaspillée.
+- **`src/lib/perf/networkPrefs.ts`** (nouveau, pur) : `saveData` ⇒ tout coupé ; `slow-2g`/`2g` ⇒ tout coupé ; `3g` ⇒ routes autorisées, données refusées ; API absente/4G ⇒ comportement conservé (fail-open). TDD `tests/perf/networkPrefs.spec.ts` rouge→vert (5/5).
+- Preuves brutes :
+```
+$ rg "api/hikes" src/components/PrefetchRoutes.tsx src/components/mobile-nav/BottomTabBar.tsx
+GREP_EXIT=1 (1 = 0 occurrence)
+
+$ node scripts/perf/capture-prefetch.mjs   (docs/perf/prefetch-avant.txt / prefetch-apres.txt)
+AVANT : / → 1 requête http://localhost:4000/api/hikes (sans paramètres)
+        /explorer → 1 requête http://localhost:4000/api/hikes (sans paramètres)
+APRÈS : / → 0 · /explorer → 0
+```
+
+### P1 — Chargement serveur parallèle
+- `src/app/explorer/page.tsx` : `Promise.all([getTrails(...), unifiedMap ? getAtlasDensity() : résolu])`, replis explicites conservés (logs inchangés).
+```
+docs/perf/server-timing.txt
+AVANT (séquentiel) : 240, 251, 245, 249, 248 ms → moyenne 247 ms
+APRÈS (Promise.all): 256, 245, 239, 253, 248 ms → moyenne 248 ms
+Note factuelle : delta dans le bruit en dev local (Supabase distant chaud + overhead Next dev) ;
+le gain structurel vaut min(t_trails, t_density), mesurable sous cache froid / réseau réel.
+```
+
+### P2 — Budget & mesure
+- `@next/bundle-analyzer` ajouté (devDependency), `next.config.mjs` enveloppé (`ANALYZE=true`, `openAnalyzer:false`), script `npm run analyze` → rapports `.next/analyze/{client,nodejs,edge}.html` (build OK, `/explorer` 16.3 kB / 265 kB First Load JS).
+- `scripts/perf/measure-maplibre.mjs` (mesure réelle) :
+```
+maplibre-gl.mjs        554 Ko brut / 139 Ko gzip
+maplibre-gl-shared.mjs 471 Ko brut / 131 Ko gzip
+maplibre-gl-worker.mjs  18 Ko brut /   6 Ko gzip
+maplibre-gl.css         81 Ko brut /  10 Ko gzip
+TOTAL                 1124 Ko brut / 286 Ko gzip
+```
+- `docs/PERFORMANCE_BUDGET.md` : budgets séparés (PERF-R3) — shell 265 Ko (métrique Next, hors `dynamic`) vs moteur carte lazy **286 Ko gzip** ; total « carte utilisable » ≈ 545-550 Ko gzip, assumé et documenté (pas de version allégée de MapLibre pour un globe WebGL).
+- Cache : `Cache-Control: public, max-age=31536000, immutable` vérifié sur `/_next/static/*` après build prod (`npm start`, HEAD réel) — non écrasé par `next.config`.
+
+### P3 — Hygiène dépôt (preuves dans `docs/perf/hygiene.txt` + `duplicates-refs.txt`)
+- `public/assets/videos/mm-ambient.mp4` : 48 007 124 octets, **0 référence** (`rg` exit 1) → supprimé.
+- **43 doublons exacts SHA-256** `public/assets/*.jpg` ↔ `images/*.jpg` : 0 référencé des deux côtés. Seule exception app : `tests/cart.spec.ts:39` référence `/assets/gear-tent-small.jpg` → copie racine conservée, copie `images/` supprimée ; les 42 autres doublons racine supprimés (références restantes = archives `resources/design-mockups/**`, hors build).
+- **Espace libéré : 77,8 Mo** — `public/assets` 138,4 Mo → **60,5 Mo**.
+
+### P4 — Non-régression
+```
+$ npx tsc --noEmit  → TSC_EXIT=0
+$ npm run lint      → LINT_EXIT=0
+$ npm run build     → ✓ Compiled successfully · BUILD_EXIT=0 · /explorer 16.3 kB / 265 kB
+$ npm test          → 2286 passed | 23 skipped (2309)   # +5 tests vs avant
+$ playwright visual (3 projets) → 7 passed, 1 flake environnemental (bandeau « Hors ligne »
+   déclenché par le build concurrent sur le dev-server) — rejoué seul : vert (11.9 s)
+$ e2e atlas → 2 passed (3 × net::ERR_ABORTED)
+```
+Rollback legacy : flag intouché (GEL) ; `ExplorerMap`/Leaflet non modifiés (`git diff` vide sur les fichiers legacy).
+
+
+## 2026-09-12 — CHANTIER FLUIDITÉ — phases F0-F4 (branche `chantier/atlas-fluidite`)
+
+> Périmètre GEL respecté : aucune couche, donnée, palette ni palier de zoom modifiés ; flag `explorer_unified_map_enabled` intouché. Un seul appel caméra par interaction (jamais d'enchaînement).
+
+### F0 — Vérifications empiriques AVANT réglage (`docs/fluidite/f0-verifications.txt`)
+- Distances réelles (centroïdes prod, haversine) : FR→DE 1 387 km · FR→NP 7 698 km · FR→NZ 19 640 km. À durée fixe 900 ms ⇒ vitesse implicite **1 541 → 21 822 km/s (14×)** : voilà précisément l'incohérence de perception corrigée en F1.
+- `raster-fade-duration` sur maplibre-gl@6.4.1 : absent par défaut (300 ms implicite), appliqué explicitement (1000) et **persiste après bascule de fond de carte**, zéro pageError ⇒ le bug historique 4.3.0→5.0.0-pre6 n'est pas présent, on peut épingler la valeur.
+
+### F1 — Vol pays courbe Van Wijk (`src/components/map/engine/camera.ts`)
+- TDD : 7 tests rouges → **11/11 verts** (`tests/map/camera.spec.ts`). Nouveaux exports purs : `haversineKm`, `computeCountryFlight`, `buildFlyToParams` (reduced-motion ⇒ `{center, zoom, duration: 0}` sans curve/speed).
+- **Correction de design pilotée par la mesure** : premier jet « bonus de vitesse sur les longues distances » = INVERSION prouvée en réel (vol Pacifique 1 063 ms < vol Atlantique 1 580 ms). Remplacé par : la distance **ralentit** légèrement, bornée [0.8, base] (base 1.2 desktop / 1.0 mobile), `curve 1.42`, `maxDuration 8000`, `minZoom 2`, `essential: true`.
+- **Trou UX comblé au passage (même geste)** : avant, seuls FR/BE (pays avec centroïde densité) déclenchaient un vol ; tous les autres ouvraient la carte sans bouger. Désormais cible = centroïde densité si disponible, sinon **le point tapé** (`event.lngLat`) — chaque sélection pays vole.
+- Preuve runtime (clics souris réels, horodatage `moveend` + série zoom 25 ms, `docs/fluidite/f1-vols-pays.txt` + captures `f1-vol-*.png`) :
+```
+FR→DE z5 (plat, 1 387 km)              : 482 ms   · fin zoom 4.60 · fin center 10.38, 51.11 (point tapé)
+Globe z1.2 → FR (~5 900 km, Δzoom 3.4) : 1 787 ms · fin zoom 4.60 · fin center -2.88, 42.46 (centroïde FR)
+Pacifique z1.2 → FR (~10 900 km)       : 2 219 ms · fin zoom 4.60 · fin center -2.88, 42.46
+```
+⇒ durées 482/1 787/2 219 ms pour 1 387/5 900/10 900 km : les longs trajets durent plus longtemps SANS à-coup, vitesse implicite 2 877→4 912 km/s (1.7× contre 14×), zéro pageError.
+
+### F2 — Inertie de pan + haptique palier
+- `instance.dragPan.enable({ linearity: 0.3, maxSpeed: 1400, deceleration: 2500 })` (valeurs officielles du d.ts maplibre — libellés `@defaultValue` inversés, écart documenté).
+- Haptique `selection` au franchissement des paliers `world/continent/region/local` (`getZoomTier`), débounce 300 ms, aller-retour sur la borne = aucun buzz ; `prefers-reduced-motion` déjà respecté par `src/lib/native/haptics.ts`.
+- Preuve runtime (`docs/fluidite/f2-f3-verifications.txt`) :
+```
+options inertie lues sur le handler : {"linearity":0.3,"maxSpeed":1400,"deceleration":2500} · enabled true
+zoom molette 1.6 → 4.87 (franchit world→continent) : vibrations = [10]  (UNE seule, pas de rafale)
+```
+
+### F3 — Fluidité visuelle pendant le mouvement
+- Bascule DOM `data-atlas-flying` sur la racine (aucun re-render React pendant le geste) ; CSS `src/styles/liquid-glass.css` : `[data-atlas-flying='true'] [data-atlas-glass='secondary'] { backdrop-filter: none }` — panneaux secondaires uniquement (carte pays, légende), les contrôles gardent leur verre.
+- `raster-fade-duration: 300` épinglé sur les 3 couches raster (défaut MapLibre explicité, vérifié F0).
+- Preuve runtime :
+```
+pendant le geste : flying=true  · carte pays backdrop-filter = none
+après le geste   : flying=false · carte pays backdrop-filter = blur(10px) saturate(1.6) (restauré)
+raster-fade-duration lu : topo=300 · osm=300 · satellite=300
+légende : .glass-pill n'a pas de backdrop-filter natif (rien à couper, documenté)
+```
+
+### F4 — Non-régression
+```
+$ npx tsc --noEmit → TSC_EXIT=0
+$ npm run lint     → LINT_EXIT=0 (1 warning préexistant queries-compte.ts)
+$ npx vitest run   → 2294 passed | 23 skipped (2317) ; 4 suites en échec = EXACTEMENT
+                     les 4 préexistantes documentées (a13-backtest-export, a14-healthcheck,
+                     a15-rollout, phase10-capacity) — +8 tests vs avant (caméra)
+$ npm run build    → ✓ Compiled · /explorer 16.3 kB / 265 kB · BUILD_EXIT=0
+$ playwright visuel (3 projets) → 8 passed, 10 skipped (skips par projet), 0 failed
+$ e2e atlas        → 2 passed (1er run : ERR_CONNECTION_REFUSED car le webServer visuel
+                     s'était arrêté — relancé après redémarrage dev, vert)
+```
+Rollback : retirer l'appel `computeCountryFlight`/les 3 options dragPan/les listeners `movestart`/`moveend`+règle CSS (`git revert` du merge F0-F4). Aucune migration ni flag touché.
+## 2026-09-12 — REFONTE COCKPIT DÉPART + identité sentier + fiabilité (branche `chantier/depart-refonte`, 13 tasks SDD)
+
+> Spec : `docs/superpowers/specs/2026-09-12-refonte-cockpit-depart-design.md` (D1-D4 validées par le propriétaire) · Plan : `docs/superpowers/plans/2026-09-12-refonte-cockpit-depart.md` · Exécution : subagent-driven-development (implémenteur + revue par task, corrections en boucle, revue finale de branche).
+
+### Résultat
+- **Desktop** : cockpit 3 colonnes dupliqué SUPPRIMÉ → flux canonique `DepartDesktopView` dans la colonne centre du hub (hero identité → alertes → grille Sac|Terrain ≥xl → Équipement → Équipe & fiche). Zéro duplication de shell.
+- **Mobile** : `DepartMobileExperience` canonique (hero glass + BudgetRing, chips, rails `GroupeRail`, drawers `GroupeDrawer`/`GlassDrawer` z-10000, safe-areas gérées par le shell uniquement).
+- **`?route=X`** : l'identité du départ est le SENTIER choisi (nom/tracé réels, gating par id validé), fini le démo « Tour du Mont-Blanc — 4j Bivouac » — y compris dans le sélecteur de kit (2 rounds de fix : id showcase `none` sans option correspondante).
+- **DS** : purge complète `rose/sand/forest/dark/bg-white-60|90` des composants réutilisés (garde-test statique `depart-ds-purge.spec.ts`), overlays migrés `GlassDrawer`/`GlassModal`, `GlassModal` plein écran carte.
+- **Logique extraite** : `departIdentity`/`departAlerts`/`departCache` purs + hooks `useDepartAlerts`/`useDepartOfflineCache` (état hors-ligne réellement transmis au hero + bandeau unique).
+- Suppressions : `DepartCockpit`, `DepartHeader`, `DepartLeft/RightSidebar`, `DepartAlerts`, `MobileFloatingIsland`, `MobileWeightHeader` + 2 specs dédiés + code mort.
+
+### Commits (base main 879820a1)
+```
+da2e1ddd docs(depart): plan d'implementation (16 tasks)
+5e07036d feat(depart): identite liee au sentier choisi (route=X)
+8acd595b fix(depart): identite validee par id + kit de depart (route explicite)
+76aa4f48 feat(depart): hero canonique partage
+d9444936 feat(depart): bandeau d'alertes unique
+aabc876c feat(depart): surface terrain unique + plein ecran GlassModal
+1246ed82 fix(depart): selecteur de tuiles ancre (non clippe en carte 180px)
+7cd02c1f refactor(depart): purge DS des composants reutilises
+d778f059 feat(depart): surface sac unifiee (poids + checklist)
+76537b33 feat(depart): section equipe + fiche en GlassDrawer (titleId)
+75dd190e feat(depart): vue desktop canonique en flux
+bf41a56a feat(depart): experience mobile canonique
+bc29044b refactor(depart): alertes/cache en modules purs + hooks
+fbdb9470 refactor(depart): bascule lg, suppression cockpit legacy
+e06f5763 test(depart): e2e + captures desktop/mobile
+a0c58978 fix(depart): selecteur kit = kit reel courant
+d651ae3b fix(depart): option kit courante prependee (id showcase)
+4eaa3701 test(e2e): garde CTA Prepaer + SW neutralise + captures regenerees
+e5ce410d fix(depart): etat hors-ligne + routage complet des actions d'alerte
+```
+
+### Gates (post-fix final)
+```
+npx tsc --noEmit          → 0
+npm run lint              → 0 (warnings preexistants)
+npx vitest run            → 2341 passed | 23 skipped (2364) ; 4 suites en echec = preexistantes
+                            (a13-backtest-export, a14-healthcheck, a15-rollout, phase10-capacity) — +55 tests vs avant
+npm run build             → ✓ Compiled · /hub/[section] 166 kB (542 kB First Load)
+e2e prod (depart + atlas) → 5/5 passed (scripts/e2e/depart-cockpit.spec.ts + atlas-explorer.spec.ts,
+                            serviceWorkers bloques pour parite dev/prod)
+visuel 3 projets          → 11 passed / 0 failed ; captures docs/depart/depart-{desktop-chrome,iphone-14-pro,ipad-portrait}.png
+                            vérifiées : « KIT DE DÉPART » affiché, AUCUNE fuite TMB
+```
+Revue finale de branche : 2 Important (isOnline non consommé ; routage d'actions d'alerte écrasé) → vague de fix unique `e5ce410d` → re-revue : tout adressé, zéro régression. Minors triés « polish » conservés en dette (liste dans le ledger SDD).
+
+### Rollback
+`git revert -m 1 <merge>` (aucune migration, flag `explorer_unified_map_enabled` intouché) ou rester sur la branche `chantier/depart-refonte`.
+## 2026-09-12/13 — CHANTIER « PRÉPARER » → ACTIVITÉ COMPLÈTE (branche `chantier/preparer-activite`, 10 tasks SDD + micro-fix)
+
+> Spec : `docs/superpowers/specs/2026-09-12-preparer-sentier-activite-complete-design.md` · Plan : `docs/superpowers/plans/2026-09-12-preparer-sentier-activite-complete.md` · Décisions propriétaire : réutilisation au 2e clic, reprise connexion auto (`?next=`), tout le contenu (itinéraire, moments, transports/hébergements/restos affiliés, descriptions, kit), atterrissage `/hub` activité active, LLM réel gratuit, arrivée immédiate + enrichissement en direct, animations framer.
+
+### Résultat
+- **Clic « Préparer »** (4 CTAs + héritage `/preparer-randonnee`) → route serveur `/preparer-sentier/[id]` : gate sentier réel (nom + géométrie), reprise connexion `?next=` puis reprise automatique, idempotence par `metadata.route_id` (index unique `uniq_trips_user_route`), création via l'usine déterministe + dressage instantané (étapes J1/multi-jours, POI réels, dépenses prévisionnelles formule documentée), cookie aventure active, `/hub`.
+- **Enrichissement LLM gratuit en direct** : job `activity-enrichment` (infra `ai_jobs` + cron existants), OpenRouter Nemotron `:free` (garde-fou `assertFreeModel` conservé), sortie JSON stricte Zod, **anti-invention** (corridor 3 km, suggestions = intentions de recherche, jamais de prix/nom présenté comme fait), écrit `trip_steps`/`trip_pois` (moments matin/AM/soir horodatés, `kind='moment'`), checklist, kit, provenance `llm_suggestion` + `metadata` (migration additive `20260912200000` puis `20260912201000`), idempotence/replay sans doublons, retry provider miroir `trail-narrative`, aucun `trip_expenses` LLM (contrainte `amount>0` + anti-invention).
+- **Affiliation au hub** : `TripAffiliateSection` visible hors token (desktop sous le bento SortieMenu, mobile dans la feuille du moment), liens de réservation **par étape** résolus côté serveur (destination > catégorie > récence), `/go` tracké conservé (`rel="sponsored nofollow"`).
+- **Animations live (framer-motion)** : rail 6 phases (coches spring + 1 haptique `success` par phase, `aria-live`), reveals inserés sur les **INSERT réels uniquement** (les échos UPDATE de l'utilisateur ne rejouent plus), éléments stables (animation, jamais de remount), squelettes pré-formés, `AnimatedNumber` sans flash, kit virtualisé révélé, respect `prefers-reduced-motion` ; aperçu dev-only `/preparer-sentier/apercu` (notFound en prod).
+
+### Commits
+```
+55f8a7d3 feat(db): migration additive provenance steps/pois + index route_id (audite)      (+ daf259b7 fix index strict)
+29b6e784 feat(trips): domaine trail->activite (brief, difficulte, corridor 3km)
+03e0197d feat(trips): dressage deterministe instantane (etapes, poi, depenses)             (+ e60df6e4 fix bornes + budget)
+4ae9348e feat(trips): prepareActivityFromTrail + route /preparer-sentier/[id]               (+ d404af0e fix ?next + garantie route_id)
+3200163e feat(explorer): CTA Preparer -> route serveur /preparer-sentier (liens partout)
+bd5b8ef9 feat(ai): contrat enrichissement activite (schema strict, prompt, sanitizer)       (+ 24c68bcd fix multi-couches)
+03830e75 feat(ai): job enrichissement activite (service, cron, registre, idempotence)       (+ 74f94420 fix moments/replay/retry)
+bd6b1d0d feat(affiliation): liens reservation par etape + section au hub (hors token)       (+ 8b2dfde8 fix matching serveur)
+fdf29f15 feat(hub): socle animations live (bus realtime, reveal, compteur, squelettes)      (+ e4716b6d fix scope/flash)
+a79dd274 feat(hub): rail de preparation live + reveals itineraire/moments + apercu dev       (+ 94b9d800 fix INSERT-only/kit)
+ddd78f73 fix(ai): reformule commentaires (faux positifs gardes dialogues natifs)
+```
+
+### Gates (finaux, post-fix)
+```
+npx tsc --noEmit → 0 · npm run lint → 0
+npx vitest run   → 2493 passed | 23 skipped ; 4 suites en échec = préexistantes (a13/a14/a15/phase10)
+npm run build    → ✓ Compiled (BUILD=0)
+e2e prod         → 7/7 (preparer-sentier + depart-cockpit + atlas-explorer, SW neutralisé)
+visuel 3 projets → 25 passed / 0 failed ; captures docs/preparer/apercu-*.png validées visuellement
+migration prod   → 20260912200000 + 20260912201000 appliquées (audit doublons 0, colonnes vérifiées)
+```
+
+### Rollback
+`git revert -m 1 <merge>` (aucune donnée détruite : les activités créées sont des données utilisateur légitimes) ; migrations additives réversibles (drop index/colonnes) ; désactiver l'enfilage → retour au socle déterministe pur.
+
+### Actions propriétaire restantes
+`TRAVELPAYOUTS_WEBHOOK_SECRET` (postbacks), `TRAVELPAYOUTS_MARKER` en env, redéploiement Travelpayouts Drive. Reliquats explorer mobile/natif : T12 (géoloc native + repli globe) et T13 (SW natif + server.url) — exécution en cours sur `chantier/explorer-mobile-native`.
+
+
+---
+
+## Volet 2 — Explorer mobile/natif (branche `chantier/explorer-mobile-native`)
+
+### Task 14 (E1) — Contrôles carte sous le carrousel : zoom/CTA non tapables
+
+**Cause racine (prouvée par `elementFromPoint`, dev 390×844 + 430×932) :** le carrousel `fixed left-0 right-0 z-[800]` (`ExplorerMobileHikeCarousel.tsx:116`) a un scroller pleine largeur `pointer-events-auto` (y 575,5→768) posé au-dessus du stacking context `absolute inset-0 z-0` (`ExplorerClient.tsx:486`) qui plafonne zoom `z-[500]` et CTA `z-[510]` (`UnifiedExplorerMap.tsx:1042/1020`). Zoom+ tombe sur le `H4` de la 2ᵉ carte, zoom− et CTA sur le bouton « Préparer » d'une carte ; taps Playwright en timeout, zoom 12→12. Réduction de zone interactive invalidée (les centres sont sur les cartes) ; relever le z seul invalidé (recouvrirait « Préparer »).
+
+**Correctif :** publication de la hauteur réelle du carrousel en `--explorer-carousel-height` (ResizeObserver, 233 px) ; offset bas des contrôles = 96 px + variable → CTA/zoom 20 px au-dessus du carrousel ; colonne zoom mobile en `right-14` pour rester à gauche de l'onglet filtres `z-[900]` (collision découverte à la re-mesure pour H 713–897).
+
+**Preuves :** `docs/explorer-mobile/e1-{avant,apres}.{json,png}` + variantes 390×844/430×932 ; `hitTestPass=true` sur zoom+/zoom−/CTA/Préparer aux 2 tailles ; taps réels zoom 12→13, CTA globe ⇄ local, « Préparer » → `/hub/depart?id=none&route=215` ; script `scripts/atlas/repro-e1-stacking.mjs`.
+
+**Gates :** e2e atlas-explorer 3/3 ; `npx tsc --noEmit` → 0 ; `npx vitest run` → 333 fichiers OK, 4 suites préexistantes en échec ; `npm run build` ✓. Commit : `fix(explorer): controles carte tapables avec le carrousel mobile visible (stacking)`.
+
+**Réserve :** moteur legacy `ExplorerMap.tsx` (flag off) non couvert — ne lit pas la variable.
+
+## 2026-09-13 — CHANTIER ITINÉRAIRE, KITS & PRÉPARATION PERSONNALISÉE (branche `chantier/itineraire-kits-personnalisation`, 20 tasks SDD)
+
+> Spec : `docs/superpowers/specs/2026-09-12-itineraire-kits-personnalisation-design.md` · Plan : `docs/superpowers/plans/2026-09-12-itineraire-kits-personnalisation.md` · Décisions : catalogue CSV complet + sélection produits (vente public, achat/marge admin) ; recalcul complet auto au join ; documents = fichiers réels + liste ; carnet notes pré-remplies + édition ; règle données : **uniquement l'auto-apprentissage, sinon estimations, sinon moyennes — chaque champ labellisé appris/estimé/moyenne** ; snapshot + recalcul serveur synchrone. (Revues formelles allégées après T7 sur demande propriétaire « va à l'essentiel ».)
+
+### Correctifs bloquants
+- **Doublon éliminé** : `revalidatePath` retirés de l'usine (l'erreur console venait du render), catch → **succès partiel `{ok, tripId}`** (plus de 500 créateur ni de fallback double), **`metadata.route_id` écrit dès la création** (l'index unique protège), géométrie via RPC GeoJSON. (`4c29f75e`)
+- **Rail → barre silencieuse** (`9e5b69a9`) · **Sidebar « Déroulé du jour » sans défilement infini** (`dc062a9b`) · **Warning clé React** localisé (child AdventureIntelligenceHub non clé) et corrigé (`82968230`).
+
+### Itinéraire
+- **Carte du jour** (tracé réel découpé par jour, entre sélecteur et journée, mobile+desktop) + restauration du tap-POI sur la nouvelle carte (`55659f9d`, `3c10d771`) · **Renommage d'activité** (action + modal, cibles 44px) + esthétique (`70198130`, `5cda8f97`) · **Nettoyages hub** : NaturePill retirée sur l'itinéraire, « Réservations & Préparation Logistique » et suggestions retirées, cockpit aventure déplacé dans l'itinéraire (`309721ae`).
+
+### Kits (catalogue CSV 80 produits)
+- **Import** : 67 SKU uniques (dédup des 11 doublons), poids réels parsés, priorités, correction catégorie ; upsert `shop_products` (`860afa35`) · **Moteur `selectKitProducts`** (produits réels, quantités par personne/groupe, poids) branché sur `contextualKitEngine` (`03d3b8b6`) · **Kit en batch** : calcul de préparation 2×→1×, ~363→278 ms, aller-retours réduits (`324035c3`).
+
+### Générateurs
+- **Documents réels** : feuille de route **PDF** (builder pur sans dépendance) + **GPX** générés et uploadés, lignes `trip_documents` (`bdc6cfef`) · **Sécurité** : `trip_safety_checkpoints` réels (J-1/J1/quotidiens/fin, jamais de dates inventées) (`cbbf8f6a`) · **Carnet** : notes pré-remplies par jour (contexte réel + questions) + **édition sur place** (action + UI) (`f7d8c9ea`) · **Dépenses** : lignes prévisionnelles catégorisées toutes > 0 (`22a54d0c`).
+
+### Multi-personnes personnalisé
+- **Migration additive `trip_member_profiles` + `trips.party_size` appliquée en prod** (`91f8f3a6`) · **`deriveMemberInput`** : appris (Profil Terrain calibré, consentement) > estimé > moyennes, `sources` exhaustif (`3d702bf4`) · **`recomputeParty`** : moteur complet `buildGroupPlan` dé-neutralisé (portage, charge max, redistribution ≤ 5 kg), quantités/owner/budget recalculés, idempotent `party_version` (`840215cf`) · **Flow « Rejoindre »** : lien de partage, consentement, snapshot profil, recalcul immédiat (`abce9fe5`) · **Transparence** : badges Appris/Estimé/Moyenne + bandeau « recalculée pour N » (`b369cdb3`).
+
+### Gates finaux
+```
+npx tsc --noEmit → 0 · npm run lint → 0
+npx vitest run   → 2645 passed | 23 skipped ; 4 suites en échec = préexistantes
+npm run build    → ✓ Compiled (0) · e2e prod → 7/7 (preparer-sentier, depart-cockpit, atlas)
+visuel 3 projets → 26 passed / 0 failed
+migration prod   → 20260912300000 appliquée (vérifiée par probe service-role)
+```
+
+### Actions propriétaire restantes
+Vérification visuelle du nouvel itinéraire sur ses captures ; usage réel du flux « Rejoindre » avec de vrais profils Terrain calibrés (sinon estimations/moyennes labellisées) ; dette notée : double écriture budget prévisionnel possible entre usine et platinage (dédoublonnage futur), 3/24 slugs de règles sans produit CSV (fallback poids base).
+---
+
+## 2026-09-13 — CHANTIER TRIBU — Lot 1 (Phases 0→6) : permissions de groupe, pont club, groupe éclair, délégations, quorum, journal, modèles
+
+> Spec : `docs/superpowers/specs/2026-09-13-chantier-tribu-design.md` · Plan : `docs/superpowers/plans/2026-09-13-chantier-tribu.md` · Rapport : `docs/tribu/rapport-lot1.md` · Preuve Phase 0 : `docs/tribu/phase0-preuve.md`. Décisions : fermer **toutes** les escalades RLS ; `member` self-only + capacité `contribute` ; pont sur `travel_groups` (jamais le legacy `/nouveau-groupe`) ; sélection éclair = co-membres + abonnements + recherche ; Phase 7 (position live) en lot 2.
+
+### Phase 0 — Sécurité
+- Capacités (10, dont `contribute`) + matrice 40 lignes + overrides ; `group_member_has_capability` (override > délégation > rôle) ; `search_path` durci (`lkv_can`, `is_moderateur`, etc.).
+- **5 `*_member_all` + 7 lectures publiques prod-only + `invitations_public_read_by_token` supprimées** ; policies par commande (SELECT membre observer inclus / INSERT contribute + owner / UPDATE-DELETE self**ou** manage_*) ; votes par appartenance self-only ; trigger anti auto-promotion ; join forcé `role='member'` ; **bootstrap organizer par trigger** (`seed_group_owner_membership`) ; `group_public_card_stats` (agrégats Bouteille sans fuite de lignes).
+- Preuves : `tribu_permissions.test.sql` **70/70**, harnais install+upgrade, double revue `database-reviewer` (NO-GO → correctifs → GO).
+
+### Phase 1 — Pont Club ↔ Hub (TRIBU-R1)
+- `parent_club_id` + `is_club_member` + enum `club_only` + policy dédiée ; garde d'insertion (groupe `club_only` = membre du club, RLS) ; onglet « Groupes » club desktop/mobile → cookie d'aventure + `/hub/groupe` ; action `createGroupFromClub` ; badge « Né du club X ».
+
+### Phase 2 — Groupe éclair
+- `is_ephemeral`/`auto_dissolve_at` + index partiel ; cron `cleanup-ephemeral-groups` (anti-TOCTOU) ; CTA Explorer + sheet (co-membres/follows/recherche) ; badge + countdown + conversion ; invitations compensées.
+
+### Phase 3→6
+- Délégations temporaires (rangs, ≤ 7 j, **additives** — bug soustractif attrapé en revue finale et corrigé) + UI ; quorum à la lecture (3 types, 6 tests) + toggle « Décision importante » ; journal d'activité par 6 triggers + panneau hub ; modèles de checklist club publiables et applicables en groupe.
+
+### Gates finaux
+```text
+tsc 0 · lint 0 · vitest 2708 passed | 23 skipped (4 suites préexistantes) · build ✓
+harnais DB install+upgrade → SUCCÈS (218 versions, pgTAP PASS) · pgTAP TRIBU 7 suites / 135 assertions vertes
+e2e prod 7/7 (preparer, depart, atlas) · garde design H-D85 14/14 · migrations prod 12/12 + vérif service-role
+```
+
+### Actions propriétaire restantes
+Vérification visuelle : onglet Groupes d'un club, création d'un groupe, sortie éclair depuis l'Explorer, journal et modèles dans /hub/groupe. Backlog lot 2 : e2e dédiés pont/modèles, alignement des affordances UI sur les capacités, puis **Phase 7 (position live)**.
+
+---
+
+## 2026-09-13 — CHANTIER TRIBU — Lot 2 : Phase 7 (partage de position live)
+
+> Spec : `docs/superpowers/specs/2026-09-13-tribu-phase7-position-live-design.md` · Plan : `docs/superpowers/plans/2026-09-13-tribu-phase7-position-live.md` · Rapport : `docs/tribu/rapport-phase7.md`. Opus : TRIBU-R4 (opt-in, jamais silencieux, indicateur permanent, arrêt 1 tap, expiration) et TRIBU-R6 (purge par cron). Ruling : sessions de partage + positions rattachées, zéro historique, lot 2 après revue du lot 1.
+
+### Données & serveur
+- **M12 sessions** : ouverture explicite, unique par groupe (index partiel), 1-72 h, clôture starter/manage_members/(tout membre si expirée).
+- **M13 positions** : une ligne par (session, membre), **TTL 15 min borné en base** (WITH CHECK), lecture membres + session ouverte + fraîcheur, self-only en écriture, propre ligne expirée récupérable. Appliquées en prod.
+- **Actions** `livePosition` : start (nettoyage expirées, 23505 explicite), stop (0 ligne = échec honnête + purge best-effort), share (session ouverte), stopSharing, getLiveState (**erreurs DB remontées, jamais un faux » aucune session »**).
+- **Hook** : ping 45 s, arrêt confirmé serveur (toggle/3 échecs/onglet masqué > 2 min/démontage), watchdog de fraîcheur 5 min.
+- **UI** : `LiveSharePanel` hub desktop+mobile — consentement explicite, durées 2/8/24 h, indicateur permanent » PARTAGE ACTIF — arrêt à un tap « , clôture organisateur only (mobile corrigé), aucun partage implicite au démarrage.
+- **Carte** : couche `atlas-members` (avatars/noms) sur `UnifiedExplorerMap`, badge » N positions du groupe « + stop 1 tap dans l'Explorer, Realtime + refresh 60 s.
+- **Cron** `expire-live-positions` : purge positions + fermeture sessions, filtres re-vérifiés.
+
+### Preuves
+```text
+pgTAP tribu_live 20/20 · vitest lot 70/70 · harnais DB install+upgrade PASS (220 versions)
+vitest complet 2734 passed | 23 skipped (4 suites préexistantes) · lint 0 · tsc 0 · build ✓
+e2e 7/7 (preparer, depart, atlas) · garde design 14/14 · prod : 2 migrations + probe service-role
+```
+
+### Revue `silent-failure-hunter` (NO-GO → corrigé)
+C1 arrêt 1 tap non effectif/inversé · C2 erreurs DB converties en absence · C3 stop carte muet · I1 clôture fantôme + bouton mobile trop large · I2 position expirée non récupérable · I3 TTL non borné en base · I4/I5 faux actif GPS / faux inactif · I6 nettoyage expirées + 23505 — **tous corrigés et couverts**.
+
+### Actions propriétaire restantes
+Vérification visuelle : panneau » Position live « dans /hub/groupe, badge/couche sur l'Explorer après démarrage d'une session (2 appareils pour voir le temps réel). Backlog noté : état du canal Realtime, purge à la clôture garantie par le cron seul, harmonisation UX manager mobile. **Chantier TRIBU complet (Phases 0→7).**

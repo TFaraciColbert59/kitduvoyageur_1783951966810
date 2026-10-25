@@ -1,0 +1,386 @@
+[
+  {
+    "predictedP50Seconds": 1800,
+    "predictedP90Seconds": 2016,
+    "actualSeconds": 1836,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 2533,
+    "predictedP90Seconds": 2837,
+    "actualSeconds": 2432,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 3266,
+    "predictedP90Seconds": 3739,
+    "actualSeconds": 3527,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 3999,
+    "predictedP90Seconds": 4479,
+    "actualSeconds": 3599,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 4732,
+    "predictedP90Seconds": 5769,
+    "actualSeconds": 5442,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 5465,
+    "predictedP90Seconds": 6121,
+    "actualSeconds": 4481,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 6198,
+    "predictedP90Seconds": 6942,
+    "actualSeconds": 6508,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 6931,
+    "predictedP90Seconds": 7763,
+    "actualSeconds": 6446,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 7664,
+    "predictedP90Seconds": 9683,
+    "actualSeconds": 10193,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 8397,
+    "predictedP90Seconds": 9969,
+    "actualSeconds": 9405,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 9130,
+    "predictedP90Seconds": 10226,
+    "actualSeconds": 6848,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 9863,
+    "predictedP90Seconds": 11047,
+    "actualSeconds": 6510,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "flat"
+  },
+  {
+    "predictedP50Seconds": 10596,
+    "predictedP90Seconds": 11906,
+    "actualSeconds": 11232,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 2329,
+    "predictedP90Seconds": 2608,
+    "actualSeconds": 2399,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 3062,
+    "predictedP90Seconds": 3429,
+    "actualSeconds": 2909,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 3795,
+    "predictedP90Seconds": 4385,
+    "actualSeconds": 4137,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 4528,
+    "predictedP90Seconds": 5760,
+    "actualSeconds": 5434,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 5261,
+    "predictedP90Seconds": 5892,
+    "actualSeconds": 4630,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 5994,
+    "predictedP90Seconds": 6713,
+    "actualSeconds": 6234,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 6727,
+    "predictedP90Seconds": 8500,
+    "actualSeconds": 8947,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 7460,
+    "predictedP90Seconds": 8698,
+    "actualSeconds": 8206,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 8193,
+    "predictedP90Seconds": 9176,
+    "actualSeconds": 6964,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 8926,
+    "predictedP90Seconds": 10124,
+    "actualSeconds": 9551,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 9659,
+    "predictedP90Seconds": 10818,
+    "actualSeconds": 8886,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "ascent"
+  },
+  {
+    "predictedP50Seconds": 10392,
+    "predictedP90Seconds": 11639,
+    "actualSeconds": 10080,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 2125,
+    "predictedP90Seconds": 2380,
+    "actualSeconds": 2231,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 2858,
+    "predictedP90Seconds": 3201,
+    "actualSeconds": 2515,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 3591,
+    "predictedP90Seconds": 4022,
+    "actualSeconds": 3735,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 4324,
+    "predictedP90Seconds": 6096,
+    "actualSeconds": 5751,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 5057,
+    "predictedP90Seconds": 5664,
+    "actualSeconds": 4046,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 5790,
+    "predictedP90Seconds": 6628,
+    "actualSeconds": 6253,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 6523,
+    "predictedP90Seconds": 7306,
+    "actualSeconds": 6653,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 7256,
+    "predictedP90Seconds": 8127,
+    "actualSeconds": 6603,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 7989,
+    "predictedP90Seconds": 9400,
+    "actualSeconds": 8868,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 8722,
+    "predictedP90Seconds": 9769,
+    "actualSeconds": 8199,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 9455,
+    "predictedP90Seconds": 11525,
+    "actualSeconds": 10873,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "descent"
+  },
+  {
+    "predictedP50Seconds": 10188,
+    "predictedP90Seconds": 11879,
+    "actualSeconds": 11207,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 1921,
+    "predictedP90Seconds": 2152,
+    "actualSeconds": 1767,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 2654,
+    "predictedP90Seconds": 2972,
+    "actualSeconds": 2707,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 3387,
+    "predictedP90Seconds": 4129,
+    "actualSeconds": 3895,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 4120,
+    "predictedP90Seconds": 4614,
+    "actualSeconds": 3914,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 4853,
+    "predictedP90Seconds": 6131,
+    "actualSeconds": 6454,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 5586,
+    "predictedP90Seconds": 6256,
+    "actualSeconds": 4748,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 6319,
+    "predictedP90Seconds": 7100,
+    "actualSeconds": 6698,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 7052,
+    "predictedP90Seconds": 7898,
+    "actualSeconds": 6276,
+    "predictedDifficulty": 2,
+    "feltDifficulty": 1.5,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 7785,
+    "predictedP90Seconds": 8995,
+    "actualSeconds": 8486,
+    "predictedDifficulty": 3,
+    "feltDifficulty": 3.5,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 8518,
+    "predictedP90Seconds": 9540,
+    "actualSeconds": 8262,
+    "predictedDifficulty": 4,
+    "feltDifficulty": 5,
+    "terrainBucket": "technical"
+  },
+  {
+    "predictedP50Seconds": 9251,
+    "predictedP90Seconds": 10983,
+    "actualSeconds": 10361,
+    "predictedDifficulty": 5,
+    "feltDifficulty": 4,
+    "terrainBucket": "technical"
+  }
+]

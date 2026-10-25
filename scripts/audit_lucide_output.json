@@ -1,0 +1,716 @@
+{
+  "totalUniqueIcons": 83,
+  "totalUsages": 295,
+  "icons": {
+    "AlertCircle": {
+      "count": 3,
+      "files": [
+        "src/features/materiel/components/cards/GearCardDispo.tsx",
+        "src/features/materiel/components/depart/DepartAlerts.tsx",
+        "src/features/materiel/components/depart/DepartChecklist.tsx"
+      ]
+    },
+    "AlertOctagon": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartParticipants.tsx"
+      ]
+    },
+    "AlertTriangle": {
+      "count": 9,
+      "files": [
+        "src/app/materiel/depart/error.tsx",
+        "src/app/materiel/depart/[id]/error.tsx",
+        "src/features/materiel/components/cards/GearCardAlertes.tsx",
+        "src/features/materiel/components/cards/GearCardSuivi.tsx",
+        "src/features/materiel/components/depart/DepartAlerts.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/mobile/MobileVitalAlertBanner.tsx",
+        "src/features/preparation/components/tabs/ShakedownTab.tsx",
+        "src/features/preparation/components/tabs/TeamTab.tsx"
+      ]
+    },
+    "ArrowDown": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/kits/TemplateStore.tsx"
+      ]
+    },
+    "ArrowLeft": {
+      "count": 3,
+      "files": [
+        "src/app/materiel/depart/error.tsx",
+        "src/app/materiel/depart/[id]/error.tsx",
+        "src/components/ui/GlassSheet.tsx"
+      ]
+    },
+    "ArrowRight": {
+      "count": 13,
+      "files": [
+        "src/app/kits/page.tsx",
+        "src/features/materiel/components/cards/GearCardAlertes.tsx",
+        "src/features/materiel/components/cards/GearCardDepart.tsx",
+        "src/features/materiel/components/cards/GearCardDispo.tsx",
+        "src/features/materiel/components/cards/GearCardForget.tsx",
+        "src/features/materiel/components/cards/GearCardKits.tsx",
+        "src/features/materiel/components/cards/GearCardSuivi.tsx",
+        "src/features/materiel/components/depart/DepartAlerts.tsx",
+        "src/features/materiel/components/depart/DepartCockpit.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/mobile/MobileVitalAlertBanner.tsx",
+        "src/features/preparation/components/tabs/ShakedownTab.tsx"
+      ]
+    },
+    "ArrowUpRight": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx"
+      ]
+    },
+    "Backpack": {
+      "count": 7,
+      "files": [
+        "src/app/kits/page.tsx",
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/features/materiel/components/cards/GearCardDepart.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx"
+      ]
+    },
+    "Bell": {
+      "count": 1,
+      "files": [
+        "src/components/explorer/ExplorerClient.tsx"
+      ]
+    },
+    "Boxes": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartCockpit.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx"
+      ]
+    },
+    "Calendar": {
+      "count": 5,
+      "files": [
+        "src/app/pays/components/EarthCountrySheet.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartRightSidebar.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx",
+        "src/features/materiel/components/kits/KitOverviewCockpitCard.tsx"
+      ]
+    },
+    "Check": {
+      "count": 18,
+      "files": [
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/features/materiel/components/cards/GearCardForget.tsx",
+        "src/features/materiel/components/cards/GearCardKits.tsx",
+        "src/features/materiel/components/cards/GearCardSuivi.tsx",
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartMap.tsx",
+        "src/features/materiel/components/depart/DepartParticipants.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx",
+        "src/features/materiel/components/forget/ForgetChecklistItem.tsx",
+        "src/features/materiel/components/kits/KitBuilder.tsx",
+        "src/features/materiel/components/kits/KitProductSuggestions.tsx",
+        "src/features/materiel/components/kits/KitsActiveCockpitCard.tsx",
+        "src/features/materiel/components/kits/KitsGrid.tsx",
+        "src/features/materiel/components/kits/TemplateStore.tsx",
+        "src/features/materiel/components/mobile/MobileChecklistItem.tsx",
+        "src/features/preparation/components/tabs/WeightTab.tsx"
+      ]
+    },
+    "CheckCircle2": {
+      "count": 8,
+      "files": [
+        "src/features/materiel/components/cards/GearCardDispo.tsx",
+        "src/features/materiel/components/cards/GearCardInventaire.tsx",
+        "src/features/materiel/components/cards/GearCardSuivi.tsx",
+        "src/features/materiel/components/depart/DepartCockpit.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/preparation/components/PreparationHeader.tsx",
+        "src/features/preparation/components/tabs/GearTab.tsx",
+        "src/features/preparation/components/tabs/TeamTab.tsx"
+      ]
+    },
+    "CheckSquare": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx"
+      ]
+    },
+    "ChevronDown": {
+      "count": 10,
+      "files": [
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+        "src/components/explorer/ExplorerMobileSheet.tsx",
+        "src/features/materiel/components/depart/DepartAlerts.tsx",
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx",
+        "src/features/materiel/components/depart/DepartWeightBreakdown.tsx",
+        "src/features/materiel/components/depart/KitSwitcher.tsx",
+        "src/features/materiel/components/kits/KitBuilder.tsx",
+        "src/features/materiel/components/kits/KitProductSuggestions.tsx"
+      ]
+    },
+    "ChevronLeft": {
+      "count": 2,
+      "files": [
+        "src/app/pays/components/EarthMobileHeader.tsx",
+        "src/features/preparation/components/PreparationHeader.tsx"
+      ]
+    },
+    "ChevronRight": {
+      "count": 3,
+      "files": [
+        "src/app/pays/components/EarthCountrySheet.tsx",
+        "src/components/explorer/ExplorerListCard.tsx",
+        "src/features/materiel/components/depart/DepartLeftSidebar.tsx"
+      ]
+    },
+    "ChevronUp": {
+      "count": 2,
+      "files": [
+        "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+        "src/components/explorer/ExplorerMobileSheet.tsx"
+      ]
+    },
+    "Clock": {
+      "count": 12,
+      "files": [
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/components/explorer/ExplorerListCard.tsx",
+        "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/features/materiel/components/cards/GearCardDepart.tsx",
+        "src/features/materiel/components/cards/GearCardDispo.tsx",
+        "src/features/materiel/components/cards/GearCardSuivi.tsx",
+        "src/features/materiel/components/depart/DepartAlerts.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx",
+        "src/features/materiel/components/kits/KitsActiveCockpitCard.tsx",
+        "src/features/materiel/components/kits/KitsGrid.tsx"
+      ]
+    },
+    "Cloud": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "CloudDrizzle": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "CloudFog": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "CloudLightning": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "CloudRain": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "CloudSnow": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "CloudSun": {
+      "count": 3,
+      "files": [
+        "src/features/materiel/components/depart/DepartCockpit.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "Coins": {
+      "count": 1,
+      "files": [
+        "src/app/pays/components/EarthCountrySheet.tsx"
+      ]
+    },
+    "Compass": {
+      "count": 6,
+      "files": [
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartMap.tsx",
+        "src/features/materiel/components/depart/DepartRightSidebar.tsx",
+        "src/features/materiel/components/kits/KitOverviewCockpitCard.tsx"
+      ]
+    },
+    "Download": {
+      "count": 2,
+      "files": [
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/features/materiel/components/depart/DepartMap.tsx"
+      ]
+    },
+    "Droplet": {
+      "count": 1,
+      "files": [
+        "src/features/preparation/components/tabs/WeightTab.tsx"
+      ]
+    },
+    "Droplets": {
+      "count": 3,
+      "files": [
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "Edit2": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartHeader.tsx"
+      ]
+    },
+    "ExternalLink": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartAlerts.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx"
+      ]
+    },
+    "FileText": {
+      "count": 3,
+      "files": [
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+        "src/features/materiel/components/depart/DepartRightSidebar.tsx"
+      ]
+    },
+    "Flame": {
+      "count": 1,
+      "files": [
+        "src/features/preparation/components/tabs/GearTab.tsx"
+      ]
+    },
+    "GripVertical": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/kits/KitsCockpit.tsx",
+        "src/features/materiel/components/MaterielGrid.tsx"
+      ]
+    },
+    "Handshake": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx"
+      ]
+    },
+    "HeartPulse": {
+      "count": 1,
+      "files": [
+        "src/features/preparation/components/tabs/TeamTab.tsx"
+      ]
+    },
+    "HelpCircle": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartAlerts.tsx"
+      ]
+    },
+    "ImageOff": {
+      "count": 1,
+      "files": [
+        "src/components/ui/SmartImage.tsx"
+      ]
+    },
+    "Layers": {
+      "count": 6,
+      "files": [
+        "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+        "src/features/materiel/components/depart/DepartCockpit.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx",
+        "src/features/materiel/components/depart/DepartLeftSidebar.tsx",
+        "src/features/materiel/components/depart/DepartMap.tsx",
+        "src/features/materiel/components/kits/KitsKpiCockpitCard.tsx"
+      ]
+    },
+    "LayoutGrid": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx"
+      ]
+    },
+    "List": {
+      "count": 2,
+      "files": [
+        "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx"
+      ]
+    },
+    "MapPin": {
+      "count": 8,
+      "files": [
+        "src/app/pays/components/EarthCountrySheet.tsx",
+        "src/components/explorer/ExplorerListCard.tsx",
+        "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+        "src/components/explorer/ExplorerMobileSheet.tsx",
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartMap.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx"
+      ]
+    },
+    "Maximize2": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartMap.tsx"
+      ]
+    },
+    "Minimize2": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartMap.tsx"
+      ]
+    },
+    "Mountain": {
+      "count": 2,
+      "files": [
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/components/ui/SmartImage.tsx"
+      ]
+    },
+    "Navigation": {
+      "count": 5,
+      "files": [
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/components/explorer/ExplorerListCard.tsx",
+        "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/features/materiel/components/depart/DepartMap.tsx"
+      ]
+    },
+    "Package": {
+      "count": 5,
+      "files": [
+        "src/features/materiel/components/cards/GearCardKits.tsx",
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/kits/KitsKpiBar.tsx",
+        "src/features/materiel/components/kits/KitsKpiCockpitCard.tsx",
+        "src/features/preparation/components/tabs/WeightTab.tsx"
+      ]
+    },
+    "PhoneCall": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartParticipants.tsx"
+      ]
+    },
+    "Play": {
+      "count": 2,
+      "files": [
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx"
+      ]
+    },
+    "Plus": {
+      "count": 8,
+      "files": [
+        "src/features/materiel/components/cards/GearCardInventaire.tsx",
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx",
+        "src/features/materiel/components/kits/KitBuilder.tsx",
+        "src/features/materiel/components/kits/KitProductSuggestions.tsx",
+        "src/features/materiel/components/mobile/MobileFloatingIsland.tsx",
+        "src/features/preparation/components/tabs/GearTab.tsx",
+        "src/features/preparation/components/tabs/TeamTab.tsx"
+      ]
+    },
+    "Printer": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartLeftSidebar.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx"
+      ]
+    },
+    "Radio": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartParticipants.tsx"
+      ]
+    },
+    "RefreshCw": {
+      "count": 2,
+      "files": [
+        "src/app/materiel/depart/error.tsx",
+        "src/app/materiel/depart/[id]/error.tsx"
+      ]
+    },
+    "RotateCcw": {
+      "count": 5,
+      "files": [
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/components/explorer/ExplorerFilterPanel.tsx",
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx"
+      ]
+    },
+    "Scale": {
+      "count": 7,
+      "files": [
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx",
+        "src/features/materiel/components/depart/DepartWeightBreakdown.tsx",
+        "src/features/materiel/components/kits/KitsKpiBar.tsx",
+        "src/features/materiel/components/kits/KitsKpiCockpitCard.tsx",
+        "src/features/preparation/components/PreparationHeader.tsx",
+        "src/features/preparation/components/tabs/ShakedownTab.tsx",
+        "src/features/preparation/components/tabs/WeightTab.tsx"
+      ]
+    },
+    "Search": {
+      "count": 6,
+      "files": [
+        "src/app/pays/components/EarthMobileHeader.tsx",
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/components/explorer/ExplorerFilterPanel.tsx",
+        "src/components/ui/GlassCommand.tsx",
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx"
+      ]
+    },
+    "Share2": {
+      "count": 4,
+      "files": [
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/features/materiel/components/depart/DepartLeftSidebar.tsx",
+        "src/features/materiel/components/depart/DepartParticipants.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx"
+      ]
+    },
+    "Shield": {
+      "count": 2,
+      "files": [
+        "src/features/preparation/components/tabs/GearTab.tsx",
+        "src/features/preparation/components/tabs/TeamTab.tsx"
+      ]
+    },
+    "ShieldAlert": {
+      "count": 2,
+      "files": [
+        "src/features/preparation/components/PreparationHeader.tsx",
+        "src/features/preparation/components/tabs/ShakedownTab.tsx"
+      ]
+    },
+    "ShieldCheck": {
+      "count": 10,
+      "files": [
+        "src/app/materiel/depart/error.tsx",
+        "src/app/materiel/depart/[id]/error.tsx",
+        "src/features/materiel/components/cards/GearCardAlertes.tsx",
+        "src/features/materiel/components/cards/GearCardSuivi.tsx",
+        "src/features/materiel/components/depart/DepartAlerts.tsx",
+        "src/features/materiel/components/depart/DepartCockpit.tsx",
+        "src/features/materiel/components/depart/DepartParticipants.tsx",
+        "src/features/materiel/components/depart/DepartRightSidebar.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx",
+        "src/features/materiel/components/kits/KitOverviewCockpitCard.tsx"
+      ]
+    },
+    "Shirt": {
+      "count": 2,
+      "files": [
+        "src/features/preparation/components/tabs/GearTab.tsx",
+        "src/features/preparation/components/tabs/WeightTab.tsx"
+      ]
+    },
+    "ShoppingBag": {
+      "count": 8,
+      "files": [
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx",
+        "src/features/materiel/components/kits/KitProductSuggestions.tsx",
+        "src/features/materiel/components/kits/KitsActiveCockpitCard.tsx",
+        "src/features/materiel/components/kits/KitsGrid.tsx",
+        "src/features/materiel/components/kits/KitsKpiCockpitCard.tsx",
+        "src/features/preparation/components/tabs/ShakedownTab.tsx"
+      ]
+    },
+    "SlidersHorizontal": {
+      "count": 1,
+      "files": [
+        "src/components/explorer/ExplorerClient.tsx"
+      ]
+    },
+    "Sparkles": {
+      "count": 9,
+      "files": [
+        "src/app/pays/components/EarthCountrySheet.tsx",
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/kits/KitBuilder.tsx",
+        "src/features/materiel/components/kits/KitProductSuggestions.tsx",
+        "src/features/materiel/components/mobile/MobileChecklistItem.tsx",
+        "src/features/preparation/components/PreparationHeader.tsx",
+        "src/features/preparation/components/tabs/ShakedownTab.tsx"
+      ]
+    },
+    "Star": {
+      "count": 1,
+      "files": [
+        "src/components/explorer/ExplorerListCard.tsx"
+      ]
+    },
+    "Sun": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "Sunrise": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "Sunset": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "Tag": {
+      "count": 1,
+      "files": [
+        "src/app/pays/components/EarthCountrySheet.tsx"
+      ]
+    },
+    "Thermometer": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx",
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "Timer": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartRightSidebar.tsx"
+      ]
+    },
+    "Trash2": {
+      "count": 6,
+      "files": [
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx",
+        "src/features/materiel/components/kits/KitBuilder.tsx",
+        "src/features/materiel/components/mobile/MobileChecklistItem.tsx",
+        "src/features/preparation/components/tabs/GearTab.tsx",
+        "src/features/preparation/components/tabs/TeamTab.tsx"
+      ]
+    },
+    "TrendingUp": {
+      "count": 4,
+      "files": [
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/components/explorer/ExplorerListCard.tsx",
+        "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+        "src/components/explorer/TrailDetailPanel.tsx"
+      ]
+    },
+    "Users": {
+      "count": 3,
+      "files": [
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartParticipants.tsx",
+        "src/features/preparation/components/tabs/TeamTab.tsx"
+      ]
+    },
+    "Volume2": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/mobile/MobileFloatingIsland.tsx"
+      ]
+    },
+    "VolumeX": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartChecklist.tsx"
+      ]
+    },
+    "Wifi": {
+      "count": 2,
+      "files": [
+        "src/features/materiel/components/depart/DepartCockpit.tsx",
+        "src/features/materiel/components/depart/DepartLeftSidebar.tsx"
+      ]
+    },
+    "WifiOff": {
+      "count": 4,
+      "files": [
+        "src/app/materiel/depart/error.tsx",
+        "src/app/materiel/depart/[id]/error.tsx",
+        "src/features/materiel/components/depart/DepartCockpit.tsx",
+        "src/features/materiel/components/depart/DepartLeftSidebar.tsx"
+      ]
+    },
+    "Wind": {
+      "count": 1,
+      "files": [
+        "src/features/materiel/components/depart/DepartWeather.tsx"
+      ]
+    },
+    "X": {
+      "count": 11,
+      "files": [
+        "src/app/pays/components/EarthCountrySheet.tsx",
+        "src/app/pays/components/EarthMobileHeader.tsx",
+        "src/components/explorer/ExplorerClient.tsx",
+        "src/components/explorer/TrailDetailPanel.tsx",
+        "src/components/ui/GlassDrawer.tsx",
+        "src/features/materiel/components/depart/DepartAlerts.tsx",
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartEquipmentHub.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx",
+        "src/features/materiel/components/mobile/MobileVitalAlertBanner.tsx"
+      ]
+    },
+    "Zap": {
+      "count": 6,
+      "files": [
+        "src/features/materiel/components/depart/DepartChecklist.tsx",
+        "src/features/materiel/components/depart/DepartCockpit.tsx",
+        "src/features/materiel/components/depart/DepartHeader.tsx",
+        "src/features/materiel/components/depart/DepartLeftSidebar.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx",
+        "src/features/materiel/components/mobile/MobileChecklistItem.tsx"
+      ]
+    }
+  }
+}

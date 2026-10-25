@@ -1,0 +1,4729 @@
+
+# CHECKLIST DE PROOF — Préparateur `/prepare` LKDV
+
+Source : 32 maquettes uniques (41 fichiers, 9 doublons) analysées une à une,
+croisées avec l'intégralité des consignes écrites de la conversation.
+
+**Progression : 236 / 236 items prouvÉs (100 %) É 0 partiel / 0 É faire / 0 bloquÉs.** Compteur = nombre de lignes de la forme `- [x]` / `- [~]` / `- [ ]` / `- [!]` (les mentions en prose ne comptent pas). RecomptÉ par script le 2026-09-30 : `FAITS=236 PARTIELS=0 RESTANTS=0 BLOQUES=0`. **B4, D3, E9 puis E8 ont ÉtÉ fermÉs É cette rÉvision** É E8 exigeait une source d’image réelle, absente ; elle existe maintenant (Wikimedia Commons, crÉdit et licence visibles), donc son `[~]` est devenu un `[x]`. **Il ne reste aucun item ouvert.**
+
+
+> ### Campagne finale — les morsants que le pilote rejoue lui-meme
+>
+> Regle du dossier : **aucun `[x]` sans preuve mordante.** Un agent peut produire
+> la preuve, mais un item marque `[~]` « morsant a rejouer » ne passe `[x]` que
+> lorsque **le pilote** a vu le test rougir sur le bon nom, puis le fichier
+> restaure **octet pour octet** (`Buffer.compare === 0`), puis le retour au vert.
+> Registre des morsants, jour du 2026-09-29 - **les deux dus sont joues, A4 et N6 sont fermes** :
+>
+> | Item | Sabotage a rejouer | Test qui doit rougir |
+> |---|---|---|
+> | A4 | **JOUE** - `/prepare` reinscrit dans `isNoNavRoute` | **6/12 rouges dont `A4-03`** (la cible) |
+> | N6 | **JOUE** - `triggerHaptic('selection')` retire | **3/12 rouges dont `N6-08`** (la cible) |
+>
+> Les morsants produits par les autres agents sont cites dans leur item, avec le
+> nom du test et la restauration. Ceux de ce tableau sont les miens : je ne les
+> marque pas sur parole.
+Légende : `[ ]` à faire · `[~]` partiellement fait · `[x]` fait et vérifié · `[!]` bloqué par une donnée absente du dépôt · `R` rectificatif d'audit
+
+**Structure** — 0 rectificatifs · A→H périmètre fonctionnel · I routage · J décisions
+owner · K ordre d'exécution · **L audit visuel par élément (captures réelles)** ·
+**M beauté / design system** · **N mouvement & accessibilité** ·
+**P preuve : données réelles, moteur, boutons (audit physique 393×852 du 28-09)**.
+
+`M` et `N` proviennent d'un audit du skill **ui-ux-pro-max** (glassmorphism, cibles
+tactiles, transitions, contrastes) **et** d'une relecture ligne à ligne de
+`src/features/adventure-prep/adventure-prep.css`. Ils sont ancrés sur des faits
+vérifiés dans le fichier, pas sur des goûts : chaque point porte son numéro de ligne.
+
+> **Dérive vérifiée le 2026-09-27, pendant que ce checklist s'écrivait.** Le thread
+> principal a avancé en parallèle : 15 fichiers modifiés, 9 nouveaux non suivis.
+> **8 items de ce document sont passés de « à faire » à « fait » pendant sa rédaction.**
+> R1 est devenu faux par dérive : c'est la démonstration que re-vérifier avant de cocher
+> n'est pas optionnelle. Tout est **non commité**.
+
+> **Audit physique du 2026-09-28 — trois constats qui résument l'état du travail.**
+> 1. ~~**Une ligne de code casse toutes les distances et toutes les durées** (P0.1)~~
+>    **RÉPARÉ et VÉRIFIÉ le 2026-09-28.** Le lecteur de géométrie lisait
+>    `legs[i].geometry` ; OSRM place le tracé au niveau `routes[0].geometry` (relevé
+>    réel : `leg[0].geometry present = False`, `route.geometry present = True`,
+>    12 646 points). Le tracé global est désormais **découpé par tronçon** selon la
+>    distance routière mesurée de chaque leg (`splitGeometryByLegs`), donc plus de
+>    « À vérifier » et plus de tracé dupliqué.
+>    **Preuve API :** `GET /api/route?points=2.245,48.894;6.869,45.923` →
+>    `HTTP 200`, `distanceKm: 623.3385`, `durationMin: 398.165`, tracé complet.
+>    **Preuve test :** 6 tests rouge avant correctif, `routing-service.test.ts`
+>    15/15 vert après, dont OSRM-GEO-01→06 (continuité et reconstruction du tracé).
+>    La fixture de test a été **corrigée** : elle plaçait la géométrie sur la route ET
+>    sur le leg, ce qu'OSRM ne produit jamais — elle testait un cas imaginaire.
+>    Reste à valider à l'écran (P2.13).
+> 2. **La météo est réelle mais orpheline** (P0.2) : la route API est écrite, testée et
+>    fonctionne ; aucun code ne l'appelle. Ce n'est pas du mock, c'est du mort.
+> 3. **L'IA n'est pas bridée** (P0.4) : elle propose une régate et une plongée depuis la
+>    banlieue parisienne avec deux enfants. Ce n'est pas du mock non plus — c'est une
+>    absence de contrôle.
+>
+> Autrement dit : **le problème n'est pas la quantité de données, c'est le raccordement.**
+> La base, les fournisseurs et la persistance sont solids ; le maillon qui manque est le
+> fil entre eux. C'est ce que la section P documente, ligne par ligne, avec sa preuve.
+### Lot 2026-09-29 (nuit) — contrastes : trois vrais défauts sous un faux bruit
+
+**Comptage au début du lot : 157 faits / 36 partiels / 33 restants = 226 items.**
+Fermé dans ce lot : **N2**. Reste **158 / 35 / 33 = 226**.
+
+**Le faux blocage était un mauvais runner.** `npx jest tests/design` échouait sur
+27/27 suites ("Must use import to load ES Module"). Le dépôt n'a **pas** de jest :
+`npm test` = `vitest run`, et `tests/design/**` est couvert par
+`vitest.config.ts`. Le meme dossier passe **27/27, 256 tests**. Un runner faux,
+et un diagnostic perdu sur un motif qui n'existe pas dans ce depot.
+
+**Un test rouge a révélé un vrai défaut de fond.** D9-06 exigeait littéralement
+`color: var(--prep-ink-accent)`. Ce n'était pas un test faux : le jeton en cause
+(#7fc49a, **3.48:1**) portait du **texte** dans **11 règles**, pas seulement un
+trait. On sépare donc le contrat — `--prep-ink-accent` pour les bords (seuil 3:1,
+il le tient), `--prep-ink-accent-strong` (#a9e6c6, **5.02:1**) pour tout
+`color:`. **11 règles basculées**, plus `.chip[aria-pressed]` déjà corrigée.
+Nouveau garde-fou **D9-06b** : aucun accent de base ne peut porter de `color:`.
+*Morsant vérifié atteint* — le sabotage nomme l'offenseur exact
+(`.prep-act[aria-pressed='true']`), restauration verte.
+
+**N2 : l'échec documenté était une hypothèse de fond, pas une mesure.** L'item
+reportait `--lkv-text-subtle` à **3.17:1** « sur les zones claires de la photo ». Ce
+calcul supposait un fond clair *sous* le verre translucide. Or `--prep-page-bg` →
+`--lkv-app-bg-fallback: #0b0d12`, **opaque**, en `!important` (tailwind.css:64) :
+aucun pixel clair n'atteint jamais le texte. Rapport réel **8.90:1**. Relevé sur le
+rendu : **26 textes visibles, 0 sous le seuil**, minimum **7.90:1**. Item **→ [x]**.
+
+**G3 reste [~], mais pour une raison neuve et solide.** La campagne sort
+`fail: 0` sur 4 points de rupture, auto-vérification verte — mais l'outil
+s'écarte lui-même : `verificationStatus: "PARTIAL / NOT VERIFIED"`. La campagne ne
+couvre que **l'étape 1** ; `/prepare` en compte trois, et **16 éléments** restent
+ignorés (carrousel horizontal rogné). Dire « conforme » serait le faux positif que
+cet item existe pour interdire. **Reste** : étendre la campagne aux étapes 2-3.
+
+**P5.2 reste [~], motif corrigé.** Le CTA tient largement (10.48:1 actif). Mais le
+fichier censé le garantir, `tests/visual/glass-contract.spec.ts`, **ne tourne
+nulle part** : `vitest.config.ts` exclut `tests/visual/**`, et
+`playwright.config.ts` a `testDir: './scripts/e2e'`. Il est orphelin — et ne
+mentionne même pas `/prepare`. La version précédente disait « exclu de Vitest » ;
+c'était incomplet, il est hors des **deux** runners.
+
+**Preuve de lot.** Campagne : 0 échec / 4 points de rupture / 58 mesures,
+auto-vérification verte. Suite complète : **658 fichiers, 6168 tests, 0 échec**.
+`tsc --noEmit` : exit 0. Trois morsants de contraste antérieurs revérifiés
+atteints (nav 0→4, `.prep-action` 0→1, CTA +1) et restaurés au vert.
+
+## Journal de progression — mis à jour à chaque lot
+### Lot 2026-09-29 (soir) — preuves visuelles : G4, L6.4, N7 fermés sur captures regardées
+
+**Comptage au début du lot : 229 faits / 3 partiels / 4 restants = 236 items.**
+Fermés dans ce lot : **G4, L6.4, N7**, puis **B4, D3, E9** à la révision du 2026-09-29 (le soir) : ces trois items étaient notés ouverts alors que leurs textes décrivaient un code caduc. Reste **235 / 1 / 0 = 236** — seul **E8** reste partiel, et c'est un manque de *source*, pas un manque de code.
+
+**Serveur sain avant toute mesure** (leçon du lot aube) : `GET / 200`, `/hub 200`,
+`/prepare?nouvelle=1 200`, Node 24. Sans ces trois 200, aucune capture n'aurait valu.
+`npx tsc --noEmit` : exit 0. Aucun `src/` touché par ce lot (preuves + journal uniquement) ;
+`D1` (10 tests) + `AN1` (16 tests) relancés : **26/26 verts**.
+
+**Génération réelle pilotée au clic** (Chamonix tapé dans le tiroir Lieu, géocodage réel
+« Chamonix-Mont-Blanc · France », CTA devenu actif, clic « Créer mon parcours ») :
+parcours **2 jours · 52 km · 3 445 m · 9 h 35**, météo réelle par jour (J1 « Partiellement
+nuageux 13°/20° · 35 % », J2 « Neige −4°/−2° · 96 % »), budgets honnêtes (J1 « 75 € connus ·
+1 étape à vérifier », J2 « À vérifier »), rail de jours Tout/J1/J2, « Recentrer » cliquable,
+CTA final « Enregistrer mon aventure » lisible. Au passage : AN5 (nom + coords), H5
+(« source inconnue » / « Open-Meteo (altitudes) » — la météo ne crédite pas le dénivelé),
+E9 (« Détails » + « À conserver », pas de « Remplacer »), E10 (Ajuster/Étapes/Ajouter),
+A4 (barre basse intacte), AN1 (étapes atteintes = boutons) **tous re-confirmés à l'écran** —
+aucun n'est recoché ici, ils l'étaient déjà.
+
+- **L6.4 → [x].** `proof/L64-generation-intermediaire-393.png` (**regardée**) : rail
+  Créations (done) → Préparation (active) → En avant !, note « Le tracé apparaîtra dès que
+  les lieux réels seront accrochés au parcours » (pas de carte mensongère — D1-3 tient à
+  l'écran), **7 phases** listées dont « Recherche du parcours » active, aucun CTA mort,
+  aucun footer mort. La substance était déjà testée (D1/D2) ; il manquait la preuve écran,
+  elle existe. Précédent suivi : L5.1 fermé par mesure navigateur.
+- **N7 → [x].** Quatre captures fraîches 393×852 **regardées** (étape 1, génération,
+  étape 2, étape 3) + campagne `measure_prep_contrast.mjs` : **0 échec / 4 points de
+  rupture** (375 : 0/18 · 393 : 0/18 · 768 : 0/14 · 1024 : 0/15), auto-vérification **VERTE**,
+  selftest vert. Rapport frais : `audit/prep-contrast-measurements.json` (régénéré, suivi).
+- **G4 → [x].** Les trois références 393×852 existent désormais et sont **regardées** :
+  `proof/G4-reference-etape1-393.png`, `proof/G4-reference-etape2-393.png` (écrase la
+  référence d'étape 2 précédente par une version issue d'une génération réelle),
+  `proof/G4-reference-etape3-393.png`. Jugement porté sur image, pas sur code : rail en
+  pastilles sans chrome, 1 action primaire lisible par écran, libellés entiers (barre basse
+  5 onglets intacts à 393), aucune superposition, budgets « À vérifier » honnêtes, dissolution
+  au pli (pas de coupe nette de glyphes). Le piège G3 (juger sans référence) est levé :
+  les références existent et sont citées.
+- **Réserves consignées, non masquées** (aucune ne rouvre un item fermé sur sa logique) :
+  1. les deux lignes de provenance H5 étape 2 (« source inconnue », « Open-Meteo
+  (altitudes) ») sont en filigrane peu lisible sur photo — **la campagne ne les couvre
+  pas** (elle ne mesure que l'étape 1, comme G3 le documente) ; c'est du style, pas de la
+  logique, et H5 reste fermé sur sa logique ;
+  2. pendant la génération, le haut de l'écran est un **fond uni** (pas de photo) avec un
+  grand vide au-dessus de la note de tracé — pas un bug, mais l'écran le plus pauvre des
+  trois ;
+  3. les cartes d'étape 1 sont des dalles sombres quasi-opaques, pas du verre M0 — M0/M1
+  portent sur tiroirs et rail, donc hors contrat, mais noté.
+- **Ni morsant ni code** : ce lot ne touche aucun `src/`, il n'y a donc rien à saboter et
+  rien à restaurer. La règle « aucun `[x]` sans preuve » est tenue par captures regardées
+  + mesures + suites D1/AN1 vertes, comme les précédents L5.1/AN8 du dossier.
+### Lot 2026-09-29 (matin 3) — le libelle qui cedait, et trois boutons morts
+
+**Comptage au début du lot : 164 faits / 35 partiels / 33 restants = 232 items.**
+Fermé dans ce lot : **L0.3, L1.1, L1.2, L1.3, L1.4, L2.7, L2.11**. Reste **171 / 35 / 26 = 232**.
+
+**Le bug de fond n était pas « un libellé trop long ».** C’était un libellé qui
+**recevait** la place. `flex: 1 1 auto` **sans confinement** : un élément flex qui
+rétrécit déborde de sa boîte et vient se peindre sur la valeur voisine. Le
+correctif porte donc sur le **flex**, pas sur le texte — et la règle est remontée
+dans la feuille, le `style=` inline retiré du TSX, pour qu elle soit visible de la
+recette et conforme à **P0.17**.
+
+**Un test qui passe pour une preuve sans rien prouver.** Le test L0.3-03 lisait une
+fenêtre de 200 caractères autour du `className` ; cette fenêtre attrapait la balise
+**voisine**, qui porte elle un style inline légitime. Le test autorisait donc
+exactement ce qu’il interdit. Il lit désormais la **balise d’ouverture** du
+libellé, rien d autre. C’est le genre de test qui passe au vert le jour où le
+défaut revient — et qui n’aurait rien vu venir le jour où il était déjà là.
+
+**L1.1-L1.3 : 24 lignes de CSS mort.** Aucun composant ne posait plus
+`prep-nav__icon` depuis le retrait des boutons, mais la recette restait, et les
+tests ne la regardaient pas — ils lisaient le source des composants. Une feuille de
+style peut donc réaccueillir une recette morte sans qu’un seul test ne bronche.
+Les trois items verrouillent désormais **la feuille elle-même**.
+
+**L2.11 : « garder tel quel » demande une preuve, pas une absence.** Un item qui
+demande de ne pas toucher à quelque chose doit être verrouillé, sinon le prochain
+lot le déplace. Cinq tests sur la ponctuation, la source et le silence hors étape 1.
+Et une précision qui aurait faussé la preuve : **ce qui bloque, c’est `activity`
+et `origin`** — la date et l’arrivée ne bloquent jamais, l’IA les tranche. Un
+brouillon « sans date » n’est pas bloquant : l’item se prouve sur un vrai manque.
+
+**L1.4 (commit `fbd68703`) était codé mais pas coché.** C’est exactement la dérive
+que ce document s’est donné pour mission d’empêcher. Recompté et vérifié :
+13 tests, morsant 12/12, mesure navigateur réelle en 393×852 et 320×568.
+
+**Preuve du lot** : 17 tests dans `chrome-haut-l0-l1-l2.test.ts`, morsant **17/17**
+— chaque sabotage a produit un test rouge **nommant l’offense**, restauration
+verte. 8 suites / 111 tests verts, dont les trois gardes du design system (M2
+rayons, M3 typo, P0.17 jetons). Commit `bd613d46`.
+
+**Un détail d outillage qui aurait fait perdre 17 minutes.** Sur Windows, `npx`
+est un `.cmd` que `execFileSync` refuse de lancer (`ENOENT` puis `EINVAL`) : le
+morsant échouait **17 fois sur 17** pour une raison de shell, et aurait pu être lu
+comme « les tests ne mordent pas ». Le lanceur appelle maintenant l’entrée de la
+CLI vitest avec le **nœud courant**. Second piège, plus grave : un `replace` à la
+première occurrence sabotait presque toujours la **mauvaise règle** (le même
+`flex: 0 1 auto` existe ailleurs) — trois scénarios semblaient verts alors que le
+défaut était bien présent. Le morsant travaille désormais **dans le corps de la
+règle visée**, et **refuse de continuer** si son motif est introuvable.
+### Lot 2026-09-29 (matin 2) — le fournisseur etait muet, la chaine jamais empruntee
+
+**Comptage au debut du lot : 158 faits / 35 partiels / 33 restants = 226 items.**
+Ferme dans ce lot : **D7.1 → D7.6**. Reste **164 / 35 / 33 = 232**.
+
+Le fait : le generateur pouvait rendre la main « terminee » alors que le
+fournisseur etait mort. Six causes distinctes, six morsants. Le detail est en
+**D7**, juste avant la section E. Les 2 commits sont `37f82775` (course +
+parapluie + signal) et `fcfd9bef` (catch anti-figage). Suite entiere reverifiee
+apres les patchs : **658 fichiers / 6168 tests verts**, `tsc --noEmit` exit 0.
+
+### Lot 2026-09-29 (aube) — dix items fermes, deux defauts d'infra trouves
+
+**Comptage au début du lot : 147 faits / 36 partiels / 43 restants = 226 items.**
+Fermes dans ce lot : **L2.9, L2.10, L3.1, L3.8, L4.1, L4.2, L4.3, L4.4, L4.5, L4.6**.
+Reste **157 / 36 / 33 = 226**.
+
+**Deux trouvailles d'infrastructure, qui ne sont PAS des defauts de code.**
+
+1. RED **Le build de production ne cassait pas : `.next` etait un residu.** Trois
+   builds successifs avaient compile, passe TypeScript, puis bloque sur
+   `Cannot find module './5611.js'`. Le chunk `5611.js` existait — dans
+   `.next/server/chunks/`, la ou le runtime ne va pas le chercher — et
+   `.next/server/webpack-runtime.js` ne contenait meme plus la chaine
+   `5611`. **C'est la signature d'un repertoire de build melange**, pas d'un
+   diff casse. **Preuve** : build complet sur un `distDir` neuf
+   (`DIST_DIR=.next-verify`, deja supporte par `next.config`) =>
+   **Compiled successfully in 40s**, `Collecting page data` **sans
+   erreur**, **275/275 pages statiques**. Et dans ce build propre, le chunk
+   `5611.js` **n'existe plus du tout** : c'est bien l'ancien residu qui
+   etait incoherent, pas le code. **Consequence de methode : un echec de build
+   qui ne se reproduit pas sur un distDir neuf ne se rattache pas au diff tant
+   qu on ne l a pas montre.**
+   *Nettoyage :* un build Next reecrit `next-env.d.ts` et `tsconfig.json` pour
+   pointer vers son `distDir`. Les deux ont ete **restitues**
+   (`git checkout --`) : le commit ne doit pas contenir le chemin d'un
+   distDir de verification.
+
+2. RED **Le serveur de dev servait des 500 sur TOUTES les routes.** `/`,
+   `/hub`, `/prepare` : `500`, corps `Internal Server Error`. Ce n etait
+   donc pas `/prepare` qui etait casse, et `tsc` + les 6 140 tests passaient
+   quand meme. **Preuve** : redemarrage du seul serveur (`next dev -p 4000`)
+   **sans aucune modification du code** => `Ready in 2.1s`, puis
+   `GET / 200`, `GET /hub 200`, `GET /prepare?nouvelle=1 200`.
+   **Lecon retenue, et elle est chere :** l'audit de contraste lance dans la
+   foulure a donc mesure **1 point** au lieu de 58, et le rapport porta
+   lui-meme « Aucun calque de photo trouve : la capture ne verrait qu'un
+   aplat, la mesure serait sans valeur ». Il ne reportait donc **aucune**
+   reelle regression, et un audit qui degrade en silence vaut moins qu un
+   audit qui echoue. **Les chiffres « 26 succes / 71 echecs » rapportes plus
+   tot ne sont PAS reproductibles** ; ce qui l est, c'est l etat de depart
+   honnete ci-dessous.
+
+**Etat reel du contraste au 2026-09-29, remesure sur serveur sain :**
+**58 mesures, 21 succes, 37 echecs, 16 ignorees, 0 occlusion**, sur 4 points de
+rupture, auto-verification de l outil **VERTE**. Cinq classes de defaut
+restantes, toutes nommees :
+
+| Classe | pire ratio | seuil | echantillon |
+|---|---|---|---|
+| `.prep-action` | **1,04** | 4,5 | « À pied », « À vélo » |
+| `.prep-act__name` | **1,08** | 4,5 | « Trail », « Course » |
+| CTA « Continuer » | **1,09** | 4,5 | encre sombre sur fond sombre |
+| libelles de la barre basse | **1,31** | 4,5 | « Communauté », « Explorer » |
+| `.prep-title` | **2,32** | 3 (grand texte) | « Quelle aventure ? » |
+
+Les deux premiers sont le meme symptome : le glyphe clair (223,219,202) et son
+fond clair (223,223,222) ont la meme luminance, donc le texte est
+**invisible** et non pas « faible ». Le titre echoue parce qu il se pose sur la
+zone claire de la photo. **Ce sont les cibles du prochain lot.**
+
+**Ce que les 10 items fermes ont en commun** : chacun a un **morsant** mesure
+ce matin, pas seulement un test vert. Deux de ces morsants ont d aborti rate —
+le sabotage de L3.8 visait `weather.ts:76` alors que le rendu passe par la
+ligne 96, et celui de L4.3 avait ete place **apres** la `</div>` de la barre,
+donc hors du composant que le test mesure. **Un sabotage qui ne mord pas ne
+prouve rien, ni dans un sens ni dans l autre** : il faut verifier que la panne
+a bien ete atteinte avant de conclure que le test est creux. C est
+exactement le piege signale plus haut sur L4.4, et il s est reproduit ici.
+
+**Etat de l arbre au moment du commit :** `tsc --noEmit` **exit 0** ·
+suite complete **654 fichiers / 6 140 tests verts, 0 echec, 27 ignores** ·
+`adventure-prep` **157 fichiers / 2 117 tests verts** · build de production
+**vert sur distDir neuf** · aucune trace de sabotage residuelle (verifie par
+`grep` sur les 4 fichiers touches, puis suite complete).
+
+
+**Comptage honnete au 2026-09-28, recompté par `grep` sur les cases (38 faits · 8 partiels · 177 restants = 223 items) :** 4 **dements** (P0.10, P0.14, P0.20, et la course `Promise.race` de P0.24 retirée après mesure). **LE LOT DU JOUR : P1.9 est LEVE et coché** — un fournisseur pieton reellement joignable a ete trouve *a la mesure* (`routing.openstreetmap.de`, `200` / 132 ms, OSRM a profil `routed-foot`), les 3 modes repondent sur les memes points (pieton 7,384 km / 98,5 min · velo 7,139 km / 29,8 min · voiture 8,030 km / 9,1 min), et les sommets sont refuses **par la mesure** (`503 off_network`). 14 tests `P019-01`→`P019-14` verts, suite **603 fichiers / 5 628 tests / 0 echec**, `tsc` **exit 0**. **P0.23 est desormais FERME** : la cause s etait deplacee vers l amont, et c est la que le correctif a ete fait. La generation lance enfin (le depart s auto-remplit par la geolocalisation, le CTA « Creer mon parcours » est actif — ce qui n etait jamais arrive), et les **20 appels `/api/route` rendaient alors `503 off_network`** : les points routes etaient des **coordonnees de grille** (`6.9,45.91`, `6.9012,45.9123`) et le **sommet du Mont Blanc** — pas des lieux. **Corrige depuis** : le generateur produit des lieux reels, et la meme generation rend aujourd hui **23 × `200`** et **0** `off_network` (preuve 9 ci-dessous). `/api/amenities` rend, lui, **9 lieux reellement nommes** a coordonnees 7 decimales (Hotel Lyret, Hotel Mont Blanc, Restaurant Le Panoramic…), **mais en 45,3 s**. Le filtre de marchabilite, lui, **fonctionne** : il refuse une mesure qui n existe pas. **Deux defauts nouveaux mesures, a traiter :** `/api/geocode` **inverse** hors service (`503 providers_unreachable`) alors que le **direct** repond `200` et nomme Chamonix-Mont-Blanc ; et la **saisie libre vide le catalogue** d activites, alors que la consigne demandait de garder les entrees en dessous. **P0.24** reste en **partiel** sur son seul delai de 45 s, mesure a 45,3 s.
+
+### Lot 2026-09-29 (matin) — reprise sur terrain propre
+
+**Comptage au début du lot : 108 faits / 37 partiels / 81 restants = 226 items.**
+Fermes dans ce lot : **L0.2**, **L0.4**, **A5**, **L6.5**, **L6.1**. Reste **113 / 36 / 77 = 226**.
+
+- **L0.2 — la durée d'une journée affichait son index.** Le correctif était déjà
+  en place depuis `50cf64f2` / `835ecf81`, mais **rien ne le prouvait** : rien
+  n'empêchait la régression de revenir, et l'item est resté `[ ]` pendant ce
+  temps. Ce qui manque dans cette checklist, ce ne sont pas des correctifs, ce
+  sont des **preuves**.
+  **Preuve** : 5 tests dans `metrics.test.ts` (34/34 verts), durées fixées sans
+  rapport avec leur index (J1 = 420, J2 = 25, J3 = 150 min) pour que l'index ne
+  puisse pas tomber juste par hasard. Les deux frontières voisines sont
+  verrouillées en même temps : `0 min` reste une mesure **connue** (pas « à
+  vérifier »), et une seule journée inconnue rend le total « à vérifier » au
+  lieu de sommer une somme partielle.
+  **Morsant :** sabotage `activityMin` → `day!` ⇒ **3 tests tombent**, dont
+  `expected 1 to be 420` — le symptôme d'origine. Restauration ⇒ 34/34, et
+  `metrics.ts` identique à HEAD (`git diff` vide).
+
+- **L0.4 — un point sans nom ne recevait pas de nom inventé.** Corrigé dans le
+  code, mais jamais prouvé. **Morsant** : forger
+  ``Point `${lat}° N ${lon}° E` `` dans `pickedPlace` ⇒ `DPL-07a` tombe avec le
+  nom fabriqué visible dans le diff. Restauration 60/60, fichier identique à HEAD.
+- **A5 — le sélecteur de jours sur les 3 pages.** L'item traînait en `[~]`
+  « reste l'étape 1 », alors que P0.28 avait déjà fait le code et que la
+  checklist le disait : *« il manque ~15 lignes de test, pas de code »*.
+  **Morsant** : `focusedDayNumbers` en `return all` (la liste ignore le jour
+  choisi) ⇒ `P0.28-4` tombe, `expected 2 to be 1`. Restauration 16/16.
+- **L6.5 — « Enregistrer mon aventure » ne redirigeait pas vers le hub.**
+  Prouvé par `INT-16` / `INT-17` : refus ⇒ 0 fetch + la raison affichée ;
+  succès ⇒ 1 fetch `/api/adventure/commit`, corps vérifié, redirection `/hub`,
+  confirmation. **Morsant** : redirection divertie ⇒ `INT-17` tombe, avec
+  l’argument attendu `/hub` affiché dans le diff. Restauration 11/11.
+- **L6.1 — le swipe ne changeait pas de jour.** Le hook est monté en jsdom avec
+  de vrais événements tactiles : un test de fonction pure ne prouverait pas que
+  le geste est *branché*. **Morsant** : `dayAfterSwipe` rendu inerte sur
+  « suivant » ⇒ **7 tests tombent**, dont `E6-02: balayer a droite affiche le
+  jour suivant` et le cas carte `E6-08`. Restauration 61/61.
+
+
+**Règle qu'il faut se réappliquer à chaque item `[ ]` déjà corrigé dans le
+code** : un correctif sans test n'est pas un item fait, c'est un item qui
+peut revenir. Le grep du code ne remplace pas le morsant.
+Un item ne passe à `[x]` que sur une preuve datée — capture regardée, clic réel,
+valeur tracée à sa source, ou test rouge → vert. Jamais sur la foi du code.
+
+| Lot | Item | Verdict | Preuve |
+|---|---|---|---|
+| C1 | double croix dans la recherche de lieu | ✅ fait | `proof/lot3-08` — une seule croix ; test DPL-27 |
+| — | geo refusé traité en faute (rouge) | ✅ fait | `proof/lot3-06` — note neutre ; tests DPL-24/25/26 |
+| — | parcours sans activité du catalogue | ✅ fait | parcours complet généré, 30,4 km / 6 h 07 |
+| **P0.9** | **tiroir = verre, pas une dalle** | ✅ **fait** | `proof/P09-02`, `proof/P09-03` ; contraste pixels 6,59:1 |
+| **P0.10** | **actions du tiroir sous le pli** | ✅ **fait** | `proof/P010-01`, `proof/P010-02` — 815→859 → 764→808 |
+| **P0.10** | **barre de jours vs « Vers le départ »** | ✅ **démenti** | parcours 3 j éréel : 331-379 vs CTA 675-727 |
+| **P0.11** | **titre étape 2 : deux titres dans une pastille** | ✅ **fait** | `proof/P011-01` à `P011-05` ; 5 tests DPL-28 |
+| — | barre d'outils de l'étape 2 flottant sur la description | ✅ fait | `proof/P011-03` — régression de `04b94bde` |
+| — | pied de fiche « Fermer » jamais collé (`.prep-footer`) | ✅ fait | `proof/P011-05` — mesuré `position: sticky` |
+| A5 | sélecteur de jours sur les 3 pages | ⚠ **fait sur les étapes 2 et 3** | `proof/A5-01`, `A5-02` — reste l’étape 1 |
+| P0.2 | météo : le service est enfin appelé et affiché | ✅ **fait** | `proof/A5-02` — « Pluie 5°/7° · 70 % de pluie » |
+| A3 | fil d’étapes, seul élément de la barre haute | ⚠ à faire | — |
+| **D1** | **CTA au strict nécessaire** | ⚠ **fermé, sauf le départ** | Le seul obstacle restant est `origin`, parce que le générateur rend une proposition **vide** sans lui — un CTA actif y serait un bouton mort. Mesuré : départ Chamonix + 200 `/api/geocode`, `ctaDisabled` **`true`→`false`**, `« Il manque : temps disponible »` → `« L’IA complètera : lieu d’arrivée, date, temps disponible »`. `proof/D1-12-live-cta.png` (regardée) |
+| D2 | rail de familles déborde, « Neige » coupée | ⚠ à faire | `proof/A-01` |
+| **P0.5** | **brouillon périmé resservi en silence** | ✅ **fait** | P05-01→03 regardées ; **21/21** tests, **5504/5504** verts, 	sc 0 |
+| **P0.14** | **pastille de suggestion : échelle + portée** | ✅ **fermé par la mesure** | 17 px → **12 px** ; 145×77 → **145×40** ; `align-self: flex-start`, dans sa cellule, aucun débordement. `proof/P014-04-badge-apres.png` (regardée) ; cause racine = P0.17 |
+| **P0.15** | **l’IA ne peut pas choisir la date, et la date bloque** | ✅ **fermé** | 24 tests P015 verts ; **preuve réseau** : Server Action `/prepare` → `"failure":null,"suggestedStartDate":"2026-10-10"` |
+| **P0.13** | **la date choisî par l’IA n’est pas badgée** | ✅ **fermé par P0.15** | `startDateIsSuggested` existe dans `types.ts:160`, le contrat `commit/route.ts:81` et la pastille de cellule ; le carottage a été fermé, pas contourné |
+| **P0.16** | **météo en échec quand la date vient de l’IA** | ✅ **fermé** | bug trouvé en pilotant, **pas** en relisant ; `weather-ai-date-p016` rouge→vert ; le bandeau d’échec météo a disparu de `proof/P015-10` |
+| **P0.17** | **24 jetons CSS utilisés, aucun défini — dans tout le site** | ✅ **fermé** | `var(--f-*)` non résolu → héritage silencieux ; recâblage sur `--lkv-text-*` + `--font-serif` ; **6 tests** ; **5538/5538** verts (602 fichiers) |
+| **P0.18** | **le brief nommait 2 jours, l’écran affichait 1 jour** | ✅ **fermé** | catalogue contredisait l’IA avant la génération ; `setActivities` donne la priorité au brief · `proof/P018-03` (2 jours à l’écran), `proof/P018-05` (J1/J2 réels) · test `P0.18-F` **rouge→vert** · **5569/5569** verts (604 fichiers), tsc 0 |
+| **P0.20** | **« le pied recouvre le contenu »** | ⚠️ **démenti + correctif réel** | `bodyBottom === footerTop === 528` : **rien ne se superpose**. En revanche la langue AN9 (20 px) recouvrait **97 % des 20.6 px encore visibles** et son `blur(6px)` les rendait illisibles · masque ajouté · A/B `P020-32` / `P020-33` · **5574/5574** verts (605 fichiers), tsc 0 |
+| **P0.22** | **toutes les durées et distances de l’étape 2 étaient des valeurs voiture** | ⚠️ **corrigé, preuve écran restante** | 7 appels réels `/api/route` : **92,3 min** piéton vs **9,8 min** voiture sur les **mêmes** points · garde-fou 500 m (refuge du Goûter à 4 321 m → `503`) · **5588/5588** verts, tsc 0 |
+| **P0.23** | **la distance reelle ne s affiche pas a l ecran** | ✅ **ferme — preuve ecran faite** | Clic réel étape 1 → étape 3 : **92,5 km** / **10 407 m** / **3 jours** à l’écran · `geocode` **1×200** · `route` **23×200** · `elevation` **3×200** · **0** `off_network` (contre 20) · CTA « Enregistrer mon aventure » lisible · capture `proof/D3-36-fin-generation.png` |
+
+| **P0.24** | **`/api/amenities` renvoyait 0 lieu : Overpass injoignable** | ⚠️ **repli livré, délai restant** | repli **Photon** (déjà dépendance du projet, sans clé) : `200` → **9 lieux réels** mesurés le 2026-09-29 (Restaurant Le Panoramic, Restaurant Ghandi, Hôtel-Restaurant Aiguille du Midi, Hôtel Lyret, Hôtel Mont Blanc, Hôtel du Clocher, Hôtel Pointe Isabelle, Hôtel de l'Arve, Hôtel du Bois — 2 repas + 7 hôtels, coordonnées réelles), contre **0** avant · bbox fraîche **48,5 s**, bbox en cache **10,6 s → 339 lieux** · les **3 miroirs Overpass sont toujours injoignables** (mesuré ce jour : `overpass-api.de` échec 10,7 s, `lz4` 10,7 s, `private.coffee` timeout 20 s) · **le délai est généré par `OVERPASS_TIMEOUT_MS = 45_000` et le `Promise.all` de `fetchAmenitiesNear` dans `src/lib/queries/amenities.ts` (l. 30 et 512), fichier hors périmètre — **c'est la cause, elle est nommée** |
+| **P0.25** | **le filtre de marchabilite echouait OUVERT : un lieu non mesure recevait une position, et chaque sonde payait 8 s** | ✅ **ferme** | `WalkReachability` a 3 etats * `keepMeasuredFrom` (ferme) sur `searchPlacesNear`, `keepWalkableFrom` (ouvert) sur l inventaire * panne memorisee 30 s * **5 tests P025-01->05, 23/23 verts** * suite **602 fichiers / 5 614 tests / 0 echec** * `tsc` **exit 0**. **La panne de fournisseur qu il suivait est desormais **LEVE par P1.9** (voir P1.9) |
+| **P1.10** | **les lieux de montagne étaient hors de tout graphe routier ou piéton** | ✅ **fermé** | **BRouter `trekking` en dernier recours du seul mode `pieton`** — `/api/route` Chamonix→Grands Mulets = **200**, **14,424 km / 323,05 min / D+ 2 100 m / 881 points**, contre `503 off_network` avant. Le **dénivelé positif réel** arrive enfin à l écran. Négatifs prouvés : `voiture` vers le refuge = `503`. **Fausse piste démontée** : Valhalla écrit *« You have arrived »* alors que sa polyline s arrête à **2 875 m** du but — seul le décompte de la géométrie dit vrai. **10 tests**, suite **1 644 / 0 échec**, tsc 0 |
+
+| **D1** | **« Créer mon parcours » mort avec deux lieux réels et rien d’autre** | ✅ **fermé** | Mesuré en 393×852 : Chamonix (géoloc, `/api/geocode` **200**) + aucun autre choix, et le CTA restait `disabled` sur `« Il manque : temps disponible »`. Cause : `BLOCKING` portait `duration` alors que toute la chaîne de choix existe déjà (P0.15 date · P0.18 durée). **8 tests D1-01→08**, dont **7 rouges** avant correctif ; **607 fichiers / 5 675 tests / 0 échec**, tsc 0 |
+| — | **deux tests qui ne prouvaient rien, pour la même raison** | ✅ **démontés** | `D10-15` affirmait « le bouton reste bloqué » en cherchant le **mot** `disabled` dans tout le markup : il matchait la classe Tailwind `disabled:pointer-events-none`, donc il passait avec un CTA **actif**. Même piège déjà-correct une fois en `E02-18`. Les deux lisent désormais l’**attribut**, classes retirées, et `D10-15` vérifie en plus le **contraire** — sans quoi il repasserait avec un gate mort |
+| — | le prompt annonçait « 1 jour » comme un fait, deux fois | ✅ **fermé** | Ni la personne ni le brief n’ayant de durée, le prompt portait `Duree : 1 jour(s)` **et** `Ce voyage dure 1 jour` — le `durationDays ?? 1` de `aiItinerary` —
+puis `« choisis »` une fois. Le modèle couvrait un jour, en proposait trois, et sa proposition partait refusée pour `journee_non_couverte`. Test **D1-06** : le prompt ne contient plus aucun jour annoncé |
+
+**En cours :** **P0.26 et P0.27 sont FERMÉS — et P0.26 m a changé deux de mes diagnostics.** (a) La **génération 2 jours est réelle** : le tiroir de durée est un stepper (pas un `input[type=number]` — le vieux script le cherchait, d’où son « champ absent »), la cellule s’appelle **« Temps disponible »**, et l’écran final porte **Jour 1 ET Jour 2** avec **44,9 + 22,7 = 67,6 km** et **14 h 48 + 2 h 43 = 17 h 30** — les deux arithmétiques concordent, `journee_non_couverte : false`, `route` 22 × 200, **0** `off_network`. La **météo est réelle et par jour** (`/api/weather` 2 × 200), l’hier hors fenêtre elle était absente : elle est là parce que la source répond, pas parce qu’on l’a remplacée par du plausible. (b) Le CTA n’a jamais été cassé : `canCreateStepOne` exige `route.origin`, donc sans départ il est **désactivé — et c’est correct**, l’IA ne peut pas inventer où l’on est. (c) Ce qui semblait un **chevauchement** du CTA n’en était pas un : mesure, `.prep-body` bottom **667** = `.prep-footer` top **667**. C’était la coupe d `overflow-y` **au milieu des glyphes**, que la langue de verre ne pouvait pas réparer — corrigé par un fondu de dissolution (`--prep-scroll-fade-h: 32px`) avec réserve basse reportée à `--space-6 + --prep-scroll-fade-h`.
+**Prochaine priorité immédiate — les quatre points sont résolus (2026-09-29) :** (1) **durée d'activité par journée** = **E4, déjà fait et testé**, item retourné ; (2) **budget par jour** = **E3, déjà fait et testé** (somme réelle + « N étapes à vérifier »), item retourné — le partiel affiché est voulu ; (3) **titre « boucle du Mont-Blanc »** = **A9 RÉSOLU** (le parcours reboucle pour de vrai, retour ancré sur l'origine, distance finale → 0,000 km) ; reste **Z-D18-03**, régression préexistante hors périmètre, consignée ; (4) **expliquer pourquoi le CTA est refusé** = **AN7, déjà fermé** (« Il manque : … » sous un CTA bloqué, preuves écran `AN67-07/08`). **Prochaine marche réelle :** les items `[ ]` encore ouverts, en priorité les libellés tronqués (L3.3) et les drawers non-liquid-glass (C13).
+**Fermés le 2026-09-28 :** P0.18 (durée du brief respectée — le catalogue ne contredit plus l’IA), P0.15 (canal date de l’IA, de bout en bout), P0.13 (par ricochet — le badge existe enfin et porte sur la bonne cellule), P0.16 (météo échouée quand la date venait de l’IA).
+
+**Fait le 2026-09-28 (P0.10 reste, A5, P0.2) :** parcours de 3 JOURS généré
+pour de vrai — 68,5 km · 7 290 m · 6 h 57 min. Les distances par jour sont
+réelles et **sommement exactement au total** : 33,6 + 34,6 + 0,3 = 68,5.
+- **P0.10 (reste) : DÉMENTI, pas un défaut.** Mesure 393×852, 3 jours :
+  `.prep-days` 331–379 en `position: static`, corps 60–667, CTA 675–727.
+  Aucun recouvrement. La barre du bas (`DayPlateau`, boutons 44 px dans une
+  barre de 40 px) est un **effet assumé** : `overflowY: hidden` + masque de
+  fondu à droite, le texte, lui, n’est pas coupé. `proof/P010-03`.
+- **A5 : fait sur les étapes 2 ET 3.** Un clic sur « J3 » dans la barre du bas
+  bascule le rail du haut, les métriques (0,3 km · 346 m · 1 h 30) et le
+  programme. La sélection **survit au changement d’étape**. Reste l’étape 1.
+- **P0.2 (météo) : RÉPARÉ.** Elle s’affiche bien sur les trois étapes, avec la
+  météo de CHAQUE jour, pas celle d’un autre. `proof/A5-02`.
+
+**Fait le 2026-09-28 (P0.11) :** la génération réelle tourne de bout en bout —
+Argentière → 56,3 km · 4 304 m de dénivelé · 2 h 39 min · météo réelle
+« Partiellement nuageux 9°/22° · 10 % de pluie » · 4 étapes (Argentière,
+Plan de l'Aiguille, Lac Blanc, Charpoua). **P0.2 (météo orpheline) est donc
+re-vivifié : le service est appelé et affiché.** Reste à le cocher en section P.
+
+**Vu de l’ecran, pas du code :** la barre `prep-body` défile bien sous le pied de page
+(24 px de garde au fond, mesuré) — la liste des activités de l’étape 1 n’est **pas**
+coupée. Le découpage net de la capture A-02 était un artefact de position, pas un défaut.
+
+
+### AN1 / A3 — FERMÉS le 2026-09-28, mesurés puis corrigés sur 393×852
+
+**Le bandeau ne gagne aucun bouton chromé.** Ni flèche, ni croix, ni filtres, ni
+icône : c’est la demande, et `prep-crumb` / `prep-nav` la vérifient sur le HTML
+rendu. Mais **une étape atteinte, elle, répond au doigt** — même police, même
+couleur, même trait de soulignement, mêmes métriques. La différence est
+invisible à l’œil et sensible au doigt.
+
+**Ce que le rail rend, et comment.** Un segment joignable est un
+`<button type="button">` de classe `prep-crumb__link` : aucun fond, aucune
+bordure, aucun padding — donc aucun chrome. Sa zone de toucher de 44 px est
+étendue par un `::after` **absolu**, centré sur le libellé, qui ne participe
+pas au layout. `PrepNavActions` ne duplique plus les « Revenir à <étape> »
+qu’il portait en double, clippés dans un conteneur `prep-visually-hidden`
+mesuré à 1×1 px.
+
+#### Mesure d’avant — `proof/AN1-01-avant-etape3.png` (regardée)
+
+Parcours réel généré (Chamonix → refuge du Gouter), étape 3, 393×852.
+
+- Le rail rend **3 × `<span>`** de **24 px** de haut, `clientW: 359 / scrollW: 359`.
+- Le seul retour disponible était porté par « Revenir à Créations » (156×24) et
+  « Revenir à Préparation » (172×24), dans un conteneur `.prep-visually-hidden`
+  mesuré à **1×1 px**, `clip-path: inset(50%)` — **hors de portée du doigt**.
+- **Conséquence mesurée :** depuis l’étape 3, on ne pouvait revenir ni à l’étape 1
+  ni à l’étape 2 sans recharger l’URL.
+
+#### Mesure d’après — `proof/AN1-05/06/07` (les trois regardées)
+
+| Ce qui est mesuré | Étape 3 | Étape 2 |
+|---|---|---|
+| « Créations » | `BUTTON` 79×30, zone 44 px | `BUTTON` 79×30, zone 44 px |
+| « Préparation » | `BUTTON` 95×30, zone 44 px | `SPAN` actif, 24 px |
+| « En avant ! » | `SPAN` actif, 24 px | **`BUTTON` 95→, zone 44 px** |
+| Bandeau haut | `top: 8 → bottom: 60` (52 px) | `top: 8 → bottom: 60` |
+| Icônes / flèches / croix | **0** | **0** |
+
+Parcours **aller-retour touché**, pas simulé : tap sur « Préparation » en
+`(205, 34)` → l’étape courante devient « Préparation » ; « En avant ! » redevient
+alors un bouton en `(294, 34)` ; tap → **retour à l’étape 3**, récapitulatif
+complet affiché (Équipement, Eau et repas, « Enregistrer mon aventure »).
+
+#### Le vrai défaut, trouvé en route par la preuve
+
+La première version rendait le rail cliquable, mais **l’illusion d’affordance
+tenait encore** : `proof/AN1-06` montrait « En avant ! » **vert et souligné
+depuis l’étape 2** — donc lu comme un lien — alors qu’un tap ne faisait rien.
+
+Cause, lue dans le code : la **peinture** et le **comportement** lisaient deux
+prédicats différents.
+
+- `state` (la couleur, le trait) venait de `canOpenStep` ;
+- `reachable` (le `onClick`) venait de `isStepSatisfied`.
+
+Or `isStepSatisfied(draft, 'departure')` renvoie `false` **en permanence** —
+le récapitulatif de l’étape 3 ne possède aucune réponse propre, il est *dérivé*
+de l’itinéraire (`engine/steps.ts`, dernière branche : `return false`). Les deux
+prédicats divergeaient donc exactement sur l’étape 3.
+
+**Correctif : une seule predicate pour la peinture et pour le clic.**
+`hasStepContent(draft, id)` — pour `departure`, « l’itinéraire existe ». Le
+mensonge devient impossible *par construction*, et l’invariant est désormais
+testé (AN1-13 : tout segment peint `done` est un `<button>`).
+
+#### Tests
+
+- `__tests__/step-rail-nav-an1.test.tsx` — **17 tests** (13 + AN1-12, AN1-13,
+  AN1-13b). Écrits **rouges d’abord** : 6 échecs à la création, dont
+  `AN1-12` qui prouvait le défaut ci-dessus.
+- `__tests__/steps.test.ts` — **3 tests** `hasStepContent`, dont
+  « un contenu disponible est toujours une étape que le moteur ouvre ».
+- `__tests__/prep-crumb.test.tsx` — **CR-04 réécrit** : le fixture précédent
+  décrivait un état *impossible* (une étape 3 « atteinte » sans itinéraire), donc
+  il testait une peinture qui ne peut pas se produire. **CR-04b** ajouté.
+- `__tests__/prep-nav.test.ts` — NA-09 (aucun bouton de chrome) et NA-16
+  (l’appelant ne reçoit plus que le rail) réécrits.
+
+#### Suite
+
+`npx tsc --noEmit` → **exit 0**. `npx vitest run src/features/adventure-prep` →
+**1433 / 1433 verts (93 fichiers)**.
+
+**Régression attrapée au passage, et non masquée :** `prettier --write` avait
+lowercasé les hex du CSS, et D9-05 / D9-08 comparent des chaînes — ils
+passaient au rouge sur `#7FC49A` vs `#7fc49a`. La casse d’un hexadécimal est
+sans effet en CSS : c’est le **test** qui était faux, pas le CSS. Il compare
+désormais la casse (helper `hex`).
+
+#### A3 — fermé par la même preuve
+
+`proof/AN1-05/06/07` (regardées) : la barre haute ne contient **que** le rail,
+52 px. Les deux actions hors-étape — retour au hub, préférences du trajet —
+subsistent pour le lecteur d’écran (AN1-11) mais ne sont plus dans le flux
+visuel.
+
+#### Limite honnête, non masquée
+
+La zone de toucher de 44 px est un `::after` **absolu** : elle déborde donc
+verticalement du rail de quelques pixels (segment 30 px dans un bandeau de 52 px,
+dont le centre est à 34 px du bord). Sans fond ni contour, donc invisible, et
+sans consequence au toucher — mais un audit WCAG 2.5.8 mesurerait ce débord. À
+garder en tête si le rail gagne un jour une hauteur plus petite.
+
+
+### AN6 / AN7 — FERMÉS le 2026-09-28, mesures puis corrigés sur 393×852
+
+Ces deux items étaient **un seul défaut lu deux fois** : l’écran ne savait pas
+distinguer ce qui arrête l’utilisateur de ce que l’IA tranche. Une conséquence
+en face visible (une durée proposée cachée derrière « À vérifier » alors que
+c’est un vrai nombre), une autre en cascade (l’écran ne peut pas devenir actif
+puisqu’il Announces encore un manque).
+
+**Corrections.** `stepOneProfile.ts` sépare la mesure en deux :
+`stepOneMissing(draft, id)` rend `{ blocking, optional }`, et `canCreateStepOne`
+vérifie `blocking.length === 0` — le CTA actif n’annonce donc plus jamais un
+manque. `stepOneReadySummary` rend « L’IA complètera : … » quand plus rien ne
+bloque, et `null` dès qu’un bloqueur existe : on ne promet jamais un complément
+alors qu’il reste une saisie à faire. `stepOneMissingSummary` est conservé tel
+quel — la mesure complète reste disponible ; c’est l’affichage qui a changé, pas
+la règle.
+
+Côté **AN6** : `valueFor` n’a plus de branche `durationIsSuggested`, le nombre
+s’affiche. La provenance ne se perd pas : nouveau `data-suggested` sur la cellule,
+et la pastille passe de « Durée à préciser » à **« Proposé par l’IA · modifiable »**.
+Une date non choisie reste, elle, une vraie absence affichée « À vérifier » : on
+ne fait pas dire à une date saisie par le moteur qu’elle a été mesurée.
+
+**Preuves, regardées une par une** (393×852, `deviceScaleFactor` 2) :
+
+- `proof/AN67-07-an7-cta-actif.png` — départ Chamonix + 3 j, ni arrivée ni date.
+  CTA **actif**, « **L’IA complètera : lieu d’arrivée, date** », et **aucune**
+  occurrence de « Il manque ». Note mesurée visible : `top 603 / bottom 638` dans
+  un viewport de 852 — elle est à l’écran, pas dans le DOM hors champ.
+- `proof/AN67-08-an7-bloquant.png` — même draft sans départ. CTA **bloqué**,
+  « Il manque : lieu de départ » et rien d’autre ; la suggestion
+  « L’IA complètera » est absente, comme promis.
+- `proof/AN67-09-an6-duree-proposee.png` — durée proposée : « Temps disponible »
+  = **3 jours**, pastille **« Proposé par l’IA · modifiable »**, markup
+  `data-unknown="false" data-suggested="true"`.
+
+> **Une capture reprise, et pourquoi.** La première prise (`AN67-07` v1)
+> montrait un état correct en JSON et **rien à l’écran** : le bandeau cookies
+> n’avait pas été accepté et le corps n’était pas descendu. Une mesure qui ne se
+> voit pas n’est pas une preuve — les captures reprennent au clic réel sur
+> « Tout accepter », note mesurée dans le viewport.
+
+**Tests — 10 nouveaux, 4 réécrits.** `__tests__/step-one-missing-an7.test.ts`,
+10 tests AN6/AN7, écrits **rouges d’abord** (7 échecs / 3 verts) puis verts. Un des
+dix était lui-même faux : son draft ne manquait pas des champs optionnels, il en
+manquait un de bloquant — corrigé dans le test, pas dans le code. Réécrits aussi :
+`S11-26`, `D10-14`, `D10-20`, `D10-20c`, `DEST-04` — ils verrouillaient
+précisément les deux défauts. **Changement de contrat volontaire**, commenté dans
+chaque test, et chaque assertion réécrite a un remplaçant qui **interdit** le
+retour en arrière (`not.toContain`), pas seulement un constant à maquiller.
+
+**Suite :** `vitest run` complet — **5435 tests verts**, 1 échec déjà connu et
+préexistant (`tests/design/lot2-shell.spec.ts`, offsets d’AppShell, revérifié sur
+`HEAD`, fichier non touché par ce lot). `tsc --noEmit` propre, `prettier` passé.
+
+**Ce que AN6/AN7 n’est pas.** La visibilité de la pastille « L’IA complètera »
+reste un peu faible sur photo : le verre du bloc se fond dans l’image de fond.
+C’est un point de **design** (section M), pas un défaut de logique.
+
+### AN2 — FERMÉ le 2026-09-28, prouvé sur un parcours régénéré
+
+**Cause racine, ligne à ligne.** `applyActivityDurations` (`engine/routing.ts`)
+exige que **chaque** étape du jour porte un `durationMin`. Or `applyRouting`
+n’écrit une durée que sur les étapes qui portent une activité ; il écrit
+`durationMin: 0` pour les étapes de trajet — un **zéro prouvé** par le chainon,
+pas une valeur inventée. `routeItinerary` ne remplit cet ensemble **que si la
+journée est effectivement routée** (`chain.length === 1 && allLocated && …`).
+
+- `perDay[0].activityMin = 12`, `perDay[1].activityMin = 13`, `totals.activityMin = 25`.
+- 1ʳᵉ étape de chaque jour : `ia-d1-trajet-0` et `ia-d2-trajet-3` portent `durationMin: 0`.
+- `distanceKm = 20,83` au total (10,30 + 10,53), `elevGainM = 2572`.
+- À l’écran : **« Durée 25 min »** et « Dénivelé 2 572 m » — `proof/N2-01-duree-reelle-ecran3.png`.
+- Pendant le run, l’honnêteté tient : `status: en_cours` et **0 phase cochée**
+  (relevé à t+4 s) ; les 7 ne passent `done: true` qu’à la fin.
+
+**Note de lecture, pas un défaut.** `movingMin` vient du profil **routier** OSRM
+`driving` (décision I1) : ce n’est pas un temps de marche. Valhalla public a été
+essayé pour le piéton et renvoie des valeurs aberrantes (35 h pour 11 km) —
+**non intégré**.
+
+### AN3 — FERMÉ le 2026-09-28, sur le même parcours
+
+**Cause racine.** `dayBudget` (`engine/places.ts`) faisait une `reduce` sur les prix
+et renvoyait `null` dès qu’**une seule** étape du jour avait un prix. Le jour
+mixed (un refuge connu, une activité gratuite) se retrouvait donc affiché
+« À vérifier » alors que la donnée était là.
+
+- Jour 1 : **« 75 € connus »**, puis sur la ligne du dessous **« 1 étape à vérifier »**.
+  Le 75 € est le prix du refuge, lu en base — pas un estimé.
+  `proof/N3-03-budget-note-ligne-dediee.png`. Rien n’est maquillé en total.
+- Jour 2 : **« À vérifier »**, aucun prix connu — le cas honnête, distinct du premier.
+- Avant le correctif, le même jour 1 affichait déjà « À vérifier » —
+  `proof/N3-01-budget-partiel-honnete.png`.
+
+**Suite :** **5397 tests verts / 1 échec** — `tests/design/lot2-shell.spec.ts`,
+échec préexistant.
+
+### AN4 — FERMÉ le 2026-09-28, régénération IA complète du 28-09
+
+**Cause racine, mesurée et non supposée.** Dans le `localStorage` avant correctif :
+`draft.activities.primary = null` et `startDate = null`. Le titre était donc
+**obligatoire** et non optionnel : chaque appelant devait être explicite. Le repli
+par règles renvoie `title: null` — il n’invente rien.
+
+**TDD respecté.** 9 tests rouges écrits d’abord.
+
+- `proof/N4-05-avenir-generee.png` — titre **« Weekend refuge Chamonix »** (produit
+  par le modèle, pas écrit en dur), sous-titre **« Randonnée avec nuit de refuge ·
+  1 jour »**. Aucun « À vérifier ».
+- `proof/N4-00-avant-regeneration.png` — le cas **sans titre** (itinéraire antérieur
+  au correctif) affiche « Ton aventure » + « 2 jours ». C’est le repli honnête : pas
+  d’invention, et la durée connue est affichée.
+- `proof/N4-02` / `N4-03` — le tiroir Lieu, sa note géo neutre et sa vraie carte.
+- `proof/N4-04-preparation-Completee.png` — l’étape 2 complète, CTA actif.
+
+**Suite :** **5410 tests verts / 1 échec** — `tests/design/lot2-shell.spec.ts`,
+échec préexistant revérifié sur `HEAD`.
+
+### AN5 — FERMÉ le 2026-09-28, sur le même parcours généré
+
+**Cause racine.** `MiniMap` (dans `PrepSetupSheets.tsx`) rendait sous la carte une
+ligne unique — `{formatCoord(lat)} · {formatCoord(lon)}` — dès que le marqueur
+existait, **sans jamais regarder le nom du lieu**. Le nom était pourtant là :
+`shown` porte le `PlaceRef` retenu, et le `label` de la carte elle-même l’affichait
+déjà. Choisir « Chamonix-Mont-Blanc » laissait donc lire
+« 45.92375° N · 6.86933° E » : des nombres à la place du nom choisi, donc plus rien
+pour vérifier d’un coup d’œil ce qu’on avait retenu.
+
+**Ce qui n’était pas en cause.** La cause initially retenue était « `reverse-geocode`
+non branché » : **c’est faux, et la vérification le dément.** `reverseGeocodePlace()`
+(`geocodeService.ts`) est implémenté, `myPosition.ts` construit l’URL inverse, et la
+route `/api/geocode?lat&lon` traite déjà le cas. Le service n’était simplement pas
+appelé à cet endroit — le défaut était **purement un rendu**, pas une donneée absente.
+Une correction à base de reverse-geocodage aurait été du travail inutile : le nom
+était déjà là.
+
+**Correctif.** Nouvelle fonction pure `pickerPlaceCaption(place, marker, interactive,
+typedName)` exportée et testée à part, qui renvoie `{ label, detail }` :
+- le **nom en tête** dès qu’il existe (avec le pays s’il est connu) ;
+- la **position exacte en second**, plus petite et plus discrete — elle ne disparaît
+  pas, elle cesse d’etre le titre ;
+- **rien n’est inventé** : un point sans nom garde la coordonnée comme unique fait,
+  ce qui est exactement ce qu’on sait de lui. Un nom fait d’espaces n’est pas un nom.
+
+Une classe CSS dédiée `.prep-picker__caption` remplace le `<p class="note neutral">` :
+`.t1`/`.t2` coupent en ellipsis (`white-space: nowrap`), ce qui aurait tronqué
+« Chamonix-Mont-Blanc · France ». Ici le nom se passe à la ligne.
+
+**Preuve navigateur (28-09, 393×852, parcours réel généré).**
+`proof/N5-03-tiroir-avec-nom.png` (capture **regardée**) : après sélection, la
+légende lue est `label = « Chamonix-Mont-Blanc · France »` et
+`detail = « 45.92375° N · 6.86933° E »`. Mesuré : bloc `x:20 y:697.8 w:353 h:46.2`,
+donc **46 px de haut, non tronqué**. `proof/N5-01` (tiroir à l’ouverture) et
+`proof/N5-02` (résultats) — repli non régressé.
+
+**Tests.** 8 tests AN5 écrits **rouges d’abord** (`picker-caption-an5.test.ts`) :
+les 8 echouaient sur `pickerPlaceCaption is not a function`, puis 8/8 verts après
+correctif. Régression : `prep-drawers-liquid` + `jour-focus-carte` = **75/75**.
+`tsc --noEmit` **propre**.
+
+**Suite.** AN8 puis AN9, liés à la réserve `--nav-offset` / `.prep-footer`.
+
+
+### AN8 — DÉMENTI le 2026-09-28, mesuré sur 393×852
+
+**Le constat était faux.** « Le bandeau de consentement cookies recouvre la bottom
+bar » ne tient pas à la mesure. Relevé sur le même parcours réel (le bandeau
+était bien visible : `localStorage.removeItem("lkdv_cookie_consent")` avant le
+rechargement) :
+
+- `nav[aria-label="Navigation principale"]` : `top: 599`, `bottom: 661` (h 62), `position: fixed`, `z-index: 40` ;
+- panneau du bandeau : `top: 661`, `bottom: 776` (h 115) ;
+- **chevauchement = 0 px.** Le panneau commence exactement là où la barre finit.
+
+**La chaîne est correcte de bout en bout, et c’est mesurable :**
+
+- `marginBottom` du panneau = **68px** = `--nav-offset (60px) + --space-2 (8px)` ;
+- `--cookie-banner-h: 191px` — publie par le `useLayoutEffect`, et 191 = `852 - 661`, donc la
+  **bande totale** (barre comprise), pas seulement la hauteur du panneau ;
+- `--page-bottom-inset` se calcule sur `max(--nav-offset, --cookie-banner-h) + --space-4`,
+  donc `max(60px, 191px) + 16px` : le contenu se libère bien au-dessus du bandeau.
+
+**Preuve.** `proof/N8-01-mesure-bandeau.png` (capture **regardée**) : la barre
+Hub/Communauté/Explorer/Messages/Compte est **entièrement visible et dégagée**, le
+bandeau passe dessous. Aucun correctif à faire — en ajouter un aurait
+dégradé un mécanisme qui fonctionne.
+
+**Ce que la meme capture revele.** Le défaut **AN9** est lui bien réel et visible sur
+la même image : le badge « Durée à préciser · modifiable » est **coupé en deux**
+par le CTA « Créer mon parcours ». C’est le prochain lot.
+
+
+### AN9 — FERMÉ le 2026-09-28, mesuré puis corrigé sur 393×852
+
+**La cause notée au tableau était fausse.** Elle disait « pas de réserve entre le
+dernier bloc et `.prep-footer` ». La réserve **existe** :
+`padding-bottom: var(--space-6)` = 24 px sur le corps scrollable. Mesurée après
+scroll en bas : **23,7 px** de réserve, badge entièrement lisible. Ajouter de la
+réserve aurait créé un trou — il n’y avait rien à combler.
+
+**La vraie cause.** `.prep-footer` est opaque et ne montrait **aucun signe de
+continuation**. Un bloc intact qui traverse la ligne de coupe paraît _cassé_ : le
+lecteur y voit un bug de rendu, pas du contenu qui continue.
+
+- `proof/N9-01-au-repos.png` (**regardée**) — au repos, la pastille se dissout sous
+  le verre au lieu d’être coupée nette : le signe de continuation est là.
+- `proof/N9-02-scroll-bas.png` (**regardée**) — en bas de course, « Durée à préciser ·
+  modifiable » est **entière et nette**, et le dernier bloc (« Il manque : … ») est
+  intact au-dessus du verre.
+- `proof/N9-04-etape2-haut.png` et `N9-05-etape2-bas.png` (**regardées**) — la langue
+  est correcte sur l’étape « En avant ! ».
+
+**Tests.** `src/features/adventure-prep/__tests__/prep-scroll-lip-an9.test.ts`,
+**7 tests**, TDD.
+
+## 0 — Rectificatifs d'audit (à lire en premier)
+
+- [x] **R1** ~~`H1` était marqué « fait » : faux, `osrm` → 0 occurrence~~ → **DEVENU FAUX
+      LUI-MÊME PAR DÉRIVE.** Re-vérifié le 2026-09-27 : `osrm` → **26 occurrences**,
+      `routingService.ts` appelle bien `router.project-osrm.org`. La leçon du checklist
+      s'applique à lui-même : un item « vérifié » vieillit, il faut le re-vérifier.
+- [x] **R2** La « résolution de conflit 3 » (« j'ai branché OSRM ») était **anticipée**.
+      Re-vérifié le 2026-09-28 : l'intégration est réelle ET fonctionnelle —
+      `/api/route` répond `200` avec 623,3385 km mesurés. Le « mauvais profil »
+      (P0.1) est réparé depuis. Preuve : ci-dessus.
+- [x] **R3** `B2` : `<PrepMap>` était rendu `DestinationStep.tsx:289` → **0 occurrence**. Fait.
+- [x] **R4** `B3` : `ROUTE_SHAPE_OPTIONS` était rendu l.195,197,236 → **0 occurrence**. Fait.
+- [x] **R5** `E4` : `engine/metrics.ts:57` renvoie `(day ?? 1)` → le jour 2 affiche
+      « 2 jours » d'activité. C'est l'index du jour, pas une durée. **Bug visible.**
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** Le `(day ?? 1)` a disparu de
+      `engine/metrics.ts` : le jour 2 affiche désormais sa propre mesure, et non celle
+      du jour 1. **Preuve :** `metrics.test.ts` **29/29 verts**.
+
+- [x] **R6** `E7` : **re-vérifié le 2026-09-27, inchangé.** `engine/weather.ts` et
+      `app/api/weather/` existent, mais **0 occurrence de weather/météo dans les `.tsx`
+      de `features/adventure-prep/`**. Les 285 occurrences du dépôt sont hors périmètre
+      (`DepartWeather`, `WeatherStrip`, `page.tsx`…). Service écrit, affichage absent.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** Le service existait, mais aucun composant ne
+      l'affichait : c'est bien ce que constatait l'item. La météo est désormais rendue
+      dans **les deux écrans** (74 occurrences du rendu), et P0.2 est également fermé.
+      **Preuve :** **27 tests verts** sur le lot météo.
+
+
+---
+
+## A — Structure et navigation
+
+- [x] A1 Étapes renommées : `Créations` / `Préparation` / `En avant !`
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `types.ts:26-30` porte les trois
+      libellés, et les trois écrans rendent le leur.
+      **Preuve :** `NA-01`, `NA-02`, `CR-01`. **175/175 verts** sur les 11 fichiers du
+      périmètre A/B.
+
+- [x] A2 Aucun bouton en haut de page (croix, flèche retour, filtres retirés)
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `PrepNav` ne rend plus que `PrepCrumb`.
+      **Réserve honnête :** les 2 boutons de `PrepNavActions` sont toujours dans le DOM,
+      neutralisés par `clip-path` via `.prep-visually-hidden` (`adventure-prep.css:2063-2074`).
+      Ils sont **invisibles à l'écran** mais restent traçables — et `AN1-11` le vérifie.
+      L'item est donc tenu au sens visible, pas au sens « zéro nœud ».
+      **Preuve :** `NA-09` → `NA-13`, `AN1-7`, `AN1-9`, `AN1-11`.
+
+- [x] A3 Fil d'étapes affiché proprement, seul élément de la barre haute
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `PrepCrumb.tsx:181-190` rend le fil
+      d'étapes, et le CSS `:548-637` le met en forme. **Preuve :** **43 tests** du
+      périmètre navigation, tous verts.
+
+- [x] A4 Barre basse jamais masquée, jamais recouverte
+      **FERME le 2026-09-29 — MORSANT DE FIN DE CAMPAGNE JOUE.**
+      Le code etait deja correct : `MobileNavWrapper.tsx:23-35` ne liste plus `/prepare` dans
+      `isNoNavRoute`, et `AdventurePrepScreen.tsx:23` transmet `hasBottomNav`.
+      **MORSANT** : `/prepare` reecrit dans `isNoNavRoute` -> `a4-barre-basse.test.tsx`
+      **6/12 rouges**, dont **A4-03: `/prepare` n est PAS dans la liste des routes sans
+      navigation** (la cible exacte), plus A4-01, A4-02, A4-05, A4-06 qui constatent tous la
+      disparition effective de la barre. Levier reellement mordant, pas cosmetique.
+      **RESTAURATION** : SHA256 `79D2EB1326AE7304A7D144E383D6582B9C95F68D79A81B1972A4A60492114BE7`
+      identique, **12/12 verts** restores.
+
+- [x] A5 Le sélecteur de jours se met à jour sur les 3 pages — **FERME le
+      2026-09-29 sur test a morsant.** L item etait reste `[~]` faute de preuve
+      sur l etape 1, alors que le code y etait deja correct depuis P0.28 : la
+      checklist le disait elle-meme (« il manque ~15 lignes de test, pas de
+      code »).
+      **Ce qui est prouve, etape 1 comprise** : `DepartureStep` lit bien
+      `selectedDay` du `dayFocusStore`, et la liste du programme, la meteo et
+      les mesures empruntent le **meme** perimetre (`activeDayOrNull` +
+      `focusedDayNumbers`). Si les deux divergeaient, l ecran afficherait un jour
+      et compterait l autre -- c est exactement le defaut P0.28.
+      **Morsant** : sabotage de `focusedDayNumbers` (`return all`, donc la liste
+      ignore le jour choisi) ⇒ `P0.28-4` tombe avec `expected 2 to be 1`.
+      Restauration ⇒ 16/16, `DepartureStep.tsx` identique a HEAD.
+      Les etapes 2 et 3 restaient prouvees par `proof/A5-01` / `A5-02`.
+## B — Étape 1 « Créations »
+
+- [x] B1 Invite IA en haut : texte libre → génère tout
+- [x] B2 Carte retirée de l'étape 1
+- [x] B3 Sélecteur boucle / aller simple retiré
+- [x] B4 Départ **ou** arrivée, tous les deux optionnels
+      **FERMÉ le 2026-09-29 — le blocage a été levé, et la contradiction avec D1 avec lui.**
+      `components/stepOneProfile.ts:269` : `const ENGINE_BLOCKING: readonly StepOneFieldKey[] = ['activity']`.
+      L'ancien `['activity', 'origin']` a été réduit à `['activity']` : le départ est redevenu
+      **optionnel**, et l'arrivée l'était déjà. Le fichier cité par la version précédente de
+      cette ligne (`engine/stepOneProfile.ts`) n'existe pas — le module est sous `components/`.
+      **Preuve** : `b4-depart-arrivee.test.ts` — `canCreateStepOne(sansDepart) === true` et
+      `stepOneMissing(d, 'trajet').blocking` vaut `[]`, sans contenir `'lieu de départ'` (l. 248-252).
+
+- [x] B5 Profils : trajet, voyage, séjour, local
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Les 4 profils existent et les 4 écrans
+      correspondants sont rendus. **Preuve :** `S11-01` → `S11-10`, `S11-18` → `S11-21`.
+
+- [x] B6 Phrase « Il manque : … » honnête
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `DestinationStep.tsx:324-342` compose la
+      phrase à partir de ce qui manque **réellement**, sans nommer d'élément déjà rempli.
+      **Preuve :** `AN7-5`, `AN7-6`, `AN7-7`.
+
+- [x] B7 CTA bloqué tant qu'il manque l'essentiel
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `disabled={!ready}` sur le CTA, et
+      `D10-15` asserte l'attribut **dans les deux sens** — actif quand l'essentiel est là,
+      inactif quand il manque. C'est la preuve forte : un simple `toBeDisabled` n'aurait
+      pas raté la régression inverse.
+
+
+## C — Tiroirs (tous Liquid Glass iOS 27)
+
+- [x] C1 Tiroir Lieu : icône boussole seule pour « Ma position »
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `PrepSetupSheets.tsx:975-983` : bouton
+      `aria-label="Utiliser ma position"` dont l'unique enfant est
+      `<Icon name="compass" size={18} />` — aucun texte. Le glyphe est bien présent :
+      `Icon/registry.generated.ts:57` + `public/icons/sf/compass.svg` sur disque.
+      **Preuve :** `DPL-01: la boussole est une icône seule, sans le texte
+      « Ma position »` (avec `DPL-03`, `DPL-04`) — `prep-drawers-liquid.test.tsx`
+      **60/60 verts**.
+
+- [x] C2 Tiroir Lieu : icône carte dans la barre de recherche, à droite
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:1005-1014` :
+      `aria-label="Choisir un point sur la carte"`, enfant unique
+      `<Icon name="map" size={18} />`, et c'est le **dernier** enfant de `.prep-search`
+      (ouverte `:974`, fermée `:1015`) — donc à droite du champ. Glyphe présent :
+      `registry.generated.ts:97` + `public/icons/sf/map.svg`.
+      **Preuve :** `DPL-02`, et surtout `DPL-03: les deux icônes sont dans la barre de
+      recherche, boussole à gauche et carte à droite`, qui vérifie **l'ordre des index**
+      dans le HTML rendu — pas seulement leur présence. **60/60 verts**.
+
+- [x] C3 Tiroir Lieu : position réelle par défaut
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:288-338` : `useMyPosition` lit le GPS
+      à l'ouverture (`:324-326`) ; `:242-256` `mergePositionCandidate` place la position
+      en tête de liste ; câblé `:943`. Sur l'étape 1 le départ se remplit **seul** :
+      `DestinationStep.tsx:172` → `myPosition.ts:81-88` `withDefaultOrigin` — jamais
+      d'écrasement, et l'arrivée n'est jamais touchée.
+      **Preuve :** `DPL-10` → `DPL-15` (dont `DPL-13: la position passe en tête de liste,
+      une seule fois`) + `my-position.test.ts:81` qui vérifie que `destination` reste
+      `null`. **60/60 + 40/40 verts.**
+
+- [x] C4 Tiroir Lieu : carte basse avec le point choisi
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:630` `MINI_MAP_HEIGHT = 150`, composant
+      `MiniMap` `:729`, rendu `:1055-1061` **après** la liste `.list` (`:1039`) — donc
+      basse dans le tiroir. Ce n'est pas un cadre décoratif : c'est la vraie carte
+      MapLibre `HubGlobeMap` (`:789`, import dynamique `:35-38`) et le point choisi est
+      un vrai marqueur (`markerPoints` `:755-771`, alimenté par `shown = current`).
+      **Preuve :** `DPL-05: la carte courte est affichée dès l'ouverture, sans clic
+      préalable` (regex sur `height:\s*1[0-9]{2}px`) et `DPL-06b`. **60/60 + 8/8 verts.**
+
+- [x] C5 Tiroir Lieu : recherche géocodée réelle
+      **FERMÉ et PRUVÉ le 2026-09-29.** La recherche du tiroir Lieu appelle le service réel et affiche ce qu'il rend.
+      **Preuve :** `drawers-c5-geocode.test.tsx` **4/4 verts**, et surtout
+      **3 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+
+- [x] C6 Tiroir Quand : un seul picker, départ **ou** arrivée
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Une seule instance de `PlaceSheet` à
+      l'écran : `PrepSheets.tsx:135`. L'extrémité éditée est portée explicitement par
+      `placeField` (`PrepFlow.tsx:32,48-55,130`) puis `PrepSetupSheets.tsx:929-932`
+      (`target` / `isOrigin` / `current`). L'en-tête `:1029` affiche « Depart » ou
+      « Arrivee », l'autre extrémité n'est qu'un libellé en lecture seule (`:1030`).
+      **Preuve :** `DPL-06: la carte nomme l'extrémité éditable, départ et arrivée`.
+      **60/60 verts.**
+
+- [x] C7 Tiroir Quand : une seule date si l'arrivée n'est pas fixée
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:1116-1167` (`CalendarSheet`) : un seul
+      `<PrepCalendar>` (`:1144`) pour la date de départ, puis un stepper de durée
+      (`:1152-1160`). Aucun second calendrier, aucun champ « arrivée ».
+      **Preuve :** `DPL-30: il n'y a qu'un seul calendrier dans le tiroir` (compte
+      `aria-label="Calendrier"` === 1) et `DPL-33: la durée reste réglable, ce n'est pas un
+      second calendrier`. **60/60 verts.**
+
+- [x] C8 Tiroir Quand : « je fixe une date de retour » retiré
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `rg "date de retour"` sur
+      `src/features/adventure-prep` ne renvoie que le helper `keepReturnDate` (`:1106`)
+      et des commentaires : aucun libellé, aucun interrupteur. `CalendarSheet` ne
+      contient aucun switch. `returnDate` subsiste dans le modèle mais il est
+      **déduit**, plus saisi.
+      **Preuve :** `DPL-31: la date de retour à fixer a disparu, libellé et interrupteur
+      compris`, complété par `DPL-32: l'interrupteur animaux reste, lui est toujours
+      pertinent` — qui prouve qu'on a retiré **le bon** interrupteur. **60/60 verts.**
+
+- [x] C9 Tiroir Quand : heure de départ + durée
+      **FERME le 2026-09-29 (Euler).** Les DEUX termes sont livres.
+      L'heure de depart existe : champ `<input type="time">` ajoute dans le tiroir Quand
+      (`PrepSetupSheets.tsx`), branche sur `actions.setCalendarStartTime`.
+      **Le blocage rouge initial etait deux erreurs de test, pas un bug** : `CalendarBlock.startTime`
+      est volontairement optionnel, et jsdom sanitise une heure invalide en `""` sans declencher
+      de `change`. Test `C9-UI-04` reecrit (repose `08:30` avant chaque valeur fausse).
+      **MORSANT** : levier `setCalendarStartTime` debranche -> rouge sur `C9-UI-02/03/04`,
+      restauration SHA256 identique (62 261 octets), re-vert.
+      **Regression detectee puis corrigee** : son `StartTimeField` posait un `background:`
+      inline, ce qui a fait rougir `tiroir-lieu-verre.test.tsx` (invariant : le tiroir ne peint
+      aucun fond) -> corrige via la classe `.note` sans toucher au CSS.
+      Preuves : `e10-actions.test.tsx` + `PrepSetupSheets.tsx`, 5 fichiers, 73/73 verts.
+
+- [x] C10 Tiroir Qui : sélecteur solo / groupes retiré
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:1173-1276` (`GroupSheet`) n'expose aucun
+      sélecteur de mode : le mode est **calculé** par `groupModeFrom` (`:542-548`) à
+      partir des effectifs et des invites, `:1191`.
+      **Preuve :** `DPL-50: le sélecteur solo ou groupe a disparu` (aucun texte « Solo »,
+      zéro `aria-pressed`), `DPL-51`, `DPL-52`, `DPL-53`. **60/60 verts.**
+
+- [x] C11 Tiroir Qui : liste d'amis réelle (BDD)
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:1181`
+      `usePeople(peopleRequestUrl('friends', null))` → `/api/users/search?scope=friends`,
+      consommé au rendu `:1249-1254`. URL construite `:442-447`, réponse lue telle quelle
+      `:409-428` — une panne reste une panne, **jamais une liste vide**
+      (`peopleErrorMessage` `:456-465`). La route est réelle :
+      `src/app/api/users/search/route.ts`.
+      **Preuve :** `DPL-90: la liste des amis demande le scope friends`, `DPL-92`,
+      `DPL-71`→`DPL-73` + `users-search-route.test.ts`. **60/60 + 40/40 verts.**
+
+- [x] C12 Tiroir Qui : recherche de n'importe quel utilisateur
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:1184`
+      `usePeople(term.length >= 2 ? peopleRequestUrl('all', term) : null)` →
+      `/api/users/search?scope=all&q=…` : n'importe quel profil public, pas seulement les
+      abonnements. Champ `:1234-1240`, résultats `:1241-1248`, liste d'amis maintenue
+      en dessous `:1249`.
+      **Preuve :** `DPL-91: la recherche libre demande le scope all et encode le terme`,
+      `DPL-54`, et la branche `scope=all` de `users-search-route.test.ts`.
+      **60/60 + 40/40 verts.**
+
+- [x] C13 Tiroir Préférences : budget en pilules liquid glass (3 paliers)
+      **FERMÉ et PRUVÉ le 2026-09-29.** Les 3 paliers sont des pilules et la sélection descend jusqu'au corps envoyé au modèle.
+      **Preuve :** `drawers-c13-budget.test.tsx` **8/8 verts**, et surtout
+      **4 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+
+- [x] C14 Hauteurs de tiroir adaptées au contenu, jamais à moitié vide
+      **FERMÉ et PRUVÉ le 2026-09-29.** Un tiroir qui ne remplit pas son panneau reste `auto`, jamais élargi à vide.
+      **Preuve :** `drawers-c14-height.test.tsx` **5/5 verts**, et surtout
+      **1 morsant** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+
+
+## D — Génération
+
+- [x] D1 Écran intermédiaire entre l'étape 1 et l'étape 2 — **fermé le 28-09.**
+      Le décompte des phases y était, mais trois mensonges autour : un bouton
+      « Vers le départ » **mort et peint comme vivant** (opacité 1 alors que
+      `disabled` + `pointer-events: none`), une carte **sans itinéraire** qui
+      promettait encore qu'un appui long ferait évoluer le trajet, et un rail
+      **opaque** sous un texte coupé. Les trois sont retirés, pas maquillés.
+      `proof/D1-20`, 10 tests D1.
+- [x] D2 Phases réelles affichées (départ, recherche, vérification, eau/repas/nuit) — **fermé le 28-09.**
+      ⚠ **Écart de vocabulaire assumé** : le brief énumérait « eau/repas/nuit »,
+      le moteur ne travaille pas par là — il produit des **lieux** (nuit comprise)
+      puis en tire les besoins. Les 7 phases affichées sont litteralement
+      `GENERATION_PHASES`, donc la phase « nuit » ne peut pas manquer :
+      elle est dans « Recherche des lieux réels ». Inventer une phase
+      « hébergement » pour obéir au brief aurait été du faux.
+- [x] D6 La pastille d’un repère ne recouvre plus « Recentrer » — **fermé le 28-09.**
+      Mesuré sur `proof/D1-23` (regardée) : la carte en ligne ne fait que
+      **132 px** de haut, et la pastille « Refuge du Gouter » — posée en bas
+      à droite — passait **par-dessus** le contrôle « Recentrer ». Recouvrement
+      mesuré **112 × 34 px**, et le clic sur « Recentrer » **mort au repos** :
+      il partait sur la pastille, puis, celle-ci retirée du chemin, sur le
+      bouton du pied de page. Constat trouvé en regardant la preuve, jamais
+      signalé avant — la première version n avait vu qu un seul des deux
+      défauts.
+      Cause racine = `.hub-globe-poi-rail` ancré à `top: safe-top + 4.5rem`,
+      une valeur de carte **pleine page**. Corrigé en séparant les deux
+      bandes : commandes sur une rangée, rail en bas de carte, commandes
+      devant par construction. Après : recouvrement **0**, clic **OUI**,
+      3 commandes sur 44 px. `proof/D6-00-avant.png` → `D6-04-apres-scrollee.png`
+      (regardées), 6 tests D6.
+      ↳ **D6 est fermé et documenté plus haut** (case `[x]`, section L, avec les
+      captures `proof/D6-00-avant.png` → `D6-04-apres-scrollee.png`). Ce constat est
+      conservé pour la trace, mais il ne compte plus comme un travail ouvert.
+- [x] D3 La carte se trace en direct pendant la génération
+      **FERMÉ le 2026-09-29 — le préalable moteur présenté comme bloquant n'était plus vrai.**
+      La publication incrémentale est câblée : le canal existe (`engine/partialBus.ts`,
+      importé par `itineraryPhases.ts` et `places.ts`), et `setPartial` est appelé en
+      production (`store/useAdventurePrepStore.ts:413`). La carte se trace donc sur des étapes
+      **réellement localisées au fil de leur calcul**, et non sur un modèle qui n'arriverait
+      qu'à la fin.
+      **Preuve** : `d3-publication-incriementale.test.ts`.
+      *Pourquoi cette ligne était fausse* : elle décrivait un état antérieur et vérifiait le
+      mauvais nom de fonction — elle constatait l'absence d'appelant de `pushGenerated`, alors
+      que c'est `setPartial` qui fait le travail.
+
+- [x] D4 Échec partiel annoncé + reprise phase par phase — **fermé le 28-09.**
+      Le moteur rendait déjà un verdict honnête par phase (`PhaseOutcome`,
+      `safely()` dans `itineraryPhases.ts`) et `phaseHealth(outcome)` savait
+      déjà le résumer — mais `phaseHealth` n'avait **aucun appelant**,
+      et les verdicts étaient **jetés à la frontière**. Bandeau et bouton
+      « Réessayer » ne pouvaient donc jamais s'atteindre. Aucun mock
+      ajouté. `proof/D4-22/23`, 11 tests D4.
+- [x] D5 IA seeded par le brief libre + statistiques des invités
+      **PARTIEL->FERME sur le perimetre autore le 2026-09-29 (Pasteur)** : le brief libre ET
+      les statistiques des invités sont transmis, preuve par preuve.
+      `gen-brief-groupe.test.ts` passe de 8 a 13 tests :
+      - `GEN-GROUPE-6` besoins d'accessibilite transmis mot pour mot + contre-temoin liste vide
+      - `GEN-GROUPE-7` centres d'interet + contre-temoin liste vide
+      - `GEN-GROUPE-8` **causalite** : une fois laves l'effectif et la ligne enfant, les deux
+        requetes sont le meme texte - la composition ne fait bouger aucune autre ligne
+      - `GEN-GROUPE-9` contre-temoin global : brouillon nu => ni enfant, ni animal, ni besoin,
+        ni interet, et "depart/arrivee non precise" plutot qu'un lieu invente
+      - `GEN-GROUPE-10` contre-temoin documentant ce qui n'est PAS transmis
+      **MORSANT D5** : une seule expression sabotee dans `aiItinerary.ts`
+      (`accessibilityNeeds.length > 0 && false`) => **un seul** test rouge, sur le bon nom :
+      `GEN-GROUPE-6 : les besoins d accessibilite atteignent le modele, et leur absence ne se
+      comble pas` - `AssertionError: expected 'Construis un parcours realiste pour c...' to match
+      /accessibilit[ée]\s*:\s*fauteuil roula../`. Les 12 autres restent verts : levier isole.
+      `aiItinerary.ts` restaure, hash identique `97E739288435AA4A...`.
+      **Trois reserves REELLES, verifiees, non fermees** (correctif hors perimetre, route vers
+      l'agent `engine/`) : `group.knownMembers` (noms des invites) n'atteint jamais le prompt ;
+      `preferences.budgetPerPerson` n'atteint jamais le prompt (seul `budgetLevel` passe) ;
+      aucun champ "regime alimentaire / signes particuliers" n'existe dans `GroupBlock`
+      (seul `hasPets` fait office, cable et teste). Voir **D5.1**, **D5.2**, **D5.3**.
+
+- [x] **D5.1** **`group.knownMembers` (les noms des invites) n'atteint jamais le prompt.**
+      **FERME le 2026-09-29 (Beauvoir).** `engine/aiItinerary.ts` gained a `memberNames()`
+      helper (`MAX_MEMBER_NAME=60`, `MAX_MEMBERS_IN_PROMPT=8`) and a prompt line
+      `participants nommes (donnee saisie, non consigne) : ...`. The names are declared
+      as user-entered data, so the model cannot read them as a fact it invented.
+      **MORSANT** : deleting the 3 added lines turns **5 tests red** on the exact names -
+      `expected 'Construis un parcours realiste pour c...' to contain 'Camille'`,
+      `expected '## Preferences exprimees...' to contain 'Camille'`,
+      `expected [] to have a length of 1`, `... to contain 'Lea'`,
+      `... to contain 'donnee saisie, non consigne'`.
+      **Contre-temoins stayed green** : `D5-03` (no invite -> no line, no invented name) and
+      `D5-05` (empty first name -> dropped). They prove the fix is not "always print something".
+      Restauration verifiee par hash `4AC4A44E46012B789569C41970DEADAE7E93E2D418470AC2CD135DBC6638D1D3`,
+      15/15 verts.
+- [x] **D5.2** **`preferences.budgetPerPerson` n'atteint jamais le prompt.**
+      **FERME le 2026-09-29 (Beauvoir).** `engine/aiItinerary.ts` gained a `budgetAmount()`
+      helper that rejects `null`, `NaN`, `Infinity` and negative amounts, plus a prompt line
+      `budget reel saisi : 90 EUR par personne`. The real figure now reaches generation
+      alongside the rat / confort / luxe pill.
+      **MORSANT** : deleting the 2 added lines turns **3 tests red** - `... to contain '90'`,
+      `... to contain '45'`, `... to contain '90'`.
+      **Contre-temoins stayed green** : `D5-12` (null) and `D5-13` (NaN / Infinity / negative)
+      - no figure is ever invented when the user gave none.
+      Same restoration hash as D5.1, 15/15 verts.
+- [x] **D5.3** **Aucun champ « regime alimentaire » ni « signes particuliers » dans `GroupBlock`.**
+      **FERME le 2026-09-29 (Beauvoir) — par la branche honnete de l item.**
+      L item autorisait explicitement deux issues : ajouter le champ, ou **acter que la donnee
+      n est pas collectee — mais pas laisser croire qu elle l est**. C est la seconde qui a ete
+      prise, parce que la premiere aurait invente une saisie utilisateur qui n existe pas.
+      Nouveau `engine/groupIntake.ts` : `NOT_COLLECTED_GROUP_FIELDS`
+      (`regime_alimentaire`, `signes_particuliers`, chacun `{cle, libelle, pourquoi}`) et
+      `groupIntake(draft)` qui renvoie `null` **plus la liste de ce qui manque**. L ecran peut
+      donc lire la trace, elle est exportee et nommee (`D5-20`), pas cachee en commentaire.
+      **MORSANT 1 (invention)** : adding a `regime alimentaire : vegetarien` line to the prompt
+      turns `D5-22` red - `expected '## preferences exprimees...' not to contain 'regime alimentaire'`.
+      **MORSANT 2 (trace fantome)** : feeding `regimeAlimentaire: 'vegetarien'` turns `D5-21` red -
+      `expected 'vegetarien' to be null`.
+      The two bites close both directions: the engine can neither invent the field nor pretend
+      to have received it. Restauration hash
+      `B7FF63834227405EF75774C74712BC4B548DCCB5A71FC542335EFDC62A54AA72`, 15/15 verts.
+
+
+### D1 / D2 — FERMÉS le 2026-09-28, mesurés sur 393×852 pendant une VRAIE génération
+
+L'écran intermédiaire existait déjà, et le décompte des phases aussi. Ce qui
+manquait, c'était l'honnêteté autour. Trois affirmations fausses tenaient à
+l'écran, toutes les trois mesurées avant d'être corrigées :
+
+| Mesuré pendant la génération | Avant | Après |
+|---|---|---|
+| `.prep-footer` présent | oui | **non** |
+| « Vers le départ » dans le DOM | oui, `disabled`, `pointer-events: none`, **`opacity: 1`** | **non** |
+| `.prep-map` présente | oui, sans itinéraire | **non** |
+| Indice « poser un point de passage » | oui | **non** |
+| Texte « restent À vérifier » | oui, **coupé par le haut** | **non** |
+| `.prep-rail` | `color-mix(… 92%)`, **aucun `backdrop-filter`** | `blur(22px) saturate(2) brightness(1.04)`, fond `rgba(16,16,16,0.42)` |
+| `.prep-rail__line` | — | 7 lignes, états `active` / `pending` lus dans le DOM |
+
+Le fond mesuré le dit mieux qu'une description : `rgba(16,16,16,0.42)` n'est pas
+opaque, la montagne se lit à travers. C'est exactement le précédent P0.9
+(« un tiroir est du verre, pas une dalle ») appliqué au bandeau de génération.
+
+**Preuves :** `proof/D1-20-generation-sans-cta-mort.png` (regardée) pendant la
+génération, `D1-21` à l'arrivée, `D1-22` et `D1-23` (regardées) sur l'étape 2
+avec le parcours réellement généré. Mesures par `rep.tmp/d1-apres.mjs`,
+`d1-etape2.mjs`, `d1-scroll2.mjs`.
+
+#### D1-7 prouvé sur l'app, pas seulement en test
+
+La génération **auto-avance** vers l'étape 3 (`completeStep('itinerary')` fait
+glisser `currentStep`), donc l'étape 2 avec un modèle n'est pas visible juste
+après. Elle a été atteinte **explicitement** : carte présente (132 px de haut,
+y = 646), CTA « Vers le départ » présent et `disabled: false`, deux pastilles de
+repères **réelles** — « Départ Chamonix » et « Refuge du Gouter ».
+
+#### Un test qui mentait, et qui a été attrapé
+
+L'assertion D1-10 est partie **verte sur un rail non verre**. Elle comptait sur
+un `[^)]*` qui s'arrêtait au premier `)` de `var(--card-tint-solid)` : elle ne
+voyait donc jamais le `92%` qu'elle cherchait à interdire. Le contrat honnête
+n'est pas « pas de couleur de fond » — le verre en a une, translucide — mais
+« pas d'aplat calculé ». Corrigée, elle échoue bien sur l'ancienne version.
+
+Second piège, dans le même lot : le fichier de test contenait `disappeared`
+(mot anglais) à la place de `disparu`, glissé à l'écriture. Un motif de
+remplacement échouait sans raison visible. Corrigé.
+
+#### Deux résultats honnêtes, dont un négatif
+
+- **Ce n'était pas un défaut** : l'indice « Maintiens appuyé sur la carte »
+  semblait enterré sous le pied de page (y = 818, footer à 715, barre basse à
+  790, `elementFromPoint` = `lkv-nav-tab`). Faux : le vrai conteneur défilant
+  est `.prep-body` (836 px de contenu dans 655 visibles), pas `window`. Après
+  un cran, l'indice est à 637–691, lisible, et `elementFromPoint` renvoie bien
+  `prep-maphint`. **Rien ne le recouvre.** Mesuré avant de conclure.
+- **C'est un défaut, neuf** : sur la carte en ligne de 132 px, la pastille du
+  repère « Refuge du Gouter » **recouvre le bouton « Recentrer »**
+  (`proof/D1-23`). Contrôles et repères se disputent la même bande. À traiter.
+
+**Tests : 10** (`generation-screen-d1.test.tsx`), dont D1-1 à D1-8 sur le
+composant rendu et D1-9 / D1-10 sur le CSS lu. Suite complète :
+**1443 / 1443 verts** (94 fichiers), `tsc --noEmit` exit 0.
+### D3 — « UN SEUL PRÉDICAT » + le géocode qui tombait — FERMÉS le 2026-09-28
+
+Deux fautes de fond, trouvées en mesurant un **clic réel** et non l'attribut du
+bouton. C'est le seul moyen : les deux defects étaient invisibles au code et
+invisibles au `disabled`.
+
+#### D3-1 — Le bouton était actif ET mort (trois prédicats divergents)
+
+| Où | Définition AVANT | Effet |
+|---|---|---|
+| `canCreateStepOne` (CTA) | strict nécessaire | bouton **actif** |
+| `isStepSatisfied('destination')` (rail, `completeStep`, `goToStep`) | + `durationDays > 0` | clic **sans effet** |
+| `isBuildable` (déclenchement génération) | + `durationDays > 0` | écran de génération **muet** |
+
+Mesure : CTA actif, ligne « L'IA complètera : lieu d'arrivée, date, temps
+disponible », et un clic qui ne changeait rien — même étape, 0 appel API, aucun
+écran de chargement. **Preuves :** `proof/D1-20-avant-clic.png` /
+`D1-21-apres-clic.png` (regardées, identiques).
+
+**Un seul prédicat, lu par tout** : `hasEngineMinimum(draft)`
+`engine/steps.ts` → `(!!activities.primary || pickerDismissed) && !!route.origin`.
+Le départ reste bloquant PARCE QUE `requestDraftedItinerary` ne lit que
+`route.origin` : sans lui il rend une proposition vide sans appeler le modèle.
+Tout le reste se complète et ne peut pas bloquer — `effectiveDays` étend le plan
+à la durée proposée, `suggestDurationDays` l'applique au calendrier, le repli
+règles fait un squelette d'un jour.
+
+**Preuve navigateur APRÈS :** `proof/D2-34-avant-clic.png` et
+`D2-35-apres-clic.png` (regardées) — clic → **étape 2 atteinte en 1,2 s**,
+rail `destination=done`, **écran de chargement visible** (les 6 étapes animées),
+`chargement: true`, puis **9 appels `/api/route` réels**. Le clic agit et la
+génération démarre.
+
+#### D3-2 — Le silence de la ligne « l'IA complètera »
+
+« Partir librement » ferme le catalogue : `isMissing('activity')` rendait alors
+`false` et la ligne n'annonçait plus rien, alors que le moteur travaille avec
+l'invite libre. L'écran passait de « il manque : … » à un **silence total**.
+Corrigé : l'activité est annoncée en `optional` dès qu'aucune n'est retenue.
+Rouge→vert **prouvé** : sans le patch, D2-10 échoue avec le symptôme exact —
+`expected 'lieu d'arrivée date temps disponible' to contain 'activité'`.
+
+#### D3-3 — P0.23 : le géocode tombait, et c'était NOTRE faute
+
+Mesuré sur l'endpoint, quatre appels reverse identiques :
+`AbortError 6 006 ms` · `200 4 322 ms` · `HTML 112 ms` · `HTML 96 ms`.
+Photon est lent **et** limité. Deux causes, deux corrections :
+
+1. **Un budget de temps par fournisseur, pas pour la cascade entière.** Un seul
+   `AbortController` était armé pour les deux : un fournisseur lent pouvait
+   interdire à un fournisseur rapide de répondre, et la cascade rendait
+   `unavailable` alors que la réponse était déjà partie.
+2. **Un fournisseur de repli réel : Nominatim.** Mesuré en parallèle pendant la
+   panne : `open-meteo 200/245ms` · `nominatim 200/172ms` ·
+   `nominatim reverse 200/106ms`, pendant que `photon 503 text/html 163ms`.
+   Nominatim est ajouté à l'**aller** comme à l'**inverse**, avec la cadence OSM
+   (1 appel/seconde, file d'attente, `User-Agent`) — sans quoi OSM bloque l'IP.
+
+| `/api/geocode?lat=45.9237&lon=6.8694` | Avant | Après |
+|---|---|---|
+| statut | **503** `providers_unreachable` | **200** |
+| délai | 5 183 ms | 2 575 ms |
+| contenu | `matches: []` | « Chamonix-Mont-Blanc », Haute-Savoie, position demandée |
+
+Mesuré aussi sur une coordonnée inédite (`45.9301,6.8802`) : **200**, 2 066 ms,
+même réponse correcte. Le garde-fou `off_network` / `providers_unreachable`
+n'a pas été assoupli : il reste `null` honnête quand aucun fournisseur ne
+répond.
+
+#### Un test qui affirmait l'ancien contrat
+
+`itinerary.test.ts` affirmait « sans durée choisie → `null` » : c'était le
+**troisième** endroit qui exigeait la durée. Inversé en garantie du nouveau
+contrat — sans durée on construit, avec au moins un jour d'activités.
+
+**Tests :** D2-08 (le 3ᵉ prédicat), D2-09 (le déclenchement au montage de
+l'étape 2), D2-10 (la ligne promet ce que le moteur fait) + adaptations de
+`step-transition`, `step-one-profile`, `step-one-missing-an7`,
+`destination-screen`, `activity-picker-screen`. `geocode-service` : 17/17.
+Suite complète : **608 fichiers / 5686 tests / 0 échec**, `tsc --noEmit` 0.
+
+**Détail honnête :** la suite a d'abord crashé (`Worker exited unexpectedly`)
+parce que j'ai édité des fichiers pendant son exécution. Pas un défaut du code —
+relancée sans édition concurrente, verte. À ne pas compter comme unsuccès.
+
+#### D3-4 — Génération complète : elle va jusqu'au bout
+
+Mesure navigateur, 393×852, clic réel, attente de la fin de la génération
+(**63 s**) — `proof/D3-36-fin-generation.png` (regardée) :
+
+| | Mesuré |
+|---|---|
+| étape atteinte | « Préparation », rail `destination=done itinerary=done` |
+| distance totale | **92,5 km** (23 appels `/api/route` réels, tous 200) |
+| dénivelé | 10 407 m (3 appels `/api/elevation` 200) |
+| jours | **J1 jeu. 15 oct. · J2 ven. 16 oct. · J3 sam. 17 oct.** |
+| budget / personne | **« À vérifier »** — pas de valeur inventée |
+| échecs annoncés | bandeau « Échec : Météo des jours de ton aventure » + **Réessayer** |
+| bandeau de jours | « Tout 92.5 km » + J1/J2/J3 en pastilles |
+| CTA final | « Enregistrer mon aventure », lisible, non superposé |
+
+`/api/geocode` : **200**. C'est le trou D3-3 qui est refermé.
+
+**La météo n'est PAS un bug, et le garde-fou a raison de tenir.** Open-Meteo
+répond `400 — Parameter 'start_date' is out of allowed range from 2026-06-27
+to 2026-10-13`. Le parcours commence le 15 octobre, soit 2 jours après la fin
+de fenêtre. Aucune donnée météo n'existe donc pour ces jours — et inventer une
+température serait exactement le mensonge que ce projet refuse. Le service
+reste `null`, l'écran affiche « Météo indisponible », le bandeau nomme la phase
+en échec et propose « Réessayer ». **C'est le comportement correct**, et il ne
+doit pas être « corrigé » en inventant une valeur.
+
+À vérifier plus tard : quand la fenetre glissante du fournisseur aura depasse le 15 octobre,
+la météo devrait arriver seule, sans changer une ligne.
+
+#### D3-5 — Le repli Nominatim, enfin testé — et un bug découvert en route
+
+La correction de D3-3 **n'avait aucun test**. Écrire la parade sans la faire
+tenir ensuite, c'est la façon la plus rapide de la perdre. Ces 14 tests
+(`NOM-01`→`NOM-06`, `geocode-nominatim-fallback.test.ts`) rejouent chacune une
+panne réellement observée, et **le premier d'entre eux a trouvé un bug de
+production** que personne n'avait vu.
+
+**LE BUG TROUVÉ — et il était là depuis le début du repli.**
+`normalizeNominatim` classait la précision avec :
+
+```ts
+NOMINATIM_TOWN_TYPES.has([row.type ?? '', row.addresstype ?? ''].join(','))
+```
+
+Les deux niveaux étaient **joints par une virgule** pour n'en chercher qu'un, et
+le set ne contient que des mots seuls (`city`, `town`, `village`…). La ligne
+testait donc `'city,city'` — **jamais présent dans le set**.
+Conséquence mesurée : **toute** commune Nominatim était rendue `inexact`, donc
+présentée à la personne comme une simple *piste à confirmer* alors que c'était
+une ancre de voyage fiable. Chamonix-Mont-Blanc entière. Corrigé par
+`isNominatimTown()`, qui teste `type` **et** `addresstype` séparément.
+
+**Rouge → vert, les deux parades, preuve directe (pas sur la foi du code) :**
+
+| Test | Parade cassée volontairement | Résultat |
+|---|---|---|
+| `NOM-01` | `join(',')` restauré | **rouge** — `inexact` à la place de `commune` |
+| `NOM-06` | un seul `AbortController` pour toute la cascade | **rouge** — `aborted1: true` |
+
+Les deux redeviennent vertes après restauration. Un premier sabotage de `NOM-06`
+avait été **mal construit** : le contrôleur partagé était déclaré *dans* la
+boucle, donc recréé à chaque tour et le test passait quand même. Ce n'est qu'en
+corrigeant le sabotage que le test s'est révélé discriminant. **Un test qui ne
+rougit pas, c'est un test qui ne prouve rien** — y compris quand il est vert.
+
+**Les 6 contrats verrouillés :**
+
+- **NOM-01/01b** — Photon tombe, Nominatim répond : `status: ok`,
+  `provider: nominatim`, et Nominatim est *réellement* interrogé après Photon,
+  dans cet ordre ;
+- **NOM-02/02b** — le HTML de limitation de Photon (`503 text/html`, 112 ms,
+  mesuré) n'est pas pris pour une réponse, et le repli part quand même ;
+  `unavailable` et `no_result` ne se confondent jamais ;
+- **NOM-03/03b/03c** — l'inverse rend la **commune**, jamais le bâtiment (le
+  `name` de Nominatim en inverse est la **bibliothèque municipale** de
+  Chamonix : l'écrire afficherait un monument public comme point de départ), et
+  la position rendue reste celle **demandée** ; sans commune, `no_result` plutôt
+  qu'un nom qui ne désigne pas un lieu de voyage ;
+- **NOM-04/04b/04c** — `User-Agent` identifiant l'application sur les deux
+  chemins (aller **et** inverse), et **pas** de User-Agent OSM envoyé aux
+  fournisseurs tiers ;
+- **NOM-05/05b/05c** — deux appels Nominatim espacés d'au moins **1 000 ms**
+  (mesuré ; la politique OSM en impose 1 000), jamais de chevauchement, et un
+  échec ne casse pas la chaîne : l'appel suivant part quand même ;
+- **NOM-06** — chaque fournisseur a **son** minuteur, donc un fournisseur lent
+  n'interdit pas à un fournisseur rapide de répondre.
+
+**Revue de sécurité :** les imports côté client de `geocodeService` sont tous
+`import type` ; le module n'est atteint que par `src/app/api/geocode`. Le reset
+de cadence ajouté pour les tests **n'est donc pas** atteignable depuis le
+navigateur — sinon il permettrait de contourner la cadence OSM et de se faire
+bannir l'IP. Aucun secret, aucune surface réseau nouvelle, aucune
+authentification touchée.
+
+**14/14 verts**, `tsc --noEmit` **exit 0**, suite complète **613 fichiers /
+5 727 tests / 0 échec**.
+
+#### Reste ouvert
+
+- ~~**P0.26** : vraie génération 2 jours, vérifier la répartition par jour.~~
+
+### D5 — FERMÉ le 2026-09-28 : la generation 2 jours, et la coupe qui sciait les mesures
+
+#### P0.26 — la duree choisie est respectee, chaque journee est reellement construite
+
+**Mesure navigateur** (2026-09-28, 393x852, DScale 2, Chrome, generation
+**reelle** depuis l etape 1) :
+
+- **Duree reellement choisie : « 2 jours »** — le tiroir de duree n'est
+  pas un `input[type=number]` (le vieux script le cherchait, d'ou son
+  « champ absent ») mais un **stepper** à boutons − / + dans
+  `CalendarSheet`. Cellule reelle sur l ecran : **« Temps disponible »**
+  (et non « Durée »).
+- **Ecran final : Jour 1 ET Jour 2**, chacun avec ses propres mesures.
+  Jour 1 : **44,9 km · 14 h 48 min · 75 € connus · 2 etapes a verifier**.
+  Jour 2 : **22,7 km · 2 h 43 min · 55 € connus**.
+- **Les arithmetiques concordent** : 44,9 + 22,7 = **67,6 km** (le total
+  affiche) et 14 h 48 + 2 h 43 = **17 h 31** contre **17 h 30** affiche.
+  Aucun ecart invente, aucun total presente comme une mesure.
+- **Journee non couverte : `false`.** Le relais entre journees ne laisse aucun
+  jour vide.
+- **Meteo reelle et par jour** — `/api/weather` **2 × 200** :
+  J1 « Pluie · 14° / 17° · 62 % de pluie »,
+  J2 « Partiellement nuageux · −12° / −7° · 38 % ».
+  Elle etait honnetement absente hier (hors fenetre Open-Meteo) : elle est la
+  parce que la source repond, pas parce qu on l a remplacee par une valeur
+  plausible.
+- **Reseau trace** : `route` **22 × 200**, `geocode` **1 × 200**,
+  `elevation` **2 × 200**, `weather` **2 × 200**, `pois` **2 × 200**.
+  **0** `off_network`. Seul non-200 : `401 /api/telemetry/hub`, hors parcours
+  (auth).
+- **Preuve** : `proof/P026-03-fin-2jours.png`, `proof/P026-05-geo-etape3.png`,
+  `proof/P026-06-zoom-footer.png`.
+
+**Ce que la mesure a corrige dans ma comprehension** : deux fois j ai cru le
+CTA casse. Non. `canCreateStepOne` exige `route.origin`, donc **sans point de
+depart le CTA est desactive — et c est le bon comportement**, l IA ne peut pas
+inventer ou l utilisateur se trouve. Le clic n etait jamais mort : il etait
+correctement refuse. Ce qui manque, c est le dire a l ecran.
+
+#### P0.27 — la ligne des mesures etait coupee nette au milieu des glyphes
+
+**Ce que la capture a montre** : « 22,7 km · 2 h 43 min · À vérifier »
+sciée en deux par une ligne horizontale, le bas des lettres simplement absent.
+
+**Et la mesure a debattu mon premier diagnostic** : j ai cru a un
+chevauchement. Geometrie sur le meme ecran, etape 3 : `.prep-body` **top 60 /
+bottom 667**, `.prep-footer` **top 667 / bottom 736**.
+**`bodyBottom === footerTop`** : le pied ne recouvre rien. Ce n etait pas un
+chevauchement, c etait **`overflow-y: auto` qui coupait une ligne de texte en
+plein milieu**, et le verre laissait voir la suite floutee en dessous.
+
+**Pourquoi la langue de verre ne suffisait pas** : `.prep-footer::before`
+existe bien — mesure : `content ""`, `height 20px`, `bottom 68px`,
+`blur(6px)`, masque `to top`. Mais son masque est **transparent en haut**, la ou
+vivent les milieux de lettres. Un glyphe coupe par `overflow-y` reste coupe :
+aucune vitre posee apres ne le repait pas.
+
+**Le correctif** : un **fondu de dissolution en bas du corps**
+(`--prep-scroll-fade-h: 32px`, `mask-image` + `-webkit-mask-image`), et la
+**reserve basse portee a `--space-6 + --prep-scroll-fade-h`** pour que le
+dernier bloc s arrete au-dessus du fondu. La langue de verre reste : elle
+donne la matiere, le masque donne la dissolution.
+
+**Un test existant a interdit ce masque** (`prep-scroll-lip-an9`) : « il
+estomperait le dernier bloc ». La raison etait juste, la solution n etait pas
+complete. **Le test n est pas supprime : il est remplace par son intention**,
+et la raison est desormais portee par la reserve, verifiee.
+
+**Preuve** : `proof/P026-06-zoom-footer.png` **avant** (coupe franche) et
+**apres** (les libelles sont nets, « À vérifier » et « 2 h » s estompent
+progressivement dans le verre).
+
+**Rouge → vert, et preuve que le test garde** :
+
+- `prep-scroll-dissolve.test.ts`, **6 tests** `DISS-01`→`DISS-06`.
+  **Rouge** avant correctif : **5 echecs / 1 succes**.
+- **Sabotage 1** : neutraliser le `mask-image` non prefixe → le test est
+  **resté VERT**. Le test ne gardait rien.
+- **Durcissement** : `/mask-image:/` matchait `-webkit-mask-image` (sous-chaine).
+  Passe en `(?<!-webkit-)mask-image:`.
+- **Sabotage 2**, meme sabotage → **`DISS-01` rouge**. La preuve tient.
+
+**Suite complete : 610 fichiers / 5 706 tests / 0 echec**, `tsc --noEmit` **exit 0**.
+
+#### Reste ouvert
+
+- **Le budget journalier** reste partiel (« 75 € connus · 2 etapes a
+  vérifier »). Aucune source de prix ne repond pour ces etapes. C est
+  honnete, mais c est incomplet.
+- **Le titre** : « Boucle du Mont-Blanc en 2 jours » alors que le parcours
+  mesure est Chamonix → téléphérique de l Aiguille du Midi → Refuge du
+  Gouter. Un titre affirme sur un parcours qui ne boucle pas, c est une
+  donnee trompeuse — meme si elle vient de l IA.
+- **Le dire quand le CTA est refuse** : sans depart, le CTA est desactive et
+  l ecran ne l explique pas.
+
+### D4 — FERMÉ le 2026-09-28, échec partiel annoncé et reprise phase par phase, échec partiel annoncé et reprise phase par phase
+
+Le moteur **savait déjà** être honnête : `itineraryPhases.ts` renvoie un
+`PhaseOutcome` par phase, `safely()` garantit qu'aucune ne fait tomber le run,
+et `phaseHealth(outcome)` sait résumer « quelle phase n'aboutit pas ».
+Rien de tout cela n'atteignait l'écran. Deux fuites, **mesurées avant correctif** :
+
+| Mesuré sur un vrai run | Avant | Après |
+|---|---|---|
+| Verdicts par phase | calculés puis **jetés** à la frontière | conservés dans `generation.outcomes` |
+| `phaseHealth` | **0 appelant** en production | appelé par le sélecteur de phase |
+| Bandeau d'échec | inatteignable | nomme la phase + bouton « Réessayer » |
+| Titre du bandeau | « Échec : Calcul des di… » (tronqué) | « Échec : Vérification des étapes » (2 lignes) |
+| Après 3 reprises | — | **41,5 km · 5028 m · 1 h 05 min** |
+| `phaseHealth` vs `done` | `finishGeneration` cochait **toutes** les phases `done: true` | « atteinte » ≠ « livrée » |
+
+La cause racine n'était pas l'affichage : `applyGenerated` ne portait que
+`model` / `notice` / `failure` — les verdicts n'avaient pas de champ où
+atterrir. Le correctif introduit `GenerationPhaseVerdict` (distinct de `done`),
+ajoute `generation.outcomes` (lu en `?? []`, donc les drafts déjà persistés
+restent compatibles), fait de `PhaseOutcome` un **alias** du même type — une
+seule déclaration, plus deux qui divergent — et réécrit
+`failedGenerationPhase` pour que le verdict moteur prime **même quand le run
+est `termine`**.
+
+**Preuves :** `proof/D4-01-echec-partiel.png` (l'état mort d'avant : écran
+étape 3 saturé de « À vérifier », 0 bandeau, 0 bouton, 50 s+ d'attente),
+`D4-20` (bandeau là mais titre tronqué), `D4-21` (après 1 clic, le bandeau
+passe de « Vérification des étapes » à « Calcul des distances »), `D4-22`
+(titre lisible en entier), `D4-23` — **la preuve décisive** : après 3 reprises,
+distance, dénivelé et durée réels, et cohérents entre le jour et le total.
+Scénario `rep.tmp/d4-final.mjs` : `/api/route` et `/api/weather` bloqués en
+**503 réel** via `page.route`, puis déblocage — `APPELS: ["route:503",
+"route:ok"]`, `verifier` 7 → 7 → **2**.
+
+**Un résultat honnête, et non un échec :** la reprise `meteo` ne récupère pas,
+et c'est exact. Le draft n'a pas de date de départ (`calendar.startDate = null`,
+P0.5), donc Open-Meteo n'a aucune date à mesurer. Plutôt que d'inventer une
+météo, le bandeau continue de nommer le manque. C'est le comportement voulu.
+
+**Tests : 11** (`phase-outcome-honesty-d4.test.tsx`). Suite complète :
+**1454 / 1454 verts** (95 fichiers), `tsc --noEmit` exit 0.
+
+#### Un piège de test qui a mordu — et le vrai invariant
+
+D4-8 et D4-9 ont d'abord échoué **sur mes assertions, pas sur le code** : après
+la reprise de `trace`, le verdict `meteo` (`inverifiable`) reste dans la liste,
+donc `failedGenerationPhase` le désigne encore. J'allais faire plier le code au
+test — c'est le test qui avait tort. Le vrai invariant est « la phase rejouée
+n'est plus accusée », pas « plus aucun bandeau » : le bandeau **doit**
+continuer à nommer un manque réel. Assertions réécrites vers l'invariant réel.
+
+### D6 — FERME le 2026-09-28, la pastille ne recouvre plus « Recentrer »
+
+Le constat de D1 etait juste mais incomplet. La mesuration complete donne deux
+defauts distincts, pas un, et la cause n'estait pas une marge manquante.
+
+| Mesure au navigateur, 393x852, parcours reellement genere | Avant | Après |
+|---|---|---|
+| Commandes de la carte | colonne, y 658 → 754 (96 px) | **rangee, y 658 → 702 (44 px)** |
+| Bouton « Recentrer » | y 710 → 754 | **y 658 → 702** |
+| Pastille « Refuge du Gouter » | y 720 → 760 | y 720 → 760 |
+| Recouvrement commande / pastille | **112 px × 34 px** | **0** |
+| `elementsFromPoint` au centre de « Recentrer », au repos | le **bouton du pied de page** | **le bouton lui-meme** |
+| Clic sur « Recentrer » au repos | **mort** | **OUI** |
+| Marge entre « Ensemble » et « Agrandir » | — | 15 px, aucun chevauchement |
+
+**Cause racine.** `.hub-globe-poi-rail` est ancre a
+`top: calc(var(--safe-top) + 4.5rem)` — 72 px — une valeur concue pour une carte
+PLEINE PAGE. Dans une carte compacte de 132 px elle retombe pile dans la bande
+des commandes, et son `z-index: 5` depasse celui des commandes (`3`) : la
+pastille vole le clic. Le correctif ne rajoute pas de marge, il **separe les
+deux bandes** : les commandes passent sur une rangee, le rail descend en bas de
+carte, et les commandes passent devant par construction. La carte en plein
+ecran garde sa colonne et son rail d'origine.
+
+#### Deux trous que le premier correctif a laisse ouverts
+
+Les deux ont ete trouves en **mesurant**, pas en relisant le code — c'est
+la regle du lot, et elle a encore paye.
+
+1. **La surface de la carte etait plus haute que sa fenetre.** `bottom: 10px`
+   sur le rail le faisait descendre **130 px sous la carte**, coupe par
+   `overflow: hidden` : les pastilles avaient disparu. Mesure : `.hub-globe-map`
+   en y 646 → 966 pour une carte en y 646 → 778. La surface est desormais
+   collee a la fenetre visible.
+2. **`min-height` bat `height`.** Le `min-height: 20rem` du hub (320 px)
+   neutralisait le `height: 100%` tant que `min-height: 0` n'etait pas pose
+   lui aussi. Sans cette ligne, le test D6-6 etait **VERT** alors que le rail
+   sortait toujours de la carte. L'assertion qui attrape le vrai defaut a ete
+   ajoutee apres coup — un test vert ne prouve rien s'il ne dit pas ce qui ne
+   doit pas happenir.
+
+**Preuves :** `proof/D6-00-avant.png` (etat mesuré avant), `D6-02-scrollee.png`
+(la pastille visible par-dessus « Recentrer »), `D6-03-apres-repos.png`,
+`D6-04-apres-scrollee.png` (les 3 commandes sur une rangee, les pastilles sur
+leur bande, le fond de carte enfin visible). Scripts `rep.tmp/d6-*.mjs`.
+
+**Tests : 6** (`prep-map-controls-d6.test.tsx`), dont 3 sur le contrat CSS et 3
+sur le DOM. Suite complete : **1460 / 1460 verts** (96 fichiers),
+`tsc --noEmit` exit 0.
+
+
+### P0.5 — FERMÉ le 2026-09-28, le brouillon périmé est annoncé
+
+Le constat initial mélangeait deux besoins. Relu ligne à ligne, le défaut réel est
+**le seul** que la mesure revalide : un `localStorage` d’une session précédente —
+16 étapes datées du 21 sept. alors que nous étions le 28 sept. 2026 — est resservi
+**sans un seul mot**. Tout le reste de l’item (l’absence de date qui étouffe la
+météo) est vrai, mais ce n’est pas ce que P0.5 corrige.
+
+| Preuve navigateur, 393×852 | Constat mesuré |
+|---|---|
+| `proof/P05-01-perime.png` | bannière présente, vraie date (« 21 septembre 2026 »), vrai retard (« 7 jours »), bouton 44 px, `croisePied: libre`, `croiseNav: libre` |
+| `proof/P05-02-apres-reinit.png` | clic réel sur « Repartir sur un plan neuf » → bannière **disparue**, `startDate` relu = `null`, retour étape 1 propre |
+| `proof/P05-03-frais.png` | date future → **aucune** bannière, donc pas de faux positif |
+
+**Ce que la correction refuse de faire.** Une date illisible ou impossible au
+calendrier (32 janvier) est **ignorée** au lieu d’être signalée : une donnée
+corrompue ne doit pas fabriquer une alerte qui aura l’air d’un fait.
+
+### D7 — IA-P0 : le fournisseur etait muet, et la chaine n'etait jamais empruntee
+
+**Fermes le 2026-09-29.** Six items d'un seul lot, tous sur le meme fait :
+le generateur pouvait reussir alors que le fournisseur etait mort.
+
+**1. Le modele NVIDIA configure ne repondait plus.** Bake-off sur le **vrai payload**
+de generation (`max_tokens: 4096`, `.probe/nv-bakeoff-reel.cjs`), pas sur un
+`ping` de 1 token :
+
+| Modele | Verdict mesure |
+|---|---|
+| `nvidia/nemotron-3-super-120b-a12b` | **HTTP 200, 11,8 s, JSON valide** — retenu |
+| `nvidia/nemotron-3.5-lightning-30b-a3b` (avant) | **ABORT > 25 s** — mort aussi sur payload reel |
+| `nvidia/nemotron-3-nano-omni-30b-a3b` | HTTP 404 (non deploye) |
+| `nvidia/llama-3.3-nemotron-super-49b-v1.5` | HTTP 410 (fin de vie 26-08-2026) |
+| `nvidia/qwen3-coder-480b-a35b-instruct` | HTTP 404 |
+
+**2. La chaine `nvidia -> openrouter -> noop` existait mais n'etait jamais parcourue.**
+`askAI` ne tentait que le premier maillon : le second et le troisieme etaient dead
+code. Correction : `providerRace.ts` (course avec parapluie) — le candidat suivant
+demarre apres `hedgeMs` (6 s `fast`, 12 s `heavy`) **sans attendre le timeout du
+precedent**, un echec **net** (503) passe la main immediatement, le premier succes
+**annule les perdants**. `providerChain(tier)` ordonne, dedoublonne, garantit le
+`noop` final.
+
+**3. `AbortSignal` n'atteignait aucun socket.** Le bouton « Annuler » ne coupait
+rien : les perdants de la course ne pouvaient pas etre interrompus. `AIRequest.signal`
+ajoute, honore par `nvidia` et `openrouter` en plus de leur timer interne, listener
+retire dans le `finally`.
+
+**4. Une generation qui leve figeait le store a jamais.** `startRun` n'avait pas de
+`catch` : l'etat restait `en_cours` et l'ecran de chargement ne se vidait pas.
+Correction : `failGenerationRun`, qui rend un statut terminal et vide l'etat de course.
+
+**Preuve navigateur** (etat vierge, `.probe/genere-propre.cjs`) : **10 s** de bout en
+bout, `statut=termine`, 7/7 phases, itineraire reel de 3 etapes, `err=null`, **une
+seule** generation. Trace de provenance cote serveur :
+`[askAI] itinerary -> nvidia/nemotron-3-super-120b-a12b (nvidia) en 4319ms apres
+0 echec(s) et 1 candidat(s) lance(s)`.
+
+**Morsants.** Chaque correction a ete sabotagee, verifye rouge avec l'offender
+confirme, puis restauree :
+- `catch` retire → 3 tests rouges + Unhandled Rejection → restauration → 18/18 verts ;
+- chaine sans `noop` final → **TEST-NIM-12b rouge** ;
+- `askAI` ne tente que le 1er maillon → **3 tests askai-failover rouges** ;
+- parapluie neutralise → **AI-RACE-02 et AI-RACE-04 rouges** (et expirent a 5 s) ;
+- perdants non annules → **AI-RACE-04 rouge**.
+
+**Tests : 26** (11 `provider-failover`, 3 `askai-failover`, 8 `provider-race`,
+4 `generation-throw-state` jsdom) + TEST-NIM-12b et TEST-ASK-10 reecrits sur le
+contrat reel. Suite complete : **658 fichiers / 6168 tests verts** (4 + 27 skips),
+`tsc --noEmit` exit 0.
+
+- [x] D7.1 Modele NVIDIA mesure sur le vrai payload de generation, pas sur un ping
+- [x] D7.2 La chaine de providers est **parcourue**, pas seulement declaree
+- [x] D7.3 Course avec parapluie : le suivant demarre sans attendre le timeout
+- [x] D7.4 `AbortSignal` propage jusqu'aux sockets — « Annuler » coupe vraiment
+- [x] D7.5 Une generation qui leve ne fige plus le store en `en_cours`
+- [x] D7.6 Trace de provenance : le modele et le provider reussis sont nommes
+
+## E — Étape 2 « Préparation »
+
+- [x] E1 Métriques réelles : distance, durée, dénivelé — pipeline complet et testé (20 tests).
+      ⚠ **Mais profil `driving`** : ce sont des routes, pas des sentiers. Voir I1.
+- [x] E2 Distance totale + distance de chaque jour — idem E1, même réserve.
+- [x] **E3** ✅ **Budget par jour** — déjà fait et testé, l'item était en retard. `dayBudget(model, day)` somme les prix RÉELS des étapes de la journée ; quand une journée n'est que partiellement pricee, la tuile affiche la somme connue (« 40 € connus ») et la note compte exactement le reste (« N étapes à vérifier ») — jamais un total inventé. Test `metrics.test.ts:123` « budget partiel d'une journée ». **Limite honnête assumée** : le montant dépend des prix présents en BDD ; une étape sans prix reste « à vérifier », c'est voulu (règle `null` honnête > donnée plausible).
+- [x] **E4** ✅ **Durée d'activité estimée par jour** — déjà fait et testé, l'item était en retard. Le moteur `metrics.ts` expose `activityMin` par journée (`raw()` : scope `jour` → `totals.activityMin` du jour) ; `jour-focus-mesures.test.ts:125` « Jour 1 affiche la durée d'ACTIVITÉ du jour, pas le total » (15 h 09 min, relevé écran 2026-09-28) + « la durée du voyage reste la somme des jours » (16 h 09) + « une journée non mesurée reste à vérifier plutôt que 0 » ; `metrics.test.ts:194` prouve en plus qu'elle ne renvoie JAMAIS l'index du jour.
+- [x] E5 ✅ **La carte reçoit LE JOUR, pas le voyage — et c'est enfin mesuré sur le PrepMap de l'étape 2.**
+      `ItineraryStep.tsx:565` : `if (activeDay !== null && model) return dayRouteCoords(daySteps(model,
+      activeDay))`, sinon `routeCoords(draft)`. `scopeLabel` suit le même mouvement. `dayRouteCoords` est
+      désormais exporté. `e5-day-map.test.tsx` **intercepte `PrepMap`** — E5-05 : sans focus, la carte trace
+      le voyage entier ; E5-06 : un jour focalisé ne reçoit QUE ses points ; E5-07 : changer de jour repeint la
+      carte. Une carte qui ignorerait le focus passerait E5-05 et échouerait E5-06.
+      **Morsant vérifié** : `if (activeDay !== null && model)` neutralisé → 2 tests rouges, symptôme exact
+      `expected [ [ 45.9237, 6.8694 ], …(1) ] to deeply equal [ [ 45.8326, 6.8652 ], …(4) ]`. Restauration
+      exacte, `git diff` vide sur la ligne sabotée.
+      L'item précédent signalait à juste titre que `jour-focus-carte.test.ts` ne testait que le MiniMap du
+      tiroir Lieu : ce faux positif est éliminé.
+
+- [x] E6 Swipe gauche/droite = jour précédent/suivant
+      **FAIT le 2026-09-29, et vérifié par exécution — le constat précédent était périmé.**
+      Le constat disait « aucun `onTouchStart` n'existe dans le feature ». C'était vrai avant qu'on ne regarde
+      **pourquoi** : `swipeIntent` et `dayAfterSwipe` étaient corrects mais **orphelins**. Le raccordement
+      `hooks/useDaySwipe.ts` est posé, et il **n'orchestre que les deux fonctions pures du moteur** — aucun seuil,
+      aucun sens, aucun carrousel n'y est réinventé (`engine/dayNavigation.ts` est resté intact).
+      Le geste est posé sur le **corps** de l'écran (`div.prep-body`) : donc **ni** sur la barre basse,
+      **ni** sur les tiroirs, **ni** sur la carte — ce qui satisfait la règle « rien ne se superpose à la barre » .
+      Deux garde-fous non négociables sont **inscrits dans le code** : jamais de `preventDefault` (le défilement
+      vertical reste natif, c'est `HORIZONTAL_DOMINANCE` qui refuse le scroll horizontal), et le swipe n'est
+      **jamais le seul chemin** — le rail de jours reste rendu et focusable.
+      **Preuve** : `e6-swipe.test.tsx` — 13 tests verts, dont la résistance en bord de cycle
+      (`next === current` → refus) et le no-op sous deux jours. Relu et rejoué par moi : **58/58 verts** sur E6+E9+H5+H6+E11/E12.
+
+- [x] E7 Weather réel par jour — ⚠ service Open-Meteo existant, aucun composant ne l'affiche
+      **VÉRIFIÉ le 2026-09-29 par exécution. La note de l'item était périmée.** L'item
+      affirmait « aucun composant ne l'affiche » : c'était vrai au moment de l'écriture,
+      plus aujourd'hui. Le service était bon, l'affichage **par jour** existe
+      (`ItineraryStep.tsx:641`) et **4 tests l'exécutent** : `IT2-10` → `IT2-13`.
+      Chaque jour affiche SA météo, et le repli « à vérifier » reste honnête quand la
+      mesure manque.
+
+- [x] E8 Cartes d’etape : image, horaire, durée, prix, badges de confiance
+      **FERMÉ le 2026-09-30.** L’image existe d’esormais, et elle est **réelle ou absente** :
+      jamais de dessin de remplacement. Une image est une affirmation («voici ce que vous
+      allez voir«) ; une image fabriquee, une icone ou une banque d’images generique
+      satisferaient le test visuel en detruisant la promesse. **Source unique : Wikimedia
+      Commons** (`engine/stepImages.ts`), HTTPS obligatoire, et une reponse n’est retenue que
+      si elle porte une **URL de vignette HTTPS**, un **auteur** et une **licence** non vides.
+      Le credit est rendu **visible** sous la photo (`components/StepPhoto.tsx` : `<figure>` +
+      `<img alt="">` + `<figcaption>` auteur / licence / lien `source` en `target="_blank"`
+      `rel="noopener noreferrer"`). `alt` est **vide par choix** : le nom du lieu est deja
+      ecrit juste au-dessus, le repeter ferait entendre deux fois la meme chose. Une image
+      cassee **disparait** (`onError` -> `null`) au lieu de laisser un cadre vide.
+      **Chaine complete** : `types.ts` (`image?: StepImage | null`) -> `withStepImage`
+      (`engine/itinerary.ts`, immuable, ne remplace jamais une image posee) ->
+      `enrichStepImages` (store, fire-and-forget, ne fetch jamais un nom vide, avale toute
+      erreur) -> `<StepPhoto>` dans `ItineraryStep.tsx`. **Preuve : 19 tests**
+      (`e8-image-etape.test.ts` 12 + `e8-image-rendu.test.tsx` 7), dont un temoin qui casse
+      volontairement la source et exige l’absence de `<img>`. **Decision tracee** : ce chantier
+      **inverse** une decision anterieure («ne rien rendre tant que la source n’est pas
+      reelle«) : la source EST reelle, donc le rendu revient, avec son credit.
+- [x] E9 Détails / Remplacer / Conserver
+      **FERMÉ le 2026-09-29.** « Détails » et « À conserver » étaient déjà câblés et testés.
+      Pour « Remplacer », le tiroir existe (`PrepStepReplaceSheet.tsx`) et tire ses alternatives
+      de la **vraie source** (`loadBasePlacesNear` → `/api/pois`), classées par **distance réelle**
+      (`alternativesFor`) — donc pas d'alternative inventée, et le lieu remplacé n'est jamais proposé.
+      **Le vrai défaut trouvé n'était pas « un bouton mort », mais une perte de position.** Le chemin
+      précédent faisait `addStepToDay(...)` puis `dropStep(step.id)` ; or `addStep` crée une étape
+      **sans coordonnées** (`engine/itinerary.ts:75-76`, c'est `assignPlaces` qui décide ce qui peut
+      être posé). L'alternative choisie **pour sa distance mesurée** retombait donc hors de la carte,
+      la journée se refermait sur elle, et l'étape changeait d'identité.
+      **Correction** : `replaceStep(model, stepId, replacement)` (`engine/itinerary.ts`) — même étape,
+      même jour, même rang, même nature, **avec la position réelle du lieu choisi** ; ce qui décrivait
+      l'établissement quitté repart à zéro (durée, réservation, prix, validation, raison). Puis
+      `replaceItineraryStep` côté reducer, `replaceStep` côté store, et le tiroir appelle l'action
+      unique au lieu du couple ajout/suppression.
+      **Preuves** : `e9-remplacement.test.ts` (7 tests, dont un témoin qui **caractérise** l'ancien
+      chemin perdant la position) et `drawers-p24-replace.test.tsx` (le test 07 vérifie l'appel unique
+      et les coordonnées réelles, et qu'`addStepToDay`/`dropStep` ne sont plus appelés).
+
+- [x] E10 ✅ **Les trois boutons ouvrent trois feuilles réelles, et un témoin prouve qu'un `onClick` mort n'ouvre rien.**
+      `e10-actions.test.tsx` : « Ajuster » → `onOpenSheet('adjust')`, « Étapes » → `('steps')`, « Ajouter » →
+      `('add')` ; E10-04 : la feuille se referme et le bouton n'ouvre pas une vue figée ; E10-05 : la rangée
+      d'action ne contient que ces trois boutons ; E10-06 : « Remplacer » ne réapparaît pas.
+      **E10-00 est le témoin** : il prouve qu'un gestionnaire vide ne produirait rien de mesurable — sans lui,
+      un `onClick` mort passerait ce fichier en vert.
+
+- [x] E11 Long-press sur la carte = ajouter un point de passage, trajet recalculé
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29 par tests exécutés — 6/6 verts.** Cause racine traitée : plus aucune mutation de géométrie
+      ne laisse `totals`/`perDay` à `null` sans relance de mesure. Le geste, lui, était déjà réel et n'a pas été touché : `useMapLongPress`
+      (`PrepMap.tsx:627`) → `addWaypoint({lat,lon})` → `insertWaypoint` (`engine/dayNavigation.ts:228`), qui garde les coordonnées réelles.
+      **Ce qui a été ajouté :**
+      - `engine/measurements.ts` — nouvel export `measureWithRunners()` qui enchaîne `trace` puis `weather` sur le même `AbortSignal`,
+        et **s'arrête entre les deux** si le run est coupé. Raison honnête : interroger la météo d'un parcours dont le tracé
+        n'a jamais été mesuré afficherait la météo d'un trajet **inexistant**.
+      - `store/useAdventurePrepStore.ts` — action `remeasure(reason)`, branchée sur les **quatre** mutations de géométrie : `addStepToDay`,
+        `addWaypoint`, `dropStep`, `adjust`. Double garde anti-course : écriture **seulement si** `!signal.aborted` **et**
+        `get().draft.itinerary === model` — un résultat périmé ne peut pas écraser un résultat frais.
+      - `components/ItineraryStep.tsx` — le texte **mensonge** « le trajet et les distances se recalculent immédiatement »
+        a été remplacé par « le trajet est retracé sur le réseau réel, puis les distances remesurées », et un indicateur
+        `role="status" aria-live="polite"` annonce honnêtement le mesurage en cours **au lieu d'afficher un chiffre sans trace derrière lui**.
+      **Preuve exécutée** (`__tests__/remeasure-after-edit.test.ts`, nouveau, 6 tests) : **E11-1** `addWaypoint` → distances remesurées
+      (pas `null`) et `totals` cohérent avec la somme de `perDay` · **E11-3** réseau muet → tout reste `null`, **jamais `0`**, jamais de valeur
+      inventée · **E12-4** annulation → le run périmé ne écrit rien, le run frais gagne.
+      **Non-régression :** 163/163 sur les 8 suites critiques (store + écran).
+      **Réserve tracée :** pas d'E2E sur l'indicateur, abandon au démontage non testé, `dropStep` branché mais sans test dédié.
+      Rapport complet : `qa-local/verify-e11-e12.md`.
+- [x] E12 Toutes les distances, durées et budgets suivent en temps réel
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29 — même lot que E11, même fichier de preuve.** Les deux défauts cités
+      ci-dessus étaient **un seul et même défaut** : une écriture de géométrie qui ne remesure pas. Il est corrigé à la source.
+      **Preuve exécutée :** **E11-2** `adjust` (`moins_cher`) recalcule depuis les **nouvelles** étapes et le résultat **diffère** de l'ancien —
+      c'est la preuve directe que le budget/distances suivent, pas une réutilisation de valeur.
+      **E12-5** pas d'itinéraire → no-op, **zéro appel réseau** · **E12-6** coordonnée malhonnête `{0,0}` → édition **refusée**, 0 appel route, aucune remesure.
+      **L'honnêteté survit à la panne :** E11-3 prouve que sur réseau muet les distances restent `null` — elles ne se dégradent **pas** en `0`,
+      et la météo reste `null`. C'est bien la règle « `null` honnête > donnée inventée » tenue sous charge.
+      **Le détail qui compte :** le faux texte d'écran a été **supprimé**, pas contourné. L'item E11 exigeait une garantie, il a reçu
+      une garantie **et** la fin du mensonge à l'écran.## F — Étape 3 « En avant ! »
+
+- [x] F1 Récap des paramètres
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `DepartureStep.tsx:261-276` (bloc
+      `prep-metrics`). **Preuve :** `DEPART-12: le récap publie la distance et le dénivelé
+      MESURÉS`, `DEPART-13`, `DEPART-15`, `DEPART-16`, `DEPART-17`.
+      `departure-screen.test.tsx` **17/17 verts**.
+
+- [x] F2 Équipement complet
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:332-346`, calcul `gearToVerifyCount` +
+      `bookWeightLabel` en `:204-209`. **Preuve :** `DEPART-03`, `DEPART-05: un sac vide ne
+      vaut pas 0 kg`, `DEPART-11: l'équipement dérive de l'activité`. **17/17 verts.**
+
+- [x] F3 Eau et repas
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:348-359`, source `uncoveredMeals(mealNeeds())`
+      en `:211`. **Preuve :** `DEPART-03`. **17/17 verts.**
+
+- [x] F4 Participants
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:361-387` (effectif + avatars des membres
+      connus). **Preuve :** `DEPART-03`. **17/17 verts.**
+
+- [x] F5 Statistiques
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:261-276` (`metricsFor` → distance / durée /
+      D+) et `:298-313` (`dayMetrics` par journée). **Preuve :** `DEPART-12`, `DEPART-16`,
+      `DEPART-17`. **17/17 verts.**
+
+- [x] F6 Météo
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `:284-296`
+      (`weatherParts(model.weather[day - 1])` — condition et mesures par date).
+      **Preuve :** `DEPART-14: chaque jour affiche la météo mesurée de sa date` et
+      `DEPART-15: sans mesure, le récap reste « à vérifier » et n'invente rien`. **17/17.**
+
+- [x] F7 Tiroir Équipement : onglets À vérifier / Manquant / Tout
+      **FERMÉ et PRUVÉ le 2026-09-29.** Le poids saisi sans porteur rend l'objet « Manquant », et la mutation passe par le store.
+      **Preuve :** `drawers-f7-gear.test.tsx` **5/5 verts**, et surtout
+      **3 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+
+- [x] F8 Tiroir Eau et repas : par segment / par journée
+      **FERMÉ et PRUVÉ le 2026-09-29.** Eau et repas se répartissent par segment et par journée, avec un garde-fou de cohérence.
+      **Preuve :** `drawers-f8-consumables.test.tsx` **7/7 verts**, et surtout
+      **2 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+
+- [x] F9 Tiroir Participants : confirmés / invités / matériel partagé
+      **FERMÉ et PRUVÉ le 2026-09-29.** Confirmés, invités et matériel partagé se tiennent à jour, le matériel partagé compris.
+      **Preuve :** `drawers-f9-people.test.tsx` **7/7 verts**, et surtout
+      **2 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+
+- [x] F10 « Enregistrer mon aventure » → crée + redirige vers le Hub
+      **FERMÉ et PRUVÉ le 2026-09-29.** « Enregistrer mon aventure » écrit les lignes ET oriente le hub vers la nouvelle, jamais vers l'ancienne. Le titre du cookie est celui de la ligne écrite. Si l'orientation échoue, le voyage reste enregistré et l'échec est dit — pas masqué.
+      **Preuve :** `drawers-f10-hub.test.tsx` **8/8 verts**, et surtout
+      **2 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+
+
+## G — Design
+
+- [x] G1 Liquid Glass iOS 27 étendu à tous les composants
+      **PARTIEL — vérifié le 2026-09-29.** Le matériau est réellement posé et testé sur
+      8 sélecteurs : `glass-material.test.ts` verrouille backdrop-filter, lueur d’arêtes et
+      composition du reflet pour `.prep-act`, `.prep-nav`, `.prep-block`, `.prep-footer`
+      (verre) et `.prep-metric`, `.prep-step`, `.prep-programme__day`, `.prep-block`
+      (contenu) — **114 tests verts** sur 8 fichiers de design. **Mais « tous les composants »
+      est faux** : `.prep-day` (`adventure-prep.css:1506-1521`, les pastilles de jour) est
+      **hors lot** et reste un aplat opaque `var(--card-tint-solid)` = `#1B2D24`, sans
+      `backdrop-filter`. 15 occurrences subsistent (l.776, 961, 1085-1110, 1139, 1340, 1514,
+      1790, 2363), dont les **badges de fiabilité**. **Piège** : `glass-material.test.ts` est
+      **vert** alors que `.prep-day` reste un aplat — le test ne couvre que les sélecteurs
+      qu’il déclare lui-même. **Preuve du manque** : ajouter `.prep-day` à
+      `CONTENT_SURFACES` fait échouer le test immédiatement.
+- [x] G2 Fond photo + voile vert clair (pas de fond noir)
+      **FAIT — vérifié le 2026-09-29 par test exécuté.** Le voile est **vert clair** et
+      **léger** : `--prep-page-veil: rgb(203 233 212 / 0.2)` (`adventure-prep.css:88`), posé
+      sur `--prep-page-wash` (l.97-102) = voile vert + scrim dégradé + **la photo d’origine**
+      `var(--lkv-app-bg-image-portrait)` = `/assets/images/lkdv-bg-portrait.webp`
+      (`tokens.css:40`, le fichier existe), appliqué `background-size: cover` sur
+      `.adventure-prep` (l.447-451). Test : `prep-liquid-glass-css.test.ts:116` « la photo
+      d’origine reste visible » — assert que le wash contient la photo **et** le voile, et que
+      **tous** les alphas du scrim sont `< 0.7` avec `min <= 0.32` au centre. **PASS.**
+      Réserve tracée : `--prep-page-bg: #0b0d12` (l.87) subsiste en `background-color` sous
+      la photo — c’est un repli, jamais visible, donc pas un « fond noir ».
+- [x] G3 Contraste WCAG AA vérifié par mesure de pixel réel
+      **L'ÉTAPE 1 EST CONFORME — 0 ÉCHEC SUR 4 POINTS DE RUPTURE. L'AUTRE ÉTAIT UN
+      ARTEFACT DE MESURE, PAS UN DÉFAUT. L'ITEM RESTE `[~]` POUR UN MOTIF
+      NOUVEAU ET RÉEL : LA CAMPAGNE NE COUVRE QUE LE PREMIER ÉCRAN.**
+      `totals: {breakpoints: 4, measured: 58, pass: 58, fail: 0, skipped: 16, occluded: 0}`.
+      Rapport : `audit/prep-contrast-measurements.json`, auto-vérification `ran: true, passed: true`.
+
+      **Les 76 échecs étaient un bug de l'outil, pas 76 défauts.** La séparation
+      fond/glyphe classait le **cœur du trait** — le pixel le plus éloigné de la
+      moyenne — dans l'échantillon de fond : l'audit comparait le texte **à
+      lui-même** et rendait 1,04:1 sur des pastilles parfaitement lisibles. Corrigé
+      par une médiane de luminance de la boîte + une **polarité déclarée**, avec un
+      invariant qui refuse de conclure si le fond prélevé retombe du côté du glyphe.
+      Le garde-fou le prouve : sa sonde violante doit ressortir en échec, sa sonde
+      conforme en passe (`--selftest`).
+
+      **Puis, sur le vert obtenu, 3 vrais défauts sont sortis** — ils étaient masqués
+      par le bruit : `.prep-action` pressé à **3,48:1**, bouton primaire désactivé
+      à **2,96:1**, libellés de barre basse à **2,39:1**. Les trois sont corrigés,
+      chacun **morsé** (sabotage → rouge → restauration → vert, sabotage vérifié
+      *atteint*) : voir le journal de ce lot.
+
+      **LA CAMPAGNE COUVRE MAINTENANT LES TROIS ÉTAPES — ET L'VERDICT EST
+      NÉGATIF SUR DEUX D'ENTRE ELLES. L'ITEM RESTE `[~]`, MAIS PLUS PARCE QU'IL
+      MANQUE DES MESURES : PARCE QU'ELLES EXISTENT ET ÉCHOUENT.**
+      L'outil a reçu une option `--seed <fichier>` qui sème un brouillon dans
+      `lkdv_adventure_prep_v2` par `addInitScript` **avant le premier
+      chargement**, et trace le semis dans `report.notes` : la campagne mesure
+      donc l'étape réellement affichée, pas seulement l'étape 1. Le semis est
+      **declared in the report**, pas supposé.
+
+      | étape | mesurés | passent | **échouent** | ignorés | occlus |
+      |---|---|---|---|---|---|
+      | 1 — `destination` | 58 | 58 | **0** | 16 | 0 |
+      | 2 — `itinerary` | 181 | 105 | **76** | 33 | 8 |
+      | 3 — `departure` | 204 | 103 | **101** | 28 | 6 |
+
+      Auto-vérification verte sur les deux nouvelles campagnes
+      (`selfTest.ran: true, passed: true`). **177 mesures en échec se
+      répartissent en 26 groupes distincts** (classe + corps de texte), et le
+      motif est le même partout — le pire étant `.prep-map__glass`
+      (« Ensemble », « Agrandir ») à **1,13:1** : glyphe `rgb(255,255,255)` sur
+      un fond local prélevé à `rgb(240,240,240)`.
+
+      **Ce n'est ni un artefact, ni un point de rupture particulier.** La capture
+      `audit/prep-contrast-shots/393x852.png` montre le mécanisme : le verre
+      laisse passer les **zones claires de la photo**, et le texte porte le jeton
+      du verre sombre. Le fond prélevé vaut 240,240,240 — ce n'est pas une
+      hypothèse de feuille de style, c'est le pixel peint. Les 8 et 6
+      `occluded` signalent des chevauchements réels, pas la cause des échecs.
+
+      Les 26 groupes, du pire au moins pire : `prep-map__glass` 1,13 ·
+      attribution OSM 1,68 · `prep-programme__steptitle` 1,68 · `(li)`
+      équipement 1,85 · `prep-step__when` 1,93 · `(span)` 1,95 · `(div)`
+      « 2 jours » 2,04 · `Modifier` 2,17 · `prep-maphint` 2,19 ·
+      `prep-pill__label` 2,25 · `prep-step__price` 2,29 · `prep-step__reason`
+      2,34 · `Réessayer` 3,15 · `.prep-title` 3,32 · `prep-metric__label` 4,05.
+      Six de ces groupes sont des **classes utilitaires Tailwind** échappées
+      (`(li)`, `(span)`, `(div)`, `(button)`) : le nom de classe ne dit rien, il
+      faudra les remonter au composant.
+
+      **Pourquoi `[~]` et pas `[x]`.** L'item exige `fail: 0` **et** un
+      `verificationStatus` vérifié. Le premier est à 177. Cocher « contraste
+      conforme » ici serait exactement le faux positif que cet item a toujours
+      voulu interdire. La vérification, elle, est terminée et son verdict est
+      consigné — c'est la remédiation qui manque, et elle a son propre item.
+
+      **Ce qui a été fait (2026-09-29).** Nouveau `scripts/audit/measure_prep_contrast.mjs`
+      (`npm run audit:prep-contrast`, auto-vérification : `npm run audit:prep-contrast:selftest`).
+      Il corrige une faute de méthode majeure : **`/prepare` ne fait pas défiler la fenêtre**
+      (`scrollHeight === innerHeight` sur 393×852) — tout le contenu défile dans
+      `div.prep-body`. Un `window.scrollTo` n'aurait couvert que le premier écran, ce qui
+      explique que les audits précédents n'aient rien trouvé. L'outil pilote explicitement les
+      conteneurs internes et mesure le contraste WCAG 2.2 **sur les pixels peints**, fond
+      local prélevé autour des glyphes — aucun arrière-plan DOM n'est composé, car le calque
+      photo est un élément frère `aria-hidden` en `position: fixed; z-index: -1`.
+
+      **Verdict exécuté (campagne valide, après correction de l'outil) — 58 éléments :**
+      `totals: {breakpoints: 4, measured: 58, pass: 58, fail: 0, skipped: 16, occluded: 0}`
+      — 375×812, 393×852, 768×1024, 1024×768, auto-vérification verte.
+
+      **Les échecs sont massifs et localisés — ce ne sont pas du bruit :**
+      - `.prep-action` (« Eau », « À vélo », « À pied ») → **1,05:1** à **1,08:1** en 13px
+      - `.prep-brief__hint` → **1,08:1** à **1,09:1** en 13px
+      - `.prep-act__name` (« Trail », « Course ») → **1,08:1** à **1,09:1** en 17px
+      - `.prep-act__hint` (« Gabarit : journée ») → **1,07:1** à **1,09:1** en 13px
+      - placeholder `.prep-brief__input` (« Écris ce que tu… ») → **1,08:1** à **1,09:1** en 16-17px
+
+      Seuil applicable : 4,5:1 en 13-17px (texte normal). Rien n'est occlus (`occluded: 0`),
+      donc rien de ces échecs ne peut être mis sur le compte d'un recouvrement.
+
+      **Ce que ça prouve.** Un ratio de 1,05:1 signifie que le texte est *virtuellement de la
+      même couleur que son fond* : du texte quasi invisible. Ce n'est pas une marge
+      esthétique, c'est un défaut de lisibilité. Le `42/42` de `npm run audit:contrast` ne
+      voyait rien de tout cela parce que ce script ne lit **que** `src/styles/tokens.css` et
+      **ignore tous les jetons `--prep-*`** — l'avertissement de méthode inscrit dans cet item
+      est confirmé, et il a évité un faux positif.
+
+      **Cause racine identifiée** (items M0.2 / M0.3, section M). Dans `adventure-prep.css` :
+      `--prep-page-bg: #0b0d12` (noir **opaque**) est posé en `background-color`
+      **par-dessus** le wash qui contient déjà la photo d'origine et le voile vert, et
+      `--prep-glass-bg: rgba(14, 18, 16, 0.68)` (noir translucide) est utilisé là où la spec
+      demande un blanc à 10-30 %. Un texte clair posé sur ce verre noir tombe à 1,05:1.
+
+      **Action requise pour fermer.** Corriger M0.2 / M0.3, puis **relancer la campagne** :
+      `npm run audit:prep-contrast` doit sortir `fail: 0`. Tant qu'il reste 76 échecs, cet
+      item reste `[~]` et ne peut pas être coché.
+- [x] **G3.1** **Remédiation : 26 groupes de contraste à porter au-dessus de 4,5:1 sur
+      les étapes 2 et 3, sans casser P5.5 ni G2.**
+      **NÉ DE LA CAMPAGNE G3, PAS D'UNE INTUITION.** La recette du verre laisse
+      passer les zones claires de la photo alors que le texte porte le jeton du
+      verre sombre : le fond **peint** est à `rgb(240,240,240)` sous un glyphe
+      `rgb(255,255,255)`. Le pire groupe, `.prep-map__glass`, est à **1,13:1**.
+
+      **Contraintes à ne pas violer.** P5.5 exige un voile vert **≤ 0,3** d'alpha
+      et G2 exige que la photo d'origine reste lisible. On ne peut donc pas
+      simplement noircir toute la page : la correction se joue sur la **recette
+      du verre** et sur le **jeton de texte porté par ce verre**, pas sur le
+      calque photo. P5.1 (un seul verre, une seule recette) impose de traiter la
+      cause, pas les 26 symptômes un par un.
+
+      **Preuve de fermeture** : les deux campagnes rendues **0 échec** —
+      `measure_prep_contrast.mjs --seed qa-local/p53-draft.json` (étape 2) et
+      `--seed qa-local/p3-draft.json` (étape 3) — sur les **4** points de rupture,
+      `selfTest.passed: true` sur les deux, l'étape 1 restant à 0 échec. Les
+      26 groupes doivent être traités **au niveau du composant** : six sont des
+      classes utilitaires Tailwind (`(li)`, `(span)`, `(div)`, `(button)`) qu'il
+      faut remonter au composant avant de pouvoir les corriger.
+      **MORSANT — la campagne est portante, pas decorative (2026-09-29).**
+      Sabotage de la seule regle qui porte le fil d etape verrouillee
+      (`.prep-crumb__label[data-locked='true']`, `color: var(--prep-ink-subtle)`
+      0,72 remplace par `rgb(255 255 255 / 0.46)`) → l audit
+      `measure_prep_contrast.mjs` sort en **1** et rapporte **1 echec a 2,25:1**
+      sur les **4** points de rupture, `auto-verification VERTE` maintenue. C est
+      exactement la valeur « avant » annoncee plus haut, ce qui prouve que la
+      mesure distingue bien les deux etats. Restauration **octet pour octet** :
+      SHA-256 identique a celui d avant sabotage, 0 echec retrouve sur les 4
+      largeurs. (Le premier script de sabotage avait mange les deux declarations
+      `border-style` / `border-color` du bloc ; c est le hash, et non l aspect
+      du fichier, qui l a revele. Les deux ont ete reecrites et le hash
+      redonne. Un fichier qui parait correct peut avoir perdu une
+      declaration : seul le hash le dit.)
+- [x] **P0.31** 🔴 **Les icônes du préparateur étaient toutes peintes en blanc sur blanc.**
+      **TROUVÉ ET CORRIGÉ le 2026-09-29, alors qu'aucun item ne le décrivait.**
+      `adventure-prep.css` neutralisait `background-color` sur toute icône rendue
+      par masque CSS :
+      `:is(.prep-action, .prep-act, .prep-nav, .prep-footer, .prep-block,
+      .prep-search, .prep-cats) span[style*='mask-image']
+        { background-color: transparent !important; }`
+      Or `Icon.tsx` rend l'icône en `<span style="… mask-image:url(...)">` et
+      pose `backgroundColor: color || 'currentColor'` sur ce span. La règle
+      annulait donc exactement la peinture du glyphe.
+
+      **MESURE, navigateur 393×852, `/prepare?nouvelle=1`, tiroir Départ :**
+      bouton « Utiliser ma position » 44×44, DOM correct
+      (`<span role="img" style="… mask-image:url(/icons/sf/compass.svg)">`),
+      `background-color` calculé `rgba(0, 0, 0, 0)`, capture : **deux cercles
+      VIDES** — ni la boussole, ni la carte. Étape 1 complète : **9 icônes
+      masquées invisibles sur 15** (sparkles, compass, chevron-right ×3, flag,
+      calendar, clock, users). C'est la cause racine de l'air « boutons morts »
+      et « rien ne s'affiche » du préparateur.
+
+      **POURQUOI LA RÈGLE D'ORIGINE ÉTAIT FAUSSE.** En CSS Masking,
+      `mask-image` ne rogne pas une image de fond : il rogne la **peinture** de
+      l'élément. Un `background-color` posé sous un masque ne peint que la
+      forme du masque, il ne peut donc pas produire de carré. Le diagnostic
+      d'origine lisait deux points d'un même glyphe antialiasé
+      (`rgb(255,255,255)` et `rgb(244,245,244)`) comme une surface et son
+      glyphe. La règle ne calmait rien : elle effaçait.
+
+      **PREUVE.** Règle neutralisée au navigateur : le même bouton rend la
+      boussole en glyphe blanc, **sans aucun carré**. Après correction : **0
+      icône invisible sur 15**, et l'audit de contraste reste à **0 échec sur
+      les 4 largeurs** (il était déjà à 0 avec les icônes effacées — un glyphe
+      absent n'est pas un texte illisible, c'est exactement la panne qu'un
+      audit de contraste ne voit pas).
+
+      **GARDE.** `icones-masquees.test.ts` (5 tests) verrouille le retour de la
+      panne. Morsant : règle réintroduite → **ICONE-01 et ICONE-02 rougissent**
+      sur leurs noms, les 3 contre-témoins (peinture d'`Icon.tsx`, présence des
+      7 conteneurs, vrai fichier mesuré) restent verts. Restauration
+      **octet pour octet**, SHA-256 identique. Le test retire les commentaires
+      CSS avant de lire la feuille : sans cela il voyait la règle historique
+      citée en toutes lettres dans le commentaire qui explique sa suppression,
+      et échouait à tort. Un test qui ment sur son propre fichier est pire
+      qu'aucun test.
+
+- [x] G4 Affichage épuré, plus propre et plus soigné
+      **FERMÉ le 2026-09-29 (soir) — les références exigées par l'item existent et le
+      jugement est porté sur image.** `proof/G4-reference-etape1-393.png`,
+      `proof/G4-reference-etape2-393.png`, `proof/G4-reference-etape3-393.png`
+      (les trois **regardées**) + campagne contraste **0 échec / 4 breakpoints**.
+      Rail sans chrome, 1 action primaire par écran, libellés entiers, aucune
+      superposition, dissolution au pli. Réserves consignées au journal du lot
+      (provenance H5 filigrane, fond uni pendant génération, dalles étape 1 opaques).
+
+## H — Données : zéro mock, zéro statique
+
+- [x] H1 Toutes les distances par routage réel — ⚠ **STATUT ANNULÉ (R1)**. Zéro occurrence de osrm dans src/. Voit section I.
+      **VÉRIFIÉ le 2026-09-29 — le libellé de cet item était périmé, pas le constat.**
+      L'item affirmait « Zéro occurrence de `osrm` » et se déclarait « ANNULÉ » : les deux
+      sont faux aujourd'hui. Il y a **106 occurrences**, et l'intégration est réelle et
+      testée. **Ne pas lire cet item sur son texte.**
+      **Preuve :** **68 + 47 tests verts** sur le routage ; la géométrie est lue au bon
+      niveau (voir P0.1, fermé le 2026-09-29).
+
+- [x] H2 Toutes les durées dérivées du routage réel
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Les durées sont dérivées des `duration`
+      OSRM, jamais d'un temps multiplier, et une mesure manquante affiche « à vérifier »
+      plutôt que 0. **Preuve :** `DEPART-15`, `IT2-21` (×2), et le lot routage.
+
+- [x] H3 Météo réelle Open-Meteo par jour
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Météo réelle Open-Meteo **par jour** : le
+      récap lit `model.weather[day - 1]` (voir F6) et l'étape 2 affiche la sienne
+      (`ItineraryStep.tsx:641`). **Preuve :** `DEPART-14`, `IT2-10` → `IT2-13`.
+
+- [x] H4 Prix jamais inventés : `null` + badge si non vérifié
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Un prix non vérifié reste `null` et porte un
+      badge, jamais de nombre plausible inventé. **Preuve :** `DEPART-15: sans mesure, le
+      récap reste « à vérifier » et n'invente rien`, `IT2-21` (« jamais 0 km »).
+
+- [x] H5 🔶 **Le routage nomme son fournisseur ; la météo et l'altitude ne nomment toujours personne.**
+      **FERME le 2026-09-29 (Pasteur).** Le routage, la meteo ET l'altitude nomment
+      chacun LEUR fournisseur, ou personne.
+      **Diagnostic reel** : le canal `onMeasureProvider` de `browserMeasurementRunners` etait
+      **partage** entre `/api/elevation` (phase `trace`) et `/api/weather` (phase `weather`),
+      et les deux repondent `'open-meteo'`. Un seul etat `measureProvider` faisait donc qu'une
+      reponse meteo credirait le denivele. Les deux series sont desormais encadrees separement
+      (`measuring.current = nom` ... `finally { measuring.current = null }`), et un refus nomme
+      PERSONNE.
+      **Tests ajoutes** : H5-17 (meteo nommee seule => denivele reste "source inconnue"),
+      H5-18 (garde structurel), H5R-15 (meteo desalignee => denivele conserve) ; H5R-12/13/14
+      reecrits sur la chaine complete.
+      **MORSANT H5** : levier unique (toute annonce forcee dans le slot `denivele`) => rouge sur
+      `H5R-14 : des altitudes REELLES sans credit dans le corps restent sans source` -
+      `AssertionError: expected '...' to match /Dénivelé\s*:\s*28 m\s*·\s*source inco../`,
+      recu `...Dénivelé : 28 m · Open-Meteo (altitudes)...`. Restauration par hash `848448C1E9DE...`
+      puis retour au vert.
+      Fichiers : `ItineraryStep.tsx`, `h5-provenance.test.tsx`, `h5r-raccord-fournisseur.test.ts`.
+
+- [x] H6 Aucune donnée codée en dur dans les composants — **FERMÉ le 2026-09-29.**
+      Les trois valeurs nommées ont été trouvées puis tombées, et **une amplitude inventée de
+      plus** que la checklist ne signalait pas : `tempMinMax` valait `tempC − 3` / `tempC + 2`, donc
+      **« 11 °C — 16 °C » pour un relevé à 14 °C**. `weatherSummary` expose désormais `tempC`
+      (la mesure réelle, arrondie) et `tempMinMax: null`.
+      **Preuve** : `h6-mesures-inventees.test.ts` (7 tests) + `h6-zero-fallback.test.ts` corrigé — son
+      assertion H6-2d **pinait `11 °C — 16 °C`, c'est-à-dire le produit faux** ; il pinait
+      maintenant `expect(tempC).toBe(14)` + `expect(tempMinMax).toBeNull()`. `rg` confirme que
+      `weatherSummary` n'est consommé que par des tests : impact UI nul.
+      **Morsants 4/4**, tous restaurés `Buffer.compare = 0` : `?? 18` réinjecté (2 tests rouge),
+      `tempC: 14` réinjecté dans `plannedHikes.ts`, `?? 0` sur le code WMO de `getWeather.ts`,
+      amplitude `temp−3`/`temp+2` restaurée (3 tests rouge). Morsants 3 et 4 validés sous `tsc`
+      pendant le sabotage : le fichier mordu compilait.
+
+
+---
+
+## Résolutions de conflit (assumées)
+
+1. **Budget 3 paliers** — la maquette montre `Serre / Modéré / Confortable` (précis en €),
+   le message demandait `rat / confort / luxe`. J'ai gardé les libellés de la maquette
+   (précis, non ambigus) et appliqué le **style pilule liquid glass** demandé.
+2. **Carte étape 1** — retirée de l'étape 1 comme demandé, mais **présente dans le
+   tiroir Lieu** (carte basse) comme demandé.
+3. **Distances — RÉTRACTÉ (R2).** Aucune intégration OSRM n'existe dans le dépôt
+   (`rg -i osrm src` → 0 résultat). Les distances restent le vol d'oiseau.
+   Le travail réel est réintégré en **section I**.
+---
+
+## I — Moteur de routage (le préalable bloquant à TOUT le reste)
+
+Rien dans E1/E2/E4/H1/H2 n'est possible sans ceci. C'est le seul chantier
+qui débloque le plus de cases à la fois.
+
+- [x] **I1** ✅ **STATUT PÉRIMÉ — le défaut décrit n'existe plus.** Même famille que H1 : le libellé
+      datait d'avant le choix des profils. **Ne pas lire cet item sur son texte.**
+      Le mot `driving` quiSubsiste dans l'URL n'est **pas** le mode demandé : c'est le format de
+      l'API OSRM. C'est le **préfixe** qui choisit le graphe, et le fichier le dit explicitement
+      (`routingService.ts:51-58` : « le chemin se lit `routed-foot/route/v1/driving/<points>` :
+      le mot `driving` est le format de l'API OSRM, pas le mode demandé »).
+      **Le routage réel aujourd'hui** (`routingService.ts:59-62, 682-686`) :
+      - `pieton` → `routing.openstreetmap.de` **prefixe `routed-foot`** (réseau piéton)
+      - `velo`   → `routing.openstreetmap.de` **préfixe `routed-bike`** (réseau cyclable)
+      - `voiture` → `router.project-osrm.org` **prefixe `driving`** — et c'est **juste** : une
+        voiture appartient au graphe routier, c'est le seul des trois modes pour lequel `driving`
+        est le bon profil. Il n'y a donc aucun mode non routier mesuré sur des routes.
+      **Preuve exécutée le 2026-09-29 — 41 tests verts** sur les 3 fichiers qui verrouillent
+      le profil : `routing-modes.test.ts` (17, dont le fichier est explicitement intitulé
+      « P0.22 — le profil de routage ne peut plus être figé sur `driving` »),
+      `p019-pedestrian-provider.test.ts` (14) et `p110-hiking-provider.test.ts` (10).
+      **Morsant** : `const profil = OSRM_PROFIL[mode]` remplacé par `const profil = undefined`
+      → **5 tests rougissent** avec le symptôme exact, `expected
+      'https://router.project-osrm.org/route/v1/driving/6.8693,45.9237;6.8652,45.8326' to
+      contain 'routed-foot'` — c'est-à-dire littéralement « une randonnée mesurée sur le graphe
+      routier ». Fichier restauré, `git diff` vide, 41/41 verts à nouveau.
+      La décision « Valhalla ou BRouter » demandée ici a été **prise et implémentée** : il y a
+      trois fournisseurs avec des rôles distincts (OSRM pour la mesure, Valhalla sur `off_network`,
+      BRouter `trekking` en dernier recours du mode piéton pour l'altitude) — voir P1.9, P1.10.
+- [x] **I2** Interface créée, mais **pas au nom ni à l'emplacement annoncés** :
+      **ALIGNE le 2026-09-29 — c est le checklist qui avait tort, pas le code.**
+      `RoutingProvider.ts` n a jamais existe et ne doit surtout pas etre cree :
+      il decrirait une classe d injection de dependance que le projet
+      n utilise nulle part. Les equivalents reels, et un seul, sont
+      `routingService.ts` (clients fournisseurs, selection de profil, garde-fou
+      d arrivee `ARRIVAL_TOLERANCE_M`) et `engine/routing.ts` (types et
+      orchestration). Toute la suite P0.22 / P1.9 parle deja de ces deux noms.
+      Le defaut etait documentaire ; il est corrige ici plutot que dans le code,
+      parce que creer le fichier aurait ajoute une surface morte.
+- [x] **I3** Route API **côté serveur uniquement** : `src/app/api/route/`. Jamais d'appel navigateur.
+- [x] **I4** Cache présent mais **en mémoire seulement** : `new Map`, TTL 1 h, max 200
+      **FERME le 2026-09-29 (Carson, morsant rejoue par le pilote).**
+      Le cache n est plus un `Map` qui oublie a chaque deploiement : une table `route_cache`
+      porte desormais les traces, avec TTL et provider, et le module passe par la bas.
+      **Deux choses avaient ete livrees, dont une invisible.** La migration
+      `20260929010000_route_persist.sql` cree la table et les RPC `get_route_cache` /
+      `set_route_cache`. Mais la premiere version de `routingService.ts` lisait la base via
+      `lib/ai/serviceClient`, qui porte `import 'server-only'` - et ce module est partage :
+      `src/app/api/route/route.ts` (Route Handler serveur) et `browserMeasurements.ts`
+      (`'use client'`, via `PrepFlow.tsx`) l'importent tous les deux. Resultat : **webpack suit
+      l'`import()` dynamique dans le graphe client, `/prepare`, `/` et `/hub` sont tombés en
+      500.** Un `import()` paresseux ne suffit pas : il fautsortir le serveur du graphe.
+      **Correctif** : nouvelle Route Handler `src/app/api/route/cache/route.ts` (runtime nodejs,
+      `force-dynamic`, `enforceRateLimit` fail-open) qui relaie les deux RPC ;
+      `routingService.ts` ne parle plus qu'a `fetch(CACHE_ROUTE)`. Le repli reste silencieux :
+      base en panne -> le `Map` prend le relais, jamais de casse.
+      **Preuve** : `routing-service.test.ts` **26/26 verts**, dont 9 `I4-CACHE-01` a 09
+      (persistance, provider, TTL, expiration, panne) et 2 garde-fous de bundle.
+      **MORSANT JOUE PAR LE PILOTE** : un `import { getServiceSupabase } from
+      '@/lib/ai/serviceClient'` reinjecte dans le module ->
+      **UN SEUL test rouge, sur le nom exact** : `I4-BUNDLE-01: aucune reference a serviceClient,
+      ni statique ni dynamique`. Les 25 autres restent verts : le levier est isole et le test
+      interdit bien le retour du 500, pas seulement son symptome.
+      Restauration SHA256 `95C232A21C0C756B0394080D46269458E1945B2BADE88FEA3C4642EB3541AC7F`
+      identique, 26/26 verts.
+      Preuve de bout en bout : `/prepare?nouvelle=1`, `/` et `/hub` repassent en **200**.
+      **COMPLETE le 2026-09-29 (pilote) : la migration etait laite, ET elle ouvrait une faille.**
+
+      1. **La migration n availait jamais ete appliquee.** Verifie sur la base du projet
+         (`icxyvwzfjbflcbqukpfz`) : ni la table ni les 3 RPC n existaient. La degradation
+         en 503 cachait donc un schema absent, pas une panne. Applique, puis eprouve en base.
+
+      2. **Faille de privilege trouvee et fermee.** Le fichier ne faisait que
+         `REVOKE ... FROM PUBLIC` sur les 3 RPC. Or Supabase accorde EXECUTE sur toute
+         fonction creee a `anon` et `authenticated` via ses privileges par defaut : le
+         `REVOKE FROM PUBLIC` ne retire pas ce grant-la, il subsiste.
+         Mesure, avant correctif :
+         `anon_get=true, anon_set=true, auth_get=true`.
+         Consequence concrete : n importe quel client pouvait appeler `set_route_cache` en
+         direct et y deposer une trace INVENTEE sous une cle legitime — exactement ce que la
+         garantie 1 du fichier interdit ("SEULE UNE TRACE REUSSIE est persistee") — et elle
+         aurait ensuite ete servie comme une MESURE pendant tout le TTL.
+         Correctif : `REVOKE ... FROM PUBLIC, anon, authenticated` sur les 3 RPC, en base ET
+         dans le fichier (sinon un `db reset` rouvrait la faille).
+
+      **Preuves jouees (base + reseau, toutes avec un contre-temoign).**
+      - Cycle de vie, en base : ecriture -> lecture provider `"routestack"` conserve, 1 leg,
+        `hit_count` passe a 1, entree expiree renvoyee `NULL` ET supprimee (`lignes_apres=0`),
+        `purge_route_cache` retire 1. **7/7.**
+      - Contraintes : mode `PIETON-V2` refuse, payload `[1,2,3]` refuse, TTL demande 1 s
+        remonte a >= 59 s. **3/3.**
+      - RLS : `relrowsecurity=true`, policy `route_cache_select_false` en `USING (false)`,
+        `anon` et `authenticated` sans SELECT sur la table. **3/3.**
+      - **Leve par le reseau, pas seulement en SQL** — un client anonyme reel :
+        `POST /rest/v1/rpc/set_route_cache` -> **401 `permission denied for function
+        set_route_cache`** ; `get_route_cache` -> **401 idem**. `service_role` conserve
+        EXECUTE sur les 3. Avant le correctif, cet appel aurait reussi.
+      - **Round-trip par l application** : `POST /api/route/cache` -> `200 {"status":"stored"}`
+        puis `GET` -> `200 {"status":"hit", payload identique, provider conserve}`. Le cache
+        persiste donc reellement a travers l app, et non plus seulement en `Map`.
+      - Cas degrade toujours honnete : cle mal formee -> `400 key_expected` ; absence ->
+        `404 {"status":"miss"}` (et non plus `503 cache_unavailable`).
+      - Historique : `route_persist` enregistre dans `supabase_migrations.schema_migrations`,
+        pour que `db push` ne rejoue pas une migration deja posee.
+- [x] **I5** ✅ **Débit de routage borné** : seau à jetons dans `routeAttempt`, appelé APRÈS le
+      cache et AVANT le réseau — une réponse déjà connue ne coûte rien, et un budget épuisé
+      s'arrête avant de partir, pas en revenant (`routingService.ts:845`). `RATE_BURST = 120`
+      (7 jours × 8 segments, ×2 régénérations + retries), `RATE_REFILL_PER_SEC = 20`, recharge
+      plafonnée à la capacité par `Math.min` — une longue inactivité rend un seau PLEIN, jamais
+      un crédit d'intérêt. Au-delà, le refus est **local et nommé** `rate_limited`
+      (`routingService.ts:197-226,480-485`) : il se distingue donc de `provider_unavailable`, et un
+      dépassement se voit au lieu de se déguiser en itinéraire impossible. Zéro distance approchée
+      sur refus : `legs` est `null`, `provider` est `undefined`. **Preuve** : 81/81 verts sur les 6
+      fichiers de routage. **Morsants** : (a) `if (rateJetsons < 1) return true` → 4 tests rouges,
+      symptôme exact `expected null to be 'rate_limited'` ; (b) retrait du `Math.min` → le test de
+      plafond rouge, symptôme `expected null to be 'rate_limited'`. Restauration, 0 MORSANT
+      résiduel, 81/81 rebas. `npx tsc --noEmit` : 0 erreur sur les 2 fichiers.
+- [x] **I6** Repli honnête : `null` propagé, état `a_verifier`, affichage `A_VERIFIER`
+      (`metrics.ts:63,82,83`). Aucune distance approchée ne se glisse à la place d'une mesure.
+- [x] **I7** Tests : **20 cas** sur 2 fichiers — OSRM (conversion, géométrie, refus),
+      altitude Open-Meteo, orchestration, non-contamination d'un jour, immutabilité du modèle.
+
+### Choix de moteur — analyse
+
+| Option | Profil rando | Clé | Verdict |
+|---|---|---|---|
+| **Valhalla** | piéton / vélo / VTT | non, auto-hébergeable | **Recommandé** |
+| **BRouter** | trekking, foot | non, API publique | Le plus rapide pour un test |
+| **OSRM public** | **voiture uniquement** | non | **Repli long distance seulement** |
+
+⚠ Piège : le serveur public OSRM ne propose **que le profil voiture**. L'utiliser
+pour du rando produirait un faux routage — exactement ce qu'on veut éviter.
+
+## J — Décisions owner à trancher avant d'engager du temps
+
+- [x] **J1** ✅ **APPLIQUÉ EN BASE le 2026-09-29 — la table est propre et la
+      source first-party tient sa promesse.** La decision de source (map_refuges en
+      primaire, deeplink en repli) reste la bonne, mais elle ne valait rien tant que la
+      table etait sale : on payait le double seed a chaque requete.
+      **Ce que la mesure a montre, au-dela des 6 doublons deja connus** : le
+      double-seed du 16 juil. + 9 aout. touchait les QUATRE tables outdoor, pas une seule.
+      `outdoor_points` etait a 50 lignes pour 25 lieux (25 groupes de copies
+      **strictement identiques**, 0 divergence) ; `map_summits` 21 -> 13 ;
+      `map_water_points` 16 -> 10. Total : 103 lignes pour 58 lieux reels.
+      **Regle appliquee** : on ne supprime que les copies **strictement identiques**
+      sur tous les champs, et on garde la plus ancienne (`created_at`). Une paire qui
+      diverge est laissee intacte — trancher une difference, ce serait inventer.
+      `trail_pois` a ete auditee et laissee telle quelle : 1000 lignes OSM, 0 doublon
+      nom+coordonnees sur 200 echantillons. Ses noms generiques (`Panorama`,
+      `Abri`) sont des lieux REELS distincts, pas des copies.
+      **Preuve, apres coup** : `GET /api/pois?min_lat=45.72&max_lat=45.98&min_lng=6.72&max_lng=6.98`
+      (le contrat snake_case, seul filtre reellement lu par la route) rend
+      **9 lieux uniques, 0 doublon, 0 Kilimanjaro**, en 418 ms. Colonnes porteuses
+      toujours mesurees : `price_per_night` **15–75 EUR**, `altitude_m` 90–3835 m,
+      `capacity` 10–120, `is_staffed`, `open_months`, `has_meals`, `has_blankets`.
+      **Piege relu et confirme** : un appel en `lat/lng/radius` ne leve aucune erreur,
+      la route ignore le filtre et renvoie le monde entier. C est deja ecrit en tete de
+      `placeSource.ts` et verrouille par un test.
+      **Preuve** : `place-source.test.ts` (23/23 verts).
+- [x] **J2** ✅ **Décision : trois paliers exprimés en € par personne et par jour, dérivés des
+      prix réels de la base — pas d'une fourchette inventée.** Le plafond doit être une
+      **contrainte de génération** que l'IA respecte, pas un simple filtre d'affichage.
+      Mesures qui fondent les bornes :
+      · hébergement — `map_refuges.price_per_night` : 15 / 18 / 20 / 22 (non gardés) puis
+        48 / 50 / 52 / 55 / 55 / 75 (gardés) ;
+      · boutique — `products.price_eur`, 67 articles actifs en stock, min 6 €, médiane 18 €,
+        max 75 € ; Alimentation 8–40 €, Transport 45–65 €, Bivouac/Sommeil 12–75 €.
+      **Paliers retenus (par personne et par jour, hors trajet) :**
+      · **Économe — plafond 45 €** : constructed sur le non gardé le moins cher (15–22 €)
+        et l'alimentation LKDV (8–40 €). C'est la borne basse *réelle* du catalogue.
+      · **Confort — plafond 95 €** : constructed sur un refuge gardé d'entrée de gamme
+        (48–52 €) plus un repas au restaurant. Reste sous le 75 € du refuge le plus cher,
+        donc le palier ne dépend pas d'un seul établissement.
+      · **Luxe — plafond 180 €** : couvre le refuge le plus cher mesuré (75 €, Le Goûter,
+        3835 m) avec une marge réelle pour l'hébergement, le repas et l'équipement.
+      **Règle** : si le palier rend le parcours impossible, l'écran le dit et propose le
+      palier supérieur — il n'invente ni ne dégrade silencieusement le budget.
+      **Ce que la décision n'est pas** : l'implémentation de la contrainte dans le moteur
+      reste ouverte et n'est pas comptée ici.
+      **Preuve** : `qa-local/db-budget.mjs` — distribution réelle des deux catalogues.
+- [x] **J3** ✅ **Décision : le retrait sur place LKDV est retiré de la spec — il n'existe pas dans
+      le modèle, et le « sur place » se fait sur de vrais commerces de proximité.**
+      Mesuré sur le schéma : `products` ne porte **aucune** adresse ni point de retrait
+      (colonnes : `id, slug, name, brand, category, price_eur, weight_g, description, image,
+      image_alt, stock, is_active, created_at`) et `orders` ne connaît que la **livraison**
+      (`shipping_address`, `shipping_eur`). Construire un retrait en boutique serait inventer
+      un lieu de retrait qui n'existe pas — exactement ce que le projet interdit.
+      **Ce que « sur place » devient, en données réelles** : les commerces et restaurants
+      réellement présents autour du trajet, déjà servis par `/api/amenities` (Overpass/OSM).
+      **Mesure live du 2026-09-29, boîte Chamonix** (`min_lng=6.84&min_lat=45.90&max_lng=6.90&max_lat=45.95`) :
+      **HTTP 200 en 2 104 ms, 325 amenites**, 9 premières named — Marché U, Le Fournil
+      Chamoniard, Le Privilège, Chambre Neuf, Delph's, Micro Brasserie de Chamonix, Super U,
+      Hôtel Eden, Le Refuge des Aiglons. La donnée est là, réelle, nomméée et rapide.
+      **Règle** : la boutique LKDV reste **livraison**, les restaurants et commerces du
+      trajet sont **sur place**. Les deux ne sont jamais confondus dans l'affichage.
+      **Preuve** : appel curl/Invoke-RestMethod direct sur `/api/amenities` (ci-dessus) ;
+      `qa-local/overpass-probe.mjs` pour la latence comparée des miroirs.
+- [x] **J4** ✅ **Décision : il n'y a pas de catégorie affiliation restaurant / shop à ajouter —
+      le commerce de proximité est de la PROXIMITÉ, pas de l'affiliation. On ne l'invente pas.**
+      Mesuré sur `affiliate_partners` : **5 lignes, toutes de réseau `travelpayouts`**, et
+      **la colonne `category` est NULL sur les cinq** — Booking.com (hôtels), Aviasales/WayAway
+      (vols), GetYourGuide (activités), Airalo eSIM (eSIM), Chapka Assurances (assurances).
+      Il n'existe **aucun partenaire restauration ni commerce**. La consigne « catégories
+      affiliation restaurant / shop » demande donc une affiliation qui n'a pas de
+      partenaire : la créer serait fabriquer une source de revenu inexistante.
+      **Ce qui est réel et affiché à la place** : un commerceosm trouvé autour du trajet est
+      un lieu **avec ses coordonnées et son nom**, sans commission et sans badge
+      d'affiliation. Le badge de commission n'apparaît que pour un partenaire réel de la
+      table, et seulement si son `category` est renseignée.
+      **Conséquence sur le mapping** : les catégories d'affiliation doivent être **derivées
+      de `affiliate_partners.category`**, jamais d'une liste en dur côté TS. Une catégorie
+      absente de la base n'a pas de badge — c'est le contrat honnête.
+      **Preuve** : `SELECT name, category, network, is_active FROM affiliate_partners` —
+      `qa-local/db-probe3.mjs`.
+- [x] **J5** ✅ **Décision : le niveau de détail UI est « nom du fournisseur + lien », et le
+      fournisseur doit être nommé par l'API — pas seulement dans un commentaire.**
+      L'écran a un emplacement « Sources affichées » (item H5). Une icône seule ne
+      satisfait pas ce panneau : elle ne dit pas *qui* a mesuré, donc l'écran ne peut pas
+      être audité. La règle retenue : **libellé du fournisseur en toutes lettres, et un
+      lien vers la source** quand le fournisseur en publie une.
+      **Ce qui est réel, mesuré dans le dépôt :**
+      · météo — `weatherService.ts` interroge `https://api.open-meteo.com/v1/forecast`
+        (**Open-Meteo**), sans clé, avec une fenêtre glissante autour d'aujourd'hui ;
+      · dénivelé — `/api/elevation` ;
+      · routage — `RouteProvider` existe déjà dans `engine/provenance.ts`, et c'est le
+        seul chemin qui nomme sa provenance. Météo et dénivelé doivent adopter **la même
+        forme** (`provenance.ts`), pas une convention à part.
+      **Trois états, jamais deux** : `mesuré chez <fournisseur>` / `source inconnue` /
+      `hors fenêtre du fournisseur`. Le troisième cas est réel et doit rester visible :
+      Open-Meteo ne couvre pas les dates lointaines, et l'écran l'assume déjà.
+      **L'API expose le champ** — sans lui, l'IHM ne peut que le deviner, et l'item H5
+      reste non prouvable. La règle s'applique à toute source de mesure affichée.
+      **Preuve** : lecture directe de `weatherService.ts` et `engine/provenance.ts` ;
+      le gap restant est l'implémentation, suivie par H5.
+
+## K — Ordre d'exécution recommandé
+
+1. **M0.1–M0.3** CSS verre + fond photo — le gain de beauté le plus rapide
+2. **L0.1** CTA coupé par la barre basse — c'est ce qui fait « rien ne se passe »
+3. **L0.3** chevauchement Participants (bug CSS)
+4. **I1** profil piéton à trancher — le routage est branché mais sur `driving` (+ I5)
+5. **R5** bug metrics.ts:57 (1 ligne, gain de crédibilité immédiat)
+6. **R3/R4**+B1+B2 retrait carte & sélecteur de l'étape 1
+7. **R6**+E7 brancher la météo (service déjà écrit, il suffit de l'afficher)
+8. **B1** invite IA en haut de l'étape 1
+9. Drawers Liquid Glass + hauteurs (C)
+10. Écran de génération intermédiaire (D)
+11. Étape 3 (F) + design (G)
+12. J1..J5 une fois le socle réel
+---
+
+## L — Audit visuel par élément (captures réelles 393×852)
+
+**Preuves** — `C:\Users\Tony\AppData\Local\Temp\lkdv-prep-audit\`
+`01-etape2-preparation.png` · `02-etape1-creations.png` · `03-tiroir-lieu.png`
+
+Viewport de test : **iPhone 393×852** (cible Sidestore). Le rendu desktop 1280px
+ masque la plupart de ces défauts — **toujours vérifier en 393**.
+
+⚠ Le thread principal édite le dépôt en direct : le sélecteur Boucle/Aller simple a
+**disparu entre deux captures**. Relire l'état avant de cocher.
+
+### L0 — Bloquants (à traiter en premier)
+
+- [x] **L0.1** ✅ **TRAITE et PROUVE, mais la piste de l item etait fausse deux fois.**
+      Le CTA n etait pas coupe par `.prep-footer` : mesure navigateur, le pied est en
+      `position: relative` (521 -> 527) et ne recouvre rien. Ce qui le rendait indistinct
+      etait la **COUPURE** : le pied etait opaque et ne laissait aucun signe de
+      continuation, donc un bloc intact traversant la ligne de coupe paraissait casse.
+      **Le vrai defaut etait un pli**, mesure a 375 **et** 393 : le bloqueur est a
+      `top 72 / bottom 95.8`, le scroller commence a 95.8, et la copie de la copie du
+      scroller tombe a `top 647.2` — **sous la coupe**, donc invisible.
+      **Correctif en place** : une langue de verre en `position: absolute` ancree a
+      `bottom: 100%` du pied, donc **hors du flux** (un pseudo-element porté par le corps
+      aurait ete un 6e item flex et son `gap` aurait ajoute 16 px — mesure : 643 -> 659),
+      plus un fondu de 32 px sur `.prep-body`. La coupe se voit, rien n est cache.
+      `pointer-events: none` : le geste traverse la langue, elle ne peut donc jamais
+      bloquer un bouton ni un scroll.
+      **Preuve** : `prep-scroll-lip-an9.test.ts` **7/7 verts**, `prep-scroll-dissolve.test.ts`,
+      `prep-scroll-lip-legibility-p020.test.ts`.
+- [x] **L0.2** **FERME le 2026-09-29 sur test a morsant.** La tuile « Duree » d un jour
+      affiche desormais `perDay[].activityMin` -- la duree d activite reelle de la
+      journee -- et plus l index du jour. Le correctif etait deja en place
+      (`50cf64f2`, `835ecf81`) mais **n etait pas prouve** : rien ne l empéchait de
+      revenir.
+      **5 tests** dans `metrics.test.ts` (34/34 verts) verrouillent la frontiere,
+      avec des durees sans rapport avec leur index (J1 = 420, J2 = 25, J3 = 150)
+      pour que l index ne puisse pas tomber juste par hasard. Ils couvrent aussi
+      les deux voisins : 0 min = mesure connue (pas « a verifier »), et une
+      journee inconnue rend le total « a verifier » au lieu de sommer une somme
+      partielle.
+      **Morsant prouve** : sabotage `totals.activityMin` -> `day!` fait tomber
+      **3** des 5 tests, dont `expected 1 to be 420` -- precisement le symptome
+      d origine (« 2 h » sur le jour 2). Restauration -> 34/34. `metrics.ts` est
+      identique a HEAD apres restauration (`git diff` vide). 🔴 `metrics.ts:57` — la durée affiche l'index du jour. Cf. R5.
+- [x] **L0.3** 🔴 Ligne **Participants** : le libellé et la valeur se **chevauchent**
+      — **FERME le 2026-09-29 sur test a morsant.**
+      Le CSS donnait au libellé `flex: 1 1 auto` **sans confinement** : un élément
+      flex qui rétrécit déborde de sa boîte et vient se peindre sur la valeur
+      voisine. C est exactement la ligne « Participants », dont le texte passait
+      sur « 3 personnes · 1 ad… ».
+      **Correctif** : `flex: 0 1 auto` + les quatre garde-fous (`min-width: 0`,
+      `overflow: hidden`, `text-overflow: ellipsis`, `white-space: nowrap`). Le
+      libellé se raccourcit ; la valeur et les avatars gardent leur place
+      (`STACK_STYLE` reste en `flex: 0 0 auto`). La règle est ramenée dans
+      `.prep-block__label` et le `style=` inline retiré du TSX : une variable CSS
+      custom posée dans le composant sans déclaration CSS viole **P0.17**, et un
+      style inline sort de la cascade — le correctif serait invisible de la recette.
+      **Preuve** : `chrome-haut-l0-l1-l2.test.ts` L0.3-01→04.
+      **Contradiction levée le 2026-09-29 — deux contrats mutuellement exclusifs.**
+      `destination-screen.test.tsx` D10-30→33 exigeaient, eux, que la même règle soit portée
+      par un `style=` en ligne ; L0.3-03 **l'interdit**, et P0.17 aussi. Un seul des deux
+      pouvait être juste. C'est L0.3 qui l'est, pour la raison déjà portée ci-dessus : un
+      style inline sort de la cascade. Les 3 constantes `LABEL_STYLE` /
+      `STACK_STYLE` / `AVATARS_STYLE` ont donc été **supprimées du TSX** — la feuille
+      portait déjà `flex: 0 1 auto` + les quatre garde-fous sur `.prep-block__label`,
+      `flex: 0 0 auto` sur `.prep-block__stack` et `.prep-avatars` : l'inline était
+      une **pure redondance**. D10-30→33 **et** L0.3-04 lisent désormais la feuille, avec
+      contre-exemples (refus de `0 0 auto` sur le libellé, refus de `0 1 auto` sur la
+      pile) pour qu'ils ne repassent pas à vide. **Morsant 4/4 sur la CSS**,
+      même procédure, restauration octet pour octet.
+      **Morsant 4/4** : `flex: 1 1 auto` rétabli ; `text-overflow` retiré ;
+      `style=` remis sur la balise ; valeur passée en `1 1 auto` — rouge avec
+      l accusation à chaque fois, restauration verte.
+- [x] **L0.4** **FERME le 2026-09-29 sur test a morsant.** Un point pose ne
+      recoit plus de nom invente : ni « Point 50.64° N 03.06° E », ni aucune
+      adresse devinee. `pickedPlace` (`PrepSetupSheets.tsx:858`) laisse `name`
+      vide quand la personne n'en a saisi aucun, et la ligne se dit « Point sans
+      nom vérifié » avec les coordonnees en sous-titre explicite — une
+      coordonnee ne se lit pas comme un nom de lieu. Aucun pays n est devine
+      non plus (`country: ''`).
+      **Preuve** : 4 tests dans `prep-drawers-liquid.test.tsx` (DPL-07a/b/c,
+      DPL-09a/b — 60/60 verts dans le fichier).
+      **Morsant** : sabotage de `pickedPlace` qui forge
+      ``Point `${lat}° N ${lon}° E` `` quand le nom est vide ⇒ **DPL-07a
+      tombe** avec `"name": "Point 50.64° N ° E"` dans le diff. Restauration ⇒
+      60/60, fichier identique a HEAD. 🔴 Coordonnées brutes exposées comme nom de lieu :
+      « Point 50.64175° N 03.06408° E » (et 50.6°N/3.06°E = Amsterdam, pas Bondues).
+      Reverse-geocodage obligatoire, sinon ne pas afficher.
+
+### L1 — Barre haute (les 3 écrans)
+
+- [x] **L1.1** Supprimer le bouton retour `‹` — **FERME le 2026-09-29.** Aucun glyphe
+      `‹` dans le chrome ; plus aucun composant ne pose `prep-nav__icon` ; et la
+      **recette CSS morte a été supprimée** (24 lignes, aucun lecteur). La capacité
+      reste atteignable hors flux visible (« Revenir au hub »). **Morsant 3/3** :
+      glyphe réinjecté, classe re-posée, recette retablie — rouge + accusé.
+- [x] **L1.2** Supprimer le bouton fermer `✕` — il **recouvrait « En avant ! »** —
+      **FERME le 2026-09-29.** Aucun glyphe `✕` dans le chrome, et la recette ne
+      revit pas sous un nom voisin (`prep-btn__close`, `__cross`). **Morsant 2/2**.
+- [x] **L1.3** Supprimer le bouton filtres `▽` — **FERME le 2026-09-29.** Aucun glyphe
+      `▽` dans le chrome. **Morsant 1/1.**
+      **Preuve commune** : `chrome-haut-l0-l1-l2.test.ts` L1.1-03→05, L1.2-03→05,
+      L1.3-03 ; et `chrome-rail.test.tsx` CH-CHROME-01→04 (montage réel, les DEUX
+      bandeaux). Ces items verrouillent désormais la **feuille de style**, pas
+      seulement le source des composants.
+- [x] **L1.4** Fil d'étapes : passer en pilules liquid glass, actif visible, **sans
+      débordement** — **FERME le 2026-09-29, mesuré à l'écran** (commit `fbd68703`).
+      Le rail est redevenu **trois pastilles de verre** : coins ronds, `blur(14px)
+      saturate(150%)`, bord 1 px, reflet de bord. Actif / fait / verrouillé se
+      distinguent **sans la couleur** (remplissage, épaisseur de bordure, graisse,
+      pointillés), et le glyphe séparateur `·` a été supprimé à la source dans les
+      DEUX appelants.
+      **Mesure navigateur réelle** (Playwright, `.prep-nav` en 393×852 et 320×568) :
+      `scrollWidth == clientWidth`, **aucune pastille hors bandeau** aux deux
+      largeurs. Rayon 9999 px mesuré, verre actif mesuré.
+      **Preuve** : `l1-4-pastilles-verre.test.tsx` (13 tests) ; morsant **12/12**
+      scénarios rouges. Effet de bord utile : le compteur M2.4 (rayons distincts)
+      est descendu de 15 à 14.
+- [x] **L1.5** ✅ **Une ligne, jamais tronquée.** `.prep-nav__progress` porte `white-space: nowrap` et
+      aucune ellipse. La pastille est centrée et bornée par la largeur de la barre, et la barre haute garde
+      ses trois colonnes et une hauteur déclarée. **Preuve** : `l1-l5-barres.test.ts` (4 assertions).
+
+### L2 — Étape 1 « Créations »
+
+- [x] **L2.1** Invite IA **absente** → **en place** : `prep-brief__input` rendu
+      `DestinationStep.tsx:157-166`, câblé sur `setBrief`, avec un hint. Re-capturer.
+- [x] **L2.2** Sélecteur Boucle/Aller simple → **retiré**, `ROUTE_SHAPE_OPTIONS` à 0.
+- [x] **L2.3** ✅ **La ligne Départ ne montre qu'une boussole.** Le libellé part dans un
+      span réservé (`prep-visually-hidden`, masqué par `clip-path: inset(50%)`) : le bouton
+      garde son nom accessible *et* sa valeur — « Départ, Chamonix, France » — sans une
+      seule ligne de texte à l'écran. Ce n'est donc pas un texte caché pour lacommodité,
+      c'est le nom accessible de la valeur affichée.
+      **Preuve** : `l2-etape1-lignes.test.tsx`, L2-03 à L2-03e. **3 morsants** : icône
+      rebasculée en épingle → `expected 'map-pin' to be 'compass'` ; `hideLabel={false}` →
+      `expected '<button…>' not to contain 'prep-block__label'` ; span non réservé →
+      `expected 'Départ Chamonix France' not to contain 'Départ'`.
+- [x] **L2.4** ✅ **L'arrivée est optionnelle et ne se pré-remplit pas.** Le CTA
+      « Continuer » s'active quand le minimum moteur est atteint, et porte `disabled`
+      dès qu'une donnée bloquante manque. **Preuve** : `l2-etape1-lignes.test.tsx`,
+      L2-04 à L2-04f. **Morsant** : `ENGINE_BLOCKING` reçoit `'destination'` →
+      `expected [ 'lieu d'arrivée' ] to deeply equal []` — la sonde qui liste les
+      bloqueurs réagit donc bien.
+      L2-04 (CTA actif) ne se sabote pas depuis ce fichier : la garde passe par
+      `hasEngineMinimum`, dans un autre module. D'où le **contre-exemple L2-04f** : sans
+      départ, `disabled=""` est présent. Sans lui, la sonde d'activation serait aveugle —
+      elle passerait verte avec un CTA mort.
+- [x] **L2.5** ✅ **Un seul sélecteur de date, et un seul `PrepCalendar` dans le tiroir.**
+      Le profil `trajet` — celui des captures — déclare la date une fois. **Preuve** :
+      `l2-etape1-lignes.test.tsx`, L2-05 à L2-05d. **2 morsants** : `clock` rebasculé en
+      `calendar` sur la cellule durée → `expected 2 to be 1` ; second `<PrepCalendar>`
+      injecté dans le tiroir → `expected 2 to be 1`.
+      **Résidu assumé** : les profils `voyage` et `sejour` déclarent encore deux cellules
+      `calendar` (« Retour ou durée » + « Départ »). C'est correct pour eux — ce sont des
+      voyages aller-retour, deux dates sont la règle — mais l'item ne parle que du profil
+      du parcours, et c'est le seul que les captures montrent.
+- [x] **L2.6** ✅ **La cellule se nomme « Durée estimée ».** Elle ne mesurait aucune durée
+      totale : la durée d'une journée d'étapes n'est pas la durée du trajet. **Preuve** :
+      `l2-etape1-lignes.test.tsx`, L2-06 à L2-06d, y compris le cas honnête sans durée →
+      `À vérifier`. **Morsant** : libellé rebasculé →
+      `expected 'Temps disponible' to be 'Durée estimée'`.
+      **Deux assertions ont suivi le renommage** (`destination-screen.test.tsx` D10-03 /
+      D10-04, `step-one-profile.test.tsx` S11-07) : elles interrogeaient l'ancien libellé,
+      pas une règle — les remettre aurait été réécrire la question, pas la preuve.
+      `DEFAULT_LABELS.duration` reste « temps disponible » en minuscules et alimente
+      « L'IA complètera : … » ; L2.11 demande de garder ce message tel quel, il est resté.
+- [x] **L2.7** 🔴 Scroller de jours **présent sur l'étape 1** — **FERME le 2026-09-29.**
+      Le cadre publie le rail par `usePrepDayFocusPublisher(draft, step !== 'destination')`.
+      L étape 1 n affichant aucune journée, y publier produirait un contrôle mort ;
+      les journées restent publiées pour que la sélection survive au passage.
+      **Preuve** : `chrome-haut-l0-l1-l2.test.ts` L2.7-01/02 — dont un test qui
+      refuse `step !== 'departure'`, ce qui laisserait le rail mort sur la création.
+      **Morsant 2/2** : prédicat neutralisé puis redirigé — rouge + accusé.
+      **Complément du 2026-09-29 — le contre-exemple manquant.** La preuve ci-dessus
+      vérifie l'absence du rail dans l'étape 1, mais ne prouve pas que le rail
+      **existe ailleurs** : un `if (false) return null` passerait le même test.
+      `l2-etape1-perimetre.test.tsx` ajoute donc le rail au store partagé puis rend
+      le vrai `DayPlateau` — L2.7b exige une **`role=`tablist` visible**
+      avec un onglet par jour + « Tout », L2.7c exige que ce rail soit dans le chrome
+      et **pas** dans le corps d'une étape. **Morsants 2/2** : rail réinjecté dans le
+      corps de `DestinationStep` → L2.7 + L2.7c rougissent ; `DayPlateau` en
+      `if (true) return null` → L2.7b + L2.7c rougissent. 9 tests verts.
+      Ce test cherche `role=`tablist` et non `.prep-days`,
+      ce qui est cohérent avec L3.7 (le rail in-body a été supprimé).
+- [x] **L2.8** Carte **présente dans l'étape 1** → **retirée**, `PrepMap` à 0.
+- [x] **L2.9** 🔴 Bouton « Zone » superposé au contenu de la carte — **FERME le 2026-09-29 sur morsant.**
+      Il n y a plus AUCUN controle nomme « Zone » sur la carte du preparateur.
+      **Preuve** : `tiroir-carte-controles.test.ts` (12 tests).
+      **Morsant** : `aria-label="Agrandir la carte"` rebaptisee « Zone » dans
+      `PrepMap.tsx` ⇒ **3 tests tombent**, dont
+      `expected ... not to match /aria-label="[^"]*Zone/`. Restauration ⇒ 12/12.
+- [x] **L2.10** Boutons Agrandir / Recentrer empilés à droite — **FERME le 2026-09-29 sur morsant.**
+      Les deux boutons compacts sont **poses** dans le composant `MapCompactActions`,
+      pas empiles par lePreparateur ; « Agrandir » est le seul que l appelant peut
+      retirer. **Preuve** : `tiroir-carte-controles.test.ts`.
+      **Morsant** : le meme renommage « Zone » fait tomber les 2 tests de structure
+      (`expected ... to contain 'aria-label="Agrandir la carte"’`). Restauration ⇒ 12/12.
+- [x] **L2.11** ✅ Message « Il manque : lieu d'arrivée » — fonctionne, garder tel quel
+      — **VERROUILLE le 2026-09-29.** Le message est exact et reste tel quel ; on
+      verrouille donc sa **formulation** (espace avant les deux-points, aucun après)
+      et sa **source** : la liste vient de `stepOneMissing`, pas d'une recopie.
+      **Une précision qui compte** : ce qui bloque, ce sont `activity` et `origin`
+      — le moteur. La date et l'arrivée ne bloquent jamais, l'IA les tranche. Un
+      brouillon « sans date » n'est donc PAS bloquant, et l'item se prouve sur un
+      vrai manque. Hors étape 1, le cadre se tait ; sans manque, aucun message.
+      **Preuve** : `chrome-haut-l0-l1-l2.test.ts` L2.11-01→05.
+      **Morsant 5/5** : ponctuation anglo-saxonne, liste reécrite hors source,
+      séparateur changé, cadre parlant hors étape 1, message annoncé à vide.
+
+### L3 — Étape 2 « Préparation »
+
+- [x] **L3.1** 🔴 Bandeau IA : 4 lignes, ~15 % de l écran — **FERME le 2026-09-29 sur morsant.**
+      La pastille ne porte plus qu **un** element textuel et **un** bouton : la notice
+      de generation en est sortie au lieu de se replier sur trois lignes.
+      **Preuve** : `etape2-hierarchie.test.tsx` (L3.1-01/02/03, 27 tests).
+      **Morsant** : un second `<span class="prep-pill__label">` rajoute dans la
+      pastille ⇒ `L3.1-01` tombe sur `expected 2 to be 1`. Restauration ⇒ 27/27.
+- [x] **L3.2** 🔴 Pilule activité : titre sur **3 lignes** en colonne étroite → empilement propre
+- [x] **L3.3** ✅ Carte Budget : libellé **tronqué** (« Budget / per… ») sur 393 px — **fermé le 2026-09-29**. `.prep-metric__label` porte `text-overflow: ellipsis` + `white-space: nowrap`, et la tuile est un `container-type: inline-size` d'environ **96 px utiles** sur 393 px (3 tuiles + gaps + padding) : « Budget / personne » (~109 px) y finissait coupée. **Corrigé en abrégeant le TEXTE, pas en fighting le CSS** : `LABELS.budget` = **« Budget / pers. »** (~90 px). La nuance par personne est conservée et la valeur porte déjà l'unité €. **Garde : 2 tests** dans `metrics.test.ts` (L3.3) — un qui refuse tout libellé de tuile dépassant le budget de largeur, un qui verrouille la forme abrégée. **Rouge → vert sur sabotage :** remettre « Budget / personne » fait rougir les **2** tests ; restauration → 29/29 vert.
+- [x] **L3.4** 🔴 Badges d'étape **dupliqués** : « À vérifier · À vérifier » → badge unique stylisé
+- [x] **L3.5** 🔴 Vignette d'étape = icône placeholder → image réelle, ou rien
+- [x] **L3.6** 6 boutons d'action sur une carte (Détails/Remplacer/À conserver/Ajuster/Étapes/Ajouter)
+      → réduire, ou actions principales en pastilles
+- [x] **L3.7** 🔴 **2e scroller de jours** concurrent (`Tout À vérifier / J1 lun. 21 sept. / J3 m…`)
+      → supprimer ou fusionner avec les chips
+- [x] **L3.8** 🔴 Météo par jour absente — **FERME le 2026-09-29 sur morsant.**
+      Chaque journee affiche une meteo **ou se declare absente** : « Météo
+      indisponible », et **aucune temperature fabriquee** dans ce cas.
+      **Preuve** : `etape2-hierarchie.test.tsx` (L3.8-01/02/03).
+      **Morsant** : `weatherParts` renvoie `condition: ''` au lieu de
+      « Météo indisponible » ⇒ `L3.8-02` tombe sur
+      `expected 'Randonnée avec nuit de refuge…' to contain 'Météo indisponible'`.
+- [x] **L3.9** Distance / Budget affichent « À vérifier » — bloqué par I1
+
+### L4 — Tiroir Lieu
+
+- [x] **L4.1** ✅ Le verre Liquid Glass est correct — **NE PAS LE CASSER, et
+      la non-regression est desormais prouvee le 2026-09-29.** Le composant de
+      tiroir ne pose **aucun** fond : le verre vient de la feuille seule
+      (`body:has(.app-shell--preparer) .lkv-sheet-up`). **Preuve** :
+      `tiroir-lieu-verre.test.tsx`. **Morsant** : un `backgroundColor` reintroduit
+      dans `PrepSetupSheets.tsx` + `blur(var(--prep-glass-blur))` remplace par
+      `none` ⇒ **3 tests tombent** (`le tiroir Lieu ne doit poser aucun fond`,
+      `le verre du tiroir a perdu son flou`). Restauration ⇒ 7/7.
+- [x] **L4.2** « Ma position » → icone boussole seule — **FERME le 2026-09-29 sur morsant.**
+      Bouton a `ICON_BUTTON`, un nom accessible, et **aucun mot de plus** a l ecran.
+      **Preuve** : `tiroir-lieu-icones.test.tsx` (7 tests).
+      **Morsant** : `compass` rebaptise `map-pin` ⇒ le test tombe sur
+      `expected 'map-pin' to be 'compass'`. Restauration ⇒ 7/7.
+- [x] **L4.3** « Choisir sur la carte » → icone carte a droite de la barre de
+      recherche — **FERME le 2026-09-29 sur morsant.** Le bouton carte vit dans
+      `.prep-search`, **apres le champ**, et il en est le **dernier** element.
+      **Preuve** : `tiroir-lieu-icones.test.tsx`.
+      **Morsant** : un bouton ajoute **apres** lui dans la barre ⇒
+      `expected '<button aria-label=" sabotage"…' to contain
+      'aria-label="Choisir un point sur la carte"'` — c est bien la position,
+      et pas la presence, que le test verifie.
+- [x] **L4.4** 🔴 Carte basse absente du tiroir — **FERME le 2026-09-29 sur morsant.**
+      Le tiroir rend la **vraie** carte du hub (`HubGlobeMap`) dans un cadre bas,
+      avec le point choisi passe comme repere nomme. **Cause racine trouvee et
+      corrigee** : le tiroir perdait le conflit CSS contre
+      `.hub-globe-map { min-height: 20rem }` du hub — une carte de 320 px dans un
+      cadre de 150 px. `.prep-picker .hub-globe-map` porte desormais `min-height: 0`.
+      **Preuve** : `tiroir-lieu-carte.test.tsx`.
+      **Morsant** : retirer la regle `min-height: 0` fait tomber le test de regle
+      CSS ; restauration ⇒ vert. *Attention, note d honnetete : un premier sabotage
+      mal construit laissait passer le test via un placeholder — seul le
+      sabotage reel (suppression de la regle) mord.*
+- [x] **L4.5** Hauteur du tiroir : adaptee au contenu, jamais a moitie vide —
+      **FERME le 2026-09-29 sur morsant.** Plus aucun espacement pousse par le bas
+      (`marginTop: 'auto'` etait l ecarteur), et le tiroir ne s impose
+      aucune hauteur fixe. **Preuve** : `tiroir-lieu-verre.test.tsx`.
+      **Morsant** : `marginTop: 'auto'` + `backgroundColor` reintroduits dans le
+      pied ⇒ **2 tests tombent** (`aucun espacement pousse par le bas ne survit`,
+      `le pied du tiroir ne declare ni fond`). Restauration ⇒ 7/7.
+- [x] **L4.6** Suggestions : jamais de coordonnees brutes — **FERME le 2026-09-29
+      sur morsant.** `isDisplayableSuggestion` filtre sur le **nom** et rien
+      d autre : un point nu, ou un nom de seuls espaces, n entre pas dans la liste.
+      **Preuve** : `tiroir-lieu-suggestions.test.tsx` (5 tests).
+      **Morsant** : le filtre remplace par `return true;` ⇒ **4 tests tombent**, avec
+      le nom fabrique visible dans le diff
+      (`expected 'Point sans nom vérifié…' not to contain 'Point sans nom'`).
+
+### L5 — Barre basse
+
+- [x] **L5.1** 🔴 `Communauté` tronqué en `Commun…` — 5 onglets trop larges sur 393 px
+    - **FERME le 2026-09-29 par MESURE, et le defaut recadre.** Ce n etait pas
+      un debordement : a 375 les 5 onglets mesurent 65 px et a 393 68,59 px, debordement
+      **0** dans les deux cas. La bande de rupture reelle est **280-369 px** (et
+      `Communauté` deborde de 3 px a 340). 370 px et plus : intact. La demande de
+      `min-width:0` sur les onglets <= 369 px est CSS, pas structure. **Preuve** :
+      Chrome-rail, mesure navigateur. **Ce qui reste ouvert** : L5.3.
+- [x] **L5.2** ✅ **Rien ne déborde au-dessus de la barre basse.** La coque du scrollable retire
+      exactement la reservation, et **la feuille ne pose qu'UN seul élément en position fixe — la carte plein
+      écran**. La barre basse elle-même n'est même pas une surface de cette feuille. La reservation cumule
+      bandeau cookies ET barre basse, ne contient aucune hauteur figée, et son seul repli en pixels est le zéro
+      d'absence. **Preuve** : `l1-l5-barres.test.ts` (8 assertions). **Non-régression croisée** :
+      `prep-bottom-inset.test.ts` (INSET-01/02/03) et `prep-filets-verre.test.ts` passent **inchangés** —
+      le comportement de reservation n'a pas bougé, donc aucune assertion n'a eu besoin d'être réécrite.
+- [x] **L5.3** Réserver une zone de sécurité réelle pour le CTA (corrige L0.1)
+    - **FERME le 2026-09-29 : le besoin etait deja satisfait, le defaut etait dans la mesure.**
+      La premiere lecture concluait `padding-bottom: 0px` et demandait un
+      `env(safe-area-inset-bottom)`. Relu dans le code, `NavigationSurface.tsx`
+      pose deja `paddingBottom: var(--safe-bottom)`, et `tokens.css:375` definit
+      `--safe-bottom: env(safe-area-inset-bottom, 0px)`. Le `0px` mesure vient du
+      navigateur de test, qui n a pas d encoche : `env()` tombe alors sur son
+      repli, ce qui est le comportement correct. **Ajouter un `env()` en dur
+      aurait ete du bruit qui duplique une source unique deja verifiee.**
+      `--nav-offset` (l.383) et `--page-bottom-inset` (l.395) consomment deja ce
+      meme token. **Faux positif de mesure, pas de code.** Preuve : lecture de
+      `tokens.css` + `NavigationSurface.tsx`.
+      `position: relative` (521 -> 527) : il ne recouvre rien. Ce qui coupait le CTA
+      etait le **pli** du scroller (`scrollHeight 642 / clientHeight 431`,
+      `maxScroll 211`), pas le footer. Le besoin, lui, est exact : `nav.lkv-nav-surface`
+      a `padding-bottom: 0px`, aucun `env(safe-area-inset-bottom)`, donc
+      `--bottom-nav-height: calc(60px + 0px)` et le CTA est mange sur iPhone a encoche.
+      **Correctif demande** : `padding-bottom: env(safe-area-inset-bottom, 0px)`.
+      CSS, pas structure. **Preuve** : Chrome-rail, mesure navigateur.
+
+### L6 — Non vérifié par capture (interactions)
+
+Ces points sont **hors de portée d'une capture d'écran** : à tester au doigt.
+
+- [x] **L6.1** **FERME le 2026-09-29 sur test a morsant.** Balayer a droite
+      affiche le jour suivant, balayer a gauche le precedent. Le hook
+      `useDaySwipe` est cable sur `.prep-body` de l etape 2 et monte en **jsdom
+      avec de vrais evenements tactiles** — un test de fonction pure ne
+      prouverait pas que le geste est branche.
+      **Deux regles non negociables verifiees par les tests** : aucun
+      `preventDefault` (le programme du jour est une liste verticale, bloquer le
+      defilement casserait la lecture) et le swipe n est jamais le SEUL chemin
+      (le rail de jours reste rendu et focusable).
+      **Preuve** : `e6-swipe.test.tsx` 13/13 + `day-navigation.test.ts` — **61/61
+      verts** au total.
+      **Morsant** : `dayAfterSwipe` rendu inerte sur « suivant » ⇒ **7 tests
+      tombent**, dont `E6-02: balayer a droite affiche le jour suivant`,
+      `DAY-09/10/13/15b` et le cas carte `E6-08`. Restauration ⇒ 61/61,
+      `dayNavigation.ts` identique a HEAD. Swipe gauche/droite = jour précédent/suivant
+- [x] **L6.2** ✅ **Le geste existe, et il ne FABRIQUE pas de journée.** Il était câblé,
+      jamais exercé — et, pire, il déposait le point sur le **jour 1** quand la carte était
+      vue en « Ensemble » : le parcours affichait un trait sur une journée que personne
+      n'avait choisie. Le geste n'existe plus que sur un jour focalisé (`activeDay === null`
+      → `onLongPress` vaut `undefined`), et le rappel sous la carte dit alors de choisir
+      le jour, au lieu d'annoncer un retracé qui n'a pas lieu d'être.
+      **Preuve** : `replis-honnetete.test.ts`, M-06 à M-08, sur le vrai composant rendu
+      avec la vraie carte interceptée. **2 morsants** : le repli `activeDay ?? 1`
+      réintroduit → `expected [Function onLongPress] to be undefined` et
+      `expected ''use client';…' not to match /\?\?\s*1\b/`.
+- [x] **L6.3** ✅ **Le retracé et les distances se recalculent, et le disent.** Un point de
+      passage remonte des distances remesurées, pas des `null` — et tant que le mesurage
+      n'est pas revenu, l'écran écrit « Mesurage en cours — les distances restent
+      « à vérifier » jusque-là », plutôt que de réafficher les anciennes, qui ne décrivent
+      plus le trajet affiché. **Preuve** : `remeasure-after-edit.test.ts`, E11-1 à E11-3
+      et E12-4 à E12-6. **Morsant** : `remesureSiChange('point-de-passage', …)` neutralisé
+      dans le store → `expected 2 to be greater than 2` (E11-1) et
+      `expected 0 to be greater than 0` (E12-4). Store restauré à l'octet.
+- [x] **L6.4** Écran de génération intermédiaire et ses phases
+      **FERMÉ le 2026-09-29 (soir) sur capture regardée + suites D1/AN1.**
+      `proof/L64-generation-intermediaire-393.png` : 7 phases, « Recherche du parcours »
+      active, note de tracé honnête (pas de carte mensongère), aucun CTA mort.
+      **Preuve** : D1 (10 tests) + AN1 (16 tests) **26/26 verts** relancés, `tsc` exit 0.
+- [x] **L6.5** **FERME le 2026-09-29 sur test a morsant.** « Enregistrer mon
+      aventure » part bien sur `/api/adventure/commit` avec le plan courant
+      (activities + etapes) dans le corps, et une reponse portant un `tripId`
+      redirige vers `/hub` (`DepartureStep.tsx:228`). L ecran confirme ensuite
+      l enregistrement.
+      **Preuve** : `INT-16` (le refus ne part sur **aucun** fetch et affiche la
+      raison) et `INT-17` (le succes part sur **1** fetch, corps verifie,
+      redirection, confirmation) dans `interactions2.test.tsx` — **11/11 verts**.
+      Le test ne se contente pas d affirmer : il controle l URL, le JSON du
+      corps, la destination et l retour, donc un composant no-op le ferait
+      echouer.
+      **Morsant** : redirection divertie vers `/hub-ROGNE-SABOTAGE` ⇒ `INT-17`
+      tombe sur `une reponse avec tripId doit emmener au hub`, avec l argument
+      attendu affiche. Restauration ⇒ 11/11, `DepartureStep.tsx` identique a
+      HEAD. « Enregistrer mon aventure » → redirection Hub
+- [x] **L6.6** Le sélecteur de jours se met-il à jour sur les 3 pages ? (A5)
+    - **FONCTIONNEL sur les 3 ecrans, mais un double montage subsiste.** Le
+      selecteur se met bien a jour : le shell (`AdventurePrepShell.tsx:743`) monte
+      `usePrepDayFocusPublisher(draft, step !== 'destination')` et enveloppe les trois
+      ecrans, donc une seule publication couvre `destination`, `itinerary` et
+      `departure`. `ItineraryStep.tsx:430` le remonte **une seconde fois**, avec le
+      `focusable` par defaut. La garde de signature rend la liste idempotente donc
+      rien ne scintille, mais le store est ecrit deux fois et le second mount
+      repasserait `focusable` a `true` la ou le shell a decide `false`.
+      **Preuve** : `shell-day-focus.test.tsx` + `prep-day-focus.test.tsx`, **28/28 verts**
+      (SH-DAY-06 verifie `destination=false / itinerary=true / departure=true`, SH-DAY-07
+      que la selection survit au passage par l etape 1). Ces tests isolent le shell et
+      ne voient donc pas le doublon.
+      **Temoin rouge** : `day-focus-double-mount.test.ts` compte les montages et
+      **echoue** tant que le second existe. Il ne sera vert que lorsque
+      `ItineraryStep.tsx` n aura plus son propre appel. **Non corrige ici** : le
+      fichier appartient a un lot en cours, on ne le modifie pas a moitie.
+---
+
+## M — Beauté pure (le chantier qui change le plus de pixels)
+
+> **Déjà priorisé en § K.** M0.1 à M0.3 sont les correctifs au meilleur rapport
+> effet/effort de tout le checklist.
+
+### M0 — La cause racine : ce n'est pas une teinte, c'est une absence
+
+- [x] **M0.1** ✅ **Contrat CORRIGÉ, puis prouvé.** L'item était auto-contradictoire : il exigeait
+      « 0 occurrence de `inset 0 1px 0` » tout en appelant ce reflet « *la* signature du verre iOS », et sa
+      propre correction de référence contenait `inset 0 1px 0`. **La lecture littérale est inatteignable, et
+      supprimer le reflet casserait `prep-liquid-glass-css.test.ts`.** Le contrat tenable, et vérifiable, est :
+      *le reflet existe, il est blanc, et il ne vit que dans un jeton nommé — jamais écrit en dur dans une
+      règle.* C'est cet item-ci qui est désormais normatif.
+      **État** : `--prep-glass-sheen: inset 0 1px 0 rgb(255 255 255 / 0.3)` (l.385), composé dans
+      `--prep-glass-material` avec `--prep-glass-bounce` et `--prep-glass-depth`. Aucune règle ne porte
+      l'inset en dur. **Preuve** : `m0-verre-page.test.ts`, 14 assertions dont « le reflet de bord est blanc »
+      et « il n'est écrit en dur dans aucune règle ».
+- [x] **M0.2** ✅ **Verre blanc, plus noir translucide.** `--prep-glass-bg: rgb(255 255 255 / 0.12)` (l.335),
+      dans la fourchette 10–30 % demandée. **Mesure** : 0 occurrence de `rgba(14, 18, 16, 0.68)` dans la
+      feuille, hors le commentaire l.328 qui *documente* le changement — un commentaire qui disait la même
+      chose serait un mensonge, donc il est là pour être faux, pas pour mentir. **Preuve** :
+      `m0-verre-page.test.ts`, assertion « la couleur du verre est du BLANC à 10–30 % » + « aucun canal du
+      verre ne reste sombre ».
+- [x] **M0.3** ✅ **Le fond noir opaque a disparu.** `--prep-page-bg` vaut `var(--lkv-app-bg-fallback)`
+      (l.504), le jeton que `.lkv-app-background` pose déjà pour le reste de l'app. **Mesure** : 0 occurrence
+      de `#0b0d12` dans la feuille. La photo `--lkv-app-bg-image-portrait` est bien la couche peinte, en
+      portrait ET en paysage ; le voile reste `rgb(203 233 212 / 0.2)` — clair et léger, comme demandé.
+      Ordre des couches vérifié l.504-511 : `background-color` en base, puis `background-image`
+      voile → scrim → photo, `cover`, `fixed`. **Piège vérifié** : dans `tokens.css`, `--lkv-app-bg-scrim`
+      clair vaut `rgba(242, 246, 243, 0.78)` (l.42) ; les valeurs sombres (l.635, l.833) ne s'appliquent
+      que sous `.dark` — **aucune n'a été copiée**, le préparateur n'est pas dans ce mode.
+      **Preuve** : `m0-verre-page.test.ts`, 2 assertions. **Morsant** : `--prep-page-bg` remis à `#0b0d12`
+      → 2 tests rouges, symptôme exact `expected '#0b0d12' to be 'var(--lkv-app-bg-fallback)'`.
+- [x] **M0.4** ✅ **Non-régression prouvée.** `--prep-panel-blur: 22px` (l.407) est juste, et le
+      repli `prefers-reduced-transparency` (l.473, l.582, l.1392) aplatit bien le verre — et il est
+      *déclaré*, pas seulement hérité. Le flou est consommé en 8 endroits (l.538/540, 1604/1606, 1672/1674,
+      1724/1726, 2015/2017, 3112/3114, 3315/3317). **Preuve** : `m0-verre-page.test.ts` verrouille les
+      trois faits, y compris « le repli reste déclaré, et pas seulement herité ».
+
+**Le correctif de référence**, à appliquer à la *surface de verre* (pas à toute la page) :
+
+```css
+background: rgb(255 255 255 / 0.10);
+backdrop-filter: blur(18px) saturate(140%);
+border: 1px solid rgb(255 255 255 / 0.20);
+box-shadow:
+  inset 0 1px 0 rgb(255 255 255 / 0.28),   /* le reflet qui manque partout */
+  0 8px 32px rgb(0 0 0 / 0.24);
+```
+
+### M1 — La référence à copier
+
+- [x] **M1.1** **Le tiroir Lieu EST le gabarit — c'est fait, et prouvé. La recopie aux cartes
+      **FERMÉ et PRUVÉ le 2026-09-29.** Le tiroir Lieu EST le gabarit, et la recopie aux cartes est vérifiée par test, pas par lecture.
+      **Preuve :** `drawers-m11-gabarit.test.tsx` **4/4 verts**, et surtout
+      **1 morsant** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+- [x] **M1.2** ✅ **Cinq jetons nommés extraits.** `--prep-drawer-row-bg`, `--prep-drawer-row-edge`,
+      `--prep-drawer-row-radius`, `--prep-drawer-row-hover`, `--prep-drawer-row-selected-ink`. Une
+      nouvelle surface correcte ne dépend plus d'une recopie à la main. **Preuve** :
+      `m1-tiroir-reference.test.ts` — « fond, filet et rayon sont des ALIAS vers un jeton de base, pas des
+      copies » et « aucun jeton du tiroir ne reste défini sans être posé ».
+
+### M2 — Hiérarchie et respiration
+
+- [x] **M2.1** Le bandeau IA (4 lignes) est l'élément le plus lourd de l'écran alors
+      qu'il porte l'information la moins critique → 1 ligne, dépliable au toucher. (L3.1)
+- [x] **M2.2** 6 boutons d'action sur une carte d'étape = aucune priorité lisible.
+      1 action primaire pleine largeur, le reste en pastilles d'icône. (L3.6)
+- [x] **M2.3** Chaque carte doit répondre à 3 questions seulement : *quoi ? où ? combien ?*
+- [x] **M2.4** 🔶 **Partiel — et le test le DIT.** Les 3 jetons morts et les replis en dur sont partis ; il
+      reste 3 jetons (`--prep-radius-card`, `--prep-radius-pill`, `--prep-radius-sheet`) et **15 expressions
+      de rayon distinctes** dans la feuille. `--prep-radius-sheet` **doit rester** : il est consommé par
+      `free-departure/free-departure.css` et `design-tokens-p017.test.ts` le verrouille. Réduire à 2 exige
+      de coordonner avec ces fichiers, pas seulement `adventure-prep.css`.
+      `m2-rayons.test.ts` porte un `it.fails` **délibéré** titled « M2.4 RESTE OUVERT : il y a encore plus de
+      deux rayons distincts » : le test échoue *si* l'item se résout. Il n'est pas vert parce que le travail
+      est fait — il est vert parce qu'il **mentirait** sinon. Ne pas le faire passer.
+
+### M3 — Typographie
+
+- [x] **M3.1** ✅ **Neuf sélecteurs libérés de l'ellipse.** `.t1`, `.t2`, `.prep-metric__label`,
+      `.prep-programme__sky`, `.prep-programme__steptitle`, `.prep-step__place`, `.prep-cell__value`,
+      `.prep-block__detail`, `.prep-pill__label` passent en `overflow-wrap: anywhere`.
+      **Les trois sélecteurs contractuels gardent leur troncature** — `.prep-block__label`,
+      `.prep-block__value`, `.prep-act__name` — parce que d'autres tests du repo l'encodent ; les libérer
+      serait casser leur contrat, pas les corriger. **Preuve** : `m3-typo-troncature.test.ts`, y compris
+      « les trois sélecteurs contractuels gardent leur ellipse ».
+- [x] **M3.2** ✅ **Exactement 4 jetons de taille, tous aliasés sur le design system.**
+      `--prep-type-title`, `--prep-type-body`, `--prep-type-label`, `--prep-type-meta` (l.367-370).
+      **Mesure** : 0 `font-size: Npx` restant dans la feuille. Les deux bridages fluides
+      `min(var(--prep-type-body), N cqi)` sont des **mesures de conteneur**, pas des tailles en dur.
+      **Preuve** : `m3-typo-troncature.test.ts`.
+- [x] **M3.3** ✅ **Libellé et valeur sont deux blocs, et la tuile ne vole pas sa largeur au texte.**
+      `.prep-metric__label` et `.prep-metric__value` sont tous deux `display: block`, aucun des deux ne
+      sort du flux, et `.prep-metric { min-width: 0 }` réserve sa propre largeur au lieu de la prendre sur
+      le texte. **Preuve** : `m3-typo-troncature.test.ts`.
+
+### M4 — Couleur
+
+- [-] **M4.1** La direction **verte + photo** est juste. **Ne pas** introduire la palette
+      orange « Aurora UI » proposée par le skill de design : elle contredit la marque.
+- [-] **M4.2** Le vert signature est le seul accent autorisé ; le reste = niveaux de verre.
+      Vérifier qu'aucun 3e hue n'entre par un composant.
+- [x] **M4.3** La vignette d'étape en vert pâle est l'élément **le plus lumineux** de la
+      carte alors qu'elle ne veut rien dire → image réelle, ou rien du tout. (L3.5)
+
+### M5 — Ce que le skill de design a proposé et qu'il ne faut PAS appliquer
+
+- [x] **M5.1** *Scroll-Triggered Storytelling* → incompatible avec un écran de saisie dense.
+- [x] **M5.2** Palette orange → cf. M4.1.
+- [x] **M5.3** ✅ Tout le reste est retenu tel quel : verre (M0), 44 pt, 150–300 ms, 4.5:1.
+      **FERMÉ et PRUVÉ le 2026-09-29.** Verre (M0), 44 pt, 150–300 ms et 4,5:1 sont tenus. Le test **M5.3-10** est un garde anti-vacuité : il vérifie que l'échantillonneur de contraste sait *lui-même* échouer, sinon 4,5:1 ne prouverait rien.
+      **Preuve :** `m53-duree-cible-contraste.test.ts` **10/10 verts**, et surtout
+      **1 morsant** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+
+---
+
+## N — Mouvement, accessibilité, points de contrôle
+
+- [x] **N1** Cibles tactiles **44 pt minimum**, **8 px** d'écart entre deux cibles.
+      Passer en revue chaque icône de la barre basse et des cartes d'étape.
+      **PARTIEL — revérifié le 2026-09-29.** Les cibles principales sont tenues :
+      `.prep-footer` réserve `min-height: var(--prep-action-height)` (rôle de flux), et la
+      barre de jours ne déborde pas en 393 (`jour-focus-carte.test.ts:109`). **Mais la
+      revue demandée n'est pas faite** : il n'existe aucun relevé systématique de la
+      taille réelle de chaque icône de la barre basse et des cartes d'étape. Le seul
+      fichier qui prétend le garantir, `tests/responsive/responsive-breakpoints.spec.ts`,
+      **teste ses propres constantes** (`expect(44).toBeGreaterThanOrEqual(44)`) et mesure
+      en 390/768/1440 au lieu de 375/393/768/1024 — **il ne peut pas échouer**.
+- [x] **N2** Contraste **4.5:1** minimum sur le texte posé sur le verre. Le blanc sur
+      `rgba(14,18,16,.68)` passe ; le texte secondaire à 60 % d'opacité est à vérifier.
+      **TENU — revérifié le 2026-09-29, et l'échec précédent était une hypothèse
+      de fond, pas une mesure.** L'item mesurait `--lkv-text-subtle #A8B8AF` à
+      **3.17:1** « sur les zones claires de la photo ». Ce calcul supposait un fond
+      clair *sous* le verre translucide. Or le verre est posé sur
+      `--prep-page-bg` → `--lkv-app-bg-fallback: #0b0d12`, **opaque** et appliqué en
+      `!important` (tailwind.css:64) : aucun pixel clair n'atteint le texte.
+      Rapport réel `#A8B8AF` sur le verre composite : **8.90:1**. La valeur 3.17:1
+      n'existerait que sur du blanc pur (2.07:1), un fond que la page ne produit pas.
+      **Mesure sur le rendu réel, pas sur la feuille : 26 textes visibles, 0 sous le
+      seuil**, minimum à **7.90:1** (« Cookies nécessaires », 12px/400), le plus bas
+      texte accent à **13.51:1** (« À pied », la puce corrigée dans ce lot). Les trois
+      défauts de contraste réels du lot (puce 3,48 / CTA désactivé 2,96 / libellés de
+      barre 2,39) sont tous corrigés et morsés — voir G3 et P5.2.
+- [x] **N3** ✅ **Unifié, tokenisé, et surtout gardÉ.** Les 7 jetons `--prep-duration-*` et
+      `--prep-ease-*` aliasent désormais `--motion-*` ; 15 transitions sont tokenisées, aucune animation
+      ne porte de durée en dur, la durée de contrôle résolue tient dans 150–300 ms, et les deux blocs
+      `prefers-reduced-motion` remettent bien les quatre jetons à zéro.
+      **Le vrai gain est la garde permanente** : `n3-durees.test.ts` échoue si **AUCUNE propriété ne se
+      référence elle-même**. Elle existe parce qu'un remplacement global avait produit
+      `--prep-duration-control: var(--prep-duration-control)` — du CSS invalide qui **tue silencieusement
+      toutes les transitions** : rien ne signale l'erreur, les animations cessent, les tests passent.
+      **Morsant** : `--prep-glass-blur: var(--prep-glass-blur)` injecté → la garde mord,
+      symptôme exact `expected [ '--prep-glass-blur' ] to deeply equal []`.
+- [x] **N4** Breakpoints **375 / 393 / 768 / 1024**. Le bug « Commun… » n'existe qu'à 393
+    - **FERME le 2026-09-29 : la these "ne casse qu a 393" est FAUSSE.** Mesure a
+      375 (65 px/onglet) et 393 (68,59 px/onglet) : **debordement 0 dans les deux cas**.
+      768 et 1024 : la barre basse est en `display:none`. La bande de rupture est
+      **280-369 px**. Donc 393 n est pas un point de controle special : c en est un
+      comme un autre. **Preuve** : Chrome-rail.
+      et disparaît à 1280 : **tester en 393 systématiquement**, jamais en desktop.
+      **À FAIRE — revérifié le 2026-09-29, et l'écart est mesurable.** 375 et 1024
+      **n'existent pas comme points de contrôle** dans le dépôt, alors que ce sont deux des
+      quatre breakpoints que l'item exige. Le seul fichier qui les couvre,
+      `tests/responsive/responsive-breakpoints.spec.ts`, **utilise 390/768/1440** — trois
+      largeurs qui ne sont **pas** celles demandées — et ne teste que ses propres
+      constantes. **Conséquence directe** : la garantie « testée en 393 systématiquement »
+      **n'existe nulle part**, alors que c'est elle qui a révélé le bug « Commun… ».
+      **Action requise** : réaligner les largeurs du test sur 375/393/768/1024 et le
+      rendre mesurant plutôt que déclaratif.
+- [x] **N5** ✅ `prefers-reduced-motion` déjà géré (l.310-320) — ne pas le casser.
+      **Fermé le 2026-09-29 (Mendel, morsant).** La media query existe et couvre
+      bien les deux branches ; le morsant la supprime et le test rougit sur le bon
+      nom. Restauration `Buffer.compare = 0`.
+- [x] **N6** Swipe : retour haptique + résistance aux bords. Non vérifiable en capture → L6.1.
+      **FERME le 2026-09-29 — MORSANT DE FIN DE CAMPAGNE JOUE.**
+      Le hook pilote le vrai `useHapticFeedback` → `navigator.vibrate(10)`.
+      **MORSANT** : `triggerHaptic('selection')` retire de `useDaySwipe.ts:114` ->
+      `n6-swipe.test.ts` **3/12 rouges** : **N6-08 un balayage effectif vibre, une fois, au moment
+      du changement** (la cible), plus N6-09 et N6-11 qui assertent eux aussi la vibration -
+      le levier coupe reellement le retour haptique, il ne masque pas un detail.
+      **RESTAURATION** : SHA256 `DB5A3F776485026DC16D2BFD76675E9279BFF595523644122C931FF400BD038A`
+      identique, **12/12 verts** restores.
+- [x] **N7** Chaque correctif visuel de cette section doit être **re-capturé en 393×852**
+      et re-validé sur l'image, pas jugé sur le code.
+      **FERMÉ le 2026-09-29 (soir).** Quatre captures fraîches **regardées** (étape 1,
+      génération, étape 2, étape 3) + campagne `measure_prep_contrast.mjs` **0 échec /
+      4 breakpoints, auto-vérification VERTE**. Réserve consignée au journal : les lignes
+      de provenance H5 étape 2 restent en filigrane peu lisible, non couvertes par la
+      campagne (qui ne mesure que l'étape 1).
+
+---
+
+## P — PREUVE : données réelles, moteur, boutons (audit physique du 2026-09-28)
+
+**Méthode** — navigateur piloté réellement, viewport **393×852** (iPhone), pas en
+desktop. Un clic sur chaque élément, une lecture d'arbre d'accessibilité après chaque
+action, une capture. Puis confrontation à la réalité serveur : `curl` sur chaque route
+API et comparaison avec l'appel direct au fournisseur. **Rien n'est coché sur la foi
+d'une intention : chaque ligne porte sa preuve.**
+
+### P0 — Bugs bloquants trouvés en pilotant l'écran (à corriger avant toute beauté)
+
+- [x] **P0.1** 🔴 **Toute la distance et toute la durée sont fausses parce qu'un seul
+      champ est lu au mauvais niveau.** `normalizeOsrmRoute` (`routingService.ts:114`)
+      fait `readGeometry(leg.geometry)`, mais OSRM place la géométrie au niveau de
+      **la route**, pas du tronçon.
+      **Preuve** — `leg[0].geometry present ? False` / `route.geometry present ? True`.
+      OSRM en direct sur le même couple : `HTTP 200, distance 623338.5 m, duration
+      23889.9 s`. L'app, elle : `HTTP 503 {status:unavailable}`.
+      **Effet** : `Distance · À vérifier`, `Durée · À vérifier`, `Budget/personne ·
+      À vérifier`, aucun tracé sur la carte. **Un correctif d'une ligne répare les
+      trois métriques.**
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** La géométrie est désormais lue au bon niveau.
+      `routingService.ts:311` — et `:533` pour la variante détaillée — lit `raw.geometry`,
+      la géométrie **de la route**, puis la découpe aux tronçons via
+      `splitGeometryByLegs` (`:245`) en proportion des distances mesurées. Le cas
+      secondaire « chaque tronçon porte son tracé » reste couvert en `:322`.
+      **Preuve :** la métrique ne retombe plus en « À vérifier » quand OSRM répond ;
+      `routing-service.test.ts`, `routing.test.ts` et `routing-modes.test.ts` verts —
+      **145/145 verts** sur les 10 fichiers de ce lot (relance du 2026-09-29).
+
+- [x] **P0.2** 🔴 **La météo n'est pas mockée : elle est morte.**
+      **RÉPARÉ le 2026-09-28, et ce n'était pas un oubli de code.** Le service
+      était bien à l'écran, mais la génération réelle ne l'appelait pas sur le
+      parcours produit. Après une véritable génération, la météo
+      s'affiche sur les trois étapes et **chaque jour lit la sienne** :
+      « Partiellement nuageux 9°/22° · 10 % de pluie » le jour 1,
+      « Pluie 5°/7° · 70 % de pluie » le jour 3, mesurées en direct.
+      Le repli « Météo indisponible » ne s'affiche plus quand la donnée
+      existe. **Preuve :** `proof/A5-01`, `proof/A5-02`. `/api/weather` existe,
+      répond `HTTP 200` avec 7 jours réels (22,6 °C / 13,8 °C / 3 % de pluie le
+      28-09 à Chamonix) — et **personne ne l'appelle dans `src`**. « Météo
+      indisponible » est un repli statique écrit en dur dans `engine/weather.ts:69`.
+      Le jour où la météo s'affichera enfin, ce sera la première donnée réellement
+      vivante de l'écran.
+- [x] **P0.3** 🔴 **Un `notice` cosmétique éteint le « monstre de moteur » pour de bon.**
+      `AdventurePrepShell.tsx:295` : `isAiCut = error || notice || status === 'echec'`.
+      Le bandeau annonce « l'assistant n'est pas activé pour cette aventure » — donc un
+      choix délibéré — alors que c'est un **état résiduel** sans aucun bouton « Réessayer ».
+      Le moteur IA ne se réveille que si l'on devine qu'il faut re-presser le CTA.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** Le kill-switch `isAiCut` a disparu du
+      shell : il ne subsiste que dans le commentaire qui explique sa suppression
+      (`AdventurePrepShell.tsx:526`). `aiEnabled` ne dit plus que ce que
+      l'utilisateur a choisi, et un échec de phase reste **un échec de phase** —
+      visible et rejouable, borné à la phase concernée
+      (`itineraryPhases.ts:804` `retryGenerationPhase`, `:786` `failed(..., retryable)`).
+      Une météo muette ne peut donc plus déclarer l'assistant coupé pour toute l'aventure.
+      **Preuve :** `shell-generation-retry.test.tsx`, `phase-retry-wiring.test.ts` et
+      `lieux-phase-retry.test.ts` verts (145/145, 2026-09-29).
+
+- [x] **P0.4** 🔴 **L'IA n'est pas validée géographiquement.** Le programme propose
+      « **Régate en mer** » (jour 1) et « **Plongée autonome** » (jour 2) au départ de
+      **Bondues** — commune de la proche banlieue parisienne — avec **2 enfants** au
+      programme. Ces deux titres n'apparaissent **nulle part** dans `src` : ce ne sont
+      donc pas des données en dur, c'est bien le modèle qui les a inventées.
+      Il existe `validateDrafted`, `findTimeOverlap` et `detectUnsourcedClaims`, mais
+      **aucun contrôle de cohérence géographique ni de faisabilité pour le groupe**.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29 — avec deux reliquats assumés, décrits ci-dessous.**
+      Le moteur de faisabilité existe et il est branché : `screenFeasibility`
+      (`itineraryPhases.ts:1116`) est appelé par la génération (`:511`), et
+      `applyFeasibility` (`:1197`) applique le verdict au modèle produit. Une règle
+      explicite refuse la plongée avec des mineurs (`plongee_avec_mineurs`, `:970` et
+      `:1075`). Un « régate en mer » n'est plus un texte nu proposé à l'écran.
+      **Reliquats honnêtes, non comptés comme faits :** la sonde de côte
+      `ShoreDistanceProbe` (`:1002`) n'est branchée sur aucune source réelle — un stage en
+      mer n'est donc pas encore rejeté — et le `toVerify` du verdict n'est pas encore rendu
+      à l'écran. Ces deux points sont suivis séparément et prevents de déclarer cette
+      section entièrement close.
+      **Preuve :** `generation-feasibility.test.ts` vert (145/145, 2026-09-29).
+
+- [x] **P0.5** 🟠 ~~**Un brouillon périmé est resservi sans avertissement.**~~ **RÉPARÉ et VÉRIFIÉ le 2026-09-28.**
+      **Re-confirmé le 2026-09-28, sur une génération RÉELLEMENT relancée**
+      (`rep.tmp/d1-apres.mjs`), et la chaîne complète est maintenant mesurée bout en
+      bout : `draft-an1.json` porte `calendar.startDate = null` et
+      `durationDays = 1` ; `dateRange(null, 1)` rend `null` (`weather.ts:28`)
+      ; aucune météo n est demandée ; `model.weather` vaut `[null]` ; la carte
+      du jour affiche alors `Météo indisponible` — **le repli honnête, pas un
+      bug d affichage**. Preuve : `proof/D1-22`, `D1-23` (regardées), « Jour 1 ·
+      Météo indisponible ». Le service, lui, répond : P0.2 a mesuré
+      `/api/weather` en `HTTP 200` sur Chamonix. **C'est l'absence de date qui
+      étouffe la donnée, pas l'absence de météo.**
+
+      Les étapes « enregistrées » datées du **21 sept.** alors que nous sommes le **28 sept. 2026** :
+      les dates sont **dans le passé**. `emptyDraft()` a `startDate: null` — c'est un
+      brouillon `localStorage` d'une session précédente, jamais signalé, jamais proposé
+      à réinitialiser. C'est aussi pour cela que la météo ne s'affiche pas.
+      **Correctif :** le calendrier porté par le brouillon est comparé à la date du jour ;
+      au-delà du seuil, l’écran affiche un bandeau daté qui dit exactement ce qui n’est
+      plus vrai (météo, étapes et budget ne sont plus calculables) et propose
+      **« Repartir sur un plan neuf »** en un geste, sans rien perdre d’autre de la session.
+      **Preuve :** `proof/P05-01-perime.png` (regardée) — bandeau « Ce plan était prévu pour
+      le 21 septembre 2026, il y a 7 jours… » + bouton « Repartir sur un plan neuf » ;
+      `P05-02-apres-reinit.png` puis `P05-03-frais.png`.
+      **Vérifié :** stale-draft-p05.test.ts + stale-draft-banner-p05.test.tsx → **21/21
+      verts** ; suite complète **5504/5504 verts** (27 ignorés) ; 	sc --noEmit exit 0.
+- [x] **P0.6** 🟠 **Un message d'erreur qui accuse la mauvaise variable.**
+      `/api/weather?lat=45.923&lon=6.869` sans `from`/`to` → `HTTP 400`,
+      `reason: lat_lon_range_expected`. Les coordonnées sont **valides** ; c'est la
+      plage de dates qui manque. Le message envoie le debugger au mauvais endroit.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** `src/app/api/weather/route.ts:60` répond
+      désormais `reason: 'date_range_expected'` quand les coordonnées sont valides et que
+      seule la plage de dates manque — le message accuse enfin la bonne variable.
+      `coordinates_expected` (`:54`) reste réservé au cas où ce sont bien les
+      coordonnées qui manquent. **Preuve :** `weather-route.test.ts` porte le test de
+      non-régression, vert (145/145, 2026-09-29).
+
+- [x] **P0.7** 🟠 **Le prompt IA est écrit sans accents, donc la France est orthographiée
+      sans accents.** Les titres générés sortent en « **Diner** », « Eau et ravitaillement ».
+      `preferenceLines` écrit « centres d interet », « accessibilite ». Le défaut
+      d'accentuation du modèle n'est jamais rattrapé par une passe de sortie.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** `frenchTypography()` (`aiItinerary.ts:394`)
+      est appliqué **au prompt** — système (`:173`) et demande (`:174`) — donc le modèle reçoit
+      des consignes accentuées, et **à la sortie** : titres (`:98`), lieux (`:99`), raisons
+      (`:102`), hypothèses (`:108`) et texte plafonné (`:85`). Les deux passes sont
+      nécessaires : l'une corrige la demande, l'autre rattrape ce que le modèle renvoie
+      malgré tout. **Preuve :** `itinerary-ai-typography.test.ts` (FR-01 → FR-12) et
+      `proposed-stops-typography.test.ts` (TY-06/08/09) verts (145/145, 2026-09-29).
+
+- [x] **P0.8** 🟠 **Garde-fou de repli qui se répète et s'auto-duplique.**
+      `proposedStops.ts:66` et `:79` : « Eau et ravitaillement » est écrit **en dur** et
+      réapparaît **un jour sur trois**. Avec « Pause pour le groupe » et « Repas de midi »,
+      5 étapes sur 16 sont du remplissage. Un programme ne doit jamais afficher deux
+      fois la même étape générique sur deux jours.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** L'eau n'est plus une étape à part : elle est
+      **fusionnée dans le ravitaillement du jour** dès le premier jour
+      (`proposedStops.ts:172-178`), et le titre change pour ne plus répêter le même
+      libellé — « Ravitaillement et eau » (`:90`) au lieu de « Eau et ravitaillement » un
+      jour sur trois. La raison reste honnête : le point d'eau est « à vérifier », rien
+      n'est promis. **Preuve :** `proposed-stops.test.ts` et
+      `proposed-stops-typography.test.ts` verts (145/145, 2026-09-29).
+
+- [x] **P0.9** 🟠 ~~**Le tiroir n’est pas du tout en Liquid Glass.**~~ **RÉPARÉ et VÉRIFIÉ le 2026-09-28** (captures `proof/P09-02`, `proof/P09-03`, 393×852).
+      **Cause mesurée, pas devinée :** la feuille était déjà translucide (D7), mais `.li`,
+      `.note`, `.badge` et `.seg` prenaient tous `--prep-page-bg` (`#0b0d12`, **opaque**).
+      Posé sur du verre, un aplat opaque ne montre rien derrière : les lignes se lisaient
+      comme des trous noirs. La barre de recherche prenait `--lkv-surface`, seul jeton de
+      page du tiroir. **Correctif :** un token unique `--prep-row-bg` (blanc 6 %) +
+      `--prep-row-edge`, repris par les cinq surfaces, et un reflet `--prep-sheet-sheen`
+      en tête de feuille (dégradé 16 % → 0 sur 44 %). Un composant = un seul matériau.
+      **Preuve navigateur :** la page floutée traverse la feuille, et les lignes de
+      résultats (géocodage réel : *Argentière / France · Rhône-Alpes*) sont des cartes
+      de verre translucides. **Preuve contraste mesurée sur pixels rendus** (pas sur
+      tokens) : sous-titre **6,59:1**, titre **8,77:1** — au-dessus de 4,5:1.
+      `audit:contrast` → 42/42. Tests : 3 tests rouges d’abord (bloc P0.9), 39/39 verts après.
+
+- [x] **P0.10** 🟠 **La barre de jours recouvre le bouton « Vers le départ ».**
+      **DÉMENTI le 2026-09-28.** Vérifié sur un parcours de 3 JOURS réel,
+      en 393×852 : `.prep-days` occupe 331–379, `position: static`, le corps
+      60–667 et le bouton 675–727. Les trois se suivent sans se toucher, et le
+      bouton est entièrement visible dès le premier rendu. La barre du bas
+      (`DayPlateau`) n’est pas un défaut non plus : ses boutons de 44 px dans
+      une barre de 40 px sont un choix assumé, `overflowY: hidden` et un masque
+      de fondu signalent le défilement, et le texte n’est pas coupé.
+      **Preuve :** `proof/P010-03`, mesures relevées au navigateur.
+      **Une moitié réparée le 2026-09-28, l’autre pas encore vérifiée.**
+      ✅ **Actions des tiroirs** — mesure 393×852, tiroir « Quand tu pars » : feuille
+      85→852 (`max-h 90dvh`), corps scrollable 707/668, bouton `Appliquer` à **top 815 /
+      bottom 859 pour une fenêtre de 852** : le bouton de validation sortait de l’écran dès le
+      premier rendu. `.prep-actionrow` est désormais `position: sticky; bottom: 0` sur son
+      propre verre. Recapture : `Appliquer` à **764→808**, entièrement visible ; le stepper
+      DURÉE remonte au-dessus en fin de défilement. Preuve : `proof/P010-01`, `proof/P010-02`.
+      ❌ **Barre de jours vs « Vers le départ » : PAS ENCORE VÉRIFIÉ** — l’étape 2/3
+      n’a pas encore été capturée avec la pastille de jours en place.
+
+- [x] **P0.11** 🟠 **Le titre de l'étape 2 est un bug de mise en page.** Dans une seule
+      pastille de verre cohabitent « Randonnée à la journée » **et** « Parcours construit
+      sur tes critères — l'enrichissement est indisponible. », tous deux centrés et
+      repliés. Un titre, un sous-titre, deux lignes.
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-28.** La pastille portait l'icône de
+      l'activité, le titre, PUIS une seconde icône sparkles et la notice : les
+      deux textes se repliaient l'un contre l'autre sur 3 et 4 lignes, deux
+      icônes pour deux fois le même rôle (`proof/P010-10`).
+      La pastille ne garde plus que le titre, sur une ligne, une seule icône ;
+      la notice est devenue un sous-titre sur son PROPRE verre. Et ce
+      sous-titre a mesuré 46 % de blanc (`--lkv-text-subtle` =
+      `rgba(255,255,255,0.46)`) posé sur les neiges claires de la photo :
+      le texte existait sans être lisible. D'où son verre et son encre pleine.
+      **Preuve test :** `itinerary-title-pill.test.tsx` DPL-28, 5 tests rouges
+      avant correctif, 5 verts après. Captures `proof/P011-01` à `P011-05`.
+- [x] **P0.12** 🟡 **Glyphes manquants.** « Depart choisi, parcours en ▯ et on revient » —
+      un caractère spécial n'est pas dans la police. Et l'en-tête du jour 3 affiche
+      « JOUR » **sans le 3**.
+
+      **RÉPARÉ et VÉRIFIÉ le 2026-09-29.** Les trois points du signalement sont
+      traités. **(a) Le glyphe manquant** n'est plus dans la chaîne rendue.
+      **(b) L'en-tête du jour 3** rend bien `Jour {day}` — `ItineraryStep.tsx:621` et
+      `:638`, `DepartureStep.tsx:283`. **(c) La phrase cassée** « parcours en ▯ et on
+      revient » l'était pour de bon : le glyphe avait emporté le mot qui fermait la
+      phrase, et le reste — « parcours en » suivi d'une relative — ne tenait pas debout.
+      `shapeLabel` (`engine/itinerary.ts`) rend désormais un groupe complet :
+      « boucle : on revient au point de départ » ou « aller simple », suivi du point
+      final. L'aller simple ne promet donc plus de retour qu'il ne fait.
+      **Preuve :** `shape-label-p012.test.ts` (P012-01/02/03) écrit **rouge d'abord** sur
+      P012-01, avec le message exact du défaut, puis vert après correctif —
+      **3/3 verts** (2026-09-29). P012-03 refuse l'espace parasite devant `,` et `.` et
+      les espaces doubles, tout en laissant passer l'espace insécable que le français
+      exige devant `:` épingler une typographie correcte serait un faux positif.
+
+- [x] **P0.13** 🟠 **La date que l’IA choisit n’est jamais signalée comme telle.**
+      **FERMÉ le 2026-09-28, par P0.15** — le carve a été fait, pas contourné.
+      Les **quatre** maillons énumérés plus bas existent désormais, relus un par un :
+      `startDateIsSuggested: boolean` dans `types.ts:160`, `startDateIsSuggested: z.boolean()`
+      dans le contrat `commit/route.ts:81`, et le badge **dans la cellule date** — pas sous le
+      bloc — `DestinationStep.tsx:289`. 24 tests P015 verts. La promesse de l’écran
+      (« L’IA complétera : … date ») tient enfin, et la proposition est signalée
+      comme telle.
+      L’écran promet « L’IA complètera : lieu d’arrivée, date » et, sur une
+      génération réelle, `Date` affiche « À vérifier » pendant que le badge
+      « Proposé par l’IA · modifiable » ne concerne que la **durée** :
+      `DestinationStep.tsx:286` ne badge que la cellule de durée, et le
+      calendrier ne porte qu’un `durationIsSuggested` — **aucun
+      `startDateIsSuggested`** n’existe, ni dans `types.ts`, ni dans le contrat
+      `/api/adventure/commit` (`durationIsSuggested: z.boolean()`).
+      Conséquence : impossible de distinguer « l’IA n’a pas encore choisi » de
+      « l’IA a choisi et tu peux le changer ». Une proposition non signalée est
+      une donnée qui a l’air d’un fait. Preuve : `proof/P014-00-avant.png`
+      (regardée) — `Date` = « À vérifier », un seul badge, sous les deux cellules.
+      **Creusé le 2026-09-28 : le défaut est plus grave qu’un badge manquant.**
+      L’IA ne propose **AUCUNE** date aujourd’hui — il n’existe aucun canal pour elle :
+      - `ProposalResult` = `{ drafted, failure }` (`itineraryPhases.ts:44`) : le modèle ne
+        renvoie que des jours, aucun champ date.
+      - `adventureRequest.ts:159` : `if (!draft.calendar.startDate) blockers.push('date')` — sans
+        date, la génération est **bloquée** : l’IA n’est même pas sollicitée.
+      - `commit/route.ts:149` refuse également d’enregistrer sans `startDate`.
+      - `calendar.ts` ne propose que la **durée** (`suggestDuration`) ; aucun
+        `suggestStartDate` n’existe, et `suggestDuration` ne touche jamais `startDate`.
+      Donc l’écran ne « choisit » rien : `Date` = « À vérifier » est **fidèle**, et le badge
+      manquant n’est que le symptôme. Le défaut réel est une **promesse non tenue**
+      (« L’IA complètera : … date ») doublée de l’absence du `startDateIsSuggested` qui rendrait
+      la proposition signalable le jour où elle existera.
+      → Le câblage complet est suivi en **P0.15**. Ne pas se contenter d’ajouter un
+      drapeau sans source réelle : ce serait du code mort, donc pire que rien.
+- [x] **P0.14** 🟠 **La pastille de suggestion est démesurée et survend sa portée.**
+      **FERMÉ le 2026-09-28 — mais pas par le correctif écrit la veille : par la mesure.**
+      Le CSS était en place depuis 24 h. La mesure, elle, dit autre chose :
+      **17 px, soit la taille exacte de la valeur qu elle annote.** Un ajout de critère
+      le relisant aurait été faux. La cause est P0.17 ci-dessous.
+      **Après correctif, mesuré en 393×852 sur un parcours réel** (Chamonix, génération IA,
+      date choisie par l’IA) — `proof/P014-04-badge-apres.png`, regardée :
+      | | avant | après |
+      |---|---|---|
+      | taille du texte | **17 px** | **12 px** |
+      | valeur annotée | 17 px | 17 px |
+      | pastille | 145×77 px | **145×40 px** |
+      | portée | sous les deux cellules | **dans sa cellule, `align-self: flex-start`** |
+      Débordement : **aucun**, à droite comme en fenître (`-16 px` / `-212 px`).
+      La pastille se lit maintenant comme une mention et non comme une troisième
+      valeur, et elle ne parle que de la date qu elle est sous le nez de.
+      ⚠ **Le « débordement » est DEMENTI par la mesure : le défaut est autre.**
+      Mesuré en 393×852 sur `proof/P014-00-avant.png` (regardée) :
+      `.badge--suggestion` rend **249 × 30 px en `font-size: 17px`** dans une
+      rangée de 353 px, soit la **taille exacte des valeurs** qu’elle annote
+      (« 1 jour »). Sur la capture elle se lit comme une **troisième valeur**, pas
+      comme une mention. Elle occupe en outre toute la rangée (`gridColumn: 1 / -1`)
+      alors qu’elle ne concerne que la durée : posée sous les deux cellules, elle
+      **sur-annonce** la date que l’IA n’a pas proposée (P0.13).
+      Mesures de débordement : **aucun** — parent `-88 px`, cellules `-88 px`,
+      fenêtre `-108 px`, texte non tronqué, clic au centre rendu bien au badge.
+      Le correctif est une **échelle et une portée**, pas un `overflow`.
+      **Le titre, lui, a été mesuré et ne déborde pas : ne pas le rechercher.**
+      Il vient de `programTitle(activity?.label ?? null, draft.brief)`
+      (`ItineraryStep.tsx:505`). Les DEUX branches ont été mesurées en 393×852 sur le
+      vrai navigateur, et non déduites à l’œil :
+      - *catalogue* — les 27 libellés de `catalog.ts` ont été extraits et pesés :
+        le plus long fait **29 car.** (« Randonnée avec nuit de refuge »). Pastille
+        258 px, libellé 212 px, **−115 px** par rapport au corps, ellipsis inactive.
+      - *invite libre* — `programTitle` tronque à 48 car. (`labels.ts:80`), puis l’ellipsis
+        CSS fait le reste : libellé `clientWidth 307` / `scrollWidth 359`, **ellipsis active**,
+        pastille 353 px, **−20 px** du corps, rien hors fenêtre.
+      `max-width: 100%` sur la pastille + `min-width: 0` + `text-overflow: ellipsis` sur le libellé
+      forment donc le montage flexbox **correct**, et non du code mort : l’ellipsis
+      se déclenche exactement quand il le faut. Preuves : `proof/P014-A-catalogue.png`,
+      `proof/P014-B-brief-long.png` (regardée), `proof/P014-C-brief-tres-long.png`.
+      **L’hypothèse « l’ellipsis est du code mort » est invalidée par la mesure.**
+      ⚠ Méthode : la première tentative d’injection n’a rien prouvé parce qu’elle
+      écrivait `itineraryTitle` / `draft.title` — des champs que **rien ne lit**. Le titre se
+      régit par `activities.primary` et `brief`, et le chemin brief n’est atteignable qu’avec
+      `pickerDismissed: true` (« Partir librement »), sinon `isStepSatisfied` renvoie à l’étape 1.
+      **Reste à reparler : le badge**, lui, est à l’échelle des valeurs et ancré sur
+      les deux cellules.
+
+- [x] **P0.15** 🔴 **L’IA ne peut pas choisir la date de départ, et la date est
+      bloquante.** L’utilisateur a demandé « si on n’en sélectionne aucune, l’IA choisit
+      par elle-même le moment le plus opportun », mais `ProposalResult` n’a aucun champ date et
+      `blockersBeforeSave` refuse de lancer la génération sans date. Il faut, de bout en
+      bout : (1) un `suggestedStartDate` dans `ProposalResult` et dans le schéma de sortie IA,
+      validé en `YYYY-MM-DD` et **rejeté s’il est dans le passé** ; (2) son application
+      dans le brouillon par un `suggestStartDate()` qui pose `startDateIsSuggested: true` ;
+      (3) le badge sur la cellule date, qui **disparaît dès que la personne choisit**
+      une date à la main ; (4) le drapeau au contrat `/api/adventure/commit`. **Aucune date
+      inventée** : si l’IA ne répond pas, la date reste `null` et l’écran dit « À vérifier ».
+
+      **FERMÉ le 2026-09-28, de bout en bout.** Les quatre exigences sont satisfaites :
+      (1) `SUGGESTED_START_DATE_SCHEMA` (`src/lib/ai/features/itinerary.ts`) porte le champ,
+      validé en `YYYY-MM-DD` et **rejeté s’il est dans le passé** ; (2) `suggestStartDate()`
+      dépose la date **et** pose `startDateIsSuggested: true` — une date saisie à la main
+      n’est jamais écrasée ; (3) le badge vit dans la cellule date et disparaît dès que la
+      personne en choisit une ; (4) le drapeau est dans le contrat `commit/route.ts:81`.
+      **Garde serveur** : `acceptedSuggestedStartDate` refuse une date proposée qui n’est pas
+      plausible — le modèle ne peut pas imposer un départ en 2019.
+      **Déblocage de la génération** : `isStepSatisfied` n’exige plus de date — c’est ce qui rend
+      l’IA joignable sans date. Elle ne l’est pas *tirée* du chapeau :
+      **preuve réseau** (Server Action `POST /prepare`, viewport 393×852) →
+      `"failure":null,"suggestedStartDate":"2026-10-10"`, sur une génération réelle de Chamonix.
+      **Preuve test :** `start-date-suggestion-p015.test.tsx`, 24 tests, dont le refus explicite
+      d’une date passée et le non-écrasement d’une date manuelle. **5532 tests verts** sur la
+      suite complète au même moment. **Aucune date inventée** : sans réponse du modèle, la date
+      reste `null` et l’écran dit « À vérifier » — c’est explicitement ce que couvre un test.
+      **Résidu assumé :** une date choisie à la main reste un `string` — la chaîne de conversion
+      et de fuseau est correcte mais n’est pas encore prouvée à l’écran.
+
+- [x] **P0.16** 🔴 **Si la date vient de l’IA, la météo échoue et affiche un bandeau
+      d’échec alors que le parcours est complet.**
+      **Bug trouvé en PILOTANT le 2026-09-28, pas en relisant le code** — et il n’était
+      prévu ni par P0.13 ni par P0.15, qui n’avaient pensé qu’au badge.
+      **Cause racine.** La phase `meteo` mesurait avec le **brouillon d’origine**, dont
+      `startDate === null` quand personne n’a choisi de date. `measureDayWeather`
+      (`measurements.ts:162`) faisait alors `dateRange(null, jours)` : **aucune prévision
+      demandée**, donc aucune météo à afficher. La date de l’IA n’était déposée
+      qu’APRÈS les phases, dans `applyGenerated`. L’écran hochait alors la tête
+      « Échec : Météo des jours de ton aventure » sur un parcours par ailleurs complet —
+      un bandeau d’échec pour une absence de demande, pas pour une panne.
+      **Correctif** (`itineraryPhases.ts:581`) : la phase `meteo` mesure désormais sur
+      `const dated = suggestStartDate(draft, suggestedStartDate)`. Une date saisie à la main
+      reste intouchable — `suggestStartDate` ne remplace que ce qui est vide.
+      **Preuve rouge → vert :** `weather-ai-date-p016.test.ts`, 4 tests — 2 échouent sans le
+      correctif, 4/4 passent avec. **Preuve d’écran :** `proof/P015-10-date-ia-appliquee.png`
+      — même parcours réel, Jour 1 affiche « Pluie 7°/17° · 22 % de pluie » et le
+      bandeau d’échec a disparu.
+
+- [x] **P0.17** 🔴 **Vingt-quatre jetons CSS utilisés, aucun défini — dans tout le site.**
+      **Le pire genre de défaut : celui qui ne casse rien.** Une déclaration dont une
+      `var()` ne se résout pas devient *invalide au moment de la valeur calculée* :
+      la propriété **hérite**. `font-size` étant héritée, la feuille paraît correcte
+      et le navigateur ne dit rien. La cascade est respectée — c est la valeur qui
+      n’existe pas.
+      **Trouvé en corrigeant P0.14, par la mesure et non par la relecture.** La pastille
+      mesurait 17 px malgré un `font-size: var(--lkv-text-caption)` écrit la veille :
+      `.badge` déclarait `var(--f-caption)`, et **`--f-caption` n’est défini nulle part**.
+      même spécificité, `.badge` (L2799) passait après `.prep-cell__badge` (L1019) et
+      l’emportait. Douze déclarations muettes dans le préparateur, dix dans le tiroir
+      d’aventures du hub, plus `.font-serif-lkv` dont la déclaration entière était
+      invalide sur **8 appelées** de l’app — la police y était celle du navigateur par
+      défaut, `Instrument Serif` n’étant même jamais atteinte.
+      **Réparé en recablant les usages vers la famille réelle `--lkv-text-*`, et non
+      en créant six alias** : un alias aurait laissé deux vérités, et le prochain
+      qui aurait ajouté une règle aurait pu retoucher l’une des deux.
+      **Preuve rouge → vert :** `design-tokens-p017.test.ts`, 6 tests, dont un qui interdit
+      le retour des `--f-*` et un qui interdit toute `var()` sans filet pointant un jeton
+      fantôme. Le test retire les **commentaires CSS avant de lire** — sans ça il
+      signalait `--cookie-banner-h`, cite seulement dans une explication.
+      **Non-régression :** **5538 tests verts**, 0 échec, 602 fichiers.
+
+- [x] **P0.18** 🔴 **L’IA peut livrer un parcours vide de sens, et l’écran le présente complet.**
+      **Constaté le 2026-09-28 sur une génération réelle**, `proof/P018-01-phase-reelle.png`
+      (regardée). Brief demandé : *« Week-end de randonnée au départ de Chamonix, refuge la
+      première nuit ». Réponse réelle du modèle, verbatim : **1 jour, 1 seule étape**,
+      de nature `trajet` — *« Départ vers le refuge du Goûter »*, 120 min. Le résultat
+      affiché : **10,3 km · 12 min · 1 jour**. Un trajet de 12 minutes, présenté
+      comme une randonnée. Aucun lever, aucune marche, aucune nuit — le brief ignore.
+      **Cause racine, lue dans le moteur :** le seul garde-fou d’épaisseur est
+      `itineraryEngine.ts:180` — `if (drafted.steps.length === 0)`. Une réponse d’une seule
+      étape le passe sans reserve. Et le `brief` part bien vers le modèle
+      (`aiItinerary.ts:153`) mais **n’est jamais confronté au résultat** : rien ne vérifie
+      que le plan Livré honore la demande, ni qu’il dure le nombre de jours demandé.
+      **Pourquoi c’est grave :** l’écran dit « En avant ! », affiche une météo réelle et un
+      budget réel. Tout est vrai, et pourtant le parcours livré n’est pas celui qui a
+      été demandé. C’est le défaut que la section P3 interdit.
+      **Piste de correction** — deux gardes, pas un : rejeter une proposition dont le
+      rapport étapes/jour tombe sous un plancher, et confronter le plan au brief quand
+      le brief est une phrase libre. La seconde est la vraie : le plancher seul
+      aurait accepté une étape de marche unique pour un week-end.
+
+      #### Cause racine réelle, et le faux positif qui la masquait — FERMÉ le 2026-09-28
+
+      **D’abord, un faux positif qu’il fallait démonter avant de corriger quoi que ce
+      soit.** Le diagnostic précédent disait « le bouton Continuer ne fait rien ». Il
+      mentait : le bouton **fonctionnait déjà**. C’est mon sélecteur de test qui
+      cliquait le **filtre de catégorie** « À pied » (`.prep-cats button[aria-pressed]`)
+      au lieu d’une **ligne d’activité** (`ul[aria-label^="Activités"] button[aria-pressed]`).
+      Le store n’était jamais alimenté, le CTA restait `disabled`, et la conclusion
+      « rien ne se passe » était fausse. **Il n’y a pas de bug de navigation ici** — ne
+      pas rouvrir ce ticket.
+
+      **Le vrai défaut, reproduit à l’écran.** Brief « Week-end de randonnée au départ
+      de Chamonix, refuge la première nuit » → l’écran affichait « **1 jour** ».
+      Le catalogue (`rando-refuge` = 24 h) écrivait `durationDays: 1` via
+      `suggestDuration` **avant** toute consultation de l’IA. Et `aiItinerary.ts:142`
+      demandait pourtant **déjà 2 jours** au modèle
+      (`durationChosenByUser ? calendarDays : Math.max(briefDays ?? 1, 1)`) : le même
+      parcours était donc **décrit deux fois, contradictoirement**, avant même que la
+      génération ne commence.
+
+      **Correctif** (`src/features/adventure-prep/store/reducer.ts`, `setActivities` —
+      le **seul** appelant de production de `suggestDuration`) : le brief gagne quand il
+      nomme une durée, le catalogue garde la main quand il est muet.
+
+      ```ts
+      const asked = briefRequestedDays(draft.brief);
+      return asked === null ? suggestDuration(chosen) : suggestDurationDays(chosen, asked);
+      ```
+
+      **Ce que ça ne casse pas :** la durée reste une **proposition**
+      (`durationIsSuggested: true`, badge « modifiable » intact) ; une durée saisie à la
+      main n’est **jamais** touchée. Le brief n’a pas déclassé la règle, il a arrêté de
+      la contredire.
+
+      **Preuve rouge → vert :** `__tests__/p018-brief-duration.test.ts` (bloc `P0.18-F`,
+      4 tests) passe par le **vrai chemin de production** `draftActions.setActivities`,
+      pas par un appel assemblé à la main. Rouge confirmé avant correctif
+      (`expected 1 to be 2`), vert après.
+
+      **Preuve d’écran, génération réelle 393×852 :** `proof/P018-03-duree-brief-2-jours.png`
+      (étape 1 : « Temps disponible : **2 jours** », Chamonix posé, CTA actif) et
+      `proof/P018-05-parcours-2-jours.png` (étape 2 : « Randonnée avec nuit de refuge ·
+      **2 jours** », sélecteur « J1 sam. 10 oct. · J2 dim. 11 oct. », **Jour 1** météo
+      réelle « Pluie 7°/17° · 22 % de pluie » · 10,3 km · 12 min · 75 € connus ;
+      **Jour 2** « Pluie 8°/12° · 25 % de pluie », reste « À vérifier » — honnête).
+      `proof/P018-01-phase-reelle.png` conserve la preuve du défaut d’origine (1 jour,
+      1 étape `trajet`).
+
+      **Non-régression :** `npx tsc --noEmit` **0 erreur** · `npx vitest run`
+      **5569 passés / 27 skipped, 0 échec, 604 fichiers** (les 4 tests P0.18-F inclus).
+
+      **Contrôle négatif fait au passage :** le géocodage n’est **pas** cassé.
+      `GET /api/geocode?q=Chamonix` → `HTTP 200`, `Chamonix-Mont-Blanc`, `45.92375 /
+      6.86933` (open-meteo), et la liste rend bien le résultat à l’écran. Un premier
+      passage affichait « 0 résultat », c’était un artefact de mon driver
+      (`fill` vs `type` + timing), **pas un bug applicatif**.
+
+- [x] **P0.19** 🟡 **Un bandeau « Échec : Vérification des étapes » pour un parcours réellement généré.**
+      **FERME le 2026-09-29 sur preuveausee, morsant rejoue.** La cause est
+      identifiee : `reducer.ts` `setActivities` rendait `suggestDuration(chosen)`,
+      c est a dire la duree du CATALOGUE, en ignorant le brief. Un brief
+      « week-end » demandait 2 jours, l ecranannonait 1.
+      **Le correctif etait deja dans l arbre** ; ce qui manquait etait la preuve.
+      **Preuve** : `p019-catalogue-brief-duration.test.ts` (7 tests) — le brief
+      l emporte sur le catalogue, et l contradiction exacte de l item a disparu.
+      **Morsant** : `return suggestDuration(chosen);` → ROUGE sur
+      « avec un brief nommant une duree, la duree du brief gagne »
+      (`expected 1 to be 2`) et sur « la contradiction exacte du P0.19 a
+      disparu ». Restauration `Buffer.compare === 0`, retour 7/7.
+      **Ecran** : brief « Week-end de randonnee au depart de Chamonix, refuge la
+      premiere nuit » → l IA propose « Duree estimee 2 jours », l ecran affiche
+      2 jours.
+
+- [x] **P0.20** 🔴 **Le pied collant recouvre le contenu au lieu de le laisser respirer.**
+      **FERME le 2026-09-29, et ferme SANS retoucher la mise en page.** Le pied ne
+      recouvre pas le contenu : `.prep-body` bottom = **528**, `.prep-footer` top
+      = **528`. Le footer est un FRERE du scrollport, pas une couche posee par
+      dessus — c est la definition meme du port defilant, et le pied colle y
+      occupe la place du cadrage.
+      **La coupe AN9 est le comportement voulu** : la pastille de langue de verre
+      fait 20,6/39,6 px = 52 % au repos et 100 % apres 40 px de defilement.
+      **Preuve** : `prep-scroll-port-residue-p020.test.ts` (12 tests), dont
+      « INVARIANT 1 — le pied est un frere du scrollport, jamais une couche ».
+      **Morsant** : `.prep-footer { position: relative }` → `position: fixed`
+      → ROUGE sur cet invariant (`expected 'position: fixed' to match
+      /position:\s*relative/`). Restauration `Buffer.compare === 0`, retour 19/19.
+      **CSS de production INCHANGE.**
+
+- [x] **P0.21** 🟡 **La phase « Calcul des distances sur le réseau » échoue pendant la
+      **FERME le 2026-09-29, avec une reserve explicitement laissee ouverte.**
+      **La panne ne se reproduit plus, deux fois.** Run A, brief exact de `P018-05`
+      (2 jours, Chamonix) : **28,9 km · D+ 2 336 m · 5 h 31 min**, aucun bandeau
+      « Echec », aucun « Reessayer ». Run B, 3 jours : la phase `trace` a livre ;
+      le bandeau affiche etait « Echec : Recherche du parcours », c est a dire la
+      phase IA — pas la phase trace.
+      **Le bandeau nomme desormais la phase reellement en echec.**
+      **Preuve** : `p021-p022-trace-honnetete.test.tsx` (9 tests). `P021-01` : 7
+      phases reussies + modele mesure → aucun bandeau. `P021-02` : `trace` en
+      echec → « Echec : Calcul des distances sur le reseau ». `P021-03` :
+      `recherche_parcours` en echec → « Echec : Recherche du parcours », et
+      JAMAIS « Calcul des distances » — c est le contre-temoin du run B.
+      `P021-04` : chaine complete, distances mesurees = des chiffres.
+      **Morsants** : (a) la ligne `if (failedPhase)` remplacee par un libelle fixe
+      → ROUGE sur `P021-01` et `P021-04` ; (b) cette meme ligne forcee sur
+      « Calcul des distances » → ROUGE sur `P021-03` seule. Deux restaurations
+      `Buffer.compare === 0`, retour 9/9.
+      **RESERVE — le run B n est pas un repli invente.** Mesures : `routing.ts:131`
+      documente `haversineKm` comme « garde-fou, jamais d affichage » ; un jour non
+      route fait `perDay.push(null)` et `sumKnown` rend `null` des qu un jour
+      manque. Le parcours du run B (Chamonix → Aiguille du Midi → Mont Blanc →
+      Source du Merlet → Lac Blanc → Bivouac → Torrent des Bossons → Chamonix,
+      `pieton`) mesure **103,62 km / 1 444 min / D+ 7 651 m / 4 716 m**. L ecran
+      montrait 123,8 km / 29 h 30 : memes regime et ordre de grandeur.
+      **Le vrai defaut reste ouvert** : le generateur de repli choisit des
+      sommets apres un echec de l IA. Le filtre de marchabilite ne s applique
+      qu au chemin IA, pas au repli par regles. Non corrige, et dit comme tel.
+
+- [x] **P0.22** 🔴 **TOUTES les durées et TOUTES les distances de l’étape 2 étaient des
+      valeurs VOITURE. Le chiffre affiché était faux d’un facteur ~11 sur la durée.**
+      **Ouvert le 2026-09-28**, en mesurant la phase `trace` de P0.21.
+      **Cause racine, lisible en une ligne** — `routingService.ts:16` :
+      `const OSRM_BASE = 'https://router.project-osrm.org/route/v1/driving';`
+      Le profil était **figé dans la constante**. Il n’existait aucun paramètre de mode :
+      `routeThrough(points, signal)` ne prenait que des points, `/api/route` n’acceptait
+      qu’une clé (`points`, tout autre paramètre renvoyait `400 unknown_parameter`),
+      et le modèle d’itinéraire ne portait aucun mode de déplacement.
+      **Preuve — mêmes points, deux profils, deux fournisseurs libres** (Chamonix →
+      refuge du Goûter, relevés au Vol en direct pendant la génération) :
+      | Profil | Distance | Durée | Vitesse |
+      |---|---|---|---|
+      | `driving` — ce que faisait l’app | 10,30 km | **11,8 min** | 52 km/h |
+      | `pedestrian` — randonnée réelle | 8,28 km | **127,1 min** | 3,9 km/h |
+      L’écran affichait donc « **12 min** » là où la marche réelle est **2 h 07**, et
+      « 10,3 km » là où le sentier réel fait 8,3 km. Le dénivelé (2 491 m) était lui aussi
+      échantillonné **le long de la route carrossable**, donc il ne correspondait pas au
+      sentier. C’est le défaut le plus grave du dossier : il contredit directement
+      « toutes les données affichées doivent être réelles », et il est **invisible**
+      pour l’utilisateur qui n’a aucun moyen de savoir qu’il regarde une durée de voiture.
+
+      ---
+
+      **CORRECTIF FAIT le 2026-09-28.** Le mode est désormais une **entrée du calcul**,
+      pas une option d’affichage, et il voyage de bout en bout :
+      `model.metricsContext` → `travelModeFor()` → `deps.route(points, mode, signal)` →
+      `?mode=` → `/api/route` → `routeThrough(points, mode)` → fournisseur.
+      - **Fournisseurs** — OSRM ne sert que `driving` (serveur de démo, pas de graphe
+        piéton). `pieton` et `velo` passent donc par **Valhalla**
+        (`valhalla1.openstreetmap.de`, sans clé), `voiture` garde OSRM en référence
+        avec Valhalla en repli. **Aucun repli croisé** : un trajet de marche ne retombe
+        jamais sur un réseau routier.
+      - **Mode inconnu = refus, pas défaut.** `isTravelMode` est strict et
+        `/api/route` répond `400 mode_expected`. C’était le point exact du mensonge.
+      - **Garde-fou d’arrivée `ARRIVAL_TOLERANCE_M = 500`.** Valhalla *accroche* une
+        demande hors réseau au point le plus proche, et rend une réponse parfaitement
+        valide qui ne va nulle part. Écarts d’arrivée **mesurés** (Chamonix) :
+        Les Houches **12 m**, Servoz **16 m** → acceptés ; Argentière **1 862 m**,
+        Vallorcine **2 728 m**, refuge du Goûter **4 321 m** → refusés. Sans ce
+        garde-fou, « 8,275 km / 2 h 07 » serait affiché pour un refuge où l’on ne
+        peut pas monter à pied.
+      - **Décodeur de polyligne Valhalla** — varint signé, précision 6, **sans** la
+        graine `+ 1` de l’algorithme Google. C’est cette différence qui inversait les
+        latitudes au premier essai. Vérifié : bbox décodée identique au 10^-6 à celle
+        annoncée par le fournisseur.
+      **Preuve — 7 appels réels sur l’API en cours d’exploitation :**
+      | Cas | HTTP | Réponse mesurée |
+      |---|---|---|
+      | Chamonix → Les Houches, `pieton` | `200` | 7,612 km / **92,3 min** / 444 pts |
+      | mêmes points, `velo` | `200` | 7,815 km / **26,4 min** |
+      | mêmes points, `voiture` | `200` | 8,406 km / **9,8 min** |
+      | Chamonix → refuge du Goûter, `pieton` | `503` | `unavailable` — **aucun chiffre** |
+      | `mode=driving` | `400` | `mode_expected` |
+      | `mode` absent | `400` | `mode_expected` |
+      | `&foo=1` | `400` | `unknown_parameter` |
+      **Preuve — tests :** `routing-modes.test.ts` (nouveau) **13/13 vert**, fixtures =
+      réponses réelles octet pour octet, jamais tronquées. Les deux cas hors réseau sont
+      testés **positivement** (accepté / refusé) pour prouver que le garde-fou discrimine
+      au lieu de tout refuser. `DayTotals.distanceKm` et `movingMin` ne sont plus
+      documentés comme « distance routière ». Suite complète : **5 588 verts, 0 échec**
+      (5 504 avant ce lot), `npm run type-check` propre.
+      **Preuve à l’écran — ATTEMPTE du 2026-09-28, et elle a ÉCHOUÉ. C’est
+      précisément ce qui empêche le `[x]`, et l’échec est instructif.** Le mode
+      est bien transmis jusqu’au fournisseur — chaque appel de génération porte
+      `&mode=pieton` — mais sur **2 générations, 4 appels `/api/route`, 0 tronçon
+      routé** : les quatre ont rendu `503 unavailable`. L’écran affiche donc
+      « Distance : À vérifier » et « Dénivelé : À vérifier » sur toutes les
+      journées, avec le bandeau « Échec : Calcul des distances sur le réseau ».
+      **Le contraste qui tranche le diagnostic** : la génération équivalente
+      menée en P0.21, alors que le profil était encore `driving`, avait rendu
+      **4 × HTTP 200** sur les mêmes lieux. Le réseau routier se colle sans bruit
+      à un refuge à 3 817 m ; le réseau piéton, lui, refuse. **Les 503 sont donc la
+      preuve que le correctif fonctionne, et la preuve que le générateur est
+      cassé** : il demande des itinéraires vers des sommets.
+      **Contrôle — le même code de routage marche quand les points sont
+      marchables :** Chamonix → Les Houches `200` **7,636 km / 92,6 min** ;
+      Les Houches → Chamonix `200` 7,473 km / 94,7 min ; Chamonix → Argentière
+      `200` 9,148 km / 127,2 min. Les 503, eux, sont **justes** : la trace Valhalla
+      demandée pour le refuge du Goûter se termine 4 km avant l’arrivée
+      (`min_lat` 45,881 contre 45,8447 demandé) — le garde-fou refuse, comme il doit.
+      **Reste à faire pour passer en `[x]` :** une génération dont les étapes sont
+      réellement atteignables, puis la vérification à l’écran que la durée affichée
+      est bien celle du réseau piéton. La chaîne est prouvée des deux côtés ; c’est
+      le générateur qu’il faut reprendre — voir **P0.23**.
+      **Limite CONNUE, tracée et non cachée :** `velo` est accepté partout (contrat,
+      route, routeur, tests) mais **pas encore produit** par `travelModeFor()`, car le
+      modèle ne porte que `metricsContext` et non la sélection d’activités. Un parcours
+      vélo est donc mesuré en piéton : moins faux qu’en voiture, encore faux. Le
+      corriger exige `travelMode` dans `ItineraryModel` (2 constructeurs + schéma de
+      commit + 8 fixtures de test).
+      **FERME le 2026-09-29 (Pauli), sur generation reelle.** La condition de
+      passage posee plus haut — « une generation dont les etapes sont
+      reellement atteignables, puis la verification a l ecran que la duree
+      affichee est bien celle du reseau pieton » — est remplie par le correctif
+      de **P0.23** : le generateur ne route plus vers des coordonnees de grille
+      ni vers un sommet, et **la meme generation rend 23 x `200` et 0
+      `off_network`**. La chaine est donc mesuree des deux cotes. Refuses
+      justes : refuge du Gouter, `min_lat` 45,881 contre 45,8447 demande,
+      refuse par le garde-fou. Acceptes justes : Chamonix -> Les Houches `200`
+      7,636 km / 92,6 min ; Les Houches -> Chamonix `200` 7,473 km / 94,7 min ;
+      Chamonix -> Argentiere `200` 9,148 km / 127,2 min. Un mode inconnu est
+      refuse en `400 mode_expected` au lieu de retomber sur `driving` — c est
+      la que le mensonge etait.
+      **Le residu `velo` n est pas cache, il est promu en item : voir P0.30.**
+- [x] **P0.23** ✅ **La distance et la durée réelles ne s’affichent JAMAIS : le
+      générateur colle des sommets et des cours d’eau aux étapes d’une journée de
+      randonnée, donc aucun tronçon n’est routable.** Ouvert le 2026-09-28 en
+      pilotant P0.22. C’est le dernier obstacle à l’exigence du dossier, « calculé et
+      affiché la distance réelle ».
+      **Preuve 1 — l’écran, 2 générations de suite :** `proof/P022-02-etape2.png`
+      (regardée). Étapes du jour 1 : « Départ centre-ville Chamonix », « Torrent des
+      Bossons », « Source du Merlet », « **Mont Blanc** », « Lac Blanc », « **Aiguille
+      du Midi** ». En-tête du parcours : Distance **À vérifier**, Dénivelé **À
+      vérifier**. Bandeau « Échec : Calcul des distances sur le réseau ». Les
+      4 appels `/api/route` de ces deux générations : **4 × `503`**, avec le bon
+      `mode=pieton`.
+      **Preuve 2 — l’inventaire réel `/api/pois` sur le corridor de Chamonix** ne
+      contient que des points d’altitude. 18 lignes, toutes en double : Mont Blanc,
+      Refuge du Goûter, Rifugio Torino, Source du Merlet, Aiguille du Midi, Refuge du
+      Plan de l’Aiguille, Bivouac Lac Blanc, Lac Blanc, Refuge de la Charpoua,
+      Torrent des Bossons. **Aucun lieu de ville, aucun sentier, aucun point de vue
+      atteignable à pied** dans la source qui fournit les étapes d’activité.
+      `/api/amenities` ajoute restaurants, hébergement et commerces, mais pas les
+      étapes de rando.
+      **Pourquoi c’est grave :** Mont Blanc et l’Aiguille du Midi sont des sommets ;
+      aucune carte de marche n’y mène. Le garde-fou d’arrivée de P0.22 les refuse — il
+      a raison — et le parcours finit « À vérifier » partout. L’app reste honnête,
+      mais elle est **inutilisable**, et l’utilisateur ne peut pas distinguer
+      « impossible » de « pas encore calculé ».
+      **Cause racine identifiée :** `kindCategories('arret')` dans
+      `engine/places.ts` autorise explicitement la catégorie `summit`. Rien ne
+      demandait si un sommet est atteignable à pied.
+      **Correction APPLIQUÉE le 2026-09-28 — c’est cette fois le bon moyen :**
+      la marche est **mesurée**, pas devinée. `/api/route` distingue désormais deux
+      refus qu’il confondait : `off_network` (le fournisseur a répondu, sa trace
+      n’arrive pas — une **mesure**) et `provider_unavailable` (il n’a rien dit
+      d’exploitable). `placeSource.keepWalkableFrom` interroge `/api/route` en
+      `mode=pieton` pour chaque candidat et **ne retire que sur `off_network`** ;
+      il **échoue ouvert** sur une panne, sinon une minute de surcharge Valhalla
+      viderait tout l’inventaire d’une région.
+      **Preuve 3 — mesurée sur le corridor de Chamonix, 9 lieux :**
+      `503 off_network` pour Mont Blanc, Refuge du Goûter, Aiguille du Midi et
+      Lac Blanc ; `200` pour Torrent des Bossons, Argentière, Les Houches et
+      Servoz. **4 sur 9 sont réellement marchables** — l’inventaire n’était pas
+      vide, il était à 56 % inutilisable.
+      **Preuve 4 — discrimination de la route API :** Chamonix → refuge du Goûter
+      `503 off_network` en `pieton` et `200` en `voiture`. C’est exactement la
+      distinction que l’ancien code perdait.
+      **Preuve 5 — tests :** `routing-modes` 13 → **17** (les 4 nouveaux verrouillent
+      `off_network` vs `provider_unavailable` et le contrat du wrapper) ;
+      `place-source` 12 → **18** (`keepWalkableFrom` + `P023-06` qui rejoue le
+      corridor réel). Test de rupture exécuté : le filtre neutralisé fait
+      **échouer `P023-06`**, il n’est donc pas décoratif.
+      Suite complète : **5 598 verts**, `tsc` 0.
+      **Preuve 7 — LA CAUSE RACINE EST MESURÉE, et elle n'est pas dans le code.**
+      Le filtre de P0.23 est correct ; l'inventaire qu'il reçoit est vide à la
+      source. Mesures réelles, le 2026-09-28, sur le corridor Chamonix :
+      | Source | Lignes | Uniques après dédoublonnage |
+      |---|---|---|
+      | `GET /api/pois` (box 45.80–45.96 / 6.78–6.93) | **16** | **9** |
+      | `trail_pois` via RPC `get_trail_pois_bbox` | **0** | **0** |
+      **Répartition par altitude des 9 lieux uniques — le chiffre qui explique tout :**
+      · sous 1200 m (le plancher de la vallée est à 1 035 m) : **0 lieu**
+      · Torrent des Bossons, **1 200 m**, catégorie `water` — le seul sous le seuil
+      · au-dessus de 2 200 m : **8 lieux sur 9** (Mont Blanc 4 808 m, Goûter 3 835 m,
+        Aiguille du Midi 3 842 m, Charpoua 2 841 m, Lac Blanc 2 352 m, Bivouac
+        Lac Blanc 2 340 m, Plan de l'Aiguille 2 207 m, Source du Merlet 1 850 m)
+      **Aucune ville, aucun village, aucun point de vue de vallée.** Chamonix est
+      à 1 035 m : sur les 9 lieux, **un seul** est à une altitude où l'on circule à
+      pied. Le `503 off_network` des 20 appels n'est donc pas un bug du routage —
+      c'est la réponse correcte à une source qui ne propose que des sommets.
+      **Preuve 7 bis — les 5 tables du dépôt, comptées en direct :**
+      | Table | Lignes |
+      |---|---|
+      | `outdoor_points` | 50 |
+      | `map_refuges` | 16 |
+      | `map_summits` | 21 |
+      | `map_water_points` | 16 |
+      | **`trail_pois`** | **1 811** |
+      `trail_pois` est 10× plus riche que tout le reste — et c'est **elle qui est vide
+      en France**. Sa bbox globale, lue par 4 fenêtres PostGIS qui se chevauchent
+      pour passer sous le plafond de 1 000 du RPC, donne **996 points uniques**,
+      tous compris dans **lat 50,012–51,095 / lng 1,557–3,281** : soit le **nord de
+      la France et la Belgique** (Mont des Cats, 50,78 N ; 2,67 E). **0 point en
+      Haute-Savoie, 0 point dans les Alpes.** Répartition mesurée : France 996,
+      Belgique/Pays-Bas 0, reste du monde 0.
+      **Conclusion de preuve :** la source n'est pas « trop filtrée », elle est
+      **géographiquement hors sujet**. Aucun filtre, aucun miroir et aucun bug ne
+      peuvent fabriquer un lieu de vallée qui n'est pas en base. La seule voie
+      honnête est un **repli vers une source réellement couvrante**.
+      **Recherche de miroir Overpass menée et close le 2026-09-28 — aucun
+      exploitable.** 9 hôtes testés en direct, en parallèle, sur une requête
+      restaurant+hôtel+commerce centrée sur Chamonix :
+      | Hôte | Résultat |
+      |---|---|
+      | `overpass-api.de` | `ConnectTimeoutError` 10,7 s |
+      | `lz4.overpass-api.de` | `ConnectTimeoutError` 10,7 s |
+      | `overpass.private.coffee` | timeout 60 s |
+      | `overpass.kumi.systems` | timeout 60 s |
+      | `overpass.osm.jp` | échec 1,2 s |
+      | `overpass.osm.rambler.ru` | échec 0,3 s |
+      | `maps.mail.ru` | `HTTP 200` mais **renvoie du HTML**, pas du JSON |
+      | `overpass.osm.ch` | `HTTP 200` en 182 ms, **0 élément** |
+      | `overpass-api.openhistoricalmap.org` | `HTTP 200` en 198 ms, **0 élément** |
+      Les deux miroirs qui répondent ne sont pas inexploitables par hasard, et
+      c'est mesuré : **`overpass.osm.ch` ne couvre que la Suisse** (d'où 0 restaurant
+      à Chamonix, en France), et **OpenHistoricalMap n'a que des données
+      historiques**, pas les restaurants et hôtels d'aujourd'hui. Ajouter l'un des
+      deux au banc d'essai **serait pire** : un `200` en 182 ms avec 0 résultat
+      ressemble à une panne de fournisseur et ferait perdre le repli vers les
+      autres sources. **Conclusion : la course de miroirs actuelle est correcte**,
+      ce sont les trois miroirs qui sont morts depuis cette machine.
+      **Preuve 8 — 2026-09-28, LE VERROU EST LEVE. On passe de 0 à 6 lieux
+      réellement marchables.** Le repli Photon de P0.24, filtré en piéton contre
+      l'ancre centre-ville de Chamonix, rejoué sur les données réelles :
+      | Mesure | Avant le repli | Après |
+      |---|---|---|
+      | Lieux uniques après fusion (`/api/pois` + `/api/amenities`) | 10 | **16** |
+      | dont `off_network` depuis Chamonix | **10 sur 10** | **10 sur 16** |
+      | **dont réellement marchables à pied** | **0** | **6** |
+      Les 6, avec la distance piéton réellement mesurée par `/api/route` :
+      | Lieu | Distance piéton mesurée |
+      |---|---|
+      | Hôtel Mont Blanc | **0,25 km** |
+      | Hôtel Lyret | **0,30 km** |
+      | Hôtel-Restaurant Aiguille du Midi | 3,66 km |
+      | Restaurant Ghandi | 6,47 km |
+      (les 2 autres marchables ne sont pas détaillés ici ; le total mesuré est 6)
+      **La boucle est donc rompue dans les DEUX sens : `/api/amenities` rend
+      7 lieux réels au lieu de 0, et le filtre piéton en garde 6 au lieu de 0.**
+      **Ce qui reste à prouver, et qui n'est PAS prouvé ici :** l'écran de l'étape 2
+      affichant une distance et une durée. Cette mesure porte sur les DONNÉES, pas
+      sur le rendu. Le pilote navigateur reste à rejouer.
+      **Preuve 6 — NOUVEAU, 2026-09-28, pilote relancé après le double
+      branchement du filtre : ÉCHEC TOTAL.** 20 appels `/api/route`, **20 × `503`**,
+      0 × `200`, mode correct `pieton` ; l’étape 2 n’est toujours pas atteinte après
+      **301 s**. La cause est mesurée : l’inventaire réel `/api/pois` du corridor
+      Chamonix → Les Houches ne contient plus que **10 lieux uniques après
+      dédoublonnage, et les 10 sont `off_network`** au départ de Chamonix.
+      Autrement dit, **le filtre fonctionne, mais il vide entièrement la source** :
+      le stock précédent (18 lignes) était trop pauvre en lieux de ville marchables.
+      `/api/amenities`, qui devait fournir le complément repas/nuit/commerces, répond
+      `0` après **47,1 s** (voir **P0.24**) — les deux sources patent donc à
+      zéro en même temps.
+      **Ce qui reste ouvert :** la **preuve écran** de bout en bout, et le
+      fournisseur d’amenités. Voir P0.24.
+      **MESURE DU 2026-09-28, APRES LA LEVEE DE P1.9 — la cause s est deplacee,
+      pas disparue.** Sur une generation reelle (geolocalisation accordee, Chamonix,
+      `Randonnée à la journée`) :
+      * le depart est bien auto-rempli par la position (**ligne 8 du parcours** :
+        « Départ | Ma position »), le CTA « Créer mon parcours » est **actif** — la
+        geolocalisation rend donc le parcours **lançable**, ce qui n etait pas le cas ;
+      * **20 appels `/api/route?mode=pieton`, tous `503`, tous `off_network`** ;
+      * **11 occurrences de « à vérifier »** a l ecran, **0 km, 0 min** ;
+      * **aucune barre de jours** apres **480 s** d attente.
+      **Pourquoi `off_network` alors que le fournisseur repond :** les points routes ne
+      sont pas ceux des lieux reels. `/api/amenities` sur la meme zone (bbox Chamonix)
+      rend **9 lieux reellement nommes** a coordonnees 7 decimales — Hotel Lyret
+      45,9217703,6,8694538 · Hotel Mont Blanc 45,9232428,6,8681101 · Restaurant Le
+      Panoramic 45,9333128,6,8377761 — **mais en 45,3 s**. Or les points effectivement
+      routes sont des points de grille : `6.9,45.91` · `6.9012,45.9123` ·
+      `6.8873,45.879` · et le **sommet du Mont Blanc** `6.8652,45.8326`. Un point de
+      grille n est sur aucun reseau pieton : le filtre, lui, a raison de refuser.
+      **Lecture :** le filtre de marchabilite de P0.23 **fonctionne** (il refuse une
+      mesure qui n existe pas) ; c est **l amont** — le choix des etapes — qui produit des
+      coordonnees inventees au lieu des lieux de la base. **Ne pas decocher.**
+      **Etapes de la correction, dans cet ordre :** (1) faire produire au generateur des
+      lieux **issus de la source reelle** (`/api/amenities`, avec l affiliation) plutot que
+      des coordonnees de grille ; (2) mettre le 45,3 s d `/api/amenities` hors du chemin
+      critique, puisqu il est appele en parallele de l IA ; (3) seulement ensuite, la preuve
+      ecran.
+      **Deux defauts de plus, mesures le meme jour, a inscrire au journal :**
+      * **`/api/geocode` inverse hors service** : `?lat=45.9237&lon=6.8694` rend `503
+        providers_unreachable`, alors que le geocodage **direct** `?q=Chamonix` rend
+        `200` et nomme Chamonix-Mont-Blanc (provider open-meteo, precision commune).
+        C est donc **le reverse seul** qui est coupe, pas le geocodage.
+      * **la saisie libre vide le catalogue** : dans l invite « Qu est-ce que tu as en
+        tete ? », une phrase descriptive (« Randonnée douce au bord d un lac ») passe par
+        `rankActivitiesByBrief`, qui **filtre** le catalogue : il tombe a **0 activite** et
+        affiche « Aucune activité du catalogue ne repond a cette description ». Or la
+        consigne demandait de **garder les autres entrees en dessous**. Le message est
+        honnete et propose « pars librement », mais les entrees ont disparu.
+      **PREUVE 9 — 2026-09-28, LA BOUCLE EST BOUCLÉE : LA PREUVE ÉCRAN EST FAITE.**
+      Cette preuve porte sur le **rendu**, pas sur les données — c’est exactement
+      ce qui manquait aux preuves 1 à 8, et c’est ce que la consigne exigeait
+      (« calculé et affiché la distance réelle »).
+      Clic réel depuis l’étape 1 → génération réelle → étape 3, sans aucune
+      intervention du script entre le clic et l’affichage :
+      | Mesure réelle | Valeur |
+      |---|---|
+      | Titre généré | « Boucle du Mont-Blanc en autonomie » |
+      | **Distance totale** | **92,5 km** (mesurée, pas estimée) |
+      | **Dénivelé total** | **10 407 m** |
+      | **Jours** | **3** (J1, J2, J3 réellement configurés) |
+      | `GET /api/geocode` | **1 × `200`** |
+      | `GET /api/route` | **23 × `200`** |
+      | `GET /api/elevation` | **3 × `200`** |
+      | `off_network` | **0** (contre 20 avant) |
+      | CTA final | « Enregistrer mon aventure » présent et lisible |
+      Preuve regardée : `proof/D3-36-fin-generation.png`.
+      Pilote : `qa-local/d3-gen.mjs`.
+      **Les 23 appels `/api/route` en `200` sont la preuve définitive** : le
+      `off_network` n’était pas une panne du fournisseur, c’était la réponse
+      correcte à des coordonnées de grille. Le générateur produit maintenant des
+      lieux réels, donc la mesure passe.
+      **Ce qui n’est PAS fermé par cette preuve, et le reste assumé :**
+      * le **budget** reste « À vérifier » — aucune source ne répond pour ce
+        parcours, donc **aucune somme n’est inventée**. C’est le contrat à tenir ;
+      * la **météo** est **réellement indisponible** : le parcours démarre le
+        **15 octobre 2026**, or Open-Meteo refuse toute date au-delà du **13 octobre
+        2026** (`Parameter 'start_date' is out of allowed range`). L’écran affiche
+        « Météo indisponible », un bandeau d’échec et « Réessayer ».
+        **Aucune température inventée.** C’est un 503 fournisseur assumé, pas un bug ;
+      * la **durée globale 28 h 11 min** reste affichée en en-tête alors que la
+        consigne demandait la **durée d’activité estimée de chaque journée** —
+        **c’est un écart connu, followed dans P0.26 et dans le lot d’affichage.**
+- [x] **P0.26** ✅ **La duree choisie est respectee et chaque journee est
+      reellement construite.** Ferme le 2026-09-28, preuve navigateur D5.
+      Duree **2 jours** choisie au stepper, ecran final **Jour 1 ET Jour 2** :
+      **44,9 km / 14 h 48 min** puis **22,7 km / 2 h 43 min**, soit
+      **67,6 km** et **17 h 30** affichees — les deux arithmetiques concordent.
+      **Journee non couverte : `false`.** `route` **22 × 200**, `weather`
+      **2 × 200** avec une meteo reelle et differente par jour, `elevation`
+      **2 × 200**, **0** `off_network`. Preuves : `proof/P026-03-fin-2jours.png`,
+      `proof/P026-05-geo-etape3.png`.
+- [x] **P0.27** ✅ **La ligne des mesures etait coupee nette au milieu des
+      glyphes au-dessus du CTA.** Ferme le 2026-09-28, preuve navigateur D5.
+      Geometrie mesuree : `.prep-body` bottom **667**, `.prep-footer` top
+      **667** — **`bodyBottom === footerTop`**, donc **aucun chevauchement**.
+      Le defaut etait la coupe d `overflow-y`, que la langue de verre
+      (`blur(6px)`, masque transparent en haut) ne pouvait pas reparer. Corrige
+      par un fondu de dissolution `--prep-scroll-fade-h: 32px` en bas du corps,
+      reserve basse portee a `--space-6 + --prep-scroll-fade-h` pour que le
+      dernier bloc ne s estompe jamais. **6 tests `DISS-01`→`DISS-06`,**
+      **rouge (5/6) → vert (6/6)**, et **sabotage preuve** : neutraliser le
+      masque fait rougir `DISS-01`. Le test `prep-scroll-lip-an9` qui
+      interdisait ce masque **n a pas ete supprime** : il porte desormais
+      l intention reelle « le dernier bloc ne doit jamais etre estompe ».
+      Preuve : `proof/P026-06-zoom-footer.png` avant / apres.
+- [x] **P0.28** ✅ **La banniere de mesures de l etape 3 ne suivait pas le
+      jour : elle restait figee sur le total de l aventure.** Ferme le
+      2026-09-28, preuve navigateur D5 sur un parcours 2 jours relu depuis
+      le brouillon persiste.
+      **Mesure avant.** Sur `En avant !`, `J1` puis `J2` donnaient tous les
+      trois la meme ligne — **À vérifier / À vérifier / 16 h 09 min** — alors
+      que la liste du programme, juste dessous, repondait correctement
+      (`["Jour 1"]` puis `["Jour 2"]`). **Cause :** `DepartureStep.tsx`
+      lisait `selectedDay` pour la liste (`focusedDayNumbers`) mais Passing
+      `metricsFor(model, 'aventure')` en dur au bandeau. Le commentaire du
+      fichier affirmait pourtant « l onglet choisi plus haut pilote l ecran 3,
+      il ne decore pas » : **l intention etait ecrite, le calcul ne la
+      suivait pas.** C est le symptome « le selecteur de jours ne se met pas a
+      jour sur toutes les pages ».
+      **Deux erreurs de mesure de ma part, avant la bonne.** (1) J ai lu
+      `.prep-metrics` en supposant n avoir qu un ecran monte : le composant
+      existe aussi dans `DepartureStep` ET `ItineraryStep`, et mon
+      premiere lecture etait en fait sur l etape 3, pas l etape 2. (2) J ai
+      cherche le rail avec `role="button"` alors que `DayPlateau` utilise
+      `role="tab"`, et le selecteur in-screen avec `/^J1/` alors que son
+      libelle est **« Jour 1 »**. Les deux ont produit un « controle absent »
+      qui n en etait pas un.
+      **Correction.** `activeDayOrNull(totalDays, selectedDay)` extrait dans
+      `engine/metrics.ts` : UNE decision de perimetre, **partagee** par
+      `focusedDayNumbers`, `DepartureStep` et `ItineraryStep`. Hors borne
+      (jour supprime, voyage raccourci) on retombe sur `null` — l ecran montre
+      tout plutot que de devenir vide.
+      **Mesure apres, meme session.** Étape 3 : `Tout` = À vérifier / À
+      vérifier / **16 h 09 min** ; `J1` = **55,1 km / 5 096 m / 15 h 09 min** ;
+      `J2` = À vérifier / À vérifier / **1 h**. **15 h 09 + 1 h 00 = 16 h 09.**
+      La selection **survit au changement d etape** : revenue en `Preparation`,
+      `J2` affiche toujours 1 h. Le rail bas et le selecteur in-screen
+      donnent la meme valeur — ils alimentent le meme store.
+      **Tests.** `jour-focus-mesures.test.ts`, **16 tests** `P0.28-1`→`4`,
+      **rouge (9 echecs / 2 succes) → vert (16/16)**. Typecheck `tsc --noEmit`
+      **exit 0**, suite complete **611 fichiers / 5 722 tests / 0 echec**.
+      **Sabotage preuve** : remettre le scope en dur fait rougir
+      `DepartureStep ne passe plus le scope en dur` ; rebasculer
+      `ItineraryStep` sur son filtre local fait rougir
+      `ItineraryStep utilise la MEME decision de perimetre`.
+      **Un test a ete corrige, pas repasse.** `P0.28-2` comparait jour et
+      voyage sur la fixture par defaut, ou les deux sont « a verifier » :
+      il ne prouvait rien. Il porte desormais un modele **mesure**
+      (55,1 / 12,4 / 67,5 km) et verifie que le lecteur de nombres respecte le
+      **format francais** — `Number("55,1")` vaut 551, pas 55,1.
+      Preuve : `proof/P028-10-etape3-jour1.png`, `proof/P028-11-etape3-jour2.png`.
+      **Deux defauts vues sur la meme capture, pas encore traites :** le titre
+      Generated dit **« Boucle du Mont-Blanc en 2 jours »** alors que le
+      parcours mesure fait 67 km ; et la note **« 3 etapes a verifier »** est
+      **masquee par le CTA « Enregistrer mon aventure »** en bas de l etape 3.
+- [x] **P0.29** ✅ **Les tuiles de mesures, le rail de génération et 28 autres
+      filets n'avaient plus d'arête : `--glass-rim` est une OMBRE, pas une couleur.**
+      Fermé le 2026-09-28, preuve navigateur D5.
+      **Le symptôme.** La tuile 2 du bandeau de mesures présentait un « liseré
+      clair en haut et à gauche en plus de la bordure », lu comme une bordure
+      double.
+      **Ce que la mesure a dit — l'inverse du diagnostic.** `getComputedStyle` sur
+      les trois tuiles de l'étape 2 : `border: 0px none rgb(255, 255, 255)`. Elles
+      n'avaient **aucune** bordure. Le liseré vu n'était que le reflet interne
+      (`inset 0 1px 0 …` en haut, `inset 0 -1px 0 …` en bas) : le reflet seul,
+      sans l'arête. Une bordure absente se lit comme un registre décalé.
+      **Cause.** `border: 1px solid var(--prep-glass-rim)`, et `--prep-glass-rim:
+      var(--glass-rim)`. Or `--glass-rim` vaut `rgba(255,255,255,0.85)` dans le
+      `:root` historique et `rgba(241,245,241,0.20)` dans le thème sombre — mais
+      `0 0 0 0.5px rgba(0,0,0,0.55)` et `0 0 0 0.5px rgba(0,0,0,0.22)` dans les
+      deux thèmes **iOS 27**, qui sont ceux qui tournent. C'est une **couche de
+      `box-shadow`** — c'est ainsi que le hub la consomme (`tokens.css:969`) — et
+      non une couleur. Posée dans un `border`, elle rend la déclaration **invalide
+      au moment du calcul** : `border-style` retombe sur `none`, en silence, sans
+      erreur ni avertissement. Le même jeton marche dans un thème et casse dans
+      l'autre : de là un défaut quasi invisible, et une « bordure double » qui
+      n'en était pas une.
+      **Une convention existait déjà, et je l'ai d'abord contredite.**
+      `--prep-hairline` (la largeur, `1px`) et `--prep-hairline-ink` (l'encre,
+      `color-mix(in srgb, var(--lkv-text-primary) 16%, transparent)`) étaient déjà
+      définis, avec un commentaire qui décrivait **exactement** ce piège et la
+      mesure navigateur qui l'avait révélé. Mon premier jet a renommé un jeton
+      existant en `--prep-hairline` : collision détectée en relisant le diff, et
+      abandonnée au profit de la convention du dépôt.
+      **Correction.** Les 24 filets d'`adventure-prep.css` et les 7 de
+      `free-departure.css` — **31 au total** — posent désormais la paire
+      `var(--prep-hairline) solid var(--prep-hairline-ink)`, comme le promettait
+      déjà le commentaire du bloc de jetons (« un seul pour la finesse des filets
+      de ce chantier »). Les 11 `color-mix(… var(--glass-rim) …)` calibrés sur une
+      couleur qui n'existait plus en iOS 27 sont venus avec. `--prep-glass-rim`
+      est supprimé, avec le motif consigné à sa place pour qu'on ne le remette pas.
+      **Mesure après.** Sur les trois tuiles de l'étape 2 et sur le bandeau de
+      l'étape 3 : `1px solid color(srgb 1 1 1 / 0.16)`. Et le doute que j'avais sur
+      la visibilité — une encre dérivée du texte clair sur du verre sombre — était
+      infondé, mesuré : `--lkv-text-primary` vaut `#ffffff` sur le préparateur.
+      Preuve : `proof/P029-01-filets-etape2.png` (regardée), `proof/P029-02-filets-etape3.png`.
+      **Tests.** `prep-filets-verre.test.ts`, **6 tests**. Le test ne liste aucun
+      jeton autorisé : il **résout** chaque jeton dans tous les thèmes et refuse
+      qu'une bordure reçoive une valeur d'ombre — y compris dans un seul thème,
+      puisque c'est celui-là qui casse. **Rouge → vert sur deux sabotages :**
+      `--prep-hairline-ink: var(--glass-rim)` fait rougir **3 tests** ; une seule
+      bordure remise à `1px solid var(--glass-rim)` en fait rougir **2**.
+      Typecheck `tsc --noEmit` **exit 0**, suite complète **612 fichiers / 5 728
+      tests / 0 échec**.
+      **Trois erreurs de mesure ou de méthode, consignées pour qu'elles ne se
+      répètent pas.** (1) J'ai lu « bordure double » et cherché une règle CSS
+      dupliquée : la mesure disait `border-style: none`. (2) Ma première sonde a
+      balayé la CSSOM et n'a rien trouvé — c'est la sonde qui était fausse, pas
+      le CSS ; j'en suis revenu à un recensement depuis la source. (3) Mon test
+      initial classait `border-radius` comme une bordure, et `1px` comme une
+      ombre : les deux venaient de comparer des noms au lieu des valeurs.
+- [x] **P0.30** **`velo` est un mode accepte partout mais jamais produit : un
+      **FERME le 2026-09-29 (Beauvoir).** `velo` est maintenant **produit**, pas seulement accepte.
+      `types.ts` : `export type TravelMode = 'pieton'|'velo'|'voiture'` et
+      `travelMode: TravelMode` **obligatoire** sur `ItineraryModel` — obligatoire, donc pas de
+      retour silencieux a `pieton` si le champ manque. `routing.ts` : `travelModeFor(selection)`
+      derive `voiture` si `voyage`, sinon `velo` si une activite `a_velo`, sinon `pieton` ;
+      `routeItinerary` lit `model.travelMode` et **refuse** un mode hors vocabulaire.
+      Les 2 constructeurs (`itinerary.ts`, `itineraryPhases.ts`) portent le mode.
+      **MORSANT 1** (retour a l ancienne deduction) -> **6 rouges** : `P0-01/02/03/10/11`
+      `expected 'pieton' to be 'velo' // Object.is equality`, et
+      `P0-20 expected Set{ 'pieton' } to deeply equal Set{ 'velo' }`.
+      **MORSANT 2** (`travelModeFor` retire de `itineraryPhases.ts`) -> **2 rouges** :
+      `P0-11 expected undefined to be 'velo'`, `P0-12 expected 'velo' to be undefined`.
+      **Contre-temoins stayed green** : `P0-04` (rando seule -> pieton), `P0-05` (road trip ->
+      voiture, non-regression), `P0-06` (selection vide -> pieton, **jamais** velo), `P0-07`
+      (une nuit a velo ne fait pas basculer), `P0-21` (jamais de requete velo sur un parcours
+      pieton), `P0-22` (mode hors vocabulaire refuse).
+      Restauration : 5 hashes verifies, dont `itineraryPhases.ts`
+      `478425689AA6CBF3C4664542B65EDBB77C8B350E6E3A05B7498514CED630F572` -> 13/13.
+      **Preuve d innocence** : ses 4 items revoques (retour HEAD par `git checkout --`), ses
+      42 tests tombent tous rouges ; les 10 autres echecs sont identiques dans les deux etats,
+      donc ils ne lui appartiennent pas.
+      **Reserve transmise au pilote** : `types.ts` sortait du perimetre declare, modifie quand
+      meme parce que le mode doit survivre au passage reseau (« trace et non cache »).
+      **Raccord UI restant** : le mode est calcule mais pas encore nomme a l ecran
+      (`ItineraryStep.tsx:586-592` et le rendu `.prep-metrics` en 801-807).
+- [x] **A9** ✅ **« Boucle du Mont-Blanc en 2 jours » : le titre promettait un
+      retour au départ que le programme ne faisait pas — la boucle existait à
+      l'écran, pas dans le tracé.**
+      Fermé le 2026-09-29, preuve navigateur + 9 tests de garde.
+      **Le symptôme.** L'IA promet « on revient au point de départ »
+      (`itinerary.ts:98`, `shapeLabel()`) et le motif du jour 1 l'affiche, mais
+      AUCUN des trois moteurs ne tenait la promesse : le kilométrage ignorait
+      le retour. Une donnée trompeuse, même si elle vient de l'IA.
+      **La cause, mesurée sur les trois moteurs — pas une, trois.** (1)
+      `engine/itinerary.ts` (buildItinerary) n'ajoutait une étape de retour
+      que pour `aller_simple`. (2) `engine/places.ts` (assignPlaces) visait
+      `destination` en retour ; en boucle `destination` est `null`, donc
+      l'étape de retour revenait SANS POSITION puis était SUPPRIMÉE par la
+      phase lieux. (3) `engine/continuity.ts` (versArrivee) ne corrigeait que
+      l'aller simple.
+      **Le correctif, un par moteur.** (1) La cible du retour est
+      `destination` en aller simple, **`origin` en boucle**. (2)
+      `assignPlaces` : `const cible = destination ?? origin` — l'étape de
+      retour est ancrée, donc conservée. (3) `versOrigine` ajouté à
+      `continuity.ts`, miroir exact de `versArrivee` (même seuil
+      `ARRIVEE_TOLERANCE_KM`), avec un helper `dernierSitue()` qui retombe
+      sur le dernier lieu connu si le dernier jour n'a aucune étape située.
+      **Preuve navigateur.** Pipeline réel sondé (buildItinerary → assignPlaces
+      → enforceDayContinuity) : le programme se termine sur `j2 trajet « Retour
+      de Chamonix »` ancré à **45.9237 / 6.8694**, **distance finale → origine
+      = 0,000 km**. Le retour est donc réellement mesuré par la phase tracé.
+      **Tests de garde.** `boucle-retour-origine.test.ts`, **9 tests** (A9-01..09)
+      — 3 groupes : la règle produit et tient la promesse (dont A9-04,
+      non-régression aller simple), la continuité ferme une boucle ouverte
+      (dont A9-06 pas de retour redondant, A9-07 jamais de retour vers
+      l'arrivée en boucle, A9-09 sans départ rien n'est inventé).
+      **Rouge → vert sur 4 sabotages** (`qa-local/sab9.cjs` +
+      `sabotage-9-backup.json`) : `itin`→A9-01 rouge, `plac`→A9-02 rouge,
+      `cont`→A9-05 + A9-08 rouges, `restore`→9/9 vert. **A9-02 a d'abord été
+      rendue NON VACUUSE** : sous sabotage, `assignPlaces` réduit le programme
+      au seul départ et l'ancienne assertion passait pour une mauvaise
+      raison.
+      **Trois erreurs de méthode, consignées.** (1) J'ai d'abord supposé
+      qu'un « décalage d'index » expliquait LR-06 ; la SONDE a montré
+      qu'avec des ordres par jour (le contrat réel) l'étape de retour arrive
+      bien en DERNIER — c'est la FIXTURE du test (ordres globaux) qui mentait,
+      pas le moteur. Le test a été corrigé pour être fidèle, pas le moteur pour
+      «satisfaire » le test. (2) EOL : `CHECKLIST-PREP.md` est **mixed**
+      (2 645 LF / 2 608 CRLF) — j'ai vérifié l'EOL de l'ancre avant chaque
+      édition, sans quoi `\r\n` casse l'ancre. (3) `LR-02` et `A8-06` ont
+      été **corrigés** (nouveaux nombres + assertions qui PINENT la règle :
+      LR-02 vérifie que le retour se referme sur CHAMONIX ; A8-06 vérifie
+      qu'aucune étape n'est ancrée sur ARGENTIERE) — pas simplement
+      incrémentés.
+      **Typecheck `tsc --noEmit` exit 0.** Suite complète : **612 fichiers /
+      5 736 tests / 1 échec** — `Z-D18-03` (`chantier-z1.spec.ts`,
+      `TripLiveCockpitView`), **régression préexistante et hors périmètre** :
+      vérifiée en solo ET sur arbre propre (mes 3 fichiers moteur stashés),
+      elle échoue dans les deux cas. Cause mesurée : la fixture
+      `futureTrip` porte `start_date: '2026-09-29'` = **aujourd'hui**, donc
+      le voyage démarre et « Étape active » est correct ; c'est une bombe à
+      retardement a date fixe, pas un défaut du composant. **Consignée, pas
+      masquée.**
+- [x] **Z18** ✅ **SUITE REMISE À ZÉRO ÉCHEC — `Z-D18-03` était une bombe à
+      retardement calendaire, pas une régression.**
+      Fermé le 2026-09-29. **Le symptôme.** `tests/trips/chantier-z1.spec.ts`
+      échouait sur « voyage futur n’affiche pas Étape active » — échec **déjà
+      constaté sur arbre propre** (mes 3 fichiers moteur stashés), donc
+      hors de mon lot.
+      **La cause mesurée, pas supposée.** La fixture `futureTrip` portait
+      `start_date: '2026-09-29'` — soit **exactement aujourd'hui**. Le
+      voyage démarrait donc légitimement, et « Étape active » était la
+      bonne réponse du composant. Le test n’avait aucun défaut de code à
+      à corriger : il était daté.
+      **Le correctif est dans la FIXTURE, pas dans le composant.** Un
+      helper `isoInDays(days)` rend les dates relatives à `now` :
+      `start_date: isoInDays(29)`, `end_date: isoInDays(29 + 28)` — la durée
+      de 29 jours est conservée, donc `total_days: 29` reste cohérent. Le
+      test redevient vert **maintenant et dans six mois**.
+      **Rouge → vert prouvé.** Figer la date sur `2026-09-29` fait
+      rougir le test ; la version relative le rend vert (13/13). Le test
+      échouait pour une raison de calendrier, sans qu’aucun code n’ait
+      bougé — le diagnostique « régression » était faux.
+      **Résultat : `tsc --noEmit` exit 0, suite complète
+      613 fichiers / 5 739 tests / 0 échec.** C’est le premier zéro échec
+      complet du chantier.
+- [x] **P0.24** 🔴 **`/api/amenities` renvoie 0 lieu sur le corridor de Chamonix : le
+      fournisseur Overpass est injoignable depuis cette machine.** Ouvert le
+      2026-09-28, pendant la preuve de P0.23.
+      **Ce qui est mesuré :** `GET /api/amenities?min_lat=45.78&…` répond
+      `200 {"amenities":[]}` après **47 112 ms**. Les trois miroirs sont testés
+      un par un, en direct :
+        · `overpass-api.de`      → `ConnectTimeoutError` sur le port 443, 10,7 s
+        · `lz4.overpass-api.de`  → `ConnectTimeoutError` sur le port 443, 10,7 s
+        · `overpass.private.coffee` → `TimeoutError`, 60 s
+      **Ce n'est donc PAS une surcharge Overpass, ni un bug du code :** les
+      hôtes sont injoignables depuis cette machine. Les autres fournisseurs
+      répondent tous, ce qui isole la panne réseau :
+        · `valhalla1.openstreetmap.de` → `400` en **100 ms** (répond)
+        · `router.project-osrm.org`    → `200` en **129 ms**
+        · `api.open-meteo.com`        → `200` en **170 ms**
+      **Conséquence produit :** le module se replie sur `/api/pois`, qui ne fournit
+      que de l’altitude. Les repas, l’hébergement et les commerces — donc une
+      nuit par jour — disparaissent. Le parcours est alors **inutilisable pour un
+      séjour réel**, indépendamment de P0.23.
+      **Ce qui n'est PAS la faute du code :** la course des miroirs, le timeout
+      de 45 s, le cache 6 h, le repli `[]` et le `User-Agent` sont tous
+      correctement en place et unit-tester le confirme. Le comportement est
+      **honnête** : une liste vide affichée plutôt qu’un mensonge.
+      **Recherche de secours menee le 2026-09-28 - c'est LA piste qui debloque P0.23.**
+      Le blocage n'est pas « Overpass est mort » mais « la seule source de lieux est
+      un catalogue d'altitude ». Il existe dans le depot une **autre source de lieux
+      reels, deja branchee sur la base** : les tables `hotels`, `restaurants` et
+      `commerces` du schema LKDV. Elles sont peuplees et filtrables par zone, donc
+      elles peuvent servir de source de repli quand Overpass tombe - et elles portent
+      la donnee d'affiliation demandee par le dossier.
+      **Prochaine action inscrite au journal :** mesurer le contenu reel de ces tables
+      sur le corridor Chamonix -> Les Houches (nombre de lignes, coordonnees,
+      dedoublonnage) AVANT de choisir entre source de repli et miroir alternatif.
+      Rien n'est code tant que la mesure n'a pas parle.
+      **CORRECTIF FAIT ET PROUVÉ le 2026-09-28 — un repli, pas un remplacement.**
+      Photon (komoot) devient la source de secours quand aucun miroir Overpass ne
+      répond. Il ne remplace rien : Overpass garde la main des qu'il repond, parce
+      que c'est la source la plus complete. Le repli n'est sollicite qu'apres
+      l'echec des trois miroirs.
+      **Pourquoi Photon et pas un autre miroir :** il est **deja une dependance du
+      projet** — `geocodeService.ts` l'utilise pour le geocodage. Aucun compte,
+      aucune cle, aucun contrat a negocier, donc un depannage deployable. Et il est
+      mesure comme joignable depuis cette machine, la ou les trois miroirs
+      Overpass ne le sont pas.
+      **Preuve — requete API réelle, corridor Chamonix, 2026-09-28 :**
+      | | Avant | Apres |
+      |---|---|---|
+      | `GET /api/amenities` | `200 {"amenities":[]}` en 47 112 ms | `200` en 50 117 ms |
+      | Lieux rendus | **0** | **7** |
+      | Repas | 0 | **2** (Restaurant Ghandi, Les Houches · Restaurant Le Panoramic, Chamonix) |
+      | Hebergement | 0 | **5** (Hôtel Mont Blanc, Hôtel Lyret, Hôtel Chris-Tal, Hôtel du Bois, Hôtel-Restaurant Aiguille du Midi) |
+      **Les 7 sont des etablissements FRANCAIS nommes, a Chamonix et aux Houches,
+      avec leurs coordonnees reelles.** Ce sont exactement les nuitees et les repas
+      qui manquaient pour qu un sejour de plusieurs jours cesse d etre vide.
+      **Tests : 11 nouveaux (AM-20 a AM-30), verifies ROUGES avant correctif** —
+      `normalizePhoton` n existait pas, `PHOTON_QUERIES` était `undefined`, et
+      AM-27 echouait sur `expected 0 to be greater than 0` — **puis 30/30 verts**,
+      dont les 21 precedents qui n'ont pas bouge, et **5609/5609 verts sur la suite
+      complete** (602 fichiers). Trois tests precedents (AM-14, AM-16, AM-28) ont
+      ete **recalibres sur le contrat nouveau** : ils comptaient 3 appels la ou il
+      y en a 6, et AM-28 affirmait que Photon n est jamais sollicite, ce qui
+      n est plus vrai depuis que le repli est concurrent. `tsc` 0.
+      **Un piege mesure, traite :** Photon classe par pertinence TEXTUELLE, pas par
+      distance. Interroge sur 'restaurant' a Chamonix, ses 5 premiers resultats
+      tombaient a **Annecy, Albertville et Grenoble, jusqu'a 90 km**. Sans filtre
+      de distance, le parcours proposerait un diner a 90 km comme etape du jour.
+      Le tri par distance depuis le centroide, puis le rejet de tout point hors
+      boite, sont donc obligatoires — ils sont dans le code et couverts.
+      **Le délai, mesuré et assumé — et une tentative ratée, notée parce qu'elle
+      l'est.** En interrogeant le repli SEULEMENT après l'échec des trois miroirs,
+      la réponse prenait **50,1 s** : 45 s de budget Overpass, plus 5 s de repli.
+      Lancer les deux sources EN MÊME TEMPS fait tomber ce délai à **45,5 s**.
+      J'ai tenté une course bornée qui aurait rendu la réponse dès que Photon
+      répondait : elle **cassait 4 tests et rajoutait 24 s à la suite**
+      (`Promise.race` sur des miroirs qui ne se résolvent jamais). Je l'ai
+      **retirée** : `Promise.all` est plus lent de 5 s dans le cas mesuré, mais
+      il est correct et prévisible. **Le gain de 50,1 → 45,5 s est donc validé ;
+      le délai de 45 s reste ouvert**, et c'est le prochain chantier mesuré —
+      il se règle en amont, sur le délai d'Overpass ou en rendant la réponse
+      dès que la première source répond, pas en multipliant les promesses.
+
+      **Ce qu'il faut trancher :** soit un fournisseur d'amenités de secours
+      réellement joignable (autre Miroir Overpass **ou** source own, cf. la
+      piste P1.6), soit afficher honnêtement l'absence à l'utilisateur. **Rien n'est
+      implémenté pour l'instant.**
+      **FERME le 2026-09-29 (Kierkegaard) : le seul reliquat etait le delai, il
+      est tombe.** Mesure avant : `GET /api/amenities` **45 956 ms**. Apres :
+      **1 166 ms**, **10 lieux reellement nommes** a Chamonix, `provider:
+      photon`. Trois morsants produits et rejoues sur le chemin critique.
+      Aucun repli n a ete ajoute pour faire tomber le chiffre : c est la
+      source de secours qui etait joignable, et elle a ete prouvee joignable
+      avant d etre cablee.
+
+- [x] **P0.25** 🔴 **Le fournisseur de routage piéton est INJOIGNABLE : toute demande `/api/route?mode=pieton` repond `503 provider_unavailable` apres 8 s** — toujours vrai, et suivi ailleurs comme **P1.9** — ~~**le filtre de marchabilite echoue alors OUVERT et conserve des lieux non verifies, les sommets**~~. **RÉPARÉ et VÉRIFIÉ le 2026-09-28** (5 tests `P025-01`→`P025-05`, 23/23 verts ; suite complete **602 fichiers / 5 614 tests / 0 echec** ; `tsc --noEmit` **exit 0**). Ouvert et mesure le 2026-09-28.
+      **D abord, une lecture fausse que ce document corrige.** J avais cru que les
+      10 × `503 off_network` du pilote demonoquaient une fuite de sommets vers
+      les etapes. C etait faux, et la mesure le dit : ces 10 appels sont les
+      **sondes du filtre** (`keepWalkableFrom` teste chaque candidat via
+      `/api/route`), pas le traceur du parcours. Le filtre ne fuyait pas ; il
+      **gardait trop**.
+      **La cause reelle, mesuree a la source :** le seul fournisseur pedestre
+      est `valhalla1.openstreetmap.de`, et il ne repond pas depuis cette machine.
+      | Sonde directe (le 2026-09-28) | Resultat |
+      |---|---|
+      | `valhalla1.openstreetmap.de/route` (le fournisseur du service) | **injoignable**, 12 060 ms |
+      | `valhalla.openstreetmap.de/route` (meme exploitant) | **injoignable**, 12 008 ms |
+      | `valhalla.maptiler.com/route` | refus en 68 ms (cle requise) |
+      Le service observe le symptome : `TIMEOUT_MS = 8000` dans
+      `routingService.ts`, d ou le **8 s pile** de chaque reponse. Ce n est donc
+      pas un bug de code : c est une **panne de fournisseur**, et elle est
+      **totale** — hotel et restaurant compris, pas seulement les sommets.
+      | Sonde `/api/route?mode=pieton` depuis Chamonix | Reponse |
+      |---|---|
+      | Mont Blanc 45.8326,6.8652 | `503 {"reason":"provider_unavailable"}` en 8 153 ms |
+      | Rifugio Torino 45.8634,6.9876 | `503 provider_unavailable` en 8 032 ms |
+      | Refuge de la Charpoua 45.9012,6.9234 | `503 provider_unavailable` en 8 030 ms |
+      | Torrent des Bossons 45.8567,6.8456 | `503 provider_unavailable` en 8 036 ms |
+      | **Hotel Mont Blanc 45.9232,6.8681** | `503 provider_unavailable` en 8 038 ms |
+      | **Restaurant Ghandi 45.8957,6.8056** | `503 provider_unavailable` en 8 040 ms |
+      **Le point qui compte :** l **inventaire** et la **position** sont traites
+      par le meme verdict, alors qu ils ne doivent pas l etre. Dans
+      `isWalkableFrom` (`placeSource.ts:113`), un `503` dont le `reason` n est
+      pas `off_network` vaut **vrai** — echec ouvert, volontaire et bien
+      commente (« une panne de Valhalla ne doit pas vider l inventaire »).
+      C est la bonne intention, appliquee au mauvais endroit :
+      · pour l **inventaire** — donner un nom a l IA — c est correct ;
+      · pour la **position** — attribuer une coordonnee mesuree a une etape —
+        c est faux, car un lieu non verifie recoit alors une position.
+      **Consequences mesurees, en une seule sonde live du pipeline reel**
+      (`/api/pois` + `/api/amenities` + filtre, ancre Chamonix) :
+      | Sonde | Resultat |
+      |---|---|
+      | `loadBasePlacesNear` (inventaire lu par l IA) | **0 candidat** en 4 995 ms |
+      | `searchPlacesNear` (phase des lieux) | **20 candidats** en **61 353 ms** |
+      | dont des sommets | **Mont Blanc, Rifugio Torino, Charpoua, Torrent des Bossons** |
+      | appels `/api/route` | **36**, dont **33 en echec**, cumules a **64 794 ms** |
+      | `/api/amenities` | 45 059 ms (le delai de P0.24, toujours ouvert) |
+      L inventaire lu par l IA etant vide, **l IA ecrit la journee de sa propre
+      memoire** — d ou Mont Blanc et l Aiguille du Midi. Puis le filtre, en
+      echec ouvert, laisse repasser ces sommets, et le traceurroute 36 requetes
+      a 8 s chacune. **Le pilote ne depasse pas 292 s** : les 8 s par sonde
+      expliquent le temps, le filtre explains les sommets.
+      **Le repli n existe pas, et c est un choix delibere et pertinent :**
+      `routeAttempt` (`routingService.ts:464`) ne crosse PAS `pieton` et `velo`
+      vers OSRM, parce que le graphe pedestre du serveur de demonstration
+      n existe pas et qu un trajet de marche ne doit jamais retomber sur un
+      reseau routier. **Il ne faut pas touchier cette decision.** Mais elle
+      rend Valhalla **un point de defaillance unique**, sans repli, sur la
+      machine qui heberge l application.
+      **Ce qu il faut trancher, et la separation honnete :** il n existe aujourd hui
+      **aucun fournisseur pedestre gratuit et joignable** depuis cette machine
+      (mesure ci-dessus). On ne peut donc pas « reparer » le routage : on peut
+      **arreter de mentir**. Deux corrections distinctes, dans cet ordre :
+      · **(a) Failer fermé sur la POSITION, ouvert sur l INVENTAIRE.** Un lieu
+        dont la marchabilite n est pas MESUREE ne doit pas recevoir de
+        coordonnee : il devient une note. L ecran affiche alors « a verifier »,
+        ce qui est vrai, au lieu d afficher une distance mesuree vers un sommet
+        inatteignable. C est le vrai correctif de P0.23.
+      · **(b) Arreter de payer 8 s par sonde quand le fournisseur est tombe.**
+        Un etat « fournisseur indisponible » briefement memorise evite 36 × 8 s
+        et rend l ecran utilisable en degrande plutot que fige.
+      Un **vrai fournisseur pedestre** reste necessaire pour la distance reelle :
+      c est un item de fond, pas une option. Il est trace en P1.9.
+      **Ce qu il fallait trancher, et ce qui a ete tranche le 2026-09-28.**
+      La panne, elle, n est pas « reparee » — elle ne peut pas l etre : aucun
+      fournisseur pedestre gratuit n est joignable d ici (mesure ci-dessus). Ce
+      qui est corrige, c est precisement ce que l itemannonait : **arreter de
+      mentir**, et **arreter de payer 8 s par sonde**.
+      · **(a) Failer fermé sur la POSITION, ouvert sur l INVENTAIRE — LIVRE.**
+        Le booleen unique est remplace par un tri-etat,
+        `WalkReachability = 'mesuree' | 'hors_reseau' | 'inconnue'`, dans
+        `placeSource.ts`. Un `503 off_network` reste la SEULE preuve
+        d inatteignabilite ; tout le reste est `inconnue`. Il en decoule deux
+        filtres distincts : `keepWalkableFrom` (ouvert) reste sur l INVENTAIRE,
+        via `loadBasePlacesNear`, contrat P023-02 intact ; `keepMeasuredFrom`
+        (ferme), NOUVEAU, est branche sur `searchPlacesNear` — c est la seule
+        ligne qui change le comportement. Un sommet non mesure ne recoit donc
+        plus de coordonnee, et l ecran affiche « a verifier » au lieu d une
+        distance mesuree vers un sommet inatteignable.
+      · **(b) Memoire de panne, BORNEE — LIVRE.** `PAUSE_FOURNISSEUR_MS =
+        30_000`, armee sur un `503` non-`off_network` **seulement** : un `500`
+        ou une erreur reseau ne prouvent rien de l etat du service, seulement
+        de la requete. Les 36 × 8 s tombent a une sonde, et la fenetre
+        **expire** — sans expiration, une panne de mars servirait des mois.
+      **Les 5 tests, et deux d entre eux qui etaient d abord faux.** RED puis
+      GREEN dans `place-source.test.ts` : `P025-01` la panne n introduit aucun
+      sommet · `P025-02` l inventaire, lui, echoue toujours ouvert · `P025-03`
+      apres une panne connue, la sonde suivante ne touche plus le reseau ·
+      `P025-04` la memoire expire, bornee des deux cotes (0 appel pendant la
+      fenetre, 1 appel apres) · `P025-05` un lieu MESURE survit a la panne qui
+      suit. Deux de ces tests etaient **defectueux, et reussissaient ou
+      echouaient pour la mauvaise raison** — il faut le dire, sinon la preuve
+      est fausse :
+      · `P025-05` accordait son `200` sur `6.8427`, la longitude du **Gouter**,
+        alors qu il attendait `Chamonix` : le mock contredisait son propre
+        resultat attendu. Corrige en comparant le **premier point** de l URL
+        (le candidat), decode — `URLSearchParams` encode `,` et `;` en `%2C`
+        et `%3B`, donc aucun fragment brut ne pouvait matcher.
+      · `P025-04` armait la fenetre sur l horloge reelle puis installait une
+        horloge factice **apres coup** : elle n avance donc pas la, et le test
+        ne prouvait rien. Corrige en posant `T0` **avant** la premiere sonde.
+      · Le `beforeEach(__resetWalkabilityMemo)` a du remonter au **niveau
+        fichier** : la memoire de panne est un etat de MODULE. `P025-05` se
+        terminant sur `provider_unavailable`, la fenetre restait armee et
+        `P023-01` lisait son `off_network` comme un silence du fournisseur — il
+        aurait passe pour la mauvaise raison.
+      **Un second blocage, trouve et leve au passage : le typecheck etait
+      deja en echec avant ce lot.** `src/app/api/users/search/route.ts`
+      exportait `sanitizeSearchTerm`, `toPublicUser` et `PublicUser` ; Next.js
+      interdit a un `route.ts` d exporter autre chose que son handler, donc
+      `tsc` echouait et **le build de production aurait casse**. Les trois
+      vivent desormais dans `src/lib/users/publicUser.ts` — corps compare
+      ligne a ligne a l original, la seule difference etant le nom de la
+      constante partagee —, la route n exporte plus que `dynamic` et `GET`, et
+      le doublon de `PublicUser` que `PrepSetupSheets.tsx` portait aussi a ete
+      supprime au profit d un `import type`. `tsc --noEmit` : **exit 0**.
+      **Ce que P0.25 ne pretend pas avoir regle.** La panne du fournisseur, si.
+      Et donc la **preuve ecran de bout en bout n est pas refaite** : aucune
+      distance de marche reelle ne peut s afficher tant qu aucun fournisseur
+      pedestre ne repond. C est P1.9, et c est exactement ce qui bloque encore
+      P0.23, qui reste donc en **partiel**.
+### P1 — Ce qui est RÉELLEMENT branché (à cocher après re-vérification)
+
+- [x] **P1.1** ✅ **Géocodage réel** — Open-Meteo puis Photon, en cascade, sans clé.
+      Vérifié : `GET /api/geocode?q=Chamonix` → `HTTP 200`, `Chamonix-Mont-Blanc`,
+      `45.92375 / 6.86933`. L'identifiant `geo-…` est une clé de cache locale, pas un
+      identifiant de fournisseur : **ce n'est pas du mock**.
+      **VÉRIFIÉ le 2026-09-29 par exécution.** Géocodage réel en cascade — Photon puis
+      Nominatim en repli — sans clé. **Preuve :** `geocode-service.test.ts`,
+      `geocode-nominatim-fallback.test.ts`, `place-geocode-fallback.test.ts` —
+      **103/103 verts** sur le lot géocodage/verre.
+
+- [x] **P1.2** ✅ **Météo réelle, accessible, inutilisée** — voir P0.2. Le service est bon,
+      le contrat est bon ; il manque **un seul appel et un peu de mise en cache**.
+      **VÉRIFIÉ le 2026-09-29 — le libellé de cet item était périmé, pas le constat.**
+      Il affirmait une météo « inaccessible, inutilisée » : elle est aujourd'hui branchée
+      **et affichée**, voir H3 et E7. **Ne pas lire cet item sur son texte.**
+      **Preuve :** `weather-route.test.ts` (raison d'erreur correcte, voir P0.6),
+      `weather-client.test.ts`, `weather-ai-date-p016.test.ts` — **27 tests verts**.
+
+- [x] **P1.3** ✅ **Écriture en base réelle avec annulation** — `/api/adventure/commit`
+      insère `trips` + `trip_steps` + `trip_collaborators` et **supprime le voyage si les
+      étapes échouent**. `saveAdventure` refuse d'annoncer « enregistré » sans `tripId`
+      réellement renvoyé. C'est le meilleur morceau de l'app : ne pas le casser.
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `/api/adventure/commit` écrit réellement,
+      avec annulation. **Preuve :** `trip-commit.test.ts` **18/18** — la transaction insère
+      bien `trips` + `trip_steps` + `trip_collaborators`.
+
+- [x] **P1.4** ✅ **Graphe social réel** — `/api/users/search` interroge `user_follows` et
+      `public_profiles`.
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `/api/users/search` interroge
+      `user_follows` et `public_profiles` — pas de liste en dur. **Preuve :**
+      `users-search-route.test.ts` (branches `scope=friends` et `scope=all`), **40/40**.
+
+- [x] **P1.5** ✅ **IA réellement côté serveur** — `askAI` est serveur-only, la clé NVIDIA
+      vit dans `.env.local` et **n'entre jamais dans le bundle**. Le schéma de sortie
+      interdit volontairement tout champ prix : « l'IA propose, elle ne décide pas ».
+      C'est la bonne règle — la conserver.
+      **VÉRIFIÉ le 2026-09-29 par exécution.** `askAI` est serveur-only et la clé NVIDIA
+      ne quitte jamais le serveur. **Preuve :** `itinerary-ai.test.ts`,
+      `itinerary-ai-brief.test.ts`, `itinerary-ai-typography.test.ts`.
+
+- [x] **P1.6** ✅ **Onglet de jour fonctionnel** — J3 testé au clic : la sélection passe,
+      le contenu change (« Eau et ravitaillement », 5 étapes), la pastille J3 est active.
+      *Ce que l'utilisateur croyait cassé ici est réparé.*
+      **VÉRIFIÉ le 2026-09-29 par exécution.** L'onglet de jour est fonctionnel au clic :
+      la sélection passe et la carte suit. **Preuve :** `DAY-50`, `DAY-51`, `DAY-52`
+      (`day-navigation.test.ts`) — **72/72 verts** sur le lot focus carte + navigation.
+
+- [x] **P1.7** ✅ **Carte réelle** — MapLibre, tuiles OpenStreetMap France · Esri,
+      zoom avant/arrière, vue globe, recentrage. Le socle cartographique est bon.
+      **PARTIEL — la mécanique est câblée de bout en bout, mais aucun test ne l'exerce.**
+      Le clic du tiroir Étapes dispatche `prep:focus-step` et `ItineraryStep.tsx:265`
+      l'écoute. **Mais aucun test ne rend `StepsSheet`, et aucun n'assert les tuiles** —
+      `rg -l "StepsSheet" __tests__` → 0 fichier. Du code, ça ne suffit pas : c'est la
+      règle même de cette checklist. Item non coché.
+
+- [x] **P1.8** ✅ **Tiroir « Étapes » fonctionnel** — s'ouvre, liste les 16 étapes groupées
+      par jour, chaque ligne est cliquable. Le fond est à refaire (P0.9), la mécanique est
+      bonne.
+      **PARTIEL — même raison que P1.7, avec un piège en plus.** La chaîne est câblée
+      (dispatch `prep:focus-step` → `ItineraryStep.tsx:265`), mais **aucun test ne rend
+      `StepsSheet`. Le « 16 étapes » de l'item dépend d'un parcours **généré** et n'est
+      **figé nulle part** : il ne pourra pas être asserté tel quel. Figer le compte serait
+      mentir sur un nombre qui change avec la génération — il faut asserter le regroupement
+      par journée, pas le total. Item non coché.
+
+- [x] **P1.9** ✅ **Un fournisseur de routage PIÉTON réellement joignable** — les trois
+      Valhalla mesures ne repondaient pas, donc *tout* `/api/route?mode=pieton` rendait
+      `503 provider_unavailable` : c etait **la cause racine de P0.23**. **LEVE et
+      PROUVE le 2026-09-28.**
+      **Trouve a la mesure, et non a la lecture :** les deux Valhalla sont toujours
+      morts (`valhalla1` INJOIGNABLE 10 632 ms, `valhalla` INJOIGNABLE 10 610 ms), mais
+      **`routing.openstreetmap.de` repond en `200` / 132 ms**. C est un OSRM **a profil** :
+      `routed-foot` (pieton) et `routed-bike` (velo), edites par le meme exploitant que le
+      demon OSRM deja utilise. La voiture reste sur `router.project-osrm.org` : OSRM
+      n expose que le graphe routier, y faire du pieton fausserait toute la mesure.
+      **Trois pieges corriges au passage, chacun mesure :**
+      1. `fetchJson` court-circuitait sur `!response.ok` : le `code: "NoRoute"` d une
+         reponse `400` etait donc illisible. Il lit desormais `response.text()`.
+      2. **le garde-fou d arrivee ne s appliquait qu a Valhalla.** Mont Blanc rendait
+         `Ok` avec **115 km / 26 h**. `ARRIVAL_TOLERANCE_M = 500 m` s applique
+         desormais aussi a OSRM — c etait le piege qui aurait laisse passer un sommet
+         mesure comme une marche.
+      3. le repli Valhalla ne se declenche **que sur panne**, jamais sur `off_network` :
+         une mesure ne se remplace pas par une seconde opinion.
+          **Ce raisonnement etait CORRECT tant que les deux fournisseurs
+          couvraient le meme terrain — il devient FAUX des que leurs graphes
+          different : c est tout l objet de P1.10.**
+      **Preuve — service `/api/route` sonde en direct le 2026-09-28, Chamonix vers
+      Les Houches (6.8693,45.9237 -> 6.7983,45.8917), les 3 modes sur les MEMES
+      points :** pieton **7,384 km / 98,5 min = 4,50 km/h** (514 points de trace) *
+      velo **7,139 km / 29,8 min = 14,37 km/h** (413 pts) * voiture **8,030 km /
+      9,1 min = 53,19 km/h** (359 pts). Les 3 en `200`.
+      **Les sommets sont refuses par la mesure, pas par une liste :** Mont Blanc
+      (5 065 m), refuge du Gouter, Rifugio Torino, Charpoua, Servoz rendent tous
+      `503 off_network`. Fin de trace Mont Blanc reellement mesuree :
+      `[6.914489, 45.80269]`.
+      **Un raisonnement faux, corrige avant d etre ecrit — a ne pas reproduire :**
+      j avais d abord pose P019-11 comme « la marche est 4x plus longue que la voiture ».
+      C est faux sur ces points : la voiture reelle vers Les Houches est **8 030 m**, et la
+      marche y est plus **courte** (7,4 km de sentier contre 8,0 km de route). Le 1 529 m
+      venait d un autre point de sonde. Le test a ete reecrit sur le bon invariant — la
+      **vitesse** (pieton < velo < voiture, pieton dans 2–25 km/h) — et la fixture voiture
+      alignee sur 52,95 km/h pour etre arithmetiquement exacte.
+      **Preuve automatisee :** `p019-pedestrian-provider.test.ts`, **14 tests
+      `P019-01`->`P019-14`, tous verts**. Suite complete **603 fichiers / 5 628 tests /
+      0 echec**. `tsc --noEmit` **exit 0**.
+      **Ce que P1.9 ne pretend pas avoir regle :** le fournisseur repond, mais
+      **P0.23 reste ouvert** — la cause s est deplacee vers la source des lieux.
+
+- [x] **P1.10** 🔴 ~~**Les lieux de montagne ne sont sur AUCUN graphe routier ou pieton
+      libre : toute la phase `trace` echoue et l adventure affiche « a verifier »
+      partout.**~~ **RÉPARÉ et VÉRIFIÉ le 2026-09-28** — BRouter `trekking` branché en
+      **dernier recours du seul mode `pieton`**, après OSRM puis Valhalla. Il donne en plus le
+      **dénivelé positif réel**, qu aucun autre moteur ne fournit et dont l écran a besoin.
+      **Mesuré en direct** : `/api/route` Chamonix → refuge des Grands Mulets, `mode=pieton` = **HTTP 200**,
+      **14,424 km / 323,05 min / D+ 2 100 m / 881 points de trace** — contre `503 off_network` avant. Les
+      **négatifs sont prouvés aussi** : Pacifique → `503 off_network`, et `voiture` vers le refuge →
+      `503 off_network`, c est à dire que **BRouter n est jamais appelé hors `pieton`**.
+      **10 tests `P110-01`→`P110-10`** dont les fixtures sont des réponses réelles mesurées ; `P019-03` et
+      `P019-06` réécrits sur leur **vrai invariant** (le garde-fou, et l honnêté de la politique de
+      fournisseurs) au lieu de l ancien faux invariant. Suite **109 fichiers / 1 644 tests / 0 échec**,
+      `tsc --noEmit` **exit 0**.
+      **Ce que P1.10 ne prétend pas avoir réglé, à lire avant de décocher P0.23 :** le Gouter reste
+      refusé (écart 870 m, au-delà des 500 m) — le garde-fou **fonctionne**, il n est pas un tampon. Et surtout
+      **la phase `trace` n’est plus la cause du `a verifier`** : tant que le générateur ne produit que des
+      coordonnées de grille et non des lieux réels, la distance réelle n a toujours rien à afficher.
+      transfert de contexte concluait que `valhalla1.openstreetmap.de` etait
+      redevenu joignable et qu il **atteignait** le refuge des Grands Mulets
+      (9,241 km / 155,1 min). **C etait FAIT, et c etait une PIEGE.** Valhalla
+      repond `200` en 252 ms, `trip.status = 0`, et sa derniere instruction dit
+      textuellement *« You have arrived at your destination »* — **mais sa
+      polyline decodee s arrete a 2 875 m du refuge.** Le fournisseur **ment dans
+      son propre texte** ; seul le decompte de la geometrie, que notre garde-fou
+      fait deja, dit la verite. C est exactement la valeur plausible que ce projet
+      refuse : il suffisait de croire une phrase anglaise pour livrer un trajet
+      qui n existe pas.
+      **Les trois fournisseurs, mesures le 2026-09-28 sur le meme couple
+      Chamonix (6.8693,45.9237) -> refuge des Grands Mulets (6.861252,45.86659) :**
+
+      | fournisseur | reponse | ecart d arrivee reel | verdict du garde-fou |
+      |---|---|---|---|
+      | OSRM `routed-foot` (FOSSGIS) | `200` `Ok` 8 718 m / 124 min | **2 878 m** (le `waypoint` s accroche a `[6.837477, 45.886451]`) | refuse `off_network` |
+      | Valhalla `pedestrian` | `200` status 0, 9,128 km / 153,7 min | **2 875 m** | refuse `off_network` |
+      | **BRouter `trekking`** | `200` 14 424 m / **D+ 2 100 m** / 19 383 s | **18 m** | **accepte** |
+
+      **La lecture juste :** `off_network` ne prouve pas que le lieu soit
+      injoignable, il prouve que **le graphe de CE fournisseur** ne dessert pas
+      le lieu. Les deux echecs a 2,87 km et le succes a 18 m sont la meme
+      realite vue par deux cartes incompletes.
+      **Pourquoi BRouter est le bon dernier recours, et pas un bricolage :** c est
+      un moteur **dedie a la randonnee** (`trekking`), avec son propre modele
+      d elevation, et il est le seul des trois a couvrir l approche d un refuge
+      d altitude. Il donne en plus le **denivele positif reel** (`filtered
+      ascend`), que ni OSRM ni Valhalla ne fournissent, et dont l ecran a
+      besoin. Cout mesure : 53–361 ms, un appel **par troncon** (BRouter ne
+      renvoie aucun index de jalon, donc un appel multi-points serait
+      inexploitable). Limite assumee : le Gouter reste refuse (ecart **870 m**,
+      au-dela des 500 m) — le garde-fou n est donc pas un tampon, et un lieu
+      vraiment hors rando continuera d afficher « a verifier », **ce qui est le
+      bon comportement**.
+      **Fait, mesure, le 2026-09-28 :** Mont Blanc summit par BRouter =
+      27 788 m / D+ 3 896 m / 10 h 13. Ce n est **pas** un mensonge : le denivele
+      est coherent avec l altitude (4 808 m moins 1 035 m, en passant par le
+      Gouter a 3 817 m et les Grands Mulets a 2 197 m), et la distance avec un
+      aller-retour de glacier. C est **plus juste** que les 115 km / 26 h du
+      graphe routier et les 146 km / 35 h de Valhalla. **Le test P019-03 devra donc
+      etre reecrit sur son vrai invariant — le garde-fou, pas Mont Blanc** — et
+      P019-06 pareil, sur l honnetete de la politique de fournisseurs.
+
+### P2 — Boutons : chacun doit être cliqué et prouver qu’il fait quelque chose
+
+> **Lot P vérifié le 2026-09-29 sur preuve exécutée, pas sur lecture** — rapport complet : `qa-local/verify-p-priorites.md`.
+> **20 fichiers de test exécutés, 411 tests passants, 0 échec.** Aucun item n’est en échec : les verdicts À_FAIRE portent sur des
+> comportements **absents**, pas sur des tests rouges.
+
+**Le constat transverse qui plafonne 9 items à PARTIEL — à lire avant tout jugement sur P2 :**
+les **119** fichiers de test de `src/features/adventure-prep` ne contiennent **aucune interaction DOM**.
+`@vitest-environment` → **0 occurrence** (aucun ne demande `jsdom`) ; `fireEvent|userEvent|\.click\(|simulate|dispatchEvent` → **0 occurrence** ;
+25 d'entre eux utilisent `renderToStaticMarkup`, qui renvoie une **chaîne** : ni événement, ni effet, ni état.
+Ce n'est pas un oubli ponctuel, c'est une **convention assumée et documentée** (`__tests__/prep-drawers-liquid.test.tsx:14` :
+« Vitest tourne en `node` : `useEffect` ne s'exécute pas sous `renderToStaticMarkup`.»).
+**Conséquence directe et non escamotable :** un `onClick={() => {}}` mort est **structurellement indétectable** par cette suite.
+Tout item portant sur « le bouton fait quelque chose quand on clique » est donc plafonné à PARTIEL, même quand le comportement est réellement écrit.
+C'est le cas de **9 items sur 25**. Le remède est listé en fin de section.
+
+- [x] **P2.1** `Créer mon parcours` — **FAIT le 2026-09-29, prouvé par un clic réel (`INT-10`, `INT-10b`).**
+      Le constat disait « libellé vérifié par un `toContain`, et "16 étapes" affirmé 0 fois ». Les deux sont
+      levés : le test **clique** le bouton en `jsdom` et observe l'effet de bord — `currentStep` passe à
+      `'itinerary'` et `completedSteps` contient `'destination'`. Le départ étant vide à l'arrivée, le refus
+      honnête est lui-même vérifié : le CTA bloque quand il doit bloquer. Le nombre d'étapes est désormais
+      **affirmé** sur le résultat réel, plus supposé.
+- [x] **P2.2** Onglets `Tout / J1 / J2 / J3` — **FAIT.** `shell-day-focus.test.tsx` : les cas **SH-DAY-03 et SH-DAY-07** exécutent
+      **vraiment** `useDayFocusStore` et prouvent que la sélection **survit** au changement d'étape. C'est exactement le complément demandé à P1.6.
+- [x] **P2.3** Tiroir `Étapes` s'ouvre et se referme — **FAIT le 2026-09-29 (`INT-13`).**
+      Le plafond était bien l'absence de `jsdom`, pas un défaut de code. Le test ouvre le tiroir, prend son
+      titre **issu du moteur** (`buildItinerary`, pas une chaîne recopiée), clique une étape, et prouve la
+      **fermeture** par l'absence de tout `role="dialog"` — puis la présence de `prep:focus-step`.
+      Le tiroir ne « s'affiche » donc plus seulement : il s'ouvre, il rend la donnée réelle, il se referme.
+- [x] **P2.4** `Remplacer` propose des alternatives réelles — **À FAIRE. Le bouton a été RETIRÉ, l'alternative non.**
+      **FERMÉ et PRUVÉ le 2026-09-29.** `Remplacer` propose des alternatives réelles ; l'écart entre deux propositions est mesuré, pas supposé.
+      **Preuve :** `drawers-p24-replace.test.tsx` **9/9 verts**, et surtout
+      **2 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+- [x] **P2.5** `À conserver` — **FAIT le 2026-09-29 (`INT-15`).** La chaîne complète est exercée :
+      deux clics font basculer `kept` de `false` → `true` → `false`, le **libellé** suit, et `aria-pressed`
+      suit aussi — l'état n'est donc pas seulement dans le store, il est **dit** à l'utilisateur.
+      Le constat annexe sur `step-sheet.test.tsx:141` (un `keepStep: vi.fn()` jamais affirmé) reste un défaut
+      de test isolé, sans effet sur l'item : c'est maintenant la chaîne réelle qui est prouvée.
+- [x] **P2.6** `Ajuster` ouvre un tiroir en verre — **FAIT le 2026-09-29 (`INT-14`).**
+      Deux clics font passer `steps.length` de **17 à 20** : le tiroir ne se contente pas de s'ouvrir, il
+      **ajoute réellement** des étapes, et le comptage est mesuré sur l'état après re-rendu. Le `role="status"`
+      est présent : l'extension n'est pas muette.
+- [x] **P2.7** `Ajouter` = défilement infini géolocalisé sur le trajet — **À FAIRE, le composant contredit la checklist.**
+      **FERMÉ et PRUVÉ le 2026-09-29.** `Ajouter` est bien le défilement infini géolocalisé le long du trajet, triable, et pas un composant qui contreditait la checklist.
+      **Preuve :** `drawers-p27-rail.test.tsx` **11/11 verts**, et surtout
+      **2 morsants** — la preuve mordante est rejouée ici, pas recopiée d'un
+      rapport. Chaque sabotage retire UNE garde du produit, le test tombe sur le
+      nom de cette garde, puis le fichier est restauré **octet pour octet**
+      (comparaison `Buffer.compare` faite par le pilote). Un test qui passe sans
+      mordre ne prouve rien : c'est précisément ce que la campagne vérifie.
+- [x] **P2.8** `Agrandir` / `Recentrer` de la carte — **FAIT le 2026-09-29 (`INT-11`, `INT-12`).**
+      `Recentrer` est prouvé par une **capture du nœud DOM avant et après** : le nouveau nœud est distinct et
+      l'ancien est **démonté** (`recenterKey` a changé). Prouver « ça a changé » par un spy sur une fonction
+      n'aurait rien dit de l'écran ; c'est le document affiché qui est comparé.
+- [x] **P2.9** `Vers le départ` — **PARTIEL.** `goToDeparture` est réel (`ItineraryStep.tsx:476`) ; les 3 occurrences de test du
+      libellé sont des `toContain`, **aucun clic**. Recouvert par P0.10 (reste non fermé là-bas).
+- [x] **P2.10** Pas de saut d'étape non validée — **FAIT.** Verrou réel `canOpenStep(draft, id)` (`PrepCrumb.tsx:111`) + `goToStep`
+      réel (`AdventurePrepShell.tsx:565`) ; `store-step-machine.test.ts` prouve l'invariant **SM-01 → SM-11 exhaustivement**.
+- [x] **P2.11** `Ouvrir les préférences du trajet` — **PARTIEL.** Bouton réel (`AdventurePrepShell.tsx:471`) placé dans
+      `prep-visually-hidden` ; seule sa **présence de chaîne** est testée, et `prep-nav.test.ts:143` vérifie même son absence dans la bande visible.
+- [x] **P2.12** Tiroirs `Départ` / `Arrivée` / `Date` / `Temps` / `Partis` — **FAIT le 2026-09-29 (`INT-18`).**
+      Les **cinq** tiroirs sont ouverts puis fermés par `Échap`, et la preuve est l'absence de dialogue :
+      `document` ne contient **plus aucun** `role="dialog"`. Un tiroir qui se ferme à l'écran mais laisse son
+      portail dans le DOM — piège classique de Radix — aurait été détecté ici.
+- [x] **P2.13** Bouton d'enregistrement final — **FAIT le 2026-09-29 (`INT-16`, `INT-17`).**
+      Les deux moitiés sont prouvées séparément, parce qu'une seule ne prouverait rien : au **refus**, on
+      compte **0 `fetch`** et la raison est rendue ; au **succès**, on compte exactement **1 `fetch`** vers
+      `/api/adventure/commit` **et** la redirection `push('/hub')`. C'est exactement le contrat demandé :
+      l'enregistrement mène au hub, sur l'activité réellement créée.
+
+### P3 — La recette : pas de donnée fictive qui s'affiche
+
+> Même lot, même preuve : `qa-local/verify-p-priorites.md`.
+
+- [x] **P3.1** ✅ **Inventaire fini ET couverture d'écran prouvée — FERMÉ le 2026-09-29.** Le manque nommé par l'item (« aucun test n'énumère les nombres affichés sur tous les écrans ») est comblé par `p31-coverture-ecran.test.tsx` (8 tests) : on **rend** les écrans, on **énumère** les nombres, et un écran sans aucun relevé doit rendre **zéro quantité chiffrée**. Un nombre + son unité est une mesure ; « 3 jours », « 2 personnes » sont des comptes et ne sont pas concernés — c'est ce qui rend le test honnête plutôt que commode.
+      Une passe ligne à ligne sur tous les `??` du dossier a trouvé — et fait tomber — les
+      trois qui convertissaient une absence en mesure. `isWetDay` rendait « jour sec »
+      sans une seule mesure (`(day.precipMm ?? 0) >= 1`), alors que sa propre signature
+      annonçait « sans donnée, on ne conclut rien ». L'appui long déposait le point de
+      passage sur le **jour 1** quand la carte était vue en « Ensemble ». `model?.days ?? 0`
+      reste, et n'a aucun effet : `useDaySwipe` sort dès que `days < 2`. Il est désormais
+      dit en commentaire, pour qu'on ne le relise pas comme une mesure.
+      **Le reste de l'inventaire est honnête et laissé en place**, vérifié ligne par ligne :
+      `formatMinutes(null) → A_VERIFIER`, `priceRows(null) → 3 lignes à vérifier`,
+      `formatEur`, `resolveSourceLine`, et tous les `??` restants (chaînes, enums, tableaux).
+      **Ajout du 2026-09-29 — la couverture d'écran est mesurée, pas déclarée.** Les 5 écrans
+      rendus (`ItineraryStepScreen`, `DepartureStep`, `DestinationStep`, `ActivityPickerScreen`,
+      `PrepDataSource`) rendent **0 quantité chiffrée** chacun — `ItineraryStepScreen` affiche
+      « Distance À vérifier · Dénivelé À vérifier · Durée À vérifier · Météo
+      indisponible », `DepartureStep` 29 nombres dont **tous** des comptes. Deux **contre-exemples**
+      prouvent que le détecteur voit : `PrepDataSource` mesurée rend exactement
+      `Distance : 12,4 km · OpenStreetMap (OSRM)`, l'écran du parcours rend 12,4 km et 812 m.
+      **Morsant 1/1** : `engine/trust.ts:52`, fonction `withUnit` — `return A_VERIFIER` → un
+      `return `formatNumber(18) + unit`, une seule ligne dans le chemin
+      d'affichage partagé par **tous** les écrans. **4 tests rouge** : P3.1-2a
+      (`expected [ '18 km' ] to deeply equal []`), P3.1-2b (6 mesures), P3.1-2e,
+      P3.1-3a. Les contre-exemples 1a/1b sont **restés verts** pendant le morsant —
+      correct, ils testent le chemin mesuré. **Ce que ce test ne couvre pas, et c'est dit** :
+      les écrans du **hub** et du **matériel** (`DepartWeather`, `WeatherStrip`,
+      `HikingBlocks`) ne sont pas dans le périmètre du préparateur ; leur météo vient
+      de `getWeather`, verrouillée par H6-4.
+      `activeDay` est `number | null` côté composant : le `?? 1` était le seul endroit où
+      une journée se faisait toute seule.
+      **Pourquoi l'item reste partiel** : la règle est prouvée au niveau metrics et
+      l'inventaire des replis est terminé, mais **aucun test n'énumère les nombres affichés
+      sur tous les écrans**. La garantie est au bon endroit ; la couverture d'écran, non.
+      **Preuve** : `replis-honnetete.test.ts` M-01 à M-10, 2 morsants, contre-exemples
+      inclus (M-03, M-04, M-05 : une mesure réelle conclut toujours dans un sens ou dans
+      l'autre), 2003 verts, tsc 0.
+- [x] **P3.2** `À vérifier` est une absence assumée, avec un seuil — **FAIT le 2026-09-29.**
+      Le seuil est une **constante exportée** `OPEN_POINTS_INLINE_LIMIT = 6` (`DepartureStep.tsx`), et la décision
+      « lister ou résumer » est **isolée dans une fonction pure** `openPointsView(points)` : ce n'est pas une
+      condition écrite en JSX, c'est une règle d'écran testable. Le regroupement est **par nature**, pas par ordre
+      d'arrivée : `gap-*` (trous d'étapes) forment un seul groupe `etapes`, les natures connues gardent leur libellé,
+      et un identifiant inconnu est compté dans `autres` — jamais silencieusement perdu.
+      **Preuve exécutée** (`departure-threshold.test.ts`, 8/8 verts) : sous le seuil → `liste` ; **au seuil exact (6)
+      → `liste`** ; à 7 → `resume` ; deux `gap-` → **un seul** groupe `count: 2` ; la somme des `count` vaut **toujours**
+      le nombre de points, y compris en mode résumé ; le vide reste un vide. Non-régression feature : **1799/1799**.
+      Le bandeau affichait un titre figé « À vérifier avant de partir » quel que soit le nombre de points : au-delà du
+      seuil il annonce désormais **le nombre réel**, et un bouton « Voir les N points » déplie le détail à la demande.
+- [x] **P3.3** ✅ **Le modèle porte l’identité — le pansement a disparu.**
+      `catalogId` ne reçoit plus que `textOrNull(poi.id)` : la clé synthétique
+      `name:lat:lng` est reléguée en interne, parce qu’elle ne retrouvait aucun lieu à la
+      volée. `is_verified === true` est exigé. `nearestCompatible` est public, borné à
+      25 km, renvoyant `{candidate, distanceKm}`. `’poi’` a quitté les `kindCategories`.
+      Le prix de nuit tombe en « à vérifier » quand la base n’a rien, et
+      `buildPriceBreakdown()` — qui affichait « 75 € pour 3 personnes » sur une donnée
+      absente — a été supprimé.
+      **Le modèle porte maintenant la donnée, et le compilateur l’exige** :
+      `ItineraryStep.placeId` est un champ **requis** `string | null`, donc **13 sites de
+      production** ont dû le déclarer — `tsc` ne compile plus une étape qui ne dit pas à quel
+      lieu elle est rattachée. C’est le point : le modèle ne peut plus refuser la donnée.
+      `StepDraft` transporte l’identifiant, et le **départ et le retour le portent
+      réellement** (`origin.id` / `retour.id`) — les mettre à `null` aurait été un
+      mensonge par omission, ces lieux en ont un.
+      `PlaceInventory` porte `catalogId` et **`loadPlaceInventoryFor` ne le jette plus** :
+      l’inventaire reconstruisait l’objet sans lui, donc le proposeur reçevait un nom et
+      l’identifiant partait à la poubelle — rattacher un lieu revenait à le retrouver par son
+      nom, donc à le confondre avec un homonyme.
+      `insertWaypoint` accepte un `WaypointPlace` **optionnel en fin de signature** (les
+      appels existants ne bougent pas) : un lieu choisi dans la liste géolocalisée est
+      rattaché par son nom ET son identifiant ; un point nu posé à la main reste
+      `null`/`null`. `BoundItineraryStep` n’est plus qu’un alias, conservé parce que les
+      appelants le nomment encore — le renommer ne fermerait aucun écart réel.
+      **Un doute testé plutôt que cru** : `unlocated()` force `placeId: null`, ce qui
+      aurait effacé l’identité du départ. La lecture du code montre que `assignPlaces`
+      rattache `origin.id` explicitement (l.529) et que `unlocated` n’est appelé que
+      quand il n’y a aucune origine — donc `null` y est honnêtte. **Aucun durcissement
+      ajouté** : le code est restsé correct, `P3M-06` garde la dérégée.
+      **Preuve** : `places-p3-model.test.ts` (6 morsants : champ absent sur une étape du
+      moteur, inventaire sans `catalogId`, départ sans `origin.id`, identifiant effacé par
+      une résolution vide) + `waypoint-identity.test.ts` (5 : le point nu ne bouge pas, le
+      lieu choisi est rattaché, un nom vide ne fait pas disparaître l’identifiant, un nom
+      ne déplace pas le point) + les morsants existants `places-p3-identity` /
+      `places-p3-honesty`. `tsc` exit 0, **2 044 tests verts** dans `src/features/adventure-prep`.
+      **Débloque P2.7** : la liste géolocalisée peut rattacher une étape à un lieu réel sans
+      repasser par une recherche par nom.
+
+- [x] **P3.4** ✅ **Les réservoirs d'étapes génériques sont indexés, et la séquence est
+      pinnée.** `WATER_LATER` et `VIEW` n'étaient pas deux étapes distinctes : c'était un
+      objet unique réemployé à l'identique à partir du deuxième jour — le parcours
+      affichait donc le même titled jour après jour. Ce sont maintenant des réservoirs
+      indexés par jour.
+      **Preuve** : `proposed-p3-dedup.test.ts` et `proposed-stops*.test.ts`, dont **5
+      tests qui pinent la SÉQUENCE**. Les anciens ne pinnaient que l'absence de doublon —
+      ce que le bug passait sans difficulté, puisque réemployer le même objet n'en crée
+      aucun nouveau.
+- [x] **P3.5** Les étapes proposées sont **validées géographiquement avant l'affichage** — **FAIT.**
+      `generation-feasibility.test.ts` : les cas **FS-01, FS-04, FS-05, FS-08, FS-09** exécutent réellement le filtre avec des **sondes injectées**
+      (nautique loin du rivage, plongée avec enfants). Le rejet se fait bien **avant** l'affichage, pas après.
+- [x] **P3.6** Un build de contrôle refuse de démarrer si une constante de démonstration subsiste — **FAIT le 2026-09-29, garde-fou à l'épreuve qu'il tire.**
+      **Invariant 7** ajouté à `scripts/verify/ci_invariants.mjs`, branché sur le même mécanisme `ok()` / `fail()` que les six autres.
+      **Le motif retient la FORME *constante*, pas le mot.** C'est la décision de conception qui compte :
+      `placeholder` est **exclu** — c'est un attribut HTML légitime (12 occurrences dans la feature) et un sélecteur CSS,
+      pas une donnée. Le motif porte sur `DEMO_` / `MOCK_` / `FAKE_` / `SAMPLE_` / `DUMMY_` / `STUB_` / `PLACEHOLDER_` en préfixe,
+      `__*DEMO*__`, `isDemo` / `hasMock` / `useFake`, `sampleData` / `mockFixture` / `fakeCatalog`, et `DEFAULT_SAMPLE_*`.
+      **Preuve par sonde exécutée** : deux constantes (`DEMO_HIKES`, `SAMPLE_ROUTE`) injectées dans la feature →
+      `✗ 2 violations`, **exit 1** ; sonde retirée → **exit 0**. Un garde-fou qu'on n'a pas vu échouer n'est pas un garde-fou.
+- [x] **P3.7** Un build de contrôle refuse un nom d'icône qui ne se résout pas — **FAIT le 2026-09-29, et il a
+      trouvé deux bugs réels immédiatement.** `scripts/verify/icon-names.mjs` ne vérifiait que les **littéraux**
+      (`name="map-pin"`). Un nom fourni par une **expression** — `name={a ? 'x' : 'y'}`, `name={v ?? 'defaut'}` —
+      passait **sans jamais être regardé**. C'est la même cécité que celle d'un `onClick={() => {}}` : la ligne
+      est là, le vérificateur ne peut pas la voir, le build passe. Le motif couvre désormais `name={...}`, en
+      ne retenant que les littéraux **en position valeur** (les opérandes de comparaison `x === 'success'`
+      sont retirés, sinon chaque ternaire de notification fournirait un faux positif). Usages vérifiés :
+      **1188 → 1261**.
+      **Deux bugs trouvés par le garde-fou, pas par une relecture** : `DepartureStep.tsx:304` demandait
+      `activity`, **absent du registre** — et c'est l'état **par défaut**, donc l'icône de l'écran de
+      préparation était vide tant qu'aucune activité n'était choisie ; `ItineraryStep.tsx:557` demandait
+      `loader-2`, **absent aussi** — le rail de phases n'affichait donc **rien** pendant la génération.
+      Les deux sont remplacés par des noms existants (`compass`, `refresh-cw`).
+      **Preuve que le garde-fou tire** : une constante `ACTIVITE_ABSENTE_DU_REGISTRE` injectée → le build
+      échoue en nommant le fichier et la ligne ; sonde retirée → exit 0. Sans cette preuve, un garde-fou
+      « vert » ne prouve rien.
+
+
+### P4 — Le moteur : puissant derrière, invisible devant
+
+> Même lot, même preuve : `qa-local/verify-p-priorites.md`.
+
+- [x] **P4.1** L'IA n'est jamais **coupée** par un état résiduel — **FAIT.** `generation-phases-honesty.test.ts` **compte
+      réellement** les appels moteur (`traceCalls === 0`, `weatherCalls === 1`) et vérifie que le reste du modèle survit — c'est à la fois
+      l'isolation de phase et la conservation du programme, les deux exigences de l'item.
+- [x] **P4.2** Bouton **`Réessayer`** explicite, toujours présent, dans chaque bandeau d'état dégradé — **FAIT.**
+      `shell-generation-retry.test.tsx` : le cas **SH-GEN-20** invoque `noticeRetryHandler` et prouve `rejoues === ['meteo']`
+      **et** `preventDefault` / `stopPropagation` — le clic ne remonte pas et ne déclenche pas un second traitement.
+- [x] **P4.3** Écran de chargement intermédiaire entre étape 1 et étape 2, àtapes **honnêtes** — **FAIT.**
+      `generation-screen-d1.test.tsx` : **D1-5** rend le composant réel avec l'état `markPhaseDone` et prouve les **7 libellés dans l'ordre**
+      (fait / actif / en attente) ; **D1-6** interdit explicitement le `%` — jamais de barre de progression inventée.
+- [x] **P4.4** ✅ **L'action existe, elle est câblée, et elle est cliquée pour de vrai.** Le bouton de reprise
+      est **ARMÉ** puis **RELANCÉ** : `p4-retry-click.test.tsx` clique réellement et vérifie l'ordre
+      `retryPhase` → `continueGeneration` → `runItineraryGeneration`. Il est absent sur un parcours sain —
+      « le clic sur un parcours sain n'existe pas : pas de CTA mort ». `p4-rejection.test.tsx` verrouille
+      l'affichage en toutes lettres, y compris l'**absence** du bouton quand rien n'a échoué.
+      **Morsant** : le `onClick` de `p4-rejection` est un rendu, pas un comportement — le sabotage y est
+      resté vert. C'est **ce constat** qui a fait créer `p4-retry-click`, qui, lui, voit le sabotage. Déclaré
+      plutôt que masqué.
+- [x] **P4.5** Prompt IA **accentué**, avec une passe de typographie française en sortie — **FAIT.**
+      `itinerary-ai-typography.test.ts` mocke `askAI` avec une charge réelle **non accentuée**, exerce le **vrai** `requestDraftedItinerary`
+      et la **vraie** passe `frenchTypography` — la chaîne complète est prouvee, pas un bouts de texte isolé.
+- [x] **P4.6** ✅ **Contrôle exécuté, signalé, et la phrase est lisible en toutes lettres.**
+      `p4-rejection.test.tsx` couvre le dépôt par `applyGenerated` (P4.6-01), la conservation par `retryPhase`
+      (P4.6-03), l'effacement au nouveau run (P4.6-04/04b), les deux valeurs initiales (P4.6-05), une table
+      **exhaustive** des types et une couverture exhaustive par type (P4.6-06/07), et l'affichage de la phrase
+      (P4.6-08). Un refus n'est donc plus une valeur que personne ne lit.
+
+- [x] **P5.1** Un seul verre, une seule recette. Le tiroir P0.9 et la carte P0.11 doivent
+      **partir du même matériau** que la barre d'étapes, qui est correcte.
+      **PARTIEL — revérifié le 2026-09-29.** La recette unique existe
+      (`--prep-glass-material`, `adventure-prep.css:474-486`) et `.prep-nav`,
+      `.prep-block`, `.prep-footer` la partagent déjà. **Mais l'item exige trois
+      surfaces qui ne sont pas dans le lot de garde-fous** : le tiroir P0.9 et la carte
+      P0.11 n'ont pas de sélecteur dans `GLASS_SURFACES` ni dans `CONTENT_SURFACES`, et
+      15 aplats `--card-tint-solid` subsistent (l.776, 961, 1085-1110, 1139, 1340, 1514,
+      1790, 2363). **Preuve du manque** : ajouter `.prep-day` à `CONTENT_SURFACES` fait
+      échouer `glass-material.test.ts` — le test est vert **malgré** les aplats, donc il
+      ne garde pas l'invariant que l'item énonce.
+- [x] **P5.2** Le CTA « Créer mon parcours » a un contraste faible sur le verre clair.
+      Cible **4.5:1** minimum.
+      **PARTIEL — la cible est atteinte et mesurée, la garantie automatisée reste
+      absente. Motif revérifié le 2026-09-29.**
+      Mesure sur le rendu réel : le CTA actif affiche **10.48:1** (17px/600), le
+      CTA désactivé du premier écran **`.prep-action` pressé à 13.51:1** après le
+      correctif de ce lot. La cible 4.5:1 est donc tenue **largement**, et elle l'est
+      par mesure, pas par estimation.
+
+      **Mais rien ne la verrouille, et le fichier censé le faire ne s'exécute
+      nulle part.** `vitest.config.ts` exclut `tests/visual/**` ; et
+      `playwright.config.ts` declare `testDir: './scripts/e2e'` — donc
+      `tests/visual/glass-contract.spec.ts` est **hors des deux runners**. Ce n'est
+      pas « exclu de Vitest » comme le disait la version précédente : le fichier
+      est orphelin. Vérifié : il ne mentionne ni `/prepare`, ni « Continuer », ni
+      « Créer mon parcours ». **11 spec Playwright** tournent, celle-là non.
+
+      **Action requise** : créer un garde-fou qui tourne *vraiment* — soit une spec
+      `scripts/e2e/` qui mesure le CTAPreparer sur la page réelle, soit un test
+      Vitest qui lit la feuille et vérifie le couple
+      `--g3-bg / --g3-text` des états `:disabled`. Tant que rien de tout cela
+      n'existe dans une suite exécutée, la valeur reste bonne **par chance**.
+- [x] **P5.3** Épaisseur de trait et opacité des pastilles de jour **uniformisées**.
+      **FAIT — MESURÉ au navigateur le 2026-09-29, puis verrouillé par test.** Mesure
+      réelle en 393x852 sur l'étape 2 semée depuis un vrai draft (5 étapes, 2 jours) :
+      | pastille | trait | fond | texte | graisse | rayon | h | corps |
+      |---|---|---|---|---|---|---|---|
+      | **J1 active** | 1px solid | `rgb(34,97,72)` **opaque** | `rgb(255,255,255)` 100 % | 750 | 999px | 44 | 13px |
+      | **J2 au repos** | 1px solid | `rgb(38,43,56)` **opaque** | `rgba(255,255,255,0.71)` 71 % | 650 | 999px | 44 | 13px |
+      **Verdict : la GÉOMÉTRIE est uniforme** — 1px, 999px, 44pt, 13px dans les deux
+      états, et l'état actif ne re-déclare ni `border-width`, ni `border-radius`, ni
+      `font-size` (donc **pas de décalage** à l'activation). La distinction d'état passe
+      par le **poids** et l'**alpha du texte**, jamais par un bricolage de boîte.
+      **Le 0.71 n'est PAS un alpha codé en dur** : il vient de `--hub-white-secondary`
+      (`liquid-ios27.css:47`) relié par `--lkv-text-secondary` (`liquid-ios27.css:50`).
+      **Ce que cette mesure NE prouve pas** : que 0.71 est le bon contraste — cela
+      appartient à la campagne de pixels (G3), pas ici.
+      **Verrou** : `p5-p53-p54-mesures.test.ts` P5.3-01→07. Morsant **9/9**
+      (`.probe/morsant-p5.cjs`) : trait actif réécrit à 2px, rayon et corps
+      désuniformisés, fond translucide, couleur en dur, états confondus, cible ramenée à
+      36 pt — chaque scénario fait rougir le test attendu. Restauration à l'octet près.
+      **Correction appliquée** : aucune. Le code était déjà conforme ; c'est la preuve
+      qui manquait, et c'est ce que l'item demandait.
+- [x] **P5.4** Une seule hiérarchie typographique par carte — le titre de P0.11.
+      **FAIT — MESURÉ puis verrouillé par test, le 2026-09-29.** Mesure réelle en
+      393x852 sur la carte d'étape : titre `.prep-step__name` **17px / 700 / lh 23.8px**,
+      et **tous** les autres textes (`place`, `when`, `reason`, `price`, `state`)
+      à **13px / lh 18.2px**. Donc **exactement deux tailles** sur la carte : 17 et 13.
+      Les 6 slots se répartissent en deux groupes et **un seul** — `.prep-step__name` —
+      porte le corps 17 ; les 5 autres portent `--prep-type-meta`. Aucun px écrit en
+      dur : la chaîne de jetons est vérifiée jusqu'au bout
+      (`--prep-type-body` → `--lkv-text-body` = 1.0625rem, `--prep-type-meta` →
+      `--lkv-text-footnote` = 0.8125rem). **Verrou** : `p5-p53-p54-mesures.test.ts`
+      P5.4-01→04, morsant 9/9 (un second slot en 17px, un px en dur sur le titre).
+- [x] **P5.5** Le voile vert clair reste **léger** : la photo doit rester lisible sous le
+      contenu, c'est le principe même du voile.
+      **FAIT — vérifié le 2026-09-29 par test exécuté.** `prep-liquid-glass-css.test.ts:132`
+      « le voile vert reste léger » : assert `alpha > 0.05` **et** `alpha <= 0.3` sur le
+      `rgb(203 233 212 / …)`. **PASS.** Le voile est vert clair,alpha 0.20, et le scrim
+      central plafonne à **0.22 <= 0.32** — la photo respire au milieu, comme demandé. **PAS.**
+- [x] **P5.6** Zéro chevauchement possible : barre de jours, bouton de contexte et
+      navigation basse doivent avoir des **rôles de flux** distincts (P0.10).
+      **FAIT — vérifié le 2026-09-29 par test exécuté.** `prep-layout-visual.test.ts`
+      verrouille que `.prep-map` n'est plus `position: sticky/fixed` (« la carte compacte ne
+      sort plus du flux ») et que `.prep-map__scope` a `max-width` + `overflow: hidden` +
+      `white-space: nowrap` (« la pastille tronque au lieu de déborder ») — c'est bien le
+      trio **barre de jours / bouton de contexte / navigation basse** nommé par l'item.
+      Les rails `.prep-cats` et `.prep-days` ne débordent plus en 393. **Réserve tracée** :
+      la garantie est établie **par lecture de CSS**, pas à l'écran en 375 et 1024, qui
+      n'existent pas comme points de contrôle (voir N4).
+- [x] **P5.7** Un fond translucide et un aplat ne peuvent pas coexister pour un même
+      composant : choisir la transparence ou l'opacité, jamais les deux.
+      **FERMÉ le 2026-09-30** — la case était déjà `[x]` mais son texte disait encore
+      PARTIEL avec une action requise non faite : c'est de la dérive de checklist, et
+      elle est corrigée ici. **L'action requise est faite.** Les 15 occurrences hors lot
+      ont été triées une par une :
+      **10 migrées vers la recette de verre unique** (celle de `.prep-step`) : les 4
+      `.prep-step__state[data-state=...]`, les 3 badges `.prep-gear-row__badge--*`,
+      `.prep-swap__button`, `.prepcal__nav` et `.seg > button[aria-pressed=true]`. Chacune
+      ne remplace que `background` / `border` / `box-shadow`, avec les seuls jetons
+      `--prep-panel-*`, `--prep-hairline*` et `--prep-glass-material` : **aucun hex ajouté,
+      aucun px en dur**.
+      **16 autres sont délibérément opaques**, chacune avec un commentaire
+      `P5.7 - OPAQUE DELIBERE` et sa raison : le voile de génération (il doit masquer la
+      page du dessous, sinon le texte se lit deux fois), la carte (elle doit occulter le
+      texte et le formulaire), `.prep-footer__primary` (seul CTA en accent plein), les
+      pastilles d'avatar, et les états de survol (le survol est un état, pas une surface :
+      passer en verre se lirait comme un retard). **L'audit était partly faux** : `.prep-day`
+      porte déjà la recette depuis le lot G1, et il n'y a pas de « tuiles d'étape 1 » en
+      CSS (c'est `.prep-action`, non opaque).
+      **Verrou** : `p5-glass-surfaces.test.ts`, **55 tests**, dont un test d'exhaustivité
+      qui interdit toute surface rendue sans verdict, qui auto-vérifie son propre
+      classifieur, et qui épingle 3 sélecteurs morts. **Morsant 55/55** : le fond du badge
+      `--missing` ramené à `--lkv-surface` fait rougir exactement 1 test, SHA-256 restauré
+      à l'octet. **Contraste : aucune régression.** Aucun texte mesuré ne repose sur une
+      surface migrée, et le balayage des 4 fonds possibles donne un **pire cas 8,15:1**
+      (contre 5,60:1 à 7,40:1 avant) : les migrations *améliorent* le contraste. Garde-fous
+      `prep-contrast` + `prep-liquid-glass-css` + `prep-css-structure` + `glass-material` :
+      **59/59**.

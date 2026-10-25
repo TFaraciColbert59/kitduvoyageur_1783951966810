@@ -1,0 +1,1117 @@
+/**
+ * LKDV DESIGN SYSTEM — CANONICAL TOKENS (Chantiers U, X & Y)
+ *
+ * SOURCE UNIQUE DE VÉRITÉ :
+ * TOUTES les valeurs brutes (couleurs, rayons, durées, courbes, espacements, élévations)
+ * sont écrites ICI et nulle part ailleurs.
+ *
+ * Conforme à docs/DESIGN_TRUTH.md et DESIGN_SYSTEM.md
+ */
+
+:root {
+  /* ── 1. Couleurs Maîtresses LKDV ────────────────────────────
+     Direction visuelle P5 (spec 2026-09-19 §6 / dossier lancement) :
+     fond sauge pâle, surfaces claires, actions vert forêt.
+     --lkv-primary reste le vert forêt de marque (titres) : verrouillé par
+     tests/design/tokens-sync.spec.ts. Les éléments d'ACTION utilisent
+     --lkv-action (#226148). */
+  --lkv-primary: #17402C;
+  --lkv-primary-hover: #205238;   /* Arbitrage X0 / U1 : tokens.ts + DESIGN_SYSTEM */
+  --lkv-primary-soft: #365233;    /* Arbitrage X0 / U1 : tokens.ts + DESIGN_SYSTEM */
+  --lkv-primary-subtle: #D3EBD9;  /* accent doux direction */
+  --lkv-primary-rgb: 23, 64, 44;
+
+  --lkv-action: #226148;
+  --lkv-action-hover: #1B4F3A;
+  --lkv-action-soft: #D3EBD9;
+  --lkv-action-rgb: 34, 97, 72;
+
+  --lkv-secondary: #5B7F55;
+  --lkv-secondary-hover: #4A6B44;
+  --lkv-secondary-subtle: #D8E5D5;
+  --lkv-secondary-rgb: 91, 127, 85;
+
+  /* TOILE UNIQUE LKDV — fond d'écran applicatif unique (image marbrée vert forêt),
+     appliqué à toutes les routes via .lkv-app-background (cf. tailwind.css).
+     La teinte --lkv-app-bg-tint atténue la topographie décorative pour que le
+     texte essentiel ne repose jamais sur un contraste variable (spec §6). */
+  /* Phase 3 — background LKDV UNIQUE : paysage forêt/montagne (image),
+     décliné portrait (mobile) / paysage (large), voilé pour la lisibilité. */
+  --lkv-app-bg-image-portrait: url('/assets/images/lkdv-bg-portrait.webp');
+  --lkv-app-bg-image-landscape: url('/assets/images/lkdv-bg-landscape.webp');
+  --lkv-app-bg-scrim: rgba(242, 246, 243, 0.78);
+  --lkv-app-bg-fallback: #F5F7F3;
+
+  --lkv-surface: #F5F7F3;
+  --lkv-surface-paper: #FFFFFF;
+  --lkv-surface-card: #FFFFFF;
+  --lkv-surface-elevated: #FFFFFF;
+  --lkv-surface-muted: #EDF1EA;
+
+  --lkv-text-primary: #172B24;
+  --lkv-text-secondary: #56665D;
+  --lkv-text-muted: #46584D;
+  --lkv-text-subtle: #526158;
+  --lkv-text-inverted: #FFFFFF;
+
+  /* États complets (champs, survol, focus, désactivé, voile) */
+  --lkv-hover-surface: #E7EDE6;
+  --lkv-field-bg: #FFFFFF;
+  --lkv-field-border: rgba(23, 43, 36, 0.22);
+  --lkv-disabled-bg: #E7EBE5;
+  --lkv-disabled-text: #7C8A80;
+  --lkv-overlay-scrim: rgba(16, 28, 23, 0.45);
+  --lkv-focus-ring: rgba(34, 97, 72, 0.28);
+  --lkv-on-action: #FFFFFF;
+  --lkv-on-primary: #FFFFFF;
+  --lkv-on-primary-muted: #E7F0E8;
+  --lkv-on-dark: #FFFFFF;
+  --lkv-on-dark-muted: #E7F0E8;
+
+  /* ── 2. Échelles Canoniques ──────────────────────────────── */
+  /* ├─ Forest ──────────────────────────────────────────────── */
+  --lkv-forest-950: #06120C;
+  --lkv-forest-900: #17402C;
+  --lkv-forest-800: #17402C;
+  --lkv-forest-700: #2D6B4A;   /* alias hover de référence /materiel */
+  --lkv-forest-600: #365233;
+  --lkv-forest-500: #3D7A52;
+  --lkv-forest-400: #4A7C5B;
+  --lkv-forest-300: #6B9B7B;
+  --lkv-forest-200: #9BBDA7;
+  --lkv-forest-100: #CCE0D4;
+  --lkv-forest-50:  #EBF2EC;
+
+  /* ├─ Sage ────────────────────────────────────────────────── */
+  --sage-900: #1E301C;
+  --sage-800: #2D482A;
+  --sage-700: #3D6038;
+  --sage-600: #4C7746;
+  --sage-500: #5B7F55;
+  --sage-400: #789972;
+  --sage-300: #96B391;
+  --sage-200: #B8CDB4;
+  --sage-100: #D8E5D5;
+  --sage-50:  #F0F5EE;
+
+  --lkv-sage-50:  var(--sage-50);
+  --lkv-sage-100: var(--sage-100);
+  --lkv-sage-200: var(--sage-200);
+  --lkv-sage-300: var(--sage-300);
+  --lkv-sage-400: var(--sage-400);
+  --lkv-sage-500: var(--sage-500);
+
+  /* ├─ Stone / Neutres ─────────────────────────────────────── */
+  --stone-50:  #EEF3EC;
+  --stone-100: #F3EFEA;
+  --stone-200: #E8E2D9;
+  --stone-300: #D4CCC0;
+  --stone-400: #B5ABA0;
+  --stone-500: #968C81;
+  --stone-600: #7A7365;
+  --stone-700: #5B554A;
+  --stone-800: #3F3B34;
+  --stone-900: #2A2722;
+  --stone-950: #1A1815;
+
+  --lkv-stone-50: var(--stone-50);
+  --lkv-stone-100: var(--stone-100);
+  --lkv-stone-200: var(--stone-200);
+
+  /* ├─ Sand / Neutres Chauds (Tailwind theme) ───────────────── */
+  --sand-900: #3D3828;
+  --sand-800: #5C5540;
+  --sand-700: #7A7258;
+  --sand-600: #998F70;
+  --sand-500: #B8AD8A;
+  --sand-400: #C9C0A3;
+  --sand-300: #DBD4BD;
+  --sand-200: #ECE8D9;
+  --sand-100: #F5F3EB;
+  --sand-50:  #FAF9F5;
+
+  --lkv-warm-300: #F1DAB1;
+  --lkv-warm-500: #E4C695;
+  --lkv-warm-700: #B08A4E;
+
+  /* ├─ Ink / Typographie sombre ────────────────────────────── */
+  --ink-900: #141916;
+  --ink-700: #2C3530;
+  --ink-500: #526058;
+  --ink-300: #88978F;
+  --ink-100: #D0D8D3;
+
+  --lkv-ink-900: var(--ink-900);
+  --lkv-ink-700: var(--ink-700);
+  --lkv-ink-500: var(--ink-500);
+  --lkv-ink-300: var(--ink-300);
+
+  /* ├─ Bordures unifiées ─────────────────────────────────────
+     border-strong composé sur le fond atteint 3:1 (frontière non-textuelle
+     seule autorisée, spec §6 « aucun séparateur pâle comme seule frontière »). */
+  --lkv-border: rgba(23, 43, 36, 0.14);
+  --lkv-border-subtle: rgba(23, 43, 36, 0.07);
+  --lkv-border-strong: rgba(23, 43, 36, 0.52);
+
+  /* Primitives des statuts (thème clair). La couche globale liquid-ios27
+     éclaircit --lkv-warning-dark / --lkv-danger pour le hub sombre ; les
+     écrans en verre clair (Compas) lisent ces primitives, jamais redéfinies. */
+  --lkv-amber-800: #765014;
+  --lkv-brick-600: #A8443A;
+
+  /* ── 3. Statuts et Alertes Terrain (palette hors orange designer) ───────────── */
+  --lkv-success: #3D6038;
+  --lkv-success-bg: #E1EBDE;
+  --lkv-warning: #C89A3B;
+  --lkv-warning-bg: #FBF1DC;
+  --lkv-warning-dark: #765014;
+  --lkv-warning-subtle: #FDF6E8;
+  --lkv-danger: #A8443A;
+  --lkv-danger-bg: #FDE8E6;
+  --lkv-danger-dark: #7E2D25;
+  --lkv-info: #4B6B7C;
+  --lkv-info-rgb: 75, 107, 124;
+  --lkv-info-bg: #DDE7EE;
+
+  --sky-900: #10222B;
+  --sky-800: #17313C;
+  --sky-700: #1F4251;
+  --sky-600: #2A5A6E;
+  --sky-500: #3E6B7A;
+  --sky-400: #5A8A9A;
+  --sky-300: #7AAAB8;
+  --sky-200: #A8C8D4;
+  --sky-100: #D4E8EE;
+  --sky-50: #F0F7FA;
+
+  /* ── 4. Apple HIG Cibles Tactiles & Rayons Unifiés ────────── */
+  --lkv-touch-min: 44px;
+  --lkv-touch-comfortable: 48px;
+
+  /* Phase 3 (final) — géométrie premium nettement plus ronde, UNE famille :
+     contrôles 18, boutons 20, cartes 28, grandes cartes 32, feuilles 36,
+     barre de navigation 32. Rayon concentrique = parent − padding. */
+  --lkv-radius-xs: 10px;
+  --lkv-radius-sm: 14px;
+  --lkv-radius-md: 18px;
+  --lkv-radius-lg: 24px;
+  --lkv-radius-xl: 28px;
+  --lkv-radius-card: 28px;
+  --lkv-radius-2xl: 32px;
+  --lkv-radius-large-card: 32px;
+  --lkv-radius-sheet: 36px;
+  --lkv-radius-nav: 32px;
+  --lkv-radius-control: 18px;
+  --lkv-radius-button: 20px;
+  --lkv-radius-concentric: calc(var(--lkv-radius-card) - var(--space-4));
+  --lkv-radius-full: 9999px;
+
+  /* ── 5. Typographie & Transitions (direction §6) ───────────
+     Police système pour le corps/UI (adaptation documentée vs dossier) ;
+     Manrope reste la police de marque pour les titres. */
+  /* Phase 2 — SF Pro d'abord (iOS), Manrope conservée pour la marque. */
+  /* SF Pro d'abord (pile systeme Apple, donc identique a iOS/macOS), puis
+     Inter qui en est le substitut metrique le plus proche sur les autres OS.
+     Segoe UI n arrive qu en dernier recours : c est la seule raison pour
+     laquelle l UI ne ressemblait pas a Apple sur Windows. */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', var(--font-inter, 'Inter'), 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', var(--font-inter, 'Inter'), 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-brand: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-body: var(--font-sans);
+  /* next/font injecte la vraie Instrument Serif sur <html> (layout.tsx).
+     Ce repli existe pour le rendu hors.next — sans lui, la declaration
+     `font-family: var(--font-serif), ...` tombait entierement invalide. */
+  --font-serif: 'Instrument Serif', Georgia, serif;
+
+  /* Phase 2 — échelle Dynamic Type iOS (large title 34, body 17, footnote 13).
+     Valeurs en rem : le texte agrandi navigateur reste pris en charge. */
+  --lkv-text-caption-2: 0.6875rem;
+  --lkv-text-caption: 0.75rem;
+  --lkv-text-footnote: 0.8125rem;
+  --lkv-text-subheadline: 0.9375rem;
+  --lkv-text-callout: 1rem;
+  --lkv-text-body: 1.0625rem;
+  --lkv-text-body-sm: 0.9375rem;
+  --lkv-text-headline: 1.0625rem;
+  --lkv-text-title-sm: 1.375rem;
+  --lkv-text-title-md: 1.75rem;
+  --lkv-text-note: 0.875rem;
+  --lkv-text-title-lg: 2.125rem;
+  --lkv-text-title-xl: 2.5rem;
+  --lkv-line-body: 1.4;
+  --lkv-line-title: 1.18;
+  --lkv-tracking-title: -0.022em;
+  --lkv-tracking-body: -0.01em;
+  --lkv-weight-regular: 400;
+  --lkv-weight-medium: 500;
+  --lkv-weight-semibold: 600;
+  --lkv-weight-bold: 700;
+  --lkv-font-numeric: tabular-nums;
+
+  --dur-xfast: 120ms;
+  --dur-fast: 180ms;
+  --dur-med: 280ms;
+  --dur-slow: 420ms;
+  --dur-xslow: 800ms;
+
+  --ease-glass: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-emphasis: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --lkv-dur: 220ms;
+  --lkv-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --lkv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Phase 2 — motion iOS : appui 110 ms, contrôle 220 ms, feuille 380 ms. */
+  --motion-press-duration: 110ms;
+  --motion-control-duration: 220ms;
+  --motion-sheet-duration: 380ms;
+  --motion-page-duration: 260ms;
+  --motion-ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  --motion-ease-decelerate: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-accelerate: cubic-bezier(0.55, 0, 1, 0.45);
+  --motion-press-scale: 0.97;
+
+  /* ── 6. Z-Index Tokens (Exclusifs) ───────────────────────── */
+  --z-base: 0;
+  --z-sticky: 20;
+  --z-drawer: 40;
+  --z-sheet: 50;
+  --z-command: 60;
+  --z-toast: 70;
+
+  /* ── 7. Espacements Canoniques (4pt hybride) ────────────────
+     Direction §6 : échelle 4/8/12/16/24/32 (les paliers 20/40/48/64 restent
+     disponibles pour les cas hérités) ; marge d'écran 16. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --lkv-screen-margin: 16px;
+
+  /* ── 8. Élévations & Ombres ──────────────────────────────── */
+  --elevation-1: 0 2px 8px rgba(23,64,44,0.04), 0 1px 2px rgba(23,64,44,0.03);
+  --elevation-2: 0 4px 16px rgba(23,64,44,0.06), 0 2px 4px rgba(23,64,44,0.04);
+  --elevation-3: 0 8px 32px rgba(23,64,44,0.08), 0 4px 8px rgba(23,64,44,0.05);
+  --elevation-4: 0 16px 48px rgba(23,64,44,0.12), 0 8px 16px rgba(23,64,44,0.06);
+  --elevation-5: 0 24px 64px rgba(23,64,44,0.16), 0 12px 24px rgba(23,64,44,0.08);
+  --glass-depth-inset: inset 0 1px 1px rgba(255,255,255,0.75);
+
+  /* ── 9. Alias sémantiques universels ─────────────────────── */
+  --danger: var(--lkv-danger);
+  --danger-bg: var(--lkv-danger-bg);
+  --info: var(--lkv-info);
+  --info-bg: var(--lkv-info-bg);
+  --success: var(--lkv-success);
+  --success-bg: var(--lkv-success-bg);
+  --warn: var(--lkv-warning);
+  --warn-bg: var(--lkv-warning-bg);
+  --warning: var(--lkv-warning);
+  --warning-bg: var(--lkv-warning-bg);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PHASE 1 — Échelles complémentaires (additif, sans redesign)
+   Catégories manquantes pour piloter la refonte Phase 2 depuis un
+   nombre limité de fichiers : contrôles, icônes, opacités, z-index
+   overlay, safe areas, breakpoints, typographie étendue, flous
+   canoniques, largeurs de bordure, motion.
+   Aucune valeur existante n'est modifiée.
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  /* ├─ Contrôles (hauteurs & paddings canoniques) */
+  --control-height-xs: 32px;
+  --control-height-sm: 36px;
+  --control-height-md: var(--lkv-touch-min);          /* 44px */
+  --control-height-lg: var(--lkv-touch-comfortable);  /* 48px */
+  --control-height-xl: 56px;
+  --control-padding-x-sm: 12px;
+  --control-padding-x-md: 16px;
+  --control-padding-x-lg: 24px;
+  --control-radius: var(--lkv-radius-sm);
+  --control-radius-pill: var(--lkv-radius-full);
+
+  /* ├─ Tailles d'icônes */
+  --icon-xs: 12px;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-xl: 32px;
+  --icon-2xl: 48px;
+
+  /* ├─ Opacités */
+  --opacity-0: 0;
+  --opacity-5: 0.05;
+  --opacity-10: 0.1;
+  --opacity-20: 0.2;
+  --opacity-30: 0.3;
+  --opacity-40: 0.4;
+  --opacity-50: 0.5;
+  --opacity-60: 0.6;
+  --opacity-70: 0.7;
+  --opacity-80: 0.8;
+  --opacity-90: 0.9;
+  --opacity-95: 0.95;
+  --opacity-100: 1;
+  --opacity-disabled: var(--btn-disabled-opacity);   /* 0.45 */
+  --opacity-muted: 0.6;
+  --opacity-subtle: 0.4;
+  --opacity-scrim: 0.45;
+
+  /* ├─ Z-index (compléments aux tokens exclusifs §6) */
+  --z-dropdown: 10;
+  --z-fab: 30;
+  --z-modal: 55;      /* au-dessus sheet (50), sous command (60) */
+  --z-popover: 65;
+  --z-tooltip: 80;
+  --z-emergency: 90;
+
+  /* ├─ Safe areas (alias des env() iOS/Android) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* ├─ Shell & navigation — SOURCE UNIQUE des offsets (Phase 2, Lot 2).
+     Aucune page ne recalcule le bas d'écran : hauteur barre 52, plateau
+     secondaire 48, offsets = hauteur(s) + safe area. */
+  --nav-height: 60px;
+  --nav-plateau-height: 40px;
+  --nav-offset: calc(var(--nav-height) + var(--safe-bottom));
+  --nav-offset-extended: calc(var(--nav-height) + var(--nav-plateau-height) + var(--space-2) + var(--safe-bottom));
+  --header-height: 44px;
+  --header-height-large: 96px;
+  --page-top-inset: calc(var(--safe-top) + var(--space-2));
+  /* --cookie-banner-h est publie par <CookieConsentBanner> (0px sinon) :
+     la bande occupee par la banniere est rendue aux pages sans qu'elles
+     aient a la connaitre.
+     max() et NON une addition : la bande MESUREE part du sommet du panneau,
+     elle contient donc deja la bottom-nav (panneau remonte de --nav-offset).
+     Additionner --nav-offset reservait deux fois la nav. Memantique que
+     AppShell (src/components/shell/AppShell.tsx). */
+  --page-bottom-inset: calc(max(var(--nav-offset), var(--cookie-banner-h, 0px)) + var(--space-4));
+  --page-bottom-inset-extended: calc(max(var(--nav-offset-extended), var(--cookie-banner-h, 0px)) + var(--space-4));
+  --page-bottom-inset-bare: calc(var(--safe-bottom) + var(--space-4));
+  --overlay-inset-top: var(--safe-top);
+  --overlay-inset-bottom: var(--safe-bottom);
+  --keyboard-inset: 0px;
+
+  /* Phase 3 — zones de placement des contrôles carte : aucun composant
+     n'invente son propre offset sous la navigation. */
+  --map-control-inset-x: 12px;
+  --map-control-top: calc(var(--safe-top) + 16px);
+  --map-control-bottom: calc(var(--nav-offset) + 16px);
+  --map-local-nav-bottom: calc(var(--nav-offset) + var(--nav-plateau-height) + 12px);
+
+  /* ├─ Breakpoints (miroir Tailwind, utilisables en JS) */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1536px;
+
+  /* ├─ Typographie étendue */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.02em;
+  --tracking-caps: 0.04em;
+
+  /* ├─ Contraste des icônes UI (Phase 3 final) — jamais invisibles. */
+  --icon-primary: rgba(255, 255, 255, 0.96);
+  --icon-secondary: rgba(255, 255, 255, 0.72);
+  --icon-tertiary: rgba(255, 255, 255, 0.56);
+  --icon-on-light: rgba(10, 18, 15, 0.90);
+  --icon-on-light-secondary: rgba(10, 18, 15, 0.64);
+
+  /* ├─ Matériau verre canonique (Phase 3 final — neutre, adaptatif) */
+  --glass-fill-top: rgba(255, 255, 255, 0.13);
+  --glass-fill-bottom: rgba(255, 255, 255, 0.09);
+  --glass-fill-active: rgba(255, 255, 255, 0.16);
+  /* Base neutre sombre : garantit un contraste stable du texte/icônes blancs
+     même quand la photo est très lumineuse derrière le verre. */
+  --glass-base: rgba(12, 16, 14, 0.34);
+  --glass-blur: 26px;
+  --glass-saturation: 1.10;
+
+  /* ├─ Flous canoniques (échelle cible Phase 2) */
+  --blur-none: 0px;
+  --blur-sm: 4px;
+  --blur-md: 8px;
+  --blur-lg: 16px;
+  --blur-xl: 24px;
+  --blur-2xl: 40px;
+
+  /* ├─ Largeurs de bordure */
+  --border-width-hairline: 0.5px;
+  --border-width-thin: 1px;
+  --border-width-medium: 1.5px;
+  --border-width-thick: 2px;
+
+  /* ├─ Alias de familles complémentaires (complètent forest/sage/stone) */
+  --lkv-sage-600: var(--sage-600);
+  --lkv-sage-700: var(--sage-700);
+  --lkv-sage-800: var(--sage-800);
+  --lkv-sage-900: var(--sage-900);
+  --lkv-stone-300: var(--stone-300);
+  --lkv-stone-400: var(--stone-400);
+  --lkv-stone-500: var(--stone-500);
+  --lkv-stone-600: var(--stone-600);
+  --lkv-stone-700: var(--stone-700);
+  --lkv-stone-800: var(--stone-800);
+  --lkv-stone-900: var(--stone-900);
+  --lkv-stone-950: var(--stone-950);
+  --lkv-sand-50: var(--sand-50);
+  --lkv-sand-100: var(--sand-100);
+  --lkv-sand-200: var(--sand-200);
+  --lkv-sand-300: var(--sand-300);
+  --lkv-sand-400: var(--sand-400);
+  --lkv-sand-500: var(--sand-500);
+  --lkv-sand-600: var(--sand-600);
+  --lkv-sand-700: var(--sand-700);
+  --lkv-sand-800: var(--sand-800);
+  --lkv-sand-900: var(--sand-900);
+  --lkv-sky-50: var(--sky-50);
+  --lkv-sky-100: var(--sky-100);
+  --lkv-sky-200: var(--sky-200);
+  --lkv-sky-300: var(--sky-300);
+  --lkv-sky-400: var(--sky-400);
+  --lkv-sky-500: var(--sky-500);
+  --lkv-sky-600: var(--sky-600);
+  --lkv-sky-700: var(--sky-700);
+  --lkv-sky-800: var(--sky-800);
+  --lkv-sky-900: var(--sky-900);
+  --lkv-ink-100: var(--ink-100);
+
+  /* ├─ Surfaces complémentaires */
+  --lkv-surface-raised: var(--lkv-surface-card);
+  --lkv-overlay: var(--lkv-overlay-scrim);
+
+  /* ├─ Motion (alias canoniques des easings historiques) */
+  --dur-instant: 80ms;
+  --spring-smooth: var(--ease-smooth);
+  --spring-bounce: var(--ease-spring);
+}
+
+/* Liquid Glass: one material scale, shared across all routes.
+   Les valeurs --glass-* sont reliées aux tokens --card-* (STYLE UNIQUE) :
+   modifier --card-* met à jour toutes les cards du site. */
+:root {
+  --glass-solid: var(--card-tint-solid);
+  --glass-text: var(--card-content);
+  --glass-text-secondary: rgba(23, 43, 36, 0.74);
+  /* Direction §6 : le verre est clair, léger et réservé aux surfaces
+     superposées ; texte sombre sur verre clair (contraste mesuré). */
+  --glass-bg-light: rgb(255 255 255 / calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
+  --glass-bg-medium: var(--card-tint);
+  --glass-bg-strong: var(--card-tint-strong);
+  --glass-bg-dark: rgba(16, 28, 23, 0.90);
+  --glass-subtle-fill: rgb(255 255 255 / calc(0.84 + 0.12 * var(--glass-intensity, 0.5)));
+  --glass-border-color: rgba(23, 43, 36, 0.12);
+  --glass-border: rgba(23, 43, 36, 0.12);
+  --glass-rim: rgba(255, 255, 255, 0.85);
+  --glass-rim-color: rgba(255, 255, 255, 0.85);
+  --glass-rim-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.22);
+  --glass-radius: var(--card-radius);
+  --glass-blur-sm: var(--card-blur);
+  --glass-blur-md: 18px;
+  --glass-blur-lg: 26px;
+  --glass-sat: var(--card-saturate);
+  --glass-shadow: var(--card-shadow);
+  --glass-shadow-elevated: var(--card-shadow-elevated);
+  --glass-highlight-top: linear-gradient(100deg, transparent, var(--glass-rim-color) 22%, transparent 84%);
+  --glass-sheen: radial-gradient(100% 70% at 18% 0%, rgba(255, 255, 255, 0.22), transparent 70%);
+  --glass-edge-light: var(--glass-highlight-top);
+  --glass-highlight-radial: var(--glass-sheen);
+  --glass-tint-sage: var(--glass-bg-medium);
+  --glass-selected-border: var(--lkv-action);
+  --glass-critical-border: var(--lkv-danger-dark);
+  --glass-focus: var(--lkv-action);
+  --glass-press-scale: 0.985;
+
+  /* Extended blur scale */
+  --glass-blur-xs: 4px;
+  --glass-blur-xl: 32px;
+
+  /* Additional depth tokens */
+  --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim-color), 0 24px 48px -16px rgba(11, 31, 23, 0.32);
+  --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim-color), 0 -4px 24px -8px rgba(11, 31, 23, 0.16);
+
+  /* Premium rdev tokens (used by PremiumGlassCard only) */
+  --glass-refraction-scale: 14;
+  --glass-aberration: 0.25;
+  --glass-elasticity: 0;
+
+  /* Liquid Glass LKDV — palette officielle (cf. CLAUDE.md) */
+  --color-glass-forest: #17402C;
+  --color-glass-sage:   #5B7F55;
+  --color-glass-stone:  #FAF8F5;
+
+  /* ════════════════════════════════════════════════════════════════
+     BOUTONS — STYLE UNIQUE (référence section 4 « Référence photo »)
+     Source de vérité unique : modifier UNE valeur ici met à jour
+     TOUS les boutons du site (classes CSS + composants React).
+     ════════════════════════════════════════════════════════════════ */
+  --btn-tint: rgb(255 255 255 / calc(0.86 + 0.10 * var(--glass-intensity, 0.5)));
+  /* Phase 3 — « rien de plein » : les boutons/pills sont du verre teinté. */
+  --btn-tint-action: rgba(34, 97, 72, 0.20);
+  --btn-tint-danger: rgba(168, 68, 58, 0.18);
+  --btn-glass-border: rgba(255, 255, 255, 0.55);
+  --btn-rim: inset 0 1px 1px rgba(255, 255, 255, 0.72);
+  --btn-tint-solid: var(--lkv-action);              /* primaire / actif / publier */
+  --btn-blur: 10px;                                 /* flou du verre (Phase 2) */
+  --btn-saturate: 160%;                             /* saturation du verre */
+  --btn-content: var(--lkv-text-primary);           /* contenu des boutons en verre */
+  --btn-on-solid: var(--lkv-on-action);             /* contenu des boutons pleins */
+  --btn-text-shadow: none;                          /* texte sombre : pas d'ombre portée */
+  --btn-shadow: 0 4px 14px rgba(23, 43, 36, 0.12), 0 1px 3px rgba(23, 43, 36, 0.08);
+  --btn-radius: 999px;                              /* rayon des pilules */
+  --btn-font-size: 12px;
+  --btn-font-weight: 600;
+  --btn-press-scale: 0.97;                          /* feedback d'appui */
+  --btn-disabled-opacity: 0.45;
+
+  /* ════════════════════════════════════════════════════════════════
+     CARDS — STYLE UNIQUE (aligné sur les boutons)
+     Surfaces claires (blanc translucide), rayon 24, contenu sombre.
+     Modifier UNE valeur ici met à jour TOUTES les cards du site.
+     ════════════════════════════════════════════════════════════════ */
+  --card-tint: rgb(255 255 255 / calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --card-tint-strong: rgb(255 255 255 / calc(0.95 + 0.04 * var(--glass-intensity, 0.5)));
+  --card-tint-solid: #FFFFFF;                       /* repli opaque (a11y) */
+  --card-blur: 14px;                                /* verre plus profond (Phase 2) */
+  --card-saturate: 160%;                            /* = --btn-saturate */
+  --card-radius: 24px;                              /* rayon des cards (direction 12/16/24) */
+  --card-content: var(--lkv-text-primary);          /* contenu sombre sur surface claire */
+  --card-border: transparent;                       /* liserés seuls (comme les boutons) */
+  --card-shadow: 0 4px 14px rgba(23, 43, 36, 0.12), 0 1px 3px rgba(23, 43, 36, 0.08);
+  --card-shadow-elevated: 0 10px 28px rgba(23, 43, 36, 0.16), 0 2px 6px rgba(23, 43, 36, 0.10);
+
+  /* ════════════════════════════════════════════════════════════════
+     PHASE 2 — MATÉRIAUX DE BARRES + EDGE EFFECT (Liquid Glass web)
+     Les barres flottent au-dessus du contenu ; un dégradé de bord
+     (scroll edge effect « soft ») sépare sans bordure dure.
+     ════════════════════════════════════════════════════════════════ */
+  --material-bar-bg: rgba(249, 251, 248, 0.72);
+  --material-bar-border: rgba(255, 255, 255, 0.55);
+  --material-bar-blur: 28px;
+  --material-bar-saturate: 180%;
+  --material-sheet-bg: rgba(252, 253, 251, 0.92);
+  --edge-effect-height: 22px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MODE SOMBRE — états complets (fond, surfaces, texte, bordures,
+   champs, survol, focus, désactivé, statuts, verre, boutons, cards).
+   Câblé par la classe .dark sur <html> (script layout.tsx +
+   prefers-color-scheme ; voir ThemeToggle). Spec §6.
+   ══════════════════════════════════════════════════════════════════ */
+.dark {
+  color-scheme: dark;
+
+  --lkv-primary: #7FC49A;
+  --lkv-primary-hover: #9AD4B1;
+  --lkv-primary-soft: #2E5D45;
+  --lkv-primary-subtle: #24382C;
+  --lkv-primary-rgb: 127, 196, 154;
+
+  --lkv-action: #7FC49A;
+  --lkv-action-hover: #9AD4B1;
+  --lkv-action-soft: #24382C;
+  --lkv-action-rgb: 127, 196, 154;
+
+  --lkv-secondary: #9BBDA7;
+  --lkv-secondary-hover: #B8CDB4;
+  --lkv-secondary-subtle: #24382C;
+
+  --lkv-app-bg-scrim: rgba(8, 10, 12, 0.88);
+  --lkv-app-bg-fallback: #0b0d12;
+
+  --lkv-surface: #101C17;
+  --lkv-surface-paper: #1B2D24;
+  --lkv-surface-card: #1B2D24;
+  --lkv-surface-elevated: #1F3328;
+  --lkv-surface-muted: #182A21;
+
+  --lkv-text-primary: #F1F5F1;
+  --lkv-text-secondary: #EDF3EF;
+  --lkv-text-muted: #CBD8D0;
+  --lkv-text-subtle: #A8B8AF;
+  --lkv-text-inverted: #FFFFFF;
+
+  --lkv-hover-surface: #22382C;
+  --lkv-field-bg: #16251D;
+  --lkv-field-border: rgba(241, 245, 241, 0.28);
+  --lkv-disabled-bg: #1F2E26;
+  --lkv-disabled-text: #7E8C84;
+  --lkv-overlay-scrim: rgba(0, 0, 0, 0.55);
+  --lkv-focus-ring: rgba(127, 196, 154, 0.35);
+  --lkv-on-action: #08150F;
+  --lkv-on-primary: #08150F;
+  --lkv-on-primary-muted: #163B28;
+
+  --lkv-border: rgba(241, 245, 241, 0.16);
+  --lkv-border-subtle: rgba(241, 245, 241, 0.08);
+  --lkv-border-strong: rgba(241, 245, 241, 0.42);
+
+  --lkv-success: #8FC7A4;
+  --lkv-success-bg: #1E3327;
+  --lkv-warning: #E4C27A;
+  --lkv-warning-bg: #3A2F1B;
+  --lkv-warning-dark: #E4C27A;
+  --lkv-warning-subtle: #2A2314;
+  --lkv-danger: #EFA096;
+  --lkv-danger-bg: #3A211E;
+  --lkv-danger-dark: #B8544A;
+  --lkv-info: #9FC4D4;
+  --lkv-info-rgb: 159, 196, 212;
+  --lkv-info-bg: #1D2F38;
+
+  --glass-solid: var(--card-tint-solid);
+  --glass-text: #F1F5F1;
+  --glass-text-secondary: rgba(241, 245, 241, 0.74);
+  /* Phase 3 (final) — VERRE NEUTRE BLANC : plus aucune teinte verte dans la
+     couche UI. Le vert reste dans la photo, le contenu et les états. */
+  --glass-bg-light: rgba(255, 255, 255, 0.07);
+  --glass-bg-medium: rgba(255, 255, 255, 0.10);
+  --glass-bg-strong: rgba(255, 255, 255, 0.14);
+  --glass-subtle-fill: rgba(255, 255, 255, 0.05);
+  --glass-border-strong: rgba(255, 255, 255, 0.30);
+  --glass-highlight: rgba(255, 255, 255, 0.36);
+  --glass-shadow-final: 0 8px 32px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --glass-border-color: rgba(255, 255, 255, 0.20);
+  --glass-border: rgba(255, 255, 255, 0.20);
+  --glass-rim: rgba(241, 245, 241, 0.20);
+  --glass-focus: #7FC49A;
+  --glass-selected-border: #7FC49A;
+  --glass-critical-border: #FFB4A9;
+  --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim-color), 0 24px 48px -16px rgba(0, 0, 0, 0.5);
+  --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim-color), 0 -4px 24px -8px rgba(0, 0, 0, 0.3);
+
+  --btn-tint: rgba(255, 255, 255, 0.10);
+  --btn-tint-action: rgba(255, 255, 255, 0.10);
+  --btn-tint-danger: rgba(255, 255, 255, 0.10);
+  --btn-glass-border: rgba(255, 255, 255, 0.20);
+  --btn-rim: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --btn-tint-solid: #7FC49A;
+  --btn-content: #F1F5F1;
+  --btn-on-solid: #08150F;
+  --btn-text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --btn-shadow: 0 4px 14px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.30);
+
+  --card-tint: rgba(255, 255, 255, 0.06);
+  --card-tint-strong: rgba(255, 255, 255, 0.11);
+  --card-tint-solid: #1B2D24;
+  --card-content: #F1F5F1;
+  --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.30);
+  --card-shadow-elevated: 0 10px 28px rgba(0, 0, 0, 0.48), 0 2px 6px rgba(0, 0, 0, 0.32);
+
+  --material-bar-bg: rgba(255, 255, 255, 0.10);
+  --material-bar-border: rgba(255, 255, 255, 0.20);
+  --material-sheet-bg: rgba(30, 32, 30, 0.62);
+  --card-saturate: 110%;
+
+  /* iOS 27 Liquid Glass Inks & Layers (Dark Mode) */
+  --glass-tint-rgb: 34 34 38;
+  --glass-label: #FFFFFF;
+  --glass-label-secondary: #E2E8E4;
+  --glass-label-tertiary: #B2C2B8;
+  --glass-label-quaternary: #7A8C82;
+
+  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.50 + 0.32 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgb(255 255 255 / calc(0.08 + 0.08 * var(--glass-intensity, 0.5)));
+  --g3-bg: rgba(255, 255, 255, 0.90);
+  --g3-text: #121815;
+  --g3-bg-disabled: rgba(255, 255, 255, 0.62);
+  --g3-text-disabled: #565B58;
+  --gc-bg: rgba(255, 255, 255, 0.12);
+
+  --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.55);
+  --glass-rim-color: rgba(0, 0, 0, 0.55);
+  --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.22);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   iOS 27 FULL LIQUID GLASS CANONICAL SPECIFICATION (5 Niveaux)
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  --glass-intensity: 0.5;
+  --glass-tint-rgb: 255 255 255;
+  --glass-ink: 18 24 21;
+  --glass-blur: calc(20px + 12px * var(--glass-intensity));
+  --glass-sat: 180%;
+
+  /* Typographie vibrante monochrome */
+  --glass-label: #101813;
+  --glass-label-secondary: #26332B;
+  --glass-label-tertiary: #405047;
+  --glass-label-quaternary: #3F5147;
+  --glass-focus-outline: #226148;
+
+  /* Couches de matière (G1 = flou, G2/G3 = lumière/matière sans flou) */
+  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgb(245 248 246 / calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --g1-reduced-bg: #FFFFFF;
+  --g2-reduced-bg: #F5F8F6;
+  --g3-reduced-bg: #121815;
+  --gc-reduced-bg: #F5F8F6;
+  --g3-bg: rgba(18, 24, 21, 0.94);
+  --g3-text: #FFFFFF;
+  --g3-bg-disabled: rgba(255, 255, 255, 0.10);
+  --g3-text-disabled: rgba(255, 255, 255, 0.85);
+  --gc-bg: rgba(255, 255, 255, 0.40);
+
+  /* Bords assombris et reflets iOS 27 */
+  --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.22);
+  --glass-rim-color: rgba(0, 0, 0, 0.22);
+  --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.45);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.16);
+
+  /* Rayons & Concentricité */
+  --lkv-radius-min: 12px;
+  --lkv-radius-tile: 24px;
+  --lkv-radius-popover: 28px;
+  --lkv-radius-card: 28px;
+  --lkv-radius-hero: 38px;
+  --lkv-radius-sheet: 44px;
+  --lkv-radius-full: 9999px;
+  --lkv-radius-concentric-floor: 20px;
+  --lkv-radius-concentric-strict: max(calc(var(--lkv-radius-card) - var(--space-4)), var(--lkv-radius-concentric-floor));
+
+  /* Hiérarchie des couches Z-Index */
+  --z-base: 1;
+  --z-sticky: 100;
+  --z-subbar: 200;
+  --z-tabbar: 300;
+  --z-hud: 400;
+  --z-sheet: 500;
+  --z-toast: 600;
+  --z-alert: 700;
+
+  /* Dimensions de navigation & compensation de scroll */
+  --tabbar-h: 72px;
+  --subbar-h: 48px;
+  --content-pb: calc(var(--tabbar-h) + var(--safe-bottom, 24px) + 28px);
+}
+
+html.dark, .dark, [data-theme='dark'] {
+  --glass-tint-rgb: 14 18 16;
+  --glass-ink: 245 250 246;
+  --glass-label: #FFFFFF;
+  --glass-label-secondary: #EDF3EF;
+  --glass-label-tertiary: #CBD8D0;
+  --glass-label-quaternary: #A8B8AF;
+  --glass-focus-outline: #7FC49A;
+  --glass-text: #F1F5F1;
+  --glass-text-secondary: #EDF3EF;
+  --glass-bg-light: rgba(18, 22, 20, 0.82);
+  --glass-bg-medium: rgba(14, 18, 16, calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
+  --glass-bg-strong: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --glass-subtle-fill: rgba(255, 255, 255, 0.08);
+  --btn-tint: rgba(26, 32, 28, 0.88);
+  --card-tint: rgba(14, 18, 16, calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
+  --card-tint-strong: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --card-content: #F1F5F1;
+  --g1-bg: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgba(22, 26, 24, calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --g1-reduced-bg: #0E1210;
+  --g2-reduced-bg: #161A18;
+  --g3-reduced-bg: #FFFFFF;
+  --gc-reduced-bg: #161A18;
+  --g3-bg: rgba(255, 255, 255, 0.95);
+  --g3-text: #0E1411;
+  --g3-bg-disabled: rgba(255, 255, 255, 0.62);
+  --g3-text-disabled: #565B58;
+  --gc-bg: rgba(255, 255, 255, 0.18);
+  --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.65);
+  --glass-rim-color: rgba(0, 0, 0, 0.65);
+  --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.50);
+  --lkv-app-bg-scrim: rgba(8, 10, 12, 0.88);
+  --lkv-app-bg-fallback: #0b0d12;
+  --lkv-text-primary: #F1F5F1;
+  --lkv-text-secondary: #EDF3EF;
+  --lkv-text-muted: #CBD8D0;
+  --lkv-text-subtle: #A8B8AF;
+  /* Encre d accent du theme sombre. Ce bloc redefinissait les encres de texte
+     et les encres de verre, mais laissait `--lkv-action` sur sa valeur du
+     theme clair (#226148) : mesure au navigateur en 393x852, la puce de filtre
+     selectionnee du preparateur sortait en rgb(34, 97, 72) sur le verre sombre,
+     soit 1,77:1. Les valeurs reprennent celles du bloc `.dark`, pour que
+     l'accent sombre n'ait qu'une definition. */
+  --lkv-action: #7FC49A;
+  --lkv-action-hover: #9AD4B1;
+  --lkv-action-soft: #24382C;
+  --lkv-action-rgb: 127, 196, 154;
+  /* Contenu pose sur un aplat d accent : sombre, sinon il disparait des que
+     l'accent devient clair. */
+  --lkv-on-action: #08150F;
+  --btn-on-solid: #08150F;
+  --lkv-on-primary: #08150F;
+  --lkv-on-primary-muted: #163B28;
+}
+
+/* Primitives boutons & composants Liquid Glass */
+.g3,
+button.g3,
+[class*='var(--g3-bg)'] {
+  background-color: var(--g3-bg) !important;
+  color: var(--g3-text) !important;
+}
+/* Un CTA primaire desactive ne peut pas etre rendu avec une opacite : elle
+   compose le texte ET son fond vers le meme gris et le rend illisible. On
+   lui donne donc une PALETTE desactivee, portee par deux jetons, et on
+   neutralise l opacite. Ce selecteur (0,2,0) l emporte sur le hack
+   [class*=var(--g3-bg)] (0,1,0) qui impose le materiau G3 en !important. */
+.button-primary:disabled {
+  --g3-bg: var(--g3-bg-disabled);
+  --g3-text: var(--g3-text-disabled);
+  background-color: var(--g3-bg) !important;
+  color: var(--g3-text) !important;
+  opacity: 1;
+}
+.g2,
+button.g2,
+[class*='var(--g2-bg)'] {
+  background-color: var(--g2-bg) !important;
+  color: var(--glass-label) !important;
+}
+
+.dark .glass-pill {
+  background: var(--g3-bg) !important;
+  color: var(--g3-text) !important;
+  border-color: var(--glass-border-color) !important;
+}
+.dark .leaflet-control-zoom a,
+.dark .leaflet-bar a {
+  background: rgba(18, 24, 21, 0.90) !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.20) !important;
+}
+.dark .leaflet-control-attribution a {
+  color: #9AD4B1 !important;
+}
+.dark [class~='bg-[var(--lkv-primary)]']:not(button) {
+  color: #08150F !important;
+}
+.dark .text-forest-soft,
+.dark .text-\[var\(--lkv-primary-soft\)\] {
+  color: #9AD4B1 !important;
+}
+.dark .ring-white {
+  --tw-ring-color: rgba(255, 255, 255, 0.20) !important;
+}
+.dark .text-stone-900,
+.dark .text-stone-800 {
+  color: #F1F5F1 !important;
+}
+.dark .text-stone-700,
+.dark .text-stone-600 {
+  color: #CBD8D0 !important;
+}
+.dark .text-forest-900,
+.dark .text-forest-800,
+.dark .text-forest-700,
+.dark .text-forest-600 {
+  color: #EDF3EF !important;
+}
+
+/* Classes utilitaires universelles Liquid Glass */
+.leaflet-control-attribution a {
+  color: var(--lkv-text-primary) !important;
+}
+.leaflet-bottom.leaflet-right {
+  bottom: calc(var(--content-pb, 88px) + 8px) !important;
+  right: 12px !important;
+  z-index: var(--z-hud, 400) !important;
+}
+.leaflet-control-attribution {
+  background: var(--card-tint-solid) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 9999px !important;
+  padding: 2px 8px !important;
+  color: var(--lkv-text-primary) !important;
+  font-size: 10px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+}
+.dark .leaflet-control-attribution {
+  background: var(--card-tint-solid) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: var(--lkv-text-primary) !important;
+}
+@media (max-width: 767px) {
+  .leaflet-bottom.leaflet-right {
+    bottom: calc(var(--content-pb, 88px) + 48px) !important;
+    left: 12px !important;
+    right: auto !important;
+  }
+  .leaflet-bottom.leaflet-right .leaflet-control-attribution {
+    left: auto !important;
+    right: auto !important;
+    float: none !important;
+  }
+}
+
+.g0-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: -1;
+  background-image: var(--lkv-app-bg-image-portrait);
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+}
+@media (min-aspect-ratio: 1 / 1) {
+  .g0-backdrop {
+    background-image: var(--lkv-app-bg-image-landscape);
+  }
+}
+
+.g1 {
+  background: var(--g1-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-rim-shadow), var(--glass-rim-inner), var(--glass-highlight), var(--glass-shadow);
+  border-radius: var(--lkv-radius-card);
+}
+
+.g2 {
+  background: var(--g2-bg);
+  box-shadow: var(--glass-rim-shadow), var(--glass-highlight);
+  border-radius: var(--lkv-radius-tile);
+}
+
+.g3 {
+  background: var(--g3-bg);
+  color: var(--g3-text);
+  box-shadow: var(--glass-rim-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25);
+  border-radius: var(--lkv-radius-full);
+  font-weight: 600;
+}
+
+.gc {
+  background: var(--gc-bg);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-rim-shadow), var(--glass-highlight), 0 4px 14px rgba(0,0,0,0.18);
+  border-radius: var(--lkv-radius-full);
+}
+
+/* Squircle progressif */
+@supports (corner-shape: squircle) {
+  .g1, .g2 { corner-shape: squircle; }
+}
+
+/* Dégradation gracieuse accessibilité */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .g1 { background: rgb(var(--glass-tint-rgb) / 0.94); }
+  .gc { background: rgb(var(--glass-tint-rgb) / 0.90); }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  html body .g1,
+  html body .g2,
+  html body .g3,
+  html body .gc,
+  html body [class*='var(--g1-bg)'],
+  html body [class*='var(--g2-bg)'],
+  html body [class*='var(--g3-bg)'],
+  html body [class*='var(--gc-bg)'],
+  html body [class~='backdrop-blur-sm'],
+  html body [class~='backdrop-blur-md'],
+  html body [class~='backdrop-blur-lg'],
+  html body [class~='backdrop-blur-xl'],
+  html body [class~='backdrop-blur-2xl'],
+  html body [class*='backdrop-blur-'] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html body [class~='backdrop-blur-sm'],
+  html body [class~='backdrop-blur-md'],
+  html body [class~='backdrop-blur-lg'],
+  html body [class~='backdrop-blur-xl'],
+  html body [class~='backdrop-blur-2xl'],
+  html body [class*='backdrop-blur-'] {
+    background: var(--glass-solid) !important;
+  }
+  html body .g1,
+  html body [class*='var(--g1-bg)'] {
+    background: var(--g1-reduced-bg) !important;
+    box-shadow: 0 0 0 1.5px rgb(var(--glass-ink) / 0.5) !important;
+  }
+  html body .g2,
+  html body [class*='var(--g2-bg)'] {
+    background: var(--g2-reduced-bg) !important;
+    box-shadow: 0 0 0 1px rgb(var(--glass-ink) / 0.3) !important;
+  }
+  html body .g3,
+  html body [class*='var(--g3-bg)'] {
+    background: var(--g3-reduced-bg) !important;
+  }
+  html body .gc,
+  html body [class*='var(--gc-bg)'] {
+    background: var(--gc-reduced-bg) !important;
+  }
+  html body [style*='--g2-bg'] {
+    background: var(--g2-reduced-bg) !important;
+  }
+  html body [style*='--g3-bg'] {
+    background: var(--g3-reduced-bg) !important;
+    color: var(--g3-text) !important;
+  }
+  html body .glass-pill.glass-pill {
+    background: var(--g3-reduced-bg) !important;
+    color: var(--g3-text) !important;
+  }
+  /* Le bouton d'action plein garde sa couleur d'action : --g3-reduced-bg
+     (verre neutre aplati) rendait le CTA en #121815 sous contraste eleve,
+     couleur invalide pour le texte blanc et contraire a l'intention
+     d'accessibilite. Ce repli appartient aux pills, pas aux CTA. */
+  html body :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
+    background: var(--btn-tint-solid) !important;
+    color: var(--btn-on-solid) !important;
+  }
+}
+
+.glass { --lkv-text-secondary: var(--glass-text-secondary); }
+
+/* ==========================================================================
+   PRÉPARATEUR D'AVENTURE — gabarit d'écran (/prepare)
+   Trois étapes plein écran : Destination · Parcours · Départ.
+   Le verre reste réservé aux commandes flottantes ; les surfaces de texte
+   sont presque opaques pour garantir la lisibilité (cf. A2).
+   ========================================================================== */
+:root {
+  /* Chrome de l'écran : bandeau de navigation et barre d'action. */
+  --prep-nav-height: 52px;
+  --prep-action-height: 52px;
+  /* Part du corps occupée par la carte. Se compacte avant tout scroll. */
+  --prep-map-share: 40%;
+  --prep-map-share-compact: 24%;
+  /* Écart entre les trois blocs d'une étape (plage 12–16 px). */
+  --prep-block-gap: 14px;
+}

@@ -1,0 +1,1061 @@
+import 'server-only';
+import { randomUUID } from 'node:crypto';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabase } from '@/lib/ai/serviceClient';
+import { createTrip } from '@/lib/queries-trips';
+import { runAutoGenPipeline } from '../engine/autoGenPipeline';
+import { createTripFromAutogenIntent } from './createTripFromAutogenIntent';
+import {
+  buildTrailRawInput,
+  isWithinCorridor,
+  mapTrailDifficulty,
+  samplePolyline,
+  type TrailInput,
+  type TrailMetaInput,
+  type TrailPoint,
+} from '../domain/trailToActivity';
+import {
+  buildDeterministicExpenses,
+  buildDeterministicPois,
+  buildDeterministicSteps,
+} from '../domain/deterministicActivityContent';
+import type { CreateTripFromAutogenIntentInput } from '../schemas/autogenTripCreate.schema';
+import type { TripBrief } from '../schemas/autoGen.schema';
+import { enqueueActivityEnrichment } from './activityEnrichment/enqueue';
+import { generateTripDocuments } from './generateTripDocuments';
+import { generateJournalNotes } from './generateJournalNotes';
+import { createKitForTrip } from './createKitForTrip';
+import { awardTrailPrepared } from '@/features/progression/server/producerHooks';
+import { enqueueProgressionAwardIntent } from '@/features/progression/server/intents';
+import {
+  claimTripLaunch,
+  completeTripLaunch,
+  failTripLaunch,
+} from './tripLaunch';
+
+/**
+ * « Préparer » un sentier → activité complète (Task 4).
+ *
+ * Chaîne idempotente : normalisation de `route_id` → sentier réel
+ * (`hiking_routes` + `trail_metadata` + géométrie `get_route_geojson`) →
+ * réutilisation par (`user_id`, `metadata->>'route_id'`) → usine AutoGen
+ * (`runAutoGenPipeline` + `createTripFromAutogenIntent`) avec repli minimal
+ * `createTrip` → socle déterministe (`trip_steps`/`trip_pois`/`trip_expenses`)
+ * → enfilage `activity-enrichment`.
+ *
+ * Règle dure : aucune valeur inventée ; tout échec non bloquant est journalisé
+ * et l'utilisateur conserve une activité réelle dès que possible.
+ */
+
+export type PrepareTrailOutcome =
+  | {
+      status: 'unavailable';
+      reason: 'not_found' | 'no_name' | 'no_geometry' | 'persist_failed';
+    }
+  | { status: 'reused'; tripId: string; slug: string; title: string }
+  | { status: 'created'; tripId: string; slug: string; title: string }
+  | { status: 'fallback_created'; tripId: string; slug: string; title: string };
+
+/**
+ * Signal interne : le sentier est valide mais aucun utilisateur connecté.
+ * La route redirige vers `/connexion?next=…` ; jamais de levée vers une 500.
+ */
+export class PrepareActivityAuthError extends Error {
+  constructor() {
+    super('Authentification requise pour préparer une activité.');
+    this.name = 'PrepareActivityAuthError';
+  }
+}
+
+interface TripRecord {
+  tripId: string;
+  slug: string;
+  title: string;
+  /** Fix round final — métadonnées réelles du voyage réutilisé (re-enfilage). */
+  metadata: Record<string, unknown> | null;
+}
+
+interface TrailPoiRow {
+  id: number;
+  name: string;
+  category: string | null;
+  lat: number;
+  lng: number;
+}
+
+type LoadedTrail =
+  | { status: 'unavailable'; reason: 'not_found' | 'no_name' | 'no_geometry' }
+  | {
+      status: 'ok';
+      trail: TrailInput;
+      meta: TrailMetaInput | null;
+      polyline: TrailPoint[];
+    };
+
+/** Corridor réel maximal des POI autour du tracé (km). */
+const POI_CORRIDOR_KM = 0.75;
+/** Marge de la bounding box d'interrogation des POI (±°, puis filtre haversine). */
+const POI_BBOX_DEG = 0.01;
+const POI_LIMIT = 200;
+const PREPARE_SOURCE = 'prepare-trail';
+/**
+ * Fix course 409 : quand l'usine refuse parce qu'une génération concurrente est
+ * active, l'activité gagnante apparaît dans `trips` sous peu. On l'attend
+ * (borné) AVANT tout repli plutôt que de créer un doublon sans kit.
+ */
+const CONCURRENT_TRIP_RETRY_ATTEMPTS = 8;
+const CONCURRENT_TRIP_RETRY_DELAY_MS = 1000;
+
+function toFiniteNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toStringOrNull(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
+/** `route_id` canonique : entier fini > 0, sinon `null` (jamais de write). */
+function normalizeRouteId(raw: string): number | null {
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed <= 0) return null;
+  return parsed;
+}
+
+/** Géométrie GeoJSON exploitable, sans invention de type. */
+function toTrailGeom(value: unknown): TrailInput['geom'] {
+  if (typeof value === 'object' && value !== null) {
+    const candidate = value as { type?: unknown; coordinates?: unknown };
+    return {
+      type: typeof candidate.type === 'string' ? candidate.type : 'Unknown',
+      coordinates: candidate.coordinates ?? null,
+    };
+  }
+  return { type: 'Unknown', coordinates: null };
+}
+
+function parseGeometry(raw: unknown): unknown {
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  return raw ?? null;
+}
+
+function isUniqueRouteViolation(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { code?: unknown; message?: unknown };
+  if (candidate.code === '23505') return true;
+  const message = typeof candidate.message === 'string' ? candidate.message : '';
+  return /uniq_trips_user_route/.test(message) || /duplicate key value/i.test(message);
+}
+
+/** Charge le sentier réel : route, métadonnées et géométrie échantillonnée. */
+async function loadTrail(db: SupabaseClient, routeId: number): Promise<LoadedTrail> {
+  const { data: routeRow, error: routeError } = await db
+    .from('hiking_routes')
+    .select('id, name, ref, network, distance_km')
+    .eq('id', routeId)
+    .maybeSingle();
+
+  if (routeError) {
+    console.error('[LKDV preparer-sentier] lecture hiking_routes en échec:', routeError.message);
+    return { status: 'unavailable', reason: 'not_found' };
+  }
+  if (!routeRow) return { status: 'unavailable', reason: 'not_found' };
+
+  const row = routeRow as Record<string, unknown>;
+  const name = toStringOrNull(row.name);
+  // Bornes du schéma `trips.title` (3–120) : hors bornes, le nom n'est pas
+  // exploitable pour une activité (jamais tronqué ni complété).
+  if (!name || name.length < 3 || name.length > 120) {
+    return { status: 'unavailable', reason: 'no_name' };
+  }
+
+  const [metaResult, geojsonResult] = await Promise.all([
+    db
+      .from('trail_metadata')
+      .select('difficulty, duration_hours, elevation_gain, terrain_type')
+      .eq('trail_id', routeId)
+      .maybeSingle(),
+    db.rpc('get_route_geojson', { p_route_id: routeId }),
+  ]);
+
+  if (metaResult.error) {
+    console.error(
+      '[LKDV preparer-sentier] lecture trail_metadata en échec:',
+      metaResult.error.message
+    );
+  }
+  if (geojsonResult.error) {
+    console.error(
+      '[LKDV preparer-sentier] lecture get_route_geojson en échec:',
+      geojsonResult.error.message
+    );
+  }
+
+  const geometry = parseGeometry(geojsonResult.data);
+  const polyline = samplePolyline(geometry);
+  if (polyline.length === 0) return { status: 'unavailable', reason: 'no_geometry' };
+
+  const metaRow = (metaResult.data ?? null) as Record<string, unknown> | null;
+  const meta: TrailMetaInput | null = metaRow
+    ? {
+        difficulty: toStringOrNull(metaRow.difficulty),
+        durationHours: toFiniteNumber(metaRow.duration_hours),
+        elevationGain: toFiniteNumber(metaRow.elevation_gain),
+        terrainType: toStringOrNull(metaRow.terrain_type),
+      }
+    : null;
+
+  return {
+    status: 'ok',
+    trail: {
+      id: routeId,
+      name,
+      ref: toStringOrNull(row.ref),
+      network: toStringOrNull(row.network),
+      distanceKm: toFiniteNumber(row.distance_km),
+      geom: toTrailGeom(geometry),
+    },
+    meta,
+    polyline,
+  };
+}
+
+/** POI réels ≤ 750 m du tracé (bbox ±0,01° puis filtre haversine). */
+async function loadTrailPois(db: SupabaseClient, polyline: TrailPoint[]): Promise<TrailPoiRow[]> {
+  const lats = polyline.map((point) => point.lat);
+  const lngs = polyline.map((point) => point.lng);
+  const minLat = Math.min(...lats) - POI_BBOX_DEG;
+  const maxLat = Math.max(...lats) + POI_BBOX_DEG;
+  const minLng = Math.min(...lngs) - POI_BBOX_DEG;
+  const maxLng = Math.max(...lngs) + POI_BBOX_DEG;
+
+  try {
+    const { data, error } = await db.rpc('get_trail_pois_bbox', {
+      min_lng: minLng,
+      min_lat: minLat,
+      max_lng: maxLng,
+      max_lat: maxLat,
+      p_limit: POI_LIMIT,
+    });
+    if (error) {
+      console.error('[LKDV preparer-sentier] POI bbox en échec:', error.message);
+      return [];
+    }
+
+    const rows: TrailPoiRow[] = [];
+    for (const raw of (data ?? []) as Record<string, unknown>[]) {
+      const id = toFiniteNumber(raw.id);
+      const name = typeof raw.name === 'string' ? raw.name.trim() : '';
+      const lat = toFiniteNumber(raw.lat);
+      const lng = toFiniteNumber(raw.lng);
+      if (id === null || name === '' || lat === null || lng === null) continue;
+      if (!isWithinCorridor({ lat, lng }, polyline, POI_CORRIDOR_KM)) continue;
+      rows.push({ id, name, category: toStringOrNull(raw.category), lat, lng });
+    }
+    return rows;
+  } catch (error) {
+    console.error('[LKDV preparer-sentier] POI bbox en erreur inattendue:', error);
+    return [];
+  }
+}
+
+type ExistingTripResult =
+  | { status: 'found'; trip: TripRecord }
+  | { status: 'none' }
+  | { status: 'error' };
+
+type PersistRouteIdResult =
+  | { status: 'ok' }
+  | { status: 'duplicate'; trip: TripRecord }
+  | { status: 'failed' };
+
+/** Réutilisation idempotente par (`user_id`, `metadata->>'route_id'`). */
+async function findExistingTrip(
+  db: SupabaseClient,
+  userId: string,
+  routeId: number
+): Promise<ExistingTripResult> {
+  const { data, error } = await db
+    .from('trips')
+    .select('id, slug, title, metadata')
+    .eq('user_id', userId)
+    .filter('metadata->>route_id', 'eq', String(routeId))
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[LKDV preparer-sentier] recherche activité existante en échec:', error.message);
+    return { status: 'error' };
+  }
+  if (!data) return { status: 'none' };
+
+  const row = data as Record<string, unknown>;
+  const metadata =
+    row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? (row.metadata as Record<string, unknown>)
+      : null;
+  return {
+    status: 'found',
+    trip: {
+      tripId: String(row.id),
+      slug: String(row.slug),
+      title: String(row.title),
+      metadata,
+    },
+  };
+}
+
+function delayMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Attente courte et bornée d'une activité créée par une génération concurrente
+ * (l'usine a répondu 409/429/5xx alors qu'un autre appel préparait le même
+ * sentier). Ré-interroge `findExistingTrip` jusqu'à 8 fois, 1 s d'intervalle :
+ * dès qu'elle apparaît, l'appelant la réutilise ; sinon repli assumé.
+ */
+async function waitForRacedTrip(
+  db: SupabaseClient,
+  userId: string,
+  routeId: number
+): Promise<ExistingTripResult> {
+  for (let attempt = 1; attempt <= CONCURRENT_TRIP_RETRY_ATTEMPTS; attempt += 1) {
+    const found = await findExistingTrip(db, userId, routeId);
+    if (found.status !== 'none') return found;
+    if (attempt < CONCURRENT_TRIP_RETRY_ATTEMPTS) {
+      console.warn('[LKDV preparer-sentier] attente de la génération concurrente…');
+      await delayMs(CONCURRENT_TRIP_RETRY_DELAY_MS);
+    }
+  }
+  return { status: 'none' };
+}
+
+/**
+ * Fix « kit jamais manquant » (réutilisation) : une activité existante sans
+ * `kit_id` (créée avant le correctif, par un ancien repli ou une course)
+ * reçoit un kit déterministe au moment où « Préparer » la réutilise.
+ *
+ * Best-effort et bon marché : UNE lecture bornée `kit_id` par réutilisation,
+ * création uniquement si le kit manque, jamais d'échec bloquant la
+ * réutilisation.
+ */
+async function ensureReusedTripKit(
+  db: SupabaseClient,
+  userId: string,
+  tripId: string,
+  trail: TrailInput,
+  meta: TrailMetaInput | null
+): Promise<void> {
+  try {
+    const { data, error } = await db
+      .from('trips')
+      .select('kit_id')
+      .eq('id', tripId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) {
+      console.error('[LKDV preparer-sentier] lecture kit_id en échec:', error.message);
+      return;
+    }
+    if ((data as { kit_id?: unknown } | null)?.kit_id) return;
+
+    const kit = await createKitForTrip({
+      supabase: db,
+      userId,
+      tripId,
+      trail: { id: trail.id, name: trail.name, distanceKm: trail.distanceKm ?? null },
+      meta: {
+        difficulty: meta?.difficulty ?? null,
+        durationHours: meta?.durationHours ?? null,
+        elevationGain: meta?.elevationGain ?? null,
+        terrainType: meta?.terrainType ?? null,
+        season: null,
+      },
+      layers: null,
+    });
+    if (kit.kitId) {
+      console.warn('[LKDV preparer-sentier] kit rétro-généré pour activité réutilisée:', tripId);
+    }
+  } catch (error) {
+    console.error('[LKDV preparer-sentier] kit rétro-généré en échec:', error);
+  }
+}
+
+/**
+ * Fix round final — un voyage réutilisé dont l'enrichissement n'a jamais abouti
+ * (aucune version enrichie, statut ≠ `done`) est ré-enfilé. Le service skippe
+ * immédiatement un voyage déjà enrichi : le rejeu est donc sans coût réel, et
+ * la reprise après un échec/cap de tentatives n'est plus un cul-de-sac.
+ */
+function shouldReenqueueEnrichment(metadata: Record<string, unknown> | null): boolean {
+  const version = metadata?.enrichment_version;
+  const enriched = typeof version === 'string' && version.trim() !== '';
+  return !enriched && metadata?.enrichment_status !== 'done';
+}
+
+function routeIdFromMetadata(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const value = (metadata as Record<string, unknown>).route_id;
+  if (value === null || value === undefined) return null;
+  const asString = String(value).trim();
+  return asString === '' ? null : asString;
+}
+
+/**
+ * Persiste `metadata.route_id` (nombre) avec une tentative, un retry, puis une
+ * vérification par relecture. Un conflit 23505 signifie qu'une autre activité
+ * porte déjà ce `route_id` → réutilisation. Tout autre échec persistant est
+ * remonté `failed` (l'appelant compense et sert la page honnête).
+ */
+async function writeTripPrepareMetadata(
+  writer: SupabaseClient,
+  tripId: string,
+  userId: string,
+  routeId: number,
+  service?: SupabaseClient | null
+): Promise<PersistRouteIdResult> {
+  const attempt = async (): Promise<'ok' | 'duplicate' | 'failed'> => {
+    try {
+      const { data, error: readError } = await writer
+        .from('trips')
+        .select('metadata')
+        .eq('id', tripId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (readError) {
+        console.error(
+          '[LKDV preparer-sentier] lecture métadonnées route_id en échec:',
+          readError.message
+        );
+        return 'failed';
+      }
+
+      const current =
+        data && typeof (data as { metadata?: unknown }).metadata === 'object' && data.metadata
+          ? ((data as { metadata: Record<string, unknown> }).metadata ?? {})
+          : {};
+
+      const payload = {
+        metadata: {
+          ...current,
+          route_id: routeId,
+          source: PREPARE_SOURCE,
+          enrichment_status: 'pending',
+        },
+        updated_at: new Date().toISOString(),
+      };
+
+      let { data: updatedRows, error } = await writer
+        .from('trips')
+        .update(payload)
+        .eq('id', tripId)
+        .eq('user_id', userId)
+        .select('id');
+
+      // Écriture silencieuse à 0 ligne (RLS/visibilité) : rejoue via le client
+      // service (bypass RLS) avant de conclure à l'échec — cause racine des
+      // « route_id absent après écriture » constatés en dev.
+      if (!error && (!updatedRows || updatedRows.length === 0) && service && service !== writer) {
+        console.warn('[LKDV preparer-sentier] écriture route_id rejouée via service:', tripId);
+        const retry = await service
+          .from('trips')
+          .update(payload)
+          .eq('id', tripId)
+          .select('id');
+        updatedRows = retry.data;
+        error = retry.error;
+      }
+
+      if (error) {
+        if (isUniqueRouteViolation(error)) return 'duplicate';
+        console.error('[LKDV preparer-sentier] écriture route_id en échec:', error.message);
+        return 'failed';
+      }
+      if (!updatedRows || updatedRows.length === 0) {
+        console.error(
+          '[LKDV preparer-sentier] écriture route_id sans effet (0 ligne):',
+          tripId,
+          userId
+        );
+        return 'failed';
+      }
+      return 'ok';
+    } catch (error) {
+      if (isUniqueRouteViolation(error)) return 'duplicate';
+      console.error('[LKDV preparer-sentier] écriture route_id en erreur inattendue:', error);
+      return 'failed';
+    }
+  };
+
+  let result = await attempt();
+  if (result === 'failed') {
+    console.error('[LKDV preparer-sentier] route_id non persisté — nouvelle tentative:', tripId);
+    result = await attempt();
+  }
+
+  if (result === 'duplicate') {
+    const existing = await findExistingTrip(writer, userId, routeId);
+    if (existing.status === 'found') return { status: 'duplicate', trip: existing.trip };
+    console.error('[LKDV preparer-sentier] conflit route_id sans activité réutilisable:', tripId);
+    return { status: 'failed' };
+  }
+  if (result === 'failed') return { status: 'failed' };
+
+  const verifyClient = service ?? writer;
+  const { data: verifyRow, error: verifyError } = await verifyClient
+    .from('trips')
+    .select('metadata')
+    .eq('id', tripId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (verifyError) {
+    console.error(
+      '[LKDV preparer-sentier] vérification route_id en échec:',
+      verifyError.message
+    );
+    return { status: 'failed' };
+  }
+
+  const persisted = routeIdFromMetadata((verifyRow as { metadata?: unknown } | null)?.metadata);
+  if (persisted !== String(routeId)) {
+    console.error('[LKDV preparer-sentier] route_id absent après écriture:', tripId);
+    return { status: 'failed' };
+  }
+
+  return { status: 'ok' };
+}
+
+/** Compensation : supprime l'activité créée (cascades enfants), best-effort. */
+async function compensateCreatedTrip(
+  writer: SupabaseClient,
+  tripId: string,
+  userId: string
+): Promise<void> {
+  try {
+    const { error } = await writer
+      .from('trips')
+      .delete()
+      .eq('id', tripId)
+      .eq('user_id', userId);
+    if (error) {
+      console.error('[LKDV preparer-sentier] compensation suppression en échec:', error.message);
+    }
+  } catch (error) {
+    console.error('[LKDV preparer-sentier] compensation suppression en erreur inattendue:', error);
+  }
+}
+
+interface PlateInput {
+  writer: SupabaseClient;
+  userId: string;
+  tripId: string;
+  trail: TrailInput;
+  meta: TrailMetaInput | null;
+  polyline: TrailPoint[];
+  pois: TrailPoiRow[];
+  layers: CreateTripFromAutogenIntentInput['layers'] | null;
+  partySize: number;
+}
+
+/**
+ * POI réels rattachés à un jour : index de polyligne le plus proche du POI,
+ * fraction de progression → jour correspondant (jamais un POI hors parcours).
+ */
+function poiNamesForDay(
+  pois: TrailPoiRow[],
+  polyline: TrailPoint[],
+  dayNumber: number,
+  days: number
+): string[] {
+  if (pois.length === 0 || polyline.length === 0 || days <= 0) return [];
+  const names: string[] = [];
+  for (const poi of pois) {
+    let bestIndex = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (let index = 0; index < polyline.length; index += 1) {
+      const deltaLat = polyline[index].lat - poi.lat;
+      const deltaLng = polyline[index].lng - poi.lng;
+      const squared = deltaLat * deltaLat + deltaLng * deltaLng;
+      if (squared < bestDistance) {
+        bestDistance = squared;
+        bestIndex = index;
+      }
+    }
+    const fraction = polyline.length > 1 ? bestIndex / (polyline.length - 1) : 0;
+    const day = Math.max(1, Math.min(days, Math.floor(fraction * days) + 1));
+    if (day === dayNumber) names.push(poi.name);
+  }
+  return names;
+}
+
+/** Dressage best-effort : chaque insert est isolé, jamais bloquant. */
+async function plateDeterministicContent(input: PlateInput): Promise<void> {
+  const { writer, userId, tripId, trail, meta, polyline, pois, layers, partySize } = input;
+
+  const steps = buildDeterministicSteps(trail, meta, polyline);
+  if (steps.length > 0) {
+    try {
+      const { error } = await writer.from('trip_steps').insert(
+        steps.map((step) => ({
+          trip_id: tripId,
+          day_number: step.dayNumber,
+          order_index: step.orderIndex,
+          title: step.title,
+          description: step.description,
+          start_time: step.startTime,
+          latitude: step.latitude,
+          longitude: step.longitude,
+          distance_km: step.distanceKm,
+          elevation_gain_m: step.elevationGainM,
+          accommodation_name: step.accommodationName,
+          transport_mode: step.transportMode,
+          metadata: step.metadata,
+          source: step.source,
+        }))
+      );
+      if (error) {
+        console.error('[LKDV preparer-sentier] insertion trip_steps en échec:', error.message);
+      }
+    } catch (error) {
+      console.error('[LKDV preparer-sentier] insertion trip_steps en erreur inattendue:', error);
+    }
+
+    // Carnet : 1 note pré-remplie par jour réel (best-effort, données réelles).
+    try {
+      const journal = await generateJournalNotes(
+        tripId,
+        userId,
+        steps.map((step) => ({
+          dayNumber: step.dayNumber,
+          title: step.title,
+          distanceKm: step.distanceKm,
+          elevationGainM: step.elevationGainM,
+          poiNames: poiNamesForDay(pois, polyline, step.dayNumber, steps.length),
+        }))
+      );
+      if (journal.warnings.length > 0) {
+        console.warn(
+          '[LKDV preparer-sentier] notes de carnet partielles:',
+          journal.warnings.join(' | ')
+        );
+      }
+    } catch (error) {
+      console.error('[LKDV preparer-sentier] notes de carnet en échec:', error);
+    }
+  }
+
+  const poiDrafts = buildDeterministicPois(pois);
+  if (poiDrafts.length > 0) {
+    try {
+      const { error } = await writer.from('trip_pois').insert(
+        poiDrafts.map((poi) => ({
+          trip_id: tripId,
+          name: poi.name,
+          category:
+            typeof poi.metadata.category === 'string' ? poi.metadata.category : null,
+          latitude: poi.latitude,
+          longitude: poi.longitude,
+          metadata: poi.metadata,
+          source: poi.source,
+        }))
+      );
+      if (error) {
+        console.error('[LKDV preparer-sentier] insertion trip_pois en échec:', error.message);
+      }
+    } catch (error) {
+      console.error('[LKDV preparer-sentier] insertion trip_pois en erreur inattendue:', error);
+    }
+  }
+
+  const expenses = buildDeterministicExpenses(trail, meta, partySize, layers);
+  if (expenses.length > 0) {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const { error } = await writer.from('trip_expenses').insert(
+        expenses.map((expense) => ({
+          trip_id: tripId,
+          payer_id: userId,
+          title: expense.title,
+          amount: expense.amountEur,
+          currency: 'EUR',
+          category: expense.category,
+          expense_date: today,
+          split_type: 'equal',
+          is_planned: true,
+          metadata: expense.metadata,
+        }))
+      );
+      if (error) {
+        console.error('[LKDV preparer-sentier] insertion trip_expenses en échec:', error.message);
+      }
+    } catch (error) {
+      console.error('[LKDV preparer-sentier] insertion trip_expenses en erreur inattendue:', error);
+    }
+  }
+}
+
+function partySizeFromBrief(brief: unknown): number {
+  if (!brief || typeof brief !== 'object') return 1;
+  const party = (brief as { party?: { value?: { adults?: unknown; minors?: unknown } } }).party;
+  const adults = toFiniteNumber(party?.value?.adults) ?? 0;
+  const minors = toFiniteNumber(party?.value?.minors) ?? 0;
+  const total = Math.trunc(adults + minors);
+  return total > 0 ? total : 1;
+}
+
+/**
+ * Prépare (ou réutilise) l'activité réelle liée à un sentier.
+ *
+ * Ne réalise aucune écriture si le sentier est inconnu/sans nom/sans tracé.
+ * Lève `PrepareActivityAuthError` si le sentier est valide mais l'utilisateur
+ * non connecté (la route redirige vers la connexion).
+ */
+export async function prepareActivityFromTrail(trailIdRaw: string): Promise<PrepareTrailOutcome> {
+  const routeId = normalizeRouteId(trailIdRaw);
+  if (routeId === null) return { status: 'unavailable', reason: 'not_found' };
+
+  const session = await createClient();
+  const service = getServiceSupabase();
+  const db: SupabaseClient = service ?? session;
+
+  const loaded = await loadTrail(db, routeId);
+  if (loaded.status === 'unavailable') {
+    return { status: 'unavailable', reason: loaded.reason };
+  }
+
+  const {
+    data: { user },
+  } = await session.auth.getUser();
+  if (!user) throw new PrepareActivityAuthError();
+
+  const existing = await findExistingTrip(db, user.id, routeId);
+  if (existing.status === 'error') {
+    return { status: 'unavailable', reason: 'persist_failed' };
+  }
+  if (existing.status === 'found') {
+    if (shouldReenqueueEnrichment(existing.trip.metadata)) {
+      await enqueueActivityEnrichment(existing.trip.tripId, user.id);
+    }
+    await ensureReusedTripKit(db, user.id, existing.trip.tripId, loaded.trail, loaded.meta);
+    const { tripId, slug, title } = existing.trip;
+    return { status: 'reused', tripId, slug, title };
+  }
+
+  const writer: SupabaseClient = service ?? session;
+  const { trail, meta, polyline } = loaded;
+
+  // --- Revendication atomique -------------------------------------------
+  // La reservation (user_id, route_id) est posee AVANT toute creation de
+  // voyage : deux appels concurrents ne peuvent plus creer deux voyages, et
+  // aucun voyage ne peut exister sans route_id (fenetre qui rendait les
+  // orphelins invisibles de findExistingTrip).
+  // -----------------------------------------------------------------------
+  const claim = await claimTripLaunch(db, user.id, routeId);
+  if (claim.status === 'ready') {
+    if (shouldReenqueueEnrichment(null)) {
+      await enqueueActivityEnrichment(claim.trip.tripId, user.id);
+    }
+    await ensureReusedTripKit(db, user.id, claim.trip.tripId, trail, meta);
+    return {
+      status: 'reused',
+      tripId: claim.trip.tripId,
+      slug: claim.trip.slug,
+      title: claim.trip.title,
+    };
+  }
+  if (claim.status === 'in_progress') {
+    // Une preparation concurrente est en cours : on attend la gagnante plutot
+    // que de dupliquer. Repli tardif si elle n'apparait pas.
+    const raced = await waitForRacedTrip(db, user.id, routeId);
+    if (raced.status === 'found') {
+      if (shouldReenqueueEnrichment(raced.trip.metadata)) {
+        await enqueueActivityEnrichment(raced.trip.tripId, user.id);
+      }
+      await ensureReusedTripKit(db, user.id, raced.trip.tripId, trail, meta);
+      return {
+        status: 'reused',
+        tripId: raced.trip.tripId,
+        slug: raced.trip.slug,
+        title: raced.trip.title,
+      };
+    }
+    return await finalReuseOrUnavailable({ db, writer, userId: user.id, routeId, trail, meta });
+  }
+  // claim.status === 'unavailable' : migration absente en base, on continue
+  // sur le chemin historique (writeTripPrepareMetadata + compensation TS).
+
+  let record: TripRecord | null = null;
+  let layers: CreateTripFromAutogenIntentInput['layers'] | null = null;
+  let brief: TripBrief | null = null;
+  let status: 'created' | 'fallback_created' = 'created';
+  let factoryError: string | null = null;
+
+  const rawInput = buildTrailRawInput(trail, meta);
+  try {
+    const pipeline = await runAutoGenPipeline(rawInput);
+    layers = pipeline.layers as CreateTripFromAutogenIntentInput['layers'];
+    brief = pipeline.brief;
+    const created = await createTripFromAutogenIntent({
+      rawInput,
+      brief: pipeline.brief,
+      layers,
+      coordinates: polyline,
+      title: trail.name,
+      correlationId: randomUUID(),
+      idempotencyKey: randomUUID(),
+      autoSelectRoute: true,
+    });
+    if (created.ok) {
+      // Succès partiel (échec tardif APRÈS insertion) : le voyage existe, il
+      // EST l'activité de ce sentier — jamais de repli `createTrip` ici, sous
+      // peine de créer un doublon réel.
+      if (created.partial) {
+        console.warn(
+          '[LKDV preparer-sentier] usine autogen partielle, voyage conservé:',
+          created.tripId,
+          created.warnings.join(' | ')
+        );
+      }
+      record = { tripId: created.tripId, slug: created.slug, title: created.title, metadata: null };
+    } else {
+      factoryError = `autogen ${created.status}: ${created.error}`;
+      console.error(
+        '[LKDV preparer-sentier] usine autogen non-ok:',
+        created.status,
+        created.error
+      );
+    }
+  } catch (error) {
+    factoryError = `autogen exception: ${error instanceof Error ? error.message : String(error)}`;
+    console.error(
+      '[LKDV preparer-sentier] usine autogen en échec:',
+      error instanceof Error ? error.message : error
+    );
+  }
+
+  if (!record) {
+    // Usine non-ok (dont 409 de course) ou en exception : une génération
+    // concurrente peut être en train de créer l'activité du même sentier.
+    // Attente courte bornée (≤ ~8 s) avant tout repli : réutiliser vaut mieux
+    // que dupliquer sans kit.
+    const raced = await waitForRacedTrip(db, user.id, routeId);
+    if (raced.status === 'error') {
+      return await finalReuseOrUnavailable({ db, writer, userId: user.id, routeId, trail, meta });
+    }
+    if (raced.status === 'found') {
+      if (shouldReenqueueEnrichment(raced.trip.metadata)) {
+        await enqueueActivityEnrichment(raced.trip.tripId, user.id);
+      }
+      const { tripId, slug, title } = raced.trip;
+      return { status: 'reused', tripId, slug, title };
+    }
+  }
+
+  if (!record) {
+    try {
+      const trip = await createTrip(
+        {
+          title: trail.name,
+          destination_name: trail.name,
+          difficulty: mapTrailDifficulty(meta?.difficulty),
+          primary_activity: 'hiking',
+          status: 'draft',
+          visibility: 'private',
+          metadata: {
+            route_id: routeId,
+            source: PREPARE_SOURCE,
+            ...(factoryError ? { prepare_error: factoryError.slice(0, 300) } : {}),
+          },
+        },
+        user.id
+      );
+      record = {
+        tripId: String((trip as { id: string }).id),
+        slug: String((trip as { slug: string }).slug),
+        title: String((trip as { title: string }).title),
+        metadata: null,
+      };
+      status = 'fallback_created';
+    } catch (error) {
+      if (isUniqueRouteViolation(error)) {
+        const raced = await findExistingTrip(db, user.id, routeId);
+        if (raced.status === 'error') {
+          return await finalReuseOrUnavailable({ db, writer, userId: user.id, routeId, trail, meta });
+        }
+        if (raced.status === 'found') {
+          if (shouldReenqueueEnrichment(raced.trip.metadata)) {
+            await enqueueActivityEnrichment(raced.trip.tripId, user.id);
+          }
+          await ensureReusedTripKit(db, user.id, raced.trip.tripId, trail, meta);
+          const { tripId, slug, title } = raced.trip;
+          return { status: 'reused', tripId, slug, title };
+        }
+      }
+      throw error;
+    }
+  }
+
+  if (!record) return await finalReuseOrUnavailable({ db, writer, userId: user.id, routeId, trail, meta });
+  const tripId = record.tripId;
+
+  // Fix « kit jamais manquant » : le repli `createTrip` ne passe pas par
+  // l'usine, donc aucun kit n'existerait. Le kit déterministe garantit un
+  // `/hub/kit-voyage` réellement garni (catalogue + règles, best-effort).
+  if (status === 'fallback_created') {
+    const kit = await createKitForTrip({
+      supabase: writer,
+      userId: user.id,
+      tripId,
+      trail: { id: trail.id, name: trail.name, distanceKm: trail.distanceKm ?? null },
+      meta: {
+        difficulty: meta?.difficulty ?? null,
+        durationHours: meta?.durationHours ?? null,
+        elevationGain: meta?.elevationGain ?? null,
+        terrainType: meta?.terrainType ?? null,
+        season: null,
+      },
+      partySize: partySizeFromBrief(brief),
+      layers: (layers as Record<string, unknown> | null) ?? null,
+    });
+    if (kit.kitId === null) {
+      console.warn('[LKDV preparer-sentier] kit déterministe indisponible pour', tripId);
+    }
+  }
+
+  // --- Persistance atomique ----------------------------------------------
+  // complete_trip_launch attache route_id ET bascule la reservation en
+  // 'ready' dans une seule transaction. En cas de course perdue ('lost'),
+  // fail_trip_launch supprime notre orphelin ET marque 'failed' dans la meme
+  // transaction : plus de compensation best-effort qui peut laisser un etat
+  // partiel cote base.
+  // -----------------------------------------------------------------------
+  if (claim.status === 'claimed') {
+    const completion = await completeTripLaunch(db, user.id, routeId, tripId);
+    if (completion.status === 'lost') {
+      await failTripLaunch(db, user.id, routeId, tripId, 'lost_race');
+      if (shouldReenqueueEnrichment(null)) {
+        await enqueueActivityEnrichment(completion.trip.tripId, user.id);
+      }
+      await ensureReusedTripKit(db, user.id, completion.trip.tripId, trail, meta);
+      const { tripId: reusedTripId, slug, title } = completion.trip;
+      return { status: 'reused', tripId: reusedTripId, slug, title };
+    }
+    if (completion.status === 'unavailable') {
+      await failTripLaunch(db, user.id, routeId, tripId, 'complete_unavailable');
+      return await finalReuseOrUnavailable({ db, writer, userId: user.id, routeId, trail, meta });
+    }
+  } else {
+    // Repli : migration absente, on conserve le chemin historique verifie.
+    const persisted = await writeTripPrepareMetadata(writer, tripId, user.id, routeId, service);
+    if (persisted.status === 'duplicate') {
+      // Course perdue : le voyage fraichement cree (sans `route_id`, il ne peut
+      // pas etre le gagnant retrouve par l'index unique) est supprime - cascades
+      // enfants comprises - avant de servir l'activite gagnante. Jamais
+      // d'orphelin sans route_id.
+      await compensateCreatedTrip(writer, tripId, user.id);
+      if (shouldReenqueueEnrichment(persisted.trip.metadata)) {
+        await enqueueActivityEnrichment(persisted.trip.tripId, user.id);
+      }
+      await ensureReusedTripKit(db, user.id, persisted.trip.tripId, trail, meta);
+      const { tripId: reusedTripId, slug, title } = persisted.trip;
+      return { status: 'reused', tripId: reusedTripId, slug, title };
+    }
+    if (persisted.status === 'failed') {
+      await compensateCreatedTrip(writer, tripId, user.id);
+      return await finalReuseOrUnavailable({ db, writer, userId: user.id, routeId, trail, meta });
+    }
+  }
+
+  const pois = await loadTrailPois(db, polyline);
+  await plateDeterministicContent({
+    writer,
+    userId: user.id,
+    tripId,
+    trail,
+    meta,
+    polyline,
+    pois,
+    layers,
+    partySize: partySizeFromBrief(brief),
+  });
+
+  // Documents réels (feuille de route PDF + GPX) : best-effort, jamais bloquant.
+  try {
+    const documents = await generateTripDocuments(tripId, user.id);
+    if (documents.warnings.length > 0) {
+      console.warn(
+        '[LKDV preparer-sentier] documents réels partiels:',
+        documents.warnings.join(' | ')
+      );
+    }
+  } catch (error) {
+    console.error('[LKDV preparer-sentier] génération des documents en échec:', error);
+  }
+
+  await enqueueActivityEnrichment(tripId, user.id);
+
+  // P2 — producteur « activité préparée depuis un sentier réel » : uniquement
+  // une création réelle (pas une réutilisation), idempotent par (user, route).
+  // T06 — l'intention durable est écrite avant l'attribution : une panne entre
+  // la création et l'appel accélérateur conserve la reprise par le worker.
+  if (status === 'created') {
+    await enqueueProgressionAwardIntent({
+      userId: user.id,
+      action: 'trail_prepared',
+      sourceType: 'trail_prep',
+      sourceId: `${user.id}:${routeId}`,
+      metadata: { routeId: String(routeId), tripId },
+    });
+    await awardTrailPrepared(user.id, routeId, tripId);
+  }
+
+  return { status, tripId: record.tripId, slug: record.slug, title: record.title };
+}
+
+/**
+ * Dernier filet anti-course : avant d'afficher « préparation indisponible »,
+ * on revérifie l'existence d'une activité pour ce sentier (l'appel concurrent
+ * a pu la créer pendant notre échec). Si elle existe → réutilisation + kit.
+ */
+async function finalReuseOrUnavailable(args: {
+  db: SupabaseClient;
+  writer: SupabaseClient;
+  userId: string;
+  routeId: number;
+  trail: TrailInput;
+  meta: TrailMetaInput | null;
+}): Promise<PrepareTrailOutcome> {
+  try {
+    const existing = await findExistingTrip(args.db, args.userId, args.routeId);
+    if (existing.status === 'found') {
+      if (shouldReenqueueEnrichment(existing.trip.metadata)) {
+        await enqueueActivityEnrichment(existing.trip.tripId, args.userId);
+      }
+      await ensureReusedTripKit(
+        args.db,
+        args.userId,
+        existing.trip.tripId,
+        args.trail,
+        args.meta
+      );
+      const { tripId, slug, title } = existing.trip;
+      return { status: 'reused', tripId, slug, title };
+    }
+  } catch (error) {
+    console.error('[LKDV preparer-sentier] re-check final en échec:', error);
+  }
+  return { status: 'unavailable', reason: 'persist_failed' };
+}

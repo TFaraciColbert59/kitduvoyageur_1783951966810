@@ -1,0 +1,55 @@
+{
+  "phase": 2,
+  "phase_name": "Unifier la chaine d'identifiants",
+  "date": "2026-09-11",
+  "sha_db_layer": "03595239",
+  "sha_server_layer": "c3ed27e5",
+  "environment": {
+    "db": "Supabase local Docker (postgresql://postgres:postgres@127.0.0.1:54322/postgres)",
+    "ci": "GitHub Actions ubuntu-latest (checks requis verts sur les 2 PR)",
+    "distant": "INSUFFICIENT_DATA -- projet de test Phase 1 non provisionne (PAT complet manquant)"
+  },
+  "deliverables": {
+    "migration_chain_integrity": "supabase/migrations/20260911500000_phase2_chain_integrity.sql",
+    "migration_attach_plan_trip": "supabase/migrations/20260911510000_phase2_attach_plan_trip.sql",
+    "rpc_select_route": "select_adventure_plan_route(uuid,bigint,uuid) -> jsonb",
+    "rpc_attach_plan": "attach_adventure_plan_to_trip(uuid,uuid,uuid) -> jsonb",
+    "projection": "src/features/trips/server/getTripExperience.ts (TripExperience)",
+    "action": "src/features/adventure-intelligence/actions/selectAdventurePlanRoute.ts",
+    "integration_test": "tests/integration/phase2-chain.integration.spec.ts"
+  },
+  "schema_changes": [
+    "adventure_plans.selected_route_id bigint FK hiking_routes ON DELETE SET NULL + index partiel",
+    "correlation_id uuid sur adventure_plans, adventure_plan_versions, hike_sessions, carnets, community_posts + index",
+    "community_posts.linked_carnet_id uuid FK carnets ON DELETE SET NULL + index",
+    "table adventure_plan_route_selections (RLS, une seule active par plan, piste d'audit)"
+  ],
+  "evidence": {
+    "pgtap_full_suite": { "command": "npx supabase test db --db-url <local>", "result": "Files=15, Tests=262, PASS" },
+    "pgtap_new_assertions": "36 (chain_integrity) + 21 (attach_plan_trip)",
+    "vitest_full": { "command": "npm run test", "result": "284 fichiers passed / 4 skipped ; 2042 tests passed / 27 skipped ; 0 failed" },
+    "type_check": "exit 0",
+    "lint": "exit 0 (0 erreur sur fichiers ajoutes/modifies)",
+    "integration_local": { "command": "PHASE2_LOCAL_INTEGRATION=1 npx vitest run tests/integration/phase2-chain.integration.spec.ts", "result": "7/7 PASS" },
+    "ci_pr_36": "checks requis verts, merge squash 03595239",
+    "ci_pr_37": "checks requis verts, merge squash c3ed27e5"
+  },
+  "gate_phase2": {
+    "test_integration_chaine_complete": "PASS (local)",
+    "aucun_objet_orphelin_echecs_injectes": "PASS (local, 7 scenarios)",
+    "plans_orphelins": "mitige par attach_adventure_plan_to_trip (idempotente, une seule affectation)",
+    "publications_sans_carnet": "linked_carnet_id valide cote publication, NULL tolere pour l'historique"
+  },
+  "limitations": [
+    "create_adventure_plan_bundle n'expose pas p_correlation_id : modification non additive refusee ; la correlation plan est ecrite par attach/select. Documente dans le code.",
+    "trips n'a pas de colonne correlation_id : la correlation est propagee (evenements/params) mais non stockee sur le voyage.",
+    "Certification BDD distante en attente du projet de test (Phase 1).",
+    "Base de production non migree par ces 2 migrations a ce stade (deploiement prod = decision ulterieure)."
+  ],
+  "residual_risks": [
+    "Divergence de type correlation_id : text sur adventure_engine_runs (A11) vs uuid sur les pivots Phase 2.",
+    "Les publications historiques sans carnet restent visibles (linked_carnet_id NULL)."
+  ],
+  "decision": "PASS (perimetre local) ; distant = INSUFFICIENT_DATA (Phase 1)",
+  "responsible": "agents DATABASE/BACKEND + ORCHESTRATOR, revue independante via PR CI"
+}

@@ -1,0 +1,17 @@
+{
+  "source": "The World Bank: ICP 2021 (International Comparison Program), indice de niveau de prix (Monde = 100)",
+  "page": "https://api.worldbank.org/v2/sources/90",
+  "series": "1101000 : Produits alimentaires et boissons non alcoolisées",
+  "classification": "PX.WL : Price level index (World = 100)",
+  "licence": "CC BY 4.0",
+  "licenceUrl": "https://datacatalog.worldbank.org/public-licenses",
+  "credit": "The World Bank: ICP 2021 (International Comparison Program), indice de niveau de prix (Monde = 100), série « Produits alimentaires et boissons non alcoolisées », année 2021 (CC BY 4.0) ; ramené à la France = 100 par le Compas, arrondi au dixième",
+  "year": 2021,
+  "lastUpdated": "2024-08-04",
+  "readOn": "2026-10-12",
+  "sha256": {
+    "food": "323075d3b05b03f2d904c4bb0c99a2439dbeacdf8381439a6400080d314b6073",
+    "countries": "c9acf3932785191a649cbc04c3056af4cf64a236e5c3b49d49be25ddb0440bce"
+  },
+  "countries": 170
+}

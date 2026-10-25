@@ -1,0 +1,15 @@
+{
+  "source": "fixture-test-only",
+  "requests24h": 5000,
+  "errorRate24h": 0.05,
+  "baselineErrorRate24h": 0.01,
+  "etaCoverageP90": 0.6,
+  "etaSampleSize": 120,
+  "terrainCriticalFalseReports": 4,
+  "moderationFailure": true,
+  "batteryPctPerHour": 7,
+  "debounceOk": false,
+  "monthlyCostOverBudget": true,
+  "sessionCorruption": false,
+  "offlineSyncDestructive": false
+}

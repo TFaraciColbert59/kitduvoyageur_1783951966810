@@ -1,0 +1,321 @@
+import { describe, expect, it } from 'vitest';
+import { assessDanger, mergeDangerIntoVerdict, type OfficialAlert } from '../engine/danger';
+import type { CompasDayPlan } from '../engine/compasModel';
+import type { DayForecast } from '../engine/weather';
+
+const plan = (over: Partial<CompasDayPlan> = {}): CompasDayPlan => ({
+  day: 1,
+  date: '2026-10-12',
+  title: 'Jour 1',
+  distanceKm: 12,
+  gainM: 600,
+  lossM: 400,
+  lat: 45,
+  lon: 6,
+  stay: null,
+  walkMin: 300,
+  ...over,
+});
+
+const forecast = (over: Partial<DayForecast> = {}): DayForecast => ({
+  date: '2026-10-12',
+  tMin: 4,
+  tMax: 18,
+  precipPct: 20,
+  precipMm: 1,
+  gustMax: 30,
+  code: 1,
+  sunrise: '2026-10-12T07:40',
+  sunset: '2026-10-12T19:00',
+  hours: [],
+  ...over,
+});
+
+const run = (p: CompasDayPlan, f: DayForecast | null, alerts: OfficialAlert[] = []) =>
+  assessDanger({
+    dayPlans: [p],
+    forecasts: [{ day: 1, date: '2026-10-12', forecast: f }],
+    alerts,
+  });
+
+describe('assessDanger', () => {
+  it('journée sereine : axes évalués sans signal', () => {
+    const d = run(plan(), forecast());
+    expect(d.signals).toEqual([]);
+    expect(d.axes.physique.level).toBe('ok');
+    expect(d.axes.conjoncturel.level).toBe('ok');
+  });
+
+  it('sans prévision ni parcours chiffré, les axes sont non évalués, pas « sans danger »', () => {
+    const d = run(plan({ walkMin: null, gainM: null, lossM: null, distanceKm: null }), null);
+    expect(d.axes.physique.level).toBe('non_evalue');
+    expect(d.axes.technique.level).toBe('non_evalue');
+    expect(d.axes.conjoncturel.level).toBe('non_evalue');
+  });
+
+  it('marche plus longue que le jour : vigilance physique datée et sourcée', () => {
+    const d = run(plan({ walkMin: 700 }), forecast());
+    const s = d.signals.find((x) => x.id === 'physique-light-1');
+    expect(s?.severity).toBe('warn');
+    expect(s?.asOf).toBe('2026-10-12');
+    expect(s?.source).toContain('DIN 33466');
+    expect(s?.label).toContain('11 h 40');
+  });
+
+  it('lever et coucher en « HH:MM » (format réel) : « X de marche pour Y de jour »', () => {
+    const d = run(plan({ walkMin: 700 }), forecast({ sunrise: '07:40', sunset: '19:00' }));
+    expect(d.signals.find((x) => x.id === 'physique-light-1')?.label).toBe(
+      'Jour 1 : 11 h 40 de marche pour 11 h 20 de jour'
+    );
+  });
+
+  it('au-delà de la prévision (J+30) : « X de marche pour Y de jour » par le calcul astronomique', () => {
+    const later = (walkMin: number) =>
+      assessDanger({
+        dayPlans: [plan({ date: '2026-11-08', walkMin })],
+        forecasts: [{ day: 1, date: '2026-11-08', forecast: null }],
+        alerts: [],
+      });
+    const s = later(700).signals.find((x) => x.id === 'physique-light-1');
+    // 8 novembre à 45° N : un peu moins de 10 h de jour.
+    expect(s?.label).toMatch(/^Jour 1 : 11 h 40 de marche pour 9 h \d{2} de jour$/);
+    expect(s?.source).toBe('DIN 33466 · calcul astronomique');
+    expect(s?.asOf).toBe('2026-11-08');
+    expect(later(300).signals.some((x) => x.id === 'physique-light-1')).toBe(false);
+  });
+
+  it('au-delà de la prévision : nuit polaire ou étape sans coordonnées, aucun signal de lumière', () => {
+    const polar = assessDanger({
+      dayPlans: [plan({ date: '2026-12-15', lat: 78.2, lon: 15.6, walkMin: 700 })],
+      forecasts: [{ day: 1, date: '2026-12-15', forecast: null }],
+      alerts: [],
+    });
+    expect(polar.signals.some((x) => x.id === 'physique-light-1')).toBe(false);
+    const nowhere = assessDanger({
+      dayPlans: [plan({ date: '2026-11-08', lat: null, lon: null, walkMin: 700 })],
+      forecasts: [{ day: 1, date: '2026-11-08', forecast: null }],
+      alerts: [],
+    });
+    expect(nowhere.signals.some((x) => x.id === 'physique-light-1')).toBe(false);
+  });
+
+  it('rafales : warn puis block selon le seuil', () => {
+    expect(run(plan(), forecast({ gustMax: 70 })).axes.conjoncturel.level).toBe('vigilance');
+    expect(run(plan(), forecast({ gustMax: 95 })).axes.conjoncturel.level).toBe('bloque');
+  });
+
+  it('pente moyenne forte → technique', () => {
+    const d = run(plan({ distanceKm: 6, gainM: 1100 }), forecast());
+    expect(d.axes.technique.level).toBe('vigilance');
+  });
+
+  it('une alerte rouge bloque, une jaune reste une information', () => {
+    const alert = (level: OfficialAlert['level']): OfficialAlert => ({
+      id: level,
+      source: 'Météo-France via Meteoalarm',
+      hazard: 'orages',
+      level,
+      area: 'Isère',
+      onset: null,
+      expires: null,
+      fetchedAt: '2026-10-01T09:00:00Z',
+    });
+    expect(run(plan(), forecast(), [alert('rouge')]).axes.conjoncturel.level).toBe('bloque');
+    const yellow = run(plan(), forecast(), [alert('jaune')]);
+    expect(yellow.axes.conjoncturel.level).toBe('ok');
+    expect(yellow.signals[0].severity).toBe('info');
+  });
+});
+
+describe('mergeDangerIntoVerdict', () => {
+  const verdict = { level: 'go' as const, reasons: [] };
+  it('une vigilance fait passer go à vigilance', () => {
+    const d = run(plan(), forecast({ gustMax: 70 }));
+    expect(mergeDangerIntoVerdict(verdict, d).level).toBe('vigilance');
+  });
+  it('un blocage l’emporte', () => {
+    const d = run(plan(), forecast({ gustMax: 95 }));
+    expect(mergeDangerIntoVerdict({ ...verdict, level: 'vigilance' as const }, d).level).toBe(
+      'bloque'
+    );
+  });
+  it('n’ajoute pas les infos aux raisons', () => {
+    const d = run(plan(), forecast());
+    expect(mergeDangerIntoVerdict(verdict, d)).toEqual(verdict);
+  });
+});
+
+describe('assessDanger — évaluation partielle', () => {
+  it('dénivelé inconnu : physique évalué sur la durée, mais dit ce qui manque', () => {
+    const d = run(plan({ gainM: null }), forecast());
+    expect(d.axes.physique.level).toBe('ok');
+    expect(d.axes.physique.partial).toBe('Non vérifié : dénivelé (J1).');
+    expect(d.axes.technique.partial).toContain('pente (J1)');
+  });
+
+  it('CONTRE-EXEMPLE — alertes officielles non lues : le conjoncturel ne prétend pas les couvrir', () => {
+    const d = run(plan(), forecast());
+    expect(d.axes.conjoncturel.level).toBe('ok');
+    expect(d.axes.conjoncturel.partial).toBe('Non vérifié : alertes officielles.');
+    const lu = assessDanger({
+      dayPlans: [plan()],
+      forecasts: [{ day: 1, date: '2026-10-12', forecast: forecast() }],
+      alerts: [],
+      alertsStatus: 'lues',
+    });
+    expect(lu.axes.conjoncturel.partial).toBeNull();
+  });
+
+  it('jour sans prévision : chaleur, froid et météo de ce jour non vérifiés', () => {
+    const d = assessDanger({
+      dayPlans: [plan(), plan({ day: 2, date: '2026-10-13' })],
+      forecasts: [
+        { day: 1, date: '2026-10-12', forecast: forecast() },
+        { day: 2, date: '2026-10-13', forecast: null },
+      ],
+      alerts: [],
+      alertsStatus: 'lues',
+    });
+    expect(d.axes.physique.partial).toBe('Non vérifié : chaleur et froid (J2).');
+    expect(d.axes.conjoncturel.partial).toBe('Non vérifié : météo (J2).');
+  });
+
+  it('un axe non évalué ne porte pas de partiel', () => {
+    const d = run(plan({ walkMin: null, gainM: null, lossM: null, distanceKm: null }), null);
+    expect(d.axes.physique).toMatchObject({ level: 'non_evalue', partial: null });
+  });
+});
+
+describe('assessDanger — état des alertes officielles', () => {
+  const avec = (alertsStatus: Parameters<typeof assessDanger>[0]['alertsStatus']) =>
+    assessDanger({
+      dayPlans: [plan()],
+      forecasts: [{ day: 1, date: '2026-10-12', forecast: forecast() }],
+      alerts: [],
+      alertsStatus,
+    }).axes.conjoncturel.partial;
+
+  it('dit pourquoi les alertes ne sont pas couvertes', () => {
+    expect(avec('lues')).toBeNull();
+    expect(avec('pas_encore_publiees')).toBe(
+      'Non vérifié : alertes officielles (publiées la veille du départ).'
+    );
+    expect(avec('non_couvert')).toBe('Non vérifié : alertes officielles (pays non couvert par Meteoalarm).');
+    expect(avec('zone_non_rapprochee')).toBe(
+      'Non vérifié : alertes officielles (zone de l’étape non reconnue dans le flux Meteoalarm).'
+    );
+    expect(avec('partielles')).toBe(
+      'Non vérifié : alertes officielles (zone reconnue en partie : d’autres alertes peuvent exister).'
+    );
+    expect(avec('indisponibles')).toBe('Non vérifié : alertes officielles.');
+    expect(avec(undefined)).toBe('Non vérifié : alertes officielles.');
+  });
+});
+
+describe('assessDanger — alerte officielle mise à jour depuis', () => {
+  it('reste visible, en information « à vérifier », datée de son émission', () => {
+    const d = assessDanger({
+      dayPlans: [plan()],
+      forecasts: [{ day: 1, date: '2026-10-12', forecast: forecast() }],
+      alertsStatus: 'lues',
+      alerts: [
+        {
+          id: 'r',
+          source: 'Météo-France via Meteoalarm',
+          hazard: 'inondations',
+          level: 'rouge',
+          area: 'Hérault',
+          onset: '2026-10-01T00:00:00+02:00',
+          expires: '2026-10-02T00:00:00+02:00',
+          sent: '2026-09-30T14:04:23.000Z',
+          updatedSince: '2026-09-30T20:05:48.000Z',
+          fetchedAt: '2026-10-01T18:00:00.000Z',
+          // Le flux de Météo-France donne sa propre page (`web`) : c'est là qu'on renvoie.
+          web: 'https://vigilance.meteofrance.fr/',
+        },
+      ],
+    });
+    const s = d.signals.find((x) => x.id === 'alert-r');
+    expect(s?.severity).toBe('info');
+    expect(s?.label).toContain('à vérifier sur vigilance.meteofrance.fr');
+    expect(s?.asOf).toBe('2026-09-30T14:04:23.000Z');
+  });
+
+  const mise = (extra: Partial<OfficialAlert>): OfficialAlert => ({
+    id: 'm',
+    source: 'Servizio Meteorologico dell’Aeronautica Militare (MeteoAM) via Meteoalarm',
+    hazard: 'vent violent',
+    level: 'rouge',
+    area: 'Sardegna',
+    onset: null,
+    expires: null,
+    sent: '2026-10-10T16:00:00.000Z',
+    updatedSince: '2026-10-10T18:00:00.000Z',
+    fetchedAt: '2026-10-11T05:00:00.000Z',
+    ...extra,
+  });
+  const labelOf = (a: OfficialAlert) =>
+    assessDanger({
+      dayPlans: [plan()],
+      forecasts: [{ day: 1, date: '2026-10-12', forecast: forecast() }],
+      alertsStatus: 'partielles',
+      alerts: [a],
+    }).signals.find((x) => x.id === 'alert-m')?.label;
+
+  it('hors France : on renvoie à Meteoalarm sans page du service, jamais vers un site de Météo-France', () => {
+    expect(labelOf(mise({}))).toContain('à vérifier sur meteoalarm.org');
+    expect(labelOf(mise({}))).not.toContain('meteofrance');
+    expect(labelOf(mise({ web: 'javascript:alert(1)' }))).toContain('à vérifier sur meteoalarm.org');
+    expect(labelOf(mise({ web: 'https://www.meteoam.it/it/avvisi' }))).toContain('à vérifier sur meteoam.it');
+  });
+
+  it('l’heure d’émission accompagne toujours l’alerte, où qu’elle s’affiche (conditions Meteoalarm)', () => {
+    expect(labelOf(mise({ sent: '2026-10-10T16:00:00.000Z' }))).toContain('émise le 10 oct. 2026, 16 h 00 UTC');
+    expect(labelOf(mise({ sent: null }))).not.toContain('émise');
+  });
+
+  it('une adresse http ou à identifiants n’est jamais citée : on renvoie à Meteoalarm', () => {
+    // 738 des 7 778 adresses des flux du 11 oct. 2026 étaient en http (MétéoSuisse, GeoSphere…).
+    expect(labelOf(mise({ web: 'http://www.meteoswiss.admin.ch' }))).toContain('à vérifier sur meteoalarm.org');
+    expect(labelOf(mise({ web: 'https://user:pass@mal.example/' }))).toContain('à vérifier sur meteoalarm.org');
+    expect(labelOf(mise({ web: 'https://exemple.fr:8443/a' }))).toContain('à vérifier sur exemple.fr');
+  });
+
+  it('la période de validité accompagne l’alerte, en UTC (Style Guide de Meteoalarm : début et fin avec leur fuseau)', () => {
+    const label = labelOf(
+      mise({ onset: '2026-10-12T06:00:00+02:00', expires: '2026-10-12T21:00:00+02:00', updatedSince: null })
+    );
+    expect(label).toContain('valable du 12 oct. 2026, 4 h 00 UTC au 12 oct. 2026, 19 h 00 UTC');
+    // L'ordre : émise, puis valable, puis (si besoin) mise à jour, puis texte officiel.
+    expect(label?.indexOf('émise')).toBeLessThan(label?.indexOf('valable') ?? -1);
+  });
+
+  it('CONTRE-EXEMPLE — début ou fin sans heure, ou absents : aucune période inventée', () => {
+    expect(labelOf(mise({ onset: '2026-10-12', expires: '2026-10-13' }))).not.toContain('valable');
+    expect(labelOf(mise({ onset: '2026-10-12T06:00:00+02:00', expires: null }))).not.toContain('valable');
+    expect(labelOf(mise({ onset: null, expires: '2026-10-12T21:00:00+02:00' }))).not.toContain('valable');
+  });
+
+  it('le signal porte le texte officiel par langue, avec de quoi reconnaître l’alerte', () => {
+    const texts = [{ lang: 'it-IT', headline: 'Allerta', description: 'Venti forti', instruction: null }];
+    const d = assessDanger({
+      dayPlans: [plan()],
+      forecasts: [{ day: 1, date: '2026-10-12', forecast: forecast() }],
+      alertsStatus: 'partielles',
+      alerts: [mise({ texts, updatedSince: null })],
+    });
+    expect(d.signals.find((x) => x.id === 'alert-m')?.official).toEqual({
+      title: 'Vigilance rouge · vent violent (Sardegna)',
+      texts,
+    });
+    const sans = assessDanger({ dayPlans: [], forecasts: [], alertsStatus: 'partielles', alerts: [mise({})] });
+    expect(sans.signals.find((x) => x.id === 'alert-m')).not.toHaveProperty('official');
+  });
+
+  it('le texte officiel du service accompagne la mise en forme, tel quel', () => {
+    const label = labelOf(mise({ headline: 'Allerta Rossa Vento per Italia - Sardegna' }));
+    expect(label).toContain('texte officiel : « Allerta Rossa Vento per Italia - Sardegna »');
+    expect(labelOf(mise({}))).not.toContain('texte officiel');
+  });
+});
+

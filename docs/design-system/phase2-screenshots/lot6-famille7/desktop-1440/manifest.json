@@ -1,0 +1,169 @@
+{
+  "project": "desktop-1440",
+  "capturedAt": "2026-09-21T18:44:54.878Z",
+  "shots": [
+    {
+      "slug": "home",
+      "route": "/",
+      "finalUrl": "http://localhost:4028/",
+      "title": "Le Kit du Voyageur — Équipement outdoor & Configurateur IA",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/home.jpg"
+    },
+    {
+      "slug": "home-full",
+      "route": "/",
+      "finalUrl": "http://localhost:4028/",
+      "title": "Le Kit du Voyageur — Équipement outdoor & Configurateur IA",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/home-full.jpg",
+      "fullPage": true
+    },
+    {
+      "slug": "materiel",
+      "route": "/materiel",
+      "finalUrl": "http://localhost:4028/materiel",
+      "title": "Matériel — Le Kit du Voyageur | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/materiel.jpg"
+    },
+    {
+      "slug": "materiel-full",
+      "route": "/materiel",
+      "finalUrl": "http://localhost:4028/materiel",
+      "title": "Matériel — Le Kit du Voyageur | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/materiel-full.jpg",
+      "fullPage": true
+    },
+    {
+      "slug": "kits",
+      "route": "/kits",
+      "finalUrl": "http://localhost:4028/kits",
+      "title": "Kits de voyage prêts à partir — Le Kit du Voyageur | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/kits.jpg"
+    },
+    {
+      "slug": "carte-interactive",
+      "route": "/carte-interactive",
+      "finalUrl": "http://localhost:4028/explorer",
+      "title": "Explorer — Sentiers & Randonnées | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/carte-interactive.jpg"
+    },
+    {
+      "slug": "communaute",
+      "route": "/communaute",
+      "finalUrl": "http://localhost:4028/communaute",
+      "title": "Communauté Voyageurs & Aventuriers | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/communaute.jpg"
+    },
+    {
+      "slug": "carnets",
+      "route": "/carnets",
+      "finalUrl": "http://localhost:4028/carnets",
+      "title": "Mes carnets | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/carnets.jpg"
+    },
+    {
+      "slug": "voyages",
+      "route": "/voyages",
+      "finalUrl": "http://localhost:4028/hub",
+      "title": "Hub — Le Kit du Voyageur | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/voyages.jpg"
+    },
+    {
+      "slug": "boutique",
+      "route": "/boutique",
+      "finalUrl": "http://localhost:4028/explorer",
+      "title": "Explorer — Sentiers & Randonnées | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/boutique.jpg"
+    },
+    {
+      "slug": "compte",
+      "route": "/compte",
+      "finalUrl": "http://localhost:4028/compte",
+      "title": "Mon compte | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/compte.jpg"
+    },
+    {
+      "slug": "hub",
+      "route": "/hub",
+      "finalUrl": "http://localhost:4028/hub",
+      "title": "Hub — Le Kit du Voyageur | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/hub.jpg"
+    },
+    {
+      "slug": "panier",
+      "route": "/panier",
+      "finalUrl": "http://localhost:4028/panier",
+      "title": "Panier | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/panier.jpg"
+    },
+    {
+      "slug": "connexion",
+      "route": "/connexion",
+      "finalUrl": "http://localhost:4028/connexion",
+      "title": "Connexion | Le Kit du Voyageur",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Refused to execute script from 'http://localhost:4028/_vercel/speed-insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+      ],
+      "screenshot": "docs/design-system/phase2-screenshots/lot6-famille7/desktop-1440/connexion.jpg"
+    }
+  ]
+}

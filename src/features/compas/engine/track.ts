@@ -1,0 +1,115 @@
+/**
+ * Tracé réel d'un itinéraire préparé : la géométrie de chaque tronçon routé
+ * (route, chemin, piste cyclable), simplifiée, plutôt que des segments droits
+ * entre les soirs. Pur et testé : la carte l'affiche tant que les étapes n'ont
+ * pas bougé (signature des positions).
+ */
+
+export type LngLat = [number, number];
+
+/** Au plus `max` points, extrémités gardées (décimation régulière). */
+export function simplifyLine(
+  coords: ReadonlyArray<readonly [number, number]>,
+  max = 150
+): LngLat[] {
+  const pts = coords
+    .filter((c) => Number.isFinite(c[0]) && Number.isFinite(c[1]))
+    .map((c) => [Math.round(c[0] * 1e5) / 1e5, Math.round(c[1] * 1e5) / 1e5] as LngLat);
+  if (pts.length <= max) return pts;
+  const out: LngLat[] = [];
+  const step = (pts.length - 1) / (max - 1);
+  for (let i = 0; i < max; i += 1) out.push(pts[Math.round(i * step)]);
+  return out;
+}
+
+/** Signature des positions des étapes, dans l'ordre (3 décimales ≈ 100 m). */
+export function trackKey(points: ReadonlyArray<{ lat: number; lon: number }>): string {
+  return points.map((p) => `${p.lat.toFixed(3)},${p.lon.toFixed(3)}`).join(';');
+}
+
+/**
+ * Tronçons d'un soir au suivant : la géométrie routée quand elle existe, sinon
+ * un segment droit (vol, bateau, tronçon non calculé). `legs[0]`, quand il
+ * existe, mène au premier soir depuis un départ qui n'est pas une étape (mise
+ * à l'eau d'une descente de rivière). Null s'il n'y a rien à tracer de plus
+ * que des segments droits.
+ */
+export function buildTrack(
+  stops: ReadonlyArray<{ lat: number; lon: number }>,
+  legs: ReadonlyArray<ReadonlyArray<readonly [number, number]> | null>
+): { type: 'MultiLineString'; coordinates: LngLat[][] } | null {
+  const lines: LngLat[][] = [];
+  let routed = false;
+  const lead = legs[0];
+  if (stops.length && lead && lead.length >= 2) {
+    lines.push(simplifyLine(lead));
+    routed = true;
+  }
+  for (let i = 1; i < stops.length; i += 1) {
+    const a = stops[i - 1];
+    const b = stops[i];
+    if (Math.abs(a.lat - b.lat) < 1e-4 && Math.abs(a.lon - b.lon) < 1e-4) continue;
+    const g = legs[i];
+    if (g && g.length >= 2) {
+      lines.push(simplifyLine(g));
+      routed = true;
+    } else {
+      lines.push([
+        [a.lon, a.lat],
+        [b.lon, b.lat],
+      ]);
+    }
+  }
+  if (!routed) return null;
+  // Le tracé vit dans `trips.metadata` (base gratuite de 500 Mo) : 600 points
+  // au plus pour tout le voyage (~12 Ko), partagés entre ses tronçons.
+  const total = lines.reduce((n, l) => n + l.length, 0);
+  const coordinates =
+    total > MAX_TRACK_POINTS
+      ? lines.map((l) => simplifyLine(l, Math.max(2, Math.floor(MAX_TRACK_POINTS / lines.length))))
+      : lines;
+  return { type: 'MultiLineString', coordinates };
+}
+
+/** Points au plus dans le tracé d'un voyage (plan 1.1). */
+export const MAX_TRACK_POINTS = 600;
+
+/**
+ * Points `[lat, lon]`, dans l'ordre, d'un GeoJSON de tracé (LineString, MultiLineString, Feature ou
+ * FeatureCollection de lignes) : la forme que lit le relief. Tout le reste (point, polygone, valeur
+ * illisible) est ignoré, jamais complété : sans ligne lisible, rien.
+ */
+export function geojsonLatLon(geojson: unknown): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  const line = (coords: unknown) => {
+    if (!Array.isArray(coords)) return;
+    for (const pt of coords) {
+      if (!Array.isArray(pt) || typeof pt[0] !== 'number' || typeof pt[1] !== 'number') continue;
+      const [lon, lat] = pt as [number, number];
+      if (
+        Number.isFinite(lat) &&
+        Number.isFinite(lon) &&
+        Math.abs(lat) <= 90 &&
+        Math.abs(lon) <= 180
+      )
+        out.push([lat, lon]);
+    }
+  };
+  const walk = (g: unknown, depth: number) => {
+    if (!g || typeof g !== 'object' || depth > 3) return;
+    const o = g as {
+      type?: unknown;
+      coordinates?: unknown;
+      geometry?: unknown;
+      features?: unknown;
+    };
+    if (o.type === 'LineString') line(o.coordinates);
+    else if (o.type === 'MultiLineString' && Array.isArray(o.coordinates))
+      o.coordinates.forEach(line);
+    else if (o.type === 'Feature') walk(o.geometry, depth + 1);
+    else if (o.type === 'FeatureCollection' && Array.isArray(o.features))
+      o.features.forEach((f) => walk(f, depth + 1));
+  };
+  walk(geojson, 0);
+  return out;
+}

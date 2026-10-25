@@ -1,0 +1,75 @@
+{
+    "name": "Le Kit du Voyageur",
+    "short_name": "KdV",
+    "description": "Préparez vos aventures avec le configurateur IA, l'inventaire matériel et la carte interactive mondiale.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#FBFAF6",
+    "theme_color": "#17402C",
+    "orientation": "portrait-primary",
+    "lang": "fr",
+    "icons": [
+        {
+            "src": "/assets/images/app_logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/images/app_logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/images/app_logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "categories": [
+        "travel",
+        "lifestyle",
+        "shopping"
+    ],
+    "shortcuts": [
+        {
+            "name": "Hub Voyage",
+            "short_name": "Hub",
+            "description": "Accéder à mon cockpit de voyage",
+            "url": "/hub",
+            "icons": [
+                {
+                    "src": "/assets/images/app_logo.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Configurateur IA",
+            "short_name": "Config",
+            "description": "Créer un kit personnalisé",
+            "url": "/ai-configurator",
+            "icons": [
+                {
+                    "src": "/assets/images/app_logo.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Explorer le monde",
+            "short_name": "Explorer",
+            "description": "Explorer les pays et sentiers du monde",
+            "url": "/explorer",
+            "icons": [
+                {
+                    "src": "/assets/images/app_logo.png",
+                    "sizes": "96x96"
+                }
+            ]
+        }
+    ]
+}

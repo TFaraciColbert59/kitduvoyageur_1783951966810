@@ -1,0 +1,42 @@
+import type { TripPhase } from '../engine/temporalPhaseEngine';
+import type { TripWidgetId } from '../engine/tripProfileEngine';
+
+/**
+ * Y1.4 — Registre des widgets de la colonne droite (source unique).
+ * `TripSidebarRight` lit ce registre, filtre par phase + profil (les widgets
+ * retenus par deriveTripProfile), ordonne par priorité et replie au-delà de
+ * la limite de hauteur (§Y_HUB_SPEC §3 : somme ≤ 2 × fenêtre 1440×900).
+ */
+
+export interface TripWidgetDef {
+  id: TripWidgetId;
+  priority: number;
+  /** Hauteur rendue estimée en px (420×900 → 1440×900), pour le test de repli. */
+  estimatedHeight: number;
+  /** Phases où le widget est monté (le profil filtre déjà par condition). */
+  phases: TripPhase[];
+}
+
+export const tripWidgetRegistry: readonly TripWidgetDef[] = [
+  { id: 'steps-timeline', priority: 62, estimatedHeight: 600, phases: ['prepare', 'live', 'recount'] },
+] as const;
+
+/** Limite de hauteur avant repli « Plus de détails » (§Y_HUB_SPEC §3). */
+export const WIDGET_COLUMN_MAX_HEIGHT = 2 * 900; // 2 × fenêtre 1440×900
+
+export function widgetDef(id: TripWidgetId): TripWidgetDef | undefined {
+  return tripWidgetRegistry.find((w) => w.id === id);
+}
+
+/** Widgets autorisés pour une phase donnée, triés par priorité décroissante. */
+export function widgetsForPhase(ids: readonly TripWidgetId[], phase: TripPhase): TripWidgetId[] {
+  return tripWidgetRegistry
+    .filter((w) => ids.includes(w.id) && w.phases.includes(phase))
+    .sort((a, b) => b.priority - a.priority)
+    .map((w) => w.id);
+}
+
+/** Somme des hauteurs estimées d'une liste de widgets. */
+export function estimatedHeight(ids: readonly TripWidgetId[]): number {
+  return ids.reduce((sum, id) => sum + (widgetDef(id)?.estimatedHeight ?? 0), 0);
+}

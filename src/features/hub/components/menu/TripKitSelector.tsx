@@ -1,0 +1,102 @@
+'use client';
+import { useState, useTransition } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
+import { setTripKit } from '@/features/trips/actions/setTripKit';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui';
+
+interface TripKitSelectorProps {
+  tripId: string;
+  kits: { id: string; name: string }[];
+  currentId: string | null;
+}
+
+function cleanKitName(name: string): string {
+  return (name || '').replace(/\s*\((?:copie|copy)\)\s*/gi, '').trim() || 'Kit';
+}
+
+/**
+ * Sélecteur de kit pour l'onglet Équipement du hub : même grammaire que
+ * KitSwitcher (depart), mais persiste via trips.kit_id (setTripKit).
+ */
+export function TripKitSelector({ tripId, kits, currentId }: TripKitSelectorProps) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [activeId, setActiveId] = useState<string | null>(currentId);
+  const shouldReduceMotion = useReducedMotion();
+
+  const kitsForSelect = kits.length > 0 ? kits : [];
+  if (kitsForSelect.length === 0) return null;
+
+  const current = kitsForSelect.find((k) => k.id === activeId) ?? kitsForSelect[0];
+
+  const handleSelect = (id: string) => {
+    setOpen(false);
+    if (id === activeId) return;
+    setActiveId(id);
+    startTransition(async () => {
+      await setTripKit(tripId, id);
+    });
+  };
+
+  return (
+    <div className="relative" aria-label="Changer de kit">
+      <Button variant="secondary"
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          'w-full !justify-between !gap-2 !px-3 !py-2 !rounded-xl min-h-[44px] text-xs font-semibold focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)] cursor-pointer',
+          isPending && 'opacity-60'
+        )}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <span className="truncate">{cleanKitName(current.name)}</span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
+          <ChevronDown size={12} aria-hidden="true" />
+        </motion.span>
+      </Button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.ul
+            role="listbox"
+            aria-label="Sélectionner un kit"
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-1 z-50 glass rounded-2xl w-full min-w-[220px] overflow-hidden border border-white/60"
+          >
+            {kitsForSelect.map((kit) => (
+              <li key={kit.id}>
+                <Button
+                  variant={kit.id === activeId ? 'primary' : 'secondary'}
+                  type="button"
+                  role="option"
+                  aria-selected={kit.id === activeId}
+                  onClick={() => handleSelect(kit.id)}
+                  className={cn(
+                    'w-full !justify-start !rounded-none !px-3.5 !py-2 min-h-[44px] text-left text-xs font-medium cursor-pointer',
+                    kit.id === activeId ? 'font-semibold' : ''
+                  )}
+                >
+                  {cleanKitName(kit.name)}
+                </Button>
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+    </div>
+  );
+}

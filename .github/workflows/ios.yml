@@ -1,0 +1,96 @@
+name: iOS Capacitor Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  # Requis pour que le check `build-ios` (status requis de la protection
+  # de branche `main`) se déclenche aussi sur les pull requests.
+  pull_request:
+    branches:
+      - main
+
+# A single branch generates push + PR checks for the same SHA. Cancel stale
+# build/visual jobs immediately when the next commit arrives, preserving runner
+# capacity for the latest revision and avoiding misleading old failure states.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    env:
+      NODE_OPTIONS: '--max-old-space-size=8192'
+      # Origine de l app servie par le WebView. Le secret prime ; a defaut on
+      # retombe sur la variable de depot, puis sur le domaine de production
+      # publie. Sans aucune des trois, verify_capacitor_server.mjs echoue
+      # volontairement : mieux vaut aucun IPA qu un IPA qui affiche un
+      # ecran de connexion au serveur.
+      CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL || vars.CAPACITOR_SERVER_URL || 'https://kitduvoyageur-1783951966810-ruddy.vercel.app' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build web app
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ci-build-placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
+
+      - name: Mask Capacitor server URL in logs
+        run: echo "::add-mask::${{ env.CAPACITOR_SERVER_URL }}"
+
+      - name: Validate Capacitor server URL
+        run: node scripts/verify/verify_capacitor_server.mjs
+
+      - name: Capacitor sync
+        run: npx cap sync ios
+
+      - name: Verify embedded Capacitor configuration
+        run: node scripts/verify/verify_capacitor_server.mjs ios/App/App/capacitor.config.json --config-only
+
+      - name: List Xcode schemes
+        working-directory: ios/App
+        run: xcodebuild -list
+
+      - name: Resolve SPM dependencies
+        working-directory: ios/App
+        run: xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App -sdk iphoneos
+
+      - name: Build unsigned iOS app
+        working-directory: ios/App
+        run: |
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -R ios/App/build/Build/Products/Release-iphoneos/App.app Payload/
+          zip -r LKDV-ios-unsigned.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: LKDV-iOS
+          path: LKDV-ios-unsigned.ipa

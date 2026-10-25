@@ -1,0 +1,1189 @@
+/* Canonical LKDV surface material. Optical values live in tokens.css.
+   .glass is also the semantic adapter for existing links/articles: no extra wrapper. */
+:root {
+  /* Jetons iOS sémantiques. Hors verre, --label reste sombre (pages claires).
+     La portée .glass (plus bas) les rétablit sur le contenu du matériau. */
+  --label: var(--lkv-text-primary);
+  --label-secondary: var(--lkv-text-secondary);
+  --label-tertiary: var(--lkv-text-secondary);
+  --label-quaternary: var(--lkv-text-muted);
+  --separator: var(--lkv-border);
+  --separator-opaque: var(--stone-200);
+  --fill-primary: var(--lkv-primary-subtle);
+  --fill-secondary: var(--lkv-primary-subtle);
+  --fill-tertiary: var(--glass-subtle-fill);
+  --fill-quaternary: var(--glass-subtle-fill);
+  --bg-primary: var(--glass-solid);
+  --bg-secondary: var(--stone-100);
+  --bg-tertiary: var(--stone-200);
+  --r-xs: var(--lkv-radius-xs);
+  --r-sm: var(--lkv-radius-sm);
+  --r-md: var(--lkv-radius-md);
+  --r-lg: var(--lkv-radius-lg);
+  --r-xl: var(--lkv-radius-card);
+  --r-2xl: var(--lkv-radius-2xl);
+  --r-full: var(--lkv-radius-full);
+  --page-max-w: 1280px;
+  --grid-gap: var(--space-5);
+  --ease-in-out: var(--ease-smooth);
+  --ease-linear: linear;
+}
+
+.glass {
+  --label: var(--glass-text);
+  --label-secondary: var(--glass-text-secondary);
+  --label-tertiary: var(--glass-text-secondary);
+
+  /* :where makes positioning defaults weaker than fixed/sticky/absolute utilities. */
+  isolation: isolate;
+  /* STYLE UNIQUE des cards — piloté par les tokens --card-* (tokens.css). */
+  background: var(--glass-sheen), var(--card-tint);
+  color: var(--glass-text);
+  border: 1px solid var(--card-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(var(--card-saturate));
+  backdrop-filter: blur(var(--card-blur)) saturate(var(--card-saturate));
+  transition: transform var(--dur-xfast) var(--ease-glass);
+}
+:where(.glass) { position: relative; }
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0 var(--space-5) auto;
+  height: 1px;
+  background: var(--glass-highlight-top);
+  pointer-events: none;
+  border-radius: inherit;
+}
+/* Liseré spéculaire en surimpression (référence rdev) */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.6;
+  -webkit-mask: linear-gradient(rgb(0, 0, 0) 0 0) content-box, linear-gradient(rgb(0, 0, 0) 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.55) inset,
+    0 1px 3px rgba(255, 255, 255, 0.3) inset,
+    0 1px 4px rgba(11, 31, 23, 0.18) inset;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.16) 33%,
+    rgba(255, 255, 255, 0.45) 66%,
+    rgba(255, 255, 255, 0) 100%);
+}
+.glass[data-glass-variant='elevated'],
+.glass[data-glass-variant='overlay'] {
+  background: var(--glass-sheen), var(--glass-bg-strong);
+  box-shadow: var(--glass-shadow-elevated);
+}
+.glass[data-glass-variant='overlay'] {
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-shadow-overlay);
+}
+.glass[data-glass-variant='selected'] {
+  border-color: var(--glass-selected-border);
+  box-shadow: var(--glass-shadow), inset 0 0 0 1px var(--glass-selected-border);
+}
+.glass[data-glass-variant='critical'], .glass.tone-danger { border-color: var(--glass-critical-border); }
+.glass.tone-warn { border-color: var(--lkv-warning-dark); }
+.glass.tone-info { border-color: var(--lkv-info); }
+/* Deprecated blur/size aliases share the same recipe; they do not create local materials. */
+.glass.blur-sm, .glass.blur-lg, .glass.size-card, .glass.size-hero { border-radius: var(--glass-radius); }
+.glass.size-sm { border-radius: var(--lkv-radius-md); }
+.glass.interactive { cursor: pointer; }
+@media (hover: hover) and (pointer: fine) {
+  .glass.interactive:not([aria-disabled='true']):hover { transform: translateY(-1px); }
+}
+.glass.interactive:not([aria-disabled='true']):active { transform: scale(var(--glass-press-scale)); }
+.glass[aria-disabled='true'] { cursor: default; }
+.glass:focus-visible {
+  outline: 2px solid var(--glass-focus);
+  outline-offset: 3px;
+}
+
+@keyframes glassFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shimmerGlass {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes fillBar {
+  from {
+    width: 0;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutDown {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes numberRoll {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.glass-anim-in {
+  animation: glassFadeIn var(--dur-slow) var(--ease-glass) both;
+}
+
+.glass-shimmer {
+  animation: shimmerGlass 1.6s ease-in-out infinite;
+}
+
+/* Utilitaires de texte hiérarchisés */
+.glass-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--label-secondary);
+}
+
+.glass-metric {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--label);
+  font-variant-numeric: tabular-nums;
+}
+
+.glass-metric-xl {
+  font-size: 64px;
+  line-height: 68px;
+}
+
+.glass-metric-xxl {
+  font-size: 44px;
+  line-height: 48px;
+}
+
+.glass-caption {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--label-secondary);
+}
+
+.glass-secondary {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--label-tertiary);
+}
+
+/* Pills / badges glass */
+.glass-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: var(--g3-bg);
+  color: var(--g3-text);
+  border: 1px solid var(--glass-border-color);
+}
+
+.glass-pill.pill-warn {
+  background: color-mix(in oklab, var(--warn) 12%, transparent);
+  color: var(--lkv-warning-dark);
+  border-color: color-mix(in oklab, var(--warn) 30%, transparent);
+}
+
+.glass-pill.pill-danger {
+  background: color-mix(in oklab, var(--danger) 12%, transparent);
+  color: var(--danger);
+  border-color: color-mix(in oklab, var(--danger) 30%, transparent);
+}
+
+.glass-pill.pill-info {
+  background: color-mix(in oklab, var(--info) 12%, transparent);
+  color: var(--info);
+  border-color: color-mix(in oklab, var(--info) 30%, transparent);
+}
+
+/* Barre de progression fine */
+.glass-progress {
+  height: 4px;
+  border-radius: var(--r-full);
+  background: color-mix(in oklab, var(--stone-800) 10%, transparent);
+  overflow: hidden;
+}
+
+.glass-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sage-600);
+  transition: width var(--dur-slow) var(--ease-glass);
+}
+
+.glass-progress-fill.success {
+  background: var(--success);
+}
+
+.glass-progress-fill.warning {
+  background: var(--warn);
+}
+
+.glass-progress-fill.critical {
+  background: var(--danger);
+}
+
+/* ============================================================
+   iOS 26 LIQUID GLASS CAPSULE BUTTONS & CONTROLS
+   Ref: Apple Liquid Glass Stadium Pill & Segmented Bar
+   ============================================================ */
+
+/* Canonical controls: thin fills inside surfaces, shared material outside.
+   Recette de référence rdev : radius full, blur 6 sat 160, double liseré. */
+.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: var(--lkv-touch-min);
+  min-height: var(--lkv-touch-min);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-font-size);
+  font-weight: var(--btn-font-weight);
+  /* Référence photo (section 4) — valeurs pilotées par les tokens --btn-* (tokens.css).
+     Un seul point de changement pour 100% des boutons du site. */
+  color: var(--btn-content);
+  text-shadow: var(--btn-text-shadow);
+  background: var(--btn-tint);
+  border: none;
+  box-shadow: var(--btn-shadow);
+  -webkit-backdrop-filter: blur(var(--btn-blur)) saturate(var(--btn-saturate));
+  backdrop-filter: blur(var(--btn-blur)) saturate(var(--btn-saturate));
+  transition: transform var(--dur-xfast) var(--ease-glass);
+  cursor: pointer;
+  white-space: nowrap;
+}
+:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like):not(.primary):not(.danger) :is(span, svg, i, b, strong, p) {
+  color: inherit !important;
+}
+:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like):not(.primary):not(.danger) span[style*='mask-image'] {
+  background-color: currentColor !important;
+}
+:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill,
+:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill :is(span, svg, i) {
+  color: var(--g3-text) !important;
+}
+:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill span[style*='mask-image'] {
+  background-color: currentColor !important;
+}
+/* Liseré spéculaire (screen) — porté de la pile LiquidGlass */
+.glass-capsule-btn::before, .glass-btn::before, .glass-circle-btn::before, .glass-capsule-btn-like::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  -webkit-mask: linear-gradient(rgb(0, 0, 0) 0 0) content-box, linear-gradient(rgb(0, 0, 0) 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.5) inset,
+    0 1px 3px rgba(255, 255, 255, 0.28) inset,
+    0 -1px 3px rgba(11, 31, 23, 0.12) inset;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.16) 33%,
+    rgba(255, 255, 255, 0.45) 66%,
+    rgba(255, 255, 255, 0) 100%);
+}
+/* Liseré en surimpression (overlay) — même géométrie, rendu plus riche */
+.glass-capsule-btn::after, .glass-btn::after, .glass-circle-btn::after, .glass-capsule-btn-like::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.6;
+  -webkit-mask: linear-gradient(rgb(0, 0, 0) 0 0) content-box, linear-gradient(rgb(0, 0, 0) 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.55) inset,
+    0 1px 3px rgba(255, 255, 255, 0.3) inset,
+    0 1px 4px rgba(11, 31, 23, 0.18) inset;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.16) 33%,
+    rgba(255, 255, 255, 0.45) 66%,
+    rgba(255, 255, 255, 0) 100%);
+}
+.glass-circle-btn { padding: var(--space-2); }
+/* Les boutons-cartes multi-lignes (contenu clampa) ne subissent pas le nowrap des pilules. */
+:is(.glass-capsule-btn, .glass-btn, .glass-capsule-btn-like) :is(.line-clamp-1, .line-clamp-2, .line-clamp-3, .line-clamp-4, .line-clamp-5, .line-clamp-6) {
+  white-space: normal;
+}
+.glass-capsule-btn.sm, .glass-btn.sm, .glass-capsule-btn.xs, .glass-btn.xs { font-size: 11px; }
+/* Bouton d'action plein : la couleur d'action du design system
+   (--btn-tint-solid = --lkv-action, « primaire / actif / publier »), pas le
+   verre neutre --g3-bg. --g3-bg rendait le CTA sombre sur fond sombre en theme
+   clair et inversement ; le contrat de contraste du CTA est verifie par
+   tests/visual/glass-contract.spec.ts et scripts/audit/visual-contrast.mjs. */
+.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary {
+  background: var(--btn-tint-solid); color: var(--btn-on-solid);
+}
+.glass-btn-secondary, .glass-capsule-btn.secondary { background: var(--btn-tint); }
+.lkv-button-primitive { text-shadow: var(--btn-text-shadow); }
+.glass-btn-danger, .glass-capsule-btn.danger, .glass-circle-btn.danger { background: var(--btn-tint); color: var(--lkv-danger); }
+:is(.glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-btn-like):not(:disabled):active {
+  transform: scale(var(--glass-press-scale));
+}
+:is(.glass-btn, .glass-capsule-btn, .glass-circle-btn):focus-visible {
+  outline: 2px solid var(--glass-focus); outline-offset: 3px;
+}
+:is(.glass-btn, .glass-capsule-btn, .glass-circle-btn):disabled { opacity: 0.6; cursor: default; }
+.glass-capsule-bar {
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--glass-bg-medium);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--lkv-radius-full);
+}
+.glass-capsule-segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--lkv-touch-min);
+  min-width: var(--lkv-touch-min);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--lkv-radius-full);
+  font-weight: 600;
+  color: var(--glass-text);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.glass-capsule-segment.active {
+  background: var(--btn-tint-action);
+  border-color: var(--glass-selected-border);
+  color: var(--btn-content);
+}
+
+/* Contrôles de zoom Leaflet natifs (carte roadbook) — matériau des boutons DS.
+   Les contrôles sont injectés par Leaflet : simple habillage, aucune logique touchée. */
+.leaflet-control-zoom.leaflet-bar {
+  border: none !important;
+  border-radius: var(--btn-radius) !important;
+  box-shadow: var(--btn-shadow) !important;
+  overflow: hidden;
+}
+.leaflet-control-zoom.leaflet-bar a {
+  width: var(--lkv-touch-min) !important;
+  height: var(--lkv-touch-min) !important;
+  line-height: var(--lkv-touch-min) !important;
+  color: var(--btn-content) !important;
+  background: var(--btn-tint) !important;
+  border: none !important;
+  text-shadow: var(--btn-text-shadow);
+  -webkit-backdrop-filter: blur(var(--btn-blur)) saturate(var(--btn-saturate));
+  backdrop-filter: blur(var(--btn-blur)) saturate(var(--btn-saturate));
+}
+.leaflet-control-zoom.leaflet-bar a:hover,
+.leaflet-control-zoom.leaflet-bar a:focus {
+  background: var(--lkv-hover-surface) !important;
+  color: var(--btn-content) !important;
+}
+.leaflet-control-zoom.leaflet-bar a.leaflet-disabled {
+  opacity: var(--btn-disabled-opacity);
+}
+
+/* Mini checkboxes interactifs style iOS 26 Reminders */
+.glass-check-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--sage-500);
+  background: rgba(255, 255, 255, 0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s var(--ease-glass);
+}
+
+.glass-check-circle.checked {
+  background: var(--sage-600);
+  border-color: var(--sage-600);
+  color: white;
+}
+
+/* Input glass */
+.glass-input {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--glass-bg-medium);
+  border: 1px solid var(--glass-border);
+  color: var(--label);
+  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  /* 16px : anti-zoom iOS sur focus (Safari auto-zoom < 16px). */
+  font-size: 16px;
+  transition:
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+
+.glass-input::placeholder {
+  color: var(--label-tertiary);
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: var(--lkv-action);
+  box-shadow: 0 0 0 3px var(--lkv-focus-ring);
+}
+
+/* États désactivés (direction §6 : tous les états complétés) */
+.glass-input:disabled {
+  background: var(--lkv-disabled-bg);
+  border-color: var(--lkv-border);
+  color: var(--lkv-disabled-text);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* ============================================================
+   Widget Utilities (iOS 26 / WWDC 2025 spec)
+   ============================================================ */
+
+/* Chips / Dots */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font-size: 11.5px;
+  font-weight: 500;
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  color: var(--label);
+  backdrop-filter: blur(var(--glass-blur-sm));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+  line-height: 1.3;
+}
+
+.chip--sm {
+  padding: 2px 8px;
+  font-size: 10.5px;
+  gap: 4px;
+}
+
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--sage-500);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--sage-500) 25%, transparent);
+}
+
+.dot--warn {
+  background: var(--warn);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--warn) 25%, transparent);
+}
+
+.dot--danger {
+  background: var(--danger);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--danger) 25%, transparent);
+}
+
+.dot--info {
+  background: var(--info);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--info) 25%, transparent);
+}
+
+/* Jauges SVG circulaires */
+.gauge__track {
+  fill: none;
+  stroke: color-mix(in oklab, var(--stone-800) 10%, transparent);
+}
+
+.gauge__fill {
+  fill: none;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.8s var(--ease-glass);
+}
+
+/* Donut slices */
+.donut__slice {
+  transition: stroke-dasharray 0.8s var(--ease-glass), stroke 0.3s ease;
+}
+
+/* Mini listes de synthèse (Kits, alertes) */
+.mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mini-list__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  background: color-mix(in oklab, var(--stone-50) 60%, transparent);
+  border: 1px solid color-mix(in oklab, var(--stone-800) 6%, transparent);
+  font-size: 11px;
+}
+
+.mini-list__swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.mini-list__name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-list__meta {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--label-secondary);
+}
+
+/* Segmented Controls Glass */
+.glass-segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--r-full);
+  background: color-mix(in oklab, var(--stone-800) 8%, transparent);
+  border: 1px solid color-mix(in oklab, var(--stone-800) 8%, transparent);
+  backdrop-filter: blur(var(--glass-blur-sm));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+}
+
+.glass-segmented-item {
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--label-secondary);
+  transition: all var(--dur-fast) var(--ease-glass);
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+}
+
+.glass-segmented-item.active {
+  background: var(--lkv-text-inverted);
+  color: var(--ink-900);
+  box-shadow: var(--elevation-1);
+}
+
+/* ============================================================
+   ENGRAVED LIQUID GLASS BUTTONS
+   Boutons "gravés" DANS le verre : ni relief, ni lévitation.
+   Tous uniformes, translucides, légèrement verdâtres (Sage).
+   ============================================================ */
+.ultra-save-mode,
+.ultra-save-mode body {
+  background-color: black !important;
+  color: var(--lkv-text-inverted) !important;
+}
+
+.ultra-save-mode .glass,
+.ultra-save-mode [data-glass],
+.ultra-save-mode header,
+.ultra-save-mode nav,
+.ultra-save-mode aside {
+  background: black !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+}
+
+.ultra-save-mode .glass::before,
+.ultra-save-mode .glass::after {
+  display: none !important;
+}
+
+/* ============================================================
+   MESSAGERIE — transitions & safe-areas
+   Uniquement transform/opacity (GPU-safe), durée 180–240ms.
+   ============================================================ */
+
+.msg-safe-top {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+}
+
+@keyframes msgSheetIn {
+  from { transform: translate3d(100%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+@keyframes msgSheetOut {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(100%, 0, 0); }
+}
+@keyframes msgSheetUp {
+  from { transform: translate3d(0, 100%, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+@keyframes msgSheetDown {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, 100%, 0); }
+}
+@keyframes msgFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes msgFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes msgPillIn {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.msg-sheet-in       { animation: msgSheetIn   var(--motion-control-duration) var(--ease-emphasis) both; }
+.msg-sheet-out      { animation: msgSheetOut  var(--dur-fast) var(--ease-emphasis) both; }
+.msg-sheet-up-in    { animation: msgSheetUp   var(--motion-control-duration) var(--ease-emphasis) both; }
+.msg-sheet-down-out { animation: msgSheetDown var(--dur-fast) var(--ease-emphasis) both; }
+.msg-fade-in        { animation: msgFadeIn    var(--dur-fast) var(--ease-glass) both; }
+.msg-fade-out       { animation: msgFadeOut   var(--dur-fast) var(--ease-glass) both; }
+.msg-pill-in        { animation: msgPillIn    var(--motion-control-duration) var(--ease-glass) both; }
+
+/* Paysage bas de plafond : on comprime le chrome plutôt que les messages. */
+@media (orientation: landscape) and (max-height: 480px) {
+  .msg-safe-top {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .msg-sheet-in,
+  .msg-sheet-out,
+  .msg-sheet-up-in,
+  .msg-sheet-down-out,
+  .msg-fade-in,
+  .msg-fade-out,
+  .msg-pill-in {
+    animation-duration: 1ms !important;
+  }
+}
+
+/* ============================================================
+   MESSAGERIE V2 — bulles Liquid Glass & bouton d'envoi
+   Verre translucide (speculaire) pour les bulles recues,
+   verre de conifere sage pour les bulles envoyees.
+   ============================================================ */
+
+.msg-bubble {
+  position: relative;
+  isolation: isolate;
+  background: var(--glass-bg-medium);
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    var(--glass-depth-inset),
+    var(--glass-shadow);
+}
+
+.msg-bubble::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: var(--glass-highlight-top);
+  pointer-events: none;
+}
+
+/* Bulle envoyee : verre teinte action (Phase 3 — aucun aplat plein). */
+.msg-bubble--mine {
+  background: var(--btn-tint-action);
+  border-color: var(--glass-selected-border);
+  color: var(--btn-content);
+  box-shadow:
+    var(--glass-depth-inset),
+    var(--glass-shadow);
+}
+
+/* Bouton d'envoi Liquid Glass : translucide sage + speculaire */
+.glass-send-btn {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.12) 45%,
+    color-mix(in oklab, var(--sage-500) 30%, transparent) 110%
+  );
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.9),
+    0 6px 18px -6px rgba(23, 64, 44, 0.28);
+  color: var(--lkv-primary);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glass-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+
+/* UI Layouts (MIT) — shimmer skeleton, adapté LKDV */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*='shimmer'] { animation: none !important; }
+}
+
+/* ============================================================
+   FLUIDITÉ F3 — Pendant un geste/vol caméra (data-atlas-flying),
+   les panneaux secondaires de la carte coupent leur backdrop-filter :
+   le flou animé coûte cher au GPU mobile et ne sert à rien en mouvement.
+   Bascule instantanée (jamais d'animation de backdrop-filter).
+   Spécificité (0,2,0) > .glass (0,1,0) — pas de !important nécessaire.
+   ============================================================ */
+[data-atlas-flying='true'] [data-atlas-glass='secondary'] {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.lkv-button-primitive :is(span, svg, i, b, strong, p) {
+  color: inherit !important;
+}
+.lkv-button-primitive span[style*='mask-image'] {
+  background-color: currentColor !important;
+}
+
+/* One blur per visual surface. !important intentionally covers older inline recipes. */
+:is(.glass, [data-glass-variant]) :is(.glass, .glass-sub-card, .glass-btn, .glass-capsule-btn,
+  .glass-circle-btn, .glass-input, .glass-segmented, .glass-capsule-bar, .chip,
+  .lkv-chip-primitive, .lkv-button-primitive, [class*='backdrop-blur'], [style*='backdrop-filter']) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+/* Exception : boutons verre posés sur un média (fond = photo, pas de glass imbriqué).
+   On réautorise l'optique réelle comme la référence rdev. */
+:is(.glass, [data-glass-variant]) .lkdv-photo-actions
+  :is(.lkv-button-primitive, .lkv-chip-primitive, .glass-circle-btn, [style*='backdrop-filter']) {
+  -webkit-backdrop-filter: blur(6px) saturate(160%) !important;
+  backdrop-filter: blur(6px) saturate(160%) !important;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  :is(.glass, [data-glass-variant]) .lkdv-photo-actions
+    :is(.lkv-button-primitive, .lkv-chip-primitive, .glass-circle-btn, [style*='backdrop-filter']) {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+[data-glass-effects='reduced'] :is(.glass, [data-glass-variant]) .lkdv-photo-actions
+  :is(.lkv-button-primitive, .lkv-chip-primitive, .glass-circle-btn, [style*='backdrop-filter']),
+.ultra-save-mode :is(.glass, [data-glass-variant]) .lkdv-photo-actions
+  :is(.lkv-button-primitive, .lkv-chip-primitive, .glass-circle-btn, [style*='backdrop-filter']) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.glass-sub-card {
+  background: var(--card-tint);
+  color: var(--card-content);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(var(--card-saturate));
+  backdrop-filter: blur(var(--card-blur)) saturate(var(--card-saturate));
+}
+.glass .glass,
+.glass .glass-sub-card {
+  /* Surface imbriquée = puits clair, jamais de second flou. */
+  --label: var(--lkv-text-primary);
+  --label-secondary: var(--lkv-text-secondary);
+  --label-tertiary: var(--lkv-text-secondary);
+  background: var(--glass-subtle-fill);
+  color: var(--lkv-text-primary);
+  box-shadow: none;
+}
+:is(.glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-segment,
+  .glass-segmented-item, .glass-send-btn, .lkv-button-primitive, button.lkv-chip-primitive) {
+  min-height: var(--lkv-touch-min);
+  min-width: var(--lkv-touch-min);
+}
+.lkv-button-primitive, button.lkv-chip-primitive {
+  transition: transform var(--dur-xfast) var(--ease-glass);
+}
+:is(.lkv-button-primitive, button.lkv-chip-primitive):not(:disabled):active {
+  transform: scale(var(--glass-press-scale));
+}
+:is(.lkv-button-primitive, button.lkv-chip-primitive, .glass-capsule-segment):focus-visible {
+  outline: 2px solid var(--glass-focus);
+  outline-offset: 3px;
+}
+/* Prefixed Safari support also counts as backdrop support. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass, .glass-sub-card, .glass-input, .glass-capsule-bar,
+  .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip,
+  .lkv-glass, .lkv-glass__warp {
+    background: var(--glass-solid);
+  }
+  .lkv-glass, .lkv-glass__warp {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+[data-glass-effects='reduced'] :is(.glass, .glass-sub-card, .glass-input, .glass-capsule-bar,
+  .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip,
+  .lkv-glass, .lkv-glass__warp) {
+  background: var(--glass-solid);
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+/* Le repli opaque clair restaure un contenu sombre lisible. */
+[data-glass-effects='reduced'] :is(.glass, .glass-sub-card) {
+  color: var(--lkv-text-primary);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :is(.glass, .glass-sub-card) {
+    color: var(--lkv-text-primary);
+  }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :is(.glass, .glass-sub-card, .glass-input, .glass-capsule-bar,
+    .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip,
+    .lkv-glass, .lkv-glass__warp) {
+    background: var(--glass-solid) !important;
+    color: var(--lkv-text-primary);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .glass::before, .glass::after { display: none; }
+}
+/* Repli d'accessibilite des boutons d'action : hors mode normal, le bouton
+   garde sa couleur d'action --btn-tint-solid (= --lkv-action), texte
+   --lkv-on-action blanc. Aplatir le fond en --g3-bg rendait le CTA illisible
+   en mode contraste eleve (fond clair + texte clair) : c'est exactement
+   l'inverse de l'intention d'accessibilite. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
+    background: var(--btn-tint-solid) !important;
+    color: var(--lkv-on-action) !important;
+  }
+  .glass-btn-danger {
+    background: var(--btn-tint) !important;
+    color: var(--lkv-danger) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.glass, .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-btn-like,
+    .glass-capsule-segment, .glass-sub-card, .lkv-button-primitive, .lkv-chip-primitive,
+    .lkv-glass--premium) {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+  .glass-anim-in, .glass-shimmer { animation: none !important; }
+}
+@media (forced-colors: active) {
+  .glass, .glass-sub-card { background: Canvas; color: CanvasText; border-color: CanvasText; box-shadow: none; }
+  .glass:focus-visible { outline-color: Highlight; }
+}
+
+
+/* Geometry is independent of optical material and never route-specific. */
+.glass.rounded-full, .glass-sub-card.rounded-full, .glass[data-glass-shape='pill'] {
+  border-radius: var(--lkv-radius-full);
+}
+.glass[data-glass-shape='sheet'] { border-radius: var(--glass-radius) var(--glass-radius) 0 0; }
+.glass[data-glass-shape='full'] { border-radius: 0; }
+/* Bottom sheet: radius on top only, upward shadow */
+.glass[data-glass-shape='bottom-sheet'] {
+  border-radius: var(--glass-radius) var(--glass-radius) 0 0;
+  box-shadow: var(--glass-shadow-sheet);
+}
+.glass[data-glass-shape='drawer'] { border-radius: var(--glass-radius) 0 0 var(--glass-radius); }
+:where(.glass) { overflow: hidden; }
+
+/* ============================================================
+   LKDV — Système Liquid Glass Réel (Couches Optiques)
+   ============================================================ */
+
+:root {
+  /* Optique additionnelle */
+  --glass-blur-strong: 18px;
+  --glass-blur-light: 16px;
+  --glass-saturate: 170%;
+  --glass-brightness: 1.02;
+  --glass-tint: var(--card-tint-solid);
+  --glass-tint-strong: rgba(255, 255, 255, 0.78);
+
+  /* Géométrie — direction P5 : rayons 12/16/24 */
+  --glass-radius-sm: 12px;
+  --glass-radius-md: 16px;
+  --glass-radius-lg: 24px;
+  --glass-radius-xl: 40px;
+  --glass-radius-pill: 999px;
+
+  /* Lumière & profondeur (ombres TOUJOURS en ink) */
+  --glass-rim-soft: rgba(255, 255, 255, 0.45);
+  --glass-inner-shadow: 0 0 0 0.5px rgba(255,255,255,0.5) inset,
+                        0 1px 3px rgba(255,255,255,0.28) inset,
+                        0 -1px 3px rgba(11,31,23,0.12) inset;
+  --glass-drop: 0 12px 40px rgba(11, 31, 23, 0.22),
+                0 2px 8px rgba(11, 31, 23, 0.14);
+  --glass-drop-strong: 0 20px 60px rgba(11, 31, 23, 0.32);
+
+  /* États */
+  --glass-hover-lift: translateY(-1px);
+  --glass-active-press: scale(0.98);
+}
+
+/* ---------- Niveau STANDARD : fallback universel ---------- */
+.lkv-glass {
+  position: relative;
+  border-radius: var(--glass-radius-sm);
+  background: var(--glass-tint);
+  backdrop-filter: blur(var(--glass-blur-light)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-light)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-inner-shadow), var(--glass-drop);
+}
+
+/* ---------- Niveau PREMIUM : couches optiques ---------- */
+.lkv-glass--premium { position: relative; }
+
+.lkv-glass__warp {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  backdrop-filter: blur(var(--glass-blur-md, 14px)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-md, 14px)) saturate(var(--glass-saturate));
+  background: var(--glass-tint);
+  box-shadow: var(--glass-drop);
+}
+
+.lkv-glass__rim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  -webkit-mask: linear-gradient(rgb(0, 0, 0) 0 0) content-box, linear-gradient(rgb(0, 0, 0) 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  box-shadow: var(--glass-inner-shadow);
+}
+
+.lkv-glass__content { position: relative; z-index: 2; }
+
+/* ---------- Ambilight des cartes média (halo flou de la photo) ---------- */
+/* Fusion haut de photo → verre de la card : fondu givré progressif. */
+.lkdv-photo-melt {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5rem;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+/* Mode sobre, contraste renforcé ou transparence réduite : pas de halo. */
+[data-glass-effects='reduced'] .lkdv-ambilight,
+.ultra-save-mode .lkdv-ambilight {
+  display: none !important;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .lkdv-ambilight { display: none !important; }
+  .lkdv-photo-melt {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0) 100%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (forced-colors: active) {
+  .lkdv-ambilight { display: none !important; }
+  .lkdv-photo-melt { display: none !important; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MODE SOMBRE — complète les éléments du matériau qui utilisaient la
+   gamme sage/stone claire en dur (le reste suit les tokens --lkv-*).
+   Spec §6 : tous les états complétés, pas seulement l'inversion du fond.
+   ════════════════════════════════════════════════════════════════ */
+.dark .glass-pill {
+  background: var(--g3-bg);
+  color: var(--g3-text);
+  border-color: var(--glass-border-color);
+}
+
+.dark .glass-check-circle {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--sage-300);
+}
+
+.dark .glass-check-circle.checked {
+  background: var(--sage-500);
+  border-color: var(--sage-500);
+}
+
+.dark .glass-progress {
+  background: color-mix(in oklab, var(--stone-50) 12%, transparent);
+}
+
+.dark .glass-progress-fill {
+  background: var(--sage-300);
+}
+
+.dark .glass-segmented {
+  background: color-mix(in oklab, var(--stone-50) 10%, transparent);
+  border-color: color-mix(in oklab, var(--stone-50) 12%, transparent);
+}
+
+.dark .mini-list__row {
+  background: color-mix(in oklab, var(--stone-50) 8%, transparent);
+  border-color: color-mix(in oklab, var(--stone-50) 10%, transparent);
+}
+
+.dark .gauge__track {
+  stroke: color-mix(in oklab, var(--stone-50) 16%, transparent);
+}
+
+/* Optique legacy (.lkv-glass) */
+.dark {
+  --glass-tint: var(--card-tint-solid);
+  --glass-tint-strong: rgba(255, 255, 255, 0.16);
+}
+
+/* Messagerie : bulles et bouton d'envoi lisibles en sombre */
+.dark .msg-bubble {
+  background: linear-gradient(180deg, rgba(27, 45, 36, 0.92), rgba(16, 28, 23, 0.88));
+  border-color: rgba(241, 245, 241, 0.24);
+  color: var(--lkv-text-primary);
+  box-shadow:
+    inset 0 1px 1px rgba(241, 245, 241, 0.12),
+    0 2px 8px -2px rgba(0, 0, 0, 0.4),
+    0 8px 22px -8px rgba(0, 0, 0, 0.5);
+}
+
+.dark .msg-bubble--mine {
+  background: linear-gradient(165deg, var(--lkv-action-hover) 0%, var(--lkv-action) 100%);
+  border-color: rgba(241, 245, 241, 0.32);
+  color: var(--btn-on-solid);
+}
+
+.dark .glass-send-btn {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    color-mix(in oklab, var(--sage-500) 30%, transparent) 110%
+  );
+  border-color: rgba(241, 245, 241, 0.32);
+  color: var(--lkv-action);
+}
+
+
+
+/* Phase 3 — rims du matériau (utilitaires : les garde-fous design interdisent
+   les ombres arbitraires hors primitives ; valeurs = tokens --glass-*). */
+.lkv-rim-inset { box-shadow: var(--glass-depth-inset); }
+.lkv-rim-btn { box-shadow: var(--btn-rim); }
+
+/* Le chrome mobile garde un repère clavier visible au-dessus du matériau. */
+.lkv-nav-tab:focus-visible,
+.lkv-nav-surface button:focus-visible {
+  outline: 2px solid var(--glass-focus-outline);
+  outline-offset: -3px;
+  border-radius: var(--lkv-radius-nav);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkv-nav-surface {
+    transition: none !important;
+  }
+
+  .lkv-nav-loading-dot {
+    animation: none !important;
+  }
+
+  .lkv-nav-surface[data-hidden="true"] {
+    transform: none !important;
+    visibility: hidden !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .lkv-nav-tab:focus-visible,
+  .lkv-nav-surface button:focus-visible {
+    outline-color: Highlight;
+  }
+}

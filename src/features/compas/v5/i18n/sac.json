@@ -1,0 +1,552 @@
+{
+  "sac": {
+    "tabBag": {
+      "fr": "Ton sac",
+      "en": "Your pack",
+      "es": "Su mochila",
+      "de": "Ihr Rucksack",
+      "it": "Il suo zaino"
+    },
+    "tabKits": {
+      "fr": "Tes kits",
+      "en": "Your kits",
+      "es": "Sus kits",
+      "de": "Ihre Kits",
+      "it": "I suoi kit"
+    },
+    "tabCarry": {
+      "fr": "Qui porte quoi",
+      "en": "Who carries what",
+      "es": "Quién lleva qué",
+      "de": "Wer trägt was",
+      "it": "Chi porta cosa"
+    },
+    "subItemsOne": {
+      "fr": "{count} objet",
+      "en": "{count} item",
+      "es": "{count} objeto",
+      "de": "{count} Gegenstand",
+      "it": "{count} oggetto"
+    },
+    "subItemsOther": {
+      "fr": "{count} objets",
+      "en": "{count} items",
+      "es": "{count} objetos",
+      "de": "{count} Gegenstände",
+      "it": "{count} oggetti"
+    },
+    "subSharedOne": {
+      "fr": "{count} objet commun",
+      "en": "{count} shared item",
+      "es": "{count} objeto común",
+      "de": "{count} gemeinsamer Gegenstand",
+      "it": "{count} oggetto comune"
+    },
+    "subSharedOther": {
+      "fr": "{count} objets communs",
+      "en": "{count} shared items",
+      "es": "{count} objetos comunes",
+      "de": "{count} gemeinsame Gegenstände",
+      "it": "{count} oggetti comuni"
+    },
+    "ringLabel": {
+      "fr": "Poids de ton sac par catégorie",
+      "en": "Your pack weight by category",
+      "es": "Peso de su mochila por categoría",
+      "de": "Gewicht Ihres Rucksacks nach Kategorie",
+      "it": "Peso del suo zaino per categoria"
+    },
+    "ringOf": {
+      "fr": "sur {max} max",
+      "en": "of {max} max",
+      "es": "de {max} máx.",
+      "de": "von max. {max}",
+      "it": "su {max} max"
+    },
+    "ringKnown": {
+      "fr": "poids connus",
+      "en": "known weights",
+      "es": "pesos conocidos",
+      "de": "bekannte Gewichte",
+      "it": "pesi noti"
+    },
+    "ringUnknownOne": {
+      "fr": "{count} objet sans poids renseigné, non compté",
+      "en": "{count} item without a recorded weight, not counted",
+      "es": "{count} objeto sin peso indicado, no contado",
+      "de": "{count} Gegenstand ohne angegebenes Gewicht, nicht gezählt",
+      "it": "{count} oggetto senza peso indicato, non contato"
+    },
+    "ringUnknownOther": {
+      "fr": "{count} objets sans poids renseigné, non comptés",
+      "en": "{count} items without a recorded weight, not counted",
+      "es": "{count} objetos sin peso indicado, no contados",
+      "de": "{count} Gegenstände ohne angegebenes Gewicht, nicht gezählt",
+      "it": "{count} oggetti senza peso indicato, non contati"
+    },
+    "ringEmpty": {
+      "fr": "Aucun poids à compter pour l’instant.",
+      "en": "No weight to count yet.",
+      "es": "Aún no hay pesos que contar.",
+      "de": "Noch kein Gewicht zu zählen.",
+      "it": "Nessun peso da contare per ora."
+    },
+    "ringOver": {
+      "fr": "Au-dessus de ta capacité de portage.",
+      "en": "Above your carrying capacity.",
+      "es": "Por encima de su capacidad de carga.",
+      "de": "Über Ihrer Tragkraft.",
+      "it": "Sopra la sua capacità di carico."
+    },
+    "ringNote": {
+      "fr": "Ce que tu portes : tes affaires et le matériel commun qui t’est confié. Ce que tu portes sur toi n’est pas compté.",
+      "en": "What you carry: your own gear and the shared gear entrusted to you. What you wear is not counted.",
+      "es": "Lo que lleva en la mochila: sus cosas y el material común que se le confía. Lo que lleva puesto no se cuenta.",
+      "de": "Was Sie im Rucksack tragen: Ihre Sachen und das Ihnen anvertraute Gemeinschaftsmaterial. Was Sie am Körper tragen, zählt nicht.",
+      "it": "Ciò che porta nello zaino: le sue cose e il materiale comune che le è affidato. Ciò che indossa non è contato."
+    },
+    "group": {
+      "porter": {
+        "fr": "Porter",
+        "en": "Carrying",
+        "es": "Transporte",
+        "de": "Tragen",
+        "it": "Trasporto"
+      },
+      "dormir": {
+        "fr": "Dormir",
+        "en": "Sleeping",
+        "es": "Descanso",
+        "de": "Schlafen",
+        "it": "Dormire"
+      },
+      "vetements": {
+        "fr": "Vêtements",
+        "en": "Clothing",
+        "es": "Ropa",
+        "de": "Kleidung",
+        "it": "Abbigliamento"
+      },
+      "securite": {
+        "fr": "Sécurité",
+        "en": "Safety",
+        "es": "Seguridad",
+        "de": "Sicherheit",
+        "it": "Sicurezza"
+      },
+      "eau": {
+        "fr": "Eau et repas",
+        "en": "Water and meals",
+        "es": "Agua y comidas",
+        "de": "Wasser und Mahlzeiten",
+        "it": "Acqua e pasti"
+      },
+      "autre": {
+        "fr": "Autre",
+        "en": "Other",
+        "es": "Otros",
+        "de": "Sonstiges",
+        "it": "Altro"
+      }
+    },
+    "adaptCap": {
+      "fr": "Adapté à ton parcours",
+      "en": "Adapted to your route",
+      "es": "Adaptado a su ruta",
+      "de": "An Ihre Route angepasst",
+      "it": "Adattato al suo percorso"
+    },
+    "adaptNone": {
+      "fr": "Aucune adaptation à signaler pour l’instant.",
+      "en": "No adaptation to report for now.",
+      "es": "Ninguna adaptación que señalar por ahora.",
+      "de": "Vorerst keine Anpassung zu melden.",
+      "it": "Nessun adattamento da segnalare per ora."
+    },
+    "adaptAdded": {
+      "fr": "Ajouté",
+      "en": "Added",
+      "es": "Añadido",
+      "de": "Hinzugefügt",
+      "it": "Aggiunto"
+    },
+    "adaptToAdd": {
+      "fr": "À ajouter",
+      "en": "To add",
+      "es": "Por añadir",
+      "de": "Noch hinzuzufügen",
+      "it": "Da aggiungere"
+    },
+    "adaptRemove": {
+      "fr": "Retirer",
+      "en": "Remove",
+      "es": "Quitar",
+      "de": "Entfernen",
+      "it": "Rimuovere"
+    },
+    "adaptRemoveLabel": {
+      "fr": "Retirer {name} du sac",
+      "en": "Remove {name} from the pack",
+      "es": "Quitar {name} de la mochila",
+      "de": "{name} aus dem Rucksack entfernen",
+      "it": "Rimuovere {name} dallo zaino"
+    },
+    "adaptAdd": {
+      "fr": "Ajouter",
+      "en": "Add",
+      "es": "Añadir",
+      "de": "Hinzufügen",
+      "it": "Aggiungere"
+    },
+    "adaptAddLabel": {
+      "fr": "Ajouter au sac : {label}",
+      "en": "Add to the pack: {label}",
+      "es": "Añadir a la mochila: {label}",
+      "de": "Zum Rucksack hinzufügen: {label}",
+      "it": "Aggiungere allo zaino: {label}"
+    },
+    "adaptSource": {
+      "fr": "Source : {source}",
+      "en": "Source: {source}",
+      "es": "Fuente: {source}",
+      "de": "Quelle: {source}",
+      "it": "Fonte: {source}"
+    },
+    "adaptWeight": {
+      "fr": "Les objets ajoutés pèsent {weight}.",
+      "en": "The added items weigh {weight}.",
+      "es": "Los objetos añadidos pesan {weight}.",
+      "de": "Die hinzugefügten Gegenstände wiegen {weight}.",
+      "it": "Gli oggetti aggiunti pesano {weight}."
+    },
+    "adaptUnknownOne": {
+      "fr": "{count} objet ajouté sans poids renseigné.",
+      "en": "{count} added item without a recorded weight.",
+      "es": "{count} objeto añadido sin peso indicado.",
+      "de": "{count} hinzugefügter Gegenstand ohne angegebenes Gewicht.",
+      "it": "{count} oggetto aggiunto senza peso indicato."
+    },
+    "adaptUnknownOther": {
+      "fr": "{count} objets ajoutés sans poids renseigné.",
+      "en": "{count} added items without a recorded weight.",
+      "es": "{count} objetos añadidos sin peso indicado.",
+      "de": "{count} hinzugefügte Gegenstände ohne angegebenes Gewicht.",
+      "it": "{count} oggetti aggiunti senza peso indicato."
+    },
+    "adaptCoverage": {
+      "fr": "Conseils de kit couverts : {covered} sur {total}.",
+      "en": "Kit advice covered: {covered} of {total}.",
+      "es": "Consejos de kit cubiertos: {covered} de {total}.",
+      "de": "Abgedeckte Kit-Hinweise: {covered} von {total}.",
+      "it": "Consigli del kit coperti: {covered} su {total}."
+    },
+    "removedMsg": {
+      "fr": "{name} retiré du sac",
+      "en": "{name} removed from the pack",
+      "es": "{name} quitado de la mochila",
+      "de": "{name} aus dem Rucksack entfernt",
+      "it": "{name} rimosso dallo zaino"
+    },
+    "stateHave": {
+      "fr": "Je l’ai",
+      "en": "I have it",
+      "es": "Lo tengo",
+      "de": "Habe ich",
+      "it": "Ce l’ho"
+    },
+    "stateBuy": {
+      "fr": "À acheter",
+      "en": "To buy",
+      "es": "Por comprar",
+      "de": "Zu kaufen",
+      "it": "Da comprare"
+    },
+    "stateBorrow": {
+      "fr": "À emprunter",
+      "en": "To borrow",
+      "es": "Por pedir prestado",
+      "de": "Zu leihen",
+      "it": "Da prendere in prestito"
+    },
+    "stateLent": {
+      "fr": "Prêté",
+      "en": "Lent out",
+      "es": "Prestado",
+      "de": "Verliehen",
+      "it": "Prestato"
+    },
+    "stateReplace": {
+      "fr": "À remplacer",
+      "en": "To replace",
+      "es": "Por reemplazar",
+      "de": "Zu ersetzen",
+      "it": "Da sostituire"
+    },
+    "stateGroup": {
+      "fr": "État de {name}",
+      "en": "Status of {name}",
+      "es": "Estado de {name}",
+      "de": "Status von {name}",
+      "it": "Stato di {name}"
+    },
+    "stateSetHave": {
+      "fr": "{name} : tu l’as",
+      "en": "{name}: you have it",
+      "es": "{name}: lo tiene",
+      "de": "{name}: Sie haben es",
+      "it": "{name}: ce l’ha"
+    },
+    "stateSetBuy": {
+      "fr": "{name} : à acheter",
+      "en": "{name}: to buy",
+      "es": "{name}: por comprar",
+      "de": "{name}: zu kaufen",
+      "it": "{name}: da comprare"
+    },
+    "stateLocked": {
+      "fr": "Cet objet est dans ton inventaire ou déjà emballé : son état ne se change pas ici.",
+      "en": "This item is in your inventory or already packed: its status can’t be changed here.",
+      "es": "Este objeto está en su inventario o ya empacado: su estado no se cambia aquí.",
+      "de": "Dieser Gegenstand ist in Ihrem Inventar oder schon gepackt: Sein Status lässt sich hier nicht ändern.",
+      "it": "Questo oggetto è nel suo inventario o già nello zaino: qui il suo stato non si cambia."
+    },
+    "lentNote": {
+      "fr": "Prêté à quelqu’un : à récupérer avant le départ.",
+      "en": "Lent to someone: get it back before you leave.",
+      "es": "Prestado a alguien: recupérelo antes de salir.",
+      "de": "An jemanden verliehen: vor der Abreise zurückholen.",
+      "it": "Prestato a qualcuno: da recuperare prima della partenza."
+    },
+    "carriedBy": {
+      "fr": "Porté par {name}",
+      "en": "Carried by {name}",
+      "es": "Lo lleva {name}",
+      "de": "Getragen von {name}",
+      "it": "Portato da {name}"
+    },
+    "carrierNone": {
+      "fr": "Pas encore de porteur",
+      "en": "No carrier yet",
+      "es": "Aún sin portador",
+      "de": "Noch kein Träger",
+      "it": "Ancora nessun portatore"
+    },
+    "reasonLine": {
+      "fr": "Là parce que : {reason}",
+      "en": "Here because: {reason}",
+      "es": "Está porque: {reason}",
+      "de": "Dabei, weil: {reason}",
+      "it": "C’è perché: {reason}"
+    },
+    "vital": {
+      "fr": "Vital",
+      "en": "Essential",
+      "es": "Esencial",
+      "de": "Lebenswichtig",
+      "it": "Vitale"
+    },
+    "openItem": {
+      "fr": "Fiche de l’objet",
+      "en": "Item details",
+      "es": "Ficha del objeto",
+      "de": "Gegenstandsdetails",
+      "it": "Scheda dell’oggetto"
+    },
+    "openCarrier": {
+      "fr": "Qui le porte",
+      "en": "Who carries it",
+      "es": "Quién lo lleva",
+      "de": "Wer trägt es",
+      "it": "Chi lo porta"
+    },
+    "openFind": {
+      "fr": "Trouver en boutique",
+      "en": "Find in the shop",
+      "es": "Buscar en la tienda",
+      "de": "Im Shop finden",
+      "it": "Trovare in negozio"
+    },
+    "shopLine": {
+      "fr": "Boutique LKDV · {price}",
+      "en": "LKDV shop · {price}",
+      "es": "Tienda LKDV · {price}",
+      "de": "LKDV-Shop · {price}",
+      "it": "Negozio LKDV · {price}"
+    },
+    "shopLineNone": {
+      "fr": "Boutique LKDV · prix non renseigné",
+      "en": "LKDV shop · price not available",
+      "es": "Tienda LKDV · precio no indicado",
+      "de": "LKDV-Shop · Preis nicht angegeben",
+      "it": "Negozio LKDV · prezzo non indicato"
+    },
+    "add": {
+      "fr": "Ajouter un objet",
+      "en": "Add an item",
+      "es": "Añadir un objeto",
+      "de": "Gegenstand hinzufügen",
+      "it": "Aggiungere un oggetto"
+    },
+    "empty": {
+      "fr": "Ton sac est vide pour l’instant.",
+      "en": "Your pack is empty for now.",
+      "es": "Su mochila está vacía por ahora.",
+      "de": "Ihr Rucksack ist vorerst leer.",
+      "it": "Il suo zaino è vuoto per ora."
+    },
+    "readOnly": {
+      "fr": "Lecture seule : tu peux voir le sac, pas le modifier.",
+      "en": "Read-only: you can see the pack but not change it.",
+      "es": "Solo lectura: puede ver la mochila, pero no modificarla.",
+      "de": "Nur Lesezugriff: Sie können den Rucksack ansehen, aber nicht ändern.",
+      "it": "Sola lettura: può vedere lo zaino, ma non modificarlo."
+    },
+    "kitsNote": {
+      "fr": "Le Compas crée un kit pour ce voyage, ou part d’un des tiens et l’adapte au parcours.",
+      "en": "Compas builds a kit for this trip, or starts from one of yours and adapts it to the route.",
+      "es": "Compas crea un kit para este viaje, o parte de uno de los suyos y lo adapta a la ruta.",
+      "de": "Compas erstellt ein Kit für diese Reise oder geht von einem Ihrer Kits aus und passt es an die Route an.",
+      "it": "Compas crea un kit per questo viaggio, oppure parte da uno dei suoi e lo adatta al percorso."
+    },
+    "kitsGroup": {
+      "fr": "Choisir un kit",
+      "en": "Choose a kit",
+      "es": "Elegir un kit",
+      "de": "Kit wählen",
+      "it": "Scegliere un kit"
+    },
+    "kitTripTitle": {
+      "fr": "Kit {title}",
+      "en": "{title} kit",
+      "es": "Kit de {title}",
+      "de": "{title}-Kit",
+      "it": "Kit di {title}"
+    },
+    "kitTripSub": {
+      "fr": "Créé pour ce voyage",
+      "en": "Created for this trip",
+      "es": "Creado para este viaje",
+      "de": "Für diese Reise erstellt",
+      "it": "Creato per questo viaggio"
+    },
+    "kitWeightUnknownOne": {
+      "fr": "dont {count} sans poids renseigné",
+      "en": "including {count} without a recorded weight",
+      "es": "de ellos {count} sin peso indicado",
+      "de": "davon {count} ohne angegebenes Gewicht",
+      "it": "di cui {count} senza peso indicato"
+    },
+    "kitWeightUnknownOther": {
+      "fr": "dont {count} sans poids renseigné",
+      "en": "including {count} without a recorded weight",
+      "es": "de ellos {count} sin peso indicado",
+      "de": "davon {count} ohne angegebenes Gewicht",
+      "it": "di cui {count} senza peso indicato"
+    },
+    "saveCap": {
+      "fr": "Enregistrer dans Mon matériel",
+      "en": "Save to My gear",
+      "es": "Guardar en Mi material",
+      "de": "In Mein Material speichern",
+      "it": "Salva in Il mio materiale"
+    },
+    "saveHelp": {
+      "fr": "Le kit de ce voyage devient un kit à part entière, privé : tu pourras le reprendre pour d’autres voyages.",
+      "en": "This trip’s kit becomes a kit in its own right, private to you: you can reuse it for other trips.",
+      "es": "El kit de este viaje pasa a ser un kit por derecho propio, privado: podrás reutilizarlo en otros viajes.",
+      "de": "Das Kit dieser Reise wird zu einem eigenständigen, privaten Kit: Sie können es für andere Reisen wiederverwenden.",
+      "it": "Il kit di questo viaggio diventa un kit a sé, privato: potrà riusarlo per altri viaggi."
+    },
+    "saveName": {
+      "fr": "Nom du kit",
+      "en": "Kit name",
+      "es": "Nombre del kit",
+      "de": "Name des Kits",
+      "it": "Nome del kit"
+    },
+    "saveButton": {
+      "fr": "Enregistrer le kit",
+      "en": "Save the kit",
+      "es": "Guardar el kit",
+      "de": "Kit speichern",
+      "it": "Salva il kit"
+    },
+    "applyButton": {
+      "fr": "Partir de ce kit",
+      "en": "Start from this kit",
+      "es": "Partir de este kit",
+      "de": "Mit diesem Kit starten",
+      "it": "Partire da questo kit"
+    },
+    "applyLabel": {
+      "fr": "Partir du kit {name}",
+      "en": "Start from the kit {name}",
+      "es": "Partir del kit {name}",
+      "de": "Mit dem Kit {name} starten",
+      "it": "Partire dal kit {name}"
+    },
+    "applyNote": {
+      "fr": "Ton kit reste tel quel : rien n’est retiré de ton sac, et aucun lien de filiation n’est créé.",
+      "en": "Your kit stays as it is: nothing is removed from your pack and no lineage link is created.",
+      "es": "Su kit se queda como está: no se quita nada de su mochila y no se crea ningún vínculo de filiación.",
+      "de": "Ihr Kit bleibt unverändert: Nichts wird aus Ihrem Rucksack entfernt und keine Abstammungsverknüpfung angelegt.",
+      "it": "Il suo kit resta com’è: nulla viene tolto dal suo zaino e non si crea alcun legame di filiazione."
+    },
+    "carryNote": {
+      "fr": "Le matériel commun se répartit entre vous. Chacun garde ses affaires personnelles.",
+      "en": "Shared gear is split between you. Everyone keeps their own personal items.",
+      "es": "El material común se reparte entre ustedes. Cada uno conserva sus cosas personales.",
+      "de": "Das Gemeinschaftsmaterial wird unter Ihnen aufgeteilt. Jeder behält seine persönlichen Sachen.",
+      "it": "Il materiale comune si divide tra voi. Ognuno tiene le proprie cose personali."
+    },
+    "carryUnassigned": {
+      "fr": "À répartir",
+      "en": "To assign",
+      "es": "Por repartir",
+      "de": "Noch zu verteilen",
+      "it": "Da assegnare"
+    },
+    "carryTo": {
+      "fr": "Confier à {name}",
+      "en": "Give to {name}",
+      "es": "Confiar a {name}",
+      "de": "{name} geben",
+      "it": "Affidare a {name}"
+    },
+    "carryToLabel": {
+      "fr": "Confier {item} à {name}",
+      "en": "Give {item} to {name}",
+      "es": "Confiar {item} a {name}",
+      "de": "{item} an {name} geben",
+      "it": "Affidare {item} a {name}"
+    },
+    "carryNothing": {
+      "fr": "rien de commun",
+      "en": "nothing shared",
+      "es": "nada común",
+      "de": "nichts Gemeinsames",
+      "it": "niente di comune"
+    },
+    "carryCapacity": {
+      "fr": "sur {max} kg",
+      "en": "of {max} kg",
+      "es": "de {max} kg",
+      "de": "von {max} kg",
+      "it": "su {max} kg"
+    },
+    "carryOpenBag": {
+      "fr": "Voir le sac de {name}",
+      "en": "See {name}’s pack",
+      "es": "Ver la mochila de {name}",
+      "de": "Rucksack von {name} ansehen",
+      "it": "Vedere lo zaino di {name}"
+    },
+    "carryEmpty": {
+      "fr": "Aucun matériel commun dans ce voyage.",
+      "en": "No shared gear on this trip.",
+      "es": "No hay material común en este viaje.",
+      "de": "Kein Gemeinschaftsmaterial auf dieser Reise.",
+      "it": "Nessun materiale comune in questo viaggio."
+    }
+  }
+}

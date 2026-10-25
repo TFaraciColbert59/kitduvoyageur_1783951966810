@@ -1,0 +1,196 @@
+import { createClient } from "@/lib/supabase/server";
+import type { MapTrail } from "@/components/explorer/types";
+
+export interface GetTrailsOptions {
+  minDist?: number;
+  maxDist?: number | null;
+  difficulty?: string | null;
+  search?: string | null;
+  includeShort?: boolean;
+  minLat?: number | null;
+  maxLat?: number | null;
+  minLng?: number | null;
+  maxLng?: number | null;
+  limit?: number | null;
+  zoom?: number | null;
+}
+
+// ── In-Memory Cache (TTL: 60 secondes) ──────────────────────────────────────────
+interface CacheEntry {
+  data: MapTrail[];
+  timestamp: number;
+}
+
+const cache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 60_000;
+
+const WORLD_BBOX = { minLng: -180, minLat: -85, maxLng: 180, maxLat: 85 };
+
+/**
+ * Charge et déduplique les randonnées via la RPC PostGIS indexée
+ * `trails_in_viewport` (ATLAS Phase 1) : filtre viewport sur `hiking_routes.geom`
+ * (index GIST `idx_hiking_routes_geom`) au lieu des colonnes calculées non
+ * indexées de `explore_trails`.
+ * Cache en mémoire pour des réponses SSR & API instantanées (< 5ms).
+ */
+export async function getTrails(options: GetTrailsOptions = {}): Promise<MapTrail[]> {
+  const {
+    minDist = 2.0,
+    maxDist = null,
+    difficulty = null,
+    search = null,
+    includeShort = false,
+    minLat = null,
+    maxLat = null,
+    minLng = null,
+    maxLng = null,
+    limit = 300,
+    zoom = null,
+  } = options;
+
+  const hasViewport =
+    minLat !== null &&
+    maxLat !== null &&
+    minLng !== null &&
+    maxLng !== null &&
+    !isNaN(Number(minLat)) &&
+    !isNaN(Number(maxLat)) &&
+    !isNaN(Number(minLng)) &&
+    !isNaN(Number(maxLng));
+
+  const bbox = hasViewport
+    ? {
+        minLng: Number(minLng),
+        minLat: Number(minLat),
+        maxLng: Number(maxLng),
+        maxLat: Number(maxLat),
+      }
+    : WORLD_BBOX;
+
+  const effectiveZoom =
+    zoom !== null && zoom !== undefined && !isNaN(Number(zoom))
+      ? Math.round(Number(zoom))
+      : 14;
+
+  const effectiveMaxDist =
+    maxDist !== null && maxDist !== undefined && !isNaN(Number(maxDist))
+      ? Number(maxDist)
+      : null;
+
+  const effectiveDifficulty =
+    difficulty && difficulty !== "all" ? difficulty : null;
+
+  const effectiveSearch =
+    search && search.trim() !== "" ? search.trim() : null;
+
+  const effectiveLimit = limit && limit > 0 ? limit : 300;
+
+  const cacheKey = JSON.stringify({
+    ...bbox,
+    minDist,
+    effectiveMaxDist,
+    effectiveDifficulty,
+    effectiveSearch,
+    includeShort,
+    effectiveLimit,
+    effectiveZoom,
+  });
+  const cached = cache.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && (now - cached.timestamp) < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("trails_in_viewport", {
+    p_min_lng: bbox.minLng,
+    p_min_lat: bbox.minLat,
+    p_max_lng: bbox.maxLng,
+    p_max_lat: bbox.maxLat,
+    p_zoom: effectiveZoom,
+    p_simplify_tolerance: 0,
+    p_min_dist: minDist,
+    p_max_dist: effectiveMaxDist,
+    p_difficulty: effectiveDifficulty,
+    p_search: effectiveSearch,
+    p_include_short: includeShort,
+    p_limit: effectiveLimit,
+  });
+
+  if (error) {
+    // ATLAS-R9 : jamais d'« empty success » silencieux. Cache frais utilisé
+    // explicitement (log d'âge), sinon erreur propagée (le routeur renvoie 5xx).
+    if (cached) {
+      console.error('[getTrails] RPC en échec — cache servi (stale)', {
+        cacheKey,
+        ageMs: now - cached.timestamp,
+        error: error.message,
+      });
+      return cached.data;
+    }
+    console.error('[getTrails] RPC en échec — aucune donnée à servir', {
+      cacheKey,
+      error: error.message,
+    });
+    throw new Error(`[getTrails] ${error.message}`);
+  }
+
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // Deduplication logic: Keep the best trail for duplicate start coordinates (~100m)
+  const seenStartCoords = new Set<string>();
+  const deduplicated: MapTrail[] = [];
+
+  for (const t of data as Array<Record<string, unknown>>) {
+    const latKey = t.start_lat !== null && t.start_lat !== undefined ? Number(t.start_lat).toFixed(3) : "null";
+    const lngKey = t.start_lng !== null && t.start_lng !== undefined ? Number(t.start_lng).toFixed(3) : "null";
+    const coordKey = `${latKey}_${lngKey}`;
+
+    if (coordKey !== "null_null" && seenStartCoords.has(coordKey)) {
+      continue;
+    }
+
+    if (coordKey !== "null_null") {
+      seenStartCoords.add(coordKey);
+    }
+
+    const lat = t.start_lat !== undefined && t.start_lat !== null ? Number(t.start_lat) : null;
+    const lng = t.start_lng !== undefined && t.start_lng !== null ? Number(t.start_lng) : null;
+    if ((lat !== null && !Number.isFinite(lat)) || (lng !== null && !Number.isFinite(lng))) {
+      console.warn('[getTrails] coordonnées invalides ignorées', { id: t.id, lat, lng });
+    }
+
+    const rawName = t.name !== null && t.name !== undefined ? String(t.name).trim() : '';
+
+    deduplicated.push({
+      id: String(t.id),
+      // ATLAS-R9 : jamais de nom fabriqué depuis l'id — absence explicite.
+      name: rawName !== '' ? rawName : 'Sans nom',
+      lat: lat !== null && Number.isFinite(lat) ? lat : null,
+      lng: lng !== null && Number.isFinite(lng) ? lng : null,
+      distance_km: t.distance_km != null ? Number(t.distance_km) : null,
+      duration_hours: t.duration_hours != null ? Number(t.duration_hours) : null,
+      difficulty: t.difficulty != null ? String(t.difficulty) : null,
+      elevation_gain: t.elevation_gain != null ? Number(t.elevation_gain) : null,
+      terrain_type: t.terrain_type != null ? String(t.terrain_type) : null,
+      family_friendly: (t.family_friendly as boolean | null) ?? null,
+      season: t.season != null ? String(t.season) : null,
+      ai_description: t.ai_description != null ? String(t.ai_description) : null,
+      adventure_score: t.adventure_score != null ? Number(t.adventure_score) : null,
+      nature_score: t.nature_score != null ? Number(t.nature_score) : null,
+      panorama_score: t.panorama_score != null ? Number(t.panorama_score) : null,
+      ref: t.ref != null ? String(t.ref) : null,
+      network: t.network != null ? String(t.network) : null,
+      geojson: null,
+    });
+  }
+
+  // Stocker dans le cache
+  cache.set(cacheKey, { data: deduplicated, timestamp: now });
+
+  return deduplicated;
+}

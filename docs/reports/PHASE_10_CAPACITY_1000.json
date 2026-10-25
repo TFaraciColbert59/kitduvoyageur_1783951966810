@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-09-12T06:25:56.934Z",
+  "phase": 10,
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "node": "v24.18.0",
+    "cpu": "AMD Ryzen 7 7800X3D 8-Core Processor           ",
+    "cpuCount": 16,
+    "totalMemoryGb": 31.2,
+    "target": "local-only",
+    "caveat": "local ≠ production"
+  },
+  "profile": {
+    "users": 1000,
+    "concurrency": 50,
+    "durationSeconds": 15,
+    "representative": true,
+    "note": "palier de croissance — résultats locaux, non contractuels"
+  },
+  "remoteCharge": "INSUFFICIENT_DATA — charge distante et 10k réels = item humain/Phase 1",
+  "claim": "local-only — aucune conclusion de capacité de production",
+  "scenario": {
+    "engine": "pg-direct",
+    "mix": [
+      {
+        "kind": "plan_read",
+        "weight": 5
+      },
+      {
+        "kind": "proximity",
+        "weight": 3
+      },
+      {
+        "kind": "feature_flags",
+        "weight": 2
+      }
+    ]
+  },
+  "result": {
+    "count": 40697,
+    "avgMs": 18.4,
+    "p50Ms": 19.13,
+    "p95Ms": 28,
+    "p99Ms": 33.82,
+    "maxMs": 194.46,
+    "durationMs": 15036,
+    "total": 40697,
+    "errors": 0,
+    "statuses": {},
+    "status4xx": 0,
+    "status5xx": 0,
+    "requestsPerSecond": 2706.58,
+    "evaluation": {
+      "verdict": "pass",
+      "reasons": [],
+      "failures": []
+    }
+  },
+  "cleanup": {
+    "leftoverFixtures": 0
+  },
+  "exitCode": 0,
+  "fixtures": {
+    "reportCount": 2000,
+    "planId": "bf091aeb-f58b-4555-98e6-5710d5c35ed3"
+  }
+}

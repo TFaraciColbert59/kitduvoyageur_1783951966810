@@ -1,0 +1,2151 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+import { createClient } from '@/lib/supabase/server';
+import {
+  compasMeta,
+  requireEditor,
+  resplitSteps,
+  tripPartySize,
+  updateTripMetadata,
+  type Supa,
+} from './compasServer';
+import { lookupBase, lookupDestination } from './placeLookup';
+import { placeSearchLimitError, resolvePlaceByName } from './placeSearch';
+import { canonicalPlaceName } from '../engine/countryNames';
+import { trailDestination } from './trailDestination';
+import { isDeparturePlace, samePlaceName, type CompasPlace } from '../engine/places';
+import { getTripById } from '@/lib/queries-trips';
+import { addTripItem } from '@/lib/queries-trip-kit';
+import { askAI } from '@/lib/ai/askAI';
+import { buildCompasDestinationSystem, compasAiLocale } from '@/lib/ai/features/compasAutofill';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { reportServerError } from '@/lib/observability/appErrors';
+import { createBookingProvider } from '@/features/booking/server/bookingProvider';
+import { BookingProviderError } from '@/features/booking/server/bookingProviderErrors';
+import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
+import type { AIFailureReason } from '@/lib/ai/providers/types';
+import {
+  MAX_INTENT_CHARS,
+  COMPAS_INTENT_SPEC,
+  buildCompasIntentPrompt,
+  buildCompasIntentSystem,
+  extractIntentJson,
+  parseCompasIntentOutput,
+} from '@/lib/ai/features/compasIntent';
+import {
+  groundingIssue,
+  mergeActions,
+  trailRegion,
+  linkedOriginOf,
+  parseIntentRules,
+  settleLinkedOrigin,
+  tripActivityHint,
+  validateActions,
+  COMPAS_ACTIVITIES,
+  type CompasActivity,
+  type CompasIntentAction,
+  type CompasProposal,
+  budgetConverted,
+} from '../engine/intent';
+import { planKitApply, type MyKit } from '../engine/kitApply';
+import { precisionActions } from '../engine/request';
+import { simplifyOffers, stayDates, type CompasStayOffer } from '../engine/stays';
+import { readCompasMeta } from '../engine/meta';
+import { coarsePosition } from '../engine/privacy';
+import { travellerToday } from '../engine/zone';
+import { getEurRate } from './rates';
+import { convertBetween } from '../engine/currency';
+import {
+  COMPAS_VERDICT_SPEC,
+  buildCompasVerdictPrompt,
+  buildCompasVerdictSystem,
+} from '@/lib/ai/features/compasVerdict';
+import { checkExplanation, verdictFacts } from '../engine/verdictExplain';
+import { getRequestLocale } from '@/lib/i18n/serverLocale';
+import { getCompasData } from './getCompasData';
+import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
+import {
+  actionError,
+  issueError,
+  serverMessage,
+  serverT,
+  serverText,
+  type CompasServerKey,
+} from './serverText';
+
+/**
+ * Compas — actions serveur propres à l'écran.
+ *
+ * Les actions génériques du kit (emballer, retirer, ajouter depuis l'inventaire,
+ * détails) restent celles de `src/app/voyages/kit-actions.ts` : le Compas les
+ * appelle directement. Ce fichier ne contient que ce qui manquait :
+ *   - choisir le porteur d'un objet parmi TOUTE l'équipe (propriétaire du
+ *     voyage, collaborateurs, membres actifs de l'équipage) ;
+ *   - relier un objet du kit à un produit précis de la boutique ;
+ *   - ajouter au kit un produit de la boutique ;
+ *   - ajouter à l'inventaire un objet réel (poids facultatif, jamais inventé).
+ *
+ * Chaque action valide ses entrées (zod), vérifie la session et le droit
+ * d'édition, puis laisse la RLS trancher : 0 ligne modifiée = échec explicite.
+ */
+
+export type CompasActionResult = { success: true } | { success: false; error: string };
+
+const uuid = z.string().uuid('compas.server.common.invalidId');
+const slug = z
+  .string()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'compas.server.common.invalidSlug')
+  .max(120);
+
+/**
+ * Volontairement vide. Les pages du voyage, du hub et du Compas sont
+ * dynamiques (aucun cache côté navigateur en Next 15) : un `revalidatePath`
+ * ne servait qu'à forcer le rendu COMPLET du Compas avant de répondre, soit
+ * plusieurs secondes par geste. Le Compas se rafraîchit lui-même en
+ * arrière-plan après chaque écriture (`router.refresh` dans une transition).
+ */
+function revalidateTrip(_tripSlug: string) {}
+
+/** Personnes réellement rattachées au voyage : propriétaire, collaborateurs, équipage actif. */
+async function tripPeople(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  trip: { id: string; user_id: string }
+): Promise<Set<string>> {
+  const { data: collabs } = await supabase
+    .from('trip_collaborators')
+    .select('user_id')
+    .eq('trip_id', trip.id);
+  const people = new Set<string>([
+    trip.user_id,
+    ...((collabs ?? []) as Array<{ user_id: string }>).map((c) => c.user_id),
+  ]);
+  const { data: row } = await supabase
+    .from('trips')
+    .select('crew_id')
+    .eq('id', trip.id)
+    .maybeSingle();
+  const crewId = (row as { crew_id?: string | null } | null)?.crew_id;
+  if (crewId) {
+    const { data } = await supabase
+      .from('crew_members')
+      .select('user_id, status')
+      .eq('crew_id', crewId)
+      .eq('status', 'active');
+    for (const m of (data ?? []) as Array<{ user_id: string }>) people.add(m.user_id);
+  }
+  return people;
+}
+
+/* ---------- Porteur ---------- */
+
+const carrierSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  itemId: uuid,
+  carrierId: uuid.nullable(),
+  shared: z.boolean(),
+});
+
+export async function compasSetCarrierAction(
+  input: z.input<typeof carrierSchema>
+): Promise<CompasActionResult> {
+  const parsed = carrierSchema.safeParse(input);
+  if (!parsed.success)
+    return issueError(parsed.error.issues[0]?.message, 'compas.server.common.invalidRequest');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    if (parsed.data.carrierId) {
+      const people = await tripPeople(auth.supabase, auth.trip);
+      if (!people.has(parsed.data.carrierId))
+        return actionError('compas.server.carrier.notInTrip');
+    }
+    const { data, error } = await auth.supabase
+      .from('trip_items')
+      .update({
+        owner_id: parsed.data.carrierId,
+        ownership: parsed.data.shared ? 'shared' : 'personal',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', parsed.data.itemId)
+      .eq('trip_id', parsed.data.tripId)
+      .select('id');
+    if (error || !data?.length)
+      return actionError('compas.server.carrier.failed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetCarrierAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/** Plus d'objets que n'en répartit un kit : au-delà, la demande est refusée. */
+const MAX_CARRIER_BATCH = 200;
+
+const carriersSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  assignments: z
+    .array(z.object({ itemId: uuid, carrierId: uuid.nullable() }))
+    .min(1, 'compas.server.carrier.noItems')
+    .max(MAX_CARRIER_BATCH, 'compas.server.carrier.tooManyItems')
+    .refine((list) => new Set(list.map((a) => a.itemId)).size === list.length, 'compas.server.carrier.duplicateItem'),
+  shared: z.boolean(),
+});
+
+/** Ce qui décide du porteur d'un objet : de quoi le remettre comme il était. */
+interface CarrierState {
+  id: string;
+  owner_id: string | null;
+  ownership: string | null;
+}
+
+/** Les ids regroupés par valeur de `key(id)` (ordre d'apparition conservé). */
+function groupIds<K>(ids: readonly string[], key: (id: string) => K): Map<K, string[]> {
+  const groups = new Map<K, string[]>();
+  for (const id of ids) {
+    const k = key(id);
+    groups.set(k, [...(groups.get(k) ?? []), id]);
+  }
+  return groups;
+}
+
+/**
+ * Remet les objets dans leur état d'avant. Une remise qui échoue n'arrête pas les autres (chaque groupe est
+ * tenté), et ce que la base n'a pas confirmé est RELU : un objet disparu, ou déjà dans son état d'avant
+ * (il n'avait pas été écrit), n'est pas « resté confié ». Rend les objets qui ont gardé leur nouveau porteur,
+ * et si la relecture a elle-même échoué (`verified: false`) tous ceux qu'on n'a pu confirmer.
+ */
+async function restoreCarriers(
+  supabase: Supa,
+  tripId: string,
+  states: readonly CarrierState[]
+): Promise<{ stuck: string[]; verified: boolean }> {
+  const byId = new Map(states.map((r) => [r.id, r]));
+  const unconfirmed: string[] = [];
+  const groups = groupIds([...byId.keys()], (id) => `${byId.get(id)?.owner_id ?? ''}|${byId.get(id)?.ownership ?? ''}`);
+  for (const ids of groups.values()) {
+    const before = byId.get(ids[0]) as CarrierState;
+    try {
+      const { data, error } = await supabase
+        .from('trip_items')
+        .update({ owner_id: before.owner_id, ownership: before.ownership, updated_at: new Date().toISOString() })
+        .eq('trip_id', tripId)
+        .in('id', ids)
+        .select('id');
+      const back = new Set(((error ? [] : data) ?? []).map((r: { id: string }) => r.id));
+      for (const id of ids) if (!back.has(id)) unconfirmed.push(id);
+    } catch (err) {
+      await reportServerError('compas.compasSetCarriersAction.restore', err);
+      unconfirmed.push(...ids);
+    }
+  }
+  if (unconfirmed.length === 0) return { stuck: [], verified: true };
+  try {
+    const { data, error } = await supabase
+      .from('trip_items')
+      .select('id, owner_id, ownership')
+      .eq('trip_id', tripId)
+      .in('id', unconfirmed);
+    if (error) return { stuck: unconfirmed, verified: false };
+    const now = new Map(((data ?? []) as CarrierState[]).map((r) => [r.id, r]));
+    const stuck = unconfirmed.filter((id) => {
+      const row = now.get(id);
+      const was = byId.get(id) as CarrierState;
+      return row != null && ((row.owner_id ?? null) !== (was.owner_id ?? null) || (row.ownership ?? null) !== (was.ownership ?? null));
+    });
+    return { stuck, verified: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetCarriersAction.verify', err);
+    return { stuck: unconfirmed, verified: false };
+  }
+}
+
+/**
+ * Porteurs de plusieurs objets d'un coup (« Répartir le matériel commun »). Tout ou rien : la
+ * répartition entière arrive en UNE demande et s'écrit en entier, ou ne change rien. Mêmes garde-fous
+ * que `compasSetCarrierAction` (zod, session, droit d'édition, RLS, 0 ligne = échec). L'état d'avant
+ * de chaque objet est lu d'abord ; si une écriture échoue ou en touche moins que prévu, ce qui vient
+ * d'être écrit est remis tel qu'il était, et la remise est vérifiée ligne par ligne. Si elle échoue à
+ * son tour, la réponse le DIT (combien d'objets ont gardé leur nouveau porteur) au lieu de promettre un
+ * retour arrière.
+ */
+export async function compasSetCarriersAction(
+  input: z.input<typeof carriersSchema>
+): Promise<CompasActionResult> {
+  const parsed = carriersSchema.safeParse(input);
+  if (!parsed.success)
+    return issueError(parsed.error.issues[0]?.message, 'compas.server.common.invalidRequest');
+  const { tripId, assignments, shared } = parsed.data;
+  /** Ce qui est écrit à coup sûr (la base l'a rendu), avec l'état d'avant : de quoi tout remettre. */
+  const written: CarrierState[] = [];
+  /**
+   * L'écriture en vol : peut-être faite, peut-être pas. Une erreur rendue par PostgREST ou une coupure ne
+   * disent pas si la base a écrit avant (réponse perdue) ; le groupe courant est donc remis lui aussi. La
+   * remise est idempotente : un objet qui n'a pas bougé reprend l'état qu'il avait.
+   */
+  let inFlight: CarrierState[] = [];
+  let supabase: Supa | null = null;
+  /** Échec : ce qui a été écrit (ou a pu l'être) est remis et vérifié ; la réponse dit la vérité si la remise échoue. */
+  const fail = async (message: string): Promise<CompasActionResult> => {
+    const toRestore = [...written, ...inFlight];
+    if (!supabase || toRestore.length === 0) return { success: false, error: message };
+    const { stuck, verified } = await restoreCarriers(supabase, tripId, toRestore);
+    if (stuck.length === 0) return { success: false, error: message };
+    await reportServerError(
+      'compas.compasSetCarriersAction.stuck',
+      new Error(`${stuck.length} objet(s) non remis : ${stuck.join(',')}`)
+    );
+    const t = await serverT();
+    return {
+      success: false,
+      error: verified
+        ? t.plural(stuck.length, 'compas.server.carrier.stuckVerifiedOne', 'compas.server.carrier.stuckVerifiedOther')
+        : t.plural(stuck.length, 'compas.server.carrier.stuckUnsureOne', 'compas.server.carrier.stuckUnsureOther'),
+    };
+  };
+  try {
+    const auth = await requireEditor(tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    supabase = auth.supabase;
+    const carriers = [...new Set(assignments.map((a) => a.carrierId).filter((c): c is string => c != null))];
+    if (carriers.length) {
+      const people = await tripPeople(auth.supabase, auth.trip);
+      if (carriers.some((c) => !people.has(c)))
+        return actionError('compas.server.carrier.notInTrip');
+    }
+    // L'état d'avant de CHAQUE objet, lu avant la première écriture : un objet absent du voyage (ou caché
+    // par la RLS) arrête tout, sans rien avoir écrit.
+    const ids = assignments.map((a) => a.itemId);
+    const { data: current, error: readError } = await auth.supabase
+      .from('trip_items')
+      .select('id, owner_id, ownership')
+      .eq('trip_id', tripId)
+      .in('id', ids);
+    const before = new Map(((current ?? []) as CarrierState[]).map((r) => [r.id, r]));
+    if (readError || before.size !== ids.length) return actionError('compas.server.carrier.failed');
+    const target = new Map(assignments.map((a) => [a.itemId, a.carrierId]));
+    // Une écriture par porteur : tous ses objets en une seule requête.
+    for (const [carrierId, group] of groupIds(ids, (id) => target.get(id) ?? null)) {
+      inFlight = group.map((id) => before.get(id) as CarrierState);
+      const { data, error } = await auth.supabase
+        .from('trip_items')
+        .update({ owner_id: carrierId, ownership: shared ? 'shared' : 'personal', updated_at: new Date().toISOString() })
+        .eq('trip_id', tripId)
+        .in('id', group)
+        .select('id');
+      // Les lignes que la base dit avoir touchées sont notées AVANT de juger : une écriture partielle se remet
+      // aussi. Sur une erreur, `touched` est vide mais le groupe reste « en vol » (réponse peut-être perdue).
+      const touched = ((error ? [] : data) ?? []) as Array<{ id: string }>;
+      for (const row of touched) written.push(before.get(row.id) as CarrierState);
+      if (error || touched.length !== group.length) return await fail(await serverText('compas.server.carrier.failed'));
+      inFlight = [];
+    }
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetCarriersAction', err);
+    return await fail(await serverText('compas.server.common.serverError'));
+  }
+}
+
+/* ---------- Boutique ---------- */
+
+async function loadActiveProduct(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  productId: string
+) {
+  const { data } = await supabase
+    .from('shop_products')
+    .select(
+      'id, name, brand, category_main, category, weight_g, weight_grams, is_active, deleted_at'
+    )
+    .eq('id', productId)
+    .maybeSingle();
+  const row = data as {
+    id: string;
+    name: string;
+    brand: string | null;
+    category_main: string | null;
+    category: string | null;
+    weight_g: number | null;
+    weight_grams: number | null;
+    is_active: boolean | null;
+    deleted_at: string | null;
+  } | null;
+  if (!row || row.is_active === false || row.deleted_at) return null;
+  return row;
+}
+
+const pickSchema = z.object({ tripId: uuid, tripSlug: slug, itemId: uuid, shopProductId: uuid });
+
+/** Relie l'objet manquant au produit précis choisi et le marque « dans le panier ». */
+export async function compasPickShopProductAction(
+  input: z.input<typeof pickSchema>
+): Promise<CompasActionResult> {
+  const parsed = pickSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.common.invalidRequest');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const product = await loadActiveProduct(auth.supabase, parsed.data.shopProductId);
+    if (!product) return actionError('compas.server.product.unavailable');
+    const patch: Record<string, unknown> = {
+      shop_product_id: product.id,
+      purchase_state: 'in_cart',
+      updated_at: new Date().toISOString(),
+    };
+    const weight = product.weight_g ?? product.weight_grams;
+    if (weight != null && weight > 0) patch.weight_grams = weight;
+    const { data, error } = await auth.supabase
+      .from('trip_items')
+      .update(patch)
+      .eq('id', parsed.data.itemId)
+      .eq('trip_id', parsed.data.tripId)
+      .select('id');
+    if (error || !data?.length)
+      return actionError('compas.server.product.linkFailed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasPickShopProductAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const addShopSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  shopProductId: uuid,
+  isVital: z.boolean().default(false),
+});
+
+/** Ajoute au kit un produit de la boutique (à acquérir). */
+export async function compasAddShopProductToTripAction(
+  input: z.input<typeof addShopSchema>
+): Promise<CompasActionResult> {
+  const parsed = addShopSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.common.invalidRequest');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const product = await loadActiveProduct(auth.supabase, parsed.data.shopProductId);
+    if (!product) return actionError('compas.server.product.unavailable');
+    const weight = product.weight_g ?? product.weight_grams;
+    const item = await addTripItem({
+      tripId: parsed.data.tripId,
+      itemName: product.name,
+      category: product.category_main ?? product.category ?? 'misc',
+      weightGrams: weight != null && weight > 0 ? weight : undefined,
+      isVital: parsed.data.isVital,
+      shopProductId: product.id,
+      purchaseState: 'needed',
+      ownerId: auth.userId,
+      source: 'compas',
+    });
+    if (!item) return actionError('compas.server.product.addFailed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasAddShopProductToTripAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/* ---------- Inventaire ---------- */
+
+const inventorySchema = z.object({
+  name: z.string().trim().min(1, 'compas.server.inventory.nameRequired').max(160),
+  brand: z.string().trim().max(120).optional(),
+  category: z.string().trim().max(60).optional(),
+  weightG: z.number().int().min(1).max(1_000_000).nullable().optional(),
+  condition: z.enum(['neuf', 'bon', 'use', 'a_remplacer', 'pour_pieces']).optional(),
+  fromShopProductId: uuid.optional(),
+});
+
+/**
+ * Ajoute un objet réel à l'inventaire de la personne connectée. Le poids reste
+ * vide s'il n'est pas connu : l'écran l'affiche « à peser », il ne l'invente pas.
+ */
+export async function compasAddInventoryItemAction(
+  input: z.input<typeof inventorySchema>
+): Promise<CompasActionResult & { itemId?: string }> {
+  const parsed = inventorySchema.safeParse(input);
+  if (!parsed.success)
+    return issueError(parsed.error.issues[0]?.message, 'compas.server.common.invalidRequest');
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return actionError('compas.server.inventory.signIn');
+
+    let { name, brand, category, weightG } = parsed.data;
+    if (parsed.data.fromShopProductId) {
+      const product = await loadActiveProduct(supabase, parsed.data.fromShopProductId);
+      if (!product) return actionError('compas.server.product.unavailable');
+      name = product.name;
+      brand = product.brand ?? undefined;
+      category = product.category_main ?? product.category ?? undefined;
+      weightG = product.weight_g ?? product.weight_grams ?? null;
+    }
+
+    const { data, error } = await supabase
+      .from('product_ownership')
+      .insert({
+        user_id: user.id,
+        name,
+        brand: brand || null,
+        category: category || 'Autre',
+        weight_g: weightG ?? null,
+        condition: parsed.data.condition ?? 'bon',
+        is_lent: false,
+      })
+      .select('id')
+      .single();
+    if (error || !data)
+      return actionError('compas.server.inventory.addFailed');
+    return { success: true, itemId: String((data as { id: string }).id) };
+  } catch (err) {
+    await reportServerError('compas.compasAddInventoryItemAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const returnedSchema = z.object({ inventoryItemId: uuid });
+
+/** L'objet prêté est revenu : il redevient disponible dans l'inventaire (et le kit). */
+export async function compasMarkReturnedAction(
+  input: z.input<typeof returnedSchema>
+): Promise<CompasActionResult> {
+  const parsed = returnedSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.common.invalidRequest');
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return actionError('compas.server.inventory.signIn');
+    const { data, error } = await supabase.rpc('return_inventory_item', {
+      p_id: parsed.data.inventoryItemId,
+    });
+    if (error || !data)
+      return actionError('compas.server.inventory.updateFailed');
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasMarkReturnedAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const budgetSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  amount: z.number().min(0).max(10_000_000).nullable(),
+});
+
+/** Enveloppe du voyage (montant total) : fixée par l'équipe, jamais proposée d'office. */
+export async function compasSetBudgetAction(
+  input: z.input<typeof budgetSchema>
+): Promise<CompasActionResult> {
+  const parsed = budgetSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.envelope.invalidAmount');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const { data, error } = await auth.supabase
+      .from('trips')
+      .update({
+        estimated_budget:
+          parsed.data.amount == null ? null : Math.round(parsed.data.amount * 100) / 100,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', parsed.data.tripId)
+      .select('id');
+    if (error || !data?.length)
+      return actionError('compas.server.envelope.saveFailed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetBudgetAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/* =============================================================================
+   Lot 1 — Où et quand : dates et durée, activité, préférences, taille du
+   groupe, parcours du catalogue (recherche, mes sorties, application).
+   ============================================================================= */
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'compas.server.dates.invalidDate');
+
+const datesSchema = z
+  .object({
+    tripId: uuid,
+    tripSlug: slug,
+    startDate: isoDate,
+    endDate: isoDate,
+    /** Durée en heures pour une sortie de moins d'un jour, sinon null. */
+    durationHours: z.number().min(0.25).max(23.99).nullable(),
+    resplit: z.boolean().default(false),
+  })
+  .refine((v) => v.endDate >= v.startDate, { message: 'compas.server.dates.endBeforeStart' });
+
+export async function compasSetDatesAction(
+  input: z.input<typeof datesSchema>
+): Promise<CompasActionResult & { kept?: number }> {
+  const parsed = datesSchema.safeParse(input);
+  if (!parsed.success)
+    return issueError(parsed.error.issues[0]?.message, 'compas.server.dates.invalid');
+  const { tripId, tripSlug, startDate, durationHours, resplit } = parsed.data;
+  const endDate = durationHours != null ? startDate : parsed.data.endDate;
+  try {
+    const auth = await requireEditor(tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const { metadata, error } = await updateTripMetadata(
+      auth.supabase,
+      tripId,
+      (meta) => {
+        const c = compasMeta(meta);
+        if (durationHours != null) c.duration_h = durationHours;
+        else delete c.duration_h;
+        return { ...meta, compas: c };
+      },
+      { columns: { start_date: startDate, end_date: endDate } }
+    );
+    if (error || !metadata)
+      return actionError('compas.server.dates.saveFailed');
+
+    let kept = 0;
+    const routeId = Number((metadata as { route_id?: unknown }).route_id);
+    if (resplit && Number.isFinite(routeId) && routeId > 0) {
+      const days =
+        Math.round(
+          (Date.parse(`${endDate}T12:00:00Z`) - Date.parse(`${startDate}T12:00:00Z`)) / 86_400_000
+        ) + 1;
+      kept = (await resplitSteps(auth.supabase, tripId, routeId, days)).kept;
+    }
+    revalidateTrip(tripSlug);
+    return { success: true, kept };
+  } catch (err) {
+    await reportServerError('compas.compasSetDatesAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const ACTIVITIES = [
+  'hiking',
+  'trekking',
+  'bivouac',
+  'roadtrip',
+  'cultural',
+  'bushcraft',
+  'mixed',
+  'cycling',
+  'ski',
+  'mountaineering',
+  'climbing',
+  'water',
+  'citytrip',
+  'beach',
+  'vanlife',
+  'running',
+  'trail',
+] as const;
+const activitySchema = z.object({ tripId: uuid, tripSlug: slug, activity: z.enum(ACTIVITIES) });
+
+export async function compasSetActivityAction(
+  input: z.input<typeof activitySchema>
+): Promise<CompasActionResult> {
+  const parsed = activitySchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.activity.invalid');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    // Titre posé par le Compas (« Mixte · Lyon ») : il suit l'activité choisie.
+    const title = auth.trip.title ?? '';
+    const autoPrefix = Object.values(CREATE_LABEL).find((l) => title.startsWith(`${l} · `));
+    const nextTitle = autoPrefix
+      ? `${CREATE_LABEL[parsed.data.activity]}${title.slice(autoPrefix.length)}`
+      : null;
+    const { data, error } = await auth.supabase
+      .from('trips')
+      .update({
+        primary_activity: parsed.data.activity,
+        ...(nextTitle && nextTitle !== title ? { title: nextTitle } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', parsed.data.tripId)
+      .select('id');
+    if (error || !data?.length)
+      return actionError('compas.server.activity.saveFailed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetActivityAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const shortList = z.array(z.string().trim().min(1).max(40)).max(8);
+const prefsSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  preferences: z.object({
+    pace: z.enum(['tranquille', 'normal', 'soutenu']),
+    nights: z.enum(['bivouac', 'refuge', 'hebergement', 'mixte']).nullable(),
+    avoid: shortList,
+    wishes: shortList,
+    level: z.enum(['debut', 'regulier', 'aguerri']).nullable().optional(),
+    autonomy: z.enum(['journee', 'bivouac_1_2', 'itinerance_longue']).nullable().optional(),
+    priority: z.enum(['legerete', 'confort', 'budget', 'securite']).nullable().optional(),
+    terrain: z
+      .enum(['sentier', 'montagne', 'hors_sentier', 'itinerance', 'urbain_transit'])
+      .nullable()
+      .optional(),
+    maxPackKg: z.number().min(1).max(40).nullable().optional(),
+    outdoorNights: z.number().int().min(0).max(60).nullable().optional(),
+    targetKm: z.number().min(1).max(300).nullable().optional(),
+    carFree: z.boolean().nullable().optional(),
+  }),
+});
+
+export async function compasSetPreferencesAction(
+  input: z.input<typeof prefsSchema>
+): Promise<CompasActionResult> {
+  const parsed = prefsSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.preferences.invalid');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (meta) => ({
+      ...meta,
+      compas: { ...compasMeta(meta), prefs: parsed.data.preferences },
+    }));
+    if (error) return actionError('compas.server.preferences.saveFailed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetPreferencesAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/**
+ * Le spécialiste donne la ville de base réelle d'un massif, d'un parc, d'un
+ * sentier (« Vercors » → Villard-de-Lans), vérifiée sur la carte dans le bon
+ * pays. Sans réponse fiable ou ville introuvable : null.
+ */
+async function baseFromSpecialist(query: string, userId: string): Promise<CompasPlace | null> {
+  try {
+    const res = await askAI({
+      feature: 'compas-autofill',
+      tier: 'fast',
+      system: buildCompasDestinationSystem(),
+      prompt: `Destination : « ${query.slice(0, 80)} »`,
+      maxTokens: 200,
+      cacheTtlSeconds: 0,
+      userId,
+      json: true,
+      // Lightning donnait une fois sur deux « base: null » pour « la côte est australienne » (14 oct.) :
+      // le modèle expert d'abord, Lightning en relais.
+      expert: true,
+    });
+    if (!res.degraded && res.provider !== 'fallback') {
+      const hint = extractIntentJson(res.text) as Record<string, unknown> | null;
+      const base = typeof hint?.base === 'string' ? hint.base : null;
+      const code = typeof hint?.country_code === 'string' && /^[A-Za-z]{2}$/.test(hint.country_code) ? hint.country_code.toUpperCase() : null;
+      const label = typeof hint?.label === 'string' && hint.label.trim() ? hint.label.trim() : query;
+      if (base) {
+        const at = await lookupBase(base, code);
+        if (at) return { ...at, name: label.slice(0, 80), kind: 'region', extent: null };
+      }
+      // Pas de ville de base sûre, mais le pays (« côte est australienne » → AU) : le pays, sous le nom
+      // dit, plutôt qu'« introuvable » ; l'itinéraire se fait alors à l'échelle du pays.
+      const countryName = code ? countryNameFr(code) : null;
+      const country = countryName ? await lookupDestination(countryName) : null;
+      if (country && country.kind === 'country' && country.countryCode === code) return { ...country, name: label.slice(0, 80) };
+    }
+  } catch {
+    /* repli : lieu naturel, puis lieu habité du même nom */
+  }
+  return null;
+}
+
+/** Nom français d'un pays par son code ISO (« AU » → « Australie »), sinon null. */
+function countryNameFr(code: string): string | null {
+  try {
+    const name = new Intl.DisplayNames(['fr'], { type: 'region' }).of(code);
+    return name && name !== code ? name : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Trois temps : le nom exact sur la carte ; sinon le spécialiste donne la
+ * ville de base réelle (massif, parc, sentier : « Vercors » → Villard-de-Lans),
+ * vérifiée sur la carte dans le bon pays ; sinon le premier lieu habité du nom.
+ * `ai: false` (un lieu de DÉPART) saute le spécialiste : une ville de base
+ * inventée deviendrait un faux départ que personne ne verrait, pour un appel IA perdu.
+ */
+async function resolveDestination(
+  query: string,
+  userId: string,
+  opts: { ai?: boolean } = {}
+): Promise<CompasPlace | null> {
+  return resolvePlaceByName(query, opts.ai === false ? undefined : (q) => baseFromSpecialist(q, userId));
+}
+
+/**
+ * « depuis Bourg en Bresse » ou « depuis Lyon en Corse » : rien dans la phrase ne dit si
+ * « en … » fait partie du nom. Le nom long est retenu seulement si la carte le connaît
+ * TEL QUEL — un lieu habité, une région ou un pays dont le nom est ce nom, à l'écriture
+ * près (« Bourg-en-Bresse »). Un résultat approchant ne compte pas : « Lyon en Corse »
+ * reste « Lyon » puis « Corse ». Pas de compteur de recherche de lieu ici : au plus une
+ * recherche par compréhension, déjà bornée par `compas-interpret`, et l'application du
+ * départ compte la sienne (deux comptages feraient refuser un départ confirmé). Carte
+ * muette : faux, et le nom court reste.
+ */
+async function longerOriginKnown(longer: string): Promise<boolean> {
+  try {
+    const found = await lookupDestination(longer);
+    return found != null && samePlaceName(found.name, longer) && isDeparturePlace(found);
+  } catch {
+    return false;
+  }
+}
+
+const destinationSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  /** Lieu tel que nommé (pays, région, ville, massif) ; null efface la destination. */
+  place: z.string().trim().min(2).max(80).nullable(),
+  /** Référence du sentier dite (« GR34 »), lue par la compréhension : consultée dans le référentiel. */
+  trail: z.string().regex(/^[\p{Lu}\p{N}]{1,12}$/u).optional(),
+});
+
+/**
+ * Destination du voyage, retrouvée sur la carte (OpenStreetMap) : nom, code
+ * pays et position servent ensuite au préremplissage. Un lieu que la carte ne
+ * connaît pas est refusé, jamais deviné.
+ */
+export async function compasSetDestinationAction(
+  input: z.input<typeof destinationSchema>
+): Promise<CompasActionResult> {
+  const parsed = destinationSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.place.invalid');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    // Effacer la destination (aussi « Annuler ») ne cherche rien : ni compté, ni refusé.
+    if (parsed.data.place) {
+      const limitError = await placeSearchLimitError(auth.userId);
+      if (limitError) return { success: false, error: limitError };
+    }
+    // « GR34 » n'est pas un lieu : le centre de son tracé (référentiel `geo_trails`, s'il est
+    // allumé et le connaît), sinon la région du sentier (jamais un point dans l'Indre).
+    // La référence portée par la proposition (« GR34 » sous « Bretagne ») prime sur le lieu.
+    const trail = parsed.data.place
+      ? await trailDestination(parsed.data.place, parsed.data.trail)
+      : null;
+    const wanted = parsed.data.place
+      ? (trailRegion(parsed.data.place) ?? canonicalPlaceName(parsed.data.place) ?? parsed.data.place)
+      : null;
+    const place = trail ?? (wanted ? await resolveDestination(wanted, auth.userId) : null);
+    if (parsed.data.place && !place)
+      return actionError('compas.server.place.notFound', { place: parsed.data.place });
+    // Titre encore générique (« Trek · nouvelle aventure ») : il prend le nom du lieu.
+    const title = auth.trip.title ?? '';
+    const generic = title.endsWith('nouvelle aventure');
+    const write = (countryColumn: string | null) => updateTripMetadata(
+      auth.supabase,
+      parsed.data.tripId,
+      (m) => {
+        const c = compasMeta(m);
+        if (place)
+          c.anchor = {
+            name: place.name,
+            lat: Math.round(place.lat * 1e5) / 1e5,
+            lon: Math.round(place.lon * 1e5) / 1e5,
+            countryCode: place.countryCode,
+            country: place.country,
+            kind: place.kind,
+            extent: place.extent,
+            // L'étiquette OSM (« place=island ») : Photon range une île sous « other », elle seule dit que c'en est une.
+            ...(place.osmTag ? { osmTag: place.osmTag.slice(0, 80) } : {}),
+          };
+        else delete c.anchor;
+        return { ...m, compas: c };
+      },
+      {
+        columns: {
+          destination_name: place?.name ?? null,
+          destination_country_code: countryColumn,
+          ...(place && generic ? { title: title.replace(/nouvelle aventure$/, place.name) } : {}),
+        },
+      }
+    );
+    let { error } = await write(place?.countryCode ?? null);
+    // Pays absent de la table des pays (`countries_geo`, clé étrangère : la Tchéquie, « 4 jours à
+    // Prague », 13 oct.) : la colonne reste vide, le pays est gardé dans l'ancre du voyage.
+    if (error && (error as { code?: string }).code === '23503' && place?.countryCode) ({ error } = await write(null));
+    if (error) {
+      // Seule trace de la cause (conflit d'écritures, droits) : « 4 jours à Prague en hiver »
+      // a échoué ainsi le 13 oct. sans rien laisser dans les journaux.
+      await reportServerError('compas.compasSetDestinationAction.write', error);
+      return actionError('compas.server.place.destinationSaveFailed');
+    }
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetDestinationAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const originSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  /** Lieu de départ tel que dit (« Lyon ») ; null ou vide efface le départ. */
+  place: z.string().trim().max(80).nullable(),
+  /**
+   * « Annuler » : le départ d'avant tel qu'il était rangé (déjà arrondi à ~1 km).
+   * Rien à chercher sur la carte ni à compter : il l'emporte sur `place`.
+   */
+  restore: z
+    .object({
+      name: z.string().trim().min(1).max(80),
+      lat: z.number().min(-90).max(90),
+      lon: z.number().min(-180).max(180),
+      countryCode: z
+        .string()
+        .regex(/^[A-Za-z]{2}$/)
+        .transform((code) => code.toUpperCase())
+        .nullable(),
+    })
+    .optional(),
+});
+
+/**
+ * Lieu de départ du voyage (« depuis Lyon »), retrouvé sur la carte comme la
+ * destination (même recherche, même limite par personne) et rangé arrondi à
+ * ~1 km dans `metadata.compas.origin` : le trajet d'approche se chiffre depuis
+ * là, avant la position de l'appareil. Effacer ne cherche rien, rétablir le
+ * départ d'avant (`restore`) non plus.
+ */
+export async function compasSetOriginAction(
+  input: z.input<typeof originSchema>
+): Promise<CompasActionResult> {
+  const parsed = originSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.place.invalid');
+  const { restore } = parsed.data;
+  const wanted = restore ? null : parsed.data.place || null;
+  if (wanted && wanted.length < 2) return actionError('compas.server.place.invalid');
+  try {
+    // L'accès d'abord : un lecteur refusé ne consomme pas de recherche.
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    if (wanted) {
+      const limitError = await placeSearchLimitError(auth.userId);
+      if (limitError) return { success: false, error: limitError };
+    }
+    const searched = wanted ? await resolveDestination(wanted, auth.userId, { ai: false }) : null;
+    if (wanted && !searched) return actionError('compas.server.place.notFound', { place: wanted });
+    // Seul un lieu habité, une région ou un pays est un départ : « depuis le camping » (ou un
+    // sommet, un lac, un hôtel) trouvé sur la carte est refusé, jamais écrit ni pris pour ancre.
+    // Le départ d'avant rétabli (`restore`) n'est pas cherché : il n'est pas revérifié.
+    if (searched && !isDeparturePlace(searched))
+      return {
+        success: false,
+        error: await serverText('compas.server.place.notInhabited', { place: wanted ?? '' }),
+      };
+    const found = restore ?? searched;
+    const at = found ? coarsePosition({ lat: found.lat, lon: found.lon }) : null;
+    if (found && !at) return actionError('compas.server.place.invalid');
+    const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (found && at)
+        c.origin = { name: found.name, lat: at.lat, lon: at.lon, countryCode: found.countryCode, source: 'dit' };
+      else delete c.origin;
+      return { ...m, compas: c };
+    });
+    if (error) return actionError('compas.server.place.originSaveFailed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetOriginAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const departureTimeSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  /** Heure de départ de chaque jour, « HH:MM » (heure locale du lieu) ; null l'efface. */
+  time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .nullable(),
+});
+
+/**
+ * Heure de départ du jour (onglet « Quand », heure de passage à chaque étape), rangée
+ * dans `metadata.compas.departure_time`. Elle vaut pour chaque jour du voyage ; une
+ * étape qui porte son heure notée (`trip_steps.start_time`) la garde. Jamais posée
+ * par défaut : seule la personne l'enregistre, et null l'efface.
+ */
+export async function compasSetDepartureTimeAction(
+  input: z.input<typeof departureTimeSchema>
+): Promise<CompasActionResult> {
+  const parsed = departureTimeSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.departureTime.invalid');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (parsed.data.time == null) delete c.departure_time;
+      else c.departure_time = parsed.data.time;
+      return { ...m, compas: c };
+    });
+    if (error) return actionError('compas.server.departureTime.saveFailed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetDepartureTimeAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const spanSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  days: z.number().int().min(1).max(60).nullable(),
+});
+
+/** Durée voulue quand la date de départ n'est pas encore choisie (« 20 jours »). */
+export async function compasSetSpanAction(
+  input: z.input<typeof spanSchema>
+): Promise<CompasActionResult> {
+  const parsed = spanSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.duration.invalid');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const { error } = await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (parsed.data.days == null) delete c.planned_days;
+      else c.planned_days = parsed.data.days;
+      return { ...m, compas: c };
+    });
+    if (error) return actionError('compas.server.duration.saveFailed');
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetSpanAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const partySchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  partySize: z.number().int().min(1).max(50),
+});
+
+export async function compasSetPartySizeAction(
+  input: z.input<typeof partySchema>
+): Promise<CompasActionResult> {
+  const parsed = partySchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.party.invalid');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const { data, error } = await auth.supabase
+      .from('trips')
+      .update({ party_size: parsed.data.partySize, updated_at: new Date().toISOString() })
+      .eq('id', parsed.data.tripId)
+      .select('id');
+    if (error || !data?.length)
+      return actionError('compas.server.party.saveFailed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetPartySizeAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const staySchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  day: z.number().int().min(1).max(60),
+  /** Nom de l'hébergement ; vide = retirer la mention. */
+  name: z.string().trim().max(120),
+});
+
+/** Déclare (ou retire) l'hébergement d'une nuit : aucune réservation n'est créée. */
+export async function compasSetStayAction(
+  input: z.input<typeof staySchema>
+): Promise<CompasActionResult> {
+  const parsed = staySchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.lodging.invalid');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const { data: steps, error: readError } = await auth.supabase
+      .from('trip_steps')
+      .select('id')
+      .eq('trip_id', parsed.data.tripId)
+      .eq('day_number', parsed.data.day)
+      .order('order_index', { ascending: false })
+      .limit(1);
+    const target = (steps as Array<{ id: string }> | null)?.[0];
+    if (readError || !target) return actionError('compas.server.lodging.noStep');
+    const { data, error } = await auth.supabase
+      .from('trip_steps')
+      .update({
+        accommodation_name: parsed.data.name || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', target.id)
+      .select('id');
+    if (error || !data?.length)
+      return actionError('compas.server.lodging.saveFailed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasSetStayAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/* ---------- Recherche d'hébergement (aucune réservation) ---------- */
+
+export type CompasStaySearchResult =
+  | {
+      success: true;
+      mode: 'sandbox' | 'live';
+      offers: CompasStayOffer[];
+      fetchedAt: string;
+    }
+  | { success: false; error: string };
+
+const staySearchSchema = z.object({ tripId: uuid, day: z.number().int().min(1).max(60) });
+
+/**
+ * Cherche des hébergements pour la nuit d'un jour du voyage. Lecture seule :
+ * aucune commande, aucun paiement, aucun lien de paiement n'est créé ici. Le
+ * mode « test » du fournisseur est signalé pour que ses résultats ne passent
+ * jamais pour de vraies offres.
+ */
+export async function compasSearchStaysAction(
+  input: z.input<typeof staySearchSchema>
+): Promise<CompasStaySearchResult> {
+  const parsed = staySearchSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.common.invalidRequest');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const trip = auth.trip as {
+      start_date?: string | null;
+      destination_name?: string | null;
+      party_size?: number | null;
+    };
+    const dates = stayDates(trip.start_date ?? null, parsed.data.day);
+    if (!dates) return actionError('compas.server.stays.needStartDate');
+    const destination = trip.destination_name?.trim();
+    if (!destination) return actionError('compas.server.stays.noDestination');
+
+    const provider = createBookingProvider({ env: process.env });
+    if (!provider.supports('hotel'))
+      return {
+        success: false,
+        error: await serverText('compas.server.stays.liveDisabled', { detail: (() => {
+          // Noms de variables seulement, jamais une valeur : de quoi corriger sur Vercel.
+          if ((process.env.BOOKING_PROVIDER || '').trim().toLowerCase() === 'disabled')
+            return ' (BOOKING_PROVIDER=disabled)';
+          const cred = resolveProviderCredentials('routestack', process.env);
+          return cred.reason ? ` (${cred.message})` : '';
+        })() }),
+      };
+
+    const limited = await enforceRateLimit(auth.userId, {
+      scope: 'booking-search',
+      limit: 30,
+      windowMs: 10 * 60_000,
+      failMode: 'closed',
+    });
+    if (limited)
+      return actionError('compas.server.stays.tooMany');
+
+    const result = await provider.search({
+      vertical: 'hotel',
+      destination,
+      checkIn: dates.checkIn,
+      checkOut: dates.checkOut,
+      travelers: await tripPartySize(auth.supabase, auth.trip),
+      limit: 8,
+    });
+    return {
+      success: true,
+      mode: result.mode,
+      offers: simplifyOffers(result.offers),
+      fetchedAt: result.fetchedAt,
+    };
+  } catch (err) {
+    if (err instanceof BookingProviderError)
+      return {
+        success: false,
+        // Code et statut seulement, jamais une clé ni la réponse brute.
+        error: await serverText('compas.server.stays.providerFailed', {
+          detail: `${err.provider ?? (await serverText('compas.server.stays.partner'))} ${err.code}${err.status ? ` ${err.status}` : ''}`,
+        }),
+      };
+    await reportServerError('compas.compasSearchStaysAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/* ---------- Mes kits ---------- */
+
+export type CompasMyKitsResult =
+  { success: true; kits: MyKit[] } | { success: false; error: string };
+
+/** Les kits de l'utilisateur connecté (hors corbeille), avec leurs objets. */
+export async function compasListMyKitsAction(): Promise<CompasMyKitsResult> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return actionError('compas.server.myKits.signIn');
+    const { data: kits, error } = await supabase
+      .from('materiel_kits')
+      .select('id, name, season')
+      .eq('user_id', user.id)
+      .eq('is_trashed', false)
+      .order('updated_at', { ascending: false })
+      .limit(20);
+    if (error) return actionError('compas.server.myKits.readFailed');
+    const ids = (kits ?? []).map((k) => k.id as string);
+    if (!ids.length) return { success: true, kits: [] };
+    const { data: items, error: itemsError } = await supabase
+      .from('materiel_kit_items')
+      .select('id, kit_id, name, category, weight_g, quantity, is_vital, product_ownership_id')
+      .in('kit_id', ids)
+      .limit(1000);
+    if (itemsError) return actionError('compas.server.myKits.itemsReadFailed');
+    const byKit = new Map<string, MyKit['items']>();
+    for (const row of (items ?? []) as Array<Record<string, unknown>>) {
+      const name = typeof row.name === 'string' ? row.name.trim() : '';
+      if (!name) continue;
+      const list = byKit.get(String(row.kit_id)) ?? [];
+      list.push({
+        id: String(row.id),
+        name,
+        category: typeof row.category === 'string' ? row.category : null,
+        weightG: typeof row.weight_g === 'number' && row.weight_g > 0 ? row.weight_g : null,
+        quantity: typeof row.quantity === 'number' && row.quantity > 0 ? row.quantity : 1,
+        isVital: row.is_vital === true,
+        productOwnershipId:
+          typeof row.product_ownership_id === 'string' ? row.product_ownership_id : null,
+      });
+      byKit.set(String(row.kit_id), list);
+    }
+    const unnamed = await serverText('compas.server.myKits.unnamed');
+    return {
+      success: true,
+      kits: (kits ?? []).map((k) => ({
+        id: k.id as string,
+        name: String(k.name ?? unnamed),
+        season: typeof k.season === 'string' ? k.season : null,
+        items: byKit.get(k.id as string) ?? [],
+      })),
+    };
+  } catch (err) {
+    await reportServerError('compas.compasListMyKitsAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const applyKitSchema = z.object({ tripId: uuid, tripSlug: slug, kitId: uuid });
+
+/**
+ * Ajoute au voyage les objets d'un des kits de l'utilisateur qui n'y sont pas
+ * déjà (même nom). Rien n'est retiré ni modifié ; objets personnels, non emballés.
+ */
+export async function compasApplyKitAction(
+  input: z.input<typeof applyKitSchema>
+): Promise<CompasActionResult> {
+  const parsed = applyKitSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.common.invalidRequest');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const listed = await compasListMyKitsAction();
+    if (!listed.success) return listed;
+    const kit = listed.kits.find((k) => k.id === parsed.data.kitId);
+    if (!kit) return actionError('compas.server.kit.notFound');
+    const { data: existing, error: readError } = await auth.supabase
+      .from('trip_items')
+      .select('item_name')
+      .eq('trip_id', parsed.data.tripId);
+    if (readError) return actionError('compas.server.kit.tripKitReadFailed');
+    const { toAdd } = planKitApply(
+      kit,
+      ((existing ?? []) as Array<{ item_name: string }>).map((r) => r.item_name)
+    );
+    if (!toAdd.length) return { success: true };
+    const { data, error } = await auth.supabase
+      .from('trip_items')
+      .insert(
+        toAdd.map((i) => ({
+          trip_id: parsed.data.tripId,
+          item_name: i.name,
+          category: i.category,
+          quantity: i.quantity,
+          weight_grams: i.weightG,
+          is_vital: i.isVital,
+          priority: i.isVital ? 'vital' : 'recommended',
+          source: 'kit',
+          ownership: 'personal',
+          owner_id: auth.userId,
+          inventory_item_id: i.productOwnershipId,
+        }))
+      )
+      .select('id');
+    if (error || data?.length !== toAdd.length)
+      return actionError('compas.server.kit.addFailed');
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasApplyKitAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const createKitSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  name: z.string().trim().min(2, 'compas.server.kit.nameTooShort').max(80, 'compas.server.kit.nameTooLong'),
+  season: z.enum(['printemps', 'ete', 'automne', 'hiver', 'toute_saison']).nullable(),
+});
+
+/**
+ * « Créer mon kit » : enregistre le kit du voyage comme un kit réutilisable
+ * (materiel_kits, origine manuelle, privé). Les objets sont copiés tels quels ;
+ * le lien d'inventaire n'est gardé que pour les objets de la personne.
+ */
+export async function compasCreateKitFromTripAction(
+  input: z.input<typeof createKitSchema>
+): Promise<CompasActionResult & { kitId?: string; count?: number }> {
+  const parsed = createKitSchema.safeParse(input);
+  if (!parsed.success)
+    return issueError(parsed.error.issues[0]?.message, 'compas.server.common.invalidRequest');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const limited = await enforceRateLimit(auth.userId, {
+      scope: 'compas-create-kit',
+      limit: 10,
+      windowMs: 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return actionError('compas.server.kit.tooMany');
+    const { data: rows, error: readError } = await auth.supabase
+      .from('trip_items')
+      .select(
+        'item_name, category, quantity, weight_grams, is_vital, priority, owner_id, inventory_item_id'
+      )
+      .eq('trip_id', parsed.data.tripId)
+      .limit(500);
+    if (readError) return actionError('compas.server.kit.tripKitReadFailed');
+    const items = ((rows ?? []) as Array<Record<string, unknown>>).filter(
+      (r) => typeof r.item_name === 'string' && r.item_name.trim().length > 0
+    );
+    if (!items.length)
+      return actionError('compas.server.kit.tripKitEmpty');
+    const weight = (r: Record<string, unknown>) => {
+      const w = Number(r.weight_grams);
+      return Number.isFinite(w) && w > 0 ? Math.round(w) : null;
+    };
+    const qty = (r: Record<string, unknown>) => {
+      const q = Number(r.quantity);
+      return Number.isFinite(q) && q > 0 ? Math.round(q) : 1;
+    };
+    const total = items.reduce((t, r) => t + (weight(r) ?? 0) * qty(r), 0);
+    const { data: kit, error: kitError } = await auth.supabase
+      .from('materiel_kits')
+      .insert({
+        user_id: auth.userId,
+        name: parsed.data.name,
+        season: parsed.data.season,
+        origin: 'manuel',
+        total_weight_g: total,
+        description: `Créé depuis le Compas (${auth.trip.title ?? 'voyage'})`,
+      })
+      .select('id')
+      .single();
+    if (kitError || !kit) return actionError('compas.server.kit.createFailed');
+    const kitId = (kit as { id: string }).id;
+    const { error: itemsError } = await auth.supabase.from('materiel_kit_items').insert(
+      items.map((r) => {
+        const vital = r.is_vital === true;
+        const priority =
+          r.priority === 'vital' || r.priority === 'optional' ? String(r.priority) : 'recommended';
+        return {
+          kit_id: kitId,
+          user_id: auth.userId,
+          name: String(r.item_name).trim().slice(0, 120),
+          category: typeof r.category === 'string' ? r.category : null,
+          quantity: qty(r),
+          weight_g: weight(r),
+          is_vital: vital,
+          priority: vital ? 'vital' : priority,
+          ownership: 'personal',
+          product_ownership_id:
+            r.owner_id === auth.userId && typeof r.inventory_item_id === 'string'
+              ? r.inventory_item_id
+              : null,
+        };
+      })
+    );
+    if (itemsError) {
+      // Pas de kit vide orphelin : on retire l'en-tête créé juste avant.
+      await auth.supabase.from('materiel_kits').delete().eq('id', kitId).eq('user_id', auth.userId);
+      return actionError('compas.server.kit.itemsSaveFailed');
+    }
+    revalidateTrip(parsed.data.tripSlug);
+    return { success: true, kitId, count: items.length };
+  } catch (err) {
+    await reportServerError('compas.compasCreateKitFromTripAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/* ---------- Équipe (Nous · Qui) ----------
+ * Lecture seule : inviter, changer un rôle et retirer quelqu'un se font dans le Hub (`/hub/groupe`),
+ * seule source de vérité du groupe. Aucune action d'écriture d'équipe ici (voir `crewView.ts`). */
+
+/* ---------- Parcours ---------- */
+
+export interface CompasRouteOption {
+  routeId: number;
+  name: string;
+  region: string | null;
+  distanceKm: number | null;
+  elevationGainM: number | null;
+  durationHours: number | null;
+  difficulty: string | null;
+  distanceFromKm: number | null;
+  communitySessions: number;
+  /** Mes sorties sur ce parcours (date de la dernière), le cas échéant. */
+  mine: { count: number; last: string | null } | null;
+}
+
+const searchSchema = z
+  .object({
+    /** Position de l'appareil pour « autour de moi » : arrondie à 0,01° (~1 km) dès l'entrée (plan 2.10), jamais plus fine ici. */
+    lat: z.number().min(-90).max(90).nullable(),
+    lon: z.number().min(-180).max(180).nullable(),
+    query: z.string().trim().max(80).nullable(),
+  })
+  .transform((v) => {
+    const at = v.lat != null && v.lon != null ? coarsePosition({ lat: v.lat, lon: v.lon }) : null;
+    return { ...v, lat: at?.lat ?? null, lon: at?.lon ?? null };
+  });
+
+/** « Autour » : tous les parcours du catalogue à moins de 50 km, du plus proche au plus loin. */
+const AROUND_RADIUS_KM = 50;
+
+export async function compasSearchRoutesAction(
+  input: z.input<typeof searchSchema>
+): Promise<{ success: true; routes: CompasRouteOption[] } | { success: false; error: string }> {
+  const parsed = searchSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.routes.searchInvalid');
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return actionError('compas.server.routes.signInSearch');
+    const { lat, lon, query } = parsed.data;
+    const [{ data, error }, { data: sessions }] = await Promise.all([
+      supabase.rpc('compas_search_routes', {
+        p_lat: lat,
+        p_lng: lon,
+        p_radius_km: query ? 500 : AROUND_RADIUS_KM,
+        p_query: query || null,
+        p_limit: query ? 12 : 60,
+      }),
+      supabase
+        .from('hike_sessions')
+        .select('route_id, started_at')
+        .eq('user_id', user.id)
+        .not('route_id', 'is', null)
+        .limit(200),
+    ]);
+    if (error) return actionError('compas.server.routes.searchUnavailable');
+    const mine = new Map<number, { count: number; last: string | null }>();
+    for (const s of (sessions ?? []) as Array<{ route_id: number; started_at: string | null }>) {
+      const m = mine.get(Number(s.route_id)) ?? { count: 0, last: null };
+      m.count += 1;
+      if (s.started_at && (!m.last || s.started_at > m.last)) m.last = s.started_at;
+      mine.set(Number(s.route_id), m);
+    }
+    const t = await serverT();
+    const routes = ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
+      routeId: Number(r.route_id),
+      name: (r.name as string | null) ?? (r.ref as string | null) ?? t('compas.server.routes.numbered', { id: String(r.route_id) }),
+      region: (r.region as string | null) ?? null,
+      distanceKm: r.distance_km == null ? null : Number(r.distance_km),
+      elevationGainM: r.elevation_gain_m == null ? null : Number(r.elevation_gain_m),
+      durationHours: r.duration_hours == null ? null : Number(r.duration_hours),
+      difficulty: (r.difficulty as string | null) ?? null,
+      distanceFromKm:
+        r.distance_from_m == null ? null : Math.round(Number(r.distance_from_m) / 100) / 10,
+      communitySessions: Number(r.community_sessions ?? 0),
+      mine: mine.get(Number(r.route_id)) ?? null,
+    }));
+    return { success: true, routes };
+  } catch (err) {
+    await reportServerError('compas.compasSearchRoutesAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/** Les parcours que j'ai déjà parcourus (sessions enregistrées), du plus récent au plus ancien. */
+export async function compasMyRoutesAction(): Promise<
+  { success: true; routes: CompasRouteOption[] } | { success: false; error: string }
+> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return actionError('compas.server.routes.signInOutings');
+    const { data: sessions } = await supabase
+      .from('hike_sessions')
+      .select('route_id, started_at')
+      .eq('user_id', user.id)
+      .not('route_id', 'is', null)
+      .order('started_at', { ascending: false })
+      .limit(200);
+    const mine = new Map<number, { count: number; last: string | null }>();
+    for (const s of (sessions ?? []) as Array<{ route_id: number; started_at: string | null }>) {
+      const m = mine.get(Number(s.route_id)) ?? { count: 0, last: s.started_at };
+      m.count += 1;
+      mine.set(Number(s.route_id), m);
+    }
+    if (!mine.size) return { success: true, routes: [] };
+    const ids = [...mine.keys()];
+    const [{ data: routes }, { data: metas }] = await Promise.all([
+      supabase.from('hiking_routes').select('id, name, ref, region, distance_km').in('id', ids),
+      supabase
+        .from('trail_metadata')
+        .select('trail_id, elevation_gain, duration_hours, difficulty')
+        .in('trail_id', ids),
+    ]);
+    const metaById = new Map(
+      ((metas ?? []) as Array<Record<string, unknown>>).map((m) => [Number(m.trail_id), m])
+    );
+    const t = await serverT();
+    const out = ((routes ?? []) as Array<Record<string, unknown>>)
+      .map((r) => {
+        const id = Number(r.id);
+        const m = metaById.get(id);
+        return {
+          routeId: id,
+          name: (r.name as string | null) ?? (r.ref as string | null) ?? t('compas.server.routes.numbered', { id }),
+          region: (r.region as string | null) ?? null,
+          distanceKm: r.distance_km == null ? null : Math.round(Number(r.distance_km) * 10) / 10,
+          elevationGainM: m?.elevation_gain == null ? null : Number(m.elevation_gain),
+          durationHours: m?.duration_hours == null ? null : Number(m.duration_hours),
+          difficulty: (m?.difficulty as string | null) ?? null,
+          distanceFromKm: null,
+          communitySessions: 0,
+          mine: mine.get(id) ?? null,
+        };
+      })
+      .sort((a, b) => (b.mine?.last ?? '').localeCompare(a.mine?.last ?? ''));
+    return { success: true, routes: out };
+  } catch (err) {
+    await reportServerError('compas.compasMyRoutesAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const applyRouteSchema = z.object({
+  tripId: uuid,
+  tripSlug: slug,
+  routeId: z.number().int().positive(),
+  days: z.number().int().min(1).max(30),
+});
+
+/**
+ * Libère un parcours tenu par un brouillon vide du Compas du même compte
+ * (aucune étape, aucun objet) : ces brouillons naissent d'un geste abandonné.
+ * Une aventure qui contient quoi que ce soit n'est jamais modifiée.
+ */
+async function freeRouteFromEmptyDraft(
+  supabase: Supa,
+  userId: string,
+  tripId: string,
+  routeId: number
+): Promise<{ freed: boolean; title: string | null }> {
+  const { data: other } = await supabase
+    .from('trips')
+    .select('id, title, status, metadata')
+    .eq('user_id', userId)
+    .neq('id', tripId)
+    .eq('metadata->>route_id', String(routeId))
+    .maybeSingle();
+  if (!other) return { freed: false, title: null };
+  const o = other as {
+    id: string;
+    title: string | null;
+    status: string | null;
+    metadata: Record<string, unknown> | null;
+  };
+  const [{ count: steps }, { count: items }] = await Promise.all([
+    supabase.from('trip_steps').select('id', { count: 'exact', head: true }).eq('trip_id', o.id),
+    supabase.from('trip_items').select('id', { count: 'exact', head: true }).eq('trip_id', o.id),
+  ]);
+  const emptyDraft =
+    o.status === 'draft' &&
+    o.metadata?.created_with === 'compas' &&
+    (steps ?? 0) === 0 &&
+    (items ?? 0) === 0;
+  if (!emptyDraft) return { freed: false, title: o.title };
+  const { error } = await updateTripMetadata(
+    supabase,
+    o.id,
+    (m) => {
+      const meta = { ...m };
+      delete meta.route_id;
+      return meta;
+    },
+    { match: { user_id: userId } }
+  );
+  return { freed: !error, title: o.title };
+}
+
+/** Choisit un parcours du catalogue pour le voyage et le découpe en `days` jours. */
+export async function compasApplyRouteAction(
+  input: z.input<typeof applyRouteSchema>
+): Promise<CompasActionResult & { kept?: number }> {
+  const parsed = applyRouteSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.routes.invalid');
+  const { tripId, tripSlug, routeId, days } = parsed.data;
+  try {
+    const auth = await requireEditor(tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    const { data: exists } = await auth.supabase
+      .from('hiking_routes')
+      .select('id')
+      .eq('id', routeId)
+      .maybeSingle();
+    if (!exists) return actionError('compas.server.routes.notFound');
+    const write = () => updateTripMetadata(auth.supabase, tripId, (meta) => ({ ...meta, route_id: routeId }));
+    let { error } = await write();
+    // Un compte ne peut avoir qu'une aventure par parcours (index unique
+    // historique du flux « sentier »). Si le parcours est tenu par un de SES
+    // brouillons vides du Compas, on le libère ; sinon on nomme l'aventure.
+    if (error?.code === '23505') {
+      const freed = await freeRouteFromEmptyDraft(auth.supabase, auth.userId, tripId, routeId);
+      if (freed.freed) ({ error } = await write());
+      else
+        return {
+          success: false,
+          error: freed.title
+            ? await serverText('compas.server.routes.takenByTitled', { title: freed.title })
+            : await serverText('compas.server.routes.takenByOther'),
+        };
+    }
+    if (error) {
+      console.error('[compas] compasApplyRouteAction update', error.code, error.message);
+      return actionError('compas.server.routes.applyFailed');
+    }
+    const { kept } = await resplitSteps(auth.supabase, tripId, routeId, days);
+    revalidateTrip(tripSlug);
+    return { success: true, kept };
+  } catch (err) {
+    await reportServerError('compas.compasApplyRouteAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/* ---------- « Dis-le » ---------- */
+
+/** Note quand la phrase est lue sans l'IA, une par raison d'échec (`compas.server.aiNotes.*`). */
+const AI_NOTES: Record<AIFailureReason, CompasServerKey> = {
+  delai_depasse: 'compas.server.aiNotes.delai_depasse',
+  quota_epuise: 'compas.server.aiNotes.quota_epuise',
+  ia_eteinte: 'compas.server.aiNotes.ia_eteinte',
+  compteur_illisible: 'compas.server.aiNotes.compteur_illisible',
+  provider_indisponible: 'compas.server.aiNotes.provider_indisponible',
+  reponse_invalide: 'compas.server.aiNotes.reponse_invalide',
+};
+
+/** La même note sous le verdict expliqué : les signaux de l'écran restent la référence. */
+const VERDICT_NOTES: Record<AIFailureReason, CompasServerKey> = {
+  delai_depasse: 'compas.server.verdictNotes.delai_depasse',
+  quota_epuise: 'compas.server.verdictNotes.quota_epuise',
+  ia_eteinte: 'compas.server.verdictNotes.ia_eteinte',
+  compteur_illisible: 'compas.server.verdictNotes.compteur_illisible',
+  provider_indisponible: 'compas.server.verdictNotes.provider_indisponible',
+  reponse_invalide: 'compas.server.verdictNotes.reponse_invalide',
+};
+
+const interpretSchema = z.object({
+  tripId: uuid,
+  text: z.string().trim().min(2).max(MAX_INTENT_CHARS),
+  /** Fuseau du navigateur (IANA) : « aujourd'hui » du voyageur. */
+  timeZone: z.string().max(64).optional(),
+});
+
+/**
+ * Comprend une phrase et renvoie des actions PROPOSÉES, jamais appliquées.
+ * L'IA traduit, les règles complètent, le moteur vérifie (ancrage dans la
+ * phrase, limites réelles) ; l'écran n'applique que ce que l'utilisateur coche.
+ */
+export async function compasInterpretAction(
+  input: z.input<typeof interpretSchema>
+): Promise<
+  | { success: true; proposals: CompasProposal[]; usedAi: boolean; note: string | null }
+  | { success: false; error: string }
+> {
+  const parsed = interpretSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.interpret.invalidText');
+  const { tripId, text, timeZone } = parsed.data;
+  try {
+    const auth = await requireEditor(tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    // L'IA et les taux de change : comptés par personne (plan 2.2).
+    const limited = await enforceRateLimit(auth.userId, {
+      scope: 'compas-interpret',
+      limit: 30,
+      windowMs: 600_000,
+      failMode: 'closed',
+    });
+    if (limited)
+      return {
+        success: false,
+        error: await serverText(
+          limited.status === 429 ? 'compas.server.interpret.tooMany' : 'compas.server.interpret.unavailable'
+        ),
+      };
+    const trip = auth.trip;
+    // « Aujourd'hui » du voyageur : le fuseau de son navigateur (Paris sans lui).
+    const today = travellerToday(timeZone);
+    const startDate = trip.start_date ?? null;
+    const endDate = trip.end_date ?? null;
+    const days =
+      startDate && endDate
+        ? Math.round(
+            (Date.parse(`${endDate}T12:00:00Z`) - Date.parse(`${startDate}T12:00:00Z`)) / 86_400_000
+          ) + 1
+        : null;
+    const prefs = readCompasMeta(trip.metadata).preferences;
+    const { data: expenseRows } = await auth.supabase
+      .from('trip_expenses')
+      .select('amount')
+      .eq('trip_id', tripId);
+    const engaged = ((expenseRows ?? []) as Array<{ amount: unknown }>).reduce(
+      (t, e) => t + (Number(e.amount) || 0),
+      0
+    );
+
+    // Précisions choisies sous « Préciser » (fin de phrase) : avant la phrase et l'IA.
+    const forced = precisionActions(text);
+    const forcedTypes = new Set(forced.map((a) => a.type));
+    const ruleLocale = await getRequestLocale();
+    // L'activité choisie hors de la phrase (« Préciser », sinon le bouton du voyage) : la lecture d'un
+    // « de X à Y » en dépend (à pied ou à vélo : un itinéraire de X à Y, sinon le lieu dit et deux envies).
+    const forcedActivity = forced.find((a) => a.type === 'set_activity')?.activity ?? null;
+    const tripActivity = (COMPAS_ACTIVITIES as readonly string[]).includes(trip.primary_activity ?? '')
+      ? (trip.primary_activity as CompasActivity)
+      : null;
+    const readWith = (activity: CompasActivity | null) => [
+      ...forced,
+      ...parseIntentRules(text, today, ruleLocale, { activity }).filter((a) => !forcedTypes.has(a.type)),
+    ];
+    // L'activité du voyage n'est qu'un repère : ignorée quand la phrase dit un autre moyen (train,
+    // voiture…), ou à pied quand la destination lue est un pays (`tripActivityHint`, relecture 3 de #108).
+    const unhinted = readWith(forcedActivity);
+    const tripHint = forcedActivity ? null : tripActivityHint(text, tripActivity, unhinted);
+    const read = tripHint ? readWith(tripHint) : unhinted;
+    const link = linkedOriginOf(read);
+    const longerKnown = link ? await longerOriginKnown(link.longer) : false;
+    let ai: CompasIntentAction[] = [];
+    let usedAi = false;
+    let note: string | null = null;
+    try {
+      const res = await askAI({
+        feature: 'compas-intent',
+        tier: COMPAS_INTENT_SPEC.tier,
+        system: buildCompasIntentSystem(),
+        prompt: buildCompasIntentPrompt({ text, today, startDate, days }),
+        maxTokens: 700,
+        cacheTtlSeconds: COMPAS_INTENT_SPEC.cacheTtlSeconds,
+        userId: auth.userId,
+        json: true,
+        // Les règles ont déjà compris l'essentiel : au-delà de 12 s, on applique
+        // sans l'IA plutôt que de faire attendre la personne.
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (res.degraded || res.provider === 'fallback') {
+        note = await serverText(AI_NOTES[res.failureReason ?? 'provider_indisponible']);
+      } else {
+        ai = parseCompasIntentOutput(extractIntentJson(res.text));
+        usedAi = true;
+      }
+    } catch {
+      note = await serverText(AI_NOTES.provider_indisponible);
+    }
+
+    ai = settleLinkedOrigin(ai, link, longerKnown);
+
+    // L'IA ne propose que ce que la phrase dit ; ce qu'elle invente est montré refusé.
+    const grounded = ai.filter((a) => groundingIssue(a, text) == null);
+    const refused = ai
+      .filter((a) => groundingIssue(a, text) != null)
+      .map((a) => ({ action: a, source: 'ia' as const, issue: groundingIssue(a, text) }));
+    const ctx = {
+      today,
+      startDate,
+      endDate,
+      engaged,
+      currency: trip.budget_currency ?? 'EUR',
+      avoid: prefs?.avoid ?? [],
+      wishes: prefs?.wishes ?? [],
+      // Le groupe rangé sur le voyage : un montant « par personne » se multiplie par lui (ou par celui de la phrase).
+      partySize: trip.party_size ?? null,
+    };
+    // L'activité lue par l'IA quand la phrase n'en dit pas (« dans le Jura de Gex à Pontarlier » + IA
+    // « randonnée ») : la lecture est refaite avec elle, comme avec celle du voyage.
+    const aiActivity = forcedActivity ? null : (grounded.find((a) => a.type === 'set_activity')?.activity ?? null);
+    const rules = settleLinkedOrigin(
+      aiActivity && aiActivity !== tripHint ? readWith(aiActivity) : read,
+      link,
+      longerKnown
+    );
+    // Une proposition de l'IA que le Compas refuse (date passée, mauvaise année…)
+    // ne masque pas la lecture correcte des règles pour le même réglage.
+    const ruleTypes = new Set(rules.map((r) => r.type));
+    const aiKept = grounded.filter(
+      (a) =>
+        !forcedTypes.has(a.type) &&
+        // Une activité nommée en toutes lettres (« ski », « vélo ») est lue par
+        // les règles : le modèle ne la remplace pas (2026-10-05, « ski de rando »
+        // devenait « alpinisme » et le kit oubliait le DVA).
+        !(RULES_FIRST.has(a.type) && ruleTypes.has(a.type)) &&
+        (!ruleTypes.has(a.type) ||
+          validateActions([{ action: a, source: 'ia' as const }], ctx)[0]?.ok !== false)
+    );
+    const merged = mergeActions(aiKept, rules, forcedActivity ?? tripHint);
+    const taken = new Set(merged.map((m) => m.action.type));
+    const list = [...merged, ...refused.filter((r) => !taken.has(r.action.type))];
+
+    type Listed = { action: CompasIntentAction; source: 'ia' | 'regles'; issue?: string | null };
+    const priced: Listed[] = await Promise.all(
+      (list as Listed[]).map(async (x) =>
+        x.issue ? x : { ...x, action: await budgetInTripCurrency(x.action, ctx.currency) }
+      )
+    );
+    const proposals = validateActions(priced, ctx);
+    return { success: true, proposals, usedAi, note };
+  } catch (err) {
+    await reportServerError('compas.compasInterpretAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/**
+ * Réglages où le mot dit en toutes lettres (règles) prime sur l'IA. La durée
+ * aussi : « bivouac 2 nuits » fait 3 jours, le modèle lisait « 2 jours »
+ * (essais aléatoires, 2026-10-06). Les dates enfin : le calcul des règles est
+ * exact, celui du modèle non (« dans 3 semaines » posé au 23 octobre au lieu
+ * du 30, aperçu du 9 oct.). Le lieu de départ : « depuis Lyon » lu par les
+ * règles n'est jamais remplacé par une ville que le modèle aurait choisie.
+ */
+const RULES_FIRST = new Set<CompasIntentAction['type']>(['set_activity', 'set_duration', 'set_budget', 'set_dates', 'set_origin']);
+
+/**
+ * Budget dit dans une autre devise que celle du voyage (« 2000 $ ») : converti
+ * au taux du jour (Frankfurter, currency-api en secours), le montant dit et le
+ * taux restent dans le libellé. Sans taux, l'action reste dans sa devise et le
+ * moteur la refuse en le disant (« taux de change indisponible »).
+ */
+async function budgetInTripCurrency(action: CompasIntentAction, tripCurrency: string): Promise<CompasIntentAction> {
+  if (action.type !== 'set_budget' || !action.currency || action.currency === tripCurrency) return action;
+  const codes = [action.currency, tripCurrency].filter((c) => c !== 'EUR');
+  const rates = Object.fromEntries(await Promise.all(codes.map(async (c) => [c, await getEurRate(c)] as const)));
+  const converted = convertBetween(action.amount, action.currency, tripCurrency, rates);
+  if (!converted) return action;
+  return budgetConverted(action, tripCurrency, converted);
+}
+
+/* ---------- Verdict expliqué par l'IA ---------- */
+
+const explainSchema = z.object({ tripId: uuid });
+
+/**
+ * L'IA reformule le verdict à partir des seuls faits du moteur. Le niveau ne
+ * change jamais ; une réponse qui invente un nombre, parle de score ou rassure
+ * au-delà des faits est écartée et la raison est rendue.
+ */
+export async function compasExplainVerdictAction(
+  input: z.input<typeof explainSchema>
+): Promise<
+  | { success: true; text: string | null; refused: string | null; note: string | null }
+  | { success: false; error: string }
+> {
+  const parsed = explainSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.common.invalidTrip');
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return actionError('compas.server.verdict.signIn');
+    // L'IA (et la lecture complète du voyage qui la précède) : comptée par
+    // personne comme la compréhension d'une phrase (plan 2.2), en plus du quota
+    // IA du jour. Refus dit, ni lecture ni appel.
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'compas-verdict',
+      limit: 10,
+      windowMs: 600_000,
+      failMode: 'closed',
+    });
+    if (limited)
+      return {
+        success: false,
+        error: await serverText(
+          limited.status === 429 ? 'compas.server.verdict.tooMany' : 'compas.server.verdict.unavailable'
+        ),
+      };
+    // Les mêmes données que l'écran, lues pour cette personne (RLS) : l'IA ne
+    // voit que ce que le Compas affiche déjà.
+    const data = await getCompasData();
+    if (!data || data.model.tripId !== parsed.data.tripId)
+      return actionError('compas.server.common.tripNotFoundOrDenied');
+    const facts = verdictFacts({
+      level: data.model.verdict.level,
+      reasons: data.model.verdict.reasons,
+      danger: data.danger,
+    });
+    // L'explication dans la langue du lecteur (PLAN-100 6.2) ; la langue entre dans la clé du
+    // cache, une explication anglaise n'est jamais servie à un lecteur français.
+    const locale = await getRequestLocale();
+    // Espagnol, allemand, italien : l'IA n'écrit pas encore ces langues (PLAN-100 6.2) ;
+    // les signaux du Compas, traduits, restent la référence.
+    const aiLocale = compasAiLocale(locale);
+    if (!aiLocale)
+      return { success: true, text: null, refused: null, note: serverMessage(locale, 'compas.server.verdictNotes.langue') };
+    const res = await askAI({
+      feature: 'compas-verdict',
+      tier: COMPAS_VERDICT_SPEC.tier,
+      system: buildCompasVerdictSystem(aiLocale),
+      prompt: buildCompasVerdictPrompt(facts, aiLocale),
+      maxTokens: 400,
+      cacheTtlSeconds: COMPAS_VERDICT_SPEC.cacheTtlSeconds,
+      userId: user.id,
+      ...(aiLocale === 'fr' ? {} : { locale: aiLocale }),
+    });
+    if (res.degraded || res.provider === 'fallback') {
+      return {
+        success: true,
+        text: null,
+        refused: null,
+        note: serverMessage(locale, VERDICT_NOTES[res.failureReason ?? 'provider_indisponible']),
+      };
+    }
+    const check = checkExplanation(res.text, facts, aiLocale);
+    return check.ok
+      ? { success: true, text: check.text, refused: null, note: null }
+      : { success: true, text: null, refused: check.reason, note: null };
+  } catch (err) {
+    await reportServerError('compas.compasExplainVerdictAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+/* ---------- Ouvrir une aventure dans le Compas ---------- */
+
+/* ---------- Créer une aventure depuis le Compas ---------- */
+
+const createTripSchema = z.object({
+  activity: z.enum(ACTIVITIES),
+  /** Phrase « Dis-le » du Compas vide : gardée sur le voyage jusqu'à son application. */
+  say: z.string().trim().min(2).max(280).optional(),
+});
+
+const CREATE_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
+  hiking: 'Randonnée',
+  trekking: 'Trek',
+  bivouac: 'Bivouac',
+  roadtrip: 'Road trip',
+  cultural: 'Culturel',
+  bushcraft: 'Bushcraft',
+  mixed: 'Mixte',
+  cycling: 'Vélo',
+  ski: 'Ski',
+  mountaineering: 'Alpinisme',
+  climbing: 'Escalade',
+  water: 'Eau',
+  citytrip: 'City trip',
+  beach: 'Plage',
+  vanlife: 'Van',
+  running: 'Course à pied',
+  trail: 'Trail',
+};
+
+/**
+ * Le Compas est le seul préparateur : la première décision (l'activité) crée
+ * le voyage en brouillon, sans date ni lieu inventés, puis l'ouvre comme
+ * aventure active. Le propriétaire est posé par le trigger
+ * `trg_trips_insert_owner` ; absent, le voyage est annulé.
+ */
+export async function compasCreateTripAction(
+  input: z.input<typeof createTripSchema>
+): Promise<CompasActionResult & { slug?: string }> {
+  const parsed = createTripSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.activity.invalid');
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return actionError('compas.server.create.signIn');
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'compas-create-trip',
+      limit: 10,
+      windowMs: 60_000,
+      failMode: 'closed',
+    });
+    if (limited)
+      return actionError('compas.server.create.tooMany');
+
+    const label = CREATE_LABEL[parsed.data.activity];
+    const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+    const base = label
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    const { data: created, error } = await supabase
+      .from('trips')
+      .insert({
+        user_id: user.id,
+        slug: `${base}-${suffix}`,
+        title: `${label} · nouvelle aventure`,
+        status: 'draft',
+        visibility: 'private',
+        difficulty: 'moderate',
+        primary_activity: parsed.data.activity,
+        budget_currency: 'EUR',
+        // La phrase vit sur le voyage, pas dans l'onglet : quitter la page avant
+        // qu'elle soit appliquée ne la perd pas, elle est reprise à l'ouverture.
+        metadata: {
+          created_with: 'compas',
+          ...(parsed.data.say ? { compas: { start_say: parsed.data.say } } : {}),
+        },
+      })
+      .select('id, slug, title')
+      .single();
+    if (error || !created) {
+      console.error('[compas] compasCreateTripAction insert', error?.code);
+      return actionError('compas.server.create.failed');
+    }
+    const { data: owner } = await supabase
+      .from('trip_collaborators')
+      .select('role')
+      .eq('trip_id', created.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (owner?.role !== 'owner') {
+      await supabase.from('trips').delete().eq('id', created.id);
+      return actionError('compas.server.create.failed');
+    }
+    const res = await setActiveAdventureAction({
+      nature: 'sortie',
+      id: created.id,
+      slug: created.slug,
+      title: created.title,
+    });
+    if (!res.success)
+      return {
+        success: false,
+        error: await serverText('compas.server.create.openFailed'),
+      };
+    revalidatePath('/compas');
+    return { success: true, slug: created.slug };
+  } catch (err) {
+    await reportServerError('compas.compasCreateTripAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const clearSaySchema = z.object({ tripId: uuid });
+
+/** La phrase de départ a été appliquée (ou ne disait rien d'applicable) : on l'oublie. */
+export async function compasClearStartSayAction(
+  input: z.input<typeof clearSaySchema>
+): Promise<CompasActionResult> {
+  const parsed = clearSaySchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.common.invalidTrip');
+  try {
+    const auth = await requireEditor(parsed.data.tripId);
+    if ('error' in auth) return { success: false, error: auth.error ?? (await serverText('compas.server.common.accessDenied')) };
+    // Rien à effacer : `m` rendu tel quel, aucune écriture.
+    await updateTripMetadata(auth.supabase, parsed.data.tripId, (m) => {
+      const c = compasMeta(m);
+      if (!('start_say' in c)) return m;
+      delete c.start_say;
+      return { ...m, compas: c };
+    });
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasClearStartSayAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}
+
+const openTripSchema = z.object({ tripId: uuid });
+
+/**
+ * Fait de ce voyage l'aventure active (même cookie que le hub), après avoir
+ * vérifié que la personne peut le lire. Le Compas s'ouvre alors dessus.
+ */
+export async function compasOpenTripAction(
+  input: z.input<typeof openTripSchema>
+): Promise<CompasActionResult> {
+  const parsed = openTripSchema.safeParse(input);
+  if (!parsed.success) return actionError('compas.server.common.invalidTrip');
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return actionError('compas.server.openTrip.signIn');
+    const trip = await getTripById(parsed.data.tripId, user.id);
+    if (!trip?.slug) return actionError('compas.server.common.tripNotFoundOrDenied');
+    const res = await setActiveAdventureAction({
+      nature: 'sortie',
+      id: trip.id,
+      slug: trip.slug,
+      title: trip.title ?? 'Voyage',
+    });
+    if (!res.success) return actionError('compas.server.openTrip.failed');
+    revalidatePath('/compas');
+    return { success: true };
+  } catch (err) {
+    await reportServerError('compas.compasOpenTripAction', err);
+    return actionError('compas.server.common.serverError');
+  }
+}

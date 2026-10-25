@@ -1,0 +1,202 @@
+﻿import { test, expect } from '@playwright/test';
+import path from 'path';
+import fs from 'fs';
+
+test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-C8)', { tag: '@local-web' }, () => {
+  const screenshotsDir = path.join(process.cwd(), 'tests', 'visual', 'snapshots');
+
+  test.beforeAll(() => {
+    if (!fs.existsSync(screenshotsDir)) {
+      fs.mkdirSync(screenshotsDir, { recursive: true });
+    }
+  });
+
+  test.beforeEach(async ({ context }) => {
+    await context.addInitScript(() => {
+      window.localStorage.setItem(
+        'lkdv_cookie_consent',
+        JSON.stringify({ necessary: true, analytics: true, marketing: true, version: '1' })
+      );
+    });
+  });
+
+  test('TEST-E2E-VOYAGE-01: API /api/voyages répond en JSON 200 avec structure canonique', async ({ request }) => {
+    const res = await request.get('/api/voyages');
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty('trips');
+    expect(Array.isArray(body.trips)).toBe(true);
+    expect(body).toHaveProperty('total');
+    expect(typeof body.total).toBe('number');
+  });
+
+  test('TEST-E2E-VOYAGE-02: Page /hub (hub unique) charge l\'aperçu et l\'entrée de création', async ({ page }) => {
+    await page.goto('/hub', { waitUntil: 'domcontentloaded' });
+
+    // Le titre et la structure principale doivent être présents
+    await expect(page).toHaveTitle(/Hub|Le Kit du Voyageur/i);
+    await expect(page.locator('main').first()).toBeVisible();
+
+    // L'entrée de création d'activité vit dans le hub
+    await page.goto('/hub/nouveau', { waitUntil: 'domcontentloaded' });
+    const headingNouveau = page.locator('h1:visible, h2:visible, main').first();
+    await expect(headingNouveau).toBeVisible();
+  });
+
+  test('TEST-E2E-VOYAGE-03: Wizard /hub/nouveau charge l\'étape 1 et les contrôles tactiles', async ({ page }) => {
+    await page.goto('/hub/nouveau', { waitUntil: 'networkidle' });
+    
+    // Vérification du wizard
+    const wizardContainer = page.locator('main').first();
+    await expect(wizardContainer).toBeVisible();
+
+    // Présence des étapes ou indicateur de progression (visible uniquement)
+    const progressIndicator = page
+      .locator('text=Étape')
+      .or(page.locator('text=Destination'))
+      .filter({ visible: true })
+      .first();
+    await expect(progressIndicator).toBeVisible();
+
+    // Vérification de la cible tactile du bouton de navigation (>= 44px)
+    const nextButton = page.locator('button:has-text("Suivant"), button:has-text("Continuer"), button:has-text("Étape suivante")').first();
+    if (await nextButton.isVisible()) {
+      const box = await nextButton.boundingBox();
+      if (box) {
+        expect(box.height).toBeGreaterThanOrEqual(40); // Standard mobile LKDV
+      }
+    }
+  });
+
+  test('TEST-E2E-VOYAGE-04: Explorateur /lieux charge le catalogue de topos et la recherche', async ({ page }) => {
+    await page.goto('/lieux', { waitUntil: 'domcontentloaded' });
+
+    // Titre ou en-tête des lieux
+    const heading = page.locator('h1, h2').first();
+    await expect(heading).toBeVisible();
+
+    // Vérifie la présence de la barre de recherche ou de filtres
+    const searchInput = page.locator('input[type="text"], input[placeholder*="recherch" i]').first();
+    if (await searchInput.isVisible()) {
+      await expect(searchInput).toBeEnabled();
+    }
+  });
+
+  test('TEST-E2E-VOYAGE-05: Redirection sécurisée /go/[slug] sur partenaire inconnu', async ({ request }) => {
+    const res = await request.get('/go/partenaire-inexistant-test', { maxRedirects: 0 });
+    // Soit 404, soit 307 vers la page de fallback
+    expect([404, 307, 308, 302]).toContain(res.status());
+  });
+
+  test('TEST-E2E-VOYAGE-06: Responsive Mobile iOS & Snapshot Visuel (390x844 — iPhone 14 Pro)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/hub', { waitUntil: 'networkidle' });
+
+    // Vérifie que le conteneur mobile ne déborde pas en largeur
+    const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+    expect(bodyWidth).toBeLessThanOrEqual(390);
+
+    // Vérifie l'accessibilité d'un bouton d'action du hub en affichage mobile :
+    // au moins un contrôle visible avec une cible tactile confortable (>= 40px).
+    const boxes = await page.locator('button:visible, a:visible').evaluateAll((els) =>
+      els.slice(0, 12).map((el) => el.getBoundingClientRect().height)
+    );
+    expect(Math.max(0, ...boxes)).toBeGreaterThanOrEqual(40);
+
+    // Capture snapshot visuel mobile 390px
+    const snapshotMobilePath = path.join(screenshotsDir, 'voyage-cockpit-390px.png');
+    await page.screenshot({ path: snapshotMobilePath, fullPage: false });
+    expect(fs.existsSync(snapshotMobilePath)).toBe(true);
+  });
+
+  test('TEST-E2E-VOYAGE-06b: Responsive Tablet iPad & Snapshot Visuel (768x1024)', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto('/hub', { waitUntil: 'networkidle' });
+
+    const mainElement = page.locator('main').first();
+    await expect(mainElement).toBeVisible();
+
+    // Capture snapshot visuel tablette 768px
+    const snapshotTabletPath = path.join(screenshotsDir, 'voyage-cockpit-768px.png');
+    await page.screenshot({ path: snapshotTabletPath, fullPage: false });
+    expect(fs.existsSync(snapshotTabletPath)).toBe(true);
+  });
+
+  test('TEST-E2E-VOYAGE-07: Desktop Navigation & Snapshot Visuel (1440x900)', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/hub', { waitUntil: 'networkidle' });
+
+    const mainElement = page.locator('main').first();
+    await expect(mainElement).toBeVisible();
+
+    // Capture snapshot visuel desktop 1440px
+    const snapshotDesktopPath = path.join(screenshotsDir, 'voyage-cockpit-1440px.png');
+    await page.screenshot({ path: snapshotDesktopPath, fullPage: false });
+    expect(fs.existsSync(snapshotDesktopPath)).toBe(true);
+  });
+
+  test('TEST-E2E-VOYAGE-08: Hub unique — sections de sortie accessibles depuis /hub', async ({ page }) => {
+    // Étape 2 — Hub unique : les sections du voyage vivent dans /hub.
+    await page.goto('/hub', { waitUntil: 'domcontentloaded' });
+
+    // La coquille du hub est rendue
+    await expect(page.locator('main').first()).toBeVisible();
+
+    // Les sections canoniques sont navigables (contenu de section rendu)
+    await page.goto('/hub/itineraire', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('main').first()).toBeVisible();
+
+    await page.goto('/hub/budget', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('main').first()).toBeVisible();
+  });
+
+  test('TEST-E2E-VOYAGE-09: Aventure active du hub et interconnexions', async ({ page }) => {
+    // 1. Le hub affiche l'aperçu de l'aventure active (jamais une liste d'abord)
+    await page.goto('/hub', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('main').first()).toBeVisible();
+
+    // 2. Navigation vers le matériel (redirection 307 vers le hub) : le contexte est conservé
+    await page.goto('/materiel', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('main').first()).toBeVisible();
+
+    // 3. Navigation vers la carte interactive
+    await page.goto('/carte-interactive', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('main, h1, h2').first()).toBeVisible();
+  });
+
+  test('TEST-E2E-VOYAGE-10: Redirection /groupes -> /hub/groupe (hub unique)', async ({ page }) => {
+    // 1. Redirection de l'ancien lien vers la section groupe du hub
+    await page.goto('/groupes', { waitUntil: 'domcontentloaded' });
+    expect(page.url()).toContain('/hub/groupe');
+
+    // 2. La section groupe du hub est rendue
+    const heading = page.locator('h1').first();
+    await expect(heading).toBeVisible();
+  });
+
+  test('TEST-E2E-VOYAGE-11: Anti-régression D2 — Altitude basse sans offre haute montagne', async ({ page }) => {
+    // Étape 2 — l'aperçu de l'activité vit dans le hub
+    await page.goto('/hub', { waitUntil: 'domcontentloaded' });
+
+    // Vérifie que pour une activité de plaine ou de basse altitude, aucune crampons / piolets / haute montagne n'est imposée
+    const highAltitudeWarning = page.locator('text=Matériel Alpinisme Obligatoire');
+    await expect(highAltitudeWarning).toHaveCount(0);
+  });
+
+  test('TEST-E2E-VOYAGE-12: Carnet public indexable & Métadonnées Schema.org', async ({ page }) => {
+    await page.goto('/carnets', { waitUntil: 'domcontentloaded' });
+    // Double arbre desktop/mobile (Phase 2) : le premier h1/h2 du DOM peut être
+    // la variante masquée — cibler le heading réellement visible.
+    const heading = page.locator('h1, h2').filter({ visible: true }).first();
+    await expect(heading).toBeVisible();
+
+    // Vérifie les balises meta de base (OpenGraph)
+    const ogType = page.locator('meta[property="og:type"]');
+    if (await ogType.count() > 0) {
+      expect(await ogType.first().getAttribute('content')).toBeDefined();
+    }
+  });
+
+});
+
+

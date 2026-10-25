@@ -1,0 +1,20 @@
+# Upload CLI Vercel.
+#
+# Le build Vercel type-checke TOUT le projet (tsconfig racine + les configs
+# Playwright à la racine), qui importent `tests/…` et `docs/…`. On n'exclut donc
+# que ce qui n'est ni importé ni compilé : binaires, artefacts, plateformes
+# natives, secrets locaux.
+
+/node_modules
+/.next
+/.git
+/.vercel
+/ios
+/android
+/.maestro
+/coverage
+/playwright-report
+/test-results
+*.tsbuildinfo
+/.env.local
+.env*.local

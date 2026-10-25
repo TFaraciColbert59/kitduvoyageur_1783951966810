@@ -1,0 +1,58 @@
+name: Alerte du rapport quotidien
+
+# Plan 1.1 (rapport quotidien) : `ops_daily_report()` écrit chaque nuit une ligne avec
+# ses alertes (base trop pleine, préparations en échec, erreurs serveur). Personne ne
+# lit la table : cette tâche la lit chaque matin et passe au ROUGE s'il y a une alerte,
+# un rapport manquant ou une base au-dessus de 400 Mio. GitHub envoie alors un e-mail
+# gratuit sur l'échec d'une exécution planifiée (Settings › Notifications › Actions).
+# Effet de bord voulu : une lecture par jour garde le projet Supabase actif (pause
+# après 7 jours sans activité).
+#
+# Secret : le MÊME `SUPABASE_DB_URL` que la sauvegarde (docs/compas/SAUVEGARDES.md).
+# Sans lui, la tâche s'arrête proprement en le disant.
+
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rapport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Secret présent ?
+        id: secret
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "::notice::Alerte non configurée : poser SUPABASE_DB_URL (docs/compas/SAUVEGARDES.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Code du dépôt
+        if: steps.secret.outputs.ready == 'true'
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          sparse-checkout: scripts/ops
+          persist-credentials: false
+
+      - name: Dernier rapport
+        if: steps.secret.outputs.ready == 'true'
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -At -c \
+            "select row_to_json(r) from (select day::text as day, db_bytes, alerts from public.ops_daily_reports order by day desc limit 1) r" \
+            > rapport.json
+          cat rapport.json
+          node scripts/ops/check-daily-report.mjs < rapport.json

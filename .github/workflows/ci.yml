@@ -1,0 +1,264 @@
+name: LKDV Unified Quality Gates
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'chantier/**', 'audit/**', 'feature/community-instagram-inspired-v1']
+  pull_request:
+    branches: [main]
+
+# A single branch generates push + PR checks for the same SHA. Cancel stale
+# build/visual jobs immediately when the next commit arrives, preserving runner
+# capacity for the latest revision and avoiding misleading old failure states.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: '--max-old-space-size=5120'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Les suites d'audit, de contraste et m53 lancent Chromium (Playwright)
+      # dans `npm test` : sans navigateur installé, elles échouent par construction.
+      - name: Install Playwright Chromium (tests unitaires navigateur)
+        run: npx playwright install --with-deps chromium
+
+      - name: Gate 1 — TypeScript Check
+        run: npm run type-check
+
+      - name: Gate 2 — ESLint Analysis
+        run: npm run lint
+
+      - name: Gate 2.5 — Design Governance Guardrails (U-D60 -> U-D64)
+        run: npx vitest run tests/design/unification.spec.ts
+
+      - name: Gate 3 — Unit & Integration Test Suite
+        run: npm test
+
+      - name: Gate 4 — Next.js Production Build
+        run: npm run build
+        env:
+          # Build CI : JAMAIS la production. Placeholder documenté par défaut ;
+          # remplacé automatiquement par le projet de test si les secrets existent.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
+
+      # Le job `e2e-compas` rejoue ce build : inutile de le refaire (5 à 10 min).
+      # `.next` est un dossier caché : include-hidden-files est indispensable.
+      - name: Conserver le build pour l'E2E du Compas
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: next-build
+          path: |
+            .next
+            !.next/cache
+          include-hidden-files: true
+          retention-days: 1
+
+      # ── Portes dépendant d'une base Supabase (opt-in via variable de dépôt) ──
+      # Pour les activer : définir la variable de dépôt LKDV_E2E_ENABLED=true et
+      # les secrets SUPABASE_TEST_URL / SUPABASE_TEST_ANON_KEY (projet de test).
+      # Sans base de test, ces portes échouent par construction : elles restent
+      # donc conditionnelles pour garder la CI des invariants de code verte.
+
+      - name: Install Playwright Browsers
+        if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Gate 5 — End-to-End Playwright Suite
+        if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
+        run: npx playwright test scripts/e2e/voyage.spec.ts scripts/e2e/adventure-intelligence.spec.ts scripts/e2e/a13-journey.spec.ts
+        env:
+          CI: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+          # A13 (S9) : utilisateur E2E créé/nettoyé via l'API admin du projet
+          # de TEST. Absent ⇒ le scénario A13 est ignoré (jamais la prod).
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
+
+      - name: 'Gate 5.1 — Messagerie : pièces jointes durables (deux identités + tiers)'
+        if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
+        run: node scripts/e2e/messaging-storage.mjs
+        env:
+          CI: true
+          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          SUPABASE_TEST_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+          SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
+
+      - name: 'Gate 5.2 — Messagerie : temps réel entre deux clients réels'
+        if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
+        run: node scripts/e2e/messaging-realtime.mjs
+        env:
+          CI: true
+          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          SUPABASE_TEST_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+          SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
+
+      # ── Chantier Y (Y0.6) — portes additionnelles ──
+
+      - name: Gate 0 — Invariants anti-dérive
+        run: node scripts/verify/ci_invariants.mjs
+
+      - name: Gate 0.1 — Icônes canoniques (noms résolus)
+        run: npm run verify:icons
+
+      - name: Gate G6 — Accessibilité axe (zéro critical/serious)
+        if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
+        run: npm run test:a11y
+        env:
+          CI: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+
+    # Gate G5 — Régression visuelle : job séparé, rapport en artefact téléchargeable.
+    # Même opt-in que Gate 5/G6 (base de test requise pour rendre les pages).
+  visual-gates:
+    if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Gate G5 — Régression visuelle (références commitées)
+        run: npx playwright test --config=playwright.visual.config.ts
+        env:
+          CI: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+
+      - name: Upload rapport visuel (artefact)
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: playwright-visual-report
+          path: playwright-report/
+          retention-days: 14
+
+  # PLAN-100 2.12 — Parcours du Compas de bout en bout, SANS réseau externe ni secret.
+  # Architecture (détail : playwright.compas.config.ts) : base PostgreSQL éphémère
+  # au schéma du dépôt, PostgREST réel (binaire épinglé par somme de contrôle),
+  # GoTrue simulé, services tiers rejoués d'après des captures réelles ou déclarés
+  # en panne, tout appel imprévu fait échouer le test. Aucune reprise automatique :
+  # un parcours qui passe au deuxième essai est instable.
+  # Rejoue le build de `quality-gates` (artefact), ne reconstruit rien.
+  # Bloquant pour une fusion une fois ajouté aux contrôles requis de `main`
+  # (réglage GitHub), après un premier passage vert sur un runner.
+  e2e-compas:
+    needs: quality-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      # Mêmes valeurs que Gate 4 : elles sont gravées dans le build téléchargé.
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Téléchargement PAR NOM : le changement v5 (chemin des téléchargements par ID) ne s'applique pas.
+      - name: Récupérer le build de quality-gates
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: next-build
+          path: .next
+
+      - name: Fichiers générés avant le build (icônes, ressources)
+        run: npm run prebuild
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Base PostgreSQL éphémère + schéma du dépôt
+        id: db
+        uses: ./.github/actions/ephemeral-postgres
+
+      - name: PostgREST 12.2.12 (somme de contrôle vérifiée)
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "$RUNNER_TEMP/postgrest.tar.xz" \
+            https://github.com/PostgREST/postgrest/releases/download/v12.2.12/postgrest-v12.2.12-linux-static-x86-64.tar.xz
+          echo "5de4092f1719da3353c40bf96c8dec6913f2254a7cd0b61cc05f233153b557d5  $RUNNER_TEMP/postgrest.tar.xz" | sha256sum -c -
+          tar -xJf "$RUNNER_TEMP/postgrest.tar.xz" -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/postgrest" --version
+
+      - name: Parcours E2E du Compas
+        run: npx playwright test --config=playwright.compas.config.ts
+        env:
+          DATABASE_URL: ${{ steps.db.outputs.database-url }}
+          POSTGREST_BIN: ${{ runner.temp }}/postgrest
+
+      - name: Upload traces et captures (échec)
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: e2e-compas-test-results
+          path: test-results/
+          retention-days: 7
+
+  # Audit #39 / PLAN-100 2.4 — suites pgTAP sur une base ÉPHÉMÈRE du job.
+  #
+  # Pourquoi ce job restait « skipped » : il exigeait la variable de dépôt
+  # LKDV_DB_TESTS_ENABLED=true ET le secret LKDV_TEST_DATABASE_URL (une base
+  # distante dédiée, jamais créée) ; sans eux, GitHub ignore le job. Il ne dépend
+  # plus d'aucun des deux : PostgreSQL 17 + PostGIS + pgTAP + pg_cron sont
+  # installés sur le runner, le schéma est celui du dépôt (baseline de production
+  # + migrations post-baseline, strictes), les tests tournent dans des
+  # transactions annulées. Aucun secret, aucune base distante, rien n'est appliqué
+  # hors du runner. `supabase db push` / `supabase test db` (Docker, base
+  # distante) ne sont plus utilisés.
+  #
+  # Bloquant pour une fusion seulement une fois ajouté aux contrôles requis de
+  # la branche `main` (réglage GitHub) : à faire après un premier passage vert
+  # sur un runner.
+  database-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Base PostgreSQL éphémère + schéma du dépôt (Gate DB.1)
+        id: db
+        uses: ./.github/actions/ephemeral-postgres
+
+      - name: Gate DB.2 — Suites pgTAP (pg_prove)
+        run: bash scripts/db/ci/run_pgtap.sh
+        env:
+          DATABASE_URL: ${{ steps.db.outputs.database-url }}

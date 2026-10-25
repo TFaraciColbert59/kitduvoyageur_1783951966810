@@ -1,0 +1,6 @@
+﻿◇ injected env (11) from .env.local // tip: ◈ secrets for agents [www.dotenvx.com]
+◇ injected env (1) from .env // tip: ⌘ suppress logs { quiet: true }
+anon: {"id":"explorer_unified_map_enabled","enabled":false}
+service_role: {"id":"explorer_unified_map_enabled","enabled":false}
+
+[rollout] SUCCÈS (flag présent, lecture anonyme opérationnelle)

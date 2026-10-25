@@ -1,0 +1,318 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest, NextResponse } from 'next/server';
+
+vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
+vi.mock('@/lib/rate-limit/routes', () => ({ enforceRateLimit: vi.fn() }));
+vi.mock('@/features/progression/server/progressionService', () => ({
+  getProgressionProfile: vi.fn(),
+  getTerritorialLeaderboard: vi.fn(),
+}));
+vi.mock('@/features/progression/server/territoryService', () => ({
+  getTerritoryState: vi.fn(),
+  updateDeclaredTerritory: vi.fn(),
+  updatePrivateAttachment: vi.fn(),
+}));
+vi.mock('@/features/progression/server/challengeService', () => ({
+  replaceProgressionChallenge: vi.fn(),
+}));
+
+import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import {
+  getProgressionProfile,
+  getTerritorialLeaderboard,
+} from '@/features/progression/server/progressionService';
+import { updateDeclaredTerritory } from '@/features/progression/server/territoryService';
+import { replaceProgressionChallenge } from '@/features/progression/server/challengeService';
+import { GET as progressionGET } from '@/app/api/progression/route';
+import { GET as leaderboardGET } from '@/app/api/progression/leaderboard/route';
+import { POST as territoryPOST } from '@/app/api/progression/territory/route';
+import { POST as challengePOST } from '@/app/api/progression/challenge/replace/route';
+import {
+  SkillType,
+  TerritorialLeaderboard,
+  UserProgressionProfile,
+} from '@/features/progression/domain/types';
+
+const USER_ID = '22222222-2222-4222-8222-222222222222';
+
+const mockedCreateClient = vi.mocked(createClient);
+const mockedRateLimit = vi.mocked(enforceRateLimit);
+const mockedProfile = vi.mocked(getProgressionProfile);
+const mockedLeaderboard = vi.mocked(getTerritorialLeaderboard);
+const mockedDeclared = vi.mocked(updateDeclaredTerritory);
+const mockedReplace = vi.mocked(replaceProgressionChallenge);
+
+function sessionClient(user: { id: string } | null) {
+  return { auth: { getUser: async () => ({ data: { user } }) } } as never;
+}
+
+function jsonRequest(url: string, body?: unknown) {
+  return new NextRequest(url, {
+    method: 'POST',
+    headers: body === undefined ? {} : { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+function skill(skillType: SkillType): UserProgressionProfile['skills'][SkillType] {
+  return {
+    skill: skillType,
+    label: skillType,
+    points: 0,
+    pct: 0,
+    icon: 'compass',
+    description: '',
+  };
+}
+
+const PROFILE: UserProgressionProfile = {
+  userId: USER_ID,
+  displayName: null,
+  avatarUrl: null,
+  hasData: false,
+  points: { lifetime: 0, season: 0, seasonId: null },
+  level: { level: 1, title: 'Randonneur Curieux', nextLevelPoints: 100, progressPct: 0 },
+  skills: {
+    explorer: skill('explorer'),
+    preparer: skill('preparer'),
+    partager: skill('partager'),
+    entraider: skill('entraider'),
+  },
+  challenge: null,
+  leaderboardRank: null,
+  usableBalance: null,
+  updatedAt: null,
+  territory: null,
+};
+
+const LEADERBOARD: TerritorialLeaderboard = {
+  filter: 'world',
+  rows: [],
+  totalParticipants: 0,
+  communityForming: true,
+  minParticipants: 5,
+  refreshedAt: null,
+};
+
+describe('routes API progression — session et périmètre P1', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedRateLimit.mockReset();
+    mockedRateLimit.mockResolvedValue(null);
+  });
+
+  it.each([429, 503])('GET /api/progression propage le refus %i sans lire le profil', async (status) => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    const denied = NextResponse.json({ error: 'rate_limit_denied' }, { status });
+    mockedRateLimit.mockResolvedValueOnce(denied);
+
+    const response = await progressionGET();
+
+    expect(response).toBe(denied);
+    expect(response.status).toBe(status);
+    expect(mockedProfile).not.toHaveBeenCalled();
+    expect(mockedRateLimit).toHaveBeenCalledWith(USER_ID, expect.objectContaining({
+      scope: 'progression-profile', failMode: 'closed',
+    }));
+  });
+
+  it.each([429, 503])('GET /api/progression/leaderboard propage le refus %i sans lire le classement', async (status) => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    const denied = NextResponse.json({ error: 'rate_limit_denied' }, { status });
+    mockedRateLimit.mockResolvedValueOnce(denied);
+
+    const response = await leaderboardGET(new NextRequest('http://localhost/api/progression/leaderboard'));
+
+    expect(response).toBe(denied);
+    expect(response.status).toBe(status);
+    expect(mockedLeaderboard).not.toHaveBeenCalled();
+    expect(mockedRateLimit).toHaveBeenCalledWith(USER_ID, expect.objectContaining({
+      scope: 'progression-leaderboard', failMode: 'closed',
+    }));
+  });
+
+  it('GET /api/progression sans session → 401 unauthorized, service jamais appelé', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient(null));
+
+    const response = await progressionGET();
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ success: false, error: 'unauthorized' });
+    expect(mockedProfile).not.toHaveBeenCalled();
+  });
+
+  it('GET /api/progression/leaderboard sans session → 401 unauthorized, service jamais appelé', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient(null));
+
+    const response = await leaderboardGET(
+      new NextRequest('http://localhost/api/progression/leaderboard?filter=city')
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ success: false, error: 'unauthorized' });
+    expect(mockedLeaderboard).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/progression/territory sans session → 401 unauthorized', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient(null));
+
+    const response = await territoryPOST(jsonRequest('http://localhost/api/progression/territory'));
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ success: false, error: 'unauthorized' });
+  });
+
+  it('POST /api/progression/challenge/replace sans session → 401 unauthorized', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient(null));
+
+    const response = await challengePOST(
+      new NextRequest('http://localhost/api/progression/challenge/replace', { method: 'POST' })
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ success: false, error: 'unauthorized' });
+  });
+
+  it('POST /api/progression/territory authentifié, choix manuel → upsert déclaré', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    mockedDeclared.mockResolvedValue({
+      ok: true,
+      declared: {
+        cityName: 'Grenoble',
+        cityCode: '38185',
+        regionCode: '84',
+        countryCode: 'FR',
+        source: 'manual',
+        updatedAt: '2026-09-19T10:00:00.000Z',
+      },
+    });
+
+    const response = await territoryPOST(
+      jsonRequest('http://localhost/api/progression/territory', {
+        city_code: '38185',
+        region_code: '84',
+        country_code: 'FR',
+        city_name: 'Grenoble',
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      success: true,
+      declared: {
+        cityName: 'Grenoble',
+        cityCode: '38185',
+        regionCode: '84',
+        countryCode: 'FR',
+        source: 'manual',
+        updatedAt: '2026-09-19T10:00:00.000Z',
+      },
+    });
+    expect(mockedDeclared).toHaveBeenCalledWith(USER_ID, {
+      city_code: '38185',
+      region_code: '84',
+      country_code: 'FR',
+      city_name: 'Grenoble',
+    });
+  });
+
+  it('POST /api/progression/challenge/replace authentifié → 200 via le service serveur', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    mockedReplace.mockResolvedValue({ ok: true, challengeId: 'catalogue-defi-reel' });
+
+    const response = await challengePOST(
+      jsonRequest('http://localhost/api/progression/challenge/replace')
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      success: true,
+      challengeId: 'catalogue-defi-reel',
+    });
+    expect(mockedReplace).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it('GET /api/progression authentifié → 200 avec le profil canonique', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    mockedProfile.mockResolvedValue(PROFILE);
+
+    const response = await progressionGET();
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true, profile: PROFILE });
+    expect(mockedProfile).toHaveBeenCalledWith(USER_ID);
+    expect(response.headers.get('Cache-Control')).toBe(
+      'private, max-age=30, stale-while-revalidate=60'
+    );
+    expect(response.headers.get('Vary')).toBe('Cookie');
+  });
+
+  it('GET /api/progression/leaderboard authentifié → 200 et filtre transmis', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    mockedLeaderboard.mockResolvedValue({ ...LEADERBOARD, filter: 'region' });
+
+    const response = await leaderboardGET(
+      new NextRequest('http://localhost/api/progression/leaderboard?filter=region')
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      success: true,
+      leaderboard: { ...LEADERBOARD, filter: 'region' },
+    });
+    expect(mockedLeaderboard).toHaveBeenCalledWith(USER_ID, 'region', {
+      limit: 50,
+      cursor: null,
+    });
+    expect(response.headers.get('Cache-Control')).toBe(
+      'private, max-age=30, stale-while-revalidate=60'
+    );
+    expect(response.headers.get('Vary')).toBe('Cookie');
+  });
+
+  it('GET /api/progression/leaderboard authentifié → filtre invalide ramené à world', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    mockedLeaderboard.mockResolvedValue(LEADERBOARD);
+
+    const response = await leaderboardGET(
+      new NextRequest('http://localhost/api/progression/leaderboard?filter=galaxie')
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockedLeaderboard).toHaveBeenCalledWith(USER_ID, 'world', {
+      limit: 50,
+      cursor: null,
+    });
+  });
+
+  it('GET /api/progression/leaderboard transmet limite et curseur keyset valides', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    mockedLeaderboard.mockResolvedValue(LEADERBOARD);
+
+    await leaderboardGET(
+      new NextRequest(
+        `http://localhost/api/progression/leaderboard?filter=world&limit=10&cursor=400:${USER_ID}`
+      )
+    );
+
+    expect(mockedLeaderboard).toHaveBeenCalledWith(USER_ID, 'world', {
+      limit: 10,
+      cursor: { points: 400, userId: USER_ID },
+    });
+  });
+
+  it('GET /api/progression/leaderboard ignore un curseur malformé', async () => {
+    mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    mockedLeaderboard.mockResolvedValue(LEADERBOARD);
+
+    await leaderboardGET(
+      new NextRequest('http://localhost/api/progression/leaderboard?cursor=abc:pas-un-uuid')
+    );
+
+    expect(mockedLeaderboard).toHaveBeenCalledWith(USER_ID, 'world', {
+      limit: 50,
+      cursor: null,
+    });
+  });
+});

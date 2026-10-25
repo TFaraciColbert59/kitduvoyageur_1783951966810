@@ -1,0 +1,301 @@
+'use client';
+
+import Icon from '@/components/ui/Icon';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import LkvIcon from '@/components/ui/LkvIcon';
+import { useAuth } from '@/contexts/AuthContext';
+import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
+import { createClient } from '@/lib/supabase/client';
+import { useCartCount } from '@/hooks/useCartCount';
+import { useConversations } from '@/features/messaging/hooks/useConversations';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+
+const NAV_LINKS = [
+  { label: 'Explorer', href: '/explorer' },
+  { label: 'Carte 3D', href: '/carte-3d' },
+  { label: 'Matériel', href: '/hub' },
+  { label: 'Communauté', href: '/communaute' },
+];
+
+export default function Header() {
+  const pathname = usePathname();
+  const { user } = useAuth();
+  // Le header n'existe qu'en desktop (`hidden md:block`) : on n'active les effets
+  // coûteux (realtime Supabase, listeners, mesures) que lorsqu'il est visible.
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+
+  // P1-3 (fin) — pilule de navigation : position/ largeur mesurées sur l'item
+  // actif (glissement CSS), remplace le layoutId framer-motion.
+  const navRef = useRef<HTMLElement>(null);
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
+  const measurePill = useCallback(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const active = nav.querySelector('[data-nav-active="true"]') as HTMLElement | null;
+    if (!active) {
+      setPill(null);
+      return;
+    }
+    const navRect = nav.getBoundingClientRect();
+    const rect = active.getBoundingClientRect();
+    const left = rect.left - navRect.left;
+    const width = rect.width;
+    // Sans bail-out, chaque frame alloue un objet neuf et re-rend tout le
+    // Header a 60 fps pendant un drag-resize, meme si la mesure n'a pas bouge.
+    setPill((prev) =>
+      prev && Math.abs(prev.left - left) < 0.5 && Math.abs(prev.width - width) < 0.5
+        ? prev
+        : { left, width }
+    );
+  }, []);
+
+  // Mesure initiale non conditionnée : la pilule doit être placée au 1er paint.
+  useLayoutEffect(() => {
+    measurePill();
+  }, [measurePill, pathname, user]);
+
+  useEffect(() => {
+    if (!isDesktop) return;
+    let frame = 0;
+    // Un seul layout par frame : le resize peut tirer à plus de 100 événements/s.
+    const onResize = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measurePill);
+    };
+    window.addEventListener('resize', onResize);
+    // Les polices décalent les libellés : re-mesure après chargement.
+    document.fonts?.ready.then(measurePill).catch(() => {});
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [isDesktop, measurePill]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const cartCount = useCartCount();
+  // Aucun canal realtime messagerie quand le header est masqué (mobile).
+  const { totalUnread: unreadMessagesCount } = useConversations(isDesktop ? user?.id : undefined);
+
+  useEffect(() => {
+    // Invisible en mobile : on évite une requête + un canal realtime pour rien.
+    if (!user || !isDesktop) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const supabase = createClient();
+
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false)
+        .not('type', 'in', '("new_message","group_message","digest")');
+      setUnreadCount(count || 0);
+    };
+
+    fetchUnread();
+
+    const channelName = `notifications-header-${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchUnread();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, isDesktop]);
+
+  useEffect(() => {
+    if (!isDesktop) return;
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    // État initial juste si la page est déjà scrollée (rechargement, ancre).
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isDesktop]);
+
+  return (
+    <>
+      <div className="hidden md:block">
+        <header className="fixed top-3 left-1/2 -translate-x-1/2 z-[var(--z-sticky)] w-full max-w-[880px] lg:max-w-[940px] px-3 pointer-events-none transition-all duration-300">
+          <div
+            className={`w-full rounded-full px-4 py-1.5 transition-all duration-300 flex items-center justify-between gap-3 pointer-events-auto cursor-default ${
+              scrolled ? 'shadow-md bg-white/90' : 'shadow-xs'
+            }`}
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%)',
+              backdropFilter: 'blur(var(--glass-blur-lg)) saturate(var(--glass-sat))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur-lg)) saturate(var(--glass-sat))',
+              border: '1px solid rgba(255, 255, 255, 0.50)',
+              boxShadow:
+                'inset 0 1px 1.5px rgba(255, 255, 255, 0.85), 0 8px 24px -6px rgba(23, 64, 44, 0.10)',
+            }}
+          >
+            {/* Left: Logo Liquid Glass (Icon Only — Sans texte) */}
+            <Link
+              href="/"
+              className="flex items-center group focus-visible:outline-none opacity-100 hover:opacity-90 active:scale-95 transition-all cursor-pointer touch-manipulation py-0.5 shrink-0"
+              aria-label="Accueil LKDV"
+            >
+              <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs flex items-center justify-center bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] group-hover:scale-105 transition-transform shrink-0">
+                <img
+                  src="/assets/images/app_logo.png"
+                  alt="LKDV"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
+            </Link>
+
+            {/* Center: Navigation Links with Animated Sliding Pill (CSS +
+                mesure — remplace le layoutId framer, même glissement iOS). */}
+            <nav
+              ref={navRef}
+              className="relative flex items-center gap-1 p-0.5 rounded-full bg-white/[0.08] border border-white/25 shadow-inner shrink-0"
+            >
+              {pill && (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-0.5 bottom-0.5 rounded-full bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] border border-[color:var(--lkv-primary)]/15 shadow-inner transition-all duration-300 ease-out"
+                  style={{ left: pill.left, width: pill.width }}
+                />
+              )}
+              {[
+                { label: 'Explorer', href: '/explorer' },
+                { label: 'Matériel', href: '/hub' },
+                { label: 'Communauté', href: '/communaute' },
+                { label: 'Mon compte', href: '/compte' },
+              ].map((link) => {
+                const isActive =
+                  pathname === link.href ||
+                  (link.href !== '/' &&
+                    link.href !== '/compte' &&
+                    pathname?.startsWith(link.href)) ||
+                  (link.href === '/compte' && pathname?.startsWith('/compte'));
+                return (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    data-nav-active={isActive ? 'true' : undefined}
+                    className="relative px-3.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase transition-colors duration-200 cursor-pointer touch-manipulation whitespace-nowrap select-none"
+                  >
+                    <span
+                      className={`relative z-10 transition-colors ${
+                        isActive
+                          ? 'text-[color:var(--lkv-text-primary)] font-extrabold'
+                          : 'text-[color:var(--lkv-text-secondary)]/80 hover:text-[color:var(--lkv-text-primary)]'
+                      }`}
+                    >
+                      {link.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Right: Actions in Liquid Glass Style */}
+            <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-1 rounded-full bg-white/[0.08] border border-white/25 p-0.5 shadow-inner">
+                {/* Panier */}
+                <Link
+                  href="/panier"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-text-primary)] active:opacity-70 transition-colors flex items-center justify-center relative cursor-pointer touch-manipulation"
+                  aria-label="Panier"
+                  title={
+                    cartCount > 0
+                      ? `Panier (${cartCount} article${cartCount > 1 ? 's' : ''})`
+                      : 'Panier'
+                  }
+                >
+                  <LkvIcon name="bag" size={14} />
+                  {cartCount > 0 && (
+                    <span
+                      className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] ring-2 ring-white"
+                      title={`${cartCount} article(s)`}
+                    />
+                  )}
+                </Link>
+
+                {/* Notifications Button — hub alertes (D4) */}
+                <Link
+                  href="/compte?tab=notifications"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-text-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
+                  aria-label="Notifications"
+                  title={
+                    unreadCount > 0
+                      ? `Notifications (${unreadCount} non lue${unreadCount > 1 ? 's' : ''})`
+                      : 'Notifications'
+                  }
+                >
+                  <LkvIcon name="bell" size={14} />
+                  {unreadCount > 0 && (
+                    <span
+                      className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] ring-2 ring-white animate-pulse"
+                      title={`${unreadCount} notification(s)`}
+                    />
+                  )}
+                </Link>
+
+                {/* Messagerie Button */}
+                <Link
+                  href="/messagerie"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-text-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
+                  aria-label="Messagerie"
+                  title={
+                    unreadMessagesCount > 0
+                      ? `Messagerie (${unreadMessagesCount} non lu${unreadMessagesCount > 1 ? 's' : ''})`
+                      : 'Messagerie'
+                  }
+                >
+                  <Icon name="message-square" className="w-[14px] h-[14px]" />
+                  {unreadMessagesCount > 0 && (
+                    <span
+                      className="absolute top-1 right-1 w-2 h-2 rounded-full bg-forest-600 ring-2 ring-white animate-pulse"
+                      title={`${unreadMessagesCount} message(s) non lu(s)`}
+                    />
+                  )}
+                </Link>
+
+                {/* Recherche Button */}
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-text-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation"
+                  aria-label="Rechercher sur tout le site"
+                  title="Rechercher sur tout le site"
+                >
+                  <LkvIcon name="search" size={13} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+      </div>
+
+      {/* Global Site Search Overlay */}
+      <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
+  );
+}

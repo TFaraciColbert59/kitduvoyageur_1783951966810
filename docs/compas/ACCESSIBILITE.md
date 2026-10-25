@@ -1,0 +1,70 @@
+# Compas — audit d'accessibilité (2026-10-06)
+
+Référentiel : **WCAG 2.2 niveau AA** (exigé pour les services numériques grand public dans l'UE depuis le 28 juin 2025, European Accessibility Act).
+
+## Méthode
+- **axe-core 4** (`@axe-core/playwright`), règles `wcag2a/2aa/21a/21aa/22aa` + `best-practice`, sur 7 écrans réels connectés au compte démo, Chromium 390×844 : Où, Nous, Résa, Verdict, Kit, Compas vide (`?nouvelle=1`), `/connexion`.
+- **Contraste mesuré au pixel** là où axe ne peut pas conclure (texte posé sur du verre et une carte) : texte rendu transparent, capture du fond réel derrière lui, ratio WCAG calculé pour chaque pixel ; on retient le 10ᵉ centile (seuils 4,5:1, 3:1 pour le grand texte).
+- **Clavier** : 45 tabulations depuis le haut de page — nom accessible, focus visible, ordre.
+- **Mouvement réduit** : `prefers-reduced-motion` coupe animations et transitions du Compas.
+
+## Constat initial (production, 2026-10-06)
+| Point | Constat |
+|---|---|
+| Contraste | 47 textes sous le seuil sur le verre (ratio 1,8 à 4,4) : verre à 19 % sur une carte sombre, gris secondaire `ink-500`, graduations et mentions à 50 % d'opacité |
+| Bannière cookies | texte forcé en blanc sur la surface claire (ratio ≈ 2) |
+| ARIA | `aria-label` sur des `div` sans rôle (rail des points d'intérêt, axes de risque) |
+| `/connexion` | identifiants `email` / `password` en double (formulaire rendu en vue ordinateur et en vue mobile) |
+| Cible tactile | poignée de la carte 64×22 px |
+| Clavier | un arrêt vide après chaque onglet de la barre (icône rendue focalisable par `whileTap` de framer-motion) ; deux liens « Aller au contenu principal » |
+| Lecteur d'écran | pas de titre `h1` sur le Compas ; carte annoncée « Map » |
+
+## Corrections
+- Verre par défaut **60 %** (réglage ☀ inchangé : 5 à 70 %, au choix de chacun), encres secondaire `ink-700` et tertiaire 78 %. Mode plein soleil : encre secondaire `ink-900`.
+- Bannière cookies sur l'encre de la palette (`--lkv-ink-900`) avec `--lkv-on-dark` / `--lkv-on-dark-muted`.
+- `role="group"` sur les groupes nommés ; `useId()` pour les champs de connexion.
+- Poignée de carte 88×44 px.
+- Icône des onglets hors tabulation (`tabIndex={-1}`, `aria-hidden`) ; un seul lien d'évitement (layout racine).
+- `h1` du Compas (« Compas · nom de l'aventure », visible des lecteurs d'écran), « Nouvelle aventure » en `h1` ; canevas de carte nommé « Carte ».
+
+## Résultat (local, même compte, mêmes écrans)
+- axe WCAG 2.2 AA : **0 violation** sur les 7 écrans ; best-practice : 0 après le `h1`.
+- Contraste au pixel : **0 texte sous le seuil** (47 avant).
+- Clavier : lien d'évitement → 5 onglets → 5 étapes → contenu, sans arrêt vide ; focus visible partout.
+
+## Limites
+- Audit automatisé + clavier ; pas encore de passage avec VoiceOver / TalkBack sur appareil réel.
+- Un voyageur qui baisse lui-même l'intensité du verre sous 60 % peut repasser sous le seuil sur une carte sombre (personnalisation volontaire).
+
+## Lot AD (2026-10-13) : membres, objet manquant, carte, bureau
+- Tests jsdom avec axe-core (WCAG 2 A/AA/2.2 AA, hors contraste) : tiroir Équipe, historique d'un objet, tiroir « Trouver », panneau de carte avec encart : 0 violation (`membresLecture`, `objetManquant`, `carteMaquette`).
+- Rôles et noms : pastilles d’étape nommées (« Départ : Gavarnie »), encart en `role="group"` « Point touché », bouton « Fermer l'encart » ; erreurs de l'historique en `role="alert"`, chargement en `role="status"` ; barres de charge décoratives (`aria-hidden`), la phrase dit les chiffres.
+- Icônes des onglets de tiroir masquées aux lecteurs d'écran (les boutons s'appelaient « package Fiche »).
+- Cibles tactiles de 44 px pour les pastilles, l'encart, le fond de carte et les liens ajoutés ; couleur jamais seule (états dits en texte).
+- Limites : captures et mesures de mise en page dans Chromium seulement ; pas de passage VoiceOver / TalkBack ; la présence « en ligne » n'existe pas.
+
+## Lot AG (2026-10-20) : contrastes des jetons, protocole appareil
+
+- `__tests__/contrastTokens.test.ts` : rapport de contraste WCAG calculé sur les vrais jetons de
+  `tokens.css` (thème clair, seul thème de `/compas`) : textes `--lkv-text-*` et encres `ink-500/700/900`
+  sur les surfaces claires, couleurs d'état des pastilles (sage-700, amber-800, brick-600, sky-600) sur le
+  papier, texte sur boutons pleins et îlot sombre : 4,5:1 ; focus (sage-500) : 3:1. Il ne mesure ni le
+  verre ni les superpositions translucides (couvert au pixel par `npm run test:a11y`).
+- Nom accessible : un bouton ne porte pas `aria-required` (rôle `button` : non pris en charge) ;
+  « (obligatoire) » entre dans son nom (`NativeDateField`, `NativeSelect`). Avatars décoratifs de la
+  Bouteille à la mer : `alt=""`. L'`Icon` du Compas reste décorative (`aria-hidden`, sans titre ni clic).
+
+## Protocole de test sur appareil réel (VoiceOver, TalkBack) 🔒
+
+À faire par une personne, sur un iPhone (VoiceOver) et un Android (TalkBack) réels. Rien ici n'a été passé.
+
+1. Ouvrir `/compas` avec une aventure préparée. Parcourir par balayage : titre `h1`, capsule d'étapes
+   (le nom de chaque étape dit son alerte), carte (« Carte »), accessoire de profil.
+2. Pour chacune des cinq étapes (Où, Nous, Résa, Verdict, Kit) : ouvrir un tiroir, vérifier que le focus y
+   entre, que le balayage ne sort pas du tiroir, que « Fermer » ramène au déclencheur.
+3. Déclencher une action annulable : l'annonce « Annuler » est lue, atteignable, dure assez (réglage 8 / 15 / 30 s).
+4. Provoquer une erreur (mode avion puis action) : annonce en `role="alert"`, immédiate.
+5. Calendrier des conditions : chaque jour dit sa qualité en texte ; « Heure par heure » aussi.
+6. Taille de police système à 200 % : aucune ligne tronquée, aucun contrôle sous 44 px.
+7. Noter appareil, version du système, étape, écart observé ; reporter dans ce fichier et cocher la case de
+   `PLAN-100.md` 5.2 seulement avec ces notes.

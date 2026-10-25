@@ -1,0 +1,110 @@
+{
+  "generatedAt": "2026-09-11T20:49:33.292Z",
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "node": "v24.18.0",
+    "cpu": "AMD Ryzen 7 7800X3D 8-Core Processor           ",
+    "cpuCount": 16,
+    "totalMemoryGb": 31.2,
+    "target": "local-only",
+    "caveat": "local ≠ production",
+    "database": "PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit"
+  },
+  "config": {
+    "dsn": "postgresql://postgres:***@127.0.0.1:54322/postgres",
+    "restUrl": "http://127.0.0.1:54321",
+    "nextUrl": "http://127.0.0.1:4028",
+    "connections": 20,
+    "durationSeconds": 15,
+    "reportCount": 2000,
+    "scenarios": [
+      "proximity",
+      "conditions",
+      "plan_read"
+    ]
+  },
+  "scenarios": {
+    "proximity": {
+      "engine": "autocannon-programmatic",
+      "count": 76764,
+      "avgMs": 75.74,
+      "p50Ms": 75,
+      "p95Ms": 142,
+      "p99Ms": 157,
+      "maxMs": 183,
+      "total": 76764,
+      "errors": 0,
+      "statuses": {
+        "200": 76764
+      },
+      "status4xx": 0,
+      "status5xx": 0,
+      "requestsPerSecond": 5118,
+      "throughputBytes": 1632358.4,
+      "durationMs": 15000,
+      "mode": "http-postgrest-rpc",
+      "evaluation": {
+        "ok": true,
+        "verdict": "pass",
+        "failures": []
+      }
+    },
+    "conditions": {
+      "engine": "node-http-native",
+      "mode": "next-route",
+      "ipRotation": true,
+      "count": 5272,
+      "avgMs": 56.96,
+      "p50Ms": 55.75,
+      "p95Ms": 70.96,
+      "p99Ms": 83.13,
+      "maxMs": 181.02,
+      "durationMs": 15031,
+      "total": 5272,
+      "errors": 0,
+      "statuses": {
+        "200": 5272
+      },
+      "status4xx": 0,
+      "status5xx": 0,
+      "requestsPerSecond": 350.75,
+      "evaluation": {
+        "ok": true,
+        "verdict": "pass",
+        "failures": []
+      }
+    },
+    "plan_read": {
+      "engine": "pg-direct",
+      "mode": "sql-plan-read-3-queries",
+      "count": 82190,
+      "avgMs": 3.65,
+      "p50Ms": 3.61,
+      "p95Ms": 4.34,
+      "p99Ms": 6.02,
+      "maxMs": 9.71,
+      "durationMs": 15009,
+      "total": 82190,
+      "errors": 0,
+      "statuses": {},
+      "status4xx": 0,
+      "status5xx": 0,
+      "requestsPerSecond": 5475.89,
+      "evaluation": {
+        "ok": true,
+        "verdict": "pass",
+        "failures": []
+      }
+    }
+  },
+  "fixtures": {
+    "reportCount": 2000,
+    "planId": "117a1238-fd80-4452-9cfd-d35c2d95f39a"
+  },
+  "cleanup": {
+    "leftoverFixtures": 0
+  },
+  "flagsEnabledAtEnd": [],
+  "exitCode": 0
+}

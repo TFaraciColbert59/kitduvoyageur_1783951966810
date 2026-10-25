@@ -1,0 +1,182 @@
+import { addCustomTripItemAction } from '@/app/voyages/kit-actions';
+import {
+  COMPAS_ACTIVITIES,
+  type ApplyCurrent,
+  type ApplyOp,
+  type CompasActivity,
+} from '../engine/intent';
+import {
+  compasSetActivityAction,
+  compasSetBudgetAction,
+  compasSetDatesAction,
+  compasSetPartySizeAction,
+  compasSetPreferencesAction,
+  compasSetDestinationAction,
+  compasSetOriginAction,
+  compasSetSpanAction,
+} from '../server/compasActions';
+import { FR_T, countText, type ActionResult, type CompasCtl } from './compasTypes';
+
+/** État courant du voyage, tel que le plan d'application le lit. */
+export function applyCurrent(ctl: CompasCtl): ApplyCurrent {
+  const { dates, preferences } = ctl.data.model;
+  return {
+    startDate: dates.start,
+    endDate: dates.end,
+    days: dates.days,
+    shortHours: dates.hours != null && dates.hours < 24 ? dates.hours : null,
+    plannedDays: ctl.data.plannedDays ?? null,
+    preferences,
+    hasRoute: ctl.data.route.id != null,
+    originName: ctl.data.originSaid?.name ?? null,
+  };
+}
+
+/**
+ * Exécute les opérations une par une (l'ordre compte : les dates avant le
+ * reste). S'arrête à la première erreur et dit combien sont passées.
+ */
+export async function runOps(
+  ctl: CompasCtl,
+  ops: ApplyOp[]
+): Promise<ActionResult & { done: number }> {
+  const { tripId, slug } = ctl.data.model;
+  let done = 0;
+  for (const op of ops) {
+    let res: ActionResult;
+    switch (op.op) {
+      case 'dates':
+        res = await compasSetDatesAction({
+          tripId,
+          tripSlug: slug,
+          startDate: op.startDate,
+          endDate: op.endDate,
+          durationHours: op.durationHours,
+          resplit: op.resplit,
+        });
+        break;
+      case 'party':
+        res = await compasSetPartySizeAction({ tripId, tripSlug: slug, partySize: op.partySize });
+        break;
+      case 'budget': // i18n-ok : opération
+        res = await compasSetBudgetAction({ tripId, tripSlug: slug, amount: op.amount });
+        break;
+      case 'prefs':
+        res = await compasSetPreferencesAction({
+          tripId,
+          tripSlug: slug,
+          preferences: op.preferences,
+        });
+        break;
+      case 'activity':
+        res = await compasSetActivityAction({ tripId, tripSlug: slug, activity: op.activity });
+        break;
+      case 'item': {
+        const fd = new FormData();
+        fd.set('itemName', op.name);
+        fd.set('category', 'misc');
+        fd.set('quantity', String(op.quantity));
+        fd.set('isVital', 'false');
+        fd.set('isWorn', 'false');
+        fd.set('isConsumable', 'false');
+        res = await addCustomTripItemAction(tripId, slug, fd);
+        break;
+      }
+      case 'route':
+        // Une recherche n'écrit rien : l'écran ouvre Parcours avec la requête.
+        res = { success: true };
+        break;
+      case 'destination':
+        res = await compasSetDestinationAction({
+          tripId,
+          tripSlug: slug,
+          place: op.place,
+          ...(op.trail ? { trail: op.trail } : {}),
+        });
+        break;
+      case 'origin':
+        res = await compasSetOriginAction({
+          tripId,
+          tripSlug: slug,
+          place: op.place,
+          ...(op.restore ? { restore: op.restore } : {}),
+        });
+        break;
+      case 'span':
+        res = await compasSetSpanAction({ tripId, tripSlug: slug, days: op.days });
+        break;
+    }
+    if (!res.success) {
+      const t = ctl.t ?? FR_T;
+      const error = res.error ?? t('compas.apply.failed');
+      const partial = 'compas.apply.partialOne' as const;
+      return {
+        success: false,
+        error: done
+          ? countText(t, ctl.locale ?? 'fr', done, partial, 'compas.apply.partialOther', { error })
+          : res.error,
+        done,
+      };
+    }
+    done += 1;
+  }
+  return { success: true, done };
+}
+
+/**
+ * L'opération inverse des écritures, calculée sur l'état réel d'AVANT.
+ * Rien d'inventé : une écriture sans inverse sûr (objet ajouté, nombre de
+ * personnes non renseigné, dates redécoupées en étapes) rend l'ensemble
+ * non annulable, et « Annuler » n'est alors pas proposé.
+ */
+export function inverseOps(ctl: CompasCtl, ops: readonly ApplyOp[]): ApplyOp[] | null {
+  const m = ctl.data.model;
+  const out: ApplyOp[] = [];
+  for (const op of ops) {
+    switch (op.op) {
+      case 'dates':
+        if (op.resplit || !m.dates.start || !m.dates.end) return null;
+        out.push({
+          op: 'dates',
+          startDate: m.dates.start,
+          endDate: m.dates.end,
+          durationHours: m.dates.hours != null && m.dates.hours < 24 ? m.dates.hours : null,
+          resplit: false,
+        });
+        break;
+      case 'prefs':
+        out.push({ op: 'prefs', preferences: m.preferences });
+        break;
+      case 'activity':
+        if (!m.activity || !(COMPAS_ACTIVITIES as readonly string[]).includes(m.activity))
+          return null;
+        out.push({ op: 'activity', activity: m.activity as CompasActivity });
+        break;
+      case 'budget': // i18n-ok : opération
+        if (m.budget.target == null) return null;
+        out.push({ op: 'budget', amount: m.budget.target }); // i18n-ok : opération
+        break;
+      case 'route':
+        break;
+      case 'destination':
+        out.push({ op: 'destination', place: m.destination ?? null });
+        break;
+      case 'origin':
+        // Le départ dit d'avant, rétabli tel que rangé (même point, sans nouvelle recherche
+        // ni passage compté) ; sans départ avant, on l'efface.
+        out.push(
+          ctl.data.originSaid
+            ? { op: 'origin', place: ctl.data.originSaid.name, restore: ctl.data.originSaid }
+            : { op: 'origin', place: null }
+        );
+        break;
+      case 'span':
+        out.push({ op: 'span', days: ctl.data.plannedDays ?? null });
+        break;
+      default:
+        return null;
+    }
+  }
+  // Dans l'ordre inverse : le dernier changement est défait en premier.
+  return out.reverse();
+}

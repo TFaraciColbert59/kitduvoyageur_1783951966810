@@ -1,0 +1,145 @@
+'use client';
+import Icon from '@/components/ui/Icon';
+import React from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { Button, IconButton } from '@/components/ui';
+import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
+import { XIcon as XAnimated } from '@/components/icons/x';
+import { cn } from '@/lib/utils';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import type { ActionableAlert } from '@/features/materiel/services/generateSmartPrompts';
+
+export interface MobileVitalAlertBannerProps {
+  alerts: ActionableAlert[];
+  onAction?: (alert: ActionableAlert) => void;
+  onDismiss?: (alert: ActionableAlert) => void;
+  dismissedIds?: string[];
+  className?: string;
+}
+
+const SEVERITY_WEIGHT: Record<string, number> = {
+  critical: 0,
+  warning: 1,
+  info: 2,
+};
+
+/**
+ * MobileVitalAlertBanner — Retractable Vital Safety Notification Banner
+ *
+ * Designed according to Apple iOS 18 Notification Banner ergonomics:
+ * - Displays the highest-priority active safety/vital alert
+ * - Styled as an iOS notification card: rounded-2xl, rose tinted glass, crisp typography
+ * - 1-tap action capsule with direct trigger callback
+ * - Dismiss / snooze button with accessible 44-48px touch target
+ * - Framer Motion spring transition with useReducedMotion support
+ */
+export function MobileVitalAlertBanner({
+  alerts = [],
+  onAction,
+  onDismiss,
+  dismissedIds,
+  className,
+}: MobileVitalAlertBannerProps) {
+  const shouldReduceMotion = useReducedMotion();
+  // Wrapper haptique unique (mission gestes, Phase 7) — remplace navigator.vibrate direct.
+  // Signature zéro-arg conservée (l'ancien vibrate(8) = feedback léger).
+  const { haptic } = useHapticFeedback();
+  const triggerHaptic = () => haptic('light');
+
+  const activeAlerts = (alerts || []).filter(
+    (a) => a && (!dismissedIds || !dismissedIds.includes(a.id))
+  );
+
+  if (activeAlerts.length === 0) {
+    return null;
+  }
+
+  // Sort by priority (critical first, then warning, then info)
+  const sortedAlerts = [...activeAlerts].sort(
+    (a, b) => (SEVERITY_WEIGHT[a.severity] ?? 9) - (SEVERITY_WEIGHT[b.severity] ?? 9)
+  );
+
+  const currentAlert = sortedAlerts[0];
+  if (!currentAlert) {
+    return null;
+  }
+
+  const handleDismiss = () => {
+    triggerHaptic();
+    onDismiss?.(currentAlert);
+  };
+
+  const handleAction = () => {
+    triggerHaptic();
+    onAction?.(currentAlert);
+  };
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.aside
+        key={currentAlert.id}
+        role="alert"
+        aria-live="polite"
+        initial={shouldReduceMotion ? false : { opacity: 0, y: -8, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={
+          shouldReduceMotion
+            ? { opacity: 0 }
+            : { opacity: 0, height: 0, y: -8, scale: 0.98, transition: { duration: 0.2 } }
+        }
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        className={cn(
+          'w-full p-2.5 sm:p-3 rounded-2xl border select-none transition-all',
+          'bg-[var(--lkv-danger)]/10 border-[var(--lkv-danger)]/25 text-[var(--lkv-danger)]',
+          'shadow-2xs backdrop-blur-md',
+          className
+        )}
+      >
+        {/* ════ EN-TÊTE COMPACT : ICÔNE + TITRE & MESSAGE + BOUTONS ACTION & FERMER ════ */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="w-7 h-7 rounded-xl bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] flex items-center justify-center shrink-0 shadow-2xs">
+              <Icon name="alert-triangle" size={14} aria-hidden="true" />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <h4 className="text-xs font-bold text-[var(--lkv-danger)] truncate leading-tight">
+                {currentAlert.title}
+              </h4>
+              <p className="text-[10.5px] text-[var(--lkv-danger)]/90 leading-tight truncate mt-0.5">
+                {currentAlert.message}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Bouton Action Rapide */}
+            <Button
+              variant="destructive"
+              size="sm"
+              data-testid="vital-alert-action"
+              onClick={handleAction}
+              icon={<ArrowRightAnimated size={10} aria-hidden="true" />}
+              iconPosition="trailing"
+              className="h-6 shrink-0 rounded-full px-2.5 text-[10.5px] font-bold shadow-2xs"
+            >
+              {currentAlert.actionLabel || 'Régler'}
+            </Button>
+
+            {/* Bouton Fermer */}
+            <IconButton
+              variant="ghost"
+              size="sm"
+              data-testid="vital-alert-dismiss"
+              onClick={handleDismiss}
+              aria-label="Masquer l'alerte"
+              className="h-7 w-7 shrink-0 rounded-full text-[var(--lkv-danger)]/70 hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)]"
+            >
+              <XAnimated size={12} aria-hidden="true" />
+            </IconButton>
+          </div>
+        </div>
+      </motion.aside>
+    </AnimatePresence>
+  );
+}

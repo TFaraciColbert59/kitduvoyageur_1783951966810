@@ -1,0 +1,202 @@
+import 'server-only';
+import { createClient } from '@/lib/supabase/server';
+import { getTripById } from '@/lib/queries-trips';
+import { convertTripToCarnetData } from '@/features/trips/engine/carnetConversionEngine';
+import {
+  awardCarnetPublished,
+  awardTripCompleted,
+} from '@/features/progression/server/producerHooks';
+import type { TripStatus } from '@/features/trips/types/trip.types';
+
+/**
+ * 8.5 Mettre à jour le statut du voyage (ex: passage à 'completed')
+ */
+export async function updateTripStatus(
+  tripId: string,
+  status: TripStatus
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('trips')
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', tripId);
+
+  if (error) {
+    console.error('[LKDV TripCompletion] Erreur updateTripStatus:', error);
+    return { success: false, error: error.message };
+  }
+
+  // Couche groupe universelle (H-ACT §4) : à la fin de l'activité, l'équipage
+  // auto-créé encore solo est supprimé automatiquement.
+  if (status === 'completed' || status === 'cancelled') {
+    await cleanupSoloAutoCrew(supabase, tripId);
+  }
+
+  // P2 — producteur « voyage terminé » : l'accroche recalcule elle-même les
+  // preuves en service role (session traitée liée, checklist 100 %, POI visité)
+  // et n'attribue qu'une fois par voyage. Toute erreur est avalée par le hook.
+  if (status === 'completed') {
+    await awardTripCompleted(tripId);
+  }
+
+  return { success: true };
+}
+
+/** Supprime l'équipage auto-créé d'un voyage s'il est resté solo (best-effort). */
+async function cleanupSoloAutoCrew(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tripId: string
+): Promise<void> {
+  try {
+    const { data: trip } = await supabase
+      .from('trips')
+      .select('crew_id')
+      .eq('id', tripId)
+      .maybeSingle();
+    const crewId = (trip as { crew_id?: string | null } | null)?.crew_id;
+    if (!crewId) return;
+
+    const { data: crew } = await supabase
+      .from('crews')
+      .select('id, auto_created')
+      .eq('id', crewId)
+      .maybeSingle();
+    if (!crew?.auto_created) return;
+
+    const { count } = await supabase
+      .from('crew_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('crew_id', crewId)
+      .eq('status', 'active');
+    if ((count ?? 0) <= 1) {
+      await supabase.from('crews').delete().eq('id', crewId);
+    }
+  } catch (err) {
+    console.error('[LKDV TripCompletion] cleanupSoloAutoCrew (non bloquant):', err);
+  }
+}
+
+/**
+ * 8.6 Publier un voyage vécu en carnet de bord communautaire
+ */
+export async function publishTripToCarnet(
+  tripId: string,
+  options?: {
+    title?: string;
+    description?: string;
+    isPublic?: boolean;
+    authorName?: string;
+  }
+): Promise<{ success: boolean; carnetId?: string; error?: string }> {
+  const supabase = await createClient();
+
+  // 1. Récupérer le voyage complet avec toutes ses relations
+  const trip = await getTripById(tripId);
+  if (!trip) {
+    return { success: false, error: 'Voyage introuvable' };
+  }
+
+  // 2. Transformer le voyage via le moteur pur
+  const { carnet, moments, kitItems } = convertTripToCarnetData(trip, {
+    customTitle: options?.title,
+    description: options?.description,
+    isPublic: options?.isPublic === true,
+    authorName: options?.authorName,
+  });
+
+  // 3. Insérer la ligne principale dans `carnets`
+  const { data: carnetRow, error: carnetError } = await supabase
+    .from('carnets')
+    .insert(carnet)
+    .select('id')
+    .single();
+
+  if (carnetError || !carnetRow) {
+    console.error('[LKDV TripCompletion] Erreur insertion carnet:', carnetError);
+    return { success: false, error: carnetError?.message || 'Erreur création carnet' };
+  }
+
+  const carnetId = carnetRow.id;
+
+  // 4. Insérer les moments de voyage en parallèle
+  if (moments.length > 0) {
+    const momentsPayload = moments.map(m => ({
+      ...m,
+      carnet_id: carnetId,
+    }));
+    const { error: momentsError } = await supabase
+      .from('carnet_moments')
+      .insert(momentsPayload);
+
+    if (momentsError) {
+      console.warn('[LKDV TripCompletion] Avertissement insertion carnet_moments:', momentsError);
+    }
+  }
+
+  // 5. Insérer les items de kit emportés
+  if (kitItems.length > 0) {
+    const kitPayload = kitItems.map(k => ({
+      ...k,
+      carnet_id: carnetId,
+    }));
+    const { error: kitError } = await supabase
+      .from('carnet_kit_items')
+      .insert(kitPayload);
+
+    if (kitError) {
+      console.warn('[LKDV TripCompletion] Avertissement insertion carnet_kit_items:', kitError);
+    }
+  }
+
+  // 6. Marquer le voyage comme complété si ce n'était pas déjà fait
+  if (trip.status !== 'completed') {
+    await updateTripStatus(tripId, 'completed');
+  }
+
+  // P2 — producteur « carnet publié » : la preuve (visibilité réelle, lien
+  // voyage/session, contenu ≥ 3 moments ou ≥ 1 média) est recalculée en service
+  // role ; un carnet privé ou vide ne crédite rien. Idempotent par carnet.
+  await awardCarnetPublished(carnetId);
+
+  return { success: true, carnetId };
+}
+
+/**
+ * 8.7 Soumettre des avis certifiés terrain (has_field_proof) pour les lieux visités
+ */
+export async function submitTripFieldReviews(
+  tripId: string,
+  authorId: string,
+  reviews: Array<{ placeId: string; rating: number; comment: string }>
+): Promise<{ success: boolean; count: number; error?: string }> {
+  const supabase = await createClient();
+
+  if (reviews.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  const payload = reviews.map(r => ({
+    place_id: r.placeId,
+    author_id: authorId,
+    rating: r.rating,
+    comment: r.comment,
+    has_field_proof: true,
+    trip_id: tripId,
+    visit_date: new Date().toISOString().slice(0, 10),
+  }));
+
+  const { error } = await supabase
+    .from('place_reviews')
+    .insert(payload);
+
+  if (error) {
+    console.error('[LKDV TripCompletion] Erreur submitTripFieldReviews:', error);
+    return { success: false, count: 0, error: error.message };
+  }
+
+  return { success: true, count: reviews.length };
+}

@@ -1,0 +1,131 @@
+import { getInventoryStatus } from '@/features/materiel/domain/inventory';
+import { createClient } from '@/lib/supabase/server';
+import { AvailabilityGauge } from '@/features/materiel/components/disponibilite/AvailabilityGauge';
+import { DispoKpis } from '@/features/materiel/components/disponibilite/DispoKpis';
+import { GanttTimeline } from '@/features/materiel/components/disponibilite/GanttTimeline';
+import { LoanTabs } from '@/features/materiel/components/disponibilite/LoanTabs';
+import { ConflictDetector } from '@/features/materiel/components/disponibilite/ConflictDetector';
+import { LoanHeatmap } from '@/features/materiel/components/disponibilite/LoanHeatmap';
+import { DigitalLoanContract } from '@/features/materiel/components/disponibilite/DigitalLoanContract';
+import { AutoReminders } from '@/features/materiel/components/disponibilite/AutoReminders';
+import { DispoScore } from '@/features/materiel/components/disponibilite/DispoScore';
+import { CollectiveActions } from '@/features/materiel/components/disponibilite/CollectiveActions';
+import { Card } from '@/components/ui';
+import { getLoans } from '@/features/materiel/services/getLoans';
+import { getInventory } from '@/features/materiel/services/getInventory';
+import { detectConflicts } from '@/lib/materiel/conflicts';
+
+/**
+ * H4.2 — Section disponibilité du hub (mêmes composants, mêmes services,
+ * mêmes dérivations que le cockpit canonique disponibilite).
+ * /materiel/disponibilite redirige 307 ici (H-AUTO-42).
+ */
+export async function HubDisponibiliteSection() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user?.id ?? null;
+
+  const [loans, inventory] = await Promise.all([getLoans(), getInventory()]);
+  const active = loans.filter((l) => l.status === 'en_cours' || l.status === 'en_retard');
+  const overdue = loans.filter((l) => l.status === 'en_retard').length;
+  const returned = loans.filter((l) => l.status === 'rendu').length;
+
+  const owned = inventory.filter((i) => !['vendu', 'a_acheter'].includes(getInventoryStatus(i)));
+  const unavailable = owned.filter((i) =>
+    ['en_pret', 'en_location'].includes(getInventoryStatus(i))
+  ).length;
+  const available = owned.length - unavailable;
+  const score = Math.max(0, 100 - active.length * 8 - overdue * 15);
+
+  let kitProductIds = new Set<string>();
+  if (user) {
+    const { data: kitItems } = await supabase
+      .from('materiel_kit_items')
+      .select('product_ownership_id')
+      .eq('user_id', user.id)
+      .not('product_ownership_id', 'is', null);
+    kitProductIds = new Set((kitItems ?? []).map((k) => k.product_ownership_id));
+  }
+  const itemsById = new Map(inventory.map((i) => [i.id, i.name]));
+  const conflicts = detectConflicts(loans, kitProductIds, itemsById);
+
+  const byMonth = new Map<string, number>();
+  for (const l of loans) {
+    const m = (l.loaned_at ?? '').slice(0, 7);
+    if (m) byMonth.set(m, (byMonth.get(m) ?? 0) + 1);
+  }
+  const heatmap = Array.from(byMonth.entries())
+    .map(([month, count]) => ({ month, count }))
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .slice(-6);
+
+  return (
+    <div className="grid grid-cols-12 gap-[var(--grid-gap)]">
+      <Card
+        className="col-span-12 md:col-span-4 p-4 flex items-center gap-4"
+        ariaLabelledBy="hub-gauge-title"
+      >
+        <AvailabilityGauge availableCount={Math.max(0, available)} total={owned.length} />
+        <div>
+          <h2 id="hub-gauge-title" className="sr-only">
+            Disponibilité
+          </h2>
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
+            Objets disponibles
+          </p>
+          <p className="text-sm text-[var(--lkv-text-secondary)]">
+            {unavailable} en prêt ou location
+          </p>
+        </div>
+      </Card>
+      <div className="col-span-12 md:col-span-8">
+        <DispoKpis
+          data={{ active: active.length, overdue, returned, totalObjects: owned.length }}
+        />
+      </div>
+      <div className="col-span-12">
+        <GanttTimeline
+          loans={loans.map((l) => ({
+            id: l.id,
+            label: l.borrower_contact ?? 'Prêt',
+            start: l.loaned_at ?? '',
+            end: l.due_date ?? l.loaned_at ?? '',
+          }))}
+        />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <LoanTabs loans={loans} userId={userId} />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <ConflictDetector conflicts={conflicts} />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <LoanHeatmap byMonth={heatmap} />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <DigitalLoanContract loan={active[0] ?? null} />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <AutoReminders
+          reminders={active
+            .filter((l) => l.due_date)
+            .map((l) => ({
+              id: l.id,
+              label: `Retour de ${l.borrower_contact ?? 'prêt'}`,
+              due: l.due_date!,
+            }))}
+        />
+      </div>
+      <div className="col-span-12 md:col-span-6">
+        <DispoScore score={score} overdue={overdue} />
+      </div>
+      <div className="col-span-12">
+        <CollectiveActions />
+      </div>
+    </div>
+  );
+}
+
+export default HubDisponibiliteSection;

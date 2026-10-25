@@ -1,0 +1,136 @@
+{
+  "phase": 8,
+  "phase_name": "Paiement, securite, vie privee et conformite",
+  "date": "2026-09-12",
+  "sha_branch": "b43d9ecd (base 919afdef = origin/main) sur feat/phase8-security-payments",
+  "sha_merged": "aucun -- pas de PR (consigne), branche poussee pour revue",
+  "environment": {
+    "local": "Supabase local Docker 127.0.0.1:54322 (replay baseline prod + migrations) + vitest + pgTAP",
+    "stripe": "INSUFFICIENT_DATA -- aucune cle ni price id disponible ; tests 100% mockes, zero appel reseau",
+    "upstash": "INSUFFICIENT_DATA -- compte non provisionne ; repli memoire teste",
+    "juridique": "INSUFFICIENT_DATA -- aucun humain habilite saisi ; brouillons uniquement",
+    "distant": "INSUFFICIENT_DATA"
+  },
+  "deliverables": {
+    "migrations": [
+      "supabase/migrations/20260911550000_phase8_rls_hardening.sql",
+      "supabase/migrations/20260911551000_phase8_user_profile_privileged_columns.sql",
+      "supabase/migrations/20260911552000_phase8_stripe_events.sql"
+    ],
+    "pgtap": "supabase/tests/database/phase8_rls_access.test.sql (40 assertions, horizontal + vertical)",
+    "stripe_lib": [
+      "src/lib/stripe/events.ts (classification/summary/grant)",
+      "src/lib/stripe/eventStore.ts (idempotence stripe_events)"
+    ],
+    "stripe_webhook": "src/app/api/stripe/webhook/route.ts (signature + idempotence evenement + 5 categories)",
+    "rate_limit": "src/lib/rate-limit/routes.ts + 10 handlers sensibles",
+    "tests_unit": [
+      "tests/security/phase8-stripe-webhook.spec.ts (10)",
+      "tests/security/phase8-stripe-events.spec.ts (13)",
+      "tests/security/phase8-stripe-eventstore.spec.ts (5)",
+      "tests/security/phase8-entitlements-forge.spec.ts (2)"
+    ],
+    "test_helper": "tests/mocks/fakeSupabaseStripe.ts",
+    "compliance": [
+      "docs/compliance/README.md",
+      "docs/compliance/01_RETENTION_SAUVEGARDES.md",
+      "docs/compliance/02_DPA_TRANSFERTS_INTERNATIONAUX.md",
+      "docs/compliance/03_AIPD_STRUCTURE.md",
+      "docs/compliance/04_DPO_CONTACT.md",
+      "docs/compliance/05_REGLES_COMMUNAUTE_MODERATION_APPEL.md",
+      "docs/compliance/06_MENTIONS_LEGALES_MARCHES.md",
+      "docs/compliance/07_STRIPE_PRICE_IDS.md",
+      "docs/compliance/08_ANTI_ABUS_OPS_WAF.md"
+    ]
+  },
+  "rls_review": {
+    "tables_public": 224,
+    "tables_rls_activees": 223,
+    "tables_sans_rls": ["spatial_ref_sys -- PostGIS, owner supabase_admin, 0 privilege anon/authenticated ; activation impossible avec le role de migration (INSUFFICIENT_DATA ops)"],
+    "tables_rls_sans_policy": ["message_mentions", "notification_deliveries", "royalty_config -- deny-all clients (service uniquement), sur et documente"],
+    "trous_corriges": [
+      "hike_sessions : 4 policies true public -> proprietaire OU carnet public",
+      "carnet_moments / carnet_kit_items : policies seed true -> supprimees (lecture scopee existante)",
+      "groupe_messages : SELECT true -> membres uniquement",
+      "comment_reports : SELECT true -> signalant/moderateur/admin",
+      "community_posts : UPDATE true (auth_like_community_posts) -> supprimee",
+      "affiliate_* : policies FOR ALL publiques -> SELECT seul (catalogue) ; conversions service_role (code adapte)",
+      "hub_dashboard_kpis : grants anon/authenticated restaurés -> REVOKE reapplique",
+      "6 vues publiques : DML anon/authenticated -> SELECT seul",
+      "user_profiles : escalade verticale role/trust_score/suspension/2FA/email -> trigger garde-fou + is_admin SECURITY DEFINER"
+    ]
+  },
+  "stripe": {
+    "signature": "stripe.webhooks.constructEvent (corps brut + stripe-signature + STRIPE_WEBHOOK_SECRET)",
+    "idempotence": "table public.stripe_events (event_id PK, RLS FORCE, 0 policy, service_role), doublon 23505 acquitte, echec -> liberation + 500 (retry)",
+    "categories": ["checkout_completed", "subscription_renewed", "payment_failed", "refund", "subscription_canceled", "ignored"],
+    "price_env_attendues": [
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET",
+      "STRIPE_PRICE_EXPLORER",
+      "STRIPE_PRICE_EXPEDITION",
+      "STRIPE_PRICE_GROUP",
+      "STRIPE_PRICE_PASS_WEEKEND",
+      "STRIPE_PRICE_PASS_TRIP",
+      "STRIPE_PRICE_PASS_EXPEDITION"
+    ],
+    "valeurs_reelles": "INSUFFICIENT_DATA (aucune valeur fournie, aucune inventee)",
+    "fail_safe": "configured:false sans cle/price ; billing n'expose que des booleens ; checkout refuse sans cle (503)",
+    "entitlements": "ecriture serveur uniquement (pgTAP + vitest anti-forge)",
+    "limite_assumee": "annulation/echec journalises sans revocation d'entitlement (pas de stockage d'abonnement verifie)"
+  },
+  "anti_abus": {
+    "phase6_routes_verifiees": [
+      "adventure/generate", "ai/jobs", "ai/chat-completion", "checkout", "terrain/reports",
+      "terrain/conditions", "adventure/offline/sync", "discovery/search", "pays/[code]"
+    ],
+    "routes_ajoutees": {
+      "rewards/claim": "30/min closed",
+      "rewards/withdraw": "5/h closed",
+      "account/export": "10/h open",
+      "account/delete": "5/h open",
+      "carnet/identify-species": "10/min closed",
+      "kit-report/generate": "10/min closed",
+      "trip-assistant": "20/min closed",
+      "telemetry/hub": "120/min open",
+      "notifications/subscribe": "20/min open",
+      "hike-sessions (POST)": "30/min open"
+    },
+    "stripe_webhook": "non limite volontairement (signature + idempotence, preserver les retries)",
+    "externe_non_fait": ["WAF Vercel", "bot management Vercel", "Upstash reel", "alertes 429/5xx"]
+  },
+  "evidence": {
+    "type_check": "exit 0",
+    "lint": "exit 0 (warnings preexistants uniquement)",
+    "vitest_full": "303 fichiers passed / 4 skipped ; 2155 tests passed / 27 skipped ; 0 failed",
+    "vitest_new": "30/30 (28 Stripe + 2 entitlements)",
+    "pgtap_full": "Files=19, Tests=380, Result: PASS",
+    "pgtap_new": "phase8_rls_access : 40/40 ok",
+    "invariants_ci": "node scripts/verify/ci_invariants.mjs exit 0"
+  },
+  "gate_phase8": {
+    "aucune_ouverture_publique_sans_validation_juridique": "BLOQUE -- brouillons uniquement, aucun humain habilite ; statut INSUFFICIENT_DATA",
+    "six_price_ids": "INSUFFICIENT_DATA -- variables documentees, aucune valeur",
+    "signatures_webhook": "PASS (mocke -- verification de code, aucun evenement Stripe reel)",
+    "idempotence_evenements": "PASS (code + tests mockes + table additive)",
+    "entitlements_serveur": "PASS (pgTAP + vitest)",
+    "revue_rls_horizontale_verticale": "PASS local (40 assertions)",
+    "waf_anti_bot": "INSUFFICIENT_DATA -- configuration externe"
+  },
+  "baselines_visuelles": "aucune UI modifiee -- aucune baseline impactee, aucune regeneration",
+  "limitations": [
+    "Aucune cle Stripe : aucun paiement/renouvellement/echec/remboursement/annulation reel teste (mocks uniquement).",
+    "Upstash reel absent : rate-limit teste en repli memoire.",
+    "Postback Travelpayouts non rejoue apres passage service_role.",
+    "spatial_ref_sys : RLS non activable par la migration (owner supabase_admin), aucun acces client constate.",
+    "loyalty_points/xp/level restent modifiables par leur proprietaire (flux produit existants) -- dette metier, pas un vecteur admin/inter-utilisateurs.",
+    "Brouillons juridiques non valides ; aucun DPO nomme."
+  ],
+  "residual_risks": [
+    "Une revocation d'entitlement en cas d'annulation/impaye reste a implementer avec les cles reelles.",
+    "Un evenement reste 'processing' si le process crash entre reservation et fin : reponse doublon au retry (rejeu manuel dashboard Stripe possible) -- choisi pour ne jamais double-traiter.",
+    "Les flux affiliation/points cote client devraient etre migres vers des RPC serveur (hors perimetre Phase 8)."
+  ],
+  "decision": "PASS_TECHNIQUE_LOCAL_DISTANT_INSUFFICIENT_DATA",
+  "responsible": "agent SECURITY/BACKEND/DATABASE + ORCHESTRATOR ; validation juridique = humain habilite non saisi"
+}

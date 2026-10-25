@@ -1,0 +1,541 @@
+﻿'use client';
+
+import Icon from '@/components/ui/Icon';
+import React, { useState, useTransition, useMemo } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button, Card, ConfirmDialog } from '@/components/ui';
+import type { TripFull } from '@/features/trips/types/trip.types';
+import {
+  type PlannerStep,
+  reorderStepList,
+  moveStepBetweenDays,
+  shiftDayNumbers,
+  compactOrderIndices,
+  withStepProvenance,
+} from './plannerEngine';
+import { DayTraceMap } from '@/features/hub/components/mobile/itinerary/DayTraceMap';
+import { routeIdFromMetadata, type DayTracePoint } from '@/features/trips/domain/dayTraces';
+import { getCivilDurationDays } from '@/lib/dates/tripDates';
+import { tripSectionHref } from '../registry/tripSectionRegistry';
+import { DayNavigator } from './DayNavigator';
+import { DayView } from './DayView';
+import { StepEditModal } from './StepEditModal';
+import { MoveStepModal } from './MoveStepModal';
+import { RenameTripModal } from '@/features/trips/components/RenameTripModal';
+import { TripInviteButton } from '@/features/trips/components/TripInviteButton';
+import { PartyPreparationBanner } from '@/features/trips/components/MemberProfileBadges';
+import {
+  addTripStepAction,
+  updateTripStepAction,
+  deleteTripStepAction,
+  reorderTripStepsAction,
+  moveStepToDayAction,
+  insertDayAction,
+  deleteDayAction,
+  duplicateDayAction,
+} from '@/app/voyages/actions';
+
+export interface ItineraryPlannerClientProps {
+  trip: TripFull;
+  initialSteps: PlannerStep[];
+}
+
+export default function ItineraryPlannerClient({
+  trip,
+  initialSteps,
+}: ItineraryPlannerClientProps) {
+  // Fix round final — provenance réelle des trip_steps pour les badges LLM.
+  const [steps, setSteps] = useState<PlannerStep[]>(() =>
+    withStepProvenance(initialSteps, trip.steps ?? [])
+  );
+  const [selectedDay, setSelectedDay] = useState<number>(1);
+  const [editingStep, setEditingStep] = useState<PlannerStep | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createDayNumber, setCreateDayNumber] = useState<number>(1);
+  const [movingStep, setMovingStep] = useState<PlannerStep | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const [renameOpen, setRenameOpen] = useState(false);
+
+  const canEdit = !!trip.permissions?.canEdit;
+  // IMPORTANT 7 — squelette timeline tant que l'enrichissement est en attente
+  // et qu'aucune étape n'existe (zéro CLS, jamais d'état vide trompeur).
+  const enrichmentPending = trip.metadata?.enrichment_status === 'pending';
+
+  // Calcul du nombre de jours total
+  const calculatedDaysCount = useMemo(() => {
+    let maxDayFromSteps = 1;
+    for (const s of steps) {
+      if (s.day_number > maxDayFromSteps) {
+        maxDayFromSteps = s.day_number;
+      }
+    }
+
+    let durationDays = 1;
+    if (trip.start_date && trip.end_date) {
+      durationDays = getCivilDurationDays(trip.start_date, trip.end_date);
+    }
+
+    return Math.max(maxDayFromSteps, durationDays, 1);
+  }, [steps, trip.start_date, trip.end_date]);
+
+  const [daysCount, setDaysCount] = useState<number>(calculatedDaysCount);
+
+  // Synchronise daysCount si calculatedDaysCount augmente
+  React.useEffect(() => {
+    if (calculatedDaysCount > daysCount) {
+      setDaysCount(calculatedDaysCount);
+    }
+  }, [calculatedDaysCount, daysCount]);
+
+  function notifySuccess(msg: string) {
+    setSuccessMessage(msg);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  }
+
+  function notifyError(msg: string) {
+    setErrorMessage(msg);
+    setTimeout(() => setErrorMessage(null), 4000);
+  }
+
+  // 1. Monter une étape
+  function handleMoveUp(stepId: string) {
+    const prevSteps = [...steps];
+    const updated = reorderStepList(steps, stepId, 'up');
+    setSteps(updated);
+
+    startTransition(async () => {
+      try {
+        const daySteps = updated
+          .filter((s) => s.day_number === selectedDay)
+          .sort((a, b) => a.order_index - b.order_index);
+        await reorderTripStepsAction({
+          trip_id: trip.id,
+          day_number: selectedDay,
+          step_ids_in_order: daySteps.map((s) => s.id),
+        });
+      } catch (err: any) {
+        setSteps(prevSteps);
+        notifyError(err.message || 'Erreur lors du réordonnancement.');
+      }
+    });
+  }
+
+  // 2. Descendre une étape
+  function handleMoveDown(stepId: string) {
+    const prevSteps = [...steps];
+    const updated = reorderStepList(steps, stepId, 'down');
+    setSteps(updated);
+
+    startTransition(async () => {
+      try {
+        const daySteps = updated
+          .filter((s) => s.day_number === selectedDay)
+          .sort((a, b) => a.order_index - b.order_index);
+        await reorderTripStepsAction({
+          trip_id: trip.id,
+          day_number: selectedDay,
+          step_ids_in_order: daySteps.map((s) => s.id),
+        });
+      } catch (err: any) {
+        setSteps(prevSteps);
+        notifyError(err.message || 'Erreur lors du réordonnancement.');
+      }
+    });
+  }
+
+  // 3. Supprimer une étape
+  function handleDeleteStep(stepId: string) {
+    const stepToDelete = steps.find((s) => s.id === stepId);
+    if (!stepToDelete) return;
+
+    const prevSteps = [...steps];
+    const filtered = steps.filter((s) => s.id !== stepId);
+    const dayCompacted = compactOrderIndices(
+      filtered.filter((s) => s.day_number === stepToDelete.day_number)
+    );
+    const finalSteps = [
+      ...filtered.filter((s) => s.day_number !== stepToDelete.day_number),
+      ...dayCompacted,
+    ];
+    setSteps(finalSteps);
+
+    startTransition(async () => {
+      try {
+        await deleteTripStepAction(trip.id, stepId);
+        notifySuccess('Étape supprimée.');
+      } catch (err: any) {
+        setSteps(prevSteps);
+        notifyError(err.message || 'Erreur lors de la suppression.');
+      }
+    });
+  }
+
+  // 4. Déplacer une étape vers un autre jour
+  async function handleSelectTargetDay(stepId: string, fromDay: number, toDay: number) {
+    const prevSteps = [...steps];
+    const updated = moveStepBetweenDays(steps, stepId, toDay);
+    setSteps(updated);
+
+    startTransition(async () => {
+      try {
+        await moveStepToDayAction({
+          trip_id: trip.id,
+          step_id: stepId,
+          from_day_number: fromDay,
+          to_day_number: toDay,
+        });
+        notifySuccess(`Étape déplacée vers le Jour ${toDay}.`);
+      } catch (err: any) {
+        setSteps(prevSteps);
+        notifyError(err.message || 'Erreur lors du déplacement.');
+      }
+    });
+  }
+
+  // 5. Enregistrer une étape (création ou modification)
+  async function handleSaveStep(stepData: Partial<PlannerStep>) {
+    if (stepData.id) {
+      // Modification existante
+      const prevSteps = [...steps];
+      setSteps((curr) =>
+        curr.map((s) => (s.id === stepData.id ? ({ ...s, ...stepData } as PlannerStep) : s))
+      );
+
+      try {
+        await updateTripStepAction({
+          trip_id: trip.id,
+          step_id: stepData.id,
+          ...stepData,
+        });
+        notifySuccess('Étape modifiée avec succès.');
+      } catch (err: any) {
+        setSteps(prevSteps);
+        notifyError(err.message || 'Erreur lors de la modification.');
+      }
+    } else {
+      // Nouvelle étape
+      const day = stepData.day_number || selectedDay;
+      const res = await addTripStepAction({
+        trip_id: trip.id,
+        day_number: day,
+        title: stepData.title!,
+        description: stepData.description,
+        location_name: stepData.location_name,
+        latitude: stepData.latitude,
+        longitude: stepData.longitude,
+        transport_mode: (stepData.transport_mode as any) || 'walking',
+        start_time: stepData.start_time ?? null,
+        accommodation_name: stepData.accommodation_name,
+        distance_km: stepData.distance_km,
+        elevation_gain_m: stepData.elevation_gain_m,
+        elevation_loss_m: stepData.elevation_loss_m,
+      });
+
+      const dayStepsCount = steps.filter((s) => s.day_number === day).length;
+      const newStep: PlannerStep = {
+        id: res.stepId,
+        trip_id: trip.id,
+        day_number: day,
+        order_index: dayStepsCount,
+        title: stepData.title!,
+        description: stepData.description,
+        location_name: stepData.location_name,
+        latitude: stepData.latitude,
+        longitude: stepData.longitude,
+        transport_mode: stepData.transport_mode,
+        accommodation_name: stepData.accommodation_name,
+        distance_km: stepData.distance_km,
+        elevation_gain_m: stepData.elevation_gain_m,
+        elevation_loss_m: stepData.elevation_loss_m,
+      };
+
+      setSteps((curr) => [...curr, newStep]);
+      notifySuccess('Nouvelle étape ajoutée.');
+    }
+  }
+
+  // 6. Insérer un jour après un jour donné
+  function handleInsertDayAfter(dayNumber: number) {
+    const prevSteps = [...steps];
+    const prevCount = daysCount;
+
+    const shifted = shiftDayNumbers(steps, dayNumber + 1, 1);
+    setSteps(shifted);
+    setDaysCount((c) => c + 1);
+
+    startTransition(async () => {
+      try {
+        await insertDayAction({
+          trip_id: trip.id,
+          after_day_number: dayNumber,
+        });
+        setSelectedDay(dayNumber + 1);
+        notifySuccess(`Journée insérée après le Jour ${dayNumber}.`);
+      } catch (err: any) {
+        setSteps(prevSteps);
+        setDaysCount(prevCount);
+        notifyError(err.message || 'Erreur lors de l’insertion de la journée.');
+      }
+    });
+  }
+
+  // 7. Dupliquer une journée
+  function handleDuplicateDay(dayNumber: number) {
+    const prevSteps = [...steps];
+    const prevCount = daysCount;
+
+    startTransition(async () => {
+      try {
+        await duplicateDayAction({
+          trip_id: trip.id,
+          day_number: dayNumber,
+        });
+
+        // Recharger localement
+        const shifted = shiftDayNumbers(steps, dayNumber + 1, 1);
+        const sourceSteps = steps.filter((s) => s.day_number === dayNumber);
+        const duplicatedSteps: PlannerStep[] = sourceSteps.map((s, idx) => ({
+          ...s,
+          id: `dup-${Date.now()}-${idx}`,
+          day_number: dayNumber + 1,
+          title: `${s.title} (copie)`,
+        }));
+
+        setSteps([...shifted, ...duplicatedSteps]);
+        setDaysCount((c) => c + 1);
+        setSelectedDay(dayNumber + 1);
+        notifySuccess(`Jour ${dayNumber} dupliqué avec succès.`);
+      } catch (err: any) {
+        setSteps(prevSteps);
+        setDaysCount(prevCount);
+        notifyError(err.message || 'Erreur lors de la duplication.');
+      }
+    });
+  }
+
+  const [dayPendingDeletion, setDayPendingDeletion] = useState<number | null>(null);
+
+  // 8. Exécuter la suppression d'une journée
+  function executeDeleteDay(dayNumber: number) {
+    const prevSteps = [...steps];
+    const prevCount = daysCount;
+
+    // Supprimer et décaler les jours suivants
+    const remaining = steps.filter((s) => s.day_number !== dayNumber);
+    const shifted = shiftDayNumbers(remaining, dayNumber + 1, -1);
+
+    setSteps(shifted);
+    setDaysCount((c) => Math.max(1, c - 1));
+    setSelectedDay((d) => Math.max(1, Math.min(d, daysCount - 1)));
+
+    startTransition(async () => {
+      try {
+        await deleteDayAction({
+          trip_id: trip.id,
+          day_number: dayNumber,
+          cascade_steps: true,
+        });
+        notifySuccess(`Jour ${dayNumber} supprimé.`);
+      } catch (err: any) {
+        setSteps(prevSteps);
+        setDaysCount(prevCount);
+        notifyError(err.message || 'Erreur lors de la suppression.');
+      }
+    });
+  }
+
+  // Demander confirmation ou supprimer directement
+  function handleDeleteDay(dayNumber: number) {
+    const daySteps = steps.filter((s) => s.day_number === dayNumber);
+    if (daySteps.length > 0) {
+      setDayPendingDeletion(dayNumber);
+      return;
+    }
+    executeDeleteDay(dayNumber);
+  }
+
+  // Étapes de la journée active, triées
+  const activeDaySteps = useMemo(() => {
+    return steps
+      .filter((s) => s.day_number === selectedDay)
+      .sort((a, b) => a.order_index - b.order_index);
+  }, [steps, selectedDay]);
+
+  // Trace réelle du sentier : chargée côté client depuis `metadata.route_id`
+  // (page.tsx = WIP propriétaire, jamais modifiée) puis découpée par jour.
+  const routeId = useMemo(() => routeIdFromMetadata(trip.metadata), [trip.metadata]);
+  const activeDayStepPoints = useMemo<DayTracePoint[]>(
+    () =>
+      activeDaySteps.flatMap((step) =>
+        step.latitude != null && step.longitude != null
+          ? [{ lat: Number(step.latitude), lng: Number(step.longitude) }]
+          : []
+      ),
+    [activeDaySteps]
+  );
+
+  return (
+    <div className="space-y-4 pb-16">
+      {/* Header Navigation */}
+      <Card className="p-[var(--space-3)]">
+        <div className="flex items-center justify-between gap-[var(--space-4)]">
+          <div className="flex min-w-0 items-center gap-[var(--space-2)]">
+            {isPending && (
+              <span className="animate-pulse font-mono text-[11px] text-[color:var(--lkv-text-secondary)]">
+                Enregistrement...
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-[var(--space-2)]">
+            <TripInviteButton trip={trip} />
+            {canEdit && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setRenameOpen(true)}
+                aria-label="Renommer l’activité"
+                icon={<Icon name="pencil" size={14} />}
+              >
+                <span className="hidden sm:inline">Renommer</span>
+              </Button>
+            )}
+            <Link
+              href={tripSectionHref(trip.slug, 'overview')}
+              aria-label="Voir le cockpit du voyage"
+              className="inline-flex min-h-[var(--control-height-sm)] shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespace-nowrap rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
+            >
+              <Icon name="map" size={14} />
+              <span className="hidden sm:inline">Cockpit</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Toasts flottants discrets */}
+        {errorMessage && (
+          <Card
+            tone="danger"
+            className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)] animate-in fade-in"
+          >
+            <Icon name="alert-circle" size={16} className="shrink-0" />
+            <span>{errorMessage}</span>
+          </Card>
+        )}
+        {successMessage && (
+          <Card
+            tone="sage"
+            className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)] animate-in fade-in"
+          >
+            <Icon name="check-circle2" size={16} className="shrink-0" />
+            <span>{successMessage}</span>
+          </Card>
+        )}
+
+        {/* Sélecteur horizontal de journées */}
+        <div className="mt-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)]">
+          <DayNavigator
+            daysCount={daysCount}
+            selectedDay={selectedDay}
+            onSelectDay={setSelectedDay}
+            onAddDay={() => handleInsertDayAfter(daysCount)}
+            startDate={trip.start_date}
+            steps={steps}
+            canEdit={canEdit}
+          />
+        </div>
+      </Card>
+
+      <PartyPreparationBanner partySize={trip.party_size} />
+
+      {/* Carte du jour sélectionné — trace réelle découpée */}
+      {routeId && (
+        <DayTraceMap
+          routeId={routeId}
+          day={selectedDay}
+          days={daysCount}
+          stepPoints={activeDayStepPoints}
+          heightClassName="h-[20rem]"
+        />
+      )}
+
+      {/* Contenu principal */}
+      <main className="space-y-4">
+        <DayView
+          dayNumber={selectedDay}
+          startDate={trip.start_date}
+          steps={activeDaySteps}
+          enrichmentPending={enrichmentPending}
+          canEdit={canEdit}
+          onAddStep={(day) => {
+            setCreateDayNumber(day);
+            setEditingStep(null);
+            setIsCreateModalOpen(true);
+          }}
+          onEditStep={(step) => {
+            setEditingStep(step);
+            setIsCreateModalOpen(true);
+          }}
+          onDeleteStep={handleDeleteStep}
+          onMoveUpStep={handleMoveUp}
+          onMoveDownStep={handleMoveDown}
+          onMoveToDay={(step) => setMovingStep(step)}
+          onInsertDayAfter={handleInsertDayAfter}
+          onDuplicateDay={handleDuplicateDay}
+          onDeleteDay={handleDeleteDay}
+        />
+      </main>
+
+      {/* Modals */}
+      <StepEditModal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setEditingStep(null);
+        }}
+        onSave={handleSaveStep}
+        initialStep={editingStep}
+        dayNumber={createDayNumber}
+      />
+
+      <MoveStepModal
+        isOpen={!!movingStep}
+        onClose={() => setMovingStep(null)}
+        step={movingStep}
+        daysCount={daysCount}
+        startDate={trip.start_date}
+        steps={steps}
+        onSelectTargetDay={handleSelectTargetDay}
+      />
+
+      <RenameTripModal
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        tripId={trip.id}
+        currentTitle={trip.title}
+        onRenamed={() => {
+          router.refresh();
+          notifySuccess('Activité renommée.');
+        }}
+      />
+
+      {/* Dialogue accessible de confirmation de suppression */}
+      <ConfirmDialog
+        open={dayPendingDeletion !== null}
+        title={`Supprimer le Jour ${dayPendingDeletion} ?`}
+        description={`Cette journée contient ${steps.filter((s) => s.day_number === dayPendingDeletion).length} étape(s). Confirmez-vous la suppression intégrale de la journée et de ses étapes ?`}
+        confirmLabel="Supprimer définitivement"
+        variant="destructive"
+        onCancel={() => setDayPendingDeletion(null)}
+        onConfirm={() => {
+          const day = dayPendingDeletion;
+          setDayPendingDeletion(null);
+          if (day !== null) executeDeleteDay(day);
+        }}
+      />
+    </div>
+  );
+}

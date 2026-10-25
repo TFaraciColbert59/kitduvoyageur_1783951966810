@@ -1,0 +1,74 @@
+[
+  {
+    "device": "Samsung Galaxy A54 (Android 360px)",
+    "viewport": {
+      "width": 360,
+      "height": 780
+    },
+    "browser": "Chromium (Playwright)",
+    "fpsEstimated": 60,
+    "longTasksCount": 0,
+    "drawerOpenDurationMs": 38,
+    "payloadSizes": {
+      "routesApiBytes": 41250,
+      "detailApiBytes": 84200,
+      "poisApiBytes": 12800
+    },
+    "cacheColdVsHot": {
+      "coldMs": 28,
+      "hotMs": 28
+    },
+    "twentyPanOperationsCompleted": true,
+    "offlineHandled": true,
+    "rateLimit429Handled": true,
+    "viewportZoomGuardHandled": true
+  },
+  {
+    "device": "iPhone 14 / 15 (iOS 390px)",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "browser": "Chromium (Playwright)",
+    "fpsEstimated": 60,
+    "longTasksCount": 0,
+    "drawerOpenDurationMs": 38,
+    "payloadSizes": {
+      "routesApiBytes": 41250,
+      "detailApiBytes": 84200,
+      "poisApiBytes": 12800
+    },
+    "cacheColdVsHot": {
+      "coldMs": 29,
+      "hotMs": 37
+    },
+    "twentyPanOperationsCompleted": true,
+    "offlineHandled": true,
+    "rateLimit429Handled": true,
+    "viewportZoomGuardHandled": false
+  },
+  {
+    "device": "iPhone 15 Pro Max (iOS 430px)",
+    "viewport": {
+      "width": 430,
+      "height": 932
+    },
+    "browser": "Chromium (Playwright)",
+    "fpsEstimated": 60,
+    "longTasksCount": 0,
+    "drawerOpenDurationMs": 38,
+    "payloadSizes": {
+      "routesApiBytes": 41250,
+      "detailApiBytes": 84200,
+      "poisApiBytes": 12800
+    },
+    "cacheColdVsHot": {
+      "coldMs": 28,
+      "hotMs": 28
+    },
+    "twentyPanOperationsCompleted": true,
+    "offlineHandled": true,
+    "rateLimit429Handled": true,
+    "viewportZoomGuardHandled": false
+  }
+]

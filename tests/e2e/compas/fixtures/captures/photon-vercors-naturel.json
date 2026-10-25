@@ -1,0 +1,291 @@
+{
+  "source": "https://photon.komoot.io/api/?q=Vercors&limit=10&lang=fr&osm_tag=natural&osm_tag=boundary:protected_area&osm_tag=boundary:national_park&osm_tag=place:region&osm_tag=leisure:nature_reserve&osm_tag=waterway:river",
+  "capturedAt": "2026-10-12T19:40:03.971Z",
+  "host": "photon.komoot.io",
+  "path": "/api/",
+  "query": {
+    "q": "Vercors",
+    "limit": "10"
+  },
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 13576294,
+          "osm_key": "leisure",
+          "osm_value": "nature_reserve",
+          "type": "other",
+          "name": "Réserve de vie sauvage du Vercors",
+          "city": "Léoncel",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26190",
+          "countrycode": "FR",
+          "extent": [
+            5.2041399,
+            44.9631089,
+            5.2471615,
+            44.9272666
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.239573,
+            44.9451859
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 17930802,
+          "osm_key": "place",
+          "osm_value": "region",
+          "type": "other",
+          "name": "Massif du Vercors",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "countrycode": "FR",
+          "extent": [
+            5.0201511,
+            45.3023861,
+            5.725041,
+            44.6771675
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4294135,
+            44.9898332
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 17930802,
+          "osm_key": "place",
+          "osm_value": "region",
+          "type": "other",
+          "name": "Massif du Vercors",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "countrycode": "FR",
+          "extent": [
+            5.0201511,
+            45.3023861,
+            5.725041,
+            44.6771675
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4294135,
+            44.9898332
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 5555268,
+          "osm_key": "boundary",
+          "osm_value": "protected_area",
+          "type": "other",
+          "name": "Parc naturel régional du Vercors",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "countrycode": "FR",
+          "extent": [
+            5.0121653,
+            45.3013098,
+            5.8303491,
+            44.6392209
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.3846127,
+            44.9703386
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "R",
+          "osm_id": 1023762,
+          "osm_key": "leisure",
+          "osm_value": "nature_reserve",
+          "type": "other",
+          "name": "Réserve naturelle des hauts plateaux du Vercors",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "countrycode": "FR",
+          "extent": [
+            5.4317555,
+            44.9911684,
+            5.5847837,
+            44.7075739
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4835449,
+            44.8492561
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 289851015,
+          "osm_key": "natural",
+          "osm_value": "peak",
+          "type": "other",
+          "name": "La Vierge du Vercors",
+          "city": "Saint-Martin-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4596963,
+            45.0282628
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 8987823007,
+          "osm_key": "natural",
+          "osm_value": "peak",
+          "type": "other",
+          "name": "Tour Vercors",
+          "country": "Groenland",
+          "countrycode": "GL"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -25.7291698,
+            71.95932
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 1434869545,
+          "osm_key": "natural",
+          "osm_value": "cliff",
+          "type": "other",
+          "name": "Falaises du Vercors",
+          "city": "Engins",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38360",
+          "countrycode": "FR",
+          "extent": [
+            5.6095704,
+            45.2226238,
+            5.6104196,
+            45.2212142
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.6102519,
+            45.2215907
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 1434869546,
+          "osm_key": "natural",
+          "osm_value": "cliff",
+          "type": "other",
+          "name": "Falaises du Vercors",
+          "city": "Noyarey",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38360",
+          "countrycode": "FR",
+          "extent": [
+            5.6104837,
+            45.2233369,
+            5.6281054,
+            45.2185397
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.6199693,
+            45.219178
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 800791986,
+          "osm_key": "natural",
+          "osm_value": "cliff",
+          "type": "other",
+          "name": "Falaises du Vercors",
+          "district": "Méaudre",
+          "city": "Autrans-Méaudre en Vercors",
+          "county": "Isère",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "38112",
+          "countrycode": "FR",
+          "extent": [
+            5.4905813,
+            45.1134606,
+            5.493759,
+            45.0910492
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.490972,
+            45.1020355
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,301 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, CheckCircle2, Circle, ListTodo } from 'lucide-react';
+import { Badge, Button, Card, EmptyState, IconButton, ListItem, Tabs } from '@/components/ui';
+import { useAuth } from '@/contexts/AuthContext';
+import { createClient } from '@/lib/supabase/client';
+import { requestChecklistCompletionAward } from '@/lib/progression-award-requests';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
+import {
+  bucketChecklist,
+  checklistProgress,
+  nextChecklistItem,
+  type ChecklistBucketKey,
+} from '../../../mobile/checklistEngine';
+import { BudgetRing } from '../budget/BudgetRing';
+import { GroupeChipsRow, type GroupeChipDef } from '../groupe/GroupeChipsRow';
+import { GroupeDrawer } from '../groupe/GroupeDrawer';
+import { GroupeRail } from '../groupe/GroupeRail';
+import { LiveArrivalReveal } from '../../live/LiveArrivalReveal';
+import { useLiveArrivalReveal } from '../../live/useLiveArrivalReveal';
+
+let checklistClient: ReturnType<typeof createClient> | null = null;
+function supabaseChecklistClient() {
+  if (!checklistClient) checklistClient = createClient();
+  return checklistClient;
+}
+
+export interface ChecklistMobileExperienceProps {
+  tripId: string;
+  daysUntilStart?: number | null;
+  items: DatabaseTripChecklistItem[];
+}
+
+const BUCKET_TITLES: Record<ChecklistBucketKey, { title: string; subtitle: string }> = {
+  j30: { title: 'Préparation fondamentale', subtitle: 'J-30' },
+  j7: { title: 'Dernière ligne droite', subtitle: 'J-7' },
+  j1: { title: 'Veille & jour J', subtitle: 'Départ' },
+};
+
+type ChecklistFilter = 'all' | 'todo' | 'done';
+
+export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: ChecklistMobileExperienceProps) {
+  const { triggerHaptic } = useHapticFeedback();
+  const { user } = useAuth();
+  // T10 — reveal des tâches ajoutées en réel (bus T9), section visible seulement.
+  const { liveIds, containerRef } = useLiveArrivalReveal<HTMLDivElement>('trip_checklist_items');
+  const [rows, setRows] = useState<DatabaseTripChecklistItem[]>(items);
+  useEffect(() => {
+    setRows(items);
+  }, [items]);
+  const [filter, setFilter] = useState<ChecklistFilter>('all');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const progress = useMemo(() => checklistProgress(rows), [rows]);
+  const buckets = useMemo(() => bucketChecklist(rows), [rows]);
+  const next = useMemo(() => nextChecklistItem(rows), [rows]);
+
+  const toggleItem = (item: DatabaseTripChecklistItem) => {
+    const ownerId = user?.id;
+    triggerHaptic('selection');
+    const nextDone = !item.done;
+    const previous = rows;
+    setRows((prev) => prev.map((row) => (row.id === item.id ? { ...row, done: nextDone } : row)));
+    void (async () => {
+      const { error } = await supabaseChecklistClient()
+        .from('trip_checklist_items')
+        .update({ done: nextDone, done_at: nextDone ? new Date().toISOString() : null })
+        .eq('id', item.id)
+        .eq('trip_id', tripId);
+      if (error) {
+        setRows(previous);
+      } else {
+        // P2 — vérification serveur de la complétion (idempotente, non bloquante).
+        if (ownerId) requestChecklistCompletionAward(tripId, ownerId);
+      }
+    })();
+  };
+
+  const openWith = (nextFilter: ChecklistFilter) => {
+    setFilter(nextFilter);
+    setDrawerOpen(true);
+  };
+
+  const chips: GroupeChipDef[] = [
+    {
+      key: 'todo',
+      icon: ListTodo,
+      value: String(progress.remaining),
+      label: 'à faire',
+      tone: progress.remaining > 0 ? 'accent' : 'default',
+      onClick: () => openWith('todo'),
+    },
+    {
+      key: 'done',
+      icon: CheckCircle2,
+      value: String(progress.done),
+      label: 'faites',
+      onClick: () => openWith('done'),
+    },
+    {
+      key: 'total',
+      icon: CalendarDays,
+      value: String(progress.total),
+      label: 'au total',
+      onClick: () => openWith('all'),
+    },
+  ];
+
+  const filtered = rows.filter((row) => {
+    if (filter === 'todo') return !row.done;
+    if (filter === 'done') return row.done;
+    return true;
+  });
+
+  const renderItem = (item: DatabaseTripChecklistItem, index: number) => {
+    const done = item.done;
+    return (
+      <li key={item.id} className="shrink-0 snap-start">
+        <LiveArrivalReveal id={item.id} liveIds={liveIds} index={index}>
+          <Button
+            variant={done ? 'primary' : 'secondary'}
+            onClick={() => toggleItem(item)}
+            aria-pressed={done}
+            aria-label={`${done ? 'Décocher' : 'Cocher'} ${item.label}`}
+            className="flex h-[8.5rem] w-[13rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
+          >
+            <span className="flex w-full items-start justify-between gap-2">
+              <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold">
+                {BUCKET_TITLES[item.due_offset_days >= 30 ? 'j30' : item.due_offset_days >= 8 ? 'j7' : 'j1'].subtitle}
+              </span>
+              {done ? (
+                <CheckCircle2 size={17} className="shrink-0" aria-hidden="true" />
+              ) : (
+                <Circle size={17} className="shrink-0" aria-hidden="true" />
+              )}
+            </span>
+            <span
+              className={`mt-2 line-clamp-3 text-[12.5px] font-bold leading-snug ${
+                done ? 'line-through opacity-60' : ''
+              }`}
+            >
+              {item.label}
+            </span>
+            <span className="mt-auto text-[10px] font-medium">
+              {item.done ? 'Fait' : `J-${item.due_offset_days}`}
+            </span>
+          </Button>
+        </LiveArrivalReveal>
+      </li>
+    );
+  };
+
+  return (
+    <div ref={containerRef} className="flex min-w-0 flex-col gap-5 pb-1">
+      <section className="glass relative overflow-hidden rounded-[var(--lkv-radius-card)] p-4" aria-label="Checklist de préparation">
+        <header className="flex items-start justify-between gap-2">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
+            Checklist de préparation
+          </p>
+          {daysUntilStart != null && (
+            <Badge tone="stone" className="shrink-0 uppercase tracking-[0.08em]">
+              {daysUntilStart > 0 ? `J-${daysUntilStart}` : 'Départ imminent'}
+            </Badge>
+          )}
+        </header>
+
+        <div className="mt-3 flex items-center gap-4">
+          <IconButton
+            variant="glass"
+            onClick={() => openWith('todo')}
+            aria-label={`Détail de la checklist — ${progress.pct}% prêt`}
+            className="relative shrink-0"
+          >
+            <BudgetRing pct={progress.pct}>
+              <span className="font-display text-2xl font-extrabold leading-none text-[var(--lkv-text-primary)]">
+                {progress.pct}%
+              </span>
+              <span className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/75">
+                prêt
+              </span>
+            </BudgetRing>
+          </IconButton>
+          <div className="min-w-0 flex-1 space-y-2">
+            <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
+              {progress.done}/{progress.total} tâche{progress.total > 1 ? 's' : ''} terminée{progress.done > 1 ? 's' : ''}
+            </p>
+            {next ? (
+              <p className="text-xs font-medium leading-snug text-[var(--lkv-text-primary)]/70">
+                Prochaine : « {next.label} » (J-{next.due_offset_days})
+              </p>
+            ) : (
+              <p className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
+                Tout est prêt pour le départ.
+              </p>
+            )}
+            <p className="text-[11px] font-medium text-[var(--lkv-text-primary)]/60">
+              {progress.remaining} restante{progress.remaining > 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+
+        <Button
+          variant="primary"
+          fullWidth
+          onClick={() => openWith('todo')}
+          className="mt-4 !py-3 text-sm font-bold"
+        >
+          Voir les tâches à faire
+        </Button>
+      </section>
+
+      <GroupeChipsRow chips={chips} />
+
+      {(['j1', 'j7', 'j30'] as ChecklistBucketKey[]).map((key) => {
+        const bucketItems = buckets[key];
+        if (bucketItems.length === 0) return null;
+        const doneInBucket = bucketItems.filter((item) => item.done).length;
+        return (
+          <GroupeRail
+            key={key}
+            title={BUCKET_TITLES[key].title}
+            subtitle={`${doneInBucket}/${bucketItems.length} terminée${doneInBucket > 1 ? 's' : ''}`}
+            actionLabel="Tout voir"
+            onAction={() => openWith('all')}
+            ariaLabel={`Checklist ${BUCKET_TITLES[key].title}`}
+          >
+            {bucketItems.map(renderItem)}
+          </GroupeRail>
+        );
+      })}
+
+      {rows.length === 0 && (
+        <Card>
+          <EmptyState
+            compact
+            title="Aucune tâche de préparation"
+            description="La checklist est générée automatiquement avec le voyage."
+          />
+        </Card>
+      )}
+
+      <GroupeDrawer open={drawerOpen} onOpenChange={setDrawerOpen} title="Checklist" width={460}>
+        <Tabs
+          variant="segmented"
+          ariaLabel="Filtrer les tâches"
+          value={filter}
+          onChange={(id) => setFilter(id as ChecklistFilter)}
+          options={[
+            { id: 'all', label: 'Tout' },
+            { id: 'todo', label: 'À faire' },
+            { id: 'done', label: 'Faites' },
+          ]}
+        />
+
+        {filtered.length === 0 ? (
+          <p className="py-6 text-center text-sm font-medium text-[var(--lkv-text-primary)]/70">
+            Aucune tâche dans ce filtre.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {filtered.map((item) => {
+              const done = item.done;
+              return (
+                <ListItem
+                  key={item.id}
+                  onClick={() => toggleItem(item)}
+                  selected={done}
+                  aria-pressed={done}
+                  aria-label={`${done ? 'Décocher' : 'Cocher'} ${item.label}`}
+                  leading={
+                    done ? (
+                      <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
+                    ) : (
+                      <Circle size={18} className="mt-0.5 shrink-0 text-[var(--lkv-text-primary)]/30" aria-hidden="true" />
+                    )
+                  }
+                  title={
+                    <span
+                      className={
+                        done
+                          ? 'line-through text-[var(--lkv-text-primary)]/45'
+                          : undefined
+                      }
+                    >
+                      {item.label}
+                    </span>
+                  }
+                  subtitle={`Recommandé J-${item.due_offset_days}`}
+                />
+              );
+            })}
+          </ul>
+        )}
+      </GroupeDrawer>
+    </div>
+  );
+}
+
+export default ChecklistMobileExperience;

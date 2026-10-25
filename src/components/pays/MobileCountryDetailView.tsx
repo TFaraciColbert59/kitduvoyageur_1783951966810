@@ -1,0 +1,560 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import Icon from '@/components/ui/AppIcon';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { CountryDetail } from '@/lib/countryDetails';
+import BouteilleALaMer from '@/components/pays/BouteilleALaMer';
+import PaysClubsList from '@/components/pays/PaysClubsList';
+import PaysCarnetsList from '@/components/pays/PaysCarnetsList';
+import CountryFlag from '@/components/ui/CountryFlag';
+import SmartImage from '@/components/ui/SmartImage';
+import { useCountryPracticalGuide } from '@/hooks/useCountryPracticalGuide';
+import PaysPratiqueView from '@/components/pays/PaysPratiqueView';
+import { DiscoverySection } from '@/features/discovery/components/DiscoverySection';
+import { KlookCtaBlock } from '@/features/discovery/components/KlookCtaBlock';
+import { SectionBlocks, PaysWeatherCard, PaysRegionsList, PaysTrailsList, PaysRecommendations } from '@/features/pays';
+import type { KlookBlock } from '@/features/discovery/providers/klook/klookTypes';
+import type { PracticalSection } from '@/lib/ai/jobs/generateCountryGuide';
+
+export type MobilePaysSection =
+  | 'presentation'
+  | 'destinations'
+  | 'activites'
+  | 'culture'
+  | 'gastronomie'
+  | 'hebergements'
+  | 'pratique'
+  | 'communaute';
+
+interface MobileCountryDetailViewProps {
+  country: CountryDetail;
+  flagEmoji: string;
+  klookBlock?: KlookBlock | null;
+}
+
+export default function MobileCountryDetailView({
+  country,
+  flagEmoji,
+  klookBlock,
+}: MobileCountryDetailViewProps) {
+  const router = useRouter();
+  const { triggerHaptic } = useHapticFeedback();
+
+  const [activeSection, setActiveSection] = useState<MobilePaysSection>('presentation');
+  const { data: guideData, isLoading: isGuidesLoading } = useCountryPracticalGuide(country.code);
+
+  // Synchronisation avec le plateau supérieur de la BottomTabBar
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail) {
+        setActiveSection(e.detail);
+      }
+    };
+    window.addEventListener('pays-detail-tab-change', handler);
+    return () => window.removeEventListener('pays-detail-tab-change', handler);
+  }, []);
+
+  const handleSectionSwitch = (sectionId: MobilePaysSection) => {
+    triggerHaptic('selection');
+    setActiveSection(sectionId);
+  };
+
+  const heroImage =
+    country.destinations?.[0]?.image_url ||
+    'https://images.unsplash.com/photo-1503614472-8c93d56e92ce?q=80&w=1200';
+
+  return (
+    <div
+      className="md:hidden min-h-screen bg-transparent pb-[calc(175px+env(safe-area-inset-bottom,0px))] text-[color:var(--glass-label)] font-sans [overscroll-behavior-y:none]"
+    >
+      
+      {/* ── 1. FLOATING TOP CONTROLS (Apple HIG Rigor) ── */}
+      <div className="px-4 pt-2 flex items-center justify-between gap-2 z-20 relative">
+        <Link
+          href="/pays"
+          onClick={() => triggerHaptic('light')}
+          className="glass-capsule-btn !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+        >
+          <span className="text-sm leading-none font-bold">←</span>
+          <span>Atlas</span>
+        </Link>
+
+        <div className="flex items-center gap-2">
+          <div className="glass-pill !px-3 !py-1 text-[11px] font-mono font-bold text-[color:var(--glass-label)] flex items-center gap-1.5 shadow-2xs">
+            <CountryFlag code={country.code} name={country.nom} size="xs" />
+            <span>{country.continent}</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic('selection');
+              router.push(`/compas?etape=kit`);
+            }}
+            className="glass-capsule-btn primary !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold !gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+          >
+            <Icon name="sparkles" size={13} />
+            <span>Kit IA</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── 2. PANORAMIC HERO CARD (Cristal Liquid Glass) ── */}
+      <div className="px-4 pt-3">
+        <div className="relative w-full h-56 overflow-hidden glass">
+          <SmartImage
+            src={heroImage}
+            alt={country.nom}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none" />
+
+          {/* Slogan & Destination Details */}
+          <div className="absolute bottom-3.5 left-4 right-4 z-10 text-white">
+            <div className="flex flex-wrap items-center gap-1.5 mb-1">
+              <span className="text-[9.5px] font-mono uppercase tracking-widest text-white/90 font-bold bg-black/40 px-2.5 py-0.5 rounded-full backdrop-blur-xs">
+                {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
+              </span>
+              <span className="text-white/90 font-mono text-[9.5px] bg-black/30 px-2 py-0.5 rounded-full backdrop-blur-xs">
+                {country.region}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-baseline gap-1.5">
+              <h1 className="font-display font-extrabold text-2xl text-white leading-tight">
+                {country.nom}
+              </h1>
+              {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() && (
+                <span className="text-xs font-mono font-medium text-white/70">
+                  ({country.nom_en})
+                </span>
+              )}
+            </div>
+
+            {country.slogan && (
+              <p className="font-serif italic text-white/80 text-xs mt-0.5 line-clamp-1">
+                « {country.slogan} »
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. QUICK STATS 4-METRIC GRID (Haute Définition) ── */}
+      <div className="px-4 pt-3">
+        <div className="glass p-2.5">
+          <div className="grid grid-cols-4 gap-1.5 text-center">
+            <div className="glass-sub-card p-2">
+              <span className="block font-mono font-bold text-[11px] sm:text-xs text-[color:var(--glass-label)] truncate" title={country.superficie_detail}>
+                {country.superficie_court === '—' ? '—' : (country.superficie_court.includes('km') ? country.superficie_court : `${country.superficie_court} km²`)}
+              </span>
+              <span className="text-[8px] text-[color:var(--lkv-text-secondary)] uppercase font-mono font-bold">
+                Superficie
+              </span>
+            </div>
+
+            <div className="glass-sub-card p-2">
+              <span className="block font-mono font-bold text-xs text-[color:var(--glass-label)] truncate" title={country.capitale}>
+                {country.capitale}
+              </span>
+              <span className="text-[8px] text-[color:var(--lkv-text-secondary)] uppercase font-mono font-bold">
+                Capitale
+              </span>
+            </div>
+
+            <div className="glass-sub-card p-2">
+              <span className="block font-mono font-bold text-xs text-[color:var(--glass-label)] truncate" title={country.monnaie || country.monnaie_nom}>
+                {country.monnaie_code || country.monnaie}
+              </span>
+              <span className="text-[8px] text-[color:var(--lkv-text-secondary)] uppercase font-mono font-bold">
+                Monnaie
+              </span>
+            </div>
+
+            <div className="glass-sub-card p-2">
+              <span className="block font-mono font-bold text-xs text-[color:var(--glass-label)] truncate" title={country.fuseau}>
+                {country.fuseau}
+              </span>
+              <span className="text-[8px] text-[color:var(--lkv-text-secondary)] uppercase font-mono font-bold">
+                Fuseau
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 4. ACTIVE SECTION CONTENT (Piloté par la BottomTabBar) ── */}
+      <div className="px-4 pt-3 space-y-3">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeSection}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="space-y-3"
+          >
+            {/* ── SECTION 1: APERÇU / PANORAMA ── */}
+            {activeSection === 'presentation' && (
+              <div className="space-y-3">
+                <SectionBlocks countryCode={country.code} sectionId="presentation" countryContent={country.country_content ?? null} />
+
+                <PaysWeatherCard countryCode={country.code} />
+
+                <PaysRecommendations countryCode={country.code} />
+
+                <div className="glass p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--glass-label)] bg-white/10 border border-white/20">
+                      01 · Panorama Général
+                    </span>
+                  </div>
+
+                  <h3 className="font-display font-bold text-base text-[color:var(--lkv-text-primary)] leading-snug">
+                    {country.presentation_titre}
+                  </h3>
+
+                  <div className="space-y-2 text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed font-sans">
+                    {country.presentation_paragraphes.map((p, idx) => (
+                      <p key={idx}>{p}</p>
+                    ))}
+                  </div>
+
+                  <div className="pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSectionSwitch('destinations')}
+                      className="flex-1 glass-capsule-btn primary !min-h-[34px] !py-1 !px-3 !text-xs !font-bold !gap-1.5"
+                    >
+                      <span>Destinations</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSectionSwitch('activites')}
+                      className="flex-1 glass-capsule-btn !min-h-[34px] !py-1 !px-3 !text-xs !font-bold !gap-1.5"
+                    >
+                      <span>Activités ({country.activites.length})</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── FICHE D'IDENTITÉ OFFICIELLE (11 Données Clés CSV) ── */}
+                <div className="glass p-4 space-y-2.5">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-white/10">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[color:var(--glass-label)] flex items-center gap-1.5">
+                      <Icon name="file-text" size={12} /> Fiche d'identité officielle
+                    </span>
+                    <span className="glass-pill !px-1.5 !py-0.5 text-[8.5px] font-mono font-bold text-[color:var(--glass-label)]">
+                      ISO {country.code} {country.iso_a3 ? `· ${country.iso_a3}` : ''}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                    <div className="p-2 rounded-xl bg-white/10 border border-white/20">
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Continent</span>
+                      <span className="font-bold text-[color:var(--lkv-text-primary)] truncate block">{country.continent}</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/10 border border-white/20">
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Région</span>
+                      <span className="font-bold text-[color:var(--lkv-text-primary)] truncate block">{country.region}</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/10 border border-white/20">
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Capitale</span>
+                      <span className="font-bold text-[color:var(--lkv-text-primary)] truncate block" title={country.capitale}>{country.capitale}</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/10 border border-white/20">
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Langues</span>
+                      <span className="font-bold text-[color:var(--lkv-text-primary)] truncate block" title={country.langue}>{country.langue}</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/10 border border-white/20">
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Superficie</span>
+                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)] truncate block">{country.superficie_detail}</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/10 border border-white/20">
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Fuseau horaire</span>
+                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)] truncate block">{country.fuseau}</span>
+                    </div>
+
+                    <div className="col-span-2 p-2 rounded-xl bg-white/10 border border-white/20">
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Monnaie</span>
+                      <span className="font-bold text-[color:var(--lkv-text-primary)] truncate block">{country.monnaie || country.monnaie_nom}</span>
+                    </div>
+
+                    {country.sources_list && country.sources_list.length > 0 && (
+                      <div className="col-span-2 p-2 rounded-xl bg-white/10 border border-white/20 space-y-1">
+                        <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Sources &amp; Références documentaires</span>
+                        <div className="flex flex-wrap gap-1 pt-0.5">
+                          {country.sources_list.map((src, i) => (
+                            <a
+                              key={i}
+                              href={src.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--glass-label-tertiary)] hover:text-[color:var(--glass-label)]"
+                            >
+                              {src.label} ↗
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Highlights preview */}
+                {country.destinations && country.destinations.length > 0 && (
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between px-1">
+                      <h4 className="font-display font-bold text-xs text-[color:var(--lkv-text-primary)] uppercase tracking-wider">
+                        Incontournables en bref
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => handleSectionSwitch('destinations')}
+                        className="text-[10.5px] font-bold text-[color:var(--lkv-secondary-ink)] hover:text-[color:var(--lkv-text-primary)]"
+                      >
+                        Tout voir ({country.destinations.length}) →
+                      </button>
+                    </div>
+
+                    <div className="-mx-4 px-4 flex gap-2.5 overflow-x-auto no-scrollbar pb-1 snap-x snap-mandatory scroll-smooth">
+                      {country.destinations.slice(0, 4).map((d, i) => (
+                        <div
+                          key={i}
+                          onClick={() => handleSectionSwitch('destinations')}
+                          className="w-52 shrink-0 glass overflow-hidden cursor-pointer group snap-start"
+                        >
+                          <div className="h-26 relative overflow-hidden bg-[color:var(--btn-tint)]">
+                            <img
+                              src={d.image_url}
+                              alt={d.titre}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                            <span className="absolute top-2 left-2 glass-pill text-white text-[8.5px] font-mono bg-black/40">
+                              {d.categorie}
+                            </span>
+                          </div>
+                          <div className="p-2.5">
+                            <h5 className="font-bold text-xs text-[color:var(--lkv-text-primary)] truncate">{d.titre}</h5>
+                            {d.titre_em && (
+                              <p className="font-serif italic text-[10.5px] text-[color:var(--lkv-text-secondary)] truncate">
+                                {d.titre_em}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── SECTION 2: DESTINATIONS / INCONTOURNABLES ── */}
+            {activeSection === 'destinations' && (
+              <div className="space-y-3">
+                <PaysRegionsList countryCode={country.code} />
+
+                <SectionBlocks countryCode={country.code} sectionId="destinations" countryContent={country.country_content ?? null} />
+
+                <DiscoverySection
+                  countryCode={country.code}
+                  category="attractions"
+                  section="destinations"
+                  limit={6}
+                  title="Attractions populaires"
+                  subtitle="Attractions et expériences locales"
+                  emptyLabel="Aucune attraction disponible pour cette destination."
+                />
+
+                <KlookCtaBlock block={klookBlock} />
+              </div>
+            )}
+
+            {/* ── SECTION 3: ACTIVITÉS ── */}
+            {activeSection === 'activites' && (
+              <div className="space-y-3">
+                <SectionBlocks countryCode={country.code} sectionId="activites" countryContent={country.country_content ?? null} />
+
+                <PaysTrailsList countryCode={country.code} />
+
+                <DiscoverySection
+                  countryCode={country.code}
+                  category="attractions"
+                  section="activites"
+                  limit={6}
+                  title="Activités & lieux d’intérêt"
+                  subtitle="Activités et expériences locales"
+                  emptyLabel="Aucune activité disponible pour cette destination."
+                />
+
+                <KlookCtaBlock block={klookBlock} />
+              </div>
+            )}
+
+            {/* ── SECTION 3bis: CULTURE & SOCIÉTÉ (blocs IA) ── */}
+            {activeSection === 'culture' && (
+              <div className="space-y-3">
+                <div className="px-1">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)] uppercase tracking-wider">
+                    Culture &amp; Société
+                  </h3>
+                  <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
+                    Usages, traditions et savoir-vivre en {country.nom}
+                  </p>
+                </div>
+
+                <SectionBlocks countryCode={country.code} sectionId="culture" countryContent={country.country_content ?? null} />
+              </div>
+            )}
+
+            {/* ── SECTION 3bis: GASTRONOMIE (Tripadvisor) ── */}
+            {activeSection === 'gastronomie' && (
+              <div className="space-y-3">
+                <div className="px-1">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)] uppercase tracking-wider">
+                    Gastronomie & Restaurants
+                  </h3>
+                  <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
+                    Adresses et avis de voyageurs en {country.nom}
+                  </p>
+                </div>
+
+                <DiscoverySection
+                  countryCode={country.code}
+                  category="restaurants"
+                  section="gastronomie"
+                  limit={6}
+                  title="Restaurants"
+                  subtitle="Expériences culinaires locales"
+                  emptyLabel="Aucune expérience culinaire disponible pour cette destination."
+                />
+              </div>
+            )}
+
+            {/* ── SECTION 3ter: HÉBERGEMENTS (Tripadvisor) ── */}
+            {activeSection === 'hebergements' && (
+              <div className="space-y-3">
+                <div className="px-1">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)] uppercase tracking-wider">
+                    Hébergements
+                  </h3>
+                  <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
+                    Hôtels et hébergements notés par les voyageurs
+                  </p>
+                </div>
+
+                <DiscoverySection
+                  countryCode={country.code}
+                  category="hotels"
+                  section="hebergements"
+                  limit={4}
+                  title="Hôtels & hébergements"
+                  subtitle="Sélection éditoriale"
+                  emptyLabel="Aucun hébergement disponible pour cette destination."
+                />
+              </div>
+            )}
+
+            {/* ── SECTION 4: PRATIQUE & MÉTÉO ── */}
+            {activeSection === 'pratique' && (
+              <div className="space-y-3">
+                {/* Live Weather Card */}
+                {country.meteo && (
+                <div className="glass p-4 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-secondary-ink)]">
+                      ⛅ Météo en direct · {country.meteo.ville}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-[9.5px] font-mono text-[color:var(--lkv-secondary-ink)] font-bold">
+                      <span className="w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] animate-pulse" />
+                      Live
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-0.5">
+                    <div>
+                      <div className="font-mono font-extrabold text-3xl text-[color:var(--lkv-text-primary)]">
+                        {country.meteo.temperature_actuelle}°C
+                      </div>
+                      <p className="text-xs font-bold text-[color:var(--lkv-text-primary)] mt-0.5">
+                        {country.meteo.conditions}
+                      </p>
+                    </div>
+                    <span className="text-3xl">🌤️</span>
+                  </div>
+
+                  <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">
+                    {country.meteo.details}
+                  </p>
+                </div>
+                )}
+
+                {/* Practical Sections — Multi-Tiers enrichis par IA (PaysPratiqueView) */}
+                <PaysPratiqueView country={country} isMobile={true} />
+              </div>
+            )}
+
+            {/* ── SECTION 5: COMMUNAUTÉ ── */}
+            {activeSection === 'communaute' && (
+              <div className="space-y-3">
+                <div className="px-1">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)] uppercase tracking-wider">
+                    Communauté & Expéditions
+                  </h3>
+                  <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
+                    Échangez avec les marcheurs et découvrez les récits en {country.nom}
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <BouteilleALaMer countryIso={country.code} countryName={country.nom} />
+                  <PaysClubsList countryIso={country.code} countryName={country.nom} />
+                  <PaysCarnetsList countryIso={country.code} countryName={country.nom} />
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* ── 5. AI CONFIGURATOR CALL TO ACTION BANNER ── */}
+        <div className="glass p-4 sm:p-5 space-y-2 mt-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🎒</span>
+            <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">
+              Composer votre aventure {country.nom}
+            </h4>
+          </div>
+          <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">
+            Kit recommandé, check-list matériel et prévisions météo adaptées à la saison.
+          </p>
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('selection');
+                router.push(`/compas?etape=kit`);
+              }}
+              className="w-full glass-capsule-btn primary !min-h-[38px] !py-2 !px-4 !text-xs !font-bold !gap-2 justify-center shadow-md"
+            >
+              <span>✨</span>
+              <span>Lancer le configurateur IA →</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}

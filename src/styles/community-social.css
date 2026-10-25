@@ -1,0 +1,1870 @@
+/* LKDV Social 2.0 — Instagram's interaction grammar, LKDV's identity.
+ * Scope is deliberately limited to Community. No global body, Compas or
+ * iOS native-tab styles are overridden here.
+ */
+.lkdv-community-experience {
+  --social-paper: var(--lkv-surface-paper);
+  --social-ink: var(--lkv-text-primary);
+  --social-muted: var(--lkv-text-secondary);
+  --social-rule: var(--lkv-border-subtle);
+  /* Blancs verre canoniques des drawers, repris verbatim :
+     DRAWER_SHELL_CSS (src/components/compte/drawer/shell/DrawerShell.tsx:204-220)
+     et DRAWER_V2_CSS (src/components/compte/drawer/SlotShell.tsx:291-303) :
+     capsule/barre .65, carte .62, lentille .72. Ce ne sont pas des couleurs
+     nouvelles : --lkv-surface-paper vaut rgba(255,255,255,.06) sous
+     html[data-liquid-ios27] et ne peut donc pas porter un verre clair. */
+  --community-capsule: rgba(255, 255, 255, 0.65);
+  --community-glass: rgba(255, 255, 255, 0.62);
+  --community-glass-soft: rgba(255, 255, 255, 0.55);
+  --community-glass-strong: rgba(255, 255, 255, 0.72);
+  --community-veil-top: rgba(255, 255, 255, 0.55);
+  --community-veil-mid: rgba(255, 255, 255, 0.72);
+  --community-veil-bottom: rgba(255, 255, 255, 0.78);
+  background: transparent;
+  color: var(--social-ink);
+}
+.lkdv-community-experience .lkdv-social-desktop-feed {
+  max-width: 690px;
+  margin-inline: auto;
+  scrollbar-width: none;
+}
+.lkdv-community-experience .lkdv-social-desktop-shell {
+  color: var(--social-ink);
+}
+.lkdv-community-experience .lkdv-social-story-shelf {
+  background: var(--social-paper);
+  border-bottom: 1px solid var(--social-rule);
+  padding: 12px 12px 10px;
+  overflow: hidden;
+}
+.lkdv-community-experience .lkdv-social-stories-heading {
+  margin-bottom: 9px;
+}
+.lkdv-community-experience .lkdv-social-stories-heading h2 {
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+}
+.lkdv-community-experience .lkdv-social-stories-rail {
+  gap: 13px;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+}
+.lkdv-community-experience .lkdv-social-stories-rail > * {
+  scroll-snap-align: start;
+}
+.lkdv-community-experience .lkdv-social-hub-callout {
+  box-shadow: none;
+  border: 1px solid var(--social-rule);
+  border-radius: 16px;
+  background: var(--social-paper);
+  padding: 15px;
+}
+.lkdv-community-experience .lkdv-social-section-tabs {
+  background: var(--social-paper);
+  border: 0;
+  border-bottom: 1px solid var(--social-rule);
+  box-shadow: none;
+}
+.lkdv-community-experience .lkdv-social-mobile {
+  background: transparent;
+  color: var(--social-ink);
+  min-height: 100dvh;
+}
+.lkdv-community-experience .lkdv-social-mobile-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  min-height: calc(56px + var(--safe-top));
+  padding: calc(var(--safe-top) + 5px) 14px 9px 17px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--social-paper);
+  border-bottom: 1px solid var(--social-rule);
+}
+.lkdv-community-experience .lkdv-social-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--social-ink);
+}
+.lkdv-community-experience .lkdv-social-brand-title {
+  font-size: clamp(23px, 6vw, 29px);
+  letter-spacing: -0.06em;
+  font-weight: 760;
+  line-height: 1.15;
+  font-family: var(--font-sans);
+}
+.lkdv-community-experience .lkdv-social-brand-signature {
+  font-family: var(--font-brand);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .06em;
+  opacity: .62;
+}
+.lkdv-community-experience .lkdv-social-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.lkdv-community-experience .lkdv-social-header-actions button,
+.lkdv-community-experience .lkdv-social-header-link {
+  min-width: 42px;
+  width: 42px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--social-ink);
+  box-shadow: none;
+}
+.lkdv-community-experience .lkdv-social-header-actions button:hover,
+.lkdv-community-experience .lkdv-social-header-link:hover {
+  background: var(--lkv-hover-surface);
+}
+.lkdv-community-experience .lkdv-social-header-actions :focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+.lkdv-community-experience .lkdv-social-create-wrap { position: relative; }
+.lkdv-community-experience .lkdv-social-create-menu {
+  position: absolute;
+  right: -48px;
+  top: 48px;
+  z-index: var(--z-dropdown);
+  width: min(245px, 80vw);
+  padding: 6px;
+  background: var(--social-paper);
+  border: 1px solid var(--social-rule);
+  border-radius: 15px;
+  box-shadow: var(--glass-shadow);
+}
+.lkdv-community-experience .lkdv-social-create-menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--social-ink);
+}
+.lkdv-community-experience .lkdv-social-create-menu a:hover {
+  background: var(--lkv-hover-surface);
+}
+.lkdv-community-experience .lkdv-social-mobile-content {
+  padding: 0 0 max(25px, var(--safe-bottom));
+}
+.lkdv-community-experience .lkdv-social-story-shelf { margin-bottom: 0; }
+.lkdv-community-experience .lkdv-social-category-tabs {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--social-rule);
+  background: var(--social-paper);
+}
+.lkdv-community-experience .lkdv-social-category-tabs > * {
+  background: transparent;
+  box-shadow: none;
+}
+.lkdv-community-experience .lkdv-social-mobile-stream {
+  padding: 4px 0 8px;
+}
+.lkdv-community-experience .lkdv-social-mobile-stream > div {
+  gap: 0;
+}
+.lkdv-community-experience .lkdv-social-mobile-stream .community-post {
+  margin-bottom: 5px;
+}
+@media (min-width: 768px) {
+  .lkdv-community-experience .lkdv-social-story-shelf {
+    border: 1px solid var(--social-rule);
+    border-radius: 14px;
+    padding: 16px 18px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-community-experience .lkdv-social-header-actions *,
+  .lkdv-community-experience .lkdv-social-stories-rail *,
+  .lkdv-community-experience .lkdv-social-post {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Posts: images first, accessible actions under media, then caption & LKDV data. */
+.lkdv-community-experience .lkdv-social-post {
+  border: 0.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 22px rgba(23, 43, 36, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+  padding: 0;
+  overflow: hidden;
+  isolation: isolate;
+  margin-bottom: 12px;
+}
+.lkdv-community-experience .lkdv-social-post-author {
+  min-height: 61px;
+  padding: 9px 14px;
+  gap: 12px;
+  background: var(--social-paper);
+}
+.lkdv-community-experience .lkdv-social-post-author a {
+  min-height: 43px;
+}
+.lkdv-community-experience .lkdv-social-post-author img {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--social-rule);
+}
+.lkdv-community-experience .lkdv-social-post-author [class*="font-mono"] {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+}
+.lkdv-community-experience .lkdv-social-post-type {
+  color: var(--social-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  letter-spacing: .02em;
+}
+.lkdv-community-experience .lkdv-social-post-media {
+  width: 100%;
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+}
+.lkdv-community-experience .lkdv-social-post-media img {
+  display: block;
+}
+.lkdv-community-experience .lkdv-social-post-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1px;
+  padding: 4px 8px 3px;
+  border: none;
+}
+.lkdv-community-experience .lkdv-social-post-actions > div {
+  gap: 0;
+}
+.lkdv-community-experience .lkdv-social-post-actions > div:nth-child(2) {
+  margin-left: auto;
+}
+.lkdv-community-experience .lkdv-social-post-actions button {
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  border-radius: 11px;
+  padding: 7px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--social-ink);
+}
+.lkdv-community-experience .lkdv-social-post-actions button svg {
+  width: 23px;
+  height: 23px;
+}
+.lkdv-community-experience .lkdv-social-post-actions button:hover {
+  background: var(--lkv-hover-surface);
+}
+.lkdv-community-experience .lkdv-social-post-actions button:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 1px;
+}
+.lkdv-community-experience .lkdv-social-post-caption {
+  padding: 0 15px 16px;
+  background: var(--social-paper);
+}
+.lkdv-community-experience .lkdv-social-post-caption > p {
+  padding: 1px 0 4px;
+  line-height: 1.46;
+  font-size: 14px;
+}
+.lkdv-community-experience .lkdv-social-post-caption > p button {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  font-size: 13px;
+}
+.lkdv-community-experience .lkdv-social-post-caption > div {
+  margin-top: 10px;
+}
+.lkdv-community-experience .lkdv-social-post > [class*="border-t"] {
+  padding-inline: 12px;
+  background: var(--social-paper);
+}
+.lkdv-community-experience .lkdv-social-post .custom-scrollbar {
+  max-height: min(55vh, 450px);
+}
+@media (min-width: 768px) {
+  .lkdv-community-experience .lkdv-social-post {
+    border: 1px solid var(--social-rule);
+    border-radius: 22px;
+    margin-bottom: 14px;
+  }
+}
+
+/* Shared social surfaces — opt-in only. Profile, clubs, carnets, editor and DMs.
+ * Never styles Compas, generic LKDV pages or the native iOS tab bar. */
+.lkdv-social-directory-mobile,
+.lkdv-social-directory-desktop,
+.lkdv-social-profile-screen,
+.lkdv-social-profile-desktop,
+.lkdv-social-compose-screen,
+.lkdv-social-messaging-screen {
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+}
+.lkdv-social-discovery {
+  background: var(--lkv-surface-paper);
+}
+.lkdv-social-discovery .lkdv-social-carnet-card,
+.lkdv-social-discovery .lkdv-social-club-card {
+  border: 1px solid var(--lkv-border-subtle);
+  border-radius: 16px;
+  background: var(--lkv-surface-paper);
+  box-shadow: none;
+}
+.lkdv-social-discovery .lkdv-social-carnet-card {
+  padding: 0;
+  overflow: hidden;
+  gap: 10px;
+}
+.lkdv-social-discovery .lkdv-social-carnet-cover {
+  border-radius: 0;
+  border: 0;
+}
+.lkdv-social-discovery .lkdv-social-carnet-card > div:last-child {
+  padding: 4px 14px 13px;
+}
+.lkdv-social-discovery .lkdv-social-club-card {
+  padding: 14px;
+  gap: 12px;
+}
+.lkdv-social-discovery .lkdv-social-club-card h3 {
+  font-size: 15px;
+  font-family: var(--font-sans);
+}
+.lkdv-social-discovery .lkdv-social-club-card p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.lkdv-social-profile-screen > section { padding-inline: 0; }
+.lkdv-social-profile-screen .lkdv-social-profile-intro {
+  border: 0;
+  border-bottom: 1px solid var(--lkv-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--lkv-surface-paper);
+  padding: 16px 18px;
+}
+.lkdv-social-profile-screen .lkdv-social-profile-highlights {
+  border: 0;
+  border-bottom: 1px solid var(--lkv-border-subtle);
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--lkv-surface-paper);
+  padding: 12px 16px;
+}
+.lkdv-social-profile-screen .lkdv-social-profile-grid {
+  gap: 2px;
+  padding: 2px;
+}
+.lkdv-social-profile-screen .lkdv-social-profile-tile {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  aspect-ratio: 3 / 4;
+}
+.lkdv-social-profile-screen .lkdv-social-profile-tile:focus-visible {
+  outline: 3px solid var(--lkv-focus-ring);
+  outline-offset: -3px;
+}
+.lkdv-social-compose-screen > div {
+  max-width: 1000px;
+}
+.lkdv-social-compose-screen [class*="lg:col-span-8"] { min-width: 0; }
+.lkdv-social-messaging-screen {
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+@media (min-width: 768px) {
+  .lkdv-social-profile-desktop main > div { max-width: 1120px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-social-profile-screen .lkdv-social-profile-tile,
+  .lkdv-social-discovery .lkdv-social-carnet-card,
+  .lkdv-social-discovery .lkdv-social-club-card {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Editorial events and discussion sheets; all behavior remains wired to the
+ * original event/comment APIs. Keep large photos and readable actions. */
+.lkdv-social-event-stream {
+  background: var(--lkv-surface-paper);
+}
+.lkdv-social-event-stream .lkdv-social-event-card {
+  border: 1px solid var(--lkv-border-subtle);
+  border-radius: 15px;
+  box-shadow: none;
+  background: var(--lkv-surface-paper);
+}
+.lkdv-social-event-stream .lkdv-social-event-cover {
+  border: none;
+  border-radius: 0;
+  width: 100%;
+  height: auto;
+}
+.lkdv-social-event-stream .lkdv-social-event-cover:focus-visible {
+  outline: 3px solid var(--lkv-focus-ring);
+  outline-offset: -3px;
+}
+.lkdv-social-event-create-modal {
+  background: var(--lkv-surface-paper);
+  border: 1px solid var(--lkv-border-subtle);
+  box-shadow: var(--glass-shadow);
+}
+.lkdv-social-comments-header {
+  min-height: 46px;
+  background: var(--lkv-surface-paper);
+  font-size: 15px;
+}
+.lkdv-social-comments-header h3 {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.lkdv-social-comments-thread {
+  padding-top: 10px;
+  padding-bottom: 12px;
+}
+.lkdv-social-comments-thread > div > div {
+  border-radius: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-social-event-stream *,
+  .lkdv-social-comments-thread * {
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* Social discovery, multi-media and real LKDV reproduction. */
+.lkdv-community-discovery, .lkdv-social-post-detail {
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+}
+.lkdv-community-discovery-header {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  display: grid; grid-template-columns: 48px 1fr 48px; align-items: center;
+  min-height: calc(56px + var(--safe-top));
+  padding-top: var(--safe-top);
+  border-bottom: 1px solid var(--lkv-border-subtle);
+  background: var(--lkv-surface-paper);
+  text-align: center;
+}
+.lkdv-community-discovery-header h1 { font-size: 18px; font-weight: 750; letter-spacing: -.025em; }
+.lkdv-discovery-back, .lkdv-discovery-create {
+  display: grid; place-items: center; min-height: 44px; font-size: 30px;
+}
+.lkdv-community-discovery-search {
+  border: 1px solid var(--lkv-border-subtle); border-radius: 13px;
+  background: var(--lkv-field-bg); padding: 13px 16px;
+  color: var(--lkv-text-primary); font-size: 15px;
+}
+.lkdv-community-discovery-filters {
+  display: flex; gap: 7px; overflow-x: auto; padding: 12px 0;
+}
+.lkdv-community-discovery-filters button {
+  min-height: 40px; padding: 8px 17px; border-radius: 100px;
+  white-space: nowrap; font-weight: 600; font-size: 13px;
+  background: var(--lkv-surface-muted); color: var(--lkv-text-primary);
+}
+.lkdv-community-discovery-filters button[aria-pressed="true"] {
+  background: var(--lkv-primary); color: white;
+}
+.lkdv-community-discovery-grid {
+  display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 2px;
+}
+.lkdv-community-discovery-tile {
+  position: relative; display: block; min-width: 0; aspect-ratio: 3/4;
+  overflow: hidden; background: var(--lkv-surface-muted);
+}
+.lkdv-community-discovery-tile img, .lkdv-community-discovery-tile video {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.lkdv-community-discovery-video-icon {
+  position: absolute; top: 6px; right: 7px; color: white;
+  text-shadow: 0 1px 7px black; font-size: 16px;
+}
+.lkdv-community-discovery-carnet {
+  display: flex; justify-content: center; align-items: center;
+  width: 100%; height: 100%; padding: 10px;
+  font-size: 13px; font-weight: bold; text-align: center;
+}
+.lkdv-social-discovery-shortcut {
+  display: flex; justify-content: flex-end; padding: 2px 12px;
+  background: var(--lkv-surface-paper);
+}
+.lkdv-social-discovery-shortcut a {
+  color: var(--lkv-text-primary);
+}
+.lkdv-social-media-index {
+  position: absolute; right: 10px; top: 10px; z-index: 15;
+  border-radius: 20px; background: rgb(0 0 0 / .56); color: white;
+  font-size: 12px; font-weight: bold; padding: 5px 9px;
+}
+.lkdv-social-media-arrow {
+  position: absolute; z-index: 20; top: 50%; transform: translateY(-50%);
+  width: 38px; height: 38px; border-radius: 999px;
+  background: rgb(0 0 0 / .6); color: white; font-size: 28px;
+  display: flex; align-items: center; justify-content: center;
+}
+.lkdv-social-reproduce-trigger {
+  display: grid; place-items: center; width: 40px; height: 40px;
+  border: 1px solid rgb(255 255 255 / .38); border-radius: 14px;
+  background: rgb(255 255 255 / .30); color: white;
+  -webkit-backdrop-filter: blur(15px) saturate(1.8);
+  backdrop-filter: blur(15px) saturate(1.8);
+  box-shadow: 0 2px 15px rgb(0 0 0 / .2);
+}
+.lkdv-social-reproduce-menu {
+  position: absolute; bottom: 45px; left: 0; z-index: 25;
+  min-width: 230px; padding: 12px; border-radius: 14px;
+  background: var(--lkv-surface-paper); color: var(--lkv-text-primary);
+  box-shadow: 0 8px 32px rgb(0 0 0 / .25);
+}
+.lkdv-social-reproduce-menu p { font-size: 12px; margin-bottom: 8px; }
+.lkdv-social-reproduce-menu button {
+  min-height: 44px; padding: 9px 12px; font-weight: 650; font-size: 13px;
+  border-radius: 10px; background: var(--lkv-primary); color: white;
+}
+.lkdv-community-video-control {
+  min-height: 44px; min-width: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgb(0 0 0 / .64); color: white;
+}
+.lkdv-community-video-control:focus-visible,
+.lkdv-social-reproduce-trigger:focus-visible,
+.lkdv-social-reproduce-menu button:focus-visible,
+.lkdv-community-discovery-tile:focus-visible {
+  outline: 3px solid var(--lkv-focus-ring); outline-offset: 2px;
+}
+@media (min-width: 768px) {
+  .lkdv-community-discovery-grid { gap: 6px; }
+  .lkdv-community-discovery-tile { border-radius: 4px; }
+}
+
+
+/* Native-like full-screen vertical Reels, video remains actual community data. */
+.lkdv-community-reels {
+  min-height: 100dvh; background: #0a0a0b; color: white;
+}
+.lkdv-community-reels-header {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: calc(50px + var(--safe-top)); padding: var(--safe-top) 16px 0;
+  background: #0a0a0b; color: white;
+}
+.lkdv-community-reels-header a {
+  display: inline-grid; place-items: center; min-width: 44px; min-height: 44px;
+  font-size: 29px;
+}
+.lkdv-community-reels-header h1 { font-weight: 750; font-size: 17px; }
+.lkdv-community-reels-track {
+  width: min(100%, 480px); margin: auto;
+  height: calc(100dvh - 50px - var(--safe-top));
+  overflow-y: auto; overscroll-behavior-y: contain;
+  scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.lkdv-community-reels-track::-webkit-scrollbar { display: none; }
+.lkdv-community-reel {
+  position: relative;
+  width: 100%; height: 100%; min-height: 100%;
+  overflow: hidden; scroll-snap-align: start;
+  background: black; border-radius: 8px;
+}
+.lkdv-community-reel-info {
+  position: absolute; left: 0; right: 0; bottom: 58px; z-index: 5;
+  padding: 32px 18px 10px; pointer-events: none;
+  background: linear-gradient(to top, rgb(0 0 0 / .7), transparent);
+}
+.lkdv-community-reel-info a { pointer-events: auto; }
+.lkdv-community-reel-info p { margin-top: 8px; max-width: 90%; }
+.lkdv-community-reel-post {
+  display: inline-flex; align-items: center;
+  min-height: 44px; padding-top: 10px; font-size: 13px;
+  font-weight: bold; text-decoration: underline;
+}
+@media (min-width: 768px) {
+  .lkdv-community-reel { height: 100%; min-height: 100%; margin: 0; }
+}
+
+.lkdv-community-reel-actions {
+  position: absolute; z-index: 10; right: 12px; bottom: 68px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.lkdv-community-reel-actions button,
+.lkdv-community-reel-actions a {
+  min-width: 46px; min-height: 50px; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+  color: white; font-size: 12px; font-weight: 650;
+  text-shadow: 0 1px 5px rgb(0 0 0 / .6);
+}
+.lkdv-community-reel-actions [aria-pressed="true"] {
+  color: #ff6b83;
+}
+.lkdv-community-reel-actions button:focus-visible,
+.lkdv-community-reel-actions a:focus-visible {
+  outline: 3px solid white; border-radius: 10px;
+}
+.lkdv-community-reel-info { padding-right: 75px; }
+
+/* Portalled story composer: above the entire WebView document, isolated from
+   AppShell transforms and glazes. Background cannot scroll through this modal. */
+.lkdv-story-composer {
+  isolation: isolate;
+  overscroll-behavior: contain;
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+.lkdv-story-composer .lkdv-story-composer-sheet {
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--lkv-border-subtle);
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .35);
+  border-radius: 20px;
+}
+.lkdv-story-composer .lkdv-story-composer-sheet input {
+  min-height: 44px;
+  font-size: 16px;
+}
+.lkdv-story-composer .lkdv-story-composer-sheet button:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Real authored community posts in public profiles, independent of journals. */
+.lkdv-social-profile-posts {
+  background: var(--lkv-surface-paper);
+  border-block: 1px solid var(--lkv-border-subtle);
+}
+.lkdv-social-profile-posts-heading {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding: 13px 14px;
+}
+.lkdv-social-profile-posts-grid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 2px;
+}
+.lkdv-social-profile-posts-tile {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--lkv-surface-muted);
+  color: var(--lkv-text-primary);
+}
+.lkdv-social-profile-posts-tile > img,
+.lkdv-social-profile-posts-tile > video {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+.lkdv-social-profile-posts-video {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  color: white;
+  text-shadow: 0 1px 5px #000;
+}
+.lkdv-social-profile-posts-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  overflow: hidden;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.lkdv-social-profile-posts-tile:focus-visible {
+  outline: 3px solid var(--lkv-focus-ring);
+  outline-offset: -3px;
+}
+@media (min-width:768px) {
+  .lkdv-social-profile-posts {
+    border: 1px solid var(--lkv-border-subtle);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+}
+
+/* Social detail pages: carnet and club keep every LKDV terrain component,
+ * but remove the competing canopée backdrop and use photo-editorial layout. */
+.lkdv-social-detail-desktop,
+.lkdv-social-detail-mobile {
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-text-primary);
+}
+.lkdv-social-detail-desktop > main {
+  max-width: 1360px;
+  gap: clamp(16px, 2.5vw, 32px);
+}
+.lkdv-social-detail-desktop > main > div:nth-child(2) {
+  scrollbar-width: thin;
+  scroll-padding-top: 16px;
+}
+.lkdv-social-detail-desktop > main a:focus-visible,
+.lkdv-social-detail-mobile a:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 3px;
+}
+@media (max-width: 767px) {
+  .lkdv-social-detail-mobile {
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+}
+
+
+/* Social surface isolation: les répertoires, le profil public et les détails
+   gardent une surface opaque ; le hub et ses sous-routes en CommunityShell
+   laissent la toile globale traverser leur voile immersif. */
+.lkdv-community-discovery,
+.lkdv-social-post-detail,
+.lkdv-social-profile-screen,
+.lkdv-social-directory-mobile,
+.lkdv-social-directory-desktop {
+  background-color: var(--lkv-surface-paper);
+  background-image: none;
+}
+.lkdv-community-experience,
+.lkdv-community-discovery,
+.lkdv-social-post-detail {
+  isolation: isolate;
+  min-height: 100dvh;
+  color: var(--lkv-text-primary);
+}
+.lkdv-community-discovery {
+  width: 100%;
+}
+.lkdv-community-discovery > div {
+  min-height: calc(100dvh - 56px - var(--safe-top));
+}
+
+/* =============================================================================
+   REFONTE COMMUNAUTÉ — grammaire Liquid Glass du Compte (2026-10-22)
+
+   Objectif : la page cesse d'être une surface papier pour devenir une pièce du
+   même hôtel que `/compte` — fond immersif, capsule d'identité, carte héro en
+   verre, capsule 48 px (`.lkdv-capsule`, `src/styles/liquid-capsules.css`),
+   cartes 18–22 px, mêmes états.
+
+   Règles :
+   - aucune couleur nouvelle : uniquement les tokens `--lkv-*`, `--glass-*`,
+     `--card-tint*`, `--btn-*` et les dérivés `color-mix` de ces tokens ;
+   - aucun `z-[…]` local : échelle `--z-*` ;
+   - la grammaire des capsules n'est PAS redéfinie ici (source unique :
+     `liquid-capsules.css`) ;
+   - `prefers-reduced-motion` respecté.
+   ============================================================================= */
+
+/* 1. Encre de la Communauté ---------------------------------------------------
+
+   Le thème global du site (`liquid-ios27`) est un thème « blanc sur photo » :
+   `--lkv-text-primary` y vaut #ffffff. La Communauté, elle, pose des surfaces
+   claires (verre + voile) : elle rescope donc les trois niveaux d'encre sur les
+   primitives `--lkv-forest-*` de `tokens.css`, et donne leur équivalent sombre
+   sous `.dark`. Aucune couleur nouvelle : uniquement des jetons existants. */
+
+.lkdv-community-experience {
+  --lkv-text-primary: var(--lkv-forest-900);
+  --lkv-text-secondary: var(--lkv-forest-600);
+  --lkv-text-muted: var(--lkv-forest-600);
+}
+
+.dark .lkdv-community-experience,
+[data-theme='dark'] .lkdv-community-experience {
+  --lkv-text-primary: var(--lkv-forest-50);
+  --lkv-text-secondary: var(--lkv-forest-100);
+  --lkv-text-muted: var(--lkv-forest-200);
+  /* Verre et voile sombres explicites : les valeurs claires ci-dessus sont
+     écrasées ici, quelle que soit la valeur de --lkv-surface-paper. */
+  --community-capsule: var(--card-tint-strong);
+  --community-glass: var(--card-tint-strong);
+  --community-glass-soft: var(--card-tint);
+  --community-glass-strong: var(--glass-bg-dark);
+  --community-veil-top: color-mix(in srgb, var(--glass-bg-dark) 62%, transparent);
+  --community-veil-mid: color-mix(in srgb, var(--glass-bg-dark) 72%, transparent);
+  --community-veil-bottom: color-mix(in srgb, var(--glass-bg-dark) 82%, transparent);
+}
+
+/* 3. Coquille immersive ------------------------------------------------------ */
+
+.lkdv-immersive {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  isolation: isolate;
+}
+
+.lkdv-immersive-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--community-veil-top) 0%,
+    var(--community-veil-mid) 42%,
+    var(--community-veil-bottom) 100%
+  );
+}
+
+.lkdv-immersive-column {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: none;
+  margin-inline: auto;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.lkdv-community-hub .lkdv-immersive-column {
+  max-width: 760px;
+}
+
+.lkdv-immersive-identity {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.lkdv-immersive-hero {
+  margin: 6px 2px 10px;
+}
+
+.lkdv-immersive-tabs {
+  margin: 0 2px 10px;
+}
+
+.lkdv-immersive-stage {
+  position: relative;
+  z-index: 1;
+}
+
+/* 3. Capsule d'identité (en-tête) -------------------------------------------- */
+
+.lkdv-community-experience .lkdv-social-mobile-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  min-height: 48px;
+  margin: 0 0 4px;
+  padding: calc(var(--safe-top) + 6px) 4px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: transparent;
+  border-bottom: 0;
+}
+
+.lkdv-community-experience .lkdv-social-brand {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--community-capsule);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: var(--glass-rim-inner), var(--glass-shadow);
+}
+
+.lkdv-community-experience .lkdv-social-brand-title {
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.lkdv-community-experience .lkdv-social-brand-signature {
+  font-size: 9px;
+}
+
+.lkdv-community-experience .lkdv-social-header-actions {
+  gap: 4px;
+}
+
+.lkdv-community-experience .lkdv-social-header-actions button,
+.lkdv-community-experience .lkdv-social-header-link {
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--community-capsule);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--glass-rim-inner), var(--glass-shadow);
+}
+
+/* 4. Carte héro --------------------------------------------------------------- */
+
+/* Même anatomie que la carte du Compte : 24 px, verre, avatar 66 px,
+   trois compteurs, bio, actions, stories à la une 44 px. */
+
+.lkdv-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 11px;
+  border-radius: 24px;
+  background: var(--community-glass);
+  -webkit-backdrop-filter: blur(25px) saturate(180%) brightness(1.05);
+  backdrop-filter: blur(25px) saturate(180%) brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.08),
+    0 8px 22px rgba(23, 43, 36, 0.1);
+  box-sizing: border-box;
+}
+
+.lkdv-hero-head {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: 11px;
+  align-items: center;
+}
+
+.lkdv-hero-avatar {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  padding: 2.5px;
+  background: conic-gradient(
+    from 140deg,
+    #17402c,
+    #5b7f55,
+    #96b391,
+    #3d7a52,
+    #17402c
+  );
+  box-shadow:
+    0 6px 16px rgba(23, 43, 36, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.lkdv-hero-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  display: block;
+}
+
+.lkdv-hero-initial {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  background: #ddebd8;
+  color: var(--lkv-primary);
+  font: 700 20px/1 var(--font-sans);
+}
+
+.lkdv-hero-avatar > .ic,
+.lkdv-hero-avatar > svg {
+  color: var(--lkv-primary);
+}
+
+.lkdv-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  min-width: 0;
+  max-width: 380px;
+}
+
+.lkdv-hero-stat {
+  min-width: 0;
+  padding: 4px 4px 3.5px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 0.5px rgba(23, 43, 36, 0.06);
+  text-align: left;
+}
+
+.lkdv-hero-stat b {
+  display: block;
+  font: 700 14px/1.1 var(--font-sans);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--lkv-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-hero-stat span {
+  display: block;
+  font: 500 9.5px/1.15 var(--font-sans);
+  color: var(--lkv-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lkdv-hero-bio {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font: 400 11.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-hero-context {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: var(--lkv-text-primary);
+  cursor: pointer;
+}
+
+.lkdv-hero-context:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.lkdv-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lkdv-hero-highlights {
+  min-width: 0;
+}
+
+/* Stories à la une — 44 px, cinq visibles, libellés 9,5 px. */
+.lkdv-hero-hl {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 0 1px;
+  scrollbar-width: none;
+}
+
+.lkdv-hero-hl::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-hero-hl-item {
+  flex: none;
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.lkdv-hero-hl-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 2px;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(
+    from 140deg,
+    rgba(23, 64, 44, 0.7),
+    rgba(91, 127, 85, 0.45),
+    rgba(255, 255, 255, 0.9),
+    rgba(23, 64, 44, 0.7)
+  );
+  box-shadow: inset 0 1px 0 #fff, 0 2px 6px rgba(23, 43, 36, 0.08);
+  transition: transform 0.15s;
+}
+
+.lkdv-hero-hl-item:active .lkdv-hero-hl-ring {
+  transform: scale(0.94);
+}
+
+.lkdv-hero-hl-ring.is-seen {
+  opacity: 0.5;
+  filter: saturate(0.4);
+}
+
+.lkdv-hero-hl-ring.is-more {
+  background: var(--community-glass-strong);
+}
+
+.lkdv-hero-hl-in {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(244, 247, 243, 0.88);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font: 600 13px/1 var(--font-sans);
+  color: var(--lkv-primary);
+}
+
+.lkdv-hero-hl-in img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-hero-hl-label {
+  max-width: 100%;
+  font: 500 9.5px/1.1 var(--font-sans);
+  color: var(--lkv-text-primary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-hero-hl-empty {
+  align-self: center;
+  font: 500 11px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-hero-hl-loading {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+/* 5. Rails et stream --------------------------------------------------------- */
+
+.lkdv-community-experience .lkdv-social-story-shelf {
+  background: transparent;
+  border-bottom: 0;
+  padding: 0 2px 4px;
+}
+
+.lkdv-community-experience .lkdv-social-stories-heading h2 {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-community-experience .lkdv-social-category-tabs {
+  background: transparent;
+  border-bottom: 0;
+  padding: 0 2px;
+}
+
+.lkdv-community-experience .lkdv-social-category-tabs > * {
+  background: transparent;
+  box-shadow: none;
+}
+
+.lkdv-community-experience .lkdv-social-discovery-shortcut {
+  background: transparent;
+  padding: 0 4px;
+}
+
+.lkdv-community-experience .lkdv-social-mobile-stream {
+  padding: 2px 2px 8px;
+}
+
+/* 6. Cartes de contenu : verre 18–22 px -------------------------------------- */
+
+/* Desktop : le cockpit garde sa voile de lisibilité (même matériau que le
+   mobile), sinon les titres de section tombent à nu sur la photo. */
+@media (min-width: 768px) {
+  .lkdv-community-experience .lkdv-social-desktop-shell {
+    background: var(--community-glass-soft);
+    -webkit-backdrop-filter: blur(3px) saturate(120%);
+    backdrop-filter: blur(3px) saturate(120%);
+    border-radius: 24px;
+  }
+
+  .lkdv-community-experience .lkdv-social-story-shelf {
+    background: var(--community-glass-soft);
+    border: 0.5px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 12px 14px 8px;
+  }
+
+  .lkdv-community-experience .lkdv-social-desktop-feed {
+    padding-inline: 4px;
+  }
+}
+
+/* Carte de publication : verre, sur les deux largeurs. `overflow: visible`
+   est indispensable au menu « Options de la publication », qui s'ouvre en
+   `absolute bottom-full` au-dessus de l'en-tête ; le rognage des médias est
+   porté par `.lkdv-social-post-media`. */
+.lkdv-community-experience .lkdv-social-post {
+  border: 0;
+  border-radius: 22px;
+  overflow: visible;
+  background: var(--community-glass);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: var(--glass-rim-inner), var(--glass-shadow);
+}
+
+.lkdv-community-experience .lkdv-social-post-media {
+  overflow: hidden;
+  border-radius: 22px;
+  width: calc(100% - 12px);
+  margin-inline: 6px;
+}
+
+.lkdv-community-experience .lkdv-social-post-author,
+.lkdv-community-experience .lkdv-social-post-caption {
+  background: transparent;
+}
+
+.lkdv-community-experience .lkdv-social-post-actions {
+  padding: 4px 10px 3px;
+}
+
+@media (max-width: 767px) {
+  .lkdv-community-experience .lkdv-social-post {
+    margin: 0 0 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .lkdv-community-experience .lkdv-social-post {
+    margin-bottom: 14px;
+  }
+}
+
+/* 7. Bandeau visiteur -------------------------------------------------------- */
+
+.lkdv-hub-visitor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: var(--community-glass-soft);
+  box-shadow: inset 0 0 0 0.5px var(--glass-border);
+  color: var(--lkv-text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+.lkdv-hub-visitor p {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.lkdv-hub-visitor-cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--lkv-primary);
+  color: var(--lkv-on-primary, var(--lkv-text-inverted));
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lkdv-hub-visitor-cta:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* 8. Drawer contexte ---------------------------------------------------------
+
+   La Sheet Radix est portailée sur <body> : elle sort du scope d'encre
+   `.lkdv-community-experience` et peint `rgba(16,16,16,.34)`. Le contenu peint
+   donc sa propre surface de verre clair `.72` (valeur DRAWER_V2_CSS) avec
+   l'encre forest-900/600, et son équivalent sombre sous .dark. */
+
+.lkdv-context {
+  --lkv-text-primary: var(--lkv-forest-900);
+  --lkv-text-secondary: var(--lkv-forest-600);
+  --lkv-text-muted: var(--lkv-forest-600);
+  --community-capsule: rgba(255, 255, 255, 0.65);
+  --community-glass: rgba(255, 255, 255, 0.62);
+  --community-glass-soft: rgba(255, 255, 255, 0.55);
+  --community-glass-strong: rgba(255, 255, 255, 0.72);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px calc(14px + var(--safe-bottom));
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--glass-rim-inner);
+  color: var(--lkv-text-primary);
+}
+
+.dark .lkdv-context,
+[data-theme='dark'] .lkdv-context {
+  --lkv-text-primary: var(--lkv-forest-50);
+  --lkv-text-secondary: var(--lkv-forest-100);
+  --lkv-text-muted: var(--lkv-forest-200);
+  --community-capsule: var(--card-tint-strong);
+  --community-glass: var(--card-tint-strong);
+  --community-glass-soft: var(--card-tint);
+  --community-glass-strong: var(--glass-bg-dark);
+  background: var(--glass-bg-dark);
+}
+
+.lkdv-context-body {
+  min-height: 120px;
+}
+
+.lkdv-context-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-context-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: var(--community-glass);
+  box-shadow: inset 0 0 0 0.5px var(--glass-border);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-context-count {
+  margin-left: auto;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-context-empty {
+  margin: 0;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--community-glass);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--lkv-text-secondary);
+}
+
+/* Capsule 48 px thémée pour le hub et le drawer, sans redéfinir sa grammaire
+   (source unique : liquid-capsules.css). En clair, blanc verre .65 des drawers ;
+   en sombre, le verre sombre reste prioritaire. */
+.lkdv-community-experience .lkdv-capsule,
+.lkdv-context .lkdv-capsule {
+  background: var(--community-capsule);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-rim-inner), var(--glass-shadow);
+}
+
+.lkdv-community-experience .lkdv-capsule .sel-lens,
+.lkdv-context .lkdv-capsule .sel-lens {
+  background: var(--community-glass-strong);
+  box-shadow: var(--glass-rim-inner);
+}
+
+/* En-tête capsule des sous-routes Communauté */
+.lkdv-subheader{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:8px;min-height:56px;padding:calc(var(--safe-top) + 6px) 4px 6px}
+.lkdv-subheader-back,.lkdv-subheader-action{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:999px;background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);color:var(--lkv-text-primary);text-decoration:none}
+.lkdv-subheader-title{justify-self:center;margin:0;min-width:0;max-width:100%;padding:0 14px;height:34px;display:inline-flex;align-items:center;border-radius:999px;background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08);font-family:var(--font-sans);font-size:15px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lkdv-subheader-back:focus-visible,.lkdv-subheader-action:focus-visible{outline:2px solid var(--lkv-focus-ring);outline-offset:2px}
+
+/* Sous-routes en CommunityShell : capsule d'en-tête au verre Communauté.
+   Couvre le clair et le sombre (la valeur sombre vient du scope .dark). */
+.lkdv-community-experience :is(.lkdv-subheader-back, .lkdv-subheader-title, .lkdv-subheader-action){background:var(--community-capsule);box-shadow:var(--glass-rim-inner),var(--glass-shadow)}
+
+/* Encre sombre pour une capsule posée hors de `.lkdv-community-experience`
+   (le thème global est blanc-sur-photo, la capsule est claire). */
+.lkdv-subheader-on-light{color:var(--lkv-text-primary);--lkv-text-primary:var(--lkv-forest-900)}
+
+/* Variante Reels : capsule en surimpression sur le flux vidéo (texte blanc,
+   fond translucide sombre). */
+.lkdv-subheader-overlay{position:absolute;top:0;left:0;right:0;width:min(100%,480px);margin-inline:auto;z-index:var(--z-sticky)}
+.lkdv-subheader-overlay .lkdv-subheader-back,.lkdv-subheader-overlay .lkdv-subheader-title,.lkdv-subheader-overlay .lkdv-subheader-action{background:var(--glass-bg-dark);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 0 0 .5px rgba(255,255,255,.14);color:var(--lkv-text-primary)}
+.lkdv-subheader-overlay .lkdv-subheader-back:focus-visible,.lkdv-subheader-overlay .lkdv-subheader-action:focus-visible{outline-color:#fff}
+
+/* L'en-tête Reels est hors flux : le rail reprend la hauteur de l'écran. */
+.lkdv-community-reels .lkdv-community-reels-track{height:calc(100dvh - var(--safe-top))}
+
+/* Desktop — la capsule des six espaces remplace la liste de la sidebar */
+.lkdv-hub-desktop-tabs{margin:0 2px 12px}
+.lkdv-hub-desktop-tabs .lkdv-capsule{max-width:520px;margin-inline:auto}
+
+
+/* =============================================================================
+   COMMUNITY v2 — compléments 2026-10-23
+   ============================================================================= */
+
+.lkdv-community-experience .lkdv-capsule button {
+  flex-direction: column;
+  gap: 1px;
+}
+
+.lkdv-community-experience .lkdv-capsule .lbl {
+  display: block;
+  max-width: 100%;
+  padding: 0 2px;
+  font: 500 9.5px/1.05 var(--font-sans);
+  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-community-experience .lkdv-social-category-tabs {
+  position: sticky;
+  top: calc(var(--safe-top) + 58px);
+  z-index: 3;
+  padding: 4px 2px;
+}
+
+.lkdv-community-feed-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.lkdv-community-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.lkdv-community-grid-tile {
+  position: relative;
+  aspect-ratio: 1 / 1.05;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(23, 64, 44, 0.12);
+  display: block;
+}
+
+.lkdv-community-grid-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-community-grid-video {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 20px;
+  background: rgba(11, 16, 27, 0.45);
+}
+
+.lkdv-community-post-skeleton {
+  border-radius: 20px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Sélecteur secondaire 30 px, ancré au-dessus de la barre globale. */
+.lkdv-community-experience .lkdv-community-view-lens {
+  position: fixed;
+  right: max(12px, calc(50% - 380px + 10px));
+  bottom: calc(var(--bottom-nav-height, 72px) + 12px);
+  z-index: var(--z-fab, 30);
+}
+
+@media (min-width: 1280px) {
+  .lkdv-community-experience .lkdv-community-view-lens {
+    right: max(12px, calc(50% - 380px + 10px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-hero-hl-loading {
+    animation: none;
+  }
+}
+
+/* =============================================================================
+   GRILLE DE CONTENUS + DRAWERS (2026-10-23, v2)
+   Tuiles identiques au Compte : 3 colonnes, 1/1.05, rayon 9, badge verre.
+   ============================================================================= */
+
+.lkdv-community-grid-card {
+  border-radius: 24px;
+  padding: 10px;
+  background: var(--community-glass);
+  -webkit-backdrop-filter: blur(25px) saturate(180%) brightness(1.05);
+  backdrop-filter: blur(25px) saturate(180%) brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.08),
+    0 8px 22px rgba(23, 43, 36, 0.1);
+  box-sizing: border-box;
+}
+
+.lkdv-community-grid-head {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 2px 9px;
+}
+
+.lkdv-community-grid-head h2 {
+  margin: 0;
+  font: 700 15px/1.2 var(--font-sans);
+  letter-spacing: -0.02em;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-community-grid-head span {
+  font: 500 10.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-community-grid-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-community-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.lkdv-community-tile {
+  position: relative;
+  aspect-ratio: 1 / 1.05;
+  min-height: 86px;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: #17402c;
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.35);
+  text-align: left;
+  transition: transform 0.15s;
+}
+
+.lkdv-community-tile:active {
+  transform: scale(0.96);
+}
+
+.lkdv-community-tile-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-community-tile-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.86);
+  color: #17402c;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    0 2px 6px rgba(23, 43, 36, 0.16);
+}
+
+.lkdv-community-tile-play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(11, 16, 27, 0.18);
+  color: #fff;
+  font-size: 22px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.lkdv-community-tile-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 8px;
+  background: linear-gradient(155deg, #17402c, #3d7a52 55%, #5b7f55);
+  color: #fff;
+}
+
+.lkdv-community-tile-fallback b {
+  font: 600 10px/1.15 var(--font-sans);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lkdv-community-tile-fallback small {
+  font: 500 8.5px/1.1 var(--font-sans);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-community-tile-caption {
+  display: none;
+}
+
+.lkdv-community-grid-more {
+  padding-top: 4px;
+  text-align: center;
+}
+
+.lkdv-community-grid-more button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: var(--lkv-text-primary);
+  font: 600 12px var(--font-sans);
+  cursor: pointer;
+}
+
+.lkdv-community-grid-more button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.lkdv-community-grid-empty {
+  padding: 16px 6px;
+}
+
+.lkdv-community-grid-skeleton {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.lkdv-community-grid-skeleton-tile {
+  aspect-ratio: 1 / 1.05;
+  border-radius: 9px;
+}
+
+.lkdv-content-drawer {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 14px 54px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Les feuilles du Compte sont lisibles sur photo : on ne laisse pas le
+     contenu flotter sur un verre à 6 % d'opacité. */
+  background: rgba(250, 249, 245, 0.94);
+  border-radius: 28px 28px 0 0;
+  /* Le drawer est portailé hors du scope `.lkdv-community-experience` :
+     on rescope l'encre ici, comme la Communauté le fait pour sa page. */
+  --lkv-text-primary: var(--lkv-forest-900);
+  --lkv-text-secondary: var(--lkv-forest-600);
+  --lkv-text-muted: var(--lkv-forest-600);
+  color: var(--lkv-text-primary);
+}
+
+.dark .lkdv-content-drawer,
+[data-theme='dark'] .lkdv-content-drawer {
+  background: var(--glass-bg-dark, rgba(20, 28, 24, 0.94));
+  --lkv-text-primary: var(--lkv-forest-50);
+  --lkv-text-secondary: var(--lkv-forest-100);
+  --lkv-text-muted: var(--lkv-forest-200);
+}
+
+.lkdv-content-drawer-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 10.5px/1 var(--font-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-content-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-content-drawer-cover {
+  aspect-ratio: 16 / 9;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(23, 64, 44, 0.12);
+}
+
+.lkdv-content-drawer-body h2 {
+  margin: 0;
+  font: 700 18px/1.2 var(--font-sans);
+  letter-spacing: -0.02em;
+  color: var(--lkv-text-primary);
+}
+
+.lkdv-content-drawer-body p {
+  margin: 0;
+  font: 400 13px/1.5 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdv-content-drawer-meta {
+  font: 500 11.5px/1.35 var(--font-sans);
+  color: var(--lkv-text-muted);
+}
+
+.lkdv-content-drawer-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font: 600 13px var(--font-sans);
+  color: var(--lkv-primary);
+  text-decoration: none;
+}
+
+.lkdv-content-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .lkdv-community-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .lkdv-community-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+
+/* Carte de post dans le drawer : une seule ligne d'auteur, sans doublon de type. */
+.lkdv-content-drawer .lkdv-social-post-author > a {
+  min-width: 0;
+  flex: 1;
+}
+
+.lkdv-content-drawer .lkdv-social-post-author > a > div:last-child {
+  min-width: 0;
+}
+
+.lkdv-content-drawer .lkdv-social-post-author > a > div:last-child > div {
+  min-width: 0;
+}
+
+.lkdv-content-drawer .lkdv-social-post-author > a > div:last-child > div > span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-content-drawer .lkdv-social-post-type {
+  display: none;
+}
+
+.lkdv-content-drawer .lkdv-post-role {
+  flex: none;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

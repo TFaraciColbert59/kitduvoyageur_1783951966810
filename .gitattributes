@@ -1,0 +1,4 @@
+# CHANTIER ATLAS — worker MapLibre copié depuis node_modules : aucun
+# traitement de fin de ligne (contenu identique au paquet publié).
+public/maplibre/maplibre-gl-worker.mjs -text
+public/maplibre/maplibre-gl-shared.mjs -text

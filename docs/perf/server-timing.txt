@@ -1,0 +1,5 @@
+P1 — Chargement serveur /explorer (5 runs chauds, dev local, même machine)
+AVANT (séquentiel getTrails puis getAtlasDensity) : 240, 251, 245, 249, 248 ms -> moyenne 247 ms
+APRES (Promise.all)                                  : 256, 245, 239, 253, 248 ms -> moyenne 248 ms
+Note factuelle : delta dans le bruit en dev local (Supabase distant chaud + overhead Next dev) ;
+le gain structurel vaut min(t_trails, t_density), mesurable sous cache froid / réseau réel.

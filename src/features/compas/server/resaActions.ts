@@ -1,0 +1,303 @@
+'use server';
+
+import { z } from 'zod';
+import { createClient } from '@/lib/supabase/server';
+import { getTripById } from '@/lib/queries-trips';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { reportServerError } from '@/lib/observability/appErrors';
+import { serverText } from './serverText';
+import {
+  BookingProviderError,
+  createBookingProvider,
+  type BookingSearchRequest,
+} from '@/features/booking/server/bookingProvider';
+import { simplifyOffers, type CompasStayOffer } from '../engine/stays';
+import type { CompasLiveVertical } from '../engine/resaExamples';
+import { viatorCountryFallback, viatorDestinationNear, viatorDestinationsFailure } from './viatorDestinations';
+import { lookupDestination } from './placeLookup';
+import { tripPartySize } from './compasServer';
+import { resolveProviderCredentials } from '@/features/booking/server/providerCredentials';
+
+/**
+ * Le lieu du voyage sur la carte : la destination retrouvée par Dis-le, sinon
+ * la première étape placée. `broad` : le voyage est un pays entier.
+ */
+function tripPoint(trip: unknown): { at: { lat: number; lon: number } | null; broad: boolean } {
+  const t = (trip ?? {}) as { metadata?: unknown; steps?: unknown };
+  const meta = (t.metadata && typeof t.metadata === 'object' ? t.metadata : {}) as Record<string, unknown>;
+  const compas = (meta.compas && typeof meta.compas === 'object' ? meta.compas : {}) as Record<string, unknown>;
+  const anchor = (compas.anchor && typeof compas.anchor === 'object' ? compas.anchor : null) as Record<
+    string,
+    unknown
+  > | null;
+  const lat = Number(anchor?.lat);
+  const lon = Number(anchor?.lon);
+  if (anchor && Number.isFinite(lat) && Number.isFinite(lon))
+    return { at: { lat, lon }, broad: anchor.kind === 'country' };
+  const steps = Array.isArray(t.steps) ? (t.steps as Array<Record<string, unknown>>) : [];
+  const first = steps.find((st) => st.latitude != null && st.longitude != null);
+  return first
+    ? { at: { lat: Number(first.latitude), lon: Number(first.longitude) }, broad: false }
+    : { at: null, broad: false };
+}
+
+/** La cause sous-jacente (message de notre client partenaire, statut), pour le journal seul. */
+function causeText(cause: unknown): string {
+  if (!cause || typeof cause !== 'object') return '';
+  const c = cause as { message?: unknown; status?: unknown; name?: unknown };
+  const bits = [
+    typeof c.name === 'string' && c.name !== 'Error' ? c.name : '',
+    typeof c.status === 'number' ? String(c.status) : '',
+    typeof c.message === 'string' ? c.message.slice(0, 120) : '',
+  ].filter(Boolean);
+  return bits.length ? ` · cause : ${bits.join(' ')}` : '';
+}
+
+/**
+ * Pourquoi le partenaire de cette catégorie est inactif, pour le corriger sur
+ * Vercel : uniquement des NOMS de variables (jamais une valeur de clé).
+ */
+function partnerReason(vertical: 'activity' | 'flight' | 'car' | 'hotel'): string {
+  const requested = (process.env.BOOKING_PROVIDER || 'auto').trim().toLowerCase();
+  if (requested === 'disabled') return ' (BOOKING_PROVIDER=disabled)';
+  const cred = resolveProviderCredentials(vertical === 'activity' ? 'viator' : 'routestack', process.env);
+  return cred.reason ? ` (${cred.message})` : '';
+}
+
+/**
+ * Destination Viator : la plus proche du lieu du voyage (« Vercors » →
+ * Grenoble, jamais Paris par défaut), sinon le nom tel quel.
+ */
+async function activityDestination(trip: unknown, name: string, typed: boolean): Promise<string> {
+  const t = (trip ?? {}) as { destination_name?: string | null; destination_country_code?: string | null };
+  // Le champ « Où » est pré-rempli avec la destination du voyage : même nom = même lieu.
+  const own = !typed || name.trim().toLowerCase() === (t.destination_name ?? '').trim().toLowerCase();
+  if (own) {
+    const { at, broad } = tripPoint(trip);
+    return (
+      (await viatorDestinationNear(at, { broad })) ?? viatorCountryFallback(t.destination_country_code, at) ?? name
+    );
+  }
+  // Un autre lieu tapé : cherché sur la carte, puis la destination Viator la plus proche.
+  const place = await lookupDestination(name).catch(() => null);
+  if (!place) return name;
+  const at = { lat: place.lat, lon: place.lon };
+  return (
+    (await viatorDestinationNear(at, { broad: place.kind === 'country' })) ??
+    viatorCountryFallback(place.countryCode, at) ??
+    name
+  );
+}
+
+/**
+ * Résa du Compas : recherche en direct chez les partenaires (Viator pour les
+ * activités, RouteStack pour les vols et les trajets). Lecture seule : rien
+ * n'est réservé ni payé ici, aucun lien de paiement n'est créé. L'offre
+ * s'ouvre chez le fournisseur seulement si la personne la touche.
+ */
+
+export type CompasOfferSearchResult =
+  | { success: true; mode: 'sandbox' | 'live'; offers: CompasStayOffer[]; fetchedAt: string }
+  | { success: false; error: string; unavailable?: boolean };
+
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+const schema = z.object({
+  tripId: z.string().uuid(),
+  vertical: z.enum(['activity', 'flight', 'car'] as const satisfies readonly CompasLiveVertical[]),
+  /** Départ d'un vol (ville ou code IATA), saisi par la personne. */
+  from: z.string().trim().max(80).optional(),
+  /** Destination ; par défaut celle du voyage. */
+  to: z.string().trim().max(80).optional(),
+  date: z.string().regex(ISO).optional(),
+  returnDate: z.string().regex(ISO).optional(),
+});
+
+export async function compasSearchOffersAction(
+  input: z.input<typeof schema>
+): Promise<CompasOfferSearchResult> {
+  const parsed = schema.safeParse(input);
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.routes.searchInvalid') };
+  const d = parsed.data;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: await serverText('compas.server.resa.signIn') };
+    const trip = (await getTripById(d.tripId, user.id)) as
+      | (Awaited<ReturnType<typeof getTripById>> & {
+          start_date?: string | null;
+          end_date?: string | null;
+          destination_name?: string | null;
+          party_size?: number | null;
+        })
+      | null;
+    if (!trip) return { success: false, error: await serverText('compas.server.common.tripNotFoundOrDenied') };
+
+    const destination = (d.to || trip.destination_name || '').trim();
+    if (!destination) return { success: false, error: await serverText('compas.server.resa.needDestination') };
+    const start = d.date ?? trip.start_date ?? null;
+    if (!start || !ISO.test(start))
+      return { success: false, error: await serverText('compas.server.stays.needStartDate') };
+    const end = d.returnDate ?? trip.end_date ?? null;
+    const travelers = await tripPartySize(supabase, {
+      id: d.tripId,
+      user_id: (trip as { user_id?: string }).user_id ?? user.id,
+      party_size: trip.party_size ?? null,
+    });
+
+    let request: BookingSearchRequest;
+    if (d.vertical === 'activity') {
+      request = {
+        vertical: 'activity',
+        destination: await activityDestination(trip, destination, Boolean(d.to)),
+        date: start,
+        travelers,
+        limit: 8,
+      };
+    } else if (d.vertical === 'flight') {
+      const origin = d.from?.trim();
+      if (!origin) return { success: false, error: await serverText('compas.server.resa.needOrigin') };
+      request = {
+        vertical: 'flight',
+        origin,
+        destination,
+        departure: start,
+        ...(end && ISO.test(end) && end >= start ? { return: end } : {}),
+        travelers,
+        limit: 8,
+      };
+    } else {
+      const back = end && ISO.test(end) && end >= start ? end : start;
+      request = {
+        vertical: 'car',
+        destination,
+        pickupAt: `${start}T09:00:00Z`,
+        dropoffAt: `${back}T18:00:00Z`,
+        travelers,
+        limit: 8,
+      };
+    }
+
+    const provider = createBookingProvider({ env: process.env });
+    if (!provider.supports(request.vertical))
+      return {
+        success: false,
+        unavailable: true,
+        error: await serverText('compas.server.resa.partnerDisabled', { detail: partnerReason(request.vertical) }),
+      };
+
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'booking-search',
+      limit: 30,
+      windowMs: 10 * 60_000,
+      failMode: 'closed',
+    });
+    if (limited)
+      return { success: false, error: await serverText('compas.server.stays.tooMany') };
+
+    const result = await provider.search(request);
+    return {
+      success: true,
+      mode: result.mode,
+      offers: simplifyOffers(result.offers),
+      fetchedAt: result.fetchedAt,
+    };
+  } catch (err) {
+    if (err instanceof BookingProviderError) {
+      // Le détail (message, cause, échec des destinations Viator) va au journal :
+      // jamais de clé, et rien d'interne à l'écran (plan 2.9).
+      console.warn(
+        '[compas] recherche partenaire',
+        err.provider,
+        err.code,
+        err.status ?? '',
+        err.message,
+        causeText(err.cause),
+        err.provider === 'viator' ? (viatorDestinationsFailure() ?? '') : ''
+      );
+      // Code et statut seulement (« viator upstream 401 ») : de quoi retrouver
+      // l'erreur dans le journal, jamais une clé ni la réponse du partenaire.
+      return {
+        success: false,
+        error: await serverText('compas.server.resa.partnerFailed', {
+          detail: `${err.provider ?? (await serverText('compas.server.stays.partner'))} ${err.code}${err.status ? ` ${err.status}` : ''}`,
+        }),
+      };
+    }
+    await reportServerError('compas.compasSearchOffersAction', err);
+    return { success: false, error: await serverText('compas.server.common.serverError') };
+  }
+}
+
+export type CompasNearbyActivitiesResult =
+  | { success: true; offers: CompasStayOffer[]; unavailable: boolean }
+  | { success: false; error: string };
+
+const nearbySchema = z.object({
+  tripId: z.string().uuid(),
+  /** Lieu (ville, massif) autour duquel chercher ; par défaut la destination du voyage. */
+  place: z.string().trim().max(80).optional(),
+});
+
+/**
+ * Activités partenaires (dont les sorties guidées) autour d'un lieu, pour les
+ * mélanger aux parcours dans « Où · Parcours ». Lecture seule. Partenaire non
+ * activé : liste vide, jamais d'exemple présenté comme réel.
+ */
+export async function compasNearbyActivitiesAction(
+  input: z.input<typeof nearbySchema>
+): Promise<CompasNearbyActivitiesResult> {
+  const parsed = nearbySchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: await serverText('compas.server.routes.searchInvalid') };
+  try {
+    const provider = createBookingProvider({ env: process.env });
+    if (!provider.supports('activity')) return { success: true, offers: [], unavailable: true };
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: await serverText('compas.server.resa.signInActivities') };
+    const trip = (await getTripById(parsed.data.tripId, user.id)) as
+      | (Awaited<ReturnType<typeof getTripById>> & {
+          start_date?: string | null;
+          destination_name?: string | null;
+          party_size?: number | null;
+        })
+      | null;
+    if (!trip) return { success: false, error: await serverText('compas.server.common.tripNotFoundOrDenied') };
+    const destination = (parsed.data.place || trip.destination_name || '').trim();
+    if (!destination) return { success: true, offers: [], unavailable: false };
+    const today = new Date().toISOString().slice(0, 10);
+    const start = trip.start_date && ISO.test(trip.start_date) && trip.start_date >= today
+      ? trip.start_date
+      : today;
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'booking-search',
+      limit: 30,
+      windowMs: 10 * 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return { success: true, offers: [], unavailable: false };
+    const result = await provider.search({
+      vertical: 'activity',
+      destination: await activityDestination(trip, destination, Boolean(parsed.data.place)),
+      date: start,
+      travelers: await tripPartySize(supabase, {
+        id: parsed.data.tripId,
+        user_id: (trip as { user_id?: string }).user_id ?? user.id,
+        party_size: trip.party_size ?? null,
+      }),
+      limit: 12,
+    });
+    return { success: true, offers: simplifyOffers(result.offers, 12), unavailable: false };
+  } catch (err) {
+    if (err instanceof BookingProviderError) {
+      console.warn('[compas] activités autour', err.provider, err.code, err.status ?? '');
+      return { success: true, offers: [], unavailable: false };
+    }
+    await reportServerError('compas.compasNearbyActivitiesAction', err);
+    return { success: false, error: await serverText('compas.server.common.serverError') };
+  }
+}

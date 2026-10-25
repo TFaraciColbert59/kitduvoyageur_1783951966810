@@ -1,0 +1,20 @@
+// src/features/pays/index.ts
+export type { PaysSectionId, PaysSectionDef, SectionBlock, SectionContent } from './types';
+export { PAYS_SECTIONS, getPaysSection } from './registry/paysSectionRegistry';
+export { buildSectionContent, toSectionBlock } from './mappers/contentBlockToSection';
+export { useSectionContent } from './hooks/useSectionContent';
+export { SectionBlocks } from './components/SectionBlocks';
+export { EditorialBlockCard } from './components/EditorialBlockCard';
+export { StructuredBlockContent } from './components/StructuredBlockContent';
+export { parseStructuredBlock } from './mappers/structuredBlock';
+export { PaysWeatherCard } from './components/PaysWeatherCard';
+export { PaysRegionsList } from './components/PaysRegionsList';
+export { PaysTrailsList } from './components/PaysTrailsList';
+export { PaysRecommendations } from './components/PaysRecommendations';
+export { usePaysWeather } from './hooks/usePaysWeather';
+export { usePaysRegions } from './hooks/usePaysRegions';
+export { usePaysTrails } from './hooks/usePaysTrails';
+export { usePaysRecommendations } from './hooks/usePaysRecommendations';
+export { buildRecommendations } from './recommendations/recommendationEngine';
+export { BlockMarkdown } from './components/BlockMarkdown';
+export { PaysSectionEmpty, PaysSectionNotice, PaysSectionSkeleton } from './components/PaysContentStates';

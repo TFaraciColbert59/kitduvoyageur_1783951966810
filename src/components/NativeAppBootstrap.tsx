@@ -1,0 +1,115 @@
+"use client";
+
+import { useCallback, useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  isNative,
+  hideNativeSplashScreen,
+  applyStatusBarTheme,
+  statusBarThemeForPath,
+  setupNativeAppListeners,
+} from "@/lib/native";
+import { purgeExpiredCache } from "@/lib/storage/cacheDB";
+import { supportsNativeIOSUI, syncNativeUIRoute } from "@/lib/native/ui";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCriticalCacheReady } from "@/components/ReactQueryProvider";
+
+/** A recoverable error is preferable to a splash stuck over an empty screen. */
+const SPLASH_MAX_WAIT_MS = 4_000;
+
+export default function NativeAppBootstrap() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const queryClient = useQueryClient();
+  const { user, loading, refreshProfile } = useAuth();
+  const cacheReady = useCriticalCacheReady();
+
+  const resumeRef = useRef({ user, refreshProfile, queryClient });
+  resumeRef.current = { user, refreshProfile, queryClient };
+  const revealReadyRef = useRef(false);
+  revealReadyRef.current = !loading && cacheReady;
+  const paintedRef = useRef(false);
+  const splashDismissedRef = useRef(false);
+  const nativeUIRevisionRef = useRef(0);
+
+  const dismissSplash = useCallback(() => {
+    if (splashDismissedRef.current) return;
+    splashDismissedRef.current = true;
+    hideNativeSplashScreen().catch(() => {});
+  }, []);
+  const revealAfterPaint = useCallback(() => {
+    if (paintedRef.current && revealReadyRef.current) dismissSplash();
+  }, [dismissSplash]);
+
+  useEffect(() => {
+    purgeExpiredCache().catch(() => {});
+  }, []);
+
+  // Auth and IndexedDB may resolve after the first paint. Keep the native
+  // splash until both are ready, subject to the existing four-second cap.
+  useEffect(() => {
+    if (isNative()) revealAfterPaint();
+  }, [cacheReady, loading, revealAfterPaint]);
+
+  // Navigation stays owned by Next.js. The SwiftUI host only gets an ordered
+  // route snapshot, including /compas so it can close any transient native UI.
+  useEffect(() => {
+    if (!isNative() || !supportsNativeIOSUI('/')) return;
+    // Keep serials inside signed 32-bit Capacitor transport, yet base them
+    // on wall time so a WKWebView reload won't reset to revision 1 and make
+    // the still-mounted native host reject every subsequent route update.
+    const revision = Math.max(Date.now() % 2_000_000_000, nativeUIRevisionRef.current + 1);
+    nativeUIRevisionRef.current = revision;
+    void syncNativeUIRoute(pathname || '/', revision);
+  }, [pathname]);
+
+  // Barre d'état (plan 5.4) : le Compas force le thème clair, son texte doit donc
+  // être sombre ; partout ailleurs, le thème de l'app (vert forêt, texte clair).
+  // Suivre la route couvre l'arrivée directe sur /compas, l'entrée et la sortie.
+  useEffect(() => {
+    if (!isNative()) return;
+    applyStatusBarTheme(statusBarThemeForPath(pathname)).catch(() => {});
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isNative()) return;
+
+    const unsubPromise = setupNativeAppListeners({
+      onBackButton: () => {
+        if (window.history.length > 1) router.back();
+      },
+      onAppActive: () => {
+        const current = resumeRef.current;
+        if (current.user) current.refreshProfile().catch(() => {});
+        current.queryClient.refetchQueries({ type: "active", stale: true }).catch(() => {});
+      },
+      onAppInactive: () => {
+        // Pending offline writes are handled by their own queues.
+      },
+    });
+
+    const dismissAfterFirstPaint = () => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        paintedRef.current = true;
+        revealAfterPaint();
+      }));
+    };
+    if (document.readyState === "complete") {
+      dismissAfterFirstPaint();
+    } else {
+      window.addEventListener("load", dismissAfterFirstPaint, { once: true });
+    }
+    window.addEventListener("error", dismissSplash, { once: true, capture: true });
+    const splashTimer = setTimeout(dismissSplash, SPLASH_MAX_WAIT_MS);
+
+    return () => {
+      clearTimeout(splashTimer);
+      window.removeEventListener("load", dismissAfterFirstPaint);
+      window.removeEventListener("error", dismissSplash, true);
+      unsubPromise.then((unsub) => unsub());
+    };
+  }, [router, dismissSplash, revealAfterPaint]);
+
+  return null;
+}

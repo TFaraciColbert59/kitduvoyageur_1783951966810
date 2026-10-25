@@ -1,0 +1,396 @@
+/**
+ * Contexte projet du Compas : la référence unique dont découlent itinéraire,
+ * nuits, sac, réservations, Verdict et Kit.
+ *
+ * Fonction PURE, jamais stockée : elle relit à chaque fois les données du
+ * voyage (`trips` + `metadata.compas.prefs`) et le profil (`user_orientation`),
+ * qui n'est jamais recopié dans le projet. Chaque champ porte sa valeur et sa
+ * SOURCE, dans cet ordre de priorité :
+ *   1. phrase  — demande en cours (Dis-le), pas encore appliquée
+ *   2. projet  — personnalisation propre à ce projet
+ *   3. compas  — sélection active du voyage (activité, dates, personnes)
+ *   4. profil  — préférences habituelles
+ *   5. defaut  — proposé selon l'activité, la durée, la saison
+ * Puis un contrôle de cohérence ADAPTE une valeur héritée (profil ou défaut)
+ * qui ne tient pas pour CE projet, et le dit. Une valeur choisie (phrase ou
+ * projet) n'est jamais changée en silence : c'est au Verdict de prévenir.
+ */
+import type {
+  CompasAutonomy,
+  CompasLevel,
+  CompasNights,
+  CompasPreferences,
+  CompasPriority,
+  CompasTerrain,
+} from './compasModel';
+import { isTropical } from './period';
+import { engineT } from './engineI18n';
+import type { Locale } from '@/lib/i18n/locale';
+import type { TranslationKey } from '@/lib/i18n/translate';
+import type { Pace } from './weather';
+
+export type ContextSource = 'phrase' | 'projet' | 'compas' | 'profil' | 'defaut';
+
+const SOURCE_KEY: Record<ContextSource, TranslationKey> = {
+  phrase: 'compas.engine.context.source.phrase',
+  projet: 'compas.engine.context.source.projet',
+  compas: 'compas.engine.context.source.compas',
+  profil: 'compas.engine.context.source.profil',
+  defaut: 'compas.engine.context.source.defaut',
+};
+
+/** D'où vient une valeur, en clair : « ton profil », « your profile ». */
+export function sourceLabel(source: ContextSource, locale: Locale = 'fr'): string {
+  return engineT(locale)(SOURCE_KEY[source]);
+}
+
+/** Les provenances en français (forme d'avant). */
+export const SOURCE_LABEL = Object.fromEntries(
+  (Object.keys(SOURCE_KEY) as ContextSource[]).map((s) => [s, sourceLabel(s)])
+) as Record<ContextSource, string>;
+
+export interface CtxField<T> {
+  value: T;
+  source: ContextSource;
+  /** Pourquoi cette valeur, en clair (adaptation ou défaut). */
+  why?: string;
+}
+
+export type ProjectScope = 'sortie' | 'journee' | 'sejour';
+
+export interface ProfileInput {
+  terrain: CompasTerrain | null;
+  autonomy: CompasAutonomy | null;
+  priority: CompasPriority | null;
+  experience: CompasLevel | null;
+}
+
+export interface ContextInput {
+  /** trips.primary_activity */
+  activity: string | null;
+  /** Nombre de jours (dates ou durée retenue sans date). */
+  days: number | null;
+  /** Durée en heures quand la sortie tient en moins d'une journée. */
+  hours: number | null;
+  partySize: number | null;
+  /** Mois du départ (1-12), si connu. */
+  month: number | null;
+  /** Latitude de la destination, si connue : au sud, les saisons sont décalées de six mois. */
+  lat?: number | null;
+  /** Altitude maximale connue du parcours, si mesurée. */
+  maxAltitudeM?: number | null;
+  /** Personnalisations du projet (metadata.compas.prefs). */
+  project: Partial<CompasPreferences> | null;
+  /** Préférences habituelles (user_orientation), lues à la volée. */
+  profile: ProfileInput | null;
+  /** Demande en cours, pas encore appliquée (aperçu). */
+  phrase?: Partial<CompasPreferences> & { activity?: string | null };
+}
+
+export interface ContextAdaptation {
+  field: 'nights' | 'autonomy';
+  /** Ce que la préférence habituelle aurait donné. */
+  usual: string;
+  /** Ce qui est retenu pour ce projet. */
+  chosen: string;
+  why: string;
+}
+
+export interface ProjectContext {
+  scope: ProjectScope;
+  activity: CtxField<string | null>;
+  pace: CtxField<Pace>;
+  nights: CtxField<CompasNights | null>;
+  level: CtxField<CompasLevel | null>;
+  autonomy: CtxField<CompasAutonomy | null>;
+  priority: CtxField<CompasPriority | null>;
+  terrain: CtxField<CompasTerrain | null>;
+  maxPackKg: CtxField<number | null>;
+  outdoorNights: CtxField<number | null>;
+  adaptations: ContextAdaptation[];
+  /** Modules utiles pour CE projet : le reste n'est pas proposé. */
+  modules: {
+    nights: boolean;
+    transport: boolean;
+    resa: boolean;
+    /** Sac complet (couchage, cuisine) ; sinon tenue et essentiels de sortie. */
+    fullPack: boolean;
+  };
+}
+
+/** Sorties courtes par nature : jamais de nuit, ni de sac de trek. */
+export const SHORT_ACTIVITIES = new Set(['running', 'trail']);
+/** Activités qui dorment sous un toit (ou dans le véhicule), sauf choix dit. */
+const ROOF_ACTIVITIES = new Set(['cultural', 'roadtrip', 'citytrip', 'beach', 'vanlife', 'ski']);
+/** Terrain qui a du sens pour l'activité (sinon le profil n'est pas suivi). */
+const TRAIL_ACTIVITIES = new Set(['hiking', 'trekking', 'bivouac', 'mixed', 'trail', 'running', 'bushcraft']);
+
+const NIGHTS_TEXT: Record<CompasNights, TranslationKey> = {
+  bivouac: 'compas.engine.context.nights.bivouac',
+  refuge: 'compas.engine.context.nights.refuge',
+  hebergement: 'compas.engine.context.nights.hebergement',
+  mixte: 'compas.engine.context.nights.mixte',
+};
+const AUTONOMY_TEXT: Record<CompasAutonomy, TranslationKey> = {
+  journee: 'compas.engine.context.autonomy.journee',
+  bivouac_1_2: 'compas.engine.context.autonomy.bivouac12',
+  itinerance_longue: 'compas.engine.context.autonomy.itineranceLongue',
+};
+
+export function scopeOf(input: Pick<ContextInput, 'activity' | 'days' | 'hours'>): ProjectScope {
+  if (input.hours != null && input.hours < 24) return 'sortie';
+  // Course et trail d'un jour : une sortie (quelques heures, sans nuit).
+  if (SHORT_ACTIVITIES.has(input.activity ?? '') && (input.days == null || input.days <= 1)) return 'sortie';
+  if (input.days == null) return 'sejour';
+  return input.days <= 1 ? 'journee' : 'sejour';
+}
+
+/** Première valeur définie dans l'ordre de priorité. */
+function pick<T>(
+  candidates: Array<[ContextSource, T | null | undefined]>,
+  fallback: CtxField<T>
+): CtxField<T> {
+  for (const [source, value] of candidates) {
+    if (value !== undefined && value !== null) return { value, source };
+  }
+  return fallback;
+}
+
+/** Mois d'hiver dans l'hémisphère nord. */
+const WINTER = new Set([11, 12, 1, 2, 3]);
+
+/** Le mois équivalent dans l'hémisphère nord : au sud, six mois de décalage (juillet ↔ janvier). */
+function northernEquivalent(month: number, lat: number | null | undefined): number {
+  return lat != null && lat < 0 ? ((month + 5) % 12) + 1 : month;
+}
+
+/**
+ * Mois d'hiver au lieu du voyage : selon l'hémisphère, et jamais entre les
+ * tropiques (saisons sèche et humide). Latitude inconnue : le mois seul.
+ */
+function isWinter(month: number | null, lat: number | null | undefined): boolean {
+  return month != null && !isTropical(lat) && WINTER.has(northernEquivalent(month, lat));
+}
+
+export function resolveProjectContext(input: ContextInput, locale: Locale = 'fr'): ProjectContext {
+  const t = engineT(locale);
+  const project = input.project ?? {};
+  const phrase = input.phrase ?? {};
+  const profile = input.profile;
+  const adaptations: ContextAdaptation[] = [];
+
+  const activity = pick<string | null>(
+    [
+      ['phrase', phrase.activity],
+      ['compas', input.activity],
+    ],
+    { value: null, source: 'defaut' }
+  );
+  const act = activity.value ?? '';
+  const scope = scopeOf({ activity: act, days: input.days, hours: input.hours });
+  const nightsCount = scope === 'sejour' ? Math.max(0, (input.days ?? 1) - 1) : 0;
+
+  /* Niveau : choisi pour le projet, sinon l'expérience du profil. */
+  const level = pick<CompasLevel | null>(
+    [
+      ['phrase', phrase.level],
+      ['projet', project.level],
+      ['profil', profile?.experience],
+    ],
+    { value: null, source: 'defaut' }
+  );
+
+  /* Priorité et terrain habituels. */
+  const priority = pick<CompasPriority | null>(
+    [
+      ['phrase', phrase.priority],
+      ['projet', project.priority],
+      ['profil', profile?.priority],
+    ],
+    { value: null, source: 'defaut' }
+  );
+  let terrain = pick<CompasTerrain | null>(
+    [
+      ['phrase', phrase.terrain],
+      ['projet', project.terrain],
+      ['profil', profile?.terrain],
+    ],
+    { value: null, source: 'defaut' }
+  );
+  // Le terrain habituel (sentier, montagne…) n'a pas de sens pour une ville ou la mer.
+  if (terrain.source === 'profil' && !TRAIL_ACTIVITIES.has(act))
+    terrain = { value: null, source: 'defaut', why: t('compas.engine.context.terrainNotRelevant') };
+
+  /* Rythme : choisi, sinon déduit du niveau, sinon normal. */
+  let pace = pick<Pace>(
+    [
+      ['phrase', phrase.pace],
+      ['projet', project.pace],
+    ],
+    { value: 'normal', source: 'defaut' }
+  );
+  if (pace.source === 'defaut' && level.value === 'debut')
+    pace = { value: 'tranquille', source: level.source, why: t('compas.engine.context.beginnerPace') };
+
+  /* Autonomie : choisie, sinon profil, puis cohérence avec la durée. */
+  let autonomy = pick<CompasAutonomy | null>(
+    [
+      ['phrase', phrase.autonomy],
+      ['projet', project.autonomy],
+      ['profil', profile?.autonomy],
+    ],
+    { value: null, source: 'defaut' }
+  );
+  if (scope !== 'sejour' && autonomy.source === 'profil' && autonomy.value && autonomy.value !== 'journee') {
+    adaptations.push({
+      field: 'autonomy',
+      usual: t(AUTONOMY_TEXT[autonomy.value]),
+      chosen: t(AUTONOMY_TEXT.journee),
+      why: t(scope === 'sortie' ? 'compas.engine.context.outingHours' : 'compas.engine.context.singleDay'),
+    });
+    autonomy = { value: 'journee', source: 'defaut', why: t('compas.engine.context.noNightToPlan') };
+  }
+
+  /* Nuits dehors et poids maximal : seulement s'ils sont choisis. */
+  const outdoorNights = pick<number | null>(
+    [
+      ['phrase', phrase.outdoorNights],
+      ['projet', project.outdoorNights],
+    ],
+    { value: null, source: 'defaut' }
+  );
+  const maxPackKg = pick<number | null>(
+    [
+      ['phrase', phrase.maxPackKg],
+      ['projet', project.maxPackKg],
+    ],
+    { value: null, source: 'defaut' }
+  );
+
+  /* Nuits. */
+  let nights = pick<CompasNights | null>(
+    [
+      ['phrase', phrase.nights],
+      ['projet', project.nights],
+    ],
+    { value: null, source: 'defaut' }
+  );
+  if (nightsCount === 0) {
+    nights = { value: null, source: 'defaut', why: t('compas.engine.context.noNights') };
+  } else if (nights.source === 'defaut') {
+    const out = outdoorNights.value;
+    if (out != null && out > 0)
+      nights = {
+        value: out >= nightsCount ? 'bivouac' : 'mixte',
+        source: outdoorNights.source,
+        why: t(out > 1 ? 'compas.engine.context.outdoorOther' : 'compas.engine.context.outdoorOne', { count: out }),
+      };
+    else if (ROOF_ACTIVITIES.has(act))
+      nights = { value: 'hebergement', source: 'defaut', why: t('compas.engine.context.roof') };
+    else if (priority.value === 'budget' && priority.source === 'profil') { // i18n-ok (valeur de l'enum)
+      const cold = isWinter(input.month, input.lat);
+      const high = (input.maxAltitudeM ?? 0) >= 1500;
+      if (cold && (high || level.value === 'debut')) {
+        adaptations.push({
+          field: 'nights',
+          usual: t(NIGHTS_TEXT.bivouac),
+          chosen: t(NIGHTS_TEXT.refuge),
+          why: t(high ? 'compas.engine.context.winterHigh' : 'compas.engine.context.winterFirst'),
+        });
+        nights = { value: 'refuge', source: 'defaut', why: t('compas.engine.context.winterRoof') };
+      } else {
+        nights = { value: 'bivouac', source: 'profil', why: t('compas.engine.context.budget') };
+      }
+    } else if (priority.value === 'confort' && priority.source === 'profil') {
+      nights = { value: 'refuge', source: 'profil', why: t('compas.engine.context.comfort') };
+    }
+  }
+
+  return {
+    scope,
+    activity,
+    pace,
+    nights,
+    level,
+    autonomy,
+    priority,
+    terrain,
+    maxPackKg,
+    outdoorNights: nightsCount === 0 ? { value: null, source: 'defaut' } : outdoorNights,
+    adaptations,
+    modules: {
+      nights: nightsCount > 0,
+      transport: scope !== 'sortie',
+      resa: scope !== 'sortie',
+      fullPack: scope === 'sejour' && !SHORT_ACTIVITIES.has(act),
+    },
+  };
+}
+
+/** « Habituellement tu préfères X, mais pour ce projet Y » — une phrase par adaptation. */
+export function adaptationText(a: ContextAdaptation): string {
+  return adaptationTextFor(a, 'fr');
+}
+
+/** La même phrase dans une locale (séparée : `adaptations.map(adaptationText)` reste valide). */
+export function adaptationTextFor(a: ContextAdaptation, locale: Locale): string {
+  return engineT(locale)('compas.engine.context.adaptation', { usual: a.usual, chosen: a.chosen, why: a.why });
+}
+
+/* ---------- Distance attendue et choix d'un parcours du catalogue ---------- */
+
+/** Vitesse moyenne réaliste par activité (km/h, pauses comprises). */
+const SPEED_KMH: Record<string, number> = {
+  running: 9,
+  trail: 7,
+  hiking: 3.5,
+  trekking: 3.5,
+  bivouac: 3.5,
+  mixed: 3.5,
+  cycling: 18,
+  water: 5,
+};
+const PER_DAY_KM: Record<Pace, number> = { tranquille: 12, normal: 16, soutenu: 22 };
+
+/** Vitesse moyenne type d'une activité (km/h, pauses comprises), null quand aucune n'est connue. */
+export function activitySpeedKmh(activity: string | null | undefined): number | null {
+  return activity != null && Object.hasOwn(SPEED_KMH, activity) ? SPEED_KMH[activity] : null;
+}
+
+/**
+ * Distance que le projet appelle : la distance dite, sinon la durée × la
+ * vitesse de l'activité (sortie), sinon jours × étape type selon rythme et
+ * niveau (séjour). null quand rien ne permet de l'estimer.
+ */
+export function expectedKm(
+  ctx: Pick<ProjectContext, 'scope' | 'activity' | 'pace' | 'level'>,
+  input: { hours: number | null; days: number | null; targetKm: number | null }
+): number | null {
+  const act = ctx.activity.value ?? '';
+  if (ctx.scope === 'sortie') {
+    if (input.targetKm) return input.targetKm;
+    const speed = SPEED_KMH[act];
+    return input.hours && speed ? Math.round(input.hours * speed * 10) / 10 : null;
+  }
+  if (!input.days) return null;
+  const perDay = input.targetKm ?? Math.min(PER_DAY_KM[ctx.pace.value], ctx.level.value === 'debut' ? 12 : 99);
+  return input.days * perDay;
+}
+
+/**
+ * Parcours du catalogue qui épouse le projet : le plus proche de la distance
+ * attendue (à ±50 %), à égalité le plus près. Sans distance attendue, le
+ * plus proche du départ. Aucun ne convient : null (l'itinéraire est composé).
+ */
+export function pickCatalogRoute<T extends { distance_km: number | string | null; distance_from_m?: number | null }>(
+  routes: T[],
+  want: number | null
+): T | null {
+  if (!routes.length) return null;
+  if (want == null) return routes[0];
+  const scored = routes
+    .map((r) => ({ r, km: Number(r.distance_km) }))
+    .filter((x) => Number.isFinite(x.km) && x.km > 0 && Math.abs(x.km - want) <= want * 0.5)
+    .sort((a, b) => Math.abs(a.km - want) - Math.abs(b.km - want) || (a.r.distance_from_m ?? 0) - (b.r.distance_from_m ?? 0));
+  return scored[0]?.r ?? null;
+}

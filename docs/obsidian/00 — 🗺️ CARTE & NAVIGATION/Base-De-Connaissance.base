@@ -1,0 +1,25 @@
+filters:
+  not:
+    - 'file.hasTag("archived")'
+
+properties:
+  file.name:
+    displayName: "Note"
+  status:
+    displayName: "Statut"
+  tags:
+    displayName: "Tags"
+  date:
+    displayName: "Dernière Révision"
+  description:
+    displayName: "Description"
+
+views:
+  - type: table
+    name: "Index Global des Notes"
+    order:
+      - file.name
+      - description
+      - status
+      - date
+      - tags

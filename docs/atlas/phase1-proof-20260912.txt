@@ -1,0 +1,208 @@
+
+==============================================================================
+PROJET : https://icxyvwzfjbflcbqukpfz.supabase.co
+==============================================================================
+
+==============================================================================
+RLS STATUS (relrowsecurity / relforcerowsecurity)
+==============================================================================
+[
+  {
+    "tablename": "hiking_routes",
+    "rls_enabled": true,
+    "rls_forced": false
+  },
+  {
+    "tablename": "trail_metadata",
+    "rls_enabled": true,
+    "rls_forced": false
+  },
+  {
+    "tablename": "trail_scores",
+    "rls_enabled": true,
+    "rls_forced": false
+  }
+]
+
+==============================================================================
+POLICIES (pg_policies)
+==============================================================================
+[
+  {
+    "schemaname": "public",
+    "tablename": "hiking_routes",
+    "policyname": "Public read hiking_routes",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "hiking_routes",
+    "policyname": "public_read_hiking_routes",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trail_metadata",
+    "policyname": "Public read trail_metadata",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  },
+  {
+    "schemaname": "public",
+    "tablename": "trail_scores",
+    "policyname": "Public read trail_scores",
+    "roles": "{public}",
+    "cmd": "SELECT",
+    "qual": "true"
+  }
+]
+
+==============================================================================
+EXPLAIN ANALYZE — trails_in_viewport (bbox Chamonix z14)
+==============================================================================
+
+--- A. requête de base (plan par défaut) ---
+Limit  (cost=27.38..27.38 rows=1 width=38) (actual time=3.423..3.424 rows=0 loops=1)
+  Buffers: shared hit=28
+  ->  Sort  (cost=27.38..27.38 rows=1 width=38) (actual time=3.422..3.422 rows=0 loops=1)
+        Sort Key: distance_km DESC NULLS LAST
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=28
+        ->  Index Scan using idx_hiking_routes_geom on hiking_routes r  (cost=0.14..27.37 rows=1 width=38) (actual time=3.394..3.395 rows=0 loops=1)
+              Index Cond: ((geom IS NOT NULL) AND (geom && '0103000020E6100000010000000500000048E17A14AE471B40CDCCCCCCCCEC464048E17A14AE471B40A4703D0AD7034740F6285C8FC2F51B40A4703D0AD7034740F6285C8FC2F51B40CDCCCCCCCCEC464048E17A14AE471B40CDCCCCCCCCEC4640'::geometry) AND (geom && '0103000020E6100000010000000500000048E17A14AE471B40CDCCCCCCCCEC464048E17A14AE471B40A4703D0AD7034740F6285C8FC2F51B40A4703D0AD7034740F6285C8FC2F51B40CDCCCCCCCCEC464048E17A14AE471B40CDCCCCCCCCEC4640'::geometry))
+              Filter: st_intersects(geom, '0103000020E6100000010000000500000048E17A14AE471B40CDCCCCCCCCEC464048E17A14AE471B40A4703D0AD7034740F6285C8FC2F51B40A4703D0AD7034740F6285C8FC2F51B40CDCCCCCCCCEC464048E17A14AE471B40CDCCCCCCCCEC4640'::geometry)
+              Buffers: shared hit=25
+Planning:
+  Buffers: shared hit=225
+Planning Time: 235.940 ms
+Execution Time: 4.199 ms
+
+--- B. requête de base (enable_seqscan=off -> preuve index GIST) ---
+Limit  (cost=27.38..27.38 rows=1 width=38) (actual time=0.020..0.020 rows=0 loops=1)
+  Buffers: shared hit=1
+  ->  Sort  (cost=27.38..27.38 rows=1 width=38) (actual time=0.019..0.019 rows=0 loops=1)
+        Sort Key: distance_km DESC NULLS LAST
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=1
+        ->  Index Scan using idx_hiking_routes_geom on hiking_routes r  (cost=0.14..27.37 rows=1 width=38) (actual time=0.014..0.014 rows=0 loops=1)
+              Index Cond: ((geom IS NOT NULL) AND (geom && '0103000020E6100000010000000500000048E17A14AE471B40CDCCCCCCCCEC464048E17A14AE471B40A4703D0AD7034740F6285C8FC2F51B40A4703D0AD7034740F6285C8FC2F51B40CDCCCCCCCCEC464048E17A14AE471B40CDCCCCCCCCEC4640'::geometry) AND (geom && '0103000020E6100000010000000500000048E17A14AE471B40CDCCCCCCCCEC464048E17A14AE471B40A4703D0AD7034740F6285C8FC2F51B40A4703D0AD7034740F6285C8FC2F51B40CDCCCCCCCCEC464048E17A14AE471B40CDCCCCCCCCEC4640'::geometry))
+              Filter: st_intersects(geom, '0103000020E6100000010000000500000048E17A14AE471B40CDCCCCCCCCEC464048E17A14AE471B40A4703D0AD7034740F6285C8FC2F51B40A4703D0AD7034740F6285C8FC2F51B40CDCCCCCCCCEC464048E17A14AE471B40CDCCCCCCCCEC4640'::geometry)
+              Buffers: shared hit=1
+Planning Time: 0.136 ms
+Execution Time: 0.049 ms
+
+--- C. appel RPC (enable_seqscan=off -> preuve inlining + index) ---
+Function Scan on trails_in_viewport  (cost=0.25..10.25 rows=1000 width=112) (actual time=48.674..48.675 rows=0 loops=1)
+  Buffers: shared hit=610
+Planning Time: 0.054 ms
+Execution Time: 48.701 ms
+
+==============================================================================
+COMPTES RÉELS
+==============================================================================
+hiking_routes                      : 1169
+countries_geo (total)              : 196
+countries_geo (geometry NULL)      : 30
+country_centroids                  : 166
+country_trail_density              : 166
+trail_density_geohash5             : 329
+
+==============================================================================
+ÉCHANTILLONS
+==============================================================================
+country_centroids: [{"iso_a2":"AE","lat":23.86863,"lng":54.20671},{"iso_a2":"AF","lat":33.8564,"lng":66.08669},{"iso_a2":"AL","lat":41.14135,"lng":20.03243},{"iso_a2":"AM","lat":40.21661,"lng":45.00029},{"iso_a2":"AO","lat":-12.24587,"lng":17.47057},{"iso_a2":"AR","lat":-35.44682,"lng":-65.17536}]
+top densités pays: [{"iso_a2":"FR","name":"France","trail_count":962,"total_distance_km":4226},{"iso_a2":"BE","name":"Belgique","trail_count":172,"total_distance_km":1188},{"iso_a2":"AL","name":"Albanie","trail_count":0,"total_distance_km":0},{"iso_a2":"AO","name":"Angola","trail_count":0,"total_distance_km":0},{"iso_a2":"AR","name":"Argentine","trail_count":0,"total_distance_km":0},{"iso_a2":"AM","name":"Arménie","trail_count":0,"total_distance_km":0}]
+trails_in_viewport (Chamonix z14)  : 0 lignes
+3 premières: []
+
+==============================================================================
+DISTRIBUTION GLOBALE (palier monde)
+==============================================================================
+top cellules geohash5: [
+  {
+    "geohash": "u11bu",
+    "trail_count": 65,
+    "center_lat": 50.78408,
+    "center_lng": 2.66615
+  },
+  {
+    "geohash": "u11bb",
+    "trail_count": 64,
+    "center_lat": 50.79542,
+    "center_lng": 2.48488
+  },
+  {
+    "geohash": "u11bc",
+    "trail_count": 51,
+    "center_lat": 50.78369,
+    "center_lng": 2.5228
+  },
+  {
+    "geohash": "u11c0",
+    "trail_count": 48,
+    "center_lat": 50.81532,
+    "center_lng": 2.48336
+  },
+  {
+    "geohash": "u11bv",
+    "trail_count": 44,
+    "center_lat": 50.78508,
+    "center_lng": 2.70217
+  },
+  {
+    "geohash": "u11by",
+    "trail_count": 42,
+    "center_lat": 50.77619,
+    "center_lng": 2.737
+  },
+  {
+    "geohash": "u11c1",
+    "trail_count": 41,
+    "center_lat": 50.82487,
+    "center_lng": 2.52579
+  },
+  {
+    "geohash": "u119p",
+    "trail_count": 34,
+    "center_lat": 50.82,
+    "center_lng": 2.4342
+  }
+]
+trails_in_viewport (monde, limit 5): 5 lignes
+[
+  {
+    "id": "371",
+    "name": "Boucle Fagnes et Val Joly",
+    "lat": 50.1203333,
+    "lng": 4.131889
+  },
+  {
+    "id": "374",
+    "name": "Boucle Forges et Etangs",
+    "lat": 50.0285706,
+    "lng": 4.1146087
+  },
+  {
+    "id": "375",
+    "name": "Boucle Val de Sambre et Maroilles",
+    "lat": 50.2135425,
+    "lng": 3.8613081
+  },
+  {
+    "id": "879",
+    "name": "Boucle du Pays Solesmois",
+    "lat": 50.236693,
+    "lng": 3.4373434
+  },
+  {
+    "id": "200",
+    "name": "Via Francigena France 02, Arras - Reims",
+    "lat": 50.0140875,
+    "lng": 2.9119284
+  }
+]

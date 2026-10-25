@@ -1,0 +1,1121 @@
+'use client';
+
+import { notedStay } from '../engine/stayProposal';
+import { classifyScale, scaleHours } from '../engine/scale';
+import { budgetInOtherCurrencies, type BudgetFxData } from '../engine/budgetFx';
+import Link from 'next/link';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { deleteTripItemAction } from '@/app/voyages/kit-actions';
+import Icon from '@/components/ui/Icon';
+import type { CompasKitLine, CompasModel } from '../engine/compasModel';
+import { activityName } from '../engine/compasI18n';
+import {
+  formatHours,
+  initials,
+} from '../engine/format';
+import { useCompasFormat, useCompasUnits } from './useCompasUnits';
+import { moneyIn } from './sheetsI18n';
+import { Thumb, useLongPress, type Tone } from './CompasPrimitives';
+import { isMeteoalarmSource } from '../engine/meteoalarmFeeds';
+import MeteoalarmNotice from './MeteoalarmNotice';
+import WorldAlertNotices from './WorldAlertNotice';
+import { DurationRuler, tripHours } from './CompasRuler';
+import { FR_T, countText, type CompasCtl } from './compasTypes';
+import { useTranslation } from '@/lib/i18n/context';
+import { formatNumber } from '@/lib/i18n/format';
+import { plural, type TranslationKey } from '@/lib/i18n/translate';
+import { RESA_CATS, bookingCat, offerCat } from '../engine/resaCats';
+import { bestShopProduct, productFitsLine } from '../engine/shopMatch';
+import { teamCount, teamCountLabel } from '../engine/team';
+import { capacityCounts } from '../engine/crewView';
+import { compasUndoAutofillAction } from '../server/autofillActions';
+import { compasSetOriginAction } from '../server/compasActions';
+
+/* =============================================================================
+   Cartes d'étape — un résumé par étape (maquette v8). Le détail et les actions
+   vivent dans les tiroirs : ≡ ouvre celui de l'étape, chaque ligne ouvre le sien.
+   ============================================================================= */
+
+/* ---------- Statut d'un objet ---------- */
+
+/** `labelKey` se traduit (`t`) ; `label` garde le français, pour les appels sans locale. */
+type LineStatus = { label: string; labelKey: TranslationKey; tone: Tone };
+const status = (labelKey: TranslationKey, tone: Tone): LineStatus => ({
+  label: FR_T(labelKey),
+  labelKey,
+  tone,
+});
+
+export const STATUS: Record<CompasKitLine['status'], LineStatus> = {
+  owned: status('compas.cards.statusOwned', 'good'),
+  missing: status('compas.cards.statusMissing', 'bad'),
+  lent: status('compas.cards.statusLent', 'warn'),
+  replace: status('compas.cards.statusReplace', 'warn'),
+};
+
+export function lineStatus(line: CompasKitLine): LineStatus {
+  if (line.status !== 'owned' && line.purchaseState === 'in_cart')
+    return status('compas.cards.statusInCart', 'soft');
+  if (line.status !== 'owned' && line.purchaseState === 'shipping')
+    return status('compas.cards.statusShipping', 'soft');
+  return STATUS[line.status];
+}
+
+/**
+ * Ligne d'objet des tiroirs : toucher = fiche, appui long = fiche en grand,
+ * glisser à gauche = « Retirer » apparaît (maquette finale) ; le retrait
+ * demande ce second geste, jamais le seul glissement. Au clavier, la fiche
+ * s'ouvre par la commande de la ligne (Entrée ou Espace) ; aucune commande
+ * n'en contient une autre (WCAG 4.1.2).
+ */
+export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
+  const { t } = useTranslation();
+  const f = useCompasFormat();
+  const [swiped, setSwiped] = useState(false);
+  const swipe = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  /** Le clic qui suit un glissement ne doit ni ouvrir la fiche ni refermer. */
+  const afterSwipe = useRef(false);
+  const press = useLongPress(
+    () => ctl.open({ kind: 'item', lineId: line.id }, 'large'),
+    () => {
+      if (afterSwipe.current) {
+        afterSwipe.current = false;
+        return;
+      }
+      if (swiped) setSwiped(false);
+      else ctl.open({ kind: 'item', lineId: line.id });
+    }
+  );
+  const canRemove = ctl.data.canEdit;
+  // Un produit dont le titre contredit l'objet n'est pas montré (constat K-001).
+  const linked = ctl.product(line.shopProductId);
+  const chosen = linked && productFitsLine(line, linked) ? linked : undefined;
+  // Objet à trouver : le produit réel de la boutique qui lui correspond le mieux.
+  const suggested = useMemo(
+    () =>
+      !chosen && (line.status === 'missing' || line.status === 'replace')
+        ? bestShopProduct(line, ctl.data.shop)
+        : null,
+    [chosen, line, ctl.data.shop]
+  );
+  const product = chosen ?? suggested ?? undefined;
+  const state = lineStatus(line);
+  const carrier = line.ownerId
+    ? ctl.memberName(line.ownerId)
+    : line.shared
+      ? t('compas.cards.noCarrier')
+      : t('compas.cards.everyone');
+  const weight =
+    line.weightGrams == null
+      ? t('compas.cards.toWeigh')
+      : f.kg(line.weightGrams * line.quantity);
+  return (
+    <div
+      className="cp-row"
+      data-swiped={swiped ? '' : undefined}
+      {...press}
+      onPointerDown={(e) => {
+        swipe.current = { x: e.clientX, y: e.clientY, moved: false };
+        afterSwipe.current = false;
+        press.onPointerDown(e);
+      }}
+      onPointerMove={(e) => {
+        press.onPointerMove(e);
+        const s0 = swipe.current;
+        if (!s0 || !canRemove) return;
+        const dx = e.clientX - s0.x;
+        if (Math.abs(e.clientY - s0.y) > 24) return;
+        if (dx < -48) {
+          s0.moved = true;
+          setSwiped(true);
+        } else if (dx > 24) {
+          s0.moved = true;
+          setSwiped(false);
+        }
+      }}
+      onPointerUp={() => {
+        afterSwipe.current = swipe.current?.moved ?? false;
+        swipe.current = null;
+        press.onPointerUp();
+      }}
+    >
+      {/* Les gestes (toucher, appui long, glissement) restent sur la ligne ; la
+          fiche s'ouvre au clavier par une vraie commande (Entrée et Espace
+          natifs, qui remontent en clic). « Retirer » et « Emballer » en sont
+          les voisines, jamais les enfants. */}
+      <button type="button" className="cp-row__main" aria-haspopup="dialog">
+        <Thumb
+          image={product?.image}
+          alt={product?.imageAlt}
+          category={line.category}
+          name={line.name}
+        />
+        <span className="cp-row__t">
+          <b>
+            {line.quantity > 1 ? `${line.quantity} × ` : ''}
+            {line.name}
+          </b>
+          <span>
+            {weight} · {carrier} · {t(state.labelKey)}
+            {line.vital ? ` · ${t('compas.cards.vital')}` : ''}
+            {suggested && suggested.priceEur != null
+              ? ` · ${t('compas.cards.shopPrice', { price: f.money(suggested.priceEur) })}`
+              : ''}
+          </span>
+        </span>
+      </button>
+      <span className="cp-row__end">
+        {swiped && (
+          <button
+            type="button"
+            className="cp-btn cp-btn--bad cp-row__swipe"
+            disabled={ctl.busy}
+            aria-label={t('compas.cards.removeFromKit', { name: line.name })}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              void ctl
+                .run(t('compas.cards.removed', { name: line.name }), () =>
+                  deleteTripItemAction(line.id, ctl.data.model.slug)
+                )
+                .then(() => setSwiped(false));
+            }}
+          >
+            {t('compas.cards.remove')}
+          </button>
+        )}
+        <button
+          type="button"
+          className="cp-ibtn"
+          aria-pressed={line.packed}
+          aria-label={t(line.packed ? 'compas.cards.unpack' : 'compas.cards.pack', { name: line.name })}
+          disabled={!ctl.data.canEdit}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            ctl.togglePacked(line);
+          }}
+        >
+          <Icon name={line.packed ? 'check-circle' : 'circle'} size={22} />
+        </button>
+      </span>
+    </div>
+  );
+}
+
+export function MemberAvatar({
+  name,
+  url,
+  small = false,
+}: {
+  name: string;
+  url: string | null;
+  small?: boolean;
+}) {
+  return (
+    <span className={`cp-avi${small ? ' cp-avi--sm' : ''}`} title={name} aria-hidden="true">
+      {url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt="" loading="lazy" />
+      ) : (
+        initials(name)
+      )}
+    </span>
+  );
+}
+
+function SummaryRow({
+  icon,
+  label,
+  value,
+  onClick,
+  href,
+  dot,
+}: {
+  icon: string;
+  label: string;
+  value: ReactNode;
+  onClick?: () => void;
+  href?: string;
+  dot?: 'good' | 'warn' | 'bad';
+}) {
+  const inner = (
+    <>
+      <span className="cp-fr__i">
+        <Icon name={icon} size={15} />
+      </span>
+      <span className="cp-fr__l">{label}</span>
+      <span className="cp-fr__v">
+        {dot && <i className="cp-qdot" data-tone={dot} aria-hidden="true" />}
+        <span>{value}</span>
+      </span>
+      <Icon name="chevron-right" size={12} />
+    </>
+  );
+  return href ? (
+    <Link className="cp-fr" href={href}>
+      {inner}
+    </Link>
+  ) : (
+    <button type="button" className="cp-fr" onClick={onClick}>
+      {inner}
+    </button>
+  );
+}
+
+const plainButton = {
+  border: 0,
+  background: 'none',
+  padding: 0,
+  textAlign: 'left',
+  cursor: 'pointer',
+  width: '100%',
+} as const;
+
+/* ---------- Où ---------- */
+
+const PACE_SHORT = {
+  tranquille: 'compas.cards.paceTranquille',
+  normal: 'compas.cards.paceNormal',
+  soutenu: 'compas.cards.paceSoutenu',
+} as const;
+const NIGHTS_SHORT = {
+  bivouac: 'compas.cards.nightsBivouac',
+  refuge: 'compas.cards.nightsRefuge',
+  hebergement: 'compas.cards.nightsHebergement',
+  mixte: 'compas.cards.nightsMixte',
+} as const;
+
+/**
+ * « Dis-le » sur la carte Où (maquette finale) : la phrase ouvre le tiroir Où,
+ * dont le « Dis-le » la comprend aussitôt. Rien n'est appliqué sans coche.
+ * L'exemple est une phrase que le Compas sait réellement lire (un « petit
+ * budget » sans montant ne donnerait rien : aucun montant n'est inventé).
+ */
+function CardSay({ ctl }: { ctl: CompasCtl }) {
+  const { t } = useTranslation();
+  const [text, setText] = useState('');
+  return (
+    <form
+      className="cp-intent"
+      aria-label={t('compas.cards.sayForm')}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const say = text.trim();
+        if (say.length < 2) return;
+        ctl.open({ kind: 'step', step: 'ou', flow: 'activite', hint: { say } }); // i18n-ok
+        setText('');
+      }}
+    >
+      <Icon name="search" size={15} aria-hidden="true" />
+      <label className="sr-only" htmlFor="cp-intent-input">
+        {t('compas.cards.say')}
+      </label>
+      <input
+        id="cp-intent-input"
+        value={text}
+        maxLength={280}
+        autoComplete="off"
+        enterKeyHint="go"
+        placeholder={t('compas.cards.sayPlaceholder')}
+        onChange={(e) => setText(e.target.value)}
+      />
+    </form>
+  );
+}
+
+export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
+  const { t, locale } = useTranslation();
+  const f = useCompasFormat();
+  const m = ctl.data.model;
+  const hours = tripHours(m, ctl.data.plannedDays);
+  const act = activityName(m.activity, locale);
+  const worst = m.weather.worstPrecipPct;
+  const toFind = ctl.lines.filter((l) => l.status !== 'owned').length;
+  const prefs = [
+    t(PACE_SHORT[m.preferences.pace]),
+    m.preferences.nights ? t(NIGHTS_SHORT[m.preferences.nights]) : null,
+    m.preferences.avoid.length
+      ? t('compas.cards.avoid', { what: m.preferences.avoid[0].toLowerCase() })
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const route = m.route.stepsCount
+    ? `${ctl.data.route.name ? `${ctl.data.route.name} · ` : ''}${f.km(m.route.distanceKm)}`
+    : t('compas.cards.toChoose');
+  const open = (flow: 'activite' | 'parcours' | 'quand' | 'preferences') => // i18n-ok
+    ctl.open({ kind: 'step', step: 'ou', flow }); // i18n-ok
+
+  return (
+    <>
+      <div>
+        <h2 className="cp-t2" id="cp-card-title">
+          {m.title}
+        </h2>
+        <p className="cp-sub">
+          {[
+            act,
+            classifyScale(scaleHours(hours, m.route.durationMin), locale)?.label ?? null,
+            hours != null ? formatHours(hours, locale) : null,
+            m.dates.label,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+      </div>
+
+      {ctl.data.canEdit && <CardSay ctl={ctl} />}
+
+      <DurationRuler ctl={ctl} />
+
+      <div className="cp-fsum cp-glass">
+        <SummaryRow
+          icon="flag"
+          label={t('compas.cards.rowActivity')}
+          value={act ?? t('compas.cards.toChoose')}
+          onClick={() => open('activite')}
+        />
+        <SummaryRow
+          icon="route"
+          label={t('compas.cards.rowRoute')}
+          value={route}
+          onClick={() => open('parcours')} // i18n-ok
+        />
+        <SummaryRow
+          icon="calendar"
+          label={t('compas.cards.rowWhen')}
+          value={m.dates.start ? m.dates.label : t('compas.cards.toChoose')}
+          dot={worst == null ? undefined : worst >= 70 ? 'bad' : worst >= 40 ? 'warn' : 'good'}
+          onClick={() => open('quand')} // i18n-ok
+        />
+        <SummaryRow
+          icon="heart"
+          label={t('compas.cards.rowPrefs')}
+          value={prefs}
+          onClick={() => open('preferences')}
+        />
+        <SummaryRow
+          icon="backpack"
+          label={t('compas.cards.rowBag')}
+          // Jamais « Complet » : rien ne dit qu'un sac est complet, seulement
+          // ce qu'il contient et ce qui est emballé.
+          value={`${
+            toFind
+              ? t('compas.cards.bagToFind', { count: formatNumber(toFind, {}, locale) })
+              : ctl.lines.length
+                ? countText(
+                    t,
+                    locale,
+                    ctl.lines.length,
+                    'compas.cards.bagItemsOne',
+                    'compas.cards.bagItemsOther'
+                  )
+                : t('compas.cards.bagCompose')
+          }${
+            m.kit.packedPct != null
+              ? ` · ${t('compas.cards.packedPct', { pct: formatNumber(m.kit.packedPct, {}, locale) })}`
+              : ''
+          }`}
+          onClick={onKit}
+        />
+      </div>
+
+      <OriginLine ctl={ctl} />
+
+      {ctl.data.canEdit && <AutofillLine ctl={ctl} />}
+    </>
+  );
+}
+
+/**
+ * Le départ dit (« depuis Lyon », `metadata.compas.origin`) reste visible : c'est de là que le
+ * trajet d'approche se chiffre, avant le domicile et la position. Il s'efface ici ; « Annuler »
+ * le rétablit tel que rangé (même point, sans nouvelle recherche). PLAN-100 4.3.
+ */
+function OriginLine({ ctl }: { ctl: CompasCtl }) {
+  const { t } = useTranslation();
+  const said = ctl.data.originSaid ?? null;
+  if (!said) return null;
+  const { tripId, slug } = ctl.data.model;
+  const [before, after] = t('compas.cards.originSaid').split('{place}');
+  return (
+    <div className="cp-autofill">
+      <p className="cp-sub">
+        {before}
+        <b>{said.name}</b>
+        {after}
+      </p>
+      {ctl.data.canEdit && (
+        <button
+          type="button"
+          className="cp-btn cp-btn--tap"
+          disabled={ctl.busy}
+          onClick={() =>
+            void ctl.run(
+              t('compas.cards.originCleared', { place: said.name }),
+              () => compasSetOriginAction({ tripId, tripSlug: slug, place: null }),
+              () => compasSetOriginAction({ tripId, tripSlug: slug, place: said.name, restore: said })
+            )
+          }
+        >
+          {t('compas.cards.clearOrigin')}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Trace du préremplissage, toujours visible : ce qu'il a écrit peut être
+ * annulé à tout moment, et relancé après une annulation.
+ */
+function AutofillLine({ ctl }: { ctl: CompasCtl }) {
+  const { t } = useTranslation();
+  const { autofill, autofillNotes, model } = ctl.data;
+  const [before, after] = t('compas.cards.autofillDone').split('{strong}');
+  if (autofill === 'done')
+    return (
+      <div className="cp-autofill">
+        <p className="cp-sub">
+          {before}
+          <b>{t('compas.cards.autofillBy')}</b>
+          {after}
+        </p>
+        {autofillNotes && autofillNotes.length > 0 && (
+          <ul className="cp-props">
+            {autofillNotes.map((n) => (
+              <li key={n}>{n}</li>
+            ))}
+          </ul>
+        )}
+        <button
+          type="button"
+          className="cp-btn"
+          disabled={ctl.busy}
+          onClick={() =>
+            void ctl.run(t('compas.screen.prepUndone'), () =>
+              compasUndoAutofillAction({ tripId: model.tripId, tripSlug: model.slug })
+            )
+          }
+        >
+          {t('compas.cards.undoPrep')}
+        </button>
+      </div>
+    );
+  if (autofill === 'undone' && ctl.autofill && (model.dates.start || ctl.data.plannedDays))
+    return (
+      <button type="button" className="cp-btn cp-btn--pg" disabled={ctl.busy} onClick={ctl.autofill}>
+        {t('compas.cards.prepareAll')}
+      </button>
+    );
+  return null;
+}
+
+/* ---------- Le budget dans d'autres devises ---------- */
+
+/**
+ * Le même budget dans la devise du voyageur (profil) et celle du pays (PLAN-100 4.2, 4.6) :
+ * le calcul reste dans la devise du voyage, chaque montant converti dit son taux, sa date
+ * et sa source juste dessous. Rien n'est stocké ; sans taux, la ligne dit « indisponible ».
+ */
+export function BudgetAlso({
+  fx,
+  currency,
+  items,
+}: {
+  fx: BudgetFxData | null | undefined;
+  currency: string;
+  items: Array<{ label: string; amount: number | null | undefined }>;
+}) {
+  const { t } = useTranslation();
+  const lines = budgetInOtherCurrencies(items, currency, fx);
+  if (!lines.length) return null;
+  return (
+    <div data-testid="budget-also">
+      {lines.map((l) => (
+        <div key={l.currency}>
+          <p className="cp-sub">
+            <b>{l.title}</b>
+            {l.parts.map((p) => ` · ${p.label} ${p.text}`).join('')}
+          </p>
+          <p className="cp-disc">
+            {l.unavailable
+              ? l.note
+              : currency === 'EUR'
+                ? t('compas.cards.fxIndicativeEur', { note: l.note })
+                : t('compas.cards.fxIndicative', { note: l.note, currency })}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- Nous : équipe et budget ---------- */
+
+export function NousCard({ ctl }: { ctl: CompasCtl }) {
+  const { t, locale } = useTranslation();
+  const { crew, budget, dates } = ctl.data.model;
+  const engaged = budget.planned + budget.spent;
+  const share = budget.target ? engaged / budget.target : null;
+  // L'enveloppe ramenée à une journée et une personne : c'est un repère de
+  // préparation. Les dépenses engagées sont déjà affichées juste au-dessus.
+  const envelopePerDay =
+    budget.target != null && dates.days && crew.size > 0
+      ? budget.target / crew.size / dates.days
+      : null;
+  const cap = capacityCounts(crew.loads);
+  const [capBefore, capAfter] = t('compas.cards.capacity').split('{count}');
+  const [formBefore, formAfter] = t('compas.cards.formalities').split('{amount}');
+  const money = (n: number) => moneyIn(locale, n, budget.currency);
+  const yourShare =
+    budget.perPerson != null
+      ? t('compas.cards.yourShare', { amount: money(budget.perPerson) })
+      : null;
+  const envelope =
+    budget.target == null
+      ? t('compas.cards.noEnvelope')
+      : [
+          t('compas.cards.envelope', { amount: money(budget.target) }),
+          envelopePerDay != null
+            ? t('compas.cards.envelopePerDay', { amount: money(Math.round(envelopePerDay)) })
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' · ');
+
+  return (
+    <>
+      <div className="cp-between">
+        <div className="cp-av">
+          {crew.loads.slice(0, 6).map((m) => (
+            <MemberAvatar key={m.userId} name={m.name} url={m.avatarUrl} />
+          ))}
+          {/* Les avatars sont décoratifs (nom en info-bulle) : les noms sont dits ici. */}
+          <span className="sr-only">
+            {t('compas.cards.team', {
+              names: crew.loads
+                .slice(0, 6)
+                .map((m) => m.name)
+                .join(', '),
+            })}
+          </span>
+          <button
+            type="button"
+            className="cp-avadd"
+            aria-label={t('compas.cards.seeWho')}
+            onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
+          >
+            <Icon name="users" size={15} />
+          </button>
+        </div>
+        <span className="cp-sub">
+          {teamCountLabel(
+            teamCount(crew.size, crew.loads.length, ctl.data.pendingInvites?.length ?? 0),
+            locale
+          )}
+        </span>
+      </div>
+      <p className="cp-sub">
+        {capBefore}
+        <b>
+          {cap.declared} / {crew.loads.length}
+        </b>
+        {capAfter}
+        {cap.estimated > 0 ? ` · ${t('compas.cards.capEstimated', { count: cap.estimated })}` : ''}
+        {` · ${
+          crew.pace.slowest
+            ? t('compas.cards.paceOf', { name: crew.pace.slowest.name })
+            : t('compas.members.paceUnknown')
+        }`}
+      </p>
+      <button
+        type="button"
+        className="cp-bigsum"
+        style={plainButton}
+        onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'budget' })} // i18n-ok
+      >
+        <b>{moneyIn(locale, engaged, budget.currency)}</b>
+        <span className="cp-sub">
+          {t('compas.cards.plannedSpent')}
+          {yourShare ? ` · ${yourShare}` : ''}
+        </span>
+      </button>
+      <BudgetAlso
+        fx={ctl.data.budgetFx}
+        currency={budget.currency}
+        items={[{ label: t('compas.cards.plannedSpent'), amount: engaged }]}
+      />
+      {ctl.data.formalities && (
+        <p className="cp-sub" data-testid="formalities-card">
+          {formBefore}
+          <b>{moneyIn(locale, ctl.data.formalities.perPerson, ctl.data.formalities.currency)}</b>
+          {formAfter}
+        </p>
+      )}
+      {share != null && (
+        <div
+          className="cp-bar"
+          data-tone={budget.overTarget ? 'bad' : share > 0.9 ? 'warn' : undefined}
+          role="img"
+          aria-label={t('compas.cards.budgetCommitted', { pct: Math.round(share * 100) })}
+        >
+          <i style={{ width: `${Math.min(100, share * 100)}%` }} />
+        </div>
+      )}
+      <p className="cp-sub">{envelope}</p>
+      {budget.overTarget && (
+        <button
+          type="button"
+          className="cp-alertline"
+          onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'budget' })} // i18n-ok
+        >
+          <Icon name="alert-triangle" size={16} />
+          <span className="cp-alertline__t">{t('compas.cards.overEnvelope')}</span>
+          <Icon name="chevron-right" size={14} />
+        </button>
+      )}
+      <button
+        type="button"
+        className="cp-btn cp-btn--soft"
+        onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'equipe' })}
+      >
+        <Icon name="users" size={16} />
+        {t('compas.cards.teamBags')}
+      </button>
+    </>
+  );
+}
+
+/* ---------- Réserver ---------- */
+
+export type VerticalId = 'hotel' | 'trajet' | 'activity'; // i18n-ok : identifiant
+
+export function verticalOf(v: string): VerticalId {
+  if (v === 'hotel') return 'hotel';
+  if (v === 'activity') return 'activity';
+  return 'trajet'; // i18n-ok : identifiant
+}
+
+export const LIVE_BOOKING = (s: string) =>
+  s !== 'cancelled' && s !== 'expired' && s !== 'failed' && s !== 'refunded';
+
+export function ResaCard({ ctl }: { ctl: CompasCtl }) {
+  const { t, locale } = useTranslation();
+  const { bookings } = ctl.data.model;
+  const list = ctl.data.bookings.filter((b) => LIVE_BOOKING(b.status));
+  const byDay = new Map<number, string | null>();
+  for (const s of ctl.data.itinerary) byDay.set(s.day, byDay.get(s.day) ?? notedStay(s.accommodation));
+  const days = [...byDay.entries()].sort((a, b) => a[0] - b[0]);
+  const lastDay = days.length ? days[days.length - 1][0] : 0;
+  const live = ctl.data.providers.routestack !== 'disabled';
+
+  return (
+    <>
+      {/* Maquette finale : six catégories. Le badge compte les réservations
+          réelles ; Extras sans offre partenaire est grisé. */}
+      <div className="cp-tchips cp-tchips--six">
+        {RESA_CATS.map((c) => {
+          const booked =
+            c.id === 'randos'
+              ? ctl.data.route.id != null
+                ? 1
+                : 0
+              : list.filter((b) => bookingCat(b.vertical) === c.id).length;
+          const offers = ctl.data.affiliateLinks.filter(
+            (l) => offerCat(l.category) === c.id
+          ).length;
+          // Activités, Vols, Trajets se cherchent en direct ; Extras liste les offres.
+          const usable = c.id !== 'extras' || booked + offers > 0;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              className="cp-tchip"
+              data-on={booked ? '1' : undefined}
+              disabled={!usable}
+              aria-label={usable ? c.title : t('compas.cards.noOffer', { title: c.title })}
+              onClick={() =>
+                c.id === 'randos'
+                  ? ctl.open({ kind: 'step', step: 'ou', flow: 'parcours' }) // i18n-ok
+                  : c.id === 'nuits' // i18n-ok : identifiant
+                    ? ctl.open({ kind: 'step', step: 'resa', flow: 'nuits' }) // i18n-ok
+                    : ctl.open({ kind: 'step', step: 'resa', flow: 'offres', hint: { resa: c.id } })
+              }
+            >
+              <Icon name={c.icon} size={17} />
+              <span>{c.label}</span>
+              {booked > 0 && <span className="cp-tchip__bd">{booked}</span>}
+            </button>
+          );
+        })}
+      </div>
+      {days.length > 0 && (
+        <div className="cp-days">
+          {days.slice(0, 5).map(([day, stay]) => {
+            const needNight = days.length > 1 && day < lastDay && !stay;
+            return (
+              <button
+                key={day}
+                type="button"
+                className="cp-day"
+                onClick={() =>
+                  ctl.open({ kind: 'step', step: 'resa', flow: 'nuits', hint: { day } }) // i18n-ok
+                }
+              >
+                <b>{t('compas.cards.day', { day })}</b>
+                <small>
+                  {stay ?? (needNight ? t('compas.cards.nightToFind') : t('compas.cards.free'))}
+                </small>
+                <span className="cp-slots">
+                  {stay && (
+                    // Noté n'est pas réservé : pastille neutre, jamais la
+                    // teinte « confirmée » d'une réservation réelle.
+                    <span
+                      className="cp-slot"
+                      data-s="noted"
+                      role="img"
+                      aria-label={t('compas.cards.noted', { stay })}
+                      title={t('compas.cards.noted', { stay })}
+                    >
+                      H
+                    </span>
+                  )}
+                  {needNight && (
+                    <span
+                      className="cp-slot"
+                      data-s="need"
+                      role="img"
+                      aria-label={t('compas.cards.nightNoStay')}
+                      title={t('compas.cards.nightNoStay')}
+                    >
+                      H
+                    </span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <div className="cp-sumline">
+        <span>
+          <b>{formatNumber(bookings.total, {}, locale)}</b>{' '}
+          {plural(locale, bookings.total, {
+            one: t('compas.cards.bookingWordOne'),
+            other: t('compas.cards.bookingWordOther'),
+          })}
+          {' · '}
+          {countText(
+            t,
+            locale,
+            bookings.confirmed,
+            'compas.cards.confirmedOne',
+            'compas.cards.confirmedOther'
+          )}
+          {' · '}
+          {t('compas.cards.pending', { count: formatNumber(bookings.pending, {}, locale) })}
+        </span>
+        <span className="cp-num cp-sub">{moneyIn(locale, bookings.amountEur)}</span>
+      </div>
+      <p className="cp-disc cp-hide-sm">
+        {t('compas.cards.affiliates')} {live ? t('compas.cards.liveOn') : t('compas.cards.liveOff')}
+      </p>
+    </>
+  );
+}
+
+/* ---------- Verdict (sans score) ---------- */
+
+const VERDICT: Record<
+  CompasModel['verdict']['level'],
+  { label: string; labelKey: TranslationKey; tone: Tone; icon: string; color: string }
+> = {
+  go: {
+    label: FR_T('compas.cards.verdictGo'),
+    labelKey: 'compas.cards.verdictGo',
+    tone: 'good',
+    icon: 'check-circle',
+    color: 'var(--cp-good)',
+  },
+  vigilance: {
+    label: FR_T('compas.cards.verdictVigilance'),
+    labelKey: 'compas.cards.verdictVigilance',
+    tone: 'warn',
+    icon: 'alert-triangle',
+    color: 'var(--lkv-warning)',
+  },
+  bloque: {
+    label: FR_T('compas.cards.verdictBlocked'),
+    labelKey: 'compas.cards.verdictBlocked',
+    tone: 'bad',
+    icon: 'shield-alert',
+    color: 'var(--cp-bad)',
+  },
+  incomplet: {
+    label: FR_T('compas.cards.verdictIncomplete'),
+    labelKey: 'compas.cards.verdictIncomplete',
+    tone: 'soft',
+    icon: 'clipboard-list',
+    color: 'var(--cp-ink3)',
+  },
+};
+
+export function verdictMeta(level: CompasModel['verdict']['level']) {
+  return VERDICT[level];
+}
+
+const AXIS_LABEL = {
+  physique: 'compas.cards.axisPhysique',
+  technique: 'compas.cards.axisTechnique',
+  conjoncturel: 'compas.cards.axisConjoncturel',
+} as const;
+const AXIS_LEVEL = {
+  ok: 'compas.cards.levelOk',
+  vigilance: 'compas.cards.levelVigilance',
+  bloque: 'compas.cards.levelBlocked',
+  non_evalue: 'compas.cards.levelNotAssessed',
+} as const;
+
+export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
+  const { t, locale } = useTranslation();
+  const { verdict } = ctl.data.model;
+  const v = VERDICT[verdict.level];
+  const shown = verdict.reasons.slice(0, 4);
+  const more = verdict.reasons.length - shown.length;
+  // Le texte officiel d'une alerte (description, consignes) s'ouvre dans « Signaux du verdict ».
+  const withOfficial = new Set(
+    ctl.data.danger.signals.filter((x) => x.official).map((x) => `${x.source}|${x.label}`)
+  );
+  const hasOfficial = shown.some((r) => withOfficial.has(`${r.source}|${r.label}`));
+  return (
+    <>
+      <div className="cp-between">
+        <span className="cp-vl" style={{ ['--c' as string]: v.color }}>
+          <i />
+          {t(v.labelKey)}
+        </span>
+        <span className="cp-sub">{t('compas.cards.signals')}</span>
+      </div>
+      <div className="cp-tchips" role="group" aria-label={t('compas.cards.dangerByAxis')}>
+        {(['physique', 'technique', 'conjoncturel'] as const).map((axis) => {
+          const a = ctl.data.danger.axes[axis];
+          return (
+            <span
+              key={axis}
+              className="cp-tchip cp-tchip--axis"
+              data-on={a.level === 'vigilance' || a.level === 'bloque' ? '1' : undefined}
+              title={a.note || a.partial || undefined}
+            >
+              <span>{t(AXIS_LABEL[axis])}</span>
+              <span className="cp-tchip__bd">
+                {a.level === 'ok' && a.partial
+                  ? t('compas.cards.levelOkPartial')
+                  : t(AXIS_LEVEL[a.level])}
+              </span>
+              {/* L'explication n'est pas qu'une info-bulle : elle est lue avec la pastille. */}
+              {(a.note || a.partial) && <span className="sr-only">. {a.note || a.partial}</span>}
+            </span>
+          );
+        })}
+      </div>
+      {shown.length ? (
+        <ul className="cp-why">
+          {shown.map((r) => (
+            <li key={`${r.source}-${r.label}`}>
+              <i data-tone={r.severity} aria-hidden="true" />
+              <span>
+                {r.label}
+                <small>{t('compas.cards.source', { source: r.source })}</small>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="cp-sub">{t('compas.cards.noSignal')}</p>
+      )}
+      {shown.some((r) => isMeteoalarmSource(r.source)) && (
+        <MeteoalarmNotice readAt={ctl.data.alertsReadAt} />
+      )}
+      <WorldAlertNotices sources={shown.map((r) => r.source)} readAt={ctl.data.alertsReadAt} />
+      <button
+        type="button"
+        className="cp-btn cp-btn--soft"
+        onClick={() =>
+          ctl.open({
+            kind: 'step',
+            step: 'verdict',
+            flow: more > 0 || hasOfficial ? 'raisons' : 'sources',
+          })
+        }
+      >
+        <Icon name="info" size={16} />
+        {more > 0
+          ? countText(t, locale, more, 'compas.cards.moreSignalsOne', 'compas.cards.moreSignalsOther')
+          : hasOfficial
+            ? t('compas.cards.officialDetails')
+            : t('compas.cards.sourcesDetails')}
+      </button>
+    </>
+  );
+}
+
+/* ---------- Kit ---------- */
+
+export function KitCard({ ctl }: { ctl: CompasCtl }) {
+  const { t, locale } = useTranslation();
+  const f = useCompasFormat();
+  const pounds = useCompasUnits().weight === 'lb';
+  const count = (n: number, one: TranslationKey, other: TranslationKey) =>
+    countText(t, locale, n, one, other);
+  const { kit, crew, inventory } = ctl.data.model;
+  const lines = ctl.lines;
+  const packed = lines.filter((l) => l.packed).length;
+  const weightTotal = lines.reduce((t, l) => t + (l.vital ? 2 : 1), 0);
+  const pct = lines.length
+    ? Math.round(
+        (lines.reduce((t, l) => t + (l.packed ? (l.vital ? 2 : 1) : 0), 0) / weightTotal) * 100
+      )
+    : null;
+  const total = kit.baseGrams + kit.consumableGrams + kit.wornGrams;
+  const missing = kit.vitalMissing.length;
+  // L'état se lit sur le sac réel : un sac vide n'est ni prêt ni complet, et
+  // « rien de vital ne manque » ne se dit que s'il y a quelque chose à vérifier.
+  const empty = lines.length === 0;
+  const packedOf = t('compas.cards.packedOf', {
+    packed: formatNumber(packed, {}, locale),
+    total: formatNumber(lines.length, {}, locale),
+  });
+  const readiness = empty
+    ? { title: t('compas.cards.bagEmpty'), detail: t('compas.cards.bagEmptyDetail') }
+    : missing
+      ? {
+          title: t('compas.cards.notReady'),
+          detail: `${packedOf} · ${count(missing, 'compas.cards.vitalToFindOne', 'compas.cards.vitalToFindOther')}`,
+        }
+      : {
+          title:
+            packed < lines.length ? t('compas.cards.inPrep') : t('compas.cards.readyChecked'),
+          detail: `${packedOf} · ${t('compas.cards.noVitalMissing')}`,
+        };
+
+  return (
+    <>
+      <div>
+        <div className="cp-weights" aria-hidden="true">
+          {total > 0 && (
+            <>
+              <i style={{ flex: kit.baseGrams, background: 'var(--lkv-primary)' }} />
+              <i style={{ flex: kit.consumableGrams, background: 'var(--lkv-secondary-subtle)' }} />
+              <i style={{ flex: kit.wornGrams, background: 'var(--lkv-info)' }} />
+            </>
+          )}
+        </div>
+        <div className="cp-wl">
+          <span style={{ ['--c' as string]: 'var(--lkv-primary)' }}>
+            {t('compas.cards.weightBase', { weight: f.kg(kit.baseGrams) })}
+          </span>
+          <span style={{ ['--c' as string]: 'var(--lkv-secondary-subtle)' }}>
+            {t('compas.cards.weightConsumable', { weight: f.kg(kit.consumableGrams) })}
+          </span>
+          <span style={{ ['--c' as string]: 'var(--lkv-info)' }}>
+            {t('compas.cards.weightWorn', { weight: f.kg(kit.wornGrams) })}
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        className="cp-ready"
+        style={plainButton}
+        onClick={() =>
+          ctl.open({
+            kind: 'step',
+            step: 'kit',
+            flow: empty ? 'mes-kits' : kit.toAcquire.length ? 'trouver' : 'emballer',
+          })
+        }
+      >
+        <div>
+          <div className="cp-hl">{readiness.title}</div>
+          <div className="cp-sub">{readiness.detail}</div>
+        </div>
+        <b>{pct == null ? '—' : t('compas.cards.pct', { pct: formatNumber(pct, {}, locale) })}</b>
+      </button>
+      {ctl.data.kitAdvice.length > 0 && (
+        <button
+          type="button"
+          className="cp-btn cp-btn--soft"
+          onClick={() => ctl.open({ kind: 'step', step: 'kit', flow: 'conseils' })}
+        >
+          <Icon name="sparkles" size={16} />
+          {(() => {
+            const open = ctl.data.kitAdvice.filter((a) => !a.covered).length;
+            return open
+              ? count(open, 'compas.cards.adviceOne', 'compas.cards.adviceOther')
+              : t('compas.cards.adviceCovered');
+          })()}
+        </button>
+      )}
+      <p className="cp-sub cp-hide-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Icon name="package" size={13} />
+        <span>
+          {count(inventory.total, 'compas.cards.inventoryOne', 'compas.cards.inventoryOther')}
+          {inventory.lent
+            ? ` · ${count(inventory.lent, 'compas.cards.lentOne', 'compas.cards.lentOther')}`
+            : ''}
+          {kit.unknownWeightCount
+            ? ` · ${t('compas.cards.toWeighCount', { count: formatNumber(kit.unknownWeightCount, {}, locale) })}`
+            : ''}
+        </span>
+      </p>
+      <div className="cp-mbs">
+        {crew.loads.map((m) => {
+          const r = m.ratio;
+          return (
+            <button
+              key={m.userId}
+              type="button"
+              className="cp-mb"
+              onClick={() => ctl.open({ kind: 'bag', userId: m.userId })}
+              aria-label={t('compas.cards.seeBag', { name: m.name })}
+            >
+              <MemberAvatar name={m.name} url={m.avatarUrl} small />
+              <span
+                className="cp-bar"
+                data-tone={r == null ? undefined : r > 1 ? 'bad' : r > 0.9 ? 'warn' : undefined}
+              >
+                <i style={{ width: r == null ? '0%' : `${Math.min(100, r * 100)}%` }} />
+              </span>
+              <b>
+                {f.kg(m.carriedGrams)}
+                {m.capacityKg != null
+                  ? pounds
+                    ? ` / ${f.kg(m.capacityKg * 1000)}`
+                    : ` / ${m.capacityKg} kg`
+                  : ''}
+              </b>
+            </button>
+          );
+        })}
+      </div>
+      {crew.unassignedShared.length > 0 && (
+        <button
+          type="button"
+          className="cp-alertline"
+          onClick={() => ctl.open({ kind: 'step', step: 'kit', flow: 'sacs' })}
+        >
+          <Icon name="users" size={16} />
+          <span className="cp-alertline__t">
+            {count(
+              crew.unassignedShared.length,
+              'compas.cards.sharedOne',
+              'compas.cards.sharedOther'
+            )}
+          </span>
+          <Icon name="chevron-right" size={14} />
+        </button>
+      )}
+    </>
+  );
+}

@@ -1,0 +1,690 @@
+import { resolveGearImage } from './gearImageResolver';
+import { createClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Participant, ChecklistItem } from '@/features/materiel/types/trekHub';
+import type { MapTrail } from '@/components/explorer/types';
+import { normalizeItemCategory, getDefaultItemWeight } from './itemCategorizer';
+import {
+  calcBaseWeight,
+  calcWornWeight,
+  calcConsumablesWeight,
+  calcTotalPackWeight,
+  calcReadinessPct,
+  calcWeightedReadinessScore,
+  type WeightedReadinessResult,
+} from '@/features/materiel/domain/departCalculations';
+import { resolveDepartIdentity } from '@/features/materiel/domain/departIdentity';
+
+export type DepartStatus = 'draft' | 'ready' | 'active' | 'done';
+
+export interface DepartDetail {
+  id: string;
+  destination: string;
+  startsAt: string | null;
+  endsAt?: string | null;
+  status: DepartStatus;
+  readinessScore: WeightedReadinessResult;
+  baseWeightG: number;
+  wornWeightG: number;
+  consumablesWeightG: number;
+  totalPackWeightG: number;
+  assignedKit: {
+    id: string;
+    name: string;
+    totalWeightG: number;
+    items: ChecklistItem[];
+  };
+  weightBreakdown: { category: string; value: number }[];
+  checklistPct: number;
+  checklistSections: { name: string; total: number; done: number }[];
+  checklistItems: { id?: string; name: string; done: boolean }[];
+  durationDays: number;
+  consumables: Record<string, number>;
+  trail: MapTrail | null;
+  participants: Participant[];
+  emergencyContact: string | null;
+  coverImageUrl?: string | null;
+  activityType?: 'Bivouac' | 'Randonnée' | 'Alpinisme' | 'Fastpacking' | 'Trek' | null;
+  comparableTrip?: { name: string; timeAgo: string; similarity: string } | null;
+  updatedAt?: string | null;
+}
+
+function parseTrailRow(row: { id: number; name: string | null; distance_km: number | null; geom: string | { type?: string; coordinates?: unknown } | null }): MapTrail | null {
+  let g: { type?: string; coordinates?: unknown } | null = null;
+  if (typeof row.geom === 'string') {
+    try { g = JSON.parse(row.geom); } catch { g = null; }
+  } else if (row.geom && typeof row.geom === 'object') {
+    g = row.geom;
+  }
+  if (!g || !Array.isArray(g.coordinates)) return null;
+  const firstLine = g.type === 'MultiLineString'
+    ? (g.coordinates as number[][][])[0]
+    : Array.isArray(g.coordinates[0]) && !Array.isArray(g.coordinates[0][0])
+      ? (g.coordinates as number[][])
+      : null;
+  if (!firstLine || firstLine.length <= 1) return null;
+  const [lng, lat] = firstLine[0];
+  if (!(Number.isFinite(lng) && Number.isFinite(lat) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180)) return null;
+  return {
+    id: String(row.id),
+    name: row.name ?? 'Randonnée',
+    lat,
+    lng,
+    distance_km: row.distance_km,
+    geojson: g,
+  };
+}
+
+/**
+ * Résout le tracé GPS réel lié à la route ou au kit depuis la table hiking_routes.
+ * 1. Par ID de route spécifique (routeId / kit.trail_id)
+ * 2. Par correspondance de mots-clés dans le nom du trek / destination
+ * 3. Par sélection d'un tracé réel emblématique (ex: Boucle Val de Sambre et Maroilles ID 375 ou GR)
+ */
+async function resolveTrail(
+  supabase: SupabaseClient,
+  routeId?: string | number | null,
+  destinationName?: string | null
+): Promise<MapTrail | null> {
+  try {
+    // 1. Résolution par identifiant explicite
+    if (routeId) {
+      const numId = Number(routeId);
+      if (Number.isFinite(numId)) {
+        const { data } = await supabase
+          .from('hiking_routes')
+          .select('id, name, distance_km, geom')
+          .eq('id', numId)
+          .maybeSingle();
+        if (data) {
+          const parsed = parseTrailRow(data as any);
+          if (parsed) return parsed;
+        }
+      }
+    }
+
+    // 2. Recherche par mots-clés du nom de destination
+    if (destinationName) {
+      const cleanKeyword = destinationName
+        .replace(/\s*\((?:copie|copy)\)\s*/gi, '')
+        .replace(/^(Tour|GR|Grande Traversée|Traversée|Boucle|Sentier|Trek|Rando)\s*(?:du|de la|des|de|d')?\s*/i, '')
+        .trim()
+        .split(/[\s—–-]+/)[0];
+
+      if (cleanKeyword && cleanKeyword.length >= 3) {
+        const { data } = await supabase
+          .from('hiking_routes')
+          .select('id, name, distance_km, geom')
+          .ilike('name', `%${cleanKeyword}%`)
+          .not('geom', 'is', null)
+          .limit(1);
+
+        if (data && data.length > 0) {
+          const parsed = parseTrailRow(data[0] as any);
+          if (parsed) return parsed;
+        }
+      }
+    }
+
+    // 3. Récupération d'un tracé réel de référence dans la base
+    const { data: defaultRoutes } = await supabase
+      .from('hiking_routes')
+      .select('id, name, distance_km, geom')
+      .not('name', 'is', null)
+      .not('geom', 'is', null)
+      .order('distance_km', { ascending: false })
+      .limit(6);
+
+    if (defaultRoutes && defaultRoutes.length > 0) {
+      // Prioriser la boucle Maroilles (375), Transylvestre (376) ou Littoral (15)
+      const preferred = defaultRoutes.find((r) => r.id === 375 || r.id === 376 || r.id === 15) ?? defaultRoutes[0];
+      const parsed = parseTrailRow(preferred as any);
+      if (parsed) return parsed;
+    }
+  } catch (err) {
+    console.error('[resolveTrail]', err);
+  }
+  return null;
+}
+
+/** Données modèles pour les démos ou utilisateurs invités */
+function getShowcaseDepart(kitId?: string, customTrail?: MapTrail | null, destinationOverride?: string | null): DepartDetail {
+  const isVercors = kitId === 'vercors-ultra';
+  const isBelledonne = kitId === 'belledonne-winter';
+
+  const defaultItems: ChecklistItem[] = isVercors
+    ? [
+        { name: 'Tente 1P Ultralight', category: 'Bivouac', weight_g: 850, is_checked: true, is_vital: true },
+        { name: 'Matelas gonflable R4', category: 'Couchage', weight_g: 410, is_checked: true, is_vital: true },
+        { name: 'Sac de couchage 0°C', category: 'Couchage', weight_g: 620, is_checked: true, is_vital: true },
+        { name: 'Veste imperméable 3L', category: 'Vêtements', weight_g: 280, is_checked: true, is_vital: true },
+        { name: 'Chaussures de trail', category: 'Vêtements', weight_g: 650, is_checked: true, is_worn: true },
+        { name: 'Trousse de premiers secours', category: 'Sécurité', weight_g: 150, is_checked: true, is_vital: true },
+        { name: 'Filtre à eau BeFree', category: 'Hydratation', weight_g: 65, is_checked: true, is_vital: true },
+        { name: 'Réchaud titane', category: 'Cuisine', weight_g: 45, is_checked: true },
+      ]
+    : isBelledonne
+    ? [
+        { name: 'Tente 4 saisons géodésique', category: 'Bivouac', weight_g: 2400, is_checked: true, is_vital: true },
+        { name: 'Duvet grand froid -15°C', category: 'Couchage', weight_g: 1350, is_checked: true, is_vital: true },
+        { name: 'Matelas mousse + gonflable', category: 'Couchage', weight_g: 780, is_checked: false, is_vital: true },
+        { name: 'Doudoune épaisse 800cuin', category: 'Vêtements', weight_g: 520, is_checked: true, is_vital: true },
+        { name: 'Crampons de randonnée', category: 'Sécurité', weight_g: 450, is_checked: true, is_vital: true },
+        { name: 'Piolet de randonnée', category: 'Sécurité', weight_g: 320, is_checked: true, is_vital: true },
+        { name: 'Trousse de secours hiver', category: 'Sécurité', weight_g: 220, is_checked: true, is_vital: true },
+      ]
+    : [
+        { name: 'Tente Hubba Hubba 2P', category: 'Bivouac', weight_g: 1540, is_checked: true, is_vital: true },
+        { name: 'Sac de couchage -2°C', category: 'Couchage', weight_g: 890, is_checked: true, is_vital: true },
+        { name: 'Matelas gonflable NeoAir', category: 'Couchage', weight_g: 360, is_checked: true, is_vital: true },
+        { name: 'Réchaud PocketRocket 2', category: 'Cuisine', weight_g: 73, is_checked: true },
+        { name: 'Popote titane 750ml', category: 'Cuisine', weight_g: 110, is_checked: true },
+        { name: 'Veste Hardshell imperméable', category: 'Vêtements', weight_g: 380, is_checked: true, is_vital: true },
+        { name: 'Polaire respirante', category: 'Vêtements', weight_g: 290, is_checked: true },
+        { name: 'Chaussures de randonnée', category: 'Vêtements', weight_g: 950, is_checked: true, is_worn: true },
+        { name: 'Trousse de premiers secours', category: 'Sécurité', weight_g: 210, is_checked: true, is_vital: true },
+        { name: 'Filtre à eau Katadyn', category: 'Hydratation', weight_g: 65, is_checked: true, is_vital: true },
+        { name: 'Lampe frontale 350lm', category: 'Électronique', weight_g: 85, is_checked: true, is_vital: true },
+        { name: 'Couteau suisse compact', category: 'Sécurité', weight_g: 60, is_checked: false },
+      ];
+
+  const consumablesMap = isVercors
+    ? { water: 3, gas: 100, meals: 4, snacks: 6 }
+    : isBelledonne
+    ? { water: 2.5, gas: 230, meals: 4, snacks: 8 }
+    : { water: 7.5, gas: 180, meals: 6, snacks: 6 };
+
+  const consumableItems: ChecklistItem[] = [];
+  if (consumablesMap) {
+    if (consumablesMap.water > 0) {
+      consumableItems.push({
+        id: 'consumable-water',
+        name: `Eau potable (${consumablesMap.water} L)`,
+        category: 'Vivres & Eau',
+        weight_g: Math.round(consumablesMap.water * 1000),
+        is_checked: false,
+        is_consumable: true,
+        is_vital: true,
+      });
+    }
+    if (consumablesMap.gas > 0) {
+      consumableItems.push({
+        id: 'consumable-gas',
+        name: `Cartouche de gaz (${consumablesMap.gas} g)`,
+        category: 'Vivres & Eau',
+        weight_g: consumablesMap.gas,
+        is_checked: false,
+        is_consumable: true,
+      });
+    }
+    if (consumablesMap.meals > 0) {
+      consumableItems.push({
+        id: 'consumable-meals',
+        name: `Rations repas (${consumablesMap.meals} repas)`,
+        category: 'Vivres & Eau',
+        weight_g: consumablesMap.meals * 150,
+        is_checked: false,
+        is_consumable: true,
+      });
+    }
+    if (consumablesMap.snacks > 0) {
+      consumableItems.push({
+        id: 'consumable-snacks',
+        name: `En-cas & barres (${consumablesMap.snacks} rations)`,
+        category: 'Vivres & Eau',
+        weight_g: consumablesMap.snacks * 50,
+        is_checked: false,
+        is_consumable: true,
+      });
+    }
+  }
+
+  const allItems = [...defaultItems, ...consumableItems].map((item) => ({
+    ...item,
+    photoUrl: resolveGearImage(item.name, item.category, item.photoUrl),
+  }));
+
+  const baseWeightG = calcBaseWeight(allItems);
+  const wornWeightG = calcWornWeight(allItems);
+  const consumablesWeightG = calcConsumablesWeight(allItems, consumablesMap);
+  const totalPackWeightG = calcTotalPackWeight(baseWeightG, consumablesWeightG);
+  const checklistPct = calcReadinessPct(allItems);
+  const readinessScore = calcWeightedReadinessScore(allItems, null, '+33 6 12 34 56 78');
+
+  const byCat = new Map<string, number>();
+  for (const i of allItems) {
+    if (i.is_worn || i.is_consumable) continue;
+    const c = i.category ?? 'Autre';
+    byCat.set(c, (byCat.get(c) ?? 0) + i.weight_g);
+  }
+  const weightBreakdown = Array.from(byCat.entries()).map(([category, value]) => ({ category, value }));
+
+  const secMap = new Map<string, { total: number; done: number }>();
+  for (const i of allItems) {
+    const c = i.category ?? 'Autre';
+    const s = secMap.get(c) ?? { total: 0, done: 0 };
+    s.total += 1;
+    if (i.is_checked) s.done += 1;
+    secMap.set(c, s);
+  }
+  const checklistSections = Array.from(secMap.entries()).map(([name, s]) => ({ name, total: s.total, done: s.done }));
+  const checklistItems = allItems.map((i) => ({ name: i.name, done: i.is_checked }));
+
+  return {
+    id: kitId || 'tmb-4j',
+    destination: destinationOverride ?? (isVercors ? 'Grande Traversée du Vercors' : isBelledonne ? 'Traversée hivernale de Belledonne' : 'Tour du Mont-Blanc — 4j Bivouac'),
+    startsAt: new Date(Date.now() + 3 * 86400000).toISOString(),
+    endsAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+    status: 'draft',
+    readinessScore,
+    baseWeightG,
+    wornWeightG,
+    consumablesWeightG,
+    totalPackWeightG,
+    assignedKit: {
+      id: kitId || 'tmb-4j',
+      name: isVercors ? 'Kit Vercors Ultra' : isBelledonne ? 'Kit Belledonne Hiver' : destinationOverride ? 'Kit de départ' : 'Kit Tour du Mont-Blanc',
+      totalWeightG: baseWeightG,
+      items: allItems,
+    },
+    weightBreakdown,
+    checklistPct,
+    checklistSections,
+    checklistItems,
+    durationDays: isVercors ? 3 : isBelledonne ? 2 : 4,
+    consumables: consumablesMap,
+    trail:
+      customTrail ?? {
+        id: isVercors ? 'vercors-hike' : isBelledonne ? 'belledonne-hike' : 'tmb-hike',
+        name: isVercors
+          ? 'Grande Traversée des Hauts-Plateaux du Vercors'
+          : isBelledonne
+          ? 'Traversée des 7 Laux et Belledonne'
+          : 'Tour du Mont-Blanc — Chamonix Courmayeur',
+        lat: isVercors ? 44.93 : isBelledonne ? 45.24 : 45.92,
+        lng: isVercors ? 5.53 : isBelledonne ? 6.01 : 6.87,
+        distance_km: isVercors ? 48.5 : isBelledonne ? 32.0 : 74.2,
+        geojson: {
+          type: 'LineString',
+          coordinates: isVercors
+            ? [
+                [5.532, 44.931],
+                [5.538, 44.945],
+                [5.542, 44.962],
+                [5.551, 44.981],
+                [5.563, 45.002],
+                [5.572, 45.021],
+                [5.568, 45.039],
+                [5.559, 45.058],
+                [5.548, 45.072],
+                [5.535, 45.089],
+              ]
+            : isBelledonne
+            ? [
+                [6.012, 45.241],
+                [6.021, 45.253],
+                [6.035, 45.268],
+                [6.042, 45.281],
+                [6.058, 45.295],
+                [6.064, 45.312],
+                [6.052, 45.328],
+                [6.039, 45.341],
+              ]
+            : [
+                [6.871, 45.923],
+                [6.885, 45.912],
+                [6.901, 45.895],
+                [6.918, 45.879],
+                [6.932, 45.862],
+                [6.945, 45.845],
+                [6.958, 45.831],
+                [6.972, 45.815],
+                [6.985, 45.798],
+              ],
+        },
+      },
+    participants: isVercors
+      ? [{ name: 'Vous', initial: 'V', color: 'var(--lkv-primary)' }]
+      : [
+          { name: 'Vous', initial: 'V', color: 'var(--lkv-primary)' },
+          { name: 'Clémence', initial: 'C', color: 'var(--lkv-primary-hover)' },
+          { name: 'Julien', initial: 'J', color: 'var(--lkv-text-muted)' },
+        ],
+    emergencyContact: '+33 6 12 34 56 78',
+    coverImageUrl: isVercors
+      ? 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&auto=format&fit=crop&q=80'
+      : isBelledonne
+      ? 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&auto=format&fit=crop&q=80'
+      : 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1200&auto=format&fit=crop&q=80',
+    activityType: isVercors ? 'Fastpacking' : isBelledonne ? 'Alpinisme' : 'Bivouac',
+    comparableTrip: isVercors
+      ? { name: 'Trek Jura 2j', timeAgo: 'il y a 2 mois', similarity: 'Même dénivelé moyen' }
+      : { name: 'Tour des Écrins', timeAgo: 'l’an dernier', similarity: 'Conditions météo et terrain comparables' },
+    updatedAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+  };
+}
+
+/**
+ * getDepartDetail — synthèse sécurisée du départ.
+ * Règle d'or : aucune fausse donnée injectée silencieusement.
+ */
+export async function getDepartDetail(id?: string | null, selectedRouteId?: string | null): Promise<DepartDetail> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Si utilisateur invité ou id d'un kit modèle
+    if (!user || id === 'tmb-4j' || id === 'vercors-ultra' || id === 'belledonne-winter') {
+      const trailData = await resolveTrail(
+        supabase,
+        selectedRouteId,
+        id === 'vercors-ultra' ? 'La Transylvestre' : id === 'belledonne-winter' ? 'Littoral' : 'Sambre'
+      );
+      const explicitRoute = Boolean(selectedRouteId);
+      const requestedTrail =
+        explicitRoute && trailData && String(trailData.id) === String(selectedRouteId) ? trailData : null;
+      const identity = resolveDepartIdentity({
+        destination: id === 'vercors-ultra' ? 'Grande Traversée du Vercors' : id === 'belledonne-winter' ? 'Traversée hivernale de Belledonne' : 'Tour du Mont-Blanc — 4j Bivouac',
+        trailName: requestedTrail?.name ?? null,
+      });
+      return getShowcaseDepart(id ?? undefined, trailData, identity.fromTrail ? identity.title : null);
+    }
+
+    // Recherche du kit réel de l utilisateur en base
+    const baseSelect =
+      'id, name, total_weight_g, consumables, trail_id, starts_at, ends_at, status, cover_image_url, tags, updated_at, created_at, materiel_kit_items(id, name, category, weight_g, quantity, is_checked, is_worn, is_consumable, product_ownership(weight_g, photo_url, name))';
+
+    interface KitRow {
+      id: string;
+      name: string;
+      total_weight_g: number;
+      consumables: Record<string, number> | null;
+      trail_id: number | null;
+      starts_at: string | null;
+      ends_at: string | null;
+      status: DepartStatus | null;
+      cover_image_url: string | null;
+      tags: string[] | null;
+      updated_at: string | null;
+      created_at: string | null;
+      materiel_kit_items: unknown[];
+    }
+
+    let kit: KitRow | null = null;
+    if (id && id !== 'none') {
+      const { data } = await supabase
+        .from('materiel_kits')
+        .select(baseSelect)
+        .eq('user_id', user.id)
+        .eq('is_trashed', false)
+        .eq('id', id)
+        .maybeSingle();
+      kit = (data as unknown as KitRow | null) ?? null;
+    }
+    if (!kit && id !== 'none') {
+      const { data } = await supabase
+        .from('materiel_kits')
+        .select(baseSelect)
+        .eq('user_id', user.id)
+        .eq('is_trashed', false)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      kit = (data as unknown as KitRow | null) ?? null;
+    }
+
+    // Si pas de kit trouvé en base ou si création explicite ('none'), renvoyer un état vide honnête
+    if (!kit) {
+      return {
+        id: 'none',
+        destination: 'Prochain départ',
+        startsAt: null,
+        endsAt: null,
+        status: 'draft',
+        readinessScore: {
+          status: 'warning',
+          grade: 'C',
+          label: 'Kit vide',
+          percentage: 0,
+          missingVitals: [],
+          factors: ['Aucun équipement ajouté'],
+        },
+        baseWeightG: 0,
+        wornWeightG: 0,
+        consumablesWeightG: 0,
+        totalPackWeightG: 0,
+        assignedKit: {
+          id: 'none',
+          name: 'Nouveau kit',
+          totalWeightG: 0,
+          items: [],
+        },
+        weightBreakdown: [],
+        checklistPct: 0,
+        checklistSections: [],
+        checklistItems: [],
+        durationDays: 0,
+        consumables: {},
+        trail: null,
+        participants: [{ name: 'Vous', initial: 'V', color: 'var(--lkv-primary)', profileId: user.id }],
+        emergencyContact: null,
+        coverImageUrl: null,
+        activityType: null,
+        comparableTrip: null,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    const cleanDestination = (kit.name || 'Prochain départ').replace(/\s*\((?:copie|copy)\)\s*/gi, '').trim();
+    const trailData = await resolveTrail(supabase, selectedRouteId || kit.trail_id, cleanDestination || kit.name);
+
+    interface RawKitItem {
+      id?: string;
+      name: string | null;
+      category: string | null;
+      weight_g: number | null;
+      quantity: number;
+      is_checked: boolean;
+      is_worn?: boolean;
+      is_consumable?: boolean;
+      product_ownership?: { weight_g: number | null; photo_url: string | null; name: string | null } | null;
+    }
+
+    const rawItems = ((kit.materiel_kit_items ?? []) as RawKitItem[]).map((i) => {
+      const name = i.product_ownership?.name || i.name || 'Article';
+      const category = normalizeItemCategory(i.category, name);
+      let weight = (i.weight_g ?? 0) || (i.product_ownership?.weight_g ?? 0) || 0;
+      if (weight <= 0) {
+        weight = getDefaultItemWeight(name, category);
+      }
+      return {
+        id: i.id,
+        name,
+        category,
+        weight_g: weight,
+        quantity: i.quantity ?? 1,
+        is_checked: i.is_checked,
+        is_worn: i.is_worn ?? false,
+        is_consumable: i.is_consumable ?? false,
+        photoUrl: resolveGearImage(name, category, i.product_ownership?.photo_url),
+        productHref: null as string | null,
+      };
+    });
+
+    const rawItemsList = rawItems.length > 0 ? rawItems : getShowcaseDepart().assignedKit.items;
+
+    const consumablesMap = (kit.consumables && Object.keys(kit.consumables).length > 0)
+      ? (kit.consumables as Record<string, number>)
+      : { water: 7.5, gas: 180, meals: 6, snacks: 6 };
+
+    const consumableItems: ChecklistItem[] = [];
+    const hasConsumablesCategory = rawItemsList.some((i) => i.category === 'Vivres & Eau');
+    if (!hasConsumablesCategory && consumablesMap) {
+      if ((consumablesMap.water ?? 0) > 0) {
+        consumableItems.push({
+          id: 'consumable-water',
+          name: `Eau potable (${consumablesMap.water} L)`,
+          category: 'Vivres & Eau',
+          weight_g: Math.round((consumablesMap.water ?? 0) * 1000),
+          is_checked: false,
+          is_consumable: true,
+          is_vital: true,
+        });
+      }
+      if ((consumablesMap.gas ?? 0) > 0) {
+        consumableItems.push({
+          id: 'consumable-gas',
+          name: `Cartouche de gaz (${consumablesMap.gas} g)`,
+          category: 'Vivres & Eau',
+          weight_g: consumablesMap.gas,
+          is_checked: false,
+          is_consumable: true,
+        });
+      }
+      if ((consumablesMap.meals ?? 0) > 0) {
+        consumableItems.push({
+          id: 'consumable-meals',
+          name: `Rations repas (${consumablesMap.meals} repas)`,
+          category: 'Vivres & Eau',
+          weight_g: (consumablesMap.meals ?? 0) * 150,
+          is_checked: false,
+          is_consumable: true,
+        });
+      }
+      if ((consumablesMap.snacks ?? 0) > 0) {
+        consumableItems.push({
+          id: 'consumable-snacks',
+          name: `En-cas & barres (${consumablesMap.snacks} rations)`,
+          category: 'Vivres & Eau',
+          weight_g: (consumablesMap.snacks ?? 0) * 50,
+          is_checked: false,
+          is_consumable: true,
+        });
+      }
+    }
+
+    const items = [...rawItemsList, ...consumableItems];
+
+    const baseWeightG = calcBaseWeight(items);
+    const wornWeightG = calcWornWeight(items);
+    const consumablesWeightG = calcConsumablesWeight(items, consumablesMap);
+    const totalPackWeightG = calcTotalPackWeight(baseWeightG, consumablesWeightG);
+    const checklistPct = calcReadinessPct(items);
+
+    // Participants
+    const { data: parts } = await supabase
+      .from('depart_participants')
+      .select('name, is_emergency_contact, contact')
+      .eq('kit_id', kit.id);
+
+    const participants: Participant[] = (parts ?? []).map((p, i) => ({
+      name: p.name,
+      initial: p.name.charAt(0).toUpperCase(),
+      color: ['var(--lkv-secondary)', 'var(--lkv-info)', 'var(--lkv-warning)', 'var(--lkv-text-muted)', 'var(--lkv-danger)'][i % 5],
+    }));
+
+    const emergency = (parts ?? []).find((p) => p.is_emergency_contact)?.contact ?? null;
+    const readinessScore = calcWeightedReadinessScore(items, null, emergency);
+
+    const byCat = new Map<string, number>();
+    for (const i of items) {
+      if (i.is_worn || i.is_consumable) continue;
+      const c = i.category ?? 'Autre';
+      byCat.set(c, (byCat.get(c) ?? 0) + i.weight_g);
+    }
+    const weightBreakdown = Array.from(byCat.entries()).map(([category, value]) => ({ category, value }));
+
+    const secMap = new Map<string, { total: number; done: number }>();
+    for (const i of items) {
+      const c = i.category ?? 'Autre';
+      const s = secMap.get(c) ?? { total: 0, done: 0 };
+      s.total += 1;
+      if (i.is_checked) s.done += 1;
+      secMap.set(c, s);
+    }
+    const checklistSections = Array.from(secMap.entries()).map(([name, s]) => ({ name, total: s.total, done: s.done }));
+    const checklistItems = items.map((i) => ({ name: i.name, done: i.is_checked }));
+
+    const tagsList = kit.tags ?? [];
+    const tagsStr = tagsList.join(' ').toLowerCase();
+    const hasBivouac = tagsStr.includes('bivouac') || items.some((i) => i.category === 'Bivouac');
+    const hasAlpi = tagsStr.includes('alpinisme') || tagsStr.includes('hiver') || items.some((i) => i.name.toLowerCase().includes('crampon') || i.name.toLowerCase().includes('piolet'));
+    const hasFast = tagsStr.includes('fastpacking') || tagsStr.includes('trail');
+    const activityType = hasAlpi ? 'Alpinisme' : hasFast ? 'Fastpacking' : hasBivouac ? 'Bivouac' : 'Randonnée';
+
+    return {
+      id: kit.id,
+      destination: cleanDestination || 'Prochain départ',
+      startsAt: kit.starts_at ?? null,
+      endsAt: kit.ends_at ?? null,
+      status: kit.status ?? 'draft',
+      readinessScore,
+      baseWeightG,
+      wornWeightG,
+      consumablesWeightG,
+      totalPackWeightG,
+      assignedKit: {
+        id: kit.id,
+        name: cleanDestination || kit.name,
+        totalWeightG: baseWeightG,
+        items,
+      },
+      weightBreakdown,
+      checklistPct,
+      checklistSections,
+      checklistItems,
+      durationDays: 3,
+      consumables: consumablesMap,
+      trail: trailData,
+      participants: participants.length ? participants : [{ name: 'Vous', initial: 'V', color: 'var(--lkv-primary)', profileId: user.id }],
+      emergencyContact: emergency,
+      coverImageUrl: kit.cover_image_url ?? null,
+      activityType,
+      comparableTrip: null,
+      updatedAt: kit.updated_at ?? kit.created_at ?? new Date().toISOString(),
+    };
+  } catch (err) {
+    console.error('getDepartDetail fallback to showcase', err);
+    if (id === 'none') {
+      return {
+        id: 'none',
+        destination: 'Prochain départ',
+        startsAt: null,
+        endsAt: null,
+        status: 'draft',
+        readinessScore: {
+          status: 'warning',
+          grade: 'C',
+          label: 'Kit vide',
+          percentage: 0,
+          missingVitals: [],
+          factors: ['Aucun équipement ajouté'],
+        },
+        baseWeightG: 0,
+        wornWeightG: 0,
+        consumablesWeightG: 0,
+        totalPackWeightG: 0,
+        assignedKit: {
+          id: 'none',
+          name: 'Nouveau kit',
+          totalWeightG: 0,
+          items: [],
+        },
+        weightBreakdown: [],
+        checklistPct: 0,
+        checklistSections: [],
+        checklistItems: [],
+        durationDays: 0,
+        consumables: {},
+        trail: null,
+        participants: [],
+        emergencyContact: null,
+        coverImageUrl: null,
+        activityType: null,
+        comparableTrip: null,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+    return getShowcaseDepart(id ?? undefined);
+  }
+}

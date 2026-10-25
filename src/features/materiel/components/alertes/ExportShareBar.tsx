@@ -1,0 +1,59 @@
+'use client';
+import { useState } from 'react';
+import { Button, Card } from '@/components/ui';
+import { Eyebrow } from '@/components/ui/Eyebrow';
+
+/** W-L-10 ExportShareBar — export (CSV/JSON), partage, calendrier. */
+export function ExportShareBar() {
+  const [status, setStatus] = useState<string | null>(null);
+
+  const exportInv = async (format: 'csv' | 'json') => {
+    const res = await fetch('/api/materiel/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ format, scope: 'inventory' }),
+    });
+    if (!res.ok) { setStatus('Erreur export'); return; }
+    if (format === 'csv') {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'inventaire.csv'; a.click();
+      URL.revokeObjectURL(url);
+      setStatus('Inventaire exporté (CSV)');
+    } else {
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'inventaire.json'; a.click();
+      URL.revokeObjectURL(url);
+      setStatus('Inventaire exporté (JSON)');
+    }
+  };
+
+  const share = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.origin + '/hub');
+      setStatus('Lien copié');
+    } catch {
+      setStatus('Partage non disponible');
+    }
+  };
+
+  const calendar = () => { window.location.href = '/api/materiel/calendar'; };
+
+  return (
+    <Card as="article" ariaLabelledBy="export-title" className="p-4">
+      <Eyebrow>Export & partage</Eyebrow>
+      <h3 id="export-title" className="sr-only">Export et partage</h3>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button variant="secondary" onClick={() => exportInv('csv')}>Export CSV</Button>
+        <Button variant="secondary" onClick={() => exportInv('json')}>Export JSON</Button>
+        <Button variant="secondary" onClick={share}>Partager</Button>
+        <Button variant="secondary" onClick={calendar}>Calendrier (ICS)</Button>
+      </div>
+      {status && <p className="mt-2 text-sm text-[color:var(--lkv-text-secondary)]">{status}</p>}
+    </Card>
+  );
+}

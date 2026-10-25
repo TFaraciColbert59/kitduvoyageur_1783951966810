@@ -1,0 +1,24 @@
+filters:
+  and:
+    - 'file.hasTag("adr")'
+    - not:
+        - 'file.hasTag("archived")'
+
+properties:
+  file.name:
+    displayName: "Décision d'Architecture"
+  status:
+    displayName: "Statut"
+  date:
+    displayName: "Date"
+  tags:
+    displayName: "Domaines"
+
+views:
+  - type: table
+    name: "Registre Officiel des ADRs"
+    order:
+      - file.name
+      - status
+      - date
+      - tags

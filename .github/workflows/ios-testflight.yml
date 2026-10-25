@@ -1,0 +1,140 @@
+name: iOS TestFlight — signed release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lkdv-ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: macos-latest
+    environment: testflight
+    timeout-minutes: 75
+    env:
+      CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL || vars.CAPACITOR_SERVER_URL }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      IOS_DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}
+      IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+      IOS_APP_STORE_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_APP_STORE_PROVISIONING_PROFILE_BASE64 }}
+      APPSTORE_CONNECT_KEY_ID: ${{ secrets.APPSTORE_CONNECT_KEY_ID }}
+      APPSTORE_CONNECT_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_ISSUER_ID }}
+      APPSTORE_CONNECT_PRIVATE_KEY_BASE64: ${{ secrets.APPSTORE_CONNECT_PRIVATE_KEY_BASE64 }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: Check credentials without exposing secrets
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          keys = ["APPLE_TEAM_ID","IOS_DISTRIBUTION_CERTIFICATE_BASE64","IOS_DISTRIBUTION_CERTIFICATE_PASSWORD","IOS_APP_STORE_PROVISIONING_PROFILE_BASE64","APPSTORE_CONNECT_KEY_ID","APPSTORE_CONNECT_ISSUER_ID","APPSTORE_CONNECT_PRIVATE_KEY_BASE64","NEXT_PUBLIC_SUPABASE_URL","NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+          missing = [k for k in keys if not os.environ.get(k)]
+          if missing:
+              print("Missing required GitHub secrets: " + ", ".join(missing), file=sys.stderr)
+              raise SystemExit(1)
+          if not os.environ.get("CAPACITOR_SERVER_URL", "").startswith("https://"):
+              raise SystemExit("CAPACITOR_SERVER_URL must be HTTPS")
+          PY
+      - name: Require deployed frontend that supports the native bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --max-time 30 \
+            "$CAPACITOR_SERVER_URL/.well-known/lkdv-ios-native-glass.json" \
+            -o "$RUNNER_TEMP/native-glass-web.json"
+          python3 - <<'PY'
+          import json, os, pathlib
+          p = json.loads((pathlib.Path(os.environ["RUNNER_TEMP"]) / "native-glass-web.json").read_text())
+          if p.get("feature") != "ios-native-liquid-glass" or p.get("release") != "all-except-compas-fast-v2":
+              raise SystemExit("Deployed web frontend does not yet support iOS global native tabs excluding Compas")
+          if p.get("supportedRoutes") != ["all-except-compas"]:
+              raise SystemExit("Deployed native navigation route contract mismatch")
+          PY
+      - name: Build and verify the Next.js app
+        run: |
+          npm ci
+          npm run type-check
+          npx vitest run src/components/mobile-nav/__tests__/native-account-routes.test.ts tests/design/lot2-shell.spec.ts
+          npm run build
+          node scripts/verify/verify_capacitor_server.mjs
+          npx cap sync ios
+          node scripts/verify/verify_capacitor_server.mjs ios/App/App/capacitor.config.json --config-only
+      - name: Install Apple distribution identity
+        shell: bash
+        env:
+          KEYCHAIN_PASSWORD: ${{ runner.temp }}-lkdv-secret
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, base64, pathlib
+          d=pathlib.Path(os.environ["RUNNER_TEMP"])
+          for key,filename in [("IOS_DISTRIBUTION_CERTIFICATE_BASE64","dist.p12"),("IOS_APP_STORE_PROVISIONING_PROFILE_BASE64","dist.mobileprovision")]:
+              (d/filename).write_bytes(base64.b64decode(os.environ[key]))
+          PY
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/lkdv-build.keychain-db"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/lkdv-build.keychain-db"
+          security set-keychain-settings -lut 21600 "$RUNNER_TEMP/lkdv-build.keychain-db"
+          security import "$RUNNER_TEMP/dist.p12" -k "$RUNNER_TEMP/lkdv-build.keychain-db" -P "$IOS_DISTRIBUTION_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/lkdv-build.keychain-db"
+          security list-keychains -d user -s "$RUNNER_TEMP/lkdv-build.keychain-db"
+          security cms -D -i "$RUNNER_TEMP/dist.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+          python3 - <<'PY'
+          import os,plistlib,pathlib,shutil
+          d=pathlib.Path(os.environ["RUNNER_TEMP"])
+          p=plistlib.loads((d/"profile.plist").read_bytes())
+          expected=os.environ["APPLE_TEAM_ID"]+".com.lekitduvoyageur.app"
+          if p.get("Entitlements",{}).get("application-identifier")!=expected:
+              raise SystemExit("Distribution provisioning profile bundle ID mismatch")
+          dest=pathlib.Path.home()/"Library/MobileDevice/Provisioning Profiles"/(p["UUID"]+".mobileprovision")
+          dest.parent.mkdir(parents=True,exist_ok=True)
+          shutil.copyfile(d/"dist.mobileprovision",dest)
+          (d/"profile-name.txt").write_text(p["Name"])
+          plist={"method":"app-store-connect","destination":"export","teamID":os.environ["APPLE_TEAM_ID"],"signingStyle":"manual","provisioningProfiles":{"com.lekitduvoyageur.app":p["Name"]}}
+          (d/"ExportOptions.plist").write_bytes(plistlib.dumps(plist))
+          PY
+      - name: Sign and export IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROFILE_NAME="$(cat "$RUNNER_TEMP/profile-name.txt")"
+          xcodebuild archive -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/LKDV.xcarchive" \
+            CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_IDENTITY="Apple Distribution" PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" | tail -n 60
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/LKDV.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+          test -f "$RUNNER_TEMP/export/App.ipa"
+      - name: Upload build to TestFlight (no App Store submission)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,json,base64,pathlib
+          d=pathlib.Path(os.environ["RUNNER_TEMP"])
+          key=base64.b64decode(os.environ["APPSTORE_CONNECT_PRIVATE_KEY_BASE64"]).decode()
+          p={"key_id":os.environ["APPSTORE_CONNECT_KEY_ID"],"issuer_id":os.environ["APPSTORE_CONNECT_ISSUER_ID"],"key":key}
+          path=d/"asc-api-key.json"
+          path.write_text(json.dumps(p))
+          path.chmod(0o600)
+          PY
+          gem install fastlane --no-document
+          fastlane pilot upload --ipa "$RUNNER_TEMP/export/App.ipa" \
+            --api_key_path "$RUNNER_TEMP/asc-api-key.json" \
+            --skip_waiting_for_build_processing true --skip_submission true
+      - name: Remove signing materials
+        if: always()
+        shell: bash
+        run: |
+          security delete-keychain "$RUNNER_TEMP/lkdv-build.keychain-db" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/dist.p12" "$RUNNER_TEMP/dist.mobileprovision" "$RUNNER_TEMP/asc-api-key.json" "$RUNNER_TEMP/profile.plist" || true

@@ -1,0 +1,122 @@
+'use client';
+import Icon from '@/components/ui/Icon';
+import Link from 'next/link';
+import { Card } from '@/components/ui';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+
+interface KitsData {
+  count: number;
+  avgCompletionPct: number;
+  trashCount: number;
+  assignedKitName: string | null;
+  totalWeightKg: number;
+  topKits: { id: string; name: string; weightKg: number; completionPct: number }[];
+}
+
+export function GearCardKits({ data, className }: { data: KitsData; className?: string }) {
+  const kits = data.topKits || [];
+
+  return (
+    <Card as="article" variant="interactive" ariaLabelledBy="kits-title" className={className}>
+      <div className="p-2.5 sm:p-5 flex flex-col justify-between h-full gap-1.5 sm:gap-4">
+        {/* Header with Title & Large Metric */}
+        <div className="flex items-start justify-between pr-7 md:pr-10">
+          <div className="space-y-0.5">
+            <h2
+              id="kits-title"
+              className="text-[13px] sm:text-[20px] font-display font-bold text-[color:var(--lkv-text-primary)] leading-tight truncate"
+            >
+              Mes kits
+            </h2>
+          </div>
+          <div className="text-right shrink-0">
+            <span className="text-[18px] sm:text-[36px] font-mono font-bold leading-none text-[color:var(--lkv-text-primary)]">
+              {data.count}
+            </span>
+            <span className="block text-[8px] sm:text-[10.5px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
+              {data.count > 1 ? 'actifs' : 'actif'}
+            </span>
+          </div>
+        </div>
+
+        {data.count === 0 ? (
+          <div className="flex flex-col items-center justify-center py-2">
+            <p className="text-[10px] sm:text-xs text-[var(--lkv-text-secondary)] text-center mb-2">
+              Aucun kit configuré.
+            </p>
+            <Link
+              href="/hub/materiel/kits/nouveau"
+              className="glass-capsule-btn primary w-full flex justify-center items-center gap-1.5 !min-h-[44px] !text-[11px] !font-bold shadow-sm"
+            >
+              <Icon name="plus" size={12} />
+              <span>Créer mon premier kit</span>
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Top Kits Preview Cards */}
+            <div className="flex flex-col gap-1 sm:gap-1.5">
+              {kits.slice(0, 2).map((k) => (
+                <div
+                  key={k.id}
+                  className="glass-sub-card px-2 py-1 sm:px-2.5 sm:py-1.5 flex items-center justify-between gap-1 text-[10px] sm:text-xs"
+                >
+                  <div className="flex items-center gap-1.5 truncate">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-white/40 border border-white/60 flex items-center justify-center text-[color:var(--lkv-text-primary)] flex-shrink-0">
+                      <Icon name="package" size={9} />
+                    </div>
+                    <span className="font-semibold text-[color:var(--lkv-text-primary)] truncate">{k.name}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-[9.5px] font-mono text-[var(--lkv-text-muted)]">
+                      {k.weightKg}kg
+                    </span>
+                    {k.completionPct === 100 && (
+                      <span className="glass-check-circle checked !w-3 !h-3 flex items-center justify-center">
+                        <Icon name="check" size={7} strokeWidth={3} />
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-0.5 sm:space-y-1">
+              <div className="flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[color:var(--lkv-text-secondary)]">
+                <span>Complétude</span>
+                <span className="font-mono text-[color:var(--lkv-text-primary)]">{data.avgCompletionPct}%</span>
+              </div>
+              <ProgressBar value={data.avgCompletionPct} label="Complétude moyenne" tone="sage" />
+            </div>
+          </>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between gap-1.5 pt-0.5 min-w-0">
+          <span
+            className="text-[9.5px] sm:text-xs text-[var(--lkv-text-muted)] truncate font-medium flex-1 min-w-0"
+            title={
+              data.totalWeightKg > 0
+                ? `Poids total du parc (${data.count} kits) : ${data.totalWeightKg} kg`
+                : `${data.count} kits configurés`
+            }
+          >
+            {data.totalWeightKg > 0
+              ? `Total parc (${data.count}) : ${data.totalWeightKg} kg`
+              : `${data.count} kits prêts`}
+          </span>
+          {data.count > 0 && (
+            <Link
+              href="/hub/kit"
+              className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0"
+            >
+              <span>Ouvrir</span>
+              <Icon name="arrow-right" size={10} />
+            </Link>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}

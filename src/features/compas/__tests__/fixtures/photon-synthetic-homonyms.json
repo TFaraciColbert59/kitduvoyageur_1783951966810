@@ -1,0 +1,378 @@
+{
+ "Bellagio": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -115.17,
+     36.11
+    ]
+   },
+   "properties": {
+    "name": "Bellagio",
+    "osm_key": "tourism",
+    "osm_value": "hotel",
+    "type": "house",
+    "country": "États-Unis d'Amérique",
+    "countrycode": "US",
+    "city": "Las Vegas",
+    "state": "Nevada"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     9.26,
+     45.98
+    ]
+   },
+   "properties": {
+    "name": "Bellagio",
+    "osm_key": "place",
+    "osm_value": "village",
+    "type": "city",
+    "country": "Italie",
+    "countrycode": "IT",
+    "state": "Lombardie"
+   }
+  }
+ ],
+ "Gavarnie": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.01,
+     42.73
+    ]
+   },
+   "properties": {
+    "name": "Gavarnie",
+    "osm_key": "tourism",
+    "osm_value": "camp_site",
+    "type": "house",
+    "country": "France",
+    "countrycode": "FR",
+    "city": "Gavarnie-Gèdre"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -0.01,
+     42.73
+    ]
+   },
+   "properties": {
+    "name": "Gavarnie",
+    "osm_key": "place",
+    "osm_value": "village",
+    "type": "city",
+    "country": "France",
+    "countrycode": "FR"
+   }
+  }
+ ],
+ "Zermatt": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -79.4,
+     43.6
+    ]
+   },
+   "properties": {
+    "name": "Zermatt",
+    "osm_key": "tourism",
+    "osm_value": "hotel",
+    "type": "house",
+    "country": "Canada",
+    "countrycode": "CA",
+    "city": "Toronto",
+    "state": "Ontario"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     7.75,
+     46.02
+    ]
+   },
+   "properties": {
+    "name": "Zermatt",
+    "osm_key": "place",
+    "osm_value": "village",
+    "type": "city",
+    "country": "Suisse",
+    "countrycode": "CH",
+    "state": "Valais"
+   }
+  }
+ ],
+ "Verdun": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -73.57,
+     45.45
+    ]
+   },
+   "properties": {
+    "name": "Verdun",
+    "osm_key": "historic",
+    "osm_value": "memorial",
+    "type": "house",
+    "country": "Canada",
+    "countrycode": "CA",
+    "city": "Montréal",
+    "state": "Québec"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5.38,
+     49.16
+    ]
+   },
+   "properties": {
+    "name": "Verdun",
+    "osm_key": "place",
+    "osm_value": "town",
+    "type": "city",
+    "country": "France",
+    "countrycode": "FR",
+    "state": "Grand Est"
+   }
+  }
+ ],
+ "Hallstatt": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -89.4,
+     43.07
+    ]
+   },
+   "properties": {
+    "name": "Hallstatt",
+    "osm_key": "tourism",
+    "osm_value": "guest_house",
+    "type": "house",
+    "country": "États-Unis d'Amérique",
+    "countrycode": "US",
+    "city": "Madison",
+    "state": "Wisconsin"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.65,
+     47.56
+    ]
+   },
+   "properties": {
+    "name": "Hallstatt",
+    "osm_key": "place",
+    "osm_value": "village",
+    "type": "city",
+    "country": "Autriche",
+    "countrycode": "AT"
+   }
+  }
+ ],
+ "Sintra": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -46.6,
+     -23.5
+    ]
+   },
+   "properties": {
+    "name": "Sintra",
+    "osm_key": "tourism",
+    "osm_value": "attraction",
+    "type": "house",
+    "country": "Brésil",
+    "countrycode": "BR",
+    "city": "São Paulo"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -9.38,
+     38.8
+    ]
+   },
+   "properties": {
+    "name": "Sintra",
+    "osm_key": "place",
+    "osm_value": "town",
+    "type": "city",
+    "country": "Portugal",
+    "countrycode": "PT"
+   }
+  }
+ ],
+ "Carcassonne": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.36,
+     43.21
+    ]
+   },
+   "properties": {
+    "name": "Carcassonne",
+    "osm_key": "historic",
+    "osm_value": "castle",
+    "type": "house",
+    "country": "France",
+    "countrycode": "FR",
+    "city": "Carcassonne"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.35,
+     43.21
+    ]
+   },
+   "properties": {
+    "name": "Carcassonne",
+    "osm_key": "place",
+    "osm_value": "city",
+    "type": "city",
+    "country": "France",
+    "countrycode": "FR"
+   }
+  }
+ ],
+ "Grèce Météores": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     21.63,
+     39.72
+    ]
+   },
+   "properties": {
+    "name": "Météores",
+    "osm_key": "tourism",
+    "osm_value": "viewpoint",
+    "type": "house",
+    "country": "Grèce",
+    "countrycode": "GR"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     21.63,
+     39.72
+    ]
+   },
+   "properties": {
+    "name": "Météores",
+    "osm_key": "natural",
+    "osm_value": "rock",
+    "type": "other",
+    "country": "Grèce",
+    "countrycode": "GR"
+   }
+  }
+ ],
+ "Refuge du Goûter": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     6.84,
+     45.85
+    ]
+   },
+   "properties": {
+    "name": "Refuge du Goûter",
+    "osm_key": "tourism",
+    "osm_value": "alpine_hut",
+    "type": "house",
+    "country": "France",
+    "countrycode": "FR"
+   }
+  }
+ ],
+ "Pic du Midi": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.14,
+     42.94
+    ]
+   },
+   "properties": {
+    "name": "Pic du Midi",
+    "osm_key": "man_made",
+    "osm_value": "tower",
+    "type": "house",
+    "country": "France",
+    "countrycode": "FR"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     0.14,
+     42.94
+    ]
+   },
+   "properties": {
+    "name": "Pic du Midi de Bigorre",
+    "osm_key": "natural",
+    "osm_value": "peak",
+    "type": "other",
+    "country": "France",
+    "countrycode": "FR"
+   }
+  }
+ ]
+}

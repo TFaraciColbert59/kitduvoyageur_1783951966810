@@ -1,0 +1,760 @@
+import { HikingStateMachine } from '../engine/HikingStateMachine';
+import { TrackingEngine } from '../engine/TrackingEngine';
+import { GPSService } from '../services/GPSService';
+import { WeatherService } from '../services/WeatherService';
+import { HikeSessionService } from '../services/HikeSessionService';
+import { loadRouteDetail } from '../services/RouteService';
+import { closestOnRoute, computeRoutePois, haversineMeters, initialBearingDeg, routeBearingAt } from '../services/RouteGeom';
+import { getRouteOffline } from '@/lib/offlineStorage';
+import { createClient } from '@/lib/supabase/client';
+import {
+  decryptLocalJson,
+  encryptLocalJson,
+  isLocalVaultEnvelope,
+  type LocalVaultEnvelope,
+} from '@/lib/security/localVault';
+import {
+  HikingState,
+  GPSPosition,
+  POI,
+  WeatherSnapshot,
+  SafetyAlert,
+} from '../types';
+
+export interface HikingControllerState {
+  state: HikingState;
+  isActive: boolean;
+  isPaused: boolean;
+  distanceKm: number;
+  durationSeconds: number;
+  elevationGainM: number | null;
+  paceMinPerKm: number;
+  currentSpeedKmH: number;
+  averageSpeedKmH: number;
+  estimatedEtaMinutes: number | null;
+  positions: GPSPosition[];
+  progressPercent: number | null;
+  /** Bearing de la route (géométrie) juste devant l'utilisateur — direction générale réelle. */
+  guidanceBearingDeg: number | null;
+  nextPoi: (POI & { distanceRemainingM: number }) | null;
+  isOffRoute: boolean;
+  deviation: { distanceM: number; bearingDeg: number } | null;
+  weather: WeatherSnapshot | null;
+  safetyAlerts: SafetyAlert[];
+  batteryLevel: number | null;
+  routeId: string | null;
+  routeTotalKm: number | null;
+  routeName: string | null;
+  /** Kit emporté sur le terrain (chantier lignées, Lot 2) — null = aucun kit. */
+  kitId: string | null;
+  /** Phase 7 — voyage associé à la sortie (contexte URL), null si inconnu. */
+  tripId: string | null;
+}
+
+interface PoiEvent {
+  poiName: string;
+  reachedAt: string;
+  lat: number;
+  lon: number;
+}
+
+const PERSISTENCE_KEY = 'lkdv_active_hike_session';
+const DEVIATION_POLL_MS = 15000;
+const OFF_ROUTE_THRESHOLD_M = 50;
+const BACK_ON_ROUTE_THRESHOLD_M = 30;
+const POI_REACHED_THRESHOLD_M = 30;
+
+export class HikingController {
+  private stateMachine: HikingStateMachine;
+  private gpsService: GPSService;
+  private trackingEngine: TrackingEngine;
+  private state: HikingControllerState;
+  private listeners: ((state: HikingControllerState) => void)[] = [];
+
+  private timerId: NodeJS.Timeout | null = null;
+  private deviationTimerId: NodeJS.Timeout | null = null;
+  private unbindGPSPosition: (() => void) | null = null;
+  private unbindGPSError: (() => void) | null = null;
+
+  private routeGeojson: unknown = null;
+  private routePois: (POI & { progressFrac: number })[] = [];
+  private reachedPois: Set<string> = new Set();
+  private poiEvents: PoiEvent[] = [];
+  private offRouteBuffer: number[] = [];
+  private offRouteDismissed = false;
+  private lastProjectedFrac: number | null = null;
+  /** Séquence d'écriture du brouillon (garde anti-écrasement asynchrone). */
+  private persistSequence = 0;
+  private persistWrittenSequence = 0;
+
+  constructor() {
+    this.stateMachine = new HikingStateMachine('IDLE');
+    this.gpsService = new GPSService();
+    this.trackingEngine = new TrackingEngine();
+
+    this.state = {
+      state: 'IDLE',
+      isActive: false,
+      isPaused: false,
+      distanceKm: 0,
+      durationSeconds: 0,
+      elevationGainM: null,
+      paceMinPerKm: 0,
+      currentSpeedKmH: 0,
+      averageSpeedKmH: 0,
+      estimatedEtaMinutes: null,
+      positions: [],
+      progressPercent: null,
+      guidanceBearingDeg: null,
+      nextPoi: null,
+      isOffRoute: false,
+      deviation: null,
+      weather: null,
+      safetyAlerts: [],
+      batteryLevel: null,
+      routeId: null,
+      routeTotalKm: null,
+      routeName: null,
+      kitId: null,
+      tripId: null,
+    };
+
+    this.stateMachine.subscribe((nextState) => {
+      this.updateState({
+        state: nextState,
+        isActive: ['TRACKING', 'PAUSED', 'OFF_ROUTE', 'GPS_WEAK', 'LOW_BATTERY', 'WEATHER_ALERT', 'SAFETY_ALERT'].includes(nextState),
+        isPaused: nextState === 'PAUSED',
+      });
+    });
+
+    this.restoreSession();
+  }
+
+  public getState(): HikingControllerState {
+    return this.state;
+  }
+
+  public subscribe(listener: (state: HikingControllerState) => void): () => void {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter((l) => l !== listener);
+    };
+  }
+
+  /**
+   * Démarre une randonnée. Le kit emporté vient de setKit (ou de l'état
+   * restauré) ; kitId explicite = override ponctuel (aucune régression :
+   * les appelants existants ne passent que routeId).
+   */
+  public async startHike(routeId?: string, kitId?: string | null, tripId?: string | null): Promise<void> {
+    if (!this.stateMachine.transitionTo('PREPARING')) return;
+
+    this.trackingEngine.reset();
+    this.reachedPois.clear();
+    this.poiEvents = [];
+    this.offRouteBuffer = [];
+    this.offRouteDismissed = false;
+    this.routeGeojson = null;
+    this.routePois = [];
+    this.lastProjectedFrac = null;
+
+    this.updateState({
+      routeId: routeId || null,
+      kitId: kitId !== undefined ? kitId : this.state.kitId,
+      tripId: tripId !== undefined ? tripId : this.state.tripId,
+      routeName: null,
+      routeTotalKm: null,
+      distanceKm: 0,
+      durationSeconds: 0,
+      elevationGainM: null,
+      paceMinPerKm: 0,
+      currentSpeedKmH: 0,
+      averageSpeedKmH: 0,
+      estimatedEtaMinutes: null,
+      positions: [],
+      safetyAlerts: [],
+      progressPercent: null,
+      guidanceBearingDeg: null,
+      isOffRoute: false,
+      deviation: null,
+      nextPoi: null,
+    });
+
+    if (routeId) {
+      await this.loadRouteDetails(routeId);
+    }
+
+    this.stateMachine.transitionTo('READY');
+    this.stateMachine.transitionTo('TRACKING');
+
+    this.bindGPS();
+    this.startTimer();
+    this.startDeviationPolling();
+    this.initBattery();
+    this.persistSession();
+  }
+
+  /** Sélectionne le kit emporté (chantier lignées, Lot 2). null = aucun kit. */
+  public setKit(kitId: string | null): void {
+    this.updateState({ kitId });
+    this.persistSession();
+  }
+
+  public pauseHike(): void {
+    if (!this.stateMachine.transitionTo('PAUSED')) return;
+    this.persistSession();
+  }
+
+  public resumeHike(): void {
+    if (this.stateMachine.transitionTo('TRACKING')) {
+      this.persistSession();
+    }
+  }
+
+  public async stopHike(carnetId?: string): Promise<{ sessionId: string; carnetId?: string | null } | null> {
+    if (!this.stateMachine.transitionTo('FINISHING')) return null;
+
+    this.stopTimer();
+    this.stopDeviationPolling();
+    this.unbindGPS();
+
+    const endedAt = new Date().toISOString();
+    const positions = this.trackingEngine.getValidPositions();
+    const startedAt = positions.length > 0 ? new Date(positions[0].timestamp).toISOString() : new Date().toISOString();
+
+    let sessionId: string | null = null;
+    let savedCarnetId: string | null = carnetId || null;
+
+    if (positions.length > 1 && this.state.distanceKm > 0) {
+      try {
+        const res = await HikeSessionService.saveSession({
+          routeId: this.state.routeId,
+          kitId: this.state.kitId,
+          carnetId: carnetId || null,
+          tripId: this.state.tripId,
+          startedAt,
+          endedAt,
+          distanceKm: this.state.distanceKm,
+          durationSeconds: this.state.durationSeconds,
+          elevationGainM: this.state.elevationGainM,
+          positions,
+          poiEvents: this.poiEvents,
+        });
+        sessionId = res.sessionId;
+        if (res.carnetId) savedCarnetId = res.carnetId;
+
+        // Récit post-randonnée ASYNCHRONE (Chantier C) : on dépose un job IA,
+        // jamais d'appel synchrone à la fermeture. Fire-and-forget : un échec
+        // d'enfilement ne doit JAMAIS perturber la fin de sortie.
+        if (res.sessionId) {
+          this.enqueueTrailNarrativeJob(res.sessionId, startedAt).catch(() => {});
+        }
+      } catch (err) {
+        console.error('[HikingController] stopHike save error:', err);
+      }
+    }
+
+    this.clearPersistedSession();
+    this.stateMachine.transitionTo('COMPLETED');
+    this.stateMachine.transitionTo('IDLE');
+
+    return sessionId ? { sessionId, carnetId: savedCarnetId } : null;
+  }
+
+  /** Chantier C — dépose un job 'trail-narrative' (traité par le cron IA). */
+  private async enqueueTrailNarrativeJob(sessionId: string, startedAt: string): Promise<void> {
+    try {
+      await fetch('/api/ai/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feature: 'trail-narrative',
+          payload: {
+            sessionId,
+            distanceKm: this.state.distanceKm,
+            durationSeconds: this.state.durationSeconds,
+            elevationGainM: this.state.elevationGainM,
+            routeName: this.state.routeName ?? undefined,
+            weather: this.state.weather?.condition ?? undefined,
+            startedAt,
+          },
+        }),
+      });
+    } catch {
+      // Silencieux : le récit est un plus, jamais un blocage.
+    }
+  }
+
+  public dismissOffRoute(): void {    this.offRouteDismissed = true;
+    this.updateState({ isOffRoute: false, deviation: null });
+    this.offRouteBuffer = [];
+    if (this.stateMachine.getState() === 'OFF_ROUTE') {
+      this.stateMachine.transitionTo('TRACKING');
+    }
+    this.persistSession();
+  }
+
+  public async fetchWeather(lat: number, lon: number): Promise<WeatherSnapshot | null> {
+    const weather = await WeatherService.fetchWeather(lat, lon);
+    if (weather) {
+      this.updateState({ weather });
+      if (weather.isAlert && weather.alertMessage) {
+        this.addAlert({
+          id: `weather-${Date.now()}`,
+          type: 'weather',
+          severity: 'warning',
+          message: weather.alertMessage,
+          timestamp: new Date().toISOString(),
+          location: { lat, lon },
+        });
+      }
+    }
+    return weather;
+  }
+
+  // ── PRIVATE HELPERS ─────────────────────────────────────────────────────────
+
+  private async loadRouteDetails(routeId: string): Promise<void> {
+    try {
+      const supabase = createClient();
+      const route = await loadRouteDetail(supabase, routeId).catch(() => null);
+
+      if (route) {
+        this.applyRouteData({
+          id: route.id,
+          name: route.name,
+          distanceKm: route.distanceKm,
+          geojson: route.geojson,
+          pois: route.pois,
+        });
+        return;
+      }
+
+      // Hors-ligne : servir la route téléchargée (IndexedDB) — géométrie + POI
+      // réellement mis en cache au moment du téléchargement.
+      if (typeof window !== 'undefined') {
+        const cached = await getRouteOffline(routeId).catch(() => undefined);
+        if (cached && cached.geojson) {
+          const geojson = cached.geojson ?? null;
+          const pois = geojson
+            ? computeRoutePois(
+                geojson,
+                cached.pois.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  category: p.category || null,
+                  lat: p.lat,
+                  lng: p.lng,
+                }))
+              )
+            : [];
+          this.applyRouteData({
+            id: routeId,
+            name: cached.name,
+            distanceKm: cached.distanceKm,
+            geojson,
+            pois,
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[HikingController] Failed to load route details:', err);
+    }
+  }
+
+  private applyRouteData(data: {
+    id: string;
+    name: string | null;
+    distanceKm: number | null;
+    geojson: unknown | null;
+    pois: { id: string; name: string; category: string; lat: number; lon: number; distanceM: number; progressFrac: number }[];
+  }): void {
+    this.routeGeojson = data.geojson;
+    this.routePois = data.pois.map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      lat: p.lat,
+      lon: p.lon,
+      distance_m: p.distanceM,
+      bearing_deg: 0,
+      progressFrac: p.progressFrac,
+    }));
+
+    this.updateState({
+      routeName: data.name || null,
+      routeTotalKm: data.distanceKm,
+    });
+  }
+
+  private updateState(partial: Partial<HikingControllerState>): void {
+    this.state = { ...this.state, ...partial };
+    this.listeners.forEach((l) => l(this.state));
+  }
+
+  private bindGPS(): void {
+    this.unbindGPS();
+
+    this.unbindGPSPosition = this.gpsService.onPosition((pos) => {
+      if (this.state.isPaused) return;
+
+      const accepted = this.trackingEngine.processPosition(pos);
+      if (accepted) {
+        const current = this.routeGeojson
+          ? closestOnRoute(this.routeGeojson, pos.latitude, pos.longitude)
+          : null;
+        const projectedFrac = current?.progressFrac ?? null;
+        this.lastProjectedFrac = projectedFrac;
+
+        const remainingKm =
+          this.state.routeTotalKm != null
+            ? projectedFrac != null
+              ? Math.max(0, this.state.routeTotalKm * (1 - projectedFrac))
+              : Math.max(0, this.state.routeTotalKm - this.state.distanceKm)
+            : null;
+        const metrics = this.trackingEngine.getMetrics(remainingKm);
+
+        const validPosList = this.trackingEngine.getValidPositions();
+
+        // Progression projetée sur la vraie géométrie : le pourcentage reflète
+        // la position sur le parcours (même si le GPS a légèrement dérivé).
+        const progressPct =
+          this.state.routeTotalKm != null && this.state.routeTotalKm > 0 && projectedFrac != null
+            ? Math.min(100, Math.max(0, Math.round(projectedFrac * 100)))
+            : null;
+
+        // Direction générale réelle : bearing de la route juste devant le hiker.
+        const guidanceBearingDeg =
+          projectedFrac != null ? routeBearingAt(this.routeGeojson, projectedFrac) : null;
+
+        // Auto-récupération : un fix valide après un GPS faible repasse en tracking.
+        if (this.stateMachine.getState() === 'GPS_WEAK') {
+          this.stateMachine.transitionTo('TRACKING');
+        }
+
+        const nextPoi = this.computeNextPoi(pos);
+
+        this.updateState({
+          distanceKm: metrics.distanceKm,
+          elevationGainM: metrics.elevationGainM,
+          currentSpeedKmH: metrics.currentSpeedKmH,
+          averageSpeedKmH: metrics.averageSpeedKmH,
+          paceMinPerKm: metrics.paceMinPerKm,
+          estimatedEtaMinutes: metrics.estimatedEtaMinutes,
+          positions: validPosList,
+          progressPercent: progressPct,
+          guidanceBearingDeg,
+          nextPoi,
+        });
+
+        this.persistSession();
+      }
+    });
+
+    this.unbindGPSError = this.gpsService.onError((err) => {
+      if (err.code === 3 || err.code === 2) {
+        if (this.stateMachine.getState() === 'TRACKING') {
+          this.stateMachine.transitionTo('GPS_WEAK');
+        }
+      }
+    });
+
+    this.gpsService.startTracking();
+  }
+
+  private computeNextPoi(pos: GPSPosition): (POI & { distanceRemainingM: number }) | null {
+    if (this.routePois.length === 0) return null;
+
+    const current = this.routeGeojson
+      ? closestOnRoute(this.routeGeojson, pos.latitude, pos.longitude)
+      : null;
+    const currentFrac = current?.progressFrac ?? 0;
+    const currentProgressBehindThreshold = currentFrac - 0.03;
+
+    for (const poi of this.routePois) {
+      if (this.reachedPois.has(String(poi.id))) continue;
+
+      const distM = haversineMeters(pos.latitude, pos.longitude, poi.lat, poi.lon);
+
+      if (distM < POI_REACHED_THRESHOLD_M) {
+        this.reachedPois.add(String(poi.id));
+        this.poiEvents.push({
+          poiName: poi.name,
+          reachedAt: new Date().toISOString(),
+          lat: poi.lat,
+          lon: poi.lon,
+        });
+        continue;
+      }
+
+      // POI clairement derrière la progression actuelle → déjà passé sans le frôler.
+      if (poi.progressFrac != null && poi.progressFrac < currentProgressBehindThreshold) {
+        this.reachedPois.add(String(poi.id));
+        continue;
+      }
+
+      return {
+        ...poi,
+        distanceRemainingM: Math.round(distM),
+        bearing_deg: initialBearingDeg(pos.latitude, pos.longitude, poi.lat, poi.lon),
+      };
+    }
+
+    return null;
+  }
+
+  private unbindGPS(): void {
+    this.gpsService.stopTracking();
+    if (this.unbindGPSPosition) {
+      this.unbindGPSPosition();
+      this.unbindGPSPosition = null;
+    }
+    if (this.unbindGPSError) {
+      this.unbindGPSError();
+      this.unbindGPSError = null;
+    }
+  }
+
+  private startTimer(): void {
+    this.stopTimer();
+    this.timerId = setInterval(() => {
+      if (this.state.isPaused) return;
+
+      const remainingKm =
+        this.state.routeTotalKm != null
+          ? this.lastProjectedFrac != null
+            ? Math.max(0, this.state.routeTotalKm * (1 - this.lastProjectedFrac))
+            : Math.max(0, this.state.routeTotalKm - this.state.distanceKm)
+          : null;
+      const metrics = this.trackingEngine.getMetrics(remainingKm);
+
+      this.updateState({
+        durationSeconds: metrics.activeDurationSeconds,
+        paceMinPerKm: metrics.paceMinPerKm,
+        averageSpeedKmH: metrics.averageSpeedKmH,
+      });
+      this.persistSession();
+    }, 1000);
+  }
+
+  private stopTimer(): void {
+    if (this.timerId) {
+      clearInterval(this.timerId);
+      this.timerId = null;
+    }
+  }
+
+  /**
+   * Détection de sortie d'itinéraire via la fonction PostGIS get_route_deviation :
+   * polling toutes les 15 s, debounce sur 2 lectures (2 × > 50 m → OFF_ROUTE,
+   * 2 × < 30 m → retour sur parcours).
+   */
+  private startDeviationPolling(): void {
+    this.stopDeviationPolling();
+    this.offRouteBuffer = [];
+
+    this.deviationTimerId = setInterval(async () => {
+      if (!this.state.routeId || this.state.isPaused || !this.state.isActive) return;
+
+      const positions = this.trackingEngine.getValidPositions();
+      const last = positions[positions.length - 1];
+      if (!last) return;
+
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.rpc('get_route_deviation', {
+          p_route_id: Number(this.state.routeId),
+          p_lat: last.latitude,
+          p_lon: last.longitude,
+        });
+        if (error) return;
+
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row) return;
+
+        const distanceM = Number(row.distance_m);
+        const bearingDeg = Number(row.bearing_deg);
+
+        this.offRouteBuffer.push(distanceM);
+        if (this.offRouteBuffer.length > 2) this.offRouteBuffer.shift();
+        if (this.offRouteBuffer.length < 2) return;
+
+        const [a, b] = this.offRouteBuffer;
+        const consistentlyFar = a > OFF_ROUTE_THRESHOLD_M && b > OFF_ROUTE_THRESHOLD_M;
+        const consistentlyNear = a < BACK_ON_ROUTE_THRESHOLD_M && b < BACK_ON_ROUTE_THRESHOLD_M;
+
+        if (consistentlyNear) {
+          this.offRouteDismissed = false;
+          if (this.stateMachine.getState() === 'OFF_ROUTE') {
+            this.stateMachine.transitionTo('TRACKING');
+          }
+          this.updateState({ isOffRoute: false, deviation: null });
+          return;
+        }
+
+        if (consistentlyFar && !this.offRouteDismissed) {
+          if (this.stateMachine.getState() === 'TRACKING') {
+            this.stateMachine.transitionTo('OFF_ROUTE');
+          }
+          this.updateState({
+            isOffRoute: true,
+            deviation: { distanceM: Math.round(distanceM), bearingDeg },
+          });
+        }
+      } catch {
+        /* hors-ligne ou erreur réseau : on ignore ce cycle */
+      }
+    }, DEVIATION_POLL_MS);
+  }
+
+  private stopDeviationPolling(): void {
+    if (this.deviationTimerId) {
+      clearInterval(this.deviationTimerId);
+      this.deviationTimerId = null;
+    }
+    this.offRouteBuffer = [];
+  }
+
+  private initBattery(): void {
+    if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+      (navigator as any).getBattery().then((battery: any) => {
+        const updateBattery = () => {
+          const level = Math.round(battery.level * 100);
+          this.updateState({ batteryLevel: level });
+          if (level <= 15) {
+            this.addAlert({
+              id: `battery-${Date.now()}`,
+              type: 'battery',
+              severity: 'warning',
+              message: `Batterie faible (${level}%)`,
+              timestamp: new Date().toISOString(),
+            });
+            if (this.stateMachine.getState() === 'TRACKING') {
+              this.stateMachine.transitionTo('LOW_BATTERY');
+            }
+          }
+        };
+        updateBattery();
+        battery.addEventListener('levelchange', updateBattery);
+      }).catch(() => {});
+    }
+  }
+
+  private addAlert(alert: SafetyAlert): void {
+    this.updateState({
+      safetyAlerts: [...this.state.safetyAlerts, alert],
+    });
+  }
+
+  private persistSession(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      if (!this.state.isActive) return;
+      const snapshot = {
+        routeId: this.state.routeId,
+        kitId: this.state.kitId,
+        tripId: this.state.tripId,
+        routeName: this.state.routeName,
+        routeTotalKm: this.state.routeTotalKm,
+        distanceKm: this.state.distanceKm,
+        durationSeconds: this.state.durationSeconds,
+        elevationGainM: this.state.elevationGainM,
+        isPaused: this.state.isPaused,
+        positions: this.state.positions.slice(-200),
+      };
+      this.persistSequence += 1;
+      const sequence = this.persistSequence;
+      void this.writePersistedSession(snapshot, sequence);
+    } catch {
+      /* ignore storage errors */
+    }
+  }
+
+  /**
+   * Phase 6 — écrit le brouillon de session chiffré (AES-GCM, clé locale non
+   * extractible) ; repli en clair UNIQUEMENT si le coffre WebCrypto/IndexedDB
+   * est indisponible (documenté dans PHASE_6_VERIFICATION.md). Le garde de
+   * séquence empêche une écriture asynchrone ancienne d'écraser la récente.
+   */
+  private async writePersistedSession(snapshot: unknown, sequence: number): Promise<void> {
+    try {
+      const envelope = await encryptLocalJson(snapshot);
+      if (sequence < this.persistWrittenSequence) return;
+      if (envelope) {
+        localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(envelope));
+        this.persistWrittenSequence = sequence;
+        return;
+      }
+      localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(snapshot));
+      this.persistWrittenSequence = sequence;
+    } catch {
+      /* ignore storage errors */
+    }
+  }
+
+  private restoreSession(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = localStorage.getItem(PERSISTENCE_KEY);
+      if (!saved) return;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(saved);
+      } catch {
+        return;
+      }
+      if (isLocalVaultEnvelope(parsed)) {
+        void this.restoreEncryptedSession(parsed);
+        return;
+      }
+      this.applyRestoredSession(parsed);
+    } catch {
+      /* ignore restore errors */
+    }
+  }
+
+  /** Déchiffre puis applique le brouillon ; une clé perdue ne restaure rien. */
+  private async restoreEncryptedSession(envelope: LocalVaultEnvelope): Promise<void> {
+    try {
+      const decrypted = await decryptLocalJson<unknown>(envelope);
+      if (decrypted) this.applyRestoredSession(decrypted);
+    } catch {
+      /* enveloppe altérée ou clé indisponible : aucune donnée inventée */
+    }
+  }
+
+  private applyRestoredSession(parsed: unknown): void {
+    const record = parsed as {
+      routeId?: unknown;
+      kitId?: unknown;
+      tripId?: unknown;
+      routeName?: unknown;
+      routeTotalKm?: unknown;
+      distanceKm?: unknown;
+      durationSeconds?: unknown;
+      elevationGainM?: unknown;
+      positions?: unknown;
+    } | null;
+    if (!record || !Array.isArray(record.positions) || record.positions.length === 0) return;
+    this.updateState({
+      routeId: typeof record.routeId === 'string' ? record.routeId : null,
+      kitId: typeof record.kitId === 'string' ? record.kitId : null,
+      tripId: typeof record.tripId === 'string' ? record.tripId : null,
+      routeName: typeof record.routeName === 'string' ? record.routeName : null,
+      routeTotalKm: record.routeTotalKm != null ? Number(record.routeTotalKm) : null,
+      distanceKm: Number(record.distanceKm) || 0,
+      durationSeconds: Number(record.durationSeconds) || 0,
+      elevationGainM: record.elevationGainM != null ? Number(record.elevationGainM) : null,
+      positions: record.positions as HikingControllerState['positions'],
+    });
+  }
+
+  private clearPersistedSession(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(PERSISTENCE_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+}

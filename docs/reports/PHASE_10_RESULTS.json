@@ -1,0 +1,156 @@
+{
+  "phase": 10,
+  "phase_name": "Observabilite et capacite",
+  "date": "2026-09-12",
+  "sha_branch": "2c43344c (base 79bb1ca0 = origin/main, Phase 8) sur feat/phase10-observability",
+  "sha_pushed": "2c43344c -- pousse sur origin/feat/phase10-observability",
+  "sha_merged": "aucun -- pas de PR (consigne), branche poussee pour revue",
+  "environment": {
+    "local": "Supabase local Docker 127.0.0.1:54322 / PostgREST 127.0.0.1:54321 + vitest + pgTAP + Node v24",
+    "production_metrics": "INSUFFICIENT_DATA -- pas de plateforme branchee (disponibilite, 5xx reels, RUM)",
+    "alert_recipient": "INSUFFICIENT_DATA -- aucun e-mail/Slack/pager provisionne",
+    "remote_charge": "INSUFFICIENT_DATA -- charge distante et 10k reels = item humain Phase 1",
+    "ai_monetary_budget": "INSUFFICIENT_DATA -- modeles :free, aucun bareme contractuel"
+  },
+  "audit_existing": {
+    "a14_healthcheck": "scripts/ops/a14_healthcheck.mjs (files, age, echecs, latence RPC, exit 0/1/2) -- reutilise par ops:slo-check",
+    "a11_engine_runs": "adventure_engine_runs.correlation_id/pipeline_version/external_calls/fallback_count -- inchange",
+    "phase2_3_correlation": "correlation_id uuid sur plans/versions/sessions/carnets/publications + RPC de chaine -- propagee, entree en-tete ajoutee",
+    "phase6_8_rate_limit": "src/lib/rate-limit + routes.ts -- inchange",
+    "a15_load": "scripts/ops/a15_load_test.mjs -- reutilise par phase10_capacity.mjs",
+    "rum": "@vercel/speed-insights monte dans src/app/layout.tsx:286 -- donnees cote Vercel uniquement",
+    "structured_logs": "absent avant Phase 10 (console.* epars)"
+  },
+  "deliverables": {
+    "correlation": [
+      "src/lib/observability/correlation.ts",
+      "src/app/api/adventure/generate/route.ts (en-tete + corps, echo reponse)",
+      "src/app/api/hike-sessions/route.ts (en-tete + corps, generation, echo reponse)"
+    ],
+    "structured_logs": "src/lib/observability/logger.ts (JSON, niveaux, correlation_id, latency_ms, status, redaction PII)",
+    "slo_as_code": [
+      "src/lib/observability/slo.ts (9 SLO Phase 10, evaluateur pur, alertDecision)",
+      "scripts/ops/phase10_slo_check.ts (A14 + A15 + ai_usage_daily -> JSON)"
+    ],
+    "dashboards_spec": [
+      "docs/observability/README.md",
+      "docs/observability/TRACES.md",
+      "docs/observability/DASHBOARDS.md",
+      "docs/observability/SLO_ALERTES.md"
+    ],
+    "ai_budget": "src/lib/observability/aiBudget.ts (calcul pur testé depuis ai_usage_daily)",
+    "capacity": "scripts/ops/phase10_capacity.mjs (profils 100/1000/10000, charge mixte, cap connexions 50, nettoyage garanti)",
+    "npm_scripts": ["ops:capacity", "ops:slo-check"],
+    "migrations": "aucune (phase code/docs uniquement)",
+    "tests_new": [
+      "tests/observability/correlation.spec.ts (8)",
+      "tests/observability/logger.spec.ts (8)",
+      "tests/observability/slo.spec.ts (5)",
+      "tests/observability/ai-budget.spec.ts (5)",
+      "tests/observability/generate-route-correlation.spec.ts (3)",
+      "tests/ops/phase10-capacity.spec.ts (5)"
+    ]
+  },
+  "slo_evaluation_local": {
+    "command": "npm run ops:slo-check -- --health docs/reports/PHASE_10_HEALTHCHECK.json --load docs/reports/A15_LOAD_TEST.json --ai-usage docs/reports/PHASE_10_AI_USAGE.json",
+    "pass": [
+      "api_read_p95_ms (70.96 ms, proxy local A15 conditions)",
+      "http_5xx_ratio (0 %, proxy local A15 conditions)",
+      "jobs_pending_events (0, A14)",
+      "jobs_oldest_pending_min (0, A14)"
+    ],
+    "fail": [],
+    "insufficient_data": [
+      "api_availability_ratio (plateforme)",
+      "api_write_p95_ms (aucun scenario d'ecriture en charge)",
+      "destructive_syncs (compteur ops a instrumenter)",
+      "rls_violations (journaux DB/pgTAP)",
+      "carnet_entry_loss (reconciliation a instrumenter)"
+    ],
+    "ai_budget": "insufficient_data -- plafonds par utilisateur OK (20 heavy / 100 fast), plafond global et monetaires non configures",
+    "honesty_rule": "une mesure absente n'est jamais PASS"
+  },
+  "capacity_local": {
+    "dataset": "2000 signalements synthetiques @example.invalid, 1 plan + version + decisions, utilisateur jetable local, nettoyage verifie 0 residu",
+    "charge_mixte": "5/10 plan_read, 3/10 proximite PostGIS, 2/10 feature flags (pg direct)",
+    "runs": [
+      {
+        "profile_users": 100,
+        "connections": 10,
+        "iterations": 23245,
+        "rps": 2321.37,
+        "p50_ms": 3.53,
+        "p95_ms": 8.88,
+        "errors": 0,
+        "verdict": "pass_local",
+        "artifact": "docs/reports/PHASE_10_CAPACITY_100.json"
+      },
+      {
+        "profile_users": 1000,
+        "connections": 50,
+        "iterations": 40697,
+        "rps": 2706.58,
+        "p50_ms": 19.13,
+        "p95_ms": 28.0,
+        "errors": 0,
+        "verdict": "pass_local",
+        "artifact": "docs/reports/PHASE_10_CAPACITY_1000.json"
+      },
+      {
+        "profile_users": 10000,
+        "connections": 50,
+        "connections_requested": 200,
+        "connections_capped": true,
+        "iterations": 55197,
+        "rps": 2754.97,
+        "p50_ms": 18.82,
+        "p95_ms": 27.43,
+        "errors": 0,
+        "verdict": "inconclusive",
+        "exit_code": 4,
+        "reason": "10000 simultanes non representables localement -- item humain/Phase 1, jamais un PASS",
+        "artifact": "docs/reports/PHASE_10_CAPACITY_10000_EXPLORATORY.json"
+      }
+    ],
+    "caveat": "local != production (pas de TLS, CDN, pooler, multi-instance, WAF) ; chiffres non contractuels"
+  },
+  "evidence": {
+    "type_check": "exit 0",
+    "lint": "exit 0 (warnings preexistants uniquement)",
+    "vitest_full": "309 fichiers passes / 4 skipped ; 2189 tests passes / 27 skipped / 0 echoue",
+    "vitest_new": "34/34",
+    "pgtap_full": "Files=19, Tests=380, Result: PASS (aucune migration Phase 10)",
+    "healthcheck_local": "SAIN -- runs 24h=144 (0 echec), files 0/0, RPC 0.61 ms",
+    "artifacts": [
+      "docs/reports/PHASE_10_HEALTHCHECK.json",
+      "docs/reports/PHASE_10_SLO_CHECK.json",
+      "docs/reports/PHASE_10_AI_USAGE.json (0 ligne reelle)",
+      "docs/reports/PHASE_10_CAPACITY_100.json",
+      "docs/reports/PHASE_10_CAPACITY_1000.json",
+      "docs/reports/PHASE_10_CAPACITY_10000_EXPLORATORY.json"
+    ]
+  },
+  "gate_phase10": {
+    "traces_correlation": "PASS local (entree en-tete + propagation routes -> DB ; params->runs)",
+    "logs_structures_redaction": "PASS (tests : email/token jamais en clair)",
+    "slo_et_alertes": "PASS code/evaluation -- destinataire reel INSUFFICIENT_DATA",
+    "dashboards_specs": "PASS documentation avec sources reelles ; branchement plateforme INSUFFICIENT_DATA",
+    "budget_ia": "PASS calcul pur ; budget monetaires INSUFFICIENT_DATA",
+    "capacite_100_1000": "PASS local (runs reels executes)",
+    "capacite_10000_et_distante": "INSUFFICIENT_DATA -- item humain/Phase 1",
+    "rum": "INSUFFICIENT_DATA -- donnees plateforme (Speed Insights monte)",
+    "cache_cdn_pooling": "INSUFFICIENT_DATA -- configuration plateforme externe"
+  },
+  "baselines_visuelles": "aucune UI modifiee -- aucune baseline impactee, aucune regeneration",
+  "limitations": [
+    "Aucun destinataire d'alerte reel branche (e-mail/Slack/pager).",
+    "Aucune metrique de production (disponibilite, 5xx, RUM, p95 ecriture).",
+    "Charge reelle 10k et charge distante non executees.",
+    "Aucun scenario d'ecriture en charge.",
+    "Budget IA global/monetaires non configures (modeles :free).",
+    "adventure_domain_events ne porte pas de correlation_id (aucun emetteur ne l'alimente aujourd'hui).",
+    "Compteurs ops (sync destructives, violations RLS, perte carnet) a instrumenter."
+  ],
+  "decision": "PASS_TECHNIQUE_LOCAL_DISTANT_OPS_INSUFFICIENT_DATA",
+  "responsible": "agent BACKEND/PERFORMANCE/QA + ORCHESTRATOR ; destinataires d'alerte, RUM, charge distante et bareme IA = humain/ops non saisi"
+}

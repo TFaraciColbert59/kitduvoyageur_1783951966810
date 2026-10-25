@@ -1,0 +1,83 @@
+[
+  {
+    "id": "w1",
+    "kind": "geographic",
+    "name": "Source test",
+    "lat": 45.01,
+    "lng": 6.01,
+    "category": "water",
+    "source": "fixture"
+  },
+  {
+    "id": "h1",
+    "kind": "geographic",
+    "name": "Refuge test",
+    "lat": 45.02,
+    "lng": 6.02,
+    "category": "refuge",
+    "source": "fixture"
+  },
+  {
+    "id": "o1",
+    "kind": "commercial_offer",
+    "name": "Hôtel test",
+    "lat": 45.03,
+    "lng": 6.03,
+    "category": "lodging",
+    "source": "fixture",
+    "price": 120,
+    "currency": "EUR",
+    "priceCheckedAt": "2026-09-01T00:00:00.000Z",
+    "availability": true,
+    "availabilityCheckedAt": "2026-09-01T00:00:00.000Z"
+  },
+  {
+    "id": "o2",
+    "kind": "commercial_offer",
+    "name": "Offre sans horodatage",
+    "lat": 45.04,
+    "lng": 6.04,
+    "category": "lodging",
+    "source": "fixture",
+    "price": 99,
+    "currency": "EUR"
+  },
+  {
+    "id": "a1",
+    "kind": "affiliate_link",
+    "name": "Lien partenaire",
+    "lat": 45.05,
+    "lng": 6.05,
+    "category": "lodging",
+    "source": "fixture",
+    "affiliateTargetUrl": "https://example.invalid/partenaire",
+    "affiliateDisclosure": "Lien affilié"
+  },
+  {
+    "id": "a2",
+    "kind": "affiliate_link",
+    "name": "Lien sans divulgation",
+    "lat": 45.06,
+    "lng": 6.06,
+    "category": "lodging",
+    "source": "fixture",
+    "affiliateTargetUrl": "https://example.invalid/sans-divulgation"
+  },
+  {
+    "id": "g-unknown",
+    "kind": "geographic",
+    "name": "Catégorie inconnue",
+    "lat": 45.07,
+    "lng": 6.07,
+    "category": "mystere",
+    "source": "fixture"
+  },
+  {
+    "id": "g-nosource",
+    "kind": "geographic",
+    "name": "Sans source",
+    "lat": 45.08,
+    "lng": 6.08,
+    "category": "water"
+  }
+]

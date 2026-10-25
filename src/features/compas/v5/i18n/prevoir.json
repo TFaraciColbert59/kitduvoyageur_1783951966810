@@ -1,0 +1,678 @@
+{
+  "prevoir": {
+    "tabBook": {
+      "fr": "À réserver",
+      "en": "To book",
+      "es": "Por reservar",
+      "de": "Zu buchen",
+      "it": "Da prenotare"
+    },
+    "tabBuy": {
+      "fr": "À acheter",
+      "en": "To buy",
+      "es": "Por comprar",
+      "de": "Zu kaufen",
+      "it": "Da comprare"
+    },
+    "subBuyOne": {
+      "fr": "{count} objet à acheter",
+      "en": "{count} item to buy",
+      "es": "{count} objeto por comprar",
+      "de": "{count} Gegenstand zu kaufen",
+      "it": "{count} oggetto da comprare"
+    },
+    "subBuyOther": {
+      "fr": "{count} objets à acheter",
+      "en": "{count} items to buy",
+      "es": "{count} objetos por comprar",
+      "de": "{count} Gegenstände zu kaufen",
+      "it": "{count} oggetti da comprare"
+    },
+    "readOnly": {
+      "fr": "Lecture seule : tu peux voir ce qui est prévu, pas le modifier.",
+      "en": "Read-only: you can see the plan but not change it.",
+      "es": "Solo lectura: puede ver lo previsto, pero no modificarlo.",
+      "de": "Nur Lesezugriff: Sie können die Planung ansehen, aber nicht ändern.",
+      "it": "Sola lettura: può vedere il programma, ma non modificarlo."
+    },
+    "nightWhen": {
+      "fr": "Nuit du jour {day}",
+      "en": "Night of day {day}",
+      "es": "Noche del día {day}",
+      "de": "Nacht von Tag {day}",
+      "it": "Notte del giorno {day}"
+    },
+    "nightWhenDate": {
+      "fr": "Nuit du jour {day} · {date}",
+      "en": "Night of day {day} · {date}",
+      "es": "Noche del día {day} · {date}",
+      "de": "Nacht von Tag {day} · {date}",
+      "it": "Notte del giorno {day} · {date}"
+    },
+    "nightAlternatives": {
+      "fr": "Nuits possibles pour la nuit du jour {day}",
+      "en": "Possible places for the night of day {day}",
+      "es": "Alojamientos posibles para la noche del día {day}",
+      "de": "Mögliche Unterkünfte für die Nacht von Tag {day}",
+      "it": "Alloggi possibili per la notte del giorno {day}"
+    },
+    "fromArrival": {
+      "fr": "à {distance} de l’arrivée",
+      "en": "{distance} from the arrival",
+      "es": "a {distance} de la llegada",
+      "de": "{distance} vom Ziel entfernt",
+      "it": "a {distance} dall’arrivo"
+    },
+    "kind": {
+      "hebergement": {
+        "fr": "Hébergement",
+        "en": "Lodging",
+        "es": "Alojamiento",
+        "de": "Unterkunft",
+        "it": "Alloggio"
+      },
+      "refuge": {
+        "fr": "Refuge",
+        "en": "Mountain hut",
+        "es": "Refugio",
+        "de": "Hütte",
+        "it": "Rifugio"
+      },
+      "camping": {
+        "fr": "Camping",
+        "en": "Campsite",
+        "es": "Zona de acampada",
+        "de": "Campingplatz",
+        "it": "Campeggio"
+      },
+      "bivouac": {
+        "fr": "Bivouac",
+        "en": "Bivouac spot",
+        "es": "Vivac",
+        "de": "Biwak",
+        "it": "Bivacco"
+      }
+    },
+    "priceEach": {
+      "fr": "{price} × {people} pers.",
+      "en": "{price} × {people} people",
+      "es": "{price} × {people} personas",
+      "de": "{price} × {people} Personen",
+      "it": "{price} × {people} persone"
+    },
+    "priceNone": {
+      "fr": "prix non renseigné",
+      "en": "price not available",
+      "es": "precio no indicado",
+      "de": "Preis nicht angegeben",
+      "it": "prezzo non indicato"
+    },
+    "priceHint": {
+      "fr": "Repère de barème au {date}",
+      "en": "Scale guide price as of {date}",
+      "es": "Precio orientativo del baremo a {date}",
+      "de": "Richtwert aus der Preistabelle, Stand {date}",
+      "it": "Prezzo indicativo da tabella al {date}"
+    },
+    "pricePartner": {
+      "fr": "Tarif du partenaire au {date}",
+      "en": "Partner rate as of {date}",
+      "es": "Tarifa del socio a {date}",
+      "de": "Tarif des Partners, Stand {date}",
+      "it": "Tariffa del partner al {date}"
+    },
+    "sourceLine": {
+      "fr": "Source : {source}",
+      "en": "Source: {source}",
+      "es": "Fuente: {source}",
+      "de": "Quelle: {source}",
+      "it": "Fonte: {source}"
+    },
+    "stateProposed": {
+      "fr": "Proposée",
+      "en": "Suggested",
+      "es": "Propuesta",
+      "de": "Vorschlag",
+      "it": "Proposta"
+    },
+    "stateChosen": {
+      "fr": "Ton choix · à confirmer",
+      "en": "Your choice · to confirm",
+      "es": "Su elección · por confirmar",
+      "de": "Ihre Wahl · zu bestätigen",
+      "it": "La sua scelta · da confermare"
+    },
+    "stateBooked": {
+      "fr": "Réservation faite",
+      "en": "Booked",
+      "es": "Reserva hecha",
+      "de": "Gebucht",
+      "it": "Prenotazione fatta"
+    },
+    "choose": {
+      "fr": "Choisir",
+      "en": "Choose",
+      "es": "Elegir",
+      "de": "Wählen",
+      "it": "Scegliere"
+    },
+    "chooseNight": {
+      "fr": "Choisir {name} pour la nuit du jour {day}",
+      "en": "Choose {name} for the night of day {day}",
+      "es": "Elegir {name} para la noche del día {day}",
+      "de": "{name} für die Nacht von Tag {day} wählen",
+      "it": "Scegliere {name} per la notte del giorno {day}"
+    },
+    "chooseTransport": {
+      "fr": "Choisir le trajet : {label}",
+      "en": "Choose the journey: {label}",
+      "es": "Elegir el trayecto: {label}",
+      "de": "Fahrt wählen: {label}",
+      "it": "Scegliere il tragitto: {label}"
+    },
+    "remove": {
+      "fr": "Retirer",
+      "en": "Remove",
+      "es": "Quitar",
+      "de": "Entfernen",
+      "it": "Rimuovere"
+    },
+    "removeNight": {
+      "fr": "Retirer le choix de la nuit du jour {day}",
+      "en": "Remove the choice for the night of day {day}",
+      "es": "Quitar la elección de la noche del día {day}",
+      "de": "Wahl für die Nacht von Tag {day} entfernen",
+      "it": "Rimuovere la scelta per la notte del giorno {day}"
+    },
+    "iBooked": {
+      "fr": "J’ai réservé",
+      "en": "I’ve booked",
+      "es": "Ya reservé",
+      "de": "Ich habe gebucht",
+      "it": "Ho prenotato"
+    },
+    "iBookedLabel": {
+      "fr": "J’ai réservé : {label}",
+      "en": "I’ve booked: {label}",
+      "es": "Ya reservé: {label}",
+      "de": "Ich habe gebucht: {label}",
+      "it": "Ho prenotato: {label}"
+    },
+    "nightChosenMsg": {
+      "fr": "Nuit du jour {day} : {name}",
+      "en": "Night of day {day}: {name}",
+      "es": "Noche del día {day}: {name}",
+      "de": "Nacht von Tag {day}: {name}",
+      "it": "Notte del giorno {day}: {name}"
+    },
+    "nightRemovedMsg": {
+      "fr": "Nuit du jour {day} retirée",
+      "en": "Night of day {day} removed",
+      "es": "Noche del día {day} quitada",
+      "de": "Nacht von Tag {day} entfernt",
+      "it": "Notte del giorno {day} rimossa"
+    },
+    "transportChosenMsg": {
+      "fr": "Trajet : {label}",
+      "en": "Journey: {label}",
+      "es": "Trayecto: {label}",
+      "de": "Fahrt: {label}",
+      "it": "Tragitto: {label}"
+    },
+    "bookedMsg": {
+      "fr": "Réservation faite : {label}",
+      "en": "Booked: {label}",
+      "es": "Reserva hecha: {label}",
+      "de": "Gebucht: {label}",
+      "it": "Prenotazione fatta: {label}"
+    },
+    "manualCap": {
+      "fr": "Noter une nuit toi-même",
+      "en": "Note a night yourself",
+      "es": "Anotar una noche usted mismo",
+      "de": "Eine Nacht selbst eintragen",
+      "it": "Annotare una notte da sé"
+    },
+    "manualLabel": {
+      "fr": "Nom du lieu pour la nuit du jour {day}",
+      "en": "Name of the place for the night of day {day}",
+      "es": "Nombre del lugar para la noche del día {day}",
+      "de": "Name des Ortes für die Nacht von Tag {day}",
+      "it": "Nome del luogo per la notte del giorno {day}"
+    },
+    "manualPlaceholder": {
+      "fr": "Nom du lieu",
+      "en": "Place name",
+      "es": "Nombre del lugar",
+      "de": "Name des Ortes",
+      "it": "Nome del luogo"
+    },
+    "manualButton": {
+      "fr": "Noter",
+      "en": "Note it",
+      "es": "Anotar",
+      "de": "Eintragen",
+      "it": "Annotare"
+    },
+    "manualTag": {
+      "fr": "Notée par toi",
+      "en": "Noted by you",
+      "es": "Anotada por usted",
+      "de": "Von Ihnen eingetragen",
+      "it": "Annotata da Lei"
+    },
+    "noOptions": {
+      "fr": "Aucune nuit trouvée près de l’arrivée du jour {day}.",
+      "en": "No place found near the arrival of day {day}.",
+      "es": "Ningún alojamiento cerca de la llegada del día {day}.",
+      "de": "Keine Unterkunft in der Nähe des Ziels von Tag {day} gefunden.",
+      "it": "Nessun alloggio trovato vicino all’arrivo del giorno {day}."
+    },
+    "extrasPending": {
+      "fr": "Les nuits possibles et les trajets n’ont pas encore été lus. Tu peux déjà noter une nuit à la main.",
+      "en": "Possible nights and journeys haven’t been read yet. You can already note a night by hand.",
+      "es": "Aún no se han leído las noches posibles ni los trayectos. Ya puede anotar una noche a mano.",
+      "de": "Mögliche Nächte und Fahrten wurden noch nicht gelesen. Sie können schon eine Nacht von Hand eintragen.",
+      "it": "Le notti possibili e i tragitti non sono ancora stati letti. Può già annotare una notte a mano."
+    },
+    "lodgingUnavailable": {
+      "fr": "La source des hébergements (OpenStreetMap) ne répond pas pour l’instant. Rien n’est comblé : tu peux noter une nuit à la main.",
+      "en": "The lodging source (OpenStreetMap) isn’t responding right now. Nothing is filled in: you can note a night by hand.",
+      "es": "La fuente de alojamientos (OpenStreetMap) no responde por ahora. No se rellena nada: puede anotar una noche a mano.",
+      "de": "Die Unterkunftsquelle (OpenStreetMap) antwortet gerade nicht. Es wird nichts ergänzt: Sie können eine Nacht von Hand eintragen.",
+      "it": "La fonte degli alloggi (OpenStreetMap) non risponde per ora. Nulla viene inventato: può annotare una notte a mano."
+    },
+    "photosUnavailable": {
+      "fr": "Les photos ne sont pas disponibles pour l’instant : des illustrations les remplacent.",
+      "en": "Photos aren’t available right now: illustrations stand in for them.",
+      "es": "Las fotos no están disponibles por ahora: se sustituyen por ilustraciones.",
+      "de": "Die Fotos sind gerade nicht verfügbar: Illustrationen ersetzen sie.",
+      "it": "Le foto non sono disponibili per ora: le sostituiscono illustrazioni."
+    },
+    "transportUnavailable": {
+      "fr": "La source des trajets ne répond pas pour l’instant. Rien n’est comblé.",
+      "en": "The journey source isn’t responding right now. Nothing is filled in.",
+      "es": "La fuente de trayectos no responde por ahora. No se rellena nada.",
+      "de": "Die Fahrtenquelle antwortet gerade nicht. Es wird nichts ergänzt.",
+      "it": "La fonte dei tragitti non risponde per ora. Nulla viene inventato."
+    },
+    "noNights": {
+      "fr": "Ce voyage n’a pas de nuit à prévoir.",
+      "en": "This trip has no night to plan.",
+      "es": "Este viaje no tiene noches que prever.",
+      "de": "Diese Reise hat keine Nacht zu planen.",
+      "it": "Questo viaggio non ha notti da prevedere."
+    },
+    "transportCap": {
+      "fr": "Trajet",
+      "en": "Journey",
+      "es": "Trayecto",
+      "de": "Fahrt",
+      "it": "Tragitto"
+    },
+    "transportAlternatives": {
+      "fr": "Trajets possibles",
+      "en": "Possible journeys",
+      "es": "Trayectos posibles",
+      "de": "Mögliche Fahrten",
+      "it": "Tragitti possibili"
+    },
+    "transportNone": {
+      "fr": "Aucun trajet proposé pour ce voyage.",
+      "en": "No journey suggested for this trip.",
+      "es": "Ningún trayecto propuesto para este viaje.",
+      "de": "Für diese Reise wird keine Fahrt vorgeschlagen.",
+      "it": "Nessun tragitto proposto per questo viaggio."
+    },
+    "transportTotal": {
+      "fr": "{price} au total",
+      "en": "{price} in total",
+      "es": "{price} en total",
+      "de": "{price} insgesamt",
+      "it": "{price} in totale"
+    },
+    "transportEach": {
+      "fr": "{price} par personne",
+      "en": "{price} per person",
+      "es": "{price} por persona",
+      "de": "{price} pro Person",
+      "it": "{price} a persona"
+    },
+    "linkPartner": {
+      "fr": "Voir chez {partner}",
+      "en": "See at {partner}",
+      "es": "Ver en {partner}",
+      "de": "Bei {partner} ansehen",
+      "it": "Vedere su {partner}"
+    },
+    "linkOfficial": {
+      "fr": "Voir le site officiel",
+      "en": "See the official site",
+      "es": "Ver el sitio oficial",
+      "de": "Offizielle Website ansehen",
+      "it": "Vedere il sito ufficiale"
+    },
+    "linkLabel": {
+      "fr": "{action} : {name} (nouvel onglet)",
+      "en": "{action}: {name} (new tab)",
+      "es": "{action}: {name} (nueva pestaña)",
+      "de": "{action}: {name} (neuer Tab)",
+      "it": "{action}: {name} (nuova scheda)"
+    },
+    "sandbox": {
+      "fr": "Mode test du fournisseur {provider} : les offres affichées ne sont ni de vraies disponibilités ni de vrais tarifs.",
+      "en": "Test mode for the provider {provider}: the offers shown are neither real availability nor real rates.",
+      "es": "Modo de prueba del proveedor {provider}: las ofertas mostradas no son disponibilidades ni tarifas reales.",
+      "de": "Testmodus des Anbieters {provider}: Die angezeigten Angebote sind weder echte Verfügbarkeiten noch echte Preise.",
+      "it": "Modalità di prova del fornitore {provider}: le offerte mostrate non sono disponibilità né tariffe reali."
+    },
+    "totalCap": {
+      "fr": "Total des réservations",
+      "en": "Booking total",
+      "es": "Total de reservas",
+      "de": "Summe der Buchungen",
+      "it": "Totale delle prenotazioni"
+    },
+    "totalNights": {
+      "fr": "Nuits",
+      "en": "Nights",
+      "es": "Noches",
+      "de": "Nächte",
+      "it": "Notti"
+    },
+    "totalTransport": {
+      "fr": "Trajet",
+      "en": "Journey",
+      "es": "Trayecto",
+      "de": "Fahrt",
+      "it": "Tragitto"
+    },
+    "totalAll": {
+      "fr": "Total",
+      "en": "Overall total",
+      "es": "Suma total",
+      "de": "Gesamtsumme",
+      "it": "Totale"
+    },
+    "totalPerPerson": {
+      "fr": "Par personne",
+      "en": "Per person",
+      "es": "Por persona",
+      "de": "Pro Person",
+      "it": "A persona"
+    },
+    "totalNone": {
+      "fr": "Rien n’est encore choisi : le total apparaît dès qu’une nuit ou un trajet l’est.",
+      "en": "Nothing is chosen yet: the total appears as soon as a night or a journey is.",
+      "es": "Todavía no hay nada elegido: el total aparece en cuanto se elige una noche o un trayecto.",
+      "de": "Noch ist nichts gewählt: Die Summe erscheint, sobald eine Nacht oder Fahrt gewählt ist.",
+      "it": "Non è ancora stato scelto nulla: il totale compare appena si sceglie una notte o un tragitto."
+    },
+    "totalUnpricedOne": {
+      "fr": "{count} choix sans prix renseigné, non compté",
+      "en": "{count} choice without a price, not counted",
+      "es": "{count} elección sin precio indicado, no contada",
+      "de": "{count} Auswahl ohne angegebenen Preis, nicht gezählt",
+      "it": "{count} scelta senza prezzo indicato, non conteggiata"
+    },
+    "totalUnpricedOther": {
+      "fr": "{count} choix sans prix renseigné, non comptés",
+      "en": "{count} choices without a price, not counted",
+      "es": "{count} elecciones sin precio indicado, no contadas",
+      "de": "{count} Auswahlen ohne angegebenen Preis, nicht gezählt",
+      "it": "{count} scelte senza prezzo indicato, non conteggiate"
+    },
+    "totalMixed": {
+      "fr": "Devises différentes, non additionnées : {list}",
+      "en": "Different currencies, not added together: {list}",
+      "es": "Monedas distintas, no sumadas: {list}",
+      "de": "Unterschiedliche Währungen, nicht addiert: {list}",
+      "it": "Valute diverse, non sommate: {list}"
+    },
+    "totalHints": {
+      "fr": "Les repères de barème ne sont pas les tarifs de l’établissement : vérifie chez lui avant de réserver.",
+      "en": "Scale guide prices are not the venue’s actual rates: check with them before booking.",
+      "es": "Los precios orientativos del baremo no son las tarifas del establecimiento: compruébelo con él antes de reservar.",
+      "de": "Richtwerte aus der Preistabelle sind nicht die Preise der Unterkunft: Fragen Sie dort nach, bevor Sie buchen.",
+      "it": "I prezzi indicativi da tabella non sono le tariffe della struttura: verifichi con essa prima di prenotare."
+    },
+    "bookAll": {
+      "fr": "Tout réserver",
+      "en": "Book everything",
+      "es": "Reservar todo",
+      "de": "Alles buchen",
+      "it": "Prenotare tutto"
+    },
+    "bookAllAmount": {
+      "fr": "Tout réserver · {amount}",
+      "en": "Book everything · {amount}",
+      "es": "Reservar todo · {amount}",
+      "de": "Alles buchen · {amount}",
+      "it": "Prenotare tutto · {amount}"
+    },
+    "bookAllNone": {
+      "fr": "Choisis d’abord une nuit ou un trajet.",
+      "en": "Choose a night or a journey first.",
+      "es": "Elija primero una noche o un trayecto.",
+      "de": "Wählen Sie zuerst eine Nacht oder eine Fahrt.",
+      "it": "Scelga prima una notte o un tragitto."
+    },
+    "bookPanel": {
+      "fr": "Réservations à ouvrir, une par une",
+      "en": "Bookings to open, one by one",
+      "es": "Reservas por abrir, una a una",
+      "de": "Buchungen zum Öffnen, eine nach der anderen",
+      "it": "Prenotazioni da aprire, una alla volta"
+    },
+    "bookStep": {
+      "fr": "{n} sur {total}",
+      "en": "{n} of {total}",
+      "es": "{n} de {total}",
+      "de": "{n} von {total}",
+      "it": "{n} su {total}"
+    },
+    "bookOpen": {
+      "fr": "Ouvrir",
+      "en": "Open",
+      "es": "Abrir",
+      "de": "Öffnen",
+      "it": "Aprire"
+    },
+    "bookNoLink": {
+      "fr": "Pas de lien : à réserver directement auprès de l’hébergeur ou du transporteur.",
+      "en": "No link: book directly with the host or the carrier.",
+      "es": "Sin enlace: reserva directamente con el alojamiento o el transportista.",
+      "de": "Kein Link: direkt bei der Unterkunft oder dem Beförderer buchen.",
+      "it": "Nessun link: prenotare direttamente presso la struttura o il vettore."
+    },
+    "bookNote": {
+      "fr": "Le Compas ne réserve ni ne paie rien. Un clic vers un partenaire ne confirme jamais une réservation : dis « J’ai réservé » quand c’est fait.",
+      "en": "Compas books and pays nothing. A click to a partner never confirms a booking: say “I’ve booked” once it’s done.",
+      "es": "Compas no reserva ni paga nada. Un clic hacia un socio nunca confirma una reserva: indique «Ya reservé» cuando esté hecho.",
+      "de": "Compas bucht und bezahlt nichts. Ein Klick zu einem Partner bestätigt nie eine Buchung: Wählen Sie „Ich habe gebucht“, wenn es erledigt ist.",
+      "it": "Compas non prenota né paga nulla. Un clic verso un partner non conferma mai una prenotazione: indichi «Ho prenotato» quando è fatto."
+    },
+    "bookAllDone": {
+      "fr": "Tout est noté comme réservé.",
+      "en": "Everything is marked as booked.",
+      "es": "Todo está anotado como reservado.",
+      "de": "Alles ist als gebucht vermerkt.",
+      "it": "Tutto è segnato come prenotato."
+    },
+    "savedCap": {
+      "fr": "Réservations enregistrées",
+      "en": "Saved bookings",
+      "es": "Reservas registradas",
+      "de": "Gespeicherte Buchungen",
+      "it": "Prenotazioni registrate"
+    },
+    "buyEmptyTitle": {
+      "fr": "Rien à acheter",
+      "en": "Nothing to buy",
+      "es": "Nada que comprar",
+      "de": "Nichts zu kaufen",
+      "it": "Niente da comprare"
+    },
+    "buyEmptySub": {
+      "fr": "Tout est dans ton sac.",
+      "en": "Everything is in your pack.",
+      "es": "Todo está en su mochila.",
+      "de": "Alles ist in Ihrem Rucksack.",
+      "it": "Tutto è nel suo zaino."
+    },
+    "buyTotal": {
+      "fr": "{amount} en boutique LKDV",
+      "en": "{amount} in the LKDV shop",
+      "es": "{amount} en la tienda LKDV",
+      "de": "{amount} im LKDV-Shop",
+      "it": "{amount} nel negozio LKDV"
+    },
+    "buyUnpricedOne": {
+      "fr": "{count} objet sans prix renseigné",
+      "en": "{count} item without a price",
+      "es": "{count} objeto sin precio indicado",
+      "de": "{count} Gegenstand ohne angegebenen Preis",
+      "it": "{count} oggetto senza prezzo indicato"
+    },
+    "buyUnpricedOther": {
+      "fr": "{count} objets sans prix renseigné",
+      "en": "{count} items without a price",
+      "es": "{count} objetos sin precio indicado",
+      "de": "{count} Gegenstände ohne angegebenen Preis",
+      "it": "{count} oggetti senza prezzo indicato"
+    },
+    "buyNoProduct": {
+      "fr": "Aucun produit de la boutique ne correspond pour l’instant.",
+      "en": "No shop product matches for now.",
+      "es": "Ningún producto de la tienda coincide por ahora.",
+      "de": "Derzeit passt kein Produkt des Shops.",
+      "it": "Per ora nessun prodotto del negozio corrisponde."
+    },
+    "buyStore": {
+      "fr": "Boutique LKDV",
+      "en": "LKDV shop",
+      "es": "Tienda LKDV",
+      "de": "LKDV-Shop",
+      "it": "Negozio LKDV"
+    },
+    "buyStoreLabel": {
+      "fr": "Choisir {product} en boutique LKDV pour {name}",
+      "en": "Choose {product} from the LKDV shop for {name}",
+      "es": "Elegir {product} en la tienda LKDV para {name}",
+      "de": "{product} im LKDV-Shop für {name} wählen",
+      "it": "Scegli {product} nel negozio LKDV per {name}"
+    },
+    "buyOther": {
+      "fr": "Autre produit",
+      "en": "Other product",
+      "es": "Otro producto",
+      "de": "Anderes Produkt",
+      "it": "Altro prodotto"
+    },
+    "buyOtherLabel": {
+      "fr": "Chercher un autre produit pour {name}",
+      "en": "Look for another product for {name}",
+      "es": "Buscar otro producto para {name}",
+      "de": "Anderes Produkt für {name} suchen",
+      "it": "Cercare un altro prodotto per {name}"
+    },
+    "buyBorrow": {
+      "fr": "Emprunter",
+      "en": "Borrow",
+      "es": "Pedir prestado",
+      "de": "Leihen",
+      "it": "Prendere in prestito"
+    },
+    "buyBorrowLabel": {
+      "fr": "Emprunter : {name}",
+      "en": "Borrow: {name}",
+      "es": "Pedir prestado: {name}",
+      "de": "Leihen: {name}",
+      "it": "Prendere in prestito: {name}"
+    },
+    "buyBought": {
+      "fr": "Déjà acheté",
+      "en": "Already bought",
+      "es": "Ya comprado",
+      "de": "Schon gekauft",
+      "it": "Già comprato"
+    },
+    "buyBoughtLabel": {
+      "fr": "Déjà acheté : {name}",
+      "en": "Already bought: {name}",
+      "es": "Ya comprado: {name}",
+      "de": "Schon gekauft: {name}",
+      "it": "Già comprato: {name}"
+    },
+    "stageInCart": {
+      "fr": "Dans le panier",
+      "en": "In the cart",
+      "es": "En el carrito",
+      "de": "Im Warenkorb",
+      "it": "Nel carrello"
+    },
+    "stageShipping": {
+      "fr": "En livraison",
+      "en": "On its way",
+      "es": "En camino",
+      "de": "Unterwegs",
+      "it": "In consegna"
+    },
+    "seeCart": {
+      "fr": "Voir le panier",
+      "en": "See the cart",
+      "es": "Ver el carrito",
+      "de": "Warenkorb ansehen",
+      "it": "Vedere il carrello"
+    },
+    "routeShop": {
+      "fr": "Repéré sur la carte : {name}, à {distance} de l’arrivée du jour {day}. Assortiment et prix non renseignés : à vérifier sur place.",
+      "en": "Spotted on the map: {name}, {distance} from the arrival of day {day}. Range and prices unknown: check on site.",
+      "es": "Localizado en el mapa: {name}, a {distance} de la llegada del día {day}. Surtido y precios no indicados: compruebe allí.",
+      "de": "Auf der Karte entdeckt: {name}, {distance} vom Ziel von Tag {day}. Sortiment und Preise unbekannt: Bitte vor Ort prüfen.",
+      "it": "Individuato sulla mappa: {name}, a {distance} dall’arrivo del giorno {day}. Assortimento e prezzi non indicati: verifichi sul posto."
+    },
+    "seeDay": {
+      "fr": "Voir le jour {day}",
+      "en": "See day {day}",
+      "es": "Ver el día {day}",
+      "de": "Tag {day} ansehen",
+      "it": "Vedere il giorno {day}"
+    },
+    "pickedMsg": {
+      "fr": "{name} : choisi en boutique, dans le panier",
+      "en": "{name}: chosen from the shop, in the cart",
+      "es": "{name}: elegido en la tienda, en el carrito",
+      "de": "{name}: im Shop gewählt, im Warenkorb",
+      "it": "{name}: scelto in negozio, nel carrello"
+    },
+    "boughtMsg": {
+      "fr": "{name} : déjà acheté",
+      "en": "{name}: already bought",
+      "es": "{name}: ya comprado",
+      "de": "{name}: schon gekauft",
+      "it": "{name}: già comprato"
+    },
+    "buyNote": {
+      "fr": "Les achats « Boutique LKDV » passent par le panier : rien n’est payé sans ton geste. Un magasin sur la route est indiqué quand la carte en a repéré un.",
+      "en": "“LKDV shop” purchases go through the cart: nothing is paid without your action. A shop on the route is shown when the map has spotted one.",
+      "es": "Las compras en la «Tienda LKDV» pasan por el carrito: no se paga nada sin su gesto. Se indica una tienda en la ruta cuando el mapa ha localizado alguna.",
+      "de": "Käufe im „LKDV-Shop“ laufen über den Warenkorb: Ohne Ihre Aktion wird nichts bezahlt. Ein Geschäft an der Route wird angezeigt, wenn die Karte eines gefunden hat.",
+      "it": "Gli acquisti nel «Negozio LKDV» passano dal carrello: nulla viene pagato senza il suo gesto. Un negozio lungo il percorso è indicato quando la mappa ne ha individuato uno."
+    },
+    "subNightsOne": {
+      "fr": "{count} nuit",
+      "en": "{count} night",
+      "es": "{count} noche",
+      "de": "{count} Nacht",
+      "it": "{count} notte"
+    },
+    "subNightsOther": {
+      "fr": "{count} nuits",
+      "en": "{count} nights",
+      "es": "{count} noches",
+      "de": "{count} Nächte",
+      "it": "{count} notti"
+    }
+  }
+}

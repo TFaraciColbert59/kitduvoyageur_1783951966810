@@ -1,0 +1,48 @@
+﻿◇ injected env (11) from .env.local // tip: ⌘ override existing { override: true }
+◇ injected env (1) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+[
+  {
+    "function_name": "refresh_atlas_density",
+    "role_name": "anon",
+    "can_execute": false
+  },
+  {
+    "function_name": "refresh_atlas_density",
+    "role_name": "authenticated",
+    "can_execute": false
+  },
+  {
+    "function_name": "refresh_atlas_density",
+    "role_name": "service_role",
+    "can_execute": true
+  },
+  {
+    "function_name": "trails_in_viewport",
+    "role_name": "anon",
+    "can_execute": true
+  },
+  {
+    "function_name": "trails_in_viewport",
+    "role_name": "authenticated",
+    "can_execute": true
+  },
+  {
+    "function_name": "trails_in_viewport",
+    "role_name": "service_role",
+    "can_execute": true
+  }
+]
+OK   trails_in_viewport / anon: can_execute=true (attendu true)
+OK   trails_in_viewport / authenticated: can_execute=true (attendu true)
+OK   refresh_atlas_density / anon: can_execute=false (attendu false)
+OK   refresh_atlas_density / authenticated: can_execute=false (attendu false)
+OK   refresh_atlas_density / service_role: can_execute=true (attendu true)
+
+[grants] SUCCÈS
+node : Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), file src\win\async.c, line 94
+Au caractère Ligne:1 : 1
++ node scripts/atlas/verify-function-grants.mjs 2>&1 | Out-File -FilePa ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Assertion faile...sync.c, line 94:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

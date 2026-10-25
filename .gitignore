@@ -1,0 +1,184 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env*.local
+.env.local
+.env.production
+.env.development
+
+# Next.js build output & Transpile caches
+dist/
+build/
+out/
+.next/
+.next-*/
+.next-dev/
+.next-verify/
+.output/
+.vercel/
+.turbo/
+.parcel-cache/
+.cleanup-trash/
+reach-report.json
+*.tsbuildinfo
+
+# OS artifacts
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor debris & temporary files
+*.bak
+*.swp
+*.swo
+*~
+*.orig
+*.rej
+*.diff
+*.patch
+*.out
+page_content.html
+step*_form.html
+temp.txt
+screenshot*.png
+step*.png
+work/
+%SystemDrive%
+
+# Optional: if using TypeScript
+*.tsbuildinfo
+
+# Testing & Performance tools
+coverage/
+# Phase 4 — dossiers de code livrés (à ne pas confondre avec les rapports de
+# couverture de tests) : pipeline, tests unitaires et matrice de couverture.
+!scripts/coverage/
+!tests/coverage/
+!docs/coverage/
+jest-test-results.json
+lighthouse_results/
+baseline_home.json
+
+# Optional: if using IDEs
+.vscode/
+.idea/
+
+# Optional: if using TurboRepo or monorepo
+turbo/
+
+# Country data cache
+.country-cache/
+.aider*
+
+# Runtime / logs
+.dev-server.pid
+dev-server.log
+dev-server.err.log
+*.log
+*.err
+
+# Playwright
+test-results/
+playwright-report/
+.playwright-mcp/
+
+# Géodonnées volumineuses générées (3 Go)
+geo_data/
+pays-data/
+*cache*
+!src/app/api/route/cache/
+!src/features/explorer-osm/services/cacheService.ts
+!tests/features/explorer-osm/cacheAndBreaker.spec.ts
+
+# Design de référence local (hors app)
+Front end/
+
+# Actifs générés non référencés
+public/assets/images/products/
+
+# Tooling
+.kilo/
+*.zip
+*.dmg
+ios-temp/
+ipa-inspect/
+MOBILE_OPTIMIZATION_PROGRESS.md
+**/ms-playwright/
+ms-playwright/
+Capture d'écran *.png
+shots/
+Nouveau Document texte.txt
+playwright-a11y-report/
+audit_shots/
+
+# SDD scratch
+.superpowers/
+
+# Captures lourdes d'audit visuel
+audit/screens/**
+!audit/screens/**/
+!audit/screens/**/*.json
+
+audit/auth-storage-state.json
+**/auth-storage-state*.json
+**/*.storageState.json
+audit/a11y/measure-contrast-*.json
+audit/a11y/contrast-key-screens-matrix.json
+audit/a11y/*.json
+audit/a11y/campaign/**
+audit/a11y/section4/**
+audit/contrast-measurements.json
+# Les captures de l audit de contraste /prepare sont regenerables :
+# 98 mesures sur 4 breakpoints, relancable par `npm run audit:prep-contrast`.
+audit/prep-contrast-shots/
+
+# Local visual QA scratch
+.probe/
+tmp-probe-*.mjs
+
+# Captures QA locales (Playwright / debug) — jamais commisees.
+artifacts/
+
+# Scripts de verification visuelle locaux (viewport 393x852).
+# Ce sont des OUTILS de travail, pas du source : ils pilotent un navigateur
+# local, dependent d un serveur de dev et n ont aucun sens en production.
+# Sans cette regle, un `git add -A` les embarquerait dans l historique.
+verify-*.cjs
+diag-*.cjs
+
+# Working evidence for the /prepare campaign (P0.x, P1.x, ANx).
+# The checklist cites these captures by filename as the proof behind each
+# closed item, so they must stay on disk -- but at ~150 MB of PNG they are a
+# local artifact, not history. What is committed is the proof itself: the
+# dates, the measurements and the test names written in CHECKLIST-PREP.md.
+proof/
+am.json
+amenities.json
+p0*.mjs
+
+# Harnais de mesure local (Playwright 393x852). Meme nature que les
+# scripts p0*.mjs : des outils qui pilotent un navigateur de dev.
+qa-local/
+
+# Phase 1 — sauvegardes locales de production (jamais commitées)
+backups/
+
+
+# Phase 1 — sauvegardes locales de production (jamais commitées)
+backups/
+
+# Artefacts de diagnostic locaux
+hosted-schema.json
+scratch/
+
+
+# Copies de travail des sous-agents (git worktree)
+.claude/worktrees/
+.vercel

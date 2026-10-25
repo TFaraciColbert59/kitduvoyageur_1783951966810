@@ -1,0 +1,935 @@
+import { isInventoryAvailable, type InventoryStatus } from '@/features/materiel/domain/inventory';
+/**
+ * Préremplissage du Compas : moteur PUR et déterministe. Il décide du type de
+ * chaque nuit (profil + terrain), chiffre le trajet depuis la position réelle,
+ * trouve chaque objet du kit dans l'ordre inventaire → prêt → location →
+ * boutique, et assemble le budget complet. Chaque montant porte sa source :
+ * `base` (lu en base), `mesure` (routage réel) ou `estimation` (règle ou IA,
+ * toujours affichée comme telle). Aucun produit, prix ou lieu n'est inventé.
+ */
+
+import { fuelPrice, type FuelKind, type FuelPrice } from './fuel';
+import { lonDelta } from './longitude';
+import { shopTokens } from './shopMatch';
+import { tollsBasis } from './tolls';
+
+/* ---------- Nuits ---------- */
+
+export type NightType = 'bivouac' | 'refuge' | 'hebergement';
+export type NightsPref = 'bivouac' | 'refuge' | 'hebergement' | 'mixte' | null;
+export type Autonomy = 'journee' | 'bivouac_1_2' | 'itinerance_longue' | null;
+export type Priority = 'legerete' | 'confort' | 'budget' | 'securite' | null;
+
+export interface NightPlan {
+  /** 1 = première nuit (soir du jour 1). */
+  night: number;
+  type: NightType;
+  reason: string;
+}
+
+export interface NightsInput {
+  nights: number;
+  pref: NightsPref;
+  autonomy: Autonomy;
+  priority: Priority;
+  maxAltitudeM: number | null;
+  /** Un refuge connu (base) près du lieu de chaque nuit. */
+  refugeNear: boolean[];
+  /** Nuits dehors demandées pour ce projet : elles priment sur le reste. */
+  outdoorNights?: number | null;
+}
+
+export const NIGHT_LABEL: Record<NightType, string> = {
+  bivouac: 'Bivouac',
+  refuge: 'Refuge',
+  hebergement: 'Hébergement',
+};
+
+export function planNights(input: NightsInput): NightPlan[] {
+  const n = Math.max(0, Math.min(60, Math.floor(input.nights)));
+  const out: NightPlan[] = [];
+  const high = (input.maxAltitudeM ?? 0) >= 2000;
+  // « Dormir dehors 3 nuits » : d'abord les nuits sans refuge connu, puis les autres.
+  const outside = new Set<number>();
+  const want = Math.min(n, Math.max(0, Math.floor(input.outdoorNights ?? 0)));
+  if (want > 0) {
+    const order = Array.from({ length: n }, (_, k) => k + 1).sort(
+      (a, b) => Number(input.refugeNear[a - 1] === true) - Number(input.refugeNear[b - 1] === true) || a - b
+    );
+    for (const night of order.slice(0, want)) outside.add(night);
+  }
+  for (let i = 1; i <= n; i += 1) {
+    const refuge = input.refugeNear[i - 1] === true;
+    if (outside.has(i)) {
+      out.push({ night: i, type: 'bivouac', reason: `${want} nuit${want > 1 ? 's' : ''} dehors demandée${want > 1 ? 's' : ''}` });
+      continue;
+    }
+    if (want > 0 && input.pref === 'bivouac') {
+      // Le reste des nuits n'est pas dehors : un toit.
+      out.push(refuge ? { night: i, type: 'refuge', reason: 'nuit sous un toit' } : { night: i, type: 'hebergement', reason: 'nuit sous un toit ; aucun refuge connu à proximité' });
+      continue;
+    }
+    const refugeOr = (why: string): NightPlan =>
+      refuge
+        ? { night: i, type: 'refuge', reason: why }
+        : { night: i, type: 'hebergement', reason: `${why} ; aucun refuge connu à proximité` };
+    let plan: NightPlan;
+    if (input.pref === 'bivouac') plan = { night: i, type: 'bivouac', reason: 'ta préférence' };
+    else if (input.pref === 'hebergement')
+      plan = { night: i, type: 'hebergement', reason: 'ta préférence' };
+    else if (input.pref === 'refuge') plan = refugeOr('ta préférence');
+    else if (input.priority === 'confort') plan = refugeOr('ton profil : confort');
+    else if (input.priority === 'budget')
+      plan = { night: i, type: 'bivouac', reason: 'ton profil : budget' };
+    else if (input.priority === 'securite' && high)
+      plan = refugeOr('ton profil : sécurité, au-dessus de 2 000 m');
+    else if (input.autonomy === 'journee') plan = refugeOr('ton profil : sorties à la journée');
+    else if (input.autonomy === 'bivouac_1_2')
+      plan =
+        i <= 2
+          ? { night: i, type: 'bivouac', reason: 'ton profil : bivouac sur 1 à 2 nuits' }
+          : refugeOr('au-delà de 2 nuits, un toit pour récupérer');
+    else if (input.autonomy === 'itinerance_longue')
+      plan =
+        i % 3 === 0 && refuge
+          ? { night: i, type: 'refuge', reason: 'une nuit sur trois au refuge : repos et ravitaillement' }
+          : { night: i, type: 'bivouac', reason: 'ton profil : itinérance en autonomie' };
+    else plan = refugeOr(high ? 'terrain de haute montagne' : 'sans préférence connue');
+    out.push(plan);
+  }
+  return out;
+}
+
+/* ---------- Trajet ---------- */
+
+/** Voiture : consommation et carburant moyens, affichés comme hypothèses. */
+export const CAR_ASSUMPTIONS = { litersPer100Km: 6.5, seats: 4 } as const;
+
+export interface TransportEstimate {
+  mode: 'voiture';
+  oneWayKm: number;
+  oneWayMin: number;
+  cars: number;
+  roundTripKm: number;
+  /** Carburant aller-retour pour toutes les voitures, péages non comptés (la base dit pourquoi). */
+  fuelEur: number;
+  /** D'où vient le prix du litre : le bulletin pétrolier de l'UE (UE-27) ou une estimation (PLAN-100 4.6). */
+  fuelSource: FuelKind;
+  /** Estimation seulement : le carburant du trajet au moins cher et au plus cher des pays de l'UE (€). */
+  fuelRangeEur: { low: number; high: number } | null;
+  basis: string;
+}
+
+export function estimateCarTrip(input: {
+  oneWayKm: number;
+  oneWayMin: number;
+  partySize: number;
+  /** Prix du litre du ou des pays du trajet (`fuelPriceFor`) ; sans lui, l'estimation de l'UE-27. */
+  fuel?: FuelPrice;
+  /**
+   * La fin de la base : « péages non comptés (pourquoi, barème du pays s'il existe) » (`tollsBasis`).
+   * Le pays de DESTINATION seulement : le domicile du profil ne se nomme jamais sur le voyage.
+   */
+  tollsBasis?: string;
+}): TransportEstimate | null {
+  if (!(input.oneWayKm > 0) || !Number.isFinite(input.oneWayKm)) return null;
+  const cars = Math.max(1, Math.ceil(Math.max(1, input.partySize) / CAR_ASSUMPTIONS.seats));
+  const roundTripKm = Math.round(input.oneWayKm * 2 * 10) / 10;
+  const fuel = input.fuel ?? fuelPrice(null);
+  const litres = (roundTripKm * CAR_ASSUMPTIONS.litersPer100Km) / 100;
+  const fuelEur = Math.round(litres * fuel.eurPerL * cars);
+  const fuelRangeEur = fuel.range
+    ? { low: Math.round(litres * fuel.range.low * cars), high: Math.round(litres * fuel.range.high * cars) }
+    : null;
+  return {
+    mode: 'voiture',
+    oneWayKm: Math.round(input.oneWayKm * 10) / 10,
+    oneWayMin: Math.round(input.oneWayMin),
+    cars,
+    roundTripKm,
+    fuelEur,
+    fuelSource: fuel.kind,
+    fuelRangeEur,
+    basis: `itinéraire routier mesuré · ${String(CAR_ASSUMPTIONS.litersPer100Km).replace('.', ',')} L/100 km · ${fuel.basis}${fuelRangeEur ? ` · entre ${fuelRangeEur.low} € et ${fuelRangeEur.high} € pour ce trajet` : ''} · ${cars} voiture${cars > 1 ? 's' : ''} · ${input.tollsBasis ?? tollsBasis(null)}`,
+  };
+}
+
+/* ---------- Kit ---------- */
+
+export interface GearNeed {
+  key: string;
+  name: string;
+  category: string;
+  vital: boolean;
+  reason: string;
+  /** Synonymes : un seul suffit dans le nom d'un objet pour le couvrir. */
+  match: string[];
+  /** Mots tous exigés (le nom de l'objet, ex. « lampe » ET « frontale »). */
+  require?: string[];
+}
+
+/** Le couchage et la cuisine dépendent des nuits ; le reste vient des règles contextuelles. */
+export function gearForNights(types: NightType[]): GearNeed[] {
+  const bivouac = types.filter((t) => t === 'bivouac').length;
+  const refuge = types.filter((t) => t === 'refuge').length;
+  const out: GearNeed[] = [];
+  if (bivouac) {
+    const why = `${bivouac} nuit${bivouac > 1 ? 's' : ''} en bivouac`;
+    out.push(
+      { key: 'tent', name: 'Tente', category: 'shelter', vital: true, reason: why, match: ['tente', 'tent', 'abri', 'tarp'] },
+      { key: 'sleeping-bag', name: 'Sac de couchage', category: 'sleep', vital: true, reason: why, match: ['couchage', 'duvet', 'quilt'] },
+      { key: 'mattress', name: 'Matelas de sol', category: 'sleep', vital: true, reason: why, match: ['matelas', 'tapis'] },
+      { key: 'stove', name: 'Réchaud', category: 'cook', vital: false, reason: why, match: ['rechaud', 'stove'] },
+      { key: 'pot', name: 'Popote', category: 'cook', vital: false, reason: why, match: ['popote', 'casserole', 'gamelle'] }
+    );
+  }
+  if (refuge)
+    out.push({
+      key: 'liner',
+      name: 'Drap de sac (sac à viande)',
+      category: 'sleep',
+      vital: false,
+      reason: `${refuge} nuit${refuge > 1 ? 's' : ''} en refuge : drap exigé dans la plupart des refuges`,
+      match: ['drap', 'viande', 'liner'],
+    });
+  return out;
+}
+
+export interface SourceInventory {
+  id: string;
+  name: string;
+  isLent: boolean;
+  inventoryStatus?: InventoryStatus;
+}
+export interface SourceBorrowed {
+  inventoryItemId: string;
+  name: string;
+  lender: string | null;
+}
+export interface SourceShop {
+  id: string;
+  name: string;
+  mode: 'achat' | 'location' | 'occasion' | 'enchere' | null;
+  priceEur: number | null;
+  pricePerDay: number | null;
+}
+
+export type GearSource = 'inventaire' | 'pret' | 'location' | 'achat' | 'a_trouver';
+
+export interface GearPick {
+  need: GearNeed;
+  source: GearSource;
+  inventoryItemId: string | null;
+  shopProductId: string | null;
+  /** Coût pour le voyage (location × jours, achat), 0 si déjà là, null si inconnu. */
+  costEur: number | null;
+  label: string;
+}
+
+/** Pluriel ignoré : « batons » couvre « baton ». */
+const stem = (t: string) => (t.length > 4 && t.endsWith('s') ? t.slice(0, -1) : t);
+
+/**
+ * `strict` (boutique) : tout le nom de l'objet est exigé. Sinon (ce qu'on
+ * possède ou emprunte) : le nom principal suffit, une « Gourde 1 L » couvre la
+ * « Gourde isotherme ».
+ */
+function covers(need: GearNeed, name: string, strict = true): boolean {
+  const words = new Set(shopTokens(name).map(stem));
+  if (need.require?.length)
+    return (strict ? need.require : need.require.slice(0, 1)).every((t) => words.has(stem(t)));
+  return need.match.some((m) => words.has(stem(m)));
+}
+
+/**
+ * Priorité voulue : ce qu'on possède, puis ce qu'on nous prête, puis la
+ * location (au prix réel par jour), puis l'achat en boutique. Un objet déjà
+ * dans le kit du voyage n'est pas ajouté une seconde fois.
+ */
+export function sourceGear(
+  needs: GearNeed[],
+  ctx: {
+    tripItemNames: string[];
+    inventory: SourceInventory[];
+    borrowed: SourceBorrowed[];
+    shop: SourceShop[];
+    days: number;
+  }
+): GearPick[] {
+  const used = new Set<string>();
+  const out: GearPick[] = [];
+  const days = Math.max(1, Math.floor(ctx.days));
+  for (const need of needs) {
+    if (ctx.tripItemNames.some((n) => covers(need, n, false))) continue;
+    const own = ctx.inventory.find((i) => isInventoryAvailable({status:i.inventoryStatus,is_lent:i.isLent}) && !used.has(i.id) && covers(need, i.name, false));
+    if (own) {
+      used.add(own.id);
+      out.push({ need, source: 'inventaire', inventoryItemId: own.id, shopProductId: null, costEur: 0, label: own.name });
+      continue;
+    }
+    const lent = ctx.borrowed.find((b) => !used.has(b.inventoryItemId) && covers(need, b.name, false));
+    if (lent) {
+      used.add(lent.inventoryItemId);
+      out.push({ need, source: 'pret', inventoryItemId: lent.inventoryItemId, shopProductId: null, costEur: 0, label: lent.name });
+      continue;
+    }
+    const rent = ctx.shop
+      .filter((p) => p.mode === 'location' && p.pricePerDay != null && p.pricePerDay > 0 && covers(need, p.name))
+      .sort((a, b) => (a.pricePerDay ?? 0) - (b.pricePerDay ?? 0))[0];
+    if (rent) {
+      out.push({
+        need,
+        source: 'location',
+        inventoryItemId: null,
+        shopProductId: rent.id,
+        costEur: Math.round((rent.pricePerDay ?? 0) * days * 100) / 100,
+        label: rent.name,
+      });
+      continue;
+    }
+    const buy = ctx.shop
+      .filter((p) => p.mode === 'achat' && p.priceEur != null && p.priceEur > 0 && covers(need, p.name))
+      .sort((a, b) => (a.priceEur ?? 0) - (b.priceEur ?? 0))[0];
+    if (buy) {
+      out.push({ need, source: 'achat', inventoryItemId: null, shopProductId: buy.id, costEur: buy.priceEur, label: buy.name });
+      continue;
+    }
+    out.push({ need, source: 'a_trouver', inventoryItemId: null, shopProductId: null, costEur: null, label: need.name });
+  }
+  return out;
+}
+
+/* ---------- Repas ---------- */
+
+/** Repli quand l'IA ne répond pas : par personne et par jour, selon la nuit. */
+export const MEAL_EUR_PER_DAY: Record<NightType | 'jour', number> = {
+  bivouac: 16,
+  refuge: 22,
+  hebergement: 30,
+  jour: 12,
+};
+
+export function estimateMeals(input: {
+  days: number;
+  partySize: number;
+  nights: NightType[];
+  /** Montant par personne et par jour proposé par l'IA (déjà borné), sinon null. */
+  aiPerPersonDay: number | null;
+}): { amount: number; perPersonDay: number; basis: string } {
+  const days = Math.max(1, Math.floor(input.days));
+  const party = Math.max(1, Math.floor(input.partySize));
+  if (input.aiPerPersonDay != null) {
+    const amount = Math.round(input.aiPerPersonDay * days * party);
+    return { amount, perPersonDay: input.aiPerPersonDay, basis: 'estimation de l’IA' };
+  }
+  let perPerson = 0;
+  for (let d = 1; d <= days; d += 1) {
+    const night = input.nights[d - 1];
+    perPerson += night ? MEAL_EUR_PER_DAY[night] : MEAL_EUR_PER_DAY.jour;
+  }
+  return {
+    amount: Math.round(perPerson * party),
+    perPersonDay: Math.round((perPerson / days) * 10) / 10,
+    basis: 'estimation selon le type de nuit',
+  };
+}
+
+/* ---------- Budget ---------- */
+
+export type BudgetCategory = 'hébergement' | 'transport' | 'nourriture' | 'matériel' | 'activités' | 'divers';
+export type AmountSource = 'base' | 'mesure' | 'estimation';
+
+export interface BudgetLine {
+  category: BudgetCategory;
+  title: string;
+  amount: number;
+  source: AmountSource;
+  basis: string;
+}
+
+/** Arrondi à l'euro ; une ligne à 0 € n'est pas écrite. */
+export function budgetLines(lines: Array<BudgetLine | null>): BudgetLine[] {
+  // Arrondi AVANT le filtre : une ligne à 0,4 € devient 0 € et ne doit pas partir
+  // (contrainte amount > 0 : tout l'insert du budget échouerait).
+  return lines
+    .filter((l): l is BudgetLine => l != null && Number.isFinite(l.amount))
+    .map((l) => ({ ...l, amount: Math.round(l.amount) }))
+    .filter((l) => l.amount > 0);
+}
+
+export function budgetTotal(lines: BudgetLine[]): number {
+  return lines.reduce((t, l) => t + l.amount, 0);
+}
+
+/* ---------- Avis de l'IA (borné) ---------- */
+
+export interface AutofillAiAdvice {
+  mealsPerPersonDay: number | null;
+  lodgingPerPersonNight: number | null;
+  /** Vol aller-retour par personne depuis le départ (voyage lointain). */
+  flightPerPerson: number | null;
+  /** Déplacements sur place entre les étapes (bus, jeep, train, taxi…), par personne. */
+  localTransportPerPerson: number | null;
+  /** Location d'une voiture, par voiture et par jour (road trip après un vol). */
+  carRentalPerDay: number | null;
+  /** Visa, permis, taxes d'entrée, par personne. */
+  entryFeesPerPerson: number | null;
+  entryFeesDetail: string | null;
+  /** Assurance voyage / rapatriement conseillée, par personne. */
+  insurancePerPerson: number | null;
+  notes: string[];
+}
+
+function cleanText(v: unknown, max: number): string | null {
+  if (typeof v !== 'string') return null;
+  const t = v.trim().replace(/\s+/g, ' ');
+  if (t.length < 3) return null;
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+}
+
+/** Ce que l'IA renvoie est borné : un chiffre hors des limites réalistes est ignoré. */
+/**
+ * Mots courants des conseils que le modèle écrit sans accent ou mal
+ * (« Reserver l'hëergement ») : corrigés, le reste est laissé tel quel.
+ */
+const ACCENT_FIXES: Array<[RegExp, string]> = [
+  // Apostrophe perdue : « lhumidité », « davance », « leau ».
+  [/\b(l|d|qu|j|n)(avance|humidit[ée]|h[ée]bergement|eau|altitude|acclimatation|arriv[ée]e|achat|acc[èe]s|itin[ée]raire|entr[ée]e|ascension|aube|hiver|automne|avion|a[ée]roport|assurance|[ée]quipement|[ée]tape|orage|ombre|essence|emplacement|office)(?![\p{L}\d])/giu, "$1'$2"],
+  [/\bh[ëe]?e?rgements?\b/gi, 'hébergement'],
+  [/\bhebergement/gi, 'hébergement'],
+  [/\breserver\b/gi, 'réserver'],
+  [/\breservation(s?)\b/gi, 'réservation$1'],
+  [/\bprevoir\b/gi, 'prévoir'],
+  [/\bverifier\b/gi, 'vérifier'],
+  [/\bdepart\b/gi, 'départ'],
+  [/\bpriviligier\b|\bprivilegier\b/gi, 'privilégier'],
+  [/\bregion(s?)\b/gi, 'région$1'],
+  [/\bmeteo\b/gi, 'météo'],
+  [/\betape(s?)\b/gi, 'étape$1'],
+  [/\bequipement(s?)\b/gi, 'équipement$1'],
+  [/\bsecurite\b/gi, 'sécurité'],
+  [/\bmateriel\b/gi, 'matériel'],
+];
+export function repairAccents(text: string): string {
+  let out = text;
+  for (const [re, fix] of ACCENT_FIXES)
+    out = out.replace(re, (m, ...g) => {
+      const word = fix.replace(/\$(\d)/g, (_d, i: string) => (typeof g[Number(i) - 1] === 'string' ? (g[Number(i) - 1] as string) : ''));
+      return m[0] === m[0].toUpperCase() ? word[0].toUpperCase() + word.slice(1) : word;
+    });
+  return out;
+}
+
+/**
+ * La réponse de l'IA, bornée. `locale` : langue des conseils (PLAN-100 6.2). Les corrections
+ * d'accents ne valent que pour le français ; en anglais, elles abîmeraient des mots justes
+ * (« region », « depart ») et ne sont pas appliquées.
+ */
+export function sanitizeAdvice(raw: unknown, locale: 'fr' | 'en' | 'es' | 'de' | 'it' = 'fr'): AutofillAiAdvice {
+  const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  const num = (v: unknown, min: number, max: number) => {
+    const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : NaN;
+    return Number.isFinite(n) && n >= min && n <= max ? Math.round(n * 10) / 10 : null;
+  };
+  const notes = Array.isArray(r.notes)
+    ? r.notes
+        .map((n) => cleanText(n, 180))
+        .filter((n): n is string => n != null && n.length >= 8)
+        .map((n) => (locale === 'fr' ? repairAccents(n) : n))
+        // Une phrase commence par une majuscule (« appliquer un indice… »).
+        .map((n) => n[0].toLocaleUpperCase(locale) + n.slice(1))
+        .slice(0, 3)
+    : [];
+  return {
+    mealsPerPersonDay: num(r.meals_eur_per_person_day, 5, 80),
+    lodgingPerPersonNight: num(r.lodging_eur_per_person_night, 5, 250),
+    flightPerPerson: num(r.flight_eur_per_person, 40, 5000),
+    localTransportPerPerson: num(r.local_transport_eur_per_person, 1, 3000),
+    carRentalPerDay: num(r.car_rental_eur_per_day, 15, 500),
+    entryFeesPerPerson: num(r.entry_fees_eur_per_person, 1, 1500),
+    entryFeesDetail: cleanText(r.entry_fees_detail, 140),
+    insurancePerPerson: num(r.insurance_eur_per_person, 5, 800),
+    notes,
+  };
+}
+
+/* ---------- Itinéraire proposé par l'IA ---------- */
+
+/** « pagaie » : descente de rivière (canoë, kayak), jamais proposé par le spécialiste. */
+export type StageMove = 'vol' | 'voiture' | 'bus' | 'train' | 'bateau' | 'marche' | 'velo' | 'pagaie' | 'aucun';
+const MOVES = new Set<StageMove>(['vol', 'voiture', 'bus', 'train', 'bateau', 'marche', 'velo', 'aucun']);
+
+export interface ProposedStage {
+  day: number;
+  place: string;
+  /** Comment on rejoint ce lieu depuis celui de la veille. */
+  move: StageMove;
+  note: string | null;
+}
+
+/**
+ * Une étape par jour, de 1 à `days`, chacune avec un lieu. Un jour manquant
+ * reprend le lieu de la veille (repos, acclimatation). Rien n'est inventé ici :
+ * le lieu sera ensuite retrouvé sur la carte, ou écarté.
+ */
+const STAGE_LIST_KEYS = ['stages', 'jours', 'etapes', 'étapes', 'itinerary', 'itineraire', 'days'];
+
+/** « Voiture », « vélo », « à pied » → le vocabulaire des étapes. */
+function normalizeMove(v: unknown): string {
+  return String(v ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function plainMove(v: unknown): StageMove {
+  const m = normalizeMove(v);
+  if (MOVES.has(m as StageMove)) return m as StageMove;
+  if (/pied|marche|trek|rando/.test(m)) return 'marche';
+  if (/velo|bike/.test(m)) return 'velo';
+  if (/avion|vol\b|flight/.test(m)) return 'vol';
+  if (/ferry|bateau|boat/.test(m)) return 'bateau';
+  if (/train|rail/.test(m)) return 'train';
+  if (/bus|car\b/.test(m)) return 'bus';
+  if (/voiture|auto|4x4|van|road/.test(m)) return 'voiture';
+  return 'aucun';
+}
+
+/**
+ * Le lieu seul, sans la phrase autour : « Départ de Glasgow », « Departure from
+ * Glasgow », « Retour à Lyon », « Arrivée à Reykjavik (aéroport) » → le nom
+ * que la carte connaît. Sans quoi la carte cherche la phrase entière et peut
+ * répondre n'importe quoi.
+ */
+const STAGE_PREFIX =
+  // Prépositions de la plus longue à la plus courte, suivies d'un espace : « des
+  // Alpes » ne doit pas laisser « s Alpes », ni « au Havre » « u Havre ».
+  /^(?:(?:jour|day)\s*\d+\s*[:\-–—]\s*)?(?:(?:d[ée]part\s+(?:des|du|de)|retour\s+(?:aux|au|vers|à|a)|arriv[ée]e\s+(?:aux|au|en|à|a)|nuit\s+(?:aux|au|à|a)|departure\s+from|return\s+to|arrival\s+(?:in|at)|back\s+to|drive\s+to|transfer\s+to)\s+|d[ée]part\s+d['’]\s*)/i;
+
+export function stagePlaceName(raw: string | null): string | null {
+  if (!raw) return raw;
+  let s = raw
+    .replace(STAGE_PREFIX, '')
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .trim();
+  // Un tronçon (« Syabru Besi to Gatlang », « Chamonix → Argentière », « de
+  // Zermatt à Täsch ») : l'étape est le lieu du soir, la fin du tronçon. Le
+  // tiret reste un nom (« Isle of Skye - Portree »).
+  const parts = s.split(/\s+(?:to|→|->|>|vers)\s+/i);
+  if (parts.length > 1) s = parts[parts.length - 1].trim();
+  else if (/^(?:de|from)\s/i.test(s)) {
+    const end = s.split(/\s+(?:à|a|to)\s+/i);
+    if (end.length > 1) s = end[end.length - 1].trim();
+  }
+  return s || raw;
+}
+
+export function sanitizeStages(raw: unknown, days: number): ProposedStage[] {
+  const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  // Le modèle ne respecte pas toujours la clé demandée : « stages », mais aussi
+  // « jours », « etapes », « itinerary »… ou un tableau nu. On prend la liste
+  // annoncée, sinon le premier tableau de la réponse.
+  // Ou encore un objet indexé par jour : {"1": [...]}, {"day1": {...}}, {"jour 1": ...}.
+  const byDayKey = Object.entries(r)
+    .map(([k, v]) => [/^(?:day|jour|j)?\s*_?(\d{1,3})$/i.exec(k)?.[1], v] as const)
+    .filter(([d]) => d != null)
+    .map(([d, v]) => {
+      let row: unknown = v;
+      // {"day1": {"stages": [[1, "Ajaccio", …]]}} : la première ligne du jour.
+      if (row && typeof row === 'object' && !Array.isArray(row)) {
+        const inner = Object.values(row as Record<string, unknown>).find(Array.isArray);
+        if (inner && Array.isArray((inner as unknown[])[0])) row = (inner as unknown[])[0];
+      }
+      if (Array.isArray(row)) {
+        const cells = typeof row[0] === 'number' ? row.slice(1) : row;
+        return [Number(d), ...cells];
+      }
+      return { ...(row as Record<string, unknown>), day: Number(d) };
+    });
+  const arr = Array.isArray(raw)
+    ? (raw as unknown[])
+    : ((STAGE_LIST_KEYS.map((k) => r[k]).find(Array.isArray) ??
+        (byDayKey.length ? byDayKey : null) ??
+        Object.values(r).find(Array.isArray) ??
+        []) as unknown[]);
+  // Format compact [jour, lieu, move, note] ou objet {day|jour, place|lieu, …}.
+  const list = arr.map((x): Record<string, unknown> => {
+    if (Array.isArray(x)) {
+      // [jour, lieu, move, note], parfois avec une case de trop : le moyen de
+      // déplacement est la case qui en est un, la note la dernière case libre.
+      const rest = x.slice(2).map((c) => (typeof c === 'string' ? c : ''));
+      const moveAt = rest.findIndex((c) => MOVES.has(normalizeMove(c) as StageMove));
+      const move = moveAt === -1 ? rest[0] : rest[moveAt];
+      const note = rest.filter((_, i) => i !== (moveAt === -1 ? 0 : moveAt)).pop();
+      return { day: x[0], place: x[1], move, note };
+    }
+    const o = x && typeof x === 'object' ? (x as Record<string, unknown>) : {};
+    const pick = (keys: string[]) => keys.map((k) => o[k]).find((v) => v != null);
+    return {
+      day: pick(['day', 'jour', 'j']),
+      place: pick(['place', 'lieu', 'ville', 'location', 'etape', 'name', 'nom']),
+      move: pick(['move', 'transport', 'deplacement', 'mode']),
+      note: pick(['note', 'notes', 'commentaire', 'description']),
+    };
+  });
+  const byDay = new Map<number, ProposedStage>();
+  for (const st of list) {
+    const day = Number(st.day);
+    const place = stagePlaceName(cleanText(st.place, 80));
+    if (!Number.isInteger(day) || day < 1 || day > days || !place || byDay.has(day)) continue;
+    const move = plainMove(st.move);
+    byDay.set(day, {
+      day,
+      place,
+      move: MOVES.has(move) ? move : 'aucun',
+      note: cleanText(st.note, 140),
+    });
+  }
+  if (!byDay.size) return [];
+  const out: ProposedStage[] = [];
+  let last: ProposedStage | null = null;
+  for (let d = 1; d <= days; d += 1) {
+    const st: ProposedStage | null =
+      byDay.get(d) ?? (last ? { day: d, place: last.place, move: 'aucun', note: null } : null);
+    if (st) {
+      out.push(st);
+      last = st;
+    }
+  }
+  return out;
+}
+
+export const STEP_TRANSPORT: Record<StageMove, 'foot' | 'car' | 'bus' | 'train' | 'plane' | 'boat' | 'bike' | 'other'> = {
+  vol: 'plane',
+  voiture: 'car',
+  bus: 'bus',
+  train: 'train',
+  bateau: 'boat',
+  marche: 'foot',
+  velo: 'bike',
+  // Le reste de l'application ne connaît que ces modes : un canoë est un bateau.
+  pagaie: 'boat',
+  aucun: 'foot',
+};
+
+const MOVE_OF_TRANSPORT: Record<string, StageMove> = {
+  plane: 'vol',
+  car: 'voiture',
+  bus: 'bus',
+  train: 'train',
+  boat: 'bateau',
+  foot: 'marche',
+  bike: 'velo',
+};
+
+/**
+ * Déplacements d'un itinéraire déjà en place (étapes saisies avant le
+ * préremplissage) : le moyen de transport enregistré de chaque étape, lu dans
+ * le même vocabulaire que les étapes proposées par le spécialiste.
+ */
+export function movesFromSteps(
+  steps: Array<{ day_number: number; title: string; transport_mode: string | null }>,
+  activity?: string
+): Array<{ day: number; name: string; move: StageMove }> {
+  return steps.map((s) => {
+    const move = (s.transport_mode && MOVE_OF_TRANSPORT[s.transport_mode]) || 'aucun';
+    // Sur l'eau, un tronçon en bateau est la descente elle-même (pas un ferry payant).
+    return { day: s.day_number, name: s.title, move: activity === 'water' && move === 'bateau' ? 'pagaie' : move };
+  });
+}
+
+/* ---------- Venir jusqu'au départ ---------- */
+
+/** Au-delà, la route n'est plus un trajet raisonnable : on part en avion. */
+export const FLIGHT_THRESHOLD_KM = 900;
+
+/**
+ * La route reste raisonnable selon la durée du voyage : un week-end ne passe
+ * pas 9 h au volant à l'aller (Annecy → Biarritz, 650 km à vol d'oiseau).
+ * 450 km à vol d'oiseau (≈ 5 h de route) pour 2 jours, 600 km pour 3, 900 au-delà.
+ */
+/**
+ * Durée de route à l'aller qu'un voyage supporte (trajet mesuré, ferry
+ * compris) : 5 h pour 2 jours, 7 h pour 3, 10 h pour 4 ou 5 jours ; au-delà,
+ * sans limite. « 3 jours en Corse » depuis Annecy : 14 h de route et de ferry.
+ */
+export function maxDriveMinutes(days: number): number {
+  if (days <= 2) return 300;
+  if (days === 3) return 420;
+  if (days <= 5) return 600;
+  return Number.POSITIVE_INFINITY;
+}
+
+export function approachMode(input: { straightKm: number; days?: number | null }): 'sur_place' | 'route' | 'avion' {
+  if (input.straightKm < 0.5) return 'sur_place';
+  const days = input.days ?? 99;
+  const limit = days <= 2 ? 450 : days === 3 ? 600 : FLIGHT_THRESHOLD_KM;
+  if (input.straightKm > limit) return 'avion';
+  return 'route';
+}
+
+/**
+ * Une recommandation des règles contextuelles devient un besoin : son nom
+ * (deux premiers mots porteurs) doit se retrouver dans l'objet proposé.
+ */
+export function needFromRule(rec: {
+  key: string;
+  name: string;
+  category: string;
+  priority: string;
+  reason: string;
+}): GearNeed {
+  const head = shopTokens(rec.name.split(/[/(]/)[0]).slice(0, 2);
+  return {
+    key: rec.key,
+    name: rec.name,
+    category: rec.category,
+    vital: rec.priority === 'vital',
+    reason: rec.reason,
+    match: head,
+    require: head,
+  };
+}
+
+/** Sans nuit en bivouac, ni tente, ni couchage, ni cuisine des règles générales. */
+export function keepRuleForNights(category: string, types: NightType[]): boolean {
+  if (types.includes('bivouac')) return true;
+  return !['shelter', 'sleep', 'cook'].includes(category);
+}
+
+/** Deux besoins désignent le même objet (la tente du bivouac et celle des règles). */
+export function sameNeed(a: GearNeed, b: GearNeed): boolean {
+  return a.key === b.key || covers(a, b.name) || covers(b, a.name);
+}
+
+/** Carburant pour des kilomètres mesurés sur place (mêmes hypothèses que le trajet). */
+export function fuelForKm(km: number, partySize: number, fuel: FuelPrice = fuelPrice(null)): { fuelEur: number; cars: number } {
+  const cars = Math.max(1, Math.ceil(Math.max(1, partySize) / CAR_ASSUMPTIONS.seats));
+  return {
+    cars,
+    fuelEur: Math.round(((km * CAR_ASSUMPTIONS.litersPer100Km) / 100) * fuel.eurPerL * cars),
+  };
+}
+
+/**
+ * Les règles de matériel sont pensées pour la montagne : pour un séjour
+ * culturel ou un road trip, seules celles qui servent vraiment restent.
+ */
+const CITY_KEYS = new Set([
+  'first-aid',
+  'powerbank',
+  'sunscreen',
+  'sunglasses',
+  'rain-poncho',
+  'water-bottle',
+  'mosquito-repellent',
+]);
+const ROAD_EXCLUDED = new Set([
+  'tent-2p',
+  'sleeping-mat',
+  'stove',
+  'fire-starter',
+  'trekking-poles',
+  'crampons',
+  'whistle',
+  'water-filter',
+  'backpack',
+]);
+
+const WATER_EXCLUDED = new Set(['trekking-poles', 'crampons']);
+/** Course et trail : on court léger, sans couchage ni cuisine ni gros sac. */
+const RUN_KEYS = new Set(['first-aid', 'sunscreen', 'sunglasses', 'water-bottle', 'whistle', 'rain-poncho']);
+
+/** Sortie de quelques heures, sans nuit : pas de quoi réparer ni de thermos. */
+const SHORT_EXCLUDED = new Set([
+  'repair-kit',
+  'thermos',
+  'water-filter',
+  'water-purification',
+  'stove',
+  'tent-2p',
+  'sleeping-mat',
+]);
+
+/**
+ * Sortie de quelques heures (6 h au plus) près de chez soi : ni lampe, ni
+ * couteau, ni sifflet, ni couverture de survie, ni batterie. Le froid (gants,
+ * doudoune, chaufferettes, crampons) seulement au-dessus de 1 500 m. Une
+ * marche nordique de 2 h à 450 m recevait gants thermiques et frontale.
+ */
+const BRIEF_EXCLUDED = new Set(['whistle', 'headlamp', 'folding-knife', 'survival-blanket', 'fire-starter', 'powerbank']);
+const COLD_KEYS = new Set(['cold-gloves', 'cold-down-jacket', 'hand-warmers', 'crampons']);
+export function keepRuleForBrief(key: string, maxAltitudeM: number | null): boolean {
+  if (BRIEF_EXCLUDED.has(key)) return false;
+  if (COLD_KEYS.has(key)) return (maxAltitudeM ?? 0) >= 1500;
+  return true;
+}
+
+export function keepRuleForActivity(key: string, activity: string, short = false): boolean {
+  if (short && SHORT_EXCLUDED.has(key)) return false;
+  // Sur l'eau : un sac étanche (matériel de l'activité), pas un sac de randonnée ni un thermos.
+  if (activity === 'water' && (key === 'backpack' || key === 'thermos')) return false;
+  if (activity === 'cultural' || activity === 'citytrip' || activity === 'beach') return CITY_KEYS.has(key);
+  if (activity === 'roadtrip' || activity === 'vanlife') return !ROAD_EXCLUDED.has(key);
+  if (activity === 'water' || activity === 'cycling') return !WATER_EXCLUDED.has(key);
+  if (activity === 'running' || activity === 'trail') return RUN_KEYS.has(key);
+  return true;
+}
+
+/** Activités qui dorment sous un toit (ou dans le véhicule), sauf préférence dite. */
+const ROOF_ACTIVITIES = new Set(['cultural', 'roadtrip', 'citytrip', 'beach', 'vanlife', 'ski']);
+
+/** Un séjour culturel, un road trip, une ville ou la plage dort sous un toit, sauf préférence dite. */
+export function nightsPrefFor(activity: string, pref: NightsPref): NightsPref {
+  if (ROOF_ACTIVITIES.has(activity) && (pref == null || pref === 'mixte')) return 'hebergement';
+  return pref;
+}
+
+const gear = (
+  key: string,
+  name: string,
+  category: string,
+  vital: boolean,
+  reason: string,
+  match: string[],
+  require?: string[]
+): GearNeed => ({ key, name, category, vital, reason, match, ...(require ? { require } : {}) });
+
+/**
+ * Matériel propre à l'activité, en plus des règles générales (météo, altitude,
+ * pays) et du couchage. « Vital » = sans lui, l'activité n'est pas sûre.
+ */
+const ACTIVITY_GEAR: Record<string, GearNeed[]> = {
+  cycling: [
+    gear('bike-helmet', 'Casque de vélo', 'safety', true, 'vélo : protection de la tête', ['casque'], ['casque']),
+    gear('bike-repair', 'Kit de réparation (chambre à air, démonte-pneus, pompe)', 'tools', true, 'vélo : crevaison loin de tout', ['chambre', 'pompe', 'reparation', 'rustine']),
+    gear('bike-lights', 'Éclairage avant et arrière', 'safety', true, 'vélo : être vu sur la route', ['eclairage', 'feu', 'lampe velo']),
+    gear('bike-lock', 'Antivol', 'tools', false, 'vélo : étapes en ville et nuits', ['antivol']),
+  ],
+  ski: [
+    gear('avalanche-transceiver', 'DVA (détecteur de victimes d’avalanche)', 'safety', true, 'hors-piste : à porter allumé', ['dva', 'arva', 'detecteur']),
+    gear('avalanche-shovel', 'Pelle à neige', 'safety', true, 'hors-piste : dégager une victime', ['pelle']),
+    gear('avalanche-probe', 'Sonde', 'safety', true, 'hors-piste : localiser une victime', ['sonde']),
+    gear('ski-goggles', 'Masque de ski', 'clothing', false, 'neige et vent', ['masque']),
+    gear('ski-helmet', 'Casque de ski', 'safety', false, 'chutes', ['casque'], ['casque']),
+  ],
+  mountaineering: [
+    gear('climbing-helmet', 'Casque d’alpinisme', 'safety', true, 'chutes de pierres et de glace', ['casque'], ['casque']),
+    gear('harness', 'Baudrier', 'safety', true, 'encordement sur glacier', ['baudrier', 'harnais']),
+    gear('crampons', 'Crampons', 'safety', true, 'neige dure et glace', ['crampon']),
+    gear('ice-axe', 'Piolet', 'safety', true, 'pentes de neige', ['piolet']),
+    gear('glacier-glasses', 'Lunettes catégorie 4', 'clothing', true, 'réverbération du glacier', ['lunettes', 'glacier']),
+  ],
+  climbing: [
+    gear('harness', 'Baudrier', 'safety', true, 'escalade', ['baudrier', 'harnais']),
+    gear('climbing-helmet', 'Casque d’escalade', 'safety', true, 'chutes de pierres', ['casque'], ['casque']),
+    gear('belay-device', 'Système d’assurage et mousqueton à vis', 'safety', true, 'assurer son partenaire', ['assurage', 'reverso', 'grigri', 'huit']),
+    gear('climbing-shoes', 'Chaussons d’escalade', 'clothing', false, 'grimper', ['chausson']),
+  ],
+  water: [
+    gear('life-jacket', 'Gilet d’aide à la flottabilité', 'safety', true, 'activité nautique', ['gilet', 'flottabilite']),
+    gear('dry-bag', 'Sac étanche', 'tools', true, 'garder affaires et papiers au sec', ['etanche', 'dry']),
+    gear('wetsuit', 'Combinaison ou lycra', 'clothing', false, 'eau froide et soleil', ['combinaison', 'lycra']),
+  ],
+  beach: [
+    gear('swimsuit', 'Maillot de bain', 'clothing', false, 'plage', ['maillot']),
+    gear('beach-towel', 'Serviette', 'tools', false, 'plage', ['serviette']),
+  ],
+  running: [
+    gear('run-shoes', 'Chaussures de course', 'clothing', true, 'course : amorti et accroche', ['chaussure', 'running', 'basket']),
+    gear('run-hydration', 'Flasque ou bouteille souple', 'tools', false, 'course : boire sans s’arrêter', ['flasque', 'gourde', 'bouteille']),
+    gear('run-light', 'Lampe ou brassard réfléchissant', 'safety', false, 'course : être vu à l’aube et au crépuscule', ['frontale', 'reflechissant', 'brassard']),
+  ],
+  trail: [
+    gear('trail-shoes', 'Chaussures de trail', 'clothing', true, 'trail : accroche sur sentier', ['chaussure', 'trail'], ['chaussure']),
+    gear('trail-vest', 'Gilet d’hydratation', 'tools', true, 'trail : eau et ravitaillement sur soi', ['gilet', 'flasque', 'poche a eau', 'camelbak']),
+    gear('trail-jacket', 'Veste imperméable légère', 'clothing', true, 'trail : protection si le temps tourne en crête', ['veste', 'impermeable', 'coupe-vent']),
+    gear('trail-blanket', 'Couverture de survie', 'safety', true, 'trail : en cas d’arrêt forcé', ['couverture de survie', 'survie']),
+    gear('trail-phone', 'Téléphone chargé avec la trace', 'safety', true, 'trail : se repérer, appeler les secours', ['telephone', 'smartphone', 'gps']),
+  ],
+  vanlife: [
+    gear('sleeping-bag', 'Sac de couchage', 'sleep', true, 'nuits dans le véhicule', ['couchage', 'duvet', 'quilt']),
+    gear('stove', 'Réchaud', 'cook', false, 'repas sur place', ['rechaud', 'stove']),
+    gear('headlamp', 'Lampe frontale', 'tools', false, 'soirées sans éclairage', ['frontale'], ['frontale']),
+  ],
+};
+
+export function gearForActivity(activity: string): GearNeed[] {
+  return ACTIVITY_GEAR[activity] ?? [];
+}
+
+/** Le plus long séjour d'affilée au même lieu (en jours) dans une suite d'étapes. */
+export function longestStay(places: readonly string[]): number {
+  let best = 0;
+  let run = 0;
+  places.forEach((p, i) => {
+    run = i > 0 && p === places[i - 1] ? run + 1 : 1;
+    best = Math.max(best, run);
+  });
+  return best;
+}
+
+/**
+ * Part des allers-retours d'une suite d'étapes le long de l'axe départ → arrivée :
+ * 0 = on avance toujours, 1 = autant de recul que d'avance. Sert à vérifier
+ * qu'une traversée traverse (Pyrénées : Lourdes → Oloron → Lourdes, non).
+ */
+export function backtrackShare(points: ReadonlyArray<{ lat: number; lon: number }>): number {
+  if (points.length < 3) return 0;
+  const a = points[0];
+  const b = points[points.length - 1];
+  const kx = Math.cos(((a.lat + b.lat) / 2) * (Math.PI / 180));
+  const ax = lonDelta(a.lon, b.lon) * kx;
+  const ay = b.lat - a.lat;
+  const len = Math.hypot(ax, ay);
+  if (len < 1e-6) return 1; // départ = arrivée : une boucle, pas une traversée
+  const proj = points.map((p) => (lonDelta(a.lon, p.lon) * kx * ax + (p.lat - a.lat) * ay) / len);
+  let forward = 0;
+  let backward = 0;
+  for (let i = 1; i < proj.length; i += 1) {
+    const d = proj[i] - proj[i - 1];
+    if (d > 0) forward += d;
+    else backward -= d;
+  }
+  return forward > 0 ? backward / forward : 1;
+}
+
+/** L'envie dit-elle une traversée ou un itinéraire linéaire (GR, haute route) ? */
+export function wantsTraverse(wishes: readonly string[]): boolean {
+  return wishes.some((w) => /\btravers[ée]e\b|\btraverse\b|\bgr ?\d{1,3}\b|haute route|\bhrp\b/i.test(w.normalize('NFC')));
+}
+
+
+const CITY_LIKE = new Set(['cultural', 'citytrip', 'beach']);
+
+/**
+ * La raison d'un objet des règles générales, dite pour CE voyage : une
+ * trousse de secours n'est pas « pour le milieu isolé » à Lisbonne, un kit de
+ * réparation n'est pas « en plein trek » sur l'eau.
+ */
+export function contextualReason(key: string, reason: string, activity: string, short: boolean): string {
+  const city = CITY_LIKE.has(activity);
+  switch (key) {
+    case 'first-aid':
+      if (city) return 'Petits soins du voyage : pansements, ampoules, antidouleur, désinfectant.';
+      if (short) return 'Ampoules, coupures, piqûres : de quoi soigner sur place.';
+      return reason;
+    case 'water-bottle':
+      if (city) return 'Rester hydraté pendant les visites, à remplir aux fontaines.';
+      if (activity === 'water') return 'Boire sur l’eau entre deux pauses.';
+      return reason;
+    case 'headlamp':
+      if (short) return 'Au cas où la sortie se termine à la tombée de la nuit.';
+      return reason;
+    case 'repair-kit':
+      if (activity === 'water') return 'Réparer une sangle, un sac ou une pagaie sans écourter la descente.';
+      if (activity === 'cycling') return 'Réparer une sangle ou une sacoche sans abandonner l’étape.';
+      return reason.replace('en plein trek', 'en cours de route');
+    case 'backpack':
+      if (short) return 'Un sac de journée pour l’eau, le pique-nique et une couche chaude.';
+      return reason;
+    default:
+      return reason;
+  }
+}

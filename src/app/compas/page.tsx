@@ -1,0 +1,117 @@
+import { CompasLightTheme } from '@/features/compas/components/CompasLightTheme';
+import type { Metadata } from 'next';
+import AppShell from '@/components/shell/AppShell';
+import { COMPAS_STEPS, type CompasStepId } from '@/features/compas/engine/compasModel';
+import { CompasScreen } from '@/features/compas/components/CompasScreen';
+import { getCompasData } from '@/features/compas/server/getCompasData';
+import { listCompasTrips } from '@/features/compas/server/myTrips';
+import { CompasTripPicker } from '@/features/compas/components/CompasTripPicker';
+import { CompasStart } from '@/features/compas/components/CompasStart';
+import { CompasV5Screen } from '@/features/compas/v5/CompasV5Screen';
+import { V5Start } from '@/features/compas/v5/V5Start';
+import { createClient } from '@/lib/supabase/server';
+import { listMyTripInvitations } from '@/features/compas/server/invitationActions';
+import { readTravellerState } from '@/features/compas/server/traveller';
+import { aiEnabled } from '@/lib/ai/aiMode';
+import '@/features/compas/compas.css';
+
+/**
+ * Compas — le préparateur de voyage (il remplace `/prepare`, qui redirige ici),
+ * branché sur les données réelles de l'aventure active du hub.
+ *
+ * Trois états, une seule route :
+ *   - aventure active   -> le Compas ;
+ *   - aucune aventure active mais des voyages -> le choix du voyage à préparer ;
+ *   - aucun voyage, ou `?nouvelle=1` (intention explicite de créer) ->
+ *     le Compas vide : le premier geste crée l'aventure (préparateur unique,
+ *     l'ancien flux de création en trois étapes n'existe plus).
+ *
+ * `?etape=ou|nous|resa|verdict|kit` ouvre directement une étape (ex. `kit` pour
+ * les anciens liens « configurateur »). Le rendu dépend de la session :
+ * jamais prérendu.
+ */
+export const dynamic = 'force-dynamic';
+/**
+ * La préparation se fait en une seule passe (carte, lieux, IA, budget) : jusqu'à
+ * 300 s, la limite de Vercel avec Fluid Compute sur toutes les offres.
+ */
+export const maxDuration = 300;
+
+export const metadata: Metadata = {
+  title: 'Compas — Kit du Voyageur',
+  description:
+    'Où, quand, avec qui, quoi réserver et quoi emporter : tout le voyage au même endroit, sans score ni donnée inventée.',
+};
+
+/** Valeurs acceptées pour ouvrir le flux de création, par porte. */
+const NEW_FLOW_VALUES = new Set(['1', 'oui', 'true', 'aventure']);
+const STEP_IDS = new Set<string>(COMPAS_STEPS.map((s) => s.id));
+
+export default async function CompasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ nouvelle?: string; etape?: string; v5?: string }>;
+}) {
+  const { nouvelle, etape, v5 } = await searchParams;
+  // L'écran v5 (carte vivante) est celui du Compas ; `?v5=0` rouvre l'écran précédent le temps de la transition.
+  const screenV5 = v5 !== '0';
+
+  const start = async () => {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const invitations = user ? await listMyTripInvitations() : [];
+    // Profil voyageur demandé une fois (PLAN-100 4.1) : jamais à un essai sans compte.
+    const traveller = user && user.is_anonymous !== true ? await readTravellerState(supabase, user.id) : null;
+    return (
+      <AppShell hasBottomNav videoBackground={false}>
+        <CompasLightTheme />
+        {screenV5 ? (
+          <V5Start
+            signedIn={Boolean(user)}
+            invitations={invitations}
+            askTraveller={traveller != null && !traveller.asked}
+            aiOn={aiEnabled()}
+          />
+        ) : (
+          <CompasStart
+            signedIn={Boolean(user)}
+            invitations={invitations}
+            askTraveller={traveller != null && !traveller.asked}
+            // Interrupteur de l'IA : éteint, le Compas vide ne parle pas d'IA (PLAN-100 5.3).
+            aiOn={aiEnabled()}
+          />
+        )}
+      </AppShell>
+    );
+  };
+
+  // Intention explicite : elle gagne même si une aventure est déjà active, et
+  // évite une lecture de base inutile.
+  if (NEW_FLOW_VALUES.has(nouvelle ?? '')) return start();
+
+  const data = await getCompasData();
+  if (!data) {
+    // Aucune aventure active : choisir parmi ses voyages s'il y en a, sinon créer.
+    const [trips, invitations] = await Promise.all([listCompasTrips(), listMyTripInvitations()]);
+    if (trips.length === 0) return start();
+    return (
+      <AppShell hasBottomNav videoBackground={false}>
+        <CompasLightTheme />
+        <CompasTripPicker trips={trips} invitations={invitations} />
+      </AppShell>
+    );
+  }
+
+  const initialStep = STEP_IDS.has(etape ?? '') ? (etape as CompasStepId) : undefined;
+
+  return (
+    // Fond peint par `.cp-bg` (paysage éclairci de la maquette) : la toile
+    // globale assombrie n'est pas rendue sur cette route.
+    <AppShell hasBottomNav videoBackground={false}>
+      <CompasLightTheme />
+      {screenV5 ? <CompasV5Screen data={data} initialStep={initialStep} /> : <CompasScreen data={data} initialStep={initialStep} />}
+    </AppShell>
+  );
+}

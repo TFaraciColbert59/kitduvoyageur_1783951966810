@@ -1,0 +1,142 @@
+import { createBrowserClient } from '@supabase/ssr';
+
+/**
+ * A11 #36 — Sécurité : plus AUCUNE URL/clé en dur côté navigateur.
+ * Les variables NEXT_PUBLIC_* sont référencées statiquement (inlining Next.js
+ * pour le bundle client) et validées à l'usage. Une absence est une erreur
+ * explicite, jamais un fallback silencieux vers un autre environnement.
+ * Voir .env.example pour les variables requises.
+ */
+function getSupabaseConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    throw new Error(
+      '[LKDV] Configuration Supabase manquante : NEXT_PUBLIC_SUPABASE_URL et ' +
+        'NEXT_PUBLIC_SUPABASE_ANON_KEY sont requis. Copiez .env.example vers ' +
+        '.env.local et renseignez-les (jamais commité).'
+    );
+  }
+  return { url, anonKey };
+}
+
+const PFX = 'sb_';
+
+/**
+ * Plan 2.11 : cookies de session `SameSite=Lax` (jamais envoyés par une requête
+ * venue d'un autre site), sauf dans un cadre d'un autre site, où seul `None`
+ * fonctionne. `Secure` dès que la page est en HTTPS.
+ */
+export function sessionCookieAttrs(ctx: { crossSiteFrame: boolean; https: boolean }): string {
+  if (ctx.crossSiteFrame) return 'SameSite=None; Secure';
+  return ctx.https ? 'SameSite=Lax; Secure' : 'SameSite=Lax';
+}
+
+/** La page est-elle ouverte dans un cadre d'un autre site ? (accès refusé = autre site) */
+export function inCrossSiteFrame(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.top !== window.self && window.top?.location.origin !== window.location.origin;
+  } catch {
+    return true;
+  }
+}
+
+const cookieAttrs = () =>
+  sessionCookieAttrs({
+    crossSiteFrame: inCrossSiteFrame(),
+    https: typeof location !== 'undefined' && location.protocol === 'https:',
+  });
+
+const canUseCookies = (() => {
+  let cache: boolean | null = null;
+  return () => {
+    if (typeof document === 'undefined') return false;
+    if (cache !== null) return cache;
+    const k = '__sb_test__';
+    document.cookie = `${k}=1; Path=/; ${cookieAttrs()}`;
+    cache = document.cookie.includes(k);
+    document.cookie = `${k}=; Path=/; Max-Age=0; ${cookieAttrs()}`;
+    return cache;
+  };
+})();
+
+const fromCookies = () =>
+  typeof document === 'undefined'
+    ? []
+    : document.cookie
+        .split(';')
+        .filter(Boolean)
+        .map((c) => {
+          const eq = c.trim().indexOf('=');
+          const name = eq >= 0 ? c.trim().slice(0, eq) : c.trim();
+          const value = eq >= 0 ? decodeURIComponent(c.trim().slice(eq + 1)) : '';
+          return { name: name.trim(), value };
+        })
+        .filter((c) => c.name);
+
+const fromStorage = () => {
+  try {
+    return Object.keys(localStorage)
+      .filter((k) => k.startsWith(PFX))
+      .map((k) => ({ name: k.slice(PFX.length), value: localStorage.getItem(k) || '' }));
+  } catch {
+    return [];
+  }
+};
+
+const setCookie = (name: string, value: string, options?: Record<string, unknown>) => {
+  let s = `${name}=${encodeURIComponent(value)}; Path=${(options?.path as string) || '/'}; ${cookieAttrs()}`;
+  if (options?.maxAge) s += `; Max-Age=${options.maxAge}`;
+  if (options?.domain) s += `; Domain=${options.domain}`;
+  if (options?.expires) s += `; Expires=${new Date(options.expires as string).toUTCString()}`;
+  document.cookie = s;
+};
+
+const deleteCookie = (name: string) => {
+  if (typeof document === 'undefined') return;
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  const domains = ['', host, host ? `.${host}` : ''].filter(Boolean);
+  const variants = ['Path=/; SameSite=Lax', 'Path=/; SameSite=None; Secure'];
+  variants.forEach((attrs) => {
+    document.cookie = `${name}=; Max-Age=0; ${attrs}`;
+    domains.forEach((domain) => {
+      document.cookie = `${name}=; Max-Age=0; Domain=${domain}; ${attrs}`;
+    });
+  });
+};
+
+export function createClient() {
+  const { url: supabaseUrl, anonKey: supabaseAnonKey } = getSupabaseConfig();
+
+  return createBrowserClient(
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+      cookies: {
+        getAll: () => (canUseCookies() ? fromCookies() : fromStorage()),
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+          if (typeof document === 'undefined') return;
+          if (canUseCookies()) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              value ? setCookie(name, value, options as Record<string, unknown>) : deleteCookie(name)
+            );
+          } else {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              try {
+                if (value) {
+                  localStorage.setItem(`${PFX}${name}`, value);
+                } else {
+                  localStorage.removeItem(`${PFX}${name}`);
+                }
+              } catch (_e) {
+                // storage unavailable
+              }
+              if (value) setCookie(name, value, options as Record<string, unknown>);
+            });
+          }
+        },
+      },
+    }
+  );
+}

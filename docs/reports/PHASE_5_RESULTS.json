@@ -1,0 +1,118 @@
+{
+  "phase": 5,
+  "phase_name": "Kit voyageur complet",
+  "date": "2026-09-12",
+  "sha_branch": "5bf5b02 (base 59e30946 = main) sur feat/phase5-kit-complet",
+  "sha_reports": "commit docs suivant sur la même branche",
+  "environment": {
+    "local": "Supabase local Docker (127.0.0.1:54322) + vitest + pgTAP",
+    "ci": "non executee dans cette phase (pas de PR, push branche uniquement)",
+    "distant": "INSUFFICIENT_DATA -- projet de test Phase 1 non provisionne"
+  },
+  "audit": {
+    "existing": [
+      "trips.kit_id -> materiel_kits (20260909120000) ; hike_sessions.kit_id",
+      "materiel_kits + materiel_kit_items (name, category, weight_g, quantity, product_ownership_id, is_checked) RLS proprietaire",
+      "trip_items : quantity, weight_grams, is_packed, status enum (packed/needed/optional/missing), packed_by, priority, is_vital/is_worn/is_consumable, source, purchase_state, inventory_item_id, day_number ; RLS can_edit_trip",
+      "Phase 3 createTripFromAutogenIntent : kit + trip_items + trip_expenses planned + checklist/documents best-effort ; trips.kit_id, estimated_budget, metadata",
+      "contextualKitEngine (regles + reason) utilise uniquement a l'affichage via getTripKitDetails",
+      "budgetEngine prevu (is_planned) vs reel + plan journalier + UI TripBudgetView",
+      "SafetyEngine temps reel, safetyRedLines, trip_safety_checkpoints, seeds conformite IA",
+      "trip_documents.file_url NOT NULL -> documents attendus via trip_checklist_items",
+      "Storage : user-documents prive (dossier = auth.uid()), carnet-media/gear-photos publics",
+      "has_active_consent (service_role) ; pipeline collectif PAR SEGMENT (segment_collective_aggregates) non consomme par generateAdventure"
+    ],
+    "missing_addressed": [
+      "kit sans ownership/etat/proprietaire/raison ; poids 0/null meme si l'objet est possede",
+      "recommandations non contextualisees par le parcours reel et non persistees avec raison",
+      "aucun etat manquant fiable (pas de rapprochement inventaire possede)",
+      "documents pays/activite limites (identite/visa/billets avion/hebergement)",
+      "controles securite pre-trip pays/activite absents",
+      "MediaUpload produisait une URL publique pour le bucket prive user-documents"
+    ],
+    "blocked_or_missing": [
+      "agregats anonymises de kit : inexistants (pas de table/RPC/finalite de consentement kit) et non consommes par generateAdventure ; documente INSUFFICIENT_DATA, non invente",
+      "meteo a la creation : aucune couche meteo dans l'entree AutoGen ; disponible seulement dans le cockpit depart",
+      "distant (migrations/pgTAP) : Phase 1 non provisionnee"
+    ]
+  },
+  "deliverables": {
+    "migration": "supabase/migrations/20260911540000_phase5_kit_completeness.sql (additive, idempotente, RLS inchangee)",
+    "pgtap": "supabase/tests/database/phase5_kit_completeness.test.sql (24 assertions)",
+    "engine_kit": "src/features/trips/engine/kitCompletenessEngine.ts",
+    "engine_safety": "src/features/trips/safety/preTripSafetyRules.ts",
+    "engine_preparation": "src/features/trips/engine/autogenPreparation.ts (recommandations, documents, securite, budget provenance)",
+    "commande": "src/features/trips/server/createTripFromAutogenIntent.ts (contexte route/activite/pays/duree + inventaire possede)",
+    "queries_actions": [
+      "src/lib/queries-trip-kit.ts (addTripItem enrichi, updateTripItemDetails)",
+      "src/app/voyages/kit-actions.ts (updateTripItemDetailsAction)"
+    ],
+    "ui": [
+      "src/features/trips/components/TripKitView.tsx (chips personnel/partage/manquant, badges, raisons, case emballe, modale edition complete)"
+    ],
+    "storage": [
+      "src/components/ui/mediaUploadPath.ts (chemin proprietaire + URL signee 3600 s)",
+      "src/components/ui/MediaUpload.tsx (bucket prive -> chemin user + createSignedUrl)"
+    ],
+    "types": "src/features/trips/types/trip.types.ts (ownership/owner_id/condition/reason)",
+    "tests_vitest": [
+      "tests/trips/phase5-kit-completeness.spec.ts (6)",
+      "tests/trips/pre-trip-safety.spec.ts (4)",
+      "tests/trips/phase5-kit-chain.spec.ts (3)",
+      "tests/components/mediaUploadPath.spec.ts (3)"
+    ]
+  },
+  "chain": "plan/route selectionnes -> contexte reel (activite, pays, duree, saison, distance, D+, difficulte) -> regles deterministes avec raison -> fusion sans doublon couche kit + recommandations -> persistance materiel_kit_items + trip_items (ownership, owner_id, condition, reason, priority, is_vital) -> missing si non possede (status='missing'), sinon lien inventaire + poids/etat reels -> checklist (documents attendus + controles securite) -> budget planned trace (règle + raison) -> estimated_budget",
+  "evidence": {
+    "type_check": "exit 0 (tsc --noEmit, aucune sortie)",
+    "lint": "exit 0 -- 0 erreur (warnings preexistants)",
+    "design_guard": "tests/design/x-d70.spec.ts : 63/63 PASS",
+    "vitest_new": "4 fichiers / 16 tests PASS",
+    "vitest_full": "292 fichiers passed / 4 skipped ; 2084 tests passed / 27 skipped ; 0 failed (baseline Phase 7 : 288/2068/27)",
+    "pgtap_full": "Files=18, Tests=340, PASS (baseline 17/316 ; +24 assertions Phase 5)",
+    "migration_replay": "npx supabase migration up --local -> {\"applied\":[]} (idempotente)"
+  },
+  "gate_phase5": {
+    "kit_pret_apres_selection_du_plan": "PASS local (contexte reel + persistance immediate)",
+    "raison_verifiable_par_recommandation": "PASS (colonne reason ; test interdit D+/km sans parcours reel)",
+    "personnel_partage_manquant": "PASS (ownership + status='missing' + rapprochement inventaire)",
+    "poids_quantite_proprietaire_etat_editables": "PASS (UI + action + RLS can_edit_trip)",
+    "documents_pays_activite": "PASS (checklist existante ; trip_documents.file_url NOT NULL respecte)",
+    "bucket_prive_url_signee": "PASS conditionnel -- correction code ; aucun flux d'upload trip_documents n'existe",
+    "budget_prevu_vs_reel": "PASS (engine inchange + provenance planned tracee)",
+    "securite_pays_activite": "PASS (checklist, aucun ecran parallele)",
+    "agregats_anonymises": "INSUFFICIENT_DATA -- flux kit inexistant, non invente",
+    "aucune_exposition_sans_consentement": "PASS (rien de nouveau n'expose de kit ; has_active_consent inchange)"
+  },
+  "snapshots": {
+    "regenerated": "aucune (interdit dans cette phase)",
+    "probably_impacted": [
+      "tests/visual/voyages-y-profiles-visual.spec.ts-snapshots/y-long-group-kit-desktop-chrome-linux.png",
+      "tests/visual/voyages-y-profiles-visual.spec.ts-snapshots/y-long-group-kit-desktop-chrome-win32.png",
+      "tests/visual/voyages-y-profiles-visual.spec.ts-snapshots/y-long-group-kit-ipad-portrait-linux.png",
+      "tests/visual/voyages-y-profiles-visual.spec.ts-snapshots/y-long-group-kit-ipad-portrait-win32.png",
+      "tests/visual/voyages-y-profiles-visual.spec.ts-snapshots/y-long-group-kit-iphone-14-pro-linux.png",
+      "tests/visual/voyages-y-profiles-visual.spec.ts-snapshots/y-long-group-kit-iphone-14-pro-win32.png"
+    ],
+    "reason": "/hub/kit-voyage (natures sortie) rend TripKitView modifie"
+  },
+  "limitations": [
+    "Agregats anonymises kit non livres : le collectif existant est segment-level et non lu par generateAdventure/le kit ; table/RPC/finalite de consentement inexistants (jamais inventes).",
+    "Meteo indisponible a la creation (aucune couche meteo AutoGen) : regles limitees aux donnees reelles presentes.",
+    "Distant INSUFFICIENT_DATA : migrations/pgTAP non pousses ; sans migration les inserts enrichis echouent en best-effort (warnings).",
+    "Aucun flux d'upload trip_documents : correction user-documents prepare le terrain sans ajouter d'ecran.",
+    "Rapprochement inventaire conservateur : un libelle tres different reste missing (pas de faux possede).",
+    "E2E Playwright non execute dans cette phase."
+  ],
+  "residual_risks": [
+    "Rapprochement manque -> faux 'manquant' sans gravite (editable par l'utilisateur).",
+    "Colonnes additives absentes en distant -> persistance enrichie best-effort (jamais de crash, warnings explicites).",
+    "Modale d'edition couverte par tests composants + garde-fou design, pas par test navigateur."
+  ],
+  "decision": "PASS (perimetre local)",
+  "decision_sub_items": {
+    "agregats_anonymises_kit": "INSUFFICIENT_DATA",
+    "distant": "INSUFFICIENT_DATA"
+  },
+  "responsible": "agent BACKEND/DATABASE/FRONTEND autonome ; validation ORCHESTRATOR requise"
+}

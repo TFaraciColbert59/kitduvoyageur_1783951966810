@@ -1,0 +1,1292 @@
+'use client';
+
+import Icon from '@/components/ui/Icon';
+import { useMemo, useState, useTransition, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import Link from 'next/link';
+import { Badge, Button, Card, EmptyState, IconButton, Spinner } from '@/components/ui';
+import { Sheet } from '@/components/ui/Sheet';
+import { SearchField } from '@/components/ui';
+import { CheckCircle2, Circle, PackagePlus, Pencil, Plus, X } from 'lucide-react';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-1 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
+import type { TripFull, TripItem } from '../types/trip.types';
+import type { TripKitAnalysis, ShopProductReference } from '../types/kit.types';
+import type { InventoryItem } from '@/features/materiel/services/getInventory';
+import { cleanItemName } from '@/lib/cleanItemName';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { classifyKitCompleteness } from '../engine/kitCompletenessEngine';
+import { isLlmSuggestion } from '../engine/llmProvenance';
+import { LlmSuggestionBadge } from './LlmSuggestionBadge';
+import { LiveArrivalReveal } from '@/features/hub/components/live/LiveArrivalReveal';
+import { useLiveArrivalReveal } from '@/features/hub/components/live/useLiveArrivalReveal';
+import {
+  addCustomTripItemAction,
+  deleteTripItemAction,
+  addInventoryItemToTripAction,
+  togglePackedAction,
+  updateTripItemDetailsAction,
+} from '@/app/voyages/kit-actions';
+
+export interface TripItemImageRef {
+  itemId: string;
+  url: string | null;
+}
+
+export interface TripKitViewProps {
+  trip: TripFull;
+  analysis: TripKitAnalysis;
+  showBackLink?: boolean;
+  /** Boutique : produits candidats (hors sac) — affichés en premier, consommables prioritaires. */
+  availableProducts?: ShopProductReference[];
+  /** Images réelles des items du sac (trip_items → shop_products / product_ownership). */
+  itemImages?: TripItemImageRef[];
+  /** Inventaire personnel (product_ownership) — état possédé + stock. */
+  inventoryItems?: InventoryItem[];
+}
+
+type InventoryCategory =
+  | 'Sacs & Portage'
+  | 'Couchage & Tentes'
+  | 'Vêtements & Vestes'
+  | 'Cuisine & Réchauds'
+  | 'Eau & Filtres'
+  | 'Lampes & Éclairage'
+  | 'Navigation & GPS'
+  | 'Sécurité & Soins'
+  | 'Accessoires & Outils'
+  | 'Autre';
+
+function mapInventoryCategory(value: string | null | undefined): InventoryCategory {
+  const v = (value ?? '').toLowerCase();
+  if (/sac|portage|bag/.test(v)) return 'Sacs & Portage';
+  if (/couchage|tente|bivouac|sommeil|matelas|duvet/.test(v)) return 'Couchage & Tentes';
+  if (/vêtement|vetement|textile|protection|veste/.test(v)) return 'Vêtements & Vestes';
+  if (/cuisine|réchaud|rechaud|gaz|popote|nutrition|repas|vivre/.test(v)) return 'Cuisine & Réchauds';
+  if (/eau|hydrat|filtre/.test(v)) return 'Eau & Filtres';
+  if (/lampe|éclairage|eclairage|pile|batterie|énergie|energie|électro|electro/.test(v))
+    return 'Lampes & Éclairage';
+  if (/navigation|gps|boussole|carte/.test(v)) return 'Navigation & GPS';
+  if (/sécur|secur|urgence|soin|premiers secours/.test(v)) return 'Sécurité & Soins';
+  if (/outil|accessoire|couteau|bâton|baton/.test(v)) return 'Accessoires & Outils';
+  return 'Autre';
+}
+
+export function TripKitView({
+  trip,
+  analysis,
+  showBackLink: _showBackLink = false,
+  availableProducts = [],
+  itemImages = [],
+  inventoryItems = [],
+}: TripKitViewProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [optimisticItems, setOptimisticItems] = useState<TripItem[]>(trip.items || []);
+  const [infoToast, setInfoToast] = useState<string | null>(null);
+  const [ownedProducts, setOwnedProducts] = useState<InventoryItem[]>([]);
+  const [busyRowKey, setBusyRowKey] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [showAllSuggestions, setShowAllSuggestions] = useState<boolean>(false);
+  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState<boolean>(false);
+  const [userInventory, setUserInventory] = useState<any[]>([]);
+  const [isLoadingInventory, setIsLoadingInventory] = useState<boolean>(false);
+  const [inventorySearch, setInventorySearch] = useState<string>('');
+  const [editingItem, setEditingItem] = useState<TripItem | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [busyPackedId, setBusyPackedId] = useState<string | null>(null);
+  const { triggerHaptic } = useHapticFeedback();
+  // T10 — reveal des objets ajoutés en réel (bus live), section visible seulement.
+  const { liveIds, containerRef } = useLiveArrivalReveal<HTMLDivElement>('trip_items');
+
+  // Phase 5 — complétude du kit : personnel / partagé / manquant + poids connus.
+  const completeness = useMemo(
+    () => classifyKitCompleteness(optimisticItems),
+    [optimisticItems]
+  );
+
+  const collaboratorsById = useMemo(
+    () =>
+      new Map(
+        (trip.collaborators || []).map((collab) => [
+          collab.user_id,
+          collab.profile?.full_name || collab.profile?.username || 'Voyageur',
+        ])
+      ),
+    [trip.collaborators]
+  );
+
+  const ownerLabel = (ownerId: string | null | undefined): string | null => {
+    if (!ownerId) return null;
+    if (ownerId === trip.user_id) return 'Vous';
+    return collaboratorsById.get(ownerId) ?? 'Voyageur';
+  };
+
+  const handleTogglePacked = (item: TripItem) => {
+    triggerHaptic('selection');
+    const nextPacked = !item.is_packed;
+    setBusyPackedId(item.id);
+    setOptimisticItems((prev) =>
+      prev.map((entry) =>
+        entry.id === item.id
+          ? { ...entry, is_packed: nextPacked, status: nextPacked ? 'packed' : 'needed' }
+          : entry
+      )
+    );
+    startTransition(async () => {
+      const res = await togglePackedAction(item.id, nextPacked, trip.slug);
+      if (!res.success) {
+        setOptimisticItems((prev) =>
+          prev.map((entry) =>
+            entry.id === item.id
+              ? { ...entry, is_packed: item.is_packed, status: item.status }
+              : entry
+          )
+        );
+        setInfoToast(res.error ?? 'Impossible de modifier le statut');
+        setTimeout(() => setInfoToast(null), 3500);
+      }
+      setBusyPackedId(null);
+    });
+  };
+
+  const handleUpdateItem = async (input: {
+    quantity: number;
+    weightGrams: number | null;
+    ownership: 'personal' | 'shared';
+    condition: 'neuf' | 'bon' | 'use' | 'a_remplacer' | 'pour_pieces' | null;
+    ownerId: string | null;
+    priority: 'vital' | 'recommended' | 'optional';
+  }) => {
+    if (!editingItem) return;
+    const target = editingItem;
+    setEditError(null);
+    setOptimisticItems((prev) =>
+      prev.map((entry) =>
+        entry.id === target.id
+          ? {
+              ...entry,
+              quantity: input.quantity,
+              weight_grams: input.weightGrams,
+              ownership: input.ownership,
+              condition: input.condition,
+              owner_id: input.ownerId,
+              priority: input.priority,
+              is_vital: input.priority === 'vital',
+            }
+          : entry
+      )
+    );
+    const res = await updateTripItemDetailsAction({
+      tripId: trip.id,
+      tripSlug: trip.slug,
+      itemId: target.id,
+      quantity: input.quantity,
+      weightGrams: input.weightGrams,
+      ownership: input.ownership,
+      condition: input.condition,
+      ownerId: input.ownerId,
+      priority: input.priority,
+      isVital: input.priority === 'vital',
+    });
+    if (!res.success) {
+      setOptimisticItems((prev) =>
+        prev.map((entry) => (entry.id === target.id ? target : entry))
+      );
+      setEditError(res.error ?? 'Modification impossible');
+      return;
+    }
+    setEditingItem(null);
+    router.refresh();
+  };
+
+  const handleOpenInventory = async () => {
+    triggerHaptic('light');
+    setIsInventoryModalOpen(true);
+    if (userInventory.length === 0) {
+      setIsLoadingInventory(true);
+      try {
+        const res = await fetch('/api/materiel/items');
+        if (res.ok) {
+          const json = await res.json();
+          setUserInventory(json.items || []);
+        }
+      } catch (err) {
+        console.error('Erreur chargement inventaire:', err);
+      } finally {
+        setIsLoadingInventory(false);
+      }
+    }
+  };
+
+  const handleImportFromInventory = (item: any) => {
+    triggerHaptic('selection');
+    const tempId = `inv-${item.id}-${Date.now()}`;
+    const newItem: TripItem = {
+      id: tempId,
+      trip_id: trip.id,
+      item_name: item.name,
+      category: item.category || 'misc',
+      weight_grams: item.weight_g || null,
+      quantity: 1,
+      is_packed: false,
+      status: 'needed',
+      priority: 'recommended',
+      inventory_item_id: item.id,
+      packed_by: null,
+      affiliate_link_id: null,
+      source: 'inventory',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setOptimisticItems((prev) => [newItem, ...prev]);
+
+    startTransition(async () => {
+      const res = await addInventoryItemToTripAction(
+        trip.id,
+        trip.slug,
+        item.id,
+        item.name,
+        item.category,
+        item.weight_g
+      );
+      if (!res.success) {
+        setOptimisticItems((prev) => prev.filter((i) => i.id !== tempId));
+      }
+    });
+  };
+
+  const filteredInventory = userInventory.filter((item: any) => {
+    if (!inventorySearch.trim()) return true;
+    const q = inventorySearch.toLowerCase();
+    return (
+      item.name?.toLowerCase().includes(q) ||
+      item.brand?.toLowerCase().includes(q) ||
+      item.category?.toLowerCase().includes(q)
+    );
+  });
+
+  // Sac : non emballés d'abord (actionnable), puis ordre alphabétique.
+  const filteredItems = [...optimisticItems].sort(
+    (a, b) =>
+      Number(a.is_packed) - Number(b.is_packed) ||
+      cleanItemName(a.item_name).localeCompare(cleanItemName(b.item_name), 'fr')
+  );
+
+  const imageByItemId = new Map(itemImages.map((i) => [i.itemId, i.url] as const));
+  const bagProductIds = new Set(
+    optimisticItems.map((i) => (i as TripItem & { shop_product_id?: string | null }).shop_product_id).filter(Boolean)
+  );
+  const normalizeName = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\(.*?\)/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  const bagNames = new Set(optimisticItems.map((i) => normalizeName(cleanItemName(i.item_name))));
+  const CONSUMABLE_PATTERN = /vivre|eau|nutrition|hydrat|repas|ration|barre|en-cas|cuisine|gaz/i;
+  const bagInventoryIds = new Set(
+    optimisticItems
+      .map((i) => i.inventory_item_id)
+      .filter((value): value is string => Boolean(value))
+  );
+  const inventoryAll = [...inventoryItems, ...ownedProducts];
+  const inventoryNameSet = new Set(inventoryAll.map((inv) => normalizeName(inv.name)));
+  const isConsumableInventory = (inv: InventoryItem) =>
+    CONSUMABLE_PATTERN.test(`${inv.category ?? ''} ${inv.name}`);
+
+  // Boutique : consommables d'abord (ce qu'on rachète le plus), puis score boutique.
+  const shopSuggestions = availableProducts
+    .filter(
+      (p) =>
+        !bagProductIds.has(p.id) &&
+        !bagNames.has(normalizeName(p.name)) &&
+        !inventoryNameSet.has(normalizeName(p.name))
+    )
+    .sort((a, b) => {
+      const aConsumable = CONSUMABLE_PATTERN.test(`${a.category_main} ${a.name}`) ? 0 : 1;
+      const bConsumable = CONSUMABLE_PATTERN.test(`${b.category_main} ${b.name}`) ? 0 : 1;
+      return aConsumable - bConsumable || (b.score_kdv ?? 0) - (a.score_kdv ?? 0);
+    });
+
+  // Inventaire possédé mais pas encore dans le sac → à transférer en priorité.
+  const inventorySuggestions = inventoryAll
+    .filter((inv) => !bagInventoryIds.has(inv.id) && !bagNames.has(normalizeName(inv.name)))
+    .sort(
+      (a, b) =>
+        Number(isConsumableInventory(b)) - Number(isConsumableInventory(a)) ||
+        a.name.localeCompare(b.name, 'fr')
+    );
+
+  const visibleShopSuggestions = showAllSuggestions ? shopSuggestions : shopSuggestions.slice(0, 6);
+  const visibleInventorySuggestions = showAllSuggestions
+    ? inventorySuggestions
+    : inventorySuggestions.slice(0, 6);
+  const addRowsCount = shopSuggestions.length + inventorySuggestions.length;
+
+  const handleDeleteItem = (itemId: string) => {
+    triggerHaptic('medium');
+    setOptimisticItems((prev) => prev.filter((i) => i.id !== itemId));
+
+    startTransition(async () => {
+      await deleteTripItemAction(itemId, trip.slug);
+    });
+  };
+
+  /** Bouton boîte-flèche : ajoute le produit boutique à Mon Matériel (inventaire). */
+  const handleAddToInventory = async (product: ShopProductReference) => {
+    triggerHaptic('selection');
+    setBusyRowKey(`shop-${product.id}`);
+    try {
+      const res = await fetch('/api/materiel/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: product.name,
+          brand: product.brand || null,
+          category: mapInventoryCategory(product.category_main),
+          weight_g: Math.round(product.weight_g || 0),
+          price_cents: Number.isFinite(product.price_eur) ? Math.round(product.price_eur * 100) : null,
+          photo_url: product.image ?? null,
+          condition: 'neuf',
+          quantity: 1,
+        }),
+      });
+      const json = (await res.json().catch(() => null)) as
+        | { item?: Partial<InventoryItem>; error?: string }
+        | null;
+      if (!res.ok || !json?.item) {
+        throw new Error(json?.error ?? 'Erreur lors de l’ajout au matériel');
+      }
+      const created = json.item;
+      setOwnedProducts((prev) => [
+        {
+          id: String(created.id ?? product.id),
+          name: String(created.name ?? product.name),
+          brand: created.brand ?? product.brand ?? null,
+          category: created.category ?? mapInventoryCategory(product.category_main),
+          weight_g: created.weight_g ?? Math.round(product.weight_g || 0),
+          price_cents: created.price_cents ?? null,
+          condition: created.condition ?? 'neuf',
+          photo_url: created.photo_url ?? product.image ?? null,
+          is_lent: false,
+          purchase_date: null,
+          maintenance_due_at: null,
+          expiry_date: null,
+          tags: null,
+          quantity: Number(created.quantity ?? 1),
+        },
+        ...prev,
+      ]);
+      setInfoToast(`« ${product.name} » ajouté à Mon Matériel`);
+      setTimeout(() => setInfoToast(null), 3500);
+      router.refresh();
+    } catch (err) {
+      console.error('Ajout au matériel:', err);
+    } finally {
+      setBusyRowKey(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Toast discret (ajout au matériel) */}
+      {infoToast && (
+        <div className="fixed bottom-24 left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-3">
+          {infoToast}
+        </div>
+      )}
+
+      {/* Alertes de sécurité & climat */}
+      {analysis.climateWarnings.length > 0 && (
+        <Card tone="warn" className="space-y-[var(--space-2)]">
+          <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-warning-dark)] sm:text-[length:var(--lkv-text-body-sm)]">
+            <Icon name="alert-triangle" size={16} className="shrink-0 text-[color:var(--lkv-warning-dark)]" />
+            Conditions de terrain identifiées pour votre expédition
+          </div>
+          <ul className="list-inside list-disc space-y-0.5 pl-1 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
+            {analysis.climateWarnings.map((w, idx) => (
+              <li key={idx}>{w}</li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {/* 2. Recommandations : fusionnées dans « Sac & inventaire » (boutique en tête de liste) */}
+
+      {/* 3. Sac & inventaire : ce qu'on a + ce qu'on n'a pas (boutique en tête, consommables d'abord) */}
+      <Card className="space-y-[var(--space-4)]">
+        <div className="flex items-center justify-between gap-[var(--space-3)]">
+          <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-black text-[color:var(--lkv-text-primary)]">
+            Sac &amp; inventaire du voyage
+          </h3>
+          <div className="flex shrink-0 items-center gap-[var(--space-2)]">
+            <IconButton
+              type="button"
+              onClick={handleOpenInventory}
+              aria-label="Importer depuis mon matériel"
+              title="Importer depuis mon matériel"
+            >
+              <Icon name="package" size={16} />
+            </IconButton>
+            <IconButton
+              type="button"
+              variant="solid"
+              onClick={() => setIsAddModalOpen(true)}
+              aria-label="Ajouter un objet"
+              title="Ajouter un objet"
+            >
+              <Icon name="plus" size={16} />
+            </IconButton>
+          </div>
+        </div>
+
+        {/* Phase 5 — complétude réelle du kit : personnel / partagé / manquant */}
+        <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+          <Badge tone="stone">Personnel {completeness.summary.personalCount}</Badge>
+          <Badge tone="stone">Partagé {completeness.summary.sharedCount}</Badge>
+          {completeness.summary.missingCount > 0 && (
+            <Badge tone="warn">Manquant {completeness.summary.missingCount}</Badge>
+          )}
+          <Badge tone="stone">
+            {completeness.summary.knownWeightGrams > 0
+              ? `Poids connu ${(completeness.summary.knownWeightGrams / 1000).toFixed(2)} kg`
+              : 'Poids non renseigné'}
+          </Badge>
+        </div>
+
+        {/* Boutique : les plus achetés (consommables d'abord) → boîte-flèche vers Mon Matériel */}
+        {visibleShopSuggestions.length > 0 && (
+          <div className="space-y-[var(--space-1)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--lkv-text-secondary)]">
+              À ajouter · les plus achetés
+            </p>
+            <div className="divide-y divide-[color:var(--lkv-border-subtle)]">
+              {visibleShopSuggestions.map((product) => (
+                <GearShopAddRow
+                  key={`shop-${product.id}`}
+                  product={product}
+                  busy={busyRowKey === `shop-${product.id}`}
+                  onAddToInventory={handleAddToInventory}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mon matériel : possédé, pas encore dans le sac → + pour l'ajouter */}
+        {visibleInventorySuggestions.length > 0 && (
+          <div className="space-y-[var(--space-1)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--lkv-text-secondary)]">
+              Dans mon matériel · à mettre au sac
+            </p>
+            <div className="divide-y divide-[color:var(--lkv-border-subtle)]">
+              {visibleInventorySuggestions.map((inv) => (
+                <GearInventoryAddRow
+                  key={`inv-${inv.id}`}
+                  inv={inv}
+                  busy={isPending}
+                  onAdd={handleImportFromInventory}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {addRowsCount > 12 && (
+          <Button
+            type="button"
+            variant="secondary"
+            fullWidth
+            onClick={() => setShowAllSuggestions((value) => !value)}
+            className="text-[length:var(--lkv-text-footnote)]"
+          >
+            {showAllSuggestions ? 'Voir moins' : `Voir plus d’idées (${addRowsCount})`}
+          </Button>
+        )}
+
+        {/* Mon sac */}
+        {filteredItems.length === 0 ? (
+          <EmptyState
+            icon={<Icon name="package" size={32} className="text-[color:var(--lkv-text-muted)]" />}
+            title="Votre sac est vide"
+            description="Ajoutez du matériel depuis les idées ci-dessus ou créez votre propre objet."
+            actionLabel="+ Ajouter un équipement"
+            onAction={() => setIsAddModalOpen(true)}
+          />
+        ) : filteredItems.length > 50 ? (
+          <VirtualTripKitItemList
+            items={filteredItems}
+            imageByItemId={imageByItemId}
+            onDeleteItem={handleDeleteItem}
+            onTogglePacked={handleTogglePacked}
+            onEdit={setEditingItem}
+            busyPackedId={busyPackedId}
+            canEdit={trip.permissions.canEdit}
+            liveIds={liveIds}
+            containerRef={containerRef}
+          />
+        ) : (
+          <div ref={containerRef} className="divide-y divide-[color:var(--lkv-border-subtle)]">
+            {filteredItems.map((item, index) => (
+              <LiveArrivalReveal key={item.id} id={item.id} liveIds={liveIds} index={index}>
+                <TripKitItemRow
+                  item={item}
+                  imageUrl={imageByItemId.get(item.id) ?? null}
+                  onDeleteItem={handleDeleteItem}
+                  onTogglePacked={handleTogglePacked}
+                  onEdit={setEditingItem}
+                  busyPacked={busyPackedId === item.id}
+                  ownerLabel={ownerLabel(item.owner_id)}
+                  canEdit={trip.permissions.canEdit}
+                />
+              </LiveArrivalReveal>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Modal Ajout Rapide d'Équipement */}
+      <Sheet
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        title="Ajouter un équipement au sac"
+      >
+        <div className="pb-2">
+          <form
+            action={(formData) => {
+              startTransition(async () => {
+                await addCustomTripItemAction(trip.id, trip.slug, formData);
+                setIsAddModalOpen(false);
+              });
+            }}
+            className="space-y-[var(--space-4)]"
+          >
+            <label className="block">
+              <span className={LABEL_CLASS}>Nom de l’équipement *</span>
+              <input
+                name="itemName"
+                required
+                placeholder="ex: Sac de couchage 0°C, Lunettes..."
+                className={FIELD_CLASS}
+              />
+            </label>
+
+            <div className="grid grid-cols-2 gap-[var(--space-3)]">
+              <label className="block">
+                <span className={LABEL_CLASS}>Catégorie</span>
+                <select name="category" className={`${FIELD_CLASS} cursor-pointer`}>
+                  <option value="safety">Sécurité & Secours</option>
+                  <option value="shelter">Abri & Tente</option>
+                  <option value="sleep">Sommeil</option>
+                  <option value="clothing">Vêtements</option>
+                  <option value="cook">Cuisine</option>
+                  <option value="water">Hydratation</option>
+                  <option value="tech">Énergie & Tech</option>
+                  <option value="misc">Matériel divers</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className={LABEL_CLASS}>Poids (grammes)</span>
+                <input
+                  type="number"
+                  name="weightGrams"
+                  placeholder="ex: 450"
+                  min={0}
+                  className={FIELD_CLASS}
+                />
+              </label>
+            </div>
+
+            <div className="space-y-[var(--space-2)] pt-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+              <label className="flex cursor-pointer items-center gap-[var(--space-2)]">
+                <input type="checkbox" name="isVital" value="true" className="rounded accent-white" />
+                <span>Équipement vital pour la sécurité ou survie</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-[var(--space-2)]">
+                <input type="checkbox" name="isWorn" value="true" className="rounded accent-white" />
+                <span>Porté sur soi (exclu du poids de base du sac)</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-[var(--space-2)]">
+                <input type="checkbox" name="isConsumable" value="true" className="rounded accent-white" />
+                <span>Consommable (eau, vivres, gaz)</span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsAddModalOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button type="submit" size="sm" disabled={isPending}>
+                Ajouter au sac
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Sheet>
+
+      {/* Modal Sélecteur d'inventaire personnel (Y6.3 — Pont matériel) */}
+      <Sheet
+        open={isInventoryModalOpen}
+        onOpenChange={setIsInventoryModalOpen}
+        title="Importer depuis Mon Matériel"
+        hideTitle
+      >
+        <div className="pb-2">
+          <div className="mb-1 flex items-center gap-[var(--space-2)]">
+            <Icon
+              name="package"
+              size={20}
+              className="shrink-0 text-[color:var(--glass-label)]"
+              aria-hidden="true"
+            />
+            <h3 className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+              Importer depuis Mon Matériel
+            </h3>
+          </div>
+
+          {/* Règle Y6.3 : Le stock n'est jamais consommé ni altéré */}
+          <Card
+            variant="compact"
+            className="mt-[var(--space-3)] flex shrink-0 items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]"
+          >
+            <Icon name="info" size={16} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+            <span>
+              Votre inventaire personnel reste intact — votre matériel est simplement référencé pour
+              cette aventure sans décompte de stock.
+            </span>
+          </Card>
+
+          {/* Barre de recherche */}
+          <div className="mt-[var(--space-3)] shrink-0">
+            <SearchField
+              value={inventorySearch}
+              onChange={(e) => setInventorySearch(e.target.value)}
+              onClear={() => setInventorySearch('')}
+              placeholder="Rechercher dans mon matériel (nom, marque)..."
+              aria-label="Rechercher dans mon matériel"
+            />
+          </div>
+
+          {/* Liste scrollable */}
+          <div className="my-[var(--space-4)] min-h-0 flex-1 divide-y divide-[color:var(--lkv-border-subtle)] overflow-y-auto pr-1">
+            {isLoadingInventory ? (
+              <div className="flex flex-col items-center justify-center gap-[var(--space-3)] py-12">
+                <Spinner size="md" label="Chargement de votre matériel" />
+                <span className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+                  Chargement de votre matériel...
+                </span>
+              </div>
+            ) : filteredInventory.length === 0 ? (
+              <div className="py-12 text-center text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+                {userInventory.length === 0 ? (
+                  <div className="space-y-[var(--space-3)]">
+                    <p>Aucun équipement trouvé dans votre inventaire personnel.</p>
+                    <Link
+                      href="/hub"
+                      className="inline-flex min-h-[var(--control-height-sm)] items-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
+                    >
+                      Gérer mon matériel →
+                    </Link>
+                  </div>
+                ) : (
+                  <p>Aucun équipement ne correspond à votre recherche.</p>
+                )}
+              </div>
+            ) : (
+              filteredInventory.map((item: any) => {
+                const isAlreadyInTrip = optimisticItems.some(
+                  (i) =>
+                    i.inventory_item_id === item.id ||
+                    (i.item_name.toLowerCase() === item.name.toLowerCase() &&
+                      i.source === 'inventory')
+                );
+
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-[var(--space-3)] py-[var(--space-3)]"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
+                        {item.name}
+                      </p>
+                      <div className="mt-0.5 flex items-center gap-[var(--space-2)] text-[11px] text-[color:var(--lkv-text-muted)]">
+                        {item.brand && <span>{item.brand}</span>}
+                        {item.category && <span>· {item.category}</span>}
+                        {item.weight_g > 0 && <span>· {item.weight_g} g</span>}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      {isAlreadyInTrip ? (
+                        <Badge tone="stone">✓ Dans le sac</Badge>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleImportFromInventory(item)}
+                          disabled={isPending}
+                        >
+                          + Dans mon sac
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Pied de modale */}
+          <div className="flex shrink-0 items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)]">
+            <Link
+              href="/hub"
+              className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-secondary)] hover:underline"
+            >
+              Ouvrir l'inventaire complet →
+            </Link>
+          </div>
+        </div>
+      </Sheet>
+
+      {/* Phase 5 — édition complète d'un item (poids, quantité, partage, état, propriétaire) */}
+      <TripKitEditModal
+        key={editingItem?.id ?? 'kit-edit'}
+        item={editingItem}
+        error={editError}
+        currentUserId={trip.user_id}
+        collaborators={trip.collaborators || []}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingItem(null);
+            setEditError(null);
+          }
+        }}
+        onSubmit={handleUpdateItem}
+      />
+    </div>
+  );
+}
+
+interface TripKitEditModalProps {
+  item: TripItem | null;
+  error: string | null;
+  currentUserId: string;
+  collaborators: TripFull['collaborators'];
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (input: {
+    quantity: number;
+    weightGrams: number | null;
+    ownership: 'personal' | 'shared';
+    condition: 'neuf' | 'bon' | 'use' | 'a_remplacer' | 'pour_pieces' | null;
+    ownerId: string | null;
+    priority: 'vital' | 'recommended' | 'optional';
+  }) => Promise<void>;
+}
+
+/** Phase 5 — modale unique d'édition d'un item du kit (aucun écran parallèle). */
+function TripKitEditModal({
+  item,
+  error,
+  currentUserId,
+  collaborators,
+  onOpenChange,
+  onSubmit,
+}: TripKitEditModalProps) {
+  const [quantity, setQuantity] = useState<string>(String(item?.quantity ?? 1));
+  const [weightGrams, setWeightGrams] = useState<string>(
+    item?.weight_grams != null ? String(item.weight_grams) : ''
+  );
+  const [ownership, setOwnership] = useState<'personal' | 'shared'>(
+    item?.ownership === 'shared' ? 'shared' : 'personal'
+  );
+  const [condition, setCondition] = useState<string>(item?.condition ?? '');
+  const [ownerId, setOwnerId] = useState<string>(item?.owner_id ?? '');
+  const [priority, setPriority] = useState<'vital' | 'recommended' | 'optional'>(
+    item?.priority === 'vital' || item?.is_vital
+      ? 'vital'
+      : item?.priority === 'optional'
+        ? 'optional'
+        : 'recommended'
+  );
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <Sheet open={item !== null} onOpenChange={onOpenChange} title="Modifier l’équipement">
+      <div className="space-y-[var(--space-4)] pb-2">
+        <p className="truncate text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
+          {item ? cleanItemName(item.item_name) : ''}
+        </p>
+
+        {error && (
+          <Card
+            role="alert"
+            tone="danger"
+            className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-danger-dark)]"
+          >
+            {error}
+          </Card>
+        )}
+
+        <div className="grid grid-cols-2 gap-[var(--space-3)]">
+          <label className="block">
+            <span className={LABEL_CLASS}>Quantité</span>
+            <input
+              className={FIELD_CLASS}
+              type="number"
+              min={1}
+              max={999}
+              value={quantity}
+              onChange={(event) => setQuantity(event.target.value)}
+            />
+          </label>
+          <label className="block">
+            <span className={LABEL_CLASS}>Poids unitaire (g)</span>
+            <input
+              className={FIELD_CLASS}
+              type="number"
+              min={0}
+              placeholder="non renseigné"
+              value={weightGrams}
+              onChange={(event) => setWeightGrams(event.target.value)}
+            />
+          </label>
+          <label className="block">
+            <span className={LABEL_CLASS}>Type</span>
+            <select
+              className={FIELD_CLASS}
+              value={ownership}
+              onChange={(event) => setOwnership(event.target.value as 'personal' | 'shared')}
+            >
+              <option value="personal">Personnel</option>
+              <option value="shared">Partagé (groupe)</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className={LABEL_CLASS}>État</span>
+            <select
+              className={FIELD_CLASS}
+              value={condition}
+              onChange={(event) => setCondition(event.target.value)}
+            >
+              <option value="">Non renseigné</option>
+              <option value="neuf">Neuf</option>
+              <option value="bon">Bon état</option>
+              <option value="use">Usé</option>
+              <option value="a_remplacer">À remplacer</option>
+              <option value="pour_pieces">Pour pièces</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className={LABEL_CLASS}>Propriétaire</span>
+            <select
+              className={FIELD_CLASS}
+              value={ownerId}
+              onChange={(event) => setOwnerId(event.target.value)}
+            >
+              <option value="">À assigner</option>
+              <option value={currentUserId}>Vous</option>
+              {collaborators
+                .filter((collab) => collab.user_id !== currentUserId)
+                .map((collab) => (
+                  <option key={collab.user_id} value={collab.user_id}>
+                    {collab.profile?.full_name || collab.profile?.username || 'Voyageur'}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className={LABEL_CLASS}>Priorité</span>
+            <select
+              className={FIELD_CLASS}
+              value={priority}
+              onChange={(event) =>
+                setPriority(event.target.value as 'vital' | 'recommended' | 'optional')
+              }
+            >
+              <option value="vital">Vital</option>
+              <option value="recommended">Recommandé</option>
+              <option value="optional">Optionnel</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="flex items-center justify-end gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            disabled={busy}
+          >
+            Annuler
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void onSubmit({
+                quantity: Math.max(1, Number(quantity) || 1),
+                weightGrams:
+                  weightGrams.trim() === '' ? null : Math.max(0, Math.round(Number(weightGrams) || 0)),
+                ownership,
+                condition: (condition || null) as
+                  | 'neuf'
+                  | 'bon'
+                  | 'use'
+                  | 'a_remplacer'
+                  | 'pour_pieces'
+                  | null,
+                ownerId: ownerId || null,
+                priority,
+              }).finally(() => setBusy(false));
+            }}
+          >
+            Enregistrer
+          </Button>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
+interface ItemRowProps {
+  item: TripItem;
+  imageUrl?: string | null;
+  onDeleteItem: (id: string) => void;
+  onTogglePacked: (item: TripItem) => void;
+  onEdit: (item: TripItem) => void;
+  busyPacked: boolean;
+  ownerLabel: string | null;
+  canEdit: boolean;
+}
+
+function GearThumb({ url, name, size = 46 }: { url?: string | null; name: string; size?: number }) {
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt=""
+        loading="lazy"
+        className="shrink-0 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] object-cover"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return (
+    <span
+      className="flex shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset font-bold text-[color:var(--glass-label)]"
+      style={{ width: size, height: size }}
+      aria-hidden="true"
+    >
+      {name.slice(0, 1).toUpperCase()}
+    </span>
+  );
+}
+
+function GearStockBadge({ quantity, stock = false }: { quantity: number; stock?: boolean }) {
+  if (quantity <= 1) return null;
+  return (
+    <span
+      className="inline-flex shrink-0"
+      title={stock ? `${quantity} en stock` : `${quantity} dans le sac`}
+    >
+      <Badge tone="stone" className="tabular-nums">
+        ×{quantity}
+        {stock ? ' en stock' : ''}
+      </Badge>
+    </span>
+  );
+}
+
+/** Ligne du sac : état emballé, badges personnel/partagé/manquant, édition. */
+function TripKitItemRow({
+  item,
+  imageUrl,
+  onDeleteItem,
+  onTogglePacked,
+  onEdit,
+  busyPacked,
+  ownerLabel,
+  canEdit,
+}: ItemRowProps) {
+  const displayName = cleanItemName(item.item_name);
+  const isMissing = item.status === 'missing';
+  const conditionLabels: Record<string, string> = {
+    neuf: 'Neuf',
+    bon: 'Bon état',
+    use: 'Usé',
+    a_remplacer: 'À remplacer',
+    pour_pieces: 'Pour pièces',
+  };
+
+  return (
+    <div
+      className={`flex items-center justify-between gap-3 py-3 transition-colors ${
+        item.is_packed ? 'opacity-70' : 'opacity-100'
+      }`}
+    >
+      <div className="flex min-w-0 items-center gap-[var(--space-3)]">
+        {canEdit ? (
+          <IconButton
+            type="button"
+            onClick={() => onTogglePacked(item)}
+            disabled={busyPacked}
+            aria-label={item.is_packed ? 'Marquer non emballé' : 'Marquer emballé'}
+            aria-pressed={item.is_packed}
+            className="shrink-0"
+          >
+            {item.is_packed ? (
+              <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+            ) : (
+              <Circle className="h-5 w-5" aria-hidden="true" />
+            )}
+          </IconButton>
+        ) : (
+          <GearThumb url={imageUrl} name={displayName} />
+        )}
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+            <span
+              className={`truncate text-[length:var(--lkv-text-body-sm)] font-medium ${
+                item.is_packed
+                  ? 'text-[color:var(--lkv-text-secondary)] line-through decoration-[color:var(--lkv-text-muted)]/60'
+                  : 'text-[color:var(--lkv-text-primary)]'
+              }`}
+            >
+              {displayName}
+            </span>
+            {item.is_packed && <Badge tone="sage">emballé</Badge>}
+            {isMissing && <Badge tone="warn">manquant</Badge>}
+            {item.ownership === 'shared' && <Badge tone="stone">partagé</Badge>}
+            {item.quantity > 1 && item.is_consumable && <GearStockBadge quantity={item.quantity} />}
+            {isLlmSuggestion(item.source) && <LlmSuggestionBadge />}
+            {item.is_vital && (
+              <span className="text-[10px] font-bold text-[color:var(--lkv-danger)]">Vital</span>
+            )}
+          </div>
+
+          <div className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
+            {item.weight_grams ? `${item.weight_grams} g` : 'poids non renseigné'}
+            {item.quantity > 1 ? ` · ×${item.quantity}` : ''}
+            {ownerLabel ? ` · ${ownerLabel}` : ''}
+            {item.condition ? ` · ${conditionLabels[item.condition] ?? item.condition}` : ''}
+          </div>
+          {item.reason && (
+            <p className="mt-0.5 line-clamp-2 text-[10px] italic text-[var(--lkv-text-muted)]">
+              {item.reason}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-[var(--space-1)]">
+        {canEdit && (
+          <IconButton
+            type="button"
+            onClick={() => onEdit(item)}
+            title="Modifier l’équipement"
+            aria-label="Modifier l’équipement"
+          >
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+          </IconButton>
+        )}
+        <IconButton
+          type="button"
+          onClick={() => onDeleteItem(item.id)}
+          title="Retirer du sac"
+          aria-label="Retirer du sac"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </IconButton>
+      </div>
+    </div>
+  );
+}
+
+/** Ligne « possédé, pas encore dans le sac » : bouton +. */
+function GearInventoryAddRow({
+  inv,
+  busy,
+  onAdd,
+}: {
+  inv: InventoryItem;
+  busy: boolean;
+  onAdd: (item: { id: string; name: string; category?: string | null; weight_g?: number | null }) => void;
+}) {
+  const consumable = /vivre|eau|nutrition|hydrat|repas|ration|barre|en-cas|cuisine|gaz/i.test(
+    `${inv.category ?? ''} ${inv.name}`
+  );
+  return (
+    <div className="flex items-center justify-between gap-3 py-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <GearThumb url={inv.photo_url} name={inv.name} />
+        <div className="min-w-0">
+          <span className="block truncate text-sm font-medium text-[var(--lkv-text-primary)]">
+            {inv.name}
+          </span>
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--lkv-text-secondary)]">
+            <span>{inv.weight_g != null ? `${inv.weight_g} g` : 'poids non renseigné'}</span>
+            {consumable && <GearStockBadge quantity={inv.quantity} stock />}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-[var(--space-1)]">
+        <IconButton
+          type="button"
+          variant="solid"
+          onClick={() =>
+            onAdd({ id: inv.id, name: inv.name, category: inv.category, weight_g: inv.weight_g })
+          }
+          disabled={busy}
+          title="Ajouter au sac"
+          aria-label={`Ajouter ${inv.name} au sac`}
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+        </IconButton>
+      </div>
+    </div>
+  );
+}
+
+/** Ligne boutique (ni possédé ni dans le sac) : bouton boîte-flèche → Mon Matériel. */
+function GearShopAddRow({
+  product,
+  busy,
+  onAddToInventory,
+}: {
+  product: ShopProductReference;
+  busy: boolean;
+  onAddToInventory: (product: ShopProductReference) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <GearThumb url={product.image ?? null} name={product.name} />
+        <div className="min-w-0">
+          <span className="block truncate text-sm font-medium text-[var(--lkv-text-primary)]">
+            {product.name}
+          </span>
+          <span className="mt-0.5 block text-[11px] text-[var(--lkv-text-secondary)]">
+            {product.price_eur} € · {product.weight_g} g
+            {product.brand ? ` · ${product.brand}` : ''}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-[var(--space-1)]">
+        <IconButton
+          type="button"
+          variant="solid"
+          onClick={() => onAddToInventory(product)}
+          disabled={busy}
+          title="Ajouter à Mon Matériel"
+          aria-label={`Ajouter ${product.name} à mon matériel`}
+        >
+          <PackagePlus className="h-4 w-4" aria-hidden="true" />
+        </IconButton>
+      </div>
+    </div>
+  );
+}
+
+function VirtualTripKitItemList({
+  items,
+  imageByItemId,
+  onDeleteItem,
+  onTogglePacked,
+  onEdit,
+  busyPackedId,
+  canEdit,
+  liveIds,
+  containerRef,
+}: {
+  items: TripItem[];
+  imageByItemId: Map<string, string | null>;
+  onDeleteItem: (id: string) => void;
+  onTogglePacked: (item: TripItem) => void;
+  onEdit: (item: TripItem) => void;
+  busyPackedId: string | null;
+  canEdit: boolean;
+  liveIds: ReadonlySet<string>;
+  containerRef: (node: HTMLDivElement | null) => void;
+}) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 64,
+    overscan: 6,
+  });
+  // T10 fix — le portail de visibilité s'accroche au parent scrollé du
+  // virtualiseur (même callback ref stable que la liste non virtualisée).
+  const setScrollNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      parentRef.current = node;
+      containerRef(node);
+    },
+    [containerRef]
+  );
+
+  return (
+    <div ref={setScrollNode} className="max-h-[500px] overflow-y-auto no-scrollbar">
+      <div
+        style={{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          const item = items[virtualRow.index];
+          return (
+            <div
+              key={item.id}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+              className="border-b border-[color:var(--lkv-border-subtle)]"
+            >
+              {/* Reveal du contenu à l'intérieur du wrapper mesuré : la
+                  géométrie du virtualiseur reste inchangée. */}
+              <LiveArrivalReveal id={item.id} liveIds={liveIds} index={virtualRow.index}>
+                <TripKitItemRow
+                  item={item}
+                  imageUrl={imageByItemId.get(item.id) ?? null}
+                  onDeleteItem={onDeleteItem}
+                  onTogglePacked={onTogglePacked}
+                  onEdit={onEdit}
+                  busyPacked={busyPackedId === item.id}
+                  ownerLabel={null}
+                  canEdit={canEdit}
+                />
+              </LiveArrivalReveal>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

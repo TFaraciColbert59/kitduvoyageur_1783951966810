@@ -1,0 +1,228 @@
+{
+  "generatedAt": "2026-09-21T20:14:34.682Z",
+  "scope": "src/**/*.{ts,tsx}",
+  "hardcodedHex": 251,
+  "roundedArbitrary": 681,
+  "roundedArbitraryLiteral": 5,
+  "textArbitrary": 10047,
+  "zIndexArbitrary": 146,
+  "zIndexArbitraryLiteral": 0,
+  "inlineStyles": 440,
+  "windowConfirmAlertPrompt": 0,
+  "lkvDialogCalls": 77,
+  "safeAreaEnvDirect": 14,
+  "legacyNavHeightVars": 0,
+  "modalPrimitiveImporters": {
+    "GlassModal": 0,
+    "Sheet": 25,
+    "GlassSheet": 0,
+    "PremiumBottomSheet": 0,
+    "GlassDrawer": 0
+  },
+  "roleDialogFiles": 7,
+  "bottomBarFiles": 2,
+  "fixedBottom0": 3,
+  "appFilesWithCustomHeader": 0,
+  "uiPrimitiveFiles": 44,
+  "roleDuplicates": {
+    "Card": {
+      "count": 72,
+      "files": [
+        "src/components/carnet/HebergementCard.tsx",
+        "src/components/carnet/JourCard.tsx",
+        "src/components/carnet/KitSouvenirCard.tsx",
+        "src/components/carnet/MomentCard.tsx",
+        "src/components/carnet/RandonneesSouvenirCard.tsx",
+        "src/components/carnets/CarnetHubCard.tsx",
+        "src/components/carnets/MobileCarnetCard.tsx",
+        "src/components/clubs/ClubAboutCard.tsx",
+        "src/components/clubs/ClubDiscussionCard.tsx",
+        "src/components/clubs/ClubFeaturedEventCard.tsx",
+        "src/components/clubs/ClubProCard.tsx",
+        "src/components/clubs/ClubTeamCard.tsx",
+        "src/components/clubs/MobileClubCard.tsx",
+        "src/components/communaute/CommunityPostCard.tsx",
+        "src/components/compte/AbonnementCard.tsx",
+        "src/components/compte/ActiviteCard.tsx",
+        "src/components/compte/BadgesCard.tsx",
+        "src/components/compte/CommandesCard.tsx",
+        "src/components/compte/ConstanceCard.tsx",
+        "src/components/compte/MesAventuresCard.tsx",
+        "src/components/compte/MesCarnetsCard.tsx",
+        "src/components/compte/MesClubsCard.tsx",
+        "src/components/compte/ParametresCompteCard.tsx",
+        "src/components/compte/ProchainVoyageCard.tsx",
+        "src/components/explorer/ExplorerListCard.tsx",
+        "src/components/groupes/DecisionsCard.tsx",
+        "src/components/groupes/DepensesCard.tsx",
+        "src/components/groupes/DiscussionCard.tsx",
+        "src/components/groupes/EquipementCard.tsx",
+        "src/components/groupes/ParcoursCard.tsx",
+        "src/components/groupes/ProgressionCard.tsx",
+        "src/components/groupes/TachesCard.tsx",
+        "src/components/groupes/VoyageursCard.tsx",
+        "src/components/identity/OrientationCard.tsx",
+        "src/components/kits/ProductLineageCard.tsx",
+        "src/components/produit/ProductCard.tsx",
+        "src/components/progression/ProgressionCompactCard.tsx",
+        "src/components/ui/Card.tsx",
+        "src/components/ui/GlassSubCard.tsx",
+        "src/components/ui/ProductGlassCard.tsx",
+        "src/features/affiliation/components/AffiliateLinkCard.tsx",
+        "src/features/discovery/components/DiscoveryCard.tsx",
+        "src/features/hub/components/menu/MenuCard.tsx",
+        "src/features/hub/components/menu/NextActionCard.tsx",
+        "src/features/hub/components/mobile/budget/BudgetBalancesCard.tsx",
+        "src/features/hub/components/mobile/budget/BudgetCategoryCard.tsx",
+        "src/features/hub/components/mobile/budget/BudgetHeroCard.tsx",
+        "src/features/hub/components/mobile/groupe/GroupeBalancesCard.tsx",
+        "src/features/hub/components/mobile/groupe/GroupeMembersCard.tsx",
+        "src/features/hub/components/mobile/MomentMapCard.tsx",
+        "src/features/hub/components/mobile/MomentStatCard.tsx",
+        "src/features/materiel/components/depart/hero/DepartHeroCard.tsx",
+        "src/features/materiel/components/inventaire/InventoryCard.tsx",
+        "src/features/materiel/components/kits/KitOverviewCockpitCard.tsx",
+        "src/features/materiel/components/kits/KitPreparationCockpitCard.tsx",
+        "src/features/materiel/components/kits/KitsActiveCockpitCard.tsx",
+        "src/features/materiel/components/kits/KitsKpiCockpitCard.tsx",
+        "src/features/messaging/components/GPXPreviewCard.tsx",
+        "src/features/messaging/components/KitCard.tsx",
+        "src/features/messaging/components/OpenGraphCard.tsx",
+        "src/features/messaging/components/ProductCard.tsx",
+        "src/features/messaging/components/TrailCard.tsx",
+        "src/features/participants/components/DogParticipantCard.tsx",
+        "src/features/participants/components/HumanParticipantCard.tsx",
+        "src/features/pays/components/EditorialBlockCard.tsx",
+        "src/features/pays/components/PaysWeatherCard.tsx",
+        "src/features/places/components/PlaceCard.tsx",
+        "src/features/terrain-live/components/TerrainReportCard.tsx",
+        "src/features/trips/components/autoGen/ProposalCard.tsx",
+        "src/features/trips/components/ResumeActiveTripCard.tsx",
+        "src/features/trips/components/TripCard.tsx",
+        "src/features/trips/planner/StepCard.tsx"
+      ]
+    },
+    "Modal": {
+      "count": 23,
+      "files": [
+        "src/components/compte/EditProfileModal.tsx",
+        "src/components/ui/GlobalSearchModal.tsx",
+        "src/components/ui/Modal.tsx",
+        "src/components/ui/ReportBlockModal.tsx",
+        "src/features/hiking/components/GPXImportExportModal.tsx",
+        "src/features/hiking/components/SafetyCenterModal.tsx",
+        "src/features/kits/components/KitSheetModal.tsx",
+        "src/features/materiel/components/depart/DepartureSheetModal.tsx",
+        "src/features/messaging/components/ConversationOptionsMenuModal.tsx",
+        "src/features/messaging/components/GroupSettingsModal.tsx",
+        "src/features/messaging/components/NewConversationModal.tsx",
+        "src/features/participants/components/GlassBreakModal.tsx",
+        "src/features/places/components/AddPlaceToTripModal.tsx",
+        "src/features/places/components/ReportPlaceModal.tsx",
+        "src/features/preparation/components/modals/AddGearModal.tsx",
+        "src/features/preparation/components/modals/AddParticipantModal.tsx",
+        "src/features/preparation/components/modals/GlassBreakModal.tsx",
+        "src/features/trips/components/QuickCreateTripModal.tsx",
+        "src/features/trips/components/RenameTripModal.tsx",
+        "src/features/trips/components/TripCompletionModal.tsx",
+        "src/features/trips/components/TripShareModal.tsx",
+        "src/features/trips/planner/MoveStepModal.tsx",
+        "src/features/trips/planner/StepEditModal.tsx"
+      ]
+    },
+    "Sheet": {
+      "count": 16,
+      "files": [
+        "src/components/social/CommentsSheet.tsx",
+        "src/components/social/ReportSheet.tsx",
+        "src/components/ui/Sheet.tsx",
+        "src/features/hiking/components/sheets/CaptureSheet.tsx",
+        "src/features/hiking/components/sheets/CopilotSheet.tsx",
+        "src/features/hiking/components/sheets/MoreSheet.tsx",
+        "src/features/hiking/components/sheets/StatsSheet.tsx",
+        "src/features/hub/components/HubMobileSectionsSheet.tsx",
+        "src/features/hub/components/NatureSwitcherSheet.tsx",
+        "src/features/messaging/components/ComposerMenuSheet.tsx",
+        "src/features/messaging/components/ConversationOptionsSheet.tsx",
+        "src/features/messaging/components/ForwardMessageSheet.tsx",
+        "src/features/messaging/components/MobileSheet.tsx",
+        "src/features/terrain-live/components/QuickReportSheet.tsx",
+        "src/features/tribu/components/EphemeralGroupSheet.tsx",
+        "src/features/trips/components/budget/ExpenseFormSheet.tsx"
+      ]
+    },
+    "Header": {
+      "count": 4,
+      "files": [
+        "src/components/communaute/MobileCommunityHeader.tsx",
+        "src/components/Header.tsx",
+        "src/components/ui/PageHeader.tsx",
+        "src/features/preparation/components/PreparationHeader.tsx"
+      ]
+    },
+    "Button": {
+      "count": 5,
+      "files": [
+        "src/components/ui/Button.tsx",
+        "src/components/ui/HeaderBackButton.tsx",
+        "src/components/ui/IconButton.tsx",
+        "src/features/hub/components/menu/SosFloatingButton.tsx",
+        "src/features/trips/components/TripInviteButton.tsx"
+      ]
+    },
+    "Tabs": {
+      "count": 6,
+      "files": [
+        "src/components/carnet/CarnetDetailVerticalTabs.tsx",
+        "src/components/carnets/CarnetVerticalTabs.tsx",
+        "src/components/clubs/ClubVerticalTabs.tsx",
+        "src/components/ui/Tabs.tsx",
+        "src/features/materiel/components/alertes/CategoryTabs.tsx",
+        "src/features/materiel/components/disponibilite/LoanTabs.tsx"
+      ]
+    }
+  },
+  "appPagesDualDesktopMobile": 47,
+  "top10FilesByHardcodedHex": [
+    [
+      "src/components/map/InteractiveMap.tsx",
+      31
+    ],
+    [
+      "src/constants/equipmentCategories.ts",
+      28
+    ],
+    [
+      "src/components/explorer/TrailLayer.tsx",
+      21
+    ],
+    [
+      "src/features/hiking/gpx/HikeReportPDFService.ts",
+      19
+    ],
+    [
+      "src/components/dev/style/StyleShowcase.tsx",
+      12
+    ],
+    [
+      "src/components/hiking/ElevationProfileChart.tsx",
+      12
+    ],
+    [
+      "src/app/admin/page.tsx",
+      11
+    ],
+    [
+      "src/components/explorer/ExplorerMap.tsx",
+      11
+    ],
+    [
+      "src/components/map/engine/mapTheme.ts",
+      11
+    ],
+    [
+      "src/app/api/notifications/process/route.ts",
+      9
+    ]
+  ]
+}

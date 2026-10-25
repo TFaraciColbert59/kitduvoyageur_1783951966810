@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-09-11T20:00:00.000Z",
+  "source": "fixture",
+  "db": {
+    "runs": {
+      "total": 22,
+      "last24h": 22,
+      "succeeded24h": 20,
+      "failed24h": 2,
+      "skipped24h": 0,
+      "avgDurationMs": 41,
+      "p95DurationMs": 120,
+      "latestStartedAt": "2026-09-11T19:58:00.000Z"
+    },
+    "queues": {
+      "pendingEvents": 0,
+      "failedEvents": 0,
+      "oldestPendingEventMinutes": 0,
+      "pendingGenerationRequests": 0,
+      "oldestGenerationRequestMinutes": 0
+    },
+    "rpc": {
+      "name": "current_feature_flags",
+      "samples": 5,
+      "avgMs": 3.2,
+      "p95Ms": 5.1
+    }
+  }
+}

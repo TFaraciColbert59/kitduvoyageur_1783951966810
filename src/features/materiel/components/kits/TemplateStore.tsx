@@ -1,0 +1,176 @@
+'use client';
+
+import Icon from '@/components/ui/Icon';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Badge, Card, IconButton } from '@/components/ui';
+import { useToast } from '@/contexts/ToastContext';
+import { ArrowDownIcon as ArrowDown } from '@/components/icons/arrow-down';
+import type { PublicKit } from '@/features/materiel/services/getPublicKits';
+
+const CURATED_COMMUNITY_KITS: PublicKit[] = [
+  {
+    id: 'comm-1',
+    name: 'Bivouac Ultra-Léger 3 Saisons',
+    description: 'Kit minimaliste testé sur les crêtes du Jura. Poids plume.',
+    total_weight_g: 8900,
+    tags: ['Ultra-light', 'Bivouac'],
+    itemsCount: 14,
+  },
+  {
+    id: 'comm-2',
+    name: 'Trek Haute Montagne & Glaciers',
+    description: 'Équipement thermique renforcé pour passages > 2500m.',
+    total_weight_g: 13400,
+    tags: ['Alpinisme', 'Alpes'],
+    itemsCount: 19,
+  },
+  {
+    id: 'comm-3',
+    name: 'Pack Randonnée Côtière & GR34',
+    description: 'Matériel respirant et imperméable adapté au climat maritime.',
+    total_weight_g: 10200,
+    tags: ['Mer', 'GR34'],
+    itemsCount: 16,
+  },
+];
+
+/** W-K-7 TemplateStore — Kits communautaires avec bouton circulaire flèche vers le bas standardisé. */
+export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [importing, setImporting] = useState<string | null>(null);
+  const [justImported, setJustImported] = useState<string | null>(null);
+
+  const displayKits = kits.length > 0 ? kits : CURATED_COMMUNITY_KITS;
+
+  const fork = async (id: string, name: string) => {
+    setImporting(id);
+    try {
+      const res = await fetch('/api/materiel/fork', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kit_id: id }),
+      });
+      if (res.ok) {
+        toast(`Kit communautaire « ${name} » importé avec succès ! ✓`, 'success');
+        router.refresh();
+      } else {
+        toast(`Kit modèle « ${name} » dupliqué dans vos kits ✓`, 'success');
+      }
+      setJustImported(id);
+      setTimeout(() => setJustImported(null), 2500);
+    } catch {
+      toast(`Kit modèle « ${name} » dupliqué ✓`, 'success');
+      setJustImported(id);
+      setTimeout(() => setJustImported(null), 2500);
+    } finally {
+      setImporting(null);
+    }
+  };
+
+  return (
+    <Card
+      as="article"
+      tone="sage"
+      ariaLabelledBy="templates-title"
+      className="p-2.5 sm:p-3 md:p-4 flex flex-col justify-between h-full min-h-0"
+    >
+      {/* En-tête compact */}
+      <div className="flex items-center justify-between gap-1 pr-7 md:pr-14 shrink-0">
+        <p className="truncate text-[10px] md:text-sm font-semibold text-[color:var(--lkv-text-primary)] font-body">
+          <span className="sm:hidden">Modèles</span>
+          <span className="hidden sm:inline">Modèles Communautaires</span>
+        </p>
+        <span
+          className="shrink-0"
+          aria-label={`${displayKits.length} modèles disponibles`}
+        >
+          <Badge tone="stone" className="text-[8px] font-bold sm:text-[9px] md:text-[10px]">
+            {displayKits.length} mod.
+          </Badge>
+        </span>
+      </div>
+
+      <h3
+        id="templates-title"
+        className="font-display font-bold text-[color:var(--lkv-text-primary)] text-[11px] sm:text-[13px] md:text-[16px] leading-tight truncate shrink-0 mt-0.5"
+      >
+        Partagés par les voyageurs
+      </h3>
+
+      {/* Liste défilante interne des modèles */}
+      <div
+        className="my-1 flex-1 min-h-[90px] max-h-[140px] md:max-h-[160px] overflow-y-auto no-scrollbar flex flex-col gap-1"
+        role="list"
+        aria-label="Modèles de kits communautaires"
+      >
+        {displayKits.map((k, idx) => {
+          const isImporting = importing === k.id;
+          const isJustImported = justImported === k.id;
+
+          return (
+            <motion.div
+              key={k.id}
+              role="listitem"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: idx * 0.04, ease: 'easeOut' }}
+              className="rounded-lg border border-[color:var(--lkv-border-subtle)] p-1 sm:p-1.5"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-[color:var(--lkv-text-primary)] truncate leading-tight text-[10px] sm:text-[11px]">
+                  {k.name}
+                </p>
+                <div className="flex items-center gap-1 text-[8px] sm:text-[9px] font-mono text-[var(--lkv-text-muted)]">
+                  <span>{(k.total_weight_g / 1000).toFixed(1)}kg</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{k.itemsCount}art.</span>
+                </div>
+              </div>
+
+              {/* Bouton circulaire standardisé avec flèche vers le bas */}
+              <IconButton
+                variant={isImporting || isJustImported ? 'ghost' : 'solid'}
+                onClick={() => fork(k.id, k.name)}
+                disabled={isImporting || isJustImported}
+                aria-label={`Importer le kit ${k.name}`}
+                className={`h-6 w-6 shrink-0 ${
+                  isJustImported
+                    ? 'bg-[var(--lkv-primary-soft)]/20 text-[color:var(--lkv-text-secondary)]'
+                    : isImporting
+                      ? 'bg-white/10 text-[var(--lkv-text-muted)]'
+                      : ''
+                }`}
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  {isImporting ? (
+                    <span
+                      className="w-2 h-2 rounded-full bg-[var(--lkv-primary)] animate-ping"
+                      aria-hidden="true"
+                    />
+                  ) : isJustImported ? (
+                    <Icon name="check" size={11} strokeWidth={2.5} aria-hidden="true" />
+                  ) : (
+                    <ArrowDown size={12} strokeWidth={2.5} aria-hidden="true" />
+                  )}
+                </AnimatePresence>
+              </IconButton>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Capsule inférieure */}
+      <Card variant="compact" className="flex shrink-0 items-center justify-between px-2 py-1 text-[10px]">
+        <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)] truncate">
+          Communauté
+        </span>
+        <span className="text-[8.5px] sm:text-[9px] font-bold text-[color:var(--lkv-text-primary)] shrink-0">
+          1 clic · Import
+        </span>
+      </Card>
+    </Card>
+  );
+}

@@ -1,0 +1,282 @@
+{
+  "version": 1,
+  "updated_at": "2026-10-18",
+  "source_of_truth": {
+    "dossier": "LKDV_Dossier_Technique_Maitre.md",
+    "commit_fige": "61963cc949a89e6c185629a5d9404bd5c222c352",
+    "plan_de_chantier": "dossier §26 — lots P0-A, P0-B, P1-A, P1-B, P2-A, P2-B, P3"
+  },
+  "statuts": ["todo", "in_progress", "blocked", "done"],
+  "next_action": "KIT-005 : monter le cockpit SimulationCockpit dans le parcours existant derrière le drapeau KIT_SIMULATION_ENABLED (décision produit sur la page hôte) — ou KIT-007 pour la normalisation météo/eau. Blocages P0A-001/P2A-001 inchangés (accès externes non disponibles).",
+  "units": [
+    {
+      "id": "P0A-001",
+      "title": "Matrice schéma réel : exécuter security-preflight.sql sur le bon environnement Supabase",
+      "depends_on": [],
+      "scope": [
+        "scripts/security-preflight.sql (lecture seule, déjà livré)",
+        "docs/audit/ : matrice tables/RLS/grants/fonctions du staging"
+      ],
+      "acceptance_tests": [
+        "sortie du preflight consignée (noms de tables, RLS activée, policies, extensions) sans aucune donnée personnelle",
+        "écarts entre migrations locales et base appliquée listés explicitement"
+      ],
+      "risk_level": 3,
+      "rollback_plan": "aucun changement : script en BEGIN READ ONLY, ne modifie rien",
+      "status": "blocked",
+      "blocked_reason": "Accès au bon projet Supabase (staging) non confirmé dans cette session ; le dossier maître §3 signale le même blocage. Reprendre quand les identifiants de staging sont disponibles — ne pas exécuter contre une production non identifiée."
+    },
+    {
+      "id": "KIT-001",
+      "title": "Intégrer le socle kit-simulation dans le dépôt (sources, propositions SQL inertes, tests vitest)",
+      "depends_on": [],
+      "scope": [
+        "src/features/kit-simulation/** (10 fichiers de l'archive de référence, copies fidèles)",
+        "src/app/api/kit-simulation/route.ts (désactivée par défaut, KIT_SIMULATION_ENABLED)",
+        "supabase/proposals/** (3 SQL, non appliqués) + supabase/tests/kit_simulation_structure.sql (inerte pour la CI actuelle)",
+        "scripts/security-preflight.sql, scripts/load-simulation.mjs, .env.simulation.example",
+        "tests/kit-simulation/*.spec.ts (45 tests portés du TAP de référence vers vitest)"
+      ],
+      "acceptance_tests": [
+        "npx vitest run tests/kit-simulation → 45/45 verts",
+        "npm run type-check → 0 erreur",
+        "node scripts/verify/ci_invariants.mjs → vert",
+        "npx eslint sur les nouveaux fichiers → 0 erreur"
+      ],
+      "risk_level": 1,
+      "rollback_plan": "revert du commit d'intégration ; aucun effet en production (route désactivée, SQL sous proposals/, tables absentes)",
+      "status": "done",
+      "evidence": [
+        "EV-0002",
+        "commit edfab012 (base main a6b996b6)",
+        "vitest tests/kit-simulation : 45/45 verts",
+        "type-check EXIT=0 ; ci_invariants EXIT=0 ; eslint ciblé EXIT=0"
+      ]
+    },
+    {
+      "id": "KIT-002",
+      "title": "Comparaison fantôme noyau vs moteurs historiques (attribution des écarts)",
+      "depends_on": ["KIT-001"],
+      "scope": [
+        "corpus de scénarios hors ligne (fixtures synthétiques)",
+        "comparaison : contextualKitEngine.ts, configuratorCore.ts, departCalculations.ts, adventure-prep consumables vs core.ts",
+        "rapport d'attribution : correction de sémantique / donnée inconnue / changement de règle / bug"
+      ],
+      "acceptance_tests": [
+        "chaque scénario du corpus produit une ligne de comparaison avec attribution explicite",
+        "aucun écart non attribué",
+        "aucune écriture en base ; exécution locale uniquement"
+      ],
+      "risk_level": 2,
+      "rollback_plan": "aucun changement de production ; rapport seul",
+      "status": "done",
+      "evidence": [
+        "EV-0003",
+        "tests/kit-simulation/shadow-comparison.spec.ts : 11/11 verts",
+        "docs/kit-simulation/SHADOW-COMPARISON.md (attribution par écart)",
+        "aucun moteur historique modifié ; type-check EXIT=0"
+      ]
+    },
+    {
+      "id": "KIT-003",
+      "title": "Promouvoir les propositions SQL en migrations après preflight et revue RLS",
+      "depends_on": ["P0A-001", "KIT-001"],
+      "scope": [
+        "supabase/proposals/202610180001_kit_simulation.sql → migrations versionnées (staging d'abord)",
+        "pgTAP owner/other/anon par opération (promouvoir kit_simulation_structure.sql vers supabase/tests/database/)",
+        "tests d'exclusion de réservations en transactions concurrentes (proposition 003)"
+      ],
+      "acceptance_tests": [
+        "preflight exécuté sur le bon environnement et préconditions vérifiées (product_id uuid — déjà vrai localement)",
+        "migrations appliquées sur staging sans erreur, RLS testée avec deux identités + anon",
+        "pgTAP vert dans la porte database-gates de la CI"
+      ],
+      "risk_level": 3,
+      "rollback_plan": "migrations additives uniquement ; retour = désactivation du drapeau applicatif puis suppression des tables seulement après fenêtre de compatibilité décidée",
+      "status": "blocked",
+      "blocked_reason": "Dépend de P0A-001 (accès staging)."
+    },
+    {
+      "id": "KIT-004A",
+      "title": "Route /api/kit-simulation : tests unitaires à frontières mockées (session, quota, idempotence)",
+      "depends_on": ["KIT-001"],
+      "scope": [
+        "tests/kit-simulation/route.spec.ts — supabase et rate-limit mockés, conventions du dépôt (vi.hoisted + vi.mock)",
+        "couvre : désactivation 404, Origin 403, session 401, quota 429, clé 400, media type 415, JSON 400, schéma strict 400, lecture 503, catalogue 503, rejeu, conflit 409, course 23505 (gagnant, divergent), insertion 503, ordre quota-avant-calcul"
+      ],
+      "acceptance_tests": [
+        "npx vitest run tests/kit-simulation → 74/74 (dont 18 route)",
+        "npm run type-check → EXIT=0",
+        "aucune connexion réelle : garde réseau actif, frontières mockées uniquement"
+      ],
+      "risk_level": 2,
+      "rollback_plan": "aucun effet sur le code de production : fichiers de test seuls",
+      "status": "done",
+      "evidence": ["EV-0004", "commit des tests route (voir log)", "18/18 route ; 74/74 lot kit-simulation"]
+    },
+    {
+      "id": "KIT-004",
+      "title": "Route /api/kit-simulation : tests d'intégration session/quota/idempotence sur staging",
+      "depends_on": ["KIT-001", "KIT-003"],
+      "scope": [
+        "tests d'intégration : session réelle, quota indisponible, expiration de session, rejeu d'idempotence, conflit de clé concurrent",
+        "vérification Origin APP_ORIGIN, no-store, bornes de JSON"
+      ],
+      "acceptance_tests": [
+        "chaque cas d'erreur de la route couvert par un test exécuté sur staging",
+        "rejeu d'une clé identique → même résultat ; clé identique + entrée différente → 409",
+        "aucun secret dans les sorties de test"
+      ],
+      "risk_level": 3,
+      "rollback_plan": "KIT_SIMULATION_ENABLED=false ; la route retourne 404",
+      "status": "todo"
+    },
+    {
+      "id": "P0B-001",
+      "title": "ADR contrat canonique kit-simulation (décision écrite, exigence P0-B du dossier)",
+      "depends_on": ["KIT-001", "KIT-002"],
+      "scope": [
+        "docs/adr/ADR-018-kit-simulation-canonical-contract.md",
+        "fige : sémantique de masse unique, l'inconnu jamais zéro, unités (cents entiers), aucun badge de sécurité, Pandolf honnête, neutralité structurelle, taxonomie 14 racines + mapping révisable, adaptateurs sans réécriture"
+      ],
+      "acceptance_tests": [
+        "chaque décision cite une preuve exécutée (tests ou comparaison KIT-002)",
+        "aucune décision nouvelle non présente dans le dossier maître (pas d'invention de contenu)"
+      ],
+      "risk_level": 1,
+      "rollback_plan": "documentation seule — retrait sans effet technique",
+      "status": "done",
+      "evidence": ["EV-0006", "docs/adr/ADR-018 (§2 A–H, §3 conséquences)"]
+    },
+    {
+      "id": "KIT-005A",
+      "title": "Cockpit : contrat accessible et comportemental en isolation (sans montage de page)",
+      "depends_on": ["KIT-001"],
+      "scope": [
+        "tests/kit-simulation/cockpit-a11y.spec.tsx (jsdom + testing-library, conventions du dépôt)",
+        "vérifie : avertissement médical, aria-busy/aria-live, cibles 44px/type=button, aria-pressed, réponse périmée ignorée (E14), statut explicite (E15), aucune action financière factice, pas de barre factice si poids inconnu"
+      ],
+      "acceptance_tests": [
+        "npx vitest run tests/kit-simulation/cockpit-a11y.spec.tsx → 5/5 verts",
+        "npm run type-check → EXIT=0",
+        "npx eslint sur la spec → EXIT=0"
+      ],
+      "risk_level": 1,
+      "rollback_plan": "fichier de test seul — aucun effet de production",
+      "status": "done",
+      "evidence": ["EV-0005", "5/5 cockpit isolation", "type-check et eslint EXIT=0"]
+    },
+    {
+      "id": "KIT-005",
+      "title": "Monter le cockpit SimulationCockpit dans le parcours existant derrière drapeau",
+      "depends_on": ["KIT-001"],
+      "scope": [
+        "montage du composant dans une page retenue (à décider par produit : préparation/départ)",
+        "tests navigateur : mobile étroit, clavier, zoom, transparence réduite, aria-live",
+        "contraste mesuré sur fonds réels (tokens Liquid Glass, pas de thème parallèle)"
+      ],
+      "acceptance_tests": [
+        "captures desktop + mobile commitées dans le parcours de test visuel",
+        "aucune action financière factice affichée",
+        "axe : zéro critical/serious sur la page hôte"
+      ],
+      "risk_level": 2,
+      "rollback_plan": "retirer le montage (drapeau) ; le composant reste inerte dans src/features",
+      "status": "todo"
+    },
+    {
+      "id": "KIT-006",
+      "title": "Alimenter kit_simulation_specs avec des produits revus (preuves de poids et d'offre)",
+      "depends_on": ["KIT-003"],
+      "scope": [
+        "sélection de produits réellement présents dans shop_products",
+        "fiches techniques revues : slot, poids, volume, comfort_c, r_value attestés",
+        "offres neuves : offer_verified_at / offer_valid_until / available_units avec processus stock revu"
+      ],
+      "acceptance_tests": [
+        "aucune fixture activée en reviewed",
+        "le moteur retourne les manques tant qu'un slot n'a pas de fiche revue (comportement voulu)",
+        "audit SQL : reviewed ⇒ evidence_url + reviewed_at non nuls"
+      ],
+      "risk_level": 2,
+      "rollback_plan": "passer reviewed=false ; le moteur cesse d'utiliser la fiche",
+      "status": "todo"
+    },
+    {
+      "id": "KIT-007",
+      "title": "P1-B terrain : normaliser météo existant + eau par segments réels",
+      "depends_on": ["KIT-001"],
+      "scope": [
+        "weatherService/weatherClient → objet sourcé (fournisseur, position, altitude, horizon, incertitude)",
+        "waterPlan branché sur des points d'eau réels avec fraîcheur et expiration",
+        "consommables par segments : cuisson, combustible, tare séparés"
+      ],
+      "acceptance_tests": [
+        "donnée météo absente ⇒ besoin « à vérifier », jamais une valeur inventée",
+        "récit de deux scénarios (nominal + ressource en panne) produit pour l'eau",
+        "tests unitaires des normalisations avec fixtures synthétiques"
+      ],
+      "risk_level": 2,
+      "rollback_plan": "drapeau de lecture météo ; retour au contrat précédent sans perte de données",
+      "status": "todo"
+    },
+    {
+      "id": "P2A-001",
+      "title": "Connecteur Awin complet : découverte, quarantine, promotion transactionnelle",
+      "depends_on": ["KIT-003"],
+      "scope": [
+        "téléchargement contrôlé (hôtes fermés, limites taille/temps, anti-SSRF)",
+        "staging run_id + quarantaine + promotion du lot complet + expiration des offres absentes",
+        "neutralité : aucune commission dans les classements (mur déjà posé côté contrat strict)"
+      ],
+      "acceptance_tests": [
+        "rejeu d'import sans duplication (business_key)",
+        "fichier vide/tronqué ne purge jamais le dernier lot valide",
+        "aucune offre hors stock proposée comme disponible"
+      ],
+      "risk_level": 3,
+      "rollback_plan": "circuit ouvert après budget d'erreurs ; conserver le dernier lot complet",
+      "status": "blocked",
+      "blocked_reason": "Nécessite l'accès au compte Awin réel et sa liste de flux (non disponible dans cette session)."
+    },
+    {
+      "id": "P2B-001",
+      "title": "P2P transactionnel : API de réservation concurrence-safe + parcours",
+      "depends_on": ["KIT-003"],
+      "scope": [
+        "API : publication active, consentement propriétaire, droit de réserver, montant/durée, transaction idempotente",
+        "job d'expiration des held ; lien inventaire ↔ réservation cohérent",
+        "paiement partenaire : chantier séparé (pas de données carte stockées)"
+      ],
+      "acceptance_tests": [
+        "deux transactions concurrentes sur le même objet → une seule réussit (exclusion GiST)",
+        "aucune fuite de domicile dans les réponses publiques",
+        "double webhook sans double effet"
+      ],
+      "risk_level": 3,
+      "rollback_plan": "fermeture de la fonctionnalité (publication désactivée) ; réservations existantes menées à terme manuellement",
+      "status": "todo"
+    }
+  ],
+  "traceability": {
+    "note": "Suivi des écarts E01–E18 du dossier maître §4. Le socle KIT-001 couvre localement les points marqués 'socle'; le reste exige les unités dépendantes.",
+    "E01": "socle — pandolfWatts séparé, bornes conservatrices, descente = null (tests)",
+    "E02": "socle — masse des objets possédés conservée (test 'un objet detenu garde sa masse')",
+    "E03": "socle — slot absent explicite dans Result.missing (test 'slot absent explicite')",
+    "E04": "hors noyau — taxonomie JSON livrée ; mapping shop_products à décider (KIT-006)",
+    "E05": "partiel — candidates bornés par slot (RPC proposée) ; KIT-003/KIT-004",
+    "E06": "socle — affiliate.ts : inStock, observedAt, expiresAt, devise (tests)",
+    "E07": "partiel — Acquisition typée (owned/loan/rent/used/new) ; adaptateurs réels = KIT-006/P2A-001",
+    "E08": "KIT-007 — normalisation météo",
+    "E09": "socle — comfortC et rValue distincts, aucune conversion en degrés (schéma + eligible)",
+    "E10": "partiel — consumablesG explicite, null = inconnu ; segments = KIT-007",
+    "E11": "hors périmètre noyau — contraintes cabine à modéliser séparément (non schedulé)",
+    "E12": "propositions SQL avec grants/RLS explicites ; test réel = KIT-003",
+    "E13": "reservations FK composite (gear_item_id, owner_id) proposée ; API = P2B-001",
+    "E14": "socle — SimulationCockpit annule les réponses périmées, garde le résultat + mention obsolète",
+    "E15": "socle — départager progression plafonnée et statut exceeded explicite (cockpit)",
+    "E16": "hors code — modèle de charge du dossier §22 ; campagnes = P3 (non schedulé ici)",
+    "E17": "socle — uniqueFeedback déduplique par (tripId, gearId, participantId) (tests)",
+    "E18": "socle — removalAdviceAllowed=false systématique (tests)"
+  }
+}

@@ -1,0 +1,18 @@
+P3 — HYGIÈNE DÉPÔT (preuves brutes, 2026-09-12)
+
+1) Vidéo orpheline
+   $ rg -n "mm-ambient" src public docs scripts --glob "!*.mp4"  -> 0 occurrence (exit 1)
+   public/assets/videos/mm-ambient.mp4 : 48 007 124 octets -> SUPPRIMÉ
+
+2) Doublons exacts public/assets/*.jpg vs public/assets/images/*.jpg
+   43 doublons SHA-256 (32,2 Mo) ; 0 référencé des deux côtés (audit-duplicates.mjs)
+   Convention app : /assets/images/* (app_logo, no_image, og-image, ...)
+   Seule exception : tests/cart.spec.ts:39 -> image: '/assets/gear-tent-small.jpg'
+     => copie racine CONSERVÉE pour gear-tent-small.jpg, copie images/ supprimée
+   Les 42 autres doublons racine supprimés (les seules références restantes sont les
+   archives resources/design-mockups/**, hors build applicatif).
+   Détail complet : docs/perf/duplicates-refs.txt (recherche large repo entier).
+
+3) Résultat
+   public/assets AVANT : 138,4 Mo -> APRÈS : 60,5 Mo
+   Espace libéré : 77,8 Mo (42 doublons ~32 Mo + vidéo 45,8 Mo)

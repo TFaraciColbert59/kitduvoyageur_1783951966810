@@ -1,0 +1,915 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Variables sémantiques — mode clair (direction P5 §6) ─────────
+   Elles pointent vers les tokens --lkv-* de tokens.css : le bloc .dark
+   de tokens.css suffit à basculer fonds, surfaces, textes, bordures,
+   champs, focus et états. Aucun hexadécimal ici (garde-fou U-D60). */
+:root {
+  color-scheme: light;
+  --background: var(--lkv-surface);
+  --foreground: var(--lkv-text-primary);
+  --primary: var(--lkv-action);
+  --primary-hover: var(--lkv-action-hover);
+  --primary-subtle: var(--lkv-primary-subtle);
+  --primary-foreground: var(--lkv-on-action);
+  --secondary: var(--lkv-secondary);
+  --secondary-foreground: var(--lkv-text-inverted);
+  --accent: var(--lkv-secondary);
+  --accent-foreground: var(--lkv-text-inverted);
+  --card: var(--lkv-surface-card);
+  --card-foreground: var(--lkv-text-primary);
+  --surface: var(--lkv-surface);
+  --surface-elevated: var(--lkv-surface-elevated);
+  --border: var(--lkv-border);
+  --border-subtle: var(--lkv-border-subtle);
+  --muted: var(--lkv-surface-muted);
+  --muted-foreground: var(--lkv-text-secondary);
+  --input: var(--lkv-field-bg);
+  --ring: var(--lkv-action);
+  --radius: var(--lkv-radius-md);
+}
+
+/* Mode sombre : les variables sémantiques suivent les tokens .dark ;
+   seules les ombres (plus profondes) restent explicites. */
+.dark {
+  color-scheme: dark;
+
+  /* Shadow colors for dark mode */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.35);
+  --shadow-2xl: 0 32px 80px rgba(0,0,0,0.5), 0 16px 32px rgba(0,0,0,0.4);
+}
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: var(--border);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button, a, [role="button"] {
+    touch-action: manipulation;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    min-height: 100%;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    background-color: var(--lkv-app-bg-fallback) !important;
+    overscroll-behavior: none !important;
+    overscroll-behavior-y: none !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    /* Transparent : le calque .lkv-app-background (z-index -1) doit rester
+       visible au-dessus du fond html (peinture des blocs in-flow après les
+       descendants à z-index négatif). */
+    background-color: transparent !important;
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    /* Corps 16 (tokens) : en rem, le texte agrandi navigateur reste pris en compte. */
+    font-size: var(--lkv-text-body);
+    line-height: var(--lkv-line-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+    min-height: 100%;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    margin: 0;
+    padding: 0;
+    overflow-x: clip;
+    overscroll-behavior: none !important;
+    overscroll-behavior-y: none !important;
+    max-width: 100%;
+    -webkit-touch-callout: none;
+  }
+
+  #main-content {
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    width: 100%;
+    max-width: 100vw;
+    background-color: transparent;
+    position: relative;
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+  }
+
+  /* Desktop : les shells 3 colonnes (hub, comptes, communautés) laissent le
+     fond immersif traverser — le voile surface est réservé aux pages mobiles. */
+  @media (min-width: 768px) {
+    #main-content {
+      min-height: 0;
+      max-width: none;
+    }
+  }
+
+  /* ── Empêcher l'auto-zoom intrusif d'iOS Safari sur les inputs ── */
+  @media screen and (max-width: 768px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* ── Gestuelle tactile fluide pour les cartes Leaflet sur iOS / Android ── */
+  .leaflet-container {
+    touch-action: none !important;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none !important;
+    font-family: inherit;
+  }
+  .leaflet-pane {
+    touch-action: none !important;
+  }
+
+  h1, h2, h3, h4, h5, h6, p {
+    margin: 0;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  .font-display { font-family: var(--font-display); }
+  .font-brand { font-family: var(--font-brand); }
+  .font-mono-data {
+    font-family: var(--font-mono);
+    /* Compteurs, points, rangs : chiffres tabulaires (direction §6). */
+    font-variant-numeric: var(--lkv-font-numeric);
+  }
+
+  /* Phase 2 — échelle Dynamic Type iOS (large title 34, body 17, footnote 13).
+     Toutes les tailles sont en rem (texte agrandi navigateur pris en charge). */
+  .text-lkv-caption-2 { font-size: var(--lkv-text-caption-2); line-height: 1.3; }
+  .text-lkv-caption { font-size: var(--lkv-text-caption); line-height: 1.3; }
+  .text-lkv-footnote { font-size: var(--lkv-text-footnote); line-height: 1.38; }
+  .text-lkv-subheadline { font-size: var(--lkv-text-subheadline); line-height: 1.35; }
+  .text-lkv-body { font-size: var(--lkv-text-body); line-height: var(--lkv-line-body); letter-spacing: var(--lkv-tracking-body); }
+  .text-lkv-body-sm { font-size: var(--lkv-text-body-sm); line-height: var(--lkv-line-body); }
+  .text-lkv-callout { font-size: var(--lkv-text-callout); line-height: 1.35; }
+  .text-lkv-headline { font-size: var(--lkv-text-headline); line-height: 1.3; font-weight: var(--lkv-weight-semibold); }
+  .text-lkv-title-sm { font-size: var(--lkv-text-title-sm); line-height: var(--lkv-line-title); letter-spacing: var(--lkv-tracking-title); font-weight: var(--lkv-weight-bold); }
+  .text-lkv-title-lg { font-size: var(--lkv-text-title-lg); line-height: var(--lkv-line-title); letter-spacing: var(--lkv-tracking-title); font-weight: var(--lkv-weight-bold); }
+  .text-lkv-title-xl { font-size: var(--lkv-text-title-xl); line-height: 1.12; letter-spacing: var(--lkv-tracking-title); font-weight: var(--lkv-weight-bold); }
+  .lkv-tabular-nums { font-variant-numeric: var(--lkv-font-numeric); }
+
+  /* Phase 3 (final) — MATÉRIAU VERRE CANONIQUE, neutre blanc.
+     Une seule recette pour toute la couche UI (navigation, contrôles,
+     overlays) : transparent, lumineux, sans teinte verte. */
+  .lkv-glass {
+    background:
+      linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bottom)),
+      var(--glass-base);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow-final);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  }
+
+  .lkv-glass-interactive {
+    transition: transform var(--motion-control-duration) var(--motion-ease-standard),
+      background var(--motion-control-duration) var(--motion-ease-standard),
+      border-color var(--motion-control-duration) var(--motion-ease-standard);
+  }
+
+  .lkv-glass-interactive:active {
+    transform: scale(var(--motion-press-scale));
+    background: var(--glass-fill-active);
+  }
+
+  /* Phase 2 — matériau de barre flottante (Liquid Glass web). */
+  .lkv-material-bar {
+    background:
+      linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bottom)),
+      var(--glass-base);
+    border: 1px solid var(--material-bar-border);
+    box-shadow: var(--glass-shadow-final);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  }
+
+  /* Phase 2 — en-tête collant : matériau + liseré bas uniquement. */
+  .lkv-material-header {
+    background-color: var(--material-bar-bg);
+    border-bottom: 1px solid var(--material-bar-border);
+    -webkit-backdrop-filter: blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate));
+    backdrop-filter: blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate));
+  }
+
+  /* Scroll edge effect « soft » : le contenu s'estompe sous une barre. */
+  .lkv-edge-top::before,
+  .lkv-edge-bottom::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: var(--edge-effect-height);
+    pointer-events: none;
+  }
+  .lkv-edge-top::before {
+    top: 0;
+    background: linear-gradient(to bottom, var(--lkv-app-bg-fallback), transparent);
+  }
+  .lkv-edge-bottom::after {
+    bottom: 0;
+    background: linear-gradient(to top, var(--lkv-app-bg-fallback), transparent);
+  }
+
+  /* Marge d'écran 16, jamais sous les encoches (safe areas). */
+  .lkv-screen-x {
+    padding-left: max(var(--lkv-screen-margin), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--lkv-screen-margin), env(safe-area-inset-right, 0px));
+  }
+
+  .text-hero {
+    font-size: clamp(3rem, 7vw, 6rem);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    font-family: var(--font-display);
+    font-weight: 800;
+  }
+
+  .text-section-title {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+
+  .text-editorial {
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    padding: 0.875rem 1.75rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    transition: all 200ms var(--spring-smooth);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    min-height: 44px;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--card-shadow-elevated);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.97);
+    box-shadow: none;
+  }
+
+  /* Micro-interactions */
+  .interactive-button {
+    transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), background-color 180ms ease, box-shadow 180ms ease;
+  }
+  .interactive-button:hover {
+    transform: translateY(-1px) scale(1.01);
+  }
+  .interactive-button:active {
+    transform: scale(0.97);
+  }
+
+  .focus-ring {
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .focus-ring:focus-within, .focus-ring:focus-visible {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--lkv-focus-ring);
+  }
+
+  /* Global focus-visible for keyboard navigation */
+  *:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  button:focus-visible:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Reduce motion for prefers-reduced-motion users — already handled above */
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: transparent;
+    color: var(--foreground);
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 200ms var(--spring-smooth);
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    min-height: 44px;
+  }
+
+  .btn-ghost:hover {
+    background: var(--muted);
+  }
+
+  /* Cards */
+
+  /* Badges */
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Animations */
+  @keyframes slideUp {
+    from { transform: translateY(32px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* P1-3 (C-17) — transition de page CSS pur (PageTransition) : courbe/durée
+     identiques à l'ancienne version framer-motion. */
+  .lkv-page-fade {
+    animation: lkv-page-fade var(--dur-instant) var(--motion-ease-decelerate) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-page-fade { animation: none; }
+    .lkv-offline-in { animation: none; }
+  }
+
+  /* P1-3 (C-17 suite) — OfflineBanner en CSS pur (mêmes courbe/durée que
+     l'ancienne version framer-motion : 250 ms, ease [0.32,0.72,0,1]). */
+  .lkv-offline-in {
+    animation: lkv-offline-in var(--motion-control-duration) var(--motion-ease-standard) both;
+  }
+
+  @keyframes lkv-offline-in {
+    from { opacity: 0; transform: translateY(-24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* P1-3 (C-17 suite) — MobileDrawer en CSS pur (entrée/sortie préservées,
+     remplace framer-motion dans le graphe racine). */
+  .lkv-drawer-scrim {
+    animation: lkv-fade-in var(--motion-control-duration) var(--lkv-ease) both;
+  }
+  .lkv-drawer-scrim--closing {
+    animation: lkv-fade-out var(--dur-fast) var(--motion-ease-accelerate) both;
+  }
+  .lkv-drawer-panel {
+    animation: lkv-drawer-in var(--motion-control-duration) var(--motion-ease-decelerate) both;
+  }
+  .lkv-drawer-panel--closing {
+    animation: lkv-drawer-out var(--motion-control-duration) var(--motion-ease-accelerate) both;
+  }
+  @keyframes lkv-drawer-in {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes lkv-drawer-out {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+  }
+
+  /* P1-3 (C-17 suite) — SearchOverlay en CSS pur (fade + descente + scale). */
+  .lkv-search-panel {
+    animation: lkv-search-in var(--motion-control-duration) var(--motion-ease-decelerate) both;
+  }
+  .lkv-search-panel--closing {
+    animation: lkv-search-out var(--motion-control-duration) var(--motion-ease-accelerate) both;
+  }
+  @keyframes lkv-search-in {
+    from { opacity: 0; transform: translateY(-20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes lkv-search-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-20px) scale(0.98); }
+  }
+
+  @keyframes lkv-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes lkv-fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-drawer-scrim, .lkv-drawer-scrim--closing,
+    .lkv-drawer-panel, .lkv-drawer-panel--closing,
+    .lkv-search-panel, .lkv-search-panel--closing,
+    .lkv-offline-in {
+      animation: none;
+    }
+  }
+
+  /* P1-3 (fin) — apparition standard des blocs (remplace les fades framer) :
+     opacity 0→1 + y 6→0, 220 ms, même courbe. */
+  .lkv-appear {
+    animation: lkv-appear var(--motion-control-duration) var(--ease-glass) both;
+  }
+
+  @keyframes lkv-appear {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-appear { animation: none; }
+  }
+
+  /* P1-3 (fin) — bottom-sheets (remplace framer AnimatePresence + motion) :
+     entrée y 100%→0 + fondu, sortie inverse. Les composants gardent leur état
+     de fermeture (--closing) le temps de l'animation. */
+  .lkv-sheet-up { animation: lkv-sheet-up var(--motion-control-duration) var(--ease-glass) both; }
+  .lkv-sheet-up--closing { animation: lkv-sheet-down var(--motion-control-duration) var(--motion-ease-accelerate) both; }
+  /* Plein écran (GlassSheet) : 320 ms, courbe [0.32,0.72,0,1] (parité framer). */
+  .lkv-sheet-full { animation: lkv-sheet-up 0.32s cubic-bezier(0.32, 0.72, 0, 1) both; }
+  .lkv-sheet-full--closing { animation: lkv-sheet-down 0.3s cubic-bezier(0.4, 0, 1, 1) both; }
+  @keyframes lkv-sheet-up {
+    from { transform: translateY(100%); opacity: 0.6; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes lkv-sheet-down {
+    from { transform: translateY(var(--lkv-sheet-from, 0)); opacity: 1; }
+    to { transform: translateY(100%); opacity: 0; }
+  }
+  .lkv-modal-in { animation: lkv-modal-in var(--motion-control-duration) var(--motion-ease-decelerate) both; }
+  .lkv-modal-in--closing { animation: lkv-modal-out var(--dur-fast) var(--motion-ease-accelerate) both; }
+  @keyframes lkv-modal-in {
+    from { opacity: 0; transform: scale(0.97); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes lkv-modal-out {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.97); }
+  }
+  .lkv-fade-in { animation: lkv-fade-in var(--motion-control-duration) var(--lkv-ease) both; }
+  .lkv-fade-in--closing { animation: lkv-fade-out var(--motion-control-duration) var(--lkv-ease) both; }
+
+  .lkv-story-progress-fill {
+    animation: lkv-story-progress 5s linear both;
+  }
+
+  @keyframes lkv-story-progress {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-story-progress-fill { animation: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-sheet-up, .lkv-sheet-up--closing,
+    .lkv-sheet-full, .lkv-sheet-full--closing,
+    .lkv-modal-in, .lkv-modal-in--closing,
+    .lkv-fade-in, .lkv-fade-in--closing {
+      animation: none;
+    }
+  }
+
+  @keyframes lkv-page-fade {
+    from { opacity: 0.92; }
+    to { opacity: 1; }
+  }
+
+  /* P1-3 (fin) — Icônes animées en CSS pur (remplace framer-motion dans le
+     graphe racine). Vocabulaire déclenché par `.lkv-ia:hover/:active` (icône
+     autonome) ou `.lkv-ia-run` (API impérative). Jamais au repos. */
+  .lkv-ia [data-anim] { will-change: transform, opacity, stroke-dashoffset; }
+  /* Transforms SVG ancrés sur la forme (sinon origine viewBox = coin haut-gauche). */
+  .lkv-ia [data-anim]:not([data-anim='draw']) { transform-box: fill-box; transform-origin: center; }
+  /* Repos : AUCUN dash (rendu identique au trait natif — un dash permanent avec
+     stroke-linecap round ajoute des ronds aux extrémités). Le dash n'existe que
+     pendant l'animation de dessin. */
+  .lkv-ia [data-anim='draw'] { stroke-dasharray: none; }
+
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim],
+  .lkv-ia-run [data-anim] {
+    animation-duration: var(--lkv-ia-dur, 0.45s);
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='draw'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='draw'],
+  .lkv-ia-run [data-anim='draw'] { animation-name: lkv-ia-draw; --lkv-ia-dur: 0.6s; stroke-dasharray: 1; stroke-dashoffset: 0; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='pop'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='pop'],
+  .lkv-ia-run [data-anim='pop'] { animation-name: lkv-ia-pop; --lkv-ia-dur: 0.4s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='wiggle'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='wiggle'],
+  .lkv-ia-run [data-anim='wiggle'] { animation-name: lkv-ia-wiggle; --lkv-ia-dur: 0.5s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='pulse'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='pulse'],
+  .lkv-ia-run [data-anim='pulse'] { animation-name: lkv-ia-pulse; --lkv-ia-dur: 0.45s; animation-iteration-count: 2; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='spin'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='spin'],
+  .lkv-ia-run [data-anim='spin'] { animation-name: lkv-ia-spin; --lkv-ia-dur: 0.5s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='nudge-right'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='nudge-right'],
+  .lkv-ia-run [data-anim='nudge-right'] { animation-name: lkv-ia-nudge-right; --lkv-ia-dur: 0.4s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='nudge-left'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='nudge-left'],
+  .lkv-ia-run [data-anim='nudge-left'] { animation-name: lkv-ia-nudge-left; --lkv-ia-dur: 0.4s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='nudge-up'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='nudge-up'],
+  .lkv-ia-run [data-anim='nudge-up'] { animation-name: lkv-ia-nudge-up; --lkv-ia-dur: 0.4s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='bounce-y'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='bounce-y'],
+  .lkv-ia-run [data-anim='bounce-y'] { animation-name: lkv-ia-bounce-y; --lkv-ia-dur: 0.5s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='scale-x'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='scale-x'],
+  .lkv-ia-run [data-anim='scale-x'] { animation-name: lkv-ia-scale-x; --lkv-ia-dur: 0.3s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='squash'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='squash'],
+  .lkv-ia-run [data-anim='squash'] { animation-name: lkv-ia-squash; --lkv-ia-dur: 0.6s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='twinkle'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='twinkle'],
+  .lkv-ia-run [data-anim='twinkle'] { animation-name: lkv-ia-twinkle; --lkv-ia-dur: 0.9s; }
+
+  /* Décalages des éléments secondaires (équivalents des delay framer). */
+  .lkv-ia [data-delay='0.2'] { animation-delay: 0.2s; }
+
+  @keyframes lkv-ia-draw {
+    from { stroke-dashoffset: 1; opacity: 0; }
+    to { stroke-dashoffset: 0; opacity: 1; }
+  }
+  @keyframes lkv-ia-pop {
+    0% { transform: scale(1); }
+    55% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  @keyframes lkv-ia-wiggle {
+    0% { transform: rotate(0); }
+    25% { transform: rotate(-10deg); }
+    55% { transform: rotate(10deg); }
+    80% { transform: rotate(-6deg); }
+    100% { transform: rotate(0); }
+  }
+  @keyframes lkv-ia-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  @keyframes lkv-ia-spin {
+    from { transform: rotate(0); }
+    to { transform: rotate(180deg); }
+  }
+  @keyframes lkv-ia-nudge-right {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(3px); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes lkv-ia-nudge-left {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(-3px); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes lkv-ia-nudge-up {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+    100% { transform: translateY(0); }
+  }
+  @keyframes lkv-ia-bounce-y {
+    0% { transform: translateY(0); }
+    60% { transform: translateY(-5px); }
+    100% { transform: translateY(-3px); }
+  }
+  @keyframes lkv-ia-scale-x {
+    0% { transform: scaleX(1); }
+    50% { transform: scaleX(0.75); }
+    100% { transform: scaleX(1); }
+  }
+  @keyframes lkv-ia-squash {
+    0% { transform: scaleY(1) scaleX(1); }
+    35% { transform: scaleY(1.3) scaleX(0.9); }
+    70% { transform: scaleY(0.9) scaleX(1.1); }
+    100% { transform: scaleY(1) scaleX(1); }
+  }
+  @keyframes lkv-ia-twinkle {
+    0% { opacity: 1; transform: scale(1); }
+    40% { opacity: 0.35; transform: scale(0.92); }
+    70% { opacity: 1; transform: scale(1.06); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-ia:not(.lkv-ia-controlled):hover [data-anim],
+    .lkv-ia:not(.lkv-ia-controlled):active [data-anim],
+    .lkv-ia-run [data-anim] {
+      animation: none;
+    }
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.94); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes springIn {
+    0% { transform: scale(0.92) translateY(16px); opacity: 0; }
+    60% { transform: scale(1.01) translateY(-2px); opacity: 1; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+  }
+
+  @keyframes scrollFill {
+    0% { height: 0%; top: 0; }
+    50% { height: 100%; top: 0; }
+    100% { height: 0%; top: 100%; }
+  }
+
+  .animate-slide-up { animation: slideUp 500ms var(--spring-smooth) both; }
+  .animate-fade-in { animation: fadeIn 400ms ease both; }
+  .animate-scale-in { animation: scaleIn 300ms var(--spring-bounce) both; }
+
+  /* Safe Areas — définitions canoniques plus bas (§5, .pt-safe/.pb-safe) */
+
+  /* Scrollbars */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  .mono-data {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+    letter-spacing: 0.02em;
+    font-variant-numeric: var(--lkv-font-numeric);
+  }
+
+  .haptic-press:active {
+    transform: scale(0.96);
+    transition: transform 80ms ease;
+  }
+
+  .noise-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+  }
+}
+
+/* View Transitions */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 250ms;
+    animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  }
+  ::view-transition-old(root) { animation-name: fade-out; }
+  ::view-transition-new(root) { animation-name: fade-in; }
+
+  @keyframes fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation: none; }
+}
+
+/* Mobile bottom bar padding — géré par AppShell */
+
+/* ── Remove all scrollbars across PC & Mobile ── */
+* {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+html, body {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* ── Custom Cursor — Pointer moderne ── */
+a, button, select, input, textarea, [role="button"], [tabindex]:not([tabindex="-1"]) {
+  cursor: pointer;
+}
+
+.font-serif-lkv {
+  font-family: var(--font-serif), 'Instrument Serif', Georgia, serif;
+}
+
+/* Animation pulse */
+@keyframes pulse-lkv {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.5); }
+}
+.animate-pulse-lkv {
+  animation: pulse-lkv 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes apple-glow-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(212, 249, 115, 0.8);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.9);
+    box-shadow: 0 0 1px rgba(212, 249, 115, 0.2);
+  }
+}
+
+/* ============================================================
+   LKDV 120 FPS MOBILE HARDWARE ACCELERATION & TOUCH OPTIMIZATION
+   ============================================================ */
+
+/* 1. Suppression du délai de tap 300ms sur mobile */
+a, button, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* 2. Momentum scrolling fluide iOS/Android sans rebond élastique */
+html {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  background-color: var(--lkv-app-bg-fallback) !important;
+}
+body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  background-color: transparent !important;
+}
+
+/* ── Toile unique LKDV — fond d'écran applicatif sur TOUTES les routes ──
+   Élément fixe rendu une seule fois dans le root layout (layout.tsx).
+   z-index -1 : au-dessus du fond html/body, sous tout le contenu. */
+.lkv-app-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100vw;
+  height: 100dvh;
+  pointer-events: none;
+  user-select: none;
+  background-color: var(--lkv-app-bg-fallback);
+  /* Phase 3 — TOILE UNIQUE : paysage forêt/montagne, portrait sur mobile et
+     paysage dès que l'écran est plus large que haut. Voile sombre pour que le
+     verre clair et le texte gardent un contraste stable. */
+  background-image: linear-gradient(var(--lkv-app-bg-scrim), var(--lkv-app-bg-scrim)),
+    var(--lkv-app-bg-image-portrait);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+@media (min-aspect-ratio: 1 / 1) {
+  .lkv-app-background {
+    background-image: linear-gradient(var(--lkv-app-bg-scrim), var(--lkv-app-bg-scrim)),
+      var(--lkv-app-bg-image-landscape);
+  }
+}
+
+/* Phase 2 (Lot 2) — shell canonique : viewport stable (svh/dvh), safe areas
+   latérales et offsets pilotés par les tokens --nav-offset/--page-*-inset.
+   Les paddings haut/bas dynamiques restent posés par AppShell (slots). */
+.lkv-shell {
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+  overflow-x: clip;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* 3. Accélération matérielle GPU pour conteneurs animés */
+.gpu-layer {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 5. Safe Area Insets iOS Dynamic Island & Android Navigation Bar */
+.safe-p-top { padding-top: max(16px, env(safe-area-inset-top, 0px)); }
+.safe-p-bottom { padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
+.safe-p-left { padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+.safe-p-right { padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.safe-p-x {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.safe-m-bottom { margin-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-m-top { margin-top: env(safe-area-inset-top, 0px); }
+.pt-safe { padding-top: max(12px, env(safe-area-inset-top, 0px)); }
+.pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+.top-safe { top: max(12px, env(safe-area-inset-top, 0px)); }
+.bottom-safe { bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+
+/* 6. Hub mobile — rail horizontal à snap natif (carrousel sections / chips) */
+.hub-hscroll {
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 1rem;
+  scroll-padding-right: 1rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.hub-hscroll::-webkit-scrollbar {
+  display: none !important;
+}
+
+
+/* Carte plein écran : le fond global est inutile sous la carte. */
+body:has(.lkdv-map-page) .lkv-app-background { display: none !important; }
+/* Compte : la toile est peinte par le fond du profil ; le calque global est redundant. */
+body:has(.lkdv-compte-v8) .lkv-app-background { display: none !important; }

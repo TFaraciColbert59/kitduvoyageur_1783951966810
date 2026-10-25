@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- Textos visibles en español (PLAN-100 6.4). El nombre de la app es una marca: no se traduce. -->
+<resources>
+    <string name="app_name">Le Kit du Voyageur</string>
+    <string name="title_activity_main">Le Kit du Voyageur</string>
+</resources>
