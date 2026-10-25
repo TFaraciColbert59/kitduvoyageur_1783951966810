@@ -23,10 +23,10 @@
 ## Captures de référence
 
 Compte :
-`account-filled-home.png`, `account-filled-post.png`, `account-filled-options.png`, `account-filled-share-clean.png`, `account-filled-comments-clean.png`.
+`latest-account-home.png`, `latest-account-post.png`, `latest-account-options.png`, `latest-account-share.png`, `latest-account-comments.png`.
 
 Communauté :
-`community-post-card.png`, `community-post-options.png`, `community-post-comments.png`, `community-post-share.png`.
+`latest-community-card.png`, `latest-community-options.png`, `latest-community-comments.png`, `latest-community-share.png`.
 
 ## Différences exhaustives
 
@@ -46,8 +46,8 @@ Communauté :
 | 12 | Like | pop + burst | compteur local | mêmes animations |
 | 13 | Panes | 3 | 2 | LensPager 3 |
 | 14 | Navigation | swipe/lens | PostGlassPanel | même pager |
-| 15 | Partage | tabs Envoyer/Externe | actions + mini | tabs partagés |
-| 16 | Mini partage | absent | 132×30 | supprimer |
+| 15 | Partage | recherche + 3 actions + liste + mini 2 | actions + mini 3 | pane partagée Compte |
+| 16 | Mini partage | 2 boutons | 3 boutons | 2 boutons |
 | 17 | Commentaires | pane 794 | panneau 354 | pane partagée |
 | 18 | Composer | textarea | input | composer Compte |
 | 19 | Liste comments | actions complètes | liste fil | composant Compte |
@@ -96,7 +96,7 @@ tests/e2e/post-card-parity.spec.ts
 
 - [ ] **Step 1:** test rouge vérifiant 406×541 et 406×794.
 - [ ] **Step 2:** fixture Playwright : login `demo@lkdv.app`, ouvrir `/compte`, première tuile.
-- [ ] **Step 3:** captures Compte (post/options/share/comments) et Fil (card/options/share/comments).
+- [ ] **Step 3:** captures Compte (home/post/options/share/comments) et Fil (card/options/share/comments).
 - [ ] **Step 4:** commit `test(post): captures parité compte rempli`.
 
 ### Task 2: `PostCardSurface`
@@ -114,7 +114,7 @@ tests/e2e/post-card-parity.spec.ts
 
 ### Task 4: `PostLensPager` + panes
 
-- [ ] **Step 1:** test rouge : 3 panes, sheet 541→794, swipe, tabs partage.
+- [ ] **Step 1:** test rouge : 3 panes, sheet 541→794, swipe, partage recherche/actions/liste.
 - [ ] **Step 2:** extraire `LensPager`, `PostSharePane`, `PostCommentsPane`.
 - [ ] **Step 3:** brancher `PostDrawer` sur ces composants.
 - [ ] **Step 4:** commit.
