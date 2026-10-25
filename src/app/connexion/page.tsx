@@ -11,7 +11,6 @@ import { createClient } from '@/lib/supabase/client';
 import AppShell from '@/components/shell/AppShell';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
-import { demoLoginAction } from '@/features/demo/demoLogin';
 import { getCaptchaToken, hcaptchaSiteKey } from '@/lib/captcha/hcaptcha';
 import { passwordResetRedirectTo } from '@/features/auth/passwordReset';
 
@@ -48,9 +47,13 @@ function AuthForm() {
     setError('');
     setDemoLoading(true);
     try {
-      const res = await demoLoginAction();
-      if (!res.success) {
-        setError(res.error);
+      const response = await fetch('/api/demo-login', { method: 'POST', credentials: 'include' });
+      const res = (await response.json().catch(() => ({ success: false, error: t('auth.errorGeneric') }))) as {
+        success: boolean;
+        error?: string;
+      };
+      if (!response.ok || !res.success) {
+        setError(res.error || t('auth.errorGeneric'));
         return;
       }
       // La session posée par le serveur (cookies) est relue par le client
