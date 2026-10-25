@@ -110,13 +110,10 @@ export function AccountDrawerHost({
                   {t.icon}
                 </button>
               ))}
-              <button type="button" aria-label="Fermer" onClick={onClose}>
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                  <path d="M6 6l12 12M18 6 6 18" />
-                </svg>
-              </button>
             </div>
           ) : null}
+
+
 
           <div className="lkdv-sheet-scroll">
             <div className="lkdv-sheet-title">

@@ -129,6 +129,21 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
   const [community, setCommunity] = useState<{ key: string; title: string; sub: string; kind: 'club' | 'carnet' }[] | null>(null);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!sectionMenu) return;
+    const onDown = (e: MouseEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (!el?.closest('.lkdv-section-select')) setSectionMenu(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSectionMenu(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [sectionMenu]);
+
   useEffect(() => initLiquidLenses(phoneRef.current), []);
   useEffect(() => {
     refreshLiquidLenses(phoneRef.current);
@@ -405,6 +420,20 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
 
   const drawerContent = (key: DrawerKey): React.ReactNode => {
     if (key === 'fiche') {
+      const summary = (
+        <div className="lkdv-sheet-card">
+          <div className="lkdv-sheet-card__head">
+            <b>{country.nom}</b>
+            <span className="lkdv-pill">{country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}</span>
+          </div>
+          <div className="lkdv-info-row">
+            <span className="lkdv-info-row__ico"><Ic d={ICONS.pin} size={15} /></span>
+            <span className="lkdv-info-row__t">Continent · région</span>
+            <span className="lkdv-info-row__v">{[country.continent, country.region].filter(Boolean).join(' · ')}</span>
+          </div>
+          {country.subtitle ? <p className="lkdv-sheet-card__hint">{country.subtitle}</p> : null}
+        </div>
+      );
       const groups: { title: string; rows: { label: string; value: string; icon: string }[] }[] = [
         {
           title: 'Géographie',
@@ -426,9 +455,9 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
           ],
         },
       ];
-      return groups.map((g) => (
+      return [summary, ...groups.map((g) => (
         <div className="lkdv-sheet-group" key={g.title}>
-          <h3>{g.title}</h3>
+          <h3>{g.title} · {g.rows.length}</h3>
           {g.rows.map((r) => (
             <div className="lkdv-info-row" key={r.label}>
               <span className="lkdv-info-row__ico"><Ic d={r.icon} size={15} /></span>
@@ -437,7 +466,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
             </div>
           ))}
         </div>
-      ));
+      ))];
     }
     if (key === 'pratique') {
       const p = country.pratique;
@@ -451,7 +480,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
       ].filter((g) => g.rows.length > 0);
       return groups.map((g) => (
         <div className="lkdv-sheet-group" key={g.title}>
-          <h3>{g.title}</h3>
+          <h3>{g.title} · {g.rows.length}</h3>
           {g.rows.map((r, i) => (
             <div className="lkdv-info-row" key={`${g.title}-${i}`}>
               <span className="lkdv-info-row__ico"><Ic d={g.icon} size={15} /></span>
@@ -466,7 +495,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
       const sources = country.sources_list ?? [];
       return (
         <div className="lkdv-sheet-group">
-          <h3>Sources & références</h3>
+          <h3>Sources & références · {new Set(sources.map((x) => x.url)).size}</h3>
           {sources.length === 0 ? (
             <div className="lkdv-info-row">
               <span className="lkdv-info-row__ico"><Ic d={ICONS.book} size={15} /></span>
@@ -605,7 +634,9 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                         <div className="lkdv-chips">
                           <button type="button" className="lkdv-chip" aria-pressed={cat === null} onClick={() => setCat(null)}>Tout</button>
                           {catList.map((c) => (
-                            <button key={c} type="button" className="lkdv-chip" aria-pressed={cat === c} onClick={() => setCat(cat === c ? null : c)}>{c}</button>
+                            <button key={c} type="button" className="lkdv-chip" aria-pressed={cat === c} onClick={() => setCat(cat === c ? null : c)}>
+                              {c.split(' · ')[0]}
+                            </button>
                           ))}
                         </div>
                       ) : null}
@@ -681,7 +712,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                                     el.parentElement?.appendChild(ph);
                                   }}
                                 />
-                                {c.badge ? <span className="lkdv-media-badge lkdv-media-badge--dark">{c.badge}</span> : null}
+                                {c.badge && c.badge !== c.cat ? <span className="lkdv-media-badge lkdv-media-badge--dark">{c.badge}</span> : null}
                                 {c.badge2 ? <span className="lkdv-media-badge lkdv-media-badge--light">{c.badge2}</span> : null}
                               </div>
                               <div className="lkdv-media-card__cap">
@@ -707,7 +738,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                     )}
                   </div>
 
-                  <div style={{ height: 46 }} aria-hidden="true" />
+                  <div style={{ height: 64 }} aria-hidden="true" />
 
                   <button
                     type="button"
