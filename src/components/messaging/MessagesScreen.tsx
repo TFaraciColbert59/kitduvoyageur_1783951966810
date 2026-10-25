@@ -1050,7 +1050,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
             </section>
 
             <section className="mapzone" aria-label="Conversation">
-              <div className="map" style={{ display: 'flex', flexDirection: 'column', background: 'var(--page)', paddingBottom: 64 }}>
+              <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--page)', paddingBottom: 64 }}>
                 {selected ? (
                   <>
                     <div className="mpane-h">
