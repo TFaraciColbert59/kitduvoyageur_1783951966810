@@ -8,18 +8,18 @@ describe('drawers Communauté — grammaire du drawer Profil', () => {
   it('reprend la feuille Profil : 8 px, 46 px, 44 px, verre Compte', () => {
     const css = read('src/styles/community-feed.css');
     const drawer = css.slice(css.indexOf('.lkdv-half-drawer {'), css.indexOf('@keyframes lkdv-profile-sheet-in'));
-    expect(drawer).toContain('left: max(8px');
-    expect(drawer).toContain('right: max(8px');
+    expect(drawer).toContain('left: 12px');
+    expect(drawer).toContain('right: 12px');
     expect(drawer).toContain('top: auto');
     expect(drawer).toContain('height: 50dvh');
-    expect(drawer).toContain('bottom: 8px');
-    expect(drawer).toContain('border-radius: 32px');
-    expect(drawer).toContain('blur(29px) saturate(1.9) brightness(1.06)');
+    expect(drawer).toContain('bottom: 0');
+    expect(drawer).toContain('border-radius: 24px 24px 0 0');
+    expect(drawer).toContain('blur(30px) saturate(1.7) brightness(1.04)');
     const form = css.slice(css.indexOf('.lkdv-form-drawer {'), css.indexOf('.lkdv-form-grab'));
     expect(form).toContain('top: auto');
     expect(form).toContain('height: 50dvh');
-    expect(form).toContain('bottom: 8px');
-    expect(form).toContain('border-radius: 32px');
+    expect(form).toContain('bottom: calc(86px');
+    expect(form).toContain('border-radius: 24px 24px 0 0');
   });
 
   it('place la recherche en première section, avec tous les types', () => {

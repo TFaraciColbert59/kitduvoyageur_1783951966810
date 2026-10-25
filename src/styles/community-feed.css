@@ -611,8 +611,8 @@
 .lkdv-pourtoi-menu b { font: 600 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .lkdv-pourtoi-menu small { display: block; color: var(--feed-muted); font: 500 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
-.lkdv-drawer-layer { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; justify-content: center; }
-.lkdv-drawer-backdrop { position: absolute; inset: 0; background: rgba(10,22,16,.3); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.lkdv-drawer-layer { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+.lkdv-drawer-backdrop { position: absolute; inset: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; }
 .lkdv-half-drawer {
   /* Portail hors `.lkdv-account-glass` : rescoper les jetons d'encre/verre. */
   --feed-ink: #17402c;
@@ -624,28 +624,27 @@
   --bar-glass-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 1px rgba(255,255,255,.45), 0 0 0 .5px rgba(23,43,36,.14), 0 8px 22px rgba(23,43,36,.12);
   --bar-thumb-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.08), 0 2px 8px rgba(23,43,36,.08);
   position: fixed;
-  left: max(8px, calc((100% - 520px) / 2));
-  right: max(8px, calc((100% - 520px) / 2));
+  left: 12px;
+  right: 12px;
   top: auto;
-  bottom: 8px;
+  bottom: calc(86px + env(safe-area-inset-bottom, 0px));
   width: auto;
   height: 50dvh;
   max-height: 50dvh;
   z-index: 1;
   display: flex; flex-direction: column; overflow: hidden; margin-bottom: 0;
-  border-radius: 32px;
-  background: linear-gradient(180deg, rgba(255,255,255,.59), rgba(255,255,255,.49) 40%, rgba(255,255,255,.53));
-  -webkit-backdrop-filter: blur(29px) saturate(1.9) brightness(1.06);
-  backdrop-filter: blur(29px) saturate(1.9) brightness(1.06);
+  border-radius: 24px 24px 0 0;
+  background: linear-gradient(180deg, rgba(245,242,236,.34), rgba(245,242,236,.2) 48%, rgba(245,242,236,.26));
+  -webkit-backdrop-filter: blur(30px) saturate(1.7) brightness(1.04);
+  backdrop-filter: blur(30px) saturate(1.7) brightness(1.04);
   box-shadow:
     inset 0 1.5px 0 rgba(255,255,255,.95),
     inset 0 -1px 1px rgba(255,255,255,.5),
-    inset 1px 0 1px rgba(255,255,255,.35),
-    inset -1px 0 1px rgba(255,255,255,.35),
     inset 0 0 22px rgba(255,255,255,.18),
     0 0 0 .5px rgba(23,43,36,.12),
     0 -8px 36px rgba(23,43,36,.16);
   color: var(--feed-ink);
+  pointer-events: auto;
   animation: lkdv-profile-sheet-in .5s cubic-bezier(.32,.72,0,1) both;
 }
 @keyframes lkdv-profile-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -737,14 +736,27 @@
 /* Toile exacte du Compte : même image, même cadrage, même voile. */
 .lkdv-feed-shell {
   background-color: var(--account-canvas-bg, #cfd6c8);
-  background-image:
-    linear-gradient(180deg, rgba(255,250,236,.08) 0%, rgba(255,255,255,0) 30%, rgba(245,242,236,.12) 60%),
-    var(--account-canvas-image, url('/assets/images/account-bg.webp'));
-  background-size: cover;
-  background-position: var(--account-canvas-position, center 30%);
-  background-repeat: no-repeat;
-  background-attachment: scroll;
+  background-image: none;
+  isolation: isolate;
 }
+.lkdv-feed-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: var(--account-canvas-image, url('/assets/images/account-bg.webp')) center 30% / cover no-repeat;
+  filter: brightness(1.1) saturate(1.05);
+  pointer-events: none;
+}
+.lkdv-feed-shell::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(255,250,236,.08), rgba(255,255,255,0) 30%, rgba(245,242,236,.12) 60%);
+  pointer-events: none;
+}
+body:has(.lkdv-feed-shell) .lkv-app-background { display: none !important; }
 
 
 /* Panneaux swipe : plus bas que la carte (80 %), ressort d'entrée. */
@@ -847,7 +859,7 @@
 
 /* ===== Formulaires de création (drawer 76dvh, footer collant) ===== */
 .lkdv-form-layer { position: fixed; inset: 0; z-index: 95; display: flex; align-items: flex-end; justify-content: center; }
-.lkdv-form-backdrop { position: absolute; inset: 0; background: rgba(10,22,16,.34); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.lkdv-form-backdrop { position: absolute; inset: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .lkdv-form-drawer {
   --feed-ink: #17402c;
   --feed-muted: #56665d;
@@ -856,28 +868,28 @@
   --bar-thumb-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.08), 0 2px 8px rgba(23,43,36,.08);
   color: var(--feed-ink);
   position: fixed;
-  left: max(8px, calc((100% - 520px) / 2));
-  right: max(8px, calc((100% - 520px) / 2));
+  left: 12px;
+  right: 12px;
   top: auto;
-  bottom: 8px;
+  bottom: calc(86px + env(safe-area-inset-bottom, 0px));
   width: auto;
   height: 50dvh;
   max-height: 50dvh;
   z-index: 1;
   display: flex; flex-direction: column; overflow: hidden;
-  border-radius: 32px;
-  background: linear-gradient(180deg, rgba(255,255,255,.59), rgba(255,255,255,.49) 40%, rgba(255,255,255,.53));
-  -webkit-backdrop-filter: blur(29px) saturate(1.9) brightness(1.06);
-  backdrop-filter: blur(29px) saturate(1.9) brightness(1.06);
+  border-radius: 24px 24px 0 0;
+  background: linear-gradient(180deg, rgba(245,242,236,.34), rgba(245,242,236,.2) 48%, rgba(245,242,236,.26));
+  -webkit-backdrop-filter: blur(30px) saturate(1.7) brightness(1.04);
+  backdrop-filter: blur(30px) saturate(1.7) brightness(1.04);
   box-shadow:
     inset 0 1.5px 0 rgba(255,255,255,.95),
     inset 0 -1px 1px rgba(255,255,255,.5),
-    inset 1px 0 1px rgba(255,255,255,.35),
-    inset -1px 0 1px rgba(255,255,255,.35),
     inset 0 0 22px rgba(255,255,255,.18),
     0 0 0 .5px rgba(23,43,36,.12),
     0 -8px 36px rgba(23,43,36,.16);
-  color: var(--feed-ink); animation: lkdv-profile-sheet-in .5s cubic-bezier(.32,.72,0,1) both;
+  color: var(--feed-ink);
+  pointer-events: auto;
+  animation: lkdv-profile-sheet-in .5s cubic-bezier(.32,.72,0,1) both;
 }
 .lkdv-form-grab { display: grid; place-items: center; height: 18px; padding: 0; flex: none; cursor: grab; touch-action: none; margin: 0 -16px; }
 .lkdv-form-grab span { display: block; width: 36px; height: 5px; border-radius: 999px; background: rgba(23,43,36,.2); }
@@ -1017,3 +1029,139 @@
 
 .lkdv-search-prompt { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 16px; text-align: center; color: var(--feed-muted); }
 .lkdv-search-prompt p { margin: 0; font: 500 12px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-create-steps {
+  position: absolute;
+  right: 20px;
+  bottom: 78px;
+  z-index: 8;
+  display: flex;
+  gap: 0;
+  width: 132px;
+  padding: 2.5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.1), 0 4px 12px rgba(23,43,36,.08);
+}
+.lkdv-create-steps button {
+  flex: 1 1 0;
+  height: 25px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--feed-muted);
+  font: 700 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+.lkdv-create-steps button.cur {
+  background: var(--feed-ink);
+  color: #fff;
+}
+.lkdv-drawer-body:has(.lkdv-embedded-form) { display: flex; flex-direction: column; }
+.lkdv-embedded-form { flex: 1 0 auto; }
+.lkdv-embedded-form-footer { margin-top: auto; }
+
+.lkdv-section-mini {
+  position: absolute;
+  right: 20px;
+  bottom: 14px;
+  z-index: 8;
+  display: flex;
+  gap: 0;
+  width: 132px;
+  padding: 2.5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  backdrop-filter: blur(22px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.1), 0 4px 14px rgba(23,43,36,.08);
+}
+.lkdv-section-mini button {
+  flex: 1 1 0;
+  height: 25px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--feed-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.lkdv-section-mini button[aria-pressed="true"] {
+  background: #fff;
+  color: var(--feed-ink);
+  box-shadow: 0 1px 4px rgba(23,43,36,.1);
+}
+.lkdv-section-detail { touch-action: pan-y; }
+
+/* La bottom bar reste visible au-dessus du voile et sous le drawer. */
+body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
+
+/* Bottom bar : copie exacte de la barre du Compte (54 px, 14/24). */
+.lkdv-feed-shell .tb {
+  left: 14px;
+  right: 14px;
+  bottom: 24px;
+  width: auto;
+  height: 54px;
+  padding: 3px;
+  transform: none;
+}
+
+/* PostDrawer du Compte rendu dans le fil : pager fonctionnel hors SlotShell. */
+.lkdv-post-drawer .lkdv-lens-track {
+  display: flex !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+.lkdv-post-drawer .lkdv-lens-pane {
+  flex: 0 0 100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}
+
+/* Compteurs et mini-sélecteur de partage, alignés sur le Compte. */
+.lkdv-count-btn {
+  width: auto !important;
+  min-width: 34px !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+}
+.lkdv-count {
+  font: 600 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  color: var(--feed-ink);
+}
+.lkdv-count-btn.liked .lkdv-count { color: var(--feed-like); }
+.lkdv-share-mini {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 20;
+  display: flex;
+  gap: 0;
+  width: 132px;
+  padding: 2.5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.42) 55%, rgba(255,255,255,.52));
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  backdrop-filter: blur(18px) saturate(1.8);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.1), 0 6px 18px rgba(23,43,36,.12);
+}
+.lkdv-share-mini button {
+  flex: 1 1 0;
+  height: 25px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--feed-ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.lkdv-share-mini button:active { background: #fff; }
