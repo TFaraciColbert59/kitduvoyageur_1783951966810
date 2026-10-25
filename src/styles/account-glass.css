@@ -1183,3 +1183,136 @@
 /* Cartes média empilées : la légende reste dans la carte */
 .lkdv-media-card { padding-bottom: 10px; }
 .lkdv-media-card__cap { position: relative; z-index: 2; margin: -16px 8px 0; }
+
+/* Outils de contenu : recherche + filtre — aucun chrome nouveau, texte seul */
+.lkdv-content-tools { padding: 2px 0 6px; }
+
+.lkdv-content-search {
+  width: 100%;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+  font: 500 11.5px/1 var(--sf);
+  color: var(--label);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.lkdv-content-search::placeholder { color: var(--label3); }
+.lkdv-content-search:focus-visible { box-shadow: inset 0 1px 0 #fff, 0 0 0 1.5px var(--tint); }
+
+.lkdv-chips button.lkdv-chip {
+  cursor: pointer;
+  border: 0;
+}
+
+.lkdv-chips button.lkdv-chip[aria-pressed='true'] {
+  background: rgba(23, 64, 44, 0.12);
+  color: var(--tint);
+}
+
+/* Image cassée : placeholder typographique, même boîte */
+.lkdv-media-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 700 22px/1 var(--sf);
+  letter-spacing: -0.02em;
+  color: var(--tint);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(235, 242, 236, 0.65));
+}
+
+/* Chips de filtre — texte + puce, aucune surface nouvelle */
+.lkdv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 0 4px;
+}
+
+.lkdv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--label);
+  font: 600 10.5px/1 var(--sf);
+  letter-spacing: -0.1px;
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+  white-space: nowrap;
+}
+
+.lkdv-chips button.lkdv-chip::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--label3);
+}
+
+.lkdv-chips button.lkdv-chip[aria-pressed='true']::before {
+  background: var(--tint);
+}
+
+/* Carte compacte (section sans photo) : icône + titre + valeur, 2 lignes max */
+.lkdv-compact-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.06);
+}
+
+.lkdv-compact-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.lkdv-compact-card__body b {
+  display: block;
+  font: 700 12.5px/1.25 var(--sf);
+  letter-spacing: -0.14px;
+  color: var(--label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-compact-card__body span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font: 500 11px/1.3 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-compact-card__body em {
+  display: block;
+  margin-top: 2px;
+  font: 400 10.5px/1.3 var(--sf);
+  font-style: normal;
+  color: var(--label3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-compact-card__tag {
+  flex: none;
+  font: 700 9.5px/1 var(--sf);
+  letter-spacing: 0.02em;
+  color: var(--label2);
+  background: rgba(23, 43, 36, 0.06);
+  padding: 4px 7px;
+  border-radius: 999px;
+}

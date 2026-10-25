@@ -19,6 +19,7 @@ import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import { AccountDrawerHost, type DrawerTab } from '@/design/account/AccountDrawerHost';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
 import { CountryMap } from '@/components/pays/CountryMap';
+import { formatArea, formatDistance, formatElevation, formatDateRange, relativeDate, plural, joinMeta } from '@/components/pays/formatPays';
 import { createClient } from '@/lib/supabase/client';
 import type { CountryDetail } from '@/lib/countryDetails';
 
@@ -82,6 +83,30 @@ const DRAWER_TABS: DrawerTab[] = [
   { id: 'partager', label: 'Partager', icon: <Ic d={ICONS.share} /> },
 ];
 
+const CAT_ICON: Record<string, string> = {
+  'Formalités': ICONS.shield,
+  Transport: ICONS.pin,
+  Budget: ICONS.coin,
+  Santé: ICONS.shield,
+  'Électricité': ICONS.spark,
+  Climat: ICONS.clock,
+  Culture: ICONS.book,
+  'Repères': ICONS.book,
+  Club: ICONS.users,
+  Carnet: ICONS.book,
+};
+
+const EMPTY_TEXT: Record<SectionKey, { text: string; cta: string; href: string }> = {
+  presentation: { text: 'Aucune donnée éditoriale pour ce pays. Les repères géographiques restent disponibles dans la fiche.', cta: 'Ouvrir la fiche', href: '/explorer' },
+  destinations: { text: 'Aucun lieu publié pour ce pays. L’atlas couvre 246 pays.', cta: 'Explorer l’atlas', href: '/explorer' },
+  activites: { text: 'Aucune activité publiée pour ce pays.', cta: 'Explorer l’atlas', href: '/explorer' },
+  culture: { text: 'Aucun repère culturel enregistré pour ce pays.', cta: 'Voir les carnets', href: '/carnets' },
+  gastronomie: { text: 'Aucune adresse publiée pour ce pays. Les partenaires ne sont pas encore configurés.', cta: 'Voir les carnets', href: '/carnets' },
+  hebergements: { text: 'Aucun hébergement publié pour ce pays.', cta: 'Voir les clubs', href: '/clubs' },
+  pratique: { text: 'Aucune donnée pratique enregistrée : rien n’est inventé pour combler le vide.', cta: 'Voir les carnets', href: '/carnets' },
+  communaute: { text: 'Aucun carnet ni club pour ce pays. Sois le premier à raconter.', cta: 'Écrire un carnet', href: '/carnets/nouveau' },
+};
+
 export interface PaysGlassV8Props {
   country: CountryDetail;
   /** Vues détaillées historiques (Discovery, Klook, pratique IA), montées dans
@@ -97,6 +122,8 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
 
   const [section, setSection] = useState<SectionKey>('presentation');
   const [sectionMenu, setSectionMenu] = useState(false);
+  const [query, setQuery] = useState('');
+  const [cat, setCat] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<DrawerKey | null>(null);
   const [weather, setWeather] = useState<WeatherPayload | null>(null);
   const [community, setCommunity] = useState<{ key: string; title: string; sub: string }[] | null>(null);
@@ -136,8 +163,8 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
       .then(([c, k]) => {
         if (!alive) return;
         const rows: { key: string; title: string; sub: string }[] = [];
-        (k.data ?? []).forEach((x: any) => rows.push({ key: `club-${x.id}`, title: x.name, sub: `${x.members_count ?? 0} membres · club` }));
-        (c.data ?? []).forEach((x: any) => rows.push({ key: `carnet-${x.id}`, title: x.title, sub: `${x.likes_count ?? 0} j’aime · carnet` }));
+        (k.data ?? []).forEach((x: any) => rows.push({ key: `club-${x.id}`, title: x.name, sub: plural(x.members_count ?? 0, 'membre', 'membres') }));
+        (c.data ?? []).forEach((x: any) => rows.push({ key: `carnet-${x.id}`, title: x.title, sub: `${plural(x.likes_count ?? 0, 'j’aime', 'j’aime')}` }));
         setCommunity(rows);
       })
       .catch(() => alive && setCommunity([]));
@@ -177,10 +204,10 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
   /* ── Cartes média / lignes / cartes d'info par section ──────────────────── */
 
   const mediaCards = useMemo(() => {
-    const cards: { key: string; title: string; sub?: string; meta?: string; badge?: string; badge2?: string; image?: string }[] = [];
+    const cards: { key: string; title: string; sub?: string | null; meta?: string | null; badge?: string | null; badge2?: string | null; image?: string | null; alt?: string; cat?: string }[] = [];
     if (section === 'presentation') {
       (country.destinations ?? []).slice(0, 2).forEach((d, i) =>
-        cards.push({ key: `ap-${i}`, title: `${d.titre}${d.titre_em ? ` ${d.titre_em}` : ''}`, sub: d.categorie, meta: [d.meta_1, d.meta_2].filter(Boolean).join(' · '), badge: d.categorie, image: d.image_url })
+        cards.push({ key: `ap-${i}`, title: `${d.titre}${d.titre_em ? ` ${d.titre_em}` : ''}`, sub: d.categorie, meta: [d.meta_1, d.meta_2].filter(Boolean).join(' · '), badge: d.categorie, image: d.image_url, alt: d.titre, cat: d.categorie })
       );
     }
     if (section === 'destinations') {
@@ -189,9 +216,11 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
           key: `d-${i}`,
           title: `${d.titre}${d.titre_em ? ` ${d.titre_em}` : ''}`,
           sub: d.categorie,
-          meta: [d.meta_1, d.meta_2, d.meta_3].filter(Boolean).join(' · '),
+          meta: joinMeta([d.meta_1, d.meta_2, d.meta_3]),
           badge: d.categorie,
           image: d.image_url,
+          alt: d.titre,
+          cat: d.categorie,
         })
       );
     }
@@ -201,10 +230,12 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
           key: `a-${i}`,
           title: `${a.titre}${a.titre_em ? ` ${a.titre_em}` : ''}`,
           sub: [a.saison, a.duree].filter(Boolean).join(' · '),
-          meta: [a.duree, a.prix].filter(Boolean).join(' · '),
+          meta: joinMeta([a.duree, a.prix]),
           badge: a.difficulte,
           badge2: a.saison,
           image: a.image_url,
+          alt: a.titre,
+          cat: a.difficulte,
         })
       );
     }
@@ -217,11 +248,34 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
           meta: g.description,
           badge: g.categorie,
           image: g.image_url,
+          alt: g.nom,
+          cat: g.categorie,
         })
       );
     }
+    if (section === 'culture') {
+      (country.culture?.faits ?? []).forEach((f, i) =>
+        cards.push({ key: `cu-${i}`, title: f.cle, sub: f.valeur, meta: f.description, badge: 'Culture', image: null, alt: f.cle, cat: 'Repères' })
+      );
+    }
+    if (section === 'pratique') {
+      const p = country.pratique;
+      const push = (rows: { cle: string; val: string }[] | undefined, catLabel: string) =>
+        (rows ?? []).forEach((r, i) => cards.push({ key: `pr-${catLabel}-${i}`, title: r.cle, sub: r.val, badge: catLabel, image: null, alt: r.cle, cat: catLabel }));
+      push(p?.formalites, 'Formalités');
+      push(p?.transport, 'Transport');
+      push(p?.budget, 'Budget');
+      push(p?.sante, 'Santé');
+      push(p?.electricite_reseau, 'Électricité');
+      push(p?.climat, 'Climat');
+    }
+    if (section === 'communaute') {
+      (community ?? []).forEach((r, i) =>
+        cards.push({ key: `co-${i}`, title: r.title, sub: r.sub, badge: r.sub.includes('club') ? 'Club' : 'Carnet', image: null, alt: r.title, cat: r.sub.includes('club') ? 'Clubs' : 'Carnets' })
+      );
+    }
     return cards;
-  }, [country, section]);
+  }, [country, community, section]);
 
   const infoCards = useMemo(() => {
     if (section !== 'presentation') return [];
@@ -329,6 +383,17 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
     return cards;
   }, [community, country, go, section, weather]);
 
+  const catList = useMemo(() => [...new Set(mediaCards.map((c) => c.cat).filter(Boolean) as string[])], [mediaCards]);
+
+  const visibleCards = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return mediaCards.filter((c) => {
+      if (cat && c.cat !== cat) return false;
+      if (!q) return true;
+      return `${c.title} ${c.sub ?? ''} ${c.meta ?? ''}`.toLowerCase().includes(q);
+    });
+  }, [cat, mediaCards, query]);
+
   const hasMedia = mediaCards.length > 0;
   const isEmpty = !hasMedia && infoRows.length === 0 && infoCards.length === 0;
 
@@ -408,14 +473,19 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
               <span className="lkdv-info-row__t">Aucune source documentaire enregistrée pour ce pays.</span>
             </div>
           ) : (
-            sources.map((s2, i) => (
-              <div className="lkdv-info-row" key={i}>
-                <span className="lkdv-info-row__ico"><Ic d={ICONS.book} size={15} /></span>
-                <a className="lkdv-info-row__t" href={s2.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--tint)', textDecoration: 'none' }}>
-                  {s2.label} ↗
-                </a>
-              </div>
-            ))
+            [...new Map(sources.map((x) => [x.url, x])).values()].map((s2, i) => {
+              let host = '';
+              try { host = new URL(s2.url).hostname.replace(/^www\./, ''); } catch { host = ''; }
+              return (
+                <div className="lkdv-info-row" key={i}>
+                  <span className="lkdv-info-row__ico"><Ic d={ICONS.book} size={15} /></span>
+                  <a className="lkdv-info-row__t" href={s2.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--tint)', textDecoration: 'none' }}>
+                    {s2.label} ↗
+                  </a>
+                  <span className="lkdv-info-row__v">{host}</span>
+                </div>
+              );
+            })
           )}
         </div>
       );
@@ -521,37 +591,93 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                     {country.slogan ? <p className="ig-bio-text">« {country.slogan} »</p> : null}
                   </div>
 
+                  {hasMedia ? (
+                    <div className="lkdv-content-tools">
+                      <input
+                        className="lkdv-content-search"
+                        type="search"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder={`Rechercher dans ${SECTION_LABEL[section].toLowerCase()}`}
+                        aria-label={`Rechercher dans ${SECTION_LABEL[section]}`}
+                      />
+                      {catList.length > 1 ? (
+                        <div className="lkdv-chips">
+                          <button type="button" className="lkdv-chip" aria-pressed={cat === null} onClick={() => setCat(null)}>Tout</button>
+                          {catList.map((c) => (
+                            <button key={c} type="button" className="lkdv-chip" aria-pressed={cat === c} onClick={() => setCat(cat === c ? null : c)}>{c}</button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  <p className="sr-only" aria-live="polite">
+                    {SECTION_LABEL[section]} : {plural(visibleCards.length, 'élément affiché', 'éléments affichés')}
+                  </p>
+
                   <div className="ig-grid-wrap">
                     {isEmpty ? (
                       <div className="lkdv-sheet-card" role="status">
                         <div className="lkdv-sheet-card__head">
-                          <b>{SECTION_LABEL[section]} — rien de publié</b>
+                          <b>{SECTION_LABEL[section]}</b>
                           <span className="lkdv-pill">vide</span>
                         </div>
-                        <p className="lkdv-sheet-card__hint">Les fiches sont enrichies pays par pays : aucune donnée n’est inventée pour combler le vide.</p>
+                        <p className="lkdv-sheet-card__hint">{EMPTY_TEXT[section].text}</p>
                         <div className="lkdv-sheet-card__actions">
-                          <button type="button" className="lkdv-compte-btn ghost" onClick={() => go('/explorer')}>Explorer l’atlas</button>
+                          <button type="button" className="lkdv-compte-btn ghost" onClick={() => go(EMPTY_TEXT[section].href)}>{EMPTY_TEXT[section].cta}</button>
                         </div>
                       </div>
                     ) : (
                       <>
-                        {mediaCards.map((c) => (
-                          <article className="lkdv-media-card" key={c.key}>
-                            <div className="lkdv-media-card__media">
-                              {c.image ? (
-                                // eslint-disable-next-line @next/next/no-img-element -- photo réelle
-                                <img src={c.image} alt={c.title} loading="lazy" />
-                              ) : null}
-                              {c.badge ? <span className="lkdv-media-badge lkdv-media-badge--dark">{c.badge}</span> : null}
-                              {c.badge2 ? <span className="lkdv-media-badge lkdv-media-badge--light">{c.badge2}</span> : null}
+                        {visibleCards.length === 0 ? (
+                          <div className="lkdv-sheet-card" role="status">
+                            <div className="lkdv-sheet-card__head"><b>Aucun résultat</b></div>
+                            <p className="lkdv-sheet-card__hint">Aucun contenu ne correspond à « {query} » dans cette section.</p>
+                            <div className="lkdv-sheet-card__actions">
+                              <button type="button" className="lkdv-compte-btn ghost" onClick={() => { setQuery(''); setCat(null); }}>Effacer le filtre</button>
                             </div>
-                            <div className="lkdv-media-card__cap">
-                              <b>{c.title}</b>
-                              {c.sub ? <span>{c.sub}</span> : null}
-                              {c.meta ? <div className="lkdv-media-card__meta">{c.meta}</div> : null}
+                          </div>
+                        ) : null}
+                        {visibleCards.map((c, idx) =>
+                          c.image ? (
+                            <article className="lkdv-media-card" key={c.key} aria-label={joinMeta([c.title, c.sub]) ?? c.title}>
+                              <div className="lkdv-media-card__media" style={idx === 0 ? { aspectRatio: '16 / 9' } : undefined}>
+                                {/* eslint-disable-next-line @next/next/no-img-element -- photo réelle */}
+                                <img
+                                  src={c.image}
+                                  alt={c.alt ?? c.title}
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    const el = e.currentTarget;
+                                    el.style.display = 'none';
+                                    const ph = document.createElement('span');
+                                    ph.className = 'lkdv-media-fallback';
+                                    ph.textContent = c.title.slice(0, 2).toUpperCase();
+                                    el.parentElement?.appendChild(ph);
+                                  }}
+                                />
+                                {c.badge ? <span className="lkdv-media-badge lkdv-media-badge--dark">{c.badge}</span> : null}
+                                {c.badge2 ? <span className="lkdv-media-badge lkdv-media-badge--light">{c.badge2}</span> : null}
+                              </div>
+                              <div className="lkdv-media-card__cap">
+                                <b title={c.title}>{c.title}</b>
+                                {c.sub ? <span title={c.sub}>{c.sub}</span> : null}
+                                {c.meta ? <div className="lkdv-media-card__meta" title={c.meta}>{c.meta}</div> : null}
+                              </div>
+                            </article>
+                          ) : (
+                            <div className="lkdv-compact-card" key={c.key} role="listitem" aria-label={joinMeta([c.title, c.sub]) ?? c.title}>
+                              <span className="lkdv-info-row__ico"><Ic d={CAT_ICON[c.badge ?? ''] ?? ICONS.pin} size={15} /></span>
+                              <div className="lkdv-compact-card__body">
+                                <b title={c.title}>{c.title}</b>
+                                {c.sub ? <span title={c.sub}>{c.sub}</span> : null}
+                                {c.meta ? <em title={c.meta}>{c.meta}</em> : null}
+                              </div>
+                              {c.badge ? <span className="lkdv-compact-card__tag">{c.badge}</span> : null}
                             </div>
-                          </article>
-                        ))}
+                          )
+                        )}
 
                         {sheetCards.map((card) => (
                           <section className="lkdv-sheet-card" key={card.key}>
