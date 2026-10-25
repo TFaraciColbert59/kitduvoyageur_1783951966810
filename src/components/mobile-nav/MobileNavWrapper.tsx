@@ -24,26 +24,8 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/connexion') ||
     pathname?.startsWith('/inscription') ||
     pathname?.startsWith('/checkout') ||
-    pathname === '/compte' ||
-    pathname?.startsWith('/compte') ||
-    pathname === '/clubs' ||
-    pathname?.startsWith('/clubs') ||
-    pathname === '/profil' ||
-    pathname?.startsWith('/profil') ||
-    // '/prepare' n'est PLUS dans cette liste : le preparateur d'aventure doit
-    // garder la barre d'onglets. Elle en etait retiree parce que le flux
-    // occupe tout l'ecran, mais l'effet reel etait l'inverse de l'intention —
-    // aucun moyen de quitter l'ecran, puisque AppShell ne rend que la
-    // reservation de place et jamais la barre elle-meme. Voir
-    // AdventurePrepScreen.
-    // Égalité stricte conservee pour les autres routes '/prepare*' :
-    // '/preparer-randonnee' et '/preparer-sentier' gardent leur navigation.
-    // Fiche carnet : la page porte sa propre top bar et la barre basse du Compte.
-    // Sans cela, le plateau contextuel « Récit / Carte & GPX… » et la barre
-    // globale se superposent aux contrôles de la fiche (constaté en recette).
-    (pathname?.startsWith('/carnets/') && !pathname.startsWith('/carnets/nouveau')) ||
-    pathname === '/communaute' ||
-    pathname?.startsWith('/communaute/publier') ||
+    // Laboratoire de la barre : elle y est rendue dans la maquette iPhone.
+    pathname?.startsWith('/dev/bottombar-ios27') ||
     // A Reel is a true full-screen viewer with its own close/back controls.
     // Never overlay the shared web OR Capacitor tab bar on its media.
     pathname === '/communaute/reels' ||
