@@ -65,7 +65,7 @@
 }
 
 /* La bulle : boîte de contenu, pas une surface d'écran. */
-.lkdv-messages .mb {
+.lkdv-messages .bub {
   position: relative;
   padding: 7px 10px;
   border-radius: 18px;
@@ -78,23 +78,23 @@
   word-break: break-word;
   white-space: pre-wrap;
 }
-.lkdv-messages .mb.other {
+.lkdv-messages .bub.other {
   border-bottom-left-radius: 6px;
 }
-.lkdv-messages .mb.mine {
+.lkdv-messages .bub.mine {
   border-bottom-right-radius: 6px;
   background: var(--tint);
   border-color: transparent;
   color: var(--tint-ink);
 }
-.lkdv-messages .mb.mid {
+.lkdv-messages .bub.mid {
   border-radius: 18px;
 }
-.lkdv-messages .mb.tap {
+.lkdv-messages .bub.tap {
   cursor: pointer;
 }
 
-.lkdv-messages .mb-quote {
+.lkdv-messages .bub-quote {
   display: block;
   margin-bottom: 4px;
   padding-left: 7px;
@@ -103,12 +103,12 @@
   color: var(--label2);
   white-space: normal;
 }
-.lkdv-messages .mb.mine .mb-quote {
+.lkdv-messages .bub.mine .bub-quote {
   color: rgba(255, 255, 255, 0.72);
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-.lkdv-messages .mb-time {
+.lkdv-messages .bub-time {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -118,11 +118,11 @@
   color: var(--label3);
   font-variant-numeric: tabular-nums;
 }
-.lkdv-messages .mb.mine .mb-time {
+.lkdv-messages .bub.mine .bub-time {
   color: rgba(255, 255, 255, 0.66);
 }
 
-.lkdv-messages .mb-img {
+.lkdv-messages .bub-img {
   display: block;
   max-width: 220px;
   border-radius: 12px;
@@ -130,7 +130,7 @@
   margin: 2px 0;
 }
 
-.lkdv-messages .mb-sys {
+.lkdv-messages .bub-sys {
   align-self: center;
   padding: 3px 10px;
   border-radius: 999px;
@@ -287,11 +287,6 @@
 }
 
 /* ---------- Rangées de conversation (dans .ig-grid-wrap) ---------- */
-.lkdv-messages .ig-grid-wrap {
-  margin-left: -12px;
-  margin-right: -12px;
-  margin-top: 2px;
-}
 .lkdv-messages .ig-feed-row {
   grid-template-columns: 40px minmax(0, 1fr) auto;
   padding: 6px 8px 6px 6px;
@@ -434,4 +429,28 @@
   .lkdv-messages .msend {
     transition: none;
   }
+}
+
+/* Le drawer de la conversation garde sa boîte mesurée (12/48/406×541) et
+   laisse le fil gérer son propre défilement : le composer reste collé en bas. */
+.lkdv-messages .mdrawer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.lkdv-messages .sw-wrap[data-det='open'] .sh-b {
+  overflow: hidden;
+  min-height: 0;
+}
+.lkdv-messages .mthread {
+  padding-bottom: 2px;
+}
+
+/* Conversation ouverte : la barre basse sort, comme pour un drawer (le composer
+   occupe le bas de la zone). */
+.lkdv-messages .phone.chat-open .lkdv-account-bar {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
 }

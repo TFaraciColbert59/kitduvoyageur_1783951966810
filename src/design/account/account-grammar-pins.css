@@ -165,7 +165,7 @@
 
 /* Grille : la marge négative de la maquette (-14) dépasse la gouttière réelle
    de la carte (12). On recale pour retrouver la largeur mesurée de 406. */
-.lkdv-compte-v8.lkdv-carnet .ig-grid-wrap {
+.lkdv-compte-v8:is(.lkdv-carnet, .lkdv-messages) .ig-grid-wrap {
   margin-left: -12px !important;
   margin-right: -12px !important;
 }

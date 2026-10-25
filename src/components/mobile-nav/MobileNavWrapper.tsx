@@ -46,6 +46,11 @@ export default function MobileNavWrapper() {
     // (48 px). Sans cela, le plateau contextuel et la barre globale se
     // superposent aux contrôles de la fiche.
     /^\/pays\/[a-z]{2}$/i.test(pathname ?? '') ||
+    // Messagerie : elle porte sa propre top bar, sa carte et la barre basse du
+    // Compte (48 px). Sans cela, le plateau contextuel des onglets et la barre
+    // globale se superposent à la carte et à la zone de conversation.
+    pathname === '/messagerie' ||
+    pathname?.startsWith('/messagerie?') ||
     pathname === '/communaute' ||
     pathname?.startsWith('/communaute/publier') ||
     // A Reel is a true full-screen viewer with its own close/back controls.

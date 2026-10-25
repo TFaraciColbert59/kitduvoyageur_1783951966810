@@ -22,7 +22,6 @@ import '@/components/messaging/messages-grammar.css';
 import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
-import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import Icon from '@/components/ui/Icon';
 import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -395,7 +394,7 @@ function MessageThread({
             return (
               <React.Fragment key={message.id}>
                 {showDay ? <div className="mday">{dayLabel(message.created_at)}</div> : null}
-                <div className="mb-sys">{message.content}</div>
+                <div className="bub-sys">{message.content}</div>
               </React.Fragment>
             );
           }
@@ -411,7 +410,7 @@ function MessageThread({
 
                   <button
                     type="button"
-                    className={`mb ${mine ? 'mine' : 'other'}${sameAsPrev && sameAsNext ? ' mid' : ''} tap`}
+                    className={`bub ${mine ? 'mine' : 'other'}${sameAsPrev && sameAsNext ? ' mid' : ''} tap`}
                     onClick={() => {
                       haptic('light');
                       setOpenMenu(openMenu === message.id ? null : message.id);
@@ -419,19 +418,19 @@ function MessageThread({
                     aria-label="Actions du message"
                   >
                     {message.reply_to_message ? (
-                      <span className="mb-quote">
+                      <span className="bub-quote">
                         {message.reply_to_message.sender_name} — {message.reply_to_message.content}
                       </span>
                     ) : null}
                     {message.message_type === 'image' ? (
-                      <span className="mb-img">
+                      <span className="bub-img">
                         {/* eslint-disable-next-line @next/next/no-img-element -- pièce jointe distante */}
                         <img src={message.content} alt="" loading="lazy" style={{ maxWidth: '100%', display: 'block' }} />
                       </span>
                     ) : (
                       message.content
                     )}
-                    <span className="mb-time">
+                    <span className="bub-time">
                       {timeLabel(message.created_at)}
                       {message.status === 'sending' ? '…' : null}
                       {message.status === 'error' ? (
@@ -869,7 +868,6 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
 
   const open = (conversation: Conversation) => {
     setSelectedId(conversation.id);
-    if (selectedId === conversation.id) setSheetOpen(true);
   };
 
   const swipe = async (conversation: Conversation, action: SwipeAction) => {
@@ -886,11 +884,11 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const headerAvatar = selected?.avatar_url ?? currentUserProfile?.avatar_url ?? null;
 
   return (
-    <div className="lkdv-compte-v8 lkdv-pays lkdv-messages">
+    <div className={`lkdv-compte-v8 lkdv-pays lkdv-messages${sheetOpen ? ' sheet-open' : ''}`}>
       <h1 className="sr-only">Messagerie</h1>
       <div className="stage">
         <div className="pwrap">
-          <div className={`phone hasnext${sheetOpen ? ' sheet-open' : ''}`} id="phone" ref={phone}>
+          <div className={`phone hasnext${sheetOpen ? ' sheet-open' : ''}${selectedId ? ' chat-open' : ''}`} id="phone" ref={phone}>
             <div
               className="bg"
               style={{ backgroundImage: "url('/assets/images/account-bg.webp')" }}
@@ -1104,7 +1102,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
             </section>
 
             <section className="mapzone" aria-label="Conversation">
-              <div className="map" style={{ display: 'flex', flexDirection: 'column', background: 'var(--page)' }}>
+              <div className="map" style={{ display: 'flex', flexDirection: 'column', background: 'var(--fill3)' }}>
                 {selected ? (
                   <>
                     <div className="mpane-h">
@@ -1128,9 +1126,14 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                         <b>{conversationTitle(selected)}</b>
                         <small>{selected.type === 'group' ? `${members.length || 1} membres` : 'Membre LKDV'}</small>
                       </div>
-                      <button type="button" className="lg gbtn" style={{ width: 34, height: 34 }} onClick={() => setSheetOpen(true)} aria-label="Ouvrir la conversation en grand">
-                        <Icon name="arrow-up-right" className="size-4" aria-hidden="true" />
-                      </button>
+                      <span style={{ display: 'flex', gap: 5 }}>
+                        <button type="button" className="lg gbtn" style={{ width: 34, height: 34 }} onClick={() => setSheetOpen(true)} aria-label="Ouvrir la conversation en grand">
+                          <Icon name="arrow-up-right" className="size-4" aria-hidden="true" />
+                        </button>
+                        <button type="button" className="lg gbtn" style={{ width: 34, height: 34 }} onClick={() => setSelectedId(null)} aria-label="Fermer la conversation">
+                          <Icon name="x" className="size-4" aria-hidden="true" />
+                        </button>
+                      </span>
                     </div>
                     <MessageThread
                       key={selected.id}
@@ -1239,19 +1242,30 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
             </AccountDrawerHost>
 
             {selected ? (
-              <OverlaySheet
+              <AccountDrawerHost
+                open={sheetOpen}
                 title={conversationTitle(selected)}
                 subtitle={selected.type === 'group' ? `${members.length || 1} membres` : 'Membre LKDV'}
                 onClose={() => setSheetOpen(false)}
-                headerRight={
-                  <button type="button" className="lg gbtn" onClick={() => setOptionsConv(selected)} aria-label="Options de conversation">
-                    <Icon name="more-vertical" className="size-4" aria-hidden="true" />
-                  </button>
-                }
               >
-                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+                <div className="mdrawer">
+                  <div style={{ display: 'flex', gap: 6, padding: '0 0 4px' }}>
+                    <button type="button" className="mbtn" onClick={() => setOptionsConv(selected)}>
+                      Options
+                    </button>
+                    <button
+                      type="button"
+                      className="mbtn"
+                      onClick={() => {
+                        setSheetOpen(false);
+                        setSelectedId(null);
+                      }}
+                    >
+                      Fermer
+                    </button>
+                  </div>
                   <MessageThread
-                    key={`sheet-${selected.id}`}
+                    key={`drawer-${selected.id}`}
                     conversation={selected}
                     currentUserId={currentUserId as string}
                     currentUserProfile={currentUserProfile}
@@ -1259,7 +1273,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     compact={false}
                   />
                 </div>
-              </OverlaySheet>
+              </AccountDrawerHost>
             ) : null}
 
             <NewConversationModal
