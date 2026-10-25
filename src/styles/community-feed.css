@@ -1549,3 +1549,22 @@ body[data-story-open="true"] nav[aria-label="Navigation principale"] { display: 
 .lkdv-story-composer-wrap .lkdv-comments-composer input { height: 32px !important; }
 .lkdv-story-composer-wrap .lkdv-comments-send { width: 32px !important; height: 32px !important; }
 .lkdv-story-actions { height: 40px !important; }
+
+/* HUD story : même verre, texte visible, hauteurs top égales. */
+.lkdv-story-actions {
+  background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.52) 55%, rgba(255,255,255,.66)) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.8) brightness(1.06) !important;
+  backdrop-filter: blur(22px) saturate(1.8) brightness(1.06) !important;
+  border: .5px solid rgba(255,255,255,.82) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.12), 0 8px 24px rgba(10,20,14,.22) !important;
+}
+.lkdv-story-composer-wrap .lkdv-comments-composer input {
+  color: #17402C !important;
+  caret-color: #17402C !important;
+  background: rgba(255,255,255,.96) !important;
+}
+.lkdv-story-composer-wrap .lkdv-comments-composer input::placeholder { color: #56665D !important; }
+.lkdv-story-options { top: max(var(--space-8), calc(var(--safe-top) + var(--space-6))) !important; }
+.lkdv-story-options .pmi-more-pill { width: 44px !important; height: 44px !important; }
+.lkdv-story-options + * { }
+.lkdv-post-author.lkdv-account-glass { min-height: 44px !important; height: 44px !important; }

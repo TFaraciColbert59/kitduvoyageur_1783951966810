@@ -356,6 +356,13 @@ export default function StoriesViewer({
     }
   };
 
+  const copyStory = async () => {
+    const url = slide.storyId
+      ? `${window.location.origin}/communaute?story=${slide.storyId}`
+      : window.location.href;
+    try { await navigator.clipboard.writeText(url); } catch { /* copie refusée */ }
+  };
+
   const viewer = (
     <div
       ref={viewerRef}
@@ -511,22 +518,23 @@ export default function StoriesViewer({
           <div className="lkdv-story-options-rail" role="menu" aria-label="Options de la story" hidden={!optionsOpen}>
             {user.id === myUserId && slide.storyId && onShowViews ? (
               <button type="button" role="menuitem" aria-label="Voir les vues" title="Voir les vues" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onShowViews(slide); setOptionsOpen(false); }}>
-                <Icon name="eye" size={18} aria-hidden="true" />
+                <Icon name="bookmark" size={18} aria-hidden="true" />
               </button>
             ) : null}
-            {user.id === myUserId && slide.storyId && onDelete ? (
-              <button type="button" role="menuitem" aria-label="Retirer ma story" title="Retirer ma story" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
-                <Icon name="trash" size={18} aria-hidden="true" />
-              </button>
-            ) : null}
+            <button type="button" role="menuitem" aria-label="Copier le lien" title="Copier le lien" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); void copyStory(); setOptionsOpen(false); }}>
+              <Icon name="link" size={18} aria-hidden="true" />
+            </button>
+            <button type="button" role="menuitem" aria-label="Partager" title="Partager" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); void shareStory(); setOptionsOpen(false); }}>
+              <Icon name="repeat" size={18} aria-hidden="true" />
+            </button>
             {user.id !== myUserId && onReport ? (
               <button type="button" role="menuitem" aria-label="Signaler" title="Signaler" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onReport(user, slide); setOptionsOpen(false); }}>
                 <Icon name="flag" size={18} aria-hidden="true" />
               </button>
             ) : null}
-            {user.id !== myUserId && onBlock ? (
-              <button type="button" role="menuitem" aria-label="Bloquer" title="Bloquer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onBlock(user); setOptionsOpen(false); }}>
-                <Icon name="user-x" size={18} aria-hidden="true" />
+            {user.id === myUserId && slide.storyId && onDelete ? (
+              <button type="button" role="menuitem" aria-label="Retirer ma story" title="Retirer ma story" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
+                <Icon name="trash" size={18} aria-hidden="true" />
               </button>
             ) : null}
           </div>
@@ -565,6 +573,7 @@ export default function StoriesViewer({
                   placeholder="Envoyer un message…"
                   inputLabel={`Répondre à ${user.name}`}
                   ariaLabel="Envoyer la réponse"
+                  sendIcon="arrow-right"
                   busy={replySending}
                   maxLength={500}
                   onFocus={() => setReplyFocused(true)}
