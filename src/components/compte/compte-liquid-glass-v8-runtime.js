@@ -2978,7 +2978,7 @@ function renderStory() {
   <div class="st-head">
     <div class="lkdv-post-author st-author"><img class="lkdv-post-author-av" src="${esc(storyAvatar)}" alt=""><span class="lkdv-post-author-txt"><span class="lkdv-post-author-line"><b>${esc(storyName)}</b></span><span class="lkdv-post-author-meta">il y a 2 j</span></span></div>
     <div class="lkdv-story-options st-options">
-      <button type="button" class="pmi-more-pill st-options-btn" data-a="stoptions" aria-label="Options de la story" aria-expanded="false"><span class="st-dots" aria-hidden="true">•••</span><span class="st-close-x" aria-hidden="true">×</span></button>
+      <button type="button" class="st-options-btn" data-a="stoptions" aria-label="Options de la story" aria-expanded="false"><span class="st-dots" aria-hidden="true">•••</span><span class="st-close-x" aria-hidden="true">×</span></button>
       <div class="lkdv-story-options-rail st-options-rail" role="menu" aria-label="Options de la story">
         <button type="button" role="menuitem" data-a="stviews" aria-label="Voir les vues">◉</button>
         <button type="button" role="menuitem" data-a="stclose" aria-label="Fermer la story">×</button>
