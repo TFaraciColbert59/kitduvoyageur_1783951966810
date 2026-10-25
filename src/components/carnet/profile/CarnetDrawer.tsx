@@ -5,14 +5,11 @@ import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
 import Icon from '@/components/ui/Icon';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 
-export type CarnetDrawerId =
-  | 'carnet'
-  | 'parcours'
-  | 'etapes'
-  | 'comments'
-  | 'likes'
-  | 'share'
-  | 'manage';
+/**
+ * Un seul drawer : les statistiques (un sous-drawer à trois volets),
+ * les Commentaires, les J’aime, le Partage et Gérer (propriétaire).
+ */
+export type CarnetDrawerId = 'stats' | 'comments' | 'likes' | 'share' | 'manage';
 
 export interface CarnetDrawerProps {
   detail: CarnetDetail;
@@ -23,9 +20,7 @@ export interface CarnetDrawerProps {
 }
 
 const PANES: { id: CarnetDrawerId; label: string; icon: string }[] = [
-  { id: 'carnet', label: 'Carnet', icon: 'book-open' },
-  { id: 'parcours', label: 'Parcours', icon: 'map' },
-  { id: 'etapes', label: 'Étapes', icon: 'route' },
+  { id: 'stats', label: 'Statistiques', icon: 'trending-up' },
   { id: 'comments', label: 'Commentaires', icon: 'message-square' },
   { id: 'likes', label: 'J’aime', icon: 'heart' },
   { id: 'share', label: 'Partage', icon: 'send' },

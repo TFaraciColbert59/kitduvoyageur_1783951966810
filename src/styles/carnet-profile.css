@@ -544,3 +544,82 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-screen .tb { bottom: 16px; }
 /* la carte d'identité garde sa marge basse pour ne pas coller à la carte */
 .ckp-card { margin-bottom: 0; }
+
+/* --- Carrousel de pages de la zone média (lot 2) -------------------------- */
+/* Une seule page montée à la fois : aucune piste plus haute que la page
+   visible, donc aucune zone morte sous la grille. Jamais de scroll horizontal. */
+.ckp-pages {
+  position: relative; overflow: hidden; min-width: 0;
+  touch-action: pan-y;
+}
+.ckp-pages:focus-visible { outline: 2px solid #17402c; outline-offset: 2px; border-radius: 14px; }
+.ckp-page { min-width: 0; }
+.ckp-page--next { animation: ckp-page-next 200ms cubic-bezier(.22, 1, .36, 1) both; }
+.ckp-page--prev { animation: ckp-page-prev 200ms cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes ckp-page-next {
+  from { opacity: .35; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ckp-page-prev {
+  from { opacity: .35; transform: translateX(-16px); }
+  to { opacity: 1; transform: none; }
+}
+/* Les volets déplacés gardent la gouttière 12 px et le rythme vertical du drawer. */
+.ckp-page-pad { display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
+.ckp-page-meta { padding: 0 1px; }
+
+/* Cinq pastilles de pages dans la capsule du bas : 27 px par cellule. */
+.ckp-card-foot .ckp-tabs { width: 140px; }
+.ckp-card-foot .ckp-tabs button { width: 27px; }
+.ckp-tabs button:focus-visible { outline: 2px solid #17402c; outline-offset: 1px; }
+
+/* --- Sous-drawer statistiques -------------------------------------------- */
+.ckp-stats .ckp-pane-sub { display: flex; margin: 0 0 2px; }
+.ckp-stat-hero { display: flex; align-items: baseline; gap: 7px; margin: 4px 0 2px; }
+.ckp-stat-hero b {
+  color: #17402c; font: 700 30px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+}
+.ckp-stat-hero span { color: #56665d; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-stat-rows { display: flex; flex-direction: column; }
+.ckp-stat-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 34px; border-top: .5px solid rgba(23, 43, 36, .08);
+}
+.ckp-stat-rows > .ckp-stat-row:first-child { border-top: 0; }
+.ckp-stat-block { display: flex; flex-direction: column; margin-top: 4px; }
+.ckp-stat-block .ckp-stat-row { border-top: .5px solid rgba(23, 43, 36, .08); }
+.ckp-stat-block .ckp-stat-row:first-of-type { border-top: 0; }
+.ckp-stat-block-title {
+  color: #56665d; font: 600 9.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: .06em; text-transform: uppercase; margin-bottom: 2px;
+}
+.ckp-stat-key {
+  min-width: 0; color: #56665d;
+  font: 500 11.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ckp-stat-val {
+  flex: none; max-width: 58%; text-align: right; color: #172b24;
+  font: 600 12px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Moments associés à un jour, dans le volet Jours. */
+.ckp-moment-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ckp-moment-list li {
+  display: flex; align-items: flex-start; gap: 5px; min-width: 0; color: #56665d;
+  font: 500 10.5px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-moment-list li svg { flex: none; margin-top: 1px; opacity: .7; }
+.ckp-moment-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ckp-moment-meta { color: #56665d; }
+.ckp-moment-caption {
+  color: #172b24; font-weight: 600; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ckp-page--next, .ckp-page--prev { animation: none; }
+}

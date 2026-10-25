@@ -11,17 +11,15 @@ import { useCarnetComments } from '@/features/carnet/detail/useCarnetComments';
 import { useCarnetEngagement } from '@/features/carnet/detail/useCarnetEngagement';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { CarnetTopBar } from './CarnetTopBar';
-import { CarnetCard, type CarnetMediaMode, type CarnetPlaceFocus, type CarnetStatDrawer } from './CarnetCard';
+import { CarnetCard, type CarnetPlaceFocus } from './CarnetCard';
 import { CarnetDrawer, type CarnetDrawerId } from './CarnetDrawer';
+import type { CarnetPageId } from './CarnetPages';
+import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetPostDrawer } from './CarnetPostDrawer';
 import { CarnetMapCard } from './CarnetMapCard';
 import { CarnetMediaViewer } from './CarnetMediaViewer';
 import { CarnetMoreMenu } from './CarnetMoreMenu';
-import { CarnetRecitPane } from './panes/CarnetRecitPane';
-import { CarnetEtapesPane } from './panes/CarnetEtapesPane';
-import { CarnetKitPane } from './panes/CarnetKitPane';
-import { CarnetNaturePane } from './panes/CarnetNaturePane';
-import { CarnetParcoursPane } from './panes/CarnetParcoursPane';
+import { CarnetStatsPane } from './panes/CarnetStatsPane';
 import { CarnetLikesPane } from './panes/CarnetLikesPane';
 import { CarnetCommentsPane } from './panes/CarnetCommentsPane';
 import { CarnetSharePane } from './panes/CarnetSharePane';
@@ -32,8 +30,6 @@ export interface CarnetScreenProps {
   detail: CarnetDetail;
 }
 
-type CarnetSubPane = 'recit' | 'etapes' | 'materiel' | 'nature';
-
 /** Fiche carnet : écran verrouillé, la carte est la seule surface. */
 export function CarnetScreen({ detail }: CarnetScreenProps) {
   const router = useRouter();
@@ -43,10 +39,12 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
   const canWrite = Boolean(user?.id) && !user?.is_anonymous;
 
   const [drawer, setDrawer] = useState<CarnetDrawerId | null>(null);
-  const [subPane, setSubPane] = useState<CarnetSubPane>('recit');
+  /** Sous-onglet du sous-drawer statistiques, choisi par la stat cliquée. */
+  const [statTab, setStatTab] = useState<CarnetStatsTab>('distance');
+  /** Page du carrousel média, gardée pendant la session de l'écran. */
+  const [page, setPage] = useState<CarnetPageId>('posts');
   const [postIndex, setPostIndex] = useState<number | null>(null);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
-  const [mediaMode, setMediaMode] = useState<CarnetMediaMode>('grid');
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [mapFocus, setMapFocus] = useState<CarnetPlaceFocus | null>(null);
@@ -86,7 +84,10 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     [detail.id],
   );
 
-  const openStat = (target: CarnetStatDrawer) => setDrawer(target);
+  const openStat = (target: CarnetStatsTab) => {
+    setStatTab(target);
+    setDrawer('stats');
+  };
 
   /* La couverture du carnet devient le fond de page, derrière un voile sombre
      léger qui garde le texte lisible. Sans couverture, le fond du Compte reste. */
@@ -105,7 +106,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
       <header className="ckp-screen-header">
         <CarnetTopBar
           title={detail.title}
-          onOpenCarnet={() => setDrawer('carnet')}
+          onOpenCarnet={() => setPage('etapes')}
           onCreate={() => router.push('/carnets/nouveau')}
           onSearch={() => router.push('/communaute')}
         />
@@ -114,30 +115,8 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
       <main className="ckp-screen-body">
         {drawer ? (
           <CarnetDrawer detail={detailView} drawer={drawer} onDrawerChange={setDrawer} onClose={() => setDrawer(null)}>
-            {drawer === 'carnet' ? (
-              <>
-                <div className="ckp-sub" role="group" aria-label="Sections du carnet" style={{ position: 'static', marginBottom: 8 }}>
-                  {([
-                    ['recit', 'Récit'],
-                    ['etapes', 'Étapes'],
-                    ['materiel', 'Matériel'],
-                    ['nature', 'Nature'],
-                  ] as const).map(([id, label]) => (
-                    <button key={id} type="button" aria-pressed={subPane === id} onClick={() => setSubPane(id)}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                {subPane === 'recit' ? <CarnetRecitPane detail={detailView} /> : null}
-                {subPane === 'etapes' ? <CarnetEtapesPane detail={detailView} /> : null}
-                {subPane === 'materiel' ? <CarnetKitPane detail={detailView} /> : null}
-                {subPane === 'nature' ? <CarnetNaturePane canWrite={canWrite} onRequireAuth={requireAuth} /> : null}
-              </>
-            ) : null}
-
-            {drawer === 'etapes' ? <CarnetEtapesPane detail={detailView} /> : null}
-            {drawer === 'parcours' ? (
-              <CarnetParcoursPane detail={detailView} onDownloadGpx={() => downloadGpx(detail.title, detail.trace)} />
+            {drawer === 'stats' ? (
+              <CarnetStatsPane detail={detailView} tab={statTab} onTabChange={setStatTab} />
             ) : null}
             {drawer === 'comments' ? (
               <CarnetCommentsPane
@@ -193,13 +172,15 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
           <>
             <CarnetCard
             detail={detailView}
-            mediaMode={mediaMode}
-            onMediaModeChange={setMediaMode}
-            onOpenCarnet={() => setDrawer('carnet')}
+            page={page}
+            onPageChange={setPage}
+            canWrite={canWrite}
+            onRequireAuth={requireAuth}
+            onOpenCarnet={() => setPage('parcours')}
             onOpenStat={openStat}
             onOpenComments={() => setDrawer('comments')}
             onOpenLikes={() => setDrawer('likes')}
-            onOpenParcours={() => setDrawer('parcours')}
+            onOpenParcours={() => setPage('parcours')}
             onOpenManage={() => setDrawer('manage')}
             onLike={() => void engagement.toggleLike()}
             onSave={() => void engagement.toggleFavorite()}

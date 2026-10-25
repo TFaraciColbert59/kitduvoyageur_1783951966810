@@ -25,8 +25,10 @@ function base(overrides: Partial<React.ComponentProps<typeof CarnetCard>> = {}) 
         { id: 'm2', dayNumber: 4, time: null, caption: null, authorName: null, place: null, imageUrl: 'https://cdn.test/2.jpg' },
       ],
     }),
-    mediaMode: 'grid' as const,
-    onMediaModeChange: noop,
+    page: 'posts' as const,
+    onPageChange: noop,
+    canWrite: false,
+    onRequireAuth: noop,
     onOpenCarnet: noop,
     onOpenStat: noop,
     onOpenComments: noop,
@@ -44,7 +46,7 @@ function base(overrides: Partial<React.ComponentProps<typeof CarnetCard>> = {}) 
 }
 
 describe('CarnetCard — carte du carnet', () => {
-  it('ouvre le drawer Carnet au clic sur le mini tracé', () => {
+  it('ouvre le carnet au clic sur le mini tracé', () => {
     const onOpenCarnet = vi.fn();
     render(<CarnetCard {...base({ onOpenCarnet, detail: detail({ trace: TRACE }) })} />);
     fireEvent.click(screen.getByRole('button', { name: 'Ouvrir le carnet' }));
@@ -64,13 +66,16 @@ describe('CarnetCard — carte du carnet', () => {
     expect(container.querySelector('.ckp-cover--initial')?.textContent).toBe('F');
   });
 
-  it('rend les statistiques comme des boutons de drawer', () => {
+  it('ouvre le sous-drawer statistiques sur le bon volet depuis chaque statistique', () => {
     const onOpenStat = vi.fn();
     render(<CarnetCard {...base({ onOpenStat })} />);
     fireEvent.click(screen.getByRole('button', { name: 'DISTANCE 106,4 km' }));
-    expect(onOpenStat).toHaveBeenCalledWith('parcours');
+    expect(onOpenStat).toHaveBeenLastCalledWith('distance');
+    fireEvent.click(screen.getByRole('button', { name: 'DÉNIVELÉ + 2 002 m' }));
+    expect(onOpenStat).toHaveBeenLastCalledWith('elevation');
     fireEvent.click(screen.getByRole('button', { name: 'JOURS 7' }));
-    expect(onOpenStat).toHaveBeenCalledWith('etapes');
+    expect(onOpenStat).toHaveBeenLastCalledWith('days');
+    expect(onOpenStat).toHaveBeenCalledTimes(3);
   });
 
   it('pose cinq actions compactes sur la ligne du sélecteur, sans libellé', () => {
@@ -97,7 +102,29 @@ describe('CarnetCard — carte du carnet', () => {
     expect(container.querySelectorAll('.ckp-tabs')).toHaveLength(1);
     // Les deux familles de boutons restent distinctes et accessibles.
     expect(foot?.querySelectorAll('.ckp-actions button[aria-label]')).toHaveLength(5);
-    expect(foot?.querySelectorAll('.ckp-tabs button[role="tab"]')).toHaveLength(2);
+    expect(foot?.querySelectorAll('.ckp-tabs button[role="tab"]')).toHaveLength(5);
+  });
+
+  it('expose les cinq pages du carrousel avec aria-selected et lentille', () => {
+    const { container } = render(<CarnetCard {...base()} />);
+    const tabs = container.querySelector('.ckp-tabs');
+    expect(tabs?.getAttribute('aria-label')).toBe('Pages du carnet');
+    expect(container.querySelector('.ckp-th')).toBeTruthy();
+    expect(screen.getAllByRole('tab')).toHaveLength(5);
+    expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
+    for (const label of ['Parcours', 'Étapes', 'Matériel', 'Nature']) {
+      expect(screen.getByRole('tab', { name: label }).getAttribute('aria-selected')).toBe('false');
+    }
+    expect(container.querySelector('.ckp-pages')).toBeTruthy();
+  });
+
+  it('remonte le changement de page depuis les pastilles', () => {
+    const onPageChange = vi.fn();
+    render(<CarnetCard {...base({ onPageChange })} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
+    expect(onPageChange).toHaveBeenLastCalledWith('parcours');
+    fireEvent.click(screen.getByRole('tab', { name: 'Nature' }));
+    expect(onPageChange).toHaveBeenLastCalledWith('nature');
   });
 
   it('garde tous les comportements des actions déplacées', () => {
@@ -190,19 +217,42 @@ describe('CarnetCard — carte du carnet', () => {
     expect(onOpenPost).toHaveBeenCalledWith(1);
   });
 
-  it('expose le sélecteur 31 px avec lentille et deux cellules', () => {
-    const { container } = render(<CarnetCard {...base()} />);
-    const tabs = container.querySelector('.ckp-tabs');
-    expect(tabs?.getAttribute('aria-label')).toBe('Affichage des médias');
-    expect(container.querySelector('.ckp-th')).toBeTruthy();
-    expect(screen.getByRole('tab', { name: 'Grille des moments' }).getAttribute('aria-selected')).toBe('true');
+  it('rend la page Étapes quand elle est active', () => {
+    const { container } = render(
+      <CarnetCard
+        {...base({
+          page: 'etapes',
+          detail: detail({
+            days: [
+              {
+                id: 'd1',
+                dayNumber: 1,
+                label: 'JOUR 1 · 26 sept.',
+                from: 'Les Houches',
+                to: 'Refuge de Bellachat',
+                note: null,
+                distanceKm: 12.4,
+                elevationM: 1050,
+                durationText: '5 h',
+                weather: null,
+                overnight: 'Refuge de Bellachat',
+              },
+            ],
+          }),
+        })}
+      />,
+    );
+    expect(container.querySelector('.ckp-pages')?.getAttribute('id')).toBe('carnet-page-etapes');
+    expect(screen.getByText('Les Houches → Refuge de Bellachat')).toBeTruthy();
+    /* Le volet Récit n'est plus dans le drawer : son contenu vit sur cette page. */
+    expect(screen.getByText(/Vérifié/)).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Étapes' }).getAttribute('aria-selected')).toBe('true');
   });
 
-  it('bascule en carte du parcours', () => {
-    const onMediaModeChange = vi.fn();
-    render(<CarnetCard {...base({ onMediaModeChange })} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Carte du parcours' }));
-    expect(onMediaModeChange).toHaveBeenCalledWith('map');
+  it('rend la page Matériel et son état vide honnête', () => {
+    const { container } = render(<CarnetCard {...base({ page: 'materiel' })} />);
+    expect(screen.getByText('Matériel non renseigné.')).toBeTruthy();
+    expect(container.querySelector('.ckp-page-pad')).toBeTruthy();
   });
 
   it('affiche les compteurs réels et le like actif', () => {

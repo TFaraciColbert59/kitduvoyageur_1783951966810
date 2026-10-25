@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boundsOf, extractCoords, projectToViewBox, traceCenter } from '../traceGeometry';
+import { boundsOf, extractCoords, haversineKm, projectToViewBox, traceCenter, traceLengthKm } from '../traceGeometry';
 
 const LINE = {
   type: 'LineString',
@@ -52,5 +52,22 @@ describe('traceGeometry — mini tracé et recentrage', () => {
     const center = traceCenter(extractCoords(LINE));
     expect(center?.lat).toBeCloseTo(45.835, 6);
     expect(center?.lng).toBeCloseTo(6.865, 6);
+  });
+});
+
+describe('traceGeometry — longueur réelle de la trace', () => {
+  it('mesure la distance entre deux points réels', () => {
+    /* 0,01° de latitude ≈ 1,11 km. */
+    expect(haversineKm([45.83, 6.86], [45.84, 6.86])).toBeCloseTo(1.112, 2);
+  });
+
+  it('cumule les segments de la trace, jamais une valeur inventée', () => {
+    const length = traceLengthKm(LINE);
+    expect(length).not.toBeNull();
+    expect(length as number).toBeGreaterThan(1.1);
+    expect(length as number).toBeLessThan(1.6);
+    expect(traceLengthKm({ type: 'LineString', coordinates: [] })).toBeNull();
+    expect(traceLengthKm(null)).toBeNull();
+    expect(traceLengthKm({ coordinates: [[6.86, 45.83]] })).toBeNull();
   });
 });

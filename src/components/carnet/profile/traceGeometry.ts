@@ -88,6 +88,31 @@ export function projectToViewBox(coords: TracePoint[], size = 66, pad = 9): stri
     .join(' ');
 }
 
+const EARTH_RADIUS_KM = 6371.0088;
+
+/** Distance réelle entre deux points `[lat, lng]`, formule de haversine. */
+export function haversineKm(a: TracePoint, b: TracePoint): number {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const dLat = toRad(b[0] - a[0]);
+  const dLng = toRad(b[1] - a[1]);
+  const lat1 = toRad(a[0]);
+  const lat2 = toRad(b[0]);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** Longueur cumulée de la trace réelle en km, `null` sous deux points. */
+export function traceLengthKm(trace: unknown): number | null {
+  const coords = extractCoords(trace);
+  if (coords.length < 2) return null;
+  let total = 0;
+  for (let index = 1; index < coords.length; index += 1) {
+    total += haversineKm(coords[index - 1], coords[index]);
+  }
+  return total > 0 ? total : null;
+}
+
 export interface TraceCenter {
   lat: number;
   lng: number;
