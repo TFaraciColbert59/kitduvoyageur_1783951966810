@@ -184,7 +184,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
       </button>
 
       {panel ? (
-        <button type="button" className="lkdv-feed-post-close" aria-label="Fermer la publication" onClick={() => setPanel(null)}>
+        <button type="button" className="lkdv-feed-post-close" aria-label="Retour à la photo" onClick={() => setPanel(null)}>
           <X size={18} aria-hidden="true" />
         </button>
       ) : null}

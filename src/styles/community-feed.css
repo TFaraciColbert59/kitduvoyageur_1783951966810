@@ -1386,3 +1386,20 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
   height: 406px !important;
   max-height: 406px !important;
 }
+
+/* Verre de panneau : image visible mais texte du dessous neutralisé. */
+.lkdv-feed-panel-surface {
+  background: linear-gradient(180deg, rgba(252,251,248,.8), rgba(252,251,248,.62) 55%, rgba(252,251,248,.74)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.6) !important;
+  backdrop-filter: blur(28px) saturate(1.6) !important;
+}
+.lkdv-feed-post .lkdv-post-panel-body { background: rgba(255,255,255,.42); }
+.lkdv-feed-post-top .lkdv-post-author {
+  min-height: 44px;
+  padding: 4px 10px 4px 4px;
+  max-width: 220px;
+}
+.lkdv-feed-post-top .lkdv-post-author-av { width: 32px; height: 32px; }
+.lkdv-feed-post-top .lkdv-post-author-line b { font-size: 12.5px; }
+.lkdv-feed-post-top .lkdv-post-author-meta { font-size: 10.5px; }
+.lkdv-feed-options-rail { top: 58px; }
