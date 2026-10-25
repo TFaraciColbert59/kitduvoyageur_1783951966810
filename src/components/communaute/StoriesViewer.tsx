@@ -540,39 +540,43 @@ export default function StoriesViewer({
 
         {/* Dock de réponse privée (phase 05) — messagerie canonique. La saisie
             met la lecture en pause ; l'envoi ne quitte pas le visionneur. */}
-        {canReply ? (
-          <div className="lkdv-story-composer-wrap">
-            <PostReplyComposer
-              value={replyText}
-              onChange={setReplyText}
-              onSend={() => void sendReply()}
-              placeholder="Envoyer un message…"
-              inputLabel={`Répondre à ${user.name}`}
-              ariaLabel="Envoyer la réponse"
-              busy={replySending}
-              maxLength={500}
-              onFocus={() => setReplyFocused(true)}
-              onBlur={() => setReplyFocused(false)}
-            />
-          </div>
-        ) : null}
+        {(canReply || user.id !== myUserId) ? (
+          <div className="lkdv-story-dock">
+            {canReply ? (
+              <div className="lkdv-story-composer-wrap">
+                <PostReplyComposer
+                  value={replyText}
+                  onChange={setReplyText}
+                  onSend={() => void sendReply()}
+                  placeholder="Envoyer un message…"
+                  inputLabel={`Répondre à ${user.name}`}
+                  ariaLabel="Envoyer la réponse"
+                  busy={replySending}
+                  maxLength={500}
+                  onFocus={() => setReplyFocused(true)}
+                  onBlur={() => setReplyFocused(false)}
+                />
+              </div>
+            ) : null}
 
-        {user.id !== myUserId ? (
-          <button
-            type="button"
-            className="lkdv-story-like"
-            aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
-            aria-pressed={liked}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => {
-              event.stopPropagation();
-              if (!liked) { setLikePulse((value) => value + 1); setHeartBurst((value) => value + 1); }
-              if (slide.storyId) onToggleLike?.(slide, liked);
-            }}
-          >
-            <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={20} color={liked ? '#E0245E' : '#ffffff'} />
-            {heartBurst > 0 ? <span key={heartBurst} className="lkdv-story-heart-burst" aria-hidden="true"><Icon name="heart" size={64} color="#fff" /></span> : null}
-          </button>
+            {user.id !== myUserId ? (
+              <button
+                type="button"
+                className="lkdv-story-like"
+                aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
+                aria-pressed={liked}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (!liked) { setLikePulse((value) => value + 1); setHeartBurst((value) => value + 1); }
+                  if (slide.storyId) onToggleLike?.(slide, liked);
+                }}
+              >
+                <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={20} color={liked ? '#E0245E' : '#17402C'} />
+                {heartBurst > 0 ? <span key={heartBurst} className="lkdv-story-heart-burst" aria-hidden="true"><Icon name="heart" size={64} color="#fff" /></span> : null}
+              </button>
+            ) : null}
+          </div>
         ) : null}
 
 

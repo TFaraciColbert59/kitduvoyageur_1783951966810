@@ -1470,3 +1470,39 @@ body[data-story-open="true"] .tb,
 body[data-story-open="true"] .account-bottom-bar,
 body[data-story-open="true"] nav[aria-label="Navigation principale"] { display: none !important; }
 .lkdv-story-options-rail[hidden] { display: none !important; }
+
+/* Dock story : message en verre pleine largeur + like à droite. */
+.lkdv-story-dock {
+  position: absolute;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: calc(var(--safe-bottom, 0px) + var(--space-4));
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lkdv-story-composer-wrap {
+  position: static;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.52) 55%, rgba(255,255,255,.66));
+  -webkit-backdrop-filter: blur(22px) saturate(1.8) brightness(1.06);
+  backdrop-filter: blur(22px) saturate(1.8) brightness(1.06);
+  border: .5px solid rgba(255,255,255,.82);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.12), 0 8px 24px rgba(10,20,14,.22);
+}
+.lkdv-story-composer-wrap .lkdv-comments-composer { border-top: 0; padding-top: 0; }
+.lkdv-story-composer-wrap .lkdv-comments-composer input { background: rgba(255,255,255,.96); }
+.lkdv-story-like {
+  position: static;
+  flex: none;
+  width: 54px;
+  min-width: 54px;
+  height: 38px;
+  margin: 0;
+}
+
+.lkdv-story-like { border-radius: 999px !important; }
