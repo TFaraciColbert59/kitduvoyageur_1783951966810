@@ -119,6 +119,15 @@ function ConversationFeedRow({
   onSwipeAction?: (conv: Conversation, action: SwipeAction) => void;
 }) {
   const { haptic } = useHapticFeedback();
+  // Brouillon local de cette conversation (même clé que le composer).
+  const [draft, setDraft] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      setDraft(window.localStorage.getItem(`lkdv:draft:${conversation.id}`));
+    } catch {
+      setDraft(null);
+    }
+  }, [conversation.id]);
   const [dx, setDx] = useState(0);
   const [snapped, setSnapped] = useState(false);
   const dxRef = useRef(0);
@@ -257,6 +266,13 @@ function ConversationFeedRow({
           ) : (
             initials(title)
           )}
+          {conversation.type === 'group' ? (
+            <span className="fa-grp">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 19c.5-3 2.8-5 6-5s5.5 2 6 5M16 10a2.5 2.5 0 1 0 0-5M17 14c2 .4 3.3 2 3.8 4.4" />
+              </svg>
+            </span>
+          ) : null}
         </span>
         <span style={{ minWidth: 0 }}>
           <b>
@@ -264,7 +280,9 @@ function ConversationFeedRow({
             {conversation.is_muted ? <Icon name="bell-off" className="ml-1 inline size-3" aria-hidden="true" /> : null}
             {isPending ? <span className="mrow-pending">Demande</span> : null}
           </b>
-          <small>{lastPreview(conversation)}</small>
+          <small>
+            {draft ? <span style={{ color: 'var(--warn)' }}>Brouillon — {draft.replace(/\s+/g, ' ').slice(0, 40)}</span> : lastPreview(conversation)}
+          </small>
         </span>
         <span className="mrow-side">
           {formatConversationTimestamp(conversation.last_message_at)}
@@ -309,6 +327,7 @@ function MessageThread({
   currentUserId,
   currentUserProfile,
   members,
+  hideReads = false,
   compact,
   focusMessageId,
 }: {
@@ -316,6 +335,8 @@ function MessageThread({
   currentUserId: string;
   currentUserProfile?: UserProfileSummary | null;
   members: ConversationMember[];
+  /** Accusés de lecture masqués (préférence locale). */
+  hideReads?: boolean;
   compact: boolean;
   focusMessageId?: string | null;
 }) {
@@ -331,8 +352,20 @@ function MessageThread({
   useEffect(() => {
     const node = scroller.current;
     if (!node) return;
-    node.scrollTop = node.scrollHeight;
+    const frame = requestAnimationFrame(() => {
+      node.scrollTop = node.scrollHeight;
+    });
+    return () => cancelAnimationFrame(frame);
   }, [messages.length, conversation.id]);
+
+  // B6 — retour du réseau : on relance les envois restés en échec.
+  useEffect(() => {
+    const retryFailed = () => {
+      messages.filter((message) => message.status === 'error').forEach((message) => retryMessage(message.id));
+    };
+    window.addEventListener('online', retryFailed);
+    return () => window.removeEventListener('online', retryFailed);
+  }, [messages, retryMessage]);
 
   useEffect(() => {
     if (!focusMessageId) return;
@@ -343,6 +376,7 @@ function MessageThread({
   }, [focusMessageId, messages.length]);
 
   const readBy = (message: Message) => {
+    if (hideReads) return null;
     if (message.sender_id !== currentUserId) return null;
     const others = members.filter((m) => m.user_id !== currentUserId);
     if (others.length === 0) return null;
@@ -376,7 +410,14 @@ function MessageThread({
 
   return (
     <>
-      <div className="mthread" ref={scroller} aria-label={`Fil de discussion avec ${conversationTitle(conversation)}`}>
+      <div
+        className="mthread"
+        ref={scroller}
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-label={`Fil de discussion avec ${conversationTitle(conversation)}`}
+      >
         {hasMore ? (
           <button type="button" className="mbtn" style={{ alignSelf: 'center', margin: '2px 0 4px' }} onClick={loadEarlier} disabled={loadingEarlier}>
             {loadingEarlier ? 'Chargement…' : 'Messages précédents'}
@@ -419,7 +460,11 @@ function MessageThread({
                       haptic('light');
                       setOpenMenu(openMenu === message.id ? null : message.id);
                     }}
-                    aria-label="Actions du message"
+                    aria-label={`Message de ${mine ? 'vous' : message.sender_profile?.full_name ?? 'un voyageur'}, ${timeLabel(message.created_at)}`}
+                    onDoubleClick={() => {
+                      haptic('medium');
+                      void toggleReaction(message.id, REACTIONS[1]);
+                    }}
                   >
                     {message.reply_to_message ? (
                       <span className="bub-quote">
@@ -492,6 +537,16 @@ function MessageThread({
                       >
                         Transférer
                       </button>
+                      <button
+                        type="button"
+                        className="mreact"
+                        onClick={() => {
+                          void navigator.clipboard?.writeText(message.content).catch(() => {});
+                          setOpenMenu(null);
+                        }}
+                      >
+                        Copier
+                      </button>
                       {REACTIONS.map((emoji) => (
                         <button
                           key={emoji}
@@ -514,7 +569,14 @@ function MessageThread({
           );
         })}
 
-        {typingUserNames.length > 0 ? <div className="mday">{typingUserNames.join(', ')} écrit…</div> : null}
+        {typingUserNames.length > 0 ? (
+          <div className="mday mtyping">
+            <i aria-hidden="true" />
+            <i aria-hidden="true" />
+            <i aria-hidden="true" />
+            <span className="sr-only">{typingUserNames.join(', ')} écrit</span>
+          </div>
+        ) : null}
       </div>
 
       {error ? (
@@ -761,10 +823,22 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const [optionsConv, setOptionsConv] = useState<Conversation | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
+  // Préférences locales de l'appareil (jamais envoyées au serveur).
+  const [hideReads, setHideReads] = useState(false);
+  const [notifyPref, setNotifyPref] = useState(false);
   const [members, setMembers] = useState<ConversationMember[]>([]);
   const [deepLinkError, setDeepLinkError] = useState<string | null>(null);
   const handledDest = useRef<string | null>(null);
   const handledConv = useRef(false);
+
+  useEffect(() => {
+    try {
+      setHideReads(window.localStorage.getItem('lkdv:messages:hide-reads') === '1');
+      setNotifyPref(window.localStorage.getItem('lkdv:messages:notify') === '1');
+    } catch {
+      /* stockage local indisponible */
+    }
+  }, []);
 
   useEffect(() => {
     const stop = initLiquidLenses(phone.current);
@@ -912,9 +986,33 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
    *  c'est l'état de la grammaire, pas un bricolage par composant. */
   const surfaceOpen =
     sheetOpen || searchOpen || newOpen || optionsConv !== null || groupSettingsOpen || reportTarget !== null;
+  // B5 — notification navigateur : uniquement si l'utilisateur l'a activée et
+  // que l'onglet est caché. Jamais de notification pour une conversation ouverte.
+  const lastNotifiedRef = useRef<number>(0);
+  useEffect(() => {
+    if (!notifyPref || typeof window === 'undefined') return;
+    if (document.visibilityState === 'visible') return;
+    const now = Date.now();
+    if (now - lastNotifiedRef.current < 5000) return;
+    const freshest = conversations
+      .filter((conversation) => (conversation.unread_count || 0) > 0 && conversation.id !== selectedId)
+      .sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())[0];
+    if (!freshest) return;
+    const stamp = new Date(freshest.last_message_at).getTime();
+    if (stamp <= lastNotifiedRef.current - 2000) return;
+    lastNotifiedRef.current = now;
+    try {
+      new Notification(conversationTitle(freshest), {
+        body: lastPreview(freshest).slice(0, 120),
+        tag: `lkdv-msg-${freshest.id}`,
+        silent: false,
+      });
+    } catch {
+      /* permission retirée : on n'insiste pas */
+    }
+  }, [conversations, notifyPref, selectedId]);
+
   const guest = !currentUserId;
-  const headerTitle = selected ? conversationTitle(selected) : 'Messages';
-  const headerAvatar = selected?.avatar_url ?? currentUserProfile?.avatar_url ?? null;
 
   return (
     <div className={`lkdv-compte-v8 lkdv-pays lkdv-messages${surfaceOpen ? ' sheet-open' : ''}`}>
@@ -1050,7 +1148,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
             </section>
 
             <section className="mapzone" aria-label="Conversation">
-              <div className="map" style={{ display: 'flex', flexDirection: 'column', background: 'var(--page)', paddingBottom: 64 }}>
+              <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--page)', paddingBottom: 64 }}>
                 {selected ? (
                   <>
                     <div className="mpane-h">
@@ -1208,6 +1306,48 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     ) : null}
                     <button
                       type="button"
+                      className={`mbtn${hideReads ? '' : ' soft'}`}
+                      aria-pressed={hideReads}
+                      onClick={() => {
+                        const next = !hideReads;
+                        setHideReads(next);
+                        try {
+                          window.localStorage.setItem('lkdv:messages:hide-reads', next ? '1' : '0');
+                        } catch {
+                          /* stockage local indisponible */
+                        }
+                      }}
+                    >
+                      Accusés&nbsp;: {hideReads ? 'masqués' : 'visibles'}
+                    </button>
+                    <button
+                      type="button"
+                      className={`mbtn${notifyPref ? ' soft' : ''}`}
+                      aria-pressed={notifyPref}
+                      onClick={async () => {
+                        if (notifyPref) {
+                          setNotifyPref(false);
+                          try {
+                            window.localStorage.setItem('lkdv:messages:notify', '0');
+                          } catch {
+                            /* ignore */
+                          }
+                          return;
+                        }
+                        try {
+                          const permission = await Notification.requestPermission();
+                          if (permission !== 'granted') return;
+                          setNotifyPref(true);
+                          window.localStorage.setItem('lkdv:messages:notify', '1');
+                        } catch {
+                          /* API indisponible */
+                        }
+                      }}
+                    >
+                      Notifications&nbsp;: {notifyPref ? 'activées' : 'désactivées'}
+                    </button>
+                    <button
+                      type="button"
                       className="mbtn"
                       onClick={() => {
                         setSheetOpen(false);
@@ -1223,6 +1363,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     currentUserId={currentUserId as string}
                     currentUserProfile={currentUserProfile}
                     members={members}
+                    hideReads={hideReads}
                     compact={false}
                   /> : null}
                 </div>
