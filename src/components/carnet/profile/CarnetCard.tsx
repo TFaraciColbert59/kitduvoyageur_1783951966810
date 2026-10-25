@@ -332,6 +332,8 @@ export function CarnetCard({
           </span>
         </div>
 
+        <span className="ckp-foot-sep" aria-hidden="true" />
+
         <CarnetMediaTabs
           items={[
             {
