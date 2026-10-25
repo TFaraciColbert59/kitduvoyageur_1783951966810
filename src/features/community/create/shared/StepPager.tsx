@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import type { CreateKind } from '../engine/createSchemas';
 import './create-shared.css';
@@ -110,14 +109,21 @@ export function StepPager({
       </LensPager>
 
       <div className="lkdv-create-stepbar">
-        <CapsuleTabs
-          items={tabs}
-          activeIndex={safeIndex}
-          onIndexChange={onIndexChange}
-          ariaLabel={label}
-          className="lkdv-create-step-tabs"
-          showLabels
-        />
+        <div className="lkdv-create-step-tabs" role="tablist" aria-label={label}>
+          {steps.map((step, stepIndex) => (
+            <button
+              key={step.id}
+              type="button"
+              role="tab"
+              aria-label={step.label}
+              aria-selected={stepIndex === safeIndex}
+              className={stepIndex === safeIndex ? 'is-active' : ''}
+              onClick={() => onIndexChange(stepIndex)}
+            >
+              {stepIndex + 1}
+            </button>
+          ))}
+        </div>
         {actions ? <div className="lkdv-create-stepbar-actions">{actions}</div> : null}
       </div>
     </div>
