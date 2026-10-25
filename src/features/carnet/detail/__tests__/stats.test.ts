@@ -51,6 +51,7 @@ const detail = (overrides: Partial<CarnetDetail> = {}): CarnetDetail => ({
   days: [],
   kit: { totalWeightG: null, items: [] },
   trace: null,
+  place: { country: null, region: null, locality: null, lat: null, lng: null },
   distanceKm: null,
   elevationM: null,
   ...overrides,

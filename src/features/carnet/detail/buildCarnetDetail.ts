@@ -1,4 +1,5 @@
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
+import { buildCarnetPlace } from './place';
 import type {
   BuildCarnetDetailInput,
   CarnetDay,
@@ -115,6 +116,8 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     return (total ?? 0) + grams;
   }, null);
 
+  const trace = hikeSession?.positions_geojson ?? null;
+
   return {
     id: carnet.id,
     title: carnet.title?.trim() || carnet.destination?.trim() || UNTITLED,
@@ -158,7 +161,8 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
         color: k.couleur_tag ?? null,
       })),
     },
-    trace: hikeSession?.positions_geojson ?? null,
+    trace,
+    place: buildCarnetPlace(carnet, trace),
     distanceKm,
     elevationM,
   };
