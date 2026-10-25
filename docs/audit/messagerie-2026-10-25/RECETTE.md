@@ -82,3 +82,20 @@ Carte 541 → 279 ; identité, 3 stats, bio, anneaux supprimés ; sélecteur/lis
 - URL : https://kitduvoyageur.faracitonyp.workers.dev/messagerie
 - Routes vérifiées après déploiement : `/`, `/compte`, `/communaute`, `/messagerie`, `/pays/fr` → **200**.
 - Incident : le premier déploiement (version `9fefd43e`) a rendu **toutes les routes en 500** (`No such module "ssr/index.js"`). **Rollback immédiat** sur `1cca8805` (déploiement `3f8bd7a8`), puis cause trouvée : le paquet n'était pas `"type": "module"` — le bundle RSC nommait `ssr/index.mjs` quand l'entrée Worker demandait `ssr/index.js`. Corrigé (paquet ESM, `tailwind.config.cjs`, `postcss.config.mjs`), build vérifié en local sur les 6 routes avant redéploiement.
+
+
+---
+
+## Déploiements concurrents (25/10, 19 h 40)
+
+Le Worker `kitduvoyageur` est déployé par **plusieurs worktrees** de ce poste (`~/lkdv-cf`, `~/Desktop/lkdv-cloudflare`, `~/Desktop/lkdv-cf-carnet*`). Entre 19 h 20 et 19 h 35, quatre déploiements se sont succédé à moins d'une minute d'intervalle : la version de la refonte était écrasée par un build plus ancien, d'où l'écran « ancien design » observé.
+
+Correctif durable : la refonte a été **portée et commitée dans les trois lignées de déploiement** (chacune typecheckée) :
+
+| Worktree | Commit | État |
+|---|---|---|
+| `~/lkdv-cf` (`deploy/cf-pays`) | `100e3d80` | commité, non déployé depuis |
+| `~/Desktop/lkdv-cloudflare` (`cloudflare/vinext`) | `125cd486` | **déployé** — version `4c1822d4`, active |
+| `~/Desktop/lkdv-cf-carnet2` (`cf/cf-carnet-latest`) | `0f21c993` | commité, non déployé |
+
+Un prochain déploiement depuis l'une de ces trois copies inclura donc la refonte. Un déploiement depuis une **quatrième** copie (non identifiée) la retirerait encore.
