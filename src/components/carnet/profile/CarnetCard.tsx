@@ -3,7 +3,9 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import Icon from '@/components/ui/Icon';
+import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
 import { CarnetMediaTabs } from './CarnetMediaTabs';
+import { extractCoords, projectToViewBox, traceCenter } from './traceGeometry';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 
 const CarnetTraceMap = dynamic(
@@ -13,6 +15,13 @@ const CarnetTraceMap = dynamic(
 
 export type CarnetMediaMode = 'grid' | 'map';
 export type CarnetStatDrawer = 'parcours' | 'etapes';
+
+/** Cible de recentrage de la carte du bas, toujours issue d'une coordonnée réelle. */
+export interface CarnetPlaceFocus {
+  lat: number;
+  lng: number;
+  zoom: number;
+}
 
 export interface CarnetCardProps {
   detail: CarnetDetail;
@@ -27,6 +36,7 @@ export interface CarnetCardProps {
   onLike: () => void;
   onSave: () => void;
   onOpenMenu: () => void;
+  onFocusPlace: (focus: CarnetPlaceFocus) => void;
   menu?: React.ReactNode;
   onOpenPost: (index: number) => void;
   onDownloadGpx: () => void;
@@ -52,23 +62,44 @@ function Action({
       onClick={onClick}
       aria-pressed={pressed}
       aria-label={typeof count === 'number' ? `${label}, ${count}` : label}
+      title={label}
     >
       <span className="ckp-action-btn">
         <span className="ckp-action-in">
-          <Icon name={icon} size={18} aria-hidden="true" />
+          <Icon name={icon} size={16} aria-hidden="true" />
+          {typeof count === 'number' && count > 0 ? (
+            <span className="ckp-action-count" aria-hidden="true">
+              {count}
+            </span>
+          ) : null}
         </span>
-        {typeof count === 'number' && count > 0 ? (
-          <span className="ckp-action-count" aria-hidden="true">
-            {count}
-          </span>
-        ) : null}
       </span>
-      <span className="ckp-action-lbl">{label}</span>
     </button>
   );
 }
 
-/** Carte du carnet : identité, statistiques boutons, actions, médias, sélecteur 31. */
+interface Participant {
+  id: string;
+  name: string;
+  handle: string | null;
+  avatarUrl: string | null;
+}
+
+/** Participants réels : l'auteur puis les likers distincts. Aucune donnée inventée. */
+function participantsOf(detail: CarnetDetail): Participant[] {
+  const seen = new Set<string>();
+  const list: Participant[] = [];
+  const push = (entry: Participant | null | undefined) => {
+    if (!entry?.id || seen.has(entry.id)) return;
+    seen.add(entry.id);
+    list.push(entry);
+  };
+  push(detail.author);
+  for (const liker of detail.likers ?? []) push(liker);
+  return list;
+}
+
+/** Carte du carnet : mini tracé, statistiques, participants, lieu, médias. */
 export function CarnetCard({
   detail,
   mediaMode,
@@ -82,11 +113,16 @@ export function CarnetCard({
   onLike,
   onSave,
   onOpenMenu,
+  onFocusPlace,
   menu = null,
   onOpenPost,
   onDownloadGpx,
 }: CarnetCardProps) {
-  const context = [detail.destination, detail.dateRange].filter(Boolean).join(' · ');
+  const traceCoords = extractCoords(detail.trace);
+  const tracePath = projectToViewBox(traceCoords, 66, 9);
+  const center = traceCenter(traceCoords);
+  const placeFocus: CarnetPlaceFocus | null = center ? { ...center, zoom: 10 } : null;
+
   const hasTrace =
     Array.isArray((detail.trace as any)?.coordinates) ||
     Array.isArray((detail.trace as any)?.geometry?.coordinates);
@@ -96,37 +132,45 @@ export function CarnetCard({
   const elevation = detail.elevationM
     ? `${detail.elevationM.toLocaleString('fr-FR')} m D+`
     : null;
-  const summaryLine = [
-    detail.days.length > 0 ? `${detail.days.length} jour${detail.days.length > 1 ? 's' : ''}` : null,
-    km,
-    elevation,
-    detail.photoMoments.length > 0 ? `${detail.photoMoments.length} moments` : null,
-  ].filter(Boolean).join(' · ');
+  const participants = participantsOf(detail);
 
   return (
     <section className="ckp-card" aria-label="Carte du carnet">
       <div className="ckp-card-scroll">
         <div className="ckp-head">
-          {detail.coverImage ? (
-            <button
-              type="button"
-              className="ckp-cover-btn"
-              onClick={onOpenCarnet}
-              aria-label="Ouvrir le carnet"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element -- couverture distante */}
-              <img className="ckp-cover" src={detail.coverImage} alt={detail.coverImageAlt ?? ''} />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="ckp-cover-btn ckp-cover-btn--empty"
-              onClick={onOpenCarnet}
-              aria-label="Ouvrir le carnet"
-            >
-              <span aria-hidden="true">{(detail.destination ?? detail.title).charAt(0).toUpperCase()}</span>
-            </button>
-          )}
+          <button
+            type="button"
+            className="ckp-cover-btn"
+            onClick={onOpenCarnet}
+            aria-label="Ouvrir le carnet"
+          >
+            {tracePath ? (
+              <span className="ckp-cover ckp-cover--trace" aria-hidden="true">
+                <svg viewBox="0 0 66 66" width="62" height="62" focusable="false">
+                  <polyline
+                    points={tracePath}
+                    fill="none"
+                    stroke="rgba(255,255,255,.92)"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <polyline
+                    points={tracePath}
+                    fill="none"
+                    stroke="#17402c"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            ) : (
+              <span className="ckp-cover ckp-cover--initial">
+                {(detail.destination ?? detail.title).charAt(0).toUpperCase()}
+              </span>
+            )}
+          </button>
 
           <div className="ckp-id-stats">
             {detail.stats.map((stat) => (
@@ -144,48 +188,40 @@ export function CarnetCard({
           </div>
         </div>
 
-        {summaryLine ? <p className="ckp-bio-line">{summaryLine}</p> : null}
-        <p className="ckp-bio-line">
-          {[context, detail.description].filter(Boolean).join(' · ')}
-        </p>
+        {detail.description ? <p className="ckp-bio-line">{detail.description}</p> : null}
 
-        <div className="ckp-actions">
-          <Action
-            icon="heart"
-            label="J’aime"
-            count={detail.engagement.likes}
-            onClick={onLike}
-            pressed={detail.engagement.liked}
-          />
-          <Action
-            icon="message-square"
-            label="Commenter"
-            count={detail.engagement.comments}
-            onClick={onOpenComments}
-          />
-          <Action
-            icon="bookmark"
-            label={detail.engagement.favorited ? 'Enregistré' : 'Enregistrer'}
-            onClick={onSave}
-            pressed={detail.engagement.favorited}
-          />
-          {detail.isOwner ? (
-            <Action icon="pencil" label="Gérer" onClick={onOpenManage} />
-          ) : (
-            <Action icon="map" label="Parcours" onClick={onOpenParcours} />
-          )}
-          <span className="ckp-action ckp-more-anchor">
-            <button type="button" className="ckp-action" onClick={onOpenMenu} aria-label="Plus d’options">
-              <span className="ckp-action-btn">
-                <span className="ckp-action-in">
-                  <Icon name="more-horizontal" size={18} aria-hidden="true" />
-                </span>
+        {detail.destination || detail.dateRange ? (
+          <div className="ckp-place-row">
+            {detail.destination ? (
+              <button
+                type="button"
+                className="ckp-place-pill"
+                onClick={() => placeFocus && onFocusPlace(placeFocus)}
+                disabled={!placeFocus}
+                aria-label={`Recentrer la carte sur ${detail.destination}`}
+              >
+                <Icon name="map-pin" size={12} aria-hidden="true" />
+                <span>{detail.destination}</span>
+              </button>
+            ) : null}
+            {detail.dateRange ? <span className="ckp-place-date">{detail.dateRange}</span> : null}
+          </div>
+        ) : null}
+
+        {participants.length > 0 ? (
+          <div className="ckp-people" role="list" aria-label="Participants au carnet">
+            {participants.map((person) => (
+              <span role="listitem" key={person.id} className="ckp-person">
+                <AccountAuthorPill
+                  name={person.name}
+                  handle={person.handle ?? undefined}
+                  avatarUrl={person.avatarUrl}
+                  href={`/profil/${person.id}`}
+                />
               </span>
-              <span className="ckp-action-lbl">Plus</span>
-            </button>
-            {menu}
-          </span>
-        </div>
+            ))}
+          </div>
+        ) : null}
 
         <div className="ckp-media">
           {mediaMode === 'grid' ? (
@@ -255,31 +291,68 @@ export function CarnetCard({
               </div>
             </div>
           )}
-
-
         </div>
       </div>
 
-      <CarnetMediaTabs
-        items={[
-          {
-            id: 'grid',
-            label: 'Grille des moments',
-            icon: (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15" aria-hidden="true">
-                <rect x="3" y="3" width="7" height="7" rx="1.6" />
-                <rect x="14" y="3" width="7" height="7" rx="1.6" />
-                <rect x="3" y="14" width="7" height="7" rx="1.6" />
-                <rect x="14" y="14" width="7" height="7" rx="1.6" />
-              </svg>
-            ),
-          },
-          { id: 'map', label: 'Carte du parcours', icon: <Icon name="map" size={15} aria-hidden="true" /> },
-        ]}
-        activeIndex={mediaMode === 'grid' ? 0 : 1}
-        onChange={(index) => onMediaModeChange(index === 0 ? 'grid' : 'map')}
-        ariaLabel="Affichage des médias"
-      />
+      <div className="ckp-card-foot">
+        <div className="ckp-actions" role="group" aria-label="Actions du carnet">
+          <Action
+            icon="heart"
+            label="J’aime"
+            count={detail.engagement.likes}
+            onClick={onLike}
+            pressed={detail.engagement.liked}
+          />
+          <Action
+            icon="message-square"
+            label="Commenter"
+            count={detail.engagement.comments}
+            onClick={onOpenComments}
+          />
+          <Action
+            icon="bookmark"
+            label={detail.engagement.favorited ? 'Enregistré' : 'Enregistrer'}
+            onClick={onSave}
+            pressed={detail.engagement.favorited}
+          />
+          {detail.isOwner ? (
+            <Action icon="pencil" label="Gérer" onClick={onOpenManage} />
+          ) : (
+            <Action icon="map" label="Parcours" onClick={onOpenParcours} />
+          )}
+          <span className="ckp-action ckp-more-anchor">
+            <button type="button" className="ckp-action" onClick={onOpenMenu} aria-label="Plus d’options">
+              <span className="ckp-action-btn">
+                <span className="ckp-action-in">
+                  <Icon name="more-horizontal" size={16} aria-hidden="true" />
+                </span>
+              </span>
+            </button>
+            {menu}
+          </span>
+        </div>
+
+        <CarnetMediaTabs
+          items={[
+            {
+              id: 'grid',
+              label: 'Grille des moments',
+              icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="7" rx="1.6" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.6" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.6" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.6" />
+                </svg>
+              ),
+            },
+            { id: 'map', label: 'Carte du parcours', icon: <Icon name="map" size={15} aria-hidden="true" /> },
+          ]}
+          activeIndex={mediaMode === 'grid' ? 0 : 1}
+          onChange={(index) => onMediaModeChange(index === 0 ? 'grid' : 'map')}
+          ariaLabel="Affichage des médias"
+        />
+      </div>
     </section>
   );
 }

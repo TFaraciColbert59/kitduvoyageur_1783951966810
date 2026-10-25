@@ -99,12 +99,19 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   position: relative; display: block; width: 100%; height: 100%; object-fit: cover;
   border-radius: 50%; border: 2px solid rgba(255, 255, 255, .92);
 }
-.ckp-cover-btn--empty span {
-  position: relative; display: grid; place-items: center; width: 100%; height: 100%;
-  border-radius: 50%; border: 2px solid rgba(255, 255, 255, .92);
+.ckp-cover--initial {
+  display: grid; place-items: center;
   background: linear-gradient(160deg, #17402c, #3d7a52); color: #fff;
   font: 700 20px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
 }
+/* Mini tracé du voyage : même anneau que la couverture, fond verre. */
+.ckp-cover--trace {
+  display: grid; place-items: center;
+  background: var(--bar-glass-bg);
+  -webkit-backdrop-filter: var(--bar-glass-blur); backdrop-filter: var(--bar-glass-blur);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+.ckp-cover--trace svg { display: block; width: 100%; height: 100%; }
 
 /* Grille de stats : gap 4, valeur 19/700, libellé 10,5/500. */
 .ckp-id-stats { display: grid; grid-template-columns: repeat(3, 101px); gap: 4px; flex: none; min-width: 0; margin: 2px 0 0 2px; }
@@ -155,37 +162,38 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* --- Actions en anneaux --------------------------------------------------- */
-.ckp-actions { display: flex; align-items: flex-start; gap: 4px; padding: 0 2px; }
+/* --- Actions compactes en bas à droite, sur la ligne du sélecteur ---------- */
+.ckp-card-foot {
+  position: absolute; left: 12px; right: 10px; bottom: 10px; z-index: 6;
+  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+  pointer-events: none;
+}
+.ckp-card-foot > * { pointer-events: auto; }
+.ckp-actions { display: flex; align-items: center; gap: 6px; }
 .ckp-action {
-  display: flex; flex-direction: column; align-items: center; gap: 2.5px;
-  width: 72px; padding: 0; border: 0; background: none; cursor: pointer;
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer;
 }
 .ckp-action-btn {
-  position: relative; width: 44px; height: 44px; padding: 2px; display: block;
+  position: relative; width: 30px; height: 30px; padding: 1.5px; display: block;
   border-radius: 50%;
-  background: linear-gradient(145deg, rgba(23, 64, 44, .55), rgba(91, 127, 85, .35), rgba(255, 255, 255, .85));
-  box-shadow: inset 0 1px 0 #fff, 0 2px 6px rgba(23, 43, 36, .08);
+  background: linear-gradient(145deg, rgba(23, 64, 44, .45), rgba(91, 127, 85, .28), rgba(255, 255, 255, .8));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 2px 6px rgba(23, 43, 36, .08);
   transition: transform .15s;
 }
 .ckp-action:active .ckp-action-btn { transform: scale(.92); }
 .ckp-action-in {
-  width: 100%; height: 100%; display: grid; place-items: center; border-radius: 50%;
+  position: relative; width: 100%; height: 100%; display: grid; place-items: center; border-radius: 50%;
   background: rgba(244, 247, 243, .88); border: 1.5px solid rgba(255, 255, 255, .95);
-  overflow: hidden; color: #172b24;
+  overflow: visible; color: #172b24;
 }
 .ckp-action[aria-pressed='true'] .ckp-action-in { color: #e0245e; }
 .ckp-action-count {
-  position: absolute; top: -3px; right: -3px; z-index: 2; min-width: 18px; height: 18px; padding: 0 5px;
+  position: absolute; top: -5px; right: -6px; z-index: 2; min-width: 15px; height: 15px; padding: 0 4px;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 999px; background: #17402c; color: #fff;
-  font: 700 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 700 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
   font-variant-numeric: tabular-nums;
-}
-.ckp-action-lbl {
-  max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font: 500 10.5px/1.1 var(--font-sans, -apple-system, system-ui, sans-serif);
-  color: #172b24; text-align: center;
 }
 
 /* --- Médias --------------------------------------------------------------- */
@@ -219,9 +227,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-map-foot .ckp-day-meta { margin: 0; }
 
-/* Sélecteur 31 px du Compte (`.ig-tabs` + `.ig-th`). */
-.ckp-tabs {
-  position: absolute; right: 10px; bottom: 10px; z-index: 5;
+/* Sélecteur 31 px du Compte (`.ig-tabs` + `.ig-th`), posé sur la ligne des actions. */
+.ckp-card-foot .ckp-tabs {
+  position: relative; right: auto; bottom: auto; z-index: 1; flex: none;
   display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   height: 30px; padding: 2.5px; border-radius: 999px; width: 88px;
   background: rgba(23, 43, 36, .06);
@@ -391,7 +399,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-species p { margin: 6px 0 0; font: 400 12.5px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
 .ckp-more-anchor { position: relative; display: inline-flex; }
-.ckp-more-anchor .pmi-options-menu { top: 44px; right: 0; }
+/* Le menu s'ouvre vers le haut : l'ancre est posée en bas de la carte. */
+.ckp-more-anchor .pmi-options-menu { top: auto; bottom: calc(100% + 8px); right: 0; }
 
 .ckp-viewer { position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center; background: rgba(10, 20, 14, .94); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .ckp-viewer img { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -428,12 +437,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 @keyframes ckp-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .ckp-skeleton { animation: none; } }
 
-/* --- Alignement v5 : 5 actions, carte 541, sélecteur en bas, carte séparée -- */
+/* --- Alignement v5 : 5 actions compactes sur la ligne du sélecteur --------- */
 
 .ckp-card { position: relative; height: 541px; flex: none; }
-.ckp-actions { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; padding: 0 2px; }
-.ckp-action { width: auto; }
-.ckp-card > .ckp-tabs { position: absolute; right: 10px; bottom: 10px; z-index: 6; }
 .ckp-tile-expand {
   position: absolute; top: 6px; right: 6px; z-index: 2;
   width: 24px; height: 24px; display: grid; place-items: center;
@@ -442,7 +448,34 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 .ckp-tile { position: relative; }
-.ckp-bio-line + .ckp-bio-line { margin-top: 2px; }
+
+/* --- Ligne de lieu : pastille cliquable (recentrage) + dates -------------- */
+.ckp-place-row { display: flex; align-items: center; gap: 8px; margin: 0 2px; min-width: 0; }
+.ckp-place-pill {
+  display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%;
+  height: 28px; padding: 0 10px; border: 0; border-radius: 999px;
+  background: var(--bar-glass-bg);
+  -webkit-backdrop-filter: var(--bar-glass-blur); backdrop-filter: var(--bar-glass-blur);
+  box-shadow: var(--bar-thumb-shadow); color: #17402c; cursor: pointer;
+  font: 600 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-place-pill span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ckp-place-pill svg { flex: none; opacity: .8; }
+.ckp-place-pill:active:not(:disabled) { transform: scale(.96); }
+.ckp-place-pill:disabled { opacity: .55; cursor: default; }
+.ckp-place-date {
+  flex: none; color: #56665d; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* --- Participants : pastilles auteur du fil Communauté, défilables -------- */
+.ckp-people {
+  display: flex; align-items: center; gap: 6px; margin: 0 2px;
+  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.ckp-people::-webkit-scrollbar { display: none; }
+.ckp-person { display: flex; flex: none; }
 
 .ckp-mapcard { position: relative; flex: 1; min-height: 240px; padding: 0; overflow: hidden; }
 .ckp-mapcard-canvas { position: absolute; inset: 0; }
