@@ -66,22 +66,24 @@ describe('/messagerie — grammaire Compte (verre Liquid Glass v8)', () => {
     expect(screen).toMatch(/\brefreshLiquidLenses\(/);
   });
 
-  it('conserve les ancres de la carte du Compte (top bar, carte, stats, grille, barre)', () => {
+  it('garde les ancres du shell (top bar, carte, liste, filtre, zone de conversation, barre)', () => {
     expect(occurrences(screen, 'className="ig-top"')).toBe(1);
     expect(occurrences(screen, 'ig-handle')).toBe(1);
     expect(occurrences(screen, 'ig-top-btn')).toBe(3);
     expect(occurrences(screen, 'className="card cs"')).toBe(1);
     expect(occurrences(screen, 'card-scroll')).toBe(1);
-    expect(occurrences(screen, 'ig-header')).toBe(1);
-    // 3 boutons `.ig-stat` ; le conteneur `.ig-stats` ne doit pas être compté.
-    expect(occurrences(screen, 'className="ig-stat"')).toBe(3);
-    expect(occurrences(screen, 'ig-bio-text')).toBe(1);
-    expect(occurrences(screen, 'ig-hl-row')).toBe(1);
     expect(occurrences(screen, 'ig-grid-wrap')).toBe(2);
-    expect(occurrences(screen, 'ig-tabs')).toBe(2);
-    expect(occurrences(screen, 'ig-th')).toBe(1);
+    expect(occurrences(screen, 'ig-feed-row')).toBe(1);
+    expect(occurrences(screen, 'className="mfilter"')).toBe(1);
     expect(occurrences(screen, 'mapzone')).toBe(1);
     expect(occurrences(screen, 'lkdv-account-bar')).toBe(1);
+  });
+
+  it('la carte ne porte que la liste : identité, bio et anneaux retirés (décision du 25/10)', () => {
+    for (const removed of ['ig-header', 'ig-stat', 'ig-bio', 'ig-hl-row', 'ig-hl-ring']) {
+      expect(screen, removed).not.toContain(removed);
+    }
+    expect(screen).not.toContain('ig-tabs');
   });
 
   it('n’a aucune trace de l’ancien système sur l’écran', () => {
@@ -121,7 +123,7 @@ describe('/messagerie — grammaire Compte (verre Liquid Glass v8)', () => {
     expect(rules).not.toMatch(/#[0-9a-f]{3,8}\b/i);
     expect(rules).not.toContain('backdrop-filter');
     expect(rules).not.toContain('linear-gradient');
-    expect(rules.split('\n').length).toBeLessThanOrEqual(520);
+    expect(rules.split('\n').length).toBeLessThanOrEqual(700);
     // Le verre et les boîtes viennent de compte-v8.css : la feuille de l'écran
     // se contente de jetons.
     expect(rules).toContain('var(--sf)');

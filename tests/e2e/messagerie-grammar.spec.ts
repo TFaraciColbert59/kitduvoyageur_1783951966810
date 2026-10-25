@@ -29,18 +29,20 @@ test.describe('Messagerie — grammaire Compte @messagerie', () => {
         topBar: box('.ig-top'),
         bar: box('.tb'),
         buttons: document.querySelectorAll('.ig-top-btn').length,
-        rings: document.querySelectorAll('.ig-hl').length,
+        filterPill: box('.mfilter'),
         pills: box('.ig-handle'),
+        rows: document.querySelectorAll('.ig-feed-row').length,
       };
     });
 
     expect(metrics.scrollHeight).toBe(metrics.innerHeight);
-    expect(metrics.card).toEqual([12, 48, 406, 541]);
+    // La carte porte la liste dans le tiers haut ; la conversation occupe le reste.
+    expect(metrics.card).toEqual([12, 48, 406, 279]);
     expect(metrics.topBar).toEqual([12, 6, 406, 36]);
     expect(metrics.bar).toEqual([14, 868, 402, 48]);
     expect(metrics.buttons).toBe(3);
-    expect(metrics.rings).toBe(4);
     expect(metrics.pills?.[3]).toBe(34);
+    expect(metrics.filterPill?.[3]).toBe(30);
   });
 
   test('un seul champ de recherche, et l’ancienne barre globale a disparu', async ({ page }) => {
@@ -49,14 +51,16 @@ test.describe('Messagerie — grammaire Compte @messagerie', () => {
     await expect(page.locator('input[placeholder*="Rechercher"]:visible')).toHaveCount(0);
   });
 
-  test('les 4 filtres sont atteignables et l’état actif est exposé', async ({ page }) => {
-    const demandes = page.getByRole('button', { name: /^Demandes/ }).first();
-    await expect(page.locator('.ig-hl')).toHaveCount(4);
-    await demandes.click();
-    await expect(demandes).toHaveAttribute('aria-pressed', 'true');
-    // Invité : la liste reste l'état honnête « connectez-vous » (l'état vide
-    // « Aucune demande en attente » n'est visible qu'avec une session).
-    await expect(page.locator('.ig-grid-wrap .mstate')).toHaveCount(1);
+  test('les 4 filtres vivent dans le menu du bas à droite', async ({ page }) => {
+    const pill = page.locator('.mfilter');
+    await expect(pill).toContainText('Toutes');
+    await pill.click();
+    const menu = page.locator('.mfilter-menu');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('menuitemradio')).toHaveCount(4);
+    await menu.getByRole('menuitemradio', { name: /Demandes/ }).click();
+    await expect(pill).toContainText('Demandes');
+    await expect(menu).toHaveCount(0);
   });
 
   test('la recherche ouvre un drawer, sort la barre, et Échap le referme', async ({ page }) => {

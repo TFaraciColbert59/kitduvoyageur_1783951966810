@@ -54,3 +54,31 @@
 - **Autre session active dans `~/lkdv-pays`** : elle a commité mes fichiers à 17 h 00 dans un commit « docs(pays) ». D'où le worktree dédié ; ne pas travailler à deux dans le même.
 - Certaines feuilles secondaires restent portées hors du `.phone` (Radix) : si une nouvelle feuille est ajoutée, vérifier qu'elle hérite bien des jetons.
 - Le compte démo de production contient des comptes de test visibles dans l'annuaire (« Test Recette », « Final Recette ») : donnée à nettoyer, hors code.
+
+
+---
+
+## Mise à jour du 25/10, 19 h 30 — retours utilisateur + production
+
+### Demandes appliquées
+
+| Demande | Mise en œuvre | Preuve |
+|---|---|---|
+| Envoi de message impossible | l'envoi passe par `sendMessage` du hook du fil (optimiste + réconciliation) ; pièces jointes/vocal/partages rechargent le fil après l'envoi | message « Test refonte — envoi » visible dans la liste et dans le fil (prod) |
+| Barre basse disparue | plus aucun masquage lié à la conversation ; la zone basse réserve 64 px pour la barre | `bar opacity = 1`, capture prod |
+| Inverser les tailles | la carte (liste) passe à **279 px**, la conversation à **597 px** | `card [12,48,406,279]`, `mapzone [0,335,430,597]` |
+| Retirer les cercles story + textes | `.ig-header`, `.ig-bio`, `.ig-hl-row` supprimés : la carte ne porte que la liste | capture prod |
+| Filtres en bas à droite | pastille 30 px + menu 4 entrées (compteurs réels) | e2e « les 4 filtres vivent dans le menu du bas à droite » |
+| Disparition / apparition fluide | fondu sortant 120 ms avant changement de filtre, apparition décalée des rangées (22 ms/ligne), `scroll-behavior: smooth` | CSS + capture |
+| Icônes de la barre haute | compose (carré + crayon), loupe, cloche — 20 px, trait 1,8, jointures rondes | capture prod |
+
+### Porte de fidélité — 11/19, 8 écarts tous voulus
+
+Carte 541 → 279 ; identité, 3 stats, bio, anneaux supprimés ; sélecteur/liste-grille remplacé par le filtre. Les 11 ancres restantes (écran verrouillé, typo de base, barre haute, pilule, 3 ronds, scroll interne, grille 406 gap 3, barre basse 402×48, 5 items 80×44, zéro erreur console, tuile) restent conformes **en production**.
+
+### Production
+
+- **Déployé** : Worker `kitduvoyageur`, version `4df1a900-277f-4aad-bbbb-da5f9dd45a96`, 25/10 19 h 19 UTC.
+- URL : https://kitduvoyageur.faracitonyp.workers.dev/messagerie
+- Routes vérifiées après déploiement : `/`, `/compte`, `/communaute`, `/messagerie`, `/pays/fr` → **200**.
+- Incident : le premier déploiement (version `9fefd43e`) a rendu **toutes les routes en 500** (`No such module "ssr/index.js"`). **Rollback immédiat** sur `1cca8805` (déploiement `3f8bd7a8`), puis cause trouvée : le paquet n'était pas `"type": "module"` — le bundle RSC nommait `ssr/index.mjs` quand l'entrée Worker demandait `ssr/index.js`. Corrigé (paquet ESM, `tailwind.config.cjs`, `postcss.config.mjs`), build vérifié en local sur les 6 routes avant redéploiement.

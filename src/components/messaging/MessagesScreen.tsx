@@ -50,7 +50,6 @@ import type {
 } from '@/features/messaging/types/messaging.types';
 
 type FilterId = 'all' | 'direct' | 'group' | 'requests';
-type ViewId = 'list' | 'grid';
 
 const FILTERS: Array<{ id: FilterId; label: string; icon: string }> = [
   { id: 'all', label: 'Toutes', icon: 'M4 6h16v12H4z' },
@@ -106,12 +105,15 @@ const REVEAL = 96;
 function ConversationFeedRow({
   conversation,
   selected,
+  index = 0,
   onSelect,
   onLongPress,
   onSwipeAction,
 }: {
   conversation: Conversation;
   selected: boolean;
+  /** Position dans la liste : sert au décalage de l'apparition. */
+  index?: number;
   onSelect: (conv: Conversation) => void;
   onLongPress?: (conv: Conversation) => void;
   onSwipeAction?: (conv: Conversation, action: SwipeAction) => void;
@@ -189,7 +191,7 @@ function ConversationFeedRow({
   };
 
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, flex: 'none' }}>
+    <div className="mfeed-item" style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, flex: 'none', ['--i' as string]: index }}>
       {(dx < 0 || snapped) && onSwipeAction ? (
         <div style={{ position: 'absolute', inset: '0 0 0 auto', display: 'flex', width: REVEAL }}>
           {isPending ? (
@@ -318,7 +320,7 @@ function MessageThread({
   focusMessageId?: string | null;
 }) {
   const { haptic } = useHapticFeedback();
-  const { messages, loading, error, hasMore, loadingEarlier, loadEarlier, retryMessage, toggleReaction } =
+  const { messages, loading, error, hasMore, loadingEarlier, loadEarlier, retryMessage, toggleReaction, sendMessage: sendThreadMessage, refreshMessages } =
     useMessages(conversation.id, currentUserId, currentUserProfile);
   const { typingUserNames, sendTypingSignal } = useRealtimeMessaging(conversation.id, currentUserId, currentUserProfile?.full_name);
   const [forwarding, setForwarding] = useState<Message | null>(null);
@@ -528,6 +530,8 @@ function MessageThread({
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
         onTyping={sendTypingSignal}
+        onSend={sendThreadMessage}
+        onRefresh={refreshMessages}
         compact={compact}
       />
 
@@ -548,6 +552,8 @@ function MessageComposerBar({
   replyTo,
   onCancelReply,
   onTyping,
+  onSend,
+  onRefresh,
   compact,
 }: {
   conversation: Conversation;
@@ -556,6 +562,10 @@ function MessageComposerBar({
   replyTo: Message | null;
   onCancelReply: () => void;
   onTyping?: () => void;
+  /** Envoi texte : passe par le hook du fil (optimiste + réconciliation). */
+  onSend: (content: string, replyToId?: string) => Promise<void>;
+  /** Rechargement du fil après un envoi direct (pièce jointe, vocal, partage). */
+  onRefresh: () => Promise<void>;
   compact: boolean;
 }) {
   const { haptic } = useHapticFeedback();
@@ -599,7 +609,7 @@ function MessageComposerBar({
     } catch {
       /* ignore */
     }
-    await messagingService.sendMessage(conversation.id, currentUserId, text, 'text', replyTo?.id || undefined);
+    await onSend(text, replyTo?.id || undefined);
     onCancelReply();
     setSending(false);
   };
@@ -609,6 +619,7 @@ function MessageComposerBar({
     const url = await messagingService.uploadAttachment(conversation.id, file);
     if (!url) return;
     await messagingService.sendMessage(conversation.id, currentUserId, url, isGpx ? 'gpx' : file.type.startsWith('image/') ? 'image' : 'file');
+    await onRefresh();
   };
 
   if (recording) {
@@ -621,6 +632,7 @@ function MessageComposerBar({
           const url = await messagingService.uploadAttachment(conversation.id, file);
           if (!url) return;
           await messagingService.sendMessage(conversation.id, currentUserId, url, 'audio');
+          await onRefresh();
           void duration;
         }}
         onCancel={() => setRecording(false)}
@@ -713,9 +725,9 @@ function MessageComposerBar({
         onClose={() => setMenuOpen(false)}
         currentUserId={currentUserId}
         onSendGpx={(file) => void upload(file)}
-        onSendProduct={(meta: ProductMessageMeta) => void messagingService.sendMessage(conversation.id, currentUserId, meta.name, 'product', undefined, meta as unknown as Record<string, unknown>)}
-        onSendTrail={(meta: TrailMessageMeta) => void messagingService.sendMessage(conversation.id, currentUserId, meta.name, 'trail', undefined, meta as unknown as Record<string, unknown>)}
-        onSendKit={(meta: KitMessageMeta) => void messagingService.sendMessage(conversation.id, currentUserId, meta.kit_name, 'kit', undefined, meta as unknown as Record<string, unknown>)}
+        onSendProduct={(meta: ProductMessageMeta) => void messagingService.sendMessage(conversation.id, currentUserId, meta.name, 'product', undefined, meta as unknown as Record<string, unknown>).then(onRefresh)}
+        onSendTrail={(meta: TrailMessageMeta) => void messagingService.sendMessage(conversation.id, currentUserId, meta.name, 'trail', undefined, meta as unknown as Record<string, unknown>).then(onRefresh)}
+        onSendKit={(meta: KitMessageMeta) => void messagingService.sendMessage(conversation.id, currentUserId, meta.kit_name, 'kit', undefined, meta as unknown as Record<string, unknown>).then(onRefresh)}
       />
       {currentUserProfile ? null : null}
     </>
@@ -738,7 +750,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId ?? undefined);
 
   const [filter, setFilter] = useState<FilterId>('all');
-  const [view, setView] = useState<ViewId>('list');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [listFading, setListFading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -762,7 +775,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   }, []);
   useEffect(() => {
     refreshLiquidLenses(phone.current);
-  }, [view, filter, selectedId, sheetOpen, conversations.length]);
+  }, [filter, selectedId, sheetOpen, conversations.length]);
 
   /* Deep links : ?conversation=<uuid> puis ?dest=<uuid> (comportement historique). */
   useEffect(() => {
@@ -872,6 +885,17 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
     });
   }, [conversations, filter, query]);
 
+  /** Disparition puis apparition de la liste : 120 ms de fondu sortant, puis
+   *  le nouveau filtre entre (les rangées ont leur propre fondu décalé). */
+  const changeFilter = (next: FilterId) => {
+    if (next === filter) return;
+    setListFading(true);
+    window.setTimeout(() => {
+      setFilter(next);
+      setListFading(false);
+    }, 120);
+  };
+
   const open = (conversation: Conversation) => {
     setSelectedId(conversation.id);
   };
@@ -898,7 +922,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
       <h1 className="sr-only">Messagerie</h1>
       <div className="stage">
         <div className="pwrap">
-          <div className={`phone hasnext${surfaceOpen ? ' sheet-open' : ''}${selectedId ? ' chat-open' : ''}`} id="phone" ref={phone}>
+          <div className={`phone hasnext${surfaceOpen ? ' sheet-open' : ''}`} id="phone" ref={phone}>
             <div
               className="bg"
               style={{ backgroundImage: "url('/assets/images/account-bg.webp')" }}
@@ -918,19 +942,28 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 </button>
                 <div className="ig-top-r">
                   <button type="button" className="lg gbtn ig-top-btn" aria-label="Nouvelle discussion" onClick={() => setNewOpen(true)}>
-                    <Icon name="plus" className="size-[18px]" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M11 5H6.5A2.5 2.5 0 0 0 4 7.5v10A2.5 2.5 0 0 0 6.5 20h10a2.5 2.5 0 0 0 2.5-2.5V13" />
+                      <path d="M17.4 3.6a2.2 2.2 0 0 1 3 3L12 15l-4 1 1-4Z" />
+                    </svg>
                   </button>
                   <button type="button" className="lg gbtn ig-top-btn" aria-label="Rechercher une discussion" onClick={() => setSearchOpen(true)}>
-                    <Icon name="search" className="size-[18px]" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="10.8" cy="10.8" r="6.3" />
+                      <path d="m15.6 15.6 4 4" />
+                    </svg>
                   </button>
                   <button
                     type="button"
                     className="lg gbtn ig-top-btn"
                     aria-label={`Demandes de message${pendingCount ? ` : ${pendingCount} en attente` : ''}`}
-                    onClick={() => setFilter('requests')}
+                    onClick={() => changeFilter('requests')}
                     aria-pressed={filter === 'requests'}
                   >
-                    <Icon name="bell" className="size-[18px]" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M6.2 9.4a5.8 5.8 0 0 1 11.6 0c0 4.1 1.6 5.6 1.6 5.6H4.6s1.6-1.5 1.6-5.6Z" />
+                      <path d="M10 18.2a2 2 0 0 0 4 0" />
+                    </svg>
                     {pendingCount > 0 ? <i className="tb-badge">{pendingCount}</i> : null}
                   </button>
                 </div>
@@ -938,83 +971,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
 
               <div className="card cs" id="card">
                 <div className="card-scroll">
-                  <div className="ig-header">
-                    <div className="ig-left">
-                      <span className="ig-avi-wrap">
-                        <span className="ig-avi-in">
-                          {headerAvatar ? (
-                            // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-                            <img src={headerAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <span style={{ font: '700 20px var(--sf)', color: 'var(--tint)' }}>{initials(headerTitle)}</span>
-                          )}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="ig-right">
-                      <div className="ig-stats" role="group" aria-label="Chiffres de la messagerie">
-                        <button type="button" className="ig-stat" onClick={() => setFilter('all')}>
-                          <b className="num">{conversations.filter((conversation) => conversation.status !== 'pending').length}</b>
-                          <span>discussions</span>
-                        </button>
-                        <button type="button" className="ig-stat" onClick={() => setFilter('all')}>
-                          <b className="num">{unreadTotal}</b>
-                          <span>non lus</span>
-                        </button>
-                        <button type="button" className="ig-stat" onClick={() => setFilter('requests')}>
-                          <b className="num">{pendingCount}</b>
-                          <span>demandes</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="ig-bio">
-                    <div className="ig-bio-top">
-                      <b className="ig-bio-cc">{headerTitle}</b>
-                      <span className="ig-bio-dot" aria-hidden="true">·</span>
-                      <span className="ig-bio-stats">
-                        {selected
-                          ? selected.type === 'group'
-                            ? `${members.length || 1} membres`
-                            : 'Membre LKDV'
-                          : `${unreadTotal} message${unreadTotal > 1 ? 's' : ''} non lu${unreadTotal > 1 ? 's' : ''}`}
-                      </span>
-                    </div>
-                    <p className="ig-bio-text">{selected ? lastPreview(selected) : 'Vos échanges avec la communauté.'}</p>
-                  </div>
-
-                  <div className="ig-hl-row" role="group" aria-label="Filtrer les discussions">
-                    {FILTERS.map((item) => {
-                      const count = item.id === 'requests' ? pendingCount : item.id === 'all' ? conversations.length : conversations.filter((conversation) => conversation.type === item.id).length;
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className={`ig-hl${filter === item.id ? ' live' : ''}`}
-                          aria-pressed={filter === item.id}
-                          onClick={() => {
-                            haptic('light');
-                            setFilter(item.id);
-                          }}
-                        >
-                          <span className="ig-hl-ring">
-                            <span className="ig-hl-in">
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tint)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d={item.icon} />
-                              </svg>
-                            </span>
-                          </span>
-                          <span>
-                            {item.label}
-                            {count > 0 && item.id === 'requests' ? ` ${count}` : ''}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="ig-grid-wrap">
+                  <div className="ig-grid-wrap" style={{ opacity: listFading ? 0 : 1, transition: 'opacity .15s ease' }}>
                     {error ? (
                       <div className="mstate" role="alert">
                         <b>Discussions indisponibles</b>
@@ -1053,66 +1010,79 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                           </button>
                         )}
                       </div>
-                    ) : view === 'list' ? (
+                    ) : (
                       visible.map((conversation) => (
                         <ConversationFeedRow
                           key={conversation.id}
                           conversation={conversation}
                           selected={conversation.id === selectedId}
+                          index={visible.indexOf(conversation)}
                           onSelect={open}
                           onLongPress={currentUserId ? setOptionsConv : undefined}
                           onSwipeAction={currentUserId ? swipe : undefined}
                         />
                       ))
-                    ) : (
-                      <div className="ig-grid" role="list" aria-label="Discussions (grille)">
-                        {visible.map((conversation) => (
-                          <button
-                            key={conversation.id}
-                            type="button"
-                            role="listitem"
-                            className="igt"
-                            onClick={() => open(conversation)}
-                            aria-label={conversationTitle(conversation)}
-                          >
-                            {conversation.avatar_url ? (
-                              // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-                              <img src={conversation.avatar_url} alt="" loading="lazy" />
-                            ) : (
-                              <span style={{ font: '700 15px var(--sf)', color: 'var(--tint)' }}>{initials(conversationTitle(conversation))}</span>
-                            )}
-                            <b>{conversationTitle(conversation)}</b>
-                            {conversation.unread_count > 0 ? <span className="mrow-badge">{conversation.unread_count > 99 ? '99+' : conversation.unread_count}</span> : null}
-                          </button>
-                        ))}
-                      </div>
                     )}
                   </div>
                 </div>
 
-                <div className="ig-tabs-float">
-                  <div className="ig-tabs" role="tablist" aria-label="Affichage des discussions">
-                    <span className="ig-th" style={{ transform: view === 'list' ? 'translateX(0%)' : 'translateX(100%)' }} aria-hidden="true" />
-                    <button type="button" role="tab" aria-selected={view === 'list'} aria-label="Liste" onClick={() => setView('list')}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                        <path d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
-                    </button>
-                    <button type="button" role="tab" aria-selected={view === 'grid'} aria-label="Grille" onClick={() => setView('grid')}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <rect x="3" y="3" width="7" height="7" />
-                        <rect x="14" y="3" width="7" height="7" />
-                        <rect x="14" y="14" width="7" height="7" />
-                        <rect x="3" y="14" width="7" height="7" />
-                      </svg>
-                    </button>
-                  </div>
+                <div className="mfilter-float">
+                  <button
+                    type="button"
+                    className="mfilter"
+                    onClick={() => setFilterOpen((open) => !open)}
+                    aria-haspopup="menu"
+                    aria-expanded={filterOpen}
+                    aria-label={`Filtre : ${FILTERS.find((item) => item.id === filter)?.label}`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M4 6h16M7 12h10M10 18h4" />
+                    </svg>
+                    <span>{FILTERS.find((item) => item.id === filter)?.label}</span>
+                    {filter === 'requests' && pendingCount > 0 ? <b className="mrow-badge">{pendingCount}</b> : null}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: filterOpen ? 'rotate(180deg)' : 'none', transition: 'transform .28s cubic-bezier(.3,1.35,.4,1)' }}>
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+
+                  {filterOpen ? (
+                    <>
+                      <button type="button" className="mfilter-scrim" aria-label="Fermer le filtre" onClick={() => setFilterOpen(false)} />
+                      <div className="mfilter-menu" role="menu" aria-label="Filtrer les discussions">
+                        {FILTERS.map((item) => {
+                          const count =
+                            item.id === 'requests'
+                              ? pendingCount
+                              : item.id === 'all'
+                                ? conversations.filter((conversation) => conversation.status !== 'pending').length
+                                : conversations.filter((conversation) => conversation.type === item.id && conversation.status !== 'pending').length;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              role="menuitemradio"
+                              aria-checked={filter === item.id}
+                              className={`mi${filter === item.id ? ' on' : ''}`}
+                              onClick={() => {
+                                haptic('light');
+                                changeFilter(item.id);
+                                setFilterOpen(false);
+                              }}
+                            >
+                              <span>{item.label}</span>
+                              {count > 0 ? <b className="num">{count}</b> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               </div>
             </section>
 
             <section className="mapzone" aria-label="Conversation">
-              <div className="map" style={{ display: 'flex', flexDirection: 'column', background: 'var(--page)' }}>
+              <div className="map" style={{ display: 'flex', flexDirection: 'column', background: 'var(--page)', paddingBottom: 64 }}>
                 {selected ? (
                   <>
                     <div className="mpane-h">
@@ -1279,14 +1249,14 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                       Fermer
                     </button>
                   </div>
-                  <MessageThread
+                  {sheetOpen ? <MessageThread
                     key={`drawer-${selected.id}`}
                     conversation={selected}
                     currentUserId={currentUserId as string}
                     currentUserProfile={currentUserProfile}
                     members={members}
                     compact={false}
-                  />
+                  /> : null}
                 </div>
               </AccountDrawerHost>
             ) : null}
