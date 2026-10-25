@@ -42,6 +42,10 @@ export default function MobileNavWrapper() {
     // Sans cela, le plateau contextuel « Récit / Carte & GPX… » et la barre
     // globale se superposent aux contrôles de la fiche (constaté en recette).
     (pathname?.startsWith('/carnets/') && !pathname.startsWith('/carnets/nouveau')) ||
+    // Fiche pays : elle porte sa propre top bar et la barre basse du Compte
+    // (48 px). Sans cela, le plateau contextuel et la barre globale se
+    // superposent aux contrôles de la fiche.
+    /^\/pays\/[a-z]{2}$/i.test(pathname ?? '') ||
     pathname === '/communaute' ||
     pathname?.startsWith('/communaute/publier') ||
     // A Reel is a true full-screen viewer with its own close/back controls.

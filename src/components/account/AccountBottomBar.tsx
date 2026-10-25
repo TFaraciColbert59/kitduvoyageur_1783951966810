@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 
 const ICONS: Record<string, React.ReactNode> = {
   explorer: (
@@ -21,7 +22,17 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
   hub: (
     <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 5h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H9l-4 3v-3H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" />
+    </svg>
+  ),
+  communaute: (
+    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 11.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM3 19.5c.6-3.3 3-5.3 6-5.3s5.4 2 6 5.3M16.5 11a2.6 2.6 0 1 0 0-5.2M17 14.4c2.1.4 3.5 2.2 4 4.6" />
+    </svg>
+  ),
+  messages: (
+    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 12a8 8 0 0 1-8 8H8l-5 3 1.4-4.6A8 8 0 1 1 21 12Z" />
     </svg>
   ),
   compte: (
@@ -32,10 +43,10 @@ const ICONS: Record<string, React.ReactNode> = {
 };
 
 const ACCOUNT_TABS = [
-  { id: 'explorer', label: 'Explorer', href: '/explorer' },
-  { id: 'compas', label: 'Compas', href: '/compas' },
-  { id: 'materiel', label: 'Matériel', href: '/materiel' },
   { id: 'hub', label: 'Hub', href: '/hub' },
+  { id: 'explorer', label: 'Explorer', href: '/explorer' },
+  { id: 'communaute', label: 'Communauté', href: '/communaute' },
+  { id: 'messages', label: 'Messages', href: '/messagerie' },
   { id: 'compte', label: 'Compte', href: '/compte' },
 ] as const;
 
@@ -44,16 +55,60 @@ const ACCOUNT_TABS = [
  * 40 px, labels 600 10 px. Sur `/communaute`, aucun onglet n'est actif : la
  * lentille est masquée.
  */
-export function AccountBottomBar() {
+export function AccountBottomBar({
+  /**
+   * `link` (défaut) garde le rendu historique des écrans déjà en place.
+   * `button` reproduit le DOM de la référence Compte (5 boutons 80 × 44),
+   * indispensable pour que les invariants de la grammaire soient mesurables.
+   */
+  renderAs = 'link',
+  active = null,
+  badges = {},
+}: {
+  renderAs?: 'link' | 'button';
+  active?: string | null;
+  /** Pastilles réelles (jamais inventées) : `{ hub: 4 }`. */
+  badges?: Partial<Record<string, number>>;
+} = {}) {
+  const router = useRouter();
+  const pathname = usePathname();
   return (
-    <nav className="tb" aria-label="Navigation principale">
+    <nav
+      className="tb"
+      aria-label="Navigation principale"
+    >
       <span className="lens" aria-hidden="true" style={{ opacity: 0 }} />
-      {ACCOUNT_TABS.map((tab) => (
-        <Link key={tab.id} href={tab.href} prefetch={false}>
-          {ICONS[tab.id]}
-          <span>{tab.label}</span>
-        </Link>
-      ))}
+      {ACCOUNT_TABS.map((tab) => {
+        const isActive = active === tab.id || (!active && pathname?.startsWith(tab.href));
+        const badge = badges[tab.id];
+        const content = (
+          <>
+            {ICONS[tab.id]}
+            {badge && badge > 0 ? (
+              <i className="tb-badge" aria-hidden="true">
+                {badge > 9 ? '9+' : badge}
+              </i>
+            ) : null}
+            <span>{tab.label}</span>
+          </>
+        );
+        return renderAs === 'button' ? (
+          <button
+            key={tab.id}
+            type="button"
+            className={isActive ? 'on' : ''}
+            aria-label={tab.label}
+            aria-current={isActive ? 'page' : undefined}
+            onClick={() => router.push(tab.href)}
+          >
+            {content}
+          </button>
+        ) : (
+          <Link key={tab.id} href={tab.href} prefetch={false}>
+            {content}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

@@ -1,0 +1,139 @@
+{
+  "url": "http://127.0.0.1:4001/carnets/b2000000-0000-0000-0000-000000000011",
+  "doc": [
+    932,
+    932
+  ],
+  "base": {
+    "font-size": "14px",
+    "letter-spacing": "-0.14px",
+    "color": "rgb(23, 43, 36)"
+  },
+  "top": [
+    0,
+    0,
+    430,
+    597.1
+  ],
+  "topBar": [
+    12,
+    6,
+    406,
+    36
+  ],
+  "pill": [
+    12,
+    7,
+    214,
+    34
+  ],
+  "buttons": [
+    [
+      38,
+      38,
+      "50%"
+    ],
+    [
+      38,
+      38,
+      "50%"
+    ],
+    [
+      38,
+      38,
+      "50%"
+    ]
+  ],
+  "card": [
+    12,
+    48,
+    406,
+    541.1
+  ],
+  "cardRadius": {
+    "border-radius": "24px"
+  },
+  "scroll": {
+    "padding": "8px 12px 56px",
+    "gap": "7px"
+  },
+  "header": [
+    24,
+    56,
+    382,
+    68
+  ],
+  "stats": [
+    [
+      100.7,
+      38.5,
+      "14px"
+    ],
+    [
+      100.7,
+      38.5,
+      "14px"
+    ],
+    [
+      100.7,
+      38.5,
+      "14px"
+    ]
+  ],
+  "bio": {
+    "box": [
+      26,
+      151,
+      378,
+      15.6
+    ],
+    "font-size": "12px",
+    "line-height": "15.6px"
+  },
+  "rings": [
+    28,
+    176.6,
+    71.6,
+    56.4
+  ],
+  "ring": [
+    41.8,
+    176.6,
+    44,
+    44
+  ],
+  "grid": [
+    10,
+    243,
+    410,
+    95.2
+  ],
+  "tile": null,
+  "tabs": [
+    320,
+    549.1,
+    88,
+    30
+  ],
+  "lens": [
+    322.5,
+    551.6,
+    41.5,
+    25
+  ],
+  "tb": [
+    14,
+    868,
+    402,
+    48
+  ],
+  "tbItems": 5,
+  "mapzone": [
+    0,
+    597.1,
+    430,
+    334.9
+  ],
+  "classes": true,
+  "text": "Aller au contenu principal Trek au Népal : Tour des Annapurnas & Lac Tilicho Trek au Népal : Tour des Annapurnas & Lac Tilicho 27,4 km dista"
+}

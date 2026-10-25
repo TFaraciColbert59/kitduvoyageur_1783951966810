@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import AppShell from '@/components/shell/AppShell';
-import { CountryDetail } from '@/lib/countryDetails';
-import AppShellDesktop from '@/components/shell/AppShellDesktop';
-import PaysLeftSidebar, { PaysSection } from '@/components/pays/PaysLeftSidebar';
-import PaysRightSidebar from '@/components/pays/PaysRightSidebar';
-import PaysHeroOverview from '@/components/pays/PaysHeroOverview';
+// Fiche pays — la coquille est la grammaire Compte (verre Liquid Glass v8) ;
+// le contenu détaillé de chaque section reste celui des vues existantes,
+// monté dans le drawer de la carte : rien ne disparaît au passage.
+
+import React, { useState } from 'react';
+import { PaysGlassV8 } from '@/components/pays/PaysGlassV8';
 import PaysDestinationsView from '@/components/pays/PaysDestinationsView';
 import PaysActivitesView from '@/components/pays/PaysActivitesView';
 import PaysCultureView from '@/components/pays/PaysCultureView';
@@ -15,28 +13,18 @@ import PaysGastronomieView from '@/components/pays/PaysGastronomieView';
 import PaysHebergementsView from '@/components/pays/PaysHebergementsView';
 import PaysPratiqueView from '@/components/pays/PaysPratiqueView';
 import PaysCommunauteView from '@/components/pays/PaysCommunauteView';
-import MobileCountryDetailView from '@/components/pays/MobileCountryDetailView';
+import type { CountryDetail } from '@/lib/countryDetails';
 import type { KlookBlock } from '@/features/discovery/providers/klook/klookTypes';
 
-function getFlagEmoji(code: string): string {
-  if (!code) return '🌐';
-  const codePoints = code
-    .toUpperCase()
-    .split('')
-    .map((char) => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
-}
-
-const PAYS_SECTIONS = [
-  'presentation',
-  'destinations',
-  'activites',
-  'culture',
-  'gastronomie',
-  'hebergements',
-  'pratique',
-  'communaute',
-] as const satisfies readonly PaysSection[];
+export type PaysSectionKey =
+  | 'presentation'
+  | 'destinations'
+  | 'activites'
+  | 'culture'
+  | 'gastronomie'
+  | 'hebergements'
+  | 'pratique'
+  | 'communaute';
 
 interface CountryDetailClientProps {
   country: CountryDetail;
@@ -44,38 +32,12 @@ interface CountryDetailClientProps {
 }
 
 export default function CountryDetailClient({ country, klookBlock }: CountryDetailClientProps) {
-  const router = useRouter();
-  const [activeSection, setActiveSection] = useState<PaysSection>('presentation');
+  const [detailsSection, setDetailsSection] = useState<PaysSectionKey | null>(null);
 
-  // Lien direct vers une section (`?section=communaute`, ex. depuis le Compas
-  // pour la Bouteille à la mer). Lu au montage : la page reste statique.
-  useEffect(() => {
-    const wanted = new URLSearchParams(window.location.search).get('section');
-    if (wanted && (PAYS_SECTIONS as readonly string[]).includes(wanted))
-      setActiveSection(wanted as PaysSection);
-  }, []);
-
-  const handleCountryGlobeClick = useCallback(
-    (targetCode: string) => {
-      if (targetCode && targetCode.toLowerCase() !== country.code.toLowerCase()) {
-        router.push(`/pays/${targetCode.toLowerCase()}`);
-      }
-    },
-    [country.code, router]
-  );
-
-  const flagEmoji = getFlagEmoji(country.code);
-
-  const renderSectionContent = () => {
-    switch (activeSection) {
+  const renderDetails = (section: PaysSectionKey): React.ReactNode => {
+    switch (section) {
       case 'destinations':
-        return (
-          <PaysDestinationsView
-            country={country}
-            klookBlock={klookBlock}
-            onSelectDestination={() => setActiveSection('activites')}
-          />
-        );
+        return <PaysDestinationsView country={country} klookBlock={klookBlock} onSelectDestination={() => {}} />;
       case 'activites':
         return <PaysActivitesView country={country} klookBlock={klookBlock} />;
       case 'culture':
@@ -85,46 +47,37 @@ export default function CountryDetailClient({ country, klookBlock }: CountryDeta
       case 'hebergements':
         return <PaysHebergementsView country={country} />;
       case 'pratique':
-        return <PaysPratiqueView country={country} />;
+        return <PaysPratiqueView country={country} isMobile />;
       case 'communaute':
         return <PaysCommunauteView country={country} />;
       case 'presentation':
-      default:
         return (
-          <PaysHeroOverview
-            country={country}
-            flagEmoji={flagEmoji}
-            onNavigateSection={setActiveSection}
-          />
+          <div className="space-y-3">
+            {country.presentation_paragraphes?.map((par, i) => (
+              <p key={i} style={{ font: '400 12.5px/1.45 var(--sf)', color: 'var(--label2)', margin: 0 }}>
+                {par}
+              </p>
+            ))}
+            {country.citation_texte ? (
+              <p style={{ font: '400 12.5px/1.45 var(--sf)', color: 'var(--tint)', margin: 0 }}>
+                {country.citation_texte}
+                {country.citation_auteur ? ` — ${country.citation_auteur}` : ''}
+              </p>
+            ) : null}
+          </div>
         );
+      default:
+        return null;
     }
   };
 
   return (
-    <AppShellDesktop
-      mobileSlot={
-        <AppShell videoBackground={true}>
-          <MobileCountryDetailView country={country} flagEmoji={flagEmoji} klookBlock={klookBlock} />
-        </AppShell>
-      }
-      sidebarLeft={
-        <PaysLeftSidebar
-          country={country}
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-          flagEmoji={flagEmoji}
-          onPrint={() => window.print()}
-        />
-      }
-      sidebarRight={
-        <PaysRightSidebar
-          country={country}
-          flagEmoji={flagEmoji}
-          onCountryGlobeClick={handleCountryGlobeClick}
-        />
-      }
-    >
-      {renderSectionContent()}
-    </AppShellDesktop>
+    <PaysGlassV8
+      country={country}
+      detailsSection={detailsSection}
+      onOpenDetails={setDetailsSection}
+      onCloseDetails={() => setDetailsSection(null)}
+      renderDetails={renderDetails}
+    />
   );
 }
