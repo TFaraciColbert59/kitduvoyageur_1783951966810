@@ -502,3 +502,121 @@
   display: block;
   font-weight: 800;
 }
+
+/* --- Compléments des formulaires (erreurs, notes, aperçus) -------------- */
+.lkdv-form-error-inline {
+  display: block;
+  color: #7a241c;
+  font: 600 10px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-form-note {
+  margin: 2px 0 10px;
+  color: var(--feed-muted, #56665d);
+  font: 500 10.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-create-step-back {
+  min-height: 26px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--feed-ink, #17402c);
+  font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.lkdv-create-step-back:active {
+  transform: scale(0.97);
+}
+
+/* Aperçu simple du carnet : vignette + lignes de la carte. */
+.lkdv-create-form-preview {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 10px;
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.09);
+}
+
+.lkdv-create-form-preview-cover {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  border-radius: 11px;
+  background: rgba(23, 64, 44, 0.1);
+  object-fit: cover;
+  font-size: 20px;
+}
+
+.lkdv-create-form-preview-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lkdv-create-form-preview-txt b {
+  overflow: hidden;
+  color: var(--feed-ink, #17402c);
+  font: 700 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-create-form-preview-txt small {
+  overflow: hidden;
+  color: var(--feed-muted, #56665d);
+  font: 500 9.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Aperçu 9:16 de la story, borné pour ne jamais pousser le footer. */
+.lkdv-create-story-frame {
+  position: relative;
+  width: 124px;
+  aspect-ratio: 9 / 16;
+  max-height: 176px;
+  margin: 0 auto 10px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgba(23, 64, 44, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 0 0 0.5px rgba(23, 43, 36, 0.12);
+}
+
+.lkdv-create-story-frame img,
+.lkdv-create-story-frame video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-create-story-frame figcaption {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  max-height: 46px;
+  overflow: hidden;
+  padding: 5px 7px;
+  border-radius: 9px;
+  background: rgba(12, 20, 16, 0.55);
+  color: #fff;
+  font: 600 9px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-create-step-back:active {
+    transform: none;
+  }
+}

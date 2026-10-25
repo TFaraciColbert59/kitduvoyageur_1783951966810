@@ -2,10 +2,21 @@
 
 import React from 'react';
 
-export function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+export function Field({
+  label,
+  hint,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  /** Associe le libellé au contrôle quand l’appelant fournit un `id`. */
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="lkdv-form-field">
-      <label>{label}</label>
+      <label htmlFor={htmlFor}>{label}</label>
       {children}
       {hint ? <span className="hint">{hint}</span> : null}
     </div>

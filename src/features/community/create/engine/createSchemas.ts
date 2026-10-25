@@ -22,6 +22,10 @@ export type PostAudience = (typeof POST_AUDIENCES)[number];
 export const STORY_AUDIENCES = ['public', 'abonnies', 'only_me'] as const;
 export type StoryAudience = (typeof STORY_AUDIENCES)[number];
 
+/** Politique de réponse, alignée sur `post_stories.reply_policy`. */
+export const STORY_REPLY_POLICIES = ['everyone', 'followers', 'off'] as const;
+export type StoryReplyPolicy = (typeof STORY_REPLY_POLICIES)[number];
+
 export const KIT_SEASONS = ['toute_saison', 'printemps', 'ete', 'automne', 'hiver'] as const;
 export type KitSeason = (typeof KIT_SEASONS)[number];
 
@@ -186,9 +190,12 @@ const postSchema = z
   });
 
 const storySchema = z.object({
-  media: mediaArray(MEDIA_MAX_COUNT).min(1, 'Ajoute au moins un média.'),
+  media: mediaArray(1).min(1, 'Ajoute au moins un média.'),
   caption: z.string().max(280, '280 caractères maximum.').default(''),
   audience: z.enum(STORY_AUDIENCES, { error: 'Choisis une audience.' }).default('public'),
+  replyPolicy: z
+    .enum(STORY_REPLY_POLICIES, { error: 'Choisis une politique de réponse.' })
+    .default('everyone'),
 });
 
 const carnetSchema = z
@@ -230,6 +237,7 @@ const kitSchema = z.object({
   season: z.enum(KIT_SEASONS, { error: 'Choisis une saison.' }).default('toute_saison'),
   weightG: z
     .number({ error: 'Le poids est requis.' })
+    .int('Le poids doit être un nombre entier de grammes.')
     .positive('Le poids doit être supérieur à 0 g.')
     .max(60_000, 'Le poids ne peut pas dépasser 60 000 g.')
     .default(0),
@@ -295,6 +303,7 @@ const defaultsFactories = {
     media: [],
     caption: '',
     audience: 'public',
+    replyPolicy: 'everyone',
   }),
   carnet: (): CarnetFormValues => ({
     title: '',
@@ -354,6 +363,7 @@ export const CREATE_FIELD_LABELS: Record<string, string> = {
   eventDuration: 'Durée',
   eventMax: 'Participants maximum',
   caption: 'Légende',
+  replyPolicy: 'Réponses',
   destination: 'Destination',
   startDate: 'Date de début',
   endDate: 'Date de fin',
