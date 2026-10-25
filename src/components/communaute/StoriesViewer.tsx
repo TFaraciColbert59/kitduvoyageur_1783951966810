@@ -106,7 +106,21 @@ export default function StoriesViewer({
   const videoRef = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     document.body.dataset.storyOpen = 'true';
-    return () => { delete document.body.dataset.storyOpen; };
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>(
+      '.tb, nav[aria-label="Navigation principale"], .account-bottom-bar, [data-account-bottom-bar]'
+    ));
+    const previous = nodes.map((node) => node.style.display);
+    nodes.forEach((node) => {
+      node.style.display = 'none';
+      node.setAttribute('aria-hidden', 'true');
+    });
+    return () => {
+      delete document.body.dataset.storyOpen;
+      nodes.forEach((node, index) => {
+        node.style.display = previous[index] ?? '';
+        node.removeAttribute('aria-hidden');
+      });
+    };
   }, []);
 
   const progressRef = useRef(0);
