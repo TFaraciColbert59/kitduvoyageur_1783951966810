@@ -826,10 +826,24 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   // Préférences locales de l'appareil (jamais envoyées au serveur).
   const [hideReads, setHideReads] = useState(false);
   const [notifyPref, setNotifyPref] = useState(false);
+  const [offline, setOffline] = useState(false);
   const [members, setMembers] = useState<ConversationMember[]>([]);
   const [deepLinkError, setDeepLinkError] = useState<string | null>(null);
   const handledDest = useRef<string | null>(null);
   const handledConv = useRef(false);
+
+  // Réseau : bandeau honnête + renvoi automatique géré dans le fil.
+  useEffect(() => {
+    const sync = () => setOffline(typeof navigator !== 'undefined' && navigator.onLine === false);
+    sync();
+    window.addEventListener('online', sync);
+    window.addEventListener('offline', sync);
+    return () => {
+      window.removeEventListener('online', sync);
+      window.removeEventListener('offline', sync);
+    };
+  }, []);
+
 
   useEffect(() => {
     try {
@@ -941,6 +955,14 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
 
   const selected = conversations.find((conversation) => conversation.id === selectedId) ?? null;
   const unreadTotal = useMemo(() => conversations.reduce((total, conversation) => total + (conversation.unread_count || 0), 0), [conversations]);
+  // Badge d'application (PWA / navigateur qui le supporte) : compteur réel.
+  // Déclaré APRÈS `unreadTotal` : une dépendance évaluée avant sa déclaration
+  // lève une ReferenceError et fait tomber l'écran dans l'error boundary.
+  useEffect(() => {
+    const badge = navigator as Navigator & { setAppBadge?: (n?: number) => Promise<void> };
+    if (!badge.setAppBadge) return;
+    void badge.setAppBadge(unreadTotal > 0 ? unreadTotal : undefined).catch(() => {});
+  }, [unreadTotal]);
   const pendingCount = useMemo(() => conversations.filter((conversation) => conversation.status === 'pending').length, [conversations]);
 
   const visible = useMemo(() => {
@@ -1148,6 +1170,11 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
             </section>
 
             <section className="mapzone" aria-label="Conversation">
+              {offline ? (
+                <div className="moffline" role="status">
+                  Hors ligne — vos messages restent en brouillon local et partiront au retour du réseau.
+                </div>
+              ) : null}
               <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--page)', paddingBottom: 64 }}>
                 {selected ? (
                   <>
