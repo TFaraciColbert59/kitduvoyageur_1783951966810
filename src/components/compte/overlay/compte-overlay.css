@@ -375,3 +375,14 @@
 .lkdv-post-drawer .lkdv-overlay-close {
   display: none !important;
 }
+
+/* Le panneau commentaires/partage commence sous la pilule auteur.
+   On décale le panneau lui-même (pas seulement un padding interne qui peut
+   être neutralisé par le scroll) pour garantir la même position des deux côtés. */
+.lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel {
+  top: 62px !important;
+  border-radius: 24px !important;
+}
+.lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel-body {
+  padding-top: 8px !important;
+}
