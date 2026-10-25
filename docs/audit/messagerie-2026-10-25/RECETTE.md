@@ -99,3 +99,18 @@ Correctif durable : la refonte a été **portée et commitée dans les trois lig
 | `~/Desktop/lkdv-cf-carnet2` (`cf/cf-carnet-latest`) | `0f21c993` | commité, non déployé |
 
 Un prochain déploiement depuis l'une de ces trois copies inclura donc la refonte. Un déploiement depuis une **quatrième** copie (non identifiée) la retirerait encore.
+
+
+---
+
+## Lots A et B + réseau/perf (25/10, 22 h 40)
+
+| Livré | Vérification |
+|---|---|
+| Fil dégagé, jour collant, saisie animée, double-tap ❤️, brouillons, copier, `role=log` | prod `48ae8128` |
+| Pastille groupe, accusés réglables, notifications navigateur, réessai hors-ligne | prod `6fb8ad53` |
+| Bandeau hors-ligne, badge d'application, `content-visibility` des bulles | prod `1eceac44` |
+
+**Incident (5 min) :** le badge d'application a été déclaré avant `unreadTotal` → `ReferenceError` → error boundary sur toute la page. Corrigé (effet déplacé après la déclaration), redéployé, prod vérifiée : 14 rangées, aucune erreur.
+
+**Déploiements concurrents :** l'autre session utilise `vinext-cloudflare deploy --skip-build` après un `rm -rf .cloudflare/output && npm run build:vinext && npm run deploy:vinext` dans `~/Desktop/lkdv-cloudflare`. Ce worktree porte maintenant la refonte et le lot A/B : ses builds republient donc le bon écran.
