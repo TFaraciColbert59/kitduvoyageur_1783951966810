@@ -1568,3 +1568,38 @@ body[data-story-open="true"] nav[aria-label="Navigation principale"] { display: 
 .lkdv-story-options .pmi-more-pill { width: 44px !important; height: 44px !important; }
 .lkdv-story-options + * { }
 .lkdv-post-author.lkdv-account-glass { min-height: 44px !important; height: 44px !important; }
+
+/* Drawer création : surface lisible, formulaire scrollable, footer fixe. */
+.lkdv-half-drawer:has(.lkdv-create-selector) {
+  background: linear-gradient(180deg, rgba(255,255,255,.84), rgba(249,251,246,.7) 55%, rgba(255,255,255,.78)) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.7) brightness(1.04) !important;
+  backdrop-filter: blur(30px) saturate(1.7) brightness(1.04) !important;
+}
+.lkdv-drawer-body:has(.lkdv-create-selector) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+.lkdv-drawer-body:has(.lkdv-create-selector) .lkdv-create-selector { flex: none; }
+.lkdv-embedded-form {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 8px;
+}
+.lkdv-embedded-form-footer {
+  position: static;
+  flex: none;
+  margin: 0 -14px;
+  padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255,255,255,.94);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+.lkdv-form-intro { color: #17402C !important; opacity: 1 !important; font-weight: 600 !important; }
+.lkdv-form-field > label { color: #17402C !important; }
+.lkdv-form-field input, .lkdv-form-field textarea, .lkdv-form-field select { color: #17402C !important; }
+.lkdv-create-selector button { color: rgba(23,64,44,.55) !important; }
+.lkdv-create-selector button[aria-selected="true"], .lkdv-create-selector button.active { color: #17402C !important; }
