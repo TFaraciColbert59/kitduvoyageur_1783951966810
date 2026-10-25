@@ -1,0 +1,25 @@
+{
+  "observed_date": "2026-10-25",
+  "k": "intents_summary",
+  "query": "select action_type,state,count(*) n,min(business_effective_at) first_business_date,max(business_effective_at) last_business_date,min(available_at) first_available_at,max(attempts) max_attempts from public.progression_award_intents group by action_type,state order by action_type,state;",
+  "data": [
+    {
+      "action_type": "carnet_published",
+      "state": "pending",
+      "n": 42,
+      "first_business_date": "2026-01-18 08:00:00+00",
+      "last_business_date": "2026-10-23 21:19:28.032522+00",
+      "first_available_at": "2026-10-22 20:51:00.670715+00",
+      "max_attempts": 0
+    },
+    {
+      "action_type": "carnet_published",
+      "state": "refused",
+      "n": 11,
+      "first_business_date": "2026-04-04 09:00:00+00",
+      "last_business_date": "2026-10-23 14:13:38.400297+00",
+      "first_available_at": "2026-10-22 20:51:00.670715+00",
+      "max_attempts": 1
+    }
+  ]
+}

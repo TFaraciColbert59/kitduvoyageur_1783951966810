@@ -1,0 +1,10 @@
+{
+  "observed_date": "2026-10-25",
+  "k": "function_earn",
+  "query": "select pg_get_functiondef(p.oid) definition from pg_proc p join pg_namespace n on p.pronamespace=n.oid where n.nspname='public' and p.proname='legacy_loyalty_earn';",
+  "data": [
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.legacy_loyalty_earn(p_user_id uuid, p_points integer, p_reason text, p_source_id text, p_type text DEFAULT 'earned'::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_balance integer;\n  v_new_balance integer;\n  v_level text;\nBEGIN\n  IF p_points IS NULL OR p_points <= 0 THEN\n    RETURN jsonb_build_object('success', false, 'error', 'invalid_points');\n  END IF;\n\n  IF p_source_id IS NULL OR length(p_source_id) = 0 OR length(p_source_id) > 200 THEN\n    RETURN jsonb_build_object('success', false, 'error', 'invalid_source');\n  END IF;\n\n  PERFORM 1 FROM public.user_profiles WHERE id = p_user_id FOR UPDATE;\n  IF NOT FOUND THEN\n    RETURN jsonb_build_object('success', false, 'error', 'user_not_found');\n  END IF;\n\n  SELECT COALESCE(SUM(points), 0) INTO v_balance\n  FROM public.loyalty_history\n  WHERE user_id = p_user_id;\n\n  IF EXISTS (SELECT 1 FROM public.loyalty_history WHERE source_id = p_source_id AND user_id = p_user_id) THEN\n    SELECT loyalty_level INTO v_level FROM public.user_profiles WHERE id = p_user_id;\n    RETURN jsonb_build_object('success', true, 'idempotent', true, 'balance', v_balance, 'level', v_level);\n  END IF;\n\n  INSERT INTO public.loyalty_history (user_id, action, points, type, source_id)\n  VALUES (p_user_id, COALESCE(p_reason, 'Gain'), p_points, COALESCE(p_type, 'earned'), p_source_id);\n\n  v_new_balance := v_balance + p_points;\n  v_level := public.legacy_loyalty_level_for(v_new_balance);\n\n  UPDATE public.user_profiles\n     SET loyalty_level = v_level,\n         updated_at = now()\n   WHERE id = p_user_id;\n\n  RETURN jsonb_build_object('success', true, 'balance', v_new_balance, 'level', v_level);\nEND; $function$\n"
+    }
+  ]
+}

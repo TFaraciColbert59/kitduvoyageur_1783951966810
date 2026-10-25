@@ -1,0 +1,15 @@
+{
+  "observed_date": "2026-10-25",
+  "k": "contribution_constraints",
+  "query": "select conname,pg_get_constraintdef(oid) definition from pg_constraint where conrelid='public.pending_contributions'::regclass and contype in ('u','c');",
+  "data": [
+    {
+      "conname": "pending_contributions_action_type_check",
+      "definition": "CHECK ((action_type = ANY (ARRAY['like'::text, 'comment'::text, 'post'::text, 'carnet'::text, 'group_message'::text, 'guide_contribution'::text, 'referral'::text, 'checklist'::text, 'info_correction'::text])))"
+    },
+    {
+      "conname": "pending_contributions_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'reversed'::text])))"
+    }
+  ]
+}

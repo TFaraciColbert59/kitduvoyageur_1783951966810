@@ -42,23 +42,6 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [discussions]);
 
-  const triggerMessageReward = async (contentText: string) => {
-    try {
-      await fetch('/api/rewards/claim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action_type: 'group_message',
-          target_id: groupId,
-          target_type: 'group',
-          metadata: { content: contentText }
-        })
-      });
-    } catch (rewardsErr) {
-      console.warn('Group message rewards claim error:', rewardsErr);
-    }
-  };
-
   const handleSendMessage = async (e?: React.FormEvent, mediaUrl?: string, location?: { lat: number; lng: number }, gpxAttachment?: string) => {
     if (e) e.preventDefault();
     const msg = newMessage.trim();
@@ -86,7 +69,6 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       setNewMessage('');
       setReplyingTo(null);
       if (onRefresh) onRefresh();
-      triggerMessageReward(insertData.content);
     }
     setLoading(false);
   };
@@ -123,14 +105,11 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       if (error) {
         console.warn('Storage upload failed, sending as text reference:', error);
         const msg = newMessage.trim() || `📎 ${file.name}`;
-        const { error: fallbackErr } = await supabase.from('group_messages').insert({
+        await supabase.from('group_messages').insert({
           group_id: groupId,
           user_id: user.id,
           content: msg,
         });
-        if (!fallbackErr) {
-          triggerMessageReward(msg);
-        }
         setNewMessage('');
         if (onRefresh) onRefresh();
       } else {
@@ -178,7 +157,6 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
           lkvAlert('Erreur: ' + error.message);
         } else {
           if (onRefresh) onRefresh();
-          triggerMessageReward(locationMsg);
         }
         setLocating(false);
       },

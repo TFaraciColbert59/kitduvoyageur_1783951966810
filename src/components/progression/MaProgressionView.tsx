@@ -1466,7 +1466,8 @@ export default function MaProgressionView({
         <PassportSection status={passport.status} discoveries={passport.discoveries} />
       </ProgressionSection>
 
-      {/* Liens économiques distincts : récompenses utilisables et fidélité historique. */}
+      {/* Lien économique distinct : les points dépensables vivent dans
+          Récompenses (/fidelite y redirige) ; les XP ne s'y convertissent pas. */}
       <section aria-label={t('progression.rewardsAndLoyaltyAria')} className="flex flex-wrap gap-2">
         <Link
           href="/recompenses"
@@ -1474,13 +1475,6 @@ export default function MaProgressionView({
         >
           <Gift size={14} aria-hidden="true" />
           <span>{t('progression.rewards')}</span>
-        </Link>
-        <Link
-          href="/fidelite"
-          className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
-        >
-          <Award size={14} aria-hidden="true" />
-          <span>{t('progression.loyalty')}</span>
         </Link>
       </section>
     </div>

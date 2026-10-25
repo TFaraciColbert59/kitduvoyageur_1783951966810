@@ -64,6 +64,10 @@ const CompteDrawer = dynamic(
   () => import('./drawer/compte/CompteDrawer').then((mod) => mod.CompteDrawer),
   { ssr: false }
 );
+const RewardsDrawer = dynamic(
+  () => import('@/components/rewards/RewardsDrawer').then((mod) => mod.RewardsDrawer),
+  { ssr: false }
+);
 const FirstRunJourney = dynamic(
   () => import('./onboarding/FirstRunJourney').then((mod) => mod.FirstRunJourney),
   { ssr: false }
@@ -742,8 +746,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       act('openAccountDrawer');
     } else if (initialTab === 'notifications') {
       act('openAccountDrawer', 1);
-    } else if (initialTab === 'fidelite') {
-      act('openStep', '3:3');
+    } else if (initialTab === 'fidelite' || initialTab === 'recompenses') {
+      act('openRewards', 0);
     } else if (initialTab === 'parametres') {
       act('openAccountDrawer', 2);
     } else if (initialTab === 'progression') {
@@ -1004,9 +1008,9 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         patch.sigText = sigRes.signature;
       }
 
-      // Store credit & rewards
-      const creditEur = (rewardRes.data?.store_credit_cents ? rewardRes.data.store_credit_cents / 100 : 0) + Number(rewardRes.data?.available_cash || 0);
-      patch.storeCreditEur = creditEur;
+      // Crédit boutique seulement : le cash retirable legacy (`available_cash`)
+      // est un droit distinct, affiché à part sur /recompenses, jamais additionné.
+      patch.storeCreditEur = rewardRes.data?.store_credit_cents ? rewardRes.data.store_credit_cents / 100 : 0;
 
       // Sorties réelles uniquement : aucun repli démo sur un compte connecté.
       const combinedOutings: any[] = [];
@@ -1381,6 +1385,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
         ) : drawerMount.kind === 'compte' ? (
           <CompteDrawer initialTab={Number(drawerMount.props?.tab) || 0} />
+        ) : drawerMount.kind === 'recompenses' ? (
+          <RewardsDrawer initialTab={Number(drawerMount.props?.tab) || 0} />
         ) : (
           <div style={{ padding: 16 }}>Chargement…</div>
         ),

@@ -1,0 +1,11 @@
+{
+  "observed_date": "2026-10-25",
+  "k": "migration_summary",
+  "query": "select count(*) as migration_count,max(version) as latest_version from supabase_migrations.schema_migrations;",
+  "data": [
+    {
+      "migration_count": 366,
+      "latest_version": "20261021165000"
+    }
+  ]
+}

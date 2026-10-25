@@ -1,7 +1,7 @@
 import 'server-only';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import type { OrderBody } from '@/features/checkout/serverPricing';
-import { EARN_ACTIONS, type EarnInput, type RedeemInput, type RefundInput, type SpendInput } from './validation';
+import { EARN_ACTIONS, type EarnInput, type RefundInput, type SpendInput } from './validation';
 
 /**
  * Phase 1 — écritures loyalty via RPC service_role uniquement.
@@ -116,18 +116,6 @@ export function rpcSpend(
   });
 }
 
-export function rpcEarn(
-  userId: string,
-  input: EarnInput
-): Promise<RpcOutcome<{ balance: number; level: string; idempotent?: boolean }>> {
-  return callLoyaltyRpc('legacy_loyalty_earn', {
-    p_user_id: userId,
-    p_points: input.points,
-    p_reason: null,
-    p_source_id: input.sourceId,
-  });
-}
-
 export function rpcRefund(
   userId: string,
   input: RefundInput
@@ -136,18 +124,6 @@ export function rpcRefund(
     p_user_id: userId,
     p_cart_item_id: input.cartItemId,
   });
-}
-
-export async function rpcRedeem(
-  userId: string,
-  input: RedeemInput
-): Promise<RpcOutcome<{ balance: number; level: string }>> {
-  const outcome = await callLoyaltyRpc('legacy_loyalty_redeem', {
-    p_user_id: userId,
-    p_reward_id: input.rewardId,
-  });
-  if (!outcome.ok) return outcome;
-  return { ok: true, data: { balance: outcome.data.balance, level: outcome.data.level } };
 }
 
 export async function createOrder(

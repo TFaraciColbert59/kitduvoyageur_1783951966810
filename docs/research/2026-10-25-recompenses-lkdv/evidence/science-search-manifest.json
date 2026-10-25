@@ -1,0 +1,352 @@
+{
+  "created_on": "2026-10-25",
+  "cutoff": "2026-10-25",
+  "language": "fr",
+  "scope": "Scientific rewards, motivation, social incentives and post-withdrawal durability; targeted review, not systematic PRISMA.",
+  "search_tool": "mcp__codex_apps__exa_web_search_exa",
+  "fetch_tool": "mcp__codex_apps__exa_web_fetch_exa",
+  "search_calls": 16,
+  "sources_reviewed": 130,
+  "sources_reviewed_definition": "Sum of requested numResults, not actually read scientific papers.",
+  "search_result_url_lines": 132,
+  "search_result_unique_urls": 120,
+  "searches": [
+    {
+      "query": "category:research paper randomized clinical trial gamification financial incentives physical activity follow-up after incentives withdrawn BE ACTIVE STEP UP 2024 Circulation 1062 participants",
+      "objective": "Prioritize original randomized trials from journal publishers or PubMed/PMC; extract sample size, intervention duration, follow-up and effects; exclude vendor summaries.",
+      "numResults": 10
+    },
+    {
+      "query": "category:research paper Nunes Dreze 2006 endowed progress effect Kivetz Urminsky Zheng 2006 goal gradient hypothesis resurrected loyalty program original experiments",
+      "objective": "Find original journal papers or author university manuscripts with sample sizes and completion results for endowed progress and goal gradient; exclude marketing blogs.",
+      "numResults": 10
+    },
+    {
+      "query": "category:research paper Deci Koestner Ryan 1999 extrinsic rewards intrinsic motivation meta analysis 128 experiments Gneezy Rustichini 2000 pay enough don't pay at all",
+      "objective": "Find original papers and authoritative publisher or author manuscripts on expected tangible rewards and crowding-out; distinguish original experiments from meta-analysis and limits.",
+      "numResults": 10
+    },
+    {
+      "query": "category:research paper gamification social incentives collaboration competition physical activity randomized STEP UP 2019 602 adults follow-up 12 weeks",
+      "objective": "Find original STEP UP and BE FIT trials and related primary social reward experiments; extract effects during intervention and after withdrawal, N and uncertainty.",
+      "numResults": 10
+    },
+    {
+      "query": "category:research paper Mekler Brühlmann Tuch Opwis 2017 individual gamification elements intrinsic motivation performance points levels leaderboards 273",
+      "objective": "Find original empirical study of points levels leaderboards and intrinsic motivation; prefer author manuscript/publisher, report N and duration and distinction performance vs motivation.",
+      "numResults": 8
+    },
+    {
+      "query": "category:research paper Fishbach Koo small area hypothesis progress to date remaining goal pursuit 2012 numerical magnitude loyalty points unit scaling",
+      "objective": "Find original goal-progress framing and points numerosity studies, not marketing advice; report whether numerical reward scale has causal evidence and context limits.",
+      "numResults": 8
+    },
+    {
+      "query": "category:research paper Schultz Dayan Montague 1997 neural substrate prediction reward dopamine learning wanting liking Berridge Robinson 2016",
+      "objective": "Find original neuroscience reward prediction error and wanting vs liking research with correct inference boundaries; exclude dopamine hacks and app-addiction advice.",
+      "numResults": 8
+    },
+    {
+      "query": "category:research paper social influence bias randomized experiment Muchnik Aral Taylor 2013 Science 101281 comments positive vote 32 percent",
+      "objective": "Find original randomized experiment social voting bias and primary work on paying online community prosocial contribution, social recognition; extract causal results and study limits.",
+      "numResults": 8
+    },
+    {
+      "query": "category:research paper Milkman Gromet Ho 2021 Megastudies improve the impact of applied behavioural science 61293 gym 54 interventions Nature",
+      "objective": "Find original Nature article on gym megastudy, 61,293 participants, short duration and post-intervention persistence, not press coverage.",
+      "numResults": 8
+    },
+    {
+      "query": "category:research paper Charness Gneezy Incentives to Exercise 2009 Econometrica 168 participants 100 dollars gym attendance after incentives",
+      "objective": "Find original paper or author university manuscript, two experiments N168 and N150 if confirmed, duration and effect heterogeneity previously nonusers vs regular users.",
+      "numResults": 8
+    },
+    {
+      "query": "Bagchi Li Illusionary Progress in Loyalty Programs Magnitudes Reward Distances Step Size Ambiguity 2011 pdf university",
+      "objective": "Find author-hosted full manuscript for original study and study sample sizes; exclude secondary marketing summaries.",
+      "numResults": 6
+    },
+    {
+      "query": "Koo Fishbach Small Area Hypothesis Effects of Progress Monitoring on Goal Adherence 2012 pdf university",
+      "objective": "Find author-hosted full manuscript for original four studies with N and durations; exclude secondary summaries.",
+      "numResults": 6
+    },
+    {
+      "query": "Gneezy Rustichini Pay Enough Don't Pay At All 2000 pdf university 160 180 high school",
+      "objective": "Find author/university manuscript of primary IQ and charity donation experiments; verify study sample sizes and monetary effects, not press summaries.",
+      "numResults": 6
+    },
+    {
+      "query": "category:research paper Restivo van de Rijt 2012 experimental study informal rewards peer production Wikipedia barnstars 200 users 60 percent 90 days PLOS ONE",
+      "objective": "Find original randomized experiment awarding Wikipedia barnstars; verify N, duration, effect and selection of eligible editors. Prefer PLOS publisher full text.",
+      "numResults": 8
+    },
+    {
+      "query": "category:research paper Finkelstein Haaland Bilger 2016 TRIPPA randomized trial activity trackers incentives Singapore 800 12 months cash incentives cessation",
+      "objective": "Find original Lancet Diabetes Endocrinology TRIPPA randomized trial, N, activity effect at6 and12months, clarify intervention device and outcome MVPA vs steps, avoid press.",
+      "numResults": 8
+    },
+    {
+      "query": "category:research paper randomized controlled trial gamification financial rewards physical activity published January 2025 through October 2026 long term follow up",
+      "objective": "Find original published trials dated on or before 25 October 2026 that update BE ACTIVE/STEP UP evidence; prioritize randomized field trials and full source-owned texts, exclude protocols reviews preprints and publications dated after cutoff.",
+      "numResults": 8
+    }
+  ],
+  "search_result_urls": [
+    "https://www.ahajournals.org/doi/10.1161/CIRCULATIONAHA.124.069531",
+    "https://clinicaltrials.gov; Unique Identifier: NCT03911141.",
+    "https://www.ahajournals.org/doi/full/10.1161/CIRCOUTCOMES.124.011839",
+    "https://www.clinicaltrials.gov; Unique identifier: NCT03911141.",
+    "https://pubmed.ncbi.nlm.nih.gov/38583084/",
+    "https://doi.org/10.1161/circulationaha.124.069531",
+    "https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/2749761",
+    "https://clinicaltrials.gov/study/NCT03911141",
+    "https://www.nih.gov/news-events/news-releases/short-term-incentives-exercise-can-lead-sustained-increases-activity",
+    "https://www.acc.org/latest-in-cardiology/articles/2024/04/02/17/02/sun-8am-be-active-acc-2024",
+    "https://doi.org/10.1001/jamainternmed.2019.3505",
+    "https://chibe.upenn.edu/publications/effect-of-gamification-financial-incentives-or-both-to-increase-physical-activity-among-patients-at-high-risk-of-cardiovascular-events-the-be-active-randomized-controlled-trial/",
+    "https://academic.oup.com/jcr/article/32/4/504/1796232",
+    "https://doi.org/10.1086/500480",
+    "https://doi.org/10.1509/jmkr.43.1.39",
+    "https://faculty.wharton.upenn.edu/wp-content/uploads/2012/04/PSC.pdf",
+    "https://journals.sagepub.com/doi/10.1509/jmkr.43.1.39",
+    "https://business.columbia.edu/sites/default/files-efs/pubfiles/1200/goalgradient.pdf",
+    "https://business.columbia.edu/faculty/research/goal-gradient-hypothesis-resurrected-purchase-acceleration-illusionary-goal",
+    "https://business.columbia.edu/insights/chazen-global-insights/goal-gradient-hypothesis-resurrected-purchase-acceleration",
+    "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2733214",
+    "https://home.uchicago.edu/ourminsky/Goal-Gradient_Illusionary_Goal_Progress.pdf",
+    "https://doi.org/10.1037//0033-2909.125.6.627",
+    "https://pubmed.ncbi.nlm.nih.gov/10589297/",
+    "https://selfdeterminationtheory.org/wp-content/uploads/2014/04/1999_DeciKoestnerRyan_Meta.pdf",
+    "https://academic.oup.com/qje/article/115/3/791/1828156",
+    "https://leeds-faculty.colorado.edu/dahe7472/deci%201999.pdf",
+    "https://research.tilburguniversity.edu/en/publications/8607148b-7f6b-4e75-ae38-b1bc23595b7e",
+    "https://journals.sagepub.com/doi/10.3102/00346543071001001",
+    "https://gwern.net/doc/economics/2000-gneezy.pdf",
+    "https://www.researchgate.net/publication/12712628_A_Meta-Analytic_Review_of_Experiments_Examining_the_Effects_of_Extrinsic_Rewards_on_Intrinsic_Motivation",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC2731358/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC6735420/",
+    "https://clinicaltrials.gov/study/NCT03311230",
+    "https://ncbi.nlm.nih.gov/pmc/articles/PMC6735420/",
+    "https://chti.upenn.edu/step-up",
+    "https://jamanetwork.com/journals/jama/article-abstract/2756178",
+    "https://www.hsrd.research.va.gov/research/citations/abstract.cfm?Identifier=127756",
+    "https://cdn.clinicaltrials.gov/large-docs/30/NCT03311230/Prot_SAP_000.pdf",
+    "https://cdn.avironactive.net/assets/storefront/aviron-workouts-2026oct-assets/files-download/JAMA%20INTERNAL%20MEDICINE.pdf",
+    "https://doi.org/10.1016/j.chb.2015.08.048",
+    "https://glassmanlab.seas.harvard.edu/annotated_works/mekler17.pdf",
+    "https://edoc.unibas.ch/entities/publication/ccec8ccc-aa54-417d-b205-334b518d6eed",
+    "https://research.aalto.fi/en/publications/towards-understanding-the-effects-of-individual-gamification-elem/",
+    "https://bruehlmann.io/publication/mekler-towards-2017/",
+    "https://www.academia.edu/118578130/Towards_understanding_the_effects_of_individual_gamification_elements_on_intrinsic_motivation_and_performance",
+    "https://bibbase.org/network/publication/mekler-brhlmann-tuch-opwis-towardsunderstandingtheeffectsofindividualgamificationelementsonintrinsicmotivationandperformance-2017",
+    "https://doi.org/10.1145/2583008.2583017",
+    "https://doi.org/10.1086/663827",
+    "https://academic.oup.com/jcr/article-abstract/39/3/493/1822606",
+    "https://www.academia.edu/57668190/The_Small_Area_Hypothesis_Effects_of_Progress_Monitoring_on_Goal_Adherence",
+    "https://academic.oup.com/jcr/article/37/5/888/1870004",
+    "https://doi.org/10.1086/656392",
+    "https://ideas.repec.org/a/oup/jconrs/doi10.1086-663827.html",
+    "https://www.chicagobooth.edu/review/tiny-course/ayelet-fishbach-get-it-done/monitoring-progress",
+    "https://www.psychologyinaction.org/2012-04-18-finding-the-motivation-to-stick-with-goals/",
+    "https://doi.org/10.1126/science.275.5306.1593",
+    "https://www.science.org/doi/10.1126/science.275.5306.1593",
+    "https://doi.org/10.1037/amp0000059",
+    "https://www.gatsby.ucl.ac.uk/~dayan/papers/sdm97.pdf",
+    "https://pubmed.ncbi.nlm.nih.gov/9054347",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC2756052/",
+    "https://doi.org/10.1016/s0165-0173(98)00019-8",
+    "https://sites.lsa.umich.edu/berridge-lab/wp-content/uploads/sites/743/2019/09/From-prediction-error-to-incentive-salience-mesolimbic-computation-of-reward-motivation.pdf",
+    "https://www.science.org/doi/10.1126/science.1240466",
+    "https://doi.org/10.1126/science.1240466",
+    "https://snap.stanford.edu/class/cs224w-readings/muchnik13bias.pdf",
+    "https://www.scienceopen.com/document?vid=d237a5c6-b374-41f2-a938-5a1720e081f6",
+    "https://en.wikipedia.org/wiki/Social_influence_bias",
+    "https://www.ovid.com/journals/scie/abstract/10.1126/science.1240466~social-influence-bias-a-randomized-experiment",
+    "https://cris.huji.ac.il/en/publications/social-influence-bias-a-randomized-experiment/",
+    "https://seanjtaylor.com/2013/08/08/science-paper-on-social-influence-bias.html",
+    "https://www.nature.com/articles/s41586-021-04128-4",
+    "https://doi.org/10.1038/s41586-021-04128-4",
+    "https://pubmed.ncbi.nlm.nih.gov/34880497/",
+    "https://www.hbs.edu/ris/Publication%20Files/Impact%20of%20Applied%20B.S._2725821f-f483-4930-9393-33c613b1f14a.pdf",
+    "https://www.nature.com/articles/s41586-021-04128-4/tables/6",
+    "https://www.gsb.stanford.edu/faculty-research/publications/megastudies-improve-impact-applied-behavioural-science",
+    "https://bcfg.wharton.upenn.edu/research/nature/megastudies-improve-the-impact-of-applied-behavioral-science/",
+    "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-021-04128-4/MediaObjects/41586_2021_4128_MOESM1_ESM.pdf",
+    "https://faculty.econ.ucsb.edu/~charness/papers/exercise.pdf",
+    "https://rady.ucsd.edu/_files/faculty-research/uri-gneezy/incentives-exercise.pdf",
+    "https://www.econometricsociety.org/publications/econometrica/2009/05/01/incentives-exercise",
+    "https://escholarship.org/uc/item/3tc3j5x7",
+    "https://doi.org/10.3982/ecta7416",
+    "https://jstor.econometricsociety.org/publications/econometrica/2009/05/01/incentives-exercise",
+    "https://ideas.repec.org/a/ecm/emetrp/v77y2009i3p909-931.html",
+    "http://www.damianclarke.net/books/microeconometrics/data/Charness_Gneezy_2009.csv",
+    "https://academic.oup.com/jcr/article-pdf/37/5/888/50275872/jcr_37_5_888.pdf",
+    "https://ideas.repec.org/a/oup/jconrs/doi10.1086-656392.html",
+    "https://news.vt.edu/content/news_vt_edu/en/articles/2010/10/102610-pamplin-rewardsprograms.html",
+    "https://www.sciencedaily.com/releases/2010/08/100824121020.htm",
+    "https://www.academia.edu/figures/14665190/figure-4-note-color-version-available-as-an-online",
+    "https://faculty.chicagobooth.edu/-/media/faculty/ayelet-fishbach/research/kf_jpsp08.pdf",
+    "https://rady.ucsd.edu/_files/faculty-research/uri-gneezy/pay-enough.pdf",
+    "https://doi.org/10.1162/003355300554917",
+    "https://research.tilburguniversity.edu/en/publications/pay-enough-or-dont-pay-at-all/",
+    "https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0034358",
+    "https://doi.org/10.1371/journal.pone.0034358",
+    "https://pubmed.ncbi.nlm.nih.gov/22479610/",
+    "https://journals.plos.org/plosone/article/file?id=10.1371%2Fjournal.pone.0034358&type=printable",
+    "https://journals.plos.org/plosone/article/figure?id=10.1371%2Fjournal.pone.0034358.g001",
+    "https://ncbi.nlm.nih.gov/pmc/articles/PMC3315525/",
+    "https://ideas.repec.org/a/plo/pone00/0034358.html",
+    "https://meta.wikimedia.org/wiki/Research:Newsletter/2012/April",
+    "https://doi.org/10.1016/s2213-8587(16)30284-4",
+    "https://www.thelancet.com/journals/landia/article/PIIS2213-8587(16)30284-4/abstract",
+    "https://www.sciencedirect.com/science/article/abs/pii/S2213858716302844",
+    "https://pubmed.ncbi.nlm.nih.gov/25666856/",
+    "https://clinicaltrials.gov/study/NCT01855776",
+    "https://doi.org/10.17615/33zr-5b51",
+    "https://cdr.lib.unc.edu/downloads/tt44pw98n",
+    "https://scholars.duke.edu/publication/1147644",
+    "https://pubmed.ncbi.nlm.nih.gov/41334739/",
+    "https://doi.org/10.64898/2026.05.31.26354543",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12805409/",
+    "https://www.jmir.org/2026/1/e82769/PDF",
+    "https://www.jacc.org/doi/10.1016/j.jaccao.2025.10.001",
+    "https://doi.org/10.2196/78376",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12304840/"
+  ],
+  "fetch_calls": 11,
+  "fetch_url_requests": 24,
+  "fetched_unique_url_count": 22,
+  "fetched_urls": [
+    "https://www.ahajournals.org/doi/10.1161/CIRCULATIONAHA.124.069531",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC6735420/",
+    "https://faculty.wharton.upenn.edu/wp-content/uploads/2012/04/PSC.pdf",
+    "https://business.columbia.edu/sites/default/files-efs/pubfiles/1200/goalgradient.pdf",
+    "https://glassmanlab.seas.harvard.edu/annotated_works/mekler17.pdf",
+    "https://snap.stanford.edu/class/cs224w-readings/muchnik13bias.pdf",
+    "https://academic.oup.com/qje/article/115/3/791/1828156",
+    "https://leeds-faculty.colorado.edu/dahe7472/deci%201999.pdf",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC2731358/",
+    "https://academic.oup.com/jcr/article/37/5/888/1870004",
+    "https://academic.oup.com/jcr/article-abstract/39/3/493/1822606",
+    "https://www.gatsby.ucl.ac.uk/~dayan/papers/sdm97.pdf",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC2756052/",
+    "https://faculty.econ.ucsb.edu/~charness/papers/exercise.pdf",
+    "https://www.nature.com/articles/s41586-021-04128-4",
+    "https://rady.ucsd.edu/_files/faculty-research/uri-gneezy/pay-enough.pdf",
+    "https://academic.oup.com/jcr/article-pdf/37/5/888/50275872/jcr_37_5_888.pdf",
+    "https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0034358",
+    "https://cdr.lib.unc.edu/downloads/tt44pw98n",
+    "https://pubmed.ncbi.nlm.nih.gov/41334739/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12304840/",
+    "https://www.jacc.org/doi/10.1016/j.jaccao.2025.10.001"
+  ],
+  "scientific_works_used": 20,
+  "works_used": [
+    {
+      "work": "BE ACTIVE 2024",
+      "url": "https://www.ahajournals.org/doi/10.1161/CIRCULATIONAHA.124.069531",
+      "quality": "Original RCT; publisher abstract and DOI method extracts; N,duration,effect and follow-up multiplicity verified; clinical sample limits transfer."
+    },
+    {
+      "work": "STEP UP 2019",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6735420/",
+      "quality": "Original RCT methods/results; N,duration,effect and between-gamification-arm null distinction verified; employed educated sample."
+    },
+    {
+      "work": "Nunes & Dreze 2006",
+      "url": "https://faculty.wharton.upenn.edu/wp-content/uploads/2012/04/PSC.pdf",
+      "quality": "Author university manuscript; randomized car-wash study methods/results; N300,34%vs19%; real purchase setting not outdoor."
+    },
+    {
+      "work": "Kivetz et al 2006",
+      "url": "https://business.columbia.edu/sites/default/files-efs/pubfiles/1200/goalgradient.pdf",
+      "quality": "Author university manuscript; field and experimental study methods;949cards are observations not unique users."
+    },
+    {
+      "work": "Mekler et al 2017",
+      "url": "https://glassmanlab.seas.harvard.edu/annotated_works/mekler17.pdf",
+      "quality": "Original article in university repository; methods/results examined; N273; short image annotation task; quantity distinct from quality/motivation."
+    },
+    {
+      "work": "Muchnik et al 2013",
+      "url": "https://snap.stanford.edu/class/cs224w-readings/muchnik13bias.pdf",
+      "quality": "Original article in university repository; randomized votes, N101281comments; relative percentages, not paid-like experiment."
+    },
+    {
+      "work": "Gneezy & Rustichini 2000",
+      "url": "https://rady.ucsd.edu/_files/faculty-research/uri-gneezy/pay-enough.pdf",
+      "quality": "Author university manuscript; IQ N160 and charity N180; short tasks, monetary effect nonmonotonic."
+    },
+    {
+      "work": "Deci et al 1999",
+      "url": "https://leeds-faculty.colorado.edu/dahe7472/deci%201999.pdf",
+      "quality": "Meta-analysis original article; abstract and theory examined,128studies; synthesis not new RCT."
+    },
+    {
+      "work": "Cameron et al 2001",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2731358/",
+      "quality": "Competing synthesis original abstract; no claim full numerical reanalysis was read."
+    },
+    {
+      "work": "Bagchi & Li 2011",
+      "url": "https://academic.oup.com/jcr/article/37/5/888/1870004",
+      "quality": "Original publisher abstract only; N,effect,duration unavailable; repeated publisher PDF did not add methods."
+    },
+    {
+      "work": "Koo & Fishbach 2012",
+      "url": "https://academic.oup.com/jcr/article-abstract/39/3/493/1822606",
+      "quality": "Original publisher abstract only; N,effect,duration unavailable; four-study direction only."
+    },
+    {
+      "work": "Schultz et al 1997",
+      "url": "https://www.gatsby.ucl.ac.uk/~dayan/papers/sdm97.pdf",
+      "quality": "Review/modelling original article author university manuscript; primate prediction-error evidence; not human app trial."
+    },
+    {
+      "work": "Berridge et al 2009",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2756052/",
+      "quality": "Review by experimental neuroscientists; conceptual dissociation liking/wanting/learning; not numerical point calibration."
+    },
+    {
+      "work": "Charness & Gneezy 2009",
+      "url": "https://faculty.econ.ucsb.edu/~charness/papers/exercise.pdf",
+      "quality": "Author university manuscript methods/results; N120then168recruited,12excludedsecondstudy; participant heterogeneity."
+    },
+    {
+      "work": "Milkman et al 2021",
+      "url": "https://www.nature.com/articles/s41586-021-04128-4",
+      "quality": "Original megastudy publisher abstract,data/extended-table descriptions; N61293,54conditions; significant intervention proportion not user proportion."
+    },
+    {
+      "work": "Restivo & van de Rijt 2012",
+      "url": "https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0034358",
+      "quality": "Original open-access randomized experiment methods/results; N200 top1% previously unawarded editors; limited generalizability; avoided ambiguous60%headline recalculation."
+    },
+    {
+      "work": "TRIPPA 2016",
+      "url": "https://cdr.lib.unc.edu/downloads/tt44pw98n",
+      "quality": "Original author article in university repository; N800,6+6months; MVPA minutes distinguished from steps; clinical outcome nulls."
+    },
+    {
+      "work": "GAMEPAD 2025",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/41334739/",
+      "quality": "Original study abstract PubMed; N103,16+8weeks; intervention primary effect p=.06 reported honestly."
+    },
+    {
+      "work": "mLIFE 2025",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12304840/",
+      "quality": "Original RCT full methods/results read; N243,12months;up to8socialpoints/day including likes; intervention bundles visible points/leaderboard/support; primary ITT weight effect nonsignificant."
+    },
+    {
+      "work": "ALLSTAR 2025",
+      "url": "https://www.jacc.org/doi/10.1016/j.jaccao.2025.10.001",
+      "quality": "Original publisher article methods/results; N150,24+12weeks; follow-up steps effect nonsignificant."
+    }
+  ],
+  "limitations": [
+    "Some publisher pages expose abstracts only; access details recorded per work.",
+    "The 2025-2026 update is a targeted pass, not proof of completeness.",
+    "No effect for points redeemable for LKDV physical goods was tested in these studies."
+  ]
+}

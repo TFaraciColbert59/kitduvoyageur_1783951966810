@@ -1,0 +1,533 @@
+{
+  "date": "2026-10-25T16:40:53.938Z",
+  "server": "17.6",
+  "migration": "supabase\\migrations\\20261025120000_rewards_points_v1.sql",
+  "passed": 51,
+  "failed": 0,
+  "results": [
+    {
+      "name": "legacy avant migration : group_message auto-approuvé sans fait vérifié",
+      "ok": true,
+      "detail": {
+        "transactions": 1
+      }
+    },
+    {
+      "name": "migration rejouée deux fois sans erreur",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "kill_switches : rewards_active=false, cashout_active conservé",
+      "ok": true,
+      "detail": {
+        "cashout_active": true,
+        "rewards_active": false
+      }
+    },
+    {
+      "name": "legacy après migration : claim_reward_points refuse",
+      "ok": true,
+      "detail": "Les récompenses sont temporairement désactivées"
+    },
+    {
+      "name": "points_program créé fermé, plafond 250",
+      "ok": true,
+      "detail": "pilote-c-2026-10"
+    },
+    {
+      "name": "catalogue existant : une ligne de financement par objet, toutes non financées",
+      "ok": true,
+      "detail": {
+        "n": 3,
+        "unfunded": 3
+      }
+    },
+    {
+      "name": "financement : « funded » sans coût/financeur/budget/stock refusé",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "attribution refusée tant que l’émission est fermée, rien écrit",
+      "ok": true,
+      "detail": {
+        "error": "emission_closed",
+        "success": false
+      }
+    },
+    {
+      "name": "producteur fermé : refus sans écriture",
+      "ok": true,
+      "detail": {
+        "error": "producer_closed",
+        "success": false
+      }
+    },
+    {
+      "name": "règle inconnue refusée (pas de gain par like)",
+      "ok": true,
+      "detail": {
+        "error": "unknown_rule",
+        "success": false
+      }
+    },
+    {
+      "name": "entrée invalide refusée",
+      "ok": true,
+      "detail": {
+        "error": "invalid_input",
+        "success": false
+      }
+    },
+    {
+      "name": "sortie validée : +50 confirmés, journal = profil",
+      "ok": true,
+      "detail": {
+        "first": {
+          "points": 50,
+          "status": "confirmed",
+          "balance": 1050,
+          "success": true,
+          "award_id": "fc86e15c-8d90-4453-aacb-1ed16ef455d8",
+          "week_remaining": 200
+        },
+        "b1": {
+          "ledger": 1050,
+          "profile": 1050
+        }
+      }
+    },
+    {
+      "name": "même fait rejoué : doublon, aucun nouveau crédit",
+      "ok": true,
+      "detail": {
+        "points": 50,
+        "status": "duplicate",
+        "success": true,
+        "award_id": "fc86e15c-8d90-4453-aacb-1ed16ef455d8",
+        "award_status": "confirmed"
+      }
+    },
+    {
+      "name": "nouvelle version du barème : même fait non réclamable",
+      "ok": true,
+      "detail": {
+        "points": 50,
+        "status": "duplicate",
+        "success": true,
+        "award_id": "fc86e15c-8d90-4453-aacb-1ed16ef455d8",
+        "award_status": "confirmed"
+      }
+    },
+    {
+      "name": "4e sortie de la semaine : refus « rule_limit », décision durable",
+      "ok": true,
+      "detail": {
+        "points": 0,
+        "reason": "rule_limit",
+        "status": "refused",
+        "success": true,
+        "award_id": "ff8e2a53-1dc0-4b4a-8cf3-90161e6c82b7"
+      }
+    },
+    {
+      "name": "fait refusé rejoué : reste refusé (doublon)",
+      "ok": true,
+      "detail": {
+        "points": 50,
+        "status": "duplicate",
+        "success": true,
+        "award_id": "ff8e2a53-1dc0-4b4a-8cf3-90161e6c82b7",
+        "award_status": "refused"
+      }
+    },
+    {
+      "name": "récit utile : en vérification, solde inchangé",
+      "ok": true,
+      "detail": {
+        "story": {
+          "points": 25,
+          "status": "pending",
+          "success": true,
+          "award_id": "a80d5e9f-e5ee-4cf3-ad58-89b162bf552b",
+          "week_remaining": 75
+        },
+        "b1c": {
+          "ledger": 1150,
+          "profile": 1150
+        }
+      }
+    },
+    {
+      "name": "portefeuille : attente séparée du solde",
+      "ok": true,
+      "detail": {
+        "balance": 1150,
+        "pending": 25,
+        "used": 175
+      }
+    },
+    {
+      "name": "portefeuille : droits legacy séparés, seuil de retrait lu en configuration",
+      "ok": true,
+      "detail": {
+        "withdrawals": [
+          {
+            "id": "a4246631-63dd-4498-a284-51140ead4547",
+            "amount": 25,
+            "status": "pending",
+            "requested_at": "2026-10-25T17:40:53.701402+01:00",
+            "payment_provider": "bank_transfer",
+            "rejection_reason": null
+          }
+        ],
+        "pending_cash": 0,
+        "available_cash": 0,
+        "cashout_active": true,
+        "economic_points": 0,
+        "store_credit_cents": 0,
+        "cashout_min_threshold": 20,
+        "economic_pending_points": 0
+      }
+    },
+    {
+      "name": "portefeuille : retraits listés sans coordonnées bancaires ni score de risque",
+      "ok": true,
+      "detail": [
+        {
+          "id": "a4246631-63dd-4498-a284-51140ead4547",
+          "amount": 25,
+          "status": "pending",
+          "requested_at": "2026-10-25T17:40:53.701402+01:00",
+          "payment_provider": "bank_transfer",
+          "rejection_reason": null
+        }
+      ]
+    },
+    {
+      "name": "portefeuille : coût et financeur jamais exposés",
+      "ok": true,
+      "detail": [
+        "id",
+        "alt",
+        "image",
+        "terms",
+        "title",
+        "value",
+        "category",
+        "available",
+        "created_at",
+        "expires_at",
+        "description",
+        "fulfillment",
+        "points_cost",
+        "terms_version",
+        "funding_status",
+        "stock_remaining",
+        "partner_disclosure",
+        "cash_complement_cents"
+      ]
+    },
+    {
+      "name": "validation du récit : +25 une seule fois",
+      "ok": true,
+      "detail": {
+        "approve": {
+          "status": "confirmed",
+          "balance": 1175,
+          "success": true
+        },
+        "approveAgain": {
+          "status": "confirmed",
+          "success": true,
+          "idempotent": true
+        },
+        "b1d": {
+          "ledger": 1175,
+          "profile": 1175
+        }
+      }
+    },
+    {
+      "name": "plafond 250 : un gain qui dépasserait est refusé entier",
+      "ok": true,
+      "detail": {
+        "points": 0,
+        "reason": "weekly_cap",
+        "status": "refused",
+        "success": true,
+        "award_id": "0fbce4b8-aa79-49e0-b52c-267577ff7ade",
+        "week_remaining": 15
+      }
+    },
+    {
+      "name": "plafond jamais dépassé (confirmé + attente ≤ 250)",
+      "ok": true,
+      "detail": {
+        "used": 235,
+        "start": "2026-10-19"
+      }
+    },
+    {
+      "name": "concurrence : 6 attributions simultanées → 3 confirmées, 3 refusées",
+      "ok": true,
+      "detail": {
+        "confirmed": 3,
+        "refused": 3,
+        "ledger": 450
+      }
+    },
+    {
+      "name": "concurrence : même fait ×6 simultané → une seule attribution",
+      "ok": true,
+      "detail": {
+        "created": 1,
+        "rows": 1,
+        "other": [
+          "confirmed",
+          "duplicate",
+          "duplicate",
+          "duplicate",
+          "duplicate",
+          "duplicate"
+        ]
+      }
+    },
+    {
+      "name": "échange d’un objet non financé refusé, aucun débit",
+      "ok": true,
+      "detail": {
+        "error": "reward_unfunded",
+        "success": false
+      }
+    },
+    {
+      "name": "clé d’idempotence invalide refusée",
+      "ok": true,
+      "detail": {
+        "error": "invalid_input",
+        "success": false
+      }
+    },
+    {
+      "name": "échange financé : réservé, débit 400, stock 2→1",
+      "ok": true,
+      "detail": {
+        "red1": {
+          "status": "reserved",
+          "balance": 785,
+          "success": true,
+          "reference": "R-F588EC386A",
+          "points_spent": 400,
+          "redemption_id": "f588ec38-6a2a-4f3b-a05f-464f26e7d4a8"
+        },
+        "b1e": {
+          "ledger": 785,
+          "profile": 785
+        },
+        "stock": {
+          "stock_remaining": 1
+        }
+      }
+    },
+    {
+      "name": "échange rejoué (même clé) : idempotent, aucun second débit",
+      "ok": true,
+      "detail": {
+        "status": "reserved",
+        "balance": 785,
+        "success": true,
+        "reference": "R-F588EC386A",
+        "idempotent": true,
+        "points_spent": 400,
+        "redemption_id": "f588ec38-6a2a-4f3b-a05f-464f26e7d4a8"
+      }
+    },
+    {
+      "name": "même clé pour un autre objet : conflit",
+      "ok": true,
+      "detail": {
+        "error": "idempotency_conflict",
+        "success": false
+      }
+    },
+    {
+      "name": "double dépense simultanée : une réservée, une refusée, solde ≥ 0",
+      "ok": true,
+      "detail": {
+        "results": [
+          "reserved",
+          "insufficient_balance"
+        ],
+        "ledger": 60
+      }
+    },
+    {
+      "name": "dernière pièce disputée : une réservation, une rupture, stock 0",
+      "ok": true,
+      "detail": {
+        "results": [
+          "reserved",
+          "out_of_stock"
+        ]
+      }
+    },
+    {
+      "name": "annulation : +400 rendus une seule fois, stock remis",
+      "ok": true,
+      "detail": {
+        "cancel": {
+          "status": "cancelled",
+          "balance": 1085,
+          "success": true,
+          "refunded": 400
+        },
+        "cancelAgain": {
+          "status": "cancelled",
+          "balance": 1085,
+          "success": true,
+          "idempotent": true
+        },
+        "ledger": 1085
+      }
+    },
+    {
+      "name": "échange historique « fulfilled » : non annulable par ce chemin",
+      "ok": true,
+      "detail": {
+        "error": "not_cancellable",
+        "status": "fulfilled",
+        "success": false
+      }
+    },
+    {
+      "name": "contre-écriture : idempotente, débit ≤ solde, reliquat tracé, XP intacts",
+      "ok": true,
+      "detail": {
+        "reverse": {
+          "status": "reversed",
+          "balance": 110,
+          "debited": 50,
+          "success": true,
+          "shortfall": 0
+        },
+        "before": 160,
+        "after": 110
+      }
+    },
+    {
+      "name": "contre-écriture sans motif refusée",
+      "ok": true,
+      "detail": {
+        "error": "invalid_input",
+        "success": false
+      }
+    },
+    {
+      "name": "choisir un objectif ne dépense rien",
+      "ok": true,
+      "detail": {
+        "goal": {
+          "reward_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+        },
+        "success": true
+      }
+    },
+    {
+      "name": "objectif indisponible refusé",
+      "ok": true,
+      "detail": {
+        "error": "reward_unavailable",
+        "success": false
+      }
+    },
+    {
+      "name": "objectif retiré",
+      "ok": true,
+      "detail": {
+        "goal": null,
+        "success": true
+      }
+    },
+    {
+      "name": "journal : (membre, source) unique en base",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "non-régression panier : dépense legacy idempotente",
+      "ok": true,
+      "detail": {
+        "legacySpend": {
+          "level": "Aventurier",
+          "balance": 1075,
+          "success": true
+        },
+        "legacySpendReplay": {
+          "level": "Aventurier",
+          "balance": 1075,
+          "success": true,
+          "idempotent": true
+        }
+      }
+    },
+    {
+      "name": "réconciliation : aucun écart journal ↔ profil",
+      "ok": true,
+      "detail": {
+        "n": 0
+      }
+    },
+    {
+      "name": "aucun solde négatif",
+      "ok": true,
+      "detail": {
+        "n": 0
+      }
+    },
+    {
+      "name": "fonctions rewards_* : SECURITY DEFINER, search_path verrouillé, service_role seul",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "RLS : le propriétaire lit son objectif",
+      "ok": true,
+      "detail": {
+        "n": 1
+      }
+    },
+    {
+      "name": "RLS : attributions limitées au propriétaire",
+      "ok": true,
+      "detail": [
+        {
+          "user_id": "22222222-2222-4222-8222-222222222222"
+        }
+      ]
+    },
+    {
+      "name": "RLS : objectifs d’autrui invisibles",
+      "ok": true,
+      "detail": {
+        "n": 0
+      }
+    },
+    {
+      "name": "financement interne invisible pour un membre",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "écriture directe d’une attribution refusée à un membre",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "anon ne peut pas lire un portefeuille",
+      "ok": true,
+      "detail": null
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "observed_date": "2026-10-25",
+  "k": "constraints",
+  "query": "select t.relname as table_name,c.conname,pg_get_constraintdef(c.oid) definition from pg_constraint c join pg_class t on c.conrelid=t.oid join pg_namespace n on t.relnamespace=n.oid where n.nspname='public' and t.relname in ('progression_events','reward_transactions','loyalty_history','progression_claims','progression_award_intents') and c.contype in ('u','p') order by t.relname,c.conname;",
+  "data": [
+    {
+      "table_name": "loyalty_history",
+      "conname": "loyalty_history_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "progression_award_intents",
+      "conname": "progression_award_intents_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "progression_award_intents",
+      "conname": "progression_award_intents_source_type_source_id_key",
+      "definition": "UNIQUE (source_type, source_id)"
+    },
+    {
+      "table_name": "progression_claims",
+      "conname": "progression_claims_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "progression_claims",
+      "conname": "progression_claims_user_id_claim_group_evidence_key_key",
+      "definition": "UNIQUE (user_id, claim_group, evidence_key)"
+    },
+    {
+      "table_name": "progression_events",
+      "conname": "progression_events_idempotency_key_key",
+      "definition": "UNIQUE (idempotency_key)"
+    },
+    {
+      "table_name": "progression_events",
+      "conname": "progression_events_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "progression_events",
+      "conname": "progression_events_reward_transaction_id_key",
+      "definition": "UNIQUE (reward_transaction_id)"
+    },
+    {
+      "table_name": "reward_transactions",
+      "conname": "reward_transactions_pkey",
+      "definition": "PRIMARY KEY (id)"
+    }
+  ]
+}

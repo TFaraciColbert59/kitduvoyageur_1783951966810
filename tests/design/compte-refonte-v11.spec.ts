@@ -77,7 +77,9 @@ describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lum
     expect(runtimeSource).toContain('Mes Kits & Lignées');
     expect(runtimeSource).toContain('Inventaire matériel réel');
     expect(runtimeSource).toContain('Prêts en cours');
-    expect(runtimeSource).toContain('Programme fidélité');
+    // Chantier Récompenses : l'onglet Fidélité devient l'entrée du tiroir Récompenses.
+    expect(runtimeSource).toContain('title: "Récompenses"');
+    expect(runtimeSource).toContain('data-a="openRewards"');
     expect(runtimeSource).toContain('Parrainage');
 
     // Code de parrainage dérivé du handle réel, jamais codé en dur
@@ -91,7 +93,7 @@ describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lum
     expect(runtimeSource).toContain('"Mes Kits":');
     expect(runtimeSource).toContain('"Inventaire":');
     expect(runtimeSource).toContain('"Prêts":');
-    expect(runtimeSource).toContain('"Fidélité":');
+    expect(runtimeSource).toContain('"Récompenses":');
     expect(runtimeSource).toContain('"Parrainage":');
 
     // Scroll continu sans troncature de lignes

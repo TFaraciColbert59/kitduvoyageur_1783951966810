@@ -1,0 +1,178 @@
+{
+  "observed_date": "2026-10-25",
+  "k": "live_v1",
+  "query": "select version,active,payload from public.progression_rules where active is true;",
+  "data": [
+    {
+      "version": "v1",
+      "active": true,
+      "payload": {
+        "levels": [
+          {
+            "level": 1,
+            "title": "Randonneur Curieux",
+            "min_points": 0
+          },
+          {
+            "level": 2,
+            "title": "Marcheur Averti",
+            "min_points": 100
+          },
+          {
+            "level": 3,
+            "title": "Arpenteur des Bois",
+            "min_points": 300
+          },
+          {
+            "level": 4,
+            "title": "Éclaireur des Cimes",
+            "min_points": 700
+          },
+          {
+            "level": 5,
+            "title": "Navigateur Alpin",
+            "min_points": 1500
+          },
+          {
+            "level": 6,
+            "title": "Pionnier des Crêtes",
+            "min_points": 3000
+          },
+          {
+            "level": 7,
+            "title": "Guide de Cordée",
+            "min_points": 5500
+          },
+          {
+            "level": 8,
+            "title": "Maître d'Expédition",
+            "min_points": 9000
+          },
+          {
+            "level": 9,
+            "title": "Légende des Sentiers",
+            "min_points": 14000
+          },
+          {
+            "level": 10,
+            "title": "Gardien des Horizons",
+            "min_points": 20000
+          }
+        ],
+        "actions": {
+          "place_review": {
+            "caps": {
+              "daily": 3,
+              "season": 50,
+              "weekly": 10
+            },
+            "points": 15,
+            "weights": {
+              "explorer": 0,
+              "partager": 1,
+              "preparer": 0,
+              "entraider": 0
+            },
+            "max_points": 15
+          },
+          "trail_prepared": {
+            "caps": {
+              "daily": 2,
+              "season": 30,
+              "weekly": 6
+            },
+            "points": 30,
+            "weights": {
+              "explorer": 0,
+              "partager": 0,
+              "preparer": 1,
+              "entraider": 0
+            },
+            "max_points": 30
+          },
+          "trip_completed": {
+            "caps": {
+              "daily": 2,
+              "season": 10,
+              "weekly": 4
+            },
+            "points": 45,
+            "weights": {
+              "explorer": 0.7,
+              "partager": 0,
+              "preparer": 0.3,
+              "entraider": 0
+            },
+            "max_points": 45
+          },
+          "carnet_published": {
+            "caps": {
+              "daily": 2,
+              "season": 15,
+              "weekly": 5
+            },
+            "points": 60,
+            "weights": {
+              "explorer": 0,
+              "partager": 1,
+              "preparer": 0,
+              "entraider": 0
+            },
+            "max_points": 60
+          },
+          "kit_field_report": {
+            "caps": {
+              "daily": 2,
+              "season": 30,
+              "weekly": 6
+            },
+            "points": 20,
+            "weights": {
+              "explorer": 0,
+              "partager": 0.3,
+              "preparer": 0.7,
+              "entraider": 0
+            },
+            "max_points": 40,
+            "bonus_per_item": 2
+          },
+          "checklist_completed": {
+            "caps": {
+              "daily": 3,
+              "season": 30,
+              "weekly": 8
+            },
+            "points": 25,
+            "weights": {
+              "explorer": 0,
+              "partager": 0,
+              "preparer": 1,
+              "entraider": 0
+            },
+            "max_points": 25
+          },
+          "hike_session_processed": {
+            "caps": {
+              "daily": 3,
+              "season": 60,
+              "weekly": 10
+            },
+            "points": 40,
+            "weights": {
+              "explorer": 1,
+              "partager": 0,
+              "preparer": 0,
+              "entraider": 0
+            },
+            "max_points": 150,
+            "bonus_per_segment": 5
+          }
+        },
+        "grace_days": 14,
+        "late_policy": "refuse",
+        "min_participants": 5,
+        "season_duration_weeks": 8
+      }
+    }
+  ]
+}

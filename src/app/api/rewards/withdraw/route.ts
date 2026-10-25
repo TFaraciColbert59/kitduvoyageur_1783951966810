@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { withdrawBodySchema } from '@/features/rewards/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/rewards/withdraw
- * Demande un retrait d'argent réel (cash-out) de manière sécurisée et idempotente.
+ * Demande de retrait du cash legacy déjà acquis (droit conservé), idempotente.
+ *
+ * Corps validé par zod (montant à deux décimales, fournisseur fermé,
+ * coordonnées bornées) ; le message SQL n'est jamais renvoyé au client et les
+ * coordonnées ne sont jamais journalisées.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -27,29 +32,30 @@ export async function POST(req: NextRequest) {
     });
     if (limited) return limited;
 
-    const body = await req.json();
-    const { amount, payment_provider = 'bank_transfer', idempotency_key, metadata = {} } = body;
-
-    if (!amount || amount <= 0 || !idempotency_key) {
+    const parsed = withdrawBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
       return NextResponse.json({ error: 'Paramètres de retrait invalides ou manquants' }, { status: 400 });
     }
+    const { amount, payment_provider, idempotency_key, metadata } = parsed.data;
 
-    // Call stored procedure
     const { data: withdrawalId, error } = await supabase.rpc('request_withdrawal', {
       p_amount: amount,
       p_payment_provider: payment_provider,
       p_idempotency_key: idempotency_key,
-      p_metadata: metadata
+      p_metadata: metadata,
     });
 
     if (error) {
-      console.warn('[rewards/withdraw] RPC error:', error.message);
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      console.warn('[rewards/withdraw] RPC refusée', error.code ?? 'sans code');
+      return NextResponse.json(
+        { error: 'Demande de retrait refusée. Vérifiez votre solde disponible et les conditions de retrait.' },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json({ success: true, withdrawalId });
-  } catch (err: any) {
-    console.error('[rewards/withdraw] Unexpected error:', err);
+  } catch (err) {
+    console.error('[rewards/withdraw] Unexpected error:', err instanceof Error ? err.name : 'inconnue');
     return NextResponse.json({ error: 'Erreur serveur inattendue' }, { status: 500 });
   }
 }

@@ -1,0 +1,143 @@
+{
+  "date": "2026-10-25",
+  "search_calls": [
+    {
+      "query": "European Commission official guidelines protection minors online DSA 2025 addictive design streaks virtual currencies rewards article 28",
+      "numResults": 6
+    },
+    {
+      "query": "DGCCRF officiel influence commerciale contrepartie avantage en nature points avis consommateurs rémunérés transparence réseaux sociaux",
+      "numResults": 6
+    },
+    {
+      "query": "CNIL officiel applications mobiles recommandations géolocalisation mineurs consentement fidélité données personnelles",
+      "numResults": 6
+    },
+    {
+      "query": "ACPR EBA official electronic money loyalty points limited network exclusion points not issued receipt funds",
+      "numResults": 6
+    },
+    {
+      "query": "CNIL applications mobiles recommandation géolocalisation permission système consentement septembre 2024",
+      "numResults": 5
+    },
+    {
+      "query": "DGCCRF avis en ligne contrepartie avis consommateurs rémunérés avantage nature influence commerciale transparence",
+      "numResults": 5
+    },
+    {
+      "query": "EUR-Lex Regulation EU 2022 2065 article 19 article 25 article 28 micro small enterprises exclusion",
+      "numResults": 5
+    },
+    {
+      "query": "ACPR Position 2022 P 01 instruments paiement réseau limité gamme limitée biens services notification 1 million",
+      "numResults": 5
+    },
+    {
+      "query": "EUR-Lex 2022 2065 Article 25 online interface design and organisation Providers shall not design organise or operate interfaces deceives manipulates",
+      "numResults": 3
+    },
+    {
+      "query": "EUR-Lex 2022 2065 Article 28 Providers online platforms accessible minors privacy safety security paragraph 3",
+      "numResults": 3
+    },
+    {
+      "query": "site:economie.gouv.fr influence commerciale guide bonne conduite 2025 2026 publicité collaboration commerciale avantage nature",
+      "numResults": 4
+    },
+    {
+      "query": "site:cnil.fr programme fidélité points données minimisation conservation profilage consentement",
+      "numResults": 4
+    },
+    {
+      "query": "site:ifrs.org IFRS 15 loyalty points material right breakage official",
+      "numResults": 4
+    },
+    {
+      "query": "European Commission Council EU payment services regulation PSD3 2026 agreement entry into application electronic money directive 2009 110",
+      "numResults": 4
+    }
+  ],
+  "fetched": [
+    {
+      "url": "https://digital-strategy.ec.europa.eu/en/library/commission-publishes-guidelines-protection-minors",
+      "ok": true
+    },
+    {
+      "url": "https://eur-lex.europa.eu/eli/reg/2022/2065/oj/eng",
+      "ok": true
+    },
+    {
+      "url": "https://cnil.fr/fr/permissions-applications-mobiles-recommandations-de-la-cnil-pour-respecter-la-vie-privee",
+      "ok": true
+    },
+    {
+      "url": "https://www.economie.gouv.fr/dgccrf/les-fiches-pratiques/avis-en-ligne-attention-aux-faux-commentaires",
+      "ok": true
+    },
+    {
+      "url": "https://www.economie.gouv.fr/particuliers/mes-droits-conso/bien-consommer/peut-faire-confiance-aux-avis-en-ligne",
+      "ok": true
+    },
+    {
+      "url": "https://eur-lex.europa.eu/eli/dir/2009/110/2018-01-13/eng",
+      "ok": true
+    },
+    {
+      "url": "https://eur-lex.europa.eu/eli/reg/2022/2065/oj/eng",
+      "ok": true
+    },
+    {
+      "url": "https://eur-lex.europa.eu/eli/C/2025/5519/oj/eng",
+      "ok": true
+    },
+    {
+      "url": "https://www.cnil.fr/fr/la-cnil-publie-8-recommandations-pour-renforcer-la-protection-des-mineurs-en-ligne",
+      "ok": true
+    },
+    {
+      "url": "https://eur-lex.europa.eu/eli/reg/2022/2065/2022-10-27/eng",
+      "ok": true
+    },
+    {
+      "url": "https://acpr.banque-france.fr/system/files/import/acpr/media/2023/07/26/20230726_position_2022-p-01.pdf",
+      "ok": true
+    },
+    {
+      "url": "https://idf.drieets.gouv.fr/sites/idf.drieets.gouv.fr/IMG/pdf/guide-de-bonne-conduite-des-influenceurs.pdf",
+      "ok": true
+    },
+    {
+      "url": "https://www.economie.gouv.fr/files/files/2026/202601-guide-influence-commerciale.pdf?v=1767360394",
+      "ok": true
+    },
+    {
+      "url": "https://cnil.fr/fr/programmes-de-fidelite-la-cnil-precise-lapplication-du-droit-la-portabilite-des-donnees",
+      "ok": true
+    },
+    {
+      "url": "https://cnil.fr/fr/minimiser-les-donnees-collectees",
+      "ok": true
+    },
+    {
+      "url": "https://www.ifrs.org/content/dam/ifrs/publications/html-standards/english/2026/issued/ifrs15.html",
+      "ok": true
+    },
+    {
+      "url": "https://www.ifrs.org/content/dam/ifrs/publications/html-standards/english/2026/issued/ifrs15-ie.html",
+      "ok": true
+    },
+    {
+      "url": "https://data.consilium.europa.eu/doc/document/ST-8535-2026-ADD-1/en/pdf",
+      "ok": true
+    },
+    {
+      "url": "https://finance.ec.europa.eu/consumer-finance-and-payments/payment-services/payment-services_en",
+      "ok": true
+    }
+  ],
+  "sources_reviewed": 66,
+  "fetch_calls": 19,
+  "unique_fetch_urls": 18,
+  "note": "sources_reviewed counts requested result slots, not unique sources read; 19 fetch calls covering 18 URL strings. DSA official journal extraction truncated twice; consolidated text read in full. October 21 2026 Council paper verifies PSD3/PSR legislative status."
+}

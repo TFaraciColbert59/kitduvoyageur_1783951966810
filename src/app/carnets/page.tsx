@@ -758,21 +758,6 @@ export default function CarnetsPage() {
         if (form.visibility !== 'private' && newC?.id) {
           requestCarnetPublicationAward(newC.id, ownerId);
         }
-
-        try {
-          await fetch('/api/rewards/claim', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action_type: 'carnet',
-              target_id: newC?.id,
-              target_type: 'carnet',
-              metadata: { title: form.title, description: form.description }
-            })
-          });
-        } catch (rewardsErr) {
-          console.warn('Rewards claim error:', rewardsErr);
-        }
       }
       setShowCreate(false);
       setEditCarnet(null);

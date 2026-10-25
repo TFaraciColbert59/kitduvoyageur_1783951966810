@@ -1,0 +1,13 @@
+{
+  "observed_date": "2026-10-25",
+  "k": "rules",
+  "query": "select version,active,payload->>'status' as payload_status,payload->>'effective_from' as effective_from,jsonb_array_length(coalesce(payload->'rules','[]'::jsonb)) as rules_count,(select count(*) from jsonb_array_elements(coalesce(payload->'rules','[]'::jsonb)) x where x->>'enabled'='true') as enabled_count from public.progression_rules;",
+  "data": {
+    "version": "v1",
+    "active": true,
+    "payload_status": null,
+    "effective_from": null,
+    "rules_count": 0,
+    "enabled_count": 0
+  }
+}

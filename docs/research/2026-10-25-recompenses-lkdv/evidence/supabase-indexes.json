@@ -1,0 +1,47 @@
+{
+  "observed_date": "2026-10-25",
+  "k": "indexes",
+  "query": "select tablename,indexname,indexdef from pg_indexes where schemaname='public' and tablename in ('loyalty_history','reward_transactions','progression_events','progression_claims') and indexdef ilike '%unique%' order by tablename,indexname;",
+  "data": [
+    {
+      "tablename": "loyalty_history",
+      "indexname": "loyalty_history_pkey",
+      "indexdef": "CREATE UNIQUE INDEX loyalty_history_pkey ON public.loyalty_history USING btree (id)"
+    },
+    {
+      "tablename": "progression_claims",
+      "indexname": "progression_claims_pkey",
+      "indexdef": "CREATE UNIQUE INDEX progression_claims_pkey ON public.progression_claims USING btree (id)"
+    },
+    {
+      "tablename": "progression_claims",
+      "indexname": "progression_claims_user_id_claim_group_evidence_key_key",
+      "indexdef": "CREATE UNIQUE INDEX progression_claims_user_id_claim_group_evidence_key_key ON public.progression_claims USING btree (user_id, claim_group, evidence_key)"
+    },
+    {
+      "tablename": "progression_events",
+      "indexname": "progression_events_idempotency_key_key",
+      "indexdef": "CREATE UNIQUE INDEX progression_events_idempotency_key_key ON public.progression_events USING btree (idempotency_key)"
+    },
+    {
+      "tablename": "progression_events",
+      "indexname": "progression_events_pkey",
+      "indexdef": "CREATE UNIQUE INDEX progression_events_pkey ON public.progression_events USING btree (id)"
+    },
+    {
+      "tablename": "progression_events",
+      "indexname": "progression_events_reward_transaction_id_key",
+      "indexdef": "CREATE UNIQUE INDEX progression_events_reward_transaction_id_key ON public.progression_events USING btree (reward_transaction_id)"
+    },
+    {
+      "tablename": "reward_transactions",
+      "indexname": "reward_transactions_pkey",
+      "indexdef": "CREATE UNIQUE INDEX reward_transactions_pkey ON public.reward_transactions USING btree (id)"
+    },
+    {
+      "tablename": "reward_transactions",
+      "indexname": "uq_reward_transactions_idempotency",
+      "indexdef": "CREATE UNIQUE INDEX uq_reward_transactions_idempotency ON public.reward_transactions USING btree (idempotency_key) WHERE (idempotency_key IS NOT NULL)"
+    }
+  ]
+}

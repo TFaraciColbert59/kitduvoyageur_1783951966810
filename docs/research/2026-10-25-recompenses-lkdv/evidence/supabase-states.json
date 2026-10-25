@@ -1,0 +1,22 @@
+{
+  "observed_date": "2026-10-25",
+  "k": "states",
+  "query": "select 'intents' as source,state as status,count(*) as n from public.progression_award_intents group by state union all select 'outbox',status,count(*) from public.progression_outbox group by status;",
+  "data": [
+    {
+      "source": "intents",
+      "status": "refused",
+      "n": 11
+    },
+    {
+      "source": "intents",
+      "status": "pending",
+      "n": 42
+    },
+    {
+      "source": "outbox",
+      "status": "processed",
+      "n": 15
+    }
+  ]
+}

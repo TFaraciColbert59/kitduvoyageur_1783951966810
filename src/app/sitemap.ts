@@ -29,7 +29,6 @@ const staticRoutes: Array<{
   { url: '/createurs', priority: 0.55, changeFrequency: 'monthly' },
   { url: '/abonnements', priority: 0.55, changeFrequency: 'monthly' },
   { url: '/pro', priority: 0.55, changeFrequency: 'monthly' },
-  { url: '/fidelite', priority: 0.55, changeFrequency: 'monthly' },
   { url: '/carbone', priority: 0.5, changeFrequency: 'monthly' },
   { url: '/faq', priority: 0.5, changeFrequency: 'monthly' },
   { url: '/contact', priority: 0.5, changeFrequency: 'monthly' },

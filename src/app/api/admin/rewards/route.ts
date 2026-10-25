@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { z } from 'zod';
+import { programConfigToList, programSchema } from '@/features/rewards/domain/contract';
+import { cancelRedemption, decideAward, reverseAward } from '@/features/rewards/server/rewardsService';
+
+const uuid = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+const reason = z.string().trim().min(1).max(300);
+
+const adminRewardActionSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('cancel_redemption'), redemption_id: uuid, reason }),
+  z.object({ action: z.literal('reverse_award'), award_id: uuid, reason }),
+  z.object({ action: z.literal('decide_award'), award_id: uuid, approve: z.boolean(), reason: reason.optional() }),
+]);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -82,10 +94,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, data });
     }
 
+    // Compensations du programme de points (chantier Récompenses) : fonctions
+    // SQL service_role, motif obligatoire, idempotentes.
+    if (action === 'cancel_redemption' || action === 'reverse_award' || action === 'decide_award') {
+      const parsed = adminRewardActionSchema.safeParse({ action, ...params });
+      if (!parsed.success) {
+        return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
+      }
+      const input = parsed.data;
+      const outcome =
+        input.action === 'cancel_redemption'
+          ? await cancelRedemption(input.redemption_id, input.reason)
+          : input.action === 'reverse_award'
+            ? await reverseAward(input.award_id, input.reason)
+            : await decideAward(input.award_id, input.approve, input.reason ?? null);
+      if (!outcome.ok) {
+        return NextResponse.json({ error: outcome.error }, { status: outcome.status });
+      }
+      return NextResponse.json({ success: true, data: outcome.data });
+    }
+
     if (action === 'update_config') {
       const { key, value, description = null } = params;
       if (!key || value == null) {
         return NextResponse.json({ error: 'Paramètres incorrects pour mettre à jour la configuration' }, { status: 400 });
+      }
+      // Le contrat du programme de points doit rester lisible : une valeur
+      // mal formée serait lue « fermé » par le serveur, mais elle est refusée
+      // ici pour que l'administration voie l'erreur.
+      if (key === 'points_program' && !programSchema.safeParse(programConfigToList(value)).success) {
+        return NextResponse.json({ error: 'Configuration points_program invalide' }, { status: 400 });
       }
 
       const { data, error } = await supabase

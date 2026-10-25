@@ -1526,18 +1526,19 @@ let defs = function() {
           }
         },
         {
-          l: "Fidélité",
+          /* Récompenses (chantier du 25 oct. 2026) : le détail — solde du
+             journal, objectif, catalogue, historique — vit dans le tiroir React
+             `rewards_drawer`. Ici, une simple entrée : aucun solde n'est
+             affiché depuis l'état local (valeurs de maquette avant hydratation),
+             le tiroir lit le solde canonique et distingue inconnu de zéro. */
+          l: "Récompenses",
           r: () => {
-            const pts = Number((S.profile && S.profile.loyaltyPoints) || 0);
             return {
               per: [4, 6],
-              title: "Programme fidélité",
+              title: "Récompenses",
               rows: [
-                `<div class="sumline" style="margin-bottom:8px"><span>Solde actuel <b class="num" style="color:var(--tint);font-size:16px;">${pts.toLocaleString('fr-FR')} pts</b></span></div>`,
-                pts > 0
-                  ? `<div class="li nt"><div><div class="ttl"><span>Points disponibles</span></div><div class="s2">Utilisables selon les avantages du programme.</div></div><span class="tg confirmed">${pts.toLocaleString('fr-FR')} pts</span></div>`
-                  : `<div style="padding:24px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucun point fidélité pour le moment. Vos points apparaîtront après vos commandes et sorties éligibles.</div>`,
-                `<div class="li nt"><div><div class="ttl"><span>Avantages</span></div><div class="s2">Les paliers et récompenses disponibles s’afficheront ici.</div></div></div>`
+                `<div class="li nt"><div><div class="ttl"><span>Points, objectif et historique</span></div><div class="s2">Votre solde de points, l’objectif choisi, le catalogue et l’historique. Choisir un objectif ne dépense aucun point ; les XP restent dans Progression.</div></div></div>`,
+                `<button class="mbtn p" style="width:100%;height:44px;justify-content:center;font-size:13px;" data-a="openRewards">Ouvrir mes récompenses</button>`
               ]
             };
           }
@@ -1678,7 +1679,7 @@ const FLI_SVG = {
   "Inventaire": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
   "Prêts": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   "Prêts & Locations": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-  "Fidélité": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  "Récompenses": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
   "Parrainage": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
   "Parcours": ic(IC.route, 's'),
   "Météo": ic(IC.sun, 's'),
@@ -1811,7 +1812,7 @@ let renderSheet = function() {
     }
     return;
   }
-  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie" };
+  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", rewards_drawer: "recompenses" };
   if (REACT_DRAWERS[sh.k]) {
     const kind = REACT_DRAWERS[sh.k];
     if (typeof window.__lkdvUnmountSlot === "function") {
@@ -1822,7 +1823,7 @@ let renderSheet = function() {
     }
     const label = kind === "reseau"
       ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
-      : kind === "sortie" ? "Sortie" : "Compte & Activité";
+      : kind === "sortie" ? "Sortie" : kind === "recompenses" ? "Récompenses" : "Compte & Activité";
     const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
     $("sheet").setAttribute("aria-label", label);
     $("sheet").innerHTML = `<div class="grab" data-drag>
@@ -1845,7 +1846,9 @@ let renderSheet = function() {
       ? { tab: drawerHintMode || "followers" }
       : kind === "sortie"
         ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
-        : { tab: drawerHintTab || 0 };
+        : kind === "recompenses"
+          ? { tab: sh.rewardsTab || 0 }
+          : { tab: drawerHintTab || 0 };
     if (root && typeof window.__lkdvMountDrawer === "function") {
       try { window.__lkdvMountDrawer(root, kind, props); } catch (err) {
         console.warn("[CompteLiquidGlassV8] drawer mount failed:", err);
@@ -4611,6 +4614,7 @@ var EXA = {
     setTimeout(() => { window.location.href = '/connexion'; }, 400);
   },
   openDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
+  openRewards: v => { openSheet('rewards_drawer', 0, 'large', { rewardsTab: +v === 1 ? 1 : 0 }); haptic(8); },
   drawerTab: v => { const next = clamp(+v, 0, 4); drawerHintTab = next; sheetSlideDir = next >= (X.drawerTab || 0) ? 1 : -1; X.drawerTab = next; renderSheet(); haptic(6); },
   toggleReseau: v => { X.reseauMode = v; refresh(false); haptic(8); },
   togglefollow: v => {

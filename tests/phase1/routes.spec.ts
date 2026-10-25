@@ -171,24 +171,13 @@ describe('Phase 1 — handlers des routes (mocks)', () => {
   describe('POST /api/loyalty/redeem', () => {
     const validBody = { rewardId: REWARD_ID };
 
-    it('409 déjà échangée (erreur métier RPC)', async () => {
-      h.rpc.mockResolvedValue({
-        data: { success: false, error: 'already_redeemed' },
-        error: null,
-      });
+    // Chantier Récompenses : remplacée par /api/rewards/redeem (réservation
+    // stock + débit atomiques). Plus aucun débit legacy par cette route.
+    it('410 : route remplacée, aucun débit', async () => {
       const res = await redeemPost(post('/api/loyalty/redeem', validBody));
-      expect(res.status).toBe(409);
-      expect(await res.json()).toEqual({ error: 'already_redeemed' });
-    });
-
-    it('200 nominal (balance + level)', async () => {
-      h.rpc.mockResolvedValue({
-        data: { success: true, balance: 50, level: 'Explorateur' },
-        error: null,
-      });
-      const res = await redeemPost(post('/api/loyalty/redeem', validBody));
-      expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ success: true, balance: 50, level: 'Explorateur' });
+      expect(res.status).toBe(410);
+      expect(await res.json()).toEqual({ error: 'moved', replacement: '/api/rewards/redeem' });
+      expect(h.rpc).not.toHaveBeenCalled();
     });
   });
 
@@ -203,19 +192,19 @@ describe('Phase 1 — handlers des routes (mocks)', () => {
       expect(h.rpc).not.toHaveBeenCalled();
     });
 
-    it('200 si le rapport appartient au membre (id brut vérifié)', async () => {
+    // Chantier Récompenses : le gain passe par rewards_award_points (fermé par
+    // défaut) ; le rapport reste vérifié par son id brut avant toute demande.
+    it('rapport du membre vérifié puis programme fermé → 409, jamais legacy_loyalty_earn', async () => {
       h.getServiceSupabase.mockReturnValue(serviceFor({ data: { id: 'report_42' }, error: null }));
-      h.rpc.mockResolvedValue({
-        data: { success: true, balance: 75, level: 'Explorateur' },
-        error: null,
-      });
+      h.rpc.mockResolvedValue({ data: { success: false, error: 'emission_closed' }, error: null });
       const res = await earnPost(post('/api/loyalty/earn', validBody));
-      expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ success: true, balance: 75, level: 'Explorateur' });
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({ error: 'emission_closed' });
       expect(h.rpc).toHaveBeenCalledWith(
-        'legacy_loyalty_earn',
-        expect.objectContaining({ p_source_id: 'rapport:report_42', p_points: 75 })
+        'rewards_award_points',
+        expect.objectContaining({ p_source_id: 'rapport:report_42', p_rule_key: 'rapport_expedition' })
       );
+      expect(h.rpc).not.toHaveBeenCalledWith('legacy_loyalty_earn', expect.anything());
     });
   });
 

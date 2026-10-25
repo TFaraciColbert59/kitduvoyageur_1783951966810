@@ -1,0 +1,39 @@
+{
+  "observed_date": "2026-10-25",
+  "k": "functions",
+  "query": "select p.proname,pg_get_function_identity_arguments(p.oid) arguments,p.prosecdef security_definer,has_function_privilege('anon',p.oid,'EXECUTE') anon_execute,has_function_privilege('authenticated',p.oid,'EXECUTE') authenticated_execute,has_function_privilege('service_role',p.oid,'EXECUTE') service_execute from pg_proc p join pg_namespace n on p.pronamespace=n.oid where n.nspname='public' and p.proname in ('claim_reward_points','legacy_loyalty_earn','legacy_loyalty_redeem','award_progression_gain','distribute_rewards','record_loyalty_payment_event') order by p.proname;",
+  "data": [
+    {
+      "proname": "award_progression_gain",
+      "arguments": "p_user_id uuid, p_action_type text, p_source_type text, p_source_id text, p_effective_at timestamp with time zone, p_points_total integer, p_weights jsonb, p_explanation text, p_metadata jsonb, p_claims jsonb",
+      "security_definer": true,
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    },
+    {
+      "proname": "claim_reward_points",
+      "arguments": "p_user_id uuid, p_action_type text, p_target_id uuid, p_target_type text, p_metadata jsonb",
+      "security_definer": true,
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    },
+    {
+      "proname": "legacy_loyalty_earn",
+      "arguments": "p_user_id uuid, p_points integer, p_reason text, p_source_id text, p_type text",
+      "security_definer": true,
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    },
+    {
+      "proname": "legacy_loyalty_redeem",
+      "arguments": "p_user_id uuid, p_reward_id uuid",
+      "security_definer": true,
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    }
+  ]
+}
