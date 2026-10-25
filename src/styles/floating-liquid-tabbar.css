@@ -108,3 +108,10 @@
     font-weight: 600;
   }
 }
+
+/* Aucune barre de navigation globale par-dessus une story plein écran. */
+body:has(.story.on) .lkdv-floating-tabbar {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
