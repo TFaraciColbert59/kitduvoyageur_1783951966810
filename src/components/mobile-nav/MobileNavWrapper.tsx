@@ -30,24 +30,36 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/clubs') ||
     pathname === '/profil' ||
     pathname?.startsWith('/profil') ||
-    // La fiche carnet porte sa propre top bar et la barre basse du Compte.
-    pathname?.startsWith('/carnets/') ||
-    // Le preparateur d'aventure doit
+    // '/prepare' n'est PLUS dans cette liste : le preparateur d'aventure doit
     // garder la barre d'onglets. Elle en etait retiree parce que le flux
     // occupe tout l'ecran, mais l'effet reel etait l'inverse de l'intention —
     // aucun moyen de quitter l'ecran, puisque AppShell ne rend que la
     // reservation de place et jamais la barre elle-meme. Voir
     // AdventurePrepScreen.
-    // Les routes de preparation gardent leur navigation.
+    // Égalité stricte conservee pour les autres routes '/prepare*' :
+    // '/preparer-randonnee' et '/preparer-sentier' gardent leur navigation.
     // Fiche carnet : la page porte sa propre top bar et la barre basse du Compte.
     // Sans cela, le plateau contextuel « Récit / Carte & GPX… » et la barre
     // globale se superposent aux contrôles de la fiche (constaté en recette).
-    (pathname?.startsWith('/communaute/') && !pathname.startsWith('/communaute')) ||
+    (pathname?.startsWith('/carnets/') && !pathname.startsWith('/carnets/nouveau')) ||
+    // Fiche pays : elle porte sa propre top bar et la barre basse du Compte
+    // (48 px). Sans cela, le plateau contextuel et la barre globale se
+    // superposent aux contrôles de la fiche.
+    /^\/pays\/[a-z]{2}$/i.test(pathname ?? '') ||
+    // Messagerie : elle porte sa propre top bar, sa carte et la barre basse du
+    // Compte (48 px). Sans cela, le plateau contextuel des onglets et la barre
+    // globale se superposent à la carte et à la zone de conversation.
+    pathname === '/messagerie' ||
+    pathname?.startsWith('/messagerie?') ||
     pathname === '/communaute' ||
+    pathname?.startsWith('/communaute/publier') ||
     // A Reel is a true full-screen viewer with its own close/back controls.
     // Never overlay the shared web OR Capacitor tab bar on its media.
-    pathname === '/communaute' ||
-    pathname?.startsWith('/communaute/');
+    pathname === '/communaute/reels' ||
+    pathname?.startsWith('/communaute/reels/') ||
+    // Carte vivante 3D plein écran immersive avec scrubber d'altitude
+    pathname === '/carte-3d' ||
+    pathname?.startsWith('/carte-3d');
 
   if (isNoNavRoute) {
     return <OfflineBanner />;
@@ -55,7 +67,7 @@ export default function MobileNavWrapper() {
 
   // Hide general top site navigation on map-heavy views to allow full-screen map focus
   const isMapHeavyRoute = 
-    pathname?.startsWith('/explorer') || 
+    pathname?.startsWith('/randonnee-active') || 
     pathname?.startsWith(HUB_DEPART_HREF) || 
     pathname?.startsWith('/carte-interactive');
 
