@@ -1303,3 +1303,8 @@ button.mb:active{background:var(--fill2)}
   cursor: pointer !important;
 }
 .st-viewcount:active { transform: scale(.94) !important; }
+
+/* Alignement pixel du HUD sur le viewer Communauté. */
+.st-head { left: 22px !important; }
+.st-head .st-options-btn { width: 44px !important; height: 44px !important; }
+.st-head .st-options-btn .st-dots { font-size: 15px !important; letter-spacing: .5px !important; }

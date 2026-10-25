@@ -2976,8 +2976,8 @@ function renderStory() {
     <div class="lkdv-story-options st-options">
       <button type="button" class="st-options-btn" data-a="stoptions" aria-label="Options de la story" aria-expanded="false"><span class="st-dots" aria-hidden="true">•••</span><span class="st-close-x" aria-hidden="true">×</span></button>
       <div class="lkdv-story-options-rail st-options-rail" role="menu" aria-label="Options de la story">
-        <button type="button" role="menuitem" data-a="stviews" aria-label="Voir les vues">◉</button>
-        <button type="button" role="menuitem" data-a="stclose" aria-label="Fermer la story">×</button>
+        <button type="button" role="menuitem" data-a="stviews" aria-label="Voir les vues"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12s4-7 10.5-7 10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button type="button" role="menuitem" data-a="stclose" aria-label="Fermer la story"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
     </div>
   </div>
