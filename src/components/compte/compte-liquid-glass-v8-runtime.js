@@ -2971,7 +2971,7 @@ function renderStory() {
     const when = person.viewedAt ? new Date(person.viewedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'vu';
     return `<button type="button" class="st-viewer-row" data-a="openUserProfile" data-v="${esc(profileKey)}" aria-label="Voir le profil de ${esc(person.name || 'Voyageur')}"><span class="st-viewer-av">${person.avatarUrl ? `<img src="${esc(person.avatarUrl)}" alt="">` : esc((person.name || 'V').charAt(0).toUpperCase())}</span><span class="st-viewer-txt"><b>${esc(person.name || 'Voyageur')}</b><small>@${esc(person.handle || 'voyageur')}</small></span><span class="st-viewer-time">${when}</span><svg class="st-viewer-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
   }).join('') : '<p class="st-viewer-empty">Aucune vue pour le moment.</p>';
-  const viewersPanel = `<div class="st-viewers" role="dialog" aria-modal="true" aria-label="Personnes ayant vu cette story"><button type="button" class="st-viewers-scrim" data-a="stviewclose" aria-label="Fermer"></button><div class="st-viewers-sheet"><div class="st-viewers-head"><span class="st-viewers-title"><b>Vues</b><small>${eng ? eng.viewCount : 0} personne${(eng ? eng.viewCount : 0) === 1 ? '' : 's'}</small></span><button type="button" class="st-viewers-close" data-a="stviewclose" aria-label="Fermer">×</button></div><div class="st-viewers-list" role="list">${viewerList}</div></div></div>`;
+  const viewersPanel = `<div class="st-viewers${X.viewersOpen ? ' on' : ''}" role="dialog" aria-modal="true" aria-label="Personnes ayant vu cette story"><button type="button" class="st-viewers-scrim" data-a="stviewclose" aria-label="Fermer"></button><div class="st-viewers-sheet"><div class="st-viewers-head"><span class="st-viewers-title"><b>Vues</b><small>${eng ? eng.viewCount : 0} personne${(eng ? eng.viewCount : 0) === 1 ? '' : 's'}</small></span><button type="button" class="st-viewers-close" data-a="stviewclose" aria-label="Fermer">×</button></div><div class="st-viewers-list" role="list">${viewerList}</div></div></div>`;
   const storyAvatar = (S.profile && S.profile.avatarUrl) || TONY_AVATAR;
   const storyName = (S.profile && S.profile.name) || 'Léa Fontaine';
   el.innerHTML = `<div class="st-bar">${st.slides.map((_, j) => `<i class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b></b></i>`).join('')}</div>
@@ -3002,8 +3002,8 @@ async function loadStoryEngagement() {
   } catch (_) { X.storyEng = null; }
   renderStory();
 }
-function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false; renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); void loadStoryEngagement(); requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); }); }
-function closeStory() { X.story = null; renderStory(); }
+function openStory(id) { X.viewersOpen = false; X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false; renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); void loadStoryEngagement(); requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); }); }
+function closeStory() { X.viewersOpen = false; X.story = null; renderStory(); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
 const tileMedia = t => t.coverImage ? `<img class="art" src="${esc(t.coverImageSmall || t.coverImage)}" alt="" loading="lazy" decoding="async" />` : tileArt(t.art);
@@ -4781,8 +4781,8 @@ var EXA = {
   openHighlight: v => { if (v === 'hl5') openSheet('newhl', 0, 'large'); else openStory(v); },
   stclose: () => closeStory(),
   stoptions: () => { const box = document.querySelector('.st-options'); const btn = document.querySelector('.st-options-btn'); const on = box ? box.classList.toggle('on') : false; if (btn) btn.setAttribute('aria-expanded', on ? 'true' : 'false'); haptic(6); },
-  stviews: () => { const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.add('on'); haptic(6); },
-  stviewclose: () => { const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.remove('on'); },
+  stviews: () => { X.viewersOpen = true; const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.add('on'); haptic(6); },
+  stviewclose: () => { X.viewersOpen = false; const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.remove('on'); },
   stlike: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; if (!storyId) return; const liked = Boolean(X.storyEng && X.storyEng.liked); try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: liked ? 'unlike' : 'like' }) }); if (res.ok) { const data = await res.json(); X.storyEng = { ...(X.storyEng || {}), liked: data.liked, likeCount: data.likeCount }; haptic(10); renderStory(); } } catch (_) {} },
   stcomment: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; const input = $('st-comment-input'); const content = input ? input.value.trim() : ''; if (!storyId || !content) return; try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'comment', content }) }); if (res.ok) { if (input) input.value = ''; haptic(8); void loadStoryEngagement(); } } catch (_) {} },
   stprev: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); void loadStoryEngagement(); } else { s.i = 0; renderStory(); void loadStoryEngagement(); } },
