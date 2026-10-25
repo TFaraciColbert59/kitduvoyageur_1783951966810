@@ -1,248 +1,156 @@
-# Carte post Communauté = drawer post Compte — plan de parité
+# Carte post Communauté = drawer post Compte — plan v2
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
-**Goal:** remplacer la carte du fil Communauté par la surface exacte du drawer post du Compte, au pixel et au comportement.
+**Goal:** rendre la carte du fil identique au drawer post du Compte dernière version, au repos comme dans les panes partage/commentaires.
 
-**Architecture:** extraire une surface partagée `PostCardSurface` + `PostLensPager` + panes partage/commentaires du `PostDrawer`, puis la rendre dans l’overlay Compte et dans une carte de fil aux mêmes dimensions. Supprimer la carte, les panneaux et les compteurs spécifiques au fil.
+**Architecture:** extraire `PostCardSurface`, `PostOptionsRail`, `PostLensPager`, `PostSharePane`, `PostCommentsPane` du `PostDrawer`, puis les utiliser dans le drawer Compte et dans une carte fil qui s’étend de 541 à 794 px. Supprimer la carte et les panneaux spécifiques au fil.
 
-**Tech Stack:** Next.js 15, React 19, TypeScript strict, vinext/Cloudflare, `LensPager`, CSS Compte, Playwright, Vitest.
+**Tech Stack:** Next.js 15, React 19, vinext/Cloudflare, LensPager, Playwright, Vitest.
 
 **Spec:** `docs/superpowers/specs/2026-10-25-community-post-card-account-drawer-parity-design.md`
 
 ## Global Constraints
 
-- Vérité unique : `src/components/compte/overlay/PostDrawer.tsx` + `compte-overlay.css`.
-- Carte fil à 430 px : **406×541**, `x=12`, rayon 28.
-- Média **4:5**, header verre, capsule **3×40 px sans compteurs**.
-- **Aucun** `PostGlassPanel`, `lkdv-share-mini`, compteurs, carte verte, média 1:1 dans le fil.
-- Le drawer Compte et la carte fil doivent rendre le **même composant**.
-- Aucune migration DB. Aucun secret. Aucun déploiement Vercel.
-- Tests et vérifications obligatoires ; build Cloudflare avant commit final.
+- Compte de recette : `lea.fontaine` (`demo@lkdv.app`).
+- Carte fil : **406×541** au repos, **406×794** en partage/commentaires, `x=12`, rayon 28.
+- Média **4:5**, header verre 60/40, X, rail d’options, compteurs.
+- **3 panes** ; onglets partage Envoyer/Partage externe.
+- Aucun `PostGlassPanel`, `lkdv-share-mini`, `AccountMoreMenu` dropdown dans le fil.
+- Pas de lightbox (désactivée côté Compte).
+- Tests + build Cloudflare avant commit final.
 
----
+## Captures de référence
 
-## Relevé exhaustif des différences
+Compte :
+`account-filled-home.png`, `account-filled-post.png`, `account-filled-options.png`, `account-filled-share-clean.png`, `account-filled-comments-clean.png`.
 
-| # | Point | Compte (vérité) | Fil actuel | Action |
+Communauté :
+`community-post-card.png`, `community-post-options.png`, `community-post-comments.png`, `community-post-share.png`.
+
+## Différences exhaustives
+
+| # | Point | Compte | Fil | Correction |
 |---|---|---|---|---|
-| 1 | Conteneur | sheet overlay `406×541 x12 y48` | carte `410×410 x10 y163` | même `PostCardSurface`, largeur 406 |
-| 2 | Fond | transparent + verre | `#17402C` | supprimer fond vert |
-| 3 | Ratio média | 4:5 | 1:1 | `aspect-ratio:4/5` partagé |
-| 4 | Header | `lkdv-overlay-heading` verre, avatar 36, nom 13, handle + temps | `pmi-author` verre, avatar 28, sans temps | composant header Compte |
-| 5 | Header cliquable | retour Compte/profil | lien profil seul | même action |
-| 6 | Options | menu 6 : Enregistrer, Copier, Republier, Signaler, Supprimer, Fermer | 4 : Enregistrer, Republier, Copier, Signaler | menu partagé 6 |
-| 7 | Déclencheur options | `lkdv-post-options-trigger` 38 px | `pmi-more-pill` 34 px | même bouton |
-| 8 | Actions | 3 × 40 px, sans compteur | 3 boutons 34 px + compteurs | capsule Compte |
-| 9 | Compteurs | absents | 12 / 3 / 1 | retirer |
-| 10 | Icônes actions | Heart / MessageCircle / Send | Heart / MessageCircle / Share2 | mêmes icônes |
-| 11 | Like | `on`/`liked`, rempli | compteur local + état | même état, sans compteur |
-| 12 | Partage | onglets Envoyer / Partage externe | 3 actions rondes + mini 132×30 | pane partagée Compte |
-| 13 | Mini partage | absent | présent | supprimer |
-| 14 | Commentaires | pane `.lkdv-comments-pane` + composer textarea | `.lkdv-post-panel` + input | pane partagée |
-| 15 | Navigation | LensPager 3 panes (share/post/comments) | PostGlassPanel 2 panes | même pager 3 |
-| 16 | Swipe | horizontal panes + swipe bas ferme | panneaux 80 %, swipe | même gestes |
-| 17 | Animation | overlay-in 260 ms, lens snap | height .4 s | animations Compte |
-| 18 | Lightbox | `.lkdv-post-lightbox` | absent | ajouter |
-| 19 | Carrousel | flèches + compteur médias | premier média seulement | ajouter |
-| 20 | Texte | post = photo uniquement | fallback texte | conserver fallback mais même cadre |
-| 21 | Vidéo | média img (drawer) | vidéo supportée | surface média partagée |
-| 22 | Fermeture | header cliquable, swipe, menu Fermer | pas de Fermer | menu/gestes Compte |
-| 23 | Scrim | transparent pour post | pas de scrim | même overlay |
-| 24 | Bottom bar | visible sous la sheet | visible | inchangé |
-| 25 | Largeur feed | 406 | 410 | colonne 12 px |
-| 26 | Focus/scroll | body lock + focus trap | expansion locale | mêmes comportements |
-| 27 | Partage externe | 4 boutons | 3 actions | mêmes boutons |
-| 28 | Recherche partage | input 35 px | input 40 px | même style |
-| 29 | Liste conversations | `.lkdv-share-list` | `.lkdv-share-conv` | même markup |
-| 30 | Composer commentaire | textarea 2 lignes + send 34 | input 40 + send 40 | composer Compte |
-| 31 | Liste commentaires | `lkdv-comment` + actions | liste fil | composant Compte |
-| 32 | Police | SF Pro/Inter 12–13 px | feed 10–13 px | tokens Compte |
-| 33 | Menu largeur | 210 | 226 | 210 |
-| 34 | Position menu | top 48/right 12 | pmi top 52/right 12 | 48/12 |
-| 35 | Accessibilité | role dialog, focus trap | role dialog local | mêmes attributs |
-| 36 | Entrée | depuis grille Compte | toujours inline | carte inline, ouverture panes |
-| 37 | Scroll body | lock | non lock | lock pendant panes |
-| 38 | Tap média | lightbox | like/double tap | lightbox + like seulement sur bouton |
-| 39 | État vide commentaires | message Compte | message fil | même texte/style |
-| 40 | Partage natif | boutons Compte | actions fil | même handlers |
-
----
+| 1 | Conteneur | sheet 406×541 x12 y48 | carte 410×410 x10 y163 | `PostCardSurface` 406 |
+| 2 | Extension panes | 406×794 | 410×354 | expansion 794 |
+| 3 | Fond | sheet transparente | `#17402C` | supprimer fond |
+| 4 | Média | 4:5 | 1:1 | 4:5 |
+| 5 | Header | 60, avatar 40, nom 15, handle+temps | 36, avatar 28, sans temps | header partagé |
+| 6 | X | oui | non | ajouter |
+| 7 | Grab | oui | non | ajouter |
+| 8 | Options | rail vertical 5 | dropdown 4 | rail partagé |
+| 9 | Trigger | `lkdv-post-options-trigger` 38 | `pmi-more-pill` 34 | même trigger |
+| 10 | Actions | 2/5/2, 46×31 | 12/3/1, 34 | mêmes tailles |
+| 11 | Icônes | Heart/MessageCircle/Send | Heart/MessageCircle/Share2 | mêmes icônes |
+| 12 | Like | pop + burst | compteur local | mêmes animations |
+| 13 | Panes | 3 | 2 | LensPager 3 |
+| 14 | Navigation | swipe/lens | PostGlassPanel | même pager |
+| 15 | Partage | tabs Envoyer/Externe | actions + mini | tabs partagés |
+| 16 | Mini partage | absent | 132×30 | supprimer |
+| 17 | Commentaires | pane 794 | panneau 354 | pane partagée |
+| 18 | Composer | textarea | input | composer Compte |
+| 19 | Liste comments | actions complètes | liste fil | composant Compte |
+| 20 | Animation sheet | expansion | height .4 | même transition |
+| 21 | Carrousel | flèches + compteur | non | ajouter |
+| 22 | Lightbox | désactivée | non | ne pas ajouter |
+| 23 | Texte | fallback | fallback | même cadre |
+| 24 | Vidéo | média | vidéo | surface média partagée |
+| 25 | Fermeture | X/grab/swipe | aucune | mêmes gestes |
+| 26 | Scrim | transparent | absent | overlay |
+| 27 | Bottom bar | visible | visible | inchangé |
+| 28 | Largeur | 406 | 410 | colonne 12 |
+| 29 | Focus | trap/lock | local | mêmes |
+| 30 | Partage externe | 4 boutons | 3 actions | mêmes |
+| 31 | Recherche partage | 35 | 40 | même style |
+| 32 | Liste conversations | rows Compte | rows fil | même markup |
+| 33 | Menu largeur | rail | 226 | rail |
+| 34 | Police | SF Pro 12–15 | feed 10–13 | tokens Compte |
+| 35 | Entrée | grille Compte | inline | inline + expansion |
+| 36 | Tap média | double like | double like | même |
+| 37 | Compteurs | oui | oui | mêmes valeurs/style |
+| 38 | Header time | oui | non | ajouter |
+| 39 | A11y | dialog/focus | dialog local | mêmes attributs |
+| 40 | Multi-média | oui | non | ajouter |
 
 ## Fichiers
 
 ```
 src/components/compte/overlay/
-  PostDrawer.tsx                 (refactor)
-  PostCardSurface.tsx            (create)
-  PostLensPager.tsx              (create)
-  PostSharePane.tsx              (create)
-  PostCommentsPane.tsx           (create)
-  PostMediaLightbox.tsx          (create)
-  compte-overlay.css             (source styles)
-src/features/community/feed/
-  CommunityFeedPost.tsx          (refactor)
-  PostCommentsPanel.tsx          (supprimer du fil / garder legacy)
-  PostSharePanel.tsx             (supprimer du fil / garder legacy)
-src/features/posts/ui/
-  post-system.css                (tokens partagés)
-tests/visual/
-  post-card-parity.spec.ts       (create)
-tests/e2e/
-  post-card-parity.spec.ts       (create)
+  PostDrawer.tsx
+  PostCardSurface.tsx
+  PostOptionsRail.tsx
+  PostLensPager.tsx
+  PostSharePane.tsx
+  PostCommentsPane.tsx
+  compte-overlay.css
+src/features/community/feed/CommunityFeedPost.tsx
+src/styles/community-feed.css
+tests/visual/post-card-parity.spec.ts
+tests/e2e/post-card-parity.spec.ts
 ```
 
 ---
 
-### Task 1: Fixture et harnais de comparaison
+### Task 1: Fixture et captures
 
-**Files:**
-- Create: `scripts/fixtures/post-card-parity.mjs`
-- Create: `tests/visual/post-card-parity.spec.ts`
-- Test: captures `account-post-*` / `community-post-*`
+- [ ] **Step 1:** test rouge vérifiant 406×541 et 406×794.
+- [ ] **Step 2:** fixture Playwright : login `demo@lkdv.app`, ouvrir `/compte`, première tuile.
+- [ ] **Step 3:** captures Compte (post/options/share/comments) et Fil (card/options/share/comments).
+- [ ] **Step 4:** commit `test(post): captures parité compte rempli`.
 
-**Interfaces:**
-- `ensureParityPost(): Promise<string>` insère un post de test pour le compte démo et retourne son id.
-- `deleteParityPost(id)` nettoie.
+### Task 2: `PostCardSurface`
 
-- [ ] **Step 1: Test rouge** — le test vérifie que les deux captures existent et que la carte du fil a `406×541`.
-- [ ] **Step 2: Écrire le fixture** — service role, `community_posts`, `post_type='post'`, image Unsplash, cleanup.
-- [ ] **Step 3: Capturer** — `/compte` → tuile → drawer ; `/communaute` → carte ; mêmes viewport 430×932.
-- [ ] **Step 4: Commit** `test(post): fixture et captures de parité`.
+- [ ] **Step 1:** test rouge : `.lkdv-post-media` 4:5, header 60/40, X, rail, compteurs 46×31.
+- [ ] **Step 2:** extraire le markup exact du `PostDrawer` (header, média, glass, rail).
+- [ ] **Step 3:** remplacer dans `PostDrawer` par `<PostCardSurface … />`.
+- [ ] **Step 4:** `tsc` + test + commit.
 
----
+### Task 3: `PostOptionsRail`
 
-### Task 2: Extraire `PostCardSurface`
+- [ ] **Step 1:** test rouge : 5 boutons, trigger 38, X, rotation 90°.
+- [ ] **Step 2:** extraire le rail et les handlers.
+- [ ] **Step 3:** commit.
 
-**Files:**
-- Create: `src/components/compte/overlay/PostCardSurface.tsx`
-- Modify: `PostDrawer.tsx:304-324`
-- Test: `tests/design/post-card-surface.spec.tsx`
+### Task 4: `PostLensPager` + panes
 
-**Interfaces:**
-```ts
-export interface PostCardSurfaceProps {
-  post: PostDetail;
-  mediaIndex: number;
-  onMediaIndexChange: (index: number) => void;
-  onOpenMedia: () => void;
-  onLike: () => void;
-  onComment: () => void;
-  onShare: () => void;
-  onOpenOptions: () => void;
-  onOpenProfile: () => void;
-  onClose: () => void;
-}
-```
+- [ ] **Step 1:** test rouge : 3 panes, sheet 541→794, swipe, tabs partage.
+- [ ] **Step 2:** extraire `LensPager`, `PostSharePane`, `PostCommentsPane`.
+- [ ] **Step 3:** brancher `PostDrawer` sur ces composants.
+- [ ] **Step 4:** commit.
 
-- [ ] **Step 1: Test rouge** — rend `.lkdv-post-main`, `.lkdv-post-media-wrap`, `.lkdv-post-media-glass`, 3 boutons, aucun compteur.
-- [ ] **Step 2: Déplacer le markup exact** du panneau post de `PostDrawer`.
-- [ ] **Step 3: Remplacer dans `PostDrawer`** par `<PostCardSurface … />`.
-- [ ] **Step 4: Run** test + `tsc` ; commit.
+### Task 5: Carte fil
 
----
+- [ ] **Step 1:** test rouge : carte 406×541, 4:5, header/X/rail/compteurs, pas de dropdown.
+- [ ] **Step 2:** remplacer `CommunityFeedPost` par `PostCardSurface` + `PostLensPager`.
+- [ ] **Step 3:** expansion 406×794 pour partage/commentaires.
+- [ ] **Step 4:** supprimer `PostGlassPanel`, `lkdv-share-mini`, `AccountMoreMenu` du fil.
+- [ ] **Step 5:** commit.
 
-### Task 3: Extraire le pager 3 panes
+### Task 6: Interactions
 
-**Files:**
-- Create: `PostLensPager.tsx`, `PostSharePane.tsx`, `PostCommentsPane.tsx`
-- Modify: `PostDrawer.tsx:259-360`
-- Test: `tests/design/post-lens-pager.spec.tsx`
+- [ ] **Step 1:** test rouge : like, double tap, options rail, partage tabs, commentaires, fermeture X/swipe.
+- [ ] **Step 2:** brancher les handlers sur les mêmes mutations.
+- [ ] **Step 3:** commit.
 
-**Interfaces:**
-```ts
-export type PostPane = 'share' | 'post' | 'comments';
-export function PostLensPager({ pane, onPaneChange, post, comments, onComment, onShare, onClose }: {...}): JSX.Element;
-```
+### Task 7: Média
 
-- [ ] **Step 1: Test rouge** — 3 panes, `share` à index 0, `post` à 1, `comments` à 2, swipe met à jour.
-- [ ] **Step 2: Extraire** le `LensPager` + les trois panes, garder le CSS `lkdv-post-pane`.
-- [ ] **Step 3: Vérifier** partage Envoyer/Partage externe et commentaires.
-- [ ] **Step 4: Commit**.
+- [ ] **Step 1:** test rouge : 4:5, flèches, compteur, pas de lightbox.
+- [ ] **Step 2:** implémenter le carrousel partagé.
+- [ ] **Step 3:** commit.
 
----
+### Task 8: Recette/déploiement
 
-### Task 4: Brancher le drawer Compte sur les composants partagés
-
-**Files:**
-- Modify: `PostDrawer.tsx`
-- Test: captures Compte inchangées.
-
-- [ ] **Step 1: Test de non-régression** — capture `account-post-post/options/share/comments`.
-- [ ] **Step 2: Remplacer** markup/CSS locaux par `PostCardSurface` + `PostLensPager`.
-- [ ] **Step 3: Run** tests + comparaison pixel ; commit.
-
----
-
-### Task 5: Remplacer la carte du fil
-
-**Files:**
-- Modify: `src/features/community/feed/CommunityFeedPost.tsx`
-- Modify: `src/styles/community-feed.css`
-- Test: `tests/visual/post-card-parity.spec.ts`
-
-- [ ] **Step 1: Test rouge** — carte `406×541`, ratio 4:5, `.lkdv-overlay-heading`, `.lkdv-post-media-glass`, pas de `.lkdv-count-btn`, pas de `.lkdv-share-mini`.
-- [ ] **Step 2: Remplacer** `article` par `<PostCardSurface>` dans un wrapper `article` de même largeur.
-- [ ] **Step 3: Supprimer** `PostGlassPanel`, `PostCommentsPanel`, `PostSharePanel` du rendu fil.
-- [ ] **Step 4: Mapper** `FeedPost` vers `PostDetail` minimal (auteur, handle, createdAt, mediaUrls, userLiked, counts non affichés).
-- [ ] **Step 5: Run** + commit.
-
----
-
-### Task 6: Panes dans la carte, interactions et options
-
-**Files:**
-- Modify: `CommunityFeedPost.tsx`, `PostCardSurface.tsx`, `PostDrawer.tsx`
-- Test: `tests/e2e/post-card-parity.spec.ts`
-
-- [ ] **Step 1: Test rouge** — clic `···` ouvre 6 entrées ; clic partage ouvre pane Envoyer ; clic commentaire ouvre pane commentaires ; swipe ferme.
-- [ ] **Step 2: Utiliser** `PostLensPager` dans la carte, pas d’overlay plein écran.
-- [ ] **Step 3: Aligner** menu 6 entrées, suppression, fermeture, like sans compteur.
-- [ ] **Step 4: Run** + commit.
-
----
-
-### Task 7: Lightbox et carrousel média
-
-**Files:**
-- Create: `PostMediaLightbox.tsx`
-- Modify: `PostCardSurface.tsx`
-- Test: `tests/e2e/post-card-media.spec.ts`
-
-- [ ] **Step 1: Test rouge** — clic média ouvre `.lkdv-post-lightbox` ; flèches changent l’index ; compteur `1/N`.
-- [ ] **Step 2: Implémenter** le même markup/CSS Compte.
-- [ ] **Step 3: Run** + commit.
-
----
-
-### Task 8: Nettoyage, tests et déploiement
-
-**Files:**
-- Modify: `tests/visual/post-card-parity.spec.ts`, docs.
-- Test: Cloudflare.
-
-- [ ] **Step 1: Lancer**
-
-```bash
-cd /Users/fr168256/Desktop/lkdv-cloudflare
-npx tsc --noEmit
-npx vitest run tests/design/post-card-surface.spec.tsx tests/design/post-lens-pager.spec.tsx
-npx playwright test tests/visual/post-card-parity.spec.ts --config=playwright.visual.config.ts
-npx playwright test tests/e2e/post-card-parity.spec.ts --project=mobile-chromium
-npm run deploy:vinext
-```
-
-- [ ] **Step 2: Vérifier** captures Compte/Fil, dimensions, options, partage, commentaires, lightbox.
-- [ ] **Step 3: Commit final + déploiement Cloudflare.**
-
----
+- [ ] **Step 1:** `npx tsc --noEmit`.
+- [ ] **Step 2:** `npx vitest run tests/design/post-card-*.spec.tsx`.
+- [ ] **Step 3:** Playwright visuel + E2E.
+- [ ] **Step 4:** `cd /Users/fr168256/Desktop/lkdv-cloudflare && npm run deploy:vinext`.
+- [ ] **Step 5:** vérifier workers.dev + captures.
 
 ## Auto-contrôle
 
-- [ ] Une seule surface : `PostCardSurface` utilisée par Compte et Fil.
-- [ ] Carte 406×541, 4:5, header verre, 3×40, zéro compteur.
-- [ ] Menu 6 entrées, partage 2 onglets, commentaires Compte.
-- [ ] 3 panes + swipe + animations Compte.
-- [ ] Lightbox + carrousel.
-- [ ] Aucun `PostGlassPanel`, `lkdv-share-mini`, `lkdv-count-btn` dans le fil.
-- [ ] Tests visuels/E2E et build Cloudflare.
+- [ ] 406×541 / 406×794.
+- [ ] Header 60/40, X, rail, compteurs.
+- [ ] 3 panes, tabs partage, comments Compte.
+- [ ] Aucun dropdown/mini/panneau fil.
+- [ ] Captures et tests.

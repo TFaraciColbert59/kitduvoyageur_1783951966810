@@ -1,93 +1,56 @@
-# Carte post Communauté = drawer post Compte — design
+# Carte post Communauté = drawer post Compte — design (v2, compte rempli)
 
 **Date :** 2026-10-25
-**Statut :** relevé + cible à valider
-**Périmètre :** `CommunityFeedPost` (fil `/communaute`) et `PostDrawer` (drawer post du Compte).
+**Statut :** relevé sur la dernière version Cloudflare + compte démo `lea.fontaine`
+**Périmètre :** `CommunityFeedPost` et `PostDrawer`.
 
----
+## Vérité unique
 
-## 1. Vérité unique
+`PostDrawer` du Compte, dernière version déployée. Compte de recette : `demo@lkdv.app` (`lea.fontaine`, 18 publications, 10 carnets, 6 clubs, 20 badges).
 
-Le **drawer post du Compte** est la seule référence visuelle et comportementale.
-La carte du fil Communauté doit reprendre **exactement** :
+## Mesures
 
-- sa surface et sa géométrie ;
-- son header auteur ;
-- son média 4:5 ;
-- sa capsule d’actions ;
-- son menu `···` ;
-- ses trois panneaux (partage, post, commentaires) ;
-- son pager et ses gestes ;
-- ses états like, lightbox, commentaires, partage, options.
+### Drawer Compte — pane post
+- sheet `406×541`, `x=12 y=48`, rayon 28.
+- header verre 60 px, avatar 40, nom 15, handle + temps, `···`, **X**.
+- média **4:5**, plein cadre.
+- capsule d’actions à droite : **like 2 / commentaire 5 / partage 2**, boutons ~46×31.
+- menu options : **rail vertical** (Enregistrer, Copier, Republier, Signaler, Supprimer) + X.
+- pas de légende.
 
-Aucune variante « feed » ne doit subsister.
+### Drawer Compte — panes partage / commentaires
+- sheet étendue jusqu’au bas de la carte : `406×794`, `x=12 y=48`.
+- partage : onglets **Envoyer / Partage externe**, recherche, actions, liste conversations.
+- commentaires : liste, likes/réponses/modifier/supprimer, composer textarea.
+- navigation par LensPager 3 panes (partage / post / commentaires).
+- fermeture : X, poignée, swipe.
 
----
+### Carte Communauté actuelle
+- carte `410×410`, `x=10 y=163`, rayon 28, fond `#17402C`.
+- média **1:1**.
+- header `pmi-author` 36 px, avatar 28, sans temps.
+- capsule comptée 34 px.
+- menu déroulant 4 entrées.
+- panneaux commentaires/partage `410×354`, à 80 % de la carte.
+- pas de X, pas de rail d’options, pas de tabs de partage, pas d’expansion à 794.
 
-## 2. Mesures de référence (viewport 430×932, Compte)
+## Écarts structurants
 
-| Élément | Compte | Communauté actuelle |
-|---|---|---|
-| Drawer/carte | `x=12 y=48 406×541` | `x=10 y=163 410×410` |
-| Rayon | 28 px | 28 px |
-| Surface | sheet transparent + verre | carte verte `#17402C` + ombre |
-| Média | 4:5, plein cadre | 1:1, plein cadre |
-| Header | `lkdv-overlay-heading` (verre, avatar 36, nom 13, handle + temps) | `pmi-author` (avatar 28, nom + handle, sans temps) |
-| Options | menu 6 entrées | menu 4 entrées |
-| Actions | 3 × 40 px, sans compteurs | 3 boutons avec compteurs `12/3/1` |
-| Panneaux | LensPager 3 panes dans la sheet | PostGlassPanel 2 panes à 80 % de la carte |
-| Partage | onglets Envoyer / Partage externe | actions rondes + mini-sélecteur |
-| Commentaires | pane dédiée | panneau overlay |
-| Lightbox | oui | non |
-| Carrousel média | oui | non |
-| Fermeture | header cliquable, swipe, menu Fermer | pas de fermeture explicite |
+1. Le Compte est une **sheet** ; le fil est une **carte**.
+2. Le Compte a **3 panes** ; le fil 2 panneaux.
+3. Le Compte **s’étend** pour partage/commentaires ; le fil reste à 410×410.
+4. Le Compte a un **rail d’options** ; le fil un dropdown.
+5. Le Compte a une **X** ; le fil n’en a pas.
+6. Le Compte a des **onglets de partage** ; le fil non.
+7. Le média Compte est **4:5** ; le fil **1:1**.
+8. Header 60/40/temps vs 36/28/sans temps.
+9. Le Compte a un **grab** et un swipe de fermeture.
+10. Le Compte a un carrousel média ; le fil non.
 
----
+## Critères
 
-## 3. Captures
-
-### Compte
-- `docs/communaute/account-post-post.png`
-- `docs/communaute/account-post-options.png`
-- `docs/communaute/account-post-share.png`
-- `docs/communaute/account-post-share-external.png`
-- `docs/communaute/account-post-comments.png`
-
-### Communauté
-- `docs/communaute/community-post-card.png`
-- `docs/communaute/community-post-options.png`
-- `docs/communaute/community-post-comments.png`
-- `docs/communaute/community-post-share.png`
-
----
-
-## 4. Décision d’architecture
-
-Extraire du `PostDrawer` un **`PostCardSurface`** partagé :
-
-- header verre ;
-- média 4:5 ;
-- capsule d’actions ;
-- menu d’options ;
-- `PostLensPager` 3 panes ;
-- panes partage/post/commentaires ;
-- lightbox et carrousel média.
-
-Le `PostDrawer` l’utilise dans son overlay Compte.
-`CommunityFeedPost` l’utilise dans une **carte de fil** de mêmes dimensions, sans overlay plein écran.
-Une seule source de markup/CSS/comportement.
-
----
-
-## 5. Critères d’acceptation
-
-- À 430 px, la carte du fil mesure `406×541` à `x=12`, rayon 28.
-- Même header, même média 4:5, même capsule 3×40 sans compteurs.
-- Même menu 6 entrées, mêmes actions.
-- Même pager 3 panes, mêmes swipes, mêmes animations.
-- Même pane partage (onglets Envoyer / Partage externe), mêmes actions.
-- Même pane commentaires, même composer, mêmes états.
-- Même lightbox, même carrousel.
-- Aucun compteur dans la capsule.
-- Aucun `PostGlassPanel` ni `lkdv-share-mini` dans le fil.
-- Tests visuels et E2E au vert, build Cloudflare déployé.
+- Carte fil `406×541` au repos, `406×794` en partage/commentaires, `x=12`.
+- Même header, même X, même rail, mêmes compteurs, même capsule.
+- Même LensPager 3 panes, mêmes onglets de partage, même composer.
+- Aucun `PostGlassPanel`, `lkdv-share-mini`, dropdown `AccountMoreMenu` dans le fil.
+- Tests visuels + E2E + build Cloudflare.
