@@ -189,19 +189,22 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    La lentille garde la famille de mouvement du Compte, en 220 ms.           */
 .ckp-card-foot {
   position: absolute; left: auto; right: 10px; bottom: 10px; z-index: 6;
-  display: flex; align-items: center; justify-content: flex-end; gap: 6px;
-  height: 30px; padding: 0; border-radius: 0;
-  background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+  display: flex; align-items: center; justify-content: flex-end; gap: 2px;
+  height: 30px; padding: 2.5px; border-radius: 999px;
+  background: rgba(23, 43, 36, .06);
+  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
   overflow: visible;
 }
 .ckp-actions { display: flex; align-items: center; gap: 3px; height: 32px; }
 .ckp-foot-sep {
-  display: none; flex: none; width: 1px; height: 16px; margin: 0 5px; border-radius: 1px;
+  display: block; flex: none; width: 1px; height: 16px; margin: 0 5px; border-radius: 1px;
   background: linear-gradient(180deg, rgba(23, 43, 36, .02), rgba(23, 43, 36, .16) 50%, rgba(23, 43, 36, .02));
 }
 .ckp-action {
   position: relative; display: grid; place-items: center;
-  width: 30px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer;
+  width: 28px; height: 25px; padding: 0; border: 0; background: none; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 /* Action à compteur : le disque garde sa place, la pastille occupe la droite
@@ -294,12 +297,11 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-card-foot .ckp-tabs {
   position: relative; right: auto; bottom: auto; z-index: 1; flex: none;
   display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
-  height: 30px; padding: 2.5px; border-radius: 999px; width: 88px;
-  background: rgba(23, 43, 36, .06);
-  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  height: 25px; padding: 0; border-radius: 999px; width: 84px;
+  background: none; box-shadow: none;
 }
 .ckp-tabs button {
-  position: relative; z-index: 1; width: 41.5px; height: 25px; border: 0; background: none; border-radius: 999px;
+  position: relative; z-index: 1; width: 42px; height: 25px; border: 0; background: none; border-radius: 999px;
   display: inline-flex; align-items: center; justify-content: center;
   color: #56665d; cursor: pointer;
   transition: color .18s ease, transform .16s cubic-bezier(.22, 1, .36, 1);
