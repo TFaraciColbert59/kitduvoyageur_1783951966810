@@ -788,8 +788,9 @@
   display: flex;
   flex-direction: column;
   /* Même marge que la barre de recherche (10 px) : les rangées sont
-     décollées des bords de la carte et alignées sur le champ. */
-  padding: 4px 10px 54px;
+     décollées des bords de la carte et alignées sur le champ. `!important`
+     parce que `.phone .card-scroll` (compte-apple-hig) impose 12/8/56. */
+  padding: 4px 10px 54px !important;
   scroll-behavior: smooth;
   overscroll-behavior: contain;
 }
