@@ -1243,8 +1243,10 @@
   grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 8px;
   padding: 2px 0;
-  height: 100%;
-  min-height: 0;
+  /* Quatre carrés : la grille elle-même est carrée, centrée dans la feuille. */
+  width: min(100%, 172px);
+  aspect-ratio: 1 / 1;
+  margin: auto;
 }
 .lkdv-messages .mdrawer-squares .mbtn {
   width: 100%;
