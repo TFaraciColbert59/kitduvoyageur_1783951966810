@@ -619,6 +619,35 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   }, [map, ready, selected]);
 
   useEffect(() => {
+    if (!map || !ready || !resolved) return;
+    const reduced = prefersReducedMotion();
+    if (resolved.kind === 'outing') {
+      map.fitBounds(
+        [
+          [resolved.data.bounds[0], resolved.data.bounds[1]],
+          [resolved.data.bounds[2], resolved.data.bounds[3]],
+        ],
+        {
+          padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
+            sheetOpen: false,
+            mapbig: map.getContainer().clientHeight > 500,
+          }),
+          maxZoom: 14,
+          duration: reduced ? 0 : 850,
+          essential: true,
+        }
+      );
+      return;
+    }
+    map.flyTo({
+      center: [resolved.position.lng, resolved.position.lat],
+      zoom: resolved.kind === 'massif' ? 10.5 : 14,
+      duration: reduced ? 0 : 800,
+      essential: true,
+    });
+  }, [map, ready, resolved]);
+
+  useEffect(() => {
     if (!map || !data || !ready) return;
     // Garder la sortie la plus récente lisible, y compris sur la grande carte :
     // les POI, le départ, l'arrivée et le carnet restent dans le cadre.
