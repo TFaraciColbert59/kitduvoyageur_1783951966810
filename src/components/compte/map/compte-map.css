@@ -644,3 +644,57 @@
 .lkdv-map-overlay .lkdv-map-massif { z-index: 3 !important; }
 .lkdv-map-overlay .lkdv-map-poi,
 .lkdv-map-overlay .lkdv-map-carnet { z-index: 2 !important; }
+
+/* Fiche carte : capsule de verre compacte, CTA pilule comme les boutons du Compte. */
+.lkdv-map-callout {
+  width: 202px !important;
+  max-width: calc(100vw - 32px);
+  padding: 10px 11px 10px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(247,252,245,.58)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.98),
+    0 0 0 .5px rgba(23,43,36,.12),
+    0 10px 26px rgba(16,32,24,.16) !important;
+}
+.lkdv-map-callout b {
+  padding-right: 18px !important;
+  font: 650 12.5px/1.25 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  letter-spacing: -.01em;
+}
+.lkdv-map-callout-badge {
+  margin-top: 3px !important;
+  padding: 2px 6px !important;
+  font-size: 9px !important;
+  background: rgba(47,107,69,.12) !important;
+  color: #2f6b45 !important;
+}
+.lkdv-map-callout p {
+  margin: 2px 0 8px !important;
+  font: 500 10.5px/1.35 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  color: #4a6252 !important;
+}
+.lkdv-map-callout-close {
+  top: 4px !important;
+  right: 4px !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  background: rgba(23,43,36,.07) !important;
+}
+.lkdv-map-callout-cta {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px !important;
+  padding: 0 12px !important;
+  border-radius: 999px !important;
+  background: #17402c !important;
+  color: #fff !important;
+  font: 600 11px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 3px 8px rgba(16,32,24,.18) !important;
+}
+.lkdv-map-callout-cta:active { transform: scale(.97); }
