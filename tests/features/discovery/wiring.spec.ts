@@ -5,7 +5,13 @@ import path from 'node:path';
 const root = process.cwd();
 const read = (relative: string) => readFileSync(path.join(root, relative), 'utf8');
 
-describe('wiring des sections Pays (desktop)', () => {
+/**
+ * Wiring des blocs partenaire sur la fiche pays.
+ * Depuis la refonte, la coquille est `PaysGlassV8` et les vues détaillées
+ * (qui portent `DiscoverySection`) sont montées dans le volet « Détails »
+ * du drawer via `CountryDetailClient`. Ces assertions protègent ce câblage.
+ */
+describe('wiring des sections Pays', () => {
   it('enrichit Destinations, Activités, Gastronomie et ajoute Hébergements', () => {
     expect(read('src/components/pays/PaysDestinationsView.tsx')).toContain('category="attractions"');
     expect(read('src/components/pays/PaysActivitesView.tsx')).toContain('category="attractions"');
@@ -14,24 +20,16 @@ describe('wiring des sections Pays (desktop)', () => {
     expect(read('src/components/pays/PaysHebergementsView.tsx')).toContain('limit={4}');
   });
 
-  it('branche la section Hébergements dans la sidebar et la fiche desktop', () => {
-    expect(read('src/components/pays/PaysLeftSidebar.tsx')).toContain("'hebergements'");
-    expect(read('src/app/pays/[code]/CountryDetailClient.tsx')).toContain('PaysHebergementsView');
-    expect(read('src/app/pays/[code]/CountryDetailClient.tsx')).toContain("case 'hebergements'");
-  });
-});
-
-describe('wiring des sections Pays (mobile)', () => {
-  it('ajoute les onglets Gastronomie et Hébergements avec blocs discovery', () => {
-    const mobile = read('src/components/pays/MobileCountryDetailView.tsx');
-    expect(mobile).toContain("'gastronomie'");
-    expect(mobile).toContain("'hebergements'");
-    expect(mobile).toContain('DiscoverySection');
-    expect(mobile).toContain('category="restaurants"');
-    expect(mobile).toContain('category="hotels"');
+  it('branche les vues détaillées dans le volet Détails de la fiche', () => {
+    const client = read('src/app/pays/[code]/CountryDetailClient.tsx');
+    expect(client).toContain('PaysHebergementsView');
+    expect(client).toContain("case 'hebergements'");
+    expect(client).toContain('PaysGlassV8');
+    expect(client).toContain('renderDetails');
+    expect(read('src/components/pays/PaysGlassV8.tsx')).toContain('renderDetails?.(section)');
   });
 
-  it('ajoute les onglets correspondants dans la barre mobile', () => {
+  it('garde les onglets Gastronomie et Hébergements dans le plateau mobile', () => {
     const plateau = read('src/components/mobile-nav/navigation/NavigationPlateau.tsx');
     expect(plateau).toContain("{ id: 'gastronomie', label: 'Gastronomie' }");
     expect(plateau).toContain("{ id: 'hebergements', label: 'Hébergements' }");
