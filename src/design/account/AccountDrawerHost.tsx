@@ -37,6 +37,8 @@ export interface AccountDrawerHostProps {
    * haut et animation d'ouverture/fermeture identique au Compte.
    */
   variant?: 'floating' | 'card';
+  /** Sans bandeau de titre : la feuille n'affiche que la croix de fermeture. */
+  hideHeader?: boolean;
 }
 
 export function AccountDrawerHost({
@@ -47,6 +49,7 @@ export function AccountDrawerHost({
   onBack,
   children,
   variant = 'floating',
+  hideHeader = false,
 }: AccountDrawerHostProps) {
   const sheetRef = useRef<HTMLElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -151,6 +154,15 @@ export function AccountDrawerHost({
             <span />
           </span>
         ) : null}
+        {hideHeader ? (
+          <div className="sh-close-only">
+            <button type="button" className="lg gbtn" aria-label="Fermer" onClick={onClose}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </button>
+          </div>
+        ) : (
         <header className="sh-h hf">
           {onBack ? (
             <button type="button" className="lg gbtn" aria-label="Retour" onClick={onBack}>
@@ -169,6 +181,7 @@ export function AccountDrawerHost({
             </svg>
           </button>
         </header>
+        )}
         <div className="sh-b">{children}</div>
       </section>
     </div>

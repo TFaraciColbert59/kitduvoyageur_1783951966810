@@ -8,7 +8,7 @@ import type { Conversation } from '@/features/messaging/types/messaging.types';
 export type FilterId = 'all' | 'direct' | 'group' | 'requests';
 
 /** Largeur révélée par le glissement d'une rangée (deux actions de 54 px). */
-export const SWIPE_REVEAL = 108;
+export const SWIPE_REVEAL = 96;
 
 export function conversationTitle(conv: Conversation): string {
   if (conv.title) return conv.title;

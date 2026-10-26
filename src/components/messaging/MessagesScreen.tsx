@@ -34,6 +34,7 @@ import { useRealtimeMessaging } from '@/features/messaging/hooks/useRealtimeMess
 import { messagingService } from '@/features/messaging/services/messagingService';
 import { formatConversationTimestamp } from '@/features/messaging/lib/messagingUtils';
 import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachmentUrl';
+import { SharedPostEmbed } from '@/features/messaging/components/SharedPostEmbed';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
 import {
   SWIPE_REVEAL,
@@ -248,7 +249,6 @@ function ConversationFeedRow({
             aria-label="Supprimer la conversation"
           >
             <Icon name="trash-2" className="size-4" aria-hidden="true" />
-            <small>Supprimer</small>
           </button>
           <button
             type="button"
@@ -257,7 +257,6 @@ function ConversationFeedRow({
             aria-label="Gérer les notifications"
           >
             <Icon name="bell" className="size-4" aria-hidden="true" />
-            <small>Notifs</small>
           </button>
         </div>
       ) : null}
@@ -387,6 +386,7 @@ function MessageThread({
   hideReads = false,
   compact,
   focusMessageId,
+  onOpenShareMenu,
 }: {
   conversation: Conversation;
   currentUserId: string;
@@ -396,6 +396,9 @@ function MessageThread({
   hideReads?: boolean;
   compact: boolean;
   focusMessageId?: string | null;
+  /** Ouvre la feuille « Partager » au niveau de l'écran (sinon elle est
+   *  rognée par l'overflow de la carte). */
+  onOpenShareMenu?: () => void;
 }) {
   const { haptic } = useHapticFeedback();
   const { messages, loading, error, hasMore, loadingEarlier, loadEarlier, retryMessage, toggleReaction, sendMessage: sendThreadMessage, refreshMessages } =
@@ -405,6 +408,8 @@ function MessageThread({
   const scroller = useRef<HTMLDivElement>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStart = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const node = scroller.current;
@@ -505,6 +510,15 @@ function MessageThread({
             <React.Fragment key={message.id}>
               {showDay ? <div className="mday">{dayLabel(message.created_at)}</div> : null}
               <div className={`mrow${mine ? ' mine' : ''}`} id={`grammar-msg-${message.id}`}>
+                {message.message_type === 'post' ? (
+                  <div className="mpost-embed-row">
+                    <SharedPostEmbed
+                      postId={String(message.metadata?.post_id ?? message.content)}
+                      currentUserId={currentUserId}
+                      currentUserProfile={currentUserProfile}
+                    />
+                  </div>
+                ) : (
                 <div className={`mstack${mine ? ' mine' : ''}`}>
                   {conversation.type === 'group' && !mine && !sameAsPrev ? (
                     <span className="msender">{message.sender_profile?.full_name ?? 'Voyageur'}</span>
@@ -513,11 +527,38 @@ function MessageThread({
                   <button
                     type="button"
                     className={`bub ${mine ? 'mine' : 'other'}${sameAsPrev && sameAsNext ? ' mid' : ''} tap`}
-                    onClick={() => {
-                      haptic('light');
-                      setOpenMenu(openMenu === message.id ? null : message.id);
+                    onPointerDown={(event) => {
+                      pressStart.current = { x: event.clientX, y: event.clientY };
+                      if (pressTimer.current) clearTimeout(pressTimer.current);
+                      pressTimer.current = setTimeout(() => {
+                        haptic('medium');
+                        setOpenMenu((current) => (current === message.id ? null : message.id));
+                      }, 460);
                     }}
-                    aria-label={`Message de ${mine ? 'vous' : message.sender_profile?.full_name ?? 'un voyageur'}, ${timeLabel(message.created_at)}`}
+                    onPointerMove={(event) => {
+                      const start = pressStart.current;
+                      if (!start || !pressTimer.current) return;
+                      if (Math.abs(event.clientX - start.x) > 8 || Math.abs(event.clientY - start.y) > 8) {
+                        clearTimeout(pressTimer.current);
+                        pressTimer.current = null;
+                      }
+                    }}
+                    onPointerUp={() => {
+                      if (pressTimer.current) clearTimeout(pressTimer.current);
+                      pressTimer.current = null;
+                    }}
+                    onPointerCancel={() => {
+                      if (pressTimer.current) clearTimeout(pressTimer.current);
+                      pressTimer.current = null;
+                    }}
+                    onContextMenu={(event) => event.preventDefault()}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setOpenMenu((current) => (current === message.id ? null : message.id));
+                      }
+                    }}
+                    aria-label={`Message de ${mine ? 'vous' : message.sender_profile?.full_name ?? 'un voyageur'}, ${timeLabel(message.created_at)}. Appui long pour les actions.`}
                     onDoubleClick={() => {
                       haptic('medium');
                       void toggleReaction(message.id, REACTIONS[1]);
@@ -531,23 +572,6 @@ function MessageThread({
                     {message.message_type === 'image' ? (
                       <span className="bub-img">
                         <AttachmentImage content={message.content} />
-                      </span>
-                    ) : message.message_type === 'post' ? (
-                      <span className="mcard">
-                        {typeof message.metadata?.image_url === 'string' ? (
-                          // eslint-disable-next-line @next/next/no-img-element -- vignette distante
-                          <img className="mcard-img" src={message.metadata.image_url} alt="" loading="lazy" />
-                        ) : (
-                          <span className="mcard-ico" aria-hidden="true">
-                            <Icon name="newspaper" className="size-4" />
-                          </span>
-                        )}
-                        <span className="mcard-txt">
-                          <b>{String(message.metadata?.title || 'Publication partagée')}</b>
-                          <small>
-                            {String(message.metadata?.author_name || 'Communauté LKDV')} · Voir la publication
-                          </small>
-                        </span>
                       </span>
                     ) : message.message_type === 'product' ? (
                       <span className="mcard">
@@ -714,6 +738,7 @@ function MessageThread({
                     </div>
                   ) : null}
                 </div>
+                )}
               </div>
             </React.Fragment>
           );
@@ -745,6 +770,7 @@ function MessageThread({
         onSend={sendThreadMessage}
         onRefresh={refreshMessages}
         compact={compact}
+        onOpenShareMenu={onOpenShareMenu}
       />
 
       <ForwardMessageSheet
@@ -767,6 +793,7 @@ function MessageComposerBar({
   onSend,
   onRefresh,
   compact,
+  onOpenShareMenu,
 }: {
   conversation: Conversation;
   currentUserId: string;
@@ -774,6 +801,8 @@ function MessageComposerBar({
   replyTo: Message | null;
   onCancelReply: () => void;
   onTyping?: () => void;
+  /** Ouvre la feuille de partage au niveau écran (hors overflow de la carte). */
+  onOpenShareMenu?: () => void;
   /** Envoi texte : passe par le hook du fil (optimiste + réconciliation). */
   onSend: (content: string, replyToId?: string) => Promise<void>;
   /** Rechargement du fil après un envoi direct (pièce jointe, vocal, partage). */
@@ -784,7 +813,6 @@ function MessageComposerBar({
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const field = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -919,7 +947,7 @@ function MessageComposerBar({
         >
           <Icon name="mic" className="size-4" aria-hidden="true" />
         </button>
-        <button type="button" className="lg gbtn" onClick={() => setMenuOpen(true)} aria-label="Partager un GPX, un équipement ou une randonnée">
+        <button type="button" className="lg gbtn" onClick={() => onOpenShareMenu?.()} aria-label="Partager un GPX, un équipement ou une randonnée">
           <Icon name="ellipsis" className="size-4" aria-hidden="true" />
         </button>
         <button
@@ -932,15 +960,6 @@ function MessageComposerBar({
         </button>
       </form>
 
-      <ComposerMenuSheet
-        isOpen={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        currentUserId={currentUserId}
-        onSendGpx={(file) => void upload(file)}
-        onSendProduct={(meta: ProductMessageMeta) => void messagingService.sendMessage(conversation.id, currentUserId, meta.name, 'product', undefined, meta as unknown as Record<string, unknown>).then(onRefresh)}
-        onSendTrail={(meta: TrailMessageMeta) => void messagingService.sendMessage(conversation.id, currentUserId, meta.name, 'trail', undefined, meta as unknown as Record<string, unknown>).then(onRefresh)}
-        onSendKit={(meta: KitMessageMeta) => void messagingService.sendMessage(conversation.id, currentUserId, meta.kit_name, 'kit', undefined, meta as unknown as Record<string, unknown>).then(onRefresh)}
-      />
       {currentUserProfile ? null : null}
     </>
   );
@@ -971,6 +990,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const [searchPeople, setSearchPeople] = useState<Array<{ id: string; full_name: string; avatar_url?: string | null }>>([]);
   const [optionsConv, setOptionsConv] = useState<Conversation | null>(null);
   const [notifyConv, setNotifyConv] = useState<Conversation | null>(null);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
   // Préférences locales de l'appareil (jamais envoyées au serveur).
@@ -1405,7 +1425,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   Hors ligne — vos messages restent en brouillon local et partiront au retour du réseau.
                 </div>
               ) : null}
-              <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: 70 }}>
+              <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: 'calc(70px + var(--kb-inset, 0px))' }}>
                 {selected ? (
                   <div className="mpane in" data-conversation={selected.id}>
                     <button
@@ -1441,6 +1461,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                         members={members}
                         hideReads={hideReads}
                         compact
+                        onOpenShareMenu={() => setShareMenuOpen(true)}
                       />
                     </div>
                   </div>
@@ -1500,14 +1521,44 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
               />
             ) : null}
 
+            {selected ? (
+              <ComposerMenuSheet
+                isOpen={shareMenuOpen}
+                onClose={() => setShareMenuOpen(false)}
+                currentUserId={currentUserId ?? ''}
+                onSendGpx={async (file) => {
+                  const url = await messagingService.uploadAttachment(selected.id, file);
+                  if (!url) return;
+                  await messagingService.sendMessage(selected.id, currentUserId as string, url, 'gpx');
+                  await refreshConversations();
+                  setShareMenuOpen(false);
+                }}
+                onSendProduct={async (meta: ProductMessageMeta) => {
+                  await messagingService.sendMessage(selected.id, currentUserId as string, meta.name, 'product', undefined, meta as unknown as Record<string, unknown>);
+                  await refreshConversations();
+                  setShareMenuOpen(false);
+                }}
+                onSendTrail={async (meta: TrailMessageMeta) => {
+                  await messagingService.sendMessage(selected.id, currentUserId as string, meta.name, 'trail', undefined, meta as unknown as Record<string, unknown>);
+                  await refreshConversations();
+                  setShareMenuOpen(false);
+                }}
+                onSendKit={async (meta: KitMessageMeta) => {
+                  await messagingService.sendMessage(selected.id, currentUserId as string, meta.kit_name, 'kit', undefined, meta as unknown as Record<string, unknown>);
+                  await refreshConversations();
+                  setShareMenuOpen(false);
+                }}
+              />
+            ) : null}
+
             <AccountDrawerHost
               open={notifyConv !== null}
               variant="card"
               title="Notifications"
-              subtitle={notifyConv ? conversationTitle(notifyConv) : undefined}
+              hideHeader
               onClose={() => setNotifyConv(null)}
             >
-              <div className="mdrawer-actions">
+              <div className="mdrawer-squares">
                 {MUTE_PRESETS.map((preset) => (
                   <button
                     key={preset.label}
