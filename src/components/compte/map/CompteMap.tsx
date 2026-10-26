@@ -491,7 +491,9 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
   useEffect(() => {
     if (!map) return;
-    const close = (event: { point: { x: number; y: number } }) => {
+    const close = (event: { point: { x: number; y: number }; originalEvent?: Event }) => {
+      const target = event.originalEvent?.target as HTMLElement | null;
+      if (target?.closest?.('.maplibregl-marker')) return;
       const hits = map.queryRenderedFeatures(event.point as never, {
         layers: [
           'compte-track-starts-dot',
