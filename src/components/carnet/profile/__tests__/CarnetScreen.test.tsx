@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CarnetScreen } from '../CarnetScreen';
 import { detail } from './fixtures';
 
@@ -28,23 +28,39 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
+const SPIES = vi.hoisted(() => ({
+  toggleLike: vi.fn(),
+  toggleFavorite: vi.fn(),
+  registerView: vi.fn(),
+}));
+
 vi.mock('@/features/carnet/detail/useCarnetEngagement', () => ({
   useCarnetEngagement: () => ({
     liked: false,
-    likes: 0,
+    likes: 22,
     favorited: false,
-    toggleLike: vi.fn(),
-    toggleFavorite: vi.fn(),
-    registerView: vi.fn(),
+    favorites: 0,
+    toggleLike: SPIES.toggleLike,
+    toggleFavorite: SPIES.toggleFavorite,
+    registerView: SPIES.registerView,
   }),
 }));
 
 vi.mock('@/features/carnet/detail/useCarnetComments', () => ({
   useCarnetComments: () => ({
-    comments: [],
+    comments: [
+      {
+        id: 'k1',
+        authorId: 'u9',
+        authorName: 'Noé Vidal',
+        authorAvatar: null,
+        content: 'Bivouac validé, merci pour l’itinéraire.',
+        createdAt: '2026-10-01T10:00:00.000Z',
+      },
+    ],
     loading: false,
-    send: vi.fn(),
-    remove: vi.fn(),
+    send: vi.fn(async () => true),
+    remove: vi.fn(async () => true),
   }),
 }));
 
@@ -61,7 +77,14 @@ vi.mock('../CarnetMapCard', () => ({
   CarnetMapCard: () => <div data-testid="map-card" />,
 }));
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 const DAYS = [
   {
@@ -81,13 +104,21 @@ const DAYS = [
 
 const OWNER = detail({ isOwner: true, days: DAYS });
 
-describe('CarnetScreen — statistiques et pages', () => {
-  it('ouvre un seul drawer avec les cinq volets autorisés', () => {
+function drawerOpen() {
+  return screen.queryByRole('region', { name: 'Panneau du carnet' }) !== null;
+}
+
+describe('CarnetScreen — drawer réduit à ce qui n’est pas dans le sélecteur', () => {
+  it('ne garde que Statistiques et Partage pour le propriétaire', () => {
     render(<CarnetScreen detail={OWNER} />);
     fireEvent.click(screen.getByRole('button', { name: 'JOURS 7' }));
     const labels = screen.getAllByRole('tab').map((tab) => tab.getAttribute('aria-label'));
-    expect(labels).toEqual(['Statistiques', 'Commentaires', 'J’aime', 'Partage', 'Gérer']);
+    expect(labels).toEqual(['Statistiques', 'Partage']);
     expect(screen.getByRole('tab', { name: 'Statistiques' }).getAttribute('aria-selected')).toBe('true');
+    /* Les volets devenus des pages ne sont plus des onglets du drawer. */
+    expect(screen.queryByRole('tab', { name: 'Commentaires' })).toBeNull();
+    expect(screen.queryByRole('tab', { name: 'J’aime' })).toBeNull();
+    expect(screen.queryByRole('tab', { name: 'Gérer' })).toBeNull();
   });
 
   it('ouvre le sous-onglet Jours depuis la statistique JOURS', () => {
@@ -112,8 +143,74 @@ describe('CarnetScreen — statistiques et pages', () => {
     expect(screen.getByRole('button', { name: 'Dénivelé' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('tabpanel', { name: 'Dénivelé' })).toBeTruthy();
   });
+});
 
-  it('change de page sans passer par le drawer : la page active est gardée', () => {
+describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
+  it('♥ ouvre la page J’aime, sans drawer', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    fireEvent.click(screen.getByRole('button', { name: /^J’aime/ }));
+    expect(drawerOpen()).toBe(false);
+    expect(document.getElementById('carnet-page-likes')).toBeTruthy();
+    expect(screen.getByRole('tabpanel', { name: 'J’aime' })).toBeTruthy();
+    /* Le contenu réel du volet : la bascule du carnet et l’état vide honnête. */
+    expect(screen.getByRole('button', { name: 'J’aime ce carnet' })).toBeTruthy();
+    expect(screen.getByText('Aucun j’aime pour l’instant.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'J’aime, 22' }).getAttribute('aria-current')).toBe('page');
+  });
+
+  it('la bascule J’aime du carnet vit dans la page, plus sur le segment', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    fireEvent.click(screen.getByRole('button', { name: /^J’aime/ }));
+    expect(SPIES.toggleLike).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'J’aime ce carnet' }));
+    expect(SPIES.toggleLike).toHaveBeenCalledOnce();
+  });
+
+  it('💬 ouvre la page Commentaires avec la liste réelle et le champ d’envoi', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Commenter/ }));
+    expect(drawerOpen()).toBe(false);
+    expect(document.getElementById('carnet-page-comments')).toBeTruthy();
+    expect(screen.getByText('Bivouac validé, merci pour l’itinéraire.')).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: 'Ajouter un commentaire' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Envoyer le commentaire' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Commenter/ }).getAttribute('aria-current')).toBe('page');
+  });
+
+  it('✏️ ouvre la page Gérer du propriétaire, sans drawer', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Gérer' }));
+    expect(drawerOpen()).toBe(false);
+    expect(document.getElementById('carnet-page-manage')).toBeTruthy();
+    expect(screen.getByText('Visibilité')).toBeTruthy();
+    expect(screen.getByText('Exporter le carnet')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Gérer' }).getAttribute('aria-current')).toBe('page');
+  });
+
+  it('le menu ··· reste un menu contextuel, jamais un drawer', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Plus d’options' }));
+    expect(drawerOpen()).toBe(false);
+    expect(document.querySelector('.pmi-options-menu')?.hasAttribute('hidden')).toBe(false);
+  });
+
+  it('le menu ··· mène à la page Gérer, pas à un volet', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Plus d’options' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Gérer le carnet' }));
+    expect(drawerOpen()).toBe(false);
+    expect(document.getElementById('carnet-page-manage')).toBeTruthy();
+  });
+
+  it('🔖 Enregistrer reste une action, sans page ni drawer', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    expect(SPIES.toggleFavorite).toHaveBeenCalledOnce();
+    expect(drawerOpen()).toBe(false);
+    expect(document.querySelector('.ckp-pages')?.getAttribute('id')).toBe('carnet-page-posts');
+  });
+
+  it('garde la page active et ses voisines swipables', () => {
     render(<CarnetScreen detail={OWNER} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
     expect(screen.getByRole('tab', { name: 'Parcours' }).getAttribute('aria-selected')).toBe('true');
@@ -122,13 +219,6 @@ describe('CarnetScreen — statistiques et pages', () => {
     expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
     fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
     expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
-  });
-
-  it('garde les quatre volets d’un visiteur, sans Gérer', () => {
-    render(<CarnetScreen detail={detail({ days: DAYS })} />);
-    fireEvent.click(screen.getByRole('button', { name: 'JOURS 7' }));
-    expect(screen.getAllByRole('tab')).toHaveLength(4);
-    expect(screen.queryByRole('tab', { name: 'Gérer' })).toBeNull();
   });
 });
 

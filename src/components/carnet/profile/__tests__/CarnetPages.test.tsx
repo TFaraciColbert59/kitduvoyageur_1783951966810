@@ -2,7 +2,7 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CARNET_PAGE_TABS, CarnetPages, swipeStep } from '../CarnetPages';
+import { CARNET_PAGE_TABS, CarnetPages, carnetPageTabs, swipeStep } from '../CarnetPages';
 import type { CarnetDay } from '@/features/carnet/detail/types';
 import { detail } from './fixtures';
 
@@ -27,6 +27,7 @@ const DAY: CarnetDay = {
 function base(overrides: Partial<React.ComponentProps<typeof CarnetPages>> = {}) {
   return {
     detail: detail({
+      isOwner: true,
       photoMoments: [
         { id: 'm1', dayNumber: 1, time: null, caption: null, authorName: null, place: null, imageUrl: 'https://cdn.test/1.jpg' },
         { id: 'm2', dayNumber: 1, time: null, caption: null, authorName: null, place: null, imageUrl: 'https://cdn.test/2.jpg' },
@@ -58,13 +59,16 @@ function swipe(element: Element, x1: number, y1: number, x2: number, y2: number)
 }
 
 describe('CarnetPages — pages du carnet', () => {
-  it('expose les cinq pages dans l’ordre du contrat', () => {
+  it('expose les huit pages dans l’ordre du contrat', () => {
     expect(CARNET_PAGE_TABS.map((tab) => tab.id)).toEqual([
       'posts',
       'parcours',
       'etapes',
       'materiel',
       'nature',
+      'likes',
+      'comments',
+      'manage',
     ]);
     expect(CARNET_PAGE_TABS.map((tab) => tab.label)).toEqual([
       'Posts',
@@ -72,8 +76,75 @@ describe('CarnetPages — pages du carnet', () => {
       'Étapes',
       'Matériel',
       'Nature',
+      'J’aime',
+      'Commentaires',
+      'Gérer',
     ]);
     for (const tab of CARNET_PAGE_TABS) expect(tab.icon).toBeTruthy();
+  });
+
+  it('ne propose Gérer qu’au propriétaire', () => {
+    expect(carnetPageTabs(true).map((tab) => tab.id)).toEqual([
+      'posts',
+      'parcours',
+      'etapes',
+      'materiel',
+      'nature',
+      'likes',
+      'comments',
+      'manage',
+    ]);
+    expect(carnetPageTabs(false).map((tab) => tab.id)).toEqual([
+      'posts',
+      'parcours',
+      'etapes',
+      'materiel',
+      'nature',
+      'likes',
+      'comments',
+    ]);
+    const visitor = render(<CarnetPages {...base({ detail: detail({ photoMoments: [] }), page: 'manage' })} />);
+    expect(visitor.container.querySelector('.ckp-page-pad')).toBeNull();
+    visitor.unmount();
+  });
+
+  it('rend les contenus J’aime, Commentaires et Gérer dans le même carrousel', () => {
+    const { container, rerender } = render(
+      <CarnetPages
+        {...base({
+          page: 'likes',
+          likesPage: <p>liste réelle</p>,
+          commentsPage: <p>fil réel</p>,
+          managePage: <p>gestion réelle</p>,
+        })}
+      />,
+    );
+    expect(container.querySelector('.ckp-pages > .ckp-page .ckp-page-pad')?.textContent).toBe('liste réelle');
+    expect(container.querySelector('.ckp-pages')?.getAttribute('aria-label')).toBe('J’aime');
+    rerender(
+      <CarnetPages
+        {...base({
+          page: 'comments',
+          likesPage: <p>liste réelle</p>,
+          commentsPage: <p>fil réel</p>,
+          managePage: <p>gestion réelle</p>,
+        })}
+      />,
+    );
+    expect(container.querySelector('.ckp-pages > .ckp-page .ckp-page-pad')?.textContent).toBe('fil réel');
+    expect(container.querySelector('.ckp-pages')?.getAttribute('aria-label')).toBe('Commentaires');
+    rerender(
+      <CarnetPages
+        {...base({
+          page: 'manage',
+          likesPage: <p>liste réelle</p>,
+          commentsPage: <p>fil réel</p>,
+          managePage: <p>gestion réelle</p>,
+        })}
+      />,
+    );
+    expect(container.querySelector('.ckp-pages > .ckp-page .ckp-page-pad')?.textContent).toBe('gestion réelle');
+    expect(container.querySelector('.ckp-pages')?.getAttribute('aria-label')).toBe('Gérer');
   });
 
   it('rend la grille de posts en page 1 et ouvre le post d’une tuile', () => {
@@ -133,14 +204,27 @@ describe('CarnetPages — pages du carnet', () => {
     /* Bornes : rien avant la première page ni après la dernière. */
     rerender(<CarnetPages {...base({ page: 'posts', onPageChange })} />);
     fireEvent.keyDown(pages(), { key: 'ArrowLeft' });
-    rerender(<CarnetPages {...base({ page: 'nature', onPageChange })} />);
+    rerender(<CarnetPages {...base({ page: 'manage', onPageChange })} />);
     fireEvent.keyDown(pages(), { key: 'ArrowRight' });
     expect(onPageChange).toHaveBeenCalledTimes(2);
     /* Home / End. */
     fireEvent.keyDown(pages(), { key: 'Home' });
     expect(onPageChange).toHaveBeenLastCalledWith('posts');
     fireEvent.keyDown(pages(), { key: 'End' });
-    expect(onPageChange).toHaveBeenLastCalledWith('nature');
+    expect(onPageChange).toHaveBeenLastCalledWith('manage');
+  });
+
+  it('enchaîne Nature → J’aime → Commentaires au swipe', () => {
+    const onPageChange = vi.fn();
+    const { container, rerender } = render(<CarnetPages {...base({ page: 'nature', onPageChange })} />);
+    swipe(container.querySelector('.ckp-pages') as Element, 300, 100, 180, 105);
+    expect(onPageChange).toHaveBeenLastCalledWith('likes');
+    rerender(<CarnetPages {...base({ page: 'likes', onPageChange })} />);
+    swipe(container.querySelector('.ckp-pages') as Element, 300, 100, 180, 105);
+    expect(onPageChange).toHaveBeenLastCalledWith('comments');
+    rerender(<CarnetPages {...base({ page: 'comments', onPageChange })} />);
+    swipe(container.querySelector('.ckp-pages') as Element, 300, 100, 180, 105);
+    expect(onPageChange).toHaveBeenLastCalledWith('manage');
   });
 
   it('garde le clic tuile quand le geste n’a pas swipé', () => {

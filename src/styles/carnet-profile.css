@@ -187,16 +187,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    Surface reprise de la capsule du Compte (`liquid-capsules.css`) : dégradé
    interne, liseré clair 1 px en haut, ombre portée douce, flou + saturation.
    La lentille garde la famille de mouvement du Compte, en 220 ms.           */
-.ckp-card-foot {
-  position: absolute; left: auto; right: 10px; bottom: 10px; z-index: 6;
-  display: flex; align-items: center; justify-content: flex-end; gap: 2px;
-  height: 30px; padding: 2.5px; border-radius: 999px;
-  background: rgba(23, 43, 36, .06);
-  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
-  -webkit-backdrop-filter: blur(18px) saturate(1.6);
-  backdrop-filter: blur(18px) saturate(1.6);
-  overflow: visible;
-}
 .ckp-actions { display: flex; align-items: center; gap: 3px; height: 32px; }
 .ckp-foot-sep {
   display: block; flex: none; width: 1px; height: 16px; margin: 0 5px; border-radius: 1px;
@@ -232,11 +222,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
     box-shadow .18s ease;
 }
 .ckp-action:active .ckp-action-in { transform: scale(.94); }
-/* J'aime rouge, Enregistrer vert : les deux seuls états pressés. */
-.ckp-action[data-icon='heart'][aria-pressed='true'] .ckp-action-in {
-  color: #e0245e; background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(224, 36, 94, .16));
-  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .98), 0 0 0 .5px rgba(224, 36, 94, .32), 0 1px 3px rgba(224, 36, 94, .22);
-}
+/* Enregistrer est le seul état pressé de la capsule. */
 .ckp-action[data-icon='bookmark'][aria-pressed='true'] .ckp-action-in {
   color: #17402c; background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(23, 64, 44, .16));
   box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .98), 0 0 0 .5px rgba(23, 64, 44, .3), 0 1px 3px rgba(23, 64, 44, .2);
@@ -253,9 +239,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 @media (hover: hover) {
   .ckp-action:hover .ckp-action-in { background: linear-gradient(180deg, #fff, rgba(255, 255, 255, .82)); }
-  .ckp-action[data-icon='heart'][aria-pressed='true']:hover .ckp-action-in {
-    background: linear-gradient(180deg, #fff, rgba(224, 36, 94, .22));
-  }
   .ckp-action[data-icon='bookmark'][aria-pressed='true']:hover .ckp-action-in {
     background: linear-gradient(180deg, #fff, rgba(23, 64, 44, .22));
   }
@@ -301,22 +284,13 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   background: none; box-shadow: none;
 }
 .ckp-tabs button {
-  position: relative; z-index: 1; width: 42px; height: 25px; border: 0; background: none; border-radius: 999px;
+  position: relative; z-index: 1; width: 41.5px; height: 25px; border: 0; background: none; border-radius: 999px;
   display: inline-flex; align-items: center; justify-content: center;
   color: #56665d; cursor: pointer;
   transition: color .18s ease, transform .16s cubic-bezier(.22, 1, .36, 1);
 }
 .ckp-tabs button[aria-selected='true'] { color: #17402c; }
 .ckp-tabs button:active { transform: scale(.94); }
-.ckp-tabs .ckp-th {
-  position: absolute; top: 1px; bottom: 1px; left: 1px;
-  width: calc((100% - 2px) / var(--n, 2)); border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(255, 255, 255, .78));
-  box-shadow: inset 0 .5px 0 #fff, 0 0 0 .5px rgba(23, 43, 36, .07), 0 2px 5px rgba(23, 43, 36, .12);
-  transform: translateX(calc(var(--i, 0) * 100%));
-  transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
-  pointer-events: none;
-}
 @media (hover: hover) {
   .ckp-tabs button:hover { color: #17402c; }
 }
@@ -489,7 +463,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 @media (prefers-reduced-motion: reduce) {
   .ckp-card--drawer { animation: none; }
-  .ckp-tabs .ckp-th, .ckp-tabs button, .ckp-action-in { transition: none; }
+  .ckp-card-foot > .ckp-th, .ckp-tabs button, .ckp-action-in { transition: none; }
   .ckp-action:active .ckp-action-in, .ckp-tabs button:active { transform: none; }
 }
 
@@ -510,7 +484,13 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 /* --- Alignement v5 : 5 actions compactes sur la ligne du sélecteur --------- */
 
-.ckp-card { position: relative; height: 541px; flex: none; }
+.ckp-card {
+  position: relative; height: 541px; flex: none;
+  /* Géométrie du sélecteur : 7 segments de 41,5 × 25, gap 2, inset 2,5.
+     Le pas de la lentille vaut segment + gap = 43,5 px. */
+  --ckp-seg: 41.5px;
+  --ckp-seg-gap: 2px;
+}
 .ckp-tile-expand {
   position: absolute; top: 6px; right: 6px; z-index: 2;
   width: 24px; height: 24px; display: grid; place-items: center;
@@ -641,6 +621,54 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-page-pad { display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
 .ckp-page-meta { padding: 0 1px; }
 
+/* --- Lentille unique du sélecteur ---------------------------------------- */
+/* Un seul blanc glisse d'un segment à l'autre : il couvre exactement le
+   segment actif (41,5 × 25, inset 2,5 px dans la capsule), jamais une action
+   au repos. Pas de translation = largeur du segment + gap de la capsule. */
+.ckp-card-foot > .ckp-th {
+  position: absolute; top: 2.5px; left: 2.5px; z-index: 0;
+  width: var(--ckp-seg); height: 25px; border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(255, 255, 255, .78));
+  box-shadow:
+    inset 0 .5px 0 #fff,
+    0 0 0 .5px rgba(23, 43, 36, .07),
+    0 2px 5px rgba(23, 43, 36, .12);
+  transform: translateX(calc(var(--i, 0) * (var(--ckp-seg) + var(--ckp-seg-gap))));
+  transition: transform 220ms cubic-bezier(.22, 1, .36, 1), opacity 160ms ease;
+  pointer-events: none;
+}
+/* Page sans segment (Étapes, Matériel, Nature) : aucune lentille visible. */
+.ckp-card-foot > .ckp-th[data-off='true'] { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .ckp-card-foot > .ckp-th { transition: none; }
+}
+
+/* --- Rangées des pages (Gérer, J’aime) ----------------------------------- */
+.ckp-row {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0;
+  min-height: 44px; padding: 7px 10px; border: 0; border-radius: 14px;
+  background: rgba(255, 255, 255, .42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 0 0 .5px rgba(23, 43, 36, .08);
+  color: #172b24; text-align: left; cursor: pointer;
+  font: 400 11.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+/* Le libellé prend la place ; l'icône garde sa taille (masque ou vecteur). */
+.ckp-row > span:not([aria-hidden='true']) { flex: 1; min-width: 0; }
+.ckp-row b { display: block; color: #172b24; font: 600 12.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-row small { display: block; margin-top: 1px; color: #56665d; font: 500 10.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* `Icon` peint un masque dont la couleur vient de `currentColor`. */
+.ckp-row svg, .ckp-row > span[aria-hidden='true'] { flex: none; color: #56665d; }
+.ckp-row:active { transform: scale(.99); }
+.ckp-row:disabled { opacity: .55; cursor: default; }
+.ckp-row--danger b, .ckp-row--danger svg, .ckp-row--danger > span[aria-hidden='true'] { color: #a33227; }
+/* Le ♥ du carnet allumé : l'icône seule change de couleur, la rangée garde
+   le verre des autres rangées (aucune teinte importée d'ailleurs). */
+.ckp-row--like[aria-pressed='true'] { background: rgba(255, 255, 255, .58); }
+.ckp-row--like[aria-pressed='true'] svg, .ckp-row--like[aria-pressed='true'] > span[aria-hidden='true'] { color: #e0245e; }
+@media (hover: hover) {
+  .ckp-row:not(:disabled):hover { background: rgba(255, 255, 255, .62); }
+}
+
 /* Cinq pastilles de pages dans la capsule du bas : 28 px par cellule. */
 .ckp-card-foot .ckp-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c; }
 .ckp-card-foot .ckp-action:focus-visible { outline: none; }
@@ -709,7 +737,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    vues) est un segment de 41,5 × 25 ; le segment actif reçoit la lentille. */
 .ckp-card-foot {
   position: absolute; right: 10px; bottom: 10px; z-index: 6;
-  display: grid; grid-auto-flow: column; grid-auto-columns: 41.5px; align-items: center;
+  display: grid; grid-auto-flow: column; grid-auto-columns: var(--ckp-seg); align-items: center;
+  gap: var(--ckp-seg-gap);
   height: 30px; padding: 2.5px; border-radius: 999px;
   background: rgba(23, 43, 36, .06);
   box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
@@ -719,7 +748,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-card-foot .ckp-actions,
 .ckp-card-foot .ckp-tabs { display: contents; }
 .ckp-foot-sep { display: none; }
-.ckp-card-foot .ckp-tabs .ckp-th { display: none; }
 .ckp-action,
 .ckp-card-foot .ckp-tabs button {
   position: relative; z-index: 1; width: 41.5px; height: 25px; padding: 0; border: 0;
@@ -731,11 +759,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   width: 100%; height: 100%; display: grid; place-items: center;
   background: none; box-shadow: none; border: 0; border-radius: 999px;
 }
-.ckp-card-foot .ckp-tabs button[aria-selected='true'],
-.ckp-action[aria-pressed='true'] {
-  background: #fff; color: #17402c;
-  box-shadow: 0 1px 3px rgba(23, 43, 36, .18), 0 0 0 .5px rgba(23, 43, 36, .06);
-}
+/* Le segment actif ne peint plus son propre fond : un seul blanc glisse,
+   sous les boutons (lentille z-index 0, boutons z-index 1). */
+.ckp-card-foot .ckp-tabs button[aria-selected='true'] { color: #17402c; }
 .ckp-action-count {
   position: absolute; top: -1px; right: 1px; min-width: 14px; height: 14px; padding: 0 3px;
   display: inline-flex; align-items: center; justify-content: center;
@@ -747,10 +773,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-card-foot .ckp-more-anchor { display: contents; }
 .ckp-card-foot .ckp-more-anchor > .ckp-menu { position: absolute; right: 0; bottom: calc(100% + 8px); }
 
-/* Actions : état = couleur d'icône, jamais la lentille (réservée aux vues). */
+/* Actions : Enregistrer est le seul état pressé, et il ne peint aucun fond. */
 .ckp-action[aria-pressed='true'] { background: none; box-shadow: none; }
-.ckp-action[aria-pressed='true'] .ckp-action-in { color: #e0245e; }
-.ckp-action[aria-label^='Enregistr'][aria-pressed='true'] .ckp-action-in { color: #17402c; }
 .ckp-action-count {
   top: -2px; right: 3px; min-width: 13px; height: 13px; padding: 0 3px;
   font: 700 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
@@ -763,4 +787,5 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-card-foot .ckp-action[aria-pressed='true'] .ckp-action-in {
   background: none; box-shadow: none; border: 0;
 }
-.ckp-card-foot .ckp-action[aria-pressed='true'] { color: #e0245e; }
+/* La page affichée allume son bouton : l'encre passe au vert, le disque reste nu. */
+.ckp-card-foot .ckp-action[aria-current='page'] .ckp-action-in { color: #17402c; }

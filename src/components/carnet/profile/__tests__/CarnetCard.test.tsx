@@ -35,7 +35,6 @@ function base(overrides: Partial<React.ComponentProps<typeof CarnetCard>> = {}) 
     onOpenLikes: noop,
     onOpenParcours: noop,
     onOpenManage: noop,
-    onLike: noop,
     onSave: noop,
     onOpenMenu: noop,
     onFocusPlace: noop,
@@ -92,6 +91,7 @@ describe('CarnetCard — carte du carnet', () => {
     // Conteneur simple : aucun rôle de sélecteur sur la capsule.
     expect(foot?.getAttribute('role')).toBeNull();
     expect([...(foot?.children ?? [])].map((el) => el.className)).toEqual([
+      'ckp-th',
       'ckp-actions',
       'ckp-foot-sep',
       'ckp-tabs',
@@ -126,14 +126,18 @@ describe('CarnetCard — carte du carnet', () => {
   });
 
   it('garde tous les comportements des actions déplacées', () => {
-    const onLike = vi.fn();
+    const onOpenLikes = vi.fn();
     const onSave = vi.fn();
     const onOpenComments = vi.fn();
     const onOpenParcours = vi.fn();
     const onOpenMenu = vi.fn();
-    render(<CarnetCard {...base({ onLike, onSave, onOpenComments, onOpenParcours, onOpenMenu })} />);
+    render(
+      <CarnetCard
+        {...base({ onOpenLikes, onSave, onOpenComments, onOpenParcours, onOpenMenu })}
+      />,
+    );
     fireEvent.click(screen.getByRole('button', { name: /^J’aime/ }));
-    expect(onLike).toHaveBeenCalledOnce();
+    expect(onOpenLikes).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: /^Commenter/ }));
     expect(onOpenComments).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
@@ -253,10 +257,96 @@ describe('CarnetCard — carte du carnet', () => {
     expect(container.querySelector('.ckp-page-pad')).toBeTruthy();
   });
 
-  it('affiche les compteurs réels et le like actif', () => {
-    render(<CarnetCard {...base({ detail: detail({ engagement: { ...detail().engagement, liked: true } }) })} />);
-    expect(screen.getByRole('button', { name: 'J’aime, 22' }).getAttribute('aria-pressed')).toBe('true');
+  it('affiche les compteurs réels sans état pressé sur les pages', () => {
+    render(<CarnetCard {...base()} />);
+    expect(screen.getByRole('button', { name: 'J’aime, 22' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Commenter, 3' })).toBeTruthy();
+    /* Le ♥ n’est plus une bascule : il ouvre la page J’aime. */
+    expect(screen.getByRole('button', { name: 'J’aime, 22' }).getAttribute('aria-pressed')).toBeNull();
+  });
+
+  it('pose les contenus J’aime, Commentaires et Gérer dans le carrousel', () => {
+    const { container } = render(
+      <CarnetCard
+        {...base({
+          page: 'likes',
+          likesPage: <p>réactions réelles</p>,
+          commentsPage: <p>commentaires réels</p>,
+          managePage: <p>gestion réelle</p>,
+        })}
+      />,
+    );
+    expect(container.querySelector('.ckp-pages > .ckp-page .ckp-page-pad')?.textContent).toBe(
+      'réactions réelles',
+    );
+    expect(container.querySelector('.ckp-pages')?.getAttribute('id')).toBe('carnet-page-likes');
+  });
+});
+
+describe('CarnetCard — lentille unique du sélecteur', () => {
+  function lens(container: HTMLElement) {
+    const node = container.querySelector('.ckp-th') as HTMLElement | null;
+    return { node, i: node?.style.getPropertyValue('--i') };
+  }
+
+  it('rend une seule lentille, enfant direct de la capsule', () => {
+    const { container } = render(<CarnetCard {...base()} />);
+    expect(container.querySelectorAll('.ckp-th')).toHaveLength(1);
+    const node = container.querySelector('.ckp-th');
+    expect(node?.parentElement?.className).toBe('ckp-card-foot');
+    expect(node?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('pose la lentille sur la vue active : grille 5, carte 6', () => {
+    const posts = render(<CarnetCard {...base({ page: 'posts' })} />);
+    expect(lens(posts.container).i).toBe('5');
+    posts.unmount();
+    const parcours = render(<CarnetCard {...base({ page: 'parcours' })} />);
+    expect(lens(parcours.container).i).toBe('6');
+  });
+
+  it('suit la page affichée : J’aime 0, Commentaires 1, Gérer 3', () => {
+    const likes = render(<CarnetCard {...base({ page: 'likes' })} />);
+    expect(lens(likes.container).i).toBe('0');
+    expect(screen.getByRole('button', { name: /^J’aime/ }).getAttribute('aria-current')).toBe('page');
+    likes.unmount();
+
+    const comments = render(<CarnetCard {...base({ page: 'comments' })} />);
+    expect(lens(comments.container).i).toBe('1');
+    expect(screen.getByRole('button', { name: /^Commenter/ }).getAttribute('aria-current')).toBe('page');
+    comments.unmount();
+
+    const manage = render(<CarnetCard {...base({ page: 'manage', detail: detail({ isOwner: true }) })} />);
+    expect(lens(manage.container).i).toBe('3');
+    expect(screen.getByRole('button', { name: 'Gérer' }).getAttribute('aria-current')).toBe('page');
+  });
+
+  it('masque la lentille sur une page sans segment (Étapes, Matériel, Nature)', () => {
+    for (const page of ['etapes', 'materiel', 'nature'] as const) {
+      const view = render(<CarnetCard {...base({ page })} />);
+      expect(lens(view.container).node?.getAttribute('data-off')).toBe('true');
+      view.unmount();
+    }
+  });
+
+  it('ne pose jamais la lentille sur Enregistrer ou Plus', () => {
+    for (const page of ['posts', 'parcours', 'likes', 'comments'] as const) {
+      const view = render(<CarnetCard {...base({ page })} />);
+      expect(screen.getByRole('button', { name: 'Enregistrer' }).getAttribute('aria-current')).toBeNull();
+      expect(screen.getByRole('button', { name: 'Plus d’options' }).getAttribute('aria-current')).toBeNull();
+      view.unmount();
+    }
+  });
+
+  it('donne Gérer au propriétaire et Parcours au visiteur, au même segment', () => {
+    const visitor = render(<CarnetCard {...base({ detail: detail({ isOwner: false }) })} />);
+    expect(screen.queryByRole('button', { name: 'Gérer' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Parcours' })).toBeTruthy();
+    visitor.unmount();
+
+    const owner = render(<CarnetCard {...base({ detail: detail({ isOwner: true }) })} />);
+    expect(screen.getByRole('button', { name: 'Gérer' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Parcours' })).toBeNull();
   });
 });
 

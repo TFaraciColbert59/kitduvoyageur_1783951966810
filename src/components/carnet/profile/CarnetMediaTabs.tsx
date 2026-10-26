@@ -17,15 +17,18 @@ export interface CarnetMediaTabsProps {
 }
 
 /**
- * Sélecteur 31 px du Compte (`.ig-tabs` + lentille `.ig-th`), ici une rangée de
- * pastilles de pages. Clavier : flèches gauche/droite avec bouclage, `Home`,
- * `End`, roving `tabIndex`, `aria-selected` et `aria-controls` sur l'actif.
+ * Sélecteur 31 px du Compte (`.ig-tabs`), ici les deux segments de vue de la
+ * capsule. La lentille blanche n'est plus peinte par ce composant : elle est
+ * rendue une seule fois par `CarnetCard` (`.ckp-card-foot > .ckp-th`), pour
+ * pouvoir glisser aussi sous les actions de page.
+ *
+ * Clavier : flèches gauche/droite avec bouclage, `Home`, `End`, roving
+ * `tabIndex`, `aria-selected` et `aria-controls` sur l'actif.
  */
 export function CarnetMediaTabs({ items, activeIndex, onChange, ariaLabel }: CarnetMediaTabsProps) {
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
   const count = items.length;
   const safeIndex = count > 0 ? (activeIndex < 0 ? -1 : Math.max(0, Math.min(activeIndex, count - 1))) : -1;
-  const lensIndex = Math.max(0, safeIndex);
 
   const select = (index: number) => {
     if (index === safeIndex) return;
@@ -51,14 +54,7 @@ export function CarnetMediaTabs({ items, activeIndex, onChange, ariaLabel }: Car
   };
 
   return (
-    <div
-      className="ckp-tabs"
-      role="tablist"
-      aria-label={ariaLabel}
-      onKeyDown={onKeyDown}
-      style={{ '--n': items.length } as React.CSSProperties}
-    >
-      <span className="ckp-th" aria-hidden="true" style={{ '--i': lensIndex } as React.CSSProperties} />
+    <div className="ckp-tabs" role="tablist" aria-label={ariaLabel} onKeyDown={onKeyDown}>
       {items.map((item, index) => (
         <button
           key={item.id}
