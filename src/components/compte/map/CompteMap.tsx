@@ -523,11 +523,12 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   useEffect(() => {
     if (!map || !ready || !data) return;
     const container = map.getContainer();
-    let overlay = container.querySelector<HTMLDivElement>('.lkdv-map-overlay');
+    const host = container.parentElement ?? container;
+    let overlay = host.querySelector<HTMLDivElement>('.lkdv-map-overlay');
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.className = 'lkdv-map-overlay';
-      container.appendChild(overlay);
+      host.appendChild(overlay);
     }
     overlay.innerHTML = '';
 
@@ -599,13 +600,17 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const width = container.clientWidth;
       const height = container.clientHeight;
       const zoom = map.getZoom();
+      const mapRect = container.getBoundingClientRect();
+      const hostRect = host.getBoundingClientRect();
+      const offsetX = mapRect.left - hostRect.left;
+      const offsetY = mapRect.top - hostRect.top;
       for (const entry of entries) {
         const point = map.project([entry.lng, entry.lat]);
         const inside =
           point.x > 10 && point.x < width - 10 && point.y > 10 && point.y < height - 10;
         const visible = inside && (!entry.detail || zoom >= 7);
         entry.element.style.display = visible ? '' : 'none';
-        entry.element.style.transform = `translate(${point.x}px, ${point.y}px) ${entry.anchor}`;
+        entry.element.style.transform = `translate(${offsetX + point.x}px, ${offsetY + point.y}px) ${entry.anchor}`;
       }
     };
     place();
