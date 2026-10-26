@@ -1837,3 +1837,44 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 .lkdv-create-step-tabs button svg { width: 16px; height: 16px; }
 .lkdv-create-step-tabs button { display: grid; place-items: center; }
 .lkdv-create-form-preview[hidden] { display: none !important; }
+
+/* Libellés de formulaire : de nouveau visibles et lisibles. */
+.lkdv-create-engine .lkdv-form-field > label,
+.lkdv-create-engine .lkdv-form-label,
+.lkdv-create-engine .lkdv-form-intro,
+.lkdv-create-engine .lkdv-form-note,
+.lkdv-create-engine .lkdv-media-dropzone-text,
+.lkdv-create-engine .lkdv-form-hint,
+.lkdv-create-engine .lkdv-number-stepper > span,
+.lkdv-create-engine .lkdv-date-range legend,
+.lkdv-create-engine .lkdv-date-range-fields label {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 0 3px !important;
+  overflow: visible !important;
+  clip: auto !important;
+  clip-path: none !important;
+  white-space: normal !important;
+  border: 0 !important;
+  display: block !important;
+  color: var(--feed-muted) !important;
+  font: 600 11.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+.lkdv-create-engine .lkdv-form-field { gap: 5px; }
+.lkdv-create-engine .lkdv-form-intro { font-weight: 500 !important; margin-bottom: 10px !important; }
+.lkdv-create-engine .lkdv-media-dropzone-text { display: flex !important; flex-direction: column; gap: 2px; }
+.lkdv-create-engine .lkdv-media-dropzone-text b { color: var(--feed-ink) !important; font: 700 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif) !important; }
+
+/* Feuilles secondaires : même matière et même rayon que la feuille Compte. */
+.lkdv-story-sheet {
+  width: 406px !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: 541px !important;
+  border-radius: 24px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(242,247,238,.94) 45%, rgba(255,255,255,.96)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.12), 0 18px 50px rgba(10,20,14,.22) !important;
+}
