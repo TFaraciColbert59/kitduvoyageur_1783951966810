@@ -127,6 +127,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
   const [drawer, setDrawer] = useState<DrawerKey | null>(null);
   const [weather, setWeather] = useState<WeatherPayload | null>(null);
   const [community, setCommunity] = useState<{ key: string; title: string; sub: string; kind: 'club' | 'carnet' }[] | null>(null);
+  const [loadingCommunity, setLoadingCommunity] = useState(true);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -181,8 +182,14 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
         (k.data ?? []).forEach((x: any) => rows.push({ key: `club-${x.id}`, title: x.name, sub: plural(x.members_count ?? 0, 'membre', 'membres'), kind: 'club' }));
         (c.data ?? []).forEach((x: any) => rows.push({ key: `carnet-${x.id}`, title: x.title, sub: plural(x.likes_count ?? 0, 'j’aime', 'j’aime'), kind: 'carnet' }));
         setCommunity(rows);
+        setLoadingCommunity(false);
       })
-      .catch(() => alive && setCommunity([]));
+      .catch(() => {
+        if (alive) {
+          setCommunity([]);
+          setLoadingCommunity(false);
+        }
+      });
     return () => {
       alive = false;
     };
@@ -641,7 +648,19 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                   </p>
 
                   <div className="ig-grid-wrap">
-                    {isEmpty ? (
+                    {section === 'communaute' && loadingCommunity ? (
+                      <div aria-busy="true" aria-label="Chargement de la communauté">
+                        {[0, 1, 2].map((i) => (
+                          <div className="lkdv-compact-card lkdv-skeleton-card" key={i}>
+                            <span className="lkdv-info-row__ico lkdv-skeleton-block" />
+                            <div className="lkdv-compact-card__body">
+                              <span className="lkdv-skeleton-line" style={{ width: `${62 - i * 8}%` }} />
+                              <span className="lkdv-skeleton-line lkdv-skeleton-line--short" style={{ width: `${34 + i * 5}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : isEmpty ? (
                       <div className="lkdv-sheet-card" role="status">
                         <div className="lkdv-sheet-card__head">
                           <b>{SECTION_LABEL[section]}</b>

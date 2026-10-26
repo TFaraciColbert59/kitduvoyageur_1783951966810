@@ -1375,3 +1375,28 @@
   flex: none;
   height: auto;
 }
+
+/* Squelettes de contenu : mêmes dimensions que les cartes réelles */
+.lkdv-skeleton-card { pointer-events: none; }
+
+.lkdv-skeleton-block,
+.lkdv-skeleton-line {
+  display: block;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.55));
+  background-size: 200% 100%;
+  animation: lkdv-skeleton 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.lkdv-skeleton-block { width: 30px; height: 30px; border-radius: 10px; flex: none; }
+.lkdv-skeleton-line { height: 11px; margin: 3px 0; }
+.lkdv-skeleton-line--short { height: 9px; opacity: 0.75; }
+
+@keyframes lkdv-skeleton {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-skeleton-block, .lkdv-skeleton-line { animation: none; }
+}
