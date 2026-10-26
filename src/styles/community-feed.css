@@ -1885,3 +1885,30 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 .lkdv-create-step-pane[aria-hidden="false"],
 .lkdv-create-step-pane:not([aria-hidden]) { position: relative !important; opacity: 1 !important; visibility: visible !important; }
 .lkdv-create-step-pane[aria-hidden="true"] { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; height: auto !important; overflow: visible !important; }
+
+/* Aucun bouton Continuer : navigation par les étapes. */
+.lkdv-embedded-form-footer:has([data-step-action="continue"]) { display: none !important; }
+
+/* Sélecteur du haut à la taille des drawers Compte. */
+.lkdv-create-selector {
+  height: 48px !important;
+  padding: 2px !important;
+}
+.lkdv-create-selector button { min-height: 44px !important; }
+.lkdv-create-selector svg { width: 20px !important; height: 20px !important; }
+.lkdv-create-selector .sel-lens { top: 2px !important; bottom: 2px !important; }
+
+/* Même texture de verre que les drawers Compte. */
+.lkdv-half-drawer,
+.lkdv-form-drawer {
+  background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(245,250,241,.62) 55%, rgba(255,255,255,.72)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.8) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(1.8) brightness(1.04) !important;
+}
+
+/* Texture Compte prioritaire sur le drawer création. */
+.lkdv-half-drawer:has(.lkdv-create-selector) {
+  background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(245,250,241,.62) 55%, rgba(255,255,255,.72)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.8) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(1.8) brightness(1.04) !important;
+}

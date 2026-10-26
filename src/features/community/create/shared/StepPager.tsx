@@ -148,7 +148,6 @@ export function StepPager({
             </button>
           ))}
         </div>
-        {actions ? <div className="lkdv-create-stepbar-actions">{actions}</div> : null}
       </div>
     </div>
   );

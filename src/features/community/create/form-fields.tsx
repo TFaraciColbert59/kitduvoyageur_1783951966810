@@ -102,7 +102,7 @@ export function SubmitFooter({
   return (
     <>
       {secondary}
-      <button type="submit" disabled={busy || disabled} onClick={onClick}>
+      <button type="submit" data-step-action={label === 'Continuer' ? 'continue' : 'submit'} disabled={busy || disabled} onClick={onClick}>
         {busy ? 'Envoi…' : label}
       </button>
     </>
