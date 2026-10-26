@@ -11,7 +11,7 @@
    réponses API privées (/api/hub, /api/materiel, /api/voyages…) en cache.
    ============================================================ */
 
-const CACHE_VERSION = 'lkdv-v7';
+const CACHE_VERSION = 'lkdv-v10';
 const STATIC_CACHE = `lkdv-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lkdv-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
@@ -123,15 +123,19 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('fonts.gstatic.com') ||
     url.hostname.includes('fonts.googleapis.com')
   ) {
+    // Network-First : un nouveau build doit toujours gagner sur un chunk en
+    // cache (c'était la cause des « anciennes versions » qui revenaient).
     event.respondWith(
       caches.open(STATIC_CACHE).then(async (cache) => {
-        const cached = await cache.match(request);
-        if (cached) return cached;
-        const response = await fetch(request);
-        if (response.status === 200) {
-          cache.put(request, response.clone());
+        try {
+          const response = await fetch(request);
+          if (response.status === 200) cache.put(request, response.clone());
+          return response;
+        } catch {
+          const cached = await cache.match(request);
+          if (cached) return cached;
+          throw new Error('offline');
         }
-        return response;
       })
     );
     return;
