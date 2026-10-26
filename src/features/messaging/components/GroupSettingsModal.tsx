@@ -140,6 +140,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
 
   return (
     <AccountDrawerHost
+      variant="card"
       open={isOpen}
       title="Gestion du groupe"
       subtitle={conversation.title || undefined}

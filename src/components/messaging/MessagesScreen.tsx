@@ -24,6 +24,7 @@ import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
 import Icon from '@/components/ui/Icon';
 import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
+import { lkvConfirm } from '@/components/ui/dialogs';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useLongPress } from '@/hooks/gestures';
 import { createClient } from '@/lib/supabase/client';
@@ -46,7 +47,6 @@ import { VoiceRecorderBar } from '@/features/messaging/components/VoiceRecorderB
 import { ComposerMenuSheet } from '@/features/messaging/components/ComposerMenuSheet';
 import { ConversationOptionsSheet } from '@/features/messaging/components/ConversationOptionsSheet';
 import { ForwardMessageSheet } from '@/features/messaging/components/ForwardMessageSheet';
-import { NewConversationModal } from '@/features/messaging/components/NewConversationModal';
 import { GroupSettingsModal } from '@/features/messaging/components/GroupSettingsModal';
 import type {
   Conversation,
@@ -57,6 +57,13 @@ import type {
   TrailMessageMeta,
   UserProfileSummary,
 } from '@/features/messaging/types/messaging.types';
+
+const MUTE_PRESETS = [
+  { label: '1 heure', minutes: 60 },
+  { label: '8 heures', minutes: 480 },
+  { label: '1 semaine', minutes: 10_080 },
+  { label: 'Désactiver', minutes: null },
+] as const;
 
 const FILTERS: Array<{ id: FilterId; label: string; icon: string }> = [
   { id: 'all', label: 'Toutes', icon: 'M4 6h16v12H4z' },
@@ -76,8 +83,7 @@ function initials(name: string): string {
 /* Rangée de conversation (gestes conservés : glissement + appui long) */
 /* ------------------------------------------------------------------ */
 
-type SwipeAction = 'accept' | 'decline' | 'archive' | 'mute';
-const REVEAL = 96;
+type SwipeAction = 'delete' | 'notify';
 
 function ConversationFeedRow({
   conversation,
@@ -137,7 +143,7 @@ function ConversationFeedRow({
     startX.current = event.touches[0].clientX;
     startY.current = event.touches[0].clientY;
     axis.current = 'none';
-    dxRef.current = snapped ? -REVEAL : 0;
+    dxRef.current = snapped ? SWIPE_REVEAL : 0;
     suppress.current = false;
     longPress.onTouchStart(event);
   };
@@ -149,8 +155,7 @@ function ConversationFeedRow({
       axis.current = Math.abs(ddx) > Math.abs(ddy) ? 'x' : 'y';
     }
     if (axis.current === 'x') {
-      const base = snapped ? -REVEAL : 0;
-      dxRef.current = Math.max(-REVEAL, Math.min(base + ddx, 0));
+      dxRef.current = clampSwipe(ddx, snapped ? SWIPE_REVEAL : 0);
       setDx(dxRef.current);
     }
     longPress.onTouchMove(event);
@@ -160,45 +165,39 @@ function ConversationFeedRow({
     moved.current = axis.current !== 'none';
     longPress.onTouchEnd();
     if (axis.current === 'x') {
-      if (dxRef.current < -REVEAL * 0.4) {
-        dxRef.current = -REVEAL;
-        setDx(-REVEAL);
-        setSnapped(true);
-      } else {
-        dxRef.current = 0;
-        setDx(0);
-        setSnapped(false);
-      }
+      const end = resolveSwipeEnd(dxRef.current);
+      dxRef.current = end.dx;
+      setDx(end.dx);
+      setSnapped(end.open);
     } else {
-      dxRef.current = snapped ? -REVEAL : 0;
+      dxRef.current = snapped ? SWIPE_REVEAL : 0;
       setDx(dxRef.current);
     }
     axis.current = 'none';
   };
 
   return (
-    <div className="mfeed-item" style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, flex: 'none', ['--i' as string]: index }}>
-      {(dx < 0 || snapped) && onSwipeAction ? (
-        <div style={{ position: 'absolute', inset: '0 0 0 auto', display: 'flex', width: REVEAL }}>
-          {isPending ? (
-            <>
-              <button type="button" className="mbtn soft" style={{ flex: 1, height: '100%', borderRadius: 0 }} onClick={() => fire('accept')} aria-label="Accepter la demande">
-                <Icon name="check" className="size-4" aria-hidden="true" />
-              </button>
-              <button type="button" className="mbtn" style={{ flex: 1, height: '100%', borderRadius: 0, color: 'var(--bad)' }} onClick={() => fire('decline')} aria-label="Refuser la demande">
-                <Icon name="x" className="size-4" aria-hidden="true" />
-              </button>
-            </>
-          ) : (
-            <>
-              <button type="button" className="mbtn" style={{ flex: 1, height: '100%', borderRadius: 0 }} onClick={() => fire('archive')} aria-label={conversation.is_archived ? 'Désarchiver' : 'Archiver'}>
-                <Icon name={conversation.is_archived ? 'archive-restore' : 'archive'} className="size-4" aria-hidden="true" />
-              </button>
-              <button type="button" className="mbtn" style={{ flex: 1, height: '100%', borderRadius: 0 }} onClick={() => fire('mute')} aria-label={conversation.is_muted ? 'Réactiver les notifications' : 'Masquer les notifications'}>
-                <Icon name={conversation.is_muted ? 'bell' : 'bell-off'} className="size-4" aria-hidden="true" />
-              </button>
-            </>
-          )}
+    <div className="mfeed-item" style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, flex: 'none', ['--i' as string]: index }}>
+      {(dx > 0 || snapped) && onSwipeAction ? (
+        <div className="mrow-actions" style={{ width: SWIPE_REVEAL }}>
+          <button
+            type="button"
+            className="mrow-act danger"
+            onClick={() => fire('delete')}
+            aria-label="Supprimer la conversation"
+          >
+            <Icon name="trash-2" className="size-4" aria-hidden="true" />
+            <small>Supprimer</small>
+          </button>
+          <button
+            type="button"
+            className="mrow-act"
+            onClick={() => fire('notify')}
+            aria-label="Gérer les notifications"
+          >
+            <Icon name="bell" className="size-4" aria-hidden="true" />
+            <small>Notifs</small>
+          </button>
         </div>
       ) : null}
 
@@ -786,19 +785,18 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const { haptic } = useHapticFeedback();
   const router = useRouter();
   const phone = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId ?? undefined);
 
   const [filter, setFilter] = useState<FilterId>('all');
   // Sens du changement de filtre : la liste glisse dans ce sens (voir CSS).
   const [filterDir, setFilterDir] = useState<'next' | 'prev'>('next');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [searchMessages, setSearchMessages] = useState<Array<{ id: string; conversation_id: string; content: string; created_at: string }>>([]);
   const [searchPeople, setSearchPeople] = useState<Array<{ id: string; full_name: string; avatar_url?: string | null }>>([]);
-  const [newOpen, setNewOpen] = useState(false);
   const [optionsConv, setOptionsConv] = useState<Conversation | null>(null);
+  const [notifyConv, setNotifyConv] = useState<Conversation | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
   // Préférences locales de l'appareil (jamais envoyées au serveur).
@@ -840,7 +838,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   }, []);
   useEffect(() => {
     refreshLiquidLenses(phone.current);
-  }, [filter, selectedId, sheetOpen, conversations.length]);
+  }, [filter, selectedId, conversations.length]);
 
   /* Deep links : ?conversation=<uuid> puis ?dest=<uuid> (comportement historique). */
   useEffect(() => {
@@ -964,17 +962,27 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
 
   const swipe = async (conversation: Conversation, action: SwipeAction) => {
     if (!currentUserId) return;
-    if (action === 'accept') await messagingService.acceptMessageRequest(conversation.id, currentUserId);
-    else if (action === 'decline') await messagingService.declineMessageRequest(conversation.id, currentUserId);
-    else if (action === 'archive') await messagingService.updateMemberPreferences(conversation.id, currentUserId, { is_archived: !conversation.is_archived });
-    else await messagingService.updateMemberPreferences(conversation.id, currentUserId, { is_muted: !conversation.is_muted });
+    if (action === 'notify') {
+      setNotifyConv(conversation);
+      return;
+    }
+    const ok = await lkvConfirm({
+      title: 'Supprimer la conversation ?',
+      message: `« ${conversationTitle(conversation)} » disparaîtra de ta messagerie. L'autre participant garde l'historique.`,
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      variant: 'destructive',
+    });
+    if (!ok) return;
+    const deleted = await messagingService.deleteConversationForMe(conversation.id, currentUserId);
+    if (deleted && selectedId === conversation.id) setSelectedId(null);
     await refreshConversations();
   };
 
   /** Toute surface ouverte (drawer, feuille, modale) sort la barre basse :
    *  c'est l'état de la grammaire, pas un bricolage par composant. */
   const surfaceOpen =
-    sheetOpen || searchOpen || newOpen || optionsConv !== null || groupSettingsOpen || reportTarget !== null;
+    optionsConv !== null || groupSettingsOpen || reportTarget !== null || notifyConv !== null;
   // B5 — notification navigateur : uniquement si l'utilisateur l'a activée et
   // que l'onglet est caché. Jamais de notification pour une conversation ouverte.
   const lastNotifiedRef = useRef<number>(0);
@@ -1001,140 +1009,11 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
     }
   }, [conversations, notifyPref, selectedId]);
 
-  // Glissement vertical du tiroir : il suit le doigt (résistance après 120 px),
-  // puis se ferme au-delà de 110 px OU d'une vitesse de 0,55 px/ms — les deux
-  // seuils des feuilles iOS, pour que le geste court et vif marche aussi.
-  useEffect(() => {
-    if (!sheetOpen) return;
-    const wrap = [...document.querySelectorAll('.sw-wrap')].find(
-      (node) => node.getAttribute('data-det') === 'open',
-    );
-    const sheet = wrap?.querySelector<HTMLElement>('.sheet');
-    const handle = wrap?.querySelector<HTMLElement>('.sh-h');
-    if (!sheet || !handle) return;
-    let startY = 0;
-    let startT = 0;
-    let dy = 0;
-    let active = false;
-    const rubber = (value: number) => (value < 120 ? value : 120 + (value - 120) * 0.55);
-    const onDown = (event: PointerEvent) => {
-      active = true;
-      startY = event.clientY;
-      startT = event.timeStamp;
-      dy = 0;
-      sheet.style.transition = 'none';
-      sheet.style.willChange = 'transform';
-      handle.setPointerCapture?.(event.pointerId);
-    };
-    const onMove = (event: PointerEvent) => {
-      if (!active) return;
-      dy = rubber(Math.max(0, event.clientY - startY));
-      sheet.style.transform = `translateY(${dy}px)`;
-      sheet.style.opacity = String(Math.max(0.6, 1 - dy / 900));
-    };
-    const onUp = (event: PointerEvent) => {
-      if (!active) return;
-      active = false;
-      const speed = dy / Math.max(1, event.timeStamp - startT);
-      sheet.style.transition = 'transform .38s cubic-bezier(.32,.72,0,1), opacity .3s';
-      sheet.style.transform = '';
-      sheet.style.opacity = '';
-      sheet.style.willChange = '';
-      if (dy > 110 || speed > 0.55) setSheetOpen(false);
-    };
-    handle.addEventListener('pointerdown', onDown);
-    handle.addEventListener('pointermove', onMove);
-    handle.addEventListener('pointerup', onUp);
-    handle.addEventListener('pointercancel', onUp);
-    return () => {
-      handle.removeEventListener('pointerdown', onDown);
-      handle.removeEventListener('pointermove', onMove);
-      handle.removeEventListener('pointerup', onUp);
-      handle.removeEventListener('pointercancel', onUp);
-    };
-  }, [sheetOpen]);
-
-  // Volet de conversation : le doigt le tire vers le bas pour revenir à la
-  // liste (le glissement vers le haut ouvre la feuille plein écran).
-  const paneRef = useRef<HTMLDivElement>(null);
-  const paneDrag = useRef({ y: 0, dy: 0, raw: 0, active: false, captured: false, t: 0 });
-  const closingRef = useRef(false);
-
-  const closePane = () => {
-    if (closingRef.current) return;
-    const el = paneRef.current;
-    const reduce =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!el || reduce) {
-      setSelectedId(null);
-      return;
-    }
-    closingRef.current = true;
-    el.classList.remove('dragging', 'settling');
-    el.classList.add('out');
-    window.setTimeout(() => {
-      closingRef.current = false;
-      setSelectedId(null);
-    }, 210);
-  };
-
-  const paneDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (closingRef.current) return;
-    // Pas de capture au pointerdown : elle retirerait le clic aux boutons de
-    // l'en-tête. On ne capture qu'une fois le geste engagé (6 px).
-    paneDrag.current = { y: event.clientY, dy: 0, raw: 0, active: true, captured: false, t: event.timeStamp };
-  };
-
-  const paneMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const drag = paneDrag.current;
-    if (!drag.active) return;
-    const raw = event.clientY - drag.y;
-    if (!drag.captured) {
-      if (Math.abs(raw) < 6) return;
-      drag.captured = true;
-      event.currentTarget.setPointerCapture?.(event.pointerId);
-      paneRef.current?.classList.add('dragging');
-    }
-    // Vers le bas : suit le doigt. Vers le haut : résiste (le geste sert au tiroir).
-    const dy = raw > 0 ? raw : raw * 0.5;
-    paneDrag.current.dy = dy;
-    paneDrag.current.raw = raw;
-    const el = paneRef.current;
-    if (!el) return;
-    el.style.transform = `translateY(${dy}px)`;
-    el.style.opacity = String(Math.max(0.45, 1 - Math.max(0, dy) / 460));
-  };
-
-  const paneUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!paneDrag.current.active) return;
-    const started = paneDrag.current.captured;
-    const dy = paneDrag.current.dy;
-    const raw = paneDrag.current.raw;
-    const speed = dy / Math.max(1, event.timeStamp - paneDrag.current.t);
-    paneDrag.current = { y: 0, dy: 0, raw: 0, active: false, captured: false, t: 0 };
-    if (!started) return; // simple tap : les boutons de l'en-tête gardent leur clic
-    const el = paneRef.current;
-    if (dy > 84 || speed > 0.7) {
-      haptic('light');
-      if (el) {
-        el.style.transform = '';
-        el.style.opacity = '';
-        el.classList.remove('dragging');
-      }
-      closePane();
-      return;
-    }
-    if (raw < -28) haptic('light');
-    if (el) {
-      el.classList.remove('dragging');
-      el.classList.add('settling');
-      el.style.transform = '';
-      el.style.opacity = '';
-      window.setTimeout(() => el.classList.remove('settling'), 420);
-    }
-    // Le seuil se juge sur le déplacement réel, pas sur la valeur amortie.
-    if (raw < -28) setSheetOpen(true);
+  /** « Nouvelle discussion » n'ouvre plus de drawer : il met le curseur dans
+   *  la barre de recherche de la carte (personnes + messages). */
+  const focusSearch = () => {
+    searchRef.current?.focus({ preventScroll: true });
+    searchRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   };
 
   const guest = !currentUserId;
@@ -1144,7 +1023,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
       <h1 className="sr-only">Messagerie</h1>
       <div className="stage">
         <div className="pwrap">
-          <div className={`phone hasnext${selected ? ' mapbig' : ''}${surfaceOpen ? ' sheet-open' : ''}`} id="phone" ref={phone}>
+          <div className={`phone hasnext${surfaceOpen ? ' sheet-open' : ''}`} id="phone" ref={phone}>
             <div
               className="bg"
               style={{ backgroundImage: "url('/assets/images/account-bg.webp')" }}
@@ -1160,39 +1039,112 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   aria-label="Messages — aller au compte"
                 >
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>Messages</span>
-                  {unreadTotal > 0 ? <i className="tb-badge">{unreadTotal > 99 ? '99+' : unreadTotal}</i> : null}
                 </button>
                 <div className="ig-top-r">
-                  <button type="button" className="lg gbtn ig-top-btn" aria-label="Nouvelle discussion" onClick={() => setNewOpen(true)}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M11 5H6.5A2.5 2.5 0 0 0 4 7.5v10A2.5 2.5 0 0 0 6.5 20h10a2.5 2.5 0 0 0 2.5-2.5V13" />
-                      <path d="M17.4 3.6a2.2 2.2 0 0 1 3 3L12 15l-4 1 1-4Z" />
-                    </svg>
-                  </button>
-                  <button type="button" className="lg gbtn ig-top-btn" aria-label="Rechercher une discussion" onClick={() => setSearchOpen(true)}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="10.8" cy="10.8" r="6.3" />
-                      <path d="m15.6 15.6 4 4" />
-                    </svg>
-                  </button>
                   <button
                     type="button"
                     className="lg gbtn ig-top-btn"
-                    aria-label={`Demandes de message${pendingCount ? ` : ${pendingCount} en attente` : ''}`}
-                    onClick={() => changeFilter('requests')}
-                    aria-pressed={filter === 'requests'}
+                    aria-label="Notifications"
+                    onClick={() => router.push('/compte?tab=notifications')}
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M6.2 9.4a5.8 5.8 0 0 1 11.6 0c0 4.1 1.6 5.6 1.6 5.6H4.6s1.6-1.5 1.6-5.6Z" />
                       <path d="M10 18.2a2 2 0 0 0 4 0" />
                     </svg>
-                    {pendingCount > 0 ? <i className="tb-badge">{pendingCount}</i> : null}
                   </button>
                 </div>
               </div>
 
+              <div className="msearch">
+                <Icon name="search" className="size-4" aria-hidden="true" />
+                <input
+                  ref={searchRef}
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Rechercher une discussion"
+                  aria-label="Rechercher une discussion, une personne ou un message"
+                />
+                {query ? (
+                  <button
+                    type="button"
+                    className="msearch-x"
+                    onClick={() => {
+                      setQuery('');
+                      searchRef.current?.focus();
+                    }}
+                    aria-label="Effacer la recherche"
+                  >
+                    <Icon name="x" className="size-3.5" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </div>
+
               <div className="card cs" id="card">
                 <div className="card-scroll">
+                  {query.trim().length >= 2 && !guest ? (
+                    <div className="mresults">
+                      {searchPeople.length > 0 ? (
+                        <section aria-label="Personnes">
+                          <h3>Personnes</h3>
+                          {searchPeople.slice(0, 4).map((person) => (
+                            <button
+                              key={person.id}
+                              type="button"
+                              className="mresult"
+                              onClick={async () => {
+                                const id = await messagingService.getOrCreateDirectConversation(
+                                  person.id,
+                                  currentUserId as string
+                                );
+                                if (!id) return;
+                                await refreshConversations();
+                                setSelectedId(id);
+                                setQuery('');
+                              }}
+                            >
+                              <span className="fa" aria-hidden="true">
+                                {person.avatar_url ? (
+                                  // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+                                  <img src={person.avatar_url} alt="" />
+                                ) : (
+                                  initials(person.full_name)
+                                )}
+                              </span>
+                              <b>{person.full_name}</b>
+                              <small>Écrire</small>
+                            </button>
+                          ))}
+                        </section>
+                      ) : null}
+                      {searchMessages.length > 0 ? (
+                        <section aria-label="Messages">
+                          <h3>Messages</h3>
+                          {searchMessages.slice(0, 4).map((message) => (
+                            <button
+                              key={message.id}
+                              type="button"
+                              className="mresult"
+                              onClick={() => {
+                                setSelectedId(message.conversation_id);
+                                setQuery('');
+                              }}
+                            >
+                              <span className="mresult-txt">
+                                {message.content.length > 80 ? `${message.content.slice(0, 80)}…` : message.content}
+                              </span>
+                              <small>
+                                {new Date(message.created_at).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                })}
+                              </small>
+                            </button>
+                          ))}
+                        </section>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <div key={filter} className={`ig-grid-wrap slide-${filterDir}`}>
                     {error ? (
                       <div className="mstate" role="alert">
@@ -1227,7 +1179,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                             Effacer la recherche
                           </button>
                         ) : (
-                          <button type="button" className="mbtn p" onClick={() => setNewOpen(true)}>
+                          <button type="button" className="mbtn p" onClick={focusSearch}>
                             Nouvelle discussion
                           </button>
                         )}
@@ -1280,69 +1232,48 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
               ) : null}
               <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: 70 }}>
                 {selected ? (
-                  <div
-                    className="mpane in"
-                    ref={paneRef}
-                    data-conversation={selected.id}
-                    onAnimationEnd={(event) => {
-                      if (event.animationName === 'mpane-in') {
-                        event.currentTarget.dataset.entered = 'true';
-                      }
-                    }}
-                  >
-                    <div
-                      className="mpane-h"
-                      onPointerDown={paneDown}
-                      onPointerMove={paneMove}
-                      onPointerUp={paneUp}
-                      onPointerCancel={paneUp}
+                  <div className="mpane in" data-conversation={selected.id}>
+                    <button
+                      type="button"
+                      className="mpill"
+                      onClick={() => {
+                        if (selected.type === 'group') setOptionsConv(selected);
+                        else if (selected.other_member?.id) router.push(`/profil/${selected.other_member.id}`);
+                      }}
+                      aria-label={`${conversationTitle(selected)} — ${
+                        selected.type === 'group' ? `${members.length || 1} membres` : 'Membre LKDV'
+                      }`}
                     >
-                      <button
-                        type="button"
-                        className="mpane-av"
-                        onClick={() => {
-                          if (selected.type === 'group') setOptionsConv(selected);
-                          else if (selected.other_member?.id) router.push(`/profil/${selected.other_member.id}`);
-                        }}
-                        aria-label={selected.type === 'group' ? 'Options du groupe' : 'Voir le profil'}
-                      >
+                      <span className="mpill-av" aria-hidden="true">
                         {selected.avatar_url ? (
                           // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-                          <img src={selected.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={selected.avatar_url} alt="" />
                         ) : (
                           initials(conversationTitle(selected))
                         )}
-                      </button>
-                      <div className="mpane-t">
-                        <b>{conversationTitle(selected)}</b>
-                        <small>{selected.type === 'group' ? `${members.length || 1} membres` : 'Membre LKDV'}</small>
-                      </div>
-                      <span style={{ display: 'flex', gap: 5 }}>
-                        <button type="button" className="lg gbtn" style={{ width: 34, height: 34 }} onClick={() => setSheetOpen(true)} aria-label="Ouvrir la conversation en grand">
-                          <Icon name="arrow-up-right" className="size-4" aria-hidden="true" />
-                        </button>
-                        <button type="button" className="lg gbtn" style={{ width: 34, height: 34 }} onClick={closePane} aria-label="Fermer la conversation">
-                          <Icon name="x" className="size-4" aria-hidden="true" />
-                        </button>
                       </span>
-                    </div>
+                      <span className="mpill-txt">
+                        <b>{conversationTitle(selected)}</b>
+                        <span>{selected.type === 'group' ? `${members.length || 1} membres` : 'Membre LKDV'}</span>
+                      </span>
+                    </button>
                     <div className="mpane-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-                    <MessageThread
-                      key={selected.id}
-                      conversation={selected}
-                      currentUserId={currentUserId as string}
-                      currentUserProfile={currentUserProfile}
-                      members={members}
-                      hideReads={hideReads}
-                      compact
-                    />
+                      <MessageThread
+                        key={selected.id}
+                        conversation={selected}
+                        currentUserId={currentUserId as string}
+                        currentUserProfile={currentUserProfile}
+                        members={members}
+                        hideReads={hideReads}
+                        compact
+                      />
                     </div>
                   </div>
                 ) : (
                   <div className="mstate" style={{ margin: 'auto' }}>
                     <b>Choisissez une discussion</b>
                     <span>Ou lancez une nouvelle discussion avec un membre de la communauté.</span>
-                    <button type="button" className="mbtn p" onClick={() => setNewOpen(true)}>
+                    <button type="button" className="mbtn p" onClick={focusSearch}>
                       Nouvelle discussion
                     </button>
                   </div>
@@ -1360,174 +1291,6 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
             <nav className="lkdv-account-bar" aria-label="Navigation principale">
               <AccountBottomBar renderAs="button" active="messages" badges={unreadTotal > 0 ? { messages: unreadTotal } : {}} />
             </nav>
-
-            <AccountDrawerHost open={searchOpen} title="Rechercher" subtitle="Discussions, personnes, messages" onClose={() => setSearchOpen(false)}>
-              <input
-                className="mfield"
-                style={{ borderRadius: 12, minHeight: 36, height: 36, flex: 'none', marginBottom: 8 }}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Rechercher…"
-                aria-label="Rechercher une discussion, une personne ou un message"
-                autoFocus
-              />
-              {query.trim().length >= 2 ? (
-                <>
-                  {searchPeople.length > 0 ? (
-                    <div>
-                      <div className="s2" style={{ font: '600 10px var(--sf)', color: 'var(--label2)', textTransform: 'none', margin: '2px 0 4px' }}>
-                        Personnes
-                      </div>
-                      {searchPeople.map((person) => (
-                        <div className="li" key={person.id}>
-                          <div>
-                            <div className="ttl">{person.full_name}</div>
-                            <div className="s2">Démarrer une discussion</div>
-                          </div>
-                          <button
-                            type="button"
-                            className="mbtn"
-                            onClick={async () => {
-                              const id = await messagingService.getOrCreateDirectConversation(person.id, currentUserId as string);
-                              if (!id) return;
-                              await refreshConversations();
-                              setSelectedId(id);
-                              setSearchOpen(false);
-                            }}
-                          >
-                            Écrire
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                  {searchMessages.length > 0 ? (
-                    <div>
-                      <div className="s2" style={{ font: '600 10px var(--sf)', color: 'var(--label2)', margin: '6px 0 4px' }}>
-                        Messages
-                      </div>
-                      {searchMessages.map((message) => (
-                        <button
-                          key={message.id}
-                          type="button"
-                          className="li nt"
-                          style={{ width: '100%', border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer' }}
-                          onClick={() => {
-                            setSelectedId(message.conversation_id);
-                            setSearchOpen(false);
-                            setSheetOpen(true);
-                          }}
-                        >
-                          <div>
-                            <div className="s2" style={{ color: 'var(--label)' }}>
-                              {message.content.length > 80 ? `${message.content.slice(0, 80)}…` : message.content}
-                            </div>
-                            <div className="s2">{new Date(message.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                  {searchPeople.length === 0 && searchMessages.length === 0 ? <div className="mstate">Aucun résultat.</div> : null}
-                </>
-              ) : (
-                <div className="mstate">Deux caractères suffisent pour chercher.</div>
-              )}
-            </AccountDrawerHost>
-
-            {selected ? (
-              <AccountDrawerHost
-                open={sheetOpen}
-                title={conversationTitle(selected)}
-                subtitle={selected.type === 'group' ? `${members.length || 1} membres` : 'Membre LKDV'}
-                onClose={() => setSheetOpen(false)}
-              >
-                <div className="mdrawer">
-                  <div className="mdrawer-actions">
-                    <button type="button" className="mbtn" onClick={() => setOptionsConv(selected)}>
-                      Options
-                    </button>
-                    {selected.type === 'group' ? (
-                      <button type="button" className="mbtn" onClick={() => setGroupSettingsOpen(true)}>
-                        Gérer le groupe
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className={`mbtn${hideReads ? '' : ' soft'}`}
-                      aria-pressed={hideReads}
-                      onClick={() => {
-                        const next = !hideReads;
-                        setHideReads(next);
-                        try {
-                          window.localStorage.setItem('lkdv:messages:hide-reads', next ? '1' : '0');
-                        } catch {
-                          /* stockage local indisponible */
-                        }
-                      }}
-                    >
-                      Accusés&nbsp;: {hideReads ? 'masqués' : 'visibles'}
-                    </button>
-                    <button
-                      type="button"
-                      className={`mbtn${notifyPref ? ' soft' : ''}`}
-                      aria-pressed={notifyPref}
-                      onClick={async () => {
-                        if (notifyPref) {
-                          setNotifyPref(false);
-                          try {
-                            window.localStorage.setItem('lkdv:messages:notify', '0');
-                          } catch {
-                            /* ignore */
-                          }
-                          return;
-                        }
-                        try {
-                          const permission = await Notification.requestPermission();
-                          if (permission !== 'granted') return;
-                          setNotifyPref(true);
-                          window.localStorage.setItem('lkdv:messages:notify', '1');
-                        } catch {
-                          /* API indisponible */
-                        }
-                      }}
-                    >
-                      Notifications&nbsp;: {notifyPref ? 'activées' : 'désactivées'}
-                    </button>
-                    <button
-                      type="button"
-                      className="mbtn"
-                      onClick={() => {
-                        setSheetOpen(false);
-                        setSelectedId(null);
-                      }}
-                    >
-                      Quitter
-                    </button>
-                  </div>
-                  {sheetOpen ? <MessageThread
-                    key={`drawer-${selected.id}`}
-                    conversation={selected}
-                    currentUserId={currentUserId as string}
-                    currentUserProfile={currentUserProfile}
-                    members={members}
-                    hideReads={hideReads}
-                    compact={false}
-                  /> : null}
-                </div>
-              </AccountDrawerHost>
-            ) : null}
-
-            <NewConversationModal
-              isOpen={newOpen}
-              onClose={() => setNewOpen(false)}
-              currentUserId={currentUserId ?? ''}
-              onConversationCreated={async (id) => {
-                await refreshConversations();
-                setSelectedId(id);
-                setNewOpen(false);
-              }}
-            />
 
             {currentUserId ? (
               <ConversationOptionsSheet
@@ -1557,11 +1320,42 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 onRefreshConversations={refreshConversations}
                 onLeaveSuccess={() => {
                   setGroupSettingsOpen(false);
-                  setSheetOpen(false);
                   setSelectedId(null);
                 }}
               />
             ) : null}
+
+            <AccountDrawerHost
+              open={notifyConv !== null}
+              variant="card"
+              title="Notifications"
+              subtitle={notifyConv ? conversationTitle(notifyConv) : undefined}
+              onClose={() => setNotifyConv(null)}
+            >
+              <div className="mdrawer-actions">
+                {MUTE_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    className="mbtn"
+                    onClick={async () => {
+                      if (!notifyConv || !currentUserId) return;
+                      await messagingService.updateMemberPreferences(notifyConv.id, currentUserId, {
+                        is_muted: preset.minutes !== null,
+                        mute_until:
+                          preset.minutes === null
+                            ? null
+                            : new Date(Date.now() + preset.minutes * 60_000).toISOString(),
+                      });
+                      setNotifyConv(null);
+                      await refreshConversations();
+                    }}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </AccountDrawerHost>
 
             <ReportBlockModal
               target={reportTarget}

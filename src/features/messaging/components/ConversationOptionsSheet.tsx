@@ -105,6 +105,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
 
   return (
     <AccountDrawerHost
+      variant="card"
       open={isOpen}
       title={isPending ? 'Demande de message' : 'Options de conversation'}
       subtitle={member?.full_name || undefined}
