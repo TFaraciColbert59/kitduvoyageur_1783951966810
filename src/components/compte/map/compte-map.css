@@ -490,3 +490,43 @@
 .lkdv-map-massif:hover .lkdv-map-massif-name,
 .lkdv-map-massif:focus-visible .lkdv-map-massif-name,
 .lkdv-map-massif.is-selected .lkdv-map-massif-name { display: inline; }
+
+/* POIs : pastille + libellé, lisibles dès le zoom sentier. */
+.lkdv-map-poi {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 150px;
+  height: 24px;
+  padding: 0 9px 0 5px;
+  border: .5px solid rgba(255,255,255,.85);
+  border-radius: 999px;
+  background: rgba(255,255,255,.9);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(12px) saturate(180%);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 .5px rgba(23,43,36,.1), 0 4px 10px rgba(23,43,36,.14);
+  color: #17402c;
+  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  cursor: pointer;
+  transform: translate(-6px, -50%);
+}
+.lkdv-map-poi-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: #2f6b45;
+  box-shadow: 0 0 0 2.5px rgba(255,255,255,.95);
+}
+.lkdv-map-poi-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lkdv-map-poi:hover,
+.lkdv-map-poi:active {
+  background: #17402c;
+  color: #fff;
+}
+.lkdv-map-poi:hover .lkdv-map-poi-dot,
+.lkdv-map-poi:active .lkdv-map-poi-dot { background: #d8f3de; }

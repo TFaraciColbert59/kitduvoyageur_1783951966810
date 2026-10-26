@@ -490,9 +490,9 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     if (!map || !ready || !data) return;
     for (const marker of markerRefs.current) marker.remove();
     markerRefs.current = [];
-    if (!config.layers.massifs) return;
+    const poiElements: HTMLElement[] = [];
 
-    for (const massif of data.massifs) {
+    if (config.layers.massifs) for (const massif of data.massifs) {
       const element = document.createElement('button');
       element.type = 'button';
       element.className = 'lkdv-map-massif';
@@ -515,7 +515,45 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
           .addTo(map)
       );
     }
-  }, [map, ready, data, config.layers.massifs]);
+
+    if (config.layers.pois) for (const poi of data.pois) {
+      const element = document.createElement('button');
+      element.type = 'button';
+      element.className = 'lkdv-map-poi';
+      element.dataset.poiId = poi.id;
+      element.setAttribute('aria-label', poi.label);
+      element.title = poi.label;
+      const dot = document.createElement('span');
+      dot.className = 'lkdv-map-poi-dot';
+      const label = document.createElement('span');
+      label.className = 'lkdv-map-poi-label';
+      label.textContent = poi.label;
+      element.append(dot, label);
+      element.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setSelected({ kind: 'poi', id: poi.id });
+      });
+      poiElements.push(element);
+      markerRefs.current.push(
+        new Marker({ element, anchor: 'left' })
+          .setLngLat([poi.position.lng, poi.position.lat])
+          .addTo(map)
+      );
+    }
+
+    const updatePoiVisibility = () => {
+      const visible = map.getZoom() >= 8;
+      for (const element of poiElements) element.style.display = visible ? '' : 'none';
+    };
+    updatePoiVisibility();
+    map.on('zoom', updatePoiVisibility);
+
+    return () => {
+      map.off('zoom', updatePoiVisibility);
+      for (const marker of markerRefs.current) marker.remove();
+      markerRefs.current = [];
+    };
+  }, [map, ready, data, config.layers.massifs, config.layers.pois]);
 
   useEffect(() => {
     if (!map || !ready) return;
