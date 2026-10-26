@@ -1245,6 +1245,8 @@
 }
 .lkdv-messages .mdrawer-squares .mbtn {
   width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
   aspect-ratio: 1 / 1;
   border-radius: 16px;
   display: grid;
