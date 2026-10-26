@@ -10,7 +10,7 @@
    réponses API privées (/api/hub, /api/materiel, /api/voyages…) en cache.
    ============================================================ */
 
-const CACHE_VERSION = 'lkdv-v9';
+const CACHE_VERSION = 'lkdv-v10';
 const STATIC_CACHE = `lkdv-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lkdv-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
