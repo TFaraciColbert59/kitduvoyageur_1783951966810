@@ -115,11 +115,11 @@ describe('CarnetScreen — statistiques et pages', () => {
 
   it('change de page sans passer par le drawer : la page active est gardée', () => {
     render(<CarnetScreen detail={OWNER} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Étapes' }));
-    expect(screen.getByRole('tab', { name: 'Étapes' }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByText('Les Houches → Refuge de Bellachat')).toBeTruthy();
-    fireEvent.click(screen.getByRole('tab', { name: 'Matériel' }));
-    expect(screen.getByText('Matériel non renseigné.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
+    expect(screen.getByRole('tab', { name: 'Parcours' }).getAttribute('aria-selected')).toBe('true');
+    expect(document.getElementById('carnet-page-parcours')).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
+    expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
     fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
     expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
   });

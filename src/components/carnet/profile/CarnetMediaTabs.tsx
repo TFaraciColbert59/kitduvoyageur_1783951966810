@@ -10,6 +10,7 @@ export interface CarnetMediaTab {
 
 export interface CarnetMediaTabsProps {
   items: CarnetMediaTab[];
+  /** Index actif ; `-1` = aucun segment sélectionné (page hors sélecteur). */
   activeIndex: number;
   onChange: (index: number) => void;
   ariaLabel: string;
@@ -23,7 +24,8 @@ export interface CarnetMediaTabsProps {
 export function CarnetMediaTabs({ items, activeIndex, onChange, ariaLabel }: CarnetMediaTabsProps) {
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
   const count = items.length;
-  const safeIndex = count > 0 ? Math.max(0, Math.min(activeIndex, count - 1)) : 0;
+  const safeIndex = count > 0 ? (activeIndex < 0 ? -1 : Math.max(0, Math.min(activeIndex, count - 1))) : -1;
+  const lensIndex = Math.max(0, safeIndex);
 
   const select = (index: number) => {
     if (index === safeIndex) return;
@@ -56,7 +58,7 @@ export function CarnetMediaTabs({ items, activeIndex, onChange, ariaLabel }: Car
       onKeyDown={onKeyDown}
       style={{ '--n': items.length } as React.CSSProperties}
     >
-      <span className="ckp-th" aria-hidden="true" style={{ '--i': safeIndex } as React.CSSProperties} />
+      <span className="ckp-th" aria-hidden="true" style={{ '--i': lensIndex } as React.CSSProperties} />
       {items.map((item, index) => (
         <button
           key={item.id}
@@ -69,7 +71,7 @@ export function CarnetMediaTabs({ items, activeIndex, onChange, ariaLabel }: Car
           aria-selected={index === safeIndex}
           aria-controls={index === safeIndex ? `carnet-page-${item.id}` : undefined}
           aria-label={item.label}
-          tabIndex={index === safeIndex ? 0 : -1}
+          tabIndex={index === (safeIndex === -1 ? 0 : safeIndex) ? 0 : -1}
           onClick={() => onChange(index)}
         >
           {item.icon}
