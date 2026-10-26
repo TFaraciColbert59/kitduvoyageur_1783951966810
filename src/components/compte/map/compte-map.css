@@ -639,3 +639,8 @@
   pointer-events: auto !important;
   will-change: transform;
 }
+
+/* Priorité de clic : un massif reste cliquable même si un POI partage sa position. */
+.lkdv-map-overlay .lkdv-map-massif { z-index: 3 !important; }
+.lkdv-map-overlay .lkdv-map-poi,
+.lkdv-map-overlay .lkdv-map-carnet { z-index: 2 !important; }
