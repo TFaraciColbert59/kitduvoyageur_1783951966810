@@ -33,6 +33,15 @@ import { useRealtimeMessaging } from '@/features/messaging/hooks/useRealtimeMess
 import { messagingService } from '@/features/messaging/services/messagingService';
 import { formatConversationTimestamp } from '@/features/messaging/lib/messagingUtils';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
+import {
+  SWIPE_REVEAL,
+  clampSwipe,
+  conversationTitle,
+  filterConversations,
+  lastPreview,
+  resolveSwipeEnd,
+  type FilterId,
+} from './messagesModel';
 import { VoiceRecorderBar } from '@/features/messaging/components/VoiceRecorderBar';
 import { ComposerMenuSheet } from '@/features/messaging/components/ComposerMenuSheet';
 import { ConversationOptionsSheet } from '@/features/messaging/components/ConversationOptionsSheet';
@@ -49,8 +58,6 @@ import type {
   UserProfileSummary,
 } from '@/features/messaging/types/messaging.types';
 
-type FilterId = 'all' | 'direct' | 'group' | 'requests';
-
 const FILTERS: Array<{ id: FilterId; label: string; icon: string }> = [
   { id: 'all', label: 'Toutes', icon: 'M4 6h16v12H4z' },
   { id: 'direct', label: 'Directs', icon: 'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 20c.8-3.8 3.8-6 8-6s7.2 2.2 8 6' },
@@ -58,41 +65,11 @@ const FILTERS: Array<{ id: FilterId; label: string; icon: string }> = [
   { id: 'requests', label: 'Demandes', icon: 'M12 3a6 6 0 0 0-6 6v4l-2 4h16l-2-4V9a6 6 0 0 0-6-6Zm-2 17a2 2 0 0 0 4 0' },
 ];
 
-function conversationTitle(conv: Conversation): string {
-  if (conv.title) return conv.title;
-  if (conv.other_member?.full_name) return conv.other_member.full_name;
-  return conv.type === 'group' ? "Groupe d'expédition" : 'Voyageur LKDV';
-}
-
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function lastPreview(conv: Conversation): string {
-  const last = conv.last_message;
-  if (!last) return 'Aucun message';
-  const prefix = conv.type === 'group' && last.sender_name ? `${last.sender_name.split(' ')[0]} : ` : '';
-  switch (last.message_type) {
-    case 'image':
-      return `${prefix}Photo`;
-    case 'audio':
-      return `${prefix}Note vocale`;
-    case 'gpx':
-      return `${prefix}Trace GPX`;
-    case 'file':
-      return `${prefix}Fichier`;
-    case 'product':
-      return `${prefix}Équipement`;
-    case 'trail':
-      return `${prefix}Randonnée`;
-    case 'kit':
-      return `${prefix}Kit`;
-    default:
-      return `${prefix}${last.content}`;
-  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -966,20 +943,10 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   }, [unreadTotal]);
   const pendingCount = useMemo(() => conversations.filter((conversation) => conversation.status === 'pending').length, [conversations]);
 
-  const visible = useMemo(() => {
-    const text = query.trim().toLowerCase();
-    return conversations.filter((conversation) => {
-      if (filter === 'requests') {
-        if (conversation.status !== 'pending') return false;
-      } else {
-        if (conversation.status === 'pending' || conversation.status === 'rejected') return false;
-        if (filter === 'direct' && conversation.type !== 'direct') return false;
-        if (filter === 'group' && conversation.type !== 'group') return false;
-      }
-      if (!text) return true;
-      return [conversationTitle(conversation), lastPreview(conversation)].join(' ').toLowerCase().includes(text);
-    });
-  }, [conversations, filter, query]);
+  const visible = useMemo(
+    () => filterConversations(conversations, { filter, query }),
+    [conversations, filter, query]
+  );
 
   /** Disparition puis apparition de la liste : 120 ms de fondu sortant, puis
    *  le nouveau filtre entre (les rangées ont leur propre fondu décalé). */
