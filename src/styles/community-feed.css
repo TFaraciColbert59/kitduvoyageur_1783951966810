@@ -1955,3 +1955,13 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   width: calc((100% - 8px) / 6) !important;
 }
 .lkdv-create-step-tabs .lkdv-create-step-lens { top: 3.5px !important; bottom: 3.5px !important; left: 3.5px !important; }
+
+/* Ordre du pager : contenu puis sélecteur. */
+.lkdv-create-step-pager { display: flex !important; flex-direction: column !important; }
+.lkdv-create-step-pager .lkdv-lens-pager { order: 1 !important; }
+.lkdv-create-step-pager .lkdv-create-stepbar {
+  order: 2 !important;
+  position: static !important;
+  background: transparent !important;
+  padding: 4px 0 0 !important;
+}
