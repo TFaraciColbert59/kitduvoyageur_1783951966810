@@ -54,7 +54,7 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
                 <ShieldCheck size={12} aria-hidden="true" /> Empreinte vérifiée
               </span>
             ) : null}
-            <span className={`lkdv-sortie-badge status ${detail.status}`}>{STATUS_LABEL[detail.status]}</span>
+            <span className={`lkdv-sortie-badge state ${detail.status}`}>{STATUS_LABEL[detail.status]}</span>
           </div>
           <h2>{detail.title}</h2>
           <p>

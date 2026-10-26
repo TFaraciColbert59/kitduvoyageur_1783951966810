@@ -113,7 +113,7 @@ export function applySetNationality(current, value) {
    Les menus/popovers/dialogues restent hors de cette liste pour rester
    utilisables depuis une feuille. */
 const SHEET_BACKGROUND_SELECTOR =
-  '#phone > .status, #phone > .island, #phone > .top, #phone > .mapzone, #phone > .tabbar, #phone > .home';
+  '#phone > .status, #phone > .island, #phone > .top, #phone > .tabbar, #phone > .home';
 const SHEET_FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 /** Photographie de l'état inert/aria-hidden avant ouverture, par feuille. */
@@ -3645,7 +3645,7 @@ const EXK = {
           cover ? `<div class="outing-hero" style="background-image:url('${cover}')"></div>` : '',
           `<div class="ttl" style="font-size:16px"><span>${o.title}</span>${o.proven ? '<span class="tg confirmed">GPS ✓</span>' : ''}</div>`,
           `<div class="s2">${o.date || 'Sortie'} · ${o.mass}${comp ? ' · avec ' + comp : ''}</div>`,
-          `<div class="sgrid"><div><small>Distance</small><b>${Number(o.km || 0).toLocaleString('fr-FR')} km</b></div><div><small>Dénivelé</small><b>+${Number(o.dplus || 0).toLocaleString('fr-FR')} m</b></div><div><small>Alt. max</small><b>${o.maxAlt ? o.maxAlt + ' m' : '—'}</b></div><div><small>Statut</small><b>${o.status === 'upcoming' ? 'À venir' : 'Terminée'}</b></div></div>`,
+          `<div class="sgrid"><div><small>Distance</small><b>${Number(o.km || 0).toLocaleString('fr-FR')} km</b></div><div><small>Dénivelé</small><b>+${Number(o.dplus || 0).toLocaleString('fr-FR')} m</b></div><div><small>Alt. max</small><b>${o.maxAlt ? o.maxAlt + ' m' : '—'}</b></div><div><small>Statut</small><span class="sg-status ${o.status === 'upcoming' ? 'is-upcoming' : 'is-done'}">${o.status === 'upcoming' ? 'À venir' : 'Terminée'}</span></div></div>`,
           note('Les données de cette sortie proviennent de votre trace GPS enregistrée.')
         ] }) },
         { l: 'Photos', icon: 'camera', r: () => ({ per: [8, 10], title: '', rows: photos.length ? [

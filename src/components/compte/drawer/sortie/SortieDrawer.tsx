@@ -382,11 +382,15 @@ export const SORTIE_CSS = `
 .lkdv-sortie-badge{display:inline-flex!important;align-items:center!important;gap:4px!important;height:22px!important;padding:0 9px!important;border-radius:999px!important;font:600 10.5px var(--sf)!important;background:rgba(255,255,255,.24)!important;color:inherit!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)!important;backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;}
 .lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge{background:rgba(255,255,255,.65)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.08)!important;}
 .lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.proof{background:rgba(23,64,44,.88)!important;color:#fff!important;}
-.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.status.planned{background:rgba(185,138,46,.92)!important;color:#fff!important;}
-.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.status.ongoing{background:rgba(61,122,82,.92)!important;color:#fff!important;}
+.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.planned{background:rgba(185,138,46,.92)!important;color:#fff!important;}
+.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.ongoing{background:rgba(61,122,82,.92)!important;color:#fff!important;}
+.lkdv-sortie-badge.state.done{background:rgba(23,64,44,.62)!important;color:#fff!important;box-shadow:inset 0 0 0 .5px rgba(47,107,69,.24)!important;}
+.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.done{background:rgba(23,64,44,.72)!important;color:#fff!important;}
 .lkdv-sortie-badge.proof{background:rgba(23,64,44,.82)!important;color:#fff!important;}
-.lkdv-sortie-badge.status.planned{background:rgba(185,138,46,.9)!important;color:#fff!important;}
-.lkdv-sortie-badge.status.ongoing{background:rgba(61,122,82,.92)!important;color:#fff!important;}
+.lkdv-sortie-badge.state.planned{background:rgba(185,138,46,.9)!important;color:#fff!important;}
+.lkdv-sortie-badge.state.ongoing{background:rgba(61,122,82,.92)!important;color:#fff!important;}
+.lkdv-sortie-badge.state.done{background:rgba(23,64,44,.62)!important;color:#fff!important;box-shadow:inset 0 0 0 .5px rgba(47,107,69,.24)!important;}
+.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.done{background:rgba(23,64,44,.72)!important;color:#fff!important;}
 .lkdv-sortie-hero h2{margin:0!important;font:650 21px/1.15 var(--sf)!important;letter-spacing:-.02em!important;color:inherit!important;}
 .lkdv-sortie-hero p{margin:0!important;font:500 12px/1.35 var(--sf)!important;opacity:.9!important;}
 .lkdv-sortie-hero-with{opacity:.78!important;}

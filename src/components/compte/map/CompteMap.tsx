@@ -43,6 +43,9 @@ const MAP_ICON = {
   book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v16H6.5A2.5 2.5 0 0 0 4 21.5V5.5ZM4 19.5A2.5 2.5 0 0 1 6.5 17H19"/></svg>',
 };
 
+const CINEMATIC_EASE = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
 function poiIcon(label: string): string {
   const value = label.toLowerCase();
   if (/(lac|étang|etang|source|rivière|riviere|cascade)/.test(value)) return MAP_ICON.water;
@@ -101,6 +104,7 @@ function tracksCollection(tracks: MapTrack[]) {
         kitId: track.kitId ?? '',
         participants: track.participantsCount,
         visibility: track.visibility,
+        massifId: track.massifId ?? '',
       },
       geometry: {
         type: 'LineString' as const,
@@ -177,6 +181,11 @@ function ensureSource(
 
 function ensureLayer(map: MapLibreMap, id: string, create: () => void) {
   if (!map.getLayer(id)) create();
+}
+
+function isMarkerClick(event: MapLayerMouseEvent): boolean {
+  const target = event.originalEvent?.target as HTMLElement | null;
+  return Boolean(target?.closest?.('.maplibregl-marker, .lkdv-map-overlay'));
 }
 
 export function CompteMap({ authState, context, focus = null }: CompteMapProps) {
@@ -353,6 +362,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         },
       });
       map.on('click', 'compte-track-starts-dot', (event: MapLayerMouseEvent) => {
+        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'outing', id: String(id) });
       });
@@ -410,6 +420,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         },
       });
       map.on('click', 'compte-carnets-dot', (event: MapLayerMouseEvent) => {
+        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'carnet', id: String(id) });
       });
@@ -444,6 +455,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         },
       });
       map.on('click', 'compte-pois-hit', (event: MapLayerMouseEvent) => {
+        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'poi', id: String(id) });
       });
@@ -461,6 +473,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         },
       });
       map.on('click', 'compte-pois-dot', (event: MapLayerMouseEvent) => {
+        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'poi', id: String(id) });
       });
@@ -488,7 +501,9 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
   useEffect(() => {
     if (!map) return;
-    const close = (event: { point: { x: number; y: number } }) => {
+    const close = (event: { point: { x: number; y: number }; originalEvent?: Event }) => {
+      const target = event.originalEvent?.target as HTMLElement | null;
+      if (target?.closest?.('.maplibregl-marker, .lkdv-map-overlay')) return;
       const hits = map.queryRenderedFeatures(event.point as never, {
         layers: [
           'compte-track-starts-dot',
@@ -507,9 +522,18 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
   useEffect(() => {
     if (!map || !ready || !data) return;
-    for (const marker of markerRefs.current) marker.remove();
-    markerRefs.current = [];
-    const poiEntries: Array<{ element: HTMLElement; lng: number; lat: number }> = [];
+    const container = map.getContainer();
+    const host = container.parentElement ?? container;
+    let overlay = host.querySelector<HTMLDivElement>('.lkdv-map-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'lkdv-map-overlay';
+      host.appendChild(overlay);
+    }
+    overlay.innerHTML = '';
+
+    type Entry = { element: HTMLButtonElement; lng: number; lat: number; anchor: string; detail: boolean };
+    const entries: Entry[] = [];
 
     if (config.layers.massifs) for (const massif of data.massifs) {
       const element = document.createElement('button');
@@ -520,22 +544,14 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const icon = document.createElement('span');
       icon.className = 'lkdv-map-massif-ico';
       icon.innerHTML = MAP_ICON.peak;
-      const count = document.createElement('b');
-      count.textContent = String(massif.outings);
-      const label = document.createElement('span');
-      label.className = 'lkdv-map-massif-name';
-      label.textContent = massif.name;
-      element.append(icon, count, label);
+      element.append(icon);
       element.title = `${massif.name} · ${massif.outings} sorties`;
       element.addEventListener('click', (event) => {
         event.stopPropagation();
         setSelected({ kind: 'massif', id: massif.id });
       });
-      markerRefs.current.push(
-        new Marker({ element, anchor: 'bottom' })
-          .setLngLat([massif.center.lng, massif.center.lat])
-          .addTo(map)
-      );
+      overlay.appendChild(element);
+      entries.push({ element, lng: massif.center.lng, lat: massif.center.lat, anchor: 'translate(-50%, -100%)', detail: false });
     }
 
     if (config.layers.pois) for (const poi of data.pois) {
@@ -553,15 +569,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         event.stopPropagation();
         setSelected({ kind: 'poi', id: poi.id });
       });
-      poiEntries.push({ element, lng: poi.position.lng, lat: poi.position.lat });
-      markerRefs.current.push(
-        new Marker({ element, anchor: 'right' })
-          .setLngLat([poi.position.lng, poi.position.lat])
-          .addTo(map)
-      );
+      overlay.appendChild(element);
+      entries.push({ element, lng: poi.position.lng, lat: poi.position.lat, anchor: 'translate(-50%, -50%)', detail: true });
     }
 
-    const carnetElements: Array<{ element: HTMLElement; lng: number; lat: number }> = [];
     if (config.layers.carnets) for (const carnet of data.carnets) {
       const element = document.createElement('button');
       element.type = 'button';
@@ -576,38 +587,50 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         event.stopPropagation();
         setSelected({ kind: 'carnet', id: carnet.id });
       });
-      carnetElements.push({ element, lng: carnet.position.lng, lat: carnet.position.lat });
-      markerRefs.current.push(
-        new Marker({ element, anchor: 'center' })
-          .setLngLat([carnet.position.lng, carnet.position.lat])
-          .addTo(map)
-      );
+      overlay.appendChild(element);
+      entries.push({ element, lng: carnet.position.lng, lat: carnet.position.lat, anchor: 'translate(-50%, -50%)', detail: true });
     }
 
-    const updatePoiVisibility = () => {
-      const zoomVisible = map.getZoom() >= 7;
-      const container = map.getContainer();
+    const place = () => {
+      try {
       const width = container.clientWidth;
       const height = container.clientHeight;
-      const show = (entry: { element: HTMLElement; lng: number; lat: number }) => {
+      const zoom = map.getZoom();
+      const mapRect = container.getBoundingClientRect();
+      const hostRect = host.getBoundingClientRect();
+      const offsetX = mapRect.left - hostRect.left;
+      const offsetY = mapRect.top - hostRect.top;
+      const massifPoints = entries
+        .filter((entry) => !entry.detail)
+        .map((entry) => map.project([entry.lng, entry.lat]));
+      for (const entry of entries) {
         const point = map.project([entry.lng, entry.lat]);
-        const inside = point.x > 12 && point.x < width - 12 && point.y > 12 && point.y < height - 12;
-        entry.element.style.display = zoomVisible && inside ? '' : 'none';
-      };
-      poiEntries.forEach(show);
-      carnetElements.forEach(show);
+        const inside =
+          point.x > 10 && point.x < width - 10 && point.y > 10 && point.y < height - 10;
+        const hiddenByMassif =
+          entry.detail &&
+          massifPoints.some((massif) => Math.hypot(massif.x - point.x, massif.y - point.y) < 32);
+        const visible = inside && (!entry.detail || zoom >= 7) && !hiddenByMassif;
+        entry.element.style.display = visible ? '' : 'none';
+        entry.element.style.transform = `translate(${offsetX + point.x}px, ${offsetY + point.y}px) ${entry.anchor}`;
+      }
+      } catch {
+        // La carte peut être détruite pendant une transition : ne jamais faire
+        // tomber toute la page Compte pour un marqueur.
+      }
     };
-    updatePoiVisibility();
-    map.on('zoom', updatePoiVisibility);
-    map.on('resize', updatePoiVisibility);
+    place();
+    map.on('move', place);
+    map.on('zoom', place);
+    map.on('resize', place);
 
     return () => {
-      map.off('zoom', updatePoiVisibility);
-      map.off('resize', updatePoiVisibility);
-      for (const marker of markerRefs.current) marker.remove();
-      markerRefs.current = [];
+      map.off('move', place);
+      map.off('zoom', place);
+      map.off('resize', place);
+      overlay?.remove();
     };
-  }, [map, ready, data, config.layers.massifs, config.layers.pois]);
+  }, [map, ready, data, config.layers.massifs, config.layers.pois, config.layers.carnets]);
 
   useEffect(() => {
     if (!map || !ready) return;
@@ -617,6 +640,65 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       element.classList.toggle('is-selected', selected?.kind === 'massif' && selected.id === id);
     });
   }, [map, ready, selected]);
+
+  useEffect(() => {
+    if (!map || !ready) return;
+    const trackId = selected?.kind === 'outing' ? selected.id : null;
+    const massifId = selected?.kind === 'massif' ? selected.id : null;
+    const match = trackId
+      ? ['==', ['get', 'id'], trackId]
+      : massifId
+        ? ['==', ['get', 'massifId'], massifId]
+        : null;
+    const line = (selectedValue: any, idle: any): any =>
+      match ? ['case', match, selectedValue, idle] : idle;
+    if (map.getLayer('compte-tracks-line')) {
+      map.setPaintProperty('compte-tracks-line', 'line-color', line('#C89A3B', '#17402C'));
+      map.setPaintProperty('compte-tracks-line', 'line-width', line(5, 3.5));
+      map.setPaintProperty('compte-tracks-line', 'line-opacity', line(1, 0.9));
+    }
+    if (map.getLayer('compte-tracks-casing')) {
+      map.setPaintProperty('compte-tracks-casing', 'line-width', line(9, 7));
+      map.setPaintProperty('compte-tracks-casing', 'line-opacity', line(0.95, 0.78));
+    }
+    if (map.getLayer('compte-tracks-glow')) {
+      map.setPaintProperty('compte-tracks-glow', 'line-width', line(14, 11));
+      map.setPaintProperty('compte-tracks-glow', 'line-opacity', line(0.4, 0.24));
+    }
+  }, [map, ready, selected]);
+
+  useEffect(() => {
+    if (!map || !ready || !resolved) return;
+    const reduced = prefersReducedMotion();
+    if (resolved.kind === 'outing') {
+      map.fitBounds(
+        [
+          [resolved.data.bounds[0], resolved.data.bounds[1]],
+          [resolved.data.bounds[2], resolved.data.bounds[3]],
+        ],
+        {
+          padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
+            sheetOpen: false,
+            mapbig: map.getContainer().clientHeight > 500,
+          }),
+          maxZoom: 14,
+          duration: reduced ? 0 : 1500,
+          easing: CINEMATIC_EASE,
+          essential: true,
+        }
+      );
+      return;
+    }
+    map.flyTo({
+      center: [resolved.position.lng, resolved.position.lat],
+      zoom: resolved.kind === 'massif' ? 10.5 : 14,
+      duration: reduced ? 0 : 1600,
+      curve: 1.42,
+      speed: 0.72,
+      easing: CINEMATIC_EASE,
+      essential: true,
+    });
+  }, [map, ready, resolved]);
 
   useEffect(() => {
     if (!map || !data || !ready) return;
@@ -637,7 +719,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         }),
         maxZoom: intent.maxZoom,
         pitch: context.mode === 'sortie' ? 45 : 0,
-        duration: reduced ? 0 : context.mode === 'sortie' ? 1200 : 800,
+        duration: reduced ? 0 : context.mode === 'sortie' ? 1600 : 1300,
+        easing: CINEMATIC_EASE,
         essential: true,
       }
     );
