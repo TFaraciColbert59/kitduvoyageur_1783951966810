@@ -556,6 +556,40 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   }, [map, data, ready, context.mode, context.outingId]);
 
   useEffect(() => {
+    if (!map || !data?.bounds || !ready) return;
+    const bounds = data.bounds;
+    const container = map.getContainer();
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const observer = new ResizeObserver(() => {
+      if (container.clientHeight <= 500) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        map.fitBounds(
+          [
+            [bounds[0], bounds[1]],
+            [bounds[2], bounds[3]],
+          ],
+          {
+            padding: paddingForViewport(container.getBoundingClientRect(), {
+              sheetOpen: false,
+              mapbig: true,
+            }),
+            maxZoom: 6.4,
+            pitch: 0,
+            duration: prefersReducedMotion() ? 0 : 700,
+            essential: true,
+          }
+        );
+      }, 140);
+    });
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+      if (timer) clearTimeout(timer);
+    };
+  }, [map, data?.bounds, ready]);
+
+  useEffect(() => {
     if (!map || !resolved) {
       setAnchor(null);
       return;
