@@ -543,13 +543,19 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
     const updatePoiVisibility = () => {
       const visible = map.getZoom() >= 8;
-      for (const element of poiElements) element.style.display = visible ? '' : 'none';
+      const compact = map.getContainer().clientHeight <= 500;
+      for (const element of poiElements) {
+        element.style.display = visible ? '' : 'none';
+        element.classList.toggle('is-compact', compact);
+      }
     };
     updatePoiVisibility();
     map.on('zoom', updatePoiVisibility);
+    map.on('resize', updatePoiVisibility);
 
     return () => {
       map.off('zoom', updatePoiVisibility);
+      map.off('resize', updatePoiVisibility);
       for (const marker of markerRefs.current) marker.remove();
       markerRefs.current = [];
     };

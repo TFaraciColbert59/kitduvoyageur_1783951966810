@@ -530,3 +530,14 @@
 }
 .lkdv-map-poi:hover .lkdv-map-poi-dot,
 .lkdv-map-poi:active .lkdv-map-poi-dot { background: #d8f3de; }
+
+/* Bande carte courte : POI en pastilles rondes ; libellés réservés à la grande carte. */
+.lkdv-map-poi.is-compact {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  justify-content: center;
+  transform: translate(-11px, -50%);
+}
+.lkdv-map-poi.is-compact .lkdv-map-poi-label { display: none; }
+.lkdv-map-poi.is-compact .lkdv-map-poi-dot { width: 9px; height: 9px; }
