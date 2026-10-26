@@ -703,3 +703,44 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-screen { position: relative; }
 /* Le fond reste DERRIÈRE tout : fixed + z-index négatif, aucun empilement local. */
 .ckp-screen > .ckp-screen-bg { position: fixed; inset: 0; z-index: -1; }
+
+/* --- Sélecteur unique du Compte : TOUS les éléments en segments égaux ------ */
+/* Une seule pilule, même matière que `.ig-tabs` : chaque bouton (actions et
+   vues) est un segment de 41,5 × 25 ; le segment actif reçoit la lentille. */
+.ckp-card-foot {
+  position: absolute; right: 10px; bottom: 10px; z-index: 6;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 41.5px; align-items: center;
+  height: 30px; padding: 2.5px; border-radius: 999px;
+  background: rgba(23, 43, 36, .06);
+  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
+  overflow: visible;
+}
+.ckp-card-foot .ckp-actions,
+.ckp-card-foot .ckp-tabs { display: contents; }
+.ckp-foot-sep { display: none; }
+.ckp-card-foot .ckp-tabs .ckp-th { display: none; }
+.ckp-action,
+.ckp-card-foot .ckp-tabs button {
+  position: relative; z-index: 1; width: 41.5px; height: 25px; padding: 0; border: 0;
+  display: grid; place-items: center; background: none; cursor: pointer;
+  border-radius: 999px; color: #56665d;
+  transition: background-color 220ms cubic-bezier(.22, 1, .36, 1), color 180ms;
+}
+.ckp-action-btn, .ckp-action-in {
+  width: 100%; height: 100%; display: grid; place-items: center;
+  background: none; box-shadow: none; border: 0; border-radius: 999px;
+}
+.ckp-card-foot .ckp-tabs button[aria-selected='true'],
+.ckp-action[aria-pressed='true'] {
+  background: #fff; color: #17402c;
+  box-shadow: 0 1px 3px rgba(23, 43, 36, .18), 0 0 0 .5px rgba(23, 43, 36, .06);
+}
+.ckp-action-count {
+  position: absolute; top: -1px; right: 1px; min-width: 14px; height: 14px; padding: 0 3px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; background: #17402c; color: #fff;
+  font: 700 8.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-action-lbl { display: none; }
+@media (prefers-reduced-motion: reduce) { .ckp-action, .ckp-card-foot .ckp-tabs button { transition: none; } }
