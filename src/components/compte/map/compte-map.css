@@ -707,3 +707,49 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 0 0 .5px rgba(23,43,36,.1), 0 6px 18px rgba(16,32,24,.1) !important;
   text-shadow: 0 1px 2px rgba(255,255,255,.55);
 }
+
+/* Marqueurs carte : icône seule, très discrets, sans chiffre ni libellé. */
+.lkdv-map-overlay .lkdv-map-massif {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  border-width: .5px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 .5px rgba(23,43,36,.1), 0 3px 8px rgba(23,43,36,.13) !important;
+}
+.lkdv-map-overlay .lkdv-map-massif:hover,
+.lkdv-map-overlay .lkdv-map-massif:focus-visible,
+.lkdv-map-overlay .lkdv-map-massif.is-selected {
+  width: 24px !important;
+  padding: 0 !important;
+}
+.lkdv-map-overlay .lkdv-map-massif-ico,
+.lkdv-map-overlay .lkdv-map-massif-ico svg { width: 12px !important; height: 12px !important; }
+.lkdv-map-overlay .lkdv-map-massif b,
+.lkdv-map-overlay .lkdv-map-massif-name { display: none !important; }
+
+.lkdv-map-overlay .lkdv-map-poi {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+}
+.lkdv-map-overlay .lkdv-map-poi-ico,
+.lkdv-map-overlay .lkdv-map-poi-ico svg { width: 11px !important; height: 11px !important; }
+
+.lkdv-map-overlay .lkdv-map-carnet {
+  width: 21px !important;
+  height: 21px !important;
+}
+.lkdv-map-overlay .lkdv-map-carnet-ico,
+.lkdv-map-overlay .lkdv-map-carnet-ico svg { width: 11px !important; height: 11px !important; }
+
+/* Zone de tap confortable sans agrandir le visuel. */
+.lkdv-map-overlay .lkdv-map-massif::after,
+.lkdv-map-overlay .lkdv-map-poi::after,
+.lkdv-map-overlay .lkdv-map-carnet::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 999px;
+}

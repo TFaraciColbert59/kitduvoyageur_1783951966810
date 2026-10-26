@@ -544,12 +544,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const icon = document.createElement('span');
       icon.className = 'lkdv-map-massif-ico';
       icon.innerHTML = MAP_ICON.peak;
-      const count = document.createElement('b');
-      count.textContent = String(massif.outings);
-      const label = document.createElement('span');
-      label.className = 'lkdv-map-massif-name';
-      label.textContent = massif.name;
-      element.append(icon, count, label);
+      element.append(icon);
       element.title = `${massif.name} · ${massif.outings} sorties`;
       element.addEventListener('click', (event) => {
         event.stopPropagation();
