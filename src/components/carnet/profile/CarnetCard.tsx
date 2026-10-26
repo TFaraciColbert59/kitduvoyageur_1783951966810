@@ -5,6 +5,7 @@ import Icon from '@/components/ui/Icon';
 import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
 import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetMediaTabs } from './CarnetMediaTabs';
+import { SfIcon, type SfIconName } from './sfIcons';
 import { CARNET_PAGE_TABS, CarnetPages, carnetPageIndex, type CarnetPageId } from './CarnetPages';
 import { extractCoords, projectToViewBox, traceCenter } from './traceGeometry';
 import { placeSegments } from '@/features/carnet/detail/place';
@@ -39,6 +40,15 @@ export interface CarnetCardProps {
   onDownloadGpx: () => void;
 }
 
+const SF_ICONS: Record<string, SfIconName> = {
+  heart: 'heart',
+  'message-square': 'bubble',
+  bookmark: 'bookmark',
+  pencil: 'pencil',
+  'more-horizontal': 'ellipsis',
+  map: 'map',
+};
+
 function Action({
   icon,
   label,
@@ -65,7 +75,7 @@ function Action({
     >
       <span className="ckp-action-btn">
         <span className="ckp-action-in">
-          <Icon name={icon} size={16} aria-hidden="true" />
+          <SfIcon name={SF_ICONS[icon] ?? 'ellipsis'} size={17} />
         </span>
         {hasCount ? (
           <span className="ckp-action-count" aria-hidden="true">

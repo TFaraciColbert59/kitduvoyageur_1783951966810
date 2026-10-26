@@ -2,6 +2,7 @@
 
 import React, { useCallback, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
+import { SfIcon } from './sfIcons';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { CarnetEtapesPane } from './panes/CarnetEtapesPane';
 import { CarnetKitPane } from './panes/CarnetKitPane';
@@ -21,16 +22,9 @@ export const CARNET_PAGE_TABS: CarnetPageTab[] = [
   {
     id: 'posts',
     label: 'Posts',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15" aria-hidden="true">
-        <rect x="3" y="3" width="7" height="7" rx="1.6" />
-        <rect x="14" y="3" width="7" height="7" rx="1.6" />
-        <rect x="3" y="14" width="7" height="7" rx="1.6" />
-        <rect x="14" y="14" width="7" height="7" rx="1.6" />
-      </svg>
-    ),
+    icon: <SfIcon name="grid" size={17} />,
   },
-  { id: 'parcours', label: 'Parcours', icon: <Icon name="map" size={15} aria-hidden="true" /> },
+  { id: 'parcours', label: 'Parcours', icon: <SfIcon name="map" size={17} /> },
   { id: 'etapes', label: 'Étapes', icon: <Icon name="route" size={15} aria-hidden="true" /> },
   { id: 'materiel', label: 'Matériel', icon: <Icon name="backpack" size={15} aria-hidden="true" /> },
   { id: 'nature', label: 'Nature', icon: <Icon name="leaf" size={15} aria-hidden="true" /> },
