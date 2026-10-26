@@ -640,8 +640,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-page-meta { padding: 0 1px; }
 
 /* Cinq pastilles de pages dans la capsule du bas : 28 px par cellule. */
-.ckp-card-foot .ckp-tabs { width: 142px; }
-.ckp-card-foot .ckp-tabs button { width: 28px; }
 .ckp-card-foot .ckp-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c; }
 .ckp-card-foot .ckp-action:focus-visible { outline: none; }
 .ckp-card-foot .ckp-action:focus-visible .ckp-action-in { box-shadow: 0 0 0 2px #17402c, 0 1px 2px rgba(23, 43, 36, .12); }
