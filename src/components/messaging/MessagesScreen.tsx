@@ -854,7 +854,7 @@ function MessageComposerBar({
           }}
           aria-label="Joindre une photo"
         />
-        <button type="button" className="mtool" onClick={() => fileInput.current?.click()} aria-label="Envoyer une photo">
+        <button type="button" className="lg gbtn" onClick={() => fileInput.current?.click()} aria-label="Envoyer une photo">
           <Icon name="image-plus" className="size-4" aria-hidden="true" />
         </button>
 
@@ -883,18 +883,18 @@ function MessageComposerBar({
 
         <button
           type="button"
-          className="mtool"
+          className="lg gbtn"
           onClick={() => setRecording(true)}
           aria-label="Enregistrer une note vocale"
         >
           <Icon name="mic" className="size-4" aria-hidden="true" />
         </button>
-        <button type="button" className="mtool" onClick={() => setMenuOpen(true)} aria-label="Partager un GPX, un équipement ou une randonnée">
+        <button type="button" className="lg gbtn" onClick={() => setMenuOpen(true)} aria-label="Partager un GPX, un équipement ou une randonnée">
           <Icon name="ellipsis" className="size-4" aria-hidden="true" />
         </button>
         <button
           type="submit"
-          className={`msend${content.trim() ? ' on' : ''}`}
+          className={`lg gbtn msend${content.trim() ? ' on' : ''}`}
           disabled={!content.trim() || sending}
           aria-label="Envoyer le message"
         >
