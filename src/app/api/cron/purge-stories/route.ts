@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isCronAuthorized } from '@/lib/cron/auth';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
@@ -21,9 +22,8 @@ const BATCH_SIZE = 200;
  * (planification : cron Vercel ou ordonnanceur ops — jamais côté client).
  */
 export async function GET(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+  // Comparaison en temps constant (même helper que /api/cron/daily).
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

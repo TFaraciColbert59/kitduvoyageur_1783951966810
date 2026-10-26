@@ -61,23 +61,21 @@ export async function POST(request: NextRequest) {
   let rawBody: unknown = {};
 
   try {
-    // Authenticate user in production (inchangé)
-    let userId: string | undefined;
-    if (process.env.NODE_ENV === 'production') {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json(
-          { error: 'Unauthorized', details: 'Authentication required' },
-          { status: 401 }
-        );
-      }
-      userId = user.id;
+    // Route payante : session obligatoire, en production comme en recette —
+    // l'ancienne garde `NODE_ENV === 'production'` laissait la route ouverte
+    // sur tout déploiement non marqué production.
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized', details: 'Authentication required' },
+        { status: 401 }
+      );
     }
+    const userId = user.id;
 
     // Phase 6 (§9.11) — route IA payante : limite distribuée fail-closed.
-    // Identité de session en production, IP sinon (développement/tests).
-    const limitIdentifier = userId ?? clientIpFromHeaders(request.headers);
+    const limitIdentifier = userId;
     const limited = await rateLimit({
       key: `ai-chat-completion:${limitIdentifier}`,
       limit: CHAT_COMPLETION_LIMIT,
@@ -121,11 +119,11 @@ export async function POST(request: NextRequest) {
 
       if (body.stream) {
         const response = await completion({
+          ...body.parameters,
           model: body.model,
           messages: body.messages,
           stream: true,
           api_key: apiKey,
-          ...body.parameters,
         });
 
         const encoder = new TextEncoder();
@@ -159,11 +157,11 @@ export async function POST(request: NextRequest) {
       }
 
       const response = await completion({
+        ...body.parameters,
         model: body.model,
         messages: body.messages,
         stream: false,
         api_key: apiKey,
-        ...body.parameters,
       });
 
       return NextResponse.json(response);

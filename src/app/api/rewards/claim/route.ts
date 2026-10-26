@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
@@ -10,6 +11,14 @@ export const dynamic = 'force-dynamic';
  * POST /api/rewards/claim
  * Enregistre une contribution utilisateur et calcule les points associés.
  */
+
+const ClaimSchema = z.object({
+  action_type: z.string().min(2).max(64),
+  target_id: z.string().uuid(),
+  target_type: z.enum(['hike', 'carnet', 'review', 'place', 'trail', 'contribution']),
+  metadata: z.record(z.string(), z.union([z.string().max(500), z.number(), z.boolean()])).optional().default({}),
+});
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
@@ -29,12 +38,11 @@ export async function POST(req: NextRequest) {
     });
     if (limited) return limited;
 
-    const body = await req.json();
-    const { action_type, target_id, target_type, metadata = {} } = body;
-
-    if (!action_type || !target_id || !target_type) {
-      return NextResponse.json({ error: 'Données de contribution incomplètes' }, { status: 400 });
+    const parsed = ClaimSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Données de contribution invalides' }, { status: 400 });
     }
+    const { action_type, target_id, target_type, metadata } = parsed.data;
 
     // Phase de stabilisation : la RPC d'attribution est service_role uniquement
     // (REVOKE authenticated). L'identité vient de la session vérifiée ci-dessus ;
