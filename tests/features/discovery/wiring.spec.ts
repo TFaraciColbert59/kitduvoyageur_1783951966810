@@ -31,6 +31,9 @@ describe('wiring des sections Pays', () => {
     expect(glass).toContain('renderDetails?.(section)');
     expect(glass).toContain('LensPager');
     expect(glass).toContain('PaysRegionGrid');
+    expect(glass).toContain('PaysCarnetFeed');
+    expect(glass).toContain('hideTitle');
+    expect(glass).toContain('formatAreaShort');
     for (const tab of ['fiche', 'carnets', 'groupes', 'bouteille', 'historique']) {
       expect(glass).toContain(`id: '${tab}'`);
     }

@@ -13,6 +13,7 @@ interface TopClub {
   members: number;
   emoji: string | null;
   cover: string | null;
+  image: string | null;
   verified: boolean;
   active: number;
 }
@@ -46,7 +47,7 @@ export function PaysTopClubs({ countryCode, countryName }: { countryCode: string
       try {
         const { data, error } = await supabase
           .from('clubs')
-          .select('id,slug,name,members_count,emoji,cover_color,is_verified,active_this_month,country_iso')
+          .select('id,slug,name,members_count,emoji,cover_color,cover_image,is_verified,active_this_month,country_iso')
           .ilike('country_iso', countryCode.toLowerCase())
           .order('members_count', { ascending: false })
           .limit(10);
@@ -64,6 +65,7 @@ export function PaysTopClubs({ countryCode, countryName }: { countryCode: string
             members: Number(row.members_count ?? 0),
             emoji: (row.emoji as string | null) ?? null,
             cover: (row.cover_color as string | null) ?? null,
+            image: (row.cover_image as string | null) ?? null,
             verified: Boolean(row.is_verified),
             active: Number(row.active_this_month ?? 0),
           })),
@@ -102,30 +104,44 @@ export function PaysTopClubs({ countryCode, countryName }: { countryCode: string
   }
 
   return (
-    <div>
-      {rows.map((row) => (
-        <button
-          key={row.id}
-          type="button"
-          className="lkdv-compact-card"
-          style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }}
-          onClick={() => {
-            triggerHaptic('light');
-            router.push(row.slug ? `/clubs/${row.slug}` : '/clubs');
-          }}
-          aria-label={`${row.name}, ${row.members} membres`}
-        >
-          <span className="lkdv-info-row__ico" aria-hidden="true" style={row.cover ? { background: row.cover } : undefined}>
-            {row.emoji ?? '◍'}
-          </span>
-          <span className="lkdv-compact-card__body">
-            <b title={row.name}>{row.name}</b>
-            <span title={plural(row.members, 'membre', 'membres')}>{plural(row.members, 'membre', 'membres')}</span>
-            <em>{[row.verified ? 'Vérifié' : null, row.active > 0 ? 'Actif ce mois' : null].filter(Boolean).join(' · ') || 'Groupe local'}</em>
-          </span>
-          <span className="lkdv-compact-card__tag">{row.members}</span>
-        </button>
-      ))}
+    <div className="ig-voyages-tab" role="region" aria-label={`Groupes les plus connus en ${countryName}`}>
+      <div className="voyages-carousel" data-hscroll>
+        {rows.map((row) => {
+          const status = [row.verified ? 'Vérifié' : null, row.active > 0 ? 'Actif ce mois' : null].filter(Boolean).join(' · ') || 'Groupe local';
+          return (
+            <button
+              key={row.id}
+              type="button"
+              className="voyage-card"
+              onClick={() => {
+                triggerHaptic('light');
+                router.push(row.slug ? `/clubs/${row.slug}` : '/clubs');
+              }}
+              aria-label={`${row.name}, ${plural(row.members, 'membre', 'membres')}, ${status}`}
+            >
+              <span className="voyage-cover">
+                {row.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- visuel réel du club
+                  <img src={row.image} alt="" className="voyage-img" loading="lazy" />
+                ) : (
+                  <span className="voyage-cover-fallback" aria-hidden="true" style={row.cover ? { background: row.cover } : undefined}>
+                    {row.emoji ?? '◍'}
+                  </span>
+                )}
+                <span className="voyage-cover-overlay" />
+                <span className="voyage-chip-gps">{status}</span>
+                <span className="voyage-info">
+                  <b className="voyage-title">{row.name}</b>
+                  <span className="voyage-sub">{countryName}</span>
+                  <span className="voyage-metrics">
+                    <span className="vm-item"><b>{plural(row.members, 'membre', 'membres')}</b></span>
+                  </span>
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
