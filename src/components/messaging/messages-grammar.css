@@ -242,8 +242,13 @@
 
 .lkdv-messages .mresults {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   padding: 2px 2px 8px;
+  min-width: 0;
+}
+.lkdv-messages .mresults section {
+  min-width: 0;
 }
 .lkdv-messages .mresults h3 {
   margin: 2px 2px 0;
@@ -256,6 +261,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
+  min-width: 0;
   min-height: 40px;
   padding: 4px 10px;
   border: 0;
@@ -297,7 +303,7 @@
   white-space: nowrap;
 }
 .lkdv-messages .mresult-txt {
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
