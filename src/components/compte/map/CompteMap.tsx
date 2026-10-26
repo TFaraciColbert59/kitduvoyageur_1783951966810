@@ -182,6 +182,11 @@ function ensureLayer(map: MapLibreMap, id: string, create: () => void) {
   if (!map.getLayer(id)) create();
 }
 
+function isMarkerClick(event: MapLayerMouseEvent): boolean {
+  const target = event.originalEvent?.target as HTMLElement | null;
+  return Boolean(target?.closest?.('.maplibregl-marker'));
+}
+
 export function CompteMap({ authState, context, focus = null }: CompteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -356,6 +361,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         },
       });
       map.on('click', 'compte-track-starts-dot', (event: MapLayerMouseEvent) => {
+        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'outing', id: String(id) });
       });
@@ -413,6 +419,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         },
       });
       map.on('click', 'compte-carnets-dot', (event: MapLayerMouseEvent) => {
+        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'carnet', id: String(id) });
       });
@@ -447,6 +454,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         },
       });
       map.on('click', 'compte-pois-hit', (event: MapLayerMouseEvent) => {
+        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'poi', id: String(id) });
       });
@@ -464,6 +472,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         },
       });
       map.on('click', 'compte-pois-dot', (event: MapLayerMouseEvent) => {
+        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'poi', id: String(id) });
       });
