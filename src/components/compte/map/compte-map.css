@@ -787,3 +787,7 @@
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
+
+.lkdv-map-callout b { color: #0b2418 !important; text-shadow: 0 1px 1px rgba(255,255,255,.95), 0 0 12px rgba(255,255,255,.65) !important; }
+.lkdv-map-callout p { color: #294838 !important; text-shadow: 0 1px 1px rgba(255,255,255,.9) !important; }
+.lkdv-map-callout-badge { background: rgba(255,255,255,.55) !important; color: #17402c !important; text-shadow: none !important; }
