@@ -399,6 +399,79 @@
   color: var(--bad);
 }
 
+/* ---------- Drawer de carte (variant `card` de AccountDrawerHost) ---------- */
+.lkdv-messages .sw-wrap[data-det='card'] .sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 14px 12px;
+}
+.lkdv-messages .sw-wrap[data-det='card'] .grab {
+  height: 18px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  touch-action: none;
+}
+.lkdv-messages .sw-wrap[data-det='card'] .grab span {
+  width: 36px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(23, 43, 36, 0.2);
+}
+.lkdv-messages .sw-wrap[data-det='card'] .sh-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0 6px;
+  margin: 0;
+}
+.lkdv-messages .sw-wrap[data-det='card'] .sh-t {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.lkdv-messages .sw-wrap[data-det='card'] .sh-t b {
+  font: 600 14px/1.2 var(--sf);
+  letter-spacing: -0.14px;
+  color: var(--label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lkdv-messages .sw-wrap[data-det='card'] .sh-t span {
+  font: 500 10.5px/1.2 var(--sf);
+  color: var(--label2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lkdv-messages .sw-wrap[data-det='card'] .sh-b {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Actions du tiroir (chips 2 colonnes, jamais une ligne qui déborde). */
+.lkdv-messages .mdrawer-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 2px 0 4px;
+}
+.lkdv-messages .mdrawer-actions .mbtn {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  font: 600 11.5px/1 var(--sf);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ---------- Composer ---------- */
 .lkdv-messages .mcomposer {
   position: relative;
