@@ -604,11 +604,17 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const hostRect = host.getBoundingClientRect();
       const offsetX = mapRect.left - hostRect.left;
       const offsetY = mapRect.top - hostRect.top;
+      const massifPoints = entries
+        .filter((entry) => !entry.detail)
+        .map((entry) => map.project([entry.lng, entry.lat]));
       for (const entry of entries) {
         const point = map.project([entry.lng, entry.lat]);
         const inside =
           point.x > 10 && point.x < width - 10 && point.y > 10 && point.y < height - 10;
-        const visible = inside && (!entry.detail || zoom >= 7);
+        const hiddenByMassif =
+          entry.detail &&
+          massifPoints.some((massif) => Math.hypot(massif.x - point.x, massif.y - point.y) < 32);
+        const visible = inside && (!entry.detail || zoom >= 7) && !hiddenByMassif;
         entry.element.style.display = visible ? '' : 'none';
         entry.element.style.transform = `translate(${offsetX + point.x}px, ${offsetY + point.y}px) ${entry.anchor}`;
       }
