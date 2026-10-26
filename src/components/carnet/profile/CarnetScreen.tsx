@@ -54,6 +54,17 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     router.push(`/connexion?next=/carnets/${detail.id}`);
   }, [detail.id, router, toast, user?.id]);
 
+  /* Export JSON du carnet, déclenché depuis la page Gérer. */
+  const exportCarnet = useCallback(() => {
+    const blob = new Blob([JSON.stringify(detail, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${detail.title.replace(/[^a-zA-Z0-9]/g, '_')}-carnet.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    toast('Carnet exporté.', 'success');
+  }, [detail, toast]);
+
   const engagement = useCarnetEngagement({
     carnetId: detail.id,
     initial: detail.engagement,
@@ -128,43 +139,15 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
 
       <main className="ckp-screen-body">
         {drawer ? (
-          <CarnetDrawer detail={detailView} drawer={drawer} onDrawerChange={setDrawer} onClose={() => setDrawer(null)}>
+          <CarnetDrawer drawer={drawer} onDrawerChange={setDrawer} onClose={() => setDrawer(null)}>
             {drawer === 'stats' ? (
               <CarnetStatsPane detail={detailView} tab={statTab} onTabChange={setStatTab} />
             ) : null}
-            {drawer === 'comments' ? (
-              <CarnetCommentsPane
-                comments={comments.comments}
-                loading={comments.loading}
-                canWrite={canWrite}
-                currentUserId={currentUserId}
-                onSend={comments.send}
-                onRemove={comments.remove}
-                onRequireAuth={requireAuth}
-              />
-            ) : null}
-            {drawer === 'likes' ? <CarnetLikesPane detail={detailView} currentUserId={currentUserId} /> : null}
             {drawer === 'share' ? (
               <CarnetSharePane
                 url={shareUrl}
                 title={detail.title}
                 onCopied={() => toast('Lien copié.', 'success')}
-              />
-            ) : null}
-            {drawer === 'manage' ? (
-              <CarnetManagePane
-                detail={detailView}
-                url={shareUrl}
-                onExport={() => {
-                  const blob = new Blob([JSON.stringify(detail, null, 2)], { type: 'application/json' });
-                  const link = document.createElement('a');
-                  link.href = URL.createObjectURL(blob);
-                  link.download = `${detail.title.replace(/[^a-zA-Z0-9]/g, '_')}-carnet.json`;
-                  link.click();
-                  URL.revokeObjectURL(link.href);
-                  toast('Carnet exporté.', 'success');
-                }}
-                onDeleted={() => router.push('/carnets')}
               />
             ) : null}
           </CarnetDrawer>
@@ -192,11 +175,10 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             onRequireAuth={requireAuth}
             onOpenCarnet={() => setPage('parcours')}
             onOpenStat={openStat}
-            onOpenComments={() => setDrawer('comments')}
-            onOpenLikes={() => setDrawer('likes')}
+            onOpenComments={() => setPage('comments')}
+            onOpenLikes={() => setPage('likes')}
             onOpenParcours={() => setPage('parcours')}
-            onOpenManage={() => setDrawer('manage')}
-            onLike={() => void engagement.toggleLike()}
+            onOpenManage={() => setPage('manage')}
             onSave={() => void engagement.toggleFavorite()}
             onOpenMenu={() => setMenuOpen((value) => !value)}
             onFocusPlace={setMapFocus}
@@ -212,12 +194,44 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
                   toast('Lien copié.', 'success');
                 }}
                 onReport={() => setReportOpen(true)}
-                onManage={() => setDrawer('manage')}
+                onManage={() => setPage('manage')}
                 onClose={() => setMenuOpen(false)}
               />
             }
             onOpenPost={(index) => setPostIndex(index)}
             onDownloadGpx={() => downloadGpx(detail.title, detail.trace)}
+            likesPage={
+              <CarnetLikesPane
+                detail={detailView}
+                currentUserId={currentUserId}
+                like={{
+                  liked: engagement.liked,
+                  count: engagement.likes,
+                  onToggle: () => void engagement.toggleLike(),
+                }}
+              />
+            }
+            commentsPage={
+              <CarnetCommentsPane
+                comments={comments.comments}
+                loading={comments.loading}
+                canWrite={canWrite}
+                currentUserId={currentUserId}
+                onSend={comments.send}
+                onRemove={comments.remove}
+                onRequireAuth={requireAuth}
+              />
+            }
+            managePage={
+              detail.isOwner ? (
+                <CarnetManagePane
+                  detail={detailView}
+                  url={shareUrl}
+                  onExport={exportCarnet}
+                  onDeleted={() => router.push('/carnets')}
+                />
+              ) : null
+            }
           />
           </>
         )}

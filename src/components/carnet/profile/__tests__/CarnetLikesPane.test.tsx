@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CarnetLikesPane } from '../panes/CarnetLikesPane';
 import { detail } from './fixtures';
 
@@ -26,5 +26,32 @@ describe('CarnetLikesPane', () => {
   it('affiche l’état vide honnête', () => {
     render(<CarnetLikesPane detail={detail({ likers: [] })} currentUserId={null} />);
     expect(screen.getByText('Aucun j’aime pour l’instant.')).toBeTruthy();
+  });
+
+  it('porte la bascule J’aime du carnet quand elle est fournie', () => {
+    const onToggle = vi.fn();
+    render(
+      <CarnetLikesPane
+        detail={DETAIL}
+        currentUserId="u1"
+        like={{ liked: false, count: 22, onToggle }}
+      />,
+    );
+    const toggle = screen.getByRole('button', { name: 'J’aime ce carnet' });
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(toggle);
+    expect(onToggle).toHaveBeenCalledOnce();
+  });
+
+  it('affiche l’état actif de la bascule sans changer les réactions', () => {
+    render(
+      <CarnetLikesPane
+        detail={DETAIL}
+        currentUserId="u1"
+        like={{ liked: true, count: 22, onToggle: () => {} }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Retirer mon j’aime' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText('22 j’aime')).toBeTruthy();
   });
 });

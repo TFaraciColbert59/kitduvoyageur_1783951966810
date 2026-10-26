@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { SfIcon } from './sfIcons';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
@@ -9,7 +9,20 @@ import { CarnetKitPane } from './panes/CarnetKitPane';
 import { CarnetNaturePane } from './panes/CarnetNaturePane';
 import { CarnetParcoursPane } from './panes/CarnetParcoursPane';
 
-export type CarnetPageId = 'posts' | 'parcours' | 'etapes' | 'materiel' | 'nature';
+/**
+ * Pages du carrousel : les cinq volets du carnet, puis les trois volets sortis
+ * du drawer (J’aime, Commentaires, Gérer) qui vivent désormais ici, dans le
+ * même conteneur `.ckp-pages` — donc swipables et animés comme les autres.
+ */
+export type CarnetPageId =
+  | 'posts'
+  | 'parcours'
+  | 'etapes'
+  | 'materiel'
+  | 'nature'
+  | 'likes'
+  | 'comments'
+  | 'manage';
 
 export interface CarnetPageTab {
   id: CarnetPageId;
@@ -17,7 +30,7 @@ export interface CarnetPageTab {
   icon: React.ReactNode;
 }
 
-/** Ordre imposé par le contrat : Posts, Parcours, Étapes, Matériel, Nature. */
+/** Ordre imposé par le contrat : Posts → Gérer (Gérer en dernier, propriétaire). */
 export const CARNET_PAGE_TABS: CarnetPageTab[] = [
   {
     id: 'posts',
@@ -28,8 +41,17 @@ export const CARNET_PAGE_TABS: CarnetPageTab[] = [
   { id: 'etapes', label: 'Étapes', icon: <Icon name="route" size={15} aria-hidden="true" /> },
   { id: 'materiel', label: 'Matériel', icon: <Icon name="backpack" size={15} aria-hidden="true" /> },
   { id: 'nature', label: 'Nature', icon: <Icon name="leaf" size={15} aria-hidden="true" /> },
+  { id: 'likes', label: 'J’aime', icon: <SfIcon name="heart" size={17} /> },
+  { id: 'comments', label: 'Commentaires', icon: <SfIcon name="bubble" size={17} /> },
+  { id: 'manage', label: 'Gérer', icon: <SfIcon name="pencil" size={17} /> },
 ];
 
+/** Pages disponibles pour ce lecteur : Gérer n’existe que pour le propriétaire. */
+export function carnetPageTabs(isOwner: boolean): CarnetPageTab[] {
+  return isOwner ? CARNET_PAGE_TABS : CARNET_PAGE_TABS.filter((tab) => tab.id !== 'manage');
+}
+
+/** Index de la page dans le carrousel complet (sert au sélecteur de vues). */
 export function carnetPageIndex(page: CarnetPageId): number {
   const index = CARNET_PAGE_TABS.findIndex((tab) => tab.id === page);
   return index < 0 ? 0 : index;
@@ -43,6 +65,10 @@ export interface CarnetPagesProps {
   onRequireAuth: () => void;
   onOpenPost: (index: number) => void;
   onDownloadGpx: () => void;
+  /** Contenus réels des volets sortis du drawer, rendus en pages. */
+  likesPage?: React.ReactNode;
+  commentsPage?: React.ReactNode;
+  managePage?: React.ReactNode;
 }
 
 const SWIPE_MIN_PX = 40;
@@ -55,9 +81,9 @@ export function swipeStep(dx: number, dy: number): -1 | 0 | 1 {
 }
 
 /**
- * Zone média de la carte, en pages qui swipent : Posts (grille de moments),
- * Parcours, Étapes, Matériel, Nature. Le geste horizontal (doigt ou souris),
- * les flèches du clavier et les pastilles du bas changent la page.
+ * Zone média de la carte, en pages qui swipent : Posts, Parcours, Étapes,
+ * Matériel, Nature, J’aime, Commentaires, Gérer. Le geste horizontal (doigt ou
+ * souris), les flèches du clavier et les segments du bas changent la page.
  */
 export function CarnetPages({
   detail,
@@ -67,20 +93,25 @@ export function CarnetPages({
   onRequireAuth,
   onOpenPost,
   onDownloadGpx,
+  likesPage = null,
+  commentsPage = null,
+  managePage = null,
 }: CarnetPagesProps) {
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
   const start = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
 
+  const pages = useMemo(() => carnetPageTabs(detail.isOwner), [detail.isOwner]);
+  const index = Math.max(0, pages.findIndex((tab) => tab.id === page));
+
   const go = useCallback(
     (delta: number) => {
-      const index = carnetPageIndex(page);
-      const target = Math.max(0, Math.min(CARNET_PAGE_TABS.length - 1, index + delta));
+      const target = Math.max(0, Math.min(pages.length - 1, index + delta));
       if (target === index) return;
       setDirection(delta > 0 ? 'next' : 'prev');
-      onPageChange(CARNET_PAGE_TABS[target].id);
+      onPageChange(pages[target].id);
     },
-    [onPageChange, page],
+    [index, onPageChange, pages],
   );
 
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -92,11 +123,11 @@ export function CarnetPages({
       go(-1);
     } else if (event.key === 'Home') {
       event.preventDefault();
-      onPageChange(CARNET_PAGE_TABS[0].id);
+      onPageChange(pages[0].id);
       setDirection('prev');
     } else if (event.key === 'End') {
       event.preventDefault();
-      onPageChange(CARNET_PAGE_TABS[CARNET_PAGE_TABS.length - 1].id);
+      onPageChange(pages[pages.length - 1].id);
       setDirection('next');
     }
   };
@@ -117,7 +148,7 @@ export function CarnetPages({
     go(step);
   };
 
-  const activeTab = CARNET_PAGE_TABS[carnetPageIndex(page)];
+  const activeTab = pages.find((tab) => tab.id === page) ?? CARNET_PAGE_TABS[carnetPageIndex(page)];
 
   return (
     <div
@@ -220,6 +251,12 @@ export function CarnetPages({
             <CarnetNaturePane canWrite={canWrite} onRequireAuth={onRequireAuth} />
           </div>
         ) : null}
+
+        {page === 'likes' && likesPage ? <div className="ckp-page-pad">{likesPage}</div> : null}
+
+        {page === 'comments' && commentsPage ? <div className="ckp-page-pad">{commentsPage}</div> : null}
+
+        {page === 'manage' && managePage ? <div className="ckp-page-pad">{managePage}</div> : null}
       </div>
     </div>
   );

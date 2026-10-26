@@ -3,16 +3,15 @@
 import React, { useEffect, useRef } from 'react';
 import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
 import Icon from '@/components/ui/Icon';
-import type { CarnetDetail } from '@/features/carnet/detail/types';
 
 /**
- * Un seul drawer : les statistiques (un sous-drawer à trois volets),
- * les Commentaires, les J’aime, le Partage et Gérer (propriétaire).
+ * Un seul drawer, réduit à ce qui n'est pas dans le sélecteur du bas :
+ * les statistiques (sous-drawer à trois volets) et le Partage.
+ * Commentaires, J’aime et Gérer sont devenus des pages du carrousel.
  */
-export type CarnetDrawerId = 'stats' | 'comments' | 'likes' | 'share' | 'manage';
+export type CarnetDrawerId = 'stats' | 'share';
 
 export interface CarnetDrawerProps {
-  detail: CarnetDetail;
   drawer: CarnetDrawerId;
   onDrawerChange: (id: CarnetDrawerId) => void;
   onClose: () => void;
@@ -21,19 +20,16 @@ export interface CarnetDrawerProps {
 
 const PANES: { id: CarnetDrawerId; label: string; icon: string }[] = [
   { id: 'stats', label: 'Statistiques', icon: 'trending-up' },
-  { id: 'comments', label: 'Commentaires', icon: 'message-square' },
-  { id: 'likes', label: 'J’aime', icon: 'heart' },
   { id: 'share', label: 'Partage', icon: 'send' },
-  { id: 'manage', label: 'Gérer', icon: 'pencil' },
 ];
 
 /**
  * Coquille de drawer du Compte : la carte devient le panneau.
  * Poignée 18 px, capsule 48, contenu scrollable à l'intérieur de la carte.
  */
-export function CarnetDrawer({ detail, drawer, onDrawerChange, onClose, children }: CarnetDrawerProps) {
+export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: CarnetDrawerProps) {
   const ref = useRef<HTMLElement | null>(null);
-  const available = PANES.filter((pane) => pane.id !== 'manage' || detail.isOwner);
+  const available = PANES;
   const items: CapsuleTabItem[] = available.map((pane) => ({
     id: pane.id,
     label: pane.label,

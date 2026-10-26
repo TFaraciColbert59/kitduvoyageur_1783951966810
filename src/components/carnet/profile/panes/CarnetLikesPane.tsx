@@ -1,12 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
+import Icon from '@/components/ui/Icon';
 import { CarnetSubCapsule } from '../CarnetSubCapsule';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 
 export interface CarnetLikesPaneProps {
   detail: CarnetDetail;
   currentUserId: string | null;
+  /**
+   * Bascule J’aime du carnet. Le ♥ du sélecteur ouvre désormais cette page :
+   * la bascule réelle vit ici, en tête de liste, pour ne pas perdre le geste.
+   */
+  like?: {
+    liked: boolean;
+    count: number;
+    onToggle: () => void;
+  };
 }
 
 const FILTERS = [
@@ -21,7 +31,7 @@ const REACTION_LABEL: Record<string, string> = {
 };
 
 /** Réactions réelles du carnet, profils joints (plafond 50). */
-export function CarnetLikesPane({ detail, currentUserId }: CarnetLikesPaneProps) {
+export function CarnetLikesPane({ detail, currentUserId, like }: CarnetLikesPaneProps) {
   const [filter, setFilter] = useState('all');
   const likers = filter === 'mine'
     ? detail.likers.filter((liker) => liker.id !== currentUserId)
@@ -29,6 +39,24 @@ export function CarnetLikesPane({ detail, currentUserId }: CarnetLikesPaneProps)
 
   return (
     <div className="ckp-pane">
+      {like ? (
+        <button
+          type="button"
+          className="ckp-row ckp-row--like"
+          onClick={like.onToggle}
+          aria-pressed={like.liked}
+          aria-label={like.liked ? 'Retirer mon j’aime' : 'J’aime ce carnet'}
+        >
+          <span>
+            <b>{like.liked ? 'Vous aimez ce carnet' : 'J’aime ce carnet'}</b>
+            <small>
+              {like.count} j’aime
+            </small>
+          </span>
+          <Icon name="heart" size={17} aria-hidden="true" />
+        </button>
+      ) : null}
+
       {likers.length === 0 ? (
         <p className="ckp-pane-empty">Aucun j’aime pour l’instant.</p>
       ) : (

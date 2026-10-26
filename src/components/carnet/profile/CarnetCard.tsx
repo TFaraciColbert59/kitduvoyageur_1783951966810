@@ -27,17 +27,44 @@ export interface CarnetCardProps {
   onRequireAuth: () => void;
   onOpenCarnet: () => void;
   onOpenStat: (stat: CarnetStatsTab) => void;
+  /** Les actions du sélecteur ouvrent une page, jamais un drawer. */
   onOpenComments: () => void;
   onOpenLikes: () => void;
   onOpenParcours: () => void;
   onOpenManage: () => void;
-  onLike: () => void;
   onSave: () => void;
   onOpenMenu: () => void;
   onFocusPlace: (focus: CarnetPlaceFocus) => void;
   menu?: React.ReactNode;
   onOpenPost: (index: number) => void;
   onDownloadGpx: () => void;
+  likesPage?: React.ReactNode;
+  commentsPage?: React.ReactNode;
+  managePage?: React.ReactNode;
+}
+
+/**
+ * Index du segment qui reçoit la lentille blanche dans la capsule.
+ *
+ * La capsule aligne sept segments de 41,5 px : ♥ 0, 💬 1, 🔖 2, ✏️ 3,
+ * ··· 4, grille 5, carte 6. La lentille ne se pose que sur une vue ou sur la
+ * page affichée ; Enregistrer, Plus et les pages hors sélecteur n'en ont pas.
+ */
+export function selectorLensIndex(page: CarnetPageId, isOwner: boolean): number {
+  switch (page) {
+    case 'likes':
+      return 0;
+    case 'comments':
+      return 1;
+    case 'manage':
+      return isOwner ? 3 : -1;
+    case 'posts':
+      return 5;
+    case 'parcours':
+      return 6;
+    default:
+      return -1;
+  }
 }
 
 const SF_ICONS: Record<string, SfIconName> = {
@@ -55,12 +82,15 @@ function Action({
   count,
   onClick,
   pressed,
+  current,
 }: {
   icon: string;
   label: string;
   count?: number;
   onClick: () => void;
   pressed?: boolean;
+  /** La page de ce bouton est affichée : encre verte, sans lentille en double. */
+  current?: boolean;
 }) {
   const hasCount = typeof count === 'number' && count > 0;
   return (
@@ -70,6 +100,7 @@ function Action({
       data-icon={icon}
       onClick={onClick}
       aria-pressed={pressed}
+      aria-current={current ? 'page' : undefined}
       aria-label={typeof count === 'number' ? `${label}, ${count}` : label}
       title={label}
     >
@@ -121,13 +152,15 @@ export function CarnetCard({
   onOpenLikes,
   onOpenParcours,
   onOpenManage,
-  onLike,
   onSave,
   onOpenMenu,
   onFocusPlace,
   menu = null,
   onOpenPost,
   onDownloadGpx,
+  likesPage = null,
+  commentsPage = null,
+  managePage = null,
 }: CarnetCardProps) {
   const traceCoords = extractCoords(detail.trace);
   const tracePath = projectToViewBox(traceCoords, 66, 9);
@@ -142,6 +175,7 @@ export function CarnetCard({
       : null;
   const placePills = placeSegments(place, detail.destination);
   const participants = participantsOf(detail);
+  const lensIndex = selectorLensIndex(page, detail.isOwner);
 
   return (
     <section className="ckp-card" aria-label="Carte du carnet">
@@ -242,24 +276,37 @@ export function CarnetCard({
             onRequireAuth={onRequireAuth}
             onOpenPost={onOpenPost}
             onDownloadGpx={onDownloadGpx}
+            likesPage={likesPage}
+            commentsPage={commentsPage}
+            managePage={managePage}
           />
         </div>
       </div>
 
       <div className="ckp-card-foot">
+        {/* Une seule lentille pour les sept segments : elle glisse par `--i`,
+            ne se pose que sur la vue ou la page active, et reste sous les
+            boutons (`z-index` 0 contre 1). */}
+        <span
+          className="ckp-th"
+          aria-hidden="true"
+          data-off={lensIndex < 0 ? 'true' : undefined}
+          style={{ '--i': Math.max(0, lensIndex) } as React.CSSProperties}
+        />
         <div className="ckp-actions" role="group" aria-label="Actions du carnet">
           <Action
             icon="heart"
             label="J’aime"
             count={detail.engagement.likes}
-            onClick={onLike}
-            pressed={detail.engagement.liked}
+            onClick={onOpenLikes}
+            current={page === 'likes'}
           />
           <Action
             icon="message-square"
             label="Commenter"
             count={detail.engagement.comments}
             onClick={onOpenComments}
+            current={page === 'comments'}
           />
           <Action
             icon="bookmark"
@@ -268,7 +315,7 @@ export function CarnetCard({
             pressed={detail.engagement.favorited}
           />
           {detail.isOwner ? (
-            <Action icon="pencil" label="Gérer" onClick={onOpenManage} />
+            <Action icon="pencil" label="Gérer" onClick={onOpenManage} current={page === 'manage'} />
           ) : (
             <Action icon="map" label="Parcours" onClick={onOpenParcours} />
           )}
