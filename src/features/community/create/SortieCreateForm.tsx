@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { Controller } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
+import { Field, Select, SubmitFooter, SwitchField, TextArea, TextInput } from './form-fields';
 import { CreateFormEngine } from './engine/CreateFormEngine';
 import {
   createDefaults,
   CREATE_FIELD_LABELS,
+  type OutingType,
   type SortieFormValues,
 } from './engine/createSchemas';
 import { CREATE_STEPS, StepPager } from './shared/StepPager';
@@ -35,9 +36,10 @@ const DEFAULTS = createDefaults('sortie');
 const STEPS = CREATE_STEPS.sortie;
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['title', 'startDate', 'endDate', 'duration'],
-  ['location', 'level', 'description', 'cover'],
-  ['maxParticipants'],
+  ['title', 'eventType', 'location', 'meetingPoint', 'cover'],
+  ['startDate', 'endDate', 'duration', 'level', 'distanceKm', 'deniveleM'],
+  ['maxParticipants', 'waitlist'],
+  ['description', 'safetyNotes'],
 ] as const;
 
 const LEVEL_LABELS: Record<SortieFormValues['level'], string> = {
@@ -45,6 +47,114 @@ const LEVEL_LABELS: Record<SortieFormValues['level'], string> = {
   moyen: 'Moyen',
   difficile: 'Difficile',
 };
+
+export const OUTING_TYPE_LABELS: Record<OutingType, string> = {
+  rando: 'Randonnée',
+  trail: 'Trail',
+  ski: 'Ski de rando',
+  velo: 'Vélo',
+  escalade: 'Escalade',
+  autre: 'Autre',
+};
+
+const OUTING_TYPE_EMOJI: Record<OutingType, string> = {
+  rando: '🥾',
+  trail: '🏃',
+  ski: '🎿',
+  velo: '🚴',
+  escalade: '🧗',
+  autre: '🧭',
+};
+
+/**
+ * `events.description` porte les métadonnées sans colonne dédiée :
+ * niveau, rendez-vous, distance, dénivelé, liste d’attente, sécurité.
+ */
+export function buildSortieDescription(values: SortieFormValues): string {
+  return [
+    values.description.trim(),
+    `Niveau : ${LEVEL_LABELS[values.level]}`,
+    values.meetingPoint.trim() ? `Rendez-vous : ${values.meetingPoint.trim()}` : '',
+    values.distanceKm > 0 ? `Distance : ${values.distanceKm} km` : '',
+    values.deniveleM > 0 ? `Dénivelé : +${values.deniveleM} m` : '',
+    values.waitlist ? 'Liste d’attente : oui' : '',
+    values.safetyNotes.trim() ? `Sécurité : ${values.safetyNotes.trim()}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+export interface SortieEventRow {
+  title: string;
+  type: OutingType;
+  emoji: string;
+  organizer_id: string;
+  event_date: string;
+  duration: string;
+  location: string;
+  country: string;
+  max_participants: number;
+  current_participants: number;
+  description: string;
+  cover_image: string;
+  cover_alt: string;
+  shared_kitty: number;
+  kitty_goal: number;
+  status: string;
+  [key: string]: unknown;
+}
+
+export function buildSortieEventRow(
+  values: SortieFormValues,
+  userId: string,
+  coverUrl: string | null,
+): SortieEventRow {
+  const duration =
+    values.duration.trim() ||
+    (values.endDate ? `Du ${values.startDate} au ${values.endDate}` : '');
+  return {
+    title: values.title.trim(),
+    type: values.eventType,
+    emoji: OUTING_TYPE_EMOJI[values.eventType],
+    organizer_id: userId,
+    event_date: values.startDate,
+    duration,
+    location: values.location.trim(),
+    country: 'France',
+    max_participants: values.maxParticipants,
+    current_participants: 0,
+    description: buildSortieDescription(values),
+    cover_image: coverUrl ?? '',
+    cover_alt: values.title.trim(),
+    shared_kitty: 0,
+    kitty_goal: 0,
+    status: 'upcoming',
+  };
+}
+
+export interface SortieSnapshot {
+  schema: 'lkdv.sortie.options.v1';
+  event_type: OutingType;
+  meeting_point: string | null;
+  waitlist: boolean;
+  level: SortieFormValues['level'];
+  distance_km: number;
+  denivele_m: number;
+  [key: string]: unknown;
+}
+
+/** Snapshot du post lié : métadonnées non persistables dans `events`. */
+export function buildSortieSnapshot(values: SortieFormValues): SortieSnapshot {
+  return {
+    schema: 'lkdv.sortie.options.v1',
+    event_type: values.eventType,
+    meeting_point: values.meetingPoint.trim() || null,
+    waitlist: values.waitlist,
+    level: values.level,
+    distance_km: values.distanceKm,
+    denivele_m: values.deniveleM,
+  };
+}
 
 export function SortieCreateForm({
   open,
@@ -73,35 +183,13 @@ export function SortieCreateForm({
     setSubmitError(null);
     if (!user?.id) throw new Error('Connecte-toi pour créer une sortie.');
     const coverUrl = resolveCoverUrl(values.cover);
-    const level = LEVEL_LABELS[values.level];
-    const description = [values.description.trim(), `Niveau : ${level}`]
-      .filter(Boolean)
-      .join('\n\n');
-    const duration =
-      values.duration.trim() ||
-      (values.endDate ? `Du ${values.startDate} au ${values.endDate}` : '');
+    const row = buildSortieEventRow(values, user.id, coverUrl);
+    const snapshotPayload = buildSortieSnapshot(values);
 
     const supabase = createClient();
     const { data, error: insertError } = await supabase
       .from('events')
-      .insert({
-        title: values.title.trim(),
-        type: 'rando',
-        emoji: '🥾',
-        organizer_id: user.id,
-        event_date: values.startDate,
-        duration,
-        location: values.location.trim(),
-        country: 'France',
-        max_participants: values.maxParticipants,
-        current_participants: 0,
-        description,
-        cover_image: coverUrl ?? '',
-        cover_alt: values.title.trim(),
-        shared_kitty: 0,
-        kitty_goal: 0,
-        status: 'upcoming',
-      })
+      .insert(row)
       .select('id')
       .single();
     if (insertError || !data) {
@@ -116,10 +204,17 @@ export function SortieCreateForm({
         authorId: user.id,
         content: `**${values.title.trim()}**\n\n${dateLine}${
           values.location.trim() ? ` · 📍 ${values.location.trim()}` : ''
-        }\n\nNiveau : ${level}\n\n${values.description.trim()}\n\n/evenements`,
+        }\n\nType : ${OUTING_TYPE_LABELS[values.eventType]}\nNiveau : ${
+          LEVEL_LABELS[values.level]
+        }${
+          values.meetingPoint.trim() ? `\nRendez-vous : ${values.meetingPoint.trim()}` : ''
+        }${
+          values.waitlist ? '\nListe d’attente ouverte' : ''
+        }\n\n${values.description.trim()}\n\n/evenements`,
         postType: 'share',
         imageUrl: coverUrl,
         title: values.title.trim(),
+        snapshotPayload,
       });
     } catch {
       // Le pont vers le fil est best-effort : la sortie existe déjà.
@@ -149,6 +244,7 @@ export function SortieCreateForm({
         const endDate = form.watch('endDate');
         const level = form.watch('level');
         const maxParticipants = form.watch('maxParticipants');
+        const eventType = form.watch('eventType');
         const goNext = async () => {
           const fields = STEP_FIELDS[activeStep] ?? [];
           const valid = await form.trigger([...fields]);
@@ -209,6 +305,61 @@ export function SortieCreateForm({
                   />
                   <InlineError message={errors.title?.message} />
                 </Field>
+
+                <Field label="Type de sortie" htmlFor="sortie-type">
+                  <Select id="sortie-type" {...form.register('eventType')}>
+                    {Object.entries(OUTING_TYPE_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                  <InlineError message={errors.eventType?.message} />
+                </Field>
+
+                <Field label="Lieu" htmlFor="sortie-location">
+                  <TextInput
+                    id="sortie-location"
+                    {...form.register('location')}
+                    maxLength={120}
+                    placeholder="Chamonix"
+                  />
+                  <InlineError message={errors.location?.message} />
+                </Field>
+
+                <Field
+                  label="Rendez-vous"
+                  hint="Point de rendez-vous de la cordée."
+                  htmlFor="sortie-meeting"
+                >
+                  <TextInput
+                    id="sortie-meeting"
+                    {...form.register('meetingPoint')}
+                    maxLength={120}
+                    placeholder="Parking de la Flégère, 8 h"
+                  />
+                  <InlineError message={errors.meetingPoint?.message} />
+                </Field>
+
+                <Controller
+                  control={form.control}
+                  name="cover"
+                  render={({ field }) => (
+                    <MediaPicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      max={1}
+                      label="Photo de couverture"
+                      hint="Une image pour la carte de la sortie."
+                      upload={uploader}
+                      fieldName="cover"
+                    />
+                  )}
+                />
+                <InlineError message={errors.cover?.message as string | undefined} />
+              </div>
+
+              <div>
                 <DateRangeField
                   label="Dates de la sortie"
                   start={startDate}
@@ -232,6 +383,7 @@ export function SortieCreateForm({
                   error={errors.startDate?.message ?? errors.endDate?.message ?? null}
                 />
                 <InlineError message={errors.startDate?.message} />
+
                 <Field label="Durée" hint="Laisser vide pour une journée." htmlFor="sortie-duration">
                   <TextInput
                     id="sortie-duration"
@@ -241,18 +393,7 @@ export function SortieCreateForm({
                   />
                   <InlineError message={errors.duration?.message} />
                 </Field>
-              </div>
 
-              <div>
-                <Field label="Lieu" htmlFor="sortie-location">
-                  <TextInput
-                    id="sortie-location"
-                    {...form.register('location')}
-                    maxLength={120}
-                    placeholder="Chamonix"
-                  />
-                  <InlineError message={errors.location?.message} />
-                </Field>
                 <Field
                   label="Niveau"
                   hint={`Niveau retenu : ${LEVEL_LABELS[level]}.`}
@@ -265,31 +406,37 @@ export function SortieCreateForm({
                   </Select>
                   <InlineError message={errors.level?.message} />
                 </Field>
-                <Controller
-                  control={form.control}
-                  name="cover"
-                  render={({ field }) => (
-                    <MediaPicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      max={1}
-                      label="Photo de couverture"
-                      hint="Une image pour la carte de la sortie."
-                      upload={uploader}
-                      fieldName="cover"
+
+                <div className="lkdv-form-row">
+                  <Field label="Distance (km)" htmlFor="sortie-distance">
+                    <TextInput
+                      id="sortie-distance"
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      max={500}
+                      step={0.1}
+                      {...form.register('distanceKm', { valueAsNumber: true })}
                     />
-                  )}
-                />
-                <InlineError message={errors.cover?.message as string | undefined} />
-                <Field label="Description" htmlFor="sortie-description">
-                  <TextArea
-                    id="sortie-description"
-                    {...form.register('description')}
-                    maxLength={1500}
-                    placeholder="Le programme, le niveau, le matériel…"
+                    <InlineError message={errors.distanceKm?.message} />
+                  </Field>
+                  <Controller
+                    control={form.control}
+                    name="deniveleM"
+                    render={({ field }) => (
+                      <NumberStepper
+                        label="Dénivelé"
+                        value={field.value}
+                        onChange={field.onChange}
+                        min={0}
+                        max={20_000}
+                        step={50}
+                        unit="m"
+                      />
+                    )}
                   />
-                  <InlineError message={errors.description?.message} />
-                </Field>
+                </div>
+                <InlineError message={errors.deniveleM?.message} />
               </div>
 
               <div>
@@ -312,9 +459,53 @@ export function SortieCreateForm({
                   {maxParticipants} place(s) ouvertes. Les inscriptions se gèrent ensuite
                   depuis la sortie.
                 </p>
+
+                <Controller
+                  control={form.control}
+                  name="waitlist"
+                  render={({ field }) => (
+                    <SwitchField
+                      label="Liste d’attente"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                <InlineError message={errors.waitlist?.message} />
+
                 <Link className="lkdv-form-link" href="/evenements" onClick={api.flushDraft}>
                   Voir les sorties
                 </Link>
+              </div>
+
+              <div>
+                <Field label="Description" htmlFor="sortie-description">
+                  <TextArea
+                    id="sortie-description"
+                    {...form.register('description')}
+                    maxLength={1500}
+                    placeholder="Le programme, le matériel, le rythme…"
+                  />
+                  <InlineError message={errors.description?.message} />
+                </Field>
+
+                <Field
+                  label="Consignes de sécurité"
+                  hint="Matériel obligatoire, conditions, points de vigilance."
+                  htmlFor="sortie-safety"
+                >
+                  <TextArea
+                    id="sortie-safety"
+                    {...form.register('safetyNotes')}
+                    maxLength={500}
+                    placeholder="DVA, pelle, sonde obligatoires…"
+                  />
+                  <InlineError message={errors.safetyNotes?.message} />
+                </Field>
+
+                <p className="lkdv-form-note">
+                  Type retenu : {OUTING_TYPE_LABELS[eventType]} · {LEVEL_LABELS[level]}.
+                </p>
               </div>
             </StepPager>
           </CommunityFormDrawer>
