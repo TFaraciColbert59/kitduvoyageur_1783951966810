@@ -102,19 +102,17 @@ describe('CarnetCard — carte du carnet', () => {
     expect(container.querySelectorAll('.ckp-tabs')).toHaveLength(1);
     // Les deux familles de boutons restent distinctes et accessibles.
     expect(foot?.querySelectorAll('.ckp-actions button[aria-label]')).toHaveLength(5);
-    expect(foot?.querySelectorAll('.ckp-tabs button[role="tab"]')).toHaveLength(5);
+    expect(foot?.querySelectorAll('.ckp-tabs button[role="tab"]')).toHaveLength(2);
   });
 
-  it('expose les cinq pages du carrousel avec aria-selected et lentille', () => {
+  it('expose deux segments grille/carte comme la page Compte', () => {
     const { container } = render(<CarnetCard {...base()} />);
     const tabs = container.querySelector('.ckp-tabs');
-    expect(tabs?.getAttribute('aria-label')).toBe('Pages du carnet');
+    expect(tabs?.getAttribute('aria-label')).toBe('Grille ou carte');
     expect(container.querySelector('.ckp-th')).toBeTruthy();
-    expect(screen.getAllByRole('tab')).toHaveLength(5);
+    expect(screen.getAllByRole('tab')).toHaveLength(2);
     expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
-    for (const label of ['Parcours', 'Étapes', 'Matériel', 'Nature']) {
-      expect(screen.getByRole('tab', { name: label }).getAttribute('aria-selected')).toBe('false');
-    }
+    expect(screen.getByRole('tab', { name: 'Parcours' }).getAttribute('aria-selected')).toBe('false');
     expect(container.querySelector('.ckp-pages')).toBeTruthy();
   });
 
@@ -123,8 +121,8 @@ describe('CarnetCard — carte du carnet', () => {
     render(<CarnetCard {...base({ onPageChange })} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
     expect(onPageChange).toHaveBeenLastCalledWith('parcours');
-    fireEvent.click(screen.getByRole('tab', { name: 'Nature' }));
-    expect(onPageChange).toHaveBeenLastCalledWith('nature');
+    fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
+    expect(onPageChange).toHaveBeenLastCalledWith('posts');
   });
 
   it('garde tous les comportements des actions déplacées', () => {
@@ -246,7 +244,7 @@ describe('CarnetCard — carte du carnet', () => {
     expect(screen.getByText('Les Houches → Refuge de Bellachat')).toBeTruthy();
     /* Le volet Récit n'est plus dans le drawer : son contenu vit sur cette page. */
     expect(screen.getByText(/Vérifié/)).toBeTruthy();
-    expect(screen.getByRole('tab', { name: 'Étapes' }).getAttribute('aria-selected')).toBe('true');
+    expect(document.getElementById('carnet-page-etapes')).toBeTruthy();
   });
 
   it('rend la page Matériel et son état vide honnête', () => {

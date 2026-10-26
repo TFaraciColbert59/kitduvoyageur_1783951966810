@@ -277,10 +277,10 @@ export function CarnetCard({
         <span className="ckp-foot-sep" aria-hidden="true" />
 
         <CarnetMediaTabs
-          items={CARNET_PAGE_TABS}
-          activeIndex={carnetPageIndex(page)}
+          items={CARNET_PAGE_TABS.slice(0, 2)}
+          activeIndex={carnetPageIndex(page) < 2 ? carnetPageIndex(page) : -1}
           onChange={(index) => onPageChange(CARNET_PAGE_TABS[index].id)}
-          ariaLabel="Pages du carnet"
+          ariaLabel="Grille ou carte"
         />
       </div>
     </section>
