@@ -528,7 +528,13 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
   useEffect(() => {
     if (!map || !data || !ready) return;
-    const intent = fitIntentForMode(context.mode, data, context.outingId);
+    const mapBig = map.getContainer().clientHeight > 500;
+    // Grande carte : montrer toute l'empreinte (massifs, POIs, toutes les traces).
+    // Bande de 335 px : cadrer la sortie la plus récente pour rester lisible.
+    const intent =
+      mapBig && data.bounds
+        ? { bounds: data.bounds, maxZoom: 6.4 }
+        : fitIntentForMode(context.mode, data, context.outingId);
     if (!intent) return;
     const reduced = prefersReducedMotion();
     map.fitBounds(
