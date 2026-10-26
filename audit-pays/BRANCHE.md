@@ -41,17 +41,17 @@
 
 | Contrôle | Local | Prod Cloudflare |
 |---|---|---|
-| `/pays/fr` — 430 / 768 / 1440 | **23/23 · 23/23 · 23/23** | à revérifier après stabilisation prod |
+| `/pays/fr` — 430 / 768 / 1440 | **23/23 · 23/23 · 23/23** | version `26dc966b` vérifiée 23/23 à 19:38, réécrite à 19:40 |
 | `/carnets/[id]` — 430 / 768 / 1440 | **19/19 · 19/19 · 19/19** | (branche vinext : autre implémentation) |
-| Tests ciblés pays/drawer | **17 / 17** | — |
+| Tests ciblés pays/drawer | **17 / 17** | suite complète : 9 échecs hors périmètre, voir rapport |
 | Build Next / vinext | OK | version `a9d1fe20` |
 
 ## Prod Cloudflare — état du 26/10 12:22
 
 | URL | Version | Porte |
 |---|---|---|
-| `https://kitduvoyageur.faracitonyp.workers.dev/pays/fr` | `15bd7a56` (100 %) | **18/18 · 18/18 · 18/18** |
-| `https://pays-refonte-kitduvoyageur.faracitonyp.workers.dev/pays/fr` | preview alias `pays-refonte` | **18/18 · 18/18 · 18/18** |
+| `https://kitduvoyageur.faracitonyp.workers.dev/pays/fr` | `26dc966b` (100 %) à 19:38:31, puis `68f19968` à 19:40:08 | **23/23 au moment du déploiement**, legacy après réécriture |
+| `https://pays-refonte-kitduvoyageur.faracitonyp.workers.dev/pays/fr` | preview alias `pays-refonte`, déploiement `a7c1b2fa` | **23/23 · 23/23 · 23/23** |
 
 La preview alias est **stable** : elle ne bouge pas quand la prod est réécrite. C'est l'URL à utiliser pour montrer la refonte tant que le worker de production est partagé.
 
