@@ -53,17 +53,9 @@ export function fitIntentForMode(
   }
   if (mode === 'prets' || mode === 'compte' || mode === 'reseau') return null;
   if (mode === 'overview' || mode === 'vitrine') {
-    // La bande carte ne fait que 335 px : cadrer les 18 sorties de France les
-    // réduit à des points. On ouvre sur la sortie la plus récente, en incluant
-    // ses POI pour qu'ils restent visibles et cliquables.
-    const latest = data.tracks[0];
-    if (latest) {
-      const poiBounds = data.pois
-        .filter((poi) => poi.outingId === latest.id)
-        .map((poi) => [poi.position.lng, poi.position.lat, poi.position.lng, poi.position.lat] as MapBounds);
-      const bounds = mergeBounds([latest.bounds, ...poiBounds]);
-      return { bounds: bounds ?? latest.bounds, maxZoom: 13 };
-    }
+    // Aperçu large dès l'arrivée : toute l'empreinte (massifs, POI, carnets)
+    // détermine le cadrage. Les marqueurs détaillés n'apparaissent qu'en zoomant.
+    if (data.bounds) return { bounds: data.bounds, maxZoom: 6.2 };
   }
   if (mode === 'kit' || mode === 'communaute' || mode === 'souvenirs') {
     const visible = filterTracksForMode(data.tracks, mode, selectedId);

@@ -34,6 +34,25 @@ import './compte-map.css';
 
 const DEFAULT_CENTER: [number, number] = [2.5, 46.5];
 
+const MAP_ICON = {
+  peak: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 19 6.5-11 4 6 2.5-4L21 19H3Z"/></svg>',
+  water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.3 6 11a6 6 0 0 1-12 0c0-4.7 6-11 6-11Z"/></svg>',
+  shelter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg>',
+  tent: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 20 9-16 9 16H3ZM12 4v16M8 20l4-7 4 7"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"/><circle cx="12" cy="9" r="2.2"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v16H6.5A2.5 2.5 0 0 0 4 21.5V5.5ZM4 19.5A2.5 2.5 0 0 1 6.5 17H19"/></svg>',
+};
+
+function poiIcon(label: string): string {
+  const value = label.toLowerCase();
+  if (/(lac|étang|etang|source|rivière|riviere|cascade)/.test(value)) return MAP_ICON.water;
+  if (/(refuge|cabane|chalet|abri|bergerie|auberge)/.test(value)) return MAP_ICON.shelter;
+  if (/(bivouac|tente|camp)/.test(value)) return MAP_ICON.tent;
+  if (/(col|sommet|mont|pic|crête|crete|dôme|dome|cime)/.test(value)) return MAP_ICON.peak;
+  return MAP_ICON.pin;
+}
+
+
 export type CompteMapAuthState = 'loading' | 'guest' | 'owner' | 'error';
 
 export interface CompteMapContext {
@@ -449,8 +468,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
     const layers = mapModeConfig(context.mode).layers;
     const visibility: Array<[string, boolean]> = [
-      ['compte-carnets-halo', layers.carnets],
-      ['compte-carnets-dot', layers.carnets],
+      ['compte-carnets-halo', false],
+      ['compte-carnets-dot', false],
       ['compte-pois-halo', layers.pois],
       ['compte-pois-hit', layers.pois],
       ['compte-pois-dot', layers.pois],
@@ -498,12 +517,15 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       element.className = 'lkdv-map-massif';
       element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
       element.dataset.massifId = massif.id;
+      const icon = document.createElement('span');
+      icon.className = 'lkdv-map-massif-ico';
+      icon.innerHTML = MAP_ICON.peak;
       const count = document.createElement('b');
       count.textContent = String(massif.outings);
       const label = document.createElement('span');
       label.className = 'lkdv-map-massif-name';
       label.textContent = massif.name;
-      element.append(count, label);
+      element.append(icon, count, label);
       element.title = `${massif.name} · ${massif.outings} sorties`;
       element.addEventListener('click', (event) => {
         event.stopPropagation();
@@ -523,12 +545,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       element.dataset.poiId = poi.id;
       element.setAttribute('aria-label', poi.label);
       element.title = poi.label;
-      const dot = document.createElement('span');
-      dot.className = 'lkdv-map-poi-dot';
-      const label = document.createElement('span');
-      label.className = 'lkdv-map-poi-label';
-      label.textContent = poi.label;
-      element.append(dot, label);
+      const icon = document.createElement('span');
+      icon.className = 'lkdv-map-poi-ico';
+      icon.innerHTML = poiIcon(poi.label);
+      element.append(icon);
       element.addEventListener('click', (event) => {
         event.stopPropagation();
         setSelected({ kind: 'poi', id: poi.id });
@@ -541,18 +561,41 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       );
     }
 
+    const carnetElements: Array<{ element: HTMLElement; lng: number; lat: number }> = [];
+    if (config.layers.carnets) for (const carnet of data.carnets) {
+      const element = document.createElement('button');
+      element.type = 'button';
+      element.className = 'lkdv-map-carnet';
+      element.setAttribute('aria-label', carnet.title || 'Carnet');
+      element.title = carnet.title || 'Carnet';
+      const icon = document.createElement('span');
+      icon.className = 'lkdv-map-carnet-ico';
+      icon.innerHTML = MAP_ICON.book;
+      element.append(icon);
+      element.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setSelected({ kind: 'carnet', id: carnet.id });
+      });
+      carnetElements.push({ element, lng: carnet.position.lng, lat: carnet.position.lat });
+      markerRefs.current.push(
+        new Marker({ element, anchor: 'center' })
+          .setLngLat([carnet.position.lng, carnet.position.lat])
+          .addTo(map)
+      );
+    }
+
     const updatePoiVisibility = () => {
-      const zoomVisible = map.getZoom() >= 8;
+      const zoomVisible = map.getZoom() >= 7;
       const container = map.getContainer();
-      const compact = container.clientHeight <= 500;
       const width = container.clientWidth;
       const height = container.clientHeight;
-      for (const entry of poiEntries) {
+      const show = (entry: { element: HTMLElement; lng: number; lat: number }) => {
         const point = map.project([entry.lng, entry.lat]);
-        const inside = point.x > 18 && point.x < width - 18 && point.y > 18 && point.y < height - 18;
+        const inside = point.x > 12 && point.x < width - 12 && point.y > 12 && point.y < height - 12;
         entry.element.style.display = zoomVisible && inside ? '' : 'none';
-        entry.element.classList.toggle('is-compact', compact);
-      }
+      };
+      poiEntries.forEach(show);
+      carnetElements.forEach(show);
     };
     updatePoiVisibility();
     map.on('zoom', updatePoiVisibility);
