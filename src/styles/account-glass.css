@@ -1006,3 +1006,235 @@
   pointer-events: none;
   transition: opacity 0.25s;
 }
+
+/* Rangée d'information : icône 30 r10 + libellé + valeur alignée */
+.lkdv-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 2px;
+  min-height: 40px;
+}
+
+.lkdv-info-row__ico {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(23, 64, 44, 0.08);
+  color: var(--tint);
+  flex: none;
+}
+
+.lkdv-info-row__t {
+  flex: 1;
+  min-width: 0;
+  font: 600 12px/1.25 var(--sf);
+  letter-spacing: -0.14px;
+  color: var(--label);
+}
+
+.lkdv-info-row__v {
+  font: 500 11px/1.2 var(--sf);
+  color: var(--label2);
+  text-align: right;
+  max-width: 52%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ═══ Primitives de contenu (restaurées après nettoyage) ═══════════════════ */
+
+/* Carte média : photo + badges posés + légende qui chevauche */
+.lkdv-media-card {
+  position: relative;
+  border-radius: 18px;
+  padding-bottom: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  width: 100%;
+}
+
+.lkdv-media-card__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--tint);
+}
+
+.lkdv-media-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-media-badge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font: 600 9.5px/1 var(--sf);
+  letter-spacing: -0.1px;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-media-badge--dark {
+  left: 6px;
+  top: 6px;
+  background: rgba(12, 24, 18, 0.5);
+  color: #fff;
+  backdrop-filter: blur(8px) saturate(1.4);
+}
+
+.lkdv-media-badge--light {
+  right: 6px;
+  top: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--label);
+}
+
+.lkdv-media-card__cap {
+  position: relative;
+  z-index: 2;
+  margin: -16px 8px 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px) saturate(1.3);
+  box-shadow: 0 4px 14px rgba(23, 43, 36, 0.08), inset 0 1px 0 #fff;
+}
+
+.lkdv-media-card__cap b {
+  display: block;
+  font: 700 13.5px/1.2 var(--sf);
+  letter-spacing: -0.2px;
+  color: var(--label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-media-card__cap span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font: 400 11px/1.25 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-media-card__meta {
+  margin-top: 4px;
+  font: 500 10.5px/1.2 var(--sf);
+  color: var(--label2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Carte de feuille : titre + pastille + lignes + actions */
+.lkdv-sheet-card {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lkdv-sheet-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lkdv-sheet-card__head b {
+  font: 700 13.5px/1.2 var(--sf);
+  letter-spacing: -0.2px;
+  color: var(--label);
+}
+
+.lkdv-pill {
+  height: 22px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.1);
+  color: var(--tint);
+  font: 700 10px/1 var(--sf);
+  letter-spacing: -0.1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-sheet-card__hint {
+  margin: 2px 0 4px;
+  font: 400 11px/1.4 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-sheet-card__actions {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+  margin-top: 2px;
+}
+
+/* Boutons de feuille */
+.lkdv-compte-btn {
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 999px;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 11.5px/1 var(--sf);
+  letter-spacing: -0.14px;
+  cursor: pointer;
+}
+
+.lkdv-compte-btn.primary {
+  background: var(--tint);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(23, 64, 44, 0.2);
+}
+
+.lkdv-compte-btn.ghost {
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--label);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+}
+
+/* Groupe de volets */
+.lkdv-sheet-group {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.lkdv-sheet-group > h3 {
+  margin: 2px 2px 6px;
+  font: 700 11px/1.2 var(--sf);
+  color: var(--label2);
+}
+
+/* Volet « Détails » (vues historiques) : neutralise leurs marges */
+.lkdv-legacy-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
