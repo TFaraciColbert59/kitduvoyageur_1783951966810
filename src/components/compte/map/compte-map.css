@@ -698,3 +698,12 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 3px 8px rgba(16,32,24,.18) !important;
 }
 .lkdv-map-callout-cta:active { transform: scale(.97); }
+
+/* Fiche carte réellement transparente : le tracé reste visible dessous. */
+.lkdv-map-callout {
+  background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(247,252,245,.18)) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(150%) !important;
+  backdrop-filter: blur(10px) saturate(150%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 0 0 .5px rgba(23,43,36,.1), 0 6px 18px rgba(16,32,24,.1) !important;
+  text-shadow: 0 1px 2px rgba(255,255,255,.55);
+}
