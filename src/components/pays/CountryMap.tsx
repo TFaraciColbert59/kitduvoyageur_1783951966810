@@ -162,19 +162,19 @@ export function CountryMap({ name, latitude, longitude, capital }: CountryMapPro
         </span>
       </div>
 
-      <div className="lkdv-pays-map-scale" role="group" aria-label="Échelle de la carte">
-        <button type="button" className={view.z <= 5 ? 'on' : ''} aria-pressed={view.z <= 5} aria-label="Vue pays" onClick={() => zoomBy(5 - view.z)}>
+      <div className="map-scale-selector" role="group" aria-label="Échelle de la carte">
+        <button type="button" className={view.z <= 5 ? 'active' : ''} aria-pressed={view.z <= 5} aria-label="Vue pays" onClick={() => zoomBy(5 - view.z)}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
             <circle cx="12" cy="12" r="9" />
             <path d="M3.5 9h17M3.5 15h17M12 3c2.5 2.6 3.6 5.6 3.6 9s-1.1 6.4-3.6 9c-2.5-2.6-3.6-5.6-3.6-9S9.5 5.6 12 3Z" />
           </svg>
         </button>
-        <button type="button" className={view.z === 7 ? 'on' : ''} aria-pressed={view.z === 7} aria-label="Vue région" onClick={() => zoomBy(7 - view.z)}>
+        <button type="button" className={view.z === 7 ? 'active' : ''} aria-pressed={view.z === 7} aria-label="Vue région" onClick={() => zoomBy(7 - view.z)}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
             <path d="m3 18 5.5-9 4 6 3-4L21 18H3Z" />
           </svg>
         </button>
-        <button type="button" className={view.z >= 9 ? 'on' : ''} aria-pressed={view.z >= 9} aria-label="Vue locale" onClick={() => zoomBy(9 - view.z)}>
+        <button type="button" className={view.z >= 9 ? 'active' : ''} aria-pressed={view.z >= 9} aria-label="Vue locale" onClick={() => zoomBy(9 - view.z)}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
             <circle cx="12" cy="12" r="7" />
             <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
@@ -182,7 +182,7 @@ export function CountryMap({ name, latitude, longitude, capital }: CountryMapPro
         </button>
       </div>
 
-      <div className="lkdv-pays-map-ctrls" role="group" aria-label="Contrôles de la carte">
+      <div className="lg mctl" role="group" aria-label="Contrôles de la carte">
         <button type="button" aria-label="Zoom avant" onClick={() => zoomBy(1)}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
         </button>
