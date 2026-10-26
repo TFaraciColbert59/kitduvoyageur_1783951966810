@@ -32,6 +32,7 @@ import { useMessages } from '@/features/messaging/hooks/useMessages';
 import { useRealtimeMessaging } from '@/features/messaging/hooks/useRealtimeMessaging';
 import { messagingService } from '@/features/messaging/services/messagingService';
 import { formatConversationTimestamp } from '@/features/messaging/lib/messagingUtils';
+import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachmentUrl';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
 import {
   SWIPE_REVEAL,
@@ -335,6 +336,19 @@ function timeLabel(iso: string) {
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '🙏', '🔥'];
 
+/** Une pièce jointe est stockée comme CLÉ durable : on résout l'URL lisible
+ *  avant de peindre (sinon la bulle reste vide). */
+function AttachmentImage({ content }: { content: string }) {
+  const url = useResolvedAttachmentUrl(content);
+  if (!url) {
+    return <span className="bub-img-skeleton" aria-hidden="true" />;
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- pièce jointe résolue
+    <img src={url} alt="" loading="lazy" style={{ maxWidth: '100%', display: 'block' }} />
+  );
+}
+
 function MessageThread({
   conversation,
   currentUserId,
@@ -486,8 +500,7 @@ function MessageThread({
                     ) : null}
                     {message.message_type === 'image' ? (
                       <span className="bub-img">
-                        {/* eslint-disable-next-line @next/next/no-img-element -- pièce jointe distante */}
-                        <img src={message.content} alt="" loading="lazy" style={{ maxWidth: '100%', display: 'block' }} />
+                        <AttachmentImage content={message.content} />
                       </span>
                     ) : message.message_type === 'post' ? (
                       <span className="mcard">
@@ -564,7 +577,7 @@ function MessageThread({
                         </span>
                         <span className="mcard-txt">
                           <b>Note vocale</b>
-                          <small>Appuyer pour écouter</small>
+                          <small>Message vocal partagé</small>
                         </span>
                       </span>
                     ) : message.message_type === 'gpx' || message.message_type === 'file' || message.message_type === 'video' ? (
