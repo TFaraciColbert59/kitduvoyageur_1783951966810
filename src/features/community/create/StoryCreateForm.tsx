@@ -5,7 +5,7 @@ import { Controller } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, Select, SubmitFooter, TextArea } from './form-fields';
+import { Field, Select, SubmitFooter, SwitchField, TextArea, TextInput } from './form-fields';
 import { CreateFormEngine } from './engine/CreateFormEngine';
 import {
   createDefaults,
@@ -32,7 +32,33 @@ export interface StoryCreateFormProps {
 const DEFAULTS = createDefaults('story');
 const STEPS = CREATE_STEPS.story;
 const LAST_STEP = STEPS.length - 1;
-const STEP_FIELDS = [['media'], ['caption', 'audience', 'replyPolicy']] as const;
+const STEP_FIELDS = [
+  ['media'],
+  ['caption', 'overlayText', 'overlayLink'],
+  ['audience', 'replyPolicy', 'allowReshare'],
+] as const;
+
+/**
+ * Composition v1 de `post_stories.composition` : tableau d’overlays.
+ *
+ * Le visionneur existant (`CommunityStoriesBar.parseTextOverlays`) filtre les
+ * entrées `type: 'text'` et ignore les autres : l’overlay lien est donc
+ * persisté sans casser la lecture actuelle.
+ */
+export type StoryCompositionEntry =
+  | { type: 'text'; text: string }
+  | { type: 'link'; url: string };
+
+export function buildStoryComposition(
+  values: Pick<StoryFormValues, 'overlayText' | 'overlayLink'>,
+): StoryCompositionEntry[] | null {
+  const entries: StoryCompositionEntry[] = [];
+  const text = values.overlayText.trim().slice(0, 120);
+  if (text) entries.push({ type: 'text', text });
+  const url = values.overlayLink.trim();
+  if (url) entries.push({ type: 'link', url });
+  return entries.length > 0 ? entries : null;
+}
 
 /** `post_stories.visibility` n’utilise pas le libellé d’interface « abonnies ». */
 const VISIBILITY: Record<StoryFormValues['audience'], string> = {
@@ -76,6 +102,7 @@ export function StoryCreateForm({
       throw new Error('Le média n’a pas pu être envoyé. Réessaie ou retire-le.');
     }
 
+    const composition = buildStoryComposition(values);
     const supabase = createClient();
     const storyId = crypto.randomUUID();
     const isVideo = (media.type || '').startsWith('video/');
@@ -111,13 +138,14 @@ export function StoryCreateForm({
       storage_path: storagePath,
       media_type: isVideo ? 'video' : 'image',
       mime_type: contentType,
-      composition: null,
-      composition_version: null,
+      composition,
+      composition_version: composition ? 1 : null,
       status: 'ready',
       client_request_id: crypto.randomUUID(),
       caption: values.caption.trim() ? values.caption.trim().slice(0, 280) : null,
       visibility: VISIBILITY[values.audience],
       reply_policy: values.replyPolicy,
+      allow_reshare: values.allowReshare,
     });
     if (insertError) {
       await supabase.storage.from('stories-private').remove([storagePath]).catch(() => {});
@@ -146,6 +174,7 @@ export function StoryCreateForm({
         const previewValues = form.watch();
         const media = form.watch('media');
         const caption = form.watch('caption');
+        const overlayText = form.watch('overlayText');
         const goNext = async () => {
           const fields = STEP_FIELDS[activeStep] ?? [];
           const valid = await form.trigger([...fields]);
@@ -230,7 +259,9 @@ export function StoryCreateForm({
                         alt={media[0].alt || 'Aperçu de la story'}
                       />
                     )}
-                    <figcaption>{caption.trim() || 'Ta légende s’affichera ici.'}</figcaption>
+                    <figcaption>
+                      {overlayText.trim() || caption.trim() || 'Ta légende s’affichera ici.'}
+                    </figcaption>
                   </figure>
                 ) : null}
 
@@ -244,6 +275,28 @@ export function StoryCreateForm({
                   <InlineError message={errors.caption?.message} />
                 </Field>
 
+                <Field label="Texte de la story" hint="120 caractères max." htmlFor="story-overlay">
+                  <TextInput
+                    id="story-overlay"
+                    {...form.register('overlayText')}
+                    maxLength={120}
+                    placeholder="Texte à poser sur la story"
+                  />
+                  <InlineError message={errors.overlayText?.message} />
+                </Field>
+
+                <Field label="Lien de la story" htmlFor="story-link">
+                  <TextInput
+                    id="story-link"
+                    type="url"
+                    {...form.register('overlayLink')}
+                    placeholder="https://…"
+                  />
+                  <InlineError message={errors.overlayLink?.message} />
+                </Field>
+              </div>
+
+              <div>
                 <div className="lkdv-form-row">
                   <Field label="Audience" htmlFor="story-audience">
                     <Select id="story-audience" {...form.register('audience')}>
@@ -262,6 +315,19 @@ export function StoryCreateForm({
                     <InlineError message={errors.replyPolicy?.message} />
                   </Field>
                 </div>
+
+                <Controller
+                  control={form.control}
+                  name="allowReshare"
+                  render={({ field }) => (
+                    <SwitchField
+                      label="Partage"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                <InlineError message={errors.allowReshare?.message} />
               </div>
             </StepPager>
           </CommunityFormDrawer>
