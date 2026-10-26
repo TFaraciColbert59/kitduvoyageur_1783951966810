@@ -45,7 +45,18 @@
 | Tests pays + discovery | **138 / 138** | — |
 | Build Next / vinext | OK | version `a9d1fe20` |
 
-## Prod Cloudflare — conflit de déploiement
+## Prod Cloudflare — état du 26/10 12:22
+
+| URL | Version | Porte |
+|---|---|---|
+| `https://kitduvoyageur.faracitonyp.workers.dev/pays/fr` | `15bd7a56` (100 %) | **18/18 · 18/18 · 18/18** |
+| `https://pays-refonte-kitduvoyageur.faracitonyp.workers.dev/pays/fr` | preview alias `pays-refonte` | **18/18 · 18/18 · 18/18** |
+
+La preview alias est **stable** : elle ne bouge pas quand la prod est réécrite. C'est l'URL à utiliser pour montrer la refonte tant que le worker de production est partagé.
+
+`/carnets/[id]` sur la prod renvoie **l'autre implémentation** du carnet (branche vinext) : 3/18 avec nos ancres, ce qui est attendu — la refonte carnet (20/20 en local) n'est pas déployée.
+
+## Conflit de déploiement (à traiter)
 
 Le worker `kitduvoyageur` reçoit des déploiements **d'une autre session** : `~/Desktop/lkdv-cloudflare/.cloudflare` (créé à 11:06) et un dossier `lkdv-cf-demo` déploient une version legacy de `/pays/fr` (marqueur `glass-capsule-btn`, écran 2 126 px).
 
