@@ -90,32 +90,39 @@ export function StepPager({
   const tabs = steps.map((step) => ({ id: step.id, label: step.label }));
 
   return (
-    <div className={`lkdv-create-step-pager ${className}`.trim()}>
+    <div
+      className={`lkdv-create-step-pager ${className}`.trim()}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowRight' && safeIndex < count - 1) onIndexChange(safeIndex + 1);
+        if (event.key === 'ArrowLeft' && safeIndex > 0) onIndexChange(safeIndex - 1);
+      }}
+    >
       <LensPager
-        index={safeIndex}
-        count={count}
+        index={0}
+        count={1}
         onIndexChange={onIndexChange}
         label={label}
       >
-        {panes.map((pane, paneIndex) => {
-          const step = steps[paneIndex];
-          const active = paneIndex === safeIndex;
-          return (
-            <section
-              key={step?.id ?? paneIndex}
-              className="lkdv-create-step-pane"
-              role="group"
-              aria-roledescription="étape"
-              aria-label={`${paneIndex + 1} sur ${count} — ${step?.label ?? ''}`}
-              aria-hidden={active ? undefined : true}
-              inert={active ? undefined : true}
-              data-step-id={step?.id}
-            >
-              {pane}
-            </section>
-          );
-        })}
+        {panes[safeIndex] ? (
+          <section
+            key={steps[safeIndex]?.id ?? safeIndex}
+            className="lkdv-create-step-pane"
+            role="group"
+            aria-roledescription="étape"
+            aria-label={`${safeIndex + 1} sur ${count} — ${steps[safeIndex]?.label ?? ''}`}
+            data-step-id={steps[safeIndex]?.id}
+          >
+            {panes[safeIndex]}
+          </section>
+        ) : null}
       </LensPager>
+      <div className="lkdv-create-inactive-panes" style={{ display: 'none' }} aria-hidden="true">
+        {panes.map((pane, paneIndex) => paneIndex === safeIndex ? null : (
+          <section key={steps[paneIndex]?.id ?? paneIndex} className="lkdv-create-step-pane" inert>
+            {pane}
+          </section>
+        ))}
+      </div>
 
       <div className="lkdv-create-stepbar">
         <div className="lkdv-create-step-tabs" role="tablist" aria-label={label}>
