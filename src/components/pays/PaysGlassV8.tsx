@@ -19,13 +19,13 @@ import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import { AccountDrawerHost, type DrawerTab } from '@/design/account/AccountDrawerHost';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import BouteilleALaMer from '@/components/pays/BouteilleALaMer';
-import { PaysTopCarnets } from '@/components/pays/drawer/PaysTopCarnets';
+import { PaysCarnetFeed } from '@/components/pays/drawer/PaysCarnetFeed';
 import { PaysTopClubs } from '@/components/pays/drawer/PaysTopClubs';
 import { PaysHistoryPane } from '@/components/pays/drawer/PaysHistoryPane';
 import { PaysRegionGrid } from '@/components/pays/drawer/PaysRegionGrid';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
 import { CountryMap } from '@/components/pays/CountryMap';
-import { formatArea, formatDistance, formatElevation, formatDateRange, relativeDate, plural, joinMeta } from '@/components/pays/formatPays';
+import { formatArea, formatAreaShort, formatDistance, formatElevation, formatDateRange, relativeDate, plural, joinMeta } from '@/components/pays/formatPays';
 import { createClient } from '@/lib/supabase/client';
 import type { CountryDetail } from '@/lib/countryDetails';
 
@@ -63,6 +63,8 @@ const ICONS = {
   clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v5l3 2',
   coin: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v10M9 8h4a2 2 0 0 1 0 4H9h4a2 2 0 0 1 0 4H9',
   spark: 'M12 3.5c.6 4.4 2.5 6.3 6.9 6.9-4.4.6-6.3 2.5-6.9 6.9-.6-4.4-2.5-6.3-6.9-6.9 4.4-.6 6.3-2.5 6.9-6.9Z',
+  waves: 'M2 9c2.5 0 2.5 2 5 2s2.5-2 5-2 2.5 2 5 2 2.5-2 5-2M2 15c2.5 0 2.5 2 5 2s2.5-2 5-2 2.5 2 5 2 2.5-2 5-2',
+  layers: 'M12 3l9 5-9 5-9-5 9-5ZM3 13l9 5 9-5',
   users: 'M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5',
 };
 
@@ -85,7 +87,7 @@ const DRAWER_TABS: DrawerTab[] = [
   { id: 'fiche', label: 'Fiche complète', icon: <Ic d={ICONS.doc} /> },
   { id: 'carnets', label: 'Carnets les plus aimés', icon: <Ic d={ICONS.book} /> },
   { id: 'groupes', label: 'Groupes les plus connus', icon: <Ic d={ICONS.users} /> },
-  { id: 'bouteille', label: 'Bouteille à la mer', icon: <Ic d={ICONS.spark} /> },
+  { id: 'bouteille', label: 'Bouteille à la mer', icon: <Ic d={ICONS.waves} /> },
   { id: 'historique', label: 'Mes passages', icon: <Ic d={ICONS.clock} /> },
 ];
 
@@ -401,17 +403,17 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
   const isEmpty = section === 'presentation' ? false : !hasMedia && infoRows.length === 0 && infoCards.length === 0;
 
   const statItems = [
-    { key: 'area', label: 'superficie', value: country.superficie_court },
+    { key: 'area', label: 'superficie', value: formatAreaShort(country.superficie_court) ?? country.superficie_court },
     { key: 'capital', label: 'capitale', value: country.capitale },
     { key: 'currency', label: 'monnaie', value: country.monnaie_code || '—' },
   ];
 
   const FICHE_PAGES = [
-    { id: 'synthese', label: 'Synthèse', icon: ICONS.doc },
+    { id: 'synthese', label: 'Synthèse', icon: ICONS.spark },
     { id: 'carte', label: 'Carte d’identité', icon: ICONS.pin },
     { id: 'pratique', label: 'Pratique', icon: ICONS.shield },
     { id: 'sources', label: 'Sources', icon: ICONS.book },
-    { id: 'details', label: 'Section active', icon: ICONS.spark },
+    { id: 'details', label: 'Section active', icon: ICONS.layers },
     { id: 'partager', label: 'Partager', icon: ICONS.share },
   ] as const;
 
@@ -615,44 +617,50 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
               </div>
             ))}
           </LensPager>
-          <div className="ig-tabs lkdv-fiche-tabs" role="tablist" aria-label="Écrans de la fiche">
-            <span
-              className="ig-th lens"
-              aria-hidden="true"
-              style={{ width: `calc((100% - 4px) / ${screens.length})`, transform: `translateX(${fichePage * 100}%)` }}
-            />
-            {screens.map((screen, index) => {
-              const active = index === fichePage;
-              return (
-                <button
-                  key={screen.id}
-                  type="button"
-                  role="tab"
-                  id={`fiche-tab-${screen.id}`}
-                  aria-selected={active}
-                  aria-controls={`fiche-${screen.id}`}
-                  aria-label={screen.label}
-                  title={screen.label}
-                  tabIndex={active ? 0 : -1}
-                  className={active ? 'cur' : ''}
-                  onClick={() => setFichePage(index)}
-                >
-                  <Ic d={screen.icon} size={15} />
-                </button>
-              );
-            })}
+          <div className="ig-tabs-float">
+            <div className="ig-tabs lkdv-fiche-tabs" role="tablist" aria-label="Écrans de la fiche">
+              <span
+                className="ig-th lens"
+                aria-hidden="true"
+                style={{ width: `calc((100% - 4px) / ${screens.length})`, transform: `translateX(${fichePage * 100}%)` }}
+              />
+              {screens.map((screen, index) => {
+                const active = index === fichePage;
+                return (
+                  <button
+                    key={screen.id}
+                    type="button"
+                    role="tab"
+                    id={`fiche-tab-${screen.id}`}
+                    aria-selected={active}
+                    aria-controls={`fiche-${screen.id}`}
+                    aria-label={screen.label}
+                    title={screen.label}
+                    tabIndex={active ? 0 : -1}
+                    className={active ? 'cur' : ''}
+                    onClick={() => setFichePage(index)}
+                  >
+                    <Ic d={screen.icon} size={15} />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       );
     }
     if (key === 'carnets') {
-      return <PaysTopCarnets countryCode={country.code} countryName={country.nom} />;
+      return <PaysCarnetFeed countryCode={country.code} countryName={country.nom} />;
     }
     if (key === 'groupes') {
       return <PaysTopClubs countryCode={country.code} countryName={country.nom} />;
     }
     if (key === 'bouteille') {
-      return <BouteilleALaMer countryIso={country.code} countryName={country.nom} />;
+      return (
+        <div className="lkdv-bottle-sheet">
+          <BouteilleALaMer countryIso={country.code} countryName={country.nom} />
+        </div>
+      );
     }
     if (key === 'historique') {
       return <PaysHistoryPane countryCode={country.code} countryName={country.nom} />;
@@ -922,6 +930,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
             <AccountDrawerHost
               open={drawer !== null}
               fit="card"
+              hideTitle
               title={drawer ? DRAWER_TABS.find((t) => t.id === drawer)?.label ?? '' : ''}
               subtitle={`${country.nom}${country.iso_a3 ? ` · ${country.iso_a3}` : ''}`}
               onClose={() => setDrawer(null)}

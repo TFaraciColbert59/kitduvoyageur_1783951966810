@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatArea, formatDistance, formatElevation, formatDateRange, relativeDate, plural, joinMeta, formatPopulation } from '../formatPays';
+import { formatArea, formatAreaShort, formatDistance, formatElevation, formatDateRange, relativeDate, plural, joinMeta, formatPopulation } from '../formatPays';
 
 describe('formatage fiche pays', () => {
   it('sépare les milliers par une espace insécable', () => {
@@ -14,6 +14,12 @@ describe('formatage fiche pays', () => {
     expect(formatArea(null)).toBeNull();
     expect(formatArea(0)).toBeNull();
     expect(formatArea('—')).toBeNull();
+  });
+
+  it('arrondit la stat superficie à la centaine de milliers', () => {
+    expect(formatAreaShort(643801)).toBe('600\u202F000 km');
+    expect(formatAreaShort('551 695')).toBe('600\u202F000 km');
+    expect(formatAreaShort(null)).toBeNull();
   });
 
   it('colle l’unité à la décimale', () => {

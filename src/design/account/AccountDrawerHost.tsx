@@ -37,6 +37,8 @@ export interface AccountDrawerHostProps {
   onBack?: () => void;
   /** `card` épouse exactement la carte supérieure ; `tall` garde la hauteur historique. */
   fit?: 'tall' | 'card';
+  /** Masque le titre et le sous-titre internes (le dialogue garde son `aria-label`). */
+  hideTitle?: boolean;
 }
 
 export function AccountDrawerHost({
@@ -50,6 +52,7 @@ export function AccountDrawerHost({
   activeTab = null,
   onTabChange,
   fit = 'tall',
+  hideTitle = false,
 }: AccountDrawerHostProps) {
   const sheetRef = useRef<HTMLElement>(null);
   const [entered, setEntered] = useState(false);
@@ -137,10 +140,12 @@ export function AccountDrawerHost({
 
 
           <div className="lkdv-sheet-scroll" data-pane={activeTab ?? 'none'}>
-            <div className="lkdv-sheet-title">
-              <b>{title}</b>
-              {subtitle ? <span>{subtitle}</span> : null}
-            </div>
+            {hideTitle ? null : (
+              <div className="lkdv-sheet-title">
+                <b>{title}</b>
+                {subtitle ? <span>{subtitle}</span> : null}
+              </div>
+            )}
             {children}
           </div>
         </div>

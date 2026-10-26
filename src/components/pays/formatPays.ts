@@ -19,6 +19,21 @@ export function formatArea(km2: number | string | null | undefined): string | nu
   return `${formatNumber(Math.round(n))} km²`;
 }
 
+function parseAreaKm2(km2: number | string | null | undefined): number | null {
+  if (km2 === null || km2 === undefined || km2 === '') return null;
+  const raw = typeof km2 === 'string' ? km2.replace(/[^\d.,]/g, '').replace(/[.,](?=\d{3}\b)/g, '') : km2;
+  const n = typeof raw === 'number' ? raw : Number(String(raw).replace(',', '.'));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+}
+
+/** « 600 000 km » — arrondi à la centaine de milliers pour la stat principale. */
+export function formatAreaShort(km2: number | string | null | undefined): string | null {
+  const n = parseAreaKm2(km2);
+  if (n === null) return null;
+  return `${formatNumber(Math.round(n / 100_000) * 100_000)} km`;
+}
+
 export function formatDistance(km: number | null | undefined, digits = 1): string | null {
   if (typeof km !== 'number' || !Number.isFinite(km)) return null;
   const fixed = Number.isInteger(km) ? String(km) : km.toFixed(digits).replace('.', ',');

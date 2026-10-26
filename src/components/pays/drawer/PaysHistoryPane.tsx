@@ -132,7 +132,7 @@ export function PaysHistoryPane({ countryCode, countryName }: { countryCode: str
   }
 
   return (
-    <div>
+    <div className="lkdv-stack">
       {state.rows.map((row) => {
         const dates = formatDateRange(row.start, row.end);
         const status = row.status ? STATUS_LABEL[row.status] ?? row.status : null;
