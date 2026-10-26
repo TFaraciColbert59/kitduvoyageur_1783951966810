@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { Controller } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
+import { Field, Select, SubmitFooter, SwitchField, TextArea, TextInput } from './form-fields';
 import { CreateFormEngine } from './engine/CreateFormEngine';
 import { createDefaults, CREATE_FIELD_LABELS, type CarnetFormValues } from './engine/createSchemas';
 import { CREATE_STEPS, StepPager } from './shared/StepPager';
 import { MediaPicker } from './shared/MediaPicker';
 import { DateRangeField } from './shared/DateRangeField';
+import { NumberStepper } from './shared/NumberStepper';
+import { TagChips } from './shared/TagChips';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { InlineError } from './shared/InlineError';
@@ -30,8 +32,18 @@ const DEFAULTS = createDefaults('carnet');
 const STEPS = CREATE_STEPS.carnet;
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['title', 'destination', 'description', 'cover'],
-  ['startDate', 'endDate'],
+  ['title', 'destination', 'cover'],
+  ['lieuDepart', 'lieuArrivee', 'distanceKm', 'deniveleM', 'routeRating'],
+  [
+    'startDate',
+    'endDate',
+    'nbNuits',
+    'nbVoyageurs',
+    'weather',
+    'tags',
+    'isCollaborative',
+  ],
+  ['description'],
   ['visibility'],
 ] as const;
 
@@ -39,6 +51,65 @@ const VISIBILITY_LABELS: Record<CarnetFormValues['visibility'], string> = {
   public: 'Public — visible dans le fil et sur ton profil.',
   private: 'Privé — seul toi peux ouvrir le carnet.',
 };
+
+const RATING_OPTIONS = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+
+export interface CarnetInsertRow {
+  title: string;
+  destination: string;
+  description: string;
+  cover_image: string;
+  cover_image_alt: string;
+  start_date: string | null;
+  end_date: string | null;
+  visibility: CarnetFormValues['visibility'];
+  author_id: string;
+  lieu_depart: string | null;
+  lieu_arrivee: string | null;
+  distance_km: number;
+  denivele_m: number;
+  nb_nuits: number;
+  nb_voyageurs: number;
+  weather: string | null;
+  route_rating: number;
+  tags: string[];
+  is_collaborative: boolean;
+  [key: string]: unknown;
+}
+
+/**
+ * Ligne `carnets` : uniquement des colonnes existantes, aucune migration.
+ * `map_points` reste intact (le formulaire rapide n’a pas de coordonnées) ;
+ * l’itinéraire vit dans `lieu_depart`, `lieu_arrivee`, `distance_km` et
+ * `denivele_m`.
+ */
+export function buildCarnetRow(
+  values: CarnetFormValues,
+  userId: string,
+  coverUrl: string | null,
+): CarnetInsertRow {
+  return {
+    title: values.title.trim(),
+    destination: values.destination.trim(),
+    description: values.description.trim(),
+    cover_image: coverUrl ?? '',
+    cover_image_alt: values.cover[0]?.alt?.trim() || values.title.trim(),
+    start_date: values.startDate || null,
+    end_date: values.endDate || null,
+    visibility: values.visibility,
+    author_id: userId,
+    lieu_depart: values.lieuDepart.trim() || null,
+    lieu_arrivee: values.lieuArrivee.trim() || null,
+    distance_km: values.distanceKm,
+    denivele_m: values.deniveleM,
+    nb_nuits: values.nbNuits,
+    nb_voyageurs: values.nbVoyageurs,
+    weather: values.weather.trim() || null,
+    route_rating: values.routeRating,
+    tags: values.tags,
+    is_collaborative: values.isCollaborative,
+  };
+}
 
 export function CarnetCreateForm({
   open,
@@ -67,20 +138,12 @@ export function CarnetCreateForm({
     setSubmitError(null);
     if (!user?.id) throw new Error('Connecte-toi pour créer un carnet.');
     const coverUrl = resolveCoverUrl(values.cover);
+    const row = buildCarnetRow(values, user.id, coverUrl);
 
     const supabase = createClient();
     const { data, error: insertError } = await supabase
       .from('carnets')
-      .insert({
-        title: values.title.trim(),
-        destination: values.destination.trim(),
-        description: values.description.trim(),
-        cover_image: coverUrl ?? '',
-        start_date: values.startDate || null,
-        end_date: values.endDate || null,
-        visibility: values.visibility,
-        author_id: user.id,
-      })
+      .insert(row)
       .select('id')
       .single();
     if (insertError || !data) {
@@ -88,11 +151,18 @@ export function CarnetCreateForm({
     }
 
     try {
+      const routeLine = [
+        values.distanceKm > 0 ? `${values.distanceKm} km` : '',
+        values.deniveleM > 0 ? `+${values.deniveleM} m` : '',
+        values.nbNuits > 0 ? `${values.nbNuits} nuit(s)` : '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
       await insertCommunityPost({
         authorId: user.id,
         content: `**${values.title.trim()}**\n\n${
           values.description.trim() || values.destination.trim()
-        }`,
+        }${routeLine ? `\n\n${routeLine}` : ''}`,
         postType: 'share',
         imageUrl: coverUrl,
         audience: values.visibility === 'public' ? 'public' : 'abonnies',
@@ -127,6 +197,7 @@ export function CarnetCreateForm({
         const startDate = form.watch('startDate');
         const endDate = form.watch('endDate');
         const visibility = form.watch('visibility');
+        const routeRating = form.watch('routeRating');
         const goNext = async () => {
           const fields = STEP_FIELDS[activeStep] ?? [];
           const valid = await form.trigger([...fields]);
@@ -212,18 +283,83 @@ export function CarnetCreateForm({
                   )}
                 />
                 <InlineError message={errors.cover?.message as string | undefined} />
-                <Field
-                  label="Description"
-                  hint={`${description.length}/1000 caractères`}
-                  htmlFor="carnet-description"
-                >
-                  <TextArea
-                    id="carnet-description"
-                    {...form.register('description')}
-                    maxLength={1000}
-                    placeholder="Le récit, l’idée, les points forts…"
+              </div>
+
+              <div>
+                <div className="lkdv-form-row">
+                  <Field label="Départ" htmlFor="carnet-from">
+                    <TextInput
+                      id="carnet-from"
+                      {...form.register('lieuDepart')}
+                      maxLength={120}
+                      placeholder="Chamonix"
+                    />
+                    <InlineError message={errors.lieuDepart?.message} />
+                  </Field>
+                  <Field label="Arrivée" htmlFor="carnet-to">
+                    <TextInput
+                      id="carnet-to"
+                      {...form.register('lieuArrivee')}
+                      maxLength={120}
+                      placeholder="Les Houches"
+                    />
+                    <InlineError message={errors.lieuArrivee?.message} />
+                  </Field>
+                </div>
+
+                <div className="lkdv-form-row">
+                  <Field label="Distance (km)" htmlFor="carnet-distance">
+                    <TextInput
+                      id="carnet-distance"
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      max={10_000}
+                      step={0.1}
+                      {...form.register('distanceKm', { valueAsNumber: true })}
+                    />
+                    <InlineError message={errors.distanceKm?.message} />
+                  </Field>
+                  <Controller
+                    control={form.control}
+                    name="deniveleM"
+                    render={({ field }) => (
+                      <NumberStepper
+                        label="Dénivelé"
+                        value={field.value}
+                        onChange={field.onChange}
+                        min={0}
+                        max={30_000}
+                        step={50}
+                        unit="m"
+                      />
+                    )}
                   />
-                  <InlineError message={errors.description?.message} />
+                </div>
+                <InlineError message={errors.deniveleM?.message} />
+
+                <Field
+                  label="Note de l’itinéraire"
+                  hint="0 à 5, par pas de 0,5."
+                  htmlFor="carnet-rating"
+                >
+                  <Select
+                    id="carnet-rating"
+                    value={String(routeRating)}
+                    onChange={(event) =>
+                      form.setValue('routeRating', Number(event.target.value), {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      })
+                    }
+                  >
+                    {RATING_OPTIONS.map((rating) => (
+                      <option key={rating} value={String(rating)}>
+                        {rating === 0 ? 'Non noté' : `${String(rating).replace('.', ',')} / 5`}
+                      </option>
+                    ))}
+                  </Select>
+                  <InlineError message={errors.routeRating?.message} />
                 </Field>
               </div>
 
@@ -250,23 +386,99 @@ export function CarnetCreateForm({
                   error={errors.endDate?.message ?? errors.startDate?.message ?? null}
                 />
                 <InlineError message={errors.startDate?.message} />
-                {startDate && endDate ? (
-                  <p className="lkdv-form-note">
-                    {Math.max(
-                      1,
-                      Math.round(
-                        (new Date(`${endDate}T12:00:00`).getTime() -
-                          new Date(`${startDate}T12:00:00`).getTime()) /
-                          86_400_000,
-                      ),
-                    )}{' '}
-                    nuit(s) sur place.
-                  </p>
-                ) : null}
+
+                <div className="lkdv-form-row">
+                  <Controller
+                    control={form.control}
+                    name="nbNuits"
+                    render={({ field }) => (
+                      <NumberStepper
+                        label="Nuits"
+                        value={field.value}
+                        onChange={field.onChange}
+                        min={0}
+                        max={90}
+                        unit="nuit(s)"
+                      />
+                    )}
+                  />
+                  <Controller
+                    control={form.control}
+                    name="nbVoyageurs"
+                    render={({ field }) => (
+                      <NumberStepper
+                        label="Voyageurs"
+                        value={field.value}
+                        onChange={field.onChange}
+                        min={1}
+                        max={50}
+                        unit="pers."
+                      />
+                    )}
+                  />
+                </div>
+                <InlineError message={errors.nbNuits?.message} />
+                <InlineError message={errors.nbVoyageurs?.message} />
+
+                <Field label="Météo" htmlFor="carnet-weather">
+                  <TextInput
+                    id="carnet-weather"
+                    {...form.register('weather')}
+                    maxLength={120}
+                    placeholder="Ensoleillé, vent 20 km/h…"
+                  />
+                  <InlineError message={errors.weather?.message} />
+                </Field>
+
+                <Controller
+                  control={form.control}
+                  name="tags"
+                  render={({ field }) => (
+                    <TagChips
+                      value={field.value}
+                      onChange={field.onChange}
+                      label="Tags"
+                      suggestions={['rando', 'bivouac', 'ski', 'vélo']}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={form.control}
+                  name="isCollaborative"
+                  render={({ field }) => (
+                    <SwitchField
+                      label="Collaboratif"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                <InlineError message={errors.isCollaborative?.message} />
               </div>
 
               <div>
-                <Field label="Visibilité" hint={VISIBILITY_LABELS[visibility]} htmlFor="carnet-visibility">
+                <Field
+                  label="Récit"
+                  hint={`${description.length}/1000 caractères`}
+                  htmlFor="carnet-description"
+                >
+                  <TextArea
+                    id="carnet-description"
+                    {...form.register('description')}
+                    maxLength={1000}
+                    placeholder="Le récit, l’idée, les points forts…"
+                  />
+                  <InlineError message={errors.description?.message} />
+                </Field>
+              </div>
+
+              <div>
+                <Field
+                  label="Visibilité"
+                  hint={VISIBILITY_LABELS[visibility]}
+                  htmlFor="carnet-visibility"
+                >
                   <Select id="carnet-visibility" {...form.register('visibility')}>
                     <option value="public">Public</option>
                     <option value="private">Privé</option>
