@@ -447,3 +447,46 @@
     animation: none !important;
   }
 }
+
+/* Marqueurs massif : pastille de verre lisible, nom révélé à la sélection. */
+.lkdv-map-massif {
+  width: 36px !important;
+  height: 36px !important;
+  gap: 6px;
+  padding: 0 9px !important;
+  border: 1.5px solid rgba(47, 107, 69, 0.42);
+  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(244,250,241,.76));
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 0 0.5px rgba(23,43,36,.12),
+    0 6px 16px rgba(23,43,36,.16),
+    0 0 0 6px rgba(255,255,255,.2);
+  color: #17402c;
+  font-size: 12px !important;
+  transition: width .24s cubic-bezier(.32,.72,0,1), background .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.lkdv-map-massif b { color: #2f6b45; font-size: 12px; }
+.lkdv-map-massif-name {
+  display: none;
+  max-width: 118px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+}
+.lkdv-map-massif:hover,
+.lkdv-map-massif:focus-visible,
+.lkdv-map-massif.is-selected {
+  width: auto !important;
+  background: linear-gradient(180deg, #2f6b45, #17402c);
+  border-color: rgba(255,255,255,.5);
+  color: #fff;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 8px 20px rgba(10,20,14,.26), 0 0 0 6px rgba(255,255,255,.16);
+}
+.lkdv-map-massif:hover b,
+.lkdv-map-massif:focus-visible b,
+.lkdv-map-massif.is-selected b { color: #d8f3de; }
+.lkdv-map-massif:hover .lkdv-map-massif-name,
+.lkdv-map-massif:focus-visible .lkdv-map-massif-name,
+.lkdv-map-massif.is-selected .lkdv-map-massif-name { display: inline; }

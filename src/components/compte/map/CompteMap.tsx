@@ -41,9 +41,18 @@ export interface CompteMapContext {
   outingId?: string | null;
 }
 
+/** Cible de recentrage externe (fiche carnet) : coordonnées réelles uniquement. */
+export interface CompteMapFocus {
+  lat: number;
+  lng: number;
+  zoom?: number;
+}
+
 export interface CompteMapProps {
   authState: CompteMapAuthState;
   context: CompteMapContext;
+  /** Quand la valeur change, la caméra vole vers ce point. */
+  focus?: CompteMapFocus | null;
 }
 
 type Selected =
@@ -151,7 +160,7 @@ function ensureLayer(map: MapLibreMap, id: string, create: () => void) {
   if (!map.getLayer(id)) create();
 }
 
-export function CompteMap({ authState, context }: CompteMapProps) {
+export function CompteMap({ authState, context, focus = null }: CompteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRefs = useRef<Marker[]>([]);
@@ -272,8 +281,8 @@ export function CompteMap({ authState, context }: CompteMapProps) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#FFFFFF',
-          'line-width': 6,
-          'line-opacity': 0.68,
+          'line-width': 7,
+          'line-opacity': 0.82,
         },
       });
     });
@@ -285,9 +294,9 @@ export function CompteMap({ authState, context }: CompteMapProps) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#5B7F55',
-          'line-width': 7,
-          'line-opacity': 0.35,
-          'line-blur': 4,
+          'line-width': 11,
+          'line-opacity': 0.32,
+          'line-blur': 7,
         },
       });
     });
@@ -299,8 +308,8 @@ export function CompteMap({ authState, context }: CompteMapProps) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#17402C',
-          'line-width': 3,
-          'line-opacity': 0.9,
+          'line-width': 3.5,
+          'line-opacity': 0.96,
         },
       });
     });
@@ -318,10 +327,10 @@ export function CompteMap({ authState, context }: CompteMapProps) {
         type: 'circle',
         source: 'compte-track-starts',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': 6,
           'circle-color': '#17402C',
           'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 2.5,
         },
       });
       map.on('click', 'compte-track-starts-dot', (event: MapLayerMouseEvent) => {
@@ -341,10 +350,10 @@ export function CompteMap({ authState, context }: CompteMapProps) {
         type: 'circle',
         source: 'compte-track-ends',
         paint: {
-          'circle-radius': 4,
-          'circle-color': '#fff',
+          'circle-radius': 5,
+          'circle-color': '#F4FBF3',
           'circle-stroke-color': '#17402C',
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 2.5,
         },
       });
     });
@@ -356,16 +365,29 @@ export function CompteMap({ authState, context }: CompteMapProps) {
         data.carnets.map((carnet) => ({ id: carnet.id, position: carnet.position }))
       )
     );
+    ensureLayer(map, 'compte-carnets-halo', () => {
+      map.addLayer({
+        id: 'compte-carnets-halo',
+        type: 'circle',
+        source: 'compte-carnets',
+        paint: {
+          'circle-radius': 12,
+          'circle-color': '#C89A3B',
+          'circle-opacity': 0.16,
+        },
+      });
+    });
     ensureLayer(map, 'compte-carnets-dot', () => {
       map.addLayer({
         id: 'compte-carnets-dot',
         type: 'circle',
         source: 'compte-carnets',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': 6,
           'circle-color': '#C89A3B',
           'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 2.5,
+          'circle-opacity': 1,
         },
       });
       map.on('click', 'compte-carnets-dot', (event: MapLayerMouseEvent) => {
@@ -379,16 +401,44 @@ export function CompteMap({ authState, context }: CompteMapProps) {
       'compte-pois',
       pointsCollection(data.pois.map((poi) => ({ id: poi.id, position: poi.position })))
     );
+    ensureLayer(map, 'compte-pois-halo', () => {
+      map.addLayer({
+        id: 'compte-pois-halo',
+        type: 'circle',
+        source: 'compte-pois',
+        paint: {
+          'circle-radius': 11,
+          'circle-color': '#2F6B45',
+          'circle-opacity': 0.14,
+        },
+      });
+    });
+    ensureLayer(map, 'compte-pois-hit', () => {
+      map.addLayer({
+        id: 'compte-pois-hit',
+        type: 'circle',
+        source: 'compte-pois',
+        paint: {
+          'circle-radius': 18,
+          'circle-color': '#2F6B45',
+          'circle-opacity': 0,
+        },
+      });
+      map.on('click', 'compte-pois-hit', (event: MapLayerMouseEvent) => {
+        const id = event.features?.[0]?.properties?.id;
+        if (id) setSelected({ kind: 'poi', id: String(id) });
+      });
+    });
     ensureLayer(map, 'compte-pois-dot', () => {
       map.addLayer({
         id: 'compte-pois-dot',
         type: 'circle',
         source: 'compte-pois',
         paint: {
-          'circle-radius': 3.5,
-          'circle-color': '#4B6B7C',
+          'circle-radius': 4.5,
+          'circle-color': '#2F6B45',
           'circle-stroke-color': '#fff',
-          'circle-stroke-width': 1.5,
+          'circle-stroke-width': 2.5,
         },
       });
       map.on('click', 'compte-pois-dot', (event: MapLayerMouseEvent) => {
@@ -399,7 +449,10 @@ export function CompteMap({ authState, context }: CompteMapProps) {
 
     const layers = mapModeConfig(context.mode).layers;
     const visibility: Array<[string, boolean]> = [
+      ['compte-carnets-halo', layers.carnets],
       ['compte-carnets-dot', layers.carnets],
+      ['compte-pois-halo', layers.pois],
+      ['compte-pois-hit', layers.pois],
       ['compte-pois-dot', layers.pois],
       ['compte-track-starts-dot', layers.outingPins],
       ['compte-track-ends-dot', layers.tracks !== 'none'],
@@ -421,6 +474,7 @@ export function CompteMap({ authState, context }: CompteMapProps) {
         layers: [
           'compte-track-starts-dot',
           'compte-carnets-dot',
+          'compte-pois-hit',
           'compte-pois-dot',
         ].filter((layer) => Boolean(map.getLayer(layer))),
       });
@@ -443,9 +497,13 @@ export function CompteMap({ authState, context }: CompteMapProps) {
       element.type = 'button';
       element.className = 'lkdv-map-massif';
       element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
+      element.dataset.massifId = massif.id;
       const count = document.createElement('b');
       count.textContent = String(massif.outings);
-      element.append(count);
+      const label = document.createElement('span');
+      label.className = 'lkdv-map-massif-name';
+      label.textContent = massif.name;
+      element.append(count, label);
       element.title = `${massif.name} · ${massif.outings} sorties`;
       element.addEventListener('click', (event) => {
         event.stopPropagation();
@@ -458,6 +516,15 @@ export function CompteMap({ authState, context }: CompteMapProps) {
       );
     }
   }, [map, ready, data, config.layers.massifs]);
+
+  useEffect(() => {
+    if (!map || !ready) return;
+    const container = map.getContainer();
+    container.querySelectorAll<HTMLElement>('.lkdv-map-massif').forEach((element) => {
+      const id = element.dataset.massifId;
+      element.classList.toggle('is-selected', selected?.kind === 'massif' && selected.id === id);
+    });
+  }, [map, ready, selected]);
 
   useEffect(() => {
     if (!map || !data || !ready) return;
@@ -499,6 +566,19 @@ export function CompteMap({ authState, context }: CompteMapProps) {
       map.off('zoom', update);
     };
   }, [map, resolved]);
+
+  /* Recentrage demandé de l'extérieur (ligne de lieu de la fiche carnet).
+     Une coordonnée absente ou non finie ne déplace rien. */
+  useEffect(() => {
+    if (!map || !focus) return;
+    if (!Number.isFinite(focus.lat) || !Number.isFinite(focus.lng)) return;
+    map.flyTo({
+      center: [focus.lng, focus.lat],
+      zoom: focus.zoom ?? 10,
+      duration: prefersReducedMotion() ? 0 : 900,
+      essential: true,
+    });
+  }, [map, focus]);
 
   const handleScale = useCallback(
     (next: MapScale) => {
