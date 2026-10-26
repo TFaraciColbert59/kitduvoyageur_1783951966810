@@ -1836,3 +1836,4 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 }
 .lkdv-create-step-tabs button svg { width: 16px; height: 16px; }
 .lkdv-create-step-tabs button { display: grid; place-items: center; }
+.lkdv-create-form-preview[hidden] { display: none !important; }
