@@ -30,12 +30,8 @@ export interface CarnetCardProps {
   /** Les actions du sélecteur ouvrent une page, jamais un drawer. */
   onOpenComments: () => void;
   onOpenLikes: () => void;
-  onOpenParcours: () => void;
-  onOpenManage: () => void;
   onSave: () => void;
-  onOpenMenu: () => void;
   onFocusPlace: (focus: CarnetPlaceFocus) => void;
-  menu?: React.ReactNode;
   onOpenPost: (index: number) => void;
   onDownloadGpx: () => void;
   likesPage?: React.ReactNode;
@@ -46,22 +42,22 @@ export interface CarnetCardProps {
 /**
  * Index du segment qui reçoit la lentille blanche dans la capsule.
  *
- * La capsule aligne sept segments de 41,5 px : ♥ 0, 💬 1, 🔖 2, ✏️ 3,
- * ··· 4, grille 5, carte 6. La lentille ne se pose que sur une vue ou sur la
- * page affichée ; Enregistrer, Plus et les pages hors sélecteur n'en ont pas.
+ * La capsule aligne cinq segments de 41,5 px : ♥ 0 (J’aime), 💬 1
+ * (Commentaires), 🔖 2 (Enregistrer, une action), ▦ 3 (Posts), 🗺 4
+ * (Parcours). La lentille ne se pose que sur une vue ou une page affichée :
+ * jamais sur une action (Enregistrer occupe le 2), et aucune sur Gérer,
+ * Étapes, Matériel ou Nature.
  */
-export function selectorLensIndex(page: CarnetPageId, isOwner: boolean): number {
+export function selectorLensIndex(page: CarnetPageId): number {
   switch (page) {
     case 'likes':
       return 0;
     case 'comments':
       return 1;
-    case 'manage':
-      return isOwner ? 3 : -1;
     case 'posts':
-      return 5;
+      return 3;
     case 'parcours':
-      return 6;
+      return 4;
     default:
       return -1;
   }
@@ -71,8 +67,6 @@ const SF_ICONS: Record<string, SfIconName> = {
   heart: 'heart',
   'message-square': 'bubble',
   bookmark: 'bookmark',
-  pencil: 'pencil',
-  'more-horizontal': 'ellipsis',
   map: 'map',
 };
 
@@ -150,12 +144,8 @@ export function CarnetCard({
   onOpenStat,
   onOpenComments,
   onOpenLikes,
-  onOpenParcours,
-  onOpenManage,
   onSave,
-  onOpenMenu,
   onFocusPlace,
-  menu = null,
   onOpenPost,
   onDownloadGpx,
   likesPage = null,
@@ -175,7 +165,7 @@ export function CarnetCard({
       : null;
   const placePills = placeSegments(place, detail.destination);
   const participants = participantsOf(detail);
-  const lensIndex = selectorLensIndex(page, detail.isOwner);
+  const lensIndex = selectorLensIndex(page);
 
   return (
     <section className="ckp-card" aria-label="Carte du carnet">
@@ -284,7 +274,7 @@ export function CarnetCard({
       </div>
 
       <div className="ckp-card-foot">
-        {/* Une seule lentille pour les sept segments : elle glisse par `--i`,
+        {/* Une seule lentille pour les cinq segments : elle glisse par `--i`,
             ne se pose que sur la vue ou la page active, et reste sous les
             boutons (`z-index` 0 contre 1). */}
         <span
@@ -308,27 +298,13 @@ export function CarnetCard({
             onClick={onOpenComments}
             current={page === 'comments'}
           />
+          {/* Enregistrer est une action : elle ne reçoit jamais la lentille. */}
           <Action
             icon="bookmark"
             label={detail.engagement.favorited ? 'Enregistré' : 'Enregistrer'}
             onClick={onSave}
             pressed={detail.engagement.favorited}
           />
-          {detail.isOwner ? (
-            <Action icon="pencil" label="Gérer" onClick={onOpenManage} current={page === 'manage'} />
-          ) : (
-            <Action icon="map" label="Parcours" onClick={onOpenParcours} />
-          )}
-          <span className="ckp-more-anchor">
-            <button type="button" className="ckp-action" data-icon="more" onClick={onOpenMenu} aria-label="Plus d’options">
-              <span className="ckp-action-btn">
-                <span className="ckp-action-in">
-                  <Icon name="more-horizontal" size={16} aria-hidden="true" />
-                </span>
-              </span>
-            </button>
-            {menu}
-          </span>
         </div>
 
         <span className="ckp-foot-sep" aria-hidden="true" />

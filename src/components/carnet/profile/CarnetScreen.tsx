@@ -133,7 +133,24 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
           title={detail.title}
           onOpenCarnet={() => setPage('etapes')}
           onCreate={() => router.push('/carnets/nouveau')}
-          onSearch={() => router.push('/communaute')}
+          menuOpen={menuOpen}
+          onOpenMenu={() => setMenuOpen((value) => !value)}
+          menu={
+            <CarnetMoreMenu
+              open={menuOpen}
+              saved={engagement.favorited}
+              isOwner={detail.isOwner}
+              onSave={() => void engagement.toggleFavorite()}
+              onShare={() => setDrawer('share')}
+              onCopy={() => {
+                void navigator.clipboard.writeText(shareUrl);
+                toast('Lien copié.', 'success');
+              }}
+              onReport={() => setReportOpen(true)}
+              onManage={() => setPage('manage')}
+              onClose={() => setMenuOpen(false)}
+            />
+          }
         />
       </header>
 
@@ -177,27 +194,8 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             onOpenStat={openStat}
             onOpenComments={() => setPage('comments')}
             onOpenLikes={() => setPage('likes')}
-            onOpenParcours={() => setPage('parcours')}
-            onOpenManage={() => setPage('manage')}
             onSave={() => void engagement.toggleFavorite()}
-            onOpenMenu={() => setMenuOpen((value) => !value)}
             onFocusPlace={setMapFocus}
-            menu={
-              <CarnetMoreMenu
-                open={menuOpen}
-                saved={engagement.favorited}
-                isOwner={detail.isOwner}
-                onSave={() => void engagement.toggleFavorite()}
-                onShare={() => setDrawer('share')}
-                onCopy={() => {
-                  void navigator.clipboard.writeText(shareUrl);
-                  toast('Lien copié.', 'success');
-                }}
-                onReport={() => setReportOpen(true)}
-                onManage={() => setPage('manage')}
-                onClose={() => setMenuOpen(false)}
-              />
-            }
             onOpenPost={(index) => setPostIndex(index)}
             onDownloadGpx={() => downloadGpx(detail.title, detail.trace)}
             likesPage={

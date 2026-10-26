@@ -26,7 +26,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   -webkit-font-smoothing: antialiased;
 }
 .ckp-screen > * { min-width: 0; }
-.ckp-screen-header { position: relative; z-index: 1; padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 6px; min-width: 0; }
+.ckp-screen-header { position: relative; z-index: 20; padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 6px; min-width: 0; }
 .ckp-screen-body {
   position: relative; z-index: 1;
   display: flex; flex-direction: column; min-height: 0;
@@ -442,9 +442,10 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-species i { display: block; color: #56665d; font: italic 400 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .ckp-species p { margin: 6px 0 0; font: 400 12.5px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
-.ckp-more-anchor { position: relative; display: inline-flex; }
-/* Le menu s'ouvre vers le haut : l'ancre est posée en bas de la carte. */
-.ckp-more-anchor .pmi-options-menu { top: auto; bottom: calc(100% + 8px); right: 0; }
+.ckp-more-anchor { position: relative; display: inline-flex; flex: none; }
+/* L'ancre est le `···` de la barre du haut : le menu s'ouvre vers le bas,
+   aligné à droite du bouton, et passe au-dessus de la carte. */
+.ckp-more-anchor .pmi-options-menu { top: calc(100% + 8px); right: 0; bottom: auto; z-index: 40; }
 
 .ckp-viewer { position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center; background: rgba(10, 20, 14, .94); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .ckp-viewer img { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -482,11 +483,11 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 @keyframes ckp-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .ckp-skeleton { animation: none; } }
 
-/* --- Alignement v5 : 5 actions compactes sur la ligne du sélecteur --------- */
+/* --- Alignement v6 : 5 segments sur la ligne du sélecteur ------------------ */
 
 .ckp-card {
   position: relative; height: 541px; flex: none;
-  /* Géométrie du sélecteur : 7 segments de 41,5 × 25, gap 2, inset 2,5.
+  /* Géométrie du sélecteur : 5 segments de 41,5 × 25, gap 2, inset 2,5.
      Le pas de la lentille vaut segment + gap = 43,5 px. */
   --ckp-seg: 41.5px;
   --ckp-seg-gap: 2px;
@@ -627,17 +628,16 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    au repos. Pas de translation = largeur du segment + gap de la capsule. */
 .ckp-card-foot > .ckp-th {
   position: absolute; top: 2.5px; left: 2.5px; z-index: 0;
-  width: var(--ckp-seg); height: 25px; border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(255, 255, 255, .78));
+  width: 41.5px; height: 25px; border-radius: 999px;
+  background: #fff;
   box-shadow:
-    inset 0 .5px 0 #fff,
-    0 0 0 .5px rgba(23, 43, 36, .07),
-    0 2px 5px rgba(23, 43, 36, .12);
-  transform: translateX(calc(var(--i, 0) * (var(--ckp-seg) + var(--ckp-seg-gap))));
-  transition: transform 220ms cubic-bezier(.22, 1, .36, 1), opacity 160ms ease;
+    0 1px 3px rgba(23, 43, 36, .18),
+    0 0 0 .5px rgba(23, 43, 36, .06);
+  transform: translateX(calc(var(--i, 0) * (41.5px + 2px)));
+  transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
   pointer-events: none;
 }
-/* Page sans segment (Étapes, Matériel, Nature) : aucune lentille visible. */
+/* Page sans segment (Gérer, Étapes, Matériel, Nature) : aucune lentille. */
 .ckp-card-foot > .ckp-th[data-off='true'] { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
   .ckp-card-foot > .ckp-th { transition: none; }
@@ -669,7 +669,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   .ckp-row:not(:disabled):hover { background: rgba(255, 255, 255, .62); }
 }
 
-/* Cinq pastilles de pages dans la capsule du bas : 28 px par cellule. */
+/* Cinq segments égaux dans la capsule du bas : 41,5 × 25 px par cellule. */
 .ckp-card-foot .ckp-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c; }
 .ckp-card-foot .ckp-action:focus-visible { outline: none; }
 .ckp-card-foot .ckp-action:focus-visible .ckp-action-in { box-shadow: 0 0 0 2px #17402c, 0 1px 2px rgba(23, 43, 36, .12); }
@@ -770,8 +770,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-action-lbl { display: none; }
 @media (prefers-reduced-motion: reduce) { .ckp-action, .ckp-card-foot .ckp-tabs button { transition: none; } }
-.ckp-card-foot .ckp-more-anchor { display: contents; }
-.ckp-card-foot .ckp-more-anchor > .ckp-menu { position: absolute; right: 0; bottom: calc(100% + 8px); }
 
 /* Actions : Enregistrer est le seul état pressé, et il ne peint aucun fond. */
 .ckp-action[aria-pressed='true'] { background: none; box-shadow: none; }

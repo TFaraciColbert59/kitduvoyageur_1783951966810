@@ -77,11 +77,30 @@ describe('CarnetCard — carte du carnet', () => {
     expect(onOpenStat).toHaveBeenCalledTimes(3);
   });
 
-  it('pose cinq actions compactes sur la ligne du sélecteur, sans libellé', () => {
+  it('pose cinq segments : trois actions puis les deux vues', () => {
     const { container } = render(<CarnetCard {...base()} />);
     expect(container.querySelector('.ckp-action-lbl')).toBeNull();
-    expect(container.querySelectorAll('.ckp-actions .ckp-action-btn')).toHaveLength(5);
+    expect(container.querySelectorAll('.ckp-actions .ckp-action-btn')).toHaveLength(3);
     expect(container.querySelector('.ckp-card-foot .ckp-tabs')).toBeTruthy();
+    const segments = container.querySelectorAll(
+      '.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button',
+    );
+    expect(segments).toHaveLength(5);
+    expect([...segments].map((node) => node.getAttribute('aria-label'))).toEqual([
+      'J’aime, 22',
+      'Commenter, 3',
+      'Enregistrer',
+      'Posts',
+      'Parcours',
+    ]);
+  });
+
+  it('ne garde ni ··· ni Gérer dans la capsule : le menu vit dans la barre du haut', () => {
+    const { container } = render(<CarnetCard {...base({ detail: detail({ isOwner: true }) })} />);
+    expect(container.querySelector('.ckp-more-anchor')).toBeNull();
+    expect(container.querySelector('.pmi-options-menu')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Plus d’options' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Gérer' })).toBeNull();
   });
 
   it('fusionne actions, séparateur et segments dans une seule capsule', () => {
@@ -101,7 +120,7 @@ describe('CarnetCard — carte du carnet', () => {
     expect(container.querySelectorAll('.ckp-card > .ckp-tabs')).toHaveLength(0);
     expect(container.querySelectorAll('.ckp-tabs')).toHaveLength(1);
     // Les deux familles de boutons restent distinctes et accessibles.
-    expect(foot?.querySelectorAll('.ckp-actions button[aria-label]')).toHaveLength(5);
+    expect(foot?.querySelectorAll('.ckp-actions button[aria-label]')).toHaveLength(3);
     expect(foot?.querySelectorAll('.ckp-tabs button[role="tab"]')).toHaveLength(2);
   });
 
@@ -125,34 +144,24 @@ describe('CarnetCard — carte du carnet', () => {
     expect(onPageChange).toHaveBeenLastCalledWith('posts');
   });
 
-  it('garde tous les comportements des actions déplacées', () => {
+  it('garde tous les comportements des actions du sélecteur', () => {
     const onOpenLikes = vi.fn();
     const onSave = vi.fn();
     const onOpenComments = vi.fn();
-    const onOpenParcours = vi.fn();
-    const onOpenMenu = vi.fn();
-    render(
-      <CarnetCard
-        {...base({ onOpenLikes, onSave, onOpenComments, onOpenParcours, onOpenMenu })}
-      />,
-    );
+    render(<CarnetCard {...base({ onOpenLikes, onSave, onOpenComments })} />);
     fireEvent.click(screen.getByRole('button', { name: /^J’aime/ }));
     expect(onOpenLikes).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: /^Commenter/ }));
     expect(onOpenComments).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
     expect(onSave).toHaveBeenCalledOnce();
-    fireEvent.click(screen.getByRole('button', { name: 'Parcours' }));
-    expect(onOpenParcours).toHaveBeenCalledOnce();
-    fireEvent.click(screen.getByRole('button', { name: 'Plus d’options' }));
-    expect(onOpenMenu).toHaveBeenCalledOnce();
   });
 
-  it('propose Gérer au propriétaire', () => {
-    const onOpenManage = vi.fn();
-    render(<CarnetCard {...base({ onOpenManage, detail: detail({ isOwner: true }) })} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Gérer' }));
-    expect(onOpenManage).toHaveBeenCalledOnce();
+  it('garde la page Parcours à portée de segment (🗺)', () => {
+    const onPageChange = vi.fn();
+    render(<CarnetCard {...base({ onPageChange })} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
+    expect(onPageChange).toHaveBeenLastCalledWith('parcours');
   });
 
   it('affiche une seule ligne de bio, sans répéter les statistiques', () => {
@@ -297,15 +306,15 @@ describe('CarnetCard — lentille unique du sélecteur', () => {
     expect(node?.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('pose la lentille sur la vue active : grille 5, carte 6', () => {
+  it('pose la lentille sur la vue active : grille 3, carte 4', () => {
     const posts = render(<CarnetCard {...base({ page: 'posts' })} />);
-    expect(lens(posts.container).i).toBe('5');
+    expect(lens(posts.container).i).toBe('3');
     posts.unmount();
     const parcours = render(<CarnetCard {...base({ page: 'parcours' })} />);
-    expect(lens(parcours.container).i).toBe('6');
+    expect(lens(parcours.container).i).toBe('4');
   });
 
-  it('suit la page affichée : J’aime 0, Commentaires 1, Gérer 3', () => {
+  it('suit la page affichée : J’aime 0, Commentaires 1', () => {
     const likes = render(<CarnetCard {...base({ page: 'likes' })} />);
     expect(lens(likes.container).i).toBe('0');
     expect(screen.getByRole('button', { name: /^J’aime/ }).getAttribute('aria-current')).toBe('page');
@@ -314,39 +323,33 @@ describe('CarnetCard — lentille unique du sélecteur', () => {
     const comments = render(<CarnetCard {...base({ page: 'comments' })} />);
     expect(lens(comments.container).i).toBe('1');
     expect(screen.getByRole('button', { name: /^Commenter/ }).getAttribute('aria-current')).toBe('page');
-    comments.unmount();
-
-    const manage = render(<CarnetCard {...base({ page: 'manage', detail: detail({ isOwner: true }) })} />);
-    expect(lens(manage.container).i).toBe('3');
-    expect(screen.getByRole('button', { name: 'Gérer' }).getAttribute('aria-current')).toBe('page');
   });
 
-  it('masque la lentille sur une page sans segment (Étapes, Matériel, Nature)', () => {
-    for (const page of ['etapes', 'materiel', 'nature'] as const) {
-      const view = render(<CarnetCard {...base({ page })} />);
+  it('masque la lentille sur une page sans segment (Gérer, Étapes, Matériel, Nature)', () => {
+    for (const page of ['manage', 'etapes', 'materiel', 'nature'] as const) {
+      const view = render(<CarnetCard {...base({ page, detail: detail({ isOwner: true }) })} />);
       expect(lens(view.container).node?.getAttribute('data-off')).toBe('true');
       view.unmount();
     }
   });
 
-  it('ne pose jamais la lentille sur Enregistrer ou Plus', () => {
+  it('ne pose jamais la lentille sur l’action Enregistrer (segment 2)', () => {
     for (const page of ['posts', 'parcours', 'likes', 'comments'] as const) {
       const view = render(<CarnetCard {...base({ page })} />);
+      expect(lens(view.container).i).not.toBe('2');
       expect(screen.getByRole('button', { name: 'Enregistrer' }).getAttribute('aria-current')).toBeNull();
-      expect(screen.getByRole('button', { name: 'Plus d’options' }).getAttribute('aria-current')).toBeNull();
       view.unmount();
     }
   });
 
-  it('donne Gérer au propriétaire et Parcours au visiteur, au même segment', () => {
-    const visitor = render(<CarnetCard {...base({ detail: detail({ isOwner: false }) })} />);
-    expect(screen.queryByRole('button', { name: 'Gérer' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Parcours' })).toBeTruthy();
-    visitor.unmount();
-
-    const owner = render(<CarnetCard {...base({ detail: detail({ isOwner: true }) })} />);
-    expect(screen.getByRole('button', { name: 'Gérer' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Parcours' })).toBeNull();
+  it('garde les mêmes cinq segments pour le propriétaire et le visiteur', () => {
+    for (const isOwner of [false, true]) {
+      const view = render(<CarnetCard {...base({ detail: detail({ isOwner }) })} />);
+      const labels = [...view.container.querySelectorAll('.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button')]
+        .map((node) => node.getAttribute('aria-label'));
+      expect(labels).toEqual(['J’aime, 22', 'Commenter, 3', 'Enregistrer', 'Posts', 'Parcours']);
+      view.unmount();
+    }
   });
 });
 

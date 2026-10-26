@@ -33,7 +33,13 @@ export function CarnetMoreMenu({
   };
 
   return (
-    <div className="pmi-options-menu" role="group" aria-label="Options du carnet" hidden={!open}>
+    <div
+      id="carnet-more-menu"
+      className="pmi-options-menu"
+      role="group"
+      aria-label="Options du carnet"
+      hidden={!open}
+    >
       <button type="button" onClick={run(onSave)}>
         <Icon name="bookmark" size={18} aria-hidden="true" />
         <span>{saved ? 'Retirer des enregistrements' : 'Enregistrer'}</span>

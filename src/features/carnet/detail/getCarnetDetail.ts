@@ -1,6 +1,7 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
+import { pickCarnetTrace } from './trace';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type {
   AuthorRow,
@@ -40,6 +41,11 @@ const CARNET_COLUMNS = [
  * du lecteur avec le client serveur (cookies) — la RLS voit donc la session :
  * un carnet privé reste lisible par son propriétaire.
  *
+ * La trace vient des `hike_sessions` liées au carnet : la policy
+ * `hike_sessions_select_owner_or_public_carnet` autorise déjà la lecture
+ * anonyme des sorties d'un carnet public (vérifié à la clé anon), donc aucune
+ * policy supplémentaire et aucun client à privilèges élevés ne sont nécessaires.
+ *
  * Retourne `null` si le carnet n'existe pas ou n'est pas lisible : la route
  * traduit cela en `notFound()`.
  */
@@ -65,13 +71,14 @@ export async function getCarnetDetail(id: string) {
         .select('id, full_name, handle, avatar_url, trust_score')
         .eq('id', carnet.author_id ?? '')
         .maybeSingle(),
+      /* Toutes les sorties du carnet : la plus récente porte les statistiques,
+         la plus récente *avec une trace* porte le parcours 3D. */
       supabase
         .from('hike_sessions')
         .select('id, carnet_id, distance_km, elevation_gain_m, duration_seconds, started_at, positions_geojson')
         .eq('carnet_id', carnet.id)
         .order('started_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+        .limit(10),
       carnet.groupe_id
         ? supabase
             .from('groupe_etapes')
@@ -122,6 +129,8 @@ export async function getCarnetDetail(id: string) {
     profile: (likeProfiles[row.user_id] as unknown as AuthorRow) ?? null,
   }));
 
+  const sessions = ((hikeResult as { data?: HikeSessionRow[] | null }).data ?? []) as HikeSessionRow[];
+
   let liked = false;
   let favorited = false;
   if (viewerId) {
@@ -136,7 +145,8 @@ export async function getCarnetDetail(id: string) {
   return buildCarnetDetail({
     carnet,
     author: (authorResult.data as unknown as AuthorRow) ?? null,
-    hikeSession: (hikeResult.data as unknown as HikeSessionRow) ?? null,
+    hikeSession: sessions[0] ?? null,
+    trace: pickCarnetTrace(sessions),
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],
     hebergements: (hebergementsResult.data as unknown as HebergementRow[]) ?? [],
     moments: (momentsResult.data as unknown as MomentRow[]) ?? [],
