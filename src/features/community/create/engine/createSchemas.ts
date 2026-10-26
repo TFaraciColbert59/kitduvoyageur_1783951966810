@@ -28,6 +28,8 @@ export type StoryReplyPolicy = (typeof STORY_REPLY_POLICIES)[number];
 
 export const KIT_SEASONS = ['toute_saison', 'printemps', 'ete', 'automne', 'hiver'] as const;
 export type KitSeason = (typeof KIT_SEASONS)[number];
+export const KIT_TEMPLATE_IDS = ['day', 'bivouac', 'alpine', 'ski', 'bike', 'water'] as const;
+export type KitTemplate = (typeof KIT_TEMPLATE_IDS)[number];
 
 export const SORTIE_LEVELS = ['facile', 'moyen', 'difficile'] as const;
 export type SortieLevel = (typeof SORTIE_LEVELS)[number];
@@ -235,9 +237,20 @@ const sortieSchema = z
     addDateRangeIssue(value, ctx);
   });
 
+const customKitItemSchema = z.object({
+  id: z.string(),
+  name: requiredText('Le nom de l’objet est requis.', 100),
+  category: z.string().max(60).default('Divers'),
+  weightG: z.number().int().min(0).max(60_000).default(0),
+  quantity: z.number().int().min(1).max(20).default(1),
+});
+
 const kitSchema = z.object({
   name: requiredText('Le nom du kit est requis.', 100),
   season: z.enum(KIT_SEASONS, { error: 'Choisis une saison.' }).default('toute_saison'),
+  template: z.enum(KIT_TEMPLATE_IDS, { error: 'Choisis un modèle.' }).default('bivouac'),
+  inventoryIds: z.array(z.string()).default([]),
+  customItems: z.array(customKitItemSchema).default([]),
   weightG: z
     .number({ error: 'Le poids est requis.' })
     .int('Le poids doit être un nombre entier de grammes.')
@@ -331,6 +344,9 @@ const defaultsFactories = {
   kit: (): KitFormValues => ({
     name: '',
     season: 'toute_saison',
+    template: 'bivouac',
+    inventoryIds: [],
+    customItems: [],
     weightG: 0,
     description: '',
     isPublic: true,

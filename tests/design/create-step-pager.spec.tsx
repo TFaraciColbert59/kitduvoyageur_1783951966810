@@ -23,7 +23,7 @@ describe('CREATE_STEPS — les six types', () => {
     expect(CREATE_STEPS.story.map((step) => step.label)).toEqual(['Média', 'Légende']);
     expect(CREATE_STEPS.carnet.map((step) => step.label)).toEqual(['Infos', 'Dates', 'Visibilité']);
     expect(CREATE_STEPS.sortie.map((step) => step.label)).toEqual(['Infos', 'Détails', 'Participants']);
-    expect(CREATE_STEPS.kit.map((step) => step.label)).toEqual(['Identité', 'Poids']);
+    expect(CREATE_STEPS.kit.map((step) => step.label)).toEqual(['Inventaire', 'Compléter', 'Partager']);
     expect(CREATE_STEPS.club.map((step) => step.label)).toEqual(['Identité', 'Présentation', 'Adhésion']);
     for (const steps of Object.values(CREATE_STEPS)) {
       expect(steps.length).toBeGreaterThanOrEqual(2);

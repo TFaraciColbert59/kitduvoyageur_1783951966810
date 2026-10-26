@@ -37,8 +37,9 @@ export const CREATE_STEPS: Record<CreateKind, readonly CreateStep[]> = {
     { id: 'participants', label: 'Participants' },
   ],
   kit: [
-    { id: 'identity', label: 'Identité' },
-    { id: 'weight', label: 'Poids' },
+    { id: 'inventory', label: 'Inventaire' },
+    { id: 'complete', label: 'Compléter' },
+    { id: 'share', label: 'Partager' },
   ],
   club: [
     { id: 'identity', label: 'Identité' },
