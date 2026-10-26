@@ -25,10 +25,10 @@ export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }:
         <button
           type="button"
           className="lkdv-pourtoi-pill"
-          aria-label="Ouvrir le drawer Pour toi"
-          onClick={() => onOpenSection('pour-toi')}
+          aria-label="Ouvrir les sections"
+          onClick={() => onOpenSection('carnets')}
         >
-          <span>Pour toi</span>
+          <span>Explorer</span>
         </button>
       </div>
 

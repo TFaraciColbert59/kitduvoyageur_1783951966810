@@ -1983,3 +1983,73 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   max-height: none !important;
   overflow-y: auto !important;
 }
+
+/* Drawers collés au bord bas. */
+.lkdv-half-drawer,
+.lkdv-half-drawer:has(.lkdv-create-selector),
+.lkdv-form-drawer {
+  bottom: 0 !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+/* Carnets / Clubs / Sorties : 2 cartes par ligne, style Compte. */
+.lkdv-section-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 4px 0 8px;
+}
+.lkdv-section-tile {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgba(255,255,255,.56);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.1), 0 6px 18px rgba(23,43,36,.08);
+}
+.lkdv-section-tile-main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--feed-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.lkdv-section-tile-cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: rgba(23,64,44,.1);
+}
+.lkdv-section-tile-cover .lkdv-section-cover {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+.lkdv-section-tile-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 8px 9px 4px; }
+.lkdv-section-tile-txt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 12.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-section-tile-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--feed-muted); font: 500 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-section-tile-action { padding: 0 8px 8px; }
+.lkdv-section-tile-action .lkdv-section-action { width: 100%; min-height: 30px; }
+
+/* Recherche : même hauteur 50dvh que les autres drawers. */
+.lkdv-half-drawer:not(:has(.lkdv-create-selector)) {
+  height: 50dvh !important;
+  max-height: 50dvh !important;
+  min-height: 50dvh !important;
+}
+
+/* Bord bas strict pour toutes les variantes de drawer. */
+.lkdv-half-drawer:not(:has(.lkdv-create-selector)),
+.lkdv-half-drawer:has(.lkdv-create-selector),
+.lkdv-form-drawer {
+  bottom: 0 !important;
+  height: 50dvh !important;
+  max-height: 50dvh !important;
+  min-height: 50dvh !important;
+  border-radius: 24px 24px 0 0 !important;
+}

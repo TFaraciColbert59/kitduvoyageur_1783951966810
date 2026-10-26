@@ -22,7 +22,7 @@ function CommunauteFeedContent() {
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
   const [storiesRefreshKey, setStoriesRefreshKey] = useState(0);
   const [sectionsOpen, setSectionsOpen] = useState(false);
-  const [sectionsTab, setSectionsTab] = useState<SectionTabId>('pour-toi');
+  const [sectionsTab, setSectionsTab] = useState<SectionTabId>('carnets');
   const [sectionsSearch, setSectionsSearch] = useState(false);
 
   const initialPostId = searchParams?.get('post') ?? null;

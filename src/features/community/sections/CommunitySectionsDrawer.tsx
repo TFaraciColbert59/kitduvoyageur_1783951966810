@@ -22,11 +22,6 @@ const SEARCH_KINDS: Array<{ id: SearchKind; label: string; short: string; tone: 
   { id: 'member', label: 'Membres', short: 'Membre', tone: '#4B6B7C' },
 ];
 
-const SEARCH_SCOPES: Array<{ id: SearchScope; label: string }> = [
-  { id: 'all', label: 'Tout' },
-  ...SEARCH_KINDS.map((kind) => ({ id: kind.id as SearchScope, label: kind.label })),
-];
-
 export interface CommunitySectionsDrawerProps {
   open: boolean;
   initialTab: SectionTabId;
@@ -75,6 +70,35 @@ function SectionRow({
       </button>
       {action}
     </div>
+  );
+}
+
+function SectionTile({
+  cover,
+  title,
+  meta,
+  label,
+  action,
+  onClick,
+}: {
+  cover?: string | null;
+  title: string;
+  meta: string;
+  label: string;
+  action?: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <article className="lkdv-section-tile">
+      <button type="button" className="lkdv-section-tile-main" onClick={onClick}>
+        <span className="lkdv-section-tile-cover"><Cover src={cover} label={label} /></span>
+        <span className="lkdv-section-tile-txt">
+          <b>{title}</b>
+          <small>{meta}</small>
+        </span>
+      </button>
+      {action ? <div className="lkdv-section-tile-action">{action}</div> : null}
+    </article>
   );
 }
 
@@ -270,22 +294,13 @@ export function CommunitySectionsDrawer({
         if (prev) changeTab(prev.id);
       }}
     >
-      <div className="lkdv-search-tabs">
-        <CommunityTabSelector value={tab} onChange={changeTab} />
-      </div>
+      {tab !== 'recherche' ? (
+        <div className="lkdv-search-tabs">
+          <CommunityTabSelector value={tab} onChange={changeTab} />
+        </div>
+      ) : null}
 
       {tab === 'recherche' ? (
-      <section className="lkdv-search-section" aria-labelledby="lkdv-search-title">
-        <div className="lkdv-search-rail">
-          <span className="lkdv-search-kicker">Explorer</span>
-          {query.trim().length >= 2 ? (
-            <span className="lkdv-search-count">{visibleResults.length} résultat{visibleResults.length > 1 ? 's' : ''}</span>
-          ) : (
-            <span className="lkdv-search-count">Fil · carnets · clubs · sorties · membres</span>
-          )}
-        </div>
-        <h2 id="lkdv-search-title">Tout trouver</h2>
-        <p className="lkdv-search-sub">Une recherche, tous les univers de la communauté.</p>
         <div className="lkdv-search-box lkdv-search-box--hero">
           <Icon name="search" size={17} aria-hidden="true" />
           <input
@@ -301,28 +316,8 @@ export function CommunitySectionsDrawer({
             </button>
           ) : null}
         </div>
-        <div className="lkdv-search-scopes" role="tablist" aria-label="Filtrer la recherche">
-          {SEARCH_SCOPES.map((item) => {
-            const count = item.id === 'all'
-              ? results.length
-              : results.filter((result) => result.kind === item.id).length;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={scope === item.id}
-                className="lkdv-search-scope"
-                onClick={() => setScope(item.id)}
-              >
-                {item.label}
-                {query.trim().length >= 2 && count > 0 ? <span>{count}</span> : null}
-              </button>
-            );
-          })}
-        </div>
-      </section>
       ) : null}
+
 
       {query.trim().length >= 2 ? (
         <div className="lkdv-search-results" aria-busy={searching}>
@@ -336,11 +331,6 @@ export function CommunitySectionsDrawer({
           {!searching
             ? resultGroups.map((group) => (
                 <section key={group.id} className="lkdv-result-group" aria-label={group.label} style={{ '--result-tone': group.tone } as React.CSSProperties}>
-                  <header className="lkdv-result-group-head">
-                    <span className="lkdv-result-dot" aria-hidden="true" />
-                    <b>{group.label}</b>
-                    <span>{group.rows.length}</span>
-                  </header>
                   {group.rows.map((result) => (
                     <Link
                       key={`${result.kind}-${result.id}`}
@@ -364,21 +354,6 @@ export function CommunitySectionsDrawer({
                 </section>
               ))
             : null}
-        </div>
-      ) : tab === 'recherche' ? (
-        <div className="lkdv-search-prompt">
-          <Icon name="search" size={22} aria-hidden="true" />
-          <p>Cherche un post, un carnet, un club, une sortie ou un membre.</p>
-        </div>
-      ) : String(tab) === 'pour-toi' ? (
-        <div className="lkdv-pourtoi-section">
-          <p className="overline">Ton fil</p>
-          <h3>Pour toi</h3>
-          <p>Retrouve les publications, les carnets, les clubs et les sorties qui comptent pour toi.</p>
-          <div className="actions">
-            <button type="button" onClick={onClose}>Voir le fil</button>
-            <Link href="/communaute" onClick={onClose}>Explorer les carnets</Link>
-          </div>
         </div>
       ) : selected ? (
         <div
@@ -451,55 +426,67 @@ export function CommunitySectionsDrawer({
           {error ? <p className="lkdv-section-empty">{error}</p> : null}
 
           {!loading && tab === 'carnets'
-            ? filteredCarnets.map((row) => (
-                <SectionRow
-                  key={row.id}
-                  cover={row.cover_image}
-                  title={row.title}
-                  meta={[row.author_name, row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : null].filter(Boolean).join(' · ')}
-                  label={row.title}
-                  onClick={() => setSelected(row)}
-                />
-              ))
+            ? (
+              <div className="lkdv-section-grid">
+                {filteredCarnets.map((row) => (
+                  <SectionTile
+                    key={row.id}
+                    cover={row.cover_image}
+                    title={row.title}
+                    meta={[row.author_name, row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : null].filter(Boolean).join(' · ')}
+                    label={row.title}
+                    onClick={() => setSelected(row)}
+                  />
+                ))}
+              </div>
+            )
             : null}
 
           {!loading && tab === 'clubs'
-            ? filteredClubs.map((row) => (
-                <SectionRow
-                  key={row.id}
-                  cover={row.cover_image}
-                  title={row.name}
-                  meta={`${row.members_count ?? 0} membres${row.category ? ` · ${row.category}` : ''}`}
-                  label={row.name}
-                  onClick={() => setSelected(row)}
-                  action={
-                    <button type="button" className="lkdv-section-action" onClick={() => void handleClub(row)}>
-                      {row.is_member ? 'Quitter' : 'Rejoindre'}
-                    </button>
-                  }
-                />
-              ))
+            ? (
+              <div className="lkdv-section-grid">
+                {filteredClubs.map((row) => (
+                  <SectionTile
+                    key={row.id}
+                    cover={row.cover_image}
+                    title={row.name}
+                    meta={`${row.members_count ?? 0} membres${row.category ? ` · ${row.category}` : ''}`}
+                    label={row.name}
+                    onClick={() => setSelected(row)}
+                    action={
+                      <button type="button" className="lkdv-section-action" onClick={() => void handleClub(row)}>
+                        {row.is_member ? 'Quitter' : 'Rejoindre'}
+                      </button>
+                    }
+                  />
+                ))}
+              </div>
+            )
             : null}
 
           {!loading && tab === 'sorties'
-            ? filteredSorties.map((row) => (
-                <SectionRow
-                  key={row.id}
-                  cover={row.cover_image}
-                  title={row.title}
-                  meta={[row.event_date ? new Date(row.event_date).toLocaleDateString('fr-FR') : null, row.location, `${row.current_participants ?? 0}/${row.max_participants ?? '∞'}`].filter(Boolean).join(' · ')}
-                  label={row.title}
-                  onClick={() => setSelected(row)}
-                  action={
-                    <button type="button" className="lkdv-section-action" onClick={() => void handleEvent(row)}>
-                      {row.is_registered ? 'Quitter' : 'Rejoindre'}
-                    </button>
-                  }
-                />
-              ))
+            ? (
+              <div className="lkdv-section-grid">
+                {filteredSorties.map((row) => (
+                  <SectionTile
+                    key={row.id}
+                    cover={row.cover_image}
+                    title={row.title}
+                    meta={[row.event_date ? new Date(row.event_date).toLocaleDateString('fr-FR') : null, row.location, `${row.current_participants ?? 0}/${row.max_participants ?? '∞'}`].filter(Boolean).join(' · ')}
+                    label={row.title}
+                    onClick={() => setSelected(row)}
+                    action={
+                      <button type="button" className="lkdv-section-action" onClick={() => void handleEvent(row)}>
+                        {row.is_registered ? 'Quitter' : 'Rejoindre'}
+                      </button>
+                    }
+                  />
+                ))}
+              </div>
+            )
             : null}
 
-          {!loading && !error ? (
+          {!loading && !error && tab !== 'recherche' ? (
             <div className="lkdv-section-cta">
               <Link href={tab === 'carnets' ? '/communaute' : tab === 'clubs' ? '/communaute' : '/hub'} onClick={onClose}>
                 Créer

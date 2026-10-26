@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Search, Sparkles, BookOpen, Users, Compass } from 'lucide-react';
+import { Search, BookOpen, Users, Compass } from 'lucide-react';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 
-export type SectionTabId = 'recherche' | 'pour-toi' | 'carnets' | 'clubs' | 'sorties';
+export type SectionTabId = 'recherche' | 'carnets' | 'clubs' | 'sorties';
 
 export interface SectionTab {
   id: SectionTabId;
@@ -14,13 +14,12 @@ export interface SectionTab {
 
 export const SECTION_TABS: SectionTab[] = [
   { id: 'recherche', label: 'Recherche', icon: <Search size={18} aria-hidden="true" /> },
-  { id: 'pour-toi', label: 'Pour toi', icon: <Sparkles size={18} aria-hidden="true" /> },
   { id: 'carnets', label: 'Carnets', icon: <BookOpen size={18} aria-hidden="true" /> },
   { id: 'clubs', label: 'Clubs', icon: <Users size={18} aria-hidden="true" /> },
   { id: 'sorties', label: 'Sorties', icon: <Compass size={18} aria-hidden="true" /> },
 ];
 
-/** Sélecteur 5 cellules, capsule 48 px — copie du sélecteur du drawer Profil. */
+/** Sélecteur 4 cellules, capsule 48 px — copie du sélecteur du drawer Profil. */
 export function CommunityTabSelector({
   value,
   onChange,
