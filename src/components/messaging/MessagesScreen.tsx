@@ -161,7 +161,13 @@ function ConversationFeedRow({
     const ddy = event.clientY - g.startY;
     if (g.axis === 'none' && (Math.abs(ddx) > 8 || Math.abs(ddy) > 8)) {
       g.axis = Math.abs(ddx) > Math.abs(ddy) ? 'x' : 'y';
-      if (g.axis === 'x') event.currentTarget.setPointerCapture?.(event.pointerId);
+      if (g.axis === 'x') {
+        try {
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+        } catch {
+          /* pointeur déjà relâché (annulation système) : le geste continue */
+        }
+      }
     }
     if (g.axis === 'x') {
       stopLongPress();
