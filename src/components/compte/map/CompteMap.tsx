@@ -535,7 +535,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       });
       poiElements.push(element);
       markerRefs.current.push(
-        new Marker({ element, anchor: 'left' })
+        new Marker({ element, anchor: 'right' })
           .setLngLat([poi.position.lng, poi.position.lat])
           .addTo(map)
       );

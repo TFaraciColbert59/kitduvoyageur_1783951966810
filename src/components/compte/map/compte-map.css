@@ -432,7 +432,7 @@
 .phone.mapbig .lkdv-map-state,
 .lkdv-map-root[data-map-empty='true'] .lkdv-map-state {
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -508,7 +508,7 @@
   color: #17402c;
   font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
   cursor: pointer;
-  transform: translate(-100%, -50%);
+  transform: none;
 }
 .lkdv-map-poi-dot {
   width: 7px;
@@ -537,7 +537,7 @@
   height: 22px;
   padding: 0;
   justify-content: center;
-  transform: translate(-50%, -50%);
+  transform: none;
 }
 .lkdv-map-poi.is-compact .lkdv-map-poi-label { display: none; }
 .lkdv-map-poi.is-compact .lkdv-map-poi-dot { width: 9px; height: 9px; }
