@@ -14,9 +14,11 @@ Le risque réel est ailleurs : **une signature `service_role` guidée par des co
 | Sévérité | Nombre | État |
 |---|---|---|
 | Critique | 1 | **corrigé** (stories media) |
-| Élevée | 4 | **3 corrigés**, 1 IDOR kit corrigé |
-| Moyenne | 10 | 2 corrigés (checkout, JSON-LD), 8 planifiés |
+| Élevée | 4 | **corrigés** (digest, process, demo-login, IDOR kit) |
+| Moyenne | 10 | **7 corrigées** — restent : `admin/rewards` (schéma + erreurs), 21 `error.message` renvoyés, patches de dépendances |
 | Faible | 173 routes + dette diverse | documentés |
+
+**Vérifié en prod après déploiement** : `notifications/process` **401**, `notifications/digest` **401**, `cron/refresh-kit-scores` **401**, `indexnow` action sitemap **401**, `ai/chat-completion` sans session **401**, `stories/:id/media` inconnue **404**, `og-preview` sans corps **400**, application **200**.
 
 ---
 
@@ -45,15 +47,21 @@ Le risque réel est ailleurs : **une signature `service_role` guidée par des co
 - **Redirections Stripe** `success_url` / `cancel_url` fournies par le client (`checkout/route.ts:155`) → même origine que `NEXT_PUBLIC_SITE_URL`, sinon retour par défaut.
 - **JSON-LD** de `/pays/[code]` (contenu généré) → `serializeJsonLd()`.
 
+**Corrigées le 26/10 (commit `4a23f165`)**
+- Session **obligatoire** sur `/api/ai/chat-completion` (plus de condition `NODE_ENV`) et paramètres serveur prioritaires sur `body.parameters` (le client ne choisit plus `api_key` ni n'écrase `model`).
+- `/api/hike-sessions/[id]` : projection explicite, `positions_geojson` / `positions_timed` / `narratives` hors API.
+- `/api/rewards/claim` et `/withdraw` : schémas zod (uuid, enum de type d'action et de provider, montant entier borné 1 €–10 000 €, metadata bornée).
+- `/api/indexnow` : action `sitemap` réservée au planificateur.
+- `/api/og-preview` : 20 req/min/IP fail-closed.
+- **17 crons** : comparaison du secret en temps constant via `isCronAuthorized` (18/18).
+
 **À planifier (priorité décroissante)**
-1. `/api/ai/chat-completion` : auth seulement si `NODE_ENV === 'production'` et `...body.parameters` après `api_key` → modèle/paramètres client (coût).
+1. `/api/admin/rewards` : schéma zod discriminé, écriture service_role après `is_admin()`, erreurs génériques.
 2. `/api/hike-sessions/[id]` : `select('*')` expose `positions_geojson` / `positions_timed` (GPS horodaté) dès qu'un carnet est public.
 3. `/api/rewards/{claim,withdraw}` : aucun schéma zod (montant sans borne haute, provider libre).
-4. `/api/admin/rewards` : pas de schéma, `error.message` renvoyés, écriture en client anon.
-5. `/api/og-preview`, `/api/indexnow` : publics sans rate limit (indexnow action `sitemap` à réserver au cron).
-6. Rate limiting mémoire locale (`checkout`, `discovery/search`, `pays/[code]`) contournable en multi-instances → `enforceRateLimit`.
-7. 17/18 crons comparent le secret hors temps constant → `isCronAuthorized`.
-8. 18 routes renvoient `error.message` au client.
+2. 21 routes renvoient encore `error.message` au client (mapping générique à faire).
+3. Rate limiting mémoire locale (`checkout`, `discovery/search`, `pays/[code]`) contournable en multi-instances → `enforceRateLimit`.
+4. Patches de dépendances : `next` 15.5.28, `@capacitor/ios|android` 8.5.1, `zod` 4.6.6 (à passer avec un build complet).
 
 ## 5. Base de données (advisors + inspection)
 
