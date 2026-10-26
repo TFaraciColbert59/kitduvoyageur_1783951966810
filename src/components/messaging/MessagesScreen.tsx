@@ -304,7 +304,7 @@ function ConversationFeedRow({
         <span className="fa" aria-hidden="true">
           {avatar ? (
             // eslint-disable-next-line @next/next/no-img-element -- avatar distant de la conversation
-            <img src={avatar} alt="" loading="lazy" />
+            <img src={avatar} alt="" loading="lazy" decoding="async" width={40} height={40} />
           ) : (
             initials(title)
           )}
@@ -1210,6 +1210,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   type="button"
                   className="lg ig-handle"
                   onClick={() => router.push('/compte')}
+                  onPointerEnter={() => router.prefetch('/compte')}
+                  onTouchStart={() => router.prefetch('/compte')}
                   aria-label="Messages — aller au compte"
                 >
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>Messages</span>
