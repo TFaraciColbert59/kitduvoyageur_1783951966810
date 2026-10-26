@@ -13,7 +13,7 @@
  * aucune matière d'écran : le verre vient de compte-v8.css.
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import '@/components/compte/compte-v8.css';
 import '@/components/compte/compte-apple-hig.css';
@@ -23,7 +23,8 @@ import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
 import Icon from '@/components/ui/Icon';
-import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
+import dynamic from 'next/dynamic';
+import type { ReportTarget } from '@/components/ui/ReportBlockModal';
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
@@ -43,11 +44,29 @@ import {
   resolveSwipeEnd,
   type FilterId,
 } from './messagesModel';
-import { VoiceRecorderBar } from '@/features/messaging/components/VoiceRecorderBar';
-import { ComposerMenuSheet } from '@/features/messaging/components/ComposerMenuSheet';
-import { ConversationOptionsSheet } from '@/features/messaging/components/ConversationOptionsSheet';
-import { ForwardMessageSheet } from '@/features/messaging/components/ForwardMessageSheet';
-import { GroupSettingsModal } from '@/features/messaging/components/GroupSettingsModal';
+// Surcouches ouvertes à la demande : hors du bundle initial (hydratation plus
+// rapide), chargées au premier clic qui les concerne.
+const ReportBlockModal = dynamic(() => import('@/components/ui/ReportBlockModal'), { ssr: false });
+const VoiceRecorderBar = dynamic(
+  () => import('@/features/messaging/components/VoiceRecorderBar').then((m) => m.VoiceRecorderBar),
+  { ssr: false }
+);
+const ComposerMenuSheet = dynamic(
+  () => import('@/features/messaging/components/ComposerMenuSheet').then((m) => m.ComposerMenuSheet),
+  { ssr: false }
+);
+const ConversationOptionsSheet = dynamic(
+  () => import('@/features/messaging/components/ConversationOptionsSheet').then((m) => m.ConversationOptionsSheet),
+  { ssr: false }
+);
+const ForwardMessageSheet = dynamic(
+  () => import('@/features/messaging/components/ForwardMessageSheet').then((m) => m.ForwardMessageSheet),
+  { ssr: false }
+);
+const GroupSettingsModal = dynamic(
+  () => import('@/features/messaging/components/GroupSettingsModal').then((m) => m.GroupSettingsModal),
+  { ssr: false }
+);
 import type {
   Conversation,
   ConversationMember,
@@ -122,7 +141,7 @@ function ConversationFeedRow({
   // Geste de rangée : pointeurs React (suivent le doigt, pas de dépendance à
   // un nœud DOM capturé) + appui long. Les actions vivent à DROITE : on tire
   // la rangée vers la gauche pour les révéler.
-  const gesture = useRef({ startX: 0, startY: 0, dx: 0, axis: 'none' as 'none' | 'x' | 'y', active: false });
+  const gesture = useRef({ startX: 0, startY: 0, dx: 0, axis: 'none' as 'none' | 'x' | 'y', active: false, hapted: false });
   const longTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stopLongPress = () => {
@@ -142,6 +161,7 @@ function ConversationFeedRow({
       dx: openRef.current ? -SWIPE_REVEAL : 0,
       axis: 'none',
       active: true,
+      hapted: false,
     };
     setDragging(true);
     stopLongPress();
@@ -174,6 +194,14 @@ function ConversationFeedRow({
       stopLongPress();
       g.dx = clampSwipe(ddx, openRef.current ? -SWIPE_REVEAL : 0);
       setDx(g.dx);
+      // Micro-retour au franchissement du seuil d'ouverture.
+      const armed = g.axis === 'x' && Math.abs(g.dx) > SWIPE_REVEAL * 0.4;
+      if (armed && !g.hapted) {
+        g.hapted = true;
+        haptic('light');
+      } else if (!armed && g.hapted) {
+        g.hapted = false;
+      }
     } else if (g.axis === 'y') {
       stopLongPress();
     }
@@ -306,6 +334,8 @@ function ConversationFeedRow({
     </div>
   );
 }
+
+const ConversationFeedRowMemo = React.memo(ConversationFeedRow);
 
 /* ------------------------------------------------------------------ */
 /* Fil + bulles + composer                                            */
@@ -783,7 +813,7 @@ function MessageComposerBar({
   const submit = async () => {
     const text = content.trim();
     if (!text || sending) return;
-    haptic('light');
+    haptic('medium');
     setSending(true);
     setContent('');
     try {
@@ -1100,11 +1130,11 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
     setFilter(next);
   };
 
-  const open = (conversation: Conversation) => {
+  const open = useCallback((conversation: Conversation) => {
     setSelectedId(conversation.id);
-  };
+  }, []);
 
-  const swipe = async (conversation: Conversation, action: SwipeAction) => {
+  const swipe = useCallback(async (conversation: Conversation, action: SwipeAction) => {
     if (!currentUserId) return;
     if (action === 'notify') {
       setNotifyConv(conversation);
@@ -1121,7 +1151,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
     const deleted = await messagingService.deleteConversationForMe(conversation.id, currentUserId);
     if (deleted && selectedId === conversation.id) setSelectedId(null);
     await refreshConversations();
-  };
+  }, [currentUserId, selectedId, refreshConversations]);
 
   /** Toute surface ouverte (drawer, feuille, modale) sort la barre basse :
    *  c'est l'état de la grammaire, pas un bricolage par composant. */
@@ -1329,7 +1359,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                       </div>
                     ) : (
                       visible.map((conversation) => (
-                        <ConversationFeedRow
+                        <ConversationFeedRowMemo
                           key={conversation.id}
                           conversation={conversation}
                           selected={conversation.id === selectedId}
@@ -1379,7 +1409,10 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     <button
                       type="button"
                       className="mpill"
-                      onClick={() => setOptionsConv(selected)}
+                      onClick={() => {
+                        haptic('light');
+                        setOptionsConv(selected);
+                      }}
                       aria-label={`${conversationTitle(selected)} — ${
                         selected.type === 'group' ? `${members.length || 1} membres` : 'Membre LKDV'
                       }`}

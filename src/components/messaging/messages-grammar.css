@@ -1159,3 +1159,60 @@
   background: var(--tint);
   color: var(--tint-ink);
 }
+/* ---------- Micro-interactions ---------- */
+/* Le bouton d'envoi « pop » quand il devient actif. */
+@keyframes msend-pop {
+  0% { transform: scale(0.86); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.lkdv-messages .mcomposer .msend.on {
+  animation: msend-pop 0.24s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+/* Une bulle qui arrive respire une fois, sans déplacer le fil. */
+@keyframes bub-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.lkdv-messages .bub {
+  animation: bub-in 0.18s cubic-bezier(0.22, 1, 0.3, 1);
+}
+/* Pastille non lue : une pulsation discrète à l'apparition. */
+@keyframes badge-pop {
+  0% { transform: scale(0.6); }
+  70% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.lkdv-messages .mrow-badge {
+  animation: badge-pop 0.32s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+/* Pillule auteur : appui vivant. */
+.lkdv-messages .mpill {
+  transition: transform 0.16s cubic-bezier(0.3, 1.4, 0.5, 1), box-shadow 0.2s;
+}
+.lkdv-messages .mpill:active {
+  transform: scale(0.97);
+}
+/* Boutons du composer : même retour que les ronds du haut. */
+.lkdv-messages .mcomposer .gbtn:active {
+  transform: scale(0.94);
+}
+/* Croix de recherche : appui net. */
+.lkdv-messages .msearch-x:active {
+  transform: scale(0.9);
+}
+.lkdv-messages .msearch-x {
+  transition: transform 0.14s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-messages .mcomposer .msend.on,
+  .lkdv-messages .bub,
+  .lkdv-messages .mrow-badge {
+    animation: none;
+  }
+  .lkdv-messages .mpill,
+  .lkdv-messages .mcomposer .gbtn,
+  .lkdv-messages .msearch-x {
+    transition: none;
+  }
+}
