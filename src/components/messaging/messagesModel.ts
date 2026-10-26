@@ -66,13 +66,14 @@ export function filterConversations(
   });
 }
 
-/** Glissement vers la droite uniquement, borné à la largeur révélée. */
+/** Glissement vers la GAUCHE : les actions (Supprimer, Notifs) vivent à
+ *  droite de la rangée. Borné à la largeur révélée. */
 export function clampSwipe(dx: number, base: number): number {
-  return Math.min(SWIPE_REVEAL, Math.max(base + dx, 0));
+  return Math.max(-SWIPE_REVEAL, Math.min(base + dx, 0));
 }
 
 /** Au relâchement : ouvert si le geste dépasse 40 % de la largeur révélée. */
 export function resolveSwipeEnd(dx: number): { open: boolean; dx: number } {
-  const open = dx > SWIPE_REVEAL * 0.4;
-  return { open, dx: open ? SWIPE_REVEAL : 0 };
+  const open = dx < -SWIPE_REVEAL * 0.4;
+  return { open, dx: open ? -SWIPE_REVEAL : 0 };
 }

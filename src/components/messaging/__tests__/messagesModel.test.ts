@@ -71,15 +71,15 @@ describe('lastPreview', () => {
 });
 
 describe('geste de rangée', () => {
-  it('borne le glissement vers la droite', () => {
-    expect(clampSwipe(40, 0)).toBe(40);
-    expect(clampSwipe(-20, 0)).toBe(0);
-    expect(clampSwipe(400, 0)).toBe(SWIPE_REVEAL);
-    expect(clampSwipe(-40, SWIPE_REVEAL)).toBe(SWIPE_REVEAL - 40);
+  it('borne le glissement vers la gauche (actions à droite)', () => {
+    expect(clampSwipe(-40, 0)).toBe(-40);
+    expect(clampSwipe(20, 0)).toBe(0);
+    expect(clampSwipe(-400, 0)).toBe(-SWIPE_REVEAL);
+    expect(clampSwipe(40, -SWIPE_REVEAL)).toBe(-SWIPE_REVEAL + 40);
   });
 
   it('ouvre au-delà de 40 % de la largeur révélée', () => {
-    expect(resolveSwipeEnd(SWIPE_REVEAL * 0.5)).toEqual({ open: true, dx: SWIPE_REVEAL });
-    expect(resolveSwipeEnd(SWIPE_REVEAL * 0.2)).toEqual({ open: false, dx: 0 });
+    expect(resolveSwipeEnd(-SWIPE_REVEAL * 0.5)).toEqual({ open: true, dx: -SWIPE_REVEAL });
+    expect(resolveSwipeEnd(-SWIPE_REVEAL * 0.2)).toEqual({ open: false, dx: 0 });
   });
 });

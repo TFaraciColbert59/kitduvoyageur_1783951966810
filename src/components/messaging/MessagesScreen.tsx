@@ -113,6 +113,7 @@ function ConversationFeedRow({
   }, [conversation.id]);
   const [dx, setDx] = useState(0);
   const [snapped, setSnapped] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const dxRef = useRef(0);
   const startX = useRef(0);
   const startY = useRef(0);
@@ -140,10 +141,11 @@ function ConversationFeedRow({
   };
 
   const onTouchStart = (event: React.TouchEvent) => {
+    setDragging(true);
     startX.current = event.touches[0].clientX;
     startY.current = event.touches[0].clientY;
     axis.current = 'none';
-    dxRef.current = snapped ? SWIPE_REVEAL : 0;
+    dxRef.current = snapped ? -SWIPE_REVEAL : 0;
     suppress.current = false;
     longPress.onTouchStart(event);
   };
@@ -155,13 +157,14 @@ function ConversationFeedRow({
       axis.current = Math.abs(ddx) > Math.abs(ddy) ? 'x' : 'y';
     }
     if (axis.current === 'x') {
-      dxRef.current = clampSwipe(ddx, snapped ? SWIPE_REVEAL : 0);
+      dxRef.current = clampSwipe(ddx, snapped ? -SWIPE_REVEAL : 0);
       setDx(dxRef.current);
     }
     longPress.onTouchMove(event);
   };
 
   const onTouchEnd = () => {
+    setDragging(false);
     moved.current = axis.current !== 'none';
     longPress.onTouchEnd();
     if (axis.current === 'x') {
@@ -170,7 +173,7 @@ function ConversationFeedRow({
       setDx(end.dx);
       setSnapped(end.open);
     } else {
-      dxRef.current = snapped ? SWIPE_REVEAL : 0;
+      dxRef.current = snapped ? -SWIPE_REVEAL : 0;
       setDx(dxRef.current);
     }
     axis.current = 'none';
@@ -178,7 +181,7 @@ function ConversationFeedRow({
 
   return (
     <div className="mfeed-item" style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, flex: 'none', ['--i' as string]: index }}>
-      {(dx > 0 || snapped) && onSwipeAction ? (
+      {(dx < 0 || snapped) && onSwipeAction ? (
         <div className="mrow-actions" style={{ width: SWIPE_REVEAL }}>
           <button
             type="button"
@@ -230,7 +233,9 @@ function ConversationFeedRow({
           border: selected ? '0.5px solid var(--subtle)' : 0,
           background: selected ? 'var(--mint)' : undefined,
           transform: `translate3d(${dx}px,0,0)`,
-          transition: dx === 0 ? 'transform .2s cubic-bezier(.3,1.2,.4,1)' : 'none',
+          transition: dragging
+            ? 'none'
+            : 'transform .3s cubic-bezier(.32,1.15,.5,1)',
           textAlign: 'left',
           cursor: 'pointer',
         }}
@@ -1055,32 +1060,31 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 </div>
               </div>
 
-              <div className="msearch">
-                <Icon name="search" className="size-4" aria-hidden="true" />
-                <input
-                  ref={searchRef}
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Rechercher une discussion"
-                  aria-label="Rechercher une discussion, une personne ou un message"
-                />
-                {query ? (
-                  <button
-                    type="button"
-                    className="msearch-x"
-                    onClick={() => {
-                      setQuery('');
-                      searchRef.current?.focus();
-                    }}
-                    aria-label="Effacer la recherche"
-                  >
-                    <Icon name="x" className="size-3.5" aria-hidden="true" />
-                  </button>
-                ) : null}
-              </div>
-
               <div className="card cs" id="card">
+                <div className="msearch">
+                  <Icon name="search" className="size-4" aria-hidden="true" />
+                  <input
+                    ref={searchRef}
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Rechercher une discussion"
+                    aria-label="Rechercher une discussion, une personne ou un message"
+                  />
+                  {query ? (
+                    <button
+                      type="button"
+                      className="msearch-x"
+                      onClick={() => {
+                        setQuery('');
+                        searchRef.current?.focus();
+                      }}
+                      aria-label="Effacer la recherche"
+                    >
+                      <Icon name="x" className="size-3.5" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </div>
                 <div className="card-scroll">
                   {query.trim().length >= 2 && !guest ? (
                     <div className="mresults">
