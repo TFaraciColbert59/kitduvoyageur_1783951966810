@@ -269,6 +269,9 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
       );
     }
     if (section === 'culture') {
+      if (country.culture?.citation) {
+        cards.push({ key: 'cu-cit', title: country.culture.citation, sub: country.culture.citation_auteur, badge: 'Citation', image: null, alt: 'Citation', cat: 'Citation' });
+      }
       (country.culture?.faits ?? []).forEach((f, i) =>
         cards.push({ key: `cu-${i}`, title: f.cle, sub: f.valeur, meta: f.description, badge: 'Culture', image: null, alt: f.cle, cat: 'Repères' })
       );
@@ -350,16 +353,6 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
         })
       );
     }
-    if (section === 'culture') {
-      const faits = country.culture?.faits ?? [];
-      cards.push({
-        key: 'culture',
-        title: 'Culture & société',
-        pill: `${faits.length} repères`,
-        rows: faits.map((f) => ({ label: f.cle, value: f.valeur, icon: ICONS.book })),
-        hint: country.culture?.citation ? `${country.culture.citation} — ${country.culture.citation_auteur}` : undefined,
-      });
-    }
     if (section === 'pratique') {
       const p = country.pratique;
       const groups = [
@@ -373,7 +366,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
       groups.forEach((g) => cards.push({
         key: g.title,
         title: g.title,
-        pill: `${g.rows.length}`,
+        pill: plural(g.rows.length, 'repère', 'repères'),
         rows: g.rows.map((r) => ({ label: r.cle, value: r.val, icon: g.icon })),
       }));
       if (weather?.current) {
@@ -392,8 +385,8 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
     if (section === 'communaute') {
       const clubs = (community ?? []).filter((r) => r.kind === 'club');
       const carnets = (community ?? []).filter((r) => r.kind === 'carnet');
-      if (clubs.length) cards.push({ key: 'clubs', title: 'Clubs outdoor', pill: `${clubs.length}`, rows: clubs.map((c) => ({ label: c.title, value: c.sub, icon: ICONS.users })), actions: [{ label: 'Tous les clubs', onClick: () => go('/clubs') }] });
-      if (carnets.length) cards.push({ key: 'carnets', title: 'Carnets d’expédition', pill: `${carnets.length}`, rows: carnets.map((c) => ({ label: c.title, value: c.sub, icon: ICONS.book })), actions: [{ label: 'Tous les carnets', onClick: () => go('/carnets') }] });
+      if (clubs.length) cards.push({ key: 'clubs', title: 'Clubs outdoor', pill: plural(clubs.length, 'club', 'clubs'), rows: clubs.map((c) => ({ label: c.title, value: c.sub, icon: ICONS.users })), actions: [{ label: 'Tous les clubs', onClick: () => go('/clubs') }] });
+      if (carnets.length) cards.push({ key: 'carnets', title: 'Carnets d’expédition', pill: plural(carnets.length, 'carnet', 'carnets'), rows: carnets.map((c) => ({ label: c.title, value: c.sub, icon: ICONS.book })), actions: [{ label: 'Tous les carnets', onClick: () => go('/carnets') }] });
     }
     return cards;
   }, [community, country, go, section, weather]);

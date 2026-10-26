@@ -1355,3 +1355,23 @@
   pointer-events: none;
   transition: opacity 0.2s;
 }
+
+/* Les cartes de contenu ne s'étirent pas quand la section est presque vide */
+.lkdv-pays .ig-grid-wrap > .lkdv-sheet-card,
+.lkdv-pays .ig-grid-wrap > .lkdv-compact-card,
+.lkdv-pays .ig-grid-wrap > .lkdv-media-card {
+  flex: 0 0 auto;
+  align-self: stretch;
+}
+
+/* Le contenu ne remplit jamais la hauteur restante : les cartes gardent leur hauteur */
+.lkdv-pays .card-scroll { justify-content: flex-start; }
+.lkdv-pays .ig-grid-wrap {
+  flex: 0 0 auto;
+  height: auto;
+  justify-content: flex-start;
+}
+.lkdv-pays .ig-grid-wrap > * {
+  flex: none;
+  height: auto;
+}
