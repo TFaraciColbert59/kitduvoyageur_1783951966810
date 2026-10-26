@@ -1965,3 +1965,21 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   background: transparent !important;
   padding: 4px 0 0 !important;
 }
+
+/* Hauteur imposée des drawers Communauté : 50 % de l'écran. */
+.lkdv-half-drawer,
+.lkdv-half-drawer:has(.lkdv-create-selector),
+.lkdv-form-drawer {
+  top: auto !important;
+  bottom: 16px !important;
+  height: 50dvh !important;
+  max-height: 50dvh !important;
+  min-height: 50dvh !important;
+}
+.lkdv-drawer-body,
+.lkdv-form-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+}
