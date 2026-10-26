@@ -241,6 +241,9 @@
 }
 
 .lkdv-messages .mresults {
+  width: 100%;
+  min-width: 0;
+  flex: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 6px;
@@ -757,6 +760,10 @@
   padding-bottom: 6px;
 }
 .lkdv-messages .card-scroll {
+  /* Colonne : sans ça, `.mresults` et la liste sont des items de flex en
+     ligne et débordent de la carte dès qu'un texte est long. */
+  display: flex;
+  flex-direction: column;
   padding: 12px 16px 54px;
   scroll-behavior: smooth;
   overscroll-behavior: contain;
@@ -955,6 +962,8 @@
 
 /* Contenu légèrement décollé des bords de la carte + retour au toucher. */
 .lkdv-messages .ig-grid-wrap {
+  width: 100%;
+  min-width: 0;
   padding-left: 4px !important;
   padding-right: 4px !important;
 }
