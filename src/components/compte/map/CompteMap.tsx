@@ -34,6 +34,25 @@ import './compte-map.css';
 
 const DEFAULT_CENTER: [number, number] = [2.5, 46.5];
 
+const MAP_ICON = {
+  peak: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 19 6.5-11 4 6 2.5-4L21 19H3Z"/></svg>',
+  water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.3 6 11a6 6 0 0 1-12 0c0-4.7 6-11 6-11Z"/></svg>',
+  shelter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg>',
+  tent: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 20 9-16 9 16H3ZM12 4v16M8 20l4-7 4 7"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"/><circle cx="12" cy="9" r="2.2"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v16H6.5A2.5 2.5 0 0 0 4 21.5V5.5ZM4 19.5A2.5 2.5 0 0 1 6.5 17H19"/></svg>',
+};
+
+function poiIcon(label: string): string {
+  const value = label.toLowerCase();
+  if (/(lac|étang|etang|source|rivière|riviere|cascade)/.test(value)) return MAP_ICON.water;
+  if (/(refuge|cabane|chalet|abri|bergerie|auberge)/.test(value)) return MAP_ICON.shelter;
+  if (/(bivouac|tente|camp)/.test(value)) return MAP_ICON.tent;
+  if (/(col|sommet|mont|pic|crête|crete|dôme|dome|cime)/.test(value)) return MAP_ICON.peak;
+  return MAP_ICON.pin;
+}
+
+
 export type CompteMapAuthState = 'loading' | 'guest' | 'owner' | 'error';
 
 export interface CompteMapContext {
@@ -281,8 +300,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#FFFFFF',
-          'line-width': 6,
-          'line-opacity': 0.68,
+          'line-width': 7,
+          'line-opacity': 0.82,
         },
       });
     });
@@ -294,9 +313,9 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#5B7F55',
-          'line-width': 7,
-          'line-opacity': 0.35,
-          'line-blur': 4,
+          'line-width': 11,
+          'line-opacity': 0.32,
+          'line-blur': 7,
         },
       });
     });
@@ -308,8 +327,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#17402C',
-          'line-width': 3,
-          'line-opacity': 0.9,
+          'line-width': 3.5,
+          'line-opacity': 0.96,
         },
       });
     });
@@ -327,10 +346,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         type: 'circle',
         source: 'compte-track-starts',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': 6,
           'circle-color': '#17402C',
           'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 2.5,
         },
       });
       map.on('click', 'compte-track-starts-dot', (event: MapLayerMouseEvent) => {
@@ -350,10 +369,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         type: 'circle',
         source: 'compte-track-ends',
         paint: {
-          'circle-radius': 4,
-          'circle-color': '#fff',
+          'circle-radius': 5,
+          'circle-color': '#F4FBF3',
           'circle-stroke-color': '#17402C',
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 2.5,
         },
       });
     });
@@ -365,16 +384,29 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         data.carnets.map((carnet) => ({ id: carnet.id, position: carnet.position }))
       )
     );
+    ensureLayer(map, 'compte-carnets-halo', () => {
+      map.addLayer({
+        id: 'compte-carnets-halo',
+        type: 'circle',
+        source: 'compte-carnets',
+        paint: {
+          'circle-radius': 12,
+          'circle-color': '#C89A3B',
+          'circle-opacity': 0.16,
+        },
+      });
+    });
     ensureLayer(map, 'compte-carnets-dot', () => {
       map.addLayer({
         id: 'compte-carnets-dot',
         type: 'circle',
         source: 'compte-carnets',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': 6,
           'circle-color': '#C89A3B',
           'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 2.5,
+          'circle-opacity': 1,
         },
       });
       map.on('click', 'compte-carnets-dot', (event: MapLayerMouseEvent) => {
@@ -388,16 +420,44 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       'compte-pois',
       pointsCollection(data.pois.map((poi) => ({ id: poi.id, position: poi.position })))
     );
+    ensureLayer(map, 'compte-pois-halo', () => {
+      map.addLayer({
+        id: 'compte-pois-halo',
+        type: 'circle',
+        source: 'compte-pois',
+        paint: {
+          'circle-radius': 11,
+          'circle-color': '#2F6B45',
+          'circle-opacity': 0.14,
+        },
+      });
+    });
+    ensureLayer(map, 'compte-pois-hit', () => {
+      map.addLayer({
+        id: 'compte-pois-hit',
+        type: 'circle',
+        source: 'compte-pois',
+        paint: {
+          'circle-radius': 18,
+          'circle-color': '#2F6B45',
+          'circle-opacity': 0,
+        },
+      });
+      map.on('click', 'compte-pois-hit', (event: MapLayerMouseEvent) => {
+        const id = event.features?.[0]?.properties?.id;
+        if (id) setSelected({ kind: 'poi', id: String(id) });
+      });
+    });
     ensureLayer(map, 'compte-pois-dot', () => {
       map.addLayer({
         id: 'compte-pois-dot',
         type: 'circle',
         source: 'compte-pois',
         paint: {
-          'circle-radius': 3.5,
-          'circle-color': '#4B6B7C',
+          'circle-radius': 4.5,
+          'circle-color': '#2F6B45',
           'circle-stroke-color': '#fff',
-          'circle-stroke-width': 1.5,
+          'circle-stroke-width': 2.5,
         },
       });
       map.on('click', 'compte-pois-dot', (event: MapLayerMouseEvent) => {
@@ -408,7 +468,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
     const layers = mapModeConfig(context.mode).layers;
     const visibility: Array<[string, boolean]> = [
-      ['compte-carnets-dot', layers.carnets],
+      ['compte-carnets-halo', false],
+      ['compte-carnets-dot', false],
+      ['compte-pois-halo', layers.pois],
+      ['compte-pois-hit', layers.pois],
       ['compte-pois-dot', layers.pois],
       ['compte-track-starts-dot', layers.outingPins],
       ['compte-track-ends-dot', layers.tracks !== 'none'],
@@ -430,6 +493,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         layers: [
           'compte-track-starts-dot',
           'compte-carnets-dot',
+          'compte-pois-hit',
           'compte-pois-dot',
         ].filter((layer) => Boolean(map.getLayer(layer))),
       });
@@ -445,16 +509,23 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     if (!map || !ready || !data) return;
     for (const marker of markerRefs.current) marker.remove();
     markerRefs.current = [];
-    if (!config.layers.massifs) return;
+    const poiEntries: Array<{ element: HTMLElement; lng: number; lat: number }> = [];
 
-    for (const massif of data.massifs) {
+    if (config.layers.massifs) for (const massif of data.massifs) {
       const element = document.createElement('button');
       element.type = 'button';
       element.className = 'lkdv-map-massif';
       element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
+      element.dataset.massifId = massif.id;
+      const icon = document.createElement('span');
+      icon.className = 'lkdv-map-massif-ico';
+      icon.innerHTML = MAP_ICON.peak;
       const count = document.createElement('b');
       count.textContent = String(massif.outings);
-      element.append(count);
+      const label = document.createElement('span');
+      label.className = 'lkdv-map-massif-name';
+      label.textContent = massif.name;
+      element.append(icon, count, label);
       element.title = `${massif.name} · ${massif.outings} sorties`;
       element.addEventListener('click', (event) => {
         event.stopPropagation();
@@ -466,10 +537,91 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
           .addTo(map)
       );
     }
-  }, [map, ready, data, config.layers.massifs]);
+
+    if (config.layers.pois) for (const poi of data.pois) {
+      const element = document.createElement('button');
+      element.type = 'button';
+      element.className = 'lkdv-map-poi';
+      element.dataset.poiId = poi.id;
+      element.setAttribute('aria-label', poi.label);
+      element.title = poi.label;
+      const icon = document.createElement('span');
+      icon.className = 'lkdv-map-poi-ico';
+      icon.innerHTML = poiIcon(poi.label);
+      element.append(icon);
+      element.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setSelected({ kind: 'poi', id: poi.id });
+      });
+      poiEntries.push({ element, lng: poi.position.lng, lat: poi.position.lat });
+      markerRefs.current.push(
+        new Marker({ element, anchor: 'right' })
+          .setLngLat([poi.position.lng, poi.position.lat])
+          .addTo(map)
+      );
+    }
+
+    const carnetElements: Array<{ element: HTMLElement; lng: number; lat: number }> = [];
+    if (config.layers.carnets) for (const carnet of data.carnets) {
+      const element = document.createElement('button');
+      element.type = 'button';
+      element.className = 'lkdv-map-carnet';
+      element.setAttribute('aria-label', carnet.title || 'Carnet');
+      element.title = carnet.title || 'Carnet';
+      const icon = document.createElement('span');
+      icon.className = 'lkdv-map-carnet-ico';
+      icon.innerHTML = MAP_ICON.book;
+      element.append(icon);
+      element.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setSelected({ kind: 'carnet', id: carnet.id });
+      });
+      carnetElements.push({ element, lng: carnet.position.lng, lat: carnet.position.lat });
+      markerRefs.current.push(
+        new Marker({ element, anchor: 'center' })
+          .setLngLat([carnet.position.lng, carnet.position.lat])
+          .addTo(map)
+      );
+    }
+
+    const updatePoiVisibility = () => {
+      const zoomVisible = map.getZoom() >= 7;
+      const container = map.getContainer();
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      const show = (entry: { element: HTMLElement; lng: number; lat: number }) => {
+        const point = map.project([entry.lng, entry.lat]);
+        const inside = point.x > 12 && point.x < width - 12 && point.y > 12 && point.y < height - 12;
+        entry.element.style.display = zoomVisible && inside ? '' : 'none';
+      };
+      poiEntries.forEach(show);
+      carnetElements.forEach(show);
+    };
+    updatePoiVisibility();
+    map.on('zoom', updatePoiVisibility);
+    map.on('resize', updatePoiVisibility);
+
+    return () => {
+      map.off('zoom', updatePoiVisibility);
+      map.off('resize', updatePoiVisibility);
+      for (const marker of markerRefs.current) marker.remove();
+      markerRefs.current = [];
+    };
+  }, [map, ready, data, config.layers.massifs, config.layers.pois]);
+
+  useEffect(() => {
+    if (!map || !ready) return;
+    const container = map.getContainer();
+    container.querySelectorAll<HTMLElement>('.lkdv-map-massif').forEach((element) => {
+      const id = element.dataset.massifId;
+      element.classList.toggle('is-selected', selected?.kind === 'massif' && selected.id === id);
+    });
+  }, [map, ready, selected]);
 
   useEffect(() => {
     if (!map || !data || !ready) return;
+    // Garder la sortie la plus récente lisible, y compris sur la grande carte :
+    // les POI, le départ, l'arrivée et le carnet restent dans le cadre.
     const intent = fitIntentForMode(context.mode, data, context.outingId);
     if (!intent) return;
     const reduced = prefersReducedMotion();
