@@ -524,6 +524,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     for (const marker of markerRefs.current) marker.remove();
     markerRefs.current = [];
     const poiEntries: Array<{ element: HTMLElement; lng: number; lat: number }> = [];
+    const massifMarkers: Array<{ marker: Marker; index: number }> = [];
 
     if (config.layers.massifs) for (const massif of data.massifs) {
       const element = document.createElement('button');
@@ -545,12 +546,25 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         event.stopPropagation();
         setSelected({ kind: 'massif', id: massif.id });
       });
-      markerRefs.current.push(
-        new Marker({ element, anchor: 'bottom' })
-          .setLngLat([massif.center.lng, massif.center.lat])
-          .addTo(map)
-      );
+      const marker = new Marker({ element, anchor: 'bottom' })
+        .setLngLat([massif.center.lng, massif.center.lat])
+        .addTo(map);
+      markerRefs.current.push(marker);
+      massifMarkers.push({ marker, index: massifMarkers.length });
     }
+
+    const updateMassifOffsets = () => {
+      const offsets: Array<[number, number]> = [
+        [0, 0], [-52, 16], [52, 16], [-34, -34], [34, -34], [0, 46],
+      ];
+      const spread = map.getZoom() < 7;
+      for (const entry of massifMarkers) {
+        const offset = spread ? offsets[entry.index % offsets.length] : [0, 0];
+        entry.marker.setOffset(offset as [number, number]);
+      }
+    };
+    updateMassifOffsets();
+    map.on('zoom', updateMassifOffsets);
 
     if (config.layers.pois) for (const poi of data.pois) {
       const element = document.createElement('button');
@@ -618,6 +632,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     return () => {
       map.off('zoom', updatePoiVisibility);
       map.off('resize', updatePoiVisibility);
+      map.off('zoom', updateMassifOffsets);
       for (const marker of markerRefs.current) marker.remove();
       markerRefs.current = [];
     };
