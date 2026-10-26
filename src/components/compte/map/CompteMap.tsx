@@ -490,7 +490,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     if (!map || !ready || !data) return;
     for (const marker of markerRefs.current) marker.remove();
     markerRefs.current = [];
-    const poiElements: HTMLElement[] = [];
+    const poiEntries: Array<{ element: HTMLElement; lng: number; lat: number }> = [];
 
     if (config.layers.massifs) for (const massif of data.massifs) {
       const element = document.createElement('button');
@@ -533,7 +533,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         event.stopPropagation();
         setSelected({ kind: 'poi', id: poi.id });
       });
-      poiElements.push(element);
+      poiEntries.push({ element, lng: poi.position.lng, lat: poi.position.lat });
       markerRefs.current.push(
         new Marker({ element, anchor: 'right' })
           .setLngLat([poi.position.lng, poi.position.lat])
@@ -542,11 +542,16 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     }
 
     const updatePoiVisibility = () => {
-      const visible = map.getZoom() >= 8;
-      const compact = map.getContainer().clientHeight <= 500;
-      for (const element of poiElements) {
-        element.style.display = visible ? '' : 'none';
-        element.classList.toggle('is-compact', compact);
+      const zoomVisible = map.getZoom() >= 8;
+      const container = map.getContainer();
+      const compact = container.clientHeight <= 500;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      for (const entry of poiEntries) {
+        const point = map.project([entry.lng, entry.lat]);
+        const inside = point.x > 18 && point.x < width - 18 && point.y > 18 && point.y < height - 18;
+        entry.element.style.display = zoomVisible && inside ? '' : 'none';
+        entry.element.classList.toggle('is-compact', compact);
       }
     };
     updatePoiVisibility();
