@@ -1798,3 +1798,41 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   height: auto !important;
   visibility: visible !important;
 }
+
+/* Pager d'étapes = capsule Grille/Sorties du Compte. */
+.lkdv-create-step-tabs {
+  position: relative !important;
+  height: 32px !important;
+  padding: 2.5px !important;
+  border-radius: 9999px !important;
+  background: rgba(255,255,255,.65) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: .5px solid rgba(255,255,255,.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 1px rgba(255,255,255,.35), 0 4px 14px rgba(23,43,36,.08) !important;
+  box-sizing: border-box !important;
+}
+.lkdv-create-step-lens {
+  position: absolute !important;
+  top: 2.5px !important;
+  bottom: 2.5px !important;
+  left: 2.5px !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.42)) !important;
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255,255,255,.5), 0 0 0 .5px rgba(23,43,36,.07), 0 2px 8px rgba(23,43,36,.08) !important;
+  transition: transform .28s cubic-bezier(.3,1.35,.4,1) !important;
+  z-index: 1 !important;
+}
+.lkdv-create-step-tabs button {
+  position: relative !important;
+  z-index: 2 !important;
+  height: 25px !important;
+  color: #56665D !important;
+  background: transparent !important;
+}
+.lkdv-create-step-tabs button.is-active {
+  background: transparent !important;
+  color: #17402C !important;
+}
+.lkdv-create-step-tabs button svg { width: 16px; height: 16px; }
+.lkdv-create-step-tabs button { display: grid; place-items: center; }

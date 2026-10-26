@@ -64,15 +64,6 @@ const FALLBACK_TITLES: Record<CreateKind, string> = {
   club: 'Nom du club',
 };
 
-const FALLBACK_ICONS: Record<CreateKind, string> = {
-  post: '📝',
-  story: '📸',
-  carnet: '📖',
-  sortie: '🥾',
-  kit: '🎒',
-  club: '👥',
-};
-
 const FALLBACK_SUMMARIES: Record<CreateKind, string> = {
   post: 'Ajoute un texte ou un média.',
   story: 'Choisis une photo ou une vidéo.',
@@ -271,6 +262,9 @@ export function FormPreview({ kind, values, className = '' }: FormPreviewProps) 
   const preview = buildFormPreview(kind, values);
   const src = preview.cover?.previewUrl || preview.cover?.url || '';
   const isVideo = preview.cover?.type?.startsWith('video/') ?? false;
+  const hasRealTitle = preview.title && preview.title !== FALLBACK_TITLES[kind];
+  const hasRealSummary = preview.summary && preview.summary !== FALLBACK_SUMMARIES[kind];
+  if (!src && !hasRealTitle && !hasRealSummary) return null;
 
   return (
     <aside
@@ -279,20 +273,18 @@ export function FormPreview({ kind, values, className = '' }: FormPreviewProps) 
       data-preview-kind={kind}
       aria-label={`Aperçu — ${preview.typeLabel}`}
     >
-      <span className="lkdv-create-form-preview-cover">
-        {src ? (
-          isVideo ? (
+      {src ? (
+        <span className="lkdv-create-form-preview-cover">
+          {isVideo ? (
             <video src={src} muted playsInline preload="metadata" aria-hidden="true" />
           ) : (
             <img
               src={src}
               alt={preview.cover?.alt || `Couverture — ${preview.title}`}
             />
-          )
-        ) : (
-          <span aria-hidden="true">{FALLBACK_ICONS[kind]}</span>
-        )}
-      </span>
+          )}
+        </span>
+      ) : null}
       <div className="lkdv-create-form-preview-txt">
         <small className="lkdv-create-form-preview-kind">{preview.typeLabel}</small>
         <b>{preview.title}</b>

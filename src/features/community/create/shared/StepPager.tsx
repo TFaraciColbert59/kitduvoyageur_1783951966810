@@ -2,12 +2,14 @@
 
 import React from 'react';
 import { LensPager } from '@/components/compte/drawer/LensPager';
+import { Square, ImagePlus, Pencil, Send, Sparkles, BookOpen, Map, Backpack, Camera, Share2, Users, Shield, Route, Check, UserPlus } from 'lucide-react';
 import type { CreateKind } from '../engine/createSchemas';
 import './create-shared.css';
 
 export interface CreateStep {
   id: string;
   label: string;
+  icon: React.ReactNode;
 }
 
 /**
@@ -18,39 +20,39 @@ export interface CreateStep {
  */
 export const CREATE_STEPS: Record<CreateKind, readonly CreateStep[]> = {
   post: [
-    { id: 'format', label: 'Format' },
-    { id: 'media', label: 'Médias' },
-    { id: 'details', label: 'Détails' },
-    { id: 'publication', label: 'Publication' },
+    { id: 'format', label: 'Format', icon: <Square size={16} aria-hidden="true" /> },
+    { id: 'media', label: 'Médias', icon: <ImagePlus size={16} aria-hidden="true" /> },
+    { id: 'details', label: 'Détails', icon: <Pencil size={16} aria-hidden="true" /> },
+    { id: 'publication', label: 'Publication', icon: <Send size={16} aria-hidden="true" /> },
   ],
   story: [
-    { id: 'media', label: 'Média' },
-    { id: 'edit', label: 'Édition' },
-    { id: 'diffusion', label: 'Diffusion' },
+    { id: 'media', label: 'Média', icon: <ImagePlus size={16} aria-hidden="true" /> },
+    { id: 'edit', label: 'Édition', icon: <Sparkles size={16} aria-hidden="true" /> },
+    { id: 'diffusion', label: 'Diffusion', icon: <Send size={16} aria-hidden="true" /> },
   ],
   carnet: [
-    { id: 'identity', label: 'Identité' },
-    { id: 'itinerary', label: 'Itinéraire' },
-    { id: 'logistics', label: 'Logistique' },
-    { id: 'story', label: 'Récit' },
-    { id: 'sharing', label: 'Partage' },
+    { id: 'identity', label: 'Identité', icon: <BookOpen size={16} aria-hidden="true" /> },
+    { id: 'itinerary', label: 'Itinéraire', icon: <Map size={16} aria-hidden="true" /> },
+    { id: 'logistics', label: 'Logistique', icon: <Backpack size={16} aria-hidden="true" /> },
+    { id: 'story', label: 'Récit', icon: <ImagePlus size={16} aria-hidden="true" /> },
+    { id: 'sharing', label: 'Partage', icon: <Share2 size={16} aria-hidden="true" /> },
   ],
   sortie: [
-    { id: 'type-place', label: 'Type & lieu' },
-    { id: 'route', label: 'Itinéraire' },
-    { id: 'participants', label: 'Participants' },
-    { id: 'safety', label: 'Sécurité' },
+    { id: 'type-place', label: 'Type & lieu', icon: <Map size={16} aria-hidden="true" /> },
+    { id: 'route', label: 'Itinéraire', icon: <Route size={16} aria-hidden="true" /> },
+    { id: 'participants', label: 'Participants', icon: <Users size={16} aria-hidden="true" /> },
+    { id: 'safety', label: 'Sécurité', icon: <Shield size={16} aria-hidden="true" /> },
   ],
   kit: [
-    { id: 'inventory', label: 'Inventaire' },
-    { id: 'complete', label: 'Compléter' },
-    { id: 'share', label: 'Partager' },
+    { id: 'inventory', label: 'Inventaire', icon: <Backpack size={16} aria-hidden="true" /> },
+    { id: 'complete', label: 'Compléter', icon: <Check size={16} aria-hidden="true" /> },
+    { id: 'share', label: 'Partager', icon: <Send size={16} aria-hidden="true" /> },
   ],
   club: [
-    { id: 'identity', label: 'Identité' },
-    { id: 'universe', label: 'Univers' },
-    { id: 'membership', label: 'Adhésion' },
-    { id: 'publication', label: 'Publication' },
+    { id: 'identity', label: 'Identité', icon: <BookOpen size={16} aria-hidden="true" /> },
+    { id: 'universe', label: 'Univers', icon: <Sparkles size={16} aria-hidden="true" /> },
+    { id: 'membership', label: 'Adhésion', icon: <UserPlus size={16} aria-hidden="true" /> },
+    { id: 'publication', label: 'Publication', icon: <Send size={16} aria-hidden="true" /> },
   ],
 };
 
@@ -117,6 +119,14 @@ export function StepPager({
 
       <div className="lkdv-create-stepbar">
         <div className="lkdv-create-step-tabs" role="tablist" aria-label={label}>
+          <span
+            className="lkdv-create-step-lens"
+            aria-hidden="true"
+            style={{
+              width: `calc((100% - 5px) / ${Math.max(1, count)})`,
+              transform: `translateX(${safeIndex * 100}%)`,
+            }}
+          />
           {steps.map((step, stepIndex) => (
             <button
               key={step.id}
@@ -127,7 +137,7 @@ export function StepPager({
               className={stepIndex === safeIndex ? 'is-active' : ''}
               onClick={() => onIndexChange(stepIndex)}
             >
-              {stepIndex + 1}
+              {step.icon}
             </button>
           ))}
         </div>
