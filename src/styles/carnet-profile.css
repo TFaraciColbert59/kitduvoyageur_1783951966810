@@ -704,3 +704,11 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 @media (prefers-reduced-motion: reduce) {
   .ckp-page--next, .ckp-page--prev { animation: none; }
 }
+
+/* --- Fond photo réellement visible ---------------------------------------- */
+/* Le canvas global de l'app peignait au-dessus : on le retire sur cet écran,
+   comme le fait déjà le fil Communauté. */
+body:has(.ckp-screen) .lkv-app-background { display: none !important; }
+.ckp-screen { isolation: isolate; position: relative; }
+.ckp-screen > .ckp-screen-bg { position: absolute; inset: 0; z-index: 0; }
+.ckp-screen > :not(.ckp-screen-bg) { position: relative; z-index: 1; }
