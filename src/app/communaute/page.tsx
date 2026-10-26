@@ -10,6 +10,7 @@ import { CommunityFeedTopBar } from '@/features/community/feed/CommunityFeedTopB
 import { CommunityFeed } from '@/features/community/feed/CommunityFeed';
 import { CreateDrawer, type CreateKind } from '@/features/community/create/CreateDrawer';
 import { CommunitySectionsDrawer } from '@/features/community/sections/CommunitySectionsDrawer';
+import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
 
 function CommunauteFeedContent() {
@@ -50,7 +51,7 @@ function CommunauteFeedContent() {
       <h1 className="sr-only">Communauté — Le Kit du Voyageur</h1>
 
       <CommunityFeedShell
-        bottomBar={null}
+        bottomBar={<AccountBottomBar active="communaute" />}
         topBar={
           <CommunityFeedTopBar
             user={user}
