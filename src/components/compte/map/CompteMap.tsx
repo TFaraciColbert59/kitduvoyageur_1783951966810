@@ -43,6 +43,9 @@ const MAP_ICON = {
   book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v16H6.5A2.5 2.5 0 0 0 4 21.5V5.5ZM4 19.5A2.5 2.5 0 0 1 6.5 17H19"/></svg>',
 };
 
+const CINEMATIC_EASE = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
 function poiIcon(label: string): string {
   const value = label.toLowerCase();
   if (/(lac|étang|etang|source|rivière|riviere|cascade)/.test(value)) return MAP_ICON.water;
@@ -633,7 +636,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
             mapbig: map.getContainer().clientHeight > 500,
           }),
           maxZoom: 14,
-          duration: reduced ? 0 : 850,
+          duration: reduced ? 0 : 1500,
+          easing: CINEMATIC_EASE,
           essential: true,
         }
       );
@@ -642,7 +646,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     map.flyTo({
       center: [resolved.position.lng, resolved.position.lat],
       zoom: resolved.kind === 'massif' ? 10.5 : 14,
-      duration: reduced ? 0 : 800,
+      duration: reduced ? 0 : 1600,
+      curve: 1.42,
+      speed: 0.72,
+      easing: CINEMATIC_EASE,
       essential: true,
     });
   }, [map, ready, resolved]);
@@ -666,7 +673,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         }),
         maxZoom: intent.maxZoom,
         pitch: context.mode === 'sortie' ? 45 : 0,
-        duration: reduced ? 0 : context.mode === 'sortie' ? 1200 : 800,
+        duration: reduced ? 0 : context.mode === 'sortie' ? 1600 : 1300,
+        easing: CINEMATIC_EASE,
         essential: true,
       }
     );

@@ -609,3 +609,19 @@
 .lkdv-map-carnet-ico { width: 14px; height: 14px; display: grid; place-items: center; }
 .lkdv-map-carnet-ico svg { width: 14px; height: 14px; display: block; }
 .lkdv-map-carnet:hover, .lkdv-map-carnet:active { background: #8a641f; color: #fff7e4; transform: scale(1.06); }
+
+/* Apparition cinématique de la fiche et du marqueur sélectionné. */
+.lkdv-map-callout {
+  animation: mapCalloutIn .42s cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes mapCalloutIn {
+  from { opacity: 0; transform: translateY(10px) scale(.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.lkdv-map-massif.is-selected .lkdv-map-massif-ico {
+  animation: mapPinPulse 1.4s cubic-bezier(.32,.72,0,1) infinite;
+}
+@keyframes mapPinPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.18); opacity: .8; }
+}
