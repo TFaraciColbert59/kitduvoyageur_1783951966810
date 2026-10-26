@@ -121,7 +121,8 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
+            // Micro autorisé pour les notes vocales de la messagerie ; caméra et géoloc inchangées.
+          value: 'camera=(), microphone=(self), geolocation=(self), interest-cohort=()',
           },
           // P0-5 (C-10) — CSP en Report-Only (une semaine d'observation des
           // rapports avant le mode bloquant ; nonce à poser sur les scripts
