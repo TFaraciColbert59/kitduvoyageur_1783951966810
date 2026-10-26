@@ -787,7 +787,9 @@
      ligne et débordent de la carte dès qu'un texte est long. */
   display: flex;
   flex-direction: column;
-  padding: 12px 16px 54px;
+  /* Même marge que la barre de recherche (10 px) : les rangées sont
+     décollées des bords de la carte et alignées sur le champ. */
+  padding: 4px 10px 54px;
   scroll-behavior: smooth;
   overscroll-behavior: contain;
 }
@@ -986,8 +988,8 @@
 .lkdv-messages .ig-grid-wrap {
   width: 100%;
   min-width: 0;
-  padding-left: 4px !important;
-  padding-right: 4px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 .lkdv-messages .ig-feed-row {
   border-radius: 18px;
