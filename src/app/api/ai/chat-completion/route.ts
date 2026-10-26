@@ -3,7 +3,7 @@ import { completion } from '@rocketnew/llm-sdk';
 import { createClient } from '@/lib/supabase/server';
 import { askAI } from '@/lib/ai/askAI';
 import { resolveAiMode, derivePromptAndSystem, buildSsePayload } from '@/lib/ai/requestMode';
-import { clientIpFromHeaders, rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
