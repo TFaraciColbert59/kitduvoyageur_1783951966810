@@ -483,9 +483,9 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     const visibility: Array<[string, boolean]> = [
       ['compte-carnets-halo', false],
       ['compte-carnets-dot', false],
-      ['compte-pois-halo', layers.pois],
-      ['compte-pois-hit', layers.pois],
-      ['compte-pois-dot', layers.pois],
+      ['compte-pois-halo', false],
+      ['compte-pois-hit', false],
+      ['compte-pois-dot', false],
       ['compte-track-starts-dot', layers.outingPins],
       ['compte-track-ends-dot', layers.tracks !== 'none'],
       ['compte-tracks-casing', layers.tracks !== 'none'],
