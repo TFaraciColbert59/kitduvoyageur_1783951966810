@@ -26,7 +26,7 @@ export default function ServiceWorkerRegistration() {
 
     const register = () => {
       navigator.serviceWorker
-        .register('/sw.js?v=12', { updateViaCache: 'none' })
+        .register('/sw.js?v=15', { updateViaCache: 'none' })
         .then((registration) => registration.update())
         .then(
           (registration) => {

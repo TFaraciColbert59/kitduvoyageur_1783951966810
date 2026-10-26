@@ -1912,3 +1912,26 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   -webkit-backdrop-filter: blur(28px) saturate(1.8) brightness(1.04) !important;
   backdrop-filter: blur(28px) saturate(1.8) brightness(1.04) !important;
 }
+
+/* Même style que le drawer Création pour l'autre drawer Communauté. */
+.lkdv-half-drawer:not(:has(.lkdv-create-selector)) {
+  top: auto !important;
+  bottom: 16px !important;
+  height: auto !important;
+  max-height: min(541px, calc(100dvh - 32px)) !important;
+  min-height: 0 !important;
+  border-radius: 24px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(245,250,241,.62) 55%, rgba(255,255,255,.72)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.8) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(1.8) brightness(1.04) !important;
+}
+.lkdv-half-drawer:not(:has(.lkdv-create-selector)) .lkdv-drawer-body {
+  flex: 0 1 auto !important;
+  max-height: calc(100dvh - 120px) !important;
+  padding: 4px 14px 16px !important;
+}
+
+/* Icônes du sélecteur Sections lisibles sur la feuille claire. */
+.lkdv-half-drawer .lkdv-slot-selector button { color: #56665D !important; }
+.lkdv-half-drawer .lkdv-slot-selector button[aria-selected="true"],
+.lkdv-half-drawer .lkdv-slot-selector button.cur { color: #17402C !important; }

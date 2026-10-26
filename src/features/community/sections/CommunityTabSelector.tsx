@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
+import { Search, Sparkles, BookOpen, Users, Compass } from 'lucide-react';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 
 export type SectionTabId = 'recherche' | 'pour-toi' | 'carnets' | 'clubs' | 'sorties';
@@ -9,15 +9,15 @@ export type SectionTabId = 'recherche' | 'pour-toi' | 'carnets' | 'clubs' | 'sor
 export interface SectionTab {
   id: SectionTabId;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 export const SECTION_TABS: SectionTab[] = [
-  { id: 'recherche', label: 'Recherche', icon: 'search' },
-  { id: 'pour-toi', label: 'Pour toi', icon: 'sparkles' },
-  { id: 'carnets', label: 'Carnets', icon: 'book-open' },
-  { id: 'clubs', label: 'Clubs', icon: 'users' },
-  { id: 'sorties', label: 'Sorties', icon: 'compass' },
+  { id: 'recherche', label: 'Recherche', icon: <Search size={18} aria-hidden="true" /> },
+  { id: 'pour-toi', label: 'Pour toi', icon: <Sparkles size={18} aria-hidden="true" /> },
+  { id: 'carnets', label: 'Carnets', icon: <BookOpen size={18} aria-hidden="true" /> },
+  { id: 'clubs', label: 'Clubs', icon: <Users size={18} aria-hidden="true" /> },
+  { id: 'sorties', label: 'Sorties', icon: <Compass size={18} aria-hidden="true" /> },
 ];
 
 /** Sélecteur 5 cellules, capsule 48 px — copie du sélecteur du drawer Profil. */
@@ -34,7 +34,7 @@ export function CommunityTabSelector({
       items={SECTION_TABS.map((tab) => ({
         id: tab.id,
         label: tab.label,
-        icon: <Icon name={tab.icon} size={18} aria-hidden="true" />,
+        icon: tab.icon,
       }))}
       activeIndex={index}
       onIndexChange={(next) => {
