@@ -64,8 +64,7 @@ export async function insertCommunityPost(input: PostBridgeInput): Promise<strin
       club_id: input.audience === 'club' ? input.clubId ?? null : null,
       linked_carnet_id: input.linkedCarnetId ?? null,
       linked_kit_id: input.linkedKitId ?? null,
-      snapshot_payload: input.linkedCarnetId ? input.snapshotPayload ?? null : null,
-      creation_meta: input.snapshotPayload ?? null,
+      snapshot_payload: input.snapshotPayload ?? null,
     })
     .select('id')
     .single();
