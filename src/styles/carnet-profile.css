@@ -756,3 +756,11 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   font: 700 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
   background: #17402c; color: #fff;
 }
+
+/* Capsule propre : aucun compteur peint, aucune auréole d'état. */
+.ckp-card-foot .ckp-action-count { display: none; }
+.ckp-card-foot .ckp-action-in,
+.ckp-card-foot .ckp-action[aria-pressed='true'] .ckp-action-in {
+  background: none; box-shadow: none; border: 0;
+}
+.ckp-card-foot .ckp-action[aria-pressed='true'] { color: #e0245e; }
