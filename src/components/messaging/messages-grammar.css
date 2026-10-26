@@ -32,13 +32,15 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  box-shadow: 0 2px 8px var(--sep);
-  background: var(--page);
   align-self: center;
   margin: 6px 0 4px;
   padding: 3px 10px;
   border-radius: 999px;
-  background: var(--fill);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 0.5px rgba(23, 43, 36, 0.08),
+    0 2px 8px rgba(23, 43, 36, 0.08);
   color: var(--label2);
   font: 600 9.5px/1 var(--sf);
   letter-spacing: -0.1px;
@@ -70,27 +72,19 @@
   padding-left: 4px;
 }
 
-/* La bulle : matière EXACTE de la carte principale du Compte
-   (compte-v8.css `.cs` : gradient --ga + .3/.2, blur --gb + 18, mêmes ombres).
-   Elle n'invente ni couleur ni opacité : elle reprend la recette. */
+/* La bulle : un chip translucide POSÉ SUR la carte. La carte porte le verre,
+   la bulle porte la teinte — c'est la hiérarchie de la référence (une seule
+   surface de verre par écran, le contenu reste plat). */
 .lkdv-messages .bub {
   position: relative;
   padding: 8px 12px;
   border-radius: 20px;
   border: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, calc(var(--ga, 0.19) + 0.3)),
-    rgba(255, 255, 255, calc(var(--ga, 0.19) + 0.2))
-  );
-  -webkit-backdrop-filter: blur(calc(var(--gb, 7px) + 18px)) saturate(1.8) brightness(1.05);
-  backdrop-filter: blur(calc(var(--gb, 7px) + 18px)) saturate(1.8) brightness(1.05);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.52));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
-    inset 0 0 16px rgba(255, 255, 255, 0.12),
-    0 0 0 0.5px rgba(23, 43, 36, 0.12),
-    0 8px 22px rgba(23, 43, 36, 0.12);
+    0 0 0 0.5px rgba(23, 43, 36, 0.1),
+    0 3px 10px rgba(23, 43, 36, 0.08);
   color: var(--label);
   font: 400 13px/1.38 var(--sf);
   letter-spacing: -0.13px;
@@ -103,28 +97,20 @@
 }
 .lkdv-messages .bub.mine {
   border-bottom-right-radius: 8px;
-  /* Même verre, teinté menthe : la teinte est un voile, pas une peinture. */
-  background:
-    linear-gradient(180deg, rgba(150, 186, 142, 0.3), rgba(150, 186, 142, 0.16)),
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, calc(var(--ga, 0.19) + 0.3)),
-      rgba(255, 255, 255, calc(var(--ga, 0.19) + 0.2))
-    );
+  /* Menthe du Compte (--soft, --mint), posée en voile translucide. */
+  background: linear-gradient(180deg, rgba(196, 219, 198, 0.78), rgba(174, 203, 177, 0.62));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
-    inset 0 0 16px rgba(255, 255, 255, 0.12),
-    0 0 0 0.5px rgba(23, 64, 44, 0.16),
-    0 8px 22px rgba(23, 43, 36, 0.12);
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 0.5px rgba(23, 64, 44, 0.14),
+    0 3px 10px rgba(23, 43, 36, 0.08);
   color: var(--label);
 }
 @media (prefers-reduced-transparency: reduce) {
-  .lkdv-messages .bub,
-  .lkdv-messages .bub.mine {
+  .lkdv-messages .bub {
     background: #fbfaf6;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+  }
+  .lkdv-messages .bub.mine {
+    background: #e7f0e8;
   }
 }
 .lkdv-messages .bub.mid {
@@ -214,7 +200,10 @@
   gap: 10px;
   height: 48px;
   padding: 0 18px 0 16px;
-  border-bottom: 0.5px solid var(--sep);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.38));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0.5px 0 rgba(23, 43, 36, 0.08);
   touch-action: none;
 }
 .lkdv-messages .mpane-av {
@@ -257,8 +246,56 @@
    leur verre dessus. Sans ce voile, `.map` peignait #E9EDE0 et la matière des
    bulles n'avait rien à flouter. */
 .lkdv-messages .map {
-  background: rgba(255, 255, 255, 0.3) !important;
+  /* Même matière que `.cs` (carte principale du Compte) : la photo du fond
+     devient une texture, pas un décor qui mange le texte. */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, calc(var(--ga, 0.19) + 0.3)),
+    rgba(255, 255, 255, calc(var(--ga, 0.19) + 0.2))
+  ) !important;
+  -webkit-backdrop-filter: blur(calc(var(--gb, 7px) + 18px)) saturate(1.8) brightness(1.05);
+  backdrop-filter: blur(calc(var(--gb, 7px) + 18px)) saturate(1.8) brightness(1.05);
   touch-action: pan-y;
+}
+
+/* L'état vide et les erreurs reçoivent leur propre panneau de verre : le texte
+   doit rester lisible même si la photo derrière est claire ou chargée. */
+.lkdv-messages .map .mstate {
+  max-width: 282px;
+  margin: auto;
+  padding: 20px 22px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.56));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 0.5px rgba(23, 43, 36, 0.1),
+    0 12px 30px rgba(23, 43, 36, 0.14);
+}
+
+/* Actions du tiroir de conversation : deux colonnes, pas une ligne qui
+   déborde sur trois. */
+.lkdv-messages .mdrawer-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 2px 0 6px;
+}
+.lkdv-messages .mdrawer-actions .mbtn {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  font: 600 11.5px/1 var(--sf);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* La feuille de conversation occupe la carte : le volet derrière s'efface
+   pour ne pas afficher deux fils et deux composers l'un sous l'autre. */
+.lkdv-messages .phone.sheet-open .mpane {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
 /* ---------- Composer ---------- */
@@ -533,7 +570,9 @@
 }
 /* Conversation ouverte = la carte se replie, le fil prend la place. */
 .lkdv-messages .phone.mapbig {
-  grid-template-rows: 150px minmax(0, 1fr) !important;
+  /* 54 px de safe-area + 42 px de barre + 6 px : la carte disparaît sans
+     laisser de bande vide entre l'en-tête et le volet. */
+  grid-template-rows: 108px minmax(0, 1fr) !important;
 }
 .lkdv-messages .phone .card {
   display: flex !important;
@@ -548,6 +587,12 @@
   transform: translateY(-10px) scale(0.985);
   pointer-events: none;
 }
+/* La grammaire retire la barre basse en `mapbig` (Instagram fait pareil dans
+   un fil) : la réserve de 70 px n'a donc plus lieu d'être, le composer
+   descend jusqu'au bord bas au lieu de laisser une bande vide. */
+.lkdv-messages .phone.mapbig .map {
+  padding-bottom: 0 !important;
+}
 .lkdv-messages .top {
   padding-bottom: 6px;
 }
@@ -558,6 +603,11 @@
 }
 .lkdv-messages .mthread {
   scroll-behavior: smooth;
+}
+/* Fil court : les messages se posent près du composer, comme dans Messages,
+   au lieu de flotter en haut d'une zone vide. */
+.lkdv-messages .mthread > :first-child {
+  margin-top: auto;
 }
 
 /* ---------- Apparition des rangées (décalée), fondu sortant géré en JS ---------- */

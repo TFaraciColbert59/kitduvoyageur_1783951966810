@@ -1090,7 +1090,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   // Volet de conversation : le doigt le tire vers le bas pour revenir à la
   // liste (le glissement vers le haut ouvre la feuille plein écran).
   const paneRef = useRef<HTMLDivElement>(null);
-  const paneDrag = useRef({ y: 0, dy: 0, active: false, t: 0 });
+  const paneDrag = useRef({ y: 0, dy: 0, raw: 0, active: false, captured: false, t: 0 });
   const closingRef = useRef(false);
 
   const closePane = () => {
@@ -1114,17 +1114,25 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
 
   const paneDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (closingRef.current) return;
-    paneDrag.current = { y: event.clientY, dy: 0, active: true, t: event.timeStamp };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    paneRef.current?.classList.add('dragging');
+    // Pas de capture au pointerdown : elle retirerait le clic aux boutons de
+    // l'en-tête. On ne capture qu'une fois le geste engagé (6 px).
+    paneDrag.current = { y: event.clientY, dy: 0, raw: 0, active: true, captured: false, t: event.timeStamp };
   };
 
   const paneMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!paneDrag.current.active) return;
-    const raw = event.clientY - paneDrag.current.y;
+    const drag = paneDrag.current;
+    if (!drag.active) return;
+    const raw = event.clientY - drag.y;
+    if (!drag.captured) {
+      if (Math.abs(raw) < 6) return;
+      drag.captured = true;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      paneRef.current?.classList.add('dragging');
+    }
     // Vers le bas : suit le doigt. Vers le haut : résiste (le geste sert au tiroir).
-    const dy = raw > 0 ? raw : raw * 0.35;
+    const dy = raw > 0 ? raw : raw * 0.5;
     paneDrag.current.dy = dy;
+    paneDrag.current.raw = raw;
     const el = paneRef.current;
     if (!el) return;
     el.style.transform = `translateY(${dy}px)`;
@@ -1133,9 +1141,12 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
 
   const paneUp = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!paneDrag.current.active) return;
+    const started = paneDrag.current.captured;
     const dy = paneDrag.current.dy;
+    const raw = paneDrag.current.raw;
     const speed = dy / Math.max(1, event.timeStamp - paneDrag.current.t);
-    paneDrag.current = { y: 0, dy: 0, active: false, t: 0 };
+    paneDrag.current = { y: 0, dy: 0, raw: 0, active: false, captured: false, t: 0 };
+    if (!started) return; // simple tap : les boutons de l'en-tête gardent leur clic
     const el = paneRef.current;
     if (dy > 84 || speed > 0.7) {
       haptic('light');
@@ -1147,9 +1158,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
       closePane();
       return;
     }
-    if (dy < -30) {
-      haptic('light');
-    }
+    if (raw < -28) haptic('light');
     if (el) {
       el.classList.remove('dragging');
       el.classList.add('settling');
@@ -1157,7 +1166,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
       el.style.opacity = '';
       window.setTimeout(() => el.classList.remove('settling'), 420);
     }
-    if (dy < -30) setSheetOpen(true);
+    // Le seuil se juge sur le déplacement réel, pas sur la valeur amortie.
+    if (raw < -28) setSheetOpen(true);
   };
 
   const guest = !currentUserId;
@@ -1301,7 +1311,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   Hors ligne — vos messages restent en brouillon local et partiront au retour du réseau.
                 </div>
               ) : null}
-              <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: 64 }}>
+              <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: 70 }}>
                 {selected ? (
                   <div
                     className="mpane in"
@@ -1466,7 +1476,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 onClose={() => setSheetOpen(false)}
               >
                 <div className="mdrawer">
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 0 4px' }}>
+                  <div className="mdrawer-actions">
                     <button type="button" className="mbtn" onClick={() => setOptionsConv(selected)}>
                       Options
                     </button>
@@ -1525,7 +1535,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                         setSelectedId(null);
                       }}
                     >
-                      Fermer
+                      Quitter
                     </button>
                   </div>
                   {sheetOpen ? <MessageThread
