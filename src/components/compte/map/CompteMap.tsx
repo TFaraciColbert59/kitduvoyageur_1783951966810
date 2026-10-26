@@ -104,6 +104,7 @@ function tracksCollection(tracks: MapTrack[]) {
         kitId: track.kitId ?? '',
         participants: track.participantsCount,
         visibility: track.visibility,
+        massifId: track.massifId ?? '',
       },
       geometry: {
         type: 'LineString' as const,
@@ -557,10 +558,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const offsets: Array<[number, number]> = [
         [0, 0], [-52, 16], [52, 16], [-34, -34], [34, -34], [0, 46],
       ];
-      const spread = map.getZoom() < 7;
+      const factor = Math.max(0, Math.min(1, (7 - map.getZoom()) / 3.4));
       for (const entry of massifMarkers) {
-        const offset = spread ? offsets[entry.index % offsets.length] : [0, 0];
-        entry.marker.setOffset(offset as [number, number]);
+        const source = offsets[entry.index % offsets.length];
+        entry.marker.setOffset([source[0] * factor, source[1] * factor] as [number, number]);
       }
     };
     updateMassifOffsets();
@@ -645,6 +646,32 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const id = element.dataset.massifId;
       element.classList.toggle('is-selected', selected?.kind === 'massif' && selected.id === id);
     });
+  }, [map, ready, selected]);
+
+  useEffect(() => {
+    if (!map || !ready) return;
+    const trackId = selected?.kind === 'outing' ? selected.id : null;
+    const massifId = selected?.kind === 'massif' ? selected.id : null;
+    const match = trackId
+      ? ['==', ['get', 'id'], trackId]
+      : massifId
+        ? ['==', ['get', 'massifId'], massifId]
+        : null;
+    const line = (selectedValue: any, idle: any): any =>
+      match ? ['case', match, selectedValue, idle] : idle;
+    if (map.getLayer('compte-tracks-line')) {
+      map.setPaintProperty('compte-tracks-line', 'line-color', line('#C89A3B', '#17402C'));
+      map.setPaintProperty('compte-tracks-line', 'line-width', line(5, 3.5));
+      map.setPaintProperty('compte-tracks-line', 'line-opacity', line(1, 0.9));
+    }
+    if (map.getLayer('compte-tracks-casing')) {
+      map.setPaintProperty('compte-tracks-casing', 'line-width', line(9, 7));
+      map.setPaintProperty('compte-tracks-casing', 'line-opacity', line(0.95, 0.78));
+    }
+    if (map.getLayer('compte-tracks-glow')) {
+      map.setPaintProperty('compte-tracks-glow', 'line-width', line(14, 11));
+      map.setPaintProperty('compte-tracks-glow', 'line-opacity', line(0.4, 0.24));
+    }
   }, [map, ready, selected]);
 
   useEffect(() => {
