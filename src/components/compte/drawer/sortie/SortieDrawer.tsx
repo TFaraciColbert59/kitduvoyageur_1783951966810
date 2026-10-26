@@ -384,13 +384,13 @@ export const SORTIE_CSS = `
 .lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.proof{background:rgba(23,64,44,.88)!important;color:#fff!important;}
 .lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.planned{background:rgba(185,138,46,.92)!important;color:#fff!important;}
 .lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.ongoing{background:rgba(61,122,82,.92)!important;color:#fff!important;}
-.lkdv-sortie-badge.state.done{background:rgba(47,107,69,.16)!important;color:#2f6b45!important;box-shadow:inset 0 0 0 .5px rgba(47,107,69,.24)!important;}
-.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.done{background:rgba(47,107,69,.12)!important;color:#2f6b45!important;}
+.lkdv-sortie-badge.state.done{background:rgba(23,64,44,.62)!important;color:#fff!important;box-shadow:inset 0 0 0 .5px rgba(47,107,69,.24)!important;}
+.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.done{background:rgba(23,64,44,.72)!important;color:#fff!important;}
 .lkdv-sortie-badge.proof{background:rgba(23,64,44,.82)!important;color:#fff!important;}
 .lkdv-sortie-badge.state.planned{background:rgba(185,138,46,.9)!important;color:#fff!important;}
 .lkdv-sortie-badge.state.ongoing{background:rgba(61,122,82,.92)!important;color:#fff!important;}
-.lkdv-sortie-badge.state.done{background:rgba(47,107,69,.16)!important;color:#2f6b45!important;box-shadow:inset 0 0 0 .5px rgba(47,107,69,.24)!important;}
-.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.done{background:rgba(47,107,69,.12)!important;color:#2f6b45!important;}
+.lkdv-sortie-badge.state.done{background:rgba(23,64,44,.62)!important;color:#fff!important;box-shadow:inset 0 0 0 .5px rgba(47,107,69,.24)!important;}
+.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.done{background:rgba(23,64,44,.72)!important;color:#fff!important;}
 .lkdv-sortie-hero h2{margin:0!important;font:650 21px/1.15 var(--sf)!important;letter-spacing:-.02em!important;color:inherit!important;}
 .lkdv-sortie-hero p{margin:0!important;font:500 12px/1.35 var(--sf)!important;opacity:.9!important;}
 .lkdv-sortie-hero-with{opacity:.78!important;}
