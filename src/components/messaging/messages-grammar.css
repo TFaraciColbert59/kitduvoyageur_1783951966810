@@ -790,9 +790,9 @@
   scroll-behavior: smooth;
   overscroll-behavior: contain;
 }
-.lkdv-messages #card > .card-scroll {
-  /* Même marge que la barre de recherche (10 px), prioritaire sur
-     `.phone .card-scroll` de la grammaire Compte. */
+.lkdv-messages .phone #card.cs > .card-scroll {
+  /* Même marge que la barre de recherche (10 px). Spécificité (1,3,0) :
+     au-dessus de `#card.cs > .card-scroll` (1,2,0) de la grammaire. */
   padding: 4px 10px 54px !important;
 }
 .lkdv-messages .mthread {
