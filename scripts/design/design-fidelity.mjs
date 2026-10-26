@@ -128,12 +128,42 @@ const m = await page.evaluate(() => {
       return { display: c.display, height: Math.round(e.getBoundingClientRect().height) };
     })(),
     sectionPill: box('.lkdv-section-pill'),
+    regions: [...document.querySelectorAll('.lkdv-region-grid .ig-tile')].map((tile) => tile.getAttribute('aria-label')),
+    regionTile: box('.lkdv-region-grid .ig-tile'),
   };
 });
 
 const colOffset = Math.round((vw.width - 430) / 2);
 const rowOffset = Math.max(0, Math.round((vw.height - 932) / 2)); // centré si l'écran tient
 const shift = (box) => (box ? [box[0] - colOffset, box[1] - rowOffset, box[2], box[3]] : null);
+
+let drawer = null;
+try {
+  await page.getByRole('button', { name: 'Fiche d’identité et sources' }).click({ timeout: 5000 });
+  await page.waitForTimeout(1100);
+  drawer = await page.evaluate(() => {
+    const wrap = document.querySelector('.lkdv-pays .sw-wrap');
+    const sheet = document.querySelector('.lkdv-pays .sw-wrap .sheet');
+    if (!wrap || !sheet) return null;
+    const box = (el) => {
+      const r = el.getBoundingClientRect();
+      return [+r.x.toFixed(1), +r.y.toFixed(1), +r.width.toFixed(1), +r.height.toFixed(1)];
+    };
+    const computed = getComputedStyle(wrap);
+    return {
+      box: box(wrap),
+      fit: wrap.dataset.fit,
+      open: wrap.classList.contains('in'),
+      transition: computed.transition,
+      opacity: computed.opacity,
+      nav: [...document.querySelectorAll('.lkdv-drawer-nav button')].map((b) => b.getAttribute('aria-label')),
+      panes: document.querySelectorAll('.lkdv-lens-pane').length,
+      ficheTabs: [...document.querySelectorAll('.lkdv-fiche-tabs button')].map((b) => b.getAttribute('aria-label')),
+    };
+  });
+} catch {
+  drawer = null;
+}
 const results = [];
 const check = (name, ok, detail) => results.push({ name, ok: Boolean(ok), detail });
 
@@ -159,6 +189,13 @@ const gridGapOk = m.grid?.gridGap ? m.grid.gridGap === ANCHORS.grid.gap : true; 
 check('Grille 406 gap 2', m.grid.box && near(m.grid.box[2], ANCHORS.grid.width) && gridGapOk, JSON.stringify({ box: m.grid.box, gap: m.grid.gridGap || m.grid.gap }));
 const tileOk = !m.tile.box || (near(m.tile.box[2], ANCHORS.tile.width) && near(m.tile.box[3], ANCHORS.tile.height) && m.tile['border-radius'] === ANCHORS.tile.radius);
 check('Tuile 134 r2 (si grille photo)', tileOk, JSON.stringify(m.tile));
+if (new URL(url).pathname.endsWith('/fr')) {
+  check('Grille des zones', m.regions.length === 5 && m.regions.every(Boolean), JSON.stringify(m.regions));
+  check('Tuile de zone 134×134', m.regionTile && boxNear(shift(m.regionTile), [12, 176.6, 134, 134]), JSON.stringify(m.regionTile));
+}
+check('Drawer superposé à la carte', drawer && boxNear(shift(drawer.box), [12, 48, 406, 541]) && drawer.fit === 'card' && drawer.open, JSON.stringify(drawer));
+check('Drawer : 5 volets et 6 écrans', drawer && drawer.nav.length === 5 && drawer.panes === 6 && drawer.ficheTabs.length === 6, JSON.stringify(drawer && { nav: drawer.nav, panes: drawer.panes, ficheTabs: drawer.ficheTabs }));
+check('Animation du drawer', drawer && drawer.transition.includes('transform') && drawer.transition.includes('opacity') && drawer.transition.includes('cubic-bezier(0.32, 0.72, 0, 1)') && drawer.opacity === '1', drawer?.transition);
 if (m.hasRings) {
   check('Sélecteur 88×30', m.selector.box && near(m.selector.box[2], ANCHORS.selector.width) && near(m.selector.box[3], ANCHORS.selector.height) && m.selector['border-radius'] === ANCHORS.selector.radius, JSON.stringify(m.selector));
   check('Lentille 41,5×25', m.lens && near(m.lens[2], ANCHORS.lens.width) && near(m.lens[3], ANCHORS.lens.height), JSON.stringify(m.lens));

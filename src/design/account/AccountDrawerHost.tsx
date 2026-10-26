@@ -12,7 +12,7 @@
 
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 /** Boîte mesurée du drawer ouvert, en dur : c'est un invariant de la grammaire. */
 export const DRAWER_INSET = { top: 48, left: 12, right: 12, bottom: 175.7 } as const;
@@ -35,6 +35,8 @@ export interface AccountDrawerHostProps {
   onTabChange?: (id: string) => void;
   /** Sous-drawer : le retour ramène au volet parent, jamais une pile invisible. */
   onBack?: () => void;
+  /** `card` épouse exactement la carte supérieure ; `tall` garde la hauteur historique. */
+  fit?: 'tall' | 'card';
 }
 
 export function AccountDrawerHost({
@@ -47,8 +49,26 @@ export function AccountDrawerHost({
   tabs,
   activeTab = null,
   onTabChange,
+  fit = 'tall',
 }: AccountDrawerHostProps) {
   const sheetRef = useRef<HTMLElement>(null);
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setEntered(false);
+      return;
+    }
+    const first = requestAnimationFrame(() => {
+      const second = requestAnimationFrame(() => setEntered(true));
+      (sheetRef.current as unknown as { __paysSecondFrame?: number }).__paysSecondFrame = second;
+    });
+    return () => {
+      cancelAnimationFrame(first);
+      const second = (sheetRef.current as unknown as { __paysSecondFrame?: number } | null)?.__paysSecondFrame;
+      if (typeof second === 'number') cancelAnimationFrame(second);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -65,8 +85,9 @@ export function AccountDrawerHost({
 
   return (
     <div
-      className="sw-wrap"
+      className={`sw-wrap${entered ? ' in' : ''}`}
       data-det={open ? 'card' : 'closed'}
+      data-fit={fit}
       aria-hidden={open ? undefined : true}
       style={{
         inset: `${DRAWER_INSET.top}px ${DRAWER_INSET.right}px ${DRAWER_INSET.bottom}px ${DRAWER_INSET.left}px`,
@@ -115,7 +136,7 @@ export function AccountDrawerHost({
 
 
 
-          <div className="lkdv-sheet-scroll">
+          <div className="lkdv-sheet-scroll" data-pane={activeTab ?? 'none'}>
             <div className="lkdv-sheet-title">
               <b>{title}</b>
               {subtitle ? <span>{subtitle}</span> : null}

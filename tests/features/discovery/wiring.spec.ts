@@ -6,10 +6,11 @@ const root = process.cwd();
 const read = (relative: string) => readFileSync(path.join(root, relative), 'utf8');
 
 /**
- * Wiring des blocs partenaire sur la fiche pays.
+ * Wiring des blocs partenaire et des volets sur la fiche pays.
  * Depuis la refonte, la coquille est `PaysGlassV8` et les vues détaillées
- * (qui portent `DiscoverySection`) sont montées dans le volet « Détails »
- * du drawer via `CountryDetailClient`. Ces assertions protègent ce câblage.
+ * (qui portent `DiscoverySection`) sont montées dans le premier écran du
+ * premier volet du drawer via `CountryDetailClient`. Ces assertions protègent
+ * ce câblage.
  */
 describe('wiring des sections Pays', () => {
   it('enrichit Destinations, Activités, Gastronomie et ajoute Hébergements', () => {
@@ -20,13 +21,19 @@ describe('wiring des sections Pays', () => {
     expect(read('src/components/pays/PaysHebergementsView.tsx')).toContain('limit={4}');
   });
 
-  it('branche les vues détaillées dans le volet Détails de la fiche', () => {
+  it('branche les vues détaillées dans le premier écran du premier volet', () => {
     const client = read('src/app/pays/[code]/CountryDetailClient.tsx');
     expect(client).toContain('PaysHebergementsView');
     expect(client).toContain("case 'hebergements'");
     expect(client).toContain('PaysGlassV8');
     expect(client).toContain('renderDetails');
-    expect(read('src/components/pays/PaysGlassV8.tsx')).toContain('renderDetails?.(section)');
+    const glass = read('src/components/pays/PaysGlassV8.tsx');
+    expect(glass).toContain('renderDetails?.(section)');
+    expect(glass).toContain('LensPager');
+    expect(glass).toContain('PaysRegionGrid');
+    for (const tab of ['fiche', 'carnets', 'groupes', 'bouteille', 'historique']) {
+      expect(glass).toContain(`id: '${tab}'`);
+    }
   });
 
   it('garde les onglets Gastronomie et Hébergements dans le plateau mobile', () => {

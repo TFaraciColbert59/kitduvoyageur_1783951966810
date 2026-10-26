@@ -17,6 +17,12 @@ import { useSearchContext } from '@/contexts/SearchContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import { AccountDrawerHost, type DrawerTab } from '@/design/account/AccountDrawerHost';
+import { LensPager } from '@/components/compte/drawer/LensPager';
+import BouteilleALaMer from '@/components/pays/BouteilleALaMer';
+import { PaysTopCarnets } from '@/components/pays/drawer/PaysTopCarnets';
+import { PaysTopClubs } from '@/components/pays/drawer/PaysTopClubs';
+import { PaysHistoryPane } from '@/components/pays/drawer/PaysHistoryPane';
+import { PaysRegionGrid } from '@/components/pays/drawer/PaysRegionGrid';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
 import { CountryMap } from '@/components/pays/CountryMap';
 import { formatArea, formatDistance, formatElevation, formatDateRange, relativeDate, plural, joinMeta } from '@/components/pays/formatPays';
@@ -73,14 +79,14 @@ interface WeatherPayload {
   current?: { temperatureC: number; condition: string; windKmH: number; uvIndex: number };
 }
 
-type DrawerKey = 'fiche' | 'pratique' | 'sources' | 'details' | 'partager';
+type DrawerKey = 'fiche' | 'carnets' | 'groupes' | 'bouteille' | 'historique';
 
 const DRAWER_TABS: DrawerTab[] = [
-  { id: 'fiche', label: 'Fiche d’identité', icon: <Ic d={ICONS.doc} /> },
-  { id: 'pratique', label: 'Pratique', icon: <Ic d={ICONS.shield} /> },
-  { id: 'sources', label: 'Sources', icon: <Ic d={ICONS.book} /> },
-  { id: 'details', label: 'Détails de la section', icon: <Ic d={ICONS.pin} /> },
-  { id: 'partager', label: 'Partager', icon: <Ic d={ICONS.share} /> },
+  { id: 'fiche', label: 'Fiche complète', icon: <Ic d={ICONS.doc} /> },
+  { id: 'carnets', label: 'Carnets les plus aimés', icon: <Ic d={ICONS.book} /> },
+  { id: 'groupes', label: 'Groupes les plus connus', icon: <Ic d={ICONS.users} /> },
+  { id: 'bouteille', label: 'Bouteille à la mer', icon: <Ic d={ICONS.spark} /> },
+  { id: 'historique', label: 'Mes passages', icon: <Ic d={ICONS.clock} /> },
 ];
 
 const CAT_ICON: Record<string, string> = {
@@ -125,6 +131,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<DrawerKey | null>(null);
+  const [fichePage, setFichePage] = useState(0);
   const [weather, setWeather] = useState<WeatherPayload | null>(null);
   const [community, setCommunity] = useState<{ key: string; title: string; sub: string; kind: 'club' | 'carnet' }[] | null>(null);
   const [loadingCommunity, setLoadingCommunity] = useState(true);
@@ -156,6 +163,10 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
       setSection(wanted as SectionKey);
     }
   }, []);
+
+  useEffect(() => {
+    if (drawer === 'fiche') setFichePage(0);
+  }, [drawer, country.code]);
 
   useEffect(() => {
     let alive = true;
@@ -203,6 +214,16 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
     [router, triggerHaptic]
   );
 
+  const selectRegion = useCallback(
+    ({ category, query: regionQuery }: { category: string | null; query: string }) => {
+      setCat(category);
+      setQuery(regionQuery);
+      setSection('destinations');
+      triggerHaptic('selection');
+    },
+    [triggerHaptic]
+  );
+
   const cover = country.hero_image_url || country.destinations?.[0]?.image_url || null;
 
   const share = useCallback(async () => {
@@ -227,11 +248,6 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
 
   const mediaCards = useMemo(() => {
     const cards: { key: string; title: string; sub?: string | null; meta?: string | null; badge?: string | null; badge2?: string | null; image?: string | null; alt?: string; cat?: string }[] = [];
-    if (section === 'presentation') {
-      (country.destinations ?? []).slice(0, 2).forEach((d, i) =>
-        cards.push({ key: `ap-${i}`, title: `${d.titre}${d.titre_em ? ` ${d.titre_em}` : ''}`, sub: d.categorie, meta: [d.meta_1, d.meta_2].filter(Boolean).join(' · '), badge: d.categorie, image: d.image_url, alt: d.titre, cat: d.categorie })
-      );
-    }
     if (section === 'destinations') {
       (country.destinations ?? []).forEach((d, i) =>
         cards.push({
@@ -303,13 +319,8 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
   }, [country, community, section]);
 
   const infoCards = useMemo(() => {
-    if (section !== 'presentation') return [];
-    return (country.highlights ?? []).map((h, i) => ({
-      key: `h-${i}`,
-      title: `${h.titre} ${h.sous_titre}`.trim(),
-      text: h.description,
-    }));
-  }, [country, section]);
+    return [];
+  }, []);
 
   const infoRows = useMemo(() => {
     const rows: { key: string; icon: string; label: string; value: string }[] = [];
@@ -337,29 +348,6 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
 
   const sheetCards = useMemo(() => {
     const cards: { key: string; title: string; pill?: string; hint?: string; rows: { label: string; value: string; icon: string }[]; actions?: { label: string; onClick: () => void }[] }[] = [];
-    if (section === 'presentation') {
-      cards.push({
-        key: 'reperes',
-        title: 'Repères',
-        pill: country.code,
-        rows: [
-          { label: 'Superficie', value: country.superficie_detail, icon: ICONS.pin },
-          { label: 'Capitale', value: country.capitale, icon: ICONS.pin },
-          { label: 'Monnaie', value: country.monnaie || country.monnaie_nom, icon: ICONS.coin },
-          { label: 'Fuseau', value: country.fuseau, icon: ICONS.clock },
-          { label: 'Langues', value: country.langue, icon: ICONS.book },
-        ],
-        actions: [{ label: 'Fiche complète', onClick: () => setDrawer('fiche') }],
-      });
-      (country.highlights ?? []).slice(0, 3).forEach((h, i) =>
-        cards.push({
-          key: `hl-${i}`,
-          title: `${h.titre} ${h.sous_titre}`.trim(),
-          rows: [],
-          hint: h.description,
-        })
-      );
-    }
     if (section === 'pratique') {
       const p = country.pratique;
       const groups = [
@@ -410,7 +398,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
   }, [cat, mediaCards, query]);
 
   const hasMedia = mediaCards.length > 0;
-  const isEmpty = !hasMedia && infoRows.length === 0 && infoCards.length === 0;
+  const isEmpty = section === 'presentation' ? false : !hasMedia && infoRows.length === 0 && infoCards.length === 0;
 
   const statItems = [
     { key: 'area', label: 'superficie', value: country.superficie_court },
@@ -418,138 +406,258 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
     { key: 'currency', label: 'monnaie', value: country.monnaie_code || '—' },
   ];
 
+  const FICHE_PAGES = [
+    { id: 'synthese', label: 'Synthèse', icon: ICONS.doc },
+    { id: 'carte', label: 'Carte d’identité', icon: ICONS.pin },
+    { id: 'pratique', label: 'Pratique', icon: ICONS.shield },
+    { id: 'sources', label: 'Sources', icon: ICONS.book },
+    { id: 'details', label: 'Section active', icon: ICONS.spark },
+    { id: 'partager', label: 'Partager', icon: ICONS.share },
+  ] as const;
+
+  const ficheGeography = useMemo(() => [
+    {
+      title: 'Géographie',
+      rows: [
+        { label: 'Nom officiel', value: country.nom, icon: ICONS.doc },
+        { label: 'Continent', value: country.continent, icon: ICONS.pin },
+        { label: 'Région', value: country.region || '—', icon: ICONS.pin },
+        { label: 'Superficie', value: country.superficie_detail, icon: ICONS.pin },
+        { label: 'Fuseau horaire', value: country.fuseau, icon: ICONS.clock },
+      ],
+    },
+    {
+      title: 'Société',
+      rows: [
+        { label: 'Capitale', value: country.capitale, icon: ICONS.pin },
+        { label: 'Langues', value: country.langue, icon: ICONS.book },
+        { label: 'Monnaie', value: country.monnaie || country.monnaie_nom, icon: ICONS.coin },
+        { label: 'Taux de change', value: country.taux_change || '—', icon: ICONS.coin },
+      ],
+    },
+  ], [country]);
+
+  const fichePratique = useMemo(() => {
+    const p = country.pratique;
+    const groups = [
+      { title: 'Formalités', rows: p?.formalites ?? [], icon: ICONS.shield },
+      { title: 'Transport', rows: p?.transport ?? [], icon: ICONS.pin },
+      { title: 'Budget', rows: p?.budget ?? [], icon: ICONS.coin },
+      { title: 'Santé', rows: p?.sante ?? [], icon: ICONS.shield },
+      { title: 'Électricité & réseau', rows: p?.electricite_reseau ?? [], icon: ICONS.spark },
+      { title: 'Climat', rows: p?.climat ?? [], icon: ICONS.clock },
+    ].filter((g) => g.rows.length > 0);
+    return { groups, empty: groups.length === 0 && !weather?.current };
+  }, [country, weather]);
+
   const drawerContent = (key: DrawerKey): React.ReactNode => {
     if (key === 'fiche') {
-      const summary = (
-        <div className="lkdv-sheet-card">
-          <div className="lkdv-sheet-card__head">
-            <b>{country.nom}</b>
-            <span className="lkdv-pill">{country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}</span>
-          </div>
-          <div className="lkdv-info-row">
-            <span className="lkdv-info-row__ico"><Ic d={ICONS.pin} size={15} /></span>
-            <span className="lkdv-info-row__t">Continent · région</span>
-            <span className="lkdv-info-row__v">{[country.continent, country.region].filter(Boolean).join(' · ')}</span>
-          </div>
-          {country.subtitle ? <p className="lkdv-sheet-card__hint">{country.subtitle}</p> : null}
-        </div>
-      );
-      const groups: { title: string; rows: { label: string; value: string; icon: string }[] }[] = [
-        {
-          title: 'Géographie',
-          rows: [
-            { label: 'Nom officiel', value: country.nom, icon: ICONS.doc },
-            { label: 'Continent', value: country.continent, icon: ICONS.pin },
-            { label: 'Région', value: country.region || '—', icon: ICONS.pin },
-            { label: 'Superficie', value: country.superficie_detail, icon: ICONS.pin },
-            { label: 'Fuseau horaire', value: country.fuseau, icon: ICONS.clock },
-          ],
-        },
-        {
-          title: 'Société',
-          rows: [
-            { label: 'Capitale', value: country.capitale, icon: ICONS.pin },
-            { label: 'Langues', value: country.langue, icon: ICONS.book },
-            { label: 'Monnaie', value: country.monnaie || country.monnaie_nom, icon: ICONS.coin },
-            { label: 'Taux de change', value: country.taux_change || '—', icon: ICONS.coin },
-          ],
-        },
-      ];
-      return [summary, ...groups.map((g) => (
-        <div className="lkdv-sheet-group" key={g.title}>
-          <h3>{g.title} · {g.rows.length}</h3>
-          {g.rows.map((r) => (
-            <div className="lkdv-info-row" key={r.label}>
-              <span className="lkdv-info-row__ico"><Ic d={r.icon} size={15} /></span>
-              <span className="lkdv-info-row__t">{r.label}</span>
-              <span className="lkdv-info-row__v">{r.value}</span>
-            </div>
-          ))}
-        </div>
-      ))];
-    }
-    if (key === 'pratique') {
-      const p = country.pratique;
-      const groups = [
-        { title: 'Formalités', rows: p?.formalites ?? [], icon: ICONS.shield },
-        { title: 'Transport', rows: p?.transport ?? [], icon: ICONS.pin },
-        { title: 'Budget', rows: p?.budget ?? [], icon: ICONS.coin },
-        { title: 'Santé', rows: p?.sante ?? [], icon: ICONS.shield },
-        { title: 'Électricité & réseau', rows: p?.electricite_reseau ?? [], icon: ICONS.spark },
-        { title: 'Climat', rows: p?.climat ?? [], icon: ICONS.clock },
-      ].filter((g) => g.rows.length > 0);
-      return groups.map((g) => (
-        <div className="lkdv-sheet-group" key={g.title}>
-          <h3>{g.title} · {g.rows.length}</h3>
-          {g.rows.map((r, i) => (
-            <div className="lkdv-info-row" key={`${g.title}-${i}`}>
-              <span className="lkdv-info-row__ico"><Ic d={g.icon} size={15} /></span>
-              <span className="lkdv-info-row__t">{r.cle}</span>
-              <span className="lkdv-info-row__v">{r.val}</span>
-            </div>
-          ))}
-        </div>
-      ));
-    }
-    if (key === 'sources') {
       const sources = country.sources_list ?? [];
-      return (
-        <div className="lkdv-sheet-group">
-          <h3>Sources & références · {new Set(sources.map((x) => x.url)).size}</h3>
-          {sources.length === 0 ? (
-            <div className="lkdv-info-row">
-              <span className="lkdv-info-row__ico"><Ic d={ICONS.book} size={15} /></span>
-              <span className="lkdv-info-row__t">Aucune source documentaire enregistrée pour ce pays.</span>
+      const extra = renderDetails?.(section);
+      const screens = [
+        {
+          ...FICHE_PAGES[0],
+          node: (
+            <>
+              <div className="lkdv-sheet-card">
+                <div className="lkdv-sheet-card__head">
+                  <b>{country.nom}</b>
+                  <span className="lkdv-pill">{country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}</span>
+                </div>
+                <div className="lkdv-info-row">
+                  <span className="lkdv-info-row__ico"><Ic d={ICONS.pin} size={15} /></span>
+                  <span className="lkdv-info-row__t">Continent · région</span>
+                  <span className="lkdv-info-row__v">{[country.continent, country.region].filter(Boolean).join(' · ')}</span>
+                </div>
+                {country.subtitle ? <p className="lkdv-sheet-card__hint">{country.subtitle}</p> : null}
+              </div>
+              {weather?.current ? (
+                <div className="lkdv-sheet-card">
+                  <div className="lkdv-sheet-card__head">
+                    <b>Météo en direct</b>
+                    <span className="lkdv-pill">{`${weather.current.temperatureC}°C`}</span>
+                  </div>
+                  <div className="lkdv-info-row">
+                    <span className="lkdv-info-row__ico"><Ic d={ICONS.spark} size={15} /></span>
+                    <span className="lkdv-info-row__t">Conditions</span>
+                    <span className="lkdv-info-row__v">{weather.current.condition}</span>
+                  </div>
+                  <div className="lkdv-info-row">
+                    <span className="lkdv-info-row__ico"><Ic d={ICONS.clock} size={15} /></span>
+                    <span className="lkdv-info-row__t">Vent · UV</span>
+                    <span className="lkdv-info-row__v">{`${weather.current.windKmH} km/h · UV ${weather.current.uvIndex}`}</span>
+                  </div>
+                </div>
+              ) : null}
+              {(country.highlights ?? []).map((h, i) => (
+                <div className="lkdv-sheet-card" key={`hl-${i}`}>
+                  <div className="lkdv-sheet-card__head">
+                    <b>{`${h.titre} ${h.sous_titre}`.trim()}</b>
+                  </div>
+                  <p className="lkdv-sheet-card__hint">{h.description}</p>
+                </div>
+              ))}
+            </>
+          ),
+        },
+        {
+          ...FICHE_PAGES[1],
+          node: ficheGeography.map((g) => (
+            <div className="lkdv-sheet-group" key={g.title}>
+              <h3>{g.title} · {g.rows.length}</h3>
+              {g.rows.map((r) => (
+                <div className="lkdv-info-row" key={r.label}>
+                  <span className="lkdv-info-row__ico"><Ic d={r.icon} size={15} /></span>
+                  <span className="lkdv-info-row__t">{r.label}</span>
+                  <span className="lkdv-info-row__v">{r.value}</span>
+                </div>
+              ))}
+            </div>
+          )),
+        },
+        {
+          ...FICHE_PAGES[2],
+          node: fichePratique.empty ? (
+            <div className="lkdv-sheet-card" role="status">
+              <div className="lkdv-sheet-card__head"><b>Aucune donnée pratique</b></div>
+              <p className="lkdv-sheet-card__hint">Aucune donnée pratique enregistrée : rien n’est inventé pour combler le vide.</p>
             </div>
           ) : (
-            [...new Map(sources.map((x) => [x.url, x])).values()].map((s2, i) => {
-              let host = '';
-              try { host = new URL(s2.url).hostname.replace(/^www\./, ''); } catch { host = ''; }
-              return (
-                <div className="lkdv-info-row" key={i}>
+            fichePratique.groups.map((g) => (
+              <div className="lkdv-sheet-group" key={g.title}>
+                <h3>{g.title} · {g.rows.length}</h3>
+                {g.rows.map((r, i) => (
+                  <div className="lkdv-info-row" key={`${g.title}-${i}`}>
+                    <span className="lkdv-info-row__ico"><Ic d={g.icon} size={15} /></span>
+                    <span className="lkdv-info-row__t">{r.cle}</span>
+                    <span className="lkdv-info-row__v">{r.val}</span>
+                  </div>
+                ))}
+              </div>
+            ))
+          ),
+        },
+        {
+          ...FICHE_PAGES[3],
+          node: (
+            <div className="lkdv-sheet-group">
+              <h3>Sources & références · {new Set(sources.map((x) => x.url)).size}</h3>
+              {sources.length === 0 ? (
+                <div className="lkdv-info-row">
                   <span className="lkdv-info-row__ico"><Ic d={ICONS.book} size={15} /></span>
-                  <a className="lkdv-info-row__t" href={s2.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--tint)', textDecoration: 'none' }}>
-                    {s2.label} ↗
-                  </a>
-                  <span className="lkdv-info-row__v">{host}</span>
+                  <span className="lkdv-info-row__t">Aucune source documentaire enregistrée pour ce pays.</span>
                 </div>
+              ) : (
+                [...new Map(sources.map((x) => [x.url, x])).values()].map((s2, i) => {
+                  let host = '';
+                  try { host = new URL(s2.url).hostname.replace(/^www\./, ''); } catch { host = ''; }
+                  return (
+                    <div className="lkdv-info-row" key={i}>
+                      <span className="lkdv-info-row__ico"><Ic d={ICONS.book} size={15} /></span>
+                      <a className="lkdv-info-row__t" href={s2.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--tint)', textDecoration: 'none' }}>
+                        {s2.label} ↗
+                      </a>
+                      <span className="lkdv-info-row__v">{host}</span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          ),
+        },
+        {
+          ...FICHE_PAGES[4],
+          node: extra ? (
+            <div className="lkdv-legacy-slot">{extra}</div>
+          ) : (
+            <div className="lkdv-sheet-group">
+              <h3>{SECTION_LABEL[section]}</h3>
+              <div className="lkdv-info-row">
+                <span className="lkdv-info-row__ico"><Ic d={ICONS.spark} size={15} /></span>
+                <span className="lkdv-info-row__t">Aucune vue détaillée pour cette section.</span>
+              </div>
+            </div>
+          ),
+        },
+        {
+          ...FICHE_PAGES[5],
+          node: (
+            <div className="lkdv-sheet-group">
+              <h3>Partager et agir</h3>
+              <div className="lkdv-info-row">
+                <span className="lkdv-info-row__ico"><Ic d={ICONS.share} size={15} /></span>
+                <span className="lkdv-info-row__t">Lien de la fiche</span>
+                <button type="button" className="lkdv-compte-btn primary" onClick={() => void share()}>Partager</button>
+              </div>
+              <div className="lkdv-info-row">
+                <span className="lkdv-info-row__ico"><Ic d={ICONS.spark} size={15} /></span>
+                <span className="lkdv-info-row__t">Composer mon kit</span>
+                <button type="button" className="lkdv-compte-btn ghost" onClick={() => go(`/prepare?tab=equipement&country=${country.code}`)}>Ouvrir</button>
+              </div>
+              {shareMsg ? <p style={{ margin: '2px 4px 0', font: '500 10.5px/1.3 var(--sf)', color: 'var(--label2)' }}>{shareMsg}</p> : null}
+            </div>
+          ),
+        },
+      ];
+      return (
+        <div className="lkdv-fiche-pager">
+          <LensPager index={fichePage} count={screens.length} onIndexChange={setFichePage} label="Écrans de la fiche">
+            {screens.map((screen, index) => (
+              <div
+                key={screen.id}
+                className="lkdv-lens-pane"
+                role="tabpanel"
+                id={`fiche-${screen.id}`}
+                aria-label={screen.label}
+                aria-hidden={index === fichePage ? undefined : true}
+              >
+                {screen.node}
+              </div>
+            ))}
+          </LensPager>
+          <div className="ig-tabs lkdv-fiche-tabs" role="tablist" aria-label="Écrans de la fiche">
+            <span
+              className="ig-th lens"
+              aria-hidden="true"
+              style={{ width: `calc((100% - 4px) / ${screens.length})`, transform: `translateX(${fichePage * 100}%)` }}
+            />
+            {screens.map((screen, index) => {
+              const active = index === fichePage;
+              return (
+                <button
+                  key={screen.id}
+                  type="button"
+                  role="tab"
+                  id={`fiche-tab-${screen.id}`}
+                  aria-selected={active}
+                  aria-controls={`fiche-${screen.id}`}
+                  aria-label={screen.label}
+                  title={screen.label}
+                  tabIndex={active ? 0 : -1}
+                  className={active ? 'cur' : ''}
+                  onClick={() => setFichePage(index)}
+                >
+                  <Ic d={screen.icon} size={15} />
+                </button>
               );
-            })
-          )}
+            })}
+          </div>
         </div>
       );
     }
-    if (key === 'details') {
-      const extra = renderDetails?.(section);
-      if (!extra) {
-        return (
-          <div className="lkdv-sheet-group">
-            <h3>{SECTION_LABEL[section]}</h3>
-            <div className="lkdv-info-row">
-              <span className="lkdv-info-row__ico"><Ic d={ICONS.spark} size={15} /></span>
-              <span className="lkdv-info-row__t">Aucune vue détaillée pour cette section.</span>
-            </div>
-          </div>
-        );
-      }
-      return <div className="lkdv-legacy-slot">{extra}</div>;
+    if (key === 'carnets') {
+      return <PaysTopCarnets countryCode={country.code} countryName={country.nom} />;
     }
-    return (
-      <div className="lkdv-sheet-group">
-        <h3>Partager et agir</h3>
-        <div className="lkdv-info-row">
-          <span className="lkdv-info-row__ico"><Ic d={ICONS.share} size={15} /></span>
-          <span className="lkdv-info-row__t">Lien de la fiche</span>
-          <button type="button" className="lkdv-compte-btn primary" onClick={() => void share()}>Partager</button>
-        </div>
-        <div className="lkdv-info-row">
-          <span className="lkdv-info-row__ico"><Ic d={ICONS.spark} size={15} /></span>
-          <span className="lkdv-info-row__t">Composer mon kit</span>
-          <button type="button" className="lkdv-compte-btn ghost" onClick={() => go(`/prepare?tab=equipement&country=${country.code}`)}>Ouvrir</button>
-        </div>
-        {shareMsg ? <p style={{ margin: '2px 4px 0', font: '500 10.5px/1.3 var(--sf)', color: 'var(--label2)' }}>{shareMsg}</p> : null}
-      </div>
-    );
+    if (key === 'groupes') {
+      return <PaysTopClubs countryCode={country.code} countryName={country.nom} />;
+    }
+    if (key === 'bouteille') {
+      return <BouteilleALaMer countryIso={country.code} countryName={country.nom} />;
+    }
+    if (key === 'historique') {
+      return <PaysHistoryPane countryCode={country.code} countryName={country.nom} />;
+    }
+    return null;
   };
 
   return (
@@ -648,7 +756,9 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                   </p>
 
                   <div className="ig-grid-wrap">
-                    {section === 'communaute' && loadingCommunity ? (
+                    {section === 'presentation' ? (
+                      <PaysRegionGrid countryCode={country.code} destinations={country.destinations ?? []} onSelectRegion={selectRegion} />
+                    ) : section === 'communaute' && loadingCommunity ? (
                       <div aria-busy="true" aria-label="Chargement de la communauté">
                         {[0, 1, 2].map((i) => (
                           <div className="lkdv-compact-card lkdv-skeleton-card" key={i}>
@@ -756,7 +866,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
                     type="button"
                     className="lkdv-info-row"
                     style={{ width: '100%', border: 0, background: 'transparent', cursor: 'pointer', textAlign: 'left' }}
-                    onClick={() => setDrawer('pratique')}
+                    onClick={() => setDrawer('fiche')}
                   >
                     <span className="lkdv-info-row__ico"><Ic d={ICONS.shield} size={15} /></span>
                     <span className="lkdv-info-row__t">Pratique & sources</span>
@@ -811,6 +921,7 @@ export function PaysGlassV8({ country, renderDetails }: PaysGlassV8Props) {
 
             <AccountDrawerHost
               open={drawer !== null}
+              fit="card"
               title={drawer ? DRAWER_TABS.find((t) => t.id === drawer)?.label ?? '' : ''}
               subtitle={`${country.nom}${country.iso_a3 ? ` · ${country.iso_a3}` : ''}`}
               onClose={() => setDrawer(null)}

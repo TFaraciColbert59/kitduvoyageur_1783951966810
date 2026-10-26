@@ -6,16 +6,17 @@
 
 | Fichier | Rôle | Preuve |
 |---|---|---|
-| `src/components/pays/PaysGlassV8.tsx` | Fiche pays : coquille verrouillée + contenu (cartes média/compactes, recherche, filtres, états, volets) | porte 17/17 |
+| `src/components/pays/PaysGlassV8.tsx` | Fiche pays : coquille verrouillée + contenu (cartes média/compactes, recherche, filtres, états, 5 volets, grille des zones) | porte 23/23 |
+| `src/components/pays/drawer/{PaysTopCarnets,PaysTopClubs,PaysHistoryPane,PaysRegionGrid}.tsx` | Volets 30 carnets / 10 groupes / historique, grille des zones éditoriales | tests + captures |
 | `src/components/pays/CountryMap.tsx` | Carte réelle déplaçable + zoom + contrôles + attribution | captures |
 | `src/components/pays/formatPays.ts` | Nombres, surfaces, distances, dates, pluriels | 10 tests |
 | `src/components/pays/{Destinations,Activites,Culture,Gastronomie,Hebergements,Pratique,Communaute}View.tsx` | Vues détaillées montées dans le volet « Détails » | test de câblage |
 | `src/components/pays/{PaysClubsList,PaysCarnetsList,BouteilleALaMer}.tsx` | Listes communauté (utilisées par la vue Communauté) | — |
-| `src/design/account/{liquid-lens.ts,AccountDrawerHost.tsx}` | Lentille liquide partagée + drawer 406 × 708,3 | porte |
+| `src/design/account/{liquid-lens.ts,AccountDrawerHost.tsx}` | Lentille liquide partagée + drawer pays 406 × 541,1 superposé à la carte | porte |
 | `src/styles/account-glass.css` | Épingles + primitives de contenu (source unique) | porte |
 | `src/app/pays/[code]/CountryDetailClient.tsx` | Coquille + volet Détails (vues historiques) | test |
 | `src/components/account/AccountBottomBar.tsx` | Barre 48, 5 items, `renderAs="button"`, pastille | porte |
-| `scripts/design/design-fidelity.mjs` `design-diff.mjs` | Porte 17/19 ancres + diff pixel | exécutés |
+| `scripts/design/design-fidelity.mjs` `design-diff.mjs` | Porte 23/23 ancres + diff pixel | exécutés |
 | `src/components/carnet/profile/CarnetProfileView.tsx` | Fiche carnet refondue | porte 19/19 |
 | `tests/features/discovery/wiring.spec.ts` | Câblage Discovery aligné sur l'architecture actuelle | 3 tests |
 | `docs/superpowers/plans/2026-10-25-pays-contenu-20.md` | Plan des 20 améliorations de contenu | — |
@@ -40,9 +41,9 @@
 
 | Contrôle | Local | Prod Cloudflare |
 |---|---|---|
-| `/pays/fr` — 430 / 768 / 1440 | **17/17 · 17/17 · 17/17** | **17/17 · 17/17 · 17/17** |
+| `/pays/fr` — 430 / 768 / 1440 | **23/23 · 23/23 · 23/23** | à revérifier après stabilisation prod |
 | `/carnets/[id]` — 430 / 768 / 1440 | **19/19 · 19/19 · 19/19** | (branche vinext : autre implémentation) |
-| Tests pays + discovery | **138 / 138** | — |
+| Tests ciblés pays/drawer | **17 / 17** | — |
 | Build Next / vinext | OK | version `a9d1fe20` |
 
 ## Prod Cloudflare — état du 26/10 12:22
