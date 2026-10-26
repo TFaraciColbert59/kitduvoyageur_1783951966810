@@ -1330,3 +1330,48 @@
 }
 
 .lkdv-section-float > * { position: relative; z-index: 1; }
+
+/* Fermeture du drawer : hors de la nav (5 lentilles comme le profil) */
+.lkdv-sheet-close {
+  position: absolute;
+  right: 14px;
+  top: 22px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 1px 0 #fff, 0 2px 8px rgba(23, 43, 36, 0.1);
+  color: var(--label);
+  cursor: pointer;
+  z-index: 5;
+}
+
+/* Le sélecteur de section disparaît quand un volet est ouvert */
+.lkdv-pays.sheet-open .lkdv-section-float {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+/* Les cartes de contenu ne s'étirent pas quand la section est presque vide */
+.lkdv-pays .ig-grid-wrap > .lkdv-sheet-card,
+.lkdv-pays .ig-grid-wrap > .lkdv-compact-card,
+.lkdv-pays .ig-grid-wrap > .lkdv-media-card {
+  flex: 0 0 auto;
+  align-self: stretch;
+}
+
+/* Le contenu ne remplit jamais la hauteur restante : les cartes gardent leur hauteur */
+.lkdv-pays .card-scroll { justify-content: flex-start; }
+.lkdv-pays .ig-grid-wrap {
+  flex: 0 0 auto;
+  height: auto;
+  justify-content: flex-start;
+}
+.lkdv-pays .ig-grid-wrap > * {
+  flex: none;
+  height: auto;
+}

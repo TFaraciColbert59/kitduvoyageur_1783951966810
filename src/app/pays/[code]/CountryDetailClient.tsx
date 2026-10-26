@@ -51,24 +51,21 @@ export default function CountryDetailClient({ country, klookBlock }: CountryDeta
       case 'presentation':
       default:
         return (
-          <div className="space-y-3">
-            {country.presentation_paragraphes?.map((par, i) => (
-              <div className="lkdv-info-card" key={i}>
-                <div>
-                  <b>Panorama</b>
-                  <p>{par}</p>
-                </div>
-              </div>
-            ))}
-            {country.citation_texte ? (
-              <div className="lkdv-info-card">
-                <div>
-                  <b>{country.citation_texte}</b>
-                  <p>{country.citation_auteur || ''}</p>
-                </div>
+          <>
+            {country.presentation_paragraphes?.length ? (
+              <div className="lkdv-sheet-card">
+                {country.presentation_paragraphes.map((par, i) => (
+                  <p className="lkdv-sheet-card__hint" key={i}>{par}</p>
+                ))}
               </div>
             ) : null}
-          </div>
+            {country.citation_texte ? (
+              <div className="lkdv-sheet-card">
+                <div className="lkdv-sheet-card__head"><b>{country.citation_texte}</b></div>
+                {country.citation_auteur ? <p className="lkdv-sheet-card__hint">{country.citation_auteur}</p> : null}
+              </div>
+            ) : null}
+          </>
         );
     }
   };
