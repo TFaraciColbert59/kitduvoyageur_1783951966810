@@ -2,10 +2,10 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Controller } from 'react-hook-form';
+import { Controller, type FieldPath } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
+import { Field, Select, SubmitFooter, SwitchField, TextArea, TextInput } from './form-fields';
 import { CreateFormEngine } from './engine/CreateFormEngine';
 import { createDefaults, CREATE_FIELD_LABELS, type ClubFormValues } from './engine/createSchemas';
 import { CREATE_STEPS, StepPager } from './shared/StepPager';
@@ -31,10 +31,11 @@ const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
   ['name', 'category', 'location'],
   ['description', 'cover'],
-  ['privacy', 'membershipRules'],
+  ['privacy', 'membershipRules', 'joinQuestions'],
+  ['welcomePost'],
 ] as const;
 
-function slugify(value: string) {
+export function slugify(value: string): string {
   return value
     .toLowerCase()
     .normalize('NFD')
@@ -42,6 +43,26 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
+}
+
+/**
+ * `clubs.rules` est la seule colonne texte d’adhésion : les règles libres et
+ * les questions structurées y sont concaténées, sans nouvelle colonne.
+ */
+export function buildClubRules(values: ClubFormValues): string | null {
+  const questions = values.joinQuestions
+    .map((question) => question.trim())
+    .filter(Boolean);
+  const parts = [values.membershipRules.trim()];
+  if (questions.length > 0) {
+    parts.push(
+      `Questions d’adhésion :\n${questions
+        .map((question, index) => `${index + 1}. ${question}`)
+        .join('\n')}`,
+    );
+  }
+  const rules = parts.filter(Boolean).join('\n\n');
+  return rules || null;
 }
 
 export function ClubCreateForm({
@@ -90,7 +111,7 @@ export function ClubCreateForm({
         cover_image: coverUrl ?? '',
         category: values.category.trim(),
         privacy: values.privacy,
-        rules: values.membershipRules.trim() || null,
+        rules: buildClubRules(values),
         created_by: user.id,
         members_count: 1,
       })
@@ -108,20 +129,22 @@ export function ClubCreateForm({
     });
     if (memberError) throw new Error(memberError.message);
 
-    try {
-      await insertCommunityPost({
-        authorId: user.id,
-        content: `**Bienvenue dans ${values.name.trim()}**\n\n${
-          values.description.trim() || 'La cordée est ouverte.'
-        }\n\n/clubs/${data.slug || data.id}`,
-        postType: 'share',
-        imageUrl: coverUrl,
-        audience: 'club',
-        clubId: data.id,
-        title: values.name.trim(),
-      });
-    } catch {
-      // Le pont vers le fil est best-effort : le club existe déjà.
+    if (values.welcomePost) {
+      try {
+        await insertCommunityPost({
+          authorId: user.id,
+          content: `**Bienvenue dans ${values.name.trim()}**\n\n${
+            values.description.trim() || 'La cordée est ouverte.'
+          }\n\n/clubs/${data.slug || data.id}`,
+          postType: 'share',
+          imageUrl: coverUrl,
+          audience: 'club',
+          clubId: data.id,
+          title: values.name.trim(),
+        });
+      } catch {
+        // Le pont vers le fil est best-effort : le club existe déjà.
+      }
     }
 
     onCreated('club', data.id);
@@ -147,6 +170,7 @@ export function ClubCreateForm({
         const description = form.watch('description');
         const privacy = form.watch('privacy');
         const name = form.watch('name');
+        const joinQuestions = form.watch('joinQuestions');
         const goNext = async () => {
           const fields = STEP_FIELDS[activeStep] ?? [];
           const valid = await form.trigger([...fields]);
@@ -159,6 +183,11 @@ export function ClubCreateForm({
           }
           api.submit();
         };
+        const setJoinQuestions = (next: string[]) =>
+          form.setValue('joinQuestions', next, {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
 
         return (
           <CommunityFormDrawer
@@ -295,6 +324,72 @@ export function ClubCreateForm({
                   />
                   <InlineError message={errors.membershipRules?.message} />
                 </Field>
+
+                {joinQuestions.map((question, index) => (
+                  <div key={index} className="lkdv-form-row">
+                    <Field
+                      label={`Question ${index + 1}`}
+                      htmlFor={`club-question-${index}`}
+                    >
+                      <Controller
+                        control={form.control}
+                        name={`joinQuestions.${index}` as FieldPath<ClubFormValues>}
+                        render={({ field }) => (
+                          <TextInput
+                            {...field}
+                            id={`club-question-${index}`}
+                            placeholder={`Question ${index + 1}`}
+                            maxLength={120}
+                          />
+                        )}
+                      />
+                      <InlineError
+                        message={errors.joinQuestions?.[index]?.message as string | undefined}
+                      />
+                    </Field>
+                    <button
+                      type="button"
+                      className="lkdv-create-step-back"
+                      aria-label={`Retirer la question ${index + 1}`}
+                      onClick={() =>
+                        setJoinQuestions(
+                          joinQuestions.filter((_, entry) => entry !== index),
+                        )
+                      }
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {joinQuestions.length < 3 ? (
+                  <button
+                    type="button"
+                    className="lkdv-create-step-back"
+                    aria-label="Ajouter une question"
+                    onClick={() => setJoinQuestions([...joinQuestions, ''])}
+                  >
+                    +
+                  </button>
+                ) : null}
+                <InlineError message={errors.joinQuestions?.message as string | undefined} />
+              </div>
+
+              <div>
+                <Controller
+                  control={form.control}
+                  name="welcomePost"
+                  render={({ field }) => (
+                    <SwitchField
+                      label="Post d’accueil"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                <InlineError message={errors.welcomePost?.message} />
+                <p className="lkdv-form-note">
+                  Le post d’accueil est publié dans le fil du club après validation.
+                </p>
                 <Link className="lkdv-form-link" href="/communaute" onClick={api.flushDraft}>
                   Ouvrir l’éditeur complet
                 </Link>

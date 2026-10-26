@@ -17,7 +17,8 @@ afterEach(cleanup);
 const STEP_FIELDS = [
   ['name', 'location'],
   ['category', 'description', 'cover'],
-  ['privacy', 'membershipRules'],
+  ['privacy', 'membershipRules', 'joinQuestions'],
+  ['welcomePost'],
 ] as const;
 
 function FocusHarness() {
@@ -60,6 +61,11 @@ function FocusHarness() {
                 <option value="closed">Sur demande</option>
               </select>
             </div>
+            <div>
+              <span>Étape publication</span>
+              <label htmlFor="club-welcome">Post d’accueil</label>
+              <input id="club-welcome" type="checkbox" {...form.register('welcomePost')} />
+            </div>
           </StepPager>
         </>
       )}
@@ -92,7 +98,7 @@ describe('focus des erreurs — étape avant champ', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Publier le club' }));
 
-    await waitFor(() => expect(activeTabLabel()).toBe('Présentation'));
+    await waitFor(() => expect(activeTabLabel()).toBe('Univers'));
     await waitFor(() =>
       expect((document.activeElement as HTMLElement | null)?.id).toBe('club-category'),
     );
@@ -107,14 +113,14 @@ describe('focus des erreurs — étape avant champ', () => {
     render(<FocusHarness />);
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'La Cordée' } });
     fireEvent.click(screen.getByRole('button', { name: 'Publier le club' }));
-    await waitFor(() => expect(activeTabLabel()).toBe('Présentation'));
+    await waitFor(() => expect(activeTabLabel()).toBe('Univers'));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Identité' }));
     await waitFor(() => expect(activeTabLabel()).toBe('Identité'));
 
     fireEvent.click(screen.getByRole('button', { name: /Catégorie : La catégorie est requise/ }));
 
-    await waitFor(() => expect(activeTabLabel()).toBe('Présentation'));
+    await waitFor(() => expect(activeTabLabel()).toBe('Univers'));
     await waitFor(() =>
       expect((document.activeElement as HTMLElement | null)?.id).toBe('club-category'),
     );

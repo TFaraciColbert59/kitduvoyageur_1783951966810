@@ -2,7 +2,11 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ClubCreateForm } from '@/features/community/create/ClubCreateForm';
+import {
+  ClubCreateForm,
+  buildClubRules,
+  slugify,
+} from '@/features/community/create/ClubCreateForm';
 import { createDefaults, createSchemas } from '@/features/community/create/engine/createSchemas';
 
 vi.mock('next/link', () => ({
@@ -18,16 +22,20 @@ function renderClub() {
 }
 
 describe('ClubCreateForm', () => {
-  it('affiche les trois étapes Identité / Présentation / Adhésion', () => {
+  it('affiche les quatre étapes Identité / Univers / Adhésion / Publication', () => {
     renderClub();
 
-    expect(screen.getByRole('tab', { name: 'Identité' }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByRole('tab', { name: 'Présentation' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Identité' }).getAttribute('aria-selected')).toBe(
+      'true',
+    );
+    expect(screen.getByRole('tab', { name: 'Univers' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Adhésion' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Publication' })).toBeTruthy();
     expect(screen.getByLabelText('Nom')).toBeTruthy();
     expect(screen.getByLabelText('Catégorie')).toBeTruthy();
     expect(screen.getByLabelText('Lieu')).toBeTruthy();
     expect(screen.queryByText(/Cover \(URL\)/)).toBeNull();
+    expect(screen.queryByRole('heading')).toBeNull();
   });
 
   it('exige le nom et la catégorie avant de continuer', async () => {
@@ -37,10 +45,12 @@ describe('ClubCreateForm', () => {
 
     expect((await screen.findAllByText('Le nom du club est requis.')).length).toBeGreaterThan(0);
     expect((await screen.findAllByText('La catégorie est requise.')).length).toBeGreaterThan(0);
-    expect(screen.getByRole('tab', { name: 'Identité' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'Identité' }).getAttribute('aria-selected')).toBe(
+      'true',
+    );
   });
 
-  it('avance à Présentation puis expose l’adhésion et les règles', async () => {
+  it('avance à Univers puis expose l’adhésion, les questions et la publication', async () => {
     renderClub();
 
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'La Cordée du Vercors' } });
@@ -48,7 +58,7 @@ describe('ClubCreateForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continuer' }));
 
     await screen.findByLabelText('Description');
-    expect(screen.getByRole('tab', { name: 'Présentation' }).getAttribute('aria-selected')).toBe(
+    expect(screen.getByRole('tab', { name: 'Univers' }).getAttribute('aria-selected')).toBe(
       'true',
     );
 
@@ -58,6 +68,15 @@ describe('ClubCreateForm', () => {
     fireEvent.change(privacy, { target: { value: 'closed' } });
     expect(privacy.value).toBe('closed');
     expect(screen.getByLabelText('Règles d’adhésion')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ajouter une question' }));
+    expect(screen.getByLabelText('Question 1')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Publication' }));
+    const welcome = screen.getByRole('switch', { name: 'Post d’accueil' });
+    expect(welcome.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(welcome);
+    expect(welcome.getAttribute('aria-checked')).toBe('false');
   });
 
   it('refuse un club sans catégorie et une confidentialité inconnue', () => {
@@ -79,5 +98,30 @@ describe('ClubCreateForm', () => {
         category: 'Randonnée',
       }).success,
     ).toBe(true);
+    expect(
+      createSchemas.club.safeParse({
+        ...createDefaults('club'),
+        name: 'La Cordée',
+        category: 'Randonnée',
+        joinQuestions: ['A', 'B', 'C', 'D'],
+      }).success,
+    ).toBe(false);
+  });
+
+  it('génère le slug et concatène les questions dans clubs.rules', () => {
+    expect(slugify('La Cordée du Vercors !')).toBe('la-cordee-du-vercors');
+
+    expect(
+      buildClubRules({
+        ...createDefaults('club'),
+        membershipRules: '  Niveau requis  ',
+        joinQuestions: ['Quel est ton niveau ?', '  ', 'As-tu un DVA ?'],
+      }),
+    ).toBe(
+      'Niveau requis\n\nQuestions d’adhésion :\n1. Quel est ton niveau ?\n2. As-tu un DVA ?',
+    );
+    expect(
+      buildClubRules({ ...createDefaults('club'), membershipRules: '', joinQuestions: [] }),
+    ).toBeNull();
   });
 });
