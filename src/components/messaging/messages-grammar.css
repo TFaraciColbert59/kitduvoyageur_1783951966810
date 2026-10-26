@@ -991,6 +991,8 @@
 }
 .lkdv-messages .ig-feed-row {
   border-radius: 18px;
+  /* Le glissement horizontal nous revient, le vertical reste au scroll natif. */
+  touch-action: pan-y;
   transition: background 0.2s, transform 0.16s cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 .lkdv-messages .ig-feed-row:active {

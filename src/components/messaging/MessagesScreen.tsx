@@ -26,7 +26,6 @@ import Icon from '@/components/ui/Icon';
 import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { useLongPress } from '@/hooks/gestures';
 import { createClient } from '@/lib/supabase/client';
 import { useConversations } from '@/features/messaging/hooks/useConversations';
 import { useMessages } from '@/features/messaging/hooks/useMessages';
@@ -114,19 +113,94 @@ function ConversationFeedRow({
   const [dx, setDx] = useState(0);
   const [snapped, setSnapped] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const dxRef = useRef(0);
-  const startX = useRef(0);
-  const startY = useRef(0);
-  const axis = useRef<'none' | 'x' | 'y'>('none');
+  const rowRef = useRef<HTMLButtonElement>(null);
+  const openRef = useRef(false);
   const moved = useRef(false);
   const suppress = useRef(false);
 
-  const longPress = useLongPress(() => {
-    if (!onLongPress) return;
-    suppress.current = true;
-    haptic('medium');
-    onLongPress(conversation);
-  });
+  // Geste de rangée : pointeur natif (suit le doigt, résiste aux remous de
+  // React) + appui long. Les actions vivent à DROITE : on tire vers la gauche.
+  useEffect(() => {
+    const node = rowRef.current;
+    if (!node || !onSwipeAction) return;
+    let startX = 0;
+    let startY = 0;
+    let dxNow = 0;
+    let axis: 'none' | 'x' | 'y' = 'none';
+    let active = false;
+    let longTimer: ReturnType<typeof setTimeout> | null = null;
+    const clearLong = () => {
+      if (longTimer) {
+        clearTimeout(longTimer);
+        longTimer = null;
+      }
+    };
+
+    const down = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      active = true;
+      axis = 'none';
+      moved.current = false;
+      startX = event.clientX;
+      startY = event.clientY;
+      dxNow = openRef.current ? -SWIPE_REVEAL : 0;
+      setDragging(true);
+      clearLong();
+      longTimer = setTimeout(() => {
+        longTimer = null;
+        if (axis === 'none' && onLongPress) {
+          suppress.current = true;
+          haptic('medium');
+          onLongPress(conversation);
+        }
+      }, 450);
+    };
+
+    const move = (event: PointerEvent) => {
+      if (!active) return;
+      const ddx = event.clientX - startX;
+      const ddy = event.clientY - startY;
+      if (axis === 'none' && (Math.abs(ddx) > 8 || Math.abs(ddy) > 8)) {
+        axis = Math.abs(ddx) > Math.abs(ddy) ? 'x' : 'y';
+        if (axis === 'x') node.setPointerCapture?.(event.pointerId);
+      }
+      if (axis === 'x') {
+        clearLong();
+        dxNow = clampSwipe(ddx, openRef.current ? -SWIPE_REVEAL : 0);
+        setDx(dxNow);
+      } else if (axis === 'y') {
+        clearLong();
+      }
+    };
+
+    const up = () => {
+      if (!active) return;
+      active = false;
+      clearLong();
+      setDragging(false);
+      if (axis === 'x') {
+        const end = resolveSwipeEnd(dxNow);
+        dxNow = end.dx;
+        openRef.current = end.open;
+        setDx(end.dx);
+        setSnapped(end.open);
+        moved.current = true;
+      }
+      axis = 'none';
+    };
+
+    node.addEventListener('pointerdown', down);
+    node.addEventListener('pointermove', move);
+    node.addEventListener('pointerup', up);
+    node.addEventListener('pointercancel', up);
+    return () => {
+      clearLong();
+      node.removeEventListener('pointerdown', down);
+      node.removeEventListener('pointermove', move);
+      node.removeEventListener('pointerup', up);
+      node.removeEventListener('pointercancel', up);
+    };
+  }, [conversation, onSwipeAction, onLongPress, haptic]);
 
   const title = conversationTitle(conversation);
   const unread = conversation.unread_count || 0;
@@ -135,48 +209,10 @@ function ConversationFeedRow({
 
   const fire = (action: SwipeAction) => {
     haptic('medium');
+    openRef.current = false;
     setDx(0);
     setSnapped(false);
     onSwipeAction?.(conversation, action);
-  };
-
-  const onTouchStart = (event: React.TouchEvent) => {
-    setDragging(true);
-    startX.current = event.touches[0].clientX;
-    startY.current = event.touches[0].clientY;
-    axis.current = 'none';
-    dxRef.current = snapped ? -SWIPE_REVEAL : 0;
-    suppress.current = false;
-    longPress.onTouchStart(event);
-  };
-
-  const onTouchMove = (event: React.TouchEvent) => {
-    const ddx = event.touches[0].clientX - startX.current;
-    const ddy = event.touches[0].clientY - startY.current;
-    if (axis.current === 'none' && (Math.abs(ddx) > 8 || Math.abs(ddy) > 8)) {
-      axis.current = Math.abs(ddx) > Math.abs(ddy) ? 'x' : 'y';
-    }
-    if (axis.current === 'x') {
-      dxRef.current = clampSwipe(ddx, snapped ? -SWIPE_REVEAL : 0);
-      setDx(dxRef.current);
-    }
-    longPress.onTouchMove(event);
-  };
-
-  const onTouchEnd = () => {
-    setDragging(false);
-    moved.current = axis.current !== 'none';
-    longPress.onTouchEnd();
-    if (axis.current === 'x') {
-      const end = resolveSwipeEnd(dxRef.current);
-      dxRef.current = end.dx;
-      setDx(end.dx);
-      setSnapped(end.open);
-    } else {
-      dxRef.current = snapped ? -SWIPE_REVEAL : 0;
-      setDx(dxRef.current);
-    }
-    axis.current = 'none';
   };
 
   return (
@@ -208,18 +244,17 @@ function ConversationFeedRow({
         type="button"
         className="ig-feed-row"
         aria-current={selected ? 'true' : undefined}
+        ref={rowRef}
         aria-label={`${title}${unread > 0 ? `, ${unread} message${unread > 1 ? 's' : ''} non lu${unread > 1 ? 's' : ''}` : ''}`}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
         onClick={() => {
           if (moved.current) {
             moved.current = false;
             return;
           }
-          if (suppress.current || snapped) {
+          if (suppress.current || openRef.current) {
             suppress.current = false;
-            if (snapped) {
+            if (openRef.current) {
+              openRef.current = false;
               setDx(0);
               setSnapped(false);
             }
