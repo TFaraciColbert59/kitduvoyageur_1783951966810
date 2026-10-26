@@ -13,6 +13,7 @@ import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
 import { getCaptchaToken, hcaptchaSiteKey } from '@/lib/captcha/hcaptcha';
 import { passwordResetRedirectTo } from '@/features/auth/passwordReset';
+import { safeNextPath } from '@/lib/supabase/safeNext';
 
 type AuthMode = 'connexion' | 'inscription';
 
@@ -23,8 +24,9 @@ function AuthForm() {
   const searchParams = useSearchParams();
   const initialMode = (searchParams?.get('mode') as AuthMode) || 'connexion';
   const requestedNext = searchParams?.get('next');
-  // Only allow internal relative paths (no open redirect via external URL)
-  const nextPath = requestedNext && requestedNext.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : null;
+  // Garde unique et testée : refuse `//`, le backslash et les caractères de
+  // contrôle (une garde locale laissait passer `/\evil.com` → open redirect).
+  const nextPath = requestedNext ? safeNextPath(requestedNext, '') || null : null;
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -4,6 +4,7 @@ import { fetchCountryByIso, fetchCountryContentByIso, fetchAllCountrySlugs } fro
 import { getCompleteCountryDetail } from '@/lib/countryDetails';
 import { getKlookBlock } from '@/features/discovery/providers/klook/klookAdapter';
 import CountryDetailClient from './CountryDetailClient';
+import { serializeJsonLd } from '@/features/carnet/detail/jsonld';
 
 interface Props {
   params: Promise<{ code: string }>;
@@ -111,7 +112,7 @@ export default async function CountryPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(schemaOrg) }}
         suppressHydrationWarning
       />
       <CountryDetailClient country={country} klookBlock={klookBlock} />

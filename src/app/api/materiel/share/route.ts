@@ -26,6 +26,18 @@ export async function POST(req: NextRequest) {
 
     const expiresAt = new Date(Date.now() + parsed.data.expires_in_days * 86400000).toISOString();
 
+    // Le kit doit appartenir à l'appelant : la policy `share_tokens_insert_owner`
+    // ne vérifie que owner_id, donc un kit_id arbitraire passait (IDOR).
+    const { data: ownedKit } = await supabase
+      .from('materiel_kits')
+      .select('id')
+      .eq('id', parsed.data.kit_id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (!ownedKit) {
+      return NextResponse.json({ error: 'Kit introuvable' }, { status: 404 });
+    }
+
     const { data, error } = await supabase
       .from('share_tokens')
       .insert({

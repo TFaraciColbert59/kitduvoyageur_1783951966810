@@ -11,6 +11,11 @@ async function demoSession(): Promise<
   | { ok: true; pending: PendingCookie[] }
   | { ok: false; error: string; status: number }
 > {
+  // Même interrupteur que la route sœur `auth/demo` : sans lui, un simple GET
+  // connectait n'importe qui au compte de démonstration (login CSRF).
+  if (process.env.DEMO_AUTO_LOGIN !== 'true') {
+    return { ok: false, error: 'Compte de démonstration désactivé.', status: 403 };
+  }
   const email = process.env.DEMO_LOGIN_EMAIL?.trim();
   const password = process.env.DEMO_LOGIN_PASSWORD;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
