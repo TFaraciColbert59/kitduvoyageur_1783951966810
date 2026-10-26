@@ -45,6 +45,33 @@
 | Tests pays + discovery | **138 / 138** | — |
 | Build Next / vinext | OK | version `a9d1fe20` |
 
+## Prod Cloudflare — conflit de déploiement
+
+Le worker `kitduvoyageur` reçoit des déploiements **d'une autre session** : `~/Desktop/lkdv-cloudflare/.cloudflare` (créé à 11:06) et un dossier `lkdv-cf-demo` déploient une version legacy de `/pays/fr` (marqueur `glass-capsule-btn`, écran 2 126 px).
+
+Séquences observées le 26/10 :
+
+| Heure (UTC) | Version | Origine |
+|---|---|---|
+| 10:15:05 | `74da6701` | ce worktree (`deploy/cf-pays`) — **18/18** |
+| 10:16:03 | `c93cdd29` | autre session — legacy |
+| 10:20:41 | `eb15c3e7` | autre session — legacy |
+| 11:22:xx | `63b8f31c` | ce worktree — **18/18** pendant 64 s (20 relevés) |
+| ~11:26 | — | legacy réapparu |
+
+**Conséquence** : la version correcte est déployée et vérifiée, mais écrasée en 1 à 2 minutes. Pour la stabiliser : arrêter l'autre déployeur, puis relancer **un seul**
+
+```bash
+cd /Users/fr168256/lkdv-cf && npx vinext-cloudflare deploy
+```
+
+puis vérifier que l'API renvoie bien la version affichée par la CLI :
+
+```bash
+DESIGN_BASE_URL=https://kitduvoyageur.faracitonyp.workers.dev \
+  node scripts/design/design-fidelity.mjs /pays/fr --all   # attendu 18/18 ×3
+```
+
 ## Décisions ouvertes (hors nettoyage)
 
 1. Carnet refondu ↔ carnet vinext : deux implémentations, à fusionner ou à trancher.
