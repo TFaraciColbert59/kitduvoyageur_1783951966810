@@ -709,6 +709,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 /* Le canvas global de l'app peignait au-dessus : on le retire sur cet écran,
    comme le fait déjà le fil Communauté. */
 body:has(.ckp-screen) .lkv-app-background { display: none !important; }
-.ckp-screen { isolation: isolate; position: relative; }
-.ckp-screen > .ckp-screen-bg { position: absolute; inset: 0; z-index: 0; }
-.ckp-screen > :not(.ckp-screen-bg) { position: relative; z-index: 1; }
+.ckp-screen { position: relative; }
+/* Le fond reste DERRIÈRE tout : fixed + z-index négatif, aucun empilement local. */
+.ckp-screen > .ckp-screen-bg { position: fixed; inset: 0; z-index: -1; }
