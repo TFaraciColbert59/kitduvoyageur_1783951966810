@@ -623,3 +623,19 @@
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.18); opacity: .8; }
 }
+
+/* Calque DOM au-dessus de la carte : positions calculées par map.project. */
+.lkdv-map-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 6 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+.lkdv-map-overlay > * {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  pointer-events: auto !important;
+  will-change: transform;
+}

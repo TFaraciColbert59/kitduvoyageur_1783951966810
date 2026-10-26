@@ -185,7 +185,7 @@ function ensureLayer(map: MapLibreMap, id: string, create: () => void) {
 
 function isMarkerClick(event: MapLayerMouseEvent): boolean {
   const target = event.originalEvent?.target as HTMLElement | null;
-  return Boolean(target?.closest?.('.maplibregl-marker'));
+  return Boolean(target?.closest?.('.maplibregl-marker, .lkdv-map-overlay'));
 }
 
 export function CompteMap({ authState, context, focus = null }: CompteMapProps) {
@@ -503,7 +503,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     if (!map) return;
     const close = (event: { point: { x: number; y: number }; originalEvent?: Event }) => {
       const target = event.originalEvent?.target as HTMLElement | null;
-      if (target?.closest?.('.maplibregl-marker')) return;
+      if (target?.closest?.('.maplibregl-marker, .lkdv-map-overlay')) return;
       const hits = map.queryRenderedFeatures(event.point as never, {
         layers: [
           'compte-track-starts-dot',
@@ -522,9 +522,17 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
   useEffect(() => {
     if (!map || !ready || !data) return;
-    for (const marker of markerRefs.current) marker.remove();
-    markerRefs.current = [];
-    const poiEntries: Array<{ element: HTMLElement; lng: number; lat: number }> = [];
+    const container = map.getContainer();
+    let overlay = container.querySelector<HTMLDivElement>('.lkdv-map-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'lkdv-map-overlay';
+      container.appendChild(overlay);
+    }
+    overlay.innerHTML = '';
+
+    type Entry = { element: HTMLButtonElement; lng: number; lat: number; anchor: string; detail: boolean };
+    const entries: Entry[] = [];
 
     if (config.layers.massifs) for (const massif of data.massifs) {
       const element = document.createElement('button');
@@ -546,11 +554,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         event.stopPropagation();
         setSelected({ kind: 'massif', id: massif.id });
       });
-      markerRefs.current.push(
-        new Marker({ element, anchor: 'bottom' })
-          .setLngLat([massif.center.lng, massif.center.lat])
-          .addTo(map)
-      );
+      overlay.appendChild(element);
+      entries.push({ element, lng: massif.center.lng, lat: massif.center.lat, anchor: 'translate(-50%, -100%)', detail: false });
     }
 
     if (config.layers.pois) for (const poi of data.pois) {
@@ -568,15 +573,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         event.stopPropagation();
         setSelected({ kind: 'poi', id: poi.id });
       });
-      poiEntries.push({ element, lng: poi.position.lng, lat: poi.position.lat });
-      markerRefs.current.push(
-        new Marker({ element, anchor: 'right' })
-          .setLngLat([poi.position.lng, poi.position.lat])
-          .addTo(map)
-      );
+      overlay.appendChild(element);
+      entries.push({ element, lng: poi.position.lng, lat: poi.position.lat, anchor: 'translate(-50%, -50%)', detail: true });
     }
 
-    const carnetElements: Array<{ element: HTMLElement; lng: number; lat: number }> = [];
     if (config.layers.carnets) for (const carnet of data.carnets) {
       const element = document.createElement('button');
       element.type = 'button';
@@ -591,38 +591,35 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         event.stopPropagation();
         setSelected({ kind: 'carnet', id: carnet.id });
       });
-      carnetElements.push({ element, lng: carnet.position.lng, lat: carnet.position.lat });
-      markerRefs.current.push(
-        new Marker({ element, anchor: 'center' })
-          .setLngLat([carnet.position.lng, carnet.position.lat])
-          .addTo(map)
-      );
+      overlay.appendChild(element);
+      entries.push({ element, lng: carnet.position.lng, lat: carnet.position.lat, anchor: 'translate(-50%, -50%)', detail: true });
     }
 
-    const updatePoiVisibility = () => {
-      const zoomVisible = map.getZoom() >= 7;
-      const container = map.getContainer();
+    const place = () => {
       const width = container.clientWidth;
       const height = container.clientHeight;
-      const show = (entry: { element: HTMLElement; lng: number; lat: number }) => {
+      const zoom = map.getZoom();
+      for (const entry of entries) {
         const point = map.project([entry.lng, entry.lat]);
-        const inside = point.x > 12 && point.x < width - 12 && point.y > 12 && point.y < height - 12;
-        entry.element.style.display = zoomVisible && inside ? '' : 'none';
-      };
-      poiEntries.forEach(show);
-      carnetElements.forEach(show);
+        const inside =
+          point.x > 10 && point.x < width - 10 && point.y > 10 && point.y < height - 10;
+        const visible = inside && (!entry.detail || zoom >= 7);
+        entry.element.style.display = visible ? '' : 'none';
+        entry.element.style.transform = `translate(${point.x}px, ${point.y}px) ${entry.anchor}`;
+      }
     };
-    updatePoiVisibility();
-    map.on('zoom', updatePoiVisibility);
-    map.on('resize', updatePoiVisibility);
+    place();
+    map.on('move', place);
+    map.on('zoom', place);
+    map.on('resize', place);
 
     return () => {
-      map.off('zoom', updatePoiVisibility);
-      map.off('resize', updatePoiVisibility);
-      for (const marker of markerRefs.current) marker.remove();
-      markerRefs.current = [];
+      map.off('move', place);
+      map.off('zoom', place);
+      map.off('resize', place);
+      overlay?.remove();
     };
-  }, [map, ready, data, config.layers.massifs, config.layers.pois]);
+  }, [map, ready, data, config.layers.massifs, config.layers.pois, config.layers.carnets]);
 
   useEffect(() => {
     if (!map || !ready) return;
