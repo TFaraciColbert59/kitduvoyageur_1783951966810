@@ -795,6 +795,14 @@
      au-dessus de `#card.cs > .card-scroll` (1,2,0) de la grammaire. */
   padding: 4px 10px 54px !important;
 }
+.lkdv-messages .phone #card.cs > .card-scroll > .ig-grid-wrap {
+  /* La grammaire annule le padding de la carte par des marges négatives
+     (-12 px, pensées pour la grille de posts) : ici on garde la marge de
+     10 px, identique au champ de recherche. */
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 4px !important;
+}
 .lkdv-messages .mthread {
   scroll-behavior: smooth;
 }
