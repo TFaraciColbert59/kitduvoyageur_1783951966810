@@ -121,6 +121,12 @@ const m = await page.evaluate(() => {
     bottomBar: box('.tb'),
     bottomItems: all('.tb button'),
     hasRings: Boolean(document.querySelector('.ig-hl-row')),
+    infoRow: (() => {
+      const e = document.querySelector('.lkdv-info-row');
+      if (!e) return null;
+      const c = getComputedStyle(e);
+      return { display: c.display, height: Math.round(e.getBoundingClientRect().height) };
+    })(),
     sectionPill: box('.lkdv-section-pill'),
   };
 });
@@ -159,6 +165,7 @@ if (m.hasRings) {
 }
 check('Barre basse 402×48', m.bottomBar && boxNear(shift(m.bottomBar), ANCHORS.bottomBar), JSON.stringify(m.bottomBar));
 check('5 items 80×44', m.bottomItems.length === ANCHORS.bottomItem.count && m.bottomItems.every((b) => near(b[0], ANCHORS.bottomItem.width) && near(b[1], ANCHORS.bottomItem.height)), JSON.stringify(m.bottomItems));
+check('Rangée d’info alignée', !m.infoRow || (m.infoRow.display === 'flex' && m.infoRow.height >= 32), JSON.stringify(m.infoRow));
 check('Zéro erreur console', errors.length === 0, errors.slice(0, 2).join(' | ') || 'aucune');
 
 await ctx.close();
