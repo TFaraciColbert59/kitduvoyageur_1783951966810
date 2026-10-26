@@ -118,89 +118,76 @@ function ConversationFeedRow({
   const moved = useRef(false);
   const suppress = useRef(false);
 
-  // Geste de rangée : pointeur natif (suit le doigt, résiste aux remous de
-  // React) + appui long. Les actions vivent à DROITE : on tire vers la gauche.
-  useEffect(() => {
-    const node = rowRef.current;
-    if (!node || !onSwipeAction) return;
-    let startX = 0;
-    let startY = 0;
-    let dxNow = 0;
-    let axis: 'none' | 'x' | 'y' = 'none';
-    let active = false;
-    let longTimer: ReturnType<typeof setTimeout> | null = null;
-    const clearLong = () => {
-      if (longTimer) {
-        clearTimeout(longTimer);
-        longTimer = null;
-      }
-    };
+  // Geste de rangée : pointeurs React (suivent le doigt, pas de dépendance à
+  // un nœud DOM capturé) + appui long. Les actions vivent à DROITE : on tire
+  // la rangée vers la gauche pour les révéler.
+  const gesture = useRef({ startX: 0, startY: 0, dx: 0, axis: 'none' as 'none' | 'x' | 'y', active: false });
+  const longTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const down = (event: PointerEvent) => {
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-      active = true;
-      axis = 'none';
-      moved.current = false;
-      startX = event.clientX;
-      startY = event.clientY;
-      dxNow = openRef.current ? -SWIPE_REVEAL : 0;
-      setDragging(true);
-      clearLong();
-      longTimer = setTimeout(() => {
-        longTimer = null;
-        if (axis === 'none' && onLongPress) {
-          suppress.current = true;
-          haptic('medium');
-          onLongPress(conversation);
-        }
-      }, 450);
-    };
+  const stopLongPress = () => {
+    if (longTimer.current) {
+      clearTimeout(longTimer.current);
+      longTimer.current = null;
+    }
+  };
 
-    const move = (event: PointerEvent) => {
-      if (!active) return;
-      const ddx = event.clientX - startX;
-      const ddy = event.clientY - startY;
-      if (axis === 'none' && (Math.abs(ddx) > 8 || Math.abs(ddy) > 8)) {
-        axis = Math.abs(ddx) > Math.abs(ddy) ? 'x' : 'y';
-        if (axis === 'x') node.setPointerCapture?.(event.pointerId);
-      }
-      if (axis === 'x') {
-        clearLong();
-        dxNow = clampSwipe(ddx, openRef.current ? -SWIPE_REVEAL : 0);
-        setDx(dxNow);
-      } else if (axis === 'y') {
-        clearLong();
-      }
-    };
+  useEffect(() => stopLongPress, []);
 
-    const up = () => {
-      if (!active) return;
-      active = false;
-      clearLong();
-      setDragging(false);
-      if (axis === 'x') {
-        const end = resolveSwipeEnd(dxNow);
-        dxNow = end.dx;
-        openRef.current = end.open;
-        setDx(end.dx);
-        setSnapped(end.open);
-        moved.current = true;
+  const onRowPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    gesture.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      dx: openRef.current ? -SWIPE_REVEAL : 0,
+      axis: 'none',
+      active: true,
+    };
+    setDragging(true);
+    stopLongPress();
+    longTimer.current = setTimeout(() => {
+      longTimer.current = null;
+      if (gesture.current.axis === 'none' && onLongPress) {
+        suppress.current = true;
+        haptic('medium');
+        onLongPress(conversation);
       }
-      axis = 'none';
-    };
+    }, 450);
+  };
 
-    node.addEventListener('pointerdown', down);
-    node.addEventListener('pointermove', move);
-    node.addEventListener('pointerup', up);
-    node.addEventListener('pointercancel', up);
-    return () => {
-      clearLong();
-      node.removeEventListener('pointerdown', down);
-      node.removeEventListener('pointermove', move);
-      node.removeEventListener('pointerup', up);
-      node.removeEventListener('pointercancel', up);
-    };
-  }, [conversation, onSwipeAction, onLongPress, haptic]);
+  const onRowPointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const g = gesture.current;
+    if (!g.active) return;
+    const ddx = event.clientX - g.startX;
+    const ddy = event.clientY - g.startY;
+    if (g.axis === 'none' && (Math.abs(ddx) > 8 || Math.abs(ddy) > 8)) {
+      g.axis = Math.abs(ddx) > Math.abs(ddy) ? 'x' : 'y';
+      if (g.axis === 'x') event.currentTarget.setPointerCapture?.(event.pointerId);
+    }
+    if (g.axis === 'x') {
+      stopLongPress();
+      g.dx = clampSwipe(ddx, openRef.current ? -SWIPE_REVEAL : 0);
+      setDx(g.dx);
+    } else if (g.axis === 'y') {
+      stopLongPress();
+    }
+  };
+
+  const onRowPointerUp = () => {
+    const g = gesture.current;
+    if (!g.active) return;
+    g.active = false;
+    stopLongPress();
+    setDragging(false);
+    if (g.axis === 'x') {
+      const end = resolveSwipeEnd(g.dx);
+      g.dx = end.dx;
+      openRef.current = end.open;
+      setDx(end.dx);
+      setSnapped(end.open);
+      moved.current = true;
+    }
+    g.axis = 'none';
+  };
 
   const title = conversationTitle(conversation);
   const unread = conversation.unread_count || 0;
@@ -246,6 +233,10 @@ function ConversationFeedRow({
         aria-current={selected ? 'true' : undefined}
         ref={rowRef}
         aria-label={`${title}${unread > 0 ? `, ${unread} message${unread > 1 ? 's' : ''} non lu${unread > 1 ? 's' : ''}` : ''}`}
+        onPointerDown={onRowPointerDown}
+        onPointerMove={onRowPointerMove}
+        onPointerUp={onRowPointerUp}
+        onPointerCancel={onRowPointerUp}
         onClick={() => {
           if (moved.current) {
             moved.current = false;
