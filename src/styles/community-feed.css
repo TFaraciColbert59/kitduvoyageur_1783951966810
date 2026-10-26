@@ -1935,3 +1935,23 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 .lkdv-half-drawer .lkdv-slot-selector button { color: #56665D !important; }
 .lkdv-half-drawer .lkdv-slot-selector button[aria-selected="true"],
 .lkdv-half-drawer .lkdv-slot-selector button.cur { color: #17402C !important; }
+
+/* Texture exacte des drawers Compte (mesurée en prod). */
+.lkdv-half-drawer,
+.lkdv-half-drawer:has(.lkdv-create-selector),
+.lkdv-form-drawer {
+  background: linear-gradient(180deg, rgba(245,242,236,.34), rgba(245,242,236,.2) 48%, rgba(245,242,236,.26)) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.7) brightness(1.04) !important;
+  backdrop-filter: blur(30px) saturate(1.7) brightness(1.04) !important;
+}
+
+/* Lentille active : 4 px de retrait des bords. */
+.lkdv-create-selector { padding: 4px !important; }
+.lkdv-create-selector button { min-height: 40px !important; }
+.lkdv-create-selector .sel-lens {
+  top: 4px !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  width: calc((100% - 8px) / 6) !important;
+}
+.lkdv-create-step-tabs .lkdv-create-step-lens { top: 3.5px !important; bottom: 3.5px !important; left: 3.5px !important; }
