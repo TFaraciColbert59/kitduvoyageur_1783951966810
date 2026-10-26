@@ -601,11 +601,16 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !uploading) cancelPending();
+    };
+    document.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKey);
       window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
     };
-  }, [pendingFiles.length]);
+  }, [cancelPending, pendingFiles.length, uploading]);
 
   return (
     <>
@@ -852,12 +857,9 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
           onClick={cancelPending}
         >
           <Card
-            className="lkdv-story-composer-sheet w-full max-w-sm space-y-[var(--space-3)] p-[var(--space-4)]"
+            className="lkdv-story-composer-sheet w-full space-y-[var(--space-3)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
-              Votre story — 24 h{pendingFiles.length > 1 ? ` · ${pendingFiles.length} slides` : ''}
-            </h3>
             {pendingPreviews.length > 0 && (
               <div className="flex gap-[var(--space-2)] overflow-x-auto pb-[var(--space-1)]" aria-label="Aperçu des slides">
                 {pendingPreviews.map((src, i) => (
@@ -867,6 +869,8 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
                         src={src}
                         muted
                         playsInline
+                        width={64}
+                        height={96}
                         className="h-24 w-16 rounded-[var(--lkv-radius-md)] object-cover"
                       />
                     ) : (
@@ -874,6 +878,10 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
                       <img
                         src={src}
                         alt=""
+                        width={64}
+                        height={96}
+                        loading="lazy"
+                        decoding="async"
                         className="h-24 w-16 rounded-[var(--lkv-radius-md)] object-cover"
                       />
                     )}
@@ -883,11 +891,6 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
                   </span>
                 ))}
               </div>
-            )}
-            {pendingKinds.includes('video') && (
-              <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                Les vidéos sont lues avec le son, muettes au premier lancement (60 s max chacune).
-              </p>
             )}
             <fieldset className="space-y-[var(--space-1)]">
               <legend className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
@@ -933,11 +936,6 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
                 className="mt-1 w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none"
               />
             </label>
-            <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-              {audience === 'only_me'
-                ? 'Vous seul·e verrez cette story. Média privé, servi uniquement à vous.'
-                : 'Média privé, servi uniquement aux personnes autorisées — 24 h.'}
-            </p>
             <div className="flex justify-end gap-[var(--space-2)]">
               <Button type="button" variant="ghost" size="sm" onClick={cancelPending} disabled={uploading}>
                 Annuler

@@ -173,9 +173,6 @@ export function StoryCreateForm({
               />
             }
           >
-            <p className="lkdv-form-intro">
-              Une photo ou une vidéo verticale, une légende, une audience. La story dure 24 h.
-            </p>
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}

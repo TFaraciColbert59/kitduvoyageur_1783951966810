@@ -100,6 +100,7 @@ export default function StoriesViewer({
   const [likePulse, setLikePulse] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [dragOpacity, setDragOpacity] = useState(1);
+  const [gesture, setGesture] = useState(false);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
   const viewerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -163,8 +164,10 @@ export default function StoriesViewer({
     };
     const onKey = (e: KeyboardEvent) => {
       if (isTyping(e)) return;
-      if (e.key === 'Escape') onClose();
-      else if (e.key === 'ArrowRight') next();
+      if (e.key === 'Escape') {
+        if (optionsOpen) setOptionsOpen(false);
+        else onClose();
+      } else if (e.key === 'ArrowRight') next();
       else if (e.key === 'ArrowLeft') prev();
       else if (e.key === ' ') {
         e.preventDefault();
@@ -181,7 +184,7 @@ export default function StoriesViewer({
       document.removeEventListener('visibilitychange', onVis);
       document.body.style.overflow = prevOverflow;
     };
-  }, [next, prev, onClose]);
+  }, [next, prev, onClose, optionsOpen]);
 
   /* Focus : entrée dans le dialogue, restitution au déclencheur */
   useEffect(() => {
@@ -294,6 +297,7 @@ export default function StoriesViewer({
   const onPointerDown = (e: React.PointerEvent) => {
     dragRef.current = { active: true, startX: e.clientX, startY: e.clientY, startT: Date.now() };
     setHolding(true);
+    setGesture(true);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -310,6 +314,7 @@ export default function StoriesViewer({
     const { startX, startY, startT } = dragRef.current;
     dragRef.current.active = false;
     setHolding(false);
+    setGesture(false);
 
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
@@ -371,7 +376,8 @@ export default function StoriesViewer({
       aria-label={`Story de ${user.name}`}
       tabIndex={-1}
       onKeyDown={handleTabTrap}
-      className="fixed inset-0 z-[var(--z-modal)] touch-none select-none bg-black"
+      data-gesture={gesture ? 'true' : undefined}
+      className="lkdv-story-viewer fixed inset-0 z-[var(--z-modal)] touch-none select-none bg-black"
       style={{ opacity: dragOpacity }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -381,6 +387,7 @@ export default function StoriesViewer({
         setHolding(false);
         setDragY(0);
         setDragOpacity(1);
+        setGesture(false);
       }}
     >
       <div className="absolute inset-0" style={{ transform: `translateY(${dragY}px)` }}>
@@ -450,7 +457,7 @@ export default function StoriesViewer({
 
         {/* Progression */}
         <div
-          className="absolute inset-x-0 top-0 z-[var(--z-sticky)] flex gap-1 px-[var(--space-3)] pt-[max(var(--space-3),var(--safe-top))]"
+          className="lkdv-story-progress absolute inset-x-0 top-0 z-[var(--z-sticky)] flex gap-1 px-[var(--space-3)] pt-[max(var(--space-3),var(--safe-top))]"
           aria-hidden="true"
         >
           {user.slides.map((_, i) => (
@@ -501,6 +508,7 @@ export default function StoriesViewer({
             className="pmi-more-pill"
             aria-label="Options de la story"
             aria-expanded={optionsOpen}
+            aria-controls={`story-options-${slide.storyId ?? `${userIndex}-${slideIndex}`}`}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
@@ -515,7 +523,13 @@ export default function StoriesViewer({
               </svg>
             )}
           </button>
-          <div className="lkdv-story-options-rail" role="menu" aria-label="Options de la story" hidden={!optionsOpen}>
+          <div
+            id={`story-options-${slide.storyId ?? `${userIndex}-${slideIndex}`}`}
+            className="lkdv-story-options-rail"
+            role="menu"
+            aria-label="Options de la story"
+            hidden={!optionsOpen}
+          >
             {user.id === myUserId && slide.storyId && onShowViews ? (
               <button type="button" role="menuitem" aria-label="Voir les vues" title="Voir les vues" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onShowViews(slide); setOptionsOpen(false); }}>
                 <Icon name="bookmark" size={18} aria-hidden="true" />
@@ -553,7 +567,7 @@ export default function StoriesViewer({
 
         {/* Média cassé : jamais d'écran blanc */}
         {mediaError && (
-          <div className="pointer-events-none absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-[var(--space-3)] bg-black/75 p-[var(--space-6)] text-center">
+          <div className="lkdv-story-media-error pointer-events-none absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-[var(--space-3)] bg-black/75 p-[var(--space-6)] text-center">
             <Icon name="image-off" size={28} color="var(--lkv-text-inverted)" />
             <p className="text-[length:var(--lkv-text-body-sm)] text-white">Média indisponible</p>
             <p className="text-[length:var(--lkv-text-caption-2)] text-white/70">Swipe pour continuer</p>

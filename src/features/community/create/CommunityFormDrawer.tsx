@@ -19,23 +19,46 @@ export function CommunityFormDrawer({ open, onClose, children, footer, error, ar
   const panelRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef<number | null>(null);
   const [dragY, setDragY] = useState(0);
+  const [gesture, setGesture] = useState(false);
 
   useEffect(() => {
     if (!open || embedded) return;
     setDragY(0);
+    const trigger = document.activeElement as HTMLElement | null;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const timer = window.setTimeout(() => {
       panelRef.current?.querySelector<HTMLElement>('input, textarea, select, button')?.focus();
     }, 60);
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !panelRef.current) return;
+      const nodes = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((node) => node.getClientRects().length > 0);
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => {
       window.clearTimeout(timer);
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previous;
+      trigger?.focus?.();
     };
   }, [embedded, onClose, open]);
 
@@ -64,6 +87,7 @@ export function CommunityFormDrawer({ open, onClose, children, footer, error, ar
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
+        data-gesture={gesture ? 'true' : undefined}
         style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
       >
         <div
@@ -71,6 +95,7 @@ export function CommunityFormDrawer({ open, onClose, children, footer, error, ar
           aria-hidden="true"
           onPointerDown={(event) => {
             dragStart.current = event.clientY;
+            setGesture(true);
             (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
           }}
           onPointerMove={(event) => {
@@ -81,6 +106,7 @@ export function CommunityFormDrawer({ open, onClose, children, footer, error, ar
             const start = dragStart.current;
             dragStart.current = null;
             const delta = start === null ? 0 : event.clientY - start;
+            setGesture(false);
             if (delta > 90) {
               onClose();
               return;
@@ -89,6 +115,7 @@ export function CommunityFormDrawer({ open, onClose, children, footer, error, ar
           }}
           onPointerCancel={() => {
             dragStart.current = null;
+            setGesture(false);
             setDragY(0);
           }}
         >

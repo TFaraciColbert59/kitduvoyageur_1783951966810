@@ -8,8 +8,8 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     const page = read('src/app/communaute/page.tsx');
     expect(page).toContain('CommunityFeedTopBar');
     expect(page).toContain('CommunityStoriesBar');
-    expect(page).toContain('AccountBottomBar');
-    expect(page).toContain('CommunityCreateDrawer');
+    expect(page).toContain('bottomBar={null}');
+    expect(page).toContain('CreateDrawer');
     expect(page).toContain('CommunitySectionsDrawer');
     expect(page).toContain('onSearch');
     expect(page).not.toContain('AccountCreateSheet');
@@ -33,11 +33,12 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     expect(css).toMatch(/\.lkdv-tab-lens[\s\S]*width: calc/);
   });
 
-  it('toutes les cartes sont carrées, texte compris', () => {
+  it('les cartes ont un ratio réservé, le texte reste auto', () => {
     const css = read('src/styles/community-feed.css');
     expect(css).toContain('.lkdv-feed-post--text');
-    expect(css).toMatch(/\.lkdv-feed-post--text[\s\S]*aspect-ratio: 1 \/ 1/);
-    expect(css).toContain('height: auto !important');
+    expect(css).toMatch(/\.lkdv-feed-post[\s\S]*aspect-ratio: 406 \/ 541/);
+    expect(css).toMatch(/\.lkdv-feed-post--text[\s\S]*aspect-ratio: auto/);
+    expect(css).toContain('height: auto');
     const post = read('src/features/community/feed/CommunityFeedPost.tsx');
     expect(post).toContain('PostAuthorPill');
     expect(post).toContain('PostCommentsPanel');
@@ -67,9 +68,9 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     }
     expect(sheet).toContain('onOpenForm');
     expect(sheet).not.toContain('/communaute/publier');
-    const page = read('src/app/communaute/page.tsx');
+    const create = read('src/features/community/create/CreateDrawer.tsx');
     for (const form of ['PostCreateForm', 'StoryCreateForm', 'CarnetCreateForm', 'SortieCreateForm', 'KitCreateForm', 'ClubCreateForm']) {
-      expect(page).toContain(form);
+      expect(create).toContain(form);
     }
   });
 

@@ -308,12 +308,19 @@ export function MediaPicker({
                     controls
                     muted
                     playsInline
+                    width={66}
+                    height={66}
+                    preload="metadata"
                   />
                 ) : (
                   <img
                     data-testid="media-preview"
                     src={item.previewUrl || item.url || ''}
                     alt={item.alt}
+                    width={66}
+                    height={66}
+                    loading="lazy"
+                    decoding="async"
                   />
                 )}
                 {item.cover ? <span className="lkdv-media-cover-badge">Couverture</span> : null}

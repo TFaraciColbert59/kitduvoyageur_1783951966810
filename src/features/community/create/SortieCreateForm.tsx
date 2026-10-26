@@ -176,9 +176,6 @@ export function SortieCreateForm({
               />
             }
           >
-            <p className="lkdv-form-intro">
-              Une sortie simple : date, lieu, participants. Le GPX se règle ensuite.
-            </p>
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}

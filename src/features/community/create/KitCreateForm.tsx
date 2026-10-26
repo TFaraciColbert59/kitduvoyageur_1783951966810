@@ -145,9 +145,6 @@ export function KitCreateForm({
               />
             }
           >
-            <p className="lkdv-form-intro">
-              Un kit rapide. Les items se détaillent ensuite dans l’éditeur complet.
-            </p>
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}

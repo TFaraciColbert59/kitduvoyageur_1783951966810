@@ -174,9 +174,6 @@ export function ClubCreateForm({
               />
             }
           >
-            <p className="lkdv-form-intro">
-              L’identité du club. Les zones, événements et membres se complètent ensuite.
-            </p>
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}

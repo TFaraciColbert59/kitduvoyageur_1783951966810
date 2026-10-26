@@ -224,9 +224,6 @@ export function PostCreateForm({
               />
             }
           >
-            <p className="lkdv-form-intro">
-              Choisis le format, ajoute ton texte ou ton média, puis publie.
-            </p>
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}

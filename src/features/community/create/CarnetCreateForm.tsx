@@ -154,9 +154,6 @@ export function CarnetCreateForm({
               />
             }
           >
-            <p className="lkdv-form-intro">
-              Les bases du carnet. Les étapes, moments et le kit se complètent ensuite.
-            </p>
             <FormErrorSummary
               errors={errors}
               labels={CREATE_FIELD_LABELS}
