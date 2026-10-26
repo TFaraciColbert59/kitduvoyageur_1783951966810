@@ -1,5 +1,4 @@
-/* ============================================================
-   LKDV — Service Worker v4 (SEC-1 : isolation inter-comptes)
+/* =====================================================   LKDV — Service Worker v4 (SEC-1 : isolation inter-comptes)
    Stratégies :
    - CacheFirst : polices, chunks Next.js statiques
    - StaleWhileRevalidate : images publiques tierces + API PUBLIQUES uniquement
@@ -11,7 +10,8 @@
    réponses API privées (/api/hub, /api/materiel, /api/voyages…) en cache.
    ============================================================ */
 
-const CACHE_VERSION = 'lkdv-v8';
+const CACHE_VERSION = 'lkdv-v9';
+const CACHE_VERSION = 'lkdv-v7';
 const STATIC_CACHE = `lkdv-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lkdv-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
