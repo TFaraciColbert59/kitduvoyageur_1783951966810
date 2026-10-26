@@ -746,3 +746,13 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 @media (prefers-reduced-motion: reduce) { .ckp-action, .ckp-card-foot .ckp-tabs button { transition: none; } }
 .ckp-card-foot .ckp-more-anchor { display: contents; }
 .ckp-card-foot .ckp-more-anchor > .ckp-menu { position: absolute; right: 0; bottom: calc(100% + 8px); }
+
+/* Actions : état = couleur d'icône, jamais la lentille (réservée aux vues). */
+.ckp-action[aria-pressed='true'] { background: none; box-shadow: none; }
+.ckp-action[aria-pressed='true'] .ckp-action-in { color: #e0245e; }
+.ckp-action[aria-label^='Enregistr'][aria-pressed='true'] .ckp-action-in { color: #17402c; }
+.ckp-action-count {
+  top: -2px; right: 3px; min-width: 13px; height: 13px; padding: 0 3px;
+  font: 700 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  background: #17402c; color: #fff;
+}
