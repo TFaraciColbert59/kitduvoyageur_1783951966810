@@ -489,6 +489,100 @@ function MessageThread({
                         {/* eslint-disable-next-line @next/next/no-img-element -- pièce jointe distante */}
                         <img src={message.content} alt="" loading="lazy" style={{ maxWidth: '100%', display: 'block' }} />
                       </span>
+                    ) : message.message_type === 'post' ? (
+                      <span className="mcard">
+                        {typeof message.metadata?.image_url === 'string' ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- vignette distante
+                          <img className="mcard-img" src={message.metadata.image_url} alt="" loading="lazy" />
+                        ) : (
+                          <span className="mcard-ico" aria-hidden="true">
+                            <Icon name="newspaper" className="size-4" />
+                          </span>
+                        )}
+                        <span className="mcard-txt">
+                          <b>{String(message.metadata?.title || 'Publication partagée')}</b>
+                          <small>
+                            {String(message.metadata?.author_name || 'Communauté LKDV')} · Voir la publication
+                          </small>
+                        </span>
+                      </span>
+                    ) : message.message_type === 'product' ? (
+                      <span className="mcard">
+                        {typeof message.metadata?.photo_url === 'string' ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- vignette distante
+                          <img className="mcard-img" src={message.metadata.photo_url} alt="" loading="lazy" />
+                        ) : (
+                          <span className="mcard-ico" aria-hidden="true">
+                            <Icon name="backpack" className="size-4" />
+                          </span>
+                        )}
+                        <span className="mcard-txt">
+                          <b>{String(message.metadata?.name || 'Équipement')}</b>
+                          <small>
+                            {typeof message.metadata?.price_cents === 'number'
+                              ? `${(message.metadata.price_cents / 100).toFixed(2).replace('.', ',')} €`
+                              : 'Équipement partagé'}
+                          </small>
+                        </span>
+                      </span>
+                    ) : message.message_type === 'trail' ? (
+                      <span className="mcard">
+                        <span className="mcard-ico" aria-hidden="true">
+                          <Icon name="route" className="size-4" />
+                        </span>
+                        <span className="mcard-txt">
+                          <b>{String(message.metadata?.name || 'Randonnée')}</b>
+                          <small>
+                            {[
+                              typeof message.metadata?.distance_km === 'number'
+                                ? `${message.metadata.distance_km.toFixed(1)} km`
+                                : null,
+                              typeof message.metadata?.elevation_gain_m === 'number'
+                                ? `+${Math.round(message.metadata.elevation_gain_m)} m`
+                                : null,
+                              typeof message.metadata?.region === 'string' ? message.metadata.region : null,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ') || 'Trace partagée'}
+                          </small>
+                        </span>
+                      </span>
+                    ) : message.message_type === 'kit' ? (
+                      <span className="mcard">
+                        <span className="mcard-ico" aria-hidden="true">
+                          <Icon name="layers" className="size-4" />
+                        </span>
+                        <span className="mcard-txt">
+                          <b>{String(message.metadata?.kit_name || 'Kit partagé')}</b>
+                          <small>Lignée de kit</small>
+                        </span>
+                      </span>
+                    ) : message.message_type === 'audio' ? (
+                      <span className="mcard">
+                        <span className="mcard-ico" aria-hidden="true">
+                          <Icon name="mic" className="size-4" />
+                        </span>
+                        <span className="mcard-txt">
+                          <b>Note vocale</b>
+                          <small>Appuyer pour écouter</small>
+                        </span>
+                      </span>
+                    ) : message.message_type === 'gpx' || message.message_type === 'file' || message.message_type === 'video' ? (
+                      <span className="mcard">
+                        <span className="mcard-ico" aria-hidden="true">
+                          <Icon name={message.message_type === 'video' ? 'play' : 'paperclip'} className="size-4" />
+                        </span>
+                        <span className="mcard-txt">
+                          <b>
+                            {message.message_type === 'gpx'
+                              ? 'Trace GPX'
+                              : message.message_type === 'video'
+                                ? 'Vidéo'
+                                : 'Fichier'}
+                          </b>
+                          <small>{message.content.split('/').pop()?.slice(0, 42) || 'Pièce jointe'}</small>
+                        </span>
+                      </span>
                     ) : (
                       message.content
                     )}
@@ -1272,10 +1366,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     <button
                       type="button"
                       className="mpill"
-                      onClick={() => {
-                        if (selected.type === 'group') setOptionsConv(selected);
-                        else if (selected.other_member?.id) router.push(`/profil/${selected.other_member.id}`);
-                      }}
+                      onClick={() => setOptionsConv(selected)}
                       aria-label={`${conversationTitle(selected)} — ${
                         selected.type === 'group' ? `${members.length || 1} membres` : 'Membre LKDV'
                       }`}

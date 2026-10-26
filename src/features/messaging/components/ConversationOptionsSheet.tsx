@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import type { Conversation } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
@@ -30,6 +31,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
   onReport,
 }) => {
   const { haptic } = useHapticFeedback();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showMuteSubmenu, setShowMuteSubmenu] = useState(false);
 
@@ -133,6 +135,26 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             <div className="s2">{isPending ? 'Souhaite vous écrire' : 'Conversation directe'}</div>
           </div>
           <span className={isPending ? 'tg pending' : 'tg'}>{isPending ? 'Demande' : 'Directe'}</span>
+        </div>
+      ) : null}
+
+      {!isPending && member?.id ? (
+        <div className="li nt">
+          <div>
+            <div className="ttl">Voir le profil</div>
+            <div className="s2">{member.full_name || 'Voyageur LKDV'}</div>
+          </div>
+          <button
+            type="button"
+            className="mbtn"
+            onClick={() => {
+              haptic('light');
+              onClose();
+              router.push(`/profil/${member.id}`);
+            }}
+          >
+            Ouvrir
+          </button>
         </div>
       ) : null}
 

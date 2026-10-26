@@ -127,6 +127,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
 
   return (
     <AccountDrawerHost
+      variant="card"
       open={isOpen}
       title={
         view === 'menu'
