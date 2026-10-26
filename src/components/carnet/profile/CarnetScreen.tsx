@@ -117,7 +117,6 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
 
   return (
     <div className="ckp-screen lkdv-account-glass" data-type-scale="compte">
-      {showCover ? <div className="ckp-screen-bg" aria-hidden="true" style={coverCss} /> : null}
       <header className="ckp-screen-header">
         <CarnetTopBar
           title={detail.title}

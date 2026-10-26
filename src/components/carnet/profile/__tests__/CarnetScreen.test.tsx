@@ -132,37 +132,9 @@ describe('CarnetScreen — statistiques et pages', () => {
   });
 });
 
-describe('CarnetScreen — fond de page = photo du carnet', () => {
-  it('pose la couverture en fond, derrière le contenu et hors de l’arbre d’accessibilité', () => {
+describe('CarnetScreen — fond identique à la page Compte', () => {
+  it('ne peint aucune photo de fond : la toile du Compte reste seule', () => {
     render(<CarnetScreen detail={detail()} />);
-    const bg = document.querySelector('.ckp-screen-bg');
-    expect(bg).toBeTruthy();
-    expect(bg?.getAttribute('aria-hidden')).toBe('true');
-    expect(bg?.getAttribute('style')).toContain('https://cdn.test/cover.jpg');
-  });
-
-  it('garde le canvas vert quand la couverture ne se charge pas', () => {
-    const Original = window.Image;
-    class BrokenImage {
-      onload: (() => void) | null = null;
-      onerror: (() => void) | null = null;
-      set src(_value: string) {
-        this.onerror?.();
-      }
-    }
-    // @ts-expect-error — substitut minimal de `Image` pour le chemin d'erreur.
-    window.Image = BrokenImage;
-    try {
-      render(<CarnetScreen detail={detail()} />);
-      expect(document.querySelector('.ckp-screen-bg')).toBeNull();
-      expect(document.querySelector('.ckp-screen')).toBeTruthy();
-    } finally {
-      window.Image = Original;
-    }
-  });
-
-  it('ne pose aucun fond sans couverture', () => {
-    render(<CarnetScreen detail={detail({ coverImage: null })} />);
     expect(document.querySelector('.ckp-screen-bg')).toBeNull();
     expect(document.querySelector('.ckp-screen')).toBeTruthy();
   });
