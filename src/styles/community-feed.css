@@ -1607,3 +1607,27 @@ body[data-story-open="true"] nav[aria-label="Navigation principale"] { display: 
 .lkdv-create-tile .ico { width: 48px; height: 48px; }
 .lkdv-share-conv > button { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
 .lkdv-section-action { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+
+/* Création Communauté : aucun libellé de structure visible. */
+.lkdv-create-engine .lkdv-form-field > label,
+.lkdv-create-engine .lkdv-form-label,
+.lkdv-create-engine .lkdv-form-intro,
+.lkdv-create-engine .lkdv-form-note,
+.lkdv-create-engine .lkdv-media-dropzone-text,
+.lkdv-create-engine .lkdv-create-form-preview-txt,
+.lkdv-create-engine .lkdv-form-hint {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.lkdv-create-engine .lkdv-media-dropzone { justify-content: center; }
+.lkdv-create-engine .lkdv-media-add { width: 44px; min-width: 44px; height: 44px; padding: 0; font-size: 0; }
+.lkdv-create-engine .lkdv-media-add::before { content: '+'; font: 700 20px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-create-engine .lkdv-media-count { text-align: center; }
