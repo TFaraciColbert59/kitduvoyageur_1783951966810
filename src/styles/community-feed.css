@@ -1615,7 +1615,10 @@ body[data-story-open="true"] nav[aria-label="Navigation principale"] { display: 
 .lkdv-create-engine .lkdv-form-note,
 .lkdv-create-engine .lkdv-media-dropzone-text,
 .lkdv-create-engine .lkdv-create-form-preview-txt,
-.lkdv-create-engine .lkdv-form-hint {
+.lkdv-create-engine .lkdv-form-hint,
+.lkdv-create-engine .lkdv-number-stepper > span,
+.lkdv-create-engine .lkdv-date-range legend,
+.lkdv-create-engine .lkdv-date-range-fields label {
   position: absolute !important;
   width: 1px !important;
   height: 1px !important;

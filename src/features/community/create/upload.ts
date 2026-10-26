@@ -42,6 +42,15 @@ export interface PostBridgeInput {
   linkedCarnetId?: string | null;
   linkedKitId?: string | null;
   title?: string | null;
+  /**
+   * Métadonnées de publication (options, sondage, planification) écrites dans
+   * `community_posts.snapshot_payload`. Réservé aux publications publiques :
+   * le trigger `reject_public_media_on_restricted_post` refuse le snapshot sur
+   * une audience restreinte. Le trigger `snapshot_community_post_carnet` ne
+   * conserve le snapshot que pour les posts liés à un carnet : les options
+   * restent donc best-effort tant que ce trigger n’est pas révisé côté base.
+   */
+  snapshotPayload?: Record<string, unknown> | null;
 }
 
 export async function insertCommunityPost(input: PostBridgeInput): Promise<string> {
@@ -59,6 +68,7 @@ export async function insertCommunityPost(input: PostBridgeInput): Promise<strin
       club_id: input.audience === 'club' ? input.clubId ?? null : null,
       linked_carnet_id: input.linkedCarnetId ?? null,
       linked_kit_id: input.linkedKitId ?? null,
+      snapshot_payload: input.snapshotPayload ?? null,
     })
     .select('id')
     .single();

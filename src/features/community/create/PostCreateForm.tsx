@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Controller } from 'react-hook-form';
+import { Controller, type FieldPath } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
+import { Field, Select, SubmitFooter, SwitchField, TextArea, TextInput } from './form-fields';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
 import { CreateFormEngine } from './engine/CreateFormEngine';
 import {
@@ -12,7 +12,6 @@ import {
   CREATE_FIELD_LABELS,
   type PostFormValues,
   type PostKind,
-  type PostAudience,
 } from './engine/createSchemas';
 import { StepPager, CREATE_STEPS } from './shared/StepPager';
 import { MediaPicker } from './shared/MediaPicker';
@@ -29,18 +28,21 @@ export interface PostCreateFormProps {
 }
 
 const POST_DEFAULTS = createDefaults('post');
+const LAST_STEP = CREATE_STEPS.post.length - 1;
 const STEP_FIELDS = [
   ['kind'],
+  ['media'],
   [
     'title',
     'content',
-    'media',
     'eventDate',
     'eventDuration',
+    'eventMax',
     'location',
     'tags',
+    'pollOptions',
   ],
-  ['audience', 'clubId', 'eventMax'],
+  ['audience', 'clubId', 'allowComments', 'allowLikes', 'scheduledAt'],
 ] as const;
 
 const TYPES: Array<{ id: PostKind; label: string }> = [
@@ -49,6 +51,37 @@ const TYPES: Array<{ id: PostKind; label: string }> = [
   { id: 'question', label: 'Question' },
   { id: 'event', label: 'Événement' },
 ];
+
+export interface PostSnapshotPayload {
+  schema: 'lkdv.post.options.v1';
+  options: { allow_comments: boolean; allow_likes: boolean };
+  scheduled_at: string | null;
+  poll: { options: string[] } | null;
+  /** Compatible `Record<string, unknown>` pour l’écriture jsonb. */
+  [key: string]: unknown;
+}
+
+/**
+ * Métadonnées de publication écrites dans `community_posts.snapshot_payload`.
+ *
+ * Le snapshot n’est autorisé que sur une audience publique (trigger
+ * `reject_public_media_on_restricted_post`). Il est donc construit ici, pur et
+ * testable, puis omis à la soumission pour `abonnies` / `club`.
+ */
+export function buildPostSnapshot(values: PostFormValues): PostSnapshotPayload {
+  const pollOptions = values.pollOptions
+    .map((option) => option.trim())
+    .filter(Boolean);
+  return {
+    schema: 'lkdv.post.options.v1',
+    options: {
+      allow_comments: values.allowComments,
+      allow_likes: values.allowLikes,
+    },
+    scheduled_at: values.scheduledAt || null,
+    poll: pollOptions.length >= 2 ? { options: pollOptions } : null,
+  };
+}
 
 function InlineError({ message }: { message?: string }) {
   return message ? (
@@ -69,10 +102,10 @@ export function PostCreateForm({
   const [internalStep, setInternalStep] = useState(0);
   const [clubs, setClubs] = useState<Array<{ id: string; name: string }>>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const activeStep = Math.max(0, Math.min(2, step ?? internalStep));
+  const activeStep = Math.max(0, Math.min(LAST_STEP, step ?? internalStep));
 
   const setStep = (next: number) => {
-    const safe = Math.max(0, Math.min(2, next));
+    const safe = Math.max(0, Math.min(LAST_STEP, next));
     setInternalStep(safe);
     onStepChange?.(safe);
   };
@@ -120,6 +153,11 @@ export function PostCreateForm({
       throw new Error('Choisis au moins une photo ou une vidéo.');
     }
 
+    // La base refuse un snapshot sur une audience restreinte : on ne l’envoie
+    // que pour une publication publique.
+    const snapshotPayload =
+      values.audience === 'public' ? buildPostSnapshot(values) : null;
+
     let postId: string;
     if (values.kind === 'event') {
       const supabase = createClient();
@@ -158,6 +196,7 @@ export function PostCreateForm({
         audience: values.audience,
         clubId: values.clubId,
         title: values.title.trim(),
+        snapshotPayload,
       });
     } else {
       const fullContent =
@@ -173,6 +212,7 @@ export function PostCreateForm({
         audience: values.audience,
         clubId: values.clubId,
         title: values.title.trim() || null,
+        snapshotPayload,
       });
     }
 
@@ -197,17 +237,35 @@ export function PostCreateForm({
         const kind = form.watch('kind');
         const errors = form.formState.errors;
         const previewValues = form.watch();
+        const pollOptions = form.watch('pollOptions');
+        const pollEnabled = pollOptions.length > 0;
+        const pollAllowed = kind === 'question' || kind === 'billet';
         const goNext = async () => {
           const fields = STEP_FIELDS[activeStep] ?? [];
           const valid = await form.trigger([...fields]);
           if (valid) setStep(activeStep + 1);
         };
         const onPrimary = () => {
-          if (activeStep < 2) {
+          if (activeStep < LAST_STEP) {
             void goNext();
             return;
           }
           api.submit();
+        };
+        const setPollOptions = (next: string[]) =>
+          form.setValue('pollOptions', next, {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
+        const selectKind = (type: PostKind) => {
+          form.setValue('kind', type, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true,
+          });
+          // Le sondage n’est proposé que pour les billets et les questions :
+          // changer de format ne doit pas publier d’options devenues invisibles.
+          if (type !== 'question' && type !== 'billet') setPollOptions([]);
         };
 
         return (
@@ -218,7 +276,7 @@ export function PostCreateForm({
             error={submitError}
             footer={
               <SubmitFooter
-                label={activeStep < 2 ? 'Continuer' : 'Publier'}
+                label={activeStep < LAST_STEP ? 'Continuer' : 'Publier'}
                 busy={form.formState.isSubmitting}
                 onClick={onPrimary}
               />
@@ -270,6 +328,31 @@ export function PostCreateForm({
               </div>
 
               <div>
+                <Controller
+                  control={form.control}
+                  name="media"
+                  render={({ field }) => (
+                    <MediaPicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      max={10}
+                      label={
+                        kind === 'event'
+                          ? 'Photo de couverture (optionnel)'
+                          : 'Photos / vidéos'
+                      }
+                      upload={uploader}
+                      fieldName="media"
+                    />
+                  )}
+                />
+                <InlineError message={errors.media?.message as string | undefined} />
+                <p className="lkdv-form-note">
+                  Les médias ne sont pas autorisés pour une audience restreinte.
+                </p>
+              </div>
+
+              <div>
                 {kind !== 'photo' ? (
                   <Field
                     label={
@@ -302,28 +385,6 @@ export function PostCreateForm({
                   <InlineError message={errors.content?.message} />
                 </Field>
 
-                {kind === 'photo' || kind === 'event' ? (
-                  <Controller
-                    control={form.control}
-                    name="media"
-                    render={({ field }) => (
-                      <MediaPicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        max={10}
-                        label={
-                          kind === 'event'
-                            ? 'Photo de couverture (optionnel)'
-                            : 'Photos / vidéos'
-                        }
-                        upload={uploader}
-                        fieldName="media"
-                      />
-                    )}
-                  />
-                ) : null}
-                <InlineError message={errors.media?.message as string | undefined} />
-
                 <div className="lkdv-form-row">
                   <Field label="Lieu">
                     <TextInput
@@ -345,35 +406,6 @@ export function PostCreateForm({
                     )}
                   />
                 </div>
-              </div>
-
-              <div>
-                <Field label="Audience">
-                  <Select {...form.register('audience')}>
-                    <option value="public">Fil public</option>
-                    <option value="abonnies">Mes abonnés</option>
-                    <option value="club">Un club</option>
-                  </Select>
-                  <InlineError message={errors.audience?.message} />
-                </Field>
-                {form.watch('audience') === 'club' ? (
-                  <Field
-                    label="Club"
-                    hint={
-                      clubs.length === 0 ? 'Aucun club actif : rejoins un club d’abord.' : undefined
-                    }
-                  >
-                    <Select {...form.register('clubId')}>
-                      <option value="">Choisir un club</option>
-                      {clubs.map((club) => (
-                        <option key={club.id} value={club.id}>
-                          {club.name}
-                        </option>
-                      ))}
-                    </Select>
-                    <InlineError message={errors.clubId?.message} />
-                  </Field>
-                ) : null}
 
                 {kind === 'event' ? (
                   <>
@@ -407,6 +439,139 @@ export function PostCreateForm({
                     <InlineError message={errors.eventMax?.message} />
                   </>
                 ) : null}
+
+                {pollAllowed ? (
+                  <div>
+                    <SwitchField
+                      label="Sondage"
+                      checked={pollEnabled}
+                      onChange={(enabled) => setPollOptions(enabled ? ['', ''] : [])}
+                    />
+                    {pollEnabled ? (
+                      <>
+                        {pollOptions.map((option, index) => (
+                          <div key={index} className="lkdv-form-row">
+                            <Field
+                              label={`Option ${index + 1}`}
+                              htmlFor={`post-poll-${index}`}
+                            >
+                              <Controller
+                                control={form.control}
+                                name={`pollOptions.${index}` as FieldPath<PostFormValues>}
+                                render={({ field }) => (
+                                  <TextInput
+                                    {...field}
+                                    id={`post-poll-${index}`}
+                                    placeholder={`Option ${index + 1}`}
+                                    maxLength={80}
+                                  />
+                                )}
+                              />
+                              <InlineError
+                                message={
+                                  errors.pollOptions?.[index]?.message as string | undefined
+                                }
+                              />
+                            </Field>
+                            <button
+                              type="button"
+                              className="lkdv-create-step-back"
+                              aria-label={`Retirer l’option ${index + 1}`}
+                              onClick={() =>
+                                setPollOptions(
+                                  pollOptions.filter((_, entry) => entry !== index),
+                                )
+                              }
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        {pollOptions.length < 4 ? (
+                          <button
+                            type="button"
+                            className="lkdv-create-step-back"
+                            aria-label="Ajouter une option"
+                            onClick={() => setPollOptions([...pollOptions, ''])}
+                          >
+                            +
+                          </button>
+                        ) : null}
+                        <InlineError
+                          message={errors.pollOptions?.message as string | undefined}
+                        />
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+
+              <div>
+                <Field label="Audience">
+                  <Select {...form.register('audience')}>
+                    <option value="public">Fil public</option>
+                    <option value="abonnies">Mes abonnés</option>
+                    <option value="club">Un club</option>
+                  </Select>
+                  <InlineError message={errors.audience?.message} />
+                </Field>
+                {form.watch('audience') === 'club' ? (
+                  <Field
+                    label="Club"
+                    hint={
+                      clubs.length === 0 ? 'Aucun club actif : rejoins un club d’abord.' : undefined
+                    }
+                  >
+                    <Select {...form.register('clubId')}>
+                      <option value="">Choisir un club</option>
+                      {clubs.map((club) => (
+                        <option key={club.id} value={club.id}>
+                          {club.name}
+                        </option>
+                      ))}
+                    </Select>
+                    <InlineError message={errors.clubId?.message} />
+                  </Field>
+                ) : null}
+
+                <Controller
+                  control={form.control}
+                  name="allowComments"
+                  render={({ field }) => (
+                    <SwitchField
+                      label="Commentaires"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                <InlineError message={errors.allowComments?.message} />
+
+                <Controller
+                  control={form.control}
+                  name="allowLikes"
+                  render={({ field }) => (
+                    <SwitchField
+                      label="J’aime"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                <InlineError message={errors.allowLikes?.message} />
+
+                <Field
+                  label="Publication programmée"
+                  hint="Vide = publication immédiate."
+                  htmlFor="post-scheduled-at"
+                >
+                  <TextInput
+                    id="post-scheduled-at"
+                    type="datetime-local"
+                    {...form.register('scheduledAt')}
+                  />
+                  <InlineError message={errors.scheduledAt?.message} />
+                </Field>
               </div>
             </StepPager>
           </CommunityFormDrawer>

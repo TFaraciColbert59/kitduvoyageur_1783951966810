@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Switch } from '@/components/ui/Switch';
 
 export function Field({
   label,
@@ -59,6 +60,29 @@ export function MediaInput({
         onChange={(event) => onChange(Array.from(event.target.files ?? []))}
       />
     </label>
+  );
+}
+
+/**
+ * Bascule binaire d’un formulaire de création.
+ *
+ * Le libellé passe par `aria-label` (nom accessible) et par le libellé de
+ * `Field`, masqué visuellement par la règle « aucun libellé de structure ».
+ * Aucun texte visible n’est ajouté à l’écran.
+ */
+export function SwitchField({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <Field label={label}>
+      <Switch checked={checked} onCheckedChange={onChange} aria-label={label} />
+    </Field>
   );
 }
 

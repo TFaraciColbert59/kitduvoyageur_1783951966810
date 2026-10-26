@@ -19,22 +19,27 @@ export interface CreateStep {
 export const CREATE_STEPS: Record<CreateKind, readonly CreateStep[]> = {
   post: [
     { id: 'format', label: 'Format' },
-    { id: 'content', label: 'Contenu' },
-    { id: 'audience', label: 'Audience' },
+    { id: 'media', label: 'Médias' },
+    { id: 'details', label: 'Détails' },
+    { id: 'publication', label: 'Publication' },
   ],
   story: [
     { id: 'media', label: 'Média' },
-    { id: 'caption', label: 'Légende' },
+    { id: 'edit', label: 'Édition' },
+    { id: 'diffusion', label: 'Diffusion' },
   ],
   carnet: [
-    { id: 'info', label: 'Infos' },
-    { id: 'dates', label: 'Dates' },
-    { id: 'visibility', label: 'Visibilité' },
+    { id: 'identity', label: 'Identité' },
+    { id: 'itinerary', label: 'Itinéraire' },
+    { id: 'logistics', label: 'Logistique' },
+    { id: 'story', label: 'Récit' },
+    { id: 'sharing', label: 'Partage' },
   ],
   sortie: [
-    { id: 'info', label: 'Infos' },
-    { id: 'details', label: 'Détails' },
+    { id: 'type-place', label: 'Type & lieu' },
+    { id: 'route', label: 'Itinéraire' },
     { id: 'participants', label: 'Participants' },
+    { id: 'safety', label: 'Sécurité' },
   ],
   kit: [
     { id: 'inventory', label: 'Inventaire' },
@@ -43,8 +48,9 @@ export const CREATE_STEPS: Record<CreateKind, readonly CreateStep[]> = {
   ],
   club: [
     { id: 'identity', label: 'Identité' },
-    { id: 'presentation', label: 'Présentation' },
+    { id: 'universe', label: 'Univers' },
     { id: 'membership', label: 'Adhésion' },
+    { id: 'publication', label: 'Publication' },
   ],
 };
 

@@ -34,6 +34,10 @@ export type KitTemplate = (typeof KIT_TEMPLATE_IDS)[number];
 export const SORTIE_LEVELS = ['facile', 'moyen', 'difficile'] as const;
 export type SortieLevel = (typeof SORTIE_LEVELS)[number];
 
+/** Types de sortie persistés dans `events.type` (aucune nouvelle colonne). */
+export const OUTING_TYPES = ['rando', 'trail', 'ski', 'velo', 'escalade', 'autre'] as const;
+export type OutingType = (typeof OUTING_TYPES)[number];
+
 export const CARNET_VISIBILITIES = ['public', 'private'] as const;
 export type CarnetVisibility = (typeof CARNET_VISIBILITIES)[number];
 
@@ -90,6 +94,42 @@ function todayIso(): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
+/**
+ * `datetime-local` produit `AAAA-MM-JJTHH:MM`, sans fuseau. On valide la forme
+ * et la date réelle, puis on compare à l’horloge locale pour la planification.
+ */
+function isLocalDateTime(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return false;
+  return Number.isFinite(new Date(value).getTime());
+}
+
+function isFutureLocalDateTime(value: string): boolean {
+  if (!isLocalDateTime(value)) return false;
+  return new Date(value).getTime() > Date.now();
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+const optionalHttpUrl = z
+  .string()
+  .default('')
+  .refine(
+    (value) => value === '' || isHttpUrl(value),
+    'Lien invalide (adresse http ou https attendue).',
+  );
+
+const tagArray = z
+  .array(z.string().trim().min(1).max(24, '24 caractères maximum par tag.'))
+  .max(10, '10 tags maximum.')
+  .default([]);
+
 function requiredText(message: string, max?: number) {
   const schema = z.string({ error: message }).trim().min(1, message);
   return typeof max === 'number'
@@ -144,10 +184,7 @@ const postSchema = z
     audience: z.enum(POST_AUDIENCES, { error: 'Choisis une audience.' }).default('public'),
     clubId: z.string().default(''),
     location: z.string().max(120, '120 caractères maximum.').default(''),
-    tags: z
-      .array(z.string().trim().min(1).max(24, '24 caractères maximum par tag.'))
-      .max(10, '10 tags maximum.')
-      .default([]),
+    tags: tagArray,
     media: mediaArray(MEDIA_MAX_COUNT).default([]),
     eventDate: optionalDate,
     eventDuration: z.string().max(60, '60 caractères maximum.').default(''),
@@ -157,8 +194,41 @@ const postSchema = z
       .min(2, '2 participants minimum.')
       .max(50, '50 participants maximum.')
       .default(10),
+    /** Options de publication persistées dans `community_posts.snapshot_payload`. */
+    allowComments: z.boolean().default(true),
+    allowLikes: z.boolean().default(true),
+    /** Planification `datetime-local` (vide = publication immédiate). */
+    scheduledAt: z
+      .string()
+      .default('')
+      .refine(
+        (value) => value === '' || isLocalDateTime(value),
+        'Date de publication invalide.',
+      )
+      .refine(
+        (value) => value === '' || isFutureLocalDateTime(value),
+        'La publication programmée doit être dans le futur.',
+      ),
+    /** Sondage : 0 option = pas de sondage, sinon 2 à 4 options non vides. */
+    pollOptions: z
+      .array(
+        z
+          .string()
+          .trim()
+          .min(1, 'Une option ne peut pas être vide.')
+          .max(80, '80 caractères maximum.'),
+      )
+      .max(4, '4 options maximum.')
+      .default([]),
   })
   .superRefine((value, ctx) => {
+    if (value.pollOptions.length === 1) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['pollOptions'],
+        message: 'Ajoute au moins deux options au sondage.',
+      });
+    }
     if (value.kind !== 'photo') {
       if (!value.title.trim()) {
         ctx.addIssue({ code: 'custom', path: ['title'], message: 'Le titre est requis.' });
@@ -201,6 +271,12 @@ const storySchema = z.object({
   replyPolicy: z
     .enum(STORY_REPLY_POLICIES, { error: 'Choisis une politique de réponse.' })
     .default('everyone'),
+  /** Overlay texte v1 (`post_stories.composition`), 120 caractères max. */
+  overlayText: z.string().max(120, '120 caractères maximum.').default(''),
+  /** Lien d’overlay, optionnel, http(s) uniquement. */
+  overlayLink: optionalHttpUrl,
+  /** `post_stories.allow_reshare` : autorise le partage par les spectateurs. */
+  allowReshare: z.boolean().default(true),
 });
 
 const carnetSchema = z
@@ -212,6 +288,40 @@ const carnetSchema = z
     description: z.string().max(1000, '1 000 caractères maximum.').default(''),
     visibility: z.enum(CARNET_VISIBILITIES, { error: 'Choisis une visibilité.' }).default('public'),
     cover: mediaArray(1).default([]),
+    /** Colonnes existantes de `carnets`, aucun champ inventé. */
+    lieuDepart: z.string().max(120, '120 caractères maximum.').default(''),
+    lieuArrivee: z.string().max(120, '120 caractères maximum.').default(''),
+    distanceKm: z
+      .number({ error: 'La distance est requise.' })
+      .min(0, 'La distance ne peut pas être négative.')
+      .max(10_000, '10 000 km maximum.')
+      .default(0),
+    deniveleM: z
+      .number({ error: 'Le dénivelé est requis.' })
+      .int('Le dénivelé doit être entier.')
+      .min(0, 'Le dénivelé ne peut pas être négatif.')
+      .max(30_000, '30 000 m maximum.')
+      .default(0),
+    nbNuits: z
+      .number({ error: 'Le nombre de nuits est requis.' })
+      .int('Le nombre de nuits doit être entier.')
+      .min(0, '0 nuit minimum.')
+      .max(90, '90 nuits maximum.')
+      .default(0),
+    nbVoyageurs: z
+      .number({ error: 'Le nombre de voyageurs est requis.' })
+      .int('Le nombre de voyageurs doit être entier.')
+      .min(1, '1 voyageur minimum.')
+      .max(50, '50 voyageurs maximum.')
+      .default(1),
+    weather: z.string().max(120, '120 caractères maximum.').default(''),
+    routeRating: z
+      .number({ error: 'La note est requise.' })
+      .min(0, '0 minimum.')
+      .max(5, '5 maximum.')
+      .default(0),
+    tags: tagArray,
+    isCollaborative: z.boolean().default(false),
   })
   .superRefine(addDateRangeIssue);
 
@@ -231,6 +341,25 @@ const sortieSchema = z
       .default(10),
     description: z.string().max(1500, '1 500 caractères maximum.').default(''),
     cover: mediaArray(1).default([]),
+    /** `events.type` : le type de sortie remplace l’emoji figé. */
+    eventType: z.enum(OUTING_TYPES, { error: 'Choisis un type de sortie.' }).default('rando'),
+    /** Point de rendez-vous, encodé dans `events.description`. */
+    meetingPoint: z.string().max(120, '120 caractères maximum.').default(''),
+    /** Liste d’attente, encodée dans `events.description` et le snapshot du post. */
+    waitlist: z.boolean().default(false),
+    distanceKm: z
+      .number({ error: 'La distance est requise.' })
+      .min(0, 'La distance ne peut pas être négative.')
+      .max(500, '500 km maximum.')
+      .default(0),
+    deniveleM: z
+      .number({ error: 'Le dénivelé est requis.' })
+      .int('Le dénivelé doit être entier.')
+      .min(0, 'Le dénivelé ne peut pas être négatif.')
+      .max(20_000, '20 000 m maximum.')
+      .default(0),
+    /** Consignes de sécurité, encodées dans `events.description`. */
+    safetyNotes: z.string().max(500, '500 caractères maximum.').default(''),
   })
   .superRefine((value, ctx) => {
     addFutureIssue(value.startDate, ctx, 'startDate');
@@ -269,6 +398,19 @@ const clubSchema = z.object({
   description: z.string().max(1500, '1 500 caractères maximum.').default(''),
   privacy: z.enum(CLUB_PRIVACIES, { error: 'Choisis un mode d’adhésion.' }).default('open'),
   membershipRules: z.string().max(1000, '1 000 caractères maximum.').default(''),
+  /** Questions d’adhésion, concaténées dans `clubs.rules` (colonne texte). */
+  joinQuestions: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, 'Une question ne peut pas être vide.')
+        .max(120, '120 caractères maximum.'),
+    )
+    .max(3, '3 questions maximum.')
+    .default([]),
+  /** Post d’accueil dans le fil du club : publié ou non. */
+  welcomePost: z.boolean().default(true),
   cover: mediaArray(1).default([]),
 });
 
@@ -314,12 +456,19 @@ const defaultsFactories = {
     eventDate: '',
     eventDuration: '',
     eventMax: 10,
+    allowComments: true,
+    allowLikes: true,
+    scheduledAt: '',
+    pollOptions: [],
   }),
   story: (): StoryFormValues => ({
     media: [],
     caption: '',
     audience: 'public',
     replyPolicy: 'everyone',
+    overlayText: '',
+    overlayLink: '',
+    allowReshare: true,
   }),
   carnet: (): CarnetFormValues => ({
     title: '',
@@ -329,6 +478,16 @@ const defaultsFactories = {
     description: '',
     visibility: 'public',
     cover: [],
+    lieuDepart: '',
+    lieuArrivee: '',
+    distanceKm: 0,
+    deniveleM: 0,
+    nbNuits: 0,
+    nbVoyageurs: 1,
+    weather: '',
+    routeRating: 0,
+    tags: [],
+    isCollaborative: false,
   }),
   sortie: (): SortieFormValues => ({
     title: '',
@@ -340,6 +499,12 @@ const defaultsFactories = {
     maxParticipants: 10,
     description: '',
     cover: [],
+    eventType: 'rando',
+    meetingPoint: '',
+    waitlist: false,
+    distanceKm: 0,
+    deniveleM: 0,
+    safetyNotes: '',
   }),
   kit: (): KitFormValues => ({
     name: '',
@@ -359,6 +524,8 @@ const defaultsFactories = {
     description: '',
     privacy: 'open',
     membershipRules: '',
+    joinQuestions: [],
+    welcomePost: true,
     cover: [],
   }),
 } satisfies Record<CreateKind, () => unknown>;
@@ -381,8 +548,15 @@ export const CREATE_FIELD_LABELS: Record<string, string> = {
   eventDate: 'Date de l’événement',
   eventDuration: 'Durée',
   eventMax: 'Participants maximum',
+  allowComments: 'Commentaires',
+  allowLikes: 'J’aime',
+  scheduledAt: 'Publication programmée',
+  pollOptions: 'Sondage',
   caption: 'Légende',
   replyPolicy: 'Réponses',
+  overlayText: 'Texte de la story',
+  overlayLink: 'Lien de la story',
+  allowReshare: 'Partage',
   destination: 'Destination',
   startDate: 'Date de début',
   endDate: 'Date de fin',
@@ -399,4 +573,19 @@ export const CREATE_FIELD_LABELS: Record<string, string> = {
   category: 'Catégorie',
   privacy: 'Adhésion',
   membershipRules: 'Règles d’adhésion',
+  joinQuestions: 'Questions d’adhésion',
+  welcomePost: 'Post d’accueil',
+  lieuDepart: 'Départ',
+  lieuArrivee: 'Arrivée',
+  distanceKm: 'Distance',
+  deniveleM: 'Dénivelé',
+  nbNuits: 'Nuits',
+  nbVoyageurs: 'Voyageurs',
+  weather: 'Météo',
+  routeRating: 'Note de l’itinéraire',
+  isCollaborative: 'Collaboratif',
+  eventType: 'Type de sortie',
+  meetingPoint: 'Rendez-vous',
+  waitlist: 'Liste d’attente',
+  safetyNotes: 'Consignes de sécurité',
 };

@@ -179,6 +179,10 @@ export function buildFormPreview(kind: CreateKind, values: unknown): FormPreview
         AUDIENCE_LABELS[text(record.audience)],
         text(record.location) ? `📍 ${text(record.location)}` : '',
         postKind === 'event' && text(record.eventDate) ? text(record.eventDate) : '',
+        text(record.scheduledAt) ? `Programmé · ${text(record.scheduledAt)}` : '',
+        Array.isArray(record.pollOptions) && record.pollOptions.length >= 2
+          ? `Sondage · ${record.pollOptions.length} options`
+          : '',
       ]),
       cover,
     };
