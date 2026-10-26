@@ -264,7 +264,7 @@ export function FormPreview({ kind, values, className = '' }: FormPreviewProps) 
   const isVideo = preview.cover?.type?.startsWith('video/') ?? false;
   const hasRealTitle = preview.title && preview.title !== FALLBACK_TITLES[kind];
   const hasRealSummary = preview.summary && preview.summary !== FALLBACK_SUMMARIES[kind];
-  if (!src && !hasRealTitle && !hasRealSummary) return null;
+  const empty = !src && !hasRealTitle && !hasRealSummary;
 
   return (
     <aside
@@ -272,6 +272,7 @@ export function FormPreview({ kind, values, className = '' }: FormPreviewProps) 
       data-testid="form-preview"
       data-preview-kind={kind}
       aria-label={`Aperçu — ${preview.typeLabel}`}
+      hidden={empty}
     >
       {src ? (
         <span className="lkdv-create-form-preview-cover">
