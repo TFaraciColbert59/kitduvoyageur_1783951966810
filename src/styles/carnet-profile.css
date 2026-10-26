@@ -744,3 +744,5 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-action-lbl { display: none; }
 @media (prefers-reduced-motion: reduce) { .ckp-action, .ckp-card-foot .ckp-tabs button { transition: none; } }
+.ckp-card-foot .ckp-more-anchor { display: contents; }
+.ckp-card-foot .ckp-more-anchor > .ckp-menu { position: absolute; right: 0; bottom: calc(100% + 8px); }
