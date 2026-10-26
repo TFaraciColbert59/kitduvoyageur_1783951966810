@@ -18,6 +18,26 @@ import type {
 } from './drawer/ProfileDrawerHost';
 import { DRAWER_V2_CSS, type SlotContentState } from './drawer/SlotShell';
 import { useCompteMapContext } from './map/useCompteMapContext';
+
+class CompteMapBoundary extends React.Component<
+  { children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: Error) {
+    console.error('[compte-map]', error);
+  }
+  render() {
+    if (this.state.failed) {
+      return <div className="lkdv-map-unavailable">Carte momentanément indisponible</div>;
+    }
+    return this.props.children;
+  }
+}
+
 import { CompteOverlayHost } from './overlay/CompteOverlayHost';
 import './overlay/compte-drawers.css';
 import './compte-v8.css';
@@ -1357,6 +1377,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       </div>
       <div ref={containerRef} />
       {mapRoot && mapVisible ? createPortal(
+        <CompteMapBoundary>
         <CompteMap
           authState={
             bootstrapPhase === 'ready'
@@ -1372,7 +1393,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                     : 'loading'
           }
           context={mapContext}
-        />,
+        />
+        </CompteMapBoundary>,
         mapRoot
       ) : null}
       {drawerMount?.root ? createPortal(

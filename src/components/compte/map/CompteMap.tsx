@@ -592,6 +592,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     }
 
     const place = () => {
+      try {
       const width = container.clientWidth;
       const height = container.clientHeight;
       const zoom = map.getZoom();
@@ -612,6 +613,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         const visible = inside && (!entry.detail || zoom >= 7) && !hiddenByMassif;
         entry.element.style.display = visible ? '' : 'none';
         entry.element.style.transform = `translate(${offsetX + point.x}px, ${offsetY + point.y}px) ${entry.anchor}`;
+      }
+      } catch {
+        // La carte peut être détruite pendant une transition : ne jamais faire
+        // tomber toute la page Compte pour un marqueur.
       }
     };
     place();
