@@ -2835,14 +2835,14 @@ S.extraHl = [];
 S.spPins = [];
 S.traveller.nats = ['France'];
 S.profile = {
-  handle: 'tony_frc',
-  name: 'Тоny',
-  followersLabel: '1 080',
-  followersCount: 1080,
-  followingCount: 339,
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-  bioLine: 'IT·FR · Haute montagne · Minimalisme',
-  sigText: '14 sorties · 182 km · 13,4 k m D+',
+  handle: '',
+  name: '',
+  followersLabel: '0',
+  followersCount: 0,
+  followingCount: 0,
+  avatarUrl: null,
+  bioLine: '',
+  sigText: '',
   isGuest: false,
   storeCreditEur: 42.50,
   loyaltyPoints: 1450
