@@ -840,3 +840,19 @@
 .lkdv-map-overlay .lkdv-map-carnet {
   background: rgba(255,247,228,.05) !important;
 }
+
+/* +10 % d'opacité sur tous les points. */
+.lkdv-map-overlay .lkdv-map-poi {
+  background: rgba(255,255,255,.12) !important;
+  border-color: rgba(255,255,255,.24) !important;
+}
+.lkdv-map-overlay .lkdv-map-carnet {
+  background: rgba(255,247,228,.15) !important;
+  border-color: rgba(255,255,255,.26) !important;
+}
+.lkdv-map-overlay .lkdv-map-massif {
+  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.12)) !important;
+  border-color: rgba(255,255,255,.26) !important;
+}
+.lkdv-map-overlay .lkdv-map-poi:hover,
+.lkdv-map-overlay .lkdv-map-poi:active { background: rgba(255,255,255,.22) !important; }
