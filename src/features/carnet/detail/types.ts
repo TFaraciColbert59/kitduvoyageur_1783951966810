@@ -204,7 +204,13 @@ export interface CarnetDetail {
 export interface BuildCarnetDetailInput {
   carnet: CarnetRow;
   author: AuthorRow | null;
+  /** Sortie la plus récente : elle porte les statistiques affichées. */
   hikeSession: HikeSessionRow | null;
+  /**
+   * Trace réelle à dessiner, choisie parmi toutes les sorties du carnet
+   * (`pickCarnetTrace`). Absente, on retombe sur la trace de `hikeSession`.
+   */
+  trace?: unknown | null;
   etapes: EtapeRow[];
   hebergements: HebergementRow[];
   moments: MomentRow[];

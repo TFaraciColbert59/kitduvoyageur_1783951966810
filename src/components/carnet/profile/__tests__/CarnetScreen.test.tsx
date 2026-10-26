@@ -177,14 +177,19 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     expect(screen.getByRole('button', { name: /^Commenter/ }).getAttribute('aria-current')).toBe('page');
   });
 
-  it('✏️ ouvre la page Gérer du propriétaire, sans drawer', () => {
+  it('le menu ··· vit dans la barre du haut, dernière position', () => {
     render(<CarnetScreen detail={OWNER} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Gérer' }));
-    expect(drawerOpen()).toBe(false);
-    expect(document.getElementById('carnet-page-manage')).toBeTruthy();
-    expect(screen.getByText('Visibilité')).toBeTruthy();
-    expect(screen.getByText('Exporter le carnet')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Gérer' }).getAttribute('aria-current')).toBe('page');
+    const more = screen.getByRole('button', { name: 'Plus d’options' });
+    expect(more.closest('.ckp-topbar')).toBeTruthy();
+    expect(more.closest('.ckp-more-anchor')).toBeTruthy();
+    /* Le sélecteur du bas perd le segment `···` : cinq segments restants. */
+    const segments = document.querySelectorAll(
+      '.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button',
+    );
+    expect(segments).toHaveLength(5);
+    expect(document.querySelector('.ckp-card-foot .ckp-more-anchor')).toBeNull();
+    /* La loupe a disparu de la barre : le `···` prend sa place. */
+    expect(screen.queryByRole('button', { name: /Rechercher/ })).toBeNull();
   });
 
   it('le menu ··· reste un menu contextuel, jamais un drawer', () => {

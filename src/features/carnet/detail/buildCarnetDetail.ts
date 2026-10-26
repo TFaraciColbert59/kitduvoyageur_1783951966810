@@ -116,7 +116,9 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     return (total ?? 0) + grams;
   }, null);
 
-  const trace = hikeSession?.positions_geojson ?? null;
+  /* La trace affichée est celle de la sortie la plus récente qui en porte une
+     (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. */
+  const trace = input.trace ?? hikeSession?.positions_geojson ?? null;
 
   return {
     id: carnet.id,

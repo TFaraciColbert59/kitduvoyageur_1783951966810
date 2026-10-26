@@ -82,6 +82,40 @@ describe('buildCarnetDetail — statistiques', () => {
     expect(detail.stats[1].value).toBe('2\u202f002 m');
   });
 
+  it('dessine la trace trouvée sur une autre sortie que la plus récente', () => {
+    const trace = {
+      type: 'LineString',
+      coordinates: [
+        [6.86, 45.83],
+        [6.87, 45.84],
+      ],
+    };
+    const detail = buildCarnetDetail(
+      input({
+        /* La sortie la plus récente n'a pas de trace : elle ne doit plus
+           effacer le parcours d'une sortie plus ancienne (constat Vercors). */
+        hikeSession: {
+          id: 'recent',
+          carnet_id: 'c1',
+          distance_km: '22',
+          elevation_gain_m: '1120',
+          duration_seconds: 18000,
+          started_at: '2026-09-27T05:00:00Z',
+          positions_geojson: null,
+        },
+        trace,
+      }),
+    );
+    expect(detail.trace).toBe(trace);
+    expect(detail.distanceKm).toBe(22);
+    expect(detail.place.lat).toBeCloseTo(45.83, 6);
+  });
+
+  it('ne rend aucune trace quand la base n’en porte aucune', () => {
+    const detail = buildCarnetDetail(input({ trace: null }));
+    expect(detail.trace).toBeNull();
+  });
+
   it('préfère la trace GPS aux colonnes du carnet', () => {
     const detail = buildCarnetDetail(
       input({
