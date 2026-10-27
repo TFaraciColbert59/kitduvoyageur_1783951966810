@@ -82,7 +82,7 @@ export function CommunityFeedPost({
   const closePanel = useCallback(() => {
     setPanel(null);
     window.requestAnimationFrame(() => {
-      panelTriggerRef.current?.focus?.();
+      panelTriggerRef.current?.focus?.({ preventScroll: true });
       panelTriggerRef.current = null;
     });
   }, []);
@@ -163,10 +163,23 @@ export function CommunityFeedPost({
         ?.querySelector<HTMLElement>(
           '.lkdv-post-panel input, .lkdv-post-panel button, .lkdv-feed-post-close',
         )
-        ?.focus();
+        ?.focus({ preventScroll: true });
     }, 30);
     return () => window.clearTimeout(timer);
   }, [panel]);
+
+  /* Dans un message, le panneau ne doit jamais déplacer le fil : on remet la
+     position du conteneur défilant telle qu'elle était à l'ouverture. */
+  useEffect(() => {
+    if (!panel || !embedded) return;
+    const scroller = articleRef.current?.closest('.mthread') as HTMLElement | null;
+    if (!scroller) return;
+    const y = scroller.scrollTop;
+    const frame = window.requestAnimationFrame(() => {
+      scroller.scrollTop = y;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [panel, embedded]);
 
   return (
     <article
