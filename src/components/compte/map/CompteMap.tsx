@@ -653,23 +653,17 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       map.setPaintProperty('compte-tracks-line', 'line-width', line(5, bandWidth));
       map.setPaintProperty('compte-tracks-line', 'line-opacity', line(1, 0.9));
     }
+    // La visibilité de casing/glow est possédée par l'effet de visibilité des
+    // couches, qui compose le mode (`layers.tracks`) et la bande (`zoomConfig`).
+    // La réécrire ici avec la bande seule ré-affichait ces couches dans les
+    // modes sans traces (prets/compte/reseau) dès que le zoom passait 6.5.
     if (map.getLayer('compte-tracks-casing')) {
       map.setPaintProperty('compte-tracks-casing', 'line-width', line(9, bandWidth + 3.5));
       map.setPaintProperty('compte-tracks-casing', 'line-opacity', line(0.95, 0.78));
-      map.setLayoutProperty(
-        'compte-tracks-casing',
-        'visibility',
-        zoomConfig.casing ? 'visible' : 'none'
-      );
     }
     if (map.getLayer('compte-tracks-glow')) {
       map.setPaintProperty('compte-tracks-glow', 'line-width', line(14, bandWidth + 7));
       map.setPaintProperty('compte-tracks-glow', 'line-opacity', line(0.4, 0.24));
-      map.setLayoutProperty(
-        'compte-tracks-glow',
-        'visibility',
-        zoomConfig.glow ? 'visible' : 'none'
-      );
     }
   }, [map, ready, selected, zoomConfig]);
 
