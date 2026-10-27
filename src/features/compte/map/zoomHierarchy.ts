@@ -239,7 +239,7 @@ export function resolveMapZoomConfig(zoom: number): MapZoomConfig {
       band: 'region',
       massifs: 'individual',
       carnets: 'dots',
-      pois: 'hidden',
+      pois: 'pills',
       endpoints: 'dots',
       trackWidth: 3.5,
       trackSimplified: false,

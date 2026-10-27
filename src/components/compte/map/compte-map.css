@@ -920,8 +920,7 @@
 
 /* Monde, Pays et Région : les POI n'existent qu'en bande Lieu. */
 .lkdv-map-root[data-zoom-band='world'] .lkdv-map-poi,
-.lkdv-map-root[data-zoom-band='country'] .lkdv-map-poi,
-.lkdv-map-root[data-zoom-band='region'] .lkdv-map-poi {
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-poi {
   display: none !important;
 }
 
@@ -985,3 +984,26 @@
   outline: 2px solid rgba(255, 255, 255, .9);
   outline-offset: 2px;
 }
+
+/* Les contrôles de carte restent toujours visibles et cliquables pendant un déplacement. */
+.mapzone .lkdv-map-controls,
+.mapzone .lkdv-map-scale,
+.mapzone .map-badge-3d {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: 60 !important;
+}
+.lkdv-map-controls button,
+.lkdv-map-scale button { pointer-events: auto !important; }
+
+/* POI plus présents, sans redevenir opaques. */
+.lkdv-map-overlay .lkdv-map-poi {
+  background: rgba(255,255,255,.30) !important;
+  border-color: rgba(255,255,255,.48) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(170%) !important;
+  backdrop-filter: blur(12px) saturate(170%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.65) !important;
+}
+.lkdv-map-overlay .lkdv-map-poi:hover,
+.lkdv-map-overlay .lkdv-map-poi:active { background: rgba(255,255,255,.42) !important; }
