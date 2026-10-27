@@ -268,7 +268,7 @@ describe('isInsideViewport', () => {
 describe('isOverlayEntryVisible', () => {
   it('au zoom 3 (Monde) : ni POI ni carnet, massifs toujours là', () => {
     const band = resolveMapZoomConfig(3);
-    expect(isOverlayEntryVisible('poi', band, true)).toBe(true);
+    expect(isOverlayEntryVisible('poi', band, true)).toBe(false);
     expect(isOverlayEntryVisible('carnet', band, true)).toBe(false);
     expect(isOverlayEntryVisible('massif', band, true)).toBe(true);
   });
