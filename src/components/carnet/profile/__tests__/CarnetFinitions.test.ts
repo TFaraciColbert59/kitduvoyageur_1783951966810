@@ -70,6 +70,39 @@ describe('Anatomie commune des drawers', () => {
   });
 });
 
+describe('Capsule d’onglets du drawer — en bas à droite de la feuille', () => {
+  it('se pose à 10 px des bords bas et droit, 30 px de haut', () => {
+    const foot = rule('.ckp-drawer-foot {');
+    expect(foot).toMatch(/position:\s*absolute/);
+    expect(foot).toMatch(/right:\s*10px/);
+    expect(foot).toMatch(/bottom:\s*10px/);
+    expect(foot).toMatch(/height:\s*30px/);
+  });
+
+  it('garde la matière et le pas de la capsule de la carte (41,5 × n + 5)', () => {
+    /* Même classe `.ckp-capsule` que la carte : verre, ombres, lentille. */
+    expect(rule('.ckp-drawer-foot .ckp-capsule {')).toMatch(
+      /width:\s*calc\(var\(--n, 2\) \* 41\.5px \+ 5px\)/,
+    );
+    expect(rule('.ckp-drawer-foot .ckp-capsule .ckp-tabs {')).toMatch(
+      /grid-template-columns:\s*repeat\(var\(--n, 2\), 41\.5px\)/,
+    );
+    /* 2 segments → 88 px, exactement le sélecteur de la carte. */
+    expect(2 * 41.5 + 5).toBe(88);
+  });
+
+  it('laisse 52 px de réserve basse au corps défilant', () => {
+    expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*0 0 52px/);
+  });
+
+  it('ne repeint plus de capsule 44 px pleine largeur dans l’en-tête', () => {
+    expect(css).not.toMatch(/\.ckp-card--drawer \.lkdv-capsule/);
+    expect(css).not.toMatch(/\.ckp-drawer-tabs/);
+    /* La croix reste seule sur sa ligne, alignée à droite. */
+    expect(rule('.ckp-drawer-row {')).toMatch(/justify-content:\s*flex-end/);
+  });
+});
+
 describe('Statistiques', () => {
   it('chiffre 34/700 tabulaire, unité 13/500, contexte 11/500', () => {
     const hero = rule('.ckp-stat-hero b {');
