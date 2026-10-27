@@ -8,7 +8,7 @@ import { SfIcon, type SfIconName } from './sfIcons';
 import { CARNET_PAGE_TABS, CarnetPages, carnetPageIndex, type CarnetPageId } from './CarnetPages';
 import { extractCoords, projectToViewBox } from './traceGeometry';
 import { PLACE_LINE_MISSING, placeLineParts } from '@/features/carnet/detail/place';
-import type { CarnetDetail } from '@/features/carnet/detail/types';
+import type { CarnetDetail, CarnetParticipant } from '@/features/carnet/detail/types';
 
 /** Cible de recentrage de la carte du bas, toujours issue d'une coordonnée réelle. */
 export interface CarnetPlaceFocus {
@@ -107,25 +107,13 @@ function Action({
   );
 }
 
-interface Participant {
-  id: string;
-  name: string;
-  handle: string | null;
-  avatarUrl: string | null;
-}
-
-/** Participants réels : l'auteur puis les likers distincts. Aucune donnée inventée. */
-function participantsOf(detail: CarnetDetail): Participant[] {
-  const seen = new Set<string>();
-  const list: Participant[] = [];
-  const push = (entry: Participant | null | undefined) => {
-    if (!entry?.id || seen.has(entry.id)) return;
-    seen.add(entry.id);
-    list.push(entry);
-  };
-  push(detail.author);
-  for (const liker of detail.likers ?? []) push(liker);
-  return list;
+/**
+ * Nom affiché d'un participant : le nom réel du profil public, à défaut son
+ * handle. Un participant sans profil public garde sa ligne (initiale du handle,
+ * ou la lettre de repli de `AccountAuthorPill`) — il n'est jamais supprimé.
+ */
+function participantLabel(person: CarnetParticipant): string {
+  return person.name ?? person.handle ?? '';
 }
 
 /** Carte du carnet : mini tracé, statistiques, participants, lieu, médias en pages. */
@@ -161,7 +149,7 @@ export function CarnetCard({
     dateRange: detail.dateRange,
   });
   const showPlaceLine = placeLine.some((part) => part !== PLACE_LINE_MISSING);
-  const participants = participantsOf(detail);
+  const participants = detail.participants ?? [];
   const lensIndex = selectorLensIndex(page);
 
   return (
@@ -229,12 +217,12 @@ export function CarnetCard({
         {participants.length > 0 ? (
           <div className="ckp-people" role="list" aria-label="Participants au carnet">
             {participants.map((person) => (
-              <span role="listitem" key={person.id} className="ckp-person">
+              <span role="listitem" key={person.userId} className="ckp-person" data-role={person.role}>
                 <AccountAuthorPill
-                  name={person.name}
+                  name={participantLabel(person)}
                   handle={person.handle ?? undefined}
                   avatarUrl={person.avatarUrl}
-                  href={`/profil/${person.id}`}
+                  href={`/profil/${person.userId}`}
                 />
               </span>
             ))}

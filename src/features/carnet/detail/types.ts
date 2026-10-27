@@ -148,6 +148,34 @@ export interface CarnetLiker {
   reaction: string;
 }
 
+/** D'où vient le participant : la ligne du carnet, un collaborateur, ou une sortie. */
+export type CarnetParticipantRole = 'author' | 'collaborator' | 'participant';
+
+/**
+ * Personne réellement rattachée au carnet : l'auteur (`carnets.author_id`), les
+ * collaborateurs (`carnet_collaborators`) et les présents des sorties
+ * (`hike_session_participants` via `hike_sessions.carnet_id`).
+ * Un profil public absent laisse `name` à `null` : la ligne existe quand même,
+ * l'affichage retombe sur l'initiale du handle. Aucun liker ici.
+ */
+export interface CarnetParticipant {
+  userId: string;
+  name: string | null;
+  handle: string | null;
+  avatarUrl: string | null;
+  role: CarnetParticipantRole;
+}
+
+/** Ligne de participation telle que lue en base, avec son profil public éventuel. */
+export interface ParticipantRow {
+  user_id: string | null;
+  /** Rôle brut de la colonne `role` (`guest`, `collaborator`…), conservé tel quel. */
+  role: string | null;
+  /** Table d'origine : `carnet_collaborators` ou `hike_session_participants`. */
+  source: 'collaborator' | 'participant';
+  profile: AuthorRow | null;
+}
+
 export interface CarnetEngagement {
   likes: number;
   comments: number;
@@ -185,6 +213,11 @@ export interface CarnetDetail {
   verified: boolean;
   isOwner: boolean;
   author: CarnetAuthor | null;
+  /**
+   * Participants réels, dédoublonnés par `userId`, l'auteur en premier.
+   * Toujours au moins l'auteur quand le carnet en a un ; jamais un liker.
+   */
+  participants: CarnetParticipant[];
   stats: CarnetStatItem[];
   engagement: CarnetEngagement;
   /** Réactions réelles, plafonnées à 50, profils joints. */
@@ -219,6 +252,12 @@ export interface BuildCarnetDetailInput {
   liked: boolean;
   favorited: boolean;
   likers?: Array<{ user_id: string; reaction: string | null; profile: AuthorRow | null }>;
+  /**
+   * Collaborateurs (`carnet_collaborators`) puis présents des sorties
+   * (`hike_session_participants`), profils publics joints. Lus sous RLS : une
+   * ligne que la policy cache est simplement absente, jamais remplacée.
+   */
+  participants?: ParticipantRow[];
   /**
    * Compteurs agrégés depuis les tables d'engagement. `carnets.likes_count`
    * n'est pas maintenu par trigger : sans ces valeurs, la fiche afficherait un

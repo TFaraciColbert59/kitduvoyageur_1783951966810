@@ -23,7 +23,7 @@ const base = {
 describe('CarnetCommentsPane', () => {
   it('trie du plus récent au plus ancien par défaut', () => {
     const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} />);
-    const names = [...container.querySelectorAll('.ckp-comment-name')].map((n) => n.textContent);
+    const names = [...container.querySelectorAll('.lkdv-comment-name')].map((n) => n.textContent);
     expect(names).toEqual(['Rachid', 'Léonie']);
     expect(screen.getByRole('group', { name: 'Tri des commentaires' })).toBeTruthy();
   });
@@ -31,7 +31,7 @@ describe('CarnetCommentsPane', () => {
   it('bascule le tri en anciens', () => {
     const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} />);
     fireEvent.click(screen.getByRole('button', { name: 'Anciens' }));
-    const names = [...container.querySelectorAll('.ckp-comment-name')].map((n) => n.textContent);
+    const names = [...container.querySelectorAll('.lkdv-comment-name')].map((n) => n.textContent);
     expect(names).toEqual(['Léonie', 'Rachid']);
   });
 
@@ -44,7 +44,7 @@ describe('CarnetCommentsPane', () => {
     const onSend = vi.fn(async () => true);
     render(<CarnetCommentsPane comments={[]} {...base} onSend={onSend} />);
     fireEvent.change(screen.getByLabelText('Ajouter un commentaire'), { target: { value: 'Bravo' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Envoyer le commentaire' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Publier le commentaire' }));
     expect(onSend).toHaveBeenCalledWith('Bravo');
   });
 });

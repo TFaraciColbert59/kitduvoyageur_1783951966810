@@ -5,6 +5,7 @@ import type {
   CarnetDay,
   CarnetDetail,
   CarnetMomentItem,
+  CarnetParticipant,
   CarnetStatItem,
 } from './types';
 
@@ -20,6 +21,45 @@ function buildAuthor(input: BuildCarnetDetailInput) {
     avatarUrl: author.avatar_url ?? null,
     trustScore: toNumber(author.trust_score) ?? 0,
   };
+}
+
+/**
+ * Participants du carnet : l'auteur d'abord (`role: 'author'`), puis les
+ * collaborateurs, puis les présents des sorties. Dédoublonné par `userId` :
+ * la première occurrence gagne, donc l'auteur garde toujours son rôle et sa
+ * position. Aucun liker n'entre ici. Un profil public absent laisse `name` à
+ * `null` mais conserve la ligne (initiale du handle à l'affichage).
+ */
+export function buildParticipants(input: BuildCarnetDetailInput): CarnetParticipant[] {
+  const byId = new Map<string, CarnetParticipant>();
+  const push = (participant: CarnetParticipant | null) => {
+    if (!participant?.userId || byId.has(participant.userId)) return;
+    byId.set(participant.userId, participant);
+  };
+
+  const authorId = input.author?.id ?? input.carnet.author_id ?? null;
+  if (authorId) {
+    push({
+      userId: authorId,
+      name: input.author?.full_name?.trim() || input.author?.handle?.trim() || null,
+      handle: input.author?.handle ?? null,
+      avatarUrl: input.author?.avatar_url ?? null,
+      role: 'author',
+    });
+  }
+
+  for (const row of input.participants ?? []) {
+    if (!row.user_id) continue;
+    push({
+      userId: row.user_id,
+      name: row.profile?.full_name?.trim() || row.profile?.handle?.trim() || null,
+      handle: row.profile?.handle ?? null,
+      avatarUrl: row.profile?.avatar_url ?? null,
+      role: row.source,
+    });
+  }
+
+  return [...byId.values()];
 }
 
 function buildMoments(input: BuildCarnetDetailInput): CarnetMomentItem[] {
@@ -135,6 +175,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     verified: carnet.verified === true,
     isOwner: Boolean(input.viewerId && carnet.author_id && input.viewerId === carnet.author_id),
     author: buildAuthor(input),
+    participants: buildParticipants(input),
     stats,
     engagement: {
       likes: input.counts?.likes ?? toNumber(carnet.likes_count) ?? 0,

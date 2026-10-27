@@ -43,6 +43,7 @@ const detail = (overrides: Partial<CarnetDetail> = {}): CarnetDetail => ({
   verified: false,
   isOwner: false,
   author: null,
+  participants: [],
   stats: [],
   engagement: { likes: 0, comments: 0, views: 0, liked: false, favorited: false },
   likers: [],
