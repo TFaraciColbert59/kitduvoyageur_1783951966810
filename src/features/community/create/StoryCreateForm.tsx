@@ -19,6 +19,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { StoryLayerStack } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { createStoryMediaUploader } from './upload';
 
@@ -253,6 +254,7 @@ export function StoryCreateForm({
               </div>
 
               <div>
+                <StoryLayerStack values={previewValues} />
                 {media[0]?.previewUrl || media[0]?.url ? (
                   <figure className="lkdv-create-story-frame" aria-label="Aperçu de la story">
                     {media[0].type.startsWith('video/') ? (

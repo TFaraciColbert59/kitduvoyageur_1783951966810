@@ -22,6 +22,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { AudienceLens } from './shared/InfoCards';
 
 export interface PostCreateFormProps {
   open: boolean;
@@ -516,6 +517,7 @@ export function PostCreateForm({
               </div>
 
               <div>
+                <AudienceLens value={form.watch('audience')} />
                 <Field label="Audience">
                   <Select {...form.register('audience')}>
                     <option value="public">Fil public</option>

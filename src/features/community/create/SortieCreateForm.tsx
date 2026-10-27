@@ -21,6 +21,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { ActivityCards } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -300,6 +301,10 @@ export function SortieCreateForm({
               }
             >
               <div>
+                <ActivityCards
+                  value={form.watch('eventType')}
+                  onChange={(next) => form.setValue('eventType', next as typeof eventType, { shouldValidate: true, shouldDirty: true })}
+                />
                 <Field label="Titre" htmlFor="sortie-title">
                   <TextInput
                     id="sortie-title"

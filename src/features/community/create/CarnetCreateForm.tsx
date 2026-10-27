@@ -17,6 +17,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { RouteMetrics } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -290,6 +291,7 @@ export function CarnetCreateForm({
               </div>
 
               <div>
+                <RouteMetrics values={previewValues} />
                 <div className="lkdv-form-row">
                   <Field label="Départ" htmlFor="carnet-from">
                     <TextInput
@@ -341,7 +343,6 @@ export function CarnetCreateForm({
                   />
                 </div>
                 <InlineError message={errors.deniveleM?.message} />
-
                 <Field
                   label="Note de l’itinéraire"
                   hint="0 à 5, par pas de 0,5."

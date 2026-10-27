@@ -14,6 +14,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { ClubRulesLedger } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -300,6 +301,7 @@ export function ClubCreateForm({
               </div>
 
               <div>
+                <ClubRulesLedger values={previewValues} />
                 <Field
                   label="Adhésion"
                   hint={
@@ -328,7 +330,6 @@ export function ClubCreateForm({
                   />
                   <InlineError message={errors.membershipRules?.message} />
                 </Field>
-
                 {joinQuestions.map((question, index) => (
                   <div key={index} className="lkdv-form-row">
                     <Field
