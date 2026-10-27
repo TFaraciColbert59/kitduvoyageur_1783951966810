@@ -34,7 +34,7 @@ import { useRealtimeMessaging } from '@/features/messaging/hooks/useRealtimeMess
 import { messagingService } from '@/features/messaging/services/messagingService';
 import { formatConversationTimestamp } from '@/features/messaging/lib/messagingUtils';
 import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachmentUrl';
-import { PostPreviewCard } from '@/features/messaging/components/PostPreviewCard';
+import { SharedPostEmbed } from '@/features/messaging/components/SharedPostEmbed';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
 import {
   SWIPE_REVEAL,
@@ -514,16 +514,13 @@ function MessageThread({
               {showDay ? <div className="mday">{dayLabel(message.created_at)}</div> : null}
               <div className={`mrow${mine ? ' mine' : ''}`} id={`grammar-msg-${message.id}`}>
                 {message.message_type === 'post' ? (
-                  <PostPreviewCard
-                    postId={String(message.metadata?.post_id ?? message.content)}
-                    fallbackTitle={typeof message.metadata?.title === 'string' ? message.metadata.title : null}
-                    fallbackAuthor={typeof message.metadata?.author_name === 'string' ? message.metadata.author_name : null}
-                    fallbackImage={typeof message.metadata?.image_url === 'string' ? message.metadata.image_url : null}
-                    onOpen={() => {
-                      haptic('light');
-                      onOpenPost?.(String(message.metadata?.post_id ?? message.content));
-                    }}
-                  />
+                  <div className="mpost-embed-row">
+                    <SharedPostEmbed
+                      postId={String(message.metadata?.post_id ?? message.content)}
+                      currentUserId={currentUserId}
+                      currentUserProfile={currentUserProfile}
+                    />
+                  </div>
                 ) : (
                 <div className={`mstack${mine ? ' mine' : ''}`}>
                   {conversation.type === 'group' && !mine && !sameAsPrev ? (
