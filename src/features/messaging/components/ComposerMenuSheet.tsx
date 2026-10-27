@@ -190,6 +190,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
         onChange={handleGpxPick}
       />
 
+      <div className="msheet-body">
       {view === 'menu' ? (
         <div>
           <div className="li nt">
@@ -466,6 +467,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
           </div>
         )
       ) : null}
+      </div>
     </AccountDrawerHost>
   );
 };

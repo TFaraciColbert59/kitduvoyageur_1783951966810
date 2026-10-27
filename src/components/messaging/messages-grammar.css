@@ -1522,3 +1522,11 @@
 .lkdv-messages .sw-wrap[data-det='card'] .sh-b > div {
   padding-top: 4px;
 }
+/* Corps du drawer partagé : la première ligne commence sous la croix. */
+.lkdv-messages .msheet-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding-top: 44px;
+}
