@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Mountain, Camera, Utensils, Tent, MapPin, Footprints, Bike, Waves, ChevronDown, ImagePlus } from 'lucide-react';
 import './carnet-extras.css';
 import { ActivitySearch } from './ActivitySearch';
@@ -22,6 +22,9 @@ export function CarnetCoverBoard({
 }) {
   const [secondary, setSecondary] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const secondaryRef = useRef<string[]>([]);
+  useEffect(() => { secondaryRef.current = secondary; }, [secondary]);
+  useEffect(() => () => { secondaryRef.current.forEach((url) => URL.revokeObjectURL(url)); }, []);
   const item = cover[0];
   const src = item?.previewUrl || item?.url || '';
   const addSecondary = (files: FileList | null) => {
@@ -32,7 +35,7 @@ export function CarnetCoverBoard({
   return (
     <div className="lkdv-cover-board">
       <button type="button" className="lkdv-cover-hero" onClick={onAddCover} aria-label="Ajouter une couverture">
-        {src ? <img src={src} alt={item?.alt || 'Couverture du carnet'} /> : <span className="lkdv-cover-plus"><Plus size={20} aria-hidden="true" /></span>}
+        {src ? <img src={src} alt={item?.alt || 'Couverture du carnet'} loading="lazy" decoding="async" /> : <span className="lkdv-cover-plus"><Plus size={20} aria-hidden="true" /></span>}
       </button>
       <div className="lkdv-cover-strip" aria-label="Photos secondaires">
         <button type="button" className="lkdv-cover-thumb lkdv-cover-thumb-add" onClick={() => inputRef.current?.click()} aria-label="Ajouter une photo secondaire">
@@ -40,7 +43,7 @@ export function CarnetCoverBoard({
         </button>
         <input ref={inputRef} type="file" accept="image/*,image/gif" multiple className="sr-only" onChange={(event) => { addSecondary(event.currentTarget.files); event.currentTarget.value = ''; }} />
         {secondary.map((url, index) => (
-          <span key={url} className="lkdv-cover-thumb"><img src={url} alt={`Photo secondaire ${index + 1}`} /></span>
+          <span key={url} className="lkdv-cover-thumb"><img src={url} alt={`Photo secondaire ${index + 1}`} loading="lazy" decoding="async" /></span>
         ))}
       </div>
     </div>
@@ -113,7 +116,7 @@ export function CarnetDays({ startDate, endDate }: { startDate: string; endDate:
                   <li key={event.id}>
                     <span className="lkdv-day-event-kind">{event.label}</span>
                     <label className="lkdv-day-photo" aria-label={`Ajouter une image ou vidéo pour ${event.label}`}>
-                      {event.media ? <img src={event.media} alt="" /> : <Plus size={12} aria-hidden="true" />}
+                      {event.media ? <img src={event.media} alt="" loading="lazy" decoding="async" /> : <Plus size={12} aria-hidden="true" />}
                       <input type="file" accept="image/*,video/*,image/gif" className="sr-only" onChange={(input) => {
                         const file = input.currentTarget.files?.[0];
                         if (!file) return;

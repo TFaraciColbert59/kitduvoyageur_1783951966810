@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Map as MapLibreMap, Marker, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useForm } from 'react-hook-form';
@@ -19,6 +19,24 @@ type Moment = { id: string; label: string; note: string; media?: string; lng: nu
 type Day = { id: string; label: string; lng: number; lat: number; moments: Moment[] };
 
 const DEFAULT_CENTER: [number, number] = [6.87, 45.92];
+const MAX_TRACE_POINTS = 2000;
+const MAX_DAYS = 60;
+const MAX_MOMENTS = 50;
+
+function clampCoordinate(value: number, min: number, max: number): number | null {
+  return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : null;
+}
+
+function sanitizeTrace(points: Array<[number, number]>): Array<[number, number]> {
+  return points
+    .map(([lng, lat]) => {
+      const safeLng = clampCoordinate(lng, -180, 180);
+      const safeLat = clampCoordinate(lat, -90, 90);
+      return safeLng === null || safeLat === null ? null : [safeLng, safeLat] as [number, number];
+    })
+    .filter((point): point is [number, number] => point !== null)
+    .slice(0, MAX_TRACE_POINTS);
+}
 
 function dayLabel(index: number) { return `Jour ${index + 1}`; }
 
@@ -43,8 +61,10 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
   const markersRef = useRef<Marker[]>([]);
   const scroller = useRef<HTMLDivElement | null>(null);
   const pointerRef = useRef(false);
+  const routeAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => { traceRef.current = trace; }, [trace]);
+  useEffect(() => () => { routeAbortRef.current?.abort(); }, []);
   useEffect(() => { daysRef.current = days; }, [days]);
 
   useEffect(() => {
@@ -85,7 +105,9 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       const element = document.createElement('button');
       element.type = 'button';
       element.className = 'lkdv-day-marker';
-      element.innerHTML = `<span>${dayIndex + 1}</span>`;
+      const dayNumber = document.createElement('span');
+      dayNumber.textContent = String(dayIndex + 1);
+      element.append(dayNumber);
       element.setAttribute('aria-label', day.label);
       element.addEventListener('click', () => { setActive(dayIndex + 1); scrollToSlide(dayIndex + 1); });
       const marker = new Marker({ element, draggable: true }).setLngLat([day.lng, day.lat]).addTo(map);
@@ -99,7 +121,9 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
         const dot = document.createElement('button');
         dot.type = 'button';
         dot.className = 'lkdv-moment-marker';
-        dot.innerHTML = `<span>${momentIndex + 1}</span>`;
+        const momentNumber = document.createElement('span');
+        momentNumber.textContent = String(momentIndex + 1);
+        dot.append(momentNumber);
         dot.setAttribute('aria-label', moment.label);
         dot.addEventListener('click', () => { setActive(dayIndex + 1); scrollToSlide(dayIndex + 1); });
         const momentMarker = new Marker({ element: dot, draggable: true }).setLngLat([moment.lng, moment.lat]).addTo(map);
@@ -129,10 +153,13 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
   };
 
   const addDay = () => {
+    if (days.length >= MAX_DAYS) return;
     const map = mapRef.current;
     const center = map?.getCenter();
     const snapped = nearestTrace(center?.lng ?? DEFAULT_CENTER[0], center?.lat ?? DEFAULT_CENTER[1]);
-    const day: Day = { id: crypto.randomUUID(), label: dayLabel(days.length), lng: snapped[0], lat: snapped[1], moments: [] };
+    const safeLng = clampCoordinate(snapped[0], -180, 180) ?? DEFAULT_CENTER[0];
+    const safeLat = clampCoordinate(snapped[1], -90, 90) ?? DEFAULT_CENTER[1];
+    const day: Day = { id: crypto.randomUUID(), label: dayLabel(days.length), lng: safeLng, lat: safeLat, moments: [] };
     setDays((current) => [...current, day]);
     setActive(days.length + 1);
     window.setTimeout(() => scrollToSlide(days.length + 1), 50);
@@ -140,7 +167,7 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
 
   const addMoment = (dayId: string) => {
     const day = days.find((entry) => entry.id === dayId);
-    if (!day) return;
+    if (!day || day.moments.length >= MAX_MOMENTS) return;
     const moment: Moment = { id: crypto.randomUUID(), label: 'Moment', note: '', lng: day.lng + .01, lat: day.lat + .01 };
     setDays((current) => current.map((entry) => entry.id === dayId ? { ...entry, moments: [...entry.moments, moment] } : entry));
   };
@@ -151,6 +178,8 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
 
   const drawStart = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!drawing) return;
+    routeAbortRef.current?.abort();
+    routeAbortRef.current = null;
     setSnapState('idle');
     pointerRef.current = true;
     mapRef.current?.dragPan.disable();
@@ -191,7 +220,9 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
     const raw = traceRef.current;
     if (raw.length < 3) return;
     setSnapState('loading');
+    routeAbortRef.current?.abort();
     const controller = new AbortController();
+    routeAbortRef.current = controller;
     const timer = window.setTimeout(() => controller.abort(), 12_000);
     try {
       const simplified = simplify(raw);
@@ -200,13 +231,15 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       const payload = await response.json();
       const legs = Array.isArray(payload.legs) ? payload.legs : [];
       const geometry = legs.flatMap((leg: { geometry?: Array<[number, number]> }) => Array.isArray(leg.geometry) ? leg.geometry : []);
-      if (!response.ok || geometry.length < 2) throw new Error('route_unavailable');
-      setTrace(geometry);
+      const safeGeometry = sanitizeTrace(geometry);
+      if (!response.ok || safeGeometry.length < 2) throw new Error('route_unavailable');
+      setTrace(safeGeometry);
       setSnapState('idle');
     } catch {
       setSnapState('error');
     } finally {
       window.clearTimeout(timer);
+      if (routeAbortRef.current === controller) routeAbortRef.current = null;
     }
   };
 
@@ -220,7 +253,10 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
     if (!map) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const point = map.unproject([event.clientX - rect.left, event.clientY - rect.top]);
-    setTrace((current) => [...current, [point.lng, point.lat]]);
+    const safeLng = clampCoordinate(point.lng, -180, 180);
+    const safeLat = clampCoordinate(point.lat, -90, 90);
+    if (safeLng === null || safeLat === null) return;
+    setTrace((current) => current.length >= MAX_TRACE_POINTS ? current : [...current, [safeLng, safeLat]]);
   };
 
   const submit = form.handleSubmit(async (values) => {
@@ -245,8 +281,6 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
   });
 
   const title = form.watch('title'); const destination = form.watch('destination'); const startDate = form.watch('startDate'); const endDate = form.watch('endDate');
-  const slides = useMemo(() => [{ id: 'base' }, ...days.map((day) => ({ id: day.id, day })), { id: 'add' }], [days]);
-
   return (
     <CommunityFormDrawer
       open={open}
@@ -301,10 +335,10 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
                   <span className="lkdv-moment-index">{momentIndex + 1}</span>
                   <input value={moment.label} onChange={(event) => updateMoment(day.id, moment.id, { label: event.target.value })} aria-label={`Nom du moment ${momentIndex + 1}`} />
                   <label className="lkdv-moment-photo" aria-label={`Image du moment ${momentIndex + 1}`}>
-                    {moment.media ? <img src={moment.media} alt="" /> : <ImagePlus size={13} />}
+                    {moment.media ? <img src={moment.media} alt="" loading="lazy" decoding="async" /> : <ImagePlus size={13} />}
                     <input type="file" accept="image/*,video/*,image/gif" className="sr-only" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (file) updateMoment(day.id, moment.id, { media: URL.createObjectURL(file) }); event.currentTarget.value = ''; }} />
                   </label>
-                  <button type="button" className="lkdv-moment-delete" aria-label="Supprimer le moment" onClick={() => setDays((current) => current.map((entry) => entry.id === day.id ? { ...entry, moments: entry.moments.filter((m) => m.id !== moment.id) } : entry))}><Trash2 size={13} /></button>
+                  <button type="button" className="lkdv-moment-delete" aria-label="Supprimer le moment" onClick={() => { if (moment.media) URL.revokeObjectURL(moment.media); setDays((current) => current.map((entry) => entry.id === day.id ? { ...entry, moments: entry.moments.filter((m) => m.id !== moment.id) } : entry)); }}><Trash2 size={13} /></button>
                   <input className="lkdv-moment-note" value={moment.note} placeholder="Petit commentaire…" aria-label={`Commentaire du moment ${momentIndex + 1}`} onChange={(event) => updateMoment(day.id, moment.id, { note: event.target.value })} />
                 </div>
               ))}

@@ -98,3 +98,5 @@
 .lkdv-carnet-daybar button { color: #6B7A70 !important; }
 .lkdv-carnet-daybar .lkdv-daybar-add { color: #17402C !important; }
 .lkdv-carnet-footer { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.lkdv-carnet-map-skeleton { height: 300px; margin: 8px 0; border-radius: 16px; background: linear-gradient(100deg, rgba(255,255,255,.3) 20%, rgba(255,255,255,.65) 40%, rgba(255,255,255,.3) 60%); background-size: 200% 100%; animation: lkdv-map-skeleton 1.4s ease-in-out infinite; }
+@keyframes lkdv-map-skeleton { to { background-position: -200% 0; } }

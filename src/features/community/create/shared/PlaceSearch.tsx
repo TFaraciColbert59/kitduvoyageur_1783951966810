@@ -42,6 +42,8 @@ export function PlaceSearch({ label, value, onChange, placeholder = 'Adresse, vi
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [openUp, setOpenUp] = useState(false);
 
+  useEffect(() => () => { abortRef.current?.abort(); }, []);
+
   useEffect(() => {
     const q = query.trim();
     if (q.length < 3 || (selectedRef.current && q === value)) {

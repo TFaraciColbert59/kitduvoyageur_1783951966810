@@ -1,18 +1,23 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Pencil, BookOpen, Map, Backpack, Users, Plus } from 'lucide-react';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import { CommunityDrawer } from '@/features/community/sections/CommunityDrawer';
 import { PostCreateForm } from './PostCreateForm';
 import { StoryCreateForm } from './StoryCreateForm';
-import { CarnetMapDrawer } from './CarnetMapDrawer';
 import { SortieCreateForm } from './SortieCreateForm';
 import { KitCreateForm } from './KitCreateForm';
 import { ClubCreateForm } from './ClubCreateForm';
 import { EmbeddedFormContext } from './EmbeddedFormContext';
 import { CREATE_STEPS } from './shared/StepPager';
 import { CloseDraftConfirm } from './shared/CloseDraftConfirm';
+
+const CarnetMapDrawer = dynamic(() => import('./CarnetMapDrawer'), {
+  ssr: false,
+  loading: () => <div className="lkdv-carnet-map-skeleton" aria-hidden="true" />,
+});
 import {
   flushCreateDraft,
   hasCreateDraftContent,
