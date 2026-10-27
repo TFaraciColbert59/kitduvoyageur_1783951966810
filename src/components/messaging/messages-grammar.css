@@ -1638,3 +1638,45 @@
 @media (prefers-reduced-motion: reduce) {
   .msk-top, .msk-search, .msk-ico, .msk-line { animation: none; }
 }
+/* ---------- Micro intégré à la barre de message ---------- */
+.lkdv-messages .mfield-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+}
+.lkdv-messages .mfield-wrap .mfield {
+  flex: 1;
+  padding-right: 42px;
+}
+.lkdv-messages .mfield-mic {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: none;
+  color: var(--label3);
+  cursor: pointer;
+  transition: transform 0.14s ease, color 0.14s ease;
+}
+.lkdv-messages .mfield-mic:active {
+  transform: scale(0.9);
+  color: var(--label);
+}
+
+/* Le `···` du post partagé revient, ancré sur la photo en haut à droite… */
+.lkdv-messages .mpost-embed .lkdv-feed-post-options {
+  display: grid !important;
+  top: 8px;
+  right: 8px;
+}
+/* …et disparaît quand le panneau commentaires/partage est ouvert. */
+.lkdv-messages .mpost-embed .lkdv-feed-post:has(.lkdv-post-panel) .lkdv-feed-post-options {
+  display: none !important;
+}

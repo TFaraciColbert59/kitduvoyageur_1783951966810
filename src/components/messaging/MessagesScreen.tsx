@@ -1011,10 +1011,11 @@ function MessageComposerBar({
           </svg>
         </button>
 
-        <textarea
-          ref={field}
-          className="mfield"
-          rows={1}
+        <div className="mfield-wrap">
+          <textarea
+            ref={field}
+            className="mfield"
+            rows={1}
           value={content}
           placeholder={compact ? 'Réponse rapide…' : 'Votre message…'}
           aria-label="Votre message"
@@ -1032,20 +1033,21 @@ function MessageComposerBar({
               void submit();
             }
           }}
-        />
+          />
 
-        <button
-          type="button"
-          className="lg gbtn"
-          onClick={() => setRecording(true)}
-          aria-label="Enregistrer une note vocale"
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="9" y="2.8" width="6" height="11" rx="3" />
-            <path d="M5.6 11.6a6.4 6.4 0 0 0 12.8 0" />
-            <path d="M12 18.2v3" />
-          </svg>
-        </button>
+          <button
+            type="button"
+            className="mfield-mic"
+            onClick={() => setRecording(true)}
+            aria-label="Enregistrer une note vocale"
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="9" y="2.8" width="6" height="11" rx="3" />
+              <path d="M5.6 11.6a6.4 6.4 0 0 0 12.8 0" />
+              <path d="M12 18.2v3" />
+            </svg>
+          </button>
+        </div>
         <button type="button" className="lg gbtn" onClick={() => onOpenShareMenu?.()} aria-label="Partager un GPX, un équipement ou une randonnée">
           <Icon name="ellipsis" className="size-4" aria-hidden="true" />
         </button>
