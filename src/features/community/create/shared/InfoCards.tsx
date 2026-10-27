@@ -69,6 +69,9 @@ export function RouteMetrics({ values }: { values: unknown }) {
         <small>Dénivelé</small><b>{dplus > 0 ? `${dplus} m D+` : '—'}</b>
         <i aria-hidden="true"><em style={{ width: `${Math.min(100, dplus / 30)}%` }} /></i>
       </span>
+      <svg className="lkdv-altitude-profile" viewBox="0 0 120 22" aria-hidden="true">
+        <path d={`M0 20 L12 ${18 - Math.min(12, dplus / 220)} L28 ${16 - Math.min(12, dplus / 300)} L44 ${19 - Math.min(10, dplus / 420)} L62 ${10 - Math.min(8, dplus / 600)} L82 ${14 - Math.min(10, dplus / 380)} L102 ${6 - Math.min(5, dplus / 900)} L120 12`} />
+      </svg>
     </div>
   );
 }
@@ -245,6 +248,34 @@ export function ClubInvitePass() {
     <div className="lkdv-club-invite" aria-label="Passe d’invitation">
       <Link2 size={15} aria-hidden="true" />
       <span><b>Passe d’invitation</b><small>Le lien sera généré après la création du club.</small></span>
+    </div>
+  );
+}
+
+export function PollBalance({ options }: { options: string[] }) {
+  const clean = options.map((option) => option.trim()).filter(Boolean);
+  if (clean.length < 2) return null;
+  return (
+    <div className="lkdv-poll-balance" aria-label="Aperçu du bulletin">
+      <div className="lkdv-poll-balance-head"><b>Aperçu du bulletin</b><small>{clean.length} options</small></div>
+      {clean.map((option, index) => (
+        <span key={`${option}-${index}`} className="lkdv-poll-balance-row">
+          <b>{option}</b>
+          <i aria-hidden="true"><em style={{ width: `${Math.max(12, 100 / clean.length)}%` }} /></i>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function StoryTrim({ media }: { media: unknown[] }) {
+  const item = rec(media[0]);
+  const ready = Boolean(txt(item.url) || txt(item.previewUrl));
+  return (
+    <div className="lkdv-story-trim" aria-label="Ruban média Story">
+      <div className="lkdv-story-trim-head"><b>{ready ? 'Média prêt' : 'Média à choisir'}</b><small>{txt(item.type).startsWith('video/') ? 'Vidéo' : 'Photo'}</small></div>
+      <div className="lkdv-story-trim-track" aria-hidden="true"><i /><i /><i /><em style={{ width: ready ? '64%' : '8%' }} /></div>
+      <div className="lkdv-story-trim-foot"><span>Début</span><span>{ready ? 'Aperçu' : '—'}</span><span>Fin</span></div>
     </div>
   );
 }

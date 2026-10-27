@@ -19,7 +19,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { StoryLayerStack, CaptionRuler } from './shared/InfoCards';
+import { StoryLayerStack, CaptionRuler, StoryTrim } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { createStoryMediaUploader } from './upload';
 
@@ -231,6 +231,7 @@ export function StoryCreateForm({
               }
             >
               <div>
+                <StoryTrim media={media} />
                 <Controller
                   control={form.control}
                   name="media"

@@ -22,7 +22,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { AudienceLens, CaptionRuler } from './shared/InfoCards';
+import { AudienceLens, CaptionRuler, PollBalance } from './shared/InfoCards';
 
 export interface PostCreateFormProps {
   open: boolean;
@@ -508,6 +508,7 @@ export function PostCreateForm({
                             +
                           </button>
                         ) : null}
+                        <PollBalance options={pollOptions} />
                         <InlineError
                           message={errors.pollOptions?.message as string | undefined}
                         />
