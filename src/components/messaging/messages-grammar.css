@@ -1244,7 +1244,8 @@
   display: none;
 }
 .lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) .sh-b {
-  padding-top: 0;
+  /* Marges strictement symétriques : la grille est centrée haut/bas. */
+  padding: 8px;
   height: 100%;
 }
 
