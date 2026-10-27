@@ -230,7 +230,7 @@ export function ClubCreateForm({
               }
             >
               <div>
-                <Field label="Nom" htmlFor="club-name">
+                <Field label="Nom" htmlFor="club-name" required>
                   <TextInput
                     id="club-name"
                     {...form.register('name')}

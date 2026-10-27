@@ -303,7 +303,7 @@ export function SortieCreateForm({
                   value={form.watch('eventType')}
                   onChange={(next) => form.setValue('eventType', next as typeof eventType, { shouldValidate: true, shouldDirty: true })}
                 />
-                <Field label="Titre" htmlFor="sortie-title">
+                <Field label="Titre" htmlFor="sortie-title" required>
                   <TextInput
                     id="sortie-title"
                     {...form.register('title')}

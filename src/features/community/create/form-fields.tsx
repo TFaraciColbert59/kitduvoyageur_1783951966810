@@ -7,17 +7,23 @@ export function Field({
   label,
   hint,
   htmlFor,
+  required,
   children,
 }: {
   label: string;
   hint?: string;
   /** Associe le libellé au contrôle quand l’appelant fournit un `id`. */
   htmlFor?: string;
+  /** Champ indispensable au chemin court. */
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="lkdv-form-field">
-      <label htmlFor={htmlFor}>{label}</label>
+      <label htmlFor={htmlFor}>
+        {label}
+        {required ? <span className="lkdv-field-required" aria-label="requis"> *</span> : null}
+      </label>
       {children}
       {hint ? <span className="hint">{hint}</span> : null}
     </div>

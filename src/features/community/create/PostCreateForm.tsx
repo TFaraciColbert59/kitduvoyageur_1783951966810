@@ -353,15 +353,10 @@ export function PostCreateForm({
               </div>
 
               <div>
-                {kind !== 'photo' ? (
+                {kind === 'event' ? (
                   <Field
-                    label={
-                      kind === 'question'
-                        ? 'Question'
-                        : kind === 'event'
-                          ? 'Titre de la sortie'
-                          : 'Titre'
-                    }
+                    required
+                    label="Titre de l’événement"
                   >
                     <TextInput
                       {...form.register('title')}
@@ -372,7 +367,7 @@ export function PostCreateForm({
                   </Field>
                 ) : null}
 
-                <Field label={kind === 'event' ? 'Description' : 'Texte'}>
+                <Field label={kind === 'event' ? 'Description' : 'Texte'} required>
                   <TextArea
                     {...form.register('content')}
                     placeholder={

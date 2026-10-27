@@ -330,7 +330,7 @@ export function KitCreateForm({
 
               <div>
                 <FormPreview kind="kit" values={previewValues} />
-                <Field label="Nom" htmlFor="kit-name">
+                <Field label="Nom" htmlFor="kit-name" required>
                   <TextInput id="kit-name" {...form.register('name')} maxLength={100} placeholder="Kit bivouac 3 saisons" />
                   <InlineError message={errors.name?.message} />
                 </Field>

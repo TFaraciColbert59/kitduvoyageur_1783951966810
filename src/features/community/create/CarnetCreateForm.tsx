@@ -245,7 +245,7 @@ export function CarnetCreateForm({
               }
             >
               <div>
-                <Field label="Titre" htmlFor="carnet-title">
+                <Field label="Titre" htmlFor="carnet-title" required>
                   <TextInput
                     id="carnet-title"
                     {...form.register('title')}
