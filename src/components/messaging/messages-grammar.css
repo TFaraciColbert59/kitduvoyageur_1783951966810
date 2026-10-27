@@ -1527,15 +1527,14 @@
   /* La croix flotte au-dessus : le contenu commence juste dessous. */
   padding-top: 44px !important;
 }
-/* Dans un message, le `···` du post n'apparaît pas ; la croix de fermeture,
-   elle, reste disponible dès qu'un panneau est ouvert. */
-.lkdv-messages .mpost-embed .lkdv-feed-post:not(:has(.lkdv-post-panel)) .lkdv-feed-post-close {
+/* Dans un message, le `···` du post est toujours masqué : la seule croix est
+   celle du panneau commentaires/partage. */
+.lkdv-messages .mpost-embed .lkdv-feed-post-close {
   display: none !important;
 }
-.lkdv-messages .mpost-embed .lkdv-feed-post:has(.lkdv-post-panel) .lkdv-feed-post-close {
-  display: grid !important;
-  top: 8px;
-  right: 8px;
+/* Pas de mini-barre d'actions flottante qui chevauche la ligne de partage. */
+.lkdv-messages .mpost-embed .lkdv-share-mini {
+  display: none !important;
 }
 
 /* Haut du fil de discussion adouci : mêmes angles que la carte. */
