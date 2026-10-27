@@ -13,7 +13,7 @@
  * aucune matière d'écran : le verre vient de compte-v8.css.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import '@/components/compte/compte-v8.css';
 import '@/components/compte/compte-apple-hig.css';
@@ -313,7 +313,7 @@ function ConversationFeedRow({
         <span className="fa" aria-hidden="true">
           {avatar ? (
             // eslint-disable-next-line @next/next/no-img-element -- avatar distant de la conversation
-            <img src={avatar} alt="" loading="lazy" decoding="async" width={40} height={40} />
+            <img src={avatar} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" width={40} height={40} />
           ) : (
             initials(title)
           )}
@@ -384,7 +384,7 @@ function AttachmentImage({ content }: { content: string }) {
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element -- pièce jointe résolue
-    <img src={url} alt="" loading="lazy" style={{ maxWidth: '100%', display: 'block' }} />
+    <img src={url} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" style={{ maxWidth: '100%', display: 'block' }} />
   );
 }
 
@@ -608,7 +608,7 @@ function MessageThread({
                       >
                         {typeof message.metadata?.photo_url === 'string' ? (
                           // eslint-disable-next-line @next/next/no-img-element -- vignette distante
-                          <img className="mcard-img" src={message.metadata.photo_url} alt="" loading="lazy" />
+                          <img className="mcard-img" src={message.metadata.photo_url} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
                         ) : (
                           <span className="mcard-ico" aria-hidden="true">
                             <Icon name="backpack" className="size-4" />
@@ -1105,6 +1105,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const [filterDir, setFilterDir] = useState<'next' | 'prev'>('next');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  // La frappe reste fluide : le filtrage suit avec un léger retard.
+  const deferredQuery = useDeferredValue(query);
   const [searchMessages, setSearchMessages] = useState<Array<{ id: string; conversation_id: string; content: string; created_at: string }>>([]);
   const [searchPeople, setSearchPeople] = useState<Array<{ id: string; full_name: string; avatar_url?: string | null }>>([]);
   const [optionsConv, setOptionsConv] = useState<Conversation | null>(null);
@@ -1256,7 +1258,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const pendingCount = useMemo(() => conversations.filter((conversation) => conversation.status === 'pending').length, [conversations]);
 
   const visible = useMemo(
-    () => filterConversations(conversations, { filter, query }),
+    () => filterConversations(conversations, { filter, query: deferredQuery }),
     [conversations, filter, query]
   );
 

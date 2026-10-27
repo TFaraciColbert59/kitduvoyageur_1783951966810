@@ -896,7 +896,8 @@
   flex: 1;
   flex-direction: column;
   min-height: 0;
-  will-change: transform, opacity;
+  /* Pas de `will-change` permanent : il fige une couche GPU par volet et
+     coûte de la mémoire. L'animation d'entrée se suffit à elle-même. */
 }
 .lkdv-messages .mpane.in {
   animation: mpane-in 0.36s cubic-bezier(0.22, 1, 0.3, 1) both;

@@ -13,6 +13,8 @@ import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type { UserProfileSummary } from '../types/messaging.types';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export interface SharedPostEmbedProps {
   postId: string;
   currentUserId: string;
@@ -24,6 +26,10 @@ export function SharedPostEmbed({ postId, currentUserId, currentUserProfile }: S
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    if (!UUID_RE.test(postId)) {
+      setFailed(true);
+      return;
+    }
     let cancelled = false;
     const load = async () => {
       try {

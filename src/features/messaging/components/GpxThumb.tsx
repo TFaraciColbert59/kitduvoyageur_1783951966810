@@ -15,6 +15,8 @@ export interface GpxThumbProps {
   height?: number;
 }
 
+const MAX_GPX_POINTS = 20_000;
+
 function parsePoints(xml: string): [number, number][] {
   const points: [number, number][] = [];
   const re = /<(?:trkpt|rtept|wpt)\b[^>]*\blat="(-?\d+(?:\.\d+)?)"[^>]*\blon="(-?\d+(?:\.\d+)?)"/g;
@@ -23,6 +25,7 @@ function parsePoints(xml: string): [number, number][] {
     const lat = Number.parseFloat(match[1]);
     const lon = Number.parseFloat(match[2]);
     if (Number.isFinite(lat) && Number.isFinite(lon)) points.push([lon, lat]);
+    if (points.length >= MAX_GPX_POINTS) break;
     match = re.exec(xml);
   }
   return points;
