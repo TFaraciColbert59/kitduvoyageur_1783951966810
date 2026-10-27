@@ -491,8 +491,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       ['compte-pois-dot', layers.pois],
       ['compte-track-starts-dot', layers.outingPins],
       ['compte-track-ends-dot', layers.tracks !== 'none'],
-      ['compte-tracks-casing', layers.tracks !== 'none'],
-      ['compte-tracks-glow', layers.tracks !== 'none'],
+      ['compte-tracks-casing', layers.tracks !== 'none' && zoomConfig.casing],
+      ['compte-tracks-glow', layers.tracks !== 'none' && zoomConfig.glow],
       ['compte-tracks-line', layers.tracks !== 'none'],
     ];
     for (const [layer, visible] of visibility) {
@@ -500,7 +500,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         map.setLayoutProperty(layer, 'visibility', visible ? 'visible' : 'none');
       }
     }
-  }, [map, ready, data, visibleTracks, context.mode]);
+  }, [map, ready, data, visibleTracks, context.mode, zoomConfig]);
 
   useEffect(() => {
     if (!map) return;
@@ -645,20 +645,33 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         : null;
     const line = (selectedValue: any, idle: any): any =>
       match ? ['case', match, selectedValue, idle] : idle;
+    // La largeur de bande ne remplace jamais la sélection : elle fournit la
+    // valeur « idle » de l'expression `case`, la valeur sélectionnée gagne.
+    const bandWidth = zoomConfig.trackWidth;
     if (map.getLayer('compte-tracks-line')) {
       map.setPaintProperty('compte-tracks-line', 'line-color', line('#C89A3B', '#17402C'));
-      map.setPaintProperty('compte-tracks-line', 'line-width', line(5, 3.5));
+      map.setPaintProperty('compte-tracks-line', 'line-width', line(5, bandWidth));
       map.setPaintProperty('compte-tracks-line', 'line-opacity', line(1, 0.9));
     }
     if (map.getLayer('compte-tracks-casing')) {
-      map.setPaintProperty('compte-tracks-casing', 'line-width', line(9, 7));
+      map.setPaintProperty('compte-tracks-casing', 'line-width', line(9, bandWidth + 3.5));
       map.setPaintProperty('compte-tracks-casing', 'line-opacity', line(0.95, 0.78));
+      map.setLayoutProperty(
+        'compte-tracks-casing',
+        'visibility',
+        zoomConfig.casing ? 'visible' : 'none'
+      );
     }
     if (map.getLayer('compte-tracks-glow')) {
-      map.setPaintProperty('compte-tracks-glow', 'line-width', line(14, 11));
+      map.setPaintProperty('compte-tracks-glow', 'line-width', line(14, bandWidth + 7));
       map.setPaintProperty('compte-tracks-glow', 'line-opacity', line(0.4, 0.24));
+      map.setLayoutProperty(
+        'compte-tracks-glow',
+        'visibility',
+        zoomConfig.glow ? 'visible' : 'none'
+      );
     }
-  }, [map, ready, selected]);
+  }, [map, ready, selected, zoomConfig]);
 
   useEffect(() => {
     if (!map || !ready || !resolved) return;
