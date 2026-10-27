@@ -28,6 +28,32 @@ export interface ScreenPoint {
   y: number;
 }
 
+export interface ViewportSize {
+  width: number;
+  height: number;
+}
+
+/**
+ * Indique si un point projeté tombe dans le viewport, marge comprise : la marge
+ * **élargit** le cadre de `marginPx` sur les quatre côtés, bornes incluses.
+ *
+ * Un point à `x = 23` dans un viewport de 400 px de large est donc conservé, même
+ * avec 24 px de marge : il est visible à l'écran. La marge ne sert qu'à tolérer un
+ * débordement (pill, épingle) au bord du cadre, jamais à masquer un point visible.
+ */
+export function isInsideViewport(
+  point: ScreenPoint,
+  viewport: ViewportSize,
+  marginPx: number
+): boolean {
+  return (
+    point.x >= -marginPx &&
+    point.y >= -marginPx &&
+    point.x <= viewport.width + marginPx &&
+    point.y <= viewport.height + marginPx
+  );
+}
+
 export interface MassifCluster<T> {
   id: string;
   items: T[];

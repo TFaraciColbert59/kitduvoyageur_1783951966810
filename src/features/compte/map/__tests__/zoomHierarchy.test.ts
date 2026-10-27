@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { MAP_ZOOM_PRIORITY, clusterByScreenDistance, resolveMapZoomConfig } from '../zoomHierarchy';
+import {
+  MAP_ZOOM_PRIORITY,
+  clusterByScreenDistance,
+  isInsideViewport,
+  resolveMapZoomConfig,
+} from '../zoomHierarchy';
 
 describe('resolveMapZoomConfig', () => {
   it('classe les quatre bandes aux seuils exacts', () => {
@@ -169,5 +174,46 @@ describe('clusterByScreenDistance', () => {
     const clusters = clusterByScreenDistance([{ id: 'solo' }], () => ({ x: 12, y: -8 }), 40);
     expect(clusters).toHaveLength(1);
     expect(clusters[0]).toEqual({ id: 'cluster-0', items: [{ id: 'solo' }], x: 12, y: -8 });
+  });
+});
+
+describe('isInsideViewport', () => {
+  const viewport = { width: 400, height: 600 };
+
+  it('garde les POI dans le viewport avec 24 px de marge', () => {
+    expect(isInsideViewport({ x: 24, y: 24 }, viewport, 24)).toBe(true);
+    expect(isInsideViewport({ x: 23, y: 100 }, viewport, 24)).toBe(true);
+    expect(isInsideViewport({ x: 200, y: 590 }, viewport, 24)).toBe(true);
+  });
+
+  it('élargit le cadre de la marge : 24 px dehors passe, 25 px dehors non', () => {
+    expect(isInsideViewport({ x: -24, y: 300 }, viewport, 24)).toBe(true);
+    expect(isInsideViewport({ x: -25, y: 300 }, viewport, 24)).toBe(false);
+    expect(isInsideViewport({ x: 424, y: 300 }, viewport, 24)).toBe(true);
+    expect(isInsideViewport({ x: 425, y: 300 }, viewport, 24)).toBe(false);
+    expect(isInsideViewport({ x: 200, y: -24 }, viewport, 24)).toBe(true);
+    expect(isInsideViewport({ x: 200, y: -25 }, viewport, 24)).toBe(false);
+    expect(isInsideViewport({ x: 200, y: 624 }, viewport, 24)).toBe(true);
+    expect(isInsideViewport({ x: 200, y: 625 }, viewport, 24)).toBe(false);
+  });
+
+  it('borne les quatre coins, marge comprise', () => {
+    expect(isInsideViewport({ x: -24, y: -24 }, viewport, 24)).toBe(true);
+    expect(isInsideViewport({ x: 424, y: 624 }, viewport, 24)).toBe(true);
+    expect(isInsideViewport({ x: 424, y: -25 }, viewport, 24)).toBe(false);
+    expect(isInsideViewport({ x: -25, y: 624 }, viewport, 24)).toBe(false);
+  });
+
+  it('traite une marge nulle comme le cadre strict, bornes incluses', () => {
+    expect(isInsideViewport({ x: 0, y: 0 }, viewport, 0)).toBe(true);
+    expect(isInsideViewport({ x: 400, y: 600 }, viewport, 0)).toBe(true);
+    expect(isInsideViewport({ x: -1, y: 300 }, viewport, 0)).toBe(false);
+    expect(isInsideViewport({ x: 200, y: 601 }, viewport, 0)).toBe(false);
+  });
+
+  it('lit un viewport de taille nulle sans accepter un point au-delà de la marge', () => {
+    expect(isInsideViewport({ x: 0, y: 0 }, { width: 0, height: 0 }, 24)).toBe(true);
+    expect(isInsideViewport({ x: 24, y: 24 }, { width: 0, height: 0 }, 24)).toBe(true);
+    expect(isInsideViewport({ x: 25, y: 0 }, { width: 0, height: 0 }, 24)).toBe(false);
   });
 });
