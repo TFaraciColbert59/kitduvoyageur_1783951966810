@@ -30,7 +30,7 @@ describe('CarnetCommentsPane', () => {
 
   it('bascule le tri en anciens', () => {
     const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Anciens' }));
+    fireEvent.click(screen.getByRole('button', { name: 'anciens' }));
     const names = [...container.querySelectorAll('.ckp-comment-name')].map((n) => n.textContent);
     expect(names).toEqual(['Léonie', 'Rachid']);
   });
@@ -46,7 +46,7 @@ describe('CarnetCommentsPane', () => {
     const row = container.querySelector('.ckp-comment') as HTMLElement;
     const meta = row.querySelector('.ckp-comment-meta') as HTMLElement;
     expect(meta.querySelector('time')?.textContent?.length).toBeGreaterThan(0);
-    expect(meta.querySelector('button')?.textContent).toBe('Supprimer');
+    expect(meta.querySelector('button')?.textContent).toBe('supprimer');
   });
 
   it('anime l’entrée d’un nouveau commentaire, jamais la liste montée', () => {
@@ -64,9 +64,28 @@ describe('CarnetCommentsPane', () => {
     expect(container.querySelectorAll('.ckp-comment.is-new')).toHaveLength(1);
   });
 
-  it('affiche l’état vide du Compte', () => {
-    render(<CarnetCommentsPane comments={[]} {...base} currentUserId={null} />);
-    expect(screen.getByText('Sois le premier à répondre.')).toBeTruthy();
+  it('affiche l’état vide sans phrase : glyphe de 32 px et tiret', () => {
+    const { container } = render(<CarnetCommentsPane comments={[]} {...base} canWrite={false} currentUserId={null} />);
+    const empty = container.querySelector('.ckp-empty-state');
+    expect(empty?.querySelector('.ckp-empty-dash')?.textContent).toBe('—');
+    expect(container.querySelector('.ckp-empty-glyph > span')).toBeTruthy();
+    /* La porte d'authentification reste un geste, pas une phrase. */
+    expect(screen.getByRole('button', { name: 'Se connecter pour commenter' })).toBeTruthy();
+    expect(container.textContent).not.toMatch(/premier|Connectez-vous/);
+  });
+
+  it('charge en squelette : 5 lignes de 48 px, aucun texte', () => {
+    const { container } = render(<CarnetCommentsPane comments={[]} {...base} loading />);
+    expect(container.querySelectorAll('.ckp-load-bar--row')).toHaveLength(5);
+    expect(container.querySelectorAll('.ckp-load-bar--hero')).toHaveLength(0);
+    expect(screen.queryByText('Chargement…')).toBeNull();
+  });
+
+  it('charge en partie : les lignes connues restent, le reste attend', () => {
+    const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} loading />);
+    expect(container.querySelectorAll('.ckp-comment')).toHaveLength(2);
+    expect(container.querySelectorAll('.ckp-load-bar--row')).toHaveLength(2);
+    expect(container.querySelector('.ckp-comments-list')?.getAttribute('data-state')).toBe('partial');
   });
 
   it('envoie un commentaire', async () => {

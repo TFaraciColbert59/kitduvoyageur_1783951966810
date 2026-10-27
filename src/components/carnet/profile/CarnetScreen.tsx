@@ -79,6 +79,8 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
   const detailView = useMemo(
     () => ({
       ...detail,
+      /* ⚠️ PREVIEW DE RECETTE — retiré après les captures. */
+      isOwner: detail.isOwner || process.env.NEXT_PUBLIC_CKP_OWNER_PREVIEW === '1',
       engagement: {
         ...detail.engagement,
         liked: engagement.liked,

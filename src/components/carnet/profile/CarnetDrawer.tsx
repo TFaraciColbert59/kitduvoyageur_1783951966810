@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
 import { CarnetMediaTabs, type CarnetMediaTab } from './CarnetMediaTabs';
-import { useScrollCut } from './useScrollCut';
+import { useScrollCut, useScrollTail } from './useScrollCut';
 
 /**
  * Un seul drawer, réduit à ce qui n'est pas dans le sélecteur du bas :
@@ -28,18 +28,18 @@ const PANES: { id: CarnetDrawerId; label: string; icon: string }[] = [
 /**
  * Coquille de drawer du Compte : la carte devient le panneau.
  *
- * Anatomie mesurée : poignée 42 × 5 à 8 px du bord et croix de 36 px (le
- * glissement n'est jamais le seul moyen de fermer) — ce sont les deux seuls
- * éléments du haut. La capsule d'onglets ne vit plus sous la poignée : elle
- * reprend la place et la matière de celle de la carte d'identité, en bas à
- * droite de la feuille (10 px des deux bords, 30 px de haut, 41,5 px par
- * segment + 5 px de padding). Un voile `backdrop-blur(12px)` + hairline
- * apparaît dès 8 px de défilement, en fondu de 160 ms. Aucun titre.
+ * Anatomie mesurée : poignée 42 × 5 à 8 px du bord et croix de 36 px — la croix
+ * est posée en absolu, elle ne prend plus de ligne dans le flux, donc le
+ * contenu commence 16 px sous la poignée. La hauteur de la feuille suit son
+ * contenu (réserve de 64 px en bas), plafonnée à 503 px ; au-delà, le corps
+ * défile et un voile de 24 px ferme le bas. La capsule d'onglets garde la
+ * matière, la lentille et le pas de celle de la carte, à 12 px des bords.
  */
 export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: CarnetDrawerProps) {
   const ref = useRef<HTMLElement | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const scrolled = useScrollCut(bodyRef);
+  const tail = useScrollTail(bodyRef);
   const available = PANES;
   const activeIndex = Math.max(0, available.findIndex((pane) => pane.id === drawer));
   const items: CarnetMediaTab[] = available.map((pane) => ({
@@ -74,19 +74,19 @@ export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: Carn
         <button type="button" className="ckp-grabber" onClick={onClose} aria-label="Fermer le panneau">
           <span aria-hidden="true" />
         </button>
-        <div className="ckp-drawer-row">
-          <button type="button" className="ckp-drawer-close" onClick={onClose} aria-label="Fermer">
-            <X size={16} aria-hidden="true" />
-          </button>
-        </div>
+        <button type="button" className="ckp-drawer-close" onClick={onClose} aria-label="Fermer">
+          <X size={16} aria-hidden="true" />
+        </button>
         <span className="ckp-drawer-cut" data-on={scrolled ? 'true' : undefined} aria-hidden="true" />
       </div>
       <div className="ckp-card-scroll ckp-drawer-body" ref={bodyRef}>
         {children}
       </div>
-      {/* La capsule d'onglets du drawer, à la place exacte de celle de la carte :
-          `right/bottom: 10px`, 30 px de haut, même verre, même lentille blanche.
-          Sa largeur suit le nombre de segments (41,5 × n + 5). */}
+      {/* Voile de fin de course : 24 px, du transparent vers le blanc .72. */}
+      <span className="ckp-drawer-veil" data-on={tail ? 'true' : undefined} aria-hidden="true" />
+      {/* La capsule d'onglets du drawer, à 12 px des bords bas et droit :
+          même verre, même lentille blanche, même pas de 41,5 px. Sa largeur
+          suit le nombre de segments (41,5 × n + 5). */}
       <div className="ckp-drawer-foot">
         <div className="ckp-capsule" style={{ '--n': items.length } as React.CSSProperties}>
           <span

@@ -2,7 +2,9 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
+import Icon from '@/components/ui/Icon';
 import { CarnetSubCapsule } from '../CarnetSubCapsule';
+import { CarnetEmpty, CarnetSkeleton } from '../CarnetStates';
 import type { CarnetComment } from '@/features/carnet/detail/useCarnetComments';
 
 export interface CarnetCommentsPaneProps {
@@ -16,8 +18,8 @@ export interface CarnetCommentsPaneProps {
 }
 
 const SORTS = [
-  { id: 'recent', label: 'Récents' },
-  { id: 'old', label: 'Anciens' },
+  { id: 'recent', label: 'récents' },
+  { id: 'old', label: 'anciens' },
 ];
 
 /** Même date relative que le fil et le post du Compte. */
@@ -26,12 +28,12 @@ function timeAgo(iso: string): string {
   if (!Number.isFinite(then)) return '';
   const diff = Math.max(0, Date.now() - then);
   const minutes = Math.round(diff / 60000);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `il y a ${minutes} min`;
+  if (minutes < 1) return 'à l’instant';
+  if (minutes < 60) return `${minutes} min`;
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `il y a ${hours} h`;
+  if (hours < 24) return `${hours} h`;
   const days = Math.round(hours / 24);
-  if (days < 7) return `il y a ${days} j`;
+  if (days < 7) return `${days} j`;
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
@@ -39,9 +41,11 @@ function timeAgo(iso: string): string {
  * Commentaires du carnet, dans le corps et le pied du post du Compte
  * (`.lkdv-post-panel-body`, `PostReplyComposer`). La ligne suit la fiche :
  * nom 12,5/600 + handle 11/500 sur la même ligne, texte 13/400 à 1,42,
- * métadonnées 10,5/500 sous le texte, jamais à droite du nom.
- * Le tri Récents / Anciens reste, en haut de la liste : c'est une donnée propre
- * au carnet, il ne remplace aucun bloc du Compte.
+ * métadonnées 11/500 `#6B7A70` sous le texte, jamais à droite du nom.
+ *
+ * Aucune phrase d'état : le chargement est un squelette (5 lignes de 48 px),
+ * l'absence de commentaire un glyphe de 32 px à 30 % et un tiret. Le tri
+ * Récents / Anciens reste, en tête de liste : c'est une donnée du carnet.
  */
 export function CarnetCommentsPane({
   comments,
@@ -99,49 +103,61 @@ export function CarnetCommentsPane({
 
   return (
     <>
-      <div ref={listRef} className="lkdv-post-panel-body">
-        {sorted.length > 1 ? (
-          <CarnetSubCapsule items={SORTS} active={sort} onChange={setSort} ariaLabel="Tri des commentaires" />
-        ) : null}
-        {loading ? (
-          <p className="py-6 text-center text-[12px] text-[#56665D]">Chargement…</p>
-        ) : null}
-        {!loading && sorted.length === 0 ? (
-          <p className="py-6 text-center text-[12px] text-[#56665D]">Sois le premier à répondre.</p>
-        ) : null}
-        {sorted.map((comment) => (
-          <div
-            key={comment.id}
-            id={`comment-${comment.id}`}
-            className={`ckp-comment${entering === comment.id ? ' is-new' : ''}`}
-          >
-            {comment.authorAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-              <img className="ckp-avatar" src={comment.authorAvatar} alt="" />
-            ) : (
-              <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
-                {comment.authorName.charAt(0).toUpperCase()}
-              </span>
-            )}
-            <div className="ckp-comment-body">
-              <div className="ckp-comment-head">
-                <span className="ckp-comment-name">{comment.authorName}</span>
-                {comment.authorHandle ? (
-                  <span className="ckp-comment-handle">@{comment.authorHandle}</span>
-                ) : null}
-              </div>
-              <p className="ckp-comment-text">{comment.content}</p>
-              <div className="ckp-comment-meta">
-                <time dateTime={comment.createdAt}>{timeAgo(comment.createdAt)}</time>
-                {currentUserId && comment.authorId === currentUserId ? (
-                  <button type="button" onClick={() => void onRemove(comment.id)}>
-                    Supprimer
-                  </button>
-                ) : null}
-              </div>
-            </div>
+      <div ref={listRef} className="lkdv-post-panel-body ckp-comments">
+        {comments.length > 1 ? (
+          <div className="ckp-comments-sort">
+            <CarnetSubCapsule items={SORTS} active={sort} onChange={setSort} ariaLabel="Tri des commentaires" />
           </div>
-        ))}
+        ) : null}
+
+        {loading && sorted.length === 0 ? <CarnetSkeleton rows={5} hero={false} /> : null}
+
+        {!loading && sorted.length === 0 ? (
+          <CarnetEmpty
+            icon={<Icon name="message-square" size={32} aria-hidden="true" />}
+            label="Aucun commentaire"
+          />
+        ) : null}
+
+        {sorted.length > 0 ? (
+          <div className="ckp-comments-list" data-state={loading ? 'partial' : 'ready'}>
+            {sorted.map((comment) => (
+              <div
+                key={comment.id}
+                id={`comment-${comment.id}`}
+                className={`ckp-comment${entering === comment.id ? ' is-new' : ''}`}
+              >
+                {comment.authorAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+                  <img className="ckp-avatar" src={comment.authorAvatar} alt="" />
+                ) : (
+                  <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
+                    {comment.authorName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <div className="ckp-comment-body">
+                  <div className="ckp-comment-head">
+                    <span className="ckp-comment-name">{comment.authorName}</span>
+                    {comment.authorHandle ? (
+                      <span className="ckp-comment-handle">@{comment.authorHandle}</span>
+                    ) : null}
+                  </div>
+                  <p className="ckp-comment-text">{comment.content}</p>
+                  <div className="ckp-comment-meta">
+                    <time dateTime={comment.createdAt}>{timeAgo(comment.createdAt)}</time>
+                    {currentUserId && comment.authorId === currentUserId ? (
+                      <button type="button" onClick={() => void onRemove(comment.id)}>
+                        supprimer
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {/* Chargement partiel : les lignes connues restent, le reste attend. */}
+            {loading ? <CarnetSkeleton rows={2} hero={false} /> : null}
+          </div>
+        ) : null}
       </div>
 
       {canWrite ? (
@@ -150,17 +166,19 @@ export function CarnetCommentsPane({
             value={draft}
             onChange={setDraft}
             onSend={() => void submit()}
-            placeholder="Ajouter un commentaire…"
+            placeholder="ajouter un commentaire…"
             inputLabel="Ajouter un commentaire"
             ariaLabel="Publier le commentaire"
             busy={busy}
           />
         </div>
       ) : (
-        <div className="lkdv-comments-gate">
-          <p>Connectez-vous pour commenter.</p>
-          <button type="button" onClick={onRequireAuth}>
-            Se connecter
+        <div className="lkdv-comments-gate ckp-comments-gate">
+          <button type="button" className="ckp-field" onClick={onRequireAuth} aria-label="Se connecter pour commenter">
+            <span className="ckp-field-icon" aria-hidden="true">
+              <Icon name="user" size={16} aria-hidden="true" />
+            </span>
+            <span className="ckp-field-label">se connecter</span>
           </button>
         </div>
       )}

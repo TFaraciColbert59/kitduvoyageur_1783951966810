@@ -247,12 +247,19 @@ export function CarnetPages({
           </div>
         ) : null}
 
-        {page === 'likes' && likesPage ? <div className="ckp-page-pad">{likesPage}</div> : null}
+        {/* Les trois pages sorties du drawer portent la gouttière dense de la
+            feuille : contenu à 16 px du bord et 64 px de réserve sous la
+            capsule, sans toucher aux autres volets du carrousel. */}
+        {page === 'likes' && likesPage ? (
+          <div className="ckp-page-pad ckp-page-pad--dense">{likesPage}</div>
+        ) : null}
 
-        {page === 'comments' && commentsPage ? <div className="ckp-page-pad">{commentsPage}</div> : null}
+        {page === 'comments' && commentsPage ? (
+          <div className="ckp-page-pad ckp-page-pad--dense">{commentsPage}</div>
+        ) : null}
 
         {page === 'manage' && managePage ? (
-          <div className="ckp-page-pad ckp-page-pad--flush">{managePage}</div>
+          <div className="ckp-page-pad ckp-page-pad--dense">{managePage}</div>
         ) : null}
       </div>
     </div>

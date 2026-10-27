@@ -87,6 +87,17 @@ export function splitThirds(series: SeriesValue[]): [number, number, number] | n
   return bands.some((band) => band > 0) ? bands : null;
 }
 
+/**
+ * Part documentée : jours qui portent réellement la valeur ÷ jours du carnet.
+ * C'est la seule progression mesurable sans cible inventée — la barre de 6 px
+ * sous le chiffre héros n'a pas d'autre maximum. `0` sans aucun jour.
+ */
+export function documentedShare(series: SeriesValue[]): number {
+  if (series.length === 0) return 0;
+  const ratio = seriesValues(series).length / series.length;
+  return Math.min(1, Math.max(0, ratio));
+}
+
 /** Hauteurs réelles des barres journalières, proportionnelles à la série. */
 export function dailyBarHeights(series: SeriesValue[], maxHeight = 16): (number | null)[] {
   const values = seriesValues(series);

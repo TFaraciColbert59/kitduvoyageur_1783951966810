@@ -19,27 +19,45 @@ describe('CarnetLikesPane', () => {
     render(<CarnetLikesPane detail={DETAIL} currentUserId="u1" />);
     expect(screen.getByText('Léonie Fabre')).toBeTruthy();
     expect(screen.getByText('Rachid Benali')).toBeTruthy();
-    /* « Bravo » est le libellé de la réaction et l'une des trois pastilles. */
-    expect(screen.getAllByText('Bravo').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole('group', { name: 'Filtre des j’aime' })).toBeTruthy();
+    /* « bravo » est le libellé de la réaction et l'un des segments de filtre. */
+    expect(screen.getAllByText('bravo').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('group', { name: 'Filtre des réactions' })).toBeTruthy();
   });
 
-  it('trie par réaction avec trois pastilles, sans masquer la liste au repos', () => {
+  it('donne le total réel et la bascule dans deux champs, jamais une phrase', () => {
+    const { container } = render(
+      <CarnetLikesPane detail={DETAIL} currentUserId="u1" like={{ liked: false, count: 2, onToggle: () => {} }} />,
+    );
+    const fields = [...container.querySelectorAll('.ckp-field')];
+    expect(fields.map((field) => field.querySelector('.ckp-field-label')?.textContent)).toEqual([
+      'réactions',
+      'mon j’aime',
+    ]);
+    expect(fields[0].querySelector('.ckp-field-value')?.textContent).toBe('2');
+    expect(fields[1].querySelector('.ckp-field-value')?.textContent).toBe('2');
+    /* Aucun titre, aucun compteur nu : la donnée est toujours dans un champ. */
+    expect(container.textContent).not.toMatch(/réactions$/);
+  });
+
+  it('filtre par réaction avec les segments du sous-sélecteur, sans masquer la liste au repos', () => {
     const { container } = render(<CarnetLikesPane detail={DETAIL} currentUserId="u1" />);
-    const pills = [...container.querySelectorAll('.ckp-like-filter')];
-    expect(pills.map((pill) => pill.textContent)).toEqual(['J’aime', 'Bravo']);
-    expect(pills.every((pill) => pill.getAttribute('aria-pressed') === 'false')).toBe(true);
+    const segments = [...container.querySelectorAll('.ckp-sub button')];
+    expect(segments.map((segment) => segment.getAttribute('aria-label'))).toEqual(['j’aime', 'bravo']);
+    expect(segments.every((segment) => segment.getAttribute('aria-pressed') === 'false')).toBe(true);
     expect(container.querySelectorAll('.ckp-liker')).toHaveLength(2);
-    fireEvent.click(pills[1]);
+    fireEvent.click(segments[1]);
     expect(container.querySelectorAll('.ckp-liker')).toHaveLength(1);
-    fireEvent.click(pills[1]);
+    fireEvent.click(segments[1]);
     expect(container.querySelectorAll('.ckp-liker')).toHaveLength(2);
-    expect(screen.getByText('2 réactions')).toBeTruthy();
   });
 
-  it('affiche l’état vide honnête', () => {
-    render(<CarnetLikesPane detail={detail({ likers: [] })} currentUserId={null} />);
-    expect(screen.getByText('Aucun j’aime pour l’instant.')).toBeTruthy();
+  it('affiche un état vide sans phrase : glyphe de 32 px et tiret', () => {
+    const { container } = render(<CarnetLikesPane detail={detail({ likers: [] })} currentUserId={null} />);
+    const empty = container.querySelector('.ckp-empty-state');
+    expect(empty).toBeTruthy();
+    expect(empty?.querySelector('.ckp-empty-dash')?.textContent).toBe('—');
+    expect(container.querySelector('.ckp-empty-glyph > span')).toBeTruthy();
+    expect(container.textContent).not.toMatch(/instant|premier|Aucun j’aime/);
   });
 
   it('porte la bascule J’aime du carnet quand elle est fournie', () => {
@@ -65,7 +83,8 @@ describe('CarnetLikesPane', () => {
         like={{ liked: true, count: 22, onToggle: () => {} }}
       />,
     );
-    expect(screen.getByRole('button', { name: 'Retirer mon j’aime' }).getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByText('22 j’aime')).toBeTruthy();
+    const toggle = screen.getByRole('button', { name: 'Retirer mon j’aime' });
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(toggle.querySelector('.ckp-field-value')?.textContent).toBe('22');
   });
 });
