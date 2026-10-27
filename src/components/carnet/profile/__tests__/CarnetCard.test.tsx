@@ -192,23 +192,39 @@ describe('CarnetCard — carte du carnet', () => {
     expect(screen.queryByRole('button', { name: /Recentrer/ })).toBeNull();
   });
 
-  it('affiche l’auteur puis les likers distincts en pastilles', () => {
+  it('affiche les participants réels en pastilles, jamais les likers', () => {
     const { container } = render(
       <CarnetCard
         {...base({
           detail: detail({
-            likers: [
-              { id: 'u1', name: 'Camille Rochat', handle: 'camille', avatarUrl: null, reaction: 'bravo' },
-              { id: 'u2', name: 'Noé Vidal', handle: null, avatarUrl: null, reaction: 'like' },
+            /* Un liker qui n'est pas participant ne doit produire aucune pastille. */
+            likers: [{ id: 'u9', name: 'Liker Fantôme', handle: 'liker', avatarUrl: null, reaction: 'like' }],
+            participants: [
+              { userId: 'u1', name: 'Camille Rochat', handle: 'camille', avatarUrl: null, role: 'author' },
+              { userId: 'u2', name: 'Noé Vidal', handle: 'noe', avatarUrl: null, role: 'participant' },
+              { userId: 'u3', name: null, handle: 'sans_profil', avatarUrl: null, role: 'collaborator' },
             ],
           }),
         })}
       />,
     );
     const people = container.querySelectorAll('.ckp-people .pmi-author');
-    expect(people).toHaveLength(2);
+    expect(people).toHaveLength(3);
     expect(people[0].getAttribute('href')).toBe('/profil/u1');
     expect(people[1].textContent).toContain('Noé Vidal');
+    /* Participant sans profil public : la ligne reste, sans nom inventé. */
+    expect(people[2].getAttribute('href')).toBe('/profil/u3');
+    expect(people[2].textContent).toContain('@sans_profil');
+    expect(container.textContent).not.toContain('Liker Fantôme');
+  });
+
+  it('une seule pastille quand l’auteur est seul (carnet Islande)', () => {
+    const { container } = render(
+      <CarnetCard {...base({ detail: detail({ participants: DETAIL.participants, likers: [] }) })} />,
+    );
+    const people = container.querySelectorAll('.ckp-people .pmi-author');
+    expect(people).toHaveLength(1);
+    expect(people[0].getAttribute('href')).toBe('/profil/u1');
   });
 
   it('ouvre le post du moment au clic sur une tuile', () => {

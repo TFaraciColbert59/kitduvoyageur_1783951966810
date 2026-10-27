@@ -365,7 +365,7 @@ export function CarnetPostSheet({
                   onClick={() => setPane('post')}
                   aria-label="Retour à la photo"
                 >
-                  <span aria-hidden="true">×</span>
+                  <X size={16} />
                 </button>
                 <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Partager le moment">
                   <div className="lkdv-panel-grab" aria-hidden="true">
@@ -489,23 +489,24 @@ export function CarnetPostSheet({
                   onClick={() => setPane('post')}
                   aria-label="Retour à la photo"
                 >
-                  <span aria-hidden="true">×</span>
+                  <X size={16} />
                 </button>
                 <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Commentaires du moment">
                   <div className="lkdv-panel-grab" aria-hidden="true">
                     <span />
                   </div>
-                  <div className="lkdv-post-panel-body">
-                    <CarnetCommentsPane
-                      comments={comments.comments}
-                      loading={comments.loading}
-                      canWrite={canWrite}
-                      currentUserId={currentUserId}
-                      onSend={comments.send}
-                      onRemove={comments.remove}
-                      onRequireAuth={onRequireAuth}
-                    />
-                  </div>
+                  {/* Le pane fournit lui-même `.lkdv-post-panel-body` puis le
+                      `.lkdv-post-panel-foot` du Compte : même corps, même pied,
+                      même composer que le post du Compte. */}
+                  <CarnetCommentsPane
+                    comments={comments.comments}
+                    loading={comments.loading}
+                    canWrite={canWrite}
+                    currentUserId={currentUserId}
+                    onSend={comments.send}
+                    onRemove={comments.remove}
+                    onRequireAuth={onRequireAuth}
+                  />
                 </div>
               </div>
             ) : null}

@@ -39,6 +39,10 @@ export function CarnetMapCard({ detail, focus = null }: CarnetMapCardProps) {
           authState={authState}
           context={{ mode: 'overview' }}
           focus={focus}
+          variant="carnet"
+          trace={detail.trace}
+          emptyTitle="Aucun tracé enregistré pour ce carnet."
+          emptyHint="L’auteur n’a pas joint de trace GPS : rien n’est dessiné plutôt qu’inventé."
         />
       </div>
       <span className="ckp-mapzone-badge">GLOBE 3D</span>

@@ -245,11 +245,17 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 
 /* --- Médias --------------------------------------------------------------- */
-/* Grille des posts : gabarit mesuré sur /compte (430 × 932) — carte 406 px de
-   large, trois colonnes de 134 px, gouttière 2 px, rayon 2, aucun padding
-   latéral. 3 × 134 + 2 × 2 = 406 : la grille colle exactement à la carte. */
+/* Grille des posts : gabarit mesuré sur /compte (430 × 932) — bloc de 406 px
+   de large (`.ig-grid-wrap` : x 12, w 406), trois colonnes de 134 px,
+   gouttière 2 px, tuiles rayon 2, images `object-fit: cover`, aucun padding
+   latéral, aucun badge. 3 × 134 + 2 × 2 = 406 : la grille colle à la carte.
+   Le bloc est rogné au rayon 22 du Compte, sinon les quatre coins restent
+   carrés et l'écart se voit au premier regard. */
 .ckp-media { position: relative; margin: 0 -12px; }
-.ckp-grid-wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0; }
+.ckp-grid-wrap {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0;
+  border-radius: 22px; overflow: hidden;
+}
 .ckp-tile {
   position: relative; aspect-ratio: 1 / 1; width: 100%; padding: 0; border: 0;
   overflow: hidden; background: #dfe8dc; cursor: pointer; border-radius: 2px; display: block;
@@ -784,6 +790,17 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 /* Le lien réel du carnet reste lisible, sur deux lignes au plus. */
 .ckp-pane-share .ckp-bio { -webkit-line-clamp: 2; overflow-wrap: anywhere; }
-/* Réserve haute des panneaux du post : le Compte laisse 70 px pour la poignée
-   et le bouton de fermeture ; le contenu du carnet démarre au même endroit. */
-.ckp-post-sheet .lkdv-post-panel-body { padding: 70px 14px 24px; }
+/* Panneaux du post : aucun padding propre. Le corps reprend celui du Compte
+   (`.lkdv-post-panel-body` : 2px 12px 4px) et le composer vit dans
+   `.lkdv-post-panel-foot`, exactement comme dans le post du Compte. */
+/* L'invitation à se connecter garde le bouton du carnet (il ouvre la modale
+   d'auth, il ne navigue pas) avec la matière du lien du Compte. */
+.ckp-post-sheet .lkdv-comments-gate button {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px;
+  background: var(--feed-ink, #17402c); color: #fff;
+  font: 700 12px var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer;
+}
+/* Le tri Récents / Anciens est une donnée du carnet : il se pose en tête de
+   liste, sans déplacer le corps ni le pied du Compte. */
+.ckp-post-sheet .lkdv-post-panel-body .ckp-sub { margin-bottom: 8px; }

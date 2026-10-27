@@ -19,6 +19,7 @@ export const DETAIL: CarnetDetail = {
   verified: true,
   isOwner: false,
   author: { id: 'u1', name: 'Camille Rochat', handle: 'camille', avatarUrl: null, trustScore: 94 },
+  participants: [{ userId: 'u1', name: 'Camille Rochat', handle: 'camille', avatarUrl: null, role: 'author' }],
   stats: [
     { key: 'distance', label: 'DISTANCE', value: '106,4 km' },
     { key: 'elevation', label: 'DÉNIVELÉ +', value: '2 002 m' },

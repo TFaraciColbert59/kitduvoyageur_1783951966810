@@ -13,6 +13,20 @@ import type {
   MomentRow,
 } from './types';
 
+interface CollaboratorRow {
+  carnet_id: string | null;
+  user_id: string | null;
+  role: string | null;
+  created_at: string | null;
+}
+
+interface SessionParticipantRow {
+  session_id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+}
+
 const CARNET_COLUMNS = [
   'id',
   'author_id',
@@ -131,6 +145,65 @@ export async function getCarnetDetail(id: string) {
 
   const sessions = ((hikeResult as { data?: HikeSessionRow[] | null }).data ?? []) as HikeSessionRow[];
 
+  /* Participants réels : collaborateurs du carnet + présents des sorties du
+     carnet. Les deux lectures passent par le client à cookies, donc par la RLS :
+     `carnet_collaborators_read_scoped` laisse lire les carnets publics, et
+     `hike_participants_select` (via `can_view_hike_session`) ne rend que les
+     sorties visibles pour ce lecteur. Un refus de la RLS n'est pas une erreur
+     de la fiche : on garde ce qui est lisible, sans rien inventer. */
+  const [collabResult, sessionIdResult] = await Promise.all([
+    supabase
+      .from('carnet_collaborators')
+      .select('carnet_id, user_id, role, created_at')
+      .eq('carnet_id', carnet.id)
+      .order('created_at', { ascending: true }),
+    /* Toutes les sorties du carnet, sans la limite de 10 de `hikeResult` :
+       les présents d'une sortie ancienne comptent aussi. */
+    supabase
+      .from('hike_sessions')
+      .select('id, started_at')
+      .eq('carnet_id', carnet.id)
+      .order('started_at', { ascending: false }),
+  ]);
+
+  const sessionIds = ((sessionIdResult.data ?? []) as Array<{ id: string }>).map((row) => row.id);
+
+  /* Cette lecture dépend des identifiants de sorties : elle ne peut pas partir
+     dans le même `Promise.all`. Un refus RLS (rôle anonyme sans le `EXECUTE` de
+     `can_view_hike_session`) rend `data: null` : on lit `[]`, sans erreur. */
+  const sessionParticipantsResult =
+    sessionIds.length > 0
+      ? await supabase
+          .from('hike_session_participants')
+          .select('session_id, user_id, role, created_at')
+          .in('session_id', sessionIds)
+      : { data: [] as SessionParticipantRow[] };
+
+  const collabRows = ((collabResult.data ?? []) as CollaboratorRow[]).filter((row) => row.user_id);
+  const sessionParticipantRows = ((sessionParticipantsResult.data ?? []) as SessionParticipantRow[]).filter(
+    (row) => row.user_id,
+  );
+
+  const participantProfiles = await fetchPublicProfilesWith(supabase as never, [
+    ...collabRows.map((row) => row.user_id),
+    ...sessionParticipantRows.map((row) => row.user_id),
+  ]);
+
+  const participants = [
+    ...collabRows.map((row) => ({
+      user_id: row.user_id,
+      role: row.role,
+      source: 'collaborator' as const,
+      profile: (participantProfiles[row.user_id ?? ''] as unknown as AuthorRow) ?? null,
+    })),
+    ...sessionParticipantRows.map((row) => ({
+      user_id: row.user_id,
+      role: row.role,
+      source: 'participant' as const,
+      profile: (participantProfiles[row.user_id ?? ''] as unknown as AuthorRow) ?? null,
+    })),
+  ];
+
   let liked = false;
   let favorited = false;
   if (viewerId) {
@@ -155,6 +228,7 @@ export async function getCarnetDetail(id: string) {
     liked,
     favorited,
     likers,
+    participants,
     counts: {
       likes: likesTotal.count ?? likeRows.length,
       comments: commentsCount.count ?? 0,

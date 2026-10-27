@@ -172,8 +172,9 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     expect(drawerOpen()).toBe(false);
     expect(document.getElementById('carnet-page-comments')).toBeTruthy();
     expect(screen.getByText('Bivouac validé, merci pour l’itinéraire.')).toBeTruthy();
-    expect(screen.getByRole('textbox', { name: 'Ajouter un commentaire' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Envoyer le commentaire' })).toBeTruthy();
+    /* Visiteur : le panneau du Compte affiche l'invitation, pas un champ mort. */
+    expect(screen.getByText('Connectez-vous pour commenter.')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Se connecter' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /^Commenter/ }).getAttribute('aria-current')).toBe('page');
   });
 
