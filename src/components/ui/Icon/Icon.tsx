@@ -103,6 +103,7 @@ export default function Icon({
             maskPosition: 'center',
             WebkitMaskPosition: 'center',
             ...style,
+            ...(maskFile.startsWith('lkdv/') ? { backgroundColor: '#17402C' } : {}),
           }}
           {...props}
         />

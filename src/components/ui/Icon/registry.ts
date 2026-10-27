@@ -7,6 +7,7 @@
  */
 
 import { SVG_MASK_ICON_NAMES } from './registry.generated';
+import { resolveLKDVFile } from './lkdv.registry';
 
 export { SVG_MASK_ICON_NAMES };
 
@@ -182,6 +183,8 @@ const LEGACY_GLYPH_ALIASES: Record<string, string> = {
  * Order: PNG pack (legacy Heroicon names) → alias table → SF SVG pack (kebab).
  */
 export function resolveMaskFile(name: string, variant: 'outline' | 'solid' = 'outline'): string | undefined {
+  const lkdv = resolveLKDVFile(name);
+  if (lkdv) return `lkdv/${lkdv}.svg`;
   const png = resolvePackFile(name);
   if (png) return png;
 
