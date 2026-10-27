@@ -24,8 +24,6 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/connexion') ||
     pathname?.startsWith('/inscription') ||
     pathname?.startsWith('/checkout') ||
-    pathname === '/compte' ||
-    pathname?.startsWith('/compte') ||
     pathname === '/clubs' ||
     pathname?.startsWith('/clubs') ||
     pathname === '/profil' ||

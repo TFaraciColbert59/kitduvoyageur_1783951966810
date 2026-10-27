@@ -1339,3 +1339,11 @@ button.mb:active{background:var(--fill2)}
 .sgrid .sg-status.is-upcoming{background:rgba(200,154,59,.16);color:#8a641f;box-shadow:inset 0 0 0 .5px rgba(200,154,59,.28)}
 
 .lkdv-map-unavailable{display:grid;place-items:center;height:100%;min-height:160px;padding:20px;border-radius:24px;background:rgba(255,255,255,.42);color:var(--label2);font:500 12px var(--sf);text-align:center}
+
+/* Drawer Options : ne jamais dépasser la carte du profil. */
+#sheet[data-kind="account_drawer"] {
+  max-height: 56dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
