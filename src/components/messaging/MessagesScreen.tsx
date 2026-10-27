@@ -34,6 +34,7 @@ import { useRealtimeMessaging } from '@/features/messaging/hooks/useRealtimeMess
 import { messagingService } from '@/features/messaging/services/messagingService';
 import { formatConversationTimestamp } from '@/features/messaging/lib/messagingUtils';
 import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachmentUrl';
+import { PostPreviewCard } from '@/features/messaging/components/PostPreviewCard';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
 import {
   SWIPE_REVEAL,
@@ -513,32 +514,16 @@ function MessageThread({
               {showDay ? <div className="mday">{dayLabel(message.created_at)}</div> : null}
               <div className={`mrow${mine ? ' mine' : ''}`} id={`grammar-msg-${message.id}`}>
                 {message.message_type === 'post' ? (
-                  <button
-                    type="button"
-                    className="mcard mpost-compact"
-                    onClick={() => {
+                  <PostPreviewCard
+                    postId={String(message.metadata?.post_id ?? message.content)}
+                    fallbackTitle={typeof message.metadata?.title === 'string' ? message.metadata.title : null}
+                    fallbackAuthor={typeof message.metadata?.author_name === 'string' ? message.metadata.author_name : null}
+                    fallbackImage={typeof message.metadata?.image_url === 'string' ? message.metadata.image_url : null}
+                    onOpen={() => {
                       haptic('light');
-                      const postId = String(message.metadata?.post_id ?? message.content);
-                      onOpenPost?.(postId);
+                      onOpenPost?.(String(message.metadata?.post_id ?? message.content));
                     }}
-                    aria-label={`Publication partagée : ${String(message.metadata?.title || 'voir la publication')}`}
-                  >
-                    {typeof message.metadata?.image_url === 'string' ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- vignette distante
-                      <img className="mcard-img" src={message.metadata.image_url} alt="" loading="lazy" />
-                    ) : (
-                      <span className="mcard-ico" aria-hidden="true">
-                        <Icon name="newspaper" className="size-4" />
-                      </span>
-                    )}
-                    <span className="mcard-txt">
-                      <b>{String(message.metadata?.title || 'Publication partagée')}</b>
-                      <small>
-                        {String(message.metadata?.author_name || 'Communauté LKDV')} · Voir la publication
-                      </small>
-                    </span>
-                    <Icon name="chevron-right" className="size-3.5 mpost-compact-chevron" aria-hidden="true" />
-                  </button>
+                  />
                 ) : (
                 <div className={`mstack${mine ? ' mine' : ''}`}>
                   {conversation.type === 'group' && !mine && !sameAsPrev ? (
