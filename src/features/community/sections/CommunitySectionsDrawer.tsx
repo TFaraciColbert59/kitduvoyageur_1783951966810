@@ -118,6 +118,7 @@ export function CommunitySectionsDrawer({
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<CarnetRow | ClubRow | EventRow | null>(null);
+  const searchReturnTab = useRef<SectionTabId>('carnets');
   const { carnets, clubs, sorties, loading, error, joinClub, leaveClub, toggleEvent } = useCommunitySections(user, open);
 
   useEffect(() => {
@@ -229,10 +230,17 @@ export function CommunitySectionsDrawer({
   );
 
   const changeTab = (next: SectionTabId) => {
+    if (next === 'recherche' && tab !== 'recherche') searchReturnTab.current = tab;
     setTab(next);
     if (next !== 'recherche') setQuery('');
     setFilter('discover');
     setSelected(null);
+  };
+
+  const closeSearch = () => {
+    setQuery('');
+    setScope('all');
+    changeTab(searchReturnTab.current);
   };
 
   const handleClub = async (club: ClubRow) => {
@@ -315,6 +323,9 @@ export function CommunitySectionsDrawer({
               <Icon name="x" size={14} aria-hidden="true" />
             </button>
           ) : null}
+          <button type="button" className="lkdv-search-close" aria-label="Fermer la recherche" onClick={closeSearch}>
+            <Icon name="x" size={16} aria-hidden="true" />
+          </button>
         </div>
       ) : null}
 

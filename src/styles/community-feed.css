@@ -2053,3 +2053,39 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   min-height: 50dvh !important;
   border-radius: 24px 24px 0 0 !important;
 }
+
+/* Recherche : animation de superposition et croix pillule. */
+.lkdv-search-box--hero {
+  animation: lkdv-search-overlay-in .36s cubic-bezier(.22,1,.36,1) both;
+  transform-origin: top center;
+}
+@keyframes lkdv-search-overlay-in {
+  from { opacity: 0; transform: translateY(-10px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.lkdv-search-box--hero { position: relative; z-index: 6; }
+.lkdv-search-close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: .5px solid rgba(255,255,255,.82);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.46) 55%, rgba(255,255,255,.6));
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  backdrop-filter: blur(18px) saturate(1.8);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.14), 0 6px 18px rgba(10,20,14,.16);
+  color: #17402C;
+  cursor: pointer;
+}
+.lkdv-search-box--hero { padding-right: 5px !important; }
+.lkdv-search-box--hero input { min-width: 0; }
+
+/* Création : fond plus clair que le verre Compte pour lire les textes. */
+.lkdv-half-drawer:has(.lkdv-create-selector) {
+  background: linear-gradient(180deg, rgba(255,255,255,.84), rgba(249,251,246,.72) 55%, rgba(255,255,255,.8)) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.6) brightness(1.03) !important;
+  backdrop-filter: blur(22px) saturate(1.6) brightness(1.03) !important;
+}
