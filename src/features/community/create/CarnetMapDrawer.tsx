@@ -33,6 +33,7 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
   const [active, setActive] = useState(0);
   const [drawing, setDrawing] = useState(false);
   const [trace, setTrace] = useState<Array<[number, number]>>([]);
+  const [snapState, setSnapState] = useState<'idle' | 'loading' | 'error'>('idle');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const mapNode = useRef<HTMLDivElement | null>(null);
@@ -89,7 +90,8 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       const marker = new Marker({ element, draggable: true }).setLngLat([day.lng, day.lat]).addTo(map);
       marker.on('dragend', () => {
         const position = marker.getLngLat();
-        setDays((current) => current.map((entry) => entry.id === day.id ? { ...entry, lng: position.lng, lat: position.lat } : entry));
+        const snapped = nearestTrace(position.lng, position.lat);
+        setDays((current) => current.map((entry) => entry.id === day.id ? { ...entry, lng: snapped[0], lat: snapped[1] } : entry));
       });
       markersRef.current.push(marker);
       day.moments.forEach((moment, momentIndex) => {
@@ -102,7 +104,8 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
         const momentMarker = new Marker({ element: dot, draggable: true }).setLngLat([moment.lng, moment.lat]).addTo(map);
         momentMarker.on('dragend', () => {
           const position = momentMarker.getLngLat();
-          setDays((current) => current.map((entry) => entry.id === day.id ? { ...entry, moments: entry.moments.map((m) => m.id === moment.id ? { ...m, lng: position.lng, lat: position.lat } : m) } : entry));
+          const snapped = nearestTrace(position.lng, position.lat);
+          setDays((current) => current.map((entry) => entry.id === day.id ? { ...entry, moments: entry.moments.map((m) => m.id === moment.id ? { ...m, lng: snapped[0], lat: snapped[1] } : m) } : entry));
         });
         markersRef.current.push(momentMarker);
       });
@@ -116,10 +119,19 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
     child?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   };
 
+  const nearestTrace = (lng: number, lat: number): [number, number] => {
+    const points = traceRef.current;
+    if (points.length === 0) return [lng, lat];
+    let best = points[0]; let bestDistance = Number.POSITIVE_INFINITY;
+    points.forEach((point) => { const distance = (point[0] - lng) ** 2 + (point[1] - lat) ** 2; if (distance < bestDistance) { bestDistance = distance; best = point; } });
+    return best;
+  };
+
   const addDay = () => {
     const map = mapRef.current;
     const center = map?.getCenter();
-    const day: Day = { id: crypto.randomUUID(), label: dayLabel(days.length), lng: center?.lng ?? DEFAULT_CENTER[0], lat: center?.lat ?? DEFAULT_CENTER[1], moments: [] };
+    const snapped = nearestTrace(center?.lng ?? DEFAULT_CENTER[0], center?.lat ?? DEFAULT_CENTER[1]);
+    const day: Day = { id: crypto.randomUUID(), label: dayLabel(days.length), lng: snapped[0], lat: snapped[1], moments: [] };
     setDays((current) => [...current, day]);
     setActive(days.length + 1);
     window.setTimeout(() => scrollToSlide(days.length + 1), 50);
@@ -138,12 +150,70 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
 
   const drawStart = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!drawing) return;
+    setSnapState('idle');
     pointerRef.current = true;
     mapRef.current?.dragPan.disable();
     addTracePoint(event);
   };
   const drawMove = (event: React.PointerEvent<HTMLDivElement>) => { if (drawing && pointerRef.current) addTracePoint(event); };
-  const drawEnd = () => { pointerRef.current = false; mapRef.current?.dragPan.enable(); };
+  const simplify = (points: Array<[number, number]>, tolerance = 0.00012): Array<[number, number]> => {
+    if (points.length <= 3) return points;
+    const sq = tolerance * tolerance;
+    const getSqSegDist = (p: [number, number], a: [number, number], b: [number, number]) => {
+      let x = a[0]; let y = a[1]; let dx = b[0] - x; let dy = b[1] - y;
+      if (dx !== 0 || dy !== 0) {
+        const t = ((p[0] - x) * dx + (p[1] - y) * dy) / (dx * dx + dy * dy);
+        if (t > 1) { x = b[0]; y = b[1]; } else if (t > 0) { x += dx * t; y += dy * t; }
+      }
+      dx = p[0] - x; dy = p[1] - y;
+      return dx * dx + dy * dy;
+    };
+    const simplifyStep = (first: number, last: number, out: Array<[number, number]>) => {
+      let maxSq = sq; let index = 0;
+      for (let i = first + 1; i < last; i += 1) {
+        const dist = getSqSegDist(points[i], points[first], points[last]);
+        if (dist > maxSq) { index = i; maxSq = dist; }
+      }
+      if (maxSq > sq) {
+        if (index - first > 1) simplifyStep(first, index, out);
+        out.push(points[index]);
+        if (last - index > 1) simplifyStep(index, last, out);
+      }
+    };
+    const out: Array<[number, number]> = [points[0]];
+    simplifyStep(0, points.length - 1, out);
+    out.push(points[points.length - 1]);
+    return out.slice(0, 14);
+  };
+
+  const snapToPath = async () => {
+    const raw = traceRef.current;
+    if (raw.length < 3) return;
+    setSnapState('loading');
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 12_000);
+    try {
+      const simplified = simplify(raw);
+      const points = simplified.map(([lng, lat]) => `${lng.toFixed(6)},${lat.toFixed(6)}`).join(';');
+      const response = await fetch(`/api/route?points=${points}&mode=pieton`, { signal: controller.signal });
+      const payload = await response.json();
+      const legs = Array.isArray(payload.legs) ? payload.legs : [];
+      const geometry = legs.flatMap((leg: { geometry?: Array<[number, number]> }) => Array.isArray(leg.geometry) ? leg.geometry : []);
+      if (!response.ok || geometry.length < 2) throw new Error('route_unavailable');
+      setTrace(geometry);
+      setSnapState('idle');
+    } catch {
+      setSnapState('error');
+    } finally {
+      window.clearTimeout(timer);
+    }
+  };
+
+  const drawEnd = () => {
+    pointerRef.current = false;
+    mapRef.current?.dragPan.enable();
+    void snapToPath();
+  };
   const addTracePoint = (event: React.PointerEvent<HTMLDivElement>) => {
     const map = mapRef.current;
     if (!map) return;
@@ -183,18 +253,27 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       ariaLabel="Créer un carnet"
       error={submitError}
       footer={
-        <div className="lkdv-carnet-daybar">
+        <div className="lkdv-carnet-footer">
           <button type="button" className="lkdv-carnet-footer-create" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet"><Check size={14} /></button>
-          <button type="button" className={active === 0 ? 'is-active' : ''} onClick={() => { setActive(0); scrollToSlide(0); }} aria-label="Réglages du carnet"><Settings2 size={14} /></button>
-          {days.map((day, index) => (
-            <button key={day.id} type="button" className={active === index + 1 ? 'is-active' : ''} onClick={() => { setActive(index + 1); scrollToSlide(index + 1); }}>{index + 1}</button>
-          ))}
-          <button type="button" className="lkdv-daybar-add" onClick={addDay} aria-label="Ajouter un jour"><Plus size={15} /></button>
+          <div
+            className="ig-tabs lkdv-carnet-daybar"
+            style={{ '--n': days.length + 2, '--active': active } as React.CSSProperties}
+            role="tablist"
+            aria-label="Jours du carnet"
+          >
+            <span className="ig-th" aria-hidden="true" />
+            <button type="button" role="tab" aria-selected={active === 0} className={active === 0 ? 'is-active' : ''} onClick={() => { setActive(0); scrollToSlide(0); }} aria-label="Réglages du carnet"><Settings2 size={13} /></button>
+            {days.map((day, index) => (
+              <button key={day.id} type="button" role="tab" aria-selected={active === index + 1} className={active === index + 1 ? 'is-active' : ''} onClick={() => { setActive(index + 1); scrollToSlide(index + 1); }} aria-label={day.label}>{index + 1}</button>
+            ))}
+            <button type="button" role="tab" aria-selected={active === days.length + 1} className="lkdv-daybar-add" onClick={addDay} aria-label="Ajouter un jour"><Plus size={14} /></button>
+          </div>
         </div>
       }
     >
       <div className="lkdv-carnet-map" ref={mapNode} data-trace-points={trace.length} data-drawing={drawing ? 'true' : 'false'}>
         <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => setDrawing((value) => !value)}><MapPin size={13} /> {drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}</button>
+        {snapState !== 'idle' ? <span className={`lkdv-snap-status${snapState === 'error' ? ' is-error' : ''}`}>{snapState === 'loading' ? 'Ajustement au chemin…' : 'Tracé libre'}</span> : null}
         <div
           className="lkdv-map-draw-layer"
           data-active={drawing ? 'true' : 'false'}
