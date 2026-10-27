@@ -265,8 +265,16 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
 
       {view === 'kit' ? (
         loadingKits ? (
-          <div className="s2" style={{ padding: '10px 2px' }}>
-            Chargement de vos kits…
+          <div className="msk-list" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <div className="msk-row" key={i}>
+                <span className="msk-ico" />
+                <span className="msk-lines">
+                  <span className="msk-line w70" />
+                  <span className="msk-line w45" />
+                </span>
+              </div>
+            ))}
           </div>
         ) : kits.length === 0 ? (
           <div className="li nt">
@@ -333,8 +341,16 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
 
       {view === 'equip' ? (
         loadingInv ? (
-          <div className="s2" style={{ padding: '10px 2px' }}>
-            Chargement de votre inventaire…
+          <div className="msk-list" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <div className="msk-row" key={i}>
+                <span className="msk-ico" />
+                <span className="msk-lines">
+                  <span className="msk-line w70" />
+                  <span className="msk-line w45" />
+                </span>
+              </div>
+            ))}
           </div>
         ) : inventory.length === 0 ? (
           <div className="li nt">
@@ -399,8 +415,16 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
 
       {view === 'trail' || view === 'gpx' ? (
         loadingTrails ? (
-          <div className="s2" style={{ padding: '10px 2px' }}>
-            Chargement de vos tracés…
+          <div className="msk-list" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <div className="msk-row" key={i}>
+                <span className="msk-ico" />
+                <span className="msk-lines">
+                  <span className="msk-line w70" />
+                  <span className="msk-line w45" />
+                </span>
+              </div>
+            ))}
           </div>
         ) : trails.length === 0 ? (
           <div className="li nt">

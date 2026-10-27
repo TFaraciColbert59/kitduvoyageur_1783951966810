@@ -22,9 +22,23 @@ export default function MessageriePage() {
         <div
           aria-busy="true"
           aria-label="Chargement de la messagerie"
-          style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}
+          style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: 16 }}
         >
-          Chargement de la messagerie…
+          <div className="msk-phone" aria-hidden="true">
+            <div className="msk-top" />
+            <div className="msk-card">
+              <div className="msk-search" />
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div className="msk-row" key={i}>
+                  <span className="msk-ico round" />
+                  <span className="msk-lines">
+                    <span className="msk-line w70" />
+                    <span className="msk-line w45" />
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
         <MessagesScreen

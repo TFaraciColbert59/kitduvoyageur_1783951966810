@@ -112,7 +112,17 @@ export const ForwardMessageSheet: React.FC<ForwardMessageSheetProps> = ({
 
       {loading ? (
         <div className="s2" style={{ padding: '10px 2px' }}>
-          Chargement de vos conversations…
+          <div className="msk-list" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <div className="msk-row" key={i}>
+                <span className="msk-ico" />
+                <span className="msk-lines">
+                  <span className="msk-line w70" />
+                  <span className="msk-line w45" />
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       ) : candidates.length === 0 ? (
         <div className="li nt">
