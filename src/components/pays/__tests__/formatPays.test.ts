@@ -16,9 +16,10 @@ describe('formatage fiche pays', () => {
     expect(formatArea('—')).toBeNull();
   });
 
-  it('arrondit la stat superficie au millier', () => {
-    expect(formatAreaShort(643801)).toBe('644\u202F000 km');
-    expect(formatAreaShort('551 695')).toBe('552\u202F000 km');
+  it('compacte la stat superficie au millier', () => {
+    expect(formatAreaShort(643801)).toBe('644k km');
+    expect(formatAreaShort('551 695')).toBe('552k km');
+    expect(formatAreaShort(850)).toBe('850 km');
     expect(formatAreaShort(null)).toBeNull();
   });
 
