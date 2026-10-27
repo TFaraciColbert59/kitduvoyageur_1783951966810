@@ -20,9 +20,8 @@ export function Field({
 }) {
   return (
     <div className="lkdv-form-field">
-      <label htmlFor={htmlFor}>
+      <label htmlFor={htmlFor} data-required={required ? 'true' : undefined}>
         {label}
-        {required ? <span className="lkdv-field-required" aria-label="requis"> *</span> : null}
       </label>
       {children}
       {hint ? <span className="hint">{hint}</span> : null}

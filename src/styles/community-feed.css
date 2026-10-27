@@ -2236,3 +2236,4 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 .lkdv-advanced > :not(summary) { margin-left: 8px; margin-right: 8px; }
 .lkdv-advanced > :last-child { margin-bottom: 8px; }
 .lkdv-field-required { color: #A05A3C; font-weight: 700; }
+.lkdv-form-field > label[data-required="true"]::after { content: ' *'; color: #A05A3C; font-weight: 700; }
