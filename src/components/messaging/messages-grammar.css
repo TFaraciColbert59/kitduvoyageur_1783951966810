@@ -1310,17 +1310,22 @@
   border-radius: 22px;
   overflow: hidden;
 }
-.lkdv-messages .mpost-embed .lkdv-post-media-wrap {
-  max-height: 168px;
-  overflow: hidden;
+.lkdv-messages .mpost-embed .lkdv-feed-post {
+  /* Le post du fil est un carré : dans un message, on le ramène à une vignette
+     large et basse pour ne pas manger tout le fil. */
+  aspect-ratio: auto !important;
+  height: 200px !important;
+  border-radius: 18px;
+}
+.lkdv-messages .mpost-embed .lkdv-post-media-wrap,
+.lkdv-messages .mpost-embed .lkdv-post-main {
+  height: 100%;
+  max-height: 200px;
 }
 .lkdv-messages .mpost-embed .lkdv-post-media {
-  max-height: 168px;
+  height: 100%;
+  max-height: 200px;
   object-fit: cover;
-}
-.lkdv-messages .mpost-embed .lkdv-post-main {
-  max-height: 320px;
-  overflow: hidden;
 }
 .lkdv-messages .mpost-embed .lkdv-feed-post,
 .lkdv-messages .mpost-embed > * {
