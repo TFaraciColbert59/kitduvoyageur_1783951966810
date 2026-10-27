@@ -87,12 +87,6 @@
 .lkdv-profile-preview{display:flex;flex-direction:column;gap:10px}.lkdv-profile-preview-head{display:flex;gap:11px;align-items:center}.lkdv-profile-preview-head>img,.lkdv-profile-preview-head>span{width:56px;height:56px;border-radius:999px;object-fit:cover;display:grid;place-items:center;background:#e4eee1;color:#17402c;font:700 18px/1 -apple-system,"SF Pro Display",Inter,system-ui,sans-serif;flex:none}
 .lkdv-profile-preview-head h3{margin:0;font:700 16px/1.2 -apple-system,"SF Pro Display",Inter,system-ui,sans-serif}.lkdv-profile-preview-head p{margin:2px 0;font:400 10.5px/1.3 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;color:#6a7a71}.lkdv-profile-preview-head small{display:inline-flex;align-items:center;gap:3px;font:600 10px/1 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;color:#17402c}.lkdv-profile-preview-bio{margin:0;font:400 12px/1.45 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;color:#4e5f55}.lkdv-profile-preview-actions{display:flex;gap:7px;flex-wrap:wrap}
 
-/* Création */
-.lkdv-create-back{height:28px;padding:0 10px;border:0;border-radius:999px;background:rgba(23,43,36,.07);color:#17402c;font:600 10.5px/1 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;cursor:pointer}
-.lkdv-create-catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lkdv-create-card{display:flex;align-items:center;gap:9px;min-height:58px;padding:9px 10px;border:0;border-radius:16px;background:rgba(255,255,255,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.94),0 0 0 .5px rgba(23,43,36,.08);text-align:left;color:#172b24;cursor:pointer}.lkdv-create-card>span:nth-child(2){flex:1;min-width:0}.lkdv-create-card b{display:block;font:600 12px/1.2 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif}.lkdv-create-card small{display:block;margin-top:2px;font:400 9.5px/1.2 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;color:#6a7a71}
-.lkdv-create-icon{width:32px;height:32px;flex:none;display:grid;place-items:center;border-radius:11px;background:#e5eee2;color:#17402c}.lkdv-create-card>svg{color:#8a978f;flex:none}.lkdv-create-preview{width:100%;max-height:220px;object-fit:cover;border-radius:16px;margin-bottom:10px;display:block}
-.lkdv-create-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.lkdv-create-check{display:flex;align-items:center;gap:7px;margin:2px 0 12px;font:500 11.5px/1.2 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;color:#4e5f55}.lkdv-create-check input{width:18px;height:18px;accent-color:#17402c}
-.lkdv-create-error{margin:0 0 10px;padding:8px 10px;border-radius:10px;background:rgba(180,60,48,.1);color:#a33227;font:500 11px/1.3 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif}.lkdv-create-note{margin:8px 0 0;font:400 10.5px/1.4 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;color:#6a7a71}
 @media(max-width:420px){.lkdv-post-pane{padding-left:12px;padding-right:12px}.lkdv-post-media{border-radius:14px}.lkdv-overlay-field input,.lkdv-overlay-field textarea,.lkdv-overlay-field select{font-size:16px}}
 /* Ancrage sur la carte principale : les overlays ne flottent plus au bas de la page. */
 .lkdv-compte-overlay{display:block!important;overflow:hidden!important;border-radius:26px!important;}
@@ -137,8 +131,7 @@
 .lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-sheet{top:0!important;bottom:calc(20% + 10px)!important;}
 .lkdv-post-drawer .lkdv-post-main .lkdv-post-author{display:none!important;}
 /* Création : feuille compacte posée sur la carte, pas une page vide. */
-.lkdv-compte-overlay:has(.lkdv-create-catalog) .lkdv-overlay-sheet,
-.lkdv-compte-overlay:has(.lkdv-create-back) .lkdv-overlay-sheet,
+.lkdv-compte-overlay:has(.lkdv-create-drawer) .lkdv-overlay-sheet,
 .lkdv-compte-overlay:has(.lkdv-saved-grid) .lkdv-overlay-sheet{top:8px!important;bottom:auto!important;height:auto!important;max-height:calc(100% - 16px)!important;}
 .lkdv-post-swipe{touch-action:pan-y!important;min-height:0!important;flex:1 1 auto!important;}
 .lkdv-post-drawer .lkdv-overlay-body>.lkdv-post-swipe{display:flex!important;flex-direction:column!important;min-height:0!important;}
@@ -154,8 +147,7 @@
 .lkdv-post-drawer .lkdv-overlay-close{background:none!important;width:30px!important;height:30px!important;}
 /* Post + création : même gabarit plein que les autres drawers de la carte. */
 .lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-sheet,
-.lkdv-compte-overlay:has(.lkdv-create-catalog) .lkdv-overlay-sheet,
-.lkdv-compte-overlay:has(.lkdv-create-back) .lkdv-overlay-sheet,
+.lkdv-compte-overlay:has(.lkdv-create-drawer) .lkdv-overlay-sheet,
 .lkdv-compte-overlay:has(.lkdv-saved-grid) .lkdv-overlay-sheet{top:8px!important;bottom:8px!important;height:auto!important;max-height:none!important;border-radius:28px!important;}
 /* Le header du post devient une pilule de verre posée sur la photo. */
 .lkdv-post-drawer .lkdv-overlay-header{position:absolute!important;top:8px!important;left:8px!important;right:8px!important;z-index:12!important;min-height:52px!important;padding:8px 10px 8px 12px!important;border:0!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.32) 55%,rgba(255,255,255,.46))!important;-webkit-backdrop-filter:blur(18px) saturate(1.8)!important;backdrop-filter:blur(18px) saturate(1.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.16),0 8px 20px rgba(23,43,36,.14)!important;}
@@ -351,132 +343,3 @@
 .lkdv-post-drawer .lkdv-share-conv b{font:600 14px/1.2 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;}
 .lkdv-post-drawer .lkdv-share-conv small{font:500 11px/1.25 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;}
 .lkdv-post-drawer .lkdv-share-conv button{min-height:36px!important;padding:0 13px!important;font:700 11px/1 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif!important;}
-
-/* Pilule auteur au-dessus des panneaux commentaires et partage,
-   alignée sur celle de la photo. Le contenu commence dessous. */
-.lkdv-post-drawer .lkdv-post-panel-author {
-  position: absolute !important;
-  top: 10px !important;
-  left: 12px !important;
-  z-index: 31 !important;
-  max-width: calc(100% - 64px) !important;
-  pointer-events: auto !important;
-}
-.lkdv-post-drawer .lkdv-post-panel-author .lkdv-post-author {
-  max-width: 100% !important;
-  min-height: 44px !important;
-}
-.lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel-body {
-  padding-top: 76px !important;
-}
-
-/* La photo se ferme par la poignée ou le glissement, pas par une croix.
-   Les panneaux commentaires/partage gardent leur propre croix. */
-.lkdv-post-drawer .lkdv-overlay-close {
-  display: none !important;
-}
-
-/* Le panneau commentaires/partage commence sous la pilule auteur.
-   On décale le panneau lui-même (pas seulement un padding interne qui peut
-   être neutralisé par le scroll) pour garantir la même position des deux côtés. */
-.lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel {
-  top: 62px !important;
-  border-radius: 24px !important;
-}
-.lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel-body {
-  padding-top: 8px !important;
-}
-
-/* Fond des panneaux jusqu'en haut ; seul le contenu reste sous la pilule. */
-.lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel {
-  top: 0 !important;
-  border-radius: 28px !important;
-}
-.lkdv-post-drawer .lkdv-community-panel-slot .lkdv-post-panel-body {
-  padding-top: 70px !important;
-}
-
-/* Capsule like/commentaire/partage : une seule recette, partagée avec le fil.
-   Même géométrie, même verre et même animation sur la Communauté et le Compte. */
-.lkdv-feed-post .lkdv-post-media-glass,
-.lkdv-post-drawer .lkdv-post-media-glass {
-  position: absolute !important;
-  left: auto !important;
-  right: 10px !important;
-  bottom: 10px !important;
-  z-index: 4 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 1px !important;
-  padding: 3px !important;
-  border-radius: 999px !important;
-  background: linear-gradient(180deg, rgba(255,255,255,.44), rgba(255,255,255,.2)) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(1.9) !important;
-  backdrop-filter: blur(18px) saturate(1.9) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.68), 0 0 0 .5px rgba(255,255,255,.36), 0 4px 14px rgba(10,20,14,.2) !important;
-  pointer-events: auto !important;
-}
-
-.lkdv-feed-post .lkdv-post-media-glass button,
-.lkdv-post-drawer .lkdv-post-media-glass button {
-  position: relative !important;
-  width: auto !important;
-  min-width: 46px !important;
-  height: 31px !important;
-  padding: 0 8px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 4px !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  color: #fff !important;
-  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
-  cursor: pointer !important;
-  transition: transform .18s cubic-bezier(.3,1.4,.5,1), color .18s ease !important;
-}
-
-.lkdv-feed-post .lkdv-post-media-glass button:active,
-.lkdv-post-drawer .lkdv-post-media-glass button:active {
-  transform: scale(.9) !important;
-}
-
-.lkdv-feed-post .lkdv-post-media-glass button:last-child,
-.lkdv-post-drawer .lkdv-post-media-glass button:last-child {
-  margin-left: 0 !important;
-}
-
-.lkdv-feed-post .lkdv-post-media-glass button.on,
-.lkdv-post-drawer .lkdv-post-media-glass button.on {
-  color: #FF6B8A !important;
-}
-
-.lkdv-feed-post .lkdv-post-media-glass svg,
-.lkdv-post-drawer .lkdv-post-media-glass svg {
-  width: 16px !important;
-  height: 16px !important;
-  flex: none !important;
-  display: block !important;
-  stroke-width: 2 !important;
-}
-
-.lkdv-feed-post .lkdv-post-action-count,
-.lkdv-post-drawer .lkdv-post-action-count {
-  display: inline-block !important;
-  min-width: 8px !important;
-  order: 2 !important;
-  text-align: left !important;
-  color: rgba(255,255,255,.94) !important;
-  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
-  font-variant-numeric: tabular-nums !important;
-  animation: lkdvCountPop .3s cubic-bezier(.22,1,.36,1) !important;
-}
-
-.lkdv-feed-post .lkdv-post-media-glass svg.is-pop,
-.lkdv-post-drawer .lkdv-post-media-glass svg.is-pop {
-  animation: lkdvLikePop .46s cubic-bezier(.22,1,.36,1) !important;
-}
