@@ -88,9 +88,9 @@ describe('clusterByScreenDistance', () => {
     expect(clusters[0].y).toBeCloseTo((0 + 0 + 20) / 3);
   });
 
-  it('ne laisse pas un massif s’étirer par agrégation en chaîne', () => {
+  it('mesure le rayon depuis le centre courant, pas entre voisins', () => {
     // a -> b -> c : chaque voisin est à 35 px du précédent, mais c est à 70 px de a.
-    // Mesurer depuis le centre courant borne l'emprise du massif.
+    // Après a et b, le centre vaut 17,5 : c est à 52,5 px du centre, donc il ne rejoint pas.
     const clusters = clusterByScreenDistance(
       [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
       (item) => ({ a: { x: 0, y: 0 }, b: { x: 35, y: 0 }, c: { x: 70, y: 0 } })[item.id]!,
@@ -100,6 +100,37 @@ describe('clusterByScreenDistance', () => {
       ['a', 'b'],
       ['c'],
     ]);
+  });
+
+  it('documente la dérive du centre : aucune borne d’emprise de massif', () => {
+    // Chaque point reste à moins de 40 px du centre courant au moment de son insertion,
+    // alors que l'emprise totale (83,33 px) dépasse le rayon. Comportement attendu, pas un bug :
+    // le contrat est « rayon depuis le centre à l'insertion », pas « diamètre borné ».
+    const xs = { a: 0, b: 40, c: 60, d: 73.33, e: 83.33 };
+    const clusters = clusterByScreenDistance(
+      ['a', 'b', 'c', 'd', 'e'] as const,
+      (id) => ({ x: xs[id], y: 0 }),
+      40
+    );
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].items).toEqual(['a', 'b', 'c', 'd', 'e']);
+    expect(clusters[0].x).toBeCloseTo((0 + 40 + 60 + 73.33 + 83.33) / 5);
+    expect(xs.e - xs.a).toBeGreaterThan(40);
+  });
+
+  it('fait absorber par le premier massif compatible, dans l’ordre d’entrée', () => {
+    // a crée cluster-0 (0), b crée cluster-1 (80), puis c (40) est à 40 px du centre de
+    // cluster-0 et à 40 px de cluster-1 : le premier compatible l'emporte, sans retrier.
+    const clusters = clusterByScreenDistance(
+      [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+      (item) => ({ a: { x: 0, y: 0 }, b: { x: 80, y: 0 }, c: { x: 40, y: 0 } })[item.id]!,
+      40
+    );
+    expect(clusters.map((cluster) => cluster.id)).toEqual(['cluster-0', 'cluster-1']);
+    expect(clusters[0].items.map((item) => item.id)).toEqual(['a', 'c']);
+    expect(clusters[0].x).toBe(20);
+    expect(clusters[1].items.map((item) => item.id)).toEqual(['b']);
+    expect(clusters[1].x).toBe(80);
   });
 
   it('garde le rayon de 40 px : 40 px agrège, 41 px sépare', () => {

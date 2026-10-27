@@ -38,12 +38,15 @@ export interface MassifCluster<T> {
 /**
  * Agrège des massifs par distance écran, en un seul passage.
  *
- * Le rayon s'applique à la distance entre le point courant et le centre courant
- * du massif candidat (moyenne de ses membres), jamais entre deux membres isolés :
- * un massif ne peut donc pas s'étirer au-delà de `radiusPx` par agrégation
- * successive. Le premier massif compatible dans l'ordre d'entrée absorbe le point,
- * ce qui rend la sortie stable : l'ordre des massifs suit leur première apparition
- * et l'ordre des membres suit l'ordre d'entrée.
+ * Le rayon est mesuré **au moment de l'insertion**, entre le point courant et le
+ * centre courant du massif candidat (moyenne de ses membres à cet instant). Ce n'est
+ * ni une distance entre membres voisins, ni une borne d'emprise : le centre dérive à
+ * chaque ajout, donc un massif peut couvrir plus de `radiusPx` de large (par exemple
+ * 0, 40, 60, 73.33, 83.33 px finissent dans un seul massif d'emprise 83.33 px).
+ *
+ * Le premier massif compatible dans l'ordre d'entrée absorbe le point, ce qui rend la
+ * sortie stable et déterministe pour une entrée donnée : l'ordre des massifs suit leur
+ * première apparition et l'ordre des membres suit l'ordre d'entrée.
  */
 export function clusterByScreenDistance<T>(
   items: T[],
