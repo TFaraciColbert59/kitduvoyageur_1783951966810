@@ -111,3 +111,21 @@
 /* Le sélecteur du sous-drawer reste visible et au-dessus. */
 .lkdv-kit-card .lkdv-kit-selector{display:grid!important;opacity:1!important;visibility:visible!important;z-index:60!important;bottom:8px!important;right:12px!important;}
 .lkdv-kit-card[data-view="2"] .lkdv-kit-selector{display:grid!important;opacity:1!important;}
+
+/* Un seul sélecteur de kit visible à la fois : pas d'empilement de 9 capsules. */
+.lkdv-kit-card[data-view="0"] .lkdv-kit-selector{opacity:0!important;pointer-events:none!important;}
+.lkdv-kit-card[data-view="0"]:hover .lkdv-kit-selector,
+.lkdv-kit-card[data-view="0"]:focus-within .lkdv-kit-selector{opacity:1!important;pointer-events:auto!important;}
+.lkdv-kit-card[data-view="1"] .lkdv-kit-selector,
+.lkdv-kit-card[data-view="2"] .lkdv-kit-selector{opacity:1!important;pointer-events:auto!important;}
+
+/* Les sélecteurs restent accessibles sur toutes les cartes kit, sans hover mobile. */
+.lkdv-kit-card[data-view="0"] .lkdv-kit-selector{
+  opacity:1!important;
+  pointer-events:auto!important;
+  z-index:25!important;
+}
+.lkdv-kit-card[data-view="1"] .lkdv-kit-selector,
+.lkdv-kit-card[data-view="2"] .lkdv-kit-selector{
+  z-index:25!important;
+}
