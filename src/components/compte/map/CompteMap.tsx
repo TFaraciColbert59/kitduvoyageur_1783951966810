@@ -26,7 +26,7 @@ import type {
   MapTrack,
   TrackPoint,
 } from '@/features/compte/map/types';
-import { resolveMapZoomConfig } from '@/features/compte/map/zoomHierarchy';
+import { clusterByScreenDistance, resolveMapZoomConfig } from '@/features/compte/map/zoomHierarchy';
 import { CompteMapAttribution, CompteMapHud } from './CompteMapHud';
 import { CompteMapCallout } from './CompteMapCallout';
 import { CompteMapFallback } from './CompteMapFallback';
@@ -206,6 +206,20 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   const [year, setYear] = useState<number | null>(null);
 
   const config = mapModeConfig(context.mode);
+  // `zoomConfig` est un objet neuf à chaque frame de zoom (handler `zoom`) :
+  // le mettre tel quel en dépendance d'effet reconstruirait tout l'overlay à
+  // chaque frame. On n'expose que les primitives qui changent réellement
+  // l'agrégation, bande comprise — une nouvelle bande signifie de nouveaux
+  // écarts écran, donc de nouveaux agrégats. `band` fait partie de l'identité
+  // du memo pour forcer ce recalcul aux franchissements de seuil.
+  const massifCluster = useMemo(
+    () => ({
+      band: zoomConfig.band,
+      clustered: zoomConfig.massifs === 'clustered',
+      radiusPx: zoomConfig.clusterRadiusPx,
+    }),
+    [zoomConfig.band, zoomConfig.massifs, zoomConfig.clusterRadiusPx]
+  );
   const query = useQuery<CompteMapPayload, Error>({
     queryKey: ['compte-map'],
     queryFn: fetchCompteMap,
@@ -535,30 +549,95 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     overlay.innerHTML = '';
 
     type Entry = { element: HTMLButtonElement; lng: number; lat: number; anchor: string; detail: boolean };
+    type MassifEntry = { massif: MapMassif; point: { x: number; y: number } };
     const entries: Entry[] = [];
 
-    if (config.layers.massifs) for (const massif of data.massifs) {
-      const element = document.createElement('button');
-      element.type = 'button';
-      element.className = 'lkdv-map-massif';
-      element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
-      element.dataset.massifId = massif.id;
-      const icon = document.createElement('span');
-      icon.className = 'lkdv-map-massif-ico';
-      icon.innerHTML = MAP_ICON.peak;
-      const count = document.createElement('b');
-      count.textContent = String(massif.outings);
-      const label = document.createElement('span');
-      label.className = 'lkdv-map-massif-name';
-      label.textContent = massif.name;
-      element.append(icon, count, label);
-      element.title = `${massif.name} · ${massif.outings} sorties`;
-      element.addEventListener('click', (event) => {
-        event.stopPropagation();
-        setSelected({ kind: 'massif', id: massif.id });
+    /** Cadre l'ensemble des massifs d'un agrégat : même padding que la fiche. */
+    const fitMassifGroup = (massifs: MapMassif[]) => {
+      const lngs = massifs.map((massif) => massif.center.lng);
+      const lats = massifs.map((massif) => massif.center.lat);
+      const bounds: [[number, number], [number, number]] = [
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)],
+      ];
+      map.fitBounds(bounds, {
+        padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
+          sheetOpen: false,
+          mapbig: map.getContainer().clientHeight > 500,
+        }),
+        maxZoom: 12,
+        duration: prefersReducedMotion() ? 0 : 1200,
+        easing: CINEMATIC_EASE,
+        essential: true,
       });
-      overlay.appendChild(element);
-      entries.push({ element, lng: massif.center.lng, lat: massif.center.lat, anchor: 'translate(-50%, -100%)', detail: false });
+    };
+
+    if (config.layers.massifs) {
+      const massifEntries: MassifEntry[] = data.massifs.map((massif) => ({
+        massif,
+        point: map.project([massif.center.lng, massif.center.lat]),
+      }));
+      // Les agrégats ne sont calculés que sur les bandes `clustered` (Monde,
+      // Pays) ; ailleurs chaque massif garde exactement son bouton et son clic.
+      const clusters = massifCluster.clustered
+        ? clusterByScreenDistance(massifEntries, (entry) => entry.point, massifCluster.radiusPx)
+        : massifEntries.map((entry) => ({
+            id: entry.massif.id,
+            items: [entry],
+            x: entry.point.x,
+            y: entry.point.y,
+          }));
+
+      for (const cluster of clusters) {
+        if (cluster.items.length > 1) {
+          const element = document.createElement('button');
+          element.type = 'button';
+          element.className = 'lkdv-map-cluster';
+          element.dataset.clusterCount = String(cluster.items.length);
+          element.setAttribute('aria-label', `${cluster.items.length} massifs proches`);
+          element.title = `${cluster.items.length} massifs proches — cadrer le groupe`;
+          element.textContent = String(cluster.items.length);
+          element.addEventListener('click', (event) => {
+            event.stopPropagation();
+            fitMassifGroup(cluster.items.map((entry) => entry.massif));
+          });
+          overlay.appendChild(element);
+          // Le centre d'un agrégat est un point écran : on le reprojette à
+          // chaque frame via la même ancre géographique que les massifs.
+          const center = map.unproject([cluster.x, cluster.y]);
+          entries.push({
+            element,
+            lng: center.lng,
+            lat: center.lat,
+            anchor: 'translate(-50%, -50%)',
+            detail: false,
+          });
+          continue;
+        }
+
+        const massif = cluster.items[0].massif;
+        const element = document.createElement('button');
+        element.type = 'button';
+        element.className = 'lkdv-map-massif';
+        element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
+        element.dataset.massifId = massif.id;
+        const icon = document.createElement('span');
+        icon.className = 'lkdv-map-massif-ico';
+        icon.innerHTML = MAP_ICON.peak;
+        const count = document.createElement('b');
+        count.textContent = String(massif.outings);
+        const label = document.createElement('span');
+        label.className = 'lkdv-map-massif-name';
+        label.textContent = massif.name;
+        element.append(icon, count, label);
+        element.title = `${massif.name} · ${massif.outings} sorties`;
+        element.addEventListener('click', (event) => {
+          event.stopPropagation();
+          setSelected({ kind: 'massif', id: massif.id });
+        });
+        overlay.appendChild(element);
+        entries.push({ element, lng: massif.center.lng, lat: massif.center.lat, anchor: 'translate(-50%, -100%)', detail: false });
+      }
     }
 
     if (config.layers.pois) for (const poi of data.pois) {
@@ -623,7 +702,15 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       map.off('resize', place);
       overlay?.remove();
     };
-  }, [map, ready, data, config.layers.massifs, config.layers.pois, config.layers.carnets]);
+  }, [
+    map,
+    ready,
+    data,
+    config.layers.massifs,
+    config.layers.pois,
+    config.layers.carnets,
+    massifCluster,
+  ]);
 
   useEffect(() => {
     if (!map || !ready) return;
@@ -632,7 +719,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const id = element.dataset.massifId;
       element.classList.toggle('is-selected', selected?.kind === 'massif' && selected.id === id);
     });
-  }, [map, ready, selected]);
+    // `massifCluster` est aussi une dépendance : un franchissement de bande
+    // reconstruit l'overlay, il faut réappliquer la sélection aux nouveaux
+    // boutons sans attendre un changement de `selected`.
+  }, [map, ready, selected, massifCluster]);
 
   useEffect(() => {
     if (!map || !ready) return;
