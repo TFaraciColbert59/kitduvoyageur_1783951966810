@@ -1,6 +1,10 @@
 import { extractCoords } from '@/components/carnet/profile/traceGeometry';
 import type { CarnetPlace, CarnetRow } from './types';
 
+/* Mêmes formateurs que le Compte (12 px, nombres groupés, une décimale max). */
+const GROUPED = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+const ONE_DECIMAL = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
+
 /**
  * Lieu réel de la fiche carnet — aucune valeur inventée.
  *
@@ -59,6 +63,60 @@ export function buildCarnetPlace(carnet: CarnetRow, trace: unknown | null): Carn
 export interface CarnetPlaceSegment {
   key: 'country' | 'region' | 'locality';
   label: string;
+}
+
+/** Valeur absente d'une ligne de fiche : un tiret, jamais un zéro décoratif. */
+export const PLACE_LINE_MISSING = '—';
+
+/** Séparateur unique de la ligne de lieu, comme la ligne de bio du Compte. */
+export const PLACE_LINE_SEPARATOR = ' · ';
+
+export interface CarnetPlaceLineInput {
+  place: CarnetPlace | null | undefined;
+  /** `carnets.destination` : utilisé seulement si le pays réel est absent. */
+  fallback?: string | null;
+  /** Nombre réel d'étapes (`carnet.days.length`). */
+  daysCount: number;
+  distanceKm: number | null;
+  elevationM: number | null;
+  /** Plage de dates réelle, optionnelle, ajoutée en fin de ligne. */
+  dateRange?: string | null;
+}
+
+/**
+ * Segments de la ligne de lieu unique — même famille que la ligne de bio du
+ * Compte (« 18 sorties · 339 km · 12,9 km D+ ») : lieu, jours, distance,
+ * dénivelé. Aucune pastille, aucun fond, aucun bouton.
+ *
+ * Chaque valeur vient d'une colonne réelle ; une valeur absente devient un
+ * tiret cadratin, jamais une estimation.
+ */
+export function placeLineParts(input: CarnetPlaceLineInput): string[] {
+  const place =
+    trimmed(input.place?.country) ??
+    trimmed(input.place?.locality) ??
+    trimmed(input.fallback);
+  const distance = input.distanceKm !== null && input.distanceKm > 0
+    ? `${ONE_DECIMAL.format(input.distanceKm)} km`
+    : null;
+  const elevation = input.elevationM !== null && input.elevationM > 0
+    ? `${GROUPED.format(input.elevationM)} m D+`
+    : null;
+
+  const parts = [
+    place ?? PLACE_LINE_MISSING,
+    input.daysCount > 0 ? `${input.daysCount} jour${input.daysCount > 1 ? 's' : ''}` : PLACE_LINE_MISSING,
+    distance ?? PLACE_LINE_MISSING,
+    elevation ?? PLACE_LINE_MISSING,
+  ];
+  const dates = trimmed(input.dateRange);
+  if (dates) parts.push(dates);
+  return parts;
+}
+
+/** Ligne de lieu complète, prête à peindre dans un seul nœud texte. */
+export function placeLineText(input: CarnetPlaceLineInput): string {
+  return placeLineParts(input).join(PLACE_LINE_SEPARATOR);
 }
 
 /**

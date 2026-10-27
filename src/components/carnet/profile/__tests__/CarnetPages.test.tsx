@@ -151,6 +151,9 @@ describe('CarnetPages — pages du carnet', () => {
     const onOpenPost = vi.fn();
     const { container } = render(<CarnetPages {...base({ onOpenPost })} />);
     expect(container.querySelectorAll('.ckp-grid-wrap .ckp-tile')).toHaveLength(2);
+    /* Gabarit du Compte : aucune décoration de tuile, rien que l'image. */
+    expect(container.querySelector('.ckp-tile-expand')).toBeNull();
+    expect(container.querySelector('.ckp-grid-wrap .ckp-tile img')).toBeTruthy();
     expect(container.querySelector('.ckp-pages')?.getAttribute('role')).toBe('tabpanel');
     expect(container.querySelector('.ckp-pages')?.getAttribute('id')).toBe('carnet-page-posts');
     fireEvent.click(screen.getAllByRole('button', { name: /^Moment / })[1]);

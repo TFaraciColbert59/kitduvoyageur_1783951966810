@@ -1,14 +1,13 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
 import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
 import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetMediaTabs } from './CarnetMediaTabs';
 import { SfIcon, type SfIconName } from './sfIcons';
 import { CARNET_PAGE_TABS, CarnetPages, carnetPageIndex, type CarnetPageId } from './CarnetPages';
-import { extractCoords, projectToViewBox, traceCenter } from './traceGeometry';
-import { placeSegments } from '@/features/carnet/detail/place';
+import { extractCoords, projectToViewBox } from './traceGeometry';
+import { PLACE_LINE_MISSING, placeLineParts } from '@/features/carnet/detail/place';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 
 /** Cible de recentrage de la carte du bas, toujours issue d'une coordonnée réelle. */
@@ -30,8 +29,6 @@ export interface CarnetCardProps {
   /** Les actions du sélecteur ouvrent une page, jamais un drawer. */
   onOpenComments: () => void;
   onOpenLikes: () => void;
-  onSave: () => void;
-  onFocusPlace: (focus: CarnetPlaceFocus) => void;
   onOpenPost: (index: number) => void;
   onDownloadGpx: () => void;
   likesPage?: React.ReactNode;
@@ -42,11 +39,10 @@ export interface CarnetCardProps {
 /**
  * Index du segment qui reçoit la lentille blanche dans la capsule.
  *
- * La capsule aligne cinq segments de 41,5 px : ♥ 0 (J’aime), 💬 1
- * (Commentaires), 🔖 2 (Enregistrer, une action), ▦ 3 (Posts), 🗺 4
- * (Parcours). La lentille ne se pose que sur une vue ou une page affichée :
- * jamais sur une action (Enregistrer occupe le 2), et aucune sur Gérer,
- * Étapes, Matériel ou Nature.
+ * La capsule aligne quatre segments de 41,5 px, dans l'ordre du DOM :
+ * ♥ 0 (J’aime), 💬 1 (Commentaires), ▦ 2 (Posts), 🗺 3 (Parcours).
+ * Chacun ouvre une page réelle ; la lentille ne se pose donc que sur la page
+ * affichée, et disparaît sur Gérer, Étapes, Matériel ou Nature.
  */
 export function selectorLensIndex(page: CarnetPageId): number {
   switch (page) {
@@ -55,9 +51,9 @@ export function selectorLensIndex(page: CarnetPageId): number {
     case 'comments':
       return 1;
     case 'posts':
-      return 3;
+      return 2;
     case 'parcours':
-      return 4;
+      return 3;
     default:
       return -1;
   }
@@ -66,7 +62,6 @@ export function selectorLensIndex(page: CarnetPageId): number {
 const SF_ICONS: Record<string, SfIconName> = {
   heart: 'heart',
   'message-square': 'bubble',
-  bookmark: 'bookmark',
   map: 'map',
 };
 
@@ -144,8 +139,6 @@ export function CarnetCard({
   onOpenStat,
   onOpenComments,
   onOpenLikes,
-  onSave,
-  onFocusPlace,
   onOpenPost,
   onDownloadGpx,
   likesPage = null,
@@ -154,21 +147,27 @@ export function CarnetCard({
 }: CarnetCardProps) {
   const traceCoords = extractCoords(detail.trace);
   const tracePath = projectToViewBox(traceCoords, 66, 9);
-  const center = traceCenter(traceCoords);
-  /* Le centre de la trace reste la cible du recentrage (comportement validé) ;
-     les coordonnées réelles du lieu prennent le relais sur un carnet sans trace. */
+  /* Lieu réel de la fiche : aucune coordonnée n'est estimée ici. */
   const place = detail.place ?? { country: null, region: null, locality: null, lat: null, lng: null };
-  const placeFocus: CarnetPlaceFocus | null = center
-    ? { ...center, zoom: 10 }
-    : place.lat !== null && place.lng !== null
-      ? { lat: place.lat, lng: place.lng, zoom: 10 }
-      : null;
-  const placePills = placeSegments(place, detail.destination);
+  /* Une ligne unique, du texte seul : lieu · jours · distance · dénivelé · dates.
+     Aucune valeur inventée : un champ absent devient un tiret, et la ligne
+     entière disparaît si le carnet n'a réellement rien à dire. */
+  const placeLine = placeLineParts({
+    place,
+    fallback: detail.destination,
+    daysCount: detail.days.length,
+    distanceKm: detail.distanceKm,
+    elevationM: detail.elevationM,
+    dateRange: detail.dateRange,
+  });
+  const showPlaceLine = placeLine.some((part) => part !== PLACE_LINE_MISSING);
   const participants = participantsOf(detail);
   const lensIndex = selectorLensIndex(page);
 
   return (
-    <section className="ckp-card" aria-label="Carte du carnet">
+    /* `id="card"` : la feuille du post (OverlaySheet) s'ancre sur la carte,
+       comme le post du Compte — mêmes marges, même cadre. */
+    <section className="ckp-card" id="card" aria-label="Carte du carnet">
       <div className="ckp-card-scroll">
         <div className="ckp-head">
           <button
@@ -223,23 +222,8 @@ export function CarnetCard({
 
         {detail.description ? <p className="ckp-bio-line">{detail.description}</p> : null}
 
-        {placePills.length > 0 || detail.dateRange ? (
-          <div className="ckp-place-row">
-            {placePills.map((segment, index) => (
-              <button
-                key={segment.key}
-                type="button"
-                className="ckp-place-pill"
-                onClick={() => placeFocus && onFocusPlace(placeFocus)}
-                disabled={!placeFocus}
-                aria-label={`Recentrer la carte sur ${segment.label}`}
-              >
-                {index === 0 ? <Icon name="map-pin" size={12} aria-hidden="true" /> : null}
-                <span>{segment.label}</span>
-              </button>
-            ))}
-            {detail.dateRange ? <span className="ckp-place-date">{detail.dateRange}</span> : null}
-          </div>
+        {showPlaceLine ? (
+          <p className="ckp-place-line">{placeLine.join(' · ')}</p>
         ) : null}
 
         {participants.length > 0 ? (
@@ -274,7 +258,7 @@ export function CarnetCard({
       </div>
 
       <div className="ckp-card-foot">
-        {/* Une seule lentille pour les cinq segments : elle glisse par `--i`,
+        {/* Une seule lentille pour les quatre segments : elle glisse par `--i`,
             ne se pose que sur la vue ou la page active, et reste sous les
             boutons (`z-index` 0 contre 1). */}
         <span
@@ -297,13 +281,6 @@ export function CarnetCard({
             count={detail.engagement.comments}
             onClick={onOpenComments}
             current={page === 'comments'}
-          />
-          {/* Enregistrer est une action : elle ne reçoit jamais la lentille. */}
-          <Action
-            icon="bookmark"
-            label={detail.engagement.favorited ? 'Enregistré' : 'Enregistrer'}
-            onClick={onSave}
-            pressed={detail.engagement.favorited}
           />
         </div>
 
