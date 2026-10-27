@@ -435,8 +435,7 @@
   height: 15px;
 }
 .lkdv-messages .mrow-act.danger {
-  /* Suppression : icône rouge seule, aucune tuile colorée. */
-  background: none;
+  /* Même tuile que l'autre action, icône rouge. */
   color: var(--bad);
 }
 
