@@ -7,7 +7,10 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lumineux, Modal Post & Drawers', () => {
-  const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx');
+  const v8Source =
+    read('src/components/compte/CompteLiquidGlassV8.tsx') +
+    '\n' + read('src/components/compte/compte-v8.css') +
+    '\n' + read('src/components/compte/compte-apple-hig.css');
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
 
   it('1. Profile Header layout (Instagram style) : avatar + name/pseudo à gauche, stats transparentes 18px à droite sans chevauchement', () => {

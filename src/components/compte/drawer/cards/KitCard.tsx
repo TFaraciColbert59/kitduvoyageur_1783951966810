@@ -227,6 +227,7 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
     Math.round(firstNumber(kit.quantity) ?? products.reduce((total, product) => total + product.quantity, 0))
   ) || kitItemCount(kit);
   const wear = wearPercent(kit.outings);
+  const generation = kitGeneration(kit);
   const [view, setView] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(products[0]?.id ?? null);
   const [dragX, setDragX] = useState(0);
@@ -518,6 +519,34 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
 
   const owner = viewerMode === 'owner';
   const actionDisabled = !kitId || busy !== null;
+  const kitFeedback = (
+    <>
+      {panel ? (
+        <section className="lkdv-kit-panel" role="region" aria-label={panel.title}>
+          <h4>{panel.title}</h4>
+          {panel.lines.map((line, index) => <p key={`${panel.title}-${index}`}>{line}</p>)}
+          {panel.href ? <a className="lkdv-kit-panel-link" href={panel.href}>Ouvrir le lien</a> : null}
+        </section>
+      ) : null}
+      {notice ? <p className="lkdv-kit-notice" role="status">{notice}</p> : null}
+      {error ? <p className="lkdv-kit-error" role="alert">{error}</p> : null}
+    </>
+  );
+  const kitActions = owner ? (
+    <div className="lkdv-kit-direct-actions" role="group" aria-label={`Actions du kit ${name}`}>
+      <button type="button" disabled={actionDisabled} onClick={() => void forkKit()} aria-label="Récupérer"><GitFork size={15} /><span>Récupérer</span></button>
+      <button type="button" disabled={actionDisabled} onClick={() => void shareKit()} aria-label="Partager"><Share2 size={15} /><span>Partager</span></button>
+      <button type="button" disabled={actionDisabled} onClick={() => openSheet()} aria-label="Fiche"><FileText size={15} /><span>Fiche</span></button>
+      <details className="lkdv-kit-more-actions">
+        <summary>Autres actions du kit</summary>
+        <div>
+          <button type="button" disabled={actionDisabled} onClick={openRoyalties} aria-label="Royalties">Royalties</button>
+          <button type="button" disabled={actionDisabled} onClick={openHistory} aria-label="Historique">Historique</button>
+          <button type="button" disabled={actionDisabled} onClick={openDiscovery} aria-label="Découvrir">Découvrir</button>
+        </div>
+      </details>
+    </div>
+  ) : null;
   const trackStyle: React.CSSProperties = {
     transform: `translateX(calc(${-view * 100}% + ${dragX}px))`,
   };
@@ -540,7 +569,7 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
       >
         <div className={`lkdv-kit-track${dragging ? ' is-dragging' : ''}`} style={trackStyle}>
           <section className="lkdv-kit-pane" data-view="base" aria-hidden={view !== 0}>
-            <div className="lkdv-kit-base">
+            <div className={`lkdv-kit-base${!products.length ? ' lkdv-kit-base--empty' : ''}`}>
               <div className="lkdv-kit-base-main">
                 <h3 className="lkdv-kit-name">{name}</h3>
                 <p className="lkdv-kit-base-meta">
@@ -548,6 +577,14 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                   <span aria-hidden="true">·</span>
                   <span>{quantity} pièce{quantity === 1 ? '' : 's'}</span>
                 </p>
+                <div className="lkdv-kit-lineage" role="group" aria-label={`Filiation du kit ${name}`}>
+                  {[1, 2, 3].map((step) => (
+                    <React.Fragment key={step}>
+                      {step > 1 ? <span aria-hidden="true">→</span> : null}
+                      <span aria-current={step === generation ? 'step' : undefined}>G{step}</span>
+                    </React.Fragment>
+                  ))}
+                </div>
                 <div
                   className="lkdv-kit-wear"
                   data-due={wear !== null && wear >= 80 ? 'true' : 'false'}
@@ -561,6 +598,7 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                   <i style={{ width: `${wear ?? 0}%` }} />
                 </div>
               </div>
+              {!products.length ? <>{kitFeedback}{kitActions}</> : null}
               <div className="lkdv-kit-rail" aria-label={`Produits du kit ${name}`}>
                 {products.length ? products.map((product) => (
                   <button
@@ -642,22 +680,8 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                     </section>
                   ) : null}
 
-                  {panel ? (
-                    <section className="lkdv-kit-panel" role="region" aria-label={panel.title}>
-                      <h4>{panel.title}</h4>
-                      {panel.lines.map((line, index) => <p key={`${panel.title}-${index}`}>{line}</p>)}
-                      {panel.href ? <a className="lkdv-kit-panel-link" href={panel.href}>Ouvrir le lien</a> : null}
-                    </section>
-                  ) : null}
-                  {notice ? <p className="lkdv-kit-notice" role="status">{notice}</p> : null}
-                  {error ? <p className="lkdv-kit-error" role="alert">{error}</p> : null}
-                  {owner ? (
-                    <div className="lkdv-kit-direct-actions" role="group" aria-label={`Actions du kit ${name}`}>
-                      <button type="button" disabled={actionDisabled} onClick={() => void forkKit()} aria-label="Récupérer"><GitFork size={15} /><span>Récupérer</span></button>
-                      <button type="button" disabled={actionDisabled} onClick={() => void shareKit()} aria-label="Partager"><Share2 size={15} /><span>Partager</span></button>
-                      <button type="button" disabled={actionDisabled} onClick={() => openSheet()} aria-label="Fiche"><FileText size={15} /><span>Fiche</span></button>
-                    </div>
-                  ) : null}
+                  {kitFeedback}
+                  {kitActions}
                 </div>
               ) : (
                 <p className="lkdv-kit-empty">Choisis un produit dans la composition.</p>
@@ -706,6 +730,9 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-card-v2[data-view="2"] .lkdv-kit-pane[data-view="product"]{opacity:1!important;transform:none!important;}
 .lkdv-kit-track.is-dragging .lkdv-kit-pane{transition:none!important;}
 .lkdv-kit-base{display:grid!important;grid-template-columns:72px minmax(0,1fr)!important;gap:8px!important;height:100%!important;min-width:0!important;}
+.lkdv-kit-base--empty{display:flex!important;flex-direction:column!important;overflow-y:auto!important;overscroll-behavior:contain!important;}
+.lkdv-kit-base--empty .lkdv-kit-base-main{flex:none!important;}
+.lkdv-kit-base--empty .lkdv-kit-rail{display:none!important;}
 .lkdv-kit-base-main{grid-column:2!important;grid-row:1!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:7px!important;min-width:0!important;}
 .lkdv-kit-name{margin:0!important;font:700 15.5px/1.18 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;letter-spacing:-.015em!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
 .lkdv-kit-base-meta{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:4px!important;margin:0!important;font:500 11.5px/1.25 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--label2,#56665D)!important;font-variant-numeric:tabular-nums!important;}
@@ -747,6 +774,12 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-product-section h4{margin:0!important;font:700 9.5px/1.2 var(--sf)!important;color:var(--label2,#56665D)!important;text-transform:uppercase!important;letter-spacing:.06em!important;}
 .lkdv-kit-product-desc{margin:0!important;font:400 11px/1.4 var(--sf)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-vital{align-self:flex-start!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.1)!important;color:#17402C!important;font:700 9px/1.2 var(--sf)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
+.lkdv-kit-lineage{display:flex;align-items:center;gap:5px;font:500 9px/1.2 var(--sf);color:var(--label2);}
+.lkdv-kit-lineage [aria-current="step"]{font-weight:700;color:var(--tint);}
+.lkdv-kit-more-actions{grid-column:1/-1;}
+.lkdv-kit-more-actions summary{display:list-item;min-height:44px;align-content:center;font:600 10px/1.2 var(--sf);cursor:pointer;}
+.lkdv-kit-more-actions>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
+.lkdv-kit-more-actions>div button{min-height:44px!important;}
 .lkdv-kit-direct-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin-top:1px!important;}
 .lkdv-kit-direct-actions button{display:flex!important;align-items:center!important;justify-content:center!important;gap:4px!important;height:32px!important;min-height:32px!important;padding:0 5px!important;border:.5px solid rgba(255,255,255,.75)!important;border-radius:999px!important;background:rgba(255,255,255,.4)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;color:#17402C!important;font:600 9px/1 var(--sf)!important;cursor:pointer!important;white-space:nowrap!important;}
 .lkdv-kit-direct-actions button:active{transform:scale(.95)!important;}

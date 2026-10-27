@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { invalidateUserCache } from '@/lib/perf/userMemo';
 
 const mocks = vi.hoisted(() => ({
   requireUser: vi.fn(),
@@ -14,8 +15,13 @@ import { GET } from '../route';
 
 describe('GET /api/compte/map', () => {
   beforeEach(() => {
+    invalidateUserCache('u1');
     mocks.requireUser.mockReset();
     mocks.loadCompteMap.mockReset();
+  });
+
+  afterEach(() => {
+    invalidateUserCache('u1');
   });
 
   it('refuse sans session', async () => {
@@ -50,5 +56,6 @@ describe('GET /api/compte/map', () => {
     mocks.loadCompteMap.mockRejectedValue(new Error('boom'));
     const response = await GET();
     expect(response.status).toBe(500);
+    expect(mocks.loadCompteMap).toHaveBeenCalledWith({}, 'u1');
   });
 });

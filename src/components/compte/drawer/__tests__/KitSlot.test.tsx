@@ -20,6 +20,24 @@ const jsonResponse = (data: unknown, ok = true, status = 200): Response =>
 
 const KIT_ID = '11111111-1111-4111-8111-111111111111';
 
+const PRODUCT = {
+  id: 'product-1',
+  name: 'Sac 45 L',
+  category: 'Portage',
+  weightG: 900,
+  quantity: 1,
+  condition: 'good',
+  priority: null,
+  vital: false,
+  brand: null,
+  description: null,
+  image: 'https://img/x.jpg',
+};
+
+function openProduct() {
+  fireEvent.click(screen.getByRole('tab', { name: 'Détail du produit' }));
+}
+
 describe('KitSlot — lentille Kits', () => {
   it('affiche une image produit et les actions kit existantes', () => {
     render(
@@ -32,6 +50,7 @@ describe('KitSlot — lentille Kits', () => {
             w: 4200,
             items: 10,
             image: 'https://img/x.jpg',
+            products: [PRODUCT],
             proven: 3,
           },
         ]}
@@ -39,16 +58,71 @@ describe('KitSlot — lentille Kits', () => {
       />
     );
 
-    const image = screen.getByRole('img', { name: /Kit 3 saisons/ }) as HTMLImageElement;
+    const image = screen.getByRole('button', { name: PRODUCT.name }).querySelector('img')!;
+    openProduct();
     expect(image.getAttribute('src')).toBe('https://img/x.jpg');
     expect(screen.getByLabelText(/Partager/)).toBeTruthy();
     expect(screen.getByLabelText(/Récupérer/)).toBeTruthy();
   });
 
-  it('réutilise le visuel produit du kit ou en génère un, jamais une image cassée', () => {
-    render(<KitSlot lens="kits" kits={[{ id: 'k2', n: 'Bivouac léger' }]} />);
+  it('garde les actions du kit sans produits accessibles depuis la vue initiale', async () => {
+    const fetchMock = vi.fn(async () =>
+      jsonResponse({
+        entries: [{ action: 'forked', created_at: '2026-10-01T09:00:00Z' }],
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
 
-    const image = screen.getByRole('img', { name: /Bivouac léger/ }) as HTMLImageElement;
+    render(
+      <KitSlot
+        lens="kits"
+        viewer="owner"
+        kits={[
+          {
+            id: KIT_ID,
+            n: 'Kit sans produits',
+            products: [],
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByRole('tab', { name: 'Vue du kit' }).getAttribute('aria-selected')).toBe(
+      'true'
+    );
+    expect(
+      (screen.getByRole('tab', { name: 'Détail du produit' }) as HTMLButtonElement).disabled
+    ).toBe(true);
+    const actions = screen.getByRole('group', { name: 'Actions du kit Kit sans produits' });
+    for (const name of ['Récupérer', 'Partager', 'Fiche']) {
+      expect((within(actions).getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(
+        false
+      );
+    }
+    fireEvent.click(within(actions).getByText('Autres actions du kit'));
+    for (const name of ['Royalties', 'Historique', 'Découvrir']) {
+      expect((within(actions).getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(
+        false
+      );
+    }
+    fireEvent.click(within(actions).getByRole('button', { name: 'Historique' }));
+
+    const panel = await screen.findByRole('region', {
+      name: 'Historique du kit Kit sans produits',
+    });
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(`/api/materiel/kits/${KIT_ID}/history`);
+    expect(within(panel).getByText(/Récupéré · 01\/10\/2026/)).toBeTruthy();
+  });
+
+  it('réutilise le visuel produit du kit ou en génère un, jamais une image cassée', () => {
+    render(
+      <KitSlot
+        lens="kits"
+        kits={[{ id: 'k2', n: 'Bivouac léger', products: [{ ...PRODUCT, image: null }] }]}
+      />
+    );
+
+    const image = screen.getByRole('button', { name: PRODUCT.name }).querySelector('img')!;
     expect(image.getAttribute('src')?.startsWith('data:image/svg+xml')).toBe(true);
   });
 
@@ -56,21 +130,16 @@ describe('KitSlot — lentille Kits', () => {
     render(
       <KitSlot
         lens="kits"
-        payload={{ kits: [{ id: 'k3', n: 'Kit payload', image: null }] }}
+        payload={{ kits: [{ id: 'k3', n: 'Kit payload', image: null, products: [PRODUCT] }] }}
       />
     );
 
-    expect(screen.getByRole('img', { name: /Kit payload/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: PRODUCT.name })).toBeTruthy();
     expect(screen.queryByText('Aucun kit enregistré.')).toBeNull();
   });
 
   it('affiche la filiation G1 → G2 → G3', () => {
-    render(
-      <KitSlot
-        lens="kits"
-        kits={[{ id: 'k4', n: 'Kit G2', gen: 'Lignée G2', prop: 1 }]}
-      />
-    );
+    render(<KitSlot lens="kits" kits={[{ id: 'k4', n: 'Kit G2', gen: 'Lignée G2', prop: 1 }]} />);
 
     const lineage = screen.getByRole('group', { name: /Filiation/ });
     expect(within(lineage).getByText('G1')).toBeTruthy();
@@ -88,7 +157,10 @@ describe('KitSlot — lentille Kits', () => {
     const fetchMock = vi.fn(async () => jsonResponse({ kit: { id: 'fork-1' } }));
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons' }]} />);
+    render(
+      <KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons', products: [PRODUCT] }]} />
+    );
+    openProduct();
     fireEvent.click(screen.getByLabelText(/Récupérer/));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -107,7 +179,10 @@ describe('KitSlot — lentille Kits', () => {
       })
     );
 
-    render(<KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons' }]} />);
+    render(
+      <KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons', products: [PRODUCT] }]} />
+    );
+    openProduct();
     fireEvent.click(screen.getByLabelText(/Récupérer/));
 
     const alert = await screen.findByRole('alert');
@@ -121,7 +196,10 @@ describe('KitSlot — lentille Kits', () => {
     const writeText = vi.fn(async () => undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
 
-    render(<KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons' }]} />);
+    render(
+      <KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons', products: [PRODUCT] }]} />
+    );
+    openProduct();
     fireEvent.click(screen.getByLabelText(/Partager/));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -134,7 +212,10 @@ describe('KitSlot — lentille Kits', () => {
   });
 
   it('n’annonce pas la copie quand le presse-papier refuse', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ url: '/k/token123' })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse({ url: '/k/token123' }))
+    );
     vi.stubGlobal('navigator', {
       clipboard: {
         writeText: vi.fn(async () => {
@@ -143,7 +224,10 @@ describe('KitSlot — lentille Kits', () => {
       },
     });
 
-    render(<KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons' }]} />);
+    render(
+      <KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons', products: [PRODUCT] }]} />
+    );
+    openProduct();
     fireEvent.click(screen.getByLabelText(/Partager/));
 
     await waitFor(() =>
@@ -185,7 +269,10 @@ describe('KitSlot — lentille Kits', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons' }]} />);
+    render(
+      <KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons', products: [PRODUCT] }]} />
+    );
+    openProduct();
     fireEvent.click(screen.getByLabelText(/Fiche/));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -211,7 +298,11 @@ describe('KitSlot — lentille Kits', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons' }]} />);
+    render(
+      <KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons', products: [PRODUCT] }]} />
+    );
+    openProduct();
+    fireEvent.click(screen.getByText('Autres actions du kit'));
     fireEvent.click(screen.getByLabelText(/Royalties/));
 
     const panel = await screen.findByRole('region', { name: 'Royalties' });
@@ -235,7 +326,11 @@ describe('KitSlot — lentille Kits', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons' }]} />);
+    render(
+      <KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons', products: [PRODUCT] }]} />
+    );
+    openProduct();
+    fireEvent.click(screen.getByText('Autres actions du kit'));
     fireEvent.click(screen.getByLabelText(/Historique/));
 
     const panel = await screen.findByRole('region', { name: /Historique du kit/ });
@@ -256,7 +351,11 @@ describe('KitSlot — lentille Kits', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons' }]} />);
+    render(
+      <KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons', products: [PRODUCT] }]} />
+    );
+    openProduct();
+    fireEvent.click(screen.getByText('Autres actions du kit'));
     fireEvent.click(screen.getByLabelText(/Découvrir/));
 
     const panel = await screen.findByRole('region', { name: /Découverte/ });
@@ -269,23 +368,46 @@ describe('KitSlot — lentille Kits', () => {
     render(
       <KitSlot
         lens="kits"
-        kits={[{ id: KIT_ID, n: 'Kit 3 saisons' }]}
+        kits={[{ id: KIT_ID, n: 'Kit 3 saisons', products: [PRODUCT] }]}
         viewer="visitor"
       />
     );
 
-    expect(screen.getByRole('img', { name: /Kit 3 saisons/ })).toBeTruthy();
-    for (const label of [/Récupérer/, /Partager/, /Fiche/, /Royalties/, /Historique/, /Découvrir/]) {
+    expect(screen.getByRole('button', { name: PRODUCT.name })).toBeTruthy();
+    openProduct();
+    for (const label of [
+      /Récupérer/,
+      /Partager/,
+      /Fiche/,
+      /Royalties/,
+      /Historique/,
+      /Découvrir/,
+    ]) {
       expect(screen.queryByLabelText(label)).toBeNull();
     }
     expect(screen.queryByRole('group', { name: /Actions du kit/ })).toBeNull();
   });
 
   it('propriétaire : toutes les actions restent disponibles', () => {
-    render(<KitSlot lens="kits" kits={[{ id: KIT_ID, n: 'Kit 3 saisons' }]} viewer="owner" />);
+    render(
+      <KitSlot
+        lens="kits"
+        kits={[{ id: KIT_ID, n: 'Kit 3 saisons', products: [PRODUCT] }]}
+        viewer="owner"
+      />
+    );
 
+    openProduct();
+    fireEvent.click(screen.getByText('Autres actions du kit'));
     const actions = screen.getByRole('group', { name: /Actions du kit/ });
-    for (const label of [/Récupérer/, /Partager/, /Fiche/, /Royalties/, /Historique/, /Découvrir/]) {
+    for (const label of [
+      /Récupérer/,
+      /Partager/,
+      /Fiche/,
+      /Royalties/,
+      /Historique/,
+      /Découvrir/,
+    ]) {
       expect(within(actions).getByLabelText(label)).toBeTruthy();
     }
   });

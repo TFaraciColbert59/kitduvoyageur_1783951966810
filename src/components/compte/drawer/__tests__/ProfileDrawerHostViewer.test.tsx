@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ProfileDrawerHost } from '../ProfileDrawerHost';
 
@@ -14,7 +14,29 @@ const PAYLOAD = {
   stamps: [],
   reposts: [],
   badges: [],
-  kits: [{ id: KIT_ID, n: 'Kit 3 saisons', w: 4200, items: 8 }],
+  kits: [
+    {
+      id: KIT_ID,
+      n: 'Kit 3 saisons',
+      w: 4200,
+      items: 8,
+      products: [
+        {
+          id: 'p1',
+          name: 'Sac 45 L',
+          category: null,
+          weightG: 900,
+          quantity: 1,
+          condition: null,
+          priority: null,
+          vital: false,
+          brand: null,
+          description: null,
+          image: null,
+        },
+      ],
+    },
+  ],
   gearItems: [],
   loans: [
     {
@@ -34,20 +56,16 @@ const PAYLOAD = {
 };
 
 describe('ProfileDrawerHost — viewer transmis aux slots', () => {
-  it('un visiteur ne voit aucune action propriétaire dans Kit, Prêts et Vitrine', () => {
+  it('un visiteur ne voit aucune action propriétaire dans Kit, Prêts et Vitrine', async () => {
     const { rerender } = render(
-      <ProfileDrawerHost
-        viewer="visitor"
-        visibility="public"
-        activeSlot="kit"
-        payload={PAYLOAD}
-      />
+      <ProfileDrawerHost viewer="visitor" visibility="public" activeSlot="kit" payload={PAYLOAD} />
     );
 
     // Kit : le slot résout bien le visiteur et masque ses actions.
     // `slot-content` est la pane de la coquille ; le slot est son enfant.
     const kitSlot = () => screen.getByTestId('slot-content').querySelector('[data-slot="kit"]');
-    expect(kitSlot()?.getAttribute('data-viewer')).toBe('visitor');
+    await waitFor(() => expect(kitSlot()?.getAttribute('data-viewer')).toBe('visitor'));
+    fireEvent.click(screen.getByRole('tab', { name: 'Détail du produit' }));
     expect(screen.queryByRole('group', { name: /Actions du kit/ })).toBeNull();
 
     // Prêts : aucune action, et le nom du prêteur n'est pas exposé.
@@ -61,7 +79,7 @@ describe('ProfileDrawerHost — viewer transmis aux slots', () => {
     );
     expect(screen.queryByRole('group', { name: /Actions pour/ })).toBeNull();
     expect(screen.queryByText('Léa')).toBeNull();
-    expect(screen.getByText('Sac 45 L')).toBeTruthy();
+    expect(await screen.findByText('Sac 45 L')).toBeTruthy();
 
     // Vitrine : le CTA de republication reste propriétaire.
     rerender(
@@ -72,23 +90,25 @@ describe('ProfileDrawerHost — viewer transmis aux slots', () => {
         payload={PAYLOAD}
       />
     );
-    fireEvent.click(screen.getByRole('tab', { name: /Republication/ }));
+    fireEvent.click(await screen.findByRole('tab', { name: /Republication/ }));
+    await waitFor(() => expect(screen.getByTestId('slot-content').querySelector('[data-slot="vitrine"]')).not.toBeNull());
     expect(screen.queryByRole('link', { name: 'Republier une publication' })).toBeNull();
   });
 
-  it('le propriétaire conserve ses actions et son CTA', () => {
+  it('le propriétaire conserve ses actions et son CTA', async () => {
     const { rerender } = render(
-      <ProfileDrawerHost
-        viewer="owner"
-        visibility="public"
-        activeSlot="kit"
-        payload={PAYLOAD}
-      />
+      <ProfileDrawerHost viewer="owner" visibility="public" activeSlot="kit" payload={PAYLOAD} />
     );
 
-    expect(
-      screen.getByTestId('slot-content').querySelector('[data-slot="kit"]')?.getAttribute('data-viewer')
-    ).toBe('owner');
+    await waitFor(() =>
+      expect(
+        screen
+          .getByTestId('slot-content')
+          .querySelector('[data-slot="kit"]')
+          ?.getAttribute('data-viewer')
+      ).toBe('owner')
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Détail du produit' }));
     const actions = screen.getByRole('group', { name: /Actions du kit/ });
     expect(within(actions).getByLabelText(/Partager/)).toBeTruthy();
 
@@ -100,8 +120,8 @@ describe('ProfileDrawerHost — viewer transmis aux slots', () => {
         payload={PAYLOAD}
       />
     );
-    fireEvent.click(screen.getByRole('tab', { name: /Republication/ }));
-    expect(screen.getByRole('link', { name: 'Republier une publication' })).toBeTruthy();
+    fireEvent.click(await screen.findByRole('tab', { name: /Republication/ }));
+    expect(await screen.findByRole('link', { name: 'Republier une publication' })).toBeTruthy();
   });
 
   it('le verrou privé reste prioritaire pour un visiteur sans invitation', () => {

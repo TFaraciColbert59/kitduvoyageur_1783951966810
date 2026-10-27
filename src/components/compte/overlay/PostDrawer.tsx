@@ -337,7 +337,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
       <OverlaySheet
         title={post?.author?.name || "Publication"}
         onClose={onClose}
-        className="lkdv-post-drawer"
+        className="lkdv-post-drawer lkdv-post-glass-sheet"
         heading={feedPost ? <PostAuthorPill post={feedPost} /> : undefined}
         headerRight={<button type="button" className={`lkdv-post-options-trigger${optionsOpen ? ' is-open' : ''}`} aria-label={optionsOpen ? 'Fermer le menu' : 'Options'} aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}>{optionsOpen ? <X size={18} /> : <MoreHorizontal size={18} />}</button>}
       >
