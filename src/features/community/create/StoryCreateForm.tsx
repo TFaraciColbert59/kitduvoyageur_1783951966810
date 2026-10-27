@@ -281,6 +281,8 @@ export function StoryCreateForm({
                   <CaptionRuler value={caption} max={280} />
                 </Field>
 
+                <details className="lkdv-advanced">
+                  <summary>Texte et lien</summary>
                 <Field label="Texte de la story" hint="120 caractères max." htmlFor="story-overlay">
                   <TextInput
                     id="story-overlay"
@@ -300,6 +302,7 @@ export function StoryCreateForm({
                   />
                   <InlineError message={errors.overlayLink?.message} />
                 </Field>
+                </details>
               </div>
 
               <div>

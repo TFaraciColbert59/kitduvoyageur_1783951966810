@@ -316,6 +316,8 @@ export function ClubCreateForm({
                   </Select>
                   <InlineError message={errors.privacy?.message} />
                 </Field>
+                <details className="lkdv-advanced">
+                  <summary>Règles et questions</summary>
                 <Field
                   label="Règles d’adhésion"
                   hint="1000 caractères max. Facultatif."
@@ -376,6 +378,7 @@ export function ClubCreateForm({
                   </button>
                 ) : null}
                 <InlineError message={errors.joinQuestions?.message as string | undefined} />
+                </details>
               </div>
 
               <div>

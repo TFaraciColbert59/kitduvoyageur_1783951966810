@@ -367,18 +367,18 @@ export function SortieCreateForm({
                   label="Dates de la sortie"
                   start={startDate}
                   end={endDate}
-                  onStartChange={(value) =>
-                    form.setValue('startDate', value, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    })
-                  }
-                  onEndChange={(value) =>
-                    form.setValue('endDate', value, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    })
-                  }
+                  onStartChange={(value) => {
+                    form.setValue('startDate', value, { shouldValidate: true, shouldDirty: true });
+                    const end = form.getValues('endDate');
+                    const days = value && end ? Math.max(1, Math.round((new Date(end).getTime() - new Date(value).getTime()) / 86_400_000) + 1) : 1;
+                    form.setValue('duration', days > 1 ? `${days} jours` : '1 journée', { shouldDirty: true });
+                  }}
+                  onEndChange={(value) => {
+                    form.setValue('endDate', value, { shouldValidate: true, shouldDirty: true });
+                    const start = form.getValues('startDate');
+                    const days = start && value ? Math.max(1, Math.round((new Date(value).getTime() - new Date(start).getTime()) / 86_400_000) + 1) : 1;
+                    form.setValue('duration', days > 1 ? `${days} jours` : '1 journée', { shouldDirty: true });
+                  }}
                   min={undefined}
                   startLabel="Date"
                   endLabel="Fin (optionnel)"
@@ -386,16 +386,7 @@ export function SortieCreateForm({
                   error={errors.startDate?.message ?? errors.endDate?.message ?? null}
                 />
                 <InlineError message={errors.startDate?.message} />
-
-                <Field label="Durée" hint="Laisser vide pour une journée." htmlFor="sortie-duration">
-                  <TextInput
-                    id="sortie-duration"
-                    {...form.register('duration')}
-                    maxLength={60}
-                    placeholder="1 journée"
-                  />
-                  <InlineError message={errors.duration?.message} />
-                </Field>
+                <p className="lkdv-form-note">Durée calculée automatiquement depuis les dates.</p>
 
                 <Field
                   label="Niveau"
@@ -499,6 +490,8 @@ export function SortieCreateForm({
                   <InlineError message={errors.description?.message} />
                 </Field>
 
+                <details className="lkdv-advanced">
+                  <summary>Sécurité et consignes</summary>
                 <Field
                   label="Consignes de sécurité"
                   hint="Matériel obligatoire, conditions, points de vigilance."
@@ -516,6 +509,7 @@ export function SortieCreateForm({
                 <p className="lkdv-form-note">
                   Type retenu : {OUTING_TYPE_LABELS[eventType]} · {LEVEL_LABELS[level]}.
                 </p>
+                </details>
               </div>
             </StepPager>
           </CommunityFormDrawer>

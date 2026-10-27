@@ -511,6 +511,8 @@ export function PostCreateForm({
 
               <div>
                 <AudienceLens value={form.watch('audience')} />
+                <details className="lkdv-advanced">
+                  <summary>Plus d’options</summary>
                 <Field label="Audience">
                   <Select {...form.register('audience')}>
                     <option value="public">Fil public</option>
@@ -550,6 +552,7 @@ export function PostCreateForm({
                   />
                   <InlineError message={errors.scheduledAt?.message} />
                 </Field>
+                </details>
               </div>
             </StepPager>
           </CommunityFormDrawer>

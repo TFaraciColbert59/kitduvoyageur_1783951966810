@@ -296,6 +296,8 @@ export function KitCreateForm({
                   </div>
                 ) : null}
 
+                <details className="lkdv-advanced">
+                  <summary>Objets personnalisés</summary>
                 <CustomItemEditor
                   onAdd={(item) => {
                     const next = [...customItems, item];
@@ -323,6 +325,7 @@ export function KitCreateForm({
                   </ul>
                 ) : null}
                 <InlineError message={errors.customItems?.message as string | undefined} />
+                </details>
               </div>
 
               <div>

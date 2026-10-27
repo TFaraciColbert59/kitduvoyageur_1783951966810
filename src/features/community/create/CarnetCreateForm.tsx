@@ -374,18 +374,18 @@ export function CarnetCreateForm({
                   label="Dates du voyage"
                   start={startDate}
                   end={endDate}
-                  onStartChange={(value) =>
-                    form.setValue('startDate', value, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    })
-                  }
-                  onEndChange={(value) =>
-                    form.setValue('endDate', value, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    })
-                  }
+                  onStartChange={(value) => {
+                    form.setValue('startDate', value, { shouldValidate: true, shouldDirty: true });
+                    const end = form.getValues('endDate');
+                    const nights = value && end ? Math.max(0, Math.round((new Date(end).getTime() - new Date(value).getTime()) / 86_400_000)) : 0;
+                    form.setValue('nbNuits', nights, { shouldDirty: true });
+                  }}
+                  onEndChange={(value) => {
+                    form.setValue('endDate', value, { shouldValidate: true, shouldDirty: true });
+                    const start = form.getValues('startDate');
+                    const nights = start && value ? Math.max(0, Math.round((new Date(value).getTime() - new Date(start).getTime()) / 86_400_000)) : 0;
+                    form.setValue('nbNuits', nights, { shouldDirty: true });
+                  }}
                   startLabel="Début"
                   endLabel="Fin"
                   idPrefix="carnet-date"
@@ -394,20 +394,6 @@ export function CarnetCreateForm({
                 <InlineError message={errors.startDate?.message} />
 
                 <div className="lkdv-form-row">
-                  <Controller
-                    control={form.control}
-                    name="nbNuits"
-                    render={({ field }) => (
-                      <NumberStepper
-                        label="Nuits"
-                        value={field.value}
-                        onChange={field.onChange}
-                        min={0}
-                        max={90}
-                        unit="nuit(s)"
-                      />
-                    )}
-                  />
                   <Controller
                     control={form.control}
                     name="nbVoyageurs"
@@ -423,8 +409,8 @@ export function CarnetCreateForm({
                     )}
                   />
                 </div>
-                <InlineError message={errors.nbNuits?.message} />
                 <InlineError message={errors.nbVoyageurs?.message} />
+                <p className="lkdv-form-note">Nuits calculées automatiquement depuis les dates.</p>
 
                 <div className="lkdv-form-row lkdv-weather-tags">
                   <Controller
