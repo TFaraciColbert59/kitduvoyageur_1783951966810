@@ -60,10 +60,11 @@ export function DateRangeField({
       <legend>{label}</legend>
       <div className="lkdv-date-range-fields">
         <label htmlFor={startId}>
-          {startLabel}
+          <span className="lkdv-date-caption">{startLabel}</span>
           <input
             id={startId}
             type="date"
+            aria-label={startLabel}
             value={start}
             min={min}
             max={max}
@@ -74,10 +75,11 @@ export function DateRangeField({
           />
         </label>
         <label htmlFor={endId}>
-          {endLabel}
+          <span className="lkdv-date-caption">{endLabel}</span>
           <input
             id={endId}
             type="date"
+            aria-label={endLabel}
             value={end}
             min={start || min}
             max={max}

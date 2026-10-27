@@ -11,7 +11,6 @@ import { createDefaults, CREATE_FIELD_LABELS, type KitFormValues } from './engin
 import { CREATE_STEPS, StepPager } from './shared/StepPager';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
-import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
 import { KitPackingMatrix, KitRing } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
@@ -229,8 +228,6 @@ export function KitCreateForm({
             }
           >
             <FormErrorSummary errors={errors} labels={CREATE_FIELD_LABELS} onFocusField={api.focusField} />
-
-            <CreationInfoRail kind="kit" step={activeStep} steps={STEPS} values={previewValues} />
             <CreationSignature kind="kit" values={previewValues} />
 
             <StepPager

@@ -12,7 +12,6 @@ import { CREATE_STEPS, StepPager } from './shared/StepPager';
 import { MediaPicker } from './shared/MediaPicker';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
-import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
 import { PlaceSearch } from './shared/PlaceSearch';
 import { ClubRulesLedger, ClubModeCards, JoinStepper, ClubInvitePass } from './shared/InfoCards';
@@ -210,7 +209,6 @@ export function ClubCreateForm({
               onFocusField={api.focusField}
             />
             <FormPreview kind="club" values={previewValues} />
-            <CreationInfoRail kind="club" step={activeStep} steps={STEPS} values={previewValues} />
             <CreationSignature kind="club" values={previewValues} />
 
             <StepPager

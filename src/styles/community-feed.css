@@ -2237,3 +2237,49 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 .lkdv-advanced > :last-child { margin-bottom: 8px; }
 .lkdv-field-required { color: #A05A3C; font-weight: 700; }
 .lkdv-form-field > label[data-required="true"]::after { content: ' *'; color: #A05A3C; font-weight: 700; }
+
+/* Aucun libellé/hint/note visible : placeholders uniquement. */
+.lkdv-form-field > label,
+.lkdv-form-label,
+.lkdv-form-field .hint,
+.lkdv-form-hint,
+.lkdv-form-note,
+.lkdv-media-count,
+.lkdv-media-dropzone,
+.lkdv-form-link { display: none !important; }
+.lkdv-create-form-preview { cursor: pointer; }
+.lkdv-carnet-dest-date { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+.lkdv-carnet-dest-date .lkdv-date-range { min-width: 0; }
+/* Labels masqués visuellement mais conservés pour l'accessibilité. */
+.lkdv-form-field > label:not([hidden]) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.lkdv-create-engine .lkdv-form-field > label,
+.lkdv-create-engine .lkdv-form-label,
+.lkdv-create-engine .lkdv-form-note,
+.lkdv-create-engine .lkdv-form-hint,
+.lkdv-create-engine .lkdv-date-range legend,
+.lkdv-create-engine .lkdv-date-caption,
+.lkdv-create-engine .lkdv-field-required { display: none !important; }
+.lkdv-carnet-dest-date .lkdv-date-range { min-width: 0; }
+.lkdv-carnet-dest-date .lkdv-date-range-fields { display: flex !important; gap: 4px !important; }
+.lkdv-carnet-dest-date .lkdv-date-range-fields label { flex: 1 1 0; min-width: 0; }
+.lkdv-carnet-dest-date .lkdv-date-range-fields input { width: 100% !important; min-width: 0 !important; }
+.lkdv-carnet-dest-date input[type="date"] { font-size: 10px !important; padding: 0 4px !important; }
+.lkdv-carnet-dest-date input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
+.lkdv-carnet-dest-date { grid-template-columns: .78fr 1.22fr !important; }
+.lkdv-carnet-dest-date input[type="date"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  font-size: 9px !important;
+  padding: 0 2px !important;
+  text-align: left !important;
+}

@@ -1,0 +1,33 @@
+.lkdv-cover-board { display: flex; flex-direction: column; gap: 6px; margin: 0 0 8px; }
+.lkdv-cover-hero { display: grid; place-items: center; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 0; border-radius: 16px; background: rgba(23,64,44,.09); color: #17402C; cursor: pointer; }
+.lkdv-cover-hero img { width: 100%; height: 100%; object-fit: cover; }
+.lkdv-cover-plus { display: grid; place-items: center; width: 42px; height: 26px; border-radius: 999px; background: rgba(255,255,255,.7); box-shadow: inset 0 0 0 .5px rgba(23,43,36,.14); }
+.lkdv-cover-strip { display: flex; gap: 6px; overflow-x: auto; max-height: 62px; padding-bottom: 2px; scrollbar-width: none; }
+.lkdv-cover-strip::-webkit-scrollbar { display: none; }
+.lkdv-cover-thumb { flex: 0 0 56px; width: 56px; height: 56px; border-radius: 10px; overflow: hidden; background: rgba(255,255,255,.4); box-shadow: inset 0 0 0 .5px rgba(23,43,36,.1); }
+.lkdv-cover-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.lkdv-cover-thumb-add { display: grid; place-items: center; border: 1px dashed rgba(23,64,44,.28); color: #17402C; cursor: pointer; }
+.lkdv-gpx-block { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.lkdv-gpx-add { display: flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 8px; border: 1px dashed rgba(23,64,44,.28); border-radius: 11px; background: rgba(255,255,255,.36); color: #17402C; font: 700 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer; }
+.lkdv-gpx-add span { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lkdv-gpx-block select { min-height: 30px; border: .5px solid rgba(255,255,255,.8); border-radius: 9px; background: rgba(255,255,255,.62); color: #17402C; font: 600 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-carnet-days { margin: 8px 0; }
+.lkdv-days-timeline { position: relative; display: flex; align-items: center; gap: 0; height: 18px; margin-bottom: 5px; }
+.lkdv-days-line { position: absolute; left: 2px; right: 2px; top: 8px; height: 1px; background: rgba(23,64,44,.24); }
+.lkdv-days-day-dot, .lkdv-days-event-dot { position: relative; z-index: 1; width: 6px; height: 6px; border-radius: 999px; background: #17402C; margin-right: 8px; }
+.lkdv-days-event-dot { width: 4px; height: 4px; margin-left: 2px; background: #2E7D5B; }
+.lkdv-day { margin-bottom: 4px; border-radius: 11px; background: rgba(255,255,255,.3); overflow: hidden; }
+.lkdv-day > summary { display: flex; align-items: center; gap: 6px; padding: 8px 9px; cursor: pointer; list-style: none; color: #17402C; font: 700 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-day > summary::-webkit-details-marker { display: none; }
+.lkdv-day > summary small { flex: 1; color: var(--feed-muted); font: 500 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-day[open] > summary svg { transform: rotate(180deg); }
+.lkdv-day-kinds { display: flex; flex-wrap: wrap; gap: 3px; padding: 0 8px 7px; }
+.lkdv-day-kinds button { display: inline-flex; align-items: center; gap: 3px; min-height: 24px; padding: 0 6px; border: .5px solid rgba(255,255,255,.8); border-radius: 999px; background: rgba(255,255,255,.5); color: #17402C; font: 600 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer; }
+.lkdv-day-events { display: flex; flex-direction: column; gap: 3px; margin: 0; padding: 0 8px 8px; list-style: none; }
+.lkdv-day-events li { display: flex; align-items: center; gap: 6px; min-height: 26px; }
+.lkdv-day-event-kind { flex: 1; color: #17402C; font: 600 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-day-photo { display: grid; place-items: center; width: 26px; height: 26px; border: .5px solid rgba(23,64,44,.18); border-radius: 7px; background: rgba(255,255,255,.55); color: #17402C; font-size: 13px; cursor: pointer; }
+.lkdv-carnet-cover-source { display: none !important; }
+.lkdv-route-gpx { align-items: flex-start !important; gap: 7px !important; }
+.lkdv-route-gpx > .lkdv-route-metrics { flex: 1 1 0; margin: 0 !important; }
+.lkdv-route-gpx > .lkdv-gpx-block { flex: 0 0 118px; }

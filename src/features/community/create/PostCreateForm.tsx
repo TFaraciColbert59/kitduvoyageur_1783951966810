@@ -20,10 +20,9 @@ import { TagChips } from './shared/TagChips';
 import { NumberStepper } from './shared/NumberStepper';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
-import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
 import { PlaceSearch } from './shared/PlaceSearch';
-import { AudienceLens, CaptionRuler, PollBalance } from './shared/InfoCards';
+import { CaptionRuler, PollBalance } from './shared/InfoCards';
 
 export interface PostCreateFormProps {
   open: boolean;
@@ -282,7 +281,6 @@ export function PostCreateForm({
               onFocusField={api.focusField}
             />
             <FormPreview kind="post" values={previewValues} />
-            <CreationInfoRail kind="post" step={activeStep} steps={STEPS} values={previewValues} />
             <CreationSignature kind="post" values={previewValues} />
 
             <StepPager
@@ -505,9 +503,6 @@ export function PostCreateForm({
               </div>
 
               <div>
-                <AudienceLens value={form.watch('audience')} />
-                <details className="lkdv-advanced">
-                  <summary>Plus d’options</summary>
                 <Field label="Audience">
                   <Select {...form.register('audience')}>
                     <option value="public">Fil public</option>
@@ -547,7 +542,6 @@ export function PostCreateForm({
                   />
                   <InlineError message={errors.scheduledAt?.message} />
                 </Field>
-                </details>
               </div>
             </StepPager>
           </CommunityFormDrawer>

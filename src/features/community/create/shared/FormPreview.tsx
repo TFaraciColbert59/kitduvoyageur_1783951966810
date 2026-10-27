@@ -272,7 +272,19 @@ export function FormPreview({ kind, values, className = '' }: FormPreviewProps) 
       data-testid="form-preview"
       data-preview-kind={kind}
       aria-label={`Aperçu — ${preview.typeLabel}`}
-      hidden={empty}
+      role="button"
+      tabIndex={0}
+      onClick={() => {
+        const input = document.querySelector<HTMLInputElement>('.lkdv-form-body input[type=file], .lkdv-embedded-form input[type=file]');
+        input?.click();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          const input = document.querySelector<HTMLInputElement>('.lkdv-form-body input[type=file], .lkdv-embedded-form input[type=file]');
+          input?.click();
+        }
+      }}
     >
       {src ? (
         <span className="lkdv-create-form-preview-cover">

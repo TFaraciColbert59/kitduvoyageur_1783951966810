@@ -14,13 +14,13 @@ import { DateRangeField } from './shared/DateRangeField';
 import { NumberStepper } from './shared/NumberStepper';
 import { TagChips } from './shared/TagChips';
 import { FormErrorSummary } from './shared/FormErrorSummary';
-import { FormPreview } from './shared/FormPreview';
-import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { FormPreview } from './shared/FormPreview';
 import { PlaceSearch } from './shared/PlaceSearch';
 import { WeatherByDay } from './shared/WeatherByDay';
 import { AiImproveButton } from './shared/AiImproveButton';
-import { RouteMetrics, CarnetStageSpine, CarnetLogistics, CoverMosaic } from './shared/InfoCards';
+import { RouteMetrics, CarnetLogistics } from './shared/InfoCards';
+import { CarnetCoverBoard, CarnetGpxBlock, CarnetDays } from './shared/CarnetExtras';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -224,8 +224,6 @@ export function CarnetCreateForm({
               labels={CREATE_FIELD_LABELS}
               onFocusField={api.focusField}
             />
-            <FormPreview kind="carnet" values={previewValues} />
-            <CreationInfoRail kind="carnet" step={activeStep} steps={STEPS} values={previewValues} />
             <CreationSignature kind="carnet" values={previewValues} />
 
             <StepPager
@@ -254,6 +252,7 @@ export function CarnetCreateForm({
                   />
                   <InlineError message={errors.title?.message} />
                 </Field>
+                <div className="lkdv-carnet-dest-date">
                 <Controller
                   control={form.control}
                   name="destination"
@@ -262,33 +261,52 @@ export function CarnetCreateForm({
                   )}
                 />
                 <InlineError message={errors.destination?.message} />
-                <Controller
-                  control={form.control}
-                  name="cover"
-                  render={({ field }) => (
-                    <MediaPicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      max={1}
-                      label="Couverture"
-                      hint="Une image pour la carte et le fil du carnet."
-                      upload={uploader}
-                      fieldName="cover"
-                    />
-                  )}
+                <DateRangeField
+                  label="Dates du voyage"
+                  start={startDate}
+                  end={endDate}
+                  onStartChange={(value) => {
+                    form.setValue('startDate', value, { shouldValidate: true, shouldDirty: true });
+                    const end = form.getValues('endDate');
+                    const nights = value && end ? Math.max(0, Math.round((new Date(end).getTime() - new Date(value).getTime()) / 86_400_000)) : 0;
+                    form.setValue('nbNuits', nights, { shouldDirty: true });
+                  }}
+                  onEndChange={(value) => {
+                    form.setValue('endDate', value, { shouldValidate: true, shouldDirty: true });
+                    const start = form.getValues('startDate');
+                    const nights = start && value ? Math.max(0, Math.round((new Date(value).getTime() - new Date(start).getTime()) / 86_400_000)) : 0;
+                    form.setValue('nbNuits', nights, { shouldDirty: true });
+                  }}
+                  startLabel="Début"
+                  endLabel="Fin"
+                  idPrefix="carnet-date"
+                  error={errors.endDate?.message ?? errors.startDate?.message ?? null}
                 />
+                <InlineError message={errors.startDate?.message} />
+                </div>
+                <div hidden aria-hidden="true"><FormPreview kind="carnet" values={previewValues} /></div>
+                <div className="lkdv-carnet-cover-source" aria-hidden="true">
+                  <Controller
+                    control={form.control}
+                    name="cover"
+                    render={({ field }) => (
+                      <MediaPicker value={field.value} onChange={field.onChange} max={1} label="Couverture" hint="Une image pour la carte et le fil du carnet." upload={uploader} fieldName="cover" />
+                    )}
+                  />
+                </div>
                 <InlineError message={errors.cover?.message as string | undefined} />
-                <CoverMosaic cover={form.watch('cover')} />
+                <CarnetCoverBoard
+                  cover={form.watch('cover')}
+                  onAddCover={() => document.querySelector<HTMLInputElement>('.lkdv-carnet-cover-source input[type=file]')?.click()}
+                />
+                <CarnetDays startDate={startDate} endDate={endDate} />
               </div>
 
               <div>
-                <CarnetStageSpine
-                  from={form.watch('lieuDepart')}
-                  to={form.watch('lieuArrivee')}
-                  km={form.watch('distanceKm')}
-                  dplus={form.watch('deniveleM')}
-                />
-                <RouteMetrics values={previewValues} />
+                <div className="lkdv-form-row lkdv-route-gpx">
+                  <RouteMetrics values={previewValues} />
+                  <CarnetGpxBlock />
+                </div>
                 <div className="lkdv-form-row">
                   <Controller
                     control={form.control}
@@ -370,28 +388,7 @@ export function CarnetCreateForm({
                   weather={form.watch('weather')}
                   rating={routeRating}
                 />
-                <DateRangeField
-                  label="Dates du voyage"
-                  start={startDate}
-                  end={endDate}
-                  onStartChange={(value) => {
-                    form.setValue('startDate', value, { shouldValidate: true, shouldDirty: true });
-                    const end = form.getValues('endDate');
-                    const nights = value && end ? Math.max(0, Math.round((new Date(end).getTime() - new Date(value).getTime()) / 86_400_000)) : 0;
-                    form.setValue('nbNuits', nights, { shouldDirty: true });
-                  }}
-                  onEndChange={(value) => {
-                    form.setValue('endDate', value, { shouldValidate: true, shouldDirty: true });
-                    const start = form.getValues('startDate');
-                    const nights = start && value ? Math.max(0, Math.round((new Date(value).getTime() - new Date(start).getTime()) / 86_400_000)) : 0;
-                    form.setValue('nbNuits', nights, { shouldDirty: true });
-                  }}
-                  startLabel="Début"
-                  endLabel="Fin"
-                  idPrefix="carnet-date"
-                  error={errors.endDate?.message ?? errors.startDate?.message ?? null}
-                />
-                <InlineError message={errors.startDate?.message} />
+
 
                 <div className="lkdv-form-row">
                   <Controller
