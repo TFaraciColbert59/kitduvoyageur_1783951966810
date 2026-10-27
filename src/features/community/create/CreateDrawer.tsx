@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import Icon from '@/components/ui/Icon';
+import { Pencil, BookOpen, Map, Backpack, Users, Plus } from 'lucide-react';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import { CommunityDrawer } from '@/features/community/sections/CommunityDrawer';
 import { PostCreateForm } from './PostCreateForm';
@@ -22,12 +22,12 @@ import {
 export type CreateKind = 'post' | 'carnet' | 'sortie' | 'kit' | 'club' | 'story';
 
 const TYPES: Array<{ id: CreateKind; label: string; icon: React.ReactNode }> = [
-  { id: 'post', label: 'Publication', icon: <Icon name="pencil" size={18} aria-hidden="true" /> },
-  { id: 'carnet', label: 'Carnet', icon: <Icon name="book-open" size={18} aria-hidden="true" /> },
-  { id: 'sortie', label: 'Sortie', icon: <Icon name="map" size={18} aria-hidden="true" /> },
-  { id: 'kit', label: 'Kit', icon: <Icon name="backpack" size={18} aria-hidden="true" /> },
-  { id: 'club', label: 'Club', icon: <Icon name="users" size={18} aria-hidden="true" /> },
-  { id: 'story', label: 'Story', icon: <Icon name="plus" size={18} aria-hidden="true" /> },
+  { id: 'post', label: 'Publication', icon: <Pencil size={19} aria-hidden="true" /> },
+  { id: 'carnet', label: 'Carnet', icon: <BookOpen size={19} aria-hidden="true" /> },
+  { id: 'sortie', label: 'Sortie', icon: <Map size={19} aria-hidden="true" /> },
+  { id: 'kit', label: 'Kit', icon: <Backpack size={19} aria-hidden="true" /> },
+  { id: 'club', label: 'Club', icon: <Users size={19} aria-hidden="true" /> },
+  { id: 'story', label: 'Story', icon: <Plus size={19} aria-hidden="true" /> },
 ];
 
 export interface CreateDrawerProps {

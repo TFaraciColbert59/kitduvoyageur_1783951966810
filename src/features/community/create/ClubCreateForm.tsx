@@ -14,6 +14,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { PlaceSearch } from './shared/PlaceSearch';
 import { ClubRulesLedger, ClubModeCards, JoinStepper, ClubInvitePass } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
@@ -251,15 +252,14 @@ export function ClubCreateForm({
                     />
                     <InlineError message={errors.category?.message} />
                   </Field>
-                  <Field label="Lieu" htmlFor="club-location">
-                    <TextInput
-                      id="club-location"
-                      {...form.register('location')}
-                      maxLength={80}
-                      placeholder="Vercors"
-                    />
-                    <InlineError message={errors.location?.message} />
-                  </Field>
+                  <Controller
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <PlaceSearch label="Lieu" value={field.value} onChange={field.onChange} placeholder="Vercors" />
+                    )}
+                  />
+                  <InlineError message={errors.location?.message} />
                 </div>
                 <p className="lkdv-form-note">
                   {name.trim()

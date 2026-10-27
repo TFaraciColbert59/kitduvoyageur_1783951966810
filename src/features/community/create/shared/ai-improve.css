@@ -1,0 +1,6 @@
+.lkdv-ai-improve { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 2px 0 4px; }
+.lkdv-ai-improve button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 9px; border: .5px solid rgba(255,255,255,.8); border-radius: 999px; background: rgba(255,255,255,.56); color: #17402C; font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer; }
+.lkdv-ai-improve button:disabled { opacity: .45; cursor: not-allowed; }
+.lkdv-ai-improve span { color: #A05A3C; font: 600 8.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-ai-spin { animation: lkdv-ai-spin 1s linear infinite; }
+@keyframes lkdv-ai-spin { to { transform: rotate(360deg); } }

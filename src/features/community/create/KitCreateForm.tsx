@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Controller, type UseFormReturn } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
@@ -9,7 +9,6 @@ import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields'
 import { CreateFormEngine } from './engine/CreateFormEngine';
 import { createDefaults, CREATE_FIELD_LABELS, type KitFormValues } from './engine/createSchemas';
 import { CREATE_STEPS, StepPager } from './shared/StepPager';
-import { MediaPicker } from './shared/MediaPicker';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
@@ -17,7 +16,7 @@ import { CreationSignature } from './shared/CreationSignature';
 import { KitPackingMatrix, KitRing } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
-import { insertCommunityPost, createPostMediaUploader } from './upload';
+import { insertCommunityPost } from './upload';
 import { InventoryPicker } from './kit/InventoryPicker';
 import {
   KIT_TEMPLATES,
@@ -66,11 +65,6 @@ export function KitCreateForm({
   const [inventoryError, setInventoryError] = useState<string | null>(null);
   const [inventoryRetry, setInventoryRetry] = useState(0);
   const activeStep = Math.max(0, Math.min(LAST_STEP, step ?? internalStep));
-
-  const uploader = useMemo(
-    () => (user?.id ? createPostMediaUploader(user.id) : undefined),
-    [user?.id],
-  );
 
   const setStep = (next: number) => {
     const safe = Math.max(0, Math.min(LAST_STEP, next));
@@ -349,13 +343,6 @@ export function KitCreateForm({
                   </Select>
                   <InlineError message={errors.season?.message} />
                 </Field>
-                <Controller
-                  control={form.control}
-                  name="cover"
-                  render={({ field }) => (
-                    <MediaPicker value={field.value} onChange={field.onChange} max={1} label="Photo de couverture" hint="Une image pour la carte du kit." upload={uploader} fieldName="cover" />
-                  )}
-                />
                 <Field label="Description" htmlFor="kit-description">
                   <TextArea id="kit-description" {...form.register('description')} maxLength={1000} placeholder="Usage, terrain, particularités…" />
                   <InlineError message={errors.description?.message} />

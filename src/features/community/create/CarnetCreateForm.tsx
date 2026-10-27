@@ -17,6 +17,9 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { PlaceSearch } from './shared/PlaceSearch';
+import { WeatherByDay } from './shared/WeatherByDay';
+import { AiImproveButton } from './shared/AiImproveButton';
 import { RouteMetrics, CarnetStageSpine, CarnetLogistics, CoverMosaic } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
@@ -263,15 +266,14 @@ export function CarnetCreateForm({
                   />
                   <InlineError message={errors.title?.message} />
                 </Field>
-                <Field label="Destination" htmlFor="carnet-destination">
-                  <TextInput
-                    id="carnet-destination"
-                    {...form.register('destination')}
-                    maxLength={120}
-                    placeholder="Vercors, France"
-                  />
-                  <InlineError message={errors.destination?.message} />
-                </Field>
+                <Controller
+                  control={form.control}
+                  name="destination"
+                  render={({ field }) => (
+                    <PlaceSearch label="Destination" value={field.value} onChange={field.onChange} placeholder="Vercors, France" />
+                  )}
+                />
+                <InlineError message={errors.destination?.message} />
                 <Controller
                   control={form.control}
                   name="cover"
@@ -300,24 +302,22 @@ export function CarnetCreateForm({
                 />
                 <RouteMetrics values={previewValues} />
                 <div className="lkdv-form-row">
-                  <Field label="Départ" htmlFor="carnet-from">
-                    <TextInput
-                      id="carnet-from"
-                      {...form.register('lieuDepart')}
-                      maxLength={120}
-                      placeholder="Chamonix"
-                    />
-                    <InlineError message={errors.lieuDepart?.message} />
-                  </Field>
-                  <Field label="Arrivée" htmlFor="carnet-to">
-                    <TextInput
-                      id="carnet-to"
-                      {...form.register('lieuArrivee')}
-                      maxLength={120}
-                      placeholder="Les Houches"
-                    />
-                    <InlineError message={errors.lieuArrivee?.message} />
-                  </Field>
+                  <Controller
+                    control={form.control}
+                    name="lieuDepart"
+                    render={({ field }) => (
+                      <PlaceSearch label="Départ" value={field.value} onChange={field.onChange} placeholder="Chamonix" />
+                    )}
+                  />
+                  <InlineError message={errors.lieuDepart?.message} />
+                  <Controller
+                    control={form.control}
+                    name="lieuArrivee"
+                    render={({ field }) => (
+                      <PlaceSearch label="Arrivée" value={field.value} onChange={field.onChange} placeholder="Les Houches" />
+                    )}
+                  />
+                  <InlineError message={errors.lieuArrivee?.message} />
                 </div>
 
                 <div className="lkdv-form-row">
@@ -438,28 +438,23 @@ export function CarnetCreateForm({
                 <InlineError message={errors.nbNuits?.message} />
                 <InlineError message={errors.nbVoyageurs?.message} />
 
-                <Field label="Météo" htmlFor="carnet-weather">
-                  <TextInput
-                    id="carnet-weather"
-                    {...form.register('weather')}
-                    maxLength={120}
-                    placeholder="Ensoleillé, vent 20 km/h…"
+                <div className="lkdv-form-row lkdv-weather-tags">
+                  <Controller
+                    control={form.control}
+                    name="weather"
+                    render={({ field }) => (
+                      <WeatherByDay startDate={startDate} endDate={endDate} value={field.value} onChange={field.onChange} />
+                    )}
                   />
-                  <InlineError message={errors.weather?.message} />
-                </Field>
-
-                <Controller
-                  control={form.control}
-                  name="tags"
-                  render={({ field }) => (
-                    <TagChips
-                      value={field.value}
-                      onChange={field.onChange}
-                      label="Tags"
-                      suggestions={['rando', 'bivouac', 'ski', 'vélo']}
-                    />
-                  )}
-                />
+                  <Controller
+                    control={form.control}
+                    name="tags"
+                    render={({ field }) => (
+                      <TagChips value={field.value} onChange={field.onChange} label="Tags" />
+                    )}
+                  />
+                </div>
+                <InlineError message={errors.weather?.message} />
 
                 <Controller
                   control={form.control}
@@ -488,6 +483,7 @@ export function CarnetCreateForm({
                     placeholder="Le récit, l’idée, les points forts…"
                   />
                   <InlineError message={errors.description?.message} />
+                  <AiImproveButton value={description} onChange={(next) => form.setValue('description', next, { shouldDirty: true, shouldValidate: true })} />
                 </Field>
               </div>
 

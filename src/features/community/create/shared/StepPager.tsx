@@ -88,6 +88,7 @@ export function StepPager({
   const count = steps.length;
   const safeIndex = count > 0 ? Math.max(0, Math.min(index, count - 1)) : 0;
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
   const panes = React.Children.toArray(children);
   const changeStep = (next: number) => {
     onIndexChange(next);
@@ -105,6 +106,23 @@ export function StepPager({
       onKeyDown={(event) => {
         if (event.key === 'ArrowRight' && safeIndex < count - 1) changeStep(safeIndex + 1);
         if (event.key === 'ArrowLeft' && safeIndex > 0) changeStep(safeIndex - 1);
+      }}
+      onTouchStart={(event) => {
+        const target = event.target as HTMLElement;
+        if (target.closest('input, textarea, select')) return;
+        const touch = event.touches[0];
+        if (touch) touchStart.current = { x: touch.clientX, y: touch.clientY };
+      }}
+      onTouchEnd={(event) => {
+        const start = touchStart.current;
+        touchStart.current = null;
+        const touch = event.changedTouches[0];
+        if (!start || !touch) return;
+        const dx = touch.clientX - start.x;
+        const dy = touch.clientY - start.y;
+        if (Math.abs(dx) < 50 || Math.abs(dx) <= Math.abs(dy)) return;
+        if (dx < 0 && safeIndex < count - 1) changeStep(safeIndex + 1);
+        if (dx > 0 && safeIndex > 0) changeStep(safeIndex - 1);
       }}
     >
       <LensPager

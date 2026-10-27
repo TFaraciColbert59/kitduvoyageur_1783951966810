@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
 import type { MediaItem, MediaUploader } from './mediaTypes';
 import './create-shared.css';
 
@@ -105,8 +106,9 @@ export function MediaPicker({
 
   const commit = useCallback(
     (next: MediaItem[]) => {
-      itemsRef.current = next;
-      onChange(next);
+      const normalized = next.map((item, index) => ({ ...item, cover: index === 0 }));
+      itemsRef.current = normalized;
+      onChange(normalized);
     },
     [onChange],
   );
@@ -185,10 +187,6 @@ export function MediaPicker({
     [accept, commit, disabled, max, upload, uploadItem],
   );
 
-  const setCover = (id: string) => {
-    commit(itemsRef.current.map((item) => ({ ...item, cover: item.id === id })));
-  };
-
   const moveBy = (id: string, delta: number) => {
     const list = [...itemsRef.current];
     const from = list.findIndex((item) => item.id === id);
@@ -225,7 +223,7 @@ export function MediaPicker({
       data-testid="media-picker"
       data-field={fieldName}
     >
-      <div
+      <label
         className={`lkdv-media-dropzone${dragOver ? ' is-over' : ''}`}
         data-testid="media-dropzone"
         onDragOver={(event) => {
@@ -242,27 +240,25 @@ export function MediaPicker({
           addFiles(event.dataTransfer?.files);
         }}
       >
+        <input
+          id={fieldName}
+          type="file"
+          multiple={max > 1}
+          accept={accept}
+          disabled={disabled}
+          className="sr-only"
+          aria-label={max > 1 ? 'Choisir des fichiers' : 'Choisir un fichier'}
+          onChange={(event) => {
+            addFiles(event.currentTarget.files);
+            event.currentTarget.value = '';
+          }}
+        />
         <div className="lkdv-media-dropzone-text">
           <b>{label}</b>
-          <span>{hint ?? 'Glisse tes fichiers ici ou choisis-les.'}</span>
+          <span>{hint ?? 'Touche le cadre pour ajouter une photo ou une vidéo.'}</span>
         </div>
-        <label className="lkdv-media-add">
-          Ajouter
-          <input
-            id={fieldName}
-            type="file"
-            multiple={max > 1}
-            accept={accept}
-            disabled={disabled}
-            className="sr-only"
-            aria-label={max > 1 ? 'Choisir des fichiers' : 'Choisir un fichier'}
-            onChange={(event) => {
-              addFiles(event.currentTarget.files);
-              event.currentTarget.value = '';
-            }}
-          />
-        </label>
-      </div>
+        <span className="lkdv-media-plus" aria-hidden="true">+</span>
+      </label>
 
       {value.length > 0 ? (
         <div className="lkdv-media-contact-head">
@@ -334,51 +330,45 @@ export function MediaPicker({
               </div>
               <div className="lkdv-media-fields">
                 <b className="lkdv-media-name">{item.name}</b>
-                <label className="lkdv-media-alt">
-                  <span>Texte alternatif</span>
+                <label className="lkdv-media-caption">
+                  <span>Texte de l’image</span>
                   <input
                     type="text"
                     value={item.alt}
                     maxLength={200}
                     disabled={disabled}
-                    aria-label={`Texte alternatif pour ${item.name}`}
+                    aria-label={`Texte pour ${item.name}`}
+                    placeholder="Décris cette image…"
                     onChange={(event) => patch(item.id, { alt: event.target.value })}
                   />
                 </label>
                 <div className="lkdv-media-actions">
                   <button
                     type="button"
-                    aria-pressed={item.cover}
-                    aria-label={`Définir ${item.name} comme couverture`}
-                    className={item.cover ? 'is-on' : ''}
-                    disabled={disabled}
-                    onClick={() => setCover(item.id)}
-                  >
-                    Couverture
-                  </button>
-                  <button
-                    type="button"
+                    className="lkdv-media-icon"
                     aria-label={`Monter ${item.name}`}
                     disabled={disabled || index === 0}
                     onClick={() => moveBy(item.id, -1)}
                   >
-                    Monter
+                    <ArrowUp size={14} aria-hidden="true" />
                   </button>
                   <button
                     type="button"
+                    className="lkdv-media-icon"
                     aria-label={`Descendre ${item.name}`}
                     disabled={disabled || index === value.length - 1}
                     onClick={() => moveBy(item.id, 1)}
                   >
-                    Descendre
+                    <ArrowDown size={14} aria-hidden="true" />
                   </button>
                   <button
                     type="button"
+                    className="lkdv-media-icon lkdv-media-trash"
                     aria-label={`Supprimer ${item.name}`}
                     disabled={disabled}
                     onClick={() => remove(item.id)}
                   >
-                    Supprimer
+                    <Trash2 size={14} aria-hidden="true" />
                   </button>
                 </div>
                 {item.status === 'uploading' ? (

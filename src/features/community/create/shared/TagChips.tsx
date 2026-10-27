@@ -66,12 +66,6 @@ export function TagChips({
     setDraft('');
   };
 
-  const availableSuggestions = suggestions.filter(
-    (suggestion) =>
-      !value.some((tag) => tag.toLowerCase() === suggestion.toLowerCase()) &&
-      normalise(suggestion, maxLength).length > 0,
-  );
-
   return (
     <div className="lkdv-tag-chips">
       <span className="lkdv-form-label">{label}</span>
@@ -115,21 +109,6 @@ export function TagChips({
           }}
         />
       </div>
-      {availableSuggestions.length > 0 && !full ? (
-        <div className="lkdv-tag-chips-suggestions">
-          {availableSuggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              aria-label={`Ajouter ${suggestion}`}
-              disabled={disabled}
-              onClick={() => add(suggestion)}
-            >
-              + {suggestion}
-            </button>
-          ))}
-        </div>
-      ) : null}
       <span className="hint" aria-live="polite">
         {full ? `${max} tags maximum.` : (hint ?? `${value.length}/${max}`)}
       </span>

@@ -2184,3 +2184,36 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   min-height: 80dvh !important;
   bottom: 0 !important;
 }
+
+/* Média : cadre cliquable, texte par image, actions icônes. */
+.lkdv-media-dropzone { position: relative; cursor: pointer; }
+.lkdv-media-plus {
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none;
+  border-radius: 999px; background: rgba(23,64,44,.1); color: #17402C;
+  font: 400 26px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.lkdv-media-add { display: none !important; }
+.lkdv-media-caption { display: flex; flex-direction: column; gap: 2px; }
+.lkdv-media-caption span { color: var(--feed-muted); font: 600 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif); text-transform: uppercase; letter-spacing: .04em; }
+.lkdv-media-caption input { min-height: 32px; padding: 0 8px; border: .5px solid rgba(255,255,255,.8); border-radius: 9px; background: rgba(255,255,255,.68); color: #17402C; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-media-actions { gap: 4px !important; }
+.lkdv-media-icon {
+  display: grid !important; place-items: center !important;
+  width: 30px !important; height: 30px !important; min-height: 30px !important;
+  padding: 0 !important; border-radius: 9px !important;
+  border: .5px solid rgba(255,255,255,.8) !important;
+  background: rgba(255,255,255,.58) !important; color: #17402C !important;
+}
+.lkdv-media-icon:disabled { opacity: .35; }
+.lkdv-media-trash { color: #A05A3C !important; }
+
+/* Sélecteur création : mêmes caractéristiques que le drawer Compte. */
+.lkdv-create-selector button { height: 44px !important; min-height: 44px !important; }
+.lkdv-create-selector .sel-lens { top: 4px !important; bottom: 4px !important; height: 40px !important; }
+.lkdv-create-selector svg { width: 19px !important; height: 19px !important; }
+.lkdv-create-step-pane { touch-action: pan-y; }
+
+/* Météo + tags côte à côte. */
+.lkdv-weather-tags { align-items: flex-start !important; gap: 8px !important; }
+.lkdv-weather-tags > * { flex: 1 1 0; min-width: 0; }
+.lkdv-weather-tags .lkdv-tag-chips { flex: .9 1 0; }

@@ -21,6 +21,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { PlaceSearch } from './shared/PlaceSearch';
 import { ActivityCards, DifficultyLadder, CapacityGauge, SafetyManifest, MeetingPin } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
@@ -326,29 +327,23 @@ export function SortieCreateForm({
                   <InlineError message={errors.eventType?.message} />
                 </Field>
 
-                <Field label="Lieu" htmlFor="sortie-location">
-                  <TextInput
-                    id="sortie-location"
-                    {...form.register('location')}
-                    maxLength={120}
-                    placeholder="Chamonix"
-                  />
-                  <InlineError message={errors.location?.message} />
-                </Field>
+                <Controller
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <PlaceSearch label="Lieu" value={field.value} onChange={field.onChange} placeholder="Chamonix" />
+                  )}
+                />
+                <InlineError message={errors.location?.message} />
 
-                <Field
-                  label="Rendez-vous"
-                  hint="Point de rendez-vous de la cordée."
-                  htmlFor="sortie-meeting"
-                >
-                  <TextInput
-                    id="sortie-meeting"
-                    {...form.register('meetingPoint')}
-                    maxLength={120}
-                    placeholder="Parking de la Flégère, 8 h"
-                  />
-                  <InlineError message={errors.meetingPoint?.message} />
-                </Field>
+                <Controller
+                  control={form.control}
+                  name="meetingPoint"
+                  render={({ field }) => (
+                    <PlaceSearch label="Rendez-vous" value={field.value} onChange={field.onChange} placeholder="Parking de la Flégère, 8 h" />
+                  )}
+                />
+                <InlineError message={errors.meetingPoint?.message} />
 
                 <Controller
                   control={form.control}

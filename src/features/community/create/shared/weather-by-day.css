@@ -1,0 +1,5 @@
+.lkdv-weather-days { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.lkdv-weather-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; max-height: 160px; overflow: auto; padding-right: 2px; }
+.lkdv-weather-day { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lkdv-weather-day span { color: var(--feed-muted); font: 600 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif); text-transform: uppercase; letter-spacing: .03em; }
+.lkdv-weather-day select { width: 100%; min-height: 32px; padding: 0 7px; border: .5px solid rgba(255,255,255,.8); border-radius: 9px; background: rgba(255,255,255,.66); color: #17402C; font: 600 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }

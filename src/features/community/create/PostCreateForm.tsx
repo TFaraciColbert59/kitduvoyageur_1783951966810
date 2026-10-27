@@ -22,6 +22,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { PlaceSearch } from './shared/PlaceSearch';
 import { AudienceLens, CaptionRuler, PollBalance } from './shared/InfoCards';
 
 export interface PostCreateFormProps {
@@ -397,13 +398,14 @@ export function PostCreateForm({
                 </Field>
 
                 <div className="lkdv-form-row">
-                  <Field label="Lieu">
-                    <TextInput
-                      {...form.register('location')}
-                      placeholder="Lac Blanc, Chamonix…"
-                    />
-                    <InlineError message={errors.location?.message} />
-                  </Field>
+                  <Controller
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <PlaceSearch label="Lieu" value={field.value} onChange={field.onChange} placeholder="Lac Blanc, Chamonix…" />
+                    )}
+                  />
+                  <InlineError message={errors.location?.message} />
                   <Controller
                     control={form.control}
                     name="tags"
@@ -546,32 +548,6 @@ export function PostCreateForm({
                     <InlineError message={errors.clubId?.message} />
                   </Field>
                 ) : null}
-
-                <Controller
-                  control={form.control}
-                  name="allowComments"
-                  render={({ field }) => (
-                    <SwitchField
-                      label="Commentaires"
-                      checked={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                <InlineError message={errors.allowComments?.message} />
-
-                <Controller
-                  control={form.control}
-                  name="allowLikes"
-                  render={({ field }) => (
-                    <SwitchField
-                      label="J’aime"
-                      checked={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                <InlineError message={errors.allowLikes?.message} />
 
                 <Field
                   label="Publication programmée"
