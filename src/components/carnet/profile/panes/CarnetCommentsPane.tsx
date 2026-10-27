@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 import { CarnetSubCapsule } from '../CarnetSubCapsule';
 import type { CarnetComment } from '@/features/carnet/detail/useCarnetComments';
@@ -36,10 +36,10 @@ function timeAgo(iso: string): string {
 }
 
 /**
- * Commentaires du carnet, dans l'anatomie exacte du post du Compte :
- * `.lkdv-post-panel-body` (liste qui défile, padding `2px 12px 4px` du Compte),
- * lignes `.lkdv-comment*` (avatar 28, nom, date relative, texte, actions),
- * et le composer du Compte (`PostReplyComposer`) dans `.lkdv-post-panel-foot`.
+ * Commentaires du carnet, dans le corps et le pied du post du Compte
+ * (`.lkdv-post-panel-body`, `PostReplyComposer`). La ligne suit la fiche :
+ * nom 12,5/600 + handle 11/500 sur la même ligne, texte 13/400 à 1,42,
+ * métadonnées 10,5/500 sous le texte, jamais à droite du nom.
  * Le tri Récents / Anciens reste, en haut de la liste : c'est une donnée propre
  * au carnet, il ne remplace aucun bloc du Compte.
  */
@@ -55,7 +55,9 @@ export function CarnetCommentsPane({
   const [sort, setSort] = useState('recent');
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
+  const [entering, setEntering] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const known = useRef<Set<string> | null>(null);
 
   const sorted = useMemo(() => {
     const list = [...comments].sort(
@@ -63,6 +65,21 @@ export function CarnetCommentsPane({
     );
     return sort === 'recent' ? list.reverse() : list;
   }, [comments, sort]);
+
+  /* Un commentaire qui arrive entre en fondu + 6 px, sans déplacer la liste.
+     Le premier rendu n'anime rien : la liste existante reste immobile. */
+  useEffect(() => {
+    if (known.current === null) {
+      known.current = new Set(comments.map((comment) => comment.id));
+      return;
+    }
+    const fresh = comments.find((comment) => !known.current?.has(comment.id));
+    comments.forEach((comment) => known.current?.add(comment.id));
+    if (!fresh) return;
+    setEntering(fresh.id);
+    const timer = window.setTimeout(() => setEntering(null), 220);
+    return () => window.clearTimeout(timer);
+  }, [comments]);
 
   const submit = async () => {
     if (!canWrite) {
@@ -93,28 +110,35 @@ export function CarnetCommentsPane({
           <p className="py-6 text-center text-[12px] text-[#56665D]">Sois le premier à répondre.</p>
         ) : null}
         {sorted.map((comment) => (
-          <div key={comment.id} id={`comment-${comment.id}`} className="lkdv-comment">
+          <div
+            key={comment.id}
+            id={`comment-${comment.id}`}
+            className={`ckp-comment${entering === comment.id ? ' is-new' : ''}`}
+          >
             {comment.authorAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-              <img className="lkdv-comment-av" src={comment.authorAvatar} alt="" />
+              <img className="ckp-avatar" src={comment.authorAvatar} alt="" />
             ) : (
-              <span className="lkdv-comment-av pmi-author-initial" aria-hidden="true">
+              <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
                 {comment.authorName.charAt(0).toUpperCase()}
               </span>
             )}
-            <div className="lkdv-comment-body">
-              <div className="lkdv-comment-head">
-                <span className="lkdv-comment-name">{comment.authorName}</span>
-                <span className="lkdv-comment-time">{timeAgo(comment.createdAt)}</span>
+            <div className="ckp-comment-body">
+              <div className="ckp-comment-head">
+                <span className="ckp-comment-name">{comment.authorName}</span>
+                {comment.authorHandle ? (
+                  <span className="ckp-comment-handle">@{comment.authorHandle}</span>
+                ) : null}
               </div>
-              <p className="lkdv-comment-text">{comment.content}</p>
-              {currentUserId && comment.authorId === currentUserId ? (
-                <div className="lkdv-comment-actions">
+              <p className="ckp-comment-text">{comment.content}</p>
+              <div className="ckp-comment-meta">
+                <time dateTime={comment.createdAt}>{timeAgo(comment.createdAt)}</time>
+                {currentUserId && comment.authorId === currentUserId ? (
                   <button type="button" onClick={() => void onRemove(comment.id)}>
                     Supprimer
                   </button>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </div>
           </div>
         ))}

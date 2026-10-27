@@ -19,8 +19,22 @@ describe('CarnetLikesPane', () => {
     render(<CarnetLikesPane detail={DETAIL} currentUserId="u1" />);
     expect(screen.getByText('Léonie Fabre')).toBeTruthy();
     expect(screen.getByText('Rachid Benali')).toBeTruthy();
-    expect(screen.getByText('Bravo')).toBeTruthy();
+    /* « Bravo » est le libellé de la réaction et l'une des trois pastilles. */
+    expect(screen.getAllByText('Bravo').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('group', { name: 'Filtre des j’aime' })).toBeTruthy();
+  });
+
+  it('trie par réaction avec trois pastilles, sans masquer la liste au repos', () => {
+    const { container } = render(<CarnetLikesPane detail={DETAIL} currentUserId="u1" />);
+    const pills = [...container.querySelectorAll('.ckp-like-filter')];
+    expect(pills.map((pill) => pill.textContent)).toEqual(['J’aime', 'Bravo']);
+    expect(pills.every((pill) => pill.getAttribute('aria-pressed') === 'false')).toBe(true);
+    expect(container.querySelectorAll('.ckp-liker')).toHaveLength(2);
+    fireEvent.click(pills[1]);
+    expect(container.querySelectorAll('.ckp-liker')).toHaveLength(1);
+    fireEvent.click(pills[1]);
+    expect(container.querySelectorAll('.ckp-liker')).toHaveLength(2);
+    expect(screen.getByText('2 réactions')).toBeTruthy();
   });
 
   it('affiche l’état vide honnête', () => {

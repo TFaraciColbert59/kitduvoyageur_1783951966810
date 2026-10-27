@@ -8,6 +8,8 @@ export interface CarnetComment {
   id: string;
   authorId: string | null;
   authorName: string;
+  /** Handle public réel, `null` quand le profil n'en porte pas. */
+  authorHandle?: string | null;
   authorAvatar: string | null;
   content: string;
   createdAt: string;
@@ -40,6 +42,7 @@ async function toComments(
       id: row.id,
       authorId: row.author_id,
       authorName: profile?.full_name?.trim() || profile?.handle?.trim() || 'Auteur',
+      authorHandle: profile?.handle?.trim() || null,
       authorAvatar: profile?.avatar_url ?? null,
       content: row.content,
       createdAt: row.created_at,

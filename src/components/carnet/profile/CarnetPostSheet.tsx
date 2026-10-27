@@ -469,7 +469,14 @@ export function CarnetPostSheet({
             </div>
 
             {meta ? <p className="lkdv-post-likes">{meta}</p> : null}
-            {moment?.caption ? <p className="lkdv-post-caption">{moment.caption}</p> : null}
+            {/* Légende : pseudo 13/600 puis texte 13/400 sur la même ligne. */}
+            {moment?.caption ? (
+              <p className="lkdv-post-caption">
+                {author?.name ? <b className="ckp-post-pseudo">{author.name}</b> : null}
+                {author?.name ? ' ' : null}
+                {moment.caption}
+              </p>
+            ) : null}
           </div>
 
           <div className="lkdv-lens-pane lkdv-post-pane">

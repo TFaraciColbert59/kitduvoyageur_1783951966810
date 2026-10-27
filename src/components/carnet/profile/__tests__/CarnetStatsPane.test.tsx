@@ -89,7 +89,10 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   it('distance : totales, étapes, moyenne, D+/km, départ, arrivée, trace', () => {
     const { container } = render(<CarnetStatsPane detail={RICH} tab="distance" onTabChange={() => {}} />);
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
-    expect(panel.querySelector('.ckp-stat-hero b')?.textContent).toBe('106,4 km');
+    /* Chiffre 34/700 et unité 13/500 : deux nœuds, une seule ligne. */
+    expect(panel.querySelector('.ckp-stat-hero b')?.textContent).toBe('106,4');
+    expect(panel.querySelector('.ckp-stat-hero .ckp-stat-unit')?.textContent).toBe('km');
+    expect(panel.querySelector('.ckp-stat-context')?.textContent).toBe('distance totale');
     expect(panel.textContent).toContain('3 étapes');
     expect(panel.textContent).toContain('35,5 km');
     expect(panel.textContent).toContain('19 m/km');
@@ -118,7 +121,8 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   it('dénivelé : cumul, moyenne, maximum et liste par jour', () => {
     const { container } = render(<CarnetStatsPane detail={RICH} tab="elevation" onTabChange={() => {}} />);
     const panel = screen.getByRole('tabpanel', { name: 'Dénivelé' });
-    expect(panel.querySelector('.ckp-stat-hero b')?.textContent).toMatch(/^2.002 m$/);
+    expect(panel.querySelector('.ckp-stat-hero b')?.textContent).toMatch(/^2.002$/);
+    expect(panel.querySelector('.ckp-stat-hero .ckp-stat-unit')?.textContent).toBe('m');
     expect(panel.textContent).toMatch(/875 m D\+/);
     expect(panel.textContent).toMatch(/1.050 m D\+ · JOUR 1/);
     expect(panel.textContent).toContain('19 m/km');
@@ -139,6 +143,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
     const { container } = render(<CarnetStatsPane detail={RICH} tab="days" onTabChange={() => {}} />);
     const panel = screen.getByRole('tabpanel', { name: 'Jours' });
     expect(panel.querySelector('.ckp-stat-hero b')?.textContent).toBe('3');
+    expect(panel.querySelector('.ckp-stat-hero .ckp-stat-unit')?.textContent).toBe('jours');
     expect(panel.textContent).toContain('JOUR 1 · 26 sept.');
     expect(panel.textContent).toContain('Les Houches → Refuge de Bellachat');
     expect(panel.textContent).toContain('12,4 km');
@@ -148,6 +153,46 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
     expect(panel.textContent).toContain('Bivouac au col');
     expect(container.querySelectorAll('.ckp-day')).toHaveLength(3);
     expect(panel.querySelectorAll('.ckp-moment-list li')).toHaveLength(1);
+  });
+
+  it('répartition : trois segments réels sous le chiffre, aucun sans donnée', () => {
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="distance" onTabChange={() => {}} />);
+    const segments = [...container.querySelectorAll('.ckp-split i')];
+    expect(segments).toHaveLength(3);
+    expect(segments.map((segment) => (segment as HTMLElement).style.opacity)).toEqual(['1', '0.7', '0.45']);
+    const bare = render(
+      <CarnetStatsPane
+        detail={detail({ days: [], trace: null, distanceKm: null, elevationM: null })}
+        tab="distance"
+        onTabChange={() => {}}
+      />,
+    );
+    expect(bare.container.querySelector('.ckp-split')).toBeNull();
+  });
+
+  it('dénivelé : aire de 72 px, point culminant, trois repères, barres sans chiffres', () => {
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="elevation" onTabChange={() => {}} />);
+    const svg = container.querySelector('.ckp-elev svg') as SVGElement;
+    expect(svg).toBeTruthy();
+    expect(svg.getAttribute('viewBox')).toBe('0 0 374 72');
+    /* Aire + trait, aucun axe ni quadrillage. */
+    expect(container.querySelectorAll('.ckp-elev svg path')).toHaveLength(2);
+    expect(container.querySelector('.ckp-elev svg path[fill="rgba(23,64,44,.12)"]')).toBeTruthy();
+    expect(container.querySelectorAll('.ckp-elev-axis span')).toHaveLength(3);
+    expect(container.querySelector('.ckp-elev-summit b')?.textContent).toMatch(/^1.050 m$/);
+    const bars = [...container.querySelectorAll('.ckp-elev-bars i')];
+    expect(bars).toHaveLength(3);
+    /* 3 jours, dont un sans distance : sa barre garde sa place, sans se peindre. */
+    expect(bars.filter((bar) => bar.getAttribute('data-empty') === 'true')).toHaveLength(1);
+  });
+
+  it('jours : ligne de 56 px, pastille 22, deux colonnes de chiffres', () => {
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="days" onTabChange={() => {}} />);
+    const head = container.querySelector('.ckp-day .ckp-day-head') as HTMLElement;
+    expect(head).toBeTruthy();
+    const nums = [...container.querySelectorAll('.ckp-day .ckp-day-nums b')].map((n) => n.textContent);
+    expect(nums.slice(0, 4)).toEqual(['12,4 km', '1 050 m D+', '14,2 km', '700 m D+']);
+    expect(container.querySelectorAll('.ckp-day .ckp-day-badge')).toHaveLength(3);
   });
 
   it('jours : état vide honnête sans étape', () => {
