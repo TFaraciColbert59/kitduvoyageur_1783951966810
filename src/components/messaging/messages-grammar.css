@@ -1302,11 +1302,25 @@
   min-width: 0;
 }
 .lkdv-messages .mpost-embed {
-  zoom: 0.55;
   width: 100%;
   margin-inline: auto;
   border-radius: 20px;
   overflow: hidden;
+}
+/* Le post du fil est un carré : dans un message on plafonne le média, tout le
+   reste du bloc (auteur, actions, texte, boutons) reste présent. */
+.lkdv-messages .mpost-embed .lkdv-feed-post {
+  aspect-ratio: auto !important;
+  height: 230px !important;
+}
+.lkdv-messages .mpost-embed .lkdv-post-media,
+.lkdv-messages .mpost-embed .lkdv-post-media-wrap,
+.lkdv-messages .mpost-embed .lkdv-post-main {
+  height: 100%;
+  max-height: 230px;
+}
+.lkdv-messages .mpost-embed .lkdv-post-media {
+  object-fit: cover;
 }
 .lkdv-messages .mpost-embed-skeleton {
   display: block;
