@@ -1524,8 +1524,8 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  /* La croix flotte au-dessus : le contenu commence plus bas. */
-  padding-top: 44px !important;
+  /* La croix flotte au-dessus : le contenu commence juste dessous. */
+  padding-top: 26px !important;
 }
 /* Le post partagé n'affiche jamais le menu `···` dans un message. */
 .lkdv-messages .mpost-embed .lkdv-feed-post-close {
