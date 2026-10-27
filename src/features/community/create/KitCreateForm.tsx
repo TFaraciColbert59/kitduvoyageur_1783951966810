@@ -12,6 +12,8 @@ import { CREATE_STEPS, StepPager } from './shared/StepPager';
 import { MediaPicker } from './shared/MediaPicker';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
+import { CreationInfoRail } from './shared/CreationInfoRail';
+import { CreationSignature } from './shared/CreationSignature';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -234,6 +236,9 @@ export function KitCreateForm({
             }
           >
             <FormErrorSummary errors={errors} labels={CREATE_FIELD_LABELS} onFocusField={api.focusField} />
+
+            <CreationInfoRail kind="kit" step={activeStep} steps={CREATE_STEPS.kit} values={previewValues} />
+            <CreationSignature kind="kit" values={previewValues} />
 
             <StepPager
               steps={STEPS}

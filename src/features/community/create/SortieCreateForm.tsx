@@ -19,6 +19,8 @@ import { DateRangeField } from './shared/DateRangeField';
 import { NumberStepper } from './shared/NumberStepper';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
+import { CreationInfoRail } from './shared/CreationInfoRail';
+import { CreationSignature } from './shared/CreationSignature';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -278,6 +280,8 @@ export function SortieCreateForm({
               onFocusField={api.focusField}
             />
             <FormPreview kind="sortie" values={previewValues} />
+            <CreationInfoRail kind="sortie" step={activeStep} steps={STEPS} values={previewValues} />
+            <CreationSignature kind="sortie" values={previewValues} />
 
             <StepPager
               steps={STEPS}

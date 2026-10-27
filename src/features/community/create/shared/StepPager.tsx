@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import { Square, ImagePlus, Pencil, Send, Sparkles, BookOpen, Map, Backpack, Camera, Share2, Users, Shield, Route, Check, UserPlus } from 'lucide-react';
 import type { CreateKind } from '../engine/createSchemas';
@@ -86,15 +87,24 @@ export function StepPager({
 }: StepPagerProps) {
   const count = steps.length;
   const safeIndex = count > 0 ? Math.max(0, Math.min(index, count - 1)) : 0;
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const panes = React.Children.toArray(children);
+  const changeStep = (next: number) => {
+    onIndexChange(next);
+    window.requestAnimationFrame(() => {
+      const scroller = rootRef.current?.closest<HTMLElement>('.lkdv-form-body, .lkdv-drawer-body');
+      scroller?.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  };
   const tabs = steps.map((step) => ({ id: step.id, label: step.label }));
 
   return (
     <div
+      ref={rootRef}
       className={`lkdv-create-step-pager ${className}`.trim()}
       onKeyDown={(event) => {
-        if (event.key === 'ArrowRight' && safeIndex < count - 1) onIndexChange(safeIndex + 1);
-        if (event.key === 'ArrowLeft' && safeIndex > 0) onIndexChange(safeIndex - 1);
+        if (event.key === 'ArrowRight' && safeIndex < count - 1) changeStep(safeIndex + 1);
+        if (event.key === 'ArrowLeft' && safeIndex > 0) changeStep(safeIndex - 1);
       }}
     >
       <LensPager
@@ -124,7 +134,35 @@ export function StepPager({
         ))}
       </div>
 
-      <div className="lkdv-create-stepbar">
+      {typeof document !== 'undefined'
+        ? createPortal(
+          <div className="lkdv-create-stepbar">
+            <div className="lkdv-create-step-tabs" role="tablist" aria-label={label}>
+          <span
+            className="lkdv-create-step-lens"
+            aria-hidden="true"
+            style={{
+              width: `calc((100% - 5px) / ${Math.max(1, count)})`,
+              transform: `translateX(${safeIndex * 100}%)`,
+            }}
+          />
+          {steps.map((step, stepIndex) => (
+            <button
+              key={step.id}
+              type="button"
+              role="tab"
+              aria-label={step.label}
+              aria-selected={stepIndex === safeIndex}
+              className={stepIndex === safeIndex ? 'is-active' : ''}
+              onClick={() => changeStep(stepIndex)}
+            >
+              {step.icon}
+            </button>
+          ))}
+        </div>
+          </div>
+          , document.body)
+        : <div className="lkdv-create-stepbar">
         <div className="lkdv-create-step-tabs" role="tablist" aria-label={label}>
           <span
             className="lkdv-create-step-lens"
@@ -142,13 +180,14 @@ export function StepPager({
               aria-label={step.label}
               aria-selected={stepIndex === safeIndex}
               className={stepIndex === safeIndex ? 'is-active' : ''}
-              onClick={() => onIndexChange(stepIndex)}
+              onClick={() => changeStep(stepIndex)}
             >
               {step.icon}
             </button>
           ))}
         </div>
-      </div>
+      </div>}
+
     </div>
   );
 }

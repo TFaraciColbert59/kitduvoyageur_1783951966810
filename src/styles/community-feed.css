@@ -2089,3 +2089,64 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   -webkit-backdrop-filter: blur(22px) saturate(1.6) brightness(1.03) !important;
   backdrop-filter: blur(22px) saturate(1.6) brightness(1.03) !important;
 }
+
+/* Format de publication : planche de 4 tuiles, pas une rangée de chips. */
+.lkdv-form-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  overflow: visible !important;
+}
+.lkdv-form-tabs button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-height: 48px !important;
+  padding: 7px 8px !important;
+  border-radius: 13px !important;
+  text-align: left !important;
+  white-space: normal !important;
+}
+.lkdv-format-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 9px;
+  background: rgba(255,255,255,.5);
+  color: #17402C;
+}
+.lkdv-format-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.lkdv-format-copy b { font: 700 10.5px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif); color: #17402C; }
+.lkdv-format-copy small { font: 500 8.5px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif); color: var(--feed-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lkdv-form-tabs button[aria-pressed="true"] { background: rgba(23,64,44,.12) !important; box-shadow: inset 0 0 0 .5px rgba(23,64,44,.16) !important; }
+.lkdv-form-tabs button[aria-pressed="true"] .lkdv-format-icon { background: #17402C; color: #fff; }
+
+/* Anneau de progression : texte contenu. */
+.lkdv-create-progress { display: inline-flex !important; align-items: center !important; justify-content: center !important; line-height: 1 !important; }
+.lkdv-create-progress b { font-size: 9px !important; }
+.lkdv-create-progress small { font-size: 6px !important; margin-left: .5px; }
+
+/* Sélecteur d'étapes toujours visible : capsule flottante en bas à droite. */
+.lkdv-create-stepbar {
+  position: fixed !important;
+  right: 26px !important;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  left: auto !important;
+  z-index: 45 !important;
+  width: auto !important;
+  padding: 0 !important;
+  background: transparent !important;
+  pointer-events: none;
+}
+.lkdv-create-stepbar .lkdv-create-step-tabs {
+  pointer-events: auto;
+  width: 187px;
+  height: 32px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.14), 0 8px 24px rgba(10,20,14,.2);
+}
+.lkdv-form-body,
+.lkdv-drawer-body { padding-bottom: 64px !important; }
+.lkdv-embedded-form { padding-bottom: 64px !important; }
+.lkdv-create-stepbar { z-index: 2147483000 !important; }

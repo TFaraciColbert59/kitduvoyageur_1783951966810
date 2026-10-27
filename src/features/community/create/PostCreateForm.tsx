@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { Camera, FileText, HelpCircle, CalendarDays } from 'lucide-react';
 import { Controller, type FieldPath } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
@@ -19,6 +20,8 @@ import { TagChips } from './shared/TagChips';
 import { NumberStepper } from './shared/NumberStepper';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
+import { CreationInfoRail } from './shared/CreationInfoRail';
+import { CreationSignature } from './shared/CreationSignature';
 
 export interface PostCreateFormProps {
   open: boolean;
@@ -45,11 +48,11 @@ const STEP_FIELDS = [
   ['audience', 'clubId', 'allowComments', 'allowLikes', 'scheduledAt'],
 ] as const;
 
-const TYPES: Array<{ id: PostKind; label: string }> = [
-  { id: 'photo', label: 'Photo / vidéo' },
-  { id: 'billet', label: 'Billet' },
-  { id: 'question', label: 'Question' },
-  { id: 'event', label: 'Événement' },
+const TYPES: Array<{ id: PostKind; label: string; hint: string; icon: React.ReactNode }> = [
+  { id: 'photo', label: 'Photo / vidéo', hint: 'Montrer un moment', icon: <Camera size={15} aria-hidden="true" /> },
+  { id: 'billet', label: 'Billet', hint: 'Raconter une histoire', icon: <FileText size={15} aria-hidden="true" /> },
+  { id: 'question', label: 'Question', hint: 'Demander à la communauté', icon: <HelpCircle size={15} aria-hidden="true" /> },
+  { id: 'event', label: 'Événement', hint: 'Donner rendez-vous', icon: <CalendarDays size={15} aria-hidden="true" /> },
 ];
 
 export interface PostSnapshotPayload {
@@ -288,6 +291,8 @@ export function PostCreateForm({
               onFocusField={api.focusField}
             />
             <FormPreview kind="post" values={previewValues} />
+            <CreationInfoRail kind="post" step={activeStep} steps={CREATE_STEPS.post} values={previewValues} />
+            <CreationSignature kind="post" values={previewValues} />
 
             <StepPager
               steps={CREATE_STEPS.post}
@@ -320,7 +325,11 @@ export function PostCreateForm({
                         })
                       }
                     >
-                      {type.label}
+                      <span className="lkdv-format-icon">{type.icon}</span>
+                      <span className="lkdv-format-copy">
+                        <b>{type.label}</b>
+                        <small>{type.hint}</small>
+                      </span>
                     </button>
                   ))}
                 </div>

@@ -15,6 +15,8 @@ import { NumberStepper } from './shared/NumberStepper';
 import { TagChips } from './shared/TagChips';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
+import { CreationInfoRail } from './shared/CreationInfoRail';
+import { CreationSignature } from './shared/CreationSignature';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -231,6 +233,8 @@ export function CarnetCreateForm({
               onFocusField={api.focusField}
             />
             <FormPreview kind="carnet" values={previewValues} />
+            <CreationInfoRail kind="carnet" step={activeStep} steps={STEPS} values={previewValues} />
+            <CreationSignature kind="carnet" values={previewValues} />
 
             <StepPager
               steps={STEPS}

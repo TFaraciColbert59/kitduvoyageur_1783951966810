@@ -17,6 +17,8 @@ import { CREATE_STEPS, StepPager } from './shared/StepPager';
 import { MediaPicker } from './shared/MediaPicker';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
+import { CreationInfoRail } from './shared/CreationInfoRail';
+import { CreationSignature } from './shared/CreationSignature';
 import { InlineError } from './shared/InlineError';
 import { createStoryMediaUploader } from './upload';
 
@@ -208,6 +210,8 @@ export function StoryCreateForm({
               onFocusField={api.focusField}
             />
             <FormPreview kind="story" values={previewValues} />
+            <CreationInfoRail kind="story" step={activeStep} steps={CREATE_STEPS.story} values={previewValues} />
+            <CreationSignature kind="story" values={previewValues} />
 
             <StepPager
               steps={STEPS}
