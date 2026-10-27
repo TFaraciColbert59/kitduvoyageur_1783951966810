@@ -50,7 +50,7 @@
 
 | URL | Version | Porte |
 |---|---|---|
-| `https://kitduvoyageur.faracitonyp.workers.dev/pays/fr` | `77943e12` (100 %) | **23/23**, stat 644k km, drawer = carte au pixel |
+| `https://kitduvoyageur-1783951966810-3l9dwl8rp.vercel.app/pays/fr` (prod Vercel, alias `koosmoweb.fr`) | déploiement Vercel 27/10 | **23/23**, stat 644k km, drawer = carte au pixel |
 | `https://pays-refonte-kitduvoyageur.faracitonyp.workers.dev/pays/fr` | preview alias `pays-refonte`, déploiement `ea4acf81` | **23/23 · 23/23 · 23/23** |
 
 La preview alias est **stable** : elle ne bouge pas quand la prod est réécrite. C'est l'URL à utiliser pour montrer la refonte tant que le worker de production est partagé.
