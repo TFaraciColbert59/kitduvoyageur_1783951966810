@@ -2073,6 +2073,8 @@ let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
   if (wasBig) setTimeout(syncCardBounds, 620);
   captureSheetOpener();
   S.sh = { k, tab, page: 0, det, ...extra };
+  const sheetEl = $("sheet");
+  if (sheetEl) sheetEl.dataset.kind = String(k || "");
   if (S.sh.det !== "closed") S.sh.det = "card";
   S.callout = null; S.popv = false; S.mopts = false;
   const phoneEl = $("phone");
