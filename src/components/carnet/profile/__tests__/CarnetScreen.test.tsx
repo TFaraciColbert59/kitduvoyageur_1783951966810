@@ -134,7 +134,8 @@ describe('CarnetScreen — drawer réduit à ce qui n’est pas dans le sélecte
     fireEvent.click(screen.getByRole('button', { name: 'DISTANCE 106,4 km' }));
     expect(screen.getByRole('button', { name: 'Distance' }).getAttribute('aria-pressed')).toBe('true');
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
-    expect(panel.querySelector('.ckp-stat-hero b')?.textContent).toBe('106,4 km');
+    expect(panel.querySelector('.ckp-stat-hero b')?.textContent).toBe('106,4');
+    expect(panel.querySelector('.ckp-stat-hero .ckp-stat-unit')?.textContent).toBe('km');
   });
 
   it('ouvre le sous-onglet Dénivelé depuis la statistique DÉNIVELÉ', () => {

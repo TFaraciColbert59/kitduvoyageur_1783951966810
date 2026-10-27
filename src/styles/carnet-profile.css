@@ -303,13 +303,36 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 /* --- Carte-drawer --------------------------------------------------------- */
 .ckp-card--drawer { height: 100%; min-height: 0; animation: ckp-drawer-in 220ms cubic-bezier(.22, 1, .36, 1) both; }
+/* En-tête du drawer : poignée 42 × 5 à 8 px du bord, sélecteur, croix 36 px.
+   Le voile de coupure vit sous la poignée et n'apparaît qu'au défilement. */
+.ckp-drawer-head { position: relative; z-index: 6; flex: none; }
 .ckp-grabber {
-  display: grid; place-items: center; width: 100%; height: 18px; margin: 6px 0 2px;
-  padding: 0; border: 0; background: none; cursor: pointer;
+  display: grid; justify-items: center; align-items: start; width: 100%; height: 21px;
+  margin: 0; padding: 8px 0 0; border: 0; background: none; cursor: pointer;
 }
-.ckp-grabber span { width: 40px; height: 4px; border-radius: 999px; background: rgba(23, 43, 36, .35); }
-.ckp-drawer-tabs { padding: 0 12px 6px; }
-.ckp-drawer-body { padding: 0 12px 14px; }
+.ckp-grabber span { width: 42px; height: 5px; border-radius: 999px; background: rgba(23, 43, 36, .18); }
+.ckp-drawer-row { display: flex; align-items: center; gap: 8px; padding: 0 12px 6px; }
+.ckp-drawer-tabs { flex: 1 1 auto; min-width: 0; padding: 0; }
+.ckp-drawer-close {
+  position: relative; flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px;
+  display: grid; place-items: center; cursor: pointer; color: #17402C;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(23, 43, 36, .06);
+  transition: transform .16s cubic-bezier(.22, 1, .36, 1);
+}
+/* Cible tactile de 44 px sans toucher au dessin de 36 px. */
+.ckp-drawer-close::after { content: ''; position: absolute; inset: -4px; border-radius: 999px; }
+.ckp-drawer-close:active { transform: scale(.94); }
+.ckp-drawer-cut {
+  position: absolute; left: 0; right: 0; top: 100%; height: 16px; z-index: 7; pointer-events: none;
+  opacity: 0; transition: opacity 160ms ease;
+  border-top: .5px solid rgba(23, 43, 36, .06);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  -webkit-mask-image: linear-gradient(180deg, #000 34%, transparent);
+  mask-image: linear-gradient(180deg, #000 34%, transparent);
+}
+.ckp-drawer-cut[data-on='true'] { opacity: 1; }
+.ckp-drawer-body { padding: 0 0 14px; }
 .ckp-card--drawer .lkdv-capsule { width: 100%; height: 44px; }
 .ckp-card--drawer .lkdv-capsule button { min-width: 0; }
 .ckp-card--drawer .lkdv-capsule button { color: #56665d; }
@@ -328,8 +351,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-pane-list { display: flex; flex-direction: column; }
 .ckp-pane-empty { margin: 0; padding: 22px 0; text-align: center; color: #56665d; font: 500 12px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
-.ckp-liker { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-top: .5px solid rgba(23, 43, 36, .08); }
-.ckp-liker:first-child { border-top: 0; }
+.ckp-liker { display: flex; align-items: center; gap: 8px; padding: 10px 0; }
+.ckp-liker + .ckp-liker { border-top: .5px solid rgba(23, 43, 36, .06); }
 .ckp-liker-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .ckp-liker-txt b { font: 600 12.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ckp-liker-txt small { color: #56665d; font: 500 10.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); }
@@ -378,18 +401,35 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   font: 600 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
 }
 .ckp-sub button[aria-pressed='true'] { background: #fff; color: #172b24; box-shadow: 0 1px 3px rgba(23, 43, 36, .14); }
-.ckp-sub button::after { content: ''; position: absolute; inset: -7px -4px; }
+.ckp-sub button::after { content: ''; position: absolute; inset: -9px -4px; }
 
-.ckp-switch { position: relative; width: 42px; height: 25px; flex: none; padding: 2px; border-radius: 999px; background: rgba(23, 43, 36, .16); }
-.ckp-switch span { display: block; width: 21px; height: 21px; border-radius: 999px; background: #fff; box-shadow: 0 1px 4px rgba(23, 43, 36, .24); transition: transform 180ms cubic-bezier(.16, 1, .3, 1); }
+/* Interrupteur 36 × 20, teinte #17402C : le dessin garde 20 px de haut, la
+   rangée de réglage de 48 px porte la cible tactile. */
+.ckp-switch { position: relative; width: 36px; height: 20px; flex: none; padding: 2px; border-radius: 999px; background: rgba(23, 43, 36, .16); transition: background 180ms ease; }
+.ckp-switch span { display: block; width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 4px rgba(23, 43, 36, .24); transition: transform 180ms cubic-bezier(.16, 1, .3, 1); }
 .ckp-switch.is-on { background: #17402c; }
-.ckp-switch.is-on span { transform: translateX(17px); }
+.ckp-switch.is-on span { transform: translateX(16px); }
 
-.ckp-comment { display: flex; gap: 8px; padding: 8px 0; }
+/* Commentaire : nom + handle sur une ligne, texte 13/400, métadonnées dessous. */
+.ckp-comment { display: flex; gap: 9px; padding: 11px 0; }
+.ckp-comment + .ckp-comment { border-top: .5px solid rgba(23, 43, 36, .06); }
 .ckp-comment-body { min-width: 0; flex: 1; }
-.ckp-comment-name { font: 700 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-comment-time { margin-left: 6px; color: #56665d; font: 500 10px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-comment-text { margin: 2px 0 0; font: 400 12.5px/1.45 var(--font-sans, -apple-system, system-ui, sans-serif); overflow-wrap: anywhere; }
+.ckp-comment-head { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.ckp-comment-name {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #172B24; font: 600 12.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-comment-handle { flex: none; color: #7A8A80; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-comment-text { margin: 3px 0 0; color: #172B24; font: 400 13px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif); overflow-wrap: anywhere; }
+.ckp-comment-meta { display: flex; align-items: center; gap: 10px; margin-top: 4px; color: #8A968D; font: 500 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-comment-meta button {
+  position: relative; padding: 0; border: 0; background: none; cursor: pointer;
+  color: #8A968D; font: 500 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-comment-meta button::after { content: ''; position: absolute; inset: -14px -8px; }
+/* Entrée d'un nouveau commentaire : fondu + 6 px, aucun saut de liste. */
+.ckp-comment.is-new { animation: ckp-comment-in 180ms cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes ckp-comment-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .ckp-avatar { width: 28px; height: 28px; flex: none; border-radius: 999px; object-fit: cover; box-shadow: 0 0 0 .5px rgba(23, 43, 36, .10); }
 .ckp-avatar--initial { display: grid; place-items: center; background: #ddebd8; color: #17402c; font: 700 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .ckp-composer { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
@@ -405,22 +445,40 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-text { margin: 0; font: 400 13px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif); white-space: pre-wrap; overflow-wrap: anywhere; }
 .ckp-link { border: 0; background: none; padding: 0; cursor: pointer; color: #56665d; font: 600 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
+/* --- Ligne de jour : 56 px, pastille 22, deux colonnes de chiffres à droite --
+   Les valeurs restent celles du carnet : une distance absente est un tiret,
+   jamais un zéro. Le récit, la météo, la nuit et les moments restent sous la
+   ligne de 56 px : aucune donnée ne quitte la fiche. */
 .ckp-daylist { display: flex; flex-direction: column; }
-.ckp-day { display: flex; gap: 10px; padding-bottom: 12px; }
-.ckp-day:last-child { padding-bottom: 0; }
-.ckp-day-rail { width: 32px; flex: none; display: flex; flex-direction: column; align-items: center; }
-.ckp-day-badge { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 999px; background: rgba(23, 64, 44, .08); color: #17402c; font: 700 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
-.ckp-day-line { flex: 1; width: 1px; margin-top: 4px; background: rgba(23, 43, 36, .12); }
+.ckp-day { display: block; border-top: .5px solid rgba(23, 43, 36, .06); }
+.ckp-day:first-child { border-top: 0; }
+.ckp-day-head { display: flex; align-items: stretch; gap: 12px; min-height: 56px; }
+.ckp-day-rail { width: 22px; flex: none; display: flex; flex-direction: column; align-items: center; }
+.ckp-day-badge {
+  width: 22px; height: 22px; margin-top: 17px; flex: none;
+  display: grid; place-items: center; border-radius: 999px;
+  background: rgba(23, 64, 44, .08); color: #17402c;
+  font: 700 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums;
+}
+.ckp-day-line { flex: 1; width: 1px; min-height: 8px; background: rgba(23, 43, 36, .10); }
 .ckp-day:last-child .ckp-day-line { display: none; }
-.ckp-day-body { flex: 1; min-width: 0; }
-.ckp-day-label { color: #56665d; font: 600 9.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); text-transform: uppercase; letter-spacing: .06em; }
-.ckp-day-title { display: block; margin-top: 2px; font: 700 14px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-day-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 3px; color: #56665d; font: 500 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-day-note { margin: 6px 0 0; font: 400 13px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-day-overnight { display: inline-flex; gap: 4px; margin-top: 4px; color: #56665d; font: 500 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-day-id { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: 8px 0; }
+.ckp-day-nums { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: center; }
+.ckp-day-nums b {
+  text-align: right; color: #172B24;
+  font: 600 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.ckp-day-nums b + b { color: #56665D; }
+.ckp-day-body { flex: 1; min-width: 0; padding: 0 0 12px 34px; }
+.ckp-day-label { color: #6B7A70; font: 600 9.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); text-transform: uppercase; letter-spacing: .08em; }
+.ckp-day-title { display: block; margin-top: 2px; font: 600 13px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); color: #172B24; }
+.ckp-day-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 3px; color: #6B7A70; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-day-note { margin: 6px 0 0; font: 400 13px/1.45 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-day-overnight { display: inline-flex; gap: 4px; margin-top: 4px; color: #6B7A70; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
 .ckp-kit-list { display: flex; flex-direction: column; }
-.ckp-kit-row { display: flex; align-items: center; gap: 9px; min-height: 44px; border-top: .5px solid rgba(23, 43, 36, .08); }
+.ckp-kit-row { display: flex; align-items: center; gap: 9px; min-height: 48px; border-top: .5px solid rgba(23, 43, 36, .06); }
 .ckp-kit-row:first-child { border-top: 0; }
 .ckp-kit-dot { width: 10px; height: 10px; border-radius: 999px; flex: none; background: #17402c; }
 .ckp-kit-name { display: block; font: 600 12.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); }
@@ -624,27 +682,71 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-capsule .ckp-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c; }
 .ckp-action:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c, inset 0 1px 1px rgba(23, 43, 36, .06); }
 
-/* --- Sous-drawer statistiques -------------------------------------------- */
-.ckp-stats .ckp-pane-sub { display: flex; margin: 0 0 2px; }
-.ckp-stat-hero { display: flex; align-items: baseline; gap: 7px; margin: 4px 0 2px; }
+/* --- Sous-drawer statistiques --------------------------------------------
+   Marges internes 16 px (20 px en haut). Chiffre principal 34/700 tabulaire,
+   unité 13/500 sur la même ligne, contexte 11/500 sans fond, barre de
+   répartition 6 px à 12 px sous le chiffre, aires et barres sans axe. */
+.ckp-stats { position: relative; padding: 20px 16px 4px; }
+.ckp-stats .ckp-pane-sub { display: flex; margin: 0 0 12px; }
+.ckp-stat-hero { display: flex; align-items: baseline; gap: 6px; margin: 0; min-width: 0; }
 .ckp-stat-hero b {
-  color: #17402c; font: 700 30px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-  letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+  color: #17402c; font: 700 34px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.6px; font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.ckp-stat-hero span { color: #56665d; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-stat-unit { flex: none; color: #6B7A70; font: 500 13px/1.1 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: 0; }
+.ckp-stat-context { margin: 7px 0 0; color: #6B7A70; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-split { display: flex; gap: 2px; height: 6px; margin: 12px 0 0; }
+.ckp-split i { display: block; height: 6px; border-radius: 999px; background: #17402c; }
+/* Séparateur avant le bloc suivant : hairline insérée de 16 px à gauche. */
+.ckp-stats-sep { margin: 14px 0 2px; border-top: .5px solid rgba(23, 43, 36, .06); }
 .ckp-stat-rows { display: flex; flex-direction: column; }
 .ckp-stat-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  min-height: 34px; border-top: .5px solid rgba(23, 43, 36, .08);
+  min-height: 40px; border-top: .5px solid rgba(23, 43, 36, .06);
 }
 .ckp-stat-rows > .ckp-stat-row:first-child { border-top: 0; }
-.ckp-stat-block { display: flex; flex-direction: column; margin-top: 4px; }
-.ckp-stat-block .ckp-stat-row { border-top: .5px solid rgba(23, 43, 36, .08); }
+.ckp-stat-block { display: flex; flex-direction: column; margin-top: 18px; }
+.ckp-stat-block .ckp-stat-row { border-top: .5px solid rgba(23, 43, 36, .06); }
 .ckp-stat-block .ckp-stat-row:first-of-type { border-top: 0; }
 .ckp-stat-block-title {
-  color: #56665d; font: 600 9.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
-  letter-spacing: .06em; text-transform: uppercase; margin-bottom: 2px;
+  color: #8A968D; font: 600 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px;
 }
+
+/* Aire altimétrique : 72 px, remplissage et trait seuls, aucun axe. */
+.ckp-elev { position: relative; margin: 10px 0 0; }
+.ckp-elev svg { display: block; width: 100%; height: 72px; }
+.ckp-elev-summit {
+  position: absolute; z-index: 2; display: inline-flex; align-items: center; gap: 4px;
+  transform: translate(5px, -50%); pointer-events: none;
+  color: #172B24; font: 600 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.ckp-elev-summit i { width: 6px; height: 6px; border-radius: 999px; background: #17402c; flex: none; }
+.ckp-elev-axis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 0 2px; }
+.ckp-elev-axis span {
+  text-align: right; color: #7A8A80; opacity: .7;
+  font: 500 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+/* Barres journalières : 4 px de large, sous le profil, sans chiffres. */
+.ckp-elev-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 18px; margin: 10px 0 0; }
+.ckp-elev-bars i { display: block; width: 4px; border-radius: 999px; background: rgba(23, 64, 44, .35); }
+
+/* En-tête collant : 40 px de verre, total en 12/600, révélé au défilement. */
+.ckp-stats-sticky { position: sticky; top: 0; z-index: 4; height: 0; pointer-events: none; }
+.ckp-stats-sticky > div {
+  position: absolute; left: -16px; right: -16px; top: 0; height: 40px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 16px;
+  background: rgba(255, 255, 255, .72);
+  -webkit-backdrop-filter: blur(14px) saturate(1.8); backdrop-filter: blur(14px) saturate(1.8);
+  border-bottom: .5px solid rgba(23, 43, 36, .06);
+  opacity: 0; transition: opacity 160ms ease;
+}
+.ckp-stats-sticky[data-on='true'] > div { opacity: 1; }
+.ckp-stats-sticky span { color: #6B7A70; font: 500 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: .02em; }
+.ckp-stats-sticky b { color: #172B24; font: 600 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
 .ckp-stat-key {
   min-width: 0; color: #56665d;
   font: 500 11.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
@@ -722,3 +824,94 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 /* Le tri Récents / Anciens est une donnée du carnet : il se pose en tête de
    liste, sans déplacer le corps ni le pied du Compte. */
 .ckp-post-sheet .lkdv-post-panel-body .ckp-sub { margin-bottom: 8px; }
+
+/* =============================================================================
+   Finitions des drawers et sous-drawers (27 oct. 2026)
+   Purement visuel : aucune route, aucune donnée, aucun comportement changé.
+   Tokens autorisés : #172B24 #17402C #56665D #6B7A70 #7A8A80 #8A968D #C13B34.
+   ============================================================================= */
+
+/* --- Focus : anneau 2 px #17402C à 2 px du contrôle (feuilles et volets) --- */
+.ckp-card--drawer :focus-visible,
+.ckp-pane :focus-visible,
+.ckp-post-sheet .lkdv-post-panel :focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px transparent, 0 0 0 4px #17402C;
+}
+
+/* --- J’aime ---------------------------------------------------------------- */
+.ckp-likes { gap: 12px; }
+.ckp-likes-count { margin: 0; color: #6B7A70; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: .02em; }
+.ckp-like-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.ckp-like-filter {
+  position: relative; height: 28px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid rgba(23, 43, 36, .14); background: none; color: #56665D; cursor: pointer;
+  font: 600 11.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+/* Cible tactile de 44 px : padding transparent, dessin de 28 px inchangé. */
+.ckp-like-filter::after { content: ''; position: absolute; inset: -8px -2px; border-radius: 999px; }
+.ckp-like-filter[aria-pressed='true'] { background: #17402C; border-color: #17402C; color: #fff; }
+.ckp-like-filter:active { transform: scale(.97); }
+
+/* --- Gérer : réglages sans cadre, sections séparées par 24 px d’air -------- */
+.ckp-manage { padding: 20px 16px 8px; }
+.ckp-manage-section { margin-top: 24px; }
+.ckp-manage-section:first-of-type { margin-top: 0; }
+.ckp-section-head {
+  margin: 0 0 6px; color: #8A968D;
+  font: 600 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: .08em; text-transform: uppercase;
+}
+.ckp-set {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  width: 100%; min-height: 48px; padding: 0; border: 0; background: none;
+  border-top: .5px solid rgba(23, 43, 36, .06);
+  color: #172B24; text-align: left; cursor: pointer;
+}
+.ckp-set:first-of-type { border-top: 0; }
+.ckp-set-label { flex: 1; min-width: 0; }
+.ckp-set-label b { display: block; color: #172B24; font: 600 13px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-set-label small {
+  display: block; margin-top: 1px; color: #6B7A70;
+  font: 500 11px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ckp-set > svg { flex: none; color: #8A968D; }
+.ckp-set:active { transform: scale(.995); }
+.ckp-set:disabled { opacity: .55; cursor: default; }
+.ckp-set--danger b, .ckp-set--danger > svg { color: #C13B34; }
+.ckp-set-confirm {
+  display: flex; flex-direction: column; align-items: stretch; gap: 10px;
+  padding: 12px 0; border-top: .5px solid rgba(23, 43, 36, .06);
+}
+.ckp-set-confirm b { color: #172B24; font: 600 13px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-set-confirm small { color: #6B7A70; font: 500 11px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-set-confirm-row { display: flex; gap: 8px; justify-content: flex-end; }
+.ckp-pill--danger { background: rgba(193, 59, 52, .10); color: #C13B34; box-shadow: inset 0 0 0 .5px rgba(193, 59, 52, .22); }
+
+/* --- Post du moment : légende « pseudo 13/600 puis texte 13/400 » ---------- */
+.ckp-post-sheet .lkdv-post-caption { font-size: 13px !important; line-height: 1.4 !important; font-weight: 400 !important; }
+.ckp-post-pseudo { font-weight: 600; color: inherit; }
+
+/* --- Mouvement réduit : fondu de 160 ms, aucune translation ---------------- */
+@keyframes ckp-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .ckp-card--drawer { animation: ckp-fade-in 160ms linear both; }
+  .ckp-page--next, .ckp-page--prev { animation: ckp-fade-in 160ms linear both; }
+  .ckp-comment.is-new { animation: ckp-fade-in 160ms linear both; }
+  .ckp-like-filter, .ckp-drawer-close, .ckp-set { transition: none; }
+  .ckp-like-filter:active, .ckp-drawer-close:active, .ckp-set:active { transform: none; }
+}
+/* Barre journalière sans valeur : elle garde sa place, elle ne se peint pas. */
+.ckp-elev-bars i[data-empty='true'] { opacity: 0; }
+
+/* Pages sans gouttière propre : le volet porte ses 16 px (Gérer, stats). */
+.ckp-page-pad--flush { padding: 0; }
+.ckp-drawer-body .ckp-pane-share { padding: 20px 16px 4px; }
+
+/* Le composer d'une page de la carte se pose au-dessus du pied flottant
+   (actions + capsule, 30 px à 10 px du bord) : le champ ne passe jamais
+   dessous, quel que soit le nombre de commentaires. Le post, lui, garde son
+   pied dans sa propre feuille : la règle ne vise que les pages du carrousel. */
+.ckp-page .lkdv-post-panel-foot { position: sticky; bottom: 48px; z-index: 2; }

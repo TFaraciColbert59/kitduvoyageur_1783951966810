@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 /**
  * La lentille du sélecteur est une forme peinte par le CSS : on lit la feuille
  * réellement servie et on vérifie le gabarit au dixième de pixel. Une capture
- * d'écran zoomée reste la preuve visuelle (docs/audit/carnet-2026-10-26).
+ * d'écran zoomée reste la preuve visuelle (docs/audit/carnet-2026-10-27).
  */
 const css = fs.readFileSync(
   path.join(process.cwd(), 'src/styles/carnet-profile.css'),
@@ -22,7 +22,7 @@ function rule(selector: string): string {
 }
 
 describe('Lentille du sélecteur — gabarit du segment actif', () => {
-  const lens = rule('.ckp-card-foot > .ckp-th {');
+  const lens = rule('.ckp-capsule > .ckp-th {');
 
   it('fait exactement 41,5 × 25, rayon 999, inset 2,5', () => {
     expect(lens).toMatch(/width:\s*41\.5px/);
@@ -40,10 +40,8 @@ describe('Lentille du sélecteur — gabarit du segment actif', () => {
     expect(lens).not.toMatch(/linear-gradient/);
   });
 
-  it('glisse par transform, au pas segment + gap', () => {
-    expect(lens).toMatch(
-      /transform:\s*translateX\(calc\(var\(--i, 0\) \* \(41\.5px \+ 2px\)\)\)/,
-    );
+  it('glisse par transform, au pas exact du segment', () => {
+    expect(lens).toMatch(/transform:\s*translateX\(calc\(var\(--i, 0\) \* 41\.5px\)\)/);
     expect(lens).toMatch(/transition:\s*transform 220ms cubic-bezier\(\.22, 1, \.36, 1\)/);
   });
 
@@ -54,14 +52,14 @@ describe('Lentille du sélecteur — gabarit du segment actif', () => {
   });
 
   it('disparaît sans segment actif et sous mouvement réduit', () => {
-    expect(rule(".ckp-card-foot > .ckp-th[data-off='true']")).toMatch(/opacity:\s*0/);
+    expect(rule(".ckp-capsule > .ckp-th[data-off='true']")).toMatch(/opacity:\s*0/);
     const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
-    expect(reduced).toMatch(/\.ckp-card-foot > \.ckp-th\s*\{\s*transition:\s*none/);
+    expect(reduced).toMatch(/\.ckp-capsule > \.ckp-th\s*\{\s*transition:\s*none/);
   });
 
   it('reste sous les boutons du sélecteur', () => {
     expect(lens).toMatch(/z-index:\s*0/);
-    const button = rule('.ckp-action,\n.ckp-card-foot .ckp-tabs button {');
+    const button = rule('.ckp-capsule .ckp-tabs button {');
     expect(button).toMatch(/z-index:\s*1/);
   });
 });

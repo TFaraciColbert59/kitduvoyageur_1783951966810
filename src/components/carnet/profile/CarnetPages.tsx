@@ -251,7 +251,9 @@ export function CarnetPages({
 
         {page === 'comments' && commentsPage ? <div className="ckp-page-pad">{commentsPage}</div> : null}
 
-        {page === 'manage' && managePage ? <div className="ckp-page-pad">{managePage}</div> : null}
+        {page === 'manage' && managePage ? (
+          <div className="ckp-page-pad ckp-page-pad--flush">{managePage}</div>
+        ) : null}
       </div>
     </div>
   );

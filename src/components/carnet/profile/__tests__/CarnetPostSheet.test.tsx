@@ -75,7 +75,8 @@ describe('CarnetPostSheet — post du moment dans la forme du post du Compte', (
     const { container } = render(<CarnetPostSheet {...base()} />);
     const doc = container.ownerDocument;
     expect(doc.querySelector('.lkdv-post-likes')?.textContent).toBe('Jour 3 · 18:30 · Col de la Seigne · 27 avril 2026');
-    expect(doc.querySelector('.lkdv-post-caption')?.textContent).toBe('Bivouac au col');
+    expect(doc.querySelector('.lkdv-post-caption .ckp-post-pseudo')?.textContent).toBe('Camille Rochat');
+    expect(doc.querySelector('.lkdv-post-caption')?.textContent).toBe('Camille Rochat Bivouac au col');
   });
 
   it('navigue d’un moment à l’autre par les flèches du média', () => {
