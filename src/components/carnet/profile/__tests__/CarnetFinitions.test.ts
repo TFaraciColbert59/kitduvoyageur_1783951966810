@@ -131,7 +131,7 @@ describe('Statistiques', () => {
     expect(sticky).toMatch(/top:\s*0/);
     const band = rule('.ckp-stats-sticky > div {');
     expect(band).toMatch(/height:\s*40px/);
-    expect(band).toMatch(/backdrop-filter:\s*blur\(14px\)/);
+    expect(band).toMatch(/backdrop-filter:\s*blur\(16px\)/);
     expect(rule('.ckp-stats-sticky b {')).toMatch(/font:\s*600 12px/);
   });
 });

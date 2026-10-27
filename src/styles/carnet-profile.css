@@ -739,8 +739,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-stats-sticky > div {
   position: absolute; left: -16px; right: -16px; top: 0; height: 40px;
   display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 16px;
-  background: rgba(255, 255, 255, .72);
-  -webkit-backdrop-filter: blur(14px) saturate(1.8); backdrop-filter: blur(14px) saturate(1.8);
+  background: rgba(255, 255, 255, .88);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
   border-bottom: .5px solid rgba(23, 43, 36, .06);
   opacity: 0; transition: opacity 160ms ease;
 }

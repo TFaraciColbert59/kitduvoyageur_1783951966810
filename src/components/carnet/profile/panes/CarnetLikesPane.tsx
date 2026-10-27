@@ -40,7 +40,7 @@ function reactionFilters(detail: CarnetDetail) {
 }
 
 /** Réactions réelles du carnet, profils joints (plafond 50). */
-export function CarnetLikesPane({ detail, currentUserId, like }: CarnetLikesPaneProps) {
+export function CarnetLikesPane({ detail, currentUserId: _currentUserId, like }: CarnetLikesPaneProps) {
   const [filter, setFilter] = useState<string | null>(null);
   const filters = useMemo(() => reactionFilters(detail), [detail]);
   const likers = filter ? detail.likers.filter((liker) => liker.reaction === filter) : detail.likers;
