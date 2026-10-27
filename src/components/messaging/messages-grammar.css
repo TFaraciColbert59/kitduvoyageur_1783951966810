@@ -1489,3 +1489,24 @@
 .lkdv-messages .mcard[role='button']:active {
   transform: scale(0.985);
 }
+/* Post partagé : le bouton `···` et le panneau commentaires/partage épousent
+   exactement la carte du message (mêmes angles, aucun décalage). */
+.lkdv-messages .mpost-embed .lkdv-feed-post-close {
+  top: 12px;
+  right: 12px;
+}
+.lkdv-messages .mpost-embed .lkdv-post-panel-slot {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 20px;
+  overflow: hidden;
+}
+.lkdv-messages .mpost-embed .lkdv-post-panel,
+.lkdv-messages .mpost-embed .lkdv-feed-panel-surface {
+  border-radius: 20px;
+}
+.lkdv-messages .mpost-embed .lkdv-post-panel-head {
+  padding-top: 8px;
+}

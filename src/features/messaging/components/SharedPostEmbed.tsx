@@ -72,6 +72,7 @@ export function SharedPostEmbed({ postId, currentUserId, currentUserProfile }: S
   return (
     <div className="mpost-embed">
       <CommunityFeedPost
+        embedded
         post={post}
         user={{ id: currentUserId, user_metadata: { full_name: currentUserProfile?.full_name } }}
       />

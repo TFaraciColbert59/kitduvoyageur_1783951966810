@@ -23,6 +23,9 @@ export interface CommunityFeedPostProps {
   initialCommentId?: string | null;
   /** Les deux premières cartes chargent leur image sans attendre le scroll. */
   mediaPriority?: boolean;
+  /** Rendu dans un message : le panneau ne verrouille pas la page et ne la
+   *  rescrolle pas (le fil de discussion gère son propre défilement). */
+  embedded?: boolean;
 }
 
 /**
@@ -37,6 +40,7 @@ export function CommunityFeedPost({
   initialPanel = null,
   initialCommentId = null,
   mediaPriority = false,
+  embedded = false,
 }: CommunityFeedPostProps) {
   const { toast } = useToast();
   const { liked, saved, toggleLike, toggleSave, share, copyLink, report } = usePostInteractions(
@@ -113,7 +117,7 @@ export function CommunityFeedPost({
   /* Verrou du fond (sans lutter contre le clavier virtuel) + remontée du
      panneau au-dessus du clavier via le visual viewport. */
   useEffect(() => {
-    if (!panel) return;
+    if (!panel || embedded) return;
     const y = panelScrollRef.current;
     const article = articleRef.current;
     const previous = document.body.style.overflow;
@@ -149,7 +153,7 @@ export function CommunityFeedPost({
         delete article.dataset.keyboard;
       }
     };
-  }, [panel]);
+  }, [panel, embedded]);
 
   /* Si le panneau initial vient d’un lien profond, poser le focus dedans. */
   useEffect(() => {
