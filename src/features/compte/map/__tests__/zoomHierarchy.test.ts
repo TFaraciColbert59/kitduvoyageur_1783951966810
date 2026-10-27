@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAP_ZOOM_PRIORITY, resolveMapZoomConfig } from '../zoomHierarchy';
+import { MAP_ZOOM_PRIORITY, clusterByScreenDistance, resolveMapZoomConfig } from '../zoomHierarchy';
 
 describe('resolveMapZoomConfig', () => {
   it('classe les quatre bandes aux seuils exacts', () => {
@@ -61,5 +61,82 @@ describe('resolveMapZoomConfig', () => {
 
   it('applique la priorité d’empilement documentée', () => {
     expect(MAP_ZOOM_PRIORITY).toEqual(['selected', 'poi', 'carnet', 'massif', 'endpoint', 'track']);
+  });
+});
+
+describe('clusterByScreenDistance', () => {
+  it('regroupe les points à moins de 40 px', () => {
+    const clusters = clusterByScreenDistance(
+      [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+      (item) => ({ a: { x: 0, y: 0 }, b: { x: 20, y: 0 }, c: { x: 100, y: 0 } })[item.id]!,
+      40
+    );
+    expect(clusters).toHaveLength(2);
+    expect(clusters[0].items.map((item) => item.id)).toEqual(['a', 'b']);
+    expect(clusters[0].x).toBe(10);
+  });
+
+  it('place le centre du massif sur la moyenne de ses membres', () => {
+    const clusters = clusterByScreenDistance(
+      [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+      (item) => ({ a: { x: 0, y: 0 }, b: { x: 20, y: 0 }, c: { x: 10, y: 20 } })[item.id]!,
+      40
+    );
+    expect(clusters).toHaveLength(1);
+    // Moyenne des trois membres, pas le milieu de la première paire.
+    expect(clusters[0].x).toBeCloseTo((0 + 20 + 10) / 3);
+    expect(clusters[0].y).toBeCloseTo((0 + 0 + 20) / 3);
+  });
+
+  it('ne laisse pas un massif s’étirer par agrégation en chaîne', () => {
+    // a -> b -> c : chaque voisin est à 35 px du précédent, mais c est à 70 px de a.
+    // Mesurer depuis le centre courant borne l'emprise du massif.
+    const clusters = clusterByScreenDistance(
+      [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+      (item) => ({ a: { x: 0, y: 0 }, b: { x: 35, y: 0 }, c: { x: 70, y: 0 } })[item.id]!,
+      40
+    );
+    expect(clusters.map((cluster) => cluster.items.map((item) => item.id))).toEqual([
+      ['a', 'b'],
+      ['c'],
+    ]);
+  });
+
+  it('garde le rayon de 40 px : 40 px agrège, 41 px sépare', () => {
+    const atDistance = (distance: number) =>
+      clusterByScreenDistance(
+        [{ id: 'a' }, { id: 'b' }],
+        (item) => (item.id === 'a' ? { x: 0, y: 0 } : { x: distance, y: 0 }),
+        40
+      );
+    expect(atDistance(40)).toHaveLength(1);
+    expect(atDistance(41)).toHaveLength(2);
+  });
+
+  it('rend un ordre de sortie stable, ancré sur l’ordre d’entrée', () => {
+    const items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
+    const pointOf = (item: { id: string }) =>
+      ({ a: { x: 0, y: 0 }, b: { x: 10, y: 0 }, c: { x: 100, y: 0 }, d: { x: 110, y: 0 } })[
+        item.id
+      ]!;
+    const first = clusterByScreenDistance(items, pointOf, 40);
+    const second = clusterByScreenDistance(items, pointOf, 40);
+
+    expect(first).toEqual(second);
+    expect(first.map((cluster) => cluster.id)).toEqual(['cluster-0', 'cluster-1']);
+    expect(first.map((cluster) => cluster.items.map((item) => item.id))).toEqual([
+      ['a', 'b'],
+      ['c', 'd'],
+    ]);
+  });
+
+  it('rend un tableau vide sans point à agrégrer', () => {
+    expect(clusterByScreenDistance([], () => ({ x: 0, y: 0 }), 40)).toEqual([]);
+  });
+
+  it('agrège un point isolé en massif à un seul membre', () => {
+    const clusters = clusterByScreenDistance([{ id: 'solo' }], () => ({ x: 12, y: -8 }), 40);
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0]).toEqual({ id: 'cluster-0', items: [{ id: 'solo' }], x: 12, y: -8 });
   });
 });
