@@ -90,3 +90,7 @@
 .lkdv-join-stepper span { display: flex; flex-direction: column; gap: 1px; }
 .lkdv-join-stepper b { color: #17402C; font: 700 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .lkdv-join-stepper small { color: var(--feed-muted); font: 500 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-club-invite { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 8px 9px; border: 1px dashed rgba(23,64,44,.22); border-radius: 12px; color: #17402C; background: rgba(255,255,255,.28); }
+.lkdv-club-invite span { display: flex; flex-direction: column; gap: 1px; }
+.lkdv-club-invite b { font: 700 10px/1.1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-club-invite small { color: var(--feed-muted); font: 500 8.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }

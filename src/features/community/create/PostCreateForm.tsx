@@ -461,7 +461,7 @@ export function PostCreateForm({
                     {pollEnabled ? (
                       <>
                         {pollOptions.map((option, index) => (
-                          <div key={index} className="lkdv-form-row">
+                          <div key={index} className="lkdv-form-row lkdv-poll-option">
                             <Field
                               label={`Option ${index + 1}`}
                               htmlFor={`post-poll-${index}`}

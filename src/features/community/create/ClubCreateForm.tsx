@@ -14,7 +14,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { ClubRulesLedger, ClubModeCards, JoinStepper } from './shared/InfoCards';
+import { ClubRulesLedger, ClubModeCards, JoinStepper, ClubInvitePass } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -382,6 +382,7 @@ export function ClubCreateForm({
               </div>
 
               <div>
+                <ClubInvitePass />
                 <Controller
                   control={form.control}
                   name="welcomePost"

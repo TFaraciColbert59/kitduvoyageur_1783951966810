@@ -2150,3 +2150,29 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 .lkdv-drawer-body { padding-bottom: 64px !important; }
 .lkdv-embedded-form { padding-bottom: 64px !important; }
 .lkdv-create-stepbar { z-index: 2147483000 !important; }
+
+/* Contact sheet : bandeau de synthèse. */
+.lkdv-media-contact-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin: 7px 0 2px; padding: 0 2px; color: var(--feed-muted);
+  font: 600 9.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.lkdv-media-contact-head span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; opacity: .8; }
+
+/* Tags : constellation de tailles et de tons. */
+.lkdv-tag-chips-list { align-items: center !important; }
+.lkdv-tag-chip:nth-child(3n + 1) { transform: rotate(-1.2deg); }
+.lkdv-tag-chip:nth-child(3n + 2) { transform: rotate(.8deg); }
+.lkdv-tag-chip:nth-child(2n) { background: rgba(23,64,44,.09) !important; }
+.lkdv-tag-chip span { font-size: 9.5px; }
+
+/* Sondage : chaque option est une ligne de bulletin. */
+.lkdv-poll-option {
+  position: relative; padding: 7px 8px 5px 10px !important;
+  border-radius: 12px; background: rgba(255,255,255,.32);
+  box-shadow: inset 0 0 0 .5px rgba(23,43,36,.08);
+}
+.lkdv-poll-option::before {
+  content: ''; position: absolute; left: 3px; top: 9px; bottom: 9px; width: 3px;
+  border-radius: 999px; background: rgba(23,64,44,.22);
+}

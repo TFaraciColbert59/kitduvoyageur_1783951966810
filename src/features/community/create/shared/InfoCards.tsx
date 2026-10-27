@@ -239,3 +239,12 @@ export function JoinStepper({ questions, privacy }: { questions: number; privacy
     </div>
   );
 }
+
+export function ClubInvitePass() {
+  return (
+    <div className="lkdv-club-invite" aria-label="Passe d’invitation">
+      <Link2 size={15} aria-hidden="true" />
+      <span><b>Passe d’invitation</b><small>Le lien sera généré après la création du club.</small></span>
+    </div>
+  );
+}

@@ -264,6 +264,13 @@ export function MediaPicker({
         </label>
       </div>
 
+      {value.length > 0 ? (
+        <div className="lkdv-media-contact-head">
+          <span>{value.length}/{max} média{max > 1 ? 's' : ''}</span>
+          <span>{value.find((item) => item.cover)?.name ?? 'Aucune couverture'}</span>
+        </div>
+      ) : null}
+
       {rejection ? (
         <p className="lkdv-media-error" role="alert">
           {rejection}
