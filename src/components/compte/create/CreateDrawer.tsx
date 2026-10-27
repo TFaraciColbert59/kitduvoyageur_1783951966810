@@ -1,34 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Camera, ChevronLeft, Image as ImageIcon, Map, Mountain, Users } from 'lucide-react';
+import { BookOpen, Camera, Image as ImageIcon, Map, Mountain, Plus, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
-import { DrawerToggle, OverlaySheet } from '../overlay/OverlaySheet';
-import { CreateActions, CreateField, CreateInput, CreateMediaSlot, CreateProgress, CreateSelect, CreateTextarea } from './ui';
-import './create-drawer.css';
+import { DrawerButton, OverlaySheet } from '../overlay/OverlaySheet';
 
 type CreateType = 'post' | 'story' | 'carnet' | 'kit' | 'club' | 'trip';
 
-/**
- * Catalogue : nom + icône seulement. Le sous-titre est retiré (il encombrait),
- * la tuile entière est cliquable et le type choisi porte un liseré 2 px.
- */
-const CATALOG: Array<{ id: CreateType; title: string; icon: React.ReactNode }> = [
-  { id: 'post', title: 'Publication', icon: <ImageIcon size={20} /> },
-  { id: 'story', title: 'Story', icon: <Camera size={20} /> },
-  { id: 'carnet', title: 'Carnet', icon: <BookOpen size={20} /> },
-  { id: 'kit', title: 'Kit', icon: <Mountain size={20} /> },
-  { id: 'club', title: 'Club', icon: <Users size={20} /> },
-  { id: 'trip', title: 'Voyage', icon: <Map size={20} /> },
+const CATALOG = [
+  { id: 'post' as const, title: 'Publication', subtitle: 'Photo, texte ou question', icon: <ImageIcon size={20} /> },
+  { id: 'story' as const, title: 'Story', subtitle: 'Visible 24 h', icon: <Camera size={20} /> },
+  { id: 'carnet' as const, title: 'Carnet', subtitle: 'Récit d’une aventure', icon: <BookOpen size={20} /> },
+  { id: 'kit' as const, title: 'Kit', subtitle: 'Compose ton sac', icon: <Mountain size={20} /> },
+  { id: 'club' as const, title: 'Club', subtitle: 'Rassemble ton groupe', icon: <Users size={20} /> },
+  { id: 'trip' as const, title: 'Voyage', subtitle: 'Prépare une aventure', icon: <Map size={20} /> },
 ];
-
-/** Étapes des formulaires à plusieurs écrans. Un seul indicateur, sans texte. */
-const STEPS: Partial<Record<CreateType, number>> = { carnet: 3 };
-
-const typeTitle = (type: CreateType) => CATALOG.find((item) => item.id === type)?.title ?? 'Créer';
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Création impossible';
@@ -56,16 +45,9 @@ export function CreateDrawer({ initialType, onClose, onCreated }: CreateDrawerPr
   const [type, setType] = useState<CreateType | null>(
     CATALOG.some((item) => item.id === initialType) ? (initialType as CreateType) : null
   );
-  const [lastType, setLastType] = useState<CreateType | null>(
-    CATALOG.some((item) => item.id === initialType) ? (initialType as CreateType) : null
-  );
-  const [step, setStep] = useState(0);
-  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  const totalSteps = type ? STEPS[type] ?? 1 : 1;
 
   const run = async (action: () => Promise<string>) => {
     setBusy(true);
@@ -83,50 +65,17 @@ export function CreateDrawer({ initialType, onClose, onCreated }: CreateDrawerPr
     }
   };
 
-  const pickType = (next: CreateType) => {
-    setType(next);
-    setLastType(next);
-    setStep(0);
-    setError(null);
-    setDirection('forward');
-  };
-
-  const goBack = () => {
-    setError(null);
-    if (step > 0) {
-      setStep(step - 1);
-    } else {
-      setType(null);
-    }
-    setDirection('back');
-  };
-
-  const goStep = (next: number) => {
-    setError(null);
-    setStep(next);
-    setDirection(next > step ? 'forward' : 'back');
-  };
-
   return (
     <OverlaySheet
-      title={type ? typeTitle(type) : 'Créer'}
+      title={type ? CATALOG.find((item) => item.id === type)?.title || 'Créer' : 'Créer'}
+      subtitle={type ? 'Tout se passe ici, sans quitter ton compte.' : 'Choisis ce que tu veux créer.'}
       onClose={onClose}
-      className="lkdv-create-drawer"
-      heading={
+      headerRight={
         type ? (
-          <div className="lkdv-cd-head">
-            <button
-              type="button"
-              className="lkdv-cd-back"
-              aria-label={step > 0 ? 'Étape précédente' : 'Tous les types de création'}
-              onClick={goBack}
-            >
-              <ChevronLeft size={24} aria-hidden="true" />
-            </button>
-          </div>
-        ) : (
-          <span />
-        )
+          <button type="button" className="lkdv-create-back" onClick={() => setType(null)}>
+            Tous les types
+          </button>
+        ) : undefined
       }
     >
       {success ? (
@@ -134,73 +83,40 @@ export function CreateDrawer({ initialType, onClose, onCreated }: CreateDrawerPr
       ) : !user ? (
         <div className="lkdv-overlay-empty"><b>Connecte-toi pour créer</b><p>Ton compte te permet de publier et partager.</p></div>
       ) : !type ? (
-        <div className="lkdv-cd-step" data-dir={direction}>
-          <div className="lkdv-cd-catalog" role="group" aria-label="Types de création">
-            {CATALOG.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className="lkdv-cd-tile"
-                aria-current={item.id === lastType ? 'true' : undefined}
-                aria-label={item.title}
-                onClick={() => pickType(item.id)}
-              >
-                <span className="lkdv-cd-tile-icon" aria-hidden="true">{item.icon}</span>
-                <span className="lkdv-cd-tile-name">{item.title}</span>
-              </button>
-            ))}
-          </div>
+        <div className="lkdv-create-catalog">
+          {CATALOG.map((item) => (
+            <button key={item.id} type="button" className="lkdv-create-card" onClick={() => setType(item.id)}>
+              <span className="lkdv-create-icon">{item.icon}</span>
+              <span><b>{item.title}</b><small>{item.subtitle}</small></span>
+              <Plus size={16} aria-hidden="true" />
+            </button>
+          ))}
         </div>
       ) : (
         <>
-          {totalSteps > 1 ? (
-            <CreateProgress step={step} total={totalSteps} label={`Étape ${step + 1} sur ${totalSteps}`} />
-          ) : null}
-          {error ? <p className="lkdv-cd-alert" role="alert">{error}</p> : null}
-          {type === 'post' ? (
-            <PostForm busy={busy} direction={direction} onSubmit={(action) => void run(action)} onCancel={onClose} />
-          ) : null}
-          {type === 'story' ? (
-            <StoryForm busy={busy} direction={direction} onSubmit={(action) => void run(action)} onCancel={onClose} />
-          ) : null}
-          {type === 'carnet' ? (
-            <CarnetForm
-              busy={busy}
-              step={step}
-              direction={direction}
-              goStep={goStep}
-              onSubmit={(action) => void run(action)}
-              onCancel={onClose}
-            />
-          ) : null}
-          {type === 'kit' ? (
-            <KitForm busy={busy} direction={direction} onSubmit={(action) => void run(action)} onCancel={onClose} />
-          ) : null}
-          {type === 'club' ? (
-            <ClubForm busy={busy} direction={direction} onSubmit={(action) => void run(action)} onCancel={onClose} />
-          ) : null}
-          {type === 'trip' ? (
-            <TripForm busy={busy} direction={direction} onSubmit={(action) => void run(action)} onCancel={onClose} />
-          ) : null}
+          {error ? <p className="lkdv-create-error" role="alert">{error}</p> : null}
+          {type === 'post' ? <PostForm busy={busy} onSubmit={(action) => void run(action)} /> : null}
+          {type === 'story' ? <StoryForm busy={busy} onSubmit={(action) => void run(action)} /> : null}
+          {type === 'carnet' ? <CarnetForm busy={busy} onSubmit={(action) => void run(action)} /> : null}
+          {type === 'kit' ? <KitForm busy={busy} onSubmit={(action) => void run(action)} /> : null}
+          {type === 'club' ? <ClubForm busy={busy} onSubmit={(action) => void run(action)} /> : null}
+          {type === 'trip' ? <TripForm busy={busy} onSubmit={(action) => void run(action)} /> : null}
         </>
       )}
     </OverlaySheet>
   );
 }
 
-interface FormProps {
-  busy: boolean;
-  direction: 'forward' | 'back';
-  onSubmit: (action: () => Promise<string>) => void;
-  onCancel: () => void;
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className="lkdv-overlay-field"><span>{label}</span>{children}</label>;
 }
 
-function PostForm({ busy, direction, onSubmit, onCancel }: FormProps) {
+function PostForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => Promise<string>) => void }) {
   const { user } = useAuth();
   const [content, setContent] = useState('');
   const [audience, setAudience] = useState('public');
   const [file, setFile] = useState<File | null>(null);
-  const canSubmit = Boolean(content.trim() || file);
+  const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
 
   const submit = async () => {
     if (!user) throw new Error('Connexion requise');
@@ -232,41 +148,22 @@ function PostForm({ busy, direction, onSubmit, onCancel }: FormProps) {
   };
 
   return (
-    <div className="lkdv-cd-step lkdv-cd-form" data-dir={direction}>
-      <div className="lkdv-cd-group">
-        <CreateMediaSlot label="Ajouter une photo" accept="image/*" file={file} onChange={setFile} disabled={busy} />
-        <CreateTextarea
-          label="Texte"
-          value={content}
-          onChange={setContent}
-          placeholder="Raconte ton moment terrain…"
-          disabled={busy}
-        />
-      </div>
-      <div className="lkdv-cd-group">
-        <CreateSelect
-          label="Audience"
-          value={audience}
-          onChange={setAudience}
-          disabled={busy}
-          options={[
-            { value: 'public', label: 'Tout le monde' },
-            { value: 'abonnies', label: 'Mes abonnés' },
-          ]}
-        />
-      </div>
-      <CreateActions
-        primaryLabel={busy ? 'Publication…' : 'Publier'}
-        onPrimary={() => onSubmit(submit)}
-        primaryDisabled={busy || !canSubmit}
-        secondaryLabel="Annuler"
-        onSecondary={onCancel}
-      />
+    <div>
+      {preview ? <img className="lkdv-create-preview" src={preview} alt="" /> : null}
+      <Field label="Photo"><input type="file" accept="image/*" onChange={(event) => setFile(event.target.files?.[0] ?? null)} /></Field>
+      <Field label="Texte"><textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="Raconte ton moment terrain…" /></Field>
+      <Field label="Audience">
+        <select value={audience} onChange={(event) => setAudience(event.target.value)}>
+          <option value="public">Tout le monde</option>
+          <option value="abonnies">Mes abonnés</option>
+        </select>
+      </Field>
+      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Publication…' : 'Publier'}</DrawerButton>
     </div>
   );
 }
 
-function StoryForm({ busy, direction, onSubmit, onCancel }: FormProps) {
+function StoryForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => Promise<string>) => void }) {
   const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
@@ -304,58 +201,23 @@ function StoryForm({ busy, direction, onSubmit, onCancel }: FormProps) {
   };
 
   return (
-    <div className="lkdv-cd-step lkdv-cd-form" data-dir={direction}>
-      <div className="lkdv-cd-group">
-        <CreateMediaSlot label="Ajouter une photo ou une vidéo" accept="image/*,video/*" file={file} onChange={setFile} disabled={busy} />
-        <CreateInput
-          label="Légende"
-          value={caption}
-          maxLength={280}
-          placeholder="Un mot sur ce moment…"
-          disabled={busy}
-          onChange={(event) => setCaption(event.target.value)}
-        />
-      </div>
-      <div className="lkdv-cd-group">
-        <CreateSelect
-          label="Visibilité"
-          value={visibility}
-          onChange={setVisibility}
-          disabled={busy}
-          options={[
-            { value: 'public', label: 'Tout le monde' },
-            { value: 'followers', label: 'Mes abonnés' },
-            { value: 'close_friends', label: 'Mes proches' },
-            { value: 'only_me', label: 'Moi uniquement' },
-          ]}
-        />
-      </div>
-      <CreateActions
-        primaryLabel={busy ? 'Publication…' : 'Publier la story'}
-        onPrimary={() => onSubmit(submit)}
-        primaryDisabled={busy || !file}
-        secondaryLabel="Annuler"
-        onSecondary={onCancel}
-      />
+    <div>
+      <Field label="Média"><input type="file" accept="image/*,video/*" onChange={(event) => setFile(event.target.files?.[0] ?? null)} /></Field>
+      <Field label="Légende"><input value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={280} placeholder="Un mot sur ce moment…" /></Field>
+      <Field label="Visibilité">
+        <select value={visibility} onChange={(event) => setVisibility(event.target.value)}>
+          <option value="public">Tout le monde</option>
+          <option value="followers">Mes abonnés</option>
+          <option value="close_friends">Mes proches</option>
+          <option value="only_me">Moi uniquement</option>
+        </select>
+      </Field>
+      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Publication…' : 'Publier la story'}</DrawerButton>
     </div>
   );
 }
 
-function CarnetForm({
-  busy,
-  direction,
-  step,
-  goStep,
-  onSubmit,
-  onCancel,
-}: {
-  busy: boolean;
-  direction: 'forward' | 'back';
-  step: number;
-  goStep: (step: number) => void;
-  onSubmit: (action: () => Promise<string>) => void;
-  onCancel: () => void;
-}) {
+function CarnetForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => Promise<string>) => void }) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [destination, setDestination] = useState('');
@@ -363,33 +225,12 @@ function CarnetForm({
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [visibility, setVisibility] = useState('public');
-  const [cover, setCover] = useState<File | null>(null);
-  const [touched, setTouched] = useState<{ title: boolean; destination: boolean }>({ title: false, destination: false });
-
-  const titleOk = title.trim().length > 0;
-  const destinationOk = destination.trim().length > 0;
-  const infosOk = titleOk && destinationOk;
-
-  const titleError = touched.title && !titleOk ? 'Titre requis' : null;
-  const destinationError = touched.destination && !destinationOk ? 'Destination requise' : null;
 
   const submit = async () => {
     if (!user) throw new Error('Connexion requise');
-    if (!titleOk) throw new Error('Donne un titre à ton carnet');
-    if (!destinationOk) throw new Error('Indique une destination');
+    if (!title.trim()) throw new Error('Donne un titre à ton carnet');
+    if (!destination.trim()) throw new Error('Indique une destination');
     const supabase = createClient();
-    let coverUrl: string | null = null;
-    if (cover) {
-      const cleaned = await stripImageMetadata(cover);
-      const ext = cleaned.type === 'image/png' ? 'png' : 'jpg';
-      const path = `carnet-covers/${user.id}/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('carnet-media').upload(path, cleaned, {
-        contentType: cleaned.type || 'image/jpeg',
-        upsert: false,
-      });
-      if (uploadError) throw new Error(uploadError.message);
-      coverUrl = supabase.storage.from('carnet-media').getPublicUrl(path).data.publicUrl;
-    }
     const { error } = await supabase.from('carnets').insert({
       author_id: user.id,
       title: title.trim(),
@@ -398,98 +239,34 @@ function CarnetForm({
       start_date: start || null,
       end_date: end || null,
       visibility,
-      cover_image: coverUrl,
+      cover_image: null,
       is_collaborative: false,
     });
     if (error) throw new Error(error.message);
     return 'Carnet créé';
   };
 
-  if (step === 0) {
-    return (
-      <div className="lkdv-cd-step lkdv-cd-form" data-dir={direction} key="carnet-infos">
-        <div className="lkdv-cd-group">
-          <CreateField error={titleError}>
-            <CreateInput
-              label="Titre"
-              value={title}
-              placeholder="Traversée du Vercors"
-              disabled={busy}
-              onChange={(event) => setTitle(event.target.value)}
-              onBlur={() => setTouched((state) => ({ ...state, title: true }))}
-            />
-          </CreateField>
-          <CreateField error={destinationError}>
-            <CreateInput
-              label="Destination"
-              value={destination}
-              placeholder="Vercors, France"
-              disabled={busy}
-              onChange={(event) => setDestination(event.target.value)}
-              onBlur={() => setTouched((state) => ({ ...state, destination: true }))}
-            />
-          </CreateField>
-          <CreateTextarea
-            label="Récit"
-            value={description}
-            onChange={setDescription}
-            placeholder="Le fil de l’aventure…"
-            disabled={busy}
-          />
-        </div>
-        <div className="lkdv-cd-group">
-          <div className="lkdv-cd-row">
-            <CreateInput label="Début" type="date" value={start} disabled={busy} onChange={(event) => setStart(event.target.value)} />
-            <CreateInput label="Fin" type="date" value={end} disabled={busy} onChange={(event) => setEnd(event.target.value)} />
-          </div>
-        </div>
-        <CreateActions
-          primaryLabel="Continuer"
-          onPrimary={() => {
-            setTouched({ title: true, destination: true });
-            if (infosOk) goStep(1);
-          }}
-          primaryDisabled={busy || !infosOk}
-          secondaryLabel="Annuler"
-          onSecondary={onCancel}
-        />
-      </div>
-    );
-  }
-
-  if (step === 1) {
-    return (
-      <div className="lkdv-cd-step lkdv-cd-form" data-dir={direction} key="carnet-photos">
-        <CreateMediaSlot label="Ajouter une photo de couverture" accept="image/*" file={cover} onChange={setCover} disabled={busy} />
-        <CreateActions primaryLabel="Continuer" onPrimary={() => goStep(2)} primaryDisabled={busy} secondaryLabel="Annuler" onSecondary={onCancel} />
-      </div>
-    );
-  }
-
   return (
-    <div className="lkdv-cd-step lkdv-cd-form" data-dir={direction} key="carnet-publication">
-      <CreateSelect
-        label="Visibilité"
-        value={visibility}
-        onChange={setVisibility}
-        disabled={busy}
-        options={[
-          { value: 'public', label: 'Public' },
-          { value: 'private', label: 'Privé' },
-        ]}
-      />
-      <CreateActions
-        primaryLabel={busy ? 'Création…' : 'Créer le carnet'}
-        onPrimary={() => onSubmit(submit)}
-        primaryDisabled={busy || !infosOk}
-        secondaryLabel="Annuler"
-        onSecondary={onCancel}
-      />
+    <div>
+      <Field label="Titre"><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Traversée du Vercors" /></Field>
+      <Field label="Destination"><input value={destination} onChange={(event) => setDestination(event.target.value)} placeholder="Vercors, France" /></Field>
+      <Field label="Récit"><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Le fil de l’aventure…" /></Field>
+      <div className="lkdv-create-row">
+        <Field label="Début"><input type="date" value={start} onChange={(event) => setStart(event.target.value)} /></Field>
+        <Field label="Fin"><input type="date" value={end} onChange={(event) => setEnd(event.target.value)} /></Field>
+      </div>
+      <Field label="Visibilité">
+        <select value={visibility} onChange={(event) => setVisibility(event.target.value)}>
+          <option value="public">Public</option>
+          <option value="private">Privé</option>
+        </select>
+      </Field>
+      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Création…' : 'Créer le carnet'}</DrawerButton>
     </div>
   );
 }
 
-function KitForm({ busy, direction, onSubmit, onCancel }: FormProps) {
+function KitForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => Promise<string>) => void }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [season, setSeason] = useState('toute_saison');
@@ -510,57 +287,28 @@ function KitForm({ busy, direction, onSubmit, onCancel }: FormProps) {
   };
 
   return (
-    <div className="lkdv-cd-step lkdv-cd-form" data-dir={direction}>
-      <div className="lkdv-cd-group">
-        <CreateInput
-          label="Nom"
-          value={name}
-          placeholder="Ultralight automne"
-          disabled={busy}
-          onChange={(event) => setName(event.target.value)}
-        />
-        <CreateTextarea
-          label="Description"
-          value={description}
-          onChange={setDescription}
-          placeholder="À quoi sert ce kit ?"
-          disabled={busy}
-        />
-      </div>
-      <div className="lkdv-cd-group">
-        <CreateSelect
-          label="Saison"
-          value={season}
-          onChange={setSeason}
-          disabled={busy}
-          options={[
-            { value: 'toute_saison', label: 'Toute saison' },
-            { value: 'printemps', label: 'Printemps' },
-            { value: 'ete', label: 'Été' },
-            { value: 'automne', label: 'Automne' },
-            { value: 'hiver', label: 'Hiver' },
-          ]}
-        />
-        <div className="lkdv-cd-switch-row">
-          <span className="lkdv-cd-switch-label" aria-hidden="true">Public</span>
-          <DrawerToggle checked={isPublic} onChange={setIsPublic} label="Kit public" />
-        </div>
-      </div>
-      <CreateActions
-        primaryLabel={busy ? 'Création…' : 'Créer le kit'}
-        onPrimary={() => onSubmit(submit)}
-        primaryDisabled={busy || !name.trim()}
-        secondaryLabel="Annuler"
-        onSecondary={onCancel}
-      />
+    <div>
+      <Field label="Nom"><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Ultralight automne" /></Field>
+      <Field label="Description"><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="À quoi sert ce kit ?" /></Field>
+      <Field label="Saison">
+        <select value={season} onChange={(event) => setSeason(event.target.value)}>
+          <option value="toute_saison">Toute saison</option>
+          <option value="printemps">Printemps</option>
+          <option value="ete">Été</option>
+          <option value="automne">Automne</option>
+          <option value="hiver">Hiver</option>
+        </select>
+      </Field>
+      <label className="lkdv-create-check"><input type="checkbox" checked={isPublic} onChange={(event) => setIsPublic(event.target.checked)} /> Kit public</label>
+      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Création…' : 'Créer le kit'}</DrawerButton>
     </div>
   );
 }
 
-function ClubForm({ busy, direction, onSubmit, onCancel }: FormProps) {
+function ClubForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => Promise<string>) => void }) {
   const { user } = useAuth();
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState('Randonnée');
   const [description, setDescription] = useState('');
   const [privacy, setPrivacy] = useState('open');
 
@@ -574,7 +322,7 @@ function ClubForm({ busy, direction, onSubmit, onCancel }: FormProps) {
       type: 'activite',
       emoji: '🥾',
       description: description.trim(),
-      category: category.trim() || 'Randonnée',
+      category,
       privacy,
       cover_color: 'from-[var(--lkv-forest-600)] to-[var(--lkv-primary)]',
       created_by: user.id,
@@ -594,55 +342,23 @@ function ClubForm({ busy, direction, onSubmit, onCancel }: FormProps) {
   };
 
   return (
-    <div className="lkdv-cd-step lkdv-cd-form" data-dir={direction}>
-      <div className="lkdv-cd-group">
-        <CreateInput
-          label="Nom"
-          value={name}
-          placeholder="Randonnée Alpine"
-          disabled={busy}
-          onChange={(event) => setName(event.target.value)}
-        />
-        <CreateInput
-          label="Catégorie"
-          value={category}
-          placeholder="Randonnée"
-          disabled={busy}
-          onChange={(event) => setCategory(event.target.value)}
-        />
-        <CreateTextarea
-          label="Description"
-          value={description}
-          onChange={setDescription}
-          placeholder="L’esprit du club…"
-          disabled={busy}
-        />
-      </div>
-      <div className="lkdv-cd-group">
-        <CreateSelect
-          label="Confidentialité"
-          value={privacy}
-          onChange={setPrivacy}
-          disabled={busy}
-          options={[
-            { value: 'open', label: 'Ouvert' },
-            { value: 'request', label: 'Sur demande' },
-            { value: 'private', label: 'Privé' },
-          ]}
-        />
-      </div>
-      <CreateActions
-        primaryLabel={busy ? 'Création…' : 'Créer le club'}
-        onPrimary={() => onSubmit(submit)}
-        primaryDisabled={busy || !name.trim()}
-        secondaryLabel="Annuler"
-        onSecondary={onCancel}
-      />
+    <div>
+      <Field label="Nom"><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Randonnée Alpine" /></Field>
+      <Field label="Catégorie"><input value={category} onChange={(event) => setCategory(event.target.value)} /></Field>
+      <Field label="Description"><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="L’esprit du club…" /></Field>
+      <Field label="Confidentialité">
+        <select value={privacy} onChange={(event) => setPrivacy(event.target.value)}>
+          <option value="open">Ouvert</option>
+          <option value="request">Sur demande</option>
+          <option value="private">Privé</option>
+        </select>
+      </Field>
+      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Création…' : 'Créer le club'}</DrawerButton>
     </div>
   );
 }
 
-function TripForm({ busy, direction, onSubmit, onCancel }: FormProps) {
+function TripForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => Promise<string>) => void }) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [destination, setDestination] = useState('');
@@ -670,49 +386,22 @@ function TripForm({ busy, direction, onSubmit, onCancel }: FormProps) {
   };
 
   return (
-    <div className="lkdv-cd-step lkdv-cd-form" data-dir={direction}>
-      <div className="lkdv-cd-group">
-        <CreateInput
-          label="Titre"
-          value={title}
-          placeholder="Tour du Mont-Blanc"
-          disabled={busy}
-          onChange={(event) => setTitle(event.target.value)}
-        />
-        <CreateInput
-          label="Destination"
-          value={destination}
-          placeholder="Chamonix, France"
-          disabled={busy}
-          onChange={(event) => setDestination(event.target.value)}
-        />
+    <div>
+      <Field label="Titre"><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Tour du Mont-Blanc" /></Field>
+      <Field label="Destination"><input value={destination} onChange={(event) => setDestination(event.target.value)} placeholder="Chamonix, France" /></Field>
+      <div className="lkdv-create-row">
+        <Field label="Début"><input type="date" value={start} onChange={(event) => setStart(event.target.value)} /></Field>
+        <Field label="Fin"><input type="date" value={end} onChange={(event) => setEnd(event.target.value)} /></Field>
       </div>
-      <div className="lkdv-cd-group">
-        <div className="lkdv-cd-row">
-          <CreateInput label="Début" type="date" value={start} disabled={busy} onChange={(event) => setStart(event.target.value)} />
-          <CreateInput label="Fin" type="date" value={end} disabled={busy} onChange={(event) => setEnd(event.target.value)} />
-        </div>
-      </div>
-      <div className="lkdv-cd-group">
-        <CreateSelect
-          label="Visibilité"
-          value={visibility}
-          onChange={setVisibility}
-          disabled={busy}
-          options={[
-            { value: 'private', label: 'Privé' },
-            { value: 'unlisted', label: 'Non listé' },
-            { value: 'public', label: 'Public' },
-          ]}
-        />
-      </div>
-      <CreateActions
-        primaryLabel={busy ? 'Création…' : 'Créer le voyage'}
-        onPrimary={() => onSubmit(submit)}
-        primaryDisabled={busy || !title.trim()}
-        secondaryLabel="Annuler"
-        onSecondary={onCancel}
-      />
+      <Field label="Visibilité">
+        <select value={visibility} onChange={(event) => setVisibility(event.target.value)}>
+          <option value="private">Privé</option>
+          <option value="unlisted">Non listé</option>
+          <option value="public">Public</option>
+        </select>
+      </Field>
+      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Création…' : 'Créer le voyage'}</DrawerButton>
+      <p className="lkdv-create-note">Tu pourras ouvrir le Compas ensuite pour construire l’itinéraire.</p>
     </div>
   );
 }
