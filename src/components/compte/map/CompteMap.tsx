@@ -28,7 +28,11 @@ import type {
 } from '@/features/compte/map/types';
 import {
   clusterByScreenDistance,
+  isInsideViewport,
+  isOverlayEntryVisible,
   resolveMapZoomConfig,
+  type MapOverlayKind,
+  type MapZoomConfig,
   type MassifCluster,
 } from '@/features/compte/map/zoomHierarchy';
 import { CompteMapAttribution, CompteMapHud } from './CompteMapHud';
@@ -217,6 +221,15 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const [scale, setScale] = useState<MapScale>('globe');
   const [zoomConfig, setZoomConfig] = useState(() => resolveMapZoomConfig(3));
+  /**
+   * Bande courante, lisible *synchroniquement* par l'overlay DOM.
+   *
+   * Le handler `zoom` met ce ref à jour avant d'appeler `setZoomConfig` : le
+   * `place()` de l'overlay (même événement, enregistré après) filtre donc les
+   * entrées sur la bande de la frame, sans dépendre du rendu React ni
+   * reconstruire l'overlay à chaque franchissement de seuil.
+   */
+  const zoomConfigRef = useRef<MapZoomConfig>(zoomConfig);
   const [tileMode, setTileMode] = useState<'satellite' | 'topo'>('satellite');
   const [online, setOnline] = useState(true);
   const [year, setYear] = useState<number | null>(null);
@@ -318,7 +331,11 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     });
     instance.on('zoom', () => {
       const zoom = instance.getZoom();
-      setZoomConfig(resolveMapZoomConfig(zoom));
+      // Le ref d'abord : l'overlay lit la bande dans son propre handler `zoom`,
+      // enregistré après celui-ci, sans attendre le re-rendu React.
+      const nextZoomConfig = resolveMapZoomConfig(zoom);
+      zoomConfigRef.current = nextZoomConfig;
+      setZoomConfig(nextZoomConfig);
       setScale(zoom < 4 ? 'globe' : zoom < 11 ? 'massif' : 'sentier');
     });
 
@@ -564,7 +581,14 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     }
     overlay.innerHTML = '';
 
-    type Entry = { element: HTMLButtonElement; lng: number; lat: number; anchor: string; detail: boolean };
+    type Entry = {
+      element: HTMLButtonElement;
+      lng: number;
+      lat: number;
+      anchor: string;
+      /** Type de point : décide de la règle de bande appliquée dans `place`. */
+      kind: MapOverlayKind;
+    };
     type MassifEntry = { massif: MapMassif; point: { x: number; y: number } };
     const entries: Entry[] = [];
 
@@ -606,7 +630,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         setSelected({ kind: 'poi', id: poi.id });
       });
       overlay.appendChild(element);
-      entries.push({ element, lng: poi.position.lng, lat: poi.position.lat, anchor: 'translate(-50%, -50%)', detail: true });
+      entries.push({ element, lng: poi.position.lng, lat: poi.position.lat, anchor: 'translate(-50%, -50%)', kind: 'poi' });
     }
 
     if (config.layers.carnets) for (const carnet of data.carnets) {
@@ -624,7 +648,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         setSelected({ kind: 'carnet', id: carnet.id });
       });
       overlay.appendChild(element);
-      entries.push({ element, lng: carnet.position.lng, lat: carnet.position.lat, anchor: 'translate(-50%, -50%)', detail: true });
+      entries.push({ element, lng: carnet.position.lng, lat: carnet.position.lat, anchor: 'translate(-50%, -50%)', kind: 'carnet' });
     }
 
     const root = overlay;
@@ -668,7 +692,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
           lng: 0,
           lat: 0,
           anchor: 'translate(-50%, -50%)',
-          detail: false,
+          kind: 'massif',
         };
         groupEntries.set(groupKey(cluster), entry);
         return entry;
@@ -700,7 +724,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         lng: massif.center.lng,
         lat: massif.center.lat,
         anchor: 'translate(-50%, -100%)',
-        detail: false,
+        kind: 'massif',
       };
       groupEntries.set(groupKey(cluster), entry);
       return entry;
@@ -754,10 +778,15 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       }
     };
 
-    const positionEntry = (entry: Entry, width: number, height: number, zoom: number) => {
+    /**
+     * Place (ou masque) une entrée. L'appartenance au cadre est calculée avec la
+     * marge extérieure de la bande (`viewportMarginPx`) ; la bande décide ensuite
+     * si ce type de point existe du tout (voir `isOverlayEntryVisible`).
+     */
+    const positionEntry = (entry: Entry, width: number, height: number, band: MapZoomConfig) => {
       const point = map.project([entry.lng, entry.lat]);
-      const inside = point.x > 10 && point.x < width - 10 && point.y > 10 && point.y < height - 10;
-      const visible = inside && (!entry.detail || zoom >= 7);
+      const inside = isInsideViewport(point, { width, height }, band.viewportMarginPx);
+      const visible = isOverlayEntryVisible(entry.kind, band, inside);
       entry.element.style.display = visible ? '' : 'none';
       entry.element.style.transform = `translate(${point.x}px, ${point.y}px) ${entry.anchor}`;
     };
@@ -767,10 +796,16 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const width = container.clientWidth;
       const height = container.clientHeight;
       const zoom = map.getZoom();
+      // La bande vient du ref, tenu par le handler `zoom` de la carte : elle est
+      // déjà à jour pour cette frame, sans re-rendu React ni rebuild de l'overlay.
+      const band = zoomConfigRef.current;
       root.classList.toggle('is-far', zoom < 7);
-      for (const entry of massifEntries) positionEntry(entry, width, height, zoom);
-      for (const entry of entries) positionEntry(entry, width, height, zoom);
+      for (const entry of massifEntries) positionEntry(entry, width, height, band);
+      for (const entry of entries) positionEntry(entry, width, height, band);
     };
+    // Première pose : si la caméra a démarré sans événement `zoom`, l'état React
+    // peut décrire une autre bande que la carte. La carte fait foi.
+    zoomConfigRef.current = resolveMapZoomConfig(map.getZoom());
     place();
     map.on('move', place);
     map.on('zoom', place);

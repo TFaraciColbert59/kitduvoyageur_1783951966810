@@ -54,6 +54,31 @@ export function isInsideViewport(
   );
 }
 
+/** Types d'entrée de l'overlay DOM de la carte, du plus discret au plus prioritaire. */
+export type MapOverlayKind = 'massif' | 'poi' | 'carnet';
+
+/**
+ * Visibilité effective d'une entrée d'overlay : d'abord l'appartenance au
+ * viewport (marge extérieure comprise, voir `isInsideViewport`), ensuite la
+ * règle de bande du type.
+ *
+ * Un massif ou un agrégat n'est **jamais** filtré par la bande : la carte le
+ * garde à toutes les échelles, seule la projection décide de sa présence.
+ * POI et carnets, eux, suivent leur champ de bande : les POI n'existent que
+ * sous forme de pastilles (`pills`), les carnets dès que la bande ne les cache
+ * plus (`dots` comme `pills`).
+ */
+export function isOverlayEntryVisible(
+  kind: MapOverlayKind,
+  config: MapZoomConfig,
+  insideViewport: boolean
+): boolean {
+  if (!insideViewport) return false;
+  if (kind === 'poi') return config.pois === 'pills';
+  if (kind === 'carnet') return config.carnets !== 'hidden';
+  return true;
+}
+
 export interface MassifCluster<T> {
   id: string;
   items: T[];

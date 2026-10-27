@@ -3,6 +3,7 @@ import {
   MAP_ZOOM_PRIORITY,
   clusterByScreenDistance,
   isInsideViewport,
+  isOverlayEntryVisible,
   resolveMapZoomConfig,
 } from '../zoomHierarchy';
 
@@ -215,5 +216,45 @@ describe('isInsideViewport', () => {
     expect(isInsideViewport({ x: 0, y: 0 }, { width: 0, height: 0 }, 24)).toBe(true);
     expect(isInsideViewport({ x: 24, y: 24 }, { width: 0, height: 0 }, 24)).toBe(true);
     expect(isInsideViewport({ x: 25, y: 0 }, { width: 0, height: 0 }, 24)).toBe(false);
+  });
+});
+
+describe('isOverlayEntryVisible', () => {
+  it('au zoom 3 (Monde) : ni POI ni carnet, massifs toujours là', () => {
+    const band = resolveMapZoomConfig(3);
+    expect(isOverlayEntryVisible('poi', band, true)).toBe(false);
+    expect(isOverlayEntryVisible('carnet', band, true)).toBe(false);
+    expect(isOverlayEntryVisible('massif', band, true)).toBe(true);
+  });
+
+  it('au zoom 8 (Région) : carnets visibles, POI absents', () => {
+    const band = resolveMapZoomConfig(8);
+    expect(band.carnets).toBe('dots');
+    expect(isOverlayEntryVisible('carnet', band, true)).toBe(true);
+    expect(isOverlayEntryVisible('poi', band, true)).toBe(false);
+    expect(isOverlayEntryVisible('massif', band, true)).toBe(true);
+  });
+
+  it('au zoom 12 (Lieu) : POI et carnets visibles s’ils sont dans le cadre', () => {
+    const band = resolveMapZoomConfig(12);
+    expect(isOverlayEntryVisible('poi', band, true)).toBe(true);
+    expect(isOverlayEntryVisible('carnet', band, true)).toBe(true);
+    expect(isOverlayEntryVisible('massif', band, true)).toBe(true);
+  });
+
+  it('hors du viewport, aucun type n’est visible, quelle que soit la bande', () => {
+    for (const zoom of [3, 8, 12]) {
+      const band = resolveMapZoomConfig(zoom);
+      for (const kind of ['poi', 'carnet', 'massif'] as const) {
+        expect(isOverlayEntryVisible(kind, band, false)).toBe(false);
+      }
+    }
+  });
+
+  it('le massif ignore la bande : seule la projection décide', () => {
+    const hidden = { ...resolveMapZoomConfig(12), carnets: 'hidden' as const, pois: 'hidden' as const };
+    expect(isOverlayEntryVisible('massif', hidden, true)).toBe(true);
+    expect(isOverlayEntryVisible('carnet', hidden, true)).toBe(false);
+    expect(isOverlayEntryVisible('poi', hidden, true)).toBe(false);
   });
 });
