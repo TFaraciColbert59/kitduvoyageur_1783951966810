@@ -1244,8 +1244,9 @@
   display: none;
 }
 .lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) .sh-b {
-  /* Marges strictement symétriques : la grille est centrée haut/bas. */
-  padding: 8px;
+  /* Marges strictement symétriques : la grille est centrée haut/bas.
+     `!important` car `.phone .sheet .sh-b` impose 4/12/20. */
+  padding: 8px !important;
   height: 100%;
 }
 
