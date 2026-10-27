@@ -228,6 +228,8 @@ export default async function RootLayout({
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} crossOrigin="anonymous" />
         <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} />
         <link rel="preconnect" href="https://static.rocket.new" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://server.arcgisonline.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://ibasemaps-api.arcgis.com" crossOrigin="anonymous" />
 
         {/* JSON-LD Structured Data */}
         <script

@@ -13,6 +13,7 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   distDir: process.env.DIST_DIR || '.next',
   compress: true,
+  poweredByHeader: false,
 
   // L'aperçu local doit laisser la navigation mobile entièrement utilisable.
   devIndicators: false,
@@ -116,6 +117,14 @@ const nextConfig = {
             value: 'nosniff',
           },
           {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'X-Permitted-Cross-Domain-Policies',
+            value: 'none',
+          },
+          {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
@@ -183,6 +192,14 @@ const nextConfig = {
       {
         source: '/api/carnets/:path*',
         headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/_next/static/media/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
     ];
   },
