@@ -875,3 +875,39 @@
   border-color: rgba(255,255,255,.10) !important;
   box-shadow: none !important;
 }
+
+/* Retour au verre translucide, et taille constante : petits points au dezoom. */
+.lkdv-map-overlay .lkdv-map-poi {
+  background: rgba(255,255,255,.08) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(160%) !important;
+  backdrop-filter: blur(10px) saturate(160%) !important;
+  border: .5px solid rgba(255,255,255,.34) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55) !important;
+}
+.lkdv-map-overlay .lkdv-map-carnet {
+  background: rgba(255,247,228,.10) !important;
+  border-color: rgba(255,255,255,.30) !important;
+}
+.lkdv-map-overlay .lkdv-map-massif {
+  background: rgba(255,255,255,.10) !important;
+  border-color: rgba(255,255,255,.30) !important;
+}
+
+/* Vue large : uniquement des points minuscules, jamais agrandis. */
+.lkdv-map-overlay.is-far .lkdv-map-poi,
+.lkdv-map-overlay.is-far .lkdv-map-carnet,
+.lkdv-map-overlay.is-far .lkdv-map-massif {
+  width: 7px !important;
+  height: 7px !important;
+  min-width: 7px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(47,107,69,.52) !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.45) !important;
+}
+.lkdv-map-overlay.is-far .lkdv-map-carnet { background: rgba(200,154,59,.58) !important; }
+.lkdv-map-overlay.is-far .lkdv-map-poi { background: rgba(75,107,124,.55) !important; }
+.lkdv-map-overlay.is-far .lkdv-map-poi-ico,
+.lkdv-map-overlay.is-far .lkdv-map-carnet-ico,
+.lkdv-map-overlay.is-far .lkdv-map-massif-ico { display: none !important; }
