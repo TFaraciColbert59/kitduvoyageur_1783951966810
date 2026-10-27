@@ -1510,3 +1510,15 @@
 .lkdv-messages .mpost-embed .lkdv-post-panel-head {
   padding-top: 8px;
 }
+/* En-tête flottant : les actions (import, croix) restent groupées à droite. */
+.lkdv-messages .sw-wrap .sh-close-only-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Aucun élément du drawer partagé ne passe sous la croix de fermeture. */
+.lkdv-messages .sw-wrap[data-det='card'] .sh-b > div {
+  padding-top: 4px;
+}
