@@ -31,7 +31,9 @@ export default function PresenceTracker() {
       }
     };
 
-    void beat();
+    // Premier battement différé : la présence n'est pas critique pour peindre
+    // l'écran, elle ne doit pas concurrencer les requêtes de contenu.
+    const firstBeat = window.setTimeout(() => void beat(), 2500);
 
     const restartInterval = () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
