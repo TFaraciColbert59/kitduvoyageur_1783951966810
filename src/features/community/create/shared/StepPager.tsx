@@ -66,6 +66,8 @@ export interface StepPagerProps {
   label?: string;
   /** Actions optionnelles à droite de la mini-capsule. */
   actions?: React.ReactNode;
+  /** Regroupement de panes par étape (facultatif). */
+  groups?: readonly (readonly number[])[];
   className?: string;
 }
 
@@ -83,6 +85,7 @@ export function StepPager({
   children,
   label = 'Étapes de création',
   actions,
+  groups,
   className = '',
 }: StepPagerProps) {
   const count = steps.length;
@@ -143,7 +146,7 @@ export function StepPager({
         onIndexChange={onIndexChange}
         label={label}
       >
-        {panes[safeIndex] ? (
+        {panes.length > 0 ? (
           <section
             key={steps[safeIndex]?.id ?? safeIndex}
             className="lkdv-create-step-pane"
@@ -152,7 +155,9 @@ export function StepPager({
             aria-label={`${safeIndex + 1} sur ${count} — ${steps[safeIndex]?.label ?? ''}`}
             data-step-id={steps[safeIndex]?.id}
           >
-            {panes[safeIndex]}
+            {(groups?.[safeIndex] ?? [safeIndex]).map((paneIndex) => (
+              <div key={paneIndex}>{panes[paneIndex]}</div>
+            ))}
           </section>
         ) : null}
       </LensPager>

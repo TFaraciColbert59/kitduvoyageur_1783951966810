@@ -21,7 +21,8 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationSignature } from './shared/CreationSignature';
 import { PlaceSearch } from './shared/PlaceSearch';
-import { ActivityCards, DifficultyLadder, CapacityGauge, SafetyManifest, MeetingPin } from './shared/InfoCards';
+import { DifficultyLadder, CapacityGauge, SafetyManifest, MeetingPin } from './shared/InfoCards';
+import { ActivitySearch } from './shared/ActivitySearch';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -297,9 +298,13 @@ export function SortieCreateForm({
               }
             >
               <div>
-                <ActivityCards
-                  value={form.watch('eventType')}
-                  onChange={(next) => form.setValue('eventType', next as typeof eventType, { shouldValidate: true, shouldDirty: true })}
+                <ActivitySearch
+                  value={OUTING_TYPE_LABELS[eventType] ?? eventType}
+                  onChange={(next) => {
+                    const key = Object.entries(OUTING_TYPE_LABELS).find(([, label]) => label === next)?.[0];
+                    if (key) form.setValue('eventType', key as typeof eventType, { shouldValidate: true, shouldDirty: true });
+                  }}
+                  placeholder="Randonnée, bivouac, resto…"
                 />
                 <Field label="Titre" htmlFor="sortie-title" required>
                   <TextInput

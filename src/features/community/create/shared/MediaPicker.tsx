@@ -281,6 +281,8 @@ export function MediaPicker({
               className="lkdv-media-item"
               data-testid="media-item"
               data-status={item.status}
+              title="Double-clique pour retirer"
+              onDoubleClick={(event) => { event.preventDefault(); if (!disabled) remove(item.id); }}
               draggable={!disabled}
               onDragStart={(event) => {
                 draggedIdRef.current = item.id;

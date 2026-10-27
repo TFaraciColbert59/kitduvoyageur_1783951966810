@@ -3,6 +3,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { Plus, Mountain, Camera, Utensils, Tent, MapPin, Footprints, Bike, Waves, ChevronDown, ImagePlus } from 'lucide-react';
 import './carnet-extras.css';
+import { ActivitySearch } from './ActivitySearch';
 
 function dayCount(start: string, end: string): number {
   if (!start || !end) return 1;
@@ -58,13 +59,7 @@ export function CarnetGpxBlock() {
         <Plus size={14} aria-hidden="true" />
       </button>
       <input ref={inputRef} type="file" accept=".gpx,application/gpx+xml" className="sr-only" onChange={(event) => { setName(event.currentTarget.files?.[0]?.name || 'Trace'); event.currentTarget.value = ''; }} />
-      <select value={activity} onChange={(event) => setActivity(event.target.value)} aria-label="Activité effectuée">
-        <option value="rando">Randonnée</option>
-        <option value="bivouac">Bivouac</option>
-        <option value="velo">Vélo</option>
-        <option value="alpinisme">Alpinisme</option>
-        <option value="eau">Eau</option>
-      </select>
+      <ActivitySearch value={activity} onChange={setActivity} placeholder="Activité effectuée…" />
     </div>
   );
 }
@@ -79,7 +74,7 @@ const KINDS = [
   { id: 'sommet', label: 'Sommet', icon: Footprints },
 ];
 
-type DayEvent = { id: string; kind: string; label: string; emoji: string };
+type DayEvent = { id: string; kind: string; label: string; emoji: string; media?: string };
 
 export function CarnetDays({ startDate, endDate }: { startDate: string; endDate: string }) {
   const count = useMemo(() => dayCount(startDate, endDate), [startDate, endDate]);
@@ -117,7 +112,16 @@ export function CarnetDays({ startDate, endDate }: { startDate: string; endDate:
                 {list.map((event) => (
                   <li key={event.id}>
                     <span className="lkdv-day-event-kind">{event.label}</span>
-                    <button type="button" className="lkdv-day-photo" aria-label={`Photo pour ${event.label}`}>{event.emoji}</button>
+                    <label className="lkdv-day-photo" aria-label={`Ajouter une image ou vidéo pour ${event.label}`}>
+                      {event.media ? <img src={event.media} alt="" /> : <Plus size={12} aria-hidden="true" />}
+                      <input type="file" accept="image/*,video/*,image/gif" className="sr-only" onChange={(input) => {
+                        const file = input.currentTarget.files?.[0];
+                        if (!file) return;
+                        const url = URL.createObjectURL(file);
+                        setEvents((current) => ({ ...current, [day]: (current[day] || []).map((entry) => entry.id === event.id ? { ...entry, media: url } : entry) }));
+                        input.currentTarget.value = '';
+                      }} />
+                    </label>
                   </li>
                 ))}
               </ul>
@@ -126,5 +130,31 @@ export function CarnetDays({ startDate, endDate }: { startDate: string; endDate:
         );
       })}
     </section>
+  );
+}
+
+export function TraceCanvas() {
+  const [points, setPoints] = useState<Array<{ x: number; y: number }>>([]);
+  const [drawing, setDrawing] = useState(false);
+  const addPoint = (event: React.PointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setPoints((current) => [...current, { x: Math.round(((event.clientX - rect.left) / rect.width) * 300), y: Math.round(((event.clientY - rect.top) / rect.height) * 150) }]);
+  };
+  return (
+    <div
+      className="lkdv-trace-canvas"
+      role="img"
+      aria-label="Dessiner le tracé du carnet"
+      onPointerDown={(event) => { setDrawing(true); setPoints([]); addPoint(event); event.currentTarget.setPointerCapture?.(event.pointerId); }}
+      onPointerMove={(event) => { if (drawing) addPoint(event); }}
+      onPointerUp={() => setDrawing(false)}
+      onPointerCancel={() => setDrawing(false)}
+    >
+      <svg viewBox="0 0 300 150" aria-hidden="true">
+        <path d="M20 115 C70 90 95 30 150 55 S240 110 280 40" fill="none" stroke="rgba(23,64,44,.18)" strokeWidth="1" strokeDasharray="3 4" />
+        {points.length > 1 ? <polyline points={points.map((point) => `${point.x},${point.y}`).join(' ')} fill="none" stroke="#17402C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /> : null}
+      </svg>
+      <span>{points.length > 0 ? 'Tracé dessiné' : 'Dessine le tracé'}</span>
+    </div>
   );
 }

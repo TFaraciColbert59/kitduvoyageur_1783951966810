@@ -2283,3 +2283,7 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   padding: 0 2px !important;
   text-align: left !important;
 }
+.lkdv-tag-chips > .hint { display: none !important; }
+.lkdv-day-photo { overflow: hidden; }
+.lkdv-day-photo img { width: 100%; height: 100%; object-fit: cover; }
+.lkdv-ai-improve-auto { display: inline-flex; align-items: center; min-height: 28px; padding: 0 9px; border: .5px solid rgba(255,255,255,.8); border-radius: 999px; background: rgba(255,255,255,.5); color: #17402C; font: 700 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer; }

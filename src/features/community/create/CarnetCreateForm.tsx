@@ -9,6 +9,7 @@ import { Field, Select, SubmitFooter, SwitchField, TextArea, TextInput } from '.
 import { CreateFormEngine } from './engine/CreateFormEngine';
 import { createDefaults, CREATE_FIELD_LABELS, type CarnetFormValues } from './engine/createSchemas';
 import { CREATE_STEPS, StepPager } from './shared/StepPager';
+import { Map, CalendarDays, FileText } from 'lucide-react';
 import { MediaPicker } from './shared/MediaPicker';
 import { DateRangeField } from './shared/DateRangeField';
 import { NumberStepper } from './shared/NumberStepper';
@@ -20,7 +21,7 @@ import { PlaceSearch } from './shared/PlaceSearch';
 import { WeatherByDay } from './shared/WeatherByDay';
 import { AiImproveButton } from './shared/AiImproveButton';
 import { RouteMetrics, CarnetLogistics } from './shared/InfoCards';
-import { CarnetCoverBoard, CarnetGpxBlock, CarnetDays } from './shared/CarnetExtras';
+import { CarnetCoverBoard, CarnetGpxBlock, CarnetDays, TraceCanvas } from './shared/CarnetExtras';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -35,7 +36,12 @@ export interface CarnetCreateFormProps {
 }
 
 const DEFAULTS = createDefaults('carnet');
-const STEPS = [CREATE_STEPS.carnet[0]];
+const STEPS = [
+  { id: 'trace', label: 'Tracé', icon: <Map size={16} aria-hidden="true" /> },
+  { id: 'days', label: 'Jours', icon: <CalendarDays size={16} aria-hidden="true" /> },
+  { id: 'details', label: 'Détails', icon: <FileText size={16} aria-hidden="true" /> },
+];
+const GROUPS = [[0, 1], [4], [2, 3, 5]] as const;
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
   ['title', 'destination', 'cover', 'lieuDepart', 'lieuArrivee', 'distanceKm', 'deniveleM', 'routeRating', 'startDate', 'endDate', 'nbNuits', 'nbVoyageurs', 'weather', 'tags', 'isCollaborative', 'description', 'visibility'],
@@ -228,6 +234,7 @@ export function CarnetCreateForm({
 
             <StepPager
               steps={STEPS}
+              groups={GROUPS}
               index={activeStep}
               onIndexChange={setStep}
               actions={
@@ -299,7 +306,7 @@ export function CarnetCreateForm({
                   cover={form.watch('cover')}
                   onAddCover={() => document.querySelector<HTMLInputElement>('.lkdv-carnet-cover-source input[type=file]')?.click()}
                 />
-                <CarnetDays startDate={startDate} endDate={endDate} />
+                <TraceCanvas />
               </div>
 
               <div>
@@ -454,7 +461,29 @@ export function CarnetCreateForm({
                   />
                   <InlineError message={errors.description?.message} />
                   <AiImproveButton value={description} onChange={(next) => form.setValue('description', next, { shouldDirty: true, shouldValidate: true })} />
+                  <button
+                    type="button"
+                    className="lkdv-ai-improve-auto"
+                    onClick={() => {
+                      const d = form.getValues();
+                      const parts = [
+                        d.destination ? `Carnet ${d.destination}` : 'Carnet de voyage',
+                        d.startDate && d.endDate ? `du ${d.startDate} au ${d.endDate}` : '',
+                        d.distanceKm ? `${d.distanceKm} km` : '',
+                        d.deniveleM ? `${d.deniveleM} m de dénivelé` : '',
+                        d.nbNuits ? `${d.nbNuits} nuits` : '',
+                        d.nbVoyageurs > 1 ? `à ${d.nbVoyageurs} voyageurs` : '',
+                      ].filter(Boolean);
+                      form.setValue('description', `${parts.join(' · ')}. ${d.weather ? `Météo : ${d.weather}.` : ''}`, { shouldDirty: true, shouldValidate: true });
+                    }}
+                  >
+                    Remplir automatiquement
+                  </button>
                 </Field>
+              </div>
+
+              <div>
+                <CarnetDays startDate={startDate} endDate={endDate} />
               </div>
 
               <div>
