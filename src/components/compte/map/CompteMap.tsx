@@ -26,7 +26,11 @@ import type {
   MapTrack,
   TrackPoint,
 } from '@/features/compte/map/types';
-import { clusterByScreenDistance, resolveMapZoomConfig } from '@/features/compte/map/zoomHierarchy';
+import {
+  clusterByScreenDistance,
+  resolveMapZoomConfig,
+  type MassifCluster,
+} from '@/features/compte/map/zoomHierarchy';
 import { CompteMapAttribution, CompteMapHud } from './CompteMapHud';
 import { CompteMapCallout } from './CompteMapCallout';
 import { CompteMapFallback } from './CompteMapFallback';
@@ -148,6 +152,16 @@ function resolveSelected(data: CompteMapPayload, selected: Selected): Resolved |
   return poi ? { kind: 'poi', data: poi, position: poi.position } : null;
 }
 
+/** Applique l'état sélectionné aux boutons massif présents dans l'overlay. */
+function applyMassifSelection(container: HTMLElement, selected: Selected | null) {
+  container.querySelectorAll<HTMLElement>('.lkdv-map-massif').forEach((element) => {
+    element.classList.toggle(
+      'is-selected',
+      selected?.kind === 'massif' && selected.id === element.dataset.massifId
+    );
+  });
+}
+
 async function fetchCompteMap(): Promise<CompteMapPayload> {
   const response = await fetch('/api/compte/map');
   if (response.status === 401) throw new Error('unauthorized');
@@ -193,6 +207,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRefs = useRef<Marker[]>([]);
+  /** Sélection courante, lisible depuis les callbacks de l'overlay (rebuilds). */
+  const selectedRef = useRef<Selected | null>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [ready, setReady] = useState(false);
   const [styleFailed, setStyleFailed] = useState(false);
@@ -554,6 +570,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
     /** Cadre l'ensemble des massifs d'un agrégat : même padding que la fiche. */
     const fitMassifGroup = (massifs: MapMassif[]) => {
+      // Une fiche ouverte masquerait le groupe cadré : on la referme d'abord.
+      setSelected(null);
       const lngs = massifs.map((massif) => massif.center.lng);
       const lats = massifs.map((massif) => massif.center.lat);
       const bounds: [[number, number], [number, number]] = [
@@ -571,74 +589,6 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         essential: true,
       });
     };
-
-    if (config.layers.massifs) {
-      const massifEntries: MassifEntry[] = data.massifs.map((massif) => ({
-        massif,
-        point: map.project([massif.center.lng, massif.center.lat]),
-      }));
-      // Les agrégats ne sont calculés que sur les bandes `clustered` (Monde,
-      // Pays) ; ailleurs chaque massif garde exactement son bouton et son clic.
-      const clusters = massifCluster.clustered
-        ? clusterByScreenDistance(massifEntries, (entry) => entry.point, massifCluster.radiusPx)
-        : massifEntries.map((entry) => ({
-            id: entry.massif.id,
-            items: [entry],
-            x: entry.point.x,
-            y: entry.point.y,
-          }));
-
-      for (const cluster of clusters) {
-        if (cluster.items.length > 1) {
-          const element = document.createElement('button');
-          element.type = 'button';
-          element.className = 'lkdv-map-cluster';
-          element.dataset.clusterCount = String(cluster.items.length);
-          element.setAttribute('aria-label', `${cluster.items.length} massifs proches`);
-          element.title = `${cluster.items.length} massifs proches — cadrer le groupe`;
-          element.textContent = String(cluster.items.length);
-          element.addEventListener('click', (event) => {
-            event.stopPropagation();
-            fitMassifGroup(cluster.items.map((entry) => entry.massif));
-          });
-          overlay.appendChild(element);
-          // Le centre d'un agrégat est un point écran : on le reprojette à
-          // chaque frame via la même ancre géographique que les massifs.
-          const center = map.unproject([cluster.x, cluster.y]);
-          entries.push({
-            element,
-            lng: center.lng,
-            lat: center.lat,
-            anchor: 'translate(-50%, -50%)',
-            detail: false,
-          });
-          continue;
-        }
-
-        const massif = cluster.items[0].massif;
-        const element = document.createElement('button');
-        element.type = 'button';
-        element.className = 'lkdv-map-massif';
-        element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
-        element.dataset.massifId = massif.id;
-        const icon = document.createElement('span');
-        icon.className = 'lkdv-map-massif-ico';
-        icon.innerHTML = MAP_ICON.peak;
-        const count = document.createElement('b');
-        count.textContent = String(massif.outings);
-        const label = document.createElement('span');
-        label.className = 'lkdv-map-massif-name';
-        label.textContent = massif.name;
-        element.append(icon, count, label);
-        element.title = `${massif.name} · ${massif.outings} sorties`;
-        element.addEventListener('click', (event) => {
-          event.stopPropagation();
-          setSelected({ kind: 'massif', id: massif.id });
-        });
-        overlay.appendChild(element);
-        entries.push({ element, lng: massif.center.lng, lat: massif.center.lat, anchor: 'translate(-50%, -100%)', detail: false });
-      }
-    }
 
     if (config.layers.pois) for (const poi of data.pois) {
       const element = document.createElement('button');
@@ -677,19 +627,149 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       entries.push({ element, lng: carnet.position.lng, lat: carnet.position.lat, anchor: 'translate(-50%, -50%)', detail: true });
     }
 
+    const root = overlay;
+    // Les agrégats restent avant les POI/carnets dans le DOM, comme avant.
+    const massifAnchor = root.firstChild;
+    // Entrées d'agrégats : remplacées seulement quand la partition change.
+    let massifEntries: Entry[] = [];
+    const groupEntries = new Map<string, Entry>();
+    let clusterSignature = '';
+    let syncedZoom = Number.NaN;
+
+    const groupKey = (cluster: MassifCluster<MassifEntry>) =>
+      cluster.items
+        .map((entry) => entry.massif.id)
+        .sort()
+        .join(',');
+
+    const placeMassifNode = (element: HTMLButtonElement) => {
+      if (massifAnchor) root.insertBefore(element, massifAnchor);
+      else root.appendChild(element);
+    };
+
+    const createMassifEntry = (cluster: MassifCluster<MassifEntry>): Entry => {
+      if (cluster.items.length > 1) {
+        const element = document.createElement('button');
+        element.type = 'button';
+        element.className = 'lkdv-map-cluster';
+        element.dataset.clusterCount = String(cluster.items.length);
+        element.setAttribute('aria-label', `Voir les ${cluster.items.length} massifs proches`);
+        element.title = `Voir les ${cluster.items.length} massifs proches`;
+        element.textContent = String(cluster.items.length);
+        element.addEventListener('click', (event) => {
+          event.stopPropagation();
+          fitMassifGroup(cluster.items.map((entry) => entry.massif));
+        });
+        placeMassifNode(element);
+        const entry: Entry = {
+          element,
+          // Ancre renseignée par syncClusters : le centre du groupe est un point
+          // écran, pas encore une coordonnée géographique.
+          lng: 0,
+          lat: 0,
+          anchor: 'translate(-50%, -50%)',
+          detail: false,
+        };
+        groupEntries.set(groupKey(cluster), entry);
+        return entry;
+      }
+
+      const massif = cluster.items[0].massif;
+      const element = document.createElement('button');
+      element.type = 'button';
+      element.className = 'lkdv-map-massif';
+      element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
+      element.dataset.massifId = massif.id;
+      const icon = document.createElement('span');
+      icon.className = 'lkdv-map-massif-ico';
+      icon.innerHTML = MAP_ICON.peak;
+      const count = document.createElement('b');
+      count.textContent = String(massif.outings);
+      const label = document.createElement('span');
+      label.className = 'lkdv-map-massif-name';
+      label.textContent = massif.name;
+      element.append(icon, count, label);
+      element.title = `${massif.name} · ${massif.outings} sorties`;
+      element.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setSelected({ kind: 'massif', id: massif.id });
+      });
+      placeMassifNode(element);
+      const entry: Entry = {
+        element,
+        lng: massif.center.lng,
+        lat: massif.center.lat,
+        anchor: 'translate(-50%, -100%)',
+        detail: false,
+      };
+      groupEntries.set(groupKey(cluster), entry);
+      return entry;
+    };
+
+    /**
+     * Recalcule la partition à chaque changement d'échelle, puis reconstruit le
+     * DOM uniquement si les groupes ont changé (`clusterSignature`). Un pur
+     * déplacement ne modifie aucune distance écran : la partition est
+     * identique, seules les ancres suivent la carte, donc on sort tôt.
+     */
+    const syncClusters = () => {
+      if (!config.layers.massifs) return;
+      const zoom = map.getZoom();
+      if (zoom === syncedZoom) return;
+      syncedZoom = zoom;
+
+      const projected: MassifEntry[] = data.massifs.map((massif) => ({
+        massif,
+        point: map.project([massif.center.lng, massif.center.lat]),
+      }));
+      // Les agrégats ne sont calculés que sur les bandes `clustered` (Monde,
+      // Pays) ; ailleurs chaque massif garde exactement son bouton et son clic.
+      const clusters: MassifCluster<MassifEntry>[] = massifCluster.clustered
+        ? clusterByScreenDistance(projected, (entry) => entry.point, massifCluster.radiusPx)
+        : projected.map((entry) => ({
+            id: entry.massif.id,
+            items: [entry],
+            x: entry.point.x,
+            y: entry.point.y,
+          }));
+      const signature = clusters.map(groupKey).sort().join('|');
+
+      if (signature !== clusterSignature) {
+        clusterSignature = signature;
+        for (const entry of massifEntries) entry.element.remove();
+        groupEntries.clear();
+        massifEntries = clusters.map(createMassifEntry);
+        // Les boutons viennent d'être remplacés : réapplique la sélection.
+        applyMassifSelection(root, selectedRef.current);
+      }
+
+      // Une ancre d'agrégat est un point écran : la reprojeter à chaque échelle
+      // garde le groupe centré sur ses membres (les singletons ne bougent pas).
+      for (const cluster of clusters) {
+        const entry = groupEntries.get(groupKey(cluster));
+        if (!entry || cluster.items.length < 2) continue;
+        const center = map.unproject([cluster.x, cluster.y]);
+        entry.lng = center.lng;
+        entry.lat = center.lat;
+      }
+    };
+
+    const positionEntry = (entry: Entry, width: number, height: number, zoom: number) => {
+      const point = map.project([entry.lng, entry.lat]);
+      const inside = point.x > 10 && point.x < width - 10 && point.y > 10 && point.y < height - 10;
+      const visible = inside && (!entry.detail || zoom >= 7);
+      entry.element.style.display = visible ? '' : 'none';
+      entry.element.style.transform = `translate(${point.x}px, ${point.y}px) ${entry.anchor}`;
+    };
+
     const place = () => {
+      syncClusters();
       const width = container.clientWidth;
       const height = container.clientHeight;
       const zoom = map.getZoom();
-      overlay?.classList.toggle('is-far', zoom < 7);
-      for (const entry of entries) {
-        const point = map.project([entry.lng, entry.lat]);
-        const inside =
-          point.x > 10 && point.x < width - 10 && point.y > 10 && point.y < height - 10;
-        const visible = inside && (!entry.detail || zoom >= 7);
-        entry.element.style.display = visible ? '' : 'none';
-        entry.element.style.transform = `translate(${point.x}px, ${point.y}px) ${entry.anchor}`;
-      }
+      root.classList.toggle('is-far', zoom < 7);
+      for (const entry of massifEntries) positionEntry(entry, width, height, zoom);
+      for (const entry of entries) positionEntry(entry, width, height, zoom);
     };
     place();
     map.on('move', place);
@@ -713,16 +793,13 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   ]);
 
   useEffect(() => {
+    // Le ref sert aux reconstructions déclenchées par le zoom : la sélection
+    // courante doit être réappliquée aux nouveaux boutons sans changer les
+    // dépendances de l'effet de l'overlay.
+    selectedRef.current = selected;
     if (!map || !ready) return;
-    const container = map.getContainer();
-    container.querySelectorAll<HTMLElement>('.lkdv-map-massif').forEach((element) => {
-      const id = element.dataset.massifId;
-      element.classList.toggle('is-selected', selected?.kind === 'massif' && selected.id === id);
-    });
-    // `massifCluster` est aussi une dépendance : un franchissement de bande
-    // reconstruit l'overlay, il faut réappliquer la sélection aux nouveaux
-    // boutons sans attendre un changement de `selected`.
-  }, [map, ready, selected, massifCluster]);
+    applyMassifSelection(map.getContainer(), selected);
+  }, [map, ready, selected]);
 
   useEffect(() => {
     if (!map || !ready) return;
