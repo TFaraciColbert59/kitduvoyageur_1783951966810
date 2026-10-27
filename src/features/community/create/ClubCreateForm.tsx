@@ -382,22 +382,21 @@ export function ClubCreateForm({
               </div>
 
               <div>
-                <ClubInvitePass />
-                <Controller
-                  control={form.control}
-                  name="welcomePost"
-                  render={({ field }) => (
-                    <SwitchField
-                      label="Post d’accueil"
-                      checked={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                <InlineError message={errors.welcomePost?.message} />
-                <p className="lkdv-form-note">
-                  Le post d’accueil est publié dans le fil du club après validation.
-                </p>
+                <details className="lkdv-advanced">
+                  <summary>Invitation et accueil</summary>
+                  <ClubInvitePass />
+                  <Controller
+                    control={form.control}
+                    name="welcomePost"
+                    render={({ field }) => (
+                      <SwitchField label="Post d’accueil" checked={field.value} onChange={field.onChange} />
+                    )}
+                  />
+                  <InlineError message={errors.welcomePost?.message} />
+                  <p className="lkdv-form-note">
+                    Le post d’accueil est publié dans le fil du club après validation.
+                  </p>
+                </details>
                 <Link className="lkdv-form-link" href="/communaute" onClick={api.flushDraft}>
                   Ouvrir l’éditeur complet
                 </Link>

@@ -348,13 +348,16 @@ export function KitCreateForm({
                   <TextArea id="kit-description" {...form.register('description')} maxLength={1000} placeholder="Usage, terrain, particularités…" />
                   <InlineError message={errors.description?.message} />
                 </Field>
-                <Field label="Visibilité" htmlFor="kit-visibility">
-                  <Select id="kit-visibility" value={form.watch('isPublic') ? 'public' : 'private'} onChange={(event) => form.setValue('isPublic', event.target.value === 'public', { shouldValidate: true, shouldDirty: true })}>
-                    <option value="public">Public</option>
-                    <option value="private">Privé</option>
-                  </Select>
-                  <InlineError message={errors.isPublic?.message} />
-                </Field>
+                <details className="lkdv-advanced">
+                  <summary>Visibilité</summary>
+                  <Field label="Visibilité" htmlFor="kit-visibility">
+                    <Select id="kit-visibility" value={form.watch('isPublic') ? 'public' : 'private'} onChange={(event) => form.setValue('isPublic', event.target.value === 'public', { shouldValidate: true, shouldDirty: true })}>
+                      <option value="public">Public</option>
+                      <option value="private">Privé</option>
+                    </Select>
+                    <InlineError message={errors.isPublic?.message} />
+                  </Field>
+                </details>
                 <p className="lkdv-form-note">{total > 0 ? `${(total / 1000).toFixed(2)} kg · ${selected.length + customItems.length} objets` : 'Ajoute des objets à ton kit.'}</p>
                 <Link className="lkdv-form-link" href="/hub" onClick={api.flushDraft}>Ouvrir l’éditeur complet</Link>
               </div>

@@ -430,18 +430,17 @@ export function CarnetCreateForm({
                 </div>
                 <InlineError message={errors.weather?.message} />
 
-                <Controller
-                  control={form.control}
-                  name="isCollaborative"
-                  render={({ field }) => (
-                    <SwitchField
-                      label="Collaboratif"
-                      checked={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                <InlineError message={errors.isCollaborative?.message} />
+                <details className="lkdv-advanced">
+                  <summary>Collaboratif</summary>
+                  <Controller
+                    control={form.control}
+                    name="isCollaborative"
+                    render={({ field }) => (
+                      <SwitchField label="Collaboratif" checked={field.value} onChange={field.onChange} />
+                    )}
+                  />
+                  <InlineError message={errors.isCollaborative?.message} />
+                </details>
               </div>
 
               <div>
@@ -462,17 +461,16 @@ export function CarnetCreateForm({
               </div>
 
               <div>
-                <Field
-                  label="Visibilité"
-                  hint={VISIBILITY_LABELS[visibility]}
-                  htmlFor="carnet-visibility"
-                >
-                  <Select id="carnet-visibility" {...form.register('visibility')}>
-                    <option value="public">Public</option>
-                    <option value="private">Privé</option>
-                  </Select>
-                  <InlineError message={errors.visibility?.message} />
-                </Field>
+                <details className="lkdv-advanced">
+                  <summary>Visibilité</summary>
+                  <Field label="Visibilité" hint={VISIBILITY_LABELS[visibility]} htmlFor="carnet-visibility">
+                    <Select id="carnet-visibility" {...form.register('visibility')}>
+                      <option value="public">Public</option>
+                      <option value="private">Privé</option>
+                    </Select>
+                    <InlineError message={errors.visibility?.message} />
+                  </Field>
+                </details>
 
                 <Link className="lkdv-form-link" href="/communaute" onClick={api.flushDraft}>
                   Ouvrir l’éditeur complet

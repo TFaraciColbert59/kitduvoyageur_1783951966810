@@ -435,6 +435,8 @@ export function SortieCreateForm({
 
               <div>
                 <CapacityGauge max={maxParticipants} waitlist={Boolean(form.watch('waitlist'))} />
+                <details className="lkdv-advanced">
+                  <summary>Capacité et liste d’attente</summary>
                 <Controller
                   control={form.control}
                   name="maxParticipants"
@@ -468,6 +470,7 @@ export function SortieCreateForm({
                 />
                 <InlineError message={errors.waitlist?.message} />
 
+                </details>
                 <Link className="lkdv-form-link" href="/evenements" onClick={api.flushDraft}>
                   Voir les sorties
                 </Link>
