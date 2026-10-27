@@ -1217,11 +1217,22 @@
     transition: none;
   }
 }
-/* Drawer sans bandeau : croix seule, alignée à droite. */
+/* Drawer sans bandeau : la croix flotte au-dessus, elle ne prend pas de place
+   (les contenus peuvent occuper toute la feuille). */
 .lkdv-messages .sw-wrap .sh-close-only {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
   display: flex;
   justify-content: flex-end;
-  padding: 2px 0 4px;
+}
+.lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) {
+  padding-top: 6px;
+}
+.lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) .sh-b {
+  padding-top: 0;
+  height: 100%;
 }
 
 /* Paramètres de conversation : les éléments respirent. */
