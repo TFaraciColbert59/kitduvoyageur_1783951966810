@@ -14,7 +14,7 @@
 
 ## A. Coquille Création (1–10)
 
-1. **Mode Rapide / Complet** — Rapide = 3 champs essentiels ; Complet = options avancées. *Un seul choix au départ.*
+1. **Un seul formulaire** — pas de mode Rapide/Complet : le chemin court est la structure par défaut, et les options avancées se déplient dans le même formulaire.
 2. **Supprimer l’étape « Format »** — le sélecteur de type est déjà en haut ; le format se déduit du média ou du texte.
 3. **3 étapes maximum** — fusionner les étapes de contenu, puis une étape de vérification.
 4. **« Plus d’options »** — replier audience avancée, planification, sondage, événement, confidentialité.
@@ -73,14 +73,14 @@
 ## F. Kit (44–48)
 
 44. **Un seul écran** — inventaire + résumé ; supprimer les 3 étapes.
-45. **Modèle optionnel** — aucun modèle par défaut ; suggestion seulement.
+45. **Aucun modèle imposé** — le kit démarre vide ; un modèle n’est qu’une suggestion, jamais un écran ou un choix obligatoire.
 46. **Poids calculé** — depuis les objets ; supprimer le poids manuel.
 47. **Objets custom repliés** — bouton « Ajouter un objet ».
 48. **Visibilité avancée** — public par défaut.
 
 ## G. Club (49–50)
 
-49. **Un seul écran Identité + Adhésion** — nom, catégorie, lieu, mode.
+49. **Un seul écran Identité + Adhésion** — nom, catégorie, lieu, choix d’adhésion.
 50. **Règles/questions/invitation repliées** — lien généré après création, pas dans le formulaire.
 
 ---
