@@ -1682,12 +1682,16 @@
 }
 /* Menu `···` du post partagé : les actions restent DANS la carte. */
 .lkdv-messages .mpost-embed .lkdv-feed-options-rail {
-  top: 52px;
+  top: 46px;
   right: 8px;
-  gap: 6px;
+  gap: 5px;
   z-index: 16;
 }
 .lkdv-messages .mpost-embed .lkdv-feed-options-rail button {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
+}
+.lkdv-messages .mpost-embed .lkdv-feed-options-rail button svg {
+  width: 14px;
+  height: 14px;
 }
