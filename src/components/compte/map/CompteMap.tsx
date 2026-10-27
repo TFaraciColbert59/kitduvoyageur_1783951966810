@@ -19,6 +19,7 @@ import {
   type MapScale,
 } from '@/features/compte/map/camera';
 import { filterTracksForMode, mapModeConfig } from '@/features/compte/map/modes';
+import { boundsOf as boundsOfPoints, parsePositions, simplifyTrack } from '@/features/compte/map/geometry';
 import type {
   CompteMapMode,
   CompteMapPayload,
@@ -53,6 +54,17 @@ export interface CompteMapProps {
   context: CompteMapContext;
   /** Quand la valeur change, la caméra vole vers ce point. */
   focus?: CompteMapFocus | null;
+  /**
+   * `carnet` : la carte d'une fiche carnet ne peint QUE le tracé du carnet.
+   * Aucune donnée du compte n'est demandée ni affichée (le visiteur n'est pas
+   * le propriétaire), et l'état « connecte-toi » n'a pas de sens ici.
+   */
+  variant?: 'compte' | 'carnet';
+  /** Trace GeoJSON du carnet (LineString, Feature, ou liste de points). */
+  trace?: unknown | null;
+  /** État vide honnête, affiché seulement si le carnet n'a réellement aucune trace. */
+  emptyTitle?: string;
+  emptyHint?: string;
 }
 
 type Selected =
@@ -93,8 +105,7 @@ function tracksCollection(tracks: MapTrack[]) {
 
 function pointsCollection(
   rows: Array<{ id: string; position: TrackPoint }>
-) {
-  return {
+) {  return {
     type: 'FeatureCollection' as const,
     features: rows.map((row) => ({
       type: 'Feature' as const,
@@ -104,6 +115,26 @@ function pointsCollection(
         coordinates: [row.position.lng, row.position.lat],
       },
     })),
+  };
+}
+
+/** Tracé d'un carnet public : une seule ligne, même matière que les traces du compte. */
+function carnetTraceCollection(points: TrackPoint[]) {
+  return {
+    type: 'FeatureCollection' as const,
+    features:
+      points.length >= 2
+        ? [
+            {
+              type: 'Feature' as const,
+              properties: { id: 'carnet-trace' },
+              geometry: {
+                type: 'LineString' as const,
+                coordinates: points.map((point) => [point.lng, point.lat]),
+              },
+            },
+          ]
+        : [],
   };
 }
 
@@ -160,7 +191,15 @@ function ensureLayer(map: MapLibreMap, id: string, create: () => void) {
   if (!map.getLayer(id)) create();
 }
 
-export function CompteMap({ authState, context, focus = null }: CompteMapProps) {
+export function CompteMap({
+  authState,
+  context,
+  focus = null,
+  variant = 'compte',
+  trace = null,
+  emptyTitle,
+  emptyHint,
+}: CompteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRefs = useRef<Marker[]>([]);
@@ -175,11 +214,22 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   const [online, setOnline] = useState(true);
   const [year, setYear] = useState<number | null>(null);
 
+  /* Fiche carnet : la carte ne montre que le tracé du carnet. */
+  const isCarnet = variant === 'carnet';
+  const tracePoints = useMemo(
+    () => (isCarnet ? simplifyTrack(parsePositions(trace)) : []),
+    [isCarnet, trace]
+  );
+  const traceBounds = useMemo(
+    () => (tracePoints.length >= 2 ? boundsOfPoints(tracePoints) : null),
+    [tracePoints]
+  );
+
   const config = mapModeConfig(context.mode);
   const query = useQuery<CompteMapPayload, Error>({
     queryKey: ['compte-map'],
     queryFn: fetchCompteMap,
-    enabled: authState === 'owner' && online,
+    enabled: authState === 'owner' && online && !isCarnet,
     staleTime: 60_000,
     retry: 1,
   });
@@ -423,6 +473,81 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     }
   }, [map, ready, data, visibleTracks, context.mode]);
 
+  /* Tracé du carnet : même peinture que les traces du Compte (liseré blanc,
+     halo vert, ligne encre), mais la donnée vient de la fiche, pas du compte. */
+  useEffect(() => {
+    if (!map || !ready || !isCarnet) return;
+    ensureSource(
+      map,
+      'compte-carnet-trace',
+      carnetTraceCollection(tracePoints) as ReturnType<typeof tracksCollection>
+    );
+    ensureLayer(map, 'compte-carnet-trace-casing', () => {
+      map.addLayer({
+        id: 'compte-carnet-trace-casing',
+        type: 'line',
+        source: 'compte-carnet-trace',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#FFFFFF', 'line-width': 6, 'line-opacity': 0.68 },
+      });
+    });
+    ensureLayer(map, 'compte-carnet-trace-glow', () => {
+      map.addLayer({
+        id: 'compte-carnet-trace-glow',
+        type: 'line',
+        source: 'compte-carnet-trace',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#5B7F55',
+          'line-width': 7,
+          'line-opacity': 0.35,
+          'line-blur': 4,
+        },
+      });
+    });
+    ensureLayer(map, 'compte-carnet-trace-line', () => {
+      map.addLayer({
+        id: 'compte-carnet-trace-line',
+        type: 'line',
+        source: 'compte-carnet-trace',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#17402C', 'line-width': 3, 'line-opacity': 0.9 },
+      });
+    });
+    const visible = tracePoints.length >= 2 ? 'visible' : 'none';
+    for (const layer of [
+      'compte-carnet-trace-casing',
+      'compte-carnet-trace-glow',
+      'compte-carnet-trace-line',
+    ]) {
+      if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visible);
+    }
+  }, [map, ready, isCarnet, tracePoints]);
+
+  /* Cadrage du tracé du carnet : le parcours remplit la bande carte, en 3D
+     (même inclinaison que la carte d'une sortie du Compte). */
+  useEffect(() => {
+    if (!map || !ready || !traceBounds) return;
+    const reduced = prefersReducedMotion();
+    map.fitBounds(
+      [
+        [traceBounds[0], traceBounds[1]],
+        [traceBounds[2], traceBounds[3]],
+      ],
+      {
+        padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
+          sheetOpen: false,
+          mapbig: map.getContainer().clientHeight > 500,
+        }),
+        maxZoom: 14,
+        pitch: 45,
+        bearing: -18,
+        duration: reduced ? 0 : 1100,
+        essential: true,
+      }
+    );
+  }, [map, ready, traceBounds]);
+
   useEffect(() => {
     if (!map) return;
     const close = (event: { point: { x: number; y: number } }) => {
@@ -605,10 +730,11 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     window.__lkdvCompteMapOpenOuting?.(id);
   }, []);
 
-  const showGuest = authState === 'guest' || unauthorized;
+  const showGuest = !isCarnet && (authState === 'guest' || unauthorized);
   const showError =
-    !fallback && !styleFailed && (authState === 'error' || (query.isError && !unauthorized));
+    !isCarnet && !fallback && !styleFailed && (authState === 'error' || (query.isError && !unauthorized));
   const showEmpty =
+    !isCarnet &&
     !fallback &&
     !styleFailed &&
     ready &&
@@ -616,12 +742,17 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     Boolean(data) &&
     (data?.tracks.length ?? 0) === 0;
   const showNeutral =
+    !isCarnet &&
     !fallback &&
     !styleFailed &&
     ready &&
     authState === 'owner' &&
     config.dimmed &&
     Boolean(config.emptyTitle);
+  /* Fiche carnet : état vide seulement quand la base ne porte réellement
+     aucune trace — jamais un « connecte-toi » qui n'a pas de sens ici. */
+  const showCarnetEmpty =
+    isCarnet && !fallback && !styleFailed && ready && tracePoints.length < 2;
 
   return (
     <div
@@ -635,13 +766,19 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       data-map-empty={data && data.tracks.length === 0 ? 'true' : 'false'}
       data-map-dimmed={config.dimmed ? 'true' : 'false'}
       data-map-fallback={fallback ? 'true' : 'false'}
+      data-map-variant={variant}
+      data-map-trace={isCarnet ? (tracePoints.length >= 2 ? 'true' : 'false') : 'account'}
       data-offline={!online ? 'true' : 'false'}
     >
       <div ref={containerRef} className="lkdv-map-canvas" />
       <p className="sr-only" aria-live="polite">
-        {data
-          ? `Carte de tes sorties : ${data.stats.outings} sorties, ${data.stats.km} kilomètres, ${data.stats.massifs} massifs.`
-          : 'Carte en chargement.'}
+        {isCarnet
+          ? tracePoints.length >= 2
+            ? `Tracé du carnet : ${tracePoints.length} points géolocalisés.`
+            : 'Aucun tracé enregistré pour ce carnet.'
+          : data
+            ? `Carte de tes sorties : ${data.stats.outings} sorties, ${data.stats.km} kilomètres, ${data.stats.massifs} massifs.`
+            : 'Carte en chargement.'}
       </p>
 
       {!ready && !styleFailed && !fallback ? (
@@ -673,7 +810,15 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         <CompteMapState kind="neutral" title={config.emptyTitle} hint={config.emptyHint} />
       ) : null}
 
-      {ready && authState === 'owner' && data && data.tracks.length > 0 && !query.isError && !fallback ? (
+      {showCarnetEmpty ? (
+        <CompteMapState
+          kind="neutral"
+          title={emptyTitle ?? 'Aucun tracé enregistré pour ce carnet.'}
+          hint={emptyHint ?? 'L’auteur n’a pas joint de trace GPS à ce carnet.'}
+        />
+      ) : null}
+
+      {ready && !isCarnet && authState === 'owner' && data && data.tracks.length > 0 && !query.isError && !fallback ? (
         <CompteMapHud
           config={config}
           scale={scale}
