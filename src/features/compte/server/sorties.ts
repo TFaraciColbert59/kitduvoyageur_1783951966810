@@ -42,6 +42,13 @@ export interface OutingGearItem {
   name: string;
   weightG: number | null;
   kitId: string | null;
+  photoUrl?: string | null;
+  category?: string | null;
+  condition?: string | null;
+  inventoryStatus?: string | null;
+  listingMode?: string | null;
+  isLent?: boolean;
+  priceCents?: number | null;
 }
 
 export interface OutingKit {
@@ -381,17 +388,62 @@ export async function loadOutingDetail(
       }
     : null;
 
-  const gear: OutingGearItem[] = ((gearRes.data ?? []) as Array<{
+  const gearRows = (gearRes.data ?? []) as Array<{
     id: string;
     item_name: string;
     weight_g: number | null;
     kit_id: string | null;
-  }>).map((row) => ({
-    id: row.id,
-    name: row.item_name,
-    weightG: row.weight_g,
-    kitId: row.kit_id,
-  }));
+  }>;
+  const productByName = new Map<
+    string,
+    {
+      photo_url: string | null;
+      category: string | null;
+      condition: string | null;
+      status: string | null;
+      listing_mode: string | null;
+      is_lent: boolean | null;
+      price_cents: number | null;
+    }
+  >();
+  if (canEdit && gearRows.length > 0) {
+    const names = Array.from(new Set(gearRows.map((row) => row.item_name.trim()))).filter(Boolean);
+    if (names.length > 0) {
+      const { data: products } = await supabase
+        .from('product_ownership')
+        .select('name,photo_url,category,condition,status,listing_mode,is_lent,price_cents')
+        .eq('user_id', userId)
+        .in('name', names);
+      for (const product of (products ?? []) as Array<{
+        name: string;
+        photo_url: string | null;
+        category: string | null;
+        condition: string | null;
+        status: string | null;
+        listing_mode: string | null;
+        is_lent: boolean | null;
+        price_cents: number | null;
+      }>) {
+        productByName.set(product.name.trim().toLowerCase(), product);
+      }
+    }
+  }
+  const gear: OutingGearItem[] = gearRows.map((row) => {
+    const product = productByName.get(row.item_name.trim().toLowerCase());
+    return {
+      id: row.id,
+      name: row.item_name,
+      weightG: row.weight_g,
+      kitId: row.kit_id,
+      photoUrl: product?.photo_url ?? null,
+      category: product?.category ?? null,
+      condition: product?.condition ?? null,
+      inventoryStatus: product?.status ?? null,
+      listingMode: product?.listing_mode ?? null,
+      isLent: product?.is_lent === true,
+      priceCents: product?.price_cents ?? null,
+    };
+  });
 
   const gearNames = new Set(
     gear.map((item) => item.name.trim().toLowerCase()).filter(Boolean)

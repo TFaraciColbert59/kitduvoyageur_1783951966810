@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { UserMinus, UserPlus, Users } from 'lucide-react';
 import type { OutingParticipant } from '@/features/compte/server/sorties';
 import { DrawerEmpty } from '../shell/DrawerShell';
@@ -68,6 +69,11 @@ export function OutingParticipants({ participants, canEdit, busy, onAdd, onRemov
         <ul className="lkdv-sortie-people">
           {participants.map((person) => (
             <li key={person.id}>
+              <Link
+                className="lkdv-sortie-person-link"
+                href={`/profil/${encodeURIComponent(person.userId)}`}
+                aria-label={`Voir le profil de ${person.name}`}
+              >
               <span className="lkdv-sortie-avatar" aria-hidden="true">
                 {person.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -82,6 +88,7 @@ export function OutingParticipants({ participants, canEdit, busy, onAdd, onRemov
                   @{person.handle} · {person.isOwner ? 'organisateur' : person.role}
                 </small>
               </div>
+              </Link>
               {canEdit && !person.isOwner ? (
                 <button
                   type="button"
