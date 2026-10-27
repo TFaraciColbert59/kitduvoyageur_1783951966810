@@ -248,7 +248,12 @@ function ConversationFeedRow({
             onClick={() => fire('delete')}
             aria-label="Supprimer la conversation"
           >
-            <Icon name="trash2" className="size-4" aria-hidden="true" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 7h16" />
+              <path d="M10 11v6M14 11v6" />
+              <path d="M6 7l.9 12.1A2 2 0 0 0 8.9 21h6.2a2 2 0 0 0 2-1.9L18 7" />
+              <path d="M9 7V5.2A2.2 2.2 0 0 1 11.2 3h1.6A2.2 2.2 0 0 1 15 5.2V7" />
+            </svg>
           </button>
           <button
             type="button"
@@ -256,7 +261,10 @@ function ConversationFeedRow({
             onClick={() => fire('notify')}
             aria-label="Gérer les notifications"
           >
-            <Icon name="bell" className="size-4" aria-hidden="true" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M6.2 9.4a5.8 5.8 0 0 1 11.6 0c0 4.1 1.6 5.6 1.6 5.6H4.6s1.6-1.5 1.6-5.6Z" />
+              <path d="M10 18.2a2 2 0 0 0 4 0" />
+            </svg>
           </button>
         </div>
       ) : null}
