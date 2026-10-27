@@ -279,3 +279,24 @@ export function StoryTrim({ media }: { media: unknown[] }) {
     </div>
   );
 }
+
+export function CoverMosaic({ cover }: { cover: unknown[] }) {
+  const item = rec(cover[0]);
+  const src = txt(item.previewUrl) || txt(item.url);
+  return (
+    <div className="lkdv-cover-mosaic" aria-label="Couverture du carnet">
+      <span className="lkdv-cover-main">{src ? <img src={src} alt="" /> : <b>Couverture</b>}</span>
+      <span className="lkdv-cover-slot" aria-hidden="true" />
+      <span className="lkdv-cover-slot" aria-hidden="true" />
+    </div>
+  );
+}
+
+export function MeetingPin({ location, meeting }: { location: string; meeting: string }) {
+  return (
+    <div className="lkdv-meeting-pin" aria-label="Point de rendez-vous">
+      <span className="lkdv-meeting-pin-dot" aria-hidden="true" />
+      <div><small>Rendez-vous</small><b>{meeting || 'À définir'}</b><span>{location || 'Lieu à définir'}</span></div>
+    </div>
+  );
+}

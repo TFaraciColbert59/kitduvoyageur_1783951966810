@@ -17,7 +17,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { RouteMetrics, CarnetStageSpine, CarnetLogistics } from './shared/InfoCards';
+import { RouteMetrics, CarnetStageSpine, CarnetLogistics, CoverMosaic } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -288,6 +288,7 @@ export function CarnetCreateForm({
                   )}
                 />
                 <InlineError message={errors.cover?.message as string | undefined} />
+                <CoverMosaic cover={form.watch('cover')} />
               </div>
 
               <div>

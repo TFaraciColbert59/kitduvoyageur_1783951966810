@@ -21,7 +21,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { ActivityCards, DifficultyLadder, CapacityGauge, SafetyManifest } from './shared/InfoCards';
+import { ActivityCards, DifficultyLadder, CapacityGauge, SafetyManifest, MeetingPin } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -369,6 +369,7 @@ export function SortieCreateForm({
               </div>
 
               <div>
+                <MeetingPin location={form.watch('location')} meeting={form.watch('meetingPoint')} />
                 <DifficultyLadder value={level} />
                 <DateRangeField
                   label="Dates de la sortie"
