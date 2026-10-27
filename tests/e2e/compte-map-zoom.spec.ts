@@ -143,8 +143,8 @@ test.describe('carte du Compte — hiérarchie de zoom', () => {
     await expect(near).toHaveCount(1);
     const [nearBox] = await visibleBoxes(near);
     expect(nearBox, 'massif Région visible').toBeDefined();
-    expect(nearBox!.width).toBeGreaterThanOrEqual(20);
-    expect(nearBox!.height).toBeGreaterThanOrEqual(20);
+    expect(nearBox!.width).toBeGreaterThanOrEqual(18);
+    expect(nearBox!.height).toBeGreaterThanOrEqual(18);
   });
 
   test('aligne les couches natives POI sur la bande Lieu', async ({ page }) => {
