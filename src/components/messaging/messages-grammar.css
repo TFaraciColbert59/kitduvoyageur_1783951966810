@@ -1233,9 +1233,15 @@
   position: absolute;
   top: 6px;
   right: 6px;
+  left: 6px;
   z-index: 3;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.lkdv-messages .sw-wrap .sh-close-only > * {
+  pointer-events: auto;
 }
 .lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) {
   padding: 6px 8px 8px;
@@ -1348,4 +1354,138 @@
   background: var(--fill3);
   color: var(--label2);
   font: 500 12px/1.3 var(--sf);
+}
+/* ---------- Boutons flèche en pillule de verre (drawer partage) ---------- */
+.lkdv-messages .mbtn-arrow {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 0.5px rgba(23, 43, 36, 0.09),
+    0 2px 8px rgba(23, 43, 36, 0.06);
+  color: var(--label2);
+  cursor: pointer;
+  transition: transform 0.14s ease;
+}
+.lkdv-messages .mbtn-arrow:active {
+  transform: scale(0.92);
+}
+
+/* Liste des discussions : fondu aussi en bas, comme en haut. */
+.lkdv-messages .card-scroll {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%);
+}
+
+/* ---------- Drawer de pièce jointe ---------- */
+.lkdv-messages .mattach-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%);
+  padding: 2px 2px 6px;
+}
+.lkdv-messages .mattach-title {
+  margin: 2px 2px 0;
+  font: 650 15px/1.25 var(--sf);
+  color: var(--label);
+}
+.lkdv-messages .mattach-map {
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #dfe6dc;
+  box-shadow: 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+}
+.lkdv-messages .mattach-map-error {
+  display: grid;
+  place-items: center;
+  height: 200px;
+  border-radius: 18px;
+  background: var(--fill3);
+  color: var(--label2);
+  font: 500 12px/1.3 var(--sf);
+}
+.lkdv-messages .mattach-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font: 500 12px/1.2 var(--sf);
+  color: var(--label3);
+  padding: 0 2px;
+}
+.lkdv-messages .mattach-link {
+  color: var(--mint);
+  font: 600 12px/1.2 var(--sf);
+  text-decoration: none;
+}
+.lkdv-messages .mattach-audio,
+.lkdv-messages .mattach-video {
+  width: 100%;
+  border-radius: 16px;
+}
+.lkdv-messages .mattach-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.07);
+  font: 500 12.5px/1.3 var(--sf);
+  color: var(--label);
+}
+.lkdv-messages .mattach-rows {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.lkdv-messages .mattach-rows > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.07);
+}
+.lkdv-messages .mattach-rows dt {
+  font: 500 12px/1.2 var(--sf);
+  color: var(--label3);
+}
+.lkdv-messages .mattach-rows dd {
+  margin: 0;
+  font: 600 12.5px/1.2 var(--sf);
+  color: var(--label);
+}
+.lkdv-messages .mattach-note {
+  margin: 4px 2px;
+  font: 500 12.5px/1.4 var(--sf);
+  color: var(--label2);
+}
+.lkdv-messages .mattach-skeleton {
+  height: 240px;
+  border-radius: 18px;
+  background: var(--fill2);
+  animation: mshimmer 1.4s ease-in-out infinite;
+}
+.lkdv-messages .mcard[role='button'] {
+  cursor: pointer;
+}
+.lkdv-messages .mcard[role='button']:active {
+  transform: scale(0.985);
 }

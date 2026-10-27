@@ -35,6 +35,7 @@ import { messagingService } from '@/features/messaging/services/messagingService
 import { formatConversationTimestamp } from '@/features/messaging/lib/messagingUtils';
 import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachmentUrl';
 import { SharedPostEmbed } from '@/features/messaging/components/SharedPostEmbed';
+import { AttachmentDrawer } from '@/features/messaging/components/AttachmentDrawer';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
 import {
   SWIPE_REVEAL,
@@ -396,6 +397,7 @@ function MessageThread({
   focusMessageId,
   onOpenShareMenu,
   onOpenPost,
+  onOpenAttachment,
 }: {
   conversation: Conversation;
   currentUserId: string;
@@ -410,6 +412,8 @@ function MessageThread({
   onOpenShareMenu?: () => void;
   /** Ouvre la publication partagée dans le fil Communauté. */
   onOpenPost?: (postId: string) => void;
+  /** Ouvre un partage (kit, GPX, randonnée, équipement, vocal, fichier). */
+  onOpenAttachment?: (message: Message) => void;
 }) {
   const { haptic } = useHapticFeedback();
   const { messages, loading, error, hasMore, loadingEarlier, loadEarlier, retryMessage, toggleReaction, sendMessage: sendThreadMessage, refreshMessages } =
@@ -585,7 +589,22 @@ function MessageThread({
                         <AttachmentImage content={message.content} />
                       </span>
                     ) : message.message_type === 'product' ? (
-                      <span className="mcard">
+                      <span
+                        className="mcard"
+                        role="button"
+                        tabIndex={0}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onOpenAttachment?.(message);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onOpenAttachment?.(message);
+                          }
+                        }}
+                      >
                         {typeof message.metadata?.photo_url === 'string' ? (
                           // eslint-disable-next-line @next/next/no-img-element -- vignette distante
                           <img className="mcard-img" src={message.metadata.photo_url} alt="" loading="lazy" />
@@ -604,7 +623,22 @@ function MessageThread({
                         </span>
                       </span>
                     ) : message.message_type === 'trail' ? (
-                      <span className="mcard">
+                      <span
+                        className="mcard"
+                        role="button"
+                        tabIndex={0}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onOpenAttachment?.(message);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onOpenAttachment?.(message);
+                          }
+                        }}
+                      >
                         <span className="mcard-ico" aria-hidden="true">
                           <Icon name="route" className="size-4" />
                         </span>
@@ -626,7 +660,22 @@ function MessageThread({
                         </span>
                       </span>
                     ) : message.message_type === 'kit' ? (
-                      <span className="mcard">
+                      <span
+                        className="mcard"
+                        role="button"
+                        tabIndex={0}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onOpenAttachment?.(message);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onOpenAttachment?.(message);
+                          }
+                        }}
+                      >
                         <span className="mcard-ico" aria-hidden="true">
                           <Icon name="layers" className="size-4" />
                         </span>
@@ -636,7 +685,22 @@ function MessageThread({
                         </span>
                       </span>
                     ) : message.message_type === 'audio' ? (
-                      <span className="mcard">
+                      <span
+                        className="mcard"
+                        role="button"
+                        tabIndex={0}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onOpenAttachment?.(message);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onOpenAttachment?.(message);
+                          }
+                        }}
+                      >
                         <span className="mcard-ico" aria-hidden="true">
                           <Icon name="mic" className="size-4" />
                         </span>
@@ -646,7 +710,22 @@ function MessageThread({
                         </span>
                       </span>
                     ) : message.message_type === 'gpx' || message.message_type === 'file' || message.message_type === 'video' ? (
-                      <span className="mcard">
+                      <span
+                        className="mcard"
+                        role="button"
+                        tabIndex={0}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onOpenAttachment?.(message);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onOpenAttachment?.(message);
+                          }
+                        }}
+                      >
                         <span className="mcard-ico" aria-hidden="true">
                           <Icon name={message.message_type === 'video' ? 'play' : 'paperclip'} className="size-4" />
                         </span>
@@ -956,7 +1035,11 @@ function MessageComposerBar({
           onClick={() => setRecording(true)}
           aria-label="Enregistrer une note vocale"
         >
-          <Icon name="mic" className="size-4" aria-hidden="true" />
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="9" y="2.8" width="6" height="11" rx="3" />
+            <path d="M5.6 11.6a6.4 6.4 0 0 0 12.8 0" />
+            <path d="M12 18.2v3" />
+          </svg>
         </button>
         <button type="button" className="lg gbtn" onClick={() => onOpenShareMenu?.()} aria-label="Partager un GPX, un équipement ou une randonnée">
           <Icon name="ellipsis" className="size-4" aria-hidden="true" />
@@ -967,7 +1050,10 @@ function MessageComposerBar({
           disabled={!content.trim() || sending}
           aria-label="Envoyer le message"
         >
-          <Icon name="send" className="size-4" aria-hidden="true" />
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4.4 12h14.2" />
+            <path d="M12.8 6.2 18.6 12l-5.8 5.8" />
+          </svg>
         </button>
       </form>
 
@@ -1002,6 +1088,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const [optionsConv, setOptionsConv] = useState<Conversation | null>(null);
   const [notifyConv, setNotifyConv] = useState<Conversation | null>(null);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [attachment, setAttachment] = useState<Message | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
   // Préférences locales de l'appareil (jamais envoyées au serveur).
@@ -1474,6 +1561,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                         compact
                         onOpenShareMenu={() => setShareMenuOpen(true)}
                         onOpenPost={(postId) => router.push(`/communaute?post=${encodeURIComponent(postId)}`)}
+                        onOpenAttachment={(message) => setAttachment(message)}
                       />
                     </div>
                   </div>
@@ -1532,6 +1620,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 }}
               />
             ) : null}
+
+            <AttachmentDrawer message={attachment} onClose={() => setAttachment(null)} />
 
             {selected ? (
               <ComposerMenuSheet

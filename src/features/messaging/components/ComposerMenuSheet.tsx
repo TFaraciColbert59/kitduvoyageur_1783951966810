@@ -49,6 +49,9 @@ const SCROLL = {
   minHeight: 0,
   overflowY: 'auto',
   overscrollBehavior: 'contain',
+  /* Mêmes fondus haut et bas que la liste des discussions. */
+  maskImage: 'linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%)',
+  WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%)',
 } as const;
 
 export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
@@ -129,6 +132,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
     <AccountDrawerHost
       variant="card"
       open={isOpen}
+      hideHeader
       title={
         view === 'menu'
           ? 'Partager dans le chat'
@@ -167,10 +171,13 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             </div>
             <button
               type="button"
-              className="mbtn p"
+              className="mbtn-arrow"
+              aria-label="Choisir un fichier GPX"
               onClick={() => gpxInputRef.current?.click()}
             >
-              Choisir
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
             </button>
           </div>
 
@@ -179,8 +186,15 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
               <div className="ttl">Équipement</div>
               <div className="s2">Depuis votre inventaire</div>
             </div>
-            <button type="button" className="mbtn" onClick={openEquip}>
-              Ouvrir
+            <button
+              type="button"
+              className="mbtn-arrow"
+              aria-label="Ouvrir l’équipement"
+              onClick={openEquip}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
             </button>
           </div>
 
@@ -189,8 +203,15 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
               <div className="ttl">Randonnée</div>
               <div className="s2">Une de vos randonnées enregistrées</div>
             </div>
-            <button type="button" className="mbtn" onClick={openTrails}>
-              Ouvrir
+            <button
+              type="button"
+              className="mbtn-arrow"
+              aria-label="Ouvrir les randonnées"
+              onClick={openTrails}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
             </button>
           </div>
 
@@ -199,8 +220,15 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
               <div className="ttl">Kit</div>
               <div className="s2">Un kit de matériel</div>
             </div>
-            <button type="button" className="mbtn" onClick={openKits}>
-              Ouvrir
+            <button
+              type="button"
+              className="mbtn-arrow"
+              aria-label="Ouvrir les kits"
+              onClick={openKits}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
             </button>
           </div>
         </div>
@@ -217,8 +245,15 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
               <div className="ttl">Aucun kit à partager</div>
               <div className="s2">Vos kits de matériel apparaîtront ici.</div>
             </div>
-            <button type="button" className="mbtn" onClick={backToMenu}>
-              Retour
+            <button
+              type="button"
+              className="mbtn-arrow"
+              aria-label="Retour"
+              onClick={backToMenu}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
             </button>
           </div>
         ) : (
@@ -249,14 +284,17 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 </div>
                 <button
                   type="button"
-                  className="mbtn p"
+                  className="mbtn-arrow"
+                  aria-label={`Envoyer le kit ${kit.name}`}
                   onClick={() => {
                     haptic('light');
                     onSendKit({ kind: 'kit', kit_id: kit.id, kit_name: kit.name });
                     onClose();
                   }}
                 >
-                  Envoyer
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M9 6l6 6-6 6" />
+                  </svg>
                 </button>
               </div>
             ))}
