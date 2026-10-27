@@ -68,3 +68,4 @@
 .lkdv-carnet-daybar .lkdv-daybar-add { color: #17402C; }
 .lkdv-carnet-footer { justify-content: flex-end; }
 .lkdv-carnet-footer .lkdv-carnet-footer-create { margin-right: auto; }
+.lkdv-carnet-daybar.ig-tabs { width: calc(var(--n) * 41.5px + 5px) !important; }
