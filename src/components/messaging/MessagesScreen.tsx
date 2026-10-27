@@ -36,6 +36,7 @@ import { formatConversationTimestamp } from '@/features/messaging/lib/messagingU
 import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachmentUrl';
 import { SharedPostEmbed } from '@/features/messaging/components/SharedPostEmbed';
 import { AttachmentDrawer } from '@/features/messaging/components/AttachmentDrawer';
+import { GpxThumb } from '@/features/messaging/components/GpxThumb';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
 import {
   SWIPE_REVEAL,
@@ -661,7 +662,7 @@ function MessageThread({
                       </span>
                     ) : message.message_type === 'kit' ? (
                       <span
-                        className="mcard"
+                        className="mcard mcard-kit"
                         role="button"
                         tabIndex={0}
                         onClick={(event) => {
@@ -676,13 +677,18 @@ function MessageThread({
                           }
                         }}
                       >
-                        <span className="mcard-ico" aria-hidden="true">
+                        <span className="mcard-tile" aria-hidden="true">
                           <Icon name="layers" className="size-4" />
                         </span>
                         <span className="mcard-txt">
                           <b>{String(message.metadata?.kit_name || 'Kit partagé')}</b>
-                          <small>Lignée de kit</small>
+                          <small>
+                            {typeof message.metadata?.items_count === 'number'
+                              ? `Kit de matériel · ${message.metadata.items_count} élément${message.metadata.items_count > 1 ? 's' : ''}`
+                              : 'Kit de matériel'}
+                          </small>
                         </span>
+                        <Icon name="chevron-right" className="size-3.5 mcard-chevron" aria-hidden="true" />
                       </span>
                     ) : message.message_type === 'audio' ? (
                       <span
@@ -726,9 +732,13 @@ function MessageThread({
                           }
                         }}
                       >
-                        <span className="mcard-ico" aria-hidden="true">
-                          <Icon name={message.message_type === 'video' ? 'play' : 'paperclip'} className="size-4" />
-                        </span>
+                        {message.message_type === 'gpx' ? (
+                          <GpxThumb content={message.content} />
+                        ) : (
+                          <span className="mcard-ico" aria-hidden="true">
+                            <Icon name={message.message_type === 'video' ? 'play' : 'paperclip'} className="size-4" />
+                          </span>
+                        )}
                         <span className="mcard-txt">
                           <b>
                             {message.message_type === 'gpx'
@@ -737,8 +747,13 @@ function MessageThread({
                                 ? 'Vidéo'
                                 : 'Fichier'}
                           </b>
-                          <small>{message.content.split('/').pop()?.slice(0, 42) || 'Pièce jointe'}</small>
+                          <small>
+                            {message.message_type === 'gpx'
+                              ? 'Toucher pour voir la carte'
+                              : message.content.split('/').pop()?.slice(0, 42) || 'Pièce jointe'}
+                          </small>
                         </span>
+                        <Icon name="chevron-right" className="size-3.5 mcard-chevron" aria-hidden="true" />
                       </span>
                     ) : (
                       message.content
