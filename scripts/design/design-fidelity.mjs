@@ -176,15 +176,7 @@ check('3 boutons 38', m.buttons.length === 3 && m.buttons.every((b) => near(b[0]
 check('Carte 406×541 r24', m.card && boxNear(shift(m.card), ANCHORS.card.box) && m.cardRadius?.['border-radius'] === ANCHORS.card.radius, `${JSON.stringify(m.card)} r=${m.cardRadius?.['border-radius']}`);
 check('Scroll interne', m.cardScroll && m.cardScroll.padding === ANCHORS.cardScroll.padding && m.cardScroll.gap === ANCHORS.cardScroll.gap, JSON.stringify(m.cardScroll));
 check('Identité 382×68', m.identity && boxNear(shift(m.identity), ANCHORS.identity), JSON.stringify(m.identity));
-check(
-    'Stats 101 r14 (superficie sur 2 lignes)',
-    m.stats.length === 3 &&
-      m.stats.every((s) => near(s[0], ANCHORS.stats.width) && s[2] === ANCHORS.stats.radius) &&
-      near(m.stats[1][1], ANCHORS.stats.height) &&
-      near(m.stats[2][1], ANCHORS.stats.height) &&
-      m.stats[0][1] >= ANCHORS.stats.height,
-    JSON.stringify(m.stats)
-  );
+check('Stats 101×39 r14', m.stats.length === 3 && m.stats.every((s) => near(s[0], ANCHORS.stats.width) && near(s[1], ANCHORS.stats.height) && s[2] === ANCHORS.stats.radius), JSON.stringify(m.stats));
 check('Bio 378 12/15,6', m.bio.box && near(m.bio.box[2], ANCHORS.bio.width) && m.bio['font-size'] === ANCHORS.bio.fontSize && m.bio['line-height'] === ANCHORS.bio.lineHeight, JSON.stringify(m.bio));
 // Variante « sans stories » : les sections vivent dans le sélecteur de la carte.
 if (m.hasRings) {

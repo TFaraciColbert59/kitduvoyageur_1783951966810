@@ -27,11 +27,12 @@ function parseAreaKm2(km2: number | string | null | undefined): number | null {
   return n;
 }
 
-/** « 644 000 km » — arrondi au millier pour la stat principale. */
+/** « 644k km » — compactée au millier pour la stat principale. */
 export function formatAreaShort(km2: number | string | null | undefined): string | null {
   const n = parseAreaKm2(km2);
   if (n === null) return null;
-  return `${formatNumber(Math.round(n / 1_000) * 1_000)} km`;
+  if (n < 1000) return `${formatNumber(Math.round(n))} km`;
+  return `${formatNumber(Math.round(n / 1_000))}k km`;
 }
 
 export function formatDistance(km: number | null | undefined, digits = 1): string | null {
