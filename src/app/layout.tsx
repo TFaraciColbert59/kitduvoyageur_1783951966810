@@ -223,6 +223,11 @@ export default async function RootLayout({
         {/* DNS prefetch for external domains */}
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        {/* Supabase (API + stockage) : ouvert dès le premier octet pour que la
+            première requête de données ne paie pas le handshake TLS. */}
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} />
+        <link rel="preconnect" href="https://static.rocket.new" crossOrigin="anonymous" />
 
         {/* JSON-LD Structured Data */}
         <script

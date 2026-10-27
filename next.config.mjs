@@ -148,7 +148,9 @@ const nextConfig = {
       },
       {
         source: '/messagerie',
-        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+        // `no-cache` (et non `no-store`) : rien n'est partagé entre utilisateurs,
+        // mais le navigateur peut réutiliser la page au retour arrière (bfcache).
+        headers: [{ key: 'Cache-Control', value: 'private, no-cache, must-revalidate' }],
       },
       {
         source: '/carnets/:path*',
