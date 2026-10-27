@@ -1003,7 +1003,12 @@ function MessageComposerBar({
           aria-label="Joindre une photo"
         />
         <button type="button" className="lg gbtn" onClick={() => fileInput.current?.click()} aria-label="Envoyer une photo">
-          <Icon name="image-plus" className="size-4" aria-hidden="true" />
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3.2" y="4.6" width="17.6" height="14.8" rx="4" />
+            <circle cx="8.6" cy="9.9" r="1.7" />
+            <path d="M3.4 16.4l4.3-4a2.4 2.4 0 0 1 3.2 0l3.1 2.9" />
+            <path d="M12.6 15.1l2.2-2a2.4 2.4 0 0 1 3.2 0l2.4 2.2" />
+          </svg>
         </button>
 
         <textarea
