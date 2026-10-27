@@ -14,6 +14,13 @@ export interface CarnetMediaTabsProps {
   activeIndex: number;
   onChange: (index: number) => void;
   ariaLabel: string;
+  /** Préfixe des ids des boutons (`carnet-page-tab` par défaut). */
+  idPrefix?: string;
+  /**
+   * Id du panneau contrôlé. Par défaut `carnet-page-${id}`, le panneau du
+   * carrousel ; `() => undefined` quand les volets n'ont pas de `tabpanel`.
+   */
+  panelIdFor?: (id: string) => string | undefined;
 }
 
 /**
@@ -24,7 +31,14 @@ export interface CarnetMediaTabsProps {
  * Clavier : flèches gauche/droite avec bouclage, `Home`, `End`, roving
  * `tabIndex`, `aria-selected` et `aria-controls` sur l'actif.
  */
-export function CarnetMediaTabs({ items, activeIndex, onChange, ariaLabel }: CarnetMediaTabsProps) {
+export function CarnetMediaTabs({
+  items,
+  activeIndex,
+  onChange,
+  ariaLabel,
+  idPrefix = 'carnet-page-tab',
+  panelIdFor = (id) => `carnet-page-${id}`,
+}: CarnetMediaTabsProps) {
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
   const count = items.length;
   const safeIndex = count > 0 ? (activeIndex < 0 ? -1 : Math.max(0, Math.min(activeIndex, count - 1))) : -1;
@@ -62,9 +76,9 @@ export function CarnetMediaTabs({ items, activeIndex, onChange, ariaLabel }: Car
           }}
           type="button"
           role="tab"
-          id={`carnet-page-tab-${item.id}`}
+          id={`${idPrefix}-${item.id}`}
           aria-selected={index === safeIndex}
-          aria-controls={index === safeIndex ? `carnet-page-${item.id}` : undefined}
+          aria-controls={index === safeIndex ? panelIdFor(item.id) : undefined}
           aria-label={item.label}
           tabIndex={index === (safeIndex === -1 ? 0 : safeIndex) ? 0 : -1}
           onClick={() => onChange(index)}
