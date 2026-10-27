@@ -168,17 +168,24 @@ export function CommunityFeedPost({
     return () => window.clearTimeout(timer);
   }, [panel]);
 
-  /* Dans un message, le panneau ne doit jamais déplacer le fil : on remet la
-     position du conteneur défilant telle qu'elle était à l'ouverture. */
+  /* Dans un message, le panneau ne doit jamais déplacer le fil : on épingle la
+     position du conteneur défilant pendant toute la durée d'ouverture (le
+     navigateur la déplace sinon pour amener le focus du panneau à l'écran). */
   useEffect(() => {
     if (!panel || !embedded) return;
     const scroller = articleRef.current?.closest('.mthread') as HTMLElement | null;
     if (!scroller) return;
-    const y = scroller.scrollTop;
-    const frame = window.requestAnimationFrame(() => {
-      scroller.scrollTop = y;
-    });
-    return () => window.cancelAnimationFrame(frame);
+    const pinned = scroller.scrollTop;
+    const pin = () => {
+      if (Math.abs(scroller.scrollTop - pinned) > 1) scroller.scrollTop = pinned;
+    };
+    const interval = window.setInterval(pin, 16);
+    const stop = window.setTimeout(() => window.clearInterval(interval), 700);
+    return () => {
+      window.clearInterval(interval);
+      window.clearTimeout(stop);
+      pin();
+    };
   }, [panel, embedded]);
 
   return (
