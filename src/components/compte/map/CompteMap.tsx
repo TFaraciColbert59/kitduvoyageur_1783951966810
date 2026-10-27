@@ -599,6 +599,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const width = container.clientWidth;
       const height = container.clientHeight;
       const zoom = map.getZoom();
+      overlay?.classList.toggle('is-far', zoom < 7);
       for (const entry of entries) {
         const point = map.project([entry.lng, entry.lat]);
         const inside =
