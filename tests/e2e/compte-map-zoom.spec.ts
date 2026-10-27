@@ -96,7 +96,13 @@ test.describe('carte du Compte — hiérarchie de zoom', () => {
 
     await zoomTo(page, 8, massifCenter);
     await expect(page.locator('.lkdv-map-root')).toHaveAttribute('data-zoom-band', 'region');
-    await expect(page.locator('.lkdv-map-poi:visible')).toHaveCount(0);
+    // Les POI apparaissent dès la bande Région.
+    expect(
+      await page.evaluate(() => {
+        const map = (window as any).__lkdvCompteMapInstance;
+        return map.getLayoutProperty('compte-pois-dot', 'visibility') ?? 'visible';
+      })
+    ).not.toBe('none');
     // Le massif centré est forcément dans le cadre : la bande Région le montre
     // en pastille individuelle (pas d'agrégat à cette échelle).
     await expect(
@@ -202,7 +208,8 @@ test.describe('carte du Compte — hiérarchie de zoom', () => {
 
     await zoomTo(page, 9.6, poiCenter);
     await expect(page.locator('.lkdv-map-root')).toHaveAttribute('data-zoom-band', 'region');
-    await expect(page.locator('.lkdv-map-poi:visible')).toHaveCount(0);
+    await expect(marker).toBeVisible();
+    await expect(marker).toHaveClass(/is-selected/);
 
     await zoomTo(page, 12.4, poiCenter);
     await expect(page.locator('.lkdv-map-root')).toHaveAttribute('data-zoom-band', 'place');

@@ -920,8 +920,7 @@
 
 /* Monde, Pays et Région : les POI n'existent qu'en bande Lieu. */
 .lkdv-map-root[data-zoom-band='world'] .lkdv-map-poi,
-.lkdv-map-root[data-zoom-band='country'] .lkdv-map-poi,
-.lkdv-map-root[data-zoom-band='region'] .lkdv-map-poi {
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-poi {
   display: none !important;
 }
 
