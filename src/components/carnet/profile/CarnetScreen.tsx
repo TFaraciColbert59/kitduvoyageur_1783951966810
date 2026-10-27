@@ -11,11 +11,11 @@ import { useCarnetComments } from '@/features/carnet/detail/useCarnetComments';
 import { useCarnetEngagement } from '@/features/carnet/detail/useCarnetEngagement';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { CarnetTopBar } from './CarnetTopBar';
-import { CarnetCard, type CarnetPlaceFocus } from './CarnetCard';
+import { CarnetCard } from './CarnetCard';
 import { CarnetDrawer, type CarnetDrawerId } from './CarnetDrawer';
 import type { CarnetPageId } from './CarnetPages';
 import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
-import { CarnetPostDrawer } from './CarnetPostDrawer';
+import { CarnetPostSheet } from './CarnetPostSheet';
 import { CarnetMapCard } from './CarnetMapCard';
 import { CarnetMediaViewer } from './CarnetMediaViewer';
 import { CarnetMoreMenu } from './CarnetMoreMenu';
@@ -47,7 +47,6 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [mapFocus, setMapFocus] = useState<CarnetPlaceFocus | null>(null);
 
   const requireAuth = useCallback(() => {
     toast(user?.id ? 'Créez un compte pour enregistrer ou commenter.' : 'Connectez-vous pour continuer.', 'info');
@@ -168,23 +167,8 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
               />
             ) : null}
           </CarnetDrawer>
-        ) : postIndex !== null ? (
-          <CarnetPostDrawer
-            detail={detailView}
-            index={postIndex}
-            onIndexChange={setPostIndex}
-            onClose={() => setPostIndex(null)}
-            comments={comments}
-            canWrite={canWrite}
-            currentUserId={currentUserId}
-            onRequireAuth={requireAuth}
-            onOpenViewer={setViewerIndex}
-            onLike={() => void engagement.toggleLike()}
-            onShare={() => setDrawer('share')}
-          />
         ) : (
-          <>
-            <CarnetCard
+          <CarnetCard
             detail={detailView}
             page={page}
             onPageChange={setPage}
@@ -194,8 +178,6 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             onOpenStat={openStat}
             onOpenComments={() => setPage('comments')}
             onOpenLikes={() => setPage('likes')}
-            onSave={() => void engagement.toggleFavorite()}
-            onFocusPlace={setMapFocus}
             onOpenPost={(index) => setPostIndex(index)}
             onDownloadGpx={() => downloadGpx(detail.title, detail.trace)}
             likesPage={
@@ -231,10 +213,31 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
               ) : null
             }
           />
-          </>
         )}
-        <CarnetMapCard detail={detailView} focus={mapFocus} />
+        <CarnetMapCard detail={detailView} />
       </main>
+
+      {/* Le post du moment est une feuille superposée à la carte, exactement
+          comme le post du Compte : la carte reste montée dessous. */}
+      {postIndex !== null ? (
+        <CarnetPostSheet
+          detail={detailView}
+          index={postIndex}
+          onIndexChange={setPostIndex}
+          onClose={() => setPostIndex(null)}
+          comments={comments}
+          canWrite={canWrite}
+          currentUserId={currentUserId}
+          onRequireAuth={requireAuth}
+          onOpenViewer={setViewerIndex}
+          onLike={() => void engagement.toggleLike()}
+          shareUrl={shareUrl}
+          onCopied={() => toast('Lien copié.', 'success')}
+          saved={engagement.favorited}
+          onSave={() => void engagement.toggleFavorite()}
+          onReport={() => setReportOpen(true)}
+        />
+      ) : null}
 
       <AccountBottomBar />
 

@@ -185,11 +185,6 @@ export function CarnetPages({
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- image distante */}
                   <img src={moment.imageUrl ?? ''} alt="" loading={index < 3 ? 'eager' : 'lazy'} />
-                  <span className="ckp-tile-expand" aria-hidden="true">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                      <path d="M9 4H4v5M15 20h5v-5" />
-                    </svg>
-                  </span>
                   {index === 8 && detail.photoMoments.length > 9 ? (
                     <span className="ckp-tile-more">+{detail.photoMoments.length - 9}</span>
                   ) : null}

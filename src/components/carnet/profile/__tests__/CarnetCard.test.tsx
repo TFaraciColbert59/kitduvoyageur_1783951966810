@@ -9,6 +9,10 @@ afterEach(() => cleanup());
 
 const noop = () => {};
 
+/** `Intl` groupe les milliers avec une espace fine insécable : on la ramène à
+    une espace ordinaire pour comparer le texte affiché. */
+const norm = (value: string | null | undefined) => (value ?? '').replace(/[\u00a0\u202f]/g, ' ');
+
 const TRACE = {
   type: 'LineString',
   coordinates: [
@@ -33,11 +37,6 @@ function base(overrides: Partial<React.ComponentProps<typeof CarnetCard>> = {}) 
     onOpenStat: noop,
     onOpenComments: noop,
     onOpenLikes: noop,
-    onOpenParcours: noop,
-    onOpenManage: noop,
-    onSave: noop,
-    onOpenMenu: noop,
-    onFocusPlace: noop,
     onOpenPost: noop,
     onDownloadGpx: noop,
     ...overrides,
@@ -77,22 +76,27 @@ describe('CarnetCard — carte du carnet', () => {
     expect(onOpenStat).toHaveBeenCalledTimes(3);
   });
 
-  it('pose cinq segments : trois actions puis les deux vues', () => {
+  it('pose quatre segments : deux actions puis les deux vues', () => {
     const { container } = render(<CarnetCard {...base()} />);
     expect(container.querySelector('.ckp-action-lbl')).toBeNull();
-    expect(container.querySelectorAll('.ckp-actions .ckp-action-btn')).toHaveLength(3);
+    expect(container.querySelectorAll('.ckp-actions .ckp-action-btn')).toHaveLength(2);
     expect(container.querySelector('.ckp-card-foot .ckp-tabs')).toBeTruthy();
     const segments = container.querySelectorAll(
       '.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button',
     );
-    expect(segments).toHaveLength(5);
+    expect(segments).toHaveLength(4);
     expect([...segments].map((node) => node.getAttribute('aria-label'))).toEqual([
       'J’aime, 22',
       'Commenter, 3',
-      'Enregistrer',
       'Posts',
       'Parcours',
     ]);
+  });
+
+  it('ne garde plus Enregistrer dans la capsule : l’action vit dans le menu ···', () => {
+    const { container } = render(<CarnetCard {...base()} />);
+    expect(screen.queryByRole('button', { name: 'Enregistrer' })).toBeNull();
+    expect(container.querySelector('.ckp-card-foot [data-icon="bookmark"]')).toBeNull();
   });
 
   it('ne garde ni ··· ni Gérer dans la capsule : le menu vit dans la barre du haut', () => {
@@ -120,7 +124,7 @@ describe('CarnetCard — carte du carnet', () => {
     expect(container.querySelectorAll('.ckp-card > .ckp-tabs')).toHaveLength(0);
     expect(container.querySelectorAll('.ckp-tabs')).toHaveLength(1);
     // Les deux familles de boutons restent distinctes et accessibles.
-    expect(foot?.querySelectorAll('.ckp-actions button[aria-label]')).toHaveLength(3);
+    expect(foot?.querySelectorAll('.ckp-actions button[aria-label]')).toHaveLength(2);
     expect(foot?.querySelectorAll('.ckp-tabs button[role="tab"]')).toHaveLength(2);
   });
 
@@ -146,15 +150,12 @@ describe('CarnetCard — carte du carnet', () => {
 
   it('garde tous les comportements des actions du sélecteur', () => {
     const onOpenLikes = vi.fn();
-    const onSave = vi.fn();
     const onOpenComments = vi.fn();
-    render(<CarnetCard {...base({ onOpenLikes, onSave, onOpenComments })} />);
+    render(<CarnetCard {...base({ onOpenLikes, onOpenComments })} />);
     fireEvent.click(screen.getByRole('button', { name: /^J’aime/ }));
     expect(onOpenLikes).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: /^Commenter/ }));
     expect(onOpenComments).toHaveBeenCalledOnce();
-    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
-    expect(onSave).toHaveBeenCalledOnce();
   });
 
   it('garde la page Parcours à portée de segment (🗺)', () => {
@@ -176,30 +177,19 @@ describe('CarnetCard — carte du carnet', () => {
     expect(text).not.toContain('moments');
   });
 
-  it('affiche le lieu et les dates sur la ligne de lieu', () => {
+  it('affiche une seule ligne de lieu, du texte, sans pastille ni bouton', () => {
     const { container } = render(<CarnetCard {...base()} />);
-    expect(container.querySelector('.ckp-place-pill')?.textContent).toBe(DETAIL.destination);
-    expect(container.querySelector('.ckp-place-date')?.textContent).toBe(DETAIL.dateRange);
-  });
-
-  it('désactive le recentrage sans coordonnée réelle', () => {
-    const onFocusPlace = vi.fn();
-    render(<CarnetCard {...base({ onFocusPlace, detail: detail({ trace: null }) })} />);
-    const chip = screen.getByRole('button', { name: /Recentrer la carte sur/ }) as HTMLButtonElement;
-    expect(chip.disabled).toBe(true);
-    fireEvent.click(chip);
-    expect(onFocusPlace).not.toHaveBeenCalled();
-  });
-
-  it('recentre la carte sur le centre réel de la trace', () => {
-    const onFocusPlace = vi.fn();
-    render(<CarnetCard {...base({ onFocusPlace, detail: detail({ trace: TRACE }) })} />);
-    fireEvent.click(screen.getByRole('button', { name: /Recentrer la carte sur/ }));
-    expect(onFocusPlace).toHaveBeenCalledOnce();
-    const target = onFocusPlace.mock.calls[0][0];
-    expect(target.lat).toBeCloseTo(45.835, 6);
-    expect(target.lng).toBeCloseTo(6.865, 6);
-    expect(target.zoom).toBe(10);
+    const line = container.querySelector('.ckp-place-line');
+    expect(norm(line?.textContent)).toBe(
+      'France / Italie / Suisse · — · 106,4 km · 2 002 m D+ · 26 sept. – 2 oct. 2026',
+    );
+    expect(container.querySelector('.ckp-place-pill')).toBeNull();
+    expect(container.querySelector('.ckp-place-row')).toBeNull();
+    expect(container.querySelector('.ckp-place-date')).toBeNull();
+    /* Du texte seul : aucun bouton, aucune surface cliquable. */
+    expect(line?.tagName).toBe('P');
+    expect(container.querySelectorAll('.ckp-place-line button')).toHaveLength(0);
+    expect(screen.queryByRole('button', { name: /Recentrer/ })).toBeNull();
   });
 
   it('affiche l’auteur puis les likers distincts en pastilles', () => {
@@ -306,12 +296,12 @@ describe('CarnetCard — lentille unique du sélecteur', () => {
     expect(node?.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('pose la lentille sur la vue active : grille 3, carte 4', () => {
+  it('pose la lentille sur la vue active : grille 2, carte 3', () => {
     const posts = render(<CarnetCard {...base({ page: 'posts' })} />);
-    expect(lens(posts.container).i).toBe('3');
+    expect(lens(posts.container).i).toBe('2');
     posts.unmount();
     const parcours = render(<CarnetCard {...base({ page: 'parcours' })} />);
-    expect(lens(parcours.container).i).toBe('4');
+    expect(lens(parcours.container).i).toBe('3');
   });
 
   it('suit la page affichée : J’aime 0, Commentaires 1', () => {
@@ -333,54 +323,88 @@ describe('CarnetCard — lentille unique du sélecteur', () => {
     }
   });
 
-  it('ne pose jamais la lentille sur l’action Enregistrer (segment 2)', () => {
+  it('n’a plus aucune action sans page dans la capsule', () => {
     for (const page of ['posts', 'parcours', 'likes', 'comments'] as const) {
       const view = render(<CarnetCard {...base({ page })} />);
-      expect(lens(view.container).i).not.toBe('2');
-      expect(screen.getByRole('button', { name: 'Enregistrer' }).getAttribute('aria-current')).toBeNull();
+      const labels = [...view.container.querySelectorAll('.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button')]
+        .map((node) => node.getAttribute('aria-label'));
+      expect(labels).toEqual(['J’aime, 22', 'Commenter, 3', 'Posts', 'Parcours']);
       view.unmount();
     }
   });
 
-  it('garde les mêmes cinq segments pour le propriétaire et le visiteur', () => {
+  it('garde les mêmes quatre segments pour le propriétaire et le visiteur', () => {
     for (const isOwner of [false, true]) {
       const view = render(<CarnetCard {...base({ detail: detail({ isOwner }) })} />);
       const labels = [...view.container.querySelectorAll('.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button')]
         .map((node) => node.getAttribute('aria-label'));
-      expect(labels).toEqual(['J’aime, 22', 'Commenter, 3', 'Enregistrer', 'Posts', 'Parcours']);
+      expect(labels).toEqual(['J’aime, 22', 'Commenter, 3', 'Posts', 'Parcours']);
       view.unmount();
     }
   });
 });
 
-describe('CarnetCard — lieu « pays · région · lieu »', () => {
+describe('CarnetCard — ligne de lieu unique', () => {
   const PLACE = { country: 'Islande', region: null, locality: 'Landmannalaugar', lat: null, lng: null };
 
-  it('affiche jusqu’à trois segments réels, sans bouton sans coordonnée', () => {
-    const { container } = render(<CarnetCard {...base({ detail: detail({ place: PLACE }) })} />);
-    const pills = container.querySelectorAll('.ckp-place-pill');
-    expect([...pills].map((pill) => pill.textContent)).toEqual(['Islande', 'Landmannalaugar']);
-    expect((pills[0] as HTMLButtonElement).disabled).toBe(true);
-    expect((pills[1] as HTMLButtonElement).disabled).toBe(true);
-  });
-
-  it('rend chaque segment cliquable dès qu’une coordonnée réelle existe', () => {
-    const onFocusPlace = vi.fn();
-    render(
-      <CarnetCard {...base({ onFocusPlace, detail: detail({ place: PLACE, trace: TRACE }) })} />,
+  it('affiche pays, jours, distance, dénivelé et dates sur une seule ligne', () => {
+    const { container } = render(
+      <CarnetCard
+        {...base({
+          detail: detail({
+            place: PLACE,
+            days: [{ id: 'd1', dayNumber: 1, label: 'JOUR 1', from: null, to: null, note: null, distanceKm: null, elevationM: null, durationText: null, weather: null, overnight: null }],
+          }),
+        })}
+      />,
     );
-    const pills = screen.getAllByRole('button', { name: /Recentrer la carte sur/ });
-    expect(pills).toHaveLength(2);
-    expect(pills.map((pill) => pill.textContent)).toEqual(['Islande', 'Landmannalaugar']);
-    fireEvent.click(pills[1]);
-    expect(onFocusPlace).toHaveBeenCalledOnce();
-    const target = onFocusPlace.mock.calls[0][0];
-    expect(target.lat).toBeCloseTo(45.835, 6);
-    expect(target.zoom).toBe(10);
+    const line = container.querySelector('.ckp-place-line');
+    expect(norm(line?.textContent)).toBe(
+      'Islande · 1 jour · 106,4 km · 2 002 m D+ · 26 sept. – 2 oct. 2026',
+    );
+    /* Le lieu est du texte : plus aucune pastille ni bouton de recentrage. */
+    expect(container.querySelectorAll('.ckp-place-line button')).toHaveLength(0);
   });
 
-  it('retombe sur la destination quand le lieu réel est vide', () => {
+  it('écrit un tiret pour chaque valeur réelle absente', () => {
+    const { container } = render(
+      <CarnetCard
+        {...base({
+          detail: detail({
+            place: { country: 'Islande', region: null, locality: null, lat: null, lng: null },
+            destination: null,
+            dateRange: null,
+            distanceKm: null,
+            elevationM: null,
+            days: [],
+          }),
+        })}
+      />,
+    );
+    expect(norm(container.querySelector('.ckp-place-line')?.textContent)).toBe('Islande · — · — · —');
+  });
+
+  it('retombe sur la destination quand le pays réel est vide', () => {
     const { container } = render(<CarnetCard {...base()} />);
-    expect(container.querySelector('.ckp-place-pill')?.textContent).toBe(DETAIL.destination);
+    expect(norm(container.querySelector('.ckp-place-line')?.textContent).startsWith(DETAIL.destination ?? '')).toBe(true);
+  });
+
+  it('n’affiche aucune ligne quand le carnet n’a réellement rien à dire', () => {
+    const { container } = render(
+      <CarnetCard
+        {...base({
+          detail: detail({
+            place: { country: null, region: null, locality: null, lat: null, lng: null },
+            destination: null,
+            dateRange: null,
+            distanceKm: null,
+            elevationM: null,
+            days: [],
+          }),
+        })}
+      />,
+    );
+    /* Aucune donnée réelle : pas de ligne de tirets décorative. */
+    expect(container.querySelector('.ckp-place-line')).toBeNull();
   });
 });

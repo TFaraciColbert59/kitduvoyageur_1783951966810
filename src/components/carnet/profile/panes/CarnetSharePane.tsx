@@ -20,7 +20,7 @@ export function CarnetSharePane({ url, title, onCopied }: CarnetSharePaneProps) 
   const canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
   return (
-    <div className="ckp-pane">
+    <div className="ckp-pane ckp-pane-share">
       <button
         type="button"
         className="ckp-pill ckp-pill--primary"
@@ -45,7 +45,7 @@ export function CarnetSharePane({ url, title, onCopied }: CarnetSharePaneProps) 
         </button>
       ) : null}
 
-      <div>
+      <div className="ckp-share-list">
         {TARGETS.map((target) => (
           <a
             key={target.id}

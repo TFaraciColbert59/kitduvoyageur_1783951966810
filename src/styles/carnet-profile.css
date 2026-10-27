@@ -245,8 +245,11 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 
 /* --- Médias --------------------------------------------------------------- */
+/* Grille des posts : gabarit mesuré sur /compte (430 × 932) — carte 406 px de
+   large, trois colonnes de 134 px, gouttière 2 px, rayon 2, aucun padding
+   latéral. 3 × 134 + 2 × 2 = 406 : la grille colle exactement à la carte. */
 .ckp-media { position: relative; margin: 0 -12px; }
-.ckp-grid-wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
+.ckp-grid-wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0; }
 .ckp-tile {
   position: relative; aspect-ratio: 1 / 1; width: 100%; padding: 0; border: 0;
   overflow: hidden; background: #dfe8dc; cursor: pointer; border-radius: 2px; display: block;
@@ -333,23 +336,10 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
 }
 
-/* --- Post (drawer) -------------------------------------------------------- */
-.ckp-post-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.ckp-post-author { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.ckp-post-media { display: block; width: 100%; padding: 0; border: 0; border-radius: 16px; overflow: hidden; background: #dfe8dc; cursor: zoom-in; }
-.ckp-post-media img { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; }
-.ckp-post-nav { display: flex; align-items: center; justify-content: center; gap: 12px; color: #56665d; font: 600 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-post-nav button { width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .55); color: #17402c; cursor: pointer; }
-.ckp-post-nav button:disabled { opacity: .4; cursor: default; }
-.ckp-post-caption { margin: 0; font: 400 13px/1.45 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-post-meta { margin: 0; color: #56665d; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-post-actions { display: flex; align-items: center; gap: 14px; }
-.ckp-post-act {
-  display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: none;
-  color: #172b24; cursor: pointer; font: 600 11.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-}
-.ckp-post-act.is-on { color: #e0245e; }
-.ckp-post-comments-title { color: #56665d; font: 600 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: .04em; text-transform: uppercase; }
+/* --- Post du moment -------------------------------------------------------
+   Le post n'est plus peint ici : il reprend la feuille et les classes du post
+   du Compte (`.lkdv-post-*`, `OverlaySheet`, `LensPager`). Aucune règle carnet
+   ne doit redéfinir cette forme. */
 
 /* --- Divers --------------------------------------------------------------- */
 .ckp-empty { display: grid; place-items: center; gap: 6px; padding: 26px 18px; text-align: center; border-radius: 18px; background: rgba(255, 255, 255, .35); color: #56665d; }
@@ -492,40 +482,16 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   --ckp-seg: 41.5px;
   --ckp-seg-gap: 2px;
 }
-.ckp-tile-expand {
-  position: absolute; top: 6px; right: 6px; z-index: 2;
-  width: 24px; height: 24px; display: grid; place-items: center;
-  border-radius: 10px; background: rgba(255, 255, 255, .82); color: #172b24;
-  box-shadow: 0 1px 4px rgba(23, 43, 36, .18);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-}
-.ckp-tile { position: relative; }
 
-/* --- Ligne de lieu : « pays · région · lieu » + dates ---------------------- */
-.ckp-place-row { display: flex; align-items: center; gap: 5px; margin: 0 2px; min-width: 0; }
-.ckp-place-pill {
-  display: inline-flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0;
-  height: 24px; padding: 0 9px; border: 0; border-radius: 999px;
-  background: rgba(255, 255, 255, .46);
-  -webkit-backdrop-filter: blur(8px) saturate(1.6); backdrop-filter: blur(8px) saturate(1.6);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .85), 0 0 0 .5px rgba(23, 43, 36, .09);
-  color: #17402c; cursor: pointer;
-  font: 600 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-  letter-spacing: -.01em;
-  transition: transform .16s cubic-bezier(.22, 1, .36, 1), background .18s ease;
-}
-.ckp-place-pill span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ckp-place-pill svg { flex: none; opacity: .8; }
-.ckp-place-pill:active:not(:disabled) { transform: scale(.96); }
-@media (hover: hover) {
-  .ckp-place-pill:not(:disabled):hover { background: rgba(255, 255, 255, .66); }
-}
-/* Sans coordonnée réelle : le segment reste du texte, sans geste possible. */
-.ckp-place-pill:disabled { cursor: default; color: #56665d; background: rgba(255, 255, 255, .3); }
-.ckp-place-date {
-  flex: none; margin-left: 2px; color: #56665d;
-  font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
-  font-variant-numeric: tabular-nums; white-space: nowrap;
+
+/* --- Ligne de lieu : texte unique, gabarit de la ligne de bio du Compte ----
+   Mesuré sur /compte (.ig-bio-stats) : 500 12px, #3f4f46, letter-spacing
+   -.14px, séparateur « · ». Aucune pastille, aucun fond, aucun bouton. */
+.ckp-place-line {
+  margin: 0 2px; color: #3f4f46;
+  font: 500 12px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.14px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
 /* --- Participants : pastilles auteur du fil Communauté, défilables -------- */
@@ -566,8 +532,11 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 /* --- Carte du monde du Compte (mapzone), en bas de l'écran ----------------- */
 
+/* Carte du monde : la carte d'identité garde ses 541 px, la carte occupe
+   TOUT le reste (comme le 1fr de `.phone` sur /compte) — 430 × 335 à
+   430 × 932, de y 597 à 932. Aucun min-height, aucune marge parasite. */
 .ckp-mapzone {
-  position: relative; flex: 1; min-height: 240px; margin-top: 8px;
+  position: relative; flex: 1 1 auto; min-height: 0; margin-top: 8px;
   border-radius: 24px; overflow: hidden;
   background: rgba(23, 64, 44, .18);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(23, 43, 36, .12);
@@ -590,6 +559,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 /* --- Carte du monde pleine largeur, jusqu'en bas, comme /compte ------------ */
 
 .ckp-screen-body { padding-bottom: 0; }
+/* Bord à bord : la carte sort de la gouttière 12 px de l'écran. */
 .ckp-mapzone {
   margin: 8px -12px 0;
   border-radius: 0;
@@ -787,3 +757,33 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 /* La page affichée allume son bouton : l'encre passe au vert, le disque reste nu. */
 .ckp-card-foot .ckp-action[aria-current='page'] .ckp-action-in { color: #17402c; }
+
+/* --- Post du moment : la feuille du Compte, ancrée sur la carte ------------ */
+/* `OverlaySheet` mesure `#card` : la feuille prend exactement le cadre de la
+   carte d'identité (12/48/406 × 541 à 430 × 932), comme le post du Compte. */
+/* Le compteur de médias du Compte tombe sous l'en-tête (le `×` le recouvre).
+   Ici il compte les moments du carnet : il reste lisible, juste sous la barre. */
+.ckp-post-sheet .lkdv-post-media-count { top: 56px; }
+/* Les flèches de navigation reprennent la pastille du Compte, jamais un glyphe nu. */
+.ckp-post-sheet .lkdv-post-media-nav { line-height: 0; }
+
+/* --- Partage : rangées de la fiche, dans la feuille du Compte -------------- */
+.ckp-share-list { display: flex; flex-direction: column; gap: 6px; }
+.ckp-share-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 44px; padding: 0 12px; border-radius: 14px;
+  background: rgba(255, 255, 255, .5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(23, 43, 36, .08);
+  color: #172b24; text-decoration: none;
+  font: 600 12.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-share-row svg { flex: none; color: #56665d; }
+.ckp-share-row:active { transform: scale(.99); }
+@media (hover: hover) {
+  .ckp-share-row:hover { background: rgba(255, 255, 255, .64); }
+}
+/* Le lien réel du carnet reste lisible, sur deux lignes au plus. */
+.ckp-pane-share .ckp-bio { -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+/* Réserve haute des panneaux du post : le Compte laisse 70 px pour la poignée
+   et le bouton de fermeture ; le contenu du carnet démarre au même endroit. */
+.ckp-post-sheet .lkdv-post-panel-body { padding: 70px 14px 24px; }

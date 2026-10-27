@@ -182,11 +182,11 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     const more = screen.getByRole('button', { name: 'Plus d’options' });
     expect(more.closest('.ckp-topbar')).toBeTruthy();
     expect(more.closest('.ckp-more-anchor')).toBeTruthy();
-    /* Le sélecteur du bas perd le segment `···` : cinq segments restants. */
+    /* Le sélecteur du bas a quatre segments : ♥, 💬, ▦, 🗺. */
     const segments = document.querySelectorAll(
       '.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button',
     );
-    expect(segments).toHaveLength(5);
+    expect(segments).toHaveLength(4);
     expect(document.querySelector('.ckp-card-foot .ckp-more-anchor')).toBeNull();
     /* La loupe a disparu de la barre : le `···` prend sa place. */
     expect(screen.queryByRole('button', { name: /Rechercher/ })).toBeNull();
@@ -207,12 +207,30 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     expect(document.getElementById('carnet-page-manage')).toBeTruthy();
   });
 
-  it('🔖 Enregistrer reste une action, sans page ni drawer', () => {
+  it('🔖 Enregistrer quitte la capsule et reste dans le menu ···', () => {
     render(<CarnetScreen detail={OWNER} />);
+    /* Plus aucun segment Enregistrer dans la capsule. */
+    expect(
+      document.querySelector('.ckp-card-foot [data-icon="bookmark"]'),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Plus d’options' }));
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
     expect(SPIES.toggleFavorite).toHaveBeenCalledOnce();
     expect(drawerOpen()).toBe(false);
     expect(document.querySelector('.ckp-pages')?.getAttribute('id')).toBe('carnet-page-posts');
+  });
+
+  it('chaque segment ouvre sa page : ♥, 💬, ▦, 🗺', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    const header = () => document.querySelector('.ckp-pages')?.getAttribute('id');
+    fireEvent.click(screen.getByRole('button', { name: /^J’aime/ }));
+    expect(header()).toBe('carnet-page-likes');
+    fireEvent.click(screen.getByRole('button', { name: /^Commenter/ }));
+    expect(header()).toBe('carnet-page-comments');
+    fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
+    expect(header()).toBe('carnet-page-posts');
+    fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
+    expect(header()).toBe('carnet-page-parcours');
   });
 
   it('garde la page active et ses voisines swipables', () => {

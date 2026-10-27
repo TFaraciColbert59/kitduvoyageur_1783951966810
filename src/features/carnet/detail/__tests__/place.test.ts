@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCarnetPlace, countryNameFromIso, placeSegments } from '../place';
+import { buildCarnetPlace, countryNameFromIso, placeLineParts, placeLineText, placeSegments } from '../place';
 import type { CarnetRow } from '../types';
 
 function carnet(overrides: Partial<CarnetRow> = {}): CarnetRow {
@@ -120,5 +120,63 @@ describe('placeSegments — pays · région · lieu', () => {
     expect(segments).toEqual([{ key: 'locality', label: 'Tour du Mont-Blanc' }]);
     expect(placeSegments(null, null)).toEqual([]);
     expect(placeSegments(null, '   ')).toEqual([]);
+  });
+});
+
+/** `Intl` groupe les milliers avec une espace fine insécable. */
+const norm = (value: string) => value.replace(/[\u00a0\u202f]/g, ' ');
+
+describe('placeLineParts — la ligne unique de la fiche', () => {
+  const BASE = {
+    place: { country: 'Islande', region: null, locality: 'Landmannalaugar', lat: null, lng: null },
+    fallback: 'Islande',
+    daysCount: 12,
+    distanceKm: 180,
+    elevationM: 1800,
+    dateRange: '25 avr. – 6 mai 2026',
+  };
+
+  it('aligne lieu, jours, distance, dénivelé puis les dates', () => {
+    expect(placeLineParts(BASE).map(norm)).toEqual([
+      'Islande',
+      '12 jours',
+      '180 km',
+      '1 800 m D+',
+      '25 avr. – 6 mai 2026',
+    ]);
+    expect(norm(placeLineText(BASE))).toBe(
+      'Islande · 12 jours · 180 km · 1 800 m D+ · 25 avr. – 6 mai 2026',
+    );
+  });
+
+  it('écrit un tiret pour chaque valeur absente, jamais un zéro', () => {
+    expect(
+      placeLineParts({
+        place: { country: null, region: null, locality: null, lat: null, lng: null },
+        fallback: null,
+        daysCount: 0,
+        distanceKm: null,
+        elevationM: null,
+        dateRange: null,
+      }),
+    ).toEqual(['—', '—', '—', '—']);
+  });
+
+  it('retombe sur la destination puis sur la localité réelle', () => {
+    expect(
+      placeLineParts({ ...BASE, place: { country: null, region: null, locality: null, lat: null, lng: null } })[0],
+    ).toBe('Islande');
+    expect(
+      placeLineParts({
+        ...BASE,
+        fallback: null,
+        place: { country: null, region: null, locality: 'Landmannalaugar', lat: null, lng: null },
+      })[0],
+    ).toBe('Landmannalaugar');
+  });
+
+  it('accorde le jour au singulier et garde une décimale au maximum', () => {
+    expect(placeLineParts({ ...BASE, daysCount: 1, distanceKm: 12.44 })[1]).toBe('1 jour');
+    expect(placeLineParts({ ...BASE, daysCount: 1, distanceKm: 12.44 })[2]).toBe('12,4 km');
   });
 });
