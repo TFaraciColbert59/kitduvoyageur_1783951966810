@@ -57,6 +57,14 @@ Rapport complet : `docs/security/AUDIT-SECURITE-2026-10-26.md`.
 
 ---
 
+## 4 bis. Tentatives de ce lot (traçabilité)
+
+| Essai | Résultat | Décision |
+|---|---|---|
+| `preconnect` Supabase + Storage dans `<head>` | posé (liens vérifiés sur Vercel) | **gardé** |
+| `Cache-Control: private, no-cache` sur `/messagerie` (bfcache) | écrasé par le framework (`no-store` réapparaît) ; retour arrière restauré mais hydratation complète | **gardé sans effet mesurable**, à traiter côté serveur |
+| Découpage i18n : FR statique, EN/ES/DE/IT en chunks à la demande (−556 Ko) | **107 tests échouent** : `translations[locale]` est utilisé de façon synchrone par le moteur Compas (textes serveur, écrans) ; les dictionnaires non-FR ne sont plus disponibles immédiatement | **annulé**, refonte nécessaire : passer le dictionnaire explicitement aux fonctions Compas (paramètre `dict`) puis rendre le provider asynchrone |
+
 ## 5. Plan priorisé (proposé)
 
 1. **i18n paresseux** — 556 Ko → ~110 Ko (gain ~450 Ko sur chaque page).
