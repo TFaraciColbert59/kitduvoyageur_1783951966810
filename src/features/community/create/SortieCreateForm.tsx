@@ -21,7 +21,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { ActivityCards, DifficultyLadder, CapacityGauge } from './shared/InfoCards';
+import { ActivityCards, DifficultyLadder, CapacityGauge, SafetyManifest } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -490,6 +490,12 @@ export function SortieCreateForm({
               </div>
 
               <div>
+                <SafetyManifest
+                  notes={form.watch('safetyNotes')}
+                  level={LEVEL_LABELS[level]}
+                  places={maxParticipants}
+                  waitlist={Boolean(form.watch('waitlist'))}
+                />
                 <Field label="Description" htmlFor="sortie-description">
                   <TextArea
                     id="sortie-description"

@@ -61,3 +61,32 @@
 .lkdv-caption-ruler { display: flex; align-items: center; gap: 7px; margin: -2px 0 7px; color: var(--feed-muted); font: 600 8.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .lkdv-caption-ruler i { flex: 1; height: 3px; border-radius: 999px; background: rgba(23,64,44,.1); overflow: hidden; }
 .lkdv-caption-ruler em { display: block; height: 100%; border-radius: inherit; background: #2E7D5B; }
+.lkdv-story-specimen { display: flex; flex-direction: column; gap: 4px; margin: 0 0 8px; }
+.lkdv-story-specimen span { display: flex; align-items: baseline; gap: 7px; padding: 5px 8px; border-radius: 10px; background: rgba(255,255,255,.34); }
+.lkdv-story-specimen small { width: 48px; flex: none; color: var(--feed-muted); font: 600 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif); text-transform: uppercase; }
+.lkdv-story-specimen b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #17402C; font: 600 10px/1.1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-carnet-spine { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; padding: 8px 9px; border-radius: 12px; background: rgba(255,255,255,.36); box-shadow: inset 0 0 0 .5px rgba(23,43,36,.08); }
+.lkdv-carnet-stage { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.lkdv-carnet-stage i { width: 7px; height: 7px; border-radius: 999px; background: #17402C; }
+.lkdv-carnet-stage small { color: var(--feed-muted); font: 600 7.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); text-transform: uppercase; }
+.lkdv-carnet-stage b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #17402C; font: 700 10px/1.1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-carnet-stage-line { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; border-top: 1px dashed rgba(23,64,44,.35); padding-top: 2px; }
+.lkdv-carnet-stage-line em, .lkdv-carnet-stage-line i { color: var(--feed-muted); font: 600 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-style: normal; }
+.lkdv-logistics, .lkdv-safety { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; margin: 0 0 8px; }
+.lkdv-logistics span, .lkdv-safety span { display: flex; flex-direction: column; gap: 1px; padding: 6px; border-radius: 10px; background: rgba(255,255,255,.36); box-shadow: inset 0 0 0 .5px rgba(23,43,36,.08); }
+.lkdv-logistics b, .lkdv-safety b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #17402C; font: 700 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-logistics small, .lkdv-safety small { color: var(--feed-muted); font: 500 7.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-safety span[data-on="true"] { background: rgba(46,125,91,.12); }
+.lkdv-kit-ring { display: flex; align-items: center; gap: 9px; margin: 0 0 8px; padding: 8px 10px; border-radius: 12px; background: rgba(255,255,255,.36); }
+.lkdv-kit-ring > span { position: relative; width: 38px; height: 38px; flex: none; border-radius: 999px; }
+.lkdv-kit-ring > span i { position: absolute; inset: 4px; border-radius: inherit; background: rgba(255,255,255,.9); }
+.lkdv-kit-ring div { display: flex; flex-direction: column; gap: 1px; }
+.lkdv-kit-ring b { color: #17402C; font: 700 14px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-kit-ring small { color: var(--feed-muted); font: 500 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-join-stepper { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 7px 9px; border-radius: 11px; background: rgba(255,255,255,.36); }
+.lkdv-join-dots { display: flex; gap: 3px; }
+.lkdv-join-dots i { width: 6px; height: 6px; border-radius: 999px; background: rgba(23,64,44,.16); }
+.lkdv-join-dots i[data-active="true"] { background: #17402C; }
+.lkdv-join-stepper span { display: flex; flex-direction: column; gap: 1px; }
+.lkdv-join-stepper b { color: #17402C; font: 700 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-join-stepper small { color: var(--feed-muted); font: 500 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }

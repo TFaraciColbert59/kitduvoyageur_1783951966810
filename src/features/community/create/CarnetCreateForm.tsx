@@ -17,7 +17,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { RouteMetrics } from './shared/InfoCards';
+import { RouteMetrics, CarnetStageSpine, CarnetLogistics } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -291,6 +291,12 @@ export function CarnetCreateForm({
               </div>
 
               <div>
+                <CarnetStageSpine
+                  from={form.watch('lieuDepart')}
+                  to={form.watch('lieuArrivee')}
+                  km={form.watch('distanceKm')}
+                  dplus={form.watch('deniveleM')}
+                />
                 <RouteMetrics values={previewValues} />
                 <div className="lkdv-form-row">
                   <Field label="Départ" htmlFor="carnet-from">
@@ -369,6 +375,12 @@ export function CarnetCreateForm({
               </div>
 
               <div>
+                <CarnetLogistics
+                  nights={form.watch('nbNuits')}
+                  travelers={form.watch('nbVoyageurs')}
+                  weather={form.watch('weather')}
+                  rating={routeRating}
+                />
                 <DateRangeField
                   label="Dates du voyage"
                   start={startDate}

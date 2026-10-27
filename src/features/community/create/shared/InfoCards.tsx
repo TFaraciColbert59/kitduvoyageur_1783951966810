@@ -171,3 +171,71 @@ export function CaptionRuler({ value, max }: { value: string; max: number }) {
     </div>
   );
 }
+
+export function StorySpecimen({ caption, overlay }: { caption: string; overlay: string }) {
+  const items = [
+    { label: 'Légende', value: caption || 'Aucune légende' },
+    { label: 'Titre', value: overlay || 'Aucun texte' },
+    { label: 'Citation', value: overlay ? `« ${overlay} »` : 'Aucune citation' },
+  ];
+  return (
+    <div className="lkdv-story-specimen" aria-label="Styles de texte Story">
+      {items.map((item) => (
+        <span key={item.label}><small>{item.label}</small><b>{item.value}</b></span>
+      ))}
+    </div>
+  );
+}
+
+export function CarnetStageSpine({ from, to, km, dplus }: { from: string; to: string; km: number; dplus: number }) {
+  return (
+    <div className="lkdv-carnet-spine" aria-label="Étapes du carnet">
+      <span className="lkdv-carnet-stage"><i aria-hidden="true" /><small>Départ</small><b>{from || 'À définir'}</b></span>
+      <span className="lkdv-carnet-stage-line" aria-hidden="true"><em>{km > 0 ? `${km} km` : '—'}</em><i>{dplus > 0 ? `${dplus} m D+` : ''}</i></span>
+      <span className="lkdv-carnet-stage"><i aria-hidden="true" /><small>Arrivée</small><b>{to || 'À définir'}</b></span>
+    </div>
+  );
+}
+
+export function CarnetLogistics({ nights, travelers, weather, rating }: { nights: number; travelers: number; weather: string; rating: number }) {
+  return (
+    <div className="lkdv-logistics" aria-label="Logistique du carnet">
+      <span><b>{nights || '—'}</b><small>Nuits</small></span>
+      <span><b>{travelers || '—'}</b><small>Voyageurs</small></span>
+      <span><b>{weather || '—'}</b><small>Météo</small></span>
+      <span><b>{rating ? `${rating}/5` : '—'}</b><small>Note</small></span>
+    </div>
+  );
+}
+
+export function SafetyManifest({ notes, level, places, waitlist }: { notes: string; level: string; places: number; waitlist: boolean }) {
+  return (
+    <div className="lkdv-safety" aria-label="Manifeste de sécurité">
+      <span data-on={Boolean(notes)}><b>{notes ? 'Renseignées' : 'À compléter'}</b><small>Consignes</small></span>
+      <span><b>{level}</b><small>Niveau</small></span>
+      <span><b>{places}</b><small>Places</small></span>
+      <span data-on={waitlist}><b>{waitlist ? 'Oui' : 'Non'}</b><small>Attente</small></span>
+    </div>
+  );
+}
+
+export function KitRing({ score }: { score: number }) {
+  return (
+    <div className="lkdv-kit-ring" aria-label={`Complétude ${score} %`}>
+      <span style={{ background: `conic-gradient(#17402C ${score}%, rgba(23,64,44,.12) 0)` }}><i /></span>
+      <div><b>{score}%</b><small>Complétude du kit</small></div>
+    </div>
+  );
+}
+
+export function JoinStepper({ questions, privacy }: { questions: number; privacy: string }) {
+  const total = Math.max(1, Math.min(3, questions || 1));
+  return (
+    <div className="lkdv-join-stepper" aria-label="Étapes d’adhésion">
+      <div className="lkdv-join-dots" aria-hidden="true">
+        {Array.from({ length: total }).map((_, index) => <i key={index} data-active={index === 0} />)}
+      </div>
+      <span><b>{questions || 'Aucune'}</b><small>question{questions > 1 ? 's' : ''} · {privacy === 'closed' ? 'validation' : 'ouvert'}</small></span>
+    </div>
+  );
+}
