@@ -30,13 +30,10 @@ export interface ClubCreateFormProps {
 }
 
 const DEFAULTS = createDefaults('club');
-const STEPS = CREATE_STEPS.club;
+const STEPS = [CREATE_STEPS.club[0]];
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['name', 'category', 'location'],
-  ['description', 'cover'],
-  ['privacy', 'membershipRules', 'joinQuestions'],
-  ['welcomePost'],
+  ['name', 'category', 'location', 'description', 'cover', 'privacy', 'membershipRules', 'joinQuestions', 'welcomePost'],
 ] as const;
 
 export function slugify(value: string): string {

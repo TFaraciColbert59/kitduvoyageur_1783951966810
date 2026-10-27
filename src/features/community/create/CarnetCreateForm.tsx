@@ -35,22 +35,10 @@ export interface CarnetCreateFormProps {
 }
 
 const DEFAULTS = createDefaults('carnet');
-const STEPS = CREATE_STEPS.carnet;
+const STEPS = [CREATE_STEPS.carnet[0]];
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['title', 'destination', 'cover'],
-  ['lieuDepart', 'lieuArrivee', 'distanceKm', 'deniveleM', 'routeRating'],
-  [
-    'startDate',
-    'endDate',
-    'nbNuits',
-    'nbVoyageurs',
-    'weather',
-    'tags',
-    'isCollaborative',
-  ],
-  ['description'],
-  ['visibility'],
+  ['title', 'destination', 'cover', 'lieuDepart', 'lieuArrivee', 'distanceKm', 'deniveleM', 'routeRating', 'startDate', 'endDate', 'nbNuits', 'nbVoyageurs', 'weather', 'tags', 'isCollaborative', 'description', 'visibility'],
 ] as const;
 
 const VISIBILITY_LABELS: Record<CarnetFormValues['visibility'], string> = {

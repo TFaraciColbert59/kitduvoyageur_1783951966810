@@ -99,6 +99,18 @@ export function StepPager({
   };
   const tabs = steps.map((step) => ({ id: step.id, label: step.label }));
 
+  if (count === 1) {
+    return (
+      <div ref={rootRef} className={`lkdv-create-step-pager lkdv-create-step-single ${className}`.trim()}>
+        {panes.map((pane, paneIndex) => (
+          <section key={steps[paneIndex]?.id ?? paneIndex} className="lkdv-create-step-pane" data-step-id={steps[paneIndex]?.id}>
+            {pane}
+          </section>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div
       ref={rootRef}

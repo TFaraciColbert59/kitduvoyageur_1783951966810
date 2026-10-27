@@ -2217,3 +2217,5 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 .lkdv-weather-tags { align-items: flex-start !important; gap: 8px !important; }
 .lkdv-weather-tags > * { flex: 1 1 0; min-width: 0; }
 .lkdv-weather-tags .lkdv-tag-chips { flex: .9 1 0; }
+.lkdv-create-step-single { display: flex !important; flex-direction: column !important; gap: 8px; }
+.lkdv-create-step-single .lkdv-create-step-pane { position: relative !important; inset: auto !important; opacity: 1 !important; visibility: visible !important; }

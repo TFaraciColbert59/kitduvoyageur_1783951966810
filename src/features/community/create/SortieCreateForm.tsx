@@ -37,13 +37,10 @@ export interface SortieCreateFormProps {
 }
 
 const DEFAULTS = createDefaults('sortie');
-const STEPS = CREATE_STEPS.sortie;
+const STEPS = [CREATE_STEPS.sortie[0]];
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['title', 'eventType', 'location', 'meetingPoint', 'cover'],
-  ['startDate', 'endDate', 'duration', 'level', 'distanceKm', 'deniveleM'],
-  ['maxParticipants', 'waitlist'],
-  ['description', 'safetyNotes'],
+  ['title', 'eventType', 'location', 'meetingPoint', 'cover', 'startDate', 'endDate', 'duration', 'level', 'distanceKm', 'deniveleM', 'maxParticipants', 'waitlist', 'description', 'safetyNotes'],
 ] as const;
 
 const LEVEL_LABELS: Record<SortieFormValues['level'], string> = {

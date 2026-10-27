@@ -33,12 +33,10 @@ export interface StoryCreateFormProps {
 }
 
 const DEFAULTS = createDefaults('story');
-const STEPS = CREATE_STEPS.story;
+const STEPS = [CREATE_STEPS.story[0]];
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['media'],
-  ['caption', 'overlayText', 'overlayLink'],
-  ['audience', 'replyPolicy', 'allowReshare'],
+  ['media', 'caption', 'overlayText', 'overlayLink', 'audience', 'replyPolicy', 'allowReshare'],
 ] as const;
 
 /**
@@ -211,7 +209,7 @@ export function StoryCreateForm({
               onFocusField={api.focusField}
             />
             <FormPreview kind="story" values={previewValues} />
-            <CreationInfoRail kind="story" step={activeStep} steps={CREATE_STEPS.story} values={previewValues} />
+            <CreationInfoRail kind="story" step={activeStep} steps={STEPS} values={previewValues} />
             <CreationSignature kind="story" values={previewValues} />
 
             <StepPager

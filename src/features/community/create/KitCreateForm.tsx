@@ -38,12 +38,10 @@ export interface KitCreateFormProps {
 }
 
 const DEFAULTS = createDefaults('kit');
-const STEPS = CREATE_STEPS.kit;
+const STEPS = [CREATE_STEPS.kit[0]];
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['inventoryIds'],
-  ['customItems', 'template'],
-  ['name', 'season', 'weightG', 'description', 'isPublic', 'cover'],
+  ['inventoryIds', 'customItems', 'template', 'name', 'season', 'weightG', 'description', 'isPublic', 'cover'],
 ] as const;
 
 function totalWeight(selected: InventoryItem[], custom: CustomKitItem[]) {
@@ -232,7 +230,7 @@ export function KitCreateForm({
           >
             <FormErrorSummary errors={errors} labels={CREATE_FIELD_LABELS} onFocusField={api.focusField} />
 
-            <CreationInfoRail kind="kit" step={activeStep} steps={CREATE_STEPS.kit} values={previewValues} />
+            <CreationInfoRail kind="kit" step={activeStep} steps={STEPS} values={previewValues} />
             <CreationSignature kind="kit" values={previewValues} />
 
             <StepPager

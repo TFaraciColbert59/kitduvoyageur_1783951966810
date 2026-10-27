@@ -33,21 +33,10 @@ export interface PostCreateFormProps {
 }
 
 const POST_DEFAULTS = createDefaults('post');
-const LAST_STEP = CREATE_STEPS.post.length - 1;
+const STEPS = [CREATE_STEPS.post[0]];
+const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['kind'],
-  ['media'],
-  [
-    'title',
-    'content',
-    'eventDate',
-    'eventDuration',
-    'eventMax',
-    'location',
-    'tags',
-    'pollOptions',
-  ],
-  ['audience', 'clubId', 'allowComments', 'allowLikes', 'scheduledAt'],
+  ['kind', 'media', 'title', 'content', 'eventDate', 'eventDuration', 'eventMax', 'location', 'tags', 'pollOptions', 'audience', 'clubId', 'allowComments', 'allowLikes', 'scheduledAt'],
 ] as const;
 
 const TYPES: Array<{ id: PostKind; label: string; hint: string; icon: React.ReactNode }> = [
@@ -293,11 +282,11 @@ export function PostCreateForm({
               onFocusField={api.focusField}
             />
             <FormPreview kind="post" values={previewValues} />
-            <CreationInfoRail kind="post" step={activeStep} steps={CREATE_STEPS.post} values={previewValues} />
+            <CreationInfoRail kind="post" step={activeStep} steps={STEPS} values={previewValues} />
             <CreationSignature kind="post" values={previewValues} />
 
             <StepPager
-              steps={CREATE_STEPS.post}
+              steps={STEPS}
               index={activeStep}
               onIndexChange={setStep}
               actions={
