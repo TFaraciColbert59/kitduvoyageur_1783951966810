@@ -2176,3 +2176,11 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   content: ''; position: absolute; left: 3px; top: 9px; bottom: 9px; width: 3px;
   border-radius: 999px; background: rgba(23,64,44,.22);
 }
+
+/* Drawer Création : 80 % de l'écran, bord bas conservé. */
+.lkdv-half-drawer:has(.lkdv-create-selector) {
+  height: 80dvh !important;
+  max-height: 80dvh !important;
+  min-height: 80dvh !important;
+  bottom: 0 !important;
+}
