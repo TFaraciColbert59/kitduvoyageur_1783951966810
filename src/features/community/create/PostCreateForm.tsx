@@ -22,7 +22,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { AudienceLens } from './shared/InfoCards';
+import { AudienceLens, CaptionRuler } from './shared/InfoCards';
 
 export interface PostCreateFormProps {
   open: boolean;
@@ -393,6 +393,7 @@ export function PostCreateForm({
                     maxLength={4000}
                   />
                   <InlineError message={errors.content?.message} />
+                  <CaptionRuler value={form.watch('content')} max={4000} />
                 </Field>
 
                 <div className="lkdv-form-row">

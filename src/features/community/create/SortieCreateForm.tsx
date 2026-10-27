@@ -21,7 +21,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { ActivityCards } from './shared/InfoCards';
+import { ActivityCards, DifficultyLadder, CapacityGauge } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -369,6 +369,7 @@ export function SortieCreateForm({
               </div>
 
               <div>
+                <DifficultyLadder value={level} />
                 <DateRangeField
                   label="Dates de la sortie"
                   start={startDate}
@@ -449,6 +450,7 @@ export function SortieCreateForm({
               </div>
 
               <div>
+                <CapacityGauge max={maxParticipants} waitlist={Boolean(form.watch('waitlist'))} />
                 <Controller
                   control={form.control}
                   name="maxParticipants"

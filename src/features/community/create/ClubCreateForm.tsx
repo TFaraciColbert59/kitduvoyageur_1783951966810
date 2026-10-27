@@ -14,7 +14,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { ClubRulesLedger } from './shared/InfoCards';
+import { ClubRulesLedger, ClubModeCards } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -302,6 +302,7 @@ export function ClubCreateForm({
 
               <div>
                 <ClubRulesLedger values={previewValues} />
+                <ClubModeCards value={privacy} />
                 <Field
                   label="Adhésion"
                   hint={

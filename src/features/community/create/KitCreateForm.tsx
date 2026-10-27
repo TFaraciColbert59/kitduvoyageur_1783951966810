@@ -14,6 +14,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
+import { KitPackingMatrix } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost, createPostMediaUploader } from './upload';
@@ -264,6 +265,7 @@ export function KitCreateForm({
               </div>
 
               <div>
+                <KitPackingMatrix selected={selectedIds.length} custom={customItems.length} score={score} />
                 <div className="lkdv-kit-completion">
                   <div className="lkdv-kit-score" aria-label={`Complétude ${score} %`}><b>{score}%</b><span aria-hidden="true"><i style={{ width: `${score}%` }} /></span></div>
                   <Select

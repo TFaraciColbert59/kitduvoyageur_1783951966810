@@ -19,7 +19,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationInfoRail } from './shared/CreationInfoRail';
 import { CreationSignature } from './shared/CreationSignature';
-import { StoryLayerStack } from './shared/InfoCards';
+import { StoryLayerStack, CaptionRuler } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { createStoryMediaUploader } from './upload';
 
@@ -279,6 +279,7 @@ export function StoryCreateForm({
                     placeholder="Un mot sur ce moment…"
                   />
                   <InlineError message={errors.caption?.message} />
+                  <CaptionRuler value={caption} max={280} />
                 </Field>
 
                 <Field label="Texte de la story" hint="120 caractères max." htmlFor="story-overlay">

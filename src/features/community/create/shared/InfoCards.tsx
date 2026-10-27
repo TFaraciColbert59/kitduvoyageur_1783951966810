@@ -108,3 +108,66 @@ export function ClubRulesLedger({ values }: { values: unknown }) {
     </div>
   );
 }
+
+const LEVELS = [
+  { id: 'facile', label: 'Facile', hint: 'Accessible' },
+  { id: 'moyen', label: 'Moyen', hint: 'Soutenu' },
+  { id: 'difficile', label: 'Difficile', hint: 'Engagé' },
+];
+
+export function DifficultyLadder({ value }: { value: string }) {
+  return (
+    <div className="lkdv-difficulty" role="img" aria-label={`Niveau ${value}`}>
+      {LEVELS.map((item, index) => (
+        <span key={item.id} data-active={item.id === value} data-level={index}>
+          <i aria-hidden="true" />
+          <b>{item.label}</b>
+          <small>{item.hint}</small>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function CapacityGauge({ max, waitlist }: { max: number; waitlist: boolean }) {
+  return (
+    <div className="lkdv-capacity" aria-label="Capacité de la sortie">
+      <div className="lkdv-capacity-head"><b>0 / {max}</b><span>places</span></div>
+      <div className="lkdv-capacity-track" aria-hidden="true"><i style={{ width: '4%' }} /></div>
+      <div className="lkdv-capacity-foot">
+        <span>{max} places ouvertes</span>
+        <span data-on={waitlist}>{waitlist ? 'Liste d’attente activée' : 'Sans liste d’attente'}</span>
+      </div>
+    </div>
+  );
+}
+
+export function KitPackingMatrix({ selected, custom, score }: { selected: number; custom: number; score: number }) {
+  return (
+    <div className="lkdv-packing" aria-label="Matrice de portage">
+      <span><b>{selected}</b><small>Inventaire</small></span>
+      <span><b>{custom}</b><small>Objets custom</small></span>
+      <span><b>{score}%</b><small>Complétude</small></span>
+    </div>
+  );
+}
+
+export function ClubModeCards({ value }: { value: string }) {
+  return (
+    <div className="lkdv-club-modes" aria-label="Mode d’adhésion">
+      <span data-active={value !== 'closed'}><b>Ouvert</b><small>On rejoint en un geste</small></span>
+      <span data-active={value === 'closed'}><b>Sur validation</b><small>Chaque demande est validée</small></span>
+    </div>
+  );
+}
+
+export function CaptionRuler({ value, max }: { value: string; max: number }) {
+  const used = Math.min(max, value.length);
+  const percent = Math.round((used / max) * 100);
+  return (
+    <div className="lkdv-caption-ruler" aria-label={`${used} caractères sur ${max}`}>
+      <span>{used}/{max}</span>
+      <i aria-hidden="true"><em style={{ width: `${percent}%` }} /></i>
+    </div>
+  );
+}
