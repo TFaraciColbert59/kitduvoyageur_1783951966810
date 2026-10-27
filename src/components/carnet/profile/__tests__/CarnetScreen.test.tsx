@@ -134,8 +134,8 @@ describe('CarnetScreen — drawer réduit à ce qui n’est pas dans le sélecte
     fireEvent.click(screen.getByRole('button', { name: 'DISTANCE 106,4 km' }));
     expect(screen.getByRole('button', { name: 'Distance' }).getAttribute('aria-pressed')).toBe('true');
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
-    expect(panel.querySelector('.ckp-stat-hero b')?.textContent).toBe('106,4');
-    expect(panel.querySelector('.ckp-stat-hero .ckp-stat-unit')?.textContent).toBe('km');
+    expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('106,4');
+    expect(panel.querySelector('.ckp-hero-unit')?.textContent).toBe('km');
   });
 
   it('ouvre le sous-onglet Dénivelé depuis la statistique DÉNIVELÉ', () => {
@@ -155,7 +155,7 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     expect(screen.getByRole('tabpanel', { name: 'J’aime' })).toBeTruthy();
     /* Le contenu réel du volet : la bascule du carnet et l’état vide honnête. */
     expect(screen.getByRole('button', { name: 'J’aime ce carnet' })).toBeTruthy();
-    expect(screen.getByText('Aucun j’aime pour l’instant.')).toBeTruthy();
+    expect(document.querySelector('.ckp-empty-state .ckp-empty-dash')?.textContent).toBe('—');
     expect(screen.getByRole('button', { name: 'J’aime, 22' }).getAttribute('aria-current')).toBe('page');
   });
 
@@ -173,9 +173,8 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     expect(drawerOpen()).toBe(false);
     expect(document.getElementById('carnet-page-comments')).toBeTruthy();
     expect(screen.getByText('Bivouac validé, merci pour l’itinéraire.')).toBeTruthy();
-    /* Visiteur : le panneau du Compte affiche l'invitation, pas un champ mort. */
-    expect(screen.getByText('Connectez-vous pour commenter.')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Se connecter' }).length).toBeGreaterThan(0);
+    /* Visiteur : la porte reste un geste, jamais une phrase. */
+    expect(screen.getByRole('button', { name: 'Se connecter pour commenter' })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Commenter/ }).getAttribute('aria-current')).toBe('page');
   });
 

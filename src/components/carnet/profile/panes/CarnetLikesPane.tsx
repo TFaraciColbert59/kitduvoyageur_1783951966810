@@ -3,6 +3,9 @@
 import React, { useMemo, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { CarnetField } from '../CarnetField';
+import { CarnetEmpty } from '../CarnetStates';
+import { CarnetSubCapsule } from '../CarnetSubCapsule';
 
 export interface CarnetLikesPaneProps {
   detail: CarnetDetail;
@@ -19,17 +22,16 @@ export interface CarnetLikesPaneProps {
 }
 
 const REACTION_LABEL: Record<string, string> = {
-  like: 'J’aime',
-  bravo: 'Bravo',
-  useful: 'Utile',
+  like: 'j’aime',
+  bravo: 'bravo',
+  useful: 'utile',
 };
 
 const REACTION_ORDER = ['like', 'bravo', 'useful'];
 
 /**
- * Trois pastilles de tri par réaction, contour 1 px, 28 px de haut.
- * Aucune n'est active par défaut : la liste montre alors toutes les réactions
- * réelles. Un second appui sur la pastille active la relâche.
+ * Filtres de réaction : mêmes 30 px que le sous-sélecteur des statistiques,
+ * mêmes cellules, même lentille ; un second appui relâche le filtre (`''`).
  */
 function reactionFilters(detail: CarnetDetail) {
   const present = new Set(detail.likers.map((liker) => liker.reaction));
@@ -41,55 +43,45 @@ function reactionFilters(detail: CarnetDetail) {
 
 /** Réactions réelles du carnet, profils joints (plafond 50). */
 export function CarnetLikesPane({ detail, currentUserId: _currentUserId, like }: CarnetLikesPaneProps) {
-  const [filter, setFilter] = useState<string | null>(null);
+  const [filter, setFilter] = useState('');
   const filters = useMemo(() => reactionFilters(detail), [detail]);
   const likers = filter ? detail.likers.filter((liker) => liker.reaction === filter) : detail.likers;
 
   return (
     <div className="ckp-pane ckp-likes">
-      <p className="ckp-likes-count">
-        {detail.likers.length.toLocaleString('fr-FR')}{' '}
-        {detail.likers.length > 1 ? 'réactions' : 'réaction'}
-      </p>
+      <div className="ckp-group">
+        <CarnetField
+          icon={<Icon name="heart" size={16} aria-hidden="true" />}
+          label="réactions"
+          value={detail.likers.length.toLocaleString('fr-FR')}
+          ariaLabel={`${detail.likers.length} réactions`}
+        />
+        {like ? (
+          <CarnetField
+            label="mon j’aime"
+            value={like.count.toLocaleString('fr-FR')}
+            pressed={like.liked}
+            onClick={like.onToggle}
+            ariaLabel={like.liked ? 'Retirer mon j’aime' : 'J’aime ce carnet'}
+          />
+        ) : null}
+      </div>
 
-      {filters.length > 0 ? (
-        <div className="ckp-like-filters" role="group" aria-label="Filtre des j’aime">
-          {filters.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="ckp-like-filter"
-              aria-pressed={filter === item.id}
-              onClick={() => setFilter((current) => (current === item.id ? null : item.id))}
-            >
-              {item.label}
-            </button>
-          ))}
+      {filters.length > 1 ? (
+        <div className="ckp-likes-filters">
+          <CarnetSubCapsule
+            items={filters}
+            active={filter}
+            onChange={(id) => setFilter((current) => (current === id ? '' : id))}
+            ariaLabel="Filtre des réactions"
+          />
         </div>
       ) : null}
 
-      {like ? (
-        <button
-          type="button"
-          className="ckp-row ckp-row--like"
-          onClick={like.onToggle}
-          aria-pressed={like.liked}
-          aria-label={like.liked ? 'Retirer mon j’aime' : 'J’aime ce carnet'}
-        >
-          <span>
-            <b>{like.liked ? 'Vous aimez ce carnet' : 'J’aime ce carnet'}</b>
-            <small>{like.count} j’aime</small>
-          </span>
-          <Icon name="heart" size={17} aria-hidden="true" />
-        </button>
-      ) : null}
-
       {likers.length === 0 ? (
-        <p className="ckp-pane-empty">
-          {detail.likers.length === 0 ? 'Aucun j’aime pour l’instant.' : 'Aucune réaction de ce type.'}
-        </p>
+        <CarnetEmpty icon={<Icon name="heart" size={32} aria-hidden="true" />} label="Aucune réaction" />
       ) : (
-        <div className="ckp-pane-list">
+        <div className="ckp-likers">
           {likers.map((liker) => (
             <div className="ckp-liker" key={liker.id}>
               {liker.avatarUrl ? (
@@ -102,9 +94,9 @@ export function CarnetLikesPane({ detail, currentUserId: _currentUserId, like }:
               )}
               <span className="ckp-liker-txt">
                 <b>{liker.name}</b>
-                <small>{liker.handle ? `@${liker.handle}` : 'Voyageur'}</small>
+                <small>{liker.handle ? `@${liker.handle}` : '—'}</small>
               </span>
-              <span className="ckp-liker-badge">{REACTION_LABEL[liker.reaction] ?? liker.reaction}</span>
+              <span className="ckp-liker-value">{REACTION_LABEL[liker.reaction] ?? liker.reaction}</span>
             </div>
           ))}
         </div>

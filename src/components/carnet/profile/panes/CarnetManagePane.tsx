@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/contexts/ToastContext';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { CarnetField } from '../CarnetField';
 
 export interface CarnetManagePaneProps {
   detail: CarnetDetail;
@@ -16,9 +16,11 @@ export interface CarnetManagePaneProps {
 
 /**
  * Gestion propriétaire, dans la carte : visibilité, export, copie, suppression.
- * Lignes de réglage de 48 px, séparateur hairline inséré, chevron de 12 px,
- * aucun cadre ; les sections sont séparées par 24 px d’air et portent un
- * en-tête 10,5/600 espacé. L'interrupteur fait 36 × 20, teinte #17402C.
+ *
+ * Aucun titre de section, aucune phrase : quatre champs de 48 px séparés par
+ * 20 px d'air, libellés en placeholders, valeurs réelles à droite. La
+ * suppression demande une confirmation en deux champs, sans discours — le
+ * liseré `#C13B34` et les noms accessibles portent le sérieux de l'action.
  */
 export function CarnetManagePane({ detail, url, onExport, onDeleted }: CarnetManagePaneProps) {
   const router = useRouter();
@@ -60,73 +62,70 @@ export function CarnetManagePane({ detail, url, onExport, onDeleted }: CarnetMan
 
   return (
     <div className="ckp-pane ckp-manage">
-      <section className="ckp-manage-section" aria-label="Confidentialité">
-        <h2 className="ckp-section-head">Confidentialité</h2>
-        <button type="button" className="ckp-set" onClick={() => void changeVisibility()} disabled={busy}>
-          <span className="ckp-set-label">
-            <b>Visibilité</b>
-            <small>{isPublic ? 'Public — visible dans la communauté' : 'Privé — visible par vous seul'}</small>
-          </span>
-          <span className={`ckp-switch${isPublic ? ' is-on' : ''}`} aria-hidden="true">
-            <span />
-          </span>
-        </button>
-      </section>
+      <div className="ckp-group">
+        <CarnetField
+          label="visibilité"
+          value={
+            <span className={`ckp-switch${isPublic ? ' is-on' : ''}`} aria-hidden="true">
+              <span />
+            </span>
+          }
+          onClick={() => void changeVisibility()}
+          disabled={busy}
+          ariaLabel={
+            isPublic
+              ? 'Visibilité : public. Appuyer pour rendre le carnet privé.'
+              : 'Visibilité : privé. Appuyer pour rendre le carnet public.'
+          }
+        />
+      </div>
 
-      <section className="ckp-manage-section" aria-label="Partage">
-        <h2 className="ckp-section-head">Partage</h2>
-        <button type="button" className="ckp-set" onClick={onExport}>
-          <span className="ckp-set-label">
-            <b>Exporter le carnet</b>
-            <small>JSON complet — récit, étapes, moments, kit</small>
-          </span>
-          <ChevronRight size={12} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className="ckp-set"
+      <div className="ckp-group">
+        <CarnetField
+          label="exporter"
+          value="json"
+          onClick={onExport}
+          ariaLabel="Exporter le carnet en JSON complet"
+        />
+        <CarnetField
+          label="copier le lien"
+          value={url}
+          wide
           onClick={() => {
             void navigator.clipboard.writeText(url).then(() => toast('Lien copié.', 'success'));
           }}
-        >
-          <span className="ckp-set-label">
-            <b>Copier le lien</b>
-            <small>{url}</small>
-          </span>
-          <ChevronRight size={12} aria-hidden="true" />
-        </button>
-      </section>
+          ariaLabel="Copier le lien du carnet"
+        />
+      </div>
 
-      <section className="ckp-manage-section" aria-label="Suppression">
-        <h2 className="ckp-section-head">Suppression</h2>
+      <div className="ckp-group">
         {confirmDelete ? (
-          <div className="ckp-set-confirm">
-            <b>Supprimer définitivement ce carnet ?</b>
-            <small>Le récit, les étapes, les moments et le kit seront supprimés.</small>
-            <div className="ckp-set-confirm-row">
-              <button type="button" className="ckp-pill" onClick={() => setConfirmDelete(false)}>
-                Annuler
-              </button>
-              <button
-                type="button"
-                className="ckp-pill ckp-pill--danger"
-                onClick={() => void remove()}
-                disabled={busy}
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
+          <>
+            <CarnetField
+              label="annuler"
+              showValue={false}
+              onClick={() => setConfirmDelete(false)}
+              ariaLabel="Annuler la suppression"
+            />
+            <CarnetField
+              label="supprimer définitivement"
+              tone="danger"
+              showValue={false}
+              onClick={() => void remove()}
+              disabled={busy}
+              ariaLabel="Confirmer la suppression définitive du carnet, de son récit, de ses étapes, de ses moments et de son kit"
+            />
+          </>
         ) : (
-          <button type="button" className="ckp-set ckp-set--danger" onClick={() => setConfirmDelete(true)}>
-            <span className="ckp-set-label">
-              <b>Supprimer le carnet</b>
-              <small>Action définitive</small>
-            </span>
-            <ChevronRight size={12} aria-hidden="true" />
-          </button>
+          <CarnetField
+            label="supprimer le carnet"
+            tone="danger"
+            showValue={false}
+            onClick={() => setConfirmDelete(true)}
+            ariaLabel="Supprimer le carnet"
+          />
         )}
-      </section>
+      </div>
     </div>
   );
 }
