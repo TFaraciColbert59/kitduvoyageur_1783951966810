@@ -1302,12 +1302,24 @@
   min-width: 0;
 }
 .lkdv-messages .mpost-embed {
-  /* Bloc du fil réduit et centré : tout le contenu est là, à ~60 % de sa
-     taille d'origine, sans occuper toute la hauteur du fil. */
-  zoom: 0.62;
+  /* Bloc du fil réduit : tout le contenu est là (média, auteur, actions), mais
+     le média est plafonné pour que le message ne prenne pas tout le fil. */
+  zoom: 0.66;
   width: 100%;
   margin-inline: auto;
   border-radius: 22px;
+  overflow: hidden;
+}
+.lkdv-messages .mpost-embed .lkdv-post-media-wrap {
+  max-height: 168px;
+  overflow: hidden;
+}
+.lkdv-messages .mpost-embed .lkdv-post-media {
+  max-height: 168px;
+  object-fit: cover;
+}
+.lkdv-messages .mpost-embed .lkdv-post-main {
+  max-height: 320px;
   overflow: hidden;
 }
 .lkdv-messages .mpost-embed .lkdv-feed-post,
