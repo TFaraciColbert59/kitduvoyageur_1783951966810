@@ -41,7 +41,7 @@
 
 | Contrôle | Local | Prod Cloudflare |
 |---|---|---|
-| `/pays/fr` — 430 / 768 / 1440 | **23/23 · 23/23 · 23/23** | version `b97e5bd6` vérifiée 23/23 |
+| `/pays/fr` — 430 / 768 / 1440 | **23/23 · 23/23 · 23/23** | version `bb793320` vérifiée 23/23, drawer = carte au pixel |
 | `/carnets/[id]` — 430 / 768 / 1440 | **19/19 · 19/19 · 19/19** | (branche vinext : autre implémentation) |
 | Tests ciblés pays/drawer/partage | **22 / 22** | suite complète : échecs hors périmètre préexistants |
 | Build Next / vinext | OK | version `a9d1fe20` |
@@ -50,7 +50,7 @@
 
 | URL | Version | Porte |
 |---|---|---|
-| `https://kitduvoyageur.faracitonyp.workers.dev/pays/fr` | `b97e5bd6` (100 %) | **23/23**, capture vérifiée |
+| `https://kitduvoyageur.faracitonyp.workers.dev/pays/fr` | `bb793320` (100 %) | **23/23**, capture vérifiée |
 | `https://pays-refonte-kitduvoyageur.faracitonyp.workers.dev/pays/fr` | preview alias `pays-refonte`, déploiement `ea4acf81` | **23/23 · 23/23 · 23/23** |
 
 La preview alias est **stable** : elle ne bouge pas quand la prod est réécrite. C'est l'URL à utiliser pour montrer la refonte tant que le worker de production est partagé.
