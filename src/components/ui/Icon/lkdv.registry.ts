@@ -30,6 +30,7 @@ const ALIASES: Record<string,string> = {
   "user-group": "groupes",
   "user-plus": "amis",
   "user-minus": "amis",
+  "user-x": "moderation",
   "heart": "favoris",
   "heart-pulse": "sante",
   "bookmark": "signet",

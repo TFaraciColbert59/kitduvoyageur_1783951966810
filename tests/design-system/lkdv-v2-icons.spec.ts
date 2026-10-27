@@ -9,6 +9,8 @@ describe('LKDV V2 single-green vector icon library',()=>{
   expect(resolveMaskFile('GlobeAltIcon')).toBe('lkdv/monde.svg');
   expect(resolveMaskFile('MapPinIcon')).toBe('lkdv/point_d_interet.svg');
   expect(resolveMaskFile('compass')).toBe('lkdv/boussole.svg');
+  expect(resolveMaskFile('trash')).toBe('lkdv/supprimer.svg');
+  expect(resolveMaskFile('user-x')).toBe('lkdv/moderation.svg');
   expect(resolveMaskFile('HomeIcon')).toBe('lkdv/accueil.svg');
   expect(resolveLKDVFile('UnknownForTestingIcon')).toBeUndefined();
  });
