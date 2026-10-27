@@ -57,8 +57,13 @@ export function useConversations(userId: string | undefined) {
   }, [userId]);
 
   useEffect(() => {
+    // `userId` arrive du serveur : dès qu'il est là, on peint la liste
+    // mémorisée avant même la requête réseau.
+    if (userId) {
+      setConversations((prev) => (prev.length > 0 ? prev : readCache(userId)));
+    }
     fetchConversations();
-  }, [fetchConversations]);
+  }, [fetchConversations, userId]);
 
   // Realtime subscription for conversation updates and unread counts
   useEffect(() => {
