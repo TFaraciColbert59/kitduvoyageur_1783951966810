@@ -1228,7 +1228,10 @@
   justify-content: flex-end;
 }
 .lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) {
-  padding-top: 6px;
+  padding: 6px 8px 8px;
+}
+.lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) .grab {
+  display: none;
 }
 .lkdv-messages .sw-wrap[data-det='card'] .sheet:has(.sh-close-only) .sh-b {
   padding-top: 0;
@@ -1299,10 +1302,10 @@
   min-width: 0;
 }
 .lkdv-messages .mpost-embed {
-  /* Le bloc du fil est réduit et centré : on garde tout le contenu, sans
-     occuper toute la hauteur du fil. */
-  zoom: 0.58;
-  width: calc(100% / 0.58);
+  /* Bloc du fil réduit et centré : tout le contenu est là, à ~60 % de sa
+     taille d'origine, sans occuper toute la hauteur du fil. */
+  zoom: 0.62;
+  width: 100%;
   margin-inline: auto;
   border-radius: 22px;
   overflow: hidden;
