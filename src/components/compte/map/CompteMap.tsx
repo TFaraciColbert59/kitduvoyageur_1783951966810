@@ -26,6 +26,7 @@ import type {
   MapTrack,
   TrackPoint,
 } from '@/features/compte/map/types';
+import { resolveMapZoomConfig } from '@/features/compte/map/zoomHierarchy';
 import { CompteMapAttribution, CompteMapHud } from './CompteMapHud';
 import { CompteMapCallout } from './CompteMapCallout';
 import { CompteMapFallback } from './CompteMapFallback';
@@ -199,6 +200,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   const [selected, setSelected] = useState<Selected | null>(null);
   const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const [scale, setScale] = useState<MapScale>('globe');
+  const [zoomConfig, setZoomConfig] = useState(() => resolveMapZoomConfig(3));
   const [tileMode, setTileMode] = useState<'satellite' | 'topo'>('satellite');
   const [online, setOnline] = useState(true);
   const [year, setYear] = useState<number | null>(null);
@@ -284,8 +286,9 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       setStyleFailed(false);
       setReady(true);
     });
-    instance.on('zoomend', () => {
+    instance.on('zoom', () => {
       const zoom = instance.getZoom();
+      setZoomConfig(resolveMapZoomConfig(zoom));
       setScale(zoom < 4 ? 'globe' : zoom < 11 ? 'massif' : 'sentier');
     });
 
@@ -853,6 +856,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       className="lkdv-map-root"
       role="region"
       aria-label="Carte de tes sorties"
+      data-zoom-band={zoomConfig.band}
       data-map-mode={context.mode}
       data-map-outing={context.outingId ?? ''}
       data-map-ready={ready ? 'true' : 'false'}
