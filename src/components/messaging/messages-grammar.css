@@ -1680,3 +1680,14 @@
 .lkdv-messages .mpost-embed .lkdv-feed-post:has(.lkdv-post-panel) .lkdv-feed-post-options {
   display: none !important;
 }
+/* Menu `···` du post partagé : les actions restent DANS la carte. */
+.lkdv-messages .mpost-embed .lkdv-feed-options-rail {
+  top: 52px;
+  right: 8px;
+  gap: 6px;
+  z-index: 16;
+}
+.lkdv-messages .mpost-embed .lkdv-feed-options-rail button {
+  width: 32px;
+  height: 32px;
+}
