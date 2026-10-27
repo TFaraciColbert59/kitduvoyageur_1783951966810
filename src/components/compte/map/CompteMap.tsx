@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Map as MapLibreMap,
@@ -19,7 +26,12 @@ import {
   type MapScale,
 } from '@/features/compte/map/camera';
 import { filterTracksForMode, mapModeConfig } from '@/features/compte/map/modes';
-import { applyOverlaySelection } from '@/features/compte/map/overlaySelection';
+import {
+  applyOverlaySelection,
+  captureOverlayFocus,
+  restoreOverlayFocus,
+  type OverlayFocus,
+} from '@/features/compte/map/overlaySelection';
 import type {
   CompteMapMode,
   CompteMapPayload,
@@ -33,6 +45,7 @@ import {
   isOverlayEntryVisible,
   resolveMapZoomConfig,
   resolveNativeLayerVisibility,
+  simplifyCoordinates,
   type MapOverlayKind,
   type MapZoomConfig,
   type MassifCluster,
@@ -44,6 +57,14 @@ import { CompteMapState } from './CompteMapState';
 import './compte-map.css';
 
 const DEFAULT_CENTER: [number, number] = [2.5, 46.5];
+
+/**
+ * `useLayoutEffect` côté navigateur, `useEffect` au rendu serveur : le composant
+ * est un Client Component mais Next le prérend, et React avertit quand un
+ * layout effect s'exécute sur le serveur. L'ordre des hooks reste identique.
+ */
+const useIsomorphicLayoutEffect =
+  typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 const MAP_ICON = {
   peak: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 19 6.5-11 4 6 2.5-4L21 19H3Z"/></svg>',
@@ -104,7 +125,28 @@ type Resolved =
     }
   | { kind: 'poi'; data: CompteMapPayload['pois'][number]; position: TrackPoint };
 
-function tracksCollection(tracks: MapTrack[]) {
+/**
+ * Deux configurations de zoom ne diffèrent « à l'écran » que par ces champs.
+ *
+ * `setZoomConfig` est appelé à chaque frame de zoom : renvoyer l'objet précédent
+ * quand rien de visible ne change garde son identité stable et empêche les
+ * effets natifs (source GeoJSON, layout, paint) de tourner à 60 fps. Les champs
+ * omis (`massifs`, `clusterRadiusPx`, `viewportMarginPx`) ne changent qu'aux
+ * seuils de bande, où `band` change déjà.
+ */
+function sameZoomPresentation(previous: MapZoomConfig, next: MapZoomConfig): boolean {
+  return (
+    previous.band === next.band &&
+    previous.trackWidth === next.trackWidth &&
+    previous.casing === next.casing &&
+    previous.glow === next.glow &&
+    previous.pois === next.pois &&
+    previous.carnets === next.carnets &&
+    previous.endpoints === next.endpoints
+  );
+}
+
+function tracksCollection(tracks: MapTrack[], simplified = false) {
   return {
     type: 'FeatureCollection' as const,
     features: tracks.map((track) => ({
@@ -119,7 +161,11 @@ function tracksCollection(tracks: MapTrack[]) {
       },
       geometry: {
         type: 'LineString' as const,
-        coordinates: track.coordinates.map((point) => [point.lng, point.lat]),
+        // Monde/Pays : 20 sommets suffisent et allègent chaque frame. Région et
+        // Lieu gardent la trace native complète pour ne pas perdre le trait.
+        coordinates: (simplified ? simplifyCoordinates(track.coordinates) : track.coordinates).map(
+          (point) => [point.lng, point.lat]
+        ),
       },
     })),
   };
@@ -222,25 +268,13 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
    * reconstruire l'overlay à chaque franchissement de seuil.
    */
   const zoomConfigRef = useRef<MapZoomConfig>(zoomConfig);
+  /** Focus clavier à reposer après une reconstruction de l'overlay. */
+  const overlayFocusRef = useRef<OverlayFocus | null>(null);
   const [tileMode, setTileMode] = useState<'satellite' | 'topo'>('satellite');
   const [online, setOnline] = useState(true);
   const [year, setYear] = useState<number | null>(null);
 
   const config = mapModeConfig(context.mode);
-  // `zoomConfig` est un objet neuf à chaque frame de zoom (handler `zoom`) :
-  // le mettre tel quel en dépendance d'effet reconstruirait tout l'overlay à
-  // chaque frame. On n'expose que les primitives qui changent réellement
-  // l'agrégation, bande comprise — une nouvelle bande signifie de nouveaux
-  // écarts écran, donc de nouveaux agrégats. `band` fait partie de l'identité
-  // du memo pour forcer ce recalcul aux franchissements de seuil.
-  const massifCluster = useMemo(
-    () => ({
-      band: zoomConfig.band,
-      clustered: zoomConfig.massifs === 'clustered',
-      radiusPx: zoomConfig.clusterRadiusPx,
-    }),
-    [zoomConfig.band, zoomConfig.massifs, zoomConfig.clusterRadiusPx]
-  );
   const query = useQuery<CompteMapPayload, Error>({
     queryKey: ['compte-map'],
     queryFn: fetchCompteMap,
@@ -327,7 +361,14 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       // enregistré après celui-ci, sans attendre le re-rendu React.
       const nextZoomConfig = resolveMapZoomConfig(zoom);
       zoomConfigRef.current = nextZoomConfig;
-      setZoomConfig(nextZoomConfig);
+      // Mise à jour fonctionnelle : à l'intérieur d'une même bande, la config
+      // précédente est renvoyée telle quelle. Son identité reste stable, donc
+      // les effets qui recopient la source GeoJSON, le layout et le paint ne
+      // tournent plus à chaque frame (seuls les franchissements de seuil les
+      // déclenchent). Le ref, lui, est toujours la config de la frame.
+      setZoomConfig((previous) =>
+        sameZoomPresentation(previous, nextZoomConfig) ? previous : nextZoomConfig
+      );
       setScale(zoom < 4 ? 'globe' : zoom < 11 ? 'massif' : 'sentier');
     });
 
@@ -342,7 +383,11 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   useEffect(() => {
     if (!map || !ready || !data) return;
 
-    ensureSource(map, 'compte-tracks', tracksCollection(visibleTracks));
+    ensureSource(
+      map,
+      'compte-tracks',
+      tracksCollection(visibleTracks, zoomConfig.trackSimplified)
+    );
     ensureLayer(map, 'compte-tracks-casing', () => {
       map.addLayer({
         id: 'compte-tracks-casing',
@@ -578,6 +623,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       overlay.className = 'lkdv-map-overlay';
       container.appendChild(overlay);
     }
+    // Focus capturé par le cleanup de l'instance précédente (changement de
+    // données, de mode ou de couches). Il est reposé après la reconstruction.
+    let pendingFocus = overlayFocusRef.current;
+    overlayFocusRef.current = null;
     overlay.innerHTML = '';
 
     type Entry = {
@@ -735,6 +784,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
      * DOM uniquement si les groupes ont changé (`clusterSignature`). Un pur
      * déplacement ne modifie aucune distance écran : la partition est
      * identique, seules les ancres suivent la carte, donc on sort tôt.
+     *
+     * La bande est lue dans `zoomConfigRef`, pas capturée à la construction de
+     * l'effet : un franchissement de seuil ne démonte donc plus l'overlay (donc
+     * ne perd ni sélection ni focus), il change seulement la partition.
      */
     const syncClusters = () => {
       if (!config.layers.massifs) return;
@@ -748,23 +801,28 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       }));
       // Les agrégats ne sont calculés que sur les bandes `clustered` (Monde,
       // Pays) ; ailleurs chaque massif garde exactement son bouton et son clic.
-      const clusters: MassifCluster<MassifEntry>[] = massifCluster.clustered
-        ? clusterByScreenDistance(projected, (entry) => entry.point, massifCluster.radiusPx)
-        : projected.map((entry) => ({
-            id: entry.massif.id,
-            items: [entry],
-            x: entry.point.x,
-            y: entry.point.y,
-          }));
+      const band = zoomConfigRef.current;
+      const clusters: MassifCluster<MassifEntry>[] =
+        band.massifs === 'clustered'
+          ? clusterByScreenDistance(projected, (entry) => entry.point, band.clusterRadiusPx)
+          : projected.map((entry) => ({
+              id: entry.massif.id,
+              items: [entry],
+              x: entry.point.x,
+              y: entry.point.y,
+            }));
       const signature = clusters.map(groupKey).sort().join('|');
 
       if (signature !== clusterSignature) {
+        // Les boutons remplacés peuvent porter le focus : on le retrouve par
+        // type/id après reconstruction (un massif absorbé dans un agrégat ne
+        // peut pas être refocalisé, `restoreOverlayFocus` renvoie alors false).
+        const focused = captureOverlayFocus(root);
         clusterSignature = signature;
         for (const entry of massifEntries) entry.element.remove();
         groupEntries.clear();
         massifEntries = clusters.map(createMassifEntry);
-        // Les boutons viennent d'être remplacés : réapplique la sélection.
-        applyOverlaySelection(root, selectedRef.current);
+        pendingFocus = focused ?? pendingFocus;
       }
 
       // Une ancre d'agrégat est un point écran : la reprojeter à chaque échelle
@@ -803,6 +861,16 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const band = zoomConfigRef.current;
       for (const entry of massifEntries) positionEntry(entry, width, height, band);
       for (const entry of entries) positionEntry(entry, width, height, band);
+
+      // Après toute reconstruction (données, mode, couches) comme à chaque
+      // pose : la sélection est reposée inconditionnellement. C'est le seul
+      // point qui couvre aussi les modes où les massifs sont désactivés
+      // (`syncClusters` sort tôt et ne réappliquait donc jamais la sélection).
+      applyOverlaySelection(root, selectedRef.current);
+      if (pendingFocus) {
+        restoreOverlayFocus(root, pendingFocus);
+        pendingFocus = null;
+      }
     };
     // Première pose : si la caméra a démarré sans événement `zoom`, l'état React
     // peut décrire une autre bande que la carte. La carte fait foi.
@@ -816,6 +884,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       map.off('move', place);
       map.off('zoom', place);
       map.off('resize', place);
+      // Mémorise le focus avant que les boutons disparaissent avec l'overlay.
+      if (overlay) overlayFocusRef.current = captureOverlayFocus(overlay);
       overlay?.remove();
     };
   }, [
@@ -825,13 +895,12 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     config.layers.massifs,
     config.layers.pois,
     config.layers.carnets,
-    massifCluster,
   ]);
 
-  useEffect(() => {
-    // Le ref sert aux reconstructions déclenchées par le zoom : la sélection
-    // courante doit être réappliquée aux nouveaux boutons sans changer les
-    // dépendances de l'effet de l'overlay.
+  useIsomorphicLayoutEffect(() => {
+    // Layout effect : le ref est à jour avant l'effet passif de l'overlay, qui
+    // peut reconstruire ses boutons dans la même passe (changement de données
+    // ou de mode) et doit alors réappliquer la sélection courante.
     selectedRef.current = selected;
     if (!map || !ready) return;
     applyOverlaySelection(map.getContainer(), selected);

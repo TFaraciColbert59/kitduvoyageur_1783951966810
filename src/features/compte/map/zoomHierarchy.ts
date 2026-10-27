@@ -1,3 +1,28 @@
+/**
+ * Réduit une trace à `maxPoints` sommets, par échantillonnage régulier.
+ *
+ * Utilisé sur les bandes Monde/Pays (`trackSimplified`) : à cette échelle une
+ * trace de 120 points ne montre aucun détail. L'échantillonnage garde toujours
+ * le premier et le dernier point (départ/arrivée réels) et reste déterministe :
+ * même entrée, même sortie. Une trace déjà courte est renvoyée telle quelle, par
+ * identité, pour ne pas allouer inutilement.
+ */
+export function simplifyCoordinates<T extends { lng: number; lat: number }>(
+  coordinates: T[],
+  maxPoints = 20
+): T[] {
+  const limit = Math.max(2, Math.floor(maxPoints));
+  if (coordinates.length <= limit) return coordinates;
+
+  const last = coordinates.length - 1;
+  const step = last / (limit - 1);
+  const simplified: T[] = [];
+  for (let index = 0; index < limit; index += 1) {
+    simplified.push(coordinates[Math.round(index * step)]!);
+  }
+  return simplified;
+}
+
 export type MapZoomBand = 'world' | 'country' | 'region' | 'place';
 
 export interface MapZoomConfig {

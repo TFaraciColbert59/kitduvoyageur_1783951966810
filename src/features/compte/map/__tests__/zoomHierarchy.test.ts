@@ -6,7 +6,52 @@ import {
   isOverlayEntryVisible,
   resolveMapZoomConfig,
   resolveNativeLayerVisibility,
+  simplifyCoordinates,
 } from '../zoomHierarchy';
+
+describe('simplifyCoordinates', () => {
+  const trace = (length: number, offset = 0) =>
+    Array.from({ length }, (_, index) => ({
+      id: index + offset,
+      lng: index + offset,
+      lat: -(index + offset),
+    }));
+
+  it('renvoie la trace courte telle quelle, par identité', () => {
+    const short = trace(20);
+    expect(simplifyCoordinates(short)).toBe(short);
+    const tiny = trace(3);
+    expect(simplifyCoordinates(tiny)).toBe(tiny);
+  });
+
+  it('borne une trace longue à 20 points', () => {
+    const simplified = simplifyCoordinates(trace(120));
+    expect(simplified).toHaveLength(20);
+    expect(simplified.length).toBeLessThanOrEqual(20);
+  });
+
+  it('garde toujours le premier et le dernier point', () => {
+    const long = trace(87, 5);
+    const simplified = simplifyCoordinates(long);
+    expect(simplified[0]).toBe(long[0]);
+    expect(simplified[simplified.length - 1]).toBe(long[long.length - 1]);
+  });
+
+  it('produit un échantillonnage stable et sans doublon', () => {
+    const long = trace(97);
+    const first = simplifyCoordinates(long);
+    const second = simplifyCoordinates(long);
+    expect(first).toEqual(second);
+    expect(new Set(first).size).toBe(first.length);
+  });
+
+  it('respecte une borne personnalisée', () => {
+    const long = trace(50);
+    const simplified = simplifyCoordinates(long, 5);
+    expect(simplified).toHaveLength(5);
+    expect(simplified[0]).toBe(long[0]);
+  });
+});
 
 describe('resolveMapZoomConfig', () => {
   it('classe les quatre bandes aux seuils exacts', () => {

@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { applyOverlaySelection } from '../overlaySelection';
+import {
+  applyOverlaySelection,
+  captureOverlayFocus,
+  restoreOverlayFocus,
+} from '../overlaySelection';
 
 const SELECTABLE = [
   { className: 'lkdv-map-massif', datasetKey: 'massifId', id: 'massif-1' },
@@ -86,5 +90,46 @@ describe('applyOverlaySelection', () => {
     const container = buildOverlay();
     applyOverlaySelection(container, { kind: 'massif', id: 'massif-1' });
     expect(container.querySelector('.lkdv-map-cluster.is-selected')).toBeNull();
+  });
+});
+
+describe('focus de l’overlay reconstruit', () => {
+  it('capture le focus d’un marqueur typé et le repose sur le même id', () => {
+    const container = buildOverlay();
+    document.body.append(container);
+    try {
+      const poi = container.querySelector<HTMLElement>('[data-poi-id="poi-1"]')!;
+      poi.focus();
+      const focus = captureOverlayFocus(container);
+      expect(focus).toEqual({ kind: 'poi', id: 'poi-1' });
+
+      // Reconstruction réelle : nouveaux boutons, mêmes data-*.
+      container.innerHTML = '';
+      container.append(buildOverlay());
+      expect(restoreOverlayFocus(container, focus)).toBe(true);
+      expect(document.activeElement).toBe(container.querySelector('[data-poi-id="poi-1"]'));
+    } finally {
+      container.remove();
+    }
+  });
+
+  it('ne capture rien quand le focus est hors de l’overlay', () => {
+    const container = buildOverlay();
+    const outside = document.createElement('button');
+    document.body.append(container, outside);
+    try {
+      outside.focus();
+      expect(captureOverlayFocus(container)).toBeNull();
+    } finally {
+      container.remove();
+      outside.remove();
+    }
+  });
+
+  it('renvoie false quand le marqueur n’existe plus (absorbé en agrégat)', () => {
+    const container = buildOverlay();
+    container.innerHTML = '';
+    expect(restoreOverlayFocus(container, { kind: 'massif', id: 'massif-1' })).toBe(false);
+    expect(restoreOverlayFocus(container, null)).toBe(false);
   });
 });
