@@ -19,6 +19,7 @@ import {
   type MapScale,
 } from '@/features/compte/map/camera';
 import { filterTracksForMode, mapModeConfig } from '@/features/compte/map/modes';
+import { applyOverlaySelection } from '@/features/compte/map/overlaySelection';
 import type {
   CompteMapMode,
   CompteMapPayload,
@@ -155,16 +156,6 @@ function resolveSelected(data: CompteMapPayload, selected: Selected): Resolved |
   }
   const poi = data.pois.find((entry) => entry.id === selected.id);
   return poi ? { kind: 'poi', data: poi, position: poi.position } : null;
-}
-
-/** Applique l'état sélectionné aux boutons massif présents dans l'overlay. */
-function applyMassifSelection(container: HTMLElement, selected: Selected | null) {
-  container.querySelectorAll<HTMLElement>('.lkdv-map-massif').forEach((element) => {
-    element.classList.toggle(
-      'is-selected',
-      selected?.kind === 'massif' && selected.id === element.dataset.massifId
-    );
-  });
 }
 
 async function fetchCompteMap(): Promise<CompteMapPayload> {
@@ -645,6 +636,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       const element = document.createElement('button');
       element.type = 'button';
       element.className = 'lkdv-map-carnet';
+      element.dataset.carnetId = carnet.id;
       element.setAttribute('aria-label', carnet.title || 'Carnet');
       element.title = carnet.title || 'Carnet';
       const icon = document.createElement('span');
@@ -772,7 +764,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         groupEntries.clear();
         massifEntries = clusters.map(createMassifEntry);
         // Les boutons viennent d'être remplacés : réapplique la sélection.
-        applyMassifSelection(root, selectedRef.current);
+        applyOverlaySelection(root, selectedRef.current);
       }
 
       // Une ancre d'agrégat est un point écran : la reprojeter à chaque échelle
@@ -841,7 +833,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     // dépendances de l'effet de l'overlay.
     selectedRef.current = selected;
     if (!map || !ready) return;
-    applyMassifSelection(map.getContainer(), selected);
+    applyOverlaySelection(map.getContainer(), selected);
   }, [map, ready, selected]);
 
   useEffect(() => {

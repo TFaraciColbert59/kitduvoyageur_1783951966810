@@ -643,13 +643,16 @@
 /* Priorité de superposition (spec : selected > poi > carnet > massif).
    Quand deux boutons se recouvrent, c'est le z-index qui décide du clic, pas
    l'ordre du DOM (les massifs sont insérés avant les POI). Le POI doit donc
-   passer devant le massif qu'il recouvre. `.is-selected` est déclaré en
-   dernier : à spécificité égale (0,2,0), il gagne sur le type et remonte la
-   sélection au-dessus de tous les autres points. */
+   passer devant le massif qu'il recouvre, le carnet devant le massif, et la
+   sélection devant tout le monde. Le sélecteur de sélection est composé
+   (0,3,0) : il reste gagnant même après les règles de type et le bloc agrégat
+   (0,2,0), quel que soit leur ordre dans le fichier. */
 .lkdv-map-overlay .lkdv-map-massif { z-index: 2 !important; }
 .lkdv-map-overlay .lkdv-map-carnet { z-index: 3 !important; }
 .lkdv-map-overlay .lkdv-map-poi { z-index: 4 !important; }
-.lkdv-map-overlay .is-selected { z-index: 6 !important; }
+.lkdv-map-overlay .lkdv-map-massif.is-selected,
+.lkdv-map-overlay .lkdv-map-poi.is-selected,
+.lkdv-map-overlay .lkdv-map-carnet.is-selected { z-index: 6 !important; }
 
 /* Fiche carte : capsule de verre compacte, CTA pilule comme les boutons du Compte. */
 .lkdv-map-callout {
