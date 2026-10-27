@@ -5,7 +5,7 @@ import { Map as MapLibreMap, Marker, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, MapPin, CalendarDays, Settings2, Trash2, ImagePlus, Check } from 'lucide-react';
+import { Plus, MapPin, CalendarDays, Settings2, Trash2, ImagePlus, Check, Loader2, WifiOff } from 'lucide-react';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
 import { createClient } from '@/lib/supabase/client';
 import { createDefaults, createSchemas, type CarnetFormValues } from './engine/createSchemas';
@@ -63,7 +63,8 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
     mapRef.current = map;
     map.on('load', () => {
       map.addSource('carnet-trace', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] }, properties: {} } });
-      map.addLayer({ id: 'carnet-trace-line', type: 'line', source: 'carnet-trace', paint: { 'line-color': '#17402C', 'line-width': 3.5, 'line-opacity': .9 } });
+      map.addLayer({ id: 'carnet-trace-casing', type: 'line', source: 'carnet-trace', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': 'rgba(255,255,255,.92)', 'line-width': 7, 'line-blur': .4 } });
+      map.addLayer({ id: 'carnet-trace-line', type: 'line', source: 'carnet-trace', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#17402C', 'line-width': 3.2, 'line-opacity': .92 } });
     });
     return () => { map.remove(); mapRef.current = null; };
   }, [open]);
@@ -272,8 +273,8 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       }
     >
       <div className="lkdv-carnet-map" ref={mapNode} data-trace-points={trace.length} data-drawing={drawing ? 'true' : 'false'}>
-        <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => setDrawing((value) => !value)}><MapPin size={13} /> {drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}</button>
-        {snapState !== 'idle' ? <span className={`lkdv-snap-status${snapState === 'error' ? ' is-error' : ''}`}>{snapState === 'loading' ? 'Ajustement au chemin…' : 'Tracé libre'}</span> : null}
+        <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => setDrawing((value) => !value)} aria-label={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'} title={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}><MapPin size={17} /></button>
+        {snapState !== 'idle' ? <span className={`lkdv-snap-status${snapState === 'error' ? ' is-error' : ''}`} aria-label={snapState === 'loading' ? 'Ajustement au chemin' : 'Tracé libre'}>{snapState === 'loading' ? <Loader2 size={14} /> : <WifiOff size={14} />}</span> : null}
         <div
           className="lkdv-map-draw-layer"
           data-active={drawing ? 'true' : 'false'}
@@ -287,19 +288,13 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       </div>
       <div className="lkdv-carnet-slider" ref={scroller}>
         <section className="lkdv-carnet-slide lkdv-carnet-base">
-          <h3>Réglages du carnet</h3>
           <input {...form.register('title')} placeholder="Titre du carnet" aria-label="Titre" />
           <PlaceSearch label="Destination" value={destination} onChange={(value) => form.setValue('destination', value, { shouldDirty: true })} placeholder="Destination" />
           <DateRangeField label="Dates" start={startDate} end={endDate} onStartChange={(value) => form.setValue('startDate', value, { shouldDirty: true })} onEndChange={(value) => form.setValue('endDate', value, { shouldDirty: true })} />
           <textarea {...form.register('description')} placeholder="Récit, idée, points forts…" aria-label="Récit" rows={3} />
-          <div className="lkdv-carnet-base-actions">
-            <button type="button" className="lkdv-carnet-add-day" onClick={addDay}><Plus size={14} /> Ajouter un jour</button>
-            <button type="button" className="lkdv-carnet-create" onClick={() => void submit()} disabled={submitting}>{submitting ? 'Création…' : 'Créer le carnet'}</button>
-          </div>
         </section>
         {days.map((day, dayIndex) => (
           <section key={day.id} className="lkdv-carnet-slide lkdv-carnet-day" aria-label={day.label}>
-            <header><span><CalendarDays size={14} /> {day.label}</span><small>{day.moments.length} moment{day.moments.length > 1 ? 's' : ''}</small></header>
             <div className="lkdv-day-moments">
               {day.moments.map((moment, momentIndex) => (
                 <div key={moment.id} className="lkdv-moment-row">
@@ -314,12 +309,11 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
                 </div>
               ))}
             </div>
-            <button type="button" className="lkdv-moment-add" onClick={() => addMoment(day.id)}><Plus size={14} /> Ajouter un moment</button>
+            <button type="button" className="lkdv-moment-add" onClick={() => addMoment(day.id)} aria-label="Ajouter un moment"><Plus size={16} /></button>
           </section>
         ))}
         <section className="lkdv-carnet-slide lkdv-carnet-add">
-          <button type="button" onClick={addDay}><Plus size={24} /><span>Ajouter un jour</span></button>
-          <small>Le point apparaîtra sur la carte et pourra être déplacé.</small>
+          <button type="button" onClick={addDay} aria-label="Ajouter un jour"><Plus size={26} /></button>
         </section>
       </div>
     </CommunityFormDrawer>

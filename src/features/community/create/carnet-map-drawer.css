@@ -69,3 +69,32 @@
 .lkdv-carnet-footer { justify-content: flex-end; }
 .lkdv-carnet-footer .lkdv-carnet-footer-create { margin-right: auto; }
 .lkdv-carnet-daybar.ig-tabs { width: calc(var(--n) * 41.5px + 5px) !important; }
+/* Nettoyage visuel Carnet. */
+.lkdv-carnet-map { margin: 8px 0 8px !important; border-radius: 16px !important; height: 300px; }
+.lkdv-carnet-map .maplibregl-canvas { filter: saturate(.82) contrast(.98); }
+.lkdv-map-draw { width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 0 !important; justify-content: center !important; border-radius: 999px !important; }
+.lkdv-snap-status { position: absolute; z-index: 30; left: 60px; top: 17px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: rgba(255,255,255,.82); color: #17402C; }
+.lkdv-snap-status.is-error { color: #A05A3C; }
+.lkdv-snap-status svg { animation: lkdv-ai-spin 1s linear infinite; }
+.lkdv-snap-status.is-error svg { animation: none; }
+.lkdv-carnet-slider { align-items: flex-start !important; flex: 0 0 auto !important; }
+.lkdv-carnet-slide { align-self: flex-start; min-height: 0 !important; height: auto !important; padding: 8px 10px !important; background: transparent !important; box-shadow: none !important; border-radius: 0 !important; }
+.lkdv-carnet-base { gap: 4px !important; }
+.lkdv-carnet-base input, .lkdv-carnet-base textarea, .lkdv-carnet-slide input, .lkdv-carnet-slide textarea {
+  border: 0 !important; border-bottom: .5px solid rgba(23,64,44,.14) !important; border-radius: 0 !important; background: transparent !important; padding: 0 2px !important; min-height: 42px !important;
+}
+.lkdv-carnet-base input::placeholder, .lkdv-carnet-base textarea::placeholder, .lkdv-carnet-slide input::placeholder { color: #5F6F65; opacity: 1; }
+.lkdv-day-moments { gap: 0 !important; }
+.lkdv-moment-row { grid-template-columns: 14px 1fr 40px 32px !important; grid-template-rows: 40px 34px !important; gap: 0 6px !important; border-top: .5px solid rgba(23,64,44,.1); padding: 4px 0 !important; }
+.lkdv-moment-index { font-size: 9px !important; }
+.lkdv-moment-photo { width: 40px !important; height: 40px !important; border-radius: 10px !important; }
+.lkdv-moment-delete { width: 32px !important; height: 32px !important; opacity: .45; }
+.lkdv-moment-row:focus-within .lkdv-moment-delete { opacity: 1; }
+.lkdv-moment-note { min-height: 34px !important; border-bottom: 0 !important; }
+.lkdv-moment-add { width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 0 !important; border-radius: 999px !important; justify-content: center !important; }
+.lkdv-carnet-add { min-height: 160px !important; }
+.lkdv-carnet-daybar .ig-th { background: rgba(255,255,255,.94) !important; box-shadow: 0 0 0 .5px rgba(23,43,36,.1), 0 2px 5px rgba(23,43,36,.08) !important; }
+.lkdv-carnet-daybar button.is-active { background: transparent !important; color: #17402C !important; }
+.lkdv-carnet-daybar button { color: #6B7A70 !important; }
+.lkdv-carnet-daybar .lkdv-daybar-add { color: #17402C !important; }
+.lkdv-carnet-footer { padding-bottom: env(safe-area-inset-bottom, 0px); }
