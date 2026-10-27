@@ -1527,3 +1527,21 @@
   /* La croix flotte au-dessus : le contenu commence plus bas. */
   padding-top: 44px !important;
 }
+/* Le post partagé n'affiche jamais le menu `···` dans un message. */
+.lkdv-messages .mpost-embed .lkdv-feed-post-close {
+  display: none !important;
+}
+
+/* Haut du fil de discussion adouci : mêmes angles que la carte. */
+.lkdv-messages .mpane,
+.lkdv-messages .mthread {
+  border-radius: 22px 22px 0 0;
+}
+.lkdv-messages .mpane {
+  overflow: hidden;
+}
+
+/* La barre de navigation reste visible au-dessus des drawers de cette page. */
+.lkdv-messages .lkdv-account-bar {
+  z-index: 40;
+}
