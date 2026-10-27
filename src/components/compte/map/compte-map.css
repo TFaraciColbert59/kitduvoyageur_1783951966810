@@ -640,10 +640,16 @@
   will-change: transform;
 }
 
-/* Priorité de clic : un massif reste cliquable même si un POI partage sa position. */
-.lkdv-map-overlay .lkdv-map-massif { z-index: 3 !important; }
-.lkdv-map-overlay .lkdv-map-poi,
-.lkdv-map-overlay .lkdv-map-carnet { z-index: 2 !important; }
+/* Priorité de superposition (spec : selected > poi > carnet > massif).
+   Quand deux boutons se recouvrent, c'est le z-index qui décide du clic, pas
+   l'ordre du DOM (les massifs sont insérés avant les POI). Le POI doit donc
+   passer devant le massif qu'il recouvre. `.is-selected` est déclaré en
+   dernier : à spécificité égale (0,2,0), il gagne sur le type et remonte la
+   sélection au-dessus de tous les autres points. */
+.lkdv-map-overlay .lkdv-map-massif { z-index: 2 !important; }
+.lkdv-map-overlay .lkdv-map-carnet { z-index: 3 !important; }
+.lkdv-map-overlay .lkdv-map-poi { z-index: 4 !important; }
+.lkdv-map-overlay .is-selected { z-index: 6 !important; }
 
 /* Fiche carte : capsule de verre compacte, CTA pilule comme les boutons du Compte. */
 .lkdv-map-callout {
@@ -913,10 +919,10 @@
 .lkdv-map-overlay.is-far .lkdv-map-massif-ico { display: none !important; }
 
 /* Agrégats de massifs (bandes Monde/Pays) : un point de 22 px par groupe.
-   Même priorité que les massifs, le compteur reste lisible à l'échelle des
-   points simples (7 px en vue large). */
+   Un agrégat est un massif : même niveau de superposition (z-index 2), le
+   compteur reste lisible à l'échelle des points simples (7 px en vue large). */
 .lkdv-map-overlay .lkdv-map-cluster {
-  z-index: 3 !important;
+  z-index: 2 !important;
   display: grid !important;
   place-items: center !important;
   width: 22px !important;
