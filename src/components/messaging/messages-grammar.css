@@ -1293,57 +1293,17 @@
   display: flex;
   flex-direction: column;
 }
-/* Post partagé : bloc complet du fil, à 100 % de la largeur du message. */
-.lkdv-messages .mrow:has(.mpost-embed-row) {
-  display: block;
+/* Post partagé : carte compacte, comme les autres partages (pas de bloc géant). */
+.lkdv-messages .mpost-compact {
+  min-width: 190px;
+  max-width: 250px;
+  text-align: left;
 }
-.lkdv-messages .mpost-embed-row {
-  width: 100%;
-  min-width: 0;
+.lkdv-messages .mpost-compact-chevron {
+  flex: none;
+  color: var(--label3);
+  margin-left: 2px;
 }
-.lkdv-messages .mpost-embed {
-  /* Bloc du fil réduit : tout le contenu est là (média, auteur, actions), mais
-     le média est plafonné pour que le message ne prenne pas tout le fil. */
-  zoom: 0.66;
-  width: 100%;
-  margin-inline: auto;
-  border-radius: 22px;
-  overflow: hidden;
-}
-.lkdv-messages .mpost-embed .lkdv-feed-post {
-  /* Le post du fil est un carré : dans un message, on le ramène à une vignette
-     large et basse pour ne pas manger tout le fil. */
-  aspect-ratio: auto !important;
-  height: 200px !important;
-  border-radius: 18px;
-}
-.lkdv-messages .mpost-embed .lkdv-post-media-wrap,
-.lkdv-messages .mpost-embed .lkdv-post-main {
-  height: 100%;
-  max-height: 200px;
-}
-.lkdv-messages .mpost-embed .lkdv-post-media {
-  height: 100%;
-  max-height: 200px;
-  object-fit: cover;
-}
-.lkdv-messages .mpost-embed .lkdv-feed-post,
-.lkdv-messages .mpost-embed > * {
-  max-width: 100% !important;
-  width: 100% !important;
-}
-.lkdv-messages .mpost-embed-skeleton {
-  display: block;
-  width: 100%;
-  height: 320px;
-  border-radius: 20px;
-  background: var(--fill2);
-  animation: mshimmer 1.4s ease-in-out infinite;
-}
-.lkdv-messages .mpost-embed-fallback {
-  padding: 14px;
-  border-radius: 16px;
-  background: var(--fill3);
-  color: var(--label2);
-  font: 500 12px/1.3 var(--sf);
+.lkdv-messages .mpost-compact:active {
+  transform: scale(0.98);
 }
