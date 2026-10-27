@@ -35,7 +35,8 @@ const PANES: { id: CarnetDrawerId; label: string; icon: string }[] = [
  */
 export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: CarnetDrawerProps) {
   const ref = useRef<HTMLElement | null>(null);
-  const scrolled = useScrollCut(ref);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const scrolled = useScrollCut(bodyRef);
   const available = PANES;
   const items: CapsuleTabItem[] = available.map((pane) => ({
     id: pane.id,
@@ -79,7 +80,9 @@ export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: Carn
         </div>
         <span className="ckp-drawer-cut" data-on={scrolled ? 'true' : undefined} aria-hidden="true" />
       </div>
-      <div className="ckp-card-scroll ckp-drawer-body">{children}</div>
+      <div className="ckp-card-scroll ckp-drawer-body" ref={bodyRef}>
+        {children}
+      </div>
     </section>
   );
 }

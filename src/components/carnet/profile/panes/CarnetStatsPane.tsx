@@ -107,8 +107,6 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
   const profile = elevationProfile(elevationSeries, PROFILE_WIDTH, PROFILE_HEIGHT);
   const bars = dailyBarHeights(distanceSeries);
 
-  const distance = splitUnit(km(stats.distanceKm));
-  const elevation = splitUnit(formatElevation(stats.elevationM));
   const dayCount = splitUnit(`${stats.daysCount.toLocaleString('fr-FR')} ${stats.daysCount > 1 ? 'jours' : 'jour'}`);
 
   const summary: Record<CarnetStatsTab, { label: string; total: string }> = {
