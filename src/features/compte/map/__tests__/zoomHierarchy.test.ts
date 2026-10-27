@@ -72,7 +72,7 @@ describe('resolveMapZoomConfig', () => {
 
   it('masque les POI hors de la bande lieu', () => {
     expect(resolveMapZoomConfig(3).pois).toBe('hidden');
-    expect(resolveMapZoomConfig(8).pois).toBe('hidden');
+    expect(resolveMapZoomConfig(8).pois).toBe('pills');
     expect(resolveMapZoomConfig(12).pois).toBe('pills');
   });
 
@@ -273,11 +273,11 @@ describe('isOverlayEntryVisible', () => {
     expect(isOverlayEntryVisible('massif', band, true)).toBe(true);
   });
 
-  it('au zoom 8 (Région) : carnets visibles, POI absents', () => {
+  it('au zoom 8 (Région) : carnets et POI visibles', () => {
     const band = resolveMapZoomConfig(8);
     expect(band.carnets).toBe('dots');
     expect(isOverlayEntryVisible('carnet', band, true)).toBe(true);
-    expect(isOverlayEntryVisible('poi', band, true)).toBe(false);
+    expect(isOverlayEntryVisible('poi', band, true)).toBe(true);
     expect(isOverlayEntryVisible('massif', band, true)).toBe(true);
   });
 
@@ -310,7 +310,7 @@ describe('resolveNativeLayerVisibility', () => {
 
   it('masque les couches POI natives hors bande `pills`', () => {
     expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(3)).pois).toBe(false);
-    expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(8)).pois).toBe(false);
+    expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(8)).pois).toBe(true);
     expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(12)).pois).toBe(true);
   });
 
