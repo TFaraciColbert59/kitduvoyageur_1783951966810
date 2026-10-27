@@ -45,7 +45,7 @@ Les seuils sont centralisés dans un module unique. Aucun composant ne doit code
 - **Géométrie** : trace simplifiée (8 à 20 points), jamais la trace GPS complète.
 - **Style** : ligne fine, sans glow, couleur par type.
 - **Massifs** : regroupés par proximité à l’écran.
-- **Agrégat de massifs** : point de 8 px avec compteur.
+- **Agrégat de massifs** : point de 22 px avec compteur.
 - **POI** : masqués.
 - **Carnets** : masqués.
 - **Départs / arrivées** : masqués.
@@ -85,7 +85,7 @@ Les seuils sont centralisés dans un module unique. Aucun composant ne doit code
 | Trace — épaisseur | 1,5 px | 2 px | 3,5 px | 4 px |
 | Trace — casing | non | non | oui | oui |
 | Trace — glow | non | non | oui | oui |
-| Massif agrégé | 8 px + compteur | 8 px + compteur | — | — |
+| Massif agrégé | 22 px + compteur | 22 px + compteur | — | — |
 | Massif | — | icône 24 px | icône 24 px | icône 24 px |
 | Carnet | — | — | point 8 px | pastille 21 px |
 | POI | — | — | — | pastille 20 px |
