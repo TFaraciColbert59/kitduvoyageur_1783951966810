@@ -19,6 +19,7 @@ import {
   type MapScale,
 } from '@/features/compte/map/camera';
 import { filterTracksForMode, mapModeConfig } from '@/features/compte/map/modes';
+import { boundsOf as boundsOfPoints, parsePositions, simplifyTrack } from '@/features/compte/map/geometry';
 import type {
   CompteMapMode,
   CompteMapPayload,
@@ -33,28 +34,6 @@ import { CompteMapState } from './CompteMapState';
 import './compte-map.css';
 
 const DEFAULT_CENTER: [number, number] = [2.5, 46.5];
-
-const MAP_ICON = {
-  peak: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 19 6.5-11 4 6 2.5-4L21 19H3Z"/></svg>',
-  water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.3 6 11a6 6 0 0 1-12 0c0-4.7 6-11 6-11Z"/></svg>',
-  shelter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg>',
-  tent: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 20 9-16 9 16H3ZM12 4v16M8 20l4-7 4 7"/></svg>',
-  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"/><circle cx="12" cy="9" r="2.2"/></svg>',
-  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v16H6.5A2.5 2.5 0 0 0 4 21.5V5.5ZM4 19.5A2.5 2.5 0 0 1 6.5 17H19"/></svg>',
-};
-
-const CINEMATIC_EASE = (t: number) =>
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-function poiIcon(label: string): string {
-  const value = label.toLowerCase();
-  if (/(lac|étang|etang|source|rivière|riviere|cascade)/.test(value)) return MAP_ICON.water;
-  if (/(refuge|cabane|chalet|abri|bergerie|auberge)/.test(value)) return MAP_ICON.shelter;
-  if (/(bivouac|tente|camp)/.test(value)) return MAP_ICON.tent;
-  if (/(col|sommet|mont|pic|crête|crete|dôme|dome|cime)/.test(value)) return MAP_ICON.peak;
-  return MAP_ICON.pin;
-}
-
 
 export type CompteMapAuthState = 'loading' | 'guest' | 'owner' | 'error';
 
@@ -75,6 +54,17 @@ export interface CompteMapProps {
   context: CompteMapContext;
   /** Quand la valeur change, la caméra vole vers ce point. */
   focus?: CompteMapFocus | null;
+  /**
+   * `carnet` : la carte d'une fiche carnet ne peint QUE le tracé du carnet.
+   * Aucune donnée du compte n'est demandée ni affichée (le visiteur n'est pas
+   * le propriétaire), et l'état « connecte-toi » n'a pas de sens ici.
+   */
+  variant?: 'compte' | 'carnet';
+  /** Trace GeoJSON du carnet (LineString, Feature, ou liste de points). */
+  trace?: unknown | null;
+  /** État vide honnête, affiché seulement si le carnet n'a réellement aucune trace. */
+  emptyTitle?: string;
+  emptyHint?: string;
 }
 
 type Selected =
@@ -104,7 +94,6 @@ function tracksCollection(tracks: MapTrack[]) {
         kitId: track.kitId ?? '',
         participants: track.participantsCount,
         visibility: track.visibility,
-        massifId: track.massifId ?? '',
       },
       geometry: {
         type: 'LineString' as const,
@@ -116,8 +105,7 @@ function tracksCollection(tracks: MapTrack[]) {
 
 function pointsCollection(
   rows: Array<{ id: string; position: TrackPoint }>
-) {
-  return {
+) {  return {
     type: 'FeatureCollection' as const,
     features: rows.map((row) => ({
       type: 'Feature' as const,
@@ -127,6 +115,26 @@ function pointsCollection(
         coordinates: [row.position.lng, row.position.lat],
       },
     })),
+  };
+}
+
+/** Tracé d'un carnet public : une seule ligne, même matière que les traces du compte. */
+function carnetTraceCollection(points: TrackPoint[]) {
+  return {
+    type: 'FeatureCollection' as const,
+    features:
+      points.length >= 2
+        ? [
+            {
+              type: 'Feature' as const,
+              properties: { id: 'carnet-trace' },
+              geometry: {
+                type: 'LineString' as const,
+                coordinates: points.map((point) => [point.lng, point.lat]),
+              },
+            },
+          ]
+        : [],
   };
 }
 
@@ -183,12 +191,15 @@ function ensureLayer(map: MapLibreMap, id: string, create: () => void) {
   if (!map.getLayer(id)) create();
 }
 
-function isMarkerClick(event: MapLayerMouseEvent): boolean {
-  const target = event.originalEvent?.target as HTMLElement | null;
-  return Boolean(target?.closest?.('.maplibregl-marker, .lkdv-map-overlay'));
-}
-
-export function CompteMap({ authState, context, focus = null }: CompteMapProps) {
+export function CompteMap({
+  authState,
+  context,
+  focus = null,
+  variant = 'compte',
+  trace = null,
+  emptyTitle,
+  emptyHint,
+}: CompteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRefs = useRef<Marker[]>([]);
@@ -203,11 +214,22 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
   const [online, setOnline] = useState(true);
   const [year, setYear] = useState<number | null>(null);
 
+  /* Fiche carnet : la carte ne montre que le tracé du carnet. */
+  const isCarnet = variant === 'carnet';
+  const tracePoints = useMemo(
+    () => (isCarnet ? simplifyTrack(parsePositions(trace)) : []),
+    [isCarnet, trace]
+  );
+  const traceBounds = useMemo(
+    () => (tracePoints.length >= 2 ? boundsOfPoints(tracePoints) : null),
+    [tracePoints]
+  );
+
   const config = mapModeConfig(context.mode);
   const query = useQuery<CompteMapPayload, Error>({
     queryKey: ['compte-map'],
     queryFn: fetchCompteMap,
-    enabled: authState === 'owner' && online,
+    enabled: authState === 'owner' && online && !isCarnet,
     staleTime: 60_000,
     retry: 1,
   });
@@ -309,8 +331,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#FFFFFF',
-          'line-width': 7,
-          'line-opacity': 0.82,
+          'line-width': 6,
+          'line-opacity': 0.68,
         },
       });
     });
@@ -322,9 +344,9 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#5B7F55',
-          'line-width': 11,
-          'line-opacity': 0.32,
-          'line-blur': 7,
+          'line-width': 7,
+          'line-opacity': 0.35,
+          'line-blur': 4,
         },
       });
     });
@@ -336,8 +358,8 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#17402C',
-          'line-width': 3.5,
-          'line-opacity': 0.96,
+          'line-width': 3,
+          'line-opacity': 0.9,
         },
       });
     });
@@ -355,14 +377,13 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         type: 'circle',
         source: 'compte-track-starts',
         paint: {
-          'circle-radius': 6,
+          'circle-radius': 5,
           'circle-color': '#17402C',
           'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2.5,
+          'circle-stroke-width': 2,
         },
       });
       map.on('click', 'compte-track-starts-dot', (event: MapLayerMouseEvent) => {
-        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'outing', id: String(id) });
       });
@@ -379,10 +400,10 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         type: 'circle',
         source: 'compte-track-ends',
         paint: {
-          'circle-radius': 5,
-          'circle-color': '#F4FBF3',
+          'circle-radius': 4,
+          'circle-color': '#fff',
           'circle-stroke-color': '#17402C',
-          'circle-stroke-width': 2.5,
+          'circle-stroke-width': 2,
         },
       });
     });
@@ -394,33 +415,19 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         data.carnets.map((carnet) => ({ id: carnet.id, position: carnet.position }))
       )
     );
-    ensureLayer(map, 'compte-carnets-halo', () => {
-      map.addLayer({
-        id: 'compte-carnets-halo',
-        type: 'circle',
-        source: 'compte-carnets',
-        paint: {
-          'circle-radius': 12,
-          'circle-color': '#C89A3B',
-          'circle-opacity': 0.16,
-        },
-      });
-    });
     ensureLayer(map, 'compte-carnets-dot', () => {
       map.addLayer({
         id: 'compte-carnets-dot',
         type: 'circle',
         source: 'compte-carnets',
         paint: {
-          'circle-radius': 6,
+          'circle-radius': 5,
           'circle-color': '#C89A3B',
           'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2.5,
-          'circle-opacity': 1,
+          'circle-stroke-width': 2,
         },
       });
       map.on('click', 'compte-carnets-dot', (event: MapLayerMouseEvent) => {
-        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'carnet', id: String(id) });
       });
@@ -431,49 +438,19 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       'compte-pois',
       pointsCollection(data.pois.map((poi) => ({ id: poi.id, position: poi.position })))
     );
-    ensureLayer(map, 'compte-pois-halo', () => {
-      map.addLayer({
-        id: 'compte-pois-halo',
-        type: 'circle',
-        source: 'compte-pois',
-        paint: {
-          'circle-radius': 11,
-          'circle-color': '#2F6B45',
-          'circle-opacity': 0.14,
-        },
-      });
-    });
-    ensureLayer(map, 'compte-pois-hit', () => {
-      map.addLayer({
-        id: 'compte-pois-hit',
-        type: 'circle',
-        source: 'compte-pois',
-        paint: {
-          'circle-radius': 18,
-          'circle-color': '#2F6B45',
-          'circle-opacity': 0,
-        },
-      });
-      map.on('click', 'compte-pois-hit', (event: MapLayerMouseEvent) => {
-        if (isMarkerClick(event)) return;
-        const id = event.features?.[0]?.properties?.id;
-        if (id) setSelected({ kind: 'poi', id: String(id) });
-      });
-    });
     ensureLayer(map, 'compte-pois-dot', () => {
       map.addLayer({
         id: 'compte-pois-dot',
         type: 'circle',
         source: 'compte-pois',
         paint: {
-          'circle-radius': 4.5,
-          'circle-color': '#2F6B45',
+          'circle-radius': 3.5,
+          'circle-color': '#4B6B7C',
           'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2.5,
+          'circle-stroke-width': 1.5,
         },
       });
       map.on('click', 'compte-pois-dot', (event: MapLayerMouseEvent) => {
-        if (isMarkerClick(event)) return;
         const id = event.features?.[0]?.properties?.id;
         if (id) setSelected({ kind: 'poi', id: String(id) });
       });
@@ -481,10 +458,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
     const layers = mapModeConfig(context.mode).layers;
     const visibility: Array<[string, boolean]> = [
-      ['compte-carnets-halo', false],
-      ['compte-carnets-dot', false],
-      ['compte-pois-halo', layers.pois],
-      ['compte-pois-hit', layers.pois],
+      ['compte-carnets-dot', layers.carnets],
       ['compte-pois-dot', layers.pois],
       ['compte-track-starts-dot', layers.outingPins],
       ['compte-track-ends-dot', layers.tracks !== 'none'],
@@ -499,16 +473,88 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     }
   }, [map, ready, data, visibleTracks, context.mode]);
 
+  /* Tracé du carnet : même peinture que les traces du Compte (liseré blanc,
+     halo vert, ligne encre), mais la donnée vient de la fiche, pas du compte. */
+  useEffect(() => {
+    if (!map || !ready || !isCarnet) return;
+    ensureSource(
+      map,
+      'compte-carnet-trace',
+      carnetTraceCollection(tracePoints) as ReturnType<typeof tracksCollection>
+    );
+    ensureLayer(map, 'compte-carnet-trace-casing', () => {
+      map.addLayer({
+        id: 'compte-carnet-trace-casing',
+        type: 'line',
+        source: 'compte-carnet-trace',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#FFFFFF', 'line-width': 6, 'line-opacity': 0.68 },
+      });
+    });
+    ensureLayer(map, 'compte-carnet-trace-glow', () => {
+      map.addLayer({
+        id: 'compte-carnet-trace-glow',
+        type: 'line',
+        source: 'compte-carnet-trace',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#5B7F55',
+          'line-width': 7,
+          'line-opacity': 0.35,
+          'line-blur': 4,
+        },
+      });
+    });
+    ensureLayer(map, 'compte-carnet-trace-line', () => {
+      map.addLayer({
+        id: 'compte-carnet-trace-line',
+        type: 'line',
+        source: 'compte-carnet-trace',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#17402C', 'line-width': 3, 'line-opacity': 0.9 },
+      });
+    });
+    const visible = tracePoints.length >= 2 ? 'visible' : 'none';
+    for (const layer of [
+      'compte-carnet-trace-casing',
+      'compte-carnet-trace-glow',
+      'compte-carnet-trace-line',
+    ]) {
+      if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visible);
+    }
+  }, [map, ready, isCarnet, tracePoints]);
+
+  /* Cadrage du tracé du carnet : le parcours remplit la bande carte, en 3D
+     (même inclinaison que la carte d'une sortie du Compte). */
+  useEffect(() => {
+    if (!map || !ready || !traceBounds) return;
+    const reduced = prefersReducedMotion();
+    map.fitBounds(
+      [
+        [traceBounds[0], traceBounds[1]],
+        [traceBounds[2], traceBounds[3]],
+      ],
+      {
+        padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
+          sheetOpen: false,
+          mapbig: map.getContainer().clientHeight > 500,
+        }),
+        maxZoom: 14,
+        pitch: 45,
+        bearing: -18,
+        duration: reduced ? 0 : 1100,
+        essential: true,
+      }
+    );
+  }, [map, ready, traceBounds]);
+
   useEffect(() => {
     if (!map) return;
-    const close = (event: { point: { x: number; y: number }; originalEvent?: Event }) => {
-      const target = event.originalEvent?.target as HTMLElement | null;
-      if (target?.closest?.('.maplibregl-marker, .lkdv-map-overlay')) return;
+    const close = (event: { point: { x: number; y: number } }) => {
       const hits = map.queryRenderedFeatures(event.point as never, {
         layers: [
           'compte-track-starts-dot',
           'compte-carnets-dot',
-          'compte-pois-hit',
           'compte-pois-dot',
         ].filter((layer) => Boolean(map.getLayer(layer))),
       });
@@ -522,177 +568,33 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
 
   useEffect(() => {
     if (!map || !ready || !data) return;
-    const container = map.getContainer();
-    let overlay = container.querySelector<HTMLDivElement>('.lkdv-map-overlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.className = 'lkdv-map-overlay';
-      container.appendChild(overlay);
-    }
-    overlay.innerHTML = '';
+    for (const marker of markerRefs.current) marker.remove();
+    markerRefs.current = [];
+    if (!config.layers.massifs) return;
 
-    type Entry = { element: HTMLButtonElement; lng: number; lat: number; anchor: string; detail: boolean };
-    const entries: Entry[] = [];
-
-    if (config.layers.massifs) for (const massif of data.massifs) {
+    for (const massif of data.massifs) {
       const element = document.createElement('button');
       element.type = 'button';
       element.className = 'lkdv-map-massif';
       element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
-      element.dataset.massifId = massif.id;
-      const icon = document.createElement('span');
-      icon.className = 'lkdv-map-massif-ico';
-      icon.innerHTML = MAP_ICON.peak;
       const count = document.createElement('b');
       count.textContent = String(massif.outings);
-      const label = document.createElement('span');
-      label.className = 'lkdv-map-massif-name';
-      label.textContent = massif.name;
-      element.append(icon, count, label);
+      element.append(count);
       element.title = `${massif.name} · ${massif.outings} sorties`;
       element.addEventListener('click', (event) => {
         event.stopPropagation();
         setSelected({ kind: 'massif', id: massif.id });
       });
-      overlay.appendChild(element);
-      entries.push({ element, lng: massif.center.lng, lat: massif.center.lat, anchor: 'translate(-50%, -100%)', detail: false });
-    }
-
-    if (config.layers.pois) for (const poi of data.pois) {
-      const element = document.createElement('button');
-      element.type = 'button';
-      element.className = 'lkdv-map-poi';
-      element.dataset.poiId = poi.id;
-      element.setAttribute('aria-label', poi.label);
-      element.title = poi.label;
-      const icon = document.createElement('span');
-      icon.className = 'lkdv-map-poi-ico';
-      icon.innerHTML = poiIcon(poi.label);
-      element.append(icon);
-      element.addEventListener('click', (event) => {
-        event.stopPropagation();
-        setSelected({ kind: 'poi', id: poi.id });
-      });
-      overlay.appendChild(element);
-      entries.push({ element, lng: poi.position.lng, lat: poi.position.lat, anchor: 'translate(-50%, -50%)', detail: true });
-    }
-
-    if (config.layers.carnets) for (const carnet of data.carnets) {
-      const element = document.createElement('button');
-      element.type = 'button';
-      element.className = 'lkdv-map-carnet';
-      element.setAttribute('aria-label', carnet.title || 'Carnet');
-      element.title = carnet.title || 'Carnet';
-      const icon = document.createElement('span');
-      icon.className = 'lkdv-map-carnet-ico';
-      icon.innerHTML = MAP_ICON.book;
-      element.append(icon);
-      element.addEventListener('click', (event) => {
-        event.stopPropagation();
-        setSelected({ kind: 'carnet', id: carnet.id });
-      });
-      overlay.appendChild(element);
-      entries.push({ element, lng: carnet.position.lng, lat: carnet.position.lat, anchor: 'translate(-50%, -50%)', detail: true });
-    }
-
-    const place = () => {
-      const width = container.clientWidth;
-      const height = container.clientHeight;
-      const zoom = map.getZoom();
-      for (const entry of entries) {
-        const point = map.project([entry.lng, entry.lat]);
-        const inside =
-          point.x > 10 && point.x < width - 10 && point.y > 10 && point.y < height - 10;
-        const visible = inside && (!entry.detail || zoom >= 7);
-        entry.element.style.display = visible ? '' : 'none';
-        entry.element.style.transform = `translate(${point.x}px, ${point.y}px) ${entry.anchor}`;
-      }
-    };
-    place();
-    map.on('move', place);
-    map.on('zoom', place);
-    map.on('resize', place);
-
-    return () => {
-      map.off('move', place);
-      map.off('zoom', place);
-      map.off('resize', place);
-      overlay?.remove();
-    };
-  }, [map, ready, data, config.layers.massifs, config.layers.pois, config.layers.carnets]);
-
-  useEffect(() => {
-    if (!map || !ready) return;
-    const container = map.getContainer();
-    container.querySelectorAll<HTMLElement>('.lkdv-map-massif').forEach((element) => {
-      const id = element.dataset.massifId;
-      element.classList.toggle('is-selected', selected?.kind === 'massif' && selected.id === id);
-    });
-  }, [map, ready, selected]);
-
-  useEffect(() => {
-    if (!map || !ready) return;
-    const trackId = selected?.kind === 'outing' ? selected.id : null;
-    const massifId = selected?.kind === 'massif' ? selected.id : null;
-    const match = trackId
-      ? ['==', ['get', 'id'], trackId]
-      : massifId
-        ? ['==', ['get', 'massifId'], massifId]
-        : null;
-    const line = (selectedValue: any, idle: any): any =>
-      match ? ['case', match, selectedValue, idle] : idle;
-    if (map.getLayer('compte-tracks-line')) {
-      map.setPaintProperty('compte-tracks-line', 'line-color', line('#C89A3B', '#17402C'));
-      map.setPaintProperty('compte-tracks-line', 'line-width', line(5, 3.5));
-      map.setPaintProperty('compte-tracks-line', 'line-opacity', line(1, 0.9));
-    }
-    if (map.getLayer('compte-tracks-casing')) {
-      map.setPaintProperty('compte-tracks-casing', 'line-width', line(9, 7));
-      map.setPaintProperty('compte-tracks-casing', 'line-opacity', line(0.95, 0.78));
-    }
-    if (map.getLayer('compte-tracks-glow')) {
-      map.setPaintProperty('compte-tracks-glow', 'line-width', line(14, 11));
-      map.setPaintProperty('compte-tracks-glow', 'line-opacity', line(0.4, 0.24));
-    }
-  }, [map, ready, selected]);
-
-  useEffect(() => {
-    if (!map || !ready || !resolved) return;
-    const reduced = prefersReducedMotion();
-    if (resolved.kind === 'outing') {
-      map.fitBounds(
-        [
-          [resolved.data.bounds[0], resolved.data.bounds[1]],
-          [resolved.data.bounds[2], resolved.data.bounds[3]],
-        ],
-        {
-          padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
-            sheetOpen: false,
-            mapbig: map.getContainer().clientHeight > 500,
-          }),
-          maxZoom: 14,
-          duration: reduced ? 0 : 1500,
-          easing: CINEMATIC_EASE,
-          essential: true,
-        }
+      markerRefs.current.push(
+        new Marker({ element, anchor: 'bottom' })
+          .setLngLat([massif.center.lng, massif.center.lat])
+          .addTo(map)
       );
-      return;
     }
-    map.flyTo({
-      center: [resolved.position.lng, resolved.position.lat],
-      zoom: resolved.kind === 'massif' ? 10.5 : 14,
-      duration: reduced ? 0 : 1600,
-      curve: 1.42,
-      speed: 0.72,
-      easing: CINEMATIC_EASE,
-      essential: true,
-    });
-  }, [map, ready, resolved]);
+  }, [map, ready, data, config.layers.massifs]);
 
   useEffect(() => {
     if (!map || !data || !ready) return;
-    // Garder la sortie la plus récente lisible, y compris sur la grande carte :
-    // les POI, le départ, l'arrivée et le carnet restent dans le cadre.
     const intent = fitIntentForMode(context.mode, data, context.outingId);
     if (!intent) return;
     const reduced = prefersReducedMotion();
@@ -708,8 +610,7 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         }),
         maxZoom: intent.maxZoom,
         pitch: context.mode === 'sortie' ? 45 : 0,
-        duration: reduced ? 0 : context.mode === 'sortie' ? 1600 : 1300,
-        easing: CINEMATIC_EASE,
+        duration: reduced ? 0 : context.mode === 'sortie' ? 1200 : 800,
         essential: true,
       }
     );
@@ -829,10 +730,11 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     window.__lkdvCompteMapOpenOuting?.(id);
   }, []);
 
-  const showGuest = authState === 'guest' || unauthorized;
+  const showGuest = !isCarnet && (authState === 'guest' || unauthorized);
   const showError =
-    !fallback && !styleFailed && (authState === 'error' || (query.isError && !unauthorized));
+    !isCarnet && !fallback && !styleFailed && (authState === 'error' || (query.isError && !unauthorized));
   const showEmpty =
+    !isCarnet &&
     !fallback &&
     !styleFailed &&
     ready &&
@@ -840,12 +742,17 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     Boolean(data) &&
     (data?.tracks.length ?? 0) === 0;
   const showNeutral =
+    !isCarnet &&
     !fallback &&
     !styleFailed &&
     ready &&
     authState === 'owner' &&
     config.dimmed &&
     Boolean(config.emptyTitle);
+  /* Fiche carnet : état vide seulement quand la base ne porte réellement
+     aucune trace — jamais un « connecte-toi » qui n'a pas de sens ici. */
+  const showCarnetEmpty =
+    isCarnet && !fallback && !styleFailed && ready && tracePoints.length < 2;
 
   return (
     <div
@@ -859,13 +766,19 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       data-map-empty={data && data.tracks.length === 0 ? 'true' : 'false'}
       data-map-dimmed={config.dimmed ? 'true' : 'false'}
       data-map-fallback={fallback ? 'true' : 'false'}
+      data-map-variant={variant}
+      data-map-trace={isCarnet ? (tracePoints.length >= 2 ? 'true' : 'false') : 'account'}
       data-offline={!online ? 'true' : 'false'}
     >
       <div ref={containerRef} className="lkdv-map-canvas" />
       <p className="sr-only" aria-live="polite">
-        {data
-          ? `Carte de tes sorties : ${data.stats.outings} sorties, ${data.stats.km} kilomètres, ${data.stats.massifs} massifs.`
-          : 'Carte en chargement.'}
+        {isCarnet
+          ? tracePoints.length >= 2
+            ? `Tracé du carnet : ${tracePoints.length} points géolocalisés.`
+            : 'Aucun tracé enregistré pour ce carnet.'
+          : data
+            ? `Carte de tes sorties : ${data.stats.outings} sorties, ${data.stats.km} kilomètres, ${data.stats.massifs} massifs.`
+            : 'Carte en chargement.'}
       </p>
 
       {!ready && !styleFailed && !fallback ? (
@@ -897,7 +810,15 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
         <CompteMapState kind="neutral" title={config.emptyTitle} hint={config.emptyHint} />
       ) : null}
 
-      {ready && authState === 'owner' && data && data.tracks.length > 0 && !query.isError && !fallback ? (
+      {showCarnetEmpty ? (
+        <CompteMapState
+          kind="neutral"
+          title={emptyTitle ?? 'Aucun tracé enregistré pour ce carnet.'}
+          hint={emptyHint ?? 'L’auteur n’a pas joint de trace GPS à ce carnet.'}
+        />
+      ) : null}
+
+      {ready && !isCarnet && authState === 'owner' && data && data.tracks.length > 0 && !query.isError && !fallback ? (
         <CompteMapHud
           config={config}
           scale={scale}
