@@ -13,6 +13,7 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   distDir: process.env.DIST_DIR || '.next',
   compress: true,
+  poweredByHeader: false,
 
   // L'aperçu local doit laisser la navigation mobile entièrement utilisable.
   devIndicators: false,
@@ -116,12 +117,21 @@ const nextConfig = {
             value: 'nosniff',
           },
           {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'X-Permitted-Cross-Domain-Policies',
+            value: 'none',
+          },
+          {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
+            // Micro autorisé pour les notes vocales de la messagerie ; caméra et géoloc inchangées.
+          value: 'camera=(), microphone=(self), geolocation=(self), interest-cohort=()',
           },
           // P0-5 (C-10) — CSP en Report-Only (une semaine d'observation des
           // rapports avant le mode bloquant ; nonce à poser sur les scripts
@@ -147,7 +157,9 @@ const nextConfig = {
       },
       {
         source: '/messagerie',
-        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+        // `no-cache` (et non `no-store`) : rien n'est partagé entre utilisateurs,
+        // mais le navigateur peut réutiliser la page au retour arrière (bfcache).
+        headers: [{ key: 'Cache-Control', value: 'private, no-cache, must-revalidate' }],
       },
       {
         source: '/carnets/:path*',
@@ -180,6 +192,14 @@ const nextConfig = {
       {
         source: '/api/carnets/:path*',
         headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/_next/static/media/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
     ];
   },
