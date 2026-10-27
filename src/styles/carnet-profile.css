@@ -29,7 +29,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-screen-header { position: relative; z-index: 20; padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 6px; min-width: 0; }
 .ckp-screen-body {
   position: relative; z-index: 1;
-  display: flex; flex-direction: column; min-height: 0;
+  display: flex; flex-direction: column; min-height: 0; min-width: 0;
   width: 100%; max-width: 430px; margin-inline: auto;
   padding: 0 12px calc(58px + env(safe-area-inset-bottom, 0px));
 }
@@ -96,7 +96,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-card-scroll::-webkit-scrollbar { display: none; }
 
 /* --- Identité ------------------------------------------------------------- */
-.ckp-head { display: flex; align-items: center; gap: 10px; }
+.ckp-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .ckp-cover-btn {
   position: relative; flex: none; width: 66px; height: 66px; padding: 2.5px;
   border: 0; border-radius: 50%; display: block; cursor: pointer;
@@ -134,11 +134,14 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-cover--trace svg { display: block; width: 100%; height: 100%; }
 
-/* Grille de stats : gap 4, valeur 19/700, libellé 10,5/500. */
-.ckp-id-stats { display: grid; grid-template-columns: repeat(3, 101px); gap: 4px; flex: none; min-width: 0; margin: 2px 0 0 2px; }
+/* Grille de stats : trois colonnes égales qui prennent la place restante —
+   aucune largeur fixe (101 px × 3 + gouttière débordait la carte de 7 px). */
+.ckp-id-stats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;
+  flex: 1 1 auto; min-width: 0; max-width: 100%; margin: 2px 0 0 2px;
+}
 .ckp-stat {
-  flex: 1 1 101px;
-  min-width: 0; min-height: 39px; padding: 2px 3px; border: 0; border-radius: 14px;
+  min-width: 0; max-width: 100%; min-height: 39px; padding: 2px 3px; border: 0; border-radius: 14px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: none; cursor: pointer; color: inherit;
 }
@@ -183,65 +186,79 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* --- Capsule verre unique en bas à droite : 5 actions · séparateur · pages --
-   Surface reprise de la capsule du Compte (`liquid-capsules.css`) : dégradé
-   interne, liseré clair 1 px en haut, ombre portée douce, flou + saturation.
-   La lentille garde la famille de mouvement du Compte, en 220 ms.           */
-.ckp-actions { display: flex; align-items: center; gap: 3px; height: 32px; }
-.ckp-foot-sep {
-  display: block; flex: none; width: 1px; height: 16px; margin: 0 5px; border-radius: 1px;
-  background: linear-gradient(180deg, rgba(23, 43, 36, .02), rgba(23, 43, 36, .16) 50%, rgba(23, 43, 36, .02));
+/* --- Pied de carte : deux boutons verre ronds + capsule 88 × 30 -----------
+   Géométrie mesurée sur /compte (`.ig-tabs`) : capsule 88 × 30, rayon 999,
+   padding 2,5 px, deux segments de 41,5 × 25, lentille blanche de même taille,
+   posée à 10 px des bords bas et droit de la carte. Les deux actions (♥, 💬)
+   sortent de la capsule : deux boutons ronds de 30 px, 8 px à sa gauche,
+   même matière que la capsule, sans texte.                                  */
+.ckp-card-foot {
+  position: absolute; right: 10px; bottom: 10px; z-index: 6;
+  display: flex; align-items: center; gap: 8px; height: 30px;
+  padding: 0; border-radius: 0; background: none; box-shadow: none;
+  overflow: visible;
 }
+.ckp-actions { display: flex; align-items: center; gap: 8px; height: 30px; }
+.ckp-foot-sep { display: none; }
+
+/* Bouton rond verre : même matière que la capsule, aucune étiquette visible. */
 .ckp-action {
-  position: relative; display: grid; place-items: center;
-  width: 28px; height: 25px; padding: 0; border: 0; background: none; cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  position: relative; z-index: 1; flex: none;
+  width: 30px; height: 30px; padding: 0; border: 0; border-radius: 999px;
+  display: grid; place-items: center; cursor: pointer;
+  background: rgba(23, 43, 36, .06);
+  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
+  color: #56665d; -webkit-tap-highlight-color: transparent;
+  transition: color 180ms ease, transform .16s cubic-bezier(.22, 1, .36, 1);
 }
-/* Action à compteur : le disque garde sa place, la pastille occupe la droite
-   de la cellule — le glyphe n'est jamais recouvert. */
-.ckp-action--count { width: 42px; }
-.ckp-action-btn {
-  position: relative; width: 100%; height: 32px; padding: 0; display: flex;
-  align-items: center; justify-content: center;
-  border-radius: 50%; background: none; box-shadow: none;
-}
-.ckp-action--count .ckp-action-btn { justify-content: flex-start; padding-left: 3px; }
-/* Disque 24 px : la matière du bouton, posée dans la capsule. */
-.ckp-action-in {
-  position: relative; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(255, 255, 255, .64));
-  box-shadow:
-    inset 0 .5px 0 rgba(255, 255, 255, .98),
-    0 0 0 .5px rgba(23, 43, 36, .10),
-    0 1px 2px rgba(23, 43, 36, .10);
-  overflow: visible; color: #56665d;
-  transition:
-    transform .16s cubic-bezier(.22, 1, .36, 1),
-    color .18s ease,
-    background .18s ease,
-    box-shadow .18s ease;
-}
-.ckp-action:active .ckp-action-in { transform: scale(.94); }
-/* Enregistrer est le seul état pressé de la capsule. */
-.ckp-action[data-icon='bookmark'][aria-pressed='true'] .ckp-action-in {
-  color: #17402c; background: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(23, 64, 44, .16));
-  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .98), 0 0 0 .5px rgba(23, 64, 44, .3), 0 1px 3px rgba(23, 64, 44, .2);
-}
-/* Compteur 16 px ancré haut-droite, toujours à l'intérieur de la capsule. */
-.ckp-action-count {
-  position: absolute; top: 1px; right: 0; z-index: 2; min-width: 16px; height: 16px; padding: 0 4px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 999px; background: #17402c; color: #fff;
-  font: 700 8.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-  font-variant-numeric: tabular-nums;
-  /* Liseré blanc : la pastille flotte au-dessus du disque au lieu de le couper. */
-  box-shadow: 0 1px 3px rgba(23, 43, 36, .3), 0 0 0 2px rgba(255, 255, 255, .92);
-}
+.ckp-action[aria-current='page'] { color: #17402c; }
+.ckp-action:active { transform: scale(.94); }
 @media (hover: hover) {
-  .ckp-action:hover .ckp-action-in { background: linear-gradient(180deg, #fff, rgba(255, 255, 255, .82)); }
-  .ckp-action[data-icon='bookmark'][aria-pressed='true']:hover .ckp-action-in {
-    background: linear-gradient(180deg, #fff, rgba(23, 64, 44, .22));
-  }
+  .ckp-action:hover { color: #17402c; }
+}
+/* Le compteur reste une donnée d'accessibilité (aria-label), jamais un texte. */
+.ckp-action-count { display: none; }
+
+/* La capsule : 88 × 30, deux segments de 41,5 × 25, aucun gap. */
+.ckp-capsule {
+  position: relative; flex: none; box-sizing: border-box;
+  width: 88px; height: 30px; padding: 2.5px; border-radius: 999px;
+  background: rgba(23, 43, 36, .06);
+  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
+}
+.ckp-capsule .ckp-tabs {
+  position: relative; z-index: 1; display: grid; grid-template-columns: 41.5px 41.5px;
+  gap: 0; width: 83px; height: 25px; padding: 0; border-radius: 999px;
+  background: none; box-shadow: none;
+}
+.ckp-capsule .ckp-tabs button {
+  position: relative; z-index: 1; width: 41.5px; height: 25px; padding: 0; border: 0;
+  border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+  background: none; color: #56665d; cursor: pointer;
+  transition: color .18s ease, transform .16s cubic-bezier(.22, 1, .36, 1);
+}
+.ckp-capsule .ckp-tabs button[aria-selected='true'] { color: #17402c; }
+.ckp-capsule .ckp-tabs button:active { transform: scale(.94); }
+@media (hover: hover) {
+  .ckp-capsule .ckp-tabs button:hover { color: #17402c; }
+}
+/* Une seule lentille blanche, 41,5 × 25, au pas exact du segment. */
+.ckp-capsule > .ckp-th {
+  position: absolute; top: 2.5px; left: 2.5px; z-index: 0;
+  width: 41.5px; height: 25px; border-radius: 999px; background: #fff;
+  box-shadow:
+    0 1px 3px rgba(23, 43, 36, .18),
+    0 0 0 .5px rgba(23, 43, 36, .06);
+  transform: translateX(calc(var(--i, 0) * 41.5px));
+  transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
+  pointer-events: none;
+}
+/* Page sans segment (J’aime, Commentaires, Gérer, Étapes, Matériel, Nature). */
+.ckp-capsule > .ckp-th[data-off='true'] { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .ckp-capsule > .ckp-th { transition: none; }
 }
 
 /* --- Médias --------------------------------------------------------------- */
@@ -251,7 +268,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    latéral, aucun badge. 3 × 134 + 2 × 2 = 406 : la grille colle à la carte.
    Le bloc est rogné au rayon 22 du Compte, sinon les quatre coins restent
    carrés et l'écart se voit au premier regard. */
-.ckp-media { position: relative; margin: 0 -12px; }
+.ckp-media { position: relative; margin: 0 -12px; min-width: 0; }
 .ckp-grid-wrap {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0;
   border-radius: 22px; overflow: hidden;
@@ -283,26 +300,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   padding: 8px 10px; background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .88));
 }
 .ckp-map-foot .ckp-day-meta { margin: 0; }
-
-/* Sélecteur de pages, fondu dans la capsule : la surface est celle de
-   `.ckp-card-foot`, seule la lentille est peinte ici (famille du Compte). */
-.ckp-card-foot .ckp-tabs {
-  position: relative; right: auto; bottom: auto; z-index: 1; flex: none;
-  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
-  height: 25px; padding: 0; border-radius: 999px; width: 84px;
-  background: none; box-shadow: none;
-}
-.ckp-tabs button {
-  position: relative; z-index: 1; width: 41.5px; height: 25px; border: 0; background: none; border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: #56665d; cursor: pointer;
-  transition: color .18s ease, transform .16s cubic-bezier(.22, 1, .36, 1);
-}
-.ckp-tabs button[aria-selected='true'] { color: #17402c; }
-.ckp-tabs button:active { transform: scale(.94); }
-@media (hover: hover) {
-  .ckp-tabs button:hover { color: #17402c; }
-}
 
 /* --- Carte-drawer --------------------------------------------------------- */
 .ckp-card--drawer { height: 100%; min-height: 0; animation: ckp-drawer-in 220ms cubic-bezier(.22, 1, .36, 1) both; }
@@ -460,8 +457,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 @media (prefers-reduced-motion: reduce) {
   .ckp-card--drawer { animation: none; }
-  .ckp-card-foot > .ckp-th, .ckp-tabs button, .ckp-action-in { transition: none; }
-  .ckp-action:active .ckp-action-in, .ckp-tabs button:active { transform: none; }
+  .ckp-capsule > .ckp-th, .ckp-capsule .ckp-tabs button, .ckp-action { transition: none; }
+  .ckp-action:active, .ckp-capsule .ckp-tabs button:active { transform: none; }
 }
 
 /* --- Squelettes ----------------------------------------------------------- */
@@ -479,14 +476,12 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 @keyframes ckp-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .ckp-skeleton { animation: none; } }
 
-/* --- Alignement v6 : 5 segments sur la ligne du sélecteur ------------------ */
-
+/* --- Carte d'identité : l'espace laissé par la carte du bas ---------------- */
+/* La carte du bas fait 40 % de la hauteur d'écran : la carte d'identité prend
+   tout le reste (top bar → carte), sans hauteur fixe et sans marge parasite.
+   C'est elle qui défile en interne, jamais la page. */
 .ckp-card {
-  position: relative; height: 541px; flex: none;
-  /* Géométrie du sélecteur : 5 segments de 41,5 × 25, gap 2, inset 2,5.
-     Le pas de la lentille vaut segment + gap = 43,5 px. */
-  --ckp-seg: 41.5px;
-  --ckp-seg-gap: 2px;
+  position: relative; flex: 1 1 auto; height: auto; min-height: 0; max-height: none;
 }
 
 
@@ -502,7 +497,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 /* --- Participants : pastilles auteur du fil Communauté, défilables -------- */
 .ckp-people {
-  display: flex; align-items: center; gap: 6px; margin: 0 2px;
+  display: flex; align-items: center; gap: 6px; margin: 0 2px; max-width: calc(100% - 4px);
   overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -538,11 +533,11 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 /* --- Carte du monde du Compte (mapzone), en bas de l'écran ----------------- */
 
-/* Carte du monde : la carte d'identité garde ses 541 px, la carte occupe
-   TOUT le reste (comme le 1fr de `.phone` sur /compte) — 430 × 335 à
-   430 × 932, de y 597 à 932. Aucun min-height, aucune marge parasite. */
+/* Carte du monde : elle fait 40 % de la hauteur d'écran (373 px à 430 × 932) et
+   reste collée au bas de l'écran, au-dessus de la barre basse. Aucun min-height,
+   aucune marge parasite : la carte d'identité prend l'espace qui reste. */
 .ckp-mapzone {
-  position: relative; flex: 1 1 auto; min-height: 0; margin-top: 8px;
+  position: relative; flex: 0 0 auto; min-height: 0; margin-top: 8px; max-width: calc(100% + 24px);
   border-radius: 24px; overflow: hidden;
   background: rgba(23, 64, 44, .18);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(23, 43, 36, .12);
@@ -565,11 +560,12 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 /* --- Carte du monde pleine largeur, jusqu'en bas, comme /compte ------------ */
 
 .ckp-screen-body { padding-bottom: 0; }
-/* Bord à bord : la carte sort de la gouttière 12 px de l'écran. */
+/* Bord à bord : la carte sort de la gouttière 12 px de l'écran, et sa hauteur
+   est le 40 % exact de la page (0,40 × 932 = 373 px à 430 × 932). */
 .ckp-mapzone {
   margin: 8px -12px 0;
   border-radius: 0;
-  min-height: 0;
+  min-height: 0; height: 40dvh;
 }
 .ckp-screen .tb { bottom: 16px; }
 /* la carte d'identité garde sa marge basse pour ne pas coller à la carte */
@@ -598,27 +594,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-page-pad { display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
 .ckp-page-meta { padding: 0 1px; }
 
-/* --- Lentille unique du sélecteur ---------------------------------------- */
-/* Un seul blanc glisse d'un segment à l'autre : il couvre exactement le
-   segment actif (41,5 × 25, inset 2,5 px dans la capsule), jamais une action
-   au repos. Pas de translation = largeur du segment + gap de la capsule. */
-.ckp-card-foot > .ckp-th {
-  position: absolute; top: 2.5px; left: 2.5px; z-index: 0;
-  width: 41.5px; height: 25px; border-radius: 999px;
-  background: #fff;
-  box-shadow:
-    0 1px 3px rgba(23, 43, 36, .18),
-    0 0 0 .5px rgba(23, 43, 36, .06);
-  transform: translateX(calc(var(--i, 0) * (41.5px + 2px)));
-  transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
-  pointer-events: none;
-}
-/* Page sans segment (Gérer, Étapes, Matériel, Nature) : aucune lentille. */
-.ckp-card-foot > .ckp-th[data-off='true'] { opacity: 0; }
-@media (prefers-reduced-motion: reduce) {
-  .ckp-card-foot > .ckp-th { transition: none; }
-}
-
 /* --- Rangées des pages (Gérer, J’aime) ----------------------------------- */
 .ckp-row {
   display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0;
@@ -645,10 +620,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   .ckp-row:not(:disabled):hover { background: rgba(255, 255, 255, .62); }
 }
 
-/* Cinq segments égaux dans la capsule du bas : 41,5 × 25 px par cellule. */
-.ckp-card-foot .ckp-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c; }
-.ckp-card-foot .ckp-action:focus-visible { outline: none; }
-.ckp-card-foot .ckp-action:focus-visible .ckp-action-in { box-shadow: 0 0 0 2px #17402c, 0 1px 2px rgba(23, 43, 36, .12); }
+/* Anneau de focus : la capsule garde ses segments, les actions rondes leur disque. */
+.ckp-capsule .ckp-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c; }
+.ckp-action:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c, inset 0 1px 1px rgba(23, 43, 36, .06); }
 
 /* --- Sous-drawer statistiques -------------------------------------------- */
 .ckp-stats .ckp-pane-sub { display: flex; margin: 0 0 2px; }
@@ -707,62 +681,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-screen { position: relative; }
 /* Le fond reste DERRIÈRE tout : fixed + z-index négatif, aucun empilement local. */
 .ckp-screen > .ckp-screen-bg { position: fixed; inset: 0; z-index: -1; }
-
-/* --- Sélecteur unique du Compte : TOUS les éléments en segments égaux ------ */
-/* Une seule pilule, même matière que `.ig-tabs` : chaque bouton (actions et
-   vues) est un segment de 41,5 × 25 ; le segment actif reçoit la lentille. */
-.ckp-card-foot {
-  position: absolute; right: 10px; bottom: 10px; z-index: 6;
-  display: grid; grid-auto-flow: column; grid-auto-columns: var(--ckp-seg); align-items: center;
-  gap: var(--ckp-seg-gap);
-  height: 30px; padding: 2.5px; border-radius: 999px;
-  background: rgba(23, 43, 36, .06);
-  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
-  -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
-  overflow: visible;
-}
-.ckp-card-foot .ckp-actions,
-.ckp-card-foot .ckp-tabs { display: contents; }
-.ckp-foot-sep { display: none; }
-.ckp-action,
-.ckp-card-foot .ckp-tabs button {
-  position: relative; z-index: 1; width: 41.5px; height: 25px; padding: 0; border: 0;
-  display: grid; place-items: center; background: none; cursor: pointer;
-  border-radius: 999px; color: #56665d;
-  transition: background-color 220ms cubic-bezier(.22, 1, .36, 1), color 180ms;
-}
-.ckp-action-btn, .ckp-action-in {
-  width: 100%; height: 100%; display: grid; place-items: center;
-  background: none; box-shadow: none; border: 0; border-radius: 999px;
-}
-/* Le segment actif ne peint plus son propre fond : un seul blanc glisse,
-   sous les boutons (lentille z-index 0, boutons z-index 1). */
-.ckp-card-foot .ckp-tabs button[aria-selected='true'] { color: #17402c; }
-.ckp-action-count {
-  position: absolute; top: -1px; right: 1px; min-width: 14px; height: 14px; padding: 0 3px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 999px; background: #17402c; color: #fff;
-  font: 700 8.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-}
-.ckp-action-lbl { display: none; }
-@media (prefers-reduced-motion: reduce) { .ckp-action, .ckp-card-foot .ckp-tabs button { transition: none; } }
-
-/* Actions : Enregistrer est le seul état pressé, et il ne peint aucun fond. */
-.ckp-action[aria-pressed='true'] { background: none; box-shadow: none; }
-.ckp-action-count {
-  top: -2px; right: 3px; min-width: 13px; height: 13px; padding: 0 3px;
-  font: 700 8px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-  background: #17402c; color: #fff;
-}
-
-/* Capsule propre : aucun compteur peint, aucune auréole d'état. */
-.ckp-card-foot .ckp-action-count { display: none; }
-.ckp-card-foot .ckp-action-in,
-.ckp-card-foot .ckp-action[aria-pressed='true'] .ckp-action-in {
-  background: none; box-shadow: none; border: 0;
-}
-/* La page affichée allume son bouton : l'encre passe au vert, le disque reste nu. */
-.ckp-card-foot .ckp-action[aria-current='page'] .ckp-action-in { color: #17402c; }
 
 /* --- Post du moment : la feuille du Compte, ancrée sur la carte ------------ */
 /* `OverlaySheet` mesure `#card` : la feuille prend exactement le cadre de la

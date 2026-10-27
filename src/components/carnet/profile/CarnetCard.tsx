@@ -39,21 +39,17 @@ export interface CarnetCardProps {
 /**
  * Index du segment qui reçoit la lentille blanche dans la capsule.
  *
- * La capsule aligne quatre segments de 41,5 px, dans l'ordre du DOM :
- * ♥ 0 (J’aime), 💬 1 (Commentaires), ▦ 2 (Posts), 🗺 3 (Parcours).
- * Chacun ouvre une page réelle ; la lentille ne se pose donc que sur la page
- * affichée, et disparaît sur Gérer, Étapes, Matériel ou Nature.
+ * La capsule est celle de `/compte` : 88 × 30, deux segments de 41,5 px, dans
+ * l'ordre du DOM — ▦ 0 (Posts), 🗺 1 (Parcours). Les deux actions ♥ et 💬 sont
+ * sorties de la capsule : elles ne portent jamais la lentille, et elle
+ * disparaît sur J’aime, Commentaires, Gérer, Étapes, Matériel ou Nature.
  */
 export function selectorLensIndex(page: CarnetPageId): number {
   switch (page) {
-    case 'likes':
-      return 0;
-    case 'comments':
-      return 1;
     case 'posts':
-      return 2;
+      return 0;
     case 'parcours':
-      return 3;
+      return 1;
     default:
       return -1;
   }
@@ -65,44 +61,35 @@ const SF_ICONS: Record<string, SfIconName> = {
   map: 'map',
 };
 
+/**
+ * Action ronde du pied de carte : bouton verre de 30 px, à gauche de la
+ * capsule — même matière qu'elle, aucun texte visible, l'icône seule.
+ */
 function Action({
   icon,
   label,
   count,
   onClick,
-  pressed,
   current,
 }: {
   icon: string;
   label: string;
   count?: number;
   onClick: () => void;
-  pressed?: boolean;
-  /** La page de ce bouton est affichée : encre verte, sans lentille en double. */
+  /** La page de ce bouton est affichée : encre verte sur le disque. */
   current?: boolean;
 }) {
-  const hasCount = typeof count === 'number' && count > 0;
   return (
     <button
       type="button"
-      className={hasCount ? 'ckp-action ckp-action--count' : 'ckp-action'}
+      className="ckp-action"
       data-icon={icon}
       onClick={onClick}
-      aria-pressed={pressed}
       aria-current={current ? 'page' : undefined}
       aria-label={typeof count === 'number' ? `${label}, ${count}` : label}
       title={label}
     >
-      <span className="ckp-action-btn">
-        <span className="ckp-action-in">
-          <SfIcon name={SF_ICONS[icon] ?? 'ellipsis'} size={17} />
-        </span>
-        {hasCount ? (
-          <span className="ckp-action-count" aria-hidden="true">
-            {count}
-          </span>
-        ) : null}
-      </span>
+      <SfIcon name={SF_ICONS[icon] ?? 'ellipsis'} size={16} />
     </button>
   );
 }
@@ -246,15 +233,8 @@ export function CarnetCard({
       </div>
 
       <div className="ckp-card-foot">
-        {/* Une seule lentille pour les quatre segments : elle glisse par `--i`,
-            ne se pose que sur la vue ou la page active, et reste sous les
-            boutons (`z-index` 0 contre 1). */}
-        <span
-          className="ckp-th"
-          aria-hidden="true"
-          data-off={lensIndex < 0 ? 'true' : undefined}
-          style={{ '--i': Math.max(0, lensIndex) } as React.CSSProperties}
-        />
+        {/* Les deux actions vivent hors de la capsule : deux boutons ronds de
+            30 px, 8 px à sa gauche, même matière, aucun texte. */}
         <div className="ckp-actions" role="group" aria-label="Actions du carnet">
           <Action
             icon="heart"
@@ -272,14 +252,22 @@ export function CarnetCard({
           />
         </div>
 
-        <span className="ckp-foot-sep" aria-hidden="true" />
-
-        <CarnetMediaTabs
-          items={CARNET_PAGE_TABS.slice(0, 2)}
-          activeIndex={carnetPageIndex(page) < 2 ? carnetPageIndex(page) : -1}
-          onChange={(index) => onPageChange(CARNET_PAGE_TABS[index].id)}
-          ariaLabel="Grille ou carte"
-        />
+        {/* La capsule de `/compte` : 88 × 30, deux segments, une seule lentille
+            qui glisse par `--i` sous les boutons (`z-index` 0 contre 1). */}
+        <div className="ckp-capsule">
+          <span
+            className="ckp-th"
+            aria-hidden="true"
+            data-off={lensIndex < 0 ? 'true' : undefined}
+            style={{ '--i': Math.max(0, lensIndex) } as React.CSSProperties}
+          />
+          <CarnetMediaTabs
+            items={CARNET_PAGE_TABS.slice(0, 2)}
+            activeIndex={carnetPageIndex(page) < 2 ? carnetPageIndex(page) : -1}
+            onChange={(index) => onPageChange(CARNET_PAGE_TABS[index].id)}
+            ariaLabel="Grille ou carte"
+          />
+        </div>
       </div>
     </section>
   );
