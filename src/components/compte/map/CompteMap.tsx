@@ -795,11 +795,12 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
       syncClusters();
       const width = container.clientWidth;
       const height = container.clientHeight;
-      const zoom = map.getZoom();
       // La bande vient du ref, tenu par le handler `zoom` de la carte : elle est
       // déjà à jour pour cette frame, sans re-rendu React ni rebuild de l'overlay.
+      // Elle est la seule autorité de présence et de taille des marqueurs, côté
+      // DOM (`isOverlayEntryVisible`) comme côté CSS (`[data-zoom-band]` dans
+      // compte-map.css) : le seuil `is-far` a disparu.
       const band = zoomConfigRef.current;
-      root.classList.toggle('is-far', zoom < 7);
       for (const entry of massifEntries) positionEntry(entry, width, height, band);
       for (const entry of entries) positionEntry(entry, width, height, band);
     };

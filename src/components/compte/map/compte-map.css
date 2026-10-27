@@ -571,7 +571,10 @@
   height: 26px !important;
   min-width: 26px !important;
   padding: 0 !important;
-  display: grid !important;
+  /* Sans `!important` : `CompteMap.positionEntry` masque une entrée hors cadre
+     avec un `display:none` inline, que la présence de bande (plus bas, avec
+     `!important`) reste seule à pouvoir contredire. */
+  display: grid;
   place-items: center !important;
   border: .5px solid rgba(255,255,255,.85) !important;
   border-radius: 999px !important;
@@ -902,10 +905,38 @@
   border-color: rgba(255,255,255,.30) !important;
 }
 
-/* Vue large : uniquement des points minuscules, jamais agrandis. */
-.lkdv-map-overlay.is-far .lkdv-map-poi,
-.lkdv-map-overlay.is-far .lkdv-map-carnet,
-.lkdv-map-overlay.is-far .lkdv-map-massif {
+/* ---------- Bandes de zoom : seule autorité de présence et de taille ----------
+
+   La hiérarchie est portée par `data-zoom-band` sur `.lkdv-map-root`, posé par
+   `CompteMap` depuis `resolveMapZoomConfig` (Monde < 4.5, Pays < 6.5,
+   Région < 10, Lieu au-delà). Ces règles doublent la décision du JS : un point
+   que la bande cache ne doit jamais revenir par une règle de style.
+
+   Les tailles de référence restent celles de l'overlay — massif 24 px, POI
+   20 px, carnet 21 px, agrégat 22 px — et une bande ne les change que par
+   exception explicite (le point de 7 px en Monde/Pays). Aucun
+   `transform: scale()` piloté par le zoom : la taille est fixe par bande, un
+   marqueur ne grossit donc jamais quand on dézoome. */
+
+/* Monde, Pays et Région : les POI n'existent qu'en bande Lieu. */
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-poi,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-poi,
+.lkdv-map-root[data-zoom-band='region'] .lkdv-map-poi {
+  display: none !important;
+}
+
+/* Monde et Pays : les carnets n'apparaissent qu'à partir de la Région. */
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-carnet,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-carnet {
+  display: none !important;
+}
+
+/* Monde et Pays : un massif isolé (ou une sélection) est un point, pas une
+   pastille. Même rendu qu'auparavant en vue large, mais décidé par la bande et
+   non plus par un seuil `is-far` indépendant, qui faisait grossir le marqueur
+   de 7 px à 24 px à l'intérieur même de la bande Région. */
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-massif,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-massif {
   width: 7px !important;
   height: 7px !important;
   min-width: 7px !important;
@@ -914,19 +945,22 @@
   border-radius: 50% !important;
   background: rgba(47,107,69,.52) !important;
   box-shadow: 0 0 0 1px rgba(255,255,255,.45) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
-.lkdv-map-overlay.is-far .lkdv-map-carnet { background: rgba(200,154,59,.58) !important; }
-.lkdv-map-overlay.is-far .lkdv-map-poi { background: rgba(75,107,124,.55) !important; }
-.lkdv-map-overlay.is-far .lkdv-map-poi-ico,
-.lkdv-map-overlay.is-far .lkdv-map-carnet-ico,
-.lkdv-map-overlay.is-far .lkdv-map-massif-ico { display: none !important; }
+
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-massif-ico,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-massif-ico {
+  display: none !important;
+}
 
 /* Agrégats de massifs (bandes Monde/Pays) : un point de 22 px par groupe.
    Un agrégat est un massif : même niveau de superposition (z-index 2), le
    compteur reste lisible à l'échelle des points simples (7 px en vue large). */
 .lkdv-map-overlay .lkdv-map-cluster {
   z-index: 2 !important;
-  display: grid !important;
+  /* Comme les POI : le `display:none` inline du hors-cadre doit gagner. */
+  display: grid;
   place-items: center !important;
   width: 22px !important;
   height: 22px !important;
