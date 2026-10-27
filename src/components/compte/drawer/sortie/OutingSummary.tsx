@@ -26,6 +26,7 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
   const [title, setTitle] = useState(detail.title);
   const [notes, setNotes] = useState(detail.notes);
   const [visibility, setVisibility] = useState<OutingVisibility>(detail.visibility);
+  const [coverFailed, setCoverFailed] = useState(false);
 
   useEffect(() => {
     setTitle(detail.title);
@@ -35,14 +36,20 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
   }, [detail.id, detail.title, detail.notes, detail.visibility]);
 
   const companions = detail.participants.filter((person) => !person.isOwner);
+  const showCover = Boolean(detail.coverUrl) && !coverFailed;
   const context = companions.map((person) => person.name).slice(0, 3).join(', ');
 
   return (
     <div className="lkdv-sortie-summary">
-      <div className={`lkdv-sortie-hero ${detail.coverUrl ? 'has-photo' : ''}`}>
-        {detail.coverUrl ? (
+      <div className={`lkdv-sortie-hero ${showCover ? 'has-photo' : ''}`}>
+        {showCover ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={detail.coverUrl} alt="" className="lkdv-sortie-hero-img" />
+          <img
+            src={detail.coverUrl ?? ''}
+            alt=""
+            className="lkdv-sortie-hero-img"
+            onError={() => setCoverFailed(true)}
+          />
         ) : (
           <TraceMap points={detail.points} className="lkdv-sortie-hero-map" />
         )}

@@ -517,6 +517,59 @@ export const SORTIE_CSS = `
 .lkdv-sortie-toast.error{background:rgba(120,32,24,.94)!important;}
 @media (max-width:370px){.lkdv-sortie-tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important;}.lkdv-sortie-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}}
 @media (prefers-reduced-motion:reduce){.lkdv-sortie-btn{transition:none!important;}}
+/* — Passe de finition du drawer Sortie (20 améliorations) — */
+/* 1. Hauteur de héros adaptative, jamais écrasée par le drawer court. */
+.lkdv-sortie-hero{min-height:clamp(170px,28dvh,210px)!important;}
+/* 2. Bord de verre cohérent avec les autres surfaces. */
+.lkdv-sortie-hero{box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 0 0 .5px rgba(23,43,36,.12),0 10px 28px rgba(23,43,36,.12)!important;}
+/* 3. Titre limité à deux lignes sur mobile. */
+.lkdv-sortie-hero-body h2{display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;font-size:19px!important;line-height:1.12!important;letter-spacing:-.02em!important;}
+/* 4. Scrim plus lisible sur photo claire. */
+.lkdv-sortie-hero.has-photo .lkdv-sortie-hero-scrim{background:linear-gradient(180deg,rgba(8,20,14,.02) 18%,rgba(8,20,14,.78) 100%)!important;}
+/* 5. Badges compacts et alignés. */
+.lkdv-sortie-hero-badges{gap:5px!important;margin-bottom:6px!important;}
+.lkdv-sortie-badge{height:21px!important;padding:0 8px!important;font-size:10px!important;}
+/* 6. Quatre tuiles toujours sur une ligne, sans écrasement. */
+.lkdv-sortie-tiles{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important;}
+.lkdv-sortie-tiles>div{min-width:0!important;padding:7px 8px!important;border-radius:14px!important;}
+.lkdv-sortie-tiles b{font-size:12.5px!important;}
+.lkdv-sortie-tiles small{font-size:8.5px!important;letter-spacing:.04em!important;}
+/* 7. Barre d’actions collante au-dessus de la navigation. */
+.lkdv-sortie-actions{position:sticky!important;bottom:0!important;z-index:6!important;margin:2px -2px 0!important;padding:8px 2px calc(2px + env(safe-area-inset-bottom,0px))!important;background:linear-gradient(180deg,rgba(246,250,243,0),rgba(246,250,243,.94) 42%)!important;}
+/* 8. Boutons d’action homogènes et tactiles. */
+.lkdv-sortie-actions .lkdv-sortie-btn{min-height:38px!important;flex:1 1 0!important;justify-content:center!important;padding:0 10px!important;}
+/* 9. Récit replié proprement. */
+.lkdv-sortie-notes{display:-webkit-box!important;-webkit-line-clamp:5!important;-webkit-box-orient:vertical!important;overflow:hidden!important;font-size:12px!important;line-height:1.5!important;}
+/* 10. Sections aérées et lisibles. */
+.lkdv-sortie-section{padding:10px!important;border-radius:16px!important;background:rgba(255,255,255,.44)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;}
+.lkdv-sortie-section>header{gap:8px!important;align-items:baseline!important;}
+/* 11. En-têtes de section plus compacts. */
+.lkdv-sortie-section>header b{font-size:11.5px!important;}
+.lkdv-sortie-section>header span{font-size:9.5px!important;}
+/* 12. Photos en grille régulière avec ratio stable. */
+.lkdv-sortie-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;}
+/* 13. Tuile photo nette et légère. */
+.lkdv-sortie-photo{aspect-ratio:1/1!important;border-radius:15px!important;overflow:hidden!important;box-shadow:inset 0 0 0 .5px rgba(23,43,36,.1),0 4px 12px rgba(23,43,36,.08)!important;}
+.lkdv-sortie-photo img{width:100%!important;height:100%!important;object-fit:cover!important;transition:transform .35s cubic-bezier(.22,1,.36,1)!important;}
+.lkdv-sortie-photo:active img{transform:scale(1.03)!important;}
+/* 14. États vides plus doux. */
+.lkdv-sortie-pane .lkdv-sortie-empty-line{padding:20px 12px!important;border-radius:16px!important;background:rgba(255,255,255,.36)!important;}
+/* 15. Focus visible cohérent. */
+.lkdv-sortie-btn:focus-visible,.lkdv-sortie-photo:focus-visible,.lkdv-sortie-kudos-btn:focus-visible{outline:2px solid #17402c!important;outline-offset:2px!important;}
+/* 16. Lightbox plus immersive. */
+.lkdv-sortie-lightbox{background:rgba(5,12,8,.94)!important;backdrop-filter:blur(18px)!important;}
+/* 17. Commentaires respirants. */
+.lkdv-sortie-comments{gap:8px!important;}
+.lkdv-sortie-comment-head b{font-size:12px!important;}
+/* 18. Matériel lisible. */
+.lkdv-sortie-gear{gap:6px!important;}
+.lkdv-sortie-gear-name{font-size:12px!important;}
+.lkdv-sortie-gear-weight{font-variant-numeric:tabular-nums!important;}
+/* 19. Toast au-dessus de la barre basse. */
+.lkdv-sortie-toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 10px 28px rgba(0,0,0,.28)!important;}
+/* 20. Mouvement réduit. */
+@media (prefers-reduced-motion:reduce){.lkdv-sortie-photo img,.lkdv-sortie-btn,.lkdv-sortie-hero{transition:none!important;animation:none!important;}}
+
 `;
 
 export default SortieDrawer;
