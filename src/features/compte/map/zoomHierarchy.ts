@@ -54,7 +54,12 @@ export function isInsideViewport(
   );
 }
 
-/** Types d'entrée de l'overlay DOM de la carte, du plus discret au plus prioritaire. */
+/**
+ * Types d'entrée de l'overlay DOM de la carte. L'ordre de cette union n'est
+ * **pas** un ordre de priorité : il suit l'ordre d'apparition historique
+ * (massifs de la tâche 6, puis POI, puis carnets). La priorité de superposition,
+ * elle, est `MAP_ZOOM_PRIORITY` : `poi` > `carnet` > `massif`.
+ */
 export type MapOverlayKind = 'massif' | 'poi' | 'carnet';
 
 /**
@@ -77,6 +82,48 @@ export function isOverlayEntryVisible(
   if (kind === 'poi') return config.pois === 'pills';
   if (kind === 'carnet') return config.carnets !== 'hidden';
   return true;
+}
+
+/**
+ * Drapeaux de couches d'un mode de carte (`mapModeConfig(mode).layers`), réduits
+ * aux booléens utiles : `tracks` y est un mode ('all' | 'filtered' | 'none').
+ */
+export interface MapModeLayerFlags {
+  pois: boolean;
+  outingPins: boolean;
+  tracks: boolean;
+}
+
+/** Visibilité effective des couches natives (rendues par MapLibre). */
+export interface NativeLayerVisibility {
+  pois: boolean;
+  trackStarts: boolean;
+  trackEnds: boolean;
+  casing: boolean;
+  glow: boolean;
+}
+
+/**
+ * Croise les couches autorisées par le mode avec la bande de zoom.
+ *
+ * Les couches natives sont le rendu de fond des mêmes objets que l'overlay DOM :
+ * sans ce croisement, masquer les boutons POI laisserait leurs cercles dessinés
+ * (et cliquables) à toutes les échelles, et les départs/arrivées resteraient
+ * visibles en Monde/Pays alors que la bande les cache. Le mode reste
+ * souverain : une couche qu'il refuse ne revient jamais par la bande.
+ */
+export function resolveNativeLayerVisibility(
+  flags: MapModeLayerFlags,
+  config: MapZoomConfig
+): NativeLayerVisibility {
+  const endpoints = config.endpoints !== 'hidden';
+  return {
+    pois: flags.pois && config.pois === 'pills',
+    trackStarts: flags.outingPins && endpoints,
+    trackEnds: flags.tracks && endpoints,
+    casing: flags.tracks && config.casing,
+    glow: flags.tracks && config.glow,
+  };
 }
 
 export interface MassifCluster<T> {

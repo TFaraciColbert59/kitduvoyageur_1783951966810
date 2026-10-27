@@ -31,6 +31,7 @@ import {
   isInsideViewport,
   isOverlayEntryVisible,
   resolveMapZoomConfig,
+  resolveNativeLayerVisibility,
   type MapOverlayKind,
   type MapZoomConfig,
   type MassifCluster,
@@ -530,16 +531,23 @@ export function CompteMap({ authState, context, focus = null }: CompteMapProps) 
     });
 
     const layers = mapModeConfig(context.mode).layers;
+    // Les couches natives suivent la même bande que l'overlay : sans ce
+    // croisement, les cercles POI resteraient dessinés (et cliquables) à toutes
+    // les échelles, et les départs/arrivées visibles en Monde/Pays.
+    const native = resolveNativeLayerVisibility(
+      { pois: layers.pois, outingPins: layers.outingPins, tracks: layers.tracks !== 'none' },
+      zoomConfig
+    );
     const visibility: Array<[string, boolean]> = [
       ['compte-carnets-halo', false],
       ['compte-carnets-dot', false],
-      ['compte-pois-halo', layers.pois],
-      ['compte-pois-hit', layers.pois],
-      ['compte-pois-dot', layers.pois],
-      ['compte-track-starts-dot', layers.outingPins],
-      ['compte-track-ends-dot', layers.tracks !== 'none'],
-      ['compte-tracks-casing', layers.tracks !== 'none' && zoomConfig.casing],
-      ['compte-tracks-glow', layers.tracks !== 'none' && zoomConfig.glow],
+      ['compte-pois-halo', native.pois],
+      ['compte-pois-hit', native.pois],
+      ['compte-pois-dot', native.pois],
+      ['compte-track-starts-dot', native.trackStarts],
+      ['compte-track-ends-dot', native.trackEnds],
+      ['compte-tracks-casing', native.casing],
+      ['compte-tracks-glow', native.glow],
       ['compte-tracks-line', layers.tracks !== 'none'],
     ];
     for (const [layer, visible] of visibility) {

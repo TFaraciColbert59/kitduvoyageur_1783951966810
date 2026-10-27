@@ -5,6 +5,7 @@ import {
   isInsideViewport,
   isOverlayEntryVisible,
   resolveMapZoomConfig,
+  resolveNativeLayerVisibility,
 } from '../zoomHierarchy';
 
 describe('resolveMapZoomConfig', () => {
@@ -256,5 +257,53 @@ describe('isOverlayEntryVisible', () => {
     expect(isOverlayEntryVisible('massif', hidden, true)).toBe(true);
     expect(isOverlayEntryVisible('carnet', hidden, true)).toBe(false);
     expect(isOverlayEntryVisible('poi', hidden, true)).toBe(false);
+  });
+});
+
+describe('resolveNativeLayerVisibility', () => {
+  const mode = { pois: true, outingPins: true, tracks: true };
+
+  it('masque les couches POI natives hors bande `pills`', () => {
+    expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(3)).pois).toBe(false);
+    expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(8)).pois).toBe(false);
+    expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(12)).pois).toBe(true);
+  });
+
+  it('masque départs et arrivées en Monde/Pays, les montre en Région/Lieu', () => {
+    expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(3))).toMatchObject({
+      trackStarts: false,
+      trackEnds: false,
+    });
+    expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(5))).toMatchObject({
+      trackStarts: false,
+      trackEnds: false,
+    });
+    expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(8))).toMatchObject({
+      trackStarts: true,
+      trackEnds: true,
+    });
+    expect(resolveNativeLayerVisibility(mode, resolveMapZoomConfig(12))).toMatchObject({
+      trackStarts: true,
+      trackEnds: true,
+    });
+  });
+
+  it('ne ressuscite jamais une couche que le mode refuse', () => {
+    const off = { pois: false, outingPins: false, tracks: false };
+    const place = resolveMapZoomConfig(14);
+    expect(resolveNativeLayerVisibility(off, place)).toEqual({
+      pois: false,
+      trackStarts: false,
+      trackEnds: false,
+      casing: false,
+      glow: false,
+    });
+  });
+
+  it('garde casing et glow liés à la bande et aux traces du mode', () => {
+    const world = resolveNativeLayerVisibility({ pois: false, outingPins: false, tracks: true }, resolveMapZoomConfig(3));
+    expect(world).toMatchObject({ casing: false, glow: false });
+    const place = resolveNativeLayerVisibility({ pois: false, outingPins: false, tracks: true }, resolveMapZoomConfig(12));
+    expect(place).toMatchObject({ casing: true, glow: true });
   });
 });
