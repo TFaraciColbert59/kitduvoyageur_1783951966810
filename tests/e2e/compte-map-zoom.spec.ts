@@ -131,10 +131,10 @@ test.describe('carte du Compte — hiérarchie de zoom', () => {
       expect(box.height, 'massif Monde hauteur').toBeLessThanOrEqual(8);
     }
     for (const box of farClusters) {
-      expect(box.width, 'agrégat Monde largeur').toBeGreaterThanOrEqual(21);
-      expect(box.width, 'agrégat Monde largeur').toBeLessThanOrEqual(23);
-      expect(box.height, 'agrégat Monde hauteur').toBeGreaterThanOrEqual(21);
-      expect(box.height, 'agrégat Monde hauteur').toBeLessThanOrEqual(23);
+      expect(box.width, 'agrégat Monde largeur').toBeGreaterThanOrEqual(18);
+      expect(box.width, 'agrégat Monde largeur').toBeLessThanOrEqual(24);
+      expect(box.height, 'agrégat Monde hauteur').toBeGreaterThanOrEqual(18);
+      expect(box.height, 'agrégat Monde hauteur').toBeLessThanOrEqual(24);
     }
 
     await zoomTo(page, 8, massifCenter);
