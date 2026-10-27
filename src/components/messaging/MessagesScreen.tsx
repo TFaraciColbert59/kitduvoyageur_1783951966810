@@ -248,7 +248,7 @@ function ConversationFeedRow({
             onClick={() => fire('delete')}
             aria-label="Supprimer la conversation"
           >
-            <Icon name="trash-2" className="size-4" aria-hidden="true" />
+            <Icon name="trash2" className="size-4" aria-hidden="true" />
           </button>
           <button
             type="button"

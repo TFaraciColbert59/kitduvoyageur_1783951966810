@@ -853,6 +853,9 @@
   margin-bottom: 4px !important;
 }
 .lkdv-messages .mthread {
+  /* Pas d'ancrage de défilement : ouvrir commentaires/partage dans un post
+     partagé ne doit pas faire sauter le fil. */
+  overflow-anchor: none;
   scroll-behavior: smooth;
 }
 /* Fil court : les messages se posent près du composer, comme dans Messages,
@@ -1242,11 +1245,12 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  padding: 2px 0;
-  /* Quatre carrés : la grille elle-même est carrée, centrée dans la feuille. */
-  width: min(100%, 172px);
-  aspect-ratio: 1 / 1;
-  margin: auto;
+  padding: 0;
+  /* Les quatre options prennent toute la largeur et la hauteur de la feuille. */
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
 }
 .lkdv-messages .mdrawer-squares .mbtn {
   width: 100%;
@@ -1284,8 +1288,12 @@
   min-width: 0;
 }
 .lkdv-messages .mpost-embed {
-  width: 100%;
-  border-radius: 20px;
+  /* Le bloc du fil est réduit et centré : on garde tout le contenu, sans
+     occuper toute la hauteur du fil. */
+  zoom: 0.58;
+  width: calc(100% / 0.58);
+  margin-inline: auto;
+  border-radius: 22px;
   overflow: hidden;
 }
 .lkdv-messages .mpost-embed .lkdv-feed-post,
