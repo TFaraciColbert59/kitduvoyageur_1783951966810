@@ -854,13 +854,42 @@ export const messagingService = {
     }
 
     const fileExt = (file.name.split('.').pop() || 'bin').toLowerCase();
+
+    // iOS et macOS signalent souvent les .gpx en `application/octet-stream` :
+    // le bucket n'accepte qu'une liste blanche de MIME, on déduit donc le type
+    // depuis l'extension avant l'upload (sinon 400 et pièce perdue).
+    const MIME_BY_EXT: Record<string, string> = {
+      gpx: 'application/gpx+xml',
+      geojson: 'application/geo+json',
+      json: 'application/json',
+      kml: 'application/vnd.google-earth.kml+xml',
+      kmz: 'application/vnd.google-earth.kmz',
+      pdf: 'application/pdf',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+      heic: 'image/heic',
+      m4a: 'audio/mp4',
+      mp3: 'audio/mpeg',
+      wav: 'audio/wav',
+      mp4: 'video/mp4',
+      mov: 'video/quicktime',
+      txt: 'text/plain',
+    };
+    const declared = file.type && file.type !== 'application/octet-stream' ? file.type : '';
+    const contentType = declared || MIME_BY_EXT[fileExt] || 'application/octet-stream';
+    const uploadBody =
+      contentType === file.type
+        ? file
+        : new File([file], file.name, { type: contentType, lastModified: file.lastModified });
     // Chemin 2 segments {conversationId}/{userId}/{file} : requis par les policies storage
     // (INSERT exige 2e segment = auth.uid(), DELETE exige 2e segment = expéditeur)
     const fileName = `${conversationId}/${user.id}/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
     const { error } = await supabase.storage
       .from('message-attachments')
-      .upload(fileName, file, { cacheControl: '3600', upsert: false });
+      .upload(fileName, uploadBody, { cacheControl: '3600', upsert: false, contentType });
 
     if (error) {
       // F-006 : jamais d'URL blob locale présentée comme un envoi réussi.
