@@ -2919,17 +2919,19 @@ const STORIES = {
 
 const storyFor = id => {
   const real = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.find((h) => h.id === id) : null;
-  if (real && Array.isArray(real.stories) && real.stories.length) {
-    return {
-      title: real.title || 'Story',
-      slides: real.stories.map((story) => ({
-        k: 'image',
-        src: story.image,
-        storyId: story.id,
-        t: story.caption || real.title || 'Story',
-        s: 'Story à la une',
-      })),
-    };
+  if (real) {
+    const slides = Array.isArray(real.stories) && real.stories.length
+      ? real.stories.map((story) => ({
+          k: 'image',
+          src: story.image,
+          storyId: story.id,
+          t: story.caption || real.title || 'Story',
+          s: 'Story à la une',
+        }))
+      : [real.coverImage
+          ? { k: 'image', src: real.coverImage, t: real.title || 'Story', s: 'Story à la une' }
+          : { k: 'photo', art: real.id, t: real.title || 'Story', s: 'Story à la une' }];
+    return { title: real.title || 'Story', slides };
   }
   if (STORIES[id]) return STORIES[id];
   if (id.startsWith('hl_ca_')) {
@@ -2947,6 +2949,7 @@ const storyFor = id => {
   return { title: 'Story', slides: [] };
 };
 function slideView(sl) {
+  if (!sl) return { body: '', foot: '' };
   if (sl.k === 'trace') {
     const a = prof(sl.seed, 16); const pts = a.map((v, i) => [24 + i * (252 / 15), 215 - v * 175 + (i % 3) * 5]);
     const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');

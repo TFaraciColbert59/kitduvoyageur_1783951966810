@@ -83,3 +83,31 @@
 .lkdv-seal-drawer .lkdv-seal-grid{gap:4px 6px!important;}
 .lkdv-seal-drawer .lkdv-seal-grid>div{min-height:29px!important;padding:4px 8px!important;background:rgba(255,255,255,.46)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.07)!important;}
 .lkdv-seal-drawer .lkdv-seal-note{font-size:10px!important;max-width:310px!important;}
+
+/* Upload local des photos de profil. */
+.lkdv-compte-upload-field{display:flex;flex-direction:column;gap:6px;}
+.lkdv-compte-upload-field>span{font:600 11.5px var(--sf);color:var(--label);}
+.lkdv-compte-upload-field>small{font:400 10px/1.35 var(--sf);color:var(--label2);}
+.lkdv-compte-upload-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.lkdv-compte-filebtn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.6);box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1);color:#17402c;font:600 11.5px var(--sf);cursor:pointer;}
+.lkdv-compte-filebtn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.lkdv-compte-fileclear{border:0;background:transparent;color:#8a3b2c;font:600 11px var(--sf);cursor:pointer;padding:8px 4px;}
+.lkdv-compte-savebar{background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+
+/* Mes clubs : même lecture verticale que les sorties. */
+.lkdv-club-rail{display:flex!important;flex-direction:column!important;gap:6px!important;overflow:visible!important;padding:0!important;margin:0!important;}
+.lkdv-club-item{flex:0 0 auto!important;flex-basis:auto!important;width:100%!important;}
+.lkdv-club-card{min-height:76px!important;display:grid!important;grid-template-columns:38px minmax(0,1fr) 22px!important;grid-template-rows:auto auto!important;column-gap:9px!important;align-items:center!important;padding:10px 11px!important;border-radius:16px!important;background:rgba(255,255,255,.5)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08)!important;text-align:left!important;}
+.lkdv-club-top{grid-column:1!important;grid-row:1/3!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.lkdv-club-badge{width:38px!important;height:38px!important;border-radius:50%!important;font-size:16px!important;}
+.lkdv-club-role{display:none!important;}
+.lkdv-club-name{grid-column:2!important;grid-row:1!important;font:600 13px/1.2 var(--sf)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-club-cat,.lkdv-club-members{grid-column:2!important;grid-row:2!important;font:500 10.5px/1.25 var(--sf)!important;color:var(--label2)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-club-members{display:none!important;}
+.lkdv-club-next{display:none!important;}
+.lkdv-club-open{grid-column:3!important;grid-row:1/3!important;width:22px!important;height:22px!important;display:grid!important;place-items:center!important;overflow:hidden!important;font-size:0!important;color:var(--label3)!important;background:transparent!important;box-shadow:none!important;}
+.lkdv-club-open svg{width:15px!important;height:15px!important;stroke:currentColor;fill:none;}
+
+/* Le sélecteur du sous-drawer reste visible et au-dessus. */
+.lkdv-kit-card .lkdv-kit-selector{display:grid!important;opacity:1!important;visibility:visible!important;z-index:60!important;bottom:8px!important;right:12px!important;}
+.lkdv-kit-card[data-view="2"] .lkdv-kit-selector{display:grid!important;opacity:1!important;}
