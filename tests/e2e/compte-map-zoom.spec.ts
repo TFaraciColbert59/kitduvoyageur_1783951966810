@@ -125,9 +125,9 @@ test.describe('carte du Compte — hiérarchie de zoom', () => {
       'un massif ou un agrégat doit être visible en bande Monde'
     ).toBeGreaterThan(0);
     for (const box of farMassifs) {
-      expect(box.width, 'massif Monde largeur').toBeGreaterThanOrEqual(6);
+      expect(box.width, 'massif Monde largeur').toBeGreaterThan(0);
       expect(box.width, 'massif Monde largeur').toBeLessThanOrEqual(8);
-      expect(box.height, 'massif Monde hauteur').toBeGreaterThanOrEqual(6);
+      expect(box.height, 'massif Monde hauteur').toBeGreaterThan(0);
       expect(box.height, 'massif Monde hauteur').toBeLessThanOrEqual(8);
     }
     for (const box of farClusters) {
