@@ -6,7 +6,7 @@ import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import { CommunityDrawer } from '@/features/community/sections/CommunityDrawer';
 import { PostCreateForm } from './PostCreateForm';
 import { StoryCreateForm } from './StoryCreateForm';
-import { CarnetCreateForm } from './CarnetCreateForm';
+import { CarnetMapDrawer } from './CarnetMapDrawer';
 import { SortieCreateForm } from './SortieCreateForm';
 import { KitCreateForm } from './KitCreateForm';
 import { ClubCreateForm } from './ClubCreateForm';
@@ -108,7 +108,7 @@ export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'po
             <StoryCreateForm {...common} step={step} onStepChange={selectStep} />
           ) : null}
           {kind === 'carnet' ? (
-            <CarnetCreateForm {...common} step={step} onStepChange={selectStep} />
+            <CarnetMapDrawer {...common} />
           ) : null}
           {kind === 'sortie' ? (
             <SortieCreateForm {...common} step={step} onStepChange={selectStep} />

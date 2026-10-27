@@ -1,0 +1,250 @@
+'use client';
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Map as MapLibreMap, Marker, setWorkerUrl } from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Plus, MapPin, CalendarDays, Settings2, Trash2, ImagePlus, Check } from 'lucide-react';
+import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import { createClient } from '@/lib/supabase/client';
+import { createDefaults, createSchemas, type CarnetFormValues } from './engine/createSchemas';
+import { CommunityFormDrawer } from './CommunityFormDrawer';
+import { DateRangeField } from './shared/DateRangeField';
+import { PlaceSearch } from './shared/PlaceSearch';
+import { insertCommunityPost } from './upload';
+import './carnet-map-drawer.css';
+
+type Moment = { id: string; label: string; note: string; media?: string; lng: number; lat: number };
+type Day = { id: string; label: string; lng: number; lat: number; moments: Moment[] };
+
+const DEFAULT_CENTER: [number, number] = [6.87, 45.92];
+
+function dayLabel(index: number) { return `Jour ${index + 1}`; }
+
+export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
+  open: boolean; onClose: () => void; user: any; onCreated: (kind: 'carnet', id: string) => void;
+}) {
+  const form = useForm<CarnetFormValues>({
+    resolver: zodResolver(createSchemas.carnet as never),
+    defaultValues: createDefaults('carnet'),
+  });
+  const [days, setDays] = useState<Day[]>([]);
+  const [active, setActive] = useState(0);
+  const [drawing, setDrawing] = useState(false);
+  const [trace, setTrace] = useState<Array<[number, number]>>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const mapNode = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<MapLibreMap | null>(null);
+  const traceRef = useRef<Array<[number, number]>>([]);
+  const daysRef = useRef<Day[]>([]);
+  const markersRef = useRef<Marker[]>([]);
+  const scroller = useRef<HTMLDivElement | null>(null);
+  const pointerRef = useRef(false);
+
+  useEffect(() => { traceRef.current = trace; }, [trace]);
+  useEffect(() => { daysRef.current = days; }, [days]);
+
+  useEffect(() => {
+    if (!open || !mapNode.current || mapRef.current) return;
+    setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+    const map = new MapLibreMap({
+      container: mapNode.current,
+      style: createMapStyle('topo'),
+      center: DEFAULT_CENTER,
+      zoom: 6,
+      minZoom: 2,
+      maxZoom: 17,
+      attributionControl: false,
+      renderWorldCopies: false,
+    });
+    mapRef.current = map;
+    map.on('load', () => {
+      map.addSource('carnet-trace', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] }, properties: {} } });
+      map.addLayer({ id: 'carnet-trace-line', type: 'line', source: 'carnet-trace', paint: { 'line-color': '#17402C', 'line-width': 3.5, 'line-opacity': .9 } });
+    });
+    return () => { map.remove(); mapRef.current = null; };
+  }, [open]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    const source = map.getSource('carnet-trace') as any;
+    source?.setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: trace }, properties: {} });
+  }, [trace]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
+    days.forEach((day, dayIndex) => {
+      const element = document.createElement('button');
+      element.type = 'button';
+      element.className = 'lkdv-day-marker';
+      element.innerHTML = `<span>${dayIndex + 1}</span>`;
+      element.setAttribute('aria-label', day.label);
+      element.addEventListener('click', () => { setActive(dayIndex + 1); scrollToSlide(dayIndex + 1); });
+      const marker = new Marker({ element, draggable: true }).setLngLat([day.lng, day.lat]).addTo(map);
+      marker.on('dragend', () => {
+        const position = marker.getLngLat();
+        setDays((current) => current.map((entry) => entry.id === day.id ? { ...entry, lng: position.lng, lat: position.lat } : entry));
+      });
+      markersRef.current.push(marker);
+      day.moments.forEach((moment, momentIndex) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'lkdv-moment-marker';
+        dot.innerHTML = `<span>${momentIndex + 1}</span>`;
+        dot.setAttribute('aria-label', moment.label);
+        dot.addEventListener('click', () => { setActive(dayIndex + 1); scrollToSlide(dayIndex + 1); });
+        const momentMarker = new Marker({ element: dot, draggable: true }).setLngLat([moment.lng, moment.lat]).addTo(map);
+        momentMarker.on('dragend', () => {
+          const position = momentMarker.getLngLat();
+          setDays((current) => current.map((entry) => entry.id === day.id ? { ...entry, moments: entry.moments.map((m) => m.id === moment.id ? { ...m, lng: position.lng, lat: position.lat } : m) } : entry));
+        });
+        markersRef.current.push(momentMarker);
+      });
+    });
+  }, [days]);
+
+  const scrollToSlide = (index: number) => {
+    const node = scroller.current;
+    if (!node) return;
+    const child = node.children[index] as HTMLElement | undefined;
+    child?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  };
+
+  const addDay = () => {
+    const map = mapRef.current;
+    const center = map?.getCenter();
+    const day: Day = { id: crypto.randomUUID(), label: dayLabel(days.length), lng: center?.lng ?? DEFAULT_CENTER[0], lat: center?.lat ?? DEFAULT_CENTER[1], moments: [] };
+    setDays((current) => [...current, day]);
+    setActive(days.length + 1);
+    window.setTimeout(() => scrollToSlide(days.length + 1), 50);
+  };
+
+  const addMoment = (dayId: string) => {
+    const day = days.find((entry) => entry.id === dayId);
+    if (!day) return;
+    const moment: Moment = { id: crypto.randomUUID(), label: 'Moment', note: '', lng: day.lng + .01, lat: day.lat + .01 };
+    setDays((current) => current.map((entry) => entry.id === dayId ? { ...entry, moments: [...entry.moments, moment] } : entry));
+  };
+
+  const updateMoment = (dayId: string, momentId: string, patch: Partial<Moment>) => {
+    setDays((current) => current.map((entry) => entry.id === dayId ? { ...entry, moments: entry.moments.map((m) => m.id === momentId ? { ...m, ...patch } : m) } : entry));
+  };
+
+  const drawStart = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!drawing) return;
+    pointerRef.current = true;
+    mapRef.current?.dragPan.disable();
+    addTracePoint(event);
+  };
+  const drawMove = (event: React.PointerEvent<HTMLDivElement>) => { if (drawing && pointerRef.current) addTracePoint(event); };
+  const drawEnd = () => { pointerRef.current = false; mapRef.current?.dragPan.enable(); };
+  const addTracePoint = (event: React.PointerEvent<HTMLDivElement>) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const point = map.unproject([event.clientX - rect.left, event.clientY - rect.top]);
+    setTrace((current) => [...current, [point.lng, point.lat]]);
+  };
+
+  const submit = form.handleSubmit(async (values) => {
+    setSubmitting(true); setSubmitError(null);
+    try {
+      if (!user?.id) throw new Error('Connecte-toi pour créer un carnet.');
+      const supabase = createClient();
+      const { data, error } = await supabase.from('carnets').insert({
+        title: values.title.trim() || 'Carnet de voyage',
+        destination: values.destination.trim(),
+        description: values.description.trim() || [values.destination, values.startDate && values.endDate ? `du ${values.startDate} au ${values.endDate}` : '', values.distanceKm ? `${values.distanceKm} km` : '', values.deniveleM ? `${values.deniveleM} m D+` : ''].filter(Boolean).join(' · '),
+        cover_image: '', cover_image_alt: values.title.trim(), start_date: values.startDate || null, end_date: values.endDate || null,
+        visibility: values.visibility, author_id: user.id, lieu_depart: values.lieuDepart.trim() || null, lieu_arrivee: values.lieuArrivee.trim() || null,
+        distance_km: values.distanceKm, denivele_m: values.deniveleM, nb_nuits: values.nbNuits, nb_voyageurs: values.nbVoyageurs,
+        weather: values.weather.trim() || null, route_rating: values.routeRating, tags: values.tags, is_collaborative: values.isCollaborative,
+        map_points: { trace, days: days.map((day) => ({ id: day.id, label: day.label, lng: day.lng, lat: day.lat, moments: day.moments.map(({ media, ...moment }) => moment) })) },
+      }).select('id').single();
+      if (error || !data) throw new Error(error?.message || 'Création du carnet refusée.');
+      try { await insertCommunityPost({ authorId: user.id, content: `**${values.title.trim() || 'Carnet'}**\n\n${values.description.trim() || values.destination}`, postType: 'share', audience: values.visibility === 'public' ? 'public' : 'abonnies', linkedCarnetId: data.id, title: values.title.trim() }); } catch { /* best effort */ }
+      onCreated('carnet', data.id); onClose();
+    } catch (error) { setSubmitError(error instanceof Error ? error.message : 'Création impossible.'); } finally { setSubmitting(false); }
+  });
+
+  const title = form.watch('title'); const destination = form.watch('destination'); const startDate = form.watch('startDate'); const endDate = form.watch('endDate');
+  const slides = useMemo(() => [{ id: 'base' }, ...days.map((day) => ({ id: day.id, day })), { id: 'add' }], [days]);
+
+  return (
+    <CommunityFormDrawer
+      open={open}
+      onClose={onClose}
+      ariaLabel="Créer un carnet"
+      error={submitError}
+      footer={
+        <div className="lkdv-carnet-daybar">
+          <button type="button" className="lkdv-carnet-footer-create" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet"><Check size={14} /></button>
+          <button type="button" className={active === 0 ? 'is-active' : ''} onClick={() => { setActive(0); scrollToSlide(0); }} aria-label="Réglages du carnet"><Settings2 size={14} /></button>
+          {days.map((day, index) => (
+            <button key={day.id} type="button" className={active === index + 1 ? 'is-active' : ''} onClick={() => { setActive(index + 1); scrollToSlide(index + 1); }}>{index + 1}</button>
+          ))}
+          <button type="button" className="lkdv-daybar-add" onClick={addDay} aria-label="Ajouter un jour"><Plus size={15} /></button>
+        </div>
+      }
+    >
+      <div className="lkdv-carnet-map" ref={mapNode} data-trace-points={trace.length} data-drawing={drawing ? 'true' : 'false'}>
+        <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => setDrawing((value) => !value)}><MapPin size={13} /> {drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}</button>
+        <div
+          className="lkdv-map-draw-layer"
+          data-active={drawing ? 'true' : 'false'}
+          onPointerDown={drawStart}
+          onPointerMove={drawMove}
+          onPointerUp={drawEnd}
+          onPointerCancel={drawEnd}
+          aria-hidden="true"
+        />
+        <div className="lkdv-map-fade" aria-hidden="true" />
+      </div>
+      <div className="lkdv-carnet-slider" ref={scroller}>
+        <section className="lkdv-carnet-slide lkdv-carnet-base">
+          <h3>Réglages du carnet</h3>
+          <input {...form.register('title')} placeholder="Titre du carnet" aria-label="Titre" />
+          <PlaceSearch label="Destination" value={destination} onChange={(value) => form.setValue('destination', value, { shouldDirty: true })} placeholder="Destination" />
+          <DateRangeField label="Dates" start={startDate} end={endDate} onStartChange={(value) => form.setValue('startDate', value, { shouldDirty: true })} onEndChange={(value) => form.setValue('endDate', value, { shouldDirty: true })} />
+          <textarea {...form.register('description')} placeholder="Récit, idée, points forts…" aria-label="Récit" rows={3} />
+          <div className="lkdv-carnet-base-actions">
+            <button type="button" className="lkdv-carnet-add-day" onClick={addDay}><Plus size={14} /> Ajouter un jour</button>
+            <button type="button" className="lkdv-carnet-create" onClick={() => void submit()} disabled={submitting}>{submitting ? 'Création…' : 'Créer le carnet'}</button>
+          </div>
+        </section>
+        {days.map((day, dayIndex) => (
+          <section key={day.id} className="lkdv-carnet-slide lkdv-carnet-day" aria-label={day.label}>
+            <header><span><CalendarDays size={14} /> {day.label}</span><small>{day.moments.length} moment{day.moments.length > 1 ? 's' : ''}</small></header>
+            <div className="lkdv-day-moments">
+              {day.moments.map((moment, momentIndex) => (
+                <div key={moment.id} className="lkdv-moment-row">
+                  <span className="lkdv-moment-index">{momentIndex + 1}</span>
+                  <input value={moment.label} onChange={(event) => updateMoment(day.id, moment.id, { label: event.target.value })} aria-label={`Nom du moment ${momentIndex + 1}`} />
+                  <label className="lkdv-moment-photo" aria-label={`Image du moment ${momentIndex + 1}`}>
+                    {moment.media ? <img src={moment.media} alt="" /> : <ImagePlus size={13} />}
+                    <input type="file" accept="image/*,video/*,image/gif" className="sr-only" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (file) updateMoment(day.id, moment.id, { media: URL.createObjectURL(file) }); event.currentTarget.value = ''; }} />
+                  </label>
+                  <button type="button" className="lkdv-moment-delete" aria-label="Supprimer le moment" onClick={() => setDays((current) => current.map((entry) => entry.id === day.id ? { ...entry, moments: entry.moments.filter((m) => m.id !== moment.id) } : entry))}><Trash2 size={13} /></button>
+                  <input className="lkdv-moment-note" value={moment.note} placeholder="Petit commentaire…" aria-label={`Commentaire du moment ${momentIndex + 1}`} onChange={(event) => updateMoment(day.id, moment.id, { note: event.target.value })} />
+                </div>
+              ))}
+            </div>
+            <button type="button" className="lkdv-moment-add" onClick={() => addMoment(day.id)}><Plus size={14} /> Ajouter un moment</button>
+          </section>
+        ))}
+        <section className="lkdv-carnet-slide lkdv-carnet-add">
+          <button type="button" onClick={addDay}><Plus size={24} /><span>Ajouter un jour</span></button>
+          <small>Le point apparaîtra sur la carte et pourra être déplacé.</small>
+        </section>
+      </div>
+    </CommunityFormDrawer>
+  );
+}
+
+export default CarnetMapDrawer;
