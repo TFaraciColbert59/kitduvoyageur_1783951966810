@@ -17,10 +17,9 @@ export interface CarnetMediaTabsProps {
 }
 
 /**
- * Sélecteur 31 px du Compte (`.ig-tabs`), ici les deux segments de vue de la
- * capsule. La lentille blanche n'est plus peinte par ce composant : elle est
- * rendue une seule fois par `CarnetCard` (`.ckp-card-foot > .ckp-th`), pour
- * pouvoir glisser aussi sous les actions de page.
+ * Sélecteur 88 × 30 du Compte (`.ig-tabs`) : deux segments de 41,5 × 25, la
+ * lentille blanche n'est pas peinte ici. Elle est rendue une seule fois par
+ * `CarnetCard` (`.ckp-capsule > .ckp-th`), au-dessus du seul segment actif.
  *
  * Clavier : flèches gauche/droite avec bouclage, `Home`, `End`, roving
  * `tabIndex`, `aria-selected` et `aria-controls` sur l'actif.

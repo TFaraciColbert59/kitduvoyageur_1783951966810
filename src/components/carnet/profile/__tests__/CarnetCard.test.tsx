@@ -76,18 +76,20 @@ describe('CarnetCard — carte du carnet', () => {
     expect(onOpenStat).toHaveBeenCalledTimes(3);
   });
 
-  it('pose quatre segments : deux actions puis les deux vues', () => {
+  it('deux boutons ronds hors capsule, puis la capsule à deux segments (Compte)', () => {
     const { container } = render(<CarnetCard {...base()} />);
     expect(container.querySelector('.ckp-action-lbl')).toBeNull();
-    expect(container.querySelectorAll('.ckp-actions .ckp-action-btn')).toHaveLength(2);
-    expect(container.querySelector('.ckp-card-foot .ckp-tabs')).toBeTruthy();
-    const segments = container.querySelectorAll(
-      '.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button',
-    );
-    expect(segments).toHaveLength(4);
-    expect([...segments].map((node) => node.getAttribute('aria-label'))).toEqual([
+    const actions = container.querySelectorAll('.ckp-card-foot > .ckp-actions .ckp-action');
+    expect(actions).toHaveLength(2);
+    expect([...actions].map((node) => node.getAttribute('aria-label'))).toEqual([
       'J’aime, 22',
       'Commenter, 3',
+    ]);
+    const capsule = container.querySelector('.ckp-card-foot .ckp-capsule');
+    expect(capsule).toBeTruthy();
+    const segments = capsule?.querySelectorAll('.ckp-tabs button') ?? [];
+    expect(segments).toHaveLength(2);
+    expect([...segments].map((node) => node.getAttribute('aria-label'))).toEqual([
       'Posts',
       'Parcours',
     ]);
@@ -114,12 +116,10 @@ describe('CarnetCard — carte du carnet', () => {
     // Conteneur simple : aucun rôle de sélecteur sur la capsule.
     expect(foot?.getAttribute('role')).toBeNull();
     expect([...(foot?.children ?? [])].map((el) => el.className)).toEqual([
-      'ckp-th',
       'ckp-actions',
-      'ckp-foot-sep',
-      'ckp-tabs',
+      'ckp-capsule',
     ]);
-    expect(foot?.querySelector('.ckp-foot-sep')?.getAttribute('aria-hidden')).toBe('true');
+    expect(foot?.querySelector('.ckp-capsule .ckp-th')?.getAttribute('aria-hidden')).toBe('true');
     // Le sélecteur vit dans la capsule, pas ailleurs dans la carte.
     expect(container.querySelectorAll('.ckp-card > .ckp-tabs')).toHaveLength(0);
     expect(container.querySelectorAll('.ckp-tabs')).toHaveLength(1);
@@ -304,30 +304,30 @@ describe('CarnetCard — lentille unique du sélecteur', () => {
     return { node, i: node?.style.getPropertyValue('--i') };
   }
 
-  it('rend une seule lentille, enfant direct de la capsule', () => {
+  it('rend une seule lentille, dans la capsule de 2 segments', () => {
     const { container } = render(<CarnetCard {...base()} />);
     expect(container.querySelectorAll('.ckp-th')).toHaveLength(1);
     const node = container.querySelector('.ckp-th');
-    expect(node?.parentElement?.className).toBe('ckp-card-foot');
+    expect(node?.parentElement?.className).toContain('ckp-capsule');
     expect(node?.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('pose la lentille sur la vue active : grille 2, carte 3', () => {
+  it('pose la lentille sur le segment actif : Posts 0, Parcours 1', () => {
     const posts = render(<CarnetCard {...base({ page: 'posts' })} />);
-    expect(lens(posts.container).i).toBe('2');
+    expect(lens(posts.container).i).toBe('0');
     posts.unmount();
     const parcours = render(<CarnetCard {...base({ page: 'parcours' })} />);
-    expect(lens(parcours.container).i).toBe('3');
+    expect(lens(parcours.container).i).toBe('1');
   });
 
-  it('suit la page affichée : J’aime 0, Commentaires 1', () => {
+  it('suit la page affichée depuis les boutons hors capsule', () => {
     const likes = render(<CarnetCard {...base({ page: 'likes' })} />);
-    expect(lens(likes.container).i).toBe('0');
+    expect(lens(likes.container).node?.getAttribute('data-off')).toBe('true');
     expect(screen.getByRole('button', { name: /^J’aime/ }).getAttribute('aria-current')).toBe('page');
     likes.unmount();
 
     const comments = render(<CarnetCard {...base({ page: 'comments' })} />);
-    expect(lens(comments.container).i).toBe('1');
+    expect(lens(comments.container).node?.getAttribute('data-off')).toBe('true');
     expect(screen.getByRole('button', { name: /^Commenter/ }).getAttribute('aria-current')).toBe('page');
   });
 

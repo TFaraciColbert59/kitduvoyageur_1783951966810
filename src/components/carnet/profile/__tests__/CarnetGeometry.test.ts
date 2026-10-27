@@ -27,10 +27,10 @@ function rules(selector: string): string[] {
 
 const last = (selector: string) => rules(selector).at(-1) as string;
 
-describe('Carte du bas — 430 × 335, de y 597 à 932', () => {
-  it('occupe tout le reste de l’écran, sans min-height qui l’écrase', () => {
+describe('Carte du bas — 40 % de la hauteur de page (373 px à 430 × 932)', () => {
+  it('prend 40 % de la hauteur de page, sans min-height qui l’écrase', () => {
     const blocks = rules('.ckp-mapzone {');
-    expect(blocks[0]).toMatch(/flex:\s*1 1 auto/);
+    expect(blocks.some((block) => /height:\s*40dvh/.test(block))).toBe(true);
     for (const block of blocks) {
       expect(block).toMatch(/min-height:\s*0/);
       expect(block).not.toMatch(/min-height:\s*240px/);
@@ -43,12 +43,13 @@ describe('Carte du bas — 430 × 335, de y 597 à 932', () => {
     expect(block).toMatch(/border-radius:\s*0/);
   });
 
-  it('laisse la carte d’identité à 541 px, sans marge parasite', () => {
-    const card = rules('.ckp-card {').find((block) => /height:\s*541px/.test(block));
-    expect(card).toBeTruthy();
-    expect(card).toMatch(/flex:\s*none/);
-    expect(card).not.toMatch(/min-height/);
-    expect(last('.ckp-card {')).toMatch(/margin-bottom:\s*0/);
+  it('laisse la carte d’identité occuper l’espace restant, sans marge parasite', () => {
+    const blocks = rules('.ckp-card {');
+    const flexible = blocks.find((block) => /flex:\s*1 1 auto/.test(block));
+    expect(flexible).toBeTruthy();
+    expect(flexible).toMatch(/min-height:\s*0/);
+    expect(blocks.every((block) => !/height:\s*541px/.test(block))).toBe(true);
+    expect(blocks.some((block) => /margin-bottom:\s*0/.test(block))).toBe(true);
   });
 
   it('ne garde aucune réserve basse : la carte touche le bas de l’écran', () => {
