@@ -16,7 +16,10 @@ import { KitPackingMatrix, KitRing } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost } from './upload';
-import { InventoryPicker } from './kit/InventoryPicker';
+import { KitBlocks } from './kit/KitBlocks';
+import { KitProductPicker } from './kit/KitProductPicker';
+import { mapInventoryItem } from './kit/catalog';
+import type { KitSlot, PickerProduct } from './kit/types';
 import {
   KIT_TEMPLATES,
   inventoryWeight,
@@ -61,6 +64,7 @@ export function KitCreateForm({
   const [inventoryLoading, setInventoryLoading] = useState(false);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
   const [inventoryRetry, setInventoryRetry] = useState(0);
+  const [picking, setPicking] = useState(false);
   const activeStep = Math.max(0, Math.min(LAST_STEP, step ?? internalStep));
 
   const setStep = (next: number) => {
@@ -239,17 +243,78 @@ export function KitCreateForm({
               ) : null}
             >
               <div>
-                <InventoryPicker
-                  items={inventory}
-                  selectedIds={selectedIds}
-                  onChange={(ids) => {
-                    form.setValue('inventoryIds', ids, { shouldValidate: true, shouldDirty: true });
-                    updateWeight(ids, customItems);
+                <KitBlocks
+                  slots={[
+                    ...selected.map((item): KitSlot => ({
+                      key: `inv:${item.id}`,
+                      source: 'inventory',
+                      id: item.id,
+                      name: item.name,
+                      brand: null,
+                      category: item.category ?? null,
+                      weightG: item.weightG ?? null,
+                      image: item.photoUrl ?? null,
+                      ownershipId: item.id,
+                      productId: null,
+                    })),
+                    ...customItems.map((item): KitSlot => ({
+                      key: `cus:${item.id}`,
+                      source: 'achat',
+                      id: item.id,
+                      name: item.name,
+                      brand: null,
+                      category: item.category,
+                      weightG: item.weightG > 0 ? item.weightG : null,
+                      image: null,
+                      ownershipId: null,
+                      productId: null,
+                    })),
+                  ]}
+                  onAdd={() => setPicking(true)}
+                  onRemove={(key) => {
+                    if (key.startsWith('inv:')) {
+                      const ids = selectedIds.filter((id) => `inv:${id}` !== key);
+                      form.setValue('inventoryIds', ids, { shouldValidate: true, shouldDirty: true });
+                      updateWeight(ids, customItems);
+                    } else {
+                      const next = customItems.filter((item) => `cus:${item.id}` !== key);
+                      form.setValue('customItems', next, { shouldValidate: true, shouldDirty: true });
+                      updateWeight(selectedIds, next);
+                    }
                   }}
-                  loading={inventoryLoading}
-                  error={inventoryError}
-                  onRetry={() => setInventoryRetry((value) => value + 1)}
                 />
+                {picking ? (
+                  <KitProductPicker
+                    inventory={inventory.map(mapInventoryItem)}
+                    inventoryLoading={inventoryLoading}
+                    inventoryError={inventoryError}
+                    onRetryInventory={() => setInventoryRetry((value) => value + 1)}
+                    onClose={() => setPicking(false)}
+                    onPick={(product: PickerProduct) => {
+                      setPicking(false);
+                      if (product.source === 'inventory') {
+                        if (selectedIds.includes(product.id)) return;
+                        const ids = [...selectedIds, product.id];
+                        form.setValue('inventoryIds', ids, { shouldValidate: true, shouldDirty: true });
+                        updateWeight(ids, customItems);
+                        return;
+                      }
+                      // Boutique, location, occasion, prêt : un objet de plus, avec son poids s'il est connu.
+                      const next = [
+                        ...customItems,
+                        {
+                          id: crypto.randomUUID(),
+                          name: product.name,
+                          category: product.category || 'Divers',
+                          weightG: product.weightG ?? 0,
+                          quantity: 1,
+                        },
+                      ];
+                      form.setValue('customItems', next, { shouldDirty: true, shouldValidate: true });
+                      updateWeight(selectedIds, next);
+                    }}
+                  />
+                ) : null}
                 <p className="lkdv-form-note">{total > 0 ? `${(total / 1000).toFixed(2)} kg sélectionnés` : 'Sélectionne les produits que tu emportes.'}</p>
               </div>
 

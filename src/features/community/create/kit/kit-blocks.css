@@ -1,0 +1,454 @@
+/* --- Kit : blocs et sélecteur de produit ------------------------------------------------- */
+
+.lkdv-kb-grid {
+  --kp-ink: #17402c;
+  --kp-muted: #56665d;
+  --kp-font: var(--font-sans, -apple-system, system-ui, sans-serif);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  align-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 4px 2px;
+  list-style: none;
+}
+
+/* Un seul bloc : le « + » est seul, au milieu. */
+.lkdv-kb-grid[data-alone='true'] {
+  grid-template-columns: minmax(0, 132px);
+  justify-content: center;
+}
+
+.lkdv-kb-grid > li {
+  display: block;
+  min-width: 0;
+}
+
+.lkdv-kb-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  color: var(--kp-muted);
+}
+
+.lkdv-kb-add {
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(23, 43, 36, 0.16);
+  color: #17402c;
+}
+
+.lkdv-kb-filled img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-kb-filled b {
+  font: 700 26px/1 var(--kp-font);
+  color: #17402c;
+}
+
+.lkdv-kb-name {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 14px 8px 7px;
+  background: linear-gradient(180deg, rgba(11, 31, 23, 0), rgba(11, 31, 23, 0.62));
+  color: #fff;
+  font: 600 10.5px/1.2 var(--kp-font);
+  text-align: left;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.lkdv-kb-remove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.86);
+  color: #17402c;
+  cursor: pointer;
+}
+
+.lkdv-kb-total {
+  --kp-muted: #56665d;
+  --kp-font: var(--font-sans, -apple-system, system-ui, sans-serif);
+  flex: none;
+  margin: 0;
+  padding: 0 6px;
+  font: 600 11.5px/1.3 var(--kp-font);
+  color: var(--kp-muted);
+  text-align: center;
+}
+
+.lkdv-kp {
+  --kp-ink: #17402c;
+  --kp-muted: #56665d;
+  --kp-font: var(--font-sans, -apple-system, system-ui, sans-serif);
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 12px 12px;
+  border-radius: 24px 24px 0 0;
+  background: linear-gradient(180deg, rgba(250, 248, 245, 0.97), rgba(250, 248, 245, 0.94));
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 -6px 22px rgba(11, 31, 23, 0.12);
+  
+}
+
+.lkdv-kp-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.lkdv-kp-search {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.12);
+  color: var(--kp-muted);
+}
+
+.lkdv-kp-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--kp-ink);
+  font: 500 15px/1 var(--kp-font);
+}
+
+.lkdv-kp-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.lkdv-kp-close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.12);
+  color: #17402c;
+  cursor: pointer;
+}
+
+.lkdv-kp-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lkdv-kp-note {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0 24px;
+  color: var(--kp-muted);
+  font: 500 13px/1.4 var(--kp-font);
+  text-align: center;
+}
+
+.lkdv-kp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 10px;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+}
+
+.lkdv-kp-item {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.lkdv-kp-card {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px;
+  border: 0;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  color: var(--kp-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-kp-img {
+  display: grid;
+  place-items: center;
+  flex: none;
+  aspect-ratio: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: rgba(23, 43, 36, 0.06);
+}
+
+.lkdv-kp-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-kp-img b {
+  font: 700 26px/1 var(--kp-font);
+  color: #17402c;
+}
+
+.lkdv-kp-txt {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.lkdv-kp-txt b {
+  overflow: hidden;
+  font: 600 12.5px/1.25 var(--kp-font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-kp-txt small {
+  overflow: hidden;
+  color: var(--kp-muted);
+  font: 500 10.5px/1.25 var(--kp-font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-kp-wear {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lkdv-kp-wear small {
+  color: var(--kp-muted);
+  font: 600 8.5px/1 var(--kp-font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lkdv-kp-wear-bar {
+  display: block;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(23, 43, 36, 0.12);
+}
+
+.lkdv-kp-wear-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #17402c;
+}
+
+.lkdv-kp-cart {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(11, 31, 23, 0.18);
+  color: #17402c;
+  cursor: pointer;
+}
+
+/* Sélecteurs en bas à droite : Inventaire / Boutique, et sous-rubrique de la boutique au-dessus. */
+.lkdv-kp-selectors {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.lkdv-kp-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    0 2px 8px rgba(23, 43, 36, 0.08);
+}
+
+.lkdv-kp-seg button {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--kp-muted);
+  font: 600 12px/1 var(--kp-font);
+  cursor: pointer;
+}
+
+.lkdv-kp-seg button[aria-selected='true'] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7));
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  color: #17402c;
+}
+
+
+.lkdv-kc-carousel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 4px;
+}
+
+.lkdv-kc-track {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  outline: 0;
+}
+
+.lkdv-kc-track::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-kc-page {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 100%;
+  min-width: 0;
+  min-height: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Un `height: 100%` ne se résout pas dans un enfant étiré : la carte ou la liste remplit la page en flex. */
+.lkdv-kc-page > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.lkdv-kc-dots {
+  display: flex;
+  justify-content: center;
+  flex: none;
+  height: 30px;
+}
+
+/* Cible de 28 × 30 px, sans pseudo-élément qui déborderait du volet (le balayage reste le geste principal). */
+.lkdv-kc-dots button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.lkdv-kc-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(23, 43, 36, 0.2);
+  transition: width 0.28s cubic-bezier(0.32, 0.72, 0, 1), background 0.2s ease;
+}
+
+.lkdv-kc-dots span[data-on='true'] {
+  width: 16px;
+  border-radius: 999px;
+  background: #17402c;
+}
+
+
+.lkdv-kp-retry {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.1);
+  color: #17402c;
+  font: 600 12.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+/* La feuille grandit quand le sélecteur de produits est ouvert. */
+.lkdv-half-drawer:has(.lkdv-kp) {
+  height: min(86dvh, 760px) !important;
+  max-height: min(86dvh, 760px) !important;
+}
+
+/* Un focus dans le sélecteur ne doit jamais décaler la feuille : `clip` interdit aussi le défilement programmatique. */
+.lkdv-half-drawer:has(.lkdv-kb-grid),
+.lkdv-half-drawer:has(.lkdv-kp) {
+  overflow: clip !important;
+}
