@@ -70,6 +70,8 @@ export interface StepPagerProps {
   /** Regroupement de panes par étape (facultatif). */
   groups?: readonly (readonly number[])[];
   className?: string;
+  /** Capsule d'étapes rendue dans le formulaire (tiroir) plutôt que flottante sur la page. */
+  inline?: boolean;
 }
 
 /**
@@ -88,6 +90,7 @@ export function StepPager({
   actions,
   groups,
   className = '',
+  inline = false,
 }: StepPagerProps) {
   const count = steps.length;
   const safeIndex = count > 0 ? Math.max(0, Math.min(index, count - 1)) : 0;
@@ -197,7 +200,7 @@ export function StepPager({
         ))}
       </div>
 
-      {typeof document !== 'undefined'
+      {typeof document !== 'undefined' && !inline
         ? createPortal(
           <div className="lkdv-create-stepbar">
             <div className="lkdv-create-step-tabs" role="tablist" aria-label={label}>

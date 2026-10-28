@@ -8,8 +8,8 @@ const surface = readFileSync('src/components/mobile-nav/navigation/NavigationSur
 const wrapper = readFileSync('src/components/mobile-nav/MobileNavWrapper.tsx', 'utf8');
 
 describe('navigation mobile : matériau et accessibilité', () => {
-  it('affiche la barre de chargement dès la frontière de chargement différé', () => {
-    expect(wrapper).toContain('loading: () => <NavigationSurface loading label="Chargement de la navigation" />');
+  it('affiche la même barre dès la frontière de chargement différé (aucun changement visuel)', () => {
+    expect(wrapper).toContain('loading: () => <FloatingLiquidTabBar />');
   });
 
   it('ne redéfinit pas la hauteur canonique de la barre dans les tokens Glass', () => {

@@ -13,6 +13,7 @@ import { ClubCreateForm } from './ClubCreateForm';
 import { EmbeddedFormContext } from './EmbeddedFormContext';
 import { CREATE_STEPS } from './shared/StepPager';
 import { CloseDraftConfirm } from './shared/CloseDraftConfirm';
+import './create-drawer-layout.css';
 
 const CarnetMapDrawer = dynamic(() => import('./CarnetMapDrawer'), {
   ssr: false,

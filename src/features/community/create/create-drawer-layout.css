@@ -1,0 +1,53 @@
+/*
+ * Tiroir « Créer » : une mise en page unique pour les six formulaires.
+ * Hauteur fixe (le tiroir ne saute plus d'un type à l'autre), le formulaire
+ * défile seul, le bouton d'action reste collé en bas, sans vide dessous.
+ * Spécificité volontairement haute : elle remplace les réserves de 64 px
+ * héritées de l'ancienne barre d'étapes flottante.
+ */
+.lkdv-half-drawer.lkdv-half-drawer:has(.lkdv-create-selector) {
+  height: min(541px, calc(100dvh - 32px)) !important;
+  max-height: min(541px, calc(100dvh - 32px)) !important;
+}
+.lkdv-half-drawer:has(.lkdv-create-selector) .lkdv-drawer-body.lkdv-drawer-body {
+  flex: 1 1 auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+}
+.lkdv-half-drawer:has(.lkdv-create-selector) .lkdv-embedded-form.lkdv-embedded-form {
+  flex: 1 1 auto !important;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 12px !important;
+}
+.lkdv-half-drawer:has(.lkdv-create-selector) .lkdv-embedded-form-footer.lkdv-embedded-form-footer {
+  position: static;
+  flex: none;
+  margin: 0 -14px !important;
+  padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Étapes : capsule en tête du formulaire, contenu à hauteur naturelle. */
+.lkdv-half-drawer .lkdv-create-step-pager .lkdv-lens-pager {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+.lkdv-half-drawer .lkdv-create-step-pager .lkdv-create-stepbar {
+  order: 0 !important;
+  position: static !important;
+  display: flex;
+  justify-content: center;
+  padding: 0 0 10px !important;
+  background: transparent !important;
+}
+.lkdv-half-drawer .lkdv-create-step-pager .lkdv-create-stepbar .lkdv-create-step-tabs {
+  width: 100%;
+  max-width: 320px;
+  height: 32px;
+}

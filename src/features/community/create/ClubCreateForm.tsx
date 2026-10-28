@@ -30,10 +30,13 @@ export interface ClubCreateFormProps {
 }
 
 const DEFAULTS = createDefaults('club');
-const STEPS = [CREATE_STEPS.club[0]];
+const STEPS = CREATE_STEPS.club;
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['name', 'category', 'location', 'description', 'cover', 'privacy', 'membershipRules', 'joinQuestions', 'welcomePost'],
+  ['name', 'category', 'location'],
+  ['description', 'cover'],
+  ['privacy', 'membershipRules', 'joinQuestions'],
+  ['welcomePost'],
 ] as const;
 
 export function slugify(value: string): string {
@@ -213,6 +216,7 @@ export function ClubCreateForm({
             <CreationSignature kind="club" values={previewValues} />
 
             <StepPager
+              inline
               steps={STEPS}
               index={activeStep}
               onIndexChange={setStep}

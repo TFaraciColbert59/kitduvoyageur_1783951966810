@@ -34,7 +34,7 @@ export function KitCarousel({
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
-    track.scrollTo({ left: 0 });
+    track.scrollTo?.({ left: 0 });
     setIndex(0);
   }, [resetKey]);
 
@@ -42,13 +42,13 @@ export function KitCarousel({
     if (scrollToPage === undefined) return;
     const track = trackRef.current;
     if (!track) return;
-    track.scrollTo({ left: scrollToPage * track.clientWidth, behavior: 'smooth' });
+    track.scrollTo?.({ left: scrollToPage * track.clientWidth, behavior: 'smooth' });
   }, [scrollToPage]);
 
   const goTo = (target: number) => {
     const track = trackRef.current;
     if (!track) return;
-    track.scrollTo({ left: target * track.clientWidth, behavior: 'smooth' });
+    track.scrollTo?.({ left: target * track.clientWidth, behavior: 'smooth' });
   };
 
   return (

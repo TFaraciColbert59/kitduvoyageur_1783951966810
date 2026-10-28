@@ -18,6 +18,7 @@ import { resolveCoverUrl } from './shared/mediaSubmit';
 import { insertCommunityPost } from './upload';
 import { KitBlocks } from './kit/KitBlocks';
 import { KitProductPicker } from './kit/KitProductPicker';
+import './kit/inventory.css';
 import { mapInventoryItem } from './kit/catalog';
 import type { KitSlot, PickerProduct } from './kit/types';
 import {
@@ -40,10 +41,12 @@ export interface KitCreateFormProps {
 }
 
 const DEFAULTS = createDefaults('kit');
-const STEPS = [CREATE_STEPS.kit[0]];
+const STEPS = CREATE_STEPS.kit;
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['inventoryIds', 'customItems', 'template', 'name', 'season', 'weightG', 'description', 'isPublic', 'cover'],
+  ['inventoryIds', 'customItems', 'template'],
+  [],
+  ['name', 'season', 'weightG', 'description', 'isPublic', 'cover'],
 ] as const;
 
 function totalWeight(selected: InventoryItem[], custom: CustomKitItem[]) {
@@ -235,6 +238,7 @@ export function KitCreateForm({
             <CreationSignature kind="kit" values={previewValues} />
 
             <StepPager
+              inline
               steps={STEPS}
               index={activeStep}
               onIndexChange={setStep}
