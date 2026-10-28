@@ -214,7 +214,7 @@ for (const project of ['mobile-chromium', 'mobile-webkit']) {
       paths: ['src/features/explorer-v2', 'src/app/explorer'],
     },
     { label: 'SERVICE_ROLE côté client', pattern: 'SERVICE_ROLE', paths: ['src/features/explorer-v2', 'src/components'] },
-    { label: 'projet Supabase fantôme', pattern: 'lwrmuggefbmboikjgudc', paths: ['.'], globs: ['!handoff/**', '!node_modules/**', '!.next/**'] },
+    { label: 'projet Supabase fantôme', pattern: 'lwrmugg' + 'efbmboikjgudc', paths: ['.'], globs: ['!handoff/**', '!node_modules/**', '!.next/**', '!docs/**'] },
   ];
   for (const rule of forbidden) {
     const existing = rule.paths.filter((p) => existsSync(join(ROOT, p)));

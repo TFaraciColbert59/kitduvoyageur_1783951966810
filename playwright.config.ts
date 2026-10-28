@@ -39,7 +39,7 @@ export default defineConfig({
     'tests/e2e/community-feed-actions.spec.ts',
     'tests/e2e/compte-map.spec.ts',
     // Explorer v2 (08_TESTS.md) : specs dédiées, taguées @explorer-v2.
-    'tests/explorer-v2/*.spec.ts',
+    'tests/explorer-v2/*.e2e.spec.ts',
   ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

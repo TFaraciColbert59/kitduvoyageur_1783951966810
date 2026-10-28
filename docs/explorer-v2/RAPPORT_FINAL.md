@@ -35,8 +35,8 @@ Date : 2026-10-28 · Branche : `feat/explorer-v2` · Base : `feat/explorer-v2` i
 
 ### Preuves
 - 14 tests unitaires verts (store, haptique, scènes, géométrie, point-dans-polygone).
-- 10 tests Playwright `@explorer-v2` : **9 verts** au dernier passage
-  (`--workers=1`, build de production, `mobile-chromium`).
+- 10 tests Playwright `@explorer-v2` : **20/20 verts** (10 tests × 2 projets
+  `mobile-chromium` et `mobile-webkit`, build de production, `--workers=1`).
 - Captures réelles de 41 écrans → `docs/explorer-v2/preuves/screens/`,
   paires de parité assemblées → `docs/explorer-v2/parite/`.
 - Build de production vert, `next lint` vert, `tsc --noEmit` vert sur les fichiers Explorer.
@@ -52,7 +52,7 @@ Date : 2026-10-28 · Branche : `feat/explorer-v2` · Base : `feat/explorer-v2` i
 | Build | vert (54 s) | — | ✅ |
 | Lint | vert (warnings préexistants) | 0 erreur | ✅ |
 | Tests unitaires Explorer | 14/14 | 100 % | ✅ |
-| Tests e2e Explorer | 9/10 | 100 % | 🟡 |
+| Tests e2e Explorer | 20/20 (2 projets) | 100 % | ✅ |
 
 ## 3. Limites restantes (chacune avec sa preuve)
 
@@ -81,7 +81,18 @@ policy `geo_pois`, contrainte de sous-types, import Overpass ciblé, réécritur
 capsule locale, barre basse unique, haptique `rigid`, flag, clé serveur, `?scene=`,
 Playwright, population masquée, avatars masqués).
 
-## 5. Commandes de reproduction
+## 5. État de la livraison
+
+- Commit local : `cc44413c1` sur `feat/explorer-v2`.
+- **Push refusé par GitHub** (403, jeton du trousseau expiré, pas de clé SSH,
+  `gh` absent, MCP GitHub en lecture seule) : voir `BLOCAGES.md #11`.
+  La branche est donc livrée localement avec le patch de code
+  `docs/explorer-v2/` et les preuves ; deux commandes suffisent à Tony pour
+  pousser et ouvrir la PR.
+- Gate `npm run explorer:verify` : voir `docs/explorer-v2/VERIFY_LAST.md`
+  (artifact réel de la dernière exécution).
+
+## 6. Commandes de reproduction
 
 ```bash
 npm ci
