@@ -102,7 +102,31 @@ const DAYS = [
   },
 ];
 
-const OWNER = detail({ isOwner: true, days: DAYS });
+const OWNER = detail({ isOwner: true, etapes: DAYS });
+
+/* Le carrousel garde son geste : c'est lui qui mène aux pages J’aime et
+   Commentaires depuis que ♥ et 💬 ont quitté la carte. */
+function pointer(element: Element, type: 'pointerdown' | 'pointerup', x: number, y: number) {
+  fireEvent(
+    element,
+    new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 }),
+  );
+}
+
+function swipePages(times: number) {
+  for (let i = 0; i < times; i += 1) {
+    const pages = document.querySelector('.ckp-pages') as Element;
+    pointer(pages, 'pointerdown', 300, 100);
+    pointer(pages, 'pointerup', 180, 105);
+  }
+}
+
+/* Le clavier du carrousel mène à la même page sans laisser de clic fantôme. */
+function keyPages(times: number) {
+  for (let i = 0; i < times; i += 1) {
+    fireEvent.keyDown(document.querySelector('.ckp-pages') as Element, { key: 'ArrowRight' });
+  }
+}
 
 function drawerOpen() {
   return screen.queryByRole('region', { name: 'Panneau du carnet' }) !== null;
@@ -140,42 +164,40 @@ describe('CarnetScreen — drawer réduit à ce qui n’est pas dans le sélecte
 
   it('ouvre le sous-onglet Dénivelé depuis la statistique DÉNIVELÉ', () => {
     render(<CarnetScreen detail={OWNER} />);
-    fireEvent.click(screen.getByRole('button', { name: 'DÉNIVELÉ + 2 002 m' }));
+    fireEvent.click(screen.getByRole('button', { name: /^DÉNIVELÉ \+ 2\s002 m$/ }));
     expect(screen.getByRole('button', { name: 'Dénivelé' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('tabpanel', { name: 'Dénivelé' })).toBeTruthy();
   });
 });
 
 describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
-  it('♥ ouvre la page J’aime, sans drawer', () => {
+  it('la page J’aime reste accessible par le carrousel, sans drawer', () => {
     render(<CarnetScreen detail={OWNER} />);
-    fireEvent.click(screen.getByRole('button', { name: /^J’aime/ }));
+    swipePages(5);
     expect(drawerOpen()).toBe(false);
     expect(document.getElementById('carnet-page-likes')).toBeTruthy();
     expect(screen.getByRole('tabpanel', { name: 'J’aime' })).toBeTruthy();
     /* Le contenu réel du volet : la bascule du carnet et l’état vide honnête. */
     expect(screen.getByRole('button', { name: 'J’aime ce carnet' })).toBeTruthy();
     expect(document.querySelector('.ckp-empty-state .ckp-empty-dash')?.textContent).toBe('—');
-    expect(screen.getByRole('button', { name: 'J’aime, 22' }).getAttribute('aria-current')).toBe('page');
   });
 
-  it('la bascule J’aime du carnet vit dans la page, plus sur le segment', () => {
+  it('la bascule J’aime du carnet vit dans la page, plus sur la carte', () => {
     render(<CarnetScreen detail={OWNER} />);
-    fireEvent.click(screen.getByRole('button', { name: /^J’aime/ }));
+    keyPages(5);
     expect(SPIES.toggleLike).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'J’aime ce carnet' }));
     expect(SPIES.toggleLike).toHaveBeenCalledOnce();
   });
 
-  it('💬 ouvre la page Commentaires avec la liste réelle et le champ d’envoi', () => {
+  it('la page Commentaires garde la liste réelle et le champ d’envoi', () => {
     render(<CarnetScreen detail={OWNER} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Commenter/ }));
+    swipePages(6);
     expect(drawerOpen()).toBe(false);
     expect(document.getElementById('carnet-page-comments')).toBeTruthy();
     expect(screen.getByText('Bivouac validé, merci pour l’itinéraire.')).toBeTruthy();
     /* Visiteur : la porte reste un geste, jamais une phrase. */
     expect(screen.getByRole('button', { name: 'Se connecter pour commenter' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^Commenter/ }).getAttribute('aria-current')).toBe('page');
   });
 
   it('le menu ··· vit dans la barre du haut, dernière position', () => {
@@ -183,11 +205,10 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     const more = screen.getByRole('button', { name: 'Plus d’options' });
     expect(more.closest('.ckp-topbar')).toBeTruthy();
     expect(more.closest('.ckp-more-anchor')).toBeTruthy();
-    /* Le sélecteur du bas a quatre segments : ♥, 💬, ▦, 🗺. */
-    const segments = document.querySelectorAll(
-      '.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button',
-    );
-    expect(segments).toHaveLength(4);
+    /* Le sélecteur du bas a deux segments : ▦, 🗺 — la capsule des drawers. */
+    const segments = document.querySelectorAll('.ckp-card-foot .ckp-tabs button');
+    expect(segments).toHaveLength(2);
+    expect(document.querySelectorAll('.ckp-card-foot .ckp-action')).toHaveLength(0);
     expect(document.querySelector('.ckp-card-foot .ckp-more-anchor')).toBeNull();
     /* La loupe a disparu de la barre : le `···` prend sa place. */
     expect(screen.queryByRole('button', { name: /Rechercher/ })).toBeNull();
@@ -221,17 +242,22 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     expect(document.querySelector('.ckp-pages')?.getAttribute('id')).toBe('carnet-page-posts');
   });
 
-  it('chaque segment ouvre sa page : ♥, 💬, ▦, 🗺', () => {
+  it('chaque segment ouvre sa page : ▦, 🗺', () => {
     render(<CarnetScreen detail={OWNER} />);
     const header = () => document.querySelector('.ckp-pages')?.getAttribute('id');
-    fireEvent.click(screen.getByRole('button', { name: /^J’aime/ }));
-    expect(header()).toBe('carnet-page-likes');
-    fireEvent.click(screen.getByRole('button', { name: /^Commenter/ }));
-    expect(header()).toBe('carnet-page-comments');
-    fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
-    expect(header()).toBe('carnet-page-posts');
     fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
     expect(header()).toBe('carnet-page-parcours');
+    fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
+    expect(header()).toBe('carnet-page-posts');
+  });
+
+  it('le carrousel mène encore aux pages sans segment : J’aime, Commentaires', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    const header = () => document.querySelector('.ckp-pages')?.getAttribute('id');
+    swipePages(5);
+    expect(header()).toBe('carnet-page-likes');
+    swipePages(1);
+    expect(header()).toBe('carnet-page-comments');
   });
 
   it('garde la page active et ses voisines swipables', () => {

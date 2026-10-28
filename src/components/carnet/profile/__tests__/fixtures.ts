@@ -30,6 +30,8 @@ export const DETAIL: CarnetDetail = {
   moments: [moment('m1', 'https://cdn.test/1.jpg')],
   photoMoments: [moment('m1', 'https://cdn.test/1.jpg')],
   days: [],
+  etapes: [],
+  summary: { distanceKm: 106.4, elevationM: 2002, days: 7, moments: 1 },
   kit: { totalWeightG: null, items: [] },
   trace: null,
   place: { country: null, region: null, locality: null, lat: null, lng: null },

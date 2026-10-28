@@ -2,13 +2,13 @@
 
 import React from 'react';
 import Icon from '@/components/ui/Icon';
-import type { CarnetDay, CarnetMomentItem } from '@/features/carnet/detail/types';
+import type { CarnetEtapeDay, CarnetMomentItem } from '@/features/carnet/detail/types';
 
 /** Aucun moment : référence partagée, sinon la ligne se redessinerait pour rien. */
 const NO_MOMENTS: CarnetMomentItem[] = [];
 
 export interface CarnetDayRowProps {
-  day: CarnetDay;
+  day: CarnetEtapeDay;
   /** Moments réels du jour, quand le volet les porte (sous-drawer Jours). */
   moments?: CarnetMomentItem[];
 }

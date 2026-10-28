@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import fs from 'node:fs';
+import path from 'node:path';
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -69,22 +71,18 @@ describe('CarnetCard — carte du carnet', () => {
     render(<CarnetCard {...base({ onOpenStat })} />);
     fireEvent.click(screen.getByRole('button', { name: 'DISTANCE 106,4 km' }));
     expect(onOpenStat).toHaveBeenLastCalledWith('distance');
-    fireEvent.click(screen.getByRole('button', { name: 'DÉNIVELÉ + 2 002 m' }));
+    fireEvent.click(screen.getByRole('button', { name: /^DÉNIVELÉ \+ 2\s002 m$/ }));
     expect(onOpenStat).toHaveBeenLastCalledWith('elevation');
     fireEvent.click(screen.getByRole('button', { name: 'JOURS 7' }));
     expect(onOpenStat).toHaveBeenLastCalledWith('days');
     expect(onOpenStat).toHaveBeenCalledTimes(3);
   });
 
-  it('deux boutons ronds hors capsule, puis la capsule à deux segments (Compte)', () => {
+  it('ne garde que la capsule des drawers, à deux segments, dans le pied', () => {
     const { container } = render(<CarnetCard {...base()} />);
-    expect(container.querySelector('.ckp-action-lbl')).toBeNull();
-    const actions = container.querySelectorAll('.ckp-card-foot > .ckp-actions .ckp-action');
-    expect(actions).toHaveLength(2);
-    expect([...actions].map((node) => node.getAttribute('aria-label'))).toEqual([
-      'J’aime, 22',
-      'Commenter, 3',
-    ]);
+    /* ♥ et 💬 ont quitté la carte : plus aucun bouton rond dans le pied. */
+    expect(container.querySelector('.ckp-action')).toBeNull();
+    expect(container.querySelector('.ckp-actions')).toBeNull();
     const capsule = container.querySelector('.ckp-card-foot .ckp-capsule');
     expect(capsule).toBeTruthy();
     const segments = capsule?.querySelectorAll('.ckp-tabs button') ?? [];
@@ -109,22 +107,17 @@ describe('CarnetCard — carte du carnet', () => {
     expect(screen.queryByRole('button', { name: 'Gérer' })).toBeNull();
   });
 
-  it('fusionne actions, séparateur et segments dans une seule capsule', () => {
+  it('ne porte qu’une capsule dans le pied, sans autre bouton', () => {
     const { container } = render(<CarnetCard {...base()} />);
     const foot = container.querySelector('.ckp-card-foot');
     expect(container.querySelectorAll('.ckp-card-foot')).toHaveLength(1);
     // Conteneur simple : aucun rôle de sélecteur sur la capsule.
     expect(foot?.getAttribute('role')).toBeNull();
-    expect([...(foot?.children ?? [])].map((el) => el.className)).toEqual([
-      'ckp-actions',
-      'ckp-capsule',
-    ]);
+    expect([...(foot?.children ?? [])].map((el) => el.className)).toEqual(['ckp-capsule']);
     expect(foot?.querySelector('.ckp-capsule .ckp-th')?.getAttribute('aria-hidden')).toBe('true');
     // Le sélecteur vit dans la capsule, pas ailleurs dans la carte.
     expect(container.querySelectorAll('.ckp-card > .ckp-tabs')).toHaveLength(0);
     expect(container.querySelectorAll('.ckp-tabs')).toHaveLength(1);
-    // Les deux familles de boutons restent distinctes et accessibles.
-    expect(foot?.querySelectorAll('.ckp-actions button[aria-label]')).toHaveLength(2);
     expect(foot?.querySelectorAll('.ckp-tabs button[role="tab"]')).toHaveLength(2);
   });
 
@@ -148,14 +141,16 @@ describe('CarnetCard — carte du carnet', () => {
     expect(onPageChange).toHaveBeenLastCalledWith('posts');
   });
 
-  it('garde tous les comportements des actions du sélecteur', () => {
-    const onOpenLikes = vi.fn();
-    const onOpenComments = vi.fn();
-    render(<CarnetCard {...base({ onOpenLikes, onOpenComments })} />);
-    fireEvent.click(screen.getByRole('button', { name: /^J’aime/ }));
-    expect(onOpenLikes).toHaveBeenCalledOnce();
-    fireEvent.click(screen.getByRole('button', { name: /^Commenter/ }));
-    expect(onOpenComments).toHaveBeenCalledOnce();
+  it('ne rend plus ♥ ni 💬 dans la carte : leurs pages vivent dans le carrousel', () => {
+    const { container } = render(<CarnetCard {...base()} />);
+    expect(screen.queryByRole('button', { name: /^J’aime/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Commenter/ })).toBeNull();
+    expect(container.querySelector('.ckp-card-foot [data-icon="heart"]')).toBeNull();
+    expect(container.querySelector('.ckp-card-foot [data-icon="message-square"]')).toBeNull();
+    /* Le contenu réel des deux pages est toujours rendu par le carrousel. */
+    const likes = render(<CarnetCard {...base({ page: 'likes', likesPage: <p>réactions</p> })} />);
+    expect(likes.container.querySelector('.ckp-page-pad')?.textContent).toBe('réactions');
+    likes.unmount();
   });
 
   it('garde la page Parcours à portée de segment (🗺)', () => {
@@ -240,7 +235,7 @@ describe('CarnetCard — carte du carnet', () => {
         {...base({
           page: 'etapes',
           detail: detail({
-            days: [
+            etapes: [
               {
                 id: 'd1',
                 dayNumber: 1,
@@ -272,12 +267,10 @@ describe('CarnetCard — carte du carnet', () => {
     expect(container.querySelector('.ckp-page-pad')).toBeTruthy();
   });
 
-  it('affiche les compteurs réels sans état pressé sur les pages', () => {
+  it('ne peint plus les compteurs ♥ et 💬 sur la carte', () => {
     render(<CarnetCard {...base()} />);
-    expect(screen.getByRole('button', { name: 'J’aime, 22' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Commenter, 3' })).toBeTruthy();
-    /* Le ♥ n’est plus une bascule : il ouvre la page J’aime. */
-    expect(screen.getByRole('button', { name: 'J’aime, 22' }).getAttribute('aria-pressed')).toBeNull();
+    expect(screen.queryByRole('button', { name: /^J’aime, 22$/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Commenter, 3$/ })).toBeNull();
   });
 
   it('pose les contenus J’aime, Commentaires et Gérer dans le carrousel', () => {
@@ -320,15 +313,15 @@ describe('CarnetCard — lentille unique du sélecteur', () => {
     expect(lens(parcours.container).i).toBe('1');
   });
 
-  it('suit la page affichée depuis les boutons hors capsule', () => {
-    const likes = render(<CarnetCard {...base({ page: 'likes' })} />);
-    expect(lens(likes.container).node?.getAttribute('data-off')).toBe('true');
-    expect(screen.getByRole('button', { name: /^J’aime/ }).getAttribute('aria-current')).toBe('page');
-    likes.unmount();
-
-    const comments = render(<CarnetCard {...base({ page: 'comments' })} />);
-    expect(lens(comments.container).node?.getAttribute('data-off')).toBe('true');
-    expect(screen.getByRole('button', { name: /^Commenter/ }).getAttribute('aria-current')).toBe('page');
+  it('n’allume la lentille que sur les deux pages du sélecteur', () => {
+    for (const page of ['likes', 'comments', 'manage'] as const) {
+      const view = render(<CarnetCard {...base({ page })} />);
+      expect(lens(view.container).node?.getAttribute('data-off')).toBe('true');
+      view.unmount();
+    }
+    const parcours = render(<CarnetCard {...base({ page: 'parcours' })} />);
+    expect(lens(parcours.container).node?.getAttribute('data-off')).toBeNull();
+    expect(lens(parcours.container).i).toBe('1');
   });
 
   it('masque la lentille sur une page sans segment (Gérer, Étapes, Matériel, Nature)', () => {
@@ -339,22 +332,22 @@ describe('CarnetCard — lentille unique du sélecteur', () => {
     }
   });
 
-  it('n’a plus aucune action sans page dans la capsule', () => {
+  it('ne garde que les deux segments du sélecteur, quelle que soit la page', () => {
     for (const page of ['posts', 'parcours', 'likes', 'comments'] as const) {
       const view = render(<CarnetCard {...base({ page })} />);
-      const labels = [...view.container.querySelectorAll('.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button')]
+      const labels = [...view.container.querySelectorAll('.ckp-card-foot .ckp-tabs button')]
         .map((node) => node.getAttribute('aria-label'));
-      expect(labels).toEqual(['J’aime, 22', 'Commenter, 3', 'Posts', 'Parcours']);
+      expect(labels).toEqual(['Posts', 'Parcours']);
       view.unmount();
     }
   });
 
-  it('garde les mêmes quatre segments pour le propriétaire et le visiteur', () => {
+  it('garde les mêmes deux segments pour le propriétaire et le visiteur', () => {
     for (const isOwner of [false, true]) {
       const view = render(<CarnetCard {...base({ detail: detail({ isOwner }) })} />);
-      const labels = [...view.container.querySelectorAll('.ckp-card-foot .ckp-action, .ckp-card-foot .ckp-tabs button')]
+      const labels = [...view.container.querySelectorAll('.ckp-card-foot .ckp-tabs button')]
         .map((node) => node.getAttribute('aria-label'));
-      expect(labels).toEqual(['J’aime, 22', 'Commenter, 3', 'Posts', 'Parcours']);
+      expect(labels).toEqual(['Posts', 'Parcours']);
       view.unmount();
     }
   });
@@ -369,7 +362,7 @@ describe('CarnetCard — ligne de lieu unique', () => {
         {...base({
           detail: detail({
             place: PLACE,
-            days: [{ id: 'd1', dayNumber: 1, label: 'JOUR 1', from: null, to: null, note: null, distanceKm: null, elevationM: null, durationText: null, weather: null, overnight: null }],
+            etapes: [{ id: 'd1', dayNumber: 1, label: 'JOUR 1', from: null, to: null, note: null, distanceKm: null, elevationM: null, durationText: null, weather: null, overnight: null }],
           }),
         })}
       />,
@@ -392,7 +385,7 @@ describe('CarnetCard — ligne de lieu unique', () => {
             dateRange: null,
             distanceKm: null,
             elevationM: null,
-            days: [],
+            etapes: [],
           }),
         })}
       />,
@@ -415,12 +408,248 @@ describe('CarnetCard — ligne de lieu unique', () => {
             dateRange: null,
             distanceKm: null,
             elevationM: null,
-            days: [],
+            etapes: [],
           }),
         })}
       />,
     );
     /* Aucune donnée réelle : pas de ligne de tirets décorative. */
     expect(container.querySelector('.ckp-place-line')).toBeNull();
+  });
+});
+
+/* =============================================================================
+   Balayage Résumé → J1 … → Jn (tâche 3) et capsule des drawers (tâche 4)
+   ============================================================================= */
+
+const M1 = {
+  id: 'm1',
+  dayNumber: 1,
+  time: '18:30',
+  caption: 'Bivouac',
+  authorName: null,
+  place: 'Col',
+  imageUrl: 'https://cdn.test/1.jpg',
+};
+const M2 = {
+  id: 'm2',
+  dayNumber: 2,
+  time: null,
+  caption: null,
+  authorName: null,
+  place: null,
+  imageUrl: 'https://cdn.test/2.jpg',
+};
+/* Un moment sans image : il compte dans le jour, jamais dans la grille. */
+const M3 = { ...M2, id: 'm3', imageUrl: null };
+
+const DAY_ONE = {
+  index: 1,
+  date: '2026-09-26',
+  distanceKm: 18.4,
+  elevationM: 620,
+  durationS: 21600,
+  moments: [M1],
+  points: [],
+};
+const DAY_TWO = {
+  index: 2,
+  date: '2026-09-27',
+  distanceKm: 12,
+  elevationM: 300,
+  durationS: null,
+  moments: [M2, M3],
+  points: [],
+};
+/* Jour sans GPS et sans moment : il reste dans le balayage, en tirets honnêtes. */
+const DAY_THREE = {
+  index: 3,
+  date: '2026-09-28',
+  distanceKm: null,
+  elevationM: null,
+  durationS: null,
+  moments: [],
+  points: [],
+};
+
+function withDays(overrides: Partial<React.ComponentProps<typeof CarnetCard>> = {}) {
+  return base({
+    detail: detail({
+      days: [DAY_ONE, DAY_TWO, DAY_THREE],
+      moments: [M1, M2, M3],
+      photoMoments: [M1, M2],
+      summary: { distanceKm: 30.4, elevationM: 920, days: 3, moments: 3 },
+    }),
+    ...overrides,
+  });
+}
+
+function drag(element: Element, x1: number, x2: number) {
+  pointer(element, 'pointerdown', x1, 100);
+  pointer(element, 'pointerup', x2, 100);
+}
+
+function pointer(element: Element, type: 'pointerdown' | 'pointerup', x: number, y: number) {
+  fireEvent(
+    element,
+    new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 }),
+  );
+}
+
+const dayLabel = (container: HTMLElement) => container.querySelector('.ckp-daypill-label')?.textContent;
+const statNames = (container: HTMLElement) =>
+  [...container.querySelectorAll('.ckp-stat')].map((node) => node.getAttribute('aria-label'));
+
+describe('CarnetCard — balayage Résumé → J1..Jn', () => {
+  it('ouvre sur le Résumé : les totaux du carnet et tous les moments', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    expect(dayLabel(container)).toBe('Résumé');
+    expect(norm(container.querySelector('.ckp-daypill-count')?.textContent)).toBe('3 moments');
+    expect(statNames(container)).toEqual([
+      'DISTANCE 30,4 km',
+      'DÉNIVELÉ + 920 m',
+      'JOURS 3',
+    ]);
+    expect(container.querySelectorAll('.ckp-grid-wrap .ckp-tile')).toHaveLength(2);
+  });
+
+  it('passe au jour 1 au balayage vers la gauche : sa date, ses chiffres, ses photos', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    drag(container.querySelector('.ckp-card') as Element, 300, 180);
+    expect(norm(dayLabel(container))).toBe('26 sept.');
+    expect(statNames(container)).toEqual([
+      'DISTANCE 18,4 km',
+      'DÉNIVELÉ + 620 m',
+      'DURÉE 6 h',
+    ]);
+    expect(container.querySelectorAll('.ckp-grid-wrap .ckp-tile')).toHaveLength(1);
+    expect(norm(container.querySelector('.ckp-daypill-count')?.textContent)).toBe('1 moment');
+  });
+
+  it('revient au Résumé au balayage vers la droite', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    drag(container.querySelector('.ckp-card') as Element, 300, 180);
+    expect(norm(dayLabel(container))).toBe('26 sept.');
+    drag(container.querySelector('.ckp-card') as Element, 120, 260);
+    expect(dayLabel(container)).toBe('Résumé');
+  });
+
+  it('respecte les bornes : rien à droite du Résumé, rien après le dernier jour', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    const card = container.querySelector('.ckp-card') as Element;
+    drag(card, 140, 300);
+    expect(dayLabel(container)).toBe('Résumé');
+    drag(card, 300, 180);
+    drag(card, 300, 180);
+    drag(card, 300, 180);
+    expect(dayLabel(container)).toBe('28 sept.');
+    drag(card, 300, 180);
+    expect(dayLabel(container)).toBe('28 sept.');
+  });
+
+  it('se balaie au clavier, flèches gauche et droite, bornes comprises', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    const card = container.querySelector('.ckp-card') as Element;
+    fireEvent.keyDown(card, { key: 'ArrowRight' });
+    expect(norm(dayLabel(container))).toBe('26 sept.');
+    fireEvent.keyDown(card, { key: 'ArrowLeft' });
+    expect(dayLabel(container)).toBe('Résumé');
+    fireEvent.keyDown(card, { key: 'ArrowLeft' });
+    expect(dayLabel(container)).toBe('Résumé');
+    fireEvent.keyDown(card, { key: 'End' });
+    expect(dayLabel(container)).toBe('28 sept.');
+    fireEvent.keyDown(card, { key: 'ArrowRight' });
+    expect(dayLabel(container)).toBe('28 sept.');
+  });
+
+  it('un jour sans GPS écrit — km, — m et un état vide de grille, sans erreur', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { container } = render(<CarnetCard {...withDays()} />);
+    const card = container.querySelector('.ckp-card') as Element;
+    fireEvent.keyDown(card, { key: 'End' });
+    expect(statNames(container)).toEqual(['DISTANCE — km', 'DÉNIVELÉ + — m', 'DURÉE — h']);
+    expect(container.querySelector('.ckp-grid-wrap')).toBeNull();
+    expect(container.querySelector('.ckp-grid-empty')?.textContent).toContain(
+      'Aucun moment ce jour-là.',
+    );
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+  });
+
+  it('ne limite la grille qu’aux moments du jour affiché', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    const card = container.querySelector('.ckp-card') as Element;
+    /* Résumé : les deux photos du carnet. */
+    expect(container.querySelectorAll('.ckp-grid-wrap .ckp-tile')).toHaveLength(2);
+    fireEvent.keyDown(card, { key: 'ArrowRight' });
+    /* J1 : une seule photo, celle de J1. */
+    expect(container.querySelectorAll('.ckp-grid-wrap .ckp-tile')).toHaveLength(1);
+    fireEvent.keyDown(card, { key: 'ArrowRight' });
+    /* J2 : deux moments, une seule photo. */
+    expect(norm(container.querySelector('.ckp-daypill-count')?.textContent)).toBe('2 moments');
+    expect(container.querySelectorAll('.ckp-grid-wrap .ckp-tile')).toHaveLength(1);
+  });
+
+  it('ouvre le post du moment réel depuis une grille de jour', () => {
+    const onOpenPost = vi.fn();
+    const { container } = render(<CarnetCard {...withDays({ onOpenPost })} />);
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
+    fireEvent.click(screen.getAllByRole('button', { name: /^Moment / })[0]);
+    /* Le moment de J2 est le deuxième de la galerie complète. */
+    expect(onOpenPost).toHaveBeenLastCalledWith(1);
+  });
+
+  it('laisse le carrousel média à son propre geste : la grille ne change pas de jour', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    drag(container.querySelector('.ckp-pages') as Element, 300, 180);
+    expect(dayLabel(container)).toBe('Résumé');
+  });
+});
+
+describe('CarnetCard — capsule des drawers et mouvement du balayage', () => {
+  const css = fs.readFileSync(path.join(process.cwd(), 'src/styles/carnet-profile.css'), 'utf8');
+
+  function rule(selector: string): string {
+    const start = css.indexOf(selector);
+    if (start < 0) throw new Error(`règle absente : ${selector}`);
+    const open = css.indexOf('{', start);
+    const close = css.indexOf('}', open);
+    return css.slice(open + 1, close);
+  }
+
+  it('pose la capsule à 10 px du bord droit et du bas, sur 30 px de haut', () => {
+    const foot = rule('.ckp-card-foot {');
+    expect(foot).toMatch(/position:\s*absolute/);
+    expect(foot).toMatch(/right:\s*10px/);
+    expect(foot).toMatch(/bottom:\s*10px/);
+    expect(foot).toMatch(/height:\s*30px/);
+  });
+
+  it('fait 88 × 30 pour deux segments, avec l’ombre de pose des drawers', () => {
+    const capsule = rule('\n.ckp-capsule {');
+    /* 2 × 41,5 + 5 = 88 : même formule que la capsule des drawers. */
+    expect(capsule).toMatch(/width:\s*calc\(var\(--n, 2\) \* 41\.5px \+ 5px\)/);
+    expect(capsule).toMatch(/height:\s*30px/);
+    expect(capsule).toMatch(/padding:\s*2\.5px/);
+    expect(rule('.ckp-card-foot .ckp-capsule {')).toMatch(/0 2px 8px rgba\(23, 43, 36, \.10\)/);
+    expect(rule('.ckp-capsule .ckp-tabs {')).toMatch(/grid-template-columns:\s*41\.5px 41\.5px/);
+    expect(2 * 41.5 + 5).toBe(88);
+  });
+
+  it('n’a plus aucun bouton rond dans le pied', () => {
+    expect(css).not.toMatch(/\.ckp-actions/);
+    expect(css).not.toMatch(/\.ckp-action\b/);
+  });
+
+  it('glisse d’un jour en 220 ms, sans translation sous mouvement réduit', () => {
+    expect(rule('.ckp-day--next {')).toMatch(
+      /animation:\s*ckp-day-next 220ms cubic-bezier\(\.22, 1, \.36, 1\)/,
+    );
+    expect(rule('.ckp-day--prev {')).toMatch(
+      /animation:\s*ckp-day-prev 220ms cubic-bezier\(\.22, 1, \.36, 1\)/,
+    );
+    const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce) {\n  .ckp-day--next'));
+    expect(reduced).toMatch(/\.ckp-day--next, \.ckp-day--prev \{ animation: none; \}/);
   });
 });

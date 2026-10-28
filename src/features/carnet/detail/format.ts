@@ -40,6 +40,29 @@ function parseDate(value: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+/**
+ * `25 avr.` — la date d'une page de jour, sans l'année. `null` quand le jour
+ * n'a pas de date réelle : la fiche affiche alors son numéro de jour.
+ */
+export function formatDayLabel(date: string | null): string | null {
+  if (!date) return null;
+  const parsed = parseDate(date);
+  return parsed ? DAY_LABEL.format(parsed) : null;
+}
+
+/**
+ * `6 h`, `4 h 30`, `45 min` — durée réelle d'une sortie. `null` sans durée :
+ * aucune minute n'est inventée.
+ */
+export function formatDuration(seconds: number | null): string | null {
+  if (seconds === null || !Number.isFinite(seconds) || seconds < 0) return null;
+  const total = Math.round(seconds / 60);
+  if (total < 60) return `${total} min`;
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+  return minutes === 0 ? `${hours} h` : `${hours} h ${String(minutes).padStart(2, '0')}`;
+}
+
 /** `26 sept. – 2 oct. 2026`, `26 sept. 2026`, `null`. */
 export function formatDateRange(start: string | null, end: string | null): string | null {
   const from = start ? parseDate(start) : null;

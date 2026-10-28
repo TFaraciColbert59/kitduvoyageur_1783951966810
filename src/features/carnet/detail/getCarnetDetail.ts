@@ -125,7 +125,9 @@ export async function getCarnetDetail(id: string) {
          la plus récente *avec une trace* porte le parcours 3D. */
       supabase
         .from('hike_sessions')
-        .select('id, carnet_id, distance_km, elevation_gain_m, duration_seconds, started_at, positions_geojson')
+        .select(
+          'id, carnet_id, distance_km, elevation_gain_m, duration_seconds, started_at, positions_geojson, positions_timed',
+        )
         .eq('carnet_id', carnet.id)
         .order('started_at', { ascending: false })
         .limit(10),
@@ -250,6 +252,9 @@ export async function getCarnetDetail(id: string) {
     carnet,
     author: (authorResult.data as unknown as AuthorRow) ?? null,
     hikeSession: sessions[0] ?? null,
+    /* Toutes les sorties datent leurs propres points : c'est la matière de
+       `buildDays` (un carnet de sept jours peut compter sept sorties). */
+    sessions,
     trace: pickCarnetTrace(sessions),
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],
     hebergements: (hebergementsResult.data as unknown as HebergementRow[]) ?? [],

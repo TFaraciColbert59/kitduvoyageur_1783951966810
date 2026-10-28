@@ -3,12 +3,12 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CarnetStatsPane } from '../panes/CarnetStatsPane';
-import type { CarnetDay } from '@/features/carnet/detail/types';
+import type { CarnetEtapeDay } from '@/features/carnet/detail/types';
 import { detail } from './fixtures';
 
 afterEach(() => cleanup());
 
-const DAYS: CarnetDay[] = [
+const DAYS: CarnetEtapeDay[] = [
   {
     id: 'd1',
     dayNumber: 1,
@@ -60,7 +60,7 @@ const TRACE = {
 };
 
 const RICH = detail({
-  days: DAYS,
+  etapes: DAYS,
   trace: TRACE,
   moments: [
     { id: 'm1', dayNumber: 1, time: '18:30', caption: 'Bivouac au col', authorName: null, place: 'Col', imageUrl: null },
@@ -135,7 +135,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   });
 
   it('distance : aucune donnée inventée quand tout manque', () => {
-    const bare = detail({ days: [], trace: null, distanceKm: null, elevationM: null });
+    const bare = detail({ etapes: [], trace: null, distanceKm: null, elevationM: null });
     const { container } = render(<CarnetStatsPane detail={bare} tab="distance" onTabChange={() => {}} />);
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
     /* 11 : `— km`, l'unité reste dans le bloc héros. */
@@ -168,7 +168,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   it('dénivelé : état vide honnête, sans phrase', () => {
     const { container } = render(
       <CarnetStatsPane
-        detail={detail({ days: [], elevationM: null, distanceKm: null })}
+        detail={detail({ etapes: [], elevationM: null, distanceKm: null })}
         tab="elevation"
         onTabChange={() => {}}
       />,
@@ -230,7 +230,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   });
 
   it('jours : état vide honnête sans étape, aucune phrase', () => {
-    const { container } = render(<CarnetStatsPane detail={detail({ days: [] })} tab="days" onTabChange={() => {}} />);
+    const { container } = render(<CarnetStatsPane detail={detail({ etapes: [] })} tab="days" onTabChange={() => {}} />);
     const panel = screen.getByRole('tabpanel', { name: 'Jours' });
     expect([...panel.querySelectorAll('.ckp-field-label')].map((node) => node.textContent)).toEqual(['jour']);
     expect(container.textContent).not.toMatch(/Aucun jour renseigné/);

@@ -169,8 +169,8 @@ describe('buildCarnetDetail — jours, moments, kit', () => {
         ],
       }),
     );
-    expect(detail.days).toHaveLength(1);
-    expect(detail.days[0]).toMatchObject({
+    expect(detail.etapes).toHaveLength(1);
+    expect(detail.etapes[0]).toMatchObject({
       dayNumber: 1,
       label: 'JOUR 1 · 26 sept.',
       from: 'Chamonix',
@@ -192,10 +192,10 @@ describe('buildCarnetDetail — jours, moments, kit', () => {
         ],
       }),
     );
-    expect(detail.days.map((d) => d.dayNumber)).toEqual([2, 4]);
-    expect(detail.days[0].label).toBe('JOUR 2');
-    expect(detail.days[0].note).toBeNull();
-    expect(detail.days[0].from).toBe('Col de la Seigne');
+    expect(detail.etapes.map((d) => d.dayNumber)).toEqual([2, 4]);
+    expect(detail.etapes[0].label).toBe('JOUR 2');
+    expect(detail.etapes[0].note).toBeNull();
+    expect(detail.etapes[0].from).toBe('Col de la Seigne');
     expect(detail.stats.some((s) => s.key === 'days')).toBe(true);
   });
 
@@ -233,6 +233,49 @@ describe('buildCarnetDetail — jours, moments, kit', () => {
       input({ kitItems: [{ id: 'k1', nom: 'Sac', detail: null, poids_g: 900, couleur_tag: null, sort_order: 1 }] }),
     );
     expect(JSON.stringify(detail.kit)).not.toContain('Matériel embarqué');
+  });
+});
+
+describe('buildCarnetDetail — jours dérivés et totaux', () => {
+  const sortie = (id: string, startedAt: string, coordinates: Array<[number, number]>) => ({
+    id,
+    carnet_id: 'c1',
+    distance_km: null,
+    elevation_gain_m: null,
+    duration_seconds: 3600,
+    started_at: startedAt,
+    positions_geojson: { type: 'LineString', coordinates },
+  });
+
+  it('expose les jours dérivés des sorties et un résumé qui en est la somme', () => {
+    const detail = buildCarnetDetail(
+      input({
+        sessions: [
+          sortie('s2', '2026-09-27T06:00:00Z', [[6.9, 45.85], [6.91, 45.86]]),
+          sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]),
+        ],
+      }),
+    );
+
+    expect(detail.days.map((day) => day.index)).toEqual([1, 2]);
+    expect(detail.days.map((day) => day.date)).toEqual(['2026-09-26', '2026-09-27']);
+    expect(detail.days[0].points).toHaveLength(2);
+    expect(detail.days[0].durationS).toBe(3600);
+    expect(detail.summary.days).toBe(2);
+    expect(detail.summary.moments).toBe(0);
+    expect(detail.summary.distanceKm).toBeCloseTo(
+      detail.days.reduce((total, day) => total + (day.distanceKm ?? 0), 0),
+      9,
+    );
+  });
+
+  it('retombe sur la sortie la plus récente quand aucune liste n’est fournie', () => {
+    const detail = buildCarnetDetail(
+      input({ hikeSession: sortie('s1', '2026-09-26T06:00:00Z', [[6.86, 45.83], [6.87, 45.84]]) }),
+    );
+    expect(detail.days.map((day) => day.index)).toEqual([1]);
+    /* La trace de la fiche reste celle de la sortie : elle n'est pas remplacée. */
+    expect(detail.trace).not.toBeNull();
   });
 });
 
