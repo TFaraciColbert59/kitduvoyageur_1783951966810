@@ -201,13 +201,12 @@ describe('CarnetScreen — drawer réduit à ce qui n’est pas dans le sélecte
     fireEvent.click(screen.getByRole('button', { name: 'DISTANCE 18,4 km' }));
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
     const values = [...panel.querySelectorAll('.ckp-field-value')].map((node) => node.textContent);
-    /* 6 h pour 18,4 km : 19,6 min/km, calculée depuis le jour. */
-    expect(values[3]).toBe('19,6 min/km');
-    /* 18,4 km est la distance cumulée du jour 1. */
-    expect(values[4]).toBe('18,4 km');
-    /* Le lieu et le départ réels restent dans le volet, pas sur la carte. */
-    expect(values[0]).toBe('France / Italie / Suisse');
-    expect(values[1]).toBe('Les Houches');
+    /* Le volet d'un jour ne porte que le jour : départ, arrivée, allure, cumul.
+       6 h pour 18,4 km : 19,6 min/km, calculée depuis le jour. */
+    expect(values).toEqual(['Les Houches', 'Refuge de Bellachat', '19,6 min/km', '18,4 km']);
+    /* 106,4 km est le total du carnet : il reste au Résumé. */
+    expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('18,4');
+    expect(panel.textContent).not.toContain('106,4');
   });
 
   it('ouvre le sous-onglet Dénivelé depuis la statistique DÉNIVELÉ', () => {
@@ -215,6 +214,32 @@ describe('CarnetScreen — drawer réduit à ce qui n’est pas dans le sélecte
     fireEvent.click(screen.getByRole('button', { name: /^DÉNIVELÉ \+ 2\s002 m$/ }));
     expect(screen.getByRole('button', { name: 'Dénivelé' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('tabpanel', { name: 'Dénivelé' })).toBeTruthy();
+  });
+
+  it('la page d’un jour ne peint que les données de ce jour dans les trois volets', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Jour 1' }));
+    fireEvent.click(screen.getByRole('button', { name: 'DISTANCE 18,4 km' }));
+
+    const distance = screen.getByRole('tabpanel', { name: 'Distance' });
+    expect(distance.querySelector('.ckp-hero-value')?.textContent).toBe('18,4');
+    expect(distance.textContent).not.toContain('106,4');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dénivelé' }));
+    const elevation = screen.getByRole('tabpanel', { name: 'Dénivelé' });
+    expect(elevation.querySelector('.ckp-hero-value')?.textContent).toBe('620');
+    expect(elevation.textContent).not.toContain('2\u202f002');
+    expect(elevation.querySelector('.ckp-elev')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Jours' }));
+    const days = screen.getByRole('tabpanel', { name: 'Jours' });
+    expect([...days.querySelectorAll('.ckp-field-label')].map((node) => node.textContent)).toEqual([
+      'jour',
+      'date',
+    ]);
+    expect(days.textContent).not.toContain('26 sept. – 2 oct. 2026');
+    /* Le récit global apparaît une seule fois dans le volet du jour. */
+    expect(days.querySelectorAll('.ckp-story')).toHaveLength(1);
   });
 });
 

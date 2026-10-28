@@ -235,21 +235,48 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
       />,
     );
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
-    expect(labels(panel).slice(0, 6)).toEqual([
-      'lieu',
-      'départ',
-      'arrivée',
-      'allure',
-      'depuis le départ',
-      'trace gps',
-    ]);
+    /* Le jour ne garde que ses lignes : ni lieu, ni trace, ni liste des jours. */
+    expect(labels(panel)).toEqual(['départ', 'arrivée', 'allure', 'depuis le départ']);
     /* Départ et arrivée viennent de l'étape déclarée du jour 2. */
-    expect(values(panel)[1]).toBe('Refuge de Bellachat');
-    expect(values(panel)[2]).toBe('Col de la Seigne');
-    /* 6 h pour 14,2 km : 25,4 min/km — calculée, jamais inventée. */
-    expect(values(panel)[3]).toBe('25,4 min/km');
-    /* 12,4 + 14,2 = 26,6 km depuis le départ. */
-    expect(values(panel)[4]).toBe('26,6 km');
+    expect(values(panel)).toEqual(['Refuge de Bellachat', 'Col de la Seigne', '25,4 min/km', '26,6 km']);
+    /* Le chiffre héros est celui du jour, jamais le total du carnet. */
+    expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('14,2');
+    expect(panel.querySelector('.ckp-hero-unit')?.textContent).toBe('km');
+    expect([...panel.querySelectorAll('.ckp-hero-sub span')].map((node) => node.textContent)).toEqual([
+      'J2',
+      '27 sept.',
+      '6 h',
+    ]);
+    expect(panel.textContent).not.toContain('106,4');
+    expect(panel.textContent).not.toMatch(/trace gps/i);
+    expect(panel.querySelectorAll('.ckp-group')).toHaveLength(2);
+  });
+
+  it('distance : une valeur absente du jour reste un tiret, sans repli sur le carnet', () => {
+    const day: CarnetDay = {
+      index: 4,
+      date: null,
+      distanceKm: null,
+      elevationM: null,
+      durationS: null,
+      moments: [],
+      points: [],
+    };
+    render(
+      <CarnetStatsPane detail={detail({ etapes: DAYS, days: [day] })} tab="distance" day={day} onTabChange={() => {}} />,
+    );
+    const panel = screen.getByRole('tabpanel', { name: 'Distance' });
+    /* 106,4 km et 2 002 m vivent sur le Résumé : jamais en repli d'un jour. */
+    expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('—');
+    expect(panel.querySelector('.ckp-hero-num')?.getAttribute('data-missing')).toBe('true');
+    expect((panel.querySelector('.ckp-hero-bar i') as HTMLElement).style.width).toBe('0%');
+    expect([...panel.querySelectorAll('.ckp-hero-sub span')].map((node) => node.textContent)).toEqual([
+      'J4',
+      '—',
+      '—',
+    ]);
+    expect(values(panel)).toEqual(['—', '—', '—', '—']);
+    expect(panel.textContent).not.toContain('106,4');
   });
 
   it('dénivelé : le D+ du jour affiché, lu sur les sorties', () => {
@@ -260,15 +287,49 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
       elevationM: 700,
       durationS: 21600,
       moments: [],
-      points: [],
+      points: [
+        { lat: 45.83, lng: 6.86, at: '2026-09-27T08:00:00Z' },
+        { lat: 45.84, lng: 6.87, at: '2026-09-27T09:00:00Z' },
+      ],
     };
-    render(<CarnetStatsPane detail={RICH} tab="elevation" day={day} onTabChange={() => {}} />);
+    render(
+      <CarnetStatsPane
+        detail={detail({ etapes: DAYS, distanceKm: 106.4, elevationM: 2002, trace: TRACE })}
+        tab="elevation"
+        day={day}
+        onTabChange={() => {}}
+      />,
+    );
     const panel = screen.getByRole('tabpanel', { name: 'Dénivelé' });
-    expect(labels(panel)[0]).toBe('dénivelé du jour');
-    expect(values(panel)[0]).toBe('700 m D+');
+    /* Chiffre héros : le D+ du jour, pas les 2 002 m du carnet. */
+    expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('700');
+    expect(panel.querySelector('.ckp-hero-unit')?.textContent).toBe('m');
+    expect(labels(panel)).toEqual(['distance du jour', 'points gps']);
+    expect(values(panel)).toEqual(['14,2 km', '2 pts']);
+    /* Ni profil agrégé, ni moyenne, ni liste des jours. */
+    expect(panel.querySelector('.ckp-elev')).toBeNull();
+    expect(panel.textContent).not.toMatch(/dénivelé par km|jours sans dénivelé/i);
+    expect(panel.querySelectorAll('.ckp-group')).toHaveLength(1);
   });
 
-  it('jours : numéro, date, plage, puis le récit complet', () => {
+  it('dénivelé : le jour sans point GPS écrit un tiret, pas le compte du carnet', () => {
+    const day: CarnetDay = {
+      index: 1,
+      date: '2026-09-26',
+      distanceKm: null,
+      elevationM: null,
+      durationS: null,
+      moments: [],
+      points: [],
+    };
+    render(<CarnetStatsPane detail={detail({ trace: TRACE })} tab="elevation" day={day} onTabChange={() => {}} />);
+    const panel = screen.getByRole('tabpanel', { name: 'Dénivelé' });
+    expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('—');
+    expect(values(panel)).toEqual(['—', '—']);
+    expect(panel.textContent).not.toContain('2\u202f002');
+  });
+
+  it('jours : numéro et date du jour seuls, récit global affiché une fois', () => {
     const day: CarnetDay = {
       index: 2,
       date: '2026-09-27',
@@ -280,12 +341,56 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
     };
     render(<CarnetStatsPane detail={RICH} tab="days" day={day} onTabChange={() => {}} />);
     const panel = screen.getByRole('tabpanel', { name: 'Jours' });
-    expect(labels(panel).slice(0, 3)).toEqual(['jour', 'date', 'dates']);
-    expect(values(panel).slice(0, 3)).toEqual(['2', '27 sept.', '26 sept. – 2 oct. 2026']);
-    /* Le récit entier est dans le volet : la carte n'en garde qu'une ligne. */
-    expect(panel.querySelector('.ckp-story')?.textContent).toBe(
-      'Dix jours, trois pays, deux bivouacs.',
+    /* Plus de plage de dates : la date du jour seule. */
+    expect(labels(panel)).toEqual(['jour', 'date']);
+    expect(values(panel)).toEqual(['2', '27 sept.']);
+    expect(panel.textContent).not.toContain('26 sept. – 2 oct. 2026');
+    expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('2');
+    expect(panel.querySelector('.ckp-hero-unit')?.textContent).toBe('jour');
+    /* Le récit du carnet : une seule occurrence, ici. */
+    expect(panel.querySelectorAll('.ckp-story')).toHaveLength(1);
+    expect(panel.querySelector('.ckp-story')?.textContent).toBe('Dix jours, trois pays, deux bivouacs.');
+    /* Aucune liste agrégée des jours dans le volet d'un jour. */
+    expect(panel.querySelector('.ckp-daylist')).toBeNull();
+  });
+
+  it('jours : le récit du jour remplace le récit global', () => {
+    const day: CarnetDay = {
+      index: 1,
+      date: '2026-09-26',
+      distanceKm: 12.4,
+      elevationM: 1050,
+      durationS: 18000,
+      moments: [],
+      points: [],
+    };
+    render(
+      <CarnetStatsPane
+        detail={detail({
+          etapes: DAYS.map((etape) =>
+            etape.dayNumber === 1 ? { ...etape, note: 'Montée dans le brouillard.' } : etape,
+          ),
+          days: [day],
+        })}
+        tab="days"
+        day={day}
+        onTabChange={() => {}}
+      />,
     );
+    const panel = screen.getByRole('tabpanel', { name: 'Jours' });
+    expect(panel.querySelectorAll('.ckp-story')).toHaveLength(1);
+    expect(panel.querySelector('.ckp-story')?.textContent).toBe('Montée dans le brouillard.');
+  });
+
+  it('résumé : les drawers gardent les totaux du carnet', () => {
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="days" onTabChange={() => {}} />);
+    const panel = screen.getByRole('tabpanel', { name: 'Jours' });
+    expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('3');
+    expect(labels(panel)).toEqual(['jour', 'date', 'dates']);
+    /* Le Résumé garde ses agrégats : jours du carnet et plage de dates. */
+    expect(values(panel)).toEqual(['7', '—', '26 sept. – 2 oct. 2026']);
+    /* La liste complète des jours reste au Résumé. */
+    expect(container.querySelectorAll('.ckp-day')).toHaveLength(3);
   });
 
   it('répartition : la part documentée pilote la barre, jamais une courbe sans donnée', () => {
