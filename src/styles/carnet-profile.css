@@ -1072,3 +1072,4 @@ button.ckp-field:active, a.ckp-field:active { transform: scale(.995); }
   .ckp-load, .ckp-empty-state { animation: ckp-fade-in 120ms linear both; }
   .ckp-drawer-veil { transition: opacity 120ms linear; }
 }
+.ckp-empty-dash { font: 600 13px/1 var(--font-sans, -apple-system, system-ui, sans-serif); color: #8A968D; }
