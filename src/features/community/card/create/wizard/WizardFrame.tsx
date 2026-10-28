@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { useWizardEdge } from './edge';
+import './wizard-polish.css';
 
 export interface WizardFrameProps {
   step: number;
@@ -147,6 +148,7 @@ export function WizardFrame({
   return (
     <form
       className="lkdv-wz"
+      style={{ '--wz-p': (step + 1) / Math.max(1, total) } as React.CSSProperties}
       noValidate
       onClickCapture={(event) => {
         if (!swallowClick.current) return;
@@ -201,7 +203,8 @@ export function WizardFrame({
           </button>
         ) : null}
         <button type="submit" className="lkdv-wz-next" disabled={busy || nextDisabled}>
-          {busy ? 'Envoi…' : nextLabel}
+          <span>{busy ? 'Envoi…' : nextLabel}</span>
+          {busy || isLast ? null : <Icon name="arrow-right" size={16} aria-hidden="true" />}
         </button>
       </div>
     </form>

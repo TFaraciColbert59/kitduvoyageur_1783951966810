@@ -251,8 +251,8 @@ export function ImagePicker({
           <img src={preview} alt="" />
         ) : (
           <label htmlFor={id} className="lkdv-wz-image-empty">
-            <Icon name="image-plus" size={compact ? 20 : 22} aria-hidden="true" />
-            {compact ? null : <span>Ajouter une image</span>}
+            <span className="lkdv-wz-image-ico"><Icon name="image-plus" size={compact ? 20 : 22} aria-hidden="true" /></span>
+            {compact ? null : <span>{round ? 'Ajouter' : 'Ajouter une image'}</span>}
           </label>
         )}
         <input

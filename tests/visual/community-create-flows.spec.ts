@@ -86,12 +86,12 @@ test.describe('Créer — glissement entre étapes', () => {
     await expect(stepLabel(pane)).toHaveText('1/3');
   });
 
-  test('glisser à droite sur la première étape ouvre l’onglet précédent (sans passer par Carnet)', async ({ page }) => {
+  test('glisser à droite sur la première étape ouvre l’onglet précédent (Carnet, créé par la carte)', async ({ page }) => {
     await openCreate(page, 'Sortie');
     const pane = page.getByRole('tabpanel', { name: 'Sortie', exact: true });
     await swipe(pane.locator('.lkdv-wz-body'), 140);
-    await expect(page.getByRole('tab', { name: 'Publication', exact: true })).toHaveAttribute('aria-selected', 'true');
-    await expect(page).not.toHaveURL(/carnets/);
+    await expect(page.getByRole('tab', { name: 'Carnet', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL(/\/communaute/);
   });
 });
 

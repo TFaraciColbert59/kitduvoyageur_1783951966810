@@ -5,7 +5,7 @@ import { Map as MapLibreMap, Marker, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, MapPin, CalendarDays, Settings2, Trash2, ImagePlus, Check, Loader2, WifiOff } from 'lucide-react';
+import { Plus, MapPin, CalendarDays, Settings2, Trash2, ImagePlus, Loader2, WifiOff, PenLine, Route, Type, AlignLeft, Flag } from 'lucide-react';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
 import { createClient } from '@/lib/supabase/client';
 import { createDefaults, createSchemas, type CarnetFormValues } from './engine/createSchemas';
@@ -304,21 +304,10 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       ariaLabel="Créer un carnet"
       error={submitError}
       footer={
-        <div className="lkdv-carnet-footer">
-          <div
-            className="ig-tabs lkdv-carnet-daybar"
-            style={{ '--n': days.length + 2, '--active': active } as React.CSSProperties}
-            role="tablist"
-            aria-label="Jours du carnet"
-          >
-            <span className="ig-th" aria-hidden="true" />
-            <button type="button" role="tab" aria-selected={active === 0} className={active === 0 ? 'is-active' : ''} onClick={() => { setActive(0); scrollToSlide(0); }} aria-label="Réglages du carnet"><Settings2 size={13} /></button>
-            {days.map((day, index) => (
-              <button key={day.id} type="button" role="tab" aria-selected={active === index + 1} className={active === index + 1 ? 'is-active' : ''} onClick={() => { setActive(index + 1); scrollToSlide(index + 1); }} aria-label={day.label}>{index + 1}</button>
-            ))}
-            <button type="button" role="tab" aria-selected={active === days.length + 1} className="lkdv-daybar-add" onClick={addDay} aria-label="Ajouter un jour"><Plus size={14} /></button>
-          </div>
-        </div>
+        <button type="button" className="lkdv-carnet-cta" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet">
+          {submitting ? <Loader2 size={16} className="lkdv-spin" aria-hidden="true" /> : <Flag size={16} aria-hidden="true" />}
+          <span>{submitting ? 'Création…' : 'Créer le carnet'}</span>
+        </button>
       }
     >
       <div
@@ -330,9 +319,14 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
         onPointerMove={(event) => { if (drawing && (event.target === event.currentTarget || (event.target as HTMLElement).classList?.contains('maplibregl-canvas'))) drawMove(event); }}
         onPointerUp={(event) => { if (drawing && (event.target === event.currentTarget || (event.target as HTMLElement).classList?.contains('maplibregl-canvas'))) drawEnd(); }}
       >
-        <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => setDrawing((value) => !value)} aria-label={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'} title={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}><MapPin size={17} /></button>
+        <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => setDrawing((value) => !value)} aria-label={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'} title={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}>{drawing ? <MapPin size={16} aria-hidden="true" /> : <PenLine size={16} aria-hidden="true" />}<span>{drawing ? 'Terminer' : 'Tracer'}</span></button>
+        {trace.length === 0 && !drawing ? <p className="lkdv-map-hint">Touche « Tracer » puis dessine ton parcours du doigt : il s’accroche aux chemins.</p> : null}
+        {drawing ? <p className="lkdv-map-hint is-live">Glisse le doigt sur la carte pour dessiner.</p> : null}
+        <div className="lkdv-map-stats" aria-hidden="true">
+          <span><Route size={12} />{trace.length > 0 ? 'Tracé prêt' : 'Aucun tracé'}</span>
+          <span>{days.length} jour{days.length > 1 ? 's' : ''}</span>
+        </div>
         {snapState !== 'idle' ? <span className={`lkdv-snap-status${snapState === 'error' ? ' is-error' : ''}`} aria-label={snapState === 'loading' ? 'Ajustement au chemin' : 'Tracé libre'}>{snapState === 'loading' ? <Loader2 size={14} /> : <WifiOff size={14} />}</span> : null}
-        <button type="button" className="lkdv-carnet-submit" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet"><Check size={17} /></button>
         <div
           className="lkdv-map-draw-layer"
           data-active={drawing ? 'true' : 'false'}
@@ -344,19 +338,27 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
         />
         <div className="lkdv-map-fade" aria-hidden="true" />
       </div>
+      <div className="lkdv-carnet-daybar" role="tablist" aria-label="Jours du carnet">
+        <button type="button" role="tab" aria-selected={active === 0} className={active === 0 ? 'is-active' : ''} onClick={() => { setActive(0); scrollToSlide(0); }} aria-label="Réglages du carnet"><Settings2 size={14} aria-hidden="true" /><span>Infos</span></button>
+        {days.map((day, index) => (
+          <button key={day.id} type="button" role="tab" aria-selected={active === index + 1} className={active === index + 1 ? 'is-active' : ''} onClick={() => { setActive(index + 1); scrollToSlide(index + 1); }} aria-label={day.label}><span>J{index + 1}</span></button>
+        ))}
+        <button type="button" role="tab" aria-selected={active === days.length + 1} className="lkdv-daybar-add" onClick={addDay} aria-label="Ajouter un jour"><Plus size={14} aria-hidden="true" /><span>Jour</span></button>
+      </div>
       <div className="lkdv-carnet-slider" ref={scroller}>
         <section className="lkdv-carnet-slide lkdv-carnet-base">
-          <input {...form.register('title')} placeholder="Titre du carnet" aria-label="Titre" />
+          <label className="lkdv-cf"><Type size={15} aria-hidden="true" /><input {...form.register('title')} placeholder="Titre du carnet" aria-label="Titre" /></label>
           <PlaceSearch label="Destination" value={destination} onChange={(value) => form.setValue('destination', value, { shouldDirty: true })} placeholder="Destination" />
           <div className="lkdv-date-pills">
             <DatePill value={startDate} label="Début" onChange={(value) => form.setValue('startDate', value, { shouldDirty: true })} />
             <DatePill value={endDate} label="Fin" onChange={(value) => form.setValue('endDate', value, { shouldDirty: true })} />
           </div>
-          <textarea {...form.register('description')} placeholder="Récit, idée, points forts…" aria-label="Récit" rows={3} />
+          <label className="lkdv-cf lkdv-cf--area"><AlignLeft size={15} aria-hidden="true" /><textarea {...form.register('description')} placeholder="Récit, idée, points forts…" aria-label="Récit" rows={3} /></label>
         </section>
         {days.map((day, dayIndex) => (
           <section key={day.id} className="lkdv-carnet-slide lkdv-carnet-day" aria-label={day.label}>
             <div className="lkdv-day-moments">
+              {day.moments.length === 0 ? <p className="lkdv-day-empty">Ajoute un moment : étape, repas, point de vue…</p> : null}
               {day.moments.map((moment, momentIndex) => (
                 <div key={moment.id} className="lkdv-moment-row">
                   <span className="lkdv-moment-index">{momentIndex + 1}</span>
@@ -370,7 +372,7 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
                 </div>
               ))}
             </div>
-            <button type="button" className="lkdv-moment-add" onClick={() => addMoment(day.id)} aria-label="Ajouter un moment"><Plus size={16} /></button>
+            <button type="button" className="lkdv-moment-add" onClick={() => addMoment(day.id)} aria-label="Ajouter un moment"><Plus size={16} aria-hidden="true" /><span>Moment</span></button>
           </section>
         ))}
         <section className="lkdv-carnet-slide lkdv-carnet-add">

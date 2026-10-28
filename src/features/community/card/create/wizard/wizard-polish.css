@@ -1,0 +1,51 @@
+/*
+ * Finition des formulaires en étapes : en-tête lisible avec progression,
+ * champs 50 px, puces franches, image d'en-tête, pied à contraste fort.
+ * Chargé après `community-card.css` ; ne change aucun comportement.
+ */
+
+/* En-tête : nom de l'étape + barre de progression. */
+.lkdv-wz-head { position: relative; align-items: center; padding: 2px 4px 10px; }
+.lkdv-wz-kicker { font: 800 13px/1 var(--sf); letter-spacing: 0.1em; color: #17402c; }
+.lkdv-wz-count { font: 700 12px/1 var(--sf); color: #55655b; }
+.lkdv-wz-head::after {
+  content: ''; position: absolute; left: 4px; right: 4px; bottom: 0; height: 3px; border-radius: 999px;
+  background: linear-gradient(90deg, #17402c calc(var(--wz-p, 0) * 100%), rgba(23, 43, 36, 0.12) 0);
+  transition: background 0.3s ease;
+}
+
+/* Champs. */
+.lkdv-wz { gap: 12px; }
+.lkdv-wz-field { gap: 6px; }
+.lkdv-wz-field > label, .lkdv-wz-label { padding: 0 6px; font: 700 12px/1 var(--sf); color: #3f5247; }
+.lkdv-wz-field input, .lkdv-wz-field textarea { min-height: 50px; border-radius: 18px; background: rgba(255, 255, 255, 0.78); box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.16); color: #17402c; }
+.lkdv-wz-field input::placeholder, .lkdv-wz-field textarea::placeholder { color: #66756b; opacity: 1; }
+.lkdv-wz-field input:focus-visible, .lkdv-wz-field textarea:focus-visible { box-shadow: inset 0 0 0 2px #17402c, 0 0 0 4px rgba(23, 64, 44, 0.12); }
+.lkdv-wz-counter { font: 600 11px/1 var(--sf); color: #66756b; }
+
+/* Puces : 44 px, sélection pleine. */
+.lkdv-wz-chips { gap: 8px; }
+.lkdv-wz-chip { min-height: 44px; padding: 0 16px; border-radius: 999px; background: rgba(255, 255, 255, 0.72); color: #17402c; box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.16); font: 600 14px/1 var(--sf); transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease; }
+.lkdv-wz-chip[aria-checked='true'], .lkdv-wz-chip[aria-pressed='true'] { background: #17402c; color: #fff; box-shadow: 0 4px 12px rgba(23, 64, 44, 0.22); }
+
+/* Image d'en-tête / pastille. */
+.lkdv-wz-image { border-radius: 22px; max-height: 190px; background: rgba(255, 255, 255, 0.55); box-shadow: inset 0 0 0 1px rgba(23, 64, 44, 0.22); }
+.lkdv-wz-image-empty { gap: 8px; font: 700 13px/1 var(--sf); color: #17402c; background: repeating-linear-gradient(135deg, rgba(23, 64, 44, 0.03) 0 8px, transparent 8px 16px); }
+.lkdv-wz-image-ico { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #fff; color: #17402c; box-shadow: 0 4px 12px rgba(10, 20, 14, 0.12); }
+.lkdv-wz-image[data-round='true'] { width: 112px; height: 112px; border-radius: 28px; }
+.lkdv-wz-image[data-round='true'] .lkdv-wz-image-empty { gap: 6px; font-size: 12px; }
+.lkdv-wz-image[data-round='true'] .lkdv-wz-image-ico { width: 36px; height: 36px; }
+
+/* Pied : retour discret, action pleine. */
+.lkdv-wz-foot { gap: 10px; padding-top: 4px; }
+.lkdv-wz-back { width: 48px; min-height: 48px; background: rgba(255, 255, 255, 0.8); color: #17402c; }
+.lkdv-wz-next {
+  gap: 8px; min-width: 148px; min-height: 50px; padding: 0 22px; background: #17402c; color: #fff;
+  box-shadow: 0 8px 20px rgba(23, 64, 44, 0.26); font: 700 15px/1 var(--sf);
+}
+.lkdv-wz-next:disabled { opacity: 0.5; box-shadow: none; }
+.lkdv-wz-dots span { background: rgba(23, 43, 36, 0.22); }
+
+/* Stepper et erreurs. */
+.lkdv-wz-stepper button { min-width: 48px; min-height: 48px; }
+.lkdv-wz-error { border-radius: 14px; font: 600 13px/1.35 var(--sf); }

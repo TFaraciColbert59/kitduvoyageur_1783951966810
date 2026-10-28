@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useId, useState } from 'react';
+import { Camera } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
 import { useObjectUrl } from './fields';
 
@@ -82,7 +83,7 @@ export function MediaTray({
     return (
       <div className="lkdv-wz-drop">
         <label className="lkdv-wz-drop-btn" htmlFor={cameraId}>
-          <Icon name="camera" size={24} aria-hidden="true" />
+          <Camera size={24} aria-hidden="true" />
           Caméra
         </label>
         <label className="lkdv-wz-drop-btn" htmlFor={galleryId}>
