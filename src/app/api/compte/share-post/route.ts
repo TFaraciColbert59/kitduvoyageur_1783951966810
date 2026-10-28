@@ -34,7 +34,50 @@ export async function GET() {
     .in('id', ids)
     .order('last_message_at', { ascending: false })
     .limit(50);
-  return NextResponse.json({ conversations: conversations ?? [] });
+  const rows = (conversations ?? []) as Array<{
+    id: string;
+    title: string | null;
+    name: string | null;
+    type: string | null;
+    avatar_url: string | null;
+    last_message_at: string | null;
+  }>;
+  // Conversations directes : l'avatar n'est pas porté par la conversation.
+  // On complète avec le profil de l'autre membre pour que le partage affiche
+  // une vraie photo de profil au lieu d'une initiale.
+  const directIds = rows.filter((c) => c.type === 'direct' && !c.avatar_url).map((c) => c.id);
+  if (directIds.length) {
+    const { data: members } = await supabase
+      .from('conversation_members')
+      .select('conversation_id,user_id')
+      .in('conversation_id', directIds);
+    const otherByConversation = new Map<string, string>();
+    for (const member of (members ?? []) as Array<{ conversation_id: string; user_id: string }>) {
+      if (member.user_id !== auth.user.id) otherByConversation.set(member.conversation_id, member.user_id);
+    }
+    const idsToLoad = Array.from(new Set(otherByConversation.values()));
+    if (idsToLoad.length) {
+      const { data: profiles } = await supabase
+        .from('public_profiles')
+        .select('id,full_name,avatar_url')
+        .in('id', idsToLoad);
+      const profilesById = new Map(
+        ((profiles ?? []) as Array<{ id: string; full_name: string | null; avatar_url: string | null }>).map((p) => [p.id, p])
+      );
+      for (const conversation of rows) {
+        const otherId = otherByConversation.get(conversation.id);
+        const profile = otherId ? profilesById.get(otherId) : null;
+        if (profile) {
+          conversation.avatar_url = profile.avatar_url;
+          if (!conversation.title && !conversation.name) {
+            conversation.name = profile.full_name;
+            conversation.title = profile.full_name;
+          }
+        }
+      }
+    }
+  }
+  return NextResponse.json({ conversations: rows });
 }
 
 export async function POST(req: Request) {

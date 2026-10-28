@@ -321,8 +321,15 @@ export function EditProfilePane() {
         <button type="button" className="lkdv-compte-btn ghost" onClick={reset} disabled={busy}>
           Annuler
         </button>
-        <button type="button" className="lkdv-compte-btn primary" onClick={() => void save()} disabled={busy || !form.name.trim() || !form.handle.trim()}>
-          {busy ? 'Enregistrement…' : <><Save size={15} aria-hidden="true" /> Enregistrer</>}
+        <button
+          type="button"
+          className="lkdv-compte-btn primary lkdv-compte-save-icon"
+          onClick={() => void save()}
+          disabled={busy || !form.name.trim() || !form.handle.trim()}
+          aria-label={busy ? 'Enregistrement en cours' : 'Enregistrer le profil'}
+          title={busy ? 'Enregistrement…' : 'Enregistrer'}
+        >
+          {busy ? <span className="lkdv-compte-save-spinner" aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
         </button>
       </div>
 
