@@ -150,11 +150,15 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
     });
     const { container } = render(<CarnetStatsPane detail={bare} tab="distance" onTabChange={() => {}} />);
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
-    /* 11 : `— km`, l'unité reste dans le bloc héros. */
+    /* Sans donnée, le héros est une ligne : le tiret seul, pas d'unité, pas de
+       piste de barre (une progression à 0 % traverserait toute la largeur). */
     expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('—');
-    expect(panel.querySelector('.ckp-hero-unit')?.textContent).toBe('km');
     expect(panel.querySelector('.ckp-hero-num')?.getAttribute('data-missing')).toBe('true');
-    expect((panel.querySelector('.ckp-hero-bar i') as HTMLElement).style.width).toBe('0%');
+    expect(panel.querySelector('.ckp-hero--empty')).toBeTruthy();
+    expect(panel.querySelector('.ckp-hero-glyph')).toBeTruthy();
+    expect(panel.querySelector('.ckp-hero-unit')).toBeNull();
+    expect(panel.querySelector('.ckp-hero-bar')).toBeNull();
+    expect(panel.querySelector('.ckp-hero-sub')).toBeNull();
     /* 18 : chaque ligne sans donnée est un tiret, jamais un vide. */
     expect(values(panel).every((value) => value === '—')).toBe(true);
     expect(screen.getByText('distance par jour')).toBeTruthy();
@@ -269,12 +273,11 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
     /* 106,4 km et 2 002 m vivent sur le Résumé : jamais en repli d'un jour. */
     expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('—');
     expect(panel.querySelector('.ckp-hero-num')?.getAttribute('data-missing')).toBe('true');
-    expect((panel.querySelector('.ckp-hero-bar i') as HTMLElement).style.width).toBe('0%');
-    expect([...panel.querySelectorAll('.ckp-hero-sub span')].map((node) => node.textContent)).toEqual([
-      'J4',
-      '—',
-      '—',
-    ]);
+    /* Même gabarit que le Résumé sans donnée : ni piste de barre, ni
+       sous-valeur — J4 vit dans la capsule, la date et la durée dans l'en-tête
+       de la carte, donc le héros vide ne les répète pas. */
+    expect(panel.querySelector('.ckp-hero-bar')).toBeNull();
+    expect(panel.querySelector('.ckp-hero-sub')).toBeNull();
     expect(values(panel)).toEqual(['—', '—', '—', '—']);
     expect(panel.textContent).not.toContain('106,4');
   });
