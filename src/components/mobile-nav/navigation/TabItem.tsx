@@ -16,8 +16,8 @@ const TAB_ICON: Record<DestinationId, string> = {
   adventures: 'home',
   community: 'users',
   explorer: 'compass',
-  messages: 'message-square',
-  me: 'user',
+  messages: 'send',
+  me: 'user-circle',
 };
 import type { Destination } from '@/components/mobile-nav/destinationRegistry';
 

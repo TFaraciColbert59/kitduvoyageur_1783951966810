@@ -47,7 +47,7 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/hub',
     label: { fr: 'Hub', en: 'Hub', es: 'Hub', de: 'Hub', it: 'Hub' },
     ariaLabel: 'Hub : aventure active, préparation et voyages',
-    iconName: 'tent',
+    iconName: 'home',
     matchPaths: [
       '/hub',
       '/groupes',
@@ -81,7 +81,7 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/messagerie',
     label: { fr: 'Messages', en: 'Messages', es: 'Mensajes', de: 'Nachrichten', it: 'Messaggi' },
     ariaLabel: 'Messages : conversations et demandes',
-    iconName: 'message-square',
+    iconName: 'send',
     matchPaths: ['/messagerie'],
   },
   {
@@ -89,7 +89,7 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/compte',
     label: { fr: 'Compte', en: 'Account', es: 'Cuenta', de: 'Konto', it: 'Account' },
     ariaLabel: 'Mon compte voyageur et ma progression',
-    iconName: 'user',
+    iconName: 'user-circle',
     matchPaths: ['/compte', '/connexion', '/inscription', '/profil', '/progression'],
   },
 ] as const;

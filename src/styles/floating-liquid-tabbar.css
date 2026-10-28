@@ -90,7 +90,15 @@
   .lkdv-floating-tab-icon > span {
     width: 19px !important;
     height: 19px !important;
+  }
+
+  .lkdv-floating-tab-icon > span[style*='mask-image'] {
     background-color: currentColor !important;
+  }
+
+  .lkdv-floating-tab-icon > span > svg {
+    width: 19px;
+    height: 19px;
   }
 
   .lkdv-floating-tab-label {

@@ -3,43 +3,19 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { Compass, House, CircleUserRound, Send, ShoppingBag, Users } from 'lucide-react';
 
+/* Glyphes « à la Instagram » : traits arrondis fins, couleur du texte (jeu Lucide, ISC).
+   Les pictogrammes d'Instagram sont une marque protégée : ce sont leurs équivalents les plus proches. */
+const glyph = { className: 'ic', strokeWidth: 1.8, 'aria-hidden': true } as const;
 const ICONS: Record<string, React.ReactNode> = {
-  explorer: (
-    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM3.5 9h17M3.5 15h17M12 3c2.5 2.6 3.6 5.6 3.6 9s-1.1 6.4-3.6 9c-2.5-2.6-3.6-5.6-3.6-9S9.5 5.6 12 3Z" />
-    </svg>
-  ),
-  compas: (
-    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8 4.8-2.2Z" />
-    </svg>
-  ),
-  materiel: (
-    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 8h14l-1 12H6L5 8ZM9 8a3 3 0 0 1 6 0" />
-    </svg>
-  ),
-  hub: (
-    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" />
-    </svg>
-  ),
-  communaute: (
-    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9 11.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM3 19.5c.6-3.3 3-5.3 6-5.3s5.4 2 6 5.3M16.5 11a2.6 2.6 0 1 0 0-5.2M17 14.4c2.1.4 3.5 2.2 4 4.6" />
-    </svg>
-  ),
-  messages: (
-    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 12a8 8 0 0 1-8 8H8l-5 3 1.4-4.6A8 8 0 1 1 21 12Z" />
-    </svg>
-  ),
-  compte: (
-    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 20c.8-3.8 3.8-6 8-6s7.2 2.2 8 6" />
-    </svg>
-  ),
+  explorer: <Compass {...glyph} />,
+  compas: <Compass {...glyph} />,
+  materiel: <ShoppingBag {...glyph} />,
+  hub: <House {...glyph} />,
+  communaute: <Users {...glyph} />,
+  messages: <Send {...glyph} />,
+  compte: <CircleUserRound {...glyph} />,
 };
 
 const ACCOUNT_TABS = [

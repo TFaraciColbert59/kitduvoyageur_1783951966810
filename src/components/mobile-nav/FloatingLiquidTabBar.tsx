@@ -14,8 +14,8 @@ const TAB_ICON: Record<DestinationId, string> = {
   adventures: 'home',
   community: 'users',
   explorer: 'compass',
-  messages: 'message-square',
-  me: 'user',
+  messages: 'send',
+  me: 'user-circle',
 };
 
 /**
@@ -54,7 +54,7 @@ export function FloatingLiquidTabBar() {
                 className={`lkdv-floating-tab${active ? ' is-active' : ''}`}
               >
                 <span className="lkdv-floating-tab-icon" aria-hidden="true">
-                  <Icon name={TAB_ICON[destination.id]} size={22} />
+                  <Icon name={TAB_ICON[destination.id]} size={24} strokeWidth={active ? 2.25 : 1.75} />
                 </span>
                 <span className="lkdv-floating-tab-label">{destination.label.fr}</span>
               </Link>
