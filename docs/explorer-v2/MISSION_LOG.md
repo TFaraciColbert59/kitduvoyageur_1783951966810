@@ -366,3 +366,32 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   `sos_alerts` sous RLS ; sans session elle répond 401 et l'interface dit
   « Alerte non enregistrée » (aucune fausse promesse).
 - Statut : OK (aucun appel réel au 112 ; mode simulé par défaut)
+
+### [P2-07..P2-12] Chorégraphie caméra · 2026-10-28 20:30
+- Fichiers : `src/features/explorer-v2/map/camera.ts`, `MapStage.tsx`
+- Preuve : six mouvements implémentés et branchés sur `state.camera` —
+  plongée (z 1,6/4,8/7,2/12, 1,3 s, courbe .65), révélation (`jumpTo` zoom +1,7
+  puis `easeTo` pitch 45° en 1,8 s), suivi (cap en haut, pitch 60°, padding
+  utilisateur au tiers bas), vue d'ensemble (`fitBounds` + marges tiroir),
+  survol (parcours de la trace, 260 ms/point, plafond 20 s), orbite (360° en
+  40 s, pause au geste, reprise après 6 s).
+  Tests unitaires : zooms de niveau, zoom selon vitesse, paddings, emprise de
+  trace (5 cas).
+- Statut : OK
+
+### [P7-15] Compte à rebours 3·2·1 + appui long · 2026-10-28 20:40
+- Fichiers : `src/features/explorer-v2/activity/Countdown.tsx`, styles
+- Preuve : `Countdown` (chiffre 1,4 → 1, haptique `rigid`), `useLongPress`
+  (600 ms, annulé au-delà de 8 px de déplacement) branché sur la carte ;
+  démarrer une activité passe par le compte à rebours, annulable.
+- Statut : OK
+
+### [P7-19] Arrêt par maintien 0,8 s → bilan · 2026-10-28 20:40
+- Fichiers : `chrome/BottomBar.tsx` (StopHoldButton), `sheet/SheetContent.tsx`,
+  `src/app/api/explorer/v2/activity/finish/route.ts`
+- Preuve : anneau de maintien 0,8 s sur le bouton d'arrêt ; le bilan affiche
+  distance, D+, durée et l'état d'enregistrement réel (`saved`, `pending`,
+  `unauthenticated`, `failed`) ; la route appelle `finish_activity_session`
+  (SECURITY DEFINER) qui écrit le résumé dans `hike_sessions`.
+- Statut : OK (écriture de bout en bout prouvée par le script de flux, voir
+  `scripts/explorer-v2/test-activity-flow.mjs`)

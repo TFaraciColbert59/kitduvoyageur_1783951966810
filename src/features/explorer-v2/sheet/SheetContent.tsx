@@ -23,6 +23,7 @@ import {
   findRegionAt,
   formatDistance,
   formatElevation,
+  formatDuration,
   type SheetContext,
 } from './context';
 import type { Sport } from '../state/types';
@@ -663,6 +664,10 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
 
 function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
   const { state } = ctx;
+  const startSport = (sport: Sport) => {
+    if (ctx.onStartSport) ctx.onStartSport(sport);
+    else state.startActivity(sport);
+  };
   if (kind === 'start') {
     return [
       {
@@ -677,7 +682,7 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                 icon={SPORT_META[sport].icon}
                 title={SPORT_META[sport].label}
                 sub="Démarrer maintenant"
-                onClick={() => state.startActivity(sport)}
+                onClick={() => startSport(sport)}
               />
             ))}
           </XpRows>
@@ -737,12 +742,68 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
     ];
   }
   if (kind === 'summary') {
+    const summary = state.summary ?? null;
     return [
       {
         id: 'bilan',
         label: 'Bilan',
         icon: 'star',
-        render: () => <XpEmpty title="Aucune sortie à résumer" hint="Termine une activité pour voir ton bilan." />,
+        render: () => {
+          if (!summary) {
+            return (
+              <XpEmpty
+                title="Aucune sortie à résumer"
+                hint="Termine une activité pour voir ton bilan."
+              />
+            );
+          }
+          const durationS = summary.movingS || (summary.endedAt - summary.startedAt) / 1000;
+          return (
+            <>
+              <XpMetrics
+                items={[
+                  { label: 'Distance', value: formatDistance(summary.distanceM / 1000) },
+                  { label: 'D+', value: `${Math.round(summary.elevGainM)} m` },
+                  { label: 'Durée', value: formatDuration(durationS) },
+                ]}
+              />
+              <XpEyebrow>Sortie</XpEyebrow>
+              <XpRows>
+                <XpRow
+                  icon={SPORT_META[summary.sport].icon}
+                  title={SPORT_META[summary.sport].label}
+                  sub={new Date(summary.startedAt).toLocaleString('fr-FR', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                />
+                <XpRow
+                  icon={state.summarySaved === 'saved' ? 'check' : 'alert'}
+                  tone={state.summarySaved === 'saved' ? 'good' : 'warn'}
+                  title={
+                    state.summarySaved === 'saved'
+                      ? 'Sortie enregistrée'
+                      : state.summarySaved === 'pending'
+                        ? 'Enregistrement en cours…'
+                        : state.summarySaved === 'unauthenticated'
+                          ? 'Sortie non enregistrée'
+                          : 'Enregistrement impossible'
+                  }
+                  sub={
+                    state.summarySaved === 'unauthenticated'
+                      ? 'Connecte-toi pour conserver tes sorties'
+                      : state.summarySaved === 'failed'
+                        ? 'Réessaie depuis ton compte'
+                        : undefined
+                  }
+                />
+              </XpRows>
+            </>
+          );
+        },
       },
     ];
   }

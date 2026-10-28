@@ -8,6 +8,7 @@ import { buildSheetModel } from './sheet/SheetContent';
 import { TopChrome } from './chrome/TopChrome';
 import { ActivityPill, BottomBar } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
+import { Countdown, useLongPress } from './activity/Countdown';
 import { offRouteLabel } from './activity/offRoute';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
@@ -38,7 +39,7 @@ import {
   type RegionGroup,
   type SheetContext,
 } from './sheet/context';
-import type { PoiKind } from './state/types';
+import type { PoiKind, Sport } from './state/types';
 import '@/styles/explorer-v2.css';
 
 const MapStage = dynamic(() => import('./map/MapStage'), {
@@ -68,6 +69,7 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   const online = useOnline();
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
   const [sheetHeight, setSheetHeight] = useState(176);
+  const [pendingSport, setPendingSport] = useState<Sport | null>(null);
   const theme = state.theme ?? systemTheme;
 
   // Scène de recette : appliquée **une seule fois**, de façon synchrone, côté
@@ -170,6 +172,11 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       .sort((a, b) => a.km - b.km)[0].poi;
   }, [pois, state.center, state.selection]);
 
+  // ── démarrage d'activité (compte à rebours 3·2·1) ─────────────────────
+  const startWithCountdown = useCallback((sport: Sport) => {
+    setPendingSport(sport);
+  }, []);
+
   // ── contexte de feuille ────────────────────────────────────────────────
   const ctx = useMemo<SheetContext>(
     () => ({
@@ -186,9 +193,10 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
+      onStartSport: startWithCountdown,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, carnetsData, tripsData, selectedPoi, me],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, carnetsData, tripsData, selectedPoi, me, startWithCountdown],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -251,6 +259,15 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     [state],
   );
 
+  // Mini-sélecteur « Survol 3D » sur un itinéraire : la caméra parcourt la trace.
+  useEffect(() => {
+    if (state.sheet !== 'trail') return;
+    if (state.mini !== 1) return;
+    useExplorerStore.setState({ camera: { type: 'flyover', routeId: state.selection?.id ?? '' } });
+  }, [state.sheet, state.mini, state.selection?.id]);
+
+  const longPress = useLongPress(() => state.setSheet('start', 'low'));
+
   const onPinClick = useCallback(
     (pin: MapPin) => {
       if (pin.kind === 'country') {
@@ -275,6 +292,42 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
+
+  // Enregistrement du bilan : uniquement pour une vraie session (UUID) et un
+  // utilisateur connecté ; sinon l'écran le dit sans mentir.
+  useEffect(() => {
+    const summary = state.summary;
+    if (!summary || state.summarySaved !== 'pending') return;
+    const sessionId = summary.sessionId;
+    if (!sessionId || !/^[0-9a-f-]{36}$/i.test(sessionId)) {
+      useExplorerStore.setState({ summarySaved: 'unauthenticated' });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) {
+          if (!cancelled) useExplorerStore.setState({ summarySaved: 'unauthenticated' });
+          return;
+        }
+        const res = await fetch('/api/explorer/v2/activity/finish', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        });
+        if (!cancelled) useExplorerStore.setState({ summarySaved: res.ok ? 'saved' : 'failed' });
+      } catch {
+        if (!cancelled) useExplorerStore.setState({ summarySaved: 'failed' });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state.summary, state.summarySaved]);
 
   const activity = state.activity;
   const [now, setNow] = useState(() => Date.now());
@@ -340,7 +393,20 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         onPinClick={onPinClick}
         onMoveEnd={(center, zoom) => state.setCenter(center, zoom)}
         sheetHeightPx={sheetHeight}
+        cameraIntent={state.camera}
+        longPressHandlers={longPress}
       />
+
+      {pendingSport ? (
+        <Countdown
+          key={pendingSport}
+          onDone={() => {
+            state.startActivity(pendingSport);
+            setPendingSport(null);
+          }}
+          onCancel={() => setPendingSport(null)}
+        />
+      ) : null}
 
       <TopChrome
         breadcrumb={breadcrumb}

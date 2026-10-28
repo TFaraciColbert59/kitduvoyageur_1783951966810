@@ -170,7 +170,18 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   },
 
   select: (selection, sheet, detent = 'mid') => {
-    set({ selection, sheet, detent, tab: 0, reveal: true });
+    const center = get().center;
+    set({
+      selection,
+      sheet,
+      detent,
+      tab: 0,
+      reveal: true,
+      camera:
+        selection.kind === 'trail'
+          ? { type: 'flyover', routeId: selection.id }
+          : { type: 'reveal', center },
+    });
     emit('select', { kind: selection.kind, id: selection.id, sheet });
   },
 
@@ -227,7 +238,15 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     set((state) => (state.activity ? { activity: { ...state.activity, ...patch } } : {})),
 
   stopActivity: () => {
-    set({ activity: undefined, sheet: 'summary', detent: 'full', camera: { type: 'overview' } });
+    const current = get().activity;
+    set({
+      activity: undefined,
+      summary: current ? { ...current, endedAt: Date.now() } : null,
+      summarySaved: 'pending',
+      sheet: 'summary',
+      detent: 'full',
+      camera: { type: 'overview' },
+    });
     emit('activity-stop', {});
   },
 

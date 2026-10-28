@@ -95,6 +95,10 @@ export interface ExplorerState {
   mini: 0 | 1;
   selection?: Selection;
   activity?: ActivityState;
+  /** Dernière sortie terminée, affichée dans l'écran Bilan. */
+  summary?: (ActivityState & { endedAt: number }) | null;
+  /** Résultat de l'enregistrement du bilan. */
+  summarySaved?: 'pending' | 'saved' | 'unauthenticated' | 'failed';
   camera: CameraIntent;
   profile: Profile;
   easyMode: boolean;

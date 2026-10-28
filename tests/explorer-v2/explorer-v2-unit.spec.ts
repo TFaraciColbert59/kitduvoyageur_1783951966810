@@ -3,6 +3,13 @@ import { useExplorerStore } from '@/features/explorer-v2/state/store';
 import { HAPTIC_TABLE, haptic, resetHapticThrottle } from '@/features/explorer-v2/state/haptics';
 import { SCENES, SCENE_NAMES, LEVEL_ZOOM, isSceneName } from '@/features/explorer-v2/state/scenes';
 import { evaluateOffRoute, offRouteLabel } from '@/features/explorer-v2/activity/offRoute';
+import {
+  LEVEL_ZOOM as CAMERA_ZOOM,
+  boundsOfTrack,
+  followPadding,
+  followZoomForSpeed,
+  overviewPadding,
+} from '@/features/explorer-v2/map/camera';
 import { poiPriority, selectVisiblePins, symbolSortKey } from '@/features/explorer-v2/map/hierarchy';
 import { TRACE_STYLES, traceStyleForRoute } from '@/features/explorer-v2/map/traceStyles';
 import {
@@ -280,5 +287,50 @@ describe('explorer-v2 · hors itinéraire', () => {
 
   it('formate le libellé de la carte du haut', () => {
     expect(offRouteLabel(80)).toBe('Hors itinéraire · 80 m');
+  });
+});
+
+describe('explorer-v2 · caméra', () => {
+  it('mappe les niveaux aux zooms de la maquette', () => {
+    expect(CAMERA_ZOOM[0]).toBe(1.6);
+    expect(CAMERA_ZOOM[1]).toBe(4.8);
+    expect(CAMERA_ZOOM[2]).toBe(7.2);
+    expect(CAMERA_ZOOM[3]).toBe(12);
+  });
+
+  it('adapte le zoom de suivi à la vitesse', () => {
+    expect(followZoomForSpeed(0.8, 3)).toBe(15);
+    expect(followZoomForSpeed(2, 3)).toBe(15.5);
+    expect(followZoomForSpeed(7, 3)).toBe(14.8);
+    expect(followZoomForSpeed(12, 3)).toBe(14.2);
+    expect(followZoomForSpeed(12, 2)).toBe(7.2);
+  });
+
+  it('place l’utilisateur au tiers bas en suivi', () => {
+    const padding = followPadding(844, 176);
+    expect(padding.top).toBe(523);
+    expect(padding.bottom).toBe(192);
+  });
+
+  it('réserve la hauteur du tiroir en vue d’ensemble', () => {
+    const padding = overviewPadding(390, 420);
+    expect(padding.bottom).toBe(444);
+    expect(padding.top).toBe(96);
+  });
+
+  it('calcule l’emprise d’une trace GeoJSON', () => {
+    const bounds = boundsOfTrack({
+      type: 'LineString',
+      coordinates: [
+        [6.8, 45.9],
+        [6.95, 46.0],
+        [6.9, 45.95],
+      ],
+    });
+    expect(bounds).toEqual([
+      [6.8, 45.9],
+      [6.95, 46],
+    ]);
+    expect(boundsOfTrack(null)).toBeNull();
   });
 });

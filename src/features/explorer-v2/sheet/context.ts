@@ -41,6 +41,8 @@ export interface SheetContext {
   trips: TripItem[];
   selectedPoi: PoiItem | null;
   me: { lat: number; lng: number } | null;
+  /** Démarrage avec compte à rebours (le parent décide de l'animation). */
+  onStartSport?: (sport: Sport) => void;
   locale: string;
 }
 

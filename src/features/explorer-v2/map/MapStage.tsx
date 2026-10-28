@@ -4,8 +4,19 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Map as MapLibreMap, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { GeoCollection } from '../data/hooks';
-import type { Level, PoiKind } from '../state/types';
+import type { CameraIntent, Level, PoiKind } from '../state/types';
 import { selectVisiblePins } from './hierarchy';
+import {
+  boundsOfTrack,
+  flyToLevel,
+  flyoverTrack,
+  followAt,
+  followPadding,
+  orbitController,
+  overviewOf,
+  overviewPadding,
+  revealAt,
+} from './camera';
 import {
   TRACE_COLOR_EXPRESSION,
   TRACE_DASH_EXPRESSION,
@@ -47,6 +58,10 @@ export interface MapStageProps {
   me?: { lat: number; lng: number } | null;
   /** Hauteur du tiroir en pixels : aucun repère ne doit apparaître dessous. */
   sheetHeightPx?: number;
+  /** Mouvement de caméra demandé par la machine d'état. */
+  cameraIntent?: CameraIntent | null;
+  /** Appui long sur la carte (départ d'activité). */
+  longPressHandlers?: Record<string, unknown>;
 }
 
 const TERRAIN_SOURCE = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
@@ -78,6 +93,8 @@ export default function MapStage({
   onReady,
   me,
   sheetHeightPx = 176,
+  cameraIntent = null,
+  longPressHandlers,
 }: MapStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -388,37 +405,55 @@ export default function MapStage({
     const key = `${level}:${zoom.toFixed(2)}:${center[0].toFixed(3)}:${center[1].toFixed(3)}`;
     if (movedToRef.current === key) return;
     movedToRef.current = key;
-    const target = { center: center as [number, number], zoom };
-    if (reducedMotion) {
-      map.jumpTo(target);
-      return;
-    }
-    map.flyTo({ ...target, duration: level === 0 ? 900 : 1300, curve: 0.65, essential: true });
+    flyToLevel(map, center as [number, number], level, reducedMotion);
   }, [level, center, zoom, ready, reducedMotion]);
 
-  // ── orbite de sommet (pause au toucher, reprise 6 s) ───────────────────
+  // ── orbite de sommet (pause au toucher, reprise après 6 s) ────────────
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    if (level !== 3 || paused || reducedMotion) {
-      if (orbitRef.current) {
-        window.clearInterval(orbitRef.current);
-        orbitRef.current = null;
-      }
+    if (level !== 3 || paused || reducedMotion) return;
+    return orbitController(map, true);
+  }, [level, paused, reducedMotion, ready]);
+
+  // ── intentions de caméra (révélation, suivi, vue d'ensemble, survol) ──
+  const intentKey = cameraIntent ? `${cameraIntent.type}:${Date.now()}` : '';
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !cameraIntent) return;
+    const container = map.getContainer();
+
+    if (cameraIntent.type === 'reveal') {
+      revealAt(map, cameraIntent.center, reducedMotion);
       return;
     }
-    let bearing = map.getBearing();
-    orbitRef.current = window.setInterval(() => {
-      bearing += 0.9;
-      map.rotateTo(bearing, { duration: 100 });
-    }, 100);
-    return () => {
-      if (orbitRef.current) {
-        window.clearInterval(orbitRef.current);
-        orbitRef.current = null;
-      }
-    };
-  }, [level, paused, reducedMotion, ready]);
+    if (cameraIntent.type === 'follow') {
+      const padding = followPadding(container.clientHeight, sheetHeightPx);
+      followAt(map, center, map.getBearing(), 1.4, padding, reducedMotion);
+      return;
+    }
+    if (cameraIntent.type === 'overview') {
+      const geometry = activityTrack?.features?.[0]?.geometry ?? null;
+      const bounds = cameraIntent.bounds ?? boundsOfTrack(geometry);
+      overviewOf(map, bounds, overviewPadding(container.clientWidth, sheetHeightPx), reducedMotion);
+      return;
+    }
+    if (cameraIntent.type === 'flyover') {
+      const points: Array<[number, number]> = [];
+      const walk = (value: unknown) => {
+        if (!Array.isArray(value)) return;
+        if (typeof value[0] === 'number' && typeof value[1] === 'number') {
+          points.push([value[0] as number, value[1] as number]);
+          return;
+        }
+        for (const child of value) walk(child);
+      };
+      for (const route of routes ?? []) walk((route.geojson as { coordinates?: unknown })?.coordinates);
+      if (points.length < 2) return;
+      return flyoverTrack(map, points, reducedMotion);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intentKey, ready]);
 
   // ── repères projetés (overlay DOM, pas de Marker MapLibre) ─────────────
   useEffect(() => {
@@ -501,6 +536,7 @@ export default function MapStage({
       data-level={level}
       data-ready={ready ? '1' : '0'}
       data-pins={pins.length}
+      {...(longPressHandlers as Record<string, unknown>)}
     >
       {!ready ? (
         <div className="xp-map-globe-skeleton" aria-hidden="true">
