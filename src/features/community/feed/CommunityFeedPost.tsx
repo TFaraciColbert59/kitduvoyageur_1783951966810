@@ -21,6 +21,8 @@ export interface CommunityFeedPostProps {
   onRequireAuth?: (reason: CommunityAuthReason) => void;
   initialPanel?: 'comments' | 'share' | null;
   initialCommentId?: string | null;
+  /** Premier post du fil : image chargée en priorité (c'est elle qui fait le LCP). */
+  priority?: boolean;
 }
 
 /**
@@ -31,7 +33,7 @@ export interface CommunityFeedPostProps {
  * Post sans image : fond de la carte Compte, texte par-dessus, hauteur auto
  * plafonnée à la hauteur du carré.
  */
-export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = null, initialCommentId = null }: CommunityFeedPostProps) {
+export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = null, initialCommentId = null, priority = false }: CommunityFeedPostProps) {
   const { toast } = useToast();
   const { liked, saved, toggleLike, toggleSave, share, copyLink, report } = usePostInteractions(
     post,
@@ -168,7 +170,9 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
             className="lkdv-feed-post-media"
             src={media!}
             alt={post.image_alt || `Publication de ${authorName(post)}`}
-            loading="lazy"
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : undefined}
+            decoding="async"
             draggable={false}
             onClick={handleMediaClick}
           />

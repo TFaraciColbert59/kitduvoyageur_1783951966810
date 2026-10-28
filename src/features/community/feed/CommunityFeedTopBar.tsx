@@ -12,12 +12,14 @@ export interface CommunityFeedTopBarProps {
   onCreate: () => void;
   onOpenSection: (id: Exclude<SectionTabId, 'pour-toi'>) => void;
   onSearch: () => void;
+  /** Appelé au premier appui : permet de précharger les drawers avant le clic. */
+  onPrefetch?: () => void;
 }
 
 /**
  * « Pour toi » + menu sections ; +, recherche, cloche (drawer Notifications du Compte).
  */
-export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }: CommunityFeedTopBarProps) {
+export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch, onPrefetch }: CommunityFeedTopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const unread = useAccountUnreadCount(user?.id);
 
@@ -40,10 +42,10 @@ export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }:
       </div>
 
       <div className="lkdv-top-actions">
-        <button type="button" className="gbtn" aria-label="Créer dans l’application" onClick={onCreate}>
+        <button type="button" className="gbtn" aria-label="Créer dans l’application" onPointerDown={onPrefetch} onClick={onCreate}>
           <Icon name="plus" size={18} aria-hidden="true" />
         </button>
-        <button type="button" className="gbtn" aria-label="Rechercher dans la communauté" onClick={onSearch}>
+        <button type="button" className="gbtn" aria-label="Rechercher dans la communauté" onPointerDown={onPrefetch} onClick={onSearch}>
           <Icon name="search" size={17} aria-hidden="true" />
         </button>
         <Link

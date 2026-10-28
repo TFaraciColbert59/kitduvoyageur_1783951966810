@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useCommunityFeed, type FeedPost } from './useCommunityFeed';
+import React, { useEffect, useRef } from 'react';
+import { useCommunityFeed } from './useCommunityFeed';
 import { CommunityFeedPost } from './CommunityFeedPost';
 import type { CommunityAuthReason } from './usePostInteractions';
 
@@ -15,8 +15,9 @@ export interface CommunityFeedProps {
 }
 
 /**
- * Fil complet : uniquement des posts, par pages de 10. Aucun filtre, aucune
- * section, aucune grille.
+ * Fil complet : uniquement des posts, par pages de 10, chargées au fur et à
+ * mesure : la page suivante part 800 px avant la fin du fil. Aucun filtre,
+ * aucune section, aucune grille.
  */
 export function CommunityFeed({
   userId,
@@ -28,6 +29,23 @@ export function CommunityFeed({
 }: CommunityFeedProps) {
   const { posts, loading, loadingMore, hasMore, error, loadMore, refresh } = useCommunityFeed(userId);
   const deepLinkDone = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const canObserve = typeof IntersectionObserver !== 'undefined';
+
+  // Défilement infini. Le fil défile dans `.lkdv-feed-main`, pas dans la page : c'est lui la racine.
+  // L'observateur est recréé à chaque page reçue : il se redéclenche si la fin reste visible (grand écran).
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore || loading || error || !canObserve) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) void loadMore();
+      },
+      { root: sentinel.closest('.lkdv-feed-main'), rootMargin: '800px 0px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [canObserve, error, hasMore, loadMore, loading, posts.length]);
 
   useEffect(() => {
     if (refreshKey > 0) void refresh();
@@ -81,10 +99,11 @@ export function CommunityFeed({
   return (
     <>
       <div className="lkdv-feed-list">
-        {posts.map((post) => (
+        {posts.map((post, index) => (
           <CommunityFeedPost
             key={post.id}
             post={post}
+            priority={index === 0}
             user={user}
             onRequireAuth={onRequireAuth}
             initialPanel={initialCommentId && post.id === initialPostId ? 'comments' : null}
@@ -94,10 +113,16 @@ export function CommunityFeed({
       </div>
 
       {hasMore ? (
-        <div className="lkdv-feed-more">
-          <button type="button" onClick={() => void loadMore()} disabled={loadingMore}>
-            {loadingMore ? 'Chargement…' : 'Charger plus'}
-          </button>
+        <div className="lkdv-feed-more" ref={sentinelRef}>
+          {canObserve ? (
+            <p role="status" aria-live="polite">
+              {loadingMore ? 'Chargement…' : ''}
+            </p>
+          ) : (
+            <button type="button" onClick={() => void loadMore()} disabled={loadingMore}>
+              {loadingMore ? 'Chargement…' : 'Charger plus'}
+            </button>
+          )}
         </div>
       ) : (
         <p className="py-5 text-center text-[11px] text-[#56665D]">Tu as tout vu.</p>
