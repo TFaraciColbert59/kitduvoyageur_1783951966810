@@ -42,6 +42,8 @@ export default defineConfig({
     // n'était sélectionnée ni par Playwright (testMatch) ni par Vitest
     // (tests/e2e exclu), donc jamais exécutée.
     'tests/e2e/compte-map-zoom.spec.ts',
+    // Explorer v2 (08_TESTS.md) : specs dédiées, taguées @explorer-v2.
+    'tests/explorer-v2/*.e2e.spec.ts',
   ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

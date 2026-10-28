@@ -1,6 +1,14 @@
 import { isNative } from "./platform";
 
-export type HapticStyle = "light" | "medium" | "heavy" | "selection" | "success" | "warning" | "error";
+export type HapticStyle =
+  | "light"
+  | "medium"
+  | "heavy"
+  | "rigid"
+  | "selection"
+  | "success"
+  | "warning"
+  | "error";
 
 /**
  * Retour haptique natif iOS/Android avec fallback Web Vibration API — SSR Safe
@@ -25,6 +33,10 @@ export async function triggerNativeHaptic(style: HapticStyle = "light"): Promise
           break;
         case "heavy":
           await Haptics.impact({ style: ImpactStyle.Heavy });
+          break;
+        case "rigid":
+          // `Rigid` existe dans iOS 13+ mais pas dans les types du paquet installé.
+          await Haptics.impact({ style: (ImpactStyle as unknown as Record<string, string>).Rigid as never });
           break;
         case "selection":
           await Haptics.selectionChanged();

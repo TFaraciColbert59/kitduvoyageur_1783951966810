@@ -187,3 +187,13 @@ scratch/
 .vinext/
 .cloudflare/
 .env*
+
+# Explorer v2 — cache de génération des fonds Natural Earth
+.cache/explorer-v2/
+
+# Explorer v2 — la maquette exécutable (23 Mo de captures) n'est pas versionnée ;
+# les paires de parité versionnées suffisent à la revue (docs/explorer-v2/parite).
+handoff/explorer-v2/maquette/
+
+# Explorer v2 — identifiants des comptes de recette (jamais versionnés)
+.secrets/
