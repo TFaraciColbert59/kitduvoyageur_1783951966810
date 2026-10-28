@@ -1,4 +1,5 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
+import type { MapBounds } from '@/features/compte/map/types';
 
 /**
  * CHANTIER ATLAS — Phase 4
@@ -75,6 +76,132 @@ type ToggleInteraction = {
   enable?: () => void;
   disable?: () => void;
 };
+
+/**
+ * Courbe d'accélération CSS `cubic-bezier(x1, y1, x2, y2)` traduite en
+ * progression MapLibre (`t ∈ [0, 1] → t'`). Sert aux vols de caméra qui
+ * doivent suivre une courbe d'interface, sans animation maison : MapLibre
+ * reste seul à animer, il reçoit seulement la courbe.
+ *
+ * Une abscisse hors `[0, 1]` n'est pas une courbe : on retombe sur le linéaire
+ * plutôt que de produire un mouvement silencieusement faux.
+ */
+export function cubicBezierEasing(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+): (progress: number) => number {
+  const inRange = (value: number) => Number.isFinite(value) && value >= 0 && value <= 1;
+  if (!inRange(x1) || !inRange(x2)) {
+    return (progress) => (Number.isFinite(progress) ? Math.min(1, Math.max(0, progress)) : 0);
+  }
+  const curve = (t: number, a: number, b: number) => {
+    const u = 1 - t;
+    return 3 * u * u * t * a + 3 * u * t * t * b + t * t * t;
+  };
+  const slope = (t: number, a: number, b: number) => {
+    const u = 1 - t;
+    return 3 * u * u * a + 6 * u * t * (b - a) + 3 * t * t * (1 - b);
+  };
+  return (progress) => {
+    if (!Number.isFinite(progress) || progress <= 0) return 0;
+    if (progress >= 1) return 1;
+    let t = progress;
+    for (let step = 0; step < 8; step += 1) {
+      const error = curve(t, x1, x2) - progress;
+      if (Math.abs(error) < 1e-6) return curve(t, y1, y2);
+      const tangent = slope(t, x1, x2);
+      if (Math.abs(tangent) < 1e-6) break;
+      t -= error / tangent;
+    }
+    let low = 0;
+    let high = 1;
+    t = progress;
+    for (let step = 0; step < 24; step += 1) {
+      const x = curve(t, x1, x2);
+      if (Math.abs(x - progress) < 1e-6) break;
+      if (x < progress) low = t;
+      else high = t;
+      t = (low + high) / 2;
+    }
+    return curve(t, y1, y2);
+  };
+}
+
+/** Cible de cadrage d'un tracé : bornes réelles + réglage du vol. */
+export interface TraceCameraTarget {
+  /** `[ouest, sud, est, nord]`. */
+  bounds: MapBounds;
+  padding: { top: number; bottom: number; left: number; right: number };
+  /** Durée du vol en ms. Défaut : `1100` (cadrage historique du carnet). */
+  duration?: number;
+  /** Courbe du vol. Absente : courbe native de MapLibre. */
+  easing?: (progress: number) => number;
+  pitch?: number;
+  bearing?: number;
+  maxZoom?: number;
+}
+
+/**
+ * Surface MapLibre strictement nécessaire au cadrage d'un tracé. Le vrai
+ * `Map` la satisfait : le helper reste testable sans WebGL.
+ */
+export interface TraceCameraMap {
+  fitBounds(bounds: [[number, number], [number, number]], options: Record<string, unknown>): unknown;
+  cameraForBounds?(
+    bounds: [[number, number], [number, number]],
+    options?: Record<string, unknown>
+  ): { center: [number, number]; zoom: number } | null | undefined;
+  jumpTo?(options: Record<string, unknown>): unknown;
+}
+
+/**
+ * Cadre un tracé : un vol animé (durée + courbe) ou, en `prefers-reduced-motion`,
+ * un saut sec vers la caméra finale — mêmes bornes, même inclinaison, même cap,
+ * aucune animation. Le saut passe par `cameraForBounds`, c'est-à-dire par la
+ * pose exacte que `fitBounds` atteindrait.
+ */
+export function applyTraceCamera(
+  map: TraceCameraMap,
+  target: TraceCameraTarget,
+  reducedMotion: boolean
+): void {
+  const pitch = target.pitch ?? 45;
+  const bearing = target.bearing ?? -18;
+  const maxZoom = target.maxZoom ?? 14;
+  const corners: [[number, number], [number, number]] = [
+    [target.bounds[0], target.bounds[1]],
+    [target.bounds[2], target.bounds[3]],
+  ];
+
+  if (!reducedMotion) {
+    map.fitBounds(corners, {
+      padding: target.padding,
+      maxZoom,
+      pitch,
+      bearing,
+      duration: target.duration ?? 1100,
+      ...(target.easing ? { easing: target.easing } : {}),
+      essential: true,
+    });
+    return;
+  }
+
+  const pose = map.cameraForBounds?.(corners, { padding: target.padding, maxZoom });
+  if (pose && map.jumpTo) {
+    map.jumpTo({ center: pose.center, zoom: pose.zoom, pitch, bearing });
+    return;
+  }
+  map.fitBounds(corners, {
+    padding: target.padding,
+    maxZoom,
+    pitch,
+    bearing,
+    duration: 0,
+    essential: true,
+  });
+}
 
 type RotationInteraction = {
   enableRotation?: () => void;
