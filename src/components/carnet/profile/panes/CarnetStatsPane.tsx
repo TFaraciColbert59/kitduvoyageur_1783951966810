@@ -244,18 +244,21 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
               icon={<Icon name="compass" size={16} aria-hidden="true" />}
               label="lieu"
               value={travel.place ?? ''}
+              wide
               ariaLabel={`lieu ${travel.place ?? '—'}`}
             />
             <CarnetField
               icon={<Icon name="map-pin" size={16} aria-hidden="true" />}
               label="départ"
               value={travel.from ?? stats.startPlace ?? ''}
+              wide
               ariaLabel={`départ ${travel.from ?? stats.startPlace ?? '—'}`}
             />
             <CarnetField
               icon={<Icon name="flag" size={16} aria-hidden="true" />}
               label="arrivée"
               value={travel.to ?? stats.endPlace ?? ''}
+              wide
               ariaLabel={`arrivée ${travel.to ?? stats.endPlace ?? '—'}`}
             />
           </div>
