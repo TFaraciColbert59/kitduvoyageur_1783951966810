@@ -9,8 +9,8 @@
  */
 
 /** Chemin racine d'un voyage. */
-export function tripPath(slug: string): string {
-  return `/voyages/${slug}`;
+export function tripPath(_slug: string): string {
+  return '/hub';
 }
 
 /** Chemin de création d'un voyage : le Compas, seul préparateur. */
@@ -20,6 +20,5 @@ export function tripNewPath(): string {
 
 /** Chemin complet d'une section par segment d'URL (ex: 'itineraire', 'kit', '' = racine). */
 export function tripSegmentPath(slug: string, segment: string): string {
-  const base = tripPath(slug);
-  return segment ? `${base}/${segment}` : base;
+  return '/hub';
 }

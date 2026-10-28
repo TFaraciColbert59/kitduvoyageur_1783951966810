@@ -1,155 +1,346 @@
 'use client';
 
-import React, { useState } from 'react';
-import { z } from 'zod';
-import Icon from '@/components/ui/Icon';
+import React, { useMemo, useState } from 'react';
+import { Controller } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
-import { prepareImage } from '@/lib/media/prepareImage';
-import { Chips, CountedTextArea, type ChipOption } from './wizard/fields';
-import { firstIssue } from './wizard/validate';
-import { MediaTray, acceptMedia } from './wizard/MediaTray';
-import { StoryStage } from './StoryStage';
-import { useCreateFlow } from './wizard/useCreateFlow';
-import { useDraftedForm } from './wizard/useDraftedForm';
-import { WizardFrame } from './wizard/WizardFrame';
+import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
+import { CommunityFormDrawer } from './CommunityFormDrawer';
+import { Field, Select, SubmitFooter, SwitchField, TextArea, TextInput } from './form-fields';
+import { CreateFormEngine } from './engine/CreateFormEngine';
+import {
+  createDefaults,
+  CREATE_FIELD_LABELS,
+  MEDIA_MAX_BYTES,
+  type StoryFormValues,
+} from './engine/createSchemas';
+import { CREATE_STEPS, StepPager } from './shared/StepPager';
+import { MediaPicker } from './shared/MediaPicker';
+import { FormErrorSummary } from './shared/FormErrorSummary';
+import { FormPreview } from './shared/FormPreview';
+import { CreationSignature } from './shared/CreationSignature';
+import { StoryLayerStack, CaptionRuler, StoryTrim } from './shared/InfoCards';
+import { InlineError } from './shared/InlineError';
+import { createStoryMediaUploader } from './upload';
 
 export interface StoryCreateFormProps {
   open: boolean;
   onClose: () => void;
   user: any;
   onCreated: (kind: 'story', id: string) => void;
+  step?: number;
+  onStepChange?: (step: number) => void;
 }
 
-const STEPS = ['media', 'share'] as const;
-type Step = (typeof STEPS)[number];
-const KICKERS: Record<Step, string> = { media: 'Média', share: 'Diffusion' };
+const DEFAULTS = createDefaults('story');
+const STEPS = [CREATE_STEPS.story[0]];
+const LAST_STEP = STEPS.length - 1;
+const STEP_FIELDS = [
+  ['media', 'caption', 'overlayText', 'overlayLink', 'audience', 'replyPolicy', 'allowReshare'],
+] as const;
 
-type Audience = 'public' | 'abonnies' | 'only_me';
-const AUDIENCES: ReadonlyArray<ChipOption<Audience>> = [
-  {
-    id: 'public',
-    label: 'Tout le monde',
-    icon: <Icon name="globe" size={16} aria-hidden="true" />,
-  },
-  {
-    id: 'abonnies',
-    label: 'Mes abonnés',
-    icon: <Icon name="users" size={16} aria-hidden="true" />,
-  },
-  { id: 'only_me', label: 'Moi', icon: <Icon name="lock" size={16} aria-hidden="true" /> },
-];
+/**
+ * Composition v1 de `post_stories.composition` : tableau d’overlays.
+ *
+ * Le visionneur existant (`CommunityStoriesBar.parseTextOverlays`) filtre les
+ * entrées `type: 'text'` et ignore les autres : l’overlay lien est donc
+ * persisté sans casser la lecture actuelle.
+ */
+export type StoryCompositionEntry =
+  | { type: 'text'; text: string }
+  | { type: 'link'; url: string };
 
-const INITIAL = { caption: '', audience: 'public' as Audience };
+export function buildStoryComposition(
+  values: Pick<StoryFormValues, 'overlayText' | 'overlayLink'>,
+): StoryCompositionEntry[] | null {
+  const entries: StoryCompositionEntry[] = [];
+  const text = values.overlayText.trim().slice(0, 120);
+  if (text) entries.push({ type: 'text', text });
+  const url = values.overlayLink.trim();
+  if (url) entries.push({ type: 'link', url });
+  return entries.length > 0 ? entries : null;
+}
 
-const shareSchema = z.object({
-  caption: z.string().max(280, 'La légende fait 280 caractères au plus.'),
-  audience: z.enum(['public', 'abonnies', 'only_me']),
-});
+/** `post_stories.visibility` n’utilise pas le libellé d’interface « abonnies ». */
+const VISIBILITY: Record<StoryFormValues['audience'], string> = {
+  public: 'public',
+  abonnies: 'followers',
+  only_me: 'only_me',
+};
 
-export function StoryCreateForm({ onClose, user, onCreated }: StoryCreateFormProps) {
-  const { values, patch, clear } = useDraftedForm('story', user?.id, INITIAL);
-  const [files, setFiles] = useState<File[]>([]);
+export function StoryCreateForm({
+  open,
+  onClose,
+  user,
+  onCreated,
+  step,
+  onStepChange,
+}: StoryCreateFormProps) {
+  const [internalStep, setInternalStep] = useState(0);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const activeStep = Math.max(0, Math.min(LAST_STEP, step ?? internalStep));
 
-  const flow = useCreateFlow<Step>({
-    steps: STEPS,
-    validate: (step) => {
-      if (step === 'media') return files.length === 0 ? 'Choisis une photo ou une vidéo.' : null;
-      return firstIssue(shareSchema, values);
-    },
-    submit: async () => {
-      const file = files[0];
-      if (!user?.id) throw new Error('Connecte-toi pour publier une story.');
+  const storyUploader = useMemo(
+    () => (user?.id ? createStoryMediaUploader(user.id) : undefined),
+    [user?.id],
+  );
+
+  const setStep = (next: number) => {
+    const safe = Math.max(0, Math.min(LAST_STEP, next));
+    setInternalStep(safe);
+    onStepChange?.(safe);
+  };
+
+  const submit = async (values: StoryFormValues) => {
+    setSubmitError(null);
+    if (!user?.id) throw new Error('Connecte-toi pour publier une story.');
+    const media = values.media[0];
+    if (!media) throw new Error('Choisis une photo ou une vidéo.');
+    if (media.status === 'uploading') {
+      throw new Error('Attends la fin de l’envoi du média.');
+    }
+    if (media.status === 'error') {
+      throw new Error('Le média n’a pas pu être envoyé. Réessaie ou retire-le.');
+    }
+
+    const composition = buildStoryComposition(values);
+    const supabase = createClient();
+    const storyId = crypto.randomUUID();
+    const isVideo = (media.type || '').startsWith('video/');
+    let contentType = media.type || (isVideo ? 'video/mp4' : 'image/jpeg');
+    let storagePath = media.storagePath?.trim() ?? '';
+    const storageBucket = media.storageBucket?.trim() || 'stories-private';
+
+    if (!storagePath) {
+      // Média jamais envoyé (ou brouillon d’une version antérieure) : envoi
+      // de secours au moment de publier, sans progression MediaPicker.
+      const file = media.file;
       if (!file) throw new Error('Choisis une photo ou une vidéo.');
-      const supabase = createClient();
-      const isVideo = file.type.startsWith('video/');
-      const cleaned = isVideo ? file : await prepareImage(file);
-      const contentType = cleaned.type || (isVideo ? 'video/mp4' : 'image/jpeg');
-      const ext = (cleaned.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')).toLowerCase();
-      const storyId = crypto.randomUUID();
-      const path = `${user.id}/${storyId}/${Date.now()}.${ext}`;
+      if (file.size > MEDIA_MAX_BYTES) {
+        throw new Error('Média trop volumineux (50 Mo max).');
+      }
+      const cleaned = isVideo ? file : await stripImageMetadata(file);
+      contentType = cleaned.type || (isVideo ? 'video/mp4' : 'image/jpeg');
+      const ext = (file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg'))
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+      storagePath = `${user.id}/${storyId}/${Date.now()}.${ext || 'bin'}`;
       const { error: uploadError } = await supabase.storage
         .from('stories-private')
-        .upload(path, cleaned, { cacheControl: '3600', upsert: false, contentType });
+        .upload(storagePath, cleaned, { cacheControl: '3600', upsert: false, contentType });
       if (uploadError) throw new Error(uploadError.message);
-      const caption = values.caption.trim();
-      const { error: insertError } = await supabase.from('post_stories').insert({
-        id: storyId,
-        author_id: user.id,
-        image_url: null,
-        storage_bucket: 'stories-private',
-        storage_path: path,
-        media_type: isVideo ? 'video' : 'image',
-        mime_type: contentType,
-        composition: null,
-        composition_version: null,
-        status: 'ready',
-        client_request_id: crypto.randomUUID(),
-        caption: caption ? caption.slice(0, 280) : null,
-        visibility: values.audience,
-      });
-      if (insertError) {
-        await supabase.storage
-          .from('stories-private')
-          .remove([path])
-          .catch(() => {});
-        throw new Error(insertError.message);
-      }
-      clear();
-      setFiles([]);
-      onCreated('story', storyId);
-      onClose();
-    },
-  });
+    }
+
+    const { error: insertError } = await supabase.from('post_stories').insert({
+      id: storyId,
+      author_id: user.id,
+      image_url: null,
+      storage_bucket: storageBucket,
+      storage_path: storagePath,
+      media_type: isVideo ? 'video' : 'image',
+      mime_type: contentType,
+      composition,
+      composition_version: composition ? 1 : null,
+      status: 'ready',
+      client_request_id: crypto.randomUUID(),
+      caption: values.caption.trim() ? values.caption.trim().slice(0, 280) : null,
+      visibility: VISIBILITY[values.audience],
+      reply_policy: values.replyPolicy,
+      allow_reshare: values.allowReshare,
+    });
+    if (insertError) {
+      await supabase.storage.from('stories-private').remove([storagePath]).catch(() => {});
+      throw new Error(insertError.message);
+    }
+
+    onCreated('story', storyId);
+    setStep(0);
+    onClose();
+  };
 
   return (
-    <WizardFrame
-      step={flow.wizard.step}
-      total={flow.wizard.total}
-      kicker={KICKERS[flow.current]}
-      error={flow.error}
-      busy={flow.busy}
-      nextLabel={flow.wizard.isLast ? 'Publier la story' : 'Suivant'}
-      onBack={flow.onBack}
-      onNext={flow.onNext}
+    <CreateFormEngine<StoryFormValues>
+      kind="story"
+      defaultValues={DEFAULTS}
+      onSubmit={submit}
+      resetOnSuccess
+      draftKey="story"
+      step={activeStep}
+      onStepChange={setStep}
+      stepFields={STEP_FIELDS}
+      onError={(message) => setSubmitError(message)}
     >
-      {flow.current === 'media' && files[0] ? (
-        <StoryStage
-          file={files[0]}
-          onNext={flow.onNext}
-          onReplace={(next) => {
-            const result = acceptMedia([], [next], 1);
-            flow.setError(result.error);
-            if (result.files.length > 0) setFiles(result.files);
-          }}
-        />
-      ) : null}
-      {flow.current === 'media' && !files[0] ? (
-        <MediaTray
-          files={files}
-          onChange={(next) => setFiles(next.slice(-1))}
-          onError={flow.setError}
-          max={1}
-        />
-      ) : null}
+      {(form, api) => {
+        const errors = form.formState.errors;
+        const previewValues = form.watch();
+        const media = form.watch('media');
+        const caption = form.watch('caption');
+        const overlayText = form.watch('overlayText');
+        const goNext = async () => {
+          const fields = STEP_FIELDS[activeStep] ?? [];
+          const valid = await form.trigger([...fields]);
+          if (valid) setStep(activeStep + 1);
+        };
+        const onPrimary = () => {
+          if (activeStep < LAST_STEP) {
+            void goNext();
+            return;
+          }
+          api.submit();
+        };
 
-      {flow.current === 'share' ? (
-        <>
-          <CountedTextArea
-            label="Un mot sur ce moment"
-            value={values.caption}
-            onChange={(caption) => patch({ caption })}
-            max={280}
-            placeholder="Visible 24 h…"
-          />
-          <Chips
-            label="Qui la voit ?"
-            options={AUDIENCES}
-            value={values.audience}
-            onChange={(audience) => patch({ audience })}
-          />
-        </>
-      ) : null}
-    </WizardFrame>
+        return (
+          <CommunityFormDrawer
+            open={open}
+            onClose={onClose}
+            ariaLabel="Créer une story"
+            error={submitError}
+            footer={
+              <SubmitFooter
+                label={activeStep < LAST_STEP ? 'Continuer' : 'Publier la story'}
+                busy={form.formState.isSubmitting}
+                onClick={onPrimary}
+              />
+            }
+          >
+            <FormErrorSummary
+              errors={errors}
+              labels={CREATE_FIELD_LABELS}
+              onFocusField={api.focusField}
+            />
+            <FormPreview kind="story" values={previewValues} />
+            <CreationSignature kind="story" values={previewValues} />
+
+            <StepPager
+              steps={STEPS}
+              index={activeStep}
+              onIndexChange={setStep}
+              actions={
+                activeStep > 0 ? (
+                  <button
+                    type="button"
+                    className="lkdv-create-step-back"
+                    onClick={() => setStep(activeStep - 1)}
+                  >
+                    Retour
+                  </button>
+                ) : null
+              }
+            >
+              <div>
+                <StoryTrim media={media} />
+                <Controller
+                  control={form.control}
+                  name="media"
+                  render={({ field }) => (
+                    <MediaPicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      max={1}
+                      label="Photo ou vidéo"
+                      hint="Un seul média, format vertical 9:16."
+                      upload={storyUploader}
+                      fieldName="media"
+                    />
+                  )}
+                />
+                <InlineError message={errors.media?.message as string | undefined} />
+                <p className="lkdv-form-note">
+                  L’envoi démarre dès la sélection. En cas d’échec, réessaie sans
+                  reprendre la story.
+                </p>
+              </div>
+
+              <div>
+                <StoryLayerStack values={previewValues} />
+                {media[0]?.previewUrl || media[0]?.url ? (
+                  <figure className="lkdv-create-story-frame" aria-label="Aperçu de la story">
+                    {media[0].type.startsWith('video/') ? (
+                      <video src={media[0].previewUrl || media[0].url || ''} muted playsInline />
+                    ) : (
+                      <img
+                        src={media[0].previewUrl || media[0].url || ''}
+                        alt={media[0].alt || 'Aperçu de la story'}
+                      />
+                    )}
+                    <figcaption>
+                      {overlayText.trim() || caption.trim() || 'Ta légende s’affichera ici.'}
+                    </figcaption>
+                  </figure>
+                ) : null}
+
+                <Field label="Légende" hint="280 caractères max." htmlFor="story-caption">
+                  <TextArea
+                    id="story-caption"
+                    {...form.register('caption')}
+                    maxLength={280}
+                    placeholder="Un mot sur ce moment…"
+                  />
+                  <InlineError message={errors.caption?.message} />
+                  <CaptionRuler value={caption} max={280} />
+                </Field>
+
+                <details className="lkdv-advanced">
+                  <summary>Texte et lien</summary>
+                <Field label="Texte de la story" hint="120 caractères max." htmlFor="story-overlay">
+                  <TextInput
+                    id="story-overlay"
+                    {...form.register('overlayText')}
+                    maxLength={120}
+                    placeholder="Texte à poser sur la story"
+                  />
+                  <InlineError message={errors.overlayText?.message} />
+                </Field>
+
+                <Field label="Lien de la story" htmlFor="story-link">
+                  <TextInput
+                    id="story-link"
+                    type="url"
+                    {...form.register('overlayLink')}
+                    placeholder="https://…"
+                  />
+                  <InlineError message={errors.overlayLink?.message} />
+                </Field>
+                </details>
+              </div>
+
+              <div>
+                <div className="lkdv-form-row">
+                  <Field label="Audience" htmlFor="story-audience">
+                    <Select id="story-audience" {...form.register('audience')}>
+                      <option value="public">Tout le monde</option>
+                      <option value="abonnies">Mes abonnés</option>
+                      <option value="only_me">Moi uniquement</option>
+                    </Select>
+                    <InlineError message={errors.audience?.message} />
+                  </Field>
+                  <Field label="Réponses" htmlFor="story-replies">
+                    <Select id="story-replies" {...form.register('replyPolicy')}>
+                      <option value="everyone">Tout le monde</option>
+                      <option value="followers">Mes abonnés</option>
+                      <option value="off">Désactivées</option>
+                    </Select>
+                    <InlineError message={errors.replyPolicy?.message} />
+                  </Field>
+                </div>
+
+                <Controller
+                  control={form.control}
+                  name="allowReshare"
+                  render={({ field }) => (
+                    <SwitchField
+                      label="Partage"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                <InlineError message={errors.allowReshare?.message} />
+              </div>
+            </StepPager>
+          </CommunityFormDrawer>
+        );
+      }}
+    </CreateFormEngine>
   );
 }
 

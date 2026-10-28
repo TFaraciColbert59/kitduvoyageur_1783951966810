@@ -80,12 +80,27 @@ export const useAuth = (): AuthContextValue => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.sessionStorage.getItem('lkdv:profile:current');
+      return raw ? (JSON.parse(raw) as UserProfile) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
   const supabase = useMemo(() => createClient(), []);
   const demoAutoLoginTried = useRef(false);
 
+  const profileRequest = useRef<Promise<void> | null>(null);
+  const PROFILE_CACHE_PREFIX = 'lkdv:profile:';
+
   const ensureProfile = useCallback(async (authUser: User) => {
+    // Le profil est déjà peint depuis le cache : on rafraîchit en fond, une
+    // seule fois, sans relancer de requête concurrente.
+    if (profileRequest.current) return profileRequest.current;
+    const run = (async () => {
     try {
       const { data: existing } = await supabase
         .from('user_profiles')
@@ -95,6 +110,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (existing) {
         setProfile(existing as UserProfile);
+        try {
+          window.sessionStorage.setItem('lkdv:profile:current', JSON.stringify(existing));
+        } catch {
+          /* quota : le cache n'est qu'un accélérateur */
+        }
         return;
       }
 
@@ -121,6 +141,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch {
       // Silently fail
     }
+    })();
+    profileRequest.current = run.finally(() => {
+      profileRequest.current = null;
+    });
+    return profileRequest.current;
   }, [supabase]);
 
   useEffect(() => {

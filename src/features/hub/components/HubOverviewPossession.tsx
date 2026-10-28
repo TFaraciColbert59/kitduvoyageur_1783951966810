@@ -127,7 +127,7 @@ export function HubOverviewPossession({
 
       <motion.div {...fade}>
         <Link
-          href="/copilote"
+          href="/compas"
           className="glass p-4 rounded-2xl flex items-center gap-3 min-h-[44px] cursor-pointer active:scale-[0.98] transition-transform"
           aria-label="Assistant IA — conseils matériel"
         >

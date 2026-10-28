@@ -27,27 +27,10 @@ SELECT is(
   (SELECT count(*)::int FROM pg_indexes
     WHERE schemaname='public' AND indexname IN ('idx_community_posts_author','idx_community_posts_created_at','idx_post_comments_post_id')),
   0, '6. Indexes dupliqués supprimés');
--- The author-only index was superseded by (author_id, created_at DESC) in
--- 20261022101000. Check usable leading-column coverage rather than old names.
 SELECT is(
-  (SELECT count(*)::int
-     FROM (VALUES ('community_posts', 'author_id'),
-                  ('community_posts', 'created_at'),
-                  ('post_comments', 'post_id')) AS required(table_name, column_name)
-    WHERE EXISTS (
-      SELECT 1
-        FROM pg_index i
-        JOIN pg_class t ON t.oid = i.indrelid
-        JOIN pg_namespace n ON n.oid = t.relnamespace
-        JOIN pg_class idx ON idx.oid = i.indexrelid
-        JOIN pg_am am ON am.oid = idx.relam
-        JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = i.indkey[0]
-       WHERE n.nspname = 'public' AND t.relname = required.table_name
-         AND a.attname = required.column_name AND am.amname = 'btree'
-         AND i.indisvalid AND i.indisready AND i.indislive
-         AND i.indpred IS NULL
-    )),
-  3, '7. Indexes utilisables couvrent auteur, date et commentaires du post');
+  (SELECT count(*)::int FROM pg_indexes
+    WHERE schemaname='public' AND indexname IN ('idx_community_posts_author_id','idx_community_posts_created','idx_post_comments_post')),
+  3, '7. Indexes conservés présents');
 -- Aucun groupe de policies permissives strictement identique ne subsiste
 -- sur les tables du périmètre communauté.
 SELECT is(

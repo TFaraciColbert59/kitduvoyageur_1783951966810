@@ -7,10 +7,7 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lumineux, Modal Post & Drawers', () => {
-  const v8Source =
-    read('src/components/compte/CompteLiquidGlassV8.tsx') +
-    '\n' + read('src/components/compte/compte-v8.css') +
-    '\n' + read('src/components/compte/compte-apple-hig.css');
+  const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx');
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
 
   it('1. Profile Header layout (Instagram style) : avatar + name/pseudo à gauche, stats transparentes 18px à droite sans chevauchement', () => {
@@ -80,9 +77,7 @@ describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lum
     expect(runtimeSource).toContain('Mes Kits & Lignées');
     expect(runtimeSource).toContain('Inventaire matériel réel');
     expect(runtimeSource).toContain('Prêts en cours');
-    // Chantier Récompenses : l'onglet Fidélité devient l'entrée du tiroir Récompenses.
-    expect(runtimeSource).toContain('title: "Récompenses"');
-    expect(runtimeSource).toContain('data-a="openRewards"');
+    expect(runtimeSource).toContain('Programme fidélité');
     expect(runtimeSource).toContain('Parrainage');
 
     // Code de parrainage dérivé du handle réel, jamais codé en dur
@@ -96,7 +91,7 @@ describe('Compte iOS 27 Liquid Glass v11 — Refonte Profil Instagram, Verre Lum
     expect(runtimeSource).toContain('"Mes Kits":');
     expect(runtimeSource).toContain('"Inventaire":');
     expect(runtimeSource).toContain('"Prêts":');
-    expect(runtimeSource).toContain('"Récompenses":');
+    expect(runtimeSource).toContain('"Fidélité":');
     expect(runtimeSource).toContain('"Parrainage":');
 
     // Scroll continu sans troncature de lignes

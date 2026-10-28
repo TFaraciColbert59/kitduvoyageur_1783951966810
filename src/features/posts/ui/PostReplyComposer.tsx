@@ -16,6 +16,7 @@ export interface PostReplyComposerProps {
   onFocus?: () => void;
   onBlur?: () => void;
   maxLength?: number;
+  sendIcon?: 'send' | 'arrow-right';
 }
 
 /** Composer unique des commentaires de post et des réponses de story. */
@@ -32,6 +33,7 @@ export function PostReplyComposer({
   onFocus,
   onBlur,
   maxLength,
+  sendIcon = 'send',
 }: PostReplyComposerProps) {
   return (
     <div className="lkdv-comments-composer">
@@ -59,7 +61,7 @@ export function PostReplyComposer({
         disabled={disabled || busy || !value.trim()}
         onClick={onSend}
       >
-        <Icon name="send" size={15} aria-hidden="true" />
+        <Icon name={sendIcon} size={15} aria-hidden="true" />
       </button>
     </div>
   );

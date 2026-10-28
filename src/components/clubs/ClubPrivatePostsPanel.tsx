@@ -67,7 +67,7 @@ export default function ClubPrivatePostsPanel({
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-[color:var(--lkv-text-primary)]">Publications des membres</h2>
         <Link
-          href={'/communaute/publier?clubId=' + encodeURIComponent(clubId)}
+          href={'/communaute?clubId=' + encodeURIComponent(clubId)}
           className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-[color:var(--lkv-text-primary)]"
         >
           + Publier

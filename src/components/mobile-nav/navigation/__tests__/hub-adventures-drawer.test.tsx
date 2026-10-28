@@ -99,7 +99,7 @@ describe('Tiroir « Tes aventures » — actions', () => {
     expect(actions[0].href).toBe('/compas?nouvelle=1');
     expect(actions[1].id).toBe('libre');
     expect(actions[1].label).toBe('Partir librement');
-    expect(actions[1].href).toBe('/partir-librement');
+    expect(actions[1].href).toBe('/compas');
   });
 
   it('DR-04: les deux routes sont absolues et distinctes — aucune route morte', () => {
@@ -341,11 +341,8 @@ describe('Tiroir « Tes aventures » — non-regression du cablage existant', ()
   });
   it('DR-30: l’appui long sur Hub continue d’emettre le signal', () => {
     expect(webNavigationBar).toContain(
-      "onHubLongPress={openHubSwitcher ?? undefined}",
+      "onLongPress={destination.id === 'adventures' ? openHubSwitcher",
     );
-    const bottomBar = readFileSync('src/components/navigation/IOS27BottomBar.tsx', 'utf8');
-    expect(bottomBar).toContain('if (idx === 0 && onHubLongPress)');
-    expect(bottomBar).toContain('onHubLongPress();');
     expect(webNavigationBar).toContain('isHubSurfacePathname(pathname)');
     expect(webNavigationBar).toContain('opticalNavigation={opticalNavigation}');
   });

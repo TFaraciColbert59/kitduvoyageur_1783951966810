@@ -1,0 +1,805 @@
+/* Socle partagé des formulaires de création (étapes, médias, contrôles). */
+
+/* --- Moteur ------------------------------------------------------------- */
+.lkdv-create-engine {
+  display: contents;
+}
+
+.lkdv-create-engine-error {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(122, 36, 28, 0.1);
+  color: #7a241c;
+  font: 600 11px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+/* --- Pager d’étapes ----------------------------------------------------- */
+.lkdv-create-step-pager {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lkdv-create-step-pager .lkdv-lens-pager {
+  width: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.lkdv-create-step-pager .lkdv-lens-track {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.lkdv-create-step-pane {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.lkdv-create-stepbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0 4px;
+  background: linear-gradient(180deg, rgba(245, 242, 236, 0), rgba(245, 242, 236, 0.92) 38%);
+}
+
+.lkdv-create-step-tabs.lkdv-capsule {
+  width: auto;
+  max-width: 100%;
+  height: 30px;
+  padding: 2px;
+}
+
+.lkdv-create-step-tabs.lkdv-capsule button {
+  min-height: 24px;
+  padding: 0 8px;
+  font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-create-stepbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+/* --- Sélecteur de médias ------------------------------------------------ */
+.lkdv-media-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.lkdv-media-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 0.5px dashed rgba(23, 43, 36, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.lkdv-media-dropzone.is-over {
+  border-color: #17402c;
+  background: rgba(23, 64, 44, 0.08);
+}
+
+.lkdv-media-dropzone-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: var(--feed-muted, #56665d);
+  font: 500 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-media-dropzone-text b {
+  color: var(--feed-ink, #17402c);
+  font: 700 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-media-add {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.1);
+  color: var(--feed-ink, #17402c);
+  font: 700 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.lkdv-media-error {
+  margin: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(122, 36, 28, 0.1);
+  color: #7a241c;
+  font: 600 10.5px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lkdv-media-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.09);
+}
+
+.lkdv-media-thumb {
+  position: relative;
+  flex: none;
+  width: 66px;
+  height: 66px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(23, 64, 44, 0.08);
+}
+
+.lkdv-media-thumb img,
+.lkdv-media-thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-media-cover-badge {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.86);
+  color: #fff;
+  font: 700 7.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lkdv-media-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+
+.lkdv-media-name {
+  overflow: hidden;
+  color: var(--feed-ink, #17402c);
+  font: 700 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-media-alt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--feed-muted, #56665d);
+  font: 600 8.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lkdv-media-alt input {
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 0.5px solid rgba(23, 43, 36, 0.18);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--feed-ink, #17402c);
+  font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  box-sizing: border-box;
+}
+
+.lkdv-media-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.lkdv-media-actions button,
+.lkdv-media-retry button {
+  min-height: 24px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.08);
+  color: var(--feed-ink, #17402c);
+  font: 700 8.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.lkdv-media-actions button.is-on {
+  background: #17402c;
+  color: #fff;
+}
+
+.lkdv-media-actions button:disabled,
+.lkdv-media-retry button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.lkdv-media-state {
+  margin: 0;
+  color: var(--feed-muted, #56665d);
+  font: 600 9px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-media-item[data-status='error'] .lkdv-media-state {
+  color: #7a241c;
+}
+
+.lkdv-media-retry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #7a241c;
+  font: 600 9px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-media-count {
+  margin: 0;
+  color: var(--feed-muted, #56665d);
+  font: 600 9px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-align: right;
+}
+
+/* --- Contrôles partagés ------------------------------------------------- */
+.lkdv-form-error-summary {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(122, 36, 28, 0.09);
+  color: #7a241c;
+  font: 600 10.5px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-form-error-summary ul {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lkdv-form-error-summary button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lkdv-tag-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.lkdv-tag-chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lkdv-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 0 4px 0 9px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.1);
+  color: var(--feed-ink, #17402c);
+  font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-tag-chip button {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.12);
+  color: inherit;
+  font: 700 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.lkdv-tag-chips-input {
+  display: flex;
+  gap: 6px;
+}
+
+.lkdv-tag-chips-input input {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 0.5px solid rgba(23, 43, 36, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--feed-ink, #17402c);
+  font: 500 12px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-tag-chips-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.lkdv-tag-chips-suggestions button {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--feed-muted, #56665d);
+  font: 600 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.lkdv-number-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 10px;
+}
+
+.lkdv-number-stepper > span {
+  color: var(--feed-muted, #56665d);
+  font: 700 10px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lkdv-number-stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lkdv-number-stepper-row button {
+  width: 38px;
+  min-height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(23, 64, 44, 0.1);
+  color: var(--feed-ink, #17402c);
+  font: 700 17px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.lkdv-number-stepper-row button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.lkdv-number-stepper-row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 0.5px solid rgba(23, 43, 36, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--feed-ink, #17402c);
+  font: 600 13px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-align: center;
+}
+
+.lkdv-number-stepper-unit {
+  color: var(--feed-muted, #56665d);
+  font: 600 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-date-range {
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+}
+
+.lkdv-date-range legend {
+  padding: 0;
+  color: var(--feed-muted, #56665d);
+  font: 700 10px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lkdv-date-range-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.lkdv-date-range-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--feed-muted, #56665d);
+  font: 600 9px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-date-range-fields input {
+  width: 100%;
+  min-height: 40px;
+  padding: 7px 9px;
+  border: 0.5px solid rgba(23, 43, 36, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--feed-ink, #17402c);
+  font: 500 12px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  box-sizing: border-box;
+}
+
+.lkdv-date-range-error {
+  margin: 5px 0 0;
+  color: #7a241c;
+  font: 600 10px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+[aria-invalid='true'].lkdv-date-range-fields input {
+  border-color: #7a241c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-media-dropzone {
+    transition: none;
+  }
+}
+
+.lkdv-form-label {
+  color: var(--feed-muted, #56665d);
+  font: 700 10px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lkdv-form-error-label {
+  display: block;
+  font-weight: 800;
+}
+
+/* --- Compléments des formulaires (erreurs, notes, aperçus) -------------- */
+.lkdv-form-error-inline {
+  display: block;
+  color: #7a241c;
+  font: 600 10px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-form-note {
+  margin: 2px 0 10px;
+  color: var(--feed-muted, #56665d);
+  font: 500 10.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-create-step-back {
+  min-height: 26px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--feed-ink, #17402c);
+  font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.lkdv-create-step-back:active {
+  transform: scale(0.97);
+}
+
+/* Aperçu réel et compact : vignette + type + titre + résumé + méta. */
+.lkdv-create-form-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.09);
+}
+
+.lkdv-create-form-preview-cover {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(23, 64, 44, 0.1);
+  object-fit: cover;
+  font-size: 18px;
+}
+
+.lkdv-create-form-preview-cover img,
+.lkdv-create-form-preview-cover video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-create-form-preview-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lkdv-create-form-preview-txt b {
+  overflow: hidden;
+  color: var(--feed-ink, #17402c);
+  font: 700 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-create-form-preview-txt small,
+.lkdv-create-form-preview-txt span {
+  overflow: hidden;
+  color: var(--feed-muted, #56665d);
+  font: 500 9.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-create-form-preview-kind {
+  color: rgba(23, 64, 44, 0.62) !important;
+  font: 800 8px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif) !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.lkdv-create-form-preview-meta {
+  color: rgba(23, 64, 44, 0.72) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-create-form-preview {
+    transition: none;
+  }
+}
+
+/* Aperçu 9:16 de la story, borné pour ne jamais pousser le footer. */
+.lkdv-create-story-frame {
+  position: relative;
+  width: 124px;
+  aspect-ratio: 9 / 16;
+  max-height: 176px;
+  margin: 0 auto 10px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgba(23, 64, 44, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 0 0 0.5px rgba(23, 43, 36, 0.12);
+}
+
+.lkdv-create-story-frame img,
+.lkdv-create-story-frame video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-create-story-frame figcaption {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  max-height: 46px;
+  overflow: hidden;
+  padding: 5px 7px;
+  border-radius: 9px;
+  background: rgba(12, 20, 16, 0.55);
+  color: #fff;
+  font: 600 9px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-create-step-back:active {
+    transform: none;
+  }
+}
+
+/* Étapes : petits onglets numérotés à droite, jamais une capsule libellée. */
+.lkdv-create-stepbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 6px 0 10px;
+  background: linear-gradient(180deg, rgba(245,242,236,0), rgba(245,242,236,.9) 45%);
+}
+.lkdv-create-step-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.1);
+}
+.lkdv-create-step-tabs button {
+  width: 42px;
+  height: 25px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(23,64,44,.55);
+  font: 700 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+.lkdv-create-step-tabs button.is-active {
+  background: #17402C;
+  color: #fff;
+}
+.lkdv-create-step-tabs button:focus-visible {
+  outline: 2px solid #17402C;
+  outline-offset: 2px;
+}
+
+/* --- Progression d’upload (MediaPicker) --------------------------------- */
+.lkdv-media-progress {
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.12);
+}
+
+.lkdv-media-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #17402c;
+  transition: width 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-media-progress span {
+    transition: none;
+  }
+}
+
+/* --- Confirmation de fermeture d’un brouillon --------------------------- */
+.lkdv-create-confirm-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 12px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+.lkdv-create-confirm-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 20, 16, 0.24);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.lkdv-create-confirm {
+  position: relative;
+  width: min(406px, 100%);
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(250, 249, 245, 0.97);
+  color: var(--feed-ink, #17402c);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 18px 48px rgba(23, 43, 36, 0.22);
+  animation: lkdv-create-confirm-in 180ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.lkdv-create-confirm b {
+  display: block;
+  font: 700 14px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-create-confirm p {
+  margin: 6px 0 14px;
+  color: var(--feed-muted, #56665d);
+  font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+.lkdv-create-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.lkdv-create-confirm-actions button {
+  flex: 1;
+  min-height: 42px;
+  border: 0;
+  border-radius: 13px;
+  background: rgba(23, 64, 44, 0.1);
+  color: var(--feed-ink, #17402c);
+  font: 700 11.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+
+.lkdv-create-confirm-actions button:first-child {
+  background: #17402c;
+  color: #fff;
+}
+
+.lkdv-create-confirm-actions button.is-danger {
+  background: rgba(122, 36, 28, 0.1);
+  color: #7a241c;
+}
+
+.lkdv-create-confirm-actions button:focus-visible {
+  outline: 2px solid #17402c;
+  outline-offset: 2px;
+}
+
+@keyframes lkdv-create-confirm-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-create-confirm {
+    animation: none;
+  }
+}

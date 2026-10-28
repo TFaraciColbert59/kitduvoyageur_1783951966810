@@ -1,9 +1,12 @@
+import { buildDays, buildSummary, toMomentItems } from './days';
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
+import { buildCarnetPlace } from './place';
 import type {
   BuildCarnetDetailInput,
-  CarnetDay,
+  CarnetEtapeDay,
   CarnetDetail,
   CarnetMomentItem,
+  CarnetParticipant,
   CarnetStatItem,
 } from './types';
 
@@ -21,19 +24,46 @@ function buildAuthor(input: BuildCarnetDetailInput) {
   };
 }
 
-function buildMoments(input: BuildCarnetDetailInput): CarnetMomentItem[] {
-  return input.moments.map((m) => ({
-    id: m.id,
-    dayNumber: m.jour_numero ?? 1,
-    time: m.heure ?? null,
-    caption: m.citation?.trim() || null,
-    authorName: m.auteur_nom?.trim() || null,
-    place: m.lieu?.trim() || null,
-    imageUrl: m.image_url?.trim() || null,
-  }));
+/**
+ * Participants du carnet : l'auteur d'abord (`role: 'author'`), puis les
+ * collaborateurs, puis les présents des sorties. Dédoublonné par `userId` :
+ * la première occurrence gagne, donc l'auteur garde toujours son rôle et sa
+ * position. Aucun liker n'entre ici. Un profil public absent laisse `name` à
+ * `null` mais conserve la ligne (initiale du handle à l'affichage).
+ */
+export function buildParticipants(input: BuildCarnetDetailInput): CarnetParticipant[] {
+  const byId = new Map<string, CarnetParticipant>();
+  const push = (participant: CarnetParticipant | null) => {
+    if (!participant?.userId || byId.has(participant.userId)) return;
+    byId.set(participant.userId, participant);
+  };
+
+  const authorId = input.author?.id ?? input.carnet.author_id ?? null;
+  if (authorId) {
+    push({
+      userId: authorId,
+      name: input.author?.full_name?.trim() || input.author?.handle?.trim() || null,
+      handle: input.author?.handle ?? null,
+      avatarUrl: input.author?.avatar_url ?? null,
+      role: 'author',
+    });
+  }
+
+  for (const row of input.participants ?? []) {
+    if (!row.user_id) continue;
+    push({
+      userId: row.user_id,
+      name: row.profile?.full_name?.trim() || row.profile?.handle?.trim() || null,
+      handle: row.profile?.handle ?? null,
+      avatarUrl: row.profile?.avatar_url ?? null,
+      role: row.source,
+    });
+  }
+
+  return [...byId.values()];
 }
 
-function buildDays(input: BuildCarnetDetailInput): CarnetDay[] {
+function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
   const overnightByDay = new Map<number, string>();
   for (const h of input.hebergements) {
     const day = h.apres_jour_numero;
@@ -70,7 +100,7 @@ function buildDays(input: BuildCarnetDetailInput): CarnetDay[] {
   // Pas d'étapes : les moments donnent les journées, sans récit inventé
   // et sans répartition des totaux (l'ancienne fiche divisait distance et D+).
   const byDay = new Map<number, CarnetMomentItem[]>();
-  for (const moment of buildMoments(input)) {
+  for (const moment of toMomentItems(input.moments)) {
     const list = byDay.get(moment.dayNumber) ?? [];
     list.push(moment);
     byDay.set(moment.dayNumber, list);
@@ -99,21 +129,31 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const { carnet, hikeSession } = input;
   const distanceKm = toNumber(hikeSession?.distance_km) ?? toNumber(carnet.distance_km);
   const elevationM = toNumber(hikeSession?.elevation_gain_m) ?? toNumber(carnet.denivele_m);
-  const moments = buildMoments(input);
-  const days = buildDays(input);
+  const moments = toMomentItems(input.moments);
+  const etapes = buildEtapes(input);
+
+  /* Jours dérivés : les moments nomment leur jour, les points GPS des sorties
+     datent le leur. Aucune valeur n'est inventée quand une source manque. */
+  const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
+  const days = buildDays({ moments: input.moments, sessions, startDate: carnet.start_date ?? null });
+  const summary = buildSummary(days);
 
   const stats: CarnetStatItem[] = [];
   const distanceLabel = formatKm(distanceKm);
   if (distanceLabel) stats.push({ key: 'distance', label: 'DISTANCE', value: distanceLabel });
   const elevationLabel = formatElevation(elevationM);
   if (elevationLabel) stats.push({ key: 'elevation', label: 'DÉNIVELÉ +', value: elevationLabel });
-  if (days.length > 0) stats.push({ key: 'days', label: 'JOURS', value: String(days.length) });
+  if (etapes.length > 0) stats.push({ key: 'days', label: 'JOURS', value: String(etapes.length) });
 
   const kitWeight = input.kitItems.reduce<number | null>((total, item) => {
     const grams = toNumber(item.poids_g);
     if (grams === null || grams <= 0) return total;
     return (total ?? 0) + grams;
   }, null);
+
+  /* La trace affichée est celle de la sortie la plus récente qui en porte une
+     (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. */
+  const trace = input.trace ?? hikeSession?.positions_geojson ?? null;
 
   return {
     id: carnet.id,
@@ -130,6 +170,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     verified: carnet.verified === true,
     isOwner: Boolean(input.viewerId && carnet.author_id && input.viewerId === carnet.author_id),
     author: buildAuthor(input),
+    participants: buildParticipants(input),
     stats,
     engagement: {
       likes: input.counts?.likes ?? toNumber(carnet.likes_count) ?? 0,
@@ -138,9 +179,18 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
       liked: input.liked,
       favorited: input.favorited,
     },
+    likers: (input.likers ?? []).map((liker) => ({
+      id: liker.user_id,
+      name: liker.profile?.full_name?.trim() || liker.profile?.handle?.trim() || 'Auteur',
+      handle: liker.profile?.handle ?? null,
+      avatarUrl: liker.profile?.avatar_url ?? null,
+      reaction: liker.reaction ?? 'like',
+    })),
     moments,
     photoMoments: moments.filter((m) => Boolean(m.imageUrl)),
     days,
+    etapes,
+    summary,
     kit: {
       totalWeightG: kitWeight,
       items: input.kitItems.map((k) => ({
@@ -151,7 +201,8 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
         color: k.couleur_tag ?? null,
       })),
     },
-    trace: hikeSession?.positions_geojson ?? null,
+    trace,
+    place: buildCarnetPlace(carnet, trace),
     distanceKm,
     elevationM,
   };

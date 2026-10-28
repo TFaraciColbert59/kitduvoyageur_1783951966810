@@ -61,6 +61,7 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeRow; onClose:
           <div><dt>Statut</dt><dd>{earned ? 'Obtenu' : 'Verrouillé'}</dd></div>
           {earned && badge.earnedAt ? <div><dt>Date</dt><dd>{new Date(badge.earnedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</dd></div> : null}
           {badge.requirement ? <div><dt>Condition</dt><dd>{badge.requirement}{badge.requirementValue ? ` · ${badge.requirementValue}` : ''}</dd></div> : null}
+          {badge.points ? <div><dt>Récompense</dt><dd>{badge.points} points</dd></div> : null}
         </dl>
       </div>
     </OverlaySheet>

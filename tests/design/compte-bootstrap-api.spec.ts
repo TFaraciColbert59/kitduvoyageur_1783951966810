@@ -59,14 +59,10 @@ describe('Compte bootstrap — mapping réel', () => {
   });
 
   it('mappe les sorties et le statut fait/à venir', () => {
-    // « À venir » = dans le futur quel que soit le jour d'exécution (une date fixe finit toujours par passer).
-    const future = new Date(Date.now() + 30 * 24 * 3600 * 1000);
-    const startedFuture = new Date(future.setUTCHours(6, 0, 0, 0)).toISOString();
-    const endedFuture = new Date(future.setUTCHours(15, 0, 0, 0)).toISOString();
     const rows = mapOutings(
       [
         { id: 'h1', route_id: 1, started_at: '2026-09-01T06:00:00Z', ended_at: '2026-09-01T15:00:00Z', distance_km: 12.5, elevation_gain_m: 800, positions_timed: [], kit_id: 'k1' },
-        { id: 'h2', route_id: 2, started_at: startedFuture, ended_at: endedFuture },
+        { id: 'h2', route_id: 2, started_at: '2026-10-28T06:00:00Z', ended_at: '2026-10-28T15:00:00Z' },
       ],
       [{ id: 1, name: 'Lac Blanc', region: 'Mont-Blanc' }, { id: 2, name: 'Néouvielle', region: 'Pyrénées' }]
     );

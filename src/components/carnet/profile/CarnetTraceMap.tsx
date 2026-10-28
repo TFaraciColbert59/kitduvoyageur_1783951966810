@@ -3,28 +3,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import { extractCoords } from './traceGeometry';
 
 export interface CarnetTraceMapProps {
   trace: unknown;
   distanceKm?: number | null;
   elevationM?: number | null;
   className?: string;
-}
-
-function extractCoords(trace: unknown): [number, number][] {
-  const raw =
-    (trace as any)?.geometry?.coordinates ?? (trace as any)?.coordinates ?? (trace as any);
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((point: any) => {
-      if (Array.isArray(point)) return [Number(point[1]), Number(point[0])] as [number, number];
-      if (point && typeof point === 'object') return [Number(point.lat), Number(point.lng)] as [number, number];
-      return null;
-    })
-    .filter(
-      (point): point is [number, number] =>
-        point !== null && point !== undefined && Number.isFinite(point[0]) && Number.isFinite(point[1]),
-    );
 }
 
 /**

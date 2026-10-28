@@ -369,9 +369,9 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                 if (savedCarnetId) {
                   router.push(`/carnets/${savedCarnetId}`);
                 } else if (savedSessionId) {
-                  router.push(`/carnets?sessionId=${savedSessionId}`);
+                  router.push(`/communaute?sessionId=${savedSessionId}`);
                 } else {
-                  router.push('/carnets');
+                  router.push('/communaute');
                 }
               }}
               onShare={() => {
@@ -385,7 +385,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                   lkvAlert('Lien copié dans le presse-papier !');
                 }
               }}
-              onEditCarnet={() => router.push('/carnets')}
+              onEditCarnet={() => router.push('/communaute')}
             />
           ) : (
             <>
@@ -554,7 +554,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                 onOpenWeather={() => setActiveTab('copilot')}
                 // H5 (H-AUTO-29) : /boussole redirigée vers le mode live (D2) ;
                 // la boussole AR reviendra comme widget du cockpit (backlog).
-                onOpenARCompass={() => router.push('/randonnee-active')}
+                onOpenARCompass={() => router.push('/explorer')}
                 onOpen3DTerrain={() => setShow3DTerrain(true)}
                 onOpenGPXModal={() => setShowGPXModal(true)}
                 onStopHike={() => setShowStopModal(true)}

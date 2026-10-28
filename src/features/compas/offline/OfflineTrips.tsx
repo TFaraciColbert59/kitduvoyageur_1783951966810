@@ -3,7 +3,7 @@
 /**
  * Aventures du Compas gardées sur l'appareil, relues sans réseau.
  * Les données viennent d'IndexedDB (`compas_snapshots`), jamais du serveur :
- * la page `/hors-ligne` reste publique et cacheable (règle SEC-1).
+ * la page `/hub` reste publique et cacheable (règle SEC-1).
  */
 import { useCallback, useEffect, useState } from 'react';
 import { Badge, Card, type BadgeTone } from '@/components/ui';

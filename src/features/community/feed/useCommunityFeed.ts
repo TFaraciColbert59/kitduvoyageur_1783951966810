@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
-import { appendUnique, cursorOf, FEED_PAGE_SIZE, hasMorePages, olderThanFilter, type FeedCursor } from './feed-cursor';
 
 export interface FeedAuthor {
   id: string;
@@ -35,6 +34,8 @@ export interface FeedPost {
   [key: string]: unknown;
 }
 
+const PAGE_SIZE = 10;
+
 interface FeedState {
   posts: FeedPost[];
   loading: boolean;
@@ -44,9 +45,8 @@ interface FeedState {
 }
 
 /**
- * Fil Communauté : uniquement `community_posts`, par pages de 10, au curseur
- * `(created_at, id)`. Une fois la page lue, les auteurs et les états
- * like/favori sont demandés **en parallèle** (et non l'un après l'autre).
+ * Fil Communauté : uniquement `community_posts`, par pages de 10.
+ * Auteurs via `public_profiles`, états like/favori en une passe.
  * Aucun chargement de carnets/clubs/groupes/événements.
  */
 export function useCommunityFeed(userId?: string) {
@@ -58,10 +58,10 @@ export function useCommunityFeed(userId?: string) {
     error: null,
   });
   const requestIdRef = useRef(0);
-  const cursorRef = useRef<FeedCursor | null>(null);
+  const offsetRef = useRef(0);
 
   const fetchPage = useCallback(
-    async (cursor: FeedCursor | null, replace: boolean) => {
+    async (offset: number, replace: boolean) => {
       const requestId = ++requestIdRef.current;
       setState((prev) => ({
         ...prev,
@@ -72,36 +72,33 @@ export function useCommunityFeed(userId?: string) {
 
       try {
         const supabase = createClient();
-        let query = supabase
+        const { data, error } = await supabase
           .from('community_posts')
           .select('*')
           .order('created_at', { ascending: false })
-          .order('id', { ascending: false })
-          .limit(FEED_PAGE_SIZE);
-        if (cursor) query = query.or(olderThanFilter(cursor));
-        const { data, error } = await query;
+          .range(offset, offset + PAGE_SIZE - 1);
 
         if (requestId !== requestIdRef.current) return;
         if (error) throw error;
 
         const rows = (data ?? []) as FeedPost[];
-        const ids = rows.map((row) => row.id);
-        const [profiles, likesRes, savesRes] = await Promise.all([
-          fetchPublicProfilesWith(
-            supabase,
-            rows.map((row) => row.author_id ?? null),
-          ),
-          userId && ids.length > 0
-            ? supabase.from('post_likes').select('post_id').eq('user_id', userId).in('post_id', ids)
-            : Promise.resolve({ data: [] as Array<{ post_id: string }> }),
-          userId && ids.length > 0
-            ? supabase.from('post_saves').select('post_id').eq('user_id', userId).in('post_id', ids)
-            : Promise.resolve({ data: [] as Array<{ post_id: string }> }),
-        ]);
+        const profiles = await fetchPublicProfilesWith(
+          supabase,
+          rows.map((row) => row.author_id ?? null),
+        );
         if (requestId !== requestIdRef.current) return;
 
-        const liked = new Set((likesRes.data ?? []).map((row: { post_id: string }) => row.post_id));
-        const saved = new Set((savesRes.data ?? []).map((row: { post_id: string }) => row.post_id));
+        let liked = new Set<string>();
+        let saved = new Set<string>();
+        if (userId && rows.length > 0) {
+          const ids = rows.map((row) => row.id);
+          const [likesRes, savesRes] = await Promise.all([
+            supabase.from('post_likes').select('post_id').eq('user_id', userId).in('post_id', ids),
+            supabase.from('post_saves').select('post_id').eq('user_id', userId).in('post_id', ids),
+          ]);
+          liked = new Set((likesRes.data ?? []).map((row: { post_id: string }) => row.post_id));
+          saved = new Set((savesRes.data ?? []).map((row: { post_id: string }) => row.post_id));
+        }
 
         const enriched = rows.map((row) => {
           const profile = row.author_id ? profiles[row.author_id] : undefined;
@@ -123,14 +120,20 @@ export function useCommunityFeed(userId?: string) {
           };
         });
 
-        cursorRef.current = cursorOf(rows) ?? cursorRef.current;
-        setState((prev) => ({
-          posts: replace ? enriched : appendUnique(prev.posts, enriched),
-          loading: false,
-          loadingMore: false,
-          hasMore: hasMorePages(rows.length),
-          error: null,
-        }));
+        if (requestId !== requestIdRef.current) return;
+        offsetRef.current = offset + rows.length;
+        setState((prev) => {
+          const nextPosts = replace
+            ? enriched
+            : [...prev.posts, ...enriched.filter((post) => !prev.posts.some((old) => old.id === post.id))];
+          return {
+            posts: nextPosts,
+            loading: false,
+            loadingMore: false,
+            hasMore: rows.length === PAGE_SIZE,
+            error: null,
+          };
+        });
       } catch {
         if (requestId !== requestIdRef.current) return;
         setState((prev) => ({
@@ -145,18 +148,16 @@ export function useCommunityFeed(userId?: string) {
   );
 
   useEffect(() => {
-    cursorRef.current = null;
-    void fetchPage(null, true);
+    void fetchPage(0, true);
   }, [fetchPage]);
 
   const loadMore = useCallback(async () => {
-    if (state.loadingMore || state.loading || !state.hasMore) return;
-    await fetchPage(cursorRef.current, false);
-  }, [fetchPage, state.hasMore, state.loading, state.loadingMore]);
+    if (state.loadingMore || !state.hasMore) return;
+    await fetchPage(offsetRef.current, false);
+  }, [fetchPage, state.hasMore, state.loadingMore]);
 
   const refresh = useCallback(async () => {
-    cursorRef.current = null;
-    await fetchPage(null, true);
+    await fetchPage(0, true);
   }, [fetchPage]);
 
   return { ...state, loadMore, refresh };

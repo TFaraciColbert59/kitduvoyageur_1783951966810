@@ -1,0 +1,15 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 430, height: 932 } });
+await page.goto('https://kitduvoyageur.faracitonyp.workers.dev/connexion', { waitUntil: 'domcontentloaded' });
+const demo = page.getByRole('button', { name: 'Connexion démo' });
+await demo.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+if (await demo.count()) await demo.click();
+await page.waitForTimeout(3000);
+console.log('url', page.url());
+await page.locator('.ig-tile').first().click();
+await page.waitForTimeout(2500);
+console.log((await page.locator('body').innerText()).slice(0, 800));
+console.log([...await page.locator('.lkdv-post-drawer button').evaluateAll(bs=>bs.map(b=>({a:b.getAttribute('aria-label'),t:b.textContent.trim()})))]);
+await page.screenshot({path:'/tmp/post-state.png'});
+await browser.close();

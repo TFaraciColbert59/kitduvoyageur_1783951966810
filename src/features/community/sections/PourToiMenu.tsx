@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Icon from '@/components/ui/Icon';
-import type { SectionTabId } from './sectionTabs';
+import type { SectionTabId } from './CommunityTabSelector';
 
 const ITEMS: Array<{ id: Exclude<SectionTabId, 'pour-toi'>; label: string; hint: string; icon: string }> = [
   { id: 'carnets', label: 'Carnets', hint: 'Lire les récits', icon: 'book-open' },

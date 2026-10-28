@@ -25,9 +25,9 @@ interface SearchResultItem {
 }
 
 const POPULAR_SEARCHES = [
-  { label: 'Tente 2 places trekking', category: 'Matériel', url: '/boutique?category=tentes' },
-  { label: 'Club Randonnée Alpes', category: 'Communauté', url: '/clubs' },
-  { label: 'Sac de couchage -5°C', category: 'Couchage', url: '/boutique?search=sac' },
+  { label: 'Tente 2 places trekking', category: 'Matériel', url: '/explorer?category=tentes' },
+  { label: 'Club Randonnée Alpes', category: 'Communauté', url: '/communaute' },
+  { label: 'Sac de couchage -5°C', category: 'Couchage', url: '/explorer?search=sac' },
   { label: 'Guide Islande & Volcans', category: 'Destination', url: '/pays/is' },
   { label: 'Configurateur IA de Kit', category: 'Outil IA', url: '/compas?etape=kit' },
 ];
@@ -99,7 +99,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
               type: 'product',
               title: p.name,
               subtitle: p.category ? `Matériel • ${p.category}` : 'Équipement',
-              url: `/boutique`,
+              url: `/explorer`,
               badge: 'Matériel',
               image: p.image_url,
               price: p.price,
@@ -121,7 +121,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
               type: 'trip',
               title: t.title,
               subtitle: t.destination ? `Voyage • ${t.destination}` : 'Expédition',
-              url: `/voyages/${t.slug}`,
+              url: '/hub',
               badge: 'Voyage',
             });
           });
@@ -161,7 +161,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
               type: 'place',
               title: p.name,
               subtitle: `${p.category || 'Lieu'}${p.region ? ` • ${p.region}` : ''}${p.altitude_m ? ` (${p.altitude_m}m)` : ''}`,
-              url: `/lieux/${p.slug}`,
+              url: '/explorer',
               badge: 'Lieu',
             });
           });
@@ -257,7 +257,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
     e.preventDefault();
     if (query.trim()) {
       onClose();
-      router.push(`/boutique?search=${encodeURIComponent(query.trim())}`);
+      router.push(`/explorer?search=${encodeURIComponent(query.trim())}`);
     }
   };
 
@@ -343,7 +343,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                 Essayez des termes plus généraux comme « tente », « randonnée », « sac », ou consultez notre boutique complète.
               </p>
               <Button
-                onClick={() => handleSelectResult(`/boutique?search=${encodeURIComponent(query.trim())}`)}
+                onClick={() => handleSelectResult(`/explorer?search=${encodeURIComponent(query.trim())}`)}
                 size="sm"
                 variant="primary"
                 className="mt-2"

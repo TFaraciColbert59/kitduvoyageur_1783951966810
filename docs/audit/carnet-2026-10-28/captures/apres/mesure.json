@@ -1,0 +1,1013 @@
+{
+  "measures": {
+    "stats-distance": {
+      "viewport": [
+        430,
+        932
+      ],
+      "docScroll": [
+        430,
+        932
+      ],
+      "ok": true,
+      "sheet": [
+        12,
+        48,
+        406,
+        487.39
+      ],
+      "sheetRadius": {
+        "border-radius": "24px",
+        "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+        "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+        "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+      },
+      "sheetBox": {
+        "height": "487.391px",
+        "max-height": "min(100%, 503px)",
+        "flex": "0 0 auto",
+        "display": "flex"
+      },
+      "headBox": {
+        "height": "13px"
+      },
+      "paneBox": {
+        "h": 394.39,
+        "pad": "0px",
+        "mt": "0px"
+      },
+      "barW": "0%",
+      "grabber": [
+        194,
+        56,
+        42,
+        5
+      ],
+      "close": [
+        370,
+        56,
+        36,
+        36
+      ],
+      "body": [
+        12,
+        61,
+        406,
+        474.39
+      ],
+      "bodyPad": {
+        "padding": "16px 16px 64px",
+        "padding-bottom": "64px"
+      },
+      "bodyScroll": [
+        474,
+        474,
+        406,
+        406
+      ],
+      "firstChild": [
+        28,
+        77,
+        374,
+        0
+      ],
+      "lastChild": [
+        28,
+        77,
+        374,
+        394.39
+      ],
+      "inner": [
+        28,
+        77,
+        374,
+        394.39
+      ],
+      "sub": [
+        28,
+        77,
+        129.5,
+        30
+      ],
+      "hero": null,
+      "heroStyle": null,
+      "unit": null,
+      "split": null,
+      "row": null,
+      "rowStyle": null,
+      "keyStyle": null,
+      "valStyle": null,
+      "capsule": [
+        318,
+        493.39,
+        88,
+        30
+      ],
+      "capsuleStyle": {
+        "right": "12px",
+        "bottom": "12px"
+      },
+      "pagePad": null,
+      "texts": [
+        "180km",
+        "180",
+        "km",
+        "7 étapes",
+        "25,7 km/j",
+        "10 m/km",
+        "départ",
+        "Landmannalaugar",
+        "arrivée",
+        "—",
+        "trace gps",
+        "—",
+        "distance par jour",
+        "—"
+      ]
+    },
+    "stats-days": {
+      "viewport": [
+        430,
+        932
+      ],
+      "docScroll": [
+        430,
+        932
+      ],
+      "ok": true,
+      "sheet": [
+        12,
+        48,
+        406,
+        503
+      ],
+      "sheetRadius": {
+        "border-radius": "24px",
+        "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+        "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+        "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+      },
+      "sheetBox": {
+        "height": "503px",
+        "max-height": "min(100%, 503px)",
+        "flex": "0 0 auto",
+        "display": "flex"
+      },
+      "headBox": {
+        "height": "13px"
+      },
+      "paneBox": {
+        "h": 901.97,
+        "pad": "0px",
+        "mt": "0px"
+      },
+      "barW": "100%",
+      "grabber": [
+        194,
+        56,
+        42,
+        5
+      ],
+      "close": [
+        370,
+        56,
+        36,
+        36
+      ],
+      "body": [
+        12,
+        61,
+        406,
+        490
+      ],
+      "bodyPad": {
+        "padding": "16px 16px 64px",
+        "padding-bottom": "64px"
+      },
+      "bodyScroll": [
+        982,
+        490,
+        406,
+        406
+      ],
+      "firstChild": [
+        28,
+        77,
+        374,
+        0
+      ],
+      "lastChild": [
+        28,
+        77,
+        374,
+        901.97
+      ],
+      "inner": [
+        28,
+        77,
+        374,
+        901.97
+      ],
+      "sub": [
+        28,
+        77,
+        129.5,
+        30
+      ],
+      "hero": null,
+      "heroStyle": null,
+      "unit": null,
+      "split": null,
+      "row": null,
+      "rowStyle": null,
+      "keyStyle": null,
+      "valStyle": null,
+      "capsule": [
+        318,
+        509,
+        88,
+        30
+      ],
+      "capsuleStyle": {
+        "right": "12px",
+        "bottom": "12px"
+      },
+      "pagePad": null,
+      "texts": [
+        "7jours",
+        "7",
+        "jours",
+        "180 km",
+        "25,7 km/j",
+        "1 800 m",
+        "1",
+        "JOUR 1",
+        "19:53 · LandmannalaugarCafé au réchaud, vue sur la vallée, rien d'autre à faire.",
+        "19:53 · Landmannalaugar",
+        "Café au réchaud, vue sur la vallée, rien d'autre à faire.",
+        "2",
+        "JOUR 2",
+        "07:34 · LandmannalaugarCafé au réchaud, vue sur la vallée, rien d'autre à faire.",
+        "07:34 · Landmannalaugar",
+        "Café au réchaud, vue sur la vallée, rien d'autre à faire.",
+        "3",
+        "JOUR 3",
+        "07:52 · LandmannalaugarOn a trouvé un abri de berger, juste assez grand pour deux duvets.",
+        "07:52 · Landmannalaugar",
+        "On a trouvé un abri de berger, juste assez grand pour deux duvets.",
+        "4",
+        "JOUR 4",
+        "07:53 · LandmannalaugarCafé au réchaud, vue sur la vallée, rien d'autre à faire.",
+        "07:53 · Landmannalaugar",
+        "Café au réchaud, vue sur la vallée, rien d'autre à faire.",
+        "5",
+        "JOUR 5",
+        "09:38 · LandmannalaugarUn chamois nous a suivis pendant vingt minutes.",
+        "09:38 · Landmannalaugar",
+        "Un chamois nous a suivis pendant vingt minutes.",
+        "6",
+        "JOUR 6",
+        "15:55 · LandmannalaugarLa dernière montée était interminable, la vue valait tout.",
+        "15:55 · Landmannalaugar",
+        "La dernière montée était interminable, la vue valait tout.",
+        "7",
+        "JOUR 7",
+        "15:35 · LandmannalaugarLa dernière montée était interminable, la vue valait tout.",
+        "15:35 · Landmannalaugar",
+        "La dernière montée était interminable, la vue valait tout."
+      ]
+    },
+    "share": {
+      "viewport": [
+        430,
+        932
+      ],
+      "docScroll": [
+        430,
+        932
+      ],
+      "ok": true,
+      "sheet": [
+        12,
+        48,
+        406,
+        489
+      ],
+      "sheetRadius": {
+        "border-radius": "24px",
+        "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+        "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+        "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+      },
+      "sheetBox": {
+        "height": "489px",
+        "max-height": "min(100%, 503px)",
+        "flex": "0 0 auto",
+        "display": "flex"
+      },
+      "headBox": {
+        "height": "13px"
+      },
+      "paneBox": {
+        "h": 396,
+        "pad": "0px",
+        "mt": "0px"
+      },
+      "barW": null,
+      "grabber": [
+        194,
+        56,
+        42,
+        5
+      ],
+      "close": [
+        370,
+        56,
+        36,
+        36
+      ],
+      "body": [
+        12,
+        61,
+        406,
+        476
+      ],
+      "bodyPad": {
+        "padding": "16px 16px 64px",
+        "padding-bottom": "64px"
+      },
+      "bodyScroll": [
+        476,
+        476,
+        406,
+        406
+      ],
+      "firstChild": [
+        28,
+        101,
+        374,
+        48
+      ],
+      "lastChild": [
+        28,
+        77,
+        374,
+        396
+      ],
+      "inner": [
+        28,
+        77,
+        374,
+        396
+      ],
+      "sub": null,
+      "hero": null,
+      "heroStyle": null,
+      "unit": null,
+      "split": null,
+      "row": null,
+      "rowStyle": null,
+      "keyStyle": null,
+      "valStyle": null,
+      "capsule": [
+        318,
+        495,
+        88,
+        30
+      ],
+      "capsuleStyle": {
+        "right": "12px",
+        "bottom": "12px"
+      },
+      "pagePad": null,
+      "texts": [
+        "copier le lien",
+        "whatsapp",
+        "x",
+        "facebook",
+        "e-mail",
+        "lien",
+        "http://localhost:4233/carnets/9ba890ca-e071-5ab8-8624-6bd8a471a6c1"
+      ]
+    },
+    "likes": {
+      "viewport": [
+        430,
+        932
+      ],
+      "docScroll": [
+        430,
+        932
+      ],
+      "ok": true,
+      "sheet": [
+        12,
+        48,
+        406,
+        503.2
+      ],
+      "sheetRadius": null,
+      "sheetBox": null,
+      "headBox": null,
+      "paneBox": null,
+      "barW": null,
+      "grabber": null,
+      "close": null,
+      "body": [
+        12,
+        217.19,
+        406,
+        1394
+      ],
+      "bodyPad": null,
+      "bodyScroll": null,
+      "firstChild": [
+        16,
+        217.19,
+        398,
+        108
+      ],
+      "lastChild": null,
+      "inner": null,
+      "sub": [
+        16,
+        345.19,
+        149.8,
+        30
+      ],
+      "hero": null,
+      "heroStyle": null,
+      "unit": null,
+      "split": null,
+      "row": null,
+      "rowStyle": null,
+      "keyStyle": null,
+      "valStyle": null,
+      "capsule": null,
+      "capsuleStyle": null,
+      "pagePad": {
+        "padding": "0px 4px 64px",
+        "gap": "0px"
+      },
+      "texts": [
+        "réactions",
+        "24",
+        "mon j’aime",
+        "24",
+        "C",
+        "Camille Démo@compas_demo_7e7b",
+        "@compas_demo_7e7b",
+        "j’aime",
+        "Léa Fontaine@lea.fontaine",
+        "@lea.fontaine",
+        "j’aime",
+        "Sarah Cohen@sarah.cohen",
+        "@sarah.cohen",
+        "utile",
+        "Lucie Baron@lucie.baron",
+        "@lucie.baron",
+        "utile",
+        "Samuel Okon@samuel.okon",
+        "@samuel.okon",
+        "utile",
+        "Hugo Blanchard@hugo.blanchard",
+        "@hugo.blanchard",
+        "superbe",
+        "Sophie Garnier@sophie.garnier",
+        "@sophie.garnier",
+        "bravo",
+        "Pierre-Yves Kermorvan@pierre-yves.kermorvan",
+        "@pierre-yves.kermorvan",
+        "utile",
+        "Marie Aubry@marie.aubry",
+        "@marie.aubry",
+        "superbe",
+        "Damien Legrand@damien.legrand",
+        "@damien.legrand",
+        "utile",
+        "Théo Marchand@theo.marchand",
+        "@theo.marchand",
+        "utile",
+        "Lucas Barbier@lucas.barbier",
+        "@lucas.barbier",
+        "bravo",
+        "Émilie Chardin@emilie.chardin",
+        "@emilie.chardin",
+        "inspirant",
+        "Baptiste Roux@baptiste.roux",
+        "@baptiste.roux",
+        "utile",
+        "Loïc Berthier@loic.berthier",
+        "@loic.berthier",
+        "bravo",
+        "Maëlle Guérin@maelle.guerin",
+        "@maelle.guerin",
+        "utile",
+        "Olivier Tissot@olivier.tissot",
+        "@olivier.tissot",
+        "inspirant",
+        "Victor Anselme@victor.anselme",
+        "@victor.anselme",
+        "superbe",
+        "Fatou Diallo@fatou.diallo"
+      ]
+    },
+    "comments": {
+      "viewport": [
+        430,
+        932
+      ],
+      "docScroll": [
+        430,
+        932
+      ],
+      "ok": true,
+      "sheet": [
+        12,
+        48,
+        406,
+        503.2
+      ],
+      "sheetRadius": null,
+      "sheetBox": null,
+      "headBox": null,
+      "paneBox": null,
+      "barW": null,
+      "grabber": null,
+      "close": null,
+      "body": [
+        12,
+        217.19,
+        406,
+        489.92
+      ],
+      "bodyPad": null,
+      "bodyScroll": null,
+      "firstChild": null,
+      "lastChild": null,
+      "inner": null,
+      "sub": [
+        16,
+        217.19,
+        126.56,
+        30
+      ],
+      "hero": null,
+      "heroStyle": null,
+      "unit": null,
+      "split": null,
+      "row": null,
+      "rowStyle": null,
+      "keyStyle": null,
+      "valStyle": null,
+      "capsule": null,
+      "capsuleStyle": null,
+      "pagePad": {
+        "padding": "0px 4px 64px",
+        "gap": "0px"
+      },
+      "texts": []
+    },
+    "manage": {
+      "viewport": [
+        430,
+        932
+      ],
+      "docScroll": [
+        430,
+        932
+      ],
+      "ok": true,
+      "sheet": [
+        12,
+        48,
+        406,
+        503.2
+      ],
+      "sheetRadius": null,
+      "sheetBox": null,
+      "headBox": null,
+      "paneBox": null,
+      "barW": null,
+      "grabber": null,
+      "close": null,
+      "body": [
+        12,
+        217.19,
+        406,
+        308
+      ],
+      "bodyPad": null,
+      "bodyScroll": null,
+      "firstChild": [
+        16,
+        217.19,
+        398,
+        48
+      ],
+      "lastChild": null,
+      "inner": null,
+      "sub": null,
+      "hero": null,
+      "heroStyle": null,
+      "unit": null,
+      "split": null,
+      "row": null,
+      "rowStyle": null,
+      "keyStyle": null,
+      "valStyle": null,
+      "capsule": null,
+      "capsuleStyle": null,
+      "pagePad": {
+        "padding": "0px 4px 64px",
+        "gap": "0px"
+      },
+      "texts": [
+        "visibilité",
+        "exporter",
+        "json",
+        "copier le lien",
+        "http://localhost:4233/carnets/9ba890ca-e071-5ab8-8624-6bd8a471a6c1",
+        "supprimer le carnet"
+      ]
+    },
+    "overflow-430": {
+      "viewport": [
+        430,
+        932
+      ],
+      "docScroll": [
+        430,
+        932
+      ],
+      "ok": true,
+      "sheet": [
+        12,
+        48,
+        406,
+        487.39
+      ],
+      "sheetRadius": {
+        "border-radius": "24px",
+        "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+        "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+        "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+      },
+      "sheetBox": {
+        "height": "487.391px",
+        "max-height": "min(100%, 503px)",
+        "flex": "0 0 auto",
+        "display": "flex"
+      },
+      "headBox": {
+        "height": "13px"
+      },
+      "paneBox": {
+        "h": 394.39,
+        "pad": "0px",
+        "mt": "0px"
+      },
+      "barW": "0%",
+      "grabber": [
+        194,
+        56,
+        42,
+        5
+      ],
+      "close": [
+        370,
+        56,
+        36,
+        36
+      ],
+      "body": [
+        12,
+        61,
+        406,
+        474.39
+      ],
+      "bodyPad": {
+        "padding": "16px 16px 64px",
+        "padding-bottom": "64px"
+      },
+      "bodyScroll": [
+        474,
+        474,
+        406,
+        406
+      ],
+      "firstChild": [
+        28,
+        77,
+        374,
+        0
+      ],
+      "lastChild": [
+        28,
+        77,
+        374,
+        394.39
+      ],
+      "inner": [
+        28,
+        77,
+        374,
+        394.39
+      ],
+      "sub": [
+        28,
+        77,
+        129.5,
+        30
+      ],
+      "hero": null,
+      "heroStyle": null,
+      "unit": null,
+      "split": null,
+      "row": null,
+      "rowStyle": null,
+      "keyStyle": null,
+      "valStyle": null,
+      "capsule": [
+        318,
+        493.39,
+        88,
+        30
+      ],
+      "capsuleStyle": {
+        "right": "12px",
+        "bottom": "12px"
+      },
+      "pagePad": null,
+      "texts": [
+        "180km",
+        "180",
+        "km",
+        "7 étapes",
+        "25,7 km/j",
+        "10 m/km",
+        "départ",
+        "Landmannalaugar",
+        "arrivée",
+        "—",
+        "trace gps",
+        "—",
+        "distance par jour",
+        "—"
+      ]
+    },
+    "overflow-768": {
+      "viewport": [
+        768,
+        1024
+      ],
+      "docScroll": [
+        768,
+        1024
+      ],
+      "ok": true,
+      "sheet": [
+        181,
+        48,
+        406,
+        487.39
+      ],
+      "sheetRadius": {
+        "border-radius": "24px",
+        "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+        "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+        "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+      },
+      "sheetBox": {
+        "height": "487.391px",
+        "max-height": "min(100%, 503px)",
+        "flex": "0 0 auto",
+        "display": "flex"
+      },
+      "headBox": {
+        "height": "13px"
+      },
+      "paneBox": {
+        "h": 394.39,
+        "pad": "0px",
+        "mt": "0px"
+      },
+      "barW": "0%",
+      "grabber": [
+        363,
+        56,
+        42,
+        5
+      ],
+      "close": [
+        539,
+        56,
+        36,
+        36
+      ],
+      "body": [
+        181,
+        61,
+        406,
+        474.39
+      ],
+      "bodyPad": {
+        "padding": "16px 16px 64px",
+        "padding-bottom": "64px"
+      },
+      "bodyScroll": [
+        474,
+        474,
+        406,
+        406
+      ],
+      "firstChild": [
+        197,
+        77,
+        374,
+        0
+      ],
+      "lastChild": [
+        197,
+        77,
+        374,
+        394.39
+      ],
+      "inner": [
+        197,
+        77,
+        374,
+        394.39
+      ],
+      "sub": [
+        197,
+        77,
+        129.5,
+        30
+      ],
+      "hero": null,
+      "heroStyle": null,
+      "unit": null,
+      "split": null,
+      "row": null,
+      "rowStyle": null,
+      "keyStyle": null,
+      "valStyle": null,
+      "capsule": [
+        487,
+        493.39,
+        88,
+        30
+      ],
+      "capsuleStyle": {
+        "right": "12px",
+        "bottom": "12px"
+      },
+      "pagePad": null,
+      "texts": [
+        "180km",
+        "180",
+        "km",
+        "7 étapes",
+        "25,7 km/j",
+        "10 m/km",
+        "départ",
+        "Landmannalaugar",
+        "arrivée",
+        "—",
+        "trace gps",
+        "—",
+        "distance par jour",
+        "—"
+      ]
+    },
+    "overflow-1440": {
+      "viewport": [
+        1440,
+        900
+      ],
+      "docScroll": [
+        1440,
+        900
+      ],
+      "ok": true,
+      "sheet": [
+        517,
+        48,
+        406,
+        487.39
+      ],
+      "sheetRadius": {
+        "border-radius": "24px",
+        "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+        "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+        "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+      },
+      "sheetBox": {
+        "height": "487.391px",
+        "max-height": "min(100%, 503px)",
+        "flex": "0 0 auto",
+        "display": "flex"
+      },
+      "headBox": {
+        "height": "13px"
+      },
+      "paneBox": {
+        "h": 394.39,
+        "pad": "0px",
+        "mt": "0px"
+      },
+      "barW": "0%",
+      "grabber": [
+        699,
+        56,
+        42,
+        5
+      ],
+      "close": [
+        875,
+        56,
+        36,
+        36
+      ],
+      "body": [
+        517,
+        61,
+        406,
+        474.39
+      ],
+      "bodyPad": {
+        "padding": "16px 16px 64px",
+        "padding-bottom": "64px"
+      },
+      "bodyScroll": [
+        474,
+        474,
+        406,
+        406
+      ],
+      "firstChild": [
+        533,
+        77,
+        374,
+        0
+      ],
+      "lastChild": [
+        533,
+        77,
+        374,
+        394.39
+      ],
+      "inner": [
+        533,
+        77,
+        374,
+        394.39
+      ],
+      "sub": [
+        533,
+        77,
+        129.5,
+        30
+      ],
+      "hero": null,
+      "heroStyle": null,
+      "unit": null,
+      "split": null,
+      "row": null,
+      "rowStyle": null,
+      "keyStyle": null,
+      "valStyle": null,
+      "capsule": [
+        823,
+        493.39,
+        88,
+        30
+      ],
+      "capsuleStyle": {
+        "right": "12px",
+        "bottom": "12px"
+      },
+      "pagePad": null,
+      "texts": [
+        "180km",
+        "180",
+        "km",
+        "7 étapes",
+        "25,7 km/j",
+        "10 m/km",
+        "départ",
+        "Landmannalaugar",
+        "arrivée",
+        "—",
+        "trace gps",
+        "—",
+        "distance par jour",
+        "—"
+      ]
+    }
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ]
+}

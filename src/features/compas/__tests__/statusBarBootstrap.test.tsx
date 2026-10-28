@@ -60,7 +60,7 @@ describe('barre d’état au démarrage natif', () => {
     const { rerender } = render(<NativeAppBootstrap />);
     state.pathname = '/compas';
     rerender(<NativeAppBootstrap />);
-    state.pathname = '/voyages';
+    state.pathname = '/hub';
     rerender(<NativeAppBootstrap />);
     expect(applyStatusBarTheme.mock.calls.map((c) => c[0])).toEqual(['default', 'compas', 'default']);
   });

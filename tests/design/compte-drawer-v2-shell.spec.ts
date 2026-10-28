@@ -63,7 +63,6 @@ describe('Compte drawer v2 — sélecteur, swipe et carte contexte', () => {
     );
     expect(compte).toContain("__lkdvOpenSlot?.('communaute')");
     expect(compte).toContain("act('openAccountDrawer')");
-    // Chantier Récompenses : ?tab=fidelite|recompenses ouvre le tiroir Récompenses.
-    expect(compte).toContain("act('openRewards', 0)");
+    expect(compte).toContain("act('openStep', '3:3')");
   });
 });

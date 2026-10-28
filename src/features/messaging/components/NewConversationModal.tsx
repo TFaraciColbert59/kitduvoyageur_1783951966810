@@ -4,9 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { PUBLIC_PROFILES_VIEW } from '@/lib/queries/publicProfilesCore';
-import { EmptyState, ListItem, SearchField, Skeleton } from '@/components/ui';
+import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { messagingService } from '../services/messagingService';
-import { MobileSheet } from './MobileSheet';
 
 interface Traveler {
   id: string;
@@ -21,6 +20,14 @@ interface NewConversationModalProps {
   currentUserId: string;
   onConversationCreated: (conversationId: string) => void;
 }
+
+/** Défilement interne de l'annuaire : `.sh-b` ne défile pas. */
+const SCROLL = {
+  flex: '1 1 auto',
+  minHeight: 0,
+  overflowY: 'auto',
+  overscrollBehavior: 'contain',
+} as const;
 
 export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   isOpen,
@@ -98,58 +105,84 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   };
 
   return (
-    <MobileSheet isOpen={isOpen} onClose={onClose} title="Nouvelle Discussion">
-      <SearchField
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        onClear={() => setSearch('')}
-        placeholder="Rechercher par nom..."
-        aria-label="Rechercher un voyageur"
-        inputMode="search"
-        enterKeyHint="search"
-      />
-
-      <div className="mt-[var(--space-4)] space-y-[var(--space-2)]">
-        {loading ? (
-          <div className="space-y-[var(--space-2)]">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-[var(--lkv-radius-md)]" />
-            ))}
-          </div>
-        ) : travelers.length === 0 ? (
-          <EmptyState
-            compact
-            title="Aucun voyageur trouvé"
-            description="Essayez un autre nom ou une autre orthographe."
-          />
-        ) : (
-          travelers.map((traveler) => (
-            <ListItem
-              key={traveler.id}
-              as="div"
-              disabled={starting}
-              onClick={() => handleStartConversation(traveler.id)}
-              className="min-h-[60px]"
-              leading={
-                <span className="relative size-10 shrink-0 overflow-hidden rounded-full ring-1 ring-[color:var(--glass-border)]">
-                  <Image
-                    src={traveler.avatar_url}
-                    alt={traveler.full_name}
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
-                    }}
-                  />
-                </span>
-              }
-              title={traveler.full_name}
-              subtitle={traveler.username ? `@${traveler.username}` : 'Membre LKDV'}
-            />
-          ))
-        )}
+    <AccountDrawerHost
+      open={isOpen}
+      title="Nouvelle discussion"
+      subtitle="Annuaire des voyageurs"
+      onClose={onClose}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <input
+          className="mfield"
+          style={{ borderRadius: 12, minHeight: 36 }}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Rechercher par nom…"
+          aria-label="Rechercher un voyageur"
+          inputMode="search"
+          enterKeyHint="search"
+        />
+        {search ? (
+          <button type="button" className="mbtn" onClick={() => setSearch('')}>
+            Effacer
+          </button>
+        ) : null}
       </div>
-    </MobileSheet>
+
+      {loading ? (
+        <div className="s2" style={{ padding: '10px 2px' }}>
+          Chargement de l’annuaire…
+        </div>
+      ) : travelers.length === 0 ? (
+        <div className="li nt">
+          <div>
+            <div className="ttl">Aucun voyageur trouvé</div>
+            <div className="s2">Essayez un autre nom ou une autre orthographe.</div>
+          </div>
+          <button
+            type="button"
+            className="mbtn"
+            onClick={() => (search ? setSearch('') : onClose())}
+          >
+            {search ? 'Effacer' : 'Fermer'}
+          </button>
+        </div>
+      ) : (
+        <div style={SCROLL}>
+          {travelers.map((traveler) => (
+            <div className="li" key={traveler.id}>
+              <span className="avi" style={{ overflow: 'hidden' }}>
+                <Image
+                  src={traveler.avatar_url}
+                  alt={traveler.full_name}
+                  fill
+                  sizes="30px"
+                  style={{ objectFit: 'cover' }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
+                  }}
+                />
+              </span>
+              <div>
+                <div className="ttl">
+                  <span>{traveler.full_name}</span>
+                </div>
+                <div className="s2">
+                  {traveler.username ? `@${traveler.username}` : 'Membre LKDV'}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="mbtn p"
+                disabled={starting}
+                onClick={() => handleStartConversation(traveler.id)}
+              >
+                Écrire
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </AccountDrawerHost>
   );
 };

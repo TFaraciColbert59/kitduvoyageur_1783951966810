@@ -46,31 +46,21 @@ const SECTIONS: NavSection[] = [
           { label: 'Rechercher', icon: 'search', href: '', action: 'search' },
           { label: 'Panier', icon: 'bag', href: '/panier' },
           { label: 'Carte interactive', icon: 'map-pin', href: '/explorer' },
-          { label: 'Boussole augmentée', icon: 'search', href: '/randonnee-active' },
-          { label: 'Mode hors-ligne', icon: 'bookmark', href: '/hors-ligne' },
-          { label: 'Carnets', icon: 'doc', href: '/carnets' },
-          { label: 'Guides', icon: 'bookmark', href: '/guides' },
-          { label: 'Blog', icon: 'doc', href: '/blog' },
-          { label: 'Outils terrain', icon: 'search', href: '/outils' },
-          { label: 'Mode rando GPS/SOS', icon: 'map-pin', href: '/randonnee-active' },
+          { label: 'Carnets', icon: 'doc', href: '/communaute' },
         ],
       },
   {
     label: 'Vie pro & occasion',
     items: [
-      { label: 'Location', icon: 'bag', href: '/location' },
-          { label: 'Enchères', icon: 'star', href: '/occasion' },
+      { label: 'Location', icon: 'bag', href: '/explorer' },
+          { label: 'Enchères', icon: 'star', href: '/explorer' },
       { label: 'Espace Pro', icon: 'user', href: '/pro' },
-      { label: 'Ambassadeurs', icon: 'star', href: '/ambassadeurs' },
-      { label: 'Créateurs', icon: 'star', href: '/createurs' },
     ],
   },
   {
     label: 'Compte & légal',
     items: [
-      { label: "Rapport d'Expédition", icon: 'doc', href: '/rapport-expedition' },
           { label: 'Rapport Kit', icon: 'bag', href: '/compas?etape=kit' },
-      { label: 'Aide / FAQ', icon: 'heart', href: '/faq' },
       { label: 'Contact', icon: 'heart', href: '/contact' },
       { label: 'CGU', icon: 'lock', href: '/cgu' },
       { label: 'CGV', icon: 'lock', href: '/cgv' },
@@ -305,7 +295,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
               {/* Footer */}
               <footer className="border-t border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-4)] pb-[calc(var(--safe-bottom)+20px)] pt-[14px]">
                 <Link
-                  href="/abonnements"
+                  href="/compte"
                   onClick={onClose}
                   className="flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-control)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] no-underline backdrop-blur-[var(--blur-md)]"
                 >

@@ -2,60 +2,66 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/features/community/feed/useAccountUnreadCount', () => ({
+  useAccountUnreadCount: () => 3,
+}));
+
 import { CarnetTopBar } from '../CarnetTopBar';
 
 afterEach(() => cleanup());
 
-const BASE = {
-  title: 'Tour du Mont-Blanc',
-  coverImage: 'https://cdn.test/cover.jpg',
-  saved: false,
-};
-
 const noop = () => {};
 
-describe('CarnetTopBar — top bar 52 du Compte', () => {
-  it('rend le retour, la pilule titre et les trois boutons ronds du Compte', () => {
-    render(
-      <CarnetTopBar {...BASE} onBack={noop} onShare={noop} onSave={noop} onMenu={noop} onTitleClick={noop} />,
-    );
-    expect(screen.getByRole('button', { name: 'Retour' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Partager' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Options du carnet' })).toBeTruthy();
-    const pill = screen.getByRole('button', { name: /Tour du Mont-Blanc/ });
+describe('CarnetTopBar — barre de la fiche', () => {
+  it('rend la pilule avec chevron, créer, notifications puis ··· en dernier', () => {
+    render(<CarnetTopBar title="Tour du Mont-Blanc" onOpenCarnet={noop} onOpenMenu={noop} />);
+    const pill = screen.getByRole('button', { name: 'Carnet Tour du Mont-Blanc' });
     expect(pill.className).toContain('ckp-title-pill');
-    expect(pill.querySelector('img')?.getAttribute('src')).toBe('https://cdn.test/cover.jpg');
+    expect(pill.querySelector('.ckp-title-chevron')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Créer' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Notifications, 3/ })).toBeTruthy();
+    const actions = screen.getByRole('button', { name: 'Créer' }).parentElement;
+    expect(actions?.querySelectorAll('.gbtn').length).toBe(3);
+    /* La loupe a laissé sa place au `···` : plus aucun bouton de recherche. */
+    expect(screen.queryByRole('button', { name: /Rechercher/ })).toBeNull();
+    const labels = [...(actions?.querySelectorAll('.gbtn') ?? [])].map((node) =>
+      node.getAttribute('aria-label'),
+    );
+    expect(labels).toEqual(['Créer', 'Notifications, 3 non lues', 'Plus d’options']);
   });
 
-  it('appelle les actions au clic', () => {
-    const onShare = vi.fn();
-    const onSave = vi.fn();
-    const onMenu = vi.fn();
+  it('ancre le menu ··· dans la barre, en dernière position', () => {
+    const onOpenMenu = vi.fn();
     render(
-      <CarnetTopBar {...BASE} onBack={noop} onShare={onShare} onSave={onSave} onMenu={onMenu} onTitleClick={noop} />,
+      <CarnetTopBar
+        title="Tour"
+        onOpenCarnet={noop}
+        onOpenMenu={onOpenMenu}
+        menuOpen
+        menu={<div className="pmi-options-menu">menu</div>}
+      />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Partager' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Options du carnet' }));
-    expect(onShare).toHaveBeenCalledOnce();
-    expect(onSave).toHaveBeenCalledOnce();
-    expect(onMenu).toHaveBeenCalledOnce();
+    const more = screen.getByRole('button', { name: 'Plus d’options' });
+    expect(more.closest('.ckp-top-actions')).toBeTruthy();
+    expect(more.closest('.ckp-more-anchor')).toBeTruthy();
+    expect(more.getAttribute('aria-expanded')).toBe('true');
+    expect(more.querySelector('svg')).toBeTruthy();
+    expect(document.querySelector('.ckp-more-anchor .pmi-options-menu')).toBeTruthy();
+    fireEvent.click(more);
+    expect(onOpenMenu).toHaveBeenCalledOnce();
   });
 
-  it('affiche l’initiale quand le carnet n’a pas de couverture', () => {
-    render(
-      <CarnetTopBar {...BASE} coverImage={null} onBack={noop} onShare={noop} onSave={noop} onMenu={noop} onTitleClick={noop} />,
-    );
-    const pill = screen.getByRole('button', { name: /Tour du Mont-Blanc/ });
-    expect(pill.querySelector('img')).toBeNull();
-    expect(pill.querySelector('.ckp-title-cover--empty')?.textContent).toBe('T');
+  it('n’affiche aucun menu sans ancre', () => {
+    render(<CarnetTopBar title="Tour" onOpenCarnet={noop} menu={<div className="pmi-options-menu" />} />);
+    expect(screen.queryByRole('button', { name: 'Plus d’options' })).toBeNull();
+    expect(document.querySelector('.pmi-options-menu')).toBeNull();
   });
 
-  it('marque le bouton Enregistrer comme actif', () => {
-    render(
-      <CarnetTopBar {...BASE} saved onBack={noop} onShare={noop} onSave={noop} onMenu={noop} onTitleClick={noop} />,
-    );
-    expect(screen.getByRole('button', { name: 'Enregistrer' }).getAttribute('aria-pressed')).toBe('true');
+  it('ouvre le drawer Carnet au clic sur la pilule', () => {
+    const onOpenCarnet = vi.fn();
+    render(<CarnetTopBar title="Tour" onOpenCarnet={onOpenCarnet}  />);
+    fireEvent.click(screen.getByRole('button', { name: 'Carnet Tour' }));
+    expect(onOpenCarnet).toHaveBeenCalledOnce();
   });
 });

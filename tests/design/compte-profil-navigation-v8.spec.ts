@@ -7,10 +7,7 @@ const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () => {
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
-  const compteCompSource =
-    read('src/components/compte/CompteLiquidGlassV8.tsx') +
-    '\n' + read('src/components/compte/compte-v8.css') +
-    '\n' + read('src/components/compte/compte-apple-hig.css');
+  const compteCompSource = read('src/components/compte/CompteLiquidGlassV8.tsx');
   const profilPageSource = read('src/app/profil/[id]/page.tsx');
   const mobileNavWrapperSource = read('src/components/mobile-nav/MobileNavWrapper.tsx');
   const publicProfileViewSource = read('src/components/profile/PublicMobileProfileView.tsx');
@@ -54,19 +51,15 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
     });
   });
 
-  describe('Requirement 2: Public profiles use the unified bottom bar', () => {
+  describe('Requirement 2: Bottom bar disappears on someone else\'s profile', () => {
     it('renders the public profile without the Compte AppShell', () => {
       expect(profilPageSource).toContain('PublicProfileV2');
       expect(profilPageSource).not.toContain('<AppShell');
     });
 
-    it('allows unified navigation on /profil while retaining fullscreen exclusions', () => {
-      expect(mobileNavWrapperSource).not.toMatch(/pathname(?:\?)?\.startsWith\('\/profil/);
-      expect(mobileNavWrapperSource).not.toContain("pathname === '/profil'");
-      expect(mobileNavWrapperSource).toContain('<NavigationBar />');
-      expect(mobileNavWrapperSource).toContain("pathname?.startsWith('/connexion')");
-      expect(mobileNavWrapperSource).toContain("pathname?.startsWith('/communaute/reels/')");
-      expect(mobileNavWrapperSource).toContain("pathname === '/carte-3d'");
+    it('suppresses global MobileNavWrapper on /profil routes', () => {
+      expect(mobileNavWrapperSource).toContain("pathname === '/profil'");
+      expect(mobileNavWrapperSource).toContain("pathname?.startsWith('/profil')");
     });
   });
 

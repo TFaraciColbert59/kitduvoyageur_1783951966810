@@ -97,11 +97,32 @@ export default function StoriesViewer({
   const [replySending, setReplySending] = useState(false);
   const [replyFocused, setReplyFocused] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [likePulse, setLikePulse] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [dragOpacity, setDragOpacity] = useState(1);
+  const [gesture, setGesture] = useState(false);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
   const viewerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    document.body.dataset.storyOpen = 'true';
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>(
+      '.tb, nav[aria-label="Navigation principale"], .account-bottom-bar, [data-account-bottom-bar]'
+    ));
+    const previous = nodes.map((node) => node.style.display);
+    nodes.forEach((node) => {
+      node.style.display = 'none';
+      node.setAttribute('aria-hidden', 'true');
+    });
+    return () => {
+      delete document.body.dataset.storyOpen;
+      nodes.forEach((node, index) => {
+        node.style.display = previous[index] ?? '';
+        node.removeAttribute('aria-hidden');
+      });
+    };
+  }, []);
+
   const progressRef = useRef(0);
   const advancingRef = useRef(false);
 
@@ -110,13 +131,7 @@ export default function StoriesViewer({
   const isVideo = slide?.mediaType === 'video';
   const liked = Boolean(slide?.storyId && likedStoryIds?.has(slide.storyId));
   const paused = holding || pinned || hiddenTab || mediaError || needsTap || replyFocused;
-  const canReply = Boolean(
-    onReply &&
-      user.id !== myUserId &&
-      slide.storyId &&
-      slide.replyPolicy !== 'off' &&
-      (slide.replyPolicy !== 'followers' || (user.id && followedAuthorIds?.has(user.id)))
-  );
+  const canReply = Boolean(onReply && user.id !== myUserId);
 
   const next = useCallback(() => {
     if (!users.length || advancingRef.current) return;
@@ -149,8 +164,10 @@ export default function StoriesViewer({
     };
     const onKey = (e: KeyboardEvent) => {
       if (isTyping(e)) return;
-      if (e.key === 'Escape') onClose();
-      else if (e.key === 'ArrowRight') next();
+      if (e.key === 'Escape') {
+        if (optionsOpen) setOptionsOpen(false);
+        else onClose();
+      } else if (e.key === 'ArrowRight') next();
       else if (e.key === 'ArrowLeft') prev();
       else if (e.key === ' ') {
         e.preventDefault();
@@ -167,7 +184,7 @@ export default function StoriesViewer({
       document.removeEventListener('visibilitychange', onVis);
       document.body.style.overflow = prevOverflow;
     };
-  }, [next, prev, onClose]);
+  }, [next, prev, onClose, optionsOpen]);
 
   /* Focus : entrée dans le dialogue, restitution au déclencheur */
   useEffect(() => {
@@ -280,6 +297,7 @@ export default function StoriesViewer({
   const onPointerDown = (e: React.PointerEvent) => {
     dragRef.current = { active: true, startX: e.clientX, startY: e.clientY, startT: Date.now() };
     setHolding(true);
+    setGesture(true);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -296,6 +314,7 @@ export default function StoriesViewer({
     const { startX, startY, startT } = dragRef.current;
     dragRef.current.active = false;
     setHolding(false);
+    setGesture(false);
 
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
@@ -327,6 +346,28 @@ export default function StoriesViewer({
     }
   };
 
+  const shareStory = async () => {
+    const url = slide.storyId
+      ? `${window.location.origin}/communaute?story=${slide.storyId}`
+      : window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Story de ${user.name}`, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+      }
+    } catch {
+      /* partage annulé */
+    }
+  };
+
+  const copyStory = async () => {
+    const url = slide.storyId
+      ? `${window.location.origin}/communaute?story=${slide.storyId}`
+      : window.location.href;
+    try { await navigator.clipboard.writeText(url); } catch { /* copie refusée */ }
+  };
+
   const viewer = (
     <div
       ref={viewerRef}
@@ -335,7 +376,8 @@ export default function StoriesViewer({
       aria-label={`Story de ${user.name}`}
       tabIndex={-1}
       onKeyDown={handleTabTrap}
-      className="fixed inset-0 z-[var(--z-modal)] touch-none select-none bg-black"
+      data-gesture={gesture ? 'true' : undefined}
+      className="lkdv-story-viewer fixed inset-0 z-[var(--z-modal)] touch-none select-none bg-black"
       style={{ opacity: dragOpacity }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -345,6 +387,7 @@ export default function StoriesViewer({
         setHolding(false);
         setDragY(0);
         setDragOpacity(1);
+        setGesture(false);
       }}
     >
       <div className="absolute inset-0" style={{ transform: `translateY(${dragY}px)` }}>
@@ -414,7 +457,7 @@ export default function StoriesViewer({
 
         {/* Progression */}
         <div
-          className="absolute inset-x-0 top-0 z-[var(--z-sticky)] flex gap-1 px-[var(--space-3)] pt-[max(var(--space-3),var(--safe-top))]"
+          className="lkdv-story-progress absolute inset-x-0 top-0 z-[var(--z-sticky)] flex gap-1 px-[var(--space-3)] pt-[max(var(--space-3),var(--safe-top))]"
           aria-hidden="true"
         >
           {user.slides.map((_, i) => (
@@ -465,41 +508,47 @@ export default function StoriesViewer({
             className="pmi-more-pill"
             aria-label="Options de la story"
             aria-expanded={optionsOpen}
+            aria-controls={`story-options-${slide.storyId ?? `${userIndex}-${slideIndex}`}`}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
               setOptionsOpen((open) => !open);
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <circle cx="5" cy="12" r="1.9" />
-              <circle cx="12" cy="12" r="1.9" />
-              <circle cx="19" cy="12" r="1.9" />
-            </svg>
+            {optionsOpen ? <Icon name="x" size={18} aria-hidden="true" /> : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="5" cy="12" r="1.9" />
+                <circle cx="12" cy="12" r="1.9" />
+                <circle cx="19" cy="12" r="1.9" />
+              </svg>
+            )}
           </button>
-          <div className="pmi-options-menu" role="group" aria-label="Options de la story" hidden={!optionsOpen}>
+          <div
+            id={`story-options-${slide.storyId ?? `${userIndex}-${slideIndex}`}`}
+            className="lkdv-story-options-rail"
+            role="menu"
+            aria-label="Options de la story"
+            hidden={!optionsOpen}
+          >
             {user.id === myUserId && slide.storyId && onShowViews ? (
-              <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onShowViews(slide); setOptionsOpen(false); }}>
-                <Icon name="eye" size={18} aria-hidden="true" />
-                <span>Voir les vues</span>
+              <button type="button" role="menuitem" aria-label="Voir les vues" title="Voir les vues" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onShowViews(slide); setOptionsOpen(false); }}>
+                <Icon name="bookmark" size={18} aria-hidden="true" />
+              </button>
+            ) : null}
+            <button type="button" role="menuitem" aria-label="Copier le lien" title="Copier le lien" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); void copyStory(); setOptionsOpen(false); }}>
+              <Icon name="link" size={18} aria-hidden="true" />
+            </button>
+            <button type="button" role="menuitem" aria-label="Partager" title="Partager" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); void shareStory(); setOptionsOpen(false); }}>
+              <Icon name="repeat" size={18} aria-hidden="true" />
+            </button>
+            {user.id !== myUserId && onReport ? (
+              <button type="button" role="menuitem" aria-label="Signaler" title="Signaler" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onReport(user, slide); setOptionsOpen(false); }}>
+                <Icon name="flag" size={18} aria-hidden="true" />
               </button>
             ) : null}
             {user.id === myUserId && slide.storyId && onDelete ? (
-              <button type="button" className="pmi-report" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
+              <button type="button" role="menuitem" aria-label="Retirer ma story" title="Retirer ma story" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
                 <Icon name="trash" size={18} aria-hidden="true" />
-                <span>Retirer ma story</span>
-              </button>
-            ) : null}
-            {user.id !== myUserId && onReport ? (
-              <button type="button" className="pmi-report" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onReport(user, slide); setOptionsOpen(false); }}>
-                <Icon name="flag" size={18} aria-hidden="true" />
-                <span>Signaler</span>
-              </button>
-            ) : null}
-            {user.id !== myUserId && onBlock ? (
-              <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onBlock(user); setOptionsOpen(false); }}>
-                <Icon name="user-x" size={18} aria-hidden="true" />
-                <span>Bloquer</span>
               </button>
             ) : null}
           </div>
@@ -518,7 +567,7 @@ export default function StoriesViewer({
 
         {/* Média cassé : jamais d'écran blanc */}
         {mediaError && (
-          <div className="pointer-events-none absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-[var(--space-3)] bg-black/75 p-[var(--space-6)] text-center">
+          <div className="lkdv-story-media-error pointer-events-none absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-[var(--space-3)] bg-black/75 p-[var(--space-6)] text-center">
             <Icon name="image-off" size={28} color="var(--lkv-text-inverted)" />
             <p className="text-[length:var(--lkv-text-body-sm)] text-white">Média indisponible</p>
             <p className="text-[length:var(--lkv-text-caption-2)] text-white/70">Swipe pour continuer</p>
@@ -527,37 +576,56 @@ export default function StoriesViewer({
 
         {/* Dock de réponse privée (phase 05) — messagerie canonique. La saisie
             met la lecture en pause ; l'envoi ne quitte pas le visionneur. */}
-        {canReply ? (
-          <div className="lkdv-story-composer-wrap">
-            <PostReplyComposer
-              value={replyText}
-              onChange={setReplyText}
-              onSend={() => void sendReply()}
-              placeholder="Envoyer un message…"
-              inputLabel={`Répondre à ${user.name}`}
-              ariaLabel="Envoyer la réponse"
-              busy={replySending}
-              maxLength={500}
-              onFocus={() => setReplyFocused(true)}
-              onBlur={() => setReplyFocused(false)}
-            />
-          </div>
-        ) : null}
+        {(canReply || user.id !== myUserId) ? (
+          <div className="lkdv-story-dock">
+            {canReply ? (
+              <div className="lkdv-story-composer-wrap">
+                <PostReplyComposer
+                  value={replyText}
+                  onChange={setReplyText}
+                  onSend={() => void sendReply()}
+                  placeholder="Envoyer un message…"
+                  inputLabel={`Répondre à ${user.name}`}
+                  ariaLabel="Envoyer la réponse"
+                  sendIcon="arrow-right"
+                  busy={replySending}
+                  maxLength={500}
+                  onFocus={() => setReplyFocused(true)}
+                  onBlur={() => setReplyFocused(false)}
+                />
+              </div>
+            ) : null}
 
-        {user.id !== myUserId ? (
-          <button
-            type="button"
-            className="lkdv-story-like"
-            aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
-            aria-pressed={liked}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => {
-              event.stopPropagation();
-              if (slide.storyId) onToggleLike?.(slide, liked);
-            }}
-          >
-            <Icon name="heart" size={22} color={liked ? '#E0245E' : '#ffffff'} />
-          </button>
+            {user.id !== myUserId ? (
+              <div className="lkdv-story-actions" role="group" aria-label="Actions de la story">
+                <button
+                  type="button"
+                  className={liked ? 'on' : ''}
+                  aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
+                  aria-pressed={liked}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (!liked) setLikePulse((value) => value + 1);
+                    if (slide.storyId) onToggleLike?.(slide, liked);
+                  }}
+                >
+                  <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={16} color={liked ? '#E0245E' : '#17402C'} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Partager la story"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void shareStory();
+                  }}
+                >
+                  <Icon name="send" size={16} color="#ffffff" />
+                </button>
+              </div>
+            ) : null}
+          </div>
         ) : null}
 
 

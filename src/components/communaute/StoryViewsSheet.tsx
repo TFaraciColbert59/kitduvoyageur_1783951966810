@@ -89,6 +89,17 @@ export default function StoryViewsSheet({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   const handleHide = async (viewerId: string) => {
     if (!currentUser?.id) return;
     setHidingId(viewerId);
@@ -115,34 +126,26 @@ export default function StoryViewsSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[var(--z-modal)] flex items-end justify-center bg-black/60 p-[var(--space-4)] backdrop-blur-[var(--glass-blur-sm)] sm:items-center"
+      className="lkdv-story-sheet-layer fixed inset-0 z-[var(--z-modal)] flex items-end justify-center bg-black/55 p-[var(--space-3)] sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-label="Vues de ma story"
       onClick={onClose}
     >
       <Card
-        className="flex max-h-[80vh] w-full max-w-sm flex-col gap-[var(--space-3)] p-[var(--space-4)]"
+        className="lkdv-story-sheet flex max-h-[70dvh] w-full flex-col gap-[var(--space-2)] p-0"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-[var(--space-2)]">
-          <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
-            Vues{rows.length > 0 ? ` · ${rows.length}` : ''}
-          </h3>
+        <div className="lkdv-story-sheet-head">
           <IconButton
             type="button"
             variant="glass"
             aria-label="Fermer les vues"
             onClick={onClose}
           >
-            <Icon name="x" size={16} />
+            <Icon name="x" size={18} />
           </IconButton>
         </div>
-
-        <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-          Vous seul·e voyez cette liste. « Masquer » retire la personne de toutes
-          vos stories (elle ne le saura pas).
-        </p>
 
         {loading && (
           <p className="py-[var(--space-4)] text-center text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
@@ -151,13 +154,13 @@ export default function StoryViewsSheet({
         )}
 
         {!loading && rows.length === 0 && (
-          <p className="py-[var(--space-4)] text-center text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+          <p className="lkdv-story-sheet-empty">
             Personne n’a encore vu cette story.
           </p>
         )}
 
         {!loading && rows.length > 0 && (
-          <ul className="flex-1 space-y-[var(--space-1)] overflow-y-auto">
+          <ul className="lkdv-story-sheet-list">
             {rows.map((row) => (
               <li
                 key={row.viewer_id}
@@ -199,7 +202,7 @@ export default function StoryViewsSheet({
           </ul>
         )}
 
-        <div className="flex justify-end">
+        <div className="lkdv-story-sheet-foot">
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>
             Fermer
           </Button>

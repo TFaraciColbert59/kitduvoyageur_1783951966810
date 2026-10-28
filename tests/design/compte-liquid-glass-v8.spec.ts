@@ -53,8 +53,7 @@ describe('Compte iOS 27 Liquid Glass v8 (@tony_frc + 50 improvements + Live Supa
     expect(v8Source).toContain(".from('product_ownership')");
     expect(v8Source).toContain(".from('orders')");
     expect(v8Source).toContain('/api/identity/signature');
-    expect(v8Source).toContain('fetchMyTripsCached()');
-    expect(read('src/features/trips/client/fetchMyTrips.ts')).toContain('/api/voyages/mine');
+    expect(v8Source).toContain('/api/voyages/mine');
     expect(v8Source).toContain('/api/account/export');
     expect(v8Source).toContain('/api/materiel/items');
     expect(v8Source).toContain('/api/materiel/fork');

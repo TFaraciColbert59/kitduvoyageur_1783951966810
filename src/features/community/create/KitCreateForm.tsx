@@ -1,230 +1,391 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { z } from 'zod';
-import { Flower2, Infinity as InfinityIcon, Leaf, Snowflake, Sun } from 'lucide-react';
-import Icon from '@/components/ui/Icon';
+import Link from 'next/link';
+import { Controller, type UseFormReturn } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
-import { insertCommunityPost, uploadCoverImage } from './upload';
-import { Chips, CountedTextArea, ImagePicker, TextField, type ChipOption } from './wizard/fields';
-import { firstIssue } from './wizard/validate';
-import { useCreateFlow } from './wizard/useCreateFlow';
-import { useDraftedForm } from './wizard/useDraftedForm';
-import { WizardFrame } from './wizard/WizardFrame';
-import { KitBlocks } from './kit/KitBlocks';
-import { KitProductPicker } from './kit/KitProductPicker';
-import { summarizeSlots, toSlot, type KitSlot } from './kit/types';
+import { CommunityFormDrawer } from './CommunityFormDrawer';
+import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
+import { CreateFormEngine } from './engine/CreateFormEngine';
+import { createDefaults, CREATE_FIELD_LABELS, type KitFormValues } from './engine/createSchemas';
+import { CREATE_STEPS, StepPager } from './shared/StepPager';
+import { FormErrorSummary } from './shared/FormErrorSummary';
+import { FormPreview } from './shared/FormPreview';
+import { CreationSignature } from './shared/CreationSignature';
+import { KitPackingMatrix, KitRing } from './shared/InfoCards';
+import { InlineError } from './shared/InlineError';
+import { resolveCoverUrl } from './shared/mediaSubmit';
+import { insertCommunityPost } from './upload';
+import { InventoryPicker } from './kit/InventoryPicker';
+import {
+  KIT_TEMPLATES,
+  inventoryWeight,
+  kitCompletionScore,
+  suggestKitCompletion,
+  type CustomKitItem,
+  type InventoryItem,
+  type KitTemplateId,
+} from './kit/kitCompletion';
 
 export interface KitCreateFormProps {
   open: boolean;
   onClose: () => void;
   user: any;
   onCreated: (kind: 'kit', id: string) => void;
+  step?: number;
+  onStepChange?: (step: number) => void;
 }
 
-const STEPS = ['name', 'items', 'note', 'share'] as const;
-type Step = (typeof STEPS)[number];
-const KICKERS: Record<Step, string> = {
-  name: 'Nom',
-  items: 'Éléments',
-  note: 'Usage',
-  share: 'Partage',
-};
+const DEFAULTS = createDefaults('kit');
+const STEPS = [CREATE_STEPS.kit[0]];
+const LAST_STEP = STEPS.length - 1;
+const STEP_FIELDS = [
+  ['inventoryIds', 'customItems', 'template', 'name', 'season', 'weightG', 'description', 'isPublic', 'cover'],
+] as const;
 
-const SEASONS: ReadonlyArray<ChipOption<string>> = [
-  {
-    id: 'toute_saison',
-    label: 'Toute saison',
-    icon: <InfinityIcon size={16} aria-hidden="true" />,
-  },
-  { id: 'printemps', label: 'Printemps', icon: <Flower2 size={16} aria-hidden="true" /> },
-  { id: 'ete', label: 'Été', icon: <Sun size={16} aria-hidden="true" /> },
-  { id: 'automne', label: 'Automne', icon: <Leaf size={16} aria-hidden="true" /> },
-  { id: 'hiver', label: 'Hiver', icon: <Snowflake size={16} aria-hidden="true" /> },
-];
+function totalWeight(selected: InventoryItem[], custom: CustomKitItem[]) {
+  return inventoryWeight(selected, custom);
+}
 
-type Visibility = 'public' | 'private';
-const VISIBILITIES: ReadonlyArray<ChipOption<Visibility>> = [
-  { id: 'public', label: 'Public', icon: <Icon name="globe" size={16} aria-hidden="true" /> },
-  { id: 'private', label: 'Privé', icon: <Icon name="lock" size={16} aria-hidden="true" /> },
-];
+export function KitCreateForm({
+  open,
+  onClose,
+  user,
+  onCreated,
+  step,
+  onStepChange,
+}: KitCreateFormProps) {
+  const [internalStep, setInternalStep] = useState(0);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [inventoryRetry, setInventoryRetry] = useState(0);
+  const activeStep = Math.max(0, Math.min(LAST_STEP, step ?? internalStep));
 
-const INITIAL = {
-  name: '',
-  season: 'toute_saison',
-  slots: [] as KitSlot[],
-  description: '',
-  visibility: 'public' as Visibility,
-};
+  const setStep = (next: number) => {
+    const safe = Math.max(0, Math.min(LAST_STEP, next));
+    setInternalStep(safe);
+    onStepChange?.(safe);
+  };
 
-const nameSchema = z.object({ name: z.string().trim().min(1, 'Donne un nom à ton kit.') });
-
-export function KitCreateForm({ onClose, user, onCreated }: KitCreateFormProps) {
-  const { values, patch, clear } = useDraftedForm('kit', user?.id, INITIAL);
-  const [cover, setCover] = useState<File | null>(null);
-  const [picking, setPicking] = useState(false);
-  const slots = Array.isArray(values.slots) ? values.slots : [];
-
-  const flow = useCreateFlow<Step>({
-    steps: STEPS,
-    validate: (step) => {
-      if (step === 'name') return firstIssue(nameSchema, values);
-      if (step === 'items')
-        return slots.length === 0 ? 'Ajoute au moins un élément à ton kit.' : null;
-      return null;
-    },
-    submit: async () => {
-      if (!user?.id) throw new Error('Connecte-toi pour créer un kit.');
-      const supabase = createClient();
-      const coverUrl = await uploadCoverImage(cover, user.id);
-      const name = values.name.trim();
-      const description = values.description.trim();
-      const { data, error: insertError } = await supabase
-        .from('materiel_kits')
-        .insert({
-          user_id: user.id,
-          name,
-          description: description || null,
-          season: values.season,
-          total_weight_g: summarizeSlots(slots).weightG,
-          is_public: values.visibility === 'public',
-          cover_image_url: coverUrl,
-        })
-        .select('id')
-        .single();
-      if (insertError || !data) throw new Error(insertError?.message || 'Création du kit refusée.');
-      if (slots.length > 0) {
-        const { error: itemsError } = await supabase.from('materiel_kit_items').insert(
-          slots.map((slot) => ({
-            kit_id: data.id,
-            user_id: user.id,
-            product_ownership_id: slot.ownershipId,
-            product_id: slot.productId,
-            name: slot.name,
-            category: slot.category,
-            weight_g: slot.weightG ?? 0,
-            quantity: 1,
-            is_checked: false,
-          }))
-        );
-        if (itemsError) {
-          // Un kit sans ses éléments serait trompeur : on le retire plutôt que de le laisser vide.
-          await supabase.from('materiel_kits').delete().eq('id', data.id);
-          throw new Error(itemsError.message || 'Enregistrement des éléments refusé.');
-        }
-      }
-      try {
-        await insertCommunityPost({
-          authorId: user.id,
-          content: `**${name}**\n\n${description || 'Mon kit de matériel.'}\n\n/materiel`,
-          postType: 'share',
-          imageUrl: coverUrl,
-          linkedKitId: data.id,
-          title: name,
-        });
-      } catch {
-        /* le kit existe ; la publication d'annonce est facultative */
-      }
-      clear();
-      setCover(null);
-      onCreated('kit', data.id);
-      onClose();
-    },
-  });
-
-  // Un message « ajoute un élément » n'a plus lieu d'être dès qu'un bloc est rempli.
-  const { setError } = flow;
   useEffect(() => {
-    if (slots.length > 0) setError(null);
-  }, [setError, slots.length]);
+    if (!open || !user?.id) return;
+    let cancelled = false;
+    setInventoryLoading(true);
+    setInventoryError(null);
+    let supabase: ReturnType<typeof createClient>;
+    try {
+      supabase = createClient();
+    } catch {
+      setInventoryError('Inventaire indisponible pour le moment.');
+      setInventoryLoading(false);
+      return;
+    }
+    void supabase
+      .from('product_ownership')
+      .select('id, name, photo_url, condition, category, weight_g')
+      .eq('user_id', user.id)
+      .order('name', { ascending: true })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) setInventoryError(error.message);
+        else {
+          setInventory(
+            (data ?? []).map((row: any) => ({
+              id: row.id,
+              name: row.name || 'Objet',
+              photoUrl: row.photo_url,
+              condition: row.condition,
+              category: row.category,
+              weightG: row.weight_g,
+            })),
+          );
+        }
+        setInventoryLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [open, user?.id, inventoryRetry]);
+
+  const submit = async (values: KitFormValues) => {
+    setSubmitError(null);
+    if (!user?.id) throw new Error('Connecte-toi pour créer un kit.');
+    const selected = inventory.filter((item) => values.inventoryIds.includes(item.id));
+    const total = totalWeight(selected, values.customItems);
+    if (total <= 0) throw new Error('Ajoute au moins un objet avec un poids.');
+    const coverUrl = resolveCoverUrl(values.cover);
+
+    const supabase = createClient();
+    const { data, error: insertError } = await supabase
+      .from('materiel_kits')
+      .insert({
+        user_id: user.id,
+        name: values.name.trim(),
+        description: values.description.trim() || null,
+        season: values.season,
+        total_weight_g: total,
+        is_public: values.isPublic,
+        cover_image_url: coverUrl,
+      })
+      .select('id')
+      .single();
+    if (insertError || !data) throw new Error(insertError?.message || 'Création du kit refusée.');
+
+    const rows = [
+      ...selected.map((item) => ({
+        kit_id: data.id,
+        user_id: user.id,
+        product_ownership_id: item.id,
+        name: item.name,
+        category: item.category || 'Divers',
+        weight_g: item.weightG ?? 0,
+        quantity: 1,
+        condition: item.condition || null,
+        is_checked: true,
+      })),
+      ...values.customItems.map((item) => ({
+        kit_id: data.id,
+        user_id: user.id,
+        name: item.name,
+        category: item.category,
+        weight_g: item.weightG,
+        quantity: item.quantity,
+        is_checked: true,
+      })),
+    ];
+    if (rows.length > 0) {
+      const { error: itemsError } = await supabase.from('materiel_kit_items').insert(rows);
+      if (itemsError) throw new Error(itemsError.message || 'Les objets du kit n’ont pas pu être enregistrés.');
+    }
+
+    try {
+      await insertCommunityPost({
+        authorId: user.id,
+        content: `**${values.name.trim()}**\n\n${values.description.trim() || 'Mon kit de matériel.'}\n\n/materiel`,
+        postType: 'share',
+        imageUrl: coverUrl,
+        linkedKitId: data.id,
+        audience: values.isPublic ? 'public' : 'abonnies',
+        title: values.name.trim(),
+      });
+    } catch {
+      // Le pont vers le fil est best-effort : le kit existe déjà.
+    }
+
+    onCreated('kit', data.id);
+    setStep(0);
+    onClose();
+  };
 
   return (
-    <WizardFrame
-      step={flow.wizard.step}
-      total={flow.wizard.total}
-      kicker={KICKERS[flow.current]}
-      error={flow.error}
-      busy={flow.busy}
-      nextLabel={flow.wizard.isLast ? 'Créer le kit' : 'Suivant'}
-      onBack={flow.onBack}
-      onNext={flow.onNext}
+    <CreateFormEngine<KitFormValues>
+      kind="kit"
+      defaultValues={DEFAULTS}
+      onSubmit={submit}
+      resetOnSuccess
+      draftKey="kit"
+      step={activeStep}
+      onStepChange={setStep}
+      stepFields={STEP_FIELDS}
+      onError={(message) => setSubmitError(message)}
     >
-      {flow.current === 'name' ? (
-        <>
-          <TextField
-            label="Nom du kit"
-            value={values.name}
-            onChange={(name) => patch({ name })}
-            maxLength={100}
-            placeholder="Kit bivouac 3 saisons"
-          />
-          <Chips
-            label="Saison"
-            options={SEASONS}
-            value={values.season}
-            onChange={(season) => patch({ season })}
-          />
-        </>
-      ) : null}
+      {(form, api) => {
+        const errors = form.formState.errors;
+        const previewValues = form.watch();
+        const selectedIds = form.watch('inventoryIds');
+        const customItems = form.watch('customItems');
+        const template = form.watch('template');
+        const selected = inventory.filter((item) => selectedIds.includes(item.id));
+        const total = totalWeight(selected, customItems);
+        const score = kitCompletionScore(selected, customItems, template as KitTemplateId);
+        const suggestions = suggestKitCompletion(selected, customItems, template as KitTemplateId);
+        const updateWeight = (nextIds: string[], nextCustom: CustomKitItem[]) => {
+          const nextSelected = inventory.filter((item) => nextIds.includes(item.id));
+          form.setValue('weightG', totalWeight(nextSelected, nextCustom), { shouldValidate: true });
+        };
+        const goNext = async () => {
+          const fields = STEP_FIELDS[activeStep] ?? [];
+          const valid = await form.trigger([...fields]);
+          if (valid) setStep(activeStep + 1);
+        };
+        const onPrimary = () => {
+          if (activeStep < LAST_STEP) { void goNext(); return; }
+          api.submit();
+        };
 
-      {flow.current === 'items' ? (
-        <>
-          <KitBlocks
-            slots={slots}
-            onAdd={() => setPicking(true)}
-            onRemove={(key) => patch({ slots: slots.filter((slot) => slot.key !== key) })}
-          />
-          {slots.length > 0 ? (
-            <p className="lkdv-kb-total" role="status">
-              {slots.length} élément{slots.length > 1 ? 's' : ''}
-              {summarizeSlots(slots).weightG > 0
-                ? ` · ${(summarizeSlots(slots).weightG / 1000).toFixed(1).replace('.', ',')} kg`
-                : ''}
-              {summarizeSlots(slots).unknown > 0
-                ? ` · poids de ${summarizeSlots(slots).unknown} à vérifier`
-                : ''}
-            </p>
-          ) : null}
-          {picking ? (
-            <KitProductPicker
-              userId={user?.id}
-              onClose={() => setPicking(false)}
-              onPick={(product) => {
-                patch({ slots: [...slots, toSlot(product)] });
-                setPicking(false);
-              }}
-            />
-          ) : null}
-        </>
-      ) : null}
+        return (
+          <CommunityFormDrawer
+            open={open}
+            onClose={onClose}
+            ariaLabel="Créer un kit"
+            error={submitError}
+            footer={
+              <SubmitFooter
+                label={activeStep < LAST_STEP ? 'Continuer' : 'Créer le kit'}
+                busy={form.formState.isSubmitting}
+                onClick={onPrimary}
+              />
+            }
+          >
+            <FormErrorSummary errors={errors} labels={CREATE_FIELD_LABELS} onFocusField={api.focusField} />
+            <CreationSignature kind="kit" values={previewValues} />
 
-      {flow.current === 'note' ? (
-        <CountedTextArea
-          label="Usage et particularités"
-          value={values.description}
-          onChange={(description) => patch({ description })}
-          max={1000}
-          placeholder="Terrain, durée, ce qui le rend spécial…"
-        />
-      ) : null}
+            <StepPager
+              steps={STEPS}
+              index={activeStep}
+              onIndexChange={setStep}
+              actions={activeStep > 0 ? (
+                <button type="button" className="lkdv-create-step-back" onClick={() => setStep(activeStep - 1)}>Retour</button>
+              ) : null}
+            >
+              <div>
+                <InventoryPicker
+                  items={inventory}
+                  selectedIds={selectedIds}
+                  onChange={(ids) => {
+                    form.setValue('inventoryIds', ids, { shouldValidate: true, shouldDirty: true });
+                    updateWeight(ids, customItems);
+                  }}
+                  loading={inventoryLoading}
+                  error={inventoryError}
+                  onRetry={() => setInventoryRetry((value) => value + 1)}
+                />
+                <p className="lkdv-form-note">{total > 0 ? `${(total / 1000).toFixed(2)} kg sélectionnés` : 'Sélectionne les produits que tu emportes.'}</p>
+              </div>
 
-      {flow.current === 'share' ? (
-        <>
-          <ImagePicker
-            label="Photo du kit (facultatif)"
-            file={cover}
-            onChange={setCover}
-            aspect="16 / 9"
-          />
-          <Chips
-            label="Qui peut le voir ?"
-            options={VISIBILITIES}
-            value={values.visibility}
-            onChange={(visibility) => patch({ visibility })}
-          />
-        </>
-      ) : null}
-    </WizardFrame>
+              <div>
+                <KitRing score={score} />
+                <KitPackingMatrix selected={selectedIds.length} custom={customItems.length} score={score} />
+                <div className="lkdv-kit-completion">
+                  <div className="lkdv-kit-score" aria-label={`Complétude ${score} %`}><b>{score}%</b><span aria-hidden="true"><i style={{ width: `${score}%` }} /></span></div>
+                  <Select
+                    aria-label="Modèle de kit"
+                    value={template}
+                    onChange={(event) => form.setValue('template', event.target.value as KitTemplateId, { shouldDirty: true })}
+                  >
+                    {KIT_TEMPLATES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+                  </Select>
+                </div>
+
+                {suggestions.length > 0 ? (
+                  <div className="lkdv-kit-suggestions">
+                    {suggestions.map((suggestion) => (
+                      <button
+                        key={suggestion.category}
+                        type="button"
+                        className="lkdv-kit-suggestion"
+                        onClick={() => {
+                          const next: CustomKitItem = {
+                            id: crypto.randomUUID(),
+                            name: suggestion.suggestedName,
+                            category: suggestion.category,
+                            weightG: 0,
+                            quantity: 1,
+                          };
+                          const nextItems = [...customItems, next];
+                          form.setValue('customItems', nextItems, { shouldDirty: true, shouldValidate: true });
+                          updateWeight(selectedIds, nextItems);
+                        }}
+                      >
+                        + {suggestion.category}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                <details className="lkdv-advanced">
+                  <summary>Objets personnalisés</summary>
+                <CustomItemEditor
+                  onAdd={(item) => {
+                    const next = [...customItems, item];
+                    form.setValue('customItems', next, { shouldDirty: true, shouldValidate: true });
+                    updateWeight(selectedIds, next);
+                  }}
+                />
+
+                {customItems.length > 0 ? (
+                  <ul className="lkdv-kit-custom-list">
+                    {customItems.map((item) => (
+                      <li key={item.id}>
+                        <span><b>{item.name}</b><small>{item.category} · {item.weightG} g</small></span>
+                        <button
+                          type="button"
+                          aria-label={`Retirer ${item.name}`}
+                          onClick={() => {
+                            const next = customItems.filter((value) => value.id !== item.id);
+                            form.setValue('customItems', next, { shouldDirty: true, shouldValidate: true });
+                            updateWeight(selectedIds, next);
+                          }}
+                        >×</button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <InlineError message={errors.customItems?.message as string | undefined} />
+                </details>
+              </div>
+
+              <div>
+                <FormPreview kind="kit" values={previewValues} />
+                <Field label="Nom" htmlFor="kit-name" required>
+                  <TextInput id="kit-name" {...form.register('name')} maxLength={100} placeholder="Kit bivouac 3 saisons" />
+                  <InlineError message={errors.name?.message} />
+                </Field>
+                <Field label="Saison" htmlFor="kit-season">
+                  <Select id="kit-season" {...form.register('season')}>
+                    <option value="toute_saison">Toute saison</option>
+                    <option value="printemps">Printemps</option>
+                    <option value="ete">Été</option>
+                    <option value="automne">Automne</option>
+                    <option value="hiver">Hiver</option>
+                  </Select>
+                  <InlineError message={errors.season?.message} />
+                </Field>
+                <Field label="Description" htmlFor="kit-description">
+                  <TextArea id="kit-description" {...form.register('description')} maxLength={1000} placeholder="Usage, terrain, particularités…" />
+                  <InlineError message={errors.description?.message} />
+                </Field>
+                <details className="lkdv-advanced">
+                  <summary>Visibilité</summary>
+                  <Field label="Visibilité" htmlFor="kit-visibility">
+                    <Select id="kit-visibility" value={form.watch('isPublic') ? 'public' : 'private'} onChange={(event) => form.setValue('isPublic', event.target.value === 'public', { shouldValidate: true, shouldDirty: true })}>
+                      <option value="public">Public</option>
+                      <option value="private">Privé</option>
+                    </Select>
+                    <InlineError message={errors.isPublic?.message} />
+                  </Field>
+                </details>
+                <p className="lkdv-form-note">{total > 0 ? `${(total / 1000).toFixed(2)} kg · ${selected.length + customItems.length} objets` : 'Ajoute des objets à ton kit.'}</p>
+                <Link className="lkdv-form-link" href="/hub" onClick={api.flushDraft}>Ouvrir l’éditeur complet</Link>
+              </div>
+            </StepPager>
+          </CommunityFormDrawer>
+        );
+      }}
+    </CreateFormEngine>
+  );
+}
+
+function CustomItemEditor({ onAdd }: { onAdd: (item: CustomKitItem) => void }) {
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('Divers');
+  const [weight, setWeight] = useState('0');
+  return (
+    <div className="lkdv-kit-custom-editor">
+      <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Objet à ajouter" aria-label="Nom de l’objet" />
+      <input value={category} onChange={(event) => setCategory(event.target.value)} placeholder="Catégorie" aria-label="Catégorie de l’objet" />
+      <input value={weight} onChange={(event) => setWeight(event.target.value)} inputMode="numeric" placeholder="g" aria-label="Poids de l’objet en grammes" />
+      <button
+        type="button"
+        aria-label="Ajouter l’objet"
+        disabled={!name.trim()}
+        onClick={() => {
+          onAdd({ id: crypto.randomUUID(), name: name.trim(), category: category.trim() || 'Divers', weightG: Math.max(0, Number(weight) || 0), quantity: 1 });
+          setName('');
+          setWeight('0');
+        }}
+      >+</button>
+    </div>
   );
 }
 

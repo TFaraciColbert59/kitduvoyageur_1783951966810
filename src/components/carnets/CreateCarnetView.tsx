@@ -24,14 +24,6 @@ export interface ChapterItem {
   hebergement_nom?: string;
   hebergement_type?: string;
   content: string;
-  /** Plusieurs activités dans la même journée ; chacune devient un moment du jour. */
-  activities?: ChapterActivity[];
-}
-
-export interface ChapterActivity {
-  id: string;
-  text: string;
-  place: string;
 }
 
 const FIELD_CLASS =
@@ -148,37 +140,6 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
     setForm(prev => ({ ...prev, chapters: [...prev.chapters, newCh] }));
   };
 
-  const addActivity = (chapterId: string) => {
-    setForm(prev => ({
-      ...prev,
-      chapters: prev.chapters.map(c =>
-        c.id === chapterId
-          ? { ...c, activities: [...(c.activities ?? []), { id: `act-${Date.now()}`, text: '', place: '' }] }
-          : c,
-      ),
-    }));
-  };
-
-  const updateActivity = (chapterId: string, activityId: string, patch: Partial<ChapterActivity>) => {
-    setForm(prev => ({
-      ...prev,
-      chapters: prev.chapters.map(c =>
-        c.id === chapterId
-          ? { ...c, activities: (c.activities ?? []).map(a => (a.id === activityId ? { ...a, ...patch } : a)) }
-          : c,
-      ),
-    }));
-  };
-
-  const removeActivity = (chapterId: string, activityId: string) => {
-    setForm(prev => ({
-      ...prev,
-      chapters: prev.chapters.map(c =>
-        c.id === chapterId ? { ...c, activities: (c.activities ?? []).filter(a => a.id !== activityId) } : c,
-      ),
-    }));
-  };
-
   const removeChapter = (id: string) => {
     if (form.chapters.length <= 1) return;
     setForm(prev => ({ ...prev, chapters: prev.chapters.filter(c => c.id !== id) }));
@@ -217,11 +178,6 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
   const handlePublish = async () => {
     if (!user) {
       setSaveError('Connectez-vous pour créer un carnet.');
-      return;
-    }
-    if (!form.coverImage.trim()) {
-      setSaveError('Ajoute une photo de couverture : elle est obligatoire pour un carnet.');
-      setActiveStep('general');
       return;
     }
     const ownerId: string = user.id;
@@ -264,23 +220,8 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         }))
         .filter((m) => m.citation.length > 0);
 
-      // Chaque activité d'une journée devient un moment du même jour.
-      const activityMoments = form.chapters.flatMap((c, i) =>
-        (c.activities ?? [])
-          .filter(a => a.text.trim().length > 0)
-          .map(a => ({
-            carnet_id: carnetId,
-            jour_numero: i + 1,
-            citation: a.text.trim(),
-            auteur_nom: authorName,
-            auteur_id: user.id,
-            lieu: a.place.trim() || null,
-          })),
-      );
-
       const momentRows = [
         ...chapterMoments,
-        ...activityMoments,
         ...form.moments
           .filter((m) => m.citation.trim().length > 0)
           .map((m, i) => ({
@@ -354,7 +295,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         {/* Mobile Horizontal Stepper */}
         <div className="flex md:hidden items-center gap-1.5 overflow-x-auto no-scrollbar py-1 shrink-0">
           <Link
-            href="/carnets"
+            href="/communaute"
             className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[var(--g2-bg)] text-[var(--glass-label)] border border-[var(--glass-rim)] shrink-0"
             aria-label="Retour aux carnets"
           >
@@ -396,7 +337,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
             </div>
 
             <Link
-              href="/carnets"
+              href="/communaute"
               className="inline-flex items-center justify-center gap-1.5 w-full rounded-full bg-[var(--g2-bg)] border border-[var(--glass-rim)] px-3 py-1.5 text-xs font-semibold text-[var(--glass-label)] hover:brightness-110 transition-all"
             >
               <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
@@ -438,7 +379,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
           <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
             <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
             <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
-            <Link href="/carnets" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Carnets</Link>
+            <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Carnets</Link>
             <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
             <span className="font-semibold text-[color:var(--lkv-text-primary)]">Publier un carnet de voyage</span>
           </div>
@@ -479,11 +420,10 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                     />
                   </div>
                   <div>
-                    <label htmlFor="carnet-cover" className={LABEL_CLASS}>Photo de couverture (obligatoire)</label>
+                    <label htmlFor="carnet-cover" className={LABEL_CLASS}>Photo de couverture (URL)</label>
                     <input
                       id="carnet-cover"
                       type="text"
-                      required
                       value={form.coverImage}
                       onChange={(e) => setField('coverImage', e.target.value)}
                       placeholder="https://images.unsplash.com/..."
@@ -742,56 +682,6 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                         aria-label="Récit de l'étape"
                         className={`${FIELD_CLASS} resize-y leading-relaxed`}
                       />
-                    </div>
-
-                    <div className="space-y-[var(--space-2)]">
-                      {(ch.activities ?? []).map((activity, activityIndex) => (
-                        <div
-                          key={activity.id}
-                          className="space-y-[var(--space-1)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] p-[var(--space-2)]"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-muted)]">
-                              Activité {activityIndex + 1}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeActivity(ch.id, activity.id)}
-                              className="text-[color:var(--lkv-danger)]"
-                            >
-                              Retirer
-                            </Button>
-                          </div>
-                          <input
-                            type="text"
-                            value={activity.place}
-                            onChange={(e) => updateActivity(ch.id, activity.id, { place: e.target.value })}
-                            placeholder="Lieu (facultatif)"
-                            aria-label={`Lieu de l'activité ${activityIndex + 1} du jour ${idx + 1}`}
-                            className={`${FIELD_CLASS} py-[var(--space-1)]`}
-                          />
-                          <textarea
-                            rows={2}
-                            value={activity.text}
-                            onChange={(e) => updateActivity(ch.id, activity.id, { text: e.target.value })}
-                            placeholder="Ce qu’on a fait…"
-                            aria-label={`Activité ${activityIndex + 1} du jour ${idx + 1}`}
-                            className={`${FIELD_CLASS} resize-y leading-relaxed`}
-                          />
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => addActivity(ch.id)}
-                        icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
-                        className="border-dashed"
-                      >
-                        Ajouter une activité ce jour-là
-                      </Button>
                     </div>
                   </Card>
                 ))}

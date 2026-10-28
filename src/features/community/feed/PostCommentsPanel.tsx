@@ -106,13 +106,13 @@ export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCom
             <input
               value={editing.text}
               onChange={(event) => setEditing({ id: comment.id, text: event.target.value })}
-              className="min-h-8 flex-1 rounded-full border border-[rgba(23,43,36,.2)] px-3 text-[12px]"
+              className="lkdv-comment-edit-input"
               aria-label="Modifier le commentaire"
             />
-            <button type="button" className="text-[10px] font-bold text-[#17402C]" onClick={() => { void edit(comment.id, editing.text); setEditing(null); }}>
+            <button type="button" className="lkdv-comment-edit-action is-primary" onClick={() => { void edit(comment.id, editing.text); setEditing(null); }}>
               OK
             </button>
-            <button type="button" className="text-[10px] text-[#56665D]" onClick={() => setEditing(null)}>Annuler</button>
+            <button type="button" className="lkdv-comment-edit-action" onClick={() => setEditing(null)}>Annuler</button>
           </div>
         ) : (
           <p className="lkdv-comment-text">{renderMentions(comment.content)}</p>

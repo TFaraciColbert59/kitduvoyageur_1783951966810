@@ -11,7 +11,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const { data: session, error } = await supabase
       .from('hike_sessions')
-      .select('*')
+      // Jamais `*` : positions GPS horodatées et narratives internes exclues.
+      .select(
+        'id, route_id, carnet_id, started_at, ended_at, distance_km, duration_seconds, elevation_gain_m, max_altitude_m, title, visibility, processing_status, track_quality, weather, created_at'
+      )
       .eq('id', id)
       .single();
 
@@ -20,7 +23,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     return NextResponse.json({ session });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    console.error('[hike-sessions] exception', err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

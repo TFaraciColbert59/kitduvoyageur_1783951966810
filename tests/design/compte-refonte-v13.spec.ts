@@ -7,10 +7,7 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 Liquid Glass v13 — Coin de card, avatar compact, grille Instagram & sélecteurs universels', () => {
-  const v8Source =
-    read('src/components/compte/CompteLiquidGlassV8.tsx') +
-    '\n' + read('src/components/compte/compte-v8.css') +
-    '\n' + read('src/components/compte/compte-apple-hig.css');
+  const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx');
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
   const v13Source = v8Source.slice(v8Source.indexOf('Compte iOS 27 v13'));
   const v14Source = v8Source.slice(v8Source.indexOf('Compte iOS 27 v14'));
@@ -63,9 +60,7 @@ describe('Compte iOS 27 Liquid Glass v13 — Coin de card, avatar compact, grill
     expect(tileBody).not.toContain('t-pill');
     expect(tileBody).not.toContain('t-prog');
     expect(tileBody).toContain('t-type');
-    expect(tileBody).toContain('tileMedia(t)');
-    expect(runtimeSource).toContain('t.coverImageSmall || t.coverImage');
-    expect(runtimeSource).toContain(': tileArt(t.art)');
+    expect(tileBody).toContain('tileArt(t.art)');
     expect(tileBody).not.toMatch(/\$\{t\.stat\}/);
     expect(tileBody).not.toContain('<b>');
     expect(tileBody).not.toContain('<small>');

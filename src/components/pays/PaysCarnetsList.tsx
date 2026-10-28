@@ -74,7 +74,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
           <p className="text-[10px] text-[color:var(--lkv-text-secondary)]">Récits vécus, traces et retours de marcheurs.</p>
         </div>
         <Link
-          href="/carnets"
+          href="/communaute"
           onClick={() => triggerHaptic('light')}
           className="glass-capsule-btn !min-h-[28px] !py-0.5 !px-3 !text-[11px] !font-bold shrink-0"
         >
@@ -146,7 +146,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
           </p>
           <div className="pt-1">
             <Link
-              href="/carnets"
+              href="/communaute"
               onClick={() => triggerHaptic('selection')}
               className="glass-capsule-btn primary !min-h-[32px] !py-1 !px-4 !text-xs !font-bold inline-flex"
             >

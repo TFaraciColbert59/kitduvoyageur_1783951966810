@@ -1,4 +1,4 @@
-import Dexie, { type Table } from "dexie";
+﻿import Dexie, { type Table } from "dexie";
 
 /**
  * lkdv-cache — Base Dexie pour le cache generaliste de l'application.

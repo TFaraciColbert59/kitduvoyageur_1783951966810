@@ -139,7 +139,7 @@ export function HubActivityHero({
           <div className="flex items-center gap-2 shrink-0">
             {assistantContextLabel && (
               <Link
-                href="/copilote"
+                href="/compas"
                 aria-label={`Assistant IA — ${assistantContextLabel}`}
                 className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 rounded-full bg-white/15 border border-white/30 backdrop-blur-sm text-xs font-bold text-white cursor-pointer active:scale-95 transition-transform"
               >

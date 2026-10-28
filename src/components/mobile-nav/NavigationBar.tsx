@@ -7,6 +7,7 @@ import { DESTINATIONS, hasExtendedNav } from './destinationRegistry';
 import { getNativeGlassDestination, shouldShowNativeGlass } from './nativeAccountRoutes';
 import { getNativePrefetchRoutes, nativeSyncKey } from './nativeNavigationPerformance';
 import WebNavigationBar from './navigation/WebNavigationBar';
+import FloatingLiquidTabBar from './FloatingLiquidTabBar';
 import NavigationPlateau from './navigation/NavigationPlateau';
 import DayPlateau from './navigation/DayPlateau';
 import { useNavigationPlateau } from './navigation/useNavigationPlateau';
@@ -226,5 +227,5 @@ export default function NavigationBar() {
       ? <NativeSecondaryPlateau pathname={pathname} showDay={showDay} />
       : null;
   }
-  return <WebNavigationBar />;
+  return <FloatingLiquidTabBar />;
 }

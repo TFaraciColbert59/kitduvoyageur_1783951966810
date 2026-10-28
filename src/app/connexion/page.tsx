@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useId, useState, Suspense } from 'react';
+import React, { useId, useState, Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -11,10 +11,9 @@ import { createClient } from '@/lib/supabase/client';
 import AppShell from '@/components/shell/AppShell';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
-import { demoLoginAction, demoLoginAvailableAction } from '@/features/demo/demoLogin';
-import { trialLoginAction, trialLoginAvailableAction } from '@/features/demo/trialSession';
 import { getCaptchaToken, hcaptchaSiteKey } from '@/lib/captcha/hcaptcha';
 import { passwordResetRedirectTo } from '@/features/auth/passwordReset';
+import { safeNextPath } from '@/lib/supabase/safeNext';
 
 type AuthMode = 'connexion' | 'inscription';
 
@@ -25,8 +24,9 @@ function AuthForm() {
   const searchParams = useSearchParams();
   const initialMode = (searchParams?.get('mode') as AuthMode) || 'connexion';
   const requestedNext = searchParams?.get('next');
-  // Only allow internal relative paths (no open redirect via external URL)
-  const nextPath = requestedNext && requestedNext.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : null;
+  // Garde unique et testée : refuse `//`, le backslash et les caractères de
+  // contrôle (une garde locale laissait passer `/\evil.com` → open redirect).
+  const nextPath = requestedNext ? safeNextPath(requestedNext, '') || null : null;
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,38 +42,27 @@ function AuthForm() {
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
-  // « Essayer sans compte » (un espace à soi) dès que Supabase le permet ;
-  // sinon « Connexion démo », visible seulement si le serveur a les identifiants.
-  const [trialAvailable, setTrialAvailable] = useState(false);
-  const [demoAvailable, setDemoAvailable] = useState(false);
+  // Accès direct au compte de démonstration partagé, sans identifiants.
   const [demoLoading, setDemoLoading] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    trialLoginAvailableAction()
-      .then((ok) => alive && setTrialAvailable(ok))
-      .catch(() => undefined);
-    demoLoginAvailableAction()
-      .then((ok) => alive && setDemoAvailable(ok))
-      .catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   const handleDemoLogin = async () => {
     setError('');
     setDemoLoading(true);
     try {
-      const res = trialAvailable ? await trialLoginAction(await getCaptchaToken()) : await demoLoginAction();
-      if (!res.success) {
-        setError(res.error);
+      const response = await fetch('/api/demo-login', { method: 'POST', credentials: 'include' });
+      const res = (await response.json().catch(() => ({ success: false, error: t('auth.errorGeneric') }))) as {
+        success: boolean;
+        error?: string;
+      };
+      if (!response.ok || !res.success) {
+        setError(res.error || t('auth.errorGeneric'));
         return;
       }
       // La session posée par le serveur (cookies) est relue par le client
       // pour que le contexte d'auth se mette à jour sans recharger la page.
       await createClient().auth.refreshSession();
       toast(t('auth.toastWelcome'), 'success');
-      router.push(nextPath ?? '/compas');
+      router.push(nextPath ?? '/compte');
       router.refresh();
     } catch {
       setError(t('auth.errorGeneric'));
@@ -344,28 +333,16 @@ function AuthForm() {
               )}
             </form>
           )}
-          {(trialAvailable || demoAvailable) && mode === 'connexion' && !forgotPasswordOpen && (
+          {mode === 'connexion' && !forgotPasswordOpen && (
             <div className="mt-[var(--space-3)]">
-              <Button
-                type="button"
-                variant="secondary"
-                fullWidth
-                size="lg"
-                loading={demoLoading}
-                onClick={handleDemoLogin}
+              <a
+                href="/api/demo-login"
+                className="flex min-h-[44px] w-full items-center justify-center rounded-full border border-[color:var(--lkv-border-subtle)] bg-white/60 px-4 py-3 text-[length:var(--lkv-text-body-sm)] font-semibold text-[#17402C] shadow-elevation-1 backdrop-blur-md"
               >
-                {trialAvailable
-                  ? demoLoading
-                    ? 'Ouverture de l’essai…'
-                    : 'Essayer sans compte'
-                  : demoLoading
-                    ? 'Connexion démo…'
-                    : 'Connexion démo'}
-              </Button>
+                Connexion démo
+              </a>
               <p className="mt-2 text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
-                {trialAvailable
-                  ? 'Un espace rien qu’à toi, sans e-mail. Gardé 7 jours sans visite ; rien n’est publié.'
-                  : 'Compte de démonstration partagé : un voyage, une équipe et des kits déjà prêts.'}
+                Accès direct au compte démo <strong>demo@lkdv.app</strong>, sans identifiants.
               </p>
             </div>
           )}

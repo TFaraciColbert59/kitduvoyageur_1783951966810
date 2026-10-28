@@ -21,7 +21,7 @@ function Listing({ listing }: { listing: MarketplaceListing }) {
   const [reviews, setReviews] = useState<MarketplaceReview[]>([]);
   const [dates, setDates] = useState({ start_date: '', end_date: '' });
   const [reason, setReason] = useState('');
-  const next = listing.mode === 'vente' ? '/occasion' : '/location';
+  const next = listing.mode === 'vente' ? '/explorer' : '/explorer';
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
     setError('');
@@ -250,7 +250,7 @@ export function MarketplaceBrowser({ initialMode }: { initialMode: MarketplaceMo
           </Link>
           <Link
             className="min-h-11 inline-flex items-center underline"
-            href={initialMode === 'vente' ? '/location' : '/occasion'}
+            href={initialMode === 'vente' ? '/explorer' : '/explorer'}
           >
             {initialMode === 'vente' ? 'Locations et prêts' : 'Ventes d’occasion'}
           </Link>

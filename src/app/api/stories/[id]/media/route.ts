@@ -6,6 +6,12 @@ export const runtime = 'nodejs';
 
 const SIGNED_URL_TTL_SECONDS = 120;
 
+/** Seuls ces buckets peuvent être signés par cette route. Les colonnes
+ *  `storage_bucket` / `storage_path` sont écrites par le client : sans liste
+ *  blanche, un compte pouvait faire signer n'importe quel objet privé
+ *  (`user-documents`, `message-attachments`…) via une story forgée. */
+const ALLOWED_BUCKETS = new Set(['stories-private']);
+
 /**
  * GET /api/stories/:id/media — accès média contrôlé (Stories V2, P0).
  *
@@ -35,7 +41,7 @@ export async function GET(
     const supabase = await createClient();
     const { data: story } = await supabase
       .from('post_stories')
-      .select('id, image_url, storage_bucket, storage_path')
+      .select('id, author_id, image_url, storage_bucket, storage_path')
       .eq('id', id)
       .maybeSingle();
 
@@ -45,6 +51,14 @@ export async function GET(
     }
 
     if (story.storage_bucket && story.storage_path) {
+      const ownedPath = `${story.author_id}/${''}`;
+      if (
+        !ALLOWED_BUCKETS.has(story.storage_bucket) ||
+        !story.storage_path.startsWith(ownedPath)
+      ) {
+        console.error('[stories/media] refus : bucket ou chemin hors périmètre', { id });
+        return notFound();
+      }
       const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
       if (!serviceKey || !url) {
@@ -71,6 +85,12 @@ export async function GET(
     }
 
     if (story.image_url) {
+      const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+      const allowedPrefix = `${supabaseOrigin}/storage/v1/object/`;
+      if (!supabaseOrigin || !story.image_url.startsWith(allowedPrefix)) {
+        console.error('[stories/media] refus : image_url hors origine Storage', { id });
+        return notFound();
+      }
       return NextResponse.redirect(story.image_url, {
         status: 302,
         headers: { 'Cache-Control': 'private, max-age=300' },

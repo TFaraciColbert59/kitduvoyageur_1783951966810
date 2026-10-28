@@ -112,7 +112,7 @@ export default function MobileClubDetailView({
 
         <div className="absolute left-4 right-4 top-[calc(max(var(--safe-top),12px)+6px)] z-10 flex items-center justify-between">
           <Link
-            href="/clubs"
+            href="/communaute"
             onClick={() => triggerHaptic('light')}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-title-sm)] text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]"
             aria-label="Retour aux clubs"

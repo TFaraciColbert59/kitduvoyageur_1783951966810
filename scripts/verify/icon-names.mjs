@@ -49,19 +49,6 @@ if (fs.existsSync(generatedPath)) {
   }
 }
 
-// LKDV V2 is the first resolver at runtime; validate its real asset targets too.
-const lkdvRegistry = fs.readFileSync(path.join(src, 'components/ui/Icon/lkdv.registry.ts'), 'utf8');
-const lkdvNames = new Set(JSON.parse(lkdvRegistry.match(/new Set(?:<[^>]+>)?\((\[[^;]+\])\)/)[1]));
-const lkdvAliases = JSON.parse(lkdvRegistry.match(/const ALIASES[^=]*=\s*({[\s\S]*?});/)[1]);
-function resolvesLKDV(name) {
-  const token = name.replace(/(IconSolid|SolidIcon|Icon)$/, '')
-    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
-    .replace(/[_ ]/g, '-').toLowerCase();
-  const asset = lkdvNames.has(token.replace(/-/g, '_')) ? token.replace(/-/g, '_') : lkdvAliases[token];
-  return lkdvNames.has(asset) && fs.existsSync(path.join(root, 'public/icons/lkdv', `${asset}.svg`));
-}
-
 function walk(dir) {
   const out = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -76,7 +63,6 @@ function walk(dir) {
 }
 
 function resolves(name) {
-  if (resolvesLKDV(name)) return 'lkdv';
   if (animatedNames.has(name)) return 'animated';
   if (svgNames.has(name)) return 'svg';
   if (pngKeys.has(name) || pngKeys.has(`${name}Icon`) || pngKeys.has(`${name}SolidIcon`)) return 'pack';

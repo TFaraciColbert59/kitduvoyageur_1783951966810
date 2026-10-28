@@ -18,6 +18,26 @@ import type {
 } from './drawer/ProfileDrawerHost';
 import { DRAWER_V2_CSS, type SlotContentState } from './drawer/SlotShell';
 import { useCompteMapContext } from './map/useCompteMapContext';
+
+class CompteMapBoundary extends React.Component<
+  { children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: Error) {
+    console.error('[compte-map]', error);
+  }
+  render() {
+    if (this.state.failed) {
+      return <div className="lkdv-map-unavailable">Carte momentanément indisponible</div>;
+    }
+    return this.props.children;
+  }
+}
+
 import { CompteOverlayHost } from './overlay/CompteOverlayHost';
 import './overlay/compte-drawers.css';
 import './compte-v8.css';
@@ -62,10 +82,6 @@ const SortieDrawer = dynamic(
 );
 const CompteDrawer = dynamic(
   () => import('./drawer/compte/CompteDrawer').then((mod) => mod.CompteDrawer),
-  { ssr: false }
-);
-const RewardsDrawer = dynamic(
-  () => import('@/components/rewards/RewardsDrawer').then((mod) => mod.RewardsDrawer),
   { ssr: false }
 );
 const FirstRunJourney = dynamic(
@@ -746,8 +762,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       act('openAccountDrawer');
     } else if (initialTab === 'notifications') {
       act('openAccountDrawer', 1);
-    } else if (initialTab === 'fidelite' || initialTab === 'recompenses') {
-      act('openRewards', 0);
+    } else if (initialTab === 'fidelite') {
+      act('openStep', '3:3');
     } else if (initialTab === 'parametres') {
       act('openAccountDrawer', 2);
     } else if (initialTab === 'progression') {
@@ -1008,9 +1024,9 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         patch.sigText = sigRes.signature;
       }
 
-      // Crédit boutique seulement : le cash retirable legacy (`available_cash`)
-      // est un droit distinct, affiché à part sur /recompenses, jamais additionné.
-      patch.storeCreditEur = rewardRes.data?.store_credit_cents ? rewardRes.data.store_credit_cents / 100 : 0;
+      // Store credit & rewards
+      const creditEur = (rewardRes.data?.store_credit_cents ? rewardRes.data.store_credit_cents / 100 : 0) + Number(rewardRes.data?.available_cash || 0);
+      patch.storeCreditEur = creditEur;
 
       // Sorties réelles uniquement : aucun repli démo sur un compte connecté.
       const combinedOutings: any[] = [];
@@ -1060,6 +1076,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
             following: payload.following || [],
             kits: payload.kits || [],
             stories: payload.stories || [],
+            highlights: payload.highlights || [],
             species: payload.species || [],
             massifs: payload.massifs || [],
             notifications: payload.notifications || [],
@@ -1360,6 +1377,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       </div>
       <div ref={containerRef} />
       {mapRoot && mapVisible ? createPortal(
+        <CompteMapBoundary>
         <CompteMap
           authState={
             bootstrapPhase === 'ready'
@@ -1375,7 +1393,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                     : 'loading'
           }
           context={mapContext}
-        />,
+        />
+        </CompteMapBoundary>,
         mapRoot
       ) : null}
       {drawerMount?.root ? createPortal(
@@ -1385,8 +1404,6 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
         ) : drawerMount.kind === 'compte' ? (
           <CompteDrawer initialTab={Number(drawerMount.props?.tab) || 0} />
-        ) : drawerMount.kind === 'recompenses' ? (
-          <RewardsDrawer initialTab={Number(drawerMount.props?.tab) || 0} />
         ) : (
           <div style={{ padding: 16 }}>Chargement…</div>
         ),

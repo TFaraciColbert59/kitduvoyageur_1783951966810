@@ -8,7 +8,6 @@ const FOOTER_LINKS = [
   { label: 'Explorer', href: '/explorer' },
   { label: 'Clubs', href: '/communaute' },
   { label: 'Configurateur IA', href: '/compas?etape=kit' },
-  { label: 'FAQ & Aide', href: '/faq' },
   { label: 'Contact', href: '/contact' },
 ];
 

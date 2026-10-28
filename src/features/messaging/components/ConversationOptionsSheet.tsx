@@ -1,12 +1,11 @@
 'use client';
 
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Button, ListItem } from '@/components/ui';
+import { useRouter } from 'next/navigation';
+import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import type { Conversation } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
-import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface ConversationOptionsSheetProps {
@@ -32,6 +31,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
   onReport,
 }) => {
   const { haptic } = useHapticFeedback();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showMuteSubmenu, setShowMuteSubmenu] = useState(false);
 
@@ -101,158 +101,229 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
     closeAndRefresh();
   };
 
+  const reportLabel = member?.full_name
+    ? `Signaler ou bloquer ${member.full_name}`
+    : 'Signaler ou bloquer';
+
   return (
-    <MobileSheet
-      isOpen={isOpen}
-      onClose={onClose}
+    <AccountDrawerHost
+      variant="card"
+      open={isOpen}
       title={isPending ? 'Demande de message' : 'Options de conversation'}
+      hideHeader
+      onClose={onClose}
+      onBack={showMuteSubmenu ? () => setShowMuteSubmenu(false) : undefined}
     >
-      {member && (
-        <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-3)] pt-[var(--space-1)]">
-          <div className="relative size-12 shrink-0 overflow-hidden rounded-full bg-[color:var(--btn-tint)] shadow-elevation-1 ring-2 ring-[color:var(--glass-border)]">
+      {member ? (
+        <div className="li">
+          <span className="avi" style={{ overflow: 'hidden' }}>
             <Image
               src={member.avatar_url || '/assets/images/no_image.png'}
               alt=""
               fill
-              className="object-cover"
-              sizes="48px"
+              sizes="30px"
+              style={{ objectFit: 'cover' }}
               onError={(e) => {
                 (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
               }}
             />
+          </span>
+          <div>
+            <div className="ttl">
+              <span>{member.full_name || 'Voyageur LKDV'}</span>
+            </div>
+            <div className="s2">{isPending ? 'Souhaite vous écrire' : 'Conversation directe'}</div>
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
-              {member.full_name || 'Voyageur LKDV'}
-            </p>
-            <p className="truncate text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
-              {isPending ? 'Souhaite vous écrire' : 'Conversation directe'}
-            </p>
-          </div>
+          <span className={isPending ? 'tg pending' : 'tg'}>{isPending ? 'Demande' : 'Directe'}</span>
         </div>
-      )}
+      ) : null}
+
+      {!isPending && member?.id ? (
+        <div className="li nt">
+          <div>
+            <div className="ttl">Voir le profil</div>
+            <div className="s2">{member.full_name || 'Voyageur LKDV'}</div>
+          </div>
+          <button
+            type="button"
+            className="mbtn"
+            onClick={() => {
+              haptic('light');
+              onClose();
+              router.push(`/profil/${member.id}`);
+            }}
+          >
+            Ouvrir
+          </button>
+        </div>
+      ) : null}
 
       {isPending ? (
-        <div className="space-y-[var(--space-2)]">
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={handleAccept}
-            className="min-h-[52px] border border-[color:var(--lkv-secondary)]/40 bg-[color:var(--lkv-secondary)]/10"
-            leading={<Icon name="check" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
-            title="Accepter la demande"
-          />
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={handleDecline}
-            className="min-h-[52px]"
-            leading={<Icon name="x" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
-            title="Refuser la demande"
-          />
-          {onReport && (
-            <ListItem
-              as="div"
-              onClick={() => {
-                onReport(conversation);
-                onClose();
-              }}
-              className="min-h-[52px] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger-bg)]"
-              leading={<Icon name="shield-alert" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
-              title={<span className="text-[color:var(--lkv-danger-dark)]">Signaler ou bloquer</span>}
-            />
-          )}
+        <div>
+          <div className="li nt">
+            <div>
+              <div className="ttl">Accepter la demande</div>
+              <div className="s2">La conversation s’ouvrira dans votre liste</div>
+            </div>
+            <button type="button" className="mbtn p" disabled={loading} onClick={handleAccept}>
+              Accepter
+            </button>
+          </div>
+
+          <div className="li nt">
+            <div>
+              <div className="ttl">Refuser la demande</div>
+              <div className="s2">Elle disparaîtra de vos demandes</div>
+            </div>
+            <button type="button" className="mbtn" disabled={loading} onClick={handleDecline}>
+              Refuser
+            </button>
+          </div>
+
+          {onReport ? (
+            <div className="li nt">
+              <div>
+                <div className="ttl">Signaler ou bloquer</div>
+                <div className="s2">Contenu inapproprié</div>
+              </div>
+              <button
+                type="button"
+                className="mbtn"
+                style={{ color: 'var(--bad)' }}
+                onClick={() => {
+                  onReport(conversation);
+                  onClose();
+                }}
+              >
+                Signaler
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : showMuteSubmenu ? (
-        <div className="space-y-[var(--space-2)]">
-          <h4 className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
-            Masquer les notifications
-          </h4>
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={() => handleMuteToggle(1)}
-            title="Pendant 1 heure"
-            className="min-h-[52px]"
-          />
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={() => handleMuteToggle(8)}
-            title="Pendant 8 heures"
-            className="min-h-[52px]"
-          />
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={() => handleMuteToggle(undefined)}
-            title="Jusqu'à réactivation (Toujours)"
-            className="min-h-[52px]"
-          />
-          <Button type="button" variant="ghost" fullWidth onClick={() => setShowMuteSubmenu(false)}>
-            Retour
-          </Button>
+        <div>
+          <div className="li nt">
+            <div>
+              <div className="ttl">Pendant 1 heure</div>
+              <div className="s2">Les notifications reviennent ensuite</div>
+            </div>
+            <button
+              type="button"
+              className="mbtn"
+              disabled={loading}
+              onClick={() => handleMuteToggle(1)}
+            >
+              Muet
+            </button>
+          </div>
+
+          <div className="li nt">
+            <div>
+              <div className="ttl">Pendant 8 heures</div>
+              <div className="s2">Les notifications reviennent ensuite</div>
+            </div>
+            <button
+              type="button"
+              className="mbtn"
+              disabled={loading}
+              onClick={() => handleMuteToggle(8)}
+            >
+              Muet
+            </button>
+          </div>
+
+          <div className="li nt">
+            <div>
+              <div className="ttl">Jusqu’à réactivation (Toujours)</div>
+              <div className="s2">Reste muet jusqu’à ce que vous réactiviez</div>
+            </div>
+            <button
+              type="button"
+              className="mbtn"
+              disabled={loading}
+              onClick={() => handleMuteToggle(undefined)}
+            >
+              Muet
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="space-y-[var(--space-2)]">
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={() => {
-              if (isMuted) {
-                handleMuteToggle(0);
-              } else {
-                setShowMuteSubmenu(true);
-              }
-            }}
-            className="min-h-[52px]"
-            leading={
-              isMuted ? (
-                <Icon name="bell" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
-              ) : (
-                <Icon name="bell-off" className="size-5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />
-              )
-            }
-            title={isMuted ? 'Réactiver les notifications' : 'Masquer les notifications'}
-            trailing={
-              isMuted ? (
-                <Icon name="check" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
-              ) : undefined
-            }
-          />
-
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={handleArchiveToggle}
-            className="min-h-[52px]"
-            leading={<Icon name="archive" className="size-5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
-            title={isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
-            trailing={
-              isArchived ? (
-                <Icon name="check" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
-              ) : undefined
-            }
-          />
-
-          {onReport && (
-            <ListItem
-              as="div"
+        <div>
+          <div className="li nt">
+            <div>
+              <div className="ttl">
+                {isMuted ? 'Réactiver les notifications' : 'Masquer les notifications'}
+              </div>
+              <div className="s2">
+                {isMuted ? 'Vous ne recevez plus d’alerte' : 'Choisir une durée de silence'}
+              </div>
+              {isMuted ? (
+                <div className="tags">
+                  <span className="tg p">Muet</span>
+                </div>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="mbtn"
+              disabled={loading}
               onClick={() => {
-                onReport(conversation);
-                onClose();
+                if (isMuted) {
+                  handleMuteToggle(0);
+                } else {
+                  setShowMuteSubmenu(true);
+                }
               }}
-              className="min-h-[52px] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger-bg)]"
-              leading={<Icon name="shield-alert" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
-              title={
-                <span className="text-[color:var(--lkv-danger-dark)]">
-                  Signaler ou bloquer {member?.full_name || ''}
-                </span>
-              }
-            />
-          )}
+            >
+              {isMuted ? 'Réactiver' : 'Choisir'}
+            </button>
+          </div>
+
+          <div className="li nt">
+            <div>
+              <div className="ttl">
+                {isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
+              </div>
+              <div className="s2">
+                {isArchived ? 'Revenir dans la liste principale' : 'Sortir de la liste principale'}
+              </div>
+              {isArchived ? (
+                <div className="tags">
+                  <span className="tg">Archivée</span>
+                </div>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="mbtn"
+              disabled={loading}
+              onClick={handleArchiveToggle}
+            >
+              {isArchived ? 'Désarchiver' : 'Archiver'}
+            </button>
+          </div>
+
+          {onReport ? (
+            <div className="li nt">
+              <div>
+                <div className="ttl">{reportLabel}</div>
+                <div className="s2">Contenu inapproprié</div>
+              </div>
+              <button
+                type="button"
+                className="mbtn"
+                style={{ color: 'var(--bad)' }}
+                onClick={() => {
+                  onReport(conversation);
+                  onClose();
+                }}
+              >
+                Signaler
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
-    </MobileSheet>
+    </AccountDrawerHost>
   );
 };

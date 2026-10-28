@@ -2,10 +2,11 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Link2, Plus, Save, Sparkles, Trash2, UserRound } from 'lucide-react';
+import { Check, Link2, Plus, Save, Sparkles, Trash2, Upload, UserRound } from 'lucide-react';
 import type { ProfileLink, ProfileSettings } from '@/features/compte/server/compte';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { fetchJson, initials } from './shared';
+import { createClient } from '@/lib/supabase/client';
 
 interface FormState {
   name: string;
@@ -73,6 +74,30 @@ export function EditProfilePane() {
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((current) => (current ? { ...current, [key]: value } : current));
+  };
+
+  const uploadPhoto = async (file: File | undefined, key: 'avatarUrl' | 'coverUrl') => {
+    if (!file || !query.data) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const extension = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const path = `profiles/${query.data.id}/${key === 'avatarUrl' ? 'avatar' : 'cover'}-${Date.now()}.${extension}`;
+      const supabase = createClient();
+      const { error } = await supabase.storage.from('carnet-media').upload(path, file, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: file.type || 'image/jpeg',
+      });
+      if (error) throw error;
+      const { data: publicUrl } = supabase.storage.from('carnet-media').getPublicUrl(path);
+      set(key, publicUrl.publicUrl);
+      setMessage({ text: 'Photo prête, enregistre ton profil.', tone: 'ok' });
+    } catch (error) {
+      setMessage({ text: error instanceof Error ? error.message : 'Envoi de la photo impossible', tone: 'error' });
+    } finally {
+      setBusy(false);
+    }
   };
 
   const reset = () => {
@@ -160,24 +185,38 @@ export function EditProfilePane() {
       )}
 
       <section className="lkdv-compte-form">
-        <label>
-          <span>Photo de profil (URL)</span>
-          <input
-            value={form.avatarUrl}
-            onChange={(event) => set('avatarUrl', event.target.value)}
-            placeholder="https://…"
-            inputMode="url"
-          />
-        </label>
-        <label>
-          <span>Photo de couverture (URL)</span>
-          <input
-            value={form.coverUrl}
-            onChange={(event) => set('coverUrl', event.target.value)}
-            placeholder="https://…"
-            inputMode="url"
-          />
-        </label>
+        <div className="lkdv-compte-upload-field">
+          <span>Photo de profil</span>
+          <div className="lkdv-compte-upload-actions">
+            <label className="lkdv-compte-filebtn">
+              <Upload size={14} aria-hidden="true" /> {form.avatarUrl ? 'Changer la photo' : 'Choisir une photo'}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(event) => void uploadPhoto(event.target.files?.[0], 'avatarUrl')}
+                disabled={busy}
+              />
+            </label>
+            {form.avatarUrl ? <button type="button" className="lkdv-compte-fileclear" onClick={() => set('avatarUrl', '')}>Retirer</button> : null}
+          </div>
+          <small>Depuis tes photos ou fichiers locaux.</small>
+        </div>
+        <div className="lkdv-compte-upload-field">
+          <span>Photo de couverture</span>
+          <div className="lkdv-compte-upload-actions">
+            <label className="lkdv-compte-filebtn">
+              <Upload size={14} aria-hidden="true" /> {form.coverUrl ? 'Changer la couverture' : 'Choisir une couverture'}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(event) => void uploadPhoto(event.target.files?.[0], 'coverUrl')}
+                disabled={busy}
+              />
+            </label>
+            {form.coverUrl ? <button type="button" className="lkdv-compte-fileclear" onClick={() => set('coverUrl', '')}>Retirer</button> : null}
+          </div>
+          <small>Depuis tes photos ou fichiers locaux.</small>
+        </div>
         <label>
           <span>Nom affiché</span>
           <input value={form.name} onChange={(event) => set('name', event.target.value)} maxLength={80} />
@@ -282,8 +321,15 @@ export function EditProfilePane() {
         <button type="button" className="lkdv-compte-btn ghost" onClick={reset} disabled={busy}>
           Annuler
         </button>
-        <button type="button" className="lkdv-compte-btn primary" onClick={() => void save()} disabled={busy || !form.name.trim() || !form.handle.trim()}>
-          {busy ? 'Enregistrement…' : <><Save size={15} aria-hidden="true" /> Enregistrer</>}
+        <button
+          type="button"
+          className="lkdv-compte-btn primary lkdv-compte-save-icon"
+          onClick={() => void save()}
+          disabled={busy || !form.name.trim() || !form.handle.trim()}
+          aria-label={busy ? 'Enregistrement en cours' : 'Enregistrer le profil'}
+          title={busy ? 'Enregistrement…' : 'Enregistrer'}
+        >
+          {busy ? <span className="lkdv-compte-save-spinner" aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
         </button>
       </div>
 

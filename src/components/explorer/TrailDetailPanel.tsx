@@ -258,7 +258,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
   const handlePrepare = async () => {
     const canonicalId = await getCanonicalId();
     if (canonicalId) {
-      router.push(`/preparer-sentier/${canonicalId}`);
+      router.push('/compas');
     }
   };
 
@@ -266,7 +266,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
     if (isUnavailableGeometry) return;
     const canonicalId = await getCanonicalId();
     if (canonicalId) {
-      router.push(`/randonnee-active?routeId=${canonicalId}`);
+      router.push(`/explorer?routeId=${canonicalId}`);
     }
   };
 

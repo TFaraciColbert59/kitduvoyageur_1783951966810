@@ -1,9 +1,0 @@
-{
-  "observed_date": "2026-10-25",
-  "k": "flags",
-  "query": "select id,enabled from public.feature_flags where id ~* 'progress|loyal|reward|funded|league|leaderboard|mission|discov|cash' order by id;",
-  "data": {
-    "id": "local_leaderboard_active",
-    "enabled": false
-  }
-}

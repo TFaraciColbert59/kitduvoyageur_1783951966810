@@ -336,7 +336,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
       )}
       <div className="cp-actions">
         {product?.slug && (
-          <Link className="cp-btn" href={`/produit/${product.slug}`}>
+          <Link className="cp-btn" href={'/explorer'}>
             <Icon name="external-link" size={16} />
             {t('compas.sheets.item.productPage')}
           </Link>
@@ -451,7 +451,7 @@ function ProductRow({
         {product.slug && (
           <Link
             className="cp-ibtn cp-ibtn--tap"
-            href={`/produit/${product.slug}`}
+            href={'/explorer'}
             aria-label={t('compas.sheets.product.pageOf', { name: product.name })}
           >
             <Icon name="external-link" size={16} aria-hidden="true" />
@@ -635,7 +635,7 @@ function AcquireSheet({
                 {mode === 'louer' ? (
                   <>
                     {t('compas.sheets.acquire.noRental')}{' '}
-                    <Link href="/location">{t('compas.sheets.acquire.seeRental')}</Link>
+                    <Link href="/explorer">{t('compas.sheets.acquire.seeRental')}</Link>
                   </>
                 ) : (
                   t('compas.sheets.common.noProductMatch')

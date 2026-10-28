@@ -73,6 +73,8 @@ export type StoryHighlightRow = {
 
 export type StoryHighlightItemRow = {
   highlight_id: string;
+  story_id?: string | null;
+  position?: number | null;
 };
 
 export type CompanionSessionRow = {
@@ -162,6 +164,11 @@ export type OwnershipRow = {
   is_lent?: boolean | null;
   description?: string | null;
   quantity?: number | null;
+  purchase_date?: string | null;
+  maintenance_due_at?: string | null;
+  status?: string | null;
+  location?: string | null;
+  tags?: string[] | null;
 };
 
 export type GeoMassifRow = {
@@ -333,6 +340,13 @@ export type KitProduct = {
   brand: string | null;
   description: string | null;
   image: string | null;
+  priceCents: number | null;
+  purchaseDate: string | null;
+  maintenanceDueAt: string | null;
+  isLent: boolean;
+  status: string | null;
+  location: string | null;
+  tags: string[];
 };
 
 export type CatalogKitItemRow = {
@@ -924,6 +938,13 @@ export function mapKitProducts(
       brand: firstString(ownership?.brand) || null,
       description: firstString(ownership?.description) || null,
       image,
+      priceCents: firstNumber(ownership?.price_cents),
+      purchaseDate: firstString(ownership?.purchase_date) || null,
+      maintenanceDueAt: firstString(ownership?.maintenance_due_at) || null,
+      isLent: Boolean(ownership?.is_lent),
+      status: firstString(ownership?.status) || null,
+      location: firstString(ownership?.location) || null,
+      tags: Array.isArray(ownership?.tags) ? ownership.tags.filter((tag): tag is string => typeof tag === 'string') : [],
     };
     const list = products.get(item.kit_id) ?? [];
     list.push(product);
@@ -967,14 +988,42 @@ export function resolveKitImages(
   return images;
 }
 
-export function mapHighlights(rows: StoryHighlightRow[], itemCounts: Map<string, number>) {
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title || '',
-    items: itemCounts.get(row.id) ?? 0,
-    coverStoryId: row.cover_story_id || null,
-    position: Number(row.position ?? 0),
-  }));
+export function mapHighlights(
+  rows: StoryHighlightRow[],
+  itemCounts: Map<string, number>,
+  itemsByHighlight?: Map<string, StoryHighlightItemRow[]>,
+  storiesById?: Map<string, StoryRow>
+) {
+  const imageOf = (storyId?: string | null) => {
+    if (!storyId) return null;
+    const story = storiesById?.get(storyId);
+    if (!story) return null;
+    return story.image_url || (story.storage_path ? `/api/stories/${story.id}/media` : null);
+  };
+  return rows.map((row) => {
+    const items = itemsByHighlight?.get(row.id) ?? [];
+    const coverStoryId = row.cover_story_id || items[0]?.story_id || null;
+    const coverImage = imageOf(coverStoryId) || items.map((item) => imageOf(item.story_id)).find(Boolean) || null;
+    return {
+      id: row.id,
+      title: row.title || '',
+      items: itemCounts.get(row.id) ?? 0,
+      coverStoryId,
+      coverImage,
+      stories: items
+        .map((item) => {
+          const story = item.story_id ? storiesById?.get(item.story_id) : null;
+          if (!story) return null;
+          return {
+            id: story.id,
+            image: story.image_url || (story.storage_path ? `/api/stories/${story.id}/media` : ''),
+            caption: story.caption || '',
+          };
+        })
+        .filter((story): story is { id: string; image: string; caption: string } => Boolean(story?.image)),
+      position: Number(row.position ?? 0),
+    };
+  });
 }
 
 export function mapCompanions(
@@ -1717,7 +1766,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     safeRows<OwnershipRow>(
       supabase
         .from('product_ownership')
-        .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity')
+        .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity,purchase_date,maintenance_due_at,status,location,tags')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(500)
@@ -1855,7 +1904,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
       safeRows<CatalogKitItemRow>(supabase.from('kit_items').select('nom,image').limit(500)),
       highlightIds.length
         ? safeRows<StoryHighlightItemRow>(
-            supabase.from('story_highlight_items').select('highlight_id').in('highlight_id', highlightIds)
+            supabase.from('story_highlight_items').select('highlight_id,story_id,position').in('highlight_id', highlightIds)
           )
         : Promise.resolve([] as StoryHighlightItemRow[]),
       repostSourceIds.length
@@ -1883,7 +1932,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         ? safeRows<OwnershipRow>(
             supabase
               .from('product_ownership')
-              .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity')
+              .select('id,name,brand,category,weight_g,price_cents,condition,photo_url,is_lent,description,quantity,purchase_date,maintenance_due_at,status,location,tags')
               .in('id', loanOwnershipIds)
           )
         : Promise.resolve([] as OwnershipRow[]),
@@ -2106,9 +2155,14 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
   }
 
   const highlightItemCounts = new Map<string, number>();
+  const highlightItemsByHighlight = new Map<string, StoryHighlightItemRow[]>();
   for (const item of highlightItems) {
     highlightItemCounts.set(item.highlight_id, (highlightItemCounts.get(item.highlight_id) ?? 0) + 1);
+    const list = highlightItemsByHighlight.get(item.highlight_id) ?? [];
+    list.push(item);
+    highlightItemsByHighlight.set(item.highlight_id, list);
   }
+  const storyById = new Map(storyRows.map((row) => [row.id, row]));
 
   const challengeProgress = new Map<string, { progress: number; completed: boolean }>();
   for (const row of userChallengeRows) {
@@ -2143,7 +2197,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     // Passeport et lieux visités sur l'historique complet, pas sur la liste
     // d'affichage plafonnée à 24 sorties.
     stamps: mapStamps(statsSessions, routes, geoMassifs),
-    highlights: mapHighlights(highlightRows, highlightItemCounts),
+    highlights: mapHighlights(highlightRows, highlightItemCounts, highlightItemsByHighlight, storyById),
     clubs: mapClubs(
       clubMembers,
       clubs,

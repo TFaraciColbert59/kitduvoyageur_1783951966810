@@ -1,5 +1,6 @@
 # Node modules
 node_modules/
+node_modules
 
 # Environment variables
 .env
@@ -21,6 +22,7 @@ out/
 .turbo/
 .parcel-cache/
 .cleanup-trash/
+resources/catalog-data/*.xlsx
 reach-report.json
 *.tsbuildinfo
 
@@ -92,9 +94,10 @@ playwright-report/
 # Géodonnées volumineuses générées (3 Go)
 geo_data/
 pays-data/
-# Ignore generated cache directories, never source modules or SQL migrations.
-.cache/
-**/.cache/
+*cache*
+!src/app/api/route/cache/
+!src/features/explorer-osm/services/cacheService.ts
+!tests/features/explorer-osm/cacheAndBreaker.spec.ts
 
 # Design de référence local (hors app)
 Front end/
@@ -181,3 +184,6 @@ scratch/
 # Copies de travail des sous-agents (git worktree)
 .claude/worktrees/
 .vercel
+.vinext/
+.cloudflare/
+.env*

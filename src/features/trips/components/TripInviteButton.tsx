@@ -28,7 +28,7 @@ export function buildJoinUrl(
 
 /**
  * Task 17 — Bouton « Inviter des amis » de l'itinéraire : ouvre une modale
- * (`Sheet` canonique) qui partage le lien `/rejoindre/<slug>`.
+ * (`Sheet` canonique) qui partage le lien `/communaute/<slug>`.
  * La personne invitée consent explicitement avant tout snapshot de profil.
  */
 export function TripInviteButton({ trip, className }: TripInviteButtonProps) {

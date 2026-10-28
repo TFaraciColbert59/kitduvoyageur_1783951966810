@@ -16,7 +16,7 @@ beforeEach(() => h.exchange.mockClear().mockResolvedValue({ error: null }));
 
 describe('safeNextPath', () => {
   it('garde un chemin du site, refuse tout ce qui en sortirait', () => {
-    expect(safeNextPath('/compte/garder-mon-essai?lien=ok')).toBe('/compte/garder-mon-essai?lien=ok');
+    expect(safeNextPath('/compte?lien=ok')).toBe('/compte?lien=ok');
     expect(safeNextPath(null)).toBe('/compte');
     expect(safeNextPath('')).toBe('/compte');
     for (const bad of ['//evil.example', '/\\evil.example', 'https://evil.example', 'evil.example', '/ok\nSet-Cookie: x', '/' + 'a'.repeat(400)]) {
@@ -28,9 +28,9 @@ describe('safeNextPath', () => {
 
 describe('GET /auth/callback', () => {
   it('code valide : retourne vers la page demandée, sur le site', async () => {
-    const res = await call(`code=abc&next=${encodeURIComponent('/compte/garder-mon-essai?lien=ok')}`);
+    const res = await call(`code=abc&next=${encodeURIComponent('/compte?lien=ok')}`);
     expect(h.exchange).toHaveBeenCalledWith('abc');
-    expect(where(res)).toBe('https://lekitduvoyageur.fr/compte/garder-mon-essai?lien=ok');
+    expect(where(res)).toBe('https://lekitduvoyageur.fr/compte?lien=ok');
   });
 
   it('next hors du site : retombe sur /compte (pas de redirection ouverte)', async () => {
@@ -38,11 +38,11 @@ describe('GET /auth/callback', () => {
     expect(where(res)).toBe('https://lekitduvoyageur.fr/compte');
   });
 
-  it('échange impossible : connexion en erreur, sauf pour « garder mon essai » qui l’explique', async () => {
+  it('échange impossible : la connexion en erreur, quel que soit next', async () => {
     h.exchange.mockResolvedValue({ error: { message: 'bad_code_verifier' } });
     expect(where(await call('code=abc'))).toBe('https://lekitduvoyageur.fr/connexion?error=callback_failed');
-    expect(where(await call(`code=abc&next=${encodeURIComponent('/compte/garder-mon-essai?lien=ok')}`))).toBe(
-      'https://lekitduvoyageur.fr/compte/garder-mon-essai?lien=echec'
+    expect(where(await call(`code=abc&next=${encodeURIComponent('/compte?lien=ok')}`))).toBe(
+      'https://lekitduvoyageur.fr/connexion?error=callback_failed'
     );
     expect(where(await call('next=/compte'))).toBe('https://lekitduvoyageur.fr/connexion?error=callback_failed');
   });

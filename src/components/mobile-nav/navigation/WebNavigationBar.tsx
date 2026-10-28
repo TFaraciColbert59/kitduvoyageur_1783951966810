@@ -8,11 +8,9 @@ import {
   getActiveDestinationId,
   getDestinationByHref,
   hasExtendedNav,
-  type DestinationId,
 } from '@/components/mobile-nav/destinationRegistry';
+import TabItem from './TabItem';
 import NavigationSurface from './NavigationSurface';
-import IOS27BottomBar from '@/components/navigation/IOS27BottomBar';
-import { zIndex } from '@/lib/ui/zIndex';
 import NavigationPlateau from './NavigationPlateau';
 import DayPlateau from './DayPlateau';
 import {
@@ -120,9 +118,6 @@ function WebNavigationBar() {
     : null;
   const activeDestinationId = pressedDestinationId ?? getActiveDestinationId(pathname);
   const opticalNavigation = isHubSurfacePathname(pathname);
-  const badges = Object.fromEntries(
-    DESTINATIONS.map((destination) => [destination.id, badgeFor(destination)]),
-  ) as Partial<Record<DestinationId, number>>;
 
   if (!mounted) {
     return (
@@ -140,26 +135,13 @@ function WebNavigationBar() {
           doit reserver la place du rail, meme hors de AppShell. Sur /prepare
           le rail recouvrait le CTA final, la page lisant un repli trop court. */}
       <BottomNavReservation hasUpperExtension={hasUpperExtension} hasDayPlateau={hasDayPlateau} />
-      {/* Barre Liquid Glass iOS 26/27 (lentille grossissante, icônes seules).
-          Le plateau contextuel reste empilé au-dessus, même slot qu'avant. */}
-      <div
-        className="lkv-nav-surface"
-        data-hidden={plateauController.hiddenByEvent}
-        style={{
-          position: 'fixed',
-          left: 0,
-          right: 0,
-          bottom: 'var(--cookie-banner-h, 0px)',
-          zIndex: zIndex.nav,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 8,
-          pointerEvents: 'none',
-          paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
-        }}
-      >
-        <div style={{ width: 'min(calc(100% - 28px), 402px)', pointerEvents: 'auto' }}>
+      <NavigationSurface
+        label="Navigation principale"
+        hidden={plateauController.hiddenByEvent}
+        opticalNavigation={opticalNavigation}
+        plateau={
+          // Un seul plateau a la fois : le rail jour remplace le plateau
+          // de section quand il est actif (meme slot, meme geometrie).
           <AnimatePresence>
             {showDayPlateau ? (
               <DayPlateau key="day-plateau" />
@@ -167,22 +149,21 @@ function WebNavigationBar() {
               <NavigationPlateau key="section-plateau" controller={plateauController} />
             ) : null}
           </AnimatePresence>
-        </div>
-        <div style={{ pointerEvents: 'auto', width: '100%', display: 'flex', justifyContent: 'center' }}>
-          <IOS27BottomBar
-            floating={false}
-            hidden={plateauController.hiddenByEvent}
-            activeTabId={(activeDestinationId as DestinationId | null) ?? undefined}
-            onSelectTab={(id) => {
-              const dest = DESTINATIONS.find((d) => d.id === id);
-              if (dest) setPressedTab(dest.href);
-            }}
-            badges={badges}
-            onHubLongPress={openHubSwitcher ?? undefined}
-            controlledNavigates
+        }
+      >
+        {DESTINATIONS.map((destination) => (
+          <TabItem
+            key={destination.id}
+            destination={destination}
+            isActive={activeDestinationId === destination.id}
+            prefetch={false}
+            onPress={setPressedTab}
+            badge={badgeFor(destination)}
+            onLongPress={destination.id === 'adventures' ? openHubSwitcher : undefined}
+            optical={opticalNavigation}
           />
-        </div>
-      </div>
+        ))}
+      </NavigationSurface>
     </>
   );
 }

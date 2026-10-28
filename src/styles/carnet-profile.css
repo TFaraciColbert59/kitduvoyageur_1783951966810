@@ -1,162 +1,438 @@
 /* =============================================================================
-   Fiche carnet — grammaire profil du Compte (2026-10-24)
-
-   Coquille, fond, boutons ronds, pastille auteur, menu ··· et barre basse sont
-   ceux du Compte/Communauté (community-feed.css, account-glass.css,
-   liquid-capsules.css). Cette feuille n'ajoute que la fiche — préfixe `ckp-`.
-   Aucune couleur nouvelle : #17402c, #56665d, #e0245e, #a33227, #3d7a52.
+   Fiche carnet — écran fixe + drawers (2026-10-24, v4)
+   Valeurs mesurées sur /compte et /communaute (430 × 932).
+   Tâche 0 : typo 14 / ls -0.01em / encre #172b24 hérités du Compte.
    ============================================================================= */
 
-.ckp-main { display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
-
-/* --- Top bar -------------------------------------------------------------- */
-
-.ckp-topbar {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  min-height: 38px;
+html:has(.ckp-screen), body:has(.ckp-screen) {
+  height: 100dvh; overflow: hidden; overscroll-behavior: none;
 }
-.ckp-topbar[data-scrolled='true'] .ckp-topbar-veil { opacity: 1; }
-.ckp-topbar-veil {
-  position: absolute; inset: 0; pointer-events: none; opacity: 0;
-  transition: opacity .2s ease;
-  background: var(--bar-glass-bg);
-  -webkit-backdrop-filter: var(--bar-glass-blur); backdrop-filter: var(--bar-glass-blur);
-  box-shadow: 0 0 0 .5px rgba(23, 43, 36, .10);
+
+/* --- Écran ---------------------------------------------------------------- */
+.ckp-screen {
+  position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100dvh; width: 100%; overflow: hidden;
+  grid-template-columns: minmax(0, 1fr);
+  background-color: var(--account-canvas-bg, #cfd6c8);
+  background-image:
+    linear-gradient(180deg, rgba(255, 250, 236, .08) 0%, rgba(255, 255, 255, 0) 30%, rgba(245, 242, 236, .12) 60%),
+    var(--account-canvas-image, url('/assets/images/account-bg.webp'));
+  background-size: cover;
+  background-position: var(--account-canvas-position, center 30%);
+  background-repeat: no-repeat;
+  color: #172b24;
+  font: 400 14px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.01em;
+  -webkit-font-smoothing: antialiased;
 }
-.ckp-topbar > * { position: relative; z-index: 1; }
-.ckp-top-left { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
+.ckp-screen > * { min-width: 0; }
+.ckp-screen-header { position: relative; z-index: 20; padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 6px; min-width: 0; }
+.ckp-screen-body {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; min-height: 0; min-width: 0;
+  width: 100%; max-width: 430px; margin-inline: auto;
+  padding: 0 12px calc(58px + env(safe-area-inset-bottom, 0px));
+}
+
+/* --- Fond de page : photo du carnet, voile dégradé, canvas vert en repli ---- */
+.ckp-screen-bg {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  background-color: var(--account-canvas-bg, #cfd6c8);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.ckp-screen-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(10, 20, 14, .18), rgba(10, 20, 14, .55));
+}
+
+/* --- Barre du haut -------------------------------------------------------- */
+.ckp-topbar { display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 36px; min-width: 0; }
+.ckp-top-left { display: flex; align-items: center; gap: 5px; min-width: 0; flex: 1; }
 .ckp-top-actions { display: flex; align-items: center; gap: 6px; flex: none; }
-.ckp-top-actions .gbtn, .ckp-top-left .gbtn { position: relative; }
-.ckp-top-actions .gbtn::after, .ckp-top-left .gbtn::after { content: ''; position: absolute; inset: -3px; }
+.ckp-top-actions .gbtn { position: relative; }
+.ckp-top-actions .gbtn::after { content: ''; position: absolute; inset: -3px; }
 
 .ckp-title-pill {
-  display: inline-flex; align-items: center; gap: 7px; max-width: 240px;
-  height: 34px; padding: 4px 10px 4px 4px; border: 0; border-radius: 999px;
-  background: var(--bar-glass-bg);
+  display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%; height: 34px; padding: 0 11px;
+  border: 0; border-radius: 999px; background: var(--bar-glass-bg);
   -webkit-backdrop-filter: var(--bar-glass-blur); backdrop-filter: var(--bar-glass-blur);
-  box-shadow: var(--bar-thumb-shadow); color: var(--feed-ink); cursor: pointer;
+  box-shadow: var(--bar-thumb-shadow); color: #172b24; cursor: pointer;
 }
-.ckp-title-pill:active { transform: scale(.97); }
-.ckp-title-cover { width: 24px; height: 24px; border-radius: 8px; object-fit: cover; flex: none; }
-.ckp-title-cover--empty {
-  display: grid; place-items: center; border-radius: 8px;
-  background: linear-gradient(160deg, #17402c, #3d7a52);
-  color: #fff; font: 700 10px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-}
+.ckp-title-pill:active { transform: scale(.96); }
 .ckp-title-pill b {
-  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font: 700 12.5px/1.1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 700 16px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.025em;
+}
+.ckp-title-chevron { flex: none; opacity: .7; }
+.ckp-notif { position: relative; }
+.ckp-notif-badge {
+  position: absolute; top: -2px; right: -2px; min-width: 16px; height: 16px; padding: 0 4px;
+  display: inline-flex; align-items: center; justify-content: center; border-radius: 999px;
+  background: #e0245e; color: #fff; font: 700 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
 }
 
-/* --- Carte d'identité ----------------------------------------------------- */
-
+/* --- Carte ---------------------------------------------------------------- */
 .ckp-card {
-  position: relative; border-radius: 28px; padding: 14px; margin: 0;
-  background: rgba(255, 255, 255, .62);
+  display: flex; flex-direction: column; min-height: 0; max-height: 100%;
+  border-radius: 24px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .486), rgba(255, 255, 255, .384));
   -webkit-backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05);
   backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 0 0 .5px rgba(23, 43, 36, .10), 0 10px 26px rgba(23, 43, 36, .12);
-  color: var(--feed-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 -1px 1px rgba(255, 255, 255, .4),
+    0 0 0 .5px rgba(23, 43, 36, .12);
+  transition: height 220ms cubic-bezier(.22, 1, .36, 1);
 }
-.ckp-head { display: flex; align-items: flex-start; gap: 12px; }
-.ckp-cover-wrap { position: relative; flex: none; }
-.ckp-cover {
-  width: 96px; height: 96px; border-radius: 18px; object-fit: cover; display: block;
-  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .12);
+.ckp-card-scroll {
+  flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 8px 12px 56px;
+  scrollbar-width: none;
+  /* Le balayage horizontal des jours reste livré au JS : le navigateur ne
+     garde que le défilement vertical de la carte. */
+  touch-action: pan-y;
 }
-@media (min-width: 768px) { .ckp-cover { width: 112px; height: 112px; } }
-.ckp-cover--empty {
-  display: grid; place-items: center; gap: 2px; text-align: center;
-  background: linear-gradient(160deg, #17402c, #3d7a52); color: #fff;
-}
-.ckp-cover--empty b { font: 700 24px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-cover--empty small { font: 600 8.5px/1.1 var(--font-sans, -apple-system, system-ui, sans-serif); opacity: .8; }
-.ckp-cover-expand {
-  position: absolute; right: 6px; bottom: 6px; width: 22px; height: 22px;
-  display: grid; place-items: center; border: 0; border-radius: 999px;
-  background: rgba(255, 255, 255, .78); color: var(--feed-ink); cursor: pointer;
-}
-.ckp-cover-expand::after { content: ''; position: absolute; inset: -11px; }
+.ckp-card-scroll::-webkit-scrollbar { display: none; }
 
-.ckp-id-col { flex: 1; min-width: 0; }
-.ckp-title-row { display: flex; align-items: flex-start; gap: 6px; }
-.ckp-title {
-  margin: 0; flex: 1; min-width: 0;
-  font: 700 20px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
-  letter-spacing: -.015em;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+/* Bloc balayé : toute la matière de la carte glisse d'un jour à l'autre.
+   `flex: none` : le bloc ne se comprime jamais, c'est la carte qui défile. */
+.ckp-day-pane { display: flex; flex-direction: column; gap: 7px; flex: none; min-width: 0; }
+/* Balayage d'un jour : 220 ms, courbe du Compte, 16 px de course — exactement
+   la course d'une page du carrousel. La classe est reposée par le JS sur un
+   nœud stable, jamais par un remontage. */
+.ckp-day--next { animation: ckp-day-next 220ms cubic-bezier(.22, 1, .36, 1) both; }
+.ckp-day--prev { animation: ckp-day-prev 220ms cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes ckp-day-next {
+  from { opacity: .35; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
 }
-@media (min-width: 768px) { .ckp-title { font: 700 22px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); } }
+@keyframes ckp-day-prev {
+  from { opacity: .35; transform: translateX(-16px); }
+  to { opacity: 1; transform: none; }
+}
+/* Mouvement réduit : aucun déplacement, la carte change de jour sans glisser. */
+@media (prefers-reduced-motion: reduce) {
+  .ckp-day--next, .ckp-day--prev { animation: none; }
+}
+
+/* --- Pastille de jour ------------------------------------------------------
+   Un marqueur, jamais un titre : point d'encre 6 px, date courte 12/700,
+   compte de moments 10,5/500 à droite. La ligne mesure 16 px et ne prend pas
+   la place d'un en-tête. */
+.ckp-daypill { display: flex; align-items: center; gap: 6px; height: 16px; margin: 0 2px; min-width: 0; }
+.ckp-daypill-dot {
+  flex: none; width: 6px; height: 6px; border-radius: 999px; background: #17402c;
+  box-shadow: 0 0 0 2.5px rgba(23, 64, 44, .12);
+}
+.ckp-daypill-label {
+  min-width: 0; color: #172b24;
+  font: 700 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ckp-daypill-count {
+  margin-left: auto; flex: none; color: #6B7A70;
+  font: 500 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* --- Identité ------------------------------------------------------------- */
+.ckp-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ckp-cover-btn {
+  position: relative; flex: none; width: 66px; height: 66px; padding: 2.5px;
+  border: 0; border-radius: 50%; display: block; cursor: pointer;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .92), rgba(235, 242, 236, .65));
+  box-shadow: 0 3px 14px rgba(23, 64, 44, .14), inset 0 1px 0 rgba(255, 255, 255, .95);
+}
+.ckp-cover-btn::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 140deg, rgba(23, 64, 44, .62), rgba(150, 179, 145, .55), rgba(255, 255, 255, .9), rgba(91, 127, 85, .5), rgba(23, 64, 44, .62));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7);
+}
+.ckp-cover-btn:active { transform: scale(.95); }
+.ckp-cover {
+  position: relative; display: block; width: 100%; height: 100%; object-fit: cover;
+  border-radius: 50%; border: 2px solid rgba(255, 255, 255, .92);
+}
+/* Repli sans trace : une pastille sombre, pas une lettre isolée. */
+.ckp-cover--initial {
+  display: grid; place-items: center;
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(160deg, #123726, #17402c 58%, #2e5c40);
+  color: #f4f7f3;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 -6px 12px rgba(0, 0, 0, .18);
+  font: 700 21px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.01em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, .28);
+}
+/* Mini tracé du voyage : même anneau que la couverture, fond verre. */
+.ckp-cover--trace {
+  display: grid; place-items: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .82), rgba(255, 255, 255, .56));
+  -webkit-backdrop-filter: var(--bar-glass-blur); backdrop-filter: var(--bar-glass-blur);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+.ckp-cover--trace svg { display: block; width: 100%; height: 100%; }
+
+/* Grille de stats : trois colonnes égales qui prennent la place restante —
+   aucune largeur fixe (101 px × 3 + gouttière débordait la carte de 7 px). */
+.ckp-id-stats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;
+  flex: 1 1 auto; min-width: 0; max-width: 100%; margin: 2px 0 0 2px;
+}
+.ckp-stat {
+  min-width: 0; max-width: 100%; min-height: 39px; padding: 2px 3px; border: 0; border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: none; cursor: pointer; color: inherit;
+}
+.ckp-stat:active { transform: scale(.95); }
+.ckp-stat-v {
+  color: #17402c; font: 700 19px/1.05 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.38px; font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ckp-stat-l { color: #56665d; font: 500 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: normal; text-transform: lowercase; }
+
+.ckp-bio-line {
+  margin: 0 2px; color: #172b24;
+  font: 400 12px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.14px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ckp-author-line {
+  display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
+  margin: 0 0 0 2px; padding: 0; border: 0; background: none; cursor: pointer;
+  color: #56665d; text-align: left;
+  font: 500 11.2px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-author-line b {
+  font-weight: 600; color: #17402c; max-width: 150px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ckp-author-score {
+  display: inline-flex; align-items: center; height: 16px; padding: 0 5px; border-radius: 999px;
+  background: rgba(255, 255, 255, .6); color: #56665d;
+  font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
 .ckp-badge {
   display: inline-flex; align-items: center; gap: 3px; flex: none;
-  height: 18px; padding: 0 6px; border-radius: 999px;
+  height: 16px; padding: 0 6px; border-radius: 999px;
   background: rgba(61, 122, 82, .12); color: #2f6b45;
   font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
 }
-.ckp-badge--private { background: rgba(23, 43, 36, .08); color: var(--feed-muted); }
-.ckp-sub, .ckp-dates { margin: 3px 0 0; color: var(--feed-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ckp-sub { font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-dates { font: 500 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-bio {
+  margin: 0 2px; color: #56665d;
+  font: 400 12px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 
-.ckp-stats { display: flex; gap: 8px; margin-top: 8px; }
-.ckp-stat { min-width: 0; }
-.ckp-stat-v {
-  display: block; font: 700 17px/1.1 var(--font-sans, -apple-system, system-ui, sans-serif);
-  font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+/* --- Pied de carte : la capsule 88 × 30, rien d'autre ---------------------
+   Géométrie mesurée sur /compte (`.ig-tabs`) et reprise des drawers : capsule
+   88 × 30, rayon 999, padding 2,5 px, deux segments de 41,5 × 25, lentille
+   blanche de même taille, posée à 10 px des bords bas et droit de la carte.
+   Aucun bouton rond : ♥ et 💬 ont quitté la carte, leurs pages se lisent dans
+   le carrousel.                                                            */
+/* La capsule : 88 × 30, deux segments de 41,5 × 25, aucun gap. Le pied de la
+   carte ne porte plus qu'elle, à 10 px des bords bas et droit : plus aucun
+   bouton rond, ♥ et 💬 ont quitté la carte. */
+.ckp-card-foot {
+  position: absolute; right: 10px; bottom: 10px; z-index: 6;
+  display: flex; align-items: center; height: 30px;
+  padding: 0; border-radius: 0; background: none; box-shadow: none;
+  overflow: visible;
+}
+/* Même matière et même ombre de pose que la capsule des drawers. */
+.ckp-card-foot .ckp-capsule {
+  box-shadow:
+    inset 0 1px 1px rgba(23, 43, 36, .06),
+    inset 0 -1px 0 rgba(255, 255, 255, .65),
+    0 2px 8px rgba(23, 43, 36, .10);
+}
+.ckp-foot-sep { display: none; }
+
+/* La capsule : 88 × 30, deux segments de 41,5 × 25, aucun gap. */
+.ckp-capsule {
+  position: relative; flex: none; box-sizing: border-box;
+  width: calc(var(--n, 2) * 41.5px + 5px); height: 30px; padding: 2.5px; border-radius: 999px;
+  background: rgba(23, 43, 36, .06);
+  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
+}
+.ckp-capsule .ckp-tabs {
+  position: relative; z-index: 1; display: grid; grid-template-columns: 41.5px 41.5px;
+  gap: 0; width: 83px; height: 25px; padding: 0; border-radius: 999px;
+  background: none; box-shadow: none;
+}
+.ckp-capsule .ckp-tabs button {
+  position: relative; z-index: 1; width: 41.5px; height: 25px; padding: 0; border: 0;
+  border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+  background: none; color: #56665d; cursor: pointer;
+  transition: color .18s ease, transform .16s cubic-bezier(.22, 1, .36, 1);
+}
+.ckp-capsule .ckp-tabs button[aria-selected='true'] { color: #17402c; }
+.ckp-capsule .ckp-tabs button:active { transform: scale(.94); }
+@media (hover: hover) {
+  .ckp-capsule .ckp-tabs button:hover { color: #17402c; }
+}
+/* Une seule lentille blanche, 41,5 × 25, au pas exact du segment. */
+.ckp-capsule > .ckp-th {
+  position: absolute; top: 2.5px; left: 2.5px; z-index: 0;
+  width: 41.5px; height: 25px; border-radius: 999px; background: #fff;
+  box-shadow:
+    0 1px 3px rgba(23, 43, 36, .18),
+    0 0 0 .5px rgba(23, 43, 36, .06);
+  transform: translateX(calc(var(--i, 0) * 41.5px));
+  transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
+  pointer-events: none;
+}
+/* Page sans segment (J’aime, Commentaires, Gérer, Étapes, Matériel, Nature). */
+.ckp-capsule > .ckp-th[data-off='true'] { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .ckp-capsule > .ckp-th { transition: none; }
+}
+
+/* --- Médias --------------------------------------------------------------- */
+/* Grille des posts : gabarit mesuré sur /compte (430 × 932) — bloc de 406 px
+   de large (`.ig-grid-wrap` : x 12, w 406), trois colonnes de 134 px,
+   gouttière 2 px, tuiles rayon 2, images `object-fit: cover`, aucun padding
+   latéral, aucun badge. 3 × 134 + 2 × 2 = 406 : la grille colle à la carte.
+   Le bloc est rogné au rayon 22 du Compte, sinon les quatre coins restent
+   carrés et l'écart se voit au premier regard. */
+.ckp-media { position: relative; margin: 0 -12px; min-width: 0; }
+.ckp-grid-wrap {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0;
+  border-radius: 22px; overflow: hidden;
+}
+.ckp-tile {
+  position: relative; aspect-ratio: 1 / 1; width: 100%; padding: 0; border: 0;
+  overflow: hidden; background: #dfe8dc; cursor: pointer; border-radius: 2px; display: block;
+}
+.ckp-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ckp-tile:active { transform: scale(.96); }
+.ckp-tile-more {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(10, 20, 14, .5); color: #fff;
+  font: 700 17px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-grid-empty {
+  display: grid; place-items: center; gap: 6px; padding: 26px 18px;
+  background: rgba(255, 255, 255, .3); text-align: center; color: #56665d;
+}
+.ckp-grid-empty b { color: #172b24; font: 700 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-grid-empty p { margin: 0; max-width: 250px; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
+
+.ckp-map-card { position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: #dfe8dc; }
+.ckp-map-canvas { position: absolute; inset: 0; }
+.ckp-map-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 18px; overflow: hidden; background: #dfe8dc; }
+.ckp-map-foot {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 400;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 10px; background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .88));
+}
+.ckp-map-foot .ckp-day-meta { margin: 0; }
+
+/* --- Carte-drawer --------------------------------------------------------- */
+/* Hauteur adaptative : le contenu + sa réserve, plafonnée à la place de la
+   carte (503 px à 430 × 932). Au-delà, c'est le corps qui défile. */
+.ckp-card.ckp-card--drawer {
+  flex: 0 0 auto; height: auto; min-height: 0; max-height: min(100%, 503px);
+  animation: ckp-drawer-in 220ms cubic-bezier(.22, 1, .36, 1) both;
+}
+/* En-tête du drawer : ce sont les deux seuls éléments du haut — la poignée
+   42 × 5 à 8 px du bord, et la croix 36 px. Le voile de coupure vit sous la
+   poignée et n'apparaît qu'au défilement. */
+.ckp-drawer-head { position: relative; z-index: 6; flex: none; }
+.ckp-grabber {
+  display: grid; justify-items: center; align-items: start; width: 100%; height: 13px;
+  margin: 0; padding: 8px 0 0; border: 0; background: none; cursor: pointer;
+}
+.ckp-grabber span { width: 42px; height: 5px; border-radius: 999px; background: rgba(23, 43, 36, .18); }
+.ckp-drawer-close {
+  position: absolute; top: 8px; right: 12px; flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px;
+  display: grid; place-items: center; cursor: pointer; color: #17402C;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(23, 43, 36, .06);
+  transition: transform .16s cubic-bezier(.22, 1, .36, 1);
+}
+/* Cible tactile de 44 px sans toucher au dessin de 36 px. */
+.ckp-drawer-close::after { content: ''; position: absolute; inset: -4px; border-radius: 999px; }
+.ckp-drawer-close:active { transform: scale(.94); }
+.ckp-drawer-cut {
+  position: absolute; left: 0; right: 0; top: 100%; height: 16px; z-index: 7; pointer-events: none;
+  opacity: 0; transition: opacity 160ms ease;
+  border-top: .5px solid rgba(23, 43, 36, .06);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  -webkit-mask-image: linear-gradient(180deg, #000 34%, transparent);
+  mask-image: linear-gradient(180deg, #000 34%, transparent);
+}
+.ckp-drawer-cut[data-on='true'] { opacity: 1; }
+.ckp-drawer-body { padding: 16px 16px 64px; gap: 0; }
+/* Pied du drawer : la capsule d'onglets occupe la place exacte de celle de la
+   carte d'identité — `right/bottom: 10px` dans la feuille, 30 px de haut, même
+   verre, même lentille, même pas de 41,5 px. Largeur = 41,5 × n + 5 px de
+   padding (88 px pour les deux volets actuels). La réserve basse du corps
+   (52 px) laisse le contenu défiler au-dessus d'elle sans jamais passer dessous. */
+.ckp-drawer-foot {
+  position: absolute; right: 12px; bottom: 12px; z-index: 6;
+  display: flex; align-items: center; height: 30px;
+}
+.ckp-drawer-foot .ckp-capsule {
+  width: calc(var(--n, 2) * 41.5px + 5px);
+  box-shadow:
+    inset 0 1px 1px rgba(23, 43, 36, .06),
+    inset 0 -1px 0 rgba(255, 255, 255, .65),
+    0 2px 8px rgba(23, 43, 36, .10);
+}
+.ckp-drawer-foot .ckp-capsule .ckp-tabs {
+  width: calc(var(--n, 2) * 41.5px);
+  grid-template-columns: repeat(var(--n, 2), 41.5px);
+}
+@keyframes ckp-drawer-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* --- Volets --------------------------------------------------------------- */
+.ckp-pane { position: relative; display: flex; flex-direction: column; gap: 0; min-height: 0; }
+.ckp-pane-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ckp-pane-head b { font: 700 15px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-pane-head small { color: #56665d; font: 500 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-pane-meta { display: flex; flex-wrap: wrap; gap: 10px; color: #56665d; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-pane-meta span { display: inline-flex; align-items: center; gap: 4px; }
+.ckp-pane-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ckp-pane-list { display: flex; flex-direction: column; }
+.ckp-pane-empty { margin: 0; padding: 22px 0; text-align: center; color: #56665d; font: 500 12px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
+
+/* Réactions : ligne de 48 px, séparateur inséré de 16 px à gauche, valeur
+   12/500 à droite. Aucune pastille, aucun cadre. */
+.ckp-likers { display: flex; flex-direction: column; }
+.ckp-liker {
+  display: flex; align-items: center; gap: 10px; min-height: 48px;
+  border-top: .5px solid rgba(23, 43, 36, .06);
+}
+.ckp-likers > .ckp-liker:first-child { border-top: 0; }
+.ckp-liker-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ckp-liker-txt b { font: 600 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ckp-liker-txt small { color: #6B7A70; font: 500 11px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ckp-liker-value {
+  flex: none; width: 120px; text-align: right;
+  color: #6B7A70; font: 500 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums; letter-spacing: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.ckp-stat-l {
-  display: block; margin-top: 1px; color: var(--feed-muted);
-  font: 600 9.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
-  text-transform: uppercase; letter-spacing: .06em;
-}
 
-.ckp-author { display: flex; align-items: center; gap: 8px; margin-top: 10px; min-width: 0; }
-.ckp-author.pmi-author { min-height: 36px; padding: 2px 10px 2px 2px; }
-.ckp-author .pmi-author-av { width: 32px; height: 32px; }
-@media (min-width: 768px) { .ckp-author .pmi-author-av { width: 44px; height: 44px; } }
-.ckp-trust {
-  display: inline-flex; align-items: center; gap: 3px; flex: none;
-  padding: 0 6px; height: 18px; border-radius: 999px;
-  background: rgba(255, 255, 255, .6); color: var(--feed-muted);
-  font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-}
-.ckp-author-static { display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: 10px; }
-.ckp-avatar {
-  width: 32px; height: 32px; flex: none; border-radius: 999px; object-fit: cover;
-  box-shadow: 0 0 0 .5px rgba(23, 43, 36, .10);
-}
-.ckp-avatar--initial {
-  display: grid; place-items: center; background: #ddebd8; color: var(--feed-ink);
-  font: 700 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-}
-.ckp-author-name {
-  display: block; font: 700 12.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.ckp-author-meta {
-  display: block; color: var(--feed-muted);
-  font: 500 10.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
+/* --- Post du moment -------------------------------------------------------
+   Le post n'est plus peint ici : il reprend la feuille et les classes du post
+   du Compte (`.lkdv-post-*`, `OverlaySheet`, `LensPager`). Aucune règle carnet
+   ne doit redéfinir cette forme. */
 
-.ckp-desc {
-  margin: 10px 0 0;
-  font: 400 13.5px/1.45 var(--font-sans, -apple-system, system-ui, sans-serif);
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-}
-.ckp-desc-more {
-  position: relative; margin: 2px 0 0; padding: 0; border: 0; background: none; cursor: pointer;
-  color: var(--feed-muted); font: 600 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
-}
-.ckp-desc-more::after { content: ''; position: absolute; inset: -14px -8px; }
+/* --- Divers --------------------------------------------------------------- */
+.ckp-empty { display: grid; place-items: center; gap: 6px; padding: 26px 18px; text-align: center; border-radius: 18px; background: rgba(255, 255, 255, .35); color: #56665d; }
+.ckp-empty b { color: #172b24; font: 700 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-empty p { margin: 0; max-width: 250px; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-empty svg { width: 24px; height: 24px; opacity: .55; }
 
-.ckp-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .ckp-pill {
   position: relative; display: inline-flex; align-items: center; gap: 6px;
   height: 36px; padding: 0 14px; border: 0; border-radius: 999px;
@@ -164,256 +440,632 @@
   -webkit-backdrop-filter: blur(4px) saturate(1.9) brightness(1.07);
   backdrop-filter: blur(4px) saturate(1.9) brightness(1.07);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(23, 43, 36, .10);
-  color: var(--feed-ink); cursor: pointer; text-decoration: none;
+  color: #172b24; cursor: pointer; text-decoration: none;
   font: 600 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-  font-variant-numeric: tabular-nums;
 }
 .ckp-pill::after { content: ''; position: absolute; inset: -4px; }
 .ckp-pill:active { transform: scale(.96); }
 .ckp-pill svg { width: 16px; height: 16px; }
-.ckp-pill.is-on { color: var(--feed-like); }
 .ckp-pill--primary { background: #17402c; color: #fff; box-shadow: 0 4px 14px rgba(23, 64, 44, .24); }
 .ckp-pill:disabled { opacity: .45; cursor: not-allowed; }
 
-.ckp-sep { height: .5px; margin: 12px 0 0; background: rgba(23, 43, 36, .10); }
-.ckp-tabs { margin-top: 12px; }
+/* Sous-sélecteur 30 px : même verre, même pas et même lentille que la capsule
+   de la carte. Non flottant — il vit dans le flux, 16 px sous la poignée. */
+.ckp-sub {
+  position: relative; box-sizing: border-box;
+  display: inline-flex; align-items: center; height: 30px; padding: 2.5px; gap: 0;
+  border-radius: 999px; background: rgba(23, 43, 36, .06);
+  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
+}
+.ckp-sub--icons { width: calc(var(--n, 3) * 41.5px + 5px); }
+.ckp-sub > .ckp-th {
+  position: absolute; top: 2.5px; left: 2.5px; z-index: 0;
+  width: 41.5px; height: 25px; border-radius: 999px; background: #fff;
+  box-shadow: 0 1px 3px rgba(23, 43, 36, .18), 0 0 0 .5px rgba(23, 43, 36, .06);
+  transform: translateX(calc(var(--i, 0) * 41.5px));
+  transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
+  pointer-events: none;
+}
+.ckp-sub > .ckp-th[data-off='true'] { opacity: 0; }
+.ckp-sub button {
+  position: relative; z-index: 1; height: 25px; padding: 0 10px; border: 0; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; color: #56665d; cursor: pointer;
+  font: 500 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0; transition: color 160ms ease;
+}
+.ckp-sub--icons button { width: 41.5px; padding: 0; }
+.ckp-sub button[aria-pressed='true'] { color: #17402C; }
+/* Mode texte : la lentille ne peut pas glisser entre des largeurs variables,
+   la cellule active reçoit donc la même matière blanche, à sa largeur. */
+.ckp-sub:not(.ckp-sub--icons) button[aria-pressed='true'] {
+  background: #fff; box-shadow: 0 1px 3px rgba(23, 43, 36, .14);
+}
+.ckp-sub button::after { content: ''; position: absolute; inset: -9px -4px; }
+@media (prefers-reduced-motion: reduce) {
+  .ckp-sub > .ckp-th { transition: none; }
+}
 
-/* --- Bloc médias ---------------------------------------------------------- */
+/* Interrupteur 36 × 20, teinte #17402C : le dessin garde 20 px de haut, la
+   rangée de réglage de 48 px porte la cible tactile. */
+.ckp-switch {
+  display: inline-block; vertical-align: middle;
+  position: relative; width: 36px; height: 20px; flex: none; padding: 2px;
+  border-radius: 999px; background: rgba(23, 43, 36, .16);
+  transition: background 180ms ease;
+}
+.ckp-switch span { display: block; width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 4px rgba(23, 43, 36, .24); transition: transform 180ms cubic-bezier(.16, 1, .3, 1); }
+.ckp-switch.is-on { background: #17402c; }
+.ckp-switch.is-on span { transform: translateX(16px); }
 
-.ckp-media { position: relative; }
-.ckp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
-.ckp-tile {
-  position: relative; aspect-ratio: 1 / 1; width: 100%; padding: 0; border: 0;
-  overflow: hidden; background: #dfe8dc; cursor: pointer; border-radius: 0; display: block;
-}
-.ckp-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.ckp-tile::after { content: ''; position: absolute; inset: 0; background: rgba(10, 20, 14, .55); opacity: 0; transition: opacity .15s ease; }
-.ckp-tile:active::after { opacity: 1; }
-.ckp-tile-more {
-  position: absolute; inset: 0; display: grid; place-items: center;
-  background: rgba(10, 20, 14, .5); color: #fff;
-  font: 700 17px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-}
-.ckp-toggle {
-  position: absolute; right: 10px; bottom: 10px; z-index: 5;
-  display: inline-flex; align-items: center; gap: 0; height: 30px; padding: 2px;
-  border-radius: 999px; background: rgba(255, 255, 255, .34);
-  -webkit-backdrop-filter: var(--bar-glass-blur); backdrop-filter: var(--bar-glass-blur);
-  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .08), inset 0 1px 2px rgba(23, 43, 36, .05), 0 6px 16px rgba(23, 43, 36, .12);
-}
-.ckp-toggle button {
-  position: relative; width: 30px; height: 26px; display: grid; place-items: center;
-  border: 0; border-radius: 999px; background: transparent; color: var(--feed-muted); cursor: pointer;
-}
-.ckp-toggle button[aria-pressed='true'] {
-  background: #fff; color: var(--feed-ink);
-  box-shadow: 0 1px 3px rgba(23, 43, 36, .14), 0 3px 8px rgba(23, 43, 36, .08);
-  transition: background .42s cubic-bezier(.32, .72, 0, 1);
-}
-.ckp-toggle button::after { content: ''; position: absolute; inset: -7px -4px; }
-.ckp-toggle svg { width: 14px; height: 14px; }
-
-.ckp-map-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 18px; overflow: hidden; background: #dfe8dc; }
-.ckp-map-canvas { position: absolute; inset: 0; }
-.ckp-map-expand { position: absolute; top: 8px; right: 8px; z-index: 500; }
-.ckp-map-foot {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 400;
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 8px 10px; background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .88));
-}
-.ckp-map-foot .ckp-day-meta { margin: 0; }
-.ckp-empty {
-  display: grid; place-items: center; gap: 6px; padding: 26px 18px; text-align: center;
-  border-radius: 28px; background: rgba(255, 255, 255, .62);
-  -webkit-backdrop-filter: blur(25.2px); backdrop-filter: blur(25.2px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 0 0 .5px rgba(23, 43, 36, .10);
-  color: var(--feed-muted);
-}
-.ckp-empty b { color: var(--feed-ink); font: 700 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-empty p { margin: 0; max-width: 250px; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-empty svg { width: 24px; height: 24px; opacity: .55; }
-
-/* --- Sections ------------------------------------------------------------- */
-
-.ckp-section {
-  scroll-margin-top: 72px; border-radius: 28px; padding: 14px 16px;
-  background: rgba(255, 255, 255, .62);
-  -webkit-backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05);
-  backdrop-filter: blur(25.2px) saturate(1.8) brightness(1.05);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 0 0 .5px rgba(23, 43, 36, .10), 0 10px 26px rgba(23, 43, 36, .10);
-  color: var(--feed-ink);
-}
-.ckp-section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.ckp-h2 {
-  margin: 0; font: 700 17px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
-  letter-spacing: -.01em;
-}
-.ckp-h2 small {
-  display: block; margin-top: 2px; color: var(--feed-muted);
-  font: 600 10.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
-  letter-spacing: .04em; text-transform: uppercase;
-}
-.ckp-text {
-  margin: 8px 0 0; font: 400 13.5px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif);
-  white-space: pre-wrap; overflow-wrap: anywhere;
-}
-.ckp-link { border: 0; background: none; padding: 0; cursor: pointer; color: var(--feed-muted); font: 600 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
-
-.ckp-daylist { display: flex; flex-direction: column; gap: 0; margin-top: 10px; }
-.ckp-day { position: relative; display: flex; gap: 10px; padding-bottom: 12px; }
-.ckp-day:last-child { padding-bottom: 0; }
-.ckp-day-rail { position: relative; width: 32px; flex: none; display: flex; flex-direction: column; align-items: center; }
-.ckp-day-badge {
-  width: 32px; height: 32px; display: grid; place-items: center; border-radius: 999px;
-  background: rgba(23, 64, 44, .08); color: var(--feed-ink);
-  font: 700 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-  font-variant-numeric: tabular-nums;
-}
-.ckp-day-line { flex: 1; width: 1px; margin-top: 4px; background: rgba(23, 43, 36, .12); }
-.ckp-day:last-child .ckp-day-line { display: none; }
-.ckp-day-body { flex: 1; min-width: 0; padding-top: 2px; }
-.ckp-day-label { color: var(--feed-muted); font: 600 9.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); text-transform: uppercase; letter-spacing: .06em; }
-.ckp-day-title { display: block; margin-top: 2px; font: 700 14px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-day-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 3px; color: var(--feed-muted); font: 500 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
-.ckp-day-note { margin: 6px 0 0; font: 400 13px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-day-overnight { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--feed-muted); font: 500 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
-
-.ckp-kit-list { display: flex; flex-direction: column; margin-top: 8px; }
-.ckp-kit-row { display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 6px 0; border-top: .5px solid rgba(23, 43, 36, .08); }
-.ckp-kit-row:first-child { border-top: 0; }
-.ckp-kit-dot { width: 10px; height: 10px; border-radius: 999px; flex: none; background: #17402c; }
-.ckp-kit-name { display: block; font: 600 12.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ckp-kit-detail { display: block; color: var(--feed-muted); font: 500 10.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ckp-kit-weight { flex: none; color: var(--feed-muted); font: 600 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
-.ckp-kit-total { margin-left: auto; font: 700 17px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
-
-.ckp-drop {
-  display: grid; place-items: center; gap: 8px; padding: 18px; margin-top: 10px;
-  border-radius: 18px; border: 1px dashed rgba(23, 43, 36, .22);
-  background: rgba(255, 255, 255, .35); text-align: center;
-}
-.ckp-drop p { margin: 0; color: var(--feed-muted); font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-species { margin-top: 10px; padding: 12px; border-radius: 18px; background: rgba(255, 255, 255, .55); box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .08); }
-.ckp-species b { display: block; font: 700 15px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-species i { display: block; margin-top: 1px; color: var(--feed-muted); font: 400 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); font-style: italic; }
-.ckp-species p { margin: 6px 0 0; font: 400 12.5px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif); }
-
-.ckp-comment { display: flex; gap: 8px; padding: 8px 0; }
+/* Commentaire : nom + handle sur une ligne, texte 13/400, métadonnées dessous. */
+.ckp-comment { display: flex; gap: 9px; padding: 11px 0; }
+.ckp-comment + .ckp-comment { border-top: .5px solid rgba(23, 43, 36, .06); }
 .ckp-comment-body { min-width: 0; flex: 1; }
-.ckp-comment-name { font: 700 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-comment-time { margin-left: 6px; color: var(--feed-muted); font: 500 10px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-comment-text { margin: 2px 0 0; font: 400 12.5px/1.45 var(--font-sans, -apple-system, system-ui, sans-serif); overflow-wrap: anywhere; }
-.ckp-composer { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.ckp-comment-head { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.ckp-comment-name {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #172B24; font: 600 12.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-comment-handle { flex: none; color: #7A8A80; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-comment-text { margin: 3px 0 0; color: #172B24; font: 400 13px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif); overflow-wrap: anywhere; }
+.ckp-comment-meta { display: flex; align-items: center; gap: 10px; margin-top: 4px; color: #6B7A70; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
+.ckp-comment-meta button {
+  position: relative; padding: 0; border: 0; background: none; cursor: pointer;
+  color: #6B7A70; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-comment-meta button::after { content: ''; position: absolute; inset: -14px -8px; }
+/* Entrée d'un nouveau commentaire : fondu + 6 px, aucun saut de liste. */
+.ckp-comment.is-new { animation: ckp-comment-in 180ms cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes ckp-comment-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.ckp-avatar { width: 28px; height: 28px; flex: none; border-radius: 999px; object-fit: cover; box-shadow: 0 0 0 .5px rgba(23, 43, 36, .10); }
+.ckp-avatar--initial { display: grid; place-items: center; background: #ddebd8; color: #17402c; font: 700 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-composer { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .ckp-composer input {
   flex: 1; min-width: 0; height: 36px; border: .5px solid rgba(23, 43, 36, .14); border-radius: 999px;
-  padding: 0 12px; background: rgba(255, 255, 255, .8); color: var(--feed-ink);
+  padding: 0 12px; background: rgba(255, 255, 255, .8); color: #172b24;
   font: 400 12.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); outline: none;
 }
-.ckp-composer input:focus { border-color: rgba(23, 64, 44, .48); box-shadow: 0 0 0 3px rgba(91, 127, 85, .14); }
-.ckp-send {
-  position: relative; width: 34px; height: 34px; flex: none; display: grid; place-items: center;
-  border: 0; border-radius: 999px; background: #17402c; color: #fff; cursor: pointer;
-}
+.ckp-send { position: relative; width: 34px; height: 34px; flex: none; display: grid; place-items: center; border: 0; border-radius: 999px; background: #17402c; color: #fff; cursor: pointer; }
 .ckp-send::after { content: ''; position: absolute; inset: -5px; }
 .ckp-send:disabled { opacity: .4; cursor: not-allowed; }
 
-/* --- Viewer média --------------------------------------------------------- */
+.ckp-text { margin: 0; font: 400 13px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ckp-link { border: 0; background: none; padding: 0; cursor: pointer; color: #56665d; font: 600 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
-.ckp-viewer {
-  position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center;
-  background: rgba(10, 20, 14, .94);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-}
-.ckp-viewer img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.ckp-viewer-close { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 12px); right: 12px; z-index: 2; }
-.ckp-viewer-count {
-  position: fixed; top: calc(env(safe-area-inset-top, 0px) + 16px); left: 50%; transform: translateX(-50%);
-  padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .16); color: #fff;
+/* --- Ligne de jour : 56 px, pastille 22, deux colonnes de chiffres à droite --
+   Les valeurs restent celles du carnet : une distance absente est un tiret,
+   jamais un zéro. Le récit, la météo, la nuit et les moments restent sous la
+   ligne de 56 px : aucune donnée ne quitte la fiche. */
+.ckp-daylist { display: flex; flex-direction: column; }
+.ckp-day { display: block; border-top: .5px solid rgba(23, 43, 36, .06); }
+.ckp-day:first-child { border-top: 0; }
+.ckp-day-head { display: flex; align-items: stretch; gap: 12px; min-height: 56px; }
+.ckp-day-rail { width: 22px; flex: none; display: flex; flex-direction: column; align-items: center; }
+.ckp-day-badge {
+  width: 22px; height: 22px; margin-top: 17px; flex: none;
+  display: grid; place-items: center; border-radius: 999px;
+  background: rgba(23, 64, 44, .08); color: #17402c;
   font: 700 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums;
 }
-.ckp-viewer-nav {
-  position: fixed; top: 50%; transform: translateY(-50%); width: 38px; height: 38px;
-  display: grid; place-items: center; border: 0; border-radius: 999px;
-  background: rgba(255, 255, 255, .22); color: #fff; cursor: pointer;
+.ckp-day-line { flex: 1; width: 1px; min-height: 8px; background: rgba(23, 43, 36, .10); }
+.ckp-day:last-child .ckp-day-line { display: none; }
+.ckp-day-id { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: 8px 0; }
+.ckp-day-nums { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: center; }
+.ckp-day-nums b {
+  text-align: right; color: #172B24;
+  font: 600 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
 }
+.ckp-day-nums b + b { color: #56665D; }
+.ckp-day-body { flex: 1; min-width: 0; padding: 0 0 12px 34px; }
+.ckp-day-label { color: #6B7A70; font: 600 9.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); text-transform: uppercase; letter-spacing: .08em; }
+.ckp-day-title { display: block; margin-top: 2px; font: 600 13px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); color: #172B24; }
+.ckp-day-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 3px; color: #6B7A70; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-day-note { margin: 6px 0 0; font: 400 13px/1.45 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-day-overnight { display: inline-flex; gap: 4px; margin-top: 4px; color: #6B7A70; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+
+.ckp-kit-list { display: flex; flex-direction: column; }
+.ckp-kit-row { display: flex; align-items: center; gap: 9px; min-height: 48px; border-top: .5px solid rgba(23, 43, 36, .06); }
+.ckp-kit-row:first-child { border-top: 0; }
+.ckp-kit-dot { width: 10px; height: 10px; border-radius: 999px; flex: none; background: #17402c; }
+.ckp-kit-name { display: block; font: 600 12.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-kit-detail { display: block; color: #56665d; font: 500 10.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-kit-weight { flex: none; color: #56665d; font: 600 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
+.ckp-kit-total { font: 700 17px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
+
+.ckp-drop { display: grid; place-items: center; gap: 8px; padding: 18px; border-radius: 18px; border: 1px dashed rgba(23, 43, 36, .22); background: rgba(255, 255, 255, .35); text-align: center; }
+.ckp-drop p { margin: 0; color: #56665d; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-species { padding: 12px; border-radius: 18px; background: rgba(255, 255, 255, .55); box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .08); }
+.ckp-species b { display: block; font: 700 15px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-species i { display: block; color: #56665d; font: italic 400 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-species p { margin: 6px 0 0; font: 400 12.5px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif); }
+
+.ckp-more-anchor { position: relative; display: inline-flex; flex: none; }
+/* L'ancre est le `···` de la barre du haut : le menu s'ouvre vers le bas,
+   aligné à droite du bouton, et passe au-dessus de la carte. */
+.ckp-more-anchor .pmi-options-menu { top: calc(100% + 8px); right: 0; bottom: auto; z-index: 40; }
+
+.ckp-viewer { position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center; background: rgba(10, 20, 14, .94); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.ckp-viewer img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.ckp-viewer-close { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 12px); right: 12px; z-index: 2; }
+.ckp-viewer-count { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 16px); left: 50%; transform: translateX(-50%); padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .16); color: #fff; font: 700 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-viewer-nav { position: fixed; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .22); color: #fff; cursor: pointer; }
 .ckp-viewer-nav--prev { left: 10px; }
 .ckp-viewer-nav--next { right: 10px; }
-.ckp-viewer-caption {
-  position: fixed; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-  margin: 0 auto; max-width: 520px; padding: 10px 12px; border-radius: 18px;
-  background: rgba(255, 255, 255, .16); color: #fff;
-  font: 500 12px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif);
+.ckp-viewer-caption { position: fixed; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); margin: 0 auto; max-width: 520px; padding: 10px 12px; border-radius: 18px; background: rgba(255, 255, 255, .16); color: #fff; font: 500 12px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
+
+.ckp-screen .tb { width: min(calc(100% - 28px), 402px); }
+.ckp-screen .tb .lens { opacity: 0; }
+
+.ckp-card :focus-visible, .ckp-screen-header :focus-visible { outline: 2px solid #17402c; outline-offset: 2px; border-radius: 8px; }
+.ckp-tile:focus-visible { outline-offset: -3px; border-radius: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ckp-card--drawer { animation: none; }
+  .ckp-capsule > .ckp-th, .ckp-capsule .ckp-tabs button { transition: none; }
+  .ckp-capsule .ckp-tabs button:active { transform: none; }
 }
 
-/* --- Menu ··· ancré dans la top bar --------------------------------------- */
-
-.ckp-more-anchor { position: relative; display: inline-flex; }
-.ckp-more-anchor .pmi-options-menu { top: 44px; right: 0; }
-
 /* --- Squelettes ----------------------------------------------------------- */
-
 .ckp-skeleton {
   border-radius: 12px;
   background: linear-gradient(90deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .75), rgba(255, 255, 255, .45));
   background-size: 200% 100%;
   animation: ckp-shimmer 1.4s ease-in-out infinite;
 }
-.ckp-skeleton--pill { width: 200px; height: 34px; border-radius: 999px; }
+.ckp-skeleton--pill { width: 200px; height: 40px; border-radius: 999px; }
 .ckp-skeleton--round { width: 38px; height: 38px; border-radius: 999px; }
-.ckp-skeleton--cover { width: 96px; height: 96px; border-radius: 18px; flex: none; }
+.ckp-skeleton--cover { width: 66px; height: 66px; border-radius: 50%; flex: none; }
 .ckp-skeleton--line { height: 12px; }
-.ckp-skeleton--tabs { height: 48px; border-radius: 999px; margin-top: 14px; }
-.ckp-skeleton--grid { aspect-ratio: 1 / 1; border-radius: 0; }
-.ckp-skeleton--section { height: 160px; border-radius: 28px; }
-@media (min-width: 768px) { .ckp-skeleton--cover { width: 112px; height: 112px; } }
-@keyframes ckp-shimmer {
-  from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
+.ckp-skeleton--grid { aspect-ratio: 1 / 1; border-radius: 22px; }
+@keyframes ckp-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .ckp-skeleton { animation: none; } }
+
+/* --- Carte d'identité : l'espace laissé par la carte du bas ---------------- */
+/* La carte du bas fait 40 % de la hauteur d'écran : la carte d'identité prend
+   tout le reste (top bar → carte), sans hauteur fixe et sans marge parasite.
+   C'est elle qui défile en interne, jamais la page. */
+.ckp-card {
+  position: relative; flex: 1 1 auto; height: auto; min-height: 0; max-height: none;
 }
 
-/* --- Accessibilité -------------------------------------------------------- */
 
-.ckp-card :focus-visible,
-.ckp-section :focus-visible,
-.ckp-media :focus-visible,
-.ckp-topbar :focus-visible {
-  outline: 2px solid #17402c;
-  outline-offset: 2px;
-  border-radius: 8px;
+/* --- Ligne de lieu : texte unique, gabarit de la ligne de bio du Compte ----
+   Mesuré sur /compte (.ig-bio-stats) : 500 12px, #3f4f46, letter-spacing
+   -.14px, séparateur « · ». Aucune pastille, aucun fond, aucun bouton. */
+.ckp-place-line {
+  margin: 0 2px; color: #3f4f46;
+  font: 500 12px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.14px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.ckp-tile:focus-visible { outline-offset: -3px; border-radius: 0; }
+
+/* --- Participants : pastilles auteur du fil Communauté, défilables -------- */
+.ckp-people {
+  display: flex; align-items: center; gap: 6px; margin: 0 2px; max-width: calc(100% - 4px);
+  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.ckp-people::-webkit-scrollbar { display: none; }
+.ckp-person { display: flex; flex: none; }
+
+.ckp-mapcard { position: relative; flex: 1; min-height: 240px; padding: 0; overflow: hidden; }
+.ckp-mapcard-canvas { position: absolute; inset: 0; }
+.ckp-mapcard-empty { display: grid; place-items: center; gap: 6px; height: 100%; padding: 24px; text-align: center; color: #56665d; }
+.ckp-mapcard-empty b { color: #172b24; font: 700 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-mapcard-empty p { margin: 0; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-mapcard-chip {
+  position: absolute; top: 10px; left: 10px; z-index: 3; display: inline-flex; gap: 8px;
+  padding: 6px 10px; border-radius: 999px; background: rgba(255, 255, 255, .72);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: #17402c; font: 600 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-mapcard-stack { position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; flex-direction: column; gap: 6px; }
+.ckp-mapcard-stack button {
+  width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 999px;
+  background: rgba(255, 255, 255, .82); color: #17402c; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(23, 43, 36, .12);
+}
+.ckp-mapcard-stack button:disabled { opacity: .5; cursor: not-allowed; }
+.ckp-mapcard-credit {
+  position: absolute; right: 8px; bottom: 6px; z-index: 3; padding: 2px 6px; border-radius: 6px;
+  background: rgba(255, 255, 255, .72); color: #56665d;
+  font: 500 9px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+/* Les enfants de la carte gardent leur hauteur : c'est le conteneur qui défile. */
+.ckp-card-scroll > * { flex: none; }
+
+/* --- Carte du monde du Compte (mapzone), en bas de l'écran ----------------- */
+
+/* Carte du monde : elle fait 40 % de la hauteur d'écran (373 px à 430 × 932) et
+   reste collée au bas de l'écran, au-dessus de la barre basse. Aucun min-height,
+   aucune marge parasite : la carte d'identité prend l'espace qui reste. */
+.ckp-mapzone {
+  position: relative; flex: 0 0 auto; min-height: 0; margin-top: 8px; max-width: calc(100% + 24px);
+  border-radius: 24px; overflow: hidden;
+  background: rgba(23, 64, 44, .18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(23, 43, 36, .12);
+}
+.ckp-mapzone-canvas { position: absolute; inset: 0; }
+.ckp-mapzone-canvas .maplibregl-map,
+.ckp-mapzone-canvas > div { width: 100%; height: 100%; }
+.ckp-mapzone-loading {
+  display: grid; place-items: center; height: 100%;
+  color: #56665d; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-mapzone-badge {
+  position: absolute; left: 12px; bottom: 12px; z-index: 3;
+  padding: 4px 8px; border-radius: 8px;
+  background: rgba(255, 255, 255, .72); color: #17402c;
+  font: 700 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: .08em;
+}
+
+/* --- Carte du monde pleine largeur, jusqu'en bas, comme /compte ------------ */
+
+.ckp-screen-body { padding-bottom: 0; }
+/* Bord à bord : la carte sort de la gouttière 12 px de l'écran, et sa hauteur
+   est le 40 % exact de la page (0,40 × 932 = 373 px à 430 × 932). */
+.ckp-mapzone {
+  margin: 8px -12px 0;
+  border-radius: 0;
+  min-height: 0; height: 40dvh;
+}
+.ckp-screen .tb { bottom: 16px; }
+/* la carte d'identité garde sa marge basse pour ne pas coller à la carte */
+.ckp-card { margin-bottom: 0; }
+
+/* --- Carrousel de pages de la zone média (lot 2) -------------------------- */
+/* Une seule page montée à la fois : aucune piste plus haute que la page
+   visible, donc aucune zone morte sous la grille. Jamais de scroll horizontal. */
+.ckp-pages {
+  /* `clip` plutôt que `hidden` : le carrousel ne devient pas un porteur de
+     défilement, donc le pied collant d'une page se cale sur le VRAI défileur
+     (`.ckp-card-scroll`) et jamais sous la capsule de la carte. */
+  position: relative; overflow: clip; min-width: 0;
+  touch-action: pan-y;
+}
+.ckp-pages:focus-visible { outline: 2px solid #17402c; outline-offset: 2px; border-radius: 14px; }
+.ckp-page { min-width: 0; }
+.ckp-page--next { animation: ckp-page-next 200ms cubic-bezier(.22, 1, .36, 1) both; }
+.ckp-page--prev { animation: ckp-page-prev 200ms cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes ckp-page-next {
+  from { opacity: .35; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ckp-page-prev {
+  from { opacity: .35; transform: translateX(-16px); }
+  to { opacity: 1; transform: none; }
+}
+/* Les volets déplacés gardent la gouttière 12 px et le rythme vertical du drawer. */
+.ckp-page-pad { display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
+.ckp-page-meta { padding: 0 1px; }
+
+/* --- Rangées des pages (Gérer, J’aime) ----------------------------------- */
+.ckp-row {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0;
+  min-height: 44px; padding: 7px 10px; border: 0; border-radius: 14px;
+  background: rgba(255, 255, 255, .42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 0 0 .5px rgba(23, 43, 36, .08);
+  color: #172b24; text-align: left; cursor: pointer;
+  font: 400 11.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+/* Le libellé prend la place ; l'icône garde sa taille (masque ou vecteur). */
+.ckp-row > span:not([aria-hidden='true']) { flex: 1; min-width: 0; }
+.ckp-row b { display: block; color: #172b24; font: 600 12.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-row small { display: block; margin-top: 1px; color: #56665d; font: 500 10.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* `Icon` peint un masque dont la couleur vient de `currentColor`. */
+.ckp-row svg, .ckp-row > span[aria-hidden='true'] { flex: none; color: #56665d; }
+.ckp-row:active { transform: scale(.99); }
+.ckp-row:disabled { opacity: .55; cursor: default; }
+.ckp-row--danger b, .ckp-row--danger svg, .ckp-row--danger > span[aria-hidden='true'] { color: #a33227; }
+/* Le ♥ du carnet allumé : l'icône seule change de couleur, la rangée garde
+   le verre des autres rangées (aucune teinte importée d'ailleurs). */
+.ckp-row--like[aria-pressed='true'] { background: rgba(255, 255, 255, .58); }
+.ckp-row--like[aria-pressed='true'] svg, .ckp-row--like[aria-pressed='true'] > span[aria-hidden='true'] { color: #e0245e; }
+@media (hover: hover) {
+  .ckp-row:not(:disabled):hover { background: rgba(255, 255, 255, .62); }
+}
+
+/* Anneau de focus : la capsule garde ses segments. */
+.ckp-capsule .ckp-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c; }
+
+/* --- Sous-drawer statistiques --------------------------------------------
+   Marges internes 16 px (20 px en haut). Chiffre principal 34/700 tabulaire,
+   unité 13/500 sur la même ligne, contexte 11/500 sans fond, barre de
+   répartition 6 px à 12 px sous le chiffre, aires et barres sans axe. */
+.ckp-stats { position: relative; padding: 0; }
+.ckp-stats-seg { display: flex; }
+/* Aire altimétrique : 72 px, remplissage et trait seuls, aucun axe. */
+.ckp-elev { position: relative; margin: 20px 0 0; }
+.ckp-elev svg { display: block; width: 100%; height: 72px; }
+.ckp-elev-summit {
+  position: absolute; z-index: 2; display: inline-flex; align-items: center; gap: 4px;
+  transform: translate(5px, -50%); pointer-events: none;
+  color: #172B24; font: 600 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.ckp-elev-summit i { width: 6px; height: 6px; border-radius: 999px; background: #17402c; flex: none; }
+.ckp-elev-axis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 0 2px; }
+.ckp-elev-axis span {
+  text-align: right; color: #7A8A80; opacity: .7;
+  font: 500 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+/* Barres journalières : 4 px de large, sous le profil, sans chiffres. */
+.ckp-elev-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 18px; margin: 10px 0 0; }
+.ckp-elev-bars i { display: block; width: 4px; border-radius: 999px; background: rgba(23, 64, 44, .35); }
+
+/* En-tête collant : 40 px de verre, total en 12/600, révélé au défilement. */
+.ckp-stats-sticky { position: sticky; top: 0; z-index: 4; height: 0; pointer-events: none; }
+.ckp-stats-sticky > div {
+  position: absolute; left: -16px; right: -16px; top: 0; height: 40px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 16px;
+  background: rgba(255, 255, 255, .88);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
+  border-bottom: .5px solid rgba(23, 43, 36, .06);
+  opacity: 0; transition: opacity 160ms ease;
+}
+.ckp-stats-sticky[data-on='true'] > div { opacity: 1; }
+.ckp-stats-sticky span { color: #6B7A70; font: 500 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: .02em; }
+.ckp-stats-sticky-icon { display: inline-flex; color: #56665D; }
+.ckp-stats-sticky b { color: #172B24; font: 600 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
+/* Moments associés à un jour, dans le volet Jours. */
+.ckp-moment-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ckp-moment-list li {
+  display: flex; align-items: flex-start; gap: 5px; min-width: 0; color: #56665d;
+  font: 500 10.5px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-moment-list li svg { flex: none; margin-top: 1px; opacity: .7; }
+.ckp-moment-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ckp-moment-meta { color: #56665d; }
+.ckp-moment-caption {
+  color: #172b24; font-weight: 600; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .ckp-skeleton { animation: none; }
-  .ckp-topbar-veil, .ckp-tile::after, .ckp-toggle button[aria-pressed='true'] { transition: none; }
+  .ckp-page--next, .ckp-page--prev { animation: none; }
 }
 
-/* --- Capsule de sections : libellés et contraste locaux -------------------
-   `.lkdv-capsule` prend sa couleur sur `--lkv-text-secondary`, blanc dans le
-   thème nuit : illisible sur le verre clair de la fiche. On repose ici les
-   valeurs du Compte (encre #17402c, muted #56665d) et la typo 9,5/600. */
+/* --- Fond photo réellement visible ---------------------------------------- */
+/* Le canvas global de l'app peignait au-dessus : on le retire sur cet écran,
+   comme le fait déjà le fil Communauté. */
+.ckp-screen { position: relative; }
+/* Le fond reste DERRIÈRE tout : fixed + z-index négatif, aucun empilement local. */
+.ckp-screen > .ckp-screen-bg { position: fixed; inset: 0; z-index: -1; }
 
-.ckp-tabs .lkdv-capsule button {
-  flex-direction: column;
-  gap: 1px;
-  color: var(--feed-muted);
-  font: inherit;
+/* --- Post du moment : la feuille du Compte, ancrée sur la carte ------------ */
+/* `OverlaySheet` mesure `#card` : la feuille prend exactement le cadre de la
+   carte d'identité (12/48/406 × 541 à 430 × 932), comme le post du Compte. */
+/* Le compteur de médias du Compte tombe sous l'en-tête (le `×` le recouvre).
+   Ici il compte les moments du carnet : il reste lisible, juste sous la barre. */
+.ckp-post-sheet .lkdv-post-media-count { top: 56px; }
+/* Les flèches de navigation reprennent la pastille du Compte, jamais un glyphe nu. */
+.ckp-post-sheet .lkdv-post-media-nav { line-height: 0; }
+
+/* Panneaux du post : aucun padding propre. Le corps reprend celui du Compte
+   (`.lkdv-post-panel-body` : 2px 12px 4px) et le composer vit dans
+   `.lkdv-post-panel-foot`, exactement comme dans le post du Compte. */
+/* L'invitation à se connecter garde le bouton du carnet (il ouvre la modale
+   d'auth, il ne navigue pas) avec la matière du lien du Compte. */
+.ckp-post-sheet .lkdv-comments-gate button {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px;
+  background: var(--feed-ink, #17402c); color: #fff;
+  font: 700 12px var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer;
 }
-.ckp-tabs .lkdv-capsule button.active,
-.ckp-tabs .lkdv-capsule button[aria-selected='true'] {
-  color: var(--feed-ink);
+/* Le tri Récents / Anciens est une donnée du carnet : il se pose en tête de
+   liste, sans déplacer le corps ni le pied du Compte. */
+.ckp-post-sheet .lkdv-post-panel-body .ckp-sub { margin-bottom: 8px; }
+
+/* =============================================================================
+   Finitions des drawers et sous-drawers (27 oct. 2026)
+   Purement visuel : aucune route, aucune donnée, aucun comportement changé.
+   Tokens autorisés : #172B24 #17402C #56665D #6B7A70 #7A8A80 #8A968D #C13B34.
+   ============================================================================= */
+
+/* --- Focus : anneau 2 px #17402C à 2 px du contrôle (feuilles et volets) --- */
+.ckp-card--drawer :focus-visible,
+.ckp-pane :focus-visible,
+.ckp-post-sheet .lkdv-post-panel :focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px transparent, 0 0 0 4px #17402C;
 }
-.ckp-tabs .lkdv-capsule button .lbl {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font: 600 9.5px/1.1 var(--font-sans, -apple-system, system-ui, sans-serif);
+
+/* --- Post du moment : légende « pseudo 13/600 puis texte 13/400 » ---------- */
+.ckp-post-sheet .lkdv-post-caption { font-size: 13px !important; line-height: 1.4 !important; font-weight: 400 !important; }
+.ckp-post-pseudo { font-weight: 600; color: inherit; }
+
+/* --- Mouvement réduit : fondu de 160 ms, aucune translation ---------------- */
+@keyframes ckp-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .ckp-card--drawer { animation: ckp-fade-in 160ms linear both; }
+  .ckp-page--next, .ckp-page--prev { animation: ckp-fade-in 160ms linear both; }
+  .ckp-comment.is-new { animation: ckp-fade-in 160ms linear both; }
+  .ckp-drawer-close { transition: none; }
+  .ckp-drawer-close:active { transform: none; }
+}
+/* Barre journalière sans valeur : elle garde sa place, elle ne se peint pas. */
+.ckp-elev-bars i[data-empty='true'] { opacity: 0; }
+
+/* Pages sans gouttière propre : le volet porte ses 16 px (Gérer, stats). */
+
+/* Le composer d'une page de la carte se pose au-dessus du pied flottant
+   (actions + capsule, 30 px à 10 px du bord) : le champ ne passe jamais
+   dessous, quel que soit le nombre de commentaires. Le post, lui, garde son
+   pied dans sa propre feuille : la règle ne vise que les pages du carrousel. */
+.ckp-page .lkdv-post-panel-foot { position: sticky; bottom: 52px; z-index: 2; }
+
+/* =============================================================================
+   Anatomie des drawers et sous-drawers (28 oct. 2026) — 50 retouches
+   Densité, chiffre héros, champs de donnée, états et mouvement.
+   Tokens : #172B24 #17402C #56665D #6B7A70 #8A968D #C13B34.
+   Deux valeurs imposées par les retouches elles-mêmes : #B4BDB6 (le `—`
+   absent, retouche 24) et #fff (la lentille du sélecteur, déjà en place).
+   ============================================================================= */
+
+/* --- 34-37. Capsule basse : voile de 24 px en fin de course --------------- */
+.ckp-drawer-veil {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 24px; z-index: 5;
+  pointer-events: none; opacity: 0; transition: opacity 160ms ease;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .72));
+}
+.ckp-drawer-veil[data-on='true'] { opacity: 1; }
+
+/* --- 3-8. Rythme vertical : 12 / 20 / 32, 20 px d'air entre les blocs ------ */
+.ckp-pane-body { display: flex; flex-direction: column; min-width: 0; }
+.ckp-pane-body > * + *,
+.ckp-pane-share > * + *,
+.ckp-likes > * + *,
+.ckp-manage > * + * { margin-top: 20px; }
+/* 6. 24 px d'air avant la première ligne de données (le bloc héros). */
+.ckp-pane-body > .ckp-hero { margin-top: 24px; }
+/* Sans sélecteur, la première ligne est aussi la première donnée : 24 px d'air
+   la dégagent de la croix de fermeture, posée en absolu. */
+.ckp-pane-share > *:first-child { margin-top: 24px; }
+
+/* --- 23-28. Champ de donnée : libellé placeholder, valeur à droite --------- */
+.ckp-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.ckp-field {
+  display: flex; align-items: center; gap: 10px; box-sizing: border-box;
+  width: 100%; min-width: 0; height: 48px; padding: 0 12px; margin: 0;
+  border: 1px solid transparent; border-radius: 12px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .06);
+  color: #172B24; text-align: left; text-decoration: none; font: inherit;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+button.ckp-field, a.ckp-field { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button.ckp-field { appearance: none; }
+button.ckp-field:active, a.ckp-field:active { transform: scale(.995); }
+.ckp-field:disabled { opacity: .55; cursor: default; }
+@media (hover: hover) {
+  button.ckp-field:hover, a.ckp-field:hover { background: rgba(255, 255, 255, .72); }
+}
+/* 40. Erreur : 1 px #C13B34 sur le champ concerné, aucun bandeau. */
+.ckp-field[data-error='true'] { border-color: #C13B34; }
+.ckp-field-icon { display: inline-flex; flex: none; color: #6B7A70; }
+.ckp-field-icon > span { width: 16px; height: 16px; }
+/* 23/25/26/49. Placeholder : 12/500 #8A968D, jamais de capitale, 46 % max. */
+.ckp-field-label {
+  flex: 1 1 auto; min-width: 0; max-width: 46%;
+  color: #8A968D; font: 500 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0; text-transform: none;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 15/16/24/48. Valeur : colonne fixe de 120 px, 13/600 tabulaire. */
+.ckp-field-value {
+  flex: none; width: 120px; text-align: right;
+  color: #172B24; font: 600 13px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0; font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ckp-field.is-missing .ckp-field-value { color: #B4BDB6; }
+.ckp-field--wide .ckp-field-value { flex: 1 1 auto; width: auto; max-width: 58%; }
+.ckp-field--danger .ckp-field-label { color: #C13B34; }
+.ckp-field--danger .ckp-field-value { color: #C13B34; }
+/* Le ♥ allumé garde la matière du champ et prend l'encre d'accent. */
+.ckp-field[aria-pressed='true'] .ckp-field-value { color: #17402C; }
+.ckp-field[aria-pressed='true'] .ckp-field-icon { color: #17402C; }
+
+/* --- 9-14. Chiffre héros -------------------------------------------------- */
+.ckp-hero { display: flex; flex-direction: column; min-width: 0; }
+.ckp-hero-num {
+  display: flex; align-items: baseline; gap: 6px; margin: 0; min-width: 0;
+  color: #17402C;
+  font: 700 40px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -1px; font-variant-numeric: tabular-nums;
+}
+.ckp-hero-num[data-missing='true'] { color: #B4BDB6; }
+.ckp-hero-value {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: inherit; color: inherit; letter-spacing: inherit;
+}
+.ckp-hero-unit {
+  flex: none; color: #6B7A70;
+  font: 500 14px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: 0;
-  text-transform: none;
 }
-.ckp-tabs .lkdv-capsule button .ic {
-  width: 18px;
-  height: 18px;
+/* 12. Barre de 6 px sur sa piste, 12 px sous le chiffre. */
+.ckp-hero-bar {
+  height: 6px; margin-top: 12px; border-radius: 999px;
+  background: rgba(23, 43, 36, .08); overflow: hidden;
+}
+.ckp-hero-bar i {
+  display: block; height: 6px; border-radius: 999px; background: #17402C;
+  transition: width 220ms cubic-bezier(.22, 1, .36, 1);
+}
+/* 13. Trois sous-valeurs 12/600 tabulaires, alignées à gauche. */
+.ckp-hero-sub {
+  display: flex; align-items: baseline; gap: 16px; margin-top: 12px; min-width: 0;
+  color: #172B24; font: 600 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0; font-variant-numeric: tabular-nums;
+}
+.ckp-hero-sub span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ckp-hero-sub span[data-missing='true'] { color: #B4BDB6; }
+/* 44. Changement de sous-onglet : fondu + 8 px, 180 ms. */
+.ckp-hero[data-animate='true'] { animation: ckp-hero-in 180ms cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes ckp-hero-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* --- 45. Rouleau des valeurs : 400 ms, une seule fois --------------------- */
+.ckp-roll { display: inline-block; min-width: 0; }
+.ckp-roll > b { display: block; font: inherit; color: inherit; letter-spacing: inherit; }
+.ckp-roll.is-rolling > b { animation: ckp-roll 400ms cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes ckp-roll { from { opacity: .25; transform: translateY(.16em); } to { opacity: 1; transform: none; } }
+
+/* --- 38-42. États : squelette, vide, partiel, fondu ----------------------- */
+.ckp-load { display: flex; flex-direction: column; gap: 12px; margin: 0; animation: ckp-fade-in 160ms linear both; }
+.ckp-load-bar {
+  position: relative; display: block; overflow: hidden; border-radius: 12px;
+  background: rgba(23, 43, 36, .06);
+}
+.ckp-load-bar--hero { height: 40px; border-radius: 10px; }
+.ckp-load-bar--row { height: 48px; }
+.ckp-load-bar::after {
+  content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .55) 50%, rgba(255, 255, 255, 0) 100%);
+  animation: ckp-shimmer 1.4s linear infinite;
+}
+@keyframes ckp-shimmer { to { transform: translateX(100%); } }
+.ckp-empty-state {
+  display: flex; align-items: center; gap: 8px; padding: 12px 0;
+  animation: ckp-fade-in 160ms linear both;
+}
+.ckp-empty-glyph { display: inline-flex; color: #172B24; opacity: .3; }
+.ckp-empty-glyph > span { width: 32px; height: 32px; }
+.ckp-empty-dash {
+  color: #B4BDB6; font: 600 13px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+.ckp-comments-list { display: flex; flex-direction: column; transition: opacity 160ms ease; }
+.ckp-comments-list[data-state='partial'] { opacity: .92; }
+
+/* --- En-tête collant des statistiques : 30 px, à la hauteur du sélecteur -- */
+.ckp-stats-sticky > div { height: 30px; }
+
+/* --- J’aime / Gérer / Partage : blocs de la feuille ---------------------- */
+.ckp-likes-filters { display: flex; }
+.ckp-comments { padding: 0 0 88px; }
+.ckp-comments-sort { display: flex; margin: 0 0 20px; }
+.lkdv-comments-gate.ckp-comments-gate { display: flex; padding: 12px 0 0; }
+.ckp-comments-gate .ckp-field { width: 100%; }
+
+/* 4/5/37. Les pages sorties du drawer : contenu à 16 px, 64 px de réserve. */
+.ckp-page-pad--dense { padding: 0 4px 64px; gap: 0; }
+/* Le corps du post du Compte ne se cumule pas avec la gouttière dense. */
+.ckp-page-pad--dense .lkdv-post-panel-body { padding-left: 0; padding-right: 0; }
+.ckp-page-pad--dense .lkdv-post-panel-foot { padding-left: 0; padding-right: 0; }
+
+/* --- 46. Mouvement réduit : aucune translation, fondu de 120 ms ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .ckp-roll.is-rolling > b { animation: none; }
+  .ckp-hero[data-animate='true'] { animation: ckp-fade-in 120ms linear both; }
+  .ckp-hero-bar i { transition: none; }
+  .ckp-load-bar::after { animation: none; }
+  .ckp-load, .ckp-empty-state { animation: ckp-fade-in 120ms linear both; }
+  .ckp-drawer-veil { transition: opacity 120ms linear; }
 }

@@ -1,0 +1,130 @@
+/*
+ * Apple Liquid Glass — barre système native (iOS 26/27), pas le variant morphing.
+ * Capsule sombre flottante, 5 libellés visibles, lentille de sélection qui glisse.
+ * Référence : SystemGlassTabView + barre UITabBar Liquid Glass d’iOS 26.
+ */
+@media (max-width: 767px) {
+  .lkdv-floating-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    z-index: var(--z-nav, 1250);
+    display: flex;
+    justify-content: center;
+    padding: 0 16px;
+    pointer-events: none;
+    touch-action: manipulation;
+  }
+
+  .lkdv-floating-tabbar-surface {
+    position: relative;
+    width: min(430px, calc(100vw - 20px));
+    height: 52px;
+    display: flex;
+    align-items: stretch;
+    padding: 4px;
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 46%, rgba(0, 0, 0, 0.12)),
+      rgba(23, 29, 26, 0.76);
+    border: 0.5px solid rgba(255, 255, 255, 0.18);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.26),
+      inset 0 -1px 1px rgba(255, 255, 255, 0.06),
+      0 10px 30px rgba(0, 0, 0, 0.24);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    pointer-events: auto;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .lkdv-floating-lens {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / 5);
+    border-radius: 999px;
+    z-index: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.23), rgba(255, 255, 255, 0.1));
+    border: 0.5px solid rgba(255, 255, 255, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.38),
+      0 1px 4px rgba(0, 0, 0, 0.12);
+    transition: transform 0.46s cubic-bezier(0.3, 1.3, 0.4, 1) !important;
+  }
+
+  .lkdv-floating-tab {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 0 2px;
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.62);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.2s ease;
+  }
+
+  .lkdv-floating-tab.is-active {
+    color: #d8f3de;
+  }
+
+  .lkdv-floating-tab-icon {
+    width: 19px;
+    height: 19px;
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+
+  .lkdv-floating-tab-icon > span {
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  .lkdv-floating-tab-icon > span[style*='mask-image'] {
+    background-color: currentColor !important;
+  }
+
+  .lkdv-floating-tab-icon > span > svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .lkdv-floating-tab-label {
+    display: block;
+    max-width: none;
+    overflow: hidden;
+    opacity: 1;
+    transform: none;
+    white-space: nowrap;
+    font: 600 9px/1 var(--font-sans, -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif);
+    letter-spacing: -0.01em;
+  }
+
+  .lkdv-floating-tab.is-active .lkdv-floating-tab-label {
+    font-weight: 600;
+  }
+}
+
+/* Aucune barre de navigation globale par-dessus une story plein écran. */
+body:has(.story.on) .lkdv-floating-tabbar {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Le bandeau cookies ne doit pas recouvrir le compteur de vues d'une story. */
+body:has(.story.on) [aria-label="Gestion des cookies"] {
+  display: none !important;
+}

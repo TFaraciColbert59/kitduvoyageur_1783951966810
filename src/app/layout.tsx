@@ -2,11 +2,12 @@ import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 import localFont from 'next/font/local';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
 import '@/styles/liquid-glass.css';
 import '@/styles/liquid-ios27.css';
+import '@/styles/apple-bottom-nav.css';
+import '@/styles/floating-liquid-tabbar.css';
 import '@/styles/liquid-capsules.css';
 import '@/styles/native-account-tabbar.css';
 import '@/styles/community-social.css';
@@ -14,7 +15,6 @@ import '@/styles/account-glass.css';
 import '@/styles/community-feed.css';
 import '@/styles/carnet-profile.css';
 import '@/features/posts/ui/post-system.css';
-import '@/styles/liquid-tabbar.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
@@ -223,6 +223,13 @@ export default async function RootLayout({
         {/* DNS prefetch for external domains */}
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        {/* Supabase (API + stockage) : ouvert dès le premier octet pour que la
+            première requête de données ne paie pas le handshake TLS. */}
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} />
+        <link rel="preconnect" href="https://static.rocket.new" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://server.arcgisonline.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://ibasemaps-api.arcgis.com" crossOrigin="anonymous" />
 
         {/* JSON-LD Structured Data */}
         <script
@@ -326,7 +333,6 @@ export default async function RootLayout({
           </ActiveTripProvider>
         </AuthProvider>
         </LocaleProvider>
-        <SpeedInsights />
       </body>
     </html>
   );
