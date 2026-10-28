@@ -41,8 +41,8 @@ describe('CarnetMapCard — carte 3D du carnet', () => {
   it('garde l’état vide honnête quand le carnet n’a réellement aucune trace', () => {
     render(<CarnetMapCard detail={detail({ trace: null })} />);
     expect(MAP_PROPS.current?.trace).toBeNull();
-    expect(MAP_PROPS.current?.emptyTitle).toBe('Aucun tracé enregistré pour ce carnet.');
-    expect(String(MAP_PROPS.current?.emptyHint)).toContain('trace GPS');
+    expect(MAP_PROPS.current?.emptyTitle).toBe('—');
+    expect(String(MAP_PROPS.current?.emptyHint)).toBe('');
   });
 
   it('donne l’état du propriétaire calculé côté serveur, jamais celui du client', () => {

@@ -1073,3 +1073,7 @@ button.ckp-field:active, a.ckp-field:active { transform: scale(.995); }
   .ckp-drawer-veil { transition: opacity 120ms linear; }
 }
 .ckp-empty-dash { font: 600 13px/1 var(--font-sans, -apple-system, system-ui, sans-serif); color: #8A968D; }
+
+/* Une seule tuile garde le gabarit 134 (3 colonnes), jamais pleine largeur. */
+.ckp-grid-wrap { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 2px; padding: 0; }
+.ckp-grid-wrap .ckp-tile { width: 100%; aspect-ratio: 1 / 1; }
