@@ -1040,6 +1040,19 @@ button.ckp-field:active, a.ckp-field:active { transform: scale(.995); }
 }
 .ckp-hero-sub span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ckp-hero-sub span[data-missing='true'] { color: #B4BDB6; }
+/* Valeur absente : une seule ligne de 56 px — glyphe 24 px à 35 % et tiret
+   20/600 `#8A968D`, centrés verticalement. Ni piste de barre, ni barre, ni
+   unité, ni sous-valeur, ni cadre : le vide ne peint rien d'autre que le fait. */
+.ckp-hero--empty {
+  flex-direction: row; align-items: center; gap: 10px; min-height: 56px;
+}
+.ckp-hero-glyph { display: inline-flex; flex: none; color: #172B24; opacity: .35; }
+.ckp-hero-glyph > span, .ckp-hero-glyph > svg { width: 24px; height: 24px; }
+/* Après `.ckp-hero-num[data-missing]` : même spécificité, l'ordre tranche. */
+.ckp-hero--empty .ckp-hero-num {
+  color: #8A968D; letter-spacing: 0;
+  font: 600 20px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
 /* 44. Changement de sous-onglet : fondu + 8 px, 180 ms. */
 .ckp-hero[data-animate='true'] { animation: ckp-hero-in 180ms cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes ckp-hero-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

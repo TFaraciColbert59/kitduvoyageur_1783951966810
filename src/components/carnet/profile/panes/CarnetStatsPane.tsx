@@ -82,11 +82,40 @@ interface Hero {
  * Chiffre héros : 40/700 tabulaire, `-1px`, interligne 1, unité 14/500 accolée,
  * barre de 6 px 12 px sous le chiffre, trois sous-valeurs 12/600 tabulaires.
  * Aucun libellé : une valeur absente s'écrit `— km`, jamais une phrase.
+ *
+ * Sans donnée, le bloc se réduit à **une ligne** de 56 px : le glyphe du volet
+ * à 24 px et 35 %, puis le tiret en 20/600 `#8A968D`. Aucune piste de barre
+ * (une progression à 0 % traverserait toute la largeur), aucune unité, aucune
+ * sous-valeur : l'absence est un fait, pas un cadre vide.
  */
-function HeroBlock({ hero, animate, tabKey }: { hero: Hero; animate: boolean; tabKey: string }) {
+function HeroBlock({
+  hero,
+  animate,
+  tabKey,
+  icon,
+}: {
+  hero: Hero;
+  animate: boolean;
+  tabKey: string;
+  icon: React.ReactNode;
+}) {
+  if (hero.value === '—') {
+    return (
+      <div className="ckp-hero ckp-hero--empty" key={tabKey} data-animate="true">
+        <span className="ckp-hero-glyph" aria-hidden="true">
+          {icon}
+        </span>
+        <p className="ckp-hero-num" data-missing="true">
+          <CarnetRollValue text={hero.value} animate={animate} className="ckp-hero-value" />
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="ckp-hero" key={tabKey} data-animate="true">
-      <p className="ckp-hero-num" data-missing={hero.value === '—' ? 'true' : undefined}>
+      {/* Branche remplie uniquement : la valeur absente est rendue plus haut. */}
+      <p className="ckp-hero-num">
         <CarnetRollValue text={hero.value} animate={animate} className="ckp-hero-value" />
         <span className="ckp-hero-unit">{hero.unit}</span>
       </p>
@@ -277,7 +306,12 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
 
       {tab === 'distance' ? (
         <div className="ckp-pane-body" role="tabpanel" aria-label="Distance">
-          <HeroBlock hero={hero.distance} animate={!rolled.current} tabKey="distance" />
+          <HeroBlock
+            hero={hero.distance}
+            animate={!rolled.current}
+            tabKey="distance"
+            icon={<Icon name={TAB_ICONS.distance} size={24} aria-hidden="true" />}
+          />
 
           {dayView ? (
             <>
@@ -383,7 +417,12 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
 
       {tab === 'elevation' ? (
         <div className="ckp-pane-body" role="tabpanel" aria-label="Dénivelé">
-          <HeroBlock hero={hero.elevation} animate={!rolled.current} tabKey="elevation" />
+          <HeroBlock
+            hero={hero.elevation}
+            animate={!rolled.current}
+            tabKey="elevation"
+            icon={<Icon name={TAB_ICONS.elevation} size={24} aria-hidden="true" />}
+          />
 
           {profile ? (
             <div className="ckp-elev">
@@ -499,7 +538,12 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
 
       {tab === 'days' ? (
         <div className="ckp-pane-body" role="tabpanel" aria-label="Jours">
-          <HeroBlock hero={hero.days} animate={!rolled.current} tabKey="days" />
+          <HeroBlock
+            hero={hero.days}
+            animate={!rolled.current}
+            tabKey="days"
+            icon={<Icon name={TAB_ICONS.days} size={24} aria-hidden="true" />}
+          />
           {/* Le récit : celui du jour quand il en porte un, sinon le récit
               global du carnet, affiché une seule fois. */}
           {dayView ? (
