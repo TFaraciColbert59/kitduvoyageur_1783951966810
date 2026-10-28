@@ -5,15 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import TabItem from '../TabItem';
 import { DESTINATIONS } from '../../destinationRegistry';
 
-/*
- * Libelles de la barre basse : JAMAIS tronques.
- *
- * Releve reel du 2026-09-28, viewport 393x852 : un onglet fait 67 px de large
- * et le libelle « Communaute » en fait 67 px, moins 4 px de padding horizontal
- * sur le span. Le mot deborde donc de 4 px et Tailwind tronque en « Communau... ».
- * Le libelle le plus long vient du registre global et ne doit pas etre raccourci
- * pour corriger le symptome : c'est l'onglet qui doit s-elargir.
- */
+/* La barre unifiée iOS 27 affiche uniquement les icônes. Le nom complet
+ * reste porté par le lien accessible, quelle que soit la largeur du tab. */
 
 function renderOne(id: string): string {
   const destination = DESTINATIONS.find((d) => d.id === id);
@@ -43,9 +36,11 @@ describe('TabItem — libelles de la barre basse', () => {
     expect(html).not.toContain('truncate');
   });
 
-  it('garde le libelle sur une seule ligne (nowrap)', () => {
+  it('conserve le nom complet sur le lien de navigation icon-only', () => {
     const html = renderOne('community');
-    expect(html).toMatch(/white-space:\s*nowrap/);
+    const destination = DESTINATIONS.find((d) => d.id === 'community')!;
+    expect(html).toContain(`aria-label="${destination.ariaLabel}"`);
+    expect(html).not.toContain(`>${destination.label}</`);
   });
 
   it('l onglet ne se verrouille pas a une largeur qui tronque le mot', () => {

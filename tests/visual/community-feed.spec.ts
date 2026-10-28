@@ -1,9 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
+import { installCommunityFeedFixture } from './_helpers/communityFeedFixture';
 
-async function gotoFeed(page: Page) {
+async function gotoFeed(page: Page, authenticated = false) {
+  const fixture = await installCommunityFeedFixture(page);
   const response = await page.goto('/communaute', { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('load').catch(() => {});
-  await page.waitForTimeout(900);
+  await expect(page.locator('.lkdv-feed-post').first()).toBeVisible();
+  if (authenticated) await fixture.signIn();
   return response;
 }
 
@@ -14,9 +16,11 @@ test.describe('Communauté — fil Instagram LKDV', () => {
 
     await expect(page.locator('.lkdv-feed-post').first()).toBeVisible();
     await expect(page.locator('.lkdv-feed-stories').first()).toBeVisible();
-    await expect(page.locator('.tb a')).toHaveCount(5);
-    await expect(page.locator('.tb a').first()).toHaveText(/Explorer/);
-    await expect(page.locator('.tb a').last()).toHaveText(/Compte/);
+    const navigation = page.getByRole('navigation', { name: 'Navigation principale', exact: true });
+    await expect(navigation.getByRole('link')).toHaveCount(5);
+    await expect(navigation.getByRole('link').first()).toHaveAttribute('href', '/hub');
+    await expect(navigation.getByRole('link').last()).toHaveAttribute('href', '/compte');
+    await expect(navigation.getByRole('link', { name: 'Explorer les sentiers, pays et destinations' })).toBeVisible();
 
     const first = page.locator('.lkdv-feed-post').first();
     await expect(first.locator('.lkdv-post-author').first()).toBeVisible();
@@ -32,14 +36,14 @@ test.describe('Communauté — fil Instagram LKDV', () => {
     await page.screenshot({ path: testInfo.outputPath('community-feed.png') });
   });
 
-  test('le + ouvre le drawer de création du Compte (5 lignes)', async ({ page }, testInfo) => {
-    await gotoFeed(page);
+  test('le + ouvre le drawer connecté et ses 6 types de création', async ({ page }, testInfo) => {
+    await gotoFeed(page, true);
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText('Carnet', { exact: true })).toBeVisible();
     await expect(dialog.getByText('Story', { exact: true })).toBeVisible();
-    await expect(dialog.locator('.lkdv-create-tile')).toHaveCount(6);
+    await expect(dialog.getByRole('tablist', { name: 'Type de création' }).getByRole('tab')).toHaveCount(6);
     await expect(dialog.getByText('Publication', { exact: true })).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('community-create.png') });
   });

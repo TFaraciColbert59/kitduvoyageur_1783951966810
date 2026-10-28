@@ -107,7 +107,7 @@ export default function IOS27BottomBarDevPage() {
           {viewMode === 'iphone' ? (
             /* iPhone 16 Pro Frame (430 × 932) */
             <div
-              className="relative rounded-[54px] p-3 shadow-2xl transition-all duration-300"
+              className="relative rounded-[var(--lkv-radius-device-frame)] p-3 shadow-2xl transition-all duration-300"
               style={{
                 width: 'min(100%, 430px)',
                 height: '840px',
@@ -117,7 +117,7 @@ export default function IOS27BottomBarDevPage() {
             >
               {/* Screen Interior */}
               <div
-                className="relative w-full h-full rounded-[44px] overflow-hidden flex flex-col justify-between"
+                className="relative w-full h-full rounded-[var(--lkv-radius-device-screen)] overflow-hidden flex flex-col justify-between"
                 style={{
                   background: currentWp.bg,
                   transition: 'background 0.5s ease',

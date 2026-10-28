@@ -172,12 +172,16 @@ describe('Hub — rendu Liquid Glass iOS 27', () => {
 
   it('aligne la barre de navigation sur la recette Apple', () => {
     // La teinte du composant ne doit plus etre forestiere.
-    expect(navigationSurface).toContain('glassTint="rgba(16, 16, 16, 0.14)"');
+    expect(navigationSurface).toContain('glassTint="rgba(16, 16, 16, 0.22)"');
     expect(navigationSurface).not.toContain('rgba(16, 38, 28, 0.4)');
     expect(navigationSurface).toContain('shadow="0 8px 15px rgba(0, 0, 0, 0.02)"');
-    // Symbols : blanc plein actif, #D9D9D9 inactif.
-    expect(tabItem).toContain("'var(--hub-label-primary)'");
-    expect(tabItem).toContain("'var(--hub-symbol)'");
+    // La barre unifiée utilise la palette Forest, aussi dans le Hub.
+    const barCss = readFileSync('src/styles/liquid-tabbar.css', 'utf8');
+    expect(webNavigationBar).toContain('<IOS27BottomBar');
+    expect(barCss).toContain('--lg-accent: #17402c');
+    expect(barCss).toContain('--lg-muted: #56665d');
+    expect(barCss).toContain('.lg-tab.is-active { color: var(--lg-accent); }');
+    expect(barCss).toContain('color: var(--lg-muted)');
   });
 
   it('verrou de transmission : aucun materiau du Hub ne depasse 0.34 d opacite', () => {

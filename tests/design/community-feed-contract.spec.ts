@@ -4,12 +4,13 @@ import { existsSync, readFileSync } from 'node:fs';
 const read = (path: string) => readFileSync(path, 'utf8');
 
 describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () => {
-  it('la page assemble les tiroirs 50 %, la recherche, le feed et la barre Compte', () => {
+  it('la page assemble les tiroirs 50 %, la recherche et le feed avec la navigation unifiée', () => {
     const page = read('src/app/communaute/page.tsx');
     expect(page).toContain('CommunityFeedTopBar');
     expect(page).toContain('CommunityStoriesBar');
-    expect(page).toContain('AccountBottomBar');
-    expect(page).toContain('CommunityCreateDrawer');
+    expect(page).not.toContain('<AccountBottomBar');
+    expect(read('src/components/mobile-nav/MobileNavWrapper.tsx')).toContain('<NavigationBar />');
+    expect(page).toContain('<CreateDrawer');
     expect(page).toContain('CommunitySectionsDrawer');
     expect(page).toContain('onSearch');
     expect(page).not.toContain('AccountCreateSheet');
@@ -36,8 +37,15 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
   it('toutes les cartes sont carrées, texte compris', () => {
     const css = read('src/styles/community-feed.css');
     expect(css).toContain('.lkdv-feed-post--text');
-    expect(css).toMatch(/\.lkdv-feed-post--text[\s\S]*aspect-ratio: 1 \/ 1/);
-    expect(css).toContain('height: auto !important');
+    // Le contrat de swipe remplace l’ancien post texte à hauteur automatique.
+    // Vérifier chaque règle évite qu’un override tardif annule le carré.
+    const textBlocks = [...css.matchAll(/\.lkdv-feed-post--text\s*\{([^}]*)\}/g)].map((match) => match[1]);
+    expect(textBlocks.length).toBeGreaterThan(0);
+    expect(textBlocks.join(' ')).toMatch(/aspect-ratio:\s*1\s*\/\s*1/);
+    for (const block of textBlocks) {
+      expect(block).not.toMatch(/aspect-ratio:\s*auto/);
+      expect(block).not.toMatch(/(?:min|max)-height:\s*(?:120px|100cqw)/);
+    }
     const post = read('src/features/community/feed/CommunityFeedPost.tsx');
     expect(post).toContain('PostAuthorPill');
     expect(post).toContain('PostCommentsPanel');
@@ -61,15 +69,15 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
   });
 
   it('le drawer de création ouvre 6 formulaires, sans navigation', () => {
-    const sheet = read('src/features/community/feed/CommunityCreateDrawer.tsx');
+    const sheet = read('src/features/community/create/CreateDrawer.tsx');
     for (const kind of ['post', 'carnet', 'sortie', 'kit', 'club', 'story']) {
       expect(sheet).toContain(`'${kind}'`);
     }
-    expect(sheet).toContain('onOpenForm');
+    expect(sheet).toContain('EmbeddedFormContext.Provider');
     expect(sheet).not.toContain('/communaute/publier');
     const page = read('src/app/communaute/page.tsx');
     for (const form of ['PostCreateForm', 'StoryCreateForm', 'CarnetCreateForm', 'SortieCreateForm', 'KitCreateForm', 'ClubCreateForm']) {
-      expect(page).toContain(form);
+      expect(sheet).toContain(`<${form} {...common} />`);
     }
   });
 

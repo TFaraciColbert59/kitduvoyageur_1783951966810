@@ -155,8 +155,8 @@
 .rhead{display:flex;justify-content:space-between;align-items:baseline;font:600 12px var(--sf);color:var(--label2)}
 .rhead b{font:700 15px var(--sf);color:var(--label);font-variant-numeric:tabular-nums}
 .ruler input{-webkit-appearance:none;appearance:none;display:block;width:100%;height:26px;background:none;margin:0;cursor:pointer;touch-action:pan-y}
-.ruler input::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:linear-gradient(90deg,#8DB287 var(--p),rgba(23,43,36,.14) var(--p))}
-.ruler input::-moz-range-track{height:4px;border-radius:99px;background:linear-gradient(90deg,#8DB287 var(--p),rgba(23,43,36,.14) var(--p))}
+.ruler input::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:linear-gradient(90deg,#8DB287 var(--p, 0%),rgba(23,43,36,.14) var(--p, 0%))}
+.ruler input::-moz-range-track{height:4px;border-radius:99px;background:linear-gradient(90deg,#8DB287 var(--p, 0%),rgba(23,43,36,.14) var(--p, 0%))}
 .ruler input::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:20px;margin-top:-8px;border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(23,43,36,.28),inset 0 0 0 .5px rgba(0,0,0,.08)}
 .ruler input::-moz-range-thumb{width:30px;height:20px;border:0;border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(23,43,36,.28)}
 .ticks{position:relative;height:15px;font:500 10px var(--sf);color:var(--label3)}
@@ -210,7 +210,7 @@
 .ring .n{position:absolute;inset:0;display:grid;place-items:center;align-content:center;font:700 24px var(--sf);text-align:center;letter-spacing:-.03em}
 .ring small{display:block;font:500 9.5px var(--sf);color:var(--label2);letter-spacing:0}
 .vl{display:inline-flex;align-items:center;gap:6px;font:600 14px var(--sf)}
-.vl i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.vl i{width:8px;height:8px;border-radius:50%;background:var(--c, var(--accent))}
 .why{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:2px;font-size:12.5px;color:var(--label2);line-height:1.3}
 .why li{display:flex;align-items:baseline}
 .vb{padding:8px 11px;border-radius:14px;background:var(--fill2);display:flex;flex-direction:column;gap:3px}
@@ -223,7 +223,7 @@
 .weights{display:flex;height:6px;border-radius:999px;overflow:hidden;gap:2px}
 .weights i{display:block;transition:flex .4s}
 .wl{display:flex;justify-content:space-between;margin-top:4px;font:500 11.5px var(--sf);color:var(--label2)}
-.wl span::before{content:"";display:inline-block;width:6px;height:6px;border-radius:2px;background:var(--c);margin-right:5px}
+.wl span::before{content:"";display:inline-block;width:6px;height:6px;border-radius:2px;background:var(--c, var(--accent));margin-right:5px}
 .ready{display:flex;justify-content:space-between;align-items:center}
 .ready b{font:700 21px var(--sf);letter-spacing:-.02em}
 .mb{display:grid;grid-template-columns:24px 1fr 78px;gap:8px;align-items:center;font:500 11.5px var(--sf);color:var(--label2)}
@@ -289,7 +289,7 @@
 .vit{font:600 9.5px var(--sf);color:var(--warn);text-transform:uppercase;letter-spacing:.03em;flex:none}
 .rbar{display:grid;grid-template-columns:128px 1fr 26px;gap:9px;align-items:center;padding:4px 0;font-size:13px}
 .rbar small{display:block;font:400 10.5px var(--sf);color:var(--label2);white-space:nowrap}
-.rbar .t{height:5px;border-radius:99px;background:var(--fill);overflow:hidden}.rbar .t i{display:block;height:100%;border-radius:99px;background:var(--c)}
+.rbar .t{height:5px;border-radius:99px;background:var(--fill);overflow:hidden}.rbar .t i{display:block;height:100%;border-radius:99px;background:var(--c, var(--accent))}
 .rbar b{font:600 12.5px var(--sf);text-align:right;font-variant-numeric:tabular-nums}
 .wx{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .wx div{padding:9px 11px;border-radius:14px;background:var(--fill2);font-size:12.5px;color:var(--label2);line-height:1.45}
@@ -438,7 +438,7 @@
 
 /* ================= v6 : produits ================= */
 .pth{--s:58px;width:var(--s);height:var(--s);border-radius:16px;flex:none;display:grid;place-items:center;position:relative;overflow:hidden;
-  background:radial-gradient(120% 90% at 30% 20%,#fff 0,var(--bgc) 55%,hsl(var(--h) 26% 80%) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -6px 12px hsla(var(--h),30%,40%,.12),0 0 0 .5px rgba(23,43,36,.08)}
+  background:radial-gradient(120% 90% at 30% 20%,#fff 0,var(--bgc, hsl(var(--h) 26% 90%)) 55%,hsl(var(--h) 26% 80%) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -6px 12px hsla(var(--h),30%,40%,.12),0 0 0 .5px rgba(23,43,36,.08)}
 .pth::after{content:"";position:absolute;left:18%;right:18%;bottom:12%;height:9%;border-radius:50%;background:hsla(var(--h),30%,25%,.14);filter:blur(2px)}
 .pth .pic{width:58%;height:58%;fill:none;stroke:hsl(var(--h) 34% 30%);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round;position:relative;z-index:1;filter:drop-shadow(0 1px 0 rgba(255,255,255,.8))}
 .pth.sm{--s:36px;border-radius:11px}.pth.xs{--s:26px;border-radius:8px}.pth.xs::after,.pth.sm::after{display:none}.pth.xl{--s:92px;border-radius:24px}.pth.xl .pic{stroke-width:1.1}
@@ -566,8 +566,8 @@ button.mb:active{background:var(--fill2)}
 .bdg{position:absolute;top:6px;left:calc(50% + 6px);width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 2px rgba(255,255,255,.9)}
 .head{gap:6px}
 /* flux des tiroirs : capsule segmentée à lentille */
-.flow{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:0;height:30px;border-radius:999px;padding:3px;margin:0 -2px}
-.flow .lens{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--n));border-radius:999px;z-index:1;transition:transform .55s cubic-bezier(.3,1.35,.4,1)}
+.flow{position:relative;display:grid;grid-template-columns:repeat(var(--n, 1),minmax(0,1fr));gap:0;height:30px;border-radius:999px;padding:3px;margin:0 -2px}
+.flow .lens{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--n, 1));border-radius:999px;z-index:1;transition:transform .55s cubic-bezier(.3,1.35,.4,1)}
 .flow button,.flow button.cur,.flow button.done{position:relative;z-index:2;height:auto;min-width:0;padding:0 4px;border:0;border-radius:999px;background:none!important;box-shadow:none!important;color:var(--label);font:500 11.5px var(--sf);display:flex;align-items:center;justify-content:center;gap:3px;cursor:pointer}
 .flow button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .flow button.cur{color:#2F6B45;font-weight:600}

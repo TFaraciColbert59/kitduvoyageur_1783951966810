@@ -92,10 +92,9 @@ playwright-report/
 # Géodonnées volumineuses générées (3 Go)
 geo_data/
 pays-data/
-*cache*
-!src/app/api/route/cache/
-!src/features/explorer-osm/services/cacheService.ts
-!tests/features/explorer-osm/cacheAndBreaker.spec.ts
+# Ignore generated cache directories, never source modules or SQL migrations.
+.cache/
+**/.cache/
 
 # Design de référence local (hors app)
 Front end/

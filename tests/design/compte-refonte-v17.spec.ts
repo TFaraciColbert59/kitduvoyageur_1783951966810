@@ -7,10 +7,13 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', () => {
-  const source = read('src/components/compte/CompteLiquidGlassV8.tsx');
+  const source =
+    read('src/components/compte/CompteLiquidGlassV8.tsx') +
+    '\n' + read('src/components/compte/compte-v8.css') +
+    '\n' + read('src/components/compte/compte-apple-hig.css');
   const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
   const v17Start = source.indexOf('Compte iOS 27 v17');
-  const v17 = source.slice(v17Start, source.indexOf('`;', v17Start));
+  const v17 = source.slice(v17Start);
 
   // Entrées de sélecteur exactes (commentaires retirés, espaces normalisés) :
   // un `toContain` sur la liste ne peut pas être satisfait par un fragment d'un autre sélecteur.

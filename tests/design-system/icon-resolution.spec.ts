@@ -6,8 +6,8 @@ import {
   resolveMaskFile,
   resolvePackFile,
   PNG_ICON_MAP,
-  SVG_MASK_ICON_NAMES,
 } from '@/components/ui/Icon/registry';
+import { LKDV_ASSET_NAMES } from '@/components/ui/Icon/lkdv.registry';
 import { HERO_OUTLINE, HERO_SOLID } from '@/components/ui/Icon/heroicons.generated';
 
 const REPO_ROOT = process.cwd();
@@ -61,37 +61,37 @@ describe('Design system — résolution des glyphes (P5)', () => {
     realHeroicons = (await import('@heroicons/react/24/outline')) as Record<string, unknown>;
   });
 
-  it('TEST-ICON-RESOLVE-01: les noms pilotés par les données base résolvent vers un glyphe SF', () => {
+  it('TEST-ICON-RESOLVE-01: les noms pilotés par les données base résolvent vers le glyphe LKDV canonique', () => {
     const expected: Record<string, string> = {
-      GlobeIcon: 'globe',
-      LeafIcon: 'leaf',
-      LockIcon: 'lock',
-      MountainIcon: 'mountain',
+      GlobeIcon: 'monde',
+      LeafIcon: 'flore',
+      LockIcon: 'verrouille',
+      MountainIcon: 'montagne',
     };
     for (const name of DATA_DRIVEN_LEGACY_NAMES) {
-      expect(resolveMaskFile(name), `${name} doit résoudre vers un masque`).toBe(`sf/${expected[name]}.svg`);
+      expect(resolveMaskFile(name), `${name} doit résoudre vers un masque`).toBe(`lkdv/${expected[name]}.svg`);
     }
   });
 
   it('TEST-ICON-RESOLVE-02: chaque fichier cible des alias existe sur le disque', () => {
     for (const name of DATA_DRIVEN_LEGACY_NAMES) {
       const mask = resolveMaskFile(name) as string;
-      expect(SVG_MASK_ICON_NAMES.has(mask.replace('sf/', '').replace('.svg', ''))).toBe(true);
+      expect(LKDV_ASSET_NAMES.has(mask.replace('lkdv/', '').replace('.svg', ''))).toBe(true);
       expect(fs.existsSync(path.join(ICONS_DIR, mask)), `${mask} absent de public/icons`).toBe(true);
     }
   });
 
-  it('TEST-ICON-RESOLVE-03: le pack PNG garde la priorité sur le pack SVG', () => {
+  it('TEST-ICON-RESOLVE-03: le registre LKDV précède le pack PNG de compatibilité', () => {
     expect(resolvePackFile('HomeIcon')).toBe('Home.png');
-    expect(resolveMaskFile('HomeIcon')).toBe('Home.png');
+    expect(resolveMaskFile('HomeIcon')).toBe('lkdv/accueil.svg');
     expect(resolvePackFile('ChevronDownIcon')).toBe('V Arrow Down.png');
     // le suffixe implicite fonctionne aussi
     expect(resolvePackFile('Home')).toBe('Home.png');
   });
 
-  it('TEST-ICON-RESOLVE-04: les tokens kebab SF résolvent, outline et solid', () => {
-    expect(resolveMaskFile('compass')).toBe('sf/compass.svg');
-    expect(resolveMaskFile('compass', 'solid')).toBe('sf/compass.svg');
+  it('TEST-ICON-RESOLVE-04: les tokens kebab historiques résolvent vers LKDV, outline et solid', () => {
+    expect(resolveMaskFile('compass')).toBe('lkdv/boussole.svg');
+    expect(resolveMaskFile('compass', 'solid')).toBe('lkdv/boussole.svg');
     expect(resolveMaskFile('inconnu-xyz')).toBeUndefined();
   });
 
