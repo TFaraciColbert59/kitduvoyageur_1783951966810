@@ -83,9 +83,11 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     expect(sheet).toContain('<CommunityCardDrawer');
     expect(sheet).not.toContain('EmbeddedFormContext');
     expect(sheet).not.toContain('/communaute/publier');
-    for (const form of ['PostCreateForm', 'StoryCreateForm', 'CarnetCreateForm', 'SortieCreateForm', 'KitCreateForm', 'ClubCreateForm']) {
+    for (const form of ['PostCreateForm', 'StoryCreateForm', 'SortieCreateForm', 'KitCreateForm', 'ClubCreateForm']) {
       expect(sheet).toContain(`<${form} {...common}`);
     }
+    // Le carnet a sa propre page de création : pas de second formulaire dans le drawer.
+    expect(sheet).not.toContain('CarnetCreateForm');
   });
 
   it('les anciens composants du hub et les feuilles remplacées ont disparu', () => {

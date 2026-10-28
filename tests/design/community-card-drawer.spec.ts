@@ -58,7 +58,7 @@ describe('Communauté — drawer Créer en étapes', () => {
   });
 
   it('chaque formulaire passe par le cadre en étapes et ne contient ni select natif ni URL de couverture', () => {
-    for (const name of ['Post', 'Story', 'Carnet', 'Sortie', 'Kit', 'Club']) {
+    for (const name of ['Post', 'Story', 'Sortie', 'Kit', 'Club']) {
       const source = read(`src/features/community/create/${name}CreateForm.tsx`);
       expect(source, name).toContain('<WizardFrame');
       expect(source, name).not.toContain('<select');
@@ -66,6 +66,12 @@ describe('Communauté — drawer Créer en étapes', () => {
       expect(source, name).not.toMatch(/Cover \(URL\)/);
       expect(source, name).toContain('zod');
     }
+  });
+
+  it('le carnet n’a pas de second formulaire : l’onglet mène à la page de création existante', () => {
+    expect(existsSync('src/features/community/create/CarnetCreateForm.tsx')).toBe(false);
+    expect(read('src/features/community/create/carnetEditor.ts')).toContain("CARNET_EDITOR_HREF = '/carnets/nouveau'");
+    expect(existsSync('src/app/carnets/nouveau/page.tsx')).toBe(true);
   });
 
   it('l’ancienne coquille modale des formulaires a disparu', () => {

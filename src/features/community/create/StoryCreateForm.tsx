@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase/client';
 import { prepareImage } from '@/lib/media/prepareImage';
 import { Chips, CountedTextArea, type ChipOption } from './wizard/fields';
 import { firstIssue } from './wizard/validate';
-import { MediaTray } from './wizard/MediaTray';
+import { MediaTray, acceptMedia } from './wizard/MediaTray';
+import { StoryStage } from './StoryStage';
 import { useCreateFlow } from './wizard/useCreateFlow';
 import { useDraftedForm } from './wizard/useDraftedForm';
 import { WizardFrame } from './wizard/WizardFrame';
@@ -25,8 +26,16 @@ const KICKERS: Record<Step, string> = { media: 'Média', share: 'Diffusion' };
 
 type Audience = 'public' | 'abonnies' | 'only_me';
 const AUDIENCES: ReadonlyArray<ChipOption<Audience>> = [
-  { id: 'public', label: 'Tout le monde', icon: <Icon name="globe" size={16} aria-hidden="true" /> },
-  { id: 'abonnies', label: 'Mes abonnés', icon: <Icon name="users" size={16} aria-hidden="true" /> },
+  {
+    id: 'public',
+    label: 'Tout le monde',
+    icon: <Icon name="globe" size={16} aria-hidden="true" />,
+  },
+  {
+    id: 'abonnies',
+    label: 'Mes abonnés',
+    icon: <Icon name="users" size={16} aria-hidden="true" />,
+  },
   { id: 'only_me', label: 'Moi', icon: <Icon name="lock" size={16} aria-hidden="true" /> },
 ];
 
@@ -79,7 +88,10 @@ export function StoryCreateForm({ onClose, user, onCreated }: StoryCreateFormPro
         visibility: values.audience,
       });
       if (insertError) {
-        await supabase.storage.from('stories-private').remove([path]).catch(() => {});
+        await supabase.storage
+          .from('stories-private')
+          .remove([path])
+          .catch(() => {});
         throw new Error(insertError.message);
       }
       clear();
@@ -100,14 +112,41 @@ export function StoryCreateForm({ onClose, user, onCreated }: StoryCreateFormPro
       onBack={flow.onBack}
       onNext={flow.onNext}
     >
-      {flow.current === 'media' ? (
-        <MediaTray files={files} onChange={(next) => setFiles(next.slice(-1))} onError={flow.setError} max={1} />
+      {flow.current === 'media' && files[0] ? (
+        <StoryStage
+          file={files[0]}
+          onNext={flow.onNext}
+          onReplace={(next) => {
+            const result = acceptMedia([], [next], 1);
+            flow.setError(result.error);
+            if (result.files.length > 0) setFiles(result.files);
+          }}
+        />
+      ) : null}
+      {flow.current === 'media' && !files[0] ? (
+        <MediaTray
+          files={files}
+          onChange={(next) => setFiles(next.slice(-1))}
+          onError={flow.setError}
+          max={1}
+        />
       ) : null}
 
       {flow.current === 'share' ? (
         <>
-          <CountedTextArea label="Un mot sur ce moment" value={values.caption} onChange={(caption) => patch({ caption })} max={280} placeholder="Visible 24 h…" />
-          <Chips label="Qui la voit ?" options={AUDIENCES} value={values.audience} onChange={(audience) => patch({ audience })} />
+          <CountedTextArea
+            label="Un mot sur ce moment"
+            value={values.caption}
+            onChange={(caption) => patch({ caption })}
+            max={280}
+            placeholder="Visible 24 h…"
+          />
+          <Chips
+            label="Qui la voit ?"
+            options={AUDIENCES}
+            value={values.audience}
+            onChange={(audience) => patch({ audience })}
+          />
         </>
       ) : null}
     </WizardFrame>

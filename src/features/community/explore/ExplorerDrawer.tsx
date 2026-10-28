@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   BookOpen,
   Compass,
@@ -13,12 +14,24 @@ import {
   UserRound,
   Users,
 } from 'lucide-react';
-import { DrawerShell, type DrawerSecondaryItem, type DrawerTab } from '@/components/compte/drawer/shell/DrawerShell';
+import {
+  DrawerShell,
+  type DrawerSecondaryItem,
+  type DrawerTab,
+} from '@/components/compte/drawer/shell/DrawerShell';
 import { useToast } from '@/contexts/ToastContext';
 import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { CommunityCardDrawer } from '@/features/community/shell/CommunityCardDrawer';
-import { countByScope, filterByScope, type SearchScope } from '@/features/community/sections/search';
-import { SECTION_TABS, sectionIndex, type SectionTabId } from '@/features/community/sections/sectionTabs';
+import {
+  countByScope,
+  filterByScope,
+  type SearchScope,
+} from '@/features/community/sections/search';
+import {
+  SECTION_TABS,
+  sectionIndex,
+  type SectionTabId,
+} from '@/features/community/sections/sectionTabs';
 import { useCommunitySearch } from '@/features/community/sections/useCommunitySearch';
 import { useCommunitySections } from '@/features/community/sections/useCommunitySections';
 import { ExplorerDetail, itemKey, type ExplorerItem } from './ExplorerCard';
@@ -54,16 +67,36 @@ const SCOPES: ReadonlyArray<{ id: SearchScope; label: string; icon: React.ReactN
   { id: 'member', label: 'Membres', icon: <User size={15} aria-hidden="true" /> },
 ];
 
-const PROPOSE_BY_TAB: Partial<Record<SectionTabId, ProposeKind>> = { carnets: 'carnet', clubs: 'club', sorties: 'sortie' };
-const MINE_LABEL: Partial<Record<SectionTabId, string>> = { carnets: 'Mes carnets', clubs: 'Mes clubs', sorties: 'Mes sorties' };
+const PROPOSE_BY_TAB: Partial<Record<SectionTabId, ProposeKind>> = {
+  carnets: 'carnet',
+  clubs: 'club',
+  sorties: 'sortie',
+};
+const MINE_LABEL: Partial<Record<SectionTabId, string>> = {
+  carnets: 'Mes carnets',
+  clubs: 'Mes clubs',
+  sorties: 'Mes sorties',
+};
 const EMPTY_MINE: Partial<Record<SectionTabId, { title: string; hint: string }>> = {
   carnets: { title: 'Aucun carnet à toi', hint: 'Raconte ta prochaine aventure, jour après jour.' },
   clubs: { title: 'Tu n’as rejoint aucun club', hint: 'Rejoins une cordée ou crée la tienne.' },
-  sorties: { title: 'Aucune sortie prévue', hint: 'Inscris-toi à une sortie ou propose la tienne.' },
+  sorties: {
+    title: 'Aucune sortie prévue',
+    hint: 'Inscris-toi à une sortie ou propose la tienne.',
+  },
 };
 
-export function ExplorerDrawer({ open, initialTab, initialSearch = false, user, onClose, onRequireAuth, onPropose }: ExplorerDrawerProps) {
+export function ExplorerDrawer({
+  open,
+  initialTab,
+  initialSearch = false,
+  user,
+  onClose,
+  onRequireAuth,
+  onPropose,
+}: ExplorerDrawerProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [index, setIndex] = useState(() => sectionIndex(initialSearch ? 'recherche' : initialTab));
   const [scopeIndex, setScopeIndex] = useState(0);
   const [modes, setModes] = useState<Record<string, number>>({ carnets: 0, clubs: 0, sorties: 0 });
@@ -86,7 +119,10 @@ export function ExplorerDrawer({ open, initialTab, initialSearch = false, user, 
 
   useEffect(() => {
     if (!open || !initialSearch) return;
-    const timer = window.setTimeout(() => document.querySelector<HTMLElement>('.lkdv-cd [data-autofocus]')?.focus(), 140);
+    const timer = window.setTimeout(
+      () => document.querySelector<HTMLElement>('.lkdv-cd [data-autofocus]')?.focus(),
+      140
+    );
     return () => window.clearTimeout(timer);
   }, [initialSearch, open]);
 
@@ -109,12 +145,15 @@ export function ExplorerDrawer({ open, initialTab, initialSearch = false, user, 
         return Boolean(item.row.is_registered);
       });
     },
-    [all, modes, user?.id],
+    [all, modes, user?.id]
   );
 
   const selected = useMemo(
-    () => [...all.carnets, ...all.clubs, ...all.sorties].find((item) => itemKey(item) === selectedKey) ?? null,
-    [all, selectedKey],
+    () =>
+      [...all.carnets, ...all.clubs, ...all.sorties].find(
+        (item) => itemKey(item) === selectedKey
+      ) ?? null,
+    [all, selectedKey]
   );
 
   const requireUser = useCallback(() => {
@@ -131,14 +170,26 @@ export function ExplorerDrawer({ open, initialTab, initialSearch = false, user, 
       }
       if (!requireUser()) return;
       if (item.kind === 'club') {
-        const ok = item.row.is_member ? await data.leaveClub(item.row) : await data.joinClub(item.row);
-        toast(ok ? (item.row.is_member ? 'Club quitté.' : 'Club rejoint.') : 'Action impossible.', ok ? 'success' : 'error');
+        const ok = item.row.is_member
+          ? await data.leaveClub(item.row)
+          : await data.joinClub(item.row);
+        toast(
+          ok ? (item.row.is_member ? 'Club quitté.' : 'Club rejoint.') : 'Action impossible.',
+          ok ? 'success' : 'error'
+        );
       } else {
         const ok = await data.toggleEvent(item.row);
-        toast(ok ? (item.row.is_registered ? 'Inscription annulée.' : 'Inscription confirmée.') : 'Action impossible.', ok ? 'success' : 'error');
+        toast(
+          ok
+            ? item.row.is_registered
+              ? 'Inscription annulée.'
+              : 'Inscription confirmée.'
+            : 'Action impossible.',
+          ok ? 'success' : 'error'
+        );
       }
     },
-    [data, requireUser, toast],
+    [data, requireUser, toast]
   );
 
   const goTab = (id: SectionTabId) => {
@@ -147,14 +198,39 @@ export function ExplorerDrawer({ open, initialTab, initialSearch = false, user, 
   };
 
   const rails: Rail[] = [
-    { kind: 'carnet', title: 'Carnets récents', items: all.carnets.slice(0, 8), empty: 'Aucun carnet pour l’instant.' },
-    { kind: 'club', title: 'Clubs actifs', items: all.clubs.slice(0, 8), empty: 'Aucun club pour l’instant.' },
-    { kind: 'sortie', title: 'Sorties à venir', items: all.sorties.slice(0, 8), empty: 'Aucune sortie prévue.' },
+    {
+      kind: 'carnet',
+      title: 'Carnets récents',
+      items: all.carnets.slice(0, 8),
+      empty: 'Aucun carnet pour l’instant.',
+    },
+    {
+      kind: 'club',
+      title: 'Clubs actifs',
+      items: all.clubs.slice(0, 8),
+      empty: 'Aucun club pour l’instant.',
+    },
+    {
+      kind: 'sortie',
+      title: 'Sorties à venir',
+      items: all.sorties.slice(0, 8),
+      empty: 'Aucune sortie prévue.',
+    },
   ];
 
   const renderList = (id: 'carnets' | 'clubs' | 'sorties') => {
-    if (selected && selected.kind === (id === 'carnets' ? 'carnet' : id === 'clubs' ? 'club' : 'sortie')) {
-      return <ExplorerDetail item={selected} onBack={() => setSelectedKey(null)} onAction={() => void act(selected)} onClose={onClose} />;
+    if (
+      selected &&
+      selected.kind === (id === 'carnets' ? 'carnet' : id === 'clubs' ? 'club' : 'sortie')
+    ) {
+      return (
+        <ExplorerDetail
+          item={selected}
+          onBack={() => setSelectedKey(null)}
+          onAction={() => void act(selected)}
+          onClose={onClose}
+        />
+      );
     }
     const empty = EMPTY_MINE[id] as { title: string; hint: string };
     return (
@@ -167,6 +243,13 @@ export function ExplorerDrawer({ open, initialTab, initialSearch = false, user, 
         onOpen={(item) => setSelectedKey(itemKey(item))}
         onAction={(item) => void act(item)}
         onPropose={() => onPropose(PROPOSE_BY_TAB[id] as ProposeKind)}
+        onLikeCarnet={(carnet) => {
+          if (!requireUser()) return;
+          void data.toggleCarnetLike(carnet).then((ok) => {
+            if (!ok) toast('Action impossible.', 'error');
+          });
+        }}
+        onNavigate={onClose}
         resetKey={`${id}-${modes[id]}`}
       />
     );
@@ -202,10 +285,18 @@ export function ExplorerDrawer({ open, initialTab, initialSearch = false, user, 
           <ForYouPane
             rails={rails}
             onOpen={(item) => {
-              goTab(item.kind === 'carnet' ? 'carnets' : item.kind === 'club' ? 'clubs' : 'sorties');
+              // Un carnet s'ouvre directement sur sa page ; clubs et sorties s'ouvrent en place.
+              if (item.kind === 'carnet') {
+                onClose();
+                router.push(`/carnets/${item.row.id}`);
+                return;
+              }
+              goTab(item.kind === 'club' ? 'clubs' : 'sorties');
               setSelectedKey(itemKey(item));
             }}
-            onSeeAll={(kind) => goTab(kind === 'carnet' ? 'carnets' : kind === 'club' ? 'clubs' : 'sorties')}
+            onSeeAll={(kind) =>
+              goTab(kind === 'carnet' ? 'carnets' : kind === 'club' ? 'clubs' : 'sorties')
+            }
           />
         );
       }
@@ -215,14 +306,22 @@ export function ExplorerDrawer({ open, initialTab, initialSearch = false, user, 
 
   const modeItems = (id: SectionTabId): DrawerSecondaryItem[] => [
     { id: 'discover', label: 'Découvrir', icon: <Compass size={15} aria-hidden="true" /> },
-    { id: 'mine', label: MINE_LABEL[id] ?? 'Mes éléments', icon: <UserRound size={15} aria-hidden="true" /> },
+    {
+      id: 'mine',
+      label: MINE_LABEL[id] ?? 'Mes éléments',
+      icon: <UserRound size={15} aria-hidden="true" />,
+    },
     { id: 'propose', label: 'Proposer', icon: <Plus size={15} aria-hidden="true" /> },
   ];
 
   const secondary =
     activeId === 'recherche'
       ? {
-          items: SCOPES.map((entry) => ({ id: entry.id, label: `${entry.label}${search.text.length >= 2 ? ` (${countByScope(search.results, entry.id)})` : ''}`, icon: entry.icon })),
+          items: SCOPES.map((entry) => ({
+            id: entry.id,
+            label: `${entry.label}${search.text.length >= 2 ? ` (${countByScope(search.results, entry.id)})` : ''}`,
+            icon: entry.icon,
+          })),
           active: scopeIndex,
           onChange: setScopeIndex,
           label: 'Filtrer la recherche',
@@ -244,7 +343,12 @@ export function ExplorerDrawer({ open, initialTab, initialSearch = false, user, 
           };
 
   const needsData = index >= 1;
-  const state = needsData && data.loading && data.carnets.length + data.clubs.length + data.sorties.length === 0 ? 'loading' : needsData && data.error ? 'error' : 'ready';
+  const state =
+    needsData && data.loading && data.carnets.length + data.clubs.length + data.sorties.length === 0
+      ? 'loading'
+      : needsData && data.error
+        ? 'error'
+        : 'ready';
 
   return (
     <CommunityCardDrawer open={open} onClose={onClose} ariaLabel="Explorer la communauté" strict>

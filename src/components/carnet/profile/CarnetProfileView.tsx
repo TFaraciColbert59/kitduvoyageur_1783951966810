@@ -63,7 +63,7 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
       user?.id
         ? 'Créez un compte pour enregistrer, commenter ou publier.'
         : 'Connectez-vous pour continuer.',
-      'info',
+      'info'
     );
     router.push(`/connexion?next=/carnets/${detail.id}`);
   }, [detail.id, router, toast, user?.id]);
@@ -81,6 +81,12 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
     void engagement.registerView();
   }, [engagement.registerView]);
 
+  // Lien « commentaires » d'une tuile de la Communauté : ouvre directement le fil de commentaires.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('commentaires') === '1')
+      setCommentsOpen(true);
+  }, []);
+
   const detailView = useMemo(
     () => ({
       ...detail,
@@ -91,7 +97,7 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
         favorited: engagement.favorited,
       },
     }),
-    [detail, engagement.favorited, engagement.liked, engagement.likes],
+    [detail, engagement.favorited, engagement.liked, engagement.likes]
   );
 
   const handleBack = useCallback(() => {
@@ -165,11 +171,11 @@ export function CarnetProfileView({ detail }: CarnetProfileViewProps) {
         });
       toast(
         error ? 'Le signalement n’a pas pu être envoyé.' : 'Signalement envoyé. Merci.',
-        error ? 'error' : 'success',
+        error ? 'error' : 'success'
       );
       setReportOpen(false);
     },
-    [currentUserId, detail.id, requireAuth, toast],
+    [currentUserId, detail.id, requireAuth, toast]
   );
 
   return (

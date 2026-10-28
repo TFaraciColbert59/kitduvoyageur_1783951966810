@@ -73,13 +73,13 @@ test.describe('Communauté — page figée, carte-drawer', () => {
     expect(Math.round((await secondary.boundingBox())!.height)).toBe(30);
     await expect(secondary.getByRole('tab')).toHaveCount(4);
 
-    await page.getByRole('tab', { name: 'Carnet' }).click();
+    await page.getByRole('tab', { name: 'Sortie' }).click();
     await expect(page.locator('.lkdv-drawer-secondary')).toHaveCount(0);
   });
 
   test('chaque volet de création tient dans la carte sans défiler', async ({ page }) => {
     await openCreate(page);
-    for (const name of ['Publication', 'Carnet', 'Sortie', 'Kit', 'Club', 'Story']) {
+    for (const name of ['Publication', 'Sortie', 'Kit', 'Club', 'Story']) {
       // Publication est déjà active à l'ouverture : un re-clic fermerait le drawer.
       if (name !== 'Publication') await page.getByRole('tab', { name, exact: true }).click();
       const pane = page.getByRole('tabpanel', { name, exact: true });
@@ -124,5 +124,11 @@ test.describe('Communauté — page figée, carte-drawer', () => {
     await expect(page.getByRole('tabpanel', { name: 'Sortie', exact: true }).getByLabel('Titre')).toHaveValue(
       'Lac Blanc au lever du jour',
     );
+  });
+
+  test('l’onglet Carnet mène à la page de création existante, sans dupliquer son formulaire', async ({ page }) => {
+    await openCreate(page);
+    await page.getByRole('tab', { name: 'Carnet', exact: true }).click();
+    await expect(page).toHaveURL(/\/carnets\/nouveau$/);
   });
 });

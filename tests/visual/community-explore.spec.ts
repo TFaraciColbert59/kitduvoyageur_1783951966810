@@ -23,7 +23,7 @@ const POSTS = [
 async function openExplorer(page: Page) {
   const posted: Array<{ table: string; body: unknown }> = [];
   const fixture = await installCommunityFeedFixture(page);
-  await page.route(/\/rest\/v1\/(carnets|clubs|events|community_posts|club_members|event_participants)(\?.*)?$/, async (route) => {
+  await page.route(/\/rest\/v1\/(carnets|clubs|events|community_posts|club_members|event_participants|carnet_likes|carnet_comments)(\?.*)?$/, async (route) => {
     const request = route.request();
     const table = new URL(request.url()).pathname.split('/').at(-1) as string;
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors(route) });
@@ -34,7 +34,20 @@ async function openExplorer(page: Page) {
     if (request.method() !== 'GET') return route.fulfill({ status: 204, headers: cors(route) });
     // Le fil lui-même (sans filtre de recherche) reste servi par le simulateur du fil.
     if (table === 'community_posts' && !request.url().includes('ilike')) return route.fallback();
-    const rows: Record<string, unknown[]> = { carnets: CARNETS, clubs: CLUBS, events: EVENTS, community_posts: POSTS, club_members: [], event_participants: [] };
+    const rows: Record<string, unknown[]> = {
+      carnets: CARNETS,
+      clubs: CLUBS,
+      events: EVENTS,
+      community_posts: POSTS,
+      club_members: [],
+      event_participants: [],
+      carnet_likes: [
+        { carnet_id: 'c1', user_id: 'u-a' },
+        { carnet_id: 'c1', user_id: 'u-b' },
+        { carnet_id: 'c2', user_id: 'u-a' },
+      ],
+      carnet_comments: [{ carnet_id: 'c1' }, { carnet_id: 'c1' }, { carnet_id: 'c1' }],
+    };
     return route.fulfill({ headers: cors(route), json: rows[table] ?? [] });
   });
   await page.goto('/communaute', { waitUntil: 'domcontentloaded' });
@@ -87,27 +100,54 @@ test.describe('Explorer la communauté', () => {
     expect(await overflow(pane)).toBeLessThanOrEqual(1);
   });
 
-  test('Carnets : grande carte, détail en place, filtre « Mes carnets », Proposer ouvre Créer', async ({ page }) => {
+  test('Carnets : tuiles espacées à image pleine, titre en bas à droite, j’aime et commentaires fonctionnels', async ({ page }, testInfo) => {
+    const { dialog, posted } = await openExplorer(page);
+    await section(dialog, 'Carnets').click();
+    const pane = dialog.getByRole('tabpanel', { name: 'Carnets', exact: true });
+    const tiles = pane.locator('.lkdv-ct');
+    await expect(tiles).toHaveCount(3);
+
+    // Pas collées : au moins 8 px entre deux tuiles voisines.
+    const [a, b] = await Promise.all([tiles.nth(0).boundingBox(), tiles.nth(1).boundingBox()]);
+    expect(Math.round(b!.x - (a!.x + a!.width))).toBeGreaterThanOrEqual(8);
+    // L’image (ou le fond) remplit toute la tuile.
+    const link = pane.getByRole('link', { name: 'Ouvrir le carnet Vercors en 3 jours' });
+    const [linkBox, tileBox] = await Promise.all([link.boundingBox(), tiles.nth(0).boundingBox()]);
+    expect(Math.round(linkBox!.width)).toBe(Math.round(tileBox!.width));
+    expect(Math.round(linkBox!.height)).toBe(Math.round(tileBox!.height));
+    // Titre aligné à droite, compteurs sous le titre.
+    expect(await tiles.nth(0).locator('.lkdv-ct-title').evaluate((el) => getComputedStyle(el).textAlign)).toBe('right');
+    const likeButton = tiles.nth(0).getByRole('button', { name: /J’aime : 2/ });
+    await expect(likeButton).toBeVisible();
+    await expect(tiles.nth(0).getByRole('link', { name: 'Commentaires : 3' })).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('explorer-carnets-tuiles.png') });
+
+    // J’aime : bascule tout de suite et écrit dans carnet_likes.
+    await likeButton.click();
+    await expect(tiles.nth(0).getByRole('button', { name: /Retirer mon j’aime : 3/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(posted.find((entry) => entry.table === 'carnet_likes')?.body).toMatchObject({ carnet_id: 'c1', user_id: AUTHOR_ID });
+
+    expect(await overflow(pane)).toBeLessThanOrEqual(1);
+
+    // Toute la tuile mène au carnet et ferme l’Explorer.
+    await link.click();
+    await expect(page).toHaveURL(/\/carnets\/c1$/, { timeout: 20_000 });
+  });
+
+  test('Carnets : « Proposer » mène à la page de création de carnet existante', async ({ page }) => {
+    const { dialog } = await openExplorer(page);
+    await section(dialog, 'Carnets').click();
+    await dialog.locator('.lkdv-drawer-secondary .ig-tabs').getByRole('tab', { name: 'Proposer' }).click();
+    await expect(page).toHaveURL(/\/carnets\/nouveau$/);
+  });
+
+  test('Carnets : le filtre « Mes carnets » ne garde que les miens', async ({ page }) => {
     const { dialog } = await openExplorer(page);
     await section(dialog, 'Carnets').click();
     const pane = dialog.getByRole('tabpanel', { name: 'Carnets', exact: true });
-    await expect(pane.getByRole('button', { name: 'Ouvrir Vercors en 3 jours' })).toBeVisible();
-
-    await pane.getByRole('button', { name: 'Lire' }).first().click();
-    await expect(pane.getByRole('button', { name: 'Retour' })).toBeVisible();
-    await pane.getByRole('button', { name: 'Retour' }).click();
-    await expect(pane.getByRole('button', { name: 'Ouvrir Vercors en 3 jours' })).toBeVisible();
-
-    const secondary = dialog.locator('.lkdv-drawer-secondary .ig-tabs');
-    await secondary.getByRole('tab', { name: 'Mes carnets' }).click();
-    await expect(pane.locator('.lkdv-ex-card')).toHaveCount(1);
-    await expect(pane.getByRole('button', { name: 'Ouvrir Vercors en 3 jours' })).toBeVisible();
-
-    await secondary.getByRole('tab', { name: 'Proposer' }).click();
-    const create = page.getByRole('dialog', { name: 'Créer dans l’application' });
-    await expect(create).toBeVisible();
-    await expect(create.getByRole('tab', { name: 'Carnet', exact: true })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('dialog', { name: 'Explorer la communauté' })).toHaveCount(0);
+    await dialog.locator('.lkdv-drawer-secondary .ig-tabs').getByRole('tab', { name: 'Mes carnets' }).click();
+    await expect(pane.locator('.lkdv-ct')).toHaveCount(1);
+    await expect(pane.getByRole('link', { name: 'Ouvrir le carnet Vercors en 3 jours' })).toBeVisible();
   });
 
   test('Clubs : rejoindre envoie l’adhésion et le bouton devient « Quitter »', async ({ page }) => {

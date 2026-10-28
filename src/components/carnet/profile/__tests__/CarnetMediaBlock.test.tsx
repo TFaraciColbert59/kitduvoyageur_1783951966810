@@ -46,7 +46,6 @@ function detail(photoMoments: CarnetMomentItem[], overrides: Partial<CarnetDetai
     days: [],
     kit: { totalWeightG: null, items: [] },
     trace: null,
-    dayTraces: [],
     distanceKm: null,
     elevationM: null,
     ...overrides,

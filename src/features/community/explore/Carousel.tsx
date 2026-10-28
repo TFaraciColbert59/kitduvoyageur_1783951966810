@@ -11,11 +11,14 @@ export function Carousel({
   label,
   pages,
   resetKey,
+  scrollToPage,
 }: {
   label: string;
   pages: React.ReactNode[];
   /** Change quand le contenu change (nouvelle recherche, autre filtre) : retour à la première page. */
   resetKey?: string;
+  /** Va à cette page quand la valeur change (ex. dernière page après un ajout). */
+  scrollToPage?: number;
 }) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const [index, setIndex] = useState(0);
@@ -23,7 +26,9 @@ export function Carousel({
   const sync = useCallback(() => {
     const track = trackRef.current;
     if (!track || track.clientWidth === 0) return;
-    setIndex(Math.max(0, Math.min(pages.length - 1, Math.round(track.scrollLeft / track.clientWidth))));
+    setIndex(
+      Math.max(0, Math.min(pages.length - 1, Math.round(track.scrollLeft / track.clientWidth)))
+    );
   }, [pages.length]);
 
   useEffect(() => {
@@ -33,6 +38,13 @@ export function Carousel({
     setIndex(0);
   }, [resetKey]);
 
+  useEffect(() => {
+    if (scrollToPage === undefined) return;
+    const track = trackRef.current;
+    if (!track) return;
+    track.scrollTo({ left: scrollToPage * track.clientWidth, behavior: 'smooth' });
+  }, [scrollToPage]);
+
   const goTo = (target: number) => {
     const track = trackRef.current;
     if (!track) return;
@@ -40,10 +52,27 @@ export function Carousel({
   };
 
   return (
-    <div className="lkdv-ex-carousel" role="group" aria-roledescription="carrousel" aria-label={label}>
-      <div className="lkdv-ex-track" ref={trackRef} onScroll={sync} tabIndex={0}>
+    <div
+      className="lkdv-ex-carousel"
+      role="group"
+      aria-roledescription="carrousel"
+      aria-label={label}
+    >
+      <div
+        className="lkdv-ex-track"
+        ref={trackRef}
+        onScroll={sync}
+        tabIndex={0}
+        data-no-swipe={pages.length > 1 ? 'true' : undefined}
+      >
         {pages.map((page, i) => (
-          <div key={i} className="lkdv-ex-page" role="group" aria-roledescription="diapositive" aria-label={`${i + 1} sur ${pages.length}`}>
+          <div
+            key={i}
+            className="lkdv-ex-page"
+            role="group"
+            aria-roledescription="diapositive"
+            aria-label={`${i + 1} sur ${pages.length}`}
+          >
             {page}
           </div>
         ))}
@@ -51,7 +80,14 @@ export function Carousel({
       {pages.length > 1 ? (
         <div className="lkdv-ex-dots" role="tablist" aria-label="Pages">
           {pages.map((_, i) => (
-            <button key={i} type="button" role="tab" aria-selected={i === index} aria-label={`Page ${i + 1}`} onClick={() => goTo(i)}>
+            <button
+              key={i}
+              type="button"
+              role="tab"
+              aria-selected={i === index}
+              aria-label={`Page ${i + 1}`}
+              onClick={() => goTo(i)}
+            >
               <span data-on={i === index ? 'true' : 'false'} />
             </button>
           ))}

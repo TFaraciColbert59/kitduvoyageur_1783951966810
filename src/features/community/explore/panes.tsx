@@ -4,11 +4,21 @@ import React from 'react';
 import Link from 'next/link';
 import { Search as SearchIcon, X } from 'lucide-react';
 import { DrawerEmpty } from '@/components/compte/drawer/shell/DrawerShell';
-import { kindLabel, paginate, RESULTS_PER_PAGE, SEARCH_KINDS, SEARCH_MIN_CHARS, type SearchResult } from '@/features/community/sections/search';
+import {
+  kindLabel,
+  paginate,
+  RESULTS_PER_PAGE,
+  SEARCH_KINDS,
+  SEARCH_MIN_CHARS,
+  type SearchResult,
+} from '@/features/community/sections/search';
 import { Carousel } from './Carousel';
+import type { CarnetRow } from '@/features/community/sections/useCommunitySections';
+import { CarnetTile } from './CarnetTile';
 import { ExplorerCard, ExplorerMini, itemKey, type ExplorerItem } from './ExplorerCard';
 
-const toneOf = (kind: SearchResult['kind']) => SEARCH_KINDS.find((entry) => entry.id === kind)?.tone ?? '#17402C';
+const toneOf = (kind: SearchResult['kind']) =>
+  SEARCH_KINDS.find((entry) => entry.id === kind)?.tone ?? '#17402C';
 
 /* --- Recherche ------------------------------------------------------------------- */
 
@@ -65,7 +75,11 @@ export function SearchPane({
                   <button type="button" onClick={() => onQuery(entry)}>
                     {entry}
                   </button>
-                  <button type="button" aria-label={`Retirer « ${entry} » des recherches récentes`} onClick={() => onRemoveRecent(entry)}>
+                  <button
+                    type="button"
+                    aria-label={`Retirer « ${entry} » des recherches récentes`}
+                    onClick={() => onRemoveRecent(entry)}
+                  >
                     <X size={12} aria-hidden="true" />
                   </button>
                 </span>
@@ -73,7 +87,10 @@ export function SearchPane({
             </div>
           </div>
         ) : (
-          <DrawerEmpty title="Tout trouver" hint="Un post, un carnet, un club, une sortie ou un membre." />
+          <DrawerEmpty
+            title="Tout trouver"
+            hint="Un post, un carnet, un club, une sortie ou un membre."
+          />
         )
       ) : searching && results.length === 0 ? (
         <p className="lkdv-ex-note" role="status">
@@ -114,7 +131,10 @@ export function SearchPane({
                         <b>{result.title}</b>
                         <small>{result.meta}</small>
                       </span>
-                      <span className="lkdv-ex-kind" style={{ '--tone': toneOf(result.kind) } as React.CSSProperties}>
+                      <span
+                        className="lkdv-ex-kind"
+                        style={{ '--tone': toneOf(result.kind) } as React.CSSProperties}
+                      >
                         {kindLabel(result.kind)}
                       </span>
                     </Link>
@@ -148,7 +168,12 @@ export function ForYouPane({
   onSeeAll: (kind: Rail['kind']) => void;
 }) {
   if (rails.every((rail) => rail.items.length === 0)) {
-    return <DrawerEmpty title="Rien à te montrer pour l’instant" hint="Les carnets, clubs et sorties de la communauté apparaîtront ici." />;
+    return (
+      <DrawerEmpty
+        title="Rien à te montrer pour l’instant"
+        hint="Les carnets, clubs et sorties de la communauté apparaîtront ici."
+      />
+    );
   }
   return (
     <div className="lkdv-ex-pane lkdv-ex-rails">
@@ -188,6 +213,8 @@ export function ListPane({
   onOpen,
   onAction,
   onPropose,
+  onLikeCarnet,
+  onNavigate,
   resetKey,
 }: {
   label: string;
@@ -198,6 +225,8 @@ export function ListPane({
   onOpen: (item: ExplorerItem) => void;
   onAction: (item: ExplorerItem) => void;
   onPropose: () => void;
+  onLikeCarnet: (carnet: CarnetRow) => void;
+  onNavigate: () => void;
   resetKey: string;
 }) {
   if (items.length === 0) {
@@ -213,13 +242,43 @@ export function ListPane({
       />
     );
   }
+  const carnets = items.filter(
+    (item): item is Extract<ExplorerItem, { kind: 'carnet' }> => item.kind === 'carnet'
+  );
+  if (carnets.length === items.length) {
+    // Carnets : quatre tuiles par page (2 × 2), bien espacées, image en fond.
+    const pages: Array<typeof carnets> = [];
+    for (let i = 0; i < carnets.length; i += 4) pages.push(carnets.slice(i, i + 4));
+    return (
+      <div className="lkdv-ex-pane">
+        <Carousel
+          label={label}
+          resetKey={resetKey}
+          pages={pages.map((page, index) => (
+            <ul key={index} className="lkdv-ct-grid">
+              {page.map((item) => (
+                <li key={item.row.id}>
+                  <CarnetTile carnet={item.row} onLike={onLikeCarnet} onNavigate={onNavigate} />
+                </li>
+              ))}
+            </ul>
+          ))}
+        />
+      </div>
+    );
+  }
   return (
     <div className="lkdv-ex-pane">
       <Carousel
         label={label}
         resetKey={resetKey}
         pages={items.map((item) => (
-          <ExplorerCard key={itemKey(item)} item={item} onOpen={() => onOpen(item)} onAction={() => onAction(item)} />
+          <ExplorerCard
+            key={itemKey(item)}
+            item={item}
+            onOpen={() => onOpen(item)}
+            onAction={() => onAction(item)}
+          />
         ))}
       />
     </div>

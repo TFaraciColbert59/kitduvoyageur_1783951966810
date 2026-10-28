@@ -59,7 +59,6 @@ export function CarnetMapSheet({ open, detail, onClose, onDownloadGpx }: CarnetM
       <div className="ckp-map-wrap" style={{ aspectRatio: '4 / 5' }}>
         <CarnetTraceMap
           trace={detail.trace}
-          dayTraces={detail.dayTraces}
           distanceKm={detail.distanceKm}
           elevationM={detail.elevationM}
         />

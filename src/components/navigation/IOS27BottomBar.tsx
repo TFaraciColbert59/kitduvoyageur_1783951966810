@@ -294,6 +294,10 @@ export function IOS27BottomBar({
     // La lentille reste soulevée le temps du trajet, puis se rétracte.
     pulseTimer.current = setTimeout(() => liftTarget.set(0), press.moved ? 60 : 200);
     if (!cancelled && !press.longFired && idx !== activeIndex) commit(idx);
+    // Onglet déjà actif mais sur une sous-page (/carnets, /clubs, /pays, une fiche…) :
+    // un appui ramène à la racine de la destination, comme la barre native. Sans cela
+    // l'onglet de la section en cours restait muet partout sauf sur sa page d'accueil.
+    else if (!cancelled && !press.longFired && DESTINATIONS[idx] && pathname !== DESTINATIONS[idx].href) commit(idx);
     else lastCommitRef.current = null;
   };
 

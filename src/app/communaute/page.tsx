@@ -9,6 +9,7 @@ import { CommunityStoriesBar } from '@/components/communaute/CommunityStoriesBar
 import { CommunityFeedShell } from '@/features/community/feed/CommunityFeedShell';
 import { CommunityFeedTopBar } from '@/features/community/feed/CommunityFeedTopBar';
 import { CommunityFeed } from '@/features/community/feed/CommunityFeed';
+import { CARNET_EDITOR_HREF } from '@/features/community/create/carnetEditor';
 import type { CreateKind } from '@/features/community/create/CreateDrawer';
 import type { ProposeKind } from '@/features/community/explore/ExplorerDrawer';
 import '@/styles/community-card.css';
@@ -81,11 +82,15 @@ function CommunauteFeedContent() {
       }
       setSectionsOpen(false);
       setSectionsSearch(false);
+      if (kind === 'carnet') {
+        router.push(CARNET_EDITOR_HREF);
+        return;
+      }
       setCreateKind(kind);
       setCreateMounted(true);
       setCreateOpen(true);
     },
-    [requireAuth, user?.id, user?.is_anonymous],
+    [requireAuth, router, user?.id, user?.is_anonymous],
   );
 
   return (

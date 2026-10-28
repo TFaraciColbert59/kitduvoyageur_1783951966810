@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { insertCommunityPost, uploadCoverImage } from './upload';
 import { Chips, CountedTextArea, ImagePicker, TextField, type ChipOption } from './wizard/fields';
 import { firstIssue } from './wizard/validate';
+import { moderateText, validateActivity } from './moderation';
 import { useCreateFlow } from './wizard/useCreateFlow';
 import { useDraftedForm } from './wizard/useDraftedForm';
 import { WizardFrame } from './wizard/WizardFrame';
@@ -24,19 +25,30 @@ const KICKERS: Record<Step, string> = { identity: 'Identité', spirit: 'Esprit',
 
 type Privacy = 'open' | 'closed';
 
-const CATEGORIES: ReadonlyArray<ChipOption<string>> = ['Randonnée', 'Trail', 'Ski', 'Escalade', 'Vélo', 'Bivouac'].map((label) => ({
+const CATEGORIES: ReadonlyArray<ChipOption<string>> = [
+  'Randonnée',
+  'Trail',
+  'Ski',
+  'Escalade',
+  'Vélo',
+  'Bivouac',
+].map((label) => ({
   id: label,
   label,
 }));
 
 const PRIVACIES: ReadonlyArray<ChipOption<Privacy>> = [
   { id: 'open', label: 'Ouvert', icon: <Icon name="globe" size={16} aria-hidden="true" /> },
-  { id: 'closed', label: 'Sur validation', icon: <Icon name="lock" size={16} aria-hidden="true" /> },
+  {
+    id: 'closed',
+    label: 'Sur validation',
+    icon: <Icon name="lock" size={16} aria-hidden="true" />,
+  },
 ];
 
 const INITIAL = {
   name: '',
-  category: 'Randonnée',
+  category: '',
   location: '',
   description: '',
   privacy: 'open' as Privacy,
@@ -60,7 +72,19 @@ export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps
 
   const flow = useCreateFlow<Step>({
     steps: STEPS,
-    validate: (step) => (step === 'identity' ? firstIssue(nameSchema, values) : null),
+    validate: (step) => {
+      if (step === 'identity') {
+        if (!badge) return 'Ajoute une image pour ton club.';
+        return (
+          firstIssue(nameSchema, values) ??
+          moderateText(values.name) ??
+          validateActivity(values.category)
+        );
+      }
+      if (step === 'spirit')
+        return moderateText(values.location) ?? moderateText(values.description);
+      return null;
+    },
     submit: async () => {
       if (!user?.id) throw new Error('Connecte-toi pour créer un club.');
       const supabase = createClient();
@@ -76,14 +100,15 @@ export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps
           name,
           description: [description, location ? `📍 ${location}` : ''].filter(Boolean).join('\n\n'),
           cover_image: coverUrl ?? '',
-          category: values.category,
+          category: values.category.trim().replace(/\s+/g, ' '),
           privacy: values.privacy,
           created_by: user.id,
           members_count: 1,
         })
         .select('id, slug')
         .single();
-      if (insertError || !data) throw new Error(insertError?.message || 'Création du club refusée.');
+      if (insertError || !data)
+        throw new Error(insertError?.message || 'Création du club refusée.');
       const { error: memberError } = await supabase.from('club_members').insert({
         club_id: data.id,
         user_id: user.id,
@@ -124,22 +149,63 @@ export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps
     >
       {flow.current === 'identity' ? (
         <>
-          <ImagePicker label="Blason" file={badge} onChange={setBadge} aspect="1 / 1" round />
-          <TextField label="Nom du club" value={values.name} onChange={(name) => patch({ name })} maxLength={80} placeholder="La Cordée du Vercors" />
-          <Chips label="Activité" options={CATEGORIES} value={values.category} onChange={(category) => patch({ category })} />
+          <ImagePicker
+            label="Image du club (obligatoire)"
+            file={badge}
+            onChange={setBadge}
+            aspect="1 / 1"
+            round
+          />
+          <TextField
+            label="Nom du club"
+            value={values.name}
+            onChange={(name) => patch({ name })}
+            maxLength={80}
+            placeholder="La Cordée du Vercors"
+          />
+          <TextField
+            label="Activité"
+            value={values.category}
+            onChange={(category) => patch({ category })}
+            maxLength={40}
+            placeholder="Randonnée, trail, ski…"
+          />
+          <Chips
+            label="Suggestions"
+            options={CATEGORIES}
+            value={values.category}
+            onChange={(category) => patch({ category })}
+          />
         </>
       ) : null}
 
       {flow.current === 'spirit' ? (
         <>
-          <TextField label="Massif ou ville" value={values.location} onChange={(location) => patch({ location })} maxLength={80} placeholder="Vercors" />
-          <CountedTextArea label="L’esprit du club" value={values.description} onChange={(description) => patch({ description })} max={1500} placeholder="Le niveau, le rythme, l’ambiance…" />
+          <TextField
+            label="Massif ou ville"
+            value={values.location}
+            onChange={(location) => patch({ location })}
+            maxLength={80}
+            placeholder="Vercors"
+          />
+          <CountedTextArea
+            label="L’esprit du club"
+            value={values.description}
+            onChange={(description) => patch({ description })}
+            max={1500}
+            placeholder="Le niveau, le rythme, l’ambiance…"
+          />
         </>
       ) : null}
 
       {flow.current === 'access' ? (
         <>
-          <Chips label="Qui peut rejoindre ?" options={PRIVACIES} value={values.privacy} onChange={(privacy) => patch({ privacy })} />
+          <Chips
+            label="Qui peut rejoindre ?"
+            options={PRIVACIES}
+            value={values.privacy}
+            onChange={(privacy) => patch({ privacy })}
+          />
           <p className="lkdv-wz-hint">
             {values.privacy === 'open'
               ? 'Tout le monde peut rejoindre en un geste.'

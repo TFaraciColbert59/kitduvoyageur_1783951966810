@@ -1,15 +1,21 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
-import { DrawerShell, type DrawerSecondaryItem, type DrawerTab } from '@/components/compte/drawer/shell/DrawerShell';
+import {
+  DrawerShell,
+  type DrawerSecondaryItem,
+  type DrawerTab,
+} from '@/components/compte/drawer/shell/DrawerShell';
 import { CommunityCardDrawer } from '@/features/community/shell/CommunityCardDrawer';
 import { PostCreateForm, type PostKind } from './PostCreateForm';
 import { StoryCreateForm } from './StoryCreateForm';
-import { CarnetCreateForm } from './CarnetCreateForm';
 import { SortieCreateForm } from './SortieCreateForm';
 import { KitCreateForm } from './KitCreateForm';
 import { ClubCreateForm } from './ClubCreateForm';
+import { CARNET_EDITOR_HREF } from './carnetEditor';
+import { WizardEdgeContext, type WizardEdgeHandler } from './wizard/edge';
 
 export type CreateKind = 'post' | 'carnet' | 'sortie' | 'kit' | 'club' | 'story';
 
@@ -40,7 +46,10 @@ export interface CreateDrawerProps {
 }
 
 function indexOfKind(kind: CreateKind): number {
-  return Math.max(0, CREATE_KINDS.findIndex((item) => item.id === kind));
+  return Math.max(
+    0,
+    CREATE_KINDS.findIndex((item) => item.id === kind)
+  );
 }
 
 /**
@@ -48,20 +57,50 @@ function indexOfKind(kind: CreateKind): number {
  * (icônes seules) en haut, un formulaire par volet. Un re-clic sur l'onglet
  * actif ferme le drawer.
  */
-export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'post' }: CreateDrawerProps) {
+export function CreateDrawer({
+  open,
+  onClose,
+  user,
+  onCreated,
+  initialKind = 'post',
+}: CreateDrawerProps) {
+  const router = useRouter();
   const [index, setIndex] = useState(() => indexOfKind(initialKind));
   const [formatIndex, setFormatIndex] = useState(0);
 
+  // `onClose` et `router` changent à chaque rendu du parent : on les lit par référence pour que
+  // l'onglet ne soit réinitialisé qu'à l'ouverture ou au changement de type demandé.
+  const latest = useRef({ onClose, router });
+  latest.current = { onClose, router };
+
   useEffect(() => {
-    if (open) setIndex(indexOfKind(initialKind));
+    if (!open) return;
+    if (initialKind === 'carnet') {
+      latest.current.onClose();
+      latest.current.router.push(CARNET_EDITOR_HREF);
+      return;
+    }
+    setIndex(indexOfKind(initialKind));
   }, [initialKind, open]);
 
   const common = { open: true, onClose, user, onCreated };
 
+  // Glissement au bord d'un parcours : onglet voisin, en sautant « Carnet » (qui quitte le drawer).
+  const edge: WizardEdgeHandler = (direction) => {
+    const step = direction === 'next' ? 1 : -1;
+    for (let target = index + step; target >= 0 && target < CREATE_KINDS.length; target += step) {
+      if (CREATE_KINDS[target]?.id === 'carnet') continue;
+      setIndex(target);
+      return true;
+    }
+    return false;
+  };
+
   const renderers: Record<CreateKind, () => React.ReactNode> = {
     post: () => <PostCreateForm {...common} format={POST_FORMATS[formatIndex]?.id ?? 'photo'} />,
     story: () => <StoryCreateForm {...common} />,
-    carnet: () => <CarnetCreateForm {...common} />,
+    // Le carnet a sa propre page de création (/carnets/nouveau) : l'onglet y mène, il n'a pas de formulaire ici.
+    carnet: () => null,
     sortie: () => <SortieCreateForm {...common} />,
     kit: () => <KitCreateForm {...common} />,
     club: () => <ClubCreateForm {...common} />,
@@ -82,19 +121,29 @@ export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'po
 
   return (
     <CommunityCardDrawer open={open} onClose={onClose} ariaLabel="Créer dans l’application" strict>
-      <DrawerShell
-        tabs={tabs}
-        activeIndex={index}
-        secondary={
-          CREATE_KINDS[index]?.id === 'post'
-            ? { items: secondaryItems, active: formatIndex, onChange: setFormatIndex, label: 'Format de publication' }
-            : undefined
-        }
-        onIndexChange={(next) => {
-          if (next === index) onClose();
-          else setIndex(next);
-        }}
-      />
+      <WizardEdgeContext.Provider value={edge}>
+        <DrawerShell
+          tabs={tabs}
+          activeIndex={index}
+          secondary={
+            CREATE_KINDS[index]?.id === 'post'
+              ? {
+                  items: secondaryItems,
+                  active: formatIndex,
+                  onChange: setFormatIndex,
+                  label: 'Format de publication',
+                }
+              : undefined
+          }
+          onIndexChange={(next) => {
+            if (next === index) onClose();
+            else if (CREATE_KINDS[next]?.id === 'carnet') {
+              onClose();
+              router.push(CARNET_EDITOR_HREF);
+            } else setIndex(next);
+          }}
+        />
+      </WizardEdgeContext.Provider>
     </CommunityCardDrawer>
   );
 }
