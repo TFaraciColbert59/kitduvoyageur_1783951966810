@@ -1,27 +1,37 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { swipeStep } from './CarnetPages';
 
 /**
  * Balayage des pages de la carte : **Résumé → J1 → J2 … → Jn**.
  *
- * Une seule grammaire de geste : le pas est celui du carrousel (`swipeStep`,
- * 40 px de course horizontale, jamais un geste vertical). Le balayage ne sort
- * jamais des bornes : à droite sur le Résumé et à gauche sur le dernier jour,
- * rien ne bouge et aucune page n'est créée. Le carrousel média (Posts,
- * Parcours, Étapes, Matériel, Nature, J’aime, Commentaires, Gérer) garde son
- * propre geste dans `.ckp-pages` : un balayage commencé dans la grille ne
- * change donc jamais de jour.
+ * Une seule grammaire de geste pour la carte entière : 40 px de course
+ * horizontale, jamais un geste vertical. Le balayage ne sort jamais des bornes :
+ * à droite sur le Résumé et à gauche sur le dernier jour, rien ne bouge et
+ * aucune page n'est créée. Un glissement horizontal n'importe où dans la carte
+ * — grille, volets, en-tête — change donc UNIQUEMENT de jour ; le carrousel
+ * média ne se pilote plus que par le sélecteur du bas et par son clavier.
  */
 export const DAY_SWIPE_MS = 220;
 
+/** Course horizontale minimale d'un pas de page. */
+const SWIPE_MIN_PX = 40;
+
 export type DayDirection = 'next' | 'prev';
 
-/** Pas de page pour un geste horizontal : +1 (jour suivant), -1, ou 0 (rien). */
+/**
+ * Pas de page pour un geste horizontal : +1 (jour suivant), -1, ou 0 (rien).
+ * Un geste vertical ou trop court ne consomme jamais le geste : le défilement
+ * de la carte garde la main.
+ */
 export function dayStep(dx: number, dy: number): -1 | 0 | 1 {
-  return swipeStep(dx, dy);
+  if (!Number.isFinite(dx) || !Number.isFinite(dy)) return 0;
+  if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) <= Math.abs(dy) * 1.2) return 0;
+  return dx < 0 ? 1 : -1;
 }
+
+/** Alias historique : même pas, même seuil, une seule grammaire de geste. */
+export const swipeStep = dayStep;
 
 /** Page cible d'un pas, toujours dans les bornes `0 … count - 1`. */
 export function dayTarget(index: number, step: -1 | 0 | 1, count: number): number {
@@ -42,17 +52,16 @@ export interface DaySwipeHandlers {
   onPointerDown: (event: React.PointerEvent) => void;
   onPointerUp: (event: React.PointerEvent) => void;
   onPointerCancel: () => void;
+  /**
+   * Un glissement ne clique jamais : après un pas, le clic qui suit le geste
+   * (tuile, bouton, segment) est avalé en phase de capture, avant l'enfant.
+   */
+  onClickCapture: (event: React.MouseEvent) => void;
 }
 
 export interface DaySwipe {
   direction: DayDirection;
   handlers: DaySwipeHandlers;
-}
-
-/** Un geste commencé dans le carrousel média appartient au carrousel. */
-function insidePages(target: EventTarget | null): boolean {
-  const node = target as Element | null;
-  return Boolean(node && typeof node.closest === 'function' && node.closest('.ckp-pages'));
 }
 
 /**
@@ -85,6 +94,7 @@ function keyboardBlocked(event: KeyboardEvent): boolean {
 export function useDaySwipe({ count, index, onChange }: DaySwipeOptions): DaySwipe {
   const [direction, setDirection] = useState<DayDirection>('next');
   const start = useRef<{ x: number; y: number } | null>(null);
+  const swiped = useRef(false);
 
   const go = useCallback(
     (step: -1 | 0 | 1) => {
@@ -98,7 +108,7 @@ export function useDaySwipe({ count, index, onChange }: DaySwipeOptions): DaySwi
 
   const onPointerDown = useCallback((event: React.PointerEvent) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    if (insidePages(event.target)) return;
+    swiped.current = false;
     start.current = { x: event.clientX, y: event.clientY };
   }, []);
 
@@ -107,13 +117,24 @@ export function useDaySwipe({ count, index, onChange }: DaySwipeOptions): DaySwi
       const origin = start.current;
       start.current = null;
       if (!origin) return;
-      go(dayStep(event.clientX - origin.x, event.clientY - origin.y));
+      const step = dayStep(event.clientX - origin.x, event.clientY - origin.y);
+      if (step === 0) return;
+      /* Même aux bornes, le geste ne se transforme jamais en clic. */
+      swiped.current = true;
+      go(step);
     },
     [go],
   );
 
   const onPointerCancel = useCallback(() => {
     start.current = null;
+  }, []);
+
+  const onClickCapture = useCallback((event: React.MouseEvent) => {
+    if (!swiped.current) return;
+    swiped.current = false;
+    event.preventDefault();
+    event.stopPropagation();
   }, []);
 
   /* Le clavier est écouté au document : la carte reste pilotable même quand
@@ -148,7 +169,7 @@ export function useDaySwipe({ count, index, onChange }: DaySwipeOptions): DaySwi
 
   return {
     direction,
-    handlers: { onPointerDown, onPointerUp, onPointerCancel },
+    handlers: { onPointerDown, onPointerUp, onPointerCancel, onClickCapture },
   };
 }
 

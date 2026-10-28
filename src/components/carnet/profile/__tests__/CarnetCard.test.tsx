@@ -605,10 +605,46 @@ describe('CarnetCard — balayage Résumé → J1..Jn', () => {
     expect(onOpenPost).toHaveBeenLastCalledWith(1);
   });
 
-  it('laisse le carrousel média à son propre geste : la grille ne change pas de jour', () => {
-    const { container } = render(<CarnetCard {...withDays()} />);
-    drag(container.querySelector('.ckp-pages') as Element, 300, 180);
+  it('un glissement dans la grille change de jour, jamais de page', () => {
+    const onPageChange = vi.fn();
+    const { container } = render(<CarnetCard {...withDays({ onPageChange })} />);
+    const pages = () => container.querySelector('.ckp-pages') as Element;
+    drag(pages(), 300, 180);
+    expect(norm(dayLabel(container))).toBe('26 sept.');
+    expect(onPageChange).not.toHaveBeenCalled();
+    expect(container.querySelector('.ckp-pages')?.getAttribute('id')).toBe('carnet-page-posts');
+    drag(pages(), 300, 180);
+    expect(norm(dayLabel(container))).toBe('27 sept.');
+    expect(onPageChange).not.toHaveBeenCalled();
+  });
+
+  it('respecte les bornes depuis la grille : rien avant le Résumé, rien après Jn', () => {
+    const onPageChange = vi.fn();
+    const { container } = render(<CarnetCard {...withDays({ onPageChange })} />);
+    const pages = () => container.querySelector('.ckp-pages') as Element;
+    /* Vers la droite sur le Résumé : aucun jour avant. */
+    drag(pages(), 140, 300);
     expect(dayLabel(container)).toBe('Résumé');
+    /* Résumé + trois jours : trois pas mènent à la borne haute, le
+       quatrième glisse dans le vide. */
+    drag(pages(), 300, 180);
+    drag(pages(), 300, 180);
+    drag(pages(), 300, 180);
+    expect(norm(dayLabel(container))).toBe('28 sept.');
+    drag(pages(), 300, 180);
+    expect(norm(dayLabel(container))).toBe('28 sept.');
+    expect(onPageChange).not.toHaveBeenCalled();
+  });
+
+  it('un glissement ne clique jamais la tuile sous le doigt', () => {
+    const onOpenPost = vi.fn();
+    const { container } = render(<CarnetCard {...withDays({ onOpenPost })} />);
+    const tile = screen.getAllByRole('button', { name: /^Moment / })[0];
+    pointer(tile, 'pointerdown', 300, 100);
+    pointer(tile, 'pointerup', 180, 105);
+    fireEvent.click(tile);
+    expect(onOpenPost).not.toHaveBeenCalled();
+    expect(norm(dayLabel(container))).toBe('26 sept.');
   });
 });
 

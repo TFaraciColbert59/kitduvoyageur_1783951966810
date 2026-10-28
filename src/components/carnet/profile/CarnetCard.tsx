@@ -75,11 +75,12 @@ function withPhoto(moments: CarnetMomentItem[]): CarnetMomentItem[] {
  * Carte du carnet : mini tracé, pages de jour (Résumé → J1..Jn), participants,
  * lieu, médias en pages.
  *
- * Le balayage horizontal de la carte change de **jour** ; le carrousel média
- * (Posts, Parcours, Étapes, Matériel, Nature, J’aime, Commentaires, Gérer) se
- * pilote par le sélecteur bas et par son propre geste, jamais par celui de la
- * carte. Le pied ne porte plus que la capsule des drawers : ♥ et 💬 ont quitté
- * la carte, leurs pages se lisent dans le carrousel.
+ * Le balayage horizontal de la carte change de **jour**, où qu'il commence —
+ * en-tête, grille ou volet. Le carrousel média (Posts, Parcours, Étapes,
+ * Matériel, Nature, J’aime, Commentaires, Gérer) ne se pilote plus que par le
+ * sélecteur bas et par son clavier. Le pied ne porte plus que la capsule des
+ * drawers : ♥ et 💬 ont quitté la carte, leurs pages s'ouvrent depuis le menu
+ * `···` de la barre du haut.
  */
 export function CarnetCard({
   detail,

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Icon from '@/components/ui/Icon';
+import { SfIcon } from './sfIcons';
 
 export interface CarnetMoreMenuProps {
   open: boolean;
@@ -10,6 +11,10 @@ export interface CarnetMoreMenuProps {
   onSave: () => void;
   onShare: () => void;
   onCopy: () => void;
+  /* Les deux pages d'engagement ont quitté la carte : elles restent
+     atteignables ici, sans ajouter de segment au sélecteur (88 × 30, 2). */
+  onLikes: () => void;
+  onComments: () => void;
   onReport: () => void;
   onManage: () => void;
   onClose: () => void;
@@ -23,6 +28,8 @@ export function CarnetMoreMenu({
   onSave,
   onShare,
   onCopy,
+  onLikes,
+  onComments,
   onReport,
   onManage,
   onClose,
@@ -51,6 +58,14 @@ export function CarnetMoreMenu({
       <button type="button" onClick={run(onCopy)}>
         <Icon name="link" size={18} aria-hidden="true" />
         <span>Copier le lien</span>
+      </button>
+      <button type="button" onClick={run(onLikes)}>
+        <SfIcon name="heart" size={17} />
+        <span>J’aime</span>
+      </button>
+      <button type="button" onClick={run(onComments)}>
+        <SfIcon name="bubble" size={17} />
+        <span>Commentaires</span>
       </button>
       {isOwner ? (
         <button type="button" onClick={run(onManage)}>

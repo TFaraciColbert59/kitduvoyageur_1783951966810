@@ -105,6 +105,10 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
   const openCarnetFromTopBar = useCallback(() => openPage('etapes'), [openPage]);
   const openCarnetFromCard = useCallback(() => openPage('parcours'), [openPage]);
   const openManagePage = useCallback(() => openPage('manage'), [openPage]);
+  /* ♥ et 💬 ne vivent plus sur la carte : leurs pages s'ouvrent depuis le menu
+     `···` de la barre du haut, sans toucher au sélecteur 88 × 30 à 2 segments. */
+  const openLikesPage = useCallback(() => openPage('likes'), [openPage]);
+  const openCommentsPage = useCallback(() => openPage('comments'), [openPage]);
   const openPost = useCallback((next: number) => setPostIndex(next), []);
   const closePost = useCallback(() => setPostIndex(null), []);
   const openViewer = useCallback((next: number) => setViewerIndex(next), []);
@@ -196,6 +200,8 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
               onSave={toggleFavorite}
               onShare={openShare}
               onCopy={copyLink}
+              onLikes={openLikesPage}
+              onComments={openCommentsPage}
               onReport={openReport}
               onManage={openManagePage}
               onClose={closeMenu}
