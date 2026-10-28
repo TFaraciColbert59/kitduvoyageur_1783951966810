@@ -254,6 +254,41 @@ export function useContent(kind: 'carnets' | 'trips', iso: string | null) {
   });
 }
 
+export interface SearchResultItem {
+  id: string;
+  kind: string;
+  subtype: string;
+  name: string;
+  lat: number;
+  lon: number;
+  ele_m: number | null;
+  potable: boolean | null;
+  distanceKm: number;
+  matched: boolean;
+}
+
+export interface SearchFilters {
+  kinds: string[];
+  maxDistanceKm: number | null;
+  easy: boolean;
+  family: boolean;
+  withWater: boolean;
+  text: string;
+}
+
+/** Recherche en langage naturel (règles déterministes, résultats BDD). */
+export function useNaturalSearch(query: string, lat: number | null, lng: number | null) {
+  return useQuery({
+    queryKey: ['xp', 'search', query, lat?.toFixed(2), lng?.toFixed(2)],
+    enabled: query.trim().length >= 2 && lat !== null && lng !== null,
+    queryFn: () =>
+      fetchJson<{ filters: SearchFilters; results: SearchResultItem[] }>(
+        `/api/explorer/v2/search?q=${encodeURIComponent(query)}&lat=${lat}&lng=${lng}`,
+      ),
+    staleTime: 60 * 1000,
+  });
+}
+
 export function useOnline(): boolean {
   const [online, setOnline] = useState(true);
   useEffect(() => {

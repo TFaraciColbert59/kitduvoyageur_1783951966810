@@ -406,3 +406,26 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   Le décodage DEM se fait **côté serveur** (`sharp`), donc aucun plantage
   mémoire côté navigateur ; le client ne fait qu'afficher la courbe.
 - Statut : OK
+
+### [P6-07] Départ réel écrit dans `trips` · 2026-10-29 00:05
+- Fichiers : `src/app/api/explorer/v2/trips/route.ts`, `sheet/SheetContent.tsx`
+  (formulaire `DepartForm`), `scripts/explorer-v2/test-trip-flow.mjs`
+- Preuve (script, 4/4) :
+  ```
+  ✔ départ créé dans trips — b7d9d20e-680e-4063-932f-0f0c065ef313
+  ✔ départ relu publiquement — planned
+  ✔ B ne peut pas créer un départ au nom de A — HTTP 403
+  ✔ nettoyage — HTTP 201
+  ```
+  RLS `trips_insert_policy` exige `user_id = auth.uid()` : le client transmet son
+  identifiant, l'usurpation est refusée. L'enum `trip_activity_type` est respecté
+  (`hiking`, `trail`, `ski`…).
+- Statut : OK
+
+### [P6-08] Recherche en langage naturel · 2026-10-29 00:10
+- Fichiers : `src/app/api/explorer/v2/search/route.ts`, `tests/explorer-v2/search-rules.spec.ts`
+- Preuve : **12 tests unitaires verts** (10 requêtes types + 2 cas de conversion
+  heures→km). Exemple réel : « un point d’eau à moins de 2 heures » →
+  `{"kinds":["water"],"maxDistanceKm":8}` puis résultats BDD triés par distance
+  (« Fontaine », « Font’haine »). Aucun modèle payant : règles déterministes.
+- Statut : OK

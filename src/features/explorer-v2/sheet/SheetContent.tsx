@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
+import { useNaturalSearch } from '../data/hooks';
 import { ElevationProfile } from './ElevationProfile';
 import {
   XpAvatars,
@@ -648,7 +649,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
         id: 'quand',
         label: 'Quand',
         icon: 'cal',
-        render: () => <XpEmpty title="Aucun départ programmé" hint="Crée un départ pour inviter d’autres membres." />,
+        render: () => <DepartForm ctx={ctx} />,
       },
     ];
   }
@@ -665,16 +666,123 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
   return [{ id: 'info', label: 'Infos', icon: 'info', render: () => <XpEmpty title="Rien à afficher" hint="Aucune donnée pour cet écran." /> }];
 }
 
+/**
+ * Création d'un départ (P6-07). Écrit dans `trips` sous RLS : la requête
+ * exige un utilisateur connecté, et le formulaire ne prétend rien créer
+ * tant que ce n'est pas le cas.
+ */
+function DepartForm({ ctx }: { ctx: SheetContext }) {
+  const today = new Date();
+  const iso = (date: Date) => date.toISOString().slice(0, 10);
+  const inAWeek = new Date(today.getTime() + 7 * 86400000);
+  const [title, setTitle] = React.useState('');
+  const [place, setPlace] = React.useState('');
+  const [start, setStart] = React.useState(iso(inAWeek));
+  const [end, setEnd] = React.useState(iso(new Date(inAWeek.getTime() + 2 * 86400000)));
+  const [party, setParty] = React.useState(4);
+  const [status, setStatus] = React.useState<'idle' | 'sending' | 'created' | 'unauthenticated' | 'error'>('idle');
+
+  const submit = async () => {
+    setStatus('sending');
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        setStatus('unauthenticated');
+        ctx.state.showToast({ title: 'Connecte-toi pour créer un départ', tone: 'warn' });
+        return;
+      }
+      const res = await fetch('/api/explorer/v2/trips', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: data.session?.user?.id,
+          title: title.trim(),
+          destination: place.trim() || undefined,
+          countryCode: ctx.state.geo || undefined,
+          startDate: start,
+          endDate: end,
+          partySize: party,
+          activity: 'hiking',
+        }),
+      });
+      if (!res.ok) {
+        setStatus('error');
+        ctx.state.showToast({ title: 'Départ non créé', sub: `HTTP ${res.status}`, tone: 'warn' });
+        return;
+      }
+      setStatus('created');
+      ctx.state.showToast({ title: 'Départ créé', sub: title.trim() });
+    } catch {
+      setStatus('error');
+    }
+  };
+
+  const disabled = title.trim().length < 3 || status === 'sending';
+
+  return (
+    <>
+      <div className="xp-form">
+        <label>
+          <span>Titre</span>
+          <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Tour du Mont-Blanc en 4 jours" maxLength={120} />
+        </label>
+        <label>
+          <span>Lieu</span>
+          <input value={place} onChange={(event) => setPlace(event.target.value)} placeholder="Chamonix" maxLength={160} />
+        </label>
+        <div className="xp-form-row">
+          <label>
+            <span>Début</span>
+            <input type="date" value={start} onChange={(event) => setStart(event.target.value)} />
+          </label>
+          <label>
+            <span>Fin</span>
+            <input type="date" value={end} onChange={(event) => setEnd(event.target.value)} />
+          </label>
+        </div>
+        <label>
+          <span>Places</span>
+          <input
+            type="number"
+            min={1}
+            max={50}
+            value={party}
+            onChange={(event) => setParty(Number(event.target.value))}
+          />
+        </label>
+      </div>
+      <button type="button" className="xp-primary" onClick={submit} disabled={disabled}>
+        {status === 'sending' ? 'Création…' : 'Créer le départ'}
+      </button>
+      {status === 'unauthenticated' ? (
+        <XpEmpty title="Départ non créé" hint="Connecte-toi pour publier un départ." />
+      ) : null}
+      {status === 'created' ? (
+        <XpEmpty title="Départ publié" hint="Il apparaît maintenant dans les départs ouverts." />
+      ) : null}
+      <XpEyebrow>Départs ouverts</XpEyebrow>
+      <TripsTab ctx={ctx} where="autour d’ici" />
+    </>
+  );
+}
+
 function SearchTab({ ctx }: { ctx: SheetContext }) {
   const [query, setQuery] = React.useState('');
+  const { data, isFetching } = useNaturalSearch(
+    query,
+    ctx.state.center[1],
+    ctx.state.center[0],
+  );
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (q.length < 2) return { countries: [], pois: [] };
     return {
-      countries: ctx.countries.filter((country) => country.name.toLowerCase().includes(q)).slice(0, 5),
-      pois: ctx.pois.filter((poi) => poi.name.toLowerCase().includes(q)).slice(0, 5),
+      countries: q.length < 2 ? [] : ctx.countries.filter((country) => country.name.toLowerCase().includes(q)).slice(0, 4),
+      pois: data?.results ?? [],
     };
-  }, [ctx.countries, ctx.pois, query]);
+  }, [ctx.countries, data, query]);
 
   return (
     <>
@@ -695,7 +803,12 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
         }}
       />
       {query.trim().length < 2 ? (
-        <XpEmpty title="Cherche un lieu" hint="Tape au moins deux lettres pour lancer la recherche." />
+        <XpEmpty
+          title="Cherche un lieu"
+          hint="Tape deux lettres, ou une phrase : « un point d’eau à moins de 2 heures »."
+        />
+      ) : isFetching ? (
+        <XpEmpty title="Recherche…" hint="Analyse de la demande et interrogation de la base." />
       ) : results.countries.length === 0 && results.pois.length === 0 ? (
         <XpEmpty title="Aucun résultat" hint="Aucun pays ni repère ne correspond dans les données disponibles." />
       ) : (
@@ -718,6 +831,21 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
               </XpRows>
             </>
           ) : null}
+          {data?.filters ? (
+            <>
+              <XpEyebrow>Filtres compris</XpEyebrow>
+              <div className="xp-chiprow" aria-label="Filtres extraits de la demande">
+                <span className="xp-chip" aria-pressed="true">
+                  {data.filters.kinds.map((kind) => POI_LABEL[kind] ?? kind).join(' · ')}
+                </span>
+                {data.filters.maxDistanceKm ? (
+                  <span className="xp-chip">{data.filters.maxDistanceKm} km max</span>
+                ) : null}
+                {data.filters.easy ? <span className="xp-chip">facile</span> : null}
+                {data.filters.family ? <span className="xp-chip">famille</span> : null}
+              </div>
+            </>
+          ) : null}
           {results.pois.length > 0 ? (
             <>
               <XpEyebrow>Repères</XpEyebrow>
@@ -728,7 +856,8 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
                     icon={POI_ICON[poi.kind] ?? 'pin'}
                     tone={POI_TONE[poi.kind] ?? 'ink'}
                     title={poi.name}
-                    sub={POI_LABEL[poi.kind] ?? poi.kind}
+                    sub={`${POI_LABEL[poi.kind] ?? poi.kind} · ${formatDistance(poi.distanceKm)}`}
+                    badge={poi.ele_m ? { label: formatElevation(poi.ele_m) ?? '', tone: 'muted' } : undefined}
                     onClick={() => ctx.state.select({ kind: poi.kind as never, id: poi.id }, poi.kind as never, 'mid')}
                   />
                 ))}
