@@ -150,3 +150,15 @@
 #sheet .lkdv-compte-save-icon { width: 42px !important; min-width: 42px !important; height: 38px !important; padding: 0 !important; border-radius: 999px !important; display: grid !important; place-items: center !important; }
 #sheet .lkdv-compte-save-spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; animation: saveSpin .7s linear infinite; }
 @keyframes saveSpin { to { transform: rotate(360deg); } }
+
+/* Le panneau d'édition doit respirer : hauteur utile et défilement interne. */
+#sheet:has(.lkdv-compte-edit) {
+  max-height: calc(100dvh - 128px) !important;
+  overflow: hidden !important;
+}
+#sheet .lkdv-compte-edit {
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+}
