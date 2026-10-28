@@ -133,3 +133,5 @@
 .lkdv-carnet-map { flex: 0 0 410px !important; height: 410px !important; min-height: 410px !important; }
 .lkdv-embedded-form-footer:has(.lkdv-carnet-daybar) { position: fixed !important; bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important; }
 @media (max-height: 760px) { .lkdv-carnet-map { flex-basis: 300px !important; height: 300px !important; min-height: 300px !important; } }
+.lkdv-carnet-slider { padding-left: 0 !important; padding-right: 0 !important; }
+.lkdv-carnet-slide { flex: 0 0 100% !important; scroll-snap-align: start !important; }

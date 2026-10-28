@@ -157,7 +157,7 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
     const node = scroller.current;
     if (!node) return;
     const child = node.children[index] as HTMLElement | undefined;
-    child?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    child?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
   };
 
   const nearestTrace = (lng: number, lat: number): [number, number] => {
@@ -321,7 +321,15 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
         </div>
       }
     >
-      <div className="lkdv-carnet-map" ref={mapNode} data-trace-points={trace.length} data-drawing={drawing ? 'true' : 'false'}>
+      <div
+        className="lkdv-carnet-map"
+        ref={mapNode}
+        data-trace-points={trace.length}
+        data-drawing={drawing ? 'true' : 'false'}
+        onPointerDown={(event) => { if (drawing && (event.target === event.currentTarget || (event.target as HTMLElement).classList?.contains('maplibregl-canvas'))) drawStart(event); }}
+        onPointerMove={(event) => { if (drawing && (event.target === event.currentTarget || (event.target as HTMLElement).classList?.contains('maplibregl-canvas'))) drawMove(event); }}
+        onPointerUp={(event) => { if (drawing && (event.target === event.currentTarget || (event.target as HTMLElement).classList?.contains('maplibregl-canvas'))) drawEnd(); }}
+      >
         <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => setDrawing((value) => !value)} aria-label={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'} title={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}><MapPin size={17} /></button>
         {snapState !== 'idle' ? <span className={`lkdv-snap-status${snapState === 'error' ? ' is-error' : ''}`} aria-label={snapState === 'loading' ? 'Ajustement au chemin' : 'Tracé libre'}>{snapState === 'loading' ? <Loader2 size={14} /> : <WifiOff size={14} />}</span> : null}
         <button type="button" className="lkdv-carnet-submit" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet"><Check size={17} /></button>
