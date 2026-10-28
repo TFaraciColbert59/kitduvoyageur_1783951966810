@@ -91,7 +91,10 @@
     "ops:slo-check": "tsx scripts/ops/phase10_slo_check.ts",
     "analyze": "node scripts/perf/analyze.mjs",
     "cleanup:audit": "node scripts/cleanup/audit.mjs",
-    "cleanup:quarantine": "node scripts/cleanup/quarantine.mjs"
+    "cleanup:quarantine": "node scripts/cleanup/quarantine.mjs",
+    "explorer:verify": "node scripts/explorer-v2/verify-all.mjs",
+    "explorer:clicks": "node scripts/explorer-v2/click-inventory.mjs",
+    "explorer:shots": "node scripts/explorer-v2/parite.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

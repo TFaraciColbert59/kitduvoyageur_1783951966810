@@ -1,0 +1,110 @@
+[
+  {
+    "scene": "monde",
+    "screen": "Monde",
+    "title": "Le monde",
+    "tabs": 3,
+    "pins": 4,
+    "detent": "peek",
+    "parity": true
+  },
+  {
+    "scene": "pays",
+    "screen": "Pays",
+    "title": "France",
+    "tabs": 4,
+    "pins": 0,
+    "detent": "peek",
+    "parity": true
+  },
+  {
+    "scene": "region",
+    "screen": "Region",
+    "title": "Auvergne-Rhône-Alpes",
+    "tabs": 4,
+    "pins": 2,
+    "detent": "low",
+    "parity": true
+  },
+  {
+    "scene": "lieu",
+    "screen": "Lieu",
+    "title": "Haute-Savoie",
+    "tabs": 4,
+    "pins": 3,
+    "detent": "peek",
+    "parity": true
+  },
+  {
+    "scene": "sommet",
+    "screen": "Sommet",
+    "title": "Pointe des Vioz",
+    "tabs": 4,
+    "pins": 2,
+    "detent": "mid",
+    "parity": true
+  },
+  {
+    "scene": "eau",
+    "screen": "Eau",
+    "title": "Fontaine",
+    "tabs": 2,
+    "pins": 3,
+    "detent": "mid",
+    "parity": true
+  },
+  {
+    "scene": "rando",
+    "screen": "Rando",
+    "title": "Itinéraire",
+    "tabs": 2,
+    "pins": 3,
+    "detent": "mid",
+    "parity": true
+  },
+  {
+    "scene": "calques",
+    "screen": "Calques",
+    "title": "Calques",
+    "tabs": 0,
+    "pins": 3,
+    "detent": "mid",
+    "parity": true
+  },
+  {
+    "scene": "course",
+    "screen": "Course",
+    "title": "Course",
+    "tabs": 0,
+    "pins": 0,
+    "detent": "peek",
+    "parity": true
+  },
+  {
+    "scene": "bienvenue",
+    "screen": "Bienvenue",
+    "title": "Bienvenue dans Explorer",
+    "tabs": 0,
+    "pins": 0,
+    "detent": "full",
+    "parity": true
+  },
+  {
+    "scene": "nuit",
+    "screen": "Nuit",
+    "title": "Haute-Savoie",
+    "tabs": 4,
+    "pins": 3,
+    "detent": "low",
+    "parity": true
+  },
+  {
+    "scene": "refuge",
+    "screen": "Refuge",
+    "title": "La Flégère",
+    "tabs": 3,
+    "pins": 3,
+    "detent": "mid",
+    "parity": true
+  }
+]
