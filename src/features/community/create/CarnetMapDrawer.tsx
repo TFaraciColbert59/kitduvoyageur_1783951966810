@@ -10,7 +10,6 @@ import { createMapStyle } from '@/components/map/engine/createMapStyle';
 import { createClient } from '@/lib/supabase/client';
 import { createDefaults, createSchemas, type CarnetFormValues } from './engine/createSchemas';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { DateRangeField } from './shared/DateRangeField';
 import { PlaceSearch } from './shared/PlaceSearch';
 import { insertCommunityPost } from './upload';
 import './carnet-map-drawer.css';
@@ -39,6 +38,23 @@ function sanitizeTrace(points: Array<[number, number]>): Array<[number, number]>
 }
 
 function dayLabel(index: number) { return `Jour ${index + 1}`; }
+
+function shortDate(value: string): string {
+  if (!value) return '';
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(date);
+}
+
+function DatePill({ value, label, onChange }: { value: string; label: string; onChange: (next: string) => void }) {
+  return (
+    <label className="lkdv-date-pill">
+      <CalendarDays size={14} aria-hidden="true" />
+      <span>{shortDate(value) || label}</span>
+      <input type="date" value={value} aria-label={label} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
 
 export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
   open: boolean; onClose: () => void; user: any; onCreated: (kind: 'carnet', id: string) => void;
@@ -289,7 +305,6 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       error={submitError}
       footer={
         <div className="lkdv-carnet-footer">
-          <button type="button" className="lkdv-carnet-footer-create" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet"><Check size={14} /></button>
           <div
             className="ig-tabs lkdv-carnet-daybar"
             style={{ '--n': days.length + 2, '--active': active } as React.CSSProperties}
@@ -309,6 +324,7 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       <div className="lkdv-carnet-map" ref={mapNode} data-trace-points={trace.length} data-drawing={drawing ? 'true' : 'false'}>
         <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => setDrawing((value) => !value)} aria-label={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'} title={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}><MapPin size={17} /></button>
         {snapState !== 'idle' ? <span className={`lkdv-snap-status${snapState === 'error' ? ' is-error' : ''}`} aria-label={snapState === 'loading' ? 'Ajustement au chemin' : 'Tracé libre'}>{snapState === 'loading' ? <Loader2 size={14} /> : <WifiOff size={14} />}</span> : null}
+        <button type="button" className="lkdv-carnet-submit" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet"><Check size={17} /></button>
         <div
           className="lkdv-map-draw-layer"
           data-active={drawing ? 'true' : 'false'}
@@ -324,7 +340,10 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
         <section className="lkdv-carnet-slide lkdv-carnet-base">
           <input {...form.register('title')} placeholder="Titre du carnet" aria-label="Titre" />
           <PlaceSearch label="Destination" value={destination} onChange={(value) => form.setValue('destination', value, { shouldDirty: true })} placeholder="Destination" />
-          <DateRangeField label="Dates" start={startDate} end={endDate} onStartChange={(value) => form.setValue('startDate', value, { shouldDirty: true })} onEndChange={(value) => form.setValue('endDate', value, { shouldDirty: true })} />
+          <div className="lkdv-date-pills">
+            <DatePill value={startDate} label="Début" onChange={(value) => form.setValue('startDate', value, { shouldDirty: true })} />
+            <DatePill value={endDate} label="Fin" onChange={(value) => form.setValue('endDate', value, { shouldDirty: true })} />
+          </div>
           <textarea {...form.register('description')} placeholder="Récit, idée, points forts…" aria-label="Récit" rows={3} />
         </section>
         {days.map((day, dayIndex) => (
