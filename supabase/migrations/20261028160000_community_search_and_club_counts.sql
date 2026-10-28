@@ -9,12 +9,32 @@
 --    (et un client pouvait écrire un nombre arbitraire). Le recalcul (`count(*)`
 --    des membres actifs) est idempotent : il reste juste même si un ancien
 --    client écrit encore.
-CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA extensions;
+-- `pg_trgm` peut déjà être installé dans `public` (base de CI, anciens projets) ou dans `extensions`
+-- (Supabase récent) : on lit son schéma au lieu de le supposer, sinon la classe d'opérateurs
+-- `gin_trgm_ops` n'est pas trouvée. Absent, il est créé dans `extensions` s'il existe, sinon dans `public`.
+DO $$
+DECLARE
+  v_schema text;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm') THEN
+    IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'extensions') THEN
+      CREATE EXTENSION pg_trgm WITH SCHEMA extensions;
+    ELSE
+      CREATE EXTENSION pg_trgm WITH SCHEMA public;
+    END IF;
+  END IF;
 
-CREATE INDEX IF NOT EXISTS idx_community_posts_content_trgm ON public.community_posts USING gin (content extensions.gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS idx_carnets_title_trgm ON public.carnets USING gin (title extensions.gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS idx_clubs_name_trgm ON public.clubs USING gin (name extensions.gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS idx_events_title_trgm ON public.events USING gin (title extensions.gin_trgm_ops);
+  SELECT n.nspname INTO v_schema
+  FROM pg_extension e
+  JOIN pg_namespace n ON n.oid = e.extnamespace
+  WHERE e.extname = 'pg_trgm';
+
+  EXECUTE format('CREATE INDEX IF NOT EXISTS idx_community_posts_content_trgm ON public.community_posts USING gin (content %I.gin_trgm_ops)', v_schema);
+  EXECUTE format('CREATE INDEX IF NOT EXISTS idx_carnets_title_trgm ON public.carnets USING gin (title %I.gin_trgm_ops)', v_schema);
+  EXECUTE format('CREATE INDEX IF NOT EXISTS idx_clubs_name_trgm ON public.clubs USING gin (name %I.gin_trgm_ops)', v_schema);
+  EXECUTE format('CREATE INDEX IF NOT EXISTS idx_events_title_trgm ON public.events USING gin (title %I.gin_trgm_ops)', v_schema);
+END
+$$;
 
 CREATE OR REPLACE FUNCTION public.sync_club_members_count()
 RETURNS trigger
