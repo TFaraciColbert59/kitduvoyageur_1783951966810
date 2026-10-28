@@ -395,3 +395,14 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   (SECURITY DEFINER) qui écrit le résumé dans `hike_sessions`.
 - Statut : OK (écriture de bout en bout prouvée par le script de flux, voir
   `scripts/explorer-v2/test-activity-flow.mjs`)
+
+### [P6-06] Profil altimétrique depuis le DEM · 2026-10-28 23:55
+- Fichiers : `src/app/api/explorer/v2/profile/route.ts`, `sheet/ElevationProfile.tsx`,
+  `workers/geo.worker.ts` (même math, réutilisable en worker)
+- Preuve : `POST /api/explorer/v2/profile` sur la trace du col des Montets →
+  `200` en **655 ms à froid**, altitudes réelles (1944 m → 2136 m → 2005 m…).
+  Écran Rando : « 1375 m · D+ 648 m · 1699 m » (capture
+  `preuves/rando-profil.png`), tracé GR pointillé sur le relief.
+  Le décodage DEM se fait **côté serveur** (`sharp`), donc aucun plantage
+  mémoire côté navigateur ; le client ne fait qu'afficher la courbe.
+- Statut : OK

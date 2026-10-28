@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
+import { ElevationProfile } from './ElevationProfile';
 import {
   XpAvatars,
   XpCard,
@@ -605,6 +606,17 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
   }
   if (kind === 'trail') {
     const route = ctx.routes.find((item) => String(item.id) === state.selection?.id) ?? ctx.routes[0];
+    const positions: Array<[number, number]> = [];
+    const walk = (value: unknown) => {
+      if (!Array.isArray(value)) return;
+      if (typeof value[0] === 'number' && typeof value[1] === 'number') {
+        positions.push([value[0] as number, value[1] as number]);
+        return;
+      }
+      for (const child of value) walk(child);
+    };
+    walk((route?.geojson as { coordinates?: unknown } | undefined)?.coordinates);
+
     return [
       {
         id: 'trace',
@@ -613,6 +625,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
         render: () =>
           route ? (
             <>
+              {positions.length > 1 ? <ElevationProfile positions={positions} /> : null}
               <XpMetrics
                 items={[
                   { label: 'Distance', value: route.distance_km ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : '—' },
