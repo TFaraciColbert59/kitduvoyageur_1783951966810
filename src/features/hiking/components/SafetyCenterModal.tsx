@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { GPSPosition, SafetyAlert } from '../types';
 import { SafetyEngine } from '../safety/SafetyEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface SafetyCenterModalProps {
   isOpen: boolean;
@@ -87,14 +88,14 @@ export default function SafetyCenterModal({
           <div className="bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-white/10 rounded-xl p-2">
             <span className="text-[color:var(--sage-400)] text-[10px] block">RÉSEAU</span>
             <span className={isOffline ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
-              {isOffline ? '🌐 Hors Ligne' : '📶 Connecté'}
+              {isOffline ? <><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /> Hors Ligne</> : <><LKDVIcon name="wifi" size="1em" className="lkdv-icon-inline" /> Connecté</>}
             </span>
           </div>
 
           <div className="bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-white/10 rounded-xl p-2">
             <span className="text-[color:var(--sage-400)] text-[10px] block">BATTERIE</span>
             <span className={batteryLevel != null && batteryLevel <= 15 ? 'text-red-400 font-bold animate-pulse' : 'text-emerald-400 font-bold'}>
-              🔋 {batteryLevel != null ? `${batteryLevel}%` : '—'}
+              <LKDVIcon name="batterie" size="1em" className="lkdv-icon-inline" /> {batteryLevel != null ? `${batteryLevel}%` : '—'}
             </span>
           </div>
         </div>
@@ -114,7 +115,7 @@ export default function SafetyCenterModal({
                     : 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border-white/10 text-[color:var(--lkv-text-primary)]'
                 }`}
               >
-                <span>{alert.severity === 'critical' ? '🚨' : alert.severity === 'warning' ? '⚠️' : 'ℹ️'}</span>
+                <span>{alert.severity === 'critical' ? <><LKDVIcon name="urgence" size="1em" className="lkdv-icon-inline" /></> : alert.severity === 'warning' ? <><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /></> : <><LKDVIcon name="informations" size="1em" className="lkdv-icon-inline" /></>}</span>
                 <span className="truncate">{alert.message}</span>
               </div>
             ))}
@@ -128,7 +129,7 @@ export default function SafetyCenterModal({
             disabled={!currentPos}
             className="w-full min-h-[44px] py-3 bg-[color:var(--lkv-primary-soft)] hover:bg-[color:var(--forest-500)] text-white font-bold text-xs rounded-xl border border-white/20 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
           >
-            <span>📲</span>
+            <span><LKDVIcon name="telephone" size="1em" className="lkdv-icon-inline" /></span>
             {copied ? '✓ Coordonnées copiées !' : 'Partager ma position GPS'}
           </button>
 
@@ -140,7 +141,7 @@ export default function SafetyCenterModal({
               }}
               className="w-full min-h-[44px] py-3 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] font-bold text-xs rounded-xl border border-white/20 flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>↩️</span>
+              <span><LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /></span>
               Guider vers le point de départ
             </button>
           )}
@@ -150,7 +151,7 @@ export default function SafetyCenterModal({
             className="w-full min-h-[48px] py-3.5 bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white font-bold text-xs rounded-xl flex flex-col items-center justify-center border border-red-500/50 text-center cursor-pointer"
           >
             <div className="flex items-center gap-1.5">
-              <span>📞</span>
+              <span><LKDVIcon name="telephone" size="1em" className="lkdv-icon-inline" /></span>
               <span>Appeler les secours Européens (112)</span>
             </div>
             <span className="text-[9px] text-red-200/80 font-normal mt-0.5">

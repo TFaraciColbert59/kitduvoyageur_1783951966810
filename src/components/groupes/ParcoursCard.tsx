@@ -6,6 +6,7 @@ import { Badge, Button, Card } from '@/components/ui';
 import 'leaflet/dist/leaflet.css';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
 import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIconHtml } from '@/components/ui/lkdvIconHtml';
 
 interface ParcoursCardProps {
   groupId?: string;
@@ -102,7 +103,7 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         fillColor: '#17402C',
         fillOpacity: 1,
         weight: 2.5,
-      }).addTo(map).bindPopup(`📍 <strong>Départ</strong> : ${trailName}`);
+      }).addTo(map).bindPopup(`${lkdvIconHtml('point_interet')} <strong>Départ</strong> : ${trailName}`);
 
       const midIndex = Math.floor(routeCoords.length / 2);
       if (midIndex > 0 && midIndex < routeCoords.length - 1) {
@@ -114,8 +115,8 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
           weight: 2,
         }).addTo(map).bindPopup(
           elevationGain != null
-            ? `⛰️ <strong>Point haut (+${elevationGain}m)</strong>`
-            : '⛰️ <strong>Point haut</strong>'
+            ? `${lkdvIconHtml('montagne')} <strong>Point haut (+${elevationGain}m)</strong>`
+            : `${lkdvIconHtml('montagne')} <strong>Point haut</strong>`
         );
       }
 

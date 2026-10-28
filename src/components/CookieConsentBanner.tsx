@@ -167,7 +167,7 @@ export default function CookieConsentBanner() {
             <div className="space-y-2 mb-4">
               <div className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl">
                 <div className="flex-1 pr-3">
-                  <p className="text-[color:var(--lkv-text-primary)] text-xs font-medium">🔒 Nécessaires</p>
+                  <p className="text-[color:var(--lkv-text-primary)] text-xs font-medium"><LKDVIcon name="verrou" size="1em" className="lkdv-icon-inline" /> Nécessaires</p>
                   <p className="text-[color:var(--lkv-text-muted)] text-[10px] mt-0.5">Authentification, panier — toujours actifs</p>
                 </div>
                 <div className="w-9 h-5 bg-[color:var(--lkv-primary)] rounded-full flex items-center justify-end pr-0.5 cursor-not-allowed opacity-60 flex-shrink-0">
@@ -177,7 +177,7 @@ export default function CookieConsentBanner() {
 
               <div className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl">
                 <div className="flex-1 pr-3">
-                  <p className="text-[color:var(--lkv-text-primary)] text-xs font-medium">📊 Analytiques</p>
+                  <p className="text-[color:var(--lkv-text-primary)] text-xs font-medium"><LKDVIcon name="denivele" size="1em" className="lkdv-icon-inline" /> Analytiques</p>
                   <p className="text-[color:var(--lkv-text-muted)] text-[10px] mt-0.5">Google Analytics — audience anonymisée</p>
                 </div>
                 <button
@@ -192,7 +192,7 @@ export default function CookieConsentBanner() {
 
               <div className="flex items-center justify-between p-2.5 bg-white/5 rounded-xl">
                 <div className="flex-1 pr-3">
-                  <p className="text-[color:var(--lkv-text-primary)] text-xs font-medium">🎯 Marketing</p>
+                  <p className="text-[color:var(--lkv-text-primary)] text-xs font-medium"><LKDVIcon name="recentrer" size="1em" className="lkdv-icon-inline" /> Marketing</p>
                   <p className="text-[color:var(--lkv-text-muted)] text-[10px] mt-0.5">Publicités personnalisées</p>
                 </div>
                 <button

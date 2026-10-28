@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Badge, Button, Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ClubAboutCardProps {
   club: {
@@ -28,7 +29,7 @@ export default function ClubAboutCard({ club }: ClubAboutCardProps) {
     <Card className="space-y-[var(--space-3)] p-[var(--space-4)] transition-all [transition-duration:var(--motion-control-duration)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-[var(--space-2)]">
-          <span className="text-[length:var(--lkv-text-caption)]" aria-hidden>ℹ️</span>
+          <span className="text-[length:var(--lkv-text-caption)]" aria-hidden><LKDVIcon name="informations" size="1em" className="lkdv-icon-inline" /></span>
           <h2 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
             Infos &amp; Charte du Collectif
           </h2>
@@ -74,7 +75,7 @@ export default function ClubAboutCard({ club }: ClubAboutCardProps) {
             className="justify-between"
           >
             <span className="flex items-center gap-[var(--space-2)]">
-              <span aria-hidden>📜</span>
+              <span aria-hidden><LKDVIcon name="facture" size="1em" className="lkdv-icon-inline" /></span>
               <span>Charte d&apos;engagement</span>
             </span>
             <span className="font-mono text-[length:var(--lkv-text-caption-2)]">{showRules ? '▲ Fermer' : '▼ Lire'}</span>

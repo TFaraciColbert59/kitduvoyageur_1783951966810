@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui';
 import type { Nature } from '../engine/hubNature';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const LABELS: Record<Nature, string> = {
   possession: 'Matériel',
@@ -33,7 +34,7 @@ export function NaturePill({
       className="w-full sm:w-auto"
     >
       <span className="truncate">
-        {LABELS[nature]} <span aria-hidden="true" className="text-[14px]">▾</span>
+        {LABELS[nature]} <span aria-hidden="true" className="text-[14px]"><LKDVIcon name="bas" size="1em" className="lkdv-icon-inline" /></span>
       </span>
     </Button>
   );

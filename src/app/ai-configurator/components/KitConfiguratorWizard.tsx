@@ -571,7 +571,7 @@ export default function KitConfiguratorWizard({
                     }`}
                   >
                     {isDone ? (
-                      <span className="w-4 h-4 rounded-full bg-[var(--lkv-text-secondary)] text-white flex items-center justify-center text-[length:var(--lkv-text-caption-2)] font-bold">✓</span>
+                      <span className="w-4 h-4 rounded-full bg-[var(--lkv-text-secondary)] text-white flex items-center justify-center text-[length:var(--lkv-text-caption-2)] font-bold"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
                     ) : (
                       <span className={`w-4 h-4 rounded-full ${isActive ? 'bg-[color:var(--btn-tint)] text-[var(--lkv-text-primary)]' : 'bg-[var(--lkv-text-primary)]/10 text-[var(--lkv-text-primary)]'} flex items-center justify-center text-[length:var(--lkv-text-caption-2)] font-bold font-mono`}>
                         {s.id}
@@ -640,7 +640,7 @@ export default function KitConfiguratorWizard({
                           <div className={`w-5 h-5 rounded-full border flex items-center justify-center motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none ${
                             isSelected ? 'bg-[var(--lkv-text-primary)] border-[var(--lkv-text-primary)] text-white' : 'border-[var(--lkv-text-primary)]/20 bg-[color:var(--lkv-surface-paper)]/70'
                           }`}>
-                            {isSelected && <span className="text-[length:var(--lkv-text-caption-2)] font-bold">✓</span>}
+                            {isSelected && <span className="text-[length:var(--lkv-text-caption-2)] font-bold"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>}
                           </div>
                         </div>
 
@@ -698,7 +698,7 @@ export default function KitConfiguratorWizard({
                       </div>
 
                       <div className="w-16 h-16 rounded-[var(--lkv-radius-lg)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] flex flex-col items-center justify-center shadow-xs">
-                        <span className="text-xl">🏔️</span>
+                        <span className="text-xl"><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /></span>
                         <span className="text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-primary)]">LKDV AI</span>
                       </div>
                     </div>
@@ -708,7 +708,7 @@ export default function KitConfiguratorWizard({
                   <div className="glass-sub-card p-4 rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)]">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[var(--lkv-text-primary)]">
-                        🎒 Matériel Déjà Possédé ({report.ownedItems.length} articles)
+                        <LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /> Matériel Déjà Possédé ({report.ownedItems.length} articles)
                       </h4>
                       <span className="glass-pill text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)]">
                         0 € à débourser
@@ -720,7 +720,7 @@ export default function KitConfiguratorWizard({
                         {report.ownedItems.map((item) => (
                           <div key={item.id} className="flex items-center justify-between py-1 border-b border-[var(--lkv-text-primary)]/5 last:border-none">
                             <span className="font-semibold text-[var(--lkv-text-primary)] flex items-center gap-1.5">
-                              <span className="text-[var(--lkv-text-secondary)]">✓</span> {item.name} ({item.brand || 'Perso'})
+                              <span className="text-[var(--lkv-text-secondary)]"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span> {item.name} ({item.brand || 'Perso'})
                             </span>
                             <span className="text-[length:var(--lkv-text-caption-2)] text-[var(--lkv-text-muted)] font-mono">{(item.weightGrams / 1000).toFixed(2)} kg</span>
                           </div>
@@ -737,7 +737,7 @@ export default function KitConfiguratorWizard({
                   <div className="glass-sub-card p-4 rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)]">
                     <div className="flex items-center justify-between mb-2.5">
                       <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[var(--lkv-text-primary)]">
-                        🛒 Matériel Recommandé ({report.missingItems.length} articles)
+                        <LKDVIcon name="panier" size="1em" className="lkdv-icon-inline" /> Matériel Recommandé ({report.missingItems.length} articles)
                       </h4>
                       <span className="font-bold text-xs font-mono text-[var(--lkv-text-primary)]">
                         Total : {report.totalMissingPriceEur} €
@@ -768,14 +768,14 @@ export default function KitConfiguratorWizard({
                   {report.inadequateAlerts.length > 0 && (
                     <div className="glass-sub-card p-4 rounded-[var(--lkv-radius-lg)] border border-[var(--lkv-warning-bg)] bg-[var(--lkv-warning-bg)]">
                       <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[var(--lkv-warning-dark)] mb-2 flex items-center gap-1.5">
-                        <span>⚠️</span> Points de vigilance terrain
+                        <span><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /></span> Points de vigilance terrain
                       </h4>
                       <div className="space-y-2 text-xs">
                         {report.inadequateAlerts.map((alert, idx) => (
                           <div key={idx} className="p-2.5 rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-paper)]/80 border border-[color:var(--glass-border)] space-y-0.5">
                             <p className="font-bold text-[var(--lkv-text-primary)]">{alert.item}</p>
                             <p className="text-xs text-[var(--lkv-text-muted)]">{alert.issue}</p>
-                            <p className="text-[length:var(--lkv-text-caption-2)] text-[var(--lkv-text-secondary)] font-semibold">💡 {alert.recommendation}</p>
+                            <p className="text-[length:var(--lkv-text-caption-2)] text-[var(--lkv-text-secondary)] font-semibold"><LKDVIcon name="suggestion" size="1em" className="lkdv-icon-inline" /> {alert.recommendation}</p>
                           </div>
                         ))}
                       </div>
@@ -794,7 +794,7 @@ export default function KitConfiguratorWizard({
                         <LKDVIcon name="ia" size={14} />
                         <span>
                           {appliedToTrip
-                            ? '✅ Équipements appliqués au sac de l’expédition !'
+                            ? <><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /> Équipements appliqués au sac de l’expédition !</>
                             : isApplyingToTrip
                             ? 'Intégration au voyage...'
                             : `Ajouter au sac de l’expédition (${report?.missingItems?.length || 0} recommandés)`}
@@ -814,7 +814,7 @@ export default function KitConfiguratorWizard({
                       <LKDVIcon name="signet" size={14} />
                       <span>
                         {savedSuccess
-                          ? '✅ Configuration enregistrée dans Mon Matériel !'
+                          ? <><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /> Configuration enregistrée dans Mon Matériel !</>
                           : isSaving
                           ? 'Sauvegarde...'
                           : 'Enregistrer ce kit dans Mon Matériel'}
@@ -896,7 +896,7 @@ export default function KitConfiguratorWizard({
                   {report.ownedItems.map((item) => (
                     <div key={item.id} className="flex items-center justify-between gap-2 py-0.5">
                       <div className="flex items-center gap-1.5 truncate">
-                        <span className="w-3.5 h-3.5 rounded-full bg-[var(--lkv-text-secondary)] text-white flex items-center justify-center text-[length:var(--lkv-text-caption-2)] font-bold shrink-0">✓</span>
+                        <span className="w-3.5 h-3.5 rounded-full bg-[var(--lkv-text-secondary)] text-white flex items-center justify-center text-[length:var(--lkv-text-caption-2)] font-bold shrink-0"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
                         <span className="truncate text-[var(--lkv-text-primary)] font-medium">{item.name}</span>
                       </div>
                       <span className="font-mono text-[var(--lkv-text-secondary)] shrink-0 text-[length:var(--lkv-text-caption-2)] bg-[color:var(--lkv-surface-paper)]/90 px-1.5 py-0.2 rounded border border-[color:var(--glass-border)]">Possédé</span>

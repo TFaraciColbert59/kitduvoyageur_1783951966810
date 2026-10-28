@@ -42,7 +42,7 @@ export default function PaysHeroOverview({
                 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
               </span>
               <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
-                📍 {country.region} · {country.continent}
+                <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {country.region} · {country.continent}
               </span>
             </div>
 
@@ -269,8 +269,7 @@ export default function PaysHeroOverview({
             onClick={() => onNavigateSection(link.id)}
             className="glass-capsule-btn !min-h-[36px] !py-1.5 !px-4 !text-xs !font-bold"
           >
-            {link.label} →
-          </button>
+            {link.label} <LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" /></button>
         ))}
         <Link
           href="/hub"

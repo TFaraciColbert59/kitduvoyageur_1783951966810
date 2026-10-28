@@ -17,6 +17,8 @@ import type {
   ScrubberState,
   WaypointCategory,
 } from '../types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIconHtml } from '@/components/ui/lkdvIconHtml';
 
 function getOrCreateArrowIcon(map: MapLibreMap) {
   if (map.hasImage('trail-arrow-icon')) return;
@@ -390,16 +392,16 @@ export function Carte3DMap({
       const isPhoto = wpt.category === 'photo';
 
       const icon = isSummit
-        ? '▲'
+        ? lkdvIconHtml('sommet')
         : isRefuge
-        ? '🏡'
+        ? lkdvIconHtml('refuge')
         : isWater
-        ? '💧'
+        ? lkdvIconHtml('eau_potable')
         : isPass
-        ? '🚩'
+        ? lkdvIconHtml('signalement')
         : isPhoto
-        ? '📸'
-        : '📍';
+        ? lkdvIconHtml('photo')
+        : lkdvIconHtml('point_interet');
 
       const badgeStyle = isSummit
         ? 'bg-rose-900/90 text-white border-rose-400'
@@ -521,7 +523,7 @@ export function Carte3DMap({
       {!webGlSupported ? (
         <div className="absolute inset-0 flex items-center justify-center p-6 text-center bg-stone-900 text-stone-200">
           <div>
-            <div className="text-3xl mb-2">⚠️</div>
+            <div className="text-3xl mb-2"><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /></div>
             <div className="font-bold text-lg">Accélération WebGL requise</div>
             <p className="text-sm text-stone-400 mt-1 max-w-sm">
               Votre navigateur ou appareil ne supporte pas le rendu 3D matériel WebGL requis pour
@@ -541,18 +543,18 @@ export function Carte3DMap({
               <div className="flex items-center gap-2">
                 <span className="text-xl">
                   {selectedWaypoint.category === 'summit'
-                    ? '🏔️'
+                    ? <><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /></>
                     : selectedWaypoint.category === 'refuge'
-                    ? '🏡'
+                    ? <><LKDVIcon name="gite" size="1em" className="lkdv-icon-inline" /></>
                     : selectedWaypoint.category === 'water'
-                    ? '💧'
+                    ? <><LKDVIcon name="eau_potable" size="1em" className="lkdv-icon-inline" /></>
                     : selectedWaypoint.category === 'pass'
-                    ? '🚩'
+                    ? <><LKDVIcon name="signalement" size="1em" className="lkdv-icon-inline" /></>
                     : selectedWaypoint.category === 'photo'
-                    ? '📸'
+                    ? <><LKDVIcon name="photo" size="1em" className="lkdv-icon-inline" /></>
                     : selectedWaypoint.category === 'weather'
-                    ? '⛅'
-                    : '📍'}
+                    ? <><LKDVIcon name="meteo" size="1em" className="lkdv-icon-inline" /></>
+                    : <><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /></>}
                 </span>
                 <div>
                   <div className="font-bold text-base leading-tight">
@@ -569,8 +571,7 @@ export function Carte3DMap({
                 aria-label="Fermer la fiche repère"
                 className="w-7 h-7 rounded-full flex items-center justify-center bg-stone-200/60 dark:bg-stone-800/60 text-stone-600 dark:text-stone-300 hover:bg-stone-300"
               >
-                ✕
-              </button>
+                <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
             </div>
 
             {selectedWaypoint.details && (

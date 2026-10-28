@@ -938,13 +938,13 @@ export function ClubDrawerHost({
               <div className="li nt" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
                 <div className="ttl"><b>{inspectedOuting.title}</b></div>
                 <div className="s2">
-                  📅 {inspectedOuting.date} · 📍 {inspectedOuting.massif} · {inspectedOuting.km} km · +{inspectedOuting.dplus} m D+ · Alt max {inspectedOuting.maxAlt} m
+                  <LKDVIcon name="calendrier" size="1em" className="lkdv-icon-inline" /> {inspectedOuting.date} · <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {inspectedOuting.massif} · {inspectedOuting.km} km · +{inspectedOuting.dplus} m D+ · Alt max {inspectedOuting.maxAlt} m
                 </div>
                 <div className="s2">
-                  🧭 Encadrant : <b>{inspectedOuting.leaderName}</b> (@{inspectedOuting.leaderHandle}) · {inspectedOuting.participantsCount}/{inspectedOuting.maxParticipants} inscrits
+                  <LKDVIcon name="boussole" size="1em" className="lkdv-icon-inline" /> Encadrant : <b>{inspectedOuting.leaderName}</b> (@{inspectedOuting.leaderHandle}) · {inspectedOuting.participantsCount}/{inspectedOuting.maxParticipants} inscrits
                 </div>
                 <div className="s2">
-                  🚐 Covoiturage départ <b>{inspectedOuting.carpoolCity}</b> : <b>{inspectedOuting.carpoolSeatsLeft} places restantes</b>
+                  <LKDVIcon name="van" size="1em" className="lkdv-icon-inline" /> Covoiturage départ <b>{inspectedOuting.carpoolCity}</b> : <b>{inspectedOuting.carpoolSeatsLeft} places restantes</b>
                 </div>
                 <div className="club-skill-tags">
                   {inspectedOuting.requiredGear.map((g) => (

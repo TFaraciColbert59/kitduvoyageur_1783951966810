@@ -807,8 +807,7 @@ export function DepartChecklist({
                                         title="Augmenter la quantité"
                                         aria-label={`Augmenter la quantité de ${item.name}`}
                                       >
-                                        +
-                                      </IconButton>
+                                        <LKDVIcon name="ajouter" size="1em" className="lkdv-icon-inline" /></IconButton>
                                     </div>
                                   )}
 

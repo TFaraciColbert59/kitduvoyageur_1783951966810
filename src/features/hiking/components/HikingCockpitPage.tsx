@@ -40,6 +40,7 @@ import CopilotSheet from './sheets/CopilotSheet';
 import MoreSheet from './sheets/MoreSheet';
 import { TerrainLiveCockpitControl, useTerrainReports } from '@/features/terrain-live';
 import AdventureCockpitControl from '@/features/adventure-intelligence/ui/AdventureCockpitControl';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface HikingCockpitPageProps {
   /** A13 (S7) — flag `terrain_live` résolu côté serveur (défaut : inactif). */
@@ -487,7 +488,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                 <div className="fixed inset-0 z-[var(--z-modal)] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
                   <div className="bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset border border-[color:var(--lkv-primary)]/12 rounded-[var(--lkv-radius-sm)] p-6 max-w-sm w-full  text-center space-y-4">
                     <div className="w-12 h-12 rounded-2xl bg-[color:var(--lkv-danger)]/10 text-[color:var(--lkv-danger)] flex items-center justify-center mx-auto text-xl font-bold">
-                      🏁
+                      <LKDVIcon name="destination" size="1em" className="lkdv-icon-inline" />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-[color:var(--lkv-text-primary)]">Terminer la randonnée ?</h3>
@@ -611,7 +612,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                 <div className="fixed inset-0 z-[var(--z-emergency)] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
                   <div className="bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset rounded-[var(--lkv-radius-sm)] max-w-md w-full p-6 text-center space-y-4">
                     <div className="w-16 h-16 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-text-primary)] flex items-center justify-center mx-auto text-2xl ">
-                      📍
+                      <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-[color:var(--lkv-text-primary)]">
@@ -625,7 +626,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                       onClick={handleStartHikeWithPermission}
                       className="w-full py-3.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-sm font-bold rounded-2xl  hover:brightness-[1.05] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                     >
-                      <span>🚀</span>
+                      <span><LKDVIcon name="destination" size="1em" className="lkdv-icon-inline" /></span>
                       <span>Autoriser la position & Démarrer</span>
                     </button>
                   </div>
@@ -637,7 +638,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                 <div className="fixed inset-0 z-[var(--z-emergency)] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
                   <div className="bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset rounded-[var(--lkv-radius-sm)] max-w-md w-full p-6 text-center space-y-4">
                     <div className="w-16 h-16 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-danger)] flex items-center justify-center mx-auto text-2xl">
-                      ⚠️
+                      <LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-[color:var(--lkv-text-primary)]">

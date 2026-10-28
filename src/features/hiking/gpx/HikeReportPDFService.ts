@@ -46,7 +46,7 @@ export class HikeReportPDFService {
 </head>
 <body>
   <div className="no-print">
-    <button onclick="window.print()" className="btn-print">🖨️ Imprimer / Sauvegarder en PDF</button>
+    <button onclick="window.print()" className="btn-print">Imprimer / Sauvegarder en PDF</button>
   </div>
 
   <div className="header">
@@ -85,7 +85,7 @@ export class HikeReportPDFService {
         session.poiEvents.map(
           (e) => `
         <li className="poi-item">
-          <span>📍 <strong>${e.poiName}</strong></span>
+          <span><strong>${e.poiName}</strong></span>
           <span style="font-family: monospace; color: #6B7A72;">${new Date(e.reachedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
         </li>
       `

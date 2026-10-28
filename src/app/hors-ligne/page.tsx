@@ -15,6 +15,7 @@ import {
   PageHeader,
   Skeleton,
 } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface RouteWithSize extends OfflineRoute {
   sizeBytes: number;
@@ -92,7 +93,7 @@ export default function HorsLignePage() {
         {!loading && routes.length > 0 && (
           <Card className="flex items-center gap-[var(--space-4)]">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-success-bg)]">
-              <span aria-hidden="true" className="text-xl">💾</span>
+              <span aria-hidden="true" className="text-xl"><LKDVIcon name="sauvegarder" size="1em" className="lkdv-icon-inline" /></span>
             </div>
             <div>
               <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
@@ -134,16 +135,16 @@ export default function HorsLignePage() {
                     <div className="mt-1.5 flex flex-wrap gap-x-[var(--space-3)] gap-y-[var(--space-1)]">
                       {route.distanceKm && (
                         <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                          📏 {route.distanceKm.toFixed(1)} km
+                          <LKDVIcon name="distance" size="1em" className="lkdv-icon-inline" /> {route.distanceKm.toFixed(1)} km
                         </span>
                       )}
                       {route.difficulty && (
                         <span className="text-[length:var(--lkv-text-caption)] capitalize text-[color:var(--lkv-text-muted)]">
-                          🎯 {route.difficulty}
+                          <LKDVIcon name="recentrer" size="1em" className="lkdv-icon-inline" /> {route.difficulty}
                         </span>
                       )}
                       <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                        💾 {formatSize(route.sizeBytes)}
+                        <LKDVIcon name="sauvegarder" size="1em" className="lkdv-icon-inline" /> {formatSize(route.sizeBytes)}
                       </span>
                     </div>
                     <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
@@ -153,7 +154,7 @@ export default function HorsLignePage() {
 
                   {/* Badge offline */}
                   <Badge tone="sage" className="shrink-0">
-                    ✅ Hors-ligne
+                    <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /> Hors-ligne
                   </Badge>
                 </div>
               </div>
@@ -164,7 +165,7 @@ export default function HorsLignePage() {
                   href={`/randonnee-active?routeId=${route.routeId}`}
                   className="flex-1 py-[var(--space-3)] text-center text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
                 >
-                  🥾 Démarrer
+                  <LKDVIcon name="randonnee" size="1em" className="lkdv-icon-inline" /> Démarrer
                 </Link>
                 <div className="w-px bg-[color:var(--lkv-border)]" aria-hidden="true" />
                 <Button
@@ -175,7 +176,7 @@ export default function HorsLignePage() {
                   disabled={deletingId === route.routeId}
                   className="flex-1 rounded-none"
                 >
-                  {deletingId === route.routeId ? '⏳ Suppression…' : '🗑 Supprimer'}
+                  {deletingId === route.routeId ? <><LKDVIcon name="duree" size="1em" className="lkdv-icon-inline" /> Suppression…</> : <><LKDVIcon name="supprimer" size="1em" className="lkdv-icon-inline" /> Supprimer</>}
                 </Button>
               </div>
             </Card>

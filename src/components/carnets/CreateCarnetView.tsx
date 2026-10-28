@@ -976,8 +976,8 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                   <span className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Visibilité du carnet</span>
                   <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                     {[
-                      { id: 'public', label: '🌍 Public', desc: 'Visible par toute la communauté LKDV et indexé dans le hub.' },
-                      { id: 'private', label: '🔒 Privé', desc: 'Accessible uniquement par vous et vos proches via lien secret.' },
+                      { id: 'public', label: <><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /> Public</>, desc: 'Visible par toute la communauté LKDV et indexé dans le hub.' },
+                      { id: 'private', label: <><LKDVIcon name="verrou" size="1em" className="lkdv-icon-inline" /> Privé</>, desc: 'Accessible uniquement par vous et vos proches via lien secret.' },
                     ].map((vis) => (
                       <label
                         key={vis.id}
@@ -1055,9 +1055,9 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                   {form.chapeau}
                 </p>
                 <div className="flex items-center justify-between border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                  <span>📏 {form.distance_km} km</span>
-                  <span>⛰️ +{form.elevation_m} m</span>
-                  <span>★ {form.routeRating}/10</span>
+                  <span><LKDVIcon name="distance" size="1em" className="lkdv-icon-inline" /> {form.distance_km} km</span>
+                  <span><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /> +{form.elevation_m} m</span>
+                  <span><LKDVIcon name="points" size="1em" className="lkdv-icon-inline" /> {form.routeRating}/10</span>
                 </div>
               </div>
             </Card>
@@ -1065,7 +1065,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
 
           <Card tone="warn" className="space-y-[var(--space-2)] p-[var(--space-3)]">
             <Badge tone="warn" className="font-mono font-bold">
-              🌟 CERTIFICATION LKDV
+              <LKDVIcon name="points" size="1em" className="lkdv-icon-inline" /> CERTIFICATION LKDV
             </Badge>
             <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
               Prêt à inspirer la communauté ?

@@ -4,6 +4,7 @@ import { BlockMarkdown } from './BlockMarkdown';
 import { StructuredBlockContent } from './StructuredBlockContent';
 import { parseStructuredBlock } from '../mappers/structuredBlock';
 import type { SectionBlock } from '../types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const BLOCK_LABELS: Partial<Record<SectionBlock['type'], string>> = {
   vue_ensemble: 'Vue d’ensemble',
@@ -54,7 +55,7 @@ export function EditorialBlockCard({ block, className }: { block: SectionBlock; 
               rel="noopener noreferrer"
               className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-secondary-ink)]"
             >
-              {source.title} ↗
+              {source.title} <LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" />
             </a>
           ))}
         </div>

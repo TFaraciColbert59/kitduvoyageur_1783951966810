@@ -125,7 +125,7 @@ export default function Footer() {
             {link.label}
           </Link>
         ))}
-        <span>• Conçu dans les Alpes 🏔️</span>
+        <span>• Conçu dans les Alpes <LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /></span>
       </div>
 
     </footer>

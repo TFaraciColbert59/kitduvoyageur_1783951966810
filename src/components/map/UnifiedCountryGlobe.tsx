@@ -16,6 +16,7 @@ import { flyToTarget } from '@/components/map/engine/camera';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
 import { resolveIsoA2 } from '@/components/map/engine/geo';
 import { MAP_COLORS } from '@/components/map/engine/mapTheme';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * CHANTIER ATLAS — Phase 5
@@ -361,7 +362,7 @@ export default function UnifiedCountryGlobe({
       {/* État d'erreur explicite (jamais un spinner infini) */}
       {geoLoaded && geoError && (
         <div className="pointer-events-none absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-2">
-          <span className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-danger)]">⚠ Impossible de charger la carte</span>
+          <span className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-danger)]"><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> Impossible de charger la carte</span>
           <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Vérifiez votre connexion et rechargez la page.</span>
         </div>
       )}

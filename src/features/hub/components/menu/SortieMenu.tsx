@@ -33,6 +33,7 @@ import type { HubHikingContext, HubChecklistItem } from '../../server/getHubAdve
 import type { HubPreparationSummary } from '../../server/preparationSummary';
 import type { TripItemImage } from '../../server/getTripItemImages';
 import type { TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface SortieMenuProps {
   trip: TripFull;

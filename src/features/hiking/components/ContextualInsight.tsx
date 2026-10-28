@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SafetyAlert, WeatherSnapshot, POI } from '../types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ContextualInsightProps {
   isOffRoute?: boolean;
@@ -66,7 +67,7 @@ export default function ContextualInsight({
               : 'bg-[color:var(--lkv-forest-100)]/20 text-[color:var(--lkv-forest-100)]'
           }`}
         >
-          {priorityType === 'off-route' ? '⚠️' : priorityType === 'weather' ? '🌧️' : priorityType === 'paused' ? '⏸️' : '📍'}
+          {priorityType === 'off-route' ? <><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /></> : priorityType === 'weather' ? <><LKDVIcon name="pluie" size="1em" className="lkdv-icon-inline" /></> : priorityType === 'paused' ? <><LKDVIcon name="pause" size="1em" className="lkdv-icon-inline" /></> : <><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /></>}
         </div>
 
         {/* Content Body */}

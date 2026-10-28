@@ -139,8 +139,7 @@ function WriteReviewModal({ onClose, onSubmit, initialType }: { onClose: () => v
                     </span>
                     {checked && (
                       <span className="ml-auto font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-action)]">
-                        ✓
-                      </span>
+                        <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
                     )}
                   </label>
                 );

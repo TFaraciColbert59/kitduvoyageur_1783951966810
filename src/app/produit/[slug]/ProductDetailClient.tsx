@@ -405,7 +405,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
                     {owned && (
                       <Card variant="compact" tone="sage" className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
-                        <span aria-hidden="true">✓</span> Cet article est déjà enregistré dans votre sac / équipement
+                        <span aria-hidden="true"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span> Cet article est déjà enregistré dans votre sac / équipement
                       </Card>
                     )}
 

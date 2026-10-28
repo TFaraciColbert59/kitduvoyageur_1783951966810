@@ -369,7 +369,7 @@ export function KitBuilder({
           shopProduct: entry.shopProduct,
         },
       ]);
-      toast(`« ${entry.name} » ajouté (Boutique 🛒)`, 'success');
+      toast(`« ${entry.name} » ajouté (Boutique )`, 'success');
     } else if (entry.inventoryItem) {
       if (kitItems.some((k) => k.id === entry.inventoryItem!.id)) {
         toast(`${entry.name} est déjà dans le kit`, 'info');
@@ -441,7 +441,7 @@ export function KitBuilder({
       }
       if (!parsed) throw new Error('Réponse IA vide');
       setAiResult(parsed);
-      toast('Optimisation IA calculée ✨', 'success');
+      toast('Optimisation IA calculée ', 'success');
     } catch (e) {
       setAiError(e instanceof Error ? e.message : 'Erreur');
     } finally {
@@ -509,7 +509,7 @@ export function KitBuilder({
 
       if (shopItemsToOrder.length > 0) {
         toast(
-          `Kit « ${name.trim()} » enregistré ! 🛒 ${shopItemsToOrder.length} article(s) à commander ajouté(s) à votre panier.`,
+          `Kit « ${name.trim()} » enregistré ! ${shopItemsToOrder.length} article(s) à commander ajouté(s) à votre panier.`,
           'success'
         );
       } else {
@@ -585,7 +585,7 @@ export function KitBuilder({
                 loading={aiLoading}
                 className="h-6 shrink-0 px-2.5 text-[9px] font-bold"
               >
-                {aiLoading ? 'Analyse…' : 'Optimiser ✨'}
+                {aiLoading ? 'Analyse…' : <>Optimiser <LKDVIcon name="ia" size="1em" className="lkdv-icon-inline" /></>}
               </Button>
             </div>
 
@@ -619,7 +619,7 @@ export function KitBuilder({
                         className="flex items-center justify-between gap-1 text-[9px] text-[var(--lkv-danger)]"
                       >
                         <span className="truncate">
-                          ⚠️ À retirer : <b>{r.item}</b> ({r.reason})
+                          <LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> À retirer : <b>{r.item}</b> ({r.reason})
                         </span>
                         <Button
                           variant="destructive"
@@ -642,7 +642,7 @@ export function KitBuilder({
                         className="flex items-center justify-between gap-1 text-[9px] text-[color:var(--lkv-text-secondary)]"
                       >
                         <span className="truncate">
-                          💡 Remplacer <b>{rep.item}</b> par <i>{rep.with}</i>
+                          <LKDVIcon name="suggestion" size="1em" className="lkdv-icon-inline" /> Remplacer <b>{rep.item}</b> par <i>{rep.with}</i>
                         </span>
                       </div>
                     ))}
@@ -719,7 +719,7 @@ export function KitBuilder({
                               {item.isFromShop ? (
                                 <>
                                   <span className="text-[color:var(--lkv-text-primary)] font-bold">
-                                    🛒 Boutique
+                                    <LKDVIcon name="panier" size="1em" className="lkdv-icon-inline" /> Boutique
                                   </span>
                                   <span className="text-[var(--lkv-text-muted)]">
                                     · {item.priceEur?.toFixed(2)}€
@@ -790,7 +790,7 @@ export function KitBuilder({
               <div role="listitem">
                 <EmptyState
                   compact
-                  icon={<span aria-hidden="true">🎒</span>}
+                  icon={<span aria-hidden="true"><LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /></span>}
                   title="Kit vide"
                   description="Ajoutez des articles depuis le catalogue à gauche."
                 />
@@ -824,7 +824,7 @@ export function KitBuilder({
                         <span>{item.weight_g}g</span>
                         {item.isFromShop && (
                           <span className="text-[color:var(--lkv-text-primary)] font-bold">
-                            · 🛒 À commander
+                            · <LKDVIcon name="panier" size="1em" className="lkdv-icon-inline" /> À commander
                           </span>
                         )}
                       </div>
@@ -860,11 +860,11 @@ export function KitBuilder({
             aria-label="Filtrer par saison"
             className="h-7 cursor-pointer appearance-none rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] py-0 pl-2.5 pr-6 text-[10px] font-bold text-[color:var(--lkv-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           >
-            <option value="toute_saison">🌿 Toutes saisons</option>
-            <option value="ete">☀️ Été</option>
-            <option value="printemps">🌸 Printemps</option>
-            <option value="automne">🍂 Automne</option>
-            <option value="hiver">❄️ Hiver</option>
+            <option value="toute_saison">Toutes saisons</option>
+            <option value="ete">Été</option>
+            <option value="printemps">Printemps</option>
+            <option value="automne">Automne</option>
+            <option value="hiver">Hiver</option>
           </select>
           <LKDVIcon name="bas"
             size={10}

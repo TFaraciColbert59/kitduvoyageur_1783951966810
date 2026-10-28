@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { usePaysTrails } from '../hooks/usePaysTrails';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 function formatDistance(km: number | null): string | null {
   if (km == null || km <= 0) return null;

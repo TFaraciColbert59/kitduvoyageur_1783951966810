@@ -175,7 +175,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           className="h-full"
           icon={
             <span className="flex size-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-2xl text-[color:var(--lkv-text-primary)]">
-              💬
+              <LKDVIcon name="messages" size="1em" className="lkdv-icon-inline" />
             </span>
           }
           title="C'est le début de votre discussion"

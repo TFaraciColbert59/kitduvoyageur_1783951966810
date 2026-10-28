@@ -255,7 +255,8 @@ export type LKDVIconName = (typeof LKDV_ICON_NAMES)[number];
 
 export type LKDVIconProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children'> & {
   name: LKDVIconName;
-  size?: number;
+  /** Pixels (nombre) ou longueur CSS (`'1em'` : suit la taille du texte, pour une icône dans une phrase). */
+  size?: number | string;
   title?: string;
   /** Nom accessible ; sans `alt` ni `title`, l’icône est décorative (masquée aux lecteurs d’écran). */
   alt?: string;
@@ -271,7 +272,7 @@ export function LKDVIcon({ name, size = 24, title, alt, style, className, ...res
       title={title}
       data-lkdv-icon={name}
       className={className ? `lkdv-icon ${className}` : 'lkdv-icon'}
-      style={{ '--lkdv-icon-url': `url(/icons/lkdv/${name}.svg)`, '--lkdv-icon-size': `${size}px`, ...style } as CSSProperties}
+      style={{ '--lkdv-icon-url': `url(/icons/lkdv/${name}.svg)`, '--lkdv-icon-size': typeof size === 'number' ? `${size}px` : size, ...style } as CSSProperties}
       {...rest}
     />
   );

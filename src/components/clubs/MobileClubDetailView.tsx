@@ -15,6 +15,7 @@ import ClubGroupsTab from '@/components/clubs/ClubGroupsTab';
 import { CLUB_SECTION_LABELS, type ClubSectionId } from '@/components/clubs/ClubVerticalTabs';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Badge, Button, Card, EmptyState } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface MobileClubDetailViewProps {
   club: any;
@@ -116,12 +117,11 @@ export default function MobileClubDetailView({
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-title-sm)] text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]"
             aria-label="Retour aux clubs"
           >
-            ‹
-          </Link>
+            <LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /></Link>
           <div className="flex items-center gap-[var(--space-2)]">
             {/* P2 — pastille sombre : blanc solide sur photo (≥4.5, ≥11px) */}
             <Badge className="border-[color:var(--glass-border)] bg-black/55 font-mono text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
-              {club.category || 'Collectif'} · {club.type === 'activite' ? '⚡ Activité' : '🌍 Région'}
+              {club.category || 'Collectif'} · {club.type === 'activite' ? <><LKDVIcon name="energie" size="1em" className="lkdv-icon-inline" /> Activité</> : <><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /> Région</>}
             </Badge>
           </div>
         </div>
@@ -129,7 +129,7 @@ export default function MobileClubDetailView({
         <div className="absolute bottom-4 left-4 right-4 z-10">
           {/* P2 — blanc 90 % sur voile sombre (≥4.5, plus de forest-300 sur photo) */}
           <span className="mb-[var(--space-1)] block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-white/90">
-            {club.emoji || '🏕️'} COLLECTIF OFFICIEL
+            {club.emoji || <><LKDVIcon name="camping" size="1em" className="lkdv-icon-inline" /></>} COLLECTIF OFFICIEL
           </span>
           <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-extrabold leading-tight text-[color:var(--lkv-text-inverted)] sm:text-[length:var(--lkv-text-title-lg)]">
             {club.name}
@@ -151,7 +151,7 @@ export default function MobileClubDetailView({
                     {m.user?.avatar_url ? (
                       <img src={m.user.avatar_url} alt={m.user?.full_name || 'Membre du club'} className="h-full w-full object-cover" />
                     ) : (
-                      m.user?.full_name?.charAt(0) || '👤'
+                      m.user?.full_name?.charAt(0) || <><LKDVIcon name="profil" size="1em" className="lkdv-icon-inline" /></>
                     )}
                   </div>
                 ))}
@@ -268,7 +268,7 @@ export default function MobileClubDetailView({
                 {validEvents.length === 0 ? (
                   <Card className="p-[var(--space-6)]">
                     <EmptyState
-                      icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>📅</span>}
+                      icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden><LKDVIcon name="calendrier" size="1em" className="lkdv-icon-inline" /></span>}
                       title="Aucune sortie programmée"
                       description="Aucune sortie programmée pour le moment."
                     />

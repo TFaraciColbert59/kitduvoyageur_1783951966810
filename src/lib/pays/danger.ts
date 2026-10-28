@@ -5,9 +5,9 @@ import type { Country } from '@/lib/countries';
  * Source unique : ne PAS dupliquer ces couleurs ailleurs.
  */
 export const DANGER_META: Record<Country['danger_level'], { label: string; bg: string; text: string }> = {
-  low: { label: '🟢 Sûr', bg: 'rgba(91,127,85,0.14)', text: '#486944' },
-  medium: { label: '🟡 Vigilance', bg: 'rgba(200,154,59,0.16)', text: '#8C6418' },
-  high: { label: '🔴 Risqué', bg: 'rgba(168,68,58,0.16)', text: '#8A241B' },
+  low: { label: 'Sûr', bg: 'rgba(91,127,85,0.14)', text: '#486944' },
+  medium: { label: 'Vigilance', bg: 'rgba(200,154,59,0.16)', text: '#8C6418' },
+  high: { label: 'Risqué', bg: 'rgba(168,68,58,0.16)', text: '#8A241B' },
 };
 
 /** Couleurs de remplissage globe par niveau de danger (caps nettes sur texture sombre). */

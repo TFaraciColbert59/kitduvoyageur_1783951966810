@@ -196,7 +196,7 @@ export default function CompletionView({
         <div className="p-4 rounded-2xl bg-white/10 border border-[color:var(--lkv-forest-100)]/25 backdrop-blur-md">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🏆</span>
+              <span className="text-xl"><LKDVIcon name="recompense" size="1em" className="lkdv-icon-inline" /></span>
               <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--lkv-forest-100)]">
                 Points LKDV Validés
               </span>
@@ -237,13 +237,13 @@ export default function CompletionView({
             onClick={onShare}
             className="py-3 px-4 bg-white/5 hover:bg-white/10 border border-[color:var(--lkv-forest-100)]/15 rounded-xl font-medium text-xs text-white flex items-center justify-center gap-2 active:scale-95 transition-transform"
           >
-            <span>🔗</span> Partager
+            <span><LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" /></span> Partager
           </button>
           <button
             onClick={onEditCarnet || onViewCarnet}
             className="py-3 px-4 bg-white/5 hover:bg-white/10 border border-[color:var(--lkv-forest-100)]/15 rounded-xl font-medium text-xs text-white flex items-center justify-center gap-2 active:scale-95 transition-transform"
           >
-            <span>📝</span> Éditer le carnet
+            <span><LKDVIcon name="modifier" size="1em" className="lkdv-icon-inline" /></span> Éditer le carnet
           </button>
         </div>
       </div>

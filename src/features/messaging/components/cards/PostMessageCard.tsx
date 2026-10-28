@@ -120,7 +120,7 @@ export const PostMessageCard: React.FC<PostMessageCardProps> = ({ meta, isMine }
               : 'text-[color:var(--lkv-forest-700)]'
           }`}
         >
-          Voir la publication <span aria-hidden="true">→</span>
+          Voir la publication <span aria-hidden="true"><LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" /></span>
         </span>
       </div>
     </Link>

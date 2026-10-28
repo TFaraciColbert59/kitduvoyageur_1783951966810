@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 export interface DrawerTab {
   id: string;
@@ -56,7 +57,7 @@ export function DrawerError({ onRetry }: { onRetry?: () => void }) {
 export function DrawerEmpty({ title, hint, action }: { title: string; hint?: string; action?: React.ReactNode }) {
   return (
     <div className="lkdv-drawer-state" data-state="empty">
-      <span className="lkdv-drawer-empty-ico" aria-hidden="true">○</span>
+      <span className="lkdv-drawer-empty-ico" aria-hidden="true"><EmptyCircle size="1em" /></span>
       <b>{title}</b>
       {hint ? <p>{hint}</p> : null}
       {action}

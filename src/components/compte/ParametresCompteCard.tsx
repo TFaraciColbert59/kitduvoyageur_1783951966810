@@ -419,7 +419,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                     Nationalité, domicile, devise, fuseau : privé, lu par le Compas.
                   </span>
                 </span>
-                <span aria-hidden="true">›</span>
+                <span aria-hidden="true"><LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" /></span>
               </Link>
 
               {/* Photo Upload Block */}
@@ -686,7 +686,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         }}
                         className="w-full capitalize"
                       >
-                        {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
+                        {mode === 'public' ? <><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /> Public</> : mode === 'membres' ? <><LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /> Membres</> : <><LKDVIcon name="verrou" size="1em" className="lkdv-icon-inline" /> Privé</>}
                       </Chip>
                     ))}
                   </div>
@@ -705,7 +705,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         }}
                         className="w-full capitalize"
                       >
-                        {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
+                        {mode === 'public' ? <><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /> Public</> : mode === 'membres' ? <><LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /> Membres</> : <><LKDVIcon name="verrou" size="1em" className="lkdv-icon-inline" /> Privé</>}
                       </Chip>
                     ))}
                   </div>
@@ -724,7 +724,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         }}
                         className="w-full capitalize"
                       >
-                        {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
+                        {mode === 'public' ? <><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /> Public</> : mode === 'membres' ? <><LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /> Membres</> : <><LKDVIcon name="verrou" size="1em" className="lkdv-icon-inline" /> Privé</>}
                       </Chip>
                     ))}
                   </div>
@@ -947,13 +947,13 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
                 {passwordError && (
                   <p className="text-xs font-bold text-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger)]/10 p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/20">
-                    ⚠️ {passwordError}
+                    <LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> {passwordError}
                   </p>
                 )}
 
                 {passwordSuccess && (
                   <p className="text-xs font-bold text-[color:var(--lkv-secondary-ink)] bg-[color:var(--lkv-secondary)]/10 p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)]/20">
-                    ✓ {passwordSuccess}
+                    <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" />{passwordSuccess}
                   </p>
                 )}
 
@@ -1021,7 +1021,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn flex items-center justify-center text-[color:var(--lkv-text-primary)]">
-                          💻
+                          <LKDVIcon name="options_avancees" size="1em" className="lkdv-icon-inline" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">

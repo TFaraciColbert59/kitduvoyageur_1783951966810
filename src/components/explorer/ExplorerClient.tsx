@@ -927,7 +927,7 @@ export default function ExplorerClient({
               className={`${LINK_PILL} h-[var(--control-height-sm)] text-[length:var(--lkv-text-caption-2)] font-bold`}
               title="Consulter ma progression et mes classements"
             >
-              <span aria-hidden="true">🧭</span>
+              <span aria-hidden="true"><LKDVIcon name="boussole" size="1em" className="lkdv-icon-inline" /></span>
               <span>Ma progression</span>
             </Link>
             <Button
@@ -938,7 +938,7 @@ export default function ExplorerClient({
               title="Créer une sortie éphémère avec des amis"
               data-testid="ephemeral-group-cta-desktop"
             >
-              <span aria-hidden="true">👥</span>
+              <span aria-hidden="true"><LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /></span>
               <span>Sortie entre amis</span>
             </Button>
             <Link
@@ -946,7 +946,7 @@ export default function ExplorerClient({
               className={`${LINK_PILL} h-[var(--control-height-sm)] text-[length:var(--lkv-text-caption-2)] font-bold`}
               title="Lancer le mode randonnée GPS"
             >
-              <span aria-hidden="true">🥾</span>
+              <span aria-hidden="true"><LKDVIcon name="randonnee" size="1em" className="lkdv-icon-inline" /></span>
               <span>Lancer rando</span>
             </Link>
           </div>
@@ -1280,7 +1280,7 @@ export default function ExplorerClient({
           aria-label="Créer une sortie avec des amis"
           data-testid="ephemeral-group-cta-mobile"
         >
-          <span aria-hidden="true">👥</span>
+          <span aria-hidden="true"><LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /></span>
           <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">Sortie entre amis</span>
         </Button>
       </div>
@@ -1351,7 +1351,7 @@ export default function ExplorerClient({
       {!isOnline && isMobile && (
         <div className="pointer-events-none fixed top-[calc(var(--safe-top)+14px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2">
           <Badge tone="warn" className="border border-[color:var(--glass-border)] bg-black/80 backdrop-blur-md px-3.5 py-1 text-[length:var(--lkv-text-caption-2)] font-semibold shadow-lg">
-            📡 Mode hors-ligne · Données en cache
+            <LKDVIcon name="live" size="1em" className="lkdv-icon-inline" /> Mode hors-ligne · Données en cache
           </Badge>
         </div>
       )}
@@ -1368,7 +1368,7 @@ export default function ExplorerClient({
             className="border border-[color:var(--glass-border)] bg-black/85 backdrop-blur-md px-3.5 py-1.5 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-xl text-center"
             data-testid="osm-error-banner"
           >
-            ⚠️ {activeBannerMessage}
+            <LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> {activeBannerMessage}
           </Badge>
         </div>
       )}

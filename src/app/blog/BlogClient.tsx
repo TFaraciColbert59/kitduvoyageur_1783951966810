@@ -131,7 +131,7 @@ function FeaturedCard({ post }: { post: BlogPost }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           <div className="absolute top-4 left-4">
             <span className="inline-block px-2 py-0.5 rounded-sm text-[length:var(--lkv-text-caption-2)] font-mono font-bold tracking-widest uppercase text-[color:var(--lkv-text-primary)] bg-[color:var(--lkv-surface-paper)]/95 border border-[color:var(--glass-border)] ">
-              ⭐ À la une
+              <LKDVIcon name="points" size="1em" className="lkdv-icon-inline" /> À la une
             </span>
           </div>
           <div className="absolute bottom-4 left-4 right-4">
@@ -323,7 +323,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {/* All posts grid */}
       {filtered.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-4xl mb-4">📝</p>
+          <p className="text-4xl mb-4"><LKDVIcon name="modifier" size="1em" className="lkdv-icon-inline" /></p>
           <h3 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)] mb-2">Aucun article trouvé</h3>
           <p className="text-[color:var(--lkv-forest-100)] mb-6">Essayez une autre catégorie ou un autre terme de recherche.</p>
           <button onClick={() => { setActiveCategory('Tous'); setSearchQuery(''); }} className="glass-capsule-btn primary">
@@ -352,7 +352,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
 
       {/* Newsletter CTA (mutualisée desk/mobile — label visible comme `contact`) */}
       <div className="glass-sub-card mt-10 p-8 text-center">
-        <p className="text-3xl mb-3" aria-hidden="true">📬</p>
+        <p className="text-3xl mb-3" aria-hidden="true"><LKDVIcon name="email" size="1em" className="lkdv-icon-inline" /></p>
         <h3 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)] mb-2">
           Restez informé
         </h3>
@@ -400,7 +400,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {/* Posts list */}
       {filtered.length === 0 ? (
         <div className="py-10 text-center">
-          <p className="mb-[var(--space-2)] text-[32px]">📝</p>
+          <p className="mb-[var(--space-2)] text-[32px]"><LKDVIcon name="modifier" size="1em" className="lkdv-icon-inline" /></p>
           <p className="mb-1 text-[16px] font-bold text-[color:var(--lkv-text-primary)]">Aucun article trouve</p>
           <p className="mb-[var(--space-4)] text-[13px] text-[color:var(--lkv-forest-100)]">Essayez une autre categorie ou un autre terme de recherche.</p>
           <button onClick={() => { setActiveCategory('Tous'); setSearchQuery(''); }}
@@ -430,7 +430,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
 
       {/* Newsletter (mutualisée desk/mobile — label visible comme `contact`) */}
       <div className="glass mt-[var(--space-6)] p-[var(--space-5)] text-center">
-        <p className="mb-[var(--space-2)] text-[28px]" aria-hidden="true">📬</p>
+        <p className="mb-[var(--space-2)] text-[28px]" aria-hidden="true"><LKDVIcon name="email" size="1em" className="lkdv-icon-inline" /></p>
         <h3 className="mb-[var(--space-2)] font-display text-[16px] font-bold text-[color:var(--lkv-text-primary)]">
           Restez informé
         </h3>

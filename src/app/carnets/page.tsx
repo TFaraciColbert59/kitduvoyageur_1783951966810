@@ -105,9 +105,9 @@ const EMPTY_FORM: CarnetForm = {
 };
 
 const VISIBILITY_OPTS = [
-  { value: 'public', label: '🌍 Public', desc: 'Visible par tous' },
-  { value: 'friends', label: '👥 Amis', desc: 'Visible par vos abonnés' },
-  { value: 'private', label: '🔒 Privé', desc: 'Visible uniquement par vous' },
+  { value: 'public', label: <><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /> Public</>, desc: 'Visible par tous' },
+  { value: 'friends', label: <><LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /> Amis</>, desc: 'Visible par vos abonnés' },
+  { value: 'private', label: <><LKDVIcon name="verrou" size="1em" className="lkdv-icon-inline" /> Privé</>, desc: 'Visible uniquement par vous' },
 ];
 
 const REACTION_OPTS = [
@@ -349,15 +349,15 @@ function CarnetDetailModal({
             {carnet.cover_image ? (
               <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-6xl" aria-hidden>🗺️</div>
+              <div className="flex h-full w-full items-center justify-center text-6xl" aria-hidden><LKDVIcon name="carte" size="1em" className="lkdv-icon-inline" /></div>
             )}
             <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
             <div className="absolute left-[var(--space-4)] top-[var(--space-4)] flex flex-wrap gap-[var(--space-2)]">
               {carnet.verified && <Badge tone="sage" className="font-bold">✓ Ajouter</Badge>}
-              {carnet.is_collaborative && <Badge tone="info" className="font-bold">👥 Collaboratif</Badge>}
+              {carnet.is_collaborative && <Badge tone="info" className="font-bold"><LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /> Collaboratif</Badge>}
               <Badge className="border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] font-bold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
-                {carnet.visibility === 'public' ? '🌍 Public' : carnet.visibility === 'friends' ? '👥 Amis' : '🔒 Privé'}
+                {carnet.visibility === 'public' ? <><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /> Public</> : carnet.visibility === 'friends' ? <><LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /> Amis</> : <><LKDVIcon name="verrou" size="1em" className="lkdv-icon-inline" /> Privé</>}
               </Badge>
             </div>
             <div className="absolute right-[var(--space-4)] top-[var(--space-4)] flex gap-[var(--space-2)]">
@@ -403,11 +403,11 @@ function CarnetDetailModal({
 
           <div className="grid grid-cols-5 divide-x divide-[color:var(--lkv-border)] border-y border-[color:var(--lkv-border)]">
             {[
-              { label: 'Note', value: `${carnet.route_rating}/10`, icon: '⭐' },
-              { label: 'Durée', value: durationDays ? `${durationDays}j` : '—', icon: '📅' },
-              { label: 'Vues', value: carnet.views_count ?? 0, icon: '👁️' },
-              { label: 'Réactions', value: carnet.likes_count, icon: '🎒' },
-              { label: 'Favoris', value: carnet.favorites_count, icon: '🔖' },
+              { label: 'Note', value: `${carnet.route_rating}/10`, icon: <LKDVIcon name="points" size="1em" className="lkdv-icon-inline" /> },
+              { label: 'Durée', value: durationDays ? `${durationDays}j` : '—', icon: <LKDVIcon name="calendrier" size="1em" className="lkdv-icon-inline" /> },
+              { label: 'Vues', value: carnet.views_count ?? 0, icon: <LKDVIcon name="vue" size="1em" className="lkdv-icon-inline" /> },
+              { label: 'Réactions', value: carnet.likes_count, icon: <LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /> },
+              { label: 'Favoris', value: carnet.favorites_count, icon: <LKDVIcon name="signet" size="1em" className="lkdv-icon-inline" /> },
             ].map((s) => (
               <div key={s.label} className="p-[var(--space-3)] text-center">
                 <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption)]" aria-hidden>{s.icon}</p>
@@ -429,7 +429,7 @@ function CarnetDetailModal({
                     </div>
                   )}
                   {carnet.start_date && carnet.end_date && (
-                    <div aria-hidden className="text-[length:var(--lkv-text-title-sm)] text-[color:var(--lkv-text-inverted)]/30">→</div>
+                    <div aria-hidden className="text-[length:var(--lkv-text-title-sm)] text-[color:var(--lkv-text-inverted)]/30"><LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" /></div>
                   )}
                   {carnet.end_date && (
                     <div>
@@ -504,7 +504,7 @@ function CarnetDetailModal({
                   onClick={() => setShowReactions(!showReactions)}
                   aria-expanded={showReactions}
                   aria-label="Réactions"
-                  icon={<span aria-hidden>{carnet.user_reaction ? REACTION_OPTS.find((r) => r.key === carnet.user_reaction)?.emoji : '🎒'}</span>}
+                  icon={<span aria-hidden>{carnet.user_reaction ? REACTION_OPTS.find((r) => r.key === carnet.user_reaction)?.emoji : <><LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /></>}</span>}
                 >
                   <span>{carnet.likes_count} réactions</span>
                 </Button>
@@ -808,7 +808,7 @@ export default function CarnetsPage() {
       await supabase.from('carnet_favorites').insert({ carnet_id: carnet.id, user_id: user.id });
       setCarnets((prev) => prev.map((c) => c.id === carnet.id ? { ...c, user_favorited: true, favorites_count: c.favorites_count + 1 } : c));
       if (detailCarnet?.id === carnet.id) setDetailCarnet((prev) => prev ? { ...prev, user_favorited: true, favorites_count: prev.favorites_count + 1 } : null);
-      showToast('Ajouté aux favoris ⭐');
+      showToast('Ajouté aux favoris ');
     }
   };
 
@@ -909,7 +909,7 @@ export default function CarnetsPage() {
                 ) : filtered.length === 0 ? (
                   <Card className="p-[var(--space-12)]">
                     <EmptyState
-                      icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>🏔️</span>}
+                      icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /></span>}
                       title="Aucun carnet trouvé"
                       description="Essayez de modifier votre recherche ou soyez le premier à partager cette aventure !"
                     />

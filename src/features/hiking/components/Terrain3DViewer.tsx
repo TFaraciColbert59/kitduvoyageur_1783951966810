@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Terrain3DViewerProps {
   isOpen: boolean;
@@ -32,8 +33,7 @@ export default function Terrain3DViewer({
           onClick={onClose}
           className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-base hover:bg-white/20"
         >
-          ✕
-        </button>
+          <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
       </div>
 
       {/* 3D Simulated Mesh Canvas Box */}
@@ -52,7 +52,7 @@ export default function Terrain3DViewer({
 
           {/* User Location Pulse Marker */}
           <div className="w-8 h-8 rounded-full bg-[var(--lkv-warning)] border-4 border-white  flex items-center justify-center animate-bounce z-20">
-            <span className="text-xs">🥾</span>
+            <span className="text-xs"><LKDVIcon name="randonnee" size="1em" className="lkdv-icon-inline" /></span>
           </div>
         </motion.div>
 

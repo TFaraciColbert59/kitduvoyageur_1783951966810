@@ -55,7 +55,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
               {data.status === 'ok' ? (
                 '✓ Prêt'
               ) : data.status === 'warning' ? (
-                '⚠️ À finaliser'
+                <><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> À finaliser</>
               ) : (
                 <span className="text-[var(--lkv-danger)] font-extrabold flex items-center gap-0.5">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--lkv-danger)] animate-ping mr-0.5" />

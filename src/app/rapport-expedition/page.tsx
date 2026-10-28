@@ -190,8 +190,8 @@ function NewReportModal({ onClose, onSave }: { onClose: () => void; onSave: (f: 
               <div className="space-y-1 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
                 <p><span className="text-[color:var(--lkv-text-muted)]">Destination :</span> {form.destination}, {form.country}</p>
                 <p><span className="text-[color:var(--lkv-text-muted)]">Type :</span> {form.type}</p>
-                <p><span className="text-[color:var(--lkv-text-muted)]">Dates :</span> {form.startDate} → {form.endDate}</p>
-                <p><span className="text-[color:var(--lkv-text-muted)]">Note :</span> {'⭐'.repeat(form.score)}</p>
+                <p><span className="text-[color:var(--lkv-text-muted)]">Dates :</span> {form.startDate} <LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" />{form.endDate}</p>
+                <p><span className="text-[color:var(--lkv-text-muted)]">Note :</span> {Array.from({ length: form.score }, (_, i) => <LKDVIcon key={i} name="points" size="1em" className="lkdv-icon-inline" />)}</p>
                 {form.budget_estimated > 0 && <p><span className="text-[color:var(--lkv-text-muted)]">Budget :</span> {form.budget_estimated}€ estimé / {form.budget_real}€ réel</p>}
               </div>
             </Card>
@@ -638,7 +638,7 @@ export default function RapportExpeditionPage() {
                   </div>
                   {reports.length === 0 && (
                     <div className="mt-3 p-3 bg-[color:var(--lkv-sand-500)]/10 border border-[color:var(--lkv-sand-500)]/20 rounded-[var(--lkv-radius-md)]">
-                      <p className="text-xs text-sand-400">💡 Créez votre premier rapport d&apos;expédition pour obtenir une analyse personnalisée.</p>
+                      <p className="text-xs text-sand-400"><LKDVIcon name="suggestion" size="1em" className="lkdv-icon-inline" /> Créez votre premier rapport d&apos;expédition pour obtenir une analyse personnalisée.</p>
                     </div>
                   )}
                 </div>
@@ -781,7 +781,7 @@ export default function RapportExpeditionPage() {
             <div className="p-[var(--space-4)]">
               {savedSuccess && (
                 <Card variant="compact" role="status" aria-live="polite" className="mb-[var(--space-3)] flex items-center gap-[var(--space-2)] border-[color:var(--lkv-success)]/40 bg-[color:var(--lkv-success-bg)]">
-                  <span className="text-[14px] text-[color:var(--lkv-success)]" aria-hidden="true">✓</span>
+                  <span className="text-[14px] text-[color:var(--lkv-success)]" aria-hidden="true"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
                   <p className="m-0 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]">
                     {earnAwarded ? `Rapport créé avec succès · ${earnAwarded}.` : 'Rapport créé avec succès.'}
                   </p>
@@ -880,7 +880,7 @@ export default function RapportExpeditionPage() {
                 {/* Header */}
                 <div className="flex items-center gap-[10px] border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-3)]">
                   <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[13px] text-[color:var(--lkv-text-primary)]" aria-hidden="true">
-                    ✨
+                    <LKDVIcon name="ia" size="1em" className="lkdv-icon-inline" />
                   </div>
                   <div className="flex-1">
                     <p className="m-0 text-[13px] font-semibold text-[color:var(--lkv-text-primary)]">Analyse IA</p>

@@ -87,7 +87,7 @@ export default function ClubHero({
 
       <div className="relative z-10 mt-[var(--space-6)] flex w-full flex-col items-end gap-[var(--space-3)] md:mt-0 md:w-auto">
         <Card variant="compact" className="mb-[var(--space-1)] flex h-24 w-24 flex-col items-center justify-center border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)]">
-          <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-title-sm)]" aria-hidden>{club.emoji || '🏕️'}</span>
+          <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-title-sm)]" aria-hidden>{club.emoji || <><LKDVIcon name="camping" size="1em" className="lkdv-icon-inline" /></>}</span>
           <span className="px-[var(--space-1)] text-center font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-primary)]">
             {club.category?.slice(0, 10) || 'Club'}
           </span>

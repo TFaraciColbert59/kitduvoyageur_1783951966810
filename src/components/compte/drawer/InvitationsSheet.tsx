@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { profileInvitationPath } from '@/lib/invitationPaths';
 import './InvitationsSheet.css';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ProfileInvitation {
   id: string;
@@ -246,8 +247,7 @@ export function InvitationsSheet({ onClose, fetcher }: InvitationsSheetProps) {
             aria-label="Fermer les invitations"
             onClick={close}
           >
-            ×
-          </button>
+            <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
         </header>
 
         {phase === 'loading' ? (

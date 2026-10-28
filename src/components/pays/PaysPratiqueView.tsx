@@ -15,6 +15,7 @@ import type {
   DifficulteItem,
   KitRecommendationItem,
 } from '@/lib/ai/country-content/contentBlocksTypes';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface PaysPratiqueViewProps {
   country: CountryDetail;
@@ -112,7 +113,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
         <div className="flex items-center justify-between pb-2.5 border-b border-[color:var(--lkv-primary)]/10">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-ink)] flex items-center justify-center font-bold text-xs shadow-2xs">
-              🌍
+              <LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" />
             </div>
             <div>
               <h3 className="font-display font-bold text-sm sm:text-base text-[color:var(--lkv-text-primary)]">
@@ -173,7 +174,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
         {country.sources_list && country.sources_list.length > 0 && (
           <div className="pt-2.5 border-t border-[color:var(--lkv-primary)]/10 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[color:var(--lkv-text-secondary)]">
-              <span>📚</span>
+              <span><LKDVIcon name="preparateur" size="1em" className="lkdv-icon-inline" /></span>
               <span>Sources documentaires certifiées :</span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -186,7 +187,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   className="glass-pill !px-2.5 !py-0.5 text-[9.5px] font-mono font-bold text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-secondary-ink)] inline-flex items-center gap-1 shadow-2xs"
                 >
                   <span>{src.label}</span>
-                  <span className="text-[8.5px]">↗</span>
+                  <span className="text-[8.5px]"><LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" /></span>
                 </a>
               ))}
             </div>
@@ -201,7 +202,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
         <div className="glass p-5 sm:p-6 space-y-3.5">
           <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🧭</span>
+              <span className="text-lg"><LKDVIcon name="boussole" size="1em" className="lkdv-icon-inline" /></span>
               <h3 className="font-display font-bold text-base sm:text-lg text-[color:var(--lkv-text-primary)]">
                 Identité Outdoor &amp; <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">Géographie Vivante</span>
               </h3>
@@ -224,7 +225,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   rel="noopener noreferrer"
                   className="hover:underline text-[color:var(--lkv-text-primary)] font-semibold"
                 >
-                  {s.title} ↗
+                  {s.title} <LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" />
                 </a>
               ))}
             </div>
@@ -245,7 +246,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
               </h3>
             </div>
             <span className="glass-pill text-[9px] font-mono font-bold text-[color:var(--lkv-secondary-ink)]">
-              🛡️ Fraîcheur &amp; Sécurité
+              <LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /> Fraîcheur &amp; Sécurité
             </span>
           </div>
 
@@ -257,7 +258,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-forest-500/15 text-forest-700 flex items-center justify-center font-bold text-sm">
-                        🛂
+                        <LKDVIcon name="passeport" size="1em" className="lkdv-icon-inline" />
                       </div>
                       <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">
                         Formalités d'entrée &amp; Visas
@@ -289,7 +290,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                           className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-secondary-ink)]"
                           title={src.title}
                         >
-                          <span className="truncate max-w-[140px]">{src.title}</span> ↗
+                          <span className="truncate max-w-[140px]">{src.title}</span> <LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" />
                         </a>
                       ))}
                     </div>
@@ -305,7 +306,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-sand-500/15 text-sand-800 flex items-center justify-center font-bold text-sm">
-                        🛡️
+                        <LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" />
                       </div>
                       <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">
                         Vigilance &amp; Alertes terrain
@@ -337,7 +338,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                           className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-secondary-ink)]"
                           title={src.title}
                         >
-                          <span className="truncate max-w-[140px]">{src.title}</span> ↗
+                          <span className="truncate max-w-[140px]">{src.title}</span> <LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" />
                         </a>
                       ))}
                     </div>
@@ -354,7 +355,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
             className="glass p-3 sm:p-3.5 flex items-center justify-between gap-3 hover:border-rose-500/30 active:scale-[0.99] transition-all cursor-pointer"
           >
             <div className="flex items-center gap-2.5">
-              <span className="text-base sm:text-lg">🚨</span>
+              <span className="text-base sm:text-lg"><LKDVIcon name="urgence" size="1em" className="lkdv-icon-inline" /></span>
               <div>
                 <span className="text-xs font-bold text-[color:var(--lkv-text-primary)] block">
                   Numéro d'urgence international
@@ -393,7 +394,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-700 flex items-center justify-center font-bold text-sm">
-                        🚆
+                        <LKDVIcon name="train" size="1em" className="lkdv-icon-inline" />
                       </div>
                       <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">
                         Transports &amp; Mobilité
@@ -410,7 +411,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                     <span>Sources :</span>
                     {transport.sources.map((s, idx) => (
                       <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[color:var(--lkv-text-primary)]">
-                        {s.title} ↗
+                        {s.title} <LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" />
                       </a>
                     ))}
                   </div>
@@ -425,7 +426,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-sand-500/15 text-sand-700 flex items-center justify-center font-bold text-sm">
-                        💶
+                        <LKDVIcon name="budget" size="1em" className="lkdv-icon-inline" />
                       </div>
                       <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">
                         Budget &amp; Moyens de paiement
@@ -442,7 +443,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                     <span>Sources :</span>
                     {budget.sources.map((s, idx) => (
                       <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[color:var(--lkv-text-primary)]">
-                        {s.title} ↗
+                        {s.title} <LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" />
                       </a>
                     ))}
                   </div>
@@ -457,7 +458,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-700 flex items-center justify-center font-bold text-sm">
-                        🏥
+                        <LKDVIcon name="trousse" size="1em" className="lkdv-icon-inline" />
                       </div>
                       <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">
                         Santé, Eau &amp; Secours
@@ -474,7 +475,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                     <span>Sources :</span>
                     {sante.sources.map((s, idx) => (
                       <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[color:var(--lkv-text-primary)]">
-                        {s.title} ↗
+                        {s.title} <LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" />
                       </a>
                     ))}
                   </div>
@@ -489,7 +490,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-forest-500/15 text-forest-700 flex items-center justify-center font-bold text-sm">
-                        🌿
+                        <LKDVIcon name="flore" size="1em" className="lkdv-icon-inline" />
                       </div>
                       <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">
                         Étiquette culturelle &amp; Nature
@@ -506,7 +507,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                     <span>Sources :</span>
                     {etiquette.sources.map((s, idx) => (
                       <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[color:var(--lkv-text-primary)]">
-                        {s.title} ↗
+                        {s.title} <LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" />
                       </a>
                     ))}
                   </div>
@@ -525,7 +526,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
         <div className="glass p-5 space-y-3.5">
           <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2">
-              <span className="text-lg">☀️</span>
+              <span className="text-lg"><LKDVIcon name="soleil" size="1em" className="lkdv-icon-inline" /></span>
               <h4 className="font-display font-bold text-base text-[color:var(--lkv-text-primary)]">
                 Meilleures périodes par activité outdoor
               </h4>
@@ -549,7 +550,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   </div>
                   <p className="text-[11px] text-[color:var(--lkv-text-secondary)] leading-relaxed">{item.conditions}</p>
                   {item.points_vigilance && (
-                    <p className="text-[10px] text-sand-800 font-mono">⚠️ {item.points_vigilance}</p>
+                    <p className="text-[10px] text-sand-800 font-mono"><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> {item.points_vigilance}</p>
                   )}
                 </div>
               ))}
@@ -563,7 +564,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
         <div className="glass p-5 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🥾</span>
+              <span className="text-lg"><LKDVIcon name="randonnee" size="1em" className="lkdv-icon-inline" /></span>
               <h4 className="font-display font-bold text-base text-[color:var(--lkv-text-primary)]">
                 Itinéraires d'aventure suggérés
               </h4>
@@ -617,7 +618,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
         <div className="glass p-5 space-y-3.5">
           <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🏔️</span>
+              <span className="text-lg"><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /></span>
               <h4 className="font-display font-bold text-base text-[color:var(--lkv-text-primary)]">
                 Spots d'aventure incontournables
               </h4>
@@ -636,7 +637,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                     {spot.type_outdoor}
                   </span>
                 </div>
-                <span className="text-[9.5px] text-[color:var(--lkv-text-secondary)] font-mono block">📍 {spot.localisation}</span>
+                <span className="text-[9.5px] text-[color:var(--lkv-text-secondary)] font-mono block"><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {spot.localisation}</span>
                 <p className="text-[11px] text-[color:var(--lkv-text-secondary)] leading-relaxed">{spot.description}</p>
               </div>
             ))}
@@ -649,7 +650,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
         <div className="glass p-5 space-y-3.5">
           <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2">
-              <span className="text-lg">❓</span>
+              <span className="text-lg"><LKDVIcon name="aide" size="1em" className="lkdv-icon-inline" /></span>
               <h4 className="font-display font-bold text-base text-[color:var(--lkv-text-primary)]">
                 Foire aux Questions Voyageur Outdoor
               </h4>
@@ -715,7 +716,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
           <div className="flex items-center justify-between pb-2.5 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] flex items-center justify-center font-bold text-sm shadow-xs">
-                🎒
+                <LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" />
               </div>
               <div>
                 <h3 className="font-display font-bold text-base sm:text-lg text-[color:var(--lkv-text-primary)]">
@@ -768,7 +769,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                             key={eIdx}
                             className="text-[9.5px] font-mono px-2 py-0.5 rounded-full bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] border border-[color:var(--lkv-primary)]/10"
                           >
-                            ✓ {eq}
+                            <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" />{eq}
                           </span>
                         ))}
                       </div>
@@ -788,7 +789,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                       onClick={() => triggerHaptic('selection')}
                       className="glass-capsule-btn flex-1 !min-h-[36px] !py-1.5 !px-3 !text-xs !font-bold text-center justify-center shadow-2xs cursor-pointer active:scale-95 transition-all"
                     >
-                      ✨ Configurer sur-mesure
+                      <LKDVIcon name="ia" size="1em" className="lkdv-icon-inline" /> Configurer sur-mesure
                     </Link>
                   </div>
                 </div>

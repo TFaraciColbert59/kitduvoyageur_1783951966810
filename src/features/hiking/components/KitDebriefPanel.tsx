@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FIELD_VERDICTS, FieldVerdict } from '@/features/kits/fieldProof';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface DebriefItem {
   key: string;
@@ -124,7 +125,7 @@ export default function KitDebriefPanel({ kitId, sessionId }: KitDebriefPanelPro
             {sentCount > 0 ? `${sentCount} avis enregistrés` : '30 secondes, facultatif'}
           </div>
         </div>
-        <span className={`transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
+        <span className={`transition-transform ${open ? 'rotate-180' : ''}`}><LKDVIcon name="bas" size="1em" className="lkdv-icon-inline" /></span>
       </button>
 
       {open && (

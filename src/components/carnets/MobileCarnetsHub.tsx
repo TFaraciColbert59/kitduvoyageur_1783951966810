@@ -7,6 +7,7 @@ import MobileCarnetCard, { MobileCarnetItem } from '@/components/carnets/MobileC
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { Button, Card, Chip, EmptyState, SearchField, SkeletonCarnetCard, Spinner } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface MobileCarnetsHubProps {
   carnets: MobileCarnetItem[];
@@ -118,7 +119,7 @@ export default function MobileCarnetsHub({
               triggerHaptic('selection');
               onOpenCreateModal();
             }}
-            icon={<span aria-hidden>➕</span>}
+            icon={<span aria-hidden><LKDVIcon name="ajouter" size="1em" className="lkdv-icon-inline" /></span>}
             className="shrink-0"
           >
             Écrire
@@ -156,7 +157,7 @@ export default function MobileCarnetsHub({
         ) : filteredCarnets.length === 0 ? (
           <Card className="p-[var(--space-6)]">
             <EmptyState
-              icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>📖</span>}
+              icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden><LKDVIcon name="preparateur" size="1em" className="lkdv-icon-inline" /></span>}
               title={tab === 'mes-carnets' ? 'Vous n’avez publié aucun carnet' : 'Aucun carnet trouvé'}
               description={
                 tab === 'mes-carnets'

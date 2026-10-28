@@ -27,7 +27,7 @@ export default function BadgesCard({ badges, trustScore = 50 }: BadgesCardProps)
           className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[9px] font-mono font-bold text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-secondary-ink)] transition-colors"
           title="Trust Score LKDV"
         >
-          🛡️ {trustScore}/100
+          <LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /> {trustScore}/100
         </Link>
       </div>
 

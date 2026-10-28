@@ -14,6 +14,7 @@ import {
   gearCategory,
   type GearEntry,
 } from '../cards/GearRow';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 export type KitLens = 'kits' | 'inventory';
 export type { KitViewer };
@@ -121,8 +122,7 @@ export function KitSlot({
         gearList.length === 0 ? (
           <div className="lkdv-slot-state" data-state="empty">
             <span className="lkdv-slot-state-ico" aria-hidden="true">
-              ○
-            </span>
+              <EmptyCircle size="1em" /></span>
             <p>Aucun matériel enregistré.</p>
           </div>
         ) : (
@@ -150,8 +150,7 @@ export function KitSlot({
       ) : kitList.length === 0 ? (
         <div className="lkdv-slot-state" data-state="empty">
           <span className="lkdv-slot-state-ico" aria-hidden="true">
-            ○
-          </span>
+            <EmptyCircle size="1em" /></span>
           <p>Aucun kit enregistré.</p>
         </div>
       ) : (

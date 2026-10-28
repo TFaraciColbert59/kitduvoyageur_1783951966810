@@ -1746,8 +1746,7 @@ export default function UnifiedExplorerMap({
                 className="shrink-0"
                 aria-label="Fermer la sélection pays"
               >
-                ×
-              </IconButton>
+                <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></IconButton>
             </div>
           </Card>
         </div>

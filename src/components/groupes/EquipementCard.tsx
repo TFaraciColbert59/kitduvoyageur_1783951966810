@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Badge, Button, Card, Chip, EmptyState, IconButton, Modal, SearchField } from '@/components/ui';
-import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { LKDVIcon, type LKDVIconName } from '@/components/ui/LKDVIcon';
 
 interface EquipementItem {
   id: string;
@@ -40,14 +40,14 @@ interface GearItem {
   quantity?: number;
 }
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  'Bivouac': '⛺',
-  'Cuisine': '🍳',
-  'Sécurité': '🩹',
-  'Orientation': '🧭',
-  'Eau & Hydratation': '💧',
-  'Électronique': '🔋',
-  'Divers': '🎒',
+const CATEGORY_ICON: Record<string, LKDVIconName> = {
+  'Bivouac': 'tente',
+  'Cuisine': 'rechaud',
+  'Sécurité': 'trousse',
+  'Orientation': 'boussole',
+  'Eau & Hydratation': 'eau_potable',
+  'Électronique': 'batterie',
+  'Divers': 'sac',
 };
 
 const FIELD_CLASS =
@@ -271,7 +271,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
             className="mt-[var(--space-1)] flex w-full items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]"
           >
             <span className="flex items-center gap-[var(--space-2)]">
-              <span aria-hidden>🎒</span>
+              <span aria-hidden><LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /></span>
               <span>Optimiser le sac avec l&apos;IA</span>
             </span>
             <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">Configurer →</span>
@@ -319,7 +319,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
               triggerHaptic('light');
               setSelectedCategory(cat);
             }}
-            icon={<span aria-hidden>{CATEGORY_EMOJI[cat] || '🎒'}</span>}
+            icon={<LKDVIcon name={CATEGORY_ICON[cat] ?? 'sac'} size="1em" className="lkdv-icon-inline" />}
             className="whitespace-nowrap"
           >
             {cat}
@@ -393,7 +393,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                 aria-label="Qui porte cet objet"
                 className={FIELD_CLASS}
               >
-                <option value="">👤 Qui porte cet objet ? (Non attribué)</option>
+                <option value="">Qui porte cet objet ? (Non attribué)</option>
                 {members?.map(m => (
                   <option key={m.user_id} value={m.user_id}>
                     {m.user_profiles?.full_name || 'Membre'}
@@ -477,7 +477,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         {filteredItems.length === 0 ? (
           <EmptyState
             compact
-            icon={<span className="text-2xl" aria-hidden>🎒</span>}
+            icon={<span className="text-2xl" aria-hidden><LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /></span>}
             title={search ? 'Aucun objet trouvé' : 'Aucun équipement dans cette catégorie'}
             description="Ajoutez les éléments clés du bivouac pour équilibrer les sacs."
             actionLabel={!search ? 'Ajouter un objet' : undefined}
@@ -496,7 +496,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
               >
                 <div className="flex min-w-0 flex-1 items-center gap-[var(--space-2)]">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-base" aria-hidden>
-                    {CATEGORY_EMOJI[item.category || 'Divers'] || '🎒'}
+                    <LKDVIcon name={CATEGORY_ICON[item.category || 'Divers'] ?? 'sac'} size="1em" className="lkdv-icon-inline" />
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -528,7 +528,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                               : 'font-semibold text-[color:var(--lkv-warning-dark)]'
                         }`}
                       >
-                        {isMyAssignment ? '👤 Porté par vous' : isAssigned ? `👤 ${item.assignee}` : '⚠️ Non attribué'}
+                        {isMyAssignment ? <><LKDVIcon name="profil" size="1em" className="lkdv-icon-inline" /> Porté par vous</> : isAssigned ? <><LKDVIcon name="profil" size="1em" className="lkdv-icon-inline" /> {item.assignee}</> : <><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> Non attribué</>}
                       </Button>
                     </div>
                   </div>

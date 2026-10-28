@@ -48,7 +48,7 @@ describe('WeatherService — refus de toute valeur meteo inventee', () => {
     expect(snapshot?.windKmH).toBe(18);
     expect(snapshot?.precipitationProbability).toBe(35);
     expect(snapshot?.uvIndex).toBe(4.1);
-    expect(snapshot?.condition).toBe('Partiellement nuageux \u26C5');
+    expect(snapshot?.condition).toBe('Partiellement nuageux');
   });
 
   it('NE FABRIQUE PAS 15 degres quand la temperature est absente', async () => {

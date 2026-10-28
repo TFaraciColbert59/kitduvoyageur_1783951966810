@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Point {
   distanceKm: number;
@@ -94,7 +95,7 @@ export default function ElevationProfileChart({
       <div className="flex items-center justify-between">
         <div>
           <h4 className="text-xs font-bold text-[color:var(--lkv-text-primary)] uppercase tracking-wider flex items-center gap-1.5 font-mono">
-            <span>📈 Profil d'Altitudes</span>
+            <span><LKDVIcon name="denivele" size="1em" className="lkdv-icon-inline" /> Profil d'Altitudes</span>
           </h4>
           <p className="text-[10px] font-mono text-[color:var(--lkv-text-secondary)]">
             Point d'orgue : {maxElev}m · Altitude min : {minElev}m
@@ -115,7 +116,7 @@ export default function ElevationProfileChart({
         {/* Hover Readout Tooltip */}
         {hoverPoint ? (
           <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-[10px] font-mono px-2.5 py-1 rounded-full  border border-white/20 z-10 transition-all">
-            📍 {hoverPoint.distanceKm.toFixed(1)} km · ⛰️ {hoverPoint.elevationM} m
+            <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {hoverPoint.distanceKm.toFixed(1)} km · <LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /> {hoverPoint.elevationM} m
           </div>
         ) : (
           <div className="absolute top-0 left-1/2 -translate-x-1/2 text-[color:var(--lkv-text-secondary)] text-[9px] font-mono opacity-60">

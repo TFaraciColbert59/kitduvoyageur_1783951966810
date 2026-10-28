@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { finiteCountOrNull, finiteNumber, formatCommunityDate } from './communityFormat';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface Challenge {
   id: string;
@@ -43,8 +44,7 @@ export function ChallengeRow({ challenge, completed = false }: ChallengeRowProps
         <h4 className="lkdv-challenge-title">
           {completed ? (
             <span className="lkdv-challenge-check" aria-hidden="true">
-              ✓
-            </span>
+              <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
           ) : null}
           {challenge.title}
         </h4>

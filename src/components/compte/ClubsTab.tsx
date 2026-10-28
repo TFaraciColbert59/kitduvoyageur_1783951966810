@@ -360,7 +360,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                     <span className="text-[10px] font-mono text-white/60 uppercase">Topos</span>
                   </div>
                   <div>
-                    <span className="text-lg font-mono font-bold text-white block">4.9★</span>
+                    <span className="text-lg font-mono font-bold text-white block">4.9<LKDVIcon name="points" size="1em" className="lkdv-icon-inline" /></span>
                     <span className="text-[10px] font-mono text-white/60 uppercase">Note</span>
                   </div>
                 </div>

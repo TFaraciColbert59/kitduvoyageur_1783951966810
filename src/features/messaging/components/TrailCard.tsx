@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import type { TrailMessageMeta } from '../types/messaging.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface TrailCardProps {
   meta: TrailMessageMeta;
@@ -37,7 +38,7 @@ export const TrailCard: React.FC<TrailCardProps> = ({ meta, isMine }) => {
           isMine ? 'text-[color:var(--lkv-text-inverted)]/80' : 'text-[color:var(--lkv-forest-700)]'
         }`}
       >
-        🥾 Randonnée
+        <LKDVIcon name="randonnee" size="1em" className="lkdv-icon-inline" /> Randonnée
       </span>
       <p
         className={`text-[length:var(--lkv-text-caption)] font-bold leading-snug ${

@@ -9,6 +9,7 @@ import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { getInventoryStatus } from '@/features/materiel/domain/inventory';
 import type { MarketplaceListing, MarketplaceTransaction, TransactionAction } from '../types';
 import { FIELD, Feedback, ManualNotice, SignIn, money, request } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const STATUS = {
   requested: 'Demandée',
@@ -101,7 +102,7 @@ function Transaction({
       </p>
       {tx.start_date && (
         <p>
-          Période : {tx.start_date} → {tx.end_date}
+          Période : {tx.start_date} <LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" />{tx.end_date}
         </p>
       )}
       {tx.tracking_code && <p>Suivi communiqué : {tx.tracking_code}</p>}

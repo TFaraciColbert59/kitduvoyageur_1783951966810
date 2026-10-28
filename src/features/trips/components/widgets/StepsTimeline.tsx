@@ -111,8 +111,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                   )}
                   {totals.dPlus > 0 && (
                     <span className="flex items-center gap-[var(--space-1)] whitespace-nowrap">
-                      <LKDVIcon name="montagne" size={11} aria-hidden="true" />+
-                      {fmtMeters(totals.dPlus)}
+                      <LKDVIcon name="montagne" size={11} aria-hidden="true" />+{fmtMeters(totals.dPlus)}
                     </span>
                   )}
                   {totals.dLoss > 0 && (
@@ -164,8 +163,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                     )}
                     {Number(step.elevation_gain_m) > 0 && (
                       <span className="flex items-center gap-[var(--space-1)]">
-                        <LKDVIcon name="montagne" size={11} aria-hidden="true" />+
-                        {fmtMeters(step.elevation_gain_m)}
+                        <LKDVIcon name="montagne" size={11} aria-hidden="true" />+{fmtMeters(step.elevation_gain_m)}
                       </span>
                     )}
                   </div>

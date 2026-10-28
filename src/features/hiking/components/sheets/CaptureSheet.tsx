@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CaptureItem {
   id: string;
@@ -97,8 +98,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-[color:var(--lkv-surface-muted)] flex items-center justify-center text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
           >
-            ✕
-          </button>
+            <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
         </div>
 
         {/* 4 Action Grid Buttons (PHOTO, VIDÉO, NOTE, MOMENT) */}
@@ -107,7 +107,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
             onClick={() => photoInputRef.current?.click()}
             className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]"
           >
-            <span className="text-xl leading-none">📸</span>
+            <span className="text-xl leading-none"><LKDVIcon name="photo" size="1em" className="lkdv-icon-inline" /></span>
             <span className="text-[9px] font-mono font-semibold tracking-wider uppercase text-center leading-none">
               PHOTO
             </span>
@@ -117,7 +117,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
             onClick={() => videoInputRef.current?.click()}
             className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)]"
           >
-            <span className="text-xl leading-none">🎥</span>
+            <span className="text-xl leading-none"><LKDVIcon name="video" size="1em" className="lkdv-icon-inline" /></span>
             <span className="text-[9px] font-mono font-semibold tracking-wider uppercase text-center leading-none">
               VIDÉO
             </span>
@@ -129,7 +129,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
               noteMode === 'NOTE' ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)]'
             }`}
           >
-            <span className="text-xl leading-none">📝</span>
+            <span className="text-xl leading-none"><LKDVIcon name="modifier" size="1em" className="lkdv-icon-inline" /></span>
             <span className="text-[9px] font-mono font-semibold tracking-wider uppercase text-center leading-none">
               NOTE
             </span>
@@ -141,7 +141,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
               noteMode === 'MOMENT' ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : 'bg-gradient-to-br from-[var(--lkv-warning)] to-[var(--lkv-warning)] text-[var(--lkv-warning-dark)]'
             }`}
           >
-            <span className="text-xl leading-none">✨</span>
+            <span className="text-xl leading-none"><LKDVIcon name="ia" size="1em" className="lkdv-icon-inline" /></span>
             <span className="text-[9px] font-mono font-semibold tracking-wider uppercase text-center leading-none">
               MOMENT
             </span>
@@ -152,7 +152,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
         {noteMode && (
           <div className="p-3.5 bg-[color:var(--lkv-surface-muted)] rounded-2xl border border-[color:var(--lkv-border)] space-y-2.5 animate-in fade-in duration-200">
             <div className="flex justify-between items-center text-xs font-semibold text-[color:var(--lkv-text-primary)]">
-              <span>{noteMode === 'NOTE' ? '📝 Ajouter une note terrain' : '✨ Enregistrer un moment fort'}</span>
+              <span>{noteMode === 'NOTE' ? <><LKDVIcon name="modifier" size="1em" className="lkdv-icon-inline" /> Ajouter une note terrain</> : <><LKDVIcon name="ia" size="1em" className="lkdv-icon-inline" /> Enregistrer un moment fort</>}</span>
               <button onClick={() => setNoteMode(null)} className="text-[color:var(--lkv-text-muted)] text-xs">Annuler</button>
             </div>
             <textarea
@@ -177,7 +177,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
         {/* Tag GPS Auto Banner */}
         <div className="p-3.5 bg-[color:var(--lkv-forest-50)] border border-[color:var(--lkv-forest-200)] rounded-2xl flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex items-center justify-center text-lg flex-shrink-0">
-            📌
+            <LKDVIcon name="position" size="1em" className="lkdv-icon-inline" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-medium text-[color:var(--lkv-text-primary)]">
@@ -205,7 +205,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
               {captures.map((cap) => (
                 <div key={cap.id} className="p-3 bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] rounded-xl flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 truncate">
-                    <span>{cap.type === 'PHOTO' ? '📸' : cap.type === 'VIDEO' ? '🎥' : cap.type === 'NOTE' ? '📝' : '✨'}</span>
+                    <span>{cap.type === 'PHOTO' ? <><LKDVIcon name="photo" size="1em" className="lkdv-icon-inline" /></> : cap.type === 'VIDEO' ? <><LKDVIcon name="video" size="1em" className="lkdv-icon-inline" /></> : cap.type === 'NOTE' ? <><LKDVIcon name="modifier" size="1em" className="lkdv-icon-inline" /></> : <><LKDVIcon name="ia" size="1em" className="lkdv-icon-inline" /></>}</span>
                     <span className="font-medium text-[color:var(--lkv-text-primary)] truncate">{cap.text || cap.type}</span>
                   </div>
                   <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)] flex-shrink-0 ml-2">{cap.timestamp}</span>

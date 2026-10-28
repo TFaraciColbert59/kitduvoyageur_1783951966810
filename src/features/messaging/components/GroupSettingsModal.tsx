@@ -211,7 +211,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             className="group flex items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)]/30 bg-[color:var(--lkv-secondary)]/10 p-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-1 transition-colors hover:bg-[color:var(--lkv-secondary)]/20"
           >
             <div className="flex items-center gap-[var(--space-2)]">
-              <span className="text-base">🎒</span>
+              <span className="text-base"><LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /></span>
               <span>Fiche Cockpit / Matériel Partagé</span>
             </div>
             <LKDVIcon

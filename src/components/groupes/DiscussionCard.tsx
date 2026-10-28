@@ -231,7 +231,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
 
               {msg.reply_to && (
                 <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] italic text-[color:var(--lkv-text-muted)]">
-                  ↩ en réponse à {discussions.find((d) => d.id === msg.reply_to)?.author || 'un message'}
+                  <LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /> en réponse à {discussions.find((d) => d.id === msg.reply_to)?.author || 'un message'}
                 </p>
               )}
 
@@ -279,7 +279,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                   >
                     <LKDVIcon name="point_interet" size={14} aria-hidden="true" />
                     <span>
-                      {typeof msg.location === 'string' ? msg.location : `📍 ${(msg.location as any).lat?.toFixed(5)}, ${(msg.location as any).lng?.toFixed(5)}`}
+                      {typeof msg.location === 'string' ? msg.location : <><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {(msg.location as any).lat?.toFixed(5)}, {(msg.location as any).lng?.toFixed(5)}</>}
                     </span>
                   </a>
                 )}
@@ -316,7 +316,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
       <div className="relative shrink-0">
         {replyingTo && (
           <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
-            <span className="font-bold">↩ Répondre à {replyingTo.author}</span>
+            <span className="font-bold"><LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /> Répondre à {replyingTo.author}</span>
             <span className="flex-1 truncate text-[color:var(--lkv-text-muted)]">« {replyingTo.content.slice(0, 60)}{replyingTo.content.length > 60 ? '…' : ''} »</span>
             <IconButton variant="ghost" size="sm" aria-label="Annuler la réponse" onClick={() => setReplyingTo(null)}>
               <LKDVIcon name="fermer" size={14} aria-hidden="true" />
@@ -347,7 +347,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
             disabled={uploading || loading}
             aria-label="Partager une trace GPX"
           >
-            <span aria-hidden>🗺️</span>
+            <span aria-hidden><LKDVIcon name="carte" size="1em" className="lkdv-icon-inline" /></span>
           </IconButton>
           <IconButton
             variant="glass"

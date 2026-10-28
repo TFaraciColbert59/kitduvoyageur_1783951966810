@@ -581,7 +581,7 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                 <div className="lkdv-kit-lineage" role="group" aria-label={`Filiation du kit ${name}`}>
                   {[1, 2, 3].map((step) => (
                     <React.Fragment key={step}>
-                      {step > 1 ? <span aria-hidden="true">→</span> : null}
+                      {step > 1 ? <span aria-hidden="true"><LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" /></span> : null}
                       <span aria-current={step === generation ? 'step' : undefined}>G{step}</span>
                     </React.Fragment>
                   ))}

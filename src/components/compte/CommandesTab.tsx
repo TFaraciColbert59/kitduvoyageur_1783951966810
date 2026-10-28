@@ -475,7 +475,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
           {/* If no active orders but have history */}
           {activeOrders.length === 0 && enrichedOrders.length > 0 && (
             <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-8 text-center space-y-2">
-              <p className="text-3xl">📦</p>
+              <p className="text-3xl"><LKDVIcon name="commande" size="1em" className="lkdv-icon-inline" /></p>
               <h4 className="font-display font-bold text-[color:var(--lkv-text-primary)] text-lg">Aucune commande en cours</h4>
               <p className="text-xs text-[color:var(--lkv-text-muted)]">Toutes vos commandes ont été livrées.</p>
             </div>
@@ -505,7 +505,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
 
             {historyOrders.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-2xl mb-2">📭</p>
+                <p className="text-2xl mb-2"><LKDVIcon name="email" size="1em" className="lkdv-icon-inline" /></p>
                 <p className="text-sm text-[color:var(--lkv-text-muted)]">Aucune commande pour cette période.</p>
               </div>
             ) : (
@@ -843,7 +843,7 @@ function ActiveOrderCard({
               </div>
             ))}
             {remainingCount > 0 && (
-              <p className="text-[11px] text-[color:var(--lkv-text-muted)] font-mono italic">+ {remainingCount} autre{remainingCount > 1 ? 's' : ''} article{remainingCount > 1 ? 's' : ''}</p>
+              <p className="text-[11px] text-[color:var(--lkv-text-muted)] font-mono italic">+{remainingCount} autre{remainingCount > 1 ? 's' : ''} article{remainingCount > 1 ? 's' : ''}</p>
             )}
           </div>
 

@@ -145,7 +145,7 @@ export default function PaysLeftSidebar({
           className="w-full glass-sub-card text-xs font-semibold text-[color:var(--lkv-text-secondary)] p-2 flex items-center justify-between hover:bg-[color:var(--lkv-hover-surface)] transition-colors cursor-pointer"
         >
           <span className="flex items-center gap-1.5">
-            <span>←</span>
+            <span><LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /></span>
             <span>Explorer tous les pays</span>
           </span>
           <span className="text-[9px] font-mono text-[color:var(--lkv-text-secondary)]">Carte LKDV</span>

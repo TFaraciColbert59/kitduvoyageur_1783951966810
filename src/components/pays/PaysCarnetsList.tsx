@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Props {
   countryIso: string;
@@ -105,7 +106,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
                     loading="lazy"
                   />
                   <span className="absolute top-2 left-2 glass-pill text-white text-[9px] font-mono bg-black/40 backdrop-blur-md">
-                    📍 {carnet.destination || countryName}
+                    <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {carnet.destination || countryName}
                   </span>
                 </div>
 
@@ -122,7 +123,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
                     {carnet.author?.avatar_url ? (
                       <img src={carnet.author.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      carnet.author?.full_name?.charAt(0) || '👤'
+                      carnet.author?.full_name?.charAt(0) || <><LKDVIcon name="profil" size="1em" className="lkdv-icon-inline" /></>
                     )}
                   </div>
                   <span className="font-medium text-[11px] text-[color:var(--lkv-text-primary)] truncate">
@@ -131,7 +132,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
                 </div>
 
                 <span className="flex items-center gap-1 text-[11px] font-mono font-bold text-rose-600 shrink-0">
-                  ❤️ {carnet.likes_count || 0}
+                  <LKDVIcon name="favoris" size="1em" className="lkdv-icon-inline" /> {carnet.likes_count || 0}
                 </span>
               </div>
             </div>
@@ -139,7 +140,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
         </div>
       ) : (
         <div className="glass-sub-card p-5 text-center space-y-2">
-          <span className="text-3xl block">📖</span>
+          <span className="text-3xl block"><LKDVIcon name="preparateur" size="1em" className="lkdv-icon-inline" /></span>
           <h4 className="font-bold text-xs text-[color:var(--lkv-text-primary)]">Aucun carnet publié en {countryName}</h4>
           <p className="text-[11px] text-[color:var(--lkv-text-secondary)] max-w-xs mx-auto">
             Soyez le premier à partager votre trace et inspirer la communauté.

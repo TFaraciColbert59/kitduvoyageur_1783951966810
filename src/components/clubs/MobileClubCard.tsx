@@ -50,7 +50,7 @@ export default function MobileClubCard({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span aria-hidden>{club.emoji || '🏕️'}</span>
+              <span aria-hidden>{club.emoji || <><LKDVIcon name="camping" size="1em" className="lkdv-icon-inline" /></>}</span>
             )}
           </div>
 
@@ -63,7 +63,7 @@ export default function MobileClubCard({
               )}
               {club.type && (
                 <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                  {club.type === 'activite' ? '⚡ Activité' : '🌍 Pays'}
+                  {club.type === 'activite' ? <><LKDVIcon name="energie" size="1em" className="lkdv-icon-inline" /> Activité</> : <><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /> Pays</>}
                 </span>
               )}
             </div>
@@ -74,8 +74,7 @@ export default function MobileClubCard({
               </h3>
               {club.is_verified && (
                 <span className="shrink-0 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-forest-700)]" title="Club vérifié">
-                  ✓
-                </span>
+                  <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
               )}
             </div>
           </div>
@@ -101,14 +100,14 @@ export default function MobileClubCard({
       <div className="flex items-center justify-between border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
         <div className="flex items-center gap-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
           <div className="flex items-center gap-[var(--space-1)]">
-            <span aria-hidden>👥</span>
+            <span aria-hidden><LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /></span>
             <span className="font-bold text-[color:var(--lkv-text-primary)]">{club.members_count || 1}</span>
             <span className="text-[length:var(--lkv-text-caption-2)]">membres</span>
           </div>
 
           {club.active_this_month !== undefined && club.active_this_month > 0 && (
             <Badge tone="sage" className="font-mono font-bold">
-              🔥 {club.active_this_month} actifs/mois
+              <LKDVIcon name="feu" size="1em" className="lkdv-icon-inline" /> {club.active_this_month} actifs/mois
             </Badge>
           )}
         </div>

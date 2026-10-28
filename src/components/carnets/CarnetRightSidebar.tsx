@@ -25,7 +25,7 @@ export default function CarnetRightSidebar({
       <Card tone="warn" className="relative space-y-[var(--space-2)] overflow-hidden p-[var(--space-3)]">
         <div className="flex items-center justify-between">
           <Badge tone="warn" className="font-mono font-bold uppercase">
-            ⭐ COUP DE CŒUR
+            <LKDVIcon name="points" size="1em" className="lkdv-icon-inline" /> COUP DE CŒUR
           </Badge>
           <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--sand-500)]" />
         </div>
@@ -35,7 +35,7 @@ export default function CarnetRightSidebar({
             {featuredCarnet?.title || 'Traversée de la Chartreuse en bivouac'}
           </h3>
           <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-            📍 {featuredCarnet?.destination || 'Massif de la Chartreuse'} · Par {featuredCarnet?.author_name || 'Julien M.'}
+            <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {featuredCarnet?.destination || 'Massif de la Chartreuse'} · Par {featuredCarnet?.author_name || 'Julien M.'}
           </p>
         </div>
 
@@ -80,7 +80,7 @@ export default function CarnetRightSidebar({
 
       <Card tone="sage" className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all [transition-duration:var(--motion-control-duration)]">
         <Badge className="font-mono uppercase tracking-widest">
-          🎒 RETOUR D&apos;AVENTURE
+          <LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /> RETOUR D&apos;AVENTURE
         </Badge>
 
         <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { generatedProductImage } from './productImage';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** Rôle du propriétaire du profil sur ce prêt. */
 export type LoanRole = 'lender' | 'borrower';
@@ -320,7 +321,7 @@ export function LoanCard({ loan, viewer = 'owner', onAction }: LoanCardProps) {
                 disabled={pending}
                 onClick={() => void submit('rate', value)}
               >
-                ★
+                <LKDVIcon name="points" size="1em" className="lkdv-icon-inline" />
               </button>
             ))}
           </div>

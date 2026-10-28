@@ -8,6 +8,7 @@ import { SlotEmpty } from './SlotEmpty';
 import { BadgeTile, type BadgeItem } from '../cards/BadgeTile';
 import { RepostCard, type RepostItem } from '../cards/RepostCard';
 import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 export type VitrineLens = 'stats' | 'repost' | 'badges';
 
@@ -279,8 +280,7 @@ function EmptyVitrine({
       <style>{VITRINE_CSS}</style>
       <div className="lkdv-slot-state" data-state="empty">
         <span className="lkdv-slot-state-ico" aria-hidden="true">
-          ○
-        </span>
+          <EmptyCircle size="1em" /></span>
         <p>{label}</p>
         {action}
       </div>
@@ -568,7 +568,7 @@ function EmpreinteBlock({
               </span>
               {stamp.verified ? (
                 <span className="lkdv-empreinte-verified">
-                  <span aria-hidden="true">✓ </span>
+                  <span aria-hidden="true"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
                   Vérifié
                 </span>
               ) : null}

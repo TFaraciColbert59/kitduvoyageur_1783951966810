@@ -177,7 +177,7 @@ export default function CreateClubView() {
           <div className="shrink-0 space-y-[var(--space-2)]">
             <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-xl" aria-hidden>
-                🎪
+                <LKDVIcon name="evenement" size="1em" className="lkdv-icon-inline" />
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
@@ -477,7 +477,7 @@ export default function CreateClubView() {
               <div className="space-y-[var(--space-3)]">
                 {form.rules.map((rule) => (
                   <Card key={rule.id} variant="compact" className="flex items-center gap-[var(--space-3)]">
-                    <span className="text-[length:var(--lkv-text-subheadline)]" aria-hidden>🛡️</span>
+                    <span className="text-[length:var(--lkv-text-subheadline)]" aria-hidden><LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /></span>
                     <div className="min-w-0 flex-1">
                       <input
                         type="text"
@@ -557,8 +557,8 @@ export default function CreateClubView() {
                   <span className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Modalité d&apos;inscription</span>
                   <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                     {[
-                      { id: 'validation', label: '🛡️ Sur validation', desc: 'Le fondateur ou les modérateurs valident chaque demande.' },
-                      { id: 'open', label: '⚡ Inscription libre', desc: 'Tout membre de la communauté peut rejoindre directement.' },
+                      { id: 'validation', label: <><LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /> Sur validation</>, desc: 'Le fondateur ou les modérateurs valident chaque demande.' },
+                      { id: 'open', label: <><LKDVIcon name="energie" size="1em" className="lkdv-icon-inline" /> Inscription libre</>, desc: 'Tout membre de la communauté peut rejoindre directement.' },
                     ].map((m) => (
                       <label
                         key={m.id}
@@ -592,7 +592,7 @@ export default function CreateClubView() {
                         onChange={() => setField('feeType', 'gratuit')}
                         className="accent-[var(--lkv-primary)]"
                       />
-                      <span className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">🎁 Gratuit (100% bénévole)</span>
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"><LKDVIcon name="cadeau" size="1em" className="lkdv-icon-inline" /> Gratuit (100% bénévole)</span>
                     </label>
 
                     <label className={OPTION_CARD_CLASS(form.feeType === 'annuel')}>
@@ -603,7 +603,7 @@ export default function CreateClubView() {
                         onChange={() => setField('feeType', 'annuel')}
                         className="accent-[var(--lkv-primary)]"
                       />
-                      <span className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">💶 Adhésion annuelle club</span>
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"><LKDVIcon name="budget" size="1em" className="lkdv-icon-inline" /> Adhésion annuelle club</span>
                     </label>
                   </div>
                 </div>
@@ -667,8 +667,8 @@ export default function CreateClubView() {
                   <span className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Visibilité du club</span>
                   <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                     {[
-                      { id: 'public', label: '🌍 Public LKDV', desc: 'Visible dans l’annuaire communautaire et sur la carte.' },
-                      { id: 'invite', label: '🔗 Privé / Sur invitation', desc: 'Accessible uniquement via lien de parrainage.' },
+                      { id: 'public', label: <><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /> Public LKDV</>, desc: 'Visible dans l’annuaire communautaire et sur la carte.' },
+                      { id: 'invite', label: <><LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" /> Privé / Sur invitation</>, desc: 'Accessible uniquement via lien de parrainage.' },
                     ].map((vis) => (
                       <label
                         key={vis.id}
@@ -743,7 +743,7 @@ export default function CreateClubView() {
                   {form.title || 'Nom du club'}
                 </h4>
                 <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]">
-                  📍 {form.location}
+                  <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {form.location}
                 </span>
                 <p className="line-clamp-2 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   {form.slogan || form.description}

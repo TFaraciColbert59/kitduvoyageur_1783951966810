@@ -11,10 +11,10 @@ const TRANSPORT_EMISSIONS: Record<string, number> = { 'avion-court': 255, 'avion
 const ACCOMMODATION_EMISSIONS: Record<string, number> = { hotel: 31, camping: 4, refuge: 8, airbnb: 22 };
 const ACTIVITIES_LIST = ['Randonnée', 'Alpinisme', 'Ski', 'Plongée', 'Surf', 'Cyclisme', 'Safari', 'Escalade'];
 const OFFSET_PROJECTS = [
-  { id: 'p1', name: 'Forêt Amazonie Brésilienne', location: 'Brésil', type: 'Reforestation', pricePerTon: 12, rating: 4.9, certified: 'Gold Standard', description: 'Protection de 50 000 ha de forêt primaire.', icon: '🌳' },
-  { id: 'p2', name: 'Énergie Solaire Afrique', location: 'Kenya', type: 'Énergie renouvelable', pricePerTon: 8, rating: 4.7, certified: 'VCS', description: 'Installation de panneaux solaires.', icon: '☀️' },
-  { id: 'p3', name: 'Mangroves Indonésie', location: 'Indonésie', type: 'Conservation marine', pricePerTon: 15, rating: 4.8, certified: 'Gold Standard', description: 'Restauration de 8 000 ha de mangroves.', icon: '🌊' },
-  { id: 'p4', name: 'Biogaz Inde Rurale', location: 'Inde', type: 'Biogaz', pricePerTon: 6, rating: 4.5, certified: 'CDM', description: 'Conversion des déchets en biogaz.', icon: '♻️' },
+  { id: 'p1', name: 'Forêt Amazonie Brésilienne', location: 'Brésil', type: 'Reforestation', pricePerTon: 12, rating: 4.9, certified: 'Gold Standard', description: 'Protection de 50 000 ha de forêt primaire.', icon: <LKDVIcon name="arbre" size="1em" className="lkdv-icon-inline" /> },
+  { id: 'p2', name: 'Énergie Solaire Afrique', location: 'Kenya', type: 'Énergie renouvelable', pricePerTon: 8, rating: 4.7, certified: 'VCS', description: 'Installation de panneaux solaires.', icon: <LKDVIcon name="soleil" size="1em" className="lkdv-icon-inline" /> },
+  { id: 'p3', name: 'Mangroves Indonésie', location: 'Indonésie', type: 'Conservation marine', pricePerTon: 15, rating: 4.8, certified: 'Gold Standard', description: 'Restauration de 8 000 ha de mangroves.', icon: <LKDVIcon name="riviere" size="1em" className="lkdv-icon-inline" /> },
+  { id: 'p4', name: 'Biogaz Inde Rurale', location: 'Inde', type: 'Biogaz', pricePerTon: 6, rating: 4.5, certified: 'CDM', description: 'Conversion des déchets en biogaz.', icon: <LKDVIcon name="dechets" size="1em" className="lkdv-icon-inline" /> },
 ];
 const ECO_GEAR = [
   { name: 'Sac Patagonia Black Hole 25L', material: 'Nylon recyclé 100%', saving: '2.1 kg CO₂', badge: 'Recyclé', href: '/boutique' },

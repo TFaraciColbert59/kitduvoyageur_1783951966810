@@ -765,16 +765,16 @@ export default function MaProgressionView({
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-white/75 text-xl shadow-sm">
               {hasData ? (
                 profile.level.level >= 10 ? (
-                  '👑'
+                  <><LKDVIcon name="recompense" size="1em" className="lkdv-icon-inline" /></>
                 ) : profile.level.level >= 7 ? (
-                  '🧗'
+                  <><LKDVIcon name="escalade" size="1em" className="lkdv-icon-inline" /></>
                 ) : profile.level.level >= 4 ? (
-                  '⛰️'
+                  <><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /></>
                 ) : (
-                  '🌱'
+                  <><LKDVIcon name="flore" size="1em" className="lkdv-icon-inline" /></>
                 )
               ) : (
-                '🧭'
+                <><LKDVIcon name="boussole" size="1em" className="lkdv-icon-inline" /></>
               )}
             </div>
             <div className="min-w-0">
@@ -992,7 +992,7 @@ export default function MaProgressionView({
         {leaderboard?.communityForming && !leaderboard.territoryMissing && (
           <div className="mb-4 space-y-2 rounded-2xl border border-white/80 bg-white/70 p-4 text-center">
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--lkv-primary)]/10 text-lg text-[color:var(--lkv-text-primary)]">
-              🌱
+              <LKDVIcon name="flore" size="1em" className="lkdv-icon-inline" />
             </div>
             <h4 className="text-sm font-bold text-[var(--lkv-text-primary)]">
               {t('progression.communityForming')}

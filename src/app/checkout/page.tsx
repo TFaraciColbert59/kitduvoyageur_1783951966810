@@ -207,7 +207,7 @@ export default function CheckoutPage() {
     {
       id: 'card' as PaymentMethod,
       label: 'Carte bancaire',
-      icon: '💳',
+      icon: <LKDVIcon name="paiement" size="1em" className="lkdv-icon-inline" />,
       desc: 'Visa, Mastercard, Amex — paiement sécurisé Stripe',
       badge: 'Recommandé',
       disabled: false,
@@ -215,7 +215,7 @@ export default function CheckoutPage() {
     {
       id: 'apple_pay' as PaymentMethod,
       label: 'Apple Pay',
-      icon: '🍎',
+      icon: <LKDVIcon name="alimentation" size="1em" className="lkdv-icon-inline" />,
       desc: 'Paiement express avec Touch ID / Face ID',
       badge: 'Safari iOS',
       disabled: true,
@@ -224,14 +224,14 @@ export default function CheckoutPage() {
     {
       id: 'paypal' as PaymentMethod,
       label: 'PayPal',
-      icon: '🅿️',
+      icon: <LKDVIcon name="parking" size="1em" className="lkdv-icon-inline" />,
       desc: 'Paiement sécurisé via votre compte PayPal',
       disabled: false,
     },
     {
       id: 'virement' as PaymentMethod,
       label: 'Virement bancaire',
-      icon: '🏦',
+      icon: <LKDVIcon name="budget" size="1em" className="lkdv-icon-inline" />,
       desc: 'Délai 2–3 jours ouvrés — validation manuelle',
       disabled: false,
     },

@@ -305,7 +305,7 @@ export default function PublicMobileProfileView({
                 }}
                 className="px-2.5 text-[10px] font-mono font-bold"
               >
-                🛡️ Trust {trustScore}/100
+                <LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /> Trust {trustScore}/100
               </Chip>
             </div>
 
@@ -403,11 +403,11 @@ export default function PublicMobileProfileView({
           <div className="flex min-w-0 flex-1 items-center">
             <Tabs
               options={[
-                { id: 'tout', label: 'Récits', icon: '⚡' },
+                { id: 'tout', label: 'Récits', icon: <LKDVIcon name="energie" size="1em" className="lkdv-icon-inline" /> },
                 { id: 'posts', label: 'Publications', icon: '▦' },
-                { id: 'carnets', label: 'Carnets', icon: '📖' },
-                { id: 'clubs', label: 'Clubs', icon: '⛺' },
-                { id: 'badges', label: 'Badges', icon: '🛡️' },
+                { id: 'carnets', label: 'Carnets', icon: <LKDVIcon name="preparateur" size="1em" className="lkdv-icon-inline" /> },
+                { id: 'clubs', label: 'Clubs', icon: <LKDVIcon name="tente" size="1em" className="lkdv-icon-inline" /> },
+                { id: 'badges', label: 'Badges', icon: <LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /> },
               ]}
               value={tab}
               onChange={(id) => {
@@ -457,7 +457,7 @@ export default function PublicMobileProfileView({
         <section className="p-3 space-y-3">
           <Card variant="featured" className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-3xl" aria-hidden="true">🛡️</span>
+              <span className="text-3xl" aria-hidden="true"><LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /></span>
               <div>
                 <h3 className="text-sm font-bold text-[color:var(--lkv-text-primary)]">
                   Indice de Confiance Voyageur
@@ -480,7 +480,7 @@ export default function PublicMobileProfileView({
             ) : (
               badges.map((b) => (
                 <Card key={b.id} variant="featured" className="p-3 text-center">
-                  <span className="text-2xl" aria-hidden="true">🏅</span>
+                  <span className="text-2xl" aria-hidden="true"><LKDVIcon name="badge" size="1em" className="lkdv-icon-inline" /></span>
                   <p className="text-[11px] font-bold mt-1 text-[color:var(--lkv-text-primary)] truncate">
                     {b.title}
                   </p>
@@ -517,7 +517,7 @@ export default function PublicMobileProfileView({
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-[color:var(--lkv-text-primary)] truncate">{club.name}</h4>
-                    <p className="text-[11px] text-[color:var(--lkv-text-muted)] truncate">📍 {club.detail || 'Outdoor Club'}</p>
+                    <p className="text-[11px] text-[color:var(--lkv-text-muted)] truncate"><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {club.detail || 'Outdoor Club'}</p>
                   </div>
                   <Badge tone="stone" className="text-[10px]">
                     {club.members_count ?? 1} membres
@@ -554,7 +554,7 @@ export default function PublicMobileProfileView({
                     fallbackIcon={<LKDVIcon name="preparateur" size={16} />}
                   />
                   <div className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white text-[10px]">
-                    📖
+                    <LKDVIcon name="preparateur" size="1em" className="lkdv-icon-inline" />
                   </div>
                   <div className="absolute bottom-1.5 left-1.5 right-1.5">
                     <p className="text-[10px] font-bold text-white drop-shadow-sm truncate">{c.title}</p>
@@ -589,7 +589,7 @@ export default function PublicMobileProfileView({
                           {c.title}
                         </h4>
                         <p className="text-xs mt-0.5 font-medium text-[color:var(--lkv-text-muted)]">
-                          📍 Expédition outdoor
+                          <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> Expédition outdoor
                         </p>
                       </div>
                       <div className="flex items-center gap-2 mt-2">

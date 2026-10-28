@@ -184,7 +184,7 @@ export default function NouveauGroupePage() {
         return;
       }
 
-      toast('Expédition créée avec succès ! 🎒', 'success');
+      toast('Expédition créée avec succès ! ', 'success');
       setTimeout(() => {
         router.push(`/groupes/${data.id}`);
       }, 800);
@@ -216,7 +216,7 @@ export default function NouveauGroupePage() {
           <div className="shrink-0 space-y-[var(--space-2)]">
             <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-xl" aria-hidden>
-                ⛺
+                <LKDVIcon name="tente" size="1em" className="lkdv-icon-inline" />
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
@@ -576,8 +576,8 @@ export default function NouveauGroupePage() {
                   <legend className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Mode de recrutement</legend>
                   <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                     {[
-                      { id: 'validation', label: '🛡️ Sur validation', desc: 'Les équipiers postulent avec un message sur leur expérience.' },
-                      { id: 'open', label: '⚡ Inscription libre', desc: 'Les places sont attribuées aux premiers inscrits.' },
+                      { id: 'validation', label: <><LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /> Sur validation</>, desc: 'Les équipiers postulent avec un message sur leur expérience.' },
+                      { id: 'open', label: <><LKDVIcon name="energie" size="1em" className="lkdv-icon-inline" /> Inscription libre</>, desc: 'Les places sont attribuées aux premiers inscrits.' },
                     ].map((mode) => (
                       <label
                         key={mode.id}
@@ -610,7 +610,7 @@ export default function NouveauGroupePage() {
                           className="flex items-center justify-between text-[length:var(--lkv-text-caption)]"
                         >
                           <span className="flex items-center gap-[var(--space-2)] font-bold text-[color:var(--lkv-text-primary)]">
-                            <span className="text-[color:var(--lkv-success)]" aria-hidden>✓</span> {gear.name}
+                            <span className="text-[color:var(--lkv-success)]" aria-hidden><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span> {gear.name}
                           </span>
                           <IconButton
                             variant="ghost"
@@ -773,9 +773,9 @@ export default function NouveauGroupePage() {
               </div>
 
               <div className="flex items-center justify-between border-t border-[color:var(--glass-border)] pt-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)]">
-                <span>📏 {selectedTrail.distance_km} km</span>
-                <span>⛰️ +{selectedTrail.elevation_gain} m</span>
-                <span>💶 ~{estimatedBudget}€</span>
+                <span><LKDVIcon name="distance" size="1em" className="lkdv-icon-inline" /> {selectedTrail.distance_km} km</span>
+                <span><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /> +{selectedTrail.elevation_gain} m</span>
+                <span><LKDVIcon name="budget" size="1em" className="lkdv-icon-inline" /> ~{estimatedBudget}€</span>
               </div>
             </div>
           </Card>
@@ -783,7 +783,7 @@ export default function NouveauGroupePage() {
           {/* CTA Final */}
           <Card tone="warn" className="space-y-[var(--space-2)] p-[var(--space-4)] text-[color:var(--lkv-text-primary)]">
             <Badge tone="warn" className="font-mono font-bold">
-              🎒 PRÉPARATION D&apos;EXPÉDITION
+              <LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /> PRÉPARATION D&apos;EXPÉDITION
             </Badge>
             <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
               Lancer le cockpit de voyage

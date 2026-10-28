@@ -31,7 +31,7 @@ export default function CarnetVerticalTabs({
       <div className="shrink-0 space-y-[var(--space-2)]">
         <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-xl" aria-hidden>
-            🗺️
+            <LKDVIcon name="carte" size="1em" className="lkdv-icon-inline" />
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
@@ -94,7 +94,7 @@ export default function CarnetVerticalTabs({
           className="flex w-full items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
         >
           <span className="flex items-center gap-[var(--space-1)]">
-            <span aria-hidden>←</span>
+            <span aria-hidden><LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /></span>
             <span>Explorer les aventures</span>
           </span>
           <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">LKDV</span>

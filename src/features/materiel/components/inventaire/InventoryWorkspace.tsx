@@ -25,6 +25,7 @@ import {
 } from '../../domain/inventory';
 import type { InventoryCatalogProduct } from '../../services/getInventoryCatalog';
 import { InventoryVirtualGrid } from './InventoryVirtualGrid';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type View = 'grid' | 'table';
 
@@ -392,7 +393,7 @@ export function InventoryWorkspace({
             ]}
             className="w-auto"
           />
-          <Button disabled={saving} onClick={openCreate} icon={<span aria-hidden="true">+</span>}>
+          <Button disabled={saving} onClick={openCreate} icon={<span aria-hidden="true"><LKDVIcon name="ajouter" size="1em" className="lkdv-icon-inline" /></span>}>
             Ajouter
           </Button>
         </div>
@@ -957,7 +958,7 @@ export function InventoryWorkspace({
           className="fixed bottom-24 right-5 z-[var(--z-fab)] h-14 w-14 text-[color:var(--lkv-text-primary)] shadow-elevation-4"
           aria-label="Scanner un article (OCR)"
         >
-          <span aria-hidden="true">📷</span>
+          <span aria-hidden="true"><LKDVIcon name="camera" size="1em" className="lkdv-icon-inline" /></span>
         </IconButton>
       )}
       {scanning && <LoadingState compact label="Analyse…" />}

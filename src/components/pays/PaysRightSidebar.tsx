@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import CountryFlag from '@/components/ui/CountryFlag';
 import { CountryDetail } from '@/lib/countryDetails';
 import { ALL_COUNTRIES } from '@/lib/countries';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // ATLAS Phase 5 — globe pays MapLibre (react-globe.gl/three retirés).
 const CountryGlobe = dynamic(
@@ -30,36 +31,36 @@ export default function PaysRightSidebar({
     {
       label: 'Saison optimale',
       val: country.saison_recommandee || 'Toute l’année',
-      icon: '☀️',
+      icon: <LKDVIcon name="soleil" size="1em" className="lkdv-icon-inline" />,
     },
     {
       label: 'Visa (Ressortissants FR)',
       val: content?.pratique_voyage?.visa_requis_fr || 'Non requis (UE)',
-      icon: '🛂',
+      icon: <LKDVIcon name="passeport" size="1em" className="lkdv-icon-inline" />,
     },
     {
       label: 'Hub aérien principal',
       val: content?.transport?.aeroport_principal
         ? `${content.transport.aeroport_principal}${content.transport.code_iata ? ` (${content.transport.code_iata})` : ''}`
         : country.capitale,
-      icon: '✈️',
+      icon: <LKDVIcon name="avion" size="1em" className="lkdv-icon-inline" />,
     },
     {
       label: 'Prises & Voltage',
       val: content?.connectivite?.type_prise_electrique
         ? `${content.connectivite.type_prise_electrique}${content.connectivite.voltage ? ` · ${content.connectivite.voltage}` : ''}`
         : 'Standard',
-      icon: '🔌',
+      icon: <LKDVIcon name="recharge" size="1em" className="lkdv-icon-inline" />,
     },
     {
       label: 'Devise locale',
       val: `${country.monnaie_nom || country.monnaie} (${country.monnaie_code})`,
-      icon: '💶',
+      icon: <LKDVIcon name="budget" size="1em" className="lkdv-icon-inline" />,
     },
     {
       label: 'Sens de conduite',
       val: content?.transport?.sens_conduite || 'À droite',
-      icon: '🚗',
+      icon: <LKDVIcon name="voiture" size="1em" className="lkdv-icon-inline" />,
     },
   ];
 
@@ -121,7 +122,7 @@ export default function PaysRightSidebar({
                 className="glass-pill !px-2.5 !py-1 text-[9px] font-mono font-bold text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-secondary-ink)] hover:border-[color:var(--lkv-secondary)]/40 transition-colors inline-flex items-center gap-1 shadow-2xs"
               >
                 <span>{src.label}</span>
-                <span className="text-[8px]">↗</span>
+                <span className="text-[8px]"><LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" /></span>
               </a>
             ))}
           </div>

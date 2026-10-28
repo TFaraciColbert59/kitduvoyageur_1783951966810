@@ -120,14 +120,14 @@ export default function CarnetHubCard({
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[length:var(--lkv-text-title-lg)] text-[color:var(--lkv-text-inverted)]/70" aria-hidden>📖</div>
+            <div className="flex h-full w-full items-center justify-center text-[length:var(--lkv-text-title-lg)] text-[color:var(--lkv-text-inverted)]/70" aria-hidden><LKDVIcon name="preparateur" size="1em" className="lkdv-icon-inline" /></div>
           )}
           <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
           <div className="pointer-events-none absolute left-[var(--space-3)] top-[var(--space-3)] flex flex-wrap items-center gap-[var(--space-1)]">
             {destinationStr && (
               <Badge className="border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-mono font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">
-                📍 {destinationStr}
+                <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {destinationStr}
               </Badge>
             )}
             {dateStr && (
@@ -152,11 +152,11 @@ export default function CarnetHubCard({
 
           <div className="pointer-events-none absolute bottom-[var(--space-2)] left-[var(--space-3)] right-[var(--space-3)] flex items-center justify-between font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-inverted)]">
             <div className="flex items-center gap-[var(--space-2)]">
-              {carnet.distance_km && <span>📏 {carnet.distance_km} km</span>}
-              {carnet.elevation_m && <span>⛰️ +{carnet.elevation_m} m</span>}
+              {carnet.distance_km && <span><LKDVIcon name="distance" size="1em" className="lkdv-icon-inline" /> {carnet.distance_km} km</span>}
+              {carnet.elevation_m && <span><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /> +{carnet.elevation_m} m</span>}
             </div>
             {Number(carnet.route_rating) > 0 ? (
-              <span className="font-bold text-[color:var(--sand-300)]">★ {carnet.route_rating}/10</span>
+              <span className="font-bold text-[color:var(--sand-300)]"><LKDVIcon name="points" size="1em" className="lkdv-icon-inline" /> {carnet.route_rating}/10</span>
             ) : (
               <Badge className="border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-mono font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">Nouveau</Badge>
             )}

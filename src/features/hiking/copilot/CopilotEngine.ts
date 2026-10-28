@@ -87,15 +87,15 @@ export class CopilotEngine {
    */
   public static getProactiveSuggestion(context: HikeContextSummary): string | null {
     if (context.weather?.isAlert && context.weather.alertMessage) {
-      return `🌧️ ${context.weather.alertMessage}`;
+      return `${context.weather.alertMessage}`;
     }
 
     if (context.paceMinPerKm > 25 && context.durationSeconds > 1800) {
-      return `⚠️ Votre allure a baissé (${context.paceMinPerKm.toFixed(0)} min/km). Pensez à vous hydrater et faire une courte pause.`;
+      return `Votre allure a baissé (${context.paceMinPerKm.toFixed(0)} min/km). Pensez à vous hydrater et faire une courte pause.`;
     }
 
     if (context.nextPoi && context.nextPoi.distanceRemainingM < 300) {
-      return `📍 ${context.nextPoi.name} à ${Math.round(context.nextPoi.distanceRemainingM)} m.`;
+      return `${context.nextPoi.name} à ${Math.round(context.nextPoi.distanceRemainingM)} m.`;
     }
 
     return null;

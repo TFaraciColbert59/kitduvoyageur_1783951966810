@@ -34,7 +34,7 @@ export interface LevelTier {
   minPoints: number;
   maxPoints: number | null;
   title: string;
-  badge: string;
+  badge: LKDVIconName;
   description: string;
   perks: string[];
 }

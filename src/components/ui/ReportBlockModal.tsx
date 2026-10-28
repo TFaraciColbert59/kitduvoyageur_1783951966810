@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Modal } from '@/components/ui/Modal';
 import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ReportTarget {
   userId: string;
@@ -158,7 +159,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
 
         {submitted ? (
           <div className="py-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] text-[color:var(--lkv-text-primary)] flex items-center justify-center text-xl mx-auto mb-3">✓</div>
+            <div className="w-12 h-12 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] text-[color:var(--lkv-text-primary)] flex items-center justify-center text-xl mx-auto mb-3"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></div>
             <h4 className="font-bold text-lg mb-2">Action confirmée</h4>
             <p className="text-sm text-white/70 mb-6 max-w-sm mx-auto">{actionDoneMsg}</p>
             <button onClick={onClose} className="px-6 py-2.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] text-[color:var(--lkv-text-primary)] rounded-full font-bold text-xs hover:brightness-[1.05] transition-colors">
@@ -176,7 +177,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                   activeTab === 'report' ? 'bg-white/15 text-white' : 'text-white/60 hover:text-white'
                 }`}
               >
-                <span>🚩</span> Signaler
+                <span><LKDVIcon name="signalement" size="1em" className="lkdv-icon-inline" /></span> Signaler
               </button>
               <button
                 type="button"
@@ -185,7 +186,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                   activeTab === 'block' ? 'bg-red-500/20 text-red-300' : 'text-white/60 hover:text-white'
                 }`}
               >
-                <span>🚫</span> Bloquer
+                <span><LKDVIcon name="zone_interdite" size="1em" className="lkdv-icon-inline" /></span> Bloquer
               </button>
             </div>
 

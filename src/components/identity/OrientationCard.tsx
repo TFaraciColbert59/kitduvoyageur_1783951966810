@@ -30,6 +30,7 @@ import {
   type Priority,
   type Terrain,
 } from '@/features/identity/orientation';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const SEGMENT_LABELS: Record<'terrain' | 'autonomy' | 'priority' | 'experience', Record<string, string>> = {
   terrain: {
@@ -204,7 +205,7 @@ export default function OrientationCard({ mode = 'collect', onSaved, onPasser }:
 
           {saved && (
             <p className="text-sm text-[color:var(--lkv-forest-600-ink)] font-medium" role="status" aria-live="polite">
-              ✓ {saved}
+              <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" />{saved}
             </p>
           )}
           {error && (

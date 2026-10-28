@@ -11,6 +11,7 @@ import {
   listMyDelegations,
   type ActiveDelegation,
 } from '@/features/tribu/actions/delegateRole';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Traveler {
   id: string;
@@ -301,7 +302,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
         ))}
         {travelers.length > 3 && (
           <Button variant="ghost" size="sm" fullWidth onClick={openManage} className="text-[length:var(--lkv-text-caption-2)]">
-            + {travelers.length - 3} autre{travelers.length - 3 > 1 ? 's' : ''} voyageur{travelers.length - 3 > 1 ? 's' : ''}
+            +{travelers.length - 3} autre{travelers.length - 3 > 1 ? 's' : ''} voyageur{travelers.length - 3 > 1 ? 's' : ''}
           </Button>
         )}
       </div>

@@ -33,6 +33,7 @@ function formatPace(paceMinPerKm: number | null | undefined): string {
 }
 
 import ElevationProfileChart from '@/components/hiking/ElevationProfileChart';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export default function StatsSheet({
   isOpen,
@@ -77,8 +78,7 @@ export default function StatsSheet({
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-[color:var(--lkv-surface-muted)] flex items-center justify-center text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
           >
-            ✕
-          </button>
+            <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
         </div>
 
         {/* Interactive Elevation Profile Curve Chart */}

@@ -7,24 +7,25 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
 import WeightGauge from '@/components/WeightGauge';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 
 // ─── TOOL: Poids du sac ───────────────────────────────────────────────────────
 interface WeightCategory {
   id: string;
   nom: string;
-  icon: string;
+  icon: React.ReactNode;
   items: { nom: string; poids_g: number }[];
 }
 
 function ToolPoidssSac() {
   const [categories, setCategories] = useState<WeightCategory[]>([
-    { id: 'vetements', nom: 'Vêtements', icon: '👕', items: [{ nom: 'Veste', poids_g: 420 }] },
-    { id: 'bivouac', nom: 'Bivouac', icon: '⛺', items: [{ nom: 'Tente', poids_g: 1800 }] },
-    { id: 'cuisine', nom: 'Cuisine', icon: '🍳', items: [] },
-    { id: 'securite', nom: 'Sécurité', icon: '🩹', items: [] },
-    { id: 'electronique', nom: 'Électronique', icon: '📱', items: [] },
-    { id: 'divers', nom: 'Divers', icon: '🎒', items: [] },
+    { id: 'vetements', nom: 'Vêtements', icon: <LKDVIcon name="vetement" size="1em" className="lkdv-icon-inline" />, items: [{ nom: 'Veste', poids_g: 420 }] },
+    { id: 'bivouac', nom: 'Bivouac', icon: <LKDVIcon name="tente" size="1em" className="lkdv-icon-inline" />, items: [{ nom: 'Tente', poids_g: 1800 }] },
+    { id: 'cuisine', nom: 'Cuisine', icon: <LKDVIcon name="rechaud" size="1em" className="lkdv-icon-inline" />, items: [] },
+    { id: 'securite', nom: 'Sécurité', icon: <LKDVIcon name="trousse" size="1em" className="lkdv-icon-inline" />, items: [] },
+    { id: 'electronique', nom: 'Électronique', icon: <LKDVIcon name="telephone" size="1em" className="lkdv-icon-inline" />, items: [] },
+    { id: 'divers', nom: 'Divers', icon: <LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" />, items: [] },
   ]);
   const [newItemName, setNewItemName] = useState('');
   const [newItemWeight, setNewItemWeight] = useState('');
@@ -139,7 +140,7 @@ function ToolPoidssSac() {
                   aria-describedby={formError ? 'poids-sac-erreur' : undefined}
                   inputMode="numeric"
                 />
-                <button type="submit" className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]" aria-label="Ajouter l’article au sac">+</button>
+                <button type="submit" className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]" aria-label="Ajouter l’article au sac"><LKDVIcon name="ajouter" size="1em" className="lkdv-icon-inline" /></button>
               </div>
             </div>
           </div>
@@ -168,7 +169,7 @@ function ToolPoidssSac() {
                     <span className="text-muted-foreground">{item.nom}</span>
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-info">{item.poids_g} g</span>
-                      <button type="button" onClick={() => removeItem(cat.id, idx)} className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]" aria-label={`Supprimer ${item.nom}`}>×</button>
+                      <button type="button" onClick={() => removeItem(cat.id, idx)} className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]" aria-label={`Supprimer ${item.nom}`}><LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
                     </div>
                   </div>
                 ))}
@@ -178,7 +179,7 @@ function ToolPoidssSac() {
         })}
         {categories.every((c) => c.items.length === 0) && (
           <div className="text-center py-12 text-muted-foreground">
-            <p className="text-4xl mb-3">⚖️</p>
+            <p className="text-4xl mb-3"><LKDVIcon name="inventaire" size="1em" className="lkdv-icon-inline" /></p>
             <p>Ajoutez vos premiers articles ci-dessus</p>
           </div>
         )}
@@ -192,12 +193,12 @@ function ToolBudget() {
   const [jours, setJours] = useState(7);
   const [personnes, setPersonnes] = useState(1);
   const [postes, setPostes] = useState([
-    { nom: 'Hébergement', montant: 50, icon: '🏨' },
-    { nom: 'Transport', montant: 20, icon: '🚌' },
-    { nom: 'Nourriture', montant: 30, icon: '🍽️' },
-    { nom: 'Activités', montant: 25, icon: '🎯' },
-    { nom: 'Équipement', montant: 10, icon: '🎒' },
-    { nom: 'Divers', montant: 15, icon: '💡' },
+    { nom: 'Hébergement', montant: 50, icon: <LKDVIcon name="hotel" size="1em" className="lkdv-icon-inline" /> },
+    { nom: 'Transport', montant: 20, icon: <LKDVIcon name="bus" size="1em" className="lkdv-icon-inline" /> },
+    { nom: 'Nourriture', montant: 30, icon: <LKDVIcon name="alimentation" size="1em" className="lkdv-icon-inline" /> },
+    { nom: 'Activités', montant: 25, icon: <LKDVIcon name="recentrer" size="1em" className="lkdv-icon-inline" /> },
+    { nom: 'Équipement', montant: 10, icon: <LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /> },
+    { nom: 'Divers', montant: 15, icon: <LKDVIcon name="suggestion" size="1em" className="lkdv-icon-inline" /> },
   ]);
 
   const totalParJour = postes.reduce((s, p) => s + p.montant, 0);
@@ -327,7 +328,7 @@ function ToolConvertisseur() {
             <div key={idx} className="flex items-center justify-between glass rounded-[var(--lkv-radius-md)] p-4">
               <div className="flex items-center gap-3">
                 <span className="font-mono text-sm text-muted-foreground">{num} {conv.from}</span>
-                <span className="text-muted-foreground">→</span>
+                <span className="text-muted-foreground"><LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" /></span>
               </div>
               <span className="font-mono font-700 text-lg text-info">
                 {result.toFixed(3)} {conv.to}
@@ -337,7 +338,7 @@ function ToolConvertisseur() {
         })}
       </div>
       {tab === 'devises' && (
-        <p className="text-xs text-muted-foreground text-center">⚠️ Taux indicatifs — vérifiez avant votre départ</p>
+        <p className="text-xs text-muted-foreground text-center"><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> Taux indicatifs — vérifiez avant votre départ</p>
       )}
     </div>
   );
@@ -429,7 +430,7 @@ function ToolChecklist() {
                 className="flex-1 min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]">
                 {[...cats, 'Divers'].map((c) => <option key={c}>{c}</option>)}
               </select>
-              <button type="submit" aria-label="Ajouter un article" className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]">+</button>
+              <button type="submit" aria-label="Ajouter un article" className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]"><LKDVIcon name="ajouter" size="1em" className="lkdv-icon-inline" /></button>
             </div>
           </div>
         </div>
@@ -456,10 +457,10 @@ function ToolChecklist() {
                   className={`glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)] flex-shrink-0 ${item.checked ? 'primary' : ''}`}
                   aria-label={`${item.checked ? 'Décocher' : 'Cocher'} ${item.text}`}
                 >
-                  {item.checked && <span className="text-white text-[length:var(--lkv-text-caption-2)]">✓</span>}
+                  {item.checked && <span className="text-white text-[length:var(--lkv-text-caption-2)]"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>}
                 </button>
                 <span className={`flex-1 text-sm ${item.checked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{item.text}</span>
-                <button type="button" onClick={() => removeItem(item.id)} className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]" aria-label={`Supprimer ${item.text}`}>×</button>
+                <button type="button" onClick={() => removeItem(item.id)} className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]" aria-label={`Supprimer ${item.text}`}><LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
               </div>
             ))}
           </div>
@@ -504,7 +505,7 @@ function ToolTailles() {
         {(['vetements', 'chaussures'] as const).map((t) => (
           <button key={t} type="button" role="tab" aria-selected={type === t} onClick={() => { setType(t); setTailleFR(t === 'vetements' ? 'M' : '42'); }}
             className={`glass-capsule-btn flex-1 min-h-[var(--lkv-touch-min)] text-sm font-medium capitalize ${type === t ? 'primary' : ''}`}>
-            {t === 'vetements' ? '👕 Vêtements' : '👟 Chaussures'}
+            {t === 'vetements' ? <><LKDVIcon name="vetement" size="1em" className="lkdv-icon-inline" /> Vêtements</> : <><LKDVIcon name="chaussure" size="1em" className="lkdv-icon-inline" /> Chaussures</>}
           </button>
         ))}
       </div>
@@ -653,7 +654,7 @@ function ToolBoussole() {
     <div className="space-y-5">
       {!active ? (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">🧭</div>
+          <div className="text-6xl mb-4"><LKDVIcon name="boussole" size="1em" className="lkdv-icon-inline" /></div>
           <p className="text-muted-foreground mb-6">Activez les capteurs pour utiliser la boussole et le niveau</p>
           <button type="button" onClick={startSensors} className="glass-capsule-btn primary px-8 py-3 min-h-[var(--lkv-touch-min)]">Activer les capteurs</button>
         </div>
@@ -691,7 +692,7 @@ function ToolBoussole() {
                 }}
               />
             </div>
-            <p className="text-center mt-3 text-sm font-medium">{isLevel ? '✅ Niveau' : '⚠️ Incliner pour niveler'}</p>
+            <p className="text-center mt-3 text-sm font-medium">{isLevel ? <><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /> Niveau</> : <><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> Incliner pour niveler</>}</p>
             <div className="grid grid-cols-2 gap-3 mt-3">
               <div className="text-center">
                 <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground">INCLINAISON X</p>
@@ -764,11 +765,11 @@ function ToolChronometre() {
         <button type="button" onClick={() => setRunning(!running)}
           aria-pressed={running}
           className={`glass-capsule-btn min-h-[var(--lkv-touch-min)] px-8 py-3 font-medium text-base ${running ? '' : 'primary'}`}>
-          {running ? '⏸ Pause' : elapsed > 0 ? '▶ Reprendre' : '▶ Démarrer'}
+          {running ? <><LKDVIcon name="pause" size="1em" className="lkdv-icon-inline" /> Pause</> : elapsed > 0 ? <><LKDVIcon name="lecture" size="1em" className="lkdv-icon-inline" /> Reprendre</> : <><LKDVIcon name="lecture" size="1em" className="lkdv-icon-inline" /> Démarrer</>}
         </button>
         {running && (
           <button type="button" onClick={addLap} className="glass-capsule-btn min-h-[var(--lkv-touch-min)] px-6 py-3 font-medium">
-            🏁 Tour
+            <LKDVIcon name="destination" size="1em" className="lkdv-icon-inline" /> Tour
           </button>
         )}
         {elapsed > 0 && !running && (
@@ -841,7 +842,7 @@ function ToolRations() {
             {(['léger', 'modéré', 'intense'] as const).map((e) => (
               <button key={e} type="button" role="radio" aria-checked={effort === e} onClick={() => setEffort(e)}
                 className={`glass-capsule-btn min-h-[var(--lkv-touch-min)] py-2 text-sm font-medium capitalize ${effort === e ? 'primary' : ''}`}>
-                {e === 'léger' ? '🚶 Léger' : e === 'modéré' ? '🏃 Modéré' : '⛰️ Intense'}
+                {e === 'léger' ? <><LKDVIcon name="marche" size="1em" className="lkdv-icon-inline" /> Léger</> : e === 'modéré' ? <><LKDVIcon name="course" size="1em" className="lkdv-icon-inline" /> Modéré</> : <><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /> Intense</>}
               </button>
             ))}
           </div>
@@ -852,7 +853,7 @@ function ToolRations() {
             {(['froid', 'tempéré', 'chaud'] as const).map((c) => (
               <button key={c} type="button" role="radio" aria-checked={chaleur === c} onClick={() => setChaleur(c)}
                 className={`glass-capsule-btn min-h-[var(--lkv-touch-min)] py-2 text-sm font-medium capitalize ${chaleur === c ? 'primary' : ''}`}>
-                {c === 'froid' ? '❄️ Froid' : c === 'tempéré' ? '🌤 Tempéré' : '☀️ Chaud'}
+                {c === 'froid' ? <><LKDVIcon name="neige" size="1em" className="lkdv-icon-inline" /> Froid</> : c === 'tempéré' ? <><LKDVIcon name="meteo" size="1em" className="lkdv-icon-inline" /> Tempéré</> : <><LKDVIcon name="soleil" size="1em" className="lkdv-icon-inline" /> Chaud</>}
               </button>
             ))}
           </div>
@@ -861,9 +862,9 @@ function ToolRations() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: 'EAU / JOUR / PERS.', value: `${eauParJourL.toFixed(1)} L`, icon: '💧', color: 'text-info' },
-          { label: 'NOURRITURE / JOUR', value: `${nourritureParJourG} g`, icon: '🍽️', color: 'text-accent' },
-          { label: 'CALORIES / JOUR', value: `${caloriesParJour} kcal`, icon: '⚡', color: 'text-white' },
+          { label: 'EAU / JOUR / PERS.', value: `${eauParJourL.toFixed(1)} L`, icon: <LKDVIcon name="eau_potable" size="1em" className="lkdv-icon-inline" />, color: 'text-info' },
+          { label: 'NOURRITURE / JOUR', value: `${nourritureParJourG} g`, icon: <LKDVIcon name="alimentation" size="1em" className="lkdv-icon-inline" />, color: 'text-accent' },
+          { label: 'CALORIES / JOUR', value: `${caloriesParJour} kcal`, icon: <LKDVIcon name="energie" size="1em" className="lkdv-icon-inline" />, color: 'text-white' },
         ].map((stat) => (
           <div key={stat.label} className="glass rounded-[var(--lkv-radius-md)] p-4 text-center">
             <p className="text-2xl mb-1">{stat.icon}</p>
@@ -959,8 +960,8 @@ function ToolPlanificateur() {
     setGenerated(true);
   };
 
-  const budgetLabels = { petit: '🎒 Petit budget (< 50€/j)', moyen: '🏨 Budget moyen (50–150€/j)', grand: '⭐ Confort (> 150€/j)' };
-  const styleLabels = { aventure: '⛰️ Aventure', culture: '🏛️ Culture', detente: '🌴 Détente', mixte: '🗺️ Mixte' };
+  const budgetLabels = { petit: 'Petit budget (< 50€/j)', moyen: 'Budget moyen (50–150€/j)', grand: 'Confort (> 150€/j)' };
+  const styleLabels = { aventure: 'Aventure', culture: 'Culture', detente: 'Détente', mixte: 'Mixte' };
 
   return (
     <div className="space-y-6">
@@ -1016,7 +1017,7 @@ function ToolPlanificateur() {
         </div>
 
         <button type="submit" className="glass-capsule-btn primary w-full min-h-[var(--lkv-touch-min)] py-3 text-base font-semibold">
-          🗺️ Générer mon itinéraire
+          <LKDVIcon name="carte" size="1em" className="lkdv-icon-inline" /> Générer mon itinéraire
         </button>
       </form>
 
@@ -1035,9 +1036,9 @@ function ToolPlanificateur() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm text-foreground">{etape.activite}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">📍 {etape.lieu}</p>
+                <p className="text-xs text-muted-foreground mt-0.5"><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {etape.lieu}</p>
                 <p className="text-xs text-info mt-1.5 flex items-start gap-1">
-                  <span>💡</span>
+                  <span><LKDVIcon name="suggestion" size="1em" className="lkdv-icon-inline" /></span>
                   <span>{etape.conseil}</span>
                 </p>
               </div>
@@ -1046,7 +1047,7 @@ function ToolPlanificateur() {
           <div className="bg-primary/5 border border-primary/20 rounded-[var(--lkv-radius-md)] p-4 text-center">
             <p className="text-sm text-muted-foreground mb-3">Pour un itinéraire personnalisé avec équipement recommandé :</p>
             <a href="/compas?etape=kit" className="btn-primary py-2 px-6 text-sm inline-flex items-center gap-2">
-              ✨ Configurateur IA complet
+              <LKDVIcon name="ia" size="1em" className="lkdv-icon-inline" /> Configurateur IA complet
             </a>
           </div>
         </div>
@@ -1054,7 +1055,7 @@ function ToolPlanificateur() {
 
       {!generated && (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-4xl mb-3">🗺️</p>
+          <p className="text-4xl mb-3"><LKDVIcon name="carte" size="1em" className="lkdv-icon-inline" /></p>
           <p>Remplissez les informations ci-dessus et cliquez sur &quot;Générer&quot;</p>
         </div>
       )}
@@ -1063,24 +1064,24 @@ function ToolPlanificateur() {
 }
 
 // ─── TOOL REGISTRY ────────────────────────────────────────────────────────────
-const toolRegistry: Record<string, { nom: string; icon: string; description: string; component: React.FC }> = {
-  'poids-sac': { nom: 'Calculateur de poids du sac', icon: '⚖️', description: 'Pesez votre sac par catégorie avec jauge visuelle.', component: ToolPoidssSac },
+const toolRegistry: Record<string, { nom: string; icon: React.ReactNode; description: string; component: React.FC }> = {
+  'poids-sac': { nom: 'Calculateur de poids du sac', icon: <LKDVIcon name="inventaire" size="1em" className="lkdv-icon-inline" />, description: 'Pesez votre sac par catégorie avec jauge visuelle.', component: ToolPoidssSac },
   // Sitemap alias
-  'poids-du-sac': { nom: 'Calculateur de poids du sac', icon: '⚖️', description: 'Pesez votre sac par catégorie avec jauge visuelle.', component: ToolPoidssSac },
-  'budget-voyage': { nom: 'Budget voyage', icon: '💰', description: 'Planifiez votre budget par jour et par poste.', component: ToolBudget },
-  'convertisseur': { nom: 'Convertisseur universel', icon: '🔄', description: 'Convertissez distances, poids, températures et devises.', component: ToolConvertisseur },
+  'poids-du-sac': { nom: 'Calculateur de poids du sac', icon: <LKDVIcon name="inventaire" size="1em" className="lkdv-icon-inline" />, description: 'Pesez votre sac par catégorie avec jauge visuelle.', component: ToolPoidssSac },
+  'budget-voyage': { nom: 'Budget voyage', icon: <LKDVIcon name="budget" size="1em" className="lkdv-icon-inline" />, description: 'Planifiez votre budget par jour et par poste.', component: ToolBudget },
+  'convertisseur': { nom: 'Convertisseur universel', icon: <LKDVIcon name="actualiser" size="1em" className="lkdv-icon-inline" />, description: 'Convertissez distances, poids, températures et devises.', component: ToolConvertisseur },
   // Sitemap alias
-  'convertisseur-devises': { nom: 'Convertisseur universel', icon: '🔄', description: 'Convertissez distances, poids, températures et devises.', component: ToolConvertisseur },
-  'checklist': { nom: 'Checklist interactive', icon: '✅', description: 'Créez et personnalisez vos listes de voyage.', component: ToolChecklist },
-  'tailles': { nom: 'Convertisseur de tailles', icon: '👟', description: 'Vêtements et chaussures par pays.', component: ToolTailles },
-  'fuseaux': { nom: 'Fuseaux horaires', icon: '🕐', description: 'Comparez les heures entre pays.', component: ToolFuseaux },
-  'boussole': { nom: 'Boussole & Niveau', icon: '🧭', description: 'Boussole et niveau à bulle via capteurs.', component: ToolBoussole },
-  'chronometre': { nom: 'Chronomètre rando', icon: '⏱️', description: 'Minuteur et chronomètre pour vos sorties.', component: ToolChronometre },
-  'rations': { nom: 'Rations eau & nourriture', icon: '💧', description: 'Calculez vos besoins en eau et nourriture.', component: ToolRations },
+  'convertisseur-devises': { nom: 'Convertisseur universel', icon: <LKDVIcon name="actualiser" size="1em" className="lkdv-icon-inline" />, description: 'Convertissez distances, poids, températures et devises.', component: ToolConvertisseur },
+  'checklist': { nom: 'Checklist interactive', icon: <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" />, description: 'Créez et personnalisez vos listes de voyage.', component: ToolChecklist },
+  'tailles': { nom: 'Convertisseur de tailles', icon: <LKDVIcon name="chaussure" size="1em" className="lkdv-icon-inline" />, description: 'Vêtements et chaussures par pays.', component: ToolTailles },
+  'fuseaux': { nom: 'Fuseaux horaires', icon: <LKDVIcon name="duree" size="1em" className="lkdv-icon-inline" />, description: 'Comparez les heures entre pays.', component: ToolFuseaux },
+  'boussole': { nom: 'Boussole & Niveau', icon: <LKDVIcon name="boussole" size="1em" className="lkdv-icon-inline" />, description: 'Boussole et niveau à bulle via capteurs.', component: ToolBoussole },
+  'chronometre': { nom: 'Chronomètre rando', icon: <LKDVIcon name="duree" size="1em" className="lkdv-icon-inline" />, description: 'Minuteur et chronomètre pour vos sorties.', component: ToolChronometre },
+  'rations': { nom: 'Rations eau & nourriture', icon: <LKDVIcon name="eau_potable" size="1em" className="lkdv-icon-inline" />, description: 'Calculez vos besoins en eau et nourriture.', component: ToolRations },
   // Sitemap alias for rations
-  'calculateur-calories': { nom: 'Rations eau & nourriture', icon: '💧', description: 'Calculez vos besoins en eau, nourriture et calories.', component: ToolRations },
+  'calculateur-calories': { nom: 'Rations eau & nourriture', icon: <LKDVIcon name="eau_potable" size="1em" className="lkdv-icon-inline" />, description: 'Calculez vos besoins en eau, nourriture et calories.', component: ToolRations },
   // Planificateur d'itinéraire — redirects to configurateur
-  'planificateur-itineraire': { nom: 'Planificateur d\'itinéraire IA', icon: '🗺️', description: 'Planifiez votre itinéraire avec l\'aide de l\'IA.', component: ToolPlanificateur },
+  'planificateur-itineraire': { nom: 'Planificateur d\'itinéraire IA', icon: <LKDVIcon name="carte" size="1em" className="lkdv-icon-inline" />, description: 'Planifiez votre itinéraire avec l\'aide de l\'IA.', component: ToolPlanificateur },
 };
 
 // ─── PAGE WRAPPER ─────────────────────────────────────────────────────────────
@@ -1097,7 +1098,7 @@ export default function OutilSlugPage() {
           <div className="min-h-screen text-foreground">
             <Header />
             <div className="max-w-2xl mx-auto px-4 pt-32 text-center">
-              <p className="text-6xl mb-4">🔧</p>
+              <p className="text-6xl mb-4"><LKDVIcon name="options_avancees" size="1em" className="lkdv-icon-inline" /></p>
               <h1 className="font-display font-700 text-2xl mb-4">Outil introuvable</h1>
               <Link href="/outils" className="btn-primary">← Retour aux outils</Link>
             </div>
@@ -1109,7 +1110,7 @@ export default function OutilSlugPage() {
         <div className="block md:hidden">
           <AppShell>
             <div className="p-[var(--space-4)] pt-20 text-center">
-              <p className="mb-[var(--space-4)] text-[40px]">🔧</p>
+              <p className="mb-[var(--space-4)] text-[40px]"><LKDVIcon name="options_avancees" size="1em" className="lkdv-icon-inline" /></p>
               <h1 className="mb-[var(--space-3)] text-[20px] font-bold text-[color:var(--glass-label)]">Outil introuvable</h1>
               <Link href="/outils" className="inline-block rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-6 py-3 text-[14px] font-bold text-[color:var(--lkv-text-primary)] no-underline">← Retour aux outils</Link>
             </div>

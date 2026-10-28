@@ -13,6 +13,7 @@ import {
   type LoanRecord,
   type LoanViewer,
 } from '../cards/LoanCard';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 export type LoansLens = 'lend' | 'borrow' | 'trust';
 
@@ -120,8 +121,7 @@ function EmptyState({ label }: { label: string }) {
   return (
     <div className="lkdv-slot-state" data-state="empty">
       <span className="lkdv-slot-state-ico" aria-hidden="true">
-        ○
-      </span>
+        <EmptyCircle size="1em" /></span>
       <p>{label}</p>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface MoreSheetProps {
   isOpen: boolean;
@@ -56,8 +57,7 @@ export default function MoreSheet({
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-[color:var(--lkv-surface-muted)] flex items-center justify-center text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
           >
-            ✕
-          </button>
+            <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
         </div>
 
         {/* Menu Grid */}
@@ -70,7 +70,7 @@ export default function MoreSheet({
             }}
             className="p-3.5 bg-[color:var(--lkv-surface-muted)] hover:bg-[color:var(--lkv-surface-muted)] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 border border-[color:var(--lkv-primary)]/10"
           >
-            <span className="text-2xl">🏔️</span>
+            <span className="text-2xl"><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /></span>
             <div>
               <div className="text-xs font-bold text-[color:var(--lkv-text-primary)]">Vue 3D Relief</div>
               <div className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">Digital Twin terrain</div>
@@ -85,7 +85,7 @@ export default function MoreSheet({
             }}
             className="p-3.5 bg-[color:var(--lkv-surface-muted)] hover:bg-[color:var(--lkv-surface-muted)] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 border border-[color:var(--lkv-primary)]/10"
           >
-            <span className="text-2xl">📥</span>
+            <span className="text-2xl"><LKDVIcon name="telecharger" size="1em" className="lkdv-icon-inline" /></span>
             <div>
               <div className="text-xs font-bold text-[color:var(--lkv-text-primary)]">Fichiers GPX</div>
               <div className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">Import & Export</div>
@@ -100,7 +100,7 @@ export default function MoreSheet({
             }}
             className="p-3.5 bg-[color:var(--lkv-surface-muted)] hover:bg-[color:var(--lkv-surface-muted)] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95"
           >
-            <span className="text-2xl">🧭</span>
+            <span className="text-2xl"><LKDVIcon name="boussole" size="1em" className="lkdv-icon-inline" /></span>
             <div>
               <div className="text-xs font-bold text-[color:var(--lkv-text-primary)]">Boussole AR</div>
               <div className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">Caméra directionnelle</div>
@@ -115,7 +115,7 @@ export default function MoreSheet({
             }}
             className="p-3.5 bg-red-950/10 hover:bg-red-950/20 border border-red-500/20 rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95"
           >
-            <span className="text-2xl">🛡️</span>
+            <span className="text-2xl"><LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /></span>
             <div>
               <div className="text-xs font-bold text-red-900">Sécurité & 112</div>
               <div className="text-[10px] font-mono text-red-700">WGS-84 & Urgence</div>
@@ -129,7 +129,7 @@ export default function MoreSheet({
               isNightMode ? 'bg-[color:var(--lkv-forest-950)] text-white' : 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)]'
             }`}
           >
-            <span className="text-2xl">{isNightMode ? '🌙' : '☀️'}</span>
+            <span className="text-2xl">{isNightMode ? <><LKDVIcon name="lune" size="1em" className="lkdv-icon-inline" /></> : <><LKDVIcon name="soleil" size="1em" className="lkdv-icon-inline" /></>}</span>
             <div>
               <div className="text-xs font-bold">Mode Nuit Haute Visibilité</div>
               <div className="text-[10px] font-mono opacity-70">
@@ -147,7 +147,7 @@ export default function MoreSheet({
           }}
           className="w-full py-3.5 bg-red-900 hover:bg-red-950 text-white font-bold text-xs rounded-2xl  flex items-center justify-center gap-2 mt-2"
         >
-          <span>⏹️</span>
+          <span><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
           Terminer et sauvegarder la randonnée
         </button>
       </motion.div>

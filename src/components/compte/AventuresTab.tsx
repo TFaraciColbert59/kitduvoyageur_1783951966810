@@ -390,7 +390,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                         {av.date_detail} · {av.duration}
                       </p>
                       <div className="flex items-center gap-1.5 mt-1 text-[10px] text-[color:var(--lkv-text-muted)]">
-                        <span>👥 {av.companions.join(', ')}</span>
+                        <span><LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /> {av.companions.join(', ')}</span>
                       </div>
                     </div>
                   </div>

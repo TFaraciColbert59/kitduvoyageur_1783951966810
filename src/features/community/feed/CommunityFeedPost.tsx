@@ -161,7 +161,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
               onClick={handleMediaClick}
               aria-label={`Vidéo de ${authorName(post)}`}
             />
-            <span className="lkdv-feed-post-play" aria-hidden="true">▶</span>
+            <span className="lkdv-feed-post-play" aria-hidden="true"><LKDVIcon name="lecture" size="1em" className="lkdv-icon-inline" /></span>
           </>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element -- média communautaire distant

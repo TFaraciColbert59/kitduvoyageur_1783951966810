@@ -260,7 +260,7 @@ export default function KitDetailPage() {
                       {kit.nom}
                     </h1>
                     <p className="mt-1 text-sm text-[var(--lkv-text-secondary)]">
-                      📍 {kit.destination} · 🗓 {kit.saison}
+                      <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {kit.destination} · <LKDVIcon name="calendrier" size="1em" className="lkdv-icon-inline" /> {kit.saison}
                     </p>
                   </div>
                 </div>
@@ -442,7 +442,7 @@ export default function KitDetailPage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[var(--lkv-forest-900)]/95 via-[var(--lkv-forest-900)]/30 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">
                   <Badge tone="stone" className="border-white/60 bg-[color:var(--card-tint-strong)]">
-                    📍 {kit.destination} · 🗓 {kit.saison}
+                    <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {kit.destination} · <LKDVIcon name="calendrier" size="1em" className="lkdv-icon-inline" /> {kit.saison}
                   </Badge>
                 </div>
               </div>
@@ -479,7 +479,7 @@ export default function KitDetailPage() {
                                 }`}
                                 aria-hidden="true"
                               >
-                                {selected && <span className="text-[10px] font-bold">✓</span>}
+                                {selected && <span className="text-[10px] font-bold"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>}
                               </span>
                               <span className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-white/30">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}

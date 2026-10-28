@@ -12,6 +12,7 @@ import { Cap, Credit, Grp, Li, MBtn, PBtn, Pic } from '../ui/primitives';
 import { V5Icon, stayIcon } from '../ui/icons';
 import type { V5Day, V5StayOption } from '../types';
 import type { V5DrawerDef } from './types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** « 1 h 45 » / « 45 min » depuis des minutes. */
 function duration(min: number, locale: string): string {
@@ -81,7 +82,7 @@ function DayBody() {
       <p className="v5-meta">
         {current.from && (
           <b>
-            {current.from} → {current.to ?? current.title}
+            {current.from} <LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" />{current.to ?? current.title}
           </b>
         )}
         {current.from && ' · '}

@@ -26,7 +26,7 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
       <div className="flex items-start justify-between gap-[var(--space-3)]">
         <div className="flex items-center gap-[var(--space-3)]">
           <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--sand-700)] text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-inverted)]">
-            🐾
+            <LKDVIcon name="faune" size="1em" className="lkdv-icon-inline" />
           </div>
           <div>
             <div className="flex items-center gap-[var(--space-2)]">
@@ -91,7 +91,7 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
 
             {isOverloaded && (
               <p className="text-[10px] font-semibold text-[color:var(--lkv-danger-dark)]">
-                ⚠️ Charge excessive ! Dépasse les 15% de portage physiologique recommandés (
+                <LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> Charge excessive ! Dépasse les 15% de portage physiologique recommandés (
                 {dog.maxCarryingCapacityKg} kg max).
               </p>
             )}
@@ -101,13 +101,13 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
 
       <div className="grid grid-cols-2 gap-[var(--space-2)] pt-[var(--space-1)] text-[length:var(--lkv-text-footnote)]">
         <Card variant="compact" className="flex items-center justify-between">
-          <span className="text-[11px] text-[color:var(--lkv-text-muted)]">💧 Eau / jour</span>
+          <span className="text-[11px] text-[color:var(--lkv-text-muted)]"><LKDVIcon name="eau_potable" size="1em" className="lkdv-icon-inline" /> Eau / jour</span>
           <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">
             {dog.waterRationLitersPerDay} L
           </span>
         </Card>
         <Card variant="compact" className="flex items-center justify-between">
-          <span className="text-[11px] text-[color:var(--lkv-text-muted)]">🍖 Croquettes</span>
+          <span className="text-[11px] text-[color:var(--lkv-text-muted)]"><LKDVIcon name="alimentation" size="1em" className="lkdv-icon-inline" /> Croquettes</span>
           <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">
             {dog.foodRationGramsPerDay} g
           </span>

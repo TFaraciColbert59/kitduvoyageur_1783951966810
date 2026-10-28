@@ -19,6 +19,7 @@ import {
 } from '../trust';
 import { Modal, Sheet } from '@/components/ui';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const ORIGIN_LABEL: Record<string, string> = {
   configurateur: 'Conçu dans le configurateur',
@@ -155,7 +156,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
     return renderShell(
       'Lignée de kit',
       <div className="py-8 text-center">
-        <p className="text-[color:var(--lkv-text-primary)]">⚠️ {error ?? 'Kit introuvable'}</p>
+        <p className="text-[color:var(--lkv-text-primary)]"><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> {error ?? 'Kit introuvable'}</p>
         <button onClick={close} className="mt-4 w-full rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn py-3 text-sm font-semibold text-[color:var(--lkv-text-primary)]">
           Fermer
         </button>

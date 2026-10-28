@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
 import TopoSeparator from '@/components/TopoSeparator';
 import { Badge, Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -18,7 +19,7 @@ interface Tool {
   slug: string;
   nom: string;
   description: string;
-  icon: string;
+  icon: React.ReactNode;
   categorie: string;
   offline: boolean;
   mobilePriority: boolean;
@@ -29,7 +30,7 @@ const tools: Tool[] = [
     slug: 'poids-sac',
     nom: 'Calculateur de poids',
     description: 'Pesez votre sac par catégorie avec jauge visuelle. Identifiez les postes les plus lourds et optimisez.',
-    icon: '⚖️',
+    icon: <LKDVIcon name="inventaire" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Préparation',
     offline: true,
     mobilePriority: true,
@@ -38,7 +39,7 @@ const tools: Tool[] = [
     slug: 'budget-voyage',
     nom: 'Budget voyage',
     description: 'Planifiez votre budget par jour et par poste (hébergement, transport, nourriture, activités).',
-    icon: '💰',
+    icon: <LKDVIcon name="budget" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Préparation',
     offline: true,
     mobilePriority: false,
@@ -47,7 +48,7 @@ const tools: Tool[] = [
     slug: 'convertisseur',
     nom: 'Convertisseur universel',
     description: 'Convertissez distances, poids, températures et devises. Fonctionne hors ligne.',
-    icon: '🔄',
+    icon: <LKDVIcon name="actualiser" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: true,
@@ -56,7 +57,7 @@ const tools: Tool[] = [
     slug: 'checklist',
     nom: 'Checklist interactive',
     description: 'Créez et personnalisez vos listes de voyage. Sauvegardées dans votre compte.',
-    icon: '✅',
+    icon: <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Préparation',
     offline: false,
     mobilePriority: true,
@@ -65,7 +66,7 @@ const tools: Tool[] = [
     slug: 'tailles',
     nom: 'Convertisseur de tailles',
     description: 'Vêtements et chaussures : convertissez entre les standards FR, UK, US, EU, JP et plus.',
-    icon: '👟',
+    icon: <LKDVIcon name="chaussure" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Shopping',
     offline: true,
     mobilePriority: false,
@@ -74,7 +75,7 @@ const tools: Tool[] = [
     slug: 'fuseaux',
     nom: 'Fuseaux horaires',
     description: 'Comparez les heures entre votre pays et votre destination. Calculez le décalage horaire.',
-    icon: '🕐',
+    icon: <LKDVIcon name="duree" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: true,
@@ -83,7 +84,7 @@ const tools: Tool[] = [
     slug: 'boussole',
     nom: 'Boussole & Niveau',
     description: 'Boussole et niveau à bulle utilisant les capteurs de votre appareil. Fallback visuel inclus.',
-    icon: '🧭',
+    icon: <LKDVIcon name="boussole" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: true,
@@ -92,7 +93,7 @@ const tools: Tool[] = [
     slug: 'chronometre',
     nom: 'Chronomètre rando',
     description: 'Minuteur et chronomètre pour vos sorties. Enregistrez vos temps d\'étape.',
-    icon: '⏱️',
+    icon: <LKDVIcon name="duree" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: true,
@@ -101,7 +102,7 @@ const tools: Tool[] = [
     slug: 'rations',
     nom: 'Rations eau & nourriture',
     description: 'Calculez vos besoins en eau et nourriture par jour et par personne selon l\'effort et la météo.',
-    icon: '💧',
+    icon: <LKDVIcon name="eau_potable" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: true,
@@ -110,7 +111,7 @@ const tools: Tool[] = [
     slug: 'decompression',
     nom: 'Calculateur de décompression',
     description: 'Calculez vos paliers de décompression pour la plongée. Basé sur les tables PADI et NAUI.',
-    icon: '🤿',
+    icon: <LKDVIcon name="plongee" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: false,
@@ -119,7 +120,7 @@ const tools: Tool[] = [
     slug: 'altimetre',
     nom: 'Altimètre & Pression',
     description: 'Mesurez l\'altitude et la pression atmosphérique en temps réel via les capteurs de votre appareil.',
-    icon: '📊',
+    icon: <LKDVIcon name="denivele" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: true,
@@ -128,7 +129,7 @@ const tools: Tool[] = [
     slug: 'meteo-montagne',
     nom: 'Météo montagne',
     description: 'Interprétez les bulletins météo montagne : nuages, vent, précipitations, risque orage.',
-    icon: '⛅',
+    icon: <LKDVIcon name="meteo" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: false,
     mobilePriority: true,
@@ -137,7 +138,7 @@ const tools: Tool[] = [
     slug: 'carbone',
     nom: 'Calculateur carbone voyage',
     description: 'Estimez l\'empreinte carbone de vos voyages et calculez la compensation nécessaire.',
-    icon: '🌿',
+    icon: <LKDVIcon name="flore" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Préparation',
     offline: true,
     mobilePriority: false,
@@ -146,7 +147,7 @@ const tools: Tool[] = [
     slug: 'debit-eau',
     nom: 'Calculateur débit rivière',
     description: 'Estimez le débit et la dangerosité d\'une rivière pour la traversée ou le kayak.',
-    icon: '🌊',
+    icon: <LKDVIcon name="riviere" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: true,
@@ -155,7 +156,7 @@ const tools: Tool[] = [
     slug: 'pharmacie',
     nom: 'Pharmacie de voyage',
     description: 'Composez votre pharmacie de voyage selon votre destination, durée et activités prévues.',
-    icon: '🏥',
+    icon: <LKDVIcon name="trousse" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Préparation',
     offline: true,
     mobilePriority: false,
@@ -164,7 +165,7 @@ const tools: Tool[] = [
     slug: 'visa',
     nom: 'Vérificateur de visa',
     description: 'Vérifiez les exigences de visa pour votre nationalité et votre destination.',
-    icon: '🛂',
+    icon: <LKDVIcon name="passeport" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Préparation',
     offline: false,
     mobilePriority: false,
@@ -173,7 +174,7 @@ const tools: Tool[] = [
     slug: 'vaccins',
     nom: 'Recommandations vaccins',
     description: 'Repères vaccinaux par destination : à vérifier auprès de votre médecin traitant ou d’un centre de vaccinations internationales avant le départ.',
-    icon: '💉',
+    icon: <LKDVIcon name="trousse" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Préparation',
     offline: false,
     mobilePriority: false,
@@ -182,7 +183,7 @@ const tools: Tool[] = [
     slug: 'langue',
     nom: 'Phrases essentielles',
     description: 'Les phrases de survie dans 40 langues : urgences, nourriture, transport, hébergement.',
-    icon: '🗣️',
+    icon: <LKDVIcon name="traduire" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: true,
@@ -191,7 +192,7 @@ const tools: Tool[] = [
     slug: 'noeud',
     nom: 'Guide des nœuds',
     description: 'Apprenez les nœuds essentiels pour la randonnée, l\'escalade et le camping avec animations.',
-    icon: '🪢',
+    icon: <LKDVIcon name="escalade" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: true,
@@ -200,7 +201,7 @@ const tools: Tool[] = [
     slug: 'soleil',
     nom: 'Calculateur lever/coucher soleil',
     description: 'Calculez les heures de lever et coucher du soleil pour n\'importe quelle date et localisation.',
-    icon: '🌅',
+    icon: <LKDVIcon name="panorama" size="1em" className="lkdv-icon-inline" />,
     categorie: 'Terrain',
     offline: true,
     mobilePriority: true,
@@ -321,7 +322,7 @@ export default function OutilsPage() {
                       <p className="text-sm text-muted-foreground leading-relaxed flex-1">{tool.description}</p>
                       <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">
-                          {tool.mobilePriority ? '📱 Mobile-first' : '💻 Desktop & mobile'}
+                          {tool.mobilePriority ? <><LKDVIcon name="telephone" size="1em" className="lkdv-icon-inline" /> Mobile-first</> : <><LKDVIcon name="options_avancees" size="1em" className="lkdv-icon-inline" />{" Desktop & mobile"}</>}
                         </span>
                         <span className="text-xs text-info font-medium group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                           Ouvrir →
@@ -344,7 +345,7 @@ export default function OutilsPage() {
               </h2>
               <p className="text-white/60 mb-8">Destination, saison, profil — notre IA génère votre liste d&apos;équipement complète en quelques secondes.</p>
               <Link href="/compas?etape=kit" className="btn-primary text-base px-8 py-3.5 inline-flex items-center gap-2">
-                <span>✨</span>
+                <span><LKDVIcon name="ia" size="1em" className="lkdv-icon-inline" /></span>
                 Lancer le configurateur
               </Link>
             </div>

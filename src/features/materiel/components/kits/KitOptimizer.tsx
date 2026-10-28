@@ -4,6 +4,7 @@ import { Badge, Button, Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { computeDiff, diffSummary, type OptimizeAction } from '@/lib/materiel/optimizer';
 import type { KitListItem } from '@/features/materiel/services/getKits';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface OptimizeResult {
   analysis: string;
@@ -91,7 +92,7 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
           loading={loading}
           className="h-10 shrink-0"
         >
-          {loading ? 'Analyse…' : 'Optimiser ✨'}
+          {loading ? 'Analyse…' : <>Optimiser <LKDVIcon name="ia" size="1em" className="lkdv-icon-inline" /></>}
         </Button>
       </div>
 
@@ -101,7 +102,7 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
         <Card variant="compact" className="mt-4 flex flex-col gap-2.5 p-3.5">
           <div className="flex flex-wrap gap-2">
             <Badge tone="sage">Score {result.score ?? diff.score}/100</Badge>
-            <Badge tone="info">{(diff.beforeG / 1000).toFixed(1)} → {(diff.afterG / 1000).toFixed(1)} kg</Badge>
+            <Badge tone="info">{(diff.beforeG / 1000).toFixed(1)} <LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" />{(diff.afterG / 1000).toFixed(1)} kg</Badge>
           </div>
           <p className="text-xs sm:text-sm text-[color:var(--lkv-text-primary)] leading-relaxed">{result.analysis}</p>
           {diffSummary(diff).map((s) => <p key={s} className="text-xs text-[color:var(--lkv-text-secondary)] font-medium">{s}</p>)}

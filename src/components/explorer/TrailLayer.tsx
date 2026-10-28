@@ -8,6 +8,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 import type { UnifiedPOI } from '@/lib/queries/pois';
+import { lkdvIconHtml } from '@/components/ui/lkdvIconHtml';
 
 interface TrailLayerProps {
   map: LeafletMap;
@@ -285,7 +286,7 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
                    justify-content: center;
                    box-shadow: 0 2px 6px rgba(51,65,85,0.35);
                    border: 2px solid white;
-                 "><span aria-hidden="true" style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: 9px;">📍</span><span>${count}</span></div>
+                 "><span aria-hidden="true" style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: 9px;">${lkdvIconHtml('point_interet')}</span><span>${count}</span></div>
               `;
               return L.divIcon({ html, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
             }
@@ -295,21 +296,21 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
       if (pois && pois.length > 0) {
         pois.forEach((poi) => {
           if (!isValidLatLng(poi.lat, poi.lng)) return;
-          let emoji = '👁️';
+          let emoji = lkdvIconHtml('vue');
           let bgColor = '#7C3AED';
           switch (poi.category) {
-            case 'refuge': emoji = '🏡'; bgColor = '#17402C'; break;
-            case 'summit': case 'col': emoji = '⛰️'; bgColor = '#334155'; break;
-            case 'water': emoji = '💧'; bgColor = '#0C4A6E'; break;
-            case 'waterfall': emoji = '🌊'; bgColor = '#0EA5E9'; break;
-            case 'camping': emoji = '⛺'; bgColor = '#16A34A'; break;
-            default: emoji = '👁️'; bgColor = '#7C3AED'; break;
+            case 'refuge': emoji = lkdvIconHtml('refuge'); bgColor = '#17402C'; break;
+            case 'summit': case 'col': emoji = lkdvIconHtml('montagne'); bgColor = '#334155'; break;
+            case 'water': emoji = lkdvIconHtml('eau_potable'); bgColor = '#0C4A6E'; break;
+            case 'waterfall': emoji = lkdvIconHtml('cascade'); bgColor = '#0EA5E9'; break;
+            case 'camping': emoji = lkdvIconHtml('tente'); bgColor = '#16A34A'; break;
+            default: emoji = lkdvIconHtml('vue'); bgColor = '#7C3AED'; break;
           }
 
           const poiIcon = L.divIcon({
             html: `
               <div style="
-                background-color: ${bgColor};
+                background-color: ${bgColor}; color: #fff;
                 width: 28px;
                 height: 28px;
                 border-radius: 50%;
@@ -332,7 +333,7 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
           marker.bindPopup(`
             <div style="padding: 6px; font-family: system-ui; min-width: 150px;">
               <strong style="font-size: 13px; color: #17402C; display: block; margin-bottom: 2px;">${emoji} ${poi.name}</strong>
-              ${poi.altitude_m ? `<span style="font-size: 11px; font-weight: 600; color: #5B7F55; display: block;">📈 ${poi.altitude_m}m</span>` : ''}
+              ${poi.altitude_m ? `<span style="font-size: 11px; font-weight: 600; color: #5B7F55; display: block;">${lkdvIconHtml('denivele')} ${poi.altitude_m}m</span>` : ''}
               <p style="font-size: 11px; color: #365233; margin: 2px 0 0 0;">${poi.details || 'Point d\'intérêt'}</p>
             </div>
           `);

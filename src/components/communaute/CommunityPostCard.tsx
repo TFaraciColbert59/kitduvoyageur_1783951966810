@@ -559,7 +559,7 @@ export default function CommunityPostCard({
       setIsSaved(!nextSaved);
       showToast('Favori non enregistré. Réessayez.');
     } else {
-      showToast(nextSaved ? 'Enregistré dans vos favoris ⭐' : 'Retiré de vos favoris');
+      showToast(nextSaved ? 'Enregistré dans vos favoris ' : 'Retiré de vos favoris');
     }
   };
 
@@ -864,7 +864,7 @@ export default function CommunityPostCard({
               aria-label="J'aime"
               className="text-xl active:scale-125"
             >
-              ❤️
+              <LKDVIcon name="favoris" size="1em" className="lkdv-icon-inline" />
             </IconButton>
             <IconButton
               type="button"
@@ -875,7 +875,7 @@ export default function CommunityPostCard({
               aria-label={isSaved ? 'Retirer des favoris' : 'Enregistrer'}
               className="text-xl active:scale-125"
             >
-              {isSaved ? '⭐' : '🔖'}
+              {isSaved ? <><LKDVIcon name="points" size="1em" className="lkdv-icon-inline" /></> : <><LKDVIcon name="signet" size="1em" className="lkdv-icon-inline" /></>}
             </IconButton>
             <div className="mx-0.5 h-5 w-px bg-[color:var(--lkv-border)]" />
             <IconButton
@@ -887,7 +887,7 @@ export default function CommunityPostCard({
               aria-label="Masquer"
               className="text-base active:scale-125"
             >
-              🙈
+              <LKDVIcon name="vue" size="1em" className="lkdv-icon-inline" />
             </IconButton>
             <IconButton
               type="button"
@@ -898,7 +898,7 @@ export default function CommunityPostCard({
               aria-label="Signaler"
               className="text-base active:scale-125"
             >
-              🚩
+              <LKDVIcon name="signalement" size="1em" className="lkdv-icon-inline" />
             </IconButton>
           </Card>
         </div>
@@ -963,11 +963,11 @@ export default function CommunityPostCard({
                 </span>
                 {activeMediaIndex > 0 && (
                   <button type="button" className="lkdv-social-media-arrow left-3" aria-label="Média précédent"
-                    onClick={(event) => { event.stopPropagation(); setActiveMediaIndex((i) => Math.max(0, i - 1)); }}>‹</button>
+                    onClick={(event) => { event.stopPropagation(); setActiveMediaIndex((i) => Math.max(0, i - 1)); }}><LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /></button>
                 )}
                 {activeMediaIndex < mediaItems.length - 1 && (
                   <button type="button" className="lkdv-social-media-arrow right-3" aria-label="Média suivant"
-                    onClick={(event) => { event.stopPropagation(); setActiveMediaIndex((i) => Math.min(mediaItems.length - 1, i + 1)); }}>›</button>
+                    onClick={(event) => { event.stopPropagation(); setActiveMediaIndex((i) => Math.min(mediaItems.length - 1, i + 1)); }}><LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" /></button>
                 )}
               </>
             )}
@@ -1081,7 +1081,7 @@ export default function CommunityPostCard({
             </h4>
             {post.snapshot_payload.destination && (
               <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                📍 {post.snapshot_payload.destination}
+                <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {post.snapshot_payload.destination}
               </p>
             )}
             {post.snapshot_payload.description && (
@@ -1384,8 +1384,7 @@ export default function CommunityPostCard({
                     onClick={() => { setReplyingTo(null); setParentCommentId(null); setCommentText(''); }}
                     aria-label="Annuler la réponse"
                   >
-                    ✕
-                  </IconButton>
+                    <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></IconButton>
                 </Card>
               )}
 
@@ -1421,7 +1420,7 @@ export default function CommunityPostCard({
                   onClick={() => gpxInputRef.current?.click()}
                   aria-label="Partager un GPX"
                 >
-                  <span className="text-[length:var(--lkv-text-caption)] leading-none">🗺️</span>
+                  <span className="text-[length:var(--lkv-text-caption)] leading-none"><LKDVIcon name="carte" size="1em" className="lkdv-icon-inline" /></span>
                 </IconButton>
                 <IconButton
                   size="sm"

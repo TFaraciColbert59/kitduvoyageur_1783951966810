@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Badge, Button } from '@/components/ui';
 import { UserProfile } from '@/lib/mock/compte-marceline';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ConstanceCardProps {
   constance: UserProfile['stats'] & any;
@@ -29,7 +30,7 @@ export default function ConstanceCard({ constance }: ConstanceCardProps) {
           <h3 className="font-display font-bold text-xs text-[color:var(--lkv-text-primary)]">Constance &amp; Rythme</h3>
         </div>
         <Badge tone="warn" className="text-[9px] font-mono font-bold">
-          🔥 6 sem.
+          <LKDVIcon name="feu" size="1em" className="lkdv-icon-inline" /> 6 sem.
         </Badge>
       </div>
 

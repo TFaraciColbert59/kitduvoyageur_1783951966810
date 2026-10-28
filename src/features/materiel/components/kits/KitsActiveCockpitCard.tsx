@@ -50,7 +50,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
         {items.length === 0 ? (
           <EmptyState
             compact
-            icon={<span aria-hidden="true">🎒</span>}
+            icon={<span aria-hidden="true"><LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /></span>}
             title="Kit vide"
             description="Utilisez l'Assembleur ci-dessus pour ajouter des articles."
           />

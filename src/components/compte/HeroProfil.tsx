@@ -124,7 +124,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
                   className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 hover:bg-[color:var(--lkv-secondary)]/20 transition-colors text-xs font-bold text-[color:var(--lkv-text-primary)] cursor-pointer"
                   title="Trust Score de confiance certifié LKDV"
                 >
-                  <span>🛡️</span>
+                  <span><LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /></span>
                   <span>Trust Score : {profile.trust_score ?? 50}/100</span>
                 </Link>
               </div>
@@ -137,7 +137,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
               href="/hub"
               className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold !py-2.5 !px-4 flex items-center gap-2 shadow-sm"
             >
-              <span>🎒</span>
+              <span><LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /></span>
               <span>Mon Matériel</span>
               <LKDVIcon name="suivant" size={12} />
             </Link>

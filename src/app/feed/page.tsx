@@ -17,7 +17,7 @@ const JOURNALS = [
 const FILTERS = [
   { id: 'all', label: 'Tous les carnets' },
   { id: 'verified', label: '✓ Achat vérifié' },
-  { id: 'gps', label: '📍 Tracé GPS' },
+  { id: 'gps', label: 'Tracé GPS', icon: <LKDVIcon name="point_interet" size={14} /> },
   { id: 'recent', label: 'Récents' },
 ];
 

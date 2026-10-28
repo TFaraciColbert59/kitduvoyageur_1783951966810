@@ -14,6 +14,7 @@ import {
   toAccountVisibility,
   type ProfileVisibilityEventDetail,
 } from '@/features/compte/data/accountVisibility';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** Visibilité de l'empreinte réellement exposée par le runtime (`S.vis`). */
 type SignatureVisibility = Visibility | 'communaute';
@@ -230,8 +231,7 @@ function MatrixCell({ value }: { value: MatrixValue }) {
     return (
       <td className="lkdv-settings-cell">
         <span className="lkdv-settings-yes" role="img" aria-label="Visible">
-          ✓
-        </span>
+          <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
       </td>
     );
   }
@@ -732,8 +732,7 @@ export function ProfileSettingsSheet({
             aria-label="Fermer les réglages"
             onClick={close}
           >
-            ×
-          </button>
+            <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
         </header>
 
         {runtimeChecked && !runtimeReady ? (

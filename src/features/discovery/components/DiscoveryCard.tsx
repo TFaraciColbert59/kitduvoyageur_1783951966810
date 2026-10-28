@@ -143,7 +143,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
             ) : null}
             {duration ? (
               <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                ⏱ {duration}
+                <LKDVIcon name="duree" size="1em" className="lkdv-icon-inline" /> {duration}
               </span>
             ) : null}
           </div>

@@ -246,7 +246,7 @@ export default function ClubDiscussionCard({
               onChange={(id) => onFilterChange(id as 'all' | 'guides')}
               options={[
                 { id: 'all', label: `Tous (${safeDiscussions.length})` },
-                { id: 'guides', label: '📌 Guides & Astuces' },
+                { id: 'guides', label: 'Guides & Astuces', icon: <LKDVIcon name="position" size={14} /> },
               ]}
               className="w-auto"
             />
@@ -295,7 +295,7 @@ export default function ClubDiscussionCard({
                       <Badge className="font-mono uppercase">{msg.tag}</Badge>
                     )}
                     {msg.is_pinned && (
-                      <Badge tone="warn" className="font-mono">📌 ÉPINGLÉ</Badge>
+                      <Badge tone="warn" className="font-mono"><LKDVIcon name="position" size="1em" className="lkdv-icon-inline" /> ÉPINGLÉ</Badge>
                     )}
                     <Button
                       type="button"
@@ -317,7 +317,7 @@ export default function ClubDiscussionCard({
 
                   {msg.reply_to && (
                     <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] italic text-[color:var(--lkv-text-muted)]">
-                      ↩ en réponse à {msg.reply_to_author || 'un message'}
+                      <LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /> en réponse à {msg.reply_to_author || 'un message'}
                     </p>
                   )}
 
@@ -363,7 +363,7 @@ export default function ClubDiscussionCard({
                         <span>
                           {typeof msg.location === 'string'
                             ? msg.location
-                            : `📍 ${(msg.location as any).lat?.toFixed(5)}, ${(msg.location as any).lng?.toFixed(5)}`}
+                            : <><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {(msg.location as any).lat?.toFixed(5)}, {(msg.location as any).lng?.toFixed(5)}</>}
                         </span>
                       </a>
                     )}
@@ -442,7 +442,7 @@ export default function ClubDiscussionCard({
 
       {replyingTo && (
         <div className="mb-[var(--space-2)] flex shrink-0 items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
-          <span className="font-bold">↩ Répondre à {replyingTo.author || 'Voyageur'}</span>
+          <span className="font-bold"><LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /> Répondre à {replyingTo.author || 'Voyageur'}</span>
           <span className="flex-1 truncate text-[color:var(--lkv-text-muted)]">
             « {(replyingTo.content || '').slice(0, 60)}{(replyingTo.content || '').length > 60 ? '…' : ''} »
           </span>
@@ -495,7 +495,7 @@ export default function ClubDiscussionCard({
             disabled={uploading || loading}
             aria-label="Partager une trace GPX"
           >
-            <span className="text-[length:var(--lkv-text-caption-2)]" aria-hidden>🗺️</span>
+            <span className="text-[length:var(--lkv-text-caption-2)]" aria-hidden><LKDVIcon name="carte" size="1em" className="lkdv-icon-inline" /></span>
           </IconButton>
           <IconButton
             size="sm"

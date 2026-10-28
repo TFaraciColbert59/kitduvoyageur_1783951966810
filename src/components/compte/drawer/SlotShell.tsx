@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { LensPager } from './LensPager';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 export type SlotId = 'vitrine' | 'kit' | 'prets' | 'souvenirs' | 'communaute';
 export type Viewer = 'owner' | 'visitor';
@@ -72,8 +73,7 @@ function EmptyState({ label }: { label: string }) {
   return (
     <div className="lkdv-slot-state" data-state="empty">
       <span className="lkdv-slot-state-ico" aria-hidden="true">
-        ○
-      </span>
+        <EmptyCircle size="1em" /></span>
       <p>{label}</p>
     </div>
   );

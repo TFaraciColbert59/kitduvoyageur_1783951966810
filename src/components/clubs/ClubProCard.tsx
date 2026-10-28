@@ -3,12 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { Badge, Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export default function ClubProCard() {
   return (
     <Card tone="warn" className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all [transition-duration:var(--motion-control-duration)]">
       <Badge tone="warn" className="font-mono uppercase tracking-widest">
-        ⭐ OFFRE PRO
+        <LKDVIcon name="points" size="1em" className="lkdv-icon-inline" /> OFFRE PRO
       </Badge>
 
       <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">

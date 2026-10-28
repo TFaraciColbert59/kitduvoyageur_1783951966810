@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { isCommunityVideoUrl, usableCommunityMedia } from '@/lib/community/media';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type PublicPost = {
   id: string;
@@ -87,7 +88,7 @@ export default function PublicProfilePostsGrid({ profileId }: { profileId: strin
               className="lkdv-social-profile-posts-tile">
               {url && video
                 ? <><video src={url} muted playsInline preload="metadata" aria-hidden="true" />
-                    <span className="lkdv-social-profile-posts-video" aria-hidden="true">▶</span></>
+                    <span className="lkdv-social-profile-posts-video" aria-hidden="true"><LKDVIcon name="lecture" size="1em" className="lkdv-icon-inline" /></span></>
                 : url
                   ? <img src={url} loading="lazy" decoding="async" alt={post.snapshot_payload?.title || 'Photo de voyage'} />
                   : <span className="lkdv-social-profile-posts-text">{post.snapshot_payload?.title || post.content || 'Récit de voyage'}</span>}

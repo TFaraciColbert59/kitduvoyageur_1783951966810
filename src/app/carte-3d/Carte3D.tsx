@@ -60,7 +60,7 @@ export interface SectorConfig {
 export const SECTORS: Record<string, SectorConfig> = {
   TMB_CHAMONIX: {
     key: 'TMB_CHAMONIX',
-    title: '🏔️ Massif du Mont-Blanc (Chamonix → Col de Voza)',
+    title: 'Massif du Mont-Blanc (Chamonix → Col de Voza)',
     region: 'MASSIF DU MONT-BLANC // ORTHOPHOTO IGN 20CM',
     center: [6.775, 45.873],
     zoom: 14.2,
@@ -81,7 +81,7 @@ export const SECTORS: Record<string, SectorConfig> = {
   },
   MONT_SAINT_MICHEL: {
     key: 'MONT_SAINT_MICHEL',
-    title: '🏰 Le Mont-Saint-Michel (Abbaye 3D & Baie)',
+    title: 'Le Mont-Saint-Michel (Abbaye 3D & Baie)',
     region: 'NORMANDIE // BAIE DU MONT-SAINT-MICHEL (GR 223)',
     center: [-1.5114, 48.636],
     zoom: 16.5,
@@ -100,7 +100,7 @@ export const SECTORS: Record<string, SectorConfig> = {
   },
   GR20_BAVELLA: {
     key: 'GR20_BAVELLA',
-    title: '⛰️ Corse — Aiguilles de Bavella (GR20)',
+    title: 'Corse — Aiguilles de Bavella (GR20)',
     region: 'CORSE // AIGUILLES DE BAVELLA (GR 20 SUD)',
     center: [9.225, 41.7955],
     zoom: 14.4,

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Props {
   countryIso: string;
@@ -81,7 +82,7 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
                     className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-2xs"
                     style={{ backgroundColor: club.cover_color || 'rgba(166,193,160,0.25)' }}
                   >
-                    {club.emoji || '🏔️'}
+                    {club.emoji || <><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /></>}
                   </div>
                   {club.is_verified && (
                     <span className="glass-pill text-forest-900 bg-forest-50 text-[9px] font-mono font-bold">
@@ -114,7 +115,7 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
         </div>
       ) : (
         <div className="glass-sub-card p-5 text-center space-y-2">
-          <span className="text-3xl block">🏔️</span>
+          <span className="text-3xl block"><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /></span>
           <h4 className="font-bold text-xs text-[color:var(--lkv-text-primary)]">Aucun club dédié à {countryName}</h4>
           <p className="text-[11px] text-[color:var(--lkv-text-secondary)] max-w-xs mx-auto">
             Rejoignez les clubs régionaux ou fondez votre communauté.

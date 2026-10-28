@@ -233,7 +233,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
 
   const mobileNotFound = (
     <div className="p-[var(--space-4)] pt-[60px] text-center">
-      <p className="mb-[var(--space-3)] text-[40px]" aria-hidden="true">📖</p>
+      <p className="mb-[var(--space-3)] text-[40px]" aria-hidden="true"><LKDVIcon name="preparateur" size="1em" className="lkdv-icon-inline" /></p>
       <h1 className="mb-[var(--space-2)] font-display text-[20px] font-extrabold text-[color:var(--lkv-text-primary)]">
         Guide introuvable
       </h1>

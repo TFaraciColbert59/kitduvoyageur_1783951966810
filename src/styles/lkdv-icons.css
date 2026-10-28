@@ -16,6 +16,11 @@
   height: var(--lkdv-icon-size, 24px);
 }
 
+/* Icône dans une phrase (remplace un emoji) : suit la taille du texte et s'aligne sur la ligne de base. */
+:where(.lkdv-icon-inline) {
+  vertical-align: -0.14em;
+}
+
 .lkdv-icon {
   background-color: #00542b;
   background-color: oklch(

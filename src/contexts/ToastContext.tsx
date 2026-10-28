@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { LKDVIcon, type LKDVIconName } from '@/components/ui/LKDVIcon';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -42,11 +43,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [dismiss]
   );
 
-  const icons: Record<ToastType, string> = {
-    success: '✓',
-    error: '✕',
-    info: 'ℹ',
-    warning: '⚠',
+  const icons: Record<ToastType, LKDVIconName> = {
+    success: 'valider',
+    error: 'fermer',
+    info: 'informations',
+    warning: 'alerte',
   };
 
   const colors: Record<ToastType, string> = {
@@ -71,15 +72,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             role="status"
             className={`flex items-center gap-3 px-4 py-3 rounded-[var(--lkv-radius-md)] text-white text-sm font-medium  pointer-events-auto max-w-sm animate-in slide-in-from-right-4 ${colors[t.type]}`}
           >
-            <span className="text-base leading-none">{icons[t.type]}</span>
+            <LKDVIcon name={icons[t.type]} size={16} aria-hidden="true" />
             <span className="flex-1">{t.message}</span>
             <button
               onClick={() => dismiss(t.id)}
               aria-label="Fermer la notification"
               className="ml-2 opacity-70 hover:opacity-100 transition-opacity text-lg leading-none"
             >
-              ×
-            </button>
+              <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
           </div>
         ))}
       </div>

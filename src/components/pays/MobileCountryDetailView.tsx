@@ -79,7 +79,7 @@ export default function MobileCountryDetailView({
           onClick={() => triggerHaptic('light')}
           className="glass-capsule-btn !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
         >
-          <span className="text-sm leading-none font-bold">←</span>
+          <span className="text-sm leading-none font-bold"><LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /></span>
           <span>Atlas</span>
         </Link>
 
@@ -301,7 +301,7 @@ export default function MobileCountryDetailView({
                               rel="noopener noreferrer"
                               className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--glass-label-tertiary)] hover:text-[color:var(--glass-label)]"
                             >
-                              {src.label} ↗
+                              {src.label} <LKDVIcon name="lien" size="1em" className="lkdv-icon-inline" />
                             </a>
                           ))}
                         </div>
@@ -475,7 +475,7 @@ export default function MobileCountryDetailView({
                 <div className="glass p-4 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-secondary-ink)]">
-                      ⛅ Météo en direct · {country.meteo.ville}
+                      <LKDVIcon name="meteo" size="1em" className="lkdv-icon-inline" /> Météo en direct · {country.meteo.ville}
                     </span>
                     <span className="inline-flex items-center gap-1.5 text-[9.5px] font-mono text-[color:var(--lkv-secondary-ink)] font-bold">
                       <span className="w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] animate-pulse" />
@@ -492,7 +492,7 @@ export default function MobileCountryDetailView({
                         {country.meteo.conditions}
                       </p>
                     </div>
-                    <span className="text-3xl">🌤️</span>
+                    <span className="text-3xl"><LKDVIcon name="meteo" size="1em" className="lkdv-icon-inline" /></span>
                   </div>
 
                   <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">
@@ -531,7 +531,7 @@ export default function MobileCountryDetailView({
         {/* ── 5. AI CONFIGURATOR CALL TO ACTION BANNER ── */}
         <div className="glass p-4 sm:p-5 space-y-2 mt-4">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🎒</span>
+            <span className="text-xl"><LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /></span>
             <h4 className="font-display font-bold text-sm text-[color:var(--lkv-text-primary)]">
               Composer votre aventure {country.nom}
             </h4>
@@ -548,7 +548,7 @@ export default function MobileCountryDetailView({
               }}
               className="w-full glass-capsule-btn primary !min-h-[38px] !py-2 !px-4 !text-xs !font-bold !gap-2 justify-center shadow-md"
             >
-              <span>✨</span>
+              <span><LKDVIcon name="ia" size="1em" className="lkdv-icon-inline" /></span>
               <span>Lancer le configurateur IA →</span>
             </button>
           </div>

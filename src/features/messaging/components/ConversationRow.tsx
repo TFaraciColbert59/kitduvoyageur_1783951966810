@@ -64,12 +64,12 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
 
   let lastMessageDisplay = 'Aucun message';
   if (lastMsg) {
-    if (lastMsg.message_type === 'image') lastMessageDisplay = '📷 Image';
-    else if (lastMsg.message_type === 'audio') lastMessageDisplay = '🎤 Note vocale';
-    else if (lastMsg.message_type === 'gpx') lastMessageDisplay = '📍 Tracé GPX';
-    else if (lastMsg.message_type === 'file') lastMessageDisplay = '📎 Fichier';
-    else if (lastMsg.message_type === 'product') lastMessageDisplay = '📦 Équipement';
-    else if (lastMsg.message_type === 'trail') lastMessageDisplay = '🥾 Randonnée';
+    if (lastMsg.message_type === 'image') lastMessageDisplay = 'Image';
+    else if (lastMsg.message_type === 'audio') lastMessageDisplay = 'Note vocale';
+    else if (lastMsg.message_type === 'gpx') lastMessageDisplay = 'Tracé GPX';
+    else if (lastMsg.message_type === 'file') lastMessageDisplay = 'Fichier';
+    else if (lastMsg.message_type === 'product') lastMessageDisplay = 'Équipement';
+    else if (lastMsg.message_type === 'trail') lastMessageDisplay = 'Randonnée';
     else lastMessageDisplay = lastMsg.content;
   }
 

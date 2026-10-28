@@ -153,7 +153,7 @@ export default function ClubGroupsTab({
       {!isMember && (
         <Card className="text-center">
           <EmptyState
-            icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>🔒</span>}
+            icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden><LKDVIcon name="verrou" size="1em" className="lkdv-icon-inline" /></span>}
             title="Réservé aux membres du club"
             description="Rejoignez le club pour voir ses groupes de voyage et en créer."
           />
@@ -163,7 +163,7 @@ export default function ClubGroupsTab({
       {isMember && groups.length === 0 && (
         <Card className="text-center">
           <EmptyState
-            icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>🎒</span>}
+            icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden><LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /></span>}
             title="Aucun groupe de voyage pour le moment"
             description="Lancez le premier groupe du club et invitez vos compagnons."
           />
@@ -198,8 +198,8 @@ export default function ClubGroupsTab({
                   </Badge>
                 </div>
                 <div className="flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
-                  {group.destination && <span>📍 {group.destination}</span>}
-                  {dates && <span className="font-mono">🗓️ {dates}</span>}
+                  {group.destination && <span><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {group.destination}</span>}
+                  {dates && <span className="font-mono"><LKDVIcon name="calendrier" size="1em" className="lkdv-icon-inline" /> {dates}</span>}
                 </div>
                 <span className="mt-auto text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                   Ouvrir dans le Hub →

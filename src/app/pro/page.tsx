@@ -63,7 +63,7 @@ export default function B2BPage() {
                 <h3 className="mb-1 text-[16px] font-bold text-[color:var(--lkv-text-primary)]">{plan.name}</h3>
                 <p className="mb-[var(--space-2)] text-[13px] text-[color:var(--lkv-text-muted)]">{plan.description}</p>
                 <p className="mb-[var(--space-3)] text-[28px] font-extrabold text-[color:var(--lkv-text-primary)]">{plan.price}€<span className="text-[13px] font-normal">/{plan.period}</span></p>
-                <ul className="mb-[var(--space-3)]">{plan.features.map((f) => <li key={f} className="py-0.5 text-[13px] text-[color:var(--lkv-text-secondary)]">✓ {f}</li>)}</ul>
+                <ul className="mb-[var(--space-3)]">{plan.features.map((f) => <li key={f} className="py-0.5 text-[13px] text-[color:var(--lkv-text-secondary)]"><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" />{f}</li>)}</ul>
                 <button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary w-full">Choisir cette offre</button>
               </div>
             ))}

@@ -68,25 +68,25 @@ export class WeatherService {
     let alertMessage: string | undefined;
 
     if (code >= 95) {
-      condition = 'Orage ⚡';
+      condition = 'Orage';
       isAlert = true;
       alertMessage = 'Risque d\'orage imminent — Abritez-vous rapidement.';
     } else if (code >= 80) {
-      condition = 'Averses 🌧';
+      condition = 'Averses';
       if (code >= 82) {
         isAlert = true;
         alertMessage = 'Fortes averses en cours.';
       }
     } else if (code >= 71) {
-      condition = 'Neige ❄️';
+      condition = 'Neige';
     } else if (code >= 61) {
-      condition = 'Pluie 🌧';
+      condition = 'Pluie';
     } else if (code >= 51) {
-      condition = 'Bruine 🌫';
+      condition = 'Bruine';
     } else if (code >= 45) {
-      condition = 'Brouillard 🌫';
+      condition = 'Brouillard';
     } else if (code >= 1 && code <= 3) {
-      condition = 'Partiellement nuageux ⛅';
+      condition = 'Partiellement nuageux';
     }
 
     if (windKmH > 60 && !isAlert) {

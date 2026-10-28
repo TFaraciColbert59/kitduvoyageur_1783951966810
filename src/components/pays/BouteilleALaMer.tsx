@@ -368,7 +368,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
         related_type: 'travel_group',
         related_id: selectedGroupForManagement.id,
         type: 'group_join_accepted',
-        title: 'Demande acceptée ! 🎉',
+        title: 'Demande acceptée ! ',
         message: `Félicitations ! Vous faites désormais partie de l'équipage pour "${selectedGroupForManagement.name}".`,
         link: `/groupes/${selectedGroupForManagement.id}`,
       });
@@ -465,7 +465,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
           
           {isSuspended && (
             <div className="mb-4 p-3 bg-[rgba(168,68,58,0.08)] border border-[rgba(168,68,58,0.30)] rounded-xl text-xs text-[color:var(--lkv-danger-dark)]">
-              ⚠️ Votre compte est temporairement limité sur la fonctionnalité Bouteille à la mer suite à un signalement. Pour contester ou obtenir de l'aide, contactez notre équipe sur <a href="mailto:contact@lekitduvoyageur.fr" className="underline font-bold text-[color:var(--lkv-text-primary)]">contact@lekitduvoyageur.fr</a>.
+              <LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> Votre compte est temporairement limité sur la fonctionnalité Bouteille à la mer suite à un signalement. Pour contester ou obtenir de l'aide, contactez notre équipe sur <a href="mailto:contact@lekitduvoyageur.fr" className="underline font-bold text-[color:var(--lkv-text-primary)]">contact@lekitduvoyageur.fr</a>.
             </div>
           )}
 
@@ -503,7 +503,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
           <form onSubmit={handleCreateGroup} className="mt-6 glass-sub-card p-5 md:p-6 max-w-xl animate-fade-in">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-display font-bold text-base text-[color:var(--lkv-text-primary)]">Lancer bouteille à la mer</h3>
-              <button type="button" onClick={() => setShowCreateForm(false)} className="w-7 h-7 flex items-center justify-center rounded-full glass-pill text-[color:var(--lkv-text-primary)] text-xs hover:bg-white/20">✕</button>
+              <button type="button" onClick={() => setShowCreateForm(false)} className="w-7 h-7 flex items-center justify-center rounded-full glass-pill text-[color:var(--lkv-text-primary)] text-xs hover:bg-white/20"><LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
             </div>
             
             <div className="space-y-3.5">
@@ -545,8 +545,8 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                     className="glass-input w-full text-xs"
                   >
                     <option value="all" className="bg-[color:var(--lkv-surface)]">Tous (Mixte)</option>
-                    <option value="women_only" className="bg-[color:var(--lkv-surface)]">Entre femmes 👭</option>
-                    <option value="men_only" className="bg-[color:var(--lkv-surface)]">Entre hommes 👬</option>
+                    <option value="women_only" className="bg-[color:var(--lkv-surface)]">Entre femmes </option>
+                    <option value="men_only" className="bg-[color:var(--lkv-surface)]">Entre hommes </option>
                   </select>
                 </div>
               </div>
@@ -583,7 +583,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
         {!showCreateForm && groups.length > 0 && (
           <div className="mt-6 pt-6 border-t border-[color:var(--lkv-border-subtle)]">
             <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-[color:var(--lkv-text-primary)]">
-              <span className="w-6 h-6 rounded-full glass-pill flex items-center justify-center text-xs">🌊</span>
+              <span className="w-6 h-6 rounded-full glass-pill flex items-center justify-center text-xs"><LKDVIcon name="riviere" size="1em" className="lkdv-icon-inline" /></span>
               Les bouteilles retrouvées dans la mer ({groups.length})
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 bouteille-list">
@@ -606,8 +606,8 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                             </div>
                             <div className="text-[10px] text-[color:var(--lkv-text-secondary)] font-mono flex items-center gap-1.5">
                               <span>Trust: <strong className={group.owner?.trust_score >= 80 ? 'text-[color:var(--sage-600)]' : 'text-[color:var(--lkv-text-primary)]'}>{group.owner?.trust_score || 0}/100</strong></span>
-                              {group.mixite === 'women_only' && <span className="text-[color:var(--lkv-warning-dark)] font-sans">· 👭 Femmes</span>}
-                              {group.mixite === 'men_only' && <span className="text-[color:var(--lkv-secondary-ink)] font-sans">· 👬 Hommes</span>}
+                              {group.mixite === 'women_only' && <span className="text-[color:var(--lkv-warning-dark)] font-sans">· <LKDVIcon name="amis" size="1em" className="lkdv-icon-inline" /> Femmes</span>}
+                              {group.mixite === 'men_only' && <span className="text-[color:var(--lkv-secondary-ink)] font-sans">· <LKDVIcon name="amis" size="1em" className="lkdv-icon-inline" /> Hommes</span>}
                             </div>
                           </div>
                         </div>
@@ -619,7 +619,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                             className="text-[color:var(--lkv-text-secondary)] hover:text-[color:var(--lkv-danger)] p-1 text-xs"
                             title="Signaler ou bloquer"
                           >
-                            🚩
+                            <LKDVIcon name="signalement" size="1em" className="lkdv-icon-inline" />
                           </button>
                         )}
                       </div>
@@ -638,7 +638,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                         </span>
                         {group.totalExpenses > 0 && (
                           <span className="glass-pill px-2 py-0.5 text-[color:var(--sage-600)]">
-                            💰 {Math.round(group.totalExpenses)} € engagés
+                            <LKDVIcon name="budget" size="1em" className="lkdv-icon-inline" /> {Math.round(group.totalExpenses)} € engagés
                           </span>
                         )}
                       </div>
@@ -698,8 +698,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                       ) : (
                         <div className="w-full">
                           <div className="text-[10px] font-mono font-bold text-[color:var(--sage-600)] mb-1.5 text-center sm:text-right">
-                            Requis {group.min_trust_score}+
-                          </div>
+                            Requis {group.min_trust_score}+</div>
                           
                           <button 
                             onClick={() => {
@@ -750,7 +749,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
               <p className="text-[color:var(--lkv-text-secondary)]">Trust Score requis : {joinModalGroup.min_trust_score}/100 (Vous avez {userTrustScore}/100).</p>
               {joinModalGroup.totalExpenses > 0 && (
                 <p className="text-[color:var(--lkv-warning-dark)] font-semibold pt-1">
-                  💳 Dépenses déjà enregistrées sur le groupe : {Math.round(joinModalGroup.totalExpenses)} €
+                  <LKDVIcon name="paiement" size="1em" className="lkdv-icon-inline" /> Dépenses déjà enregistrées sur le groupe : {Math.round(joinModalGroup.totalExpenses)} €
                 </p>
               )}
             </div>

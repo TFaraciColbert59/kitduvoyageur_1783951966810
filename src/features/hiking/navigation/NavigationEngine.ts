@@ -210,7 +210,7 @@ export class NavigationEngine {
     if (level === 'OFF_ROUTE') {
       return {
         type: 'off-route',
-        message: `⚠️ Sortie du parcours (${deviationMeters} m)`,
+        message: `Sortie du parcours (${deviationMeters} m)`,
         distanceMeters: deviationMeters,
         targetLat: rejoinPoint?.lat,
         targetLon: rejoinPoint?.lon,
@@ -221,7 +221,7 @@ export class NavigationEngine {
     if (nextWaypoint && nextWaypoint.distanceRemainingM < 30) {
       return {
         type: 'poi-reached',
-        message: `📍 ${nextWaypoint.name} atteint !`,
+        message: `${nextWaypoint.name} atteint !`,
         distanceMeters: 0,
         targetLat: nextWaypoint.lat,
         targetLon: nextWaypoint.lon,

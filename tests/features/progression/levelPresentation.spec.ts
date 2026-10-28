@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { calculateLevel, LEVEL_TIERS } from '@/features/progression/domain/rules';
 
-// Launch thresholds and historical identities must survive a presentation upgrade.
+// Launch thresholds and historical identities (badge = clé de la base LKDV V2) must survive a presentation upgrade.
 const historicalTiers = [
-  [1, 0, 99, 'Randonneur Curieux', '🌱'],
-  [2, 100, 299, 'Marcheur Averti', '🌲'],
-  [3, 300, 699, 'Arpenteur des Bois', '🧭'],
-  [4, 700, 1499, 'Éclaireur des Cimes', '⛰️'],
-  [5, 1500, 2999, 'Navigateur Alpin', '🏔️'],
-  [6, 3000, 5499, 'Pionnier des Crêtes', '🦅'],
-  [7, 5500, 8999, 'Guide de Cordée', '🧗'],
-  [8, 9000, 13999, "Maître d'Expédition", '❄️'],
-  [9, 14000, 19999, 'Légende des Sentiers', '🌟'],
-  [10, 20000, null, 'Gardien des Horizons', '👑'],
+  [1, 0, 99, 'Randonneur Curieux', 'flore'],
+  [2, 100, 299, 'Marcheur Averti', 'foret'],
+  [3, 300, 699, 'Arpenteur des Bois', 'boussole'],
+  [4, 700, 1499, 'Éclaireur des Cimes', 'montagne'],
+  [5, 1500, 2999, 'Navigateur Alpin', 'sommet'],
+  [6, 3000, 5499, 'Pionnier des Crêtes', 'observation'],
+  [7, 5500, 8999, 'Guide de Cordée', 'escalade'],
+  [8, 9000, 13999, "Maître d'Expédition", 'neige'],
+  [9, 14000, 19999, 'Légende des Sentiers', 'points'],
+  [10, 20000, null, 'Gardien des Horizons', 'recompense'],
 ] as const;
 
 describe('Level presentation without permissions or commercial promises', () => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { SectionBlock } from '../types';
 import { parseStructuredBlock } from '../mappers/structuredBlock';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 function Pill({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: 'neutral' | 'sage' }) {
   return (
@@ -35,7 +36,7 @@ export function StructuredBlockContent({ block }: { block: SectionBlock }) {
               {spot.type_outdoor ? <Pill tone="sage">{spot.type_outdoor}</Pill> : null}
             </div>
             {spot.localisation ? (
-              <p className="text-[10.5px] font-mono text-[color:var(--lkv-text-secondary)]">📍 {spot.localisation}</p>
+              <p className="text-[10.5px] font-mono text-[color:var(--lkv-text-secondary)]"><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {spot.localisation}</p>
             ) : null}
             <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">{spot.description}</p>
           </div>
@@ -98,7 +99,7 @@ export function StructuredBlockContent({ block }: { block: SectionBlock }) {
           </div>
           <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">{item.conditions}</p>
           {item.points_vigilance ? (
-            <p className="text-[11px] text-[color:var(--lkv-warning-dark)] leading-relaxed">⚠ {item.points_vigilance}</p>
+            <p className="text-[11px] text-[color:var(--lkv-warning-dark)] leading-relaxed"><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> {item.points_vigilance}</p>
           ) : null}
         </div>
       ))}

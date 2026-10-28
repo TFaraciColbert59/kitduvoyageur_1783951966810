@@ -33,7 +33,7 @@ export default function ClubTeamCard({
     <Card className="space-y-[var(--space-3)] p-[var(--space-4)] transition-all [transition-duration:var(--motion-control-duration)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-[var(--space-2)]">
-          <span className="text-[length:var(--lkv-text-caption)]" aria-hidden>🛡️</span>
+          <span className="text-[length:var(--lkv-text-caption)]" aria-hidden><LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /></span>
           <h2 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
             Équipe d&apos;animation ({admins.length})
           </h2>
@@ -80,7 +80,7 @@ export default function ClubTeamCard({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      admin.user?.full_name?.charAt(0) || '👤'
+                      admin.user?.full_name?.charAt(0) || <><LKDVIcon name="profil" size="1em" className="lkdv-icon-inline" /></>
                     )}
                   </span>
                 </Link>
@@ -94,7 +94,7 @@ export default function ClubTeamCard({
                   {admin.user?.full_name || 'Membre collectif'}
                 </Link>
               }
-              subtitle={<span className="font-mono text-[length:var(--lkv-text-caption-2)]">{admin.role === 'admin' ? '👑 Leader' : '🛡️ Modérateur'}</span>}
+              subtitle={<span className="font-mono text-[length:var(--lkv-text-caption-2)]">{admin.role === 'admin' ? <><LKDVIcon name="recompense" size="1em" className="lkdv-icon-inline" /> Leader</> : <><LKDVIcon name="securite" size="1em" className="lkdv-icon-inline" /> Modérateur</>}</span>}
               trailing={
                 onContact && (
                   <IconButton
@@ -122,7 +122,7 @@ export default function ClubTeamCard({
             onClick={onViewAll}
             className="font-medium"
           >
-            + {admins.length - 4} autre{admins.length - 4 > 1 ? 's' : ''} organisateur{admins.length - 4 > 1 ? 's' : ''}
+            +{admins.length - 4} autre{admins.length - 4 > 1 ? 's' : ''} organisateur{admins.length - 4 > 1 ? 's' : ''}
           </Button>
         )}
       </div>

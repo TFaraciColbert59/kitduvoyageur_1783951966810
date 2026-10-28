@@ -133,7 +133,7 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
 
     window.dispatchEvent(new Event('storage'));
     setAddedIds((prev) => new Set(prev).add(p.id));
-    toast(`« ${p.name} » ajouté au panier ! 🛒`, 'success');
+    toast(`« ${p.name} » ajouté au panier ! `, 'success');
 
     setTimeout(() => {
       setAddedIds((prev) => {

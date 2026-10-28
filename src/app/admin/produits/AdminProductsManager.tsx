@@ -2375,7 +2375,7 @@ export default function AdminProductsManager() {
                               <td className={`p-3 font-bold ${m.quantity_change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                 {m.quantity_change > 0 ? `+${m.quantity_change}` : m.quantity_change}
                               </td>
-                              <td className="p-3 text-white/70">{m.quantity_before} → {m.quantity_after}</td>
+                              <td className="p-3 text-white/70">{m.quantity_before} <LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" />{m.quantity_after}</td>
                               <td className="p-3 font-sans text-white/50">{m.notes || '—'}</td>
                             </tr>
                           ))}

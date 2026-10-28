@@ -291,7 +291,7 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
         lng,
         altitude_m: r.altitude_m != null ? Number(r.altitude_m) : null,
         description: r.description || null,
-        details: details ? `🏡 ${details}` : 'Refuge de montagne',
+        details: details ? `${details}` : 'Refuge de montagne',
         capacity: r.capacity ? Number(r.capacity) : null,
         price_per_night: r.price_per_night ? Number(r.price_per_night) : null,
         is_staffed: r.is_staffed,
@@ -332,7 +332,7 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
         lng,
         altitude_m: s.altitude_m != null ? Number(s.altitude_m) : null,
         description: s.description || null,
-        details: details ? `⛰️ ${details}` : 'Sommet alpin',
+        details: details ? `${details}` : 'Sommet alpin',
         massif: s.massif || null,
         region: s.region || null,
         country: s.country || null,
@@ -354,7 +354,7 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
       if (seenCoordinates.has(key)) continue;
       seenCoordinates.add(key);
 
-      const potableStr = w.is_potable ? 'Eau potable vérifiée ✅' : 'Eau non traitée / à filtrer ⚠️';
+      const potableStr = w.is_potable ? 'Eau potable vérifiée ' : 'Eau non traitée / à filtrer ';
       const typeStr = w.water_type ? `Type : ${w.water_type}` : '';
       const flowStr = w.flow_rate ? `Débit : ${w.flow_rate}` : '';
       const details = [potableStr, typeStr, flowStr].filter(Boolean).join(' · ');
@@ -367,7 +367,7 @@ export async function getPois(options: GetPoisOptions = {}): Promise<UnifiedPOI[
         lng,
         altitude_m: w.altitude_m != null ? Number(w.altitude_m) : null,
         description: w.description || null,
-        details: `💧 ${details}`,
+        details: `${details}`,
         is_potable: w.is_potable,
         water_type: w.water_type || null,
         region: w.region || null,

@@ -1110,12 +1110,12 @@ function RewardsSection() {
     <div className="space-y-6 text-white">
       {error && (
         <div className="p-4 bg-rose-955/40 border border-rose-800/80 text-rose-200 rounded-xl text-xs">
-          ⚠️ {error}
+          <LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> {error}
         </div>
       )}
       {success && (
         <div className="p-4 bg-forest-955/40 border border-forest-800/80 text-forest-200 rounded-xl text-xs">
-          ✅ {success}
+          <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /> {success}
         </div>
       )}
 

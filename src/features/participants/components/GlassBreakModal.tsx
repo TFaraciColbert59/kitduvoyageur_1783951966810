@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { HumanParticipant } from '../types/participant.types';
 import { Badge, Button, Card, Modal } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface GlassBreakModalProps {
   participant: HumanParticipant;
@@ -98,7 +99,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
         {!isUnlocked ? (
           <Card tone="danger" className="flex flex-col items-center gap-[var(--space-3)] text-center">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--lkv-danger-bg)] text-[length:var(--lkv-text-title-sm)]">
-              🔒
+              <LKDVIcon name="verrou" size="1em" className="lkdv-icon-inline" />
             </div>
             <div>
               <h4 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
@@ -111,13 +112,13 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
             </div>
 
             <Button variant="destructive" fullWidth onClick={() => onUnlock(participant.id)}>
-              ⚡ Déverrouiller l&apos;accès d&apos;urgence (Glass Break)
+              <LKDVIcon name="energie" size="1em" className="lkdv-icon-inline" /> Déverrouiller l&apos;accès d&apos;urgence (Glass Break)
             </Button>
           </Card>
         ) : (
           <div className="space-y-[var(--space-4)] animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-warning)]/40 bg-[color:var(--lkv-warning-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-warning-dark)]">
-              <span className="font-semibold">⚠️ Mode Glass Break Actif</span>
+              <span className="font-semibold"><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /> Mode Glass Break Actif</span>
               <span className="font-mono font-bold">Verrouillage auto : {timeLeft}s</span>
             </div>
 
@@ -168,7 +169,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
                     href={`tel:${privateData.iceContact.phone.replace(/\s+/g, '')}`}
                     className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:brightness-[1.05]"
                   >
-                    📞 Appeler
+                    <LKDVIcon name="telephone" size="1em" className="lkdv-icon-inline" /> Appeler
                   </a>
                 </div>
               </Card>
@@ -188,7 +189,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
             </div>
 
             <Button variant="secondary" fullWidth onClick={() => onLock(participant.id)}>
-              🔒 Re-verrouiller immédiatement
+              <LKDVIcon name="verrou" size="1em" className="lkdv-icon-inline" /> Re-verrouiller immédiatement
             </Button>
           </div>
         )}

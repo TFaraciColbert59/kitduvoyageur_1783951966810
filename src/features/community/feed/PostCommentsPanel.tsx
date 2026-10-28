@@ -10,6 +10,7 @@ import { encodeMention, renderMentions } from './mention-utils';
 import { timeAgo } from './feed-utils';
 import type { FeedPost } from './useCommunityFeed';
 import type { CommunityAuthReason } from './usePostInteractions';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface PostCommentsPanelProps {
   post: FeedPost;
@@ -126,7 +127,7 @@ export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCom
                 aria-label="J'aime ce commentaire"
                 aria-pressed={comment.userLiked}
               >
-                ♥ {comment.likes > 0 ? comment.likes : ''}
+                <LKDVIcon name="favoris" size="1em" className="lkdv-icon-inline" /> {comment.likes > 0 ? comment.likes : ''}
               </button>
               <button type="button" onClick={() => { setReplyTo({ id: comment.id, name: comment.author?.full_name || 'Voyageur' }); inputRef.current?.focus(); }}>
                 Répondre
@@ -141,7 +142,7 @@ export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCom
               )}
             </>
           ) : (
-            <span className="text-[10px] text-[#56665D]">{comment.likes > 0 ? `♥ ${comment.likes}` : ''}</span>
+            <span className="text-[10px] text-[#56665D]">{comment.likes > 0 ? <><LKDVIcon name="favoris" size="1em" className="lkdv-icon-inline" /> {comment.likes}</> : ''}</span>
           )}
         </div>
         {comment.replies.length > 0 ? (

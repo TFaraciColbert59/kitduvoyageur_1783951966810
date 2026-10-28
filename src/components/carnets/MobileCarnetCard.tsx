@@ -60,12 +60,12 @@ export default function MobileCarnetCard({
 
         <div className="absolute left-[var(--space-2)] right-[var(--space-2)] top-[var(--space-2)] z-10 flex items-center justify-between">
           <Badge className="border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-mono font-semibold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">
-            📍 {carnet.destination || 'Massif & Randonnée'}
+            <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {carnet.destination || 'Massif & Randonnée'}
           </Badge>
 
           {carnet.route_rating !== undefined && (
             <Badge className="border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-mono font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">
-              ★ {carnet.route_rating}/10
+              <LKDVIcon name="points" size="1em" className="lkdv-icon-inline" /> {carnet.route_rating}/10
             </Badge>
           )}
         </div>
@@ -92,7 +92,7 @@ export default function MobileCarnetCard({
             {carnet.author?.avatar_url ? (
               <img src={carnet.author.avatar_url} alt={carnet.author?.full_name || 'Auteur du carnet'} className="h-full w-full object-cover" />
             ) : (
-              carnet.author?.full_name?.charAt(0) || '👤'
+              carnet.author?.full_name?.charAt(0) || <><LKDVIcon name="profil" size="1em" className="lkdv-icon-inline" /></>
             )}
           </span>
           <span className="min-w-0 flex-1">

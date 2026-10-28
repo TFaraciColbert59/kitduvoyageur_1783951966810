@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** Un tampon de passeport normalisé depuis les massifs réellement visités. */
 export interface StampTileData {
@@ -41,8 +42,7 @@ export function StampTile({ stamp }: { stamp: StampTileData }) {
           aria-label="Lieu vérifié"
           className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] text-[9px] font-bold text-white"
         >
-          ✓
-        </span>
+          <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
       ) : null}
 
       <span

@@ -5,6 +5,7 @@ import MobileClubCard, { ClubCardItem } from '@/components/clubs/MobileClubCard'
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { Button, Card, Chip, EmptyState, SearchField, SkeletonClubCard, Spinner } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface MobileClubsHubProps {
   clubs: ClubCardItem[];
@@ -109,7 +110,7 @@ export default function MobileClubsHub({
               triggerHaptic('selection');
               onOpenCreateModal();
             }}
-            icon={<span aria-hidden>➕</span>}
+            icon={<span aria-hidden><LKDVIcon name="ajouter" size="1em" className="lkdv-icon-inline" /></span>}
             className="shrink-0"
           >
             Créer
@@ -148,7 +149,7 @@ export default function MobileClubsHub({
         ) : filteredClubs.length === 0 ? (
           <Card className="p-[var(--space-6)]">
             <EmptyState
-              icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>🏕️</span>}
+              icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden><LKDVIcon name="camping" size="1em" className="lkdv-icon-inline" /></span>}
               title={tab === 'mes-clubs' ? 'Vous n’avez rejoint aucun club' : 'Aucun club trouvé'}
               description={
                 tab === 'mes-clubs'

@@ -27,7 +27,7 @@ export default function TabsGroupe({ activeTab, setActiveTab, data, layoutVarian
         <div className="shrink-0 space-y-[var(--space-2)]">
           <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-xl" aria-hidden>
-              ⛺
+              <LKDVIcon name="tente" size="1em" className="lkdv-icon-inline" />
             </div>
             <div className="min-w-0 flex-1">
               <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">

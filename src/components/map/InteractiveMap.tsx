@@ -24,6 +24,7 @@ import {
 } from '@/components/ui';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
 import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIconHtml } from '@/components/ui/lkdvIconHtml';
 
 interface MapTrail {
   id: string;
@@ -449,7 +450,7 @@ export default function InteractiveMap() {
                justify-content: center;
                box-shadow: 0 2px 6px rgba(51,65,85,0.3);
                border: 2px solid #E4DED3;
-             "><span aria-hidden="true" style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: 9px;">📍</span><span>${count}</span></div>
+             "><span aria-hidden="true" style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: 9px;">${lkdvIconHtml('point_interet')}</span><span>${count}</span></div>
           `;
           return L.divIcon({ html, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
         }
@@ -545,34 +546,34 @@ export default function InteractiveMap() {
       filteredPois.forEach(poi => {
         const isSelected = poi.id === selectedPoiId;
         
-        let emoji = '👁️';
+        let emoji = lkdvIconHtml('vue');
         let bgColor = '#7C3AED';
         
         switch (poi.category) {
           case 'refuge':
-            emoji = '🏡';
+            emoji = lkdvIconHtml('refuge');
             bgColor = '#17402C';
             break;
           case 'summit':
           case 'col':
-            emoji = '⛰️';
+            emoji = lkdvIconHtml('montagne');
             bgColor = '#334155';
             break;
           case 'water':
-            emoji = '💧';
+            emoji = lkdvIconHtml('eau_potable');
             bgColor = '#0C4A6E';
             break;
           case 'waterfall':
-            emoji = '🌊';
+            emoji = lkdvIconHtml('cascade');
             bgColor = '#0EA5E9';
             break;
           case 'camping':
-            emoji = '⛺';
+            emoji = lkdvIconHtml('tente');
             bgColor = '#16A34A';
             break;
           case 'viewpoint':
           default:
-            emoji = '👁️';
+            emoji = lkdvIconHtml('vue');
             bgColor = '#7C3AED';
             break;
         }
@@ -580,7 +581,7 @@ export default function InteractiveMap() {
         const poiIcon = L.divIcon({
           html: `
             <div style="
-              background-color: ${bgColor};
+              background-color: ${bgColor}; color: #fff;
               width: ${isSelected ? '34px' : '28px'};
               height: ${isSelected ? '34px' : '28px'};
               border-radius: 50%;
@@ -605,11 +606,11 @@ export default function InteractiveMap() {
         
         // Rich Popup info
         const categoryLabel = poi.category === 'refuge' ? 'Refuge' : poi.category === 'summit' ? 'Sommet' : poi.category === 'water' ? 'Point d\'eau' : poi.category === 'viewpoint' ? 'Panorama' : poi.category === 'camping' ? 'Bivouac' : 'Point d\'intérêt';
-        const altitudeStr = poi.altitude_m ? `<div style="font-size: 11px; font-weight: bold; color: #17402C; margin-top: 2px;">📈 Altitude : ${poi.altitude_m} m</div>` : '';
-        const regionStr = poi.region ? `<div style="font-size: 10px; color: #5A7064;">📍 ${poi.region}${poi.country ? `, ${poi.country}` : ''}</div>` : '';
+        const altitudeStr = poi.altitude_m ? `<div style="font-size: 11px; font-weight: bold; color: #17402C; margin-top: 2px;">${lkdvIconHtml('denivele')} Altitude : ${poi.altitude_m} m</div>` : '';
+        const regionStr = poi.region ? `<div style="font-size: 10px; color: #5A7064;">${lkdvIconHtml('point_interet')} ${poi.region}${poi.country ? `, ${poi.country}` : ''}</div>` : '';
         const descStr = poi.details ? `<div style="font-size: 11px; color: #365233; margin-top: 3px;">${poi.details}</div>` : '';
         const potableBadge = poi.category === 'water' && poi.is_potable !== null && poi.is_potable !== undefined
-          ? `<div style="font-size: 10px; font-weight: bold; color: ${poi.is_potable ? '#15803D' : '#B45309'}; margin-top: 2px;">${poi.is_potable ? '✅ Eau potable' : '⚠️ Non traitée / Filtrer'}</div>`
+          ? `<div style="font-size: 10px; font-weight: bold; color: ${poi.is_potable ? '#15803D' : '#B45309'}; margin-top: 2px;">${poi.is_potable ? `${lkdvIconHtml('valider')} Eau potable` : `${lkdvIconHtml('alerte')} Non traitée / Filtrer`}</div>`
           : '';
 
         marker.bindPopup(`
@@ -681,7 +682,7 @@ const LINK_ICON =
               Carte Aventure
             </h2>
             <p className="flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-secondary)]">
-              <span aria-hidden="true">📍</span>
+              <span aria-hidden="true"><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /></span>
               <span>{locationLabel}</span>
             </p>
           </div>
@@ -692,7 +693,7 @@ const LINK_ICON =
               onClick={handleRecenter}
               title="Recentrer sur ma position (10 km)"
             >
-              🎯 Ma zone
+              <LKDVIcon name="recentrer" size="1em" className="lkdv-icon-inline" /> Ma zone
             </Button>
           </div>
         </div>
@@ -733,22 +734,22 @@ const LINK_ICON =
           </div>
           <div className="flex flex-wrap gap-2">
             <Chip selected={showTrails} onClick={() => setShowTrails((v) => !v)}>
-              🗺️ Sentiers
+              <LKDVIcon name="carte" size="1em" className="lkdv-icon-inline" /> Sentiers
             </Chip>
             <Chip selected={showRefuges} onClick={() => setShowRefuges((v) => !v)}>
-              🏡 Refuges
+              <LKDVIcon name="gite" size="1em" className="lkdv-icon-inline" /> Refuges
             </Chip>
             <Chip selected={showSummits} onClick={() => setShowSummits((v) => !v)}>
-              ⛰️ Sommets
+              <LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /> Sommets
             </Chip>
             <Chip selected={showWaterPoints} onClick={() => setShowWaterPoints((v) => !v)}>
-              💧 Points d'eau
+              <LKDVIcon name="eau_potable" size="1em" className="lkdv-icon-inline" /> Points d'eau
             </Chip>
             <Chip selected={showViewpoints} onClick={() => setShowViewpoints((v) => !v)}>
-              👁️ Panoramas
+              <LKDVIcon name="vue" size="1em" className="lkdv-icon-inline" /> Panoramas
             </Chip>
             <Chip selected={showCampings} onClick={() => setShowCampings((v) => !v)}>
-              ⛺ Bivouacs
+              <LKDVIcon name="tente" size="1em" className="lkdv-icon-inline" /> Bivouacs
             </Chip>
           </div>
         </div>
@@ -788,13 +789,12 @@ const LINK_ICON =
           filteredTrails.map((t) => {
             const isSelected = t.id === selectedTrailId;
             const diffColor = getDifficultyColor(t.difficulty);
+            const ico = (name: 'distance' | 'duree' | 'denivele') => <LKDVIcon name={name} size="1em" className="lkdv-icon-inline" />;
             const stats = [
-              t.distance_km ? `📏 ${Number(t.distance_km).toFixed(1)} km` : '📏 N/A',
-              t.duration_hours ? `⏱️ ${t.duration_hours}h` : null,
-              t.elevation_gain ? `📈 +${t.elevation_gain}m` : null,
-            ]
-              .filter(Boolean)
-              .join('  ·  ');
+              <span key="d">{ico('distance')} {t.distance_km ? `${Number(t.distance_km).toFixed(1)} km` : 'N/A'}</span>,
+              t.duration_hours ? <span key="t">{ico('duree')} {t.duration_hours}h</span> : null,
+              t.elevation_gain ? <span key="e">{ico('denivele')} +{t.elevation_gain}m</span> : null,
+            ].filter(Boolean);
             return (
               <ListItem
                 key={t.id}
@@ -802,7 +802,7 @@ const LINK_ICON =
                 selected={isSelected}
                 onClick={() => handleSelectTrail(t)}
                 title={t.name}
-                subtitle={stats}
+                subtitle={stats.map((s, i) => (i === 0 ? s : <React.Fragment key={i}>{'  ·  '}{s}</React.Fragment>))}
                 metadata={
                   <Badge
                     className="border-transparent uppercase tracking-wider"
@@ -854,7 +854,7 @@ const LINK_ICON =
               className="min-h-[38px] px-4 shadow-lg"
             >
               <span className={isSearchingZone ? 'inline-flex' : 'inline-flex'}>
-                {isSearchingZone ? <Spinner size="xs" tone="inverted" label="" /> : '🔄'}
+                {isSearchingZone ? <Spinner size="xs" tone="inverted" label="" /> : <><LKDVIcon name="actualiser" size="1em" className="lkdv-icon-inline" /></>}
               </span>
               <span>{isSearchingZone ? 'Chargement en cours…' : 'Rechercher dans cette zone'}</span>
             </Button>
@@ -872,7 +872,7 @@ const LINK_ICON =
               className="min-h-[42px] px-4 shadow-lg"
               aria-label="Ouvrir les filtres"
             >
-              <span aria-hidden="true">🔍</span>
+              <span aria-hidden="true"><LKDVIcon name="recherche" size="1em" className="lkdv-icon-inline" /></span>
               <span>Filtres</span>
               <Badge tone="stone">{filteredPois.length}</Badge>
             </Button>
@@ -936,8 +936,7 @@ const LINK_ICON =
               aria-label="Zoom avant"
               className="font-bold"
             >
-              +
-            </IconButton>
+              <LKDVIcon name="ajouter" size="1em" className="lkdv-icon-inline" /></IconButton>
             <Divider orientation="vertical" spacing="none" className="h-px w-4" />
             <IconButton
               variant="glass"
@@ -1005,7 +1004,7 @@ const LINK_ICON =
                   rel="noopener noreferrer"
                   className={LINK_PILL_PRIMARY}
                 >
-                  <span aria-hidden="true">🧭</span>
+                  <span aria-hidden="true"><LKDVIcon name="boussole" size="1em" className="lkdv-icon-inline" /></span>
                   <span>Point de départ</span>
                 </a>
                 <Link
@@ -1036,14 +1035,14 @@ const LINK_ICON =
 
               <div className="mb-1 flex flex-wrap items-center gap-2">
                 <Badge tone="sage" className="font-mono uppercase tracking-wider">
-                  {selectedPoi.category === 'refuge' ? '🏡 Refuge' : selectedPoi.category === 'summit' ? '⛰️ Sommet' : selectedPoi.category === 'water' ? '💧 Point d\'eau' : selectedPoi.category === 'viewpoint' ? '👁️ Panorama' : selectedPoi.category === 'camping' ? '⛺ Bivouac / Camping' : selectedPoi.category === 'waterfall' ? '🌊 Cascade' : '⛰️ Col'}
+                  {selectedPoi.category === 'refuge' ? <><LKDVIcon name="gite" size="1em" className="lkdv-icon-inline" /> Refuge</> : selectedPoi.category === 'summit' ? <><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /> Sommet</> : selectedPoi.category === 'water' ? <><LKDVIcon name="eau_potable" size="1em" className="lkdv-icon-inline" />{" Point d'eau"}</> : selectedPoi.category === 'viewpoint' ? <><LKDVIcon name="vue" size="1em" className="lkdv-icon-inline" /> Panorama</> : selectedPoi.category === 'camping' ? <><LKDVIcon name="tente" size="1em" className="lkdv-icon-inline" /> Bivouac / Camping</> : selectedPoi.category === 'waterfall' ? <><LKDVIcon name="riviere" size="1em" className="lkdv-icon-inline" /> Cascade</> : <><LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /> Col</>}
                 </Badge>
                 {selectedPoi.is_verified && (
                   <Badge tone="info" className="font-mono">Vérifié ✓</Badge>
                 )}
                 {selectedPoi.altitude_m && (
                   <Badge tone="stone" className="font-mono">
-                    📈 {selectedPoi.altitude_m} m
+                    <LKDVIcon name="denivele" size="1em" className="lkdv-icon-inline" /> {selectedPoi.altitude_m} m
                   </Badge>
                 )}
               </div>
@@ -1055,7 +1054,7 @@ const LINK_ICON =
               {/* Geographical Massif / Region context */}
               {(selectedPoi.massif || selectedPoi.region) && (
                 <p className="mb-2 text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)]">
-                  📍 {[selectedPoi.massif, selectedPoi.region, selectedPoi.country].filter(Boolean).join(' · ')}
+                  <LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> {[selectedPoi.massif, selectedPoi.region, selectedPoi.country].filter(Boolean).join(' · ')}
                 </p>
               )}
 
@@ -1088,7 +1087,7 @@ const LINK_ICON =
                   rel="noopener noreferrer"
                   className={LINK_PILL_PRIMARY}
                 >
-                  <span aria-hidden="true">🧭</span>
+                  <span aria-hidden="true"><LKDVIcon name="boussole" size="1em" className="lkdv-icon-inline" /></span>
                   <span>Itinéraire GPS</span>
                 </a>
 
@@ -1099,7 +1098,7 @@ const LINK_ICON =
                     title="Appeler"
                     aria-label="Appeler"
                   >
-                    <span aria-hidden="true">📞</span>
+                    <span aria-hidden="true"><LKDVIcon name="telephone" size="1em" className="lkdv-icon-inline" /></span>
                   </a>
                 )}
 
@@ -1112,7 +1111,7 @@ const LINK_ICON =
                     title="Site web officiel"
                     aria-label="Site web officiel"
                   >
-                    <span aria-hidden="true">🌐</span>
+                    <span aria-hidden="true"><LKDVIcon name="monde" size="1em" className="lkdv-icon-inline" /></span>
                   </a>
                 )}
               </div>

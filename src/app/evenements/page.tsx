@@ -150,10 +150,10 @@ function EventDetailModal({
           {/* Key stats */}
           <div className="grid grid-cols-4 divide-x divide-border border-b border-border">
             {[
-              { label: 'Date', value: event.event_date ? new Date(event.event_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—', icon: '📅' },
-              { label: 'Durée', value: event.duration || '—', icon: '⏱️' },
-              { label: 'Places', value: `${event.current_participants}/${event.max_participants}`, icon: '👥' },
-              { label: 'Cagnotte', value: `${event.shared_kitty}€`, icon: '💰' },
+              { label: 'Date', value: event.event_date ? new Date(event.event_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—', icon: <LKDVIcon name="calendrier" size="1em" className="lkdv-icon-inline" /> },
+              { label: 'Durée', value: event.duration || '—', icon: <LKDVIcon name="duree" size="1em" className="lkdv-icon-inline" /> },
+              { label: 'Places', value: `${event.current_participants}/${event.max_participants}`, icon: <LKDVIcon name="communaute" size="1em" className="lkdv-icon-inline" /> },
+              { label: 'Cagnotte', value: `${event.shared_kitty}€`, icon: <LKDVIcon name="budget" size="1em" className="lkdv-icon-inline" /> },
             ].map((s) => (
               <div key={s.label} className="p-4 text-center">
                 <p className="text-base mb-0.5">{s.icon}</p>
@@ -185,12 +185,12 @@ function EventDetailModal({
             {/* Date & location */}
             <div className="grid grid-cols-2 gap-3">
               <div className="p-4 glass-sub-card rounded-[var(--lkv-radius-md)]">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1.5">📅 Date</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1.5"><LKDVIcon name="calendrier" size="1em" className="lkdv-icon-inline" /> Date</p>
                 <p className="font-700 text-foreground text-sm">{event.event_date ? formatDate(event.event_date) : '—'}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{event.duration}</p>
               </div>
               <div className="p-4 glass-sub-card rounded-[var(--lkv-radius-md)]">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1.5">📍 Lieu</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1.5"><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /> Lieu</p>
                 <p className="font-700 text-foreground text-sm">{event.location}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{event.country}</p>
               </div>
@@ -681,10 +681,10 @@ export default function EvenementsPage() {
           <div className="flex items-center gap-1 py-3 overflow-x-auto scrollbar-hide">
             {[
               { id: 'all', label: 'Toutes les sorties' },
-              { id: 'rando', label: '🥾 Randonnée' },
-              { id: 'bushcraft', label: '🪓 Bushcraft' },
-              { id: 'vanlife', label: '🚐 Vanlife' },
-              { id: 'alpinisme', label: '⛏️ Alpinisme' },
+              { id: 'rando', label: <><LKDVIcon name="randonnee" size="1em" className="lkdv-icon-inline" /> Randonnée</> },
+              { id: 'bushcraft', label: <><LKDVIcon name="feu" size="1em" className="lkdv-icon-inline" /> Bushcraft</> },
+              { id: 'vanlife', label: <><LKDVIcon name="van" size="1em" className="lkdv-icon-inline" /> Vanlife</> },
+              { id: 'alpinisme', label: <><LKDVIcon name="alpinisme" size="1em" className="lkdv-icon-inline" /> Alpinisme</> },
             ].map((f) => (
               <button
                 key={f.id}
@@ -785,10 +785,10 @@ export default function EvenementsPage() {
       <div className="scrollbar-hide mb-[var(--space-4)] flex gap-1.5 overflow-x-auto pb-[var(--space-2)]">
         {[
           { id: 'all', label: 'Toutes' },
-          { id: 'rando', label: '🥾 Rando' },
-          { id: 'bushcraft', label: '🪓 Bushcraft' },
-          { id: 'vanlife', label: '🚐 Vanlife' },
-          { id: 'alpinisme', label: '⛏️ Alpi' },
+          { id: 'rando', label: <><LKDVIcon name="randonnee" size="1em" className="lkdv-icon-inline" /> Rando</> },
+          { id: 'bushcraft', label: <><LKDVIcon name="feu" size="1em" className="lkdv-icon-inline" /> Bushcraft</> },
+          { id: 'vanlife', label: <><LKDVIcon name="van" size="1em" className="lkdv-icon-inline" /> Vanlife</> },
+          { id: 'alpinisme', label: <><LKDVIcon name="alpinisme" size="1em" className="lkdv-icon-inline" /> Alpi</> },
         ].map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
             className={`glass-capsule-btn flex-shrink-0 text-xs font-bold ${filter === f.id ? 'primary' : ''}`}>
@@ -809,7 +809,7 @@ export default function EvenementsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="py-10 text-center text-[color:var(--lkv-text-secondary)]">
-          <p className="mb-[var(--space-2)] text-[36px]">📅</p>
+          <p className="mb-[var(--space-2)] text-[36px]"><LKDVIcon name="calendrier" size="1em" className="lkdv-icon-inline" /></p>
           <p className="mb-1 text-[16px] font-bold text-[color:var(--lkv-text-primary)]">Aucun evenement</p>
           <p className="text-[13px]">Soyez le premier a organiser une sortie !</p>
         </div>
@@ -868,11 +868,11 @@ export default function EvenementsPage() {
                   <div>
                     <label className="text-xs font-600 text-muted-foreground uppercase tracking-wide block mb-1.5">Type</label>
                     <select className="glass-input w-full" value={createForm.type} onChange={(e) => setCreateForm((f) => ({ ...f, type: e.target.value }))}>
-                      <option value="rando">🥾 Randonnée</option>
-                      <option value="bushcraft">🪓 Bushcraft</option>
-                      <option value="vanlife">🚐 Vanlife</option>
-                      <option value="alpinisme">⛏️ Alpinisme</option>
-                      <option value="photo">📷 Photo</option>
+                      <option value="rando">Randonnée</option>
+                      <option value="bushcraft">Bushcraft</option>
+                      <option value="vanlife">Vanlife</option>
+                      <option value="alpinisme">Alpinisme</option>
+                      <option value="photo">Photo</option>
                     </select>
                   </div>
                   <div>

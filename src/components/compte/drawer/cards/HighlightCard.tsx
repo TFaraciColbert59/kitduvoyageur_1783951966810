@@ -76,8 +76,7 @@ export function HighlightCard({
           </span>
 
           <span aria-hidden="true" className="shrink-0 text-lg text-[color:var(--label2)]">
-            ›
-          </span>
+            <LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" /></span>
         </button>
       </h4>
     </li>

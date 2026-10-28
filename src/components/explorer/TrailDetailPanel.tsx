@@ -522,7 +522,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
                   <ul className="flex flex-col gap-2">
                     {aiEnrichment.safetyTips.map((tip, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)] leading-snug">
-                        <span className="shrink-0 mt-0.5 text-[color:var(--lkv-warning)] font-bold">⚠️</span>
+                        <span className="shrink-0 mt-0.5 text-[color:var(--lkv-warning)] font-bold"><LKDVIcon name="alerte" size="1em" className="lkdv-icon-inline" /></span>
                         <span>{tip}</span>
                       </li>
                     ))}
@@ -607,7 +607,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
               {aiEnrichment.biodiversity && (
                 <Card variant="compact" className="flex flex-col gap-2 p-3.5">
                   <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
-                    <span>🌿</span>
+                    <span><LKDVIcon name="flore" size="1em" className="lkdv-icon-inline" /></span>
                     <span>Faune, Flore & Écosystème</span>
                   </div>
                   <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)] leading-relaxed">
@@ -666,7 +666,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
                   <div className="flex flex-col">
                     <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Type de tracé</span>
                     <span className="font-semibold text-[color:var(--lkv-text-primary)]">
-                      {trail.roundtrip ? '🔄 Boucle' : '➡️ Aller simple'}
+                      {trail.roundtrip ? <><LKDVIcon name="actualiser" size="1em" className="lkdv-icon-inline" /> Boucle</> : <><LKDVIcon name="suivant" size="1em" className="lkdv-icon-inline" /> Aller simple</>}
                     </span>
                   </div>
                 )}

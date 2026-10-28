@@ -154,7 +154,7 @@ export default function CommentsSheet({
     >
       {/* Header */}
       <div className="lkdv-social-comments-header flex items-center gap-[var(--space-2)] border-b border-[color:var(--lkv-border)] pb-[var(--space-3)]">
-        <span className="text-base">💬</span>
+        <span className="text-base"><LKDVIcon name="messages" size="1em" className="lkdv-icon-inline" /></span>
         <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold tracking-wide text-[color:var(--lkv-text-primary)]">
           {title}
         </h3>
@@ -201,7 +201,7 @@ export default function CommentsSheet({
                     {rootComment.author_avatar ? (
                       <img src={rootComment.author_avatar} alt={rootComment.author_name} className="size-full object-cover" />
                     ) : (
-                      rootComment.author_name?.charAt(0) || '👤'
+                      rootComment.author_name?.charAt(0) || <><LKDVIcon name="profil" size="1em" className="lkdv-icon-inline" /></>
                     )}
                   </a>
                   <div className="min-w-0 flex-1">
@@ -229,7 +229,7 @@ export default function CommentsSheet({
                         size="sm"
                         onClick={() => startReply(rootComment.id, rootComment.author_name)}
                       >
-                        ↩ Répondre
+                        <LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /> Répondre
                       </Button>
 
                       {currentUserId && rootComment.author_id === currentUserId && onDeleteComment && (
@@ -296,7 +296,7 @@ export default function CommentsSheet({
                             {reply.author_avatar ? (
                               <img src={reply.author_avatar} alt={reply.author_name} className="size-full object-cover" />
                             ) : (
-                              reply.author_name?.charAt(0) || '👤'
+                              reply.author_name?.charAt(0) || <><LKDVIcon name="profil" size="1em" className="lkdv-icon-inline" /></>
                             )}
                           </a>
                           <div className="min-w-0 flex-1">
@@ -324,7 +324,7 @@ export default function CommentsSheet({
                                 size="sm"
                                 onClick={() => startReply(rootComment.id, reply.author_name)}
                               >
-                                ↩ Répondre
+                                <LKDVIcon name="retour" size="1em" className="lkdv-icon-inline" /> Répondre
                               </Button>
 
                               {currentUserId && reply.author_id === currentUserId && onDeleteComment && (

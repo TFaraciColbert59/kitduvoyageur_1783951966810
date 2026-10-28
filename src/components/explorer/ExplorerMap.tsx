@@ -605,8 +605,7 @@ export default function ExplorerMap({
             aria-label="Zoom avant"
             className="font-bold"
           >
-            +
-          </IconButton>
+            <LKDVIcon name="ajouter" size="1em" className="lkdv-icon-inline" /></IconButton>
           <Divider orientation="vertical" spacing="none" className="h-px w-4" />
           <IconButton
             variant="glass"

@@ -128,14 +128,14 @@ export function FloatingGlassControls({
     reader.readAsText(file);
   };
 
-  const categoriesConfig: { id: WaypointCategory; label: string; icon: string }[] = [
-    { id: 'summit', label: 'Sommets', icon: '🏔️' },
-    { id: 'refuge', label: 'Refuges', icon: '🏡' },
-    { id: 'water', label: 'Points d’eau', icon: '💧' },
-    { id: 'pass', label: 'Cols & Brèches', icon: '🚩' },
-    { id: 'viewpoint', label: 'Panoramas', icon: '👁️' },
-    { id: 'weather', label: 'Météo', icon: '⛅' },
-    { id: 'photo', label: 'Photos', icon: '📸' },
+  const categoriesConfig: { id: WaypointCategory; label: string; icon: React.ReactNode }[] = [
+    { id: 'summit', label: 'Sommets', icon: <LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /> },
+    { id: 'refuge', label: 'Refuges', icon: <LKDVIcon name="gite" size="1em" className="lkdv-icon-inline" /> },
+    { id: 'water', label: 'Points d’eau', icon: <LKDVIcon name="eau_potable" size="1em" className="lkdv-icon-inline" /> },
+    { id: 'pass', label: 'Cols & Brèches', icon: <LKDVIcon name="signalement" size="1em" className="lkdv-icon-inline" /> },
+    { id: 'viewpoint', label: 'Panoramas', icon: <LKDVIcon name="vue" size="1em" className="lkdv-icon-inline" /> },
+    { id: 'weather', label: 'Météo', icon: <LKDVIcon name="meteo" size="1em" className="lkdv-icon-inline" /> },
+    { id: 'photo', label: 'Photos', icon: <LKDVIcon name="photo" size="1em" className="lkdv-icon-inline" /> },
   ];
 
   return (
@@ -157,7 +157,7 @@ export function FloatingGlassControls({
             }}
             className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl backdrop-blur-xl bg-white/90 dark:bg-stone-950/90 border border-white/60 dark:border-white/15 shadow-lg text-stone-900 dark:text-stone-100 active:scale-95 transition-all"
           >
-            <span className="text-base">🥾</span>
+            <span className="text-base"><LKDVIcon name="randonnee" size="1em" className="lkdv-icon-inline" /></span>
             <div className="text-left">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-stone-600 dark:text-stone-300">
                 {currentTrail.massif}
@@ -326,8 +326,7 @@ export function FloatingGlassControls({
                 title="Zoomer sur le relief"
                 className="w-9 h-11 flex items-center justify-center text-sm font-bold text-stone-900 dark:text-stone-100 hover:bg-stone-200/60 dark:hover:bg-stone-800/60 active:scale-95 transition-all"
               >
-                +
-              </button>
+                <LKDVIcon name="ajouter" size="1em" className="lkdv-icon-inline" /></button>
               <div className="w-px h-5 bg-stone-300 dark:bg-stone-700" />
               <button
                 onClick={() => {
@@ -354,7 +353,7 @@ export function FloatingGlassControls({
               title="Changer de fond de carte"
               className="w-11 h-11 rounded-2xl backdrop-blur-xl bg-white/90 dark:bg-stone-950/90 border border-white/60 dark:border-white/15 shadow-lg flex items-center justify-center text-stone-900 dark:text-stone-100 active:scale-95 transition-all"
             >
-              <span className="text-base">🗺️</span>
+              <span className="text-base"><LKDVIcon name="carte" size="1em" className="lkdv-icon-inline" /></span>
             </button>
 
             {/* Menu des fonds de carte */}
@@ -362,9 +361,9 @@ export function FloatingGlassControls({
               <div className="absolute right-0 mt-2 w-48 rounded-2xl backdrop-blur-2xl bg-white/95 dark:bg-stone-950/95 border border-white/60 dark:border-white/15 shadow-2xl p-2 z-30">
                 {(
                   [
-                    { id: 'satellite-esri', label: 'Satellite Esri', icon: '🛰️' },
+                    { id: 'satellite-esri', label: 'Satellite Esri', icon: <LKDVIcon name="satellite" size="1em" className="lkdv-icon-inline" /> },
                     { id: 'ign-ortho', label: 'IGN Ortho France', icon: '🇫🇷' },
-                    { id: 'topo-outdoor', label: 'Topo Outdoor', icon: '🏔️' },
+                    { id: 'topo-outdoor', label: 'Topo Outdoor', icon: <LKDVIcon name="montagne" size="1em" className="lkdv-icon-inline" /> },
                   ] as const
                 ).map((b) => (
                   <button
@@ -400,7 +399,7 @@ export function FloatingGlassControls({
               title="Filtrer les repères"
               className="w-11 h-11 rounded-2xl backdrop-blur-xl bg-white/90 dark:bg-stone-950/90 border border-white/60 dark:border-white/15 shadow-lg flex items-center justify-center text-stone-900 dark:text-stone-100 active:scale-95 transition-all"
             >
-              <span className="text-base">📍</span>
+              <span className="text-base"><LKDVIcon name="point_interet" size="1em" className="lkdv-icon-inline" /></span>
             </button>
 
             {filterMenuOpen && (
@@ -478,7 +477,7 @@ export function FloatingGlassControls({
                   className="h-11 px-3 rounded-2xl backdrop-blur-xl bg-stone-200/70 dark:bg-stone-800/70 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 shadow-md flex items-center gap-1.5 text-xs font-semibold"
                   title="Disponible pour exploration hors-ligne"
                 >
-                  <span>✓</span>
+                  <span><LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" /></span>
                   <span className="hidden sm:inline">Hors-ligne</span>
                 </button>
                 <button
@@ -489,8 +488,7 @@ export function FloatingGlassControls({
                   className="w-8 h-11 rounded-xl hover:bg-rose-500/20 text-stone-400 hover:text-rose-600 transition-colors flex items-center justify-center text-xs"
                   title="Supprimer la zone hors-ligne"
                 >
-                  ✕
-                </button>
+                  <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
               </div>
             ) : (
               <button

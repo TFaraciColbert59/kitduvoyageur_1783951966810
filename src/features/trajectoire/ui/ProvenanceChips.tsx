@@ -29,6 +29,7 @@ import {
 } from '@/features/trajectoire/domain/provenance';
 import type { CardLocation } from '@/features/trajectoire/domain/provenance';
 import type { TrajectoireSnapshot } from '@/features/trajectoire/domain/types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** Ton du chip, deduit de l'etat de resolution — pas du contenu. */
 const RESOLVABLE_TONE = 'info' as const;

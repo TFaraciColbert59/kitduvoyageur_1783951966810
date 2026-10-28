@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 /**
  * Contenu d'un état vide. La racine du slot porte déjà `lkdv-slot-state` et
@@ -10,8 +11,7 @@ export function EmptyState({ label }: { label: string }) {
   return (
     <>
       <span className="lkdv-slot-state-ico" aria-hidden="true">
-        ○
-      </span>
+        <EmptyCircle size="1em" /></span>
       <p>{label}</p>
     </>
   );

@@ -72,13 +72,13 @@ export class PwaWeatherNotifier {
 
     if (weatherData.isAlert || (weatherData.precipitationProbability && weatherData.precipitationProbability >= 0.75)) {
       this.sendAlert({
-        title: '⚡ Alerte Météo Randonnée',
+        title: 'Alerte Météo Randonnée',
         body: `Risque élevé de pluie (${Math.round((weatherData.precipitationProbability || 0.8) * 100)}%). Pensez à abriter votre équipement.`,
         tag: 'rain-alert',
       });
     } else if (weatherData.windSpeedKmH && weatherData.windSpeedKmH > 55) {
       this.sendAlert({
-        title: '💨 Alerte Vents Forts en Altitude',
+        title: 'Alerte Vents Forts en Altitude',
         body: `Raffales détectées à ${Math.round(weatherData.windSpeedKmH)} km/h sur votre secteur. Soyez prudent sur les crêtes.`,
         tag: 'wind-alert',
       });

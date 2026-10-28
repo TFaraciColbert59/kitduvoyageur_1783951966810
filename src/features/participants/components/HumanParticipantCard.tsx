@@ -52,7 +52,7 @@ export const HumanParticipantCard: React.FC<HumanParticipantCardProps> = ({
                 <Badge tone={role.tone}>{role.label}</Badge>
               </div>
               <span className="font-mono text-[11px] text-[color:var(--lkv-text-muted)]">
-                🎒 Sac : {publicData.packWeightKg} kg · Forme : {publicData.fitnessScore}%
+                <LKDVIcon name="sac" size="1em" className="lkdv-icon-inline" /> Sac : {publicData.packWeightKg} kg · Forme : {publicData.fitnessScore}%
               </span>
             </div>
           </div>

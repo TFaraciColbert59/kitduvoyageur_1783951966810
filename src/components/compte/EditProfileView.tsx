@@ -632,10 +632,10 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                     <Chip
                       key={lang}
                       onClick={() => toggleArrayItem('languages', lang)}
-                      icon={<span aria-hidden="true">✕</span>}
+                      icon={<span aria-hidden="true"><LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></span>}
                       className="font-bold"
                     >
-                      ✓ {lang}
+                      <LKDVIcon name="valider" size="1em" className="lkdv-icon-inline" />{lang}
                     </Chip>
                   ))}
                 </div>

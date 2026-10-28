@@ -25,6 +25,7 @@ import { Carte3DMap } from './Carte3DMap';
 import { ElevationTimelineScrubber } from './ElevationTimelineScrubber';
 import { FloatingGlassControls } from './FloatingGlassControls';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Carte3DViewProps {
   initialTrailId?: string;
@@ -401,7 +402,7 @@ export function Carte3DView({ initialTrailId }: Carte3DViewProps) {
       {isDraggingFile && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md border-4 border-dashed border-stone-400 p-6 pointer-events-none animate-in fade-in duration-200">
           <div className="text-center text-white">
-            <div className="text-5xl mb-3 animate-bounce">🥾</div>
+            <div className="text-5xl mb-3 animate-bounce"><LKDVIcon name="randonnee" size="1em" className="lkdv-icon-inline" /></div>
             <div className="text-xl font-bold">Déposez votre tracé GPX</div>
             <p className="text-sm text-stone-300 mt-1">
               Rendu instantané en relief 3D et drapage satellite

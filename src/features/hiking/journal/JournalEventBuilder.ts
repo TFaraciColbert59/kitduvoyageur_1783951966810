@@ -43,7 +43,7 @@ export class JournalEventBuilder {
       longitude: pos.longitude,
       altitudeM: pos.altitude != null ? Math.round(pos.altitude) : null,
       distanceKm: 0,
-      title: '🥾 Départ de la randonnée',
+      title: 'Départ de la randonnée',
       description: 'Début de la trace GPS',
       weather: weather || null,
       isAutomatic: true,
@@ -68,7 +68,7 @@ export class JournalEventBuilder {
       longitude: pos.longitude,
       altitudeM: pos.altitude != null ? Math.round(pos.altitude) : null,
       distanceKm: totalDistanceKm,
-      title: '🏁 Fin de la randonnée',
+      title: 'Fin de la randonnée',
       description: `Parcours de ${totalDistanceKm.toFixed(1)} km effectué en ${mins} min.`,
       weather: weather || null,
       isAutomatic: true,
@@ -93,7 +93,7 @@ export class JournalEventBuilder {
       longitude: pos.longitude,
       altitudeM: pos.altitude != null ? Math.round(pos.altitude) : null,
       distanceKm: currentDistanceKm,
-      title: isSummit ? `🏔️ Sommet atteint : ${poi.name}` : `📍 Point d'intérêt : ${poi.name}`,
+      title: isSummit ? `Sommet atteint : ${poi.name}` : `Point d'intérêt : ${poi.name}`,
       description: poi.category ? `Catégorie : ${poi.category}` : undefined,
       weather: weather || null,
       isAutomatic: true,
@@ -112,7 +112,7 @@ export class JournalEventBuilder {
       longitude: pos.longitude,
       altitudeM: pos.altitude != null ? Math.round(pos.altitude) : null,
       distanceKm: currentDistanceKm,
-      title: '⏸️ Pause sur le parcours',
+      title: 'Pause sur le parcours',
       description: 'Halte et repos',
       isAutomatic: true,
     };
@@ -131,10 +131,10 @@ export class JournalEventBuilder {
     weather?: WeatherSnapshot | null
   ): HikingJournalEvent {
     const titleMap: Record<string, string> = {
-      PHOTO: '📸 Photo capturée',
-      VIDEO: '🎥 Vidéo capturée',
-      VOICE_NOTE: '🎙️ Note vocale',
-      TEXT_NOTE: '📝 Note de carnet',
+      PHOTO: 'Photo capturée',
+      VIDEO: 'Vidéo capturée',
+      VOICE_NOTE: 'Note vocale',
+      TEXT_NOTE: 'Note de carnet',
     };
 
     return {

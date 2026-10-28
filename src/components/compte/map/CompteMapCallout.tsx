@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { MapCarnet, MapMassif, MapPoi, MapTrack } from '@/features/compte/map/types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type Base = { onOpen: (id: string) => void; onClose: () => void };
 
@@ -86,8 +87,7 @@ export function CompteMapCallout(props: Props) {
         aria-label="Fermer"
         onClick={props.onClose}
       >
-        ×
-      </button>
+        <LKDVIcon name="fermer" size="1em" className="lkdv-icon-inline" /></button>
       <b>{title}</b>
       {props.kind === 'outing' && props.data.verified ? (
         <span className="lkdv-map-callout-badge">Trace GPS vérifiée</span>
