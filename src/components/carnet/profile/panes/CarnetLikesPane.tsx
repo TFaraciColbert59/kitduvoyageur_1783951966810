@@ -6,6 +6,7 @@ import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { CarnetField } from '../CarnetField';
 import { CarnetEmpty } from '../CarnetStates';
 import { CarnetSubCapsule } from '../CarnetSubCapsule';
+import { groupsOfThree } from '../groups';
 
 export interface CarnetLikesPaneProps {
   detail: CarnetDetail;
@@ -49,6 +50,8 @@ export function CarnetLikesPane({ detail, currentUserId: _currentUserId, like }:
     () => (filter ? detail.likers.filter((liker) => liker.reaction === filter) : detail.likers),
     [detail.likers, filter],
   );
+  /* Trois réactions par groupe, 20 px d'air entre deux groupes. */
+  const likerGroups = useMemo(() => groupsOfThree(likers), [likers]);
   const onFilterChange = useCallback(
     (id: string) => setFilter((current) => (current === id ? '' : id)),
     [],
@@ -90,21 +93,25 @@ export function CarnetLikesPane({ detail, currentUserId: _currentUserId, like }:
         <CarnetEmpty icon={<Icon name="heart" size={32} aria-hidden="true" />} label="Aucune réaction" />
       ) : (
         <div className="ckp-likers">
-          {likers.map((liker) => (
-            <div className="ckp-liker" key={liker.id}>
-              {liker.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-                <img className="ckp-avatar" src={liker.avatarUrl} alt="" />
-              ) : (
-                <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
-                  {liker.name.charAt(0).toUpperCase()}
-                </span>
-              )}
-              <span className="ckp-liker-txt">
-                <b>{liker.name}</b>
-                <small>{liker.handle ? `@${liker.handle}` : '—'}</small>
-              </span>
-              <span className="ckp-liker-value">{REACTION_LABEL[liker.reaction] ?? liker.reaction}</span>
+          {likerGroups.map((group) => (
+            <div className="ckp-list-group" key={group[0]?.id ?? 'groupe'}>
+              {group.map((liker) => (
+                <div className="ckp-liker" key={liker.id}>
+                  {liker.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+                    <img className="ckp-avatar" src={liker.avatarUrl} alt="" aria-hidden="true" />
+                  ) : (
+                    <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
+                      {liker.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="ckp-liker-txt">
+                    <b>{liker.name}</b>
+                    <small>{liker.handle ? `@${liker.handle}` : '—'}</small>
+                  </span>
+                  <span className="ckp-liker-value">{REACTION_LABEL[liker.reaction] ?? liker.reaction}</span>
+                </div>
+              ))}
             </div>
           ))}
         </div>

@@ -13,6 +13,7 @@ import { CarnetField } from '../CarnetField';
 import { CarnetRollValue } from '../CarnetRollValue';
 import { CarnetDayRow } from './CarnetDayRow';
 import { useScrollCut } from '../useScrollCut';
+import { groupsOfThree } from '../groups';
 import {
   dailyBarHeights,
   documentedShare,
@@ -46,13 +47,6 @@ const TABS: CarnetSubCapsuleItem[] = CARNET_STATS_TABS.map((item) => ({
   label: item.label,
   icon: <Icon name={TAB_ICONS[item.id]} size={16} aria-hidden="true" />,
 }));
-
-/** Trois lignes au plus par groupe : la règle de densité de la feuille. */
-function chunk<T>(items: T[], size = 3): T[][] {
-  const groups: T[][] = [];
-  for (let index = 0; index < items.length; index += size) groups.push(items.slice(index, index + size));
-  return groups;
-}
 
 function number(value: number | null, suffix: string): string {
   if (value === null || !Number.isFinite(value) || value <= 0) return '—';
@@ -277,8 +271,10 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
 
   const distanceDays = stats.daysWithDistance;
   const elevationDays = stats.daysWithElevation;
-  const distanceGroups = useMemo(() => chunk(distanceDays), [distanceDays]);
-  const elevationGroups = useMemo(() => chunk(elevationDays), [elevationDays]);
+  const distanceGroups = useMemo(() => groupsOfThree(distanceDays), [distanceDays]);
+  const elevationGroups = useMemo(() => groupsOfThree(elevationDays), [elevationDays]);
+  /* Liste des jours : trois lignes par groupe, 20 px d'air entre deux. */
+  const dayGroups = useMemo(() => groupsOfThree(stats.days), [stats.days]);
 
   const changeTab = useCallback((id: string) => onTabChange(id as CarnetStatsTab), [onTabChange]);
 
@@ -570,10 +566,14 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
                 <CarnetField label="date" value={travel.date ?? ''} />
                 <CarnetField label="dates" value={detail.dateRange ?? ''} wide />
               </div>
-              {stats.days.length === 0 ? null : (
+              {dayGroups.length === 0 ? null : (
                 <div className="ckp-daylist">
-                  {stats.days.map(({ day, moments }) => (
-                    <CarnetDayRow key={day.id} day={day} moments={moments} />
+                  {dayGroups.map((group) => (
+                    <div className="ckp-list-group" key={group[0]?.day.id ?? 'groupe'}>
+                      {group.map(({ day, moments }) => (
+                        <CarnetDayRow key={day.id} day={day} moments={moments} />
+                      ))}
+                    </div>
                   ))}
                 </div>
               )}

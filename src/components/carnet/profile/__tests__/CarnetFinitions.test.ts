@@ -147,18 +147,17 @@ describe('Anatomie de la feuille', () => {
   });
 
   /* 3 / 4 / 5 — rythme 12 / 20 / 32, marges 16, une seule ligne de base. */
-  it('rythme vertical 12 / 20 / 32 et marges internes de 16 px', () => {
+  it('rythme 12 / 20 posé par `gap`, marges internes de 16 px', () => {
     expect(rule('.ckp-group {')).toMatch(/gap:\s*12px/);
-    expect(rule('.ckp-pane-body > * + \*,\n.ckp-pane-share > * + \*,\n.ckp-likes > * + \*,\n.ckp-manage > * + \* {')).toMatch(
-      /margin-top:\s*20px/,
-    );
+    expect(rule('.ckp-pane-body {')).toMatch(/gap:\s*20px/);
+    expect(rule('.ckp-pane-share,\n.ckp-likes,\n.ckp-manage {')).toMatch(/gap:\s*20px/);
     expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*16px 16px 64px/);
     expect(rule('.ckp-stats {')).toMatch(/padding:\s*0/);
   });
 
   /* 6 / 7 / 8 — 24 px avant la première donnée, 20 px entre blocs, 64 en bas. */
-  it('24 px avant le bloc héros, 20 px entre blocs, 64 px de réserve basse', () => {
-    expect(rule('.ckp-pane-body > .ckp-hero {')).toMatch(/margin-top:\s*24px/);
+  it('20 px sous le sous-sélecteur, 20 px entre blocs, 64 px de réserve basse', () => {
+    expect(rule('.ckp-stats-seg {')).toMatch(/margin:\s*0 0 20px/);
     expect(rule('.ckp-elev {')).toMatch(/margin:\s*20px 0 0/);
     expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*16px 16px 64px/);
   });
@@ -215,15 +214,17 @@ describe('Chiffre héros', () => {
 
 describe('Champs de donnée', () => {
   /* 15 / 23 / 26 — champ de 48 px, rayon 12, fond blanc .55, placeholder 46 %. */
-  it('champ 48 px, rayon 12, fond rgba(255,255,255,.55)', () => {
+  it('champ 48 px sans cadre, valeurs à droite dans 120 px', () => {
     const field = rule('.ckp-field {');
     expect(field).toMatch(/height:\s*48px/);
-    expect(field).toMatch(/border-radius:\s*12px/);
-    expect(field).toMatch(/background:\s*rgba\(255, 255, 255, \.55\)/);
-    expect(field).toMatch(/padding:\s*0 12px/);
+    expect(field).toMatch(/border:\s*0/);
+    expect(field).toMatch(/border-radius:\s*0/);
+    expect(field).toMatch(/background:\s*none/);
+    expect(field).toMatch(/box-shadow:\s*none/);
+    expect(field).toMatch(/padding:\s*0/);
     const label = rule('.ckp-field-label {');
     expect(label).toMatch(/font:\s*500 13px\/1\.42/);
-    expect(label).toMatch(/color:\s*#8A968D/);
+    expect(label).toMatch(/color:\s*#6B7A70/);
     expect(label).toMatch(/max-width:\s*46%/);
     expect(label).toMatch(/text-overflow:\s*ellipsis/);
     expect(label).toMatch(/text-transform:\s*none/);
@@ -240,11 +241,19 @@ describe('Champs de donnée', () => {
   });
 
   /* 17 / 19 — hairline 0,5 px inset, jamais sur la première ligne du groupe. */
-  it('hairline 0,5 px sur les listes, pas sur la première ligne', () => {
-    expect(rule('.ckp-liker {')).toMatch(/border-top:\s*\.5px solid rgba\(23, 43, 36, \.06\)/);
-    expect(rule('.ckp-likers > .ckp-liker:first-child {')).toMatch(/border-top:\s*0/);
-    expect(rule('.ckp-day {')).toMatch(/border-top:\s*\.5px solid rgba\(23, 43, 36, \.06\)/);
-    expect(rule('.ckp-day:first-child {')).toMatch(/border-top:\s*0/);
+  it('filet 0,5 px inséré de 16 px, uniquement entre deux lignes', () => {
+    /* Plus aucune bordure pleine : le filet est un pseudo-élément posé entre
+       deux lignes, donc jamais en tête ni en pied de groupe. */
+    /* Seul le voile de coupe du lot A garde un filet de bord : les lignes de
+       données n'en portent plus aucune. */
+    const flat = [...css.matchAll(/border-top:\s*\.5px solid rgba\(23, 43, 36, \.06\)/g)];
+    expect(flat).toHaveLength(1);
+    expect(css).toContain('.ckp-drawer-cut');
+    const hairline = rule('.ckp-field + .ckp-field::before,\n.ckp-liker + .ckp-liker::before');
+    expect(hairline).toMatch(/left:\s*16px/);
+    expect(hairline).toMatch(/right:\s*16px/);
+    expect(hairline).toMatch(/height:\s*\.5px/);
+    expect(hairline).toMatch(/background:\s*rgba\(23, 43, 36, \.06\)/);
   });
 
   /* 21 — icône de 16 px, 22 — aucun chevron. */
@@ -256,9 +265,9 @@ describe('Champs de donnée', () => {
   });
 
   /* 40 — erreur : bordure 1 px #C13B34, aucun bandeau. */
-  it('erreur : bordure de 1 px #C13B34 sur le champ', () => {
-    expect(rule('.ckp-field {')).toMatch(/border:\s*1px solid transparent/);
-    expect(rule('.ckp-field[data-error=\'true\'] {')).toMatch(/border-color:\s*#C13B34/);
+  it('erreur : liseré de 1 px #C13B34 sur le champ', () => {
+    expect(rule('.ckp-field {')).toMatch(/border:\s*0/);
+    expect(rule(".ckp-field[data-error='true'] {")).toMatch(/box-shadow:\s*inset 0 0 0 1px #C13B34/);
   });
 });
 
@@ -495,10 +504,10 @@ describe('Typographie — lot B', () => {
   });
 
   /* 15 — un lieu long s'ellipse au milieu : coupe à gauche, colonne intacte. */
-  it('ellipse au milieu : direction RTL et alignement à gauche', () => {
+  it('ellipse au milieu : direction RTL, valeur toujours à droite', () => {
     const mid = rule('.ckp-field--mid .ckp-field-value {');
     expect(mid).toMatch(/direction:\s*rtl/);
-    expect(mid).toMatch(/text-align:\s*left/);
+    expect(mid).toMatch(/text-align:\s*right/);
   });
 
   /* 16 — un seul accent : plus aucune couleur hors jetons dans la feuille. */
@@ -516,5 +525,57 @@ describe('Typographie — lot B', () => {
     };
     const offenders = hex.map(normalize).filter((value) => !allowed.has(value));
     expect(offenders).toEqual([]);
+  });
+});
+
+describe('Rythme — lot C', () => {
+  /* 17 — l'échelle est 4 / 8 / 12 / 20 / 32 : plus aucun 7 / 14 / 24 / 56 dans
+     un espacement (les rayons et les tailles de la carte ne bougent pas). */
+  it('échelle 4 / 8 / 12 / 20 / 32 : plus aucun 7 / 14 / 24 / 56', () => {
+    expect(rule('.ckp-card-scroll {')).toMatch(/gap:\s*8px/);
+    expect(rule('.ckp-card-scroll {')).toMatch(/padding:\s*8px 12px 64px/);
+    expect(rule('.ckp-day-pane {')).toMatch(/gap:\s*8px/);
+    expect(rule('.ckp-comment {')).toMatch(/padding:\s*12px 0/);
+    expect(rule('.ckp-liker {')).toMatch(/gap:\s*12px/);
+    const spacing = [...css.matchAll(/>\s*[^;{}]*\b(?:gap|margin|padding)[^;{}]*?\b(7|14|24|56)px/g)].map((hit) => hit[0]);
+    expect(spacing).toEqual([]);
+  });
+
+  /* 18 — toute ligne de donnée mesure 48 px, la colonne de valeurs 120 px. */
+  it('lignes de 48 px, colonne de valeurs fixe de 120 px', () => {
+    expect(rule('.ckp-field {')).toMatch(/height:\s*48px/);
+    expect(rule('.ckp-liker {')).toMatch(/min-height:\s*48px/);
+    expect(rule('.ckp-day-head {')).toMatch(/min-height:\s*48px/);
+    expect(rule('.ckp-row {')).toMatch(/min-height:\s*48px/);
+    expect(rule('.ckp-field-value {')).toMatch(/width:\s*120px/);
+    expect(rule('.ckp-liker-value {')).toMatch(/width:\s*120px/);
+    /* 60 + 8 + 60 = 128 px de colonne de valeurs pour la ligne de jour. */
+    expect(rule('.ckp-day-nums {')).toMatch(/grid-template-columns:\s*repeat\(2, 60px\)/);
+  });
+
+  /* 20 / 21 — trois lignes par groupe, 20 px d'air, filet seulement entre deux. */
+  it('groupes de trois lignes, 20 px d’air, filet seulement entre deux lignes', () => {
+    expect(rule('.ckp-list-group + .ckp-list-group {')).toMatch(/margin-top:\s*20px/);
+    expect(rule('.ckp-list-group {')).toMatch(/display:\s*flex/);
+    for (const selector of ['.ckp-likers {', '.ckp-comments-list {', '.ckp-daylist {', '.ckp-kit-list {']) {
+      expect(rule(selector)).toMatch(/flex-direction:\s*column/);
+    }
+  });
+
+  /* 22 / 23 — marges internes de 16 px, réserve basse de 64 px. */
+  it('marges internes 16 px et réserve basse 64 px', () => {
+    expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*16px 16px 64px/);
+    expect(rule('.ckp-page-pad--dense {')).toMatch(/padding:\s*0 0 64px/);
+  });
+
+  /* 24 — aucun cadre : ni champ, ni rangée, ni bloc encadré. */
+  it('aucun cadre : champ et rangée sans fond, sans ombre, sans rayon', () => {
+    for (const selector of ['.ckp-field {', '.ckp-row {']) {
+      const block = rule(selector);
+      expect(block).toMatch(/background:\s*none/);
+      expect(block).toMatch(/box-shadow:\s*none/);
+      expect(block).toMatch(/border-radius:\s*0/);
+    }
+    expect(css).not.toMatch(/\.ckp-species \{[^}]*background/);
   });
 });

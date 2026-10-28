@@ -92,8 +92,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-card-scroll {
   flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain;
-  display: flex; flex-direction: column; gap: 7px;
-  padding: 8px 12px 56px;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 8px 12px 64px;
   scrollbar-width: none;
   /* Le balayage horizontal des jours reste livré au JS : le navigateur ne
      garde que le défilement vertical de la carte. */
@@ -103,7 +103,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 /* Bloc balayé : toute la matière de la carte glisse d'un jour à l'autre.
    `flex: none` : le bloc ne se comprime jamais, c'est la carte qui défile. */
-.ckp-day-pane { display: flex; flex-direction: column; gap: 7px; flex: none; min-width: 0; }
+.ckp-day-pane { display: flex; flex-direction: column; gap: 8px; flex: none; min-width: 0; }
 /* Balayage d'un jour : 220 ms, courbe du Compte, 16 px de course — exactement
    la course d'une page du carrousel. La classe est reposée par le JS sur un
    nœud stable, jamais par un remontage. */
@@ -496,10 +496,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    12/500 à droite. Aucune pastille, aucun cadre. */
 .ckp-likers { display: flex; flex-direction: column; }
 .ckp-liker {
-  display: flex; align-items: center; gap: 10px; min-height: 48px;
-  border-top: .5px solid rgba(23, 43, 36, .06);
+  display: flex; align-items: center; gap: 12px; min-height: 48px;
 }
-.ckp-likers > .ckp-liker:first-child { border-top: 0; }
 .ckp-liker-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .ckp-liker-txt b { font: 500 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ckp-liker-txt small { color: #6B7A70; font: 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -588,8 +586,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-switch.is-on span { transform: translateX(16px); }
 
 /* Commentaire : nom + handle sur une ligne, texte 13/400, métadonnées dessous. */
-.ckp-comment { display: flex; gap: 9px; padding: 11px 0; }
-.ckp-comment + .ckp-comment { border-top: .5px solid rgba(23, 43, 36, .06); }
+.ckp-comment { display: flex; gap: 12px; padding: 12px 0; }
 .ckp-comment-body { min-width: 0; flex: 1; }
 .ckp-comment-head { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
 .ckp-comment-name {
@@ -627,12 +624,11 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    jamais un zéro. Le récit, la météo, la nuit et les moments restent sous la
    ligne de 56 px : aucune donnée ne quitte la fiche. */
 .ckp-daylist { display: flex; flex-direction: column; }
-.ckp-day { display: block; border-top: .5px solid rgba(23, 43, 36, .06); }
-.ckp-day:first-child { border-top: 0; }
-.ckp-day-head { display: flex; align-items: stretch; gap: 12px; min-height: 56px; }
+.ckp-day { display: block; }
+.ckp-day-head { display: flex; align-items: stretch; gap: 12px; min-height: 48px; }
 .ckp-day-rail { width: 22px; flex: none; display: flex; flex-direction: column; align-items: center; }
 .ckp-day-badge {
-  width: 22px; height: 22px; margin-top: 17px; flex: none;
+  width: 22px; height: 22px; margin-top: 13px; flex: none;
   display: grid; place-items: center; border-radius: 999px;
   background: rgba(23, 64, 44, .08); color: #17402c;
   font: 700 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums;
@@ -640,7 +636,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-day-line { flex: 1; width: 1px; min-height: 8px; background: rgba(23, 43, 36, .10); }
 .ckp-day:last-child .ckp-day-line { display: none; }
 .ckp-day-id { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: 8px 0; }
-.ckp-day-nums { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: center; }
+/* Colonne de valeurs fixe : 60 + 8 + 60 = 128 px, deux chiffres tabulaires
+   alignés à droite — la largeur ne bouge pas d'un jour à l'autre. */
+.ckp-day-nums { flex: none; display: grid; grid-template-columns: repeat(2, 60px); gap: 8px; align-items: center; }
 .ckp-day-nums b {
   text-align: right; color: #172B24;
   font: 500 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
@@ -657,8 +655,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-day-overnight { display: inline-flex; gap: 4px; margin-top: 4px; color: #6B7A70; font: 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
 .ckp-kit-list { display: flex; flex-direction: column; }
-.ckp-kit-row { display: flex; align-items: center; gap: 9px; min-height: 48px; border-top: .5px solid rgba(23, 43, 36, .06); }
-.ckp-kit-row:first-child { border-top: 0; }
+.ckp-kit-row { display: flex; align-items: center; gap: 12px; min-height: 48px; }
 .ckp-kit-dot { width: 10px; height: 10px; border-radius: 999px; flex: none; background: #17402c; }
 .ckp-kit-name { display: block; font: 500 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .ckp-kit-detail { display: block; color: #6B7A70; font: 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif); }
@@ -667,10 +664,10 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 .ckp-drop { display: grid; place-items: center; gap: 8px; padding: 18px; border-radius: 18px; border: 1px dashed rgba(23, 43, 36, .22); background: rgba(255, 255, 255, .35); text-align: center; }
 .ckp-drop p { margin: 0; color: #56665d; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-species { padding: 12px; border-radius: 18px; background: rgba(255, 255, 255, .55); box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .08); }
-.ckp-species b { display: block; font: 700 15px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-species i { display: block; color: #56665d; font: italic 400 10.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-species p { margin: 6px 0 0; font: 400 12.5px/1.5 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-species { padding: 0; }
+.ckp-species b { display: block; font: 500 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-species i { display: block; color: #6B7A70; font: italic 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-species p { margin: 8px 0 0; font: 500 13px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
 .ckp-more-anchor { position: relative; display: inline-flex; flex: none; }
 /* L'ancre est le `···` de la barre du haut : le menu s'ouvre vers le bas,
@@ -727,11 +724,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-dayinfo-moments { list-style: none; margin: 0 2px; padding: 0; display: flex; flex-direction: column; min-width: 0; }
 .ckp-dayinfo-moment {
   display: flex; align-items: center; gap: 8px; min-height: 22px;
-  border-top: .5px solid rgba(23, 43, 36, .06);
   color: #6B7A70; font: 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: 0;
 }
-.ckp-dayinfo-moment:first-child { border-top: 0; }
 .ckp-dayinfo-time {
   flex: none; width: 40px; color: #17402c; font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -845,21 +840,22 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-page-meta { padding: 0 1px; }
 
 /* --- Rangées des pages (Gérer, J’aime) ----------------------------------- */
+/* Rangée de liste : 48 px, aucun cadre — elle vit par son contenu et son
+   filet, comme les champs de la feuille. */
 .ckp-row {
-  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0;
-  min-height: 44px; padding: 7px 10px; border: 0; border-radius: 14px;
-  background: rgba(255, 255, 255, .42);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 0 0 .5px rgba(23, 43, 36, .08);
+  position: relative; display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0;
+  min-height: 48px; padding: 0; border: 0; border-radius: 0;
+  background: none; box-shadow: none;
   color: #172b24; text-align: left; cursor: pointer;
-  font: 400 11.5px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 500 13px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
 }
 /* Le libellé prend la place ; l'icône garde sa taille (masque ou vecteur). */
 .ckp-row > span:not([aria-hidden='true']) { flex: 1; min-width: 0; }
-.ckp-row b { display: block; color: #172b24; font: 600 12.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-row small { display: block; margin-top: 1px; color: #56665d; font: 500 10.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ckp-row b { display: block; color: #172b24; font: 500 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-row small { display: block; margin-top: 4px; color: #6B7A70; font: 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* `Icon` peint un masque dont la couleur vient de `currentColor`. */
 .ckp-row svg, .ckp-row > span[aria-hidden='true'] { flex: none; color: #56665d; }
-.ckp-row:active { transform: scale(.99); }
+.ckp-row:active { background-color: rgba(255, 255, 255, .55); }
 .ckp-row:disabled { opacity: .55; cursor: default; }
 .ckp-row--danger b, .ckp-row--danger svg, .ckp-row--danger > span[aria-hidden='true'] { color: #C13B34; }
 /* Le ♥ du carnet allumé : l'icône seule change de couleur, la rangée garde
@@ -867,7 +863,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-row--like[aria-pressed='true'] { background: rgba(255, 255, 255, .58); }
 .ckp-row--like[aria-pressed='true'] svg, .ckp-row--like[aria-pressed='true'] > span[aria-hidden='true'] { color: #C13B34; }
 @media (hover: hover) {
-  .ckp-row:not(:disabled):hover { background: rgba(255, 255, 255, .62); }
+  .ckp-row:not(:disabled):hover { background-color: rgba(255, 255, 255, .55); }
 }
 
 /* Anneau de focus : la capsule garde ses segments. */
@@ -878,7 +874,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    unité 13/500 sur la même ligne, contexte 11/500 sans fond, barre de
    répartition 6 px à 12 px sous le chiffre, aires et barres sans axe. */
 .ckp-stats { position: relative; padding: 0; }
-.ckp-stats-seg { display: flex; }
+.ckp-stats-seg { display: flex; margin: 0 0 20px; }
 /* Aire altimétrique : 72 px, remplissage et trait seuls, aucun axe. */
 .ckp-elev { position: relative; margin: 20px 0 0; }
 .ckp-elev svg { display: block; width: 100%; height: 72px; }
@@ -1017,16 +1013,12 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-drawer-veil[data-on='true'] { opacity: 1; }
 
 /* --- 3-8. Rythme vertical : 12 / 20 / 32, 20 px d'air entre les blocs ------ */
-.ckp-pane-body { display: flex; flex-direction: column; min-width: 0; }
-.ckp-pane-body > * + *,
-.ckp-pane-share > * + *,
-.ckp-likes > * + *,
-.ckp-manage > * + * { margin-top: 20px; }
-/* 6. 24 px d'air avant la première ligne de données (le bloc héros). */
-.ckp-pane-body > .ckp-hero { margin-top: 24px; }
-/* Sans sélecteur, la première ligne est aussi la première donnée : 24 px d'air
-   la dégagent de la croix de fermeture, posée en absolu. */
-.ckp-pane-share > *:first-child { margin-top: 24px; }
+/* Le rythme est porté par `gap`, jamais par une marge d'enfant : un texte qui
+   remet `margin: 0` ne peut plus écraser les 20 px d'air entre deux blocs. */
+.ckp-pane-body { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.ckp-pane-share,
+.ckp-likes,
+.ckp-manage { display: flex; flex-direction: column; gap: 20px; min-width: 0; padding-top: 20px; }
 
 /* --- 23-28. Champ de donnée : libellé placeholder, valeur à droite --------- */
 .ckp-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -1039,29 +1031,27 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   letter-spacing: -.01em;
 }
 .ckp-field {
-  display: flex; align-items: center; gap: 10px; box-sizing: border-box;
-  width: 100%; min-width: 0; height: 48px; padding: 0 12px; margin: 0;
-  border: 1px solid transparent; border-radius: 12px;
-  background: rgba(255, 255, 255, .55);
-  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .06);
+  position: relative; display: flex; align-items: center; gap: 12px; box-sizing: border-box;
+  width: 100%; min-width: 0; height: 48px; padding: 0; margin: 0;
+  border: 0; border-radius: 0; background: none; box-shadow: none;
   color: #172B24; text-align: left; text-decoration: none; font: inherit;
-  transition: background 160ms ease, border-color 160ms ease;
+  transition: background-color 160ms ease;
 }
 button.ckp-field, a.ckp-field { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button.ckp-field { appearance: none; }
-button.ckp-field:active, a.ckp-field:active { transform: scale(.995); }
+button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 255, .55); }
 .ckp-field:disabled { opacity: .55; cursor: default; }
 @media (hover: hover) {
-  button.ckp-field:hover, a.ckp-field:hover { background: rgba(255, 255, 255, .72); }
+  button.ckp-field:hover, a.ckp-field:hover { background-color: rgba(255, 255, 255, .55); }
 }
 /* 40. Erreur : 1 px #C13B34 sur le champ concerné, aucun bandeau. */
-.ckp-field[data-error='true'] { border-color: #C13B34; }
+.ckp-field[data-error='true'] { box-shadow: inset 0 0 0 1px #C13B34; }
 .ckp-field-icon { display: inline-flex; flex: none; color: #6B7A70; }
 .ckp-field-icon > span { width: 16px; height: 16px; }
 /* 23/25/26/49. Placeholder : 12/500 #8A968D, jamais de capitale, 46 % max. */
 .ckp-field-label {
   flex: 1 1 auto; min-width: 0; max-width: 46%;
-  color: #8A968D; font: 500 13px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
+  color: #6B7A70; font: 500 13px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: 0; text-transform: none;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -1176,7 +1166,7 @@ button.ckp-field:active, a.ckp-field:active { transform: scale(.995); }
 .ckp-comments-gate .ckp-field { width: 100%; }
 
 /* 4/5/37. Les pages sorties du drawer : contenu à 16 px, 64 px de réserve. */
-.ckp-page-pad--dense { padding: 0 4px 64px; gap: 0; }
+.ckp-page-pad--dense { padding: 0 0 64px; gap: 0; }
 /* Le corps du post du Compte ne se cumule pas avec la gouttière dense. */
 .ckp-page-pad--dense .lkdv-post-panel-body { padding-left: 0; padding-right: 0; }
 .ckp-page-pad--dense .lkdv-post-panel-foot { padding-left: 0; padding-right: 0; }
@@ -1206,10 +1196,75 @@ button.ckp-field:active, a.ckp-field:active { transform: scale(.995); }
 
 /* --- Lot B — 15 : ellipse au milieu pour les lieux longs -------------------
    Un lieu se reconnaît par sa fin (…Landmannalaugar) : la valeur garde la
-   colonne de 120 px et son ellipse, mais la coupe se fait à gauche. La
-   technique est celle que le brief autorise : direction RTL + alignement à
-   gauche ; le texte reste lu dans l'ordre exact par les lecteurs d'écran. */
+   colonne de 120 px et son ellipse, mais la coupe se fait à gauche : la valeur
+   reste alignée à droite (direction RTL + alignement à droite), l'ellipse
+   tombe au début et le texte reste lu dans l'ordre exact par les lecteurs
+   d'écran, dans le même ordre que le DOM. */
 .ckp-field--mid .ckp-field-value {
   direction: rtl;
-  text-align: left;
+  text-align: right;
+}
+
+/* =============================================================================
+   Lot C — rythme (17-24)
+   Échelle 4 / 8 / 12 / 20 / 32, lignes de 48 px, filet inséré de 16 px,
+   groupes de trois lignes, 64 px de réserve basse, aucun cadre.
+   ============================================================================= */
+
+/* 19 / 21 — le filet n'existe qu'entre deux lignes. Il s'arrête à 16 px des
+   deux bords de la ligne : jamais une bordure pleine, jamais de filet en tête
+   ni en pied de groupe. */
+.ckp-field,
+.ckp-liker,
+.ckp-day,
+.ckp-comment,
+.ckp-kit-row,
+.ckp-dayinfo-moment {
+  position: relative;
+  border-top: 0;
+}
+
+.ckp-field + .ckp-field::before,
+.ckp-liker + .ckp-liker::before,
+.ckp-day + .ckp-day::before,
+.ckp-comment + .ckp-comment::before,
+.ckp-kit-row + .ckp-kit-row::before,
+.ckp-dayinfo-moment + .ckp-dayinfo-moment::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: .5px;
+  background: rgba(23, 43, 36, .06);
+  pointer-events: none;
+}
+
+/* 20 — trois lignes au plus par groupe, 20 px d'air entre deux groupes. */
+.ckp-list-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ckp-list-group + .ckp-list-group { margin-top: 20px; }
+.ckp-likers,
+.ckp-comments-list,
+.ckp-daylist,
+.ckp-kit-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Le bandeau collant des statistiques garde son verre, son filet devient celui
+   de la feuille : inséré de 16 px, jamais pleine largeur. */
+.ckp-stats-sticky > div { border-bottom: 0; }
+.ckp-stats-sticky > div::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: .5px;
+  background: rgba(23, 43, 36, .06);
 }

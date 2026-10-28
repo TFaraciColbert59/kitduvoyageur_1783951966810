@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
 import { formatWeight } from '@/features/carnet/detail/format';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { groupsOfThree } from '../groups';
 
 export interface CarnetKitPaneProps {
   detail: CarnetDetail;
@@ -25,23 +26,27 @@ export function CarnetKitPane({ detail }: CarnetKitPaneProps) {
       </div>
 
       <div className="ckp-kit-list">
-        {detail.kit.items.map((item) => {
-          const weight = formatWeight(item.weightG);
-          return (
-            <div className="ckp-kit-row" key={item.id}>
-              <span
-                className="ckp-kit-dot"
-                style={item.color ? { background: item.color } : undefined}
-                aria-hidden="true"
-              />
-              <span style={{ minWidth: 0, flex: 1 }}>
-                <span className="ckp-kit-name">{item.name}</span>
-                {item.detail ? <span className="ckp-kit-detail">{item.detail}</span> : null}
-              </span>
-              {weight ? <span className="ckp-kit-weight">{weight}</span> : null}
-            </div>
-          );
-        })}
+        {groupsOfThree(detail.kit.items).map((group) => (
+          <div className="ckp-list-group" key={group[0]?.id ?? 'groupe'}>
+            {group.map((item) => {
+              const weight = formatWeight(item.weightG);
+              return (
+                <div className="ckp-kit-row" key={item.id}>
+                  <span
+                    className="ckp-kit-dot"
+                    style={item.color ? { background: item.color } : undefined}
+                    aria-hidden="true"
+                  />
+                  <span style={{ minWidth: 0, flex: 1 }}>
+                    <span className="ckp-kit-name">{item.name}</span>
+                    {item.detail ? <span className="ckp-kit-detail">{item.detail}</span> : null}
+                  </span>
+                  {weight ? <span className="ckp-kit-weight">{weight}</span> : null}
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {detail.isOwner ? (
