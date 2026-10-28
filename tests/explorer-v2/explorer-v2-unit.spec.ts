@@ -2,6 +2,9 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { useExplorerStore } from '@/features/explorer-v2/state/store';
 import { HAPTIC_TABLE, haptic, resetHapticThrottle } from '@/features/explorer-v2/state/haptics';
 import { SCENES, SCENE_NAMES, LEVEL_ZOOM, isSceneName } from '@/features/explorer-v2/state/scenes';
+import { evaluateOffRoute, offRouteLabel } from '@/features/explorer-v2/activity/offRoute';
+import { poiPriority, selectVisiblePins, symbolSortKey } from '@/features/explorer-v2/map/hierarchy';
+import { TRACE_STYLES, traceStyleForRoute } from '@/features/explorer-v2/map/traceStyles';
 import {
   distanceKm,
   findRegionAt,
@@ -169,5 +172,113 @@ describe('explorer-v2 · géométrie', () => {
     const found = findRegionAt(geo, [6.8694, 45.9237]);
     expect(found?.group).toBe('Auvergne-Rhône-Alpes');
     expect(findRegionAt(geo, [2.35, 48.85])).toBeNull();
+  });
+});
+
+describe('explorer-v2 · hiérarchie carte', () => {
+  it('classe les dangers en P0 à tous les niveaux', () => {
+    expect(poiPriority('danger', 0)).toBe(0);
+    expect(poiPriority('danger', 3)).toBe(0);
+    expect(poiPriority('bivouac', 3)).toBe(3);
+    expect(poiPriority('trail', 0)).toBe(1);
+    expect(poiPriority('trail', 3)).toBe(0);
+  });
+
+  it('écarte les repères sous le tiroir et hors champ', () => {
+    const pins = [
+      { id: 'a', kind: 'water' as const, x: 100, y: 200, distanceKm: 1 },
+      { id: 'b', kind: 'water' as const, x: 100, y: 900, distanceKm: 0.2 },
+      { id: 'c', kind: 'summit' as const, x: -120, y: 200, distanceKm: 2 },
+    ];
+    const kept = selectVisiblePins(pins, {
+      level: 3,
+      sheetTop: 600,
+      viewport: { width: 390, height: 844 },
+    });
+    expect(kept.map((pin) => pin.id)).toEqual(['a']);
+  });
+
+  it('priorité puis proximité, et densité bornée par cellule', () => {
+    const pins = Array.from({ length: 10 }, (_, index) => ({
+      id: `p${index}`,
+      kind: (index === 9 ? 'danger' : 'bivouac') as 'danger' | 'bivouac',
+      x: 10 + index,
+      y: 10 + index,
+      distanceKm: index,
+    }));
+    const kept = selectVisiblePins(pins, {
+      level: 3,
+      sheetTop: 700,
+      viewport: { width: 390, height: 844 },
+      maxPerCell: 3,
+    });
+    // Le danger (P0) passe devant malgré sa distance, et la cellule est plafonnée.
+    expect(kept).toHaveLength(3);
+    expect(kept[0].id).toBe('p9');
+  });
+
+  it('en activité, les repères secondaires reculent', () => {
+    const pins = [{ id: 'v', kind: 'viewpoint' as const, x: 50, y: 50, distanceKm: 0 }];
+    const normal = selectVisiblePins(pins, {
+      level: 3,
+      sheetTop: 700,
+      viewport: { width: 390, height: 844 },
+    });
+    const live = selectVisiblePins(pins, {
+      level: 3,
+      sheetTop: 700,
+      viewport: { width: 390, height: 844 },
+      activity: true,
+    });
+    expect(normal).toHaveLength(1);
+    expect(live).toHaveLength(1);
+    expect(symbolSortKey('viewpoint', 3, 0)).toBeGreaterThan(symbolSortKey('danger', 3, 10));
+  });
+});
+
+describe('explorer-v2 · styles de tracés', () => {
+  it('expose les 13 styles de la planche Traces', () => {
+    expect(Object.keys(TRACE_STYLES)).toHaveLength(13);
+    expect(TRACE_STYLES.gr.dash).toEqual([2, 1.4]);
+    expect(TRACE_STYLES.itineraire.casing).toBe('#FFFFFF');
+  });
+
+  it('déduit le style du réseau OSM', () => {
+    expect(traceStyleForRoute('nwn')).toBe('gr');
+    expect(traceStyleForRoute('iwn')).toBe('gr');
+    expect(traceStyleForRoute('rwn')).toBe('pr');
+    expect(traceStyleForRoute('lwn')).toBe('variante');
+    expect(traceStyleForRoute(null)).toBe('itineraire');
+  });
+});
+
+describe('explorer-v2 · hors itinéraire', () => {
+  const at = (seconds: number, distanceM: number) => ({ t: seconds * 1000, distanceM });
+
+  it('ne déclenche pas avant 15 s au-delà de 40 m', () => {
+    const samples = [at(0, 10), at(5, 45), at(10, 60), at(14, 55)];
+    expect(evaluateOffRoute(samples).offRoute).toBe(false);
+  });
+
+  it('déclenche après 15 s continus hors trace', () => {
+    const samples = [at(0, 10), at(5, 45), at(20, 80)];
+    const state = evaluateOffRoute(samples);
+    expect(state.offRoute).toBe(true);
+    expect(state.distanceM).toBe(80);
+  });
+
+  it('revient sur la trace sous 25 m', () => {
+    const samples = [at(0, 10), at(5, 45), at(20, 80), at(25, 20)];
+    const state = evaluateOffRoute(samples, { offRoute: true, distanceM: 80, outSinceS: 15 });
+    expect(state.offRoute).toBe(false);
+  });
+
+  it('reste hors trace entre 25 et 40 m (hystérésis)', () => {
+    const state = evaluateOffRoute([at(30, 32)], { offRoute: true, distanceM: 40, outSinceS: 20 });
+    expect(state.offRoute).toBe(true);
+  });
+
+  it('formate le libellé de la carte du haut', () => {
+    expect(offRouteLabel(80)).toBe('Hors itinéraire · 80 m');
   });
 });

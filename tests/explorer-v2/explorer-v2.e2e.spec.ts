@@ -42,6 +42,11 @@ async function dismissCookies(page: Page) {
   if (await refuse.count()) {
     await refuse.first().click().catch(() => {});
   }
+  // La bannière est un overlay global z-60 : on attend qu'elle soit retirée.
+  await page
+    .locator('[aria-label="Gestion des cookies"]')
+    .waitFor({ state: 'detached', timeout: 5000 })
+    .catch(() => {});
 }
 
 async function openScene(page: Page, scene: string) {
@@ -60,6 +65,16 @@ async function openScene(page: Page, scene: string) {
   await expect(root(page).locator('.xp-sheet')).toBeVisible({ timeout: 30_000 });
   await expect(root(page)).toHaveAttribute('data-scene', scene, { timeout: 30_000 });
 }
+
+test.beforeEach(async ({ page }) => {
+  // Consentement déjà stocké : la bannière ne recouvre jamais les commandes.
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'lkdv_cookie_consent',
+      JSON.stringify({ necessary: true, analytics: false, marketing: false, version: '1' }),
+    );
+  });
+});
 
 test.describe('Explorer v2 · @explorer-v2', () => {
   test('Monde : titre, onglets et repères réels @explorer-v2', async ({ page }) => {
@@ -132,8 +147,33 @@ test.describe('Explorer v2 · @explorer-v2', () => {
   test('les états d’activité affichent la pastille, pas la barre basse @explorer-v2', async ({ page }) => {
     await openScene(page, 'course');
     await expect(root(page).locator('.xp-activity-pill')).toBeVisible();
+    // Laisse la carte poser ses repères (le premier rendu décale le chrome).
+    await page.waitForTimeout(1500);
     await expect(root(page).locator('.xp-bottombar')).toHaveCount(0);
     await expect(root(page).locator('.xp-sos')).toBeVisible();
+  });
+
+  test('SOS : présent, accessible et armable au clavier @explorer-v2', async ({ page }) => {
+    await openScene(page, 'course');
+    const sos = root(page).locator('.xp-sos');
+    await expect(sos).toBeVisible();
+    await expect(sos).toHaveAttribute('aria-label', /SOS/i);
+    // Le maintien de 1,5 s est couvert par `sos-button.spec.tsx` (timers
+    // contrôlés) ; ici on vérifie le chemin clavier, sans aléa de geste.
+    await sos.focus();
+    await page.keyboard.press('Enter');
+    await expect(root(page).locator('.xp-sos-counting')).toBeVisible();
+    // Échap annule immédiatement (pas d'attente d'actionnabilité).
+    await page.keyboard.press('Escape');
+    await expect(root(page).locator('.xp-toast')).toContainText('SOS annulé');
+    await expect(root(page).locator('.xp-sos-counting')).toHaveCount(0);
+  });
+
+  test('hors itinéraire : bandeau ambre et distance @explorer-v2', async ({ page }) => {
+    await openScene(page, 'horstrace');
+    const banner = root(page).locator('.xp-offroute');
+    await expect(banner).toBeVisible();
+    await expect(banner).toContainText('Hors itinéraire');
   });
 
   test('chaque scène rend une feuille avec un titre @explorer-v2', async ({ page }) => {

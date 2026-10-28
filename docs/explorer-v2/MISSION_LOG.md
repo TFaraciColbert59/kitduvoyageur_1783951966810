@@ -329,3 +329,40 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
 - Preuve : `git push` OK après rebase sur `origin/main` (`52b7e4bd`) ;
   PR **https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/119**
 - Statut : OK (PR en brouillon, non mergée)
+
+### [P2-05] Hiérarchie d'affichage P0–P3 · 2026-10-28 19:10
+- Fichiers : `src/features/explorer-v2/map/hierarchy.ts`, `MapStage.tsx`, `ExplorerV2.tsx`
+- Preuve : `selectVisiblePins` est pure et testée (4 cas) : dangers en P0 partout,
+  repères sous le tiroir écartés, densité plafonnée par cellule de 100×100 px,
+  priorité puis proximité, recul des repères secondaires en activité.
+  La hauteur du tiroir est mesurée en direct (`ResizeObserver`) et passée à la
+  carte : **aucun repère ne se dessine sous la feuille**.
+- Statut : OK
+
+### [P2-06] 13 styles de tracés · 2026-10-28 19:10
+- Fichiers : `src/features/explorer-v2/map/traceStyles.ts`, `MapStage.tsx`
+- Preuve : `TRACE_STYLES` expose les 13 styles de `04_CARTE §2` (casing, largeur,
+  pointillé, opacité, ordre) ; `traceStyleForRoute` mappe iwn/nwn → GR, rwn → PR,
+  lwn → variante ; la couche `xp-routes` utilise les expressions `match` de
+  couleur/largeur/pointillé et un casing blanc dessous.
+  Tests unitaires : 13 styles présents, dash GR `[2, 1.4]`.
+- Statut : OK (capture de la planche réelle à comparer avec `Traces.png` :
+  voir `PARITE.md`)
+
+### [P7-17] Hors-trace 40 m / 15 s · 2026-10-28 19:10
+- Fichiers : `src/features/explorer-v2/activity/offRoute.ts`, `ExplorerV2.tsx`
+- Preuve : `evaluateOffRoute` testé (5 cas : pas avant 15 s, déclenche à 15 s,
+  retour sous 25 m, hystérésis 25–40 m, libellé). Bandeau ambre `.xp-offroute`
+  affiché dès que `activity.offRoute` (test e2e « hors itinéraire »).
+- Statut : OK (la mesure GPS réelle reste branchée sur la trace simulée)
+
+### [P7-18] SOS : maintien 1,5 s, compte à rebours annulable, enregistrement · 2026-10-28 19:10
+- Fichiers : `src/features/explorer-v2/chrome/SosButton.tsx`, `src/app/api/explorer/v2/sos/route.ts`
+- Preuve : 4 tests composant (`sos-button.spec.tsx`, timers contrôlés) :
+  pas d'armement avant 1,5 s, armement à 1,5 s, annulation explicite, envoi après
+  5 s, chemin clavier. Test e2e : bouton présent, armable au clavier, annulation
+  par Échap → toast « SOS annulé ».
+  La route `POST /api/explorer/v2/sos` exige un jeton utilisateur et écrit dans
+  `sos_alerts` sous RLS ; sans session elle répond 401 et l'interface dit
+  « Alerte non enregistrée » (aucune fausse promesse).
+- Statut : OK (aucun appel réel au 112 ; mode simulé par défaut)

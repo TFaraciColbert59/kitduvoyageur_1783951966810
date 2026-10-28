@@ -4,7 +4,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Map as MapLibreMap, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { GeoCollection } from '../data/hooks';
-import type { Level } from '../state/types';
+import type { Level, PoiKind } from '../state/types';
+import { selectVisiblePins } from './hierarchy';
+import {
+  TRACE_COLOR_EXPRESSION,
+  TRACE_DASH_EXPRESSION,
+  TRACE_WIDTH_EXPRESSION,
+  traceStyleForRoute,
+} from './traceStyles';
 import { OPENFREEMAP_STYLE_URL } from '@/components/map/engine/standardBase';
 
 export interface MapPin {
@@ -15,6 +22,8 @@ export interface MapPin {
   lat: number;
   lon: number;
   tone?: 'ink' | 'water' | 'warn' | 'bad' | 'good';
+  /** Distance au centre, utilisée par la hiérarchie d'affichage. */
+  distanceKm?: number;
 }
 
 export interface MapStageProps {
@@ -24,7 +33,7 @@ export interface MapStageProps {
   theme: 'light' | 'dark';
   countries?: GeoCollection | null;
   regions?: GeoCollection | null;
-  routes?: Array<{ id: number; name: string | null; geojson: unknown }>;
+  routes?: Array<{ id: number; name: string | null; network?: string | null; geojson: unknown }>;
   pins: MapPin[];
   activityTrack?: GeoCollection | null;
   selectedId?: string | null;
@@ -36,6 +45,8 @@ export interface MapStageProps {
   onMoveEnd?: (center: [number, number], zoom: number) => void;
   onReady?: () => void;
   me?: { lat: number; lng: number } | null;
+  /** Hauteur du tiroir en pixels : aucun repère ne doit apparaître dessous. */
+  sheetHeightPx?: number;
 }
 
 const TERRAIN_SOURCE = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
@@ -66,6 +77,7 @@ export default function MapStage({
   onMoveEnd,
   onReady,
   me,
+  sheetHeightPx = 176,
 }: MapStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -163,6 +175,19 @@ export default function MapStage({
             paint: { 'line-color': '#2F6F78', 'line-width': 0.9, 'line-opacity': 0.45 },
           });
         }
+        if (!map.getLayer('xp-routes-casing')) {
+          map.addLayer({
+            id: 'xp-routes-casing',
+            type: 'line',
+            source: 'xp-routes',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: {
+              'line-color': '#FFFFFF',
+              'line-width': ['*', 1.7, TRACE_WIDTH_EXPRESSION as never],
+              'line-opacity': 0.9,
+            },
+          });
+        }
         if (!map.getLayer('xp-routes-line')) {
           map.addLayer({
             id: 'xp-routes-line',
@@ -170,10 +195,10 @@ export default function MapStage({
             source: 'xp-routes',
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: {
-              'line-color': '#C0392B',
-              'line-width': 2.2,
-              'line-opacity': 0.85,
-              'line-dasharray': [2, 1.4],
+              'line-color': TRACE_COLOR_EXPRESSION as never,
+              'line-width': TRACE_WIDTH_EXPRESSION as never,
+              'line-opacity': 0.95,
+              'line-dasharray': TRACE_DASH_EXPRESSION as never,
             },
           });
         }
@@ -281,7 +306,7 @@ export default function MapStage({
         .filter((route) => route.geojson)
         .map((route) => ({
           type: 'Feature',
-          properties: { id: route.id, name: route.name },
+          properties: { id: route.id, name: route.name, style: traceStyleForRoute(route.network) },
           geometry: route.geojson as never,
         })),
     } as never);
@@ -411,16 +436,35 @@ export default function MapStage({
         if (point.y < -60 || point.y > map.getContainer().clientHeight + 60) continue;
         next.push({ pin, x: point.x, y: point.y });
       }
+      const sheetTop = map.getContainer().clientHeight - sheetHeightPx;
+      const kept = selectVisiblePins(
+        next.map((item) => ({
+          id: item.pin.id,
+          kind: item.pin.kind as PoiKind,
+          x: item.x,
+          y: item.y,
+          distanceKm: item.pin.distanceKm ?? 0,
+          item,
+        })),
+        {
+          level,
+          sheetTop,
+          viewport: {
+            width: map.getContainer().clientWidth,
+            height: map.getContainer().clientHeight,
+          },
+        },
+      ).map((entry) => entry.item);
       setOverlay((current) => {
         const same =
-          current.length === next.length &&
+          current.length === kept.length &&
           current.every(
             (item, index) =>
-              item.pin.id === next[index]?.pin.id &&
-              Math.abs(item.x - next[index].x) < 0.5 &&
-              Math.abs(item.y - next[index].y) < 0.5,
+              item.pin.id === kept[index]?.pin.id &&
+              Math.abs(item.x - kept[index].x) < 0.5 &&
+              Math.abs(item.y - kept[index].y) < 0.5,
           );
-        return same ? current : next;
+        return same ? current : kept;
       });
       if (me) {
         const point = map.project([me.lng, me.lat]);
@@ -447,7 +491,7 @@ export default function MapStage({
       map.off('zoom', schedule);
       map.off('render', schedule);
     };
-  }, [me, pins, ready]);
+  }, [level, me, pins, ready, sheetHeightPx]);
 
   return (
     <div

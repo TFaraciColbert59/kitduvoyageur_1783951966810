@@ -269,7 +269,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 72px + var(--cookie-banner-h, 0px));
   display: flex;
   flex-direction: column;
   border-radius: 30px 30px 0 0;
@@ -802,7 +802,7 @@
 .xp-sos {
   position: absolute;
   right: 12px;
-  bottom: 12px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 72px + var(--cookie-banner-h, 0px));
   z-index: 7;
   display: grid;
   place-items: center;
@@ -849,7 +849,9 @@
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  /* La bannière cookies est un overlay global : le chrome de l'Explorer
+     réserve sa hauteur réelle (--cookie-banner-h), comme le reste de l'app. */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px + var(--cookie-banner-h, 0px));
   height: 48px;
   z-index: 8;
   display: grid;
@@ -891,7 +893,7 @@
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px + var(--cookie-banner-h, 0px));
   height: 52px;
   z-index: 8;
   display: flex;
@@ -1067,4 +1069,48 @@
   .xp-me-halo {
     display: none;
   }
+}
+
+/* ── SOS : anneau de maintien et compte à rebours ─────────────────────── */
+.xp-sos {
+  overflow: hidden;
+  touch-action: none;
+}
+.xp-sos-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: conic-gradient(rgba(255, 255, 255, 0.85) calc(var(--p, 0) * 360deg), transparent 0);
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.15s linear;
+}
+.xp-sos[data-holding='false'] .xp-sos-ring {
+  opacity: 0;
+}
+.xp-sos-counting {
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+  animation: xpPulse 1s ease-in-out infinite;
+}
+
+/* ── Bandeau hors itinéraire (ambre, 0,4 s) ───────────────────────────── */
+.xp-offroute {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 56px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 32px);
+  padding: 9px 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(214, 176, 96, 0.95), rgba(185, 138, 46, 0.95));
+  box-shadow: 0 8px 22px rgba(185, 138, 46, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  color: #2b1f05;
+  font-size: 12.5px;
+  font-weight: 700;
+  animation: xpToast 0.4s ease both;
 }

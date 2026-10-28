@@ -7,6 +7,8 @@ import { ExplorerSheet } from './sheet/ExplorerSheet';
 import { buildSheetModel } from './sheet/SheetContent';
 import { TopChrome } from './chrome/TopChrome';
 import { ActivityPill, BottomBar } from './chrome/BottomBar';
+import { SosButton } from './chrome/SosButton';
+import { offRouteLabel } from './activity/offRoute';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
 import { useExplorerStore } from './state/store';
@@ -65,6 +67,7 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   const reducedMotion = useReducedMotion();
   const online = useOnline();
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
+  const [sheetHeight, setSheetHeight] = useState(176);
   const theme = state.theme ?? systemTheme;
 
   // Scène de recette : appliquée **une seule fois**, de façon synchrone, côté
@@ -219,14 +222,14 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         return true;
       })
       .slice(0, 6)
-      .map(({ poi }) => poi)
-      .map((poi) => ({
+      .map(({ poi, km }) => ({
         id: poi.id,
         kind: poi.kind,
         name: poi.name,
         sub: poi.ele_m ? `${poi.ele_m} m` : undefined,
         lat: poi.lat,
         lon: poi.lon,
+        distanceKm: km,
         tone: (poi.kind === 'water' ? 'water' : poi.kind === 'bivouac' ? 'warn' : 'ink') as MapPin['tone'],
       }));
   }, [countries, pois, state.level]);
@@ -259,6 +262,19 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     },
     [state],
   );
+
+  // Hauteur réelle du tiroir : aucun repère ne doit se dessiner dessous
+  // (04_CARTE §1), y compris pendant un glissement.
+  useEffect(() => {
+    const node = document.querySelector('.xp-sheet');
+    if (!node) return;
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height;
+      if (height && height > 0) setSheetHeight(Math.round(height));
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   const activity = state.activity;
   const [now, setNow] = useState(() => Date.now());
@@ -323,6 +339,7 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         onRegionClick={onRegionClick}
         onPinClick={onPinClick}
         onMoveEnd={(center, zoom) => state.setCenter(center, zoom)}
+        sheetHeightPx={sheetHeight}
       />
 
       <TopChrome
@@ -347,13 +364,62 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       ) : null}
 
       {activity && state.sheet === 'live' ? (
+        <SosButton
+          sessionId={activity.sessionId}
+          position={me}
+          onArmed={() => {
+            haptic('sos-armed');
+            state.showToast({ title: 'SOS armé', sub: 'Touche pour annuler', tone: 'warn' });
+          }}
+          onTick={() => haptic('countdown')}
+          onSend={async (payload) => {
+            try {
+              const { createClient } = await import('@/lib/supabase/client');
+              const supabase = createClient();
+              const { data } = await supabase.auth.getSession();
+              const token = data.session?.access_token;
+              if (!token) return 'unauthenticated' as const;
+              const res = await fetch('/api/explorer/v2/sos', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  lat: payload.lat,
+                  lng: payload.lng,
+                  sessionId: /^[0-9a-f-]{36}$/i.test(payload.sessionId ?? '') ? payload.sessionId : null,
+                }),
+              });
+              return res.ok ? ('sent' as const) : ('queued' as const);
+            } catch {
+              return 'unauthenticated' as const;
+            }
+          }}
+          onResult={(result) => {
+            haptic(result === 'cancelled' ? 'tab' : 'sos-fired');
+            state.showToast(
+              result === 'cancelled'
+                ? { title: 'SOS annulé', sub: 'Aucune alerte envoyée' }
+                : result === 'sent'
+                  ? { title: 'Alerte envoyée', sub: 'Position transmise', tone: 'bad' }
+                  : {
+                      title: 'Alerte non enregistrée',
+                      sub: 'Connecte-toi pour transmettre ta position',
+                      tone: 'warn',
+                    },
+            );
+          }}
+        />
+      ) : null}
+
+      {activity?.offRoute ? (
         <button
           type="button"
-          className="xp-sos"
-          onClick={() => state.setSheet('sos', 'mid')}
-          aria-label="SOS"
+          className="xp-offroute"
+          onClick={() => state.setSheet('live', 'peek')}
+          aria-label={offRouteLabel(activity.distanceM)}
         >
-          SOS
+          <XpIcon name="alert" size={15} />
+          <span>{offRouteLabel(activity.distanceM)}</span>
+          <XpIcon name="nav" size={15} />
         </button>
       ) : null}
 
