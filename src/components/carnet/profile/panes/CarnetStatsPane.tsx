@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import Icon from '@/components/ui/Icon';
 import { formatElevation, formatKm } from '@/features/carnet/detail/format';
 import { CARNET_STATS_TABS, summarizeCarnet, type CarnetStatsTab } from '@/features/carnet/detail/stats';
@@ -86,7 +86,9 @@ function HeroBlock({ hero, animate, tabKey }: { hero: Hero; animate: boolean; ta
       </div>
       <div className="ckp-hero-sub">
         {hero.sub.map((item, index) => (
-          <span key={index}>{item}</span>
+          <span key={index} data-missing={item === '—' ? 'true' : undefined}>
+            {item}
+          </span>
         ))}
       </div>
     </div>
@@ -117,16 +119,26 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
     rolled.current = true;
   }, []);
 
-  const distanceSeries: SeriesValue[] = detail.days.map((day) => day.distanceKm);
-  const elevationSeries: SeriesValue[] = detail.days.map((day) => day.elevationM);
-  const daySeries: SeriesValue[] = detail.days.map(() => 1);
-  const profile = elevationProfile(elevationSeries, PROFILE_WIDTH, PROFILE_HEIGHT);
-  const bars = dailyBarHeights(distanceSeries);
+  /* Séries et géométries dérivées : pures, donc mémoïsées sur les jours. */
+  const distanceSeries = useMemo<SeriesValue[]>(
+    () => detail.days.map((day) => day.distanceKm),
+    [detail.days],
+  );
+  const elevationSeries = useMemo<SeriesValue[]>(
+    () => detail.days.map((day) => day.elevationM),
+    [detail.days],
+  );
+  const daySeries = useMemo<SeriesValue[]>(() => detail.days.map(() => 1), [detail.days]);
+  const profile = useMemo(
+    () => elevationProfile(elevationSeries, PROFILE_WIDTH, PROFILE_HEIGHT),
+    [elevationSeries],
+  );
+  const bars = useMemo(() => dailyBarHeights(distanceSeries), [distanceSeries]);
 
   const dayCount = stats.daysCount;
   const dayUnit = dayCount > 1 ? 'jours' : 'jour';
 
-  const hero: Record<CarnetStatsTab, Hero> = {
+  const hero = useMemo<Record<CarnetStatsTab, Hero>>(() => ({
     distance: {
       value: splitUnit(formatKm(stats.distanceKm)).value,
       unit: 'km',
@@ -159,30 +171,45 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
       ],
       share: documentedShare(daySeries),
     },
-  };
+  }), [dayCount, daySeries, dayUnit, distanceSeries, elevationSeries, stats]);
 
   /* Trois repères verticaux : les vrais jours placés aux quarts de l'axe. */
-  const ticks = detail.days.length
-    ? [0.25, 0.5, 0.75].map((ratio) => {
-        const index = Math.min(detail.days.length - 1, Math.round(ratio * (detail.days.length - 1)));
-        return `J${detail.days[index].dayNumber}`;
-      })
-    : [];
+  const ticks = useMemo(
+    () =>
+      detail.days.length
+        ? [0.25, 0.5, 0.75].map((ratio) => {
+            const index = Math.min(detail.days.length - 1, Math.round(ratio * (detail.days.length - 1)));
+            return `J${detail.days[index].dayNumber}`;
+          })
+        : [],
+    [detail.days],
+  );
 
   const traceBroken = tracePoints.length === 1;
-  const traceValue =
-    tracePoints.length > 1
-      ? `${tracePoints.length} pts${traceKm ? ` · ${formatKm(traceKm)}` : ''}`
-      : '';
+  const traceValue = useMemo(
+    () =>
+      tracePoints.length > 1
+        ? `${tracePoints.length} pts${traceKm ? ` · ${formatKm(traceKm)}` : ''}`
+        : '',
+    [traceKm, tracePoints.length],
+  );
 
   const distanceDays = stats.daysWithDistance;
   const elevationDays = stats.daysWithElevation;
+  const distanceGroups = useMemo(() => chunk(distanceDays), [distanceDays]);
+  const elevationGroups = useMemo(() => chunk(elevationDays), [elevationDays]);
+
+  const changeTab = useCallback((id: string) => onTabChange(id as CarnetStatsTab), [onTabChange]);
 
   return (
     <div className="ckp-pane ckp-stats" ref={rootRef}>
+      {/* Rappel de données au défilement : l'icône du sous-onglet et le total.
+          Aucun libellé texte, donc aucun titre qui doublerait le chiffre. */}
       <div className="ckp-stats-sticky" data-on={scrolled ? 'true' : undefined} aria-hidden="true">
         <div>
-          <span>{CARNET_STATS_TABS.find((item) => item.id === tab)?.label}</span>
+          <span className="ckp-stats-sticky-icon">
+            <Icon name={TAB_ICONS[tab]} size={16} aria-hidden="true" />
+          </span>
           <b>{`${hero[tab].value} ${hero[tab].unit}`}</b>
         </div>
       </div>
@@ -191,7 +218,7 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
         <CarnetSubCapsule
           items={TABS}
           active={tab}
-          onChange={(id) => onTabChange(id as CarnetStatsTab)}
+          onChange={changeTab}
           ariaLabel="Statistiques du carnet"
         />
       </div>
@@ -227,8 +254,8 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
               <CarnetField label="distance par jour" value="" />
             </div>
           ) : (
-            chunk(distanceDays).map((group, index) => (
-              <div className="ckp-group" key={index}>
+            distanceGroups.map((group) => (
+              <div className="ckp-group" key={group[0]?.id ?? 'empty'}>
                 {group.map((day) => (
                   <CarnetField
                     key={day.id}
@@ -320,8 +347,8 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
               <CarnetField label="dénivelé par jour" value="" />
             </div>
           ) : (
-            chunk(elevationDays).map((group, index) => (
-              <div className="ckp-group" key={index}>
+            elevationGroups.map((group) => (
+              <div className="ckp-group" key={group[0]?.id ?? 'empty'}>
                 {group.map((day) => (
                   <CarnetField
                     key={day.id}

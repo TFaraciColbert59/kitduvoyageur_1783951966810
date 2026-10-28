@@ -43,7 +43,7 @@ describe('Anatomie de la feuille', () => {
 
   /* 2 — hauteur adaptative au contenu + réserve, plafond 503 px. */
   it('hauteur adaptative, plafond 503 px, corps défilant', () => {
-    const sheet = rule('.ckp-card--drawer {');
+    const sheet = rule('.ckp-card.ckp-card--drawer {');
     expect(sheet).toMatch(/height:\s*auto/);
     expect(sheet).toMatch(/flex:\s*0 0 auto/);
     expect(sheet).toMatch(/max-height:\s*min\(100%, 503px\)/);
@@ -233,7 +233,7 @@ describe('Mouvement', () => {
   it('entrée du drawer : translateY(12px) + fondu, 220 ms', () => {
     const keyframes = css.slice(css.indexOf('@keyframes ckp-drawer-in'));
     expect(keyframes).toMatch(/translateY\(12px\)/);
-    expect(rule('.ckp-card--drawer {')).toMatch(/ckp-drawer-in 220ms cubic-bezier\(\.22, 1, \.36, 1\)/);
+    expect(rule('.ckp-card.ckp-card--drawer {')).toMatch(/ckp-drawer-in 220ms cubic-bezier\(\.22, 1, \.36, 1\)/);
   });
 
   /* 44 — changement de sous-onglet : fondu + 8 px, 180 ms. */

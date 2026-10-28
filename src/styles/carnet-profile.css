@@ -304,7 +304,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 /* --- Carte-drawer --------------------------------------------------------- */
 /* Hauteur adaptative : le contenu + sa réserve, plafonnée à la place de la
    carte (503 px à 430 × 932). Au-delà, c'est le corps qui défile. */
-.ckp-card--drawer {
+.ckp-card.ckp-card--drawer {
   flex: 0 0 auto; height: auto; min-height: 0; max-height: min(100%, 503px);
   animation: ckp-drawer-in 220ms cubic-bezier(.22, 1, .36, 1) both;
 }
@@ -443,6 +443,11 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-sub--icons button { width: 41.5px; padding: 0; }
 .ckp-sub button[aria-pressed='true'] { color: #17402C; }
+/* Mode texte : la lentille ne peut pas glisser entre des largeurs variables,
+   la cellule active reçoit donc la même matière blanche, à sa largeur. */
+.ckp-sub:not(.ckp-sub--icons) button[aria-pressed='true'] {
+  background: #fff; box-shadow: 0 1px 3px rgba(23, 43, 36, .14);
+}
 .ckp-sub button::after { content: ''; position: absolute; inset: -9px -4px; }
 @media (prefers-reduced-motion: reduce) {
   .ckp-sub > .ckp-th { transition: none; }
@@ -450,7 +455,12 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 
 /* Interrupteur 36 × 20, teinte #17402C : le dessin garde 20 px de haut, la
    rangée de réglage de 48 px porte la cible tactile. */
-.ckp-switch { position: relative; width: 36px; height: 20px; flex: none; padding: 2px; border-radius: 999px; background: rgba(23, 43, 36, .16); transition: background 180ms ease; }
+.ckp-switch {
+  display: inline-block; vertical-align: middle;
+  position: relative; width: 36px; height: 20px; flex: none; padding: 2px;
+  border-radius: 999px; background: rgba(23, 43, 36, .16);
+  transition: background 180ms ease;
+}
 .ckp-switch span { display: block; width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 4px rgba(23, 43, 36, .24); transition: transform 180ms cubic-bezier(.16, 1, .3, 1); }
 .ckp-switch.is-on { background: #17402c; }
 .ckp-switch.is-on span { transform: translateX(16px); }
@@ -678,7 +688,10 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 /* Une seule page montée à la fois : aucune piste plus haute que la page
    visible, donc aucune zone morte sous la grille. Jamais de scroll horizontal. */
 .ckp-pages {
-  position: relative; overflow: hidden; min-width: 0;
+  /* `clip` plutôt que `hidden` : le carrousel ne devient pas un porteur de
+     défilement, donc le pied collant d'une page se cale sur le VRAI défileur
+     (`.ckp-card-scroll`) et jamais sous la capsule de la carte. */
+  position: relative; overflow: clip; min-width: 0;
   touch-action: pan-y;
 }
 .ckp-pages:focus-visible { outline: 2px solid #17402c; outline-offset: 2px; border-radius: 14px; }
@@ -765,6 +778,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-stats-sticky[data-on='true'] > div { opacity: 1; }
 .ckp-stats-sticky span { color: #6B7A70; font: 500 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: .02em; }
+.ckp-stats-sticky-icon { display: inline-flex; color: #56665D; }
 .ckp-stats-sticky b { color: #172B24; font: 600 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
 /* Moments associés à un jour, dans le volet Jours. */
 .ckp-moment-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -851,7 +865,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    (actions + capsule, 30 px à 10 px du bord) : le champ ne passe jamais
    dessous, quel que soit le nombre de commentaires. Le post, lui, garde son
    pied dans sa propre feuille : la règle ne vise que les pages du carrousel. */
-.ckp-page .lkdv-post-panel-foot { position: sticky; bottom: 48px; z-index: 2; }
+.ckp-page .lkdv-post-panel-foot { position: sticky; bottom: 52px; z-index: 2; }
 
 /* =============================================================================
    Anatomie des drawers et sous-drawers (28 oct. 2026) — 50 retouches
@@ -877,6 +891,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-manage > * + * { margin-top: 20px; }
 /* 6. 24 px d'air avant la première ligne de données (le bloc héros). */
 .ckp-pane-body > .ckp-hero { margin-top: 24px; }
+/* Sans sélecteur, la première ligne est aussi la première donnée : 24 px d'air
+   la dégagent de la croix de fermeture, posée en absolu. */
+.ckp-pane-share > *:first-child { margin-top: 24px; }
 
 /* --- 23-28. Champ de donnée : libellé placeholder, valeur à droite --------- */
 .ckp-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -956,6 +973,7 @@ button.ckp-field:active, a.ckp-field:active { transform: scale(.995); }
   letter-spacing: 0; font-variant-numeric: tabular-nums;
 }
 .ckp-hero-sub span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ckp-hero-sub span[data-missing='true'] { color: #B4BDB6; }
 /* 44. Changement de sous-onglet : fondu + 8 px, 180 ms. */
 .ckp-hero[data-animate='true'] { animation: ckp-hero-in 180ms cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes ckp-hero-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -998,7 +1016,7 @@ button.ckp-field:active, a.ckp-field:active { transform: scale(.995); }
 
 /* --- J’aime / Gérer / Partage : blocs de la feuille ---------------------- */
 .ckp-likes-filters { display: flex; }
-.ckp-comments { padding: 0; }
+.ckp-comments { padding: 0 0 88px; }
 .ckp-comments-sort { display: flex; margin: 0 0 20px; }
 .lkdv-comments-gate.ckp-comments-gate { display: flex; padding: 12px 0 0; }
 .ckp-comments-gate .ckp-field { width: 100%; }

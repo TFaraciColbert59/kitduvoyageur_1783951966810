@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
 import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetMediaTabs } from './CarnetMediaTabs';
@@ -54,6 +54,9 @@ export function selectorLensIndex(page: CarnetPageId): number {
       return -1;
   }
 }
+
+/** Les deux seuls segments de la capsule : la référence, une fois pour toutes. */
+const CAPSULE_TABS = CARNET_PAGE_TABS.slice(0, 2);
 
 const SF_ICONS: Record<string, SfIconName> = {
   heart: 'heart',
@@ -120,24 +123,41 @@ export function CarnetCard({
   commentsPage = null,
   managePage = null,
 }: CarnetCardProps) {
-  const traceCoords = extractCoords(detail.trace);
-  const tracePath = projectToViewBox(traceCoords, 66, 9);
-  /* Lieu réel de la fiche : aucune coordonnée n'est estimée ici. */
-  const place = detail.place ?? { country: null, region: null, locality: null, lat: null, lng: null };
+  /* Tracé et ligne de lieu : purs, donc calculés une fois par carnet et non
+     à chaque bascule d'engagement ou de page. */
+  const tracePath = useMemo(() => projectToViewBox(extractCoords(detail.trace), 66, 9), [detail.trace]);
   /* Une ligne unique, du texte seul : lieu · jours · distance · dénivelé · dates.
      Aucune valeur inventée : un champ absent devient un tiret, et la ligne
      entière disparaît si le carnet n'a réellement rien à dire. */
-  const placeLine = placeLineParts({
-    place,
-    fallback: detail.destination,
-    daysCount: detail.days.length,
-    distanceKm: detail.distanceKm,
-    elevationM: detail.elevationM,
-    dateRange: detail.dateRange,
-  });
+  const placeLine = useMemo(() => {
+    /* Lieu réel de la fiche : aucune coordonnée n'est estimée ici. */
+    const place = detail.place ?? { country: null, region: null, locality: null, lat: null, lng: null };
+    return placeLineParts({
+      place,
+      fallback: detail.destination,
+      daysCount: detail.days.length,
+      distanceKm: detail.distanceKm,
+      elevationM: detail.elevationM,
+      dateRange: detail.dateRange,
+    });
+  }, [
+    detail.place,
+    detail.destination,
+    detail.days.length,
+    detail.distanceKm,
+    detail.elevationM,
+    detail.dateRange,
+  ]);
   const showPlaceLine = placeLine.some((part) => part !== PLACE_LINE_MISSING);
   const participants = detail.participants ?? [];
   const lensIndex = selectorLensIndex(page);
+
+  /* Les deux segments de la capsule : handler stable, donc la lentille et les
+     boutons ne se remontent pas quand la carte se redessine. */
+  const onCapsuleChange = useCallback(
+    (index: number) => onPageChange(CAPSULE_TABS[index].id),
+    [onPageChange],
+  );
 
   return (
     /* `id="card"` : la feuille du post (OverlaySheet) s'ancre sur la carte,
@@ -262,9 +282,9 @@ export function CarnetCard({
             style={{ '--i': Math.max(0, lensIndex) } as React.CSSProperties}
           />
           <CarnetMediaTabs
-            items={CARNET_PAGE_TABS.slice(0, 2)}
+            items={CAPSULE_TABS}
             activeIndex={carnetPageIndex(page) < 2 ? carnetPageIndex(page) : -1}
-            onChange={(index) => onPageChange(CARNET_PAGE_TABS[index].id)}
+            onChange={onCapsuleChange}
             ariaLabel="Grille ou carte"
           />
         </div>

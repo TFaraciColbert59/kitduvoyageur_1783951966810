@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import ReportSheet from '@/components/social/ReportSheet';
@@ -79,8 +79,6 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
   const detailView = useMemo(
     () => ({
       ...detail,
-      /* ⚠️ PREVIEW DE RECETTE — retiré après les captures. */
-      isOwner: detail.isOwner || process.env.NEXT_PUBLIC_CKP_OWNER_PREVIEW === '1',
       engagement: {
         ...detail.engagement,
         liked: engagement.liked,
@@ -96,10 +94,65 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     [detail.id],
   );
 
-  const openStat = (target: CarnetStatsTab) => {
+  /* Handlers passés aux listes et aux composants mémoïsés : identité stable,
+     donc aucun rendu en cascade quand l'engagement ou les commentaires bougent.
+     Le changement de page du carrousel est une transition : interruptible,
+     sans bloquer le geste, rendu visible inchangé. */
+  const openPage = useCallback((next: CarnetPageId) => {
+    startTransition(() => setPage(next));
+  }, []);
+
+  const openCarnetFromTopBar = useCallback(() => openPage('etapes'), [openPage]);
+  const openCarnetFromCard = useCallback(() => openPage('parcours'), [openPage]);
+  const openCommentsPage = useCallback(() => openPage('comments'), [openPage]);
+  const openLikesPage = useCallback(() => openPage('likes'), [openPage]);
+  const openManagePage = useCallback(() => openPage('manage'), [openPage]);
+  const openPost = useCallback((next: number) => setPostIndex(next), []);
+  const closePost = useCallback(() => setPostIndex(null), []);
+  const openViewer = useCallback((next: number) => setViewerIndex(next), []);
+  const closeViewer = useCallback(() => setViewerIndex(null), []);
+  const closeDrawer = useCallback(() => setDrawer(null), []);
+  const openShare = useCallback(() => setDrawer('share'), []);
+  const openReport = useCallback(() => setReportOpen(true), []);
+  const closeReport = useCallback(() => setReportOpen(false), []);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const toggleMenu = useCallback(() => setMenuOpen((value) => !value), []);
+  const copied = useCallback(() => toast('Lien copié.', 'success'), [toast]);
+
+  /* Sous-onglet des statistiques : même transition que la page du carrousel. */
+  const changeStatTab = useCallback((next: CarnetStatsTab) => {
+    startTransition(() => setStatTab(next));
+  }, []);
+
+  const openStat = useCallback((target: CarnetStatsTab) => {
     setStatTab(target);
     setDrawer('stats');
-  };
+  }, []);
+
+  /* Ces deux bascules viennent du hook : on ne dépend que de la fonction,
+     jamais de l'objet retourné (recréé à chaque rendu). */
+  const toggleLike = useCallback(() => void engagement.toggleLike(), [engagement.toggleLike]);
+  const toggleFavorite = useCallback(() => void engagement.toggleFavorite(), [engagement.toggleFavorite]);
+
+  /* Objet stable de la bascule J’aime : sans lui, chaque rendu de l'écran
+     recréait la prop et la page J’aime se redessinait pour rien. */
+  const likeState = useMemo(
+    () => ({ liked: engagement.liked, count: engagement.likes, onToggle: toggleLike }),
+    [engagement.liked, engagement.likes, toggleLike],
+  );
+
+  const copyLink = useCallback(() => {
+    void navigator.clipboard.writeText(shareUrl);
+    toast('Lien copié.', 'success');
+  }, [shareUrl, toast]);
+
+  const handleDownloadGpx = useCallback(
+    () => downloadGpx(detail.title, detail.trace),
+    [detail.title, detail.trace],
+  );
+
+  const goToCarnets = useCallback(() => router.push('/carnets'), [router]);
+  const goToNewCarnet = useCallback(() => router.push('/carnets/nouveau'), [router]);
 
   /* La couverture du carnet est le fond de page, derrière un voile dégradé qui
      garde le texte lisible. Sans couverture — ou si l'URL ne se charge pas
@@ -132,24 +185,21 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
       <header className="ckp-screen-header">
         <CarnetTopBar
           title={detail.title}
-          onOpenCarnet={() => setPage('etapes')}
-          onCreate={() => router.push('/carnets/nouveau')}
+          onOpenCarnet={openCarnetFromTopBar}
+          onCreate={goToNewCarnet}
           menuOpen={menuOpen}
-          onOpenMenu={() => setMenuOpen((value) => !value)}
+          onOpenMenu={toggleMenu}
           menu={
             <CarnetMoreMenu
               open={menuOpen}
               saved={engagement.favorited}
               isOwner={detail.isOwner}
-              onSave={() => void engagement.toggleFavorite()}
-              onShare={() => setDrawer('share')}
-              onCopy={() => {
-                void navigator.clipboard.writeText(shareUrl);
-                toast('Lien copié.', 'success');
-              }}
-              onReport={() => setReportOpen(true)}
-              onManage={() => setPage('manage')}
-              onClose={() => setMenuOpen(false)}
+              onSave={toggleFavorite}
+              onShare={openShare}
+              onCopy={copyLink}
+              onReport={openReport}
+              onManage={openManagePage}
+              onClose={closeMenu}
             />
           }
         />
@@ -157,40 +207,32 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
 
       <main className="ckp-screen-body">
         {drawer ? (
-          <CarnetDrawer drawer={drawer} onDrawerChange={setDrawer} onClose={() => setDrawer(null)}>
+          <CarnetDrawer drawer={drawer} onDrawerChange={setDrawer} onClose={closeDrawer}>
             {drawer === 'stats' ? (
-              <CarnetStatsPane detail={detailView} tab={statTab} onTabChange={setStatTab} />
+              <CarnetStatsPane detail={detailView} tab={statTab} onTabChange={changeStatTab} />
             ) : null}
             {drawer === 'share' ? (
-              <CarnetSharePane
-                url={shareUrl}
-                title={detail.title}
-                onCopied={() => toast('Lien copié.', 'success')}
-              />
+              <CarnetSharePane url={shareUrl} title={detail.title} onCopied={copied} />
             ) : null}
           </CarnetDrawer>
         ) : (
           <CarnetCard
             detail={detailView}
             page={page}
-            onPageChange={setPage}
+            onPageChange={openPage}
             canWrite={canWrite}
             onRequireAuth={requireAuth}
-            onOpenCarnet={() => setPage('parcours')}
+            onOpenCarnet={openCarnetFromCard}
             onOpenStat={openStat}
-            onOpenComments={() => setPage('comments')}
-            onOpenLikes={() => setPage('likes')}
-            onOpenPost={(index) => setPostIndex(index)}
-            onDownloadGpx={() => downloadGpx(detail.title, detail.trace)}
+            onOpenComments={openCommentsPage}
+            onOpenLikes={openLikesPage}
+            onOpenPost={openPost}
+            onDownloadGpx={handleDownloadGpx}
             likesPage={
               <CarnetLikesPane
                 detail={detailView}
                 currentUserId={currentUserId}
-                like={{
-                  liked: engagement.liked,
-                  count: engagement.likes,
-                  onToggle: () => void engagement.toggleLike(),
-                }}
+                like={likeState}
               />
             }
             commentsPage={
@@ -210,7 +252,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
                   detail={detailView}
                   url={shareUrl}
                   onExport={exportCarnet}
-                  onDeleted={() => router.push('/carnets')}
+                  onDeleted={goToCarnets}
                 />
               ) : null
             }
@@ -225,19 +267,19 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
         <CarnetPostSheet
           detail={detailView}
           index={postIndex}
-          onIndexChange={setPostIndex}
-          onClose={() => setPostIndex(null)}
+          onIndexChange={openPost}
+          onClose={closePost}
           comments={comments}
           canWrite={canWrite}
           currentUserId={currentUserId}
           onRequireAuth={requireAuth}
-          onOpenViewer={setViewerIndex}
-          onLike={() => void engagement.toggleLike()}
+          onOpenViewer={openViewer}
+          onLike={toggleLike}
           shareUrl={shareUrl}
-          onCopied={() => toast('Lien copié.', 'success')}
+          onCopied={copied}
           saved={engagement.favorited}
-          onSave={() => void engagement.toggleFavorite()}
-          onReport={() => setReportOpen(true)}
+          onSave={toggleFavorite}
+          onReport={openReport}
         />
       ) : null}
 
@@ -247,14 +289,14 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
         <CarnetMediaViewer
           items={detail.photoMoments}
           index={viewerIndex}
-          onIndexChange={setViewerIndex}
-          onClose={() => setViewerIndex(null)}
+          onIndexChange={openViewer}
+          onClose={closeViewer}
         />
       ) : null}
 
       <ReportSheet
         isOpen={reportOpen}
-        onClose={() => setReportOpen(false)}
+        onClose={closeReport}
         contentId={detail.id}
         contentType="carnet"
         onSubmitReport={async (reason, details) => {
