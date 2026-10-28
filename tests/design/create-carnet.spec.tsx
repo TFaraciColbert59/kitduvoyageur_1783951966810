@@ -7,6 +7,7 @@ import {
   buildCarnetRow,
 } from '@/features/community/create/CarnetCreateForm';
 import { createDefaults, createSchemas } from '@/features/community/create/engine/createSchemas';
+import { COVER } from './_coverFixture';
 
 vi.mock('next/link', () => ({
   default: ({ children, ...props }: React.ComponentProps<'a'>) => <a {...props}>{children}</a>,
@@ -107,6 +108,7 @@ describe('CarnetCreateForm', () => {
       ...createDefaults('carnet'),
       title: 'Traversée du Vercors',
       destination: 'Vercors',
+      cover: COVER,
     };
 
     expect(createSchemas.carnet.safeParse({ ...base, distanceKm: -1 }).success).toBe(false);

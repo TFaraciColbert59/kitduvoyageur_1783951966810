@@ -14,6 +14,7 @@ import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationSignature } from './shared/CreationSignature';
 import { PlaceSearch } from './shared/PlaceSearch';
+import { ActivitySearch } from './shared/ActivitySearch';
 import { ClubRulesLedger, ClubModeCards, JoinStepper, ClubInvitePass } from './shared/InfoCards';
 import { InlineError } from './shared/InlineError';
 import { resolveCoverUrl } from './shared/mediaSubmit';
@@ -238,12 +239,13 @@ export function ClubCreateForm({
                   <InlineError message={errors.name?.message} />
                 </Field>
                 <div className="lkdv-form-row">
-                  <Field label="Catégorie" htmlFor="club-category">
-                    <TextInput
-                      id="club-category"
-                      {...form.register('category')}
-                      maxLength={60}
-                      placeholder="Randonnée"
+                  <Field label="Activité" htmlFor="club-category" required>
+                    <Controller
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <ActivitySearch value={field.value} onChange={field.onChange} placeholder="Randonnée, trail, ski…" />
+                      )}
                     />
                     <InlineError message={errors.category?.message} />
                   </Field>
@@ -285,7 +287,7 @@ export function ClubCreateForm({
                       value={field.value}
                       onChange={field.onChange}
                       max={1}
-                      label="Photo de couverture"
+                      label="Image du club (obligatoire)"
                       hint="Le visuel de la carte du club."
                       upload={uploader}
                       fieldName="cover"
