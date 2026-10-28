@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CARNET_STATS_TABS, summarizeCarnet } from '../stats';
-import type { CarnetDay, CarnetDetail, CarnetMomentItem } from '../types';
+import type { CarnetEtapeDay, CarnetDetail, CarnetMomentItem } from '../types';
 
-const day = (overrides: Partial<CarnetDay>): CarnetDay => ({
+const day = (overrides: Partial<CarnetEtapeDay>): CarnetEtapeDay => ({
   id: 'd',
   dayNumber: 1,
   label: 'JOUR 1',
@@ -50,6 +50,8 @@ const detail = (overrides: Partial<CarnetDetail> = {}): CarnetDetail => ({
   moments: [],
   photoMoments: [],
   days: [],
+  etapes: [],
+  summary: { distanceKm: null, elevationM: null, days: 0, moments: 0 },
   kit: { totalWeightG: null, items: [] },
   trace: null,
   place: { country: null, region: null, locality: null, lat: null, lng: null },
@@ -85,7 +87,7 @@ describe('summarizeCarnet — statistiques réelles', () => {
 
   it('calcule moyenne par étape et dénivelé par km', () => {
     const summary = summarizeCarnet(
-      detail({ distanceKm: 106.4, elevationM: 2002, days: [day({ id: 'd1' }), day({ id: 'd2' })] }),
+      detail({ distanceKm: 106.4, elevationM: 2002, etapes: [day({ id: 'd1' }), day({ id: 'd2' })] }),
     );
     expect(summary.averageDistanceKm).toBeCloseTo(53.2, 6);
     expect(summary.elevationPerKm).toBeCloseTo(18.8, 1);
@@ -95,7 +97,7 @@ describe('summarizeCarnet — statistiques réelles', () => {
     const summary = summarizeCarnet(
       detail({
         elevationM: 1750,
-        days: [
+        etapes: [
           day({ id: 'd1', dayNumber: 1, from: 'Les Houches', to: 'Bellachat', distanceKm: 12.4, elevationM: 1050 }),
           day({ id: 'd2', dayNumber: 2, from: 'Bellachat', to: 'Mottets', distanceKm: 14.2, elevationM: 700 }),
           day({ id: 'd3', dayNumber: 3, from: 'Mottets', to: 'Courmayeur' }),
@@ -115,7 +117,7 @@ describe('summarizeCarnet — statistiques réelles', () => {
   it('attache les moments au bon jour, sans en inventer', () => {
     const summary = summarizeCarnet(
       detail({
-        days: [day({ id: 'd1', dayNumber: 1 }), day({ id: 'd2', dayNumber: 2 })],
+        etapes: [day({ id: 'd1', dayNumber: 1 }), day({ id: 'd2', dayNumber: 2 })],
         moments: [
           moment({ id: 'm1', dayNumber: 1, place: 'Col' }),
           moment({ id: 'm2', dayNumber: 2 }),
@@ -130,7 +132,7 @@ describe('summarizeCarnet — statistiques réelles', () => {
 
   it('traite une valeur nulle comme une absence, jamais comme un zéro', () => {
     const summary = summarizeCarnet(
-      detail({ distanceKm: 0, elevationM: 0, days: [day({ id: 'd1', distanceKm: 0, elevationM: 0 })] }),
+      detail({ distanceKm: 0, elevationM: 0, etapes: [day({ id: 'd1', distanceKm: 0, elevationM: 0 })] }),
     );
     expect(summary.distanceKm).toBeNull();
     expect(summary.elevationM).toBeNull();

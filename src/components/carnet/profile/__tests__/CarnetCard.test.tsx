@@ -240,7 +240,7 @@ describe('CarnetCard — carte du carnet', () => {
         {...base({
           page: 'etapes',
           detail: detail({
-            days: [
+            etapes: [
               {
                 id: 'd1',
                 dayNumber: 1,
@@ -369,7 +369,7 @@ describe('CarnetCard — ligne de lieu unique', () => {
         {...base({
           detail: detail({
             place: PLACE,
-            days: [{ id: 'd1', dayNumber: 1, label: 'JOUR 1', from: null, to: null, note: null, distanceKm: null, elevationM: null, durationText: null, weather: null, overnight: null }],
+            etapes: [{ id: 'd1', dayNumber: 1, label: 'JOUR 1', from: null, to: null, note: null, distanceKm: null, elevationM: null, durationText: null, weather: null, overnight: null }],
           }),
         })}
       />,
@@ -392,7 +392,7 @@ describe('CarnetCard — ligne de lieu unique', () => {
             dateRange: null,
             distanceKm: null,
             elevationM: null,
-            days: [],
+            etapes: [],
           }),
         })}
       />,
@@ -415,7 +415,7 @@ describe('CarnetCard — ligne de lieu unique', () => {
             dateRange: null,
             distanceKm: null,
             elevationM: null,
-            days: [],
+            etapes: [],
           }),
         })}
       />,

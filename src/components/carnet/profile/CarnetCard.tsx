@@ -135,7 +135,7 @@ export function CarnetCard({
     return placeLineParts({
       place,
       fallback: detail.destination,
-      daysCount: detail.days.length,
+      daysCount: detail.etapes.length,
       distanceKm: detail.distanceKm,
       elevationM: detail.elevationM,
       dateRange: detail.dateRange,
@@ -143,7 +143,7 @@ export function CarnetCard({
   }, [
     detail.place,
     detail.destination,
-    detail.days.length,
+    detail.etapes.length,
     detail.distanceKm,
     detail.elevationM,
     detail.dateRange,

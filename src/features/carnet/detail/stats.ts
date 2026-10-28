@@ -5,7 +5,7 @@
  * une moyenne n'existe que si le numérateur ET le dénominateur existent.
  */
 
-import type { CarnetDay, CarnetDetail, CarnetMomentItem } from './types';
+import type { CarnetEtapeDay, CarnetDetail, CarnetMomentItem } from './types';
 
 export type CarnetStatsTab = 'distance' | 'elevation' | 'days';
 
@@ -22,7 +22,7 @@ export const CARNET_STATS_TABS: CarnetStatsTabItem[] = [
 ];
 
 export interface CarnetDayStats {
-  day: CarnetDay;
+  day: CarnetEtapeDay;
   moments: CarnetMomentItem[];
 }
 
@@ -36,9 +36,9 @@ export interface CarnetStatsSummary {
   elevationPerKm: number | null;
   startPlace: string | null;
   endPlace: string | null;
-  daysWithDistance: CarnetDay[];
-  daysWithElevation: CarnetDay[];
-  maxElevationDay: CarnetDay | null;
+  daysWithDistance: CarnetEtapeDay[];
+  daysWithElevation: CarnetEtapeDay[];
+  maxElevationDay: CarnetEtapeDay | null;
   /** Moyenne calculée sur les seuls jours dont le dénivelé est renseigné. */
   averageElevationM: number | null;
   daysWithoutElevation: number;
@@ -53,7 +53,7 @@ function positive(value: number | null): number | null {
 export function summarizeCarnet(detail: CarnetDetail): CarnetStatsSummary {
   const distanceKm = positive(detail.distanceKm);
   const elevationM = positive(detail.elevationM);
-  const days = detail.days;
+  const days = detail.etapes;
   const daysCount = days.length;
 
   const averageDistanceKm =
@@ -64,7 +64,7 @@ export function summarizeCarnet(detail: CarnetDetail): CarnetStatsSummary {
   const daysWithDistance = days.filter((day) => positive(day.distanceKm) !== null);
   const daysWithElevation = days.filter((day) => positive(day.elevationM) !== null);
 
-  let maxElevationDay: CarnetDay | null = null;
+  let maxElevationDay: CarnetEtapeDay | null = null;
   let elevationSum = 0;
   for (const day of daysWithElevation) {
     const value = positive(day.elevationM) as number;

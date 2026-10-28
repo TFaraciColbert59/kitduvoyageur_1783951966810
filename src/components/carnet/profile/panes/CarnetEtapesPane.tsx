@@ -10,14 +10,14 @@ export interface CarnetEtapesPaneProps {
 
 /** Étapes réelles du carnet, dans la ligne de jour commune (56 px). */
 export function CarnetEtapesPane({ detail }: CarnetEtapesPaneProps) {
-  if (detail.days.length === 0) {
+  if (detail.etapes.length === 0) {
     return <p className="ckp-pane-empty">Aucune étape enregistrée.</p>;
   }
 
   return (
     <div className="ckp-pane">
       <div className="ckp-daylist">
-        {detail.days.map((day) => (
+        {detail.etapes.map((day) => (
           <CarnetDayRow key={day.id} day={day} />
         ))}
       </div>

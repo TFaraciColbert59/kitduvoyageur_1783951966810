@@ -121,14 +121,14 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
 
   /* Séries et géométries dérivées : pures, donc mémoïsées sur les jours. */
   const distanceSeries = useMemo<SeriesValue[]>(
-    () => detail.days.map((day) => day.distanceKm),
-    [detail.days],
+    () => detail.etapes.map((day) => day.distanceKm),
+    [detail.etapes],
   );
   const elevationSeries = useMemo<SeriesValue[]>(
-    () => detail.days.map((day) => day.elevationM),
-    [detail.days],
+    () => detail.etapes.map((day) => day.elevationM),
+    [detail.etapes],
   );
-  const daySeries = useMemo<SeriesValue[]>(() => detail.days.map(() => 1), [detail.days]);
+  const daySeries = useMemo<SeriesValue[]>(() => detail.etapes.map(() => 1), [detail.etapes]);
   const profile = useMemo(
     () => elevationProfile(elevationSeries, PROFILE_WIDTH, PROFILE_HEIGHT),
     [elevationSeries],
@@ -176,13 +176,13 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
   /* Trois repères verticaux : les vrais jours placés aux quarts de l'axe. */
   const ticks = useMemo(
     () =>
-      detail.days.length
+      detail.etapes.length
         ? [0.25, 0.5, 0.75].map((ratio) => {
-            const index = Math.min(detail.days.length - 1, Math.round(ratio * (detail.days.length - 1)));
-            return `J${detail.days[index].dayNumber}`;
+            const index = Math.min(detail.etapes.length - 1, Math.round(ratio * (detail.etapes.length - 1)));
+            return `J${detail.etapes[index].dayNumber}`;
           })
         : [],
-    [detail.days],
+    [detail.etapes],
   );
 
   const traceBroken = tracePoints.length === 1;
@@ -325,7 +325,7 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
               <div className="ckp-elev-bars" aria-hidden="true">
                 {bars.map((height, index) => (
                   <i
-                    key={detail.days[index]?.id ?? index}
+                    key={detail.etapes[index]?.id ?? index}
                     data-empty={height === null ? 'true' : undefined}
                     style={{ height: height ?? 2 }}
                   />

@@ -32,6 +32,12 @@ export interface HikeSessionRow {
   duration_seconds: number | null;
   started_at: string | null;
   positions_geojson: unknown;
+  /**
+   * Échantillons horodatés `{lat, lng, timestamp, elevationM}` : seule source
+   * de l'heure par point. Absente, les points ne portent pas d'heure et c'est
+   * `started_at` qui date la sortie.
+   */
+  positions_timed?: unknown;
 }
 
 export interface EtapeRow {
@@ -111,7 +117,46 @@ export interface CarnetMomentItem {
   imageUrl: string | null;
 }
 
+/** Un point GPS d'un jour : sa coordonnée réelle et son heure réelle. */
+export interface CarnetDayPoint {
+  lat: number;
+  lng: number;
+  /** Horodatage ISO du point (échantillon horodaté, sinon début de sortie). */
+  at: string;
+}
+
+/**
+ * Un jour de la fiche, dérivé côté serveur (`buildDays`).
+ *
+ * Un jour existe dès qu'il porte au moins un moment **ou** un point GPS.
+ * Chaque valeur absente reste `null` : aucune distance, aucun dénivelé, aucune
+ * durée et aucune date ne sont inventés ni répartis.
+ */
 export interface CarnetDay {
+  /** Numéro du jour tel que le carnet le numérote, à partir de 1. */
+  index: number;
+  /** `YYYY-MM-DD`, ou `null` quand aucune date réelle ne peut être établie. */
+  date: string | null;
+  /** Longueur haversine des segments du jour, `null` sous deux points. */
+  distanceKm: number | null;
+  /** Somme des dénivelés positifs, si les altitudes existent. */
+  elevationM: number | null;
+  /** Somme des durées des sorties du jour (`duration_seconds`). */
+  durationS: number | null;
+  moments: CarnetMomentItem[];
+  /** Points GPS des sorties du jour, fusionnés et triés chronologiquement. */
+  points: CarnetDayPoint[];
+}
+
+/** Totaux réels du carnet : somme des jours, jamais une valeur inventée. */
+export interface CarnetSummary {
+  distanceKm: number | null;
+  elevationM: number | null;
+  days: number;
+  moments: number;
+}
+
+export interface CarnetEtapeDay {
   id: string;
   dayNumber: number;
   label: string;
@@ -225,7 +270,15 @@ export interface CarnetDetail {
   moments: CarnetMomentItem[];
   /** Moments qui portent une image : seuls ceux-là peuplent la grille. */
   photoMoments: CarnetMomentItem[];
+  /**
+   * Jours dérivés des moments et des points GPS (`buildDays`), indexés 1..n.
+   * Un jour sans donnée n'est pas créé : la numérotation reste celle du carnet.
+   */
   days: CarnetDay[];
+  /** Étapes déclarées du carnet (`groupe_etapes`), lecture historique inchangée. */
+  etapes: CarnetEtapeDay[];
+  /** Totaux du carnet (`buildSummary`). */
+  summary: CarnetSummary;
   kit: CarnetKit;
   trace: unknown | null;
   /** Lieu réel de la fiche : pays · région · lieu, plus la coordonnée de départ. */
@@ -239,6 +292,12 @@ export interface BuildCarnetDetailInput {
   author: AuthorRow | null;
   /** Sortie la plus récente : elle porte les statistiques affichées. */
   hikeSession: HikeSessionRow | null;
+  /**
+   * Toutes les sorties du carnet (les plus récentes d'abord), dans la limite
+   * lue par `getCarnetDetail`. Sert exclusivement à `buildDays` : chaque sortie
+   * date son bloc de points GPS. Absente, `hikeSession` en tient lieu.
+   */
+  sessions?: HikeSessionRow[];
   /**
    * Trace réelle à dessiner, choisie parmi toutes les sorties du carnet
    * (`pickCarnetTrace`). Absente, on retombe sur la trace de `hikeSession`.

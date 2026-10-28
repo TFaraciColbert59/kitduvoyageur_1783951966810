@@ -102,7 +102,7 @@ const DAYS = [
   },
 ];
 
-const OWNER = detail({ isOwner: true, days: DAYS });
+const OWNER = detail({ isOwner: true, etapes: DAYS });
 
 function drawerOpen() {
   return screen.queryByRole('region', { name: 'Panneau du carnet' }) !== null;

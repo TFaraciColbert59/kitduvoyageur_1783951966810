@@ -75,7 +75,7 @@ export interface CarnetPlaceLineInput {
   place: CarnetPlace | null | undefined;
   /** `carnets.destination` : utilisé seulement si le pays réel est absent. */
   fallback?: string | null;
-  /** Nombre réel d'étapes (`carnet.days.length`). */
+  /** Nombre réel d'étapes déclarées (`carnet.etapes.length`). */
   daysCount: number;
   distanceKm: number | null;
   elevationM: number | null;

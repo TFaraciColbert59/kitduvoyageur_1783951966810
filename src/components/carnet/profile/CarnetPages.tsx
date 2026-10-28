@@ -276,8 +276,8 @@ export function CarnetPages({
                 </span>
               ) : null}
               <span>
-                <Icon name="route" size={13} aria-hidden="true" /> {detail.days.length} étape
-                {detail.days.length > 1 ? 's' : ''}
+                <Icon name="route" size={13} aria-hidden="true" /> {detail.etapes.length} étape
+                {detail.etapes.length > 1 ? 's' : ''}
               </span>
               <span>
                 <Icon name="image-plus" size={13} aria-hidden="true" /> {detail.photoMoments.length}{' '}

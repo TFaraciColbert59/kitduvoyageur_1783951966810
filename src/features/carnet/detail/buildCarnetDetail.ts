@@ -1,8 +1,9 @@
+import { buildDays, buildSummary, toMomentItems } from './days';
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import { buildCarnetPlace } from './place';
 import type {
   BuildCarnetDetailInput,
-  CarnetDay,
+  CarnetEtapeDay,
   CarnetDetail,
   CarnetMomentItem,
   CarnetParticipant,
@@ -62,19 +63,7 @@ export function buildParticipants(input: BuildCarnetDetailInput): CarnetParticip
   return [...byId.values()];
 }
 
-function buildMoments(input: BuildCarnetDetailInput): CarnetMomentItem[] {
-  return input.moments.map((m) => ({
-    id: m.id,
-    dayNumber: m.jour_numero ?? 1,
-    time: m.heure ?? null,
-    caption: m.citation?.trim() || null,
-    authorName: m.auteur_nom?.trim() || null,
-    place: m.lieu?.trim() || null,
-    imageUrl: m.image_url?.trim() || null,
-  }));
-}
-
-function buildDays(input: BuildCarnetDetailInput): CarnetDay[] {
+function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
   const overnightByDay = new Map<number, string>();
   for (const h of input.hebergements) {
     const day = h.apres_jour_numero;
@@ -111,7 +100,7 @@ function buildDays(input: BuildCarnetDetailInput): CarnetDay[] {
   // Pas d'étapes : les moments donnent les journées, sans récit inventé
   // et sans répartition des totaux (l'ancienne fiche divisait distance et D+).
   const byDay = new Map<number, CarnetMomentItem[]>();
-  for (const moment of buildMoments(input)) {
+  for (const moment of toMomentItems(input.moments)) {
     const list = byDay.get(moment.dayNumber) ?? [];
     list.push(moment);
     byDay.set(moment.dayNumber, list);
@@ -140,15 +129,21 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const { carnet, hikeSession } = input;
   const distanceKm = toNumber(hikeSession?.distance_km) ?? toNumber(carnet.distance_km);
   const elevationM = toNumber(hikeSession?.elevation_gain_m) ?? toNumber(carnet.denivele_m);
-  const moments = buildMoments(input);
-  const days = buildDays(input);
+  const moments = toMomentItems(input.moments);
+  const etapes = buildEtapes(input);
+
+  /* Jours dérivés : les moments nomment leur jour, les points GPS des sorties
+     datent le leur. Aucune valeur n'est inventée quand une source manque. */
+  const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
+  const days = buildDays({ moments: input.moments, sessions, startDate: carnet.start_date ?? null });
+  const summary = buildSummary(days);
 
   const stats: CarnetStatItem[] = [];
   const distanceLabel = formatKm(distanceKm);
   if (distanceLabel) stats.push({ key: 'distance', label: 'DISTANCE', value: distanceLabel });
   const elevationLabel = formatElevation(elevationM);
   if (elevationLabel) stats.push({ key: 'elevation', label: 'DÉNIVELÉ +', value: elevationLabel });
-  if (days.length > 0) stats.push({ key: 'days', label: 'JOURS', value: String(days.length) });
+  if (etapes.length > 0) stats.push({ key: 'days', label: 'JOURS', value: String(etapes.length) });
 
   const kitWeight = input.kitItems.reduce<number | null>((total, item) => {
     const grams = toNumber(item.poids_g);
@@ -194,6 +189,8 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     moments,
     photoMoments: moments.filter((m) => Boolean(m.imageUrl)),
     days,
+    etapes,
+    summary,
     kit: {
       totalWeightG: kitWeight,
       items: input.kitItems.map((k) => ({

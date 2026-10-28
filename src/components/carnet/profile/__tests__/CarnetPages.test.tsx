@@ -3,14 +3,14 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CARNET_PAGE_TABS, CarnetPages, carnetPageTabs, swipeStep } from '../CarnetPages';
-import type { CarnetDay } from '@/features/carnet/detail/types';
+import type { CarnetEtapeDay } from '@/features/carnet/detail/types';
 import { detail } from './fixtures';
 
 afterEach(() => cleanup());
 
 const noop = () => {};
 
-const DAY: CarnetDay = {
+const DAY: CarnetEtapeDay = {
   id: 'd1',
   dayNumber: 1,
   label: 'JOUR 1 · 26 sept.',
@@ -32,7 +32,7 @@ function base(overrides: Partial<React.ComponentProps<typeof CarnetPages>> = {})
         { id: 'm1', dayNumber: 1, time: null, caption: null, authorName: null, place: null, imageUrl: 'https://cdn.test/1.jpg' },
         { id: 'm2', dayNumber: 1, time: null, caption: null, authorName: null, place: null, imageUrl: 'https://cdn.test/2.jpg' },
       ],
-      days: [DAY],
+      etapes: [DAY],
     }),
     page: 'posts' as const,
     onPageChange: noop,
