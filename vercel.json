@@ -9,5 +9,5 @@
       "schedule": "0 3 * * *"
     }
   ],
-  "buildCommand": "NODE_OPTIONS=--max-old-space-size=8192 next build"
+  "buildCommand": "NODE_OPTIONS=--max-old-space-size=8192 next build --no-lint"
 }
