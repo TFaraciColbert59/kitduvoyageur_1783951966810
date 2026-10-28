@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import Icon from '@/components/ui/Icon';
 import { formatElevation, formatKm } from '@/features/carnet/detail/format';
 import { travelInfo } from '@/features/carnet/detail/dayinfo';
+import { dayDrawerStats } from '@/features/carnet/detail/daydrawer';
 import { CARNET_STATS_TABS, summarizeCarnet, type CarnetStatsTab } from '@/features/carnet/detail/stats';
 import type { CarnetDay, CarnetDetail } from '@/features/carnet/detail/types';
 import { extractCoords, traceLengthKm } from '../traceGeometry';
@@ -25,9 +26,10 @@ export interface CarnetStatsPaneProps {
   tab: CarnetStatsTab;
   onTabChange: (tab: CarnetStatsTab) => void;
   /**
-   * Page de jour affichée sur la carte : `null` sur le Résumé. Les
-   * informations qui vivaient sous les statistiques de la carte (lieu,
-   * départ, arrivée, allure, cumul, D+ du jour, numéro et date) sont ici.
+   * Page de jour affichée sur la carte : `null` sur le Résumé. Quand un jour
+   * est actif, les trois volets ne contiennent **que** les données de ce jour
+   * (distance, allure, départ, arrivée, cumul, D+, points GPS, numéro, date et
+   * récit) ; les totaux et la plage de dates restent au Résumé.
    */
   day?: CarnetDay | null;
 }
@@ -118,6 +120,9 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
   /* Lieu et informations de la page : mêmes dérivations que l'ancienne fiche,
      désormais peintes dans les volets concernés. */
   const travel = useMemo(() => travelInfo(detail, day), [day, detail]);
+  /* Page de jour : les trois volets ne parlent que de ce jour — aucun total,
+     aucune plage de dates, aucune moyenne du carnet. */
+  const dayView = useMemo(() => (day ? dayDrawerStats(detail, day) : null), [day, detail]);
   const tracePoints = useMemo(() => extractCoords(detail.trace), [detail.trace]);
   const traceKm = useMemo(() => traceLengthKm(detail.trace), [detail.trace]);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -141,49 +146,84 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
     [stats.days],
   );
   const daySeries = useMemo<SeriesValue[]>(() => detail.etapes.map(() => 1), [detail.etapes]);
+  /* Les géométries agrégées (profil, barres, repères) n'ont aucun sens sur une
+     page de jour : elles ne sont pas calculées, donc rien d'agrégé ne traîne. */
   const profile = useMemo(
-    () => elevationProfile(elevationSeries, PROFILE_WIDTH, PROFILE_HEIGHT),
-    [elevationSeries],
+    () => (dayView ? null : elevationProfile(elevationSeries, PROFILE_WIDTH, PROFILE_HEIGHT)),
+    [dayView, elevationSeries],
   );
-  const bars = useMemo(() => dailyBarHeights(distanceSeries), [distanceSeries]);
+  const bars = useMemo(() => (dayView ? [] : dailyBarHeights(distanceSeries)), [dayView, distanceSeries]);
 
   const dayCount = stats.daysCount;
   const dayUnit = dayCount > 1 ? 'jours' : 'jour';
 
-  const hero = useMemo<Record<CarnetStatsTab, Hero>>(() => ({
-    distance: {
-      value: splitUnit(formatKm(stats.distanceKm)).value,
-      unit: 'km',
-      sub: [
-        dayCount > 0 ? `${dayCount} étapes` : '—',
-        number(stats.averageDistanceKm, 'km/j'),
-        perKm(stats.elevationPerKm),
-      ],
-      share: documentedShare(distanceSeries),
-    },
-    elevation: {
-      value: splitUnit(formatElevation(stats.elevationM)).value,
-      unit: 'm',
-      sub: [
-        dplus(stats.averageElevationM),
-        stats.maxElevationDay
-          ? `${formatElevation(stats.maxElevationDay.elevationM) ?? '—'} · ${stats.maxElevationDay.label}`
-          : '—',
-        `${stats.daysWithElevation.length} / ${dayCount} ${dayUnit}`,
-      ],
-      share: documentedShare(elevationSeries),
-    },
-    days: {
-      value: dayCount > 0 ? dayCount.toLocaleString('fr-FR') : '—',
-      unit: dayUnit,
-      sub: [
-        formatKm(stats.distanceKm) ?? '—',
-        number(stats.averageDistanceKm, 'km/j'),
-        formatElevation(stats.elevationM) ?? '—',
-      ],
-      share: documentedShare(daySeries),
-    },
-  }), [dayCount, daySeries, dayUnit, distanceSeries, elevationSeries, stats]);
+  const hero = useMemo<Record<CarnetStatsTab, Hero>>(() => {
+    if (dayView) {
+      /* Un seul jour : le chiffre héros est celui du jour, ses trois
+         sous-valeurs aussi. Aucune moyenne ni total ne descend du carnet. */
+      const dayDistance = formatKm(dayView.distanceKm);
+      const dayElevation = formatElevation(dayView.elevationM);
+      const dayLabel = `J${dayView.dayNumber}`;
+      const dayDate = dayView.date ?? '—';
+      const dayDuration = dayView.duration ?? '—';
+
+      return {
+        distance: {
+          value: splitUnit(dayDistance).value,
+          unit: 'km',
+          sub: [dayLabel, dayDate, dayDuration],
+          share: dayDistance ? 1 : 0,
+        },
+        elevation: {
+          value: splitUnit(dayElevation).value,
+          unit: 'm',
+          sub: [dayLabel, dayDate, dayDuration],
+          share: dayElevation ? 1 : 0,
+        },
+        days: {
+          value: dayView.dayNumber.toLocaleString('fr-FR'),
+          unit: 'jour',
+          sub: [dayDate, dayDistance ?? '—', dplus(dayView.elevationM)],
+          share: 1,
+        },
+      };
+    }
+
+    return {
+      distance: {
+        value: splitUnit(formatKm(stats.distanceKm)).value,
+        unit: 'km',
+        sub: [
+          dayCount > 0 ? `${dayCount} étapes` : '—',
+          number(stats.averageDistanceKm, 'km/j'),
+          perKm(stats.elevationPerKm),
+        ],
+        share: documentedShare(distanceSeries),
+      },
+      elevation: {
+        value: splitUnit(formatElevation(stats.elevationM)).value,
+        unit: 'm',
+        sub: [
+          dplus(stats.averageElevationM),
+          stats.maxElevationDay
+            ? `${formatElevation(stats.maxElevationDay.elevationM) ?? '—'} · ${stats.maxElevationDay.label}`
+            : '—',
+          `${stats.daysWithElevation.length} / ${dayCount} ${dayUnit}`,
+        ],
+        share: documentedShare(elevationSeries),
+      },
+      days: {
+        value: dayCount > 0 ? dayCount.toLocaleString('fr-FR') : '—',
+        unit: dayUnit,
+        sub: [
+          formatKm(stats.distanceKm) ?? '—',
+          number(stats.averageDistanceKm, 'km/j'),
+          formatElevation(stats.elevationM) ?? '—',
+        ],
+        share: documentedShare(daySeries),
+      },
+    };
+  }, [dayCount, daySeries, dayUnit, dayView, distanceSeries, elevationSeries, stats]);
 
   /* Trois repères verticaux : les vrais jours placés aux quarts de l'axe. */
   const ticks = useMemo(
@@ -239,67 +279,104 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
         <div className="ckp-pane-body" role="tabpanel" aria-label="Distance">
           <HeroBlock hero={hero.distance} animate={!rolled.current} tabKey="distance" />
 
-          <div className="ckp-group">
-            <CarnetField
-              icon={<Icon name="compass" size={16} aria-hidden="true" />}
-              label="lieu"
-              value={travel.place ?? ''}
-              wide
-              ariaLabel={`lieu ${travel.place ?? '—'}`}
-            />
-            <CarnetField
-              icon={<Icon name="map-pin" size={16} aria-hidden="true" />}
-              label="départ"
-              value={travel.from ?? stats.startPlace ?? ''}
-              wide
-              ariaLabel={`départ ${travel.from ?? stats.startPlace ?? '—'}`}
-            />
-            <CarnetField
-              icon={<Icon name="flag" size={16} aria-hidden="true" />}
-              label="arrivée"
-              value={travel.to ?? stats.endPlace ?? ''}
-              wide
-              ariaLabel={`arrivée ${travel.to ?? stats.endPlace ?? '—'}`}
-            />
-          </div>
-
-          <div className="ckp-group">
-            <CarnetField
-              label="allure"
-              value={travel.pace ?? ''}
-              ariaLabel={`allure ${travel.pace ?? '—'}`}
-            />
-            <CarnetField
-              label="depuis le départ"
-              value={travel.cumulative ?? ''}
-              ariaLabel={`depuis le départ ${travel.cumulative ?? '—'}`}
-            />
-            <CarnetField
-              icon={<Icon name="route" size={16} aria-hidden="true" />}
-              label="trace gps"
-              value={traceValue}
-              error={traceBroken}
-              ariaLabel={`trace gps ${traceValue || '—'}`}
-            />
-          </div>
-
-          {distanceDays.length === 0 ? (
-            <div className="ckp-group">
-              <CarnetField label="distance par jour" value="" />
-            </div>
-          ) : (
-            distanceGroups.map((group) => (
-              <div className="ckp-group" key={group[0]?.id ?? 'empty'}>
-                {group.map((day) => (
-                  <CarnetField
-                    key={day.id}
-                    label={day.label}
-                    value={formatKm(day.distanceKm) ?? ''}
-                    ariaLabel={`${day.label} ${formatKm(day.distanceKm) ?? '—'}`}
-                  />
-                ))}
+          {dayView ? (
+            <>
+              {/* Page de jour : départ, arrivée, allure et cumul du jour. */}
+              <div className="ckp-group">
+                <CarnetField
+                  icon={<Icon name="map-pin" size={16} aria-hidden="true" />}
+                  label="départ"
+                  value={dayView.from ?? ''}
+                  wide
+                  ariaLabel={`départ ${dayView.from ?? '—'}`}
+                />
+                <CarnetField
+                  icon={<Icon name="flag" size={16} aria-hidden="true" />}
+                  label="arrivée"
+                  value={dayView.to ?? ''}
+                  wide
+                  ariaLabel={`arrivée ${dayView.to ?? '—'}`}
+                />
               </div>
-            ))
+
+              <div className="ckp-group">
+                <CarnetField
+                  label="allure"
+                  value={dayView.pace ?? ''}
+                  ariaLabel={`allure ${dayView.pace ?? '—'}`}
+                />
+                <CarnetField
+                  label="depuis le départ"
+                  value={formatKm(dayView.cumulativeKm) ?? ''}
+                  ariaLabel={`depuis le départ ${formatKm(dayView.cumulativeKm) ?? '—'}`}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="ckp-group">
+                <CarnetField
+                  icon={<Icon name="compass" size={16} aria-hidden="true" />}
+                  label="lieu"
+                  value={travel.place ?? ''}
+                  wide
+                  ariaLabel={`lieu ${travel.place ?? '—'}`}
+                />
+                <CarnetField
+                  icon={<Icon name="map-pin" size={16} aria-hidden="true" />}
+                  label="départ"
+                  value={travel.from ?? stats.startPlace ?? ''}
+                  wide
+                  ariaLabel={`départ ${travel.from ?? stats.startPlace ?? '—'}`}
+                />
+                <CarnetField
+                  icon={<Icon name="flag" size={16} aria-hidden="true" />}
+                  label="arrivée"
+                  value={travel.to ?? stats.endPlace ?? ''}
+                  wide
+                  ariaLabel={`arrivée ${travel.to ?? stats.endPlace ?? '—'}`}
+                />
+              </div>
+
+              <div className="ckp-group">
+                <CarnetField
+                  label="allure"
+                  value={travel.pace ?? ''}
+                  ariaLabel={`allure ${travel.pace ?? '—'}`}
+                />
+                <CarnetField
+                  label="depuis le départ"
+                  value={travel.cumulative ?? ''}
+                  ariaLabel={`depuis le départ ${travel.cumulative ?? '—'}`}
+                />
+                <CarnetField
+                  icon={<Icon name="route" size={16} aria-hidden="true" />}
+                  label="trace gps"
+                  value={traceValue}
+                  error={traceBroken}
+                  ariaLabel={`trace gps ${traceValue || '—'}`}
+                />
+              </div>
+
+              {distanceDays.length === 0 ? (
+                <div className="ckp-group">
+                  <CarnetField label="distance par jour" value="" />
+                </div>
+              ) : (
+                distanceGroups.map((group) => (
+                  <div className="ckp-group" key={group[0]?.id ?? 'empty'}>
+                    {group.map((day) => (
+                      <CarnetField
+                        key={day.id}
+                        label={day.label}
+                        value={formatKm(day.distanceKm) ?? ''}
+                        ariaLabel={`${day.label} ${formatKm(day.distanceKm) ?? '—'}`}
+                      />
+                    ))}
+                  </div>
+                ))
+              )}
+            </>
           )}
         </div>
       ) : null}
@@ -369,19 +446,37 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
           ) : null}
 
           <div className="ckp-group">
-            <CarnetField
-              label="dénivelé du jour"
-              value={travel.elevationM !== null ? dplus(travel.elevationM) : ''}
-              ariaLabel={`dénivelé du jour ${dplus(travel.elevationM)}`}
-            />
-            <CarnetField label="dénivelé par km" value={perKm(stats.elevationPerKm)} />
-            <CarnetField
-              label="jours sans dénivelé"
-              value={stats.daysWithoutElevation.toLocaleString('fr-FR')}
-            />
+            {dayView ? (
+              <>
+                {/* Page de jour : distance et points GPS du jour. Le D+ du jour
+                    est le chiffre héros — aucun total, aucune moyenne. */}
+                <CarnetField
+                  label="distance du jour"
+                  value={formatKm(dayView.distanceKm) ?? ''}
+                />
+                <CarnetField
+                  icon={<Icon name="route" size={16} aria-hidden="true" />}
+                  label="points gps"
+                  value={dayView.gpsPoints > 0 ? `${dayView.gpsPoints} pts` : ''}
+                />
+              </>
+            ) : (
+              <>
+                <CarnetField
+                  label="dénivelé du jour"
+                  value={travel.elevationM !== null ? dplus(travel.elevationM) : ''}
+                  ariaLabel={`dénivelé du jour ${dplus(travel.elevationM)}`}
+                />
+                <CarnetField label="dénivelé par km" value={perKm(stats.elevationPerKm)} />
+                <CarnetField
+                  label="jours sans dénivelé"
+                  value={stats.daysWithoutElevation.toLocaleString('fr-FR')}
+                />
+              </>
+            )}
           </div>
 
-          {elevationDays.length === 0 ? (
+          {dayView ? null : elevationDays.length === 0 ? (
             <div className="ckp-group">
               <CarnetField label="dénivelé par jour" value="" />
             </div>
@@ -405,22 +500,35 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
       {tab === 'days' ? (
         <div className="ckp-pane-body" role="tabpanel" aria-label="Jours">
           <HeroBlock hero={hero.days} animate={!rolled.current} tabKey="days" />
-          {/* Le récit complet du carnet : la carte n'en garde qu'une ligne. */}
-          {detail.description ? <p className="ckp-story">{detail.description}</p> : null}
-          <div className="ckp-group">
-            <CarnetField
-              label="jour"
-              value={travel.dayNumber !== null ? String(travel.dayNumber) : ''}
-            />
-            <CarnetField label="date" value={travel.date ?? ''} />
-            <CarnetField label="dates" value={detail.dateRange ?? ''} wide />
-          </div>
-          {stats.days.length === 0 ? null : (
-            <div className="ckp-daylist">
-              {stats.days.map(({ day, moments }) => (
-                <CarnetDayRow key={day.id} day={day} moments={moments} />
-              ))}
-            </div>
+          {/* Le récit : celui du jour quand il en porte un, sinon le récit
+              global du carnet, affiché une seule fois. */}
+          {dayView ? (
+            <>
+              {dayView.story ? <p className="ckp-story">{dayView.story}</p> : null}
+              <div className="ckp-group">
+                <CarnetField label="jour" value={String(dayView.dayNumber)} />
+                <CarnetField label="date" value={dayView.date ?? ''} />
+              </div>
+            </>
+          ) : (
+            <>
+              {detail.description ? <p className="ckp-story">{detail.description}</p> : null}
+              <div className="ckp-group">
+                <CarnetField
+                  label="jour"
+                  value={travel.dayNumber !== null ? String(travel.dayNumber) : ''}
+                />
+                <CarnetField label="date" value={travel.date ?? ''} />
+                <CarnetField label="dates" value={detail.dateRange ?? ''} wide />
+              </div>
+              {stats.days.length === 0 ? null : (
+                <div className="ckp-daylist">
+                  {stats.days.map(({ day, moments }) => (
+                    <CarnetDayRow key={day.id} day={day} moments={moments} />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       ) : null}
