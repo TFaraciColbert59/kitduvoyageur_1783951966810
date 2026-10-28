@@ -17,10 +17,17 @@
  * carnet sans date garde `date: null`, une sortie sans durée ne fabrique pas de
  * durée. Une distance ne relie jamais deux sorties distinctes : le saut entre
  * la fin d'un relevé et le début d'un autre n'est pas un segment parcouru.
+ *
+ * Le D+ d'un jour vient d'abord des sorties : `hike_sessions.elevation_gain_m`
+ * est le dénivelé réel de la sortie, rattaché au jour où elle a commencé (même
+ * règle que la durée). Les altitudes des points GPS ne prennent le relais que
+ * si aucune sortie du jour ne porte de gain non nul. Sans l'une ni l'autre, le
+ * jour garde `elevationM: null` : aucun D+ n'est réparti depuis le total.
  */
 
 import { parsePositions } from '@/features/compte/map/geometry';
 import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
+import { toNumber } from './format';
 import type {
   CarnetDay,
   CarnetDayPoint,
@@ -204,6 +211,9 @@ export function buildDays(input: {
   const runsByDay = new Map<number, DayRun[]>();
   const durationsByDay = new Map<number, number>();
   const momentsByDay = new Map<number, CarnetMomentItem[]>();
+  /* D+ porté par les sorties du jour : `real` dit qu'au moins une sortie donne
+     un gain non nul, `total` additionne les gains connus (zéro compris). */
+  const elevationsByDay = new Map<number, { total: number; real: boolean }>();
 
   for (const { session, points } of sessions) {
     /* Une sortie peut chevaucher minuit : ses points sont répartis par heure,
@@ -230,6 +240,20 @@ export function buildDays(input: {
       const index = startedAt ? dayIndexOf(startedAt, startDayStamp, dateRanks) : null;
       if (index !== null) durationsByDay.set(index, (durationsByDay.get(index) ?? 0) + duration);
     }
+
+    /* Le D+ de la sortie suit le même jour que sa durée : `elevation_gain_m`
+       est le gain réel du relevé, jamais une valeur déduite des points. */
+    const gain = toNumber(session.elevation_gain_m);
+    if (gain !== null) {
+      const startedAt = asText(session.started_at) ?? points[0]?.at ?? null;
+      const index = startedAt ? dayIndexOf(startedAt, startDayStamp, dateRanks) : null;
+      if (index !== null) {
+        const entry = elevationsByDay.get(index) ?? { total: 0, real: false };
+        entry.total += gain;
+        if (gain !== 0) entry.real = true;
+        elevationsByDay.set(index, entry);
+      }
+    }
   }
 
   for (const moment of toMomentItems(input.moments)) {
@@ -251,6 +275,7 @@ export function buildDays(input: {
     const merged = runs.flatMap((run) => run.points);
     const first = merged[0];
     const firstStamp = first ? dayStamp(first.at) : null;
+    const sessionGain = elevationsByDay.get(index);
 
     return {
       index,
@@ -261,7 +286,12 @@ export function buildDays(input: {
             ? isoDate(firstStamp)
             : null,
       distanceKm: sumOf(runs, (run) => runDistanceKm(run.points)),
-      elevationM: sumOf(runs, (run) => runElevationM(run.points)),
+      /* Sorties d'abord : leur gain est réel ; les altitudes des points ne
+         prennent le relais que si aucune sortie du jour n'en porte. */
+      elevationM:
+        sessionGain?.real === true
+          ? sessionGain.total
+          : sumOf(runs, (run) => runElevationM(run.points)),
       durationS: durationsByDay.get(index) ?? null,
       moments: momentsByDay.get(index) ?? [],
       points: merged.map((point) => ({ lat: point.lat, lng: point.lng, at: point.at })),

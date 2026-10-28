@@ -7,7 +7,8 @@
  * des valeurs, rien d'autre.
  */
 
-import { formatElevation, formatKm } from './format';
+import { formatDayLabel, formatElevation, formatKm } from './format';
+import { placeSegments } from './place';
 import type { CarnetDay, CarnetDetail, CarnetEtapeDay, CarnetMomentItem } from './types';
 
 /** Valeur absente d'une ligne d'information : un tiret, jamais un zéro. */
@@ -122,6 +123,70 @@ export function dayInfoRows(detail: CarnetDetail, day: CarnetDay | null): DayInf
     row('to', 'Arrivée', places.to),
     row('cumulative', 'Depuis le départ', formatKm(cumulative)),
   ];
+}
+
+/**
+ * Informations de voyage d'une page, prêtes à peindre dans le drawer
+ * Statistiques : la carte ne les porte plus.
+ *
+ * `place` est le lieu réel du carnet (pays · région · lieu, ou la destination
+ * saisie). Départ, arrivée, allure et cumul sont ceux du **jour affiché** ;
+ * sur le Résumé, le départ et l'arrivée sont ceux du carnet et le cumul son
+ * total. Le D+ du jour reste `null` quand aucune sortie ne le porte : le héros
+ * du volet affiche déjà le total du carnet.
+ */
+export interface CarnetTravelInfo {
+  place: string | null;
+  from: string | null;
+  to: string | null;
+  pace: string | null;
+  cumulative: string | null;
+  elevationM: number | null;
+  /** Numéro du jour affiché ; sur le Résumé, le nombre de jours du carnet. */
+  dayNumber: number | null;
+  /** `28 sept.` — la date du jour affiché, `null` sur le Résumé. */
+  date: string | null;
+}
+
+export function travelInfo(detail: CarnetDetail, day: CarnetDay | null): CarnetTravelInfo {
+  const place = placeSegments(detail.place, detail.destination)
+    .map((segment) => segment.label)
+    .join(' · ') || null;
+  const summary = detail.summary ?? { distanceKm: null, elevationM: null, days: 0, moments: 0 };
+
+  if (!day) {
+    const first = detail.etapes[0] ?? null;
+    const last = detail.etapes[detail.etapes.length - 1] ?? null;
+    const days = summary.days > 0 ? summary.days : detail.etapes.length;
+    return {
+      place,
+      from: first?.from ?? null,
+      to: last?.to ?? null,
+      pace: null,
+      cumulative: formatKm(detail.distanceKm ?? summary.distanceKm),
+      elevationM: null,
+      dayNumber: days > 0 ? days : null,
+      date: null,
+    };
+  }
+
+  /* Mêmes dérivations que la fiche : allure, départ, arrivée, cumul. */
+  const rows = dayInfoRows(detail, day);
+  const pick = (key: string): string | null => {
+    const value = rows.find((entry) => entry.key === key)?.value ?? null;
+    return value === INFO_MISSING ? null : value;
+  };
+
+  return {
+    place,
+    from: pick('from'),
+    to: pick('to'),
+    pace: pick('pace'),
+    cumulative: pick('cumulative'),
+    elevationM: day.elevationM,
+    dayNumber: day.index,
+    date: formatDayLabel(day.date),
+  };
 }
 
 export interface DayMomentRow {

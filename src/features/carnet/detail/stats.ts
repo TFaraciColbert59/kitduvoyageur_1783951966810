@@ -50,10 +50,28 @@ function positive(value: number | null): number | null {
   return value !== null && Number.isFinite(value) && value > 0 ? value : null;
 }
 
+/**
+ * D+ réel de chaque jour dérivé, quand la sortie le porte : la fiche et le
+ * volet Dénivelé lisent alors le même chiffre. Une étape qui porte déjà son
+ * `denivele_m` n'est jamais remplacée.
+ */
+function etapesWithDerivedElevation(detail: CarnetDetail): CarnetEtapeDay[] {
+  const derived = new Map<number, number>();
+  for (const day of detail.days ?? []) {
+    if (positive(day.elevationM) !== null) derived.set(day.index, day.elevationM as number);
+  }
+  if (derived.size === 0) return detail.etapes;
+  return detail.etapes.map((etape) => {
+    if (positive(etape.elevationM) !== null) return etape;
+    const value = derived.get(etape.dayNumber);
+    return value === undefined ? etape : { ...etape, elevationM: value };
+  });
+}
+
 export function summarizeCarnet(detail: CarnetDetail): CarnetStatsSummary {
   const distanceKm = positive(detail.distanceKm);
   const elevationM = positive(detail.elevationM);
-  const days = detail.etapes;
+  const days = etapesWithDerivedElevation(detail);
   const daysCount = days.length;
 
   const averageDistanceKm =

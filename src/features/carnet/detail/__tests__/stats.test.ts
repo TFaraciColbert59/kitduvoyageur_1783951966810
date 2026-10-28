@@ -114,6 +114,29 @@ describe('summarizeCarnet — statistiques réelles', () => {
     expect(summary.endPlace).toBe('Courmayeur');
   });
 
+  it('comble le D+ d’une étape avec la sortie dérivée du même jour', () => {
+    const summary = summarizeCarnet(
+      detail({
+        etapes: [
+          day({ id: 'd1', dayNumber: 1, distanceKm: 12.4 }),
+          day({ id: 'd2', dayNumber: 2, distanceKm: 14.2, elevationM: 700 }),
+          day({ id: 'd3', dayNumber: 3 }),
+        ],
+        days: [
+          { index: 1, date: '2026-09-26', distanceKm: 12.4, elevationM: 420, durationS: null, moments: [], points: [] },
+          /* L'étape du jour 2 porte déjà son D+ : la sortie ne l'écrase pas. */
+          { index: 2, date: '2026-09-27', distanceKm: 14.2, elevationM: 999, durationS: null, moments: [], points: [] },
+        ],
+      }),
+    );
+    expect(summary.daysWithElevation.map((entry) => [entry.id, entry.elevationM])).toEqual([
+      ['d1', 420],
+      ['d2', 700],
+    ]);
+    expect(summary.daysWithoutElevation).toBe(1);
+    expect(summary.days[0].day.elevationM).toBe(420);
+  });
+
   it('attache les moments au bon jour, sans en inventer', () => {
     const summary = summarizeCarnet(
       detail({

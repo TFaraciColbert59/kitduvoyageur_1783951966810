@@ -235,7 +235,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
         {drawer ? (
           <CarnetDrawer drawer={drawer} onDrawerChange={setDrawer} onClose={closeDrawer}>
             {drawer === 'stats' ? (
-              <CarnetStatsPane detail={detailView} tab={statTab} onTabChange={changeStatTab} />
+              <CarnetStatsPane detail={detailView} tab={statTab} day={activeDay} onTabChange={changeStatTab} />
             ) : null}
             {drawer === 'share' ? (
               <CarnetSharePane url={shareUrl} title={detail.title} onCopied={copied} />
