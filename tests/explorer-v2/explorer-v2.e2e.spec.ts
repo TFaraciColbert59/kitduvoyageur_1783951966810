@@ -47,6 +47,15 @@ async function dismissCookies(page: Page) {
 async function openScene(page: Page, scene: string) {
   await page.goto(`/explorer?v2=1&scene=${scene}`, { waitUntil: 'domcontentloaded' });
   await dismissCookies(page);
+  // Un premier chargement à froid (build neuf, cache vide) peut dépasser 15 s :
+  // on attend que les données pays soient arrivées avant d'aller plus loin.
+  await page
+    .waitForFunction(
+      () => (document.querySelector('.xp-root')?.getAttribute('data-countries') ?? '0') !== '0',
+      undefined,
+      { timeout: 45_000 },
+    )
+    .catch(() => {});
   await expect(root(page)).toBeVisible({ timeout: 30_000 });
   await expect(root(page).locator('.xp-sheet')).toBeVisible({ timeout: 30_000 });
   await expect(root(page)).toHaveAttribute('data-scene', scene, { timeout: 30_000 });
@@ -59,7 +68,7 @@ test.describe('Explorer v2 · @explorer-v2', () => {
     await expect(root(page).locator('.xp-tab')).toHaveCount(3);
     await expect(root(page).locator('.xp-bottombar')).toHaveCount(1);
     await page.waitForFunction(() => document.querySelectorAll('.xp-pin').length > 0, undefined, {
-      timeout: 15_000,
+      timeout: 30_000,
     });
     expect(await root(page).locator('.xp-pin').count()).toBeGreaterThan(0);
   });
@@ -108,7 +117,7 @@ test.describe('Explorer v2 · @explorer-v2', () => {
   test('un repère ouvre sa fiche avec ses onglets @explorer-v2', async ({ page }) => {
     await openScene(page, 'lieu');
     await page.waitForFunction(() => document.querySelectorAll('.xp-pin').length > 0, undefined, {
-      timeout: 15_000,
+      timeout: 30_000,
     });
     await root(page).locator('.xp-pin').first().click({ force: true });
     expect(await root(page).locator('.xp-tab').count()).toBeGreaterThanOrEqual(2);

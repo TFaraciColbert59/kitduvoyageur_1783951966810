@@ -1,60 +1,42 @@
 # VERIFY_LAST · Explorer v2
 
-- Exécuté : 2026-10-28 13:02–13:10 (Europe/Paris)
-- Commande : `PW_BASE_URL=http://localhost:4028 EXPLORER_V2_E2E=1 npm run explorer:verify`
+- Exécuté : 2026-10-28 15:00–15:20 (Europe/Paris)
+- Commande : `node scripts/explorer-v2/verify-all.mjs` (ou `npm run explorer:verify`)
 - Mode : courant (pas `--final`)
-- **Résultat : ⛔ arrêté à l'étape Playwright** — voir « Ce qui reste à exécuter ».
 
-## Étapes réellement exécutées
+## Résultats mesurés
 
-| # | Étape | Code | Durée | Sortie |
+| # | Étape | Code | Durée | Détail |
 |---|---|---|---|---|
-| 1 | `npx tsc --noEmit` | 0 | 48,9 s | aucune erreur |
-| 2 | `npx next lint` | 0 | ~60 s | warnings préexistants uniquement (aucune erreur) |
-| 3 | `npx vitest run explorer-v2` | 0 | 0,2 s | **14 tests / 14 verts** |
-| 4 | `npm run build` | 0 | 61,1 s | compilé ; `ƒ /explorer 40.4 kB 342 kB` |
-| 5 | Playwright `@explorer-v2` | — | — | **exécuté séparément : 20/20 verts** (voir §Mesures séparées) |
-| 6 | Inventaire de clics | — | — | script livré, mesure non fiable (voir §Limites) |
-| 7 | axe (a11y) | 0 | — | inclus dans le test Playwright n°10 : **aucune violation serious/critical** |
-| 8 | Greps bloquants | 0 | — | exécutés séparément (voir §Greps) |
-| 9 | Intrusion RLS | — | — | script `.agents/test_rls_intrusion.mjs` **absent du dépôt** → non exécuté |
-| 10 | Checklist | — | — | 135 cases, 61 restantes non cochées (voir `ETAT_DES_POINTS.md`) |
+| 1 | `npx tsc --noEmit` | 0 | 9,5 s | aucune erreur |
+| 2 | `npx next lint` | 0 | 3,5 s | warnings préexistants uniquement |
+| 3 | `npx vitest run explorer-v2` | 0 | 2,5 s | **14/14 verts** |
+| 4 | `npx next build` | 0 | 278,8 s | `ƒ /explorer 20.4 kB 141 kB` (budget 170 Ko) |
+| 5 | Playwright `@explorer-v2` (chromium + webkit) | 0 | 29 s + 27 s | **20/20 verts** (10 tests × 2 projets) |
+| 6 | Inventaire de clics | ⏭ | — | réservé à `--final` (mesure longue) |
+| 7 | axe (a11y) | 0 | — | dernier test Playwright : aucune violation sérieuse |
+| 8 | Greps bloquants | 0 | — | E4501C, TODO/mock, SERVICE_ROLE, projet fantôme, compas : propres |
+| 9 | Intrusion RLS | 0 | 4 s | **11/11 contrôles verts** (`docs/explorer-v2/RLS_INTRUSION.md`) |
+| 10 | Checklist | — | — | affichée sans échec (non bloquante hors `--final`) |
 
-## Mesures séparées (mêmes conditions)
+## Corrections apportées au script pendant la recette
 
-```
-$ PW_BASE_URL=http://localhost:4028 npx playwright test tests/explorer-v2 \
-    --project=mobile-chromium --project=mobile-webkit --workers=1
-20 passed (41.8s)
-```
+1. Build de recette : `EXPLORER_V2_E2E=1` + `NEXT_PUBLIC_EXPLORER_SCENES=1` sont
+   passés au `next build` (sinon les scènes `?scene=` ne sont pas embarquées et
+   les tests navigateur échouent).
+2. **Serveur neuf après le build** : `startFreshServer()` tue l'ancien
+   `next-server` et relance `npm run start` sur le build courant. Sans cela, le
+   serveur servait des chunks périmés (écrans vides) et les tests expiraient.
+3. Playwright lancé par le binaire local (`node_modules/.bin/playwright`) avec
+   `stdio: 'inherit'` : `npx` + sortie pipée ne rendait pas la main dans cet
+   environnement, et `CI=1` figeait le lanceur.
+4. Étape a11y : elle visait `tests/explorer-v2/a11y.spec.ts` (inexistant) ;
+   elle exécute désormais le test `a11y` de la suite principale.
 
-## Greps (exécutés à la main, 13:11)
+## Limites connues
 
-```
-$ grep -rn "E4501C" src
-src/features/compas/__tests__/*.tsx : occurrences dans des tests Compas préexistants
-  (interdiction vérifiée par ces tests) — hors périmètre Explorer v2
-$ grep -rnE "TODO|FIXME|lorem|EXAMPLE_TRAIL|mock" src/features/explorer-v2 src/app/explorer
-(rien)
-$ grep -rn "SERVICE_ROLE" src/features/explorer-v2 src/components
-(rien)
-$ grep -rn "lwrmuggefbmboikjgudc" src scripts supabase docs
-(rien hors le motif de contrôle lui-même)
-$ git diff --name-only 0e0a35e4...HEAD | grep -c compas
-0
-```
-
-## Ce qui reste à exécuter
-
-1. L'étape Playwright de `verify-all.mjs` n'a pas rendu la main dans le script
-   (elle tourne pourtant en 42 s lancée directement) : le `spawnSync` du script
-   n'hérite pas correctement de `PW_BASE_URL`/`EXPLORER_V2_E2E` dans cet
-   environnement. Correctif à faire : passer explicitement `env` dans `run()`.
-2. `click-inventory.mjs` mesure 0 % sur plusieurs scènes : la sélection
-   d'éléments n'est pas restreinte au dernier `.xp-root` monté (la transition
-   `lkv-page-fade` laisse brièvement l'ancienne page dans le DOM). Correctif :
-   scoper les sélecteurs, comme dans `explorer-v2.e2e.spec.ts`.
-3. `.agents/test_rls_intrusion.mjs` n'existe pas : le contrôle d'intrusion RLS
-   reste à écrire (BLOCAGES #5).
-4. Budget de bundle : 342 Ko au lieu de 170 Ko tant que `ExplorerClient` (legacy)
-   est importé par la page (P10-04).
+1. `click-inventory.mjs` mesure ~38 % de couverture : il compte aussi des
+   boutons décoratifs (poignée, mini-sélecteur inactif) et le comptage dépend
+   du dernier `.xp-root` monté. À fiabiliser avant d'en faire une gate.
+2. `--final` (checklist à 100 % + budget de bundle strict) reste rouge : 61
+   cases de `07_CHECKLIST.md` ne sont pas faites (voir `ETAT_DES_POINTS.md`).

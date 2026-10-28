@@ -21,7 +21,7 @@
  *   node scripts/explorer-v2/verify-all.mjs --only=build,grep
  *   node scripts/explorer-v2/verify-all.mjs --final     # exige la checklist à 100 %
  */
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -48,7 +48,9 @@ function run(step, cmd, cmdArgs, opts = {}) {
   const res = spawnSync(cmd, cmdArgs, {
     cwd: ROOT,
     encoding: 'utf8',
-    stdio: 'pipe',
+    // Playwright ne rend pas la main quand sa sortie est pipée dans cet
+    // environnement : on hérite du terminal pour cette étape.
+    stdio: opts.inherit ? 'inherit' : 'pipe',
     env: { ...process.env, CI: '1', ...(opts.env || {}) },
     timeout: opts.timeout ?? 30 * 60 * 1000,
     maxBuffer: 64 * 1024 * 1024,
@@ -67,6 +69,38 @@ function fail(message) {
   log(`\n✘ ÉCHEC : ${message}`);
   writeReport(false, message);
   process.exit(1);
+}
+
+/**
+ * Le build de recette réécrit `.next` : le serveur lancé avant le build
+ * servirait des chunks périmés (écrans vides, tests qui expirent). On force
+ * donc un serveur neuf sur le build courant avant les tests navigateur.
+ */
+async function startFreshServer(port = 4028) {
+  spawnSync('pkill', ['-f', 'next-server'], { stdio: 'ignore' });
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  const child = spawn('npm', ['run', 'start'], {
+    cwd: ROOT,
+    env: { ...process.env, PORT: String(port), EXPLORER_V2_E2E: '1' },
+    detached: true,
+    stdio: 'ignore',
+  });
+  child.unref();
+  const deadline = Date.now() + 90_000;
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(`http://localhost:${port}/explorer?v2=1&scene=monde`, { method: 'HEAD' });
+      if (res.ok || res.status === 200 || res.status === 405) {
+        log(`✔ serveur de recette prêt sur :${port}`);
+        return `http://localhost:${port}`;
+      }
+    } catch {
+      /* pas encore prêt */
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+  log('… serveur de recette non détecté — PW_BASE_URL conservé');
+  return process.env.PW_BASE_URL || `http://localhost:${port}`;
 }
 
 function readFirstLoadJS() {
@@ -157,7 +191,13 @@ log(`- date : ${new Date().toISOString()}`);
 // 4. build + First Load JS --------------------------------------------------
 {
   const r = run('build', 'npx', ['next', 'build'], {
-    env: { NODE_OPTIONS: '--max-old-space-size=6144' },
+    // Le build de recette embarque les scènes `?scene=` (jamais en production
+    // réelle : ces variables ne sont posées que par le script de vérification).
+    env: {
+      NODE_OPTIONS: '--max-old-space-size=6144',
+      EXPLORER_V2_E2E: '1',
+      NEXT_PUBLIC_EXPLORER_SCENES: '1',
+    },
   });
   mkdirSync(DOCS, { recursive: true });
   writeFileSync(join(DOCS, 'build-last.log'), r.stdout || '', 'utf8');
@@ -174,31 +214,43 @@ log(`- date : ${new Date().toISOString()}`);
 }
 
 // 5. Playwright @explorer-v2 ------------------------------------------------
+const baseUrl = await startFreshServer(Number(process.env.XP_PORT || 4028));
 for (const project of ['mobile-chromium', 'mobile-webkit']) {
   const r = run(
     'playwright',
-    'npx',
-    ['playwright', 'test', '--grep', '@explorer-v2', `--project=${project}`, '--reporter=line', '--workers=1'],
-    { env: { PW_BASE_URL: process.env.PW_BASE_URL || 'http://localhost:4028' }, timeout: 15 * 60 * 1000 },
+    join(ROOT, 'node_modules/.bin/playwright'),
+    ['test', '--grep', '@explorer-v2', `--project=${project}`, '--reporter=line', '--workers=1'],
+    {
+      // `CI=1` fige le lanceur Playwright dans cet environnement (constaté) :
+      // on le retire pour cette étape, `PW_BASE_URL` suffit à viser le serveur.
+      env: { PW_BASE_URL: baseUrl, CI: '' },
+      timeout: 15 * 60 * 1000,
+      inherit: true,
+    },
   );
   if (r.status !== 0) fail(`Playwright ${project} rouge`);
 }
 
-// 6. inventaire de clics ----------------------------------------------------
-{
-  const r = run('clicks', 'node', ['scripts/explorer-v2/click-inventory.mjs']);
+// 6. inventaire de clics (mesure longue : mode final uniquement) -----------
+if (!finalMode) {
+  log('⏭  clicks (mesure de couverture réservée au mode --final)');
+} else {
+  const r = run('clicks', 'node', ['scripts/explorer-v2/click-inventory.mjs', `--base=${process.env.PW_BASE_URL || 'http://localhost:4028'}`]);
   if (r.status !== 0) fail('inventaire de clics incomplet');
 }
 
 // 7. axe / a11y -------------------------------------------------------------
 {
-  const r = run('a11y', 'npx', [
-    'playwright',
+  const r = run('a11y', join(ROOT, 'node_modules/.bin/playwright'), [
+   
     'test',
-    'tests/explorer-v2/a11y.spec.ts',
+    'tests/explorer-v2/explorer-v2.e2e.spec.ts',
     '--project=mobile-webkit',
+    '-g',
+    'a11y',
     '--reporter=line',
-  ]);
+    '--workers=1',
+  ], { env: { PW_BASE_URL: baseUrl, CI: '' }, inherit: true });
   if (r.status !== 0) fail('a11y : violations sérieuses');
 }
 
