@@ -7,12 +7,26 @@ import { useToast } from '@/contexts/ToastContext';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityDrawer } from './CommunityDrawer';
 import { CommunityTabSelector, SECTION_TABS, type SectionTabId } from './CommunityTabSelector';
-import { useCommunitySections, type CarnetRow, type ClubRow, type EventRow } from './useCommunitySections';
+import {
+  useCommunitySections,
+  type CarnetRow,
+  type ClubRow,
+  type EventRow,
+} from './useCommunitySections';
+import { CarnetTile } from './CarnetTile';
+import './carnet-tile.css';
 
 type FilterId = 'discover' | 'mine';
 type SearchKind = 'post' | 'carnet' | 'club' | 'sortie' | 'member';
 type SearchScope = 'all' | SearchKind;
-type SearchResult = { id: string; kind: SearchKind; title: string; meta: string; href: string; cover?: string | null };
+type SearchResult = {
+  id: string;
+  kind: SearchKind;
+  title: string;
+  meta: string;
+  href: string;
+  cover?: string | null;
+};
 
 const SEARCH_KINDS: Array<{ id: SearchKind; label: string; short: string; tone: string }> = [
   { id: 'post', label: 'Publications', short: 'Post', tone: '#17402C' },
@@ -38,7 +52,9 @@ function Cover({ src, label }: { src?: string | null; label: string }) {
         // eslint-disable-next-line @next/next/no-img-element -- covers distantes
         <img src={src} alt="" />
       ) : (
-        <span className="text-[13px] font-bold text-[#17402C]">{label.charAt(0).toUpperCase()}</span>
+        <span className="text-[13px] font-bold text-[#17402C]">
+          {label.charAt(0).toUpperCase()}
+        </span>
       )}
     </span>
   );
@@ -61,7 +77,11 @@ function SectionRow({
 }) {
   return (
     <div className="lkdv-section-row">
-      <button type="button" className="flex min-w-0 flex-1 items-center gap-2.5 text-left" onClick={onClick}>
+      <button
+        type="button"
+        className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+        onClick={onClick}
+      >
         <Cover src={cover} label={label} />
         <span className="lkdv-section-txt">
           <b>{title}</b>
@@ -91,7 +111,9 @@ function SectionTile({
   return (
     <article className="lkdv-section-tile">
       <button type="button" className="lkdv-section-tile-main" onClick={onClick}>
-        <span className="lkdv-section-tile-cover"><Cover src={cover} label={label} /></span>
+        <span className="lkdv-section-tile-cover">
+          <Cover src={cover} label={label} />
+        </span>
         <span className="lkdv-section-tile-txt">
           <b>{title}</b>
           <small>{meta}</small>
@@ -119,7 +141,17 @@ export function CommunitySectionsDrawer({
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<CarnetRow | ClubRow | EventRow | null>(null);
   const searchReturnTab = useRef<SectionTabId>('carnets');
-  const { carnets, clubs, sorties, loading, error, joinClub, leaveClub, toggleEvent } = useCommunitySections(user, open);
+  const {
+    carnets,
+    clubs,
+    sorties,
+    loading,
+    error,
+    joinClub,
+    leaveClub,
+    toggleEvent,
+    toggleCarnetLike,
+  } = useCommunitySections(user, open);
 
   useEffect(() => {
     if (!open) return;
@@ -152,8 +184,16 @@ export function CommunitySectionsDrawer({
             .order('created_at', { ascending: false })
             .limit(5),
           supabase.from('carnets').select('id,title,cover_image').ilike('title', like).limit(5),
-          supabase.from('clubs').select('id,slug,name,cover_image,members_count,category').ilike('name', like).limit(5),
-          supabase.from('events').select('id,title,location,event_date').ilike('title', like).limit(5),
+          supabase
+            .from('clubs')
+            .select('id,slug,name,cover_image,members_count,category')
+            .ilike('name', like)
+            .limit(5),
+          supabase
+            .from('events')
+            .select('id,title,location,event_date')
+            .ilike('title', like)
+            .limit(5),
           supabase
             .from('public_profiles')
             .select('id,full_name,handle,avatar_url,location')
@@ -218,15 +258,15 @@ export function CommunitySectionsDrawer({
 
   const filteredCarnets = useMemo(
     () => (filter === 'mine' ? carnets.filter((row) => row.author_id === user?.id) : carnets),
-    [carnets, filter, user?.id],
+    [carnets, filter, user?.id]
   );
   const filteredClubs = useMemo(
     () => (filter === 'mine' ? clubs.filter((row) => row.is_member) : clubs),
-    [clubs, filter],
+    [clubs, filter]
   );
   const filteredSorties = useMemo(
     () => (filter === 'mine' ? sorties.filter((row) => row.is_registered) : sorties),
-    [filter, sorties],
+    [filter, sorties]
   );
 
   const changeTab = (next: SectionTabId) => {
@@ -249,7 +289,10 @@ export function CommunitySectionsDrawer({
       return;
     }
     const ok = club.is_member ? await leaveClub(club) : await joinClub(club);
-    toast(ok ? (club.is_member ? 'Club quitté.' : 'Club rejoint.') : 'Action impossible.', ok ? 'success' : 'error');
+    toast(
+      ok ? (club.is_member ? 'Club quitté.' : 'Club rejoint.') : 'Action impossible.',
+      ok ? 'success' : 'error'
+    );
   };
 
   const handleEvent = async (event: EventRow) => {
@@ -258,7 +301,14 @@ export function CommunitySectionsDrawer({
       return;
     }
     const ok = await toggleEvent(event);
-    toast(ok ? (event.is_registered ? 'Inscription annulée.' : 'Inscription confirmée.') : 'Action impossible.', ok ? 'success' : 'error');
+    toast(
+      ok
+        ? event.is_registered
+          ? 'Inscription annulée.'
+          : 'Inscription confirmée.'
+        : 'Action impossible.',
+      ok ? 'success' : 'error'
+    );
   };
 
   const detailTitle = selected
@@ -269,9 +319,16 @@ export function CommunitySectionsDrawer({
 
   const visibleResults = useMemo(
     () => (scope === 'all' ? results : results.filter((result) => result.kind === scope)),
-    [results, scope],
+    [results, scope]
   );
-  const cardRows: any[] = tab === 'carnets' ? filteredCarnets : tab === 'clubs' ? filteredClubs : tab === 'sorties' ? filteredSorties : [];
+  const cardRows: any[] =
+    tab === 'carnets'
+      ? filteredCarnets
+      : tab === 'clubs'
+        ? filteredClubs
+        : tab === 'sorties'
+          ? filteredSorties
+          : [];
   const detailStartX = useRef<number | null>(null);
 
   const resultGroups = useMemo(
@@ -280,7 +337,7 @@ export function CommunitySectionsDrawer({
         ...kind,
         rows: visibleResults.filter((result) => result.kind === kind.id),
       })).filter((group) => group.rows.length > 0),
-    [visibleResults],
+    [visibleResults]
   );
 
   return (
@@ -319,16 +376,25 @@ export function CommunitySectionsDrawer({
             data-autofocus={initialSearch ? 'true' : undefined}
           />
           {query ? (
-            <button type="button" className="lkdv-search-clear" aria-label="Effacer la recherche" onClick={() => setQuery('')}>
+            <button
+              type="button"
+              className="lkdv-search-clear"
+              aria-label="Effacer la recherche"
+              onClick={() => setQuery('')}
+            >
               <Icon name="x" size={14} aria-hidden="true" />
             </button>
           ) : null}
-          <button type="button" className="lkdv-search-close" aria-label="Fermer la recherche" onClick={closeSearch}>
+          <button
+            type="button"
+            className="lkdv-search-close"
+            aria-label="Fermer la recherche"
+            onClick={closeSearch}
+          >
             <Icon name="x" size={16} aria-hidden="true" />
           </button>
         </div>
       ) : null}
-
 
       {query.trim().length >= 2 ? (
         <div className="lkdv-search-results" aria-busy={searching}>
@@ -336,12 +402,19 @@ export function CommunitySectionsDrawer({
           {!searching && visibleResults.length === 0 ? (
             <div className="lkdv-search-empty">
               <p>Aucun résultat pour « {query.trim()} ».</p>
-              <button type="button" onClick={() => setQuery('')}>Effacer la recherche</button>
+              <button type="button" onClick={() => setQuery('')}>
+                Effacer la recherche
+              </button>
             </div>
           ) : null}
           {!searching
             ? resultGroups.map((group) => (
-                <section key={group.id} className="lkdv-result-group" aria-label={group.label} style={{ '--result-tone': group.tone } as React.CSSProperties}>
+                <section
+                  key={group.id}
+                  className="lkdv-result-group"
+                  aria-label={group.label}
+                  style={{ '--result-tone': group.tone } as React.CSSProperties}
+                >
                   {group.rows.map((result) => (
                     <Link
                       key={`${result.kind}-${result.id}`}
@@ -369,7 +442,10 @@ export function CommunitySectionsDrawer({
       ) : selected ? (
         <div
           className="lkdv-section-detail"
-          onPointerDown={(event) => { event.stopPropagation(); detailStartX.current = event.clientX; }}
+          onPointerDown={(event) => {
+            event.stopPropagation();
+            detailStartX.current = event.clientX;
+          }}
           onPointerUp={(event) => {
             event.stopPropagation();
             const start = detailStartX.current;
@@ -390,7 +466,11 @@ export function CommunitySectionsDrawer({
             <div className="h-20 w-full bg-[rgba(23,64,44,.12)]">
               {(selected as any).cover_image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={(selected as any).cover_image} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={(selected as any).cover_image}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
               ) : null}
             </div>
             <div className="p-3">
@@ -400,18 +480,30 @@ export function CommunitySectionsDrawer({
                   ? `${selected.members_count ?? 0} membres${selected.category ? ` · ${selected.category}` : ''}`
                   : 'event_date' in selected
                     ? [selected.location, selected.event_date].filter(Boolean).join(' · ')
-                    : 'author_name' in selected ? selected.author_name || 'Carnet' : 'Carnet'}
+                    : 'author_name' in selected
+                      ? selected.author_name || 'Carnet'
+                      : 'Carnet'}
               </p>
               {selected.description ? (
-                <p className="mt-2 line-clamp-3 text-[12px] leading-[1.45] text-[#17352A]">{selected.description}</p>
+                <p className="mt-2 line-clamp-3 text-[12px] leading-[1.45] text-[#17352A]">
+                  {selected.description}
+                </p>
               ) : null}
               <div className="mt-3 flex gap-2">
                 {'members_count' in selected ? (
-                  <button type="button" className="lkdv-section-action" onClick={() => void handleClub(selected as ClubRow)}>
+                  <button
+                    type="button"
+                    className="lkdv-section-action"
+                    onClick={() => void handleClub(selected as ClubRow)}
+                  >
                     {selected.is_member ? 'Quitter' : 'Rejoindre'}
                   </button>
                 ) : 'event_date' in selected ? (
-                  <button type="button" className="lkdv-section-action" onClick={() => void handleEvent(selected as EventRow)}>
+                  <button
+                    type="button"
+                    className="lkdv-section-action"
+                    onClick={() => void handleEvent(selected as EventRow)}
+                  >
                     {selected.is_registered ? 'Quitter' : 'Rejoindre'}
                   </button>
                 ) : null}
@@ -436,73 +528,99 @@ export function CommunitySectionsDrawer({
           {loading ? <p className="lkdv-section-loading">Chargement…</p> : null}
           {error ? <p className="lkdv-section-empty">{error}</p> : null}
 
-          {!loading && tab === 'carnets'
-            ? (
-              <div className="lkdv-section-grid">
-                {filteredCarnets.map((row) => (
-                  <SectionTile
-                    key={row.id}
-                    cover={row.cover_image}
-                    title={row.title}
-                    meta={[row.author_name, row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : null].filter(Boolean).join(' · ')}
-                    label={row.title}
-                    onClick={() => setSelected(row)}
-                  />
-                ))}
-              </div>
-            )
-            : null}
-
-          {!loading && tab === 'clubs'
-            ? (
-              <div className="lkdv-section-grid">
-                {filteredClubs.map((row) => (
-                  <SectionTile
-                    key={row.id}
-                    cover={row.cover_image}
-                    title={row.name}
-                    meta={`${row.members_count ?? 0} membres${row.category ? ` · ${row.category}` : ''}`}
-                    label={row.name}
-                    onClick={() => setSelected(row)}
-                    action={
-                      <button type="button" className="lkdv-section-action" onClick={() => void handleClub(row)}>
-                        {row.is_member ? 'Quitter' : 'Rejoindre'}
-                      </button>
+          {!loading && tab === 'carnets' ? (
+            <div className="lkdv-ct-grid">
+              {filteredCarnets.map((row) => (
+                <CarnetTile
+                  key={row.id}
+                  carnet={row}
+                  onNavigate={onClose}
+                  onLike={(carnet) => {
+                    if (!user?.id || user.is_anonymous) {
+                      onRequireAuth();
+                      return;
                     }
-                  />
-                ))}
-              </div>
-            )
-            : null}
+                    void toggleCarnetLike(carnet).then((ok) => {
+                      if (!ok) toast('Action impossible.', 'error');
+                    });
+                  }}
+                />
+              ))}
+            </div>
+          ) : null}
 
-          {!loading && tab === 'sorties'
-            ? (
-              <div className="lkdv-section-grid">
-                {filteredSorties.map((row) => (
-                  <SectionTile
-                    key={row.id}
-                    cover={row.cover_image}
-                    title={row.title}
-                    meta={[row.event_date ? new Date(row.event_date).toLocaleDateString('fr-FR') : null, row.location, `${row.current_participants ?? 0}/${row.max_participants ?? '∞'}`].filter(Boolean).join(' · ')}
-                    label={row.title}
-                    onClick={() => setSelected(row)}
-                    action={
-                      <button type="button" className="lkdv-section-action" onClick={() => void handleEvent(row)}>
-                        {row.is_registered ? 'Quitter' : 'Rejoindre'}
-                      </button>
-                    }
-                  />
-                ))}
-              </div>
-            )
-            : null}
+          {!loading && tab === 'clubs' ? (
+            <div className="lkdv-section-grid">
+              {filteredClubs.map((row) => (
+                <SectionTile
+                  key={row.id}
+                  cover={row.cover_image}
+                  title={row.name}
+                  meta={`${row.members_count ?? 0} membres${row.category ? ` · ${row.category}` : ''}`}
+                  label={row.name}
+                  onClick={() => setSelected(row)}
+                  action={
+                    <button
+                      type="button"
+                      className="lkdv-section-action"
+                      onClick={() => void handleClub(row)}
+                    >
+                      {row.is_member ? 'Quitter' : 'Rejoindre'}
+                    </button>
+                  }
+                />
+              ))}
+            </div>
+          ) : null}
+
+          {!loading && tab === 'sorties' ? (
+            <div className="lkdv-section-grid">
+              {filteredSorties.map((row) => (
+                <SectionTile
+                  key={row.id}
+                  cover={row.cover_image}
+                  title={row.title}
+                  meta={[
+                    row.event_date ? new Date(row.event_date).toLocaleDateString('fr-FR') : null,
+                    row.location,
+                    `${row.current_participants ?? 0}/${row.max_participants ?? '∞'}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  label={row.title}
+                  onClick={() => setSelected(row)}
+                  action={
+                    <button
+                      type="button"
+                      className="lkdv-section-action"
+                      onClick={() => void handleEvent(row)}
+                    >
+                      {row.is_registered ? 'Quitter' : 'Rejoindre'}
+                    </button>
+                  }
+                />
+              ))}
+            </div>
+          ) : null}
 
           {!loading && !error && tab !== 'recherche' ? (
             <div className="lkdv-section-cta">
-              <Link href={tab === 'carnets' ? '/communaute' : tab === 'clubs' ? '/communaute' : '/hub'} onClick={onClose}>
+              <Link
+                href={tab === 'carnets' ? '/communaute' : tab === 'clubs' ? '/communaute' : '/hub'}
+                onClick={onClose}
+              >
                 Créer
               </Link>
-              <Link href={tab === 'carnets' ? '/communaute' : tab === 'clubs' ? '/communaute' : '/communaute'} onClick={onClose}>
+              <Link
+                href={
+                  tab === 'carnets'
+                    ? '/communaute'
+                    : tab === 'clubs'
+                      ? '/communaute'
+                      : '/communaute'
+                }
+                onClick={onClose}
+              >
                 Tout voir
               </Link>
             </div>
@@ -512,13 +630,38 @@ export function CommunitySectionsDrawer({
 
       {!selected && ['carnets', 'clubs', 'sorties'].includes(tab) ? (
         <div className="lkdv-section-mini" role="tablist" aria-label="Filtrer cette section">
-          <button type="button" role="tab" aria-selected={filter === 'discover'} aria-pressed={filter === 'discover'} aria-label="Découvrir" onClick={() => setFilter('discover')}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === 'discover'}
+            aria-pressed={filter === 'discover'}
+            aria-label="Découvrir"
+            onClick={() => setFilter('discover')}
+          >
             <Icon name="compass" size={15} aria-hidden="true" />
           </button>
-          <button type="button" role="tab" aria-selected={filter === 'mine'} aria-pressed={filter === 'mine'} aria-label={tab === 'sorties' ? 'Mes sorties' : tab === 'clubs' ? 'Mes clubs' : 'Mes carnets'} onClick={() => setFilter('mine')}>
-            <Icon name={tab === 'clubs' ? 'users' : tab === 'sorties' ? 'map' : 'bookmark'} size={15} aria-hidden="true" />
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === 'mine'}
+            aria-pressed={filter === 'mine'}
+            aria-label={
+              tab === 'sorties' ? 'Mes sorties' : tab === 'clubs' ? 'Mes clubs' : 'Mes carnets'
+            }
+            onClick={() => setFilter('mine')}
+          >
+            <Icon
+              name={tab === 'clubs' ? 'users' : tab === 'sorties' ? 'map' : 'bookmark'}
+              size={15}
+              aria-hidden="true"
+            />
           </button>
-          <button type="button" role="button" aria-label="Rechercher" onClick={() => changeTab('recherche')}>
+          <button
+            type="button"
+            role="button"
+            aria-label="Rechercher"
+            onClick={() => changeTab('recherche')}
+          >
             <Icon name="search" size={15} aria-hidden="true" />
           </button>
         </div>

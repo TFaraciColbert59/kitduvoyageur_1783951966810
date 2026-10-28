@@ -72,6 +72,11 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
   });
   const comments = useCarnetComments({ carnetId: detail.id, user });
 
+  // Lien « commentaires » d'une tuile de la Communauté : ouvre directement la page des commentaires.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('commentaires') === '1') setPage('comments');
+  }, []);
+
   useEffect(() => {
     void engagement.registerView();
   }, [engagement.registerView]);
