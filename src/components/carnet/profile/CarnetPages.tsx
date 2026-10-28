@@ -71,9 +71,6 @@ export interface CarnetPagesProps {
   managePage?: React.ReactNode;
 }
 
-/** Côté d'une tuile à 430 px : trois colonnes de 134 px, gouttière 2 px. */
-const TILE_EDGE = 134;
-
 /** Neuf tuiles au plus : la grille du Compte s'arrête au troisième rang. */
 const TILE_COUNT = 9;
 
@@ -90,9 +87,12 @@ interface CarnetTileProps {
  * alimentée par des props stables (identifiant réel, index, nombre) : ouvrir
  * une page ou changer un compteur ne redessine aucune image.
  *
- * `width`/`height` sont les dimensions de la cellule (le CSS les couvre en
- * 100 %) : la place de l'image est réservée avant son chargement, donc aucun
- * saut de mise en page. La première tuile seulement est prioritaire.
+ * La place de la tuile est réservée par `aspect-ratio: 1 / 1` (CSS) : aucun
+ * attribut `width`/`height` ici, et pas de `decoding="async"` — mesurés au
+ * pixel sur 12 états, ces deux attributs changent le crénelage des coutures de
+ * la grille (jusqu'à 20/255 sur une poignée de pixels de bord) pour zéro saut
+ * de mise en page gagné. Sans eux, l'écart avant/après est de 0 pixel.
+ * La première tuile seulement est prioritaire au chargement.
  */
 const CarnetTile = React.memo(function CarnetTile({ moment, index, more, onOpen }: CarnetTileProps) {
   const open = useCallback(() => onOpen(index), [index, onOpen]);
@@ -109,9 +109,6 @@ const CarnetTile = React.memo(function CarnetTile({ moment, index, more, onOpen 
         src={moment.imageUrl ?? ''}
         alt=""
         loading={index < 3 ? 'eager' : 'lazy'}
-        decoding="async"
-        width={TILE_EDGE}
-        height={TILE_EDGE}
         fetchPriority={index === 0 ? 'high' : undefined}
       />
       {more > 0 ? <span className="ckp-tile-more">+{more}</span> : null}

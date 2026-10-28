@@ -94,7 +94,7 @@ export function CarnetLikesPane({ detail, currentUserId: _currentUserId, like }:
             <div className="ckp-liker" key={liker.id}>
               {liker.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-                <img className="ckp-avatar" src={liker.avatarUrl} alt="" width={28} height={28} decoding="async" />
+                <img className="ckp-avatar" src={liker.avatarUrl} alt="" />
               ) : (
                 <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
                   {liker.name.charAt(0).toUpperCase()}
