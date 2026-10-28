@@ -138,7 +138,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-daypill-count {
   margin-left: auto; flex: none; color: #6B7A70;
-  font: 500 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 500 11px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: 0; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
@@ -212,12 +212,12 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-more {
   position: relative; flex: none; margin: 0; padding: 0; border: 0; background: none;
-  color: #17402C; font: 500 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  color: #56665D; font: 600 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: -.14px; white-space: nowrap; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 /* Cible tactile de 44 px sans élargir la ligne visible. */
-.ckp-more::after { content: ''; position: absolute; inset: -12px -6px; }
+.ckp-more::after { content: ''; position: absolute; inset: -14px -8px; }
 .ckp-more:active { opacity: .6; }
 .ckp-author-line {
   display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
@@ -231,8 +231,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-author-score {
   display: inline-flex; align-items: center; height: 16px; padding: 0 5px; border-radius: 999px;
-  background: rgba(255, 255, 255, .6); color: #56665d;
-  font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  background: rgba(255, 255, 255, .6); color: #56665D;
+  font: 500 11px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums;
 }
 .ckp-badge {
   display: inline-flex; align-items: center; gap: 3px; flex: none;
@@ -339,14 +339,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-tile-more {
   position: absolute; inset: 0; display: grid; place-items: center;
   background: rgba(10, 20, 14, .5); color: #fff;
-  font: 700 17px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 600 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
 }
-.ckp-grid-empty {
-  display: grid; place-items: center; gap: 6px; padding: 26px 18px;
-  background: rgba(255, 255, 255, .3); text-align: center; color: #56665d;
-}
-.ckp-grid-empty b { color: #172b24; font: 700 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-grid-empty p { margin: 0; max-width: 250px; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
 /* La carte interne du carrousel a été retirée avec la page Parcours : la seule
    carte de la fiche est celle du bas (`.ckp-mapzone`, 40dvh). Les règles
@@ -490,7 +484,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-pane-meta span { display: inline-flex; align-items: center; gap: 4px; }
 .ckp-pane-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .ckp-pane-list { display: flex; flex-direction: column; }
-.ckp-pane-empty { margin: 0; padding: 22px 0; text-align: center; color: #56665d; font: 500 12px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
 /* Réactions : ligne de 48 px, séparateur inséré de 16 px à gauche, valeur
    12/500 à droite. Aucune pastille, aucun cadre. */
@@ -532,7 +525,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-pill::after { content: ''; position: absolute; inset: -4px; }
 .ckp-pill:active { transform: scale(.96); }
 .ckp-pill svg { width: 16px; height: 16px; }
-.ckp-pill--primary { background: #17402c; color: #fff; box-shadow: 0 4px 14px rgba(23, 64, 44, .24); }
+.ckp-pill--primary { height: 48px; padding: 0 20px; font: 600 14px/1 var(--font-sans, -apple-system, system-ui, sans-serif); background: #17402c; color: #fff; box-shadow: 0 4px 14px rgba(23, 64, 44, .24); }
 .ckp-pill:disabled { opacity: .45; cursor: not-allowed; }
 
 /* Sous-sélecteur 30 px : même verre, même pas et même lentille que la capsule
@@ -604,8 +597,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 /* Entrée d'un nouveau commentaire : fondu + 6 px, aucun saut de liste. */
 .ckp-comment.is-new { animation: ckp-comment-in 180ms cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes ckp-comment-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.ckp-avatar { width: 28px; height: 28px; flex: none; border-radius: 999px; object-fit: cover; box-shadow: 0 0 0 .5px rgba(23, 43, 36, .10); }
-.ckp-avatar--initial { display: grid; place-items: center; background: rgba(23, 64, 44, .10); color: #17402c; font: 700 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-avatar { width: 28px; height: 28px; flex: none; border-radius: 999px; object-fit: cover; box-shadow: 0 0 0 1.5px #fff; }
+.ckp-avatar--initial { display: grid; place-items: center; background: rgba(23, 64, 44, .10); color: #17402c; font: 700 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .ckp-composer { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .ckp-composer input {
   flex: 1; min-width: 0; height: 36px; border: .5px solid rgba(23, 43, 36, .14); border-radius: 999px;
@@ -792,7 +785,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   position: absolute; left: 12px; bottom: 12px; z-index: 3;
   padding: 4px 8px; border-radius: 8px;
   background: rgba(255, 255, 255, .72); color: #17402c;
-  font: 700 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 600 11px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: .08em;
 }
 
@@ -950,9 +943,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    d'auth, il ne navigue pas) avec la matière du lien du Compte. */
 .ckp-post-sheet .lkdv-comments-gate button {
   display: inline-flex; align-items: center; justify-content: center;
-  min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px;
+  height: 48px; padding: 0 20px; border: 0; border-radius: 999px;
   background: var(--feed-ink, #17402c); color: #fff;
-  font: 700 12px var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer;
+  font: 600 14px/1 var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer;
 }
 /* Le tri Récents / Anciens est une donnée du carnet : il se pose en tête de
    liste, sans déplacer le corps ni le pied du Compte. */
@@ -1075,8 +1068,8 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 .ckp-hero-num {
   display: flex; align-items: baseline; gap: 4px; margin: 0; min-width: 0;
   color: #17402C;
-  font: 700 40px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-  letter-spacing: -1px; font-variant-numeric: tabular-nums;
+  font: 700 34px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.02em; font-variant-numeric: tabular-nums;
 }
 .ckp-hero-num[data-missing='true'] { color: #B4BDB6; }
 .ckp-hero-value {
@@ -1099,8 +1092,8 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 }
 /* 13. Trois sous-valeurs 12/600 tabulaires, alignées à gauche. */
 .ckp-hero-sub {
-  display: flex; align-items: baseline; gap: 16px; margin-top: 12px; min-width: 0;
-  color: #172B24; font: 600 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  display: flex; align-items: baseline; gap: 12px; margin-top: 12px; min-width: 0;
+  color: #172B24; font: 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: 0; font-variant-numeric: tabular-nums;
 }
 .ckp-hero-sub span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1116,7 +1109,7 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 /* Après `.ckp-hero-num[data-missing]` : même spécificité, l'ordre tranche. */
 .ckp-hero--empty .ckp-hero-num {
   color: #8A968D; letter-spacing: 0;
-  font: 600 20px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 700 20px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
 }
 /* 44. Changement de sous-onglet : fondu + 8 px, 180 ms. */
 .ckp-hero[data-animate='true'] { animation: ckp-hero-in 180ms cubic-bezier(.22, 1, .36, 1) both; }
@@ -1134,7 +1127,7 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
   position: relative; display: block; overflow: hidden; border-radius: 12px;
   background: rgba(23, 43, 36, .06);
 }
-.ckp-load-bar--hero { height: 40px; border-radius: 10px; }
+.ckp-load-bar--hero { height: 34px; border-radius: 10px; }
 .ckp-load-bar--row { height: 48px; }
 .ckp-load-bar::after {
   content: ''; position: absolute; inset: 0; transform: translateX(-100%);
@@ -1180,7 +1173,6 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
   .ckp-load, .ckp-empty-state { animation: ckp-fade-in 120ms linear both; }
   .ckp-drawer-veil { transition: opacity 120ms linear; }
 }
-.ckp-empty-dash { font: 600 13px/1 var(--font-sans, -apple-system, system-ui, sans-serif); color: #8A968D; }
 
 /* Une seule tuile garde le gabarit 134 (3 colonnes), jamais pleine largeur. */
 .ckp-grid-wrap { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 2px; padding: 0; }
@@ -1267,4 +1259,98 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
   bottom: 0;
   height: .5px;
   background: rgba(23, 43, 36, .06);
+}
+
+/* =============================================================================
+   Lot D — composants (25-34)
+   Carte de stat, ligne de liste, pastille, badge, en-tête de section, état vide,
+   squelette, erreur de champ, section repliable, boutons.
+   ============================================================================= */
+
+/* 26 — le chevron n'existe que sur une ligne qui navigue. */
+.ckp-field-chevron,
+.ckp-row-chevron {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: #56665D;
+}
+
+/* 29 — en-tête de section : 10,5/600, interlettrage .08em, #8A968D. */
+.ckp-section-head {
+  color: #8A968D;
+  font: 600 10.5px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* 32 — erreur de champ : liseré de 1 px et message de 11 px sous la ligne. */
+.ckp-field-wrap { display: flex; flex-direction: column; min-width: 0; }
+.ckp-field-error {
+  margin-top: 4px;
+  color: #C13B34;
+  font: 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+/* 33 — section repliable : chevron 180° en 180 ms, ouverture 0fr → 1fr. */
+.ckp-collapsible { display: flex; flex-direction: column; min-width: 0; }
+.ckp-collapse-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.ckp-collapse-chevron {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: #8A968D;
+  transition: transform 180ms cubic-bezier(.22, 1, .36, 1);
+}
+.ckp-collapse-head[aria-expanded='true'] .ckp-collapse-chevron { transform: rotate(180deg); }
+.ckp-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 180ms cubic-bezier(.22, 1, .36, 1);
+}
+.ckp-collapse[data-open='true'] { grid-template-rows: 1fr; }
+.ckp-collapse > * { overflow: hidden; min-height: 0; }
+
+/* 34 — bouton primaire 48 / rayon 999 / 14-600 ; bouton texte 13/600 #56665D. */
+.ckp-btn--primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #17402C;
+  color: #fff;
+  cursor: pointer;
+  font: 600 14px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-btn--primary:disabled { opacity: .45; cursor: not-allowed; }
+.ckp-btn--text {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: #56665D;
+  cursor: pointer;
+  font: 600 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
 }

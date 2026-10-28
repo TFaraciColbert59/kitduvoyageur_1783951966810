@@ -272,7 +272,9 @@ describe('CarnetCard — carte du carnet', () => {
 
   it('rend la page Matériel et son état vide honnête', () => {
     const { container } = render(<CarnetCard {...base({ page: 'materiel' })} />);
-    expect(screen.getByText('Matériel non renseigné.')).toBeTruthy();
+    /* Aucun texte : un glyphe de 32 px à 30 % et un tiret. */
+    expect(container.querySelector('.ckp-empty-state .ckp-empty-dash')?.textContent).toBe('—');
+    expect(container.querySelector('.ckp-empty-glyph > span')).toBeTruthy();
     expect(container.querySelector('.ckp-page-pad')).toBeTruthy();
   });
 
@@ -588,9 +590,10 @@ describe('CarnetCard — balayage Résumé → J1..Jn', () => {
     fireEvent.keyDown(card, { key: 'End' });
     expect(statNames(container)).toEqual(['DISTANCE — km', 'DÉNIVELÉ + — m', 'DURÉE — h']);
     expect(container.querySelector('.ckp-grid-wrap')).toBeNull();
-    expect(container.querySelector('.ckp-grid-empty')?.textContent).toContain(
-      'Aucun moment ce jour-là.',
-    );
+    /* Jour sans photo : glyphe + tiret, aucun texte. */
+    const empty = container.querySelector('.ckp-empty-state');
+    expect(empty?.querySelector('.ckp-empty-dash')?.textContent).toBe('—');
+    expect(empty?.textContent).toBe('—');
     expect(errors).not.toHaveBeenCalled();
     errors.mockRestore();
   });

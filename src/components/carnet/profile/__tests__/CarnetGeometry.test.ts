@@ -92,10 +92,10 @@ describe('Récit de la carte — une ligne et « voir plus… »', () => {
     expect(block).toMatch(/min-width:\s*0/);
   });
 
-  it('pose « voir plus… » en 13/500 #17402C, sans fond ni bordure', () => {
+  it('pose « voir plus… » en 13/600 #56665D, sans fond ni bordure', () => {
     const more = last('.ckp-more {');
-    expect(more).toMatch(/font:\s*500 13px/);
-    expect(more).toMatch(/color:\s*#17402C/);
+    expect(more).toMatch(/font:\s*600 13px\/1\.15/);
+    expect(more).toMatch(/color:\s*#56665D/);
     expect(more).toMatch(/background:\s*none/);
     expect(more).toMatch(/border:\s*0/);
     expect(more).toMatch(/cursor:\s*pointer/);

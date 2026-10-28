@@ -2,6 +2,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
+import { CarnetEmpty } from './CarnetStates';
 import Icon from '@/components/ui/Icon';
 import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetMediaTabs } from './CarnetMediaTabs';
@@ -262,11 +263,10 @@ export function CarnetCard({
               moments={gridMoments}
               emptyGrid={
                 day ? (
-                  <div className="ckp-grid-empty">
-                    <Icon name="image-plus" size={20} aria-hidden="true" />
-                    <b>Aucun moment ce jour-là.</b>
-                    <p>La page reste vraie : ce jour n’a pas de photo.</p>
-                  </div>
+                  <CarnetEmpty
+                    icon={<Icon name="image-plus" size={32} aria-hidden="true" />}
+                    label="Aucun moment ce jour-là"
+                  />
                 ) : null
               }
               likesPage={likesPage}

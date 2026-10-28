@@ -12,6 +12,7 @@ import { CarnetSubCapsule, type CarnetSubCapsuleItem } from '../CarnetSubCapsule
 import { CarnetField } from '../CarnetField';
 import { CarnetRollValue } from '../CarnetRollValue';
 import { CarnetDayRow } from './CarnetDayRow';
+import { CarnetCollapsible } from '../CarnetCollapsible';
 import { useScrollCut } from '../useScrollCut';
 import { groupsOfThree } from '../groups';
 import {
@@ -389,6 +390,7 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
                   label="trace gps"
                   value={traceValue}
                   error={traceBroken}
+                  errorMessage={traceBroken ? 'point unique' : undefined}
                   ariaLabel={`trace gps ${traceValue || '—'}`}
                 />
               </div>
@@ -549,7 +551,11 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
               global du carnet, affiché une seule fois. */}
           {dayView ? (
             <>
-              {dayView.story ? <p className="ckp-story">{dayView.story}</p> : null}
+              {dayView.story ? (
+                <CarnetCollapsible label="récit">
+                  <p className="ckp-story">{dayView.story}</p>
+                </CarnetCollapsible>
+              ) : null}
               <div className="ckp-group">
                 <CarnetField label="jour" value={String(dayView.dayNumber)} />
                 <CarnetField label="date" value={dayView.date ?? ''} />
@@ -557,7 +563,11 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
             </>
           ) : (
             <>
-              {detail.description ? <p className="ckp-story">{detail.description}</p> : null}
+              {detail.description ? (
+                <CarnetCollapsible label="récit">
+                  <p className="ckp-story">{detail.description}</p>
+                </CarnetCollapsible>
+              ) : null}
               <div className="ckp-group">
                 <CarnetField
                   label="jour"

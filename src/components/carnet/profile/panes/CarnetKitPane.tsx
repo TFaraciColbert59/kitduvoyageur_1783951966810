@@ -6,6 +6,7 @@ import Icon from '@/components/ui/Icon';
 import { formatWeight } from '@/features/carnet/detail/format';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { groupsOfThree } from '../groups';
+import { CarnetEmpty } from '../CarnetStates';
 
 export interface CarnetKitPaneProps {
   detail: CarnetDetail;
@@ -15,7 +16,7 @@ export function CarnetKitPane({ detail }: CarnetKitPaneProps) {
   const total = formatWeight(detail.kit.totalWeightG);
 
   if (detail.kit.items.length === 0) {
-    return <p className="ckp-pane-empty">Matériel non renseigné.</p>;
+    return <CarnetEmpty icon={<Icon name="backpack" size={32} aria-hidden="true" />} label="Matériel non renseigné" />;
   }
 
   return (

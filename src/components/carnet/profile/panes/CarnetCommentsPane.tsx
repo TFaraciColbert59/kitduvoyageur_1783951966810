@@ -223,11 +223,14 @@ export function CarnetCommentsPane({
         </div>
       ) : (
         <div className="lkdv-comments-gate ckp-comments-gate">
-          <button type="button" className="ckp-field" onClick={onRequireAuth} aria-label="Se connecter pour commenter">
-            <span className="ckp-field-icon" aria-hidden="true">
-              <Icon name="user" size={16} aria-hidden="true" />
-            </span>
-            <span className="ckp-field-label">se connecter</span>
+          <button
+            type="button"
+            className="ckp-btn--primary"
+            onClick={onRequireAuth}
+            aria-label="Se connecter pour commenter"
+          >
+            <Icon name="user" size={16} aria-hidden="true" />
+            Se connecter
           </button>
         </div>
       )}

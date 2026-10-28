@@ -160,8 +160,11 @@ describe('CarnetPages — pages du carnet', () => {
   });
 
   it('affiche l’état vide honnête de la grille', () => {
-    render(<CarnetPages {...base({ detail: detail({ photoMoments: [] }) })} />);
-    expect(screen.getByText('Aucun moment pour l’instant.')).toBeTruthy();
+    const { container } = render(<CarnetPages {...base({ detail: detail({ photoMoments: [] }) })} />);
+    const empty = container.querySelector('.ckp-empty-state');
+    expect(empty?.querySelector('.ckp-empty-dash')?.textContent).toBe('—');
+    /* Aucune phrase : l'état vide ne dit rien d'autre que l'absence. */
+    expect(empty?.textContent).toBe('—');
   });
 
   it('ne capte plus aucun geste horizontal : la page ne change jamais au swipe', () => {
@@ -246,8 +249,10 @@ describe('CarnetPages — pages du carnet', () => {
   });
 
   it('rend le volet Matériel et son état vide, jamais de mock', () => {
-    render(<CarnetPages {...base({ page: 'materiel' })} />);
-    expect(screen.getByText('Matériel non renseigné.')).toBeTruthy();
+    const { container } = render(<CarnetPages {...base({ page: 'materiel' })} />);
+    const empty = container.querySelector('.ckp-empty-state');
+    expect(empty?.querySelector('.ckp-empty-dash')?.textContent).toBe('—');
+    expect(empty?.textContent).toBe('—');
   });
 
   it('rend le volet Nature et son bouton d’identification', () => {

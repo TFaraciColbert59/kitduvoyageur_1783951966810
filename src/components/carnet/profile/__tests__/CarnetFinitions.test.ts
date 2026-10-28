@@ -165,7 +165,6 @@ describe('Anatomie de la feuille', () => {
   /* 7 — aucune section encadrée : ni titre, ni carte, ni rangée de réglage. */
   it('ne garde aucune section encadrée ni titre de volet', () => {
     expect(css).not.toMatch(/\.ckp-manage-section/);
-    expect(css).not.toMatch(/\.ckp-section-head/);
     expect(css).not.toMatch(/\.ckp-set\b/);
     expect(css).not.toMatch(/\.ckp-share-row/);
     expect(css).not.toMatch(/\.ckp-stat-block-title/);
@@ -175,10 +174,10 @@ describe('Anatomie de la feuille', () => {
 
 describe('Chiffre héros', () => {
   /* 9 / 10 / 48 / 50 — 40/700 tabulaire, unité 14/500 accolée. */
-  it('chiffre 40/700 tabulaire, -1 px, interligne 1 ; unité 14/500', () => {
+  it('chiffre 34/700 tabulaire, -0,02em, interligne 1,15 ; unité 14/500', () => {
     const num = rule('.ckp-hero-num {');
-    expect(num).toMatch(/font:\s*700 40px\/1/);
-    expect(num).toMatch(/letter-spacing:\s*-1px/);
+    expect(num).toMatch(/font:\s*700 34px\/1\.15/);
+    expect(num).toMatch(/letter-spacing:\s*-\.02em/);
     expect(num).toMatch(/font-variant-numeric:\s*tabular-nums/);
     expect(num).toMatch(/color:\s*#17402C/);
     const unit = rule('.ckp-hero-unit {');
@@ -204,11 +203,11 @@ describe('Chiffre héros', () => {
   });
 
   /* 13 — trois sous-valeurs 12/600 tabulaires, sans libellé long. */
-  it('trois sous-valeurs 12/600 tabulaires', () => {
+  it('trois sous-valeurs 11/500 tabulaires, 12 px d’écart', () => {
     const sub = rule('.ckp-hero-sub {');
-    expect(sub).toMatch(/font:\s*600 12px/);
+    expect(sub).toMatch(/font:\s*500 11px\/1\.42/);
     expect(sub).toMatch(/font-variant-numeric:\s*tabular-nums/);
-    expect(sub).toMatch(/gap:\s*16px/);
+    expect(sub).toMatch(/gap:\s*12px/);
   });
 });
 
@@ -257,11 +256,12 @@ describe('Champs de donnée', () => {
   });
 
   /* 21 — icône de 16 px, 22 — aucun chevron. */
-  it('icône 16 px dans le champ, aucun chevron peint', () => {
+  it('icône 16 px dans le champ, chevron réservé aux lignes qui naviguent', () => {
     expect(rule('.ckp-field-icon > span {')).toMatch(/width:\s*16px/);
     expect(rule('.ckp-field-icon > span {')).toMatch(/height:\s*16px/);
-    const additions = css.slice(css.indexOf('Anatomie des drawers et sous-drawers'));
-    expect(additions).not.toMatch(/chevron/);
+    const chevron = rule('.ckp-field-chevron,\n.ckp-row-chevron {');
+    expect(chevron).toMatch(/width:\s*16px/);
+    expect(chevron).toMatch(/color:\s*#56665D/);
   });
 
   /* 40 — erreur : bordure 1 px #C13B34, aucun bandeau. */
@@ -313,9 +313,9 @@ describe('Sous-sélecteur et capsule', () => {
 
 describe('États', () => {
   /* 38 — squelette : 5 lignes de 48 px + bloc héros de 40 px, shimmer 1,4 s. */
-  it('squelette : lignes 48 px, héros 40 px, shimmer de 1,4 s', () => {
+  it('squelette : lignes 48 px, héros 34 px, shimmer de 1,4 s', () => {
     expect(rule('.ckp-load-bar--row {')).toMatch(/height:\s*48px/);
-    expect(rule('.ckp-load-bar--hero {')).toMatch(/height:\s*40px/);
+    expect(rule('.ckp-load-bar--hero {')).toMatch(/height:\s*34px/);
     expect(rule('.ckp-load-bar::after {')).toMatch(/animation:\s*ckp-shimmer 1\.4s/);
     expect(rule('.ckp-load {')).toMatch(/gap:\s*12px/);
   });
@@ -577,5 +577,94 @@ describe('Rythme — lot C', () => {
       expect(block).toMatch(/border-radius:\s*0/);
     }
     expect(css).not.toMatch(/\.ckp-species \{[^}]*background/);
+  });
+});
+
+describe('Composants — lot D', () => {
+  /* 25 — carte de stat : 34/700, sous-valeurs 11/500, barre de 6 px. */
+  it('carte de stat : 34/700 + 11/500 + barre de 6 px', () => {
+    expect(rule('.ckp-hero-num {')).toMatch(/font:\s*700 34px\/1\.15/);
+    expect(rule('.ckp-hero-sub {')).toMatch(/font:\s*500 11px\/1\.42/);
+    expect(rule('.ckp-hero-bar {')).toMatch(/height:\s*6px/);
+    expect(rule('.ckp-hero-bar i {')).toMatch(/height:\s*6px/);
+  });
+
+  /* 26 — ligne de liste : icône 16 #56665D, valeur à droite, chevron navigable. */
+  it('ligne de liste : icône 16 #56665D et valeur à droite', () => {
+    expect(rule('.ckp-field-icon {')).toMatch(/color:\s*#6B7A70/);
+    expect(rule('.ckp-row svg, .ckp-row > span[aria-hidden=\'true\'] {')).toMatch(/color:\s*#56665d/);
+    expect(rule('.ckp-field-value {')).toMatch(/text-align:\s*right/);
+    expect(rule('.ckp-field-chevron,\n.ckp-row-chevron {')).toMatch(/width:\s*16px/);
+  });
+
+  /* 27 — pastille avatar : anneau de 1,5 px blanc, initiales 11/700. */
+  it('pastille avatar : anneau 1,5 px blanc, initiales 11/700', () => {
+    expect(rule('.ckp-avatar {')).toMatch(/box-shadow:\s*0 0 0 1\.5px #fff/);
+    expect(rule('.ckp-avatar--initial {')).toMatch(/font:\s*700 11px\/1/);
+  });
+
+  /* 28 — badge compteur : 13 px au plus. */
+  it('badges compteurs : 13 px au plus', () => {
+    const sizes: Record<string, number> = {
+      '.ckp-author-score {': 11,
+      '.ckp-badge {': 11,
+      '.ckp-daypill-count {': 11,
+      '.ckp-tile-more {': 13,
+      '.ckp-notif-badge {': 11,
+    };
+    for (const [selector, size] of Object.entries(sizes)) {
+      const font = rule(selector).match(/font:\s*(\d+\s+)?([\d.]+)px/);
+      expect(font, selector).toBeTruthy();
+      expect(Number(font?.[2]), selector).toBe(size);
+      expect(size).toBeLessThanOrEqual(13);
+    }
+  });
+
+  /* 29 — en-tête de section : 10,5/600, interlettrage .08em, #8A968D. */
+  it('en-tête de section : 10,5/600, .08em, #8A968D', () => {
+    const head = rule('.ckp-section-head {');
+    expect(head).toMatch(/font:\s*600 10\.5px\/1\.15/);
+    expect(head).toMatch(/letter-spacing:\s*\.08em/);
+    expect(head).toMatch(/color:\s*#8A968D/);
+  });
+
+  /* 30 — état vide : glyphe de 32 px à 30 %, tiret, aucune phrase. */
+  it('état vide : glyphe 32 px à 30 % et tiret, aucun texte d’état', () => {
+    expect(rule('.ckp-empty-glyph > span {')).toMatch(/width:\s*32px/);
+    expect(rule('.ckp-empty-glyph {')).toMatch(/opacity:\s*\.3/);
+    expect(rule('.ckp-empty-dash {')).toMatch(/color:\s*#B4BDB6/);
+    /* Plus aucune règle d'état vide ne porte de phrase. */
+    expect(css).not.toMatch(/\.ckp-grid-empty/);
+    expect(css).not.toMatch(/\.ckp-pane-empty/);
+  });
+
+  /* 32 — erreur de champ : liseré #C13B34 et message de 11 px. */
+  it('erreur de champ : liseré #C13B34 et message 11 px', () => {
+    expect(rule(".ckp-field[data-error='true'] {")).toMatch(/inset 0 0 0 1px #C13B34/);
+    const message = rule('.ckp-field-error {');
+    expect(message).toMatch(/font:\s*500 11px\/1\.42/);
+    expect(message).toMatch(/color:\s*#C13B34/);
+  });
+
+  /* 33 — section repliable : chevron 180° en 180 ms, 0fr → 1fr. */
+  it('section repliable : chevron 180° / 180 ms et 0fr → 1fr', () => {
+    expect(rule('.ckp-collapse-chevron {')).toMatch(/transition:\s*transform 180ms/);
+    expect(rule(".ckp-collapse-head[aria-expanded='true'] .ckp-collapse-chevron {")).toMatch(
+      /transform:\s*rotate\(180deg\)/,
+    );
+    expect(rule('.ckp-collapse {')).toMatch(/grid-template-rows:\s*0fr/);
+    expect(rule('.ckp-collapse {')).toMatch(/transition:\s*grid-template-rows 180ms/);
+    expect(rule(".ckp-collapse[data-open='true'] {")).toMatch(/grid-template-rows:\s*1fr/);
+  });
+
+  /* 34 — bouton primaire 48 / r999 / 14-600, secondaire texte 13/600 #56665D. */
+  it('bouton primaire 48 / r999 / 14-600, bouton texte 13/600 #56665D', () => {
+    const primary = rule('.ckp-btn--primary {');
+    expect(primary).toMatch(/height:\s*48px/);
+    expect(primary).toMatch(/border-radius:\s*999px/);
+    expect(primary).toMatch(/font:\s*600 14px\/1/);
+    const text = rule('.ckp-btn--text {');
+    expect(text).toMatch(/font:\s*600 13px\/1\.15/);
+    expect(text).toMatch(/color:\s*#56665D/);
   });
 });
