@@ -113,7 +113,11 @@ export function dayInfoRows(detail: CarnetDetail, day: CarnetDay | null): DayInf
 
   return [
     row('pace', 'Allure', formatPace(day.durationS, day.distanceKm)),
-    row('activity', 'Activité', null),
+    /* La ligne Activité n'apparaît que si une source réelle existe un jour :
+       une ligne toujours vide encombre plus qu'elle n'informe. */
+    ...((detail as { activity?: string | null }).activity
+      ? [row('activity', 'Activité', (detail as { activity?: string | null }).activity ?? null)]
+      : []),
     row('from', 'Départ', places.from),
     row('to', 'Arrivée', places.to),
     row('cumulative', 'Depuis le départ', formatKm(cumulative)),
