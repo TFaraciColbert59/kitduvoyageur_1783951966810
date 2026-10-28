@@ -222,7 +222,7 @@ describe('Champs de donnée', () => {
     expect(field).toMatch(/background:\s*rgba\(255, 255, 255, \.55\)/);
     expect(field).toMatch(/padding:\s*0 12px/);
     const label = rule('.ckp-field-label {');
-    expect(label).toMatch(/font:\s*500 12px/);
+    expect(label).toMatch(/font:\s*500 13px\/1\.42/);
     expect(label).toMatch(/color:\s*#8A968D/);
     expect(label).toMatch(/max-width:\s*46%/);
     expect(label).toMatch(/text-overflow:\s*ellipsis/);
@@ -230,11 +230,11 @@ describe('Champs de donnée', () => {
   });
 
   /* 16 / 24 — colonne de valeurs fixe de 120 px, alignée à droite. */
-  it('colonne de valeurs 120 px, 13/600 tabulaire, alignée à droite', () => {
+  it('colonne de valeurs 120 px, 13/500 tabulaire, alignée à droite', () => {
     const value = rule('.ckp-field-value {');
     expect(value).toMatch(/width:\s*120px/);
     expect(value).toMatch(/text-align:\s*right/);
-    expect(value).toMatch(/font:\s*600 13px/);
+    expect(value).toMatch(/font:\s*500 13px\/1\.15/);
     expect(value).toMatch(/font-variant-numeric:\s*tabular-nums/);
     expect(value).toMatch(/color:\s*#172B24/);
   });
@@ -439,5 +439,82 @@ describe('Géométrie des séries', () => {
     expect(documentedShare([1, 1, 1])).toBe(1);
     expect(documentedShare([null, null])).toBe(0);
     expect(documentedShare([])).toBe(0);
+  });
+});
+
+describe('Typographie — lot B', () => {
+  /* 9 — trois niveaux et rien d'autre : 20/700, 13/500, 11/500. */
+  it('trois niveaux : titre 20/700, texte et valeur 13/500, méta 11/500', () => {
+    expect(rule('.ckp-pane-head b {')).toMatch(/font:\s*700 20px\/1\.15/);
+    expect(rule('.ckp-field-value {')).toMatch(/font:\s*500 13px\/1\.15/);
+    expect(rule('.ckp-liker-txt b {')).toMatch(/font:\s*500 13px\/1\.15/);
+    expect(rule('.ckp-comment-name {')).toMatch(/font:\s*500 13px\/1\.15/);
+    expect(rule('.ckp-field-label {')).toMatch(/font:\s*500 13px\/1\.42/);
+    expect(rule('.ckp-comment-text {')).toMatch(/font:\s*500 13px\/1\.42/);
+    expect(rule('.ckp-comment-meta {')).toMatch(/font:\s*500 11px\/1\.42/);
+    expect(rule('.ckp-day-meta {')).toMatch(/font:\s*500 11px\/1\.42/);
+  });
+
+  /* 10 — tout chiffre est tabulaire, sur les quatre surfaces qui en portent. */
+  it('tabular-nums posé sur la carte, la feuille, les volets et les pages', () => {
+    const base = rule('.ckp-card, .ckp-card--drawer, .ckp-pane, .ckp-page, .ckp-screen-header {');
+    expect(base).toMatch(/font-variant-numeric:\s*tabular-nums/);
+  });
+
+  /* 11 — l'unité est accolée : 4 px du chiffre, 14/500, #6B7A70. */
+  it('unité accolée à 4 px, 14/500 #6B7A70', () => {
+    expect(rule('.ckp-hero-num {')).toMatch(/gap:\s*4px/);
+    const unit = rule('.ckp-hero-unit {');
+    expect(unit).toMatch(/font:\s*500 14px\/1/);
+    expect(unit).toMatch(/color:\s*#6B7A70/);
+  });
+
+  /* 13 — interlignage : 1,42 pour les textes, 1,15 pour les valeurs. */
+  it('interlignage 1,42 (textes) et 1,15 (valeurs)', () => {
+    for (const selector of ['.ckp-comment-text {', '.ckp-story {', '.ckp-text {', '.ckp-field-label {']) {
+      expect(rule(selector)).toMatch(/\/1\.42/);
+    }
+    for (const selector of ['.ckp-field-value {', '.ckp-liker-value {', '.ckp-day-nums b {', '.ckp-day-title {']) {
+      expect(rule(selector)).toMatch(/\/1\.15/);
+    }
+  });
+
+  /* 14 — métadonnées à #6B7A70, jamais #8A968D pour du texte lisible. */
+  it('métadonnées à #6B7A70', () => {
+    for (const selector of [
+      '.ckp-comment-handle {',
+      '.ckp-day-meta {',
+      '.ckp-moment-list li {',
+      '.ckp-elev-axis span {',
+      '.ckp-pane-meta {',
+      '.ckp-kit-detail {',
+      '.ckp-dayinfo-day {',
+    ]) {
+      expect(rule(selector)).toMatch(/color:\s*#6B7A70/);
+    }
+  });
+
+  /* 15 — un lieu long s'ellipse au milieu : coupe à gauche, colonne intacte. */
+  it('ellipse au milieu : direction RTL et alignement à gauche', () => {
+    const mid = rule('.ckp-field--mid .ckp-field-value {');
+    expect(mid).toMatch(/direction:\s*rtl/);
+    expect(mid).toMatch(/text-align:\s*left/);
+  });
+
+  /* 16 — un seul accent : plus aucune couleur hors jetons dans la feuille. */
+  it('une seule couleur d’accent : aucune valeur hors jetons', () => {
+    const tokens = ['#172b24', '#17402c', '#56665d', '#6b7a70', '#8a968d', '#c13b34', '#b4bdb6'];
+    /* Exceptions nommées : la lentille (`#fff`), la surface opaque du
+       `prefers-reduced-transparency` (#F4F7F3, lot E), le canvas de repli du
+       Compte (#cfd6c8), le dégradé de la pastille de couverture (#123726,
+       #2e5c40) et les masques (`#000`). */
+    const allowed = new Set([...tokens, '#fff', '#ffffff', '#f4f7f3', '#cfd6c8', '#123726', '#2e5c40', '#000', '#000000']);
+    const hex = css.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];
+    const normalize = (value: string) => {
+      const lower = value.toLowerCase();
+      return lower.length === 4 ? `#${lower[1]}${lower[1]}${lower[2]}${lower[2]}${lower[3]}${lower[3]}` : lower;
+    };
+    const offenders = hex.map(normalize).filter((value) => !allowed.has(value));
+    expect(offenders).toEqual([]);
   });
 });

@@ -28,6 +28,12 @@ export interface CarnetFieldProps {
   /** Valeur longue (lien) : la colonne fixe s'élargit, toujours ellipsée. */
   wide?: boolean;
   /**
+   * Valeur longue qui se reconnaît par sa fin (un lieu : `…Landmannalaugar`) :
+   * l'ellipse se fait au milieu, jamais du seul côté droit. Le texte complet
+   * reste dans le DOM, dans `aria-label` et dans `title`.
+   */
+  mid?: boolean;
+  /**
    * Nom accessible complet. Le libellé visible reste un placeholder court ;
    * c'est ici que la phrase utile aux lecteurs d'écran est portée.
    */
@@ -54,6 +60,7 @@ export function CarnetField({
   error,
   showValue = true,
   wide,
+  mid,
   ariaLabel,
   title,
 }: CarnetFieldProps) {
@@ -63,6 +70,7 @@ export function CarnetField({
     tone === 'danger' ? 'ckp-field--danger' : null,
     missing ? 'is-missing' : null,
     wide ? 'ckp-field--wide' : null,
+    mid ? 'ckp-field--mid' : null,
   ]
     .filter(Boolean)
     .join(' ');
@@ -106,7 +114,7 @@ export function CarnetField({
         target="_blank"
         rel="noopener noreferrer"
         aria-label={ariaLabel ?? label}
-        title={title ?? label}
+        title={title ?? (typeof value === 'string' ? value : label)}
         {...state}
       >
         {inner}
@@ -118,6 +126,7 @@ export function CarnetField({
     <div
       className={className}
       aria-label={ariaLabel}
+      title={title ?? (typeof value === 'string' ? value : label)}
       {...state}
     >
       {inner}

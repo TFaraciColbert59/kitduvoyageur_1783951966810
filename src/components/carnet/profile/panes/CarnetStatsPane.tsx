@@ -322,6 +322,7 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
                   label="départ"
                   value={dayView.from ?? ''}
                   wide
+                  mid
                   ariaLabel={`départ ${dayView.from ?? '—'}`}
                 />
                 <CarnetField
@@ -329,6 +330,7 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
                   label="arrivée"
                   value={dayView.to ?? ''}
                   wide
+                  mid
                   ariaLabel={`arrivée ${dayView.to ?? '—'}`}
                 />
               </div>
@@ -354,6 +356,7 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
                   label="lieu"
                   value={travel.place ?? ''}
                   wide
+                  mid
                   ariaLabel={`lieu ${travel.place ?? '—'}`}
                 />
                 <CarnetField
@@ -361,6 +364,7 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
                   label="départ"
                   value={travel.from ?? stats.startPlace ?? ''}
                   wide
+                  mid
                   ariaLabel={`départ ${travel.from ?? stats.startPlace ?? '—'}`}
                 />
                 <CarnetField
@@ -368,6 +372,7 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
                   label="arrivée"
                   value={travel.to ?? stats.endPlace ?? ''}
                   wide
+                  mid
                   ariaLabel={`arrivée ${travel.to ?? stats.endPlace ?? '—'}`}
                 />
               </div>
