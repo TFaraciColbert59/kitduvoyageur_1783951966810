@@ -1,0 +1,29 @@
+[
+  {
+    "scene": "monde",
+    "screen": "Monde",
+    "title": "Le monde",
+    "tabs": 3,
+    "pins": 4,
+    "detent": "peek",
+    "parity": true
+  },
+  {
+    "scene": "pays",
+    "screen": "Pays",
+    "title": "France",
+    "tabs": 4,
+    "pins": 0,
+    "detent": "peek",
+    "parity": true
+  },
+  {
+    "scene": "region",
+    "screen": "Region",
+    "title": "Auvergne-Rhône-Alpes",
+    "tabs": 4,
+    "pins": 2,
+    "detent": "low",
+    "parity": true
+  }
+]
