@@ -60,10 +60,9 @@ function swipe(element: Element, x1: number, y1: number, x2: number, y2: number)
 }
 
 describe('CarnetPages — pages du carnet', () => {
-  it('expose les huit pages dans l’ordre du contrat', () => {
+  it('expose les sept pages dans l’ordre du contrat, sans page Parcours', () => {
     expect(CARNET_PAGE_TABS.map((tab) => tab.id)).toEqual([
       'posts',
-      'parcours',
       'etapes',
       'materiel',
       'nature',
@@ -73,7 +72,6 @@ describe('CarnetPages — pages du carnet', () => {
     ]);
     expect(CARNET_PAGE_TABS.map((tab) => tab.label)).toEqual([
       'Posts',
-      'Parcours',
       'Étapes',
       'Matériel',
       'Nature',
@@ -81,13 +79,14 @@ describe('CarnetPages — pages du carnet', () => {
       'Commentaires',
       'Gérer',
     ]);
+    /* La page qui portait la carte interne a disparu avec elle. */
+    expect(CARNET_PAGE_TABS.some((tab) => (tab.id as string) === 'parcours')).toBe(false);
     for (const tab of CARNET_PAGE_TABS) expect(tab.icon).toBeTruthy();
   });
 
   it('ne propose Gérer qu’au propriétaire', () => {
     expect(carnetPageTabs(true).map((tab) => tab.id)).toEqual([
       'posts',
-      'parcours',
       'etapes',
       'materiel',
       'nature',
@@ -97,7 +96,6 @@ describe('CarnetPages — pages du carnet', () => {
     ]);
     expect(carnetPageTabs(false).map((tab) => tab.id)).toEqual([
       'posts',
-      'parcours',
       'etapes',
       'materiel',
       'nature',
@@ -198,8 +196,8 @@ describe('CarnetPages — pages du carnet', () => {
     const pages = () => container.querySelector('.ckp-pages') as Element;
     const { container, rerender } = render(<CarnetPages {...base({ onPageChange })} />);
     fireEvent.keyDown(pages(), { key: 'ArrowRight' });
-    expect(onPageChange).toHaveBeenLastCalledWith('parcours');
-    rerender(<CarnetPages {...base({ page: 'parcours', onPageChange })} />);
+    expect(onPageChange).toHaveBeenLastCalledWith('etapes');
+    rerender(<CarnetPages {...base({ page: 'etapes', onPageChange })} />);
     fireEvent.keyDown(pages(), { key: 'ArrowLeft' });
     expect(onPageChange).toHaveBeenLastCalledWith('posts');
     expect(onPageChange).toHaveBeenCalledTimes(2);
@@ -218,14 +216,14 @@ describe('CarnetPages — pages du carnet', () => {
 
   it('garde son animation d’entrée, dans le sens du changement de page', () => {
     const onPageChange = vi.fn();
-    const { container, rerender } = render(<CarnetPages {...base({ page: 'parcours', onPageChange })} />);
+    const { container, rerender } = render(<CarnetPages {...base({ page: 'etapes', onPageChange })} />);
     const page = () => container.querySelector('.ckp-pages > .ckp-page') as Element;
     fireEvent.keyDown(container.querySelector('.ckp-pages') as Element, { key: 'ArrowLeft' });
     expect(onPageChange).toHaveBeenLastCalledWith('posts');
     rerender(<CarnetPages {...base({ page: 'posts', onPageChange })} />);
     expect(page().className).toContain('ckp-page--prev');
     fireEvent.keyDown(container.querySelector('.ckp-pages') as Element, { key: 'ArrowRight' });
-    rerender(<CarnetPages {...base({ page: 'parcours', onPageChange })} />);
+    rerender(<CarnetPages {...base({ page: 'etapes', onPageChange })} />);
     expect(page().className).toContain('ckp-page--next');
   });
 

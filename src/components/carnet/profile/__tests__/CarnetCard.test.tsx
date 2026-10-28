@@ -78,7 +78,7 @@ describe('CarnetCard — carte du carnet', () => {
     expect(onOpenStat).toHaveBeenCalledTimes(3);
   });
 
-  it('ne garde que la capsule des drawers, à deux segments, dans le pied', () => {
+  it('ne garde que la capsule des jours dans le pied', () => {
     const { container } = render(<CarnetCard {...base()} />);
     /* ♥ et 💬 ont quitté la carte : plus aucun bouton rond dans le pied. */
     expect(container.querySelector('.ckp-action')).toBeNull();
@@ -86,11 +86,9 @@ describe('CarnetCard — carte du carnet', () => {
     const capsule = container.querySelector('.ckp-card-foot .ckp-capsule');
     expect(capsule).toBeTruthy();
     const segments = capsule?.querySelectorAll('.ckp-tabs button') ?? [];
-    expect(segments).toHaveLength(2);
-    expect([...segments].map((node) => node.getAttribute('aria-label'))).toEqual([
-      'Posts',
-      'Parcours',
-    ]);
+    /* Carnet sans jour : une seule page, le Résumé. */
+    expect(segments).toHaveLength(1);
+    expect([...segments].map((node) => node.getAttribute('aria-label'))).toEqual(['Résumé']);
   });
 
   it('ne garde plus Enregistrer dans la capsule : l’action vit dans le menu ···', () => {
@@ -118,27 +116,35 @@ describe('CarnetCard — carte du carnet', () => {
     // Le sélecteur vit dans la capsule, pas ailleurs dans la carte.
     expect(container.querySelectorAll('.ckp-card > .ckp-tabs')).toHaveLength(0);
     expect(container.querySelectorAll('.ckp-tabs')).toHaveLength(1);
-    expect(foot?.querySelectorAll('.ckp-tabs button[role="tab"]')).toHaveLength(2);
+    expect(foot?.querySelectorAll('.ckp-tabs button[role="tab"]')).toHaveLength(1);
   });
 
-  it('expose deux segments grille/carte comme la page Compte', () => {
-    const { container } = render(<CarnetCard {...base()} />);
+  it('expose un segment par page de jour, libellé court et nom complet', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
     const tabs = container.querySelector('.ckp-tabs');
-    expect(tabs?.getAttribute('aria-label')).toBe('Grille ou carte');
+    expect(tabs?.getAttribute('aria-label')).toBe('Jours du carnet');
     expect(container.querySelector('.ckp-th')).toBeTruthy();
-    expect(screen.getAllByRole('tab')).toHaveLength(2);
-    expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByRole('tab', { name: 'Parcours' }).getAttribute('aria-selected')).toBe('false');
+    const segments = screen.getAllByRole('tab');
+    expect(segments).toHaveLength(4);
+    expect(segments.map((node) => node.getAttribute('aria-label'))).toEqual([
+      'Résumé',
+      'Jour 1',
+      'Jour 2',
+      'Jour 3',
+    ]);
+    expect(segments.map((node) => node.textContent)).toEqual(['R', 'J1', 'J2', 'J3']);
+    expect(screen.getByRole('tab', { name: 'Résumé' }).getAttribute('aria-selected')).toBe('true');
     expect(container.querySelector('.ckp-pages')).toBeTruthy();
   });
 
-  it('remonte le changement de page depuis les pastilles', () => {
+  it('change de jour au clic sur un segment, sans toucher au carrousel', () => {
     const onPageChange = vi.fn();
-    render(<CarnetCard {...base({ onPageChange })} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
-    expect(onPageChange).toHaveBeenLastCalledWith('parcours');
-    fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
-    expect(onPageChange).toHaveBeenLastCalledWith('posts');
+    const { container } = render(<CarnetCard {...withDays({ onPageChange })} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Jour 2' }));
+    expect(norm(dayLabel(container))).toBe('Jour 2 · 27 sept.');
+    expect(onPageChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('tab', { name: 'Résumé' }));
+    expect(dayLabel(container)).toBe('Résumé');
   });
 
   it('ne rend plus ♥ ni 💬 dans la carte : leurs pages vivent dans le carrousel', () => {
@@ -153,11 +159,14 @@ describe('CarnetCard — carte du carnet', () => {
     likes.unmount();
   });
 
-  it('garde la page Parcours à portée de segment (🗺)', () => {
-    const onPageChange = vi.fn();
-    render(<CarnetCard {...base({ onPageChange })} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
-    expect(onPageChange).toHaveBeenLastCalledWith('parcours');
+  it('ne monte aucune carte dans le carrousel : la seule carte est celle du bas', () => {
+    for (const page of ['posts', 'etapes', 'materiel', 'nature'] as const) {
+      const view = render(<CarnetCard {...base({ page })} />);
+      expect(view.container.querySelector('.ckp-card .ckp-map-wrap')).toBeNull();
+      expect(view.container.querySelector('.ckp-card .ckp-map-canvas')).toBeNull();
+      expect(view.container.querySelector('.ckp-card .leaflet-container')).toBeNull();
+      view.unmount();
+    }
   });
 
   it('affiche une seule ligne de bio, sans répéter les statistiques', () => {
@@ -298,7 +307,7 @@ describe('CarnetCard — lentille unique du sélecteur', () => {
     return { node, i: node?.style.getPropertyValue('--i') };
   }
 
-  it('rend une seule lentille, dans la capsule de 2 segments', () => {
+  it('rend une seule lentille, dans la capsule des jours', () => {
     const { container } = render(<CarnetCard {...base()} />);
     expect(container.querySelectorAll('.ckp-th')).toHaveLength(1);
     const node = container.querySelector('.ckp-th');
@@ -306,49 +315,42 @@ describe('CarnetCard — lentille unique du sélecteur', () => {
     expect(node?.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('pose la lentille sur le segment actif : Posts 0, Parcours 1', () => {
-    const posts = render(<CarnetCard {...base({ page: 'posts' })} />);
-    expect(lens(posts.container).i).toBe('0');
-    posts.unmount();
-    const parcours = render(<CarnetCard {...base({ page: 'parcours' })} />);
-    expect(lens(parcours.container).i).toBe('1');
+  it('pose la lentille sur le segment du jour affiché', () => {
+    const summary = render(<CarnetCard {...base({ dayPage: 0 })} />);
+    expect(lens(summary.container).i).toBe('0');
+    summary.unmount();
+    const dayTwo = render(<CarnetCard {...withDays({ dayPage: 2 })} />);
+    expect(lens(dayTwo.container).i).toBe('2');
+    dayTwo.unmount();
+    const last = render(<CarnetCard {...withDays({ dayPage: 3 })} />);
+    expect(lens(last.container).i).toBe('3');
   });
 
-  it('n’allume la lentille que sur les deux pages du sélecteur', () => {
-    for (const page of ['likes', 'comments', 'manage'] as const) {
-      const view = render(<CarnetCard {...base({ page })} />);
-      expect(lens(view.container).node?.getAttribute('data-off')).toBe('true');
-      view.unmount();
-    }
-    const parcours = render(<CarnetCard {...base({ page: 'parcours' })} />);
-    expect(lens(parcours.container).node?.getAttribute('data-off')).toBeNull();
-    expect(lens(parcours.container).i).toBe('1');
-  });
-
-  it('masque la lentille sur une page sans segment (Gérer, Étapes, Matériel, Nature)', () => {
-    for (const page of ['manage', 'etapes', 'materiel', 'nature'] as const) {
-      const view = render(<CarnetCard {...base({ page, detail: detail({ isOwner: true }) })} />);
-      expect(lens(view.container).node?.getAttribute('data-off')).toBe('true');
+  it('garde la lentille allumée sur le jour affiché, quel que soit le volet ouvert', () => {
+    for (const page of ['posts', 'likes', 'comments', 'manage', 'etapes', 'materiel', 'nature'] as const) {
+      const view = render(<CarnetCard {...withDays({ page, detail: detail({ isOwner: true, days: [DAY_ONE, DAY_TWO] }) })} />);
+      expect(lens(view.container).node?.getAttribute('data-off')).toBeNull();
+      expect(lens(view.container).i).toBe('0');
       view.unmount();
     }
   });
 
-  it('ne garde que les deux segments du sélecteur, quelle que soit la page', () => {
-    for (const page of ['posts', 'parcours', 'likes', 'comments'] as const) {
-      const view = render(<CarnetCard {...base({ page })} />);
+  it('ne garde qu’un segment par page de jour, quel que soit le volet ouvert', () => {
+    for (const page of ['posts', 'likes', 'comments', 'etapes'] as const) {
+      const view = render(<CarnetCard {...withDays({ page })} />);
       const labels = [...view.container.querySelectorAll('.ckp-card-foot .ckp-tabs button')]
         .map((node) => node.getAttribute('aria-label'));
-      expect(labels).toEqual(['Posts', 'Parcours']);
+      expect(labels).toEqual(['Résumé', 'Jour 1', 'Jour 2', 'Jour 3']);
       view.unmount();
     }
   });
 
-  it('garde les mêmes deux segments pour le propriétaire et le visiteur', () => {
+  it('garde les mêmes segments pour le propriétaire et le visiteur', () => {
     for (const isOwner of [false, true]) {
-      const view = render(<CarnetCard {...base({ detail: detail({ isOwner }) })} />);
+      const view = render(<CarnetCard {...base({ detail: detail({ isOwner, days: [DAY_ONE] }) })} />);
       const labels = [...view.container.querySelectorAll('.ckp-card-foot .ckp-tabs button')]
         .map((node) => node.getAttribute('aria-label'));
-      expect(labels).toEqual(['Posts', 'Parcours']);
+      expect(labels).toEqual(['Résumé', 'Jour 1']);
       view.unmount();
     }
   });
@@ -501,6 +503,38 @@ function pointer(element: Element, type: 'pointerdown' | 'pointerup', x: number,
   );
 }
 
+/* jsdom n'émet aucun `pointerType` : on le pose sur l'événement natif, comme
+   le fait un vrai navigateur tactile. */
+function pointerAs(
+  element: Element,
+  type: 'pointerdown' | 'pointerup',
+  x: number,
+  y: number,
+  pointerType: string,
+) {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 });
+  Object.defineProperty(event, 'pointerType', { value: pointerType });
+  fireEvent(element, event);
+}
+
+function touchStart(element: Element, x: number, y: number) {
+  fireEvent.touchStart(element, { touches: [{ clientX: x, clientY: y, identifier: 0 }] });
+}
+
+function touchMove(element: Element, x: number, y: number) {
+  fireEvent.touchMove(element, { touches: [{ clientX: x, clientY: y, identifier: 0 }] });
+}
+
+function touchEnd(element: Element, x: number, y: number) {
+  fireEvent.touchEnd(element, { changedTouches: [{ clientX: x, clientY: y, identifier: 0 }], touches: [] });
+}
+
+function swipeTouch(element: Element, x1: number, y1: number, x2: number, y2: number) {
+  touchStart(element, x1, y1);
+  touchMove(element, x2, y2);
+  touchEnd(element, x2, y2);
+}
+
 const dayLabel = (container: HTMLElement) => container.querySelector('.ckp-daypill-label')?.textContent;
 const statNames = (container: HTMLElement) =>
   [...container.querySelectorAll('.ckp-stat')].map((node) => node.getAttribute('aria-label'));
@@ -521,7 +555,7 @@ describe('CarnetCard — balayage Résumé → J1..Jn', () => {
   it('passe au jour 1 au balayage vers la gauche : sa date, ses chiffres, ses photos', () => {
     const { container } = render(<CarnetCard {...withDays()} />);
     drag(container.querySelector('.ckp-card') as Element, 300, 180);
-    expect(norm(dayLabel(container))).toBe('26 sept.');
+    expect(norm(dayLabel(container))).toBe('Jour 1 · 26 sept.');
     expect(statNames(container)).toEqual([
       'DISTANCE 18,4 km',
       'DÉNIVELÉ + 620 m',
@@ -534,7 +568,7 @@ describe('CarnetCard — balayage Résumé → J1..Jn', () => {
   it('revient au Résumé au balayage vers la droite', () => {
     const { container } = render(<CarnetCard {...withDays()} />);
     drag(container.querySelector('.ckp-card') as Element, 300, 180);
-    expect(norm(dayLabel(container))).toBe('26 sept.');
+    expect(norm(dayLabel(container))).toBe('Jour 1 · 26 sept.');
     drag(container.querySelector('.ckp-card') as Element, 120, 260);
     expect(dayLabel(container)).toBe('Résumé');
   });
@@ -547,24 +581,24 @@ describe('CarnetCard — balayage Résumé → J1..Jn', () => {
     drag(card, 300, 180);
     drag(card, 300, 180);
     drag(card, 300, 180);
-    expect(dayLabel(container)).toBe('28 sept.');
+    expect(dayLabel(container)).toBe('Jour 3 · 28 sept.');
     drag(card, 300, 180);
-    expect(dayLabel(container)).toBe('28 sept.');
+    expect(dayLabel(container)).toBe('Jour 3 · 28 sept.');
   });
 
   it('se balaie au clavier, flèches gauche et droite, bornes comprises', () => {
     const { container } = render(<CarnetCard {...withDays()} />);
     const card = container.querySelector('.ckp-card') as Element;
     fireEvent.keyDown(card, { key: 'ArrowRight' });
-    expect(norm(dayLabel(container))).toBe('26 sept.');
+    expect(norm(dayLabel(container))).toBe('Jour 1 · 26 sept.');
     fireEvent.keyDown(card, { key: 'ArrowLeft' });
     expect(dayLabel(container)).toBe('Résumé');
     fireEvent.keyDown(card, { key: 'ArrowLeft' });
     expect(dayLabel(container)).toBe('Résumé');
     fireEvent.keyDown(card, { key: 'End' });
-    expect(dayLabel(container)).toBe('28 sept.');
+    expect(dayLabel(container)).toBe('Jour 3 · 28 sept.');
     fireEvent.keyDown(card, { key: 'ArrowRight' });
-    expect(dayLabel(container)).toBe('28 sept.');
+    expect(dayLabel(container)).toBe('Jour 3 · 28 sept.');
   });
 
   it('un jour sans GPS écrit — km, — m et un état vide de grille, sans erreur', () => {
@@ -610,11 +644,11 @@ describe('CarnetCard — balayage Résumé → J1..Jn', () => {
     const { container } = render(<CarnetCard {...withDays({ onPageChange })} />);
     const pages = () => container.querySelector('.ckp-pages') as Element;
     drag(pages(), 300, 180);
-    expect(norm(dayLabel(container))).toBe('26 sept.');
+    expect(norm(dayLabel(container))).toBe('Jour 1 · 26 sept.');
     expect(onPageChange).not.toHaveBeenCalled();
     expect(container.querySelector('.ckp-pages')?.getAttribute('id')).toBe('carnet-page-posts');
     drag(pages(), 300, 180);
-    expect(norm(dayLabel(container))).toBe('27 sept.');
+    expect(norm(dayLabel(container))).toBe('Jour 2 · 27 sept.');
     expect(onPageChange).not.toHaveBeenCalled();
   });
 
@@ -630,9 +664,9 @@ describe('CarnetCard — balayage Résumé → J1..Jn', () => {
     drag(pages(), 300, 180);
     drag(pages(), 300, 180);
     drag(pages(), 300, 180);
-    expect(norm(dayLabel(container))).toBe('28 sept.');
+    expect(norm(dayLabel(container))).toBe('Jour 3 · 28 sept.');
     drag(pages(), 300, 180);
-    expect(norm(dayLabel(container))).toBe('28 sept.');
+    expect(norm(dayLabel(container))).toBe('Jour 3 · 28 sept.');
     expect(onPageChange).not.toHaveBeenCalled();
   });
 
@@ -644,7 +678,199 @@ describe('CarnetCard — balayage Résumé → J1..Jn', () => {
     pointer(tile, 'pointerup', 180, 105);
     fireEvent.click(tile);
     expect(onOpenPost).not.toHaveBeenCalled();
-    expect(norm(dayLabel(container))).toBe('26 sept.');
+    expect(norm(dayLabel(container))).toBe('Jour 1 · 26 sept.');
+  });
+
+  /* --- Doigt : même seuil, mêmes bornes, même règle ------------------------ */
+
+  it('se balaie au doigt : touchstart → touchmove → touchend change de jour', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    const card = container.querySelector('.ckp-card') as Element;
+    swipeTouch(card, 300, 120, 180, 128);
+    expect(norm(dayLabel(container))).toBe('Jour 1 · 26 sept.');
+    swipeTouch(card, 300, 120, 180, 128);
+    expect(norm(dayLabel(container))).toBe('Jour 2 · 27 sept.');
+    swipeTouch(card, 120, 120, 260, 124);
+    expect(norm(dayLabel(container))).toBe('Jour 1 · 26 sept.');
+  });
+
+  it('ignore un geste tactile vertical ou trop court', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    const card = container.querySelector('.ckp-card') as Element;
+    /* Trop court : moins de 40 px. */
+    swipeTouch(card, 200, 100, 175, 100);
+    expect(dayLabel(container)).toBe('Résumé');
+    /* Vertical : le défilement de la carte garde la main. */
+    swipeTouch(card, 200, 60, 160, 220);
+    expect(dayLabel(container)).toBe('Résumé');
+  });
+
+  it('respecte les bornes au doigt', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    const card = container.querySelector('.ckp-card') as Element;
+    swipeTouch(card, 140, 120, 300, 120);
+    expect(dayLabel(container)).toBe('Résumé');
+    swipeTouch(card, 300, 120, 180, 120);
+    swipeTouch(card, 300, 120, 180, 120);
+    swipeTouch(card, 300, 120, 180, 120);
+    expect(norm(dayLabel(container))).toBe('Jour 3 · 28 sept.');
+    swipeTouch(card, 300, 120, 180, 120);
+    expect(norm(dayLabel(container))).toBe('Jour 3 · 28 sept.');
+  });
+
+  it('un balayage tactile ne clique jamais la tuile sous le doigt', () => {
+    const onOpenPost = vi.fn();
+    const { container } = render(<CarnetCard {...withDays({ onOpenPost })} />);
+    const tile = screen.getAllByRole('button', { name: /^Moment / })[0];
+    swipeTouch(tile, 300, 100, 180, 105);
+    expect(norm(dayLabel(container))).toBe('Jour 1 · 26 sept.');
+    /* Le clic synthétique du navigateur est avalé en capture. */
+    fireEvent.click(tile);
+    expect(onOpenPost).not.toHaveBeenCalled();
+  });
+
+  it('ne compte qu’un jour quand le doigt émet aussi des événements pointeur', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    const card = container.querySelector('.ckp-card') as Element;
+    pointerAs(card, 'pointerdown', 300, 120, 'touch');
+    pointerAs(card, 'pointerup', 180, 120, 'touch');
+    expect(dayLabel(container)).toBe('Résumé');
+    swipeTouch(card, 300, 120, 180, 120);
+    expect(norm(dayLabel(container))).toBe('Jour 1 · 26 sept.');
+  });
+});
+
+/* =============================================================================
+   Informations du jour : lignes chiffrées et liste des moments
+   ============================================================================= */
+
+describe('CarnetCard — informations du jour', () => {
+  const rows = (container: HTMLElement) =>
+    [...container.querySelectorAll('.ckp-dayinfo-row')].map((row) => [
+      row.querySelector('.ckp-dayinfo-l')?.textContent,
+      row.querySelector('.ckp-dayinfo-v')?.textContent,
+    ]);
+
+  const moments = (container: HTMLElement) =>
+    [...container.querySelectorAll('.ckp-dayinfo-moment')].map((row) => [
+      row.querySelector('.ckp-dayinfo-time')?.textContent,
+      row.querySelector('.ckp-dayinfo-place')?.textContent,
+    ]);
+
+  it('donne les totaux du Résumé : jours, moments, D+ cumulé, distance', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    expect(rows(container)).toEqual([
+      ['Jours', '3'],
+      ['Moments', '3'],
+      ['D+ cumulé', '920 m'],
+      ['Distance totale', '30,4 km'],
+    ]);
+  });
+
+  it('calcule l’allure réelle du jour et le cumul depuis le départ', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
+    /* 6 h pour 18,4 km : 19,6 min/km — calculée, jamais inventée. */
+    expect(rows(container)).toEqual([
+      ['Allure', '19,6 min/km'],
+      ['Activité', '—'],
+      ['Départ', '—'],
+      ['Arrivée', '—'],
+      ['Depuis le départ', '18,4 km'],
+    ]);
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
+    expect(rows(container)).toContainEqual(['Depuis le départ', '30,4 km']);
+  });
+
+  it('écrit un tiret quand la durée ou la distance manque', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'End' });
+    expect(rows(container)).toEqual([
+      ['Allure', '—'],
+      ['Activité', '—'],
+      ['Départ', '—'],
+      ['Arrivée', '—'],
+      ['Depuis le départ', '30,4 km'],
+    ]);
+  });
+
+  it('lit le départ et l’arrivée dans l’étape déclarée', () => {
+    const { container } = render(
+      <CarnetCard
+        {...withDays({
+          detail: detail({
+            days: [DAY_ONE],
+            etapes: [
+              {
+                id: 'd1',
+                dayNumber: 1,
+                label: 'JOUR 1 · 26 sept.',
+                from: 'Les Houches',
+                to: 'Refuge de Bellachat',
+                note: null,
+                distanceKm: 12.4,
+                elevationM: 1050,
+                durationText: '5 h',
+                weather: null,
+                overnight: null,
+              },
+            ],
+          }),
+        })}
+      />,
+    );
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
+    expect(rows(container)).toContainEqual(['Départ', 'Les Houches']);
+    expect(rows(container)).toContainEqual(['Arrivée', 'Refuge de Bellachat']);
+  });
+
+  it('retombe sur les points GPS du jour quand aucune étape ne les nomme', () => {
+    const { container } = render(
+      <CarnetCard
+        {...withDays({
+          detail: detail({
+            days: [
+              {
+                ...DAY_ONE,
+                points: [
+                  { lat: 44.942, lng: 5.42, at: '2026-09-26T07:30:00.000Z' },
+                  { lat: 45.1, lng: 5.5, at: '2026-09-26T12:30:00.000Z' },
+                ],
+              },
+            ],
+            etapes: [],
+          }),
+        })}
+      />,
+    );
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
+    expect(rows(container)).toContainEqual(['Départ', '44,942 · 5,42']);
+    expect(rows(container)).toContainEqual(['Arrivée', '45,1 · 5,5']);
+  });
+
+  it('liste les moments du jour avec leur heure et leur lieu', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
+    expect(moments(container)).toEqual([['18:30', 'Col']]);
+  });
+
+  it('écrit un tiret pour une heure ou un lieu absent', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
+    expect(moments(container)).toEqual([
+      ['—', '—'],
+      ['—', '—'],
+    ]);
+  });
+
+  it('préfixe les moments du Résumé par leur numéro de jour', () => {
+    const { container } = render(<CarnetCard {...withDays()} />);
+    expect(
+      [...container.querySelectorAll('.ckp-dayinfo-moment')].map(
+        (row) => row.querySelector('.ckp-dayinfo-day')?.textContent,
+      ),
+    ).toEqual(['J1', 'J2', 'J2']);
   });
 });
 
@@ -659,7 +885,7 @@ describe('CarnetCard — capsule des drawers et mouvement du balayage', () => {
     return css.slice(open + 1, close);
   }
 
-  it('pose la capsule à 10 px du bord droit et du bas, sur 30 px de haut', () => {
+  it('pose la capsule des jours à 10 px du bord droit et du bas, sur 30 px de haut', () => {
     const foot = rule('.ckp-card-foot {');
     expect(foot).toMatch(/position:\s*absolute/);
     expect(foot).toMatch(/right:\s*10px/);
@@ -667,14 +893,16 @@ describe('CarnetCard — capsule des drawers et mouvement du balayage', () => {
     expect(foot).toMatch(/height:\s*30px/);
   });
 
-  it('fait 88 × 30 pour deux segments, avec l’ombre de pose des drawers', () => {
+  it('fait `n × 41,5 + 5` de large, avec l’ombre de pose des drawers', () => {
     const capsule = rule('\n.ckp-capsule {');
     /* 2 × 41,5 + 5 = 88 : même formule que la capsule des drawers. */
     expect(capsule).toMatch(/width:\s*calc\(var\(--n, 2\) \* 41\.5px \+ 5px\)/);
     expect(capsule).toMatch(/height:\s*30px/);
     expect(capsule).toMatch(/padding:\s*2\.5px/);
     expect(rule('.ckp-card-foot .ckp-capsule {')).toMatch(/0 2px 8px rgba\(23, 43, 36, \.10\)/);
-    expect(rule('.ckp-capsule .ckp-tabs {')).toMatch(/grid-template-columns:\s*41\.5px 41\.5px/);
+    expect(rule('.ckp-capsule .ckp-tabs {')).toMatch(
+      /grid-template-columns:\s*repeat\(var\(--n, 2\), 41\.5px\)/,
+    );
     expect(2 * 41.5 + 5).toBe(88);
   });
 

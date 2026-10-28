@@ -5,8 +5,9 @@ import { AccountAuthorPill } from '@/components/account/AccountAuthorPill';
 import Icon from '@/components/ui/Icon';
 import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetMediaTabs } from './CarnetMediaTabs';
-import { CARNET_PAGE_TABS, CarnetPages, carnetPageIndex, type CarnetPageId } from './CarnetPages';
+import { CarnetPages, type CarnetPageId } from './CarnetPages';
 import { CarnetDayHeader } from './CarnetDayHeader';
+import { CarnetDayInfo, CarnetDayMomentList } from './CarnetDayInfo';
 import { useDayMotion, useDaySwipe } from './CarnetDaySwipe';
 import { extractCoords, projectToViewBox } from './traceGeometry';
 import { PLACE_LINE_MISSING, placeLineParts } from '@/features/carnet/detail/place';
@@ -44,26 +45,25 @@ export interface CarnetCardProps {
 }
 
 /**
- * Index du segment qui reçoit la lentille blanche dans la capsule.
- *
- * La capsule est celle de `/compte` et des drawers : 88 × 30, deux segments de
- * 41,5 px, dans l'ordre du DOM — ▦ 0 (Posts), 🗺 1 (Parcours). Les pages
- * J’aime, Commentaires, Gérer, Étapes, Matériel et Nature n'ont pas de segment :
- * leur lentille disparaît (`data-off`).
+ * Segments de la capsule : **un segment par page de jour** — `R` (Résumé),
+ * puis `J1`, `J2`… `Jn`, dans l'ordre du balayage. Le libellé complet reste
+ * l'`aria-label` du segment (« Résumé », « Jour 1 »…) : aucun segment n'est
+ * muet pour un lecteur d'écran.
  */
-export function selectorLensIndex(page: CarnetPageId): number {
-  switch (page) {
-    case 'posts':
-      return 0;
-    case 'parcours':
-      return 1;
-    default:
-      return -1;
-  }
+export interface CarnetDayTab {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
 }
 
-/** Les deux seuls segments de la capsule : la référence, une fois pour toutes. */
-const CAPSULE_TABS = CARNET_PAGE_TABS.slice(0, 2);
+export function buildDayTabs(count: number): CarnetDayTab[] {
+  const total = Math.max(1, count);
+  return Array.from({ length: total }, (_, index) => ({
+    id: index === 0 ? 'resume' : `j${index}`,
+    label: index === 0 ? 'Résumé' : `Jour ${index}`,
+    icon: index === 0 ? 'R' : `J${index}`,
+  }));
+}
 
 /**
  * Nom affiché d'un participant : le nom réel du profil public, à défaut son
@@ -80,15 +80,15 @@ function withPhoto(moments: CarnetMomentItem[]): CarnetMomentItem[] {
 }
 
 /**
- * Carte du carnet : mini tracé, pages de jour (Résumé → J1..Jn), participants,
- * lieu, médias en pages.
+ * Carte du carnet : mini tracé, pages de jour (Résumé → J1..Jn), informations
+ * du jour, participants, lieu, médias en pages.
  *
  * Le balayage horizontal de la carte change de **jour**, où qu'il commence —
- * en-tête, grille ou volet. Le carrousel média (Posts, Parcours, Étapes,
- * Matériel, Nature, J’aime, Commentaires, Gérer) ne se pilote plus que par le
- * sélecteur bas et par son clavier. Le pied ne porte plus que la capsule des
- * drawers : ♥ et 💬 ont quitté la carte, leurs pages s'ouvrent depuis le menu
- * `···` de la barre du haut.
+ * en-tête, grille, volet — au doigt comme à la souris et au clavier. La capsule
+ * du pied porte **un segment par page de jour** (R, J1…Jn) et rien d'autre :
+ * cliquer un segment change de jour, la lentille suit. Le carrousel média
+ * (Posts, Étapes, Matériel, Nature, J’aime, Commentaires, Gérer) s'ouvre depuis
+ * la barre du haut et le menu `···`, plus depuis la capsule.
  */
 export function CarnetCard({
   detail,
@@ -182,14 +182,17 @@ export function CarnetCard({
     [detail.photoMoments, gridMoments, onOpenPost],
   );
 
+  /* Une seule page montée : les moments de la page affichée nourrissent la
+     grille. La liste des moments et les lignes d'information du jour vivent
+     dans `CarnetDayInfo`, sous la ligne de lieu. */
+  const dayTabs = useMemo(() => buildDayTabs(pageCount), [pageCount]);
+
   /* Les deux segments de la capsule : handler stable, donc la lentille et les
      boutons ne se remontent pas quand la carte se redessine. */
-  const onCapsuleChange = useCallback(
-    (index: number) => onPageChange(CAPSULE_TABS[index].id),
-    [onPageChange],
+  const onDayTabChange = useCallback(
+    (index: number) => setDayPage(index),
+    [setDayPage],
   );
-
-  const lensIndex = selectorLensIndex(page);
 
   /* Couverture de la carte : le mini tracé réel, ou la pastille du carnet. */
   const cover = (
@@ -255,6 +258,8 @@ export function CarnetCard({
             <p className="ckp-place-line">{placeLine.join(' · ')}</p>
           ) : null}
 
+          <CarnetDayInfo detail={detail} day={day} />
+
           {participants.length > 0 ? (
             <div className="ckp-people" role="list" aria-label="Participants au carnet">
               {participants.map((person) => (
@@ -294,24 +299,31 @@ export function CarnetCard({
               managePage={managePage}
             />
           </div>
+
+          {/* Les moments sous la grille : les photos gardent leur place, la
+              liste ajoute l'heure et le lieu de chaque moment. */}
+          <CarnetDayMomentList detail={detail} day={day} />
         </div>
       </div>
 
-      {/* Le pied de carte est celui des drawers : la capsule 88 × 30 à deux
-          segments, à 10 px des bords bas et droit. Plus aucun bouton rond. */}
+      {/* Le pied de carte est celui des drawers : la capsule 30 px de haut,
+          ancrée à 10 px des bords bas et droit. Elle ne porte plus les vues
+          (grille/carte) mais **les jours** : un segment par page, `R` puis
+          `J1`… `Jn`, largeur `n × 41,5 + 5`, lentille blanche au pas exact. */}
       <div className="ckp-card-foot">
-        <div className="ckp-capsule">
+        <div className="ckp-capsule" style={{ '--n': dayTabs.length } as React.CSSProperties}>
           <span
             className="ckp-th"
             aria-hidden="true"
-            data-off={lensIndex < 0 ? 'true' : undefined}
-            style={{ '--i': Math.max(0, lensIndex) } as React.CSSProperties}
+            style={{ '--i': dayIndex } as React.CSSProperties}
           />
           <CarnetMediaTabs
-            items={CAPSULE_TABS}
-            activeIndex={carnetPageIndex(page) < 2 ? carnetPageIndex(page) : -1}
-            onChange={onCapsuleChange}
-            ariaLabel="Grille ou carte"
+            items={dayTabs}
+            activeIndex={dayIndex}
+            onChange={onDayTabChange}
+            ariaLabel="Jours du carnet"
+            idPrefix="carnet-day-tab"
+            panelIdFor={() => undefined}
           />
         </div>
       </div>

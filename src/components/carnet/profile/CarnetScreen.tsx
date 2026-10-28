@@ -122,7 +122,9 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
   }, []);
 
   const openCarnetFromTopBar = useCallback(() => openPage('etapes'), [openPage]);
-  const openCarnetFromCard = useCallback(() => openPage('parcours'), [openPage]);
+  /* La couverture de la carte ouvre le même volet que le titre : la page
+     « Parcours » a disparu avec la carte interne, le GPX vit dans Étapes. */
+  const openCarnetFromCard = useCallback(() => openPage('etapes'), [openPage]);
   const openManagePage = useCallback(() => openPage('manage'), [openPage]);
   /* ♥ et 💬 ne vivent plus sur la carte : leurs pages s'ouvrent depuis le menu
      `···` de la barre du haut, sans toucher au sélecteur 88 × 30 à 2 segments. */

@@ -74,10 +74,15 @@ export function dayStats(day: CarnetDay): CarnetDayStat[] {
   ];
 }
 
-/** « 25 avr. » pour un jour daté, « Jour 3 » sinon. « Résumé » sur la page 0. */
+/**
+ * « Jour 2 · 19 sept. » pour un jour daté, « Jour 3 » sinon. « Résumé » sur la
+ * page 0. Le numéro et la date réelle sont toujours ensemble : un jour sans
+ * date n'affiche pas un numéro seul suivi d'un tiret décoratif.
+ */
 export function dayPageLabel(day: CarnetDay | null): string {
   if (!day) return 'Résumé';
-  return formatDayLabel(day.date) ?? `Jour ${day.index}`;
+  const date = formatDayLabel(day.date);
+  return date ? `Jour ${day.index} · ${date}` : `Jour ${day.index}`;
 }
 
 /** Nombre de moments de la page : tous pour le Résumé, ceux du jour sinon. */
