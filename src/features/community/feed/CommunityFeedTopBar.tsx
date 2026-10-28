@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
 import { PourToiMenu } from '@/features/community/sections/PourToiMenu';
-import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
+import type { SectionTabId } from '@/features/community/sections/sectionTabs';
 import { useAccountUnreadCount } from './useAccountUnreadCount';
 
 export interface CommunityFeedTopBarProps {

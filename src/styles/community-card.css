@@ -989,3 +989,518 @@ html.lkdv-no-page-scroll body {
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
+
+/* =============================================================================
+   Explorer (`.lkdv-ex-*`) : recherche, rails, grandes cartes en carrousel, détail.
+   Aucun défilement vertical : les listes se balaient à l'horizontale.
+   ============================================================================= */
+
+.lkdv-ex-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 8px;
+}
+
+.lkdv-ex-search {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 8px;
+  height: 46px;
+  padding: 0 6px 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.14);
+  color: var(--label2);
+}
+
+.lkdv-ex-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--label);
+  font: 500 16px/1.3 var(--sf);
+}
+
+/* Une seule croix : celle du composant (la croix native du champ « search » est masquée). */
+.lkdv-ex-search input::-webkit-search-cancel-button,
+.lkdv-ex-search input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.lkdv-ex-search button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--label2);
+  cursor: pointer;
+}
+
+.lkdv-ex-search:focus-within {
+  box-shadow: inset 0 0 0 1.5px #17402c;
+}
+
+.lkdv-ex-recents {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-ex-recent {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.14);
+}
+
+.lkdv-ex-recent button {
+  min-height: 44px;
+  padding: 0 6px 0 14px;
+  border: 0;
+  background: none;
+  color: var(--label);
+  font: 600 13px/1 var(--sf);
+  cursor: pointer;
+}
+
+.lkdv-ex-recent button + button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  padding: 0;
+  color: var(--label2);
+}
+
+.lkdv-ex-count,
+.lkdv-ex-note {
+  flex: none;
+  margin: 0;
+  padding: 0 6px;
+  font: 600 11px/1.3 var(--sf);
+  color: var(--label2);
+}
+
+.lkdv-ex-carousel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 4px;
+}
+
+.lkdv-ex-track {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  outline: 0;
+}
+
+.lkdv-ex-track::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-ex-page {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 100%;
+  min-width: 0;
+  min-height: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Un `height: 100%` ne se résout pas dans un enfant étiré : la carte ou la liste remplit la page en flex. */
+.lkdv-ex-page > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.lkdv-ex-dots {
+  display: flex;
+  justify-content: center;
+  flex: none;
+  height: 30px;
+}
+
+/* Cible de 28 × 30 px, sans pseudo-élément qui déborderait du volet (le balayage reste le geste principal). */
+.lkdv-ex-dots button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.lkdv-ex-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(23, 43, 36, 0.2);
+  transition: width 0.28s cubic-bezier(0.32, 0.72, 0, 1), background 0.2s ease;
+}
+
+.lkdv-ex-dots span[data-on='true'] {
+  width: 16px;
+  border-radius: 999px;
+  background: #17402c;
+}
+
+/* Résultats : quatre lignes par page. */
+.lkdv-ex-results {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0 2px;
+  list-style: none;
+}
+
+.lkdv-ex-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  color: var(--label);
+  text-decoration: none;
+}
+
+.lkdv-ex-result:active {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.lkdv-ex-result-cover,
+.lkdv-ex-mini-cover,
+.lkdv-ex-card-cover,
+.lkdv-ex-detail-cover {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: rgba(23, 64, 44, 0.1);
+  color: #17402c;
+}
+
+.lkdv-ex-result-cover {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+}
+
+.lkdv-ex-result-cover img,
+.lkdv-ex-mini-cover img,
+.lkdv-ex-card-cover img,
+.lkdv-ex-detail-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-ex-result-txt {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.lkdv-ex-result-txt b,
+.lkdv-ex-mini b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 13px/1.25 var(--sf);
+}
+
+.lkdv-ex-result-txt small,
+.lkdv-ex-mini small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--label2);
+  font: 500 10.5px/1.3 var(--sf);
+}
+
+.lkdv-ex-kind {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 700 9.5px/1 var(--sf);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tone, #17402c);
+}
+
+.lkdv-ex-kind::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tone, #17402c);
+}
+
+/* Rails « Pour toi » */
+.lkdv-ex-rails {
+  justify-content: space-between;
+}
+
+.lkdv-ex-rail {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  gap: 4px;
+}
+
+.lkdv-ex-rail header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  padding: 0 4px;
+}
+
+.lkdv-ex-rail h3 {
+  margin: 0;
+  font: 700 13px/1 var(--sf);
+  letter-spacing: -0.1px;
+}
+
+.lkdv-ex-rail header button {
+  min-height: 32px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--label2);
+  font: 600 11px/1 var(--sf);
+  cursor: pointer;
+}
+
+.lkdv-ex-rail-track {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.lkdv-ex-rail-track::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-ex-mini {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 128px;
+  min-height: 0;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--label);
+  text-align: left;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+.lkdv-ex-mini-cover {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.12);
+}
+
+/* Grande carte */
+.lkdv-ex-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+}
+
+.lkdv-ex-card-open {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--label);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-ex-card-cover {
+  flex: 1 1 52%;
+  min-height: 0;
+  width: 100%;
+}
+
+.lkdv-ex-card-cover b,
+.lkdv-ex-detail-cover b {
+  font: 700 34px/1 var(--sf);
+}
+
+.lkdv-ex-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  gap: 3px;
+  padding: 12px 14px 6px;
+}
+
+.lkdv-ex-card-body b {
+  font: 700 19px/1.2 var(--sf);
+  letter-spacing: -0.38px;
+}
+
+.lkdv-ex-card-body small {
+  color: var(--label2);
+  font: 500 11px/1.3 var(--sf);
+}
+
+.lkdv-ex-card-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--label2);
+  font: 400 12px/1.3 var(--sf);
+}
+
+.lkdv-ex-card-actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  padding: 6px 12px 12px;
+}
+
+.lkdv-ex-primary,
+.lkdv-ex-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  font: 700 13px/1 var(--sf);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.lkdv-ex-primary {
+  flex: 1;
+  background: var(--pg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.6px rgba(23, 64, 44, 0.16), 0 5px 14px rgba(23, 64, 44, 0.13);
+  color: var(--pg-ink);
+}
+
+.lkdv-ex-secondary {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.14);
+  color: var(--label);
+}
+
+.lkdv-ex-primary:active,
+.lkdv-ex-secondary:active {
+  transform: scale(0.97);
+}
+
+/* Détail en place */
+.lkdv-ex-detail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 6px;
+}
+
+.lkdv-ex-back {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  flex: none;
+  min-height: 44px;
+  padding: 0 12px 0 6px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 0 0.5px rgba(23, 43, 36, 0.14);
+  color: var(--label);
+  font: 600 12.5px/1 var(--sf);
+  cursor: pointer;
+}
+
+.lkdv-ex-detail-cover {
+  flex: 1 1 auto;
+  min-height: 80px;
+  border-radius: 20px;
+}
+
+.lkdv-ex-detail h3 {
+  flex: none;
+  margin: 2px 4px 0;
+  font: 700 19px/1.2 var(--sf);
+  letter-spacing: -0.38px;
+}
+
+.lkdv-ex-detail-meta {
+  flex: none;
+  margin: 0 4px;
+  color: var(--label2);
+  font: 500 11px/1.3 var(--sf);
+}
+
+.lkdv-ex-detail-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  flex: none;
+  overflow: hidden;
+  margin: 0 4px;
+  color: var(--label);
+  font: 400 12px/1.35 var(--sf);
+}
+
+.lkdv-ex-detail .lkdv-ex-card-actions {
+  padding: 4px 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-ex-dots span {
+    transition: none;
+  }
+  .lkdv-ex-track {
+    scroll-behavior: auto;
+  }
+}
