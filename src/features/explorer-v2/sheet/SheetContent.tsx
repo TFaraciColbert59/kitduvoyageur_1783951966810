@@ -24,6 +24,7 @@ import {
   formatDistance,
   formatElevation,
   formatDuration,
+  relativeDay,
   type SheetContext,
 } from './context';
 import type { Sport } from '../state/types';
@@ -37,6 +38,17 @@ export interface SheetModel {
   actions: React.ReactNode;
   onBack?: () => void;
 }
+
+const CATEGORY_LABEL: Record<string, string> = {
+  water: 'Point d’eau',
+  snow_ice: 'Neige / glace',
+  danger: 'Danger',
+  closure: 'Fermeture',
+  obstacle: 'Obstacle',
+  mud: 'Boue',
+  rockfall: 'Chutes de pierres',
+  flood: 'Crue',
+};
 
 const SPORTS: Sport[] = ['course', 'rando', 'velo', 'kayak', 'trail', 'ski', 'escalade', 'famille', 'bivouac'];
 
@@ -459,6 +471,9 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
       ),
   };
 
+  const nearbyReports = ctx.reports
+    .filter((report) => report.category === 'water' || report.category === 'snow_ice')
+    .slice(0, 5);
   const etat: SheetTab = {
     id: 'etat',
     label: 'État',
@@ -475,7 +490,58 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
             />
           </XpRows>
           <XpEyebrow>Derniers signalements</XpEyebrow>
-          <XpEmpty title="Aucun signalement" hint="Personne n’a encore signalé l’état de cette eau." />
+          {nearbyReports.length === 0 ? (
+            <XpEmpty title="Aucun signalement" hint="Personne n’a encore signalé l’état de cette eau." />
+          ) : (
+            <XpRows>
+              {nearbyReports.map((report) => (
+                <XpRow
+                  key={report.id}
+                  icon={report.category === 'water' ? 'drop' : 'snow'}
+                  tone={report.category === 'water' ? 'water' : 'warn'}
+                  title={report.description ?? CATEGORY_LABEL[report.category] ?? report.category}
+                  sub={`${relativeDay(report.created_at)} · ${report.present_count} présent · ${report.gone_count} disparu`}
+                  badge={{ label: `${Math.round(report.distance_m)} m`, tone: 'muted' }}
+                />
+              ))}
+            </XpRows>
+          )}
+          <XpEyebrow>Confirmer l’état</XpEyebrow>
+          {nearbyReports.length === 0 ? (
+            <XpEmpty title="Rien à confirmer" hint="Aucun signalement actif autour de ce point." />
+          ) : (
+            <XpRows>
+              {nearbyReports.slice(0, 2).map((report) => (
+                <XpRow
+                  key={`confirm-${report.id}`}
+                  icon="check"
+                  tone="good"
+                  title="Toujours là"
+                  sub={report.description ?? CATEGORY_LABEL[report.category]}
+                  onClick={() => ctx.onConfirmReport?.(report.id, 'present')}
+                  trailing={
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="xp-chip"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        ctx.onConfirmReport?.(report.id, 'gone');
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        ctx.onConfirmReport?.(report.id, 'gone');
+                      }}
+                    >
+                      Plus là
+                    </span>
+                  }
+                />
+              ))}
+            </XpRows>
+          )}
         </>
       ) : (
         <XpEmpty title="État inconnu" hint="Ce point d’eau n’est pas encore enregistré." />

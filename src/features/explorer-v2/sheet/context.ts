@@ -3,6 +3,7 @@
 import type {
   CarnetItem,
   CountryDetails,
+  TerrainReport,
   TripItem,
   PoiItem,
   PlaceResponse,
@@ -38,11 +39,14 @@ export interface SheetContext {
   routes: RouteItem[];
   weather: WeatherResponse | undefined;
   carnets: CarnetItem[];
+  reports: TerrainReport[];
   trips: TripItem[];
   selectedPoi: PoiItem | null;
   me: { lat: number; lng: number } | null;
   /** Démarrage avec compte à rebours (le parent décide de l'animation). */
   onStartSport?: (sport: Sport) => void;
+  /** Confirmer un signalement (« présent » / « disparu »). */
+  onConfirmReport?: (reportId: string, verdict: 'present' | 'gone') => void;
   locale: string;
 }
 

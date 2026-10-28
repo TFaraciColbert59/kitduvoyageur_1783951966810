@@ -25,6 +25,7 @@ import {
   useSystemTheme,
   useWeather,
   useContent,
+  useReportsNear,
   type CountryFeatureProperties,
   type CarnetItem,
   type TripItem,
@@ -149,6 +150,11 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
 
   // `center` est [lng, lat] ; `usePlace` attend (lat, lng).
   const { data: place } = usePlace(state.center[1], state.center[0], state.zoom, state.level >= 1);
+  const { data: reportsData } = useReportsNear(
+    state.center[1],
+    state.center[0],
+    state.level >= 2,
+  );
   const { data: carnetsData } = useContent('carnets', state.geo || null);
   const { data: tripsData } = useContent('trips', state.geo || null);
   const { data: weather } = useWeather(
@@ -172,6 +178,40 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       .sort((a, b) => a.km - b.km)[0].poi;
   }, [pois, state.center, state.selection]);
 
+  // ── confirmation d'un signalement terrain ─────────────────────────────
+  const onConfirmReport = useCallback(
+    async (reportId: string, verdict: 'present' | 'gone') => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) {
+          state.showToast({ title: 'Connecte-toi pour confirmer', tone: 'warn' });
+          return;
+        }
+        const res = await fetch('/api/explorer/v2/reports/confirm', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reportId, verdict }),
+        });
+        const json = (await res.json().catch(() => null)) as { result?: { status?: string } } | null;
+        if (!res.ok) {
+          state.showToast({ title: 'Confirmation refusée', sub: 'Réessaie plus tard', tone: 'warn' });
+          return;
+        }
+        haptic('back-on-route');
+        state.showToast({
+          title: verdict === 'present' ? 'Signalement confirmé' : 'Signalement marqué disparu',
+          sub: json?.result?.status === 'own_report' ? 'Tu ne peux pas confirmer ton propre signalement' : undefined,
+        });
+      } catch {
+        state.showToast({ title: 'Confirmation impossible', tone: 'warn' });
+      }
+    },
+    [state],
+  );
+
   // ── démarrage d'activité (compte à rebours 3·2·1) ─────────────────────
   const startWithCountdown = useCallback((sport: Sport) => {
     setPendingSport(sport);
@@ -190,13 +230,15 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       routes,
       weather,
       carnets: (carnetsData ?? []) as CarnetItem[],
+      reports: reportsData ?? [],
       trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
       onStartSport: startWithCountdown,
+      onConfirmReport,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, carnetsData, tripsData, selectedPoi, me, startWithCountdown],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, reportsData, carnetsData, tripsData, selectedPoi, me, startWithCountdown, onConfirmReport],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -351,7 +393,9 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     if (state.level >= 3 && state.regionId) {
       items.push({ label: state.regionId, onClick: () => state.setLevel(2) });
     }
-    return items;
+    // La capsule ne montre que le parent immédiat : au-delà, les libellés
+    // seraient tronqués à une lettre (constaté en recette).
+    return items.slice(-1);
   }, [country?.name, state]);
 
   const current =

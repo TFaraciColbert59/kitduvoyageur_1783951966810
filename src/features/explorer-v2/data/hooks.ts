@@ -212,6 +212,36 @@ export interface TripItem {
 }
 
 /** Carnets publics et départs ouverts, réels (aucun contenu de démonstration). */
+export interface TerrainReport {
+  id: string;
+  category: string;
+  severity: string;
+  passability: string;
+  description: string | null;
+  lat: number;
+  lng: number;
+  status: string;
+  present_count: number;
+  gone_count: number;
+  report_count: number;
+  distance_m: number;
+  created_at: string;
+}
+
+/** Signalements terrain réels autour d'un point (RPC a5, lecture publique). */
+export function useReportsNear(lat: number, lng: number, enabled = true) {
+  return useQuery({
+    queryKey: ['xp', 'reports', lat.toFixed(3), lng.toFixed(3)],
+    enabled,
+    queryFn: () =>
+      fetchJson<{ reports: TerrainReport[] }>(
+        `/api/explorer/v2/reports/near?lat=${lat}&lng=${lng}&radius=5000`,
+      ),
+    staleTime: 2 * 60 * 1000,
+    select: (data) => data.reports,
+  });
+}
+
 export function useContent(kind: 'carnets' | 'trips', iso: string | null) {
   return useQuery({
     queryKey: ['xp', 'content', kind, iso],

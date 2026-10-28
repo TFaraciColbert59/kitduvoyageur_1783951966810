@@ -39,13 +39,10 @@ export function TopChrome({
           <XpIcon name="search" size={16} />
           {breadcrumb.length > 0 ? (
             <>
-              {breadcrumb.map((item, index) => (
+              {breadcrumb
+                .filter((item) => item.label && item.label.trim().length > 0)
+                .map((item, index) => (
                 <React.Fragment key={`${item.label}-${index}`}>
-                  {index > 0 ? (
-                    <span className="xp-crumb-sep" aria-hidden="true">
-                      <XpIcon name="chevr" size={12} />
-                    </span>
-                  ) : null}
                   <span
                     className="xp-crumb-btn"
                     role={item.onClick ? 'button' : undefined}
