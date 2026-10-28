@@ -1,10 +1,9 @@
 'use client';
-
-import { ArrowRight } from 'lucide-react';
 import { Badge, Button, IconButton } from '@/components/ui';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import type { GroupeReadiness } from '../../../mobile/groupeEngine';
 import { BudgetRing } from '../budget/BudgetRing';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface GroupeReadinessHeroProps {
   readiness: GroupeReadiness;
@@ -113,7 +112,7 @@ export function GroupeReadinessHero({
         variant="primary"
         fullWidth
         onClick={onPrimary}
-        icon={<ArrowRight size={15} aria-hidden="true" />}
+        icon={<LKDVIcon name="suivant" size={15} aria-hidden="true" />}
         iconPosition="trailing"
         className="mt-4 !py-3 text-sm font-bold"
       >

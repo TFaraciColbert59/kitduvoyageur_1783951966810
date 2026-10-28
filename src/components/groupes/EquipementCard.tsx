@@ -4,9 +4,9 @@ import { lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Badge, Button, Card, Chip, EmptyState, IconButton, Modal, SearchField } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface EquipementItem {
   id: string;
@@ -292,7 +292,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         <Button
           variant="secondary"
           onClick={openImport}
-          icon={<Icon name="ArrowDownTrayIcon" size={12} aria-hidden="true" />}
+          icon={<LKDVIcon name="telecharger" size={12} aria-hidden="true" />}
           className="shrink-0"
         >
           <span className="hidden sm:inline">Mon kit</span>
@@ -329,7 +329,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
 
       {error && (
         <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-danger-dark)]" role="alert">
-          <Icon name="ExclamationTriangleIcon" size={14} aria-hidden="true" /> {error}
+          <LKDVIcon name="alerte" size={14} aria-hidden="true" /> {error}
         </div>
       )}
       {notice && (
@@ -419,7 +419,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
           <div className="flex items-center justify-between">
             <h4 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Modifier l&apos;équipement</h4>
             <IconButton variant="ghost" size="sm" aria-label="Fermer l'édition" onClick={() => setEditingId(null)}>
-              <Icon name="XMarkIcon" size={14} aria-hidden="true" />
+              <LKDVIcon name="fermer" size={14} aria-hidden="true" />
             </IconButton>
           </div>
 
@@ -541,7 +541,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                     onClick={() => startEdit(item)}
                     aria-label={`Modifier ${item.item}`}
                   >
-                    <Icon name="PencilSquareIcon" size={14} aria-hidden="true" />
+                    <LKDVIcon name="modifier" size={14} aria-hidden="true" />
                   </IconButton>
                   <IconButton
                     variant="glass"
@@ -551,7 +551,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                     aria-label={`Supprimer ${item.item}`}
                     className="text-[color:var(--lkv-danger)]"
                   >
-                    <Icon name="TrashIcon" size={14} aria-hidden="true" />
+                    <LKDVIcon name="supprimer" size={14} aria-hidden="true" />
                   </IconButton>
                 </div>
               </Card>

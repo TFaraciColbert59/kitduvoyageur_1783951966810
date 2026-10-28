@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type CommunityHubTab = 'fil' | 'carnets' | 'clubs' | 'groupes' | 'evenements' | 'entraide';
 
@@ -67,7 +67,7 @@ export default function CommunityHubNav({
             >
               <span className="truncate text-left">{tab.label}</span>
               {/* P2 — chevron sombre sur verre clair actif (≥4.5, plus de white/70) */}
-              {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-muted)]" aria-hidden />}
+              {isActive && <LKDVIcon name="suivant" size={13} className="shrink-0 text-[color:var(--lkv-text-muted)]" aria-hidden />}
             </Link>
           );
         })}

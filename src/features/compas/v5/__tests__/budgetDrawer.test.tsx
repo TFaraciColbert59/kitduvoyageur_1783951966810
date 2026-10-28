@@ -48,9 +48,9 @@ afterEach(() => cleanup());
 describe('Budget : capsule et titres', () => {
   it('trois onglets pour un groupe, deux en solo, sans texte visible (icônes + nom accessible)', () => {
     expect(budgetDrawer.tabs(makeApi()).map((t) => [t.icon, t.label])).toEqual([
-      ['pie', 'Aperçu du budget'],
-      ['receipt', 'Dépenses'],
-      ['swap', 'Qui doit quoi'],
+      ['budget', 'Aperçu du budget'],
+      ['facture', 'Dépenses'],
+      ['itineraire', 'Qui doit quoi'],
     ]);
     expect(budgetDrawer.tabs(makeApi({ solo: true, people: 1 }, { data: soloData() })).map((t) => t.label)).toEqual(['Aperçu du budget', 'Dépenses']);
   });

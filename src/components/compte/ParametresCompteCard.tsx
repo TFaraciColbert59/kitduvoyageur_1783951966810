@@ -5,12 +5,12 @@ import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Chip, ListItem, Modal, Switch } from '@/components/ui';
 import { UserProfile } from '@/lib/mock/compte-marceline';
 import SignatureVisibilityControl from '@/components/identity/SignatureVisibilityControl';
 import OrientationCard from '@/components/identity/OrientationCard';
 import { ACCOUNT_SETTINGS_KEY, UNIT_SETTING_EVENT, writeUnitCookie } from '@/lib/i18n/unitSetting';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ParametresCompteCardProps {
   profile: UserProfile;
@@ -294,12 +294,12 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
   };
 
   const navItems = [
-    { id: 'profil', label: 'Profil & identité', icon: 'UserIcon' },
-    { id: 'notifications', label: 'Notifications & rappels', icon: 'BellIcon', badge: '2' },
-    { id: 'confidentialite', label: 'Confidentialité & visibilité', icon: 'EyeIcon' },
-    { id: 'langue', label: 'Langue & région', icon: 'GlobeIcon' },
-    { id: 'securite', label: 'Sécurité & sessions', icon: 'LockIcon' },
-    { id: 'danger', label: 'Zone de danger', icon: 'ExclamationTriangleIcon', danger: true },
+    { id: 'profil', label: 'Profil & identité', icon: 'profil' as const },
+    { id: 'notifications', label: 'Notifications & rappels', icon: 'notifications' as const, badge: '2' },
+    { id: 'confidentialite', label: 'Confidentialité & visibilité', icon: 'vue' as const },
+    { id: 'langue', label: 'Langue & région', icon: 'monde' as const },
+    { id: 'securite', label: 'Sécurité & sessions', icon: 'verrou' as const },
+    { id: 'danger', label: 'Zone de danger', icon: 'alerte' as const, danger: true },
   ];
 
   return (
@@ -334,7 +334,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
             variant="secondary"
             size="sm"
             onClick={handleExportData}
-            icon={<Icon name="ArrowDownTrayIcon" size={14} aria-hidden="true" />}
+            icon={<LKDVIcon name="telecharger" size={14} aria-hidden="true" />}
           >
             Exporter mes données
           </Button>
@@ -370,7 +370,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   className="justify-between px-[var(--space-4)] text-[length:var(--lkv-text-footnote)]"
                 >
                   <span className="flex items-center gap-[var(--space-3)]">
-                    <Icon name={item.icon as any} size={16} aria-hidden="true" />
+                    <LKDVIcon name={item.icon} size={16} aria-hidden="true" />
                     <span>{item.label}</span>
                   </span>
                   {item.badge && <Badge tone="warn" className="text-[10px]">{item.badge}</Badge>}

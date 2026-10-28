@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import Icon from '@/components/ui/AppIcon';
 import CountryFlag from '@/components/ui/CountryFlag';
 import { CountryDetail } from '@/lib/countryDetails';
 import { ALL_COUNTRIES } from '@/lib/countries';

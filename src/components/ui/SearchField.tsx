@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface SearchFieldProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -34,8 +34,8 @@ export function SearchField({
         containerClassName
       )}
     >
-      <Icon
-        name="MagnifyingGlassIcon"
+      <LKDVIcon
+        name="recherche"
         size={18}
         className="shrink-0 text-[color:var(--glass-label-secondary)]"
       />
@@ -59,7 +59,7 @@ export function SearchField({
           aria-label="Effacer la recherche"
           className="inline-flex h-[var(--control-height-sm)] w-[var(--control-height-sm)] shrink-0 items-center justify-center rounded-full text-[color:var(--glass-label-secondary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
         >
-          <Icon name="XMarkIcon" size={16} />
+          <LKDVIcon name="fermer" size={16} />
         </button>
       )}
     </div>

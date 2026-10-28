@@ -1,10 +1,7 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui';
-import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
-import { LayersIcon as Layers } from '@/components/icons/layers';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Props {
   activeCount: number;
@@ -35,25 +32,25 @@ export function KitsKpiCockpitCard({
       label: 'Prêts',
       value: activeCount,
       unit: 'nb',
-      icon: <Icon name="package" size={10} aria-hidden="true" />,
+      icon: <LKDVIcon name="inventaire" size={10} aria-hidden="true" />,
     },
     {
       label: 'Poids',
       value: weightKg,
       unit: 'kg',
-      icon: <Icon name="scale" size={10} aria-hidden="true" />,
+      icon: <LKDVIcon name="difficulte" size={10} aria-hidden="true" />,
     },
     {
       label: 'Articles',
       value: totalItemsCount,
       unit: 'art.',
-      icon: <Layers size={10} aria-hidden="true" />,
+      icon: <LKDVIcon name="calques" size={10} aria-hidden="true" />,
     },
     {
       label: 'Commande',
       value: shopItemsCount,
       unit: 'art.',
-      icon: <ShoppingBag size={10} aria-hidden="true" />,
+      icon: <LKDVIcon name="boutique" size={10} aria-hidden="true" />,
       muted: shopItemsCount === 0,
     },
   ];

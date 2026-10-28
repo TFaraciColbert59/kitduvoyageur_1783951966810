@@ -1,12 +1,11 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Button, EmptyState, Skeleton } from '@/components/ui';
 import type { Message, ConversationMember } from '../types/messaging.types';
 import { MessageBubble, type BubbleGroupPosition } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface MessageListProps {
   messages: Message[];
@@ -297,7 +296,7 @@ export const MessageList: React.FC<MessageListProps> = ({
               setHasNewUnseenMessages(false);
             }}
             className="msg-pill-in pointer-events-auto shadow-elevation-3"
-            icon={<Icon name="arrow-down" className="size-4" aria-hidden="true" />}
+            icon={<LKDVIcon name="bas" className="size-4" aria-hidden="true" />}
           >
             Nouveaux messages
           </Button>

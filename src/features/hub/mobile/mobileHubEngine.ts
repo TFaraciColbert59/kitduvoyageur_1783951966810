@@ -1,34 +1,4 @@
-import type { LucideIcon } from 'lucide-react';
-import {
-  Backpack,
-  BellRing,
-  BookOpen,
-  CalendarCheck,
-  CalendarDays,
-  CheckSquare,
-  ClipboardList,
-  CloudOff,
-  CloudSun,
-  Compass,
-  CreditCard,
-  FileText,
-  FlaskConical,
-  Footprints,
-  LayoutGrid,
-  MailPlus,
-  Map as MapIcon,
-  MapPin,
-  MessageSquare,
-  Navigation,
-  Package,
-  Route,
-  Share2,
-  Shield,
-  TrendingUp,
-  Users,
-  Vote,
-  Wallet,
-} from 'lucide-react';
+
 import {
   HUB_HOME_HREF,
   hubSectionHref,
@@ -52,19 +22,20 @@ import { weatherLabel } from '@/features/materiel/services/getWeather';
 import type { HubHikingContext } from '../server/getHubAdventureData';
 import type { MaterielSummary } from '@/features/materiel/services/getMaterielSummary';
 import type { GroupeMenuSummary } from '../server/getGroupeMenu';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export interface MobileSectionTile {
   key: string;
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon: LKDVIconComponent;
   badge?: string | null;
   accent?: boolean;
 }
 
 export interface MobileInfoChip {
   key: string;
-  icon: LucideIcon;
+  icon: LKDVIconComponent;
   value: string;
   label: string;
   tone?: 'default' | 'warn' | 'accent';
@@ -123,7 +94,7 @@ function sortieTile(
         key,
         label: 'Cockpit terrain',
         href: `${HUB_HOME_HREF}?phase=live`,
-        icon: Compass,
+        icon: lkdvIcon('boussole'),
         accent: true,
       };
     case 'raconter':
@@ -131,7 +102,7 @@ function sortieTile(
         key,
         label: 'Raconter',
         href: `${HUB_HOME_HREF}?phase=recount`,
-        icon: Share2,
+        icon: lkdvIcon('partager'),
         accent: true,
       };
     case 'context':
@@ -139,14 +110,14 @@ function sortieTile(
         key,
         label: 'Contexte',
         href: hubSectionHref(ref, 'overview'),
-        icon: LayoutGrid,
+        icon: lkdvIcon('calques'),
       };
     case 'itinerary':
       return {
         key,
         label: 'Itinéraire',
         href: hubSectionHref(ref, 'itinerary'),
-        icon: Navigation,
+        icon: lkdvIcon('gps'),
         badge: num(badges.steps),
       };
     case 'gear':
@@ -154,7 +125,7 @@ function sortieTile(
         key,
         label: 'Équipement',
         href: hubSectionHref(ref, 'gear'),
-        icon: Package,
+        icon: lkdvIcon('inventaire'),
         badge: typeof badges.packedPct === 'number' ? `${badges.packedPct}%` : null,
       };
     case 'budget':
@@ -162,7 +133,7 @@ function sortieTile(
         key,
         label: 'Budget',
         href: hubSectionHref(ref, 'budget'),
-        icon: CreditCard,
+        icon: lkdvIcon('paiement'),
         badge: badges.budgetLabel ?? null,
       };
     case 'groupe':
@@ -170,7 +141,7 @@ function sortieTile(
         key,
         label: 'Groupe',
         href: hubSectionHref(ref, 'groupe'),
-        icon: Users,
+        icon: lkdvIcon('communaute'),
         badge: num(badges.team),
       };
     case 'checklist':
@@ -178,7 +149,7 @@ function sortieTile(
         key,
         label: 'Checklist',
         href: hubSectionHref(ref, 'checklist'),
-        icon: CheckSquare,
+        icon: lkdvIcon('checklist'),
         badge: badges.checklistLabel ?? null,
       };
     case 'docs':
@@ -186,7 +157,7 @@ function sortieTile(
         key,
         label: 'Documents',
         href: hubSectionHref(ref, 'docs'),
-        icon: FileText,
+        icon: lkdvIcon('facture'),
         badge: num(badges.docs),
       };
     case 'safety':
@@ -194,7 +165,7 @@ function sortieTile(
         key,
         label: 'Sécurité',
         href: hubSectionHref(ref, 'safety'),
-        icon: Shield,
+        icon: lkdvIcon('securite'),
         badge: num(badges.safetyPending),
       };
     case 'journal':
@@ -202,7 +173,7 @@ function sortieTile(
         key,
         label: 'Journal',
         href: hubSectionHref(ref, 'journal'),
-        icon: BookOpen,
+        icon: lkdvIcon('preparateur'),
         badge: num(badges.notes),
       };
     default:
@@ -262,7 +233,7 @@ export function buildSortieInfoChips(args: {
   if (current) {
     chips.push({
       key: 'weather',
-      icon: CloudSun,
+      icon: lkdvIcon('meteo'),
       value: `${Math.round(current.tempC)}°C`,
       label: weatherLabel(current.weathercode),
       href: overviewHref,
@@ -270,7 +241,7 @@ export function buildSortieInfoChips(args: {
   } else {
     chips.push({
       key: 'weather',
-      icon: CloudOff,
+      icon: lkdvIcon('hors_ligne'),
       value: '—',
       label: 'Météo indisponible',
       href: overviewHref,
@@ -280,7 +251,7 @@ export function buildSortieInfoChips(args: {
   if (trip.destination_name) {
     chips.push({
       key: 'place',
-      icon: MapPin,
+      icon: lkdvIcon('point_interet'),
       value: trip.destination_name,
       label: 'Lieu',
       href: overviewHref,
@@ -290,7 +261,7 @@ export function buildSortieInfoChips(args: {
   if (context.phase === 'prepare') {
     chips.push({
       key: 'countdown',
-      icon: CalendarDays,
+      icon: lkdvIcon('jours'),
       value: context.daysUntil != null ? `J-${context.daysUntil}` : '—',
       label: 'Départ',
       tone: context.daysUntil != null && context.daysUntil > 0 && context.daysUntil <= 7 ? 'accent' : 'default',
@@ -299,7 +270,7 @@ export function buildSortieInfoChips(args: {
   } else if (context.phase === 'live') {
     chips.push({
       key: 'countdown',
-      icon: CalendarDays,
+      icon: lkdvIcon('jours'),
       value: `Jour ${context.dayIndex ?? 1}`,
       label: context.totalDays ? `sur ${context.totalDays}` : 'en cours',
       href: `${HUB_HOME_HREF}?phase=live`,
@@ -307,7 +278,7 @@ export function buildSortieInfoChips(args: {
   } else {
     chips.push({
       key: 'countdown',
-      icon: CalendarDays,
+      icon: lkdvIcon('jours'),
       value: 'Terminé',
       label: context.totalDays ? `${context.totalDays} jours` : 'Bilan',
       href: `${HUB_HOME_HREF}?phase=recount`,
@@ -316,14 +287,14 @@ export function buildSortieInfoChips(args: {
 
   chips.push({
     key: 'distance',
-    icon: Route,
+    icon: lkdvIcon('itineraire'),
     value: metrics.totalKm > 0 ? `${formatKm(metrics.totalKm)} km` : '—',
     label: 'Distance',
     href: itineraryHref,
   });
   chips.push({
     key: 'steps',
-    icon: Footprints,
+    icon: lkdvIcon('randonnee'),
     value: String(metrics.stepsCount),
     label: 'Étapes',
     href: itineraryHref,
@@ -331,7 +302,7 @@ export function buildSortieInfoChips(args: {
   if (metrics.dPlus > 0) {
     chips.push({
       key: 'elevation',
-      icon: TrendingUp,
+      icon: lkdvIcon('denivele'),
       value: `+${metrics.dPlus.toLocaleString('fr-FR')} m`,
       label: 'Dénivelé',
       href: itineraryHref,
@@ -339,14 +310,14 @@ export function buildSortieInfoChips(args: {
   }
   chips.push({
     key: 'budget',
-    icon: Wallet,
+    icon: lkdvIcon('budget'),
     value: formatEuro(stats.total_spent),
     label: stats.estimated_budget > 0 ? `sur ${formatEuro(stats.estimated_budget)}` : 'Dépensé',
     href: hubSectionHref(ref, 'budget'),
   });
   chips.push({
     key: 'kit',
-    icon: Backpack,
+    icon: lkdvIcon('sac'),
     value: `${metrics.packedPct}%`,
     label: metrics.totalItems > 0 ? `${metrics.readyItems}/${metrics.totalItems} prêts` : 'Équipement',
     href: hubSectionHref(ref, 'gear'),
@@ -686,7 +657,7 @@ export function buildPossessionSectionTiles(
       key: 'depart',
       label: 'Départ',
       href: hubSectionHref(ref, 'depart'),
-      icon: Footprints,
+      icon: lkdvIcon('randonnee'),
       accent: true,
       badge:
         !summary.depart.isEstimated && departDays != null && departDays >= 0 ? `J-${departDays}` : null,
@@ -695,42 +666,42 @@ export function buildPossessionSectionTiles(
       key: 'alertes',
       label: 'Alertes',
       href: hubSectionHref(ref, 'alertes'),
-      icon: BellRing,
+      icon: lkdvIcon('notifications'),
       badge: summary.alertes.count > 0 ? String(summary.alertes.count) : null,
     },
     {
       key: 'inventaire',
       label: 'Inventaire',
       href: hubSectionHref(ref, 'inventaire'),
-      icon: Package,
+      icon: lkdvIcon('inventaire'),
       badge: summary.inventaire.count > 0 ? String(summary.inventaire.count) : null,
     },
     {
       key: 'kit',
       label: 'Kits',
       href: hubSectionHref(ref, 'kit'),
-      icon: Backpack,
+      icon: lkdvIcon('sac'),
       badge: summary.kits.count > 0 ? String(summary.kits.count) : null,
     },
     {
       key: 'preparation',
       label: 'Préparation',
       href: hubSectionHref(ref, 'preparation'),
-      icon: FlaskConical,
+      icon: lkdvIcon('recentrer'),
       badge: summary.kits.count > 0 ? `${summary.kits.avgCompletionPct}%` : null,
     },
     {
       key: 'disponibilite',
       label: 'Disponibilité',
       href: hubSectionHref(ref, 'disponibilite'),
-      icon: CalendarCheck,
+      icon: lkdvIcon('calendrier'),
       badge: summary.dispo.total > 0 ? `${summary.dispo.availableCount}/${summary.dispo.total}` : null,
     },
     {
       key: 'oublis',
       label: 'À ne pas oublier',
       href: hubSectionHref(ref, 'oublis'),
-      icon: ClipboardList,
+      icon: lkdvIcon('checklist_voyage'),
       badge: summary.forget.forgetRemaining > 0 ? String(summary.forget.forgetRemaining) : null,
     },
   ];
@@ -747,7 +718,7 @@ export function buildPossessionInfoChips(
   const chips: MobileInfoChip[] = [
     {
       key: 'depart',
-      icon: Footprints,
+      icon: lkdvIcon('randonnee'),
       value: scheduled ? `J-${departDays}` : '—',
       label: summary.depart.isEstimated
         ? 'départ à planifier'
@@ -758,21 +729,21 @@ export function buildPossessionInfoChips(
     },
     {
       key: 'readiness',
-      icon: CheckSquare,
+      icon: lkdvIcon('checklist'),
       value: summary.inventaire.count > 0 ? `${summary.depart.readinessPct}%` : '—',
       label: summary.inventaire.count > 0 ? 'prêt au départ' : 'aucun kit',
       href: hubSectionHref(ref, 'depart'),
     },
     {
       key: 'objets',
-      icon: Package,
+      icon: lkdvIcon('inventaire'),
       value: String(summary.inventaire.count),
       label: 'objets',
       href: hubSectionHref(ref, 'inventaire'),
     },
     {
       key: 'kits',
-      icon: Backpack,
+      icon: lkdvIcon('sac'),
       value: String(summary.kits.count),
       label: summary.kits.totalWeightKg > 0 ? `${summary.kits.totalWeightKg.toFixed(1)} kg` : 'kits',
       href: hubSectionHref(ref, 'kit'),
@@ -781,7 +752,7 @@ export function buildPossessionInfoChips(
   if (summary.alertes.count > 0) {
     chips.push({
       key: 'alertes',
-      icon: BellRing,
+      icon: lkdvIcon('notifications'),
       value: String(summary.alertes.count),
       label: summary.alertes.criticalCount > 0 ? `${summary.alertes.criticalCount} critique(s)` : 'alertes',
       tone: summary.alertes.criticalCount > 0 ? 'warn' : 'default',
@@ -790,7 +761,7 @@ export function buildPossessionInfoChips(
   }
   chips.push({
     key: 'fiabilite',
-    icon: Shield,
+    icon: lkdvIcon('securite'),
     value: summary.inventaire.count > 0 ? `${summary.alertes.reliabilityScore}%` : '—',
     label: summary.inventaire.count > 0 ? 'fiabilité' : 'aucun objet',
     href: hubSectionHref(ref, 'alertes'),
@@ -798,7 +769,7 @@ export function buildPossessionInfoChips(
   if (summary.dispo.total > 0) {
     chips.push({
       key: 'dispo',
-      icon: CalendarCheck,
+      icon: lkdvIcon('calendrier'),
       value: `${summary.dispo.availableCount}/${summary.dispo.total}`,
       label: 'disponibles',
       href: hubSectionHref(ref, 'disponibilite'),
@@ -807,7 +778,7 @@ export function buildPossessionInfoChips(
   if (summary.forget.forgetRemaining > 0) {
     chips.push({
       key: 'oublis',
-      icon: ClipboardList,
+      icon: lkdvIcon('checklist_voyage'),
       value: String(summary.forget.forgetRemaining),
       label: 'à cocher',
       tone: 'warn',
@@ -831,7 +802,7 @@ export function buildCollectifSectionTiles(
       key: 'groupe',
       label: summary.name ?? 'Groupe',
       href: groupeHref,
-      icon: Users,
+      icon: lkdvIcon('communaute'),
       badge: num(summary.members),
       accent: true,
     },
@@ -839,48 +810,48 @@ export function buildCollectifSectionTiles(
       key: 'tasks',
       label: 'Tâches',
       href: tab('tasks'),
-      icon: CheckSquare,
+      icon: lkdvIcon('checklist'),
       badge: num(summary.tasksOpen),
     },
     {
       key: 'equipment',
       label: 'Équipement',
       href: tab('equipment'),
-      icon: Package,
+      icon: lkdvIcon('inventaire'),
       badge: num(summary.equipmentCount),
     },
     {
       key: 'expenses',
       label: 'Dépenses',
       href: tab('expenses'),
-      icon: CreditCard,
+      icon: lkdvIcon('paiement'),
       badge: summary.expensesTotal > 0 ? formatEuro(summary.expensesTotal) : null,
     },
     {
       key: 'decisions',
       label: 'Décisions',
       href: tab('decisions'),
-      icon: Vote,
+      icon: lkdvIcon('evenement'),
       badge: num(summary.pollsOpen),
     },
     {
       key: 'discussion',
       label: 'Discussion',
       href: tab('discussion'),
-      icon: MessageSquare,
+      icon: lkdvIcon('messages'),
     },
     {
       key: 'invitations',
       label: 'Invitations',
       href: hubSectionHref(ref, 'invitations'),
-      icon: MailPlus,
+      icon: lkdvIcon('email'),
       badge: num(summary.pendingInvites),
     },
     {
       key: 'voyages-lies',
       label: 'Voyages liés',
       href: hubSectionHref(ref, 'voyages-lies'),
-      icon: MapIcon,
+      icon: lkdvIcon('carte'),
       badge: num(summary.linkedTrips),
     },
   ];
@@ -889,7 +860,7 @@ export function buildCollectifSectionTiles(
       key: 'voyage-actif',
       label: 'Voyage actif',
       href: tripSwitchHref(linkedTripSlug),
-      icon: Compass,
+      icon: lkdvIcon('boussole'),
       accent: true,
     });
   }
@@ -903,10 +874,10 @@ export function buildCollectifInfoChips(
   const groupeHref = hubSectionHref(ref, 'groupe');
   const tab = (id: string) => `${groupeHref}?onglet=${id}`;
   const chips: MobileInfoChip[] = [
-    { key: 'membres', icon: Users, value: String(summary.members), label: 'membres', href: groupeHref },
+    { key: 'membres', icon: lkdvIcon('communaute'), value: String(summary.members), label: 'membres', href: groupeHref },
     {
       key: 'invitations',
-      icon: MailPlus,
+      icon: lkdvIcon('email'),
       value: String(summary.pendingInvites),
       label: 'en attente',
       tone: summary.pendingInvites > 0 ? 'accent' : 'default',
@@ -915,7 +886,7 @@ export function buildCollectifInfoChips(
   ];
   chips.push({
     key: 'tasks',
-    icon: CheckSquare,
+    icon: lkdvIcon('checklist'),
     value: String(summary.tasksOpen),
     label: 'tâches',
     href: tab('tasks'),
@@ -923,21 +894,21 @@ export function buildCollectifInfoChips(
   const perPerson = summary.members > 0 ? Math.round(summary.expensesTotal / summary.members) : summary.expensesTotal;
   chips.push({
     key: 'expenses',
-    icon: CreditCard,
+    icon: lkdvIcon('paiement'),
     value: formatEuro(summary.expensesTotal),
     label: summary.members > 0 ? `≈ ${formatEuro(perPerson)}/pers.` : 'dépensé',
     href: tab('expenses'),
   });
-  chips.push({ key: 'decisions', icon: Vote, value: String(summary.pollsOpen), label: 'votes', href: tab('decisions') });
+  chips.push({ key: 'decisions', icon: lkdvIcon('evenement'), value: String(summary.pollsOpen), label: 'votes', href: tab('decisions') });
   chips.push({
     key: 'progression',
-    icon: TrendingUp,
+    icon: lkdvIcon('denivele'),
     value: `${summary.progression}%`,
     label: 'préparation',
     href: groupeHref,
   });
   if (summary.departureLabel) {
-    chips.push({ key: 'depart', icon: CalendarDays, value: summary.departureLabel, label: 'départ', href: groupeHref });
+    chips.push({ key: 'depart', icon: lkdvIcon('jours'), value: summary.departureLabel, label: 'départ', href: groupeHref });
   }
   return chips;
 }

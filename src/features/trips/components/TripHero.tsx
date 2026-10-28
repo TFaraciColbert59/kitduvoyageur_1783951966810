@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import AppImage from '@/components/ui/AppImage';
 import { Button } from '@/components/ui';
@@ -8,6 +6,7 @@ import { TripBadge } from './TripBadge';
 import { getTripCounters } from '../hooks/useTripCounters';
 import type { TripFull } from '../types/trip.types';
 import { formatCivilDateRange } from '@/lib/dates/tripDates';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TripHeroProps {
   trip: TripFull;
@@ -70,7 +69,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
               variant="secondary"
               size="sm"
               onClick={handleShare}
-              icon={copied ? <Icon name="check" size={15} /> : <Icon name="share2" size={15} />}
+              icon={copied ? <LKDVIcon name="valider" size={15} /> : <LKDVIcon name="partager" size={15} />}
             >
               {copied ? 'Lien copié !' : 'Partager'}
             </Button>
@@ -80,7 +79,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
                 variant="primary"
                 size="sm"
                 onClick={onEditClick}
-                icon={<Icon name="edit3" size={15} />}
+                icon={<LKDVIcon name="modifier" size={15} />}
               >
                 Modifier
               </Button>
@@ -92,7 +91,7 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
         <div className="mt-[var(--space-8)] max-w-4xl space-y-[var(--space-3)]">
           {trip.destination_name && (
             <div className="inline-flex items-center gap-[var(--space-2)] rounded-full border border-white/20 bg-white/15 px-[var(--space-3)] py-1 text-[length:var(--lkv-text-footnote)] font-medium text-white/90 backdrop-blur-[var(--blur-md)] sm:text-[length:var(--lkv-text-body-sm)]">
-              <Icon name="map-pin" size={14} className="text-white/80" />
+              <LKDVIcon name="point_interet" size={14} className="text-white/80" />
               {trip.destination_name}
               {trip.destination_country_code && ` (${trip.destination_country_code})`}
             </div>
@@ -112,20 +111,20 @@ export function TripHero({ trip, onEditClick }: TripHeroProps) {
           <div className="flex flex-wrap items-center gap-[var(--space-4)] pt-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-white/80 sm:text-[length:var(--lkv-text-body-sm)]">
             {(trip.start_date || trip.end_date) && (
               <span className="flex items-center gap-[var(--space-2)] rounded-full border border-white/10 bg-black/30 px-[var(--space-3)] py-1 backdrop-blur-[var(--blur-sm)]">
-                <Icon name="calendar" size={14} className="text-white/80" />
+                <LKDVIcon name="calendrier" size={14} className="text-white/80" />
                 {formatCivilDateRange(trip.start_date, trip.end_date, undefined, 'fr-FR')}
               </span>
             )}
 
             {trip.estimated_budget !== null && trip.estimated_budget !== undefined && (
               <span className="flex items-center gap-[var(--space-2)] rounded-full border border-white/10 bg-black/30 px-[var(--space-3)] py-1 backdrop-blur-[var(--blur-sm)]">
-                <Icon name="credit-card" size={14} className="text-white/80" />
+                <LKDVIcon name="paiement" size={14} className="text-white/80" />
                 Budget prévu : {trip.estimated_budget} {trip.budget_currency}
               </span>
             )}
 
             <span className="flex items-center gap-[var(--space-2)] rounded-full border border-white/10 bg-black/30 px-[var(--space-3)] py-1 backdrop-blur-[var(--blur-sm)]">
-              <Icon name="users" size={14} className="text-white/80" />
+              <LKDVIcon name="communaute" size={14} className="text-white/80" />
               {participantsCount} {participantsCount > 1 ? 'participants' : 'participant'}
             </span>
           </div>

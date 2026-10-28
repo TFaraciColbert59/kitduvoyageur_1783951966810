@@ -2,8 +2,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 import './compte-overlay.css';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface OverlaySheetProps {
   title: string;
@@ -161,7 +161,7 @@ export function OverlaySheet({
             {headerRight}
             {hideClose ? null : (
               <button type="button" className="lkdv-overlay-close" onClick={onClose} aria-label="Fermer">
-                <X size={18} aria-hidden="true" />
+                <LKDVIcon name="fermer" size={18} aria-hidden="true" />
               </button>
             )}
           </div>

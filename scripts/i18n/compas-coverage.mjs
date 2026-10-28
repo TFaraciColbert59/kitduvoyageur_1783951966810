@@ -189,9 +189,17 @@ const FRENCH_WORD_RE = new RegExp(`(?<![\\w-])(${FRENCH_WORDS.join('|')})(?![\\w
 const TECHNICAL_ATTR_RE =
   /(?:\b(?:name|className|id|type|href|key|variant|role|rel|target|htmlFor|enterKeyHint|autoComplete|mode|src|data-[\w-]+|aria-(?:current|live|hidden|busy|describedby|expanded|pressed|controls))\s*=\s*\{?\s*)$/;
 
+/** Clés de la base d'icônes LKDV V2 : des identifiants techniques (`jours`, `budget`…), jamais du texte lu. */
+const LKDV_ICON_KEYS = new Set(
+  [...fs
+    .readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'src/components/ui/LKDVIcon.tsx'), 'utf8')
+    .matchAll(/^\s+'([a-z0-9_]+)',$/gm)].map((m) => m[1]),
+);
+
 function looksFrench(text) {
   const value = text.trim();
   if (value.length < 2) return false;
+  if (LKDV_ICON_KEYS.has(value)) return false;
   if (/^compas\.[\w.]+$/.test(value)) return false;
   if (/^(?:\/|https?:|@\/|\.{1,2}\/)/.test(value)) return false;
   return ACCENTED_RE.test(value) || FRENCH_WORD_RE.test(value);

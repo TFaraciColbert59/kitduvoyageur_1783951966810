@@ -107,8 +107,8 @@ const COCKPIT_INPUT = {
 };
 
 const QUICK_LINKS = [
-  { id: 'itinerary', label: 'Itinéraire', icon: 'navigation' },
-  { id: 'safety', label: 'Sécurité', icon: 'shield-alert' },
+  { id: 'itinerary', label: 'Itinéraire', icon: 'gps' as const },
+  { id: 'safety', label: 'Sécurité', icon: 'danger' as const },
 ];
 
 describe('cockpit aventure — rendu de la section itinéraire', () => {

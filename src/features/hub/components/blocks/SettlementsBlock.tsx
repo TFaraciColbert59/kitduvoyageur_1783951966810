@@ -1,7 +1,8 @@
-import Icon from '@/components/ui/Icon';
+
 import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import { hubSectionHref, type HubAdventureRef } from '../../registry/hubSectionRegistry';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * H-ACT — Bloc "Qui doit quoi" de l'aperçu (budgetEngine.simplifyDebts —
@@ -22,8 +23,8 @@ export function SettlementsBlock({ trip, slug }: { trip: TripFull; slug: string 
     <div className="glass p-5 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
-          <Icon
-            name="hand-coins"
+          <LKDVIcon
+            name="points"
             size={18}
             className="text-[var(--lkv-text-secondary)]"
             aria-hidden="true"
@@ -40,8 +41,8 @@ export function SettlementsBlock({ trip, slug }: { trip: TripFull; slug: string 
 
       {settlements.length === 0 ? (
         <div className="flex items-center gap-2.5 text-sm text-[var(--lkv-text-secondary)]">
-          <Icon
-            name="check-circle2"
+          <LKDVIcon
+            name="valider"
             size={18}
             className="text-[var(--lkv-success)] shrink-0"
             aria-hidden="true"

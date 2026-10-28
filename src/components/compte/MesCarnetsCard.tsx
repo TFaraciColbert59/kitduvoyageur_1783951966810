@@ -4,9 +4,9 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Card } from '@/components/ui';
 import { Carnet } from '@/lib/mock/compte-marceline';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface MesCarnetsCardProps {
   carnets: Carnet[];
@@ -36,7 +36,7 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
             href="/carnets/nouveau"
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 !py-2 !px-4 !min-h-[0] text-xs font-bold"
           >
-            <Icon name="PlusIcon" size={14} />
+            <LKDVIcon name="plus" size={14} />
             <span>+ Nouveau</span>
           </Link>
         </div>
@@ -89,9 +89,9 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
             <div className="p-4 pt-0 border-t border-[color:var(--lkv-primary)]/5 mt-2 flex items-center justify-between text-xs font-mono font-bold text-[color:var(--lkv-forest-600-ink)]/70">
               {item.status === 'Publié' ? (
                 <div className="flex items-center gap-3 w-full justify-between pt-2">
-                  <span className="flex items-center gap-1"><Icon name="HeartIcon" size={14} className="text-[color:var(--lkv-secondary-ink)]" /> {item.likes}</span>
-                  <span className="flex items-center gap-1"><Icon name="EyeIcon" size={14} className="text-[color:var(--lkv-text-muted)]" /> {item.views}</span>
-                  <span className="flex items-center gap-1"><Icon name="ChatBubbleLeftIcon" size={14} className="text-[color:var(--lkv-info)]" /> {item.comments}</span>
+                  <span className="flex items-center gap-1"><LKDVIcon name="favoris" size={14} className="text-[color:var(--lkv-secondary-ink)]" /> {item.likes}</span>
+                  <span className="flex items-center gap-1"><LKDVIcon name="vue" size={14} className="text-[color:var(--lkv-text-muted)]" /> {item.views}</span>
+                  <span className="flex items-center gap-1"><LKDVIcon name="messages" size={14} className="text-[color:var(--lkv-info)]" /> {item.comments}</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-between w-full pt-2 text-[color:var(--lkv-forest-600-ink)]/60">

@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import KitDebriefPanel from './KitDebriefPanel';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface HighlightItem {
   icon: string;
@@ -68,9 +69,7 @@ export default function CompletionView({
       <div className="relative z-10 w-full max-w-md space-y-6 my-auto">
         {/* Celebration Badge Icon */}
         <div className="relative w-24 h-24 rounded-full mx-auto bg-gradient-to-br from-[color:var(--lkv-forest-200)] to-[color:var(--lkv-forest-100)] text-[color:var(--lkv-forest-950)] flex items-center justify-center shadow-md">
-          <svg className="w-11 h-11 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 21l3-9h12l3 9M6 12l6-8 6 8M9 17l2 2 4-4" />
-          </svg>
+          <LKDVIcon name="sommet" size={44} className="w-11 h-11 stroke-[2]" />
           <div className="absolute -inset-1.5 rounded-full border-2 border-dashed border-[color:var(--lkv-forest-100)]/40" />
         </div>
 
@@ -214,9 +213,7 @@ export default function CompletionView({
             className="mt-3 flex items-center justify-between text-xs font-semibold text-[color:var(--lkv-forest-200)] hover:text-[color:var(--lkv-forest-100)] transition-colors pt-2 border-t border-white/10"
           >
             <span>Consulter mon niveau et mes classements</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
+            <LKDVIcon name="suivant" size={14} />
           </Link>
         </div>
 
@@ -230,9 +227,7 @@ export default function CompletionView({
           </span>
           <span className="flex items-center gap-2">
             <span className="font-mono text-[11px] opacity-75 uppercase">CARNET GÉNÉRÉ</span>
-            <svg className="w-4 h-4 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
+            <LKDVIcon name="suivant" size={16} className="w-4 h-4 stroke-[2]" />
           </span>
         </button>
 

@@ -61,7 +61,7 @@ function skill(skillType: SkillType): UserProgressionProfile['skills'][SkillType
     label: skillType,
     points: 0,
     pct: 0,
-    icon: 'compass',
+    icon: 'boussole',
     description: '',
   };
 }

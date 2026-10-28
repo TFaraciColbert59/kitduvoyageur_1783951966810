@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useReducedMotion } from 'framer-motion';
-import { AlertTriangle, CheckCircle2, Package, Weight } from 'lucide-react';
 import { Sheet, Button, Card } from '@/components/ui';
 import { DepartHeroCard } from '@/features/materiel/components/depart/hero/DepartHeroCard';
 import { DepartAlertsBanner } from '@/features/materiel/components/depart/DepartAlertsBanner';
@@ -27,6 +26,8 @@ import type { WeatherForecast } from '@/features/materiel/services/getWeather';
 import { GroupeChipsRow, type GroupeChipDef } from '../groupe/GroupeChipsRow';
 import { GroupeDrawer } from '../groupe/GroupeDrawer';
 import { GroupeRail } from '../groupe/GroupeRail';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 const SHOWCASE_IDS = new Set(['tmb-4j', 'vercors-ultra', 'belledonne-winter', 'none']);
 
@@ -160,7 +161,7 @@ export function DepartMobileExperience({
   const chips: GroupeChipDef[] = [
     {
       key: 'poids',
-      icon: Weight,
+      icon: lkdvIcon('inventaire'),
       value: `${(totalPackWeightG / 1000).toFixed(1)} kg`,
       label: 'Poids porté',
       tone: totalPackWeightG > 15000 ? 'warn' : 'default',
@@ -168,7 +169,7 @@ export function DepartMobileExperience({
     },
     {
       key: 'manquants',
-      icon: AlertTriangle,
+      icon: lkdvIcon('alerte'),
       value: String(missingCount),
       label: 'À compléter',
       tone: missingCount ? 'warn' : 'accent',
@@ -176,7 +177,7 @@ export function DepartMobileExperience({
     },
     {
       key: 'pret',
-      icon: CheckCircle2,
+      icon: lkdvIcon('valider'),
       value: `${readinessPct} %`,
       label: 'Prêt',
       tone: 'accent',
@@ -247,7 +248,7 @@ export function DepartMobileExperience({
                 className="glass flex h-[8.5rem] w-[10.5rem] shrink-0 snap-start flex-col rounded-[var(--lkv-radius-lg)] p-3"
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)]">
-                  <Package size={15} aria-hidden="true" />
+                  <LKDVIcon name="inventaire" size={15} aria-hidden="true" />
                 </span>
                 <p className="mt-2 line-clamp-2 text-[12.5px] font-bold leading-snug text-[var(--lkv-text-primary)]">
                   {item.name}

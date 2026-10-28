@@ -9,6 +9,7 @@ import { GlassLabSurface } from './GlassLabSurface';
 import { resolveGlassEngine, type GlassEngine } from './glassLabPolicy';
 import { useGlassCapabilities } from './useGlassCapabilities';
 import styles from './glassLab.module.css';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const engines = [{ value: 'standard', label: 'Standard CSS' }, { value: 'rdev', label: 'rdev 1.1.1' }, { value: 'samasante', label: 'samasante 0.1.1' }] as const;
 const states = ['normal', 'loading', 'empty', 'error', 'selected', 'disabled'] as const;
@@ -131,11 +132,7 @@ export default function GlassLab() {
             variant="secondary"
             onClick={increment}
             icon={
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
+              <LKDVIcon name="retour" size={16} aria-hidden="true" />
             }
           >
             Se déconnecter

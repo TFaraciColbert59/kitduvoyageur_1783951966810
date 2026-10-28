@@ -1,13 +1,8 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import { useState } from 'react';
-import { UsersIcon as Users } from '@/components/icons/users';
-import { AlertOctagonIcon as AlertOctagon } from '@/components/icons/alert-octagon';
-import { RadioIcon as Radio } from '@/components/icons/radio';
-import { Share2Icon as Share2 } from '@/components/icons/share-2';
-import { PhoneCallIcon as PhoneCallAnimated } from '@/components/icons/phone-call';
 import { Badge, Button, Card } from '@/components/ui';
 import type { Participant } from '@/features/materiel/types/trekHub';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface DepartParticipantsProps {
   participants: Participant[];
@@ -49,7 +44,7 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
             id="participants-heading"
             className="text-xs sm:text-[13px] font-bold text-[color:var(--lkv-text-primary)] flex items-center gap-2"
           >
-            <Users size={15} className="text-[var(--lkv-primary-hover)]" aria-hidden="true" />
+            <LKDVIcon name="communaute" size={15} className="text-[var(--lkv-primary-hover)]" aria-hidden="true" />
             <span>Équipe & Sécurité</span>
           </h2>
 
@@ -62,7 +57,7 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
               variant="ghost"
               size="sm"
               onClick={handleShare}
-              icon={copied ? <Icon name="check" size={11} /> : <Share2 size={11} />}
+              icon={copied ? <LKDVIcon name="valider" size={11} /> : <LKDVIcon name="partager" size={11} />}
               className="h-auto gap-1 px-0 text-[11px] font-bold text-[var(--lkv-primary-hover)] hover:underline"
               title="Partager les coordonnées d’urgence"
             >
@@ -94,7 +89,7 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
           <Card tone="danger" className="flex items-center justify-between gap-3 p-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-danger-bg)] text-[var(--lkv-danger)]">
-                <Icon name="shield-check" size={16} aria-hidden="true" />
+                <LKDVIcon name="securite" size={16} aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-danger)]">
@@ -111,7 +106,7 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
               className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full bg-[var(--lkv-danger)] px-3 text-xs font-semibold text-[var(--lkv-text-inverted)] transition-transform active:scale-[var(--motion-press-scale)] motion-reduce:transition-none"
               aria-label={`Appeler le contact d'urgence au ${emergencyContact}`}
             >
-              <PhoneCallAnimated size={12} aria-hidden="true" />
+              <LKDVIcon name="telephone" size={12} aria-hidden="true" />
               <span>Appeler</span>
             </a>
           </Card>
@@ -128,10 +123,10 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
               className="p-2 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] flex items-center justify-between hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] font-semibold cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
-                <AlertOctagon size={13} className="text-[var(--lkv-danger)]" />
+                <LKDVIcon name="alerte" size={13} className="text-[var(--lkv-danger)]" />
                 <span>112 (Europe)</span>
               </div>
-              <Icon name="phone-call" size={11} className="text-[var(--lkv-text-muted)]" />
+              <LKDVIcon name="telephone" size={11} className="text-[var(--lkv-text-muted)]" />
             </a>
 
             <a
@@ -139,10 +134,10 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
               className="p-2 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] flex items-center justify-between hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] font-semibold cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
-                <Radio size={13} className="text-[var(--lkv-primary-hover)]" />
+                <LKDVIcon name="live" size={13} className="text-[var(--lkv-primary-hover)]" />
                 <span>15 (SAMU / Urgence)</span>
               </div>
-              <Icon name="phone-call" size={11} className="text-[var(--lkv-text-muted)]" />
+              <LKDVIcon name="telephone" size={11} className="text-[var(--lkv-text-muted)]" />
             </a>
           </div>
         </div>

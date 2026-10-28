@@ -1,12 +1,11 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useRef, useState } from 'react';
 import Image from 'next/image';
 import type { Conversation } from '../types/messaging.types';
 import { formatConversationTimestamp } from '../lib/messagingUtils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useLongPress } from '@/hooks/gestures';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type SwipeAction = 'accept' | 'decline' | 'archive' | 'mute';
 
@@ -146,7 +145,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   aria-label="Accepter la demande"
                   className="h-full min-h-[44px] min-w-[44px] flex-1 bg-[color:var(--lkv-forest-700)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--lkv-focus-ring)]"
                 >
-                  <Icon name="check" className="w-5 h-5" />
+                  <LKDVIcon name="valider" className="w-5 h-5" />
                   <span className="text-[length:var(--lkv-text-caption-2)] font-bold">Accepter</span>
                 </button>
                 <button
@@ -155,7 +154,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   aria-label="Refuser la demande"
                   className="h-full min-h-[44px] min-w-[44px] flex-1 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-danger)] flex flex-col items-center justify-center gap-1 active:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--lkv-focus-ring)]"
                 >
-                  <Icon name="x" className="w-5 h-5" />
+                  <LKDVIcon name="fermer" className="w-5 h-5" />
                   <span className="text-[length:var(--lkv-text-caption-2)] font-bold">Refuser</span>
                 </button>
               </>
@@ -168,9 +167,9 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   className="h-full min-h-[44px] min-w-[44px] flex-1 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex flex-col items-center justify-center gap-1 active:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--lkv-focus-ring)]"
                 >
                   {conversation.is_archived ? (
-                    <Icon name="archive-restore" className="w-5 h-5" />
+                    <LKDVIcon name="actualiser" className="w-5 h-5" />
                   ) : (
-                    <Icon name="archive" className="w-5 h-5" />
+                    <LKDVIcon name="historique" className="w-5 h-5" />
                   )}
                   <span className="text-[length:var(--lkv-text-caption-2)] font-bold">
                     {conversation.is_archived ? 'Restaurer' : 'Archiver'}
@@ -187,9 +186,9 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   className="h-full min-h-[44px] min-w-[44px] flex-1 bg-[color:var(--lkv-warning)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--lkv-focus-ring)]"
                 >
                   {conversation.is_muted ? (
-                    <Icon name="bell" className="w-5 h-5" />
+                    <LKDVIcon name="notifications" className="w-5 h-5" />
                   ) : (
-                    <Icon name="bell-off" className="w-5 h-5" />
+                    <LKDVIcon name="notifications_silence" className="w-5 h-5" />
                   )}
                   <span className="text-[length:var(--lkv-text-caption-2)] font-bold">
                     {conversation.is_muted ? 'Son' : 'Muet'}
@@ -258,7 +257,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
           </span>
           {isGroup && (
             <span className="absolute -bottom-1 -right-1 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] rounded-full p-1 shadow-xs border border-white">
-              <Icon name="users" className="w-3 h-3" />
+              <LKDVIcon name="communaute" className="w-3 h-3" />
             </span>
           )}
         </div>
@@ -291,7 +290,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
 
             <span className="flex items-center gap-1.5 shrink-0">
               {conversation.is_muted && (
-                <Icon name="bell-off" className="w-3.5 h-3.5 text-[color:var(--lkv-text-subtle)]" />
+                <LKDVIcon name="notifications_silence" className="w-3.5 h-3.5 text-[color:var(--lkv-text-subtle)]" />
               )}
               {unreadCount > 0 && (
                 <span

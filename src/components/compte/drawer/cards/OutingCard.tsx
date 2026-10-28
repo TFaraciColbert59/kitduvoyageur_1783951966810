@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { formatNumber } from '../memories/memoriesModel';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** Une sortie du bootstrap, déjà normalisée pour l'affichage. */
 export interface OutingCardData {
@@ -56,16 +57,7 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
             aria-hidden="true"
             className="flex h-full w-full items-center justify-center text-[color:var(--lkv-primary)]"
           >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-7 w-7"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-            >
-              <path d="m3 18 5.5-8 4 5 3-3.5L21 18H3Z" strokeLinejoin="round" />
-              <circle cx="16.5" cy="7" r="1.6" />
-            </svg>
+            <LKDVIcon name="montagne" size={28} className="h-7 w-7" />
           </span>
         )}
       </div>
@@ -92,16 +84,7 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
             aria-label="Trace GPS vérifiée"
             className="inline-flex h-[19px] items-center gap-1 rounded-full bg-[color:var(--lkv-primary)] px-1.5 font-mono text-[9.5px] font-bold text-white"
           >
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              className="h-3 w-3"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-            >
-              <path d="m5 12 5 5L19 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <LKDVIcon name="valider" size={12} className="h-3 w-3" aria-hidden="true" />
             GPS
           </span>
         ) : null}

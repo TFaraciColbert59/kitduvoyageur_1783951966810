@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import type { FeedPost } from './useCommunityFeed';
 import { timeAgo } from './feed-utils';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Pillule auteur du post (screen 2) : avatar 32, nom, badge de confiance,
@@ -34,10 +35,7 @@ export function PostAuthorPill({ post }: { post: FeedPost }) {
           <b>{name}</b>
           {trust !== null ? (
             <span className="lkdv-post-author-badge">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 3l7 3v5c0 4.4-2.8 7.6-7 9-4.2-1.4-7-4.6-7-9V6l7-3Z" />
-                <path d="M9 12l2 2 4-4" />
-              </svg>
+              <LKDVIcon name="securite" size={10} aria-hidden="true" />
               {Math.round(trust)}
             </span>
           ) : null}

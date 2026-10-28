@@ -1,6 +1,4 @@
 ﻿'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { Badge, Card, EmptyState, ListItem } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -10,6 +8,8 @@ import { requestChecklistCompletionAward } from '@/lib/progression-award-request
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
 import { LiveArrivalReveal } from '@/features/hub/components/live/LiveArrivalReveal';
 import { useLiveArrivalReveal } from '@/features/hub/components/live/useLiveArrivalReveal';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 let checklistClient: ReturnType<typeof createClient> | null = null;
 function supabaseChecklistClient() {
@@ -346,13 +346,9 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
                     leading={
                       <span className="mt-0.5 shrink-0">
                         {isChecked ? (
-                          <Icon name="check-circle2" size={20} className="text-[color:var(--lkv-text-primary)]" />
+                          <LKDVIcon name="valider" size={20} className="text-[color:var(--lkv-text-primary)]" />
                         ) : (
-                          <Icon
-                            name="circle"
-                            size={20}
-                            className="text-[color:var(--lkv-text-secondary)]/50"
-                          />
+                          <EmptyCircle size={20} className="text-[color:var(--lkv-text-secondary)]/50" />
                         )}
                       </span>
                     }
@@ -386,7 +382,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
       {/* Barre de progression */}
       <Card tone="sage">
         <div className="mb-[var(--space-2)] flex items-center justify-between gap-[var(--space-4)]">
-          <Icon name="shield-check" size={20} className="text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
+          <LKDVIcon name="securite" size={20} className="text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
           <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
             {doneCount} / {totalCount} ({progress}%)
           </div>
@@ -402,7 +398,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
 
         {daysUntilStart !== null && daysUntilStart !== undefined && (
           <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
-            <Icon name="calendar" size={13} />
+            <LKDVIcon name="calendrier" size={13} />
             <span>
               {daysUntilStart > 0
                 ? `Départ prévu dans ${daysUntilStart} jour${daysUntilStart > 1 ? 's' : ''}`

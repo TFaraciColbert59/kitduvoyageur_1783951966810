@@ -8,6 +8,7 @@
 
 import { resolveAdventureHref } from '@/features/hub/context/adventureLists';
 import type { AdventureGroups } from '@/features/hub/context/adventureLists';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /** Nature d'une aventure telle que le hub les range deja. */
 export type DrawerNature = 'possession' | 'sortie' | 'collectif';
@@ -17,7 +18,7 @@ export interface DrawerAction {
   readonly label: string;
   readonly description: string;
   readonly href: string;
-  readonly icon: string;
+  readonly icon: LKDVIconName;
   /** `primary` = le geste attendue ; `secondary` = l raccourci sans prep. */
   readonly variant: 'primary' | 'secondary';
 }
@@ -28,7 +29,7 @@ export interface DrawerRow {
   readonly title: string;
   readonly subtitle: string;
   readonly href: string;
-  readonly icon: string;
+  readonly icon: LKDVIconName;
 }
 
 export const DRAWER_TITLE = 'Tes aventures';
@@ -52,7 +53,7 @@ export const PREPARE_ACTION: DrawerAction = {
   label: 'Préparer une activité',
   description: 'Trois réponses suffisent : on construit tout le reste.',
   href: '/compas?nouvelle=1',
-  icon: 'route',
+  icon: 'itineraire',
   variant: 'primary',
 };
 
@@ -61,7 +62,7 @@ export const FREE_ACTION: DrawerAction = {
   label: 'Partir librement',
   description: 'Sans préparation, tu pars tout de suite.',
   href: '/partir-librement',
-  icon: 'navigation',
+  icon: 'gps',
   variant: 'secondary',
 };
 
@@ -70,10 +71,10 @@ export function drawerActions(): readonly DrawerAction[] {
   return [PREPARE_ACTION, FREE_ACTION];
 }
 
-const NATURE_ICON: Record<DrawerNature, string> = {
-  sortie: 'compass',
-  collectif: 'users',
-  possession: 'backpack',
+const NATURE_ICON: Record<DrawerNature, LKDVIconName> = {
+  sortie: 'boussole',
+  collectif: 'communaute',
+  possession: 'sac',
 };
 
 const NATURE_LABEL: Record<DrawerNature, string> = {

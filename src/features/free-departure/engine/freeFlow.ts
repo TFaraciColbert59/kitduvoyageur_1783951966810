@@ -10,6 +10,7 @@
  * s'affiche `—` » — ne doit pas dependre du fait qu'un traceur a repondu.
  */
 
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 import { activityById } from '@/features/adventure-prep/catalog';
 import { shortActivityLabel, type ActivityGuessConfidence } from '../engine/activityGuess';
 import { privacyRows, type FreePrivacyRow } from '../engine/privacy';
@@ -61,7 +62,7 @@ export interface LiveViewInput {
 
 export interface LiveView {
   activityLabel: string;
-  activityIcon: string;
+  activityIcon: LKDVIconName;
   clock: string;
   distance: string;
   pace: string;
@@ -92,7 +93,7 @@ export function resolveLiveView(input: LiveViewInput): LiveView {
     // Un identifiant inconnu ne doit pas faire disparaitre l'ecran : on
     // retombe sur l'honnetete (« Suivi libre ») plutot que de lever.
     activityLabel: def === null ? UNKNOWN_ACTIVITY : shortActivityLabel(def.label),
-    activityIcon: def?.icon ?? 'route',
+    activityIcon: def?.icon ?? 'itineraire',
     clock: formatClock(input.durationSeconds),
     distance: formatDistanceKm(input.distanceKm),
     pace: formatPace(paceFromSpeed(input.averageSpeedKmH)),
@@ -110,7 +111,7 @@ export function resolveLiveView(input: LiveViewInput): LiveView {
 export interface SummaryView {
   /** Activite retenue, ou `null` si rien n'est defendable. */
   label: string | null;
-  activityIcon: string;
+  activityIcon: LKDVIconName;
   /** `true` = deduction moteur, affichée comme une question. */
   isGuess: boolean;
   /** Justification composee de mesures. `null` quand l'utilisateur a choisi. */
@@ -169,7 +170,7 @@ export function buildSummaryView(state: FreeDepartureState): SummaryView {
 
   return {
     label,
-    activityIcon: manual?.icon ?? guess?.icon ?? 'route',
+    activityIcon: manual?.icon ?? guess?.icon ?? 'itineraire',
     isGuess,
     justification,
     guessConfidence: isGuess ? (guess?.confidence ?? null) : null,

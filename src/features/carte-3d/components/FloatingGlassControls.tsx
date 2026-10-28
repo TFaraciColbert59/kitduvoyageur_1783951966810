@@ -11,6 +11,7 @@ import {
 } from '../lib/supabaseTrailService';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import HeaderBackButton from '@/components/ui/HeaderBackButton';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface FloatingGlassControlsProps {
   currentTrail: Carte3DTrail;
@@ -165,16 +166,9 @@ export function FloatingGlassControls({
                 {currentTrail.name}
               </div>
             </div>
-            <svg
-              className={`w-4 h-4 ml-1 text-stone-500 transition-transform ${
-                trailMenuOpen ? 'rotate-180' : ''
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            <LKDVIcon name="bas" size={16} className={`w-4 h-4 ml-1 text-stone-500 transition-transform ${
+ trailMenuOpen ? 'rotate-180' : ''
+ }`} />
           </button>
 
           {/* Tiroir déroulant des sentiers */}
@@ -303,14 +297,7 @@ export function FloatingGlassControls({
                   }}
                   className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl border-2 border-dashed border-stone-300 dark:border-stone-700 hover:border-stone-500 text-xs font-semibold text-stone-700 dark:text-stone-300 hover:bg-stone-200/20 transition-all"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                    />
-                  </svg>
+                  <LKDVIcon name="exporter" size={16} className="w-4 h-4" />
                   <span>Importer un fichier GPX</span>
                 </button>
 
@@ -473,12 +460,7 @@ export function FloatingGlassControls({
               className="w-6 h-6 flex items-center justify-center transition-transform duration-200"
               style={{ transform: `rotate(${-bearing}deg)` }}
             >
-              <svg viewBox="0 0 24 24" className="w-5 h-5">
-                <polygon points="12,2 16,12 12,9" fill="#E11D48" />
-                <polygon points="12,2 8,12 12,9" fill="#FB7185" />
-                <polygon points="12,22 16,12 12,15" fill="#64748B" />
-                <polygon points="12,22 8,12 12,15" fill="#94A3B8" />
-              </svg>
+              <LKDVIcon name="boussole" size={20} className="w-5 h-5" />
             </div>
           </button>
 
@@ -486,22 +468,7 @@ export function FloatingGlassControls({
           <div className="relative">
             {isDownloadingOffline ? (
               <div className="h-11 px-3 rounded-2xl backdrop-blur-xl bg-stone-900 text-white shadow-lg flex items-center gap-2 text-xs font-mono">
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8H4z"
-                  />
-                </svg>
+                <LKDVIcon name="actualiser" size={16} className="w-4 h-4 animate-spin" />
                 <span>{downloadProgress}%</span>
               </div>
             ) : offlinePack ? (
@@ -534,14 +501,7 @@ export function FloatingGlassControls({
                 title="Télécharger cette zone pour un usage hors-ligne"
                 className="h-11 px-3 rounded-2xl backdrop-blur-xl bg-white/90 dark:bg-stone-950/90 border border-white/60 dark:border-white/15 shadow-lg flex items-center gap-1.5 text-xs font-semibold text-stone-900 dark:text-stone-100 hover:bg-stone-200/80 dark:hover:bg-stone-800/80 active:scale-95 transition-all"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
+                <LKDVIcon name="telecharger" size={16} className="w-4 h-4" />
                 <span className="hidden sm:inline">Hors-ligne</span>
               </button>
             )}

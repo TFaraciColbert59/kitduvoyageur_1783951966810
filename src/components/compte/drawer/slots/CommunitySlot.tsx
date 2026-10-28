@@ -11,6 +11,8 @@ import {
   type Companion,
   type CommunityPerson,
 } from '../cards/CompanionRow';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type CommunityLens = 'challenges' | 'clubs' | 'cordee';
 
@@ -183,11 +185,11 @@ function useCommunitySlotStyles() {
   }, []);
 }
 
-function CommunityEmpty({ icon, children }: { icon: string; children: React.ReactNode }) {
+function CommunityEmpty({ children }: { children: React.ReactNode }) {
   return (
     <div className="lkdv-slot-state" data-state="empty">
       <span className="lkdv-slot-state-ico" aria-hidden="true">
-        {icon}
+        <EmptyCircle size={18} />
       </span>
       {children}
     </div>
@@ -226,7 +228,7 @@ function ChallengesLens({ challenges }: { challenges: Challenge[] }) {
             ))}
           </ul>
         ) : (
-          <CommunityEmpty icon="○">
+          <CommunityEmpty>
             <p>Aucun défi en cours.</p>
           </CommunityEmpty>
         )}
@@ -242,9 +244,7 @@ function ChallengesLens({ challenges }: { challenges: Challenge[] }) {
             onClick={() => setDoneOpen((open) => !open)}
           >
             <span>Terminés ({done.length})</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+            <LKDVIcon name="bas" aria-hidden="true" />
           </button>
           {doneOpen ? (
             <ul className="lkdv-challenge-list lkdv-comm-done" id={doneId}>
@@ -270,7 +270,7 @@ function ClubsLens({ clubs }: { clubs: Club[] }) {
   if (clubs.length === 0) {
     return (
       <div className="lkdv-comm">
-        <CommunityEmpty icon="○">
+        <CommunityEmpty>
           <p>Aucun club.</p>
           <Link className="lkdv-comm-link" href="/clubs">
             Découvrir des clubs
@@ -325,10 +325,7 @@ function CordeeLens({
     <div className="lkdv-comm">
       <div className="lkdv-cordee-trust" role="note">
         <span className="lkdv-cordee-shield" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false">
-            <path d="M12 3.5 19 6v6c0 4.2-2.8 7.3-7 8.5-4.2-1.2-7-4.3-7-8.5V6l7-2.5Z" />
-            <path d="m9 12 2 2 4-4.2" />
-          </svg>
+          <LKDVIcon name="securite" />
         </span>
         <div className="lkdv-cordee-trust-txt">
           <b>Cordée de confiance</b>
@@ -372,7 +369,7 @@ function CordeeLens({
             ))}
           </ul>
         ) : (
-          <CommunityEmpty icon="○">
+          <CommunityEmpty>
             <p>Aucune sortie partagée.</p>
             <p className="lkdv-comm-hint">
               Les compagnons apparaissent après une sortie réelle en commun.

@@ -1,3 +1,4 @@
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 /**
  * UNIFIED PROGRESSION & TERRITORIAL RANKINGS
  * Domain Types & Interfaces
@@ -24,7 +25,7 @@ export interface SkillProgress {
   label: string;
   points: number;
   pct: number;
-  icon: string;
+  icon: LKDVIconName;
   description: string;
 }
 

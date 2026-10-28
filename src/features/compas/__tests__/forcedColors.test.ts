@@ -57,8 +57,10 @@ describe('compas.css : forced-colors', () => {
     }
   });
 
-  it('les icônes en masque gardent leur peinture (sinon elles disparaissent)', () => {
-    expect(rule("[style*='mask-image']")).toMatch(/forced-color-adjust:\s*none/);
+  it('les icônes LKDV gardent leur tracé (jamais repeint par le système)', () => {
+    // La feuille commune des icônes pose `forced-color-adjust: none` sur chaque `.lkdv-icon`, Compas compris.
+    const icons = readFileSync(join(process.cwd(), 'src/styles/lkdv-icons.css'), 'utf8');
+    expect(icons).toMatch(/\.lkdv-icon\s*\{[^}]*forced-color-adjust:\s*none/);
   });
 
   it('les états choisis (aria-pressed, aria-current, aria-checked, jour du calendrier) se voient sans teinte', () => {

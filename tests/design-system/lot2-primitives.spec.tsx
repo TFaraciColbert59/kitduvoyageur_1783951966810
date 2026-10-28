@@ -106,7 +106,7 @@ describe('Lot 2 Extended Primitives — Liquid Glass iOS 27', () => {
 
     it('gère le repli sans emoji pour un code invalide ou manquant', () => {
       const html = renderToStaticMarkup(<CountryFlag code="" />);
-      expect(html).toContain('<svg');
+      expect(html).toContain('/icons/lkdv/monde.svg');
       expect(html).not.toContain('🌐');
     });
   });

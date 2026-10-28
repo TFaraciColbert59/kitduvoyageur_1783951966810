@@ -1,12 +1,9 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { motion } from 'framer-motion';
 import { Badge, Card, EmptyState, ListItem } from '@/components/ui';
-import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
-import { ClockIcon as Clock } from '@/components/icons/clock';
 import type { KitListItem } from '@/features/materiel/services/getKits';
 import { EASE_DECELERATE } from '@/lib/animations/constants';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Props {
   kit: KitListItem | null;
@@ -85,9 +82,9 @@ export function KitsActiveCockpitCard({ kit }: Props) {
                       aria-hidden="true"
                     >
                       {isUnowned ? (
-                        <Clock size={9} />
+                        <LKDVIcon name="duree" size={9} />
                       ) : (
-                        <Icon name="check" size={10} strokeWidth={3} />
+                        <LKDVIcon name="valider" size={10} />
                       )}
                     </span>
                   }
@@ -99,7 +96,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
                   metadata={
                     isUnowned ? (
                       <Badge tone="info" className="gap-0.5 px-1 py-0.5 text-[8px] font-bold">
-                        <ShoppingBag size={8} aria-hidden="true" />
+                        <LKDVIcon name="boutique" size={8} aria-hidden="true" />
                         En commande
                       </Badge>
                     ) : (

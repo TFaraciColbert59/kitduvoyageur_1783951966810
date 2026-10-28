@@ -242,13 +242,13 @@ describe('Hub — tiroirs lateraux mobile', () => {
 
   it('reduit le cockpit aventure en tiroir cockpit sur le bord droit', () => {
     expect(hubShell).toContain('<HubEdgeDrawer kind="cockpit" slot="bottom"');
-    expect(hubShell).not.toContain('icon={Compass}');
-    expect(hubEdgeDrawer).toContain("cockpit: { icon: Compass");
+    expect(hubShell).not.toContain("icon={lkdvIcon('boussole')}");
+    expect(hubEdgeDrawer).toContain("cockpit: { icon: lkdvIcon('boussole')");
   });
 
   it('reduit l etat et la progression en deux tiroirs sans casser la frontiere RSC', () => {
     // MobileAdventureHub doit rester un Server Component : les tuiles portent
-    // des references de composants lucide, incompatibles avec un prop de
+    // des references de composants d'icones, incompatibles avec un prop de
     // fonction traverse vers un Client Component.
     expect(mobileAdventureHub.trimStart().startsWith("'use client'")).toBe(false);
     expect(mobileAdventureHub).toMatch(/<HubEdgeDrawer\s+kind="progression"\s+slot="top"/);
@@ -258,8 +258,8 @@ describe('Hub — tiroirs lateraux mobile', () => {
 
   it('resout les icones des poignees dans le composant client via KIND_META', () => {
     expect(hubEdgeDrawer).toContain('const KIND_META');
-    expect(hubEdgeDrawer).toContain("status: { icon: CircleCheckBig");
-    expect(hubEdgeDrawer).toContain("progression: { icon: Trophy");
+    expect(hubEdgeDrawer).toContain("status: { icon: lkdvIcon('valider')");
+    expect(hubEdgeDrawer).toContain("progression: { icon: lkdvIcon('recompense')");
     expect(hubEdgeDrawer).toContain('kind: HubEdgeKind;');
   });
 

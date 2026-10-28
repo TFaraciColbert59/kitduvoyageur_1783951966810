@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUserPresence } from '@/hooks/useUserPresence';
-import Icon from '@/components/ui/AppIcon';
 import {
   Badge,
   Button,
@@ -30,6 +29,8 @@ import {
   type CompteBadgeItem,
   type CompteActiviteItem,
 } from '@/lib/supabase/queries-compte';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 interface PublicMobileProfileViewProps {
   profile: CompteUserProfile;
@@ -44,12 +45,12 @@ interface PublicMobileProfileViewProps {
 type TabKey = 'tout' | 'posts' | 'carnets' | 'clubs' | 'badges';
 type ViewMode = 'grid' | 'list';
 
-const ACTIVITY_ICONS: Record<CompteActiviteItem['icon_type'], string> = {
-  like: 'heart',
-  badge: 'award',
-  order: 'shopping-bag',
-  comment: 'message-square',
-  follow: 'user-plus',
+const ACTIVITY_ICONS: Record<CompteActiviteItem['icon_type'], LKDVIconName> = {
+  like: 'favoris',
+  badge: 'badge',
+  order: 'boutique',
+  comment: 'messages',
+  follow: 'amis',
 };
 
 export default function PublicMobileProfileView({
@@ -205,7 +206,7 @@ export default function PublicMobileProfileView({
                   onReport();
                 }}
               >
-                <Icon name="flag" size={15} />
+                <LKDVIcon name="signalement" size={15} />
               </IconButton>
             )}
             <IconButton
@@ -217,7 +218,7 @@ export default function PublicMobileProfileView({
                 onShare();
               }}
             >
-              <Icon name="share2" size={15} />
+              <LKDVIcon name="partager" size={15} />
             </IconButton>
           </span>
         }
@@ -235,7 +236,7 @@ export default function PublicMobileProfileView({
                       alt={fullName}
                       fill
                       className="w-full h-full"
-                      fallbackIcon={<Icon name="user" size={22} />}
+                      fallbackIcon={<LKDVIcon name="profil" size={22} />}
                     />
                   ) : (
                     <span className="text-2xl font-bold font-serif text-[color:var(--lkv-text-primary)]">
@@ -320,10 +321,7 @@ export default function PublicMobileProfileView({
 
             {profile.location && (
               <div className="flex items-center gap-1 text-xs pt-1 text-[color:var(--lkv-text-muted)] font-medium">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
+                <LKDVIcon name="point_interet" size={12} aria-hidden="true" />
                 <span>{profile.location}</span>
               </div>
             )}
@@ -348,7 +346,7 @@ export default function PublicMobileProfileView({
               href={`/messagerie?dest=${profile.id}`}
                   className="inline-flex flex-1 items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
             >
-              <Icon name="message-square" size={13} />
+              <LKDVIcon name="messages" size={13} />
               Message
             </Link>
             )}
@@ -362,7 +360,7 @@ export default function PublicMobileProfileView({
                 onShare();
               }}
             >
-              <Icon name="share2" size={14} />
+              <LKDVIcon name="partager" size={14} />
             </IconButton>
           </div>
           {followError && <p role="alert" className="px-1 pt-2 text-xs text-[color:var(--lkv-danger)]">{followError}</p>}
@@ -386,7 +384,7 @@ export default function PublicMobileProfileView({
                         alt={h.label}
                         fill
                         className="w-full h-full"
-                        fallbackIcon={<Icon name="book-open" size={16} />}
+                        fallbackIcon={<LKDVIcon name="preparateur" size={16} />}
                       />
                     </div>
                   </div>
@@ -434,12 +432,7 @@ export default function PublicMobileProfileView({
                   setViewMode('grid');
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
-                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                </svg>
+                <LKDVIcon name="galerie" size={14} aria-hidden="true" />
               </IconButton>
               <IconButton
                 variant={viewMode === 'list' ? 'solid' : 'ghost'}
@@ -451,14 +444,7 @@ export default function PublicMobileProfileView({
                   setViewMode('list');
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
-                  <line x1="8" y1="6" x2="21" y2="6" />
-                  <line x1="8" y1="12" x2="21" y2="12" />
-                  <line x1="8" y1="18" x2="21" y2="18" />
-                  <circle cx="4" cy="6" r="1.2" fill="currentColor" />
-                  <circle cx="4" cy="12" r="1.2" fill="currentColor" />
-                  <circle cx="4" cy="18" r="1.2" fill="currentColor" />
-                </svg>
+                <LKDVIcon name="checklist_voyage" size={14} aria-hidden="true" />
               </IconButton>
             </div>
           )}
@@ -526,7 +512,7 @@ export default function PublicMobileProfileView({
                       alt={club.name}
                       fill
                       className="w-full h-full"
-                      fallbackIcon={<Icon name="tent" size={16} />}
+                      fallbackIcon={<LKDVIcon name="tente" size={16} />}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -565,7 +551,7 @@ export default function PublicMobileProfileView({
                     alt={c.title}
                     fill
                     className="absolute inset-0"
-                    fallbackIcon={<Icon name="book-open" size={16} />}
+                    fallbackIcon={<LKDVIcon name="preparateur" size={16} />}
                   />
                   <div className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white text-[10px]">
                     📖
@@ -591,7 +577,7 @@ export default function PublicMobileProfileView({
                         alt={c.title}
                         fill
                         className="w-full h-full"
-                        fallbackIcon={<Icon name="book-open" size={16} />}
+                        fallbackIcon={<LKDVIcon name="preparateur" size={16} />}
                       />
                     </div>
                     <div className="flex-1 flex flex-col justify-between py-0.5">
@@ -632,7 +618,7 @@ export default function PublicMobileProfileView({
                       key={item.id}
                       leading={
                         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-                          <Icon name={ACTIVITY_ICONS[item.icon_type] ?? 'compass'} size={14} />
+                          <LKDVIcon name={ACTIVITY_ICONS[item.icon_type] ?? 'boussole'} size={14} />
                         </span>
                       }
                       title={item.text}

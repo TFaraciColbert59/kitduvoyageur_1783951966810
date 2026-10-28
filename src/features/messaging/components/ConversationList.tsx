@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, EmptyState, IconButton, SearchField, Skeleton, Tabs } from '@/components/ui';
 import type { Conversation } from '../types/messaging.types';
@@ -8,6 +6,7 @@ import { ConversationRow, type SwipeAction } from './ConversationRow';
 import { ConversationOptionsSheet } from './ConversationOptionsSheet';
 import { messagingService } from '../services/messagingService';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -216,7 +215,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
             className="shrink-0 min-h-[44px] min-w-[44px]"
             title="Nouvelle discussion"
           >
-            <Icon name="plus" className="size-5" aria-hidden="true" />
+            <LKDVIcon name="plus" className="size-5" aria-hidden="true" />
           </IconButton>
         </div>
       </div>
@@ -249,7 +248,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                         Démarrer une discussion
                       </span>
                     </span>
-                    <Icon name="send" size={14} className="shrink-0 text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+                    <LKDVIcon name="partager" size={14} className="shrink-0 text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
                   </button>
                 ))}
               </div>
@@ -285,7 +284,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         ) : filteredConversations.length === 0 ? (
           <EmptyState
             compact
-            icon={<Icon name="message-square" size={28} aria-hidden="true" />}
+            icon={<LKDVIcon name="messages" size={28} aria-hidden="true" />}
             title={
               debouncedSearch
                 ? 'Aucun résultat'

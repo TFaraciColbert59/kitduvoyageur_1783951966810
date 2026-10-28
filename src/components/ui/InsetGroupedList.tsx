@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface InsetGroupedListProps {
   children: React.ReactNode;
@@ -94,8 +94,8 @@ export function InsetGroupedItem({
           </span>
         )}
         {chevron && (
-          <Icon
-            name="chevron-right"
+          <LKDVIcon
+            name="suivant"
             size={16}
             className="text-[color:var(--glass-label-secondary)] opacity-60"
           />

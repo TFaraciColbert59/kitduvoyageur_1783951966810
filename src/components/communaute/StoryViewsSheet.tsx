@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Button, Card, IconButton } from '@/components/ui';
-import Icon from '@/components/ui/AppIcon';
 import { lkvAlert } from '@/components/ui/dialogs';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type ViewRow = {
   viewer_id: string;
@@ -135,7 +135,7 @@ export default function StoryViewsSheet({
             aria-label="Fermer les vues"
             onClick={onClose}
           >
-            <Icon name="x" size={16} />
+            <LKDVIcon name="fermer" size={16} />
           </IconButton>
         </div>
 
@@ -192,7 +192,7 @@ export default function StoryViewsSheet({
                   disabled={hidingId === row.viewer_id}
                   onClick={() => void handleHide(row.viewer_id)}
                 >
-                  <Icon name="user-minus" size={16} />
+                  <LKDVIcon name="amis" size={16} />
                 </IconButton>
               </li>
             ))}

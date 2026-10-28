@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { Button, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { GearCardData } from '../../../mobile/gearEngine';
 import { LiveArrivalReveal } from '../../live/LiveArrivalReveal';
 import { useLiveArrivalReveal } from '../../live/useLiveArrivalReveal';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface GearPhotoCarouselProps {
   cards: GearCardData[];
@@ -63,7 +63,7 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
             aria-label="Éléments précédents"
             className="h-10 w-10 shrink-0"
           >
-            <ArrowLeft size={16} aria-hidden="true" />
+            <LKDVIcon name="retour" size={16} aria-hidden="true" />
           </IconButton>
           <IconButton
             variant="solid"
@@ -72,7 +72,7 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
             aria-label="Éléments suivants"
             className="h-10 w-10 shrink-0"
           >
-            <ArrowRight size={16} aria-hidden="true" />
+            <LKDVIcon name="suivant" size={16} aria-hidden="true" />
           </IconButton>
         </div>
       </div>
@@ -131,7 +131,7 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
 
               {card.isPacked && (
                 <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-[color:var(--lkv-text-primary)] shadow-2xs">
-                  <Check size={11} aria-hidden="true" />
+                  <LKDVIcon name="valider" size={11} aria-hidden="true" />
                   Prêt
                 </span>
               )}

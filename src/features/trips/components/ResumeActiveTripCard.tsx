@@ -1,11 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import { IconButton } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const LINK_SECONDARY_CLASS =
   'inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]';
@@ -49,18 +48,18 @@ export function ResumeActiveTripCard() {
               href={tripSectionHref(activeTrip.slug, 'overview')}
               className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:brightness-[1.05]"
             >
-              <Icon name="compass" size={14} />
+              <LKDVIcon name="boussole" size={14} />
               <span>Reprendre le voyage</span>
-              <Icon name="arrow-right" size={13} />
+              <LKDVIcon name="suivant" size={13} />
             </Link>
 
             <Link href={`${tripSectionHref(activeTrip.slug, 'overview')}?phase=live`} className={LINK_SECONDARY_CLASS}>
-              <Icon name="radio" size={13} />
+              <LKDVIcon name="live" size={13} />
               <span>Cockpit</span>
             </Link>
 
             <Link href="/hub" className={LINK_SECONDARY_CLASS}>
-              <Icon name="package" size={13} />
+              <LKDVIcon name="inventaire" size={13} />
               <span>Mon sac</span>
             </Link>
 
@@ -72,7 +71,7 @@ export function ResumeActiveTripCard() {
               aria-label="Fermer l'expédition active"
               title="Désactiver l'expédition active"
             >
-              <Icon name="x" size={14} />
+              <LKDVIcon name="fermer" size={14} />
             </IconButton>
           </div>
         </div>

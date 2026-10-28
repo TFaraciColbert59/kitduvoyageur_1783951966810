@@ -2,21 +2,21 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Camera, Image as ImageIcon, Map, Mountain, Plus, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import { DrawerButton, OverlaySheet } from '../overlay/OverlaySheet';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type CreateType = 'post' | 'story' | 'carnet' | 'kit' | 'club' | 'trip';
 
 const CATALOG = [
-  { id: 'post' as const, title: 'Publication', subtitle: 'Photo, texte ou question', icon: <ImageIcon size={20} /> },
-  { id: 'story' as const, title: 'Story', subtitle: 'Visible 24 h', icon: <Camera size={20} /> },
-  { id: 'carnet' as const, title: 'Carnet', subtitle: 'Récit d’une aventure', icon: <BookOpen size={20} /> },
-  { id: 'kit' as const, title: 'Kit', subtitle: 'Compose ton sac', icon: <Mountain size={20} /> },
-  { id: 'club' as const, title: 'Club', subtitle: 'Rassemble ton groupe', icon: <Users size={20} /> },
-  { id: 'trip' as const, title: 'Voyage', subtitle: 'Prépare une aventure', icon: <Map size={20} /> },
+  { id: 'post' as const, title: 'Publication', subtitle: 'Photo, texte ou question', icon: <LKDVIcon name="photo" size={20} /> },
+  { id: 'story' as const, title: 'Story', subtitle: 'Visible 24 h', icon: <LKDVIcon name="camera" size={20} /> },
+  { id: 'carnet' as const, title: 'Carnet', subtitle: 'Récit d’une aventure', icon: <LKDVIcon name="preparateur" size={20} /> },
+  { id: 'kit' as const, title: 'Kit', subtitle: 'Compose ton sac', icon: <LKDVIcon name="montagne" size={20} /> },
+  { id: 'club' as const, title: 'Club', subtitle: 'Rassemble ton groupe', icon: <LKDVIcon name="communaute" size={20} /> },
+  { id: 'trip' as const, title: 'Voyage', subtitle: 'Prépare une aventure', icon: <LKDVIcon name="carte" size={20} /> },
 ];
 
 function errorMessage(error: unknown) {
@@ -88,7 +88,7 @@ export function CreateDrawer({ initialType, onClose, onCreated }: CreateDrawerPr
             <button key={item.id} type="button" className="lkdv-create-card" onClick={() => setType(item.id)}>
               <span className="lkdv-create-icon">{item.icon}</span>
               <span><b>{item.title}</b><small>{item.subtitle}</small></span>
-              <Plus size={16} aria-hidden="true" />
+              <LKDVIcon name="plus" size={16} aria-hidden="true" />
             </button>
           ))}
         </div>

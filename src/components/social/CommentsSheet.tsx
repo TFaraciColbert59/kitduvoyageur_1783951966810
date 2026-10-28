@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 import { Badge, Button, Card, EmptyState, IconButton, Sheet, Skeleton } from '@/components/ui';
-import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CommentData {
   id: string;
@@ -135,7 +135,7 @@ export default function CommentsSheet({
         {submitting ? (
           <span className="text-[length:var(--lkv-text-caption-2)] font-bold">...</span>
         ) : (
-          <Icon name="PaperAirplaneIcon" size={16} aria-hidden="true" />
+          <LKDVIcon name="partager" size={16} aria-hidden="true" />
         )}
       </IconButton>
     </form>
@@ -178,7 +178,7 @@ export default function CommentsSheet({
         ) : comments.length === 0 ? (
           <EmptyState
             compact
-            icon={<Icon name="ChatBubbleLeftIcon" size={28} aria-hidden="true" />}
+            icon={<LKDVIcon name="messages" size={28} aria-hidden="true" />}
             title="Aucun commentaire pour le moment"
             description="Soyez le premier à poser une question ou partager votre avis !"
           />
@@ -243,7 +243,7 @@ export default function CommentsSheet({
                             onDeleteComment(rootComment.id);
                           }}
                         >
-                          <Icon name="TrashIcon" size={14} aria-hidden="true" />
+                          <LKDVIcon name="supprimer" size={14} aria-hidden="true" />
                           Supprimer
                         </Button>
                       )}
@@ -259,10 +259,9 @@ export default function CommentsSheet({
                       onClick={() => handleLikeToggle(rootComment)}
                       aria-label="Aimer le commentaire"
                     >
-                      <Icon
-                        name={rootLikedState.liked ? 'HeartIconSolid' : 'HeartIcon'}
+                      <LKDVIcon
+                        name={rootLikedState.liked ? 'favoris' : 'favoris'}
                         size={16}
-                        color={rootLikedState.liked ? 'var(--lkv-danger)' : 'var(--lkv-text-muted)'}
                         aria-hidden="true"
                       />
                     </IconButton>
@@ -339,7 +338,7 @@ export default function CommentsSheet({
                                     onDeleteComment(reply.id);
                                   }}
                                 >
-                                  <Icon name="TrashIcon" size={13} aria-hidden="true" />
+                                  <LKDVIcon name="supprimer" size={13} aria-hidden="true" />
                                   Supprimer
                                 </Button>
                               )}
@@ -355,10 +354,9 @@ export default function CommentsSheet({
                               onClick={() => handleLikeToggle(reply)}
                               aria-label="Aimer la réponse"
                             >
-                              <Icon
-                                name={replyLikedState.liked ? 'HeartIconSolid' : 'HeartIcon'}
+                              <LKDVIcon
+                                name={replyLikedState.liked ? 'favoris' : 'favoris'}
                                 size={14}
-                                color={replyLikedState.liked ? 'var(--lkv-danger)' : 'var(--lkv-text-muted)'}
                                 aria-hidden="true"
                               />
                             </IconButton>

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import Icon from '@/components/ui/Icon';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { useSheetEscape } from './useSheetEscape';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CarnetShareSheetProps {
   open: boolean;
@@ -73,7 +73,7 @@ export function CarnetShareSheet({ open, url, title, onClose, onCopied }: Carnet
           style={{ width: '100%' }}
           onClick={() => void copy()}
         >
-          <Icon name="link" size={16} aria-hidden="true" />
+          <LKDVIcon name="lien" size={16} aria-hidden="true" />
           Copier le lien
         </button>
         {canNativeShare ? (
@@ -83,7 +83,7 @@ export function CarnetShareSheet({ open, url, title, onClose, onCopied }: Carnet
             style={{ width: '100%' }}
             onClick={() => void nativeShare()}
           >
-            <Icon name="send" size={16} aria-hidden="true" />
+            <LKDVIcon name="partager" size={16} aria-hidden="true" />
             Partager…
           </button>
         ) : null}
@@ -99,7 +99,7 @@ export function CarnetShareSheet({ open, url, title, onClose, onCopied }: Carnet
               <span className="lkdv-overlay-row-main">
                 <b>{target.label}</b>
               </span>
-              <Icon name="external-link" size={15} aria-hidden="true" />
+              <LKDVIcon name="lien" size={15} aria-hidden="true" />
             </a>
           ))}
         </div>

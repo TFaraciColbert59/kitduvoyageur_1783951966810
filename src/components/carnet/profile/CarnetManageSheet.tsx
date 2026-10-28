@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Icon from '@/components/ui/Icon';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/contexts/ToastContext';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { useSheetEscape } from './useSheetEscape';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CarnetManageSheetProps {
   open: boolean;
@@ -92,7 +92,7 @@ export function CarnetManageSheet({
             <b>Exporter le carnet</b>
             <small>JSON complet — récit, étapes, moments, kit</small>
           </span>
-          <Icon name="download" size={16} aria-hidden="true" />
+          <LKDVIcon name="telecharger" size={16} aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -105,7 +105,7 @@ export function CarnetManageSheet({
             <b>Copier le lien</b>
             <small>{url}</small>
           </span>
-          <Icon name="link" size={16} aria-hidden="true" />
+          <LKDVIcon name="lien" size={16} aria-hidden="true" />
         </button>
       </div>
 
@@ -140,7 +140,7 @@ export function CarnetManageSheet({
               <b>Supprimer le carnet</b>
               <small>Action définitive</small>
             </span>
-            <Icon name="trash2" size={16} aria-hidden="true" />
+            <LKDVIcon name="supprimer" size={16} aria-hidden="true" />
           </button>
         )}
       </div>

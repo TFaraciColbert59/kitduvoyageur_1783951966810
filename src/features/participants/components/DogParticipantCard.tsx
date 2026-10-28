@@ -3,7 +3,7 @@
 import React from 'react';
 import { DogParticipant } from '../types/participant.types';
 import { Badge, Card, IconButton } from '@/components/ui';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface DogParticipantCardProps {
   dog: DogParticipant;
@@ -48,7 +48,7 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
             size="sm"
             onClick={() => onRemove(dog.id)}
           >
-            <Icon name="x" size={14} />
+            <LKDVIcon name="fermer" size={14} />
           </IconButton>
         )}
       </div>

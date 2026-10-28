@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { useToast } from '@/contexts/ToastContext';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 import { usePostComments, type FeedComment } from './usePostComments';

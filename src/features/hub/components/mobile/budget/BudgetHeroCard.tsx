@@ -1,12 +1,11 @@
 'use client';
-
-import { Plus } from 'lucide-react';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import type { BudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { budgetProgress } from '../../../mobile/budgetEngine';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
 import { BudgetRing } from './BudgetRing';
 import { Button, Badge } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface BudgetHeroCardProps {
   summary: BudgetSummary;
@@ -76,7 +75,7 @@ export function BudgetHeroCard({ summary, isMulti, remaining, onAdd }: BudgetHer
         onClick={onAdd}
         className="mt-4 inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
       >
-        <Plus size={15} aria-hidden="true" />
+        <LKDVIcon name="plus" size={15} aria-hidden="true" />
         Ajouter une dépense
       </Button>
     </section>

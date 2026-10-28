@@ -10,7 +10,6 @@
  * transform/opacité ≤ 220 ms, rayons/ombres système uniquement.
  */
 import { useMemo } from 'react';
-import Icon from '@/components/ui/Icon';
 import {
   buildCockpitView,
   type CockpitActionKind,
@@ -22,6 +21,8 @@ import { RECALC_REASONS } from '../domain/recalcTriggers';
 import { SEVERITY_COLORS, SEVERITY_LABELS } from '@/features/terrain-live/lib/terrainDisplay';
 import type { TerrainSeverity } from '@/features/adventure-intelligence/schemas/live.schema';
 import OfflineBanner from './OfflineBanner';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 export interface AdventureCockpitProps {
   input: CockpitInput;
@@ -47,16 +48,16 @@ const TONE_BAR_CLASSES: Record<CockpitTone, string> = {
   critical: 'bg-[var(--lkv-danger)]',
 };
 
-const ACTION_ICONS: Record<CockpitActionKind, string> = {
-  decide: 'check-circle',
-  navigate: 'navigation',
-  report: 'alert-triangle',
+const ACTION_ICONS: Record<CockpitActionKind, LKDVIconName> = {
+  decide: 'valider',
+  navigate: 'gps',
+  report: 'alerte',
 };
 
-const SEVERITY_ICONS: Record<TerrainSeverity, string> = {
-  critical: 'alert-triangle',
-  warning: 'alert-circle',
-  info: 'info',
+const SEVERITY_ICONS: Record<TerrainSeverity, LKDVIconName> = {
+  critical: 'alerte',
+  warning: 'alerte',
+  info: 'informations',
 };
 
 const CONFIDENCE_LABELS: Record<string, string> = {
@@ -178,7 +179,7 @@ export function AdventureCockpit({
                     : 'bg-[var(--lkv-surface-card)] text-[var(--lkv-text-primary)] shadow-sm'
                 }`}
               >
-                <Icon name={ACTION_ICONS[action.kind]} size={17} aria-hidden="true" />
+                <LKDVIcon name={ACTION_ICONS[action.kind]} size={17} aria-hidden="true" />
                 <span className="flex-1">{action.label}</span>
               </button>
             </li>
@@ -198,7 +199,7 @@ export function AdventureCockpit({
                 className="h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: SEVERITY_COLORS[alert.severity] }}
               />
-              <Icon
+              <LKDVIcon
                 name={SEVERITY_ICONS[alert.severity]}
                 size={14}
                 style={{ color: SEVERITY_COLORS[alert.severity] }}

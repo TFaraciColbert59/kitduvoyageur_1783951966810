@@ -2,9 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
-import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import { Button, Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ClubVerticalTabsProps {
   activeTab: ClubSectionId;
@@ -78,7 +77,7 @@ export default function ClubVerticalTabs({
             href="/clubs/nouveau"
             className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
           >
-            <Icon name="PlusIcon" size={12} aria-hidden="true" />
+            <LKDVIcon name="plus" size={12} aria-hidden="true" />
             <span>Nouveau</span>
           </Link>
 
@@ -86,7 +85,7 @@ export default function ClubVerticalTabs({
             href="/communaute"
             className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
           >
-            <Icon name="UserGroupIcon" size={12} aria-hidden="true" />
+            <LKDVIcon name="groupes" size={12} aria-hidden="true" />
             <span>Tous</span>
           </Link>
         </div>
@@ -109,7 +108,7 @@ export default function ClubVerticalTabs({
               aria-pressed={isActive}
             >
               <span className="truncate text-left">{tab.label}</span>
-              {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
+              {isActive && <LKDVIcon name="suivant" size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
             </Button>
           );
         })}

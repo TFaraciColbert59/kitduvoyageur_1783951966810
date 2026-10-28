@@ -4,13 +4,13 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
-import Icon from '@/components/ui/AppIcon';
 import AppImage from '@/components/ui/AppImage';
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { Spinner } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface EventExpense {
   id: string;
@@ -133,7 +133,7 @@ function EventDetailModal({
           <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
           <button onClick={onClose} aria-label="Fermer" className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11 absolute top-4 right-4">
-            <Icon name="XMarkIcon" size={18} className="text-white" />
+            <LKDVIcon name="fermer" size={18} className="text-white" />
           </button>
           <div className="absolute top-4 left-4 flex gap-2">
             <span className={`text-[10px] font-700 px-2.5 py-1 rounded-full ${cfg.color}`}>{event.emoji} {cfg.label}</span>
@@ -228,12 +228,12 @@ function EventDetailModal({
                 className="glass-capsule-btn w-full justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <Icon name="BanknotesIcon" size={16} />
+                  <LKDVIcon name="budget" size={16} />
                   <span className="font-600 text-foreground">Cagnotte groupe</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-700 text-foreground">{event.shared_kitty}€ / {event.kitty_goal}€</span>
-                  <Icon name={showKitty ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={14} className="text-muted-foreground" />
+                  <LKDVIcon name={showKitty ? 'haut' : 'bas'} size={14} className="text-muted-foreground" />
                 </div>
               </button>
               <div className="mt-2 px-1">
@@ -326,7 +326,7 @@ function EventCard({ event, onToggleRegister, onViewDetail, onCancel, currentUse
         </div>
         <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
           <div className="bg-[color:var(--glass-bg-medium)] backdrop-blur-sm rounded-[var(--lkv-radius-md)] px-4 py-2 flex items-center gap-2">
-            <Icon name="EyeIcon" size={16} className="text-white" />
+            <LKDVIcon name="vue" size={16} className="text-white" />
             <span className="text-white text-sm font-600">Voir les détails</span>
           </div>
         </div>
@@ -373,12 +373,12 @@ function EventCard({ event, onToggleRegister, onViewDetail, onCancel, currentUse
             className="glass-capsule-btn w-full justify-between"
           >
             <div className="flex items-center gap-2">
-              <Icon name="BanknotesIcon" size={14} />
+              <LKDVIcon name="budget" size={14} />
               <span className="text-sm font-600 text-foreground">Cagnotte groupe</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm font-700 text-foreground">{event.shared_kitty}€ / {event.kitty_goal}€</span>
-              <Icon name={showKitty ? 'ChevronUpIcon' : 'ChevronDownIcon'} size={14} className="text-muted-foreground" />
+              <LKDVIcon name={showKitty ? 'haut' : 'bas'} size={14} className="text-muted-foreground" />
             </div>
           </button>
           <div className="mt-2 px-1">
@@ -412,7 +412,7 @@ function EventCard({ event, onToggleRegister, onViewDetail, onCancel, currentUse
             onClick={() => onViewDetail(event)}
             className="flex items-center gap-2 px-4 py-2.5 glass-capsule-btn secondary text-sm"
           >
-            <Icon name="EyeIcon" size={14} />
+            <LKDVIcon name="vue" size={14} />
             Détails
           </button>
           <button
@@ -669,7 +669,7 @@ export default function EvenementsPage() {
               </p>
             </div>
             <button onClick={() => setShowCreateModal(true)} className="glass-capsule-btn primary flex-shrink-0 self-start lg:self-auto">
-              <Icon name="PlusIcon" size={16} />
+              <LKDVIcon name="plus" size={16} />
               Organiser une sortie
             </button>
           </div>
@@ -713,7 +713,7 @@ export default function EvenementsPage() {
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
-                <Icon name="CalendarIcon" size={40} className="mx-auto mb-3 opacity-30" />
+                <LKDVIcon name="calendrier" size={40} className="mx-auto mb-3 opacity-30" />
                 <p className="font-display font-700 text-foreground mb-1">Aucun événement</p>
                 <p className="text-sm">Soyez le premier à organiser une sortie !</p>
               </div>
@@ -727,7 +727,7 @@ export default function EvenementsPage() {
           <aside className="space-y-6">
             <div className="glass p-5">
               <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                <Icon name="ShieldCheckIcon" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
+                <LKDVIcon name="securite" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
                 Trust Score & sécurité
               </h3>
               <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
@@ -748,7 +748,7 @@ export default function EvenementsPage() {
             </div>
             <div className="glass p-5">
               <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                <Icon name="BanknotesIcon" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
+                <LKDVIcon name="budget" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
                 Cagnotte intégrée
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -853,7 +853,7 @@ export default function EvenementsPage() {
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-700 text-foreground text-lg">Organiser une sortie</h2>
               <button onClick={() => setShowCreateModal(false)} aria-label="Fermer" className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11">
-                <Icon name="XMarkIcon" size={18} />
+                <LKDVIcon name="fermer" size={18} />
               </button>
             </div>
             {!user ? (

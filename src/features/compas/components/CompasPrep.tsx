@@ -1,9 +1,8 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { useTranslation } from '@/lib/i18n/context';
 import type { TranslationKey } from '@/lib/i18n/translate';
 import { AiNotice } from './AiNotice';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type PrepStage = 'understand' | 'itinerary' | 'rest' | 'done' | 'error' | 'stopped';
 
@@ -76,7 +75,7 @@ export function CompasPrep({
           return (
             <li key={s.id} className="cp-prep__step" data-state={state}>
               <span className="cp-prep__dot" aria-hidden="true">
-                {state === 'done' ? <Icon name="check" size={14} /> : state === 'run' ? <span className="cp-prep__spin" /> : null}
+                {state === 'done' ? <LKDVIcon name="valider" size={14} /> : state === 'run' ? <span className="cp-prep__spin" /> : null}
               </span>
               <span className="cp-prep__t">
                 <b>{t(s.label)}</b>
@@ -107,7 +106,7 @@ export function CompasPrep({
       <div className="cp-actions">
         {finished && (
           <button type="button" className="cp-btn cp-btn--pg cp-btn--block" onClick={onClose}>
-            <Icon name="check" size={16} />
+            <LKDVIcon name="valider" size={16} />
             {t('compas.prep.viewAdventure')}
           </button>
         )}

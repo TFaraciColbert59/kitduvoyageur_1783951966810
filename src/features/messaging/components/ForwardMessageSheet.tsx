@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Card, EmptyState, ListItem, SearchField, Skeleton } from '@/components/ui';
@@ -8,6 +6,7 @@ import type { Conversation, Message } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ForwardMessageSheetProps {
   isOpen: boolean;
@@ -135,7 +134,7 @@ export const ForwardMessageSheet: React.FC<ForwardMessageSheetProps> = ({
                 }
                 title={title}
                 subtitle={isGroup ? 'Groupe de voyage' : conv.other_member?.full_name || 'Voyageur LKDV'}
-                trailing={<Icon name="send" className="size-4 text-[color:var(--lkv-text-muted)]" aria-hidden="true" />}
+                trailing={<LKDVIcon name="partager" className="size-4 text-[color:var(--lkv-text-muted)]" aria-hidden="true" />}
               />
             );
           })

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Download, Pencil, Share2, ShieldCheck, Trash2, X } from 'lucide-react';
 import type { OutingDetail, OutingVisibility } from '@/features/compte/server/sorties';
 import { ElevationProfile, TraceMap, formatDate, formatDuration, formatNumber } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface OutingSummaryProps {
   detail: OutingDetail;
@@ -51,7 +51,7 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
           <div className="lkdv-sortie-hero-badges">
             {detail.verified ? (
               <span className="lkdv-sortie-badge proof">
-                <ShieldCheck size={12} aria-hidden="true" /> Empreinte vérifiée
+                <LKDVIcon name="securite" size={12} aria-hidden="true" /> Empreinte vérifiée
               </span>
             ) : null}
             <span className={`lkdv-sortie-badge status ${detail.status}`}>{STATUS_LABEL[detail.status]}</span>
@@ -133,11 +133,11 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
           {detail.notes ? <p className="lkdv-sortie-notes">{detail.notes}</p> : null}
           <div className="lkdv-sortie-actions">
             <button type="button" className="lkdv-sortie-btn primary" onClick={onShare}>
-              <Share2 size={15} aria-hidden="true" /> Partager
+              <LKDVIcon name="partager" size={15} aria-hidden="true" /> Partager
             </button>
             {detail.canEdit ? (
               <button type="button" className="lkdv-sortie-btn ghost" onClick={() => setEditing(true)}>
-                <Pencil size={15} aria-hidden="true" /> Modifier
+                <LKDVIcon name="modifier" size={15} aria-hidden="true" /> Modifier
               </button>
             ) : null}
             <button
@@ -147,7 +147,7 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
               disabled={detail.points.length < 2}
               title={detail.points.length < 2 ? 'Aucune trace GPS rattachée' : 'Télécharger le GPX'}
             >
-              <Download size={15} aria-hidden="true" /> GPX
+              <LKDVIcon name="telecharger" size={15} aria-hidden="true" /> GPX
             </button>
           </div>
         </>
@@ -180,16 +180,16 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
               <p>Supprimer définitivement cette sortie, ses photos, son matériel et ses échanges ?</p>
               <div className="lkdv-sortie-edit-actions">
                 <button type="button" className="lkdv-sortie-btn ghost" onClick={() => setConfirmDelete(false)}>
-                  <X size={14} aria-hidden="true" /> Annuler
+                  <LKDVIcon name="fermer" size={14} aria-hidden="true" /> Annuler
                 </button>
                 <button type="button" className="lkdv-sortie-btn danger" onClick={onDelete}>
-                  <Trash2 size={14} aria-hidden="true" /> Supprimer
+                  <LKDVIcon name="supprimer" size={14} aria-hidden="true" /> Supprimer
                 </button>
               </div>
             </>
           ) : (
             <button type="button" className="lkdv-sortie-danger-link" onClick={() => setConfirmDelete(true)}>
-              <Trash2 size={14} aria-hidden="true" /> Supprimer cette sortie
+              <LKDVIcon name="supprimer" size={14} aria-hidden="true" /> Supprimer cette sortie
             </button>
           )}
         </section>

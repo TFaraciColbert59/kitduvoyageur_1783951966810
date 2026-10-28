@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import AppShell from '@/components/shell/AppShell';
 import { Chip, EmptyState } from '@/components/ui';
 

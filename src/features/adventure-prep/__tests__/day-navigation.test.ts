@@ -36,7 +36,7 @@ function step(over: Partial<ItineraryStep> & { id: string; day: number; order: n
     price: PRICE_TO_CHECK,
     state: 'propose',
     kept: false,
-    icon: 'map-pin',
+    icon: 'point_interet',
     lat: null,
     lon: null,
     ...over,

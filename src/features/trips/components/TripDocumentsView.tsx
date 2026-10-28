@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Badge, Button, Card, EmptyState, IconButton, type BadgeTone } from '@/components/ui';
@@ -9,6 +7,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { addTripDocumentAction, deleteTripDocumentAction } from '@/app/voyages/document-actions';
 import type { TripFull, TripDocumentCategory, TripDocument } from '../types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface TripDocumentsViewProps {
   trip: TripFull;
@@ -135,7 +134,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
           <Button
             size="sm"
             onClick={() => setIsAddOpen(true)}
-            icon={<Icon name="plus" size={16} />}
+            icon={<LKDVIcon name="plus" size={16} />}
           >
             Attacher un document
           </Button>
@@ -152,8 +151,8 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
         </Card>
       )}
       <p className="flex items-center gap-[var(--space-2)] px-1 text-[11px] text-[color:var(--lkv-text-muted)]">
-        <Icon
-          name="shield-check"
+        <LKDVIcon
+          name="securite"
           size={14}
           className="shrink-0 text-[color:var(--lkv-secondary-ink)]"
           aria-hidden="true"
@@ -164,7 +163,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       {/* Bloc « Documents nécessaires » : sous-ensemble requis, importance-first */}
       {trip.documents.length === 0 ? (
         <EmptyState
-          icon={<Icon name="file-check" size={32} className="text-[color:var(--lkv-secondary-ink)]" />}
+          icon={<LKDVIcon name="checklist" size={32} className="text-[color:var(--lkv-secondary-ink)]" />}
           title="Aucun document attaché"
           description="Attachez vos billets d'avion, réservations de refuges, assurances et passeports pour les garder accessibles partout."
           actionLabel={canEdit ? 'Attacher un document' : undefined}
@@ -176,8 +175,8 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
             <Card as="section" id="documents-necessaires" aria-label="Documents nécessaires" className="space-y-[var(--space-3)]">
               <div className="flex flex-wrap items-center justify-between gap-[var(--space-2)]">
                 <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
-                  <Icon
-                    name="shield-check"
+                  <LKDVIcon
+                    name="securite"
                     size={14}
                     className="shrink-0 text-[color:var(--lkv-secondary-ink)]"
                     aria-hidden="true"
@@ -357,7 +356,7 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
         <div className="flex items-start justify-between gap-[var(--space-2)]">
           <div className="flex items-center gap-[var(--space-3)]">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--glass-label)]">
-              <Icon name="file-text" size={18} />
+              <LKDVIcon name="facture" size={18} />
             </div>
             <div>
               <div className="text-[length:var(--lkv-text-footnote)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
@@ -372,9 +371,9 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
           {/* Badge d'échéance (expiré / avertissement en premier) */}
           {expiryCheck.status !== 'none' && (
             <Badge tone={expiryTone} className="shrink-0">
-              {expiryCheck.status === 'expired' && <Icon name="alert-triangle" size={10} />}
-              {expiryCheck.status === 'warning' && <Icon name="clock" size={10} />}
-              {expiryCheck.status === 'valid' && <Icon name="check-circle2" size={10} />}
+              {expiryCheck.status === 'expired' && <LKDVIcon name="alerte" size={10} />}
+              {expiryCheck.status === 'warning' && <LKDVIcon name="duree" size={10} />}
+              {expiryCheck.status === 'valid' && <LKDVIcon name="valider" size={10} />}
               <span>{expiryCheck.label}</span>
             </Badge>
           )}
@@ -382,7 +381,7 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
 
         {required && (
           <Badge tone="sage">
-            <Icon name="shield-check" size={11} aria-hidden="true" />
+            <LKDVIcon name="securite" size={11} aria-hidden="true" />
             requis
           </Badge>
         )}
@@ -403,7 +402,7 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
           className="inline-flex items-center gap-[var(--space-2)] py-1 font-semibold text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--glass-label)]"
         >
           <span>Ouvrir le document</span>
-          <Icon name="external-link" size={13} />
+          <LKDVIcon name="lien" size={13} />
         </a>
 
         {canEdit && (
@@ -415,7 +414,7 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
             aria-label="Supprimer ce document"
             title="Supprimer ce document"
           >
-            <Icon name="trash2" size={15} />
+            <LKDVIcon name="supprimer" size={15} />
           </IconButton>
         )}
       </div>

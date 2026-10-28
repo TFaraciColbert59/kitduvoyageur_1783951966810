@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Check, Clock, MessageCircle, ShieldCheck, UserPlus } from 'lucide-react';
 import type { ReseauUser } from '@/features/compte/server/reseau';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 function initials(name: string) {
   return name
@@ -69,7 +69,7 @@ export function UserRow({ user, mode, busy, onFollow, onUnfollow }: UserRowProps
       <div className="lkdv-reseau-meta">
         <div className="lkdv-reseau-name">
           <a href={`/profil/${encodeURIComponent(user.handle)}`}><b>{user.name}</b></a>
-          {user.verified ? <ShieldCheck size={13} aria-label="Profil vérifié" /> : null}
+          {user.verified ? <LKDVIcon name="securite" size={13} aria-label="Profil vérifié" /> : null}
         </div>
         <div className="lkdv-reseau-sub">
           @{user.handle}
@@ -79,7 +79,7 @@ export function UserRow({ user, mode, busy, onFollow, onUnfollow }: UserRowProps
           {user.relation === 'mutual' ? 'Abonnés mutuels' : user.relation === 'follows_you' ? 'Te suit' : 'Tu suis'}
           {lastSeen ? (
             <>
-              <Clock size={11} aria-hidden="true" /> {lastSeen}
+              <LKDVIcon name="duree" size={11} aria-hidden="true" /> {lastSeen}
             </>
           ) : null}
         </div>
@@ -92,7 +92,7 @@ export function UserRow({ user, mode, busy, onFollow, onUnfollow }: UserRowProps
           onClick={handleFollowClick}
           aria-label={following ? `Retirer ${user.name} de tes abonnements` : `Suivre ${user.name}`}
         >
-          {following && !confirming ? <Check size={14} aria-hidden="true" /> : <UserPlus size={14} aria-hidden="true" />}
+          {following && !confirming ? <LKDVIcon name="valider" size={14} aria-hidden="true" /> : <LKDVIcon name="amis" size={14} aria-hidden="true" />}
           {following ? (confirming ? 'Retirer ?' : 'Abonné') : 'Suivre'}
         </button>
         <a
@@ -101,7 +101,7 @@ export function UserRow({ user, mode, busy, onFollow, onUnfollow }: UserRowProps
           aria-label={`Message à ${user.name}`}
           title="Message"
         >
-          <MessageCircle size={15} aria-hidden="true" />
+          <LKDVIcon name="messages" size={15} aria-hidden="true" />
         </a>
       </div>
     </div>

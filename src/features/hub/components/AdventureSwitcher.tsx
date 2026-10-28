@@ -1,12 +1,9 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Cmd from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Compass } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { zIndex } from '@/lib/ui/zIndex';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
@@ -21,6 +18,7 @@ import {
   type AdventureEntry,
   type TripEntry,
 } from '../context/adventureLists';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** Viewport mobile réactif (matchMedia — jamais window.innerWidth éphémère). */
 function useIsMobileViewport(): boolean {
@@ -207,7 +205,7 @@ export function AdventureSwitcher({
         onSelect={() => activate(entry)}
         className="flex items-center gap-2 px-3 py-2.5 rounded-[var(--lkv-radius-md)] text-left cursor-pointer aria-selected:bg-white/40 aria-selected:text-[var(--lkv-text-primary)]"
       >
-        <Compass
+        <LKDVIcon name="boussole"
           size={14}
           className="shrink-0 text-[var(--lkv-text-secondary)]"
           aria-hidden="true"
@@ -221,8 +219,8 @@ export function AdventureSwitcher({
           </span>
         </span>
         {isCurrent && (
-          <Icon
-            name="check"
+          <LKDVIcon
+            name="valider"
             size={14}
             className="shrink-0 text-[var(--lkv-secondary-ink)]"
             aria-hidden="true"
@@ -257,7 +255,7 @@ export function AdventureSwitcher({
           className="flex items-center gap-1.5 px-2 pb-1 text-[10.5px] font-semibold text-[var(--lkv-danger)]"
           role="alert"
         >
-          <Icon name="alert-triangle" size={11} aria-hidden="true" />
+          <LKDVIcon name="alerte" size={11} aria-hidden="true" />
           Impossible de changer d’activité — vérifiez la connexion puis réessayez.
         </p>
       )}
@@ -285,7 +283,7 @@ export function AdventureSwitcher({
           className="!min-h-[44px] !px-3 !py-1 inline-flex items-center gap-1 !text-[10.5px] font-semibold cursor-pointer"
           aria-label="Recharger la liste des activités"
         >
-          <Icon name="refresh-cw" size={11} />
+          <LKDVIcon name="actualiser" size={11} />
           Recharger
         </Button>
       </div>
@@ -297,8 +295,8 @@ export function AdventureSwitcher({
     <Cmd.CommandRoot loop onValueChange={() => {}}>
       <div className="flex items-center gap-2 px-3 h-11 rounded-[var(--lkv-radius-md)] bg-white/35">
         {withSearchIcon && (
-          <Icon
-            name="search"
+          <LKDVIcon
+            name="recherche"
             size={16}
             className="shrink-0 text-[var(--lkv-text-secondary)]"
             aria-hidden="true"
@@ -341,9 +339,9 @@ export function AdventureSwitcher({
             aria-expanded={open}
             title="Changer d'activité (Ctrl/Cmd+K ou J)"
           >
-            <Icon name="compass" size={14} aria-hidden="true" />
+            <LKDVIcon name="boussole" size={14} aria-hidden="true" />
             <span className="max-w-[160px] truncate hidden sm:inline">{triggerLabel}</span>
-            <Icon name="chevrons-up-down" size={12} aria-hidden="true" />
+            <LKDVIcon name="options" size={12} aria-hidden="true" />
           </Button>
         </div>
       )}
@@ -388,7 +386,7 @@ export function AdventureSwitcher({
             aria-haspopup="dialog"
             aria-expanded={sheetOpen}
           >
-            <Icon name="compass" size={14} className="shrink-0" aria-hidden="true" />
+            <LKDVIcon name="boussole" size={14} className="shrink-0" aria-hidden="true" />
             <span className="max-w-[110px] truncate">{triggerLabel}</span>
           </Button>
         </div>

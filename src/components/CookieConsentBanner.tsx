@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getStoredConsent, storeConsent, CONSENT_VERSION } from '@/lib/cookieConsent';
 import { isNative } from '@/lib/native/platform';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export { useCookieConsent } from '@/lib/cookieConsent';
 
@@ -119,9 +120,7 @@ export default function CookieConsentBanner() {
           <div className="px-4 py-3 sm:p-5">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl lkv-glass flex items-center justify-center flex-shrink-0 text-[color:var(--icon-primary)]">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.955 11.955 0 013.598 6 11.955 11.955 0 003 12c0 6.627 5.373 12 12 12s12-5.373 12-12c0-2.017-.5-3.92-1.382-5.593" />
-                </svg>
+                <LKDVIcon name="securite" size={16} className="w-4 h-4" />
               </div>
               <p id="cookie-banner-desc" className="flex-1 min-w-0 text-[color:var(--lkv-on-dark-muted)] text-xs leading-snug">
                 Cookies nécessaires et analytiques pour votre cordée.{' '}
@@ -148,9 +147,7 @@ export default function CookieConsentBanner() {
                 className="w-[var(--lkv-touch-min)] flex-shrink-0 border border-[color:var(--glass-border)] hover:border-[color:var(--glass-border-strong)] text-[color:var(--lkv-on-dark-muted)] hover:text-[color:var(--lkv-on-dark)] px-0 py-2 rounded-xl text-xs transition-all active:scale-95 min-h-[var(--lkv-touch-min)] flex items-center justify-center"
                 aria-label="Gérer mes préférences cookies"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 5a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V6a1 1 0 0 1 1-1zM12 12a1 1 0 0 1 1 1v5a1 1 0 0 1-2 0v-5a1 1 0 0 1 1-1z" />
-                </svg>
+                <LKDVIcon name="informations" size={16} className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -162,9 +159,7 @@ export default function CookieConsentBanner() {
                 className="text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-secondary)] transition-colors"
                 aria-label="Retour"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
+                <LKDVIcon name="retour" size={16} className="w-4 h-4" />
               </button>
               <h2 className="font-semibold text-[color:var(--lkv-text-primary)] text-sm">Personnaliser mes préférences</h2>
             </div>

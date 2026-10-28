@@ -45,11 +45,11 @@ export function TopBar({ onRoute }: { onRoute: (query: string) => void }) {
       <span className="v5-spacer" />
       {canEdit && (
         <button type="button" className="v5-rbtn v5-lg" aria-label={t('compas.v5.top.sayLabel')} onClick={() => setSay(true)}>
-          <V5Icon name="spark" />
+          <V5Icon name='ia' />
         </button>
       )}
       <button type="button" className="v5-rbtn v5-lg" aria-label={t('compas.v5.top.menu')} onClick={() => openSpace('menu')}>
-        <V5Icon name="dots" />
+        <V5Icon name='plus_options' />
       </button>
 
       <form
@@ -65,7 +65,7 @@ export function TopBar({ onRoute }: { onRoute: (query: string) => void }) {
           }
         }}
       >
-        <V5Icon name="spark" size="s" />
+        <V5Icon name='ia' size="s" />
         <input
           ref={input}
           value={text}
@@ -76,10 +76,10 @@ export function TopBar({ onRoute }: { onRoute: (query: string) => void }) {
           onChange={(e) => setText(e.target.value)}
         />
         <button type="submit" className="v5-rbtn" disabled={busy || text.trim().length < 2} aria-label={t('compas.v5.top.say')}>
-          <V5Icon name="check" size="s" />
+          <V5Icon name='valider' size="s" />
         </button>
         <button type="button" className="v5-rbtn" aria-label={t('compas.v5.top.sayClose')} onClick={() => setSay(false)}>
-          <V5Icon name="x" size="s" />
+          <V5Icon name='fermer' size="s" />
         </button>
       </form>
     </div>

@@ -1,10 +1,9 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, Skeleton } from '@/components/ui';
 import type { OpenGraphPreviewData } from '../types/messaging.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const ogCache = new Map<string, OpenGraphPreviewData | null>();
 
@@ -96,9 +95,9 @@ export const OpenGraphCard: React.FC<OpenGraphCardProps> = ({ url, isMine }) => 
           )}
           <div className="space-y-[var(--space-1)] p-[var(--space-3)]">
             <div className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold opacity-75">
-              <Icon name="globe" className="size-3 shrink-0" />
+              <LKDVIcon name="monde" className="size-3 shrink-0" />
               <span className="truncate">{ogData.domain}</span>
-              <Icon name="external-link" className="ml-auto size-2.5 shrink-0 opacity-60" />
+              <LKDVIcon name="lien" className="ml-auto size-2.5 shrink-0 opacity-60" />
             </div>
             <p className="line-clamp-1 text-[length:var(--lkv-text-caption)] font-bold leading-tight group-hover:underline">
               {ogData.title}

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * H5 (D7-partiel) — Entrée assistant IA depuis le hub.
@@ -13,8 +13,8 @@ export function HubAssistantCta({ contextLabel }: { contextLabel: string }) {
       className="glass p-4 rounded-[var(--lkv-radius-card)] flex items-center gap-3 min-h-[44px]"
       aria-label={`Assistant IA — ${contextLabel}`}
     >
-      <Icon
-        name="sparkles"
+      <LKDVIcon
+        name="ia"
         size={18}
         className="shrink-0 text-[var(--lkv-text-secondary)]"
         aria-hidden="true"
@@ -27,8 +27,8 @@ export function HubAssistantCta({ contextLabel }: { contextLabel: string }) {
           {contextLabel}
         </span>
       </span>
-      <Icon
-        name="arrow-right"
+      <LKDVIcon
+        name="suivant"
         size={14}
         className="text-[var(--lkv-text-muted)]"
         aria-hidden="true"

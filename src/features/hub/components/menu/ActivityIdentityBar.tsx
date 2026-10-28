@@ -1,4 +1,5 @@
-import { Compass, Package, Users, type LucideIcon } from 'lucide-react';
+
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export interface ActivityIdentityBarProps {
   nature: 'sortie' | 'possession' | 'collectif';
@@ -10,9 +11,9 @@ export interface ActivityIdentityBarProps {
 }
 
 const ICONS = {
-  sortie: Compass,
-  possession: Package,
-  collectif: Users,
+  sortie: lkdvIcon('boussole'),
+  possession: lkdvIcon('inventaire'),
+  collectif: lkdvIcon('communaute'),
 } as const;
 
 /**
@@ -20,7 +21,7 @@ const ICONS = {
  * icône + nom de l'activité + phase + J-x. Le bento reste anonyme sans lui.
  */
 export function ActivityIdentityBar({ nature, name, phaseLabel, daysUntil }: ActivityIdentityBarProps) {
-  const Icon: LucideIcon = ICONS[nature];
+  const Icon: LKDVIconComponent = ICONS[nature];
   return (
     <div className="flex items-center gap-2.5 px-1 py-0.5">
       <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)] ring-1 ring-[var(--lkv-primary)]/20 shrink-0">

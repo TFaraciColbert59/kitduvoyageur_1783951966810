@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { hubSectionHref, type HubAdventureRef } from '../registry/hubSectionRegistry';
 import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import type { HubWidgetId } from '../engine/hubProfileEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface HubWidgetData {
   items: number;
@@ -87,7 +87,7 @@ export function HubWidgetBody({
           className="glass-capsule-btn primary inline-flex items-center justify-center gap-2 min-h-[44px] px-4 w-full"
         >
           <span>Entrer dans le voyage</span>
-          <Icon name="arrow-up-right" size={14} aria-hidden="true" />
+          <LKDVIcon name="exporter" size={14} aria-hidden="true" />
         </Link>
       );
     default:
@@ -104,7 +104,7 @@ function WidgetCard({ label, value, href }: { label: string; value: string; href
       <p className="text-sm font-bold text-[var(--lkv-text-primary)] leading-snug">{value}</p>
       <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)] mt-1 flex items-center gap-1">
         <span>{label}</span>
-        <Icon name="arrow-right" size={11} aria-hidden="true" />
+        <LKDVIcon name="suivant" size={11} aria-hidden="true" />
       </p>
     </Link>
   );

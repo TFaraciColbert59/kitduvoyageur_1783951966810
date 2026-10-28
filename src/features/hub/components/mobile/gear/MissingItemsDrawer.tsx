@@ -1,9 +1,9 @@
 'use client';
-
-import { Check, Package, RotateCcw, ShoppingBag, Truck } from 'lucide-react';
 import { Sheet, Button, IconButton } from '@/components/ui';
 import { PURCHASE_META, type MissingRow } from '../../../mobile/gearEngine';
 import type { TripPurchaseState } from '@/features/trips/types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export interface MissingItemsDrawerProps {
   open: boolean;
@@ -14,11 +14,11 @@ export interface MissingItemsDrawerProps {
   onReset: (row: MissingRow) => void;
 }
 
-const STATE_ICON: Record<TripPurchaseState, typeof ShoppingBag> = {
-  needed: ShoppingBag,
-  added: Check,
-  in_cart: ShoppingBag,
-  shipping: Truck,
+const STATE_ICON: Record<TripPurchaseState, LKDVIconComponent> = {
+  needed: lkdvIcon('boutique'),
+  added: lkdvIcon('valider'),
+  in_cart: lkdvIcon('boutique'),
+  shipping: lkdvIcon('livraison'),
 };
 
 export function MissingItemsDrawer({
@@ -52,7 +52,7 @@ export function MissingItemsDrawer({
                     />
                   ) : (
                     <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-white/60 bg-white/70 text-[var(--lkv-text-muted)]">
-                      <Package size={20} aria-hidden="true" />
+                      <LKDVIcon name="inventaire" size={20} aria-hidden="true" />
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
@@ -94,7 +94,7 @@ export function MissingItemsDrawer({
                       aria-label="Revenir à « à ajouter »"
                       className="h-10 w-10 shrink-0 text-[var(--lkv-text-secondary)]"
                     >
-                      <RotateCcw size={15} aria-hidden="true" />
+                      <LKDVIcon name="actualiser" size={15} aria-hidden="true" />
                     </IconButton>
                   )}
                 </div>

@@ -1,13 +1,11 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { ClockIcon as Clock } from '@/components/icons/clock';
 import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import type { MaterielSummary } from '@/features/materiel/services/getMaterielSummary';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Props {
   alertes: MaterielSummary['alertes'];
@@ -49,14 +47,14 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
             {alertes.criticalCount > 0 ? (
               <Badge tone="danger">
                 <span className="flex items-center gap-1">
-                  <Icon name="alert-triangle" size={11} aria-hidden="true" />
+                  <LKDVIcon name="alerte" size={11} aria-hidden="true" />
                   <span>{alertes.criticalCount} critique(s)</span>
                 </span>
               </Badge>
             ) : (
               <Badge tone="sage">
                 <span className="flex items-center gap-1">
-                  <Icon name="shield-check" size={11} aria-hidden="true" />
+                  <LKDVIcon name="securite" size={11} aria-hidden="true" />
                   <span>Matériel opérationnel</span>
                 </span>
               </Badge>
@@ -99,7 +97,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
               className="flex items-center justify-between text-[10.5px] font-bold text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-text-secondary)] pt-1 border-t border-white/10"
             >
               <span>Voir diagnostic</span>
-              <Icon name="arrow-right" size={12} />
+              <LKDVIcon name="suivant" size={12} />
             </Link>
           </div>
 
@@ -136,7 +134,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
               className="flex items-center justify-between text-[10.5px] font-bold text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-text-secondary)] pt-1 border-t border-white/10"
             >
               <span>Gérer les prêts</span>
-              <Icon name="arrow-right" size={12} />
+              <LKDVIcon name="suivant" size={12} />
             </Link>
           </div>
 
@@ -175,7 +173,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
               className="flex items-center justify-between text-[10.5px] font-bold text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-text-secondary)] pt-1 border-t border-white/10"
             >
               <span>Ouvrir checklist</span>
-              <Icon name="arrow-right" size={12} />
+              <LKDVIcon name="suivant" size={12} />
             </Link>
           </div>
         </div>

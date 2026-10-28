@@ -1,0 +1,35 @@
+/*
+ * Icônes LKDV V2 — une seule teinte, le vert #00542B (SVG autonomes de public/icons/lkdv/, jamais retouchés).
+ *
+ * Le SVG sert de masque ; la peinture est choisie d'après la couleur du TEXTE courant (`currentColor`) :
+ *   - texte sombre (surface claire)  → vert #00542B, exactement ;
+ *   - texte clair (photo, bouton plein, thème sombre, bandeau forêt) → blanc, pour garder le contraste (WCAG 1.4.11).
+ * Aucune liste de surfaces, aucun filtre, aucun JavaScript : une icône suit le texte qui l'accompagne, comme avant.
+ *
+ * #00542B ≡ oklch(0.3912 0.09914 153.762). Seuil de bascule : luminosité OKLCH 0.62 (transition sur 0.02).
+ * Navigateurs sans « relative color syntax » : la première déclaration (vert pur) s'applique.
+ */
+:where(.lkdv-icon) {
+  display: inline-block;
+  flex: none;
+  width: var(--lkdv-icon-size, 24px);
+  height: var(--lkdv-icon-size, 24px);
+}
+
+.lkdv-icon {
+  background-color: #00542b;
+  background-color: oklch(
+    from currentColor calc(0.3912 + 0.6088 * clamp(0, (l - 0.62) * 50, 1))
+      calc(0.09914 * (1 - clamp(0, (l - 0.62) * 50, 1))) 153.762
+  );
+  -webkit-mask-image: var(--lkdv-icon-url, none);
+  mask-image: var(--lkdv-icon-url, none);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  /* Contraste forcé (Windows) : le système n'efface pas la peinture du masque. */
+  forced-color-adjust: none;
+}

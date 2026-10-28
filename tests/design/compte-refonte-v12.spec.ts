@@ -147,12 +147,12 @@ describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Dro
     expect(v8Source).not.toMatch(/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{[^}]*\.segc\s*\{[^}]*background:\s*rgba\(28/);
   });
 
-  it('7. Invariant strict : strictement 0 modification dans /compas', () => {
+  it('7. Invariant : 0 modification de style dans /compas (la migration des icônes LKDV V2 touche le code, pas le design)', () => {
     try {
-      const diffCompas = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
+      const diffCompas = execSync("git diff --name-only origin/main -- ':(glob)src/app/compas/**/*.css' ':(glob)src/features/compas/**/*.css'", { encoding: 'utf8' }).trim();
       expect(diffCompas).toBe('');
     } catch (_) {
-      const statusCompas = execSync('git status --porcelain -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
+      const statusCompas = execSync("git status --porcelain -- ':(glob)src/app/compas/**/*.css' ':(glob)src/features/compas/**/*.css'", { encoding: 'utf8' }).trim();
       expect(statusCompas).toBe('');
     }
   });

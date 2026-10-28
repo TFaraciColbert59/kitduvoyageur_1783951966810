@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
@@ -9,6 +7,7 @@ import { formatCivilDateRange } from '@/lib/dates/tripDates';
 import { Button, Card } from '@/components/ui';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import { printActiveView } from '@/lib/native/print';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ExportClientViewProps {
   trip: TripFull;
@@ -60,7 +59,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
         {/* Metriques cles */}
         <div className="mt-[var(--space-6)] grid grid-cols-2 gap-[var(--space-4)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)] sm:grid-cols-4">
           <div className="flex items-center gap-[var(--space-2)]">
-            <Icon name="map-pin" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
+            <LKDVIcon name="point_interet" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
             <div>
               <div className="text-[10px] uppercase text-[color:var(--lkv-text-muted)]">Destination</div>
               <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
@@ -70,7 +69,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           </div>
 
           <div className="flex items-center gap-[var(--space-2)]">
-            <Icon name="calendar" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
+            <LKDVIcon name="calendrier" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
             <div>
               <div className="text-[10px] uppercase text-[color:var(--lkv-text-muted)]">Dates</div>
               <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
@@ -81,7 +80,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           </div>
 
           <div className="flex items-center gap-[var(--space-2)]">
-            <Icon name="users" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
+            <LKDVIcon name="communaute" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
             <div>
               <div className="text-[10px] uppercase text-[color:var(--lkv-text-muted)]">Equipe</div>
               <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
@@ -91,7 +90,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           </div>
 
           <div className="flex items-center gap-[var(--space-2)]">
-            <Icon name="shield" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
+            <LKDVIcon name="securite" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
             <div>
               <div className="text-[10px] uppercase text-[color:var(--lkv-text-muted)]">
                 Activite & Niveau
@@ -290,7 +289,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           href={tripSectionHref(trip.slug, 'overview')}
           className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]"
         >
-          <Icon name="arrow-left" size={13} />
+          <LKDVIcon name="retour" size={13} />
           <span>Cockpit</span>
         </Link>
         <div className="flex items-center gap-[var(--space-2)]">
@@ -299,10 +298,10 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
             download={`${trip.slug}.gpx`}
             className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
           >
-            <Icon name="download" size={12} />
+            <LKDVIcon name="telecharger" size={12} />
             <span>GPX</span>
           </a>
-          <Button size="sm" onClick={handlePrint} icon={<Icon name="printer" size={12} />}>
+          <Button size="sm" onClick={handlePrint} icon={<LKDVIcon name="exporter" size={12} />}>
             PDF
           </Button>
         </div>

@@ -1,15 +1,6 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import {
-  BedDouble,
-  CalendarDays,
-  Clock,
-  Flag,
-  PenLine,
-  Shield,
-  type LucideIcon,
-} from 'lucide-react';
 import { MomentMapCard } from '../MomentMapCard';
 import {
   formatKm,
@@ -23,6 +14,8 @@ import { decideHikingNavigation } from '../../../engine/hikingNavigation';
 import { useDayFocusStore } from '@/components/mobile-nav/dayFocusStore';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import type { HubHikingContext } from '../../../server/getHubAdventureData';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export interface SortieMomentProps {
   trip: TripFull;
@@ -32,7 +25,7 @@ export interface SortieMomentProps {
   fillViewport?: boolean;
 }
 
-function MomentRow({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
+function MomentRow({ icon: Icon, label, value }: { icon: LKDVIconComponent; label: string; value: string }) {
   return (
     <li className="flex items-center gap-2 text-[11.5px]">
       <Icon size={13} className="shrink-0 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
@@ -124,7 +117,7 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
           </div>
           {duration != null && (
             <p className="flex shrink-0 items-center gap-1 text-[11px] font-bold text-[var(--lkv-text-primary)]">
-              <Clock size={12} aria-hidden="true" />
+              <LKDVIcon name="duree" size={12} aria-hidden="true" />
               {formatHikeDuration(duration)}
             </p>
           )}
@@ -161,13 +154,13 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
         {moment.accommodation || moment.checkpoint || moment.note ? (
           <ul className="mt-2.5 space-y-1.5 border-t border-black/5 pt-2.5">
             {moment.accommodation && (
-              <MomentRow icon={BedDouble} label="Nuit" value={moment.accommodation} />
+              <MomentRow icon={lkdvIcon('hotel')} label="Nuit" value={moment.accommodation} />
             )}
             {moment.checkpoint && (
-              <MomentRow icon={Shield} label="Point de contrôle" value={moment.checkpoint.label} />
+              <MomentRow icon={lkdvIcon('securite')} label="Point de contrôle" value={moment.checkpoint.label} />
             )}
             {moment.note && (
-              <MomentRow icon={PenLine} label="Note du jour" value={moment.note.title || 'Journal'} />
+              <MomentRow icon={lkdvIcon('modifier')} label="Note du jour" value={moment.note.title || 'Journal'} />
             )}
           </ul>
         ) : (
@@ -189,7 +182,7 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
         {moment.note ? (
           <ul className="mt-2.5 space-y-1.5 border-t border-black/5 pt-2.5">
             <MomentRow
-              icon={PenLine}
+              icon={lkdvIcon('modifier')}
               label="Dernière note"
               value={moment.note.title || moment.note.content.slice(0, 40)}
             />
@@ -212,11 +205,11 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
         </p>
         <ul className="mt-2.5 space-y-1.5 border-t border-black/5 pt-2.5">
           {moment.dateLabel && (
-            <MomentRow icon={CalendarDays} label="Départ" value={moment.dateLabel} />
+            <MomentRow icon={lkdvIcon('jours')} label="Départ" value={moment.dateLabel} />
           )}
-          <MomentRow icon={Flag} label="Première étape" value={moment.title} />
+          <MomentRow icon={lkdvIcon('signalement')} label="Première étape" value={moment.title} />
           {moment.accommodation && (
-            <MomentRow icon={BedDouble} label="Nuit" value={moment.accommodation} />
+            <MomentRow icon={lkdvIcon('hotel')} label="Nuit" value={moment.accommodation} />
           )}
         </ul>
         {hasRoute && !navigation.enabled && navigation.reason && (
@@ -233,10 +226,10 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
       <p className="text-xs font-semibold text-[var(--lkv-text-primary)]">{moment.title}</p>
       <ul className="space-y-1.5">
         {context.phase === 'prepare' && moment.dateLabel && (
-          <MomentRow icon={CalendarDays} label="Départ" value={moment.dateLabel} />
+          <MomentRow icon={lkdvIcon('jours')} label="Départ" value={moment.dateLabel} />
         )}
-        <MomentRow icon={Flag} label="Étapes" value={String(moment.stepCount)} />
-        <MomentRow icon={Clock} label="Distance" value={`${formatKm(moment.distanceKm)} km`} />
+        <MomentRow icon={lkdvIcon('signalement')} label="Étapes" value={String(moment.stepCount)} />
+        <MomentRow icon={lkdvIcon('duree')} label="Distance" value={`${formatKm(moment.distanceKm)} km`} />
       </ul>
       {moment.routePois.length > 0 && (
         <ul className="space-y-1.5 border-t border-black/5 pt-2">

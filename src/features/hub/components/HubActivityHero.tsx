@@ -1,12 +1,11 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { motion, useReducedMotion } from 'framer-motion';
 import { EASE_GLASS } from '@/lib/animations/constants';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * UX Hub — Hero de l'activité active. Même langage que TripHero (cover,
@@ -131,7 +130,7 @@ export function HubActivityHero({
             </h1>
             {subtitle && (
               <p className="text-xs sm:text-sm text-white/85 mt-0.5 flex items-center gap-1.5">
-                <Icon name="map-pin" size={13} aria-hidden="true" />
+                <LKDVIcon name="point_interet" size={13} aria-hidden="true" />
                 <span className="truncate">{subtitle}</span>
               </p>
             )}
@@ -143,7 +142,7 @@ export function HubActivityHero({
                 aria-label={`Assistant IA — ${assistantContextLabel}`}
                 className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 rounded-full bg-white/15 border border-white/30 backdrop-blur-sm text-xs font-bold text-white cursor-pointer active:scale-95 transition-transform"
               >
-                <Icon name="sparkles" size={14} aria-hidden="true" />
+                <LKDVIcon name="ia" size={14} aria-hidden="true" />
                 <span className="truncate max-w-[140px]">Assistant IA</span>
               </Link>
             )}
@@ -151,7 +150,7 @@ export function HubActivityHero({
               variant="secondary"
               size="sm"
               onClick={handleShare}
-              icon={copied ? <Icon name="check" size={15} /> : <Icon name="share2" size={15} />}
+              icon={copied ? <LKDVIcon name="valider" size={15} /> : <LKDVIcon name="partager" size={15} />}
               className="!bg-white/15 !border-white/30 !text-white"
             >
               {copied ? 'Copié !' : 'Partager'}

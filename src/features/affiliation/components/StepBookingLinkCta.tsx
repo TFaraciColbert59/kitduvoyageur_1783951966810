@@ -1,7 +1,7 @@
 'use client';
-
-import { BedDouble, Compass, ExternalLink, Plane, Shield, Smartphone } from 'lucide-react';
 import type { AffiliateIntent } from '../engine/stepBookingLink';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 export interface StepBookingLinkCtaProps {
   booking: AffiliateIntent;
@@ -16,13 +16,13 @@ export interface StepBookingLinkCtaProps {
 }
 
 const CATEGORY_ICONS = {
-  hotel: BedDouble,
-  flight: Plane,
-  activity: Compass,
-  insurance: Shield,
-  esim: Smartphone,
-  transport: Plane,
-  gear: Compass,
+  hotel: lkdvIcon('hotel'),
+  flight: lkdvIcon('avion'),
+  activity: lkdvIcon('boussole'),
+  insurance: lkdvIcon('securite'),
+  esim: lkdvIcon('telephone'),
+  transport: lkdvIcon('avion'),
+  gear: lkdvIcon('boussole'),
 } as const;
 
 /**
@@ -42,7 +42,7 @@ export function StepBookingLinkCta({
   className = '',
 }: StepBookingLinkCtaProps) {
   const href = tripId ? `/go/${slug}?trip_id=${tripId}` : `/go/${slug}`;
-  const CategoryIcon = CATEGORY_ICONS[booking.category] ?? Plane;
+  const CategoryIcon = CATEGORY_ICONS[booking.category] ?? lkdvIcon('avion');
 
   return (
     <a
@@ -61,7 +61,7 @@ export function StepBookingLinkCta({
           {subtitle ?? `Suggestion · Lien partenaire${partnerName ? ` · ${partnerName}` : ''}`}
         </span>
       </span>
-      <ExternalLink size={13} className="shrink-0 text-[var(--lkv-text-muted)]" aria-hidden="true" />
+      <LKDVIcon name="lien" size={13} className="shrink-0 text-[var(--lkv-text-muted)]" aria-hidden="true" />
     </a>
   );
 }

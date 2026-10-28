@@ -2,7 +2,6 @@
 
 import { notedStay } from '../engine/stayProposal';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
-import Icon from '@/components/ui/Icon';
 import type { CompasLevel, CompasNights, CompasTerrain } from '../engine/compasModel';
 import { sourceLabel, adaptationTextFor, type CtxField } from '../engine/projectContext';
 import { addDaysIso, capitalize, weatherLabel } from '../engine/format';
@@ -46,6 +45,8 @@ import type { TranslationKey } from '@/lib/i18n/translate';
 import { ACTIVITY_HINT_KEY, activityName, compasFormat, compasT, countText } from '../engine/compasI18n';
 import { useCompasFormat, useCompasUnits, useWeekStart } from './useCompasUnits';
 import { calendarOffset, rotateWeek } from '@/lib/i18n/region';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 const staticRow = { cursor: 'default' } as const;
 
@@ -62,24 +63,24 @@ function useBrowserZone(): string | null {
 
 /* ---------- Activité ---------- */
 
-const ACTIVITY_ICON: Record<CompasActivity, string> = {
-  hiking: 'footprints',
-  trekking: 'mountain',
-  bivouac: 'tent',
-  roadtrip: 'car',
-  cultural: 'building',
-  bushcraft: 'flame',
-  mixed: 'compass',
-  cycling: 'bike',
-  ski: 'cloud-snow',
-  mountaineering: 'flag',
-  climbing: 'trending-up',
-  water: 'droplets',
-  citytrip: 'building2',
-  beach: 'sun',
+const ACTIVITY_ICON: Record<CompasActivity, LKDVIconName> = {
+  hiking: 'randonnee',
+  trekking: 'montagne',
+  bivouac: 'tente',
+  roadtrip: 'voiture',
+  cultural: 'ville',
+  bushcraft: 'feu',
+  mixed: 'boussole',
+  cycling: 'velo',
+  ski: 'neige',
+  mountaineering: 'signalement',
+  climbing: 'denivele',
+  water: 'eau_potable',
+  citytrip: 'ville',
+  beach: 'soleil',
   vanlife: 'bus',
-  running: 'heart-pulse',
-  trail: 'zap',
+  running: 'trousse',
+  trail: 'energie',
 };
 
 /**
@@ -91,7 +92,7 @@ export const ACTIVITY_META = Object.fromEntries(
     a,
     { icon: ACTIVITY_ICON[a], hintKey: ACTIVITY_HINT_KEY[a], hint: compasT('fr')(ACTIVITY_HINT_KEY[a]) },
   ])
-) as Record<CompasActivity, { icon: string; hint: string; hintKey: TranslationKey }>;
+) as Record<CompasActivity, { icon: LKDVIconName; hint: string; hintKey: TranslationKey }>;
 
 /** Ordre d'affichage : de la marche au repos, « Mixte / autre » en dernier. */
 export const ACTIVITY_ORDER: CompasActivity[] = [
@@ -148,7 +149,7 @@ export function ActiviteFlow({ ctl }: { ctl: CompasCtl }) {
               disabled={!ctl.data.canEdit || ctl.busy}
               onClick={() => pick(a)}
             >
-              <Icon name={ACTIVITY_META[a].icon} size={20} />
+              <LKDVIcon name={ACTIVITY_META[a].icon} size={20} />
               <span>{activityName(a, locale)}</span>
             </button>
           );
@@ -309,7 +310,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
             </>
           )}
         </span>
-        {data.route.id != null && <Chip icon="map-pin">{t('compas.ouRoute.catalogue')}</Chip>}
+        {data.route.id != null && <Chip icon="point_interet">{t('compas.ouRoute.catalogue')}</Chip>}
       </div>
 
       <form className="cp-searchrow" onSubmit={onSearch} role="search">
@@ -329,7 +330,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
           aria-label={t('compas.ouRoute.searchButton')}
           disabled={query.trim().length < 3}
         >
-          <Icon name="search" size={17} />
+          <LKDVIcon name="recherche" size={17} />
         </button>
       </form>
 
@@ -356,7 +357,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               void load('cherche', w);
             }}
           >
-            <Icon name="heart" size={12} />
+            <LKDVIcon name="favoris" size={12} />
             {w}
           </button>
         ))}
@@ -386,7 +387,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                   {s.aiProposed && <span>{AI_STEP_LABEL}</span>}
                 </span>
                 <span className="cp-row__end">
-                  {notedStay(s.accommodation) && <Chip icon="bed-double">{notedStay(s.accommodation)}</Chip>}
+                  {notedStay(s.accommodation) && <Chip icon="hotel">{notedStay(s.accommodation)}</Chip>}
                 </span>
               </div>
             )}
@@ -435,7 +436,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                 const body = (
                   <>
                     <span className="cp-thumb" aria-hidden="true">
-                      <Icon name="ticket" size={18} />
+                      <LKDVIcon name="billet" size={18} />
                     </span>
                     <span className="cp-row__t">
                       <b>{a.title}</b>
@@ -469,7 +470,7 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
               const r = entry.item;
               return (<button key={r.routeId} type="button" className="cp-row" onClick={() => setPicked(r)}>
                 <span className="cp-thumb" aria-hidden="true">
-                  <Icon name={r.mine ? 'footprints' : 'route'} size={18} />
+                  <LKDVIcon name={r.mine ? 'randonnee' : 'itineraire'} size={18} />
                 </span>
                 <span className="cp-row__t">
                   <b>{r.name}</b>
@@ -487,11 +488,11 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
                   {r.mine ? (
                     <Chip tone="good">{t('compas.ouRoute.doneTimes', { count: r.mine.count })}</Chip>
                   ) : r.communitySessions > 0 ? (
-                    <Chip icon="users">{r.communitySessions}</Chip>
+                    <Chip icon="communaute">{r.communitySessions}</Chip>
                   ) : r.distanceFromKm != null ? (
                     <span className="cp-sub">{miles ? t('compas.units.away', { distance: f.km(r.distanceFromKm) }) : t('compas.ouRoute.away', { km: f.decimal(Math.round(r.distanceFromKm), 0) })}</span>
                   ) : null}
-                  <Icon name="chevron-right" size={16} />
+                  <LKDVIcon name="suivant" size={16} />
                 </span>
               </button>);
             }}
@@ -577,7 +578,7 @@ function RouteConfirm({
             disabled={days <= 1}
             onClick={() => setDays(days - 1)}
           >
-            <Icon name="minus" size={14} />
+            <LKDVIcon name="annuler" size={14} />
           </button>
           <b>{countText(t, locale, days, 'compas.start.daysOne', 'compas.start.daysOther')}</b>
           <button
@@ -587,14 +588,14 @@ function RouteConfirm({
             disabled={days >= MAX_TRIP_DAYS}
             onClick={() => setDays(days + 1)}
           >
-            <Icon name="plus" size={14} />
+            <LKDVIcon name="plus" size={14} />
           </button>
         </div>
       )}
       <p className="cp-note">{t('compas.ouRoute.splitNote')}</p>
       <div className="cp-actions">
         <button type="button" className="cp-btn cp-btn--soft" onClick={onBack}>
-          <Icon name="chevron-left" size={16} />
+          <LKDVIcon name="retour" size={16} />
           {t('compas.ouRoute.back')}
         </button>
         {ctl.data.canEdit && (
@@ -604,7 +605,7 @@ function RouteConfirm({
             disabled={ctl.busy}
             onClick={() => void choose()}
           >
-            <Icon name="check" size={16} />
+            <LKDVIcon name="valider" size={16} />
             {t('compas.ouRoute.choose')}
           </button>
         )}
@@ -987,21 +988,21 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
         <div className="cp-dayd__chips">
           {w && <Chip icon={w.icon}>{w.label}</Chip>}
           {forecast.tMin != null && forecast.tMax != null && (
-            <Chip icon="thermometer">
+            <Chip icon="meteo">
               {f.degrees(forecast.tMin)} / {f.degrees(forecast.tMax)}
             </Chip>
           )}
           {forecast.precipPct != null && (
-            <Chip icon="droplet" tone={forecast.precipPct >= 60 ? 'warn' : undefined}>
+            <Chip icon="eau_potable" tone={forecast.precipPct >= 60 ? 'warn' : undefined}>
               {forecast.precipPct} %
             </Chip>
           )}
           {forecast.gustMax != null && (
-            <Chip icon="wind" tone={forecast.gustMax >= 60 ? 'warn' : undefined}>
+            <Chip icon="vent" tone={forecast.gustMax >= 60 ? 'warn' : undefined}>
               {Math.round(forecast.gustMax)} km/h
             </Chip>
           )}
-          {freezing != null && <Chip icon="mountain">{units.temperature === 'f' ? t('compas.units.freezingAt', { temp: f.temp(0), altitude: f.meters(freezing) }) : t('compas.ouDay.freezingAt', { altitude: f.meters(freezing) })}</Chip>}
+          {freezing != null && <Chip icon="montagne">{units.temperature === 'f' ? t('compas.units.freezingAt', { temp: f.temp(0), altitude: f.meters(freezing) }) : t('compas.ouDay.freezingAt', { altitude: f.meters(freezing) })}</Chip>}
           {q && (
             <Chip tone={q.quality === 'bon' ? 'good' : q.quality === 'moyen' ? 'warn' : 'bad'}>
               {t(QUALITY_WORD[q.quality])}
@@ -1059,7 +1060,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
       </dl>
       {advice.warning && (
         <p className="cp-note cp-note--warn" role="status">
-          <Icon name="alert-triangle" size={14} /> {advice.warning}
+          <LKDVIcon name="alerte" size={14} /> {advice.warning}
         </p>
       )}
 
@@ -1076,7 +1077,7 @@ function DayDetail({ ctl, day }: { ctl: CompasCtl; day: number }) {
                 title={hq.reasons.join(', ') || undefined}
               >
                 <small>{t('compas.ouDay.hour', { hour: h.time.slice(11, 13) })}</small>
-                {hw && <Icon name={hw.icon} size={16} />}
+                {hw && <LKDVIcon name={hw.icon} size={16} />}
                 <b>{f.degrees(h.tempC)}</b>
                 <small>{h.precipPct != null ? `${h.precipPct} %` : '—'}</small>
                 {/* La qualité de l'heure en texte (et une forme), pas seulement en teinte. */}
@@ -1105,11 +1106,11 @@ const PACE_KEY: Record<Pace, TranslationKey> = {
   normal: 'compas.ouDay.paceNormal',
   soutenu: 'compas.ouDay.paceBrisk',
 };
-const NIGHT_OPTIONS: Array<{ id: CompasNights; label: TranslationKey; icon: string }> = [
-  { id: 'bivouac', label: 'compas.ouPrefs.nightBivouac', icon: 'tent' },
-  { id: 'refuge', label: 'compas.ouPrefs.nightRefuge', icon: 'home' },
-  { id: 'hebergement', label: 'compas.ouPrefs.nightLodging', icon: 'bed-double' },
-  { id: 'mixte', label: 'compas.ouPrefs.nightMixed', icon: 'layers' },
+const NIGHT_OPTIONS: Array<{ id: CompasNights; label: TranslationKey; icon: LKDVIconName }> = [
+  { id: 'bivouac', label: 'compas.ouPrefs.nightBivouac', icon: 'tente' },
+  { id: 'refuge', label: 'compas.ouPrefs.nightRefuge', icon: 'accueil' },
+  { id: 'hebergement', label: 'compas.ouPrefs.nightLodging', icon: 'hotel' },
+  { id: 'mixte', label: 'compas.ouPrefs.nightMixed', icon: 'calques' },
 ];
 /** Suggestions proposées dans la langue de l'écran (elles deviennent le texte de l'envie). */
 const AVOID_SUGGESTIONS: TranslationKey[] = [
@@ -1174,7 +1175,7 @@ export function PreferencesFlow({ ctl }: { ctl: CompasCtl }) {
                 )
               }
             >
-              <Icon name={o.icon} size={13} />
+              <LKDVIcon name={o.icon} size={13} />
               {t(o.label)}
             </button>
           ))}
@@ -1452,14 +1453,14 @@ function TagEditor({
             }
           >
             {v}
-            <Icon name="x" size={12} />
+            <LKDVIcon name="fermer" size={12} />
           </button>
         ))}
         {edit &&
           values.length < 8 &&
           free.slice(0, 4).map((s) => (
             <button key={s} type="button" className="cp-pill" onClick={() => add(s)}>
-              <Icon name="plus" size={12} />
+              <LKDVIcon name="plus" size={12} />
               {s}
             </button>
           ))}
@@ -1487,7 +1488,7 @@ function TagEditor({
             aria-label={t('compas.ouPrefs.addButton', { title })}
             disabled={!draft.trim()}
           >
-            <Icon name="plus" size={17} />
+            <LKDVIcon name="plus" size={17} />
           </button>
         </form>
       )}

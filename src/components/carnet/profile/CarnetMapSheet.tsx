@@ -2,11 +2,11 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import Icon from '@/components/ui/Icon';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { formatElevation, formatKm } from '@/features/carnet/detail/format';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { useSheetEscape } from './useSheetEscape';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const CarnetTraceMap = dynamic(
   () => import('./CarnetTraceMap').then((mod) => mod.CarnetTraceMap),
@@ -50,7 +50,7 @@ export function CarnetMapSheet({ open, detail, onClose, onDownloadGpx }: CarnetM
             onClick={onDownloadGpx}
             disabled={!hasTrace}
           >
-            <Icon name="download" size={16} aria-hidden="true" />
+            <LKDVIcon name="telecharger" size={16} aria-hidden="true" />
             Télécharger le GPX
           </button>
         </div>

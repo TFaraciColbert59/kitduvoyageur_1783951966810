@@ -7,6 +7,7 @@ import { formatElevation } from '@/lib/format/metrics';
 import { SlotEmpty } from './SlotEmpty';
 import { BadgeTile, type BadgeItem } from '../cards/BadgeTile';
 import { RepostCard, type RepostItem } from '../cards/RepostCard';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type VitrineLens = 'stats' | 'repost' | 'badges';
 
@@ -243,30 +244,19 @@ function sortRecentBadges(badges: BadgeItem[]): BadgeItem[] {
 
 
 const ROUTE_ICON = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M3 19h18M6 19l5-11 4 7 3-4 3 8" />
-    <path d="M9 12h2" />
-  </svg>
+  <LKDVIcon name="montagne" aria-hidden="true" />
 );
 
 const NIGHT_ICON = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M20 14.5A7.5 7.5 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
-  </svg>
+  <LKDVIcon name="lune" aria-hidden="true" />
 );
 
 const MOUNTAIN_ICON = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="m3 19 6-12 4 7 2-3 6 8H3Z" />
-    <path d="m7 12 2 1 1-2" />
-  </svg>
+  <LKDVIcon name="montagne" aria-hidden="true" />
 );
 
 const GLOBE_ICON = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <circle cx="12" cy="12" r="8.5" />
-    <path d="M3.5 12h17M12 3.5c2.6 2.4 4 5.3 4 8.5s-1.4 6.1-4 8.5c-2.6-2.4-4-5.3-4-8.5s1.4-6.1 4-8.5Z" />
-  </svg>
+  <LKDVIcon name="monde" aria-hidden="true" />
 );
 
 function EmptyVitrine({

@@ -1,4 +1,4 @@
-import Icon from '@/components/ui/Icon';
+
 import { hubSectionHref, type HubAdventureRef } from '../../registry/hubSectionRegistry';
 import { BentoGrid } from '@/components/ui-layouts/bento-grid';
 import { MenuCard } from './MenuCard';
@@ -14,6 +14,7 @@ import {
   pluralize,
 } from '../../mobile/mobileHubEngine';
 import type { MaterielSummary } from '@/features/materiel/services/getMaterielSummary';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface PossessionMenuProps {
   summary: MaterielSummary;
@@ -304,7 +305,7 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
                   <span
                     className={`flex h-4 w-4 items-center justify-center rounded-full ${it.is_checked ? 'bg-[var(--lkv-success)] text-white' : 'bg-black/5 text-[var(--lkv-text-muted)]'}`}
                   >
-                    {it.is_checked && <Icon name="check" size={10} aria-hidden="true" />}
+                    {it.is_checked && <LKDVIcon name="valider" size={10} aria-hidden="true" />}
                   </span>
                   <span
                     className={`truncate ${it.is_checked ? 'text-[var(--lkv-text-muted)] line-through' : 'text-[var(--lkv-text-primary)] font-medium'}`}

@@ -1,15 +1,15 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Compass, Package, Users } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui';
 import { resetHubPrefs, type Nature } from '../engine/hubNature';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
-const NATURES: { id: Nature; label: string; Icon: typeof Package }[] = [
-  { id: 'possession', label: 'Matériel', Icon: Package },
-  { id: 'sortie', label: 'Voyage', Icon: Compass },
-  { id: 'collectif', label: 'Rando', Icon: Users },
+const NATURES: { id: Nature; label: string; Icon: LKDVIconComponent }[] = [
+  { id: 'possession', label: 'Matériel', Icon: lkdvIcon('inventaire') },
+  { id: 'sortie', label: 'Voyage', Icon: lkdvIcon('boussole') },
+  { id: 'collectif', label: 'Rando', Icon: lkdvIcon('communaute') },
 ];
 
 /** Haptique gardée (iOS Safari : fallback silencieux). */

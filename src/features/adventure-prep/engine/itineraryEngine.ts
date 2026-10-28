@@ -1,3 +1,4 @@
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 import { buildItinerary, isBuildable, renumberByDay } from './itinerary';
 import { PRICE_TO_CHECK, type AdventurePrepDraft, type ItineraryModel, type ItineraryStep } from '../types';
 
@@ -279,12 +280,12 @@ export function validateDrafted(
   return { ok: true, reason: null, detail: null, offending: [] };
 }
 
-const ICONS: Readonly<Record<ItineraryStep['kind'], string>> = {
-  trajet: 'navigation',
-  arret: 'map',
-  repos: 'clock',
-  nuit: 'bed-double',
-  ravitaillement: 'backpack',
+const ICONS: Readonly<Record<ItineraryStep['kind'], LKDVIconName>> = {
+  trajet: 'gps',
+  arret: 'carte',
+  repos: 'duree',
+  nuit: 'hotel',
+  ravitaillement: 'sac',
 };
 
 /**

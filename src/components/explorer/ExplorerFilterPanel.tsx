@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { Button, Chip, SearchField } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface PoiFilterItem {
   id: string;
@@ -86,7 +86,7 @@ export default function ExplorerFilterPanel({
           variant="secondary"
           size="sm"
           onClick={onReset}
-          icon={<RotateCcwAnimated size={10} />}
+          icon={<LKDVIcon name="actualiser" size={10} />}
           className="self-start"
         >
           Réinitialiser les filtres

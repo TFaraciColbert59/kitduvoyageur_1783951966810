@@ -5,10 +5,10 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Spinner } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 
 interface Guide {
@@ -93,7 +93,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
   const desktopNotFound = (
     <div className="max-w-[820px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 text-center">
       <div className="py-16 glass rounded-xl">
-        <Icon name="BookOpenIcon" size={48} className="mx-auto mb-4 text-[color:var(--lkv-text-secondary)]" variant="outline" />
+        <LKDVIcon name="preparateur" size={48} className="mx-auto mb-4 text-[color:var(--lkv-text-secondary)]" />
         <h1 className="font-display font-bold text-2xl text-[color:var(--lkv-text-primary)] mb-3">
           Guide introuvable
         </h1>
@@ -102,7 +102,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
           href="/guides"
           className="glass-capsule-btn primary"
         >
-          <Icon name="ArrowLeftIcon" size={14} variant="outline" />
+          <LKDVIcon name="retour" size={14} />
           Voir tous les guides
         </Link>
       </div>
@@ -115,9 +115,9 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs text-[color:var(--lkv-text-secondary)] mb-6">
         <Link href="/" className="hover:text-[color:var(--lkv-text-primary)] transition-colors">Accueil</Link>
-        <Icon name="ChevronRightIcon" size={12} variant="outline" />
+        <LKDVIcon name="suivant" size={12} />
         <Link href="/guides" className="hover:text-[color:var(--lkv-text-primary)] transition-colors">Guides</Link>
-        <Icon name="ChevronRightIcon" size={12} variant="outline" />
+        <LKDVIcon name="suivant" size={12} />
         <span className="text-[color:var(--lkv-text-primary)] truncate">{guide.title}</span>
       </nav>
 
@@ -130,12 +130,12 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
           {guide.difficulty}
         </span>
         <span className="glass-pill">
-          <Icon name="ClockIcon" size={12} variant="outline" />
+          <LKDVIcon name="duree" size={12} />
           {guide.read_time} min de lecture
         </span>
         {guide.destination && (
           <span className="glass-pill">
-            <Icon name="MapPinIcon" size={12} variant="outline" />
+            <LKDVIcon name="point_interet" size={12} />
             {guide.destination}
           </span>
         )}
@@ -161,7 +161,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       {/* Author & date */}
       <div className="flex items-center gap-3 mb-8 pb-8 border-b border-white/40">
         <div className="w-9 h-9 rounded-full bg-[color:var(--lkv-secondary)] flex items-center justify-center text-white">
-          <Icon name="UserCircleIcon" size={20} variant="outline" />
+          <LKDVIcon name="profil" size={20} />
         </div>
         <div>
           <p className="text-sm font-medium text-[color:var(--lkv-text-primary)]">{guide.author?.full_name ?? 'Équipe Le Kit du Voyageur'}</p>
@@ -182,7 +182,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
           </p>
           <div className="glass-sub-card p-5">
             <div className="flex items-center gap-2 mb-3">
-              <Icon name="SparklesIcon" size={16} className="text-[color:var(--lkv-secondary-ink)]" variant="outline" />
+              <LKDVIcon name="ia" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
               <span className="font-semibold text-[color:var(--lkv-text-primary)] text-sm">Configurez votre kit pour {guide.destination}</span>
             </div>
             <p className="text-sm text-[color:var(--lkv-text-secondary)] mb-4">
@@ -192,7 +192,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
               href="/compas?etape=kit"
               className="glass-capsule-btn primary"
             >
-              <Icon name="SparklesIcon" size={14} variant="outline" />
+              <LKDVIcon name="ia" size={14} />
               Lancer le configurateur
             </Link>
           </div>
@@ -216,7 +216,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
           href="/guides"
           className="inline-flex items-center gap-2 text-sm text-[color:var(--lkv-text-secondary)] hover:text-[color:var(--lkv-text-primary)] transition-colors"
         >
-          <Icon name="ArrowLeftIcon" size={14} variant="outline" />
+          <LKDVIcon name="retour" size={14} />
           Retour aux guides
         </Link>
       </div>
@@ -280,7 +280,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       {/* Author */}
       <div className="mb-[var(--space-4)] flex items-center gap-[10px] border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-4)]">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[14px] text-[color:var(--lkv-text-primary)]" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <LKDVIcon name="profil" size={16} />
         </div>
         <div>
           <p className="m-0 text-[13px] font-semibold text-[color:var(--lkv-text-primary)]">{guide.author?.full_name ?? 'Équipe Le Kit du Voyageur'}</p>

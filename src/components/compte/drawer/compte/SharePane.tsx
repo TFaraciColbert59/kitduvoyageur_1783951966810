@@ -3,10 +3,10 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Copy, ExternalLink, QrCode, Share2, ShieldCheck } from 'lucide-react';
 import type { ProfileSettings, ShareStats } from '@/features/compte/server/compte';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { fetchJson, initials } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export function SharePane() {
   const [copied, setCopied] = useState(false);
@@ -107,10 +107,10 @@ export function SharePane() {
               }}
             />
           ) : (
-            <QrCode size={48} aria-hidden="true" />
+            <LKDVIcon name="scanner" size={48} aria-hidden="true" />
           )}
           <span className="lkdv-compte-share-seal" aria-hidden="true">
-            <ShieldCheck size={18} />
+            <LKDVIcon name="securite" size={18} />
           </span>
         </div>
 
@@ -118,14 +118,14 @@ export function SharePane() {
 
         <div className="lkdv-compte-share-actions">
           <button type="button" className="lkdv-compte-btn primary" onClick={() => void share()}>
-            <Share2 size={15} aria-hidden="true" /> Partager
+            <LKDVIcon name="partager" size={15} aria-hidden="true" /> Partager
           </button>
           <button type="button" className="lkdv-compte-btn ghost" onClick={() => void copy()}>
-            {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+            {copied ? <LKDVIcon name="valider" size={15} aria-hidden="true" /> : <LKDVIcon name="dupliquer" size={15} aria-hidden="true" />}
             {copied ? 'Copié' : 'Copier'}
           </button>
           <Link className="lkdv-compte-btn ghost" href={stats.url || '/profil'} target="_blank">
-            <ExternalLink size={15} aria-hidden="true" /> Voir
+            <LKDVIcon name="lien" size={15} aria-hidden="true" /> Voir
           </Link>
         </div>
       </div>
@@ -147,7 +147,7 @@ export function SharePane() {
 
       <section className="lkdv-compte-share-note">
         <b>
-          <ShieldCheck size={14} aria-hidden="true" /> Ton profil privé reste sur invitation
+          <LKDVIcon name="securite" size={14} aria-hidden="true" /> Ton profil privé reste sur invitation
         </b>
         <p>
           Partager ce lien n’ouvre pas ton profil privé : seules les personnes que tu acceptes

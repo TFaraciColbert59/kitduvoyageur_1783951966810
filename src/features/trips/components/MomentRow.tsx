@@ -1,8 +1,9 @@
-import { Moon, Sun, Sunrise, type LucideIcon } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { MOMENT_SLOT_LABELS, momentTitleBody, type MomentSlot } from '../engine/momentSlots';
 import { isLlmSuggestion } from '../engine/llmProvenance';
 import { LlmSuggestionBadge } from './LlmSuggestionBadge';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 /**
  * Ligne de moment d'enrichissement (§4.3) — rendu compact matin / après-midi /
@@ -11,13 +12,13 @@ import { LlmSuggestionBadge } from './LlmSuggestionBadge';
  * Fix round final — badge « Suggestion IA » quand la ligne vient du job LLM
  * (`source` ou `metadata.source === 'llm_suggestion'`), une pastille par rangée.
  */
-const SLOT_STYLES: Record<MomentSlot, { Icon: LucideIcon; tone: string }> = {
-  matin: { Icon: Sunrise, tone: 'bg-[color:var(--sage-50)] text-[color:var(--sage-700)]' },
+const SLOT_STYLES: Record<MomentSlot, { Icon: LKDVIconComponent; tone: string }> = {
+  matin: { Icon: lkdvIcon('panorama'), tone: 'bg-[color:var(--sage-50)] text-[color:var(--sage-700)]' },
   'apres-midi': {
-    Icon: Sun,
+    Icon: lkdvIcon('soleil'),
     tone: 'bg-[color:var(--lkv-secondary-subtle)] text-[color:var(--lkv-secondary-hover)]',
   },
-  soir: { Icon: Moon, tone: 'bg-[color:var(--lkv-warm-300)] text-[color:var(--lkv-warm-700)]' },
+  soir: { Icon: lkdvIcon('lune'), tone: 'bg-[color:var(--lkv-warm-300)] text-[color:var(--lkv-warm-700)]' },
 };
 
 export interface MomentRowProps {

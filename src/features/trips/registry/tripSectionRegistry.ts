@@ -1,16 +1,4 @@
-import {
-  Compass,
-  Navigation,
-  Package,
-  Users,
-  CreditCard,
-  FileText,
-  CheckSquare,
-  Shield,
-  BookOpen,
-  Share2,
-  type LucideIcon,
-} from 'lucide-react';
+
 import type { TripPhase } from '../engine/temporalPhaseEngine';
 import type { TripPermissions } from '../types/trip.types';
 import {
@@ -21,6 +9,7 @@ import {
 import type { TripFull } from '../types/trip.types';
 import { hubSectionRegistry, hubSectionHref } from '@/features/hub/registry/hubSectionRegistry';
 import type { HubSectionId } from '@/features/hub/engine/hubProfileEngine';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 /**
  * Y1.3 — Registre des sections du hub voyage (source unique de la navigation).
@@ -37,7 +26,7 @@ export interface TripSectionDef {
   label: string;
   /** Segment d'URL sous /voyages/[slug] — '' pour la racine (overview). */
   segment: string;
-  icon: LucideIcon;
+  icon: LKDVIconComponent;
   phases: TripPhase[];
   /** Permission requise (aucune si undefined) — vérifiée à l'affichage ET côté serveur. */
   permission?: keyof TripPermissions;
@@ -50,7 +39,7 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
     id: 'overview',
     label: 'Aperçu',
     segment: '',
-    icon: Compass,
+    icon: lkdvIcon('boussole'),
     phases: ['prepare', 'live', 'recount'],
     counter: () => null,
   },
@@ -58,7 +47,7 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
     id: 'itinerary',
     label: 'Itinéraire',
     segment: 'itineraire',
-    icon: Navigation,
+    icon: lkdvIcon('gps'),
     phases: ['prepare', 'live'],
     counter: (trip) => trip.steps?.length ?? 0,
   },
@@ -66,7 +55,7 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
     id: 'gear',
     label: 'Équipement',
     segment: 'kit',
-    icon: Package,
+    icon: lkdvIcon('inventaire'),
     phases: ['prepare'],
     counter: (trip) => trip.items?.length ?? 0,
   },
@@ -74,7 +63,7 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
     id: 'team',
     label: 'Équipage',
     segment: 'equipage',
-    icon: Users,
+    icon: lkdvIcon('communaute'),
     phases: ['prepare', 'live'],
     counter: (trip) => (trip.collaborators?.length ?? 0) + 1,
   },
@@ -82,7 +71,7 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
     id: 'budget',
     label: 'Budget',
     segment: 'budget',
-    icon: CreditCard,
+    icon: lkdvIcon('paiement'),
     phases: ['prepare', 'recount'],
     permission: 'canManageBudget',
     counter: (trip) => trip.expenses?.length ?? 0,
@@ -91,7 +80,7 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
     id: 'docs',
     label: 'Documents',
     segment: 'documents',
-    icon: FileText,
+    icon: lkdvIcon('facture'),
     phases: ['prepare', 'live'],
     permission: 'canViewDocuments',
     counter: (trip) => trip.documents?.length ?? 0,
@@ -100,7 +89,7 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
     id: 'checklist',
     label: 'Checklist départ',
     segment: 'checklist',
-    icon: CheckSquare,
+    icon: lkdvIcon('checklist'),
     phases: ['prepare'],
     counter: (trip) => trip.items?.filter((i) => !i.is_packed).length ?? 0,
   },
@@ -108,7 +97,7 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
     id: 'safety',
     label: 'Sécurité',
     segment: 'securite',
-    icon: Shield,
+    icon: lkdvIcon('securite'),
     phases: ['prepare', 'live'],
     counter: (trip) => trip.safety_checkpoints?.filter((c) => c.status === 'pending').length ?? 0,
   },
@@ -116,7 +105,7 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
     id: 'journal',
     label: 'Journal',
     segment: 'journal',
-    icon: BookOpen,
+    icon: lkdvIcon('preparateur'),
     phases: ['live', 'recount'],
     counter: (trip) => trip.notes?.length ?? 0,
   },
@@ -124,7 +113,7 @@ export const tripSectionRegistry: readonly TripSectionDef[] = [
     id: 'export',
     label: 'Export',
     segment: 'export',
-    icon: Share2,
+    icon: lkdvIcon('partager'),
     phases: ['prepare', 'recount'],
     counter: () => null,
   },

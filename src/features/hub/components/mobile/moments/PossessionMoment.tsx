@@ -1,8 +1,8 @@
 import { MomentStatCard } from '../MomentStatCard';
-import { CalendarDays } from 'lucide-react';
 import { daysUntilFrom } from '../../../mobile/mobileHubEngine';
 import { hubSectionHref, type HubAdventureRef } from '../../../registry/hubSectionRegistry';
 import type { MaterielSummary } from '@/features/materiel/services/getMaterielSummary';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 function ForestRow({ label, value }: { label: string; value: string }) {
   return (
@@ -71,7 +71,7 @@ export function PossessionMoment({ summary }: { summary: MaterielSummary }) {
       ) : (
         <div className="flex items-center gap-3 py-1">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]">
-            <CalendarDays size={22} aria-hidden="true" />
+            <LKDVIcon name="jours" size={22} aria-hidden="true" />
           </span>
           <div>
             <p className="text-sm font-bold text-[color:var(--lkv-text-primary)]">Votre prochaine aventure commence ici</p>

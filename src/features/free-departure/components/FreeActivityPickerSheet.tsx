@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useMemo, useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import { Button, Chip, Sheet } from '@/components/ui';
 import {
   ACTIVITY_CATEGORIES,
@@ -10,6 +9,7 @@ import {
   searchActivities,
 } from '@/features/adventure-prep/catalog';
 import type { ActivityCategoryId, ActivityDef } from '@/features/adventure-prep/types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface FreeActivityPickerSheetProps {
   open: boolean;
@@ -101,12 +101,12 @@ export function FreeActivityPickerSheet({
                 onClick={() => choose(activity)}
               >
                 <span className="prep-act__icon" aria-hidden="true">
-                  <Icon name={activity.icon} size={22} />
+                  <LKDVIcon name={activity.icon} size={22} />
                 </span>
                 <span className="prep-act__name">{activity.label}</span>
                 {activity.id === activityId ? (
                   <span className="prep-act__check">
-                    <Icon name="check" size={20} aria-hidden="true" />
+                    <LKDVIcon name="valider" size={20} aria-hidden="true" />
                     <span className="prep-visually-hidden">Sélectionnée</span>
                   </span>
                 ) : null}
@@ -130,7 +130,7 @@ export function FreeActivityPickerSheet({
               onOpenChange(false);
             }}
           >
-            <Icon name="sparkles" size={18} aria-hidden="true" />
+            <LKDVIcon name="ia" size={18} aria-hidden="true" />
             Revenir à la détection automatique
           </Button>
         ) : null}

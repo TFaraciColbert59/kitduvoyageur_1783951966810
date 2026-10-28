@@ -1,6 +1,4 @@
 ﻿'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -35,6 +33,7 @@ import {
   deleteDayAction,
   duplicateDayAction,
 } from '@/app/voyages/actions';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ItineraryPlannerClientProps {
   trip: TripFull;
@@ -399,7 +398,7 @@ export default function ItineraryPlannerClient({
                 variant="secondary"
                 onClick={() => setRenameOpen(true)}
                 aria-label="Renommer l’activité"
-                icon={<Icon name="pencil" size={14} />}
+                icon={<LKDVIcon name="modifier" size={14} />}
               >
                 <span className="hidden sm:inline">Renommer</span>
               </Button>
@@ -409,7 +408,7 @@ export default function ItineraryPlannerClient({
               aria-label="Voir le cockpit du voyage"
               className="inline-flex min-h-[var(--control-height-sm)] shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespace-nowrap rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
             >
-              <Icon name="map" size={14} />
+              <LKDVIcon name="carte" size={14} />
               <span className="hidden sm:inline">Cockpit</span>
             </Link>
           </div>
@@ -421,7 +420,7 @@ export default function ItineraryPlannerClient({
             tone="danger"
             className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)] animate-in fade-in"
           >
-            <Icon name="alert-circle" size={16} className="shrink-0" />
+            <LKDVIcon name="alerte" size={16} className="shrink-0" />
             <span>{errorMessage}</span>
           </Card>
         )}
@@ -430,7 +429,7 @@ export default function ItineraryPlannerClient({
             tone="sage"
             className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)] animate-in fade-in"
           >
-            <Icon name="check-circle2" size={16} className="shrink-0" />
+            <LKDVIcon name="valider" size={16} className="shrink-0" />
             <span>{successMessage}</span>
           </Card>
         )}

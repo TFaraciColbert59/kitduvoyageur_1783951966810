@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { Button, Card, EmptyState } from '@/components/ui';
 import { TripBadge } from './TripBadge';
@@ -9,6 +7,7 @@ import { getKitCounters } from '../hooks/useKitCounters';
 import { getTripDistance } from '../hooks/useTripDistance';
 import { getCanonicalTripSteps, getTripCounters } from '../hooks/useTripCounters';
 import type { TripFull, TripStats } from '../types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TripOverviewTabProps {
   trip: TripFull;
@@ -33,7 +32,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
       <div className="grid grid-cols-2 gap-[var(--space-3)] sm:grid-cols-4 sm:gap-[var(--space-4)]">
         <Card variant="compact" className="p-[var(--space-4)]">
           <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
-            <Icon name="calendar" size={13} />
+            <LKDVIcon name="calendrier" size={13} />
             <span>Durée</span>
           </div>
           <div className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
@@ -46,7 +45,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
 
         <Card variant="compact" className="p-[var(--space-4)]">
           <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
-            <Icon name="navigation" size={13} />
+            <LKDVIcon name="gps" size={13} />
             <span>Distance</span>
           </div>
           <div className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
@@ -59,7 +58,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
 
         <Card variant="compact" className="p-[var(--space-4)]">
           <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
-            <Icon name="package" size={13} />
+            <LKDVIcon name="inventaire" size={13} />
             <span>Sac à dos</span>
           </div>
           <div className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
@@ -72,7 +71,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
 
         <Card variant="compact" className="p-[var(--space-4)]">
           <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
-            <Icon name="credit-card" size={13} />
+            <LKDVIcon name="paiement" size={13} />
             <span>Budget</span>
           </div>
           <div className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
@@ -111,7 +110,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
           <div>
             <div className="mb-[var(--space-4)] flex items-center justify-between">
               <h2 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
-                <Icon name="navigation" size={18} className="text-[color:var(--lkv-text-secondary)]" />
+                <LKDVIcon name="gps" size={18} className="text-[color:var(--lkv-text-secondary)]" />
                 <span>Aperçu de l’itinéraire</span>
               </h2>
               <Button size="sm" variant="secondary" onClick={() => onTabChange('itinerary')}>
@@ -153,7 +152,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
           <div>
             <div className="mb-[var(--space-4)] flex items-center justify-between">
               <h2 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
-                <Icon name="users" size={18} className="text-[color:var(--lkv-text-secondary)]" />
+                <LKDVIcon name="communaute" size={18} className="text-[color:var(--lkv-text-secondary)]" />
                 <span>Équipe d’expédition</span>
               </h2>
               <Button size="sm" variant="secondary" onClick={() => onTabChange('team')}>
@@ -194,7 +193,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
       <Card>
         <div className="flex items-start gap-[var(--space-4)]">
           <div className="shrink-0 rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-[color:var(--glass-label)]">
-            <Icon name="compass" size={22} />
+            <LKDVIcon name="boussole" size={22} />
           </div>
           <div>
             <h3 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">

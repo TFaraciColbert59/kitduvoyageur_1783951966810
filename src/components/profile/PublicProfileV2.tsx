@@ -3,16 +3,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  ArrowLeft,
-  Flag,
-  MessageCircle,
-  MoreHorizontal,
-  Share2,
-  ShieldCheck,
-  UserCheck,
-  UserPlus,
-} from 'lucide-react';
 import { ProfileDrawerHost } from '@/components/compte/drawer/ProfileDrawerHost';
 import { DRAWER_V2_CSS } from '@/components/compte/drawer/SlotShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +15,7 @@ import type {
   CompteUserProfile,
 } from '@/lib/supabase/queries-compte';
 import { buildPublicProfilePayload } from './publicProfilePayload';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface PublicProfileV2Props {
   profile: CompteUserProfile;
@@ -172,20 +163,20 @@ export function PublicProfileV2({
               onClick={() => (window.history.length > 1 ? router.back() : router.push('/communaute'))}
               aria-label="Retour"
             >
-              <ArrowLeft size={18} aria-hidden="true" />
+              <LKDVIcon name="retour" size={18} aria-hidden="true" />
             </button>
             <span className="lkdv-public-toplabel">Profil voyageur</span>
             <div className="lkdv-public-topactions">
               <button type="button" className="lkdv-public-icon" onClick={() => void share()} aria-label="Partager le profil">
-                <Share2 size={17} aria-hidden="true" />
+                <LKDVIcon name="partager" size={17} aria-hidden="true" />
               </button>
               {!owner && onReport ? (
                 <button type="button" className="lkdv-public-icon" onClick={onReport} aria-label="Signaler le profil">
-                  <Flag size={16} aria-hidden="true" />
+                  <LKDVIcon name="signalement" size={16} aria-hidden="true" />
                 </button>
               ) : (
                 <Link href="/compte" className="lkdv-public-icon" aria-label="Mon compte">
-                  <MoreHorizontal size={18} aria-hidden="true" />
+                  <LKDVIcon name="plus_options" size={18} aria-hidden="true" />
                 </Link>
               )}
             </div>
@@ -205,7 +196,7 @@ export function PublicProfileV2({
                 <b>{name}</b>
                 {trust >= 70 ? (
                   <span className="lkdv-public-trust" title={`Confiance ${trust}/100`}>
-                    <ShieldCheck size={12} aria-hidden="true" /> {trust}
+                    <LKDVIcon name="securite" size={12} aria-hidden="true" /> {trust}
                   </span>
                 ) : null}
               </div>
@@ -229,13 +220,13 @@ export function PublicProfileV2({
                 onClick={() => void toggleFollow()}
                 disabled={busy}
               >
-                {following ? <UserCheck size={15} aria-hidden="true" /> : <UserPlus size={15} aria-hidden="true" />}
+                {following ? <LKDVIcon name="amis" size={15} aria-hidden="true" /> : <LKDVIcon name="amis" size={15} aria-hidden="true" />}
                 {following ? 'Abonné' : 'Suivre'}
               </button>
             )}
             {!owner ? (
               <Link className="lkdv-public-secondary" href={`/messagerie?to=${encodeURIComponent(handle)}`}>
-                <MessageCircle size={15} aria-hidden="true" /> Message
+                <LKDVIcon name="messages" size={15} aria-hidden="true" /> Message
               </Link>
             ) : null}
           </div>

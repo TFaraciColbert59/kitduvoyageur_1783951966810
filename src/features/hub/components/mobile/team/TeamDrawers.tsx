@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Dog, HeartPulse, Plus, Trash2, UserPlus } from 'lucide-react';
-import Icon from '@/components/ui/Icon';
 import { Badge, Button, IconButton, Switch, type BadgeTone } from '@/components/ui';
 import type { HumanParticipant, DogParticipant } from '@/features/participants/types/participant.types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { carnetRoleLabel, dogLoadView, formatJoinDate, personInitials, teamRoleLabel } from '../../../mobile/teamEngine';
 import { GroupeDrawer } from '../groupe/GroupeDrawer';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const ROLE_TONES: Record<string, string> = {
   guide: 'bg-[var(--lkv-primary)]/12 text-[color:var(--lkv-text-primary)]',
@@ -74,8 +73,8 @@ export function TeamMembersDrawer({
             </p>
           )}
           <div className="relative">
-            <Icon
-              name="mail"
+            <LKDVIcon
+              name="email"
               size={16}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--lkv-text-muted)]"
               aria-hidden="true"
@@ -103,7 +102,7 @@ export function TeamMembersDrawer({
             variant="primary"
             fullWidth
             loading={isPending}
-            icon={<UserPlus size={15} aria-hidden="true" />}
+            icon={<LKDVIcon name="amis" size={15} aria-hidden="true" />}
             className="!py-3 text-sm font-bold"
           >
             {isPending ? 'Envoi…' : "Envoyer l'invitation"}
@@ -158,7 +157,7 @@ export function TeamMembersDrawer({
                     aria-label={`Retirer ${member.name} de l'expédition`}
                     className="shrink-0 !text-[var(--lkv-danger)]"
                   >
-                    <Trash2 size={16} aria-hidden="true" />
+                    <LKDVIcon name="supprimer" size={16} aria-hidden="true" />
                   </IconButton>
                 </div>
               )}
@@ -257,7 +256,7 @@ export function TeamCarnetDrawer({
                   aria-label={`Retirer ${human.publicData.firstName} du carnet`}
                   className="shrink-0 !text-[var(--lkv-danger)]"
                 >
-                  <Trash2 size={15} aria-hidden="true" />
+                  <LKDVIcon name="supprimer" size={15} aria-hidden="true" />
                 </IconButton>
               )}
             </div>
@@ -268,7 +267,7 @@ export function TeamCarnetDrawer({
                 triggerHaptic('selection');
                 onMedical(human);
               }}
-              icon={<HeartPulse size={14} aria-hidden="true" />}
+              icon={<LKDVIcon name="trousse" size={14} aria-hidden="true" />}
               className="mt-2.5 !py-2.5 text-xs font-bold"
             >
               Fiche médicale / ICE
@@ -279,7 +278,7 @@ export function TeamCarnetDrawer({
 
       <form onSubmit={submit} className="glass-sub-card space-y-3 rounded-2xl p-3.5">
         <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/70">
-          <Plus size={12} aria-hidden="true" />
+          <LKDVIcon name="plus" size={12} aria-hidden="true" />
           Ajouter un équipier
         </p>
         <input
@@ -394,7 +393,7 @@ export function TeamDogsDrawer({
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-secondary)]/15 text-[var(--lkv-text-primary)]"
                   aria-hidden="true"
                 >
-                  <Dog size={18} />
+                  <LKDVIcon name="faune" size={18} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
@@ -413,7 +412,7 @@ export function TeamDogsDrawer({
                   aria-label={`Retirer ${dog.name}`}
                   className="shrink-0 !text-[var(--lkv-danger)]"
                 >
-                  <Trash2 size={15} aria-hidden="true" />
+                  <LKDVIcon name="supprimer" size={15} aria-hidden="true" />
                 </IconButton>
               </div>
 
@@ -455,7 +454,7 @@ export function TeamDogsDrawer({
 
       <form onSubmit={submit} className="glass-sub-card space-y-3 rounded-2xl p-3.5">
         <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/70">
-          <Plus size={12} aria-hidden="true" />
+          <LKDVIcon name="plus" size={12} aria-hidden="true" />
           Ajouter un chien
         </p>
         <input

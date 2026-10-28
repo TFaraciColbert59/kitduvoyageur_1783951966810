@@ -3,8 +3,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface StoryOverlay {
   type: 'text';
@@ -471,34 +471,30 @@ export default function StoriesViewer({
               setOptionsOpen((open) => !open);
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <circle cx="5" cy="12" r="1.9" />
-              <circle cx="12" cy="12" r="1.9" />
-              <circle cx="19" cy="12" r="1.9" />
-            </svg>
+            <LKDVIcon name="plus_options" size={18} aria-hidden="true" />
           </button>
           <div className="pmi-options-menu" role="group" aria-label="Options de la story" hidden={!optionsOpen}>
             {user.id === myUserId && slide.storyId && onShowViews ? (
               <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onShowViews(slide); setOptionsOpen(false); }}>
-                <Icon name="eye" size={18} aria-hidden="true" />
+                <LKDVIcon name="vue" size={18} aria-hidden="true" />
                 <span>Voir les vues</span>
               </button>
             ) : null}
             {user.id === myUserId && slide.storyId && onDelete ? (
               <button type="button" className="pmi-report" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
-                <Icon name="trash" size={18} aria-hidden="true" />
+                <LKDVIcon name="supprimer" size={18} aria-hidden="true" />
                 <span>Retirer ma story</span>
               </button>
             ) : null}
             {user.id !== myUserId && onReport ? (
               <button type="button" className="pmi-report" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onReport(user, slide); setOptionsOpen(false); }}>
-                <Icon name="flag" size={18} aria-hidden="true" />
+                <LKDVIcon name="signalement" size={18} aria-hidden="true" />
                 <span>Signaler</span>
               </button>
             ) : null}
             {user.id !== myUserId && onBlock ? (
               <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onBlock(user); setOptionsOpen(false); }}>
-                <Icon name="user-x" size={18} aria-hidden="true" />
+                <LKDVIcon name="moderation" size={18} aria-hidden="true" />
                 <span>Bloquer</span>
               </button>
             ) : null}
@@ -519,7 +515,7 @@ export default function StoriesViewer({
         {/* Média cassé : jamais d'écran blanc */}
         {mediaError && (
           <div className="pointer-events-none absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-[var(--space-3)] bg-black/75 p-[var(--space-6)] text-center">
-            <Icon name="image-off" size={28} color="var(--lkv-text-inverted)" />
+            <LKDVIcon name="galerie" size={28} />
             <p className="text-[length:var(--lkv-text-body-sm)] text-white">Média indisponible</p>
             <p className="text-[length:var(--lkv-text-caption-2)] text-white/70">Swipe pour continuer</p>
           </div>
@@ -556,7 +552,7 @@ export default function StoriesViewer({
               if (slide.storyId) onToggleLike?.(slide, liked);
             }}
           >
-            <Icon name="heart" size={22} color={liked ? '#E0245E' : '#ffffff'} />
+            <LKDVIcon name="favoris" size={22} />
           </button>
         ) : null}
 

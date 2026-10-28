@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useEffect, useState, useTransition } from 'react';
 import {
   getTripOfflineQueue,
@@ -9,6 +7,7 @@ import {
 } from '@/features/trips/offline/tripOfflineSyncQueue';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/lib/utils';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface TripNetworkStatusProps {
   tripSlug: string;
@@ -79,8 +78,8 @@ export function TripNetworkStatus({
         aria-live="polite"
         title="Mode hors-ligne actif. Vos modifications sont sauvegardées localement."
       >
-        <Icon
-          name="cloud-off"
+        <LKDVIcon
+          name="hors_ligne"
           className="w-3.5 h-3.5 text-[var(--lkv-warning-dark)]"
           aria-hidden="true"
         />
@@ -103,8 +102,8 @@ export function TripNetworkStatus({
         title="Actions en attente de synchronisation. Cliquez pour synchroniser."
       >
         {isPending ? (
-          <Icon
-            name="refresh-cw"
+          <LKDVIcon
+            name="actualiser"
             className="w-3.5 h-3.5 animate-spin text-[var(--lkv-warning-dark)]"
             aria-hidden="true"
           />
@@ -130,7 +129,7 @@ export function TripNetworkStatus({
         )}
         role="status"
       >
-        <Icon name="check" className="w-3.5 h-3.5 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
+        <LKDVIcon name="valider" className="w-3.5 h-3.5 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
         <span>Synchronisé</span>
       </div>
     );
@@ -146,7 +145,7 @@ export function TripNetworkStatus({
       role="status"
       title="Toutes les données sont synchronisées"
     >
-      <Icon name="cloud" className="w-3.5 h-3.5 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
+      <LKDVIcon name="meteo" className="w-3.5 h-3.5 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
       <span>À jour</span>
     </div>
   );

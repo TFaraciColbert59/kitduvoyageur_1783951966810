@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import Icon from '@/components/ui/AppIcon';
 import ClubDiscussionCard from '@/components/clubs/ClubDiscussionCard';
 import ClubPrivatePostsPanel from '@/components/clubs/ClubPrivatePostsPanel';
 import ClubFeaturedEventCard from '@/components/clubs/ClubFeaturedEventCard';

@@ -1,6 +1,4 @@
 ﻿'use client';
-
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
@@ -11,6 +9,7 @@ import { deriveScale, deriveParty, getProfileBadgeLabel } from '../engine/tripPr
 import type { TripSummary, TripWithDetails } from '../types/trip.types';
 
 import { formatCivilDate, formatCivilDateRange } from '@/lib/dates/tripDates';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TripCardProps {
   trip: TripSummary | TripWithDetails;
@@ -70,7 +69,7 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
           {/* Destination Overlay */}
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
             <span className="flex items-center gap-1 font-medium drop-shadow">
-              <Icon name="map-pin" size={14} className="text-sage-300" />
+              <LKDVIcon name="point_interet" size={14} className="text-sage-300" />
               {trip.destination_name || trip.destination_country_code || 'Destination sauvage'}
             </span>
             {showRole && role && <TripBadge type="role" value={role} size="sm" />}
@@ -93,14 +92,14 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
           {/* Bottom Meta */}
           <div className="pt-2 border-t border-black/5 flex items-center justify-between text-xs text-lkv-secondary">
             <span className="flex items-center gap-1">
-              <Icon name="calendar" size={13} className="text-lkv-secondary" />
+              <LKDVIcon name="calendrier" size={13} className="text-lkv-secondary" />
               {formatDateRange(trip.start_date, trip.end_date)}
             </span>
 
             <div className="flex items-center gap-3">
               {trip.steps_count !== undefined && trip.steps_count > 0 && (
                 <span className="flex items-center gap-1" title={`${trip.steps_count} étapes`}>
-                  <Icon name="navigation" size={13} />
+                  <LKDVIcon name="gps" size={13} />
                   {trip.steps_count}
                 </span>
               )}
@@ -109,7 +108,7 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
                   className="flex items-center gap-1"
                   title={`${trip.collaborators_count} participants`}
                 >
-                  <Icon name="users" size={13} />
+                  <LKDVIcon name="communaute" size={13} />
                   {trip.collaborators_count}
                 </span>
               )}

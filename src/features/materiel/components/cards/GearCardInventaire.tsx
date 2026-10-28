@@ -1,8 +1,8 @@
 ﻿'use client';
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import { Card } from '@/components/ui';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface InventaireData {
   count: number;
@@ -51,7 +51,7 @@ export function GearCardInventaire({
         <div className="grid grid-cols-2 gap-2">
           <div className="glass-sub-card p-2.5 flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/25 flex items-center justify-center text-[color:var(--lkv-text-primary)] flex-shrink-0 shadow-inner">
-              <Icon name="check-circle2" size={15} />
+              <LKDVIcon name="valider" size={15} />
             </div>
             <div className="truncate">
               <span className="block text-[10px] uppercase font-semibold text-[var(--lkv-text-muted)]">
@@ -96,7 +96,7 @@ export function GearCardInventaire({
             {data.lastAddedLabel ?? 'Inventaire opérationnel'}
           </span>
           <Link href="/hub/inventaire" className="glass-capsule-btn secondary">
-            <Icon name="plus" size={14} />
+            <LKDVIcon name="plus" size={14} />
             <span>Ajouter</span>
           </Link>
         </div>

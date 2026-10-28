@@ -28,7 +28,7 @@ function step(id: string): ItineraryStep {
     price: { amount: null, currency: 'EUR', state: 'a_reserver' },
     state: 'a_reserver',
     kept: false,
-    icon: 'clock',
+    icon: 'duree',
     lat: null,
     lon: null,
   };

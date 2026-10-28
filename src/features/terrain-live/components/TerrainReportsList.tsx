@@ -1,14 +1,9 @@
 'use client';
-
-/**
- * A5 — Liste verticale des conditions Terrain Live.
- * États vides/chargement/erreur soignés ; skeleton sans CLS ; jamais d'écran blanc.
- */
-import Icon from '@/components/ui/Icon';
 import type { TerrainConfirmation } from '@/features/adventure-intelligence/schemas/live.schema';
 import { Button, Card, EmptyState, Skeleton } from '@/components/ui';
 import TerrainReportCard from './TerrainReportCard';
 import type { TerrainLiveReport } from '../lib/terrainDisplay';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TerrainReportsListProps {
   reports: TerrainLiveReport[];
@@ -56,7 +51,7 @@ export default function TerrainReportsList({
       <Card variant="compact" className="px-6 py-8">
         <EmptyState
           compact
-          icon={<Icon name="check-circle" size={22} className="text-[color:var(--lkv-text-primary)]" aria-hidden="true" />}
+          icon={<LKDVIcon name="valider" size={22} className="text-[color:var(--lkv-text-primary)]" aria-hidden="true" />}
           title="Aucun signalement récent"
           description="Le sentier est calme autour de vous."
         />

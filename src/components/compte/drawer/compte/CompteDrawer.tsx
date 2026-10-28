@@ -1,21 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {
-  Archive,
-  Bell,
-  Grid2x2,
-  Package,
-  Receipt,
-  Server,
-  Settings,
-  Share2,
-  ShoppingBag,
-  Truck,
-  UserPen,
-  Users,
-  XCircle,
-} from 'lucide-react';
 import { DrawerShell, DrawerSkeleton, type DrawerSecondaryItem, type DrawerTab } from '../shell/DrawerShell';
 import { DrawerAuthRequired } from '../shell/DrawerAuthRequired';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,20 +9,21 @@ import { NotificationsPane } from './NotificationsPane';
 import { SettingsPane } from './SettingsPane';
 import { EditProfilePane } from './EditProfilePane';
 import { SharePane } from './SharePane';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const ORDER_FILTERS: DrawerSecondaryItem[] = [
-  { id: 'all', label: 'Toutes', icon: <Grid2x2 size={15} aria-hidden="true" /> },
-  { id: 'active', label: 'En cours', icon: <Truck size={15} aria-hidden="true" /> },
-  { id: 'past', label: 'Passées', icon: <Archive size={15} aria-hidden="true" /> },
-  { id: 'cancelled', label: 'Annulées', icon: <XCircle size={15} aria-hidden="true" /> },
+  { id: 'all', label: 'Toutes', icon: <LKDVIcon name="calques" size={15} aria-hidden="true" /> },
+  { id: 'active', label: 'En cours', icon: <LKDVIcon name="livraison" size={15} aria-hidden="true" /> },
+  { id: 'past', label: 'Passées', icon: <LKDVIcon name="historique" size={15} aria-hidden="true" /> },
+  { id: 'cancelled', label: 'Annulées', icon: <LKDVIcon name="annuler" size={15} aria-hidden="true" /> },
 ];
 
 const NOTIFICATION_FILTERS: DrawerSecondaryItem[] = [
-  { id: 'all', label: 'Tout', icon: <Bell size={15} aria-hidden="true" /> },
-  { id: 'social', label: 'Social', icon: <Users size={15} aria-hidden="true" /> },
-  { id: 'loans', label: 'Prêts', icon: <Package size={15} aria-hidden="true" /> },
-  { id: 'orders', label: 'Commandes', icon: <ShoppingBag size={15} aria-hidden="true" /> },
-  { id: 'system', label: 'Système', icon: <Server size={15} aria-hidden="true" /> },
+  { id: 'all', label: 'Tout', icon: <LKDVIcon name="notifications" size={15} aria-hidden="true" /> },
+  { id: 'social', label: 'Social', icon: <LKDVIcon name="communaute" size={15} aria-hidden="true" /> },
+  { id: 'loans', label: 'Prêts', icon: <LKDVIcon name="inventaire" size={15} aria-hidden="true" /> },
+  { id: 'orders', label: 'Commandes', icon: <LKDVIcon name="boutique" size={15} aria-hidden="true" /> },
+  { id: 'system', label: 'Système', icon: <LKDVIcon name="options_avancees" size={15} aria-hidden="true" /> },
 ];
 
 export function CompteDrawer({ initialTab = 0 }: { initialTab?: number }) {
@@ -69,31 +55,31 @@ export function CompteDrawer({ initialTab = 0 }: { initialTab?: number }) {
     {
       id: 'orders',
       label: 'Commandes',
-      icon: <Receipt size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="facture" size={18} aria-hidden="true" />,
       render: () => <OrdersPane filter={orderFilter} />,
     },
     {
       id: 'notifications',
       label: 'Notifications',
-      icon: <Bell size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="notifications" size={18} aria-hidden="true" />,
       render: () => <NotificationsPane filter={notificationFilter} />,
     },
     {
       id: 'settings',
       label: 'Paramètres',
-      icon: <Settings size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="options_avancees" size={18} aria-hidden="true" />,
       render: () => <SettingsPane />,
     },
     {
       id: 'profile',
       label: 'Modifier le profil',
-      icon: <UserPen size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="profil" size={18} aria-hidden="true" />,
       render: () => <EditProfilePane />,
     },
     {
       id: 'share',
       label: 'Partager',
-      icon: <Share2 size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="partager" size={18} aria-hidden="true" />,
       render: () => <SharePane />,
     },
   ];

@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Button, Card, ErrorState, SearchField } from '@/components/ui';
 import type { UserProfileSummary, Conversation } from '../types/messaging.types';
@@ -14,6 +12,7 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { messagingService } from '../services/messagingService';
 import { createClient } from '@/lib/supabase/client';
 import { zIndex } from '@/lib/ui/zIndex';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface MessageInboxProps {
   currentUserId: string;
@@ -269,7 +268,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
           ) : (
             <Card className="flex h-full w-full flex-col items-center justify-center p-[var(--space-8)] text-center">
               <div className="mb-[var(--space-4)] flex size-20 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-                <Icon name="send" className="size-10" aria-hidden="true" />
+                <LKDVIcon name="partager" className="size-10" aria-hidden="true" />
               </div>
               <h3 className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
                 Vos messages
@@ -286,7 +285,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
                   setIsModalOpen(true);
                 }}
                 className="mt-[var(--space-6)] shadow-elevation-2"
-                icon={<Icon name="plus" className="size-4" aria-hidden="true" />}
+                icon={<LKDVIcon name="plus" className="size-4" aria-hidden="true" />}
               >
                 Nouvelle discussion
               </Button>

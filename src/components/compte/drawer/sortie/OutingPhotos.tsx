@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { Camera, ImagePlus, Trash2, X } from 'lucide-react';
 import type { OutingPhoto } from '@/features/compte/server/sorties';
 import { DrawerEmpty } from '../shell/DrawerShell';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface OutingPhotosProps {
   photos: OutingPhoto[];
@@ -43,7 +43,7 @@ export function OutingPhotos({ photos, canEdit, uploading, onUpload, onDelete }:
               disabled={uploading}
               onClick={() => inputRef.current?.click()}
             >
-              <ImagePlus size={15} aria-hidden="true" /> {uploading ? 'Envoi…' : 'Ajouter'}
+              <LKDVIcon name="photo" size={15} aria-hidden="true" /> {uploading ? 'Envoi…' : 'Ajouter'}
             </button>
           </>
         ) : null}
@@ -60,7 +60,7 @@ export function OutingPhotos({ photos, canEdit, uploading, onUpload, onDelete }:
           action={
             canEdit ? (
               <button type="button" className="lkdv-sortie-btn ghost" onClick={() => inputRef.current?.click()}>
-                <Camera size={15} aria-hidden="true" /> Choisir une photo
+                <LKDVIcon name="camera" size={15} aria-hidden="true" /> Choisir une photo
               </button>
             ) : undefined
           }
@@ -86,7 +86,7 @@ export function OutingPhotos({ photos, canEdit, uploading, onUpload, onDelete }:
       {active ? (
         <div className="lkdv-sortie-lightbox" role="dialog" aria-modal="true" aria-label={active.caption || 'Photo'}>
           <button type="button" className="lkdv-sortie-lightbox-close" onClick={() => setActive(null)} aria-label="Fermer">
-            <X size={18} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={18} aria-hidden="true" />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={active.url} alt={active.caption || ''} />
@@ -101,7 +101,7 @@ export function OutingPhotos({ photos, canEdit, uploading, onUpload, onDelete }:
                   setActive(null);
                 }}
               >
-                <Trash2 size={15} aria-hidden="true" /> Supprimer
+                <LKDVIcon name="supprimer" size={15} aria-hidden="true" /> Supprimer
               </button>
             ) : null}
           </div>

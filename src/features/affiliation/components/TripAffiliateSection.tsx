@@ -1,11 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { Badge, Card } from '@/components/ui';
 import { AffiliateDisclosure } from './AffiliateDisclosure';
 import { AffiliateLinkCard } from './AffiliateLinkCard';
 import type { AffiliateLink } from '../types/affiliate.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TripAffiliateSectionProps {
   links: AffiliateLink[];
@@ -39,7 +38,7 @@ export function TripAffiliateSection({
         <div className="flex flex-col justify-between gap-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-4)] sm:flex-row sm:items-center">
           <div>
             <span className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-secondary-ink)]">
-              <Icon name="compass" className="h-3.5 w-3.5" />
+              <LKDVIcon name="boussole" className="h-3.5 w-3.5" />
               Réservations & Préparation Logistique
             </span>
             <h3 className="mt-[var(--space-1)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">

@@ -1,15 +1,4 @@
 'use client';
-
-import {
-  BatteryCharging,
-  CalendarDays,
-  Clock,
-  FileText,
-  Mountain,
-  Share2,
-  Wifi,
-  WifiOff,
-} from 'lucide-react';
 import { Badge, Button, Card, type BadgeTone } from '@/components/ui';
 import { BudgetRing } from '@/features/hub/components/mobile/budget/BudgetRing';
 import { CountdownLive } from '@/features/materiel/components/cards/CountdownLive';
@@ -17,6 +6,7 @@ import { formatDistanceKm, formatWeight } from '@/features/materiel/domain/depar
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { DepartIdentity } from '@/features/materiel/domain/departIdentity';
 import type { DepartDetail, DepartStatus } from '@/features/materiel/services/getDepartDetail';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface DepartHeroCardProps {
   depart: DepartDetail;
@@ -96,14 +86,14 @@ export function DepartHeroCard({
         </h2>
         <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium text-[var(--lkv-text-primary)]/70">
           <span className="inline-flex items-center gap-1">
-            <CalendarDays size={12} aria-hidden="true" />
+            <LKDVIcon name="jours" size={12} aria-hidden="true" />
             {dateLabel}
           </span>
           {startsAt && (
             <>
               <span aria-hidden="true">·</span>
               <span className="inline-flex items-center gap-1 tabular-nums">
-                <Clock size={12} aria-hidden="true" />
+                <LKDVIcon name="duree" size={12} aria-hidden="true" />
                 <CountdownLive target={startsAt} />
               </span>
             </>
@@ -112,7 +102,7 @@ export function DepartHeroCard({
             <>
               <span aria-hidden="true">·</span>
               <span className="inline-flex items-center gap-1">
-                <Mountain size={12} aria-hidden="true" />
+                <LKDVIcon name="montagne" size={12} aria-hidden="true" />
                 {activity}
               </span>
             </>
@@ -161,7 +151,7 @@ export function DepartHeroCard({
       <div className="mt-4 flex gap-2">
         <Button
           onClick={handleOpenSheet}
-          icon={<FileText size={15} aria-hidden="true" />}
+          icon={<LKDVIcon name="facture" size={15} aria-hidden="true" />}
           className="min-h-[44px] flex-1 py-3 text-sm font-bold"
         >
           Ouvrir la fiche de départ
@@ -169,7 +159,7 @@ export function DepartHeroCard({
         <Button
           variant="secondary"
           onClick={handleShare}
-          icon={<Share2 size={14} aria-hidden="true" />}
+          icon={<LKDVIcon name="partager" size={14} aria-hidden="true" />}
           className="min-h-[44px] px-3 text-xs font-bold"
         >
           Partager
@@ -180,7 +170,7 @@ export function DepartHeroCard({
         {depart?.status && (
           <span title="Mode éco batterie">
             <Badge tone="stone" className="gap-1 px-2 py-0.5 font-semibold">
-              <BatteryCharging size={12} aria-hidden="true" />
+              <LKDVIcon name="recharge" size={12} aria-hidden="true" />
               ÉCO
             </Badge>
           </span>
@@ -189,7 +179,7 @@ export function DepartHeroCard({
           className="inline-flex items-center gap-1 font-semibold"
           title={isOnline ? 'En ligne' : 'Hors-ligne (cache local)'}
         >
-          {isOnline ? <Wifi size={12} aria-hidden="true" /> : <WifiOff size={12} aria-hidden="true" />}
+          {isOnline ? <LKDVIcon name="wifi" size={12} aria-hidden="true" /> : <LKDVIcon name="hors_ligne" size={12} aria-hidden="true" />}
           {isOnline ? 'En ligne' : 'Hors-ligne'}
         </span>
         {kits && kits.length > 1 && (

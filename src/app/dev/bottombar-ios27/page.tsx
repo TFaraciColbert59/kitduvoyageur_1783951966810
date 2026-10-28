@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { IOS27BottomBar } from '@/components/navigation/IOS27BottomBar';
 import { DESTINATIONS, type DestinationId } from '@/components/mobile-nav/destinationRegistry';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const WALLPAPERS = [
   {
@@ -134,9 +135,7 @@ export default function IOS27BottomBarDevPage() {
                   </div>
                   {/* Battery & Signal icons */}
                   <div className="flex items-center gap-1.5" style={{ color: currentWp.textColor }}>
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z" />
-                    </svg>
+                    <LKDVIcon name="point_interet" size={14} className="w-3.5 h-3.5" />
                     <div className="w-5 h-2.5 rounded-sm border border-current p-0.5 flex items-center">
                       <div className="h-full w-3 bg-current rounded-2xs" />
                     </div>

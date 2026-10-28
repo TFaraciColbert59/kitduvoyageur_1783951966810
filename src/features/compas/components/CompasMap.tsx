@@ -2,7 +2,6 @@
 
 import dynamic from 'next/dynamic';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
-import Icon from '@/components/ui/Icon';
 import type { HubRoutePoint } from '@/features/hub/components/mobile/HubRouteMap';
 import type { CompasPoint } from '../server/getCompasData';
 import {
@@ -17,6 +16,7 @@ import {
 import { MAP_BASES, stepPins, type CalloutText, type MapBase } from '../engine/mapStyle';
 import { useTranslation } from '@/lib/i18n/context';
 import { countText } from './compasTypes';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Carte du Compas : la carte MapLibre du hub, chargée à part (chunk lourd,
@@ -166,11 +166,11 @@ export function CompasMap({
           aria-pressed={big}
           aria-label={big ? t('compas.map.shrink') : t('compas.map.grow')}
         >
-          <Icon name={big ? 'chevron-down' : 'chevron-up'} size={18} />
+          <LKDVIcon name={big ? 'bas' : 'haut'} size={18} />
         </button>
         {hasSomething && (
           <button type="button" onClick={() => setRecenter((n) => n + 1)} aria-label={t('compas.map.recenter')}>
-            <Icon name="navigation" size={17} />
+            <LKDVIcon name="gps" size={17} />
           </button>
         )}
         <button
@@ -179,7 +179,7 @@ export function CompasMap({
           aria-expanded={panel}
           aria-label={t('compas.map.customize')}
         >
-          <Icon name="layers" size={17} />
+          <LKDVIcon name="calques" size={17} />
         </button>
       </div>
       {panel && (
@@ -203,7 +203,7 @@ export function CompasMap({
                   aria-pressed={base === b.id}
                   onClick={() => onBase(b.id)}
                 >
-                  <Icon name={b.icon} size={15} aria-hidden="true" />
+                  <LKDVIcon name={b.icon} size={15} aria-hidden="true" />
                   {b.label}
                 </button>
               ))}
@@ -222,7 +222,7 @@ export function CompasMap({
                   title={n === 0 ? t('compas.map.noPoint') : undefined}
                   onClick={() => onLayers({ ...layers, [l.id]: !layers[l.id] })}
                 >
-                  <Icon name={l.icon} size={16} />
+                  <LKDVIcon name={l.icon} size={16} />
                   <span>{l.label}</span>
                   {n != null && n > 0 && <small>{n}</small>}
                   {n === 0 && <small>{t('compas.map.none')}</small>}
@@ -259,7 +259,7 @@ export function CompasMap({
                 aria-label={t('compas.map.openInRoute')}
                 onClick={onOpenStep}
               >
-                <Icon name="route" size={16} aria-hidden="true" />
+                <LKDVIcon name="itineraire" size={16} aria-hidden="true" />
               </button>
             )}
             <button
@@ -268,7 +268,7 @@ export function CompasMap({
               aria-label={t('compas.map.closeCallout')}
               onClick={() => setSelected(null)}
             >
-              <Icon name="x" size={16} aria-hidden="true" />
+              <LKDVIcon name="fermer" size={16} aria-hidden="true" />
             </button>
           </span>
         </div>

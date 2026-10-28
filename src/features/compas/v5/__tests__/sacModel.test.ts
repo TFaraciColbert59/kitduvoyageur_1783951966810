@@ -66,10 +66,10 @@ describe('weightGroup', () => {
 
 describe('itemIcon', () => {
   it('donne une illustration sobre selon le nom, puis la catégorie', () => {
-    expect(itemIcon(line({ id: 'a', name: 'Bâtons de marche' }))).toBe('poles');
-    expect(itemIcon(line({ id: 'a', name: 'Trousse de secours' }))).toBe('cross');
-    expect(itemIcon(line({ id: 'a', name: 'Appareil photo', category: 'misc' }))).toBe('box');
-    expect(itemIcon(line({ id: 'a', name: 'Truc', category: 'clothing' }))).toBe('shirt');
+    expect(itemIcon(line({ id: 'a', name: 'Bâtons de marche' }))).toBe('marche');
+    expect(itemIcon(line({ id: 'a', name: 'Trousse de secours' }))).toBe('trousse');
+    expect(itemIcon(line({ id: 'a', name: 'Appareil photo', category: 'misc' }))).toBe('inventaire');
+    expect(itemIcon(line({ id: 'a', name: 'Truc', category: 'clothing' }))).toBe('vetement');
   });
 });
 

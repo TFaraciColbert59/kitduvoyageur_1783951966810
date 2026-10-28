@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Chip, Switch } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal?: () => void; onSave?: (updatedProfile: any) => void }) {
   const router = useRouter();
@@ -368,7 +369,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full border border-[color:var(--glass-border)] shadow-md overflow-hidden bg-[color:var(--glass-bg-medium)] shrink-0">
                   <img src={form.avatarUrl || '/assets/images/no_image.png'} alt={form.publicName || 'Photo de profil'} className="w-full h-full object-cover" />
                   <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold cursor-pointer">
-                    <Icon name="CameraIcon" size={20} />
+                    <LKDVIcon name="camera" size={20} />
                     <input
                       type="file"
                       accept="image/*"
@@ -548,7 +549,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <div>
                   <label htmlFor="profil-city" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Ville de résidence *</label>
                   <div className="relative">
-                    <Icon name="MapPinIcon" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-muted)]" />
+                    <LKDVIcon name="point_interet" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-muted)]" />
                     <input
                       id="profil-city"
                       type="text"
@@ -764,15 +765,15 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
             <div className="space-y-3">
               {[
-                { name: 'Strava', handle: '@mchevrier · 124 sorties synchro', connected: form.stravaConnected, key: 'stravaConnected', icon: 'heart-pulse' },
-                { name: 'Garmin Connect', handle: '@mchevrier_trek · Traces synchro', connected: form.garminConnected, key: 'garminConnected', icon: 'clock' },
-                { name: 'Komoot', handle: 'Non connecté', connected: form.komootConnected, key: 'komootConnected', icon: 'map' },
-                { name: 'Wikiloc', handle: 'Non connecté', connected: form.wikilocConnected, key: 'wikilocConnected', icon: 'compass' },
+                { name: 'Strava', handle: '@mchevrier · 124 sorties synchro', connected: form.stravaConnected, key: 'stravaConnected', icon: 'trousse' as const },
+                { name: 'Garmin Connect', handle: '@mchevrier_trek · Traces synchro', connected: form.garminConnected, key: 'garminConnected', icon: 'duree' as const },
+                { name: 'Komoot', handle: 'Non connecté', connected: form.komootConnected, key: 'komootConnected', icon: 'carte' as const },
+                { name: 'Wikiloc', handle: 'Non connecté', connected: form.wikilocConnected, key: 'wikilocConnected', icon: 'boussole' as const },
               ].map((app) => (
                 <div key={app.name} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <span className="flex size-9 items-center justify-center rounded-full bg-white/10 text-[color:var(--glass-label)]">
-                      <Icon name={app.icon} size={18} aria-hidden="true" />
+                      <LKDVIcon name={app.icon} size={18} aria-hidden="true" />
                     </span>
                     <div>
                       <div className="font-bold text-xs text-[color:var(--glass-label)]">{app.name}</div>
@@ -903,7 +904,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between text-xs">
                   <span className={item.done ? 'text-[color:var(--glass-label)] font-semibold flex items-center gap-1.5' : 'text-[color:var(--lkv-text-muted)] flex items-center gap-1.5'}>
-                    <Icon name={item.done ? 'check' : 'circle'} size={12} className={item.done ? 'text-white' : 'opacity-40'} />
+                    {item.done ? <LKDVIcon name="valider" size={12} /> : <EmptyCircle size={12} className="opacity-40" />}
                     {item.label}
                   </span>
                   <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-text-muted)]">{item.done ? 'Fait' : 'À faire'}</span>

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, ChevronLeft, ChevronRight, Flag, Heart, Link2, MessageCircle, MoreHorizontal, Repeat2, Send, Share2, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import { fetchPostDetail } from '@/features/community/posts/queries';
@@ -16,6 +15,7 @@ import { PostCommentsPanel } from '@/features/community/feed/PostCommentsPanel';
 import { PostSharePanel } from '@/features/community/feed/PostSharePanel';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 import { PostAuthorPill } from '@/features/community/feed/PostAuthorPill';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type Pane = 'share' | 'post' | 'comments';
 const ORDER: Pane[] = ['share', 'post', 'comments'];
@@ -339,7 +339,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         onClose={onClose}
         className="lkdv-post-drawer lkdv-post-glass-sheet"
         heading={feedPost ? <PostAuthorPill post={feedPost} /> : undefined}
-        headerRight={<button type="button" className={`lkdv-post-options-trigger${optionsOpen ? ' is-open' : ''}`} aria-label={optionsOpen ? 'Fermer le menu' : 'Options'} aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}>{optionsOpen ? <X size={18} /> : <MoreHorizontal size={18} />}</button>}
+        headerRight={<button type="button" className={`lkdv-post-options-trigger${optionsOpen ? ' is-open' : ''}`} aria-label={optionsOpen ? 'Fermer le menu' : 'Options'} aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}>{optionsOpen ? <LKDVIcon name="fermer" size={18} /> : <LKDVIcon name="plus_options" size={18} />}</button>}
       >
         {loading ? <div className="lkdv-overlay-empty"><p>Chargement…</p></div> : error || !post ? (
           <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><DrawerButton onClick={() => void load()}>Réessayer</DrawerButton></div>
@@ -350,7 +350,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'share' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="share" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
-                    <button type="button" className="lkdv-post-panel-close" onClick={onClose} aria-label="Fermer"><X size={16} /></button>
+                    <button type="button" className="lkdv-post-panel-close" onClick={onClose} aria-label="Fermer"><LKDVIcon name="fermer" size={16} /></button>
                     <PostSharePanel post={feedPost} user={user} onClose={() => { setPane('post'); void refreshDetail(); }} />
                   </div>
                 ) : null}
@@ -360,19 +360,19 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                 <div className="lkdv-post-main">
                   {currentMedia ? (
                     <div className="lkdv-post-media-wrap">
-                      <div className="lkdv-post-media" onPointerDown={onMediaPointerDown} onPointerUp={onMediaPointerUp} onDoubleClick={burstLike}><img src={currentMedia} alt="" draggable={false} />{burst > 0 ? <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true"><Heart size={82} fill="currentColor" /></span> : null}</div>
-                      {media.length > 1 ? <><button type="button" className="lkdv-post-media-nav is-left" aria-label="Précédent" onClick={() => setMediaIndex((i) => Math.max(0, i - 1))}><ChevronLeft size={18} /></button><button type="button" className="lkdv-post-media-nav is-right" aria-label="Suivant" onClick={() => setMediaIndex((i) => Math.min(media.length - 1, i + 1))}><ChevronRight size={18} /></button><span className="lkdv-post-media-count">{mediaIndex + 1}/{media.length}</span></> : null}
+                      <div className="lkdv-post-media" onPointerDown={onMediaPointerDown} onPointerUp={onMediaPointerUp} onDoubleClick={burstLike}><img src={currentMedia} alt="" draggable={false} />{burst > 0 ? <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true"><LKDVIcon name="favoris" size={82} /></span> : null}</div>
+                      {media.length > 1 ? <><button type="button" className="lkdv-post-media-nav is-left" aria-label="Précédent" onClick={() => setMediaIndex((i) => Math.max(0, i - 1))}><LKDVIcon name="retour" size={18} /></button><button type="button" className="lkdv-post-media-nav is-right" aria-label="Suivant" onClick={() => setMediaIndex((i) => Math.min(media.length - 1, i + 1))}><LKDVIcon name="suivant" size={18} /></button><span className="lkdv-post-media-count">{mediaIndex + 1}/{media.length}</span></> : null}
                       <div className="lkdv-post-media-glass">
                         <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label={`Aimer (${post.likesCount})`} aria-pressed={post.userLiked}>
-                          <Heart key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} size={16} fill={post.userLiked ? 'currentColor' : 'none'} />
+                          <LKDVIcon name="favoris" key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} size={16} />
                           <span key={`likes-${post.likesCount}`} className="lkdv-post-action-count">{formatCount(post.likesCount)}</span>
                         </button>
                         <button type="button" onClick={() => { haptic(6); setPane('comments'); }} aria-label={`Commenter (${post.commentsCount})`}>
-                          <MessageCircle size={16} />
+                          <LKDVIcon name="messages" size={16} />
                           <span key={`comments-${post.commentsCount}`} className="lkdv-post-action-count">{formatCount(post.commentsCount)}</span>
                         </button>
                         <button type="button" onClick={() => { haptic(6); setPane('share'); }} aria-label={`Partager (${post.sharesCount})`}>
-                          <Send size={16} />
+                          <LKDVIcon name="partager" size={16} />
                           <span key={`shares-${post.sharesCount}`} className="lkdv-post-action-count">{formatCount(post.sharesCount)}</span>
                         </button>
                       </div>
@@ -384,7 +384,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'comments' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="comments" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
-                    <button type="button" className="lkdv-post-panel-close" onClick={onClose} aria-label="Fermer"><X size={16} /></button>
+                    <button type="button" className="lkdv-post-panel-close" onClick={onClose} aria-label="Fermer"><LKDVIcon name="fermer" size={16} /></button>
                     <PostCommentsPanel post={feedPost} user={user} onClose={() => setPane('post')} focusCommentId={initialCommentId} />
                   </div>
                 ) : null}
@@ -397,19 +397,19 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         {optionsOpen && post ? (
           <div className="lkdv-post-options-menu" role="menu" aria-label="Options de la publication">
             <button type="button" role="menuitem" aria-label={post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'} title={post.userSaved ? 'Retirer des enregistrements' : 'Enregistrer'} onClick={() => { setOptionsOpen(false); void save(); }}>
-              <Bookmark size={17} fill={post.userSaved ? 'currentColor' : 'none'} />
+              <LKDVIcon name="signet" size={17} />
             </button>
             <button type="button" role="menuitem" aria-label="Copier le lien" title="Copier le lien" onClick={() => { setOptionsOpen(false); void copy(); }}>
-              <Link2 size={17} />
+              <LKDVIcon name="lien" size={17} />
             </button>
             <button type="button" role="menuitem" aria-label="Republier" title="Republier" onClick={() => { setOptionsOpen(false); void repost(); }}>
-              <Repeat2 size={17} />
+              <LKDVIcon name="actualiser" size={17} />
             </button>
             <button type="button" role="menuitem" aria-label="Signaler" title="Signaler" onClick={() => { setOptionsOpen(false); setReportOpen(true); }}>
-              <Flag size={17} />
+              <LKDVIcon name="signalement" size={17} />
             </button>
             {user?.id === post.author?.id ? <button type="button" className="is-danger" role="menuitem" aria-label="Supprimer" title="Supprimer" onClick={() => { setOptionsOpen(false); setDeleteOpen(true); }}>
-              <Trash2 size={17} />
+              <LKDVIcon name="supprimer" size={17} />
             </button> : null}
           </div>
         ) : null}
@@ -446,7 +446,7 @@ function renderComment(comment: PostComment, isReply: boolean, tools: CommentToo
           <div className="lkdv-comment-edit"><textarea value={tools.editText} onChange={(event) => tools.setEditText(event.target.value)} /><div><button type="button" onClick={() => tools.setEditing(null)}>Annuler</button><button type="button" onClick={() => void tools.saveEdit()}>Enregistrer</button></div></div>
         ) : <p>{comment.content}</p>}
         <div className="lkdv-comment-actions">
-          <button type="button" className={comment.userLiked ? 'on' : ''} onClick={() => void tools.likeComment(comment)}><Heart size={13} fill={comment.userLiked ? 'currentColor' : 'none'} />{comment.likesCount || ''}</button>
+          <button type="button" className={comment.userLiked ? 'on' : ''} onClick={() => void tools.likeComment(comment)}><LKDVIcon name="favoris" size={13} />{comment.likesCount || ''}</button>
           {!isReply ? <button type="button" onClick={() => tools.setReplyTo(comment)}>Répondre</button> : null}
           {comment.isOwner ? <><button type="button" onClick={() => { tools.setEditing(comment); tools.setEditText(comment.content); }}>Modifier</button><button type="button" onClick={() => void tools.removeComment(comment)}>Supprimer</button></> : <button type="button" onClick={() => tools.setReportComment(comment)}>Signaler</button>}
         </div>

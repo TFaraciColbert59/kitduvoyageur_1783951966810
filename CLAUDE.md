@@ -52,7 +52,7 @@ Tony travaille en autonomie complète : **carte blanche, budget 0 €**. Il ne v
 - `typescript.ignoreBuildErrors = false` et `eslint.ignoreDuringBuilds = false` : le lint et le typage tournent au build, 0 erreur ESLint sur le dépôt. Aucun bypass.
 - Portes de qualité : `npm run lint` · `npm run type-check` · `npm run build` · `node scripts/validate-country-cache.mjs`. Le workflow est à `.github/ci.yml` (à déplacer vers `.github/workflows/ci.yml` depuis l'interface GitHub).
 - Tests : `npm test` (Vitest), `npm run test:unit` avant tout commit majeur, E2E `npm run test:e2e*`, visuel `npm run test:visual`, accessibilité `npm run test:a11y`.
-- `transpilePackages: ['react-globe.gl', 'three', 'lucide-react']` (`next.config.mjs`). Redirections permanentes : `/shop`, `/catalogue/*` → `/boutique`.
+- `transpilePackages: ['react-globe.gl', 'three']` (`next.config.mjs`). Redirections permanentes : `/shop`, `/catalogue/*` → `/boutique`.
 
 ---
 
@@ -90,7 +90,8 @@ Décision de Tony du 2026-10-02 : `/compas` est l'**unique** préparateur et con
 - Palette Liquid Glass : Forest `#17402C`, Sage `#5B7F55`, Stone `#FAF8F5`. Ombres à base d'encre `rgba(11,31,23,%)`, jamais `rgba(0,0,0)`.
 - Typographie : sans Söhne/Inter ; italique d'emphase Georgia (`<em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>`) ; mono JetBrains Mono ; labels en capitales avec tracking `0.14em` ou `0.1em`.
 - Verre : `backdrop-filter: blur(24px) saturate(1.5)` sur BottomTabBar et MobileDrawer.
-- Primitives : `GlassCard`, `LkvButton`, `LkvChip`, `LkvIcon`, `AppShell` (safe-areas). Cibles tactiles ≥ 44 px. Icônes décoratives en `aria-hidden`.
+- Primitives : `GlassCard`, `LkvButton`, `LkvChip`, `LKDVIcon`, `AppShell` (safe-areas). Cibles tactiles ≥ 44 px. Icônes décoratives en `aria-hidden`.
+- **Icônes : une seule base, LKDV V2, aujourd'hui et à l'avenir** (décision de Tony du 2026-10-28). 238 SVG monochromes vert `#00542B` dans `public/icons/lkdv/<clé>.svg`, rendus par `<LKDVIcon name="…" size={…} />` (`@/components/ui/LKDVIcon`, clés typées `LKDVIconName`) ; pour une table d'icônes, `lkdvIcon('clé')` (`@/components/ui/lkdvIconComponent`). **Interdits** : lucide, Heroicons, Phosphor, react-icons, tout autre pack, PNG/emoji/SVG dessinés à la main comme pictogrammes, recoloration (teinte, dégradé, ombre). La couleur suit le texte : vert `#00542B` sur surface claire, blanc quand le texte courant est clair (`src/styles/lkdv-icons.css`). Pas d'icône voulue dans la base ? Rien à inventer : prendre la plus proche ou demander à Tony de l'ajouter à la planche (`docs/design-system/lkdv-v2/`, puis `npm run icons:import`). Verrous : `npm run verify:icons`, `tests/design-system/lkdv-icons.spec.ts`, règle ESLint `@typescript-eslint/no-restricted-imports`. Anciens noms (lucide, Heroicons…) lus via `resolveLKDVIcon` (`lkdvAliases.ts`) pour les seules données venues de la base.
 - **Interaction (skill Aura)** : `.agents/skills/interaction-design/SKILL.md` pour toute décision UX. Respecter `prefers-reduced-motion`, animer uniquement `transform` et `opacity`, préserver safe-areas et composants shell (`MobilePageShell`, `BottomTabBar`, `HamburgerMenu`).
 - États de page : chargement = spinner centré ; erreur = ⚠️ + message + « Réessayer » ; vide = `EmptyState`.
   ```tsx
@@ -121,7 +122,7 @@ Espaceur de pied mobile : `<div style={{ height: 'calc(62px + 12px + 12px + env(
 
 ### Navigation mobile
 `MobilePageShell` (safe-area) · `MobileDrawer` (verre) · `MobileNavWrapper` (TopBar + BottomTabBar + MobileDrawer + SearchOverlay + OfflineBanner) · `TopBar` (`variant: 'standard' | 'on-image'`, `onMenuOpen`, `scrolled`) · `BottomTabBar` à 5 onglets : Accueil, Explorer, Boutique, Communauté, Compte.
-`LkvIcon` : `home`, `mountain`, `bag`, `doc`, `user`, `search`, `chevron-left`, `chevron-right`, `heart`, `bookmark`, `bell`, `map-pin`, `star`, `minus`, `plus`, `close`, `menu`, `arrow-right`, `lock`, `filter`, `users`, `compass`, `backpack`, `book`.
+`LKDVIcon` : 238 clés en français (`accueil`, `montagne`, `sac`, `profil`, `recherche`, `retour`, `suivant`, `favoris`, `signet`, `notifications`, `point_interet`, `ajouter`, `fermer`, `menu`, `verrou`, `filtres`, `communaute`, `boussole`…), liste complète dans `src/components/ui/LKDVIcon.tsx` et `docs/design-system/lkdv-v2/INVENTAIRE.md`..
 
 ---
 

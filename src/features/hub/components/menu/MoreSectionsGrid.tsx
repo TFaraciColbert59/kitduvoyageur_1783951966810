@@ -1,15 +1,11 @@
 'use client';
-
-// Hub V4 — Bento « Plus de sections » : sur desktop la grille reste complète ;
-// sur mobile les cartes secondaires quittent le bento pour un tiroir sheet
-// (un clic de plus, identique en contenu — aération sans perte d'accès).
-import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
 import React, { useState } from 'react';
 import { BentoGrid, type BentoCell } from '@/components/ui-layouts/bento-grid';
 import { Sheet } from '@/components/ui/Sheet';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface MoreSectionsGridProps {
   cells: BentoCell[];
@@ -38,8 +34,8 @@ export function MoreSectionsGrid({ cells, moreCells, fitRows }: MoreSectionsGrid
         }}
         className="w-full mt-3 flex items-center gap-3 px-4 min-h-[44px] text-left cursor-pointer active:scale-[0.99] transition-transform"
       >
-        <Icon
-          name="more-horizontal"
+        <LKDVIcon
+          name="plus_options"
           size={18}
           className="text-[var(--lkv-text-secondary)]"
           aria-hidden="true"

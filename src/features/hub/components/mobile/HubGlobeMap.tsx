@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ComponentType } from 'react';
-import { Check, MapPin } from 'lucide-react';
 import { sanitizeGeoJSON, type MapTrail } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import type { AtlasTileMode } from '@/components/map/engine/createMapStyle';
 import type { MapStepBadge } from '@/components/map/UnifiedExplorerMap';
 import type { HubRoutePoint } from './HubRouteMap';
 import './hub-map-liquid.css';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface HubGlobeMapProps {
   name: string;
@@ -250,7 +250,7 @@ export function HubGlobeMap({
         </div>
       ) : (
         <div className="hub-globe-map__empty">
-          <MapPin size={22} aria-hidden="true" />
+          <LKDVIcon name="point_interet" size={22} aria-hidden="true" />
           <span>{selectedTrail ? 'Globe indisponible' : 'Aucun itinéraire géolocalisé'}</span>
         </div>
       )}
@@ -274,9 +274,9 @@ export function HubGlobeMap({
                   style={{ background: point?.color ?? 'rgba(255,255,255,0.78)' }}
                   aria-hidden="true"
                 />
-                <MapPin size={13} aria-hidden="true" />
+                <LKDVIcon name="point_interet" size={13} aria-hidden="true" />
                 <span>{poi.name}</span>
-                {point?.visited ? <Check size={12} aria-label="Déjà visité" /> : null}
+                {point?.visited ? <LKDVIcon name="valider" size={12} aria-label="Déjà visité" /> : null}
               </button>
             );
           })}

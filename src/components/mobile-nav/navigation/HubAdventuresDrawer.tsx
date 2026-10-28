@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import Icon from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { useActiveAdventure } from '@/features/hub/context/ActiveAdventureContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -21,6 +20,7 @@ import {
   type DrawerRow,
 } from './adventuresDrawerModel';
 import './hubAdventuresDrawer.css';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Marque posee sur <html> pendant que le tiroir est ouvert (cf. CSS). */
@@ -54,7 +54,7 @@ export function HubAdventuresDrawerContent({
       {isEmpty ? (
         <div className="had-empty">
           <span className="had-empty__icon" aria-hidden="true">
-            <Icon name="compass" size={18} />
+            <LKDVIcon name="boussole" size={18} />
           </span>
           <p className="had-empty__title">{EMPTY_ADVENTURES_TITLE}</p>
           <p className="had-empty__hint">{EMPTY_ADVENTURES_HINT}</p>
@@ -72,13 +72,13 @@ export function HubAdventuresDrawerContent({
             onClick={() => onNavigate(action.href)}
           >
             <span className="had-action__lead" aria-hidden="true">
-              <Icon name={action.icon} size={18} />
+              <LKDVIcon name={action.icon} size={18} />
             </span>
             <span className="had-action__text">
               <span className="had-action__label">{action.label}</span>
               <span className="had-action__description">{action.description}</span>
             </span>
-            <Icon name="chevron-right" size={16} className="had-action__chevron" aria-hidden="true" />
+            <LKDVIcon name="suivant" size={16} className="had-action__chevron" aria-hidden="true" />
           </button>
         ))}
       </div>
@@ -97,13 +97,13 @@ export function HubAdventuresDrawerContent({
                   onClick={() => onNavigate(row.href)}
                 >
                   <span className="had-row__lead" aria-hidden="true">
-                    <Icon name={row.icon} size={16} />
+                    <LKDVIcon name={row.icon} size={16} />
                   </span>
                   <span className="had-row__text">
                     <span className="had-row__title">{row.title}</span>
                     <span className="had-row__subtitle">{row.subtitle}</span>
                   </span>
-                  <Icon name="chevron-right" size={14} className="had-row__chevron" aria-hidden="true" />
+                  <LKDVIcon name="suivant" size={14} className="had-row__chevron" aria-hidden="true" />
                 </button>
               </li>
             ))}

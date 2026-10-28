@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { UserMinus, UserPlus, Users } from 'lucide-react';
 import type { OutingParticipant } from '@/features/compte/server/sorties';
 import { DrawerEmpty } from '../shell/DrawerShell';
 import { initials } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface OutingParticipantsProps {
   participants: OutingParticipant[];
@@ -45,7 +45,7 @@ export function OutingParticipants({ participants, canEdit, busy, onAdd, onRemov
             </div>
           </label>
           <button type="submit" className="lkdv-sortie-btn primary" disabled={busy || !handle.trim()}>
-            <UserPlus size={15} aria-hidden="true" /> {busy ? 'Ajout…' : 'Ajouter'}
+            <LKDVIcon name="amis" size={15} aria-hidden="true" /> {busy ? 'Ajout…' : 'Ajouter'}
           </button>
         </form>
       ) : null}
@@ -60,7 +60,7 @@ export function OutingParticipants({ participants, canEdit, busy, onAdd, onRemov
           }
           action={
             <span className="lkdv-sortie-hint-ico" aria-hidden="true">
-              <Users size={20} />
+              <LKDVIcon name="communaute" size={20} />
             </span>
           }
         />
@@ -90,7 +90,7 @@ export function OutingParticipants({ participants, canEdit, busy, onAdd, onRemov
                   disabled={busy}
                   aria-label={`Retirer ${person.name}`}
                 >
-                  <UserMinus size={15} aria-hidden="true" />
+                  <LKDVIcon name="amis" size={15} aria-hidden="true" />
                 </button>
               ) : null}
             </li>

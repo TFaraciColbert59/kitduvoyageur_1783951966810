@@ -4,11 +4,11 @@ import { startTransition, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AppShell from '@/components/shell/AppShell';
-import Icon from '@/components/ui/Icon';
 import { CompasLightTheme } from '@/features/compas/components/CompasLightTheme';
 // Voir loading.tsx : la page d'erreur doit avoir sa feuille même si la page
 // n'a jamais pu se charger.
 import '@/features/compas/compas.css';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Le Compas n'a pas pu s'afficher (plans 2.9 et 5.1).
@@ -69,13 +69,13 @@ export default function CompasError({
             <button type="button" className="cp-btn cp-btn--pg" onClick={retry}>
               {/* Le pictogramme porte un nom (aria-label) : masqué, pour que le bouton s'appelle « Réessayer ». */}
               <span aria-hidden="true" style={{ display: 'inline-flex' }}>
-                <Icon name="rotate-ccw" size={16} />
+                <LKDVIcon name="actualiser" size={16} />
               </span>
               Réessayer
             </button>
             <Link className="cp-btn cp-btn--soft" href="/hub">
               <span aria-hidden="true" style={{ display: 'inline-flex' }}>
-                <Icon name="home" size={16} />
+                <LKDVIcon name="accueil" size={16} />
               </span>
               Retour au hub
             </Link>

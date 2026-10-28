@@ -256,7 +256,7 @@ export const DE_LEXICON: PivotLexicon = {
     'oktober', 'dezember', 'sommer', 'herbst', 'fruhling', 'weihnachten', 'ostern', 'pfingsten', 'silvester',
     'erwachsene', 'kinder', 'kindern', 'freunden', 'frau', 'mann', 'bruder', 'schwester', 'eltern', 'familie',
     'etwa', 'unter', 'mochten', 'fahren', 'besuchen', 'als', 'paar', 'ganz', 'halben', 'nachmittag', 'stunden',
-    'besteigen', 'mochte', 'wollen', 'bis', 'oder', 'ohne', 'tag', 'nacht', 'hutte', 'zelten', 'berghutte',
+    'besteigen', 'mochte', 'wollen', 'bis', 'oder', 'ohne', 'promo', 'nacht', 'hutte', 'zelten', 'berghutte',
     'strandurlaub', 'stadtereise', 'wohnmobil', 'rucksack', 'familienurlaub', 'kind', 'tageswanderung',
     'wanderurlaub', 'schneeschuhwandern', 'kanutour', 'kajaktour', 'segeln', 'trekkingtour', 'skiwoche',
     'surfurlaub', 'mountainbiken', 'huttenwanderung', 'trailrunning', 'bergsteigen', 'vierkopfige', 'bergfuhrer',

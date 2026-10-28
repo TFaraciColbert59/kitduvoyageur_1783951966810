@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Badge } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface CarnetHubHeroProps {
   totalCarnets?: number;
@@ -61,7 +61,7 @@ export default function CarnetHubHero({
           onClick={onCreateClick}
           className="inline-flex min-h-[var(--control-height-lg)] w-full items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-6)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-2 md:w-auto"
         >
-          <Icon name="PlusIcon" size={16} aria-hidden="true" />
+          <LKDVIcon name="plus" size={16} aria-hidden="true" />
           <span>Créer un carnet</span>
         </Link>
       </div>

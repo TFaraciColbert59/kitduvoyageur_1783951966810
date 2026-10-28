@@ -2,19 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Bell,
-  Eye,
-  Lock,
-  Monitor,
-  Ruler,
-  ShieldCheck,
-  Sparkles,
-} from 'lucide-react';
 import type { NotificationPrefs, ProfileSettings } from '@/features/compte/server/compte';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { createClient } from '@/lib/supabase/client';
 import { fetchJson } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const PREF_LABELS: Array<{ key: keyof NotificationPrefs; label: string }> = [
   { key: 'social', label: 'Social' },
@@ -132,7 +124,7 @@ export function SettingsPane() {
       <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
           <span className="lkdv-compte-setting-ico" aria-hidden="true">
-            <Eye size={17} />
+            <LKDVIcon name="vue" size={17} />
           </span>
           <div>
             <b>Confidentialité</b>
@@ -165,7 +157,7 @@ export function SettingsPane() {
       <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
           <span className="lkdv-compte-setting-ico" aria-hidden="true">
-            <Bell size={17} />
+            <LKDVIcon name="notifications" size={17} />
           </span>
           <div>
             <b>Notifications</b>
@@ -199,7 +191,7 @@ export function SettingsPane() {
       <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
           <span className="lkdv-compte-setting-ico" aria-hidden="true">
-            <Ruler size={17} />
+            <LKDVIcon name="distance" size={17} />
           </span>
           <div>
             <b>Unités</b>
@@ -209,10 +201,10 @@ export function SettingsPane() {
         </div>
         <div className="lkdv-compte-segment" role="group" aria-label="Unités">
           <button type="button" className={units === 'metric' ? 'on' : ''} onClick={() => changeUnits('metric')}>
-            <Ruler size={13} aria-hidden="true" /> Métrique
+            <LKDVIcon name="distance" size={13} aria-hidden="true" /> Métrique
           </button>
           <button type="button" className={units === 'imperial' ? 'on' : ''} onClick={() => changeUnits('imperial')}>
-            <Monitor size={13} aria-hidden="true" /> Impérial
+            <LKDVIcon name="satellite" size={13} aria-hidden="true" /> Impérial
           </button>
         </div>
       </section>
@@ -220,7 +212,7 @@ export function SettingsPane() {
       <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
           <span className="lkdv-compte-setting-ico" aria-hidden="true">
-            <Sparkles size={17} />
+            <LKDVIcon name="ia" size={17} />
           </span>
           <div>
             <b>Parcours de découverte</b>
@@ -233,26 +225,26 @@ export function SettingsPane() {
           className="lkdv-compte-btn ghost"
           onClick={() => window.dispatchEvent(new Event('lkdv:onboarding-open'))}
         >
-          <Sparkles size={14} aria-hidden="true" /> Reprendre le parcours
+          <LKDVIcon name="ia" size={14} aria-hidden="true" /> Reprendre le parcours
         </button>
       </section>
 
       <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
           <span className="lkdv-compte-setting-ico" aria-hidden="true">
-            <Lock size={17} />
+            <LKDVIcon name="verrou" size={17} />
           </span>
           <div>
             <b>Sécurité</b>
             <small>{profile.twoFaEnabled ? 'Double authentification active' : 'Double authentification inactive'}</small>
           </div>
           <span className={`lkdv-compte-security-badge ${profile.twoFaEnabled ? 'on' : ''}`}>
-            <ShieldCheck size={13} aria-hidden="true" /> {profile.twoFaEnabled ? 'Protégé' : 'À activer'}
+            <LKDVIcon name="securite" size={13} aria-hidden="true" /> {profile.twoFaEnabled ? 'Protégé' : 'À activer'}
           </span>
         </div>
         <div className="lkdv-compte-security-actions">
           <button type="button" className="lkdv-compte-btn ghost" onClick={() => void sendPasswordReset()} disabled={securityBusy}>
-            <Lock size={14} aria-hidden="true" /> Changer mon mot de passe
+            <LKDVIcon name="verrou" size={14} aria-hidden="true" /> Changer mon mot de passe
           </button>
           <button
             type="button"
@@ -260,7 +252,7 @@ export function SettingsPane() {
             onClick={() => void signOutOthers()}
             disabled={securityBusy}
           >
-            <ShieldCheck size={14} aria-hidden="true" /> {confirmSignOut ? 'Confirmer la déconnexion' : 'Déconnecter mes autres appareils'}
+            <LKDVIcon name="securite" size={14} aria-hidden="true" /> {confirmSignOut ? 'Confirmer la déconnexion' : 'Déconnecter mes autres appareils'}
           </button>
         </div>
         <p>{profile.twoFaEnabled ? 'La double authentification est active sur ce compte.' : 'La double authentification n’est pas activée sur ce compte.'}</p>

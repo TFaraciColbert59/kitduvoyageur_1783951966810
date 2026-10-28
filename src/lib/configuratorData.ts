@@ -1,10 +1,11 @@
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 export interface ConfiguratorOption {
   id: string;
   titlePrefix: string;
   titleItalic: string;
   titleSuffix?: string;
   subtext: string;
-  icon: string;
+  icon: LKDVIconName;
   defaultChecked?: boolean;
 }
 
@@ -40,7 +41,7 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
         titlePrefix: 'Trek & ',
         titleItalic: 'randonnée.',
         subtext: '1 à plusieurs jours en autonomie. Portage équilibré sur sentier.',
-        icon: 'mountain',
+        icon: 'montagne',
         defaultChecked: true,
       },
       {
@@ -48,21 +49,21 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
         titlePrefix: 'Bikepacking ',
         titleItalic: 'sauvage.',
         subtext: 'Voyage à vélo & bivouac. Matériel compact adapté aux sacoches.',
-        icon: 'bike',
+        icon: 'velo',
       },
       {
         id: 'alpinisme',
         titlePrefix: 'Alpinisme ',
         titleItalic: 'technique.',
         subtext: 'Haute montagne, cols escarpés & froid. Matériel renforcé.',
-        icon: 'compass',
+        icon: 'boussole',
       },
       {
         id: 'voyage',
         titlePrefix: 'Voyage ',
         titleItalic: 'nomade.',
         subtext: 'Itinérance mixte train/bus/marche. Polyvalence & discrétion.',
-        icon: 'bag',
+        icon: 'boutique',
       },
     ],
   },
@@ -78,14 +79,14 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
         titlePrefix: '1 à 2 ',
         titleItalic: 'jours.',
         subtext: 'Week-end escapade. Sac léger 30 à 35 L.',
-        icon: 'sun',
+        icon: 'soleil',
       },
       {
         id: '3-5d',
         titlePrefix: '3 à 5 ',
         titleItalic: 'jours.',
         subtext: 'Trek intermédiaire. Sac 45 L, autonomie nourriture 4j.',
-        icon: 'calendar',
+        icon: 'calendrier',
         defaultChecked: true,
       },
       {
@@ -93,14 +94,14 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
         titlePrefix: '1 à 2 ',
         titleItalic: 'semaines.',
         subtext: 'Grande traversée. Sac 55-60 L avec ravitaillement.',
-        icon: 'map',
+        icon: 'carte',
       },
       {
         id: '2w+',
         titlePrefix: '2 semaines ',
         titleItalic: 'et +',
         subtext: 'Expédition au long cours. Matériel haute durabilité.',
-        icon: 'globe',
+        icon: 'monde',
       },
     ],
   },
@@ -116,14 +117,14 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
         titlePrefix: 'Sec et ',
         titleItalic: 'chaud.',
         subtext: '15 à 25 °C, faible humidité. On priorise la respirabilité.',
-        icon: 'sun',
+        icon: 'soleil',
       },
       {
         id: 'frais_brumeux',
         titlePrefix: 'Frais et ',
         titleItalic: 'brumeux.',
         subtext: '5 à 15 °C avec humidité. Notre configuration par défaut.',
-        icon: 'cloud-fog',
+        icon: 'meteo',
         defaultChecked: true,
       },
       {
@@ -131,14 +132,14 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
         titlePrefix: 'Pluvieux et ',
         titleItalic: 'venté.',
         subtext: '0 à 10 °C, précipitations fréquentes. Coques imper renforcées.',
-        icon: 'rain',
+        icon: 'pluie',
       },
       {
         id: 'froid_sec',
         titlePrefix: 'Froid ',
         titleItalic: 'sec.',
         subtext: '-5 à 5 °C. Duvet gonflant, base couche lourde.',
-        icon: 'snowflake',
+        icon: 'neige',
       },
     ],
   },
@@ -154,14 +155,14 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
         titlePrefix: 'Ultra-léger ',
         titleItalic: '& rapide.',
         subtext: 'Poids minimal, équipements épurés, vitesse de marche maximale.',
-        icon: 'zap',
+        icon: 'energie',
       },
       {
         id: 'equilibre',
         titlePrefix: 'Équilibré ',
         titleItalic: 'standard.',
         subtext: 'Compromis parfait entre légèreté, robustesse et confort de nuit.',
-        icon: 'scale',
+        icon: 'difficulte',
         defaultChecked: true,
       },
       {
@@ -169,7 +170,7 @@ export const CONFIGURATOR_STEPS: ConfiguratorStep[] = [
         titlePrefix: 'Grand ',
         titleItalic: 'confort.',
         subtext: 'Matelas épais, tente spacieuse, accessoires de confort au camp.',
-        icon: 'shield',
+        icon: 'securite',
       },
     ],
   },

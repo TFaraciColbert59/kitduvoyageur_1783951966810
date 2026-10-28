@@ -2,11 +2,11 @@
 
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Button } from '@/components/ui';
-import type { LucideIcon } from 'lucide-react';
+import { type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export interface GroupeChipDef {
   key: string;
-  icon: LucideIcon;
+  icon: LKDVIconComponent;
   value: string;
   label: string;
   tone?: 'default' | 'warn' | 'accent';

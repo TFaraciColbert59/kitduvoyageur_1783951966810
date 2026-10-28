@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Button, EmptyState, ListItem, Skeleton } from '@/components/ui';
@@ -12,6 +10,7 @@ import type {
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type InventoryItem = {
   id: string;
@@ -123,7 +122,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
       variant="ghost"
       size="sm"
       onClick={() => setView('menu')}
-      icon={<Icon name="arrow-left" className="size-4" aria-hidden="true" />}
+      icon={<LKDVIcon name="retour" className="size-4" aria-hidden="true" />}
     >
       Retour
     </Button>
@@ -165,7 +164,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             as="div"
             onClick={() => gpxInputRef.current?.click()}
             className="min-h-[52px]"
-            leading={<Icon name="route" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
+            leading={<LKDVIcon name="itineraire" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
             title="Carte GPX — partager un itinéraire"
             metadata={<span className="font-medium text-[color:var(--lkv-text-secondary)]">.gpx</span>}
           />
@@ -173,21 +172,21 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             as="div"
             onClick={openEquip}
             className="min-h-[52px]"
-            leading={<Icon name="map-pin" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
+            leading={<LKDVIcon name="point_interet" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
             title="Équipement — depuis mon inventaire"
           />
           <ListItem
             as="div"
             onClick={openTrails}
             className="min-h-[52px]"
-            leading={<Icon name="mountain" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
+            leading={<LKDVIcon name="montagne" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
             title="Partager une randonnée"
           />
           <ListItem
             as="div"
             onClick={openKits}
             className="min-h-[52px]"
-            leading={<Icon name="backpack" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
+            leading={<LKDVIcon name="sac" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
             title="Partager un kit — lignée"
           />
         </div>
@@ -213,7 +212,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 className="min-h-[60px]"
                 leading={
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)] ring-1 ring-[color:var(--lkv-secondary)]/50">
-                    <Icon name="backpack" className="size-5 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
+                    <LKDVIcon name="sac" className="size-5 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
                   </span>
                 }
                 title={kit.name}
@@ -298,7 +297,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 className="min-h-[60px]"
                 leading={
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-                    <Icon name="mountain" className="size-5" aria-hidden="true" />
+                    <LKDVIcon name="montagne" className="size-5" aria-hidden="true" />
                   </span>
                 }
                 title={t.name}

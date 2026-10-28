@@ -1,11 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { Button, Card, Chip, IconButton } from '@/components/ui';
 import { addPlaceToTripAction } from '@/app/lieux/actions';
 import type { PlaceWithDistance } from '../types/place.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface UserTripOption {
   id: string;
@@ -86,7 +85,7 @@ export function AddPlaceToTripModal({
             className="absolute right-3 top-3"
             aria-label="Fermer"
           >
-            <Icon name="x" className="h-5 w-5" />
+            <LKDVIcon name="fermer" className="h-5 w-5" />
           </IconButton>
 
           {/* Modal Header */}
@@ -107,7 +106,7 @@ export function AddPlaceToTripModal({
           {successResult ? (
             <div className="py-[var(--space-4)] text-center">
               <div className="mx-auto mb-[var(--space-3)] flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)]">
-                <Icon name="check-circle2" className="h-6 w-6" />
+                <LKDVIcon name="valider" className="h-6 w-6" />
               </div>
               <h3 className="mb-[var(--space-1)] text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
                 Lieu ajouté avec succès !
@@ -125,7 +124,7 @@ export function AddPlaceToTripModal({
                     className="gap-2"
                   >
                     Voir l’itinéraire
-                    <Icon name="arrow-right" className="h-4 w-4" />
+                    <LKDVIcon name="suivant" className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Button
@@ -141,7 +140,7 @@ export function AddPlaceToTripModal({
             <form onSubmit={handleSubmit} className="space-y-[var(--space-4)]">
               {errorMsg && (
                 <Card tone="danger" className="flex items-center gap-2 p-[var(--space-3)] text-[length:var(--lkv-text-caption-1)]">
-                  <Icon name="alert-circle" className="h-4 w-4 shrink-0" />
+                  <LKDVIcon name="alerte" className="h-4 w-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </Card>
               )}
@@ -213,7 +212,7 @@ export function AddPlaceToTripModal({
                         <span>Ajout en cours...</span>
                       ) : (
                         <>
-                          <Icon name="plus" className="h-4 w-4" />
+                          <LKDVIcon name="plus" className="h-4 w-4" />
                           Confirmer l’ajout au Jour {selectedDay}
                         </>
                       )}

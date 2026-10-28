@@ -4,17 +4,17 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import Icon from '@/components/ui/AppIcon';
-import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { createClient } from '@/lib/supabase/client';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 export interface ClubRule {
   id: string;
   title: string;
   description: string;
-  icon: string;
+  icon: LKDVIconName;
 }
 
 const FIELD_CLASS =
@@ -108,7 +108,7 @@ export default function CreateClubView() {
       id: `r-${Date.now()}`,
       title: 'Nouvelle règle',
       description: 'Précisez l’esprit attendu pour les membres.',
-      icon: 'ShieldCheckIcon'
+      icon: 'securite'
     };
     setForm(prev => ({ ...prev, rules: [...prev.rules, newRule] }));
   };
@@ -197,7 +197,7 @@ export default function CreateClubView() {
                 href="/clubs"
                 className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
               >
-                <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
+                <LKDVIcon name="retour" size={12} aria-hidden="true" />
                 <span>Retour</span>
               </Link>
 
@@ -206,7 +206,7 @@ export default function CreateClubView() {
                 variant="secondary"
                 size="sm"
                 onClick={() => window.print()}
-                icon={<Icon name="PrinterIcon" size={12} aria-hidden="true" />}
+                icon={<LKDVIcon name="exporter" size={12} aria-hidden="true" />}
                 className="px-[var(--space-2)]"
               >
                 Imprimer
@@ -231,7 +231,7 @@ export default function CreateClubView() {
                   aria-pressed={isActive}
                 >
                   <span className="truncate text-left">{sec.label}</span>
-                  {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
+                  {isActive && <LKDVIcon name="suivant" size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
                 </Button>
               );
             })}
@@ -247,9 +247,9 @@ export default function CreateClubView() {
         <div className="h-full min-w-0 flex-1 space-y-[var(--space-4)] overflow-y-auto pr-[var(--space-2)]">
           <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
             <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <LKDVIcon name="suivant" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
             <Link href="/communaute?tab=clubs" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Clubs</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <LKDVIcon name="suivant" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
             <span className="font-semibold text-[color:var(--lkv-text-primary)]">Créer un club</span>
           </div>
 
@@ -508,7 +508,7 @@ export default function CreateClubView() {
                       aria-label={`Supprimer la règle ${rule.title}`}
                       className="shrink-0"
                     >
-                      <Icon name="x" size={14} aria-hidden="true" />
+                      <LKDVIcon name="fermer" size={14} aria-hidden="true" />
                     </IconButton>
                   </Card>
                 ))}
@@ -518,7 +518,7 @@ export default function CreateClubView() {
                   variant="secondary"
                   fullWidth
                   onClick={addRule}
-                  icon={<Icon name="plus" size={14} aria-hidden="true" />}
+                  icon={<LKDVIcon name="plus" size={14} aria-hidden="true" />}
                 >
                   Ajouter une règle à la charte
                 </Button>
@@ -711,7 +711,7 @@ export default function CreateClubView() {
                     onClick={handlePublish}
                     disabled={saving || !form.title.trim()}
                     loading={saving}
-                    icon={<Icon name="CheckIcon" size={14} aria-hidden="true" />}
+                    icon={<LKDVIcon name="valider" size={14} aria-hidden="true" />}
                   >
                     {saving ? 'Création...' : saveSuccess ? '✓ Créé !' : 'Fonder le club'}
                   </Button>
@@ -795,7 +795,7 @@ export default function CreateClubView() {
                 disabled={saving || !form.title.trim()}
                 loading={saving}
                 fullWidth
-                icon={<Icon name="PlusIcon" size={13} aria-hidden="true" />}
+                icon={<LKDVIcon name="plus" size={13} aria-hidden="true" />}
               >
                 {saving ? 'Création...' : 'Fonder le club'}
               </Button>

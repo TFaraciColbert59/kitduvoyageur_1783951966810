@@ -1,11 +1,10 @@
 'use client';
-
-import { Plus } from 'lucide-react';
 import { Sheet, Button } from '@/components/ui';
 import { ExpenseRow } from '@/features/trips/components/budget/ExpenseRow';
 import type { TripExpense } from '@/features/trips/types/trip.types';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
 import type { BudgetDaySlide } from '../../../mobile/budgetEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface DayExpensesDrawerProps {
   open: boolean;
@@ -79,7 +78,7 @@ export function DayExpensesDrawer({
             onClick={onAdd}
             className="inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
           >
-            <Plus size={15} aria-hidden="true" />
+            <LKDVIcon name="plus" size={15} aria-hidden="true" />
             Enregistrer une dépense
           </Button>
         )}

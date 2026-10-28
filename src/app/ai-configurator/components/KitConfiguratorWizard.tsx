@@ -7,8 +7,6 @@ import { CONFIGURATOR_STEPS } from '@/lib/configuratorData';
 import { addToCart } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { newId } from '@/lib/uuid';
-import Icon from '@/components/ui/AppIcon';
-import { MapPin, Compass, Zap, Mountain, Users, BookOpen, Package } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { applyConfiguratorKitToTripAction } from '@/app/voyages/kit-actions';
 import {
@@ -20,83 +18,15 @@ import {
   ConnectedKitReport,
   CarnetContextData,
 } from '@/lib/ai/configuratorEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
-function StepIcon({ icon, active }: { icon: string; active: boolean }) {
-  const iconColor = active ? 'text-[var(--lkv-text-primary)]' : 'text-[var(--lkv-text-muted)]';
+function StepIcon({ icon, active }: { icon: LKDVIconName; active: boolean }) {
   const badgeBg = active ? 'bg-[color:var(--btn-tint)] shadow-2xs' : 'bg-[color:var(--glass-subtle-fill)]';
 
   return (
     <div className={`w-10 h-10 rounded-[var(--lkv-radius-lg)] ${badgeBg} border border-[color:var(--glass-border)] flex items-center justify-center flex-shrink-0 motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none`}>
-      {icon === 'sun' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-        </svg>
-      )}
-      {icon === 'cloud-fog' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /><line x1="4" y1="22" x2="20" y2="22" />
-        </svg>
-      )}
-      {icon === 'rain' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <path d="M16 13v8M8 13v8M12 15v8M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
-        </svg>
-      )}
-      {icon === 'snowflake' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <line x1="12" y1="2" x2="12" y2="22" /><line x1="20" y1="12" x2="4" y2="12" /><line x1="17.66" y1="17.66" x2="6.34" y2="6.34" /><line x1="6.34" y1="17.66" x2="17.66" y2="6.34" />
-        </svg>
-      )}
-      {icon === 'mountain' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
-        </svg>
-      )}
-      {icon === 'bike' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <circle cx="5.5" cy="17.5" r="3.5" /><circle cx="18.5" cy="17.5" r="3.5" /><path d="M15 6h-5l-3 7h11.5" strokeLinecap="round" />
-        </svg>
-      )}
-      {icon === 'compass' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" /><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-        </svg>
-      )}
-      {icon === 'bag' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <path d="M6 20h12a2 2 0 0 0 2-2V8H4v10a2 2 0 0 0 2 2z" /><path d="M8 8V6a4 4 0 0 1 8 0v2" />
-        </svg>
-      )}
-      {icon === 'calendar' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-        </svg>
-      )}
-      {icon === 'map' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" /><line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" />
-        </svg>
-      )}
-      {icon === 'globe' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-        </svg>
-      )}
-      {icon === 'zap' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-        </svg>
-      )}
-      {icon === 'scale' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3z" />
-        </svg>
-      )}
-      {icon === 'shield' && (
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
-      )}
+      <LKDVIcon name={icon} size={20} className={active ? '' : 'opacity-60'} />
     </div>
   );
 }
@@ -537,12 +467,12 @@ export default function KitConfiguratorWizard({
         <div className="flex items-center gap-2 flex-wrap">
           {tripContext ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[color:var(--lkv-surface-paper)]/90 text-xs font-bold text-[var(--lkv-text-primary)] border border-[color:var(--glass-border)] shadow-2xs">
-              <MapPin size={12} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <LKDVIcon name="point_interet" size={12} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
               <span className="truncate max-w-[200px]">{tripContext.title}</span>
             </span>
           ) : (
             <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[color:var(--btn-tint)] hover:brightness-[1.05] text-xs font-bold text-[var(--lkv-text-primary)] border border-[color:var(--btn-glass-border)] shadow-2xs motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none min-h-[var(--lkv-touch-min)] items-center">
-              <Compass size={12} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <LKDVIcon name="boussole" size={12} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
               <span>Configurateur IA</span>
             </Link>
           )}
@@ -553,35 +483,35 @@ export default function KitConfiguratorWizard({
 
           {tripContext?.activity && (
             <span className="glass-pill inline-flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)]">
-              <Zap size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <LKDVIcon name="energie" size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
               <span>{tripContext.activity}</span>
             </span>
           )}
 
           {tripContext?.maxAltitudeM && tripContext.maxAltitudeM > 0 ? (
             <span className="glass-pill inline-flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)]">
-              <Mountain size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <LKDVIcon name="montagne" size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
               <span>{tripContext.maxAltitudeM} m</span>
             </span>
           ) : null}
 
           {groupInfo && (
             <span className="glass-pill inline-flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-primary)]">
-              <Users size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <LKDVIcon name="communaute" size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
               <span>{groupInfo.groupName}</span>
             </span>
           )}
 
           {carnetData && (
             <span className="glass-pill inline-flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-primary)]">
-              <BookOpen size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <LKDVIcon name="preparateur" size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
               <span>{carnetData.title}</span>
             </span>
           )}
 
           {userInventory.length > 0 && (
             <span className="glass-pill inline-flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)]">
-              <Package size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <LKDVIcon name="inventaire" size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
               <span>{userInventory.length} matériel(s) détecté(s)</span>
             </span>
           )}
@@ -861,7 +791,7 @@ export default function KitConfiguratorWizard({
                         disabled={isApplyingToTrip}
                         className="w-full glass-capsule-btn primary text-xs font-bold py-3 flex items-center justify-center gap-2 shadow-sm min-h-[var(--lkv-touch-min)] cursor-pointer"
                       >
-                        <Icon name="SparklesIcon" size={14} />
+                        <LKDVIcon name="ia" size={14} />
                         <span>
                           {appliedToTrip
                             ? '✅ Équipements appliqués au sac de l’expédition !'
@@ -881,7 +811,7 @@ export default function KitConfiguratorWizard({
                       disabled={isSaving}
                       className="w-full glass-capsule-btn text-xs font-bold py-2.5 flex items-center justify-center gap-2 shadow-xs min-h-[var(--lkv-touch-min)]"
                     >
-                      <Icon name="BookmarkIcon" size={14} />
+                      <LKDVIcon name="signet" size={14} />
                       <span>
                         {savedSuccess
                           ? '✅ Configuration enregistrée dans Mon Matériel !'

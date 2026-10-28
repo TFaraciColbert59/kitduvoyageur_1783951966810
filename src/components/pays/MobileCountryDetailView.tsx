@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { CountryDetail } from '@/lib/countryDetails';
 import BouteilleALaMer from '@/components/pays/BouteilleALaMer';
@@ -19,6 +18,7 @@ import { KlookCtaBlock } from '@/features/discovery/components/KlookCtaBlock';
 import { SectionBlocks, PaysWeatherCard, PaysRegionsList, PaysTrailsList, PaysRecommendations } from '@/features/pays';
 import type { KlookBlock } from '@/features/discovery/providers/klook/klookTypes';
 import type { PracticalSection } from '@/lib/ai/jobs/generateCountryGuide';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type MobilePaysSection =
   | 'presentation'
@@ -97,7 +97,7 @@ export default function MobileCountryDetailView({
             }}
             className="glass-capsule-btn primary !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold !gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
           >
-            <Icon name="sparkles" size={13} />
+            <LKDVIcon name="ia" size={13} />
             <span>Kit IA</span>
           </button>
         </div>
@@ -246,7 +246,7 @@ export default function MobileCountryDetailView({
                 <div className="glass p-4 space-y-2.5">
                   <div className="flex items-center justify-between pb-1.5 border-b border-white/10">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[color:var(--glass-label)] flex items-center gap-1.5">
-                      <Icon name="file-text" size={12} /> Fiche d'identité officielle
+                      <LKDVIcon name="facture" size={12} /> Fiche d'identité officielle
                     </span>
                     <span className="glass-pill !px-1.5 !py-0.5 text-[8.5px] font-mono font-bold text-[color:var(--glass-label)]">
                       ISO {country.code} {country.iso_a3 ? `· ${country.iso_a3}` : ''}

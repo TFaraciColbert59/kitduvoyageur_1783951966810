@@ -5,13 +5,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Icon from '@/components/ui/AppIcon';
 import { Button, EmptyState, IconButton, Tabs } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { UserProfile } from '@/lib/mock/compte-marceline';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // ─────────────────────────────────────────────
 // Types
@@ -284,14 +284,14 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
             href="/carnets/brouillons"
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
           >
-            <Icon name="DocumentTextIcon" size={14} />
+            <LKDVIcon name="facture" size={14} />
             <span>Brouillons ({drafts.length})</span>
           </Link>
           <Link
             href="/carnets/nouveau"
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold"
           >
-            <Icon name="PlusIcon" size={14} />
+            <LKDVIcon name="plus" size={14} />
             <span>+ Rédiger un carnet</span>
           </Link>
         </div>
@@ -506,15 +506,15 @@ function CarnetCard({ carnet, isNew }: { carnet: CarnetDB; isNew: boolean }) {
       {/* Stats footer */}
       <div className="px-4 py-3 flex items-center justify-between text-xs font-mono font-bold text-[color:var(--lkv-text-muted)]">
         <span className="flex items-center gap-1.5 text-[color:var(--lkv-secondary-ink)]">
-          <Icon name="HeartIcon" size={13} />
+          <LKDVIcon name="favoris" size={13} />
           {fmtNum(carnet.likes_count || 0)}
         </span>
         <span className="flex items-center gap-1.5 text-[color:var(--lkv-text-muted)]">
-          <Icon name="EyeIcon" size={13} />
+          <LKDVIcon name="vue" size={13} />
           {fmtNum(carnet.views_count || 0)}
         </span>
         <span className="flex items-center gap-1.5 text-[color:var(--lkv-info)]">
-          <Icon name="ChatBubbleLeftIcon" size={13} />
+          <LKDVIcon name="messages" size={13} />
           {fmtNum(carnet.comments_count || 0)}
         </span>
       </div>
@@ -573,7 +573,7 @@ function DraftRow({
                 title="Publier"
                 onClick={() => onPublish(draft.id)}
               >
-                <Icon name="ArrowUpOnSquareIcon" size={14} />
+                <LKDVIcon name="exporter" size={14} />
               </IconButton>
               <IconButton
                 variant="glass"
@@ -582,7 +582,7 @@ function DraftRow({
                 title="Supprimer"
                 onClick={() => onDelete(draft.id)}
               >
-                <Icon name="TrashIcon" size={14} />
+                <LKDVIcon name="supprimer" size={14} />
               </IconButton>
             </div>
           </div>

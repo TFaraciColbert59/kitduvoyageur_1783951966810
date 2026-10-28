@@ -11,7 +11,6 @@
  * `prefers-reduced-motion` honoré, zéro orange, aucun dialogue natif.
  */
 import { useCallback, useEffect, useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
 import { useSheetDrag } from '@/hooks/useSheetDrag';
 import type { TerrainConfirmation } from '@/features/adventure-intelligence/schemas/live.schema';
@@ -19,6 +18,7 @@ import QuickReportSheet, { type QuickReportSubmission } from './QuickReportSheet
 import TerrainReportsList from './TerrainReportsList';
 import { confirmTerrainReportViaApi, createTerrainReportViaApi } from '../lib/terrainMap';
 import type { TerrainLiveReport } from '../lib/terrainDisplay';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TerrainLiveCockpitControlProps {
   /** Flag `terrain_live` — faux ⇒ composant invisible. */
@@ -178,7 +178,7 @@ export default function TerrainLiveCockpitControl({
         aria-haspopup="dialog"
         className="absolute right-3.5 bottom-[calc(var(--safe-bottom)+96px)] z-[var(--z-fab)] shadow-md md:right-6"
       >
-        <Icon name="radio" size={18} aria-hidden="true" />
+        <LKDVIcon name="live" size={18} aria-hidden="true" />
         {reports.length > 0 ? (
           <Badge
             className="absolute -right-1 -top-1 min-h-0 border-transparent bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-1 font-semibold text-[color:var(--lkv-text-primary)]"
@@ -222,7 +222,7 @@ export default function TerrainLiveCockpitControl({
                   onClick={() => setOpen(false)}
                   aria-label="Fermer"
                 >
-                  <Icon name="x" size={18} aria-hidden="true" />
+                  <LKDVIcon name="fermer" size={18} aria-hidden="true" />
                 </IconButton>
               </div>
 
@@ -267,7 +267,7 @@ export default function TerrainLiveCockpitControl({
                   disabled={!position}
                   className="min-h-[50px] gap-2"
                 >
-                  <Icon name="plus" size={16} aria-hidden="true" />
+                  <LKDVIcon name="plus" size={16} aria-hidden="true" />
                   Signaler un problème
                 </Button>
               </div>

@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { HUB_HOME_HREF } from '../../registry/hubSectionRegistry';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Hub V4 — Retour au MENU (racine /hub). Icône seule (V7), ≥44px, accessible.
@@ -13,7 +13,7 @@ export function MenuBack() {
       title="Retour au hub"
       className="inline-flex h-11 w-11 -ml-2 items-center justify-center rounded-full text-[var(--lkv-text-secondary)] transition-transform hover:text-[var(--lkv-text-primary)] active:scale-95"
     >
-      <Icon name="arrow-left" size={18} aria-hidden="true" />
+      <LKDVIcon name="retour" size={18} aria-hidden="true" />
     </Link>
   );
 }

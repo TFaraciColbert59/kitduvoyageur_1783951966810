@@ -1,37 +1,25 @@
 import Link from 'next/link';
 import {
-  ArrowRight,
-  CalendarClock,
-  Check,
-  CheckCircle2,
-  CircleAlert,
-  CircleX,
-  FileCheck2,
-  Footprints,
-  PackageCheck,
-  ShieldCheck,
-  Sparkles,
-  type LucideIcon,
-} from 'lucide-react';
-import {
   deriveActivityState,
   type ActivityStateCheck,
   type ActivityStateCheckStatus,
   type ActivityStateInput,
 } from './activityStateModel';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
-const CHECK_ICONS: Record<ActivityStateCheck['id'], LucideIcon> = {
-  route: Footprints,
-  checklist: CheckCircle2,
-  equipment: PackageCheck,
-  safety: ShieldCheck,
-  documents: FileCheck2,
+const CHECK_ICONS: Record<ActivityStateCheck['id'], LKDVIconComponent> = {
+  route: lkdvIcon('randonnee'),
+  checklist: lkdvIcon('valider'),
+  equipment: lkdvIcon('inventaire'),
+  safety: lkdvIcon('securite'),
+  documents: lkdvIcon('checklist'),
 };
 
-const STATUS_ICONS: Record<ActivityStateCheckStatus, LucideIcon> = {
-  ready: Check,
-  attention: CircleAlert,
-  blocked: CircleX,
+const STATUS_ICONS: Record<ActivityStateCheckStatus, LKDVIconComponent> = {
+  ready: lkdvIcon('valider'),
+  attention: lkdvIcon('alerte'),
+  blocked: lkdvIcon('annuler'),
 };
 
 const STATUS_LABELS: Record<ActivityStateCheckStatus, string> = {
@@ -79,22 +67,22 @@ export function ActivityStateDrawer({ input }: ActivityStateDrawerProps) {
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="hub-state-drawer__pill inline-flex min-h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold">
-            <CalendarClock size={13} aria-hidden="true" />
+            <LKDVIcon name="horaire" size={13} aria-hidden="true" />
             {state.timingLabel}
           </span>
           {state.blockerCount > 0 ? (
             <span className="hub-state-drawer__pill inline-flex min-h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold">
-              <CircleX size={13} aria-hidden="true" />
+              <LKDVIcon name="annuler" size={13} aria-hidden="true" />
               {state.blockerCount} blocage{state.blockerCount > 1 ? 's' : ''}
             </span>
           ) : state.attentionCount > 0 ? (
             <span className="hub-state-drawer__pill inline-flex min-h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold">
-              <CircleAlert size={13} aria-hidden="true" />
+              <LKDVIcon name="alerte" size={13} aria-hidden="true" />
               {state.attentionCount} vigilance{state.attentionCount > 1 ? 's' : ''}
             </span>
           ) : (
             <span className="hub-state-drawer__pill inline-flex min-h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold">
-              <Sparkles size={13} aria-hidden="true" />
+              <LKDVIcon name="ia" size={13} aria-hidden="true" />
               Prêt à partir
             </span>
           )}
@@ -110,9 +98,9 @@ export function ActivityStateDrawer({ input }: ActivityStateDrawerProps) {
       >
         <span className="hub-state-drawer__cta-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
           {ctaIsLaunch ? (
-            <CheckCircle2 size={19} aria-hidden="true" />
+            <LKDVIcon name="valider" size={19} aria-hidden="true" />
           ) : (
-            <ArrowRight size={19} aria-hidden="true" />
+            <LKDVIcon name="suivant" size={19} aria-hidden="true" />
           )}
         </span>
         <span className="min-w-0 flex-1">
@@ -123,7 +111,7 @@ export function ActivityStateDrawer({ input }: ActivityStateDrawerProps) {
             {state.cta.label}
           </span>
         </span>
-        <ArrowRight
+        <LKDVIcon name="suivant"
           size={18}
           className="shrink-0 text-white/70 transition-transform duration-200 ease-out group-active:translate-x-0.5 motion-reduce:transition-none"
           aria-hidden="true"
@@ -168,7 +156,7 @@ export function ActivityStateDrawer({ input }: ActivityStateDrawerProps) {
                       {check.value}
                     </span>
                   </span>
-                  <ArrowRight
+                  <LKDVIcon name="suivant"
                     size={15}
                     className="shrink-0 text-white/42 transition-transform duration-200 ease-out group-active:translate-x-0.5 motion-reduce:transition-none"
                     aria-hidden="true"
@@ -196,7 +184,7 @@ export function ActivityStateDrawer({ input }: ActivityStateDrawerProps) {
               {state.nextAction.description}
             </span>
           </span>
-          <ArrowRight size={16} className="shrink-0 text-white/60" aria-hidden="true" />
+          <LKDVIcon name="suivant" size={16} className="shrink-0 text-white/60" aria-hidden="true" />
         </Link>
       ) : null}
     </div>

@@ -1,13 +1,6 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
-import { CompassIcon as Compass } from '@/components/icons/compass';
-import { NavigationIcon as Navigation } from '@/components/icons/navigation';
-import { LayersIcon as Layers } from '@/components/icons/layers';
-import { Minimize2Icon as Minimize2 } from '@/components/icons/minimize-2';
-import { DownloadIcon as DownloadAnimated } from '@/components/icons/download';
-import { Maximize2Icon as Maximize2Animated } from '@/components/icons/maximize-2';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Sheet } from '@/components/ui/Sheet';
 import { Card, Chip, EmptyState, IconButton } from '@/components/ui';
@@ -15,6 +8,7 @@ import { formatDistanceKm } from '@/features/materiel/domain/departCalculations'
 import { cn } from '@/lib/utils';
 import type { MapTrail } from '@/components/explorer/types';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface DepartMapProps {
   trail: MapTrail | null;
@@ -188,7 +182,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
           compact
           icon={
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/60 bg-white/40 text-[color:var(--lkv-text-primary)]">
-              <Compass size={20} />
+              <LKDVIcon name="boussole" size={20} />
             </span>
           }
           title="Aucun tracé associé à ce départ"
@@ -246,7 +240,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
       {/* ════ HEADER CARTE : NOM DU TRACÉ & DISTANCE ════ */}
       <div className="px-4 py-2.5 border-b border-black/5 flex items-center justify-between gap-2 bg-white/40 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <Icon name="map-pin" size={14} className="text-[var(--lkv-primary-hover)] shrink-0" />
+          <LKDVIcon name="point_interet" size={14} className="text-[var(--lkv-primary-hover)] shrink-0" />
           <span className="text-xs font-bold text-[color:var(--lkv-text-primary)] truncate">{trail.name}</span>
           {trail.distance_km !== null && (
             <span className="text-[11px] font-mono font-semibold text-[var(--lkv-text-muted)] shrink-0 bg-white/50 px-1.5 py-0.2 rounded-md">
@@ -265,9 +259,9 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
             aria-label="Exporter le tracé"
           >
             {isOfflineSaved ? (
-              <Icon name="check" size={14} className="text-[var(--lkv-forest-600-ink)]" />
+              <LKDVIcon name="valider" size={14} className="text-[var(--lkv-forest-600-ink)]" />
             ) : (
-              <DownloadAnimated size={14} />
+              <LKDVIcon name="telecharger" size={14} />
             )}
           </IconButton>
           {!embedded && (
@@ -280,7 +274,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
                 isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'
               }
             >
-              {isFullscreen ? <Minimize2 size={14} /> : <Maximize2Animated size={14} />}
+              {isFullscreen ? <LKDVIcon name="plein_ecran" size={14} /> : <LKDVIcon name="plein_ecran" size={14} />}
             </IconButton>
           )}
         </div>
@@ -311,7 +305,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
             title="Recentrer le tracé"
             aria-label="Recentrer le tracé"
           >
-            <Navigation size={15} />
+            <LKDVIcon name="gps" size={15} />
           </IconButton>
           <IconButton
             variant="glass"
@@ -321,7 +315,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
             aria-label="Changer de fond de carte"
             aria-expanded={showTilePicker}
           >
-            <Layers size={15} />
+            <LKDVIcon name="calques" size={15} />
           </IconButton>
         </div>
 

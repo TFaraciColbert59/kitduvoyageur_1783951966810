@@ -1,8 +1,5 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import { useState, useTransition } from 'react';
-import { PlayIcon as PlayAnimated } from '@/components/icons/play';
-import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { Button, Modal, Sheet } from '@/components/ui';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { formatDistanceKm, formatWeight } from '@/features/materiel/domain/departCalculations';
@@ -10,6 +7,7 @@ import { updateDepartStatus } from '@/features/materiel/actions/updateDepartStat
 import { cn } from '@/lib/utils';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface DepartureSheetModalProps {
   depart: DepartDetail;
@@ -100,7 +98,7 @@ export function DepartureSheetModal({
           </p>
           {depart.trail && (
             <p className="text-xs text-[var(--lkv-text-muted)] flex items-center gap-1">
-              <Icon name="map-pin" size={12} className="text-[var(--lkv-primary-hover)]" />
+              <LKDVIcon name="point_interet" size={12} className="text-[var(--lkv-primary-hover)]" />
               <span>
                 {depart.trail.name} ({formatDistanceKm(depart.trail.distance_km)})
               </span>
@@ -112,7 +110,7 @@ export function DepartureSheetModal({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           <div className="p-3 rounded-2xl bg-white/70 border border-black/5 space-y-0.5">
             <div className="flex items-center gap-1 text-[var(--lkv-text-muted)] text-[10px] font-semibold uppercase">
-              <Icon name="calendar" size={12} />
+              <LKDVIcon name="calendrier" size={12} />
               <span>Date</span>
             </div>
             <p className="text-xs font-bold text-[color:var(--lkv-text-primary)] truncate">{dateLabel}</p>
@@ -120,7 +118,7 @@ export function DepartureSheetModal({
 
           <div className="p-3 rounded-2xl bg-white/70 border border-black/5 space-y-0.5">
             <div className="flex items-center gap-1 text-[var(--lkv-text-muted)] text-[10px] font-semibold uppercase">
-              <Icon name="backpack" size={12} />
+              <LKDVIcon name="sac" size={12} />
               <span>Poids total</span>
             </div>
             <p className="text-xs font-mono font-bold text-[color:var(--lkv-text-primary)]">
@@ -133,7 +131,7 @@ export function DepartureSheetModal({
 
           <div className="p-3 rounded-2xl bg-white/70 border border-black/5 space-y-0.5">
             <div className="flex items-center gap-1 text-[var(--lkv-text-muted)] text-[10px] font-semibold uppercase">
-              <Icon name="droplets" size={12} />
+              <LKDVIcon name="eau_potable" size={12} />
               <span>Vivres</span>
             </div>
             <p className="text-xs font-bold text-[color:var(--lkv-text-primary)]">
@@ -143,7 +141,7 @@ export function DepartureSheetModal({
 
           <div className="p-3 rounded-2xl bg-white/70 border border-black/5 space-y-0.5">
             <div className="flex items-center gap-1 text-[var(--lkv-text-muted)] text-[10px] font-semibold uppercase">
-              <Icon name="thermometer" size={12} />
+              <LKDVIcon name="meteo" size={12} />
               <span>Météo J-1</span>
             </div>
             <p className="text-xs font-mono font-bold text-[color:var(--lkv-text-primary)]">
@@ -155,7 +153,7 @@ export function DepartureSheetModal({
         {/* Contact d'urgence ICE & Équipe */}
         <div className="p-3.5 rounded-2xl bg-[var(--lkv-danger)]/8 border border-[var(--lkv-danger)]/20 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <Icon name="shield-check" size={18} className="text-[var(--lkv-danger)] shrink-0" />
+            <LKDVIcon name="securite" size={18} className="text-[var(--lkv-danger)] shrink-0" />
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-danger)]">
                 Contact de sécurité ICE
@@ -176,7 +174,7 @@ export function DepartureSheetModal({
         {/* Checklist des vitaux validés */}
         <div className="space-y-1.5">
           <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1.5">
-            <Icon name="check" size={13} className="text-[var(--lkv-primary-hover)]" />
+            <LKDVIcon name="valider" size={13} className="text-[var(--lkv-primary-hover)]" />
             <span>Équipements et vivres validés ({vitalItems.length})</span>
           </h3>
           <div className="max-h-36 overflow-y-auto no-scrollbar grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-white/50 border border-black/5">
@@ -185,8 +183,8 @@ export function DepartureSheetModal({
                 key={item.id ?? item.name}
                 className="flex items-center gap-1.5 text-xs text-[color:var(--lkv-text-primary)] p-1 truncate"
               >
-                <Icon
-                  name="check"
+                <LKDVIcon
+                  name="valider"
                   size={11}
                   className="text-[var(--lkv-primary-hover)] shrink-0"
                 />
@@ -203,7 +201,7 @@ export function DepartureSheetModal({
               variant="secondary"
               size="sm"
               onClick={() => window['print']()}
-              icon={<Icon name="printer" size={13} />}
+              icon={<LKDVIcon name="exporter" size={13} />}
             >
               Imprimer
             </Button>
@@ -212,7 +210,7 @@ export function DepartureSheetModal({
               variant="secondary"
               size="sm"
               onClick={handleShare}
-              icon={copied ? <Icon name="check" size={13} /> : <Icon name="share2" size={13} />}
+              icon={copied ? <LKDVIcon name="valider" size={13} /> : <LKDVIcon name="partager" size={13} />}
             >
               {copied ? 'Copié !' : 'Partager'}
             </Button>
@@ -223,7 +221,7 @@ export function DepartureSheetModal({
               <Button
                 onClick={() => handleToggleStatus('active')}
                 disabled={isPending}
-                icon={<PlayAnimated size={12} />}
+                icon={<LKDVIcon name="lecture" size={12} />}
                 className="text-xs"
               >
                 Démarrer le trek (Mode Actif)
@@ -232,7 +230,7 @@ export function DepartureSheetModal({
               <Button
                 onClick={() => handleToggleStatus('done')}
                 disabled={isPending}
-                icon={<RotateCcwAnimated size={12} />}
+                icon={<LKDVIcon name="actualiser" size={12} />}
                 className="text-xs"
               >
                 Terminer et archiver le trek

@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -26,6 +24,7 @@ import { ConversationOptionsMenuModal } from './ConversationOptionsMenuModal';
 import { GroupSettingsModal } from './GroupSettingsModal';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ConversationViewProps {
   conversation: Conversation;
@@ -320,7 +319,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
             title={headerTargetLabel}
           >
             <span className="truncate">{title}</span>
-            {isGroup && <Icon name="users" className="size-3.5 shrink-0 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+            {isGroup && <LKDVIcon name="communaute" className="size-3.5 shrink-0 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
           </Button>
         }
         subtitle={isGroup ? 'Groupe de Voyage' : 'Membre LKDV'}
@@ -338,7 +337,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
                 title="Gérer le groupe"
                 className="shadow-elevation-1"
               >
-                <Icon name="users" className="size-5" aria-hidden="true" />
+                <LKDVIcon name="communaute" className="size-5" aria-hidden="true" />
               </IconButton>
             )}
 
@@ -353,7 +352,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
               title="Options de conversation"
               className="shadow-elevation-1"
             >
-              <Icon name="more-vertical" className="size-5" aria-hidden="true" />
+              <LKDVIcon name="plus_options" className="size-5" aria-hidden="true" />
             </IconButton>
           </>
         }
@@ -394,7 +393,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         <div className="animate-slide-up flex shrink-0 flex-col gap-[var(--space-3)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] pb-[calc(var(--safe-bottom)+var(--space-3))] pt-[var(--space-4)] backdrop-blur-[var(--glass-blur-sm)]">
           <div className="flex items-center gap-[var(--space-2)]">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-warning)]/15 text-[color:var(--lkv-warning)]">
-              <Icon name="shield-alert" className="size-5" aria-hidden="true" />
+              <LKDVIcon name="danger" className="size-5" aria-hidden="true" />
             </div>
             <div>
               <p className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
@@ -415,7 +414,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
               variant="primary"
               onClick={handleAcceptRequest}
               className="flex-1"
-              icon={<Icon name="check" className="size-4" aria-hidden="true" />}
+              icon={<LKDVIcon name="valider" className="size-4" aria-hidden="true" />}
             >
               Accepter
             </Button>
@@ -424,7 +423,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
               variant="secondary"
               onClick={handleDeclineRequest}
               className="flex-1"
-              icon={<Icon name="x" className="size-4" aria-hidden="true" />}
+              icon={<LKDVIcon name="fermer" className="size-4" aria-hidden="true" />}
             >
               Refuser
             </Button>

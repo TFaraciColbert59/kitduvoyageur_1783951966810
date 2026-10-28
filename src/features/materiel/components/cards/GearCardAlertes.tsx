@@ -1,10 +1,9 @@
 ﻿'use client';
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface AlertesData {
   count: number;
@@ -53,7 +52,7 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
           {data.criticalCount > 0 && (
             <Badge tone="danger">
               <span className="flex items-center gap-1 text-[8.5px] sm:text-[10px]">
-                <Icon name="alert-triangle" size={9} />
+                <LKDVIcon name="alerte" size={9} />
                 <span>{data.criticalCount} critique</span>
               </span>
             </Badge>
@@ -66,7 +65,7 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
           {data.count === 0 && (
             <Badge tone="sage">
               <span className="flex items-center gap-1 text-[8.5px] sm:text-[10px]">
-                <Icon name="shield-check" size={9} />
+                <LKDVIcon name="securite" size={9} />
                 <span>Parc 100% fiable</span>
               </span>
             </Badge>
@@ -92,7 +91,7 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
             className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5"
           >
             <span>Détails</span>
-            <ArrowRightAnimated size={10} />
+            <LKDVIcon name="suivant" size={10} />
           </Link>
         </div>
       </div>

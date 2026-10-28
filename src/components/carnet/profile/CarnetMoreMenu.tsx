@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CarnetMoreMenuProps {
   open: boolean;
@@ -35,25 +35,25 @@ export function CarnetMoreMenu({
   return (
     <div className="pmi-options-menu" role="group" aria-label="Options du carnet" hidden={!open}>
       <button type="button" onClick={run(onSave)}>
-        <Icon name="bookmark" size={18} aria-hidden="true" />
+        <LKDVIcon name="signet" size={18} aria-hidden="true" />
         <span>{saved ? 'Retirer des enregistrements' : 'Enregistrer'}</span>
       </button>
       <button type="button" onClick={run(onShare)}>
-        <Icon name="send" size={18} aria-hidden="true" />
+        <LKDVIcon name="partager" size={18} aria-hidden="true" />
         <span>Partager</span>
       </button>
       <button type="button" onClick={run(onCopy)}>
-        <Icon name="link" size={18} aria-hidden="true" />
+        <LKDVIcon name="lien" size={18} aria-hidden="true" />
         <span>Copier le lien</span>
       </button>
       {isOwner ? (
         <button type="button" onClick={run(onManage)}>
-          <Icon name="pencil" size={18} aria-hidden="true" />
+          <LKDVIcon name="modifier" size={18} aria-hidden="true" />
           <span>Gérer le carnet</span>
         </button>
       ) : null}
       <button type="button" className="pmi-report" onClick={run(onReport)}>
-        <Icon name="flag" size={18} aria-hidden="true" />
+        <LKDVIcon name="signalement" size={18} aria-hidden="true" />
         <span>Signaler</span>
       </button>
     </div>

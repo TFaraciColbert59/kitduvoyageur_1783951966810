@@ -1,10 +1,9 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import { Card, Skeleton } from '@/components/ui';
 import { GPXEngine, ParsedGPXData } from '@/features/hiking/gpx/GPXEngine';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface GPXPreviewCardProps {
   gpxUrl?: string;
@@ -147,7 +146,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
       <div className="mb-[var(--space-2)] flex items-center justify-between gap-[var(--space-2)]">
         <div className="flex items-center gap-[var(--space-2)] overflow-hidden">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/20 text-[color:var(--lkv-text-primary)]">
-            <Icon name="navigation" className="size-4" aria-hidden="true" />
+            <LKDVIcon name="gps" className="size-4" aria-hidden="true" />
           </div>
           <div className="overflow-hidden">
             <h4 className="truncate text-[length:var(--lkv-text-caption)] font-bold leading-tight">
@@ -170,7 +169,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
             title="Télécharger le fichier GPX"
             aria-label="Télécharger le fichier GPX"
           >
-            <Icon name="download" className="size-3.5" aria-hidden="true" />
+            <LKDVIcon name="telecharger" className="size-3.5" aria-hidden="true" />
           </a>
         )}
       </div>
@@ -186,7 +185,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
         </div>
       ) : error || !stats ? (
         <div className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] border border-dashed border-[color:var(--lkv-border)] p-[var(--space-2)] text-[length:var(--lkv-text-caption)] opacity-80">
-          <Icon name="map-pin" className="size-3.5 shrink-0 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
+          <LKDVIcon name="point_interet" className="size-3.5 shrink-0 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
           <span className="truncate">Tracé GPX prêt pour synchronisation hors-ligne.</span>
         </div>
       ) : (

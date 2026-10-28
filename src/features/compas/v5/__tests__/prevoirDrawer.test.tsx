@@ -88,8 +88,8 @@ describe('capsule et titre', () => {
     const api = makeApi();
     expect(prevoirDrawer.space).toBe('prevoir');
     expect(prevoirDrawer.tabs(api).map((t) => [t.icon, t.label])).toEqual([
-      ['bed', 'À réserver'],
-      ['cart', 'À acheter'],
+      ['hotel', 'À réserver'],
+      ['panier', 'À acheter'],
     ]);
     expect(prevoirDrawer.title(makeApi({ tab: 1 }))).toBe('À acheter');
     expect(prevoirDrawer.subtitle(makeApi({ tab: 0 }))).toBe('2 nuits');

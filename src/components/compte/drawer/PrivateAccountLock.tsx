@@ -2,6 +2,7 @@
 
 import React from 'react';
 import './PrivateAccountLock.css';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface PrivateAccountLockProps {
   /** Nom réel fourni par le payload — jamais inventé. */
@@ -11,10 +12,7 @@ export interface PrivateAccountLockProps {
 }
 
 const LOCK_GLYPH = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <rect x="4" y="10" width="16" height="11" rx="3" />
-    <path d="M8 10V7a4 4 0 0 1 8 0v3M12 15v2" />
-  </svg>
+  <LKDVIcon name="verrou" aria-hidden="true" />
 );
 
 function text(value: unknown): string | null {

@@ -2,39 +2,12 @@
 
 import React, { useMemo, useState } from 'react';
 import {
-  Award,
-  Backpack,
-  Calendar,
-  CalendarPlus,
-  Check,
-  CloudSun,
-  Compass,
-  Download,
-  Globe,
-  Layers,
-  MapPin,
-  MessageCircle,
-  MessageSquarePlus,
-  Mountain,
-  Package,
-  PlusCircle,
-  QrCode,
-  Route,
-  Scale,
-  Search,
-  Shield,
-  Sliders,
-  Trophy,
-  UserCheck,
-  UserPlus,
-  Users,
-} from 'lucide-react';
-import {
   DrawerShell,
   type DrawerSecondaryItem,
   type DrawerTab,
 } from '@/components/compte/drawer/shell/DrawerShell';
 import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ClubItemData {
   id: string;
@@ -268,7 +241,7 @@ export function ClubDrawerHost({
       {
         id: 'create-post',
         label: 'Publier dans le club',
-        icon: <MessageSquarePlus size={18} aria-hidden="true" />,
+        icon: <LKDVIcon name="commentaire" size={18} aria-hidden="true" />,
         render: () => (
           <form
             className="club-drawer-form"
@@ -346,7 +319,7 @@ export function ClubDrawerHost({
       {
         id: 'create-outing',
         label: 'Proposer une sortie',
-        icon: <CalendarPlus size={18} aria-hidden="true" />,
+        icon: <LKDVIcon name="calendrier" size={18} aria-hidden="true" />,
         render: () => (
           <form
             className="club-drawer-form"
@@ -437,7 +410,7 @@ export function ClubDrawerHost({
       {
         id: 'create-gear',
         label: 'Mettre un équipement au coffre commun',
-        icon: <Backpack size={18} aria-hidden="true" />,
+        icon: <LKDVIcon name="sac" size={18} aria-hidden="true" />,
         render: () => (
           <form
             className="club-drawer-form"
@@ -506,7 +479,7 @@ export function ClubDrawerHost({
       {
         id: 'create-club',
         label: 'Fonder un nouveau club',
-        icon: <PlusCircle size={18} aria-hidden="true" />,
+        icon: <LKDVIcon name="ajouter" size={18} aria-hidden="true" />,
         render: () => (
           <form
             className="club-drawer-form"
@@ -605,29 +578,29 @@ export function ClubDrawerHost({
   // Secondary sub-drawer items (30px floating icon-only pill at bottom-right) per main tab
   const secondaryByTab: Record<number, DrawerSecondaryItem[]> = {
     0: [
-      { id: 'my-clubs', label: 'Mes tribus rejointes', icon: <Users size={14} aria-hidden="true" /> },
-      { id: 'discover-clubs', label: 'Découvrir tous les clubs', icon: <Globe size={14} aria-hidden="true" /> },
-      { id: 'search-all', label: 'Recherche unifiée', icon: <Search size={14} aria-hidden="true" /> },
+      { id: 'my-clubs', label: 'Mes tribus rejointes', icon: <LKDVIcon name="communaute" size={14} aria-hidden="true" /> },
+      { id: 'discover-clubs', label: 'Découvrir tous les clubs', icon: <LKDVIcon name="monde" size={14} aria-hidden="true" /> },
+      { id: 'search-all', label: 'Recherche unifiée', icon: <LKDVIcon name="recherche" size={14} aria-hidden="true" /> },
     ],
     1: [
-      { id: 'members-all', label: 'Tous les membres', icon: <Users size={14} aria-hidden="true" /> },
-      { id: 'members-guides', label: 'Encadrants et référents sécurité', icon: <Shield size={14} aria-hidden="true" /> },
-      { id: 'members-binomes', label: 'Binômes disponibles ce week-end', icon: <UserCheck size={14} aria-hidden="true" /> },
+      { id: 'members-all', label: 'Tous les membres', icon: <LKDVIcon name="communaute" size={14} aria-hidden="true" /> },
+      { id: 'members-guides', label: 'Encadrants et référents sécurité', icon: <LKDVIcon name="securite" size={14} aria-hidden="true" /> },
+      { id: 'members-binomes', label: 'Binômes disponibles ce week-end', icon: <LKDVIcon name="amis" size={14} aria-hidden="true" /> },
     ],
     2: [
-      { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={14} aria-hidden="true" /> },
-      { id: 'outings-weather', label: 'Météo et conditions massif', icon: <CloudSun size={14} aria-hidden="true" /> },
-      { id: 'outings-gpx', label: 'Archives et traces GPX', icon: <Route size={14} aria-hidden="true" /> },
+      { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <LKDVIcon name="calendrier" size={14} aria-hidden="true" /> },
+      { id: 'outings-weather', label: 'Météo et conditions massif', icon: <LKDVIcon name="meteo" size={14} aria-hidden="true" /> },
+      { id: 'outings-gpx', label: 'Archives et traces GPX', icon: <LKDVIcon name="itineraire" size={14} aria-hidden="true" /> },
     ],
     3: [
-      { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={14} aria-hidden="true" /> },
-      { id: 'vault-kits', label: 'Kits types du club', icon: <Layers size={14} aria-hidden="true" /> },
-      { id: 'vault-weight', label: 'Répartition poids de cordée', icon: <Scale size={14} aria-hidden="true" /> },
+      { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <LKDVIcon name="inventaire" size={14} aria-hidden="true" /> },
+      { id: 'vault-kits', label: 'Kits types du club', icon: <LKDVIcon name="calques" size={14} aria-hidden="true" /> },
+      { id: 'vault-weight', label: 'Répartition poids de cordée', icon: <LKDVIcon name="difficulte" size={14} aria-hidden="true" /> },
     ],
     4: [
-      { id: 'tribu-challenges', label: 'Défis collectifs et sommets', icon: <Trophy size={14} aria-hidden="true" /> },
-      { id: 'tribu-chat', label: 'Canal live de la tribu', icon: <MessageCircle size={14} aria-hidden="true" /> },
-      { id: 'tribu-gov', label: 'Charte, gouvernance et QR Code', icon: <Sliders size={14} aria-hidden="true" /> },
+      { id: 'tribu-challenges', label: 'Défis collectifs et sommets', icon: <LKDVIcon name="recompense" size={14} aria-hidden="true" /> },
+      { id: 'tribu-chat', label: 'Canal live de la tribu', icon: <LKDVIcon name="messages" size={14} aria-hidden="true" /> },
+      { id: 'tribu-gov', label: 'Charte, gouvernance et QR Code', icon: <LKDVIcon name="options" size={14} aria-hidden="true" /> },
     ],
   };
 
@@ -636,13 +609,13 @@ export function ClubDrawerHost({
     {
       id: 'explorer',
       label: 'Explorateur et changement de club',
-      icon: <Compass size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="boussole" size={18} aria-hidden="true" />,
       render: () => {
         if (currentSub === 2) {
           return (
             <div className="club-drawer-pane-content">
               <div className="club-search-box">
-                <Search size={15} aria-hidden="true" />
+                <LKDVIcon name="recherche" size={15} aria-hidden="true" />
                 <input
                   type="search"
                   data-autofocus="true"
@@ -807,7 +780,7 @@ export function ClubDrawerHost({
     {
       id: 'cordee',
       label: 'Cordée et membres du club',
-      icon: <Users size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="communaute" size={18} aria-hidden="true" />,
       render: () => {
         if (inspectedMember) {
           return (
@@ -843,11 +816,7 @@ export function ClubDrawerHost({
                 </div>
                 {inspectedMember.seekingObjective ? (
                   <div className="s2" style={{ color: '#17402C', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="12" cy="12" r="10" />
-                      <circle cx="12" cy="12" r="6" />
-                      <circle cx="12" cy="12" r="2" />
-                    </svg>
+                    <LKDVIcon name="recentrer" size={14} aria-hidden="true" />
                     <span>Objectif binôme : {inspectedMember.seekingObjective}</span>
                   </div>
                 ) : null}
@@ -951,7 +920,7 @@ export function ClubDrawerHost({
     {
       id: 'sorties',
       label: 'Sorties, camps de base et météo massif',
-      icon: <Mountain size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="montagne" size={18} aria-hidden="true" />,
       render: () => {
         if (inspectedOuting) {
           return (
@@ -995,7 +964,7 @@ export function ClubDrawerHost({
                     className="reseau-btn active"
                     onClick={() => onFlyToCoords(inspectedOuting.lat, inspectedOuting.lng, inspectedOuting.title)}
                   >
-                    <MapPin size={13} style={{ display: 'inline', marginRight: 4 }} />
+                    <LKDVIcon name="point_interet" size={13} style={{ display: 'inline', marginRight: 4 }} />
                     Trace 3D
                   </button>
                   <button
@@ -1003,7 +972,7 @@ export function ClubDrawerHost({
                     className="reseau-btn active"
                     onClick={() => onDownloadGpx(inspectedOuting)}
                   >
-                    <Download size={13} style={{ display: 'inline', marginRight: 4 }} />
+                    <LKDVIcon name="telecharger" size={13} style={{ display: 'inline', marginRight: 4 }} />
                     GPX
                   </button>
                 </div>
@@ -1124,7 +1093,7 @@ export function ClubDrawerHost({
     {
       id: 'coffre',
       label: 'Coffre matériel mutualisé du club',
-      icon: <Backpack size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="sac" size={18} aria-hidden="true" />,
       render: () => {
         if (currentSub === 1) {
           return (
@@ -1226,7 +1195,7 @@ export function ClubDrawerHost({
     {
       id: 'tribu',
       label: 'Défis collectifs, canal et gouvernance',
-      icon: <Award size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="badge" size={18} aria-hidden="true" />,
       render: () => {
         if (currentSub === 1) {
           return (
@@ -1275,10 +1244,7 @@ export function ClubDrawerHost({
                   aria-label="Envoyer au canal"
                   disabled={!chatDraft.trim()}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <line x1="22" y1="2" x2="11" y2="13" />
-                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                  </svg>
+                  <LKDVIcon name="partager" size={16} aria-hidden="true" />
                 </button>
               </form>
             </div>
@@ -1315,7 +1281,7 @@ export function ClubDrawerHost({
               </div>
               <div className="li nt">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <QrCode size={28} color="#17402C" aria-hidden="true" />
+                  <LKDVIcon name="scanner" size={28} aria-hidden="true" />
                   <div>
                     <div className="ttl"><span>Pass QR Terrain · {activeClub.name}</span></div>
                     <div className="s2">Recrutement direct au refuge ou au parking</div>

@@ -1,9 +1,8 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface VoiceRecorderBarProps {
   onSendVoiceNote: (audioBlob: Blob, durationSec: number) => void;
@@ -101,7 +100,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
     return (
       <div className="flex items-center justify-between gap-[var(--space-3)] border-t border-[color:var(--lkv-danger)]/20 bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-danger-dark)]">
         <div className="flex items-center gap-[var(--space-2)]">
-          <Icon name="alert-circle" className="size-4 shrink-0 text-[color:var(--lkv-danger)]" aria-hidden="true" />
+          <LKDVIcon name="alerte" className="size-4 shrink-0 text-[color:var(--lkv-danger)]" aria-hidden="true" />
           <span>{permissionError}</span>
         </div>
         <Button type="button" variant="secondary" size="sm" onClick={onCancel} className="shrink-0">
@@ -118,7 +117,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
           <span className="absolute size-3 animate-ping rounded-full bg-[color:var(--lkv-danger)]" />
           <span className="relative size-3 rounded-full bg-[color:var(--lkv-danger)]" />
         </div>
-        <Icon name="mic" className="size-4 text-[color:var(--lkv-danger)]" aria-hidden="true" />
+        <LKDVIcon name="micro" className="size-4 text-[color:var(--lkv-danger)]" aria-hidden="true" />
         <span className="font-mono text-[length:var(--lkv-text-footnote)] font-bold tracking-wider text-[color:var(--lkv-text-primary)]">
           {formatTimer(seconds)}
         </span>
@@ -139,7 +138,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
           title="Annuler"
           className="text-[color:var(--lkv-danger)]"
         >
-          <Icon name="trash2" className="size-4" aria-hidden="true" />
+          <LKDVIcon name="supprimer" className="size-4" aria-hidden="true" />
         </IconButton>
 
         <Button
@@ -148,7 +147,7 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
           size="md"
           onClick={handleStopAndSend}
           disabled={seconds < 1}
-          icon={<Icon name="send" className="size-3.5" aria-hidden="true" />}
+          icon={<LKDVIcon name="partager" className="size-3.5" aria-hidden="true" />}
           className={seconds >= 1 ? 'shadow-elevation-2' : 'opacity-40'}
         >
           Envoyer

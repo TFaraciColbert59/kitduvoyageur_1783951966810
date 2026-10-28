@@ -5,9 +5,9 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
 import Image from 'next/image';
-import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { Badge, Button, Card, Chip, IconButton, PriceTag, Tabs } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Plan {
   id: string;
@@ -116,12 +116,12 @@ const BOX_PREVIEWS: BoxContent[] = [
 ];
 
 const PROFILES = [
-  { id: 'montagne', label: 'Montagne & Alpinisme', icon: 'MapPinIcon' },
-  { id: 'desert', label: 'Désert & Aride', icon: 'SunIcon' },
-  { id: 'jungle', label: 'Jungle & Tropical', icon: 'GlobeAltIcon' },
-  { id: 'mer', label: 'Mer & Côtier', icon: 'MapIcon' },
-  { id: 'urbain', label: 'Nomade Urbain', icon: 'BuildingOfficeIcon' },
-  { id: 'mixte', label: 'Multi-terrain', icon: 'AdjustmentsHorizontalIcon' },
+  { id: 'montagne', label: 'Montagne & Alpinisme', icon: 'point_interet' as const },
+  { id: 'desert', label: 'Désert & Aride', icon: 'soleil' as const },
+  { id: 'jungle', label: 'Jungle & Tropical', icon: 'monde' as const },
+  { id: 'mer', label: 'Mer & Côtier', icon: 'carte' as const },
+  { id: 'urbain', label: 'Nomade Urbain', icon: 'ville' as const },
+  { id: 'mixte', label: 'Multi-terrain', icon: 'options' as const },
 ];
 
 const AI_LINK_CLASS =
@@ -139,7 +139,7 @@ export default function AbonnementsPage() {
       <section className="relative overflow-hidden bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] py-[var(--space-16)] text-[color:var(--lkv-text-primary)]">
         <div className="relative z-[var(--z-sticky)] mx-auto max-w-4xl text-center">
           <Badge tone="stone" className="mb-[var(--space-6)] font-mono">
-            <Icon name="SparklesIcon" size={12} variant="outline" />
+            <LKDVIcon name="ia" size={12} />
             Abonnements &amp; Box LKDV
           </Badge>
           <h1 className="mb-[var(--space-4)] font-display text-[length:var(--lkv-text-title-xl)] font-extrabold tracking-[var(--lkv-tracking-title)]">
@@ -215,7 +215,7 @@ export default function AbonnementsPage() {
                 <ul className="mb-[var(--space-6)] space-y-[var(--space-2)]">
                   {plan.features.map((f, i) => (
                     <li key={i} className="flex items-start gap-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
-                      <Icon name="CheckIcon" size={14} variant="outline" className="mt-0.5 flex-shrink-0 text-white" />
+                      <LKDVIcon name="valider" size={14} className="mt-0.5 flex-shrink-0 text-white" />
                       {f}
                     </li>
                   ))}
@@ -224,7 +224,7 @@ export default function AbonnementsPage() {
                 {plan.box && (
                   <Card variant="compact" tone="warn" className="mb-[var(--space-4)] p-[var(--space-3)]">
                     <p className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-warning-dark)]">
-                      <Icon name="GiftIcon" size={12} variant="outline" />
+                      <LKDVIcon name="cadeau" size={12} />
                       {plan.box}
                     </p>
                   </Card>
@@ -285,7 +285,7 @@ export default function AbonnementsPage() {
               </div>
               <div className="p-[var(--space-6)]">
                 <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)]">
-                  <Icon name="UserIcon" size={14} variant="outline" className="text-[color:var(--lkv-text-muted)]" />
+                  <LKDVIcon name="profil" size={14} className="text-[color:var(--lkv-text-muted)]" />
                   <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{BOX_PREVIEWS[activeBox].profile}</span>
                 </div>
                 <div className="mb-[var(--space-6)] space-y-[var(--space-3)]">
@@ -324,7 +324,7 @@ export default function AbonnementsPage() {
                 key={p.id}
                 selected={selectedProfile === p.id}
                 onClick={() => setSelectedProfile(p.id)}
-                icon={<Icon name={p.icon as string} size={16} variant="outline" />}
+                icon={<LKDVIcon name={p.icon} size={16} />}
                 className="justify-start px-[var(--space-4)] py-[var(--space-3)]"
               >
                 <span className="text-[length:var(--lkv-text-body-sm)] font-medium">{p.label}</span>
@@ -334,7 +334,7 @@ export default function AbonnementsPage() {
           <div className="mt-[var(--space-6)] text-center">
             <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Profil sélectionné : <span className="text-[color:var(--lkv-text-secondary)]">{PROFILES.find((p) => p.id === selectedProfile)?.label}</span></p>
             <Link href="/compas?etape=kit" className={AI_LINK_CLASS}>
-              <Icon name="SparklesIcon" size={16} variant="outline" />
+              <LKDVIcon name="ia" size={16} />
               Affiner mon profil avec l&apos;IA
             </Link>
           </div>

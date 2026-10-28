@@ -1,10 +1,10 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface KitSwitcherProps {
   kits: { id: string; name: string }[];
@@ -44,7 +44,7 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
       >
         <span className="truncate">{cleanKitName(current.name)}</span>
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
-          <ChevronDown size={12} aria-hidden="true" className="text-[var(--lkv-text-muted)]" />
+          <LKDVIcon name="bas" size={12} aria-hidden="true" className="text-[var(--lkv-text-muted)]" />
         </motion.span>
       </Button>
 

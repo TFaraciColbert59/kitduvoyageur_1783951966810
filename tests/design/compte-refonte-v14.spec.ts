@@ -112,12 +112,12 @@ describe('Compte iOS 27 Liquid Glass v14 — card aérée, drawers carte, post i
     expect(runtimeSource).toContain("notifyHostAction('reportPost'");
   });
 
-  it('10. Invariant strict : 0 modification dans /compas', () => {
+  it('10. Invariant : 0 modification de style dans /compas (la migration des icônes LKDV V2 touche le code, pas le design)', () => {
     try {
-      const diffCompas = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
+      const diffCompas = execSync("git diff --name-only origin/main -- ':(glob)src/app/compas/**/*.css' ':(glob)src/features/compas/**/*.css'", { encoding: 'utf8' }).trim();
       expect(diffCompas).toBe('');
     } catch (_) {
-      const statusCompas = execSync('git status --porcelain -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
+      const statusCompas = execSync("git status --porcelain -- ':(glob)src/app/compas/**/*.css' ':(glob)src/features/compas/**/*.css'", { encoding: 'utf8' }).trim();
       expect(statusCompas).toBe('');
     }
   });

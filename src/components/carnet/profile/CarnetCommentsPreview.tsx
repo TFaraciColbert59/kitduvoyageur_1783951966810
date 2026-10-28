@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import type { CarnetComment } from '@/features/carnet/detail/useCarnetComments';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CarnetCommentsPreviewProps {
   comments: CarnetComment[];
@@ -104,7 +104,7 @@ export function CarnetCommentsPreview({
           disabled={busy || !draft.trim()}
           aria-label="Envoyer le commentaire"
         >
-          <Icon name="send" size={16} aria-hidden="true" />
+          <LKDVIcon name="partager" size={16} aria-hidden="true" />
         </button>
       </div>
     </section>

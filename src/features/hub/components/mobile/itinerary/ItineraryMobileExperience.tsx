@@ -2,16 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Backpack,
-  CalendarPlus,
-  ChevronRight,
-  Footprints,
-  MapPin,
-  Mountain,
-  Plus,
-  Wallet,
-} from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 import { Button } from '@/components/ui';
 import {
@@ -73,6 +63,8 @@ import {
   POI_CATEGORY_LABELS,
   type ItineraryPoiDetail,
 } from './ItineraryDrawers';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 export interface ItineraryMobileExperienceProps {
   trip: TripFull;
@@ -568,28 +560,28 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
   const chips: GroupeChipDef[] = [
     {
       key: 'days',
-      icon: CalendarPlus,
+      icon: lkdvIcon('calendrier'),
       value: String(daysCount),
       label: 'jours',
       onClick: () => setDaysOpen(true),
     },
     {
       key: 'steps',
-      icon: Footprints,
+      icon: lkdvIcon('randonnee'),
       value: String(totals.stepsCount),
       label: 'étapes',
       onClick: () => setDaysOpen(true),
     },
     {
       key: 'distance',
-      icon: Mountain,
+      icon: lkdvIcon('montagne'),
       value: `${totals.distanceKm} km`,
       label: `+${totals.elevGainM} m`,
       onClick: () => setDaysOpen(true),
     },
     {
       key: 'pois',
-      icon: MapPin,
+      icon: lkdvIcon('point_interet'),
       value: String(pois.length),
       label: 'points d’intérêt',
       tone: pois.length > 0 ? 'accent' : 'default',
@@ -600,7 +592,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
     },
     {
       key: 'expenses',
-      icon: Wallet,
+      icon: lkdvIcon('budget'),
       value: formatEuro(expensesView.total),
       label: `${expensesView.count} dépense${expensesView.count > 1 ? 's' : ''}`,
       tone: expensesView.count > 0 ? 'accent' : 'default',
@@ -691,7 +683,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
               className="flex h-[8.5rem] w-[9rem] !flex-col !items-center !justify-center !gap-2 !rounded-[var(--lkv-radius-lg)] !border-2 !border-dashed !border-white/50 !p-3"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
-                <CalendarPlus size={17} aria-hidden="true" />
+                <LKDVIcon name="calendrier" size={17} aria-hidden="true" />
               </span>
               <span className="text-[11px] font-bold">Ajouter un jour</span>
             </Button>
@@ -742,7 +734,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
                 setFormStep(null);
                 setFormOpen(true);
               }}
-              icon={<Plus size={13} aria-hidden="true" />}
+              icon={<LKDVIcon name="plus" size={13} aria-hidden="true" />}
               className="min-h-[44px] shrink-0 !px-3 !py-1.5 text-[11px] font-bold"
             >
               Étape
@@ -801,7 +793,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
               >
                 <span className="flex items-center gap-1.5">
                   <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em]">
-                    <MapPin size={11} aria-hidden="true" />
+                    <LKDVIcon name="point_interet" size={11} aria-hidden="true" />
                     {POI_CATEGORY_LABELS[poi.category ?? 'other'] ?? 'Autre'}
                   </span>
                   {isLlmSuggestion(poi.source, poi.metadata) && <LlmSuggestionBadge />}
@@ -843,7 +835,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
             className="flex h-[8.5rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
           >
             <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em]">
-              <Wallet size={11} aria-hidden="true" />
+              <LKDVIcon name="budget" size={11} aria-hidden="true" />
               Total jour
             </span>
             <span className="mt-2 font-display text-lg font-extrabold tabular-nums">
@@ -851,7 +843,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
             </span>
             <span className="mt-auto inline-flex items-center gap-0.5 text-[10px] font-semibold">
               Ouvrir le budget
-              <ChevronRight size={11} aria-hidden="true" />
+              <LKDVIcon name="suivant" size={11} aria-hidden="true" />
             </span>
           </Button>
         </li>
@@ -921,7 +913,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10"
                   aria-hidden="true"
                 >
-                  <Backpack size={15} />
+                  <LKDVIcon name="sac" size={15} />
                 </span>
                 <span className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-snug">
                   {item.item_name}

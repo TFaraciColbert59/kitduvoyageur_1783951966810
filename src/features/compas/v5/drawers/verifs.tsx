@@ -11,9 +11,9 @@ import type { V5Point } from '../types';
 import type { V5DrawerDef } from './types';
 
 const FAMILIES: Array<{ kind: V5Point['kind']; icon: V5IconName; title: 'toi' | 'terrain' | 'conditions'; hint: 'toiHint' | 'terrainHint' | 'conditionsHint'; axis: 'physique' | 'technique' | 'conjoncturel' }> = [
-  { kind: 'toi', icon: 'person', title: 'toi', hint: 'toiHint', axis: 'physique' },
-  { kind: 'terrain', icon: 'peak', title: 'terrain', hint: 'terrainHint', axis: 'technique' },
-  { kind: 'conditions', icon: 'cloudsun', title: 'conditions', hint: 'conditionsHint', axis: 'conjoncturel' },
+  { kind: 'toi', icon: 'profil', title: 'toi', hint: 'toiHint', axis: 'physique' },
+  { kind: 'terrain', icon: 'sommet', title: 'terrain', hint: 'terrainHint', axis: 'technique' },
+  { kind: 'conditions', icon: 'meteo', title: 'conditions', hint: 'conditionsHint', axis: 'conjoncturel' },
 ];
 
 /**
@@ -52,7 +52,7 @@ function VerifsBody() {
               {mine.map((p) => (
                 <Li
                   key={p.id}
-                  icon={p.severity === 'block' ? 'flag' : p.severity === 'warn' ? 'info' : 'check'}
+                  icon={p.severity === 'block' ? 'signalement' : p.severity === 'warn' ? 'informations' : 'valider'}
                   title={p.text}
                   detail={p.source}
                   right={
@@ -71,7 +71,7 @@ function VerifsBody() {
       <p className="v5-src">{t('compas.v5.verifs.sources')}</p>
       {data.aiOn === true && data.canEdit && (
         <MBtn onClick={() => void explain()}>
-          <V5Icon name="spark" size="s" /> {t('compas.v5.verifs.explain')}
+          <V5Icon name='ia' size="s" /> {t('compas.v5.verifs.explain')}
         </MBtn>
       )}
     </>

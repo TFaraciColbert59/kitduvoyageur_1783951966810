@@ -1,11 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { TripFull } from '../types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TripInviteButtonProps {
   trip: TripFull;
@@ -57,7 +56,7 @@ export function TripInviteButton({ trip, className }: TripInviteButtonProps) {
         size="sm"
         variant="secondary"
         className={className}
-        icon={<Icon name="user-plus" size={14} />}
+        icon={<LKDVIcon name="amis" size={14} />}
         aria-label="Inviter des amis"
         onClick={() => {
           triggerHaptic('light');
@@ -85,7 +84,7 @@ export function TripInviteButton({ trip, className }: TripInviteButtonProps) {
               onClick={handleCopy}
               variant="primary"
               size="sm"
-              icon={copied ? <Icon name="check" size={14} /> : <Icon name="copy" size={14} />}
+              icon={copied ? <LKDVIcon name="valider" size={14} /> : <LKDVIcon name="dupliquer" size={14} />}
               className="shrink-0"
             >
               {copied ? 'Copié !' : 'Copier'}

@@ -1,6 +1,4 @@
 ﻿'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button, Card, Chip } from '@/components/ui';
@@ -8,6 +6,7 @@ import { formatTripShareUrl } from '../engine/exportEngine';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { updateTripVisibilityAction } from '@/app/voyages/share-actions';
 import type { TripFull, TripVisibility } from '../types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const FIELD_CLASS =
   'min-h-[var(--control-height-md)] w-full select-all rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] font-mono text-[length:var(--lkv-text-footnote)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
@@ -80,7 +79,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               className="flex-col items-start !rounded-[var(--lkv-radius-md)] p-[var(--space-3)] text-left"
             >
               <span className="flex items-center gap-[var(--space-2)] font-bold">
-                <Icon name="lock" size={14} />
+                <LKDVIcon name="verrou" size={14} />
                 <span>Privé</span>
               </span>
               <span className="mt-1 text-[10px] opacity-80">Membres seuls</span>
@@ -93,7 +92,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               className="flex-col items-start !rounded-[var(--lkv-radius-md)] p-[var(--space-3)] text-left"
             >
               <span className="flex items-center gap-[var(--space-2)] font-bold">
-                <Icon name="eye-off" size={14} />
+                <LKDVIcon name="vue" size={14} />
                 <span>Lien secret</span>
               </span>
               <span className="mt-1 text-[10px] opacity-80">Ceux avec le lien</span>
@@ -106,7 +105,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               className="flex-col items-start !rounded-[var(--lkv-radius-md)] p-[var(--space-3)] text-left"
             >
               <span className="flex items-center gap-[var(--space-2)] font-bold">
-                <Icon name="globe" size={14} />
+                <LKDVIcon name="monde" size={14} />
                 <span>Public</span>
               </span>
               <span className="mt-1 text-[10px] opacity-80">Visible de tous</span>
@@ -138,7 +137,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               onClick={handleCopy}
               variant="primary"
               size="sm"
-              icon={copied ? <Icon name="check" size={14} /> : <Icon name="copy" size={14} />}
+              icon={copied ? <LKDVIcon name="valider" size={14} /> : <LKDVIcon name="dupliquer" size={14} />}
               className="shrink-0"
             >
               {copied ? 'Copié !' : 'Copier'}
@@ -148,8 +147,8 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
 
         {/* Règle RGPD Documents */}
         <Card variant="compact" className="flex items-start gap-[var(--space-2)] text-[11px] text-[color:var(--lkv-text-muted)]">
-          <Icon
-            name="shield-alert"
+          <LKDVIcon
+            name="danger"
             size={16}
             className="mt-0.5 shrink-0 text-[color:var(--lkv-secondary-ink)]"
           />
@@ -167,7 +166,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               download={`${trip.slug}.gpx`}
               className={EXPORT_LINK_CLASS}
             >
-              <Icon name="download" size={15} className="text-[color:var(--lkv-secondary-ink)]" />
+              <LKDVIcon name="telecharger" size={15} className="text-[color:var(--lkv-secondary-ink)]" />
               <span>Trace GPX 1.1</span>
             </a>
 
@@ -177,7 +176,7 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               rel="noopener noreferrer"
               className={`${EXPORT_LINK_CLASS} w-full`}
             >
-              <Icon name="printer" size={15} className="text-[color:var(--lkv-secondary-ink)]" />
+              <LKDVIcon name="exporter" size={15} className="text-[color:var(--lkv-secondary-ink)]" />
               <span>Feuille de Route / PDF</span>
             </a>
           </div>

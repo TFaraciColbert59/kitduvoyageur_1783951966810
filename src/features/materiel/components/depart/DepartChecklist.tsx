@@ -1,5 +1,4 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import React, {
   useOptimistic,
   useTransition,
@@ -9,12 +8,6 @@ import React, {
   useMemo,
 } from 'react';
 import Link from 'next/link';
-import { Volume2Icon as Volume2 } from '@/components/icons/volume-2';
-import { VolumeXIcon as VolumeX } from '@/components/icons/volume-x';
-import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
-import { CheckSquareIcon as CheckSquare } from '@/components/icons/check-square';
-import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
-import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button, Chip, IconButton, Modal } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -26,6 +19,7 @@ import { queueOfflineAction } from '@/features/materiel/offline/departOfflineQue
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { MobileChecklistItem } from '@/features/materiel/components/mobile/MobileChecklistItem';
 import type { ChecklistItem, Participant } from '@/features/materiel/types/trekHub';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface CategoryGroup {
   name: string;
@@ -490,7 +484,7 @@ export function DepartChecklist({
         {/* ════ HEADER CHECKLIST FIXE IMMOBILE SUR UNE SEULE LIGNE ════ */}
         <div className="shrink-0 flex items-center justify-between gap-2 pb-2 border-b border-black/5">
           <div className="flex items-center gap-1.5 min-w-0">
-            <CheckSquare
+            <LKDVIcon name="checklist"
               size={14}
               className="text-[var(--lkv-primary-hover)] shrink-0"
               aria-hidden="true"
@@ -541,7 +535,7 @@ export function DepartChecklist({
                 isSpeaking ? 'Arrêter la lecture audio' : 'Lire la checklist à voix haute'
               }
             >
-              {isSpeaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
+              {isSpeaking ? <LKDVIcon name="audio" size={12} /> : <LKDVIcon name="audio" size={12} />}
             </IconButton>
 
             {/* Bouton Ajouter un équipement (JUSTE L'ICÔNE PLUS) */}
@@ -553,7 +547,7 @@ export function DepartChecklist({
               title="Ajouter un équipement au sac"
               aria-label="Ajouter un équipement au sac"
             >
-              <Icon name="plus" size={13} strokeWidth={2.5} />
+              <LKDVIcon name="plus" size={13} />
             </IconButton>
           </div>
         </div>
@@ -562,7 +556,7 @@ export function DepartChecklist({
         {failedItem && (
           <div className="p-2.5 rounded-xl bg-[var(--lkv-danger)]/10 border border-[var(--lkv-danger)]/20 text-[var(--lkv-danger)] text-xs flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
-              <Icon name="alert-circle" size={14} className="text-[var(--lkv-danger)] shrink-0" />
+              <LKDVIcon name="alerte" size={14} className="text-[var(--lkv-danger)] shrink-0" />
               <span>
                 Échec de synchronisation pour <strong>{failedItem.name}</strong>
               </span>
@@ -571,7 +565,7 @@ export function DepartChecklist({
               variant="destructive"
               size="sm"
               onClick={() => handleToggle(failedItem)}
-              icon={<RotateCcwAnimated size={11} />}
+              icon={<LKDVIcon name="actualiser" size={11} />}
               className="h-7 rounded-lg px-2 text-[11px]"
             >
               Réessayer
@@ -632,8 +626,8 @@ export function DepartChecklist({
                     />
                     <span className="text-xs sm:text-[13px] font-semibold truncate flex items-center gap-1.5">
                       {isFoodWater && (
-                        <Icon
-                          name="droplets"
+                        <LKDVIcon
+                          name="eau_potable"
                           size={12}
                           className="text-[var(--lkv-primary-hover)]"
                         />
@@ -657,7 +651,7 @@ export function DepartChecklist({
                       animate={shouldReduceMotion ? {} : { rotate: isOpen ? 180 : 0 }}
                       transition={{ duration: 0.18, ease: 'easeInOut' }}
                     >
-                      <ChevronDown
+                      <LKDVIcon name="bas"
                         size={13}
                         className="text-[var(--lkv-text-muted)]"
                         aria-hidden="true"
@@ -739,17 +733,16 @@ export function DepartChecklist({
                                         animate={{ scale: 1 }}
                                         transition={{ type: 'spring', stiffness: 500, damping: 20 }}
                                       >
-                                        <Icon
-                                          name="check"
+                                        <LKDVIcon
+                                          name="valider"
                                           size={9}
                                           className="text-white"
-                                          strokeWidth={3}
                                         />
                                       </motion.span>
                                     )}
                                     {hasError && (
-                                      <Icon
-                                        name="alert-circle"
+                                      <LKDVIcon
+                                        name="alerte"
                                         size={9}
                                         className="text-[var(--lkv-danger)]"
                                       />
@@ -770,7 +763,7 @@ export function DepartChecklist({
                                       </span>
                                       {item.is_vital && (
                                         <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] flex items-center gap-0.5">
-                                          <Icon name="zap" size={8} />
+                                          <LKDVIcon name="energie" size={8} />
                                           Vital
                                         </span>
                                       )}
@@ -781,7 +774,7 @@ export function DepartChecklist({
                                       )}
                                       {item.is_consumable && (
                                         <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-full bg-[var(--lkv-forest-100)]/80 text-[var(--lkv-forest-900)] flex items-center gap-0.5">
-                                          <Icon name="sparkles" size={8} />
+                                          <LKDVIcon name="ia" size={8} />
                                           Consommable
                                         </span>
                                       )}
@@ -842,7 +835,7 @@ export function DepartChecklist({
                                       className="p-1 rounded-lg text-[var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)] hover:bg-black/5"
                                       title="Voir dans la boutique LKDV"
                                     >
-                                      <ShoppingBag size={12} />
+                                      <LKDVIcon name="boutique" size={12} />
                                     </Link>
                                   )}
 
@@ -855,7 +848,7 @@ export function DepartChecklist({
                                       title="Supprimer de ce départ"
                                       aria-label={`Supprimer ${item.name} de ce départ`}
                                     >
-                                      <Icon name="trash2" size={12} />
+                                      <LKDVIcon name="supprimer" size={12} />
                                     </IconButton>
                                   )}
                                 </div>
@@ -875,7 +868,7 @@ export function DepartChecklist({
         {/* ── ZONE BASSE FIXE (Statut de préparation du sac) ── */}
         <div className="shrink-0 pt-2 border-t border-[var(--lkv-primary)]/5 flex items-center justify-between gap-1 px-1">
           <div className="flex items-center gap-1 text-[9px] font-mono text-[var(--lkv-text-muted)]">
-            <CheckSquare size={11} className="text-[var(--lkv-primary-hover)]" />
+            <LKDVIcon name="checklist" size={11} className="text-[var(--lkv-primary-hover)]" />
             <span>
               {done === total
                 ? 'Sac 100% prêt'

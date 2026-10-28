@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface RepostItem {
   id: string;
@@ -40,10 +41,7 @@ function formatCardDate(value?: string): string {
 }
 
 const THUMB_ICON = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="m3 19 6-12 4 7 2-3 6 8H3Z" />
-    <path d="m7 12 2 1 1-2" />
-  </svg>
+  <LKDVIcon name="montagne" aria-hidden="true" />
 );
 
 /**

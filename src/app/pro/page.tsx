@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import AppShell from '@/components/shell/AppShell';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const PRO_PLANS = [
   { id: 'guide', name: 'Guide Indépendant', price: 29, period: 'mois', description: 'Pour les guides de montagne et accompagnateurs indépendants', features: ['Tarifs pro -15%', 'Commandes groupées jusqu\'à 10', 'Facturation professionnelle', 'Support prioritaire'], highlighted: false },
@@ -31,14 +31,14 @@ export default function B2BPage() {
                   <div className="flex items-center gap-2 mb-5"><span className="tag-badge bg-primary/20 text-primary border border-primary/30 text-[10px]">PHASE 2</span><span className="text-white/50 text-xs font-mono-data">ESPACE PROFESSIONNEL B2B</span></div>
                   <h1 className="text-hero text-white mb-4">L&apos;équipement outdoor<br />pour les pros</h1>
                   <p className="text-white/60 text-lg max-w-xl mb-8">Tarifs préférentiels, commandes groupées et outils dédiés.</p>
-                  <div className="flex gap-4"><button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary py-3.5 px-7"><Icon name="BuildingOfficeIcon" size={18} />Demander un accès pro</button><button onClick={() => setActiveTab('catalogue')} className="glass-capsule-btn py-3.5 px-7">Voir le catalogue pro</button></div>
+                  <div className="flex gap-4"><button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary py-3.5 px-7"><LKDVIcon name="ville" size={18} />Demander un accès pro</button><button onClick={() => setActiveTab('catalogue')} className="glass-capsule-btn py-3.5 px-7">Voir le catalogue pro</button></div>
                 </div>
               </div>
             </section>
             <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border"><div className="max-w-7xl mx-auto px-4">
-              <div className="flex gap-0">{[{ id: 'plans', label: 'Offres pro', icon: 'SparklesIcon' }, { id: 'catalogue', label: 'Catalogue B2B', icon: 'TagIcon' }, { id: 'dashboard', label: 'Dashboard pro', icon: 'ChartBarIcon' }].map((tab) => (
+              <div className="flex gap-0">{[{ id: 'plans', label: 'Offres pro', icon: 'ia' as const }, { id: 'catalogue', label: 'Catalogue B2B', icon: 'promo' as const }, { id: 'dashboard', label: 'Dashboard pro', icon: 'denivele' as const }].map((tab) => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)} className={`glass-capsule-btn flex items-center gap-2 px-5 py-4 text-sm font-600 ${activeTab === tab.id ? 'primary' : ''}`}>
-                  <Icon name={tab.icon} size={16} />{tab.label}</button>
+                  <LKDVIcon name={tab.icon} size={16} />{tab.label}</button>
               ))}</div></div></section>
             <div className="max-w-7xl mx-auto px-4 py-10">
               {activeTab === 'plans' && <div className="text-center mb-10"><h2 className="font-display font-700 text-foreground text-2xl mb-2">Choisissez votre offre professionnelle</h2></div>}

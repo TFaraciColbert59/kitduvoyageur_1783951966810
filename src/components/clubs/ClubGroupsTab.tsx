@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, EmptyState, ListItem } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
 import {
@@ -9,6 +8,7 @@ import {
   listGroupTaskTemplates,
   type ClubTaskTemplate,
 } from '@/features/tribu/actions/taskTemplates';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ClubGroupsTabProps {
   club: any;
@@ -142,7 +142,7 @@ export default function ClubGroupsTab({
           <Button
             type="button"
             onClick={() => setModalOpen(true)}
-            icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
+            icon={<LKDVIcon name="plus" size={14} aria-hidden="true" />}
             data-testid="club-groups-create-cta"
           >
             Créer un groupe de voyage

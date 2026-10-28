@@ -1,11 +1,4 @@
 'use client';
-
-/**
- * A5 — Carte de signalement (calme, iOS) avec 3 réponses rapides.
- * Un utilisateur ne compte qu'une fois côté serveur ; l'UI ne montre jamais
- * l'identité d'un contributeur.
- */
-import Icon from '@/components/ui/Icon';
 import type { TerrainConfirmation } from '@/features/adventure-intelligence/schemas/live.schema';
 import { Button, Card } from '@/components/ui';
 import {
@@ -14,6 +7,7 @@ import {
   relativeAgeFr,
 } from '../lib/terrainDisplay';
 import type { TerrainLiveReport } from '../lib/terrainDisplay';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TerrainReportCardProps {
   report: TerrainLiveReport;
@@ -49,7 +43,7 @@ export default function TerrainReportCard({
           style={{ backgroundColor: `${color}1A`, color }}
           aria-hidden="true"
         >
-          <Icon name={display.icon} size={17} />
+          <LKDVIcon name={display.icon} size={17} />
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">

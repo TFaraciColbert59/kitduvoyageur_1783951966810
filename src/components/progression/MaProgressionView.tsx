@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Award, ChevronDown, Gift, RefreshCw, Target, Trophy } from 'lucide-react';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, LoadingState, Tabs } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
@@ -18,6 +16,9 @@ import {
   TerritoryFilter,
   SkillType,
 } from '@/features/progression/domain/types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { resolveLKDVIcon } from '@/components/ui/lkdvAliases';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 interface MaProgressionViewProps {
   initialProfile?: UserProgressionProfile;
@@ -34,12 +35,12 @@ const SKILL_LABEL_KEYS: Record<SkillType, TranslationKey> = {
   entraider: 'progression.skill.entraider',
 };
 
-const TERRITORY_FILTERS: { id: TerritoryFilter; labelKey: TranslationKey; icon: string }[] = [
-  { id: 'around_me', labelKey: 'progression.territoryAroundMe', icon: 'map-pin' },
-  { id: 'city', labelKey: 'progression.territoryCity', icon: 'navigation' },
-  { id: 'region', labelKey: 'progression.territoryRegion', icon: 'map' },
-  { id: 'country', labelKey: 'progression.territoryCountry', icon: 'flag' },
-  { id: 'world', labelKey: 'progression.territoryWorld', icon: 'globe' },
+const TERRITORY_FILTERS: { id: TerritoryFilter; labelKey: TranslationKey; icon: LKDVIconName }[] = [
+  { id: 'around_me', labelKey: 'progression.territoryAroundMe', icon: 'point_interet' },
+  { id: 'city', labelKey: 'progression.territoryCity', icon: 'gps' },
+  { id: 'region', labelKey: 'progression.territoryRegion', icon: 'carte' },
+  { id: 'country', labelKey: 'progression.territoryCountry', icon: 'signalement' },
+  { id: 'world', labelKey: 'progression.territoryWorld', icon: 'monde' },
 ];
 
 /** Raisons honnêtes d'indisponibilité renvoyées par la RPC de classement. */
@@ -215,7 +216,7 @@ function ProgressionSection({
             {summary}
           </span>
         </span>
-        <ChevronDown
+        <LKDVIcon name="bas"
           size={16}
           className="shrink-0 text-[var(--lkv-text-muted)] transition-transform group-open:rotate-180 motion-reduce:transition-none"
           aria-hidden="true"
@@ -693,7 +694,7 @@ export default function MaProgressionView({
         <div className="w-full space-y-6">
           <Card variant="featured" className="p-6 sm:p-8 text-center">
             <div className="w-14 h-14 rounded-2xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] flex items-center justify-center mx-auto mb-4 shadow-md">
-              <Trophy size={28} className="text-sand-200" />
+              <LKDVIcon name="recompense" size={28} className="text-sand-200" />
             </div>
             <h2 className="font-display font-bold text-2xl text-[color:var(--lkv-text-primary)] mb-2">
               Votre Cordée & Progression
@@ -868,7 +869,7 @@ export default function MaProgressionView({
                 aria-hidden="true"
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-sm"
               >
-                <Icon name={data.icon} size={15} />
+                <LKDVIcon name={data.icon} size={15} />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
@@ -901,14 +902,14 @@ export default function MaProgressionView({
           <div className="mt-3 flex flex-wrap gap-2">
             {rank !== null && (
               <SummaryChip
-                icon={<Trophy size={15} />}
+                icon={<LKDVIcon name="recompense" size={15} />}
                 label={`${t('progression.rank')} · ${filterLabel}`}
                 value={`#${rank}`}
               />
             )}
             {challenge !== null && (
               <SummaryChip
-                icon={<Target size={15} />}
+                icon={<LKDVIcon name="recentrer" size={15} />}
                 label={t('progression.nextChallenge')}
                 value={
                   challengePct !== null
@@ -919,7 +920,7 @@ export default function MaProgressionView({
             )}
             {usableBalance !== null && (
               <SummaryChip
-                icon={<Gift size={15} />}
+                icon={<LKDVIcon name="cadeau" size={15} />}
                 label={t('progression.usableBalance')}
                 value={`${formatNumber(usableBalance, {}, locale)} ${t('progression.pointsShort')}`}
               />
@@ -955,7 +956,7 @@ export default function MaProgressionView({
           options={TERRITORY_FILTERS.map((f) => ({
             id: f.id,
             label: t(f.labelKey),
-            icon: <Icon name={f.icon} size={13} />,
+            icon: <LKDVIcon name={f.icon} size={13} />,
           }))}
           value={selectedFilter}
           onChange={(id) => handleFilterChange(id as TerritoryFilter)}
@@ -1124,7 +1125,7 @@ export default function MaProgressionView({
                 disabled={!challenge.canBeReplaced || replacingChallenge}
                 aria-label={t('progression.challengeReplaceAria')}
                 icon={
-                  <RefreshCw
+                  <LKDVIcon name="actualiser"
                     size={14}
                     aria-hidden="true"
                     className={replacingChallenge ? 'animate-spin motion-reduce:animate-none' : ''}
@@ -1192,7 +1193,7 @@ export default function MaProgressionView({
                     aria-hidden="true"
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-lg shadow-sm"
                   >
-                    {distinction.icon ?? <Award size={16} className="text-[var(--lkv-secondary-ink)]" />}
+                    <LKDVIcon name={resolveLKDVIcon(distinction.icon ?? '') ?? 'badge'} size={16} className="text-[var(--lkv-secondary-ink)]" />
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-bold text-[var(--lkv-text-primary)]">
@@ -1473,7 +1474,7 @@ export default function MaProgressionView({
           href="/recompenses"
           className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
         >
-          <Gift size={14} aria-hidden="true" />
+          <LKDVIcon name="cadeau" size={14} aria-hidden="true" />
           <span>{t('progression.rewards')}</span>
         </Link>
       </section>

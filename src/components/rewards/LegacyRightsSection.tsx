@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, Check } from 'lucide-react';
 import { WITHDRAWAL_STATUS_LABEL, formatDay, formatPoints, type LegacyRights } from '@/features/rewards/domain/wallet';
 import { newIdempotencyKey } from '@/features/rewards/domain/redemption';
 import './rewards.css';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Droits acquis de l'ancien programme de partage (parts économiques, cash,
@@ -167,7 +167,7 @@ export function LegacyRightsSection({ legacy, onWithdrawn }: { legacy: LegacyRig
           ) : null}
           {result ? (
             <div className={`lkdv-rw-alert ${result.ok ? 'ok' : 'bad'}`} role={result.ok ? 'status' : 'alert'} style={{ marginTop: 8 }}>
-              {result.ok ? <Check size={16} aria-hidden="true" /> : <AlertTriangle size={16} aria-hidden="true" />}
+              {result.ok ? <LKDVIcon name="valider" size={16} aria-hidden="true" /> : <LKDVIcon name="alerte" size={16} aria-hidden="true" />}
               <p>{result.message}</p>
             </div>
           ) : null}

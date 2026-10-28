@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Download, MapPin, Wind } from 'lucide-react';
 import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
 import type { OutingWeather } from '@/features/compte/server/weather';
 import { ElevationProfile, TraceMap, formatDuration, formatNumber, weatherIcon } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface OutingTraceProps {
   detail: OutingDetail;
@@ -81,7 +81,7 @@ function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
         <ul className="lkdv-sortie-alerts">
           {weather.alerts.map((alert) => (
             <li key={alert}>
-              <Wind size={13} aria-hidden="true" /> {alert}
+              <LKDVIcon name="vent" size={13} aria-hidden="true" /> {alert}
             </li>
           ))}
         </ul>
@@ -102,7 +102,7 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
       <div className="lkdv-sortie-pane">
         <div className="lkdv-sortie-state">
           <span aria-hidden="true">
-            <MapPin size={22} />
+            <LKDVIcon name="point_interet" size={22} />
           </span>
           <b>Aucune trace GPS rattachée</b>
           <p>
@@ -169,7 +169,7 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
       <WeatherBlock weather={detail.weather} />
 
       <button type="button" className="lkdv-sortie-btn primary wide" onClick={onExport}>
-        <Download size={15} aria-hidden="true" /> Télécharger le GPX
+        <LKDVIcon name="telecharger" size={15} aria-hidden="true" /> Télécharger le GPX
       </button>
     </div>
   );

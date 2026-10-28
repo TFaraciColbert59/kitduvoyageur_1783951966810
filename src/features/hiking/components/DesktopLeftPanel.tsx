@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import React from 'react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface WaypointItem {
   id: string;
@@ -107,20 +108,13 @@ export default function DesktopLeftPanel({
                 }`}
               >
                 {wp.status === 'done' ? (
-                  <svg className="w-3 h-3 stroke-current stroke-[2.6] fill-none" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12l5 5L20 7" />
-                  </svg>
+                  <LKDVIcon name="valider" size={12} className="w-3 h-3 stroke-[2.6]" />
                 ) : wp.status === 'current' ? (
                   <div className="w-1.5 h-1.5 rounded-full bg-[color:var(--lkv-forest-950)]" />
                 ) : wp.iconType === 'photo' ? (
-                  <svg className="w-2.5 h-2.5 stroke-current stroke-[1.8] fill-none" viewBox="0 0 24 24">
-                    <rect x="3" y="5" width="18" height="14" rx="2" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
+                  <LKDVIcon name="camera" size={10} className="w-2.5 h-2.5 stroke-[1.8]" />
                 ) : (
-                  <svg className="w-2.5 h-2.5 stroke-current stroke-[1.8] fill-none" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 21l3-9h12l3 9M6 12l6-8 6 8" />
-                  </svg>
+                  <LKDVIcon name="montagne" size={10} className="w-2.5 h-2.5 stroke-[1.8]" />
                 )}
               </div>
 

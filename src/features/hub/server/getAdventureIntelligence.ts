@@ -20,6 +20,7 @@ import type { TerrainLiveReport } from '@/features/terrain-live/lib/terrainDispl
 import { hubSectionHref, hubSectionRegistry, type HubAdventureRef } from '../registry/hubSectionRegistry';
 import type { ActiveAdventureData } from '../context/adventureSchema';
 import type { AdventureNature, HubSectionId } from '../engine/hubProfileEngine';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /**
  * A10 (10.11) — Chargeur serveur du montage Adventure Intelligence du hub.
@@ -38,7 +39,7 @@ export const HUB_TERRAIN_RADIUS_M = 5000;
 export interface HubAdventureQuickLink {
   id: string;
   label: string;
-  icon: string;
+  icon: LKDVIconName;
 }
 
 export interface HubAdventureIntelligenceData {
@@ -54,25 +55,25 @@ export interface HubAdventureIntelligenceData {
 
 interface QuickLinkConfig {
   id: HubSectionId;
-  icon: string;
+  icon: LKDVIconName;
 }
 
 const QUICK_LINKS_BY_NATURE: Record<AdventureNature, QuickLinkConfig[]> = {
   sortie: [
-    { id: 'itinerary', icon: 'navigation' },
-    { id: 'safety', icon: 'shield-alert' },
-    { id: 'checklist', icon: 'check-square' },
-    { id: 'journal', icon: 'book-open' },
+    { id: 'itinerary', icon: 'gps' },
+    { id: 'safety', icon: 'danger' },
+    { id: 'checklist', icon: 'checklist' },
+    { id: 'journal', icon: 'preparateur' },
   ],
   possession: [
-    { id: 'kit', icon: 'backpack' },
-    { id: 'preparation', icon: 'flask-conical' },
-    { id: 'depart', icon: 'footprints' },
-    { id: 'oublis', icon: 'clipboard-list' },
+    { id: 'kit', icon: 'sac' },
+    { id: 'preparation', icon: 'recentrer' },
+    { id: 'depart', icon: 'randonnee' },
+    { id: 'oublis', icon: 'checklist_voyage' },
   ],
   collectif: [
-    { id: 'groupe', icon: 'users' },
-    { id: 'invitations', icon: 'mail-plus' },
+    { id: 'groupe', icon: 'communaute' },
+    { id: 'invitations', icon: 'email' },
   ],
 };
 

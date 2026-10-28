@@ -3,8 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import CountryFlag from '@/components/ui/CountryFlag';
-import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import { CountryDetail } from '@/lib/countryDetails';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type PaysSection =
   | 'presentation'
@@ -132,7 +132,7 @@ export default function PaysLeftSidebar({
               }`}
             >
               <span className="truncate text-left">{s.label}</span>
-              {isActive && <ChevronRightAnimated size={13} className="text-white/70 shrink-0" />}
+              {isActive && <LKDVIcon name="suivant" size={13} className="text-white/70 shrink-0" />}
             </button>
           );
         })}

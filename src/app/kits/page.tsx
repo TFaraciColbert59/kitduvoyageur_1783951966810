@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
-import Icon from '@/components/ui/Icon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
 import Link from 'next/link';
 import { Button, Card, PageHeader } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -122,7 +122,7 @@ export default function KitsPage() {
                       {kit.weight} · {kit.itemsCount} articles
                     </span>
                     <Link href={`/kits/${kit.slug}`} className="shrink-0">
-                      <Button variant="secondary" size="sm" icon={<Icon name="arrow-right" size={14} />} iconPosition="trailing">
+                      <Button variant="secondary" size="sm" icon={<LKDVIcon name="suivant" size={14} />} iconPosition="trailing">
                         Voir le kit
                       </Button>
                     </Link>
@@ -168,7 +168,7 @@ export default function KitsPage() {
                       {kit.weight} · {kit.itemsCount} articles
                     </span>
                     <Link href={`/kits/${kit.slug}`} className="shrink-0">
-                      <Button variant="primary" size="sm" icon={<Icon name="arrow-right" size={13} />} iconPosition="trailing">
+                      <Button variant="primary" size="sm" icon={<LKDVIcon name="suivant" size={13} />} iconPosition="trailing">
                         Explorer
                       </Button>
                     </Link>

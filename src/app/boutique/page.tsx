@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
-import Icon from '@/components/ui/Icon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
 import Link from 'next/link';
 import { Card, PageHeader } from '@/components/ui';
-import { Backpack, Recycle, KeyRound } from 'lucide-react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -28,21 +28,21 @@ export const metadata: Metadata = {
 const RAYONS = [
   {
     href: '/kits',
-    icone: Backpack,
+    icone: lkdvIcon('sac'),
     nom: 'Kits prêts à partir',
     description:
       'Le sac, le bivouac, les vêtements : des kits complets, testés six semaines minimum en conditions réelles.',
   },
   {
     href: '/occasion',
-    icone: Recycle,
+    icone: lkdvIcon('dechets'),
     nom: 'Occasion vérifiée',
     description:
       'Du matériel de seconde main contrôlé par la communauté. Moins cher, moins de CO₂, même exigence.',
   },
   {
     href: '/location',
-    icone: KeyRound,
+    icone: lkdvIcon('deverrou'),
     nom: 'Location',
     description: 'Un besoin ponctuel ? Louez l’équipement pour la durée exacte de votre aventure.',
   },
@@ -103,7 +103,7 @@ export default function BoutiquePage() {
                   <div className="flex items-center justify-end border-t border-[color:var(--lkv-border)] pt-[var(--space-2)]">
                     <Link href={rayon.href} className={CTA_CLASS}>
                       <span>Explorer</span>
-                      <Icon name="arrow-right" size={14} />
+                      <LKDVIcon name="suivant" size={14} />
                     </Link>
                   </div>
                 </Card>
@@ -145,7 +145,7 @@ export default function BoutiquePage() {
                   <div className="flex items-center justify-end pt-[var(--space-1)]">
                     <Link href={rayon.href} className={CTA_CLASS}>
                       <span>Explorer</span>
-                      <Icon name="arrow-right" size={13} />
+                      <LKDVIcon name="suivant" size={13} />
                     </Link>
                   </div>
                 </Card>

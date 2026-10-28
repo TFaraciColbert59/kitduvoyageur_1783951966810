@@ -1,3 +1,4 @@
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 /**
  * Les six catégories de réservation de la maquette finale (Randos, Activités,
  * Nuits, Vols, Trajets, Extras), appliquées aux données réelles : réservations
@@ -6,14 +7,14 @@
 
 export type ResaCat = 'randos' | 'activites' | 'nuits' | 'vols' | 'trajets' | 'extras';
 
-export const RESA_CATS: ReadonlyArray<{ id: ResaCat; label: string; title: string; icon: string }> =
+export const RESA_CATS: ReadonlyArray<{ id: ResaCat; label: string; title: string; icon: LKDVIconName }> =
   [
-    { id: 'randos', label: 'Randos', title: 'Randonnées', icon: 'mountain' },
-    { id: 'activites', label: 'Activités', title: 'Activités', icon: 'ticket' },
-    { id: 'nuits', label: 'Nuits', title: 'Hébergement', icon: 'bed-double' },
-    { id: 'vols', label: 'Vols', title: 'Vols', icon: 'plane' },
-    { id: 'trajets', label: 'Trajets', title: 'Transports', icon: 'car' },
-    { id: 'extras', label: 'Extras', title: 'Extras', icon: 'shield' },
+    { id: 'randos', label: 'Randos', title: 'Randonnées', icon: 'montagne' },
+    { id: 'activites', label: 'Activités', title: 'Activités', icon: 'billet' },
+    { id: 'nuits', label: 'Nuits', title: 'Hébergement', icon: 'hotel' },
+    { id: 'vols', label: 'Vols', title: 'Vols', icon: 'avion' },
+    { id: 'trajets', label: 'Trajets', title: 'Transports', icon: 'voiture' },
+    { id: 'extras', label: 'Extras', title: 'Extras', icon: 'securite' },
   ];
 
 /** Réservation du voyage → catégorie (un type inconnu est un trajet, comme avant). */

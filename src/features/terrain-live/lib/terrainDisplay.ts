@@ -4,6 +4,7 @@ import type {
   TerrainReportPublic,
   TerrainSeverity,
 } from '@/features/adventure-intelligence/schemas/live.schema';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /** Signalement public enrichi de sa distance au point de recherche. */
 export interface TerrainLiveReport extends TerrainReportPublic {
@@ -12,28 +13,28 @@ export interface TerrainLiveReport extends TerrainReportPublic {
 
 export interface TerrainDisplayInfo {
   label: string;
-  icon: string;
+  icon: LKDVIconName;
 }
 
 /** Libellés français des 6 catégories MVP (Phase 5). */
 export const MVP_CATEGORY_DISPLAY: Record<string, TerrainDisplayInfo> = {
-  obstacle: { label: 'Obstacle', icon: 'alert-triangle' },
-  closure: { label: 'Chemin fermé', icon: 'x-circle' },
-  mud: { label: 'Boue', icon: 'droplet' },
-  snow_ice: { label: 'Neige / glace', icon: 'cloud-snow' },
-  water: { label: 'Eau', icon: 'droplet' },
-  danger: { label: 'Danger', icon: 'shield-alert' },
+  obstacle: { label: 'Obstacle', icon: 'alerte' },
+  closure: { label: 'Chemin fermé', icon: 'annuler' },
+  mud: { label: 'Boue', icon: 'eau_potable' },
+  snow_ice: { label: 'Neige / glace', icon: 'neige' },
+  water: { label: 'Eau', icon: 'eau_potable' },
+  danger: { label: 'Danger', icon: 'danger' },
 };
 
 /** Libellés français des catégories étendues (schéma complet A1). */
 export const EXTENDED_CATEGORY_DISPLAY: Record<string, TerrainDisplayInfo> = {
-  bridge: { label: 'Pont', icon: 'route' },
-  flood: { label: 'Crue', icon: 'droplet' },
-  marking: { label: 'Balisage', icon: 'map-pin' },
-  shelter: { label: 'Refuge', icon: 'home' },
-  crowding: { label: 'Affluence', icon: 'users' },
-  animal: { label: 'Animal', icon: 'alert-circle' },
-  rockfall: { label: 'Chutes de pierres', icon: 'mountain' },
+  bridge: { label: 'Pont', icon: 'itineraire' },
+  flood: { label: 'Crue', icon: 'eau_potable' },
+  marking: { label: 'Balisage', icon: 'point_interet' },
+  shelter: { label: 'Refuge', icon: 'accueil' },
+  crowding: { label: 'Affluence', icon: 'communaute' },
+  animal: { label: 'Animal', icon: 'alerte' },
+  rockfall: { label: 'Chutes de pierres', icon: 'montagne' },
 };
 
 export const MVP_TERRAIN_CATEGORIES: TerrainReportCategory[] = [
@@ -48,7 +49,7 @@ export const MVP_TERRAIN_CATEGORIES: TerrainReportCategory[] = [
 export function categoryDisplay(category: TerrainReportCategory): TerrainDisplayInfo {
   return (
     MVP_CATEGORY_DISPLAY[category] ??
-    EXTENDED_CATEGORY_DISPLAY[category] ?? { label: category, icon: 'info' }
+    EXTENDED_CATEGORY_DISPLAY[category] ?? { label: category, icon: 'informations' }
   );
 }
 

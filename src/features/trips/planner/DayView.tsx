@@ -1,12 +1,11 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { StepCard } from './StepCard';
 import { recalculateDayMetrics, type PlannerStep } from './plannerEngine';
 import { Badge, Button, Card, EmptyState, IconButton } from '@/components/ui';
 import { formatCivilDayIndex } from '@/lib/dates/tripDates';
 import { ActivitySectionSkeleton } from '@/features/hub/components/live/ActivitySectionSkeleton';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface DayViewProps {
   dayNumber: number;
@@ -70,17 +69,17 @@ export function DayView({
     },
     {
       label: 'Insérer un jour après',
-      icon: 'calendar-plus',
+      icon: 'calendrier',
       onSelect: () => onInsertDayAfter(dayNumber),
     },
     {
       label: 'Dupliquer la journée',
-      icon: 'copy',
+      icon: 'dupliquer',
       onSelect: () => onDuplicateDay(dayNumber),
     },
     {
       label: 'Supprimer la journée',
-      icon: 'trash2',
+      icon: 'supprimer',
       destructive: true,
       onSelect: () => onDeleteDay(dayNumber),
     },
@@ -112,7 +111,7 @@ export function DayView({
                 variant="secondary"
                 size="sm"
                 onClick={() => onAddStep(dayNumber)}
-                icon={<Icon name="plus" size={14} />}
+                icon={<LKDVIcon name="plus" size={14} />}
                 className="hidden sm:inline-flex"
               >
                 Ajouter étape
@@ -125,7 +124,7 @@ export function DayView({
                 aria-label="Options de la journée"
                 aria-expanded={showMenu}
               >
-                <Icon name="more-vertical" size={16} />
+                <LKDVIcon name="plus_options" size={16} />
               </IconButton>
 
               {/* Menu contextuel de la journée */}
@@ -149,7 +148,7 @@ export function DayView({
                           setShowMenu(false);
                           item.onSelect();
                         }}
-                        icon={<Icon name={item.icon} size={16} />}
+                        icon={<LKDVIcon name={item.icon} size={16} />}
                         className={`w-full justify-start gap-[var(--space-3)] whitespace-normal rounded-[var(--lkv-radius-sm)] px-[var(--space-3)] font-normal ${
                           'destructive' in item && item.destructive
                             ? 'text-[color:var(--lkv-danger)]'
@@ -170,7 +169,7 @@ export function DayView({
         <div className="mt-[var(--space-5)] grid grid-cols-2 gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)] sm:grid-cols-4">
           <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-              <Icon name="map-pin" size={16} />
+              <LKDVIcon name="point_interet" size={16} />
             </div>
             <div>
               <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
@@ -184,7 +183,7 @@ export function DayView({
 
           <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-              <Icon name="trending-up" size={16} />
+              <LKDVIcon name="denivele" size={16} />
             </div>
             <div>
               <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
@@ -198,7 +197,7 @@ export function DayView({
 
           <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-              <Icon name="clock" size={16} />
+              <LKDVIcon name="duree" size={16} />
             </div>
             <div>
               <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
@@ -212,7 +211,7 @@ export function DayView({
 
           <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-              <Icon name="footprints" size={16} />
+              <LKDVIcon name="randonnee" size={16} />
             </div>
             <div>
               <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
@@ -233,7 +232,7 @@ export function DayView({
         ) : (
           <Card className="border-dashed">
             <EmptyState
-              icon={<Icon name="footprints" size={24} />}
+              icon={<LKDVIcon name="randonnee" size={24} />}
               title="Aucune étape pour cette journée"
               description="Cette journée peut servir de temps libre, de repos ou d’acclimatation."
               actionLabel={canEdit ? 'Ajouter la première étape' : undefined}
@@ -264,7 +263,7 @@ export function DayView({
               size="sm"
               variant="secondary"
               onClick={() => onAddStep(dayNumber)}
-              icon={<Icon name="plus" size={14} />}
+              icon={<LKDVIcon name="plus" size={14} />}
               fullWidth
               className="sm:hidden"
             >

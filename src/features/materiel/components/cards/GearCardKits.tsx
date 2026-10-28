@@ -1,8 +1,8 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import { Card } from '@/components/ui';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface KitsData {
   count: number;
@@ -48,7 +48,7 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
               href="/hub/materiel/kits/nouveau"
               className="glass-capsule-btn primary w-full flex justify-center items-center gap-1.5 !min-h-[44px] !text-[11px] !font-bold shadow-sm"
             >
-              <Icon name="plus" size={12} />
+              <LKDVIcon name="plus" size={12} />
               <span>Créer mon premier kit</span>
             </Link>
           </div>
@@ -63,7 +63,7 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
                 >
                   <div className="flex items-center gap-1.5 truncate">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-white/40 border border-white/60 flex items-center justify-center text-[color:var(--lkv-text-primary)] flex-shrink-0">
-                      <Icon name="package" size={9} />
+                      <LKDVIcon name="inventaire" size={9} />
                     </div>
                     <span className="font-semibold text-[color:var(--lkv-text-primary)] truncate">{k.name}</span>
                   </div>
@@ -73,7 +73,7 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
                     </span>
                     {k.completionPct === 100 && (
                       <span className="glass-check-circle checked !w-3 !h-3 flex items-center justify-center">
-                        <Icon name="check" size={7} strokeWidth={3} />
+                        <LKDVIcon name="valider" size={7} />
                       </span>
                     )}
                   </div>
@@ -112,7 +112,7 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
               className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0"
             >
               <span>Ouvrir</span>
-              <Icon name="arrow-right" size={10} />
+              <LKDVIcon name="suivant" size={10} />
             </Link>
           )}
         </div>

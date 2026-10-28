@@ -1,4 +1,5 @@
 import { UserProfile } from '@/lib/types/profile';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 export type { UserProfile };
 
 export interface ProchainVoyage {
@@ -62,7 +63,7 @@ export interface Commande {
 export interface BadgeItem {
   id: string;
   title: string;
-  icon_name: string;
+  icon_name: LKDVIconName;
   earned: boolean;
 }
 
@@ -276,14 +277,14 @@ export const MOCK_MARCELINE_DATA = {
   ] as Commande[],
 
   badges: [
-    { id: 'b-1', title: 'Sommet 3000', icon_name: 'MountainIcon', earned: true },
-    { id: 'b-2', title: '100 km', icon_name: 'SparklesIcon', earned: true },
-    { id: 'b-3', title: 'Auteur', icon_name: 'PencilIcon', earned: true },
-    { id: 'b-4', title: 'Sac léger', icon_name: 'ShoppingBagIcon', earned: true },
-    { id: 'b-5', title: 'Solidaire', icon_name: 'HeartIcon', earned: true },
-    { id: 'b-6', title: 'Massif +5', icon_name: 'MapPinIcon', earned: true },
-    { id: 'b-7', title: 'Guide', icon_name: 'StarIcon', earned: false },
-    { id: 'b-8', title: 'GR complet', icon_name: 'CheckBadgeIcon', earned: false },
+    { id: 'b-1', title: 'Sommet 3000', icon_name: 'montagne', earned: true },
+    { id: 'b-2', title: '100 km', icon_name: 'ia', earned: true },
+    { id: 'b-3', title: 'Auteur', icon_name: 'modifier', earned: true },
+    { id: 'b-4', title: 'Sac léger', icon_name: 'boutique', earned: true },
+    { id: 'b-5', title: 'Solidaire', icon_name: 'favoris', earned: true },
+    { id: 'b-6', title: 'Massif +5', icon_name: 'point_interet', earned: true },
+    { id: 'b-7', title: 'Guide', icon_name: 'points', earned: false },
+    { id: 'b-8', title: 'GR complet', icon_name: 'badge', earned: false },
   ] as BadgeItem[],
 
   constance: {

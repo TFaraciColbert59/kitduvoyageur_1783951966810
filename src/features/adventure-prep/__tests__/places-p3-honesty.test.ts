@@ -86,7 +86,7 @@ function nuitAvec(price: MoneyValue, extra: Partial<ItineraryStep> = {}): Itiner
     price: price,
     state: 'propose',
     kept: false,
-    icon: 'bed',
+    icon: 'hotel',
     lat: null,
     lon: null,
     ...extra,

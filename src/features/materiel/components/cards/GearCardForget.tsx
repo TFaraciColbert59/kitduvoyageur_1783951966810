@@ -1,8 +1,8 @@
 ﻿'use client';
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import { Card } from '@/components/ui';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ForgetData {
   forgetRemaining: number;
@@ -58,7 +58,7 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
               <span
                 className={`glass-check-circle ${item.is_checked ? 'checked' : ''} !w-3.5 !h-3.5`}
               >
-                {item.is_checked && <Icon name="check" size={8} strokeWidth={3} />}
+                {item.is_checked && <LKDVIcon name="valider" size={8} />}
               </span>
               <span
                 className={`flex-1 truncate ${item.is_checked ? 'line-through opacity-60 text-[color:var(--lkv-text-secondary)]' : ''}`}
@@ -92,7 +92,7 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
             className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5"
           >
             <span>Voir</span>
-            <Icon name="arrow-right" size={10} />
+            <LKDVIcon name="suivant" size={10} />
           </Link>
         </div>
       </div>

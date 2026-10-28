@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useRef, useEffect } from 'react';
 import { Button, IconButton } from '@/components/ui';
 import type {
@@ -12,6 +10,7 @@ import type {
 import { VoiceRecorderBar } from './VoiceRecorderBar';
 import { ComposerMenuSheet } from './ComposerMenuSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface MessageComposerProps {
   currentUserId: string;
@@ -146,7 +145,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
         <div className="animate-fade-in flex items-center justify-between border-b border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] py-[var(--space-2)]">
           <div className="flex items-center gap-[var(--space-2)] overflow-hidden">
             <div className="h-8 w-1 shrink-0 rounded-full bg-[color:var(--lkv-primary)]" />
-            <Icon name="reply" className="size-4 shrink-0 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
+            <LKDVIcon name="retour" className="size-4 shrink-0 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
             <div className="overflow-hidden text-[length:var(--lkv-text-caption)]">
               <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">
                 Réponse à {replyToMessage.sender_profile?.full_name || 'un voyageur'}
@@ -167,7 +166,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
             title="Annuler la réponse"
             aria-label="Annuler la réponse"
           >
-            <Icon name="x" className="size-3.5" aria-hidden="true" />
+            <LKDVIcon name="fermer" className="size-3.5" aria-hidden="true" />
           </IconButton>
         </div>
       )}
@@ -197,7 +196,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           aria-label="Envoyer une photo"
           title="Envoyer une photo"
           className="shrink-0"
-          icon={<Icon name="image-plus" className="size-5" aria-hidden="true" />}
+          icon={<LKDVIcon name="photo" className="size-5" aria-hidden="true" />}
         />
 
         <div className="relative flex min-w-0 flex-1 items-center">
@@ -233,7 +232,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
             title="Enregistrer une note vocale terrain"
             className="shrink-0 text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-danger)]"
           >
-            <Icon name="mic" className="size-5" aria-hidden="true" />
+            <LKDVIcon name="micro" className="size-5" aria-hidden="true" />
           </IconButton>
         )}
 
@@ -250,7 +249,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           title="Partager un GPX, un équipement ou une randonnée"
           className="shrink-0"
         >
-          <Icon name="ellipsis" className="size-5" aria-hidden="true" />
+          <LKDVIcon name="plus_options" className="size-5" aria-hidden="true" />
         </IconButton>
 
         <IconButton
@@ -261,7 +260,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           title="Envoyer le message"
           className="shrink-0 shadow-elevation-2"
         >
-          <Icon name="send" className="size-4" aria-hidden="true" />
+          <LKDVIcon name="partager" className="size-4" aria-hidden="true" />
         </IconButton>
       </form>
 

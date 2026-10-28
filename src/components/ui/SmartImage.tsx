@@ -1,8 +1,7 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image, { ImageProps } from 'next/image';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface SmartImageProps {
   src?: string | null;
@@ -75,7 +74,7 @@ export default function SmartImage({
         style={aspectRatio ? { aspectRatio } : undefined}
       >
         <div className="w-10 h-10 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center shadow-2xs mb-1">
-          {fallbackIcon || <Icon name="mountain" size={18} className="text-[color:var(--glass-label)]" />}
+          {fallbackIcon || <LKDVIcon name="montagne" size={18} className="text-[color:var(--glass-label)]" />}
         </div>
         <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-[color:var(--glass-label-secondary)]">
           {alt || 'LKDV Expédition'}

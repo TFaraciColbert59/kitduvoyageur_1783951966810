@@ -16,6 +16,7 @@ import type { DayWeather } from './engine/weather';
 // `import type` : le lien est efface a la compilation, donc aucun cycle
 // d execution. `itineraryEngine.ts` importe deja `../types`.
 import type { RejectionReason } from './engine/itineraryEngine';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /* ------------------------------------------------------------------ */
 /* Etapes                                                              */
@@ -42,7 +43,7 @@ export type ActivityCategoryId =
 export interface ActivityCategory {
   id: ActivityCategoryId;
   label: string;
-  icon: string;
+  icon: LKDVIconName;
 }
 
 /** Contexte de metrique dominant : pilote les trois metriques de l'etape 2. */
@@ -65,7 +66,7 @@ export interface ActivityDef {
   id: string;
   label: string;
   category: ActivityCategoryId;
-  icon: string;
+  icon: LKDVIconName;
   keywords: readonly string[];
   metrics: MetricsContext;
   /** Activite principale possible dans le catalogue. */
@@ -329,7 +330,7 @@ export interface ItineraryStep {
   state: BookingState;
   /** « À conserver » : bloque l'etape lors d'une nouvelle proposition. */
   kept: boolean;
-  icon: string;
+  icon: LKDVIconName;
   lat: number | null;
   lon: number | null;
   /** Tag optionnel : rattache un ravitaillement a un repas precis. */

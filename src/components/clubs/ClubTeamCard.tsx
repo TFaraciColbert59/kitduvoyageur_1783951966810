@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Button, Card, IconButton, ListItem } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface TeamMember {
   id: string;
@@ -106,7 +106,7 @@ export default function ClubTeamCard({
                     }}
                     aria-label={`Envoyer un message à ${admin.user?.full_name || "l'organisateur"}`}
                   >
-                    <Icon name="ChatBubbleLeftIcon" size={12} aria-hidden="true" />
+                    <LKDVIcon name="messages" size={12} aria-hidden="true" />
                   </IconButton>
                 )
               }

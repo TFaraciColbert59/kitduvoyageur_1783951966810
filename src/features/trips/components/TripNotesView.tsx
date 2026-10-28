@@ -1,6 +1,4 @@
 ﻿'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { Badge, Button, Card, Chip, EmptyState, IconButton } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
@@ -11,6 +9,7 @@ import { addTripNoteAction, deleteTripNoteAction } from '@/app/voyages/completio
 import { updateTripNoteAction } from '@/features/trips/actions/updateTripNoteAction';
 import { getTripDuration } from '../hooks/useTripDuration';
 import type { TripFull, TripNote } from '../types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const FIELD_CLASS =
   'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
@@ -161,8 +160,8 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       <Card as="section" aria-label="Carnet en création" className="space-y-[var(--space-3)]">
         <div className="flex flex-wrap items-center justify-between gap-[var(--space-2)]">
           <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
-            <Icon
-              name="book-open"
+            <LKDVIcon
+              name="preparateur"
               size={14}
               className="shrink-0 text-[color:var(--lkv-secondary-ink)]"
               aria-hidden="true"
@@ -242,7 +241,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       <div className="flex flex-wrap items-center justify-between gap-[var(--space-4)]">
         {trip.status === 'completed' && (
           <Badge tone="sage">
-            <Icon name="check-circle2" size={13} aria-hidden="true" />
+            <LKDVIcon name="valider" size={13} aria-hidden="true" />
             <span>Expédition terminée</span>
           </Badge>
         )}
@@ -252,14 +251,14 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
               variant="secondary"
               size="sm"
               onClick={() => setIsCompletionOpen(true)}
-              icon={<Icon name="award" size={16} />}
+              icon={<LKDVIcon name="badge" size={16} />}
             >
               {trip.status === 'completed' ? 'Bilan & Rétrospective' : 'Clôturer le voyage'}
             </Button>
             <Button
               size="sm"
               onClick={() => setIsAddOpen(true)}
-              icon={<Icon name="plus" size={16} />}
+              icon={<LKDVIcon name="plus" size={16} />}
             >
               Ajouter un récit
             </Button>
@@ -284,7 +283,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       {/* Liste des notes */}
       {filteredNotes.length === 0 ? (
         <EmptyState
-          icon={<Icon name="book-open" size={36} className="text-[color:var(--lkv-secondary-ink)]/40" />}
+          icon={<LKDVIcon name="preparateur" size={36} className="text-[color:var(--lkv-secondary-ink)]/40" />}
           title="Aucune note enregistrée"
           description={
             canEdit
@@ -308,7 +307,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                   {note.day_number && <Badge tone="sage">Jour {note.day_number}</Badge>}
                   {note.is_pinned && (
                     <Badge tone="warn">
-                      <Icon name="pin" size={11} /> Épinglé
+                      <LKDVIcon name="position" size={11} /> Épinglé
                     </Badge>
                   )}
                 </div>
@@ -322,7 +321,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                       disabled={isPending}
                       aria-label="Éditer la note"
                     >
-                      <Icon name="pencil" size={16} />
+                      <LKDVIcon name="modifier" size={16} />
                     </IconButton>
                     <IconButton
                       type="button"
@@ -331,7 +330,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                       disabled={isPending}
                       aria-label="Supprimer la note"
                     >
-                      <Icon name="trash2" size={16} />
+                      <LKDVIcon name="supprimer" size={16} />
                     </IconButton>
                   </div>
                 )}
@@ -349,11 +348,11 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
 
               <div className="mt-[var(--space-4)] flex items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)] text-[11px] text-[color:var(--lkv-text-secondary)]">
                 <div className="flex items-center gap-[var(--space-2)]">
-                  <Icon name="user" size={12} />
+                  <LKDVIcon name="profil" size={12} />
                   <span>{note.author?.full_name || 'Explorateur'}</span>
                 </div>
                 <div className="flex items-center gap-[var(--space-2)]">
-                  <Icon name="calendar" size={12} />
+                  <LKDVIcon name="calendrier" size={12} />
                   <span>{new Date(note.created_at).toLocaleDateString('fr-FR')}</span>
                 </div>
               </div>

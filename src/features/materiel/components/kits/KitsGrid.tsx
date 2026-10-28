@@ -1,13 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { useState } from 'react';
 import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
-import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
-import { ClockIcon as Clock } from '@/components/icons/clock';
 import type { KitListItem } from '@/features/materiel/services/getKits';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Props {
   kits: KitListItem[];
@@ -147,9 +144,9 @@ export function KitsGrid({ kits, onSelect }: Props) {
                       }`}
                     >
                       {isUnowned ? (
-                        <Clock size={11} />
+                        <LKDVIcon name="duree" size={11} />
                       ) : (
-                        <Icon name="check" size={12} strokeWidth={3} />
+                        <LKDVIcon name="valider" size={12} />
                       )}
                     </div>
                     <div className="min-w-0">
@@ -171,7 +168,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
 
                   {isUnowned && (
                     <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)] border border-[var(--lkv-primary)]/20 flex items-center gap-1">
-                      <ShoppingBag size={9} />
+                      <LKDVIcon name="boutique" size={9} />
                       En commande
                     </span>
                   )}

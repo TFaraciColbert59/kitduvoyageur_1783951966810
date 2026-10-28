@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { PourToiMenu } from '@/features/community/sections/PourToiMenu';
 import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
 import { useAccountUnreadCount } from './useAccountUnreadCount';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CommunityFeedTopBarProps {
   user: any;
@@ -32,26 +32,24 @@ export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }:
           onClick={() => setMenuOpen((open) => !open)}
         >
           <span>Pour toi</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <path d="M7 10l5 5 5-5" />
-          </svg>
+          <LKDVIcon name="bas" size={14} aria-hidden="true" />
         </button>
         <PourToiMenu open={menuOpen} onSelect={onOpenSection} onClose={() => setMenuOpen(false)} />
       </div>
 
       <div className="lkdv-top-actions">
         <button type="button" className="gbtn" aria-label="Créer dans l’application" onClick={onCreate}>
-          <Icon name="plus" size={18} aria-hidden="true" />
+          <LKDVIcon name="plus" size={18} aria-hidden="true" />
         </button>
         <button type="button" className="gbtn" aria-label="Rechercher dans la communauté" onClick={onSearch}>
-          <Icon name="search" size={17} aria-hidden="true" />
+          <LKDVIcon name="recherche" size={17} aria-hidden="true" />
         </button>
         <Link
           href="/compte?tab=notifications"
           className="lkdv-notif-wrap gbtn"
           aria-label={unread > 0 ? `Notifications, ${unread} non lues` : 'Notifications'}
         >
-          <Icon name="bell" size={17} aria-hidden="true" />
+          <LKDVIcon name="notifications" size={17} aria-hidden="true" />
           {unread > 0 ? <span className="lkdv-notif-badge">{unread > 99 ? '99+' : unread}</span> : null}
         </Link>
       </div>

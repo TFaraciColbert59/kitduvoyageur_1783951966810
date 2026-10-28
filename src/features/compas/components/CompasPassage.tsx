@@ -1,7 +1,6 @@
 'use client';
 
 import { useId, useMemo, useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import { formatDuration } from '../engine/format';
 import {
   MISSING_TEXT,
@@ -13,6 +12,7 @@ import {
 import { compasSetDepartureTimeAction } from '../server/compasActions';
 import type { CompasCtl } from './compasTypes';
 import { useTranslation } from '@/lib/i18n/context';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Heure de passage à chaque étape (onglet « Quand », maquette finale).
@@ -224,7 +224,7 @@ function PassageRow({
         )}
         {dark && (
           <small className="cp-pass__dark">
-            <Icon name="alert-triangle" size={13} aria-hidden="true" /> {dark}
+            <LKDVIcon name="alerte" size={13} aria-hidden="true" /> {dark}
           </small>
         )}
       </span>

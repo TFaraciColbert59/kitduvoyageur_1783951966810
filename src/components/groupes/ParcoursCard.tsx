@@ -2,10 +2,10 @@
 
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card } from '@/components/ui';
 import 'leaflet/dist/leaflet.css';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ParcoursCardProps {
   groupId?: string;
@@ -184,7 +184,7 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
             variant="secondary"
             size="sm"
             onClick={handleDownloadGpx}
-            icon={<Icon name="ArrowDownTrayIcon" size={12} aria-hidden="true" />}
+            icon={<LKDVIcon name="telecharger" size={12} aria-hidden="true" />}
           >
             GPX
           </Button>
@@ -193,7 +193,7 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
             className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]"
           >
             Carte
-            <Icon name="ArrowRightIcon" size={12} aria-hidden="true" />
+            <LKDVIcon name="suivant" size={12} aria-hidden="true" />
           </Link>
         </div>
       </div>
@@ -215,11 +215,11 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         </span>
         {elevationGain != null && (
           <span className="flex items-center gap-[var(--space-1)] font-bold text-[color:var(--lkv-text-primary)]">
-            <Icon name="ArrowTrendingUpIcon" size={12} aria-hidden="true" /> +{elevationGain} m D+
+            <LKDVIcon name="denivele" size={12} aria-hidden="true" /> +{elevationGain} m D+
           </span>
         )}
         <span className="flex items-center gap-[var(--space-1)] font-semibold">
-          <Icon name="MapPinIcon" size={12} aria-hidden="true" /> {trailName}
+          <LKDVIcon name="point_interet" size={12} aria-hidden="true" /> {trailName}
         </span>
       </div>
     </Card>

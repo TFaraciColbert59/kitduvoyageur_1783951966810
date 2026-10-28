@@ -1,8 +1,7 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import type { TripExpense } from '../../types/trip.types';
 import { Button, Card, IconButton } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ExpenseRowProps {
   expense: TripExpense;
@@ -61,7 +60,7 @@ export function ExpenseRow({
             onClick={onSettle}
             disabled={isPending}
             title="Régler cette dépense prévue"
-            icon={<Icon name="check-circle" size={14} />}
+            icon={<LKDVIcon name="valider" size={14} />}
           >
             <span className="sr-only sm:inline">Régler</span>
           </Button>
@@ -76,7 +75,7 @@ export function ExpenseRow({
               aria-label="Modifier la dépense"
               title="Modifier la dépense"
             >
-              <Icon name="pencil" size={14} />
+              <LKDVIcon name="modifier" size={14} />
             </IconButton>
             <IconButton
               type="button"
@@ -86,7 +85,7 @@ export function ExpenseRow({
               aria-label="Supprimer la dépense"
               title="Supprimer la dépense"
             >
-              <Icon name="trash2" size={14} />
+              <LKDVIcon name="supprimer" size={14} />
             </IconButton>
           </>
         )}

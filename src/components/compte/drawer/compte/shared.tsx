@@ -1,18 +1,8 @@
 'use client';
 
 import React from 'react';
-import {
-  Bell,
-  Heart,
-  MessageCircle,
-  Package,
-  ShieldCheck,
-  ShoppingBag,
-  UserPlus,
-  Users,
-  Wrench,
-} from 'lucide-react';
 import type { NotificationGroup } from '@/features/compte/server/compte';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -71,13 +61,13 @@ export const NOTIFICATION_GROUP_LABEL: Record<NotificationGroup, string> = {
 
 export function notificationIcon(type: string): React.ReactNode {
   const value = type.toLowerCase();
-  if (value.includes('follow')) return <UserPlus size={15} aria-hidden="true" />;
-  if (value.includes('like')) return <Heart size={15} aria-hidden="true" />;
-  if (value.includes('comment') || value.includes('message')) return <MessageCircle size={15} aria-hidden="true" />;
-  if (value.includes('group')) return <Users size={15} aria-hidden="true" />;
-  if (value.includes('order') || value.includes('commande')) return <ShoppingBag size={15} aria-hidden="true" />;
-  if (value.includes('loan') || value.includes('pret')) return <Package size={15} aria-hidden="true" />;
-  if (value.includes('materiel') || value.includes('gear')) return <Wrench size={15} aria-hidden="true" />;
-  if (value.includes('sos')) return <ShieldCheck size={15} aria-hidden="true" />;
-  return <Bell size={15} aria-hidden="true" />;
+  if (value.includes('follow')) return <LKDVIcon name="amis" size={15} aria-hidden="true" />;
+  if (value.includes('like')) return <LKDVIcon name="favoris" size={15} aria-hidden="true" />;
+  if (value.includes('comment') || value.includes('message')) return <LKDVIcon name="messages" size={15} aria-hidden="true" />;
+  if (value.includes('group')) return <LKDVIcon name="communaute" size={15} aria-hidden="true" />;
+  if (value.includes('order') || value.includes('commande')) return <LKDVIcon name="boutique" size={15} aria-hidden="true" />;
+  if (value.includes('loan') || value.includes('pret')) return <LKDVIcon name="inventaire" size={15} aria-hidden="true" />;
+  if (value.includes('materiel') || value.includes('gear')) return <LKDVIcon name="options_avancees" size={15} aria-hidden="true" />;
+  if (value.includes('sos')) return <LKDVIcon name="securite" size={15} aria-hidden="true" />;
+  return <LKDVIcon name="notifications" size={15} aria-hidden="true" />;
 }

@@ -2,15 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import AppShell from '@/components/shell/AppShell';
 import { Button, Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const POPULAR_PAGES = [
-  { label: 'Explorer', href: '/explorer', icon: 'GlobeAltIcon' },
-  { label: 'Hub Voyage', href: '/hub', icon: 'SparklesIcon' },
-  { label: 'Boutique & Kits', href: '/boutique', icon: 'ShoppingBagIcon' },
-  { label: 'Communauté', href: '/communaute', icon: 'UserGroupIcon' },
+  { label: 'Explorer', href: '/explorer', icon: 'monde' as const },
+  { label: 'Hub Voyage', href: '/hub', icon: 'ia' as const },
+  { label: 'Boutique & Kits', href: '/boutique', icon: 'boutique' as const },
+  { label: 'Communauté', href: '/communaute', icon: 'groupes' as const },
 ];
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -65,7 +65,7 @@ export default function NotFound() {
             <div className="mb-6 flex justify-center gap-[var(--space-2)] md:mb-8 md:gap-[var(--space-3)]">
               <Button
                 variant="secondary"
-                icon={<Icon name="ArrowLeftIcon" size={16} variant="outline" />}
+                icon={<LKDVIcon name="retour" size={16} />}
                 onClick={handleGoBack}
                 className="flex-1 md:flex-none"
               >
@@ -73,7 +73,7 @@ export default function NotFound() {
               </Button>
               <Link href="/hub" className="flex-1 md:flex-none">
                 <Button
-                  icon={<Icon name="HomeIcon" size={16} variant="outline" />}
+                  icon={<LKDVIcon name="accueil" size={16} />}
                   fullWidth
                 >
                   Aller au Hub
@@ -92,10 +92,9 @@ export default function NotFound() {
                     href={page.href}
                     className="flex min-h-[var(--lkv-touch-min)] items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] font-medium text-[color:var(--glass-label)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
                   >
-                    <Icon
+                    <LKDVIcon
                       name={page.icon}
                       size={14}
-                      variant="outline"
                       className="text-[color:var(--glass-label-secondary)]"
                     />
                     <span className="truncate">{page.label}</span>

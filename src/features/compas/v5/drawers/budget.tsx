@@ -45,13 +45,13 @@ import './nous-budget.css';
 /** Tiroir « Budget » : aperçu, dépenses, et (en groupe) qui doit quoi. Le Compas compte, il ne paie rien. */
 
 const POST_ICON: Record<PostKey, V5IconName> = {
-  lodging: 'bed',
-  food: 'cup',
-  transport: 'car',
-  activities: 'hike',
-  gear: 'bag',
-  misc: 'receipt',
-  custom: 'receipt',
+  lodging: 'hotel',
+  food: 'alimentation',
+  transport: 'voiture',
+  activities: 'randonnee',
+  gear: 'sac',
+  misc: 'facture',
+  custom: 'facture',
 };
 
 function useBudget() {
@@ -401,7 +401,7 @@ function ExpenseForm({ edit, onDone }: { edit?: ExpenseRow; onDone?: () => void 
         )}
         <div className="nb-actions nb-actions--flush">
           <PBtn type="submit" disabled={ctl.busy}>
-            <V5Icon name={edit ? 'check' : 'plus'} size="s" />
+            <V5Icon name={edit ? 'valider' : 'ajouter'} size="s" />
             {edit ? text('form.save') : text('form.add')}
           </PBtn>
           {edit && (
@@ -580,7 +580,7 @@ function Settle() {
       ) : (
         <Grp>
           {view.balanced ? (
-            <Li icon="check" title={text('settle.balanced')} />
+            <Li icon='valider' title={text('settle.balanced')} />
           ) : (
             view.debts.map((d) => (
               <div key={`${d.fromId}-${d.toId}`} className="v5-li">
@@ -648,7 +648,7 @@ export const budgetDrawer: V5DrawerDef = {
   space: 'budget',
   tabs: (api) => {
     const text = tabText(api);
-    const all = { overview: { icon: 'pie', label: text('tabOverview') }, expenses: { icon: 'receipt', label: text('tabExpenses') }, settle: { icon: 'swap', label: text('tabSettle') } } as const;
+    const all = { overview: { icon: 'budget', label: text('tabOverview') }, expenses: { icon: 'facture', label: text('tabExpenses') }, settle: { icon: 'itineraire', label: text('tabSettle') } } as const;
     return budgetTabs(api.solo).map((id) => all[id]);
   },
   title: (api) => {

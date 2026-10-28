@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Icon from '@/components/ui/AppIcon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** One active video at a time, always muted by default. Pauses off-screen/tab hidden. */
 export default function CommunityVideo({ src, className = '' }: { src: string; className?: string }) {
@@ -77,18 +77,10 @@ export default function CommunityVideo({ src, className = '' }: { src: string; c
       ) : (
         <div className="absolute inset-x-3 bottom-3 flex items-center justify-end gap-2">
           <button type="button" className="lkdv-community-video-control" onClick={() => { if (playing) pause(); else void play(); }} aria-label={playing ? 'Mettre la vidéo en pause' : 'Lire la vidéo'}>
-            <Icon name={playing ? 'pause' : 'play'} size={20} aria-hidden="true" />
+            <LKDVIcon name={playing ? 'pause' : 'lecture'} size={20} aria-hidden="true" />
           </button>
           <button type="button" className="lkdv-community-video-control" onClick={() => setMuted((value) => !value)} aria-label={muted ? 'Activer le son' : 'Couper le son'}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-              {muted ? (
-                <><path d="m16 9 5 6" /><path d="m21 9-5 6" /></>
-              ) : (
-                <><path d="M15 9a5 5 0 0 1 0 6" /><path d="M18 6a9 9 0 0 1 0 12" /></>
-              )}
-            </svg>
+            <LKDVIcon name="audio" size={20} aria-hidden="true" />
           </button>
         </div>
       )}

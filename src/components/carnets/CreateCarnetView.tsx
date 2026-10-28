@@ -4,13 +4,12 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import Icon from '@/components/ui/AppIcon';
-import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { createClient } from '@/lib/supabase/client';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import { CarnetKitItem, CarnetMoment } from '@/types/carnet';
 import { Badge, Button, Card, Chip, IconButton } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ChapterItem {
   id: string;
@@ -299,7 +298,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
             className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[var(--g2-bg)] text-[var(--glass-label)] border border-[var(--glass-rim)] shrink-0"
             aria-label="Retour aux carnets"
           >
-            <Icon name="ArrowLeftIcon" size={14} aria-hidden="true" />
+            <LKDVIcon name="retour" size={14} aria-hidden="true" />
           </Link>
           {STEPS.map((st) => {
             const isActive = activeStep === st.id;
@@ -340,7 +339,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
               href="/carnets"
               className="inline-flex items-center justify-center gap-1.5 w-full rounded-full bg-[var(--g2-bg)] border border-[var(--glass-rim)] px-3 py-1.5 text-xs font-semibold text-[var(--glass-label)] hover:brightness-110 transition-all"
             >
-              <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
+              <LKDVIcon name="retour" size={12} aria-hidden="true" />
               <span>Retour aux carnets</span>
             </Link>
           </div>
@@ -362,7 +361,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                   aria-pressed={isActive}
                 >
                   <span className="truncate text-left">{st.label}</span>
-                  {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
+                  {isActive && <LKDVIcon name="suivant" size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
                 </Button>
               );
             })}
@@ -378,9 +377,9 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         <div className="h-full min-w-0 flex-1 space-y-[var(--space-4)] overflow-y-auto pr-[var(--space-2)]">
           <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
             <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <LKDVIcon name="suivant" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
             <Link href="/carnets" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Carnets</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <LKDVIcon name="suivant" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
             <span className="font-semibold text-[color:var(--lkv-text-primary)]">Publier un carnet de voyage</span>
           </div>
 
@@ -691,7 +690,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                   variant="secondary"
                   fullWidth
                   onClick={addChapter}
-                  icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
+                  icon={<LKDVIcon name="plus" size={14} aria-hidden="true" />}
                   className="border-dashed"
                 >
                   Ajouter une journée de marche
@@ -813,7 +812,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                   variant="secondary"
                   fullWidth
                   onClick={addMoment}
-                  icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
+                  icon={<LKDVIcon name="plus" size={14} aria-hidden="true" />}
                   className="border-dashed"
                 >
                   Ajouter un souvenir / photo
@@ -908,7 +907,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                         onClick={() => removeKitItem(item.id)}
                         aria-label={`Retirer ${item.name || "l'équipement"}`}
                       >
-                        <Icon name="XMarkIcon" size={14} aria-hidden="true" />
+                        <LKDVIcon name="fermer" size={14} aria-hidden="true" />
                       </IconButton>
                     </Card>
                   ))}
@@ -918,7 +917,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                     variant="secondary"
                     fullWidth
                     onClick={addKitItem}
-                    icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
+                    icon={<LKDVIcon name="plus" size={14} aria-hidden="true" />}
                     className="border-dashed"
                   >
                     Ajouter un équipement
@@ -1021,7 +1020,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                     onClick={handlePublish}
                     disabled={saving || !form.title.trim()}
                     loading={saving}
-                    icon={<Icon name="CheckIcon" size={14} aria-hidden="true" />}
+                    icon={<LKDVIcon name="valider" size={14} aria-hidden="true" />}
                   >
                     {saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}
                   </Button>
@@ -1086,7 +1085,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                 disabled={saving || !form.title.trim()}
                 loading={saving}
                 fullWidth
-                icon={<Icon name="CheckIcon" size={14} aria-hidden="true" />}
+                icon={<LKDVIcon name="valider" size={14} aria-hidden="true" />}
               >
                 {saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}
               </Button>

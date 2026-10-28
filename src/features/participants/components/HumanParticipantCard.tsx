@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { HumanParticipant } from '../types/participant.types';
 import { GlassBreakModal } from './GlassBreakModal';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface HumanParticipantCardProps {
   participant: HumanParticipant;
@@ -64,7 +64,7 @@ export const HumanParticipantCard: React.FC<HumanParticipantCardProps> = ({
               size="sm"
               onClick={() => onRemove(participant.id)}
             >
-              <Icon name="x" size={14} />
+              <LKDVIcon name="fermer" size={14} />
             </IconButton>
           )}
         </div>
@@ -77,7 +77,7 @@ export const HumanParticipantCard: React.FC<HumanParticipantCardProps> = ({
           <Button
             size="sm"
             variant="secondary"
-            icon={<Icon name="shield" size={14} />}
+            icon={<LKDVIcon name="securite" size={14} />}
             onClick={() => setIsModalOpen(true)}
           >
             Fiche Médicale / ICE →

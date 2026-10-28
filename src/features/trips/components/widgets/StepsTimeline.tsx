@@ -1,11 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import type { TripPhase } from '../../engine/temporalPhaseEngine';
 import type { TripStep } from '../../types/trip.types';
 import { Badge, Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface StepsTimelineProps {
   steps: TripStep[];
@@ -67,7 +66,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
     <Card className="flex h-full min-h-0 flex-col space-y-[var(--space-2)] p-[var(--space-3)]">
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
-          <Icon name="route" size={13} aria-hidden="true" />
+          <LKDVIcon name="itineraire" size={13} aria-hidden="true" />
           Déroulé du jour
         </h3>
         <Badge tone="stone">{phasePill}</Badge>
@@ -86,7 +85,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
             >
               <div className="flex items-center justify-between gap-[var(--space-2)]">
                 <Badge tone="sage">
-                  <Icon name="map-pin" size={10} aria-hidden="true" />
+                  <LKDVIcon name="point_interet" size={10} aria-hidden="true" />
                   Point de départ
                 </Badge>
                 <Badge tone="stone" className="tabular-nums">
@@ -98,7 +97,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
               </div>
               {startStep.location_name && (
                 <div className="flex items-center gap-[var(--space-1)] text-[11px] text-[color:var(--lkv-text-secondary)]">
-                  <Icon name="map-pin" size={11} aria-hidden="true" />
+                  <LKDVIcon name="point_interet" size={11} aria-hidden="true" />
                   {startStep.location_name}
                 </div>
               )}
@@ -106,19 +105,19 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                 <div className="flex flex-wrap items-center gap-x-[var(--space-3)] gap-y-0.5 border-t border-[color:var(--lkv-primary)]/10 pt-0.5 text-[11px] tabular-nums text-[color:var(--lkv-text-secondary)]">
                   {totals.km > 0 && (
                     <span className="flex items-center gap-[var(--space-1)] whitespace-nowrap">
-                      <Icon name="route" size={11} aria-hidden="true" />
+                      <LKDVIcon name="itineraire" size={11} aria-hidden="true" />
                       {fmtKm(totals.km)}
                     </span>
                   )}
                   {totals.dPlus > 0 && (
                     <span className="flex items-center gap-[var(--space-1)] whitespace-nowrap">
-                      <Icon name="mountain" size={11} aria-hidden="true" />+
+                      <LKDVIcon name="montagne" size={11} aria-hidden="true" />+
                       {fmtMeters(totals.dPlus)}
                     </span>
                   )}
                   {totals.dLoss > 0 && (
                     <span className="flex items-center gap-[var(--space-1)] whitespace-nowrap">
-                      <Icon name="mountain" size={11} className="rotate-180" aria-hidden="true" />
+                      <LKDVIcon name="montagne" size={11} className="rotate-180" aria-hidden="true" />
                       −{fmtMeters(totals.dLoss)}
                     </span>
                   )}
@@ -141,7 +140,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                   </Badge>
                   {step.accommodation_name && (
                     <span className="flex min-w-0 items-center gap-[var(--space-1)] truncate text-[10px] text-[color:var(--lkv-text-muted)]">
-                      <Icon name="moon-star" size={10} aria-hidden="true" />
+                      <LKDVIcon name="lune" size={10} aria-hidden="true" />
                       {step.accommodation_name}
                     </span>
                   )}
@@ -151,7 +150,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                 </div>
                 {step.location_name && (
                   <div className="flex items-center gap-[var(--space-1)] text-[11px] text-[color:var(--lkv-text-secondary)]">
-                    <Icon name="map-pin" size={11} aria-hidden="true" />
+                    <LKDVIcon name="point_interet" size={11} aria-hidden="true" />
                     {step.location_name}
                   </div>
                 )}
@@ -159,13 +158,13 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
                   <div className="flex items-center gap-[var(--space-2)] text-[11px] tabular-nums text-[color:var(--lkv-text-muted)]">
                     {fmtKm(step.distance_km) && (
                       <span className="flex items-center gap-[var(--space-1)]">
-                        <Icon name="route" size={11} aria-hidden="true" />
+                        <LKDVIcon name="itineraire" size={11} aria-hidden="true" />
                         {fmtKm(step.distance_km)}
                       </span>
                     )}
                     {Number(step.elevation_gain_m) > 0 && (
                       <span className="flex items-center gap-[var(--space-1)]">
-                        <Icon name="mountain" size={11} aria-hidden="true" />+
+                        <LKDVIcon name="montagne" size={11} aria-hidden="true" />+
                         {fmtMeters(step.elevation_gain_m)}
                       </span>
                     )}

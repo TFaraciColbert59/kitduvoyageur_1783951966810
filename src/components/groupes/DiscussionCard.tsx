@@ -2,8 +2,8 @@ import { lkvAlert } from '@/components/ui/dialogs';
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, EmptyState, IconButton } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Message {
   id: string;
@@ -194,7 +194,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
         {discussions.length === 0 && (
           <EmptyState
             compact
-            icon={<Icon name="ChatBubbleLeftRightIcon" size={22} aria-hidden="true" />}
+            icon={<LKDVIcon name="messages" size={22} aria-hidden="true" />}
             title="Soyez le premier à lancer la discussion"
             description="Partagez une info, un point de rendez-vous ou une photo avec l'équipe."
           />
@@ -245,7 +245,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                 {msg.attachment && (
                   <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)]">
                     <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-                      <Icon name="MapIcon" size={20} aria-hidden="true" />
+                      <LKDVIcon name="carte" size={20} aria-hidden="true" />
                     </div>
                     <div>
                       <p className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{msg.attachment}</p>
@@ -266,7 +266,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                         a.click();
                       }}
                     >
-                      <Icon name="ArrowDownTrayIcon" size={14} aria-hidden="true" />
+                      <LKDVIcon name="telecharger" size={14} aria-hidden="true" />
                     </IconButton>
                   </div>
                 )}
@@ -277,7 +277,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                     rel="noopener noreferrer"
                     className="mt-[var(--space-3)] inline-flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]"
                   >
-                    <Icon name="MapPinIcon" size={14} aria-hidden="true" />
+                    <LKDVIcon name="point_interet" size={14} aria-hidden="true" />
                     <span>
                       {typeof msg.location === 'string' ? msg.location : `📍 ${(msg.location as any).lat?.toFixed(5)}, ${(msg.location as any).lng?.toFixed(5)}`}
                     </span>
@@ -319,7 +319,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
             <span className="font-bold">↩ Répondre à {replyingTo.author}</span>
             <span className="flex-1 truncate text-[color:var(--lkv-text-muted)]">« {replyingTo.content.slice(0, 60)}{replyingTo.content.length > 60 ? '…' : ''} »</span>
             <IconButton variant="ghost" size="sm" aria-label="Annuler la réponse" onClick={() => setReplyingTo(null)}>
-              <Icon name="XMarkIcon" size={14} aria-hidden="true" />
+              <LKDVIcon name="fermer" size={14} aria-hidden="true" />
             </IconButton>
           </div>
         )}
@@ -356,7 +356,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
             disabled={uploading || loading}
             aria-label="Envoyer une photo ou vidéo"
           >
-            <Icon name="PhotoIcon" size={16} aria-hidden="true" />
+            <LKDVIcon name="photo" size={16} aria-hidden="true" />
           </IconButton>
           <IconButton
             variant="glass"
@@ -365,7 +365,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
             disabled={locating || loading}
             aria-label="Partager ma position"
           >
-            <Icon name="MapPinIcon" size={16} aria-hidden="true" />
+            <LKDVIcon name="point_interet" size={16} aria-hidden="true" />
           </IconButton>
           <IconButton
             variant="solid"
@@ -374,7 +374,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
             disabled={!newMessage.trim() || loading}
             aria-label="Envoyer le message"
           >
-            <Icon name="PaperAirplaneIcon" size={14} aria-hidden="true" />
+            <LKDVIcon name="partager" size={14} aria-hidden="true" />
           </IconButton>
         </div>
       </div>

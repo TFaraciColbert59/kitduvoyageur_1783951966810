@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { Button, Card, IconButton, PriceTag } from '@/components/ui';
-import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ProductBuyBarProps {
   price: number;
@@ -39,7 +39,7 @@ export default function ProductBuyBar({ price, onAddToCart }: ProductBuyBarProps
             setQty(Math.max(1, qty - 1));
           }}
         >
-          <Icon name="MinusIcon" size={14} />
+          <LKDVIcon name="annuler" size={14} />
         </IconButton>
         <span
           aria-live="polite"
@@ -55,7 +55,7 @@ export default function ProductBuyBar({ price, onAddToCart }: ProductBuyBarProps
             setQty(qty + 1);
           }}
         >
-          <Icon name="PlusIcon" size={14} />
+          <LKDVIcon name="plus" size={14} />
         </IconButton>
       </div>
 

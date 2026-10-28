@@ -1,12 +1,11 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { Button, Card, Tabs, type TabOption } from '@/components/ui';
 import type { TripFull } from '../types/trip.types';
 import { TripNotesView } from './TripNotesView';
 import { TripBudgetView } from './TripBudgetView';
 import { TripShareModal } from './TripShareModal';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TripPhaseRecountViewProps {
   trip: TripFull;
@@ -22,13 +21,13 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
     {
       id: 'notes',
       label: 'Carnet de bord & Notes',
-      icon: <Icon name="book-open" size={15} />,
+      icon: <LKDVIcon name="preparateur" size={15} />,
       count: trip.notes?.length ?? 0,
     },
     {
       id: 'budget',
       label: 'Bilan Dépenses & Soldes',
-      icon: <Icon name="credit-card" size={15} />,
+      icon: <LKDVIcon name="paiement" size={15} />,
     },
   ];
 
@@ -39,7 +38,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
         <div className="flex flex-col justify-between gap-[var(--space-4)] sm:flex-row sm:items-center">
           <div className="flex items-start gap-[var(--space-4)] sm:items-center">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1">
-              <Icon name="sparkles" size={24} />
+              <LKDVIcon name="ia" size={24} />
             </div>
             <div>
               <span className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider text-[color:var(--lkv-secondary-ink)]">
@@ -58,7 +57,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
             type="button"
             onClick={() => setIsShareModalOpen(true)}
             size="sm"
-            icon={<Icon name="share2" size={15} />}
+            icon={<LKDVIcon name="partager" size={15} />}
           >
             Partager / Exporter GPX
           </Button>

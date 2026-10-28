@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import Icon from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface HeaderBackButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -46,7 +46,7 @@ export default function HeaderBackButton({
         className
       )}
     >
-      <Icon name="ChevronLeftIcon" size={22} strokeWidth={2.2} />
+      <LKDVIcon name="retour" size={22} />
     </button>
   );
 }

@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Button, Card, IconButton } from '@/components/ui';
-import Icon from '@/components/ui/AppIcon';
 import { lkvAlert } from '@/components/ui/dialogs';
 import { createClient } from '@/lib/supabase/client';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type ArchivedRow = {
   id: string;
@@ -220,7 +220,7 @@ export default function StoriesArchiveSheet({
             aria-label="Fermer mes archives"
             onClick={onClose}
           >
-            <Icon name="x" size={16} />
+            <LKDVIcon name="fermer" size={16} />
           </IconButton>
         </div>
 
@@ -245,7 +245,7 @@ export default function StoriesArchiveSheet({
                     onClick={() => void handleDeleteHighlight(highlight.id)}
                     className="text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
                   >
-                    <Icon name="x" size={12} />
+                    <LKDVIcon name="fermer" size={12} />
                   </button>
                 </li>
               ))}
@@ -306,7 +306,7 @@ export default function StoriesArchiveSheet({
                       disabled={deletingId === row.id}
                       onClick={() => void handleDelete(row.id)}
                     >
-                      <Icon name="trash2" size={16} />
+                      <LKDVIcon name="supprimer" size={16} />
                     </IconButton>
                   </span>
                 </div>

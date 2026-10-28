@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { CheckSquare, Package, Plus, Users, Wallet, X } from 'lucide-react';
 import { Button, Card, IconButton } from '@/components/ui';
 import TachesCard from '@/components/groupes/TachesCard';
 import EquipementCard from '@/components/groupes/EquipementCard';
@@ -39,6 +38,8 @@ import { GroupeBalancesCard } from './GroupeBalancesCard';
 import { GroupeMembersCard } from './GroupeMembersCard';
 import { GroupeRail } from './GroupeRail';
 import { GroupeDrawer, GroupeReadinessDrawer, type GroupeReadinessFactor } from './GroupeDrawer';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 export interface GroupeMobileExperienceProps {
   data: any;
@@ -368,7 +369,7 @@ export function GroupeMobileExperience({
   const chips: GroupeChipDef[] = [
     {
       key: 'tasks',
-      icon: CheckSquare,
+      icon: lkdvIcon('checklist'),
       value: String(openCount),
       label: overdueCount > 0 ? `${overdueCount} en retard` : 'à faire',
       tone: overdueCount > 0 ? 'warn' : 'default',
@@ -376,7 +377,7 @@ export function GroupeMobileExperience({
     },
     {
       key: 'balances',
-      icon: Wallet,
+      icon: lkdvIcon('budget'),
       value: formatEuro(data.expenses?.total ?? 0),
       label: pendingExpenses.length > 0 ? `${pendingExpenses.length} à rembourser` : 'dépenses',
       tone: pendingExpenses.length > 0 ? 'accent' : 'default',
@@ -384,7 +385,7 @@ export function GroupeMobileExperience({
     },
     {
       key: 'members',
-      icon: Users,
+      icon: lkdvIcon('communaute'),
       value: String(activeCount),
       label: pendingCount > 0 ? `${pendingCount} en attente` : 'membres',
       tone: pendingCount > 0 ? 'accent' : 'default',
@@ -392,7 +393,7 @@ export function GroupeMobileExperience({
     },
     {
       key: 'equipment',
-      icon: Package,
+      icon: lkdvIcon('inventaire'),
       value: String(kitTotal),
       label: 'objets partagés',
       onClick: () => setEquipmentOpen(true),
@@ -416,7 +417,7 @@ export function GroupeMobileExperience({
             className="shrink-0 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
             aria-label="Fermer le message"
           >
-            <X size={16} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={16} aria-hidden="true" />
           </IconButton>
         </div>
       )}
@@ -750,7 +751,7 @@ export function GroupeMobileExperience({
               className="flex h-[8rem] w-[8.75rem] !flex-col !items-center !justify-center !gap-2 !rounded-[var(--lkv-radius-lg)] !border-2 !border-dashed !border-white/50 !p-3"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
-                <Plus size={18} aria-hidden="true" />
+                <LKDVIcon name="plus" size={18} aria-hidden="true" />
               </span>
               <span className="text-[11px] font-bold">Inviter</span>
               <span className="text-[9px] font-semibold uppercase tracking-[0.12em]">

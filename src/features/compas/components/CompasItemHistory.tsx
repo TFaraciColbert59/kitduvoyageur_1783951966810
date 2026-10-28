@@ -2,17 +2,18 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import type { CompasKitLine } from '../engine/compasModel';
 import { dayText, inventoryFacts, type HistoryEntry, type HistoryKind } from '../engine/itemHistory';
 import { compasItemHistoryAction, type CompasHistorySource } from '../server/itemHistoryActions';
 import type { CompasData } from '../server/getCompasData';
 import { useTranslation } from '@/lib/i18n/context';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
-const KIND_ICON: Record<HistoryKind, string> = {
-  pret: 'handshake',
-  voyage: 'route',
-  commande: 'shopping-bag',
+const KIND_ICON: Record<HistoryKind, LKDVIconName> = {
+  pret: 'affiliation',
+  voyage: 'itineraire',
+  commande: 'boutique',
 };
 
 type State =
@@ -87,7 +88,7 @@ export function ItemHistory({
         <>
           {state.unavailable.length > 0 && (
             <p className="cp-note cp-note--warn" role="status">
-              <Icon name="alert-triangle" size={14} aria-hidden="true" />
+              <LKDVIcon name="alerte" size={14} aria-hidden="true" />
               <span>{t('compas.history.unreadable', { sources: state.unavailable.join(', ') })}</span>
             </p>
           )}
@@ -102,7 +103,7 @@ export function ItemHistory({
               {state.entries.map((e) => (
                 <li key={e.id} className="cp-row cp-row--tall cp-row--wrap" style={{ cursor: 'default' }}>
                   <span className="cp-hist__ic" aria-hidden="true">
-                    <Icon name={KIND_ICON[e.kind]} size={16} />
+                    <LKDVIcon name={KIND_ICON[e.kind]} size={16} />
                   </span>
                   <span className="cp-row__t">
                     <b>{e.title}</b>
@@ -116,7 +117,7 @@ export function ItemHistory({
           )}
           {line.shopProductId && (
             <Link className="cp-btn cp-btn--soft cp-btn--tap" href="/compte?tab=commandes">
-              <Icon name="external-link" size={16} aria-hidden="true" />
+              <LKDVIcon name="lien" size={16} aria-hidden="true" />
               {t('compas.history.orders')}
             </Link>
           )}

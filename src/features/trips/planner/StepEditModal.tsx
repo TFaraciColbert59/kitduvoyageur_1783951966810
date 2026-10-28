@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button, Card, Chip } from '@/components/ui';
 import type { PlannerStep } from './plannerEngine';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 export interface StepEditModalProps {
   isOpen: boolean;
@@ -21,15 +21,15 @@ const LABEL_CLASS =
   'mb-1 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
 
 const transportModesList = [
-  { id: 'walking', label: 'À pied', Icon: Footprints },
-  { id: 'hiking', label: 'Rando', Icon: Footprints },
-  { id: 'car', label: 'Voiture', Icon: Car },
-  { id: 'bus', label: 'Bus', Icon: Bus },
-  { id: 'train', label: 'Train', Icon: Train },
-  { id: 'flight', label: 'Vol', Icon: Plane },
-  { id: 'boat', label: 'Bateau', Icon: Ship },
-  { id: 'bike', label: 'Vélo', Icon: Bike },
-  { id: 'other', label: 'Autre', Icon: Compass },
+  { id: 'walking', label: 'À pied', Icon: lkdvIcon('randonnee') },
+  { id: 'hiking', label: 'Rando', Icon: lkdvIcon('randonnee') },
+  { id: 'car', label: 'Voiture', Icon: lkdvIcon('voiture') },
+  { id: 'bus', label: 'Bus', Icon: lkdvIcon('bus') },
+  { id: 'train', label: 'Train', Icon: lkdvIcon('train') },
+  { id: 'flight', label: 'Vol', Icon: lkdvIcon('avion') },
+  { id: 'boat', label: 'Bateau', Icon: lkdvIcon('bateau') },
+  { id: 'bike', label: 'Vélo', Icon: lkdvIcon('velo') },
+  { id: 'other', label: 'Autre', Icon: lkdvIcon('boussole') },
 ] as const;
 
 export function StepEditModal({

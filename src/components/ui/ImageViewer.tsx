@@ -6,8 +6,8 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useDragDismiss, useDoubleTap } from '@/hooks/gestures';
 import { EASE_DECELERATE } from '@/lib/animations/constants';
-import Icon from './Icon';
 import { IconButton } from './IconButton';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ImageViewerProps {
   /** Images du carrousel (une seule = pas de navigation horizontale). */
@@ -234,7 +234,7 @@ export default function ImageViewer({
         aria-label="Fermer la visionneuse"
         className="absolute right-[var(--space-4)] top-[max(var(--space-3),var(--safe-top))] h-11 w-11 rounded-full bg-black/50 text-white backdrop-blur-[var(--blur-sm)] hover:bg-black/70"
       >
-        <Icon name="x" size={16} aria-hidden="true" />
+        <LKDVIcon name="fermer" size={16} aria-hidden="true" />
       </IconButton>
 
       {/* Indicateur zoom */}

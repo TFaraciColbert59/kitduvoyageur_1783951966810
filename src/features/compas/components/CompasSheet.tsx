@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, type ReactNode, type UIEvent } from 'react';
-import Icon from '@/components/ui/Icon';
 import { useTranslation } from '@/lib/i18n/context';
 import { trapTab, useFocusReturn } from './focusTrap';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type Detent = 'small' | 'medium' | 'large';
 
@@ -143,7 +143,7 @@ export function CompasSheet({
                 onClick={onBack}
                 aria-label={t('compas.drawer.back')}
               >
-                <Icon name="chevron-left" size={18} />
+                <LKDVIcon name="retour" size={18} />
               </button>
             )}
             <button
@@ -152,7 +152,7 @@ export function CompasSheet({
               onClick={onClose}
               aria-label={t('compas.drawer.close')}
             >
-              <Icon name="x" size={18} />
+              <LKDVIcon name="fermer" size={18} />
             </button>
           </span>
           <h3>{title}</h3>
@@ -163,7 +163,7 @@ export function CompasSheet({
               onClick={() => onDetent(detent === 'large' ? 'medium' : 'large')}
               aria-label={detent === 'large' ? t('compas.drawer.medium') : t('compas.drawer.full')}
             >
-              <Icon name={detent === 'large' ? 'chevron-down' : 'chevron-up'} size={18} />
+              <LKDVIcon name={detent === 'large' ? 'bas' : 'haut'} size={18} />
             </button>
           </span>
         </div>

@@ -5,6 +5,7 @@ import type { Detent } from './CompasSheet';
 import { formatNumber } from '@/lib/i18n/format';
 import type { Locale } from '@/lib/i18n/locale';
 import { translations } from '@/lib/i18n/translations';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 import {
   plural,
   t as translate,
@@ -34,7 +35,7 @@ export function countText(
 export type AcquireMode = 'emprunter' | 'louer' | 'acheter';
 
 /** Un onglet de tiroir : `labelKey` se traduit (`t`), `label` garde le français par défaut. */
-const flow = <I extends string>(id: I, labelKey: TranslationKey, icon: string) =>
+const flow = <I extends string>(id: I, labelKey: TranslationKey, icon: LKDVIconName) =>
   ({ id, labelKey, label: FR_T(labelKey), icon }) as const;
 
 /** Parcours internes du tiroir de chaque étape (capsule, comme les étapes). */
@@ -42,41 +43,41 @@ export const STEP_FLOWS = {
   // Ordre de la maquette finale : Activité → Parcours → Quand → Préférences
   // → Sac. « Sur place » (points OSM réels : tracé et autour des étapes) suit, en dernier.
   ou: [
-    flow('activite', 'compas.flowTabs.activite', 'flag'),
-    flow('parcours', 'compas.flowTabs.parcours', 'route'), // i18n-ok : identifiant
-    flow('quand', 'compas.flowTabs.quand', 'calendar-days'), // i18n-ok : identifiant
-    flow('preferences', 'compas.flowTabs.preferences', 'heart'),
-    flow('sac', 'compas.flowTabs.sac', 'backpack'),
-    flow('trace', 'compas.flowTabs.trace', 'map-pin'),
+    flow('activite', 'compas.flowTabs.activite', 'signalement'),
+    flow('parcours', 'compas.flowTabs.parcours', 'itineraire'), // i18n-ok : identifiant
+    flow('quand', 'compas.flowTabs.quand', 'jours'), // i18n-ok : identifiant
+    flow('preferences', 'compas.flowTabs.preferences', 'favoris'),
+    flow('sac', 'compas.flowTabs.sac', 'sac'),
+    flow('trace', 'compas.flowTabs.trace', 'point_interet'),
   ],
   nous: [
-    flow('equipe', 'compas.flowTabs.equipe', 'users'),
-    flow('qui', 'compas.flowTabs.qui', 'user-plus'),
-    flow('budget', 'compas.flowTabs.budget', 'coins'), // i18n-ok : identifiant
-    flow('annonce', 'compas.flowTabs.annonce', 'send'),
+    flow('equipe', 'compas.flowTabs.equipe', 'communaute'),
+    flow('qui', 'compas.flowTabs.qui', 'amis'),
+    flow('budget', 'compas.flowTabs.budget', 'points'), // i18n-ok : identifiant
+    flow('annonce', 'compas.flowTabs.annonce', 'partager'),
   ],
   resa: [
-    flow('nuits', 'compas.flowTabs.nuits', 'bed-double'), // i18n-ok : identifiant
-    flow('reservations', 'compas.flowTabs.reservations', 'ticket'),
-    flow('offres', 'compas.flowTabs.offres', 'tag'),
-    flow('etats', 'compas.flowTabs.etats', 'check-check'),
+    flow('nuits', 'compas.flowTabs.nuits', 'hotel'), // i18n-ok : identifiant
+    flow('reservations', 'compas.flowTabs.reservations', 'billet'),
+    flow('offres', 'compas.flowTabs.offres', 'promo'),
+    flow('etats', 'compas.flowTabs.etats', 'valider'),
   ],
   // Maquette finale : Risques → Météo → Veille → Sources (la veille suit).
   verdict: [
-    flow('raisons', 'compas.flowTabs.raisons', 'shield-check'),
-    flow('meteo', 'compas.flowTabs.meteo', 'cloud-sun'),
-    flow('veille', 'compas.flowTabs.veille', 'bell'),
-    flow('sources', 'compas.flowTabs.sources', 'layers'),
+    flow('raisons', 'compas.flowTabs.raisons', 'securite'),
+    flow('meteo', 'compas.flowTabs.meteo', 'meteo'),
+    flow('veille', 'compas.flowTabs.veille', 'notifications'),
+    flow('sources', 'compas.flowTabs.sources', 'calques'),
   ],
   kit: [
-    flow('conseils', 'compas.flowTabs.conseils', 'sparkles'),
-    flow('mes-kits', 'compas.flowTabs.mesKits', 'package'),
-    flow('inventaire', 'compas.flowTabs.inventaire', 'archive'),
-    flow('trouver', 'compas.flowTabs.trouver', 'search'),
-    flow('emballer', 'compas.flowTabs.emballer', 'check-square'),
-    flow('tout', 'compas.flowTabs.tout', 'clipboard-list'), // i18n-ok : identifiant
-    flow('sacs', 'compas.flowTabs.sacs', 'backpack'),
-    flow('eau', 'compas.flowTabs.eau', 'droplet'),
+    flow('conseils', 'compas.flowTabs.conseils', 'ia'),
+    flow('mes-kits', 'compas.flowTabs.mesKits', 'inventaire'),
+    flow('inventaire', 'compas.flowTabs.inventaire', 'historique'),
+    flow('trouver', 'compas.flowTabs.trouver', 'recherche'),
+    flow('emballer', 'compas.flowTabs.emballer', 'checklist'),
+    flow('tout', 'compas.flowTabs.tout', 'checklist_voyage'), // i18n-ok : identifiant
+    flow('sacs', 'compas.flowTabs.sacs', 'sac'),
+    flow('eau', 'compas.flowTabs.eau', 'eau_potable'),
   ],
 } as const;
 

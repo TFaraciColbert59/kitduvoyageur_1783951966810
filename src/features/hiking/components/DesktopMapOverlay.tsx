@@ -6,6 +6,7 @@ import { MapTrail } from '@/components/explorer/types';
 import { POI } from '../types';
 import { RouteTurnEvent } from '../services/RouteGeom';
 import type { TerrainLiveReport } from '@/features/terrain-live/lib/terrainDisplay';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface DesktopMapOverlayProps {
   userLoc: [number, number] | null;
@@ -94,10 +95,7 @@ export default function DesktopMapOverlay({
       {!activeGuideTurn && activeGuidePoi && activeGuidePoi.distanceRemainingM < 300 && (
         <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] backdrop-blur-[var(--glass-blur-sm)] border border-[color:var(--lkv-primary)]/12 rounded-[var(--lkv-radius-sm)] p-4 shadow-lg flex items-center gap-3.5 z-30 select-none">
           <div className="w-11 h-11 rounded-2xl bg-[color:var(--lkv-forest-200)] text-[color:var(--lkv-forest-950)] flex items-center justify-center flex-shrink-0  relative">
-            <svg className="w-5 h-5 fill-none stroke-current stroke-[2.2]" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-6-5.333-6-10a6 6 0 0112 0c0 4.667-6 10-6 10z" />
-              <circle cx="12" cy="11" r="2" fill="currentColor" />
-            </svg>
+            <LKDVIcon name="point_interet" size={20} className="w-5 h-5 stroke-[2.2]" />
             <span className="absolute -inset-1 rounded-2xl border-2 border-[color:var(--lkv-primary)] opacity-25 animate-ping pointer-events-none" />
           </div>
           <div className="flex-1 min-w-0">

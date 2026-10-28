@@ -15,7 +15,7 @@ const HANDOFF = {
 
 const LIVE: Omit<FreeLiveScreenProps, keyof typeof HANDOFF> = {
   activityLabel: 'Randonnée',
-  activityIcon: 'footprints',
+  activityIcon: 'randonnee',
   clock: '1:12:48',
   distance: '6,3 km',
   pace: '11:34',

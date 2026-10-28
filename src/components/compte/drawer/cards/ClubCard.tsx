@@ -7,6 +7,7 @@ import {
   formatCommunityDate,
   pluralizeCommunity,
 } from './communityFormat';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ClubNextEvent {
   id?: string;
@@ -121,9 +122,7 @@ export function ClubCard({ club, onOpen }: ClubCardProps) {
 
         <span className="lkdv-club-open">
           Ouvrir le club
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="m9 6 6 6-6 6" />
-          </svg>
+          <LKDVIcon name="suivant" aria-hidden="true" />
         </span>
       </button>
     </div>

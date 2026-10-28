@@ -4,9 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Chip, IconButton } from '@/components/ui';
-import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import CommunityHubNav from '@/components/social/CommunityHubNav';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { createClient } from '@/lib/supabase/client';
@@ -14,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import 'leaflet/dist/leaflet.css';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const FIELD_CLASS =
   'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
@@ -237,7 +236,7 @@ export default function NouveauGroupePage() {
                 href="/groupes"
                 className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
               >
-                <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
+                <LKDVIcon name="retour" size={12} aria-hidden="true" />
                 <span>Groupes</span>
               </Link>
 
@@ -246,7 +245,7 @@ export default function NouveauGroupePage() {
                 variant="secondary"
                 size="sm"
                 onClick={() => window.print()}
-                icon={<Icon name="PrinterIcon" size={12} aria-hidden="true" />}
+                icon={<LKDVIcon name="exporter" size={12} aria-hidden="true" />}
                 className="px-[var(--space-2)]"
               >
                 Imprimer
@@ -272,7 +271,7 @@ export default function NouveauGroupePage() {
                   aria-pressed={isActive}
                 >
                   <span className="truncate text-left">{st.label}</span>
-                  {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
+                  {isActive && <LKDVIcon name="suivant" size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
                 </Button>
               );
             })}
@@ -291,9 +290,9 @@ export default function NouveauGroupePage() {
           {/* Breadcrumbs */}
           <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
             <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <LKDVIcon name="suivant" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
             <Link href="/communaute?tab=groupes" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Groupes</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <LKDVIcon name="suivant" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
             <span className="font-semibold text-[color:var(--lkv-text-primary)]">Créer une expédition</span>
           </div>
 
@@ -619,7 +618,7 @@ export default function NouveauGroupePage() {
                             onClick={() => handleRemoveGear(gear.id)}
                             aria-label={`Retirer ${gear.name}`}
                           >
-                            <Icon name="XMarkIcon" size={14} aria-hidden="true" />
+                            <LKDVIcon name="fermer" size={14} aria-hidden="true" />
                           </IconButton>
                         </Card>
                       </li>
@@ -733,7 +732,7 @@ export default function NouveauGroupePage() {
                   variant="primary"
                   onClick={handleCreateGroup}
                   disabled={saving || !name.trim()}
-                  icon={<Icon name="CheckIcon" size={14} aria-hidden="true" />}
+                  icon={<LKDVIcon name="valider" size={14} aria-hidden="true" />}
                 >
                   {saving ? 'Lancement...' : 'Créer l’expédition'}
                 </Button>
@@ -799,7 +798,7 @@ export default function NouveauGroupePage() {
                 fullWidth
                 onClick={handleCreateGroup}
                 disabled={saving || !name.trim()}
-                icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
+                icon={<LKDVIcon name="plus" size={14} aria-hidden="true" />}
               >
                 {saving ? 'Création...' : 'Lancer l’expédition'}
               </Button>

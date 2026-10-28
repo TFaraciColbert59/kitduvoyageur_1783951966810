@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import AppShell from '@/components/shell/AppShell';
 import { Badge, Button, Card, EmptyState, Spinner, Tabs } from '@/components/ui';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const JOURNALS = [
   { id: 'j1', author: 'Thomas Vernet', authorId: 'fake-author-1', authorAvatar: 'TV', authorTrustScore: 94, authorLevel: 'ambassadeur', title: 'Circuit des Annapurnas — 18 jours en autonomie complète', destination: 'Circuit des Annapurnas', country: 'Népal', countryCode: 'np', duration: '18 jours', date: '2026-07-01', coverImage: "https://img.rocket.new/generatedImages/rocket_gen_img_1fc94b322-1777501827822.png", coverAlt: 'Randonneur avec sac à dos sur sentier himalayan', excerpt: 'Départ de Besisahar le 12 mars, retour à Pokhara le 30.', gpsTrace: true, gpsPoints: 2847, weatherReal: 'Ensoleillé J1–J14, tempête neige J15–J18', gearUsed: [{ name: 'Osprey Atmos 65', category: 'Sac à dos', rating: 5, linked: true }], missingGear: ['Guêtres imperméables'], routeRating: 9.2, reactions: { useful: 203, securityConfirmed: 87, bagHelped: 156 }, comments: 34, readTime: 12, verified: true },
@@ -76,7 +76,7 @@ export default function FeedPage() {
                     variant="primary"
                     size="lg"
                     onClick={() => setShowNewJournal(true)}
-                    icon={<Icon name="PencilSquareIcon" size={16} aria-hidden="true" />}
+                    icon={<LKDVIcon name="modifier" size={16} aria-hidden="true" />}
                     className="shrink-0 self-start lg:self-auto"
                   >
                     Écrire un carnet
@@ -130,7 +130,7 @@ export default function FeedPage() {
                 <Card>
                   <EmptyState
                     compact
-                    icon={<Icon name="book-open" size={28} aria-hidden="true" />}
+                    icon={<LKDVIcon name="preparateur" size={28} aria-hidden="true" />}
                     title="Aucun carnet"
                     description="Aucun carnet ne correspond à ce filtre pour le moment."
                   />

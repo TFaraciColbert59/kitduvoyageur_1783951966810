@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
-import Icon from '@/components/ui/Icon';
 import type { CompasModel } from '../engine/compasModel';
 import {
   rulerTicks,
@@ -16,6 +15,7 @@ import { planApplication } from '../engine/intent';
 import { applyCurrent, runOps } from './compasApply';
 import type { CompasCtl } from './compasTypes';
 import { useTranslation } from '@/lib/i18n/context';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** Durée affichée : choisie (dates ou heures), sinon temps de marche du parcours. */
 export function tripHours(model: CompasModel, plannedDays?: number | null): number | null {
@@ -140,7 +140,7 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
               aria-label={t('compas.ruler.cancel')}
               onClick={() => setDraft(null)}
             >
-              <Icon name="x" size={14} />
+              <LKDVIcon name="fermer" size={14} />
             </button>
             <button
               type="button"
@@ -153,7 +153,7 @@ export function DurationRuler({ ctl }: { ctl: CompasCtl }) {
               disabled={ctl.busy}
               onClick={() => void apply()}
             >
-              <Icon name={m.dates.start ? 'check' : 'calendar'} size={14} />
+              <LKDVIcon name={m.dates.start ? 'valider' : 'calendrier'} size={14} />
             </button>
           </span>
         ) : (

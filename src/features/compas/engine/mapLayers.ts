@@ -1,3 +1,4 @@
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 /**
  * Calques de la carte du Compas (maquette finale : « Personnaliser la carte »).
  * Seulement des calques dont la donnée existe : étapes du voyage, points
@@ -20,21 +21,21 @@ export type MapLayer =
   | 'parking'
   | 'profil';
 
-export const MAP_LAYERS: ReadonlyArray<{ id: MapLayer; label: string; icon: string }> = [
-  { id: 'etapes', label: 'Étapes', icon: 'route' },
-  { id: 'resto', label: 'Restos', icon: 'flame' },
-  { id: 'commerce', label: 'Commerces', icon: 'shopping-cart' },
-  { id: 'sante', label: 'Santé', icon: 'heart-pulse' },
-  { id: 'hebergement', label: 'Hébergements', icon: 'bed-double' },
+export const MAP_LAYERS: ReadonlyArray<{ id: MapLayer; label: string; icon: LKDVIconName }> = [
+  { id: 'etapes', label: 'Étapes', icon: 'itineraire' },
+  { id: 'resto', label: 'Restos', icon: 'feu' },
+  { id: 'commerce', label: 'Commerces', icon: 'panier' },
+  { id: 'sante', label: 'Santé', icon: 'trousse' },
+  { id: 'hebergement', label: 'Hébergements', icon: 'hotel' },
   { id: 'transport', label: 'Transports', icon: 'bus' },
-  { id: 'water', label: 'Eau', icon: 'droplet' },
-  { id: 'refuge', label: 'Refuges', icon: 'home' },
-  { id: 'camping', label: 'Camping', icon: 'tent' },
-  { id: 'toilets', label: 'Toilettes', icon: 'droplets' },
-  { id: 'viewpoint', label: 'Vues', icon: 'eye' },
-  { id: 'peak', label: 'Sommets', icon: 'mountain' },
-  { id: 'parking', label: 'Parkings', icon: 'car' },
-  { id: 'profil', label: 'Profil', icon: 'trending-up' },
+  { id: 'water', label: 'Eau', icon: 'eau_potable' },
+  { id: 'refuge', label: 'Refuges', icon: 'accueil' },
+  { id: 'camping', label: 'Camping', icon: 'tente' },
+  { id: 'toilets', label: 'Toilettes', icon: 'eau_potable' },
+  { id: 'viewpoint', label: 'Vues', icon: 'vue' },
+  { id: 'peak', label: 'Sommets', icon: 'montagne' },
+  { id: 'parking', label: 'Parkings', icon: 'voiture' },
+  { id: 'profil', label: 'Profil', icon: 'denivele' },
 ];
 
 export type LayerState = Record<MapLayer, boolean>;

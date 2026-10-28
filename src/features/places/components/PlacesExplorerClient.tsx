@@ -1,11 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo } from 'react';
 import { PlaceCard } from './PlaceCard';
 import { AddPlaceToTripModal, type UserTripOption } from './AddPlaceToTripModal';
 import { Card, Chip, EmptyState, SearchField, Tabs } from '@/components/ui';
 import type { PlaceWithDistance, PlaceCategory } from '../types/place.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface PlacesExplorerClientProps {
   initialPlaces: PlaceWithDistance[];
@@ -110,7 +109,7 @@ export function PlacesExplorerClient({ initialPlaces, userTrips }: PlacesExplore
       {/* Grille des Lieux */}
       {filteredPlaces.length === 0 ? (
         <EmptyState
-          icon={<Icon name="map-pin" className="h-8 w-8" />}
+          icon={<LKDVIcon name="point_interet" className="h-8 w-8" />}
           title="Aucun lieu ne correspond à ces critères"
           description="Essayez d’élargir vos filtres de pays ou de catégorie."
         />

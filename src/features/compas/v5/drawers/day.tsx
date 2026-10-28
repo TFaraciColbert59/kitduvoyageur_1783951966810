@@ -66,13 +66,13 @@ function DayBody() {
   return (
     <>
       <div className="v5-hero">
-        <Pic photo={photo} icon="peak" alt={t('compas.v5.card.photoAlt', { place: current.to ?? current.title })} />
+        <Pic photo={photo} icon='sommet' alt={t('compas.v5.card.photoAlt', { place: current.to ?? current.title })} />
         <div className="nav">
           <button type="button" className="v5-rbtn v5-lg" aria-label={t('compas.v5.day.prev')} disabled={idx <= 0} onClick={() => openSpace('day', { day: idx - 1 })}>
-            <V5Icon name="left" size="s" />
+            <V5Icon name='retour' size="s" />
           </button>
           <button type="button" className="v5-rbtn v5-lg" aria-label={t('compas.v5.day.next')} disabled={idx >= days.length - 1} onClick={() => openSpace('day', { day: idx + 1 })}>
-            <V5Icon name="right" size="s" />
+            <V5Icon name='suivant' size="s" />
           </button>
         </div>
       </div>
@@ -104,7 +104,7 @@ function DayBody() {
       </div>
 
       <Grp>
-        <Li icon="cloudsun" title={weatherLine} onClick={() => openSpace('meteo')} right={<V5Icon name="right" size="s" />} />
+        <Li icon='meteo' title={weatherLine} onClick={() => openSpace('meteo')} right={<V5Icon name='suivant' size="s" />} />
       </Grp>
 
       {current.isLast ? (
@@ -115,19 +115,19 @@ function DayBody() {
           <Grp>
             {noted && (
               <Li
-                icon="sleep"
+                icon='lune'
                 title={noted}
                 detail={t('compas.v5.day.noted')}
                 right={
                   canEdit ? (
                     <MBtn onClick={() => void clear()} aria-label={t('compas.v5.day.noteClear')}>
-                      <V5Icon name="trash" size="s" />
+                      <V5Icon name='supprimer' size="s" />
                     </MBtn>
                   ) : undefined
                 }
               />
             )}
-            {!noted && <Li icon="sleep" title={t('compas.v5.day.noStay')} />}
+            {!noted && <Li icon='lune' title={t('compas.v5.day.noStay')} />}
             {options
               .filter((o) => o.name !== noted)
               .map((o) => (
@@ -145,7 +145,7 @@ function DayBody() {
                   right={
                     canEdit ? (
                       <MBtn primary onClick={() => void choose(o)} aria-label={`${t('compas.v5.day.chooseOther')} : ${o.name}`}>
-                        <V5Icon name="check" size="s" />
+                        <V5Icon name='valider' size="s" />
                       </MBtn>
                     ) : undefined
                   }
@@ -174,7 +174,7 @@ function DayBody() {
               >
                 <input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} aria-label={t('compas.v5.day.noteLabel')} placeholder={t('compas.v5.day.noteLabel')} />
                 <button type="submit" aria-label={t('compas.v5.day.noteSave')} disabled={!name.trim()}>
-                  <V5Icon name="check" />
+                  <V5Icon name='valider' />
                 </button>
               </form>
               <p className="v5-src">{t('compas.v5.day.noteHint')}</p>

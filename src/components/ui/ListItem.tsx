@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ListItemProps
   extends Omit<React.HTMLAttributes<HTMLElement>, 'title'> {
@@ -90,8 +90,8 @@ export function ListItem({
       )}
       {trailing && <span className="flex shrink-0 items-center">{trailing}</span>}
       {chevron && (
-        <Icon
-          name="ChevronRightIcon"
+        <LKDVIcon
+          name="suivant"
           size={16}
           className="shrink-0 text-[color:var(--lkv-text-muted)]"
         />

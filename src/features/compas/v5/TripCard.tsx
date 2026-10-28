@@ -66,11 +66,11 @@ export function TripCard({ view, onDay }: { view: 'grid' | 'fil'; onDay: (index:
         <div className="v5-ava">
           {firstPhoto ? <img src={firstPhoto.url} alt={t('compas.v5.card.photoAlt', { place: model.destination ?? model.title })} referrerPolicy="no-referrer" /> : (
             <span className="ph">
-              <V5Icon name="hike" />
+              <V5Icon name='randonnee' />
             </span>
           )}
           <span className="bd">
-            <V5Icon name="route" size="s" />
+            <V5Icon name='itineraire' size="s" />
           </span>
         </div>
         <div className="v5-stats">
@@ -111,14 +111,14 @@ export function TripCard({ view, onDay }: { view: 'grid' | 'fil'; onDay: (index:
       </div>
 
       <div className="v5-bubs" role="group" aria-label={t('compas.v5.card.aria')}>
-        {bubble(solo ? 'person' : 'people', solo ? t('compas.v5.card.bubSolo') : `${t('compas.v5.card.bubNous')} · ${people}`, 'nous')}
-        {bubble('euro', perPerson ? moneyShort(model.budget.planned, head.currency, locale) : t('compas.v5.card.bubBudget'), 'budget', null, null, perPerson ? `${t('compas.v5.card.bubBudget')} : ${moneyShort(model.budget.planned, head.currency, locale)}` : undefined)}
-        {bubble('bag', myWeight ? t('compas.v5.card.bubBag', { weight: myWeight }) : t('compas.v5.card.bubBagNoWeight'), 'sac')}
-        {bubble('list', t('compas.v5.card.bubTodo'), 'prevoir', todoCount ? { n: todoCount } : { n: '✓', ok: true })}
-        {bubble('shield', t('compas.v5.card.bubChecks'), 'verifs', ready.count ? { n: ready.count } : null)}
-        {bubble('cloudsun', t('compas.v5.card.bubWeather'), 'meteo')}
-        {bubble('route', t('compas.v5.card.bubTrip'), 'voyage')}
-        {bubble('dots', t('compas.v5.card.bubMore'), 'menu')}
+        {bubble(solo ? 'profil' : 'communaute', solo ? t('compas.v5.card.bubSolo') : `${t('compas.v5.card.bubNous')} · ${people}`, 'nous')}
+        {bubble('budget', perPerson ? moneyShort(model.budget.planned, head.currency, locale) : t('compas.v5.card.bubBudget'), 'budget', null, null, perPerson ? `${t('compas.v5.card.bubBudget')} : ${moneyShort(model.budget.planned, head.currency, locale)}` : undefined)}
+        {bubble('sac', myWeight ? t('compas.v5.card.bubBag', { weight: myWeight }) : t('compas.v5.card.bubBagNoWeight'), 'sac')}
+        {bubble('checklist_voyage', t('compas.v5.card.bubTodo'), 'prevoir', todoCount ? { n: todoCount } : { n: '✓', ok: true })}
+        {bubble('securite', t('compas.v5.card.bubChecks'), 'verifs', ready.count ? { n: ready.count } : null)}
+        {bubble('meteo', t('compas.v5.card.bubWeather'), 'meteo')}
+        {bubble('itineraire', t('compas.v5.card.bubTrip'), 'voyage')}
+        {bubble('plus_options', t('compas.v5.card.bubMore'), 'menu')}
       </div>
 
       {days.length === 0 ? (
@@ -132,9 +132,9 @@ export function TripCard({ view, onDay }: { view: 'grid' | 'fil'; onDay: (index:
         <div className="v5-grid">
           {days.map((d) => (
             <button key={`d${d.day}`} type="button" className={`v5-tile${extras.dayPhotos[d.day] ? '' : ' ill'}`} onClick={() => onDay(d.index)} aria-label={d.from ? t('compas.v5.card.tileDayAria', { n: d.day, from: d.from, to: d.to ?? d.title }) : `${t('compas.v5.card.tileDay', { n: d.day })} · ${d.to ?? d.title}`}>
-              {extras.dayPhotos[d.day] ? <Pic photo={extras.dayPhotos[d.day]} icon="peak" alt="" /> : <V5Icon name="peak" size="big" />}
+              {extras.dayPhotos[d.day] ? <Pic photo={extras.dayPhotos[d.day]} icon='sommet' alt="" /> : <V5Icon name='sommet' size="big" />}
               <span className="tg">
-                <V5Icon name="hike" />
+                <V5Icon name='randonnee' />
               </span>
               <span className="lb">
                 <b>{t('compas.v5.card.tileDay', { n: d.day })}</b>
@@ -158,7 +158,7 @@ export function TripCard({ view, onDay }: { view: 'grid' | 'fil'; onDay: (index:
                   {chosen?.photo ? <img src={chosen.photo.url} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <V5Icon name={stayIcon(chosen?.kind ?? 'hebergement')} size="big" />}
                   {booked && <span className="ok">{t('compas.v5.card.tileNightBooked')}</span>}
                   <span className="tg">
-                    <V5Icon name="sleep" />
+                    <V5Icon name='lune' />
                   </span>
                   <span className="lb">
                     <b>{noted ?? t('compas.v5.card.tileNightToFind', { n: d.day })}</b>
@@ -184,7 +184,7 @@ export function TripCard({ view, onDay }: { view: 'grid' | 'fil'; onDay: (index:
             return (
               <button key={d.day} type="button" className="fr v5-grp" onClick={() => onDay(d.index)}>
                 <span className="ph v5-ava" style={{ width: 54, height: 54, padding: 0, borderRadius: 14 }}>
-                  <Pic photo={extras.dayPhotos[d.day] ?? null} icon="peak" />
+                  <Pic photo={extras.dayPhotos[d.day] ?? null} icon='sommet' />
                 </span>
                 <span>
                   <b>
@@ -196,7 +196,7 @@ export function TripCard({ view, onDay }: { view: 'grid' | 'fil'; onDay: (index:
                   </small>
                   <small>{d.isLast ? t('compas.v5.card.timelineLast') : noted ? t('compas.v5.card.timelineNight', { name: noted }) : t('compas.v5.card.timelineNightEmpty')}</small>
                 </span>
-                <V5Icon name="right" size="s" />
+                <V5Icon name='suivant' size="s" />
               </button>
             );
           })}
@@ -213,10 +213,10 @@ export function ViewSwitch({ view, onView }: { view: 'grid' | 'fil'; onView: (v:
     <div className="v5-igsel v5-lg" role="group" aria-label={t('compas.v5.card.viewGroup')}>
       <span className="th" style={{ transform: `translateX(${view === 'grid' ? 0 : 100}%)` }} />
       <button type="button" aria-pressed={view === 'grid'} aria-label={t('compas.v5.card.viewGrid')} onClick={() => onView('grid')}>
-        <V5Icon name="grid" size="s" />
+        <V5Icon name='calques' size="s" />
       </button>
       <button type="button" aria-pressed={view === 'fil'} aria-label={t('compas.v5.card.viewTimeline')} onClick={() => onView('fil')}>
-        <V5Icon name="timeline" size="s" />
+        <V5Icon name='jours' size="s" />
       </button>
     </div>
   );

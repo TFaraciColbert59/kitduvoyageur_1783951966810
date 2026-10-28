@@ -2,11 +2,11 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { ChevronRight, Flame, Target, Trophy } from 'lucide-react';
 import { Badge } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import MaProgressionView from './MaProgressionView';
 import { progressionProfileQuery, progressionCityRankQuery } from '@/features/progression/client/progressionQuery';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ProgressionCompactCardProps {
   className?: string;
@@ -94,7 +94,7 @@ export function ProgressionCompactCard({
             aria-hidden="true"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)]"
           >
-            <Trophy size={16} />
+            <LKDVIcon name="recompense" size={16} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
@@ -109,7 +109,7 @@ export function ProgressionCompactCard({
               </span>
             )}
           </span>
-          <ChevronRight
+          <LKDVIcon name="suivant"
             size={16}
             className="shrink-0 text-[var(--lkv-text-muted)]"
             aria-hidden="true"
@@ -120,19 +120,19 @@ export function ProgressionCompactCard({
           <span className="mt-2 flex flex-wrap gap-1.5">
             {seasonPoints !== null && (
               <Badge tone="stone" className="gap-1 text-[10px] font-mono font-bold">
-                <Flame size={11} aria-hidden="true" />
+                <LKDVIcon name="feu" size={11} aria-hidden="true" />
                 {seasonPoints.toLocaleString('fr-FR')} pts saison
               </Badge>
             )}
             {rank !== null && (
               <Badge tone="stone" className="gap-1 text-[10px] font-mono font-bold">
-                <Trophy size={11} aria-hidden="true" />
+                <LKDVIcon name="recompense" size={11} aria-hidden="true" />
                 Rang #{rank}
               </Badge>
             )}
             {challenge !== null && (
               <Badge tone="stone" className="min-w-0 gap-1 text-[10px] font-mono font-bold">
-                <Target size={11} className="shrink-0" aria-hidden="true" />
+                <LKDVIcon name="recentrer" size={11} className="shrink-0" aria-hidden="true" />
                 <span className="truncate">{challenge.title}</span>
               </Badge>
             )}

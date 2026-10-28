@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState, useTransition, type FormEvent } from 'react';
-import { CalendarClock, ExternalLink, FileText, Plus, ShieldCheck, Trash2, X } from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 import { Badge, Button, IconButton, ListItem, Tabs, type BadgeTone } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
@@ -11,6 +10,8 @@ import { buildDocsView, type DocsRow, type DocsStatus } from '../../../mobile/do
 import { GroupeChipsRow, type GroupeChipDef } from '../groupe/GroupeChipsRow';
 import { GroupeDrawer } from '../groupe/GroupeDrawer';
 import { GroupeRail } from '../groupe/GroupeRail';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 export interface DocsMobileExperienceProps {
   trip: TripFull;
@@ -101,14 +102,14 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
   const chips: GroupeChipDef[] = [
     {
       key: 'total',
-      icon: FileText,
+      icon: lkdvIcon('facture'),
       value: String(view.total),
       label: view.total <= 1 ? 'document' : 'documents',
       onClick: () => openList('all'),
     },
     {
       key: 'expired',
-      icon: ShieldCheck,
+      icon: lkdvIcon('securite'),
       value: String(view.expired),
       label: view.expired <= 1 ? 'expiré' : 'expirés',
       tone: view.expired > 0 ? 'warn' : 'default',
@@ -116,7 +117,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
     },
     {
       key: 'warning',
-      icon: CalendarClock,
+      icon: lkdvIcon('horaire'),
       value: String(view.warning),
       label: 'à renouveler',
       tone: view.warning > 0 ? 'accent' : 'default',
@@ -168,7 +169,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
             className="shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
-            <X size={16} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={16} aria-hidden="true" />
           </IconButton>
         </div>
       )}
@@ -216,7 +217,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
                 triggerHaptic('light');
                 setAddOpen(true);
               }}
-              icon={<Plus size={15} aria-hidden="true" />}
+              icon={<LKDVIcon name="plus" size={15} aria-hidden="true" />}
               className="flex-1 !py-3 text-sm font-bold"
             >
               Attacher
@@ -306,7 +307,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
                 }}
                 leading={
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10">
-                    <FileText size={15} aria-hidden="true" />
+                    <LKDVIcon name="facture" size={15} aria-hidden="true" />
                   </span>
                 }
                 title={row.title}
@@ -361,7 +362,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
                 rel="noreferrer"
                 className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
               >
-                <ExternalLink size={15} aria-hidden="true" />
+                <LKDVIcon name="lien" size={15} aria-hidden="true" />
                 Ouvrir le document
               </a>
             )}
@@ -371,7 +372,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
                 variant="destructive"
                 fullWidth
                 onClick={() => setConfirmState({ id: selected.id, title: selected.title })}
-                icon={<Trash2 size={15} aria-hidden="true" />}
+                icon={<LKDVIcon name="supprimer" size={15} aria-hidden="true" />}
                 className="!py-3 text-sm font-bold"
               >
                 Supprimer

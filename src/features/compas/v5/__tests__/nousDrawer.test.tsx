@@ -42,7 +42,7 @@ describe('Nous : la capsule', () => {
   it('deux onglets sans texte visible : Solo et Avec d’autres', () => {
     const tabs = nousDrawer.tabs(makeApi());
     expect(tabs.map((t) => t.label)).toEqual(['Solo', 'Avec d’autres']);
-    expect(tabs.map((t) => t.icon)).toEqual(['person', 'people']);
+    expect(tabs.map((t) => t.icon)).toEqual(['profil', 'communaute']);
   });
   it('titre et contexte suivent le voyage', () => {
     const group = makeApi();

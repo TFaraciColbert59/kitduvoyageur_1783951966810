@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { Card, EmptyState, ListItem } from '@/components/ui';
 import { createClient } from '@/lib/supabase/server';
 import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import type { ActiveAdventureData } from '../../context/adventureSchema';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface HubVoyagesLiesSectionProps {
   adventure: Extract<ActiveAdventureData, { nature: 'collectif' }>;
@@ -53,8 +53,8 @@ export async function HubVoyagesLiesSection({ adventure }: HubVoyagesLiesSection
                   : undefined
               }
               trailing={
-                <Icon
-                  name="arrow-up-right"
+                <LKDVIcon
+                  name="exporter"
                   size={14}
                   className="text-[var(--lkv-text-muted)]"
                   aria-hidden="true"

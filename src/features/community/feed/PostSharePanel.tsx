@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import { useToast } from '@/contexts/ToastContext';
 import { usePostShareTargets } from './usePostShareTargets';
 import type { FeedPost } from './useCommunityFeed';
 import type { CommunityAuthReason } from './usePostInteractions';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface PostSharePanelProps {
   post: FeedPost;
@@ -68,7 +68,7 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
 
       <div className="lkdv-post-panel-body">
         <div className="lkdv-search-box">
-          <Icon name="search" size={15} aria-hidden="true" />
+          <LKDVIcon name="recherche" size={15} aria-hidden="true" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -78,18 +78,16 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
         </div>
         <div className="lkdv-share-actions">
           <button type="button" className="lkdv-share-action" onClick={() => document.getElementById(`share-conv-${post.id}`)?.scrollIntoView({ behavior: 'smooth' })}>
-            <span className="ico"><Icon name="send" size={18} aria-hidden="true" /></span>
+            <span className="ico"><LKDVIcon name="partager" size={18} aria-hidden="true" /></span>
             Envoyer
           </button>
           <button type="button" className="lkdv-share-action" onClick={() => void copy()}>
-            <span className="ico"><Icon name="link" size={18} aria-hidden="true" /></span>
+            <span className="ico"><LKDVIcon name="lien" size={18} aria-hidden="true" /></span>
             {copied ? 'Copié' : 'Copier'}
           </button>
           <button type="button" className="lkdv-share-action" onClick={() => void shareNative()}>
             <span className="ico">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 3v12M8 7l4-4 4 4M6 11v9h12v-9" />
-              </svg>
+              <LKDVIcon name="partager" size={18} aria-hidden="true" />
             </span>
             Partager
           </button>

@@ -3,10 +3,10 @@ import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Button, Card, IconButton } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CommentData {
   id: string;
@@ -215,7 +215,7 @@ export default function CommentItem({
                 onClick={() => setIsReplying(!isReplying)}
                 aria-label={`Répondre à ${comment.author?.full_name || 'cette personne'}`}
               >
-                <Icon name="message-square" size={12} aria-hidden="true" />
+                <LKDVIcon name="messages" size={12} aria-hidden="true" />
               </IconButton>
             )}
             {isOwnComment ? (
@@ -226,7 +226,7 @@ export default function CommentItem({
                   onClick={() => setIsEditing(!isEditing)}
                   aria-label="Modifier"
                 >
-                  <Icon name="pencil" size={12} aria-hidden="true" />
+                  <LKDVIcon name="modifier" size={12} aria-hidden="true" />
                 </IconButton>
                 <IconButton
                   variant="glass"
@@ -235,7 +235,7 @@ export default function CommentItem({
                   aria-label="Supprimer"
                   className="text-[color:var(--lkv-danger)]"
                 >
-                  <Icon name="trash2" size={12} aria-hidden="true" />
+                  <LKDVIcon name="supprimer" size={12} aria-hidden="true" />
                 </IconButton>
               </>
             ) : (
@@ -245,7 +245,7 @@ export default function CommentItem({
                 onClick={() => setIsReporting(!isReporting)}
                 aria-label="Signaler"
               >
-                <Icon name="flag" size={12} aria-hidden="true" />
+                <LKDVIcon name="signalement" size={12} aria-hidden="true" />
               </IconButton>
             )}
           </div>

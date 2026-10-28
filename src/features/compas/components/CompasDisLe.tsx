@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import Icon from '@/components/ui/Icon';
 import { planApplication, type CompasProposal } from '../engine/intent';
 import { compasClearStartSayAction, compasInterpretAction } from '../server/compasActions';
 import { browserTimeZone } from '../engine/zone';
 import { applyCurrent, inverseOps, runOps } from './compasApply';
 import { countText, type CompasCtl } from './compasTypes';
 import { useTranslation } from '@/lib/i18n/context';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type State =
   | { status: 'idle' }
@@ -145,7 +145,7 @@ export function DisLe({
                     {p.source === 'ia' && (
                       // Du texte pour les lecteurs d'écran : une icône seule ne dit pas « IA » (PLAN-100 5.3).
                       <span className="cp-prop__ai">
-                        <Icon name="sparkles" size={12} aria-hidden="true" />
+                        <LKDVIcon name="ia" size={12} aria-hidden="true" />
                         <span className="sr-only">{t('compas.disle.aiUnderstood')}</span>
                       </span>
                     )}
@@ -169,7 +169,7 @@ export function DisLe({
                 disabled={ctl.busy}
                 onClick={() => void apply()}
               >
-                <Icon name="check" size={16} />
+                <LKDVIcon name="valider" size={16} />
                 {t('compas.disle.apply', { count: chosen.length })}
               </button>
             )}
@@ -184,7 +184,7 @@ export function DisLe({
       <div className="cp-disle__row">
         {before}
         <form className="cp-disle__in cp-glass" onSubmit={submit}>
-          <Icon name="sparkles" size={15} />
+          <LKDVIcon name="ia" size={15} />
           <label className="sr-only" htmlFor="cp-disle-input">
             {t('compas.cards.say')}
           </label>
@@ -209,7 +209,7 @@ export function DisLe({
             disabled={state.status === 'loading' || text.trim().length < 2}
             aria-busy={state.status === 'loading'}
           >
-            <Icon name={state.status === 'loading' ? 'clock' : 'send'} size={14} />
+            <LKDVIcon name={state.status === 'loading' ? 'duree' : 'partager'} size={14} />
           </button>
         </form>
         {after}

@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface CarnetRightSidebarProps {
   totalCarnets?: number;
@@ -95,7 +95,7 @@ export default function CarnetRightSidebar({
           href="/carnets/nouveau"
           className="mt-[var(--space-1)] inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
         >
-          <Icon name="PlusIcon" size={14} aria-hidden="true" />
+          <LKDVIcon name="plus" size={14} aria-hidden="true" />
           <span>Créer mon carnet</span>
         </Link>
       </Card>

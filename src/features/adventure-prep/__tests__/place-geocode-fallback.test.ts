@@ -148,7 +148,7 @@ function step(over: Partial<ItineraryStep> & Pick<ItineraryStep, 'id' | 'kind' |
     price: { amount: null, currency: 'EUR', state: 'a_reserver' },
     state: 'a_reserver',
     kept: false,
-    icon: 'pin',
+    icon: 'position',
     lat: null,
     lon: null,
     ...over,

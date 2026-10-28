@@ -1,30 +1,11 @@
-import {
-  Backpack,
-  BellRing,
-  BookOpen,
-  CalendarCheck,
-  CheckSquare,
-  ClipboardList,
-  Compass,
-  CreditCard,
-  FileText,
-  FlaskConical,
-  Footprints,
-  MailPlus,
-  Map as MapIcon,
-  Navigation,
-  Package,
-  Share2,
-  Shield,
-  Users,
-  type LucideIcon,
-} from 'lucide-react';
+
 import {
   HUB_SECTION_ORDER,
   type AdventureNature,
   type AdventureProfile,
   type HubSectionId,
 } from '../engine/hubProfileEngine';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 /**
  * H1.2 — Registre des sections du hub voyageur (source unique de navigation).
@@ -62,7 +43,7 @@ export interface HubSectionDef {
   label: string;
   /** Segment d'URL sous /hub — '' = racine (overview sortie seulement). */
   segment: string;
-  icon: LucideIcon;
+  icon: LKDVIconComponent;
   natures: AdventureNature[];
   /** Natures pour lesquelles la section est cœur (non désactivable). */
   coreNatures: AdventureNature[];
@@ -74,25 +55,25 @@ const num = (v: number | undefined): number | null =>
   typeof v === 'number' && v >= 0 ? v : null;
 
 export const hubSectionRegistry: readonly HubSectionDef[] = [
-  { id: 'inventaire', label: 'Inventaire', segment: 'inventaire', icon: Package, natures: ['possession'], coreNatures: ['possession'], counter: (d) => num(d.items) },
-  { id: 'kit', label: 'Kits', segment: 'kit', icon: Backpack, natures: ['possession'], coreNatures: [], counter: () => null },
-  { id: 'preparation', label: 'Préparation', segment: 'preparation', icon: FlaskConical, natures: ['possession'], coreNatures: [], counter: () => null },
-  { id: 'depart', label: 'Départ', segment: 'depart', icon: Footprints, natures: ['possession'], coreNatures: [], counter: () => null },
-  { id: 'disponibilite', label: 'Disponibilité', segment: 'disponibilite', icon: CalendarCheck, natures: ['possession'], coreNatures: [], counter: (d) => num(d.loans) },
-  { id: 'alertes', label: 'Alertes', segment: 'alertes', icon: BellRing, natures: ['possession'], coreNatures: [], counter: (d) => num(d.alerts) },
-  { id: 'oublis', label: 'À ne pas oublier', segment: 'oublis', icon: ClipboardList, natures: ['possession'], coreNatures: [], counter: () => null },
-  { id: 'overview', label: 'Aperçu', segment: '', icon: Compass, natures: ['sortie'], coreNatures: ['sortie'], counter: () => null },
-  { id: 'itinerary', label: 'Itinéraire', segment: 'itineraire', icon: Navigation, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.steps) },
-  { id: 'gear', label: 'Équipement', segment: 'kit-voyage', icon: Package, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.tripItems) },
-  { id: 'groupe', label: 'Groupe', segment: 'groupe', icon: Users, natures: ['sortie', 'collectif'], coreNatures: ['collectif'], counter: (d) => num(d.collaborators ?? d.members) },
-  { id: 'budget', label: 'Budget', segment: 'budget', icon: CreditCard, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.expenses) },
-  { id: 'docs', label: 'Documents', segment: 'documents', icon: FileText, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.documents) },
-  { id: 'checklist', label: 'Checklist', segment: 'checklist', icon: CheckSquare, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.checklistPending) },
-  { id: 'safety', label: 'Sécurité', segment: 'securite', icon: Shield, natures: ['sortie'], coreNatures: ['sortie'], counter: (d) => num(d.pendingSafety) },
-  { id: 'journal', label: 'Journal', segment: 'journal', icon: BookOpen, natures: ['sortie'], coreNatures: [], counter: (d) => num(d.notes) },
-  { id: 'export', label: 'Export', segment: 'export', icon: Share2, natures: ['sortie'], coreNatures: [], counter: () => null },
-  { id: 'invitations', label: 'Invitations', segment: 'invitations', icon: MailPlus, natures: ['collectif'], coreNatures: [], counter: (d) => num(d.invites) },
-  { id: 'voyages-lies', label: 'Voyages liés', segment: 'voyages', icon: MapIcon, natures: ['collectif'], coreNatures: [], counter: (d) => num(d.linkedTrips) },
+  { id: 'inventaire', label: 'Inventaire', segment: 'inventaire', icon: lkdvIcon('inventaire'), natures: ['possession'], coreNatures: ['possession'], counter: (d) => num(d.items) },
+  { id: 'kit', label: 'Kits', segment: 'kit', icon: lkdvIcon('sac'), natures: ['possession'], coreNatures: [], counter: () => null },
+  { id: 'preparation', label: 'Préparation', segment: 'preparation', icon: lkdvIcon('recentrer'), natures: ['possession'], coreNatures: [], counter: () => null },
+  { id: 'depart', label: 'Départ', segment: 'depart', icon: lkdvIcon('randonnee'), natures: ['possession'], coreNatures: [], counter: () => null },
+  { id: 'disponibilite', label: 'Disponibilité', segment: 'disponibilite', icon: lkdvIcon('calendrier'), natures: ['possession'], coreNatures: [], counter: (d) => num(d.loans) },
+  { id: 'alertes', label: 'Alertes', segment: 'alertes', icon: lkdvIcon('notifications'), natures: ['possession'], coreNatures: [], counter: (d) => num(d.alerts) },
+  { id: 'oublis', label: 'À ne pas oublier', segment: 'oublis', icon: lkdvIcon('checklist_voyage'), natures: ['possession'], coreNatures: [], counter: () => null },
+  { id: 'overview', label: 'Aperçu', segment: '', icon: lkdvIcon('boussole'), natures: ['sortie'], coreNatures: ['sortie'], counter: () => null },
+  { id: 'itinerary', label: 'Itinéraire', segment: 'itineraire', icon: lkdvIcon('gps'), natures: ['sortie'], coreNatures: [], counter: (d) => num(d.steps) },
+  { id: 'gear', label: 'Équipement', segment: 'kit-voyage', icon: lkdvIcon('inventaire'), natures: ['sortie'], coreNatures: [], counter: (d) => num(d.tripItems) },
+  { id: 'groupe', label: 'Groupe', segment: 'groupe', icon: lkdvIcon('communaute'), natures: ['sortie', 'collectif'], coreNatures: ['collectif'], counter: (d) => num(d.collaborators ?? d.members) },
+  { id: 'budget', label: 'Budget', segment: 'budget', icon: lkdvIcon('paiement'), natures: ['sortie'], coreNatures: [], counter: (d) => num(d.expenses) },
+  { id: 'docs', label: 'Documents', segment: 'documents', icon: lkdvIcon('facture'), natures: ['sortie'], coreNatures: [], counter: (d) => num(d.documents) },
+  { id: 'checklist', label: 'Checklist', segment: 'checklist', icon: lkdvIcon('checklist'), natures: ['sortie'], coreNatures: [], counter: (d) => num(d.checklistPending) },
+  { id: 'safety', label: 'Sécurité', segment: 'securite', icon: lkdvIcon('securite'), natures: ['sortie'], coreNatures: ['sortie'], counter: (d) => num(d.pendingSafety) },
+  { id: 'journal', label: 'Journal', segment: 'journal', icon: lkdvIcon('preparateur'), natures: ['sortie'], coreNatures: [], counter: (d) => num(d.notes) },
+  { id: 'export', label: 'Export', segment: 'export', icon: lkdvIcon('partager'), natures: ['sortie'], coreNatures: [], counter: () => null },
+  { id: 'invitations', label: 'Invitations', segment: 'invitations', icon: lkdvIcon('email'), natures: ['collectif'], coreNatures: [], counter: (d) => num(d.invites) },
+  { id: 'voyages-lies', label: 'Voyages liés', segment: 'voyages', icon: lkdvIcon('carte'), natures: ['collectif'], coreNatures: [], counter: (d) => num(d.linkedTrips) },
 ] as const;
 
 export interface HubAdventureRef {

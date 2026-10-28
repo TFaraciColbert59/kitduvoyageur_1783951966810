@@ -7,21 +7,10 @@
 // puis affiche la première action pertinente. Carte pleine largeur, accent, cliquable.
 import React from 'react';
 import Link from 'next/link';
-import {
-  ArrowRight,
-  CheckSquare,
-  CreditCard,
-  FileText,
-  MessageSquare,
-  Play,
-  Share2,
-  Shield,
-  Sparkles,
-  Users,
-  type LucideIcon,
-} from 'lucide-react';
 import { useReducedMotion } from 'framer-motion';
 import type { HubChecklistItem } from '../../server/getHubAdventureData';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export type NextActionKind =
   | 'cockpit'
@@ -43,18 +32,18 @@ export interface NextActionSignal {
   description: string;
 }
 
-const ICONS: Record<NextActionKind, LucideIcon> = {
-  cockpit: Play,
-  raconter: Share2,
-  navigation: Play,
-  safety: Shield,
-  checklist: CheckSquare,
-  documents: FileText,
-  debts: CreditCard,
-  tasks: CheckSquare,
-  discussion: MessageSquare,
-  invitations: Users,
-  'all-clear': Sparkles,
+const ICONS: Record<NextActionKind, LKDVIconComponent> = {
+  cockpit: lkdvIcon('lecture'),
+  raconter: lkdvIcon('partager'),
+  navigation: lkdvIcon('lecture'),
+  safety: lkdvIcon('securite'),
+  checklist: lkdvIcon('checklist'),
+  documents: lkdvIcon('facture'),
+  debts: lkdvIcon('paiement'),
+  tasks: lkdvIcon('checklist'),
+  discussion: lkdvIcon('messages'),
+  invitations: lkdvIcon('communaute'),
+  'all-clear': lkdvIcon('ia'),
 };
 
 /**
@@ -91,7 +80,7 @@ export function NextActionCard({ actions, checklist, variant = 'default' }: Next
     }) ?? actions[0];
 
   if (!picked) return null;
-  const Icon = ICONS[picked.kind] ?? Sparkles;
+  const Icon = ICONS[picked.kind] ?? lkdvIcon('ia');
   const isAllClear = picked.kind === 'all-clear';
 
   return (
@@ -139,7 +128,7 @@ export function NextActionCard({ actions, checklist, variant = 'default' }: Next
             {picked.description}
           </span>
         </span>
-        <ArrowRight
+        <LKDVIcon name="suivant"
           size={compact ? 15 : 17}
           className="shrink-0 text-[color:var(--lkv-text-muted)] transition-transform group-hover:translate-x-0.5"
           aria-hidden="true"

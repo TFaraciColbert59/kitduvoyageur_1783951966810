@@ -1,20 +1,5 @@
 import React from 'react';
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  Backpack,
-  BarChart3,
-  BookOpen,
-  Boxes,
-  Flag,
-  History,
-  Image,
-  Link2,
-  Repeat2,
-  ShieldCheck,
-  Trophy,
-  Users,
-} from 'lucide-react';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 /**
  * Icônes des lentilles du drawer Profil.
@@ -28,18 +13,18 @@ const icon = (Glyph: React.ComponentType<{ size?: number; strokeWidth?: number }
 );
 
 export const LENS_ICONS: Record<string, React.ReactNode> = {
-  stats: icon(BarChart3),
-  repost: icon(Repeat2),
-  badges: icon(Trophy),
-  kits: icon(Backpack),
-  inventory: icon(Boxes),
-  lender: icon(ArrowUpRight),
-  borrower: icon(ArrowDownLeft),
-  trust: icon(ShieldCheck),
-  timeline: icon(History),
-  passport: icon(BookOpen),
-  souvenirs: icon(Image),
-  challenges: icon(Flag),
-  clubs: icon(Users),
-  cordee: icon(Link2),
+  stats: icon(lkdvIcon('denivele')),
+  repost: icon(lkdvIcon('actualiser')),
+  badges: icon(lkdvIcon('recompense')),
+  kits: icon(lkdvIcon('sac')),
+  inventory: icon(lkdvIcon('liste_materiel')),
+  lender: icon(lkdvIcon('exporter')),
+  borrower: icon(lkdvIcon('telecharger')),
+  trust: icon(lkdvIcon('securite')),
+  timeline: icon(lkdvIcon('historique')),
+  passport: icon(lkdvIcon('preparateur')),
+  souvenirs: icon(lkdvIcon('photo')),
+  challenges: icon(lkdvIcon('signalement')),
+  clubs: icon(lkdvIcon('communaute')),
+  cordee: icon(lkdvIcon('lien')),
 };

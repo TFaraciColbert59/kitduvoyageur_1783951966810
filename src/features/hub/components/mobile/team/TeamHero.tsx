@@ -1,9 +1,9 @@
 'use client';
-
-import { CalendarDays, Dog, ShieldCheck, UserPlus, Users } from 'lucide-react';
 import { Badge, Button } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { personInitials } from '../../../mobile/teamEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export interface TeamHeroProps {
   title: string;
@@ -18,7 +18,7 @@ export interface TeamHeroProps {
   onOpenCarnet: () => void;
 }
 
-function MetaPill({ icon: Icon, label }: { icon: typeof Users; label: string }) {
+function MetaPill({ icon: Icon, label }: { icon: LKDVIconComponent; label: string }) {
   return (
     <Badge
       tone="stone"
@@ -78,9 +78,9 @@ export function TeamHero({
           )}
         </div>
         <div className="flex min-w-0 flex-wrap gap-1.5">
-          <MetaPill icon={Users} label={`${collaboratorNames.length} équipier${collaboratorNames.length > 1 ? 's' : ''}`} />
-          {humansCount > 0 && <MetaPill icon={Users} label={`${humansCount} au carnet`} />}
-          {dogsCount > 0 && <MetaPill icon={Dog} label={`${dogsCount} chien${dogsCount > 1 ? 's' : ''}`} />}
+          <MetaPill icon={lkdvIcon('communaute')} label={`${collaboratorNames.length} équipier${collaboratorNames.length > 1 ? 's' : ''}`} />
+          {humansCount > 0 && <MetaPill icon={lkdvIcon('communaute')} label={`${humansCount} au carnet`} />}
+          {dogsCount > 0 && <MetaPill icon={lkdvIcon('faune')} label={`${dogsCount} chien${dogsCount > 1 ? 's' : ''}`} />}
         </div>
       </div>
 
@@ -106,7 +106,7 @@ export function TeamHero({
             Sécurité ICE
           </p>
           <p className="mt-1 inline-flex items-center gap-1 text-[11.5px] font-bold text-[var(--lkv-text-primary)]">
-            <ShieldCheck size={13} aria-hidden="true" />
+            <LKDVIcon name="securite" size={13} aria-hidden="true" />
             Verrouillée
           </p>
         </li>
@@ -120,7 +120,7 @@ export function TeamHero({
               triggerHaptic('light');
               onInvite();
             }}
-            icon={<UserPlus size={15} aria-hidden="true" />}
+            icon={<LKDVIcon name="amis" size={15} aria-hidden="true" />}
             className="flex-1 !py-3 text-sm font-bold"
           >
             Inviter
@@ -132,7 +132,7 @@ export function TeamHero({
             triggerHaptic('selection');
             onOpenCarnet();
           }}
-          icon={<CalendarDays size={15} aria-hidden="true" />}
+          icon={<LKDVIcon name="jours" size={15} aria-hidden="true" />}
           className="flex-1 !py-3 text-sm font-bold"
         >
           Carnet d&apos;équipage

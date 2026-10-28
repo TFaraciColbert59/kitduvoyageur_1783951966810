@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { PageHeader } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -999,8 +999,8 @@ export default function AdminProductsManager() {
               : 'bg-sky-950/90 text-sky-200 border-sky-500/30'
           }`}
         >
-          <Icon
-            name={notification.type === 'success' ? 'CheckCircleIcon' : notification.type === 'error' ? 'XCircleIcon' : 'InformationCircleIcon'}
+          <LKDVIcon
+            name={notification.type === 'success' ? 'valider' : notification.type === 'error' ? 'annuler' : 'informations'}
             size={18}
           />
           <span className="text-sm font-medium">{notification.text}</span>
@@ -1025,7 +1025,7 @@ export default function AdminProductsManager() {
             href="/admin"
             className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all text-xs font-mono"
           >
-            <Icon name="ArrowLeftIcon" size={14} />
+            <LKDVIcon name="retour" size={14} />
             <span>Dashboard</span>
           </Link>
         }
@@ -1037,13 +1037,13 @@ export default function AdminProductsManager() {
               className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all disabled:opacity-50"
               title="Rafraîchir les données"
             >
-              <Icon name="ArrowPathIcon" size={16} className={refreshing ? 'animate-spin' : ''} />
+              <LKDVIcon name="actualiser" size={16} className={refreshing ? 'animate-spin' : ''} />
             </button>
             <button
               onClick={() => openProductEditor()}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[color:var(--lkv-primary-soft)] hover:bg-[color:var(--lkv-primary-hover)] text-white text-xs font-bold  transition-all active:scale-95"
             >
-              <Icon name="PlusIcon" size={16} />
+              <LKDVIcon name="plus" size={16} />
               <span>Nouveau Produit</span>
             </button>
           </>
@@ -1054,11 +1054,11 @@ export default function AdminProductsManager() {
       <div className="px-4 lg:px-8 pt-3">
         <nav className="flex items-center gap-1 bg-black/30 p-1 rounded-xl border border-white/5 overflow-x-auto">
           {[
-            { id: 'catalogue', label: 'Catalogue', icon: 'Squares2X2Icon' },
-            { id: 'stock', label: 'Stocks & Mouvements', icon: 'ArchiveBoxIcon' },
-            { id: 'categories', label: 'Catégories', icon: 'FolderIcon' },
-            { id: 'import_export', label: 'Import / Export', icon: 'ArrowDownTrayIcon' },
-            { id: 'audit', label: 'Journal Audit', icon: 'DocumentTextIcon' },
+            { id: 'catalogue', label: 'Catalogue', icon: 'calques' as const },
+            { id: 'stock', label: 'Stocks & Mouvements', icon: 'historique' as const },
+            { id: 'categories', label: 'Catégories', icon: 'exporter' as const },
+            { id: 'import_export', label: 'Import / Export', icon: 'telecharger' as const },
+            { id: 'audit', label: 'Journal Audit', icon: 'facture' as const },
           ].map(tab => (
             <button
               key={tab.id}
@@ -1072,7 +1072,7 @@ export default function AdminProductsManager() {
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Icon name={tab.icon} size={14} />
+              <LKDVIcon name={tab.icon} size={14} />
               <span>{tab.label}</span>
             </button>
           ))}
@@ -1117,7 +1117,7 @@ export default function AdminProductsManager() {
               <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
                 {/* Search Input */}
                 <div className="relative flex-1 min-w-[200px]">
-                  <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+                  <LKDVIcon name="recherche" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
                   <input
                     type="text"
                     value={search}
@@ -1127,7 +1127,7 @@ export default function AdminProductsManager() {
                   />
                   {search && (
                     <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
-                      <Icon name="XMarkIcon" size={14} />
+                      <LKDVIcon name="fermer" size={14} />
                     </button>
                   )}
                 </div>
@@ -1187,7 +1187,7 @@ export default function AdminProductsManager() {
                     onClick={() => setIsBulkModalOpen(true)}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sand-600/20 text-sand-300 border border-sand-500/30 text-xs font-bold hover:bg-sand-600/30 transition-all"
                   >
-                    <Icon name="SparklesIcon" size={14} />
+                    <LKDVIcon name="ia" size={14} />
                     <span>Actions groupées ({selectedIds.size})</span>
                   </button>
                 )}
@@ -1195,7 +1195,7 @@ export default function AdminProductsManager() {
                   onClick={() => handleExportCSV(false)}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/10 text-xs font-medium transition-all"
                 >
-                  <Icon name="ArrowDownTrayIcon" size={14} />
+                  <LKDVIcon name="telecharger" size={14} />
                   <span>Export CSV</span>
                 </button>
               </div>
@@ -1267,7 +1267,7 @@ export default function AdminProductsManager() {
                     {loading ? (
                       <tr>
                         <td colSpan={9} className="p-12 text-center text-white/40">
-                          <Icon name="ArrowPathIcon" size={24} className="animate-spin mx-auto mb-2 text-[color:var(--lkv-text-secondary)]" />
+                          <LKDVIcon name="actualiser" size={24} className="animate-spin mx-auto mb-2 text-[color:var(--lkv-text-secondary)]" />
                           Chargement des produits en cours...
                         </td>
                       </tr>
@@ -1320,7 +1320,7 @@ export default function AdminProductsManager() {
                                     }}
                                   />
                                 ) : (
-                                  <Icon name="PhotoIcon" size={16} className="text-white/20" />
+                                  <LKDVIcon name="photo" size={16} className="text-white/20" />
                                 )}
                               </div>
                             </td>
@@ -1411,28 +1411,28 @@ export default function AdminProductsManager() {
                                   className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all"
                                   title="Voir sur la boutique"
                                 >
-                                  <Icon name="EyeIcon" size={14} />
+                                  <LKDVIcon name="vue" size={14} />
                                 </Link>
                                 <button
                                   onClick={() => handleDuplicateProduct(prod)}
                                   className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all"
                                   title="Dupliquer"
                                 >
-                                  <Icon name="DocumentDuplicateIcon" size={14} />
+                                  <LKDVIcon name="dupliquer" size={14} />
                                 </button>
                                 <button
                                   onClick={() => openProductEditor(prod)}
                                   className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all"
                                   title="Modifier"
                                 >
-                                  <Icon name="PencilSquareIcon" size={14} />
+                                  <LKDVIcon name="modifier" size={14} />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteProduct(prod.id, prod.name)}
                                   className="p-1.5 rounded-lg text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-all"
                                   title="Supprimer"
                                 >
-                                  <Icon name="TrashIcon" size={14} />
+                                  <LKDVIcon name="supprimer" size={14} />
                                 </button>
                               </div>
                             </td>
@@ -1496,7 +1496,7 @@ export default function AdminProductsManager() {
                   onClick={() => { setActiveTab('catalogue'); setEditingProduct(null); }}
                   className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white font-mono mb-1 transition-colors"
                 >
-                  <Icon name="ArrowLeftIcon" size={12} />
+                  <LKDVIcon name="retour" size={12} />
                   <span>Retour au catalogue</span>
                 </button>
                 <h2 className="text-xl font-bold font-display text-white">
@@ -1512,7 +1512,7 @@ export default function AdminProductsManager() {
                     isCreatingNew ? 'opacity-40 pointer-events-none' : ''
                   }`}
                 >
-                  <Icon name="EyeIcon" size={14} />
+                  <LKDVIcon name="vue" size={14} />
                   <span>Aperçu Boutique</span>
                 </Link>
                 <button
@@ -1520,7 +1520,7 @@ export default function AdminProductsManager() {
                   disabled={savingProduct}
                   className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[color:var(--lkv-primary-soft)] hover:bg-[color:var(--lkv-primary-hover)] text-white text-xs font-bold  transition-all active:scale-95 disabled:opacity-50"
                 >
-                  <Icon name="CheckIcon" size={16} className={savingProduct ? 'animate-spin' : ''} />
+                  <LKDVIcon name="valider" size={16} className={savingProduct ? 'animate-spin' : ''} />
                   <span>{savingProduct ? 'Enregistrement...' : 'Enregistrer le Produit'}</span>
                 </button>
               </div>
@@ -1529,15 +1529,15 @@ export default function AdminProductsManager() {
             {/* Editor Subtabs Navigation */}
             <nav className="flex items-center gap-1.5 border-b border-white/10 pb-3 overflow-x-auto">
               {[
-                { id: 'info', label: '1. Informations', icon: 'DocumentTextIcon' },
-                { id: 'images', label: '2. Images & Galerie', icon: 'PhotoIcon', count: productImages.length },
-                { id: 'pricing', label: '3. Prix & Marges', icon: 'CurrencyEuroIcon' },
-                { id: 'stock', label: '4. Stock & Alertes', icon: 'ArchiveBoxIcon' },
-                { id: 'variants', label: '5. Variantes', icon: 'SparklesIcon', count: editingProduct.variants?.length || 0 },
-                { id: 'categories', label: '6. Catégories', icon: 'FolderIcon' },
-                { id: 'seo', label: '7. SEO & URL', icon: 'GlobeAltIcon' },
-                { id: 'supplier', label: '8. Fournisseur', icon: 'TruckIcon' },
-                { id: 'history', label: '9. Historique', icon: 'ClockIcon' },
+                { id: 'info', label: '1. Informations', icon: 'facture' as const },
+                { id: 'images', label: '2. Images & Galerie', icon: 'photo' as const, count: productImages.length },
+                { id: 'pricing', label: '3. Prix & Marges', icon: 'budget' as const },
+                { id: 'stock', label: '4. Stock & Alertes', icon: 'historique' as const },
+                { id: 'variants', label: '5. Variantes', icon: 'ia' as const, count: editingProduct.variants?.length || 0 },
+                { id: 'categories', label: '6. Catégories', icon: 'exporter' as const },
+                { id: 'seo', label: '7. SEO & URL', icon: 'monde' as const },
+                { id: 'supplier', label: '8. Fournisseur', icon: 'livraison' as const },
+                { id: 'history', label: '9. Historique', icon: 'duree' as const },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -1548,7 +1548,7 @@ export default function AdminProductsManager() {
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <Icon name={tab.icon} size={14} />
+                  <LKDVIcon name={tab.icon} size={14} />
                   <span>{tab.label}</span>
                   {typeof tab.count === 'number' && tab.count > 0 && (
                     <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-black/40 text-[color:var(--sage-400)]">
@@ -1763,7 +1763,7 @@ export default function AdminProductsManager() {
                   />
                   <label htmlFor="product-image-upload" className="cursor-pointer flex flex-col items-center gap-2">
                     <div className="w-12 h-12 rounded-full bg-[color:var(--lkv-primary-soft)]/20 text-[color:var(--sage-400)] flex items-center justify-center">
-                      <Icon name="CloudArrowUpIcon" size={24} className={uploadingImage ? 'animate-spin' : ''} />
+                      <LKDVIcon name="exporter" size={24} className={uploadingImage ? 'animate-spin' : ''} />
                     </div>
                     <span className="text-sm font-bold text-white">
                       {uploadingImage ? 'Téléversement vers Supabase Storage...' : 'Ajouter une image'}
@@ -1993,8 +1993,8 @@ export default function AdminProductsManager() {
                             : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
                         }`}
                       >
-                        <Icon
-                          name={isOut ? 'ExclamationCircleIcon' : isLow ? 'ExclamationTriangleIcon' : 'CheckCircleIcon'}
+                        <LKDVIcon
+                          name={isOut ? 'alerte' : isLow ? 'alerte' : 'valider'}
                           size={24}
                         />
                         <div>
@@ -2040,7 +2040,7 @@ export default function AdminProductsManager() {
                     }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
                   >
-                    <Icon name="PlusIcon" size={14} />
+                    <LKDVIcon name="plus" size={14} />
                     <span>Ajouter une variante</span>
                   </button>
                 </div>
@@ -2148,7 +2148,7 @@ export default function AdminProductsManager() {
                             className="p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors"
                             title="Supprimer la variante"
                           >
-                            <Icon name="TrashIcon" size={16} />
+                            <LKDVIcon name="supprimer" size={16} />
                           </button>
                         </div>
                       </div>
@@ -2498,7 +2498,7 @@ export default function AdminProductsManager() {
             <div className="bg-[color:var(--lkv-forest-950)] border border-white/10 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[color:var(--lkv-primary-soft)]/20 text-[color:var(--sage-400)] flex items-center justify-center">
-                  <Icon name="ArrowDownTrayIcon" size={20} />
+                  <LKDVIcon name="telecharger" size={20} />
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-base">Exporter le Catalogue</h3>
@@ -2510,7 +2510,7 @@ export default function AdminProductsManager() {
                   onClick={() => handleExportCSV(false)}
                   className="w-full py-2.5 rounded-xl bg-[color:var(--lkv-primary-soft)] hover:bg-[color:var(--lkv-primary-hover)] text-white text-xs font-bold transition-all  flex items-center justify-center gap-2"
                 >
-                  <Icon name="DocumentArrowDownIcon" size={16} />
+                  <LKDVIcon name="telecharger" size={16} />
                   <span>Exporter tous les produits ({products.length})</span>
                 </button>
               </div>
@@ -2520,7 +2520,7 @@ export default function AdminProductsManager() {
             <div className="bg-[color:var(--lkv-forest-950)] border border-white/10 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
-                  <Icon name="CloudArrowUpIcon" size={20} />
+                  <LKDVIcon name="exporter" size={20} />
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-base">Import Catalogue</h3>
@@ -2591,7 +2591,7 @@ export default function AdminProductsManager() {
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-white text-base">Ajustement de Stock Rapide</h3>
               <button onClick={() => setQuickStockItem(null)} className="text-white/40 hover:text-white">
-                <Icon name="XMarkIcon" size={18} />
+                <LKDVIcon name="fermer" size={18} />
               </button>
             </div>
             <p className="text-xs text-white/70">
@@ -2660,7 +2660,7 @@ export default function AdminProductsManager() {
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-white text-base">Actions Groupées ({selectedIds.size} sélectionnés)</h3>
               <button onClick={() => setIsBulkModalOpen(false)} className="text-white/40 hover:text-white">
-                <Icon name="XMarkIcon" size={18} />
+                <LKDVIcon name="fermer" size={18} />
               </button>
             </div>
 

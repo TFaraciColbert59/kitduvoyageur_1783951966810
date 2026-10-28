@@ -1,6 +1,4 @@
 ﻿'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { Button, Card, IconButton } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
@@ -14,6 +12,7 @@ import {
   submitTripFieldReviewsAction,
 } from '@/app/voyages/completion-actions';
 import type { TripFull } from '../types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const FIELD_CLASS =
   'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
@@ -131,7 +130,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
             tone="sage"
             className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)]"
           >
-            <Icon name="check-circle2" size={18} className="shrink-0" />
+            <LKDVIcon name="valider" size={18} className="shrink-0" />
             <span>{successMessage}</span>
           </Card>
         )}
@@ -149,7 +148,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
         {/* Métriques d'aventure */}
         <div className="grid grid-cols-2 gap-[var(--space-3)] sm:grid-cols-4">
           <Card variant="compact" className="text-center">
-            <Icon name="navigation" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
+            <LKDVIcon name="gps" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
             <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               {metrics.totalKm} km
             </div>
@@ -157,7 +156,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           </Card>
 
           <Card variant="compact" className="text-center">
-            <Icon name="mountain" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
+            <LKDVIcon name="montagne" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
             <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               +{metrics.totalElevationGainM} m
             </div>
@@ -165,7 +164,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           </Card>
 
           <Card variant="compact" className="text-center">
-            <Icon name="package" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
+            <LKDVIcon name="inventaire" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
             <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               {metrics.packedWeightKg} kg
             </div>
@@ -175,7 +174,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           </Card>
 
           <Card variant="compact" className="text-center">
-            <Icon name="award" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
+            <LKDVIcon name="badge" size={18} className="mx-auto mb-1 text-[color:var(--lkv-text-primary)]" />
             <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               {metrics.durationDays} jours
             </div>
@@ -198,7 +197,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                   className="h-4 w-4 rounded accent-[color:var(--lkv-primary)]"
                 />
                 <span className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
-                  <Icon name="book-open" size={16} /> Publier en carnet de bord communautaire
+                  <LKDVIcon name="preparateur" size={16} /> Publier en carnet de bord communautaire
                 </span>
               </label>
             </div>
@@ -258,7 +257,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
             <div className="space-y-[var(--space-3)]">
               <div>
                 <h4 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
-                  <Icon name="map-pin" size={16} /> Certifier vos lieux visités (Preuve terrain)
+                  <LKDVIcon name="point_interet" size={16} /> Certifier vos lieux visités (Preuve terrain)
                 </h4>
                 <p className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                   Vos avis sont certifiés réels (pondération x2 dans le scoring communautaire).
@@ -291,7 +290,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                               }
                               className={currentRev.rating === star ? 'text-[color:var(--lkv-warning)]' : ''}
                             >
-                              <Icon name="star" size={16} />
+                              <LKDVIcon name="points" size={16} />
                             </IconButton>
                           ))}
                         </div>

@@ -1,10 +1,10 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { ArrowRight } from 'lucide-react';
 import { HapticLink } from '../menu/HapticLink';
 import HubGlobeMap from './HubGlobeMap';
 import type { HubRoutePoint } from './HubRouteMap';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface MomentMapCardProps {
   eyebrow: string;
@@ -93,7 +93,7 @@ export function MomentMapCard({
               ariaLabel={cta.label}
               className="hub-map-card__cta"
             >
-              <ArrowRight size={16} aria-hidden="true" />
+              <LKDVIcon name="suivant" size={16} aria-hidden="true" />
             </HapticLink>
           </div>
         </div>

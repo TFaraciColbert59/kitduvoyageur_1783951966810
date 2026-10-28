@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
 import type { BudgetDaySlide } from '../../../mobile/budgetEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface BudgetDaySliderProps {
   slides: BudgetDaySlide[];
@@ -59,7 +59,7 @@ export function BudgetDaySlider({ slides, onSelectDay }: BudgetDaySliderProps) {
             aria-label="Jours précédents"
             className="h-10 w-10"
           >
-            <ArrowLeft size={16} aria-hidden="true" />
+            <LKDVIcon name="retour" size={16} aria-hidden="true" />
           </IconButton>
           <IconButton
             variant="solid"
@@ -68,7 +68,7 @@ export function BudgetDaySlider({ slides, onSelectDay }: BudgetDaySliderProps) {
             aria-label="Jours suivants"
             className="h-10 w-10"
           >
-            <ArrowRight size={16} aria-hidden="true" />
+            <LKDVIcon name="suivant" size={16} aria-hidden="true" />
           </IconButton>
         </div>
       </div>

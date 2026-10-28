@@ -5,7 +5,6 @@ import { TripInvitationsInbox } from './TripInvitations';
 import type { TripInvitationView } from '../server/invitationActions';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useTransition } from 'react';
-import Icon from '@/components/ui/Icon';
 import { COMPAS_STEPS } from '../engine/compasModel';
 import { understandRequest, type RequestLine, type RequestPrecisions } from '../engine/request';
 import { MAX_TRIP_DAYS } from '../engine/intent';
@@ -18,16 +17,18 @@ import { AiNotice } from './AiNotice';
 import { useTranslation } from '@/lib/i18n/context';
 import { plural } from '@/lib/i18n/translate';
 import { formatNumber } from '@/lib/i18n/format';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
-const LINE_ICON: Record<RequestLine['key'], string> = {
-  activite: 'compass',
-  lieu: 'map-pin',
-  depart: 'navigation',
-  quand: 'calendar',
-  groupe: 'users',
-  nuits: 'moon',
-  envies: 'heart',
-  budget: 'euro',
+const LINE_ICON: Record<RequestLine['key'], LKDVIconName> = {
+  activite: 'boussole',
+  lieu: 'point_interet',
+  depart: 'gps',
+  quand: 'calendrier',
+  groupe: 'communaute',
+  nuits: 'lune',
+  envies: 'favoris',
+  budget: 'budget',
   deplacements: 'train',
 };
 
@@ -107,7 +108,7 @@ export function CompasStart({
                 aria-describedby={i > 0 ? 'cp-start-locked' : undefined}
                 title={i > 0 ? t('compas.start.lockedStep') : undefined}
               >
-                <Icon name={s.icon} size={20} aria-hidden="true" />
+                <LKDVIcon name={s.icon} size={20} aria-hidden="true" />
                 <span className="cp-step__l">{t(STEP_LABEL_KEY[s.id])}</span>
               </button>
             ))}
@@ -168,7 +169,7 @@ export function CompasStart({
                   {understood.lines.map((l) => (
                     <div key={l.key} className="cp-fr" data-state={l.state}>
                       <span className="cp-fr__i">
-                        <Icon name={LINE_ICON[l.key]} size={15} />
+                        <LKDVIcon name={LINE_ICON[l.key]} size={15} />
                       </span>
                       <span className="cp-fr__l">{l.label}</span>
                       <span className="cp-fr__v">
@@ -195,7 +196,7 @@ export function CompasStart({
                     title={t(ACTIVITY_META[a].hintKey)}
                     onClick={() => setPrecise((p) => ({ ...p, activity: p.activity === a ? null : a }))}
                   >
-                    <Icon name={ACTIVITY_META[a].icon} size={22} />
+                    <LKDVIcon name={ACTIVITY_META[a].icon} size={22} />
                     <span>{activityName(a, locale)}</span>
                   </button>
                 ))}
@@ -212,7 +213,7 @@ export function CompasStart({
                     aria-expanded={false}
                     onClick={() => setAllActivities(true)}
                   >
-                    <Icon name="more-horizontal" size={22} />
+                    <LKDVIcon name="plus_options" size={22} />
                     <span>{t('compas.start.moreActivities')}</span>
                   </button>
                 )}
@@ -241,7 +242,7 @@ export function CompasStart({
                         disabled={pending || v == null}
                         onClick={() => setNum(key, v != null && v > 1 ? v - 1 : null)}
                       >
-                        <Icon name="minus" size={14} />
+                        <LKDVIcon name="annuler" size={14} />
                       </button>
                       <output aria-live="polite">{v == null ? t('compas.start.auto') : count(v)}</output>
                       <button
@@ -251,7 +252,7 @@ export function CompasStart({
                         disabled={pending || (v ?? 0) >= max}
                         onClick={() => setNum(key, (v ?? 0) + 1)}
                       >
-                        <Icon name="plus" size={14} />
+                        <LKDVIcon name="plus" size={14} />
                       </button>
                     </span>
                   </div>
@@ -265,7 +266,7 @@ export function CompasStart({
               disabled={!ready || pending}
               aria-busy={pending}
             >
-              <Icon name="sparkles" size={16} />
+              <LKDVIcon name="ia" size={16} />
               {pending ? t('compas.start.creating') : t('compas.start.submit')}
             </button>
           </form>

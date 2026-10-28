@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useRef, useState } from 'react';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface SpeciesResult {
   name: string;
@@ -102,7 +102,7 @@ export function CarnetNatureSection({ canWrite, onRequireAuth }: CarnetNatureSec
         </div>
       ) : (
         <div className="ckp-drop">
-          <Icon name="compass" size={24} aria-hidden="true" />
+          <LKDVIcon name="boussole" size={24} aria-hidden="true" />
           <p>
             {state === 'loading'
               ? 'Identification en cours…'
@@ -122,7 +122,7 @@ export function CarnetNatureSection({ canWrite, onRequireAuth }: CarnetNatureSec
               inputRef.current?.click();
             }}
           >
-            <Icon name="image-plus" size={16} aria-hidden="true" />
+            <LKDVIcon name="photo" size={16} aria-hidden="true" />
             {canWrite ? 'Prendre une photo' : 'Se connecter pour identifier'}
           </button>
         </div>

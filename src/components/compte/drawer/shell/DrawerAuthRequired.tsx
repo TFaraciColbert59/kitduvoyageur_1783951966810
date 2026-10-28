@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { LogIn, ShieldCheck } from 'lucide-react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * État affiché quand le drawer est ouvert sans session valide.
@@ -20,12 +20,12 @@ export function DrawerAuthRequired({
   return (
     <div className="lkdv-drawer-auth" role="status">
       <span className="lkdv-drawer-auth-ico" aria-hidden="true">
-        <ShieldCheck size={22} />
+        <LKDVIcon name="securite" size={22} />
       </span>
       <b>{title}</b>
       <p>{hint}</p>
       <a className="lkdv-drawer-auth-cta" href="/connexion?redirect=/compte">
-        <LogIn size={15} aria-hidden="true" /> Se connecter
+        <LKDVIcon name="suivant" size={15} aria-hidden="true" /> Se connecter
       </a>
       <small>Tu reviens directement sur ton compte après la connexion.</small>
     </div>

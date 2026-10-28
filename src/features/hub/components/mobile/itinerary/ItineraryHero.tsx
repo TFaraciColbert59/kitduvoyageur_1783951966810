@@ -1,9 +1,8 @@
 'use client';
-
-import { CalendarDays, Pencil, Plus } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { ItineraryTotals } from '../../../mobile/itineraryEngine';
 import { Button, IconButton, Badge } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ItineraryHeroProps {
   title: string;
@@ -50,7 +49,7 @@ export function ItineraryHero({
                 aria-label="Renommer l’activité"
                 className="h-11 w-11 shrink-0"
               >
-                <Pencil size={14} aria-hidden="true" />
+                <LKDVIcon name="modifier" size={14} aria-hidden="true" />
               </IconButton>
             )}
           </div>
@@ -112,7 +111,7 @@ export function ItineraryHero({
             }}
             className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
           >
-            <Plus size={15} aria-hidden="true" />
+            <LKDVIcon name="plus" size={15} aria-hidden="true" />
             Ajouter une étape
           </Button>
         )}
@@ -125,7 +124,7 @@ export function ItineraryHero({
           }}
           className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
         >
-          <CalendarDays size={15} aria-hidden="true" />
+          <LKDVIcon name="jours" size={15} aria-hidden="true" />
           Gérer les jours
         </Button>
       </div>

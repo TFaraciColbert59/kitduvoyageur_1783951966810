@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MapPinOff } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface HubRoutePoint {
   id?: string;
@@ -253,7 +253,7 @@ export default function HubRouteMap({
       <div
         className={`flex h-full w-full flex-col items-center justify-center gap-2 bg-[var(--lkv-surface-raised)] ${className ?? ''}`}
       >
-        <MapPinOff size={22} className="text-[var(--lkv-text-muted)]" aria-hidden="true" />
+        <LKDVIcon name="localiser" size={22} className="text-[var(--lkv-text-muted)]" aria-hidden="true" />
         <p className="text-[11px] font-medium text-[var(--lkv-text-secondary)]">{emptyLabel}</p>
       </div>
     );

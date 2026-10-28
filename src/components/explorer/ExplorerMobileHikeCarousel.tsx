@@ -1,15 +1,6 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
-import { NavigationIcon as Navigation } from '@/components/icons/navigation';
-import { DocIcon as FileText } from '@/components/icons/doc';
-import { ListIcon as List } from '@/components/icons/list';
-import { LayersIcon as Layers } from '@/components/icons/layers';
-import { ClockIcon as Clock } from '@/components/icons/clock';
-import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import Link from 'next/link';
 import type { MapTrail } from './types';
 import {
@@ -23,6 +14,7 @@ import {
 import ExplorerListCard from './ExplorerListCard';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const LINK_PILL = [
   'inline-flex min-h-[36px] flex-1 select-none items-center justify-center whitespace-nowrap rounded-full',
@@ -126,19 +118,19 @@ export default function ExplorerMobileHikeCarousel({
       {/* ── TOP FLOATING PILL (Mode Switch & Counter) ── */}
       <div className="pointer-events-auto mb-1.5 flex items-center justify-between px-3.5">
         <Badge tone="stone" className="gap-1.5">
-          <Icon name="map-pin" size={12} className="text-[color:var(--lkv-text-primary)]" />
+          <LKDVIcon name="point_interet" size={12} className="text-[color:var(--lkv-text-primary)]" />
           <span>{count} randonnées</span>
         </Badge>
 
         <Button variant="secondary" size="sm" onClick={toggleViewMode}>
           {viewMode === 'carousel' ? (
             <>
-              <List size={12} />
+              <LKDVIcon name="checklist_voyage" size={12} />
               <span>Voir liste</span>
             </>
           ) : (
             <>
-              <Layers size={12} />
+              <LKDVIcon name="calques" size={12} />
               <span>Mode cartes</span>
             </>
           )}
@@ -198,19 +190,19 @@ export default function ExplorerMobileHikeCarousel({
                   {/* Metrics Row */}
                   <div className="flex items-center gap-2 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
                     <span className="flex items-center gap-0.5 font-semibold">
-                      <Navigation size={9} className="text-[color:var(--lkv-text-primary)]" />
+                      <LKDVIcon name="gps" size={9} className="text-[color:var(--lkv-text-primary)]" />
                       {formatDistance(trail.distance_km)}
                     </span>
                     <span aria-hidden="true" className="opacity-40">·</span>
                     <span className="flex items-center gap-0.5 text-[color:var(--lkv-text-muted)]">
-                      <Clock size={9} />
+                      <LKDVIcon name="duree" size={9} />
                       {formatDuration(trail.duration_hours || estimateHikingDurationHours(trail.distance_km, trail.elevation_gain))}
                     </span>
                     {trail.elevation_gain != null && (
                       <>
                         <span aria-hidden="true" className="opacity-40">·</span>
                         <span className="flex items-center gap-0.5 font-bold text-[color:var(--lkv-text-primary)]">
-                          <TrendingUp size={9} />+{Math.round(trail.elevation_gain)}m
+                          <LKDVIcon name="denivele" size={9} />+{Math.round(trail.elevation_gain)}m
                         </span>
                       </>
                     )}
@@ -241,7 +233,7 @@ export default function ExplorerMobileHikeCarousel({
                       title="Voir la fiche complète"
                       aria-label="Voir la fiche complète"
                     >
-                      <FileText size={15} strokeWidth={2.2} />
+                      <LKDVIcon name="facture" size={15} />
                     </IconButton>
                   </div>
                 </div>
@@ -266,7 +258,7 @@ export default function ExplorerMobileHikeCarousel({
               <span className="font-mono text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-primary)]">
                 Tous les sentiers ({trails.length})
               </span>
-              <Button variant="secondary" size="sm" onClick={toggleViewMode} icon={<ChevronDown size={12} />}>
+              <Button variant="secondary" size="sm" onClick={toggleViewMode} icon={<LKDVIcon name="bas" size={12} />}>
                 Fermer
               </Button>
             </div>

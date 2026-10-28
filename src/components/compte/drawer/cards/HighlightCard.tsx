@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** Un album « À la une » normalisé depuis `story_highlights`. */
 export interface HighlightCardData {
@@ -61,18 +62,7 @@ export function HighlightCard({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <svg
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-                className="h-7 w-7 text-[color:var(--lkv-primary)]"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-              >
-                <rect x="3" y="5" width="18" height="14" rx="2.5" />
-                <circle cx="8.5" cy="10" r="1.5" />
-                <path d="m4 17 5-4.5 3.5 3 3-2.5L20 17" strokeLinejoin="round" />
-              </svg>
+              <LKDVIcon name="photo" size={28} className="h-7 w-7 text-[color:var(--lkv-primary)]" aria-hidden="true" />
             )}
           </span>
 

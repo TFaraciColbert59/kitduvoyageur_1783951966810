@@ -1,10 +1,9 @@
 'use client';
-
-import { Check } from 'lucide-react';
 import { Button, Sheet } from '@/components/ui';
 import { HapticLink } from '../../menu/HapticLink';
 import { hubSectionHref } from '../../../registry/hubSectionRegistry';
 import type { GearCardData } from '../../../mobile/gearEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface GearItemPanelProps {
   card: GearCardData | null;
@@ -76,7 +75,7 @@ export function GearItemPanel({ card, tripSlug, open, onOpenChange, busy, onTogg
             fullWidth
             onClick={() => onTogglePacked(card)}
             disabled={busy}
-            icon={<Check size={16} aria-hidden="true" />}
+            icon={<LKDVIcon name="valider" size={16} aria-hidden="true" />}
             className="h-12 text-sm font-bold"
           >
             {card.isPacked ? 'Retirer du sac' : 'Marquer comme prêt'}

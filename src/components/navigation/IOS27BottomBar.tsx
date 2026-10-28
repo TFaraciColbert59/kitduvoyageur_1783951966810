@@ -13,7 +13,7 @@ import {
 } from 'framer-motion';
 import { triggerNativeHaptic } from '@/lib/native/haptics';
 import { DESTINATIONS, type DestinationId } from '@/components/mobile-nav/destinationRegistry';
-import { LIQUID_TAB_ICONS } from './liquidTabIcons';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /* ----------------------------------------------------------------------------
  * Barre d'onglets Liquid Glass — réplique web du `TabView` iOS 26/27
@@ -310,8 +310,12 @@ export function IOS27BottomBar({
   const displayIndex = hoverIndex ?? activeIndex;
   const ready = cellW > 0 && (activeIndex >= 0 || hoverIndex !== null);
 
-  const renderIcon = (id: DestinationId, on: boolean) =>
-    on ? LIQUID_TAB_ICONS[id].filled : LIQUID_TAB_ICONS[id].outline;
+  // Base LKDV V2 : un seul tracé vert ; l'état actif se lit par le fond de la lentille et l'opacité.
+  const renderIcon = (id: DestinationId, on: boolean) => {
+    const destination = DESTINATIONS.find((item) => item.id === id);
+    if (!destination) return null;
+    return <LKDVIcon name={destination.iconName} size={24} className="lg-ic" style={{ opacity: on ? 1 : 0.62 }} />;
+  };
 
   return (
     <nav

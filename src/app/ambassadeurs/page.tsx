@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppShell } from '@/components/shell';
 import { Button, Chip } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export default function AmbassadeursPage() {
   const [activeTab, setActiveTab] = useState<'programme' | 'dashboard' | 'codes'>('programme');
@@ -25,7 +25,7 @@ export default function AmbassadeursPage() {
               <p className="font-mono text-xs text-primary tracking-widest uppercase mb-3">PROGRAMME AMBASSADEURS</p>
               <h1 className="font-display font-800 text-4xl md:text-5xl text-white tracking-tight mb-4">Partagez votre passion,<br />gagnez des commissions</h1>
               <p className="text-white/60 text-lg max-w-xl mb-8">Rejoignez nos ambassadeurs qui monétisent leur audience.</p>
-              <div className="flex flex-wrap gap-4"><button onClick={() => setApplyOpen(true)} className="glass-capsule-btn primary"><Icon name="UserPlusIcon" size={16} variant="outline" />Devenir ambassadeur</button></div>
+              <div className="flex flex-wrap gap-4"><button onClick={() => setApplyOpen(true)} className="glass-capsule-btn primary"><LKDVIcon name="amis" size={16} />Devenir ambassadeur</button></div>
             </div>
           </section>
           <Footer />
@@ -46,7 +46,7 @@ export default function AmbassadeursPage() {
               fullWidth
               className="mt-[var(--space-3)]"
               onClick={() => setApplyOpen(true)}
-              icon={<Icon name="UserPlusIcon" size={16} variant="outline" />}
+              icon={<LKDVIcon name="amis" size={16} />}
             >
               Devenir ambassadeur
             </Button>

@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Gift, History } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRewardsWallet } from '@/features/rewards/client/useRewardsWallet';
 import { DRAWER_SHELL_CSS, DrawerShell, type DrawerTab } from '@/components/compte/drawer/shell/DrawerShell';
 import { DrawerAuthRequired } from '@/components/compte/drawer/shell/DrawerAuthRequired';
 import { RewardsHistory, RewardsOverview } from './RewardsPanel';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Tiroir « Récompenses » du Compte : deux volets (récompenses, historique)
@@ -35,7 +35,7 @@ export function RewardsDrawer({ initialTab = 0 }: { initialTab?: number }) {
     {
       id: 'recompenses',
       label: 'Récompenses',
-      icon: <Gift size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="cadeau" size={18} aria-hidden="true" />,
       render: () => (
         <>
           <RewardsOverview controller={controller} />
@@ -50,7 +50,7 @@ export function RewardsDrawer({ initialTab = 0 }: { initialTab?: number }) {
     {
       id: 'historique',
       label: 'Historique',
-      icon: <History size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="historique" size={18} aria-hidden="true" />,
       render: () => <RewardsHistory controller={controller} />,
     },
   ];

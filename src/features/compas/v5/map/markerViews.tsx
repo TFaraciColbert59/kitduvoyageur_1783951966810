@@ -72,7 +72,7 @@ export function NightPin({
         <Thumb photo={photo} kind={kind} />
         {booked && (
           <span className="ok" aria-hidden="true">
-            <V5Icon name="check" size="xs" />
+            <V5Icon name='valider' size="xs" />
           </span>
         )}
       </span>

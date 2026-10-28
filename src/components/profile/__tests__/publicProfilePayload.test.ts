@@ -38,7 +38,7 @@ describe('publicProfilePayload', () => {
         { id: 'c1', title: 'Vercors', status: 'Publié', image_url: 'https://img.test/1.jpg' },
       ],
       clubs: [{ id: 'cl1', name: 'Trekkeurs', role: 'Membre', members_count: 12, detail: '', logo_url: '', slug: 'trek' }],
-      badges: [{ id: 'b1', title: 'Premier pas', icon_name: '', earned: true }],
+      badges: [{ id: 'b1', title: 'Premier pas', icon_name: 'badge', earned: true }],
       activite: [],
       viewer: 'visitor',
       visibility: 'public',

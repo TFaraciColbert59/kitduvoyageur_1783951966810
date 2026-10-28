@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useToast } from '@/contexts/ToastContext';
 import { zIndex } from '@/lib/ui/zIndex';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * P1-3 (C-17 suite) — framer-motion retiré du graphe du layout racine :
@@ -125,22 +126,7 @@ export default function OfflineBanner() {
           >
             {hasVerifiedCache === true ? OFFLINE_MESSAGE_CACHED : OFFLINE_MESSAGE_NO_CACHE}
           </span>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--lkv-surface)"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M5 13a10 10 0 0 1 14 0" />
-            <path d="M8.5 16.5a5 5 0 0 1 7 0" />
-            <path d="M2 2l20 20" />
-            <path d="M12 20h.01" />
-          </svg>
+          <LKDVIcon name="hors_ligne" size={16} aria-hidden="true" />
       </div>
     )
   );

@@ -1,13 +1,13 @@
 'use client';
 
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { MailPlus, Map as MapIcon, Users } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { HUB_COLLECTIF_HREFS, hubSectionHref } from '../registry/hubSectionRegistry';
 import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import { HubActivityHero } from './HubActivityHero';
 import { EASE_GLASS } from '@/lib/animations/constants';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export interface HubOverviewCollectifProps {
   groupLabel: string;
@@ -33,20 +33,20 @@ export function HubOverviewCollectif({
     transition: { duration: reduceMotion ? 0 : 0.22, ease: EASE_GLASS },
   };
 
-  const cards: Array<{ href: string; label: string; Icon: typeof Users; count?: number }> = [
+  const cards: Array<{ href: string; label: string; Icon: LKDVIconComponent; count?: number }> = [
     {
       href: hubSectionHref({ nature: 'collectif' }, 'groupe'),
       label: 'Groupe',
-      Icon: Users,
+      Icon: lkdvIcon('communaute'),
       count: members,
     },
     {
       href: hubSectionHref({ nature: 'collectif' }, 'invitations'),
       label: 'Invitations',
-      Icon: MailPlus,
+      Icon: lkdvIcon('email'),
       count: pendingInvites,
     },
-    { href: HUB_COLLECTIF_HREFS.voyagesLies, label: 'Voyages liés', Icon: MapIcon },
+    { href: HUB_COLLECTIF_HREFS.voyagesLies, label: 'Voyages liés', Icon: lkdvIcon('carte') },
   ];
 
   return (
@@ -66,7 +66,7 @@ export function HubOverviewCollectif({
             className="glass-capsule-btn primary inline-flex items-center gap-2 min-h-[44px] px-5 active:scale-[0.98] transition-transform"
           >
             <span>Entrer dans le voyage</span>
-            <Icon name="arrow-up-right" size={14} aria-hidden="true" />
+            <LKDVIcon name="exporter" size={14} aria-hidden="true" />
           </Link>
         </motion.div>
       )}
@@ -89,8 +89,8 @@ export function HubOverviewCollectif({
                     {c.count !== undefined && c.count > 0 ? ` · ${c.count}` : ''}
                   </span>
                 </span>
-                <Icon
-                  name="arrow-right"
+                <LKDVIcon
+                  name="suivant"
                   size={14}
                   className="text-[var(--lkv-text-muted)] shrink-0"
                   aria-hidden="true"
@@ -107,8 +107,8 @@ export function HubOverviewCollectif({
           className="glass p-4 rounded-2xl flex items-center gap-3 min-h-[44px] cursor-pointer active:scale-[0.98] transition-transform"
           aria-label={`Assistant IA — coordination ${groupLabel}`}
         >
-          <Icon
-            name="sparkles"
+          <LKDVIcon
+            name="ia"
             size={18}
             className="shrink-0 text-[var(--lkv-text-secondary)]"
             aria-hidden="true"
@@ -118,8 +118,8 @@ export function HubOverviewCollectif({
               Assistant IA
             </span>
           </span>
-          <Icon
-            name="arrow-right"
+          <LKDVIcon
+            name="suivant"
             size={14}
             className="text-[var(--lkv-text-muted)] shrink-0"
             aria-hidden="true"

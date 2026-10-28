@@ -8,6 +8,7 @@ import {
   pluralizeCommunity,
 } from './cards/communityFormat';
 import './ClubDrawer.css';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type ClubRsvp = 'yes' | 'no';
 
@@ -350,9 +351,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
             onClick={onClose}
             ref={closeRef}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="m6 6 12 12M18 6 6 18" />
-            </svg>
+            <LKDVIcon name="fermer" aria-hidden="true" />
           </button>
         </header>
 

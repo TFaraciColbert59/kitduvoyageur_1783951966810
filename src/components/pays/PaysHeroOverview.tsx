@@ -3,10 +3,10 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import CountryFlag from '@/components/ui/CountryFlag';
 import { CountryDetail } from '@/lib/countryDetails';
 import { SectionBlocks, PaysWeatherCard, PaysRecommendations } from '@/features/pays';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface PaysHeroOverviewProps {
   country: CountryDetail;
@@ -76,7 +76,7 @@ export default function PaysHeroOverview({
                 href={`/compas?etape=kit`}
                 className="glass-capsule-btn primary text-xs font-bold !py-2 !px-4"
               >
-                <Icon name="SparklesIcon" size={14} />
+                <LKDVIcon name="ia" size={14} />
                 <span>Créer mon kit pour {country.nom}</span>
               </Link>
 
@@ -236,7 +236,7 @@ export default function PaysHeroOverview({
           {country.highlights.map((h, i) => (
             <div key={i} className="glass p-4 space-y-2 hover:border-[color:var(--lkv-secondary)]/30 transition-colors">
               <div className="w-8 h-8 rounded-xl bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-ink)] flex items-center justify-center">
-                <Icon name="SparklesIcon" size={16} />
+                <LKDVIcon name="ia" size={16} />
               </div>
               <h4 className="font-bold text-sm text-[color:var(--lkv-text-primary)]">
                 {h.titre} <span className="font-serif italic font-normal text-[color:var(--lkv-secondary-ink)]">{h.sous_titre}</span>

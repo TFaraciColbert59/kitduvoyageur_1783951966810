@@ -1,12 +1,12 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { ArrowRight } from 'lucide-react';
 import { Sheet, Button } from '@/components/ui';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { GroupeReadiness } from '../../../mobile/groupeEngine';
 import { BudgetRing } from '../budget/BudgetRing';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface GroupeDrawerProps {
   open: boolean;
@@ -110,7 +110,7 @@ export function GroupeReadinessDrawer({
         className="inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
       >
         {primaryLabel}
-        <ArrowRight size={15} aria-hidden="true" />
+        <LKDVIcon name="suivant" size={15} aria-hidden="true" />
       </Button>
     </GroupeDrawer>
   );

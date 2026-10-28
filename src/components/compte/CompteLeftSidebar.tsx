@@ -3,12 +3,11 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button } from '@/components/ui';
-import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import { CompteTab } from '@/components/compte/TabsCompte';
 import { UserProfile } from '@/lib/types/profile';
 import { useTranslation } from '@/lib/i18n/context';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface CompteLeftSidebarProps {
   activeTab: CompteTab;
@@ -86,7 +85,7 @@ export default function CompteLeftSidebar({
             variant="secondary"
             size="sm"
             onClick={onEditProfile}
-            icon={<Icon name="PencilSquareIcon" size={12} aria-hidden="true" />}
+            icon={<LKDVIcon name="modifier" size={12} aria-hidden="true" />}
             className="px-[var(--space-2)] text-[10.5px]"
           >
             Modifier
@@ -96,7 +95,7 @@ export default function CompteLeftSidebar({
             href="/hub"
             className="inline-flex min-h-[var(--control-height-sm)] items-center justify-center gap-[var(--space-2)] rounded-full border border-transparent bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-2)] text-[10.5px] font-bold text-[color:var(--lkv-text-primary)]"
           >
-            <Icon name="BriefcaseIcon" size={12} aria-hidden="true" />
+            <LKDVIcon name="valise" size={12} aria-hidden="true" />
             <span>Mon Matériel</span>
           </Link>
         </div>
@@ -121,7 +120,7 @@ export default function CompteLeftSidebar({
               aria-pressed={isActive}
             >
               <span className="truncate text-left">{t.label}</span>
-              {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
+              {isActive && <LKDVIcon name="suivant" size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
             </Button>
           );
         })}
@@ -135,7 +134,7 @@ export default function CompteLeftSidebar({
           fullWidth
           size="sm"
           onClick={onShareProfile}
-          icon={<Icon name="ShareIcon" size={13} aria-hidden="true" />}
+          icon={<LKDVIcon name="partager" size={13} aria-hidden="true" />}
         >
           Partager mon profil
         </Button>

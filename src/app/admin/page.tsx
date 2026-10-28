@@ -3,42 +3,43 @@ import { lkvPromptAsync } from '@/components/ui/dialogs';
 import { PageHeader } from '@/components/ui';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import AppShell from '@/components/shell/AppShell';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type AdminSection =
   | 'overview' | 'products' | 'kits' | 'categories' |'orders'| 'configurator' | 'countries' | 'toolbox' |'users' | 'moderation' | 'content' | 'audit' | 'rewards' | 'progression';
 
 // ─── Sidebar config ────────────────────────────────────────────────────────────
-const SIDEBAR_ITEMS: { id: AdminSection; label: string; icon: string; badge?: string; group?: string }[] = [
-  { id: 'overview', label: 'Vue d\'ensemble', icon: 'ChartBarIcon', group: 'Principal' },
-  { id: 'products', label: 'Produits', icon: 'ArchiveBoxIcon', group: 'Catalogue' },
-  { id: 'kits', label: 'Kits', icon: 'CubeIcon', group: 'Catalogue' },
-  { id: 'categories', label: 'Catégories', icon: 'TagIcon', group: 'Catalogue' },
-  { id: 'orders', label: 'Commandes', icon: 'ClipboardDocumentListIcon', badge: '3', group: 'Commerce' },
-  { id: 'configurator', label: 'Configurateur IA', icon: 'SparklesIcon', group: 'Commerce' },
-  { id: 'countries', label: 'Pages Pays', icon: 'GlobeAltIcon', group: 'Contenu' },
-  { id: 'toolbox', label: 'Toolbox', icon: 'WrenchScrewdriverIcon', group: 'Contenu' },
-  { id: 'content', label: 'Guides', icon: 'BookOpenIcon', group: 'Contenu' },
-  { id: 'users', label: 'Utilisateurs', icon: 'UsersIcon', group: 'Gestion' },
-  { id: 'moderation', label: 'Modération', icon: 'ShieldCheckIcon', badge: '7', group: 'Gestion' },
-  { id: 'rewards', label: 'Récompenses & Sim', icon: 'GiftIcon', group: 'Gestion' },
-  { id: 'progression', label: 'Barème & Simulation', icon: 'AdjustmentsHorizontalIcon', group: 'Gestion' },
-  { id: 'audit', label: 'Audit & Paramètres', icon: 'Cog6ToothIcon', group: 'Gestion' },
+const SIDEBAR_ITEMS: { id: AdminSection; label: string; icon: LKDVIconName; badge?: string; group?: string }[] = [
+  { id: 'overview', label: 'Vue d\'ensemble', icon: 'denivele', group: 'Principal' },
+  { id: 'products', label: 'Produits', icon: 'historique', group: 'Catalogue' },
+  { id: 'kits', label: 'Kits', icon: 'commande', group: 'Catalogue' },
+  { id: 'categories', label: 'Catégories', icon: 'promo', group: 'Catalogue' },
+  { id: 'orders', label: 'Commandes', icon: 'checklist_voyage', badge: '3', group: 'Commerce' },
+  { id: 'configurator', label: 'Configurateur IA', icon: 'ia', group: 'Commerce' },
+  { id: 'countries', label: 'Pages Pays', icon: 'monde', group: 'Contenu' },
+  { id: 'toolbox', label: 'Toolbox', icon: 'options_avancees', group: 'Contenu' },
+  { id: 'content', label: 'Guides', icon: 'preparateur', group: 'Contenu' },
+  { id: 'users', label: 'Utilisateurs', icon: 'communaute', group: 'Gestion' },
+  { id: 'moderation', label: 'Modération', icon: 'securite', badge: '7', group: 'Gestion' },
+  { id: 'rewards', label: 'Récompenses & Sim', icon: 'cadeau', group: 'Gestion' },
+  { id: 'progression', label: 'Barème & Simulation', icon: 'options', group: 'Gestion' },
+  { id: 'audit', label: 'Audit & Paramètres', icon: 'options_avancees', group: 'Gestion' },
 ];
 
 // ─── Mock data ─────────────────────────────────────────────────────────────────
 const _KPI_DATA = [
-  { label: 'CA du jour', value: '3 240€', change: '+18%', up: true, icon: 'CurrencyEuroIcon' },
-  { label: 'CA du mois', value: '67 400€', change: '+24.8%', up: true, icon: 'ArrowTrendingUpIcon' },
-  { label: 'Commandes en attente', value: '3', change: '-2', up: true, icon: 'ClockIcon' },
-  { label: 'Nouveaux comptes', value: '47', change: '+31%', up: true, icon: 'UserPlusIcon' },
-  { label: 'Panier moyen', value: '247€', change: '+12%', up: true, icon: 'ShoppingBagIcon' },
-  { label: 'Taux config→achat', value: '34.2%', change: '+3.1%', up: true, icon: 'SparklesIcon' },
+  { label: 'CA du jour', value: '3 240€', change: '+18%', up: true, icon: 'budget' as const },
+  { label: 'CA du mois', value: '67 400€', change: '+24.8%', up: true, icon: 'denivele' as const },
+  { label: 'Commandes en attente', value: '3', change: '-2', up: true, icon: 'duree' as const },
+  { label: 'Nouveaux comptes', value: '47', change: '+31%', up: true, icon: 'amis' as const },
+  { label: 'Panier moyen', value: '247€', change: '+12%', up: true, icon: 'boutique' as const },
+  { label: 'Taux config→achat', value: '34.2%', change: '+3.1%', up: true, icon: 'ia' as const },
 ];
 
 const _PRODUCTS_DATA = [
@@ -137,7 +138,7 @@ function ConfirmModal({ title, message, onConfirm, onCancel }: {
       <div className="bg-[color:var(--lkv-forest-900)] border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 ">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl bg-red-500/15 flex items-center justify-center">
-            <Icon name="ExclamationTriangleIcon" size={18} variant="outline" className="text-red-400" />
+            <LKDVIcon name="alerte" size={18} className="text-red-400" />
           </div>
           <h3 className="font-display font-700 text-white text-base" style={{ fontFamily: 'var(--font-display)' }}>{title}</h3>
         </div>
@@ -214,12 +215,12 @@ function OverviewSection() {
   }, [supabase]);
 
   const KPI_LIVE = [
-    { label: 'Produits', value: stats.products.toString(), icon: 'ArchiveBoxIcon', color: 'text-emerald-400' },
-    { label: 'Kits', value: stats.kits.toString(), icon: 'CubeIcon', color: 'text-blue-400' },
-    { label: 'Membres', value: stats.users.toString(), icon: 'UsersIcon', color: 'text-purple-400' },
-    { label: 'Posts communauté', value: stats.posts.toString(), icon: 'ChatBubbleLeftRightIcon', color: 'text-amber-400' },
-    { label: 'Clubs', value: stats.clubs.toString(), icon: 'UserGroupIcon', color: 'text-pink-400' },
-    { label: 'Avis produits', value: stats.reviews.toString(), icon: 'StarIcon', color: 'text-yellow-400' },
+    { label: 'Produits', value: stats.products.toString(), icon: 'historique' as const, color: 'text-emerald-400' },
+    { label: 'Kits', value: stats.kits.toString(), icon: 'commande' as const, color: 'text-blue-400' },
+    { label: 'Membres', value: stats.users.toString(), icon: 'communaute' as const, color: 'text-purple-400' },
+    { label: 'Posts communauté', value: stats.posts.toString(), icon: 'messages' as const, color: 'text-amber-400' },
+    { label: 'Clubs', value: stats.clubs.toString(), icon: 'groupes' as const, color: 'text-pink-400' },
+    { label: 'Avis produits', value: stats.reviews.toString(), icon: 'points' as const, color: 'text-yellow-400' },
   ];
 
   return (
@@ -233,7 +234,7 @@ function OverviewSection() {
           {KPI_LIVE.map(kpi => (
             <div key={kpi.label} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <Icon name={kpi.icon as string} size={16} variant="outline" className={kpi.color} />
+                <LKDVIcon name={kpi.icon} size={16} className={kpi.color} />
                 <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
               </div>
               <div className="font-mono text-xl font-700 text-white" style={{ fontFamily: 'var(--font-mono)' }}>{kpi.value}</div>
@@ -310,7 +311,7 @@ function ProductsSection() {
     <div className="space-y-4">
       <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-6 text-center">
         <div className="w-12 h-12 rounded-2xl bg-[color:var(--lkv-primary)]/15 flex items-center justify-center mx-auto mb-4">
-          <Icon name="ArchiveBoxIcon" size={22} variant="outline" className="text-[color:var(--lkv-text-primary)]" />
+          <LKDVIcon name="historique" size={22} className="text-[color:var(--lkv-text-primary)]" />
         </div>
         <h3 className="font-semibold text-white mb-2">Gestion complète des produits</h3>
         <p className="text-sm text-white/40 mb-5 max-w-sm mx-auto">
@@ -318,7 +319,7 @@ function ProductsSection() {
         </p>
         <Link href="/admin/produits"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[color:var(--lkv-primary)] text-white text-sm font-medium hover:bg-[color:var(--lkv-danger)] transition-all">
-          <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+          <LKDVIcon name="lien" size={14} />
           Ouvrir la gestion produits
         </Link>
       </div>
@@ -332,7 +333,7 @@ function ProgressionRulesSection() {
     <div className="space-y-4">
       <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-6 text-center">
         <div className="w-12 h-12 rounded-2xl bg-[color:var(--lkv-primary)]/15 flex items-center justify-center mx-auto mb-4">
-          <Icon name="AdjustmentsHorizontalIcon" size={22} variant="outline" className="text-[color:var(--lkv-text-primary)]" />
+          <LKDVIcon name="options" size={22} className="text-[color:var(--lkv-text-primary)]" />
         </div>
         <h3 className="font-semibold text-white mb-2">Barème de progression — prévisualisation</h3>
         <p className="text-sm text-white/40 mb-5 max-w-sm mx-auto">
@@ -341,7 +342,7 @@ function ProgressionRulesSection() {
         </p>
         <Link href="/admin/progression"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[color:var(--lkv-primary)] text-white text-sm font-medium hover:bg-[color:var(--lkv-danger)] transition-all">
-          <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+          <LKDVIcon name="lien" size={14} />
           Ouvrir le simulateur de barème
         </Link>
       </div>
@@ -419,7 +420,7 @@ function OrdersSection() {
           </button>
         ))}
         <button className="ml-auto flex items-center gap-1.5 text-xs text-white/40 hover:text-white transition-colors">
-          <Icon name="ArrowDownTrayIcon" size={13} variant="outline" />
+          <LKDVIcon name="telecharger" size={13} />
           Exporter CSV
         </button>
       </div>
@@ -452,11 +453,11 @@ function OrdersSection() {
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       <button className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all">
-                        <Icon name="EyeIcon" size={13} variant="outline" />
+                        <LKDVIcon name="vue" size={13} />
                       </button>
                       {o.status !== 'annulé' && (
                         <button onClick={() => setConfirm(o.id)} className="p-1.5 rounded-lg hover:bg-sand-500/15 text-white/40 hover:text-sand-400 transition-all" title="Rembourser">
-                          <Icon name="ArrowUturnLeftIcon" size={13} variant="outline" />
+                          <LKDVIcon name="retour" size={13} />
                         </button>
                       )}
                     </div>
@@ -486,7 +487,7 @@ function CountriesSection() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{COUNTRIES_DATA.length} pays configurés</p>
         <button className="flex items-center gap-2 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-danger)] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
-          <Icon name="PlusIcon" size={14} variant="outline" />
+          <LKDVIcon name="plus" size={14} />
           Nouveau pays
         </button>
       </div>
@@ -519,10 +520,10 @@ function CountriesSection() {
                 <td className="px-4 py-3">
                   <div className="flex gap-1">
                     <button className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all">
-                      <Icon name="PencilIcon" size={13} variant="outline" />
+                      <LKDVIcon name="modifier" size={13} />
                     </button>
                     <button onClick={() => setConfirm(c.code)} className="p-1.5 rounded-lg hover:bg-sky-500/15 text-white/40 hover:text-sky-400 transition-all" title="Forcer resync dangerosité">
-                      <Icon name="ArrowPathIcon" size={13} variant="outline" />
+                      <LKDVIcon name="actualiser" size={13} />
                     </button>
                   </div>
                 </td>
@@ -555,7 +556,7 @@ function UsersSection() {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className="flex-1 relative">
-          <Icon name="MagnifyingGlassIcon" size={14} variant="outline" className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <LKDVIcon name="recherche" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
           <input
             type="text"
             placeholder="Rechercher un utilisateur..."
@@ -633,14 +634,14 @@ function ModerationSection() {
                   onClick={() => setQueue(q => q.filter(x => x.id !== item.id))}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-forest-500/15 text-forest-400 hover:bg-forest-500/25 transition-all text-xs font-medium"
                 >
-                  <Icon name="CheckIcon" size={12} variant="outline" />
+                  <LKDVIcon name="valider" size={12} />
                   Valider
                 </button>
                 <button
                   onClick={() => setQueue(q => q.filter(x => x.id !== item.id))}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-all text-xs font-medium"
                 >
-                  <Icon name="XMarkIcon" size={12} variant="outline" />
+                  <LKDVIcon name="fermer" size={12} />
                   Rejeter
                 </button>
               </div>
@@ -649,7 +650,7 @@ function ModerationSection() {
         ))}
         {queue.length === 0 && (
           <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-8 text-center">
-            <Icon name="CheckCircleIcon" size={32} variant="outline" className="text-forest-400 mx-auto mb-3" />
+            <LKDVIcon name="valider" size={32} className="text-forest-400 mx-auto mb-3" />
             <p className="text-sm text-white/50">File de modération vide — tout est à jour.</p>
           </div>
         )}
@@ -666,7 +667,7 @@ function ToolboxSection() {
       {tools.map(tool => (
         <div key={tool.id} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4 flex items-center gap-4">
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${tool.active ? 'bg-[color:var(--lkv-primary)]/15' : 'bg-white/5'}`}>
-            <Icon name="WrenchScrewdriverIcon" size={16} variant="outline" className={tool.active ? 'text-[color:var(--lkv-text-primary)]' : 'text-white/25'} />
+            <LKDVIcon name="options_avancees" size={16} className={tool.active ? 'text-[color:var(--lkv-text-primary)]' : 'text-white/25'} />
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-white/80">{tool.name}</p>
@@ -693,7 +694,7 @@ function ContentSection() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{GUIDES_DATA.length} guides</p>
         <button onClick={() => setEditing('new')} className="flex items-center gap-2 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-danger)] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
-          <Icon name="PlusIcon" size={14} variant="outline" />
+          <LKDVIcon name="plus" size={14} />
           Nouvel article
         </button>
       </div>
@@ -703,7 +704,7 @@ function ContentSection() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-white">Éditeur Markdown</h3>
             <button onClick={() => setEditing(null)} className="text-white/40 hover:text-white transition-colors">
-              <Icon name="XMarkIcon" size={16} variant="outline" />
+              <LKDVIcon name="fermer" size={16} />
             </button>
           </div>
           <input type="text" placeholder="Titre de l'article" className="w-full bg-[color:var(--lkv-forest-900)] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[color:var(--lkv-primary)]/50" />
@@ -716,7 +717,7 @@ function ContentSection() {
           />
           <div className="flex gap-3">
             <button className="flex items-center gap-2 bg-[color:var(--lkv-primary)] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[color:var(--lkv-danger)] transition-all">
-              <Icon name="CheckIcon" size={14} variant="outline" />
+              <LKDVIcon name="valider" size={14} />
               Publier
             </button>
             <button className="px-4 py-2 rounded-xl border border-white/10 text-sm text-white/50 hover:text-white transition-all">
@@ -746,7 +747,7 @@ function ContentSection() {
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       <button onClick={() => setEditing(g.id)} className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all">
-                        <Icon name="PencilIcon" size={13} variant="outline" />
+                        <LKDVIcon name="modifier" size={13} />
                       </button>
                     </div>
                   </td>
@@ -815,7 +816,7 @@ function AuditSection() {
                     {item.value}
                   </code>
                   <button className="p-1.5 rounded-lg hover:bg-white/8 text-white/30 hover:text-white transition-all flex-shrink-0">
-                    <Icon name="EyeSlashIcon" size={13} variant="outline" />
+                    <LKDVIcon name="vue" size={13} />
                   </button>
                 </div>
               </div>
@@ -836,13 +837,13 @@ function ConfiguratorSection() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         {[
-          { label: 'Sessions ce mois', value: '3 241', icon: 'ChatBubbleLeftRightIcon' },
-          { label: 'Destinations top', value: 'Népal', icon: 'GlobeAltIcon' },
-          { label: 'Taux d\'abandon', value: '28.4%', icon: 'ArrowTrendingDownIcon' },
-          { label: 'Config → Achat', value: '34.2%', icon: 'ShoppingBagIcon' },
+          { label: 'Sessions ce mois', value: '3 241', icon: 'messages' as const },
+          { label: 'Destinations top', value: 'Népal', icon: 'monde' as const },
+          { label: 'Taux d\'abandon', value: '28.4%', icon: 'denivele' as const },
+          { label: 'Config → Achat', value: '34.2%', icon: 'boutique' as const },
         ].map(kpi => (
           <div key={kpi.label} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
-            <Icon name={kpi.icon as string} size={16} variant="outline" className="text-[color:var(--lkv-text-primary)] mb-2" />
+            <LKDVIcon name={kpi.icon} size={16} className="text-[color:var(--lkv-text-primary)] mb-2" />
             <div className="font-mono text-xl font-700 text-white" style={{ fontFamily: 'var(--font-mono)' }}>{kpi.value}</div>
             <div className="text-xs text-white/40 mt-0.5">{kpi.label}</div>
           </div>
@@ -863,7 +864,7 @@ function ConfiguratorSection() {
         />
         <div className="flex gap-3 mt-3">
           <button className="flex items-center gap-2 bg-[color:var(--lkv-primary)] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[color:var(--lkv-danger)] transition-all">
-            <Icon name="CheckIcon" size={14} variant="outline" />
+            <LKDVIcon name="valider" size={14} />
             Sauvegarder le prompt
           </button>
           <button className="px-4 py-2 rounded-xl border border-white/10 text-sm text-white/50 hover:text-white transition-all">
@@ -888,7 +889,7 @@ function KitsSection() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{KITS.length} kits</p>
         <button className="flex items-center gap-2 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-danger)] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
-          <Icon name="PlusIcon" size={14} variant="outline" />
+          <LKDVIcon name="plus" size={14} />
           Nouveau kit
         </button>
       </div>
@@ -914,10 +915,10 @@ function KitsSection() {
                 <td className="px-4 py-3">
                   <div className="flex gap-1">
                     <button className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all">
-                      <Icon name="PencilIcon" size={13} variant="outline" />
+                      <LKDVIcon name="modifier" size={13} />
                     </button>
                     <button className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all">
-                      <Icon name="EyeIcon" size={13} variant="outline" />
+                      <LKDVIcon name="vue" size={13} />
                     </button>
                   </div>
                 </td>
@@ -944,7 +945,7 @@ function CategoriesSection() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{CATS.length} catégories</p>
         <button className="flex items-center gap-2 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-danger)] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
-          <Icon name="PlusIcon" size={14} variant="outline" />
+          <LKDVIcon name="plus" size={14} />
           Nouvelle catégorie
         </button>
       </div>
@@ -952,7 +953,7 @@ function CategoriesSection() {
         {CATS.map(cat => (
           <div key={cat.id} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4 flex items-center gap-4">
             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
-              <Icon name="TagIcon" size={14} variant="outline" className="text-white/40" />
+              <LKDVIcon name="promo" size={14} className="text-white/40" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-white/80">{cat.name}</p>
@@ -960,7 +961,7 @@ function CategoriesSection() {
             </div>
             <div className="flex gap-1">
               <button className="p-1.5 rounded-lg hover:bg-white/8 text-white/40 hover:text-white transition-all">
-                <Icon name="PencilIcon" size={13} variant="outline" />
+                <LKDVIcon name="modifier" size={13} />
               </button>
             </div>
           </div>
@@ -1123,7 +1124,7 @@ function RewardsSection() {
         {/* Kill Switches */}
         <div className="md:col-span-5 bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-2xl p-5 space-y-4">
           <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-            <Icon name="WrenchScrewdriverIcon" size={14} className="text-[color:var(--lkv-forest-200)]" />
+            <LKDVIcon name="options_avancees" size={14} className="text-[color:var(--lkv-forest-200)]" />
             Arrêt d&apos;urgence (Kill Switches)
           </h3>
           <div className="space-y-3">
@@ -1166,7 +1167,7 @@ function RewardsSection() {
         {/* Active Period Finalizer */}
         <div className="md:col-span-7 bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-2xl p-5 space-y-4">
           <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-            <Icon name="CalendarIcon" size={14} className="text-[color:var(--lkv-forest-200)]" />
+            <LKDVIcon name="calendrier" size={14} className="text-[color:var(--lkv-forest-200)]" />
             Clôture de la période active
           </h3>
           {activePeriod ? (
@@ -1207,7 +1208,7 @@ function RewardsSection() {
       {/* Row 2: Economic Simulator */}
       <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-2xl p-6 space-y-6">
         <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-          <Icon name="ArrowTrendingUpIcon" size={14} className="text-[color:var(--lkv-forest-200)]" />
+          <LKDVIcon name="denivele" size={14} className="text-[color:var(--lkv-forest-200)]" />
           Simulateur Économique (Modélisation de scénarios)
         </h3>
 
@@ -1311,7 +1312,7 @@ function RewardsSection() {
       {/* Row 3: Pending Withdrawals Moderation */}
       <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-2xl p-6 space-y-4">
         <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-          <Icon name="WrenchScrewdriverIcon" size={14} className="text-[color:var(--lkv-forest-200)]" />
+          <LKDVIcon name="options_avancees" size={14} className="text-[color:var(--lkv-forest-200)]" />
           Demandes de retraits en attente de validation
         </h3>
 
@@ -1377,7 +1378,7 @@ function RewardsSection() {
       {/* Row 4: Suspect Users List */}
       <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-2xl p-6 space-y-4">
         <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-          <Icon name="ShieldCheckIcon" size={14} className="text-[color:var(--lkv-forest-200)]" />
+          <LKDVIcon name="securite" size={14} className="text-[color:var(--lkv-forest-200)]" />
           Utilisateurs sous surveillance (Spam / Triche)
         </h3>
 
@@ -1502,7 +1503,7 @@ export default function AdminPage() {
             {/* Logo */}
             <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/8 flex-shrink-0">
               <div className="w-7 h-7 rounded-lg bg-[color:var(--lkv-primary)] flex items-center justify-center flex-shrink-0">
-                <Icon name="ShieldCheckIcon" size={14} variant="outline" className="text-white" />
+                <LKDVIcon name="securite" size={14} className="text-white" />
               </div>
               {!sidebarCollapsed && (
                 <div className="min-w-0">
@@ -1531,7 +1532,7 @@ export default function AdminPage() {
                         }`}
                         title={sidebarCollapsed ? item.label : undefined}
                       >
-                        <Icon name={item.icon as string} size={15} variant="outline" className="flex-shrink-0" />
+                        <LKDVIcon name={item.icon} size={15} className="flex-shrink-0" />
                         {!sidebarCollapsed && (
                           <>
                             <span className="flex-1 text-left truncate">{item.label}</span>
@@ -1555,14 +1556,14 @@ export default function AdminPage() {
                 href="/"
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-white/35 hover:text-white hover:bg-white/6 transition-all"
               >
-                <Icon name="ArrowLeftIcon" size={14} variant="outline" className="flex-shrink-0" />
+                <LKDVIcon name="retour" size={14} className="flex-shrink-0" />
                 {!sidebarCollapsed && <span>Retour au site</span>}
               </Link>
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-white/25 hover:text-white hover:bg-white/6 transition-all"
               >
-                <Icon name={sidebarCollapsed ? 'ChevronRightIcon' : 'ChevronLeftIcon'} size={14} variant="outline" className="flex-shrink-0" />
+                <LKDVIcon name={sidebarCollapsed ? 'suivant' : 'retour'} size={14} className="flex-shrink-0" />
                 {!sidebarCollapsed && <span>Réduire</span>}
               </button>
             </div>
@@ -1582,7 +1583,7 @@ export default function AdminPage() {
                   className="lg:hidden p-2 rounded-xl bg-white/8 text-white/60 hover:text-white transition-colors"
                   aria-label="Ouvrir le menu"
                 >
-                  <Icon name="Bars3Icon" size={18} variant="outline" />
+                  <LKDVIcon name="menu" size={18} />
                 </button>
               }
               actions={

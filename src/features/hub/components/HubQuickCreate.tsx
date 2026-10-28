@@ -1,11 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { QuickCreateTripModal } from '@/features/trips/components/QuickCreateTripModal';
 import { HUB_NEW_HREF } from '../registry/hubSectionRegistry';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * UX Hub — CTA "Nouvelle activité" de la sidebar : ouvre la création rapide
@@ -22,7 +21,7 @@ export function HubQuickCreate() {
         onClick={() => setOpen(true)}
         className="hub-liquid-action w-full min-h-[44px] !px-3 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer active:scale-[0.98]"
       >
-        <Icon name="plus" size={14} aria-hidden="true" />
+        <LKDVIcon name="plus" size={14} aria-hidden="true" />
         <span>Nouvelle activité</span>
       </Button>
       <Link

@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { formatWeight } from '@/features/carnet/detail/format';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CarnetKitSectionProps {
   detail: CarnetDetail;
@@ -24,7 +24,7 @@ export function CarnetKitSection({ detail }: CarnetKitSectionProps) {
         {total ? <span className="ckp-kit-total">{total}</span> : null}
         {detail.isOwner ? (
           <Link className="ckp-pill" href="/compas">
-            <Icon name="compass" size={16} aria-hidden="true" />
+            <LKDVIcon name="boussole" size={16} aria-hidden="true" />
             Reconfigurer
           </Link>
         ) : null}

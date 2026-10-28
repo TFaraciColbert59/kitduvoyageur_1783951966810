@@ -1,12 +1,11 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import { adventureKey, resolveAdventureHref } from '../context/adventureLists';
 import type { HubUserTripLite } from '../server/getHubAdventureData';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface HubSidebarActivitiesProps {
   trips: HubUserTripLite[];
@@ -28,7 +27,7 @@ export function HubSidebarActivities({ trips, activeSlug = null }: HubSidebarAct
     return (
       <div className="flex h-full min-h-48 flex-col items-center justify-center px-4 text-center">
         <span className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]">
-          <Icon name="compass" size={23} aria-hidden="true" />
+          <LKDVIcon name="boussole" size={23} aria-hidden="true" />
         </span>
         <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">Vos aventures, au même endroit</p>
         <p className="mt-1 text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
@@ -77,14 +76,14 @@ export function HubSidebarActivities({ trips, activeSlug = null }: HubSidebarAct
                 className="min-h-[44px] !justify-start !gap-2.5 !rounded-[var(--lkv-radius-sm)] !px-2.5 text-left"
               >
                 <span aria-hidden="true" className="shrink-0">
-                  <Icon name="compass" size={16} />
+                  <LKDVIcon name="boussole" size={16} />
                 </span>
                 <span className="flex-1 min-w-0 truncate text-[13px] font-semibold">
                   {t.title}
                 </span>
                 {current && (
-                  <Icon
-                    name="check"
+                  <LKDVIcon
+                    name="valider"
                     size={12}
                     className="shrink-0"
                     aria-label="Aventure active"

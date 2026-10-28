@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { ArrowRight } from 'lucide-react';
 import { HapticLink } from '../menu/HapticLink';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface MomentStatCardProps {
   eyebrow: string;
@@ -41,7 +41,7 @@ export function MomentStatCard({ eyebrow, badge, children, cta }: MomentStatCard
           className="hub-liquid-action relative mt-4 flex h-11 items-center justify-center gap-1.5 rounded-full px-4 text-xs font-bold transition-transform hover:brightness-[1.05] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
         >
           <span className="truncate">{cta.label}</span>
-          <ArrowRight size={14} className="shrink-0" aria-hidden="true" />
+          <LKDVIcon name="suivant" size={14} className="shrink-0" aria-hidden="true" />
         </HapticLink>
       )}
     </section>

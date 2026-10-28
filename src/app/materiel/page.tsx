@@ -1,16 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import {
-  ArrowRight,
-  Backpack,
-  CalendarCheck,
-  Package,
-  Plus,
-  Shield,
-  ShoppingBag,
-  SlidersHorizontal,
-  Sparkles,
-} from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
@@ -21,6 +10,8 @@ import {
   type MaterielSummary,
 } from '@/features/materiel/services/getMaterielSummary';
 import { hubSectionHref } from '@/features/hub/registry/hubSectionRegistry';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export const metadata: Metadata = {
   title: 'Matériel — Le Kit du Voyageur',
@@ -66,7 +57,7 @@ interface AccessLink {
   label: string;
   hint: string;
   href: string;
-  Icon: typeof Package;
+  Icon: LKDVIconComponent;
 }
 
 const ACCESS_LINKS: AccessLink[] = [
@@ -74,31 +65,31 @@ const ACCESS_LINKS: AccessLink[] = [
     label: 'Inventaire',
     hint: 'Tout votre équipement et son état',
     href: HREFS.inventaire,
-    Icon: Package,
+    Icon: lkdvIcon('inventaire'),
   },
   {
     label: 'Kits',
     hint: 'Composez et réutilisez vos kits',
     href: HREFS.kits,
-    Icon: Backpack,
+    Icon: lkdvIcon('sac'),
   },
   {
     label: 'Configurateur',
     hint: 'Générez un kit adapté à votre sortie',
     href: '/compas?etape=kit',
-    Icon: SlidersHorizontal,
+    Icon: lkdvIcon('options'),
   },
   {
     label: 'Prêts & réparations',
     hint: 'Disponibilité, prêts en cours et retours',
     href: HREFS.disponibilite,
-    Icon: CalendarCheck,
+    Icon: lkdvIcon('calendrier'),
   },
   {
     label: 'Boutique',
     hint: 'Compléter votre équipement',
     href: '/boutique',
-    Icon: ShoppingBag,
+    Icon: lkdvIcon('boutique'),
   },
 ];
 
@@ -157,7 +148,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
         className="group flex min-h-[44px] items-center gap-3 rounded-3xl border border-[var(--lkv-forest-900)]/15 bg-[var(--lkv-forest-900)] p-4 text-[var(--sage-300)] shadow-sm transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] active:scale-[0.99] motion-reduce:transition-none"
       >
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
-          <Plus size={19} aria-hidden="true" />
+          <LKDVIcon name="plus" size={19} aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-bold text-white">
@@ -169,7 +160,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
               : 'Votre inventaire est vide — commencez par un objet.'}
           </span>
         </span>
-        <ArrowRight size={17} className="shrink-0 text-white/80" aria-hidden="true" />
+        <LKDVIcon name="suivant" size={17} className="shrink-0 text-white/80" aria-hidden="true" />
       </Link>
 
       {/* ── Kit actif ── */}
@@ -235,7 +226,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
                   <ListItem
                     as="div"
                     leading={
-                      <Shield
+                      <LKDVIcon name="securite"
                         size={16}
                         className="shrink-0 text-[var(--lkv-warning-dark)]"
                         aria-hidden="true"
@@ -251,7 +242,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
           </ul>
         ) : (
           <p className="flex items-center gap-2 text-sm text-[var(--lkv-text-secondary)]">
-            <Sparkles size={15} className="shrink-0 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
+            <LKDVIcon name="ia" size={15} className="shrink-0 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
             {hasInventory
               ? 'Rien à préparer pour l’instant : aucune alerte, checklist ou prêt en attente.'
               : 'Rien à préparer pour l’instant. Ajoutez un équipement pour activer le suivi.'}

@@ -1,7 +1,7 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface KitsKpi {
   active: number;
@@ -15,7 +15,7 @@ export function KitsKpiBar({ kpi }: { kpi: KitsKpi }) {
       <Card tone="sage" className="p-3.5 sm:p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-[var(--lkv-primary)]/10 border border-[var(--lkv-primary)]/20 flex items-center justify-center text-[color:var(--lkv-text-primary)]">
-            <Icon name="package" size={20} />
+            <LKDVIcon name="inventaire" size={20} />
           </div>
           <div>
             <Eyebrow>Matériel préparé</Eyebrow>
@@ -37,7 +37,7 @@ export function KitsKpiBar({ kpi }: { kpi: KitsKpi }) {
             </span>
           </div>
           <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-[var(--lkv-text-muted)] shrink-0">
-            <Icon name="scale" size={16} />
+            <LKDVIcon name="difficulte" size={16} />
           </div>
         </div>
       </Card>

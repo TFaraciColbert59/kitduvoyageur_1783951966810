@@ -6,7 +6,6 @@ import InventoryEntryButton from '@/components/produit/InventoryEntryButton';
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import { Metric } from '@/components/ui/Metric';
 import { Badge, Button, Card, Chip, IconButton, LoadingState, PageHeader } from '@/components/ui';
 import Link from 'next/link';
@@ -18,6 +17,7 @@ import { useEquipment } from '@/hooks/useEquipment';
 import AppShell from '@/components/shell/AppShell';
 import ProductBuyBar from '@/components/produit/ProductBuyBar';
 import { cleanItemName } from '@/lib/cleanItemName';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -180,7 +180,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
           <Card className="mx-auto max-w-[32rem] p-[var(--space-8)] text-center">
             <div className="mb-[var(--space-4)] flex justify-center">
               <span className="flex h-14 w-14 items-center justify-center rounded-[var(--lkv-radius-lg)] bg-[color:var(--lkv-danger-bg)] text-[color:var(--lkv-danger)]">
-                <Icon name="ExclamationTriangleIcon" size={26} variant="outline" />
+                <LKDVIcon name="alerte" size={26} />
               </span>
             </div>
             <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
@@ -247,11 +247,11 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
             <div className="mx-auto mb-[var(--space-6)] max-w-7xl px-4 sm:px-6 lg:px-8">
               <nav className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">
                 <Link href="/" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Accueil</Link>
-                <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
+                <LKDVIcon name="suivant" size={10} className="opacity-50" />
                 <Link href="/boutique" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Boutique</Link>
-                <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
+                <LKDVIcon name="suivant" size={10} className="opacity-50" />
                 <Link href="/boutique" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">{product.categorie}</Link>
-                <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
+                <LKDVIcon name="suivant" size={10} className="opacity-50" />
                 <span className="text-[color:var(--lkv-text-primary)]">{product.nom}</span>
               </nav>
             </div>
@@ -304,7 +304,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                       aria-label="Agrandir l'image"
                       className="absolute bottom-[var(--space-4)] right-[var(--space-4)] opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                     >
-                      <Icon name="ArrowsPointingOutIcon" size={16} variant="outline" />
+                      <LKDVIcon name="plein_ecran" size={16} />
                     </IconButton>
                   </div>
                 </div>
@@ -320,7 +320,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                       {firstWords} <em className="font-serif font-normal italic text-[color:var(--lkv-text-secondary)]">{lastWords}</em>.
                     </h1>
                     <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)]">
-                      <span className="flex items-center gap-[var(--space-1)] text-[color:var(--lkv-warning)]"><Icon name="StarIcon" size={12} /> 4.9</span>
+                      <span className="flex items-center gap-[var(--space-1)] text-[color:var(--lkv-warning)]"><LKDVIcon name="points" size={12} /> 4.9</span>
                       <span className="h-1 w-1 rounded-full bg-[color:var(--lkv-border-strong)]" />
                       <span>125 avis</span>
                       <span className="h-1 w-1 rounded-full bg-[color:var(--lkv-border-strong)]" />
@@ -427,7 +427,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                           setCartAdded(true);
                           setTimeout(() => setCartAdded(false), 2500);
                         }}
-                        icon={cartAdded ? <Icon name="CheckCircleIcon" size={18} /> : <Icon name="ShoppingBagIcon" size={18} />}
+                        icon={cartAdded ? <LKDVIcon name="valider" size={18} /> : <LKDVIcon name="boutique" size={18} />}
                       >
                         {cartAdded
                           ? 'Ajouté au panier !'
@@ -453,7 +453,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                             transition={{ duration: 0.15 }}
                             className="inline-flex"
                           >
-                            <Icon name="HeartIcon" size={20} variant={isFavorite ? "solid" : "outline"} className={isFavorite ? "fill-current" : ""} />
+                            <LKDVIcon name="favoris" size={20} className={isFavorite ? "fill-current" : ""} />
                           </motion.span>
                         </AnimatePresence>
                       </IconButton>
@@ -463,14 +463,14 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                   {/* TRUST BADGES */}
                   <div className="grid grid-cols-2 gap-[var(--space-3)]">
                     {[
-                      { icon: 'ShieldCheckIcon', title: 'Garantie à vie', sub: 'Réparable 1x/an gratuit' },
-                      { icon: 'TruckIcon', title: 'Livraison offerte', sub: 'Dès 100€' },
-                      { icon: 'ArrowPathIcon', title: 'Retour 30 jours', sub: 'Sans motifs' },
-                      { icon: 'GlobeAltIcon', title: '100% Europe', sub: 'Alpes-de-Haute-Provence' },
+                      { icon: 'securite' as const, title: 'Garantie à vie', sub: 'Réparable 1x/an gratuit' },
+                      { icon: 'livraison' as const, title: 'Livraison offerte', sub: 'Dès 100€' },
+                      { icon: 'actualiser' as const, title: 'Retour 30 jours', sub: 'Sans motifs' },
+                      { icon: 'monde' as const, title: '100% Europe', sub: 'Alpes-de-Haute-Provence' },
                     ].map(badge => (
                       <Card key={badge.title} variant="compact" className="flex items-start gap-[var(--space-3)] p-[var(--space-3)]">
                         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-secondary)]">
-                          <Icon name={badge.icon as any} size={16} variant="outline" />
+                          <LKDVIcon name={badge.icon} size={16} />
                         </div>
                         <div>
                           <div className="mb-0.5 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">{badge.title}</div>
@@ -596,7 +596,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                   aria-pressed={isFavorite}
                   onClick={() => setIsFavorite(!isFavorite)}
                 >
-                  <Icon name="HeartIcon" size={18} variant={isFavorite ? 'solid' : 'outline'} />
+                  <LKDVIcon name="favoris" size={18} />
                 </IconButton>
               }
             />
@@ -682,7 +682,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
               </div>
               
               <div className="flex items-center gap-[6px] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-success-bg)] px-[var(--space-3)] py-[6px] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-                <Icon name="StarIcon" size={12} variant="solid" className="text-[color:var(--lkv-warning)]" />
+                <LKDVIcon name="points" size={12} className="text-[color:var(--lkv-warning)]" />
                 <span className="font-bold text-[color:var(--lkv-text-primary)]">{product.rating}</span>
                 <span>({product.review_count || 12} avis)</span>
               </div>

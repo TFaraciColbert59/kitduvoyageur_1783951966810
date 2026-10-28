@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Compass, Globe2, Layers, MapPin, Minus, Mountain, Plus } from 'lucide-react';
 import type { MapModeConfig } from '@/features/compte/map/types';
 import type { MapScale } from '@/features/compte/map/camera';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 export function CompteMapAttribution() {
   return (
@@ -30,9 +31,9 @@ export interface CompteMapHudProps {
 }
 
 const SCALE_ITEMS = [
-  { id: 'globe' as const, label: 'Vue globe', Icon: Globe2 },
-  { id: 'massif' as const, label: 'Vue massif', Icon: Mountain },
-  { id: 'sentier' as const, label: 'Vue sentier', Icon: Compass },
+  { id: 'globe' as const, label: 'Vue globe', Icon: lkdvIcon('monde') },
+  { id: 'massif' as const, label: 'Vue massif', Icon: lkdvIcon('montagne') },
+  { id: 'sentier' as const, label: 'Vue sentier', Icon: lkdvIcon('boussole') },
 ];
 
 /**
@@ -67,7 +68,7 @@ export function CompteMapHud({
             title={label}
             onClick={() => onScale(id)}
           >
-            <Icon size={15} strokeWidth={2} aria-hidden="true" />
+            <Icon size={15} aria-hidden="true" />
           </button>
         ))}
       </div>
@@ -79,16 +80,16 @@ export function CompteMapHud({
           aria-label="Personnaliser la carte d'empreinte"
           title="Personnaliser la carte d'empreinte"
         >
-          <Layers size={18} aria-hidden="true" />
+          <LKDVIcon name="calques" size={18} aria-hidden="true" />
         </button>
         <button type="button" onClick={onRecenter} aria-label="Recentrer" title="Recentrer">
-          <MapPin size={18} aria-hidden="true" />
+          <LKDVIcon name="point_interet" size={18} aria-hidden="true" />
         </button>
         <button type="button" onClick={onZoomIn} aria-label="Zoom avant" title="Zoom avant">
-          <Plus size={18} aria-hidden="true" />
+          <LKDVIcon name="plus" size={18} aria-hidden="true" />
         </button>
         <button type="button" onClick={onZoomOut} aria-label="Zoom arrière" title="Zoom arrière">
-          <Minus size={18} aria-hidden="true" />
+          <LKDVIcon name="annuler" size={18} aria-hidden="true" />
         </button>
       </div>
     </div>

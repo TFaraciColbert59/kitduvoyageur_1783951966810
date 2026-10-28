@@ -1,13 +1,11 @@
 ﻿'use client';
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ClockIcon as Clock } from '@/components/icons/clock';
-import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { CountdownLive } from './CountdownLive';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface DepartData {
   id: string;
@@ -72,8 +70,8 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
         <div className="glass-sub-card p-2 sm:p-3.5 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/40 shadow-2xs border border-white/60 flex items-center justify-center text-[color:var(--lkv-text-primary)] shrink-0">
-              <Clock size={15} className="sm:hidden" />
-              <Clock size={18} className="hidden sm:block" />
+              <LKDVIcon name="duree" size={15} className="sm:hidden" />
+              <LKDVIcon name="duree" size={18} className="hidden sm:block" />
             </div>
             <div>
               <span className="text-[9.5px] sm:text-[11px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
@@ -90,7 +88,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
                 Poids du kit
               </span>
               <div className="flex items-center gap-1.5 text-[18px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
-                <Icon name="backpack" size={16} />
+                <LKDVIcon name="sac" size={16} />
                 <span>{data.totalWeightKg} kg</span>
               </div>
             </div>
@@ -122,7 +120,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
               className="glass-capsule-btn primary !h-7 sm:!h-9 !text-[11px] sm:!text-xs !px-3 sm:!px-4"
             >
               <span>Cockpit</span>
-              <ArrowRightAnimated size={13} />
+              <LKDVIcon name="suivant" size={13} />
             </Link>
           ) : (
             <Link
@@ -131,7 +129,7 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
               className="glass-capsule-btn primary !h-7 sm:!h-9 !text-[11px] sm:!text-xs !px-3 sm:!px-4"
             >
               <span>Préparer</span>
-              <ArrowRightAnimated size={13} />
+              <LKDVIcon name="suivant" size={13} />
             </Link>
           )}
         </div>

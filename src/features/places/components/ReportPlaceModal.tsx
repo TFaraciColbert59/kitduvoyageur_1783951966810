@@ -1,10 +1,9 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { Button, Modal } from '@/components/ui';
 import { reportPlaceAction } from '@/app/lieux/actions';
 import type { PlaceReportReason } from '../types/place.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ReportPlaceModalProps {
   placeId: string;
@@ -68,14 +67,14 @@ export function ReportPlaceModal({ placeId, placeName, isOpen, onClose }: Report
     >
       <div className="space-y-[var(--space-4)]">
         <span className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-1)] font-bold uppercase tracking-wider text-[color:var(--lkv-warning-dark)]">
-          <Icon name="alert-triangle" className="h-4 w-4" />
+          <LKDVIcon name="alerte" className="h-4 w-4" />
           Sécurité & Éthique Outdoor
         </span>
 
         {success ? (
           <div className="py-[var(--space-4)] text-center">
             <div className="mx-auto mb-[var(--space-3)] flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)]">
-              <Icon name="check-circle2" className="h-6 w-6" />
+              <LKDVIcon name="valider" className="h-6 w-6" />
             </div>
             <h3 className="mb-[var(--space-1)] text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
               Signalement bien reçu
@@ -92,7 +91,7 @@ export function ReportPlaceModal({ placeId, placeName, isOpen, onClose }: Report
           <form onSubmit={handleSubmit} className="space-y-[var(--space-4)]">
             {errorMsg && (
               <div className="flex items-center gap-2 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/40 bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-danger-dark)]">
-                <Icon name="alert-circle" className="h-4 w-4 shrink-0" />
+                <LKDVIcon name="alerte" className="h-4 w-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { isLKDVIconName } from '@/components/ui/lkdvAliases';
 import {
   ACTIVITIES,
   ACTIVITY_CATEGORIES,
@@ -24,10 +25,10 @@ describe('catalogue d\'activites', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('donne un libelle lisible et une icone du sprite a chaque activite', () => {
+  it('donne un libelle lisible et une icone de la base LKDV V2 a chaque activite', () => {
     for (const activity of ACTIVITIES) {
       expect(activity.label.length).toBeGreaterThan(2);
-      expect(activity.icon).toMatch(/^[a-z0-9-]+$/);
+      expect(isLKDVIconName(activity.icon), activity.id).toBe(true);
     }
   });
 

@@ -8,6 +8,7 @@ import AppShell from '@/components/shell/AppShell';
 import AppImage from '@/components/ui/AppImage';
 import { Card } from '@/components/ui';
 import type { BlogPost } from './page';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const CATEGORIES = ['Tous', 'Conseils', 'Destinations', 'Comparatifs', 'Guides d\'achat', 'Lifestyle'];
 
@@ -92,7 +93,7 @@ function BlogSearchInput({ value, onChange, id }: { value: string; onChange: (v:
   return (
     <div className="relative flex-1">
       <label htmlFor={id} className="sr-only">Rechercher un article</label>
-      <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-secondary)]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <LKDVIcon name="recherche" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />
       <input
         id={id}
         type="search"

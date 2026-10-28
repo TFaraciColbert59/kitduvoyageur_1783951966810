@@ -3,7 +3,6 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, Card } from '@/components/ui';
-import Icon from '@/components/ui/AppIcon';
 import { lkvAlert } from '@/components/ui/dialogs';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import { storyMediaUrl } from '@/lib/stories/media';
@@ -12,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import dynamic from 'next/dynamic';
 import type { StoryOverlay, StorySlide, StoryUser } from './StoriesViewer';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // Les trois overlays ne servent qu'au tap : les sortir du First Load JS.
 const StoriesViewer = dynamic(() => import('./StoriesViewer'), { ssr: false });
@@ -667,7 +667,7 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
             >
               <span className="lkdv-hero-hl-ring is-more">
                 <span className="lkdv-hero-hl-in">
-                  <Icon name="plus" size={16} aria-hidden="true" />
+                  <LKDVIcon name="plus" size={16} aria-hidden="true" />
                 </span>
               </span>
               <span className="lkdv-hero-hl-label">Tout voir</span>
@@ -745,7 +745,7 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
               className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
             >
               <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
-                <Icon name="plus" size={20} aria-hidden="true" />
+                <LKDVIcon name="plus" size={20} aria-hidden="true" />
               </span>
               <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
                 {uploading ? 'Envoi…' : 'Votre story'}
@@ -806,7 +806,7 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
               className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
             >
               <span className="flex size-[64px] items-center justify-center rounded-full border border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">
-                <Icon name="clock" size={20} aria-hidden="true" />
+                <LKDVIcon name="duree" size={20} aria-hidden="true" />
               </span>
               <span className="w-full truncate text-center text-[11px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">
                 Archives

@@ -1,14 +1,10 @@
 'use client';
-
-// Hub V4 — SOS flottant (phase « En cours » uniquement). Bouton fixe en
-// bas à droite ; ouvre une confirmation (jamais d'appel automatique) avec
-// le 112 et l'accès direct aux points de contrôle.
-import Icon from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Sheet } from '@/components/ui/Sheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface SosFloatingButtonProps {
   /** Lien vers la section Sécurité (hubSectionHref). */
@@ -34,7 +30,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
         }} // lkdv-safe-area-ok
         className="fixed right-4 z-[var(--z-drawer)] !bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-danger)] hover:!brightness-[1.05] md:bottom-6 md:right-6 md:!bottom-6 flex h-14 w-14 items-center justify-center transition-transform active:scale-90 cursor-pointer"
       >
-        <Icon name="siren" size={24} aria-hidden="true" />
+        <LKDVIcon name="urgence" size={24} aria-hidden="true" />
       </IconButton>
 
       <Sheet open={open} onOpenChange={setOpen} title="Urgence">
@@ -45,7 +41,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
             className="flex items-center gap-4 rounded-2xl border-2 border-[var(--lkv-danger)] bg-[var(--lkv-danger)]/5 p-4 active:scale-[0.98] transition-transform"
           >
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-danger)] shrink-0">
-              <Icon name="phone" size={22} aria-hidden="true" />
+              <LKDVIcon name="telephone" size={22} aria-hidden="true" />
             </span>
             <span>
               <span className="block text-base font-extrabold text-[var(--lkv-danger)]">
@@ -63,7 +59,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
             className="glass-sub-card flex items-center gap-4 rounded-2xl p-4 active:scale-[0.98] transition-transform"
           >
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shrink-0">
-              <Icon name="shield" size={22} aria-hidden="true" />
+              <LKDVIcon name="securite" size={22} aria-hidden="true" />
             </span>
             <span>
               <span className="block text-base font-bold text-[var(--lkv-text-primary)]">

@@ -156,7 +156,7 @@ function SoloBody({ text, onSwitch }: { text: NousText; onSwitch: (target: NousM
       <p className="v5-note">{text('solo.note')}</p>
       {!api.canEdit && <p className="v5-note">{text('readOnly')}</p>}
       <PBtn onClick={() => void onSwitch('group')} disabled={!api.canEdit}>
-        <V5Icon name="people" size="s" />
+        <V5Icon name='communaute' size="s" />
         {text('solo.toGroup')}
       </PBtn>
     </>
@@ -199,7 +199,7 @@ function SafetyCard({ text }: { text: NousText }) {
 
   return (
     <Grp>
-      <Li icon="bell" title={text('safety.tellTitle')} detail={text('safety.tellSub')} />
+      <Li icon='notifications' title={text('safety.tellTitle')} detail={text('safety.tellSub')} />
       {route ? (
         <div className="nb-form">
           <label className="nb-field">
@@ -213,18 +213,18 @@ function SafetyCard({ text }: { text: NousText }) {
           <div className="nb-actions nb-actions--flush">
             {canShare && (
               <button type="button" className="v5-mbtn p nb-btn" onClick={() => void share()}>
-                <V5Icon name="share" size="xs" />
+                <V5Icon name='partager' size="xs" />
                 {text('safety.send')}
               </button>
             )}
             {mailto && (
               <a className={`v5-mbtn nb-btn${canShare ? '' : ' p'}`} href={mailto}>
-                <V5Icon name="chat" size="xs" />
+                <V5Icon name='messages' size="xs" />
                 {text('safety.mail')}
               </a>
             )}
             <button type="button" className="v5-mbtn nb-btn" onClick={() => void copy()}>
-              <V5Icon name="link" size="xs" />
+              <V5Icon name='lien' size="xs" />
               {text('safety.copy')}
             </button>
           </div>
@@ -246,7 +246,7 @@ function EmergencyCard({ text }: { text: NousText }) {
   const view = emergencyView(api.data.countryCode);
   return (
     <Grp>
-      <Li icon="cross" title={text('emergency.title')} detail={text(SOURCE_KEY[view.source])} />
+      <Li icon='trousse' title={text('emergency.title')} detail={text(SOURCE_KEY[view.source])} />
       {view.numbers.map((n) => (
         <div key={`${n.number}-${n.use}`} className="v5-li">
           <span className="t">
@@ -254,7 +254,7 @@ function EmergencyCard({ text }: { text: NousText }) {
             <small>{text(USE_KEY[n.use])}</small>
           </span>
           <a className="v5-mbtn p nb-btn" href={`tel:${n.number}`} aria-label={text('emergency.call', { number: n.number })}>
-            <V5Icon name="cross" size="xs" />
+            <V5Icon name='trousse' size="xs" />
             {n.number}
           </a>
         </div>
@@ -311,7 +311,7 @@ function GroupBody({ text, onSwitch }: { text: NousText; onSwitch: (target: Nous
     <>
       <Grp>
         <div className="v5-li">
-          <Fi icon="people" />
+          <Fi icon='communaute' />
           <span className="t">
             <b id="nb-people-label">{text('group.peopleLabel')}</b>
             <small>
@@ -343,14 +343,14 @@ function GroupBody({ text, onSwitch }: { text: NousText; onSwitch: (target: Nous
         ))}
         <div className="v5-li">
           <span className="v5-avadd" aria-hidden="true">
-            <V5Icon name="plus" size="s" />
+            <V5Icon name='ajouter' size="s" />
           </span>
           <span className="t">
             <b>{text('group.inviteTitle')}</b>
             <small>{text('group.inviteSub')}</small>
           </span>
           <Link className="v5-mbtn p nb-btn" href={HUB_GROUP_PATH}>
-            <V5Icon name="link" size="xs" />
+            <V5Icon name='lien' size="xs" />
             {text('group.inviteLink')}
           </Link>
         </div>
@@ -376,7 +376,7 @@ function GroupBody({ text, onSwitch }: { text: NousText; onSwitch: (target: Nous
       <Cap>{text('group.groupCap')}</Cap>
       <Grp>
         <Li
-          icon="hike"
+          icon='randonnee'
           title={held.kind === 'held' ? text('group.paceTitle', { name: held.name }) : text('group.paceNone')}
           detail={
             held.kind === 'held'
@@ -385,7 +385,7 @@ function GroupBody({ text, onSwitch }: { text: NousText; onSwitch: (target: Nous
           }
         />
         <div className="v5-li">
-          <Fi icon="bag" />
+          <Fi icon='sac' />
           <span className="t">
             <b>{gearTitle}</b>
             <small>{gearDetail}</small>
@@ -404,7 +404,7 @@ function GroupBody({ text, onSwitch }: { text: NousText; onSwitch: (target: Nous
           </span>
         </div>
         <div className="v5-li">
-          <Fi icon="euro" />
+          <Fi icon='budget' />
           <span className="t">
             <b>{text('group.budgetTitle')}</b>
             <small>{budget.perPerson != null && budget.perPerson > 0 ? text('group.budgetSub', { amount: money(budget.perPerson) }) : text('group.budgetNone')}</small>
@@ -440,7 +440,7 @@ function GroupBody({ text, onSwitch }: { text: NousText; onSwitch: (target: Nous
 
       {members > 1 && <p className="v5-note">{text('switch.blocked')}</p>}
       <PBtn onClick={() => void onSwitch('solo')} disabled={!canEdit || members > 1}>
-        <V5Icon name="person" size="s" />
+        <V5Icon name='profil' size="s" />
         {text('group.backSolo')}
       </PBtn>
     </>
@@ -452,8 +452,8 @@ export const nousDrawer: V5DrawerDef = {
   tabs: (api) => {
     const text = nousText(api.t, api.locale);
     return [
-      { icon: 'person', label: text('tabSolo') },
-      { icon: 'people', label: text('tabGroup') },
+      { icon: 'profil', label: text('tabSolo') },
+      { icon: 'communaute', label: text('tabGroup') },
     ];
   },
   title: (api) => {

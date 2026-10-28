@@ -350,7 +350,8 @@ describe('GARDE-FOU H-D85 — module hub (14 règles)', () => {
 
   it('Règle 14 : toute nature de section passe par le registre — 0 littéral de segment/id hub hors moteur, registre, tests', () => {
     const v: Violation[] = [];
-    const literalRx = new RegExp(`['"\`](${HUB_LITERALS.join('|')})['"\`]`, 'g');
+    // `inventaire` est aussi une clé d'icône LKDV (« Mon matériel ») : ce n'est pas un segment hub.
+    const literalRx = new RegExp(`(?<!lkdvIcon\\()(?<!name=)['"\`](${HUB_LITERALS.join('|')})['"\`]`, 'g');
     for (const dir of SCOPE_DIRS) {
       walk(dir, (content, file) => {
         if (exempted('R14', file)) return;

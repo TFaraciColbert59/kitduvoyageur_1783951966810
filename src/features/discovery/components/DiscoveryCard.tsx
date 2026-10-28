@@ -1,10 +1,9 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { TripRatingBadge } from './TripRatingBadge';
 import { Badge, Card } from '@/components/ui';
 import type { DiscoveryItem } from '../types/discovery.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface DiscoveryCardProps {
   item: DiscoveryItem;
@@ -65,7 +64,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 text-[color:var(--lkv-text-muted)]">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--card-tint-strong)] shadow-2xs backdrop-blur-[var(--blur-md)]">
-              <Icon name="mountain" size={16} className="text-[color:var(--lkv-text-primary)]" />
+              <LKDVIcon name="montagne" size={16} className="text-[color:var(--lkv-text-primary)]" />
             </div>
             <span className="font-mono text-[9.5px] uppercase tracking-wider">Sans photo</span>
           </div>
@@ -103,7 +102,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
           </h4>
           {location ? (
             <p className="flex items-center gap-1 truncate font-mono text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
-              <Icon name="map-pin" size={12} className="shrink-0 text-[color:var(--lkv-secondary-ink)]" />
+              <LKDVIcon name="point_interet" size={12} className="shrink-0 text-[color:var(--lkv-secondary-ink)]" />
               <span className="truncate">{location}</span>
             </p>
           ) : null}
@@ -157,7 +156,7 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
               className={PARTNER_LINK}
             >
               <span>{ctaLabel}</span>
-              <Icon name="external-link" className="h-3.5 w-3.5 opacity-70" />
+              <LKDVIcon name="lien" className="h-3.5 w-3.5 opacity-70" />
             </a>
           ) : null}
         </div>

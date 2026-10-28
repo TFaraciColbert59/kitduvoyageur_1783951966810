@@ -74,8 +74,10 @@ Toutes les couleurs doivent provenir directement de `src/design/tokens.ts` ou de
 * **Primitives form** : `LkvInput`, `LkvTextarea`, `LkvSelect`, `LkvCheckbox`, `LkvSwitch`.
 * **Anti-zoom iOS Safari** : Taille de police minimale de `16px` sur mobile (`text-[16px] sm:text-sm`).
 
-### Icônes (`LkvIcon.tsx`)
-* **Primitive officielle** : `LkvIcon` et sous-icônes animées de `@/components/icons/*`.
+### Icônes (`LKDVIcon.tsx`)
+* **Base unique** : LKDV V2, 238 SVG vert `#00542B` (`public/icons/lkdv/`), via `<LKDVIcon name="…" />` (`@/components/ui/LKDVIcon`). Aucune autre bibliothèque, aucun emoji ni SVG dessiné à la main comme pictogramme.
+* **Couleur** : vert `#00542B` sur surface claire ; blanc automatiquement quand le texte courant est clair (photo, bouton plein, thème sombre) — `src/styles/lkdv-icons.css`. Ni dégradé, ni ombre, ni autre teinte.
+* **Source** : `docs/design-system/lkdv-v2/` (planche, inventaire) ; régénération `npm run icons:import` ; contrôle `npm run verify:icons`.
 * **Target tactile minimale** : $44 \times 44 \text{ px}$.
 
 ---

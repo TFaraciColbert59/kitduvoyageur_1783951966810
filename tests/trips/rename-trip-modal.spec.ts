@@ -103,7 +103,7 @@ describe('RenameTripModal — formulaire et action', () => {
     const desktop = read('src/features/trips/planner/ItineraryPlannerClient.tsx');
 
     expect(hero).toContain('onRename');
-    expect(hero).toMatch(/Pencil/);
+    expect(hero).toContain('name="modifier"');
     // Cible tactile 44px HIG/repo : crayon hero (IconButton canonique) et déclencheur desktop.
     expect(hero).toContain('IconButton');
     expect(hero).toMatch(/h-11 w-11/);
@@ -111,6 +111,6 @@ describe('RenameTripModal — formulaire et action', () => {
     expect(desktop).toContain('aria-label="Renommer l’activité"');
     expect(mobile).toContain('<RenameTripModal');
     expect(desktop).toContain('<RenameTripModal');
-    expect(desktop).toMatch(/Icon name="pencil"/);
+    expect(desktop).toMatch(/LKDVIcon name="modifier"/);
   });
 });

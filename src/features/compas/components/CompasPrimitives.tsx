@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import Icon from '@/components/ui/Icon';
 import { useTranslation } from '@/lib/i18n/context';
 import { paginate } from '../engine/format';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /* ---------- Liste paginée : la hauteur disponible décide, jamais de défilement ---------- */
 
@@ -93,7 +94,7 @@ export function PagedList<T>({
                 disabled={current === 0}
                 onClick={() => setPage(current - 1)}
               >
-                <Icon name="chevron-left" size={16} />
+                <LKDVIcon name="retour" size={16} />
               </button>
               <span aria-live="polite">
                 {current + 1} / {pages.length}
@@ -104,7 +105,7 @@ export function PagedList<T>({
                 disabled={current >= pages.length - 1}
                 onClick={() => setPage(current + 1)}
               >
-                <Icon name="chevron-right" size={16} />
+                <LKDVIcon name="suivant" size={16} />
               </button>
             </div>
           )}
@@ -185,22 +186,22 @@ export function DoubleTapRow({
 
 /* ---------- Visuels ---------- */
 
-const CATEGORY_ICONS: Array<[RegExp, string]> = [
-  [/s[ée]cu|safety|secours|pharma/i, 'shield'],
-  [/abri|shelter|tente|tarp/i, 'tent'],
-  [/couchage|sleep|duvet|matelas/i, 'moon'],
-  [/v[êe]t|cloth|veste|chaus/i, 'shirt'],
-  [/cuisine|cook|r[ée]chaud|popote/i, 'flame'],
-  [/eau|water|filtre|gourde/i, 'droplet'],
-  [/tech|[ée]lectr|lampe|frontale|batter/i, 'zap'],
-  [/nav|gps|carte|boussole/i, 'compass'],
-  [/sac|backpack|portage/i, 'backpack'],
+const CATEGORY_ICONS: Array<[RegExp, LKDVIconName]> = [
+  [/s[ée]cu|safety|secours|pharma/i, 'securite'],
+  [/abri|shelter|tente|tarp/i, 'tente'],
+  [/couchage|sleep|duvet|matelas/i, 'lune'],
+  [/v[êe]t|cloth|veste|chaus/i, 'vetement'],
+  [/cuisine|cook|r[ée]chaud|popote/i, 'feu'],
+  [/eau|water|filtre|gourde/i, 'eau_potable'],
+  [/tech|[ée]lectr|lampe|frontale|batter/i, 'energie'],
+  [/nav|gps|carte|boussole/i, 'boussole'],
+  [/sac|backpack|portage/i, 'sac'],
 ];
 
-export function categoryIcon(category: string | null, name = ''): string {
+export function categoryIcon(category: string | null, name = ''): LKDVIconName {
   const hay = `${category ?? ''} ${name}`;
   for (const [re, icon] of CATEGORY_ICONS) if (re.test(hay)) return icon;
-  return 'package';
+  return 'inventaire';
 }
 
 export function Thumb({
@@ -225,7 +226,7 @@ export function Thumb({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={image} alt={alt ?? name} loading="lazy" />
       ) : (
-        <Icon name={categoryIcon(category, name)} size={large ? 34 : 20} />
+        <LKDVIcon name={categoryIcon(category, name)} size={large ? 34 : 20} />
       )}
     </span>
   );
@@ -239,12 +240,12 @@ export function Chip({
   children,
 }: {
   tone?: Tone;
-  icon?: string;
+  icon?: LKDVIconName;
   children: ReactNode;
 }) {
   return (
     <span className="cp-chip" data-tone={tone}>
-      {icon && <Icon name={icon} size={13} />}
+      {icon && <LKDVIcon name={icon} size={13} />}
       {children}
     </span>
   );
@@ -257,7 +258,7 @@ export function Segments<K extends string>({
   label,
 }: {
   value: K;
-  options: ReadonlyArray<{ id: K; label: string; icon?: string }>;
+  options: ReadonlyArray<{ id: K; label: string; icon?: LKDVIconName }>;
   onChange: (id: K) => void;
   label: string;
 }) {
@@ -283,7 +284,7 @@ export function Segments<K extends string>({
           aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
         >
-          {o.icon && <Icon name={o.icon} size={15} aria-hidden="true" />}
+          {o.icon && <LKDVIcon name={o.icon} size={15} aria-hidden="true" />}
           {o.label}
         </button>
       ))}

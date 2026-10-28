@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const FOOTER_LINKS = [
   { label: 'Explorer', href: '/explorer' },
@@ -51,7 +51,7 @@ export default function Footer() {
 
         {subscribed ? (
           <div className="text-xs font-bold text-[color:var(--lkv-text-primary)] px-3 py-1 flex items-center gap-1.5 animate-fade-in">
-            <Icon name="CheckCircleIcon" size={14} />
+            <LKDVIcon name="valider" size={14} />
             <span>Bienvenue dans l'aventure !</span>
           </div>
         ) : (
@@ -111,7 +111,7 @@ export default function Footer() {
             © {new Date().getFullYear()}
           </span>
           <div className="glass-pill flex items-center gap-1 text-[10px] font-semibold text-[color:var(--lkv-text-primary)] px-3 py-1.5">
-            <Icon name="ShieldCheckIcon" size={12} className="text-[color:var(--lkv-text-primary)]" />
+            <LKDVIcon name="securite" size={12} className="text-[color:var(--lkv-text-primary)]" />
             <span>100% Sécurisé</span>
           </div>
         </div>

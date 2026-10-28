@@ -3,7 +3,7 @@
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from '@/lib/utils';
-import Icon from './Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type SheetDetent = 'auto' | 'medium' | 'large';
 
@@ -163,7 +163,7 @@ export function Sheet({
                       aria-label="Fermer"
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[color:var(--lkv-text-secondary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] hover:text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
                     >
-                      <Icon name="x" size={18} aria-hidden="true" />
+                      <LKDVIcon name="fermer" size={18} aria-hidden="true" />
                     </button>
                   </Dialog.Close>
                 )}

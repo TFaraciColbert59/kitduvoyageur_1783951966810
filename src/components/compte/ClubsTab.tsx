@@ -4,9 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import Icon from '@/components/ui/AppIcon';
 import { Button, Tabs } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type FilterMode = 'tous' | 'admin' | 'membre';
 
@@ -249,14 +249,14 @@ export default function ClubsTab({ profile }: { profile?: any }) {
             href="/groupes"
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
           >
-            <Icon name="PlusIcon" size={14} />
+            <LKDVIcon name="plus" size={14} />
             <span>Nouveau groupe</span>
           </Link>
           <Link
             href="/clubs/nouveau"
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold"
           >
-            <Icon name="UserGroupIcon" size={14} />
+            <LKDVIcon name="groupes" size={14} />
             <span>+ Créer un club</span>
           </Link>
         </div>

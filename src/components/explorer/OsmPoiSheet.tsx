@@ -3,7 +3,8 @@
 import React from 'react';
 import type { RoutePoiSummary } from '@/features/explorer-osm/domain/types';
 import { Badge, Button, Card, Sheet } from '@/components/ui';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 interface OsmPoiSheetProps {
   poi: RoutePoiSummary | null;
@@ -13,16 +14,16 @@ interface OsmPoiSheetProps {
 
 const CATEGORY_META: Record<
   string,
-  { label: string; icon: string; color: string }
+  { label: string; icon: LKDVIconName; color: string }
 > = {
-  refuge: { label: 'Refuge / Cabane', icon: 'home', color: 'var(--lkv-primary)' },
-  shelter: { label: 'Abri', icon: 'shield', color: 'var(--lkv-primary)' },
-  water: { label: 'Eau potable', icon: 'droplet', color: '#0284c7' },
-  summit: { label: 'Sommet / Col', icon: 'mountain', color: '#e11d48' },
-  camp: { label: 'Bivouac / Camping', icon: 'tent', color: '#16a34a' },
-  viewpoint: { label: 'Point de vue', icon: 'eye', color: '#d97706' },
-  parking: { label: 'Parking', icon: 'navigation', color: '#64748b' },
-  transit: { label: 'Transport', icon: 'compass', color: '#7c3aed' },
+  refuge: { label: 'Refuge / Cabane', icon: 'accueil', color: 'var(--lkv-primary)' },
+  shelter: { label: 'Abri', icon: 'securite', color: 'var(--lkv-primary)' },
+  water: { label: 'Eau potable', icon: 'eau_potable', color: '#0284c7' },
+  summit: { label: 'Sommet / Col', icon: 'montagne', color: '#e11d48' },
+  camp: { label: 'Bivouac / Camping', icon: 'tente', color: '#16a34a' },
+  viewpoint: { label: 'Point de vue', icon: 'vue', color: '#d97706' },
+  parking: { label: 'Parking', icon: 'gps', color: '#64748b' },
+  transit: { label: 'Transport', icon: 'boussole', color: '#7c3aed' },
 };
 
 export default function OsmPoiSheet({ poi, open, onClose }: OsmPoiSheetProps) {
@@ -30,7 +31,7 @@ export default function OsmPoiSheet({ poi, open, onClose }: OsmPoiSheetProps) {
 
   const meta = CATEGORY_META[poi.category] || {
     label: poi.category,
-    icon: 'map-pin',
+    icon: 'point_interet',
     color: 'var(--lkv-text-primary)',
   };
 
@@ -49,7 +50,7 @@ export default function OsmPoiSheet({ poi, open, onClose }: OsmPoiSheetProps) {
               className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-xs"
               style={{ backgroundColor: meta.color }}
             >
-              <Icon name={meta.icon as any} size={20} />
+              <LKDVIcon name={meta.icon} size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">

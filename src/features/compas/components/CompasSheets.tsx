@@ -12,7 +12,6 @@ import {
   type CompasBottleApplicant,
   type CompasBottleState,
 } from '../server/bottleActions';
-import Icon from '@/components/ui/Icon';
 import { addToCart } from '@/lib/cart';
 import {
   addCustomTripItemAction,
@@ -98,6 +97,8 @@ import {
   type SheetState,
   type StepFlow,
 } from './compasTypes';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /* ---------- Titre de chaque tiroir ---------- */
 
@@ -195,8 +196,8 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
         value={tab}
         onChange={setTab}
         options={[
-          { id: 'fiche', label: t('compas.sheets.item.tabSheet'), icon: 'package' },
-          { id: 'historique', label: t('compas.sheets.item.tabHistory'), icon: 'clock' },
+          { id: 'fiche', label: t('compas.sheets.item.tabSheet'), icon: 'inventaire' as const },
+          { id: 'historique', label: t('compas.sheets.item.tabHistory'), icon: 'duree' as const },
         ]}
       />
       {tab === 'historique' ? (
@@ -214,7 +215,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minWidth: 0 }}>
           <Chip tone={status.tone}>{status.label}</Chip>
           {line.vital && (
-            <Chip tone="bad" icon="shield-alert">
+            <Chip tone="bad" icon="danger">
               {t('compas.sheets.item.vital')}
             </Chip>
           )}
@@ -229,7 +230,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
             </Chip>
           )}
           {line.packed && (
-            <Chip tone="good" icon="check">
+            <Chip tone="good" icon="valider">
               {t('compas.sheets.item.packed')}
             </Chip>
           )}
@@ -285,7 +286,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
             className="cp-btn cp-btn--pg"
             onClick={() => ctl.togglePacked(line)}
           >
-            <Icon name={line.packed ? 'rotate-ccw' : 'check'} size={16} />
+            <LKDVIcon name={line.packed ? 'actualiser' : 'valider'} size={16} />
             {line.packed ? t('compas.sheets.item.unpack') : t('compas.sheets.item.pack')}
           </button>
           <button
@@ -293,7 +294,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
             className="cp-btn cp-btn--soft"
             onClick={() => ctl.open({ kind: 'carrier', lineId: line.id })}
           >
-            <Icon name="user-plus" size={16} />
+            <LKDVIcon name="amis" size={16} />
             {t('compas.sheets.title.carrier')}
           </button>
         </div>
@@ -309,7 +310,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
             )
           }
         >
-          <Icon name="archive-restore" size={16} />
+          <LKDVIcon name="actualiser" size={16} />
           {t('compas.sheets.item.gotBack')}
         </button>
       )}
@@ -317,9 +318,9 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
         <div className="cp-seg" role="group" aria-label={t('compas.sheets.item.find')}>
           {(
             [
-              { id: 'emprunter', label: t('compas.sheets.common.borrow'), icon: 'handshake' },
-              { id: 'louer', label: t('compas.sheets.common.rent'), icon: 'calendar-days' },
-              { id: 'acheter', label: t('compas.sheets.common.buy'), icon: 'shopping-bag' },
+              { id: 'emprunter', label: t('compas.sheets.common.borrow'), icon: 'affiliation' },
+              { id: 'louer', label: t('compas.sheets.common.rent'), icon: 'jours' },
+              { id: 'acheter', label: t('compas.sheets.common.buy'), icon: 'boutique' },
             ] as const
           ).map((m) => (
             <button
@@ -328,7 +329,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
               aria-pressed={false}
               onClick={() => ctl.open({ kind: 'acquire', lineId: line.id, mode: m.id })}
             >
-              <Icon name={m.icon} size={15} aria-hidden="true" />
+              <LKDVIcon name={m.icon} size={15} aria-hidden="true" />
               {m.label}
             </button>
           ))}
@@ -337,7 +338,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
       <div className="cp-actions">
         {product?.slug && (
           <Link className="cp-btn" href={`/produit/${product.slug}`}>
-            <Icon name="external-link" size={16} />
+            <LKDVIcon name="lien" size={16} />
             {t('compas.sheets.item.productPage')}
           </Link>
         )}
@@ -355,7 +356,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
                   if (ok) ctl.back();
                 }}
               >
-                <Icon name="trash2" size={16} />
+                <LKDVIcon name="supprimer" size={16} />
                 {t('compas.sheets.item.confirmRemove')}
               </button>
               <button type="button" className="cp-btn" onClick={() => setConfirm(false)}>
@@ -364,7 +365,7 @@ function ItemSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
             </>
           ) : (
             <button type="button" className="cp-btn" onClick={() => setConfirm(true)}>
-              <Icon name="trash2" size={16} />
+              <LKDVIcon name="supprimer" size={16} />
               {t('compas.sheets.item.remove')}
             </button>
           ))}
@@ -454,7 +455,7 @@ function ProductRow({
             href={`/produit/${product.slug}`}
             aria-label={t('compas.sheets.product.pageOf', { name: product.name })}
           >
-            <Icon name="external-link" size={16} aria-hidden="true" />
+            <LKDVIcon name="lien" size={16} aria-hidden="true" />
           </Link>
         )}
         <button
@@ -542,17 +543,17 @@ function AcquireSheet({
           {
             id: 'emprunter',
             label: `${t('compas.sheets.common.borrow')} · ${teammates.length}`,
-            icon: 'handshake',
+            icon: 'affiliation' as const,
           },
           {
             id: 'louer',
             label: `${t('compas.sheets.common.rent')} · ${counts.louer}`,
-            icon: 'calendar-days',
+            icon: 'jours' as const,
           },
           {
             id: 'acheter',
             label: `${t('compas.sheets.common.buy')} · ${counts.acheter}`,
-            icon: 'shopping-bag',
+            icon: 'boutique' as const,
           },
         ]}
       />
@@ -683,7 +684,7 @@ function AcquireSheet({
           <p className="cp-note">{t('compas.sheets.acquire.payNote')}</p>
           <div className="cp-actions">
             <Link className="cp-btn cp-btn--soft" href="/panier">
-              <Icon name="shopping-cart" size={16} />
+              <LKDVIcon name="panier" size={16} />
               {t('compas.sheets.acquire.seeCart')}
             </Link>
           </div>
@@ -739,12 +740,12 @@ function AddSheet({
   const options =
     target === 'kit'
       ? ([
-          { id: 'inventaire', label: t('compas.sheets.common.inventory'), icon: 'archive' },
-          { id: 'boutique', label: t('compas.sheets.add.shop'), icon: 'shopping-bag' },
+          { id: 'inventaire', label: t('compas.sheets.common.inventory'), icon: 'historique' },
+          { id: 'boutique', label: t('compas.sheets.add.shop'), icon: 'boutique' },
           { id: 'libre', label: t('compas.sheets.add.other'), icon: 'plus' }, // i18n-ok : icône
         ] as const)
       : ([
-          { id: 'boutique', label: t('compas.sheets.add.shop'), icon: 'shopping-bag' },
+          { id: 'boutique', label: t('compas.sheets.add.shop'), icon: 'boutique' },
           { id: 'libre', label: t('compas.sheets.add.other'), icon: 'plus' }, // i18n-ok : icône
         ] as const);
 
@@ -953,7 +954,7 @@ function FreeItemForm({
         </div>
       )}
       <button type="submit" className="cp-btn cp-btn--pg" disabled={ctl.busy}>
-        <Icon name="plus" size={16} />
+        <LKDVIcon name="plus" size={16} />
         {t('compas.sheets.common.add')}
       </button>
     </form>
@@ -1031,8 +1032,8 @@ function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
         value={shared ? 'commun' : 'perso'}
         onChange={(v) => setShared(v === 'commun')}
         options={[
-          { id: 'commun', label: t('compas.sheets.carrier.sharedGroup'), icon: 'users' },
-          { id: 'perso', label: t('compas.sheets.common.personal'), icon: 'user' },
+          { id: 'commun', label: t('compas.sheets.carrier.sharedGroup'), icon: 'communaute' as const },
+          { id: 'perso', label: t('compas.sheets.common.personal'), icon: 'profil' as const },
         ]}
       />
       <PagedList
@@ -1068,7 +1069,7 @@ function CarrierSheet({ ctl, lineId }: { ctl: CompasCtl; lineId: string }) {
               </span>
             </span>
             <span className="cp-row__end">
-              {line.ownerId === m.userId && <Icon name="check" size={18} />}
+              {line.ownerId === m.userId && <LKDVIcon name="valider" size={18} />}
             </span>
           </button>
         )}
@@ -1118,7 +1119,7 @@ function StepSheet({
       title={before?.label}
       onClick={() => before && ctl.replace({ kind: 'step', step, flow: before.id as StepFlow })}
     >
-      <Icon name="chevron-left" size={18} />
+      <LKDVIcon name="retour" size={18} />
     </button>
   );
   const next = after ? (
@@ -1128,12 +1129,12 @@ function StepSheet({
       onClick={() => ctl.replace({ kind: 'step', step, flow: after.id as StepFlow })}
     >
       {t('compas.sheets.step.next')}
-      <Icon name="chevron-right" size={16} />
+      <LKDVIcon name="suivant" size={16} />
     </button>
   ) : (
     <button type="button" className="cp-btn cp-btn--pg cp-sheet__next" onClick={() => ctl.close()}>
       {t('compas.sheets.step.finish')}
-      <Icon name="check" size={16} />
+      <LKDVIcon name="valider" size={16} />
     </button>
   );
   return (
@@ -1253,7 +1254,7 @@ function PartySize({ ctl }: { ctl: CompasCtl }) {
             disabled={ctl.busy || crew.size <= Math.max(1, crew.loads.length)}
             onClick={() => set(crew.size - 1)}
           >
-            <Icon name="minus" size={16} />
+            <LKDVIcon name="annuler" size={16} />
           </button>
           <button
             type="button"
@@ -1262,7 +1263,7 @@ function PartySize({ ctl }: { ctl: CompasCtl }) {
             disabled={ctl.busy || crew.size >= 50}
             onClick={() => set(crew.size + 1)}
           >
-            <Icon name="plus" size={16} />
+            <LKDVIcon name="plus" size={16} />
           </button>
         </span>
       )}
@@ -1326,7 +1327,7 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
           className="cp-alertline"
           onClick={() => ctl.open({ kind: 'step', step: 'kit', flow: 'sacs' })}
         >
-          <Icon name="users" size={16} />
+          <LKDVIcon name="communaute" size={16} />
           <span className="cp-alertline__t">
             {pl(
               crew.unassignedShared.length,
@@ -1335,7 +1336,7 @@ function EquipeFlow({ ctl }: { ctl: CompasCtl }) {
               { count: num(crew.unassignedShared.length) }
             )}
           </span>
-          <Icon name="chevron-right" size={14} />
+          <LKDVIcon name="suivant" size={14} />
         </button>
       )}
       <HubGroupLink />
@@ -1524,7 +1525,7 @@ function BudgetFlow({ ctl }: { ctl: CompasCtl }) {
         render={(c) => (
           <div key={c.category} className="cp-row" style={staticRow}>
             <span className="cp-thumb">
-              <Icon name="coins" size={18} />
+              <LKDVIcon name="points" size={18} />
             </span>
             <span className="cp-row__t">
               <b>{c.category}</b>
@@ -1552,7 +1553,7 @@ function FormalitiesLine({ formalities: f }: { formalities: CompasData['formalit
     <div data-testid="formalities-line">
       <div className="cp-row" style={staticRow}>
         <span className="cp-thumb">
-          <Icon name="coins" size={18} />
+          <LKDVIcon name="points" size={18} />
         </span>
         <span className="cp-row__t">
           <b>{f.title}</b>
@@ -1592,7 +1593,7 @@ function ExpenseForm({ ctl }: { ctl: CompasCtl }) {
   if (!open)
     return (
       <button type="button" className="cp-btn cp-btn--soft" onClick={() => setOpen(true)}>
-        <Icon name="plus" size={16} />
+        <LKDVIcon name="plus" size={16} />
         {t('compas.sheets.expense.open')}
       </button>
     );
@@ -1829,7 +1830,7 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
     <>
       <div className="cp-row" style={staticRow}>
         <span className="cp-thumb">
-          <Icon name="users" size={20} />
+          <LKDVIcon name="communaute" size={20} />
         </span>
         <span className="cp-row__t">
           <b>
@@ -1939,7 +1940,7 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
         >
           <div className="cp-bottle__h">
             <b>
-              <Icon name="send" size={15} aria-hidden="true" /> {t('compas.sheets.bottle.formTitle')}
+              <LKDVIcon name="partager" size={15} aria-hidden="true" /> {t('compas.sheets.bottle.formTitle')}
             </b>
           </div>
           <p className="cp-sub">
@@ -2021,7 +2022,7 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
             {t('compas.sheets.bottle.adultCheck')}
           </label>
           <button type="submit" className="cp-btn cp-btn--pg" disabled={ctl.busy}>
-            <Icon name="send" size={16} />
+            <LKDVIcon name="partager" size={16} />
             {t('compas.sheets.bottle.launch')}
           </button>
           <p className="cp-note">{t('compas.sheets.bottle.launchNote')}</p>
@@ -2029,7 +2030,7 @@ function AnnonceFlow({ ctl }: { ctl: CompasCtl }) {
       )}
 
       <Link className="cp-btn cp-btn--tap" href={HUB_GROUP_PATH}>
-        <Icon name="users" size={16} aria-hidden="true" />
+        <LKDVIcon name="communaute" size={16} aria-hidden="true" />
         {t('compas.sheets.bottle.inviteKnown')}
       </Link>
     </>
@@ -2054,11 +2055,11 @@ const bookingLabel = (t: SheetsT, status: string) => {
   const s = BOOKING_STATUS[status];
   return s ? t(s.key) : status;
 };
-const VERTICAL_LABEL: Record<string, { key: TranslationKey; icon: string }> = {
-  hotel: { key: 'compas.sheets.booking.hotel', icon: 'bed-double' },
-  flight: { key: 'compas.sheets.booking.flight', icon: 'plane' },
-  car: { key: 'compas.sheets.booking.car', icon: 'car' },
-  activity: { key: 'compas.sheets.booking.activity', icon: 'ticket' },
+const VERTICAL_LABEL: Record<string, { key: TranslationKey; icon: LKDVIconName }> = {
+  hotel: { key: 'compas.sheets.booking.hotel', icon: 'hotel' },
+  flight: { key: 'compas.sheets.booking.flight', icon: 'avion' },
+  car: { key: 'compas.sheets.booking.car', icon: 'voiture' },
+  activity: { key: 'compas.sheets.booking.activity', icon: 'billet' },
 };
 
 // Motif sur la catégorie (donnée partenaire), pas un texte affiché.
@@ -2157,7 +2158,7 @@ function StaySearch({
                 }
               >
                 <span className="cp-thumb">
-                  <Icon name="bed-double" size={20} />
+                  <LKDVIcon name="hotel" size={20} />
                 </span>
                 <span className="cp-row__t cp-row__t--wrap">
                   <b>{o.title}</b>
@@ -2243,7 +2244,7 @@ function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
             }}
           >
             <span className="cp-thumb">
-              <Icon name="bed-double" size={20} />
+              <LKDVIcon name="hotel" size={20} />
             </span>
             <span className="cp-row__t">
               <b>{t('compas.sheets.nights.night', { day })}</b>
@@ -2295,14 +2296,14 @@ function NuitsFlow({ ctl, focusDay }: { ctl: CompasCtl; focusDay?: number }) {
                 rel="sponsored nofollow noopener"
               >
                 <span className="cp-thumb">
-                  <Icon name="bed-double" size={20} />
+                  <LKDVIcon name="hotel" size={20} />
                 </span>
                 <span className="cp-row__t">
                   <b>{l.label}</b>
                   <span>{l.partner ?? t('compas.sheets.common.partner')}</span>
                 </span>
                 <span className="cp-row__end">
-                  <Icon name="external-link" size={16} />
+                  <LKDVIcon name="lien" size={16} />
                 </span>
               </a>
             )}
@@ -2351,7 +2352,7 @@ function ReservationsFlow({ ctl }: { ctl: CompasCtl }) {
           const known = VERTICAL_LABEL[b.vertical];
           const v = known
             ? { label: t(known.key), icon: known.icon }
-            : { label: b.vertical, icon: 'ticket' };
+            : { label: b.vertical, icon: 'billet' as const };
           const st = { label: bookingLabel(t, b.status), tone: BOOKING_STATUS[b.status]?.tone };
           return (
             <div
@@ -2361,7 +2362,7 @@ function ReservationsFlow({ ctl }: { ctl: CompasCtl }) {
               data-vertical={verticalOf(b.vertical)}
             >
               <span className="cp-thumb">
-                <Icon name={v.icon} size={20} />
+                <LKDVIcon name={v.icon} size={20} />
               </span>
               <span className="cp-row__t">
                 <b>{v.label}</b>
@@ -2411,7 +2412,7 @@ function EtatsFlow({ ctl }: { ctl: CompasCtl }) {
     <>
       <div className="cp-row" style={staticRow}>
         <span className="cp-thumb">
-          <Icon name="bed-double" size={20} />
+          <LKDVIcon name="hotel" size={20} />
         </span>
         <span className="cp-row__t">
           <b>{t('compas.sheets.states.toBook')}</b>
@@ -2438,16 +2439,16 @@ function EtatsFlow({ ctl }: { ctl: CompasCtl }) {
 }
 
 // Motifs sur la catégorie (donnée partenaire), pas des textes affichés.
-const OFFER_ICONS: Array<[RegExp, string]> = [
-  [/vol|flight|avion/i, 'plane'],
-  [/h[ôo]tel|h[ée]berg|stay|refuge|g[îi]te/i, 'bed-double'], // i18n-ok
-  [/voiture|car|location/i, 'car'],
+const OFFER_ICONS: Array<[RegExp, LKDVIconName]> = [
+  [/vol|flight|avion/i, 'avion'],
+  [/h[ôo]tel|h[ée]berg|stay|refuge|g[îi]te/i, 'hotel'], // i18n-ok
+  [/voiture|car|location/i, 'voiture'],
   [/train|rail/i, 'train'],
 ];
 
-function offerIcon(category: string | null): string {
+function offerIcon(category: string | null): LKDVIconName {
   for (const [re, icon] of OFFER_ICONS) if (re.test(category ?? '')) return icon;
-  return 'ticket';
+  return 'billet';
 }
 
 /**
@@ -2512,7 +2513,7 @@ function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat 
             ctl.replace({ kind: 'step', step: 'resa', flow: 'nuits' }) // i18n-ok : identifiant
           }
         >
-          <Icon name="bed-double" size={16} />
+          <LKDVIcon name="hotel" size={16} />
           {t('compas.sheets.offers.nightly')}
         </button>
       )}
@@ -2533,7 +2534,7 @@ function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat 
                 rel="sponsored nofollow noopener"
               >
                 <span className="cp-thumb">
-                  <Icon name={offerIcon(l.category)} size={20} />
+                  <LKDVIcon name={offerIcon(l.category)} size={20} />
                 </span>
                 <span className="cp-row__t">
                   <b>{l.label}</b>
@@ -2543,7 +2544,7 @@ function OffresFlow({ ctl, initialCat }: { ctl: CompasCtl; initialCat?: ResaCat 
                   </span>
                 </span>
                 <span className="cp-row__end">
-                  <Icon name="external-link" size={16} />
+                  <LKDVIcon name="lien" size={16} />
                 </span>
               </a>
             )}
@@ -2647,7 +2648,7 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
           className="cp-btn cp-btn--pg"
           disabled={state.status === 'loading' || !model.dates.start}
         >
-          <Icon name="search" size={16} />
+          <LKDVIcon name="recherche" size={16} />
           {state.status === 'loading'
             ? t('compas.sheets.live.searching')
             : t('compas.sheets.live.search')}
@@ -2663,8 +2664,8 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
           render={(x) => (
             <div key={x.title} className="cp-row" style={staticRow}>
               <span className="cp-thumb">
-                <Icon
-                  name={vertical === 'flight' ? 'plane' : vertical === 'car' ? 'car' : 'ticket'}
+                <LKDVIcon
+                  name={vertical === 'flight' ? 'avion' : vertical === 'car' ? 'voiture' : 'billet'}
                   size={20}
                 />
               </span>
@@ -2695,8 +2696,8 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
               const body = (
                 <>
                   <span className="cp-thumb">
-                    <Icon
-                      name={vertical === 'flight' ? 'plane' : vertical === 'car' ? 'car' : 'ticket'}
+                    <LKDVIcon
+                      name={vertical === 'flight' ? 'avion' : vertical === 'car' ? 'voiture' : 'billet'}
                       size={20}
                     />
                   </span>
@@ -2721,7 +2722,7 @@ function LiveSearch({ ctl, vertical }: { ctl: CompasCtl; vertical: CompasLiveVer
                 >
                   {body}
                   <span className="cp-row__end">
-                    <Icon name="external-link" size={16} />
+                    <LKDVIcon name="lien" size={16} />
                   </span>
                 </a>
               ) : (
@@ -2758,13 +2759,13 @@ function RaisonsFlow({ ctl }: { ctl: CompasCtl }) {
           // doivent se lire en entier (Meteoalarm), pas finir en points de suspension.
           <div key={`${r.source}-${r.label}`} className="cp-row cp-row--tall cp-row--wrap" style={staticRow}>
             <span className="cp-thumb">
-              <Icon
+              <LKDVIcon
                 name={
                   r.severity === 'block'
-                    ? 'shield-alert'
+                    ? 'danger'
                     : r.severity === 'warn'
-                      ? 'alert-triangle'
-                      : 'info'
+                      ? 'alerte'
+                      : 'informations'
                 }
                 size={20}
               />
@@ -2854,7 +2855,7 @@ function VerdictExplain({ ctl }: { ctl: CompasCtl }) {
           disabled={state.status === 'loading'}
           onClick={() => void explain()}
         >
-          <Icon name="sparkles" size={16} aria-hidden="true" />
+          <LKDVIcon name="ia" size={16} aria-hidden="true" />
           {state.status === 'loading'
             ? t('compas.sheets.explain.loading')
             : t('compas.sheets.explain.button')}
@@ -3109,7 +3110,7 @@ function SourcesFlow({ ctl }: { ctl: CompasCtl }) {
           className="cp-btn cp-btn--soft"
           onClick={() => ctl.open({ kind: 'add', target: 'inventaire' })}
         >
-          <Icon name="archive" size={16} />
+          <LKDVIcon name="historique" size={16} />
           {t('compas.sheets.common.addToInventory')}
         </button>
       </div>
@@ -3149,7 +3150,7 @@ function KitListFlow({ ctl, flow }: { ctl: CompasCtl; flow: KitListMode }) {
             className="cp-btn cp-btn--pg cp-btn--block"
             onClick={() => ctl.open({ kind: 'add', target: 'kit' })}
           >
-            <Icon name="plus" size={16} />
+            <LKDVIcon name="plus" size={16} />
             {t('compas.sheets.common.addToKit')}
           </button>
         </div>
@@ -3178,17 +3179,17 @@ function TallList<T>({
   );
 }
 
-const ADVICE_ICON: Record<string, string> = {
-  pluie: 'cloud-rain',
-  etanche: 'package',
-  froid: 'thermometer',
-  chaud: 'thermometer',
-  extremites: 'cloud-snow',
-  soleil: 'sun',
-  moustiques: 'shield',
-  filtre: 'filter',
-  frontale: 'sunset',
-  eau: 'droplet',
+const ADVICE_ICON: Record<string, LKDVIconName> = {
+  pluie: 'pluie',
+  etanche: 'inventaire',
+  froid: 'meteo',
+  chaud: 'meteo',
+  extremites: 'neige',
+  soleil: 'soleil',
+  moustiques: 'securite',
+  filtre: 'filtres',
+  frontale: 'panorama',
+  eau: 'eau_potable',
 };
 
 /** Mot cherché dans la boutique quand on ajoute depuis un conseil (sous-chaîne, sans accent). */
@@ -3218,7 +3219,7 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
         render={(a) => (
           <div key={a.id} className="cp-row cp-row--tall" style={staticRow}>
             <span className="cp-thumb">
-              <Icon name={ADVICE_ICON[a.need] ?? 'sparkles'} size={20} />
+              <LKDVIcon name={ADVICE_ICON[a.need] ?? 'ia'} size={20} />
             </span>
             <span className="cp-row__t cp-row__t--wrap">
               <b>{a.label}</b>
@@ -3261,21 +3262,21 @@ function ConseilsFlow({ ctl }: { ctl: CompasCtl }) {
   );
 }
 
-const POI_ICON: Record<RoutePoiCategory, string> = {
-  water: 'droplet',
-  refuge: 'home',
-  camping: 'tent',
-  viewpoint: 'eye',
-  peak: 'mountain',
-  parking: 'car',
-  resto: 'flame',
-  commerce: 'shopping-cart',
-  sante: 'heart-pulse',
-  hebergement: 'bed-double',
+const POI_ICON: Record<RoutePoiCategory, LKDVIconName> = {
+  water: 'eau_potable',
+  refuge: 'accueil',
+  camping: 'tente',
+  viewpoint: 'vue',
+  peak: 'montagne',
+  parking: 'voiture',
+  resto: 'feu',
+  commerce: 'panier',
+  sante: 'trousse',
+  hebergement: 'hotel',
   transport: 'bus',
-  toilets: 'droplets',
-  via_ferrata: 'link',
-  aerialway_station: 'arrow-up-right',
+  toilets: 'eau_potable',
+  via_ferrata: 'lien',
+  aerialway_station: 'exporter',
 };
 
 function TraceFlow({ ctl }: { ctl: CompasCtl }) {
@@ -3322,7 +3323,7 @@ function TraceFlow({ ctl }: { ctl: CompasCtl }) {
         render={(p) => (
           <div key={p.id} className="cp-row" style={staticRow}>
             <span className="cp-thumb">
-              <Icon name={POI_ICON[p.category]} size={20} />
+              <LKDVIcon name={POI_ICON[p.category]} size={20} />
             </span>
             <span className="cp-row__t">
               <b>{poiLabel(p)}</b>
@@ -3443,7 +3444,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
           aria-expanded={false}
           onClick={() => setShowCreate(true)}
         >
-          <Icon name="plus" size={16} />
+          <LKDVIcon name="plus" size={16} />
           {t('compas.sheets.kits.create')}
         </button>
       )}
@@ -3454,7 +3455,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
           aria-label={t('compas.sheets.kits.create')}
         >
           <b className="cp-mkkit__t">
-            <Icon name="plus" size={15} aria-hidden="true" /> {t('compas.sheets.kits.create')}
+            <LKDVIcon name="plus" size={15} aria-hidden="true" /> {t('compas.sheets.kits.create')}
           </b>
           <span className="cp-note">
             {pl(ctl.lines.length, 'compas.sheets.kits.saveAsOne', 'compas.sheets.kits.saveAsOther')}
@@ -3515,7 +3516,7 @@ function MesKitsFlow({ ctl }: { ctl: CompasCtl }) {
           return (
             <div key={kit.id} className="cp-row cp-row--tall" style={staticRow}>
               <span className="cp-thumb">
-                <Icon name="package" size={20} />
+                <LKDVIcon name="inventaire" size={20} />
               </span>
               <span className="cp-row__t cp-row__t--wrap">
                 <b>
@@ -3621,7 +3622,7 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
     <>
       <div className="cp-row" style={staticRow}>
         <span className="cp-thumb">
-          <Icon name="droplet" size={20} />
+          <LKDVIcon name="eau_potable" size={20} />
         </span>
         <span className="cp-row__t">
           <b>
@@ -3685,7 +3686,7 @@ function EauFlow({ ctl }: { ctl: CompasCtl }) {
           render={(p) => (
             <div key={p.id} className="cp-row" style={staticRow}>
               <span className="cp-thumb">
-                <Icon name="droplet" size={20} />
+                <LKDVIcon name="eau_potable" size={20} />
               </span>
               <span className="cp-row__t">
                 <b>{poiLabel(p)}</b>
@@ -3913,7 +3914,7 @@ function SacsFlow({ ctl }: { ctl: CompasCtl }) {
                 </span>
               </span>
               <span className="cp-row__end">
-                <Icon name="chevron-right" size={16} />
+                <LKDVIcon name="suivant" size={16} />
               </span>
             </button>
           );

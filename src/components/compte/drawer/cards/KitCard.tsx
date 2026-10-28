@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { wearPercent } from './WearGauge';
 import { formatEuro, formatHistoryLine, formatWeight } from './format';
 import { generatedProductImage } from './productImage';
-import { FileText, GitFork, Layers, LayoutGrid, Package, Share2 } from 'lucide-react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 export type KitViewer = 'owner' | 'visitor';
 
@@ -534,9 +535,9 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
   );
   const kitActions = owner ? (
     <div className="lkdv-kit-direct-actions" role="group" aria-label={`Actions du kit ${name}`}>
-      <button type="button" disabled={actionDisabled} onClick={() => void forkKit()} aria-label="Récupérer"><GitFork size={15} /><span>Récupérer</span></button>
-      <button type="button" disabled={actionDisabled} onClick={() => void shareKit()} aria-label="Partager"><Share2 size={15} /><span>Partager</span></button>
-      <button type="button" disabled={actionDisabled} onClick={() => openSheet()} aria-label="Fiche"><FileText size={15} /><span>Fiche</span></button>
+      <button type="button" disabled={actionDisabled} onClick={() => void forkKit()} aria-label="Récupérer"><LKDVIcon name="dupliquer" size={15} /><span>Récupérer</span></button>
+      <button type="button" disabled={actionDisabled} onClick={() => void shareKit()} aria-label="Partager"><LKDVIcon name="partager" size={15} /><span>Partager</span></button>
+      <button type="button" disabled={actionDisabled} onClick={() => openSheet()} aria-label="Fiche"><LKDVIcon name="facture" size={15} /><span>Fiche</span></button>
       <details className="lkdv-kit-more-actions">
         <summary>Autres actions du kit</summary>
         <div>
@@ -694,9 +695,9 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
       <div className="lkdv-kit-selector" role="tablist" aria-label={`États du kit ${name}`}>
         <span className="lkdv-kit-lens" aria-hidden="true" style={{ '--i': view } as React.CSSProperties} />
         {[
-          { icon: LayoutGrid, label: 'Vue du kit' },
-          { icon: Layers, label: 'Composition du kit' },
-          { icon: Package, label: 'Détail du produit' },
+          { icon: lkdvIcon('calques'), label: 'Vue du kit' },
+          { icon: lkdvIcon('calques'), label: 'Composition du kit' },
+          { icon: lkdvIcon('inventaire'), label: 'Détail du produit' },
         ].map((item, index) => {
           const Icon = item.icon;
           return (
@@ -710,7 +711,7 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
               disabled={index === 2 && !products.length}
               onClick={() => goTo(index)}
             >
-              <Icon size={15} strokeWidth={1.8} />
+              <Icon size={15} />
             </button>
           );
         })}

@@ -1,10 +1,9 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import type { PlannerStep } from './plannerEngine';
 import { formatCivilDayIndex } from '@/lib/dates/tripDates';
 import { Badge, ListItem, Modal } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface MoveStepModalProps {
   isOpen: boolean;
@@ -90,8 +89,8 @@ export function MoveStepModal({
                   }
                   trailing={
                     !isCurrent ? (
-                      <Icon
-                        name="arrow-right"
+                      <LKDVIcon
+                        name="suivant"
                         size={16}
                         className="shrink-0 text-[color:var(--lkv-text-primary)]"
                       />

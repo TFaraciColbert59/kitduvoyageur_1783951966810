@@ -28,7 +28,7 @@ function step(overrides: Partial<ItineraryStep> = {}): ItineraryStep {
     price: { amount: null, currency: 'EUR', state: 'a_reserver' },
     state: 'propose',
     kept: false,
-    icon: 'map',
+    icon: 'carte',
     lat: null,
     lon: null,
     mealSlot: null,

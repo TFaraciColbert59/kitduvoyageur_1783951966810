@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, CalendarDays, Check } from 'lucide-react';
 import { Button, Card, EmptyState, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { GroupeCriticalTask } from '../../../mobile/groupeEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface GroupeCriticalPathProps {
   tasks: GroupeCriticalTask[];
@@ -101,7 +101,7 @@ export function GroupeCriticalPath({
                 aria-label="Tâches précédentes"
                 className="h-10 w-10"
               >
-                <ArrowLeft size={16} aria-hidden="true" />
+                <LKDVIcon name="retour" size={16} aria-hidden="true" />
               </IconButton>
               <IconButton
                 variant="solid"
@@ -110,7 +110,7 @@ export function GroupeCriticalPath({
                 aria-label="Tâches suivantes"
                 className="h-10 w-10"
               >
-                <ArrowRight size={16} aria-hidden="true" />
+                <LKDVIcon name="suivant" size={16} aria-hidden="true" />
               </IconButton>
             </>
           )}
@@ -173,7 +173,7 @@ export function GroupeCriticalPath({
                       aria-label={`Marquer « ${task.title} » comme terminée`}
                       className="h-10 w-10"
                     >
-                      <Check size={13} aria-hidden="true" />
+                      <LKDVIcon name="valider" size={13} aria-hidden="true" />
                     </IconButton>
 
                     <label
@@ -182,7 +182,7 @@ export function GroupeCriticalPath({
                       }`}
                       title="Changer l’échéance"
                     >
-                      <CalendarDays size={15} aria-hidden="true" />
+                      <LKDVIcon name="jours" size={15} aria-hidden="true" />
                       <input
                         type="date"
                         value={task.dueDate ? task.dueDate.slice(0, 10) : ''}

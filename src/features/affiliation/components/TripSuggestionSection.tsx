@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui';
 import { useTripAffiliate } from './TripAffiliateProvider';
 import { StepBookingLinkCta } from './StepBookingLinkCta';
@@ -9,6 +8,7 @@ import {
   resolveEnrichmentSuggestions,
   type EnrichmentSuggestion,
 } from '../engine/enrichmentSuggestions';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TripSuggestionSectionProps {
   /** Suggestions réelles du job d'enrichissement (`metadata.enrichment_suggestions`). */
@@ -48,7 +48,7 @@ export function TripSuggestionSection({
       className={`p-[var(--space-4)] ${className}`}
     >
       <p className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-medium uppercase tracking-[var(--tracking-caps)] text-[color:var(--lkv-text-secondary)]">
-        <Sparkles size={12} aria-hidden="true" />
+        <LKDVIcon name="ia" size={12} aria-hidden="true" />
         Suggestions de réservation
       </p>
       <ul className="mt-[var(--space-2)] space-y-[var(--space-2)]">

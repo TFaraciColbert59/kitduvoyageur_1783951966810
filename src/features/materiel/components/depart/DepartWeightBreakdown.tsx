@@ -1,11 +1,10 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { Button, Card } from '@/components/ui';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface WeightBreakdownItem {
   category: string;
@@ -77,7 +76,7 @@ export function DepartWeightBreakdown({
       >
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-2xl bg-[var(--lkv-primary-hover)]/10 border border-[var(--lkv-primary-hover)]/20 flex items-center justify-center text-[var(--lkv-primary-hover)] shadow-2xs shrink-0">
-            <Icon name="scale" size={18} />
+            <LKDVIcon name="difficulte" size={18} />
           </div>
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-[color:var(--lkv-text-primary)]">
@@ -97,7 +96,7 @@ export function DepartWeightBreakdown({
             animate={shouldReduceMotion ? {} : { rotate: isOpen ? 180 : 0 }}
             transition={{ duration: 0.18 }}
           >
-            <ChevronDown size={15} className="text-[var(--lkv-text-muted)]" />
+            <LKDVIcon name="bas" size={15} className="text-[var(--lkv-text-muted)]" />
           </motion.div>
         </div>
       </Button>

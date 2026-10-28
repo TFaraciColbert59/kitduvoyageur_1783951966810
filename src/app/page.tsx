@@ -3,8 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
 import { Badge, Button, Card } from '@/components/ui';
-import Icon from '@/components/ui/AppIcon';
 import { ResumeActiveTripCard } from '@/features/trips/components/ResumeActiveTripCard';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -62,7 +62,7 @@ export default function HomePage() {
                     <Button
                       variant="primary"
                       size="lg"
-                      icon={<Icon name="arrow-right" size={14} aria-hidden="true" />}
+                      icon={<LKDVIcon name="suivant" size={14} aria-hidden="true" />}
                       iconPosition="trailing"
                       className="w-full sm:w-auto"
                     >
@@ -83,7 +83,7 @@ export default function HomePage() {
                 {/* Reviews */}
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-[var(--lkv-warm-500)]">
-                    <Icon name="star" size={16} aria-hidden="true" />
+                    <LKDVIcon name="points" size={16} aria-hidden="true" />
                     <span className="text-3xl font-bold text-[var(--lkv-on-primary)] leading-none ml-1">4,9</span>
                   </div>
                   <p className="text-[11px] uppercase font-mono tracking-widest text-[var(--lkv-on-primary-muted)] leading-tight font-medium">
@@ -163,7 +163,7 @@ export default function HomePage() {
                   <div className="absolute inset-x-0 bottom-0 h-32 bg-[var(--lkv-forest-950)]" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                     <Badge className="bg-[var(--lkv-surface)] py-1.5 text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm">3 Jours / 50 km</Badge>
-                    <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+                    <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><LKDVIcon name="suivant" size={14} /></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
                     <h3 className="text-white text-2xl font-bold leading-tight mb-2">Chartreuse<br/>sentier des balcons</h3>
@@ -187,7 +187,7 @@ export default function HomePage() {
                   <div className="absolute inset-x-0 bottom-0 h-32 bg-[var(--lkv-forest-950)]" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                     <Badge className="bg-[var(--lkv-surface)] py-1.5 text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm">2 Jours</Badge>
-                    <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+                    <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><LKDVIcon name="suivant" size={14} /></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
                     <h3 className="text-white text-2xl font-bold leading-tight mb-2">Bivouac étoilé<br/>Vercors</h3>
@@ -210,7 +210,7 @@ export default function HomePage() {
                   <div className="absolute inset-x-0 bottom-0 h-32 bg-[var(--lkv-forest-950)]" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                     <Badge className="bg-[var(--lkv-surface)] py-1.5 text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm">1 Jour</Badge>
-                    <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+                    <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><LKDVIcon name="suivant" size={14} /></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
                     <h3 className="text-white text-2xl font-bold leading-tight mb-2">Kayak<br/>Sans-Rançon</h3>
@@ -240,7 +240,7 @@ export default function HomePage() {
                 <Link href="/manifeste" className="mb-16 inline-flex">
                   <Button
                     variant="secondary"
-                    icon={<Icon name="arrow-right" size={14} aria-hidden="true" />}
+                    icon={<LKDVIcon name="suivant" size={14} aria-hidden="true" />}
                     iconPosition="trailing"
                   >
                     Lire notre manifeste

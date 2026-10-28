@@ -276,7 +276,7 @@ export function insertWaypoint(
     price: PRICE_TO_CHECK,
     state: 'propose',
     kept: false,
-    icon: 'map-pin',
+    icon: 'point_interet',
     lat: coord.lat,
     lon: coord.lon,
   };

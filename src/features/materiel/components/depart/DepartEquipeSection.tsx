@@ -1,10 +1,9 @@
 'use client';
-
-import { FileText } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import { DepartParticipants } from '@/features/materiel/components/depart/DepartParticipants';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface DepartEquipeSectionProps {
   depart: DepartDetail;
@@ -37,7 +36,7 @@ export function DepartEquipeSection({ depart, onOpenSheet }: DepartEquipeSection
       <Button
         onClick={handleOpenSheet}
         aria-haspopup="dialog"
-        icon={<FileText size={15} aria-hidden="true" />}
+        icon={<LKDVIcon name="facture" size={15} aria-hidden="true" />}
         fullWidth
         className="mt-3 min-h-[44px] py-3 text-sm font-bold"
       >

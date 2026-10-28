@@ -3,7 +3,6 @@
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, CheckCheck } from 'lucide-react';
 import type { NotificationItem } from '@/features/compte/server/compte';
 import { DrawerEmpty, DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import {
@@ -13,6 +12,7 @@ import {
   notificationIcon,
   timeAgo,
 } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type Group = 'today' | 'yesterday' | 'week' | 'earlier';
 const GROUPS: Array<{ id: Group; label: string }> = [
@@ -136,7 +136,7 @@ export function NotificationsPane({ filter = 0 }: { filter?: number }) {
         </div>
         {unread > 0 ? (
           <button type="button" className="lkdv-compte-btn ghost" onClick={() => void mark({ all: true })} disabled={busy}>
-            <CheckCheck size={14} aria-hidden="true" /> Tout lire
+            <LKDVIcon name="valider" size={14} aria-hidden="true" /> Tout lire
           </button>
         ) : null}
       </div>
@@ -151,7 +151,7 @@ export function NotificationsPane({ filter = 0 }: { filter?: number }) {
           }
           action={
             <span className="lkdv-compte-empty-ico" aria-hidden="true">
-              <Bell size={20} />
+              <LKDVIcon name="notifications" size={20} />
             </span>
           }
         />

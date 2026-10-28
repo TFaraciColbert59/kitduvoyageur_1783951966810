@@ -14,9 +14,9 @@ import { compasCreateTripAction } from '../server/compasActions';
 import { V5Icon, type V5IconName } from './ui/icons';
 
 const IDEAS: Array<{ key: 'ideaVercors' | 'ideaSolo' | 'ideaGr20'; icon: V5IconName }> = [
-  { key: 'ideaVercors', icon: 'people' },
-  { key: 'ideaSolo', icon: 'person' },
-  { key: 'ideaGr20', icon: 'peak' },
+  { key: 'ideaVercors', icon: 'communaute' },
+  { key: 'ideaSolo', icon: 'profil' },
+  { key: 'ideaGr20', icon: 'sommet' },
 ];
 
 /**
@@ -90,7 +90,7 @@ export function V5Start({
               onChange={(e) => setText(e.target.value)}
             />
             <button type="submit" disabled={!ready || pending} aria-busy={pending} aria-label={t('compas.v5.start.go')}>
-              <V5Icon name="right" />
+              <V5Icon name='suivant' />
             </button>
           </form>
           <div className="v5-ideas" role="group" aria-label={t('compas.v5.start.title')}>

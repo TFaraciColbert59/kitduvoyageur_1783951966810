@@ -203,7 +203,7 @@ describe('formats', () => {
     expect(formatDuration(330)).toBe('5 h 30');
     expect(formatDayMonth('2026-10-10')).toBe('sam. 10 oct.');
     expect(formatWeekday('2026-10-12')).toBe('lun. 12');
-    expect(weatherLabel(0)).toEqual({ label: 'Dégagé', icon: 'sun' });
+    expect(weatherLabel(0)).toEqual({ label: 'Dégagé', icon: 'soleil' });
     expect(rulerTicks()).toEqual(RULER_TICKS);
     expect(activityLabel('hiking')).toBe('Randonnée');
     expect(durationZone(48)).toBe('Expédition');
@@ -217,7 +217,7 @@ describe('formats', () => {
     expect(formatDuration(330, 'en')).toBe('5 h 30 min');
     expect(formatDayMonth('2026-10-10', 'en')).toBe('Sat, Oct 10');
     expect(formatWeekday('2026-10-12', 'en')).toBe('Mon 12');
-    expect(weatherLabel(0, 'en')).toEqual({ label: 'Clear', icon: 'sun' });
+    expect(weatherLabel(0, 'en')).toEqual({ label: 'Clear', icon: 'soleil' });
     expect(weatherLabel(95, 'en').label).toBe('Thunderstorm');
     expect(rulerTicks('en').map(([, l]) => l)).toEqual(['15 min', '1 h', '1 d', '1 wk', '1 mo']);
     expect(activityLabel('randonnee', 'en')).toBe('Hiking');

@@ -47,7 +47,7 @@ const FEUILLE = join(__dirname, '..', 'adventure-prep.css');
 const CSS = readFileSync(FEUILLE, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ');
 
 /** Le composant qui peint : sans lui, il n'y aurait rien a neutraliser. */
-const ICON_TSX = join(__dirname, '..', '..', '..', 'components', 'ui', 'Icon', 'Icon.tsx');
+const ICON_TSX = join(__dirname, '..', '..', '..', 'components', 'ui', 'LKDVIcon.tsx');
 const ICON_SRC = readFileSync(ICON_TSX, 'utf8');
 
 /** Les conteneurs que l'ancienne regle visait, et ou vivent les icones. */
@@ -87,11 +87,21 @@ describe('Icones masquees — la peinture du glyphe ne doit jamais etre annulee'
     expect(CSS).not.toMatch(/span\[style\*=['"]mask-image['"]\][^{]*\{[^}]*background[^}]*!important/);
   });
 
-  it('ICONE-03: Icon.tsx peint toujours son glyphe', () => {
-    // Sans ceoud painting, ICONE-01 neadiatorait plus a rien : il n y aurait
-    // plus de fond a annuler, et le test passerait sur un Icon casse.
-    expect(ICON_SRC).toContain("backgroundColor: color || 'currentColor'");
-    expect(ICON_SRC).toContain('maskImage:');
+  it('ICONE-03: LKDVIcon peint toujours son glyphe (masque SVG + peinture de .lkdv-icon)', () => {
+    // Sans cette garde, ICONE-01 ne surveillerait rien : il n'y aurait plus de peinture à neutraliser.
+    expect(ICON_SRC).toContain("'--lkdv-icon-url'");
+    expect(ICON_SRC).toContain("'lkdv-icon'");
+    const sheet = readFileSync(join(__dirname, '..', '..', '..', 'styles', 'lkdv-icons.css'), 'utf8');
+    expect(sheet).toContain('mask-image: var(--lkdv-icon-url, none)');
+    expect(sheet).toMatch(/background-color:\s*#00542b/i);
+  });
+
+  it('ICONE-03b: aucune règle de la feuille du préparateur ne cache ni n efface une icone LKDV', () => {
+    const coupables = regles()
+      .filter((r) => r.selecteur.includes('lkdv-icon'))
+      .filter((r) => /(?:display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0\b|background(?:-color)?\s*:\s*(?:transparent|none))/i.test(r.corps))
+      .map((r) => r.selecteur);
+    expect(coupables).toEqual([]);
   });
 
   it('ICONE-04: les conteneurs vises existent bien dans la feuille', () => {

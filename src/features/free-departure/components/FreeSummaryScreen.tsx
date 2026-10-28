@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import { Button, Switch } from '@/components/ui';
 import { shortActivityLabel } from '../engine/activityGuess';
 import type { ActivityGuessConfidence } from '../engine/activityGuess';
@@ -9,6 +8,7 @@ import type { FreePrivacyId, FreePrivacyRow } from '../engine/privacy';
 import { guessHeadline, NO_VALUE, type TracePoint } from '../engine/freeSession';
 import { FreeActivityPickerSheet } from './FreeActivityPickerSheet';
 import { FreeTraceMap } from './FreeTraceMap';
+import { LKDVIcon, type LKDVIconName } from '@/components/ui/LKDVIcon';
 
 export interface FreeSummaryScreenProps {
   /** Activite retenue, ou `null` si rien n'est defendable. */
@@ -17,7 +17,7 @@ export interface FreeSummaryScreenProps {
    * Icone du catalogue. Optionnelle : une identite inconnue ne doit pas
    * faire tomber l'ecran au moment ou l'utilisateur relit sa sortie.
    */
-  activityIcon?: string;
+  activityIcon?: LKDVIconName;
   /** `true` = deduction moteur : le titre devient une question. */
   isGuess: boolean;
   /** Justification composee de mesures. `null` quand l'utilisateur a choisi. */
@@ -72,7 +72,7 @@ export function FreeSummaryScreen({
 }: FreeSummaryScreenProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const shortLabel = label === null ? null : shortActivityLabel(label);
-  const icon = activityIcon ?? 'route';
+  const icon = activityIcon ?? 'itineraire';
   const title = shortLabel === null ? 'Activité à confirmer' : guessHeadline(shortLabel, isGuess);
 
   return (
@@ -81,7 +81,7 @@ export function FreeSummaryScreen({
         <div className="prep-nav free-top">
           <span className="free-top__title">Activité terminée</span>
           <button type="button" className="free-close" onClick={onClose} aria-label="Revenir au hub">
-            <Icon name="x" size={18} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={18} aria-hidden="true" />
           </button>
         </div>
 
@@ -132,7 +132,7 @@ export function FreeSummaryScreen({
           {shortLabel ? (
             <div className="free-proposal">
               <span className="free-proposal__icon" aria-hidden="true">
-                <Icon name={icon} size={20} />
+                <LKDVIcon name={icon} size={20} />
               </span>
               <div className="free-proposal__body">
                 <p className="free-proposal__title">{shortLabel}</p>
@@ -140,7 +140,7 @@ export function FreeSummaryScreen({
               </div>
               {isGuess ? (
                 <span className="free-badge" data-confidence={guessConfidence ?? 'proposee'}>
-                  <Icon name="sparkles" size={13} aria-hidden="true" />
+                  <LKDVIcon name="ia" size={13} aria-hidden="true" />
                   {badgeLabel(guessConfidence)}
                 </span>
               ) : null}
@@ -157,7 +157,7 @@ export function FreeSummaryScreen({
                 data-disabled={row.disabled ? 'true' : undefined}
                 aria-disabled={row.disabled ? 'true' : undefined}
               >
-                <Icon name={row.id === 'trace' ? 'lock' : 'share2'} size={17} aria-hidden="true" />
+                <LKDVIcon name={row.id === 'trace' ? 'verrou' : 'partager'} size={17} aria-hidden="true" />
                 <div className="free-privacy__text">
                   <span className="free-privacy__label">{row.label}</span>
                   <span className="free-privacy__hint">{row.hint}</span>
@@ -181,7 +181,7 @@ export function FreeSummaryScreen({
 
         <div className="prep-footer free-actions free-actions--stack">
           <Button variant="primary" size="lg" fullWidth onClick={() => setPickerOpen(true)}>
-            <Icon name="pencil" size={18} aria-hidden="true" />
+            <LKDVIcon name="modifier" size={18} aria-hidden="true" />
             Corriger
           </Button>
         </div>

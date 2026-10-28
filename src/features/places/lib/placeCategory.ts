@@ -1,4 +1,5 @@
-import { MapPin, Mountain, Tent, Droplet, Compass } from 'lucide-react';
+
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 /**
  * Helpers de catégorie des lieux — module partagé volontairement SANS
@@ -34,17 +35,17 @@ export function getCategoryLabel(category: string): string {
 export function getCategoryIcon(category: string) {
   switch (category) {
     case 'refuge':
-      return Mountain;
+      return lkdvIcon('montagne');
     case 'bivouac':
     case 'campground':
-      return Tent;
+      return lkdvIcon('tente');
     case 'water_source':
-      return Droplet;
+      return lkdvIcon('eau_potable');
     case 'pass':
     case 'viewpoint':
     case 'summit':
-      return Compass;
+      return lkdvIcon('boussole');
     default:
-      return MapPin;
+      return lkdvIcon('point_interet');
   }
 }

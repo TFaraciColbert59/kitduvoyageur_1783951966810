@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export type DesktopDockTab = 'stats' | 'carnet' | 'capture' | 'moment' | 'more' | 'copilot';
 
@@ -63,9 +64,7 @@ export default function DesktopDockBar({
               : 'text-[var(--glass-secondary)] hover:text-[var(--glass-label)] hover:bg-white/10'
           }`}
         >
-          <svg className="w-4 h-4 stroke-current stroke-[2] fill-none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 20l6-12 4 6 4-2 2 8" />
-          </svg>
+          <LKDVIcon name="montagne" size={16} className="w-4 h-4 stroke-[2]" />
           <span className="text-xs font-semibold">Stats</span>
         </button>
 
@@ -77,10 +76,7 @@ export default function DesktopDockBar({
               : 'text-[var(--glass-secondary)] hover:text-[var(--glass-label)] hover:bg-white/10'
           }`}
         >
-          <svg className="w-4 h-4 stroke-current stroke-[2] fill-none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 9h5M8 13h8M8 17h6" />
-          </svg>
+          <LKDVIcon name="facture" size={16} className="w-4 h-4 stroke-[2]" />
           <span className="text-xs font-semibold">Carnet</span>
         </button>
       </div>
@@ -99,15 +95,7 @@ export default function DesktopDockBar({
               : 'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-sm hover:brightness-105'
           }`}
         >
-          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-            {isPaused ? (
-              <path d="M8 5v14l11-7z" />
-            ) : isActive ? (
-              <path stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" d="M8 5v14M16 5v14" fill="none" />
-            ) : (
-              <path d="M8 5v14l11-7z" />
-            )}
-          </svg>
+          <LKDVIcon name="lecture" size={16} className="w-4 h-4" />
           <span>{isPaused ? 'REPRENDRE' : isActive ? 'PAUSE' : 'DÉMARRER'}</span>
         </button>
 
@@ -133,11 +121,7 @@ export default function DesktopDockBar({
           }`}
           title="Capture photo / note"
         >
-          <svg className="w-5 h-5 stroke-current stroke-[1.9] fill-none" viewBox="0 0 24 24">
-            <rect x="3" y="5" width="18" height="14" rx="2" />
-            <circle cx="12" cy="12" r="4" />
-            <path strokeLinecap="round" d="M8 2v3M16 2v3" />
-          </svg>
+          <LKDVIcon name="camera" size={20} className="w-5 h-5 stroke-[1.9]" />
           <span className="text-[11px] font-mono tracking-wider uppercase font-medium">Capture</span>
         </button>
 
@@ -150,9 +134,7 @@ export default function DesktopDockBar({
           }`}
           title="Ajouter un moment fort"
         >
-          <svg className="w-5 h-5 stroke-current stroke-[1.9] fill-none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l3 7h7l-6 4 2 8-6-4-6 4 2-8-6-4h7z" />
-          </svg>
+          <LKDVIcon name="points" size={20} className="w-5 h-5 stroke-[1.9]" />
           <span className="text-[11px] font-mono tracking-wider uppercase font-medium">Moment</span>
         </button>
 
@@ -165,9 +147,7 @@ export default function DesktopDockBar({
           }`}
           title="Plus d'actions"
         >
-          <svg className="w-5 h-5 stroke-current stroke-[1.9] fill-none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M4 6h16M4 18h10" />
-          </svg>
+          <LKDVIcon name="menu" size={20} className="w-5 h-5 stroke-[1.9]" />
         </button>
       </div>
     </div>

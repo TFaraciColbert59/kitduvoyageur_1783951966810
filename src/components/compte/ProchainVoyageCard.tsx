@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Card } from '@/components/ui';
 import { ProchainVoyage } from '@/lib/mock/compte-marceline';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ProchainVoyageCardProps {
   voyage: ProchainVoyage;
@@ -38,7 +38,7 @@ export default function ProchainVoyageCard({ voyage, compact = false }: Prochain
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold w-full sm:w-auto shadow-sm"
           >
             <span>Explorer les sorties</span>
-            <Icon name="ArrowRightIcon" size={13} />
+            <LKDVIcon name="suivant" size={13} />
           </Link>
         </div>
       </Card>

@@ -65,7 +65,7 @@ const TMB_WAYPOINTS: Carte3DWaypoint[] = [
     distanceKm: 0,
     details: 'Départ historique du Tour du Mont-Blanc dans la vallée alpine.',
     photoUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-    weatherSnapshot: { tempC: 18, windKmh: 8, condition: 'Ensoleillé', icon: 'sun' },
+    weatherSnapshot: { tempC: 18, windKmh: 8, condition: 'Ensoleillé', icon: 'soleil' },
   },
   {
     id: 'tmb-wpt-col-voza',
@@ -97,7 +97,7 @@ const TMB_WAYPOINTS: Carte3DWaypoint[] = [
     altitudeM: 2329,
     distanceKm: 34.0,
     details: 'Point de bascule mythique vers le Beaufortain et l’Italie.',
-    weatherSnapshot: { tempC: 9, windKmh: 35, condition: 'Vent fort', icon: 'wind' },
+    weatherSnapshot: { tempC: 9, windKmh: 35, condition: 'Vent fort', icon: 'vent' },
   },
   {
     id: 'tmb-wpt-croix-bonhomme',
@@ -119,7 +119,7 @@ const TMB_WAYPOINTS: Carte3DWaypoint[] = [
     altitudeM: 2516,
     distanceKm: 52.4,
     details: 'Frontière franco-italienne. Vue spectaculaire sur les arêtes sud du Mont Blanc et le Val Veny.',
-    weatherSnapshot: { tempC: 7, windKmh: 28, condition: 'Frais & Dégagé', icon: 'cloud-sun' },
+    weatherSnapshot: { tempC: 7, windKmh: 28, condition: 'Frais & Dégagé', icon: 'meteo' },
   },
   {
     id: 'tmb-wpt-rif-elisabetta',
@@ -152,7 +152,7 @@ const TMB_WAYPOINTS: Carte3DWaypoint[] = [
     altitudeM: 1224,
     distanceKm: 76.8,
     details: 'Cité alpine du versant italien, idéale pour le ravitaillement et les produits valdôtains.',
-    weatherSnapshot: { tempC: 21, windKmh: 10, condition: 'Grand soleil', icon: 'sun' },
+    weatherSnapshot: { tempC: 21, windKmh: 10, condition: 'Grand soleil', icon: 'soleil' },
   },
   {
     id: 'tmb-wpt-rif-bonatti',
@@ -175,7 +175,7 @@ const TMB_WAYPOINTS: Carte3DWaypoint[] = [
     altitudeM: 2537,
     distanceKm: 99.4,
     details: 'Point culminant de l’itinéraire pédestre, passage de l’Italie vers la Suisse valaisanne.',
-    weatherSnapshot: { tempC: 6, windKmh: 30, condition: 'Vent d’altitude', icon: 'wind' },
+    weatherSnapshot: { tempC: 6, windKmh: 30, condition: 'Vent d’altitude', icon: 'vent' },
   },
   {
     id: 'tmb-wpt-champex',
@@ -197,7 +197,7 @@ const TMB_WAYPOINTS: Carte3DWaypoint[] = [
     altitudeM: 2191,
     distanceKm: 146.5,
     details: 'Retour en France avec vue plongeante sur toute la longueur de la vallée de Chamonix.',
-    weatherSnapshot: { tempC: 11, windKmh: 18, condition: 'Léger brouillard', icon: 'cloud' },
+    weatherSnapshot: { tempC: 11, windKmh: 18, condition: 'Léger brouillard', icon: 'meteo' },
   },
   {
     id: 'tmb-wpt-lac-blanc',
@@ -210,7 +210,7 @@ const TMB_WAYPOINTS: Carte3DWaypoint[] = [
     details: 'Miroir d’eau glaciaire reflétant l’aiguille Verte, les Drus et le massif du Mont-Blanc.',
     capacity: 45,
     photoUrl: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80',
-    weatherSnapshot: { tempC: 10, windKmh: 12, condition: 'Ciel bleu limpide', icon: 'sun' },
+    weatherSnapshot: { tempC: 10, windKmh: 12, condition: 'Ciel bleu limpide', icon: 'soleil' },
   },
   // Sommets emblématiques environnants (affichés en 3D sur le relief)
   {

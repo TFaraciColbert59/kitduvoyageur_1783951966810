@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Badge, Button, Card } from '@/components/ui';
@@ -9,6 +7,8 @@ import { ReportPlaceModal } from './ReportPlaceModal';
 import { PlaceReviewSection } from './PlaceReviewSection';
 import { getCategoryLabel, getCategoryIcon } from '../lib/placeCategory';
 import type { PlaceWithDistance, PlaceReview, PlacePhoto } from '../types/place.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 export interface PlaceDetailClientProps {
   place: PlaceWithDistance;
@@ -18,7 +18,7 @@ export interface PlaceDetailClientProps {
 }
 
 interface InfoTileProps {
-  icon: string;
+  icon: LKDVIconName;
   label: React.ReactNode;
   children: React.ReactNode;
 }
@@ -26,7 +26,7 @@ interface InfoTileProps {
 function InfoTile({ icon, label, children }: InfoTileProps) {
   return (
     <Card variant="compact" className="flex items-start gap-3 p-3.5">
-      <Icon name={icon} className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--glass-label)]" />
+      <LKDVIcon name={icon} className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--glass-label)]" />
       <div>
         <span className="block font-semibold text-[color:var(--lkv-text-muted)]">{label}</span>
         <strong className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)]">
@@ -53,7 +53,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
           href="/lieux"
           className="inline-flex items-center gap-2 py-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-muted)] no-underline transition-colors hover:text-[color:var(--lkv-text-primary)]"
         >
-          <Icon name="arrow-left" className="h-4 w-4" />
+          <LKDVIcon name="retour" className="h-4 w-4" />
           Retour aux lieux et topos
         </Link>
       </div>
@@ -69,7 +69,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
             {place.altitude_m && (
               <Badge tone="stone" className="gap-1">
-                <Icon name="mountain" className="h-3.5 w-3.5" />
+                <LKDVIcon name="montagne" className="h-3.5 w-3.5" />
                 {place.altitude_m} m
               </Badge>
             )}
@@ -78,7 +78,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
           <div className="flex items-center gap-2">
             {place.is_verified && (
               <Badge tone="sage" className="gap-1">
-                <Icon name="shield-check" className="h-3.5 w-3.5 text-[color:var(--glass-label)]" />
+                <LKDVIcon name="securite" className="h-3.5 w-3.5 text-[color:var(--glass-label)]" />
                 Lieu vérifié terrain
               </Badge>
             )}
@@ -91,7 +91,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
         </h1>
 
         <div className="mb-[var(--space-6)] flex items-center gap-2 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">
-          <Icon name="map-pin" className="h-4 w-4 shrink-0 text-[color:var(--glass-label)]" />
+          <LKDVIcon name="point_interet" className="h-4 w-4 shrink-0 text-[color:var(--glass-label)]" />
           <span>
             {place.city ? `${place.city}, ` : ''}
             {place.region ? `${place.region}, ` : ''}
@@ -102,7 +102,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
         {/* Alerte Floutage Éthique */}
         {place.is_blurred && (
           <Card tone="warn" className="mb-[var(--space-6)] flex items-start gap-3 p-[var(--space-4)]">
-            <Icon name="shield-alert" className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--lkv-warning-dark)]" />
+            <LKDVIcon name="danger" className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--lkv-warning-dark)]" />
             <div className="space-y-1">
               <strong className="block font-bold">
                 Préservation de la biodiversité & sécurité physique (Charte LKDV §5.7)
@@ -123,7 +123,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
             className="min-h-[48px] flex-1 gap-2 font-bold"
             onClick={() => setIsAddModalOpen(true)}
           >
-            <Icon name="plus" className="h-4 w-4" />
+            <LKDVIcon name="plus" className="h-4 w-4" />
             Ajouter à mon voyage
           </Button>
 
@@ -132,7 +132,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
             className="min-h-[48px] gap-2"
             onClick={() => setIsReportModalOpen(true)}
           >
-            <Icon name="alert-triangle" className="h-4 w-4 text-[color:var(--lkv-warning-dark)]" />
+            <LKDVIcon name="alerte" className="h-4 w-4 text-[color:var(--lkv-warning-dark)]" />
             Signaler un problème
           </Button>
         </div>
@@ -142,7 +142,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
       {place.description && (
         <Card className="p-6 sm:p-7">
           <h2 className="mb-[var(--space-3)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
-            <Icon name="compass" className="h-4 w-4 text-[color:var(--glass-label)]" />
+            <LKDVIcon name="boussole" className="h-4 w-4 text-[color:var(--glass-label)]" />
             Présentation & Caractéristiques
           </h2>
           <p className="whitespace-pre-line text-[length:var(--lkv-text-body-sm)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
@@ -154,13 +154,13 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
       {/* Informations Pratiques */}
       <Card className="p-6 sm:p-7">
         <h2 className="mb-[var(--space-4)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
-          <Icon name="calendar" className="h-4 w-4 text-[color:var(--glass-label)]" />
+          <LKDVIcon name="calendrier" className="h-4 w-4 text-[color:var(--glass-label)]" />
           Informations Pratiques & Équipements
         </h2>
 
         <div className="grid grid-cols-1 gap-4 text-[length:var(--lkv-text-caption)] sm:grid-cols-2 lg:grid-cols-3">
           {/* Eau */}
-          <InfoTile icon="droplet" label="Eau potable / Source">
+          <InfoTile icon="eau_potable" label="Eau potable / Source">
             {info.waterAvailable === true
               ? 'Disponible'
               : info.waterAvailable === false
@@ -169,32 +169,32 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
           </InfoTile>
 
           {/* Accès & Frais */}
-          <InfoTile icon="users" label="Accès / Tarifs">
+          <InfoTile icon="communaute" label="Accès / Tarifs">
             {info.feesRequired ? 'Payant / Taxe de séjour' : 'Accès libre'}
             {info.bookingRequired ? ' (Réservation obligatoire)' : ''}
           </InfoTile>
 
           {/* Saison */}
           {info.openingSeason && (
-            <InfoTile icon="calendar" label="Période gardée / Saison">
+            <InfoTile icon="calendrier" label="Période gardée / Saison">
               {info.openingSeason}
             </InfoTile>
           )}
 
           {/* Capacité */}
           {info.capacity && (
-            <InfoTile icon="mountain" label="Capacité d’accueil">
+            <InfoTile icon="montagne" label="Capacité d’accueil">
               {info.capacity} places
             </InfoTile>
           )}
 
           {/* Feux */}
-          <InfoTile icon="flame" label="Feux de camp">
+          <InfoTile icon="feu" label="Feux de camp">
             {info.fireAllowed ? 'Tolérés avec prudence' : 'Strictement interdits'}
           </InfoTile>
 
           {/* Coordonnées */}
-          <InfoTile icon="map-pin" label={<>Position GPS {place.is_blurred ? '(floutée ~500m)' : '(précise)'}</>}>
+          <InfoTile icon="point_interet" label={<>Position GPS {place.is_blurred ? '(floutée ~500m)' : '(précise)'}</>}>
             <span className="font-mono text-[length:var(--lkv-text-caption)]">
               {place.latitude.toFixed(place.is_blurred ? 2 : 5)},{' '}
               {place.longitude.toFixed(place.is_blurred ? 2 : 5)}
@@ -203,7 +203,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
           {/* Téléphone si renseigné */}
           {info.phone && (
-            <InfoTile icon="phone" label="Contact téléphonique">
+            <InfoTile icon="telephone" label="Contact téléphonique">
               <a
                 href={`tel:${info.phone}`}
                 className="font-semibold text-[color:var(--lkv-text-primary)] hover:underline"
@@ -215,7 +215,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
           {/* Site Web si renseigné */}
           {info.website && (
-            <InfoTile icon="globe" label="Site officiel">
+            <InfoTile icon="monde" label="Site officiel">
               <a
                 href={info.website}
                 target="_blank"
@@ -233,7 +233,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
       {photos.length > 0 && (
         <Card className="p-6 sm:p-7">
           <h2 className="mb-[var(--space-4)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
-            <Icon name="compass" className="h-4 w-4 text-[color:var(--glass-label)]" />
+            <LKDVIcon name="boussole" className="h-4 w-4 text-[color:var(--glass-label)]" />
             Photos Communautaires ({photos.length})
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

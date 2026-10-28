@@ -70,7 +70,7 @@ nextjs/
             compte/            # Dashboard tabs (dynamic imports)
             groups/            # Cards groupe voyage (dynamic imports)
             home/              # 17 sections homepage
-            ui/                # AppImage, LkvIcon, EmptyState, CustomCursor
+            ui/                # AppImage, LKDVIcon, EmptyState, CustomCursor
         features/
             hiking/              # Cockpit de randonnée (GPS, stats, carnet, GPX, 3D, IA)
                 components/       # DesktopTopBar, DesktopLeftPanel, DesktopRightPanel, DesktopDockBar, DesktopMapOverlay, CompletionView, HikingCockpitPage

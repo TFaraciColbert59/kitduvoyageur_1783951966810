@@ -1,5 +1,4 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Badge, Button, IconButton } from '@/components/ui';
@@ -8,6 +7,7 @@ import { resolveGearImage } from '@/features/materiel/services/gearImageResolver
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { ChecklistItem } from '@/features/materiel/types/trekHub';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface MobileChecklistItemProps {
   item: ChecklistItem;
@@ -57,12 +57,12 @@ export function MobileChecklistItem({
         aria-hidden="true"
       >
         <div className="flex items-center gap-2 font-bold text-xs">
-          <Icon name="check" size={18} strokeWidth={3} />
+          <LKDVIcon name="valider" size={18} />
           <span>{item.is_checked ? 'Déballer' : 'Packé !'}</span>
         </div>
         {onDelete && (
           <div className="flex items-center gap-1 font-bold text-xs text-[var(--lkv-danger-bg)]">
-            <Icon name="trash2" size={16} />
+            <LKDVIcon name="supprimer" size={16} />
             <span>Supprimer</span>
           </div>
         )}
@@ -115,7 +115,7 @@ export function MobileChecklistItem({
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 25 }}
               >
-                <Icon name="check" size={14} strokeWidth={3} className="text-[color:var(--lkv-text-primary)]" />
+                <LKDVIcon name="valider" size={14} className="text-[color:var(--lkv-text-primary)]" />
               </motion.span>
             )}
           </div>
@@ -146,13 +146,13 @@ export function MobileChecklistItem({
             )}
             {item.is_vital && (
               <Badge tone="danger" className="gap-0.5 px-1.5 py-0.2 text-[9.5px] font-bold">
-                <Icon name="zap" size={8} aria-hidden="true" />
+                <LKDVIcon name="energie" size={8} aria-hidden="true" />
                 Vital
               </Badge>
             )}
             {item.is_consumable && (
               <Badge tone="sage" className="gap-0.5 px-1.5 py-0.2 text-[9.5px] font-semibold">
-                <Icon name="sparkles" size={8} aria-hidden="true" />
+                <LKDVIcon name="ia" size={8} aria-hidden="true" />
                 Consommable
               </Badge>
             )}
@@ -177,7 +177,7 @@ export function MobileChecklistItem({
               aria-label={`Supprimer : ${item.name}`}
               className="h-12 w-12 min-h-[48px] min-w-[48px] text-[var(--lkv-text-muted)]/60 hover:text-[var(--lkv-danger)] focus-visible:ring-[var(--lkv-danger)]"
             >
-              <Icon name="trash2" size={15} aria-hidden="true" />
+              <LKDVIcon name="supprimer" size={15} aria-hidden="true" />
             </IconButton>
           )}
           <div className="w-9 h-9 shrink-0 rounded-xl overflow-hidden bg-black/5 border border-black/5 shadow-2xs">

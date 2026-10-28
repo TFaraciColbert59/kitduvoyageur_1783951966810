@@ -3,11 +3,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import LkvIcon, { type LkvIconName } from '@/components/ui/LkvIcon';
 import { Button, IconButton } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCartCount } from '@/hooks/useCartCount';
 import { DESTINATIONS } from '@/components/mobile-nav/destinationRegistry';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ interface NavItem {
   label: string;
   href: string;
   action?: 'search';
-  icon: string;
+  icon: LKDVIconName;
 }
 
 interface NavSection {
@@ -43,39 +44,39 @@ const SECTIONS: NavSection[] = [
 {
         label: 'Découvrir & Terrain',
         items: [
-          { label: 'Rechercher', icon: 'search', href: '', action: 'search' },
-          { label: 'Panier', icon: 'bag', href: '/panier' },
-          { label: 'Carte interactive', icon: 'map-pin', href: '/explorer' },
-          { label: 'Boussole augmentée', icon: 'search', href: '/randonnee-active' },
-          { label: 'Mode hors-ligne', icon: 'bookmark', href: '/hors-ligne' },
-          { label: 'Carnets', icon: 'doc', href: '/carnets' },
-          { label: 'Guides', icon: 'bookmark', href: '/guides' },
-          { label: 'Blog', icon: 'doc', href: '/blog' },
-          { label: 'Outils terrain', icon: 'search', href: '/outils' },
-          { label: 'Mode rando GPS/SOS', icon: 'map-pin', href: '/randonnee-active' },
+          { label: 'Rechercher', icon: 'recherche', href: '', action: 'search' },
+          { label: 'Panier', icon: 'boutique', href: '/panier' },
+          { label: 'Carte interactive', icon: 'point_interet', href: '/explorer' },
+          { label: 'Boussole augmentée', icon: 'recherche', href: '/randonnee-active' },
+          { label: 'Mode hors-ligne', icon: 'signet', href: '/hors-ligne' },
+          { label: 'Carnets', icon: 'facture', href: '/carnets' },
+          { label: 'Guides', icon: 'signet', href: '/guides' },
+          { label: 'Blog', icon: 'facture', href: '/blog' },
+          { label: 'Outils terrain', icon: 'recherche', href: '/outils' },
+          { label: 'Mode rando GPS/SOS', icon: 'point_interet', href: '/randonnee-active' },
         ],
       },
   {
     label: 'Vie pro & occasion',
     items: [
-      { label: 'Location', icon: 'bag', href: '/location' },
-          { label: 'Enchères', icon: 'star', href: '/occasion' },
-      { label: 'Espace Pro', icon: 'user', href: '/pro' },
-      { label: 'Ambassadeurs', icon: 'star', href: '/ambassadeurs' },
-      { label: 'Créateurs', icon: 'star', href: '/createurs' },
+      { label: 'Location', icon: 'boutique', href: '/location' },
+          { label: 'Enchères', icon: 'points', href: '/occasion' },
+      { label: 'Espace Pro', icon: 'profil', href: '/pro' },
+      { label: 'Ambassadeurs', icon: 'points', href: '/ambassadeurs' },
+      { label: 'Créateurs', icon: 'points', href: '/createurs' },
     ],
   },
   {
     label: 'Compte & légal',
     items: [
-      { label: "Rapport d'Expédition", icon: 'doc', href: '/rapport-expedition' },
-          { label: 'Rapport Kit', icon: 'bag', href: '/compas?etape=kit' },
-      { label: 'Aide / FAQ', icon: 'heart', href: '/faq' },
-      { label: 'Contact', icon: 'heart', href: '/contact' },
-      { label: 'CGU', icon: 'lock', href: '/cgu' },
-      { label: 'CGV', icon: 'lock', href: '/cgv' },
-      { label: 'Mentions Légales', icon: 'lock', href: '/mentions-legales' },
-      { label: 'Politique de Confidentialité', icon: 'lock', href: '/politique-confidentialite' },
+      { label: "Rapport d'Expédition", icon: 'facture', href: '/rapport-expedition' },
+          { label: 'Rapport Kit', icon: 'boutique', href: '/compas?etape=kit' },
+      { label: 'Aide / FAQ', icon: 'favoris', href: '/faq' },
+      { label: 'Contact', icon: 'favoris', href: '/contact' },
+      { label: 'CGU', icon: 'verrou', href: '/cgu' },
+      { label: 'CGV', icon: 'verrou', href: '/cgv' },
+      { label: 'Mentions Légales', icon: 'verrou', href: '/mentions-legales' },
+      { label: 'Politique de Confidentialité', icon: 'verrou', href: '/politique-confidentialite' },
     ],
   },
 ];
@@ -206,12 +207,12 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                   aria-label="Fermer le menu"
                   className="absolute right-[var(--space-3)] top-[calc(var(--safe-top)+var(--space-3))] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)]"
                 >
-                  <LkvIcon name="close" size={14} />
+                  <LKDVIcon name="fermer" size={14} />
                 </IconButton>
 
                 {/* Logo + Brand */}
                 <div className="relative z-[var(--z-dropdown)] mb-[22px] flex items-center gap-[10px]">
-                  <LkvIcon name="mountain" size={28} className="text-[color:var(--sage-300)]" />
+                  <LKDVIcon name="montagne" size={28} className="text-[color:var(--sage-300)]" />
                   <div>
                     <div className="text-[length:var(--lkv-text-footnote)] font-medium">
                       Le Kit du Voyageur
@@ -269,9 +270,9 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                             }}
                             className={`${ITEM_CLASS} w-full border-none bg-transparent text-left`}
                           >
-                            <LkvIcon name="search" size={20} />
+                            <LKDVIcon name="recherche" size={20} />
                             <span className="flex-1">{item.label}</span>
-                            <LkvIcon name="chevron-right" size={16} className="text-[color:var(--ink-300)]" />
+                            <LKDVIcon name="suivant" size={16} className="text-[color:var(--ink-300)]" />
                           </button>
                         ) : (
                         <Link
@@ -282,15 +283,15 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                             isActive ? 'bg-[color:var(--lkv-hover-surface)] font-medium' : ''
                           }`}
                         >
-                          <LkvIcon name={item.icon as LkvIconName} size={20} />
+                          <LKDVIcon name={item.icon} size={20} />
                           <span className="flex-1">{item.label}</span>
                           {item.href === '/panier' && cartCount > 0 && (
                             <span className="mr-1 rounded-full bg-[color:var(--lkv-secondary)] px-1.5 py-px font-mono text-[10px] font-bold text-[color:var(--lkv-text-inverted)]">
                               {cartCount > 9 ? '9+' : cartCount}
                             </span>
                           )}
-                          <LkvIcon
-                            name="chevron-right"
+                          <LKDVIcon
+                            name="suivant"
                             size={16}
                             className="text-[color:var(--ink-300)]"
                           />
@@ -309,7 +310,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                   onClick={onClose}
                   className="flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-control)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] no-underline backdrop-blur-[var(--blur-md)]"
                 >
-                  <LkvIcon name="star" size={20} />
+                  <LKDVIcon name="points" size={20} />
                   <div>
                     <div className="text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                       Premium Voyageur
@@ -318,7 +319,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                       Débloquez toutes les fonctionnalités
                     </div>
                   </div>
-                  <LkvIcon name="arrow-right" size={16} className="text-[color:var(--lkv-text-primary)]" />
+                  <LKDVIcon name="suivant" size={16} className="text-[color:var(--lkv-text-primary)]" />
                 </Link>
                 <div className="mt-[14px] text-center font-mono text-[10px] text-[color:var(--ink-300)]">
                   {version} · GRENOBLE · FR

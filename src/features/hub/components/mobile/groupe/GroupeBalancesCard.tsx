@@ -1,10 +1,9 @@
 'use client';
-
-import { ArrowRight, Wallet } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
 import type { GroupeBalancesView } from '../../../mobile/groupeEngine';
 import { Button } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface GroupePendingExpense {
   id: string;
@@ -108,7 +107,7 @@ export function GroupeBalancesCard({
                     <span className="min-w-0 truncate font-semibold text-[var(--lkv-text-primary)]">
                       {settlement.fromName}
                     </span>
-                    <ArrowRight size={12} className="shrink-0 text-[var(--lkv-text-primary)]/50" aria-hidden="true" />
+                    <LKDVIcon name="suivant" size={12} className="shrink-0 text-[var(--lkv-text-primary)]/50" aria-hidden="true" />
                     <span className="min-w-0 truncate font-semibold text-[var(--lkv-text-primary)]">
                       {settlement.toName}
                     </span>
@@ -136,7 +135,7 @@ export function GroupeBalancesCard({
                 {pendingExpenses.map((expense) => (
                   <li key={expense.id} className="flex items-center gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/70 text-[var(--lkv-secondary-ink)]">
-                      <Wallet size={14} aria-hidden="true" />
+                      <LKDVIcon name="budget" size={14} aria-hidden="true" />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12.5px] font-bold text-[var(--lkv-text-primary)]">

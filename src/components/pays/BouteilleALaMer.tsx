@@ -11,7 +11,7 @@ import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal
 import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { Sheet } from '@/components/ui/Sheet';
-import Icon from '@/components/ui/AppIcon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Props {
   countryIso: string;
@@ -485,7 +485,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                 }`}
                 title={user && !canCreate ? `Trust score requis : ${CREATION_THRESHOLD}` : ''}
               >
-                <Icon name="message-square" size={14} />
+                <LKDVIcon name="messages" size={14} />
                 Lancer bouteille à la mer
               </button>
               

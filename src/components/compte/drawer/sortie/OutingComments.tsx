@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Heart, Send, Trash2 } from 'lucide-react';
 import type { OutingComment, OutingKudos } from '@/features/compte/server/sorties';
 import { initials, relativeTime } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface OutingCommentsProps {
   kudos: OutingKudos;
@@ -21,7 +21,7 @@ export function OutingComments({ kudos, comments, busy, onKudos, onComment, onDe
     <div className="lkdv-sortie-pane">
       <section className={`lkdv-sortie-kudos ${kudos.mine ? 'mine' : ''}`}>
         <button type="button" className="lkdv-sortie-kudos-btn" onClick={onKudos} disabled={busy} aria-pressed={kudos.mine}>
-          <Heart size={18} aria-hidden="true" fill={kudos.mine ? 'currentColor' : 'none'} />
+          <LKDVIcon name="favoris" size={18} aria-hidden="true" />
           <span>{kudos.count > 0 ? kudos.count : ''}</span>
         </button>
         <div>
@@ -69,7 +69,7 @@ export function OutingComments({ kudos, comments, busy, onKudos, onComment, onDe
                   disabled={busy}
                   aria-label="Supprimer mon commentaire"
                 >
-                  <Trash2 size={13} aria-hidden="true" />
+                  <LKDVIcon name="supprimer" size={13} aria-hidden="true" />
                 </button>
               ) : null}
             </li>
@@ -96,7 +96,7 @@ export function OutingComments({ kudos, comments, busy, onKudos, onComment, onDe
           aria-label="Ton commentaire"
         />
         <button type="submit" className="lkdv-sortie-send" disabled={busy || !body.trim()} aria-label="Envoyer le commentaire">
-          <Send size={16} aria-hidden="true" />
+          <LKDVIcon name="partager" size={16} aria-hidden="true" />
         </button>
       </form>
     </div>

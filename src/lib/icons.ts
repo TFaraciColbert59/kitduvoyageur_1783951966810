@@ -1,104 +1,63 @@
-import type { LucideIcon } from 'lucide-react';
-import {
-  Compass,
-  MapPin,
-  Calendar,
-  Users,
-  Package,
-  Shield,
-  CreditCard,
-  FileText,
-  Clock,
-  Sparkles,
-  Mountain,
-  Tent,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Plus,
-  Trash2,
-  Edit3,
-  Share2,
-  Download,
-  Printer,
-  ChevronDown,
-  ChevronUp,
-  ChevronLeft,
-  ChevronRight,
-  ArrowRight,
-  ArrowLeft,
-  Search,
-  Filter,
-  Check,
-  X,
-  Lock,
-  Heart,
-  Bookmark,
-  Bell,
-  Home,
-  ShoppingBag,
-  TrendingUp,
-  TrendingDown,
-  Info,
-} from 'lucide-react';
+
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export const SEMANTIC_ICONS = {
   // Navigation & Structure
-  home: Home,
-  compass: Compass,
-  mountain: Mountain,
-  mapPin: MapPin,
-  calendar: Calendar,
-  clock: Clock,
-  search: Search,
-  filter: Filter,
+  home: lkdvIcon('accueil'),
+  compass: lkdvIcon('boussole'),
+  mountain: lkdvIcon('montagne'),
+  mapPin: lkdvIcon('point_interet'),
+  calendar: lkdvIcon('calendrier'),
+  clock: lkdvIcon('duree'),
+  search: lkdvIcon('recherche'),
+  filter: lkdvIcon('filtres'),
   
   // Expeditions & Team
-  users: Users,
-  gear: Package,
-  safety: Shield,
-  budget: CreditCard,
-  document: FileText,
-  tent: Tent,
-  sparkles: Sparkles,
-  shop: ShoppingBag,
+  users: lkdvIcon('communaute'),
+  gear: lkdvIcon('inventaire'),
+  safety: lkdvIcon('securite'),
+  budget: lkdvIcon('paiement'),
+  document: lkdvIcon('facture'),
+  tent: lkdvIcon('tente'),
+  sparkles: lkdvIcon('ia'),
+  shop: lkdvIcon('boutique'),
 
   // Status & Feedback
-  success: CheckCircle2,
-  warning: AlertTriangle,
-  error: XCircle,
-  info: Info,
-  check: Check,
-  close: X,
-  lock: Lock,
-  heart: Heart,
-  bookmark: Bookmark,
-  bell: Bell,
+  success: lkdvIcon('valider'),
+  warning: lkdvIcon('alerte'),
+  error: lkdvIcon('annuler'),
+  info: lkdvIcon('informations'),
+  check: lkdvIcon('valider'),
+  close: lkdvIcon('fermer'),
+  lock: lkdvIcon('verrou'),
+  heart: lkdvIcon('favoris'),
+  bookmark: lkdvIcon('signet'),
+  bell: lkdvIcon('notifications'),
 
   // Actions
-  plus: Plus,
-  trash: Trash2,
-  edit: Edit3,
-  share: Share2,
-  download: Download,
-  print: Printer,
-  trendUp: TrendingUp,
-  trendDown: TrendingDown,
+  plus: lkdvIcon('plus'),
+  trash: lkdvIcon('supprimer'),
+  edit: lkdvIcon('modifier'),
+  share: lkdvIcon('partager'),
+  download: lkdvIcon('telecharger'),
+  print: lkdvIcon('exporter'),
+  trendUp: lkdvIcon('denivele'),
+  trendDown: lkdvIcon('denivele'),
 
   // Chevrons & Direction
-  chevronDown: ChevronDown,
-  chevronUp: ChevronUp,
-  chevronLeft: ChevronLeft,
-  chevronRight: ChevronRight,
-  arrowRight: ArrowRight,
-  arrowLeft: ArrowLeft,
+  chevronDown: lkdvIcon('bas'),
+  chevronUp: lkdvIcon('haut'),
+  chevronLeft: lkdvIcon('retour'),
+  chevronRight: lkdvIcon('suivant'),
+  arrowRight: lkdvIcon('suivant'),
+  arrowLeft: lkdvIcon('retour'),
 } as const;
 
 export type SemanticIconName = keyof typeof SEMANTIC_ICONS;
 
 /**
- * Récupère l'icône Lucide vectorielle standard pour un nom sémantique.
+ * Récupère l'icône LKDV V2 standard pour un nom sémantique.
  */
-export function getSemanticIcon(name: SemanticIconName): LucideIcon {
-  return SEMANTIC_ICONS[name] || Compass;
+export function getSemanticIcon(name: SemanticIconName): LKDVIconComponent {
+  return SEMANTIC_ICONS[name] || lkdvIcon('boussole');
 }

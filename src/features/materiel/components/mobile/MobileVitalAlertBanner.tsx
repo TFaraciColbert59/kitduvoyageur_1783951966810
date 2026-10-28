@@ -1,13 +1,11 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Button, IconButton } from '@/components/ui';
-import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
-import { XIcon as XAnimated } from '@/components/icons/x';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { ActionableAlert } from '@/features/materiel/services/generateSmartPrompts';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface MobileVitalAlertBannerProps {
   alerts: ActionableAlert[];
@@ -99,7 +97,7 @@ export function MobileVitalAlertBanner({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="w-7 h-7 rounded-xl bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] flex items-center justify-center shrink-0 shadow-2xs">
-              <Icon name="alert-triangle" size={14} aria-hidden="true" />
+              <LKDVIcon name="alerte" size={14} aria-hidden="true" />
             </div>
 
             <div className="min-w-0 flex-1">
@@ -119,7 +117,7 @@ export function MobileVitalAlertBanner({
               size="sm"
               data-testid="vital-alert-action"
               onClick={handleAction}
-              icon={<ArrowRightAnimated size={10} aria-hidden="true" />}
+              icon={<LKDVIcon name="suivant" size={10} aria-hidden="true" />}
               iconPosition="trailing"
               className="h-6 shrink-0 rounded-full px-2.5 text-[10.5px] font-bold shadow-2xs"
             >
@@ -135,7 +133,7 @@ export function MobileVitalAlertBanner({
               aria-label="Masquer l'alerte"
               className="h-7 w-7 shrink-0 rounded-full text-[var(--lkv-danger)]/70 hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)]"
             >
-              <XAnimated size={12} aria-hidden="true" />
+              <LKDVIcon name="fermer" size={12} aria-hidden="true" />
             </IconButton>
           </div>
         </div>

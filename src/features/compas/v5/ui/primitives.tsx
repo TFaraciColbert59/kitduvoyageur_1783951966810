@@ -158,11 +158,11 @@ export function Stepper({
   return (
     <span className="v5-stp">
       <button type="button" aria-label={lessLabel} disabled={disabled || value <= min} onClick={() => onChange(Math.max(min, value - step))}>
-        <V5Icon name="minus" size="xs" />
+        <V5Icon name='annuler' size="xs" />
       </button>
       <i />
       <button type="button" aria-label={moreLabel} disabled={disabled || value >= max} onClick={() => onChange(Math.min(max, value + step))}>
-        <V5Icon name="plus" size="xs" />
+        <V5Icon name='ajouter' size="xs" />
       </button>
     </span>
   );

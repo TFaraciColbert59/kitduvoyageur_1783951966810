@@ -87,6 +87,42 @@ const config = [
     },
   },
   {
+    name: 'lkdv/icones-base-unique',
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      /**
+       * La base LKDV V2 (`@/components/ui/LKDVIcon`) est la seule source de pictogrammes, aujourd'hui et
+       * à l'avenir. Règle en erreur, via la version typescript-eslint pour ne pas écraser celle du shell.
+       */
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                'lucide-react',
+                'lucide',
+                '@heroicons/*',
+                '@phosphor-icons/*',
+                'phosphor-react',
+                'react-icons',
+                'react-icons/*',
+                '@tabler/icons*',
+                '@radix-ui/react-icons',
+                'iconoir-react',
+                '@fortawesome/*',
+                'react-feather',
+                'feather-icons',
+              ],
+              message:
+                "[LKDV Icônes] Seule la base LKDV V2 est autorisée : <LKDVIcon name=\"…\" /> (@/components/ui/LKDVIcon).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     name: 'lkdv/shell-safe-area-canonical',
     files: [
       'src/components/shell/AppShell.tsx',

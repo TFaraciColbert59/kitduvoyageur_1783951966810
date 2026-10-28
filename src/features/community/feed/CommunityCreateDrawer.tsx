@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
 import { CommunityDrawer } from '@/features/community/sections/CommunityDrawer';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 export type CreateKind = 'post' | 'carnet' | 'sortie' | 'kit' | 'club' | 'story';
 
@@ -12,12 +13,12 @@ export interface CommunityCreateDrawerProps {
   onOpenForm: (kind: CreateKind) => void;
 }
 
-const TILES: Array<{ kind: CreateKind; icon: string; title: string; subtitle: string }> = [
-  { kind: 'post', icon: 'pencil', title: 'Publication', subtitle: 'Photo, billet, question' },
-  { kind: 'carnet', icon: 'book-open', title: 'Carnet', subtitle: 'Raconte ton expédition' },
-  { kind: 'sortie', icon: 'map', title: 'Sortie GPS', subtitle: 'Date, lieu, participants' },
-  { kind: 'kit', icon: 'backpack', title: 'Kit', subtitle: 'Compose ton sac' },
-  { kind: 'club', icon: 'users', title: 'Club', subtitle: 'Rassemble ta cordée' },
+const TILES: Array<{ kind: CreateKind; icon: LKDVIconName; title: string; subtitle: string }> = [
+  { kind: 'post', icon: 'modifier', title: 'Publication', subtitle: 'Photo, billet, question' },
+  { kind: 'carnet', icon: 'preparateur', title: 'Carnet', subtitle: 'Raconte ton expédition' },
+  { kind: 'sortie', icon: 'carte', title: 'Sortie GPS', subtitle: 'Date, lieu, participants' },
+  { kind: 'kit', icon: 'sac', title: 'Kit', subtitle: 'Compose ton sac' },
+  { kind: 'club', icon: 'communaute', title: 'Club', subtitle: 'Rassemble ta cordée' },
   { kind: 'story', icon: 'plus', title: 'Story', subtitle: 'Un moment, 24 h' },
 ];
 
@@ -40,7 +41,7 @@ export function CommunityCreateDrawer({ open, onOpenChange, onOpenForm }: Commun
               onOpenForm(tile.kind);
             }}
           >
-            <span className="ico" aria-hidden="true"><Icon name={tile.icon} size={22} /></span>
+            <span className="ico" aria-hidden="true"><LKDVIcon name={tile.icon} size={22} /></span>
             <b>{tile.title}</b>
             <small>{tile.subtitle}</small>
           </button>

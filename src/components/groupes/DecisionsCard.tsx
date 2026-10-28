@@ -3,8 +3,8 @@ import { lkvAlert } from '@/components/ui/dialogs';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, EmptyState, Spinner } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Option {
   id: string;
@@ -217,7 +217,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
           variant={isAdding ? 'secondary' : 'primary'}
           size="sm"
           onClick={() => setIsAdding(!isAdding)}
-          icon={<Icon name={isAdding ? 'XMarkIcon' : 'PlusIcon'} size={12} aria-hidden="true" />}
+          icon={<LKDVIcon name={isAdding ? 'fermer' : 'plus'} size={12} aria-hidden="true" />}
         >
           {isAdding ? 'Annuler' : 'Lancer un vote'}
         </Button>
@@ -302,7 +302,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
         {decisions.length === 0 && !isAdding && (
           <EmptyState
             compact
-            icon={<Icon name="ChatBubbleLeftRightIcon" size={22} aria-hidden="true" />}
+            icon={<LKDVIcon name="messages" size={22} aria-hidden="true" />}
             title="Aucun sondage en cours"
             description="Lancez un vote pour trancher les décisions du groupe."
           />
@@ -358,7 +358,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
                             : 'border-[color:var(--btn-glass-border)] bg-[color:var(--lkv-field-bg)]'
                         }`}
                       >
-                        {option.selected && <Icon name="CheckIcon" size={12} aria-hidden="true" />}
+                        {option.selected && <LKDVIcon name="valider" size={12} aria-hidden="true" />}
                       </span>
                       <p className={`text-[length:var(--lkv-text-caption)] font-semibold ${option.selected ? 'text-[color:var(--lkv-text-primary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
                         {option.label}

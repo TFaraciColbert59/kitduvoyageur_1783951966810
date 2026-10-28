@@ -1,15 +1,7 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
-import { CompassIcon as Compass } from '@/components/icons/compass';
-import { MountainIcon as Mountain } from '@/components/icons/mountain';
-import { Share2Icon as Share2 } from '@/components/icons/share-2';
-import { DownloadIcon as Download } from '@/components/icons/download';
-import { ClockIcon as Clock } from '@/components/icons/clock';
 import type { MapTrail } from './types';
 import { useOfflineDownload } from '@/hooks/useOfflineDownload';
 import { listOfflineRoutes } from '@/lib/offlineStorage';
@@ -24,6 +16,7 @@ import {
   formatDuration,
   estimateHikingDurationHours,
 } from './types';
+import { LKDVIcon, type LKDVIconName } from '@/components/ui/LKDVIcon';
 
 interface Props {
   trail: MapTrail;
@@ -32,10 +25,10 @@ interface Props {
   open?: boolean;
 }
 
-const SCORE_LABELS: { key: keyof MapTrail; label: string; icon: string }[] = [
-  { key: 'adventure_score', label: 'Aventure', icon: '⛰️' },
-  { key: 'nature_score', label: 'Immersion Nature', icon: '🌿' },
-  { key: 'panorama_score', label: 'Points de vue', icon: '🔭' },
+const SCORE_LABELS: { key: keyof MapTrail; label: string; icon: LKDVIconName }[] = [
+  { key: 'adventure_score', label: 'Aventure', icon: 'montagne' },
+  { key: 'nature_score', label: 'Immersion Nature', icon: 'flore' },
+  { key: 'panorama_score', label: 'Points de vue', icon: 'vue' },
 ];
 
 function ScoreBar({ value }: { value: number }) {
@@ -347,14 +340,14 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
               aria-label="Partager le sentier"
               title="Partager"
             >
-              <Share2 size={15} />
+              <LKDVIcon name="partager" size={15} />
             </IconButton>
           </div>
 
           <div className="absolute bottom-3 left-3.5 right-3.5">
             <Card className="rounded-[var(--lkv-radius-md)] px-3.5 py-2.5 shadow-xs">
               <p className="mb-0.5 flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
-                <Icon name="map-pin" size={11} className="text-[color:var(--lkv-text-primary)]" />
+                <LKDVIcon name="point_interet" size={11} className="text-[color:var(--lkv-text-primary)]" />
                 <span>{trail.network || trail.terrain_type || 'Massif Alpin'}</span>
               </p>
               <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold leading-tight text-[color:var(--lkv-text-primary)] line-clamp-2">
@@ -369,12 +362,12 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           {/* Key Stats Row */}
           <div className="grid grid-cols-3 gap-2">
             <StatPill
-              icon={<TrendingUp size={16} />}
+              icon={<LKDVIcon name="denivele" size={16} />}
               label="Distance"
               value={formatDistance(trail.distance_km)}
             />
             <StatPill
-              icon={<Mountain size={16} />}
+              icon={<LKDVIcon name="montagne" size={16} />}
               label="Dénivelé +"
               value={
                 trail.elevation_gain !== null && trail.elevation_gain !== undefined
@@ -383,7 +376,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
               }
             />
             <StatPill
-              icon={<Clock size={16} />}
+              icon={<LKDVIcon name="duree" size={16} />}
               label="Durée estimée"
               value={formatDuration(effectiveDuration)}
             />
@@ -394,7 +387,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
             <Card variant="compact" className="flex flex-col gap-2.5 p-3.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
-                  <Icon name="mountain" size={13} className="text-[color:var(--lkv-text-primary)]" />
+                  <LKDVIcon name="montagne" size={13} className="text-[color:var(--lkv-text-primary)]" />
                   <span>Topographie & Profil altimétrique</span>
                 </div>
                 {(trail.avg_slope != null || trail.max_slope != null) && (
@@ -438,7 +431,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           {(trail.surface || trail.trail_visibility || trail.dog_friendly) && (
             <Card variant="compact" className="flex flex-col gap-2 p-3.5">
               <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
-                <Compass size={13} className="text-[color:var(--lkv-text-primary)]" />
+                <LKDVIcon name="boussole" size={13} className="text-[color:var(--lkv-text-primary)]" />
                 <span>Terrain & Praticabilité</span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-[length:var(--lkv-text-caption)]">
@@ -471,7 +464,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between px-0.5 pt-1">
                 <div className="flex items-center gap-1.5">
-                  <Icon name="sparkles" size={14} className="text-[color:var(--lkv-accent)]" />
+                  <LKDVIcon name="ia" size={14} className="text-[color:var(--lkv-accent)]" />
                   <span className="text-[length:var(--lkv-text-caption-2)] font-bold tracking-wider uppercase text-[color:var(--lkv-accent)]">
                     Adventure Intelligence
                   </span>
@@ -484,7 +477,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
               {/* Storyline / Récit immersif */}
               <Card variant="compact" className="flex flex-col gap-2 p-3.5 border-l-2 border-l-[color:var(--lkv-accent)]">
                 <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
-                  <Compass size={13} className="text-[color:var(--lkv-text-primary)]" />
+                  <LKDVIcon name="boussole" size={13} className="text-[color:var(--lkv-text-primary)]" />
                   <span>Ce qui vous attend</span>
                 </div>
                 <p className="text-[length:var(--lkv-text-body-sm)] font-normal leading-relaxed text-[color:var(--lkv-text-primary)]">
@@ -496,7 +489,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
               {aiEnrichment.idealSeason && (
                 <Card variant="compact" className="flex flex-col gap-2 p-3.5">
                   <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
-                    <Icon name="calendar" size={13} className="text-[color:var(--lkv-text-primary)]" />
+                    <LKDVIcon name="calendrier" size={13} className="text-[color:var(--lkv-text-primary)]" />
                     <span>Saisonnalité & Période idéale</span>
                   </div>
                   {aiEnrichment.idealSeason.bestMonths && aiEnrichment.idealSeason.bestMonths.length > 0 && (
@@ -523,7 +516,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
               {aiEnrichment.safetyTips && aiEnrichment.safetyTips.length > 0 && (
                 <Card variant="compact" className="flex flex-col gap-2.5 p-3.5 border-l-2 border-l-[color:var(--lkv-warning)]">
                   <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-warning)]">
-                    <Icon name="shield" size={13} className="text-[color:var(--lkv-warning)]" />
+                    <LKDVIcon name="securite" size={13} className="text-[color:var(--lkv-warning)]" />
                     <span>Points de vigilance & Sécurité</span>
                   </div>
                   <ul className="flex flex-col gap-2">
@@ -542,7 +535,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
                 <Card variant="compact" className="flex flex-col gap-2.5 p-3.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
-                      <Icon name="check" size={13} className="text-[color:var(--lkv-text-primary)]" />
+                      <LKDVIcon name="valider" size={13} className="text-[color:var(--lkv-text-primary)]" />
                       <span>Équipement recommandé</span>
                     </div>
                     <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-text-muted)]">
@@ -570,7 +563,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
                                 : 'border-[color:var(--glass-border-medium)]'
                             }`}
                           >
-                            {isChecked && <Icon name="check" size={12} className="text-white" />}
+                            {isChecked && <LKDVIcon name="valider" size={12} className="text-white" />}
                           </div>
                           <span className="text-[length:var(--lkv-text-caption)] leading-tight">{item}</span>
                         </button>
@@ -584,7 +577,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
               {aiEnrichment.effortPacing && (
                 <Card variant="compact" className="flex flex-col gap-2 p-3.5">
                   <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
-                    <Clock size={13} className="text-[color:var(--lkv-text-primary)]" />
+                    <LKDVIcon name="duree" size={13} className="text-[color:var(--lkv-text-primary)]" />
                     <span>Gestion de l'effort & Rythme</span>
                   </div>
                   <div className="flex flex-col gap-2 text-[length:var(--lkv-text-caption)]">
@@ -636,7 +629,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
                 <div key={key} className="space-y-1">
                   <div className="flex items-center justify-between text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-secondary)]">
                     <span className="flex items-center gap-1.5">
-                      <span aria-hidden="true">{icon}</span>
+                      <LKDVIcon name={icon} size={14} />
                       <span className="text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider">
                         {label}
                       </span>
@@ -652,7 +645,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           {/* Guide & Description source */}
           <Card variant="compact" className="flex flex-col gap-2 p-3.5">
             <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
-              <Icon name="info" size={13} className="text-[color:var(--lkv-text-primary)]" />
+              <LKDVIcon name="informations" size={13} className="text-[color:var(--lkv-text-primary)]" />
               <span>Description & Contexte</span>
             </div>
             <p className="text-[length:var(--lkv-text-body-sm)] font-normal leading-relaxed text-[color:var(--lkv-text-secondary)]">
@@ -665,7 +658,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           {(trail.roundtrip != null || trail.operator || trail.from || trail.to || trail.ref) && (
             <Card variant="compact" className="flex flex-col gap-2.5 p-3.5">
               <div className="flex items-center gap-1.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
-                <Icon name="info" size={13} className="text-[color:var(--lkv-text-primary)]" />
+                <LKDVIcon name="informations" size={13} className="text-[color:var(--lkv-text-primary)]" />
                 <span>Caractéristiques du parcours</span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-[length:var(--lkv-text-caption)]">
@@ -709,7 +702,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           <Card variant="compact" className="flex items-center justify-between gap-3 p-3">
             <div className="flex min-w-0 items-center gap-2.5">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-                {isOfflineAvailable ? <Icon name="check" size={16} /> : <Download size={16} />}
+                {isOfflineAvailable ? <LKDVIcon name="valider" size={16} /> : <LKDVIcon name="telecharger" size={16} />}
               </div>
               <div className="min-w-0">
                 <p className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">

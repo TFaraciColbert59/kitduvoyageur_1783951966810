@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,9 +6,8 @@ import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { useToast } from '@/contexts/ToastContext';
 import { addToCart } from '@/lib/cart';
-import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
-import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const CURATED_SUGGESTIONS: ProductSuggestion[] = [
   {
@@ -170,7 +167,7 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
           </h3>
         </div>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-[color:var(--lkv-text-primary)] bg-[var(--lkv-primary)]/08 px-3 py-1 rounded-full border border-[var(--lkv-primary)]/15">
-          <Icon name="sparkles" size={13} />
+          <LKDVIcon name="ia" size={13} />
           <span>Sélection Expert</span>
         </div>
       </div>
@@ -251,12 +248,12 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
                 >
                   {isAdded ? (
                     <>
-                      <Icon name="check" size={11} strokeWidth={3} />
+                      <LKDVIcon name="valider" size={11} />
                       <span>Ajouté</span>
                     </>
                   ) : (
                     <>
-                      <Icon name="plus" size={11} />
+                      <LKDVIcon name="plus" size={11} />
                       <span>Au panier</span>
                     </>
                   )}
@@ -276,7 +273,7 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
             className="glass-capsule-btn secondary text-xs font-bold flex items-center gap-1.5 h-8 px-4"
           >
             <span>Charger plus ({filtered.length - visibleCount} restants)</span>
-            <ChevronDown size={13} />
+            <LKDVIcon name="bas" size={13} />
           </button>
         </div>
       )}

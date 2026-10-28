@@ -2,11 +2,11 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import LkvIcon from '@/components/ui/LkvIcon';
 import { Button, Chip, IconButton, SearchField } from '@/components/ui';
 import { useRecentSearches } from '@/components/search/useRecentSearches';
 import { useSearchContext } from '@/contexts/SearchContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export default function SearchOverlay() {
   const { isSearchOpen, closeSearch } = useSearchContext();
@@ -133,7 +133,7 @@ export default function SearchOverlay() {
                 containerClassName="min-w-0 flex-1"
               />
               <IconButton aria-label="Fermer la recherche" onClick={closeSearch}>
-                <LkvIcon name="close" size={20} />
+                <LKDVIcon name="fermer" size={20} />
               </IconButton>
             </form>
 
@@ -165,7 +165,7 @@ export default function SearchOverlay() {
                         aria-label={`Supprimer ${entry.query}`}
                         onClick={() => removeSearch(entry.query)}
                       >
-                        <LkvIcon name="close" size={12} />
+                        <LKDVIcon name="fermer" size={12} />
                       </IconButton>
                     </span>
                   ))}

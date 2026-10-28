@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -24,6 +22,7 @@ import type {
   KitMessageMeta,
   PostMessageMeta,
 } from '../types/messaging.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // Les six réactions d'iMessage (Compose intégration pomme).
 const REACTION_PALETTE = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
@@ -251,7 +250,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               title="Répondre"
               aria-label="Répondre"
             >
-              <Icon name="reply" className="size-3.5" aria-hidden="true" />
+              <LKDVIcon name="retour" className="size-3.5" aria-hidden="true" />
             </IconButton>
             <IconButton
               type="button"
@@ -266,7 +265,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               title="Transférer"
               aria-label="Transférer"
             >
-              <Icon name="share2" className="size-3.5" aria-hidden="true" />
+              <LKDVIcon name="partager" className="size-3.5" aria-hidden="true" />
             </IconButton>
           </Card>
         )}
@@ -295,7 +294,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               className="text-[color:var(--lkv-text-secondary)] shadow-elevation-1 hover:text-[color:var(--lkv-text-primary)]"
               title="Réagir"
             >
-              <Icon name="smile" className="size-3.5" aria-hidden="true" />
+              <LKDVIcon name="amis" className="size-3.5" aria-hidden="true" />
             </IconButton>
             <IconButton
               type="button"
@@ -309,7 +308,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               className="text-[color:var(--lkv-text-secondary)] shadow-elevation-1 hover:text-[color:var(--lkv-text-primary)]"
               title="Répondre"
             >
-              <Icon name="reply" className="size-3.5" aria-hidden="true" />
+              <LKDVIcon name="retour" className="size-3.5" aria-hidden="true" />
             </IconButton>
           </div>
 
@@ -385,7 +384,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           rel="noopener noreferrer"
                           className="flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-2)] text-[length:var(--lkv-text-caption)] transition-colors hover:brightness-[1.05]"
                         >
-                          <Icon name="file-text" className="size-4" aria-hidden="true" />
+                          <LKDVIcon name="facture" className="size-4" aria-hidden="true" />
                           <span className="truncate underline">
                             {att.file_name || 'Télécharger le fichier'}
                           </span>
@@ -518,11 +517,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           : 'Vu'
                       }
                     >
-                      <Icon name="check-check" className="inline size-3.5 text-[color:var(--lkv-forest-100)]" aria-hidden="true" />
+                      <LKDVIcon name="valider" className="inline size-3.5 text-[color:var(--lkv-forest-100)]" aria-hidden="true" />
                       <span>{readByCount && readByCount > 1 ? `Vu par ${readByCount}` : 'Vu'}</span>
                     </span>
                   ) : (
-                    <Icon name="check" className="inline size-3.5" aria-hidden="true" />
+                    <LKDVIcon name="valider" className="inline size-3.5" aria-hidden="true" />
                   )}
                 </span>
               )}

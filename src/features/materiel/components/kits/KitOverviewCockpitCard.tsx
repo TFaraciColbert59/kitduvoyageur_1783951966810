@@ -2,8 +2,6 @@
 
 import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
-import { Calendar, ShieldCheck } from 'lucide-react';
-import { CompassIcon as Compass } from '@/components/icons/compass';
 import type { KitListItem } from '@/features/materiel/services/getKits';
 
 interface Props {

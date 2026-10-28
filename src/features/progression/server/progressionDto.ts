@@ -9,6 +9,7 @@ import {
   UserProgressionProfile,
 } from '../domain/types';
 import { canReplaceChallenge } from '../domain/rules';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 export interface ProgressionLevelTier {
   level: number;
@@ -106,26 +107,26 @@ type ChallengeDifficulty = (typeof CHALLENGE_DIFFICULTIES)[number];
 
 export const SKILL_PRESENTATION: Record<
   SkillType,
-  { label: string; icon: string; description: string }
+  { label: string; icon: LKDVIconName; description: string }
 > = {
   explorer: {
     label: 'Explorer',
-    icon: 'compass',
+    icon: 'boussole',
     description: 'Découverte de massifs, relevé de sentiers et waypoints vérifiés.',
   },
   preparer: {
     label: 'Se préparer',
-    icon: 'shield',
+    icon: 'securite',
     description: 'Optimisation du sac, fiches sécurité, vérification météo et checklists.',
   },
   partager: {
     label: 'Partager',
-    icon: 'book-open',
+    icon: 'preparateur',
     description: 'Récits d’expédition, photographies, conseils et tracés publiés.',
   },
   entraider: {
     label: "S'entraider",
-    icon: 'heart',
+    icon: 'favoris',
     description: 'Réponses bienveillantes, prêts de matériel et solidarité de cordée.',
   },
 };

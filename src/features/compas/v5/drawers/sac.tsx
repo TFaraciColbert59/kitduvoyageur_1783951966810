@@ -174,13 +174,13 @@ function BagTab() {
                 <div className="v5-rc v5-grp">
                   <div className="r">
                     <span className="ico good" aria-hidden="true">
-                      <V5Icon name="check" size="s" />
+                      <V5Icon name='valider' size="s" />
                     </span>
                     <span className="why">{a.reason}</span>
                   </div>
                   <div className="it">
                     <span className="th">
-                      <Pic src={photo?.src ?? null} icon={line ? itemIcon(line) : 'box'} alt={photo?.alt ?? a.name} />
+                      <Pic src={photo?.src ?? null} icon={line ? itemIcon(line) : 'inventaire'} alt={photo?.alt ?? a.name} />
                     </span>
                     <span className="t">
                       <b>{a.name}</b>
@@ -204,13 +204,13 @@ function BagTab() {
               <div className="v5-rc v5-grp">
                 <div className="r">
                   <span className="ico warn" aria-hidden="true">
-                    <V5Icon name="info" size="s" />
+                    <V5Icon name='informations' size="s" />
                   </span>
                   <span className="why">{a.reason}</span>
                 </div>
                 <div className="it">
                   <span className="th">
-                    <Pic icon="box" />
+                    <Pic icon='inventaire' />
                   </span>
                   <span className="t">
                     <b>{a.label}</b>
@@ -255,7 +255,7 @@ function BagTab() {
       ))}
       {canEdit && (
         <PBtn disabled={ctl.busy} onClick={() => ctl.open({ kind: 'add', target: 'kit' })}>
-          <V5Icon name="plus" size="s" />
+          <V5Icon name='ajouter' size="s" />
           {t('compas.v5.sac.add')}
         </PBtn>
       )}
@@ -648,9 +648,9 @@ function CarryTab() {
 export const sacDrawer: V5DrawerDef = {
   space: 'sac',
   tabs: (api) => [
-    { icon: 'bag', label: api.t('compas.v5.sac.tabBag') },
-    { icon: 'spark', label: api.t('compas.v5.sac.tabKits') },
-    ...(api.solo ? [] : [{ icon: 'people' as const, label: api.t('compas.v5.sac.tabCarry') }]),
+    { icon: 'sac', label: api.t('compas.v5.sac.tabBag') },
+    { icon: 'ia', label: api.t('compas.v5.sac.tabKits') },
+    ...(api.solo ? [] : [{ icon: 'communaute' as const, label: api.t('compas.v5.sac.tabCarry') }]),
   ],
   title: (api) => {
     const tab = api.solo ? Math.min(api.tab, 1) : Math.min(api.tab, 2);

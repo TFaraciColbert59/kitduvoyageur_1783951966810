@@ -40,7 +40,7 @@ function etape(
     id, day, order, kind, title: titre, placeName,
     placeId: null,
     startTime: null, durationMin: null, reason: null,
-    price: { ...PRIX }, state: 'propose', kept: false, icon: 'map-pin',
+    price: { ...PRIX }, state: 'propose', kept: false, icon: 'point_interet',
     lat: point?.lat ?? null, lon: point?.lon ?? null,
   };
 }

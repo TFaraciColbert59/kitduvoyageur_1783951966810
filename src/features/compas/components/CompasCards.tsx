@@ -6,7 +6,6 @@ import { budgetInOtherCurrencies, type BudgetFxData } from '../engine/budgetFx';
 import Link from 'next/link';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { deleteTripItemAction } from '@/app/voyages/kit-actions';
-import Icon from '@/components/ui/Icon';
 import type { CompasKitLine, CompasModel } from '../engine/compasModel';
 import { activityName } from '../engine/compasI18n';
 import {
@@ -30,6 +29,9 @@ import { teamCount, teamCountLabel } from '../engine/team';
 import { capacityCounts } from '../engine/crewView';
 import { compasUndoAutofillAction } from '../server/autofillActions';
 import { compasSetOriginAction } from '../server/compasActions';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /* =============================================================================
    Cartes d'étape — un résumé par étape (maquette v8). Le détail et les actions
@@ -196,7 +198,7 @@ export function KitRow({ line, ctl }: { line: CompasKitLine; ctl: CompasCtl }) {
             ctl.togglePacked(line);
           }}
         >
-          <Icon name={line.packed ? 'check-circle' : 'circle'} size={22} />
+          {line.packed ? <LKDVIcon name="valider" size={22} /> : <EmptyCircle size={22} />}
         </button>
       </span>
     </div>
@@ -232,7 +234,7 @@ function SummaryRow({
   href,
   dot,
 }: {
-  icon: string;
+  icon: LKDVIconName;
   label: string;
   value: ReactNode;
   onClick?: () => void;
@@ -242,14 +244,14 @@ function SummaryRow({
   const inner = (
     <>
       <span className="cp-fr__i">
-        <Icon name={icon} size={15} />
+        <LKDVIcon name={icon} size={15} />
       </span>
       <span className="cp-fr__l">{label}</span>
       <span className="cp-fr__v">
         {dot && <i className="cp-qdot" data-tone={dot} aria-hidden="true" />}
         <span>{value}</span>
       </span>
-      <Icon name="chevron-right" size={12} />
+      <LKDVIcon name="suivant" size={12} />
     </>
   );
   return href ? (
@@ -307,7 +309,7 @@ function CardSay({ ctl }: { ctl: CompasCtl }) {
         setText('');
       }}
     >
-      <Icon name="search" size={15} aria-hidden="true" />
+      <LKDVIcon name="recherche" size={15} aria-hidden="true" />
       <label className="sr-only" htmlFor="cp-intent-input">
         {t('compas.cards.say')}
       </label>
@@ -371,32 +373,32 @@ export function OuCard({ ctl, onKit }: { ctl: CompasCtl; onKit: () => void }) {
 
       <div className="cp-fsum cp-glass">
         <SummaryRow
-          icon="flag"
+          icon="signalement"
           label={t('compas.cards.rowActivity')}
           value={act ?? t('compas.cards.toChoose')}
           onClick={() => open('activite')}
         />
         <SummaryRow
-          icon="route"
+          icon="itineraire"
           label={t('compas.cards.rowRoute')}
           value={route}
           onClick={() => open('parcours')} // i18n-ok
         />
         <SummaryRow
-          icon="calendar"
+          icon="calendrier"
           label={t('compas.cards.rowWhen')}
           value={m.dates.start ? m.dates.label : t('compas.cards.toChoose')}
           dot={worst == null ? undefined : worst >= 70 ? 'bad' : worst >= 40 ? 'warn' : 'good'}
           onClick={() => open('quand')} // i18n-ok
         />
         <SummaryRow
-          icon="heart"
+          icon="favoris"
           label={t('compas.cards.rowPrefs')}
           value={prefs}
           onClick={() => open('preferences')}
         />
         <SummaryRow
-          icon="backpack"
+          icon="sac"
           label={t('compas.cards.rowBag')}
           // Jamais « Complet » : rien ne dit qu'un sac est complet, seulement
           // ce qu'il contient et ce qui est emballé.
@@ -607,7 +609,7 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
             aria-label={t('compas.cards.seeWho')}
             onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'qui' })}
           >
-            <Icon name="users" size={15} />
+            <LKDVIcon name="communaute" size={15} />
           </button>
         </div>
         <span className="cp-sub">
@@ -671,9 +673,9 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
           className="cp-alertline"
           onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'budget' })} // i18n-ok
         >
-          <Icon name="alert-triangle" size={16} />
+          <LKDVIcon name="alerte" size={16} />
           <span className="cp-alertline__t">{t('compas.cards.overEnvelope')}</span>
-          <Icon name="chevron-right" size={14} />
+          <LKDVIcon name="suivant" size={14} />
         </button>
       )}
       <button
@@ -681,7 +683,7 @@ export function NousCard({ ctl }: { ctl: CompasCtl }) {
         className="cp-btn cp-btn--soft"
         onClick={() => ctl.open({ kind: 'step', step: 'nous', flow: 'equipe' })}
       >
-        <Icon name="users" size={16} />
+        <LKDVIcon name="communaute" size={16} />
         {t('compas.cards.teamBags')}
       </button>
     </>
@@ -744,7 +746,7 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
                     : ctl.open({ kind: 'step', step: 'resa', flow: 'offres', hint: { resa: c.id } })
               }
             >
-              <Icon name={c.icon} size={17} />
+              <LKDVIcon name={c.icon} size={17} />
               <span>{c.label}</span>
               {booked > 0 && <span className="cp-tchip__bd">{booked}</span>}
             </button>
@@ -830,34 +832,34 @@ export function ResaCard({ ctl }: { ctl: CompasCtl }) {
 
 const VERDICT: Record<
   CompasModel['verdict']['level'],
-  { label: string; labelKey: TranslationKey; tone: Tone; icon: string; color: string }
+  { label: string; labelKey: TranslationKey; tone: Tone; icon: LKDVIconName; color: string }
 > = {
   go: {
     label: FR_T('compas.cards.verdictGo'),
     labelKey: 'compas.cards.verdictGo',
     tone: 'good',
-    icon: 'check-circle',
+    icon: 'valider',
     color: 'var(--cp-good)',
   },
   vigilance: {
     label: FR_T('compas.cards.verdictVigilance'),
     labelKey: 'compas.cards.verdictVigilance',
     tone: 'warn',
-    icon: 'alert-triangle',
+    icon: 'alerte',
     color: 'var(--lkv-warning)',
   },
   bloque: {
     label: FR_T('compas.cards.verdictBlocked'),
     labelKey: 'compas.cards.verdictBlocked',
     tone: 'bad',
-    icon: 'shield-alert',
+    icon: 'danger',
     color: 'var(--cp-bad)',
   },
   incomplet: {
     label: FR_T('compas.cards.verdictIncomplete'),
     labelKey: 'compas.cards.verdictIncomplete',
     tone: 'soft',
-    icon: 'clipboard-list',
+    icon: 'checklist_voyage',
     color: 'var(--cp-ink3)',
   },
 };
@@ -950,7 +952,7 @@ export function VerdictCard({ ctl }: { ctl: CompasCtl }) {
           })
         }
       >
-        <Icon name="info" size={16} />
+        <LKDVIcon name="informations" size={16} />
         {more > 0
           ? countText(t, locale, more, 'compas.cards.moreSignalsOne', 'compas.cards.moreSignalsOther')
           : hasOfficial
@@ -1048,7 +1050,7 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
           className="cp-btn cp-btn--soft"
           onClick={() => ctl.open({ kind: 'step', step: 'kit', flow: 'conseils' })}
         >
-          <Icon name="sparkles" size={16} />
+          <LKDVIcon name="ia" size={16} />
           {(() => {
             const open = ctl.data.kitAdvice.filter((a) => !a.covered).length;
             return open
@@ -1058,7 +1060,7 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
         </button>
       )}
       <p className="cp-sub cp-hide-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Icon name="package" size={13} />
+        <LKDVIcon name="inventaire" size={13} />
         <span>
           {count(inventory.total, 'compas.cards.inventoryOne', 'compas.cards.inventoryOther')}
           {inventory.lent
@@ -1105,7 +1107,7 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
           className="cp-alertline"
           onClick={() => ctl.open({ kind: 'step', step: 'kit', flow: 'sacs' })}
         >
-          <Icon name="users" size={16} />
+          <LKDVIcon name="communaute" size={16} />
           <span className="cp-alertline__t">
             {count(
               crew.unassignedShared.length,
@@ -1113,7 +1115,7 @@ export function KitCard({ ctl }: { ctl: CompasCtl }) {
               'compas.cards.sharedOther'
             )}
           </span>
-          <Icon name="chevron-right" size={14} />
+          <LKDVIcon name="suivant" size={14} />
         </button>
       )}
     </>

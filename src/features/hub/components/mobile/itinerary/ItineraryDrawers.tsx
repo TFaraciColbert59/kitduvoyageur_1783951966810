@@ -1,28 +1,6 @@
 'use client';
 
 import type { FormEvent } from 'react';
-import {
-  ArrowRightLeft,
-  Backpack,
-  Bike,
-  Bus,
-  CalendarPlus,
-  Car,
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  Eye,
-  EyeOff,
-  Footprints,
-  Link2,
-  MapPin,
-  Mountain,
-  Pencil,
-  Plane,
-  Ship,
-  Train,
-  Trash2,
-} from 'lucide-react';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 import { recalculateDayMetrics } from '@/features/trips/planner/plannerEngine';
 import {
@@ -33,6 +11,7 @@ import {
 } from '../../../mobile/itineraryEngine';
 import { GroupeDrawer } from '../groupe/GroupeDrawer';
 import { Switch } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export const POI_CATEGORY_LABELS: Record<string, string> = {
   water: 'Point d’eau',
@@ -50,21 +29,21 @@ function TransportIcon({ mode }: { mode: string | null | undefined }) {
   switch (mode) {
     case 'plane':
     case 'flight':
-      return <Plane size={15} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="avion" size={15} className={className} aria-hidden="true" />;
     case 'train':
-      return <Train size={15} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="train" size={15} className={className} aria-hidden="true" />;
     case 'car':
-      return <Car size={15} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="voiture" size={15} className={className} aria-hidden="true" />;
     case 'bus':
-      return <Bus size={15} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="bus" size={15} className={className} aria-hidden="true" />;
     case 'boat':
-      return <Ship size={15} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="bateau" size={15} className={className} aria-hidden="true" />;
     case 'bike':
-      return <Bike size={15} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="velo" size={15} className={className} aria-hidden="true" />;
     case 'hiking':
-      return <Mountain size={15} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="montagne" size={15} className={className} aria-hidden="true" />;
     default:
-      return <Footprints size={15} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="randonnee" size={15} className={className} aria-hidden="true" />;
   }
 }
 
@@ -140,7 +119,7 @@ export function ItineraryDaysDrawer({
                     aria-label={`Insérer une journée après le jour ${day.day}`}
                     className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center gap-1 !py-2 text-[10.5px] font-bold disabled:opacity-50"
                   >
-                    <CalendarPlus size={13} aria-hidden="true" />
+                    <LKDVIcon name="calendrier" size={13} aria-hidden="true" />
                     Insérer
                   </button>
                   <button
@@ -150,7 +129,7 @@ export function ItineraryDaysDrawer({
                     aria-label={`Dupliquer le jour ${day.day}`}
                     className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center gap-1 !py-2 text-[10.5px] font-bold disabled:opacity-50"
                   >
-                    <Copy size={13} aria-hidden="true" />
+                    <LKDVIcon name="dupliquer" size={13} aria-hidden="true" />
                     Dupliquer
                   </button>
                   <button
@@ -160,7 +139,7 @@ export function ItineraryDaysDrawer({
                     aria-label={`Supprimer le jour ${day.day}`}
                     className="glass-circle-btn h-11 w-11 shrink-0 !text-[var(--lkv-danger)] disabled:opacity-40"
                   >
-                    <Trash2 size={15} aria-hidden="true" />
+                    <LKDVIcon name="supprimer" size={15} aria-hidden="true" />
                   </button>
                 </div>
               )}
@@ -272,7 +251,7 @@ export function ItineraryStepDrawer({
                 onClick={onEdit}
                 className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
               >
-                <Pencil size={15} aria-hidden="true" />
+                <LKDVIcon name="modifier" size={15} aria-hidden="true" />
                 Modifier l&apos;étape
               </button>
               {daysCount > 1 && (
@@ -281,7 +260,7 @@ export function ItineraryStepDrawer({
                   onClick={onMove}
                   className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
                 >
-                  <ArrowRightLeft size={15} aria-hidden="true" />
+                  <LKDVIcon name="itineraire" size={15} aria-hidden="true" />
                   Déplacer vers un autre jour
                 </button>
               )}
@@ -293,7 +272,7 @@ export function ItineraryStepDrawer({
                   aria-label="Monter l'étape"
                   className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold disabled:opacity-50"
                 >
-                  <ChevronUp size={15} aria-hidden="true" />
+                  <LKDVIcon name="haut" size={15} aria-hidden="true" />
                   Monter
                 </button>
                 <button
@@ -303,7 +282,7 @@ export function ItineraryStepDrawer({
                   aria-label="Descendre l'étape"
                   className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold disabled:opacity-50"
                 >
-                  <ChevronDown size={15} aria-hidden="true" />
+                  <LKDVIcon name="bas" size={15} aria-hidden="true" />
                   Descendre
                 </button>
               </div>
@@ -312,7 +291,7 @@ export function ItineraryStepDrawer({
                 onClick={onDelete}
                 className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold text-[var(--lkv-danger)]"
               >
-                <Trash2 size={15} aria-hidden="true" />
+                <LKDVIcon name="supprimer" size={15} aria-hidden="true" />
                 Supprimer l&apos;étape
               </button>
             </div>
@@ -569,7 +548,7 @@ export function ItineraryPoiFormDrawer({
       <form onSubmit={submit} className="space-y-3">
         {coords && (
           <p className="flex items-center gap-1.5 rounded-xl bg-[var(--lkv-primary)]/10 px-3 py-2 text-[11px] font-semibold tabular-nums text-[color:var(--lkv-text-primary)]">
-            <MapPin size={13} aria-hidden="true" />
+            <LKDVIcon name="point_interet" size={13} aria-hidden="true" />
             {coords.lat.toFixed(5)}, {coords.lon.toFixed(5)}
           </p>
         )}
@@ -605,7 +584,7 @@ export function ItineraryPoiFormDrawer({
           disabled={isPending || !coords}
           className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold disabled:opacity-50"
         >
-          <MapPin size={15} aria-hidden="true" />
+          <LKDVIcon name="point_interet" size={15} aria-hidden="true" />
           {isPending ? 'Enregistrement…' : 'Ajouter le point'}
         </button>
       </form>
@@ -653,7 +632,7 @@ export function ItineraryPoiDetailDrawer({
         <div className="space-y-4">
           <div className="glass-sub-card space-y-2 rounded-2xl p-3.5">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-primary)]">
-              <MapPin size={12} aria-hidden="true" />
+              <LKDVIcon name="point_interet" size={12} aria-hidden="true" />
               {POI_CATEGORY_LABELS[poi.category ?? 'other'] ?? 'Autre'}
             </span>
             <p className="text-sm font-bold text-[var(--lkv-text-primary)]">{poi.name}</p>
@@ -678,13 +657,13 @@ export function ItineraryPoiDetailDrawer({
               poi.visited ? 'primary' : ''
             }`}
           >
-            {poi.visited ? <Eye size={15} aria-hidden="true" /> : <EyeOff size={15} aria-hidden="true" />}
+            {poi.visited ? <LKDVIcon name="vue" size={15} aria-hidden="true" /> : <LKDVIcon name="vue" size={15} aria-hidden="true" />}
             {poi.visited ? 'Visité' : 'Marquer comme visité'}
           </button>
 
           <label className="glass-sub-card block space-y-2 rounded-2xl p-3.5">
             <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/70">
-              <Link2 size={12} aria-hidden="true" />
+              <LKDVIcon name="lien" size={12} aria-hidden="true" />
               Rattacher à une étape du jour
             </span>
             <select
@@ -709,7 +688,7 @@ export function ItineraryPoiDetailDrawer({
             disabled={isPending}
             className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold text-[var(--lkv-danger)] disabled:opacity-50"
           >
-            <Trash2 size={15} aria-hidden="true" />
+            <LKDVIcon name="supprimer" size={15} aria-hidden="true" />
             Supprimer le point
           </button>
         </div>
@@ -768,7 +747,7 @@ export function ItineraryItemsDrawer({
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]"
                   aria-hidden="true"
                 >
-                  <Backpack size={15} />
+                  <LKDVIcon name="sac" size={15} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[12.5px] font-bold text-[var(--lkv-text-primary)]">

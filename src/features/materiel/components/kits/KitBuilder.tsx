@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -8,11 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Badge, Button, Card, EmptyState, IconButton, Tabs } from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { addToCart } from '@/lib/cart';
-import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
 import type { KitListItem } from '@/features/materiel/services/getKits';
 import { EASE_DECELERATE } from '@/lib/animations/constants';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface KitBuilderItem {
   id: string;
@@ -544,8 +542,8 @@ export function KitBuilder({
         className="absolute right-8 top-1.5 z-[var(--z-dropdown)] h-6 w-6 text-[color:var(--lkv-text-primary)] md:right-11 md:top-2 md:h-8 md:w-8"
         aria-label={showAi ? 'Fermer l’assistant IA' : 'Ouvrir l’assistant IA'}
       >
-        <Icon name="sparkles" size={12} className="md:hidden" aria-hidden="true" />
-        <Icon name="sparkles" size={15} className="hidden md:block" aria-hidden="true" />
+        <LKDVIcon name="ia" size={12} className="md:hidden" aria-hidden="true" />
+        <LKDVIcon name="ia" size={15} className="hidden md:block" aria-hidden="true" />
       </IconButton>
 
       {/* En-tête compact */}
@@ -753,9 +751,9 @@ export function KitBuilder({
                           }`}
                         >
                           {isAdded ? (
-                            <Icon name="check" size={11} strokeWidth={2.5} aria-hidden="true" />
+                            <LKDVIcon name="valider" size={11} aria-hidden="true" />
                           ) : (
-                            <Icon name="plus" size={12} strokeWidth={2.5} aria-hidden="true" />
+                            <LKDVIcon name="plus" size={12} aria-hidden="true" />
                           )}
                         </IconButton>
                       </Card>
@@ -838,7 +836,7 @@ export function KitBuilder({
                     aria-label={`Retirer ${item.name}`}
                     className="h-5 w-5 shrink-0 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)]"
                   >
-                    <Icon name="trash2" size={10} aria-hidden="true" />
+                    <LKDVIcon name="supprimer" size={10} aria-hidden="true" />
                   </IconButton>
                 </motion.div>
               ))
@@ -868,7 +866,7 @@ export function KitBuilder({
             <option value="automne">🍂 Automne</option>
             <option value="hiver">❄️ Hiver</option>
           </select>
-          <ChevronDown
+          <LKDVIcon name="bas"
             size={10}
             className="absolute right-2 top-2.5 pointer-events-none text-[color:var(--lkv-text-primary)]"
           />

@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import Header from '@/components/Header';
-import Icon from '@/components/ui/AppIcon';
 import AppShell from '@/components/shell/AppShell';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import SupportTicketList from '@/features/support/SupportTicketList';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const FIELD_CLASS =
   'min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] [&_option]:bg-[#16251D] [&_option]:text-white placeholder:text-[color:var(--lkv-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
@@ -16,28 +16,28 @@ const LABEL_CLASS =
 
 const CONTACTS = [
   {
-    icon: 'EnvelopeIcon',
+    icon: 'email' as const,
     title: 'Support client',
     desc: 'Questions sur vos commandes, retours, garanties',
     value: 'sav@lekitduvoyageur.fr',
     href: 'mailto:sav@lekitduvoyageur.fr',
   },
   {
-    icon: 'ArrowPathIcon',
+    icon: 'actualiser' as const,
     title: 'Retours & remboursements',
     desc: 'Initier un retour ou suivre un remboursement',
     value: 'retour@lekitduvoyageur.fr',
     href: 'mailto:retour@lekitduvoyageur.fr',
   },
   {
-    icon: 'ShieldCheckIcon',
+    icon: 'securite' as const,
     title: 'DPO — Données personnelles',
     desc: 'Exercer vos droits RGPD',
     value: 'dpo@lekitduvoyageur.fr',
     href: 'mailto:dpo@lekitduvoyageur.fr',
   },
   {
-    icon: 'BuildingOfficeIcon',
+    icon: 'ville' as const,
     title: 'Partenariats & B2B',
     desc: 'Offres Pro, revendeurs',
     value: 'contact@lekitduvoyageur.fr',
@@ -93,11 +93,10 @@ export default function ContactPage() {
             className="flex items-start gap-[var(--space-4)] p-[var(--space-4)]"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)]">
-              <Icon
+              <LKDVIcon
                 name={c.icon}
                 size={18}
                 className="text-[color:var(--lkv-secondary-ink)]"
-                variant="outline"
               />
             </div>
             <div className="min-w-0 flex-1">
@@ -111,11 +110,10 @@ export default function ContactPage() {
                 {c.value}
               </p>
             </div>
-            <Icon
-              name="ArrowTopRightOnSquareIcon"
+            <LKDVIcon
+              name="lien"
               size={14}
               className="mt-1 shrink-0 text-[color:var(--lkv-text-secondary)]"
-              variant="outline"
             />
           </Card>
         </a>
@@ -129,11 +127,10 @@ export default function ContactPage() {
       className="flex flex-col items-center px-[var(--space-6)] py-[var(--space-12)] text-center"
     >
       <div className="mb-[var(--space-4)] flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/15">
-        <Icon
-          name="CheckCircleIcon"
+        <LKDVIcon
+          name="valider"
           size={28}
           className="text-[color:var(--lkv-secondary-ink)]"
-          variant="outline"
         />
       </div>
       <h3 className="mb-[var(--space-2)] font-semibold text-[color:var(--lkv-text-primary)]">
@@ -202,7 +199,7 @@ export default function ContactPage() {
         loading={submitting}
         disabled={submitting || !user}
         icon={
-          !submitting ? <Icon name="PaperAirplaneIcon" size={16} variant="outline" /> : undefined
+          !submitting ? <LKDVIcon name="partager" size={16} /> : undefined
         }
       >
         {submitting ? 'Envoi en cours…' : 'Envoyer le message'}

@@ -1,8 +1,8 @@
 import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, EmptyState, IconButton, Spinner } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Tache {
   id: string;
@@ -235,7 +235,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
             variant={isAdding ? 'secondary' : 'primary'}
             size="sm"
             onClick={() => setIsAdding(!isAdding)}
-            icon={<Icon name={isAdding ? 'XMarkIcon' : 'PlusIcon'} size={12} aria-hidden="true" />}
+            icon={<LKDVIcon name={isAdding ? 'fermer' : 'plus'} size={12} aria-hidden="true" />}
           >
             {isAdding ? 'Annuler' : 'Ajouter une tâche'}
           </Button>
@@ -280,7 +280,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
         {filteredTasks.length === 0 && (
           <EmptyState
             compact
-            icon={<Icon name="CheckCircleIcon" size={22} aria-hidden="true" />}
+            icon={<LKDVIcon name="valider" size={22} aria-hidden="true" />}
             title="Aucune tâche trouvée"
             description="Ajustez le filtre ou ajoutez une nouvelle tâche au groupe."
           />
@@ -299,7 +299,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
                 togglingId === task.id ? (
                   <Spinner size="xs" label="" />
                 ) : task.completed ? (
-                  <Icon name="CheckIcon" size={12} aria-hidden="true" />
+                  <LKDVIcon name="valider" size={12} aria-hidden="true" />
                 ) : undefined
               }
             />
@@ -322,7 +322,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
                     aria-label={`Supprimer la tâche ${task.title}`}
                     className="ml-[var(--space-2)] text-[color:var(--lkv-danger)] opacity-0 group-hover:opacity-100"
                   >
-                    <Icon name="TrashIcon" size={14} aria-hidden="true" />
+                    <LKDVIcon name="supprimer" size={14} aria-hidden="true" />
                   </IconButton>
                 </div>
               </div>

@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { Button, IconButton } from '@/components/ui';
 import { motion, useDragControls } from 'framer-motion';
 import type { Variants } from 'framer-motion';
@@ -16,6 +14,7 @@ import type { KitListItem } from '@/features/materiel/services/getKits';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import type { PublicKit } from '@/features/materiel/services/getPublicKits';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // Emplacements — formation 2 - 1 - 2 sur mobile, 3 / 1 / 2 sur desktop
 // Indexés par position (0, 1, 2, 3, 4) pour permettre le déplacement et re-packing fluide comme dans Départ
@@ -243,8 +242,8 @@ function DraggableCard({
         className="absolute right-1.5 top-1.5 z-[var(--z-sticky)] h-6 w-6 cursor-grab touch-none text-[color:var(--lkv-text-primary)] md:right-2 md:top-2 md:h-8 md:w-8"
         aria-label={`Déplacer le widget ${LABEL[id] ?? id}`}
       >
-        <Icon name="grip-vertical" size={12} className="md:hidden" aria-hidden="true" />
-        <Icon name="grip-vertical" size={16} className="hidden md:block" aria-hidden="true" />
+        <LKDVIcon name="options" size={12} className="md:hidden" aria-hidden="true" />
+        <LKDVIcon name="options" size={16} className="hidden md:block" aria-hidden="true" />
       </IconButton>
       <div className="h-full min-h-0 overflow-hidden [&>article]:h-full [&>article]:min-h-0 [&>article]:flex [&>article]:flex-col">
         {children}

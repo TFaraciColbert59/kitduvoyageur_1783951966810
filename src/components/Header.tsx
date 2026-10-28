@@ -1,16 +1,14 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import LkvIcon from '@/components/ui/LkvIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
 import { createClient } from '@/lib/supabase/client';
 import { useCartCount } from '@/hooks/useCartCount';
 import { useConversations } from '@/features/messaging/hooks/useConversations';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const NAV_LINKS = [
   { label: 'Explorer', href: '/explorer' },
@@ -230,7 +228,7 @@ export default function Header() {
                       : 'Panier'
                   }
                 >
-                  <LkvIcon name="bag" size={14} />
+                  <LKDVIcon name="boutique" size={14} />
                   {cartCount > 0 && (
                     <span
                       className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] ring-2 ring-white"
@@ -250,7 +248,7 @@ export default function Header() {
                       : 'Notifications'
                   }
                 >
-                  <LkvIcon name="bell" size={14} />
+                  <LKDVIcon name="notifications" size={14} />
                   {unreadCount > 0 && (
                     <span
                       className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] ring-2 ring-white animate-pulse"
@@ -270,7 +268,7 @@ export default function Header() {
                       : 'Messagerie'
                   }
                 >
-                  <Icon name="message-square" className="w-[14px] h-[14px]" />
+                  <LKDVIcon name="messages" className="w-[14px] h-[14px]" />
                   {unreadMessagesCount > 0 && (
                     <span
                       className="absolute top-1 right-1 w-2 h-2 rounded-full bg-forest-600 ring-2 ring-white animate-pulse"
@@ -286,7 +284,7 @@ export default function Header() {
                   aria-label="Rechercher sur tout le site"
                   title="Rechercher sur tout le site"
                 >
-                  <LkvIcon name="search" size={13} />
+                  <LKDVIcon name="recherche" size={13} />
                 </button>
               </div>
             </div>

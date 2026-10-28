@@ -1,12 +1,11 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { Button, ListItem } from '@/components/ui';
 import type { Conversation } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ConversationOptionsMenuModalProps {
   isOpen: boolean;
@@ -118,9 +117,9 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
             className="min-h-[52px]"
             leading={
               isMuted ? (
-                <Icon name="bell" className="size-4 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
+                <LKDVIcon name="notifications" className="size-4 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
               ) : (
-                <Icon name="bell-off" className="size-4 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />
+                <LKDVIcon name="notifications_silence" className="size-4 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />
               )
             }
             title={
@@ -128,7 +127,7 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
             }
             trailing={
               isMuted ? (
-                <Icon name="check" className="size-4 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
+                <LKDVIcon name="valider" className="size-4 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
               ) : undefined
             }
           />
@@ -139,11 +138,11 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
             disabled={loading}
             onClick={handleArchiveToggle}
             className="min-h-[52px]"
-            leading={<Icon name="archive" className="size-4 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+            leading={<LKDVIcon name="historique" className="size-4 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
             title={isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
             trailing={
               isArchived ? (
-                <Icon name="check" className="size-4 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
+                <LKDVIcon name="valider" className="size-4 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
               ) : undefined
             }
           />
@@ -157,7 +156,7 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
                 onOpenReportBlock();
               }}
               className="mt-[var(--space-2)] min-h-[52px] text-[color:var(--lkv-danger-dark)]"
-              leading={<Icon name="shield-alert" className="size-4 text-[color:var(--lkv-danger)]" aria-hidden="true" />}
+              leading={<LKDVIcon name="danger" className="size-4 text-[color:var(--lkv-danger)]" aria-hidden="true" />}
               title={
                 <span className="text-[color:var(--lkv-danger-dark)]">
                   Signaler ou Bloquer {conversation.other_member.full_name}

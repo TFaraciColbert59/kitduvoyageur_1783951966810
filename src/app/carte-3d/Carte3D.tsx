@@ -6,10 +6,6 @@ import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as THREE from 'three';
 import {
-  Sliders,
-  X,
-} from 'lucide-react';
-import {
   GLOBE_PROJECTION_CONFIG,
   GLOBE_ZOOM_BOUNDS,
   GLOBE_SKY_CONFIG,
@@ -28,6 +24,7 @@ import {
   type UserExpeditionPhoto,
   type UserFieldNote,
 } from '@/features/carte-3d/services/userFootprintService';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // Configuration worker local MapLibre pour éviter tout blocage réseau externe
 if (typeof window !== 'undefined' && typeof maplibregl.setWorkerUrl === 'function') {
@@ -1252,7 +1249,7 @@ export default function Carte3D() {
             title="Ouvrir les réglages et calques"
             aria-label="Réglages et calques"
           >
-            <Sliders className="w-3.5 h-3.5" />
+            <LKDVIcon name="options" className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
@@ -1399,7 +1396,7 @@ export default function Carte3D() {
                   className="p-1 rounded text-white/70 hover:text-white hover:bg-white/10"
                   aria-label="Fermer"
                 >
-                  <X className="w-4 h-4" />
+                  <LKDVIcon name="fermer" className="w-4 h-4" />
                 </button>
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1447,7 +1444,7 @@ export default function Carte3D() {
                   className="p-1 rounded text-white/70 hover:text-white hover:bg-white/10"
                   aria-label="Fermer"
                 >
-                  <X className="w-4 h-4" />
+                  <LKDVIcon name="fermer" className="w-4 h-4" />
                 </button>
               </div>
               <div>
@@ -1485,7 +1482,7 @@ export default function Carte3D() {
                 className="p-1 rounded bg-[#dbd2c2] text-[#181715]"
                 aria-label="Fermer"
               >
-                <X className="w-4 h-4" />
+                <LKDVIcon name="fermer" className="w-4 h-4" />
               </button>
             </div>
 

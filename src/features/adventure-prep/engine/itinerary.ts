@@ -16,13 +16,14 @@ import { proposedStops } from './proposedStops';
 import { buildContingencies } from './resilience';
 import { de } from './frenchText';
 import { travelModeFor } from './routing';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
-const ICONS: Record<ItineraryStepKind, string> = {
-  trajet: 'navigation',
-  arret: 'map',
-  repos: 'clock',
-  nuit: 'bed-double',
-  ravitaillement: 'backpack',
+const ICONS: Record<ItineraryStepKind, LKDVIconName> = {
+  trajet: 'gps',
+  arret: 'carte',
+  repos: 'duree',
+  nuit: 'hotel',
+  ravitaillement: 'sac',
 };
 
 const EMPTY_TOTALS: DayTotals = {

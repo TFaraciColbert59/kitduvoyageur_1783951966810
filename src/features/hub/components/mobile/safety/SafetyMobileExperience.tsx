@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { AlertTriangle, CheckCircle2, Clock, Phone, Radio, ShieldCheck, X } from 'lucide-react';
 import { Badge, Button, IconButton, ListItem, Tabs } from '@/components/ui';
 import type { TripFull, TripSafetyCheckpoint } from '@/features/trips/types/trip.types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -18,6 +17,8 @@ import { BudgetRing } from '../budget/BudgetRing';
 import { GroupeChipsRow, type GroupeChipDef } from '../groupe/GroupeChipsRow';
 import { GroupeDrawer } from '../groupe/GroupeDrawer';
 import { GroupeRail } from '../groupe/GroupeRail';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export interface SafetyMobileExperienceProps {
   trip: TripFull;
@@ -32,11 +33,11 @@ const STATUS_TONES: Record<SafetyStatus, string> = {
   alert_sent: 'bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)]',
 };
 
-const STATUS_ICONS: Record<SafetyStatus, typeof Clock> = {
-  pending: Clock,
-  checked: CheckCircle2,
-  missed: AlertTriangle,
-  alert_sent: Radio,
+const STATUS_ICONS: Record<SafetyStatus, LKDVIconComponent> = {
+  pending: lkdvIcon('duree'),
+  checked: lkdvIcon('valider'),
+  missed: lkdvIcon('alerte'),
+  alert_sent: lkdvIcon('live'),
 };
 
 function formatSchedule(iso: string): string {
@@ -99,7 +100,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
   const chips: GroupeChipDef[] = [
     {
       key: 'pending',
-      icon: Clock,
+      icon: lkdvIcon('duree'),
       value: String(pendingCount),
       label: 'à pointer',
       tone: pendingCount > 0 ? 'accent' : 'default',
@@ -107,14 +108,14 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
     },
     {
       key: 'checked',
-      icon: CheckCircle2,
+      icon: lkdvIcon('valider'),
       value: String(progress.checked),
       label: 'validés',
       onClick: () => openWith('checked'),
     },
     {
       key: 'late',
-      icon: AlertTriangle,
+      icon: lkdvIcon('alerte'),
       value: String(lateCount),
       label: 'en alerte',
       tone: lateCount > 0 ? 'warn' : 'default',
@@ -153,7 +154,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
           </p>
           {checkpoint.contact_name && (
             <p className="mt-1 flex items-center gap-1 truncate text-[9.5px] font-medium text-[var(--lkv-text-primary)]/60">
-              <Phone size={10} aria-hidden="true" />
+              <LKDVIcon name="telephone" size={10} aria-hidden="true" />
               {checkpoint.contact_name}
             </p>
           )}
@@ -193,7 +194,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
             className="shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
-            <X size={16} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={16} aria-hidden="true" />
           </IconButton>
         </div>
       )}
@@ -219,7 +220,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
           </BudgetRing>
           <div className="min-w-0 flex-1 space-y-1.5">
             <p className="flex items-center gap-1.5 text-sm font-bold text-[var(--lkv-text-primary)]">
-              <ShieldCheck size={15} aria-hidden="true" />
+              <LKDVIcon name="securite" size={15} aria-hidden="true" />
               {next ? 'Prochain point' : 'Tous les points sont validés'}
             </p>
             {next && (
@@ -279,7 +280,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
             className="glass flex h-[7.5rem] w-[9.5rem] flex-col items-center justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-3 text-center"
             aria-label="Appeler le 112 — urgences européennes"
           >
-            <Phone size={18} className="text-[var(--lkv-danger)]" aria-hidden="true" />
+            <LKDVIcon name="telephone" size={18} className="text-[var(--lkv-danger)]" aria-hidden="true" />
             <span className="font-display text-xl font-extrabold text-[var(--lkv-text-primary)]">112</span>
             <span className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-[var(--lkv-text-primary)]/60">
               Urgences
@@ -292,7 +293,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
             className="glass flex h-[7.5rem] w-[9.5rem] flex-col items-center justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-3 text-center"
             aria-label="Appeler le 114 — urgences montagne"
           >
-            <Phone size={18} className="text-[color:var(--glass-label)]" aria-hidden="true" />
+            <LKDVIcon name="telephone" size={18} className="text-[color:var(--glass-label)]" aria-hidden="true" />
             <span className="font-display text-xl font-extrabold text-[var(--lkv-text-primary)]">114</span>
             <span className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-[var(--lkv-text-primary)]/60">
               Montagne

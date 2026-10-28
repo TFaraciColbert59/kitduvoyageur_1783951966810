@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui';
-import LkvIcon from '@/components/ui/LkvIcon';
-import Icon from '@/components/ui/AppIcon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -271,7 +270,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
         
         {/* Search Header Input */}
         <form onSubmit={handleFormSubmit} className="p-4 sm:p-5 border-b border-white/10 flex items-center gap-3">
-          <Icon name="MagnifyingGlassIcon" size={22} className="text-forest-400 shrink-0 ml-2" />
+          <LKDVIcon name="recherche" size={22} className="text-forest-400 shrink-0 ml-2" />
           <input
             ref={inputRef}
             type="text"
@@ -286,7 +285,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
               onClick={() => setQuery('')}
               className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors shrink-0"
             >
-              <Icon name="XMarkIcon" size={16} />
+              <LKDVIcon name="fermer" size={16} />
             </button>
           )}
           <button
@@ -337,7 +336,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
 
           {!loading && query.trim() && filteredResults.length === 0 && (
             <div className="py-12 text-center text-white/50 space-y-3">
-              <Icon name="MagnifyingGlassIcon" size={36} className="mx-auto text-white/20" />
+              <LKDVIcon name="recherche" size={36} className="mx-auto text-white/20" />
               <p className="text-base font-semibold text-white">Aucun résultat trouvé pour « {query} »</p>
               <p className="text-xs text-white/40 max-w-sm mx-auto">
                 Essayez des termes plus généraux comme « tente », « randonnée », « sac », ou consultez notre boutique complète.
@@ -366,21 +365,21 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                       {item.image ? (
                         <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                       ) : (
-                        <Icon
+                        <LKDVIcon
                           name={
                             item.type === 'product'
-                              ? 'ShoppingBagIcon'
+                              ? 'boutique'
                               : item.type === 'trip'
-                              ? 'MapIcon'
+                              ? 'carte'
                               : item.type === 'crew'
-                              ? 'UserGroupIcon'
+                              ? 'groupes'
                               : item.type === 'place'
-                              ? 'MapPinIcon'
+                              ? 'point_interet'
                               : item.type === 'carnet'
-                              ? 'BookOpenIcon'
+                              ? 'preparateur'
                               : item.type === 'club'
-                              ? 'UsersIcon'
-                              : 'GlobeAltIcon'
+                              ? 'communaute'
+                              : 'monde'
                           }
                           size={20}
                           className="text-forest-400"
@@ -409,7 +408,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                       <span className="font-mono font-bold text-forest-400 text-sm">{item.price} €</span>
                     )}
                     <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-forest-500 group-hover:text-forest-950 flex items-center justify-center text-white/50 transition-all">
-                      <Icon name="ArrowRightIcon" size={14} />
+                      <LKDVIcon name="suivant" size={14} />
                     </div>
                   </div>
                 </div>
@@ -421,7 +420,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
             <div className="space-y-6 py-2">
               <div>
                 <h4 className="text-xs font-mono uppercase tracking-widest text-forest-400/80 mb-3 flex items-center gap-2">
-                  <Icon name="SparklesIcon" size={14} /> Searches Populaires
+                  <LKDVIcon name="ia" size={14} /> Searches Populaires
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {POPULAR_SEARCHES.map((item) => (

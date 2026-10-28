@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Award, BadgeCheck, Lock } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchSavedPosts } from '@/features/community/posts/queries';
 import type { SavedPost } from '@/features/community/posts/types';
 import { DrawerButton, OverlaySheet } from './OverlaySheet';
 import { formatElevation, formatKm } from '@/lib/format/metrics';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface BadgeRow { id: string; name?: string; description?: string; rarity?: string; earned?: boolean; earnedAt?: string; requirement?: string; requirementValue?: number; points?: number }
 export interface GearRowData { id: string; realId?: string; name?: string; brand?: string; category?: string; weight_g?: number; price_cents?: number; condition?: string; photo_url?: string | null; is_lent?: boolean; loaned_to?: string | null; outings_count?: number }
@@ -53,7 +53,7 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeRow; onClose:
   return (
     <OverlaySheet title="Trophée" subtitle={earned ? 'Obtenu' : 'À débloquer'} onClose={onClose} nested>
       <div className="lkdv-badge-detail">
-        <span className={`lkdv-badge-detail-medal ${earned ? 'is-earned' : ''}`}>{earned ? <Award size={34} /> : <Lock size={26} />}</span>
+        <span className={`lkdv-badge-detail-medal ${earned ? 'is-earned' : ''}`}>{earned ? <LKDVIcon name="badge" size={34} /> : <LKDVIcon name="verrou" size={26} />}</span>
         <h3>{badge.name || 'Trophée'}</h3>
         <span className="lkdv-badge-detail-rarity">{badge.rarity || 'Trophée LKDV'}</span>
         {badge.description ? <p>{badge.description}</p> : null}
@@ -168,7 +168,7 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
         <div className="lkdv-profile-preview">
           <div className="lkdv-profile-preview-head">
             {profile.avatar_url ? <img src={profile.avatar_url} alt="" /> : <span>{profile.full_name?.charAt(0) || 'L'}</span>}
-            <div><h3>{profile.full_name || profile.handle || 'Voyageur'}</h3><p>@{profile.handle || 'voyageur'}{profile.location ? ` · ${profile.location}` : ''}</p><small><BadgeCheck size={13} /> Confiance {profile.trust_score ?? 0}/100</small></div>
+            <div><h3>{profile.full_name || profile.handle || 'Voyageur'}</h3><p>@{profile.handle || 'voyageur'}{profile.location ? ` · ${profile.location}` : ''}</p><small><LKDVIcon name="badge" size={13} /> Confiance {profile.trust_score ?? 0}/100</small></div>
           </div>
           {profile.bio ? <p className="lkdv-profile-preview-bio">{profile.bio}</p> : null}
           <div className="lkdv-profile-preview-actions">{user?.id !== profile.id ? <DrawerButton tone={following ? 'secondary' : 'primary'} onClick={() => void toggle()}>{following ? 'Abonné' : 'Suivre'}</DrawerButton> : null}<DrawerButton tone="ghost" onClick={onClose}>Fermer</DrawerButton></div>

@@ -3,7 +3,7 @@
 import React from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Button, Card } from '@/components/ui';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ClubFeaturedEventCardProps {
   event: {
@@ -52,7 +52,7 @@ export default function ClubFeaturedEventCard({
         <div className="min-w-0 flex-1 space-y-[2px]">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wide text-[color:var(--lkv-text-primary)] flex items-center gap-1">
-              <Icon name="compass" size={12} className="text-[color:var(--glass-label)]" />
+              <LKDVIcon name="boussole" size={12} className="text-[color:var(--glass-label)]" />
               <span>Sortie Collective</span>
             </span>
             <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-white" title="Sortie active" />
@@ -61,7 +61,7 @@ export default function ClubFeaturedEventCard({
             {event.title}
           </h3>
           <p className="flex items-center gap-[var(--space-1)] truncate font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-            <Icon name="map-pin" size={11} className="text-[color:var(--glass-label)]" />
+            <LKDVIcon name="point_interet" size={11} className="text-[color:var(--glass-label)]" />
             <span>{event.location || 'Lieu à définir'}</span>
           </p>
         </div>

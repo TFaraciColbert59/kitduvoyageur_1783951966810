@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/AppIcon';
 import { useToast } from '@/contexts/ToastContext';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface HeroVoyageProps {
   data: any;
@@ -102,7 +102,7 @@ export default function HeroVoyage({ data, groupId, inviteCode, onOpenChat }: He
 
         <Button
           onClick={handleInvite}
-          icon={<Icon name="PlusIcon" size={16} aria-hidden="true" />}
+          icon={<LKDVIcon name="plus" size={16} aria-hidden="true" />}
           className="w-full md:w-auto"
         >
           Inviter un ami
@@ -110,13 +110,13 @@ export default function HeroVoyage({ data, groupId, inviteCode, onOpenChat }: He
 
         <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-2)]">
           <IconButton variant="glass" aria-label="Ouvrir la discussion" onClick={onOpenChat}>
-            <Icon name="ChatBubbleLeftIcon" size={16} aria-hidden="true" />
+            <LKDVIcon name="messages" size={16} aria-hidden="true" />
           </IconButton>
           <IconButton variant="glass" aria-label="Partager le voyage" onClick={handleShare}>
-            <Icon name="ShareIcon" size={16} aria-hidden="true" />
+            <LKDVIcon name="partager" size={16} aria-hidden="true" />
           </IconButton>
           <IconButton variant="glass" aria-label="Options du voyage" onClick={handleInvite}>
-            <Icon name="EllipsisHorizontalIcon" size={16} aria-hidden="true" />
+            <LKDVIcon name="plus_options" size={16} aria-hidden="true" />
           </IconButton>
         </div>
       </div>

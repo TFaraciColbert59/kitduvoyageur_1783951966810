@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
 import { CarnetSectionTabs } from './CarnetSectionTabs';
 import { formatWeight } from '@/features/carnet/detail/format';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CarnetIdentityCardProps {
   detail: CarnetDetail;
@@ -111,7 +111,7 @@ export function CarnetIdentityCard({
             {/* eslint-disable-next-line @next/next/no-img-element -- couverture distante */}
             <img className="ckp-cover" src={detail.coverImage} alt={detail.coverImageAlt ?? ''} />
             <span className="ckp-cover-expand" aria-hidden="true">
-              <Icon name="external-link" size={12} />
+              <LKDVIcon name="lien" size={12} />
             </span>
           </button>
         ) : (
@@ -128,13 +128,13 @@ export function CarnetIdentityCard({
             <h2 className="ckp-title">{detail.title}</h2>
             {detail.verified ? (
               <span className="ckp-badge">
-                <Icon name="shield-check" size={12} aria-hidden="true" />
+                <LKDVIcon name="securite" size={12} aria-hidden="true" />
                 Vérifié
               </span>
             ) : null}
             {!detail.isPublic && detail.isOwner ? (
               <span className="ckp-badge ckp-badge--private">
-                <Icon name="lock" size={12} aria-hidden="true" />
+                <LKDVIcon name="verrou" size={12} aria-hidden="true" />
                 Privé
               </span>
             ) : null}
@@ -166,7 +166,7 @@ export function CarnetIdentityCard({
           aria-pressed={detail.engagement.liked}
           aria-label={`J’aime, ${detail.engagement.likes} ${detail.engagement.likes > 1 ? 'mentions' : 'mention'}`}
         >
-          <Icon name="heart" size={16} aria-hidden="true" />
+          <LKDVIcon name="favoris" size={16} aria-hidden="true" />
           {detail.engagement.likes}
         </button>
         <button
@@ -175,18 +175,18 @@ export function CarnetIdentityCard({
           onClick={onOpenComments}
           aria-label={`Commentaires, ${detail.engagement.comments}`}
         >
-          <Icon name="message-square" size={16} aria-hidden="true" />
+          <LKDVIcon name="messages" size={16} aria-hidden="true" />
           {detail.engagement.comments}
         </button>
         {detail.isOwner ? (
           <button type="button" className="ckp-pill" onClick={onOpenManage} aria-label="Gérer le carnet">
-            <Icon name="pencil" size={16} aria-hidden="true" />
+            <LKDVIcon name="modifier" size={16} aria-hidden="true" />
             Gérer
           </button>
         ) : null}
         {!detail.isOwner && detail.kit.totalWeightG ? (
           <span className="ckp-pill">
-            <Icon name="backpack" size={16} aria-hidden="true" />
+            <LKDVIcon name="sac" size={16} aria-hidden="true" />
             {formatWeight(detail.kit.totalWeightG)}
           </span>
         ) : null}

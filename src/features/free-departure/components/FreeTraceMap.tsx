@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import React, { useMemo } from 'react';
-import Icon from '@/components/ui/Icon';
 import type { TracePoint } from '../engine/freeSession';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * La carte MapLibre du hub est un chunk lourd : elle ne doit jamais entrer dans
@@ -69,7 +69,7 @@ export function FreeTraceMap({
 
       <div className="prep-map__scope">
         <span className="prep-map__glass">
-          <Icon name="route" size={16} aria-hidden="true" />
+          <LKDVIcon name="itineraire" size={16} aria-hidden="true" />
           {pillLabel}
         </span>
       </div>
@@ -82,7 +82,7 @@ export function FreeTraceMap({
             onClick={onRecenter}
             aria-label="Recadrer sur ma position"
           >
-            <Icon name="navigation" size={18} aria-hidden="true" />
+            <LKDVIcon name="gps" size={18} aria-hidden="true" />
           </button>
         </div>
       ) : null}

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
 import { activityById } from '@/features/adventure-prep/catalog';
 import {
@@ -13,6 +12,8 @@ import {
 import { useFreeDepartureStore } from '../store/useFreeDepartureStore';
 import { FreeActivityPickerSheet } from './FreeActivityPickerSheet';
 import { FreeTraceMap } from './FreeTraceMap';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 export interface FreeDepartureScreenProps {
   permission: LocationPermission;
@@ -68,7 +69,7 @@ export function FreeDepartureScreen({
       <div className="free-screen">
         <div className="prep-nav free-top">
           <button type="button" className="free-close" onClick={onClose} aria-label="Revenir au hub">
-            <Icon name="x" size={18} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={18} aria-hidden="true" />
           </button>
           <span className="free-top__title">Partir librement</span>
         </div>
@@ -90,7 +91,7 @@ export function FreeDepartureScreen({
                 onClick={onUseAutoDetection}
               >
                 <span className="free-mode__icon" aria-hidden="true">
-                  <Icon name="sparkles" size={20} />
+                  <LKDVIcon name="ia" size={20} />
                 </span>
                 <span className="free-mode__body">
                   <span className="free-mode__title">Détection automatique</span>
@@ -98,7 +99,7 @@ export function FreeDepartureScreen({
                     L’activité est proposée à la fin, tu confirmes
                   </span>
                 </span>
-                <Icon name={activityId === null ? 'check-circle' : 'circle'} size={22} aria-hidden="true" />
+                {activityId === null ? <LKDVIcon name="valider" size={22} /> : <EmptyCircle size={22} />}
               </button>
             </li>
 
@@ -112,7 +113,7 @@ export function FreeDepartureScreen({
                 onClick={() => setPickerOpen(true)}
               >
                 <span className="free-mode__icon" aria-hidden="true">
-                  <Icon name="clipboard-list" size={20} />
+                  <LKDVIcon name="checklist_voyage" size={20} />
                 </span>
                 <span className="free-mode__body">
                   <span className="free-mode__title">Je choisis l’activité</span>
@@ -124,7 +125,7 @@ export function FreeDepartureScreen({
                     <span className="free-mode__hint">Randonnée, vélo, kayak…</span>
                   )}
                 </span>
-                <Icon name={activityId === null ? 'circle' : 'check-circle'} size={22} aria-hidden="true" />
+                {activityId === null ? <EmptyCircle size={22} /> : <LKDVIcon name="valider" size={22} />}
               </button>
             </li>
           </ul>
@@ -136,7 +137,7 @@ export function FreeDepartureScreen({
                 l’écrasera pas.
               </p>
               <button type="button" className="free-chosen__undo" onClick={onUseAutoDetection}>
-                <Icon name="rotate-ccw" size={15} aria-hidden="true" />
+                <LKDVIcon name="actualiser" size={15} aria-hidden="true" />
                 Revenir à la détection
               </button>
             </div>
@@ -145,7 +146,7 @@ export function FreeDepartureScreen({
           {/* --- Ce que la position va servir --------------------------- */}
           <div className="free-info">
             <span className="free-info__icon" aria-hidden="true">
-              <Icon name="map-pin" size={20} />
+              <LKDVIcon name="point_interet" size={20} />
             </span>
             <div>
               <p className="free-info__title">Ce que l’app fera de ta position</p>
@@ -156,7 +157,7 @@ export function FreeDepartureScreen({
           {permission === 'refusee' ? (
             <div className="free-info" data-tone="warn">
               <span className="free-info__icon" aria-hidden="true">
-                <Icon name="alert-circle" size={20} />
+                <LKDVIcon name="alerte" size={20} />
               </span>
               <div>
                 <p className="free-info__title">{PERMISSION_LABELS.refusee}</p>
@@ -168,7 +169,7 @@ export function FreeDepartureScreen({
           {permission === 'indisponible' ? (
             <div className="free-info" data-tone="warn">
               <span className="free-info__icon" aria-hidden="true">
-                <Icon name="alert-circle" size={20} />
+                <LKDVIcon name="alerte" size={20} />
               </span>
               <div>
                 <p className="free-info__title">{PERMISSION_LABELS.indisponible}</p>
@@ -194,7 +195,7 @@ export function FreeDepartureScreen({
             className="prep-footer__primary"
             onClick={handleStart}
           >
-            <Icon name="play" size={18} aria-hidden="true" />
+            <LKDVIcon name="lecture" size={18} aria-hidden="true" />
             Démarrer
           </Button>
         </div>

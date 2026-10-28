@@ -1,8 +1,7 @@
 'use client';
-
-import { MapPin, MapPinPlus, X } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import HubRouteMap, { type HubRoutePoint } from '../HubRouteMap';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ItineraryMapSectionProps {
   routeCoords: Array<[number, number]>;
@@ -71,7 +70,7 @@ export function ItineraryMapSection({
             }}
             className="glass-capsule-btn primary inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
           >
-            <MapPinPlus size={15} aria-hidden="true" />
+            <LKDVIcon name="position" size={15} aria-hidden="true" />
             Ajouter un point ici
           </button>
           <button
@@ -80,12 +79,12 @@ export function ItineraryMapSection({
             aria-label="Annuler le point choisi"
             className="glass-circle-btn h-11 w-11 shrink-0"
           >
-            <X size={16} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={16} aria-hidden="true" />
           </button>
         </div>
       ) : (
         <p className="mt-3 flex items-center gap-1.5 text-[10.5px] font-medium text-[var(--lkv-text-primary)]/65">
-          <MapPin size={12} aria-hidden="true" />
+          <LKDVIcon name="point_interet" size={12} aria-hidden="true" />
           {canEdit
             ? 'Touchez la carte pour poser un point d’intérêt, ou un marqueur pour son nom.'
             : 'Touchez un marqueur pour son nom.'}

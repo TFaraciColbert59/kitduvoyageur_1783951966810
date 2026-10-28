@@ -2,12 +2,12 @@
 
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Clock, Search, User, UserCheck, UserPlus, Users, X } from 'lucide-react';
 import { DrawerEmpty, DrawerError, DrawerShell, DrawerSkeleton, type DrawerTab } from '../shell/DrawerShell';
 import { DrawerAuthRequired } from '../shell/DrawerAuthRequired';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRow } from './UserRow';
 import type { FollowRequestItem, ReseauPayload, ReseauUser } from '@/features/compte/server/reseau';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url, { headers: { accept: 'application/json' } });
@@ -16,9 +16,9 @@ async function getJson<T>(url: string): Promise<T> {
 }
 
 const FILTERS = [
-  { id: 'all', label: 'Tous', icon: <Users size={15} aria-hidden="true" /> },
-  { id: 'mutual', label: 'Mutuels', icon: <UserCheck size={15} aria-hidden="true" /> },
-  { id: 'recent', label: 'Récents', icon: <Clock size={15} aria-hidden="true" /> },
+  { id: 'all', label: 'Tous', icon: <LKDVIcon name="communaute" size={15} aria-hidden="true" /> },
+  { id: 'mutual', label: 'Mutuels', icon: <LKDVIcon name="amis" size={15} aria-hidden="true" /> },
+  { id: 'recent', label: 'Récents', icon: <LKDVIcon name="duree" size={15} aria-hidden="true" /> },
 ] as const;
 
 export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
@@ -176,7 +176,7 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
                 disabled={busyId === request.id}
                 onClick={() => requestMutation.mutate({ request, action: 'accept' })}
               >
-                <Check size={14} aria-hidden="true" /> Accepter
+                <LKDVIcon name="valider" size={14} aria-hidden="true" /> Accepter
               </button>
               <button
                 type="button"
@@ -185,7 +185,7 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
                 onClick={() => requestMutation.mutate({ request, action: 'decline' })}
                 aria-label="Refuser la demande"
               >
-                <X size={15} aria-hidden="true" />
+                <LKDVIcon name="fermer" size={15} aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -236,7 +236,7 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
   const renderPane = (kind: 'following' | 'followers') => (
     <div className="lkdv-reseau-pane" data-pane={kind}>
       <label className="lkdv-reseau-search">
-        <Search size={15} aria-hidden="true" />
+        <LKDVIcon name="recherche" size={15} aria-hidden="true" />
         <input
           type="search"
           value={search}
@@ -260,13 +260,13 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
     {
       id: 'following',
       label: 'Abonnements',
-      icon: <User size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="profil" size={18} aria-hidden="true" />,
       render: () => renderPane('following'),
     },
     {
       id: 'followers',
       label: 'Abonnés',
-      icon: <Users size={18} aria-hidden="true" />,
+      icon: <LKDVIcon name="communaute" size={18} aria-hidden="true" />,
       render: () => renderPane('followers'),
     },
   ];

@@ -5,9 +5,9 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, EmptyState, IconButton, Tabs } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ClubMessage {
   id: string;
@@ -257,7 +257,7 @@ export default function ClubDiscussionCard({
       <div className="mb-[var(--space-4)] flex-1 space-y-[var(--space-4)] overflow-y-auto pr-[var(--space-2)]">
         {filteredDiscussions.length === 0 ? (
           <EmptyState
-            icon={<Icon name="ChatBubbleLeftRightIcon" size={22} aria-hidden="true" />}
+            icon={<LKDVIcon name="messages" size={22} aria-hidden="true" />}
             title="Aucun message pour le moment"
             description="Lancez la première discussion dans le club !"
           />
@@ -359,7 +359,7 @@ export default function ClubDiscussionCard({
                         rel="noopener noreferrer"
                         className="mt-[var(--space-3)] inline-flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]"
                       >
-                        <Icon name="MapPinIcon" size={14} className="text-[color:var(--lkv-forest-700)]" aria-hidden="true" />
+                        <LKDVIcon name="point_interet" size={14} className="text-[color:var(--lkv-forest-700)]" aria-hidden="true" />
                         <span>
                           {typeof msg.location === 'string'
                             ? msg.location
@@ -405,7 +405,7 @@ export default function ClubDiscussionCard({
                         }}
                         className="px-[var(--space-3)]"
                       >
-                        <Icon name="message-square" size={13} aria-hidden="true" />
+                        <LKDVIcon name="messages" size={13} aria-hidden="true" />
                         <span>{msg.replies || 0} réponses</span>
                       </Button>
                     </div>
@@ -453,7 +453,7 @@ export default function ClubDiscussionCard({
             aria-label="Annuler la réponse"
             onClick={() => setReplyingTo(null)}
           >
-            <Icon name="XMarkIcon" size={14} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={14} aria-hidden="true" />
           </IconButton>
         </div>
       )}
@@ -504,7 +504,7 @@ export default function ClubDiscussionCard({
             disabled={uploading || loading}
             aria-label="Envoyer une photo"
           >
-            <Icon name="PhotoIcon" size={13} aria-hidden="true" />
+            <LKDVIcon name="photo" size={13} aria-hidden="true" />
           </IconButton>
           <IconButton
             size="sm"
@@ -513,7 +513,7 @@ export default function ClubDiscussionCard({
             disabled={locating || loading}
             aria-label="Partager ma position"
           >
-            <Icon name="MapPinIcon" size={13} aria-hidden="true" />
+            <LKDVIcon name="point_interet" size={13} aria-hidden="true" />
           </IconButton>
           <IconButton
             size="sm"
@@ -522,7 +522,7 @@ export default function ClubDiscussionCard({
             aria-label="Envoyer"
             variant={Boolean(newMessage.trim()) ? 'solid' : 'glass'}
           >
-            <Icon name="PaperAirplaneIcon" size={13} aria-hidden="true" />
+            <LKDVIcon name="partager" size={13} aria-hidden="true" />
           </IconButton>
         </div>
       </div>

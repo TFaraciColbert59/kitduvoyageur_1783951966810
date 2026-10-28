@@ -4,12 +4,12 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Divider, LoadingState } from '@/components/ui';
 import { getCart, getCartTotals, clearCart, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppShell from '@/components/shell/AppShell';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type Step = 'livraison' | 'paiement' | 'confirmation';
 type PaymentMethod = 'card' | 'paypal' | 'apple_pay' | 'google_pay' | 'virement';
@@ -291,7 +291,7 @@ export default function CheckoutPage() {
                         </div>
                         <label className="mt-[var(--space-2)] flex cursor-pointer items-center gap-[var(--space-3)]">
                           <span aria-hidden="true" className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-                            <Icon name="CheckIcon" size={10} />
+                            <LKDVIcon name="valider" size={10} />
                           </span>
                           <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">Recevoir le journal du Kit — un envoi par saison, refuges et sentiers uniquement.</span>
                         </label>
@@ -519,7 +519,7 @@ export default function CheckoutPage() {
 
                             <label className="mb-[var(--space-6)] mt-[var(--space-4)] flex cursor-pointer items-center gap-[var(--space-3)]">
                               <span aria-hidden="true" className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-                                <Icon name="CheckIcon" size={10} />
+                                <LKDVIcon name="valider" size={10} />
                               </span>
                               <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Enregistrer cette carte pour un futur achat (chiffrée par Stripe).</span>
                             </label>
@@ -532,7 +532,7 @@ export default function CheckoutPage() {
                             variant="primary"
                             size="lg"
                             fullWidth
-                            icon={<Icon name="LockClosedIcon" size={18} />}
+                            icon={<LKDVIcon name="verrou" size={18} />}
                           >
                             Payer {formatPriceEur(grandTotal)}
                           </Button>
@@ -545,7 +545,7 @@ export default function CheckoutPage() {
                   /* ── STEP 3: Confirmation ── */
                   <Card className="flex h-full min-h-[420px] flex-col items-center justify-center p-[var(--space-12)] text-center">
                     <div className="mb-[var(--space-6)] flex h-20 w-20 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)]">
-                      <Icon name="CheckIcon" size={32} className="text-[color:var(--lkv-text-primary)]" />
+                      <LKDVIcon name="valider" size={32} className="text-[color:var(--lkv-text-primary)]" />
                     </div>
                     <h2 className="mb-[var(--space-4)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
                       {orderNumber ? 'Commande enregistrée — en attente de paiement.' : 'Commande confirmée.'}
@@ -585,7 +585,7 @@ export default function CheckoutPage() {
                             <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-[color:var(--glass-bg-medium)]">
-                              <Icon name="PhotoIcon" size={16} className="text-[color:var(--lkv-text-muted)]" />
+                              <LKDVIcon name="photo" size={16} className="text-[color:var(--lkv-text-muted)]" />
                             </div>
                           )}
                         </div>
@@ -619,12 +619,12 @@ export default function CheckoutPage() {
                   </div>
 
                   {step === 'livraison' && (
-                    <Button onClick={handleShippingSubmit} fullWidth className="mt-[var(--space-6)]" icon={<Icon name="LockClosedIcon" size={16} />}>
+                    <Button onClick={handleShippingSubmit} fullWidth className="mt-[var(--space-6)]" icon={<LKDVIcon name="verrou" size={16} />}>
                       Payer {formatPriceEur(grandTotal)} par carte
                     </Button>
                   )}
                   {step === 'paiement' && (
-                    <Button onClick={handleStripeCheckout} disabled={processing} loading={processing} fullWidth className="mt-[var(--space-6)]" icon={<Icon name="LockClosedIcon" size={16} />}>
+                    <Button onClick={handleStripeCheckout} disabled={processing} loading={processing} fullWidth className="mt-[var(--space-6)]" icon={<LKDVIcon name="verrou" size={16} />}>
                       {processing ? 'Traitement...' : `Payer ${formatPriceEur(grandTotal)} par carte`}
                     </Button>
                   )}
@@ -659,7 +659,7 @@ export default function CheckoutPage() {
           <Card variant="compact" className="mx-[var(--space-4)] mb-[var(--space-3)] p-[var(--space-4)]">
             <div className="flex items-center gap-[var(--space-3)]">
               <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)]">
-                <Icon name="MapPinIcon" size={16} variant="outline" className="text-[color:var(--glass-label)]" />
+                <LKDVIcon name="point_interet" size={16} className="text-[color:var(--glass-label)]" />
               </div>
               <div className="flex-1">
                 <div className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">{shipping.prenom || 'Mathieu'} {shipping.nom || 'Chevrier'}</div>
@@ -758,7 +758,7 @@ export default function CheckoutPage() {
               <span className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Total</span>
               <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{formatPriceEur(grandTotal)}</span>
             </div>
-            <Button onClick={handleStripeCheckout} disabled={processing} loading={processing} fullWidth icon={<Icon name="LockClosedIcon" size={16} />}>
+            <Button onClick={handleStripeCheckout} disabled={processing} loading={processing} fullWidth icon={<LKDVIcon name="verrou" size={16} />}>
               Payer {formatPriceEur(grandTotal)}
             </Button>
           </Card>

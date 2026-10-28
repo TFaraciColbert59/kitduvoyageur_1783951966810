@@ -1,6 +1,6 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export function ForgetChecklistItem({
   label,
@@ -23,7 +23,7 @@ export function ForgetChecklistItem({
           checked ? 'bg-[var(--sage-500)]' : 'bg-[color:var(--btn-tint)]'
         }`}
       >
-        {checked && <Icon name="check" size={12} className="text-white" aria-hidden="true" />}
+        {checked && <LKDVIcon name="valider" size={12} className="text-white" aria-hidden="true" />}
       </span>
       <span
         className={`text-sm ${checked ? 'line-through text-[color:var(--lkv-text-muted)]' : 'text-[color:var(--lkv-text-primary)]'}`}

@@ -1,5 +1,6 @@
 import { createClient } from './client';
 import { PUBLIC_PROFILES_VIEW } from '@/lib/queries/publicProfilesCore';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /* ────────────────────────────────────────────
    Types — matching UI expectations
@@ -106,7 +107,7 @@ export interface CompteCommande {
 export interface CompteBadgeItem {
   id: string;
   title: string;
-  icon_name: string;
+  icon_name: LKDVIconName;
   earned: boolean;
 }
 
@@ -360,21 +361,21 @@ export async function fetchUserBadges(userId: string): Promise<CompteBadgeItem[]
 
   const earnedIds = new Set((userBadges ?? []).map((ub: any) => ub.badge_id));
 
-  const iconMap: Record<string, string> = {
-    summit: 'MountainIcon',
-    distance: 'SparklesIcon',
-    author: 'PencilIcon',
-    lightweight: 'ShoppingBagIcon',
-    social: 'HeartIcon',
-    regions: 'MapPinIcon',
-    guide: 'StarIcon',
-    complete: 'CheckBadgeIcon',
+  const iconMap: Record<string, LKDVIconName> = {
+    summit: 'montagne',
+    distance: 'ia',
+    author: 'modifier',
+    lightweight: 'boutique',
+    social: 'favoris',
+    regions: 'point_interet',
+    guide: 'points',
+    complete: 'badge',
   };
 
   return (allBadges ?? []).map((b: any) => ({
     id: b.id,
     title: b.name,
-    icon_name: iconMap[b.slug] ?? 'StarIcon',
+    icon_name: iconMap[b.slug] ?? 'points',
     earned: earnedIds.has(b.id),
   }));
 }

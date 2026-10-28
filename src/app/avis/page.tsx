@@ -4,12 +4,12 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import { Button, Card, IconButton, Modal, Tabs } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 import AppShell from '@/components/shell/AppShell';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Review {
   id: string;
@@ -26,10 +26,10 @@ interface Review {
 }
 
 const typeConfig = {
-  produit: { label: 'Produit', color: 'glass-pill', icon: 'TagIcon' },
-  kit: { label: 'Kit', color: 'glass-pill pill-info', icon: 'RectangleStackIcon' },
-  location: { label: 'Location', color: 'glass-pill pill-warn', icon: 'KeyIcon' },
-  occasion: { label: 'Occasion', color: 'glass-pill pill-danger', icon: 'ArrowPathIcon' },
+  produit: { label: 'Produit', color: 'glass-pill', icon: 'promo' as const },
+  kit: { label: 'Kit', color: 'glass-pill pill-info', icon: 'calques' as const },
+  location: { label: 'Location', color: 'glass-pill pill-warn', icon: 'deverrou' as const },
+  occasion: { label: 'Occasion', color: 'glass-pill pill-danger', icon: 'actualiser' as const },
 };
 
 const FALLBACK_REVIEWS: Review[] = [
@@ -41,7 +41,7 @@ const FALLBACK_REVIEWS: Review[] = [
 function StarRating({ rating, size = 14 }: { rating: number; size?: number }) {
   return (
     <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => <Icon key={star} name="StarIcon" size={size} className={star <= rating ? 'text-[color:var(--lkv-warning)] fill-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-subtle)] fill-[color:var(--lkv-text-subtle)]'} />)}
+      {[1, 2, 3, 4, 5].map((star) => <LKDVIcon key={star} name="points" size={size} className={star <= rating ? 'text-[color:var(--lkv-warning)] fill-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-subtle)] fill-[color:var(--lkv-text-subtle)]'} />)}
     </div>
   );
 }
@@ -67,7 +67,7 @@ function ReviewCard({ review, onHelpful }: { review: Review; onHelpful: (id: str
             >
               {authorName}
             </Link>
-            {review.verified && <span className="flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]"><Icon name="CheckBadgeIcon" size={12} className="text-[color:var(--lkv-secondary-ink)]" />Achat vérifié</span>}
+            {review.verified && <span className="flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]"><LKDVIcon name="badge" size={12} className="text-[color:var(--lkv-secondary-ink)]" />Achat vérifié</span>}
           </div>
           <div className="flex items-center gap-2 mt-0.5"><StarRating rating={review.rating} size={12} /><span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">{new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
         </div>
@@ -81,11 +81,11 @@ function ReviewCard({ review, onHelpful }: { review: Review; onHelpful: (id: str
           variant={voted ? 'primary' : 'secondary'}
           onClick={() => { if (!voted) { onHelpful(review.id); setVoted(true); } }}
           aria-pressed={voted}
-          icon={<Icon name="HandThumbUpIcon" size={14} />}
+          icon={<LKDVIcon name="aimer" size={14} />}
         >
           Utile ({review.helpful_count + (voted ? 1 : 0)})
         </Button>
-        <Button size="sm" variant="ghost" icon={<Icon name="FlagIcon" size={12} />}>
+        <Button size="sm" variant="ghost" icon={<LKDVIcon name="signalement" size={12} />}>
           Signaler
         </Button>
       </div>
@@ -133,7 +133,7 @@ function WriteReviewModal({ onClose, onSubmit, initialType }: { onClose: () => v
                       onChange={() => setForm((f) => ({ ...f, type: key }))}
                       className="h-4 w-4 shrink-0 accent-[var(--lkv-action)]"
                     />
-                    <Icon name={val.icon} size={16} aria-hidden="true" />
+                    <LKDVIcon name={val.icon} size={16} aria-hidden="true" />
                     <span className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
                       {val.label}
                     </span>
@@ -171,7 +171,7 @@ function WriteReviewModal({ onClose, onSubmit, initialType }: { onClose: () => v
                   onClick={() => setRating(star)}
                   className="bg-transparent"
                 >
-                  <Icon name="StarIcon" size={24} className={star <= (hovered || rating) ? 'text-[color:var(--lkv-warning)] fill-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-subtle)] fill-[color:var(--lkv-text-subtle)]'} />
+                  <LKDVIcon name="points" size={24} className={star <= (hovered || rating) ? 'text-[color:var(--lkv-warning)] fill-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-subtle)] fill-[color:var(--lkv-text-subtle)]'} />
                 </IconButton>
               ))}
             </div>
@@ -207,7 +207,7 @@ function WriteReviewModal({ onClose, onSubmit, initialType }: { onClose: () => v
               loading={submitting}
               disabled={submitting || !rating || !form.title || !form.comment}
               onClick={handleSubmit}
-              icon={!submitting ? <Icon name="PaperAirplaneIcon" size={16} /> : undefined}
+              icon={!submitting ? <LKDVIcon name="partager" size={16} /> : undefined}
             >
               {submitting ? 'Publication...' : "Publier l'avis"}
             </Button>
@@ -216,7 +216,7 @@ function WriteReviewModal({ onClose, onSubmit, initialType }: { onClose: () => v
       ) : (
         <div className="py-[var(--space-8)] text-center">
           <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)]">
-            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-text-primary)]" />
+            <LKDVIcon name="valider" size={28} className="text-[color:var(--lkv-text-primary)]" />
           </div>
           <h3 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">Avis publié !</h3>
           <Button onClick={onClose}>Fermer</Button>
@@ -280,7 +280,7 @@ export default function AvisPage() {
                 <h1 className="font-display font-bold text-3xl tracking-tight text-[color:var(--glass-label)]">Les avis de la communauté</h1>
                 <p className="text-sm text-[color:var(--lkv-text-secondary)] mt-1.5 max-w-xl">Avis vérifiés sur les produits, kits, locations et articles d&apos;occasion.</p>
               </div>
-              <Button onClick={() => setShowWriteModal(true)} icon={<Icon name="PencilSquareIcon" size={16} />} className="shrink-0">
+              <Button onClick={() => setShowWriteModal(true)} icon={<LKDVIcon name="modifier" size={16} />} className="shrink-0">
                 Laisser un avis
               </Button>
             </div>
@@ -305,7 +305,7 @@ export default function AvisPage() {
 
             {error && (
               <div className="mb-6 p-4 rounded-md border text-sm bg-[rgba(168,68,58,0.08)] border-[rgba(168,68,58,0.35)] text-[color:var(--lkv-danger-dark)]">
-                <span className="flex items-center gap-2"><Icon name="ExclamationTriangleIcon" size={16} />{error}</span>
+                <span className="flex items-center gap-2"><LKDVIcon name="alerte" size={16} />{error}</span>
               </div>
             )}
 
@@ -315,7 +315,7 @@ export default function AvisPage() {
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-16 text-[color:var(--lkv-forest-100)]">
-                <Icon name="StarIcon" size={40} className="mx-auto mb-3 opacity-30" />
+                <LKDVIcon name="points" size={40} className="mx-auto mb-3 opacity-30" />
                 <p className="font-display font-bold text-[color:var(--lkv-text-primary)] mb-1">Aucun avis pour l&apos;instant</p>
               </div>
             ) : (
@@ -335,7 +335,7 @@ export default function AvisPage() {
             <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--glass-label)]">Les avis de la communauté</h1>
             <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">Avis vérifiés sur les produits, kits et locations.</p>
 
-            <Button fullWidth className="mb-[var(--space-4)]" onClick={() => setShowWriteModal(true)} icon={<Icon name="PencilSquareIcon" size={16} />}>
+            <Button fullWidth className="mb-[var(--space-4)]" onClick={() => setShowWriteModal(true)} icon={<LKDVIcon name="modifier" size={16} />}>
               Laisser un avis
             </Button>
 
@@ -349,7 +349,7 @@ export default function AvisPage() {
             />
             {error ? (
               <div className="py-[var(--space-10)] text-center">
-                <Icon name="ExclamationTriangleIcon" size={32} className="mx-auto mb-[var(--space-2)] text-[var(--lkv-warning)]" />
+                <LKDVIcon name="alerte" size={32} className="mx-auto mb-[var(--space-2)] text-[var(--lkv-warning)]" />
                 <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">{error}</p>
                 <Button size="sm" onClick={() => loadReviews()}>Réessayer</Button>
               </div>

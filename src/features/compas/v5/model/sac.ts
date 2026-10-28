@@ -42,29 +42,29 @@ export function weightGroup(category: string | null, name = ''): WeightGroup {
 /** Illustration sobre d'un objet sans photo de catalogue (jamais la photo d'un autre objet). */
 export function itemIcon(line: Pick<CompasKitLine, 'name' | 'category'>): V5IconName {
   const name = plain(line.name);
-  if (/baton|pole/.test(name)) return 'poles';
-  if (/veste|doudoune|jacket|manteau/.test(name)) return 'jacket';
-  if (/polaire|pull|shirt|pantalon|short/.test(name)) return 'shirt';
-  if (/drap/.test(name)) return 'sheet';
-  if (/tente|tarp|abri|bivy/.test(name)) return 'tent';
-  if (/rechaud|popote|gamelle/.test(name)) return 'stove';
-  if (/gourde|eau|filtre|bouteille/.test(name)) return 'drop';
-  if (/trousse|secours|pharma/.test(name)) return 'cross';
-  if (/carte|boussole|gps/.test(name)) return 'map';
-  if (/frontale|lampe/.test(name)) return 'sun';
+  if (/baton|pole/.test(name)) return 'marche';
+  if (/veste|doudoune|jacket|manteau/.test(name)) return 'vetement';
+  if (/polaire|pull|shirt|pantalon|short/.test(name)) return 'vetement';
+  if (/drap/.test(name)) return 'couchage';
+  if (/tente|tarp|abri|bivy/.test(name)) return 'tente';
+  if (/rechaud|popote|gamelle/.test(name)) return 'rechaud';
+  if (/gourde|eau|filtre|bouteille/.test(name)) return 'eau_potable';
+  if (/trousse|secours|pharma/.test(name)) return 'trousse';
+  if (/carte|boussole|gps/.test(name)) return 'carte';
+  if (/frontale|lampe/.test(name)) return 'soleil';
   switch (weightGroup(line.category, line.name)) {
     case 'porter':
-      return 'bag';
+      return 'sac';
     case 'dormir':
-      return 'tent';
+      return 'tente';
     case 'vetements':
-      return 'shirt';
+      return 'vetement';
     case 'securite':
-      return 'cross';
+      return 'trousse';
     case 'eau':
-      return 'drop';
+      return 'eau_potable';
     default:
-      return 'box';
+      return 'inventaire';
   }
 }
 

@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeftRight, Bookmark, LayoutGrid, ShoppingBag, Users } from 'lucide-react';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import type { SlotId } from './SlotShell';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface SlotSelectorItem {
   id: SlotId;
@@ -20,11 +20,11 @@ export const SLOT_SELECTOR_ITEMS: SlotSelectorItem[] = [
 ];
 
 const SLOT_GLYPHS: Record<SlotId, React.ReactNode> = {
-  vitrine: <LayoutGrid size={18} strokeWidth={1.8} aria-hidden="true" />,
-  kit: <ShoppingBag size={18} strokeWidth={1.8} aria-hidden="true" />,
-  prets: <ArrowLeftRight size={18} strokeWidth={1.8} aria-hidden="true" />,
-  souvenirs: <Bookmark size={18} strokeWidth={1.8} aria-hidden="true" />,
-  communaute: <Users size={18} strokeWidth={1.8} aria-hidden="true" />,
+  vitrine: <LKDVIcon name="calques" size={18} aria-hidden="true" />,
+  kit: <LKDVIcon name="boutique" size={18} aria-hidden="true" />,
+  prets: <LKDVIcon name="itineraire" size={18} aria-hidden="true" />,
+  souvenirs: <LKDVIcon name="signet" size={18} aria-hidden="true" />,
+  communaute: <LKDVIcon name="communaute" size={18} aria-hidden="true" />,
 };
 
 /** Id du panneau de contenu contrôlé par l'onglet d'un slot. */

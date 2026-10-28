@@ -2,10 +2,10 @@
 import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, IconButton, Modal, Tabs, type BadgeTone } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { UserProfile } from '@/lib/mock/compte-marceline';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // ─────────────────────────────────────────────
 // Types
@@ -441,7 +441,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
               <Button
                 variant="secondary"
                 size="sm"
-                icon={<Icon name="ArrowDownTrayIcon" size={14} />}
+                icon={<LKDVIcon name="telecharger" size={14} />}
                 onClick={handleDownloadAllInvoices}
                 className="font-bold"
               >
@@ -558,7 +558,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
                 'Accès aux carnets premium',
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-2 text-xs text-white/85">
-                  <Icon name="CheckIcon" size={12} className="text-[color:var(--sage-300)] shrink-0" />
+                  <LKDVIcon name="valider" size={12} className="text-[color:var(--sage-300)] shrink-0" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -657,7 +657,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
               variant="secondary"
               size="sm"
               fullWidth
-              icon={<Icon name="PlusIcon" size={13} />}
+              icon={<LKDVIcon name="plus" size={13} />}
               onClick={() => {
                 setAddressToEdit(null);
                 setShowAddressModal(true);
@@ -721,7 +721,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
               variant="secondary"
               size="sm"
               fullWidth
-              icon={<Icon name="PlusIcon" size={13} />}
+              icon={<LKDVIcon name="plus" size={13} />}
               onClick={() => setShowCardModal(true)}
               className="font-bold"
             >
@@ -753,7 +753,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
       {/* Global Toast */}
       {toast && (
         <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-6 py-3 rounded-full text-xs font-bold shadow-lg animate-fade-in flex items-center gap-2 border border-white/20">
-          <Icon name="CheckIcon" size={14} />
+          <LKDVIcon name="valider" size={14} />
           <span>{toast}</span>
         </div>
       )}
@@ -891,7 +891,7 @@ function ActiveOrderCard({
                     : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-text-muted)]'
                 } ${isCurrent ? 'ring-2 ring-[color:var(--lkv-secondary)] ring-offset-2 ring-offset-[color:var(--glass-bg-medium)]' : ''}`}>
                   {isDone ? (
-                    <Icon name="CheckIcon" size={14} />
+                    <LKDVIcon name="valider" size={14} />
                   ) : (
                     <span className="text-[10px] font-mono">{i + 1}</span>
                   )}
@@ -982,7 +982,7 @@ function HistoryOrderRow({
           title="Télécharger la facture"
           onClick={onInvoice}
         >
-          <Icon name="ArrowDownTrayIcon" size={14} />
+          <LKDVIcon name="telecharger" size={14} />
         </IconButton>
         <IconButton
           variant="glass"
@@ -991,7 +991,7 @@ function HistoryOrderRow({
           title="Voir le détail"
           onClick={onTrack}
         >
-          <Icon name="EyeIcon" size={14} />
+          <LKDVIcon name="vue" size={14} />
         </IconButton>
       </div>
     </div>

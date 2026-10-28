@@ -1,8 +1,8 @@
 import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, EmptyState, IconButton, ListItem, Modal } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Expense {
   id: string;
@@ -98,7 +98,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
           variant={isAdding ? 'secondary' : 'primary'}
           size="sm"
           onClick={() => setIsAdding(!isAdding)}
-          icon={<Icon name={isAdding ? 'XMarkIcon' : 'PlusIcon'} size={12} aria-hidden="true" />}
+          icon={<LKDVIcon name={isAdding ? 'fermer' : 'plus'} size={12} aria-hidden="true" />}
         >
           {isAdding ? 'Annuler' : 'Ajouter'}
         </Button>
@@ -178,7 +178,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
 
       <div className="mb-[var(--space-6)] space-y-[var(--space-1)]">
         {expenses.items.length === 0 && (
-          <EmptyState compact icon={<Icon name="CurrencyEuroIcon" size={22} aria-hidden="true" />} title="Aucune dépense enregistrée" />
+          <EmptyState compact icon={<LKDVIcon name="budget" size={22} aria-hidden="true" />} title="Aucune dépense enregistrée" />
         )}
         {expenses.items.map((item) => (
           <ListItem
@@ -187,7 +187,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
             className="group bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn"
             leading={
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-                <Icon name="CurrencyEuroIcon" size={14} aria-hidden="true" />
+                <LKDVIcon name="budget" size={14} aria-hidden="true" />
               </span>
             }
             title={item.title}
@@ -206,7 +206,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
                 aria-label={`Supprimer la dépense ${item.title}`}
                 className="opacity-0 group-hover:opacity-100 text-[color:var(--lkv-danger)]"
               >
-                <Icon name="TrashIcon" size={14} aria-hidden="true" />
+                <LKDVIcon name="supprimer" size={14} aria-hidden="true" />
               </IconButton>
             }
           />

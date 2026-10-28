@@ -313,15 +313,9 @@
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like):not(.primary):not(.danger) :is(span, svg, i, b, strong, p) {
   color: inherit !important;
 }
-:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like):not(.primary):not(.danger) span[style*='mask-image'] {
-  background-color: currentColor !important;
-}
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill,
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill :is(span, svg, i) {
   color: var(--g3-text) !important;
-}
-:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill span[style*='mask-image'] {
-  background-color: currentColor !important;
 }
 /* Liseré spéculaire (screen) — porté de la pile LiquidGlass */
 .glass-capsule-btn::before, .glass-btn::before, .glass-circle-btn::before, .glass-capsule-btn-like::before {
@@ -819,9 +813,6 @@
 
 .lkv-button-primitive :is(span, svg, i, b, strong, p) {
   color: inherit !important;
-}
-.lkv-button-primitive span[style*='mask-image'] {
-  background-color: currentColor !important;
 }
 
 /* One blur per visual surface. !important intentionally covers older inline recipes. */

@@ -66,7 +66,7 @@ export function V5Sheet() {
           <h2>{def.title(api)}</h2>
           {subtitle && <span>{subtitle}</span>}
           <button type="button" className="v5-sx" aria-label={t('compas.v5.core.close')} onClick={closeSpace}>
-            <V5Icon name="x" size="s" />
+            <V5Icon name='fermer' size="s" />
           </button>
         </div>
       </div>

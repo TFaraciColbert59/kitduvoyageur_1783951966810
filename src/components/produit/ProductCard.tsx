@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ProductCardProps {
   image: string;
@@ -56,7 +56,7 @@ export default function ProductCard({
       <div className="relative aspect-[4/3] overflow-hidden rounded-t-[var(--lkv-radius-card)] bg-white/5">
         {imgError || !image ? (
           <div className="flex h-full w-full items-center justify-center text-[color:var(--glass-label)]">
-            <Icon name="package" size={32} className="opacity-30" />
+            <LKDVIcon name="inventaire" size={32} className="opacity-30" />
           </div>
         ) : (
           <img
@@ -116,7 +116,7 @@ export default function ProductCard({
         {ctaLabel && (
           <span className="mt-[var(--space-3)] inline-flex min-h-[var(--control-height-sm)] w-full items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
             {ctaLabel}
-            <Icon name="arrow-right" size={14} />
+            <LKDVIcon name="suivant" size={14} />
           </span>
         )}
       </div>

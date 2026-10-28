@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CountryFlagProps {
   code: string;
@@ -59,10 +60,7 @@ export function CountryFlag({
         {isoCode ? (
           isoCode.slice(0, 2).toUpperCase()
         ) : (
-          <svg className="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" strokeWidth="2" />
-            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" strokeWidth="2" />
-          </svg>
+          <LKDVIcon name="monde" size={14} className="w-3.5 h-3.5" />
         )}
       </span>
     );

@@ -1,12 +1,11 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-react';
 import type { PlannerStep } from './plannerEngine';
 import { isLlmSuggestion } from '../engine/llmProvenance';
 import { LlmSuggestionBadge } from '../components/LlmSuggestionBadge';
 import { Badge, Card, IconButton } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 export interface StepCardProps {
   step: PlannerStep;
@@ -25,23 +24,23 @@ function getTransportIcon(mode?: string | null) {
   switch (m) {
     case 'flight':
     case 'plane':
-      return Plane;
+      return lkdvIcon('avion');
     case 'train':
-      return Train;
+      return lkdvIcon('train');
     case 'car':
-      return Car;
+      return lkdvIcon('voiture');
     case 'bus':
-      return Bus;
+      return lkdvIcon('bus');
     case 'boat':
-      return Ship;
+      return lkdvIcon('bateau');
     case 'bike':
-      return Bike;
+      return lkdvIcon('velo');
     case 'hiking':
     case 'walking':
     case 'foot':
-      return Footprints;
+      return lkdvIcon('randonnee');
     default:
-      return Compass;
+      return lkdvIcon('boussole');
   }
 }
 
@@ -101,7 +100,7 @@ export function StepCard({
               {llmStep && <LlmSuggestionBadge />}
               {step.location_name && (
                 <span className="flex max-w-[200px] items-center gap-[var(--space-1)] truncate text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
-                  <Icon name="map-pin" size={14} className="shrink-0 text-[color:var(--lkv-text-primary)]" />
+                  <LKDVIcon name="point_interet" size={14} className="shrink-0 text-[color:var(--lkv-text-primary)]" />
                   {step.location_name}
                 </span>
               )}
@@ -130,8 +129,8 @@ export function StepCard({
               )}
               {step.accommodation_name && (
                 <Badge tone="stone" className="max-w-[200px] truncate">
-                  <Icon
-                    name="bed-double"
+                  <LKDVIcon
+                    name="hotel"
                     size={14}
                     className="shrink-0 text-[color:var(--lkv-text-primary)]"
                   />
@@ -154,7 +153,7 @@ export function StepCard({
                 disabled={isFirst}
                 aria-label="Monter cette étape"
               >
-                <Icon name="chevron-up" size={16} />
+                <LKDVIcon name="haut" size={16} />
               </IconButton>
               <IconButton
                 type="button"
@@ -163,7 +162,7 @@ export function StepCard({
                 disabled={isLast}
                 aria-label="Descendre cette étape"
               >
-                <Icon name="chevron-down" size={16} />
+                <LKDVIcon name="bas" size={16} />
               </IconButton>
             </div>
 
@@ -175,7 +174,7 @@ export function StepCard({
               aria-label="Déplacer vers un autre jour"
               title="Déplacer vers un autre jour"
             >
-              <Icon name="arrow-right-left" size={16} />
+              <LKDVIcon name="itineraire" size={16} />
             </IconButton>
 
             {/* Modifier */}
@@ -186,7 +185,7 @@ export function StepCard({
               aria-label="Modifier l'étape"
               title="Modifier"
             >
-              <Icon name="pencil" size={16} />
+              <LKDVIcon name="modifier" size={16} />
             </IconButton>
 
             {/* Supprimer */}
@@ -197,7 +196,7 @@ export function StepCard({
               aria-label="Supprimer l'étape"
               title="Supprimer"
             >
-              <Icon name="trash2" size={16} />
+              <LKDVIcon name="supprimer" size={16} />
             </IconButton>
           </div>
         )}

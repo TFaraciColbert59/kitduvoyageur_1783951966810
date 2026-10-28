@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/AppIcon';
 import { BadgeItem } from '@/lib/mock/compte-marceline';
 import Link from 'next/link';
 import { Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface BadgesCardProps {
   badges: BadgeItem[];
@@ -48,7 +48,7 @@ export default function BadgesCard({ badges, trustScore = 50 }: BadgesCardProps)
                 b.earned ? 'bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-ink)]' : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-muted)]/40'
               }`}
             >
-              <Icon name={b.icon_name} size={13} />
+              <LKDVIcon name={b.icon_name} size={13} />
             </div>
             <span className="text-[8.5px] font-bold leading-tight line-clamp-1">
               {b.title}

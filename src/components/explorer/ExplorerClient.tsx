@@ -4,19 +4,6 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import dynamic from 'next/dynamic';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Backpack } from 'lucide-react';
-import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
-import { NavigationIcon as Navigation } from '@/components/icons/navigation';
-import { CompassIcon as Compass } from '@/components/icons/compass';
-import { DocIcon as FileText } from '@/components/icons/doc';
-import { BellIcon as Bell } from '@/components/icons/bell';
-import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
-import { ClockIcon as Clock } from '@/components/icons/clock';
-import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
-import { SlidersHorizontalIcon as SlidersHorizontalAnimated } from '@/components/icons/sliders-horizontal';
-import { XIcon as XAnimated } from '@/components/icons/x';
-import { RotateCCWIcon as RotateCcwAnimated, type RotateCCWIconHandle } from '@/components/icons/rotate-ccw';
-import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { MapTrail } from '@/components/explorer/types';
@@ -104,6 +91,7 @@ const DURATION_FILTERS = [
 const CATEGORIES = ['Tout', 'Refuge', 'Itinéraire', 'Bivouac', 'Escalade', 'Multi-jours', 'Famille'];
 
 import type { UnifiedPOI } from '@/lib/queries/pois';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // ── Dernière position connue ───────────────────────────────────────────────────
 // Clé relue par `UnifiedExplorerMap` pour replier « Explorer ma zone » sans GPS.
@@ -328,7 +316,6 @@ export default function ExplorerClient({
     }
   }, []);
 
-  const searchHereIconRef = useRef<RotateCCWIconHandle | null>(null);
 
   // Vérification de pré-vol côté client : l'aire géodésique du viewport courant dépasse-t-elle le budget (400 km²) ?
   const isViewportTooLarge = useMemo(() => {
@@ -986,7 +973,6 @@ export default function ExplorerClient({
               disabled={worldSearchFetching}
               onClick={() => {
                 if (worldSearchFetching) return;
-                searchHereIconRef.current?.startAnimation();
                 handleSearchHere();
               }}
               className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[length:var(--lkv-text-caption)] font-bold shadow-lg backdrop-blur-[var(--blur-xl)] transition-all active:scale-95 disabled:opacity-85 disabled:cursor-wait ${
@@ -1011,8 +997,8 @@ export default function ExplorerClient({
               data-testid="search-here-button"
               aria-busy={worldSearchFetching}
             >
-              <RotateCcwAnimated
-                ref={searchHereIconRef}
+              <LKDVIcon
+                name="actualiser"
                 size={14}
                 className={worldSearchFetching ? 'animate-spin' : ''}
               />
@@ -1049,7 +1035,7 @@ export default function ExplorerClient({
                 title="Ouvrir la recherche et les filtres"
                 aria-label="Ouvrir la recherche et les filtres"
               >
-                <SlidersHorizontalAnimated size={20} />
+                <LKDVIcon name="options" size={20} />
                 {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
                   <Badge
                     className="absolute left-1 top-1 h-4 min-h-0 border-transparent bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-primary)]"
@@ -1073,7 +1059,7 @@ export default function ExplorerClient({
                 <div className="flex items-center justify-between border-b border-[color:var(--lkv-border)] pb-2">
                   <div className="flex items-center gap-2">
                     <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary-ink)]">
-                      <SlidersHorizontalAnimated size={15} />
+                      <LKDVIcon name="options" size={15} />
                     </div>
                     <div>
                       <h3 className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
@@ -1092,7 +1078,7 @@ export default function ExplorerClient({
                     title="Fermer"
                     aria-label="Fermer les filtres"
                   >
-                    <Icon name="x" size={14} />
+                    <LKDVIcon name="fermer" size={14} />
                   </IconButton>
                 </div>
 
@@ -1154,7 +1140,7 @@ export default function ExplorerClient({
             <Card variant="featured" className="p-4">
               <EmptyState
                 compact
-                icon={<Compass size={18} className="text-[color:var(--lkv-text-muted)]" />}
+                icon={<LKDVIcon name="boussole" size={18} className="text-[color:var(--lkv-text-muted)]" />}
                 title={activeBannerMessage ?? "Aucun itinéraire trouvé"}
                 actionLabel={activeBannerMessage ? undefined : "Effacer les filtres"}
                 onAction={activeBannerMessage ? undefined : resetFilters}
@@ -1176,7 +1162,7 @@ export default function ExplorerClient({
                   size="sm"
                   fullWidth
                   onClick={() => setDisplayLimit((p) => Math.min(p + 40, filteredTrails.length))}
-                  icon={<ChevronDown size={13} />}
+                  icon={<LKDVIcon name="bas" size={13} />}
                   className="shrink-0"
                 >
                   <span>Afficher +{Math.min(40, filteredTrails.length - displayLimit)} sentiers</span>
@@ -1223,7 +1209,7 @@ export default function ExplorerClient({
                   title="Fermer"
                   aria-label="Fermer"
                 >
-                  <XAnimated size={12} />
+                  <LKDVIcon name="fermer" size={12} />
                 </IconButton>
               </div>
 
@@ -1234,19 +1220,19 @@ export default function ExplorerClient({
                 </h4>
                 <div className="flex items-center gap-2 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
                   <span className="flex items-center gap-1 font-semibold">
-                    <Navigation size={9.5} className="text-[color:var(--lkv-text-primary)]" />
+                    <LKDVIcon name="gps" size={9.5} className="text-[color:var(--lkv-text-primary)]" />
                     {formatDistance(selectedTrail.distance_km)}
                   </span>
                   <span aria-hidden="true" className="text-[color:var(--lkv-text-muted)]/40">·</span>
                   <span className="flex items-center gap-1 font-semibold">
-                    <Clock size={9.5} className="text-[color:var(--lkv-text-muted)]" />
+                    <LKDVIcon name="duree" size={9.5} className="text-[color:var(--lkv-text-muted)]" />
                     {formatDuration(selectedTrail.duration_hours)}
                   </span>
                   {selectedTrail.elevation_gain != null && (
                     <>
                       <span aria-hidden="true" className="text-[color:var(--lkv-text-muted)]/40">·</span>
                       <span className="flex items-center gap-1 font-bold text-[color:var(--lkv-text-primary)]">
-                        <TrendingUp size={9.5} />
+                        <LKDVIcon name="denivele" size={9.5} />
                         +{Math.round(selectedTrail.elevation_gain)}m
                       </span>
                     </>
@@ -1269,7 +1255,7 @@ export default function ExplorerClient({
                     title="Voir la fiche complète"
                     aria-label="Voir la fiche complète"
                   >
-                    <FileText size={15} strokeWidth={2.2} />
+                    <LKDVIcon name="facture" size={15} />
                   </IconButton>
                 </div>
               </div>

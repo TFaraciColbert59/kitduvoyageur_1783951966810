@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect } from 'react';
-import Icon from '@/components/ui/Icon';
 import type { CarnetMomentItem } from '@/features/carnet/detail/types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CarnetMediaViewerProps {
   items: CarnetMomentItem[];
@@ -51,7 +51,7 @@ export function CarnetMediaViewer({ items, index, onIndexChange, onClose }: Carn
         {safeIndex + 1}/{items.length}
       </span>
       <button type="button" className="gbtn ckp-viewer-close" onClick={onClose} aria-label="Fermer">
-        <Icon name="x" size={18} aria-hidden="true" />
+        <LKDVIcon name="fermer" size={18} aria-hidden="true" />
       </button>
       {items.length > 1 ? (
         <>
@@ -61,7 +61,7 @@ export function CarnetMediaViewer({ items, index, onIndexChange, onClose }: Carn
             onClick={() => go(-1)}
             aria-label="Photo précédente"
           >
-            <Icon name="chevron-left" size={18} aria-hidden="true" />
+            <LKDVIcon name="retour" size={18} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -69,7 +69,7 @@ export function CarnetMediaViewer({ items, index, onIndexChange, onClose }: Carn
             onClick={() => go(1)}
             aria-label="Photo suivante"
           >
-            <Icon name="chevron-right" size={18} aria-hidden="true" />
+            <LKDVIcon name="suivant" size={18} aria-hidden="true" />
           </button>
         </>
       ) : null}

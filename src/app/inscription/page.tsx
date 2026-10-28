@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { getCaptchaToken } from '@/lib/captcha/hcaptcha';
 import { useAuth } from '@/contexts/AuthContext';
 import AppShell from '@/components/shell/AppShell';
 import { Button, Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const FIELD_CLASS =
   'min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] placeholder:text-[color:var(--glass-label-muted)] backdrop-blur-[var(--glass-blur-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30';
@@ -51,7 +51,7 @@ export default function InscriptionPage() {
   const content = success ? (
     <Card variant="featured" className="p-[var(--space-8)] text-center">
       <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-white/10 border border-white/15">
-        <Icon name="CheckCircleIcon" size={32} className="text-white" variant="outline" />
+        <LKDVIcon name="valider" size={32} className="text-white" />
       </div>
       <h2 className="mb-2 font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--glass-label)]">
         Compte créé !
@@ -60,7 +60,7 @@ export default function InscriptionPage() {
         Un email de confirmation a été envoyé à <strong className="text-[color:var(--glass-label)]">{form.email}</strong>.
       </p>
       <Link href="/connexion">
-        <Button icon={<Icon name="ArrowRightIcon" size={14} variant="outline" />}>
+        <Button icon={<LKDVIcon name="suivant" size={14} />}>
           Se connecter
         </Button>
       </Link>
@@ -80,7 +80,7 @@ export default function InscriptionPage() {
       </div>
       {error && (
         <div role="alert" className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-danger)]/25 bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger)]">
-          <Icon name="ExclamationCircleIcon" size={16} className="shrink-0 text-[color:var(--lkv-danger)]" variant="outline" />
+          <LKDVIcon name="alerte" size={16} className="shrink-0 text-[color:var(--lkv-danger)]" />
           {error}
         </div>
       )}
@@ -105,7 +105,7 @@ export default function InscriptionPage() {
           type="submit"
           loading={loading}
           fullWidth
-          icon={!loading ? <Icon name="UserPlusIcon" size={16} variant="outline" /> : undefined}
+          icon={!loading ? <LKDVIcon name="amis" size={16} /> : undefined}
         >
           {loading ? 'Création en cours…' : 'Créer mon compte'}
         </Button>

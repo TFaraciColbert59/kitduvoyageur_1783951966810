@@ -1,5 +1,4 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect } from 'react';
@@ -10,6 +9,7 @@ import type { Conversation, ConversationMember } from '../types/messaging.types'
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface GroupSettingsModalProps {
   isOpen: boolean;
@@ -177,7 +177,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                     aria-label="Enregistrer le nom"
                     className="shrink-0"
                   >
-                    <Icon name="check" className="size-3.5" aria-hidden="true" />
+                    <LKDVIcon name="valider" className="size-3.5" aria-hidden="true" />
                   </IconButton>
                 </div>
               ) : (
@@ -193,7 +193,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                       title="Modifier le nom"
                       aria-label="Modifier le nom"
                     >
-                      <Icon name="edit2" className="size-3.5" aria-hidden="true" />
+                      <LKDVIcon name="modifier" className="size-3.5" aria-hidden="true" />
                     </IconButton>
                   )}
                 </div>
@@ -214,8 +214,8 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               <span className="text-base">🎒</span>
               <span>Fiche Cockpit / Matériel Partagé</span>
             </div>
-            <Icon
-              name="external-link"
+            <LKDVIcon
+              name="lien"
               className="size-3.5 text-[color:var(--lkv-text-primary)] transition-transform group-hover:translate-x-0.5"
               aria-hidden="true"
             />
@@ -283,15 +283,15 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                         >
                           {mem.role === 'owner' ? (
                             <>
-                              <Icon name="crown" className="size-2.5 text-[color:var(--lkv-warning)]" aria-hidden="true" /> Organisateur
+                              <LKDVIcon name="recompense" className="size-2.5 text-[color:var(--lkv-warning)]" aria-hidden="true" /> Organisateur
                             </>
                           ) : mem.role === 'admin' ? (
                             <>
-                              <Icon name="shield" className="size-2.5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" /> Admin
+                              <LKDVIcon name="securite" className="size-2.5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" /> Admin
                             </>
                           ) : (
                             <>
-                              <Icon name="user" className="size-2.5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" /> Membre
+                              <LKDVIcon name="profil" className="size-2.5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" /> Membre
                             </>
                           )}
                         </Badge>
@@ -327,7 +327,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                           title="Retirer du groupe"
                           aria-label="Retirer du groupe"
                         >
-                          <Icon name="user-minus" className="size-3.5" aria-hidden="true" />
+                          <LKDVIcon name="amis" className="size-3.5" aria-hidden="true" />
                         </IconButton>
                       </div>
                     )}
@@ -347,7 +347,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
           fullWidth
           disabled={loading}
           onClick={handleLeaveGroup}
-          icon={<Icon name="log-out" className="size-4" aria-hidden="true" />}
+          icon={<LKDVIcon name="retour" className="size-4" aria-hidden="true" />}
         >
           Quitter le groupe d&apos;expédition
         </Button>

@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sheet } from '@/components/ui/Sheet';
@@ -8,6 +6,7 @@ import { Button, Card } from '@/components/ui';
 import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import { createTripSchema, type CreateTripInput } from '../schemas/trip.schema';
 import type { TripActivityType, TripDifficulty, TripVisibility } from '../types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const FIELD_CLASS =
   'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
@@ -115,7 +114,7 @@ export function QuickCreateTripModal({ isOpen, onClose, onSubmitTrip }: QuickCre
             tone="danger"
             className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)] p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
           >
-            <Icon name="alert-circle" size={16} />
+            <LKDVIcon name="alerte" size={16} />
             <span>{formError}</span>
           </Card>
         )}

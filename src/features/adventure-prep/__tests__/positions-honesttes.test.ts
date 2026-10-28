@@ -71,7 +71,7 @@ function step(overrides: Partial<ItineraryStep> & { id: string; day: number; ord
     price: { ...PRICE_TO_CHECK },
     state: 'propose',
     kept: false,
-    icon: 'map',
+    icon: 'carte',
     lat: null,
     lon: null,
     mealSlot: null,

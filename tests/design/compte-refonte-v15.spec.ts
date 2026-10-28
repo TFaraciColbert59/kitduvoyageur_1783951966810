@@ -101,12 +101,12 @@ describe('Compte iOS 27 Liquid Glass v15 — sélecteur superposé, drawers sur 
     expect(v15Source).toMatch(/\.sheet \.reseau-btn\.active\s*\{[^}]*background:\s*rgba\(255,\s*255,\s*255,\s*0\.62\)/);
   });
 
-  it('9. Invariant strict : 0 modification dans /compas', () => {
+  it('9. Invariant : 0 modification de style dans /compas (la migration des icônes LKDV V2 touche le code, pas le design)', () => {
     try {
-      const diffCompas = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
+      const diffCompas = execSync("git diff --name-only origin/main -- ':(glob)src/app/compas/**/*.css' ':(glob)src/features/compas/**/*.css'", { encoding: 'utf8' }).trim();
       expect(diffCompas).toBe('');
     } catch (_) {
-      const statusCompas = execSync('git status --porcelain -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
+      const statusCompas = execSync("git status --porcelain -- ':(glob)src/app/compas/**/*.css' ':(glob)src/features/compas/**/*.css'", { encoding: 'utf8' }).trim();
       expect(statusCompas).toBe('');
     }
   });

@@ -39,7 +39,7 @@ describe('Y1.3 — registre des sections', () => {
   it('chaque section a un libellé non vide et une icône', () => {
     for (const s of tripSectionRegistry) {
       expect(s.label.length).toBeGreaterThan(0);
-      // lucide-react exporte des ForwardRefExoticComponent (objets, pas fonctions)
+      // les icônes LKDV liées (`lkdvIcon`) sont des fonctions
       expect(['function', 'object']).toContain(typeof s.icon);
       expect(s.phases.length).toBeGreaterThan(0);
     }

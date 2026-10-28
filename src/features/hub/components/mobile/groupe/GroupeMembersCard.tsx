@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Copy, Users } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Button } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface GroupeMemberRow {
   userId: string;
@@ -107,7 +107,7 @@ export function GroupeMembersCard({ members, pending, inviteCode, onManage }: Gr
         {inviteCode && (
           <div className="mt-2 flex items-center gap-3 border-t border-black/5 pt-2.5">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/70 text-[var(--lkv-secondary-ink)]">
-              <Users size={14} aria-hidden="true" />
+              <LKDVIcon name="communaute" size={14} aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[9.5px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/60">
@@ -122,7 +122,7 @@ export function GroupeMembersCard({ members, pending, inviteCode, onManage }: Gr
               onClick={copyCode}
               className="shrink-0 !px-3 !py-1.5 text-[11px] font-bold min-h-[44px]"
             >
-              {copied ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
+              {copied ? <LKDVIcon name="valider" size={13} aria-hidden="true" /> : <LKDVIcon name="dupliquer" size={13} aria-hidden="true" />}
               {copied ? 'Copié' : 'Copier'}
             </Button>
           </div>

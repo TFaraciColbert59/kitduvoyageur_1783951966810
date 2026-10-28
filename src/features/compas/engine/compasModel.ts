@@ -20,16 +20,17 @@ import {
 } from './crew';
 import { walkingMinutes, type Pace } from './weather';
 import { compasStepsFr } from '@/lib/i18n/translations/compas-steps.fr';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 export type CompasStepId = 'ou' | 'nous' | 'resa' | 'verdict' | 'kit';
 
 /** `label` : nom français (dictionnaire `compas.steps.*`) ; un écran traduit par `STEP_LABEL_KEY` (compasI18n). */
-export const COMPAS_STEPS: ReadonlyArray<{ id: CompasStepId; label: string; icon: string }> = [
-  { id: 'ou', label: compasStepsFr.steps.ou, icon: 'map' },
-  { id: 'nous', label: compasStepsFr.steps.nous, icon: 'users' },
-  { id: 'resa', label: compasStepsFr.steps.resa, icon: 'ticket' },
-  { id: 'verdict', label: compasStepsFr.steps.verdict, icon: 'shield-check' },
-  { id: 'kit', label: compasStepsFr.steps.kit, icon: 'backpack' },
+export const COMPAS_STEPS: ReadonlyArray<{ id: CompasStepId; label: string; icon: LKDVIconName }> = [
+  { id: 'ou', label: compasStepsFr.steps.ou, icon: 'carte' },
+  { id: 'nous', label: compasStepsFr.steps.nous, icon: 'communaute' },
+  { id: 'resa', label: compasStepsFr.steps.resa, icon: 'billet' },
+  { id: 'verdict', label: compasStepsFr.steps.verdict, icon: 'securite' },
+  { id: 'kit', label: compasStepsFr.steps.kit, icon: 'sac' },
 ];
 
 /* ---------- Entrées (sous-ensembles des tables réelles) ---------- */

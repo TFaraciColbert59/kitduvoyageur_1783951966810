@@ -60,7 +60,7 @@ function stepOf(
     price: { ...PRICE },
     state: 'propose',
     kept: false,
-    icon: 'map-pin',
+    icon: 'point_interet',
     lat: point?.lat ?? null,
     lon: point?.lon ?? null,
   };

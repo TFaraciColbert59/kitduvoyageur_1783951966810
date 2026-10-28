@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import Icon from '@/components/ui/Icon';
 import type { SectionTabId } from './CommunityTabSelector';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
-const ITEMS: Array<{ id: Exclude<SectionTabId, 'pour-toi'>; label: string; hint: string; icon: string }> = [
-  { id: 'carnets', label: 'Carnets', hint: 'Lire les récits', icon: 'book-open' },
-  { id: 'clubs', label: 'Clubs', hint: 'Rejoindre une cordée', icon: 'users' },
-  { id: 'sorties', label: 'Sorties', hint: 'Participer au terrain', icon: 'compass' },
+const ITEMS: Array<{ id: Exclude<SectionTabId, 'pour-toi'>; label: string; hint: string; icon: LKDVIconName }> = [
+  { id: 'carnets', label: 'Carnets', hint: 'Lire les récits', icon: 'preparateur' },
+  { id: 'clubs', label: 'Clubs', hint: 'Rejoindre une cordée', icon: 'communaute' },
+  { id: 'sorties', label: 'Sorties', hint: 'Participer au terrain', icon: 'boussole' },
 ];
 
 export function PourToiMenu({
@@ -55,15 +56,13 @@ export function PourToiMenu({
           }}
         >
           <span className="mi-ico" aria-hidden="true">
-            <Icon name={item.icon} size={17} />
+            <LKDVIcon name={item.icon} size={17} />
           </span>
           <span className="min-w-0 flex-1">
             <b>{item.label}</b>
             <small>{item.hint}</small>
           </span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <path d="M9 6l6 6-6 6" />
-          </svg>
+          <LKDVIcon name="suivant" size={14} aria-hidden="true" />
         </button>
       ))}
     </div>

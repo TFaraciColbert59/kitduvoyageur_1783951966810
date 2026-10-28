@@ -1,8 +1,8 @@
 'use client';
 import React from 'react';
 import { motion } from 'framer-motion';
-import Icon from '@/components/ui/AppIcon';
 import { Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ProgressionCardProps {
   progression: number;
@@ -61,7 +61,7 @@ export default function ProgressionCard({ progression }: ProgressionCardProps) {
                     : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-text-muted)]'
               }`}
             >
-              {step.completed ? <Icon name="CheckIcon" size={12} aria-hidden="true" /> : step.id}
+              {step.completed ? <LKDVIcon name="valider" size={12} aria-hidden="true" /> : step.id}
             </div>
             <span className={`hidden text-center font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest sm:block ${step.active ? 'text-[color:var(--lkv-text-primary)]' : 'text-[color:var(--lkv-text-muted)]/50'}`}>
               {step.label}

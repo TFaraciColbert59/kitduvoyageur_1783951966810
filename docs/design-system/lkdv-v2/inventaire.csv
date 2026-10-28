@@ -1,0 +1,258 @@
+﻿category,label,key,src
+Navigation & exploration,Monde,monde,SVG/originaux/monde.svg
+Navigation & exploration,Carte,carte,SVG/originaux/carte.svg
+Navigation & exploration,Explorer,explorer,SVG/originaux/explorer.svg
+Navigation & exploration,Recherche,recherche,SVG/originaux/recherche.svg
+Navigation & exploration,Filtres,filtres,SVG/originaux/filtres.svg
+Navigation & exploration,Position,position,SVG/originaux/position.svg
+Navigation & exploration,Itinéraire,itineraire,SVG/originaux/itineraire.svg
+Navigation & exploration,Calques,calques,SVG/originaux/calques.svg
+Navigation & exploration,Boussole,boussole,SVG/originaux/boussole.svg
+Navigation & exploration,GPS,gps,SVG/originaux/gps.svg
+Navigation & exploration,Scanner,scanner,SVG/originaux/scanner.svg
+Navigation & exploration,Recentrer,recentrer,SVG/originaux/recentrer.svg
+Navigation & exploration,Hors ligne,hors_ligne,SVG/originaux/hors_ligne.svg
+Navigation & exploration,Satellite,satellite,SVG/originaux/satellite.svg
+Navigation & exploration,Relief 3D,relief_3d,SVG/originaux/relief_3d.svg
+Navigation & exploration,Tracé GPX,gpx,SVG/originaux/gpx.svg
+Navigation & exploration,Destination,destination,SVG/originaux/destination.svg
+Navigation & exploration,Voyage,mon_voyage,SVG/originaux/mon_voyage.svg
+Compte & communauté,Profil,profil,SVG/originaux/profil.svg
+Compte & communauté,Communauté,communaute,SVG/originaux/communaute.svg
+Compte & communauté,Messages,messages,SVG/originaux/messages.svg
+Compte & communauté,Favoris,favoris,SVG/originaux/favoris.svg
+Compte & communauté,Notifications,notifications,SVG/originaux/notifications.svg
+Compte & communauté,Groupes,groupes,SVG/originaux/groupes.svg
+Compte & communauté,Stories,stories,SVG/originaux/stories.svg
+Compte & communauté,Badge,badge,SVG/originaux/badge.svg
+Compte & communauté,Amis,amis,SVG/originaux/amis.svg
+Compte & communauté,Club,club,SVG/originaux/club.svg
+Compte & communauté,Événement,evenement,SVG/originaux/evenement.svg
+Compte & communauté,Commentaire,commentaire,SVG/originaux/commentaire.svg
+Compte & communauté,J’aime,aimer,SVG/originaux/aimer.svg
+Compte & communauté,Abonnement social,abonnement_social,SVG/originaux/abonnement_social.svg
+Compte & communauté,Signaler,signalement,SVG/originaux/signalement.svg
+Compte & communauté,Modération,moderation,SVG/originaux/moderation.svg
+Compte & communauté,Partager un post,partage_publication,SVG/originaux/partage_publication.svg
+Compte & communauté,Réputation,reputation,SVG/originaux/reputation.svg
+Activités & sports,Randonnée,randonnee,SVG/originaux/randonnee.svg
+Activités & sports,Vélo,velo,SVG/originaux/velo.svg
+Activités & sports,VTT,vtt,SVG/originaux/vtt.svg
+Activités & sports,Course,course,SVG/originaux/course.svg
+Activités & sports,Marche,marche,SVG/originaux/marche.svg
+Activités & sports,Trail,trail,SVG/originaux/trail.svg
+Activités & sports,Escalade,escalade,SVG/originaux/escalade.svg
+Activités & sports,Alpinisme,alpinisme,SVG/originaux/alpinisme.svg
+Activités & sports,Ski,ski,SVG/originaux/ski.svg
+Activités & sports,Snowboard,snowboard,SVG/originaux/snowboard.svg
+Activités & sports,Raquettes,raquettes,SVG/originaux/raquettes.svg
+Activités & sports,Kayak,kayak,SVG/originaux/kayak.svg
+Activités & sports,Paddle,paddle,SVG/originaux/paddle.svg
+Activités & sports,Plongée,plongee,SVG/originaux/plongee.svg
+Activités & sports,Natation,natation,SVG/originaux/natation.svg
+Activités & sports,Surf,surf,SVG/originaux/surf.svg
+Activités & sports,Pêche,peche,SVG/originaux/peche.svg
+Activités & sports,Yoga,yoga,SVG/originaux/yoga.svg
+Activités & sports,Canyoning,canyoning,SVG/originaux/canyoning.svg
+Activités & sports,Observation,observation,SVG/originaux/observation.svg
+Activités & sports,Bivouac,bivouac,SVG/originaux/bivouac.svg
+Transports & déplacement,Avion,avion,SVG/originaux/avion.svg
+Transports & déplacement,Train,train,SVG/originaux/train.svg
+Transports & déplacement,Voiture,voiture,SVG/originaux/voiture.svg
+Transports & déplacement,Van,van,SVG/originaux/van.svg
+Transports & déplacement,Bateau,bateau,SVG/originaux/bateau.svg
+Transports & déplacement,Bus,bus,SVG/originaux/bus.svg
+Transports & déplacement,Hélicoptère,helicoptere,SVG/originaux/helicoptere.svg
+Transports & déplacement,Moto,moto,SVG/originaux/moto.svg
+Transports & déplacement,Trottinette,trottinette,SVG/originaux/trottinette.svg
+Transports & déplacement,Carburant,carburant,SVG/originaux/carburant.svg
+Transports & déplacement,Recharge,recharge,SVG/originaux/recharge.svg
+Transports & déplacement,Camping-car,camping_car,SVG/originaux/camping_car.svg
+Transports & déplacement,Valise,valise,SVG/originaux/valise.svg
+Transports & déplacement,Passeport,passeport,SVG/originaux/passeport.svg
+Transports & déplacement,Billet,billet,SVG/originaux/billet.svg
+Nature & environnement,Montagne,montagne,SVG/originaux/montagne.svg
+Nature & environnement,Colline,colline,SVG/originaux/colline.svg
+Nature & environnement,Vallée,vallee,SVG/originaux/vallee.svg
+Nature & environnement,Forêt,foret,SVG/originaux/foret.svg
+Nature & environnement,Arbre,arbre,SVG/originaux/arbre.svg
+Nature & environnement,Lac,lac,SVG/originaux/lac.svg
+Nature & environnement,Rivière,riviere,SVG/originaux/riviere.svg
+Nature & environnement,Cascade,cascade,SVG/originaux/cascade.svg
+Nature & environnement,Grotte,grotte,SVG/originaux/grotte.svg
+Nature & environnement,Faune,faune,SVG/originaux/faune.svg
+Nature & environnement,Flore,flore,SVG/originaux/flore.svg
+Nature & environnement,Roche,roche,SVG/originaux/roche.svg
+Nature & environnement,Volcan,volcan,SVG/originaux/volcan.svg
+Nature & environnement,Soleil,soleil,SVG/originaux/soleil.svg
+Nature & environnement,Lune,lune,SVG/originaux/lune.svg
+Nature & environnement,Vent,vent,SVG/originaux/vent.svg
+Nature & environnement,Neige,neige,SVG/originaux/neige.svg
+Nature & environnement,Pluie,pluie,SVG/originaux/pluie.svg
+Nature & environnement,Météo,meteo,SVG/originaux/meteo.svg
+Nature & environnement,Palmier,palmier,SVG/originaux/palmier.svg
+Nature & environnement,Sentier,sentier,SVG/originaux/sentier.svg
+Hébergements,Tente,tente,SVG/originaux/tente.svg
+Hébergements,Camping,camping,SVG/originaux/camping.svg
+Hébergements,Bivouac,bivouac,SVG/originaux/bivouac.svg
+Hébergements,Cabane,cabane,SVG/originaux/cabane.svg
+Hébergements,Refuge,refuge,SVG/originaux/refuge.svg
+Hébergements,Chalet,chalet,SVG/originaux/chalet.svg
+Hébergements,Gîte,gite,SVG/originaux/gite.svg
+Hébergements,Hôtel,hotel,SVG/originaux/hotel.svg
+Hébergements,Auberge,auberge,SVG/originaux/auberge.svg
+Hébergements,Vanlife,van,SVG/originaux/van.svg
+Hébergements,Camping-car,camping_car,SVG/originaux/camping_car.svg
+Hébergements,Hamac,hamac,SVG/originaux/hamac.svg
+Hébergements,Réservation,reservation,SVG/originaux/reservation.svg
+Lieux & points d’intérêt,Point d’intérêt,point_interet,SVG/originaux/point_interet.svg
+Lieux & points d’intérêt,Sommet,sommet,SVG/originaux/sommet.svg
+Lieux & points d’intérêt,Vue,vue,SVG/originaux/vue.svg
+Lieux & points d’intérêt,Panorama,panorama,SVG/originaux/panorama.svg
+Lieux & points d’intérêt,Belvédère,belvedere,SVG/originaux/belvedere.svg
+Lieux & points d’intérêt,Plage,plage,SVG/originaux/plage.svg
+Lieux & points d’intérêt,Ville,ville,SVG/originaux/ville.svg
+Lieux & points d’intérêt,Culture,culture,SVG/originaux/culture.svg
+Lieux & points d’intérêt,Patrimoine,patrimoine,SVG/originaux/patrimoine.svg
+Lieux & points d’intérêt,Source,source,SVG/originaux/source.svg
+Lieux & points d’intérêt,Sentier,sentier,SVG/originaux/sentier.svg
+Lieux & points d’intérêt,Lac,lac,SVG/originaux/lac.svg
+Lieux & points d’intérêt,Accueil,accueil,SVG/originaux/accueil.svg
+Planification & expéditions,Préparateur IA,preparateur,SVG/originaux/preparateur.svg
+Planification & expéditions,Checklist,checklist,SVG/originaux/checklist.svg
+Planification & expéditions,Liste voyage,checklist_voyage,SVG/originaux/checklist_voyage.svg
+Planification & expéditions,Calendrier,calendrier,SVG/originaux/calendrier.svg
+Planification & expéditions,Jours,jours,SVG/originaux/jours.svg
+Planification & expéditions,Itinéraire,itineraire,SVG/originaux/itineraire.svg
+Planification & expéditions,Carte parcours,carte_parcours,SVG/originaux/carte_parcours.svg
+Planification & expéditions,Difficulté,difficulte,SVG/originaux/difficulte.svg
+Planification & expéditions,Durée,duree,SVG/originaux/duree.svg
+Planification & expéditions,Distance,distance,SVG/originaux/distance.svg
+Planification & expéditions,Dénivelé,denivele,SVG/originaux/denivele.svg
+Planification & expéditions,Altitude,altitude,SVG/originaux/altitude.svg
+Planification & expéditions,Budget,budget,SVG/originaux/budget.svg
+Planification & expéditions,Météo,meteo,SVG/originaux/meteo.svg
+Planification & expéditions,Télécharger,telecharger,SVG/originaux/telecharger.svg
+Planification & expéditions,Historique,historique,SVG/originaux/historique.svg
+Planification & expéditions,Enregistrer,sauvegarder,SVG/originaux/sauvegarder.svg
+Médias & création,Photo,photo,SVG/originaux/photo.svg
+Médias & création,Vidéo,video,SVG/originaux/video.svg
+Médias & création,Réel,reel,SVG/originaux/reel.svg
+Médias & création,Story,stories,SVG/originaux/stories.svg
+Médias & création,Publication,publication,SVG/originaux/publication.svg
+Médias & création,Musique,musique,SVG/originaux/musique.svg
+Médias & création,Audio,audio,SVG/originaux/audio.svg
+Médias & création,Caméra,camera,SVG/originaux/camera.svg
+Médias & création,Galerie,galerie,SVG/originaux/galerie.svg
+Médias & création,Micro,micro,SVG/originaux/micro.svg
+Médias & création,Direct,live,SVG/originaux/live.svg
+Médias & création,Lecture,lecture,SVG/originaux/lecture.svg
+Médias & création,Pause,pause,SVG/originaux/pause.svg
+Médias & création,Enregistrer,enregistrer,SVG/originaux/enregistrer.svg
+Médias & création,Album,album,SVG/originaux/album.svg
+Médias & création,Plein écran,plein_ecran,SVG/originaux/plein_ecran.svg
+Matériel & équipements,Mon matériel,inventaire,SVG/originaux/inventaire.svg
+Matériel & équipements,Inventaire,liste_materiel,SVG/originaux/liste_materiel.svg
+Matériel & équipements,Sac à dos,sac,SVG/originaux/sac.svg
+Matériel & équipements,Chaussure,chaussure,SVG/originaux/chaussure.svg
+Matériel & équipements,Lampe,lampe,SVG/originaux/lampe.svg
+Matériel & équipements,Gourde,gourde,SVG/originaux/gourde.svg
+Matériel & équipements,Trousse,trousse,SVG/originaux/trousse.svg
+Matériel & équipements,Couteau,couteau,SVG/originaux/couteau.svg
+Matériel & équipements,Couchage,couchage,SVG/originaux/couchage.svg
+Matériel & équipements,Tente,tente,SVG/originaux/tente.svg
+Matériel & équipements,Réchaud,rechaud,SVG/originaux/rechaud.svg
+Matériel & équipements,Vêtements,vetement,SVG/originaux/vetement.svg
+Matériel & équipements,Nourriture,alimentation,SVG/originaux/alimentation.svg
+Matériel & équipements,Feu,feu,SVG/originaux/feu.svg
+Matériel & équipements,Filtre eau,filtration_eau,SVG/originaux/filtration_eau.svg
+Matériel & équipements,Batterie,batterie,SVG/originaux/batterie.svg
+Matériel & équipements,Énergie,energie,SVG/originaux/energie.svg
+Boutique & récompenses,Boutique,boutique,SVG/originaux/boutique.svg
+Boutique & récompenses,Panier,panier,SVG/originaux/panier.svg
+Boutique & récompenses,Commande,commande,SVG/originaux/commande.svg
+Boutique & récompenses,Paiement,paiement,SVG/originaux/paiement.svg
+Boutique & récompenses,Promotion,promo,SVG/originaux/promo.svg
+Boutique & récompenses,Livraison,livraison,SVG/originaux/livraison.svg
+Boutique & récompenses,Cadeau,cadeau,SVG/originaux/cadeau.svg
+Boutique & récompenses,Récompense,recompense,SVG/originaux/recompense.svg
+Boutique & récompenses,Points,points,SVG/originaux/points.svg
+Boutique & récompenses,Liste de souhaits,wishlist,SVG/originaux/wishlist.svg
+Boutique & récompenses,Abonnement,abonnement,SVG/originaux/abonnement.svg
+Boutique & récompenses,Affiliation,affiliation,SVG/originaux/affiliation.svg
+Boutique & récompenses,Facture,facture,SVG/originaux/facture.svg
+Boutique & récompenses,Réduction,reduction,SVG/originaux/reduction.svg
+Informations & services,Information,informations,SVG/originaux/informations.svg
+Informations & services,Alerte,alerte,SVG/originaux/alerte.svg
+Informations & services,Sécurité,securite,SVG/originaux/securite.svg
+Informations & services,Santé,trousse,SVG/originaux/trousse.svg
+Informations & services,Urgence,urgence,SVG/originaux/urgence.svg
+Informations & services,Téléphone,telephone,SVG/originaux/telephone.svg
+Informations & services,E-mail,email,SVG/originaux/email.svg
+Informations & services,Lien,lien,SVG/originaux/lien.svg
+Informations & services,Localisation,localiser,SVG/originaux/localiser.svg
+Informations & services,Directions,sentier,SVG/originaux/sentier.svg
+Informations & services,Horaires,horaire,SVG/originaux/horaire.svg
+Informations & services,Règlementation,reglementation,SVG/originaux/reglementation.svg
+Informations & services,Eau potable,eau_potable,SVG/originaux/eau_potable.svg
+Informations & services,Toilettes,toilettes,SVG/originaux/toilettes.svg
+Informations & services,Parking,parking,SVG/originaux/parking.svg
+Informations & services,Wi-Fi,wifi,SVG/originaux/wifi.svg
+Informations & services,Accessibilité,accessibilite,SVG/originaux/accessibilite.svg
+Intelligence artificielle,IA,ia,SVG/originaux/ia.svg
+Intelligence artificielle,Assistant IA,assistant_ia,SVG/originaux/assistant_ia.svg
+Intelligence artificielle,Préparateur,preparateur,SVG/originaux/preparateur.svg
+Intelligence artificielle,Générer,generer,SVG/originaux/generer.svg
+Intelligence artificielle,Suggestion,suggestion,SVG/originaux/suggestion.svg
+Intelligence artificielle,Traduire,traduire,SVG/originaux/traduire.svg
+Intelligence artificielle,Pays,pays,SVG/originaux/pays.svg
+Intelligence artificielle,Explorer,explorer,SVG/originaux/explorer.svg
+Intelligence artificielle,Analyse,recentrer,SVG/originaux/recentrer.svg
+Actions & interface,Ajouter,ajouter,SVG/originaux/ajouter.svg
+Actions & interface,Valider,valider,SVG/originaux/valider.svg
+Actions & interface,Annuler,annuler,SVG/originaux/annuler.svg
+Actions & interface,Retour,retour,SVG/originaux/retour.svg
+Actions & interface,Suivant,suivant,SVG/originaux/suivant.svg
+Actions & interface,Haut,haut,SVG/originaux/haut.svg
+Actions & interface,Bas,bas,SVG/originaux/bas.svg
+Actions & interface,Menu,menu,SVG/originaux/menu.svg
+Actions & interface,Plus,plus,SVG/originaux/plus.svg
+Actions & interface,Options,options,SVG/originaux/options.svg
+Actions & interface,Options avancées,options_avancees,SVG/originaux/options_avancees.svg
+Actions & interface,Modifier,modifier,SVG/originaux/modifier.svg
+Actions & interface,Dupliquer,dupliquer,SVG/originaux/dupliquer.svg
+Actions & interface,Supprimer,supprimer,SVG/originaux/supprimer.svg
+Actions & interface,Fermer,fermer,SVG/originaux/fermer.svg
+Actions & interface,Actualiser,actualiser,SVG/originaux/actualiser.svg
+Actions & interface,Partager,partager,SVG/originaux/partager.svg
+Actions & interface,Télécharger,telecharger,SVG/originaux/telecharger.svg
+Actions & interface,Exporter,exporter,SVG/originaux/exporter.svg
+Actions & interface,Enregistrer,sauvegarder,SVG/originaux/sauvegarder.svg
+Signalements communautaires,Danger,danger,SVG/originaux/danger.svg
+Signalements communautaires,Sentier fermé,sentier_ferme,SVG/originaux/sentier_ferme.svg
+Signalements communautaires,Obstacle,obstacle,SVG/originaux/obstacle.svg
+Signalements communautaires,Arbre tombé,arbre_tombe,SVG/originaux/arbre_tombe.svg
+Signalements communautaires,Inondation,inondation,SVG/originaux/inondation.svg
+Signalements communautaires,Chute de pierres,chute_pierre,SVG/originaux/chute_pierre.svg
+Signalements communautaires,Incendie,incendie_foret,SVG/originaux/incendie_foret.svg
+Signalements communautaires,Animal sauvage,animal_sauvage,SVG/originaux/animal_sauvage.svg
+Signalements communautaires,Météo extrême,meteo_extreme,SVG/originaux/meteo_extreme.svg
+Signalements communautaires,Eau indisponible,absence_eau,SVG/originaux/absence_eau.svg
+Signalements communautaires,Déchets,dechets,SVG/originaux/dechets.svg
+Signalements communautaires,Travaux,travaux,SVG/originaux/travaux.svg
+Signalements communautaires,Zone interdite,zone_interdite,SVG/originaux/zone_interdite.svg
+Signalements communautaires,Chasse,chasse,SVG/originaux/chasse.svg
+Signalements communautaires,Secours,secours,SVG/originaux/secours.svg
+Signalements communautaires,Sentier dégradé,sentier_degrade,SVG/originaux/sentier_degrade.svg
+Paramètres & états,Paramètres,options_avancees,SVG/originaux/options_avancees.svg
+Paramètres & états,Aide,aide,SVG/originaux/aide.svg
+Paramètres & états,Mode sombre,mode_sombre,SVG/originaux/mode_sombre.svg
+Paramètres & états,Mode clair,mode_clair,SVG/originaux/mode_clair.svg
+Paramètres & états,Plus d’options,plus_options,SVG/originaux/plus_options.svg
+Paramètres & états,Notifications muettes,notifications_silence,SVG/originaux/notifications_silence.svg
+Paramètres & états,Signet,signet,SVG/originaux/signet.svg
+Paramètres & états,Brouillon,brouillon,SVG/originaux/brouillon.svg
+Paramètres & états,Verrouillé,verrou,SVG/originaux/verrou.svg
+Paramètres & états,Déverrouillé,deverrou,SVG/originaux/deverrou.svg
+Paramètres & états,Profil,profil,SVG/originaux/profil.svg
+Paramètres & états,Scanner,scanner,SVG/originaux/scanner.svg

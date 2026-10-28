@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
 import { AccountRoundButton } from '@/components/account/AccountRoundButton';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CarnetTopBarProps {
   title: string;
@@ -40,7 +40,7 @@ export function CarnetTopBar({
 
       <div className="ckp-top-left">
         <AccountRoundButton label="Retour" onClick={onBack}>
-          <Icon name="arrow-left" size={18} aria-hidden="true" />
+          <LKDVIcon name="retour" size={18} aria-hidden="true" />
         </AccountRoundButton>
 
         <button type="button" className="ckp-title-pill" onClick={onTitleClick} title={title}>
@@ -58,14 +58,14 @@ export function CarnetTopBar({
 
       <div className="ckp-top-actions">
         <AccountRoundButton label="Partager" onClick={onShare}>
-          <Icon name="send" size={17} aria-hidden="true" />
+          <LKDVIcon name="partager" size={17} aria-hidden="true" />
         </AccountRoundButton>
         <AccountRoundButton label="Enregistrer" onClick={onSave} pressed={saved}>
-          <Icon name="bookmark" size={17} aria-hidden="true" />
+          <LKDVIcon name="signet" size={17} aria-hidden="true" />
         </AccountRoundButton>
         <span className="ckp-more-anchor">
           <AccountRoundButton label="Options du carnet" onClick={onMenu}>
-            <Icon name="more-horizontal" size={18} aria-hidden="true" />
+            <LKDVIcon name="plus_options" size={18} aria-hidden="true" />
           </AccountRoundButton>
           {menu}
         </span>

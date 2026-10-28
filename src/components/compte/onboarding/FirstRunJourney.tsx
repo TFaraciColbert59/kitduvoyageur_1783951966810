@@ -2,18 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Backpack,
-  Check,
-  ChevronRight,
-  Compass,
-  Share2,
-  Sparkles,
-  UserRound,
-  Users,
-  X,
-} from 'lucide-react';
 import type { OnboardingPayload, OnboardingStepId } from '@/features/compte/server/onboarding';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type Stored = {
   dismissedAt?: number;
@@ -23,11 +13,11 @@ type Stored = {
 };
 
 const STEP_ICONS: Record<OnboardingStepId, React.ReactNode> = {
-  profile: <UserRound size={22} aria-hidden="true" />,
-  outing: <Compass size={22} aria-hidden="true" />,
-  kit: <Backpack size={22} aria-hidden="true" />,
-  cordee: <Users size={22} aria-hidden="true" />,
-  share: <Share2 size={22} aria-hidden="true" />,
+  profile: <LKDVIcon name="profil" size={22} aria-hidden="true" />,
+  outing: <LKDVIcon name="boussole" size={22} aria-hidden="true" />,
+  kit: <LKDVIcon name="sac" size={22} aria-hidden="true" />,
+  cordee: <LKDVIcon name="communaute" size={22} aria-hidden="true" />,
+  share: <LKDVIcon name="partager" size={22} aria-hidden="true" />,
 };
 
 const STEP_CTA: Record<OnboardingStepId, string> = {
@@ -196,14 +186,14 @@ export function FirstRunJourney({ userId }: { userId: string }) {
         <header className="lkdv-onboarding-head">
           <div>
             <span className="lkdv-onboarding-eyebrow">
-              <Sparkles size={13} aria-hidden="true" /> Parcours de départ
+              <LKDVIcon name="ia" size={13} aria-hidden="true" /> Parcours de départ
             </span>
             <b>
               {doneCount}/{steps.length}
             </b>
           </div>
           <button type="button" className="lkdv-onboarding-close" onClick={() => close(true)} aria-label="Fermer le parcours">
-            <X size={17} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={17} aria-hidden="true" />
           </button>
         </header>
 
@@ -214,7 +204,7 @@ export function FirstRunJourney({ userId }: { userId: string }) {
         {allDone ? (
           <div className="lkdv-onboarding-body done">
             <span className="lkdv-onboarding-icon">
-              <Check size={24} aria-hidden="true" />
+              <LKDVIcon name="valider" size={24} aria-hidden="true" />
             </span>
             <h2 id="lkdv-onboarding-title">Ton camp de base est prêt</h2>
             <p>Tu as posé les premiers repères. Le reste du chemin t’appartient : explore à ton rythme.</p>
@@ -237,7 +227,7 @@ export function FirstRunJourney({ userId }: { userId: string }) {
                 disabled={busy}
               >
                 {STEP_CTA[current.id]}
-                <ChevronRight size={16} aria-hidden="true" />
+                <LKDVIcon name="suivant" size={16} aria-hidden="true" />
               </button>
               <button type="button" className="lkdv-onboarding-secondary" onClick={() => close(true)}>
                 Plus tard
@@ -257,7 +247,7 @@ export function FirstRunJourney({ userId }: { userId: string }) {
               className={step.done ? 'done' : stepIndex === index ? 'current' : ''}
               aria-current={stepIndex === index ? 'step' : undefined}
             >
-              <span aria-hidden="true">{step.done ? <Check size={10} /> : stepIndex + 1}</span>
+              <span aria-hidden="true">{step.done ? <LKDVIcon name="valider" size={10} /> : stepIndex + 1}</span>
               {step.title}
             </li>
           ))}

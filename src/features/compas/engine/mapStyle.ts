@@ -8,14 +8,15 @@
  */
 import { formatKm } from './format';
 import { ROUTE_POI_LABEL, type RoutePoiCategory } from './routePois';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /** Les trois fonds de l'Explorer : Relief (outdoor), Clair (plan), Satellite. */
 export type MapBase = 'topo' | 'osm' | 'satellite';
 
-export const MAP_BASES: ReadonlyArray<{ id: MapBase; label: string; icon: string }> = [
-  { id: 'topo', label: 'Relief', icon: 'mountain' },
-  { id: 'osm', label: 'Clair', icon: 'map' },
-  { id: 'satellite', label: 'Satellite', icon: 'layers' },
+export const MAP_BASES: ReadonlyArray<{ id: MapBase; label: string; icon: LKDVIconName }> = [
+  { id: 'topo', label: 'Relief', icon: 'montagne' },
+  { id: 'osm', label: 'Clair', icon: 'carte' },
+  { id: 'satellite', label: 'Satellite', icon: 'calques' },
 ];
 
 export const DEFAULT_BASE: MapBase = 'topo';

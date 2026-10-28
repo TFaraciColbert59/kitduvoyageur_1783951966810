@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
 import { useLocale } from '@/lib/i18n/context';
 import type { Locale } from '@/lib/i18n/locale';
 import { fr } from '@/lib/i18n/translations/fr';
 import { affiliateDisclosureCopy } from '../engine/disclosureRegion';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface AffiliateDisclosureProps {
   className?: string;
@@ -46,7 +46,7 @@ export function AffiliateDisclosure({
       <details role="note" aria-label={copy.ariaLabel} className={`cp-aff ${className}`}>
         <summary>
           <span>{copy.summary}</span>
-          <Icon name="info" size={13} aria-hidden="true" />
+          <LKDVIcon name="informations" size={13} aria-hidden="true" />
           <span className="sr-only">{copy.showDetail}</span>
         </summary>
         <p>{copy.note ? `${copy.note} ${copy.compact}` : copy.compact}</p>
@@ -58,7 +58,7 @@ export function AffiliateDisclosure({
       aria-label={copy.ariaLabel}
       className={`flex items-start gap-[var(--space-3)] rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] text-[length:var(--lkv-text-caption)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)] ${className}`}
     >
-      <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--lkv-secondary-ink)]" />
+      <LKDVIcon name="informations" className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--lkv-secondary-ink)]" />
       <div>
         <strong className="font-semibold text-[color:var(--lkv-text-primary)]">{copy.title}</strong>{' '}
         {copy.note ? (

@@ -1,11 +1,10 @@
 'use client';
-
-import { Plus, X } from 'lucide-react';
 import { Tabs } from '@/components/ui/Tabs';
 import { Button, Sheet } from '@/components/ui';
 import { ExpenseRow } from '@/features/trips/components/budget/ExpenseRow';
 import type { TripExpense } from '@/features/trips/types/trip.types';
 import type { BudgetFilter } from '../../../mobile/budgetEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface BudgetAllExpensesDrawerProps {
   open: boolean;
@@ -62,7 +61,7 @@ export function BudgetAllExpensesDrawer({
             variant="secondary"
             size="sm"
             onClick={onClearCategory}
-            icon={<X size={12} aria-hidden="true" />}
+            icon={<LKDVIcon name="fermer" size={12} aria-hidden="true" />}
             iconPosition="trailing"
             className="min-h-[44px] !px-3 text-[11px] font-bold"
             aria-label={`Retirer le filtre catégorie ${categoryLabel}`}
@@ -76,7 +75,7 @@ export function BudgetAllExpensesDrawer({
             variant="primary"
             fullWidth
             onClick={onAdd}
-            icon={<Plus size={15} aria-hidden="true" />}
+            icon={<LKDVIcon name="plus" size={15} aria-hidden="true" />}
             className="!py-3 text-sm font-bold"
           >
             Ajouter une dépense

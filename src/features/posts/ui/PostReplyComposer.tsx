@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface PostReplyComposerProps {
   value: string;
@@ -59,7 +59,7 @@ export function PostReplyComposer({
         disabled={disabled || busy || !value.trim()}
         onClick={onSend}
       >
-        <Icon name="send" size={15} aria-hidden="true" />
+        <LKDVIcon name="partager" size={15} aria-hidden="true" />
       </button>
     </div>
   );

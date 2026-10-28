@@ -1,8 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
-import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import { Badge, Button, Card, Tabs } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface TabsGroupeProps {
   activeTab: string;
@@ -48,7 +47,7 @@ export default function TabsGroupe({ activeTab, setActiveTab, data, layoutVarian
               href="/groupes"
               className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
             >
-              <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
+              <LKDVIcon name="retour" size={12} aria-hidden="true" />
               <span>Groupes</span>
             </Link>
 
@@ -57,7 +56,7 @@ export default function TabsGroupe({ activeTab, setActiveTab, data, layoutVarian
               variant="secondary"
               size="sm"
               onClick={() => window.print()}
-              icon={<Icon name="PrinterIcon" size={12} aria-hidden="true" />}
+              icon={<LKDVIcon name="exporter" size={12} aria-hidden="true" />}
               className="px-[var(--space-2)]"
             >
               Imprimer
@@ -82,7 +81,7 @@ export default function TabsGroupe({ activeTab, setActiveTab, data, layoutVarian
                 aria-pressed={isActive}
               >
                 <span className="truncate text-left">{tab.label}</span>
-                {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
+                {isActive && <LKDVIcon name="suivant" size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
               </Button>
             );
           })}

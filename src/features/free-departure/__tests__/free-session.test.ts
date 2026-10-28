@@ -25,7 +25,7 @@ function guess(overrides: Partial<ActivityGuess> = {}): ActivityGuess {
   return {
     activityId: 'rando-journee',
     label: activityById('rando-journee')?.label ?? 'Randonnee',
-    icon: 'footprints',
+    icon: 'randonnee',
     because: 'vitesse moyenne 4,8 km/h, sur 2 h, 9,8 km',
     confidence: 'proposee',
     ...overrides,

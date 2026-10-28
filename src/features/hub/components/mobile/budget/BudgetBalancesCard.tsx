@@ -1,6 +1,7 @@
-import { ArrowRight } from 'lucide-react';
+
 import { formatEuro } from '../../../mobile/mobileHubEngine';
 import type { BudgetBalancesView } from '../../../mobile/budgetEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface BudgetBalancesCardProps {
   view: BudgetBalancesView;
@@ -66,7 +67,7 @@ export function BudgetBalancesCard({ view }: BudgetBalancesCardProps) {
                 <span className="min-w-0 truncate font-semibold text-[var(--lkv-text-primary)]">
                   {settlement.fromName}
                 </span>
-                <ArrowRight size={12} className="shrink-0 text-[var(--lkv-text-primary)]/50" aria-hidden="true" />
+                <LKDVIcon name="suivant" size={12} className="shrink-0 text-[var(--lkv-text-primary)]/50" aria-hidden="true" />
                 <span className="min-w-0 truncate font-semibold text-[var(--lkv-text-primary)]">
                   {settlement.toName}
                 </span>

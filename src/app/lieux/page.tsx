@@ -1,9 +1,9 @@
 import { Metadata } from 'next';
-import Icon from '@/components/ui/Icon';
 import { createClient } from '@/lib/supabase/server';
 import { getPlaces, getUserTripsForPicker } from '@/lib/queries-places';
 import AppShell from '@/components/shell/AppShell';
 import { PlacesExplorerClient } from '@/features/places/components/PlacesExplorerClient';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,7 +71,7 @@ export default async function LieuxPage() {
         {/* Header de la Page */}
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-xs font-bold uppercase tracking-wider">
-            <Icon name="compass" className="w-3.5 h-3.5 text-[color:var(--lkv-secondary-ink)]" />
+            <LKDVIcon name="boussole" className="w-3.5 h-3.5 text-[color:var(--lkv-secondary-ink)]" />
             Communauté & Topos Outdoor
           </div>
 

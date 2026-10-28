@@ -1,17 +1,7 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
-import { ListIcon as List } from '@/components/icons/list';
-import { LayersIcon as Layers } from '@/components/icons/layers';
-import { ArrowUpRightIcon as ArrowUpRight } from '@/components/icons/arrow-up-right';
-import { BoxIcon as Boxes } from '@/components/icons/box';
-import { ExternalLinkIcon as ExternalLink } from '@/components/icons/external-link';
-import { CheckSquareIcon as CheckSquare } from '@/components/icons/check-square';
-import { LayoutGridIcon as LayoutGridAnimated } from '@/components/icons/layout-grid';
-import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { Badge, Button, Card, Chip, EmptyState, IconButton, Modal, SearchField, Tabs } from '@/components/ui';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { addInventoryItem } from '@/features/materiel/actions/addInventoryItem';
@@ -29,6 +19,7 @@ import type { ProductSuggestion } from '@/features/materiel/services/getProductS
 import type { ChecklistItem, Participant } from '@/features/materiel/types/trekHub';
 import type { MapTrail } from '@/components/explorer/types';
 import type { WeatherForecast } from '@/features/materiel/services/getWeather';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface UnifiedEquipmentItem {
   id: string;
@@ -507,12 +498,12 @@ export function DepartEquipmentHub({
           {
             id: 'catalog',
             label: `Parc Matériel (${filteredItems.length})`,
-            icon: <Boxes size={14} />,
+            icon: <LKDVIcon name="commande" size={14} />,
           },
           {
             id: 'bag',
             label: `Sac Actif (${kitItems.filter((i) => i.is_checked).length}/${kitItems.length})`,
-            icon: <CheckSquare size={14} />,
+            icon: <LKDVIcon name="checklist" size={14} />,
           },
         ]}
       />
@@ -560,7 +551,7 @@ export function DepartEquipmentHub({
             <div className="flex items-center justify-between gap-2 border-b border-black/5 pb-2">
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-7 h-7 rounded-xl bg-[var(--lkv-primary-hover)]/10 border border-[var(--lkv-primary-hover)]/20 flex items-center justify-center text-[var(--lkv-primary-hover)] shadow-2xs shrink-0">
-                  <Boxes size={14} aria-hidden="true" />
+                  <LKDVIcon name="commande" size={14} aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-xs sm:text-sm font-bold text-[color:var(--lkv-text-primary)] tracking-tight truncate">
@@ -572,7 +563,7 @@ export function DepartEquipmentHub({
               <Button
                 size="sm"
                 onClick={() => setIsAddModalOpen(true)}
-                icon={<Icon name="plus" size={12} />}
+                icon={<LKDVIcon name="plus" size={12} />}
                 className="h-7 shrink-0 rounded-xl px-2.5 text-[11px]"
               >
                 Ajouter
@@ -605,7 +596,7 @@ export function DepartEquipmentHub({
                   aria-label="Vue Grille"
                   aria-pressed={viewMode === 'grid'}
                 >
-                  <LayoutGridAnimated size={13} />
+                  <LKDVIcon name="calques" size={13} />
                 </IconButton>
                 <IconButton
                   size="sm"
@@ -620,7 +611,7 @@ export function DepartEquipmentHub({
                   aria-label="Vue Liste"
                   aria-pressed={viewMode === 'list'}
                 >
-                  <List size={13} />
+                  <LKDVIcon name="checklist_voyage" size={13} />
                 </IconButton>
               </div>
             </div>
@@ -667,7 +658,7 @@ export function DepartEquipmentHub({
             {filteredItems.length === 0 ? (
               <EmptyState
                 compact
-                icon={<Boxes size={24} className="text-[var(--lkv-text-muted)]/60" />}
+                icon={<LKDVIcon name="commande" size={24} className="text-[var(--lkv-text-muted)]/60" />}
                 title="Aucun équipement ne correspond à vos filtres."
               />
             ) : viewMode === 'grid' ? (
@@ -771,7 +762,7 @@ export function DepartEquipmentHub({
                               size="sm"
                               fullWidth
                               onClick={() => handleReturnLoan(item.loanId!, item.inventoryId)}
-                              icon={<Icon name="check" size={11} />}
+                              icon={<LKDVIcon name="valider" size={11} />}
                               className="h-7 rounded-xl px-1 text-[10.5px]"
                             >
                               Rendu
@@ -781,14 +772,14 @@ export function DepartEquipmentHub({
                               size="sm"
                               fullWidth
                               onClick={() => handleReplenishConsumable(item)}
-                              icon={<RotateCcwAnimated size={11} />}
+                              icon={<LKDVIcon name="actualiser" size={11} />}
                               className="h-7 rounded-xl px-1 text-[10.5px]"
                             >
                               Recharger
                             </Button>
                           ) : isItemInBag ? (
                             <Badge tone="sage" className="w-full justify-center gap-1 py-1 text-[10.5px] font-bold">
-                              <Icon name="check" size={11} />
+                              <LKDVIcon name="valider" size={11} />
                               Dans le sac
                             </Badge>
                           ) : (
@@ -796,7 +787,7 @@ export function DepartEquipmentHub({
                               size="sm"
                               fullWidth
                               onClick={() => handleQuickAddToBag(item)}
-                              icon={<Icon name="plus" size={11} />}
+                              icon={<LKDVIcon name="plus" size={11} />}
                               className="h-7 rounded-xl px-1 text-[10.5px]"
                             >
                               + Au sac
@@ -877,14 +868,14 @@ export function DepartEquipmentHub({
                       <div className="shrink-0">
                         {isItemInBag ? (
                           <Badge tone="sage" className="gap-1 py-1 text-[10.5px] font-bold">
-                            <Icon name="check" size={11} />
+                            <LKDVIcon name="valider" size={11} />
                             Dans le sac
                           </Badge>
                         ) : (
                           <Button
                             size="sm"
                             onClick={() => handleQuickAddToBag(item)}
-                            icon={<Icon name="plus" size={11} />}
+                            icon={<LKDVIcon name="plus" size={11} />}
                             className="h-7 rounded-xl px-2.5 text-[10.5px]"
                           >
                             + Sac
@@ -1020,7 +1011,7 @@ export function DepartEquipmentHub({
         {selectedItemForLoan && (
           <>
               <div className="p-3 rounded-2xl bg-black/5 text-xs font-semibold flex items-center gap-2">
-                <Boxes size={14} className="text-[var(--lkv-primary-hover)]" />
+                <LKDVIcon name="commande" size={14} className="text-[var(--lkv-primary-hover)]" />
                 <span>
                   Objet : <strong>{selectedItemForLoan.name}</strong>
                 </span>

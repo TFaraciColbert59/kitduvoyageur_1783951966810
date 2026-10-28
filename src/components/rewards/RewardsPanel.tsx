@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Check, ChevronDown, Gift, Loader2, RefreshCw, Target, WifiOff } from 'lucide-react';
 import {
   FULFILLMENT_LABEL,
   REDEEMABILITY_HINT,
@@ -29,6 +28,7 @@ import { REDEEM_ERROR_MESSAGE, redeemReducer, type RedeemFlow } from '@/features
 import type { RedeemOutcome } from '@/features/rewards/client/useRewardsWallet';
 import { PILOT_C_RULES } from '@/features/rewards/domain/contract';
 import './rewards.css';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Récompenses : solde dépensable, objectif choisi, catalogue court et
@@ -71,7 +71,7 @@ function Thumb({ item }: { item: Pick<CatalogItem, 'image' | 'alt'> | null }) {
   }
   return (
     <span className="lkdv-rw-thumb" aria-hidden="true">
-      <Gift size={20} />
+      <LKDVIcon name="cadeau" size={20} />
     </span>
   );
 }
@@ -109,7 +109,7 @@ function BalanceCard({
       <div className="lkdv-rw-card">
         <p className="lkdv-rw-eyebrow">Points disponibles</p>
         <div className="lkdv-rw-alert warn" role="alert" style={{ marginTop: 8 }}>
-          {offline ? <WifiOff size={16} aria-hidden="true" /> : <AlertTriangle size={16} aria-hidden="true" />}
+          {offline ? <LKDVIcon name="hors_ligne" size={16} aria-hidden="true" /> : <LKDVIcon name="alerte" size={16} aria-hidden="true" />}
           <p>
             {offline
               ? 'Hors ligne : aucun solde enregistré sur cet appareil. Il s’affichera au retour du réseau.'
@@ -119,7 +119,7 @@ function BalanceCard({
         {!offline ? (
           <div className="lkdv-rw-actions">
             <button type="button" className="lkdv-rw-btn" onClick={controller.refetch} disabled={controller.isFetching}>
-              <RefreshCw size={15} aria-hidden="true" /> Réessayer
+              <LKDVIcon name="actualiser" size={15} aria-hidden="true" /> Réessayer
             </button>
           </div>
         ) : null}
@@ -142,7 +142,7 @@ function BalanceCard({
       </p>
       {offline ? (
         <p className="lkdv-rw-sub">
-          <WifiOff size={13} aria-hidden="true" style={{ verticalAlign: '-2px' }} /> Dernier solde connu · {formatDateTime(view.savedAt)} · synchronisation en attente
+          <LKDVIcon name="hors_ligne" size={13} aria-hidden="true" style={{ verticalAlign: '-2px' }} /> Dernier solde connu · {formatDateTime(view.savedAt)} · synchronisation en attente
         </p>
       ) : null}
       {wallet.pendingPoints > 0 ? (
@@ -176,7 +176,7 @@ function BalanceCard({
 
       {goalItem && goalState === 'redeemable' && !offline ? (
         <div className="lkdv-rw-alert ok" style={{ marginTop: 10 }}>
-          <Check size={16} aria-hidden="true" />
+          <LKDVIcon name="valider" size={16} aria-hidden="true" />
           <p>Votre objectif « {goalItem.title} » est disponible.</p>
         </div>
       ) : null}
@@ -192,7 +192,7 @@ function BalanceCard({
         ) : null}
         {!goalItem ? (
           <button type="button" className="lkdv-rw-btn" onClick={onChooseGoal}>
-            <Target size={15} aria-hidden="true" /> Choisir ma récompense
+            <LKDVIcon name="recentrer" size={15} aria-hidden="true" /> Choisir ma récompense
           </button>
         ) : null}
       </div>
@@ -304,7 +304,7 @@ function CatalogRow({
             disabled={goalBusy || !canAct}
             onClick={() => onGoal(item)}
           >
-            <Target size={14} aria-hidden="true" /> {isGoal ? 'Objectif choisi' : 'Choisir comme objectif'}
+            <LKDVIcon name="recentrer" size={14} aria-hidden="true" /> {isGoal ? 'Objectif choisi' : 'Choisir comme objectif'}
           </button>
         ) : null}
         <button
@@ -314,7 +314,7 @@ function CatalogRow({
           aria-controls={detailsId}
           onClick={() => setOpen((value) => !value)}
         >
-          Détails <ChevronDown size={14} aria-hidden="true" />
+          Détails <LKDVIcon name="bas" size={14} aria-hidden="true" />
         </button>
       </div>
 
@@ -377,7 +377,7 @@ function CatalogRow({
             >
               {flow.step === 'submitting' ? (
                 <>
-                  <Loader2 size={15} aria-hidden="true" /> Réservation en cours…
+                  <LKDVIcon name="actualiser" size={15} aria-hidden="true" /> Réservation en cours…
                 </>
               ) : (
                 'Confirmer l’échange'
@@ -392,7 +392,7 @@ function CatalogRow({
 
       {mine && flow.step === 'reserved' ? (
         <div className="lkdv-rw-alert ok" style={{ marginTop: 10 }}>
-          <Check size={16} aria-hidden="true" />
+          <LKDVIcon name="valider" size={16} aria-hidden="true" />
           <p>
             Récompense réservée{flow.reference ? ` · référence ${flow.reference}` : ''}. Son suivi apparaît dans l’historique.
           </p>
@@ -401,7 +401,7 @@ function CatalogRow({
 
       {mine && flow.step === 'failed' ? (
         <div className="lkdv-rw-alert bad" role="alert" style={{ marginTop: 10 }}>
-          <AlertTriangle size={16} aria-hidden="true" />
+          <LKDVIcon name="alerte" size={16} aria-hidden="true" />
           <div>
             <p>{REDEEM_ERROR_MESSAGE[flow.code]}</p>
             <div className="lkdv-rw-actions">
@@ -504,7 +504,7 @@ export function RewardsOverview({ controller }: { controller: RewardsController 
 
       {controller.goalError ? (
         <div className="lkdv-rw-alert bad" role="alert">
-          <AlertTriangle size={16} aria-hidden="true" />
+          <LKDVIcon name="alerte" size={16} aria-hidden="true" />
           <p>
             {controller.goalError === 'reward_unavailable'
               ? 'Cet objet n’est plus proposé comme objectif.'
@@ -571,13 +571,13 @@ export function RewardsHistory({ controller }: { controller: RewardsController }
     return (
       <div className="lkdv-rw">
         <div className="lkdv-rw-alert warn" role="alert">
-          <AlertTriangle size={16} aria-hidden="true" />
+          <LKDVIcon name="alerte" size={16} aria-hidden="true" />
           <p>Historique indisponible pour le moment.</p>
         </div>
         {controller.view.state === 'unavailable' ? (
           <div className="lkdv-rw-actions">
             <button type="button" className="lkdv-rw-btn" onClick={controller.refetch}>
-              <RefreshCw size={15} aria-hidden="true" /> Réessayer
+              <LKDVIcon name="actualiser" size={15} aria-hidden="true" /> Réessayer
             </button>
           </div>
         ) : null}

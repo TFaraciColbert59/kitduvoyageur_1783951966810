@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, CheckCircle2, Circle, ListTodo } from 'lucide-react';
 import { Badge, Button, Card, EmptyState, IconButton, ListItem, Tabs } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -20,6 +19,9 @@ import { GroupeDrawer } from '../groupe/GroupeDrawer';
 import { GroupeRail } from '../groupe/GroupeRail';
 import { LiveArrivalReveal } from '../../live/LiveArrivalReveal';
 import { useLiveArrivalReveal } from '../../live/useLiveArrivalReveal';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 let checklistClient: ReturnType<typeof createClient> | null = null;
 function supabaseChecklistClient() {
@@ -86,7 +88,7 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
   const chips: GroupeChipDef[] = [
     {
       key: 'todo',
-      icon: ListTodo,
+      icon: lkdvIcon('checklist_voyage'),
       value: String(progress.remaining),
       label: 'à faire',
       tone: progress.remaining > 0 ? 'accent' : 'default',
@@ -94,14 +96,14 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
     },
     {
       key: 'done',
-      icon: CheckCircle2,
+      icon: lkdvIcon('valider'),
       value: String(progress.done),
       label: 'faites',
       onClick: () => openWith('done'),
     },
     {
       key: 'total',
-      icon: CalendarDays,
+      icon: lkdvIcon('jours'),
       value: String(progress.total),
       label: 'au total',
       onClick: () => openWith('all'),
@@ -131,9 +133,9 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
                 {BUCKET_TITLES[item.due_offset_days >= 30 ? 'j30' : item.due_offset_days >= 8 ? 'j7' : 'j1'].subtitle}
               </span>
               {done ? (
-                <CheckCircle2 size={17} className="shrink-0" aria-hidden="true" />
+                <LKDVIcon name="valider" size={17} className="shrink-0" aria-hidden="true" />
               ) : (
-                <Circle size={17} className="shrink-0" aria-hidden="true" />
+                <EmptyCircle size={17} className="shrink-0" />
               )}
             </span>
             <span
@@ -271,9 +273,9 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
                   aria-label={`${done ? 'Décocher' : 'Cocher'} ${item.label}`}
                   leading={
                     done ? (
-                      <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
+                      <LKDVIcon name="valider" size={18} className="mt-0.5 shrink-0 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
                     ) : (
-                      <Circle size={18} className="mt-0.5 shrink-0 text-[var(--lkv-text-primary)]/30" aria-hidden="true" />
+                      <EmptyCircle size={18} className="mt-0.5 shrink-0 text-[var(--lkv-text-primary)]/30" />
                     )
                   }
                   title={

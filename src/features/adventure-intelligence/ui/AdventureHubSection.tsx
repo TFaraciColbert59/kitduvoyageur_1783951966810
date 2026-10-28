@@ -1,26 +1,21 @@
 'use client';
-
-/**
- * A7 — Bloc Hub : état global, décisions requises et grille compacte vers les
- * sections existantes du Hub (ids du registre `hubSectionRegistry`, aucune
- * route nouvelle). Composant autonome, prêt à être monté en Phase 9.
- */
-import Icon from '@/components/ui/Icon';
 import type { CockpitTone, CockpitView } from '../domain/cockpit';
 import OfflineBanner from './OfflineBanner';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 export interface HubQuickLink {
   id: string;
   label: string;
-  icon: string;
+  icon: LKDVIconName;
 }
 
 /** Miroir des sections cœur d'une sortie (ids registre hub). */
 export const DEFAULT_HUB_QUICK_LINKS: HubQuickLink[] = [
-  { id: 'itinerary', label: 'Itinéraire', icon: 'navigation' },
-  { id: 'safety', label: 'Sécurité', icon: 'shield-alert' },
-  { id: 'checklist', label: 'Checklist', icon: 'check-square' },
-  { id: 'journal', label: 'Journal', icon: 'book-open' },
+  { id: 'itinerary', label: 'Itinéraire', icon: 'gps' },
+  { id: 'safety', label: 'Sécurité', icon: 'danger' },
+  { id: 'checklist', label: 'Checklist', icon: 'checklist' },
+  { id: 'journal', label: 'Journal', icon: 'preparateur' },
 ];
 
 export interface AdventureHubSectionProps {
@@ -144,15 +139,15 @@ export function AdventureHubSection({
                     onClick={() => onDecide?.(decision.id)}
                     className="flex min-h-[44px] w-full items-center gap-3 rounded-2xl bg-[var(--lkv-surface)] px-3 text-left text-[14px] font-medium text-[var(--lkv-text-primary)] active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
                   >
-                    <Icon
-                      name="check-circle"
+                    <LKDVIcon
+                      name="valider"
                       size={16}
                       className="shrink-0 text-[var(--lkv-secondary-ink)]"
                       aria-hidden="true"
                     />
                     <span className="flex-1">{decision.label}</span>
-                    <Icon
-                      name="chevron-right"
+                    <LKDVIcon
+                      name="suivant"
                       size={14}
                       className="shrink-0 text-[var(--lkv-text-muted)]"
                       aria-hidden="true"
@@ -176,7 +171,7 @@ export function AdventureHubSection({
                   compact ? 'min-h-[48px]' : 'min-h-[64px]'
                 }`}
               >
-                <Icon
+                <LKDVIcon
                   name={section.icon}
                   size={16}
                   className="text-[var(--lkv-secondary-ink)]"

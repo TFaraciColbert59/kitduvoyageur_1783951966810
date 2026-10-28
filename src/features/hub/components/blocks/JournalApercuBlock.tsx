@@ -1,7 +1,8 @@
-import Icon from '@/components/ui/Icon';
+
 import { EmptyState } from '@/components/ui/EmptyState';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import { hubSectionHref, type HubAdventureRef } from '../../registry/hubSectionRegistry';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * H-ACT — Bloc "Journal récent" de l'aperçu : les 2 dernières notes du
@@ -22,8 +23,8 @@ export function JournalApercuBlock({ trip, slug }: { trip: TripFull; slug: strin
     <div className="glass p-5 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
-          <Icon
-            name="book-open"
+          <LKDVIcon
+            name="preparateur"
             size={18}
             className="text-[var(--lkv-text-secondary)]"
             aria-hidden="true"
@@ -41,7 +42,7 @@ export function JournalApercuBlock({ trip, slug }: { trip: TripFull; slug: strin
       {notes.length === 0 ? (
         <EmptyState
           compact
-          icon={<Icon name="book-open" size={22} aria-hidden="true" />}
+          icon={<LKDVIcon name="preparateur" size={22} aria-hidden="true" />}
           title="Aucune note"
           description="Racontez vos journées au fil du voyage."
         />

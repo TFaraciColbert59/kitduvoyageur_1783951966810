@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import {
   HUB_GROUP_PATH,
   pendingViews,
@@ -13,6 +12,7 @@ import { MemberAvatar } from './CompasCards';
 import { Chip } from './CompasPrimitives';
 import { useTranslation } from '@/lib/i18n/context';
 import { FR_T, type CompasT } from './compasTypes';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Nous · Équipe : les membres EN LECTURE (niveau, présence, rôle, charge portée).
@@ -36,11 +36,11 @@ export function MemberTags({ view }: { view: MemberView }) {
   const { t } = useTranslation();
   return (
     <span className="cp-mem__tags">
-      <Chip tone="soft" icon="user">
+      <Chip tone="soft" icon="profil">
         {view.role}
       </Chip>
       {view.level && (
-        <Chip icon="mountain">
+        <Chip icon="montagne">
           {t('compas.members.level', { level: view.level })}
           {view.levelNote ? ` · ${view.levelNote}` : ''}
         </Chip>
@@ -90,7 +90,7 @@ export function MemberRow({
         {load.pct != null && (
           <Chip tone={load.tone}>{t('compas.cards.pct', { pct: load.pct })}</Chip>
         )}
-        <Icon name="chevron-right" size={16} />
+        <LKDVIcon name="suivant" size={16} />
       </span>
     </button>
   );
@@ -121,7 +121,7 @@ export function HubGroupLink() {
     <div className="cp-mem__hub">
       <p className="cp-note">{t('compas.members.hubNote')}</p>
       <Link className="cp-btn cp-btn--soft cp-btn--tap" href={HUB_GROUP_PATH}>
-        <Icon name="external-link" size={16} aria-hidden="true" />
+        <LKDVIcon name="lien" size={16} aria-hidden="true" />
         {t('compas.members.hubLink')}
       </Link>
     </div>

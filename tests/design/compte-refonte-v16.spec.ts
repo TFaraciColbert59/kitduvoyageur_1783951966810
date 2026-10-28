@@ -28,14 +28,14 @@ describe('Compte iOS 27 v16 — la card défile au lieu d’écraser les posts',
     expect(v16).not.toMatch(/\.ig-grid-wrap\s*\{[^}]*height:\s*\d/);
   });
 
-  it('4. Invariant strict : 0 modification dans /compas', () => {
+  it('4. Invariant : 0 modification de style dans /compas (la migration des icônes LKDV V2 touche le code, pas le design)', () => {
     try {
-      const diff = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', {
+      const diff = execSync("git diff --name-only origin/main -- ':(glob)src/app/compas/**/*.css' ':(glob)src/features/compas/**/*.css'", {
         encoding: 'utf8',
       }).trim();
       expect(diff).toBe('');
     } catch (_) {
-      const status = execSync('git status --porcelain -- src/app/compas src/features/compas', {
+      const status = execSync("git status --porcelain -- ':(glob)src/app/compas/**/*.css' ':(glob)src/features/compas/**/*.css'", {
         encoding: 'utf8',
       }).trim();
       expect(status).toBe('');

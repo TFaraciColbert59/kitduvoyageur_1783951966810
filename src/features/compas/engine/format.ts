@@ -7,6 +7,7 @@ import { toIntlLocale, type Locale } from '@/lib/i18n/locale';
 import type { TranslationKey } from '@/lib/i18n/translate';
 import { classifyScale } from './scale';
 import { engineT } from './engineI18n';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 const nf1 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
 const nf0 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
@@ -100,23 +101,23 @@ export function daysBetweenIso(a: string, b: string): number {
 }
 
 /** Libellé court d'un code météo WMO et icône du registre LKDV. */
-export function weatherLabel(code: number, locale: Locale = 'fr'): { label: string; icon: string } {
+export function weatherLabel(code: number, locale: Locale = 'fr'): { label: string; icon: LKDVIconName } {
   const [key, icon] = weatherKey(code);
   return { label: engineT(locale)(key), icon };
 }
 
-function weatherKey(code: number): [TranslationKey, string] {
-  if (code === 0) return ['compas.engine.format.weather.clear', 'sun'];
-  if (code <= 2) return ['compas.engine.format.weather.sunnySpells', 'cloud-sun'];
-  if (code === 3) return ['compas.engine.format.weather.overcast', 'cloud'];
-  if (code === 45 || code === 48) return ['compas.engine.format.weather.fog', 'cloud-fog'];
-  if (code >= 51 && code <= 57) return ['compas.engine.format.weather.drizzle', 'cloud-drizzle'];
-  if (code >= 61 && code <= 67) return ['compas.engine.format.weather.rain', 'cloud-rain'];
-  if (code >= 71 && code <= 77) return ['compas.engine.format.weather.snow', 'cloud-snow'];
-  if (code >= 80 && code <= 82) return ['compas.engine.format.weather.showers', 'cloud-rain-wind'];
-  if (code >= 85 && code <= 86) return ['compas.engine.format.weather.snowShowers', 'cloud-snow'];
-  if (code >= 95) return ['compas.engine.format.weather.storm', 'cloud-lightning'];
-  return ['compas.engine.format.weather.variable', 'cloud'];
+function weatherKey(code: number): [TranslationKey, LKDVIconName] {
+  if (code === 0) return ['compas.engine.format.weather.clear', 'soleil'];
+  if (code <= 2) return ['compas.engine.format.weather.sunnySpells', 'meteo'];
+  if (code === 3) return ['compas.engine.format.weather.overcast', 'meteo'];
+  if (code === 45 || code === 48) return ['compas.engine.format.weather.fog', 'meteo'];
+  if (code >= 51 && code <= 57) return ['compas.engine.format.weather.drizzle', 'pluie'];
+  if (code >= 61 && code <= 67) return ['compas.engine.format.weather.rain', 'pluie'];
+  if (code >= 71 && code <= 77) return ['compas.engine.format.weather.snow', 'neige'];
+  if (code >= 80 && code <= 82) return ['compas.engine.format.weather.showers', 'pluie'];
+  if (code >= 85 && code <= 86) return ['compas.engine.format.weather.snowShowers', 'neige'];
+  if (code >= 95) return ['compas.engine.format.weather.storm', 'meteo_extreme'];
+  return ['compas.engine.format.weather.variable', 'meteo'];
 }
 
 /** Première lettre en capitale, reste inchangé. */

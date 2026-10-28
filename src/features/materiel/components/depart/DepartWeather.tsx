@@ -1,12 +1,10 @@
 'use client';
-import Icon from '@/components/ui/Icon';
 import { useState } from 'react';
-import { ClockIcon as Clock } from '@/components/icons/clock';
-import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Card } from '@/components/ui';
 import { rainLabel, weatherLabel, type WeatherForecast } from '@/features/materiel/services/getWeather';
 import { cn } from '@/lib/utils';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface DepartWeatherProps {
   weather: WeatherForecast | null;
@@ -15,22 +13,22 @@ interface DepartWeatherProps {
 
 function getWeatherIcon(code: number, size = 16) {
   if (code === 0)
-    return <Icon name="sun" size={size} className="text-[var(--lkv-warning)]" aria-hidden="true" />;
+    return <LKDVIcon name="soleil" size={size} className="text-[var(--lkv-warning)]" aria-hidden="true" />;
   if (code <= 2)
-    return <Icon name="cloud-sun" size={size} className="text-[var(--lkv-warning)]/80" aria-hidden="true" />;
+    return <LKDVIcon name="meteo" size={size} className="text-[var(--lkv-warning)]/80" aria-hidden="true" />;
   if (code === 3)
-    return <Icon name="cloud" size={size} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />;
+    return <LKDVIcon name="meteo" size={size} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />;
   if (code <= 48)
-    return <Icon name="cloud-fog" size={size} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />;
+    return <LKDVIcon name="meteo" size={size} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />;
   if (code <= 57)
-    return <Icon name="cloud-drizzle" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
+    return <LKDVIcon name="pluie" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
   if (code <= 67)
-    return <Icon name="cloud-rain" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
+    return <LKDVIcon name="pluie" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
   if (code <= 77)
-    return <Icon name="cloud-snow" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
+    return <LKDVIcon name="neige" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
   if (code <= 86)
-    return <Icon name="cloud-rain" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
-  return <Icon name="cloud-lightning" size={size} className="text-[var(--lkv-warning)]" aria-hidden="true" />;
+    return <LKDVIcon name="pluie" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
+  return <LKDVIcon name="meteo_extreme" size={size} className="text-[var(--lkv-warning)]" aria-hidden="true" />;
 }
 
 export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
@@ -57,8 +55,8 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
               id="weather-heading"
               className="text-xs sm:text-[13px] font-bold text-[color:var(--lkv-text-primary)] flex items-center gap-2"
             >
-              <Icon
-                name="thermometer"
+              <LKDVIcon
+                name="meteo"
                 size={15}
                 className="text-[var(--lkv-primary-hover)]"
                 aria-hidden="true"
@@ -108,7 +106,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
               </div>
               {(day.precipPct ?? day.precipMm ?? 0) > 0 && (
                 <div className="flex items-center justify-center gap-0.5 text-[9px] text-[var(--lkv-info)] font-medium">
-                  <Icon name="droplets" size={8.5} />
+                  <LKDVIcon name="eau_potable" size={8.5} />
                   <span>{rainLabel(day.precipPct, day.precipMm)}</span>
                 </div>
               )}
@@ -118,7 +116,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
           {/* Éphéméride du jour */}
           <div className="shrink-0 p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
-              <Icon name="sunrise" size={10} className="text-[var(--lkv-warning)]" />
+              <LKDVIcon name="panorama" size={10} className="text-[var(--lkv-warning)]" />
               <span>Lever</span>
             </span>
             <span className="font-mono font-bold text-[color:var(--lkv-text-primary)] text-[11px] my-auto">
@@ -128,7 +126,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
 
           <div className="shrink-0 p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
-              <Icon name="sunset" size={10} className="text-[var(--lkv-warning)]" />
+              <LKDVIcon name="panorama" size={10} className="text-[var(--lkv-warning)]" />
               <span>Coucher</span>
             </span>
             <span className="font-mono font-bold text-[color:var(--lkv-text-primary)] text-[11px] my-auto">
@@ -138,7 +136,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
 
           <div className="shrink-0 p-2 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center justify-between w-[80px]">
             <span className="text-[9px] uppercase tracking-wider text-[var(--lkv-text-muted)] flex items-center gap-1 font-semibold">
-              <Icon name="sun" size={10} className="text-[var(--lkv-forest-700)]" />
+              <LKDVIcon name="soleil" size={10} className="text-[var(--lkv-forest-700)]" />
               <span>Jour</span>
             </span>
             <span className="font-mono font-bold text-[color:var(--lkv-text-primary)] text-[11px] my-auto">

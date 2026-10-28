@@ -82,9 +82,9 @@ describe('capsule et titre', () => {
     const api = makeApi();
     expect(sacDrawer.space).toBe('sac');
     expect(sacDrawer.tabs(api).map((t) => [t.icon, t.label])).toEqual([
-      ['bag', 'Ton sac'],
-      ['spark', 'Tes kits'],
-      ['people', 'Qui porte quoi'],
+      ['sac', 'Ton sac'],
+      ['ia', 'Tes kits'],
+      ['communaute', 'Qui porte quoi'],
     ]);
   });
 

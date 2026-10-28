@@ -43,7 +43,7 @@ function etape(over: Partial<ItineraryStep> & Pick<ItineraryStep, 'id' | 'title'
     price: { amount: null, currency: 'EUR', state: 'a_reserver' },
     state: 'a_reserver',
     kept: false,
-    icon: 'navigation',
+    icon: 'gps',
     lat: null,
     lon: null,
     ...over,

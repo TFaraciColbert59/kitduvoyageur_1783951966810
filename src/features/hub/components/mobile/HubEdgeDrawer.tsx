@@ -2,9 +2,9 @@
 
 import * as React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { CircleCheckBig, Compass, Trophy, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 /** Position verticale du declencheur sur le bord droit (3 tiroirs empiles). */
 export type HubEdgeSlot = 'top' | 'mid' | 'bottom';
@@ -31,10 +31,10 @@ export interface HubEdgeDrawerProps {
   defaultOpen?: boolean;
 }
 
-const KIND_META: Record<HubEdgeKind, { icon: LucideIcon; label: string; title: string }> = {
-  status: { icon: CircleCheckBig, label: 'État', title: 'État de l’aventure' },
-  progression: { icon: Trophy, label: 'Points', title: 'Ma progression' },
-  cockpit: { icon: Compass, label: 'Cockpit', title: 'Cockpit aventure' },
+const KIND_META: Record<HubEdgeKind, { icon: LKDVIconComponent; label: string; title: string }> = {
+  status: { icon: lkdvIcon('valider'), label: 'État', title: 'État de l’aventure' },
+  progression: { icon: lkdvIcon('recompense'), label: 'Points', title: 'Ma progression' },
+  cockpit: { icon: lkdvIcon('boussole'), label: 'Cockpit', title: 'Cockpit aventure' },
 };
 
 const SLOT_CLASS: Record<HubEdgeSlot, string> = {
@@ -137,7 +137,7 @@ export function HubEdgeDrawer({
         aria-haspopup="dialog"
         className={cn('hub-edge-trigger', SLOT_CLASS[slot], className)}
       >
-        <TriggerIcon size={17} strokeWidth={2} aria-hidden="true" />
+        <TriggerIcon size={17} aria-hidden="true" />
         <span className="hub-edge-trigger__label">{triggerLabel}</span>
       </button>
 
@@ -180,7 +180,7 @@ export function HubEdgeDrawer({
                 </div>
                 <Dialog.Close asChild>
                   <button type="button" aria-label="Fermer" className="hub-edge-panel__close">
-                    <Icon name="x" size={16} aria-hidden="true" />
+                    <LKDVIcon name="fermer" size={16} aria-hidden="true" />
                   </button>
                 </Dialog.Close>
               </div>

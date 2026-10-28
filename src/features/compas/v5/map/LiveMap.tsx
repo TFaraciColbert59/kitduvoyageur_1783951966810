@@ -97,7 +97,7 @@ const LAYER_LINE = 'v5-days-line';
 const LAYER_DASH = 'v5-days-dash';
 const LAYER_HIT = 'v5-days-hit';
 const BASE_ORDER: ReadonlyArray<MapBase> = ['osm', 'topo', 'satellite'];
-const BASE_ICON: Record<MapBase, V5IconName> = { osm: 'map', topo: 'peak', satellite: 'globe' };
+const BASE_ICON: Record<MapBase, V5IconName> = { osm: 'carte', topo: 'sommet', satellite: 'monde' };
 const FIT_MAX_ZOOM = 14.5;
 const FLY_MS = 900;
 const FALLBACK_CENTER: [number, number] = [2.35, 46.6];
@@ -125,34 +125,34 @@ const LAYER_LABEL: Record<Exclude<MapLayer, 'profil'>, TranslationKey> = {
 };
 
 const LAYER_ICON: Record<Exclude<MapLayer, 'profil'>, V5IconName> = {
-  etapes: 'route',
-  resto: 'cup',
-  commerce: 'cart',
-  sante: 'cross',
-  hebergement: 'bed',
+  etapes: 'itineraire',
+  resto: 'alimentation',
+  commerce: 'panier',
+  sante: 'trousse',
+  hebergement: 'hotel',
   transport: 'bus',
-  water: 'drop',
-  refuge: 'house',
-  camping: 'tent',
-  toilets: 'flag',
-  viewpoint: 'eye',
-  peak: 'peak',
-  parking: 'park',
+  water: 'eau_potable',
+  refuge: 'refuge',
+  camping: 'tente',
+  toilets: 'signalement',
+  viewpoint: 'vue',
+  peak: 'sommet',
+  parking: 'parking',
 };
 
 const POI_ICON: Record<string, V5IconName> = {
-  water: 'drop',
-  refuge: 'house',
-  peak: 'peak',
-  camping: 'tent',
-  hebergement: 'bed',
-  commerce: 'cart',
-  sante: 'cross',
-  viewpoint: 'eye',
-  parking: 'park',
+  water: 'eau_potable',
+  refuge: 'refuge',
+  peak: 'sommet',
+  camping: 'tente',
+  hebergement: 'hotel',
+  commerce: 'panier',
+  sante: 'trousse',
+  viewpoint: 'vue',
+  parking: 'parking',
   transport: 'bus',
-  resto: 'cup',
-  toilets: 'flag',
+  resto: 'alimentation',
+  toilets: 'signalement',
 };
 
 /** Les calques qui se voient sur la carte (le profil d'altitude n'est pas un objet de carte). */
@@ -757,7 +757,7 @@ export function LiveMap(props: LiveMapProps) {
         className: `v5-mk v5-mk-poi${p.category ? ` v5-cat-${safeClass(p.category)}` : ''}`,
         content: (
           <PoiPin
-            icon={(p.category && POI_ICON[p.category]) || 'info'}
+            icon={(p.category && POI_ICON[p.category]) || 'informations'}
             label={kind ? t('compas.v5.carte.poi', { name: poiName, kind }) : poiName}
             onClick={(e: ReactMouseEvent<HTMLButtonElement>) => {
               setSelected({ point: p, opener: e.currentTarget, keyboard: e.detail === 0 });
@@ -868,16 +868,16 @@ export function LiveMap(props: LiveMapProps) {
               aria-controls={layersId}
               onClick={() => setLayersOpen((v) => !v)}
             >
-              <V5Icon name="layers" size="s" />
+              <V5Icon name='calques' size="s" />
             </button>
             <button type="button" aria-label={t('compas.v5.carte.fitTrip')} onClick={fitTrip}>
-              <V5Icon name="fit" size="s" />
+              <V5Icon name='plein_ecran' size="s" />
             </button>
             <button type="button" aria-label={t('compas.v5.carte.zoomIn')} onClick={() => zoomBy(1)}>
-              <V5Icon name="plus" size="s" />
+              <V5Icon name='ajouter' size="s" />
             </button>
             <button type="button" aria-label={t('compas.v5.carte.zoomOut')} onClick={() => zoomBy(-1)}>
-              <V5Icon name="minus" size="s" />
+              <V5Icon name='annuler' size="s" />
             </button>
           </div>
 
@@ -929,7 +929,7 @@ export function LiveMap(props: LiveMapProps) {
             {t('compas.v5.carte.poiOpen')}
           </button>
           <button type="button" className="v5-callout__x" aria-label={t('compas.v5.carte.calloutClose')} onClick={() => closeCallout(true)}>
-            <V5Icon name="x" size="s" />
+            <V5Icon name='fermer' size="s" />
           </button>
         </div>
       )}

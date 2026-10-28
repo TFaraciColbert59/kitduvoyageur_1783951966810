@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import type { TripFull, TripStats, TripStep } from '../types/trip.types';
@@ -19,6 +17,7 @@ import { momentSlotOf } from '../engine/momentSlots';
 import { isLlmSuggestion } from '../engine/llmProvenance';
 import { LlmSuggestionBadge } from './LlmSuggestionBadge';
 import Link from 'next/link';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface TripItineraryTabProps {
   trip: TripFull;
@@ -108,7 +107,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       {/* 0. Bandeau d'information squelette si aucune donnée de référence */}
       {provenanceInfo.variant === 'skeleton' && (
         <Card tone="warn" className="flex items-start gap-[var(--space-3)] text-[color:var(--lkv-warning-dark)]">
-          <Icon name="alert-triangle" size={18} className="mt-0.5 shrink-0" />
+          <LKDVIcon name="alerte" size={18} className="mt-0.5 shrink-0" />
           <div className="text-[length:var(--lkv-text-footnote)] leading-relaxed">
             <span className="mb-0.5 block font-semibold">Squelette d’itinéraire :</span>
             Aucun tracé de référence pour cette destination. Ajoute tes étapes, les distances se
@@ -126,7 +125,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
               tone={w.severity === 'alert' ? 'danger' : 'warn'}
               className="flex items-start gap-[var(--space-3)]"
             >
-              <Icon name="alert-triangle" size={18} className="shrink-0" />
+              <LKDVIcon name="alerte" size={18} className="shrink-0" />
               <div className="text-[length:var(--lkv-text-footnote)] leading-relaxed">
                 <span className="mb-0.5 block font-semibold">Alerte météo & praticabilité :</span>
                 {w.message}
@@ -136,7 +135,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
         </div>
       ) : trip.start_date ? (
         <Card tone="sage" className="flex items-center gap-[var(--space-3)]">
-          <Icon name="check-circle2" size={16} className="shrink-0" />
+          <LKDVIcon name="valider" size={16} className="shrink-0" />
           <div className="text-[length:var(--lkv-text-footnote)]">
             <span className="font-semibold">Période optimale :</span> les dates prévues
             correspondent à la meilleure saison pour cette destination.
@@ -171,7 +170,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
           <div>
             <span className="block text-[color:var(--lkv-text-muted)]">Provenance</span>
             <span className="inline-flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
-              <Icon name="sparkles" size={12} className="text-[color:var(--lkv-text-secondary)]" />
+              <LKDVIcon name="ia" size={12} className="text-[color:var(--lkv-text-secondary)]" />
               {provenanceInfo.label}
             </span>
           </div>
@@ -183,7 +182,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
               href={tripSectionHref(trip.slug, 'itinerary')}
               className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:brightness-[1.05]"
             >
-              <Icon name="calendar" size={15} />
+              <LKDVIcon name="calendrier" size={15} />
               Ouvrir le Planificateur
             </Link>
           </div>
@@ -227,7 +226,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                         </span>
                         {step.accommodation_name && (
                           <Badge tone="stone">
-                            <Icon name="home" size={10} />
+                            <LKDVIcon name="accueil" size={10} />
                             {step.accommodation_name}
                           </Badge>
                         )}
@@ -240,7 +239,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
 
                       {step.location_name && (
                         <div className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
-                          <Icon name="map-pin" size={12} />
+                          <LKDVIcon name="point_interet" size={12} />
                           {step.location_name}
                         </div>
                       )}
@@ -255,7 +254,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                     <div className="flex shrink-0 items-center gap-[var(--space-3)] self-start text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)] sm:flex-col sm:items-end sm:gap-[var(--space-1)]">
                       {step.distance_km ? (
                         <div className="flex items-center gap-[var(--space-1)]">
-                          <Icon name="footprints" size={13} />
+                          <LKDVIcon name="randonnee" size={13} />
                           <span>{step.distance_km} km</span>
                         </div>
                       ) : null}
@@ -341,7 +340,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
         </div>
       ) : (
         <EmptyState
-          icon={<Icon name="navigation" size={36} className="text-[color:var(--lkv-text-muted)]" />}
+          icon={<LKDVIcon name="gps" size={36} className="text-[color:var(--lkv-text-muted)]" />}
           title="Aucune étape définie"
           description="Ce voyage n'a pas encore d'itinéraire journalier. Vous pouvez le générer automatiquement avec notre moteur de répartition."
           actionLabel={

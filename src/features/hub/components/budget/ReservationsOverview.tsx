@@ -1,4 +1,4 @@
-import { BedDouble, Car, Plane, ShoppingCart, Ticket } from 'lucide-react';
+
 import type { ReactNode } from 'react';
 import { Card, EmptyState } from '@/components/ui';
 import type {
@@ -6,6 +6,7 @@ import type {
   CartOverviewEntry,
   TripBookingOverview,
 } from '../../server/getTripBookingOverview';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * W6 (P4) — apercu des reservations et du panier dans la section budget.
@@ -24,10 +25,10 @@ interface ReservationsOverviewProps {
 }
 
 const VERTICAL_ICONS: Record<string, ReactNode> = {
-  flight: <Plane size={14} aria-hidden="true" />,
-  hotel: <BedDouble size={14} aria-hidden="true" />,
-  car: <Car size={14} aria-hidden="true" />,
-  activity: <Ticket size={14} aria-hidden="true" />,
+  flight: <LKDVIcon name="avion" size={14} aria-hidden="true" />,
+  hotel: <LKDVIcon name="hotel" size={14} aria-hidden="true" />,
+  car: <LKDVIcon name="voiture" size={14} aria-hidden="true" />,
+  activity: <LKDVIcon name="billet" size={14} aria-hidden="true" />,
 };
 
 const CART_KIND_LABELS: Record<CartOverviewEntry['kind'], string> = {
@@ -68,7 +69,7 @@ export function ReservationsOverview({ overview }: ReservationsOverviewProps) {
           {overview.reservations.length === 0 ? (
             <EmptyState
               compact
-              icon={<Ticket size={18} aria-hidden="true" />}
+              icon={<LKDVIcon name="billet" size={18} aria-hidden="true" />}
               title="Aucune réservation"
               description="Les réservations ouvertes depuis le préparateur apparaissent ici."
             />
@@ -77,7 +78,7 @@ export function ReservationsOverview({ overview }: ReservationsOverviewProps) {
               {overview.reservations.map((entry: BookingOverviewEntry) => (
                 <Row key={entry.id}>
                   <div className="flex min-w-0 items-center gap-[var(--space-2)]">
-                    {VERTICAL_ICONS[entry.vertical] ?? <Ticket size={14} aria-hidden="true" />}
+                    {VERTICAL_ICONS[entry.vertical] ?? <LKDVIcon name="billet" size={14} aria-hidden="true" />}
                     <div className="min-w-0">
                       <div className="truncate text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                         {entry.title}
@@ -118,7 +119,7 @@ export function ReservationsOverview({ overview }: ReservationsOverviewProps) {
           {overview.cartLines.length === 0 ? (
             <EmptyState
               compact
-              icon={<ShoppingCart size={18} aria-hidden="true" />}
+              icon={<LKDVIcon name="panier" size={18} aria-hidden="true" />}
               title="Panier vide"
               description="Les articles et réservations ajoutés depuis le préparateur s’ajoutent ici."
             />

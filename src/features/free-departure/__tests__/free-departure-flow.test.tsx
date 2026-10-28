@@ -68,7 +68,7 @@ describe('freeFlow — machine a trois etats (60 → 61 → 62)', () => {
     it('FREE-FL03: une activite choisie s’affiche telle quelle', () => {
       const view = live({ activityId: 'rando-journee' });
       expect(view.activityLabel).toBe('Randonnée');
-      expect(view.activityIcon).toBe('footprints');
+      expect(view.activityIcon).toBe('randonnee');
     });
 
     it('FREE-FL04: une identite d’activite inconnue ne fait pas planter l’ecran', () => {

@@ -1,5 +1,4 @@
-import type { LucideIcon } from 'lucide-react';
-import { Clock, Sun, Target, TrendingUp, Users, Wallet } from 'lucide-react';
+
 import {
   buildBudgetDayPlan,
   type BudgetSummary,
@@ -9,12 +8,13 @@ import {
 import type { TripExpense, TripFull } from '@/features/trips/types/trip.types';
 import { formatDayLabel } from '@/features/trips/components/budget/budgetFormat';
 import { formatEuro } from './mobileHubEngine';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export type BudgetFilter = 'all' | 'planned' | 'real' | 'today';
 
 export interface BudgetChipDef {
   key: string;
-  icon: LucideIcon;
+  icon: LKDVIconComponent;
   value: string;
   label: string;
   tone?: 'default' | 'warn' | 'accent';
@@ -62,14 +62,14 @@ export function buildBudgetChips(args: {
   const chips: BudgetChipDef[] = [
     {
       key: 'real',
-      icon: Wallet,
+      icon: lkdvIcon('budget'),
       value: formatEuro(summary.totalSpent),
       label: `${real.length} dépense${real.length > 1 ? 's' : ''}`,
       filter: 'real',
     },
     {
       key: 'planned',
-      icon: Clock,
+      icon: lkdvIcon('duree'),
       value: formatEuro(summary.plannedTotal),
       label: `${planned.length} à venir`,
       tone: planned.length > 0 ? 'accent' : 'default',
@@ -77,7 +77,7 @@ export function buildBudgetChips(args: {
     },
     {
       key: 'remaining',
-      icon: Target,
+      icon: lkdvIcon('recentrer'),
       value: remaining != null ? formatEuro(remaining) : '—',
       label: isMulti ? 'à régler' : 'du budget',
       tone: remaining != null && remaining < 0 ? 'warn' : 'default',
@@ -85,14 +85,14 @@ export function buildBudgetChips(args: {
     },
     {
       key: 'average',
-      icon: TrendingUp,
+      icon: lkdvIcon('denivele'),
       value: formatEuro(summary.totalSpent / days),
       label: 'par jour',
       filter: 'all',
     },
     {
       key: 'today',
-      icon: Sun,
+      icon: lkdvIcon('soleil'),
       value: formatEuro(todayTotal),
       label: 'aujourd’hui',
       tone: todayTotal > 0 ? 'accent' : 'default',
@@ -103,7 +103,7 @@ export function buildBudgetChips(args: {
   if (isMulti) {
     chips.push({
       key: 'per-person',
-      icon: Users,
+      icon: lkdvIcon('communaute'),
       value: formatEuro(summary.totalSpent / Math.max(1, participantCount)),
       label: 'par personne',
       filter: 'all',

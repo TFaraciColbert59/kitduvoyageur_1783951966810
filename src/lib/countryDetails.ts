@@ -147,19 +147,19 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     carte_repere: 'Carte administrative',
     highlights: [
       {
-        icon: 'calendar',
+        icon: 'calendrier',
         titre: 'Meilleure',
         sous_titre: 'saison',
         description: 'Juin → août pour la nuit blanche et les hauts plateaux accessibles. Novembre → février pour les aurores boréales et les glaciers illuminés.',
       },
       {
-        icon: 'plane',
+        icon: 'avion',
         titre: 'Vol',
         sous_titre: 'direct',
         description: 'Paris → Keflavík · 3 h 30. Vols quotidiens Icelandair, réguliers Play. Location de 4x4 recommandée dès qu’on quitte la Ring Road.',
       },
       {
-        icon: 'compass',
+        icon: 'boussole',
         titre: 'Densité',
         sous_titre: 'de rêve',
         description: '3,7 habitants/km². Deux tiers de la population vivent dans la région de Reykjavík : l’essentiel de l’île est un désert habité par la géologie.',
@@ -436,19 +436,19 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     carte_repere: 'Carte des préfectures',
     highlights: [
       {
-        icon: 'calendar',
+        icon: 'calendrier',
         titre: 'Meilleure',
         sous_titre: 'saison',
         description: 'Avril pour les cerisiers en fleurs (Sakura), Octobre-Novembre pour les érables flamboyants (Kōyō).',
       },
       {
-        icon: 'plane',
+        icon: 'avion',
         titre: 'Vol',
         sous_titre: 'direct',
         description: 'Paris → Tokyo Haneda · 13 h 40. Vols réguliers Air France et ANA. Pass JR pour les liaisons train.',
       },
       {
-        icon: 'compass',
+        icon: 'boussole',
         titre: 'Relief',
         sous_titre: 'montagneux',
         description: '73 % du pays est montagneux, idéal pour la randonnée estivale et le ski de poudreuse en hiver à Hokkaido.',
@@ -700,19 +700,19 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     carte_repere: 'Carte des massifs',
     highlights: [
       {
-        icon: 'calendar',
+        icon: 'calendrier',
         titre: 'Meilleure',
         sous_titre: 'saison',
         description: 'Juin à Septembre pour les refuges d’altitude et la haute montagne. Mai-Juin & Sept-Oct pour le Sud et la Corse.',
       },
       {
-        icon: 'plane',
+        icon: 'avion',
         titre: 'Accès',
         sous_titre: 'direct',
         description: 'TGV haute vitesse reliant Paris aux Alpes, Pyrénées et Méditerranée en 2 à 4 heures.',
       },
       {
-        icon: 'compass',
+        icon: 'boussole',
         titre: 'Réseau',
         sous_titre: 'GR®',
         description: '180 000 km de sentiers balisés par la FFRandonnée et un réseau dense de refuges gardés.',
@@ -949,19 +949,19 @@ export const COUNTRY_DETAILS: Record<string, Partial<CountryDetail>> = {
     carte_repere: 'Carte des Parcs Nationaux',
     highlights: [
       {
-        icon: 'mountain',
+        icon: 'montagne',
         titre: 'Superficie',
         sous_titre: 'démesurée',
         description: '9,98M km² : deuxième plus grand pays au monde par sa superficie terrestre, s’étendant sur 6 fuseaux horaires.',
       },
       {
-        icon: 'compass',
+        icon: 'boussole',
         titre: 'Sanctuaires',
         sous_titre: 'nationaux',
         description: '48 parcs nationaux dont Banff et Jasper préservant les glaciers, la taïga et les grands mammifères nord-américains.',
       },
       {
-        icon: 'calendar',
+        icon: 'calendrier',
         titre: 'Densité',
         sous_titre: 'sauvage',
         description: '4 hab/km² : une concentration urbaine au sud laissant 80 % du territoire sous forme de nature sauvage intacte.',
@@ -1297,7 +1297,7 @@ export function getCompleteCountryDetail(
     : ([
         contentCountry?.climat?.meilleure_periode_trek
           ? {
-              icon: 'calendar',
+              icon: 'calendrier',
               titre: 'Meilleure',
               sous_titre: 'saison',
               description: `Période optimale : ${contentCountry.climat.meilleure_periode_trek}. ${contentCountry.climat.climat_general ? `Climat : ${contentCountry.climat.climat_general}.` : ''}`,
@@ -1305,7 +1305,7 @@ export function getCompleteCountryDetail(
           : null,
         contentCountry?.transport?.aeroport_principal
           ? {
-              icon: 'plane',
+              icon: 'avion',
               titre: 'Accès',
               sous_titre: '& vols',
               description: `Aéroport principal : ${contentCountry.transport.aeroport_principal}${contentCountry.transport.code_iata ? ` (${contentCountry.transport.code_iata})` : ''}. ${contentCountry.transport.compagnies_depuis_france ? `Compagnies : ${contentCountry.transport.compagnies_depuis_france}.` : ''}`,
@@ -1313,7 +1313,7 @@ export function getCompleteCountryDetail(
           : null,
         contentCountry?.outdoor?.treks_phares
           ? {
-              icon: 'compass',
+              icon: 'boussole',
               titre: 'Treks',
               sous_titre: '& nature',
               description: `Sentiers phares : ${contentCountry.outdoor.treks_phares}.`,

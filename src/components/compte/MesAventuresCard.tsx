@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button } from '@/components/ui';
 import { Aventure } from '@/lib/mock/compte-marceline';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface MesAventuresCardProps {
   aventures: Aventure[];
@@ -47,7 +47,7 @@ export default function MesAventuresCard({ aventures }: MesAventuresCardProps) {
             <Button
               variant="secondary"
               size="sm"
-              icon={<Icon name="FunnelIcon" size={14} />}
+              icon={<LKDVIcon name="filtres" size={14} />}
               className="font-bold"
             >
               Filtrer

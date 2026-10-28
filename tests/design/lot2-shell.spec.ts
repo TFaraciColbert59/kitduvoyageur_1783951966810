@@ -134,7 +134,7 @@ describe('LOT 2 — PageHeader canonique', () => {
 
   it('le bouton retour est unique : 44×44, icône chevron, historique puis repli', () => {
     expect(backButton).toContain('--control-height-md');
-    expect(backButton).toContain('ChevronLeftIcon');
+    expect(backButton).toContain('name="retour"');
     expect(backButton).toContain('router.back()');
     expect(backButton).toContain('router.push(fallbackHref)');
   });

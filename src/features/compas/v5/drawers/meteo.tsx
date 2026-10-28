@@ -10,10 +10,10 @@ import type { V5DrawerDef } from './types';
 
 /** Icône d'un code météo WMO. */
 function iconOf(code: number): V5IconName {
-  if (code === 0 || code === 1) return 'sun';
-  if (code >= 71 && code <= 77) return 'snow';
-  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95) return 'rain';
-  return 'cloudsun';
+  if (code === 0 || code === 1) return 'soleil';
+  if (code >= 71 && code <= 77) return 'neige';
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95) return 'pluie';
+  return 'meteo';
 }
 
 /**
@@ -32,7 +32,7 @@ function MeteoBody() {
   if (!model.dates.start) {
     return (
       <Grp>
-        <Li icon="calendar" title={t('compas.v5.meteo.noDates')} onClick={() => openSpace('voyage', { tab: 2 })} right={<V5Icon name="right" size="s" />} />
+        <Li icon='calendrier' title={t('compas.v5.meteo.noDates')} onClick={() => openSpace('voyage', { tab: 2 })} right={<V5Icon name='suivant' size="s" />} />
       </Grp>
     );
   }
@@ -76,7 +76,7 @@ function MeteoBody() {
           <Cap>{t('compas.v5.meteo.alerts')}</Cap>
           <Grp>
             {alerts.map((s) => (
-              <Li key={s.id} icon="flag" title={s.official?.title ?? s.label} detail={`${s.source} · ${s.asOf}`} />
+              <Li key={s.id} icon='signalement' title={s.official?.title ?? s.label} detail={`${s.source} · ${s.asOf}`} />
             ))}
           </Grp>
         </>

@@ -3,7 +3,6 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, ExternalLink, HelpCircle, Package, ShoppingBag } from 'lucide-react';
 import {
   ORDER_STEPS,
   orderStageLabel,
@@ -11,6 +10,7 @@ import {
 } from '@/features/compte/server/compte';
 import { DrawerEmpty, DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { fetchJson, formatMoney, formatOrderDate } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export function OrdersPane({ filter = 0 }: { filter?: number }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export function OrdersPane({ filter = 0 }: { filter?: number }) {
           action={
             orders.length === 0 ? (
               <Link href="/boutique" className="lkdv-compte-btn primary">
-                <ShoppingBag size={15} aria-hidden="true" /> Découvrir la boutique
+                <LKDVIcon name="boutique" size={15} aria-hidden="true" /> Découvrir la boutique
               </Link>
             ) : undefined
           }
@@ -96,7 +96,7 @@ export function OrdersPane({ filter = 0 }: { filter?: number }) {
                   {order.items.map((item, index) => (
                     <li key={`${order.id}-${index}`}>
                       <span className="lkdv-compte-order-thumb" aria-hidden="true">
-                        <Package size={15} />
+                        <LKDVIcon name="inventaire" size={15} />
                       </span>
                       <span>{item.title}</span>
                       <small>×{item.qty}</small>
@@ -118,11 +118,11 @@ export function OrdersPane({ filter = 0 }: { filter?: number }) {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <ExternalLink size={14} aria-hidden="true" /> Suivre
+                      <LKDVIcon name="lien" size={14} aria-hidden="true" /> Suivre
                     </a>
                   ) : null}
                   <Link className="lkdv-compte-btn ghost" href={`/contact?commande=${encodeURIComponent(order.reference)}`}>
-                    <HelpCircle size={14} aria-hidden="true" /> Aide
+                    <LKDVIcon name="aide" size={14} aria-hidden="true" /> Aide
                   </Link>
                   <button
                     type="button"
@@ -130,7 +130,7 @@ export function OrdersPane({ filter = 0 }: { filter?: number }) {
                     onClick={() => setOpenId(expanded ? null : order.id)}
                     aria-expanded={expanded}
                   >
-                    <ChevronDown size={14} aria-hidden="true" /> Détails
+                    <LKDVIcon name="bas" size={14} aria-hidden="true" /> Détails
                   </button>
                 </div>
 

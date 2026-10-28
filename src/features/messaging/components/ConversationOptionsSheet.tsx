@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button, ListItem } from '@/components/ui';
@@ -8,6 +6,7 @@ import type { Conversation } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ConversationOptionsSheetProps {
   isOpen: boolean;
@@ -139,7 +138,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             disabled={loading}
             onClick={handleAccept}
             className="min-h-[52px] border border-[color:var(--lkv-secondary)]/40 bg-[color:var(--lkv-secondary)]/10"
-            leading={<Icon name="check" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
+            leading={<LKDVIcon name="valider" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
             title="Accepter la demande"
           />
           <ListItem
@@ -147,7 +146,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             disabled={loading}
             onClick={handleDecline}
             className="min-h-[52px]"
-            leading={<Icon name="x" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
+            leading={<LKDVIcon name="fermer" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
             title="Refuser la demande"
           />
           {onReport && (
@@ -158,7 +157,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
                 onClose();
               }}
               className="min-h-[52px] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger-bg)]"
-              leading={<Icon name="shield-alert" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
+              leading={<LKDVIcon name="danger" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
               title={<span className="text-[color:var(--lkv-danger-dark)]">Signaler ou bloquer</span>}
             />
           )}
@@ -208,15 +207,15 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             className="min-h-[52px]"
             leading={
               isMuted ? (
-                <Icon name="bell" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
+                <LKDVIcon name="notifications" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
               ) : (
-                <Icon name="bell-off" className="size-5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />
+                <LKDVIcon name="notifications_silence" className="size-5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />
               )
             }
             title={isMuted ? 'Réactiver les notifications' : 'Masquer les notifications'}
             trailing={
               isMuted ? (
-                <Icon name="check" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
+                <LKDVIcon name="valider" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
               ) : undefined
             }
           />
@@ -226,11 +225,11 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             disabled={loading}
             onClick={handleArchiveToggle}
             className="min-h-[52px]"
-            leading={<Icon name="archive" className="size-5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+            leading={<LKDVIcon name="historique" className="size-5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
             title={isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
             trailing={
               isArchived ? (
-                <Icon name="check" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
+                <LKDVIcon name="valider" className="size-5 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
               ) : undefined
             }
           />
@@ -243,7 +242,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
                 onClose();
               }}
               className="min-h-[52px] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger-bg)]"
-              leading={<Icon name="shield-alert" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
+              leading={<LKDVIcon name="danger" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
               title={
                 <span className="text-[color:var(--lkv-danger-dark)]">
                   Signaler ou bloquer {member?.full_name || ''}

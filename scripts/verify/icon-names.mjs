@@ -1,188 +1,94 @@
 #!/usr/bin/env node
 /**
- * ICON NAME INVARIANT
- * ===================
- * Verifies that statically-written icon names resolve against the canonical
- * icon registry (`src/components/ui/Icon/registry.ts`).
+ * INVARIANT ICÔNES — LKDV V2 est la seule base de pictogrammes
+ * ===========================================================
+ * Échoue (code 1) si :
+ *  - un fichier de `src/` importe une autre bibliothèque d'icônes (lucide, Heroicons, Phosphor,
+ *    react-icons, Tabler, Radix icons, Iconoir…) ou les anciens modules `ui/Icon`, `ui/AppIcon`, `ui/LkvIcon` ;
+ *  - du code référence les anciens packs (`/icons/sf/…`, PNG de `/icons/`) ;
+ *  - un nom écrit en dur (`<LKDVIcon name="…">`, `lkdvIcon('…')`) n'est pas une clé de la base ;
+ *  - la liste `LKDV_ICON_NAMES` ne correspond pas exactement aux SVG de `public/icons/lkdv/` ;
+ *  - un SVG de la base contient autre chose que le vert unique `#00542B` (dégradé, ombre, transparence, fond).
  *
- * - Semantic kebab-case names must exist in `ANIMATED_ICON_NAMES` or the PNG pack.
- * - PascalCase Heroicon-style names (`FooIcon`) are accepted as "unverified
- *   legacy" because they resolve through the Heroicons fallback at runtime.
- * - Unknown lowercase / kebab names fail.
- *
- * Usage: node scripts/verify/icon-names.mjs
+ * Usage : node scripts/verify/icon-names.mjs
  */
-
 import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
 const src = path.join(root, 'src');
-const registryPath = path.join(src, 'components', 'ui', 'Icon', 'registry.ts');
+const iconsDir = path.join(root, 'public', 'icons', 'lkdv');
+const GREEN = '#00542B';
 
-if (!fs.existsSync(registryPath)) {
-  console.error(`✗ Icon registry introuvable : ${path.relative(root, registryPath)}`);
+const failures = [];
+const fail = (msg) => failures.push(msg);
+
+// --- 1. la liste typée = les fichiers SVG ---------------------------------------------------------
+const component = fs.readFileSync(path.join(src, 'components/ui/LKDVIcon.tsx'), 'utf8');
+const listBody = component.match(/LKDV_ICON_NAMES = \[([\s\S]*?)\] as const/);
+if (!listBody) {
+  console.error('✗ LKDV_ICON_NAMES introuvable dans src/components/ui/LKDVIcon.tsx');
   process.exit(1);
 }
+const names = new Set([...listBody[1].matchAll(/'([a-z0-9_]+)'/g)].map((m) => m[1]));
+const files = new Set(
+  fs.existsSync(iconsDir) ? fs.readdirSync(iconsDir).filter((f) => f.endsWith('.svg')).map((f) => f.slice(0, -4)) : [],
+);
+for (const n of names) if (!files.has(n)) fail(`SVG manquant : public/icons/lkdv/${n}.svg`);
+for (const f of files) if (!names.has(f)) fail(`SVG hors liste : public/icons/lkdv/${f}.svg (absent de LKDV_ICON_NAMES)`);
 
-const registry = fs.readFileSync(registryPath, 'utf8');
-
-const pngKeys = new Set();
-for (const m of registry.matchAll(/^\s*([A-Za-z0-9_]+):\s*'[^']+\.png',/gm)) {
-  pngKeys.add(m[1]);
+// --- 2. chaque SVG : un seul vert, aucun artifice --------------------------------------------------
+for (const f of files) {
+  const svg = fs.readFileSync(path.join(iconsDir, `${f}.svg`), 'utf8');
+  const colors = new Set((svg.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []).map((c) => c.toUpperCase()));
+  if (colors.size !== 1 || !colors.has(GREEN)) fail(`${f}.svg : couleurs ${[...colors].join(', ') || 'aucune'} (attendu ${GREEN} seul)`);
+  if (/<image|<style|(?:linear|radial)Gradient|<filter|opacity|<mask|<clipPath/i.test(svg)) fail(`${f}.svg : dégradé, filtre, opacité ou masque interdit`);
+  if (!/viewBox="0 0 100 100"/.test(svg)) fail(`${f}.svg : viewBox 0 0 100 100 attendu`);
 }
 
-const animatedMatch = registry.match(/ANIMATED_ICON_NAMES\s*=\s*\[([\s\S]*?)\]\s*as const/);
-const animatedNames = new Set();
-if (animatedMatch) {
-  for (const m of animatedMatch[1].matchAll(/'([^']+)'/g)) {
-    animatedNames.add(m[1]);
-  }
-}
-
-const generatedPath = path.join(src, 'components', 'ui', 'Icon', 'registry.generated.ts');
-const svgNames = new Set();
-if (fs.existsSync(generatedPath)) {
-  const generated = fs.readFileSync(generatedPath, 'utf8');
-  for (const m of generated.matchAll(/'([^']+)'/g)) {
-    svgNames.add(m[1]);
-  }
-}
-
-// LKDV V2 is the first resolver at runtime; validate its real asset targets too.
-const lkdvRegistry = fs.readFileSync(path.join(src, 'components/ui/Icon/lkdv.registry.ts'), 'utf8');
-const lkdvNames = new Set(JSON.parse(lkdvRegistry.match(/new Set(?:<[^>]+>)?\((\[[^;]+\])\)/)[1]));
-const lkdvAliases = JSON.parse(lkdvRegistry.match(/const ALIASES[^=]*=\s*({[\s\S]*?});/)[1]);
-function resolvesLKDV(name) {
-  const token = name.replace(/(IconSolid|SolidIcon|Icon)$/, '')
-    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
-    .replace(/[_ ]/g, '-').toLowerCase();
-  const asset = lkdvNames.has(token.replace(/-/g, '_')) ? token.replace(/-/g, '_') : lkdvAliases[token];
-  return lkdvNames.has(asset) && fs.existsSync(path.join(root, 'public/icons/lkdv', `${asset}.svg`));
-}
-
-function walk(dir) {
-  const out = [];
+// --- 3. le code -------------------------------------------------------------------------------------
+function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      out.push(...walk(full));
-    } else if (/\.(tsx|ts)$/.test(entry.name)) {
-      out.push(full);
-    }
+    if (entry.isDirectory()) walk(full, out);
+    else if (/\.(tsx?|css)$/.test(entry.name)) out.push(full);
   }
   return out;
 }
 
-function resolves(name) {
-  if (resolvesLKDV(name)) return 'lkdv';
-  if (animatedNames.has(name)) return 'animated';
-  if (svgNames.has(name)) return 'svg';
-  if (pngKeys.has(name) || pngKeys.has(`${name}Icon`) || pngKeys.has(`${name}SolidIcon`)) return 'pack';
-  if (/^[A-Z][A-Za-z0-9]*(Icon|IconSolid|SolidIcon)$/.test(name)) return 'hero-legacy';
-  return null;
-}
+const FORBIDDEN_IMPORT =
+  /from\s+['"](?:lucide-react|lucide|@heroicons\/[^'"]*|@phosphor-icons\/[^'"]*|react-icons(?:\/[^'"]*)?|@tabler\/icons[^'"]*|@radix-ui\/react-icons|iconoir-react|@fortawesome\/[^'"]*|phosphor-react|feather-icons|react-feather)['"]/;
+const REMOVED_MODULE = /from\s+['"](?:@\/components\/ui\/(?:Icon|AppIcon|LkvIcon)(?:\/[^'"]*)?|\.\/(?:Icon|AppIcon|LkvIcon)|@\/components\/icons\/[^'"]*)['"]/;
+const OLD_PACK = /\/icons\/sf\/|\/icons\/[A-Za-z0-9 _%-]+\.png/;
+const STATIC_NAME = /<LKDVIcon\b[^>]*?\bname\s*=\s*(?:"([^"]+)"|'([^']+)')/g;
+const BOUND_NAME = /\blkdvIcon\(\s*'([^']+)'\s*\)/g;
 
-const usageRe = /<(?:Icon|AppIcon|LkvIcon)\b[^>]*?\bname\s*=\s*(?:"([^"]+)"|'([^']+)')/g;
-const canonicalImportRe =
-  /components\/ui\/(?:AppIcon|LkvIcon|Icon)\b|from\s+['"]\.\/(?:AppIcon|LkvIcon)['"]/;
-
-const failures = [];
-const legacy = new Set();
-let total = 0;
-
+let checked = 0;
 for (const file of walk(src)) {
-  const content = fs.readFileSync(file, 'utf8');
-  if (!canonicalImportRe.test(content)) continue;
-  for (const m of content.matchAll(usageRe)) {
-    const name = m[1] ?? m[2];
-    if (!name) continue;
-    total++;
-    const kind = resolves(name);
-    if (kind === 'hero-legacy') {
-      legacy.add(name);
-    } else if (!kind) {
-      const line = content.slice(0, m.index).split(/\r?\n/).length;
-      failures.push(`${path.relative(root, file)}:${line} → "${name}"`);
-    }
-  }
-}
-
-
-/**
- * Les expressions `name={...}` : le trou aveugle du verificateur.
- *
- * `usageRe` ne voyait que les LITTERAUX (`name="map-pin"`). Un nom fourni par
- * une expression — `name={a ? 'x' : 'y'}`, `name={v ?? 'defaut'}` — passait
- * donc sans JAMAIS etre regarde, quel que soit son contenu. C'est la meme
- * cecite que celle d'un `onClick={() => {}}` : la ligne est presente, le
- * verificateur ne peut pas la voir, et le build passe.
- *
- * On extrait donc les litteraux EN POSITION VALEUR. Les operandes de
- * comparaison (`x === 'success'`) ne sont PAS des noms d'icones : ils sont
- * retires avant extraction, sinon chaque ternaire de notificationControllers
- * fournirait un faux positif.
- */
-const usageExprRe = /<(?:Icon|AppIcon|LkvIcon)\b[^>]*?\bname\s*=\s*\{([^}]*)\}/g;
-const COMPARISON = /(['"])(?:(?!\1).)*\1\s*(?:===|!==|==|!=)|(?:===|!==|==|!=)\s*(['"])(?:(?!\2).)*\2/g;
-
-for (const file of walk(src)) {
-  const content = fs.readFileSync(file, 'utf8');
-  if (!canonicalImportRe.test(content)) continue;
-  for (const m of content.matchAll(usageExprRe)) {
-    const line = content.slice(0, m.index).split(/\r?\n/).length;
-    const valueSide = m[1].replace(COMPARISON, ' ');
-    for (const lit of valueSide.matchAll(/'([^']+)'|"([^"]+)"/g)) {
-      const name = lit[1] ?? lit[2];
-      if (!name) continue;
-      total++;
-      const kind = resolves(name);
-      if (kind === 'hero-legacy') {
-        legacy.add(name);
-      } else if (!kind) {
-        failures.push(`${path.relative(root, file)}:${line} → "${name}" (dans name={...})`);
+  const rel = path.relative(root, file);
+  const text = fs.readFileSync(file, 'utf8');
+  const isTest = /__tests__|\.test\.|\.spec\./.test(rel);
+  if (/\.tsx?$/.test(file)) {
+    if (!isTest && FORBIDDEN_IMPORT.test(text)) fail(`${rel} : import d'une autre bibliothèque d'icônes`);
+    if (REMOVED_MODULE.test(text) && !/vi\.mock/.test(text)) fail(`${rel} : import d'un ancien module d'icônes`);
+    if (!isTest && OLD_PACK.test(text)) fail(`${rel} : référence à un ancien pack d'icônes (/icons/sf, PNG)`);
+    for (const re of [STATIC_NAME, BOUND_NAME]) {
+      for (const m of text.matchAll(re)) {
+        const name = m[1] ?? m[2];
+        checked++;
+        if (!names.has(name)) {
+          const line = text.slice(0, m.index).split(/\r?\n/).length;
+          fail(`${rel}:${line} → "${name}" n'est pas une icône LKDV V2`);
+        }
       }
     }
+  } else if (OLD_PACK.test(text.replace(/\/\*[\s\S]*?\*\//g, ''))) {
+    fail(`${rel} : référence à un ancien pack d'icônes (/icons/sf, PNG)`);
   }
 }
-/**
- * Les structures de données `icon: 'nom'` — deuxième angle mort.
- * `POST_TYPES` du composeur portait `icon: 'camera'`, un glyphe inexistant :
- * six avertissements runtime (« No glyph resolved ») sans qu'aucun
- * vérificateur statique ne bronche. On contrôle désormais les littéraux en
- * position valeur derrière une clé `icon:`. Les valeurs non ASCII (émojis)
- * relèvent d'un autre registre et sont ignorées.
- */
-const dataIconRe = /\bicon\s*:\s*'([^']+)'|\bicon\s*:\s*"([^"]+)"/g;
 
-for (const file of walk(src)) {
-  const content = fs.readFileSync(file, 'utf8');
-  if (!canonicalImportRe.test(content)) continue;
-  for (const m of content.matchAll(dataIconRe)) {
-    const name = m[1] ?? m[2];
-    if (!name) continue;
-    if (/[^\x00-\x7F]/.test(name)) continue;
-    total++;
-    const kind = resolves(name);
-    if (kind === 'hero-legacy') {
-      legacy.add(name);
-    } else if (!kind) {
-      const line = content.slice(0, m.index).split(/\r?\n/).length;
-      failures.push(`${path.relative(root, file)}:${line} → "${name}" (dans icon:)`);
-    }
-  }
-}
-console.log(`=== VÉRIFICATION DES NOMS D'ICÔNES (${total} usages statiques) ===`);
-console.log(`  registry: ${pngKeys.size} glyphes pack, ${svgNames.size} SF-style, ${animatedNames.size} animés`);
-if (legacy.size > 0) {
-  console.log(`  ${legacy.size} nom(s) Heroicon non vérifiables statiquement (tolérés)`);
-}
-
-if (failures.length > 0) {
-  console.error(`\n✗ ${failures.length} nom(s) d'icône non résolu(s) :`);
-  failures.forEach((f) => console.error(`  - ${f}`));
+if (failures.length) {
+  console.error(`✗ Invariant icônes : ${failures.length} écart(s)\n` + failures.map((f) => `  - ${f}`).join('\n'));
   process.exit(1);
 }
-
-console.log('\n✓ Tous les noms d\'icônes statiques sont résolus.');
+console.log(`✓ Icônes : ${names.size} SVG LKDV V2 (${GREEN}), ${checked} noms écrits en dur vérifiés, aucune autre bibliothèque.`);

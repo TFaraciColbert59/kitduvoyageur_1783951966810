@@ -13,7 +13,6 @@ import {
   type MapMouseEvent,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import Icon from '@/components/ui/Icon';
 import { Badge, Button, Card, IconButton, Spinner, Tabs } from '@/components/ui';
 import type { MapTrail } from '@/components/explorer/types';
 import { getDifficultyColor, isValidLatLng, sanitizeGeoJSON } from '@/components/explorer/types';
@@ -56,6 +55,7 @@ import {
   buildMemberPositionsGeoJSON,
   type MemberPositionInput,
 } from '@/features/tribu/lib/memberPositions';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * CHANTIER ATLAS — moteur cartographique unique (MapLibre GL, projection globe).
@@ -1566,7 +1566,7 @@ export default function UnifiedExplorerMap({
             aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
             aria-pressed={viewMode === 'globe'}
           >
-            <Icon name="compass" size={14} />
+            <LKDVIcon name="boussole" size={14} />
             <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">
               {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
             </span>
@@ -1610,7 +1610,7 @@ export default function UnifiedExplorerMap({
               title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
               aria-pressed={viewMode === 'globe'}
             >
-              <Icon name="compass" size={19} />
+              <LKDVIcon name="boussole" size={19} />
             </IconButton>
             <span className="h-6 w-px self-center bg-white/30" aria-hidden="true" />
           </>
@@ -1624,7 +1624,7 @@ export default function UnifiedExplorerMap({
           aria-label="Zoom avant"
           title="Zoom avant"
         >
-          <Icon name="plus" size={17} />
+          <LKDVIcon name="plus" size={17} />
         </IconButton>
         <IconButton
           variant="glass"
@@ -1634,7 +1634,7 @@ export default function UnifiedExplorerMap({
           aria-label="Zoom arrière"
           title="Zoom arrière"
         >
-          <Icon name="minus" size={17} />
+          <LKDVIcon name="annuler" size={17} />
         </IconButton>
 
         {!compact && (
@@ -1647,7 +1647,7 @@ export default function UnifiedExplorerMap({
               aria-label="Me recentrer"
               title="Me recentrer"
             >
-              <Icon name="navigation" size={16} />
+              <LKDVIcon name="gps" size={16} />
             </IconButton>
             <Button
               variant="secondary"
@@ -1657,7 +1657,7 @@ export default function UnifiedExplorerMap({
               title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
               aria-pressed={viewMode === 'globe'}
             >
-              <Icon name="compass" size={14} />
+              <LKDVIcon name="boussole" size={14} />
               <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">
                 {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
               </span>
@@ -1693,7 +1693,7 @@ export default function UnifiedExplorerMap({
           options={TILE_MODES.map((mode) => ({
             id: mode,
             label: mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite',
-            icon: <Icon name={mode === 'topo' ? 'mountain' : mode === 'osm' ? 'map' : 'layers'} size={15} />,
+            icon: <LKDVIcon name={mode === 'topo' ? 'montagne' : mode === 'osm' ? 'carte' : 'calques'} size={15} />,
           }))}
           value={tileMode}
           onChange={(id) => setTileMode(id as AtlasTileMode)}

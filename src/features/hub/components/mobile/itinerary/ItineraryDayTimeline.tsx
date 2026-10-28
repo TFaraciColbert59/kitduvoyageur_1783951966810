@@ -1,16 +1,4 @@
 'use client';
-
-import {
-  Bike,
-  Bus,
-  Car,
-  CheckCircle2,
-  Footprints,
-  Mountain,
-  Plane,
-  Ship,
-  Train,
-} from 'lucide-react';
 import { Button } from '@/components/ui';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 import { formatDurationShort, formatStepTime, transportLabel } from '../../../mobile/itineraryEngine';
@@ -22,6 +10,7 @@ import { MomentRow } from '@/features/trips/components/MomentRow';
 import { LlmSuggestionBadge } from '@/features/trips/components/LlmSuggestionBadge';
 import { LiveArrivalReveal } from '../../live/LiveArrivalReveal';
 import { useLiveArrivalReveal } from '../../live/useLiveArrivalReveal';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ItineraryDayTimelineProps {
   steps: PlannerStep[];
@@ -41,21 +30,21 @@ function TransportIcon({ mode }: { mode: string | null | undefined }) {
   switch (mode) {
     case 'plane':
     case 'flight':
-      return <Plane size={13} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="avion" size={13} className={className} aria-hidden="true" />;
     case 'train':
-      return <Train size={13} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="train" size={13} className={className} aria-hidden="true" />;
     case 'car':
-      return <Car size={13} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="voiture" size={13} className={className} aria-hidden="true" />;
     case 'bus':
-      return <Bus size={13} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="bus" size={13} className={className} aria-hidden="true" />;
     case 'boat':
-      return <Ship size={13} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="bateau" size={13} className={className} aria-hidden="true" />;
     case 'bike':
-      return <Bike size={13} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="velo" size={13} className={className} aria-hidden="true" />;
     case 'hiking':
-      return <Mountain size={13} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="montagne" size={13} className={className} aria-hidden="true" />;
     default:
-      return <Footprints size={13} className={className} aria-hidden="true" />;
+      return <LKDVIcon name="randonnee" size={13} className={className} aria-hidden="true" />;
   }
 }
 
@@ -159,7 +148,7 @@ export function ItineraryDayTimeline({
                         {step.elevation_gain_m != null && <span>+{step.elevation_gain_m} m</span>}
                         {step.accommodation_name && (
                           <span className="inline-flex min-w-0 items-center gap-1 truncate">
-                            <CheckCircle2 size={11} aria-hidden="true" />
+                            <LKDVIcon name="valider" size={11} aria-hidden="true" />
                             {step.accommodation_name}
                           </span>
                         )}

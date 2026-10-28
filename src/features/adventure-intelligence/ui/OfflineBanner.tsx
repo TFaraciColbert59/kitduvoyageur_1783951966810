@@ -1,10 +1,5 @@
 'use client';
-
-/**
- * A7 — Bandeau hors-ligne discret : `role="status"`, jamais bloquant.
- * Ne rend rien en ligne (exactement un indicateur réseau à l'écran).
- */
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface OfflineBannerProps {
   offline: boolean;
@@ -28,7 +23,7 @@ export function OfflineBanner({ offline, pendingCount = 0, className = '' }: Off
       aria-live="polite"
       className={`inline-flex max-w-full items-center gap-2 rounded-full bg-[var(--lkv-warning-bg)] px-3 py-1.5 text-[12px] font-medium text-[var(--lkv-warning-dark)] ${className}`}
     >
-      <Icon name="wifi-off" size={13} aria-hidden="true" />
+      <LKDVIcon name="hors_ligne" size={13} aria-hidden="true" />
       <span className="truncate">{label}</span>
     </p>
   );

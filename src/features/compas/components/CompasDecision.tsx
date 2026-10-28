@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Icon from '@/components/ui/Icon';
 import type { CompasDecision } from '../engine/compasModel';
 import type { DecisionApply } from '../engine/decisionApply';
 import { compasSetCarriersAction } from '../server/compasActions';
 import { useTranslation } from '@/lib/i18n/context';
 import { countText, type CompasCtl } from './compasTypes';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Îlot de la prochaine décision (maquette finale), posé au-dessus de la barre d'onglets.
@@ -93,7 +93,7 @@ export function DecisionCapsule({
       }}
     >
       <span className="cp-decision__i" data-tone={blocked ? 'bad' : undefined}>
-        <Icon name="compass" size={17} />
+        <LKDVIcon name="boussole" size={17} />
       </span>
       <span className="cp-decision__t">
         <b>{decision.label}</b>

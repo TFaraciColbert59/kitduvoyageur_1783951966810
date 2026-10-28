@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Badge, Button, Card } from '@/components/ui';
 

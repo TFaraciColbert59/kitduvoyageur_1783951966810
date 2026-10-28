@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import type { CarnetComment } from '@/features/carnet/detail/useCarnetComments';
 import { useSheetEscape } from './useSheetEscape';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CarnetCommentsSheetProps {
   open: boolean;
@@ -71,7 +71,7 @@ export function CarnetCommentsSheet({
             disabled={busy || !draft.trim()}
             aria-label="Envoyer le commentaire"
           >
-            <Icon name="send" size={16} aria-hidden="true" />
+            <LKDVIcon name="partager" size={16} aria-hidden="true" />
           </button>
         </div>
       }
@@ -113,7 +113,7 @@ export function CarnetCommentsSheet({
                 onClick={() => void onRemove(comment.id)}
                 aria-label="Supprimer mon commentaire"
               >
-                <Icon name="trash2" size={15} aria-hidden="true" />
+                <LKDVIcon name="supprimer" size={15} aria-hidden="true" />
               </button>
             ) : null}
           </div>

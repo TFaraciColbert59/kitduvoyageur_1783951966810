@@ -1,15 +1,15 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
 import { Button } from '@/components/ui';
 import { NO_VALUE, type TracePoint } from '../engine/freeSession';
 import { FreeTraceMap } from './FreeTraceMap';
+import { LKDVIcon, type LKDVIconName } from '@/components/ui/LKDVIcon';
 
 export interface FreeLiveScreenProps {
   /** Activite retenue, ou « Suivi libre » si l'utilisateur n'en a pas choisi. */
   activityLabel: string;
-  activityIcon: string;
+  activityIcon: LKDVIconName;
   /** Horloge d'ecoulement, deja formatee. */
   clock: string;
   distance: string;
@@ -54,7 +54,7 @@ export function FreeLiveScreen({
       <div className="free-screen">
         <div className="prep-nav free-top">
           <span className="free-top__icon">
-            <Icon name={activityIcon} size={18} aria-hidden="true" />
+            <LKDVIcon name={activityIcon} size={18} aria-hidden="true" />
             <span className="free-top__title">{activityLabel}</span>
           </span>
         </div>
@@ -70,7 +70,7 @@ export function FreeLiveScreen({
               suivi continue. */}
           {paused ? (
             <p className="free-paused" aria-live="polite">
-              <Icon name="pause" size={14} aria-hidden="true" />
+              <LKDVIcon name="pause" size={14} aria-hidden="true" />
               En pause — ton chrono et ta trace sont figés
             </p>
           ) : null}
@@ -107,7 +107,7 @@ export function FreeLiveScreen({
 
         <div className="prep-footer free-actions">
           <Button variant="secondary" size="lg" onClick={onFinish}>
-            <Icon name="square" size={18} aria-hidden="true" />
+            <LKDVIcon name="valider" size={18} aria-hidden="true" />
             Terminer
           </Button>
           <Button
@@ -117,7 +117,7 @@ export function FreeLiveScreen({
             className="prep-footer__primary"
             onClick={paused ? onResume : onPause}
           >
-            <Icon name={paused ? 'play' : 'pause'} size={18} aria-hidden="true" />
+            <LKDVIcon name={paused ? 'lecture' : 'pause'} size={18} aria-hidden="true" />
             {paused ? 'Reprendre' : 'Pause'}
           </Button>
         </div>

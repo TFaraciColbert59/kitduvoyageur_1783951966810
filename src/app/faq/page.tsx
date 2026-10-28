@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import AppShell from '@/components/shell/AppShell';
 import { Button, Card, Chip } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 interface FAQItem {
   q: string;
@@ -15,7 +16,7 @@ interface FAQItem {
 
 interface FAQCategory {
   title: string;
-  icon: string;
+  icon: LKDVIconName;
   items: FAQItem[];
 }
 
@@ -24,7 +25,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr'
 const FAQ_DATA: FAQCategory[] = [
   {
     title: 'Commandes & Livraison',
-    icon: 'ShoppingBagIcon',
+    icon: 'boutique',
     items: [
       { q: 'Quels sont les délais de livraison ?', a: 'Livraison standard (Colissimo) : 3 à 5 jours ouvrés. Livraison express (Chronopost) : 1 à 2 jours ouvrés. Point relais (Mondial Relay) : 2 à 4 jours ouvrés. La livraison est offerte dès 99 € d\'achat.' },
       { q: 'Comment suivre ma commande ?', a: 'Dès l\'expédition de votre commande, vous recevez un email avec un numéro de suivi. Vous pouvez également consulter l\'état de votre commande depuis votre espace compte.' },
@@ -33,7 +34,7 @@ const FAQ_DATA: FAQCategory[] = [
   },
   {
     title: 'Retours & Remboursements',
-    icon: 'ArrowPathIcon',
+    icon: 'actualiser',
     items: [
       { q: 'Quel est le délai de rétractation ?', a: 'Vous disposez de 14 jours calendaires à compter de la réception de votre commande pour exercer votre droit de rétractation, sans justification. Envoyez votre demande à retour@lekitduvoyageur.fr.' },
       { q: 'Comment retourner un produit ?', a: 'Contactez notre équipe à retour@lekitduvoyageur.fr avec votre numéro de commande. Nous vous enverrons les instructions de retour.' },
@@ -42,7 +43,7 @@ const FAQ_DATA: FAQCategory[] = [
   },
   {
     title: 'Configurateur IA',
-    icon: 'SparklesIcon',
+    icon: 'ia',
     items: [
       { q: 'Comment fonctionne le configurateur IA ?', a: 'Notre configurateur IA analyse votre destination, la saison, votre profil et vos contraintes pour générer une liste d\'équipement personnalisée.' },
       { q: 'Faut-il un compte pour utiliser le configurateur ?', a: 'Vous pouvez utiliser le configurateur sans compte. Cependant, créer un compte vous permet de sauvegarder vos kits.' },
@@ -51,7 +52,7 @@ const FAQ_DATA: FAQCategory[] = [
   },
   {
     title: 'Compte & Fidélité',
-    icon: 'UserCircleIcon',
+    icon: 'profil',
     items: [
       { q: 'Comment créer un compte ?', a: 'Cliquez sur "Connexion" dans le menu, puis sur "Créer un compte". Renseignez votre email et un mot de passe.' },
       { q: 'Comment fonctionne le programme de fidélité ?', a: 'Vous gagnez des points à chaque achat (1 € = 10 points), en publiant des avis, en partageant des guides et en parrainant des amis.' },
@@ -60,7 +61,7 @@ const FAQ_DATA: FAQCategory[] = [
   },
   {
     title: 'Produits & Garanties',
-    icon: 'ShieldCheckIcon',
+    icon: 'securite',
     items: [
       { q: 'Les produits sont-ils authentiques ?', a: 'Oui, tous les produits vendus sur Le Kit du Voyageur sont authentiques et proviennent directement des marques ou de distributeurs officiels agréés.' },
       { q: 'Quelle est la garantie sur les produits ?', a: 'Tous les produits bénéficient de la garantie légale de conformité (2 ans) et de la garantie contre les vices cachés.' },
@@ -82,7 +83,7 @@ function FAQAccordion({ items }: { items: FAQItem[] }) {
             className="flex min-h-[var(--lkv-touch-min)] w-full items-center justify-between gap-[var(--space-3)] px-[var(--space-4)] py-[10px] text-left text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           >
             <span className="text-[length:var(--lkv-text-body-sm)] font-medium">{item.q}</span>
-            <Icon name="ChevronDownIcon" size={16} variant="outline" className={`shrink-0 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`} />
+            <LKDVIcon name="bas" size={16} className={`shrink-0 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`} />
           </button>
           {open === i && (
             <div className="border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-5)] pb-[var(--space-4)] pt-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">
@@ -101,7 +102,7 @@ function FAQContent({ mobile = false }: { mobile?: boolean }) {
   const categories = (
     <div className={`flex flex-wrap gap-[var(--space-2)] ${mobile ? 'mb-[var(--space-5)]' : 'shrink-0'}`}>
       {FAQ_DATA.map((cat, i) => (
-        <Chip key={i} selected={activeCategory === i} onClick={() => setActiveCategory(i)} icon={<Icon name={cat.icon} size={14} variant="outline" />}>
+        <Chip key={i} selected={activeCategory === i} onClick={() => setActiveCategory(i)} icon={<LKDVIcon name={cat.icon} size={14} />}>
           {cat.title}
         </Chip>
       ))}
@@ -111,14 +112,14 @@ function FAQContent({ mobile = false }: { mobile?: boolean }) {
   const helpCard = (
     <Card variant="standard" className="flex flex-col items-center gap-[var(--space-4)] p-[var(--space-5)] text-center sm:flex-row sm:text-left">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)]">
-        <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-[color:var(--lkv-secondary-ink)]" variant="outline" />
+        <LKDVIcon name="messages" size={22} className="text-[color:var(--lkv-secondary-ink)]" />
       </div>
       <div className="flex-1">
         <p className="font-semibold text-[color:var(--lkv-text-primary)]">Vous n&apos;avez pas trouvé votre réponse ?</p>
         <p className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">Notre équipe répond sous 48 heures ouvrées.</p>
       </div>
       <Link href="/contact">
-        <Button variant="secondary" icon={<Icon name="EnvelopeIcon" size={14} variant="outline" />}>
+        <Button variant="secondary" icon={<LKDVIcon name="email" size={14} />}>
           Nous contacter
         </Button>
       </Link>

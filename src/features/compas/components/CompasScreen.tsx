@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import type { Locale } from '@/lib/i18n/locale';
 import type { TranslationKey } from '@/lib/i18n/translate';
 import {
@@ -35,6 +33,7 @@ type StepFlow
 import { InstallApp } from './InstallApp';
 import { TrialNote } from './TrialNote';
 import { DEFAULT_UNDO_S,UNDO_CHOICES,useCompasController } from './useCompasController';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /** Nom de l'étape : bouton ≡ (« Détails : … ») et carte de l'étape. */
 const STEP_TITLES: Record<CompasStepId, { details: TranslationKey; card: TranslationKey }> = {
@@ -244,7 +243,7 @@ export function CompasScreen({
                 aria-current={step === s.id ? 'step' : undefined}
                 onClick={() => selectStep(s.id)}
               >
-                <Icon name={s.icon} size={20} aria-hidden="true" />
+                <LKDVIcon name={s.icon} size={20} aria-hidden="true" />
                 <span className="cp-step__l">{t(STEP_LABEL_KEY[s.id])}</span>
                 {alerts[s.id] && (
                   <>
@@ -273,7 +272,7 @@ export function CompasScreen({
             aria-expanded={popover}
             onClick={() => setPopover((v) => !v)}
           >
-            <Icon name="sun" size={18} />
+            <LKDVIcon name="soleil" size={18} />
           </button>
         </div>
 
@@ -296,7 +295,7 @@ export function CompasScreen({
             <b>{model.title}</b>
             <span>{miniLine}</span>
           </span>
-          <Icon name="chevron-down" size={16} />
+          <LKDVIcon name="bas" size={16} />
         </button>
       </div>
 
@@ -496,18 +495,7 @@ export function CompasScreen({
 /** Trois traits (≡) : aucun glyphe du registre ne le dessine. */
 function LinesGlyph() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <path d="M4 7h16M4 12h16M4 17h16" />
-    </svg>
+    <LKDVIcon name="menu" size={18} aria-hidden="true" />
   );
 }
 

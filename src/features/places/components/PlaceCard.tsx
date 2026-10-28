@@ -1,11 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
 import { Badge, Button, Card } from '@/components/ui';
 import type { PlaceWithDistance } from '../types/place.types';
 import { getCategoryIcon, getCategoryLabel } from '../lib/placeCategory';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export { getCategoryIcon, getCategoryLabel } from '../lib/placeCategory';
 
@@ -47,7 +46,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
             </h3>
 
             <div className="mb-[var(--space-3)] flex items-center gap-1 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
-              <Icon name="map-pin" className="h-3.5 w-3.5 shrink-0 text-[color:var(--lkv-text-primary)]" />
+              <LKDVIcon name="point_interet" className="h-3.5 w-3.5 shrink-0 text-[color:var(--lkv-text-primary)]" />
               <span className="truncate">
                 {place.city ? `${place.city}, ` : ''}
                 {place.region || place.country_code}
@@ -65,7 +64,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
             {place.is_blurred && (
               <div className="mb-[var(--space-3)]">
                 <Badge tone="warn" className="w-full gap-1.5 py-[var(--space-2)]">
-                  <Icon name="shield-alert" className="h-3.5 w-3.5 shrink-0" />
+                  <LKDVIcon name="danger" className="h-3.5 w-3.5 shrink-0" />
                   <span>Zone fragile : coordonnées floutées à ~500m</span>
                 </Badge>
               </div>
@@ -77,7 +76,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
             {/* Note bayésienne */}
             <div className="flex items-center gap-1.5">
               <div className="flex items-center gap-1 text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-warning-dark)]">
-                <Icon name="star" className="h-4 w-4" />
+                <LKDVIcon name="points" className="h-4 w-4" />
                 <span>
                   {place.bayesian_rating > 0 ? place.bayesian_rating.toFixed(1) : 'Nouveau'}
                 </span>
@@ -89,7 +88,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
 
             {place.is_verified && (
               <Badge tone="sage" className="gap-1">
-                <Icon name="check-circle2" className="h-3 w-3 text-[color:var(--lkv-text-primary)]" />
+                <LKDVIcon name="valider" className="h-3 w-3 text-[color:var(--lkv-text-primary)]" />
                 Vérifié
               </Badge>
             )}
@@ -110,7 +109,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
               onAddToTrip(place);
             }}
           >
-            <Icon name="plus" className="h-4 w-4 text-[color:var(--lkv-text-primary)]" />
+            <LKDVIcon name="plus" className="h-4 w-4 text-[color:var(--lkv-text-primary)]" />
             Ajouter à mon voyage
           </Button>
         </div>

@@ -1,11 +1,5 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
-import { NavigationIcon as Navigation } from '@/components/icons/navigation';
-import { ClockIcon as Clock } from '@/components/icons/clock';
-import { ChevronRightIcon as ChevronRight } from '@/components/icons/chevron-right';
 import { Badge, Card } from '@/components/ui';
 import type { MapTrail } from './types';
 import {
@@ -16,6 +10,7 @@ import {
   formatDuration,
   estimateHikingDurationHours,
 } from './types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Props {
   trail: MapTrail;
@@ -65,7 +60,7 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
             {trail.name}
           </h3>
           <p className="mt-0.5 flex items-center gap-1 truncate text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)]">
-            <Icon name="map-pin" size={9.5} className="shrink-0 text-[color:var(--lkv-text-primary)]/80" />
+            <LKDVIcon name="point_interet" size={9.5} className="shrink-0 text-[color:var(--lkv-text-primary)]/80" />
             <span>{trail.terrain_type || trail.network || 'Massif Alpin'}</span>
           </p>
         </div>
@@ -73,19 +68,19 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
         <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-1">
           <div className="flex items-center gap-2 font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">
             <span className="flex items-center gap-0.5 font-semibold text-[color:var(--lkv-text-primary)]">
-              <Navigation size={9} />
+              <LKDVIcon name="gps" size={9} />
               {dist}
             </span>
             <span aria-hidden="true" className="opacity-40">·</span>
             <span className="flex items-center gap-0.5 font-medium text-[color:var(--lkv-text-muted)]">
-              <Clock size={9} />
+              <LKDVIcon name="duree" size={9} />
               {dur}
             </span>
             {trail.elevation_gain !== null && trail.elevation_gain !== undefined && (
               <>
                 <span aria-hidden="true" className="opacity-40">·</span>
                 <span className="flex items-center gap-0.5 font-bold text-[color:var(--lkv-text-primary)]">
-                  <TrendingUp size={9} />+{Math.round(trail.elevation_gain)}m
+                  <LKDVIcon name="denivele" size={9} />+{Math.round(trail.elevation_gain)}m
                 </span>
               </>
             )}
@@ -93,12 +88,12 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
 
           {score !== null ? (
             <div className="flex items-center gap-0.5 font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
-              <Icon name="star" size={10} className="text-[color:var(--lkv-warning)]" />
+              <LKDVIcon name="points" size={10} className="text-[color:var(--lkv-warning)]" />
               <span>{score}</span>
             </div>
           ) : (
             <div className="flex items-center gap-0.5 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] transition-transform group-hover:translate-x-0.5">
-              <ChevronRight size={11} />
+              <LKDVIcon name="suivant" size={11} />
             </div>
           )}
         </div>

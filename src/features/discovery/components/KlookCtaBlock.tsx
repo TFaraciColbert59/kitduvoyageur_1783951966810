@@ -1,8 +1,8 @@
 import React from 'react';
-import Icon from '@/components/ui/Icon';
 import { Badge, Card } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import type { KlookBlock } from '../providers/klook/klookTypes';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface KlookCtaBlockProps {
   block?: KlookBlock | null;
@@ -50,7 +50,7 @@ export function KlookCtaBlock({ block, className }: KlookCtaBlockProps) {
         className="flex min-h-[44px] w-full shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-5 text-[length:var(--lkv-text-caption-1)] font-bold text-[color:var(--lkv-text-primary)] no-underline shadow-sm transition-transform active:scale-[var(--motion-press-scale)] hover:brightness-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] sm:w-auto"
       >
         <span>{block.ctaLabel}</span>
-        <Icon name="external-link" className="h-3.5 w-3.5 opacity-70" />
+        <LKDVIcon name="lien" className="h-3.5 w-3.5 opacity-70" />
       </a>
     </Card>
   );

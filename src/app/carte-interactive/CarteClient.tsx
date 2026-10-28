@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import { Spinner } from '@/components/ui';
 import { MapPageLayout } from '@/design';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const InteractiveMap = dynamic(() => import('@/components/map/InteractiveMap'), {
   ssr: false,
@@ -48,10 +49,7 @@ export default function CarteClient() {
               className="absolute inset-0 z-[2] flex items-end justify-center pb-[calc(var(--map-control-bottom,88px)+64px)] outline-none"
             >
               <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-5 py-3 text-[13px] font-bold text-[#17402C] shadow-lg backdrop-blur-md">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="m9 18-6 3V6l6-3 6 3 6-3v15l-6 3-6-3Z" />
-                  <path d="M9 3v15M15 6v15" />
-                </svg>
+                <LKDVIcon name="carte" size={17} aria-hidden="true" />
                 Explorer la carte
               </span>
             </button>

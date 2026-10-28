@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { useMemo, useState, useTransition, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -8,7 +6,6 @@ import Link from 'next/link';
 import { Badge, Button, Card, EmptyState, IconButton, Spinner } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
 import { SearchField } from '@/components/ui';
-import { CheckCircle2, Circle, PackagePlus, Pencil, Plus, X } from 'lucide-react';
 
 const FIELD_CLASS =
   'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
@@ -32,6 +29,8 @@ import {
   togglePackedAction,
   updateTripItemDetailsAction,
 } from '@/app/voyages/kit-actions';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { EmptyCircle } from '@/components/ui/EmptyCircle';
 
 export interface TripItemImageRef {
   itemId: string;
@@ -408,7 +407,7 @@ export function TripKitView({
       {analysis.climateWarnings.length > 0 && (
         <Card tone="warn" className="space-y-[var(--space-2)]">
           <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-warning-dark)] sm:text-[length:var(--lkv-text-body-sm)]">
-            <Icon name="alert-triangle" size={16} className="shrink-0 text-[color:var(--lkv-warning-dark)]" />
+            <LKDVIcon name="alerte" size={16} className="shrink-0 text-[color:var(--lkv-warning-dark)]" />
             Conditions de terrain identifiées pour votre expédition
           </div>
           <ul className="list-inside list-disc space-y-0.5 pl-1 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
@@ -434,7 +433,7 @@ export function TripKitView({
               aria-label="Importer depuis mon matériel"
               title="Importer depuis mon matériel"
             >
-              <Icon name="package" size={16} />
+              <LKDVIcon name="inventaire" size={16} />
             </IconButton>
             <IconButton
               type="button"
@@ -443,7 +442,7 @@ export function TripKitView({
               aria-label="Ajouter un objet"
               title="Ajouter un objet"
             >
-              <Icon name="plus" size={16} />
+              <LKDVIcon name="plus" size={16} />
             </IconButton>
           </div>
         </div>
@@ -515,7 +514,7 @@ export function TripKitView({
         {/* Mon sac */}
         {filteredItems.length === 0 ? (
           <EmptyState
-            icon={<Icon name="package" size={32} className="text-[color:var(--lkv-text-muted)]" />}
+            icon={<LKDVIcon name="inventaire" size={32} className="text-[color:var(--lkv-text-muted)]" />}
             title="Votre sac est vide"
             description="Ajoutez du matériel depuis les idées ci-dessus ou créez votre propre objet."
             actionLabel="+ Ajouter un équipement"
@@ -647,8 +646,8 @@ export function TripKitView({
       >
         <div className="pb-2">
           <div className="mb-1 flex items-center gap-[var(--space-2)]">
-            <Icon
-              name="package"
+            <LKDVIcon
+              name="inventaire"
               size={20}
               className="shrink-0 text-[color:var(--glass-label)]"
               aria-hidden="true"
@@ -663,7 +662,7 @@ export function TripKitView({
             variant="compact"
             className="mt-[var(--space-3)] flex shrink-0 items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]"
           >
-            <Icon name="info" size={16} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+            <LKDVIcon name="informations" size={16} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
             <span>
               Votre inventaire personnel reste intact — votre matériel est simplement référencé pour
               cette aventure sans décompte de stock.
@@ -1053,9 +1052,9 @@ function TripKitItemRow({
             className="shrink-0"
           >
             {item.is_packed ? (
-              <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+              <LKDVIcon name="valider" className="h-5 w-5" aria-hidden="true" />
             ) : (
-              <Circle className="h-5 w-5" aria-hidden="true" />
+              <EmptyCircle className="h-5 w-5" />
             )}
           </IconButton>
         ) : (
@@ -1105,7 +1104,7 @@ function TripKitItemRow({
             title="Modifier l’équipement"
             aria-label="Modifier l’équipement"
           >
-            <Pencil className="h-4 w-4" aria-hidden="true" />
+            <LKDVIcon name="modifier" className="h-4 w-4" aria-hidden="true" />
           </IconButton>
         )}
         <IconButton
@@ -1114,7 +1113,7 @@ function TripKitItemRow({
           title="Retirer du sac"
           aria-label="Retirer du sac"
         >
-          <X className="h-4 w-4" aria-hidden="true" />
+          <LKDVIcon name="fermer" className="h-4 w-4" aria-hidden="true" />
         </IconButton>
       </div>
     </div>
@@ -1160,7 +1159,7 @@ function GearInventoryAddRow({
           title="Ajouter au sac"
           aria-label={`Ajouter ${inv.name} au sac`}
         >
-          <Plus className="h-4 w-4" aria-hidden="true" />
+          <LKDVIcon name="plus" className="h-4 w-4" aria-hidden="true" />
         </IconButton>
       </div>
     </div>
@@ -1201,7 +1200,7 @@ function GearShopAddRow({
           title="Ajouter à Mon Matériel"
           aria-label={`Ajouter ${product.name} à mon matériel`}
         >
-          <PackagePlus className="h-4 w-4" aria-hidden="true" />
+          <LKDVIcon name="inventaire" className="h-4 w-4" aria-hidden="true" />
         </IconButton>
       </div>
     </div>

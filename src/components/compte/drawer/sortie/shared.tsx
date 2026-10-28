@@ -1,17 +1,9 @@
 'use client';
 
 import React from 'react';
-import {
-  Cloud,
-  CloudFog,
-  CloudLightning,
-  CloudRain,
-  CloudSnow,
-  CloudSun,
-  Sun,
-} from 'lucide-react';
 import type { OutingPoint } from '@/features/compte/server/sorties';
 import type { WeatherIcon } from '@/features/compte/server/weather';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export function formatDate(value: string | null): string {
   if (!value) return 'Date non renseignée';
@@ -69,21 +61,21 @@ export function weatherIcon(icon: WeatherIcon, size = 16): React.ReactNode {
   const props = { size, 'aria-hidden': true as const };
   switch (icon) {
     case 'sun':
-      return <Sun {...props} />;
+      return <LKDVIcon name="soleil" {...props} />;
     case 'partly':
-      return <CloudSun {...props} />;
+      return <LKDVIcon name="meteo" {...props} />;
     case 'cloud':
-      return <Cloud {...props} />;
+      return <LKDVIcon name="meteo" {...props} />;
     case 'rain':
-      return <CloudRain {...props} />;
+      return <LKDVIcon name="pluie" {...props} />;
     case 'snow':
-      return <CloudSnow {...props} />;
+      return <LKDVIcon name="neige" {...props} />;
     case 'storm':
-      return <CloudLightning {...props} />;
+      return <LKDVIcon name="meteo_extreme" {...props} />;
     case 'fog':
-      return <CloudFog {...props} />;
+      return <LKDVIcon name="meteo" {...props} />;
     default:
-      return <Cloud {...props} />;
+      return <LKDVIcon name="meteo" {...props} />;
   }
 }
 

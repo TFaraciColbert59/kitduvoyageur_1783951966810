@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface AccountMoreMenuProps {
   open: boolean;
@@ -33,19 +33,19 @@ export function AccountMoreMenu({
       hidden={!open}
     >
       <button type="button" onClick={onSave}>
-        <Icon name="bookmark" size={18} aria-hidden="true" />
+        <LKDVIcon name="signet" size={18} aria-hidden="true" />
         <span>{saved ? 'Retirer des enregistrements' : 'Enregistrer'}</span>
       </button>
       <button type="button" onClick={onRepublish}>
-        <Icon name="send" size={18} aria-hidden="true" />
+        <LKDVIcon name="partager" size={18} aria-hidden="true" />
         <span>Republier</span>
       </button>
       <button type="button" onClick={onCopy}>
-        <Icon name="link" size={18} aria-hidden="true" />
+        <LKDVIcon name="lien" size={18} aria-hidden="true" />
         <span>Copier le lien</span>
       </button>
       <button type="button" className="pmi-report" onClick={onReport}>
-        <Icon name="flag" size={18} aria-hidden="true" />
+        <LKDVIcon name="signalement" size={18} aria-hidden="true" />
         <span>Signaler</span>
       </button>
     </div>

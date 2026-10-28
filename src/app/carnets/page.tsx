@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
-import Icon from '@/components/ui/AppIcon';
 import Image from 'next/image';
 import Link from 'next/link';
 import CarnetVerticalTabs from '@/components/carnets/CarnetVerticalTabs';
@@ -31,6 +30,7 @@ import {
   SearchField,
   Switch,
 } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface Carnet {
   id: string;
@@ -364,15 +364,15 @@ function CarnetDetailModal({
               {isOwner && (
                 <>
                   <IconButton variant="glass" onClick={() => { onClose(); onEdit(carnet); }} aria-label="Modifier le carnet">
-                    <Icon name="PencilIcon" size={15} aria-hidden="true" />
+                    <LKDVIcon name="modifier" size={15} aria-hidden="true" />
                   </IconButton>
                   <IconButton variant="glass" onClick={() => { onClose(); onDelete(carnet); }} aria-label="Supprimer le carnet" className="text-[color:var(--lkv-danger)]">
-                    <Icon name="TrashIcon" size={15} aria-hidden="true" />
+                    <LKDVIcon name="supprimer" size={15} aria-hidden="true" />
                   </IconButton>
                 </>
               )}
               <IconButton variant="glass" onClick={onClose} aria-label="Fermer">
-                <Icon name="XMarkIcon" size={18} aria-hidden="true" />
+                <LKDVIcon name="fermer" size={18} aria-hidden="true" />
               </IconButton>
             </div>
 
@@ -420,7 +420,7 @@ function CarnetDetailModal({
           <div className="space-y-[var(--space-6)]">
             {(carnet.start_date || carnet.end_date) && (
               <div className="flex items-center gap-[var(--space-4)] rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-4)]">
-                <Icon name="CalendarDaysIcon" size={20} className="shrink-0 text-[color:var(--lkv-text-inverted)]" aria-hidden="true" />
+                <LKDVIcon name="jours" size={20} className="shrink-0 text-[color:var(--lkv-text-inverted)]" aria-hidden="true" />
                 <div className="flex flex-wrap items-center gap-[var(--space-4)] text-[length:var(--lkv-text-caption)]">
                   {carnet.start_date && (
                     <div>
@@ -456,7 +456,7 @@ function CarnetDetailModal({
 
             {carnet.weather && (
               <Card variant="compact" className="flex items-start gap-[var(--space-3)]">
-                <Icon name="CloudIcon" size={18} className="mt-[2px] shrink-0 text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+                <LKDVIcon name="meteo" size={18} className="mt-[2px] shrink-0 text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
                 <div>
                   <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-wider text-[color:var(--lkv-text-muted)]">Conditions météo</p>
                   <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">{carnet.weather}</p>
@@ -530,7 +530,7 @@ function CarnetDetailModal({
                 variant={carnet.user_favorited ? 'primary' : 'secondary'}
                 size="sm"
                 onClick={() => onFavorite(carnet)}
-                icon={<Icon name="bookmark" size={14} aria-hidden="true" />}
+                icon={<LKDVIcon name="signet" size={14} aria-hidden="true" />}
               >
                 {carnet.favorites_count} favoris
               </Button>
@@ -540,7 +540,7 @@ function CarnetDetailModal({
                   href={`/profil/${carnet.author_id}`}
                   className="ml-auto inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]"
                 >
-                  <Icon name="user" size={14} aria-hidden="true" />
+                  <LKDVIcon name="profil" size={14} aria-hidden="true" />
                   Voir le profil
                 </Link>
               )}
@@ -555,7 +555,7 @@ function CarnetDetailModal({
               ) : comments.length === 0 ? (
                 <EmptyState
                   compact
-                  icon={<Icon name="ChatBubbleLeftIcon" size={22} aria-hidden="true" />}
+                  icon={<LKDVIcon name="messages" size={22} aria-hidden="true" />}
                   title="Aucun commentaire"
                   description="Aucun commentaire. Soyez le premier !"
                 />
@@ -864,7 +864,7 @@ export default function CarnetsPage() {
             <div className="h-full min-w-0 flex-1 space-y-[var(--space-5)] overflow-y-auto pr-[var(--space-2)]">
               <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
                 <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
-                <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+                <LKDVIcon name="suivant" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
                 <span className="font-semibold text-[color:var(--lkv-text-primary)]">Carnets d&apos;expédition</span>
               </div>
 

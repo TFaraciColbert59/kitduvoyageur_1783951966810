@@ -8,7 +8,6 @@
  * `transform`/`opacity`, `prefers-reduced-motion` honoré.
  */
 import { useCallback, useEffect, useReducer } from 'react';
-import Icon from '@/components/ui/Icon';
 import { Button, Chip } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
 import type {
@@ -27,6 +26,7 @@ import {
   SEVERITY_LABELS,
   categoryDisplay,
 } from '../lib/terrainDisplay';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface QuickReportSubmission {
   category: TerrainReportCategory;
@@ -93,7 +93,7 @@ export default function QuickReportSheet({
                   onClick={() => dispatch({ type: 'select_category', category })}
                   className="flex min-h-[72px] w-full flex-col items-start justify-center gap-1 rounded-[var(--lkv-radius-md)] px-4 py-3 text-left"
                 >
-                  <Icon
+                  <LKDVIcon
                     name={display.icon}
                     size={20}
                     className="text-[color:var(--lkv-text-primary)]"
@@ -125,7 +125,7 @@ export default function QuickReportSheet({
                     {SEVERITY_LABELS[severity]}
                   </span>
                   {state.severity === severity && (
-                    <Icon name="check" size={16} className="text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
+                    <LKDVIcon name="valider" size={16} className="text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
                   )}
                 </Button>
               </li>

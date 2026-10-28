@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Card, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface MobileCarnetItem {
   id: string;
@@ -124,8 +124,8 @@ export default function MobileCarnetCard({
             className={`w-auto px-[10px] ${carnet.user_liked ? 'bg-[color:var(--lkv-danger-bg)] text-[color:var(--lkv-danger)]' : ''}`}
           >
             <span className="inline-flex items-center gap-[var(--space-1)]">
-              <Icon
-                name="HeartIcon"
+              <LKDVIcon
+                name="favoris"
                 size={13}
                 className={carnet.user_liked ? 'fill-[color:var(--lkv-danger)] text-[color:var(--lkv-danger)]' : ''}
                 aria-hidden="true"
@@ -145,8 +145,8 @@ export default function MobileCarnetCard({
             aria-pressed={carnet.user_favorited || undefined}
             className={carnet.user_favorited ? 'bg-[color:var(--lkv-warning-bg)] text-[color:var(--lkv-warning-dark)]' : undefined}
           >
-            <Icon
-              name="BookmarkIcon"
+            <LKDVIcon
+              name="signet"
               size={13}
               className={carnet.user_favorited ? 'fill-[color:var(--lkv-warning-dark)] text-[color:var(--lkv-warning-dark)]' : ''}
               aria-hidden="true"
@@ -161,7 +161,7 @@ export default function MobileCarnetCard({
             }}
             aria-label="Partager"
           >
-            <Icon name="ShareIcon" size={13} aria-hidden="true" />
+            <LKDVIcon name="partager" size={13} aria-hidden="true" />
           </IconButton>
         </div>
 
@@ -171,7 +171,7 @@ export default function MobileCarnetCard({
           className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
         >
           <span>Lire le récit</span>
-          <Icon name="ArrowRightIcon" size={12} aria-hidden="true" />
+          <LKDVIcon name="suivant" size={12} aria-hidden="true" />
         </Link>
       </div>
     </Card>

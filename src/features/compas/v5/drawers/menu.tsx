@@ -22,14 +22,14 @@ function MenuBody() {
   return (
     <>
       <Grp>
-        <Li icon="edit" title={t('compas.v5.menu.settings')} detail={t('compas.v5.menu.settingsHint')} onClick={() => openSpace('voyage', { tab: 0 })} right={<V5Icon name="right" size="s" />} />
+        <Li icon='modifier' title={t('compas.v5.menu.settings')} detail={t('compas.v5.menu.settingsHint')} onClick={() => openSpace('voyage', { tab: 0 })} right={<V5Icon name='suivant' size="s" />} />
       </Grp>
 
       <Cap>{t('compas.screen.display')}</Cap>
       <Grp>
-        <Li icon="sun" title={t('compas.v5.menu.sun')} detail={t('compas.v5.menu.sunHint')} right={<Switch checked={prefs.outdoor} onChange={prefs.setOutdoor} label={t('compas.v5.menu.sun')} />} />
+        <Li icon='soleil' title={t('compas.v5.menu.sun')} detail={t('compas.v5.menu.sunHint')} right={<Switch checked={prefs.outdoor} onChange={prefs.setOutdoor} label={t('compas.v5.menu.sun')} />} />
         <Li
-          icon="clock"
+          icon='duree'
           title={t('compas.v5.menu.toastLength')}
           right={
             <span className="v5-chips">
@@ -42,7 +42,7 @@ function MenuBody() {
           }
         />
         <Li
-          icon="download"
+          icon='telecharger'
           title={t('compas.v5.menu.offline')}
           detail={
             prefs.offlineSavedAt ? (
@@ -57,15 +57,15 @@ function MenuBody() {
       {canEdit && (
         <>
           <Grp>
-            {prefs.redo && <Li icon="refresh" title={t('compas.v5.menu.redo')} detail={t('compas.v5.menu.redoHint')} onClick={() => { closeSpace(); prefs.redo?.(); }} />}
-            <Li icon="swap" title={t('compas.v5.menu.undoPrep')} detail={t('compas.v5.menu.undoPrepHint')} onClick={() => void undoPrep().then(() => router.refresh())} />
+            {prefs.redo && <Li icon='actualiser' title={t('compas.v5.menu.redo')} detail={t('compas.v5.menu.redoHint')} onClick={() => { closeSpace(); prefs.redo?.(); }} />}
+            <Li icon='itineraire' title={t('compas.v5.menu.undoPrep')} detail={t('compas.v5.menu.undoPrepHint')} onClick={() => void undoPrep().then(() => router.refresh())} />
           </Grp>
         </>
       )}
 
       <Grp>
-        <Li icon="plus" title={t('compas.v5.menu.newTrip')} detail={t('compas.v5.menu.newTripHint')} onClick={() => router.push('/compas?nouvelle=1')} right={<V5Icon name="right" size="s" />} />
-        <Li icon="people" title={t('compas.v5.menu.hub')} onClick={() => router.push('/hub/groupe')} right={<V5Icon name="external" size="s" />} />
+        <Li icon="plus" title={t('compas.v5.menu.newTrip')} detail={t('compas.v5.menu.newTripHint')} onClick={() => router.push('/compas?nouvelle=1')} right={<V5Icon name='suivant' size="s" />} />
+        <Li icon='communaute' title={t('compas.v5.menu.hub')} onClick={() => router.push('/hub/groupe')} right={<V5Icon name='lien' size="s" />} />
       </Grp>
     </>
   );

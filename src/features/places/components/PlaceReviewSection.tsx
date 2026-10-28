@@ -1,10 +1,9 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { Badge, Button, Card, EmptyState, IconButton } from '@/components/ui';
 import { addPlaceReviewAction } from '@/app/lieux/actions';
 import type { PlaceReview } from '../types/place.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface PlaceReviewSectionProps {
   placeId: string;
@@ -96,8 +95,8 @@ export function PlaceReviewSection({
               {bayesianRating > 0 ? (
                 <div className="flex items-center text-[color:var(--lkv-warning-dark)]">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Icon
-                      name="star"
+                    <LKDVIcon
+                      name="points"
                       key={star}
                       className={`h-4 w-4 ${
                         star <= Math.round(bayesianRating)
@@ -124,7 +123,7 @@ export function PlaceReviewSection({
           size="sm"
           onClick={() => setShowForm(!showForm)}
           className="shrink-0"
-          icon={<Icon name="message-square-plus" className="h-4 w-4" />}
+          icon={<LKDVIcon name="commentaire" className="h-4 w-4" />}
         >
           {showForm ? 'Masquer le formulaire' : 'Donner mon avis'}
         </Button>
@@ -134,14 +133,14 @@ export function PlaceReviewSection({
       {showForm && (
         <Card className="p-6">
           <h4 className="mb-[var(--space-4)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
-            <Icon name="compass" className="h-4 w-4 text-[color:var(--glass-label)]" />
+            <LKDVIcon name="boussole" className="h-4 w-4 text-[color:var(--glass-label)]" />
             Votre retour d’expérience terrain
           </h4>
 
           <form onSubmit={handleSubmitReview} className="space-y-[var(--space-4)]">
             {errorMsg && (
               <Card tone="danger" className="flex items-center gap-2 p-[var(--space-3)] text-[length:var(--lkv-text-caption-1)]">
-                <Icon name="alert-circle" className="h-4 w-4 shrink-0" />
+                <LKDVIcon name="alerte" className="h-4 w-4 shrink-0" />
                 <span>{errorMsg}</span>
               </Card>
             )}
@@ -161,8 +160,8 @@ export function PlaceReviewSection({
                     aria-pressed={s <= rating}
                     onClick={() => setRating(s)}
                   >
-                    <Icon
-                      name="star"
+                    <LKDVIcon
+                      name="points"
                       className={`h-6 w-6 ${
                         s <= rating ? 'text-[color:var(--lkv-warning-dark)]' : 'text-[color:var(--lkv-text-muted)]/40'
                       }`}
@@ -250,7 +249,7 @@ export function PlaceReviewSection({
 
       {successMsg && (
         <Card tone="sage" className="flex items-center gap-2 p-[var(--space-4)] text-[length:var(--lkv-text-caption-1)]">
-          <Icon name="check-circle2" className="h-4 w-4 shrink-0" />
+          <LKDVIcon name="valider" className="h-4 w-4 shrink-0" />
           <span>{successMsg}</span>
         </Card>
       )}
@@ -274,8 +273,8 @@ export function PlaceReviewSection({
                 <div className="flex items-center gap-2">
                   <div className="flex items-center text-[color:var(--lkv-warning-dark)]">
                     {[1, 2, 3, 4, 5].map((s) => (
-                      <Icon
-                        name="star"
+                      <LKDVIcon
+                        name="points"
                         key={s}
                         className={`h-3.5 w-3.5 ${
                           s <= rev.rating ? 'text-[color:var(--lkv-warning-dark)]' : 'text-[color:var(--lkv-text-muted)]/40'
@@ -286,7 +285,7 @@ export function PlaceReviewSection({
 
                   {rev.has_field_proof && (
                     <Badge tone="sage" className="gap-1">
-                      <Icon name="shield-check" className="h-3.5 w-3.5 text-[color:var(--lkv-text-primary)]" />
+                      <LKDVIcon name="securite" className="h-3.5 w-3.5 text-[color:var(--lkv-text-primary)]" />
                       Preuve terrain certifiée
                     </Badge>
                   )}
@@ -294,7 +293,7 @@ export function PlaceReviewSection({
 
                 {rev.visit_date && (
                   <span className="flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                    <Icon name="calendar" className="h-3 w-3" />
+                    <LKDVIcon name="calendrier" className="h-3 w-3" />
                     Visité le {rev.visit_date}
                   </span>
                 )}

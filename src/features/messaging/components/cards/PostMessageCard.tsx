@@ -3,8 +3,8 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import type { PostMessageMeta } from '../../types/messaging.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface PostMessageCardProps {
   meta: PostMessageMeta;
@@ -56,7 +56,7 @@ export const PostMessageCard: React.FC<PostMessageCardProps> = ({ meta, isMine }
                 : 'text-[color:var(--lkv-text-secondary)]'
             }`}
           >
-            <Icon name="image-off" size={20} aria-hidden="true" />
+            <LKDVIcon name="galerie" size={20} aria-hidden="true" />
           </div>
         )}
       </div>

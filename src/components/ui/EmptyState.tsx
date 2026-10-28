@@ -3,8 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import Icon from '@/components/ui/Icon';
 import Button from '@/components/ui/Button';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -37,7 +37,7 @@ export function EmptyState({
       variant="primary"
       size={compact ? 'sm' : 'md'}
       onClick={onAction}
-      icon={<Icon name="arrow-right" size={14} />}
+      icon={<LKDVIcon name="suivant" size={14} />}
       iconPosition="trailing"
     >
       {actionLabel}
@@ -89,7 +89,7 @@ export function EmptyState({
         </div>
       ) : (
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full g2 border border-[color:var(--glass-rim)] text-[color:var(--glass-label)] shadow-sm">
-          <Icon name="compass" size={28} />
+          <LKDVIcon name="boussole" size={28} />
         </div>
       )}
       <h3 className="text-base font-bold text-[color:var(--glass-label)] mb-1.5">{title}</h3>
@@ -134,7 +134,7 @@ export function ErrorState({
       )}
     >
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 border border-red-500/30 text-red-300">
-        <Icon name="alert-triangle" size={28} />
+        <LKDVIcon name="alerte" size={28} />
       </div>
       <h3 className="text-base font-bold text-[color:var(--glass-label)] mb-1.5">{title}</h3>
       <p className="text-xs sm:text-sm text-[color:var(--glass-secondary)] max-w-sm mb-6 leading-relaxed">
@@ -145,7 +145,7 @@ export function ErrorState({
           variant="secondary"
           size="md"
           onClick={onRetry}
-          icon={<Icon name="rotate-ccw" size={14} />}
+          icon={<LKDVIcon name="actualiser" size={14} />}
           iconPosition="leading"
         >
           Réessayer

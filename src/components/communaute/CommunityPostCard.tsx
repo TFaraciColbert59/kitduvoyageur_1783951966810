@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Divider, IconButton } from '@/components/ui';
 import SmartImage from '@/components/ui/SmartImage';
 import CommunityVideo from './CommunityVideo';
@@ -16,6 +15,7 @@ import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDoubleTap, useLongPress } from '@/hooks/gestures';
 import { presentNativeActions, shareNativeURL } from '@/lib/native/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // Visionneuse plein écran en dynamic import — protège le First Load JS
 // (mission gestes, Phase 6 : budget ≤170 KB).
@@ -73,27 +73,11 @@ export const timeAgo = (dateStr: string) => {
 export function HeartSvg({ filled = false, className = '' }: { filled?: boolean; className?: string }) {
   if (filled) {
     return (
-      <svg
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className={`size-3.5 scale-110 text-[color:var(--lkv-danger)] transition-transform duration-200 ${className}`}
-      >
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-      </svg>
+      <LKDVIcon name="favoris" size={14} className={`size-3.5 scale-125 transition-transform duration-200 ${className}`} />
     );
   }
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={`size-3.5 text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-danger)] ${className}`}
-    >
-      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-    </svg>
+    <LKDVIcon name="favoris" size={14} className={`size-3.5 opacity-60 transition-opacity hover:opacity-100 ${className}`} />
   );
 }
 
@@ -730,7 +714,7 @@ export default function CommunityPostCard({
               fullWidth
               className="justify-start"
               onClick={handleToggleSave}
-              icon={<Icon name="bookmark" size={14} className={isSaved ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-secondary)]'} aria-hidden="true" />}
+              icon={<LKDVIcon name="signet" size={14} className={isSaved ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-secondary)]'} aria-hidden="true" />}
             >
               {isSaved ? 'Retirer des favoris' : 'Enregistrer'}
             </Button>
@@ -742,7 +726,7 @@ export default function CommunityPostCard({
               fullWidth
               className="justify-start"
               onClick={() => { handleShare(); setShowMoreMenu(false); }}
-              icon={<Icon name="link" size={14} className="text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+              icon={<LKDVIcon name="lien" size={14} className="text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
             >
               Copier le lien direct
             </Button>
@@ -754,7 +738,7 @@ export default function CommunityPostCard({
               fullWidth
               className="justify-start"
               onClick={handleHidePost}
-              icon={<Icon name="eye-off" size={14} className="text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+              icon={<LKDVIcon name="vue" size={14} className="text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
             >
               Masquer ce post
             </Button>
@@ -768,7 +752,7 @@ export default function CommunityPostCard({
               fullWidth
               className="justify-start text-[color:var(--lkv-danger)] hover:bg-[color:var(--lkv-danger-bg)]"
               onClick={handleReport}
-              icon={<Icon name="flag" size={14} aria-hidden="true" />}
+              icon={<LKDVIcon name="signalement" size={14} aria-hidden="true" />}
             >
               Signaler le post
             </Button>
@@ -804,10 +788,9 @@ export default function CommunityPostCard({
           aria-label="Commenter la publication"
           className={onImage ? 'min-w-[84px] border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' : 'min-w-[84px]'}
         >
-          <Icon
-            name="message-square"
+          <LKDVIcon
+            name="messages"
             size={15}
-            color="var(--lkv-text-primary)"
             aria-hidden="true"
           />
           {commentsCount > 0 && <span className="tabular-nums">{commentsCount}</span>}
@@ -822,10 +805,9 @@ export default function CommunityPostCard({
           aria-label="Partager"
           className={onImage ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' : ''}
         >
-          <Icon
-            name="send"
+          <LKDVIcon
+            name="partager"
             size={15}
-            color="var(--lkv-text-primary)"
             aria-hidden="true"
           />
         </IconButton>
@@ -838,10 +820,9 @@ export default function CommunityPostCard({
             aria-label="Options de la publication"
             className={onImage ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' : ''}
           >
-            <Icon
-              name="ellipsis"
+            <LKDVIcon
+              name="plus_options"
               size={16}
-              color="var(--lkv-text-primary)"
               aria-hidden="true"
             />
           </IconButton>
@@ -995,7 +976,7 @@ export default function CommunityPostCard({
                 <button type="button" className="lkdv-social-reproduce-trigger"
                   aria-label="Reproduire le kit de cette publication" aria-expanded={reproduceOpen}
                   onClick={(event) => { event.stopPropagation(); setReproduceOpen((v) => !v); }}>
-                  <Icon name="copy" size={18} aria-hidden="true" />
+                  <LKDVIcon name="dupliquer" size={18} aria-hidden="true" />
                 </button>
                 {reproduceOpen && (
                   <div className="lkdv-social-reproduce-menu">
@@ -1024,9 +1005,7 @@ export default function CommunityPostCard({
                 transition={{ duration: 0.7, times: [0, 0.25, 0.6, 1], ease: 'easeOut' }}
                 onAnimationComplete={() => setHeartBurst(0)}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="size-20 text-[color:var(--lkv-danger)] drop-shadow-lg">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                </svg>
+                <LKDVIcon name="favoris" size={80} className="size-20 drop-shadow-lg" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -1047,7 +1026,7 @@ export default function CommunityPostCard({
           aria-label={isSaved ? 'Retirer des favoris' : 'Enregistrer la publication'}
           aria-pressed={isSaved}
         >
-          <Icon name="bookmark" size={23} aria-hidden="true" />
+          <LKDVIcon name="signet" size={23} aria-hidden="true" />
         </IconButton>
       </div>
 
@@ -1192,7 +1171,7 @@ export default function CommunityPostCard({
                                   onClick={() => handleStartEditComment(rootComment)}
                                   aria-label="Modifier"
                                 >
-                                  <Icon name="pencil" size={11} aria-hidden="true" />
+                                  <LKDVIcon name="modifier" size={11} aria-hidden="true" />
                                 </IconButton>
                                 <IconButton
                                   size="sm"
@@ -1200,7 +1179,7 @@ export default function CommunityPostCard({
                                   onClick={() => handleDeleteComment(rootComment.id)}
                                   aria-label="Supprimer"
                                 >
-                                  <Icon name="trash2" size={11} className="text-[color:var(--lkv-danger)]" aria-hidden="true" />
+                                  <LKDVIcon name="supprimer" size={11} className="text-[color:var(--lkv-danger)]" aria-hidden="true" />
                                 </IconButton>
                               </>
                             ) : (
@@ -1210,7 +1189,7 @@ export default function CommunityPostCard({
                                 onClick={() => handleReportComment(rootComment.id)}
                                 aria-label="Signaler"
                               >
-                                <Icon name="flag" size={11} aria-hidden="true" />
+                                <LKDVIcon name="signalement" size={11} aria-hidden="true" />
                               </IconButton>
                             )}
                           </div>
@@ -1271,7 +1250,7 @@ export default function CommunityPostCard({
                             onClick={() => handleReplyTo(rootComment.author?.full_name || 'Voyageur', rootComment.id)}
                             aria-label={`Répondre à ${rootComment.author?.full_name || 'ce message'}`}
                           >
-                            <Icon name="reply" size={12} aria-hidden="true" />
+                            <LKDVIcon name="retour" size={12} aria-hidden="true" />
                           </IconButton>
 
                           <IconButton
@@ -1323,7 +1302,7 @@ export default function CommunityPostCard({
                                         onClick={() => handleDeleteComment(reply.id)}
                                         aria-label="Supprimer"
                                       >
-                                        <Icon name="trash2" size={11} className="text-[color:var(--lkv-danger)]" aria-hidden="true" />
+                                        <LKDVIcon name="supprimer" size={11} className="text-[color:var(--lkv-danger)]" aria-hidden="true" />
                                       </IconButton>
                                     ) : (
                                       <IconButton
@@ -1332,7 +1311,7 @@ export default function CommunityPostCard({
                                         onClick={() => handleReportComment(reply.id)}
                                         aria-label="Signaler"
                                       >
-                                        <Icon name="flag" size={11} aria-hidden="true" />
+                                        <LKDVIcon name="signalement" size={11} aria-hidden="true" />
                                       </IconButton>
                                     )}
                                   </div>
@@ -1434,7 +1413,7 @@ export default function CommunityPostCard({
                   onClick={() => fileInputRef.current?.click()}
                   aria-label="Joindre une photo"
                 >
-                  <Icon name="image-plus" size={13} aria-hidden="true" />
+                  <LKDVIcon name="photo" size={13} aria-hidden="true" />
                 </IconButton>
                 <IconButton
                   size="sm"
@@ -1450,7 +1429,7 @@ export default function CommunityPostCard({
                   onClick={handleShareLocation}
                   aria-label="Partager ma position"
                 >
-                  <Icon name="map-pin" size={13} aria-hidden="true" />
+                  <LKDVIcon name="point_interet" size={13} aria-hidden="true" />
                 </IconButton>
 
                 <IconButton
@@ -1460,7 +1439,7 @@ export default function CommunityPostCard({
                   aria-label="Publier le commentaire"
                   variant="solid"
                 >
-                  <Icon name="send" size={13} aria-hidden="true" />
+                  <LKDVIcon name="partager" size={13} aria-hidden="true" />
                 </IconButton>
               </Card>
             </div>

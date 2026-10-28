@@ -1,9 +1,8 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useRef, useEffect } from 'react';
 import { IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface AudioPlayerBubbleProps {
   audioUrl: string;
@@ -93,16 +92,16 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
         aria-label={isPlaying ? 'Pause' : 'Écouter la note vocale'}
       >
         {isPlaying ? (
-          <Icon name="pause" className="size-4" aria-hidden="true" />
+          <LKDVIcon name="pause" className="size-4" aria-hidden="true" />
         ) : (
-          <Icon name="play" className="ml-0.5 size-4" aria-hidden="true" />
+          <LKDVIcon name="lecture" className="ml-0.5 size-4" aria-hidden="true" />
         )}
       </IconButton>
 
       <div className="flex flex-1 flex-col gap-[var(--space-1)]">
         <div className="flex items-center justify-between text-[length:var(--lkv-text-caption-2)] font-semibold opacity-90">
           <span className="flex items-center gap-[var(--space-1)]">
-            <Icon name="mic" className="size-3 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
+            <LKDVIcon name="micro" className="size-3 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
             Note vocale
           </span>
           <span className="font-mono">

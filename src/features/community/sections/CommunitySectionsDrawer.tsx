@@ -2,12 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { useToast } from '@/contexts/ToastContext';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityDrawer } from './CommunityDrawer';
 import { CommunityTabSelector, type SectionTabId } from './CommunityTabSelector';
 import { useCommunitySections, type CarnetRow, type ClubRow, type EventRow } from './useCommunitySections';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type FilterId = 'discover' | 'mine';
 type SearchKind = 'post' | 'carnet' | 'club' | 'sortie' | 'member';
@@ -267,7 +267,7 @@ export function CommunitySectionsDrawer({
         <h2 id="lkdv-search-title">Tout trouver</h2>
         <p className="lkdv-search-sub">Une recherche, tous les univers de la communauté.</p>
         <div className="lkdv-search-box lkdv-search-box--hero">
-          <Icon name="search" size={17} aria-hidden="true" />
+          <LKDVIcon name="recherche" size={17} aria-hidden="true" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -277,7 +277,7 @@ export function CommunitySectionsDrawer({
           />
           {query ? (
             <button type="button" className="lkdv-search-clear" aria-label="Effacer la recherche" onClick={() => setQuery('')}>
-              <Icon name="x" size={14} aria-hidden="true" />
+              <LKDVIcon name="fermer" size={14} aria-hidden="true" />
             </button>
           ) : null}
         </div>
@@ -338,7 +338,7 @@ export function CommunitySectionsDrawer({
                         <span className="lkdv-result-dot" aria-hidden="true" />
                         {group.short}
                       </span>
-                      <Icon name="arrow-right" size={14} aria-hidden="true" />
+                      <LKDVIcon name="suivant" size={14} aria-hidden="true" />
                     </Link>
                   ))}
                 </section>
@@ -347,7 +347,7 @@ export function CommunitySectionsDrawer({
         </div>
       ) : tab === 'recherche' ? (
         <div className="lkdv-search-prompt">
-          <Icon name="search" size={22} aria-hidden="true" />
+          <LKDVIcon name="recherche" size={22} aria-hidden="true" />
           <p>Cherche un post, un carnet, un club, une sortie ou un membre.</p>
         </div>
       ) : String(tab) === 'pour-toi' ? (
@@ -363,9 +363,7 @@ export function CommunitySectionsDrawer({
       ) : selected ? (
         <div>
           <button type="button" className="mb-2 mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#56665D]" onClick={() => setSelected(null)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="M15 6l-6 6 6 6" />
-            </svg>
+            <LKDVIcon name="retour" size={14} aria-hidden="true" />
             Retour
           </button>
           <div className="overflow-hidden rounded-2xl bg-white/55" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,.95)' }}>

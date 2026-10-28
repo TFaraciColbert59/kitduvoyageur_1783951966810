@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 type LibreState = 'before' | 'during' | 'after';
 
@@ -76,7 +76,7 @@ export default function PartirLibrementView() {
     <div className="prep-libre">
       <div className="prep-libre__map" style={{ backgroundColor: 'var(--prep-map-skeleton-bg)' }}>
         <div style={{ padding: 20, textAlign: 'center', opacity: 0.5, paddingTop: 100 }}>
-          <Icon name="map" size={48} />
+          <LKDVIcon name="carte" size={48} />
           {/* Aucune carte n est rendue : ce composant ne monte pas MapLibre et ne
               trace aucun parcours. Un fond « carte » sur lequel on ecrit « carte
               plein ecran » ferait croire a une carte la. On nomme donc

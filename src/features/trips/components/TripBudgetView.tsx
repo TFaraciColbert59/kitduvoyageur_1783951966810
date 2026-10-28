@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useEffect, useMemo, useState, useTransition } from 'react';
 import { Badge, Button, Card, EmptyState, IconButton, ListItem } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
@@ -18,6 +16,7 @@ import { ExpenseFormSheet } from './budget/ExpenseFormSheet';
 import { formatDayLabel } from './budget/budgetFormat';
 import { BudgetMobileExperience } from '@/features/hub/components/mobile/budget/BudgetMobileExperience';
 import type { TripFull, TripExpense } from '../types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface TripBudgetViewProps {
   trip: TripFull;
@@ -204,7 +203,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
               onClick={() => setErrorMsg(null)}
               aria-label="Fermer le message"
             >
-              <Icon name="x" size={16} />
+              <LKDVIcon name="fermer" size={16} />
             </IconButton>
           </Card>
         )}
@@ -213,7 +212,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
         <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-3">
           <Card variant="compact" className="p-[var(--space-4)]">
             <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-secondary)]">
-              <Icon name="calendar-days" size={13} /> Prévu (prévisionnel)
+              <LKDVIcon name="jours" size={13} /> Prévu (prévisionnel)
             </div>
             <div className="mt-1 text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
               {budgetSummary.plannedTotal} {budgetSummary.currency}
@@ -225,7 +224,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
 
           <Card variant="compact" className="p-[var(--space-4)]">
             <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-secondary)]">
-              <Icon name="banknote" size={13} /> Réel (dépensé)
+              <LKDVIcon name="budget" size={13} /> Réel (dépensé)
             </div>
             <div className="mt-1 text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
               {budgetSummary.totalSpent} {budgetSummary.currency}
@@ -239,9 +238,9 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
           <Card variant="compact" className="p-[var(--space-4)]">
             <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-secondary)]">
               {isMulti ? (
-                <Icon name="trending-up" size={13} />
+                <LKDVIcon name="denivele" size={13} />
               ) : (
-                <Icon name="credit-card" size={13} />
+                <LKDVIcon name="paiement" size={13} />
               )}{' '}
               Restant à payer
             </div>
@@ -259,7 +258,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                       : 'text-[color:var(--lkv-success)]'
                   }
                 >
-                  {budgetSummary.isOverBudget && <Icon name="alert-triangle" size={12} />}
+                  {budgetSummary.isOverBudget && <LKDVIcon name="alerte" size={12} />}
                   {budgetSummary.isOverBudget
                     ? `Dépassement de ${Math.abs(budgetSummary.remainingBudget ?? 0)} ${budgetSummary.currency}`
                     : `Reste du budget : ${budgetSummary.remainingBudget} ${budgetSummary.currency}`}
@@ -301,7 +300,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
         <div className="space-y-[var(--space-3)]">
           <div className="flex items-center justify-between">
             <h4 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
-              <Icon name="calendar-check" size={18} className="text-[color:var(--glass-label)]" />
+              <LKDVIcon name="calendrier" size={18} className="text-[color:var(--glass-label)]" />
               Jour par jour — prévu vs réel
             </h4>
             {canManage && (
@@ -311,7 +310,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                   setEditTarget(null);
                   setIsAddOpen(true);
                 }}
-                icon={<Icon name="plus" size={16} />}
+                icon={<LKDVIcon name="plus" size={16} />}
               >
                 Enregistrer une dépense
               </Button>
@@ -320,7 +319,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
 
           {dayPlan.length === 0 ? (
             <EmptyState
-              icon={<Icon name="credit-card" size={32} className="text-[color:var(--lkv-secondary-ink)]" />}
+              icon={<LKDVIcon name="paiement" size={32} className="text-[color:var(--lkv-secondary-ink)]" />}
               title="Aucune dépense"
               description="Ajoutez des dépenses prévues à venir, ou enregistrez les dépenses réelles au fil du voyage."
               actionLabel={canManage ? 'Enregistrer une dépense' : undefined}
@@ -431,7 +430,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                             variant="secondary"
                             fullWidth
                             size="sm"
-                            icon={<Icon name="plus" size={14} />}
+                            icon={<LKDVIcon name="plus" size={14} />}
                             onClick={() => {
                               setEditTarget(null);
                               setIsAddOpen(true);
@@ -488,7 +487,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
             <Card className="space-y-[var(--space-3)]">
               <div className="flex items-center justify-between border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-2)]">
                 <h4 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
-                  <Icon name="trending-up" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
+                  <LKDVIcon name="denivele" size={16} className="text-[color:var(--lkv-secondary-ink)]" />
                   <span>Règlements de compte optimaux</span>
                 </h4>
                 <span className="text-[11px] text-[color:var(--lkv-text-secondary)]">
@@ -501,7 +500,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                   tone="sage"
                   className="flex items-center gap-[var(--space-2)] p-[var(--space-4)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]"
                 >
-                  <Icon name="check-circle" size={16} className="shrink-0" />
+                  <LKDVIcon name="valider" size={16} className="shrink-0" />
                   <span>Tous les comptes sont équilibrés. Aucun remboursement en attente.</span>
                 </Card>
               ) : (
@@ -516,8 +515,8 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                         <span className="font-semibold text-[color:var(--lkv-text-primary)]">
                           {s.fromName}
                         </span>
-                        <Icon
-                          name="arrow-right"
+                        <LKDVIcon
+                          name="suivant"
                           size={14}
                           className="shrink-0 text-[color:var(--lkv-secondary-ink)]"
                         />

@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState, useTransition, type FormEvent } from 'react';
-import { CalendarDays, NotebookPen, Pencil, Pin, Plus, Trash2, X } from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 import { TripCompletionModal } from '@/features/trips/components/TripCompletionModal';
 import { Badge, Button, IconButton, ListItem, Tabs } from '@/components/ui';
@@ -21,6 +20,8 @@ import { BudgetRing } from '../budget/BudgetRing';
 import { GroupeChipsRow, type GroupeChipDef } from '../groupe/GroupeChipsRow';
 import { GroupeDrawer } from '../groupe/GroupeDrawer';
 import { GroupeRail } from '../groupe/GroupeRail';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 export interface JournalMobileExperienceProps {
   trip: TripFull;
@@ -120,7 +121,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
   const chips: GroupeChipDef[] = [
     {
       key: 'notes',
-      icon: NotebookPen,
+      icon: lkdvIcon('modifier'),
       value: String(stats.total),
       label: 'notes',
       onClick: () => {
@@ -130,7 +131,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
     },
     {
       key: 'days',
-      icon: CalendarDays,
+      icon: lkdvIcon('jours'),
       value: `${stats.daysTold}/${duration.durationDays}`,
       label: 'jours couverts',
       tone: stats.daysTold > 0 ? 'accent' : 'default',
@@ -141,7 +142,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
     },
     {
       key: 'pinned',
-      icon: Pin,
+      icon: lkdvIcon('position'),
       value: String(stats.pinned),
       label: 'épinglées',
       onClick: () => {
@@ -163,7 +164,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
         className="flex h-[10rem] w-[14.5rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3.5 text-left"
       >
         <span className="flex items-center gap-1.5">
-          {note.is_pinned && <Pin size={12} aria-hidden="true" />}
+          {note.is_pinned && <LKDVIcon name="position" size={12} aria-hidden="true" />}
           {note.day_number != null && (
             <Badge tone="stone" className="bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[color:var(--lkv-text-primary)]">
               Jour {note.day_number}
@@ -198,7 +199,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
             className="shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
-            <X size={16} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={16} aria-hidden="true" />
           </IconButton>
         </div>
       )}
@@ -231,7 +232,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
             </p>
             {pinned.length > 0 && (
               <p className="flex items-center gap-1 text-[11px] font-semibold text-[color:var(--lkv-text-primary)]">
-                <Pin size={11} aria-hidden="true" />
+                <LKDVIcon name="position" size={11} aria-hidden="true" />
                 {pinned.length} note{pinned.length > 1 ? 's' : ''} épinglée{pinned.length > 1 ? 's' : ''}
               </p>
             )}
@@ -246,7 +247,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
                 triggerHaptic('light');
                 setEditorOpen(true);
               }}
-              icon={<Plus size={15} aria-hidden="true" />}
+              icon={<LKDVIcon name="plus" size={15} aria-hidden="true" />}
               className="flex-1 !py-3 text-sm font-bold"
             >
               Écrire
@@ -333,7 +334,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
                 }}
                 leading={
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10">
-                    {note.is_pinned ? <Pin size={15} aria-hidden="true" /> : <NotebookPen size={15} aria-hidden="true" />}
+                    {note.is_pinned ? <LKDVIcon name="position" size={15} aria-hidden="true" /> : <LKDVIcon name="modifier" size={15} aria-hidden="true" />}
                   </span>
                 }
                 title={noteTitle(note)}
@@ -366,7 +367,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
               )}
               {selected.is_pinned && (
                 <Badge tone="sage" className="px-2.5 py-1">
-                  <Pin size={11} aria-hidden="true" />
+                  <LKDVIcon name="position" size={11} aria-hidden="true" />
                   Épinglée
                 </Badge>
               )}
@@ -419,7 +420,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
                     setEditing(true);
                     triggerHaptic('light');
                   }}
-                  icon={<Pencil size={15} aria-hidden="true" />}
+                  icon={<LKDVIcon name="modifier" size={15} aria-hidden="true" />}
                   className="!py-3 text-sm font-bold"
                 >
                   Éditer la note
@@ -430,7 +431,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
                   onClick={() =>
                     setConfirmState({ id: selected.id, label: `« ${noteTitle(selected)} »` })
                   }
-                  icon={<Trash2 size={15} aria-hidden="true" />}
+                  icon={<LKDVIcon name="supprimer" size={15} aria-hidden="true" />}
                   className="!py-3 text-sm font-bold"
                 >
                   Supprimer la note

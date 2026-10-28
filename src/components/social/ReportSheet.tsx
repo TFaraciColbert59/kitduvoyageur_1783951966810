@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import Icon from '@/components/ui/AppIcon';
 import { Button, Card, ListItem, Sheet } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ReportSheetProps {
   isOpen: boolean;
@@ -14,11 +14,11 @@ export interface ReportSheetProps {
 }
 
 const REPORT_REASONS = [
-  { id: 'spam', label: 'Spam ou contenu indésirable', icon: 'ArchiveBoxXMarkIcon' },
-  { id: 'harassment', label: 'Harcèlement ou intimidation', icon: 'ExclamationTriangleIcon' },
-  { id: 'inappropriate', label: 'Contenu inapproprié ou offensant', icon: 'NoSymbolIcon' },
-  { id: 'misinformation', label: 'Fausse information sur un itinéraire', icon: 'QuestionMarkCircleIcon' },
-  { id: 'other', label: 'Autre motif', icon: 'EllipsisHorizontalIcon' },
+  { id: 'spam', label: 'Spam ou contenu indésirable', icon: 'supprimer' as const },
+  { id: 'harassment', label: 'Harcèlement ou intimidation', icon: 'alerte' as const },
+  { id: 'inappropriate', label: 'Contenu inapproprié ou offensant', icon: 'zone_interdite' as const },
+  { id: 'misinformation', label: 'Fausse information sur un itinéraire', icon: 'aide' as const },
+  { id: 'other', label: 'Autre motif', icon: 'plus_options' as const },
 ];
 
 export default function ReportSheet({
@@ -85,7 +85,7 @@ export default function ReportSheet({
       {submitted ? (
         <div className="flex flex-col items-center gap-[var(--space-3)] py-[var(--space-10)] text-center">
           <div className="flex size-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)]">
-            <Icon name="CheckCircleIcon" size={28} />
+            <LKDVIcon name="valider" size={28} />
           </div>
           <h4 className="text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
             Signalement envoyé
@@ -113,7 +113,7 @@ export default function ReportSheet({
                     triggerHaptic('light');
                     setSelectedReason(reason.id);
                   }}
-                  leading={<Icon name={reason.icon} size={18} className="text-[color:var(--lkv-text-secondary)]" />}
+                  leading={<LKDVIcon name={reason.icon} size={18} className="text-[color:var(--lkv-text-secondary)]" />}
                   title={reason.label}
                   trailing={
                     <span

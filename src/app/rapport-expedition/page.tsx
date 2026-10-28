@@ -3,13 +3,13 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import { useChat } from '@/lib/hooks/useChat';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppShell from '@/components/shell/AppShell';
 import { earnAnnouncement } from '@/features/rewards/domain/wallet';
 import { Badge, Button, Card, Chip, EmptyState, IconButton, Modal, Skeleton, Tabs } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface GearItem {
   name: string;
@@ -63,7 +63,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
           onClick={() => onChange(star)}
           className={star <= value ? 'bg-[color:var(--lkv-warning)] text-[color:var(--lkv-text-inverted)]' : 'text-[color:var(--lkv-text-muted)]'}
         >
-          <Icon name="StarIcon" size={18} variant="solid" />
+          <LKDVIcon name="points" size={18} />
         </IconButton>
       ))}
     </div>
@@ -108,7 +108,7 @@ function NewReportModal({ onClose, onSave }: { onClose: () => void; onSave: (f: 
               Suivant
             </Button>
           ) : (
-            <Button fullWidth onClick={() => onSave(form)} icon={<Icon name="CheckIcon" size={16} />}>
+            <Button fullWidth onClick={() => onSave(form)} icon={<LKDVIcon name="valider" size={16} />}>
               Créer le rapport
             </Button>
           )}
@@ -453,7 +453,7 @@ export default function RapportExpeditionPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] text-[color:var(--glass-label)] text-xs font-mono mb-4">
-                  <Icon name="DocumentChartBarIcon" size={12} variant="outline" />
+                  <LKDVIcon name="facture" size={12} />
                   Rapport post-expédition
                 </div>
                 <h1 className="font-display font-800 text-3xl sm:text-4xl text-white mb-3 tracking-tight">
@@ -466,7 +466,7 @@ export default function RapportExpeditionPage() {
               </div>
               <Button
                 onClick={() => setShowNewReportModal(true)}
-                icon={<Icon name="PlusIcon" size={18} variant="outline" />}
+                icon={<LKDVIcon name="plus" size={18} />}
                 className="shrink-0 whitespace-nowrap"
               >
                 Nouveau rapport
@@ -476,14 +476,14 @@ export default function RapportExpeditionPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
               {[
-                { label: 'Expéditions', value: reports.length.toString(), icon: 'MapIcon', color: 'text-[color:var(--lkv-info)]' },
-                { label: 'Score moyen', value: reports.length > 0 ? `${avgScore}/100` : '—', icon: 'TrophyIcon', color: 'text-[color:var(--lkv-warning)]' },
-                { label: 'Budget total', value: totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}€` : '—', icon: 'BanknotesIcon', color: totalBudgetDelta > 0 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-success)]' },
-                { label: 'Équipements', value: userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '—', icon: 'ArchiveBoxIcon', color: 'text-[color:var(--lkv-text-primary)]' },
+                { label: 'Expéditions', value: reports.length.toString(), icon: 'carte' as const, color: 'text-[color:var(--lkv-info)]' },
+                { label: 'Score moyen', value: reports.length > 0 ? `${avgScore}/100` : '—', icon: 'recompense' as const, color: 'text-[color:var(--lkv-warning)]' },
+                { label: 'Budget total', value: totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}€` : '—', icon: 'budget' as const, color: totalBudgetDelta > 0 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-success)]' },
+                { label: 'Équipements', value: userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '—', icon: 'historique' as const, color: 'text-[color:var(--lkv-text-primary)]' },
               ].map((stat) => (
                 <div key={stat.label} className="bg-white/5 border border-white/8 rounded-[var(--lkv-radius-md)] p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Icon name={stat.icon as never} size={14} variant="outline" className={stat.color} />
+                    <LKDVIcon name={stat.icon} size={14} className={stat.color} />
                     <span className="text-xs text-white/40">{stat.label}</span>
                   </div>
                   <p className={`font-display font-700 text-xl ${stat.color}`}>{stat.value}</p>
@@ -515,7 +515,7 @@ export default function RapportExpeditionPage() {
             <div className="max-w-5xl mx-auto">
               {savedSuccess && (
                 <div className="mb-4 flex items-center gap-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-success)]/30 bg-[color:var(--lkv-success-bg)] px-4 py-3 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
-                  <Icon name="CheckCircleIcon" size={16} variant="outline" />
+                  <LKDVIcon name="valider" size={16} />
                   {earnAwarded ? `Rapport créé avec succès · ${earnAwarded}.` : 'Rapport créé avec succès.'}
                 </div>
               )}
@@ -525,7 +525,7 @@ export default function RapportExpeditionPage() {
                   size="sm"
                   variant="secondary"
                   onClick={() => setShowNewReportModal(true)}
-                  icon={<Icon name="PlusIcon" size={14} variant="outline" />}
+                  icon={<LKDVIcon name="plus" size={14} />}
                 >
                   Nouveau
                 </Button>
@@ -533,7 +533,7 @@ export default function RapportExpeditionPage() {
 
               {!user ? (
                 <div className="text-center py-16 text-white/40">
-                  <Icon name="DocumentChartBarIcon" size={40} className="mx-auto mb-3 opacity-30" />
+                  <LKDVIcon name="facture" size={40} className="mx-auto mb-3 opacity-30" />
                   <p className="text-sm">Connectez-vous pour voir vos rapports d&apos;expédition.</p>
                 </div>
               ) : loadingReports ? (
@@ -542,14 +542,14 @@ export default function RapportExpeditionPage() {
                 </div>
               ) : reports.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-white/40 gap-4">
-                  <Icon name="DocumentChartBarIcon" size={48} className="opacity-20" />
+                  <LKDVIcon name="facture" size={48} className="opacity-20" />
                   <div className="text-center">
                     <p className="font-display font-700 text-white/60 text-lg mb-1">Aucune expédition enregistrée</p>
                     <p className="text-sm">Créez votre premier rapport pour commencer à analyser vos aventures.</p>
                   </div>
                   <Button
                     onClick={() => setShowNewReportModal(true)}
-                    icon={<Icon name="PlusIcon" size={16} variant="outline" />}
+                    icon={<LKDVIcon name="plus" size={16} />}
                   >
                     Créer mon premier rapport
                   </Button>
@@ -584,7 +584,7 @@ export default function RapportExpeditionPage() {
                         <div className={`flex items-center gap-1 text-sm font-medium ${report.budgetDelta > 0 ? 'text-red-400' : report.budgetDelta < 0 ? 'text-green-400' : 'text-white/40'}`}>
                           {report.budgetDelta !== 0 ? (
                             <>
-                              <Icon name={report.budgetDelta > 0 ? 'ArrowUpIcon' : 'ArrowDownIcon'} size={12} variant="outline" />
+                              <LKDVIcon name={report.budgetDelta > 0 ? 'haut' : 'bas'} size={12} />
                               {Math.abs(report.budgetDelta)}€ vs budget
                             </>
                           ) : (
@@ -607,7 +607,7 @@ export default function RapportExpeditionPage() {
               <div className="bg-card border border-cyan-500/20 rounded-[var(--lkv-radius-lg)] overflow-hidden">
                 <div className="flex items-center gap-3 p-4 border-b border-border bg-gradient-to-r from-cyan-500/5 to-transparent">
                   <div className="w-9 h-9 rounded-[var(--lkv-radius-md)] bg-gradient-to-br from-cyan-500 to-primary flex items-center justify-center">
-                    <Icon name="SparklesIcon" size={16} variant="outline" className="text-white" />
+                    <LKDVIcon name="ia" size={16} className="text-white" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-white">Analyse IA de vos expéditions</p>
@@ -649,7 +649,7 @@ export default function RapportExpeditionPage() {
                     {chatMessages.map((msg, i) => (
                       <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                         <div className={`w-7 h-7 rounded-[var(--lkv-radius-sm)] flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-primary' : 'bg-cyan-500/20'}`}>
-                          <Icon name={msg.role === 'user' ? 'UserIcon' : 'SparklesIcon'} size={12} variant="outline" className={msg.role === 'user' ? 'text-white' : 'text-cyan-400'} />
+                          <LKDVIcon name={msg.role === 'user' ? 'profil' : 'ia'} size={12} className={msg.role === 'user' ? 'text-white' : 'text-cyan-400'} />
                         </div>
                         <div className={`max-w-[80%] px-4 py-2.5 rounded-[var(--lkv-radius-md)] text-sm ${msg.role === 'user' ? 'bg-primary/20 text-white' : 'bg-white/5 text-white/80'}`}>
                           {msg.content}
@@ -659,7 +659,7 @@ export default function RapportExpeditionPage() {
                     {isLoading && (
                       <div className="flex gap-3">
                         <div className="w-7 h-7 rounded-[var(--lkv-radius-sm)] bg-cyan-500/20 flex items-center justify-center">
-                          <Icon name="SparklesIcon" size={12} variant="outline" className="text-cyan-400" />
+                          <LKDVIcon name="ia" size={12} className="text-cyan-400" />
                         </div>
                         <div className="px-4 py-2.5 rounded-[var(--lkv-radius-md)] bg-white/5 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -689,7 +689,7 @@ export default function RapportExpeditionPage() {
                       aria-label="Envoyer la question"
                       className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]"
                     >
-                      <Icon name="PaperAirplaneIcon" size={16} variant="outline" />
+                      <LKDVIcon name="partager" size={16} />
                     </IconButton>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-3">

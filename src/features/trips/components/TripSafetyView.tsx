@@ -1,11 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { TripFull, TripSafetyCheckpoint } from '../types/trip.types';
 import { Badge, Button, Card, EmptyState, type BadgeTone } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { checkTripSafetyPoint } from '../actions/checkTripSafetyPoint';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface TripSafetyViewProps {
   trip: TripFull;
@@ -18,22 +17,22 @@ const STATUS_CONFIG: Record<
   pending: {
     label: 'En attente',
     tone: 'warn',
-    icon: <Icon name="clock" size={14} />,
+    icon: <LKDVIcon name="duree" size={14} />,
   },
   checked: {
     label: 'Validé',
     tone: 'sage',
-    icon: <Icon name="check-circle2" size={14} />,
+    icon: <LKDVIcon name="valider" size={14} />,
   },
   missed: {
     label: 'En retard',
     tone: 'danger',
-    icon: <Icon name="alert-triangle" size={14} />,
+    icon: <LKDVIcon name="alerte" size={14} />,
   },
   alert_sent: {
     label: 'Alerte envoyée',
     tone: 'danger',
-    icon: <Icon name="radio" size={14} />,
+    icon: <LKDVIcon name="live" size={14} />,
   },
 };
 
@@ -108,7 +107,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
           <Button
             variant="secondary"
             size="sm"
-            icon={<Icon name="plus" size={16} />}
+            icon={<LKDVIcon name="plus" size={16} />}
             onClick={() => setInfoNote(true)}
           >
             Nouveau point
@@ -117,7 +116,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
       </div>
       {infoNote && (
         <Card tone="info" className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-info)]">
-          <Icon name="shield" size={16} className="shrink-0" />
+          <LKDVIcon name="securite" size={16} className="shrink-0" />
           <span>
             La configuration de nouveaux points de contrôle sera disponible prochainement.
           </span>
@@ -146,7 +145,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
                         {cp.label}
                       </div>
                       <div className="mt-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
-                        <Icon name="clock" size={13} />
+                        <LKDVIcon name="duree" size={13} />
                         {new Date(cp.scheduled_at).toLocaleString('fr-FR', {
                           day: 'numeric',
                           month: 'short',
@@ -156,7 +155,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
                       </div>
                       {cp.contact_name && (
                         <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
-                          <Icon name="phone-call" size={12} />
+                          <LKDVIcon name="telephone" size={12} />
                           <span>Contact : {cp.contact_name}</span>
                           {cp.contact_phone && (
                             <span className="font-medium text-[color:var(--lkv-text-primary)]">
@@ -182,7 +181,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
                           variant="secondary"
                           size="sm"
                           onClick={() => handleCheckIn(cp.id)}
-                          icon={<Icon name="check-circle2" size={13} />}
+                          icon={<LKDVIcon name="valider" size={13} />}
                           disabled={isPending}
                           aria-label={`Pointer le passage : ${cp.label}`}
                         >
@@ -198,7 +197,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
         </div>
       ) : (
         <EmptyState
-          icon={<Icon name="radio" size={32} />}
+          icon={<LKDVIcon name="live" size={32} />}
           title="Aucun point de contrôle configuré"
           description="Définissez des points de passage clés pour sécuriser votre progression et transmettre vos alertes en cas d'imprévu."
         />
@@ -208,7 +207,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
       <Card>
         <div className="flex items-start gap-[var(--space-4)]">
           <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-2)] text-[color:var(--lkv-text-primary)]">
-            <Icon name="phone-call" size={20} />
+            <LKDVIcon name="telephone" size={20} />
           </div>
           <div>
             <h3 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">

@@ -3,9 +3,9 @@
 import React, { useState, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import AppShell from '@/components/shell/AppShell';
 import { Button, Card, Chip } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const TRANSPORT_EMISSIONS: Record<string, number> = { 'avion-court': 255, 'avion-long': 195, train: 14, voiture: 171, bus: 89 };
 const ACCOMMODATION_EMISSIONS: Record<string, number> = { hotel: 31, camping: 4, refuge: 8, airbnb: 22 };
@@ -135,7 +135,7 @@ export default function CarbonePage() {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-[color:var(--lkv-surface-paper)]/15 border border-[color:var(--glass-border)] flex items-center justify-center">
-                  <Icon name="LeafIcon" size={20} className="text-[color:var(--lkv-text-inverted)]" variant="outline" />
+                  <LKDVIcon name="flore" size={20} className="text-[color:var(--lkv-text-inverted)]" />
                 </div>
                 <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-inverted)]/80 tracking-widest uppercase">Bilan carbone voyage</p>
               </div>

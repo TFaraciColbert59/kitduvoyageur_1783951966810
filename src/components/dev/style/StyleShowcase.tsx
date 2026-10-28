@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { Button, IconButton } from '@/components/ui';
 import { Chip } from '@/components/ui';
-import Icon from '@/components/ui/AppIcon';
 import LiquidGlass from '@/components/glass/LiquidGlass';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /* ------------------------------------------------------------------ *
  * Planche de style LKDV — LE style unique des boutons.
@@ -235,7 +235,7 @@ export default function StyleShowcase() {
           <Button variant="secondary">Action secondaire</Button>
           <Button variant="ghost">Discret</Button>
           <Button variant="destructive">Destructif</Button>
-          <IconButton aria-label="Plus"><Icon name="plus" size={18} /></IconButton>
+          <IconButton aria-label="Plus"><LKDVIcon name="plus" size={18} /></IconButton>
           <IconButton
             title="J'aime"
             aria-label="J'aime"
@@ -243,14 +243,14 @@ export default function StyleShowcase() {
             aria-pressed
             style={{ width: 'auto', paddingInline: '10px' }}
           >
-            <span className="inline-flex items-center gap-1.5"><Icon name="heart" size={14} /><span className="tabular-nums">{128}</span></span>
+            <span className="inline-flex items-center gap-1.5"><LKDVIcon name="favoris" size={14} /><span className="tabular-nums">{128}</span></span>
           </IconButton>
           <IconButton
             title="Commenter"
             aria-label="Commenter"
             style={{ width: 'auto', paddingInline: '10px' }}
           >
-            <span className="inline-flex items-center gap-1.5"><Icon name="message-square" size={14} /><span className="tabular-nums">{24}</span></span>
+            <span className="inline-flex items-center gap-1.5"><LKDVIcon name="messages" size={14} /><span className="tabular-nums">{24}</span></span>
           </IconButton>
           <Button variant="primary" disabled>Désactivé</Button>
         </Section>
@@ -268,12 +268,12 @@ export default function StyleShowcase() {
         {/* 3 — Sur photo (même pile, mêmes pastilles) */}
         <Section photo title="3 · Sur photo" hint="exactement les mêmes composants que la référence (4) — ici sur une photo sunrise">
           <RefPill label="J'aime" width={84}>
-            <Icon name="heart" size={15} color="#ffffff" /> 2
+            <LKDVIcon name="favoris" size={15} /> 2
           </RefPill>
           <RefPill label="Commenter" width={84}>
-            <Icon name="message-square" size={15} color="#ffffff" /> 7
+            <LKDVIcon name="messages" size={15} /> 7
           </RefPill>
-          <Button variant="primary" icon={<Icon name="plus" size={15} />}>Participer</Button>
+          <Button variant="primary" icon={<LKDVIcon name="plus" size={15} />}>Participer</Button>
           <span className="glass-pill text-[10px] font-mono font-bold text-white border border-white/40" style={{ background: 'var(--btn-tint)' }}>
             Il y a 32 j
           </span>
@@ -286,18 +286,18 @@ export default function StyleShowcase() {
             <div className="absolute inset-x-3 bottom-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <RefPill label="J'aime" width={84}>
-                  <Icon name="heart" size={15} color="#ffffff" /> 2
+                  <LKDVIcon name="favoris" size={15} /> 2
                 </RefPill>
                 <RefPill label="Commenter" width={84}>
-                  <Icon name="message-square" size={15} color="#ffffff" /> 7
+                  <LKDVIcon name="messages" size={15} /> 7
                 </RefPill>
               </div>
               <div className="flex items-center gap-2.5">
                 <RefPill label="Partager">
-                  <Icon name="send" size={15} color="#ffffff" />
+                  <LKDVIcon name="partager" size={15} />
                 </RefPill>
                 <RefPill label="Options">
-                  <Icon name="ellipsis" size={16} color="#ffffff" />
+                  <LKDVIcon name="plus_options" size={16} />
                 </RefPill>
               </div>
             </div>

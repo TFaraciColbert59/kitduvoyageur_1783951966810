@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import { compasOpenTripAction } from '../server/compasActions';
 import type { CompasTripChoice } from '../server/myTrips';
 import type { TripInvitationView } from '../server/invitationActions';
@@ -12,6 +11,7 @@ import { useTranslation } from '@/lib/i18n/context';
 import { formatDate } from '@/lib/i18n/format';
 import type { Locale } from '@/lib/i18n/locale';
 import type { CompasT } from './compasTypes';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const DAY: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', timeZone: 'UTC' };
 
@@ -82,7 +82,7 @@ export function CompasTripPicker({
               onClick={() => void open(trip.id)}
             >
               <span className="cp-thumb">
-                <Icon name="map" size={20} />
+                <LKDVIcon name="carte" size={20} />
               </span>
               <span className="cp-row__t">
                 <b>{trip.title}</b>
@@ -95,7 +95,7 @@ export function CompasTripPicker({
                 {busy === trip.id ? (
                   <span className="cp-sub">{t('compas.picker.opening')}</span>
                 ) : (
-                  <Icon name="chevron-right" size={16} />
+                  <LKDVIcon name="suivant" size={16} />
                 )}
               </span>
             </button>
@@ -107,7 +107,7 @@ export function CompasTripPicker({
           </p>
         )}
         <Link className="cp-btn cp-btn--soft" href="/compas?nouvelle=1">
-          <Icon name="plus" size={16} />
+          <LKDVIcon name="plus" size={16} />
           {t('compas.picker.newAdventure')}
         </Link>
       </section>

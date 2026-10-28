@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import React, { useState, useTransition } from 'react';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
@@ -9,6 +7,7 @@ import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { TripSafetyView } from './TripSafetyView';
 import { TripItineraryTab } from './TripItineraryTab';
 import { getTripPhaseDetails } from '../engine/temporalPhaseEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TripLiveCockpitViewProps {
   trip: TripFull;
@@ -176,7 +175,7 @@ export function TripLiveCockpitView({
           variant={isSunMode ? 'primary' : 'secondary'}
           size="sm"
           onClick={() => setIsSunMode(!isSunMode)}
-          icon={<Icon name={isSunMode ? 'sun' : 'moon'} size={16} />}
+          icon={<LKDVIcon name={isSunMode ? 'soleil' : 'lune'} size={16} />}
           aria-pressed={isSunMode}
           title="Bascule en contraste élevé plein soleil pour consultation sous forte luminosité"
         >
@@ -196,7 +195,7 @@ export function TripLiveCockpitView({
             size="sm"
             disabled={activeDay <= 1}
             onClick={() => setActiveDay((prev) => Math.max(1, prev - 1))}
-            icon={<Icon name="chevron-left" size={16} />}
+            icon={<LKDVIcon name="retour" size={16} />}
           >
             <span className="hidden sm:inline">Jour précédent</span>
           </Button>
@@ -226,7 +225,7 @@ export function TripLiveCockpitView({
             size="sm"
             disabled={activeDay >= calculatedTotalDays}
             onClick={() => setActiveDay((prev) => Math.min(calculatedTotalDays, prev + 1))}
-            icon={<Icon name="chevron-right" size={16} />}
+            icon={<LKDVIcon name="suivant" size={16} />}
             iconPosition="trailing"
           >
             <span className="hidden sm:inline">Jour suivant</span>
@@ -276,8 +275,8 @@ export function TripLiveCockpitView({
             <div className="grid grid-cols-2 gap-[var(--space-2)] pt-[var(--space-2)] sm:grid-cols-4 sm:gap-[var(--space-3)]">
               <div className={`rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] ${metricCardClass}`}>
                 <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
-                  <Icon
-                    name="navigation"
+                  <LKDVIcon
+                    name="gps"
                     size={13}
                     className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'}
                   />
@@ -294,8 +293,8 @@ export function TripLiveCockpitView({
 
               <div className={`rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] ${metricCardClass}`}>
                 <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
-                  <Icon
-                    name="mountain"
+                  <LKDVIcon
+                    name="montagne"
                     size={13}
                     className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'}
                   />
@@ -312,8 +311,8 @@ export function TripLiveCockpitView({
 
               <div className={`rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] ${metricCardClass}`}>
                 <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
-                  <Icon
-                    name="mountain"
+                  <LKDVIcon
+                    name="montagne"
                     size={13}
                     className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'}
                   />
@@ -330,8 +329,8 @@ export function TripLiveCockpitView({
 
               <div className={`rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] ${metricCardClass}`}>
                 <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
-                  <Icon
-                    name="home"
+                  <LKDVIcon
+                    name="accueil"
                     size={13}
                     className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'}
                   />
@@ -356,7 +355,7 @@ export function TripLiveCockpitView({
                     : 'border-[color:var(--lkv-primary)]/10 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
                 }`}
               >
-                <Icon name="droplets" size={16} className="mt-0.5 shrink-0" />
+                <LKDVIcon name="eau_potable" size={16} className="mt-0.5 shrink-0" />
                 <div>
                   <span className="font-bold">Déplacement : </span>
                   Progression en{' '}
@@ -370,8 +369,8 @@ export function TripLiveCockpitView({
           </div>
         ) : (
           <div className="py-[var(--space-6)] text-center">
-            <Icon
-              name="compass"
+            <LKDVIcon
+              name="boussole"
               size={40}
               className="mx-auto mb-2 text-[color:var(--lkv-text-secondary)]/60"
             />
@@ -390,7 +389,7 @@ export function TripLiveCockpitView({
         >
           <div className="mb-[var(--space-3)] flex items-center justify-between">
             <div className="flex items-center gap-[var(--space-2)]">
-              <Icon name="credit-card" size={20} className="text-[color:var(--lkv-success)]" />
+              <LKDVIcon name="paiement" size={20} className="text-[color:var(--lkv-success)]" />
               <h4 className="text-[length:var(--lkv-text-footnote)] font-bold">
                 Dépense Express Terrain
               </h4>
@@ -411,7 +410,7 @@ export function TripLiveCockpitView({
             <Button
               variant="primary"
               onClick={() => setIsQuickExpenseOpen(true)}
-              icon={<Icon name="plus" size={18} />}
+              icon={<LKDVIcon name="plus" size={18} />}
               fullWidth
             >
               Saisir une dépense
@@ -423,7 +422,7 @@ export function TripLiveCockpitView({
                   tone="sage"
                   className="flex items-center gap-[var(--space-2)] p-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]"
                 >
-                  <Icon name="check-circle2" size={16} />
+                  <LKDVIcon name="valider" size={16} />
                   <span>{expenseSuccessMsg}</span>
                 </Card>
               )}
@@ -433,7 +432,7 @@ export function TripLiveCockpitView({
                   tone="danger"
                   className="flex items-center gap-[var(--space-2)] p-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-danger-dark)]"
                 >
-                  <Icon name="alert-triangle" size={16} />
+                  <LKDVIcon name="alerte" size={16} />
                   <span>{expenseErrorMsg}</span>
                 </Card>
               )}
@@ -515,7 +514,7 @@ export function TripLiveCockpitView({
         <Card className={isSunMode ? 'border-white/20 bg-black/80 text-white' : ''}>
           <div className="mb-[var(--space-3)] flex items-center justify-between">
             <div className="flex items-center gap-[var(--space-2)]">
-              <Icon name="shield" size={20} className="text-[color:var(--lkv-danger)]" />
+              <LKDVIcon name="securite" size={20} className="text-[color:var(--lkv-danger)]" />
               <h4 className="text-[length:var(--lkv-text-footnote)] font-bold">Secours & Urgences</h4>
             </div>
             <Badge tone="danger">Hors-Ligne</Badge>
@@ -528,7 +527,7 @@ export function TripLiveCockpitView({
                 href="tel:112"
                 className="flex min-h-[48px] items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] p-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-extrabold text-[color:var(--lkv-danger)] shadow-elevation-2 transition-colors hover:brightness-[1.05]"
               >
-                <Icon name="phone-call" size={16} />
+                <LKDVIcon name="telephone" size={16} />
                 <span>Appel 112</span>
               </a>
 
@@ -536,7 +535,7 @@ export function TripLiveCockpitView({
                 href="sms:114"
                 className="flex min-h-[48px] items-center justify-center gap-[var(--space-2)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-extrabold text-[color:var(--lkv-danger)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
               >
-                <Icon name="message-square" size={16} />
+                <LKDVIcon name="messages" size={16} />
                 <span>SMS 114</span>
               </a>
             </div>
@@ -567,9 +566,9 @@ export function TripLiveCockpitView({
                 title="Copier les coordonnées pour les secours"
               >
                 {copiedCoords ? (
-                  <Icon name="check" size={16} className="text-[color:var(--lkv-success)]" />
+                  <LKDVIcon name="valider" size={16} className="text-[color:var(--lkv-success)]" />
                 ) : (
-                  <Icon name="copy" size={16} />
+                  <LKDVIcon name="dupliquer" size={16} />
                 )}
               </IconButton>
             </div>
@@ -590,7 +589,7 @@ export function TripLiveCockpitView({
             size="sm"
             onClick={() => setShowSafetyCheckpoints(!showSafetyCheckpoints)}
             aria-pressed={showSafetyCheckpoints}
-            icon={<Icon name="shield" size={14} />}
+            icon={<LKDVIcon name="securite" size={14} />}
           >
             {showSafetyCheckpoints
               ? 'Masquer les jalons sécurité'
@@ -603,7 +602,7 @@ export function TripLiveCockpitView({
             size="sm"
             onClick={() => setShowFullItinerary(!showFullItinerary)}
             aria-pressed={showFullItinerary}
-            icon={<Icon name="navigation" size={14} />}
+            icon={<LKDVIcon name="gps" size={14} />}
           >
             {showFullItinerary ? 'Masquer l’itinéraire complet' : 'Voir tout le tracé'}
           </Button>
@@ -612,7 +611,7 @@ export function TripLiveCockpitView({
             href="/progression"
             className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
           >
-            <Icon name="award" size={14} />
+            <LKDVIcon name="badge" size={14} />
             <span>Ma progression LKDV</span>
           </Link>
         </div>

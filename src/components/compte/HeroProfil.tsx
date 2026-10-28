@@ -3,10 +3,10 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { Button, Card, IconButton } from '@/components/ui';
 import { UserProfile } from '@/lib/types/profile';
 import UserFieldSignature from '@/components/identity/UserFieldSignature';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface HeroProfilProps {
   profile: UserProfile;
@@ -45,7 +45,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
             variant="secondary"
             size="sm"
             onClick={onEditProfile}
-            icon={<Icon name="PencilSquareIcon" size={14} aria-hidden="true" />}
+            icon={<LKDVIcon name="modifier" size={14} aria-hidden="true" />}
           >
             Modifier profil
           </Button>
@@ -53,7 +53,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
           <Button
             size="sm"
             onClick={onShareProfile}
-            icon={<Icon name="ShareIcon" size={14} aria-hidden="true" />}
+            icon={<LKDVIcon name="partager" size={14} aria-hidden="true" />}
           >
             Partager
           </Button>
@@ -83,7 +83,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
                 aria-label="Changer de photo"
                 className="absolute -bottom-1 -right-1"
               >
-                <Icon name="image-plus" size={12} aria-hidden="true" />
+                <LKDVIcon name="photo" size={12} aria-hidden="true" />
               </IconButton>
             </div>
 
@@ -112,11 +112,11 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
               {/* Meta tags */}
               <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono text-[color:var(--lkv-text-muted)]">
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600-ink)]">
-                  <Icon name="MapPinIcon" size={12} className="text-[color:var(--lkv-warning-dark)]" />
+                  <LKDVIcon name="point_interet" size={12} className="text-[color:var(--lkv-warning-dark)]" />
                   {profile.location}
                 </span>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600-ink)]">
-                  <Icon name="CalendarIcon" size={12} className="text-[color:var(--lkv-secondary-ink)]" />
+                  <LKDVIcon name="calendrier" size={12} className="text-[color:var(--lkv-secondary-ink)]" />
                   {profile.tenure}
                 </span>
                 <Link
@@ -139,7 +139,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
             >
               <span>🎒</span>
               <span>Mon Matériel</span>
-              <Icon name="ArrowRightIcon" size={12} />
+              <LKDVIcon name="suivant" size={12} />
             </Link>
           </div>
 

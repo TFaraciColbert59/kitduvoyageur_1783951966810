@@ -1,8 +1,7 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import type { TripPhase } from '../engine/temporalPhaseEngine';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TripPhaseControllerProps {
   activePhase: TripPhase;
@@ -39,19 +38,19 @@ export function TripPhaseController({
         daysUntilStart !== null && daysUntilStart !== undefined && daysUntilStart > 0
           ? `J-${daysUntilStart}`
           : 'Avant départ',
-      icon: <Icon name="compass" size={18} />,
+      icon: <LKDVIcon name="boussole" size={18} />,
     },
     {
       id: 'live',
       label: 'Vivre',
       subLabel: dayIndex && totalDays ? `Jour ${dayIndex}/${totalDays}` : 'Cockpit terrain',
-      icon: <Icon name="flame" size={18} />,
+      icon: <LKDVIcon name="feu" size={18} />,
     },
     {
       id: 'recount',
       label: 'Raconter',
       subLabel: 'Récits & bilan',
-      icon: <Icon name="book-open" size={18} />,
+      icon: <LKDVIcon name="preparateur" size={18} />,
     },
   ];
 

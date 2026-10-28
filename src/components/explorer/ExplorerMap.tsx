@@ -12,6 +12,7 @@ import TerrainLiveLayer from '@/features/terrain-live/components/TerrainLiveLaye
 import type { TerrainLiveReport } from '@/features/terrain-live/lib/terrainDisplay';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
 import dynamicImport from 'next/dynamic';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // T20 — couche personnelle des découvertes : chargée à la demande (client),
 // jamais bloquante, limitée à des identifiants territoriaux (aucune coordonnée).
@@ -558,11 +559,7 @@ export default function ExplorerMap({
             aria-label="Carte standard (Plan)"
             aria-pressed={tileMode === 'osm'}
           >
-            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path>
-              <path d="M9 3v12"></path>
-              <path d="M15 6v12"></path>
-            </svg>
+            <LKDVIcon name="carte" size={15} />
           </IconButton>
           <IconButton
             variant={tileMode === 'topo' ? 'solid' : 'ghost'}
@@ -572,9 +569,7 @@ export default function ExplorerMap({
             aria-label="Relief / Topographie"
             aria-pressed={tileMode === 'topo'}
           >
-            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
-            </svg>
+            <LKDVIcon name="montagne" size={15} />
           </IconButton>
           <IconButton
             variant={tileMode === 'satellite' ? 'solid' : 'ghost'}
@@ -584,11 +579,7 @@ export default function ExplorerMap({
             aria-label="Vue Satellite"
             aria-pressed={tileMode === 'satellite'}
           >
-            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
+            <LKDVIcon name="monde" size={15} />
           </IconButton>
         </Card>
       </div>
@@ -603,10 +594,7 @@ export default function ExplorerMap({
             title="Recentrer sur ma position"
             aria-label="Recentrer sur ma position"
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
-            </svg>
+            <LKDVIcon name="recentrer" size={14} />
           </IconButton>
           <Divider orientation="vertical" spacing="none" className="h-px w-4" />
           <IconButton

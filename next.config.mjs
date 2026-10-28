@@ -61,9 +61,6 @@ const nextConfig = {
   ],
   experimental: {
     optimizePackageImports: [
-      '@heroicons/react/24/outline',
-      '@heroicons/react/24/solid',
-      '@heroicons/react',
       '@radix-ui/react-dialog',
       '@tanstack/react-query',
       '@tanstack/react-virtual',
@@ -71,7 +68,6 @@ const nextConfig = {
       'clsx',
       'tailwind-merge',
       'framer-motion',
-      'lucide-react',
       'recharts',
       'zustand',
     ],

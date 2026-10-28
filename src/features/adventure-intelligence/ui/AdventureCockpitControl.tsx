@@ -12,13 +12,13 @@
  * dialogue natif ; sans plan aventure identifié, rien n'est monté.
  */
 import { useEffect, useRef, useState } from 'react';
-import Icon from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui';
 import AdventureCockpit from './AdventureCockpit';
 import {
   useAdventureCockpit,
   type AdventureTrackingFix,
 } from './useAdventureCockpit';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface AdventureCockpitControlProps {
   adventureId: string | null;
@@ -108,7 +108,7 @@ export default function AdventureCockpitControl({
         aria-haspopup="dialog"
         className="absolute right-3.5 bottom-[calc(var(--safe-bottom)+152px)] z-[var(--z-fab)] shadow-md md:right-6"
       >
-        <Icon name="compass" size={18} aria-hidden="true" />
+        <LKDVIcon name="boussole" size={18} aria-hidden="true" />
         {error ? (
           <span
             aria-hidden="true"
@@ -136,7 +136,7 @@ export default function AdventureCockpitControl({
                 onClick={() => setOpen(false)}
                 aria-label="Fermer le cockpit"
               >
-                <Icon name="x" size={18} aria-hidden="true" />
+                <LKDVIcon name="fermer" size={18} aria-hidden="true" />
               </IconButton>
             </div>
 

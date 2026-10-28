@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n/locale';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /**
  * M02 — Registre canonique des destinations principales de la barre mobile.
@@ -29,7 +30,7 @@ export interface Destination {
   label: { fr: string; en: string; es: string; de: string; it: string };
   ariaLabel: string;
   /** Nom de glyphe résolu par la primitive canonique `Icon`. */
-  iconName: string;
+  iconName: LKDVIconName;
   /**
    * Préfixes reconnus. Une route n'appartient qu'à une destination :
    * aucun chemin ne doit apparaître dans deux destinations.
@@ -47,7 +48,7 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/hub',
     label: { fr: 'Hub', en: 'Hub', es: 'Hub', de: 'Hub', it: 'Hub' },
     ariaLabel: 'Hub : aventure active, préparation et voyages',
-    iconName: 'tent',
+    iconName: 'tente',
     matchPaths: [
       '/hub',
       '/voyages',
@@ -69,7 +70,7 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/communaute',
     label: { fr: 'Communauté', en: 'Community', es: 'Comunidad', de: 'Community', it: 'Comunità' },
     ariaLabel: 'Communauté, clubs, événements',
-    iconName: 'users',
+    iconName: 'communaute',
     matchPaths: [
       '/communaute',
       '/communaute-pro',
@@ -87,7 +88,7 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/explorer',
     label: { fr: 'Explorer', en: 'Explore', es: 'Explorar', de: 'Entdecken', it: 'Esplora' },
     ariaLabel: 'Explorer les sentiers, pays et destinations',
-    iconName: 'compass',
+    iconName: 'boussole',
     matchPaths: ['/explorer', '/carte-3d', '/hors-ligne', '/pays'],
   },
   {
@@ -95,7 +96,7 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/messagerie',
     label: { fr: 'Messages', en: 'Messages', es: 'Mensajes', de: 'Nachrichten', it: 'Messaggi' },
     ariaLabel: 'Messages : conversations et demandes',
-    iconName: 'message-square',
+    iconName: 'messages',
     matchPaths: ['/messagerie'],
   },
   {
@@ -103,7 +104,7 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/compte',
     label: { fr: 'Compte', en: 'Account', es: 'Cuenta', de: 'Konto', it: 'Account' },
     ariaLabel: 'Mon compte voyageur et ma progression',
-    iconName: 'user',
+    iconName: 'profil',
     matchPaths: ['/compte', '/connexion', '/inscription', '/profil', '/progression'],
   },
 ] as const;

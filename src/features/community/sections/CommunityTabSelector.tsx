@@ -1,22 +1,23 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/Icon';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 export type SectionTabId = 'recherche' | 'pour-toi' | 'carnets' | 'clubs' | 'sorties';
 
 export interface SectionTab {
   id: SectionTabId;
   label: string;
-  icon: string;
+  icon: LKDVIconName;
 }
 
 export const SECTION_TABS: SectionTab[] = [
-  { id: 'recherche', label: 'Recherche', icon: 'search' },
-  { id: 'pour-toi', label: 'Pour toi', icon: 'sparkles' },
-  { id: 'carnets', label: 'Carnets', icon: 'book-open' },
-  { id: 'clubs', label: 'Clubs', icon: 'users' },
-  { id: 'sorties', label: 'Sorties', icon: 'compass' },
+  { id: 'recherche', label: 'Recherche', icon: 'recherche' },
+  { id: 'pour-toi', label: 'Pour toi', icon: 'ia' },
+  { id: 'carnets', label: 'Carnets', icon: 'preparateur' },
+  { id: 'clubs', label: 'Clubs', icon: 'communaute' },
+  { id: 'sorties', label: 'Sorties', icon: 'boussole' },
 ];
 
 /** Sélecteur 4 cellules, 48 px, même verre/lentille que la barre basse du Compte. */
@@ -45,7 +46,7 @@ export function CommunityTabSelector({
           className="lkdv-tab-btn"
           onClick={() => onChange(tab.id)}
         >
-          <Icon name={tab.icon} size={18} aria-hidden="true" />
+          <LKDVIcon name={tab.icon} size={18} aria-hidden="true" />
           <span>{tab.label}</span>
         </button>
       ))}

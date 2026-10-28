@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface BadgeItem {
   id: string;
@@ -42,10 +43,7 @@ function formatEarnedAt(value?: string): string {
 }
 
 const MEDAL_ICON = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <circle cx="12" cy="9" r="5.2" />
-    <path d="m8.6 13.2-2.1 7.3 5.5-2.9 5.5 2.9-2.1-7.3" />
-  </svg>
+  <LKDVIcon name="badge" aria-hidden="true" />
 );
 
 /**

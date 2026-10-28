@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import React, { useState } from 'react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface DesktopRightPanelProps {
   averageSpeedKmH?: number;
@@ -213,26 +214,19 @@ export default function DesktopRightPanel({
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {remainingDistanceKm != null && remainingDistanceKm > 0 && (
                     <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-text-primary)] inline-flex items-center gap-1">
-                      <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-                        <path d="M4 21l16-8L4 5v6l10 2-10 2z" />
-                      </svg>
+                      <LKDVIcon name="gps" size={10} className="w-2.5 h-2.5 stroke-[2]" />
                       {remainingDistanceKm.toFixed(1)} km
                     </span>
                   )}
                   {elevationGainM != null && elevationGainM > 0 && (
                     <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-text-primary)] inline-flex items-center gap-1">
-                      <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-                        <path d="M4 20l6-12 4 6 4-2 2 8" />
-                      </svg>
+                      <LKDVIcon name="montagne" size={10} className="w-2.5 h-2.5 stroke-[2]" />
                       +{Math.round(elevationGainM)} m
                     </span>
                   )}
                   {weatherCondition && (
                     <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-text-primary)] inline-flex items-center gap-1">
-                      <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M12 7v5l3 2" />
-                      </svg>
+                      <LKDVIcon name="duree" size={10} className="w-2.5 h-2.5 stroke-[2]" />
                       {weatherCondition}
                     </span>
                   )}
@@ -279,10 +273,7 @@ export default function DesktopRightPanel({
             aria-label="Envoyer la question"
             className="w-8 h-8 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex items-center justify-center active:scale-95 transition-transform"
           >
-            <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18 10c0 4-2 6-6 6s-6-2-6-6M12 16v4" />
-            </svg>
+            <LKDVIcon name="micro" size={14} className="w-3.5 h-3.5 stroke-[2]" />
           </button>
         </form>
       </div>

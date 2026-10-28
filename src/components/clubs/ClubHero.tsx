@@ -1,8 +1,8 @@
 ﻿'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ClubHeroProps {
   club: {
@@ -100,7 +100,7 @@ export default function ClubHero({
               onClick={onShare}
               aria-label="Partager le club"
             >
-              <Icon name="ShareIcon" size={16} aria-hidden="true" />
+              <LKDVIcon name="partager" size={16} aria-hidden="true" />
             </IconButton>
           )}
           <Button

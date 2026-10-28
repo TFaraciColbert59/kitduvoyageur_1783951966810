@@ -231,7 +231,7 @@ function BookTab() {
                           aria-label={t('compas.v5.prevoir.linkLabel', { action: t('compas.v5.prevoir.bookOpen'), name: step.label })}
                         >
                           {t('compas.v5.prevoir.bookOpen')}
-                          <V5Icon name="external" size="xs" />
+                          <V5Icon name='lien' size="xs" />
                         </a>
                       )}
                       {done ? (
@@ -275,7 +275,7 @@ function BookTab() {
                 return (
                   <li key={b.id} className="v5-li">
                     <span className="fi" aria-hidden="true">
-                      <V5Icon name={b.vertical === 'hotel' ? 'bed' : b.vertical === 'flight' ? 'plane' : b.vertical === 'car' ? 'car' : 'cart'} size="s" />
+                      <V5Icon name={b.vertical === 'hotel' ? 'hotel' : b.vertical === 'flight' ? 'avion' : b.vertical === 'car' ? 'voiture' : 'panier'} size="s" />
                     </span>
                     <span className="t">
                       <b>{vertical}</b>
@@ -352,7 +352,7 @@ function NightCardView({ card, booked, onBooked }: { card: NightCard; booked: bo
         </div>
       ) : (
         <div className="ill">
-          <V5Icon name={shown ? stayIcon(shown.kind) : 'bed'} />
+          <V5Icon name={shown ? stayIcon(shown.kind) : 'hotel'} />
           <div className="t">
             <small>{when}</small>
             <b>{shown ? shown.name : t('compas.v5.prevoir.noOptions', { day: card.day })}</b>
@@ -405,7 +405,7 @@ function NightCardView({ card, booked, onBooked }: { card: NightCard; booked: bo
                 aria-label={t('compas.v5.prevoir.linkLabel', { action: shown.partner ? t('compas.v5.prevoir.linkPartner', { partner: shown.partner }) : t('compas.v5.prevoir.linkOfficial'), name: shown.name })}
               >
                 {shown.partner ? t('compas.v5.prevoir.linkPartner', { partner: shown.partner }) : t('compas.v5.prevoir.linkOfficial')}
-                <V5Icon name="external" size="xs" />
+                <V5Icon name='lien' size="xs" />
               </a>
             )}
             {canEdit && !chosen && (
@@ -543,7 +543,7 @@ function TransportCardView({
               aria-label={t('compas.v5.prevoir.linkLabel', { action: shown.partner ? t('compas.v5.prevoir.linkPartner', { partner: shown.partner }) : t('compas.v5.prevoir.linkOfficial'), name: shown.label })}
             >
               {shown.partner ? t('compas.v5.prevoir.linkPartner', { partner: shown.partner }) : t('compas.v5.prevoir.linkOfficial')}
-              <V5Icon name="external" size="xs" />
+              <V5Icon name='lien' size="xs" />
             </a>
           )}
           {canEdit && !chosen && (
@@ -578,7 +578,7 @@ function BuyTab() {
         <Grp>
           <div className="v5-li">
             <span className="fi" aria-hidden="true">
-              <V5Icon name="check" size="s" />
+              <V5Icon name='valider' size="s" />
             </span>
             <span className="t">
               <b>{t('compas.v5.prevoir.buyEmptyTitle')}</b>
@@ -595,7 +595,7 @@ function BuyTab() {
           </p>
           {shop && (
             <div className="v5-line info">
-              <V5Icon name="cart" size="s" />
+              <V5Icon name='panier' size="s" />
               <span>{t('compas.v5.prevoir.routeShop', { name: shop.label, distance: formatDistance(locale, shop.distanceM), day: shop.day })}</span>
               <MBtn onClick={() => api.openSpace('day', { day: shop.day - 1 })}>{t('compas.v5.prevoir.seeDay', { day: shop.day })}</MBtn>
             </div>
@@ -714,8 +714,8 @@ function BuyCard({ entry, solo }: { entry: BuyEntry; solo: boolean }) {
 export const prevoirDrawer: V5DrawerDef = {
   space: 'prevoir',
   tabs: (api) => [
-    { icon: 'bed', label: api.t('compas.v5.prevoir.tabBook') },
-    { icon: 'cart', label: api.t('compas.v5.prevoir.tabBuy') },
+    { icon: 'hotel', label: api.t('compas.v5.prevoir.tabBook') },
+    { icon: 'panier', label: api.t('compas.v5.prevoir.tabBuy') },
   ],
   title: (api) => (Math.min(api.tab, 1) === 0 ? api.t('compas.v5.prevoir.tabBook') : api.t('compas.v5.prevoir.tabBuy')),
   subtitle: (api) => {

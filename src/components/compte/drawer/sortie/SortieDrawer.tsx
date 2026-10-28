@@ -2,15 +2,6 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Backpack,
-  Camera,
-  Check,
-  MessageCircle,
-  Mountain,
-  Route,
-  Users,
-} from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { OutingDetail } from '@/features/compte/server/sorties';
@@ -22,6 +13,7 @@ import { OutingPhotos } from './OutingPhotos';
 import { OutingGear } from './OutingGear';
 import { OutingParticipants } from './OutingParticipants';
 import { OutingComments } from './OutingComments';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -36,12 +28,12 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 const TABS = [
-  { id: 'resume', label: 'Résumé', icon: <Route size={18} aria-hidden="true" /> },
-  { id: 'trace', label: 'Trace & relief', icon: <Mountain size={18} aria-hidden="true" /> },
-  { id: 'photos', label: 'Photos', icon: <Camera size={18} aria-hidden="true" /> },
-  { id: 'materiel', label: 'Matériel', icon: <Backpack size={18} aria-hidden="true" /> },
-  { id: 'compagnons', label: 'Compagnons', icon: <Users size={18} aria-hidden="true" /> },
-  { id: 'echanges', label: 'Échanges', icon: <MessageCircle size={18} aria-hidden="true" /> },
+  { id: 'resume', label: 'Résumé', icon: <LKDVIcon name="itineraire" size={18} aria-hidden="true" /> },
+  { id: 'trace', label: 'Trace & relief', icon: <LKDVIcon name="montagne" size={18} aria-hidden="true" /> },
+  { id: 'photos', label: 'Photos', icon: <LKDVIcon name="camera" size={18} aria-hidden="true" /> },
+  { id: 'materiel', label: 'Matériel', icon: <LKDVIcon name="sac" size={18} aria-hidden="true" /> },
+  { id: 'compagnons', label: 'Compagnons', icon: <LKDVIcon name="communaute" size={18} aria-hidden="true" /> },
+  { id: 'echanges', label: 'Échanges', icon: <LKDVIcon name="messages" size={18} aria-hidden="true" /> },
 ] as const;
 
 type Toast = { text: string; tone: 'ok' | 'error' } | null;
@@ -359,7 +351,7 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
       <DrawerShell tabs={tabs} activeIndex={tab} onIndexChange={setTab} />
       {toast ? (
         <div className={`lkdv-sortie-toast ${toast.tone}`} role="status" aria-live="polite">
-          {toast.tone === 'ok' ? <Check size={14} aria-hidden="true" /> : null}
+          {toast.tone === 'ok' ? <LKDVIcon name="valider" size={14} aria-hidden="true" /> : null}
           {toast.text}
         </div>
       ) : null}

@@ -1,5 +1,4 @@
 import { rainLabel } from '@/features/materiel/services/getWeather';
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
@@ -7,6 +6,7 @@ import { formatHikeDuration } from '../../engine/activityTypes';
 import { decideHikingNavigation } from '../../engine/hikingNavigation';
 import type { HubHikingContext } from '../../server/getHubAdventureData';
 import type { TripPoi } from '@/features/trips/types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * H-ACT §3 — Blocs d'aperçu du profil Randonnée : CTA cockpit, parcours
@@ -35,7 +35,7 @@ export function CtaRandonneeBlock({
         data-testid="hub-cta-randonnee"
         data-navigation-ready={decision.enabled ? 'true' : 'false'}
       >
-        <Icon name={decision.enabled ? 'play' : 'route'} size={16} aria-hidden="true" />
+        <LKDVIcon name={decision.enabled ? 'lecture' : 'itineraire'} size={16} aria-hidden="true" />
         <span>{decision.label}</span>
         <span className="sr-only">— randonnée {slug}</span>
       </Link>
@@ -60,8 +60,8 @@ export function ParcoursBlock({ hiking, slug }: { hiking: HubHikingContext | nul
   return (
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Parcours">
       <div className="flex items-center gap-2">
-        <Icon
-          name="route"
+        <LKDVIcon
+          name="itineraire"
           size={15}
           className="shrink-0 text-[var(--lkv-text-secondary)]"
           aria-hidden="true"
@@ -72,17 +72,17 @@ export function ParcoursBlock({ hiking, slug }: { hiking: HubHikingContext | nul
       </div>
       <div className="grid grid-cols-3 gap-2 mt-3">
         <Stat
-          icon={<Icon name="footprints" size={13} aria-hidden="true" />}
+          icon={<LKDVIcon name="randonnee" size={13} aria-hidden="true" />}
           label="Distance"
           value={fmt(hiking?.distanceKm, 'km')}
         />
         <Stat
-          icon={<Icon name="mountain" size={13} aria-hidden="true" />}
+          icon={<LKDVIcon name="montagne" size={13} aria-hidden="true" />}
           label="D+ / D−"
           value={`${fmt(hiking?.elevationGainM, 'm')} / ${fmt(hiking?.elevationLossM, 'm')}`}
         />
         <Stat
-          icon={<Icon name="arrow-right" size={13} aria-hidden="true" />}
+          icon={<LKDVIcon name="suivant" size={13} aria-hidden="true" />}
           label="Durée est."
           value={duration ?? '—'}
         />
@@ -92,7 +92,7 @@ export function ParcoursBlock({ hiking, slug }: { hiking: HubHikingContext | nul
         className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] min-h-[44px]"
       >
         <span>Voir l’itinéraire</span>
-        <Icon name="arrow-right" size={13} aria-hidden="true" />
+        <LKDVIcon name="suivant" size={13} aria-hidden="true" />
       </Link>
     </section>
   );
@@ -145,8 +145,8 @@ export function MeteoBlock({ hiking }: { hiking: HubHikingContext | null }) {
       aria-label="Météo"
     >
       <div className="flex items-center gap-2">
-        <Icon
-          name="cloud-sun"
+        <LKDVIcon
+          name="meteo"
           size={15}
           className="shrink-0 text-[var(--lkv-text-secondary)]"
           aria-hidden="true"
@@ -197,8 +197,8 @@ export function PointsPassageBlock({ pois, slug }: { pois: TripPoi[]; slug: stri
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Points de passage">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Icon
-            name="route"
+          <LKDVIcon
+            name="itineraire"
             size={16}
             className="text-[var(--lkv-text-secondary)]"
             aria-hidden="true"
@@ -226,7 +226,7 @@ export function PointsPassageBlock({ pois, slug }: { pois: TripPoi[]; slug: stri
         className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] min-h-[44px]"
       >
         <span>Voir sur l’itinéraire</span>
-        <Icon name="arrow-right" size={13} aria-hidden="true" />
+        <LKDVIcon name="suivant" size={13} aria-hidden="true" />
       </Link>
     </section>
   );
@@ -237,8 +237,8 @@ export function PointsEauBlock({ count }: { count: number }) {
   return (
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Points d'eau">
       <div className="flex items-center gap-2">
-        <Icon
-          name="droplets"
+        <LKDVIcon
+          name="eau_potable"
           size={15}
           className="shrink-0 text-[var(--lkv-text-secondary)]"
           aria-hidden="true"

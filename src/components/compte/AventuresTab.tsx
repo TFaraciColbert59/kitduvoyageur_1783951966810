@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import Icon from '@/components/ui/AppIcon';
 import { Button, EmptyState, LoadingState, Tabs } from '@/components/ui';
 import Link from 'next/link';
 import { UserProfile, Aventure } from '@/lib/mock/compte-marceline';
 import { createClient } from '@/lib/supabase/client';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface AventuresTabProps {
   profile: UserProfile;
@@ -184,7 +184,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
           <Button
             variant="secondary"
             size="sm"
-            icon={<Icon name="ArrowDownTrayIcon" size={14} />}
+            icon={<LKDVIcon name="telecharger" size={14} />}
             onClick={handleExport}
             className="font-bold"
           >
@@ -194,7 +194,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
             href="/groupes"
             className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 !py-2 !px-4 text-xs font-bold"
           >
-            <Icon name="PlusIcon" size={14} />
+            <LKDVIcon name="plus" size={14} />
             <span>Nouveau groupe</span>
           </Link>
         </div>
@@ -209,7 +209,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
             <span className="text-sm font-bold text-[color:var(--lkv-text-muted)] font-mono">km</span>
           </div>
           <p className="text-[10px] text-[color:var(--lkv-secondary-ink)] font-semibold flex items-center gap-1">
-            <Icon name="ArrowTrendingUpIcon" size={12} />
+            <LKDVIcon name="denivele" size={12} />
             <span>+15% vs 2025 · 89% objectif annuel</span>
           </p>
         </div>
@@ -411,7 +411,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                       </span>
 
                       <div className="w-7 h-7 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] flex items-center justify-center text-[color:var(--lkv-text-muted)] group-hover:text-[color:var(--lkv-text-primary)] group-hover:brightness-[1.05] transition-colors">
-                        <Icon name="ArrowRightIcon" size={12} />
+                        <LKDVIcon name="suivant" size={12} />
                       </div>
                     </div>
                   </div>

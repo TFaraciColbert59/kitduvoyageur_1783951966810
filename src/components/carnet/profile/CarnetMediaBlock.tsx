@@ -2,8 +2,8 @@
 
 import React, { useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import Icon from '@/components/ui/Icon';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const CarnetTraceMap = dynamic(
   () => import('./CarnetTraceMap').then((mod) => mod.CarnetTraceMap),
@@ -76,7 +76,7 @@ export function CarnetMediaBlock({
       {mode === 'grid' ? (
         photos.length === 0 ? (
           <div className="ckp-empty">
-            <Icon name="image-plus" size={24} aria-hidden="true" />
+            <LKDVIcon name="photo" size={24} aria-hidden="true" />
             <b>Aucun moment pour l’instant.</b>
             <p>
               {detail.isOwner
@@ -124,12 +124,12 @@ export function CarnetMediaBlock({
                 onClick={onOpenMap}
                 aria-label="Agrandir la carte"
               >
-                <Icon name="external-link" size={16} aria-hidden="true" />
+                <LKDVIcon name="lien" size={16} aria-hidden="true" />
               </button>
             </>
           ) : (
             <div className="ckp-empty" style={{ height: '100%', borderRadius: 18 }}>
-              <Icon name="route" size={24} aria-hidden="true" />
+              <LKDVIcon name="itineraire" size={24} aria-hidden="true" />
               <b>Aucune trace GPS.</b>
               <p>
                 {detail.isOwner
@@ -149,7 +149,7 @@ export function CarnetMediaBlock({
               onClick={onDownloadGpx}
               disabled={!hasTrace}
             >
-              <Icon name="download" size={16} aria-hidden="true" />
+              <LKDVIcon name="telecharger" size={16} aria-hidden="true" />
               Télécharger le GPX
             </button>
           </div>
@@ -163,12 +163,7 @@ export function CarnetMediaBlock({
           aria-label="Grille"
           onClick={() => onModeChange('grid')}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <rect x="3" y="3" width="7" height="7" rx="1.6" />
-            <rect x="14" y="3" width="7" height="7" rx="1.6" />
-            <rect x="3" y="14" width="7" height="7" rx="1.6" />
-            <rect x="14" y="14" width="7" height="7" rx="1.6" />
-          </svg>
+          <LKDVIcon name="galerie" aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -176,7 +171,7 @@ export function CarnetMediaBlock({
           aria-label="Carte"
           onClick={() => onModeChange('map')}
         >
-          <Icon name="map" size={14} aria-hidden="true" />
+          <LKDVIcon name="carte" size={14} aria-hidden="true" />
         </button>
       </div>
     </section>

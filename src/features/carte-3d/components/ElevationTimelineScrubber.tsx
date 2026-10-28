@@ -3,6 +3,7 @@
 import React, { useCallback, useId, useMemo, useRef } from 'react';
 import type { Carte3DTrail, Carte3DWaypoint, ScrubberState } from '../types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface ElevationTimelineScrubberProps {
   trail: Carte3DTrail;
@@ -308,14 +309,9 @@ export function ElevationTimelineScrubber({
             className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center bg-[#17402C] text-white hover:bg-stone-700 active:scale-95 transition-all shadow-md"
           >
             {scrubberState.isPlaying ? (
-              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                <rect x="6" y="4" width="4" height="16" rx="1" />
-                <rect x="14" y="4" width="4" height="16" rx="1" />
-              </svg>
+              <LKDVIcon name="pause" size={16} className="w-4 h-4" />
             ) : (
-              <svg className="w-4 h-4 fill-current translate-x-0.5" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
+              <LKDVIcon name="lecture" size={16} className="w-4 h-4 translate-x-0.5" />
             )}
           </button>
 

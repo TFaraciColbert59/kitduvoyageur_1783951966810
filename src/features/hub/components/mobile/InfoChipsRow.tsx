@@ -29,7 +29,7 @@ export function InfoChipsRow({ chips, label = 'Informations clés' }: InfoChipsR
           const Icon = chip.icon;
           const content = (
             <>
-              <Icon size={15} strokeWidth={2.25} className="shrink-0" aria-hidden="true" />
+              <Icon size={15} className="shrink-0" aria-hidden="true" />
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-[13px] font-extrabold tabular-nums">{chip.value}</span>
                 <span className="block max-w-[10rem] truncate text-[9px] font-medium uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">

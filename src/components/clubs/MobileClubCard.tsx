@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Badge, Button, Card } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ClubCardItem {
   id: string;
@@ -120,7 +120,7 @@ export default function MobileClubCard({
             className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]"
           >
             <span>Ouvrir</span>
-            <Icon name="ArrowRightIcon" size={12} aria-hidden="true" />
+            <LKDVIcon name="suivant" size={12} aria-hidden="true" />
           </Link>
         ) : (
           <div className="flex items-center gap-[var(--space-2)]">

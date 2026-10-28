@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent } from 'react';
-import { X } from 'lucide-react';
 import { Button, IconButton } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
@@ -33,6 +32,7 @@ import { BudgetBalancesCard } from './BudgetBalancesCard';
 import { BudgetAllExpensesDrawer } from './BudgetAllExpensesDrawer';
 import { DayExpensesDrawer } from './DayExpensesDrawer';
 import { BudgetSideTrigger } from './BudgetSideTrigger';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface BudgetMobileExperienceProps {
   trip: TripFull;
@@ -306,7 +306,7 @@ export function BudgetMobileExperience({ trip, initialDay }: BudgetMobileExperie
             className="shrink-0 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
             aria-label="Fermer le message"
           >
-            <X size={16} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={16} aria-hidden="true" />
           </IconButton>
         </div>
       )}

@@ -7,7 +7,6 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { Map as LeafletMap, LayerGroup } from 'leaflet';
 import type { UnifiedPOI } from '@/lib/queries/pois';
-import { XIcon as XAnimated } from '@/components/icons/x';
 import {
   Badge,
   Button,
@@ -24,6 +23,7 @@ import {
   Tabs,
 } from '@/components/ui';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface MapTrail {
   id: string;
@@ -890,9 +890,7 @@ const LINK_ICON =
               aria-label="Carte Standard (OSM)"
               aria-pressed={tileMode === 'osm'}
             >
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
-              </svg>
+              <LKDVIcon name="carte" size={14} />
             </IconButton>
             <IconButton
               variant={tileMode === 'topo' ? 'solid' : 'ghost'}
@@ -902,9 +900,7 @@ const LINK_ICON =
               aria-label="Relief / Topographique"
               aria-pressed={tileMode === 'topo'}
             >
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
-              </svg>
+              <LKDVIcon name="montagne" size={14} />
             </IconButton>
             <IconButton
               variant={tileMode === 'satellite' ? 'solid' : 'ghost'}
@@ -914,9 +910,7 @@ const LINK_ICON =
               aria-label="Vue Satellite"
               aria-pressed={tileMode === 'satellite'}
             >
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
-              </svg>
+              <LKDVIcon name="monde" size={14} />
             </IconButton>
           </Card>
         </div>
@@ -931,13 +925,7 @@ const LINK_ICON =
               title="Ma position (10 km)"
               aria-label="Ma position"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="7" />
-                <line x1="12" y1="1" x2="12" y2="4" />
-                <line x1="12" y1="20" x2="12" y2="23" />
-                <line x1="1" y1="12" x2="4" y2="12" />
-                <line x1="20" y1="12" x2="23" y2="12" />
-              </svg>
+              <LKDVIcon name="recentrer" size={14} />
             </IconButton>
             <Divider orientation="vertical" spacing="none" className="h-px w-4" />
             <IconButton
@@ -975,7 +963,7 @@ const LINK_ICON =
                 className="absolute right-2 top-2"
                 aria-label="Fermer la fiche du sentier"
               >
-                <XAnimated size={12} />
+                <LKDVIcon name="fermer" size={12} />
               </IconButton>
 
               <div className="mb-1 flex flex-wrap items-center gap-2">
@@ -1043,7 +1031,7 @@ const LINK_ICON =
                 className="absolute right-2 top-2"
                 aria-label="Fermer la fiche du point d'intérêt"
               >
-                <XAnimated size={12} />
+                <LKDVIcon name="fermer" size={12} />
               </IconButton>
 
               <div className="mb-1 flex flex-wrap items-center gap-2">

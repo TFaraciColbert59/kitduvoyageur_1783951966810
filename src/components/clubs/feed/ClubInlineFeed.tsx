@@ -1,5 +1,6 @@
 'use client';
 
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 import React, { useRef, useState } from 'react';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 
@@ -51,29 +52,6 @@ export interface ClubInlineFeedProps {
   onFlyToSpot: (post: ClubFeedPostItem) => void;
   onOpenOutingDetail: (outingId: string) => void;
   onOpenCreatePost: () => void;
-}
-
-function SfIcon({ name, size = 18 }: { name: string; size?: number }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="inline-flex items-center justify-center select-none shrink-0"
-      style={{
-        width: size,
-        height: size,
-        display: 'inline-flex',
-        backgroundColor: 'currentColor',
-        maskImage: `url(/icons/sf/${name}.svg)`,
-        maskSize: 'contain',
-        maskRepeat: 'no-repeat',
-        maskPosition: 'center',
-        WebkitMaskImage: `url(/icons/sf/${name}.svg)`,
-        WebkitMaskSize: 'contain',
-        WebkitMaskRepeat: 'no-repeat',
-        WebkitMaskPosition: 'center',
-      }}
-    />
-  );
 }
 
 function ClubPostCard({
@@ -209,9 +187,7 @@ function ClubPostCard({
     >
       {showHeartPop ? (
         <span className="club-heart-pop" aria-hidden="true">
-          <svg width="72" height="72" viewBox="0 0 24 24" fill="#e0245e" stroke="#fff" strokeWidth="1.5">
-            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-          </svg>
+          <LKDVIcon name="favoris" size={72} />
         </span>
       ) : null}
 
@@ -256,7 +232,7 @@ function ClubPostCard({
               {post.authorRole ? <span className="lkdv-post-author-badge">{post.authorRole}</span> : null}
               {post.pinned ? (
                 <span className="lkdv-post-author-badge" title="Épinglé par le club" aria-label="Épinglé">
-                  <SfIcon name="pin" size={11} />
+                  <LKDVIcon name="position" size={11} />
                 </span>
               ) : null}
             </span>
@@ -282,16 +258,9 @@ function ClubPostCard({
         }}
       >
         {panel ? (
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          <LKDVIcon name="fermer" size={15} aria-hidden="true" />
         ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <circle cx="5" cy="12" r="2" />
-            <circle cx="12" cy="12" r="2" />
-            <circle cx="19" cy="12" r="2" />
-          </svg>
+          <LKDVIcon name="plus_options" size={16} aria-hidden="true" />
         )}
       </button>
 
@@ -304,7 +273,7 @@ function ClubPostCard({
               setMenuOpen(false);
             }}
           >
-            <SfIcon name="map-pin" />
+            <LKDVIcon name="point_interet" size={18} />
             <span>Voir en 3D</span>
           </button>
           <button
@@ -314,7 +283,7 @@ function ClubPostCard({
               setMenuOpen(false);
             }}
           >
-            <SfIcon name="bookmark" />
+            <LKDVIcon name="signet" size={18} />
             <span>{post.saved ? 'Retirer' : 'Enregistrer'}</span>
           </button>
           {post.outingId ? (
@@ -325,7 +294,7 @@ function ClubPostCard({
                 setMenuOpen(false);
               }}
             >
-              <SfIcon name="mountain" />
+              <LKDVIcon name="montagne" size={18} />
               <span>Fiche sortie</span>
             </button>
           ) : null}
@@ -336,7 +305,7 @@ function ClubPostCard({
               setMenuOpen(false);
             }}
           >
-            <SfIcon name="link" />
+            <LKDVIcon name="lien" size={18} />
             <span>{copied ? 'Lien copié' : 'Copier le lien'}</span>
           </button>
         </div>
@@ -387,19 +356,7 @@ function ClubPostCard({
             aria-pressed={Boolean(post.liked)}
             onClick={() => onToggleLike(post.id)}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill={post.liked ? '#e0245e' : 'none'}
-              stroke={post.liked ? '#e0245e' : 'currentColor'}
-              strokeWidth="2.1"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-            </svg>
+            <LKDVIcon name="favoris" size={16} aria-hidden="true" style={{ opacity: post.liked ? 1 : 0.62, transform: post.liked ? 'scale(1.18)' : undefined }} />
           </button>
           <button
             type="button"
@@ -408,19 +365,7 @@ function ClubPostCard({
             aria-expanded={false}
             onClick={() => setPanel('comments')}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-            </svg>
+            <LKDVIcon name="messages" size={16} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -429,20 +374,7 @@ function ClubPostCard({
             aria-expanded={false}
             onClick={() => setPanel('share')}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
+            <LKDVIcon name="partager" size={16} aria-hidden="true" />
           </button>
         </div>
       ) : null}
@@ -508,10 +440,7 @@ function ClubPostCard({
                     aria-label="Envoyer le commentaire"
                     disabled={!commentDraft.trim()}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <line x1="22" y1="2" x2="11" y2="13" />
-                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                    </svg>
+                    <LKDVIcon name="partager" size={16} aria-hidden="true" />
                   </button>
                 </form>
               </div>

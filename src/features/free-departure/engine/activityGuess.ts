@@ -8,6 +8,7 @@
  */
 
 import { activityById } from '@/features/adventure-prep/catalog';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 
 /** Mesures observees pendant la session, toutes optionnelles. */
 export interface FreeSessionSignals {
@@ -26,7 +27,7 @@ export type ActivityGuessConfidence = 'proposee' | 'incertaine';
 export interface ActivityGuess {
   activityId: string;
   label: string;
-  icon: string;
+  icon: LKDVIconName;
   /** Ce qui a conduit a cette proposition, en mots. */
   because: string;
   confidence: ActivityGuessConfidence;

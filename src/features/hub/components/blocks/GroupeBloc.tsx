@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import type { HubCrewBlock } from '../../server/getHubAdventureData';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * H-ACT §4 — Bloc Groupe universel, présent dans chaque hub d'activité.
@@ -31,8 +31,8 @@ export function GroupeBloc({
       <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Groupe">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">Sortie en solo</p>
-          <Icon
-            name="user-plus"
+          <LKDVIcon
+            name="amis"
             size={15}
             className="shrink-0 text-[var(--lkv-text-secondary)]"
             aria-hidden="true"
@@ -42,7 +42,7 @@ export function GroupeBloc({
           href={groupeHref}
           className="glass-capsule-btn primary inline-flex items-center gap-2 mt-3 min-h-[44px] px-4"
         >
-          <Icon name="mail-plus" size={14} aria-hidden="true" />
+          <LKDVIcon name="email" size={14} aria-hidden="true" />
           <span>Inviter un compagnon</span>
         </Link>
       </section>
@@ -53,8 +53,8 @@ export function GroupeBloc({
   return (
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Groupe">
       <div className="flex items-center justify-between">
-        <Icon
-          name="users"
+        <LKDVIcon
+          name="communaute"
           size={15}
           className="shrink-0 text-[var(--lkv-text-secondary)]"
           aria-hidden="true"
@@ -84,7 +84,7 @@ export function GroupeBloc({
         href={groupeHref}
         className="glass-capsule-btn primary inline-flex items-center gap-2 mt-3 min-h-[44px] px-4"
       >
-        <Icon name="mail-plus" size={14} aria-hidden="true" />
+        <LKDVIcon name="email" size={14} aria-hidden="true" />
         <span>{members.length === 0 ? 'Inviter un compagnon' : 'Gérer le groupe'}</span>
       </Link>
     </section>

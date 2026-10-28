@@ -1,8 +1,6 @@
 'use client';
 
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { BellRing, CalendarCheck, Package } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { HUB_POSSESSION_HREFS } from '../registry/hubSectionRegistry';
 import { HubActivityHero } from './HubActivityHero';
@@ -13,6 +11,8 @@ import { GearCardAlertes } from '@/features/materiel/components/cards/GearCardAl
 import { GearCardDispo } from '@/features/materiel/components/cards/GearCardDispo';
 import type { MaterielSummary } from '@/features/materiel/services/getMaterielSummary';
 import { EASE_GLASS } from '@/lib/animations/constants';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon, type LKDVIconComponent } from '@/components/ui/lkdvIconComponent';
 
 export interface HubOverviewPossessionProps {
   items: number;
@@ -43,7 +43,7 @@ export function HubOverviewPossession({
     label: string;
     value: number;
     unit: string;
-    Icon: typeof Package;
+    Icon: LKDVIconComponent;
     tone: string;
   }> = [
     {
@@ -51,7 +51,7 @@ export function HubOverviewPossession({
       label: 'Inventaire',
       value: items,
       unit: 'objet(s)',
-      Icon: Package,
+      Icon: lkdvIcon('inventaire'),
       tone: 'text-[var(--lkv-text-secondary)]',
     },
     {
@@ -59,7 +59,7 @@ export function HubOverviewPossession({
       label: 'Disponibilité',
       value: loans,
       unit: 'prêt(s)',
-      Icon: CalendarCheck,
+      Icon: lkdvIcon('calendrier'),
       tone: 'text-[var(--lkv-text-secondary)]',
     },
     {
@@ -67,7 +67,7 @@ export function HubOverviewPossession({
       label: 'Alertes',
       value: alerts,
       unit: 'à traiter',
-      Icon: BellRing,
+      Icon: lkdvIcon('notifications'),
       tone: alerts > 0 ? 'text-[rgba(168,68,58,0.9)]' : 'text-[var(--lkv-text-secondary)]',
     },
   ];
@@ -103,8 +103,8 @@ export function HubOverviewPossession({
                     {s.label} · {s.unit}
                   </span>
                 </span>
-                <Icon
-                  name="arrow-right"
+                <LKDVIcon
+                  name="suivant"
                   size={14}
                   className="text-[var(--lkv-text-muted)] shrink-0"
                   aria-hidden="true"
@@ -131,8 +131,8 @@ export function HubOverviewPossession({
           className="glass p-4 rounded-2xl flex items-center gap-3 min-h-[44px] cursor-pointer active:scale-[0.98] transition-transform"
           aria-label="Assistant IA — conseils matériel"
         >
-          <Icon
-            name="sparkles"
+          <LKDVIcon
+            name="ia"
             size={18}
             className="shrink-0 text-[var(--lkv-text-secondary)]"
             aria-hidden="true"
@@ -142,8 +142,8 @@ export function HubOverviewPossession({
               Assistant IA
             </span>
           </span>
-          <Icon
-            name="arrow-right"
+          <LKDVIcon
+            name="suivant"
             size={14}
             className="text-[var(--lkv-text-muted)] shrink-0"
             aria-hidden="true"

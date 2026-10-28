@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { motion, useDragControls } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import { useRef, useState } from 'react';
@@ -11,6 +9,7 @@ import { GearCardKits } from './cards/GearCardKits';
 import { GearCardForget } from './cards/GearCardForget';
 import { GearCardAlertes } from './cards/GearCardAlertes';
 import { GearCardDispo } from './cards/GearCardDispo';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 // Emplacements — formation 2 - 1 - 2 sur mobile et 8/4 + 4/4/4 sur PC (desktop)
 // Slot 0 (forget) : Mobile Ligne 1 Gauche (6 cols) | PC Ligne 1 Droite (4 cols)
@@ -172,7 +171,7 @@ function DraggableCard({
         className="hidden md:flex !absolute top-2 right-2 z-20 h-8 w-8 !rounded-full glass interactive items-center justify-center text-[color:var(--lkv-text-primary)] cursor-grab touch-none border border-white/40 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         aria-label={`Déplacer la carte ${LABEL[id] ?? id}`}
       >
-        <Icon name="grip-vertical" size={16} aria-hidden="true" />
+        <LKDVIcon name="options" size={16} aria-hidden="true" />
       </button>
       <div className="h-full min-h-0 overflow-hidden [&>article]:h-full [&>article]:min-h-0 [&>article]:flex [&>article]:flex-col">
         {children}

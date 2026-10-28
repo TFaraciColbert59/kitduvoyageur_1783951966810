@@ -1,4 +1,5 @@
 import { UserProfile } from '@/lib/types/profile';
+import type { LKDVIconName } from '@/components/ui/LKDVIcon';
 export type { UserProfile };
 
 export interface ProchainVoyage {
@@ -62,7 +63,7 @@ export interface Commande {
 export interface BadgeItem {
   id: string;
   title: string;
-  icon_name: string;
+  icon_name: LKDVIconName;
   earned: boolean;
 }
 

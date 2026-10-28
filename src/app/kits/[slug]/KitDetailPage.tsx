@@ -8,7 +8,6 @@ import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
 import WeightGauge from '@/components/WeightGauge';
 import TopoSeparator from '@/components/TopoSeparator';
-import Icon from '@/components/ui/AppIcon';
 import {
   Badge,
   Button,
@@ -22,6 +21,7 @@ import {
 } from '@/components/ui';
 import { saveCart, getCart } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface KitItem {
   id: string;
@@ -183,8 +183,8 @@ export default function KitDetailPage() {
                 <div className="w-full max-w-md">
                   <EmptyState
                     icon={
-                      <Icon
-                        name="ExclamationTriangleIcon"
+                      <LKDVIcon
+                        name="alerte"
                         size={40}
                         className="text-[var(--lkv-warning)]"
                       />
@@ -206,8 +206,8 @@ export default function KitDetailPage() {
             <div className="px-3 pt-20">
               <EmptyState
                 icon={
-                  <Icon
-                    name="ExclamationTriangleIcon"
+                  <LKDVIcon
+                    name="alerte"
                     size={40}
                     className="text-[var(--lkv-warning)]"
                   />
@@ -303,7 +303,7 @@ export default function KitDetailPage() {
                                       }`}
                                       aria-hidden="true"
                                     >
-                                      {selected && <Icon name="CheckIcon" size={10} className="text-white" />}
+                                      {selected && <LKDVIcon name="valider" size={10} className="text-white" />}
                                     </span>
                                     <span className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/30">
                                       {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -4,13 +4,13 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Divider, EmptyState, IconButton, LoadingState } from '@/components/ui';
 import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 import { getCart, updateQuantity, removeFromCart, getCartTotals, applyLoyaltyFree, removeLoyaltyFree, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppShell from '@/components/shell/AppShell';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const FIELD_CLASS =
   'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
@@ -158,7 +158,7 @@ export default function PanierPage() {
           <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
             {items.length === 0 ? (
               <EmptyState
-                icon={<Icon name="ShoppingBagIcon" size={36} />}
+                icon={<LKDVIcon name="boutique" size={36} />}
                 title="Votre panier est vide"
                 description="Explorez notre catalogue pour trouver votre équipement."
                 actionLabel="Voir le catalogue"
@@ -209,11 +209,11 @@ export default function PanierPage() {
                             <div className="flex flex-col items-end">
                               <div className="flex items-center gap-[var(--space-1)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-1)]">
                                 <IconButton variant="ghost" onClick={() => handleQuantity(item.id, item.quantity - 1)} aria-label="Réduire la quantité">
-                                  <Icon name="MinusIcon" size={12} />
+                                  <LKDVIcon name="annuler" size={12} />
                                 </IconButton>
                                 <span className="w-4 text-center text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{item.quantity}</span>
                                 <IconButton variant="ghost" onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité">
-                                  <Icon name="PlusIcon" size={12} />
+                                  <LKDVIcon name="plus" size={12} />
                                 </IconButton>
                               </div>
                             </div>
@@ -221,10 +221,10 @@ export default function PanierPage() {
 
                           <div className="mt-[var(--space-4)] flex items-end justify-between">
                             <div className="flex gap-[var(--space-4)]">
-                              <Button variant="secondary" size="sm" icon={<Icon name="BookmarkIcon" size={14} variant="outline" />}>
+                              <Button variant="secondary" size="sm" icon={<LKDVIcon name="signet" size={14} />}>
                                 Enregistrer
                               </Button>
-                              <Button variant="secondary" size="sm" onClick={() => handleRemoveRequest(item.id)} icon={<Icon name="TrashIcon" size={14} variant="outline" />}>
+                              <Button variant="secondary" size="sm" onClick={() => handleRemoveRequest(item.id)} icon={<LKDVIcon name="supprimer" size={14} />}>
                                 Retirer
                               </Button>
                             </div>
@@ -250,7 +250,7 @@ export default function PanierPage() {
                           <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Autonomie 45 h, batterie rechargeable. Souvent oubliée, jamais regrettée.</p>
                         </div>
                       </div>
-                      <Button variant="secondary" size="sm" className="flex-shrink-0" icon={<Icon name="PlusIcon" size={14} />} iconPosition="trailing">
+                      <Button variant="secondary" size="sm" className="flex-shrink-0" icon={<LKDVIcon name="plus" size={14} />} iconPosition="trailing">
                         84 €
                       </Button>
                     </Card>
@@ -296,7 +296,7 @@ export default function PanierPage() {
                         </Button>
                       </Link>
                       <p className="mb-[var(--space-8)] flex items-center justify-center gap-[var(--space-1)] text-center text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-                        <Icon name="LockClosedIcon" size={12} /> Paiement sécurisé Stripe
+                        <LKDVIcon name="verrou" size={12} /> Paiement sécurisé Stripe
                       </p>
 
                       <div className="mb-[var(--space-6)] flex justify-center gap-[var(--space-2)] opacity-60">
@@ -309,13 +309,13 @@ export default function PanierPage() {
 
                       <Card variant="compact" className="flex justify-between gap-[var(--space-2)] text-center text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-muted)]">
                         <div className="flex flex-1 flex-col items-center gap-[var(--space-2)]">
-                          <Icon name="StarIcon" size={16} /> Garantie à vie
+                          <LKDVIcon name="points" size={16} /> Garantie à vie
                         </div>
                         <div className="flex flex-1 flex-col items-center gap-[var(--space-2)]">
-                          <Icon name="ArrowPathIcon" size={16} /> Retour 30 j.
+                          <LKDVIcon name="actualiser" size={16} /> Retour 30 j.
                         </div>
                         <div className="flex flex-1 flex-col items-center gap-[var(--space-2)]">
-                          <Icon name="MapPinIcon" size={16} /> 100 % Europe
+                          <LKDVIcon name="point_interet" size={16} /> 100 % Europe
                         </div>
                       </Card>
 
@@ -335,7 +335,7 @@ export default function PanierPage() {
         <AppShell background="transparent">
           {items.length === 0 ? (
             <EmptyState
-              icon={<Icon name="ShoppingBagIcon" size={32} />}
+              icon={<LKDVIcon name="boutique" size={32} />}
               title="Votre panier est vide"
               description="Explorez notre catalogue pour trouver votre équipement."
               actionLabel="Voir le catalogue"
@@ -376,11 +376,11 @@ export default function PanierPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[6px] py-[3px]">
                         <IconButton variant="ghost" onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} aria-label="Diminuer la quantité">
-                          <Icon name="MinusIcon" size={12} />
+                          <LKDVIcon name="annuler" size={12} />
                         </IconButton>
                         <span className="min-w-[22px] text-center font-mono text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{item.quantity}</span>
                         <IconButton variant="ghost" onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité">
-                          <Icon name="PlusIcon" size={12} />
+                          <LKDVIcon name="plus" size={12} />
                         </IconButton>
                       </div>
                       <div className="text-right">

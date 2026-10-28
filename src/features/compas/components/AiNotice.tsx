@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { useTranslation } from '@/lib/i18n/context';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * Mention « IA » du Compas (PLAN-100 5.3) : une note de TEXTE, lue par les lecteurs d'écran ;
@@ -24,7 +24,7 @@ export function AiNotice({
   const { t } = useTranslation();
   return (
     <p role="note" className="cp-note cp-ai">
-      <Icon name="sparkles" size={12} aria-hidden="true" />{' '}
+      <LKDVIcon name="ia" size={12} aria-hidden="true" />{' '}
       {variant === 'run' ? t('compas.ai.noticeRun') : t('compas.ai.noticeDone')}
       {withPrivacyLink && (
         <>

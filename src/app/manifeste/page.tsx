@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
-import Icon from '@/components/ui/Icon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
 import Link from 'next/link';
 import { Card, PageHeader } from '@/components/ui';
-import { FlaskConical, Mountain, Users } from 'lucide-react';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
+import { lkdvIcon } from '@/components/ui/lkdvIconComponent';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -27,19 +27,19 @@ export const metadata: Metadata = {
 
 const PRINCIPES = [
   {
-    icone: FlaskConical,
+    icone: lkdvIcon('recentrer'),
     nom: 'Testé, pas promis',
     description:
       'Nous testons chaque objet en conditions réelles pendant six semaines minimum. Ceux qui restent trouvent leur place dans le kit. Les autres retournent d’où ils viennent.',
   },
   {
-    icone: Mountain,
+    icone: lkdvIcon('montagne'),
     nom: 'Léger et sans réseau',
     description:
       'Un sac de base à sec autour d’1,4 kg, pensé pour le sauvage et le hors-réseau. Le superflu ne part jamais.',
   },
   {
-    icone: Users,
+    icone: lkdvIcon('communaute'),
     nom: 'Partagé, pas possédé',
     description:
       'Occasion vérifiée, location, entraide : l’équipement circule entre voyageurs au lieu de dormir dans un placard.',
@@ -103,11 +103,11 @@ export default function ManifestePage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/boutique" className="glass-capsule-btn primary">
                 <span>Voir la boutique</span>
-                <Icon name="arrow-right" size={14} />
+                <LKDVIcon name="suivant" size={14} />
               </Link>
               <Link href="/explorer" className="glass-capsule-btn secondary">
                 <span>Explorer les aventures</span>
-                <Icon name="arrow-right" size={14} />
+                <LKDVIcon name="suivant" size={14} />
               </Link>
             </div>
           </main>
@@ -147,11 +147,11 @@ export default function ManifestePage() {
             <div className="flex flex-wrap gap-3">
               <Link href="/boutique" className="glass-capsule-btn primary">
                 <span>Voir la boutique</span>
-                <Icon name="arrow-right" size={13} />
+                <LKDVIcon name="suivant" size={13} />
               </Link>
               <Link href="/explorer" className="glass-capsule-btn secondary">
                 <span>Explorer</span>
-                <Icon name="arrow-right" size={13} />
+                <LKDVIcon name="suivant" size={13} />
               </Link>
             </div>
           </div>

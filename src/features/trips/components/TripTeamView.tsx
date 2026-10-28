@@ -1,6 +1,4 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { Card, EmptyState, IconButton } from '@/components/ui';
@@ -16,6 +14,7 @@ import {
   removeCollaboratorAction,
 } from '@/app/voyages/collab-actions';
 import type { TripFull } from '../types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface TripTeamViewProps {
   trip: TripFull;
@@ -108,7 +107,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
           tone="danger"
           className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
         >
-          <Icon name="alert-circle" size={16} className="shrink-0" />
+          <LKDVIcon name="alerte" size={16} className="shrink-0" />
           <span>{actionError}</span>
         </Card>
       )}
@@ -117,7 +116,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
           <Button
             size="sm"
             onClick={() => setIsInviteOpen(true)}
-            icon={<Icon name="user-plus" size={16} />}
+            icon={<LKDVIcon name="amis" size={16} />}
           >
             Inviter un voyageur
           </Button>
@@ -127,7 +126,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       {/* Liste des membres */}
       {trip.collaborators.length === 0 ? (
         <EmptyState
-          icon={<Icon name="users" size={32} className="text-[color:var(--glass-label)]" />}
+          icon={<LKDVIcon name="communaute" size={32} className="text-[color:var(--glass-label)]" />}
           title="Aucun compagnon de route"
           description="Vous préparez actuellement cette expédition en solo. Invitez des coéquipiers pour partager l'itinéraire, le matériel et les dépenses."
           actionLabel={isOwner ? 'Inviter un voyageur' : undefined}
@@ -205,7 +204,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                       aria-label={`Retirer ${name} de l'expédition`}
                       title="Retirer de l'expédition"
                     >
-                      <Icon name="trash2" size={16} />
+                      <LKDVIcon name="supprimer" size={16} />
                     </IconButton>
                   </div>
                 )}
@@ -230,7 +229,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
               tone="danger"
               className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
             >
-              <Icon name="alert-circle" size={16} className="shrink-0" />
+              <LKDVIcon name="alerte" size={16} className="shrink-0" />
               <span>{inviteError}</span>
             </Card>
           )}
@@ -240,7 +239,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
               tone="sage"
               className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]"
             >
-              <Icon name="check-circle2" size={16} className="shrink-0" />
+              <LKDVIcon name="valider" size={16} className="shrink-0" />
               <span>{inviteSuccess}</span>
             </Card>
           )}
@@ -249,8 +248,8 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
             <label className="block">
               <span className={LABEL_CLASS}>Email ou Pseudo LKDV du voyageur</span>
               <span className="relative block">
-                <Icon
-                  name="mail"
+                <LKDVIcon
+                  name="email"
                   size={16}
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-muted)]"
                 />

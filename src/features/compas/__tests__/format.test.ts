@@ -38,9 +38,9 @@ describe('formats du Compas', () => {
   });
 
   it('codes météo WMO → icônes du registre', () => {
-    expect(weatherLabel(0).icon).toBe('sun');
+    expect(weatherLabel(0).icon).toBe('soleil');
     expect(weatherLabel(63).label).toBe('Pluie');
-    expect(weatherLabel(95).icon).toBe('cloud-lightning');
+    expect(weatherLabel(95).icon).toBe('meteo_extreme');
   });
 
   it('pagination exacte, jamais de page vide sauf liste vide', () => {

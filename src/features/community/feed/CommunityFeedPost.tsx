@@ -13,6 +13,7 @@ import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { PostCommentsPanel } from './PostCommentsPanel';
 import { PostSharePanel } from './PostSharePanel';
 import type { FeedPost } from './useCommunityFeed';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface CommunityFeedPostProps {
   post: FeedPost;
@@ -192,11 +193,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
           setMenuOpen((open) => !open);
         }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <circle cx="5" cy="12" r="1.9" />
-          <circle cx="12" cy="12" r="1.9" />
-          <circle cx="19" cy="12" r="1.9" />
-        </svg>
+        <LKDVIcon name="plus_options" size={18} aria-hidden="true" />
       </button>
 
       <AccountMoreMenu

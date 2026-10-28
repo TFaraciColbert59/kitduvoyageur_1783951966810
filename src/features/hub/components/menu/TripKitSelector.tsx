@@ -1,10 +1,10 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { setTripKit } from '@/features/trips/actions/setTripKit';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface TripKitSelectorProps {
   tripId: string;
@@ -54,7 +54,7 @@ export function TripKitSelector({ tripId, kits, currentId }: TripKitSelectorProp
       >
         <span className="truncate">{cleanKitName(current.name)}</span>
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
-          <ChevronDown size={12} aria-hidden="true" />
+          <LKDVIcon name="bas" size={12} aria-hidden="true" />
         </motion.span>
       </Button>
 

@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Backpack, PackagePlus, Trash2 } from 'lucide-react';
 import type { OutingGearItem, OutingKit } from '@/features/compte/server/sorties';
 import { DrawerEmpty } from '../shell/DrawerShell';
 import { formatWeight } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface OutingGearProps {
   gear: OutingGearItem[];
@@ -29,7 +29,7 @@ export function OutingGear({ gear, kit, missingGear, canEdit, busy, onAttach, on
           </header>
           <div className="lkdv-sortie-kit">
             <span className="lkdv-sortie-kit-ico" aria-hidden="true">
-              <Backpack size={20} />
+              <LKDVIcon name="sac" size={20} />
             </span>
             <div>
               <b>{kit.name}</b>
@@ -40,7 +40,7 @@ export function OutingGear({ gear, kit, missingGear, canEdit, busy, onAttach, on
             </div>
             {canEdit && gear.length === 0 && kit.items.length > 0 ? (
               <button type="button" className="lkdv-sortie-btn primary" onClick={onAttach} disabled={busy}>
-                <PackagePlus size={15} aria-hidden="true" /> {busy ? 'Ajout…' : 'Rattacher'}
+                <LKDVIcon name="inventaire" size={15} aria-hidden="true" /> {busy ? 'Ajout…' : 'Rattacher'}
               </button>
             ) : null}
           </div>
@@ -58,7 +58,7 @@ export function OutingGear({ gear, kit, missingGear, canEdit, busy, onAttach, on
           action={
             canEdit && kit && kit.items.length > 0 ? (
               <button type="button" className="lkdv-sortie-btn ghost" onClick={onAttach} disabled={busy}>
-                <PackagePlus size={15} aria-hidden="true" /> Rattacher {kit.name}
+                <LKDVIcon name="inventaire" size={15} aria-hidden="true" /> Rattacher {kit.name}
               </button>
             ) : undefined
           }
@@ -79,7 +79,7 @@ export function OutingGear({ gear, kit, missingGear, canEdit, busy, onAttach, on
             {gear.map((item) => (
               <li key={item.id}>
                 <span className="lkdv-sortie-gear-ico" aria-hidden="true">
-                  <Backpack size={15} />
+                  <LKDVIcon name="sac" size={15} />
                 </span>
                 <span className="lkdv-sortie-gear-name">{item.name}</span>
                 <span className="lkdv-sortie-gear-weight">{formatWeight(item.weightG)}</span>
@@ -91,7 +91,7 @@ export function OutingGear({ gear, kit, missingGear, canEdit, busy, onAttach, on
                     aria-label={`Retirer ${item.name}`}
                     disabled={busy}
                   >
-                    <Trash2 size={14} aria-hidden="true" />
+                    <LKDVIcon name="supprimer" size={14} aria-hidden="true" />
                   </button>
                 ) : null}
               </li>

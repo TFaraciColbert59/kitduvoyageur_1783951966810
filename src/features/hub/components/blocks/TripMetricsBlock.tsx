@@ -1,10 +1,11 @@
-import Icon from '@/components/ui/Icon';
+
 import { getTripDuration } from '@/features/trips/hooks/useTripDuration';
 import { getKitCounters } from '@/features/trips/hooks/useKitCounters';
 import { getTripDistance } from '@/features/trips/hooks/useTripDistance';
 import { getCanonicalTripSteps } from '@/features/trips/hooks/useTripCounters';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import { hubSectionHref, type HubAdventureRef } from '../../registry/hubSectionRegistry';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * H-ACT — Bloc "Métriques vitales" de l'aperçu sortie (adapté de
@@ -40,7 +41,7 @@ export function TripMetricsBlock({
           className={`${cardClass} cursor-pointer hover:bg-white/60 transition-colors`}
         >
           <div className={headClass}>
-            <Icon name="calendar" size={13} aria-hidden="true" />
+            <LKDVIcon name="calendrier" size={13} aria-hidden="true" />
             <span>Durée</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold text-[var(--lkv-text-primary)]">
@@ -56,7 +57,7 @@ export function TripMetricsBlock({
           className={`${cardClass} cursor-pointer hover:bg-white/60 transition-colors`}
         >
           <div className={headClass}>
-            <Icon name="navigation" size={13} aria-hidden="true" />
+            <LKDVIcon name="gps" size={13} aria-hidden="true" />
             <span>Distance</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold text-[var(--lkv-text-primary)]">
@@ -72,7 +73,7 @@ export function TripMetricsBlock({
           className={`${cardClass} cursor-pointer hover:bg-white/60 transition-colors`}
         >
           <div className={headClass}>
-            <Icon name="package" size={13} aria-hidden="true" />
+            <LKDVIcon name="inventaire" size={13} aria-hidden="true" />
             <span>Sac à dos</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold text-[var(--lkv-text-primary)]">
@@ -88,7 +89,7 @@ export function TripMetricsBlock({
           className={`${cardClass} cursor-pointer hover:bg-white/60 transition-colors`}
         >
           <div className={headClass}>
-            <Icon name="credit-card" size={13} aria-hidden="true" />
+            <LKDVIcon name="paiement" size={13} aria-hidden="true" />
             <span>Budget</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold text-[var(--lkv-text-primary)]">

@@ -2,15 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import {
-  CalendarDays,
-  ChevronRight,
-  Download,
-  LifeBuoy,
-  Printer,
-  Route,
-  Share2,
-} from 'lucide-react';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { BudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { Badge, Button, ListItem } from '@/components/ui';
@@ -20,6 +11,7 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { buildExportProgram, buildExportSummaryCards } from '../../../mobile/exportEngine';
 import { tripItineraryTotals } from '../../../mobile/itineraryEngine';
 import { GroupeRail } from '../groupe/GroupeRail';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface ExportMobileExperienceProps {
   trip: TripFull;
@@ -100,7 +92,7 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
             download={`${trip.slug}.gpx`}
             className="glass-capsule-btn primary inline-flex min-h-[44px] items-center justify-center gap-1.5 !py-3 text-sm font-bold"
           >
-            <Download size={15} aria-hidden="true" />
+            <LKDVIcon name="telecharger" size={15} aria-hidden="true" />
             GPX
           </a>
           <Button
@@ -109,7 +101,7 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
               triggerHaptic('light');
               printActiveView();
             }}
-            icon={<Printer size={15} aria-hidden="true" />}
+            icon={<LKDVIcon name="exporter" size={15} aria-hidden="true" />}
             className="!py-3 text-sm font-bold"
           >
             PDF
@@ -117,7 +109,7 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
           <Button
             variant="secondary"
             onClick={handleShare}
-            icon={<Share2 size={15} aria-hidden="true" />}
+            icon={<LKDVIcon name="partager" size={15} aria-hidden="true" />}
             className="col-span-2 !py-3 text-sm font-bold"
           >
             Partager la feuille de route
@@ -162,18 +154,18 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
                   }
                   title={
                     <span className="flex items-center gap-1.5">
-                      <CalendarDays size={12} className="shrink-0 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
+                      <LKDVIcon name="jours" size={12} className="shrink-0 text-[var(--lkv-secondary-ink)]" aria-hidden="true" />
                       <span className="truncate">{day.dateLabel ?? `Jour ${day.day}`}</span>
                     </span>
                   }
                   subtitle={
                     <span className="flex items-center gap-1.5">
-                      <Route size={11} aria-hidden="true" />
+                      <LKDVIcon name="itineraire" size={11} aria-hidden="true" />
                       {day.stepsCount} étape{day.stepsCount > 1 ? 's' : ''} · {day.distanceKm} km
                     </span>
                   }
                   trailing={
-                    <ChevronRight size={15} className="shrink-0 text-[var(--lkv-text-primary)]/40" aria-hidden="true" />
+                    <LKDVIcon name="suivant" size={15} className="shrink-0 text-[var(--lkv-text-primary)]/40" aria-hidden="true" />
                   }
                 />
               </Link>
@@ -218,7 +210,7 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
       {/* ── SÉCURITÉ ── */}
       <section className="glass-sub-card rounded-2xl p-4" aria-label="Numéros d'urgence">
         <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/70">
-          <LifeBuoy size={12} aria-hidden="true" />
+          <LKDVIcon name="secours" size={12} aria-hidden="true" />
           Sécurité &amp; numéros d’urgence
         </p>
         <ul className="mt-2 flex flex-wrap gap-2">

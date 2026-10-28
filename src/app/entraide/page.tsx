@@ -4,9 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
-import Icon from '@/components/ui/AppIcon';
 import AppShell from '@/components/shell/AppShell';
 import { Button } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * F-031 — page honnête : plus de CTA « Lancer un appel » sans formulaire ni
@@ -17,7 +17,7 @@ import { Button } from '@/components/ui';
 export default function EntraidePage() {
   const cta = (
     <Link href="/communaute/publier?type=question">
-      <Button icon={<Icon name="PlusIcon" size={15} variant="outline" />} size="lg">
+      <Button icon={<LKDVIcon name="plus" size={15} />} size="lg">
         Poser une question à la communauté
       </Button>
     </Link>
@@ -62,7 +62,7 @@ export default function EntraidePage() {
               Posez votre question à la communauté — et en urgence, contactez les secours locaux.
             </p>
             <Link href="/communaute/publier?type=question" className="block">
-              <Button fullWidth icon={<Icon name="PlusIcon" size={15} variant="outline" />}>
+              <Button fullWidth icon={<LKDVIcon name="plus" size={15} />}>
                 Poser une question à la communauté
               </Button>
             </Link>

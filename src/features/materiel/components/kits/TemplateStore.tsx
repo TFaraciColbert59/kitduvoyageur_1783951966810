@@ -1,13 +1,11 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge, Card, IconButton } from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
-import { ArrowDownIcon as ArrowDown } from '@/components/icons/arrow-down';
 import type { PublicKit } from '@/features/materiel/services/getPublicKits';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 const CURATED_COMMUNITY_KITS: PublicKit[] = [
   {
@@ -151,9 +149,9 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
                       aria-hidden="true"
                     />
                   ) : isJustImported ? (
-                    <Icon name="check" size={11} strokeWidth={2.5} aria-hidden="true" />
+                    <LKDVIcon name="valider" size={11} aria-hidden="true" />
                   ) : (
-                    <ArrowDown size={12} strokeWidth={2.5} aria-hidden="true" />
+                    <LKDVIcon name="bas" size={12} aria-hidden="true" />
                   )}
                 </AnimatePresence>
               </IconButton>

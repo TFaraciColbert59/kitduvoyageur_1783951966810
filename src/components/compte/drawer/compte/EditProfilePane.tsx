@@ -2,10 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Link2, Plus, Save, Sparkles, Trash2, UserRound } from 'lucide-react';
 import type { ProfileLink, ProfileSettings } from '@/features/compte/server/compte';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { fetchJson, initials } from './shared';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface FormState {
   name: string;
@@ -145,7 +145,7 @@ export function EditProfilePane() {
       {stats.missing.length > 0 ? (
         <section className="lkdv-compte-suggestions">
           <b>
-            <Sparkles size={14} aria-hidden="true" /> Complète ton profil
+            <LKDVIcon name="ia" size={14} aria-hidden="true" /> Complète ton profil
           </b>
           <ul>
             {stats.missing.map((item) => (
@@ -155,7 +155,7 @@ export function EditProfilePane() {
         </section>
       ) : (
         <p className="lkdv-compte-inline-status">
-          <Check size={13} aria-hidden="true" /> Ton profil est complet.
+          <LKDVIcon name="valider" size={13} aria-hidden="true" /> Ton profil est complet.
         </p>
       )}
 
@@ -225,13 +225,13 @@ export function EditProfilePane() {
                 className="lkdv-compte-link"
                 onClick={() => set('links', [...form.links, { label: '', url: '' }])}
               >
-                <Plus size={13} aria-hidden="true" /> Ajouter
+                <LKDVIcon name="plus" size={13} aria-hidden="true" /> Ajouter
               </button>
             ) : null}
           </div>
           {form.links.length === 0 ? (
             <p className="lkdv-compte-empty-line">
-              <Link2 size={13} aria-hidden="true" /> Aucun lien : ajoute ton carnet, ton club ou ton site.
+              <LKDVIcon name="lien" size={13} aria-hidden="true" /> Aucun lien : ajoute ton carnet, ton club ou ton site.
             </p>
           ) : (
             form.links.map((link, index) => (
@@ -264,7 +264,7 @@ export function EditProfilePane() {
                   onClick={() => set('links', form.links.filter((_, position) => position !== index))}
                   aria-label={`Supprimer le lien ${index + 1}`}
                 >
-                  <Trash2 size={14} aria-hidden="true" />
+                  <LKDVIcon name="supprimer" size={14} aria-hidden="true" />
                 </button>
               </div>
             ))
@@ -283,12 +283,12 @@ export function EditProfilePane() {
           Annuler
         </button>
         <button type="button" className="lkdv-compte-btn primary" onClick={() => void save()} disabled={busy || !form.name.trim() || !form.handle.trim()}>
-          {busy ? 'Enregistrement…' : <><Save size={15} aria-hidden="true" /> Enregistrer</>}
+          {busy ? 'Enregistrement…' : <><LKDVIcon name="sauvegarder" size={15} aria-hidden="true" /> Enregistrer</>}
         </button>
       </div>
 
       <p className="lkdv-compte-note">
-        <UserRound size={13} aria-hidden="true" /> Les changements de handle et de visibilité s’appliquent immédiatement à ton profil public.
+        <LKDVIcon name="profil" size={13} aria-hidden="true" /> Les changements de handle et de visibilité s’appliquent immédiatement à ton profil public.
       </p>
     </div>
   );

@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import type { TripStep } from '@/features/trips/types/trip.types';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 /**
  * H-ACT §3 — Blocs d'aperçu du profil Voyage : réservations (hébergements
@@ -23,8 +23,8 @@ export function ReservationsBlock({
     <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Réservations">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Icon
-            name="bed-double"
+          <LKDVIcon
+            name="hotel"
             size={16}
             className="text-[var(--lkv-text-secondary)]"
             aria-hidden="true"
@@ -67,7 +67,7 @@ export function ReservationsBlock({
         className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] min-h-[44px]"
       >
         <span>Gérer les réservations</span>
-        <Icon name="arrow-right" size={13} aria-hidden="true" />
+        <LKDVIcon name="suivant" size={13} aria-hidden="true" />
       </Link>
     </section>
   );

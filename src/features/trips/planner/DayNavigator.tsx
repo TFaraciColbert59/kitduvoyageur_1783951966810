@@ -1,11 +1,10 @@
 'use client';
-
-import Icon from '@/components/ui/Icon';
 import React, { useRef, useEffect } from 'react';
 import type { PlannerStep } from './plannerEngine';
 import { formatCivilDayIndex } from '@/lib/dates/tripDates';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Button, Chip } from '@/components/ui';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface DayNavigatorProps {
   daysCount: number;
@@ -94,7 +93,7 @@ export function DayNavigator({
             type="button"
             size="sm"
             variant="secondary"
-            icon={<Icon name="plus" size={14} />}
+            icon={<LKDVIcon name="plus" size={14} />}
             onClick={() => {
               triggerHaptic('light');
               onAddDay();

@@ -1,10 +1,9 @@
 ﻿'use client';
-import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { ClockIcon as Clock } from '@/components/icons/clock';
 import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 interface DispoData {
   unavailableCount: number;
@@ -38,13 +37,13 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
 
           <div className="flex items-center gap-1 shrink-0">
             <div className="glass-sub-card px-1.5 py-0.5 flex items-center gap-0.5">
-              <Icon name="check-circle2" size={10} className="text-[color:var(--lkv-text-primary)]" />
+              <LKDVIcon name="valider" size={10} className="text-[color:var(--lkv-text-primary)]" />
               <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[color:var(--lkv-text-primary)]">
                 {available}
               </span>
             </div>
             <div className="glass-sub-card px-1.5 py-0.5 flex items-center gap-0.5">
-              <Clock size={10} className="text-[var(--lkv-warning)]" />
+              <LKDVIcon name="duree" size={10} className="text-[var(--lkv-warning)]" />
               <span className="text-[11px] sm:text-[14px] font-mono font-bold text-[var(--lkv-warning)]">
                 {data.unavailableCount}
               </span>
@@ -67,14 +66,14 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
             {data.hasConflict ? (
               <Badge tone="danger">
                 <span className="flex items-center gap-0.5 text-[8.5px] sm:text-[9px]">
-                  <Icon name="alert-circle" size={9} />
+                  <LKDVIcon name="alerte" size={9} />
                   <span>Conflit</span>
                 </span>
               </Badge>
             ) : (
               <Badge tone="sage">
                 <span className="flex items-center gap-0.5 text-[8.5px] sm:text-[9px]">
-                  <Icon name="check-circle2" size={9} />
+                  <LKDVIcon name="valider" size={9} />
                   <span>0 conflit</span>
                 </span>
               </Badge>
@@ -89,7 +88,7 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
             className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0"
           >
             <span>Prêts</span>
-            <Icon name="arrow-right" size={10} />
+            <LKDVIcon name="suivant" size={10} />
           </Link>
         </div>
       </div>

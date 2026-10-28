@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState, useTransition, type FormEvent } from 'react';
-import { Dog, HeartPulse, Plus, UserPlus, X } from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 import { MemberProfileBadges } from '@/features/trips/components/MemberProfileBadges';
 import { Badge, Button, IconButton, Switch, type BadgeTone } from '@/components/ui';
@@ -19,6 +18,7 @@ import { carnetRoleLabel, dogLoadView, formatJoinDate, personInitials, teamRoleL
 import { GroupeRail } from '../groupe/GroupeRail';
 import { TeamHero } from './TeamHero';
 import { TeamCarnetDrawer, TeamDogsDrawer, TeamMembersDrawer } from './TeamDrawers';
+import { LKDVIcon } from '@/components/ui/LKDVIcon';
 
 export interface TeamMobileExperienceProps {
   trip: TripFull;
@@ -193,7 +193,7 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
             className="shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
-            <X size={16} aria-hidden="true" />
+            <LKDVIcon name="fermer" size={16} aria-hidden="true" />
           </IconButton>
         </div>
       )}
@@ -269,7 +269,7 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
               className="flex h-[9rem] w-[9.5rem] !flex-col !items-center !justify-center !gap-2 !rounded-[var(--lkv-radius-lg)] !border-2 !border-dashed !border-white/50 !p-3"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
-                <UserPlus size={17} aria-hidden="true" />
+                <LKDVIcon name="amis" size={17} aria-hidden="true" />
               </span>
               <span className="text-[11px] font-bold">Inviter</span>
             </Button>
@@ -316,7 +316,7 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
                   setSelectedHuman(human);
                 }}
                 aria-label={`Fiche médicale de ${human.publicData.firstName}`}
-                icon={<HeartPulse size={13} aria-hidden="true" />}
+                icon={<LKDVIcon name="trousse" size={13} aria-hidden="true" />}
                 className="mt-auto min-h-[44px] !py-2 text-[10.5px] font-bold"
               >
                 Fiche ICE
@@ -332,7 +332,7 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
             className="flex h-[9.5rem] w-[9.5rem] !flex-col !items-center !justify-center !gap-2 !rounded-[var(--lkv-radius-lg)] !border-2 !border-dashed !border-white/50 !p-3"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
-              <Plus size={17} aria-hidden="true" />
+              <LKDVIcon name="plus" size={17} aria-hidden="true" />
             </span>
             <span className="text-[11px] font-bold">Ajouter</span>
           </Button>
@@ -371,7 +371,7 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
                       className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--lkv-secondary)]/15 text-[var(--lkv-text-primary)]"
                       aria-hidden="true"
                     >
-                      <Dog size={15} />
+                      <LKDVIcon name="faune" size={15} />
                     </span>
                     <span className="min-w-0 truncate text-[12.5px] font-bold text-[var(--lkv-text-primary)]">
                       {dog.name}
