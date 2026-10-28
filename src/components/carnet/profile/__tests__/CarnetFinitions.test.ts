@@ -27,6 +27,103 @@ function rule(selector: string): string {
   return css.slice(open + 1, close);
 }
 
+/** Règle trouvée par un fragment de sélecteur (listes multi-lignes). */
+function ruleFrom(marker: string): string {
+  const start = css.indexOf(marker);
+  if (start < 0) throw new Error(`sélecteur absent : ${marker}`);
+  return css.slice(start, css.indexOf('}', start));
+}
+
+describe('Anatomie du drawer — lot A', () => {
+  /* 1 — poignée 42 × 5 ; 6 px et .32 sous le doigt, en 120 ms. */
+  it('poignée 42 × 5 qui s’épaissit à 6 px / .32 en 120 ms', () => {
+    const bar = rule('.ckp-grabber span {');
+    expect(bar).toMatch(/width:\s*42px/);
+    expect(bar).toMatch(/height:\s*5px/);
+    expect(bar).toMatch(/transition:\s*height 120ms ease, background-color 120ms ease/);
+    const press = ruleFrom(".ckp-grabber[data-press='true']");
+    expect(press).toMatch(/height:\s*6px/);
+    expect(press).toMatch(/background:\s*rgba\(23, 43, 36, \.32\)/);
+    expect(ruleFrom('.ckp-grabber:active span')).toMatch(/height:\s*6px/);
+  });
+
+  /* 2 — rayon du châssis en haut (24), bas refermé à 16 ; la carte ne bouge pas. */
+  it('rayon 24 en haut et 16 en bas, la carte garde 24 partout', () => {
+    expect(rule('.ckp-card.ckp-card--drawer {')).toMatch(/border-radius:\s*24px 24px 16px 16px/);
+    expect(rule('.ckp-card {')).toMatch(/border-radius:\s*24px;/);
+    /* L'ombre héritée épouse la courbe : la carte garde ses trois lames, aucune
+       ombre n'est redessinée pour le bas de la feuille. */
+    const card = rule('.ckp-card {');
+    expect(card).toMatch(/inset 0 1px 0 rgba\(255, 255, 255, \.95\)/);
+    expect(card).toMatch(/inset 0 -1px 1px rgba\(255, 255, 255, \.4\)/);
+    expect(card).toMatch(/0 0 0 \.5px rgba\(23, 43, 36, \.12\)/);
+  });
+
+  /* 3 — liseré de 1 px sur l'arc supérieur seulement, clippé par un masque. */
+  it('liseré 1 px sur l’arc supérieur, masqué à 26 px', () => {
+    const edge = rule('.ckp-card--drawer::before {');
+    expect(edge).toMatch(/box-shadow:\s*inset 0 1px 0 rgba\(255, 255, 255, \.9\)/);
+    expect(edge).toMatch(/border-radius:\s*24px 24px 0 0/);
+    expect(edge).toMatch(/mask-image:\s*linear-gradient\(180deg, #000 0 18px, transparent 26px\)/);
+    expect(edge).toMatch(/height:\s*26px/);
+  });
+
+  /* 4 — voile de coupe : blur 12, hairline .06, fondu de 160 ms. */
+  it('voile de coupe : blur 12, hairline .06, opacité 160 ms', () => {
+    const cut = rule('.ckp-drawer-cut {');
+    expect(cut).toMatch(/backdrop-filter:\s*blur\(12px\)/);
+    expect(cut).toMatch(/border-top:\s*\.5px solid rgba\(23, 43, 36, \.06\)/);
+    expect(cut).toMatch(/transition:\s*opacity 160ms/);
+    expect(rule(".ckp-drawer-cut[data-on='true'] {")).toMatch(/opacity:\s*1/);
+  });
+
+  /* 5 — zone de retour tactile : 12 px en bas, curseur grab, aucun geste. */
+  it('zone tactile de 12 px en bas de feuille, curseur grab', () => {
+    const grip = rule('.ckp-drawer-grip {');
+    expect(grip).toMatch(/bottom:\s*0/);
+    expect(grip).toMatch(/height:\s*12px/);
+    expect(grip).toMatch(/cursor:\s*grab/);
+    expect(grip).toMatch(/background:\s*transparent/);
+  });
+
+  /* 6 — élévation : 0 -2px 10px .14 → 0 -10px 34px .16 en 200 ms, puis stable. */
+  it('élévation 200 ms puis stable, les trois lames du Compte intactes', () => {
+    const sheet = rule('.ckp-card.ckp-card--drawer {');
+    expect(sheet).toMatch(/inset 0 1px 0 rgba\(255, 255, 255, \.95\)/);
+    expect(sheet).toMatch(/inset 0 -1px 1px rgba\(255, 255, 255, \.4\)/);
+    expect(sheet).toMatch(/0 0 0 \.5px rgba\(23, 43, 36, \.12\)/);
+    expect(sheet).toMatch(/0 -10px 34px rgba\(23, 43, 36, \.16\)/);
+    expect(sheet).toMatch(/ckp-drawer-lift 200ms cubic-bezier\(\.22, 1, \.36, 1\) both/);
+    const lift = css.slice(css.indexOf('@keyframes ckp-drawer-lift'));
+    expect(lift).toMatch(/0 -2px 10px rgba\(23, 43, 36, \.14\)/);
+    /* Une seule fois : aucune animation en boucle, aucune durée de série. */
+    expect(lift.slice(0, lift.indexOf('.ckp-card--drawer::before'))).not.toMatch(/infinite/);
+  });
+
+  /* 7 — scrim gradué .10 au centre → .28 sous la feuille. */
+  it('scrim gradué de .10 à .28', () => {
+    const scrim = rule('.ckp-scrim {');
+    expect(scrim).toMatch(/linear-gradient\(/);
+    expect(scrim).toMatch(/rgba\(10, 20, 14, \.10\) 0%/);
+    expect(scrim).toMatch(/rgba\(10, 20, 14, \.10\) 50%/);
+    expect(scrim).toMatch(/rgba\(10, 20, 14, \.28\) 100%/);
+    expect(scrim).toMatch(/pointer-events:\s*none/);
+  });
+
+  /* 8 — croix de 36 px, en absolu, jamais conditionnée à un état. */
+  it('croix de fermeture 36 px toujours visible', () => {
+    const close = rule('.ckp-drawer-close {');
+    expect(close).toMatch(/width:\s*36px/);
+    expect(close).toMatch(/height:\s*36px/);
+    expect(close).toMatch(/position:\s*absolute/);
+    expect(close).toMatch(/display:\s*grid/);
+    expect(close).not.toMatch(/opacity:\s*0/);
+    expect(close).not.toMatch(/visibility:\s*hidden/);
+    expect(close).not.toMatch(/display:\s*none/);
+    expect(css).not.toMatch(/\.ckp-drawer-close\[data-/);
+  });
+});
+
 describe('Anatomie de la feuille', () => {
   /* 1 — le contenu commence 16 px sous la poignée, plus 60 px de vide. */
   it('poignée 42 × 5 à 8 px du bord, 13 px de haut, corps à 16 px dessous', () => {

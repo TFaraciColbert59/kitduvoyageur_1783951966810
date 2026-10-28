@@ -93,3 +93,66 @@ describe('CarnetDrawer — coquille', () => {
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('CarnetDrawer — finitions du lot A', () => {
+  /* 1 — la poignée s'épaissit au toucher, sans changer de comportement. */
+  it('marque la poignée pressée puis la relâche', () => {
+    const { container } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>,
+    );
+    const grabber = container.querySelector('.ckp-grabber') as HTMLElement;
+    expect(grabber.getAttribute('data-press')).toBeNull();
+    fireEvent.pointerDown(grabber);
+    expect(grabber.getAttribute('data-press')).toBe('true');
+    fireEvent.pointerUp(grabber);
+    expect(grabber.getAttribute('data-press')).toBeNull();
+  });
+
+  /* 4 — le voile de coupe s'allume au-delà de 8 px de défilement, pas avant. */
+  it('allume le voile de coupe à 8 px de défilement', () => {
+    const { container } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>,
+    );
+    const body = container.querySelector('.ckp-drawer-body') as HTMLElement;
+    const cut = container.querySelector('.ckp-drawer-cut') as HTMLElement;
+    expect(cut.getAttribute('data-on')).toBeNull();
+    body.scrollTop = 4;
+    fireEvent.scroll(body);
+    expect(cut.getAttribute('data-on')).toBeNull();
+    body.scrollTop = 12;
+    fireEvent.scroll(body);
+    expect(cut.getAttribute('data-on')).toBe('true');
+    body.scrollTop = 0;
+    fireEvent.scroll(body);
+    expect(cut.getAttribute('data-on')).toBeNull();
+  });
+
+  /* 5 / 7 — la feuille porte la zone tactile et le voile gradué de la page. */
+  it('pose la zone tactile de 12 px et le scrim de la page', () => {
+    const { container } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>,
+    );
+    const grip = container.querySelector('.ckp-drawer-grip') as HTMLElement;
+    expect(grip).toBeTruthy();
+    expect(grip.getAttribute('aria-hidden')).toBe('true');
+    expect(grip.parentElement?.classList.contains('ckp-card--drawer')).toBe(true);
+    const scrim = container.querySelector('.ckp-scrim') as HTMLElement;
+    expect(scrim).toBeTruthy();
+    expect(scrim.getAttribute('aria-hidden')).toBe('true');
+    /* Le voile est un frère de la feuille, jamais un enfant : il reste dessous. */
+    expect(scrim.nextElementSibling?.classList.contains('ckp-card--drawer')).toBe(true);
+  });
+
+  /* 8 — la croix reste dans le flux de l'en-tête même quand le corps défile. */
+  it('garde la croix de 36 px quand le corps défile', () => {
+    const { container } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>,
+    );
+    const body = container.querySelector('.ckp-drawer-body') as HTMLElement;
+    body.scrollTop = 120;
+    fireEvent.scroll(body);
+    const close = screen.getByRole('button', { name: 'Fermer' });
+    expect(close.classList.contains('ckp-drawer-close')).toBe(true);
+    expect(close.closest('.ckp-drawer-head')).toBeTruthy();
+  });
+});
