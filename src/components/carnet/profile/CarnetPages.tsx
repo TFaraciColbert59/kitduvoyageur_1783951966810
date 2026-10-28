@@ -65,6 +65,14 @@ export interface CarnetPagesProps {
   onRequireAuth: () => void;
   onOpenPost: (index: number) => void;
   onDownloadGpx: () => void;
+  /**
+   * Moments de la grille Posts, dans l'ordre d'ouverture du post : ceux du
+   * jour affiché sur la carte, tous les moments sur le Résumé. Absent, la
+   * grille garde `detail.photoMoments`.
+   */
+  moments?: CarnetMomentItem[];
+  /** État vide de la grille quand la page n'a aucun moment (jour sans photo). */
+  emptyGrid?: React.ReactNode;
   /** Contenus réels des volets sortis du drawer, rendus en pages. */
   likesPage?: React.ReactNode;
   commentsPage?: React.ReactNode;
@@ -138,6 +146,8 @@ export function CarnetPages({
   onRequireAuth,
   onOpenPost,
   onDownloadGpx,
+  moments,
+  emptyGrid = null,
   likesPage = null,
   commentsPage = null,
   managePage = null,
@@ -151,8 +161,9 @@ export function CarnetPages({
 
   /* Dérivés stables : la liste des tuiles ne se recalcule pas à chaque frappe
      ou à chaque bascule d'engagement, et les props des tuiles restent égales. */
-  const tiles = useMemo(() => detail.photoMoments.slice(0, TILE_COUNT), [detail.photoMoments]);
-  const more = detail.photoMoments.length > TILE_COUNT ? detail.photoMoments.length - TILE_COUNT : 0;
+  const photos = moments ?? detail.photoMoments;
+  const tiles = useMemo(() => photos.slice(0, TILE_COUNT), [photos]);
+  const more = photos.length > TILE_COUNT ? photos.length - TILE_COUNT : 0;
 
   /* Le changement de page est une transition : il reste interruptible sans
      jamais bloquer le geste, et le rendu visible est le même. */
@@ -244,6 +255,8 @@ export function CarnetPages({
                 />
               ))}
             </div>
+          ) : emptyGrid ? (
+            emptyGrid
           ) : (
             <div className="ckp-grid-empty">
               <Icon name="image-plus" size={20} aria-hidden="true" />

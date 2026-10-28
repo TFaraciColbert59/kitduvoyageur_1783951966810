@@ -104,8 +104,6 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
 
   const openCarnetFromTopBar = useCallback(() => openPage('etapes'), [openPage]);
   const openCarnetFromCard = useCallback(() => openPage('parcours'), [openPage]);
-  const openCommentsPage = useCallback(() => openPage('comments'), [openPage]);
-  const openLikesPage = useCallback(() => openPage('likes'), [openPage]);
   const openManagePage = useCallback(() => openPage('manage'), [openPage]);
   const openPost = useCallback((next: number) => setPostIndex(next), []);
   const closePost = useCallback(() => setPostIndex(null), []);
@@ -225,8 +223,6 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             onRequireAuth={requireAuth}
             onOpenCarnet={openCarnetFromCard}
             onOpenStat={openStat}
-            onOpenComments={openCommentsPage}
-            onOpenLikes={openLikesPage}
             onOpenPost={openPost}
             onDownloadGpx={handleDownloadGpx}
             likesPage={
