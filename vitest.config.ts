@@ -28,7 +28,16 @@ export default defineConfig({
     // Le contrat de verre fait exception : c est le seul garde-fou de contraste
     // du CTA, et il doit rester dans la suite Vitest pour tourner a chaque commit.
     // tests/e2e-compas-full/ : banc Playwright EN LIGNE du Compas (playwright.compas-full.config.ts).
-    exclude: ['node_modules/**', 'tests/visual/!(glass-contract).spec.ts', 'tests/a11y/e2e/**', 'tests/ui/**', 'tests/e2e/**', 'tests/e2e-compas-full/**'],
+    exclude: [
+      'node_modules/**',
+      'tests/visual/!(glass-contract).spec.ts',
+      'tests/a11y/e2e/**',
+      'tests/ui/**',
+      'tests/e2e/**',
+      'tests/e2e-compas-full/**',
+      // Specs Playwright de l'Explorer v2 (exécutées par Playwright, pas Vitest).
+      'tests/explorer-v2/**/*.e2e.spec.ts',
+    ],
   },
   resolve: {
     alias: {
