@@ -773,7 +773,6 @@ describe('CarnetCard — informations du jour', () => {
     /* 6 h pour 18,4 km : 19,6 min/km — calculée, jamais inventée. */
     expect(rows(container)).toEqual([
       ['Allure', '19,6 min/km'],
-      ['Activité', '—'],
       ['Départ', '—'],
       ['Arrivée', '—'],
       ['Depuis le départ', '18,4 km'],
@@ -787,7 +786,6 @@ describe('CarnetCard — informations du jour', () => {
     fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'End' });
     expect(rows(container)).toEqual([
       ['Allure', '—'],
-      ['Activité', '—'],
       ['Départ', '—'],
       ['Arrivée', '—'],
       ['Depuis le départ', '30,4 km'],
