@@ -198,7 +198,8 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
 
   it('la bascule J’aime du carnet vit dans la page, plus sur la carte', () => {
     render(<CarnetScreen detail={OWNER} />);
-    keyPages(5);
+    /* Posts → Étapes → Matériel → Nature → J’aime : quatre pas de clavier. */
+    keyPages(4);
     expect(SPIES.toggleLike).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'J’aime ce carnet' }));
     expect(SPIES.toggleLike).toHaveBeenCalledOnce();
@@ -219,9 +220,14 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     const more = screen.getByRole('button', { name: 'Plus d’options' });
     expect(more.closest('.ckp-topbar')).toBeTruthy();
     expect(more.closest('.ckp-more-anchor')).toBeTruthy();
-    /* Le sélecteur du bas a deux segments : ▦, 🗺 — la capsule des drawers. */
+    /* La capsule du bas porte les jours : un segment par page. */
     const segments = document.querySelectorAll('.ckp-card-foot .ckp-tabs button');
-    expect(segments).toHaveLength(2);
+    expect(segments).toHaveLength(3);
+    expect([...segments].map((node) => node.getAttribute('aria-label'))).toEqual([
+      'Résumé',
+      'Jour 1',
+      'Jour 2',
+    ]);
     expect(document.querySelectorAll('.ckp-card-foot .ckp-action')).toHaveLength(0);
     expect(document.querySelector('.ckp-card-foot .ckp-more-anchor')).toBeNull();
     /* La loupe a disparu de la barre : le `···` prend sa place. */
@@ -256,22 +262,35 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     expect(document.querySelector('.ckp-pages')?.getAttribute('id')).toBe('carnet-page-posts');
   });
 
-  it('chaque segment ouvre sa page : ▦, 🗺', () => {
+  it('chaque segment du bas affiche son jour, sans toucher au carrousel', () => {
     render(<CarnetScreen detail={OWNER} />);
-    const header = () => document.querySelector('.ckp-pages')?.getAttribute('id');
-    fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
-    expect(header()).toBe('carnet-page-parcours');
-    fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
-    expect(header()).toBe('carnet-page-posts');
+    expect(dayLabel()).toBe('Résumé');
+    fireEvent.click(screen.getByRole('tab', { name: 'Jour 2' }));
+    expect(dayLabel()).toBe('Jour 2 · 27 sept.');
+    expect(pageId()).toBe('carnet-page-posts');
+    fireEvent.click(screen.getByRole('tab', { name: 'Jour 1' }));
+    expect(dayLabel()).toBe('Jour 1 · 26 sept.');
+    fireEvent.click(screen.getByRole('tab', { name: 'Résumé' }));
+    expect(dayLabel()).toBe('Résumé');
+    expect(pageId()).toBe('carnet-page-posts');
+  });
+
+  it('la lentille du sélecteur suit le jour affiché', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    const lens = () => document.querySelector('.ckp-th') as HTMLElement | null;
+    expect(lens()?.style.getPropertyValue('--i')).toBe('0');
+    fireEvent.click(screen.getByRole('tab', { name: 'Jour 2' }));
+    expect(lens()?.style.getPropertyValue('--i')).toBe('2');
+    expect(document.querySelectorAll('.ckp-th')).toHaveLength(1);
   });
 
   it('un glissement dans la grille change de jour, la page Posts reste affichée', () => {
     render(<CarnetScreen detail={OWNER} />);
     expect(dayLabel()).toBe('Résumé');
     swipeGrid(300, 180);
-    expect(dayLabel()).toBe('26 sept.');
+    expect(dayLabel()).toBe('Jour 1 · 26 sept.');
     expect(pageId()).toBe('carnet-page-posts');
-    expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'Jour 1' }).getAttribute('aria-selected')).toBe('true');
     /* Le geste inverse revient au Résumé, jamais à une page du carrousel. */
     swipeGrid(120, 260);
     expect(dayLabel()).toBe('Résumé');
@@ -286,21 +305,27 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     /* Deux jours : deux pas mènent au dernier, le troisième ne bouge plus. */
     swipeGrid(300, 180);
     swipeGrid(300, 180);
-    expect(dayLabel()).toBe('27 sept.');
+    expect(dayLabel()).toBe('Jour 2 · 27 sept.');
     swipeGrid(300, 180);
-    expect(dayLabel()).toBe('27 sept.');
+    expect(dayLabel()).toBe('Jour 2 · 27 sept.');
     expect(pageId()).toBe('carnet-page-posts');
   });
 
-  it('garde la page active et ne la change qu’au sélecteur', () => {
+  it('ouvre la page Étapes depuis le titre et la garde, sans page Parcours', () => {
     render(<CarnetScreen detail={OWNER} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
-    expect(screen.getByRole('tab', { name: 'Parcours' }).getAttribute('aria-selected')).toBe('true');
-    expect(document.getElementById('carnet-page-parcours')).toBeTruthy();
-    fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
-    expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
-    fireEvent.click(screen.getByRole('tab', { name: 'Posts' }));
-    expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: /^Carnet / }));
+    expect(pageId()).toBe('carnet-page-etapes');
+    /* La page qui portait la carte interne n'existe plus. */
+    expect(document.getElementById('carnet-page-parcours')).toBeNull();
+    expect(document.querySelector('.ckp-pages .leaflet-container')).toBeNull();
+    /* Le GPX reste téléchargeable depuis cette page. */
+    expect(screen.getByRole('button', { name: 'Télécharger le GPX' })).toBeTruthy();
+  });
+
+  it('la couverture de la carte ouvre le même volet que le titre', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvrir le carnet' }));
+    expect(pageId()).toBe('carnet-page-etapes');
   });
 });
 

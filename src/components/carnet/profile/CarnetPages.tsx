@@ -7,18 +7,19 @@ import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/ty
 import { CarnetEtapesPane } from './panes/CarnetEtapesPane';
 import { CarnetKitPane } from './panes/CarnetKitPane';
 import { CarnetNaturePane } from './panes/CarnetNaturePane';
-import { CarnetParcoursPane } from './panes/CarnetParcoursPane';
+import { formatElevation, formatKm } from '@/features/carnet/detail/format';
 
 /**
- * Pages du carrousel : les cinq volets du carnet, puis les trois volets sortis
- * du drawer (J’aime, Commentaires, Gérer) qui vivent désormais ici, dans le
- * même conteneur `.ckp-pages`. Le carrousel ne se pilote que par le sélecteur
- * du bas et par son clavier : aucun geste ici, le glissement horizontal de la
+ * Pages du carrousel : les quatre volets du carnet, puis les trois volets
+ * sortis du drawer (J’aime, Commentaires, Gérer) qui vivent désormais ici, dans
+ * le même conteneur `.ckp-pages`. La page « Parcours » a disparu : la seule
+ * carte de la fiche est celle du bas (`40dvh`), et le téléchargement GPX est
+ * passé dans le pied de la page Étapes. Le carrousel ne se pilote que par la
+ * barre du haut, le menu `···` et son clavier : le glissement horizontal de la
  * carte appartient aux jours.
  */
 export type CarnetPageId =
   | 'posts'
-  | 'parcours'
   | 'etapes'
   | 'materiel'
   | 'nature'
@@ -39,7 +40,6 @@ export const CARNET_PAGE_TABS: CarnetPageTab[] = [
     label: 'Posts',
     icon: <SfIcon name="grid" size={17} />,
   },
-  { id: 'parcours', label: 'Parcours', icon: <SfIcon name="map" size={17} /> },
   { id: 'etapes', label: 'Étapes', icon: <Icon name="route" size={15} aria-hidden="true" /> },
   { id: 'materiel', label: 'Matériel', icon: <Icon name="backpack" size={15} aria-hidden="true" /> },
   { id: 'nature', label: 'Nature', icon: <Icon name="leaf" size={15} aria-hidden="true" /> },
@@ -83,6 +83,16 @@ export interface CarnetPagesProps {
 
 /** Neuf tuiles au plus : la grille du Compte s'arrête au troisième rang. */
 const TILE_COUNT = 9;
+
+/**
+ * Une trace est téléchargeable quand elle porte réellement des coordonnées :
+ * `LineString` brute, ou géométrie GeoJSON encapsulée. Aucun GPX n'est fabriqué
+ * à partir d'une trace absente.
+ */
+export function hasTrace(trace: unknown): boolean {
+  const value = trace as { coordinates?: unknown; geometry?: { coordinates?: unknown } } | null;
+  return Array.isArray(value?.coordinates) || Array.isArray(value?.geometry?.coordinates);
+}
 
 interface CarnetTileProps {
   moment: CarnetMomentItem;
@@ -235,12 +245,6 @@ export function CarnetPages({
           )
         ) : null}
 
-        {page === 'parcours' ? (
-          <div className="ckp-page-pad">
-            <CarnetParcoursPane detail={detail} onDownloadGpx={onDownloadGpx} />
-          </div>
-        ) : null}
-
         {page === 'etapes' ? (
           <div className="ckp-page-pad">
             {/* Le volet Récit sort du drawer : sa donnée propre (auteur vérifié,
@@ -263,6 +267,26 @@ export function CarnetPages({
               </span>
             </div>
             <CarnetEtapesPane detail={detail} />
+            {/* Le pied de la page Parcours supprimée : le GPX reste
+                téléchargeable, avec les deux chiffres réels du carnet. Le
+                bouton est le seul élément conservé de ce volet. */}
+            <div className="ckp-pane-foot">
+              <span className="ckp-day-meta">
+                {formatKm(detail.distanceKm) ? <span>{formatKm(detail.distanceKm)}</span> : null}
+                {formatElevation(detail.elevationM) ? (
+                  <span>{formatElevation(detail.elevationM)} D+</span>
+                ) : null}
+              </span>
+              <button
+                type="button"
+                className="ckp-pill ckp-pill--primary"
+                onClick={onDownloadGpx}
+                disabled={!hasTrace(detail.trace)}
+              >
+                <Icon name="download" size={16} aria-hidden="true" />
+                Télécharger le GPX
+              </button>
+            </div>
           </div>
         ) : null}
 

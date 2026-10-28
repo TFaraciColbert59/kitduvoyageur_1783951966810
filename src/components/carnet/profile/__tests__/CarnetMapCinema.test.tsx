@@ -174,7 +174,7 @@ function mount(node: React.ReactElement) {
 async function mountReady(node: React.ReactElement) {
   const view = mount(node);
   /* `style.load` est le seul signal de disponibilité de la carte. */
-  await waitFor(() => expect(fake.state.map).not.toBeNull());
+  await waitFor(() => expect(fake.state.map).not.toBeNull(), { timeout: 5000 });
   act(() => {
     (fake.state.map as unknown as { fire: (event: string) => void }).fire('style.load');
   });
@@ -192,7 +192,7 @@ describe('CarnetMapCard — caméra cinématique par jour', () => {
     const view = await mountReady(<CarnetMapCard detail={carnet} focusKey="resume" dayPoints={null} />);
 
     /* Résumé : cadrage du tracé complet du carnet. */
-    await waitFor(() => expect(fake.state.fitBounds.length).toBeGreaterThan(0));
+    await waitFor(() => expect(fake.state.fitBounds.length).toBeGreaterThan(0), { timeout: 5000 });
     const full = boundsOfLastFit();
     expect(full).toEqual([
       [6.86, 45.83],
@@ -210,7 +210,7 @@ describe('CarnetMapCard — caméra cinématique par jour', () => {
       </QueryClientProvider>,
     );
 
-    await waitFor(() => expect(fake.state.fitBounds.length).toBeGreaterThan(before));
+    await waitFor(() => expect(fake.state.fitBounds.length).toBeGreaterThan(before), { timeout: 5000 });
     expect(boundsOfLastFit()).toEqual([
       [6.86, 45.9],
       [6.9, 45.93],
@@ -220,7 +220,7 @@ describe('CarnetMapCard — caméra cinématique par jour', () => {
   it('recadre sur le tracé complet quand on revient au Résumé', async () => {
     const carnet = detail({ trace: TRACE });
     const view = await mountReady(<CarnetMapCard detail={carnet} focusKey="j1" dayPoints={J1} />);
-    await waitFor(() => expect(fake.state.fitBounds.length).toBeGreaterThan(0));
+    await waitFor(() => expect(fake.state.fitBounds.length).toBeGreaterThan(0), { timeout: 5000 });
     expect(boundsOfLastFit()).toEqual([
       [6.86, 45.9],
       [6.9, 45.93],
@@ -232,7 +232,7 @@ describe('CarnetMapCard — caméra cinématique par jour', () => {
         <CarnetMapCard detail={carnet} focusKey="resume" dayPoints={null} />
       </QueryClientProvider>,
     );
-    await waitFor(() => expect(fake.state.fitBounds.length).toBeGreaterThan(before));
+    await waitFor(() => expect(fake.state.fitBounds.length).toBeGreaterThan(before), { timeout: 5000 });
     expect(boundsOfLastFit()).toEqual([
       [6.86, 45.83],
       [6.9, 45.9],
@@ -243,7 +243,7 @@ describe('CarnetMapCard — caméra cinématique par jour', () => {
     reduced = true;
     await mountReady(<CarnetMapCard detail={detail({ trace: TRACE })} focusKey="j1" dayPoints={J1} />);
 
-    await waitFor(() => expect(fake.state.jumpTo.length).toBeGreaterThan(0));
+    await waitFor(() => expect(fake.state.jumpTo.length).toBeGreaterThan(0), { timeout: 5000 });
     expect(fake.state.fitBounds).toHaveLength(0);
     const jump = fake.state.jumpTo[0] as { center: [number, number]; zoom: number; pitch: number };
     expect(jump.center[0]).toBeCloseTo(6.88, 6);

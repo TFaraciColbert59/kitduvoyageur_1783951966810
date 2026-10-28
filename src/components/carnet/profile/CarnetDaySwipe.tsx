@@ -6,16 +6,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * Balayage des pages de la carte : **Résumé → J1 → J2 … → Jn**.
  *
  * Une seule grammaire de geste pour la carte entière : 40 px de course
- * horizontale, jamais un geste vertical. Le balayage ne sort jamais des bornes :
- * à droite sur le Résumé et à gauche sur le dernier jour, rien ne bouge et
- * aucune page n'est créée. Un glissement horizontal n'importe où dans la carte
- * — grille, volets, en-tête — change donc UNIQUEMENT de jour ; le carrousel
- * média ne se pilote plus que par le sélecteur du bas et par son clavier.
+ * horizontale, jamais un geste vertical. Le geste se lit au **doigt** comme à la
+ * souris et au stylet, et le clavier garde les flèches. Le balayage ne sort
+ * jamais des bornes : à droite sur le Résumé et à gauche sur le dernier jour,
+ * rien ne bouge et aucune page n'est créée. Un glissement horizontal n'importe
+ * où dans la carte — grille, volets, en-tête — change donc UNIQUEMENT de jour ;
+ * le carrousel média s'ouvre depuis la barre du haut et le menu `···`.
  */
 export const DAY_SWIPE_MS = 220;
 
 /** Course horizontale minimale d'un pas de page. */
-const SWIPE_MIN_PX = 40;
+export const SWIPE_MIN_PX = 40;
 
 export type DayDirection = 'next' | 'prev';
 
@@ -52,6 +53,17 @@ export interface DaySwipeHandlers {
   onPointerDown: (event: React.PointerEvent) => void;
   onPointerUp: (event: React.PointerEvent) => void;
   onPointerCancel: () => void;
+  /**
+   * Le doigt a sa propre grammaire : sur un écran tactile le navigateur émet
+   * aussi des événements pointeur, donc le pointeur se tait dès que
+   * `pointerType` vaut `touch` (ou `pen`) et le geste se lit ici. Aucun
+   * `preventDefault` n'est nécessaire : le geste ne consomme jamais le
+   * défilement vertical, et le clic fantôme est avalé en capture.
+   */
+  onTouchStart: (event: React.TouchEvent) => void;
+  onTouchMove: (event: React.TouchEvent) => void;
+  onTouchEnd: (event: React.TouchEvent) => void;
+  onTouchCancel: () => void;
   /**
    * Un glissement ne clique jamais : après un pas, le clic qui suit le geste
    * (tuile, bouton, segment) est avalé en phase de capture, avant l'enfant.
@@ -90,10 +102,16 @@ function keyboardBlocked(event: KeyboardEvent): boolean {
  * Geste et clavier du balayage. Les handlers se posent sur la carte entière ;
  * le clavier ne répond qu'aux flèches non déjà traitées par un enfant (le
  * carrousel appelle `preventDefault`, donc `defaultPrevented` l'exclut).
+ *
+ * Trois entrées pour une seule règle : le doigt (`touchstart`/`touchmove`/
+ * `touchend`), la souris et le stylet (`pointer*`), le clavier. Un geste tactile
+ * émet aussi des événements pointeur : ceux-ci sont ignorés quand
+ * `pointerType` vaut `touch`/`pen`, sinon un seul balayage ferait deux jours.
  */
 export function useDaySwipe({ count, index, onChange }: DaySwipeOptions): DaySwipe {
   const [direction, setDirection] = useState<DayDirection>('next');
   const start = useRef<{ x: number; y: number } | null>(null);
+  const latest = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
 
   const go = useCallback(
@@ -106,16 +124,24 @@ export function useDaySwipe({ count, index, onChange }: DaySwipeOptions): DaySwi
     [count, index, onChange],
   );
 
+  const reset = useCallback(() => {
+    start.current = null;
+    latest.current = null;
+  }, []);
+
+  /* Souris et stylet. Le doigt est traité par les handlers tactiles. */
   const onPointerDown = useCallback((event: React.PointerEvent) => {
+    if (event.pointerType && event.pointerType !== 'mouse') return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     swiped.current = false;
     start.current = { x: event.clientX, y: event.clientY };
+    latest.current = null;
   }, []);
 
   const onPointerUp = useCallback(
     (event: React.PointerEvent) => {
       const origin = start.current;
-      start.current = null;
+      reset();
       if (!origin) return;
       const step = dayStep(event.clientX - origin.x, event.clientY - origin.y);
       if (step === 0) return;
@@ -123,12 +149,48 @@ export function useDaySwipe({ count, index, onChange }: DaySwipeOptions): DaySwi
       swiped.current = true;
       go(step);
     },
-    [go],
+    [go, reset],
   );
 
   const onPointerCancel = useCallback(() => {
-    start.current = null;
+    reset();
+  }, [reset]);
+
+  /* Doigt : même seuil, même règle, mêmes bornes que la souris. */
+  const onTouchStart = useCallback((event: React.TouchEvent) => {
+    const touch = event.touches[0] ?? event.changedTouches[0] ?? null;
+    if (!touch) return;
+    swiped.current = false;
+    start.current = { x: touch.clientX, y: touch.clientY };
+    latest.current = { x: touch.clientX, y: touch.clientY };
   }, []);
+
+  const onTouchMove = useCallback((event: React.TouchEvent) => {
+    const touch = event.touches[0] ?? null;
+    if (!touch) return;
+    latest.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const onTouchEnd = useCallback(
+    (event: React.TouchEvent) => {
+      const origin = start.current;
+      /* `touchend` porte la position finale ; `lastTouch` couvre le cas d'un
+         `changedTouches` vide (certains navigateurs, tests). */
+      const end = event.changedTouches[0] ?? latest.current;
+      reset();
+      if (!origin || !end) return;
+      const step = dayStep(end.clientX - origin.x, end.clientY - origin.y);
+      if (step === 0) return;
+      /* Le clic synthétique qui suit le geste est avalé en capture. */
+      swiped.current = true;
+      go(step);
+    },
+    [go, reset],
+  );
+
+  const onTouchCancel = useCallback(() => {
+    reset();
+  }, [reset]);
 
   const onClickCapture = useCallback((event: React.MouseEvent) => {
     if (!swiped.current) return;
@@ -169,7 +231,16 @@ export function useDaySwipe({ count, index, onChange }: DaySwipeOptions): DaySwi
 
   return {
     direction,
-    handlers: { onPointerDown, onPointerUp, onPointerCancel, onClickCapture },
+    handlers: {
+      onPointerDown,
+      onPointerUp,
+      onPointerCancel,
+      onTouchStart,
+      onTouchMove,
+      onTouchEnd,
+      onTouchCancel,
+      onClickCapture,
+    },
   };
 }
 

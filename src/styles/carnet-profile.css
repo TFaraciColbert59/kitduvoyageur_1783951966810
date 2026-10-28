@@ -233,18 +233,18 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* --- Pied de carte : la capsule 88 × 30, rien d'autre ---------------------
+/* --- Pied de carte : la capsule des jours, rien d'autre --------------------
    Géométrie mesurée sur /compte (`.ig-tabs`) et reprise des drawers : capsule
-   88 × 30, rayon 999, padding 2,5 px, deux segments de 41,5 × 25, lentille
+   30 px de haut, rayon 999, padding 2,5 px, segments de 41,5 × 25, lentille
    blanche de même taille, posée à 10 px des bords bas et droit de la carte.
-   Aucun bouton rond : ♥ et 💬 ont quitté la carte, leurs pages se lisent dans
-   le carrousel.                                                            */
-/* La capsule : 88 × 30, deux segments de 41,5 × 25, aucun gap. Le pied de la
-   carte ne porte plus qu'elle, à 10 px des bords bas et droit : plus aucun
-   bouton rond, ♥ et 💬 ont quitté la carte. */
+   Le contenu des segments a changé, pas sa matière : un segment par page de
+   jour (R, J1…Jn) au lieu des deux vues grille/carte. */
+/* La capsule : `n × 41,5 + 5` — 88 px pour les deux segments des drawers,
+   171 px pour Résumé + trois jours. Aucun gap. */
 .ckp-card-foot {
   position: absolute; right: 10px; bottom: 10px; z-index: 6;
   display: flex; align-items: center; height: 30px;
+  max-width: calc(100% - 20px);
   padding: 0; border-radius: 0; background: none; box-shadow: none;
   overflow: visible;
 }
@@ -257,7 +257,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-foot-sep { display: none; }
 
-/* La capsule : 88 × 30, deux segments de 41,5 × 25, aucun gap. */
+/* La capsule : `n × 41,5 + 5`, 30 px de haut, rayon 999, aucun gap. */
 .ckp-capsule {
   position: relative; flex: none; box-sizing: border-box;
   width: calc(var(--n, 2) * 41.5px + 5px); height: 30px; padding: 2.5px; border-radius: 999px;
@@ -265,15 +265,22 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
   -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
 }
+/* Un carnet long peut dépasser la carte : la capsule défile alors
+   horizontalement, jamais la page. La lentille absolue suit le défilement. */
+.ckp-card-foot .ckp-capsule { max-width: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.ckp-card-foot .ckp-capsule::-webkit-scrollbar { display: none; }
 .ckp-capsule .ckp-tabs {
-  position: relative; z-index: 1; display: grid; grid-template-columns: 41.5px 41.5px;
-  gap: 0; width: 83px; height: 25px; padding: 0; border-radius: 999px;
+  position: relative; z-index: 1; display: grid;
+  grid-template-columns: repeat(var(--n, 2), 41.5px);
+  gap: 0; width: calc(var(--n, 2) * 41.5px); height: 25px; padding: 0; border-radius: 999px;
   background: none; box-shadow: none;
 }
 .ckp-capsule .ckp-tabs button {
   position: relative; z-index: 1; width: 41.5px; height: 25px; padding: 0; border: 0;
   border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
   background: none; color: #56665d; cursor: pointer;
+  font: 600 11.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums; letter-spacing: 0;
   transition: color .18s ease, transform .16s cubic-bezier(.22, 1, .36, 1);
 }
 .ckp-capsule .ckp-tabs button[aria-selected='true'] { color: #17402c; }
@@ -328,15 +335,10 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-grid-empty b { color: #172b24; font: 700 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .ckp-grid-empty p { margin: 0; max-width: 250px; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
-.ckp-map-card { position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: #dfe8dc; }
-.ckp-map-canvas { position: absolute; inset: 0; }
-.ckp-map-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 18px; overflow: hidden; background: #dfe8dc; }
-.ckp-map-foot {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 400;
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 8px 10px; background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .88));
-}
-.ckp-map-foot .ckp-day-meta { margin: 0; }
+/* La carte interne du carrousel a été retirée avec la page Parcours : la seule
+   carte de la fiche est celle du bas (`.ckp-mapzone`, 40dvh). Les règles
+   `.ckp-map-card` / `.ckp-map-canvas` / `.ckp-map-wrap` / `.ckp-map-foot`
+   n'avaient plus aucun porteur. */
 
 /* --- Carte-drawer --------------------------------------------------------- */
 /* Hauteur adaptative : le contenu + sa réserve, plafonnée à la place de la
@@ -644,6 +646,46 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   letter-spacing: -.14px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* --- Informations du jour : lignes libellé/valeur, aucune pastille --------
+   Même matière que la ligne de lieu : du texte seul. Libellé 9,5/600 en
+   capitales espacées (#6B7A70), valeur 11,5/600 tabulaire (#172b24). Une
+   valeur absente est un tiret cadratin, jamais un zéro. */
+.ckp-dayinfo { display: flex; flex-direction: column; margin: 1px 2px 0; min-width: 0; }
+.ckp-dayinfo-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  min-height: 20px; padding: 2px 0;
+  border-top: .5px solid rgba(23, 43, 36, .06);
+}
+.ckp-dayinfo-row:first-child { border-top: 0; }
+.ckp-dayinfo-l {
+  flex: none; margin: 0; color: #6B7A70;
+  font: 600 9.5px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.ckp-dayinfo-v {
+  margin: 0; min-width: 0; max-width: 62%; text-align: right; color: #172b24;
+  font: 600 11.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums; letter-spacing: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Liste des moments : heure 40 px puis lieu, et le jour seulement sur le
+   Résumé. Aucune phrase, aucune image — la grille 134 reste juste en dessous. */
+.ckp-dayinfo-moments { list-style: none; margin: 0 2px; padding: 0; display: flex; flex-direction: column; min-width: 0; }
+.ckp-dayinfo-moment {
+  display: flex; align-items: center; gap: 8px; min-height: 22px;
+  border-top: .5px solid rgba(23, 43, 36, .06);
+  color: #56665d; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0;
+}
+.ckp-dayinfo-moment:first-child { border-top: 0; }
+.ckp-dayinfo-time {
+  flex: none; width: 40px; color: #17402c; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ckp-dayinfo-place { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ckp-dayinfo-day { flex: none; color: #7A8A80; font-variant-numeric: tabular-nums; }
 
 /* --- Participants : pastilles auteur du fil Communauté, défilables -------- */
 .ckp-people {
