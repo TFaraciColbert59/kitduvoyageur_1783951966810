@@ -2,15 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 
 const read = (path: string) => readFileSync(path, 'utf8');
+/** Vrai si un fichier source de la Communauté mentionne encore ce nom (import ou usage). */
+const page = (name: string) =>
+  ['src/app/communaute/page.tsx', 'src/features/community/card/explore/ExplorerDrawer.tsx', 'src/features/community/card/create/CreateDrawer.tsx'].some((file) => read(file).includes(name));
 
 describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () => {
-  it('la page assemble les tiroirs 50 %, la recherche, le feed et la barre Compte', () => {
+  it('la page assemble les tiroirs 50 %, la recherche et le feed avec la navigation unifiée', () => {
     const page = read('src/app/communaute/page.tsx');
     expect(page).toContain('CommunityFeedTopBar');
     expect(page).toContain('CommunityStoriesBar');
-    expect(page).toContain('bottomBar={null}');
-    expect(page).toContain('CreateDrawer');
-    expect(page).toContain('CommunitySectionsDrawer');
+    expect(page).not.toContain('<AccountBottomBar');
+    expect(read('src/components/mobile-nav/MobileNavWrapper.tsx')).toContain('<NavigationBar />');
+    expect(page).toContain('<CreateDrawer');
+    expect(page).toContain('ExplorerDrawer');
     expect(page).toContain('onSearch');
     expect(page).not.toContain('AccountCreateSheet');
     expect(page).not.toContain('CommunityHeroCard');
@@ -25,12 +29,15 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     expect(top).toContain('Rechercher dans la communauté');
   });
 
-  it('le demi-tiroir est plafonné à 50dvh et le sélecteur fait 48 px', () => {
-    const css = read('src/styles/community-feed.css');
-    expect(css).toMatch(/\.lkdv-half-drawer[\s\S]*height: 50dvh/);
-    expect(css).toMatch(/\.lkdv-half-drawer[\s\S]*max-height: 50dvh/);
-    expect(css).toMatch(/\.lkdv-tab-selector[\s\S]*height: 48px/);
-    expect(css).toMatch(/\.lkdv-tab-lens[\s\S]*width: calc/);
+  it('les drawers sont des cartes en place (plus de demi-tiroir modal)', () => {
+    const css = read('src/styles/community-card.css');
+    expect(css).toMatch(/\.lkdv-cd\s*\{[\s\S]*border-radius:\s*24px/);
+    const explorer = read('src/features/community/card/explore/ExplorerDrawer.tsx');
+    expect(explorer).toContain('<DrawerShell');
+    expect(explorer).toContain('<CommunityCardDrawer');
+    for (const old of ['CommunityDrawer', 'CommunityTabSelector', 'CommunitySectionsDrawer']) {
+      expect(page(old), old).toBe(false);
+    }
   });
 
   it('les cartes ont un ratio réservé, le texte reste auto', () => {
@@ -61,17 +68,19 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     expect(stories).not.toContain('conic-gradient');
   });
 
-  it('le drawer de création ouvre 6 formulaires, sans navigation', () => {
-    const sheet = read('src/features/community/feed/CommunityCreateDrawer.tsx');
+  it('le drawer de création ouvre 6 formulaires en place dans la carte, sans navigation', () => {
+    const sheet = read('src/features/community/card/create/CreateDrawer.tsx');
     for (const kind of ['post', 'carnet', 'sortie', 'kit', 'club', 'story']) {
       expect(sheet).toContain(`'${kind}'`);
     }
-    expect(sheet).toContain('onOpenForm');
+    expect(sheet).toContain('<DrawerShell');
+    expect(sheet).toContain('<CommunityCardDrawer');
     expect(sheet).not.toContain('/communaute/publier');
-    const create = read('src/features/community/create/CreateDrawer.tsx');
-    for (const form of ['PostCreateForm', 'StoryCreateForm', 'CarnetCreateForm', 'SortieCreateForm', 'KitCreateForm', 'ClubCreateForm']) {
-      expect(create).toContain(form);
+    for (const form of ['PostCreateForm', 'StoryCreateForm', 'SortieCreateForm', 'KitCreateForm', 'ClubCreateForm']) {
+      expect(sheet).toContain(`<${form} {...common}`);
     }
+    // Le carnet se crée par la carte (CarnetMapDrawer), jamais par un second formulaire à étapes.
+    expect(sheet).not.toContain('CarnetCreateForm');
   });
 
   it('les anciens composants du hub et les feuilles remplacées ont disparu', () => {
