@@ -11,7 +11,7 @@ import {
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
-import { prefersReducedMotion } from '@/components/map/engine/camera';
+import { prefersReducedMotion, applyTraceCamera, type TraceCameraMap } from '@/components/map/engine/camera';
 import {
   cameraForScale,
   fitIntentForMode,
@@ -65,6 +65,23 @@ export interface CompteMapProps {
   /** État vide honnête, affiché seulement si le carnet n'a réellement aucune trace. */
   emptyTitle?: string;
   emptyHint?: string;
+  /**
+   * Réglage du vol vers le tracé (fiche carnet, page par page). Absente : le
+   * cadrage du carnet garde ses valeurs historiques (`1100 ms`, courbe native,
+   * `pitch 45`, `bearing -18`). Le parent mémorise l'objet : son identité
+   * rejoue le vol quand `key` change.
+   */
+  traceFlight?: CompteMapTraceFlight | null;
+}
+
+/** Vol de caméra vers un tracé : durée, courbe, inclinaison, cap. */
+export interface CompteMapTraceFlight {
+  /** Identifiant stable du cadrage : quand il change, la caméra rejoue. */
+  key: string;
+  duration?: number;
+  easing?: (progress: number) => number;
+  pitch?: number;
+  bearing?: number;
 }
 
 type Selected =
@@ -199,6 +216,7 @@ export function CompteMap({
   trace = null,
   emptyTitle,
   emptyHint,
+  traceFlight = null,
 }: CompteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -524,29 +542,41 @@ export function CompteMap({
     }
   }, [map, ready, isCarnet, tracePoints]);
 
+  /* Les bornes sont comparées par valeur : sans cela, un tableau reconstruit
+     au rendu rejouerait le vol à chaque passe de la fiche carnet. */
+  const traceBoundsKey = useMemo(
+    () => (traceBounds ? traceBounds.map((value) => value.toFixed(6)).join('|') : null),
+    [traceBounds]
+  );
+  const traceBoundsRef = useRef(traceBounds);
+  traceBoundsRef.current = traceBounds;
+
   /* Cadrage du tracé du carnet : le parcours remplit la bande carte, en 3D
-     (même inclinaison que la carte d'une sortie du Compte). */
+     (même inclinaison que la carte d'une sortie du Compte). `traceFlight`
+     règle le vol (fiche par jour : 900 ms, cubic-bezier(.22,1,.36,1)) ; sans
+     lui, valeurs historiques. `prefers-reduced-motion` → saut sec. */
   useEffect(() => {
-    if (!map || !ready || !traceBounds) return;
-    const reduced = prefersReducedMotion();
-    map.fitBounds(
-      [
-        [traceBounds[0], traceBounds[1]],
-        [traceBounds[2], traceBounds[3]],
-      ],
+    if (!map || !ready) return;
+    const bounds = traceBoundsRef.current;
+    if (!bounds) return;
+    const container = map.getContainer();
+    applyTraceCamera(
+      map as unknown as TraceCameraMap,
       {
-        padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
+        bounds,
+        padding: paddingForViewport(container.getBoundingClientRect(), {
           sheetOpen: false,
-          mapbig: map.getContainer().clientHeight > 500,
+          mapbig: container.clientHeight > 500,
         }),
         maxZoom: 14,
-        pitch: 45,
-        bearing: -18,
-        duration: reduced ? 0 : 1100,
-        essential: true,
-      }
+        pitch: traceFlight?.pitch,
+        bearing: traceFlight?.bearing,
+        duration: traceFlight?.duration,
+        easing: traceFlight?.easing,
+      },
+      prefersReducedMotion()
     );
-  }, [map, ready, traceBounds]);
+  }, [map, ready, traceBoundsKey, traceFlight]);
 
   useEffect(() => {
     if (!map) return;

@@ -33,6 +33,14 @@ export interface CarnetCardProps {
   likesPage?: React.ReactNode;
   commentsPage?: React.ReactNode;
   managePage?: React.ReactNode;
+  /**
+   * Page de jour affichée : `0` = Résumé, puis un jour par page dérivée.
+   * Fournie par l'écran, elle pilote aussi la carte du bas ; absente, la carte
+   * garde son propre état (usage isolé, tests).
+   */
+  dayPage?: number;
+  /** Reçoit chaque changement de page de jour, déjà borné. */
+  onDayPageChange?: (page: number) => void;
 }
 
 /**
@@ -95,6 +103,8 @@ export function CarnetCard({
   likesPage = null,
   commentsPage = null,
   managePage = null,
+  dayPage,
+  onDayPageChange,
 }: CarnetCardProps) {
   /* Tracé et ligne de lieu : purs, donc calculés une fois par carnet et non
      à chaque bascule d'engagement, de page ou de jour. */
@@ -129,11 +139,24 @@ export function CarnetCard({
   const participants = detail.participants ?? [];
 
   /* Balayage : page 0 = Résumé, puis un jour par page dérivée. Un carnet sans
-     aucun jour ne garde que le Résumé — aucune page n'est fabriquée. */
+     aucun jour ne garde que le Résumé — aucune page n'est fabriquée.
+     La page peut être tenue par l'écran (`dayPage`), pour que la carte du bas
+     suive le jour affiché ; sans elle, la carte garde son propre état. */
   const days = detail.days ?? [];
-  const [dayPage, setDayPage] = React.useState(0);
+  const [localDayPage, setLocalDayPage] = React.useState(0);
   const pageCount = days.length + 1;
-  const dayIndex = Math.max(0, Math.min(pageCount - 1, dayPage));
+  const boundedPage = (next: number) => Math.max(0, Math.min(pageCount - 1, next));
+  const controlledPage = typeof dayPage === 'number';
+  const dayIndex = boundedPage(controlledPage ? (dayPage as number) : localDayPage);
+  const setDayPage = useCallback(
+    (next: number) => {
+      const bounded = boundedPage(next);
+      if (!controlledPage) setLocalDayPage(bounded);
+      onDayPageChange?.(bounded);
+    },
+    // `boundedPage` ne dépend que de `pageCount`, déjà dans les dépendances.
+    [controlledPage, onDayPageChange, pageCount],
+  );
   const day = dayIndex === 0 ? null : days[dayIndex - 1];
   const swipe = useDaySwipe({ count: pageCount, index: dayIndex, onChange: setDayPage });
   const motion = useDayMotion(dayIndex, swipe.direction);

@@ -17,6 +17,7 @@ import type { CarnetPageId } from './CarnetPages';
 import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetPostSheet } from './CarnetPostSheet';
 import { CarnetMapCard } from './CarnetMapCard';
+import { dayFocusKey } from './dayTrace';
 import { CarnetMediaViewer } from './CarnetMediaViewer';
 import { CarnetMoreMenu } from './CarnetMoreMenu';
 import { CarnetStatsPane } from './panes/CarnetStatsPane';
@@ -93,6 +94,24 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     () => (typeof window === 'undefined' ? '' : `${window.location.origin}/carnets/${detail.id}`),
     [detail.id],
   );
+
+  /* Page de jour tenue par l'écran : `0` = Résumé, puis un jour par page.
+     La carte du bas ne peut suivre le jour que si la page vit ici, pas dans
+     la carte d'identité — c'est la seule raison de la remonter. */
+  const [dayPage, setDayPage] = useState(0);
+  const days = detailView.days ?? [];
+  const boundedDayPage = Math.max(0, Math.min(days.length, dayPage));
+  const activeDay = boundedDayPage === 0 ? null : (days[boundedDayPage - 1] ?? null);
+  /* Points GPS du jour affiché : `null` sur le Résumé (tracé complet), `[]`
+     pour un jour réellement sans point — la carte reste alors vide. */
+  const dayPoints = useMemo(
+    () =>
+      activeDay
+        ? activeDay.points.map((point) => ({ lat: point.lat, lng: point.lng }))
+        : null,
+    [activeDay],
+  );
+  const focusKey = dayFocusKey(activeDay?.index);
 
   /* Handlers passés aux listes et aux composants mémoïsés : identité stable,
      donc aucun rendu en cascade quand l'engagement ou les commentaires bougent.
@@ -225,6 +244,8 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             detail={detailView}
             page={page}
             onPageChange={openPage}
+            dayPage={dayPage}
+            onDayPageChange={setDayPage}
             canWrite={canWrite}
             onRequireAuth={requireAuth}
             onOpenCarnet={openCarnetFromCard}
@@ -261,7 +282,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             }
           />
         )}
-        <CarnetMapCard detail={detailView} />
+        <CarnetMapCard detail={detailView} dayPoints={dayPoints} focusKey={focusKey} />
       </main>
 
       {/* Le post du moment est une feuille superposée à la carte, exactement
