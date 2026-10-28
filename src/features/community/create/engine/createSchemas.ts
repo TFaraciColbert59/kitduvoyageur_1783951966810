@@ -288,7 +288,7 @@ const carnetSchema = z
     endDate: optionalDate,
     description: z.string().max(1000, '1 000 caractères maximum.').default(''),
     visibility: z.enum(CARNET_VISIBILITIES, { error: 'Choisis une visibilité.' }).default('public'),
-    cover: mediaArray(1).min(1, 'Ajoute une photo de couverture : elle est obligatoire pour un carnet.').default([]),
+    cover: mediaArray(1).default([]),
     /** Colonnes existantes de `carnets`, aucun champ inventé. */
     lieuDepart: z.string().max(120, '120 caractères maximum.').default(''),
     lieuArrivee: z.string().max(120, '120 caractères maximum.').default(''),
