@@ -102,10 +102,16 @@ const DAYS = [
   },
 ];
 
-const OWNER = detail({ isOwner: true, etapes: DAYS });
+/* Deux vrais jours dérivés : le balayage de la carte a de quoi changer de jour. */
+const CARD_DAYS = [
+  { index: 1, date: '2026-09-26', distanceKm: 18.4, elevationM: 620, durationS: 21600, moments: [], points: [] },
+  { index: 2, date: '2026-09-27', distanceKm: 12, elevationM: 300, durationS: null, moments: [], points: [] },
+];
 
-/* Le carrousel garde son geste : c'est lui qui mène aux pages J’aime et
-   Commentaires depuis que ♥ et 💬 ont quitté la carte. */
+const OWNER = detail({ isOwner: true, etapes: DAYS, days: CARD_DAYS });
+
+/* Le geste horizontal appartient aux jours : un glissement dans la grille
+   change de jour, jamais la page du carrousel. */
 function pointer(element: Element, type: 'pointerdown' | 'pointerup', x: number, y: number) {
   fireEvent(
     element,
@@ -113,12 +119,10 @@ function pointer(element: Element, type: 'pointerdown' | 'pointerup', x: number,
   );
 }
 
-function swipePages(times: number) {
-  for (let i = 0; i < times; i += 1) {
-    const pages = document.querySelector('.ckp-pages') as Element;
-    pointer(pages, 'pointerdown', 300, 100);
-    pointer(pages, 'pointerup', 180, 105);
-  }
+function swipeGrid(fromX: number, toX: number) {
+  const pages = document.querySelector('.ckp-pages') as Element;
+  pointer(pages, 'pointerdown', fromX, 100);
+  pointer(pages, 'pointerup', toX, 105);
 }
 
 /* Le clavier du carrousel mène à la même page sans laisser de clic fantôme. */
@@ -127,6 +131,16 @@ function keyPages(times: number) {
     fireEvent.keyDown(document.querySelector('.ckp-pages') as Element, { key: 'ArrowRight' });
   }
 }
+
+/* Les pages sans segment s'ouvrent depuis le menu `···` de la barre du haut. */
+function openMenuEntry(label: string) {
+  fireEvent.click(screen.getByRole('button', { name: 'Plus d’options' }));
+  fireEvent.click(screen.getByRole('button', { name: label }));
+}
+
+const dayLabel = () =>
+  (document.querySelector('.ckp-daypill-label')?.textContent ?? '').replace(/[\u00a0\u202f]/g, ' ');
+const pageId = () => document.querySelector('.ckp-pages')?.getAttribute('id');
 
 function drawerOpen() {
   return screen.queryByRole('region', { name: 'Panneau du carnet' }) !== null;
@@ -171,9 +185,9 @@ describe('CarnetScreen — drawer réduit à ce qui n’est pas dans le sélecte
 });
 
 describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
-  it('la page J’aime reste accessible par le carrousel, sans drawer', () => {
+  it('la page J’aime s’ouvre depuis le menu ···, sans drawer', () => {
     render(<CarnetScreen detail={OWNER} />);
-    swipePages(5);
+    openMenuEntry('J’aime');
     expect(drawerOpen()).toBe(false);
     expect(document.getElementById('carnet-page-likes')).toBeTruthy();
     expect(screen.getByRole('tabpanel', { name: 'J’aime' })).toBeTruthy();
@@ -190,9 +204,9 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     expect(SPIES.toggleLike).toHaveBeenCalledOnce();
   });
 
-  it('la page Commentaires garde la liste réelle et le champ d’envoi', () => {
+  it('la page Commentaires s’ouvre depuis le menu ··· et garde la liste réelle', () => {
     render(<CarnetScreen detail={OWNER} />);
-    swipePages(6);
+    openMenuEntry('Commentaires');
     expect(drawerOpen()).toBe(false);
     expect(document.getElementById('carnet-page-comments')).toBeTruthy();
     expect(screen.getByText('Bivouac validé, merci pour l’itinéraire.')).toBeTruthy();
@@ -251,16 +265,34 @@ describe('CarnetScreen — les actions du sélecteur sont des pages', () => {
     expect(header()).toBe('carnet-page-posts');
   });
 
-  it('le carrousel mène encore aux pages sans segment : J’aime, Commentaires', () => {
+  it('un glissement dans la grille change de jour, la page Posts reste affichée', () => {
     render(<CarnetScreen detail={OWNER} />);
-    const header = () => document.querySelector('.ckp-pages')?.getAttribute('id');
-    swipePages(5);
-    expect(header()).toBe('carnet-page-likes');
-    swipePages(1);
-    expect(header()).toBe('carnet-page-comments');
+    expect(dayLabel()).toBe('Résumé');
+    swipeGrid(300, 180);
+    expect(dayLabel()).toBe('26 sept.');
+    expect(pageId()).toBe('carnet-page-posts');
+    expect(screen.getByRole('tab', { name: 'Posts' }).getAttribute('aria-selected')).toBe('true');
+    /* Le geste inverse revient au Résumé, jamais à une page du carrousel. */
+    swipeGrid(120, 260);
+    expect(dayLabel()).toBe('Résumé');
+    expect(pageId()).toBe('carnet-page-posts');
   });
 
-  it('garde la page active et ses voisines swipables', () => {
+  it('un glissement dans la carte ne sort jamais des bornes de jours', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    /* À droite sur le Résumé : aucun jour avant. */
+    swipeGrid(120, 260);
+    expect(dayLabel()).toBe('Résumé');
+    /* Deux jours : deux pas mènent au dernier, le troisième ne bouge plus. */
+    swipeGrid(300, 180);
+    swipeGrid(300, 180);
+    expect(dayLabel()).toBe('27 sept.');
+    swipeGrid(300, 180);
+    expect(dayLabel()).toBe('27 sept.');
+    expect(pageId()).toBe('carnet-page-posts');
+  });
+
+  it('garde la page active et ne la change qu’au sélecteur', () => {
     render(<CarnetScreen detail={OWNER} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Parcours' }));
     expect(screen.getByRole('tab', { name: 'Parcours' }).getAttribute('aria-selected')).toBe('true');

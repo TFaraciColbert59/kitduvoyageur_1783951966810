@@ -1,6 +1,6 @@
 'use client';
 
-import React, { startTransition, useCallback, useMemo, useRef, useState } from 'react';
+import React, { startTransition, useCallback, useMemo, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { SfIcon } from './sfIcons';
 import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
@@ -12,7 +12,9 @@ import { CarnetParcoursPane } from './panes/CarnetParcoursPane';
 /**
  * Pages du carrousel : les cinq volets du carnet, puis les trois volets sortis
  * du drawer (J’aime, Commentaires, Gérer) qui vivent désormais ici, dans le
- * même conteneur `.ckp-pages` — donc swipables et animés comme les autres.
+ * même conteneur `.ckp-pages`. Le carrousel ne se pilote que par le sélecteur
+ * du bas et par son clavier : aucun geste ici, le glissement horizontal de la
+ * carte appartient aux jours.
  */
 export type CarnetPageId =
   | 'posts'
@@ -124,19 +126,11 @@ const CarnetTile = React.memo(function CarnetTile({ moment, index, more, onOpen 
   );
 });
 
-const SWIPE_MIN_PX = 40;
-
-/** Pas de page pour un geste horizontal : 1 (page suivante), -1, ou 0 (rien). */
-export function swipeStep(dx: number, dy: number): -1 | 0 | 1 {
-  if (!Number.isFinite(dx) || !Number.isFinite(dy)) return 0;
-  if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) <= Math.abs(dy) * 1.2) return 0;
-  return dx < 0 ? 1 : -1;
-}
-
 /**
- * Zone média de la carte, en pages qui swipent : Posts, Parcours, Étapes,
- * Matériel, Nature, J’aime, Commentaires, Gérer. Le geste horizontal (doigt ou
- * souris), les flèches du clavier et les segments du bas changent la page.
+ * Zone média de la carte, en pages : Posts, Parcours, Étapes, Matériel, Nature,
+ * J’aime, Commentaires, Gérer. Les segments du bas et les flèches du clavier
+ * changent la page ; le geste horizontal de la carte n'est pas écouté ici, il
+ * change de jour (voir `CarnetDaySwipe`).
  */
 export function CarnetPages({
   detail,
@@ -153,8 +147,6 @@ export function CarnetPages({
   managePage = null,
 }: CarnetPagesProps) {
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
-  const start = useRef<{ x: number; y: number } | null>(null);
-  const swiped = useRef(false);
 
   const pages = useMemo(() => carnetPageTabs(detail.isOwner), [detail.isOwner]);
   const index = Math.max(0, pages.findIndex((tab) => tab.id === page));
@@ -166,7 +158,7 @@ export function CarnetPages({
   const more = photos.length > TILE_COUNT ? photos.length - TILE_COUNT : 0;
 
   /* Le changement de page est une transition : il reste interruptible sans
-     jamais bloquer le geste, et le rendu visible est le même. */
+     jamais bloquer le clic, et le rendu visible est le même. */
   const requestPage = useCallback(
     (next: CarnetPageId, nextDirection: 'next' | 'prev') => {
       startTransition(() => {
@@ -202,22 +194,6 @@ export function CarnetPages({
     }
   };
 
-  const onPointerDown = (event: React.PointerEvent) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    start.current = { x: event.clientX, y: event.clientY };
-    swiped.current = false;
-  };
-
-  const onPointerUp = (event: React.PointerEvent) => {
-    const origin = start.current;
-    start.current = null;
-    if (!origin) return;
-    const step = swipeStep(event.clientX - origin.x, event.clientY - origin.y);
-    if (step === 0) return;
-    swiped.current = true;
-    go(step);
-  };
-
   const activeTab = pages.find((tab) => tab.id === page) ?? CARNET_PAGE_TABS[carnetPageIndex(page)];
 
   return (
@@ -228,18 +204,7 @@ export function CarnetPages({
       aria-label={activeTab.label}
       tabIndex={0}
       onKeyDown={onKeyDown}
-      onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
-      onPointerCancel={() => {
-        start.current = null;
-      }}
       onDragStart={(event) => event.preventDefault()}
-      onClickCapture={(event) => {
-        if (!swiped.current) return;
-        swiped.current = false;
-        event.preventDefault();
-        event.stopPropagation();
-      }}
     >
       <div key={page} className={`ckp-page ckp-page--${direction}`}>
         {page === 'posts' ? (

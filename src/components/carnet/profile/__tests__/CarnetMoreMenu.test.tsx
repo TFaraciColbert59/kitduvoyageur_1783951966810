@@ -18,6 +18,8 @@ describe('CarnetMoreMenu — menu ··· 226 px', () => {
         onSave={noop}
         onShare={noop}
         onCopy={noop}
+        onLikes={noop}
+        onComments={noop}
         onReport={noop}
         onManage={noop}
         onClose={noop}
@@ -40,6 +42,8 @@ describe('CarnetMoreMenu — menu ··· 226 px', () => {
         onSave={noop}
         onShare={noop}
         onCopy={noop}
+        onLikes={noop}
+        onComments={noop}
         onReport={noop}
         onManage={noop}
         onClose={noop}
@@ -57,6 +61,8 @@ describe('CarnetMoreMenu — menu ··· 226 px', () => {
         onSave={noop}
         onShare={noop}
         onCopy={noop}
+        onLikes={noop}
+        onComments={noop}
         onReport={noop}
         onManage={noop}
         onClose={noop}
@@ -72,6 +78,8 @@ describe('CarnetMoreMenu — menu ··· 226 px', () => {
         onSave={noop}
         onShare={noop}
         onCopy={noop}
+        onLikes={noop}
+        onComments={noop}
         onReport={noop}
         onManage={noop}
         onClose={noop}
@@ -89,6 +97,8 @@ describe('CarnetMoreMenu — menu ··· 226 px', () => {
         onSave={noop}
         onShare={noop}
         onCopy={noop}
+        onLikes={noop}
+        onComments={noop}
         onReport={noop}
         onManage={noop}
         onClose={noop}
@@ -108,6 +118,8 @@ describe('CarnetMoreMenu — menu ··· 226 px', () => {
         onSave={noop}
         onShare={onShare}
         onCopy={noop}
+        onLikes={noop}
+        onComments={noop}
         onReport={noop}
         onManage={noop}
         onClose={onClose}
@@ -116,5 +128,69 @@ describe('CarnetMoreMenu — menu ··· 226 px', () => {
     fireEvent.click(screen.getByRole('button', { name: /Partager/ }));
     expect(onShare).toHaveBeenCalledOnce();
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('ouvre les pages J’aime et Commentaires depuis le menu, puis se referme', () => {
+    const onLikes = vi.fn();
+    const onComments = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <CarnetMoreMenu
+        open
+        saved={false}
+        isOwner={false}
+        onSave={noop}
+        onShare={noop}
+        onCopy={noop}
+        onLikes={onLikes}
+        onComments={onComments}
+        onReport={noop}
+        onManage={noop}
+        onClose={onClose}
+      />,
+    );
+    const menu = screen.getByRole('group', { name: 'Options du carnet' });
+    expect([...menu.querySelectorAll('button')].map((node) => node.textContent)).toEqual([
+      'Enregistrer',
+      'Partager',
+      'Copier le lien',
+      'J’aime',
+      'Commentaires',
+      'Signaler',
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'J’aime' }));
+    expect(onLikes).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'Commentaires' }));
+    expect(onComments).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('garde les deux entrées pour le propriétaire, entre le lien et Gérer', () => {
+    render(
+      <CarnetMoreMenu
+        open
+        saved={false}
+        isOwner
+        onSave={noop}
+        onShare={noop}
+        onCopy={noop}
+        onLikes={noop}
+        onComments={noop}
+        onReport={noop}
+        onManage={noop}
+        onClose={noop}
+      />,
+    );
+    const menu = screen.getByRole('group', { name: 'Options du carnet' });
+    expect([...menu.querySelectorAll('button')].map((node) => node.textContent)).toEqual([
+      'Enregistrer',
+      'Partager',
+      'Copier le lien',
+      'J’aime',
+      'Commentaires',
+      'Gérer le carnet',
+      'Signaler',
+    ]);
   });
 });

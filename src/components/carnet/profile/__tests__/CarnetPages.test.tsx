@@ -2,7 +2,8 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CARNET_PAGE_TABS, CarnetPages, carnetPageTabs, swipeStep } from '../CarnetPages';
+import { CARNET_PAGE_TABS, CarnetPages, carnetPageTabs } from '../CarnetPages';
+import { swipeStep } from '../CarnetDaySwipe';
 import type { CarnetEtapeDay } from '@/features/carnet/detail/types';
 import { detail } from './fixtures';
 
@@ -165,21 +166,19 @@ describe('CarnetPages — pages du carnet', () => {
     expect(screen.getByText('Aucun moment pour l’instant.')).toBeTruthy();
   });
 
-  it('swipe vers la gauche : page suivante', () => {
+  it('ne capte plus aucun geste horizontal : la page ne change jamais au swipe', () => {
     const onPageChange = vi.fn();
-    const { container } = render(<CarnetPages {...base({ onPageChange })} />);
+    const { container, rerender } = render(<CarnetPages {...base({ onPageChange })} />);
+    const pages = container.querySelector('.ckp-pages') as Element;
+    /* Gauche, droite : le geste appartient aux jours, jamais au carrousel. */
+    swipe(pages, 300, 100, 180, 105);
+    swipe(pages, 120, 100, 260, 105);
+    rerender(<CarnetPages {...base({ page: 'likes', onPageChange })} />);
     swipe(container.querySelector('.ckp-pages') as Element, 300, 100, 180, 105);
-    expect(onPageChange).toHaveBeenCalledWith('parcours');
+    expect(onPageChange).not.toHaveBeenCalled();
   });
 
-  it('swipe vers la droite : page précédente', () => {
-    const onPageChange = vi.fn();
-    const { container } = render(<CarnetPages {...base({ page: 'etapes', onPageChange })} />);
-    swipe(container.querySelector('.ckp-pages') as Element, 120, 100, 260, 105);
-    expect(onPageChange).toHaveBeenCalledWith('parcours');
-  });
-
-  it('ignore un geste vertical ou trop court', () => {
+  it('garde le pas du geste et ignore un geste vertical ou trop court', () => {
     const onPageChange = vi.fn();
     const { container } = render(<CarnetPages {...base({ onPageChange })} />);
     const pages = container.querySelector('.ckp-pages') as Element;
@@ -217,17 +216,17 @@ describe('CarnetPages — pages du carnet', () => {
     expect(onPageChange).toHaveBeenLastCalledWith('manage');
   });
 
-  it('enchaîne Nature → J’aime → Commentaires au swipe', () => {
+  it('garde son animation d’entrée, dans le sens du changement de page', () => {
     const onPageChange = vi.fn();
-    const { container, rerender } = render(<CarnetPages {...base({ page: 'nature', onPageChange })} />);
-    swipe(container.querySelector('.ckp-pages') as Element, 300, 100, 180, 105);
-    expect(onPageChange).toHaveBeenLastCalledWith('likes');
-    rerender(<CarnetPages {...base({ page: 'likes', onPageChange })} />);
-    swipe(container.querySelector('.ckp-pages') as Element, 300, 100, 180, 105);
-    expect(onPageChange).toHaveBeenLastCalledWith('comments');
-    rerender(<CarnetPages {...base({ page: 'comments', onPageChange })} />);
-    swipe(container.querySelector('.ckp-pages') as Element, 300, 100, 180, 105);
-    expect(onPageChange).toHaveBeenLastCalledWith('manage');
+    const { container, rerender } = render(<CarnetPages {...base({ page: 'parcours', onPageChange })} />);
+    const page = () => container.querySelector('.ckp-pages > .ckp-page') as Element;
+    fireEvent.keyDown(container.querySelector('.ckp-pages') as Element, { key: 'ArrowLeft' });
+    expect(onPageChange).toHaveBeenLastCalledWith('posts');
+    rerender(<CarnetPages {...base({ page: 'posts', onPageChange })} />);
+    expect(page().className).toContain('ckp-page--prev');
+    fireEvent.keyDown(container.querySelector('.ckp-pages') as Element, { key: 'ArrowRight' });
+    rerender(<CarnetPages {...base({ page: 'parcours', onPageChange })} />);
+    expect(page().className).toContain('ckp-page--next');
   });
 
   it('garde le clic tuile quand le geste n’a pas swipé', () => {
