@@ -358,7 +358,49 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    carte (503 px à 430 × 932). Au-delà, c'est le corps qui défile. */
 .ckp-card.ckp-card--drawer {
   flex: 0 0 auto; height: auto; min-height: 0; max-height: min(100%, 503px);
-  animation: ckp-drawer-in 220ms cubic-bezier(.22, 1, .36, 1) both;
+  /* Rayon du châssis conservé en haut (24) ; le bas se resserre à 16 pour que
+     la feuille se referme sur son pied. Aucune ombre nouvelle n'est dessinée :
+     `box-shadow` épouse le `border-radius`, y compris l'arc inférieur. */
+  border-radius: 24px 24px 16px 16px;
+  /* Les trois lames du Compte (liseré, revers, filet) restent identiques ; la
+     quatrième est l'élévation du drawer : 0 -2px 10px .14 à l'ouverture, puis
+     0 -10px 34px .16 en 200 ms — une seule fois, jamais en boucle. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 -1px 1px rgba(255, 255, 255, .4),
+    0 0 0 .5px rgba(23, 43, 36, .12),
+    0 -10px 34px rgba(23, 43, 36, .16);
+  animation:
+    ckp-drawer-in 220ms cubic-bezier(.22, 1, .36, 1) both,
+    ckp-drawer-lift 200ms cubic-bezier(.22, 1, .36, 1) both;
+  /* La feuille passe devant le voile de page ; son propre empilement (en-tête 6,
+     pied 6, voiles 5/7/8) reste interne. */
+  z-index: 3;
+}
+@keyframes ckp-drawer-lift {
+  from {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .95),
+      inset 0 -1px 1px rgba(255, 255, 255, .4),
+      0 0 0 .5px rgba(23, 43, 36, .12),
+      0 -2px 10px rgba(23, 43, 36, .14);
+  }
+  to {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .95),
+      inset 0 -1px 1px rgba(255, 255, 255, .4),
+      0 0 0 .5px rgba(23, 43, 36, .12),
+      0 -10px 34px rgba(23, 43, 36, .16);
+  }
+}
+/* Liseré de l'arc supérieur : 1 px blanc qui suit la courbure haute et meurt
+   à 26 px — jamais de filet le long des flancs ni sur le bas. */
+.ckp-card--drawer::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 26px; z-index: 8;
+  pointer-events: none; border-radius: 24px 24px 0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9);
+  -webkit-mask-image: linear-gradient(180deg, #000 0 18px, transparent 26px);
+  mask-image: linear-gradient(180deg, #000 0 18px, transparent 26px);
 }
 /* En-tête du drawer : ce sont les deux seuls éléments du haut — la poignée
    42 × 5 à 8 px du bord, et la croix 36 px. Le voile de coupure vit sous la
@@ -368,7 +410,14 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   display: grid; justify-items: center; align-items: start; width: 100%; height: 13px;
   margin: 0; padding: 8px 0 0; border: 0; background: none; cursor: pointer;
 }
-.ckp-grabber span { width: 42px; height: 5px; border-radius: 999px; background: rgba(23, 43, 36, .18); }
+.ckp-grabber span {
+  width: 42px; height: 5px; border-radius: 999px; background: rgba(23, 43, 36, .18);
+  transition: height 120ms ease, background-color 120ms ease;
+}
+/* Toucher — souris, doigt, stylet : la barre passe de 5 à 6 px et de .18 à .32
+   en 120 ms, puis revient d'elle-même. Aucun geste n'est branché là. */
+.ckp-grabber:active span,
+.ckp-grabber[data-press='true'] span { height: 6px; background: rgba(23, 43, 36, .32); }
 .ckp-drawer-close {
   position: absolute; top: 8px; right: 12px; flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px;
   display: grid; place-items: center; cursor: pointer; color: #17402C;
@@ -410,6 +459,27 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   grid-template-columns: repeat(var(--n, 2), 41.5px);
 }
 @keyframes ckp-drawer-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+/* Zone de retour tactile : les 12 px du bas de la feuille portent le curseur
+   `grab` du châssis. Aucun geste nouveau n'y est branché : le contenu s'arrête
+   64 px plus haut, la zone ne masque donc rien. */
+.ckp-drawer-grip {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 12px; z-index: 7;
+  border-radius: 0 0 16px 16px; background: transparent; cursor: grab;
+}
+/* Voile de la page derrière la feuille : .10 au centre de la zone, .28 là où la
+   feuille se pose. Il prend la boîte du corps de l'écran et se glisse sous la
+   feuille (3) et au-dessus du contenu de page (0) — jamais au-dessus du texte
+   de la feuille, et il ne capte aucun clic. */
+.ckp-scrim {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 20, 14, .10) 0%,
+    rgba(10, 20, 14, .10) 50%,
+    rgba(10, 20, 14, .28) 100%
+  );
+  animation: ckp-fade-in 160ms linear both;
+}
 
 /* --- Volets --------------------------------------------------------------- */
 .ckp-pane { position: relative; display: flex; flex-direction: column; gap: 0; min-height: 0; }
@@ -738,6 +808,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   margin: 8px -12px 0;
   border-radius: 0;
   min-height: 0; height: 40dvh;
+  /* Contexte d'empilement propre : le voile du drawer passe au-dessus de la
+     carte (et de son badge) d'un seul tenant, sans mélange de plans. */
+  z-index: 0;
 }
 .ckp-screen .tb { bottom: 16px; }
 /* la carte d'identité garde sa marge basse pour ne pas coller à la carte */
