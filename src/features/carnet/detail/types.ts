@@ -1,3 +1,8 @@
+import type { DayTrace } from '@/features/carnet/trace/days';
+import type { DayTraceRow } from '@/features/carnet/trace/parse';
+
+export type { DayTraceRow };
+
 /** Contrat de la fiche carnet. Une valeur absente est `null`, jamais inventée. */
 
 export interface CarnetRow {
@@ -169,6 +174,8 @@ export interface CarnetDetail {
   days: CarnetDay[];
   kit: CarnetKit;
   trace: unknown | null;
+  /** Tracé de chaque journée (dessiné et accroché aux chemins), vide si le carnet n'en a pas. */
+  dayTraces: DayTrace[];
   distanceKm: number | null;
   elevationM: number | null;
 }
@@ -190,4 +197,6 @@ export interface BuildCarnetDetailInput {
    * nombre décoratif (constat de recette : 22 en colonne, 3 lignes réelles).
    */
   counts?: { likes: number; comments: number };
+  /** Lignes de `carnet_day_traces` (absentes tant que la migration n'est pas appliquée). */
+  dayTraceRows?: DayTraceRow[];
 }

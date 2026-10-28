@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
 import type {
   AuthorRow,
+  DayTraceRow,
   CarnetRow,
   EtapeRow,
   HebergementRow,
@@ -56,7 +57,7 @@ export async function getCarnetDetail(id: string) {
   if (carnetError || !carnetData) return null;
   const carnet = carnetData as unknown as CarnetRow;
 
-  const [authorResult, hikeResult, etapesResult, hebergementsResult, momentsResult, kitResult] =
+  const [authorResult, hikeResult, etapesResult, hebergementsResult, momentsResult, kitResult, dayTracesResult] =
     await Promise.all([
       supabase
         .from('public_profiles')
@@ -97,6 +98,12 @@ export async function getCarnetDetail(id: string) {
         .select('id, nom, detail, poids_g, couleur_tag, sort_order')
         .eq('carnet_id', carnet.id)
         .order('sort_order', { ascending: true }),
+      // Table ajoutée par la migration 20261028150000 : absente, l'erreur est ignorée et la fiche reste lisible.
+      supabase
+        .from('carnet_day_traces')
+        .select('jour_numero, coords, waypoints, snapped, distance_km, end_label')
+        .eq('carnet_id', carnet.id)
+        .order('jour_numero', { ascending: true }),
     ]);
 
   const [likesCount, commentsCount] = await Promise.all([
@@ -123,6 +130,7 @@ export async function getCarnetDetail(id: string) {
     hebergements: (hebergementsResult.data as unknown as HebergementRow[]) ?? [],
     moments: (momentsResult.data as unknown as MomentRow[]) ?? [],
     kitItems: (kitResult.data as unknown as KitItemRow[]) ?? [],
+    dayTraceRows: dayTracesResult.error ? [] : ((dayTracesResult.data as unknown as DayTraceRow[]) ?? []),
     viewerId,
     liked,
     favorited,

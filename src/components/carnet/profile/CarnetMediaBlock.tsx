@@ -115,6 +115,7 @@ export function CarnetMediaBlock({
             <>
               <CarnetTraceMap
                 trace={detail.trace}
+                dayTraces={detail.dayTraces}
                 distanceKm={detail.distanceKm}
                 elevationM={detail.elevationM}
               />

@@ -62,9 +62,10 @@ export function WizardFrame({
 
       <div className="lkdv-wz-foot">
         <div className="lkdv-wz-dots" aria-hidden="true">
-          {Array.from({ length: total }, (_, index) => (
-            <span key={index} data-on={index === step ? 'true' : 'false'} />
-          ))}
+          {/* Au-delà de 8 étapes (carnet de plusieurs jours), le compteur n/total suffit. */}
+          {total <= 8
+            ? Array.from({ length: total }, (_, index) => <span key={index} data-on={index === step ? 'true' : 'false'} />)
+            : null}
         </div>
         {step > 0 && onBack ? (
           <button type="button" className="lkdv-wz-back" aria-label="Étape précédente" onClick={onBack} disabled={busy}>

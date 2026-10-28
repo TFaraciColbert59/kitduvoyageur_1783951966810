@@ -34,6 +34,7 @@ function detail(overrides: Partial<CarnetDetail> = {}): CarnetDetail {
     days: [],
     kit: { totalWeightG: null, items: [] },
     trace: null,
+    dayTraces: [],
     distanceKm: 106.4,
     elevationM: 2002,
     ...overrides,

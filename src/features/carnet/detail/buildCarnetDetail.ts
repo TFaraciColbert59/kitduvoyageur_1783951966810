@@ -1,3 +1,5 @@
+import { totalDistanceKm } from '@/features/carnet/trace/days';
+import { mergeDayTraces, parseDayTraceRows } from '@/features/carnet/trace/parse';
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import type {
   BuildCarnetDetailInput,
@@ -97,7 +99,9 @@ function buildDays(input: BuildCarnetDetailInput): CarnetDay[] {
 
 export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   const { carnet, hikeSession } = input;
-  const distanceKm = toNumber(hikeSession?.distance_km) ?? toNumber(carnet.distance_km);
+  const dayTraces = parseDayTraceRows(input.dayTraceRows);
+  const distanceKm =
+    toNumber(hikeSession?.distance_km) ?? (dayTraces.length > 0 ? totalDistanceKm(dayTraces) : null) ?? toNumber(carnet.distance_km);
   const elevationM = toNumber(hikeSession?.elevation_gain_m) ?? toNumber(carnet.denivele_m);
   const moments = buildMoments(input);
   const days = buildDays(input);
@@ -151,7 +155,9 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
         color: k.couleur_tag ?? null,
       })),
     },
-    trace: hikeSession?.positions_geojson ?? null,
+    // Trace GPS réelle d'abord ; sinon les jours dessinés mis bout à bout (GPX et carte restent actifs).
+    trace: hikeSession?.positions_geojson ?? mergeDayTraces(dayTraces),
+    dayTraces,
     distanceKm,
     elevationM,
   };

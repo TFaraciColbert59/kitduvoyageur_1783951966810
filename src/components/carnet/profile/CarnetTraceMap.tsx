@@ -2,10 +2,14 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
+import '@/styles/carnet-trace.css';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import { dayColor, type DayTrace } from '@/features/carnet/trace/days';
 
 export interface CarnetTraceMapProps {
   trace: unknown;
+  /** Journées tracées : si présentes, chaque jour est dessiné dans sa couleur, bornes J1 → ✓ comprises. */
+  dayTraces?: DayTrace[];
   distanceKm?: number | null;
   elevationM?: number | null;
   className?: string;
@@ -31,7 +35,7 @@ function extractCoords(trace: unknown): [number, number][] {
  * Carte de la fiche : mêmes tuiles, même crédit et même trace que le Compte
  * (Leaflet, sans Card ni Button : le bloc porte sa propre géométrie).
  */
-export function CarnetTraceMap({ trace, className = '' }: CarnetTraceMapProps) {
+export function CarnetTraceMap({ trace, dayTraces, className = '' }: CarnetTraceMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
@@ -53,7 +57,8 @@ export function CarnetTraceMap({ trace, className = '' }: CarnetTraceMapProps) {
 
     void import('leaflet').then((L) => {
       if (!mounted) return;
-      const coords = extractCoords(trace);
+      const days = (dayTraces ?? []).filter((entry) => entry.coords.length >= 2);
+      const coords = days.length > 0 ? days.flatMap((entry) => entry.coords.map(([lon, lat]) => [lat, lon] as [number, number])) : extractCoords(trace);
       const map = L.map(container, {
         center: coords[0] ?? [45.9, 6.9],
         zoom: coords.length > 0 ? 10 : 4,
@@ -68,7 +73,24 @@ export function CarnetTraceMap({ trace, className = '' }: CarnetTraceMapProps) {
       const tiles = leafletTiles('osm');
       L.tileLayer(tiles.url, { ...tiles.options, keepBuffer: 4 }).addTo(map);
 
-      if (coords.length > 0) {
+      if (days.length > 0) {
+        const group = L.featureGroup().addTo(map);
+        for (const entry of days) {
+          const latlngs = entry.coords.map(([lon, lat]) => [lat, lon] as [number, number]);
+          const color = dayColor(entry.day);
+          L.polyline(latlngs, { color: '#ffffff', weight: 8, opacity: 0.9, lineCap: 'round' }).addTo(group);
+          L.polyline(latlngs, { color, weight: 4.5, opacity: 1, lineCap: 'round', dashArray: entry.snapped ? undefined : '6 8' }).addTo(group);
+          const pin = (label: string, size: [number, number]) =>
+            L.divIcon({ className: 'lkdv-tr-pin-wrap', html: `<span class="lkdv-tr-pin" style="background:${color}">${label}</span>`, iconSize: size, iconAnchor: [size[0] / 2, size[1] / 2] });
+          L.marker(latlngs[0] as [number, number], { icon: pin(`J${entry.day}`, [30, 22]), interactive: false, keyboard: false }).addTo(group);
+          L.marker(latlngs[latlngs.length - 1] as [number, number], { icon: pin('✓', [22, 22]), interactive: false, keyboard: false }).addTo(group);
+        }
+        try {
+          map.fitBounds(group.getBounds(), { padding: [26, 26] });
+        } catch {
+          /* bounds dégénérés : la vue initiale suffit */
+        }
+      } else if (coords.length > 0) {
         const halo = L.polyline(coords, {
           color: '#ffffff',
           weight: 7,
@@ -126,7 +148,7 @@ export function CarnetTraceMap({ trace, className = '' }: CarnetTraceMapProps) {
       }
       mapRef.current = null;
     };
-  }, [trace]);
+  }, [trace, dayTraces]);
 
   return (
     <div

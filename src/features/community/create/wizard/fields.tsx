@@ -226,26 +226,33 @@ export function ImagePicker({
   onChange,
   aspect = '16 / 10',
   round = false,
+  compact = false,
 }: {
   label: string;
   file: File | null;
   onChange: (file: File | null) => void;
   aspect?: string;
   round?: boolean;
+  /** Vignette carrée de 72 px, pour tenir sur la même ligne qu'un champ. */
+  compact?: boolean;
 }) {
   const preview = useObjectUrl(file);
   const id = useId();
   return (
     <div className="lkdv-wz-field">
       <span className="lkdv-wz-label">{label}</span>
-      <div className="lkdv-wz-image" data-round={round ? 'true' : 'false'} style={{ aspectRatio: aspect }}>
+      <div
+        className={compact ? 'lkdv-wz-image lkdv-wz-image--square' : 'lkdv-wz-image'}
+        data-round={round ? 'true' : 'false'}
+        style={compact ? undefined : { aspectRatio: aspect }}
+      >
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element -- aperçu local (blob:)
           <img src={preview} alt="" />
         ) : (
           <label htmlFor={id} className="lkdv-wz-image-empty">
-            <Icon name="image-plus" size={22} aria-hidden="true" />
-            <span>Ajouter une image</span>
+            <Icon name="image-plus" size={compact ? 20 : 22} aria-hidden="true" />
+            {compact ? null : <span>Ajouter une image</span>}
           </label>
         )}
         <input

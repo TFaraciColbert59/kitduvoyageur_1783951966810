@@ -106,23 +106,23 @@ test.describe('Communauté — page figée, carte-drawer', () => {
 
   test('un formulaire en étapes valide, avance et garde le brouillon', async ({ page }) => {
     await openCreate(page);
-    await page.getByRole('tab', { name: 'Carnet', exact: true }).click();
-    const pane = page.getByRole('tabpanel', { name: 'Carnet', exact: true });
+    await page.getByRole('tab', { name: 'Sortie', exact: true }).click();
+    const pane = page.getByRole('tabpanel', { name: 'Sortie', exact: true });
     await pane.getByRole('button', { name: 'Suivant' }).click();
     await expect(pane.getByRole('alert')).toContainText('Donne un titre');
 
-    await pane.getByLabel('Titre').fill('Traversée du Vercors');
+    await pane.getByLabel('Titre').fill('Lac Blanc au lever du jour');
     await pane.getByRole('button', { name: 'Suivant' }).click();
     await expect(pane.getByText('Où & quand')).toBeVisible();
-    await expect(pane.getByLabel('Destination')).toBeVisible();
+    await expect(pane.getByLabel('Lieu')).toBeVisible();
 
     // Fermer puis rouvrir : la saisie est restaurée depuis le brouillon local.
     await page.waitForTimeout(600);
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
-    await page.getByRole('tab', { name: 'Carnet', exact: true }).click();
-    await expect(page.getByRole('tabpanel', { name: 'Carnet', exact: true }).getByLabel('Titre')).toHaveValue(
-      'Traversée du Vercors',
+    await page.getByRole('tab', { name: 'Sortie', exact: true }).click();
+    await expect(page.getByRole('tabpanel', { name: 'Sortie', exact: true }).getByLabel('Titre')).toHaveValue(
+      'Lac Blanc au lever du jour',
     );
   });
 });

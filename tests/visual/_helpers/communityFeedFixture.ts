@@ -1,6 +1,18 @@
 import { expect, type Page } from '@playwright/test';
 
-const AUTHOR_ID = '00000000-0000-4000-8000-000000000101';
+/** En-têtes CORS permissifs pour les réponses simulées (origine de la page reprise telle quelle). */
+export const cors = (route: { request: () => { headers: () => Record<string, string> } }) => {
+  const origin = route.request().headers()['origin'] ?? '*';
+  return {
+    'access-control-allow-origin': origin,
+    'access-control-allow-credentials': 'true',
+    'access-control-allow-headers': '*',
+    'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+    'access-control-expose-headers': '*',
+  };
+};
+
+export const AUTHOR_ID = '00000000-0000-4000-8000-000000000101';
 const profile = {
   id: AUTHOR_ID,
   full_name: 'Camille Martin',
@@ -23,16 +35,6 @@ export async function installCommunityFeedFixture(page: Page) {
   // Les requêtes authentifiées portent `authorization`/`apikey` : le navigateur envoie
   // d'abord une pré-vérification CORS (OPTIONS) qu'il faut accepter, sinon la requête
   // réelle échoue avec `net::ERR_FAILED` et le fil affiche « n'a pas pu être chargé ».
-  const cors = (route: { request: () => { headers: () => Record<string, string> } }) => {
-    const origin = route.request().headers()['origin'] ?? '*';
-    return {
-      'access-control-allow-origin': origin,
-      'access-control-allow-credentials': 'true',
-      'access-control-allow-headers': '*',
-      'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
-      'access-control-expose-headers': '*',
-    };
-  };
   await page.route('**/rest/v1/**', async (route) => {
     if (route.request().method() === 'OPTIONS') {
       await route.fulfill({ status: 204, headers: cors(route) });

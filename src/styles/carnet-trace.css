@@ -1,0 +1,20 @@
+/* Bornes de jours sur les cartes de carnet (éditeur et fiche) : pastille « J1 » au départ, « ✓ » à l'arrivée. */
+
+.lkdv-tr-pin-wrap {
+  background: none;
+  border: 0;
+}
+
+.lkdv-tr-pin {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(23, 43, 36, 0.35);
+  color: #fff;
+  font: 700 10px/1 var(--sf);
+  box-sizing: border-box;
+}
