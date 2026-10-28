@@ -72,7 +72,7 @@ const CarnetCommentRow = React.memo(function CarnetCommentRow({
     <div id={`comment-${comment.id}`} className={`ckp-comment${isNew ? ' is-new' : ''}`}>
       {comment.authorAvatar ? (
         // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-        <img className="ckp-avatar" src={comment.authorAvatar} alt="" width={28} height={28} decoding="async" />
+        <img className="ckp-avatar" src={comment.authorAvatar} alt="" />
       ) : (
         <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
           {comment.authorName.charAt(0).toUpperCase()}

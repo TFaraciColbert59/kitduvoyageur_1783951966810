@@ -129,10 +129,11 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     setDrawer('stats');
   }, []);
 
-  /* Ces deux bascules viennent du hook : on ne dépend que de la fonction,
+  /* Ces deux bascules viennent du hook : on ne dépend que des fonctions,
      jamais de l'objet retourné (recréé à chaque rendu). */
-  const toggleLike = useCallback(() => void engagement.toggleLike(), [engagement.toggleLike]);
-  const toggleFavorite = useCallback(() => void engagement.toggleFavorite(), [engagement.toggleFavorite]);
+  const { toggleLike: toggleLikeNow, toggleFavorite: toggleFavoriteNow } = engagement;
+  const toggleLike = useCallback(() => void toggleLikeNow(), [toggleLikeNow]);
+  const toggleFavorite = useCallback(() => void toggleFavoriteNow(), [toggleFavoriteNow]);
 
   /* Objet stable de la bascule J’aime : sans lui, chaque rendu de l'écran
      recréait la prop et la page J’aime se redessinait pour rien. */

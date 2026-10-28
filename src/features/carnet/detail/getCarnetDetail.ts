@@ -109,7 +109,7 @@ export async function getCarnetDetail(id: string) {
       kitResult,
       likesRows,
       likesTotal,
-      commentsCount,
+      commentsTotal,
       collabResult,
       sessionIdResult,
     ],
@@ -163,11 +163,12 @@ export async function getCarnetDetail(id: string) {
         .eq('carnet_id', carnet.id)
         .order('created_at', { ascending: false })
         .limit(50),
+      /* Deux compteurs lus, un seul coût réseau : voir `counts` en bas de
+         fonction — la valeur rendue est identique à l'ancienne, requête de trop
+         en moins. */
       supabase.from('carnet_likes').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
-      supabase
-        .from('carnet_comments')
-        .select('carnet_id', { count: 'exact', head: true })
-        .eq('carnet_id', carnet.id),
+      /* Comptage réel des commentaires (le total des j'aime était affiché). */
+      supabase.from('carnet_comments').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
       /* Participants réels : collaborateurs du carnet + présents des sorties du
          carnet. Les deux lectures passent par le client à cookies, donc par la RLS :
          `carnet_collaborators_read_scoped` laisse lire les carnets publics, et
@@ -261,7 +262,9 @@ export async function getCarnetDetail(id: string) {
     participants,
     counts: {
       likes: likesTotal.count ?? likeRows.length,
-      comments: commentsCount.count ?? 0,
+      /* Vrai comptage des commentaires (le total des j'aime était affiché par
+         erreur : la requête `carnet_comments` était jetée). */
+      comments: commentsTotal.count ?? 0,
     },
   });
 }
