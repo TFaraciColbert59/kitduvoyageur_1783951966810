@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { startTransition, useCallback, useMemo, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { SfIcon } from './sfIcons';
-import type { CarnetDetail } from '@/features/carnet/detail/types';
+import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
 import { CarnetEtapesPane } from './panes/CarnetEtapesPane';
 import { CarnetKitPane } from './panes/CarnetKitPane';
 import { CarnetNaturePane } from './panes/CarnetNaturePane';
@@ -71,6 +71,54 @@ export interface CarnetPagesProps {
   managePage?: React.ReactNode;
 }
 
+/** Côté d'une tuile à 430 px : trois colonnes de 134 px, gouttière 2 px. */
+const TILE_EDGE = 134;
+
+/** Neuf tuiles au plus : la grille du Compte s'arrête au troisième rang. */
+const TILE_COUNT = 9;
+
+interface CarnetTileProps {
+  moment: CarnetMomentItem;
+  index: number;
+  /** Reste à voir, affiché sur la 9e tuile seulement (`0` = aucun badge). */
+  more: number;
+  onOpen: (index: number) => void;
+}
+
+/**
+ * Tuile de la grille : même bouton, même image, même badge. Mémoïsée et
+ * alimentée par des props stables (identifiant réel, index, nombre) : ouvrir
+ * une page ou changer un compteur ne redessine aucune image.
+ *
+ * `width`/`height` sont les dimensions de la cellule (le CSS les couvre en
+ * 100 %) : la place de l'image est réservée avant son chargement, donc aucun
+ * saut de mise en page. La première tuile seulement est prioritaire.
+ */
+const CarnetTile = React.memo(function CarnetTile({ moment, index, more, onOpen }: CarnetTileProps) {
+  const open = useCallback(() => onOpen(index), [index, onOpen]);
+
+  return (
+    <button
+      type="button"
+      className="ckp-tile"
+      onClick={open}
+      aria-label={`Moment ${index + 1}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- image distante */}
+      <img
+        src={moment.imageUrl ?? ''}
+        alt=""
+        loading={index < 3 ? 'eager' : 'lazy'}
+        decoding="async"
+        width={TILE_EDGE}
+        height={TILE_EDGE}
+        fetchPriority={index === 0 ? 'high' : undefined}
+      />
+      {more > 0 ? <span className="ckp-tile-more">+{more}</span> : null}
+    </button>
+  );
+});
+
 const SWIPE_MIN_PX = 40;
 
 /** Pas de page pour un geste horizontal : 1 (page suivante), -1, ou 0 (rien). */
@@ -104,14 +152,30 @@ export function CarnetPages({
   const pages = useMemo(() => carnetPageTabs(detail.isOwner), [detail.isOwner]);
   const index = Math.max(0, pages.findIndex((tab) => tab.id === page));
 
+  /* Dérivés stables : la liste des tuiles ne se recalcule pas à chaque frappe
+     ou à chaque bascule d'engagement, et les props des tuiles restent égales. */
+  const tiles = useMemo(() => detail.photoMoments.slice(0, TILE_COUNT), [detail.photoMoments]);
+  const more = detail.photoMoments.length > TILE_COUNT ? detail.photoMoments.length - TILE_COUNT : 0;
+
+  /* Le changement de page est une transition : il reste interruptible sans
+     jamais bloquer le geste, et le rendu visible est le même. */
+  const requestPage = useCallback(
+    (next: CarnetPageId, nextDirection: 'next' | 'prev') => {
+      startTransition(() => {
+        setDirection(nextDirection);
+        onPageChange(next);
+      });
+    },
+    [onPageChange],
+  );
+
   const go = useCallback(
     (delta: number) => {
       const target = Math.max(0, Math.min(pages.length - 1, index + delta));
       if (target === index) return;
-      setDirection(delta > 0 ? 'next' : 'prev');
-      onPageChange(pages[target].id);
+      requestPage(pages[target].id, delta > 0 ? 'next' : 'prev');
     },
-    [index, onPageChange, pages],
+    [index, pages, requestPage],
   );
 
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -123,12 +187,10 @@ export function CarnetPages({
       go(-1);
     } else if (event.key === 'Home') {
       event.preventDefault();
-      onPageChange(pages[0].id);
-      setDirection('prev');
+      requestPage(pages[0].id, 'prev');
     } else if (event.key === 'End') {
       event.preventDefault();
-      onPageChange(pages[pages.length - 1].id);
-      setDirection('next');
+      requestPage(pages[pages.length - 1].id, 'next');
     }
   };
 
@@ -173,22 +235,16 @@ export function CarnetPages({
     >
       <div key={page} className={`ckp-page ckp-page--${direction}`}>
         {page === 'posts' ? (
-          detail.photoMoments.length > 0 ? (
+          tiles.length > 0 ? (
             <div className="ckp-grid-wrap">
-              {detail.photoMoments.slice(0, 9).map((moment, index) => (
-                <button
+              {tiles.map((moment, index) => (
+                <CarnetTile
                   key={moment.id}
-                  type="button"
-                  className="ckp-tile"
-                  onClick={() => onOpenPost(index)}
-                  aria-label={`Moment ${index + 1}`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- image distante */}
-                  <img src={moment.imageUrl ?? ''} alt="" loading={index < 3 ? 'eager' : 'lazy'} />
-                  {index === 8 && detail.photoMoments.length > 9 ? (
-                    <span className="ckp-tile-more">+{detail.photoMoments.length - 9}</span>
-                  ) : null}
-                </button>
+                  moment={moment}
+                  index={index}
+                  more={index === TILE_COUNT - 1 ? more : 0}
+                  onOpen={onOpenPost}
+                />
               ))}
             </div>
           ) : (

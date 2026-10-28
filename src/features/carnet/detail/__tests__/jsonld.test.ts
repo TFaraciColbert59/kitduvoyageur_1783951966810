@@ -50,6 +50,40 @@ describe('serializeJsonLd', () => {
     const payload = serializeJsonLd({ a: 1, b: 'x<y' });
     expect(JSON.parse(payload.replace(/\\u003c/g, '<'))).toEqual({ a: 1, b: 'x<y' });
   });
+
+  it('échappe l’esperluette et les séparateurs de ligne Unicode', () => {
+    const payload = serializeJsonLd({ url: 'https://cdn.test/a.jpg?x=1&y=2', sep: 'a\u2028b\u2029c' });
+    expect(payload).not.toContain('&');
+    expect(payload).toContain('\\u0026');
+    expect(payload).not.toContain('\u2028');
+    expect(payload).not.toContain('\u2029');
+    expect(payload).toContain('\\u2028');
+    expect(payload).toContain('\\u2029');
+  });
+
+  it('ne laisse passer aucune balise dans le payload complet', () => {
+    const payload = serializeJsonLd(
+      buildCarnetJsonLd(
+        buildCarnetDetail({
+          carnet: { ...CARNET, title: '</script><svg onload=alert(1)>', description: 'a & b' },
+          author: { id: 'u1', full_name: '</script><img src=x>', handle: 'cam&ille', avatar_url: null, trust_score: 1 },
+          hikeSession: null,
+          etapes: [],
+          hebergements: [],
+          moments: [],
+          kitItems: [],
+          viewerId: null,
+          liked: false,
+          favorited: false,
+        }),
+        'https://lekitduvoyageur.fr',
+      ),
+    );
+    expect(payload).not.toMatch(/<\/script/i);
+    expect(payload).not.toContain('<svg');
+    expect(payload).not.toContain('<img');
+    expect(payload).not.toContain('&');
+  });
 });
 
 describe('buildCarnetJsonLd', () => {

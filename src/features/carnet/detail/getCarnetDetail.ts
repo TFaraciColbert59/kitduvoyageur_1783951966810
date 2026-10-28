@@ -78,8 +78,44 @@ export async function getCarnetDetail(id: string) {
   if (carnetError || !carnetData) return null;
   const carnet = carnetData as unknown as CarnetRow;
 
-  const [authorResult, hikeResult, etapesResult, hebergementsResult, momentsResult, kitResult] =
-    await Promise.all([
+  /* Tout ce qui ne dépend que du carnet part dans le même `Promise.all` :
+     auteur, sorties, étapes, hébergements, moments, kit, collaborateurs,
+     identifiants de sorties, j'aime et favori du lecteur. Une seule vague de
+     requêtes, donc un seul aller-retour au lieu de quatre. */
+  const viewerFlags: Promise<[{ data: unknown }, { data: unknown }]> = viewerId
+    ? Promise.all([
+        supabase
+          .from('carnet_likes')
+          .select('carnet_id')
+          .eq('carnet_id', carnet.id)
+          .eq('user_id', viewerId)
+          .maybeSingle(),
+        supabase
+          .from('carnet_favorites')
+          .select('carnet_id')
+          .eq('carnet_id', carnet.id)
+          .eq('user_id', viewerId)
+          .maybeSingle(),
+      ])
+    : Promise.resolve([{ data: null }, { data: null }] as [{ data: unknown }, { data: unknown }]);
+
+  const [
+    [
+      authorResult,
+      hikeResult,
+      etapesResult,
+      hebergementsResult,
+      momentsResult,
+      kitResult,
+      likesRows,
+      likesTotal,
+      commentsCount,
+      collabResult,
+      sessionIdResult,
+    ],
+    [likeResult, favoriteResult],
+  ] = await Promise.all([
+    Promise.all([
       supabase
         .from('public_profiles')
         .select('id, full_name, handle, avatar_url, trust_score')
@@ -120,51 +156,43 @@ export async function getCarnetDetail(id: string) {
         .select('id, nom, detail, poids_g, couleur_tag, sort_order')
         .eq('carnet_id', carnet.id)
         .order('sort_order', { ascending: true }),
-    ]);
-
-  const [likesRows, likesTotal, commentsCount] = await Promise.all([
-    supabase
-      .from('carnet_likes')
-      .select('user_id, reaction, created_at')
-      .eq('carnet_id', carnet.id)
-      .order('created_at', { ascending: false })
-      .limit(50),
-
-    supabase.from('carnet_likes').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
-    supabase.from('carnet_likes').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
-    supabase.from('carnet_comments').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
+      /* Réactions réelles : les 50 dernières lignes, plus le total exact. */
+      supabase
+        .from('carnet_likes')
+        .select('user_id, reaction, created_at')
+        .eq('carnet_id', carnet.id)
+        .order('created_at', { ascending: false })
+        .limit(50),
+      supabase.from('carnet_likes').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
+      supabase
+        .from('carnet_comments')
+        .select('carnet_id', { count: 'exact', head: true })
+        .eq('carnet_id', carnet.id),
+      /* Participants réels : collaborateurs du carnet + présents des sorties du
+         carnet. Les deux lectures passent par le client à cookies, donc par la RLS :
+         `carnet_collaborators_read_scoped` laisse lire les carnets publics, et
+         `hike_participants_select` (via `can_view_hike_session`) ne rend que les
+         sorties visibles pour ce lecteur. Un refus de la RLS n'est pas une erreur
+         de la fiche : on garde ce qui est lisible, sans rien inventer. */
+      supabase
+        .from('carnet_collaborators')
+        .select('carnet_id, user_id, role, created_at')
+        .eq('carnet_id', carnet.id)
+        .order('created_at', { ascending: true }),
+      /* Toutes les sorties du carnet, sans la limite de 10 de `hikeResult` :
+         les présents d'une sortie ancienne comptent aussi. */
+      supabase
+        .from('hike_sessions')
+        .select('id, started_at')
+        .eq('carnet_id', carnet.id)
+        .order('started_at', { ascending: false }),
+    ]),
+    viewerFlags,
   ]);
 
   const likeRows = (likesRows.data ?? []) as Array<{ user_id: string; reaction: string | null }>;
-  const likeProfiles = await fetchPublicProfilesWith(supabase as never, likeRows.map((row) => row.user_id));
-  const likers = likeRows.map((row) => ({
-    user_id: row.user_id,
-    reaction: row.reaction,
-    profile: (likeProfiles[row.user_id] as unknown as AuthorRow) ?? null,
-  }));
 
   const sessions = ((hikeResult as { data?: HikeSessionRow[] | null }).data ?? []) as HikeSessionRow[];
-
-  /* Participants réels : collaborateurs du carnet + présents des sorties du
-     carnet. Les deux lectures passent par le client à cookies, donc par la RLS :
-     `carnet_collaborators_read_scoped` laisse lire les carnets publics, et
-     `hike_participants_select` (via `can_view_hike_session`) ne rend que les
-     sorties visibles pour ce lecteur. Un refus de la RLS n'est pas une erreur
-     de la fiche : on garde ce qui est lisible, sans rien inventer. */
-  const [collabResult, sessionIdResult] = await Promise.all([
-    supabase
-      .from('carnet_collaborators')
-      .select('carnet_id, user_id, role, created_at')
-      .eq('carnet_id', carnet.id)
-      .order('created_at', { ascending: true }),
-    /* Toutes les sorties du carnet, sans la limite de 10 de `hikeResult` :
-       les présents d'une sortie ancienne comptent aussi. */
-    supabase
-      .from('hike_sessions')
-      .select('id, started_at')
-      .eq('carnet_id', carnet.id)
-      .order('started_at', { ascending: false }),
-  ]);
 
   const sessionIds = ((sessionIdResult.data ?? []) as Array<{ id: string }>).map((row) => row.id);
 
@@ -184,10 +212,20 @@ export async function getCarnetDetail(id: string) {
     (row) => row.user_id,
   );
 
-  const participantProfiles = await fetchPublicProfilesWith(supabase as never, [
-    ...collabRows.map((row) => row.user_id),
-    ...sessionParticipantRows.map((row) => row.user_id),
+  /* Les deux jointures de profils sont indépendantes : une seule vague. */
+  const [likeProfiles, participantProfiles] = await Promise.all([
+    fetchPublicProfilesWith(supabase as never, likeRows.map((row) => row.user_id)),
+    fetchPublicProfilesWith(supabase as never, [
+      ...collabRows.map((row) => row.user_id),
+      ...sessionParticipantRows.map((row) => row.user_id),
+    ]),
   ]);
+
+  const likers = likeRows.map((row) => ({
+    user_id: row.user_id,
+    reaction: row.reaction,
+    profile: (likeProfiles[row.user_id] as unknown as AuthorRow) ?? null,
+  }));
 
   const participants = [
     ...collabRows.map((row) => ({
@@ -204,16 +242,8 @@ export async function getCarnetDetail(id: string) {
     })),
   ];
 
-  let liked = false;
-  let favorited = false;
-  if (viewerId) {
-    const [likeResult, favoriteResult] = await Promise.all([
-      supabase.from('carnet_likes').select('carnet_id').eq('carnet_id', carnet.id).eq('user_id', viewerId).maybeSingle(),
-      supabase.from('carnet_favorites').select('carnet_id').eq('carnet_id', carnet.id).eq('user_id', viewerId).maybeSingle(),
-    ]);
-    liked = Boolean(likeResult.data);
-    favorited = Boolean(favoriteResult.data);
-  }
+  const liked = Boolean(likeResult.data);
+  const favorited = Boolean(favoriteResult.data);
 
   return buildCarnetDetail({
     carnet,

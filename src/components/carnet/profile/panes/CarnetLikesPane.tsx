@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { CarnetField } from '../CarnetField';
@@ -45,7 +45,14 @@ function reactionFilters(detail: CarnetDetail) {
 export function CarnetLikesPane({ detail, currentUserId: _currentUserId, like }: CarnetLikesPaneProps) {
   const [filter, setFilter] = useState('');
   const filters = useMemo(() => reactionFilters(detail), [detail]);
-  const likers = filter ? detail.likers.filter((liker) => liker.reaction === filter) : detail.likers;
+  const likers = useMemo(
+    () => (filter ? detail.likers.filter((liker) => liker.reaction === filter) : detail.likers),
+    [detail.likers, filter],
+  );
+  const onFilterChange = useCallback(
+    (id: string) => setFilter((current) => (current === id ? '' : id)),
+    [],
+  );
 
   return (
     <div className="ckp-pane ckp-likes">
@@ -58,6 +65,7 @@ export function CarnetLikesPane({ detail, currentUserId: _currentUserId, like }:
         />
         {like ? (
           <CarnetField
+            icon={<Icon name="heart" size={16} aria-hidden="true" />}
             label="mon j’aime"
             value={like.count.toLocaleString('fr-FR')}
             pressed={like.liked}
@@ -72,7 +80,7 @@ export function CarnetLikesPane({ detail, currentUserId: _currentUserId, like }:
           <CarnetSubCapsule
             items={filters}
             active={filter}
-            onChange={(id) => setFilter((current) => (current === id ? '' : id))}
+            onChange={onFilterChange}
             ariaLabel="Filtre des réactions"
           />
         </div>
@@ -86,7 +94,7 @@ export function CarnetLikesPane({ detail, currentUserId: _currentUserId, like }:
             <div className="ckp-liker" key={liker.id}>
               {liker.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-                <img className="ckp-avatar" src={liker.avatarUrl} alt="" />
+                <img className="ckp-avatar" src={liker.avatarUrl} alt="" width={28} height={28} decoding="async" />
               ) : (
                 <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
                   {liker.name.charAt(0).toUpperCase()}

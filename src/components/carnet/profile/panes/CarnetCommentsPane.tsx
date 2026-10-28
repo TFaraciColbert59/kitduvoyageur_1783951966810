@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 import Icon from '@/components/ui/Icon';
 import { CarnetSubCapsule } from '../CarnetSubCapsule';
@@ -22,6 +22,15 @@ const SORTS = [
   { id: 'old', label: 'anciens' },
 ];
 
+/**
+ * Longueur maximale d'un commentaire, côté saisie. Même valeur que la réponse
+ * privée d'une story (`StoriesViewer`, `maxLength={500}`) : un seul plafond
+ * pour tous les commentaires de la maison. La colonne `carnet_comments.content`
+ * est un `text` sans contrainte : le composer est donc la seule borne, et le
+ * serveur n'en ajoute aucune.
+ */
+export const CARNET_COMMENT_MAX_LENGTH = 500;
+
 /** Même date relative que le fil et le post du Compte. */
 function timeAgo(iso: string): string {
   const then = new Date(iso).getTime();
@@ -36,6 +45,57 @@ function timeAgo(iso: string): string {
   if (days < 7) return `${days} j`;
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
+
+interface CarnetCommentRowProps {
+  comment: CarnetComment;
+  /** Le commentaire vient d'arriver : fondu + 6 px, une seule fois. */
+  isNew: boolean;
+  /** Le lecteur est l'auteur : la ligne porte « supprimer ». */
+  mine: boolean;
+  onRemove: (commentId: string) => Promise<boolean>;
+}
+
+/**
+ * Ligne de commentaire : même gabarit, même DOM que la ligne d'origine.
+ * Mémoïsée, avec un handler stable par ligne : ajouter ou supprimer un
+ * commentaire ne redessine pas les autres lignes.
+ */
+const CarnetCommentRow = React.memo(function CarnetCommentRow({
+  comment,
+  isNew,
+  mine,
+  onRemove,
+}: CarnetCommentRowProps) {
+  const remove = useCallback(() => void onRemove(comment.id), [comment.id, onRemove]);
+
+  return (
+    <div id={`comment-${comment.id}`} className={`ckp-comment${isNew ? ' is-new' : ''}`}>
+      {comment.authorAvatar ? (
+        // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+        <img className="ckp-avatar" src={comment.authorAvatar} alt="" width={28} height={28} decoding="async" />
+      ) : (
+        <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
+          {comment.authorName.charAt(0).toUpperCase()}
+        </span>
+      )}
+      <div className="ckp-comment-body">
+        <div className="ckp-comment-head">
+          <span className="ckp-comment-name">{comment.authorName}</span>
+          {comment.authorHandle ? <span className="ckp-comment-handle">@{comment.authorHandle}</span> : null}
+        </div>
+        <p className="ckp-comment-text">{comment.content}</p>
+        <div className="ckp-comment-meta">
+          <time dateTime={comment.createdAt}>{timeAgo(comment.createdAt)}</time>
+          {mine ? (
+            <button type="button" onClick={remove}>
+              supprimer
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 /**
  * Commentaires du carnet, dans le corps et le pied du post du Compte
@@ -63,12 +123,16 @@ export function CarnetCommentsPane({
   const listRef = useRef<HTMLDivElement | null>(null);
   const known = useRef<Set<string> | null>(null);
 
+  /* Le tri est différé : la bascule Récents / Anciens reste immédiate, seule la
+     liste se réordonne quand le fil est libre. Rendu final identique. */
+  const deferredSort = useDeferredValue(sort);
+
   const sorted = useMemo(() => {
     const list = [...comments].sort(
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     );
-    return sort === 'recent' ? list.reverse() : list;
-  }, [comments, sort]);
+    return deferredSort === 'recent' ? list.reverse() : list;
+  }, [comments, deferredSort]);
 
   /* Un commentaire qui arrive entre en fondu + 6 px, sans déplacer la liste.
      Le premier rendu n'anime rien : la liste existante reste immobile. */
@@ -85,7 +149,7 @@ export function CarnetCommentsPane({
     return () => window.clearTimeout(timer);
   }, [comments]);
 
-  const submit = async () => {
+  const submit = useCallback(async () => {
     if (!canWrite) {
       onRequireAuth();
       return;
@@ -99,7 +163,7 @@ export function CarnetCommentsPane({
       );
     }
     setBusy(false);
-  };
+  }, [busy, canWrite, draft, onRequireAuth, onSend]);
 
   return (
     <>
@@ -122,37 +186,13 @@ export function CarnetCommentsPane({
         {sorted.length > 0 ? (
           <div className="ckp-comments-list" data-state={loading ? 'partial' : 'ready'}>
             {sorted.map((comment) => (
-              <div
+              <CarnetCommentRow
                 key={comment.id}
-                id={`comment-${comment.id}`}
-                className={`ckp-comment${entering === comment.id ? ' is-new' : ''}`}
-              >
-                {comment.authorAvatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-                  <img className="ckp-avatar" src={comment.authorAvatar} alt="" />
-                ) : (
-                  <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
-                    {comment.authorName.charAt(0).toUpperCase()}
-                  </span>
-                )}
-                <div className="ckp-comment-body">
-                  <div className="ckp-comment-head">
-                    <span className="ckp-comment-name">{comment.authorName}</span>
-                    {comment.authorHandle ? (
-                      <span className="ckp-comment-handle">@{comment.authorHandle}</span>
-                    ) : null}
-                  </div>
-                  <p className="ckp-comment-text">{comment.content}</p>
-                  <div className="ckp-comment-meta">
-                    <time dateTime={comment.createdAt}>{timeAgo(comment.createdAt)}</time>
-                    {currentUserId && comment.authorId === currentUserId ? (
-                      <button type="button" onClick={() => void onRemove(comment.id)}>
-                        supprimer
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
+                comment={comment}
+                isNew={entering === comment.id}
+                mine={Boolean(currentUserId) && comment.authorId === currentUserId}
+                onRemove={onRemove}
+              />
             ))}
             {/* Chargement partiel : les lignes connues restent, le reste attend. */}
             {loading ? <CarnetSkeleton rows={2} hero={false} /> : null}
@@ -170,6 +210,7 @@ export function CarnetCommentsPane({
             inputLabel="Ajouter un commentaire"
             ariaLabel="Publier le commentaire"
             busy={busy}
+            maxLength={CARNET_COMMENT_MAX_LENGTH}
           />
         </div>
       ) : (

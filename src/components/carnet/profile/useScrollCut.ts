@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * Défilement du conteneur réel d'un volet. Le carnet monte ses volets dans
@@ -17,6 +17,7 @@ export function useScrollCut<T extends HTMLElement>(
   threshold = 8,
 ): boolean {
   const [past, setPast] = useState(false);
+  const last = useRef(false);
 
   useEffect(() => {
     const node = ref.current;
@@ -27,7 +28,14 @@ export function useScrollCut<T extends HTMLElement>(
       node.classList.contains('ckp-card-scroll') ? node : node.closest('.ckp-card-scroll')
     ) as HTMLElement | null;
     if (!scroller) return;
-    const read = () => setPast(scroller.scrollTop > threshold);
+    /* L'état ne bascule qu'au franchissement du seuil : aucun rendu par pixel
+       de défilement, la valeur rendue est la même. */
+    const read = () => {
+      const next = scroller.scrollTop > threshold;
+      if (next === last.current) return;
+      last.current = next;
+      setPast(next);
+    };
     read();
     scroller.addEventListener('scroll', read, { passive: true });
     return () => scroller.removeEventListener('scroll', read);
@@ -46,6 +54,7 @@ export function useScrollTail<T extends HTMLElement>(
   threshold = 2,
 ): boolean {
   const [tail, setTail] = useState(false);
+  const last = useRef(false);
 
   useEffect(() => {
     const node = ref.current;
@@ -54,8 +63,12 @@ export function useScrollTail<T extends HTMLElement>(
       node.classList.contains('ckp-card-scroll') ? node : node.closest('.ckp-card-scroll')
     ) as HTMLElement | null;
     if (!scroller) return;
-    const read = () =>
-      setTail(scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight > threshold);
+    const read = () => {
+      const next = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight > threshold;
+      if (next === last.current) return;
+      last.current = next;
+      setTail(next);
+    };
     read();
     const frame = window.requestAnimationFrame(read);
     scroller.addEventListener('scroll', read, { passive: true });

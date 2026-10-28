@@ -4,6 +4,9 @@ import React from 'react';
 import Icon from '@/components/ui/Icon';
 import type { CarnetDay, CarnetMomentItem } from '@/features/carnet/detail/types';
 
+/** Aucun moment : référence partagée, sinon la ligne se redessinerait pour rien. */
+const NO_MOMENTS: CarnetMomentItem[] = [];
+
 export interface CarnetDayRowProps {
   day: CarnetDay;
   /** Moments réels du jour, quand le volet les porte (sous-drawer Jours). */
@@ -28,7 +31,7 @@ function dplusText(value: number | null): string | null {
  * la nuit et les moments restent sous la ligne : rien ne quitte la fiche.
  * Une valeur absente est un tiret, jamais un zéro inventé.
  */
-export function CarnetDayRow({ day, moments = [] }: CarnetDayRowProps) {
+function CarnetDayRowBase({ day, moments = NO_MOMENTS }: CarnetDayRowProps) {
   const distance = kmText(day.distanceKm);
   const dplus = dplusText(day.elevationM);
   const hasBody = Boolean(day.durationText || day.weather || day.note || day.overnight) || moments.length > 0;
@@ -84,5 +87,12 @@ export function CarnetDayRow({ day, moments = [] }: CarnetDayRowProps) {
     </article>
   );
 }
+
+/**
+ * Mémoïsée sur `day` et `moments`, tous deux stables (ils viennent des données
+ * du carnet) : une bascule d'engagement ou un tri de commentaires ne redessine
+ * aucune ligne de jour.
+ */
+export const CarnetDayRow = React.memo(CarnetDayRowBase);
 
 export default CarnetDayRow;

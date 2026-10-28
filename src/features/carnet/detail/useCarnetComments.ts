@@ -20,6 +20,12 @@ export interface UseCarnetCommentsArgs {
   user: { id: string; is_anonymous?: boolean } | null | undefined;
 }
 
+/**
+ * Message d'erreur exposé au client : volontairement générique. Le détail
+ * technique (code PostgREST, nom de policy) part en console, jamais dans l'UI.
+ */
+export const COMMENTS_READ_ERROR = 'Les commentaires n’ont pas pu être chargés.';
+
 type CommentRow = {
   id: string;
   carnet_id: string;
@@ -68,7 +74,11 @@ export function useCarnetComments({ carnetId, user }: UseCarnetCommentsArgs) {
       .then(async ({ data, error: queryError }) => {
         if (!active) return;
         if (queryError) {
-          setError(queryError.message);
+          /* Message générique dans l'état : le message PostgREST brut (nom de
+             policy, `permission denied for table ...`) reste en console pour le
+             diagnostic, jamais dans un nœud rendu. */
+          console.error('[carnet/comments] lecture refusée:', queryError);
+          setError(COMMENTS_READ_ERROR);
           setLoading(false);
           return;
         }

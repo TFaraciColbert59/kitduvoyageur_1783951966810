@@ -8,13 +8,24 @@ const commentsRows = [
 ];
 const deleted: string[] = [];
 
+/* Le refus de lecture est pilotable : le même mock sert le cas nominal et le
+   cas « la RLS refuse », sans deuxième module simulé. */
+const state = vi.hoisted(() => ({ failRead: false }));
+
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     from: (table: string) => {
       if (table !== 'carnet_comments') throw new Error(`unexpected table ${table}`);
       return {
         select: () => ({
-          eq: () => ({ order: () => Promise.resolve({ data: commentsRows, error: null }) }),
+          eq: () => ({
+            order: () =>
+              Promise.resolve(
+                state.failRead
+                  ? { data: null, error: { message: 'permission denied for table carnet_comments' } }
+                  : { data: commentsRows, error: null },
+              ),
+          }),
         }),
         insert: (payload: { content: string }) => ({
           select: () => ({
@@ -49,10 +60,11 @@ vi.mock('@/lib/queries/publicProfilesCore', () => ({
     Promise.resolve({ u1: { id: 'u1', full_name: 'Camille', avatar_url: null } }),
 }));
 
-import { useCarnetComments } from '../useCarnetComments';
+import { COMMENTS_READ_ERROR, useCarnetComments } from '../useCarnetComments';
 
 beforeEach(() => {
   deleted.length = 0;
+  state.failRead = false;
 });
 
 describe('useCarnetComments', () => {
@@ -84,6 +96,20 @@ describe('useCarnetComments', () => {
       expect(await result.current.send('   ')).toBe(false);
     });
     expect(result.current.comments).toHaveLength(2);
+  });
+
+  it('garde le message technique en console et n’expose qu’un message générique', async () => {
+    state.failRead = true;
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { result } = renderHook(() => useCarnetComments({ carnetId: 'c1', user: { id: 'u1' } }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.error).toBe(COMMENTS_READ_ERROR);
+    expect(result.current.error).not.toMatch(/permission denied|policy|carnet_comments/);
+    expect(logged).toHaveBeenCalled();
+    expect(result.current.comments).toHaveLength(0);
+    logged.mockRestore();
   });
 
   it('supprime son propre commentaire seulement', async () => {
