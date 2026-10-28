@@ -570,6 +570,29 @@ export const SORTIE_CSS = `
 /* 20. Mouvement réduit. */
 @media (prefers-reduced-motion:reduce){.lkdv-sortie-photo img,.lkdv-sortie-btn,.lkdv-sortie-hero{transition:none!important;animation:none!important;}}
 
+/* Matériel : vraies cartes produit + navigation par catégorie. */
+.lkdv-sortie-product-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;}
+.lkdv-sortie-product{position:relative!important;display:flex!important;flex-direction:column!important;min-width:0!important;border-radius:16px!important;overflow:hidden!important;background:rgba(255,255,255,.52)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.08)!important;}
+.lkdv-sortie-product-visual{position:relative!important;aspect-ratio:1.15/1!important;background:#e8eee5!important;}
+.lkdv-sortie-product-visual img{width:100%!important;height:100%!important;object-fit:cover!important;}
+.lkdv-sortie-product-status{position:absolute!important;left:6px!important;bottom:6px!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.86)!important;color:#fff!important;font:600 8.5px/1.2 var(--sf)!important;}
+.lkdv-sortie-product-body{display:flex!important;flex-direction:column!important;gap:2px!important;padding:7px 8px 8px!important;min-width:0!important;}
+.lkdv-sortie-product-body>b{font:600 11.5px/1.2 var(--sf)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;color:var(--label)!important;}
+.lkdv-sortie-product-body>small{font:500 9px/1.2 var(--sf)!important;color:var(--label2)!important;}
+.lkdv-sortie-product-wear{display:flex!important;align-items:center!important;gap:5px!important;margin-top:4px!important;}
+.lkdv-sortie-product-wear>span{font:500 8px/1 var(--sf)!important;color:var(--label3)!important;letter-spacing:.02em!important;}
+.lkdv-sortie-product-wear>i{flex:1!important;height:4px!important;border-radius:999px!important;background:rgba(23,43,36,.1)!important;overflow:hidden!important;}
+.lkdv-sortie-product-wear u{display:block!important;height:100%!important;border-radius:999px!important;background:linear-gradient(90deg,#5B7F55,#C89A3B)!important;text-decoration:none!important;}
+.lkdv-sortie-product .lkdv-sortie-gear-remove{position:absolute!important;top:5px!important;right:5px!important;width:24px!important;height:24px!important;border-radius:50%!important;background:rgba(12,24,18,.55)!important;color:#fff!important;}
+.lkdv-sortie-gear-pane{padding-bottom:52px!important;position:relative!important;}
+.lkdv-sortie-category-bar{position:absolute!important;left:0!important;right:0!important;bottom:0!important;z-index:7!important;display:flex!important;gap:4px!important;overflow-x:auto!important;padding:8px 2px calc(4px + env(safe-area-inset-bottom,0px))!important;margin:0 -2px!important;background:linear-gradient(180deg,rgba(246,250,243,0),rgba(246,250,243,.96) 45%)!important;scrollbar-width:none!important;}
+.lkdv-sortie-category-bar::-webkit-scrollbar{display:none!important;}
+.lkdv-sortie-category-bar button{flex:none!important;height:30px!important;padding:0 11px!important;border:0!important;border-radius:999px!important;background:rgba(255,255,255,.6)!important;color:var(--label2)!important;font:600 10.5px/1 var(--sf)!important;box-shadow:inset 0 0 0 .5px rgba(23,43,36,.08)!important;}
+.lkdv-sortie-category-bar button.on{background:#17402c!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)!important;}
+
+.lkdv-sortie-person-link{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;flex:1!important;color:inherit!important;text-decoration:none!important;}
+.lkdv-sortie-person-link:active{opacity:.7!important;}
+
 `;
 
 export default SortieDrawer;
