@@ -1,0 +1,125 @@
+{
+  "resume": {
+    "day": "Résumé",
+    "count": "7 moments",
+    "stats": [
+      "DISTANCE 18 km",
+      "DÉNIVELÉ + 1 240 m",
+      "JOURS 8"
+    ],
+    "tiles": 7,
+    "empty": null,
+    "scroll": [
+      430,
+      932,
+      430,
+      932
+    ]
+  },
+  "geometry": {
+    "card": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "head": [
+      24,
+      79,
+      382,
+      66
+    ],
+    "pill": [
+      26,
+      56,
+      378,
+      16
+    ],
+    "grid": [
+      12,
+      240.19,
+      406,
+      406
+    ],
+    "tile": [
+      12,
+      240.19,
+      134,
+      134
+    ],
+    "foot": [
+      320,
+      511.2,
+      88,
+      30
+    ],
+    "capsule": [
+      320,
+      511.2,
+      88,
+      30
+    ],
+    "lens": [
+      322.5,
+      513.7,
+      41.5,
+      25
+    ],
+    "mapzone": [
+      0,
+      559.2,
+      430,
+      372.8
+    ],
+    "segments": [
+      "Posts",
+      "Parcours"
+    ]
+  },
+  "jour1": {
+    "day": "22 sept.",
+    "count": "1 moment",
+    "stats": [
+      "DISTANCE — km",
+      "DÉNIVELÉ + — m",
+      "DURÉE — h"
+    ],
+    "tiles": 1,
+    "empty": null,
+    "scroll": [
+      430,
+      932,
+      430,
+      932
+    ]
+  },
+  "dernier": {
+    "day": "23 oct.",
+    "count": "0 moment",
+    "stats": [
+      "DISTANCE 23,2 km",
+      "DÉNIVELÉ + — m",
+      "DURÉE — h"
+    ],
+    "tiles": 0,
+    "empty": "Aucun moment ce jour-là.",
+    "scroll": [
+      430,
+      932,
+      430,
+      932
+    ]
+  },
+  "scrollLast": [
+    12,
+    48,
+    406,
+    503.2
+  ],
+  "reduced": {
+    "label": "23 oct.",
+    "className": "ckp-day-pane ckp-day--next",
+    "animation": "none"
+  },
+  "errors": []
+}

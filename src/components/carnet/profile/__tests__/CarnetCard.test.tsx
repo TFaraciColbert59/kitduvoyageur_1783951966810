@@ -175,8 +175,9 @@ describe('CarnetCard — carte du carnet', () => {
   it('affiche une seule ligne de lieu, du texte, sans pastille ni bouton', () => {
     const { container } = render(<CarnetCard {...base()} />);
     const line = container.querySelector('.ckp-place-line');
+    /* Même source que la rangée de statistiques : les totaux des jours. */
     expect(norm(line?.textContent)).toBe(
-      'France / Italie / Suisse · — · 106,4 km · 2 002 m D+ · 26 sept. – 2 oct. 2026',
+      'France / Italie / Suisse · 7 jours · 106,4 km · 2 002 m D+ · 26 sept. – 2 oct. 2026',
     );
     expect(container.querySelector('.ckp-place-pill')).toBeNull();
     expect(container.querySelector('.ckp-place-row')).toBeNull();
@@ -369,7 +370,7 @@ describe('CarnetCard — ligne de lieu unique', () => {
     );
     const line = container.querySelector('.ckp-place-line');
     expect(norm(line?.textContent)).toBe(
-      'Islande · 1 jour · 106,4 km · 2 002 m D+ · 26 sept. – 2 oct. 2026',
+      'Islande · 7 jours · 106,4 km · 2 002 m D+ · 26 sept. – 2 oct. 2026',
     );
     /* Le lieu est du texte : plus aucune pastille ni bouton de recentrage. */
     expect(container.querySelectorAll('.ckp-place-line button')).toHaveLength(0);
@@ -386,6 +387,7 @@ describe('CarnetCard — ligne de lieu unique', () => {
             distanceKm: null,
             elevationM: null,
             etapes: [],
+            summary: { distanceKm: null, elevationM: null, days: 0, moments: 0 },
           }),
         })}
       />,
@@ -409,6 +411,7 @@ describe('CarnetCard — ligne de lieu unique', () => {
             distanceKm: null,
             elevationM: null,
             etapes: [],
+            summary: { distanceKm: null, elevationM: null, days: 0, moments: 0 },
           }),
         })}
       />,
@@ -478,6 +481,8 @@ function withDays(overrides: Partial<React.ComponentProps<typeof CarnetCard>> = 
       days: [DAY_ONE, DAY_TWO, DAY_THREE],
       moments: [M1, M2, M3],
       photoMoments: [M1, M2],
+      distanceKm: 30.4,
+      elevationM: 920,
       summary: { distanceKm: 30.4, elevationM: 920, days: 3, moments: 3 },
     }),
     ...overrides,

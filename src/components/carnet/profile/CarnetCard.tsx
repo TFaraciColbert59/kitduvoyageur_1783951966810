@@ -104,18 +104,22 @@ export function CarnetCard({
   const placeLine = useMemo(() => {
     /* Lieu réel de la fiche : aucune coordonnée n'est estimée ici. */
     const place = detail.place ?? { country: null, region: null, locality: null, lat: null, lng: null };
+    /* Même source que la rangée de statistiques : le total du carnet, le
+       `summary` des jours en relais. La carte ne montre jamais deux totaux. */
+    const summary = detail.summary ?? { distanceKm: null, elevationM: null, days: 0, moments: 0 };
     return placeLineParts({
       place,
       fallback: detail.destination,
-      daysCount: detail.etapes.length,
-      distanceKm: detail.distanceKm,
-      elevationM: detail.elevationM,
+      daysCount: summary.days > 0 ? summary.days : detail.etapes.length,
+      distanceKm: detail.distanceKm ?? summary.distanceKm,
+      elevationM: detail.elevationM ?? summary.elevationM,
       dateRange: detail.dateRange,
     });
   }, [
     detail.place,
     detail.destination,
     detail.etapes.length,
+    detail.summary,
     detail.distanceKm,
     detail.elevationM,
     detail.dateRange,

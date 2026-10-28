@@ -1,0 +1,609 @@
+{
+  "accueil": {
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "card": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "grabber": null,
+    "postGrab": null,
+    "overlayHeader": null,
+    "overlayClose": null,
+    "options": null,
+    "mediaGlass": null,
+    "composer": null,
+    "selector": [
+      320,
+      511.2,
+      88,
+      30
+    ],
+    "bottomBar": [
+      14,
+      868,
+      402,
+      48
+    ],
+    "grabberStyle": null,
+    "sheetStyle": null
+  },
+  "stats-Distance": {
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "card": null,
+    "grabber": [
+      195,
+      61,
+      40,
+      4
+    ],
+    "postGrab": null,
+    "overlayHeader": null,
+    "overlayClose": null,
+    "options": null,
+    "mediaGlass": null,
+    "composer": null,
+    "selector": null,
+    "bottomBar": [
+      14,
+      868,
+      402,
+      48
+    ],
+    "grabberStyle": {
+      "width": "40px",
+      "height": "4px",
+      "border-radius": "999px",
+      "background-color": "rgba(23, 43, 36, 0.35)",
+      "opacity": "1"
+    },
+    "sheetStyle": {
+      "border-radius": "24px",
+      "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+      "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+      "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+    }
+  },
+  "stats-Dénivelé": {
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "card": null,
+    "grabber": [
+      195,
+      61,
+      40,
+      4
+    ],
+    "postGrab": null,
+    "overlayHeader": null,
+    "overlayClose": null,
+    "options": null,
+    "mediaGlass": null,
+    "composer": null,
+    "selector": null,
+    "bottomBar": [
+      14,
+      868,
+      402,
+      48
+    ],
+    "grabberStyle": {
+      "width": "40px",
+      "height": "4px",
+      "border-radius": "999px",
+      "background-color": "rgba(23, 43, 36, 0.35)",
+      "opacity": "1"
+    },
+    "sheetStyle": {
+      "border-radius": "24px",
+      "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+      "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+      "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+    }
+  },
+  "stats-Jours": {
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "card": null,
+    "grabber": [
+      195,
+      61,
+      40,
+      4
+    ],
+    "postGrab": null,
+    "overlayHeader": null,
+    "overlayClose": null,
+    "options": null,
+    "mediaGlass": null,
+    "composer": null,
+    "selector": null,
+    "bottomBar": [
+      14,
+      868,
+      402,
+      48
+    ],
+    "grabberStyle": {
+      "width": "40px",
+      "height": "4px",
+      "border-radius": "999px",
+      "background-color": "rgba(23, 43, 36, 0.35)",
+      "opacity": "1"
+    },
+    "sheetStyle": {
+      "border-radius": "24px",
+      "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+      "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+      "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+    }
+  },
+  "likes": {
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "card": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "grabber": null,
+    "postGrab": null,
+    "overlayHeader": null,
+    "overlayClose": null,
+    "options": null,
+    "mediaGlass": null,
+    "composer": null,
+    "selector": [
+      320,
+      511.2,
+      88,
+      30
+    ],
+    "bottomBar": [
+      14,
+      868,
+      402,
+      48
+    ],
+    "grabberStyle": null,
+    "sheetStyle": null
+  },
+  "comments": {
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "card": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "grabber": null,
+    "postGrab": null,
+    "overlayHeader": null,
+    "overlayClose": null,
+    "options": null,
+    "mediaGlass": null,
+    "composer": [
+      24,
+      382.69,
+      382,
+      59
+    ],
+    "selector": [
+      320,
+      511.2,
+      88,
+      30
+    ],
+    "bottomBar": [
+      14,
+      868,
+      402,
+      48
+    ],
+    "grabberStyle": null,
+    "sheetStyle": null
+  },
+  "manage": {
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "card": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "grabber": null,
+    "postGrab": null,
+    "overlayHeader": null,
+    "overlayClose": null,
+    "options": null,
+    "mediaGlass": null,
+    "composer": [
+      24,
+      382.69,
+      382,
+      59
+    ],
+    "selector": [
+      320,
+      511.2,
+      88,
+      30
+    ],
+    "bottomBar": [
+      14,
+      868,
+      402,
+      48
+    ],
+    "grabberStyle": null,
+    "sheetStyle": null
+  },
+  "manageOpened": false,
+  "post": {
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "card": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "grabber": [
+      194,
+      55,
+      42,
+      5
+    ],
+    "postGrab": [
+      194,
+      55,
+      42,
+      5
+    ],
+    "overlayHeader": [
+      22,
+      58,
+      386,
+      44
+    ],
+    "overlayClose": [
+      370,
+      59.5,
+      38,
+      38
+    ],
+    "options": [
+      326,
+      61,
+      38,
+      38
+    ],
+    "mediaGlass": [
+      256.09,
+      504.2,
+      151.91,
+      37
+    ],
+    "composer": null,
+    "selector": [
+      320,
+      511.2,
+      88,
+      30
+    ],
+    "bottomBar": [
+      14,
+      868,
+      402,
+      48
+    ],
+    "grabberStyle": null,
+    "sheetStyle": null
+  },
+  "viewports": {
+    "768x1024": {
+      "viewport": [
+        768,
+        1024
+      ],
+      "docScroll": [
+        768,
+        1024
+      ],
+      "okOverflow": true,
+      "sheet": [
+        181,
+        48,
+        406,
+        558.41
+      ],
+      "card": [
+        181,
+        48,
+        406,
+        558.41
+      ],
+      "grabber": null,
+      "postGrab": null,
+      "overlayHeader": null,
+      "overlayClose": null,
+      "options": null,
+      "mediaGlass": null,
+      "composer": null,
+      "selector": [
+        489,
+        566.41,
+        88,
+        30
+      ],
+      "bottomBar": [
+        183,
+        960,
+        402,
+        48
+      ],
+      "grabberStyle": null,
+      "sheetStyle": null
+    },
+    "768x1024-drawer": {
+      "viewport": [
+        768,
+        1024
+      ],
+      "docScroll": [
+        768,
+        1024
+      ],
+      "okOverflow": true,
+      "sheet": [
+        181,
+        48,
+        406,
+        558.41
+      ],
+      "card": null,
+      "grabber": [
+        364,
+        61,
+        40,
+        4
+      ],
+      "postGrab": null,
+      "overlayHeader": null,
+      "overlayClose": null,
+      "options": null,
+      "mediaGlass": null,
+      "composer": null,
+      "selector": null,
+      "bottomBar": [
+        183,
+        960,
+        402,
+        48
+      ],
+      "grabberStyle": {
+        "width": "40px",
+        "height": "4px",
+        "border-radius": "999px",
+        "background-color": "rgba(23, 43, 36, 0.35)",
+        "opacity": "1"
+      },
+      "sheetStyle": {
+        "border-radius": "24px",
+        "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+        "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+        "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+      }
+    },
+    "1440x900": {
+      "viewport": [
+        1440,
+        900
+      ],
+      "docScroll": [
+        1440,
+        900
+      ],
+      "okOverflow": true,
+      "sheet": [
+        517,
+        48,
+        406,
+        484
+      ],
+      "card": [
+        517,
+        48,
+        406,
+        484
+      ],
+      "grabber": null,
+      "postGrab": null,
+      "overlayHeader": null,
+      "overlayClose": null,
+      "options": null,
+      "mediaGlass": null,
+      "composer": null,
+      "selector": [
+        825,
+        492,
+        88,
+        30
+      ],
+      "bottomBar": [
+        519,
+        836,
+        402,
+        48
+      ],
+      "grabberStyle": null,
+      "sheetStyle": null
+    },
+    "1440x900-drawer": {
+      "viewport": [
+        1440,
+        900
+      ],
+      "docScroll": [
+        1440,
+        900
+      ],
+      "okOverflow": true,
+      "sheet": [
+        517,
+        48,
+        406,
+        484
+      ],
+      "card": null,
+      "grabber": [
+        700,
+        61,
+        40,
+        4
+      ],
+      "postGrab": null,
+      "overlayHeader": null,
+      "overlayClose": null,
+      "options": null,
+      "mediaGlass": null,
+      "composer": null,
+      "selector": null,
+      "bottomBar": [
+        519,
+        836,
+        402,
+        48
+      ],
+      "grabberStyle": {
+        "width": "40px",
+        "height": "4px",
+        "border-radius": "999px",
+        "background-color": "rgba(23, 43, 36, 0.35)",
+        "opacity": "1"
+      },
+      "sheetStyle": {
+        "border-radius": "24px",
+        "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384))",
+        "backdrop-filter": "blur(25.2px) saturate(1.8) brightness(1.05)",
+        "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.4) 0px -1px 1px 0px inset, rgba(23, 43, 36, 0.12) 0px 0px 0px 0.5px"
+      }
+    }
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ]
+}

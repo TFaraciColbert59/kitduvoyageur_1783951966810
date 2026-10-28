@@ -1,0 +1,513 @@
+{
+  "drawer-stats-430": {
+    "tag": "drawer-stats-430",
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "overflow": [],
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "head": [
+      12,
+      48,
+      406,
+      63
+    ],
+    "grabber": [
+      194,
+      56,
+      42,
+      5
+    ],
+    "close": [
+      370,
+      69,
+      36,
+      36
+    ],
+    "headButtons": [
+      "Fermer le panneau",
+      "Fermer"
+    ],
+    "body": [
+      12,
+      111,
+      406,
+      440.2
+    ],
+    "bodyPad": "0px 0px 52px",
+    "bodyScroll": [
+      539,
+      440,
+      0
+    ],
+    "capsule": [
+      320,
+      511.2,
+      88,
+      30
+    ],
+    "capsuleStyle": {
+      "bg": "rgba(23, 43, 36, 0.06)",
+      "shadow": "rgba(23, 43, 36, 0.06) 0px 1px 1px 0px inset, rgba(255, 255, 255, 0.65) 0px -1px 0px 0px inset",
+      "blur": "blur(18px) saturate(1.6)",
+      "radius": "999px",
+      "padding": "2.5px",
+      "width": "88px",
+      "height": "30px"
+    },
+    "rightInset": 10,
+    "bottomInset": 10,
+    "segments": [
+      {
+        "aria": "Statistiques",
+        "box": [
+          322.5,
+          513.7,
+          41.5,
+          25
+        ],
+        "selected": "true",
+        "controls": null
+      },
+      {
+        "aria": "Partage",
+        "box": [
+          364,
+          513.7,
+          41.5,
+          25
+        ],
+        "selected": "false",
+        "controls": null
+      }
+    ],
+    "lens": {
+      "box": [
+        322.5,
+        513.7,
+        41.5,
+        25
+      ],
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "varI": "0"
+    },
+    "selectorLensOff": null
+  },
+  "drawer-stats-bottom": {
+    "lastBox": [
+      12,
+      487.09375,
+      499.09375
+    ],
+    "capsuleTop": 511.203125,
+    "freeGap": 12.11,
+    "paddingBottom": "52px"
+  },
+  "drawer-share-430": {
+    "tag": "drawer-share-430",
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "overflow": [],
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "head": [
+      12,
+      48,
+      406,
+      63
+    ],
+    "grabber": [
+      194,
+      56,
+      42,
+      5
+    ],
+    "close": [
+      370,
+      69,
+      36,
+      36
+    ],
+    "headButtons": [
+      "Fermer le panneau",
+      "Fermer"
+    ],
+    "body": [
+      12,
+      111,
+      406,
+      440.2
+    ],
+    "bodyPad": "0px 0px 52px",
+    "bodyScroll": [
+      440,
+      440,
+      0
+    ],
+    "capsule": [
+      320,
+      511.2,
+      88,
+      30
+    ],
+    "capsuleStyle": {
+      "bg": "rgba(23, 43, 36, 0.06)",
+      "shadow": "rgba(23, 43, 36, 0.06) 0px 1px 1px 0px inset, rgba(255, 255, 255, 0.65) 0px -1px 0px 0px inset",
+      "blur": "blur(18px) saturate(1.6)",
+      "radius": "999px",
+      "padding": "2.5px",
+      "width": "88px",
+      "height": "30px"
+    },
+    "rightInset": 10,
+    "bottomInset": 10,
+    "segments": [
+      {
+        "aria": "Statistiques",
+        "box": [
+          322.5,
+          513.7,
+          41.5,
+          25
+        ],
+        "selected": "false",
+        "controls": null
+      },
+      {
+        "aria": "Partage",
+        "box": [
+          364,
+          513.7,
+          41.5,
+          25
+        ],
+        "selected": "true",
+        "controls": null
+      }
+    ],
+    "lens": {
+      "box": [
+        364,
+        513.7,
+        41.5,
+        25
+      ],
+      "transform": "matrix(1, 0, 0, 1, 41.5, 0)",
+      "varI": "1"
+    },
+    "selectorLensOff": null
+  },
+  "page-comments-430": {
+    "tag": "page-comments-430",
+    "viewport": [
+      430,
+      932
+    ],
+    "docScroll": [
+      430,
+      932
+    ],
+    "okOverflow": true,
+    "overflow": [],
+    "sheet": [
+      12,
+      48,
+      406,
+      503.2
+    ],
+    "head": null,
+    "grabber": null,
+    "close": null,
+    "headButtons": [],
+    "body": null,
+    "bodyScroll": null,
+    "capsule": [
+      320,
+      511.2,
+      88,
+      30
+    ],
+    "capsuleStyle": {
+      "bg": "rgba(23, 43, 36, 0.06)",
+      "shadow": "rgba(23, 43, 36, 0.06) 0px 1px 1px 0px inset, rgba(255, 255, 255, 0.65) 0px -1px 0px 0px inset",
+      "blur": "blur(18px) saturate(1.6)",
+      "radius": "999px",
+      "padding": "2.5px",
+      "width": "88px",
+      "height": "30px"
+    },
+    "rightInset": 10,
+    "bottomInset": 10,
+    "segments": [
+      {
+        "aria": "Posts",
+        "box": [
+          322.5,
+          513.7,
+          41.5,
+          25
+        ],
+        "selected": "false",
+        "controls": null
+      },
+      {
+        "aria": "Parcours",
+        "box": [
+          364,
+          513.7,
+          41.5,
+          25
+        ],
+        "selected": "false",
+        "controls": null
+      }
+    ],
+    "lens": {
+      "box": [
+        322.5,
+        513.7,
+        41.5,
+        25
+      ],
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "varI": "0"
+    },
+    "selectorLensOff": "true"
+  },
+  "drawer-stats-768": {
+    "tag": "drawer-stats-768",
+    "viewport": [
+      768,
+      1024
+    ],
+    "docScroll": [
+      768,
+      1024
+    ],
+    "okOverflow": true,
+    "overflow": [],
+    "sheet": [
+      181,
+      48,
+      406,
+      558.41
+    ],
+    "head": [
+      181,
+      48,
+      406,
+      63
+    ],
+    "grabber": [
+      363,
+      56,
+      42,
+      5
+    ],
+    "close": [
+      539,
+      69,
+      36,
+      36
+    ],
+    "headButtons": [
+      "Fermer le panneau",
+      "Fermer"
+    ],
+    "body": [
+      181,
+      111,
+      406,
+      495.41
+    ],
+    "bodyPad": "0px 0px 52px",
+    "bodyScroll": [
+      539,
+      495,
+      0
+    ],
+    "capsule": [
+      489,
+      566.41,
+      88,
+      30
+    ],
+    "capsuleStyle": {
+      "bg": "rgba(23, 43, 36, 0.06)",
+      "shadow": "rgba(23, 43, 36, 0.06) 0px 1px 1px 0px inset, rgba(255, 255, 255, 0.65) 0px -1px 0px 0px inset",
+      "blur": "blur(18px) saturate(1.6)",
+      "radius": "999px",
+      "padding": "2.5px",
+      "width": "88px",
+      "height": "30px"
+    },
+    "rightInset": 10,
+    "bottomInset": 10,
+    "segments": [
+      {
+        "aria": "Statistiques",
+        "box": [
+          491.5,
+          568.91,
+          41.5,
+          25
+        ],
+        "selected": "true",
+        "controls": null
+      },
+      {
+        "aria": "Partage",
+        "box": [
+          533,
+          568.91,
+          41.5,
+          25
+        ],
+        "selected": "false",
+        "controls": null
+      }
+    ],
+    "lens": {
+      "box": [
+        491.5,
+        568.91,
+        41.5,
+        25
+      ],
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "varI": "0"
+    },
+    "selectorLensOff": null
+  },
+  "drawer-stats-1440": {
+    "tag": "drawer-stats-1440",
+    "viewport": [
+      1440,
+      900
+    ],
+    "docScroll": [
+      1440,
+      900
+    ],
+    "okOverflow": true,
+    "overflow": [],
+    "sheet": [
+      517,
+      48,
+      406,
+      484
+    ],
+    "head": [
+      517,
+      48,
+      406,
+      63
+    ],
+    "grabber": [
+      699,
+      56,
+      42,
+      5
+    ],
+    "close": [
+      875,
+      69,
+      36,
+      36
+    ],
+    "headButtons": [
+      "Fermer le panneau",
+      "Fermer"
+    ],
+    "body": [
+      517,
+      111,
+      406,
+      421
+    ],
+    "bodyPad": "0px 0px 52px",
+    "bodyScroll": [
+      539,
+      421,
+      0
+    ],
+    "capsule": [
+      825,
+      492,
+      88,
+      30
+    ],
+    "capsuleStyle": {
+      "bg": "rgba(23, 43, 36, 0.06)",
+      "shadow": "rgba(23, 43, 36, 0.06) 0px 1px 1px 0px inset, rgba(255, 255, 255, 0.65) 0px -1px 0px 0px inset",
+      "blur": "blur(18px) saturate(1.6)",
+      "radius": "999px",
+      "padding": "2.5px",
+      "width": "88px",
+      "height": "30px"
+    },
+    "rightInset": 10,
+    "bottomInset": 10,
+    "segments": [
+      {
+        "aria": "Statistiques",
+        "box": [
+          827.5,
+          494.5,
+          41.5,
+          25
+        ],
+        "selected": "true",
+        "controls": null
+      },
+      {
+        "aria": "Partage",
+        "box": [
+          869,
+          494.5,
+          41.5,
+          25
+        ],
+        "selected": "false",
+        "controls": null
+      }
+    ],
+    "lens": {
+      "box": [
+        827.5,
+        494.5,
+        41.5,
+        25
+      ],
+      "transform": "matrix(1, 0, 0, 1, 0, 0)",
+      "varI": "0"
+    },
+    "selectorLensOff": null
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ]
+}
