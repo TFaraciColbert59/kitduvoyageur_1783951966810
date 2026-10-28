@@ -42,7 +42,6 @@ export interface DaySwipeHandlers {
   onPointerDown: (event: React.PointerEvent) => void;
   onPointerUp: (event: React.PointerEvent) => void;
   onPointerCancel: () => void;
-  onKeyDown: (event: React.KeyboardEvent) => void;
 }
 
 export interface DaySwipe {
@@ -54,6 +53,28 @@ export interface DaySwipe {
 function insidePages(target: EventTarget | null): boolean {
   const node = target as Element | null;
   return Boolean(node && typeof node.closest === 'function' && node.closest('.ckp-pages'));
+}
+
+/**
+ * Le clavier des jours ne prend jamais la main à un autre composant : le
+ * carrousel (flèches), une feuille ouverte (post, photo), un champ de saisie.
+ */
+const KEYBOARD_BLOCKERS = [
+  '.ckp-pages',
+  '.ckp-post-sheet',
+  '.ckp-viewer',
+  '[role="dialog"]',
+  'input',
+  'textarea',
+  'select',
+  '[contenteditable="true"]',
+].join(', ');
+
+function keyboardBlocked(event: KeyboardEvent): boolean {
+  if (event.defaultPrevented) return true;
+  const node = event.target as Element | null;
+  if (!node || typeof node.closest !== 'function') return false;
+  return Boolean(node.closest(KEYBOARD_BLOCKERS));
 }
 
 /**
@@ -95,10 +116,12 @@ export function useDaySwipe({ count, index, onChange }: DaySwipeOptions): DaySwi
     start.current = null;
   }, []);
 
-  const onKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.defaultPrevented) return;
-      if (insidePages(event.target)) return;
+  /* Le clavier est écouté au document : la carte reste pilotable même quand
+     aucun de ses boutons n'a le focus, sans jamais voler une flèche au
+     carrousel ou à une feuille ouverte. */
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (keyboardBlocked(event)) return;
       if (event.key === 'ArrowRight') {
         event.preventDefault();
         go(1);
@@ -118,13 +141,14 @@ export function useDaySwipe({ count, index, onChange }: DaySwipeOptions): DaySwi
           onChange(count - 1);
         }
       }
-    },
-    [count, go, index, onChange],
-  );
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [count, go, index, onChange]);
 
   return {
     direction,
-    handlers: { onPointerDown, onPointerUp, onPointerCancel, onKeyDown },
+    handlers: { onPointerDown, onPointerUp, onPointerCancel },
   };
 }
 

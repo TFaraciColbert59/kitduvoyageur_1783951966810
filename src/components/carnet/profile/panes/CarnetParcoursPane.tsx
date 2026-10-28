@@ -30,9 +30,9 @@ export function CarnetParcoursPane({ detail, onDownloadGpx }: CarnetParcoursPane
           <CarnetTraceMap trace={detail.trace} distanceKm={detail.distanceKm} elevationM={detail.elevationM} />
         ) : (
           <div className="ckp-empty" style={{ height: '100%', borderRadius: 18 }}>
-            <Icon name="route" size={24} aria-hidden="true" />
-            <b>Aucune trace GPS.</b>
-            <p>Ce carnet n’a pas de trace enregistrée.</p>
+            {/* Aucun texte : glyphe seul + placeholder, règle de contenu de la fiche. */}
+            <Icon name="route" size={28} aria-hidden="true" />
+            <span className="ckp-empty-dash" aria-label="Aucune trace enregistrée">—</span>
           </div>
         )}
       </div>

@@ -37,9 +37,14 @@ export function statDuration(seconds: number | null): string {
 }
 
 /**
- * Rangée du Résumé : les totaux du carnet (`summary`), avec repli sur les
- * colonnes réelles du carnet quand la dérivation des jours ne porte rien —
- * jamais une valeur inventée, jamais un zéro décoratif.
+ * Rangée du Résumé : les totaux du carnet.
+ *
+ * Distance et D+ viennent du total du carnet — la même valeur que la ligne de
+ * lieu, le sous-drawer statistiques et le JSON-LD —, le `summary` des jours
+ * prenant le relais quand ce total manque. Le nombre de jours et de moments
+ * vient du `summary` : c'est le nombre réel de pages du balayage. Aucune
+ * valeur inventée, aucun zéro décoratif, et jamais deux totaux différents sur
+ * la même carte.
  */
 export function summaryStats(detail: CarnetDetail): CarnetDayStat[] {
   const summary = detail.summary ?? { distanceKm: null, elevationM: null, days: 0, moments: 0 };
@@ -48,12 +53,12 @@ export function summaryStats(detail: CarnetDetail): CarnetDayStat[] {
     {
       tab: 'distance',
       label: 'DISTANCE',
-      value: statDistance(summary.distanceKm ?? detail.distanceKm),
+      value: statDistance(detail.distanceKm ?? summary.distanceKm),
     },
     {
       tab: 'elevation',
       label: 'DÉNIVELÉ +',
-      value: statElevation(summary.elevationM ?? detail.elevationM),
+      value: statElevation(detail.elevationM ?? summary.elevationM),
     },
     { tab: 'days', label: 'JOURS', value: days > 0 ? String(days) : '—' },
   ];
