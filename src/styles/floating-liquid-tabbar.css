@@ -128,3 +128,12 @@ body:has(.story.on) .lkdv-floating-tabbar {
 body:has(.story.on) [aria-label="Gestion des cookies"] {
   display: none !important;
 }
+
+/* Barre unique, montée une fois à la racine : elle ne disparaît que lorsqu'un
+   tiroir (feuille communauté, formulaire, story) s'ouvre par-dessus. */
+body:has(.lkdv-drawer-layer) .lkdv-floating-tabbar,
+body:has(.lkdv-form-layer) .lkdv-floating-tabbar,
+body:has([role="dialog"][aria-label^="Story de"]) .lkdv-floating-tabbar {
+  visibility: hidden;
+  pointer-events: none;
+}
