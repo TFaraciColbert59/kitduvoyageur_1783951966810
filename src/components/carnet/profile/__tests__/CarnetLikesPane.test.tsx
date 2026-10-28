@@ -88,3 +88,21 @@ describe('CarnetLikesPane', () => {
     expect(toggle.querySelector('.ckp-field-value')?.textContent).toBe('22');
   });
 });
+
+describe('CarnetLikesPane — rythme (lot C)', () => {
+  it('replie les réactions en groupes de trois lignes, sans en perdre une', () => {
+    const many = detail({
+      likers: Array.from({ length: 7 }, (_, index) => ({
+        id: `u${index}`,
+        name: `Voyageur ${index + 1}`,
+        handle: `v${index + 1}`,
+        avatarUrl: null,
+        reaction: 'like' as const,
+      })),
+    });
+    const { container } = render(<CarnetLikesPane detail={many} currentUserId={null} />);
+    const groups = [...container.querySelectorAll('.ckp-likers > .ckp-list-group')];
+    expect(groups.map((group) => group.querySelectorAll('.ckp-liker').length)).toEqual([3, 3, 1]);
+    expect(container.querySelectorAll('.ckp-liker')).toHaveLength(7);
+  });
+});

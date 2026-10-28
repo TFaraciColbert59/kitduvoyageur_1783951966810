@@ -6,6 +6,7 @@ import Icon from '@/components/ui/Icon';
 import { CarnetSubCapsule } from '../CarnetSubCapsule';
 import { CarnetEmpty, CarnetSkeleton } from '../CarnetStates';
 import type { CarnetComment } from '@/features/carnet/detail/useCarnetComments';
+import { groupsOfThree } from '../groups';
 
 export interface CarnetCommentsPaneProps {
   comments: CarnetComment[];
@@ -72,7 +73,7 @@ const CarnetCommentRow = React.memo(function CarnetCommentRow({
     <div id={`comment-${comment.id}`} className={`ckp-comment${isNew ? ' is-new' : ''}`}>
       {comment.authorAvatar ? (
         // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-        <img className="ckp-avatar" src={comment.authorAvatar} alt="" />
+        <img className="ckp-avatar" src={comment.authorAvatar} alt="" aria-hidden="true" />
       ) : (
         <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
           {comment.authorName.charAt(0).toUpperCase()}
@@ -133,6 +134,9 @@ export function CarnetCommentsPane({
     );
     return deferredSort === 'recent' ? list.reverse() : list;
   }, [comments, deferredSort]);
+  /* Trois commentaires par groupe, 20 px d'air entre deux groupes : la même
+     densité que les listes de la feuille. */
+  const groups = useMemo(() => groupsOfThree(sorted), [sorted]);
 
   /* Un commentaire qui arrive entre en fondu + 6 px, sans déplacer la liste.
      Le premier rendu n'anime rien : la liste existante reste immobile. */
@@ -185,14 +189,18 @@ export function CarnetCommentsPane({
 
         {sorted.length > 0 ? (
           <div className="ckp-comments-list" data-state={loading ? 'partial' : 'ready'}>
-            {sorted.map((comment) => (
-              <CarnetCommentRow
-                key={comment.id}
-                comment={comment}
-                isNew={entering === comment.id}
-                mine={Boolean(currentUserId) && comment.authorId === currentUserId}
-                onRemove={onRemove}
-              />
+            {groups.map((group) => (
+              <div className="ckp-list-group" key={group[0]?.id ?? 'groupe'}>
+                {group.map((comment) => (
+                  <CarnetCommentRow
+                    key={comment.id}
+                    comment={comment}
+                    isNew={entering === comment.id}
+                    mine={Boolean(currentUserId) && comment.authorId === currentUserId}
+                    onRemove={onRemove}
+                  />
+                ))}
+              </div>
             ))}
             {/* Chargement partiel : les lignes connues restent, le reste attend. */}
             {loading ? <CarnetSkeleton rows={2} hero={false} /> : null}
