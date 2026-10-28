@@ -181,20 +181,19 @@ describe('CarnetCard — carte du carnet', () => {
     expect(text).not.toContain('moments');
   });
 
-  it('affiche une seule ligne de lieu, du texte, sans pastille ni bouton', () => {
+  it('ne rend plus la ligne de lieu ni les lignes d’information : elles vivent dans le drawer', () => {
     const { container } = render(<CarnetCard {...base()} />);
-    const line = container.querySelector('.ckp-place-line');
-    /* Même source que la rangée de statistiques : les totaux des jours. */
-    expect(norm(line?.textContent)).toBe(
-      'France / Italie / Suisse · 7 jours · 106,4 km · 2 002 m D+ · 26 sept. – 2 oct. 2026',
-    );
+    expect(container.querySelector('.ckp-place-line')).toBeNull();
     expect(container.querySelector('.ckp-place-pill')).toBeNull();
     expect(container.querySelector('.ckp-place-row')).toBeNull();
     expect(container.querySelector('.ckp-place-date')).toBeNull();
-    /* Du texte seul : aucun bouton, aucune surface cliquable. */
-    expect(line?.tagName).toBe('P');
-    expect(container.querySelectorAll('.ckp-place-line button')).toHaveLength(0);
-    expect(screen.queryByRole('button', { name: /Recentrer/ })).toBeNull();
+    expect(container.querySelector('.ckp-dayinfo')).toBeNull();
+    expect(container.querySelectorAll('.ckp-dayinfo-row')).toHaveLength(0);
+    /* Les libellés déplacés ne traînent plus sous les statistiques. */
+    const text = container.textContent ?? '';
+    expect(text).not.toContain('Allure');
+    expect(text).not.toContain('Depuis le départ');
+    expect(text).not.toContain('D+ cumulé');
   });
 
   it('affiche les participants réels en pastilles, jamais les likers', () => {
@@ -356,70 +355,51 @@ describe('CarnetCard — lentille unique du sélecteur', () => {
   });
 });
 
-describe('CarnetCard — ligne de lieu unique', () => {
-  const PLACE = { country: 'Islande', region: null, locality: 'Landmannalaugar', lat: null, lng: null };
-
-  it('affiche pays, jours, distance, dénivelé et dates sur une seule ligne', () => {
-    const { container } = render(
-      <CarnetCard
-        {...base({
-          detail: detail({
-            place: PLACE,
-            etapes: [{ id: 'd1', dayNumber: 1, label: 'JOUR 1', from: null, to: null, note: null, distanceKm: null, elevationM: null, durationText: null, weather: null, overnight: null }],
-          }),
-        })}
-      />,
-    );
-    const line = container.querySelector('.ckp-place-line');
-    expect(norm(line?.textContent)).toBe(
-      'Islande · 7 jours · 106,4 km · 2 002 m D+ · 26 sept. – 2 oct. 2026',
-    );
-    /* Le lieu est du texte : plus aucune pastille ni bouton de recentrage. */
-    expect(container.querySelectorAll('.ckp-place-line button')).toHaveLength(0);
-  });
-
-  it('écrit un tiret pour chaque valeur réelle absente', () => {
-    const { container } = render(
-      <CarnetCard
-        {...base({
-          detail: detail({
-            place: { country: 'Islande', region: null, locality: null, lat: null, lng: null },
-            destination: null,
-            dateRange: null,
-            distanceKm: null,
-            elevationM: null,
-            etapes: [],
-            summary: { distanceKm: null, elevationM: null, days: 0, moments: 0 },
-          }),
-        })}
-      />,
-    );
-    expect(norm(container.querySelector('.ckp-place-line')?.textContent)).toBe('Islande · — · — · —');
-  });
-
-  it('retombe sur la destination quand le pays réel est vide', () => {
+describe('CarnetCard — récit sur une ligne, informations dans le drawer', () => {
+  it('garde la description sur une seule ligne, suivie de « voir plus… »', () => {
     const { container } = render(<CarnetCard {...base()} />);
-    expect(norm(container.querySelector('.ckp-place-line')?.textContent).startsWith(DETAIL.destination ?? '')).toBe(true);
+    const lines = container.querySelectorAll('.ckp-bio-line');
+    expect(lines).toHaveLength(1);
+    expect(lines[0].textContent).toBe(DETAIL.description);
+    expect(lines[0].tagName).toBe('P');
+    /* Le bouton est un texte seul, à côté de la ligne, pas un fond. */
+    const more = screen.getByRole('button', { name: 'voir plus…' });
+    expect(more.className).toContain('ckp-more');
+    expect(more.textContent).toBe('voir plus…');
+    expect(container.querySelector('.ckp-bio-row')?.contains(more)).toBe(true);
   });
 
-  it('n’affiche aucune ligne quand le carnet n’a réellement rien à dire', () => {
+  it('pose le récit sous les statistiques, avant les participants', () => {
+    const { container } = render(<CarnetCard {...base()} />);
+    const head = container.querySelector('.ckp-head') as Element;
+    const row = container.querySelector('.ckp-bio-row') as Element;
+    const people = container.querySelector('.ckp-people') as Element;
+    expect(head).toBeTruthy();
+    expect(row).toBeTruthy();
+    expect(people).toBeTruthy();
+    /* DOCUMENT_POSITION_FOLLOWING : le récit vient après l'en-tête chiffré. */
+    expect(head.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(row.compareDocumentPosition(people) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    /* La description reste la même sur les pages de jour. */
+    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
+    expect(container.querySelectorAll('.ckp-bio-line')).toHaveLength(1);
+  });
+
+  it('ouvre le drawer Statistiques sur le volet qui porte le récit complet', () => {
+    const onOpenStat = vi.fn();
+    render(<CarnetCard {...base({ onOpenStat })} />);
+    fireEvent.click(screen.getByRole('button', { name: 'voir plus…' }));
+    expect(onOpenStat).toHaveBeenCalledOnce();
+    expect(onOpenStat).toHaveBeenCalledWith('days');
+  });
+
+  it('n’affiche ni ligne ni bouton quand le carnet n’a réellement pas de récit', () => {
     const { container } = render(
-      <CarnetCard
-        {...base({
-          detail: detail({
-            place: { country: null, region: null, locality: null, lat: null, lng: null },
-            destination: null,
-            dateRange: null,
-            distanceKm: null,
-            elevationM: null,
-            etapes: [],
-            summary: { distanceKm: null, elevationM: null, days: 0, moments: 0 },
-          }),
-        })}
-      />,
+      <CarnetCard {...base({ detail: detail({ description: null }) })} />,
     );
-    /* Aucune donnée réelle : pas de ligne de tirets décorative. */
-    expect(container.querySelector('.ckp-place-line')).toBeNull();
+    expect(container.querySelector('.ckp-bio-line')).toBeNull();
+    expect(container.querySelector('.ckp-bio-row')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'voir plus…' })).toBeNull();
   });
 });
 
@@ -744,107 +724,12 @@ describe('CarnetCard — balayage Résumé → J1..Jn', () => {
    Informations du jour : lignes chiffrées et liste des moments
    ============================================================================= */
 
-describe('CarnetCard — informations du jour', () => {
-  const rows = (container: HTMLElement) =>
-    [...container.querySelectorAll('.ckp-dayinfo-row')].map((row) => [
-      row.querySelector('.ckp-dayinfo-l')?.textContent,
-      row.querySelector('.ckp-dayinfo-v')?.textContent,
-    ]);
-
+describe('CarnetCard — moments de la page', () => {
   const moments = (container: HTMLElement) =>
     [...container.querySelectorAll('.ckp-dayinfo-moment')].map((row) => [
       row.querySelector('.ckp-dayinfo-time')?.textContent,
       row.querySelector('.ckp-dayinfo-place')?.textContent,
     ]);
-
-  it('donne les totaux du Résumé : jours, moments, D+ cumulé, distance', () => {
-    const { container } = render(<CarnetCard {...withDays()} />);
-    expect(rows(container)).toEqual([
-      ['Jours', '3'],
-      ['Moments', '3'],
-      ['D+ cumulé', '920 m'],
-      ['Distance totale', '30,4 km'],
-    ]);
-  });
-
-  it('calcule l’allure réelle du jour et le cumul depuis le départ', () => {
-    const { container } = render(<CarnetCard {...withDays()} />);
-    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
-    /* 6 h pour 18,4 km : 19,6 min/km — calculée, jamais inventée. */
-    expect(rows(container)).toEqual([
-      ['Allure', '19,6 min/km'],
-      ['Départ', '—'],
-      ['Arrivée', '—'],
-      ['Depuis le départ', '18,4 km'],
-    ]);
-    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
-    expect(rows(container)).toContainEqual(['Depuis le départ', '30,4 km']);
-  });
-
-  it('écrit un tiret quand la durée ou la distance manque', () => {
-    const { container } = render(<CarnetCard {...withDays()} />);
-    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'End' });
-    expect(rows(container)).toEqual([
-      ['Allure', '—'],
-      ['Départ', '—'],
-      ['Arrivée', '—'],
-      ['Depuis le départ', '30,4 km'],
-    ]);
-  });
-
-  it('lit le départ et l’arrivée dans l’étape déclarée', () => {
-    const { container } = render(
-      <CarnetCard
-        {...withDays({
-          detail: detail({
-            days: [DAY_ONE],
-            etapes: [
-              {
-                id: 'd1',
-                dayNumber: 1,
-                label: 'JOUR 1 · 26 sept.',
-                from: 'Les Houches',
-                to: 'Refuge de Bellachat',
-                note: null,
-                distanceKm: 12.4,
-                elevationM: 1050,
-                durationText: '5 h',
-                weather: null,
-                overnight: null,
-              },
-            ],
-          }),
-        })}
-      />,
-    );
-    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
-    expect(rows(container)).toContainEqual(['Départ', 'Les Houches']);
-    expect(rows(container)).toContainEqual(['Arrivée', 'Refuge de Bellachat']);
-  });
-
-  it('retombe sur les points GPS du jour quand aucune étape ne les nomme', () => {
-    const { container } = render(
-      <CarnetCard
-        {...withDays({
-          detail: detail({
-            days: [
-              {
-                ...DAY_ONE,
-                points: [
-                  { lat: 44.942, lng: 5.42, at: '2026-09-26T07:30:00.000Z' },
-                  { lat: 45.1, lng: 5.5, at: '2026-09-26T12:30:00.000Z' },
-                ],
-              },
-            ],
-            etapes: [],
-          }),
-        })}
-      />,
-    );
-    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
-    expect(rows(container)).toContainEqual(['Départ', '44,942 · 5,42']);
-    expect(rows(container)).toContainEqual(['Arrivée', '45,1 · 5,5']);
-  });
 
   it('liste les moments du jour avec leur heure et leur lieu', () => {
     const { container } = render(<CarnetCard {...withDays()} />);

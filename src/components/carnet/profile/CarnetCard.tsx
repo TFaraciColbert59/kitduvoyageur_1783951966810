@@ -7,10 +7,9 @@ import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetMediaTabs } from './CarnetMediaTabs';
 import { CarnetPages, type CarnetPageId } from './CarnetPages';
 import { CarnetDayHeader } from './CarnetDayHeader';
-import { CarnetDayInfo, CarnetDayMomentList } from './CarnetDayInfo';
+import { CarnetDayMomentList } from './CarnetDayInfo';
 import { useDayMotion, useDaySwipe } from './CarnetDaySwipe';
 import { extractCoords, projectToViewBox } from './traceGeometry';
-import { PLACE_LINE_MISSING, placeLineParts } from '@/features/carnet/detail/place';
 import type { CarnetDetail, CarnetMomentItem, CarnetParticipant } from '@/features/carnet/detail/types';
 
 /** Cible de recentrage de la carte du bas, toujours issue d'une coordonnée réelle. */
@@ -80,8 +79,9 @@ function withPhoto(moments: CarnetMomentItem[]): CarnetMomentItem[] {
 }
 
 /**
- * Carte du carnet : mini tracé, pages de jour (Résumé → J1..Jn), informations
- * du jour, participants, lieu, médias en pages.
+ * Carte du carnet : mini tracé, pages de jour (Résumé → J1..Jn), statistiques,
+ * récit sur une ligne, participants, médias en pages. Les informations de lieu
+ * et de jour vivent dans le drawer Statistiques.
  *
  * Le balayage horizontal de la carte change de **jour**, où qu'il commence —
  * en-tête, grille, volet — au doigt comme à la souris et au clavier. La capsule
@@ -106,36 +106,9 @@ export function CarnetCard({
   dayPage,
   onDayPageChange,
 }: CarnetCardProps) {
-  /* Tracé et ligne de lieu : purs, donc calculés une fois par carnet et non
-     à chaque bascule d'engagement, de page ou de jour. */
+  /* Tracé : pur, donc calculé une fois par carnet et non à chaque bascule
+     d'engagement, de page ou de jour. */
   const tracePath = useMemo(() => projectToViewBox(extractCoords(detail.trace), 66, 9), [detail.trace]);
-  /* Une ligne unique, du texte seul : lieu · jours · distance · dénivelé · dates.
-     Aucune valeur inventée : un champ absent devient un tiret, et la ligne
-     entière disparaît si le carnet n'a réellement rien à dire. */
-  const placeLine = useMemo(() => {
-    /* Lieu réel de la fiche : aucune coordonnée n'est estimée ici. */
-    const place = detail.place ?? { country: null, region: null, locality: null, lat: null, lng: null };
-    /* Même source que la rangée de statistiques : le total du carnet, le
-       `summary` des jours en relais. La carte ne montre jamais deux totaux. */
-    const summary = detail.summary ?? { distanceKm: null, elevationM: null, days: 0, moments: 0 };
-    return placeLineParts({
-      place,
-      fallback: detail.destination,
-      daysCount: summary.days > 0 ? summary.days : detail.etapes.length,
-      distanceKm: detail.distanceKm ?? summary.distanceKm,
-      elevationM: detail.elevationM ?? summary.elevationM,
-      dateRange: detail.dateRange,
-    });
-  }, [
-    detail.place,
-    detail.destination,
-    detail.etapes.length,
-    detail.summary,
-    detail.distanceKm,
-    detail.elevationM,
-    detail.dateRange,
-  ]);
-  const showPlaceLine = placeLine.some((part) => part !== PLACE_LINE_MISSING);
   const participants = detail.participants ?? [];
 
   /* Balayage : page 0 = Résumé, puis un jour par page dérivée. Un carnet sans
@@ -183,8 +156,7 @@ export function CarnetCard({
   );
 
   /* Une seule page montée : les moments de la page affichée nourrissent la
-     grille. La liste des moments et les lignes d'information du jour vivent
-     dans `CarnetDayInfo`, sous la ligne de lieu. */
+     grille. La liste des moments vit dans `CarnetDayMomentList`, sous la grille. */
   const dayTabs = useMemo(() => buildDayTabs(pageCount), [pageCount]);
 
   /* Les deux segments de la capsule : handler stable, donc la lentille et les
@@ -252,13 +224,16 @@ export function CarnetCard({
             onOpenStat={onOpenStat}
           />
 
-          {detail.description ? <p className="ckp-bio-line">{detail.description}</p> : null}
-
-          {showPlaceLine ? (
-            <p className="ckp-place-line">{placeLine.join(' · ')}</p>
+          {/* La carte ne garde que le récit, sur une ligne : les informations
+              de lieu et de jour vivent dans le drawer Statistiques. */}
+          {detail.description ? (
+            <div className="ckp-bio-row">
+              <p className="ckp-bio-line">{detail.description}</p>
+              <button type="button" className="ckp-more" onClick={() => onOpenStat('days')}>
+                voir plus…
+              </button>
+            </div>
           ) : null}
-
-          <CarnetDayInfo detail={detail} day={day} />
 
           {participants.length > 0 ? (
             <div className="ckp-people" role="list" aria-label="Participants au carnet">

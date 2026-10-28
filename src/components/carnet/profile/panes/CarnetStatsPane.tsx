@@ -3,8 +3,9 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import Icon from '@/components/ui/Icon';
 import { formatElevation, formatKm } from '@/features/carnet/detail/format';
+import { travelInfo } from '@/features/carnet/detail/dayinfo';
 import { CARNET_STATS_TABS, summarizeCarnet, type CarnetStatsTab } from '@/features/carnet/detail/stats';
-import type { CarnetDetail } from '@/features/carnet/detail/types';
+import type { CarnetDay, CarnetDetail } from '@/features/carnet/detail/types';
 import { extractCoords, traceLengthKm } from '../traceGeometry';
 import { CarnetSubCapsule, type CarnetSubCapsuleItem } from '../CarnetSubCapsule';
 import { CarnetField } from '../CarnetField';
@@ -23,6 +24,12 @@ export interface CarnetStatsPaneProps {
   detail: CarnetDetail;
   tab: CarnetStatsTab;
   onTabChange: (tab: CarnetStatsTab) => void;
+  /**
+   * Page de jour affichée sur la carte : `null` sur le Résumé. Les
+   * informations qui vivaient sous les statistiques de la carte (lieu,
+   * départ, arrivée, allure, cumul, D+ du jour, numéro et date) sont ici.
+   */
+  day?: CarnetDay | null;
 }
 
 /** Icône de chaque sous-onglet : aucune étiquette texte, le nom est `aria-label`. */
@@ -106,8 +113,11 @@ const PROFILE_HEIGHT = 72;
  * libellé est un placeholder, chaque valeur une donnée réelle ; une valeur
  * absente est un tiret, jamais une phrase ni un zéro.
  */
-export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPaneProps) {
+export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: CarnetStatsPaneProps) {
   const stats = useMemo(() => summarizeCarnet(detail), [detail]);
+  /* Lieu et informations de la page : mêmes dérivations que l'ancienne fiche,
+     désormais peintes dans les volets concernés. */
+  const travel = useMemo(() => travelInfo(detail, day), [day, detail]);
   const tracePoints = useMemo(() => extractCoords(detail.trace), [detail.trace]);
   const traceKm = useMemo(() => traceLengthKm(detail.trace), [detail.trace]);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -124,9 +134,11 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
     () => detail.etapes.map((day) => day.distanceKm),
     [detail.etapes],
   );
+  /* Mêmes jours que `summarizeCarnet` : le D+ dérivé d'une sortie comble une
+     étape sans `denivele_m`, donc le profil et les lignes restent d'accord. */
   const elevationSeries = useMemo<SeriesValue[]>(
-    () => detail.etapes.map((day) => day.elevationM),
-    [detail.etapes],
+    () => stats.days.map(({ day }) => day.elevationM),
+    [stats.days],
   );
   const daySeries = useMemo<SeriesValue[]>(() => detail.etapes.map(() => 1), [detail.etapes]);
   const profile = useMemo(
@@ -229,16 +241,35 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
 
           <div className="ckp-group">
             <CarnetField
+              icon={<Icon name="compass" size={16} aria-hidden="true" />}
+              label="lieu"
+              value={travel.place ?? ''}
+              ariaLabel={`lieu ${travel.place ?? '—'}`}
+            />
+            <CarnetField
               icon={<Icon name="map-pin" size={16} aria-hidden="true" />}
               label="départ"
-              value={stats.startPlace ?? ''}
-              ariaLabel={`départ ${stats.startPlace ?? '—'}`}
+              value={travel.from ?? stats.startPlace ?? ''}
+              ariaLabel={`départ ${travel.from ?? stats.startPlace ?? '—'}`}
             />
             <CarnetField
               icon={<Icon name="flag" size={16} aria-hidden="true" />}
               label="arrivée"
-              value={stats.endPlace ?? ''}
-              ariaLabel={`arrivée ${stats.endPlace ?? '—'}`}
+              value={travel.to ?? stats.endPlace ?? ''}
+              ariaLabel={`arrivée ${travel.to ?? stats.endPlace ?? '—'}`}
+            />
+          </div>
+
+          <div className="ckp-group">
+            <CarnetField
+              label="allure"
+              value={travel.pace ?? ''}
+              ariaLabel={`allure ${travel.pace ?? '—'}`}
+            />
+            <CarnetField
+              label="depuis le départ"
+              value={travel.cumulative ?? ''}
+              ariaLabel={`depuis le départ ${travel.cumulative ?? '—'}`}
             />
             <CarnetField
               icon={<Icon name="route" size={16} aria-hidden="true" />}
@@ -335,6 +366,11 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
           ) : null}
 
           <div className="ckp-group">
+            <CarnetField
+              label="dénivelé du jour"
+              value={travel.elevationM !== null ? dplus(travel.elevationM) : ''}
+              ariaLabel={`dénivelé du jour ${dplus(travel.elevationM)}`}
+            />
             <CarnetField label="dénivelé par km" value={perKm(stats.elevationPerKm)} />
             <CarnetField
               label="jours sans dénivelé"
@@ -366,11 +402,17 @@ export function CarnetStatsPane({ detail, tab, onTabChange }: CarnetStatsPanePro
       {tab === 'days' ? (
         <div className="ckp-pane-body" role="tabpanel" aria-label="Jours">
           <HeroBlock hero={hero.days} animate={!rolled.current} tabKey="days" />
-          {stats.days.length === 0 ? (
-            <div className="ckp-group">
-              <CarnetField label="jour" value="" />
-            </div>
-          ) : (
+          {/* Le récit complet du carnet : la carte n'en garde qu'une ligne. */}
+          {detail.description ? <p className="ckp-story">{detail.description}</p> : null}
+          <div className="ckp-group">
+            <CarnetField
+              label="jour"
+              value={travel.dayNumber !== null ? String(travel.dayNumber) : ''}
+            />
+            <CarnetField label="date" value={travel.date ?? ''} />
+            <CarnetField label="dates" value={detail.dateRange ?? ''} wide />
+          </div>
+          {stats.days.length === 0 ? null : (
             <div className="ckp-daylist">
               {stats.days.map(({ day, moments }) => (
                 <CarnetDayRow key={day.id} day={day} moments={moments} />

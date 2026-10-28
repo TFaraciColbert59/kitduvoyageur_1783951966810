@@ -176,6 +176,40 @@ describe('CarnetScreen — drawer réduit à ce qui n’est pas dans le sélecte
     expect(panel.querySelector('.ckp-hero-unit')?.textContent).toBe('km');
   });
 
+  it('ouvre le volet Jours et le récit complet depuis « voir plus… »', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    /* La carte ne garde qu'une ligne : le récit entier n'est pas monté. */
+    expect(document.querySelector('.ckp-story')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'voir plus…' }));
+    expect(drawerOpen()).toBe(true);
+    expect(screen.getByRole('button', { name: 'Jours' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('tabpanel', { name: 'Jours' })).toBeTruthy();
+    expect(document.querySelector('.ckp-story')?.textContent).toBe(
+      'Dix jours, trois pays, deux bivouacs.',
+    );
+    /* La carte a cédé la place au drawer : plus de ligne de récit tronquée. */
+    expect(document.querySelector('.ckp-bio-line')).toBeNull();
+    expect(document.querySelector('.ckp-place-line')).toBeNull();
+    expect(document.querySelector('.ckp-dayinfo')).toBeNull();
+  });
+
+  it('porte l’allure et le cumul du jour affiché dans le volet Distance', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    /* La capsule change de jour sans geste : le clic suivant n'est pas avalé. */
+    fireEvent.click(screen.getByRole('tab', { name: 'Jour 1' }));
+    expect(dayLabel()).toBe('Jour 1 · 26 sept.');
+    fireEvent.click(screen.getByRole('button', { name: 'DISTANCE 18,4 km' }));
+    const panel = screen.getByRole('tabpanel', { name: 'Distance' });
+    const values = [...panel.querySelectorAll('.ckp-field-value')].map((node) => node.textContent);
+    /* 6 h pour 18,4 km : 19,6 min/km, calculée depuis le jour. */
+    expect(values[3]).toBe('19,6 min/km');
+    /* 18,4 km est la distance cumulée du jour 1. */
+    expect(values[4]).toBe('18,4 km');
+    /* Le lieu et le départ réels restent dans le volet, pas sur la carte. */
+    expect(values[0]).toBe('France / Italie / Suisse');
+    expect(values[1]).toBe('Les Houches');
+  });
+
   it('ouvre le sous-onglet Dénivelé depuis la statistique DÉNIVELÉ', () => {
     render(<CarnetScreen detail={OWNER} />);
     fireEvent.click(screen.getByRole('button', { name: /^DÉNIVELÉ \+ 2\s002 m$/ }));

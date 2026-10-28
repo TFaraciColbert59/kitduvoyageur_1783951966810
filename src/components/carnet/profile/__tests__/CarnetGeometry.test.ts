@@ -81,23 +81,30 @@ describe('Grille des posts — gabarit du Compte (134 / 2 / 2, pleine largeur)',
   });
 });
 
-describe('Ligne de lieu — texte seul, gabarit de la ligne de bio du Compte', () => {
-  it('12 px, encre secondaire, séparateur « · »', () => {
-    const block = last('.ckp-place-line {');
-    expect(block).toMatch(/font:\s*500 12px/);
-    expect(block).toMatch(/color:\s*#3f4f46/);
-    expect(block).toMatch(/letter-spacing:\s*-\.14px/);
+describe('Récit de la carte — une ligne et « voir plus… »', () => {
+  it('tronque la description sur une seule ligne, avec ellipse', () => {
+    const block = last('.ckp-bio-line {');
     expect(block).toMatch(/white-space:\s*nowrap/);
+    expect(block).toMatch(/text-overflow:\s*ellipsis/);
+    expect(block).toMatch(/overflow:\s*hidden/);
+    /* La ligne prend la place restante, le bouton garde la sienne. */
+    expect(last('.ckp-bio-row {')).toMatch(/display:\s*flex/);
+    expect(block).toMatch(/min-width:\s*0/);
   });
 
-  it('n’est ni une pastille ni un bouton', () => {
-    const block = last('.ckp-place-line {');
-    expect(block).not.toMatch(/background/);
-    expect(block).not.toMatch(/border/);
-    expect(block).not.toMatch(/border-radius/);
-    expect(block).not.toMatch(/cursor/);
-    expect(css).not.toMatch(/\.ckp-place-pill/);
-    expect(css).not.toMatch(/\.ckp-place-row/);
-    expect(css).not.toMatch(/\.ckp-place-date/);
+  it('pose « voir plus… » en 13/500 #17402C, sans fond ni bordure', () => {
+    const more = last('.ckp-more {');
+    expect(more).toMatch(/font:\s*500 13px/);
+    expect(more).toMatch(/color:\s*#17402C/);
+    expect(more).toMatch(/background:\s*none/);
+    expect(more).toMatch(/border:\s*0/);
+    expect(more).toMatch(/cursor:\s*pointer/);
+  });
+
+  it('a retiré la ligne de lieu et les lignes d’information de la carte', () => {
+    expect(css).not.toMatch(/\.ckp-place-line/);
+    expect(css).not.toMatch(/\.ckp-dayinfo-row/);
+    expect(css).not.toMatch(/\.ckp-dayinfo-l/);
+    expect(css).not.toMatch(/\.ckp-dayinfo-v/);
   });
 });

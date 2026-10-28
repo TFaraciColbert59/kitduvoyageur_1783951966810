@@ -132,6 +132,92 @@ describe('buildDays — un jour par date réelle', () => {
     expect(sansAltitude[0].elevationM).toBeNull();
   });
 
+  it('prend le D+ du jour sur elevation_gain_m des sorties, sans inventer', () => {
+    const days = buildDays({
+      moments: [],
+      startDate: START,
+      sessions: [
+        session({
+          id: 'matin',
+          started_at: '2026-04-24T06:00:00Z',
+          elevation_gain_m: 620,
+          positions_geojson: line([[6.86, 45.83], [6.87, 45.84]]),
+        }),
+        session({
+          id: 'apres-midi',
+          started_at: '2026-04-24T14:00:00Z',
+          /* Colonne `numeric` : le relevé peut arriver en texte. */
+          elevation_gain_m: '180',
+          positions_geojson: line([[6.9, 45.85], [6.91, 45.86]]),
+        }),
+      ],
+    });
+
+    expect(days).toHaveLength(1);
+    expect(days[0].elevationM).toBe(800);
+  });
+
+  it('sépare le D+ des sorties jour par jour, chacune sur son jour de départ', () => {
+    const days = buildDays({
+      moments: [],
+      startDate: START,
+      sessions: [
+        session({ id: 'j1', started_at: '2026-04-24T06:00:00Z', elevation_gain_m: 420, positions_geojson: line([[6.86, 45.83], [6.87, 45.84]]) }),
+        session({ id: 'j2', started_at: '2026-04-25T06:00:00Z', elevation_gain_m: 260, positions_geojson: line([[6.9, 45.85], [6.91, 45.86]]) }),
+      ],
+    });
+
+    expect(days.map((day) => day.index)).toEqual([1, 2]);
+    expect(days.map((day) => day.elevationM)).toEqual([420, 260]);
+  });
+
+  it('retombe sur les altitudes des points quand aucune sortie ne donne de gain', () => {
+    const days = buildDays({
+      moments: [],
+      startDate: START,
+      sessions: [
+        session({
+          id: 'a',
+          started_at: '2026-04-25T06:00:00Z',
+          elevation_gain_m: 0,
+          positions_timed: timed([
+            { lat: 45.83, lng: 6.86, timestamp: '2026-04-25T06:00:00Z', elevationM: 1000 },
+            { lat: 45.84, lng: 6.87, timestamp: '2026-04-25T06:30:00Z', elevationM: 1150 },
+          ]),
+        }),
+      ],
+    });
+
+    /* Un gain nul n'est pas une source : les 150 m réels des points comptent. */
+    expect(days[0].elevationM).toBe(150);
+  });
+
+  it('garde le D+ à null sans gain de sortie ni altitude de point', () => {
+    const sansGain = buildDays({
+      moments: [],
+      startDate: START,
+      sessions: [
+        session({
+          id: 'a',
+          started_at: '2026-04-25T06:00:00Z',
+          elevation_gain_m: 0,
+          positions_timed: timed([
+            { lat: 45.83, lng: 6.86, timestamp: '2026-04-25T06:00:00Z' },
+            { lat: 45.84, lng: 6.87, timestamp: '2026-04-25T06:30:00Z' },
+          ]),
+        }),
+      ],
+    });
+    expect(sansGain[0].elevationM).toBeNull();
+
+    const sansSource = buildDays({
+      moments: [],
+      startDate: START,
+      sessions: [session({ id: 'b', started_at: '2026-04-25T06:00:00Z', positions_geojson: line([[6.86, 45.83], [6.87, 45.84]]) })],
+    });
+    expect(sansSource[0].elevationM).toBeNull();
+  });
+
   it('garde un jour sans GPS quand il porte des moments : aucune valeur inventée', () => {
     const days = buildDays({
       moments: [
