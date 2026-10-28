@@ -39,6 +39,67 @@ export interface SheetModel {
 
 const SPORTS: Sport[] = ['course', 'rando', 'velo', 'kayak', 'trail', 'ski', 'escalade', 'famille', 'bivouac'];
 
+function CarnetsTab({ ctx, where }: { ctx: SheetContext; where: string }) {
+  const items = ctx.carnets;
+  if (items.length === 0) {
+    return (
+      <XpEmpty
+        title="Aucun carnet publié"
+        hint={`Personne n’a encore publié de carnet public ${where}.`}
+      />
+    );
+  }
+  return (
+    <XpRows>
+      {items.map((carnet) => (
+        <XpRow
+          key={carnet.id}
+          icon="book"
+          title={carnet.title}
+          sub={[
+            carnet.destination,
+            carnet.distance_km ? `${carnet.distance_km.toFixed(1).replace('.', ',')} km` : null,
+            carnet.nb_nuits ? `${carnet.nb_nuits} nuit(s)` : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          badge={
+            carnet.likes_count && carnet.likes_count > 0
+              ? { label: `${carnet.likes_count} ❤`, tone: 'muted' }
+              : undefined
+          }
+        />
+      ))}
+    </XpRows>
+  );
+}
+
+function TripsTab({ ctx, where }: { ctx: SheetContext; where: string }) {
+  const items = ctx.trips;
+  if (items.length === 0) {
+    return <XpEmpty title="Aucun départ ouvert" hint={`Aucun départ public n’est programmé ${where}.`} />;
+  }
+  return (
+    <XpRows>
+      {items.map((trip) => (
+        <XpRow
+          key={trip.id}
+          icon="users"
+          title={trip.title}
+          sub={[
+            trip.destination_name,
+            trip.start_date ? new Date(trip.start_date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : null,
+            trip.party_size ? `${trip.party_size} pers.` : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          badge={trip.difficulty ? { label: trip.difficulty, tone: 'muted' } : undefined}
+        />
+      ))}
+    </XpRows>
+  );
+}
+
 function EmptyCarnets({ where }: { where: string }) {
   return (
     <XpEmpty
@@ -212,7 +273,7 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
           </>
         ),
       },
-      { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <EmptyCarnets where="dans le monde" /> },
+      { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <CarnetsTab ctx={ctx} where="dans le monde" /> },
       {
         id: 'empreinte',
         label: 'Empreinte',
@@ -267,8 +328,8 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
           </>
         ),
       },
-      { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <EmptyCarnets where="dans ce pays" /> },
-      { id: 'departs', label: 'Départs', icon: 'users', render: () => <EmptyCarnets where="dans ce pays" /> },
+      { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <CarnetsTab ctx={ctx} where="dans ce pays" /> },
+      { id: 'departs', label: 'Départs', icon: 'users', render: () => <TripsTab ctx={ctx} where="dans ce pays" /> },
       { id: 'pratique', label: 'Pratique', icon: 'bag', render: () => <CountryPratiqueTab ctx={ctx} /> },
     ];
   }
@@ -309,15 +370,15 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
         ),
       },
       { id: 'randos', label: 'Randos', icon: 'hike', render: () => <RoutesTab ctx={ctx} /> },
-      { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <EmptyCarnets where="dans cette région" /> },
-      { id: 'departs', label: 'Départs', icon: 'users', render: () => <EmptyCarnets where="dans cette région" /> },
+      { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <CarnetsTab ctx={ctx} where="dans cette région" /> },
+      { id: 'departs', label: 'Départs', icon: 'users', render: () => <TripsTab ctx={ctx} where="dans cette région" /> },
     ];
   }
 
   return [
     { id: 'autour', label: 'Autour', icon: 'target', render: () => <PoiSummaryTab ctx={ctx} /> },
     { id: 'randos', label: 'Randos', icon: 'hike', render: () => <RoutesTab ctx={ctx} /> },
-    { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <EmptyCarnets where="ici" /> },
+    { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <CarnetsTab ctx={ctx} where="ici" /> },
     { id: 'amis', label: 'Amis', icon: 'users', render: () => <EmptyAmis /> },
   ];
 }

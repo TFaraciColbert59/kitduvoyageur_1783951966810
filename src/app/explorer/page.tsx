@@ -5,7 +5,7 @@ import { getTrails } from '@/lib/queries/trails';
 import { getAtlasDensity, type AtlasDensity } from '@/lib/queries/atlas';
 import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
 import { resolveUnifiedMapEnabled } from '@/lib/atlas/rollout';
-import ExplorerClient from '@/components/explorer/ExplorerClient';
+import LegacyExplorerFallback from '@/features/explorer-v2/LegacyExplorerFallback';
 import type { MapTrail } from '@/components/explorer/types';
 import ExplorerV2 from '@/features/explorer-v2/ExplorerV2';
 import { isSceneName, sceneEnabled } from '@/features/explorer-v2/state/scenes';
@@ -100,6 +100,10 @@ export default async function ExplorerPage({ searchParams }: ExplorerPageProps) 
   const [initialTrails, atlasDensity] = await Promise.all([initialTrailsPromise, atlasDensityPromise]);
 
   return (
-    <ExplorerClient initialTrails={initialTrails} unifiedMap={unifiedMap} atlasDensity={atlasDensity} />
+    <LegacyExplorerFallback
+      initialTrails={initialTrails}
+      unifiedMap={unifiedMap}
+      atlasDensity={atlasDensity}
+    />
   );
 }

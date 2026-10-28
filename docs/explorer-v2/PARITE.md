@@ -30,10 +30,10 @@ inventée » et n'est pas compté comme un écart de structure.
 
 | Écran | Scène | Statut | Écarts constatés |
 |---|---|---|---|
-| Monde | `monde` | 🟡 | Capsule d'onglets sous les cartes comme la maquette ; cartes « Près de toi » calculées depuis la position, pas de carnets/départs (bases vides) ; libellés du fond de carte masqués sur le globe |
-| Pays · France | `pays` | 🟡 | 18 régions Natural Earth réelles ; onglets Carnets/Départs en état vide ; « Bon moment pour » absent (aucune donnée de saison) |
-| Région · ARA | `region` | 🟡 | 101 départements Natural Earth ; « Massifs » remplacé par la liste réelle des départements |
-| Lieu · Chamonix | `lieu` | 🟡 | Titre = département réel (« Haute-Savoie ») car aucune table de communes ; relief 3D présent ; sélecteur 2D/3D présent ; Amis en état vide |
+| Monde | `monde` | 🟡 | Capsule d'onglets sous les cartes comme la maquette ; cartes « Près de toi » calculées depuis la position ; onglet Carnets alimenté par les 82 carnets publics réels ; libellés du fond de carte masqués sur le globe |
+| Pays · France | `pays` | 🟡 | 18 régions Natural Earth réelles ; **Carnets et Départs réels** (capture `preuves/carnets-pays.png`) ; « Bon moment pour » absent (aucune donnée de saison) |
+| Région · ARA | `region` | 🟡 | 101 départements Natural Earth ; « Massifs » remplacé par la liste réelle des départements ; Carnets/Départs réels |
+| Lieu · Chamonix | `lieu` | 🟡 | Titre = département réel (« Haute-Savoie ») car aucune table de communes ; relief 3D présent ; sélecteur 2D/3D présent ; Carnets réels ; Amis en état vide (0 position partagée) |
 | Sommet · Le Brévent | `sommet` | 🟡 | Repère réel (OSM, 2 525 m) ; onglets Aperçu/Accès/Carnets/Météo ; profil SVG et « 128 membres » absents (données inexistantes) |
 | Eau · Chéserys | `eau` | 🟡 | Onglets État/Accès ; signalements en état vide (`terrain_reports` = 0) |
 | Refuge | `refuge` | 🟡 | Onglets Aperçu/Accès/Carnets ; pas d'avis (table absente) |

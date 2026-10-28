@@ -1,7 +1,9 @@
 'use client';
 
 import type {
+  CarnetItem,
   CountryDetails,
+  TripItem,
   PoiItem,
   PlaceResponse,
   RegionFeatureProperties,
@@ -35,6 +37,8 @@ export interface SheetContext {
   pois: PoiItem[];
   routes: RouteItem[];
   weather: WeatherResponse | undefined;
+  carnets: CarnetItem[];
+  trips: TripItem[];
   selectedPoi: PoiItem | null;
   me: { lat: number; lng: number } | null;
   locale: string;

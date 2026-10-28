@@ -21,7 +21,10 @@ import {
   useRegionsGeo,
   useSystemTheme,
   useWeather,
+  useContent,
   type CountryFeatureProperties,
+  type CarnetItem,
+  type TripItem,
 } from './data/hooks';
 import {
   distanceKm,
@@ -141,6 +144,8 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
 
   // `center` est [lng, lat] ; `usePlace` attend (lat, lng).
   const { data: place } = usePlace(state.center[1], state.center[0], state.zoom, state.level >= 1);
+  const { data: carnetsData } = useContent('carnets', state.geo || null);
+  const { data: tripsData } = useContent('trips', state.geo || null);
   const { data: weather } = useWeather(
     state.selection ? state.center[1] : null,
     state.selection ? state.center[0] : null,
@@ -174,11 +179,13 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       pois,
       routes,
       weather,
+      carnets: (carnetsData ?? []) as CarnetItem[],
+      trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, selectedPoi, me],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, carnetsData, tripsData, selectedPoi, me],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);

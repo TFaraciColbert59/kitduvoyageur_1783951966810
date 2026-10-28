@@ -188,6 +188,42 @@ export function useWeather(lat: number | null, lng: number | null) {
   });
 }
 
+export interface CarnetItem {
+  id: string;
+  title: string;
+  destination: string | null;
+  cover_image: string | null;
+  start_date: string | null;
+  distance_km: number | null;
+  denivele_m: number | null;
+  nb_nuits: number | null;
+  likes_count: number | null;
+}
+
+export interface TripItem {
+  id: string;
+  title: string;
+  destination_name: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  difficulty: string | null;
+  primary_activity: string | null;
+  party_size: number | null;
+}
+
+/** Carnets publics et départs ouverts, réels (aucun contenu de démonstration). */
+export function useContent(kind: 'carnets' | 'trips', iso: string | null) {
+  return useQuery({
+    queryKey: ['xp', 'content', kind, iso],
+    queryFn: () =>
+      fetchJson<{ kind: string; items: Array<CarnetItem | TripItem> }>(
+        `/api/explorer/v2/content?kind=${kind}${iso ? `&iso=${iso}` : ''}&limit=6`,
+      ),
+    staleTime: 5 * 60 * 1000,
+    select: (data) => data.items,
+  });
+}
+
 export function useOnline(): boolean {
   const [online, setOnline] = useState(true);
   useEffect(() => {

@@ -175,14 +175,12 @@ log(`- date : ${new Date().toISOString()}`);
 
 // 5. Playwright @explorer-v2 ------------------------------------------------
 for (const project of ['mobile-chromium', 'mobile-webkit']) {
-  const r = run('playwright', 'npx', [
+  const r = run(
     'playwright',
-    'test',
-    '--grep',
-    '@explorer-v2',
-    `--project=${project}`,
-    '--reporter=line',
-  ]);
+    'npx',
+    ['playwright', 'test', '--grep', '@explorer-v2', `--project=${project}`, '--reporter=line', '--workers=1'],
+    { env: { PW_BASE_URL: process.env.PW_BASE_URL || 'http://localhost:4028' }, timeout: 15 * 60 * 1000 },
+  );
   if (r.status !== 0) fail(`Playwright ${project} rouge`);
 }
 
@@ -238,13 +236,15 @@ for (const project of ['mobile-chromium', 'mobile-webkit']) {
 
 // 9. intrusion RLS ----------------------------------------------------------
 {
-  const script = '.agents/test_rls_intrusion.mjs';
-  if (existsSync(join(ROOT, script))) {
+  const scripts = ['.agents/test_rls_intrusion.mjs', 'scripts/explorer-v2/test-rls-intrusion.mjs'];
+  let ran = 0;
+  for (const script of scripts) {
+    if (!existsSync(join(ROOT, script))) continue;
+    ran += 1;
     const r = run('rls', 'node', [script]);
-    if (r.status !== 0) fail('test d’intrusion RLS rouge');
-  } else {
-    log(`… ${script} absent — contrôle RLS délégué aux tests SQL (voir MISSION_LOG)`);
+    if (r.status !== 0) fail(`test d’intrusion RLS rouge (${script})`);
   }
+  if (ran === 0) log('… aucun script d’intrusion RLS — voir BLOCAGES');
 }
 
 // 10. checklist -------------------------------------------------------------

@@ -278,3 +278,54 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   3. repères triés par **distance au centre** avant de garder un repère par type
      (`04_CARTE.md §1`), sinon les 3 pastilles tombaient hors écran ;
   4. `setPointerCapture` protégé par `try/catch` (pointeurs synthétiques de test).
+
+### [P1-11 / P5-09] Comptes de recette + intrusion RLS · 2026-10-28 13:25
+- Fichiers : `scripts/explorer-v2/seed-test-accounts.mjs`, `scripts/explorer-v2/test-rls-intrusion.mjs`, `.secrets/` (gitignoré)
+- Preuve (sortie réelle, 11 contrôles) :
+  ```
+  ✔ A lit sa propre session live — 1 ligne(s)
+  ✔ anon ne lit aucune session — HTTP 200, 0 ligne(s)
+  ✔ B (abonné mutuel) lit la session live partagée de A — 1 ligne(s)
+  ✔ B ne lit aucun point GPS de A — 0 point(s)
+  ✔ A lit ses propres points GPS — 41 point(s)
+  ✔ B ne peut pas modifier la session de A — HTTP 200, 0 ligne(s)
+  ✔ B ne peut pas créer une session au nom de A — HTTP 403
+  ✔ B ne lit aucune alerte SOS — 0 ligne(s)
+  ✔ geo_pois lisible publiquement (anon) — HTTP 200
+  ✔ country_practical lisible publiquement — HTTP 200
+  ✔ osm_poi_cache fermé au public — HTTP 200
+  11/11 contrôles verts
+  ```
+  Rapport : `docs/explorer-v2/RLS_INTRUSION.md`.
+- Données créées par les comptes : 2 profils (`recette.lea@lkdv.test`,
+  `recette.yanis@lkdv.test`), follows mutuels, 1 session `rando` en direct
+  partagée aux abonnés, 41 points GPS, 2 signalements terrain réels.
+- Statut : OK
+
+### [P9-01] First Load JS `/explorer` ≤ 170 Ko · 2026-10-28 13:50
+- Fichiers : `src/features/explorer-v2/LegacyExplorerFallback.tsx`, `src/app/explorer/page.tsx`
+- Preuve : le moteur legacy est passé en `next/dynamic` (chunk asynchrone) :
+  ```
+  avant : ├ ƒ /explorer   40.2 kB   342 kB
+  après : ├ ƒ /explorer   20.4 kB   141 kB   (budget 170 kB)
+  ```
+- Statut : OK — **−201 Ko**, budget tenu avec 29 Ko de marge.
+
+### [P4-02/P4-03] Carnets et départs réels · 2026-10-28 13:52
+- Fichiers : `src/app/api/explorer/v2/content/route.ts`, `data/hooks.ts`, `sheet/SheetContent.tsx`
+- Preuve (navigateur, onglet Carnets de l'écran Pays) :
+  ```
+  Forêts du Vercors, quatre saisons — Vercors, France · 131,0 km · 7 nuit(s)
+  Traversée du Jura en bikepacking gravel (GTJ)
+  Tour du Mont-Blanc en autonomie complète
+  $ curl /api/explorer/v2/content?kind=trips&iso=FR
+  Lille — Chamonix à vélo — 10 jours · 19/11/2026 · 2 pers.
+  ```
+  Capture : `docs/explorer-v2/preuves/carnets-pays.png`.
+- Statut : OK — les états vides « Carnets / Départs » sont remplacés par les
+  82 carnets publics et les départs ouverts réels.
+
+### [P10-08] Branche poussée et PR ouverte · 2026-10-28 13:20
+- Preuve : `git push` OK après rebase sur `origin/main` (`52b7e4bd`) ;
+  PR **https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/119**
+- Statut : OK (PR en brouillon, non mergée)

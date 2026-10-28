@@ -44,8 +44,10 @@ for (const scene of SCENES) {
   await page.waitForSelector('.xp-sheet', { timeout: 30_000 });
   await page.waitForTimeout(2500);
 
+  // Toujours le dernier `.xp-root` monté : la transition `lkv-page-fade` garde
+  // brièvement l'ancienne page dans le DOM.
   const elements = await page.$$eval(
-    '.xp-root button, .xp-root [role="tab"], .xp-root [role="button"], .xp-root a',
+    '.xp-root:last-of-type button, .xp-root:last-of-type [role="tab"], .xp-root:last-of-type [role="button"], .xp-root:last-of-type a',
     (nodes) =>
       nodes.map((node, index) => ({
         index,
@@ -57,16 +59,21 @@ for (const scene of SCENES) {
       })),
   );
 
+  const sceneUrl = page.url();
   let sceneExercised = 0;
   for (const element of elements) {
-    const before = await page.evaluate(
-      () => (window.__explorerEvents ?? []).length,
-    );
+    let before = 0;
+    try {
+      before = await page.evaluate(() => (window.__explorerEvents ?? []).length);
+    } catch {
+      before = 0;
+    }
     try {
       await page.evaluate((index) => {
-        const nodes = document.querySelectorAll(
-          '.xp-root button, .xp-root [role="tab"], .xp-root [role="button"], .xp-root a',
-        );
+        const roots = document.querySelectorAll('.xp-root');
+        const root = roots[roots.length - 1];
+        if (!root) return;
+        const nodes = root.querySelectorAll('button, [role="tab"], [role="button"], a');
         const node = nodes[index];
         if (node instanceof HTMLElement) node.click();
       }, element.index);
@@ -74,13 +81,20 @@ for (const scene of SCENES) {
     } catch {
       /* élément détruit entre-temps */
     }
-    const after = await page.evaluate(() => (window.__explorerEvents ?? []).length);
-    if (after > before) sceneExercised += 1;
+    let after = before;
+    try {
+      after = await page.evaluate(() => (window.__explorerEvents ?? []).length);
+    } catch {
+      after = before + 1; // contexte détruit par une navigation : clic effectif
+    }
+    const urlNow = page.url();
+    const navigated = urlNow !== sceneUrl;
+    if (after > before || navigated) sceneExercised += 1;
 
-    // Retour à la scène pour continuer l'inventaire sur le même état.
-    if (element.index > 0 && (await page.locator('.xp-sheet').count()) === 0) {
-      await page.goto(`${base}/explorer?v2=1&scene=${scene}`, { waitUntil: 'domcontentloaded' });
-      await page.waitForSelector('.xp-sheet');
+    // Retour à la scène après une navigation ou un écran refermé.
+    if (page.url() !== sceneUrl || (await page.locator('.xp-sheet').count()) === 0) {
+      await page.goto(sceneUrl, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('.xp-sheet', { timeout: 30_000 });
     }
   }
 

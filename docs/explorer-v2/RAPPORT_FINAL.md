@@ -45,7 +45,7 @@ Date : 2026-10-28 · Branche : `feat/explorer-v2` · Base : `feat/explorer-v2` i
 
 | Mesure | Valeur | Budget | État |
 |---|---|---|---|
-| First Load JS `/explorer` | **342 Ko** | ≤ 170 Ko | ❌ (legacy `ExplorerClient` encore importé) |
+| First Load JS `/explorer` | **141 Ko** | ≤ 170 Ko | ✅ (−201 Ko : moteur legacy passé en chunk asynchrone) |
 | `explorer_pois` | 115 ms | < 300 ms | ✅ |
 | `explorer_place` | 172–210 ms | < 300 ms | ✅ |
 | `explorer_routes` | 286 ms | < 300 ms | ✅ |
@@ -56,10 +56,9 @@ Date : 2026-10-28 · Branche : `feat/explorer-v2` · Base : `feat/explorer-v2` i
 
 ## 3. Limites restantes (chacune avec sa preuve)
 
-1. **Bundle à 342 Ko** au lieu de 170 Ko : `src/app/explorer/page.tsx` importe encore
-   `ExplorerClient` (legacy) en plus d'`ExplorerV2`. La suppression du legacy (P10-04)
-   divise le bundle ; elle est volontairement reportée pour garder le retour arrière
-   (flag à 0 %). Preuve : ligne `ƒ /explorer 40.2 kB 342 kB` de `next build`.
+1. ~~Bundle à 342 Ko~~ **corrigé** : le moteur legacy est chargé en `next/dynamic`
+   (`LegacyExplorerFallback`), le First Load JS tombe à **141 Ko**
+   (preuve : `ƒ /explorer 20.4 kB 141 kB`).
 2. **Géométries en base** : les 49 617 lignes de `admin_regions_geo` restent sans
    géométrie et la France n'a aucune ligne. Les régions sont servies par Natural Earth
    en statique. Preuve : `AUDIT_VERIFIE.md §2.1`.
@@ -83,12 +82,10 @@ Playwright, population masquée, avatars masqués).
 
 ## 5. État de la livraison
 
-- Commit local : `cc44413c1` sur `feat/explorer-v2`.
-- **Push refusé par GitHub** (403, jeton du trousseau expiré, pas de clé SSH,
-  `gh` absent, MCP GitHub en lecture seule) : voir `BLOCAGES.md #11`.
-  La branche est donc livrée localement avec le patch de code
-  `docs/explorer-v2/` et les preuves ; deux commandes suffisent à Tony pour
-  pousser et ouvrir la PR.
+- Branche `feat/explorer-v2` poussée sur `origin` (rebasée sur `main` `52b7e4bd`).
+- **PR ouverte en brouillon : https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/119**
+- Comptes de recette : `recette.lea@lkdv.test` / `recette.yanis@lkdv.test`
+  (mots de passe générés, dans `.secrets/` non versionné) — 11 contrôles RLS verts.
 - Gate `npm run explorer:verify` : voir `docs/explorer-v2/VERIFY_LAST.md`
   (artifact réel de la dernière exécution).
 
