@@ -39,12 +39,14 @@ test.describe('Communauté — fil Instagram LKDV', () => {
   test('le + ouvre le drawer connecté et ses 6 types de création', async ({ page }, testInfo) => {
     await gotoFeed(page, true);
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
-    const dialog = page.locator('[role="dialog"]').first();
+    const dialog = page.getByRole('dialog', { name: 'Créer dans l’application' });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText('Carnet', { exact: true })).toBeVisible();
-    await expect(dialog.getByText('Story', { exact: true })).toBeVisible();
-    await expect(dialog.getByRole('tablist', { name: 'Type de création' }).getByRole('tab')).toHaveCount(6);
-    await expect(dialog.getByText('Publication', { exact: true })).toBeVisible();
+    // Capsule en icônes seules : chaque type est un onglet nommé, sans libellé visible.
+    const tabs = dialog.getByRole('tablist', { name: 'Sections' }).getByRole('tab');
+    await expect(tabs).toHaveCount(6);
+    for (const name of ['Publication', 'Carnet', 'Sortie', 'Kit', 'Club', 'Story']) {
+      await expect(dialog.getByRole('tab', { name, exact: true })).toBeVisible();
+    }
     await page.screenshot({ path: testInfo.outputPath('community-create.png') });
   });
 

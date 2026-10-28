@@ -1,11 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { z } from 'zod';
+import { Flower2, Infinity as InfinityIcon, Leaf, Snowflake, Sun } from 'lucide-react';
+import Icon from '@/components/ui/Icon';
 import { createClient } from '@/lib/supabase/client';
-import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
-import { insertCommunityPost } from './upload';
+import { insertCommunityPost, uploadCoverImage } from './upload';
+import { Chips, CountedTextArea, ImagePicker, Stepper, TextField, type ChipOption } from './wizard/fields';
+import { firstIssue } from './wizard/validate';
+import { useCreateFlow } from './wizard/useCreateFlow';
+import { useDraftedForm } from './wizard/useDraftedForm';
+import { WizardFrame } from './wizard/WizardFrame';
 
 export interface KitCreateFormProps {
   open: boolean;
@@ -14,41 +19,57 @@ export interface KitCreateFormProps {
   onCreated: (kind: 'kit', id: string) => void;
 }
 
-const SEASONS = [
-  ['toute_saison', 'Toute saison'],
-  ['printemps', 'Printemps'],
-  ['ete', 'Été'],
-  ['automne', 'Automne'],
-  ['hiver', 'Hiver'],
-] as const;
+const STEPS = ['name', 'weight', 'share'] as const;
+type Step = (typeof STEPS)[number];
+const KICKERS: Record<Step, string> = { name: 'Nom', weight: 'Poids', share: 'Partage' };
 
-export function KitCreateForm({ open, onClose, user, onCreated }: KitCreateFormProps) {
-  const [name, setName] = useState('');
-  const [season, setSeason] = useState('toute_saison');
-  const [weight, setWeight] = useState('');
-  const [description, setDescription] = useState('');
-  const [cover, setCover] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const SEASONS: ReadonlyArray<ChipOption<string>> = [
+  { id: 'toute_saison', label: 'Toute saison', icon: <InfinityIcon size={16} aria-hidden="true" /> },
+  { id: 'printemps', label: 'Printemps', icon: <Flower2 size={16} aria-hidden="true" /> },
+  { id: 'ete', label: 'Été', icon: <Sun size={16} aria-hidden="true" /> },
+  { id: 'automne', label: 'Automne', icon: <Leaf size={16} aria-hidden="true" /> },
+  { id: 'hiver', label: 'Hiver', icon: <Snowflake size={16} aria-hidden="true" /> },
+];
 
-  const submit = async () => {
-    setError(null);
-    if (!user?.id) return setError('Connecte-toi pour créer un kit.');
-    if (!name.trim()) return setError('Le nom du kit est requis.');
-    setBusy(true);
-    try {
+type Visibility = 'public' | 'private';
+const VISIBILITIES: ReadonlyArray<ChipOption<Visibility>> = [
+  { id: 'public', label: 'Public', icon: <Icon name="globe" size={16} aria-hidden="true" /> },
+  { id: 'private', label: 'Privé', icon: <Icon name="lock" size={16} aria-hidden="true" /> },
+];
+
+const INITIAL = {
+  name: '',
+  season: 'toute_saison',
+  weightKg: 5,
+  description: '',
+  visibility: 'public' as Visibility,
+};
+
+const nameSchema = z.object({ name: z.string().trim().min(1, 'Donne un nom à ton kit.') });
+
+export function KitCreateForm({ onClose, user, onCreated }: KitCreateFormProps) {
+  const { values, patch, clear } = useDraftedForm('kit', user?.id, INITIAL);
+  const [cover, setCover] = useState<File | null>(null);
+
+  const flow = useCreateFlow<Step>({
+    steps: STEPS,
+    validate: (step) => (step === 'name' ? firstIssue(nameSchema, values) : null),
+    submit: async () => {
+      if (!user?.id) throw new Error('Connecte-toi pour créer un kit.');
       const supabase = createClient();
+      const coverUrl = await uploadCoverImage(cover, user.id);
+      const name = values.name.trim();
+      const description = values.description.trim();
       const { data, error: insertError } = await supabase
         .from('materiel_kits')
         .insert({
           user_id: user.id,
-          name: name.trim(),
-          description: description.trim() || null,
-          season,
-          total_weight_g: Number(weight) || 0,
-          is_public: isPublic,
-          cover_image_url: cover.trim() || null,
+          name,
+          description: description || null,
+          season: values.season,
+          total_weight_g: Math.round(values.weightKg * 1000),
+          is_public: values.visibility === 'public',
+          cover_image_url: coverUrl,
         })
         .select('id')
         .single();
@@ -56,63 +77,54 @@ export function KitCreateForm({ open, onClose, user, onCreated }: KitCreateFormP
       try {
         await insertCommunityPost({
           authorId: user.id,
-          content: `**${name.trim()}**\n\n${description.trim() || 'Mon kit de matériel.'}\n\n/materiel`,
+          content: `**${name}**\n\n${description || 'Mon kit de matériel.'}\n\n/materiel`,
           postType: 'share',
-          imageUrl: cover.trim() || null,
+          imageUrl: coverUrl,
           linkedKitId: data.id,
-          title: name.trim(),
+          title: name,
         });
       } catch {
-        setError('Kit créé, mais la publication n’a pas pu être ajoutée.');
+        /* le kit existe ; la publication d'annonce est facultative */
       }
+      clear();
+      setCover(null);
       onCreated('kit', data.id);
-      setName('');
-      setDescription('');
-      setCover('');
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Création impossible.');
-    } finally {
-      setBusy(false);
-    }
-  };
+    },
+  });
 
   return (
-    <CommunityFormDrawer
-      open={open}
-      onClose={onClose}
-      ariaLabel="Créer un kit"
-      error={error}
-      footer={<SubmitFooter label="Créer le kit" busy={busy} onClick={() => void submit()} />}
+    <WizardFrame
+      step={flow.wizard.step}
+      total={flow.wizard.total}
+      kicker={KICKERS[flow.current]}
+      error={flow.error}
+      busy={flow.busy}
+      nextLabel={flow.wizard.isLast ? 'Créer le kit' : 'Suivant'}
+      onBack={flow.onBack}
+      onNext={flow.onNext}
     >
-      <p className="lkdv-form-intro">Un kit rapide. Les items et le poids se détaillent dans l’éditeur complet.</p>
-      <Field label="Nom">
-        <TextInput value={name} onChange={(event) => setName(event.target.value)} maxLength={100} placeholder="Kit bivouac 3 saisons" />
-      </Field>
-      <div className="lkdv-form-row">
-        <Field label="Saison">
-          <Select value={season} onChange={(event) => setSeason(event.target.value)}>
-            {SEASONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </Select>
-        </Field>
-        <Field label="Poids (g)">
-          <TextInput type="number" min={0} value={weight} onChange={(event) => setWeight(event.target.value)} placeholder="4200" />
-        </Field>
-      </div>
-      <Field label="Description">
-        <TextArea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={1000} placeholder="Usage, terrain, particularités…" />
-      </Field>
-      <Field label="Cover (URL)">
-        <TextInput value={cover} onChange={(event) => setCover(event.target.value)} placeholder="https://…" />
-      </Field>
-      <Field label="Visibilité">
-        <Select value={isPublic ? 'public' : 'private'} onChange={(event) => setIsPublic(event.target.value === 'public')}>
-          <option value="public">Public</option>
-          <option value="private">Privé</option>
-        </Select>
-      </Field>
-      <Link className="lkdv-form-link" href="/materiel" onClick={onClose}>Ouvrir l’éditeur complet</Link>
-    </CommunityFormDrawer>
+      {flow.current === 'name' ? (
+        <>
+          <TextField label="Nom du kit" value={values.name} onChange={(name) => patch({ name })} maxLength={100} placeholder="Kit bivouac 3 saisons" />
+          <Chips label="Saison" options={SEASONS} value={values.season} onChange={(season) => patch({ season })} />
+        </>
+      ) : null}
+
+      {flow.current === 'weight' ? (
+        <>
+          <Stepper label="Poids total" value={values.weightKg} min={0} max={30} step={0.5} unit="kg" onChange={(weightKg) => patch({ weightKg })} />
+          <CountedTextArea label="Usage et particularités" value={values.description} onChange={(description) => patch({ description })} max={1000} placeholder="Terrain, durée, ce qui le rend spécial…" />
+        </>
+      ) : null}
+
+      {flow.current === 'share' ? (
+        <>
+          <ImagePicker label="Photo du kit (facultatif)" file={cover} onChange={setCover} aspect="16 / 9" />
+          <Chips label="Qui peut le voir ?" options={VISIBILITIES} value={values.visibility} onChange={(visibility) => patch({ visibility })} />
+        </>
+      ) : null}
+    </WizardFrame>
   );
 }
 

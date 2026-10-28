@@ -1,11 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { z } from 'zod';
+import Icon from '@/components/ui/Icon';
 import { createClient } from '@/lib/supabase/client';
-import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
-import { insertCommunityPost } from './upload';
+import { insertCommunityPost, uploadCoverImage } from './upload';
+import { Chips, CountedTextArea, ImagePicker, TextField, type ChipOption } from './wizard/fields';
+import { firstIssue } from './wizard/validate';
+import { useCreateFlow } from './wizard/useCreateFlow';
+import { useDraftedForm } from './wizard/useDraftedForm';
+import { WizardFrame } from './wizard/WizardFrame';
 
 export interface ClubCreateFormProps {
   open: boolean;
@@ -14,44 +18,66 @@ export interface ClubCreateFormProps {
   onCreated: (kind: 'club', id: string) => void;
 }
 
+const STEPS = ['identity', 'spirit', 'access'] as const;
+type Step = (typeof STEPS)[number];
+const KICKERS: Record<Step, string> = { identity: 'Identité', spirit: 'Esprit', access: 'Accès' };
+
+type Privacy = 'open' | 'closed';
+
+const CATEGORIES: ReadonlyArray<ChipOption<string>> = ['Randonnée', 'Trail', 'Ski', 'Escalade', 'Vélo', 'Bivouac'].map((label) => ({
+  id: label,
+  label,
+}));
+
+const PRIVACIES: ReadonlyArray<ChipOption<Privacy>> = [
+  { id: 'open', label: 'Ouvert', icon: <Icon name="globe" size={16} aria-hidden="true" /> },
+  { id: 'closed', label: 'Sur validation', icon: <Icon name="lock" size={16} aria-hidden="true" /> },
+];
+
+const INITIAL = {
+  name: '',
+  category: 'Randonnée',
+  location: '',
+  description: '',
+  privacy: 'open' as Privacy,
+};
+
+const nameSchema = z.object({ name: z.string().trim().min(1, 'Donne un nom à ton club.') });
+
 function slugify(value: string) {
   return value
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
 }
 
-export function ClubCreateForm({ open, onClose, user, onCreated }: ClubCreateFormProps) {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
-  const [cover, setCover] = useState('');
-  const [privacy, setPrivacy] = useState<'open' | 'closed'>('open');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps) {
+  const { values, patch, clear } = useDraftedForm('club', user?.id, INITIAL);
+  const [badge, setBadge] = useState<File | null>(null);
 
-  const submit = async () => {
-    setError(null);
-    if (!user?.id) return setError('Connecte-toi pour créer un club.');
-    if (!name.trim()) return setError('Le nom du club est requis.');
-    setBusy(true);
-    try {
+  const flow = useCreateFlow<Step>({
+    steps: STEPS,
+    validate: (step) => (step === 'identity' ? firstIssue(nameSchema, values) : null),
+    submit: async () => {
+      if (!user?.id) throw new Error('Connecte-toi pour créer un club.');
       const supabase = createClient();
-      const slugBase = slugify(name);
-      const slug = `${slugBase || 'club'}-${Math.random().toString(36).slice(2, 6)}`;
+      const coverUrl = await uploadCoverImage(badge, user.id);
+      const name = values.name.trim();
+      const description = values.description.trim();
+      const location = values.location.trim();
+      const slug = `${slugify(name) || 'club'}-${Math.random().toString(36).slice(2, 6)}`;
       const { data, error: insertError } = await supabase
         .from('clubs')
         .insert({
           slug,
-          name: name.trim(),
-          description: [description.trim(), location.trim() ? `📍 ${location.trim()}` : ''].filter(Boolean).join('\n\n'),
-          cover_image: cover.trim(),
-          category: category.trim(),
-          privacy,
+          name,
+          description: [description, location ? `📍 ${location}` : ''].filter(Boolean).join('\n\n'),
+          cover_image: coverUrl ?? '',
+          category: values.category,
+          privacy: values.privacy,
           created_by: user.id,
           members_count: 1,
         })
@@ -68,63 +94,60 @@ export function ClubCreateForm({ open, onClose, user, onCreated }: ClubCreateFor
       try {
         await insertCommunityPost({
           authorId: user.id,
-          content: `**Bienvenue dans ${name.trim()}**\n\n${description.trim() || 'La cordée est ouverte.'}\n\n/clubs/${data.slug || data.id}`,
+          content: `**Bienvenue dans ${name}**\n\n${description || 'La cordée est ouverte.'}\n\n/clubs/${data.slug || data.id}`,
           postType: 'share',
-          imageUrl: cover.trim() || null,
+          imageUrl: coverUrl,
           audience: 'club',
           clubId: data.id,
-          title: name.trim(),
+          title: name,
         });
       } catch {
-        setError('Club créé, mais la publication d’accueil n’a pas pu être ajoutée.');
+        /* le club existe ; le message d'accueil est facultatif */
       }
+      clear();
+      setBadge(null);
       onCreated('club', data.id);
-      setName('');
-      setDescription('');
-      setLocation('');
-      setCover('');
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Création impossible.');
-    } finally {
-      setBusy(false);
-    }
-  };
+    },
+  });
 
   return (
-    <CommunityFormDrawer
-      open={open}
-      onClose={onClose}
-      ariaLabel="Créer un club"
-      error={error}
-      footer={<SubmitFooter label="Créer le club" busy={busy} onClick={() => void submit()} />}
+    <WizardFrame
+      step={flow.wizard.step}
+      total={flow.wizard.total}
+      kicker={KICKERS[flow.current]}
+      error={flow.error}
+      busy={flow.busy}
+      nextLabel={flow.wizard.isLast ? 'Créer le club' : 'Suivant'}
+      onBack={flow.onBack}
+      onNext={flow.onNext}
     >
-      <p className="lkdv-form-intro">L’identité du club. Les règles, zones et adhésions se complètent ensuite.</p>
-      <Field label="Nom">
-        <TextInput value={name} onChange={(event) => setName(event.target.value)} maxLength={80} placeholder="La Cordée du Vercors" />
-      </Field>
-      <div className="lkdv-form-row">
-        <Field label="Catégorie">
-          <TextInput value={category} onChange={(event) => setCategory(event.target.value)} maxLength={60} placeholder="Randonnée" />
-        </Field>
-        <Field label="Lieu">
-          <TextInput value={location} onChange={(event) => setLocation(event.target.value)} maxLength={80} placeholder="Vercors" />
-        </Field>
-      </div>
-      <Field label="Description">
-        <TextArea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={1500} placeholder="L’esprit du club, le niveau, le rythme…" />
-      </Field>
-      <Field label="Cover (URL)">
-        <TextInput value={cover} onChange={(event) => setCover(event.target.value)} placeholder="https://…" />
-      </Field>
-      <Field label="Adhésion">
-        <Select value={privacy} onChange={(event) => setPrivacy(event.target.value as typeof privacy)}>
-          <option value="open">Ouvert</option>
-          <option value="closed">Sur validation</option>
-        </Select>
-      </Field>
-      <Link className="lkdv-form-link" href="/clubs/nouveau" onClick={onClose}>Ouvrir l’éditeur complet</Link>
-    </CommunityFormDrawer>
+      {flow.current === 'identity' ? (
+        <>
+          <ImagePicker label="Blason" file={badge} onChange={setBadge} aspect="1 / 1" round />
+          <TextField label="Nom du club" value={values.name} onChange={(name) => patch({ name })} maxLength={80} placeholder="La Cordée du Vercors" />
+          <Chips label="Activité" options={CATEGORIES} value={values.category} onChange={(category) => patch({ category })} />
+        </>
+      ) : null}
+
+      {flow.current === 'spirit' ? (
+        <>
+          <TextField label="Massif ou ville" value={values.location} onChange={(location) => patch({ location })} maxLength={80} placeholder="Vercors" />
+          <CountedTextArea label="L’esprit du club" value={values.description} onChange={(description) => patch({ description })} max={1500} placeholder="Le niveau, le rythme, l’ambiance…" />
+        </>
+      ) : null}
+
+      {flow.current === 'access' ? (
+        <>
+          <Chips label="Qui peut rejoindre ?" options={PRIVACIES} value={values.privacy} onChange={(privacy) => patch({ privacy })} />
+          <p className="lkdv-wz-hint">
+            {values.privacy === 'open'
+              ? 'Tout le monde peut rejoindre en un geste.'
+              : 'Tu valides chaque demande avant l’entrée dans le club.'}
+          </p>
+        </>
+      ) : null}
+    </WizardFrame>
   );
 }
 

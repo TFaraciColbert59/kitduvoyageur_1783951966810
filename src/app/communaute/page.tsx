@@ -10,6 +10,7 @@ import { CommunityFeedTopBar } from '@/features/community/feed/CommunityFeedTopB
 import { CommunityFeed } from '@/features/community/feed/CommunityFeed';
 import { CreateDrawer, type CreateKind } from '@/features/community/create/CreateDrawer';
 import { CommunitySectionsDrawer } from '@/features/community/sections/CommunitySectionsDrawer';
+import '@/styles/community-card.css';
 import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
 
 function CommunauteFeedContent() {
@@ -58,19 +59,24 @@ function CommunauteFeedContent() {
                 requireAuth();
                 return;
               }
+              setSectionsOpen(false);
               setCreateOpen(true);
             }}
             onOpenSection={(id) => {
+              setCreateOpen(false);
               setSectionsTab(id);
               setSectionsSearch(false);
               setSectionsOpen(true);
             }}
             onSearch={() => {
+              setCreateOpen(false);
               setSectionsSearch(true);
               setSectionsOpen(true);
             }}
           />
         }
+        drawerOpen={createOpen}
+        drawer={<CreateDrawer open={createOpen} onClose={() => setCreateOpen(false)} user={user} onCreated={handleCreated} />}
         stories={
           <CommunityStoriesBar
             key={storiesRefreshKey}
@@ -88,8 +94,6 @@ function CommunauteFeedContent() {
           refreshKey={feedRefreshKey}
         />
       </CommunityFeedShell>
-
-      <CreateDrawer open={createOpen} onClose={() => setCreateOpen(false)} user={user} onCreated={handleCreated} />
 
       <CommunitySectionsDrawer
         open={sectionsOpen}

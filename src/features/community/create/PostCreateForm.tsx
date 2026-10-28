@@ -1,12 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { z } from 'zod';
+import Icon from '@/components/ui/Icon';
 import { createClient } from '@/lib/supabase/client';
-import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, MediaInput, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
 import { insertCommunityPost, uploadPostMedia } from './upload';
+import { Chips, CountedTextArea, Stepper, TextField, type ChipOption } from './wizard/fields';
+import { MediaTray } from './wizard/MediaTray';
+import { firstIssue, todayIso } from './wizard/validate';
+import { useDraftedForm } from './wizard/useDraftedForm';
+import { useWizard } from './wizard/useWizard';
+import { WizardFrame } from './wizard/WizardFrame';
 
-type PostKind = 'photo' | 'billet' | 'question' | 'event';
+export type PostKind = 'photo' | 'billet' | 'question' | 'event';
 type Audience = 'public' | 'abonnies' | 'club';
 
 export interface PostCreateFormProps {
@@ -14,30 +20,79 @@ export interface PostCreateFormProps {
   onClose: () => void;
   user: any;
   onCreated: (kind: 'post', id: string) => void;
+  /** Format choisi dans la sous-capsule du drawer. */
+  format?: PostKind;
 }
 
-const TYPES: Array<{ id: PostKind; label: string }> = [
-  { id: 'photo', label: 'Photo / vidéo' },
-  { id: 'billet', label: 'Billet' },
-  { id: 'question', label: 'Question' },
-  { id: 'event', label: 'Événement' },
+/** Étapes par format : un écran = une intention. */
+export const POST_STEPS: Record<PostKind, ReadonlyArray<'media' | 'text' | 'details' | 'when' | 'audience'>> = {
+  photo: ['media', 'text', 'audience'],
+  billet: ['text', 'audience'],
+  question: ['text', 'audience'],
+  event: ['media', 'details', 'when', 'audience'],
+};
+
+const KICKERS = {
+  media: 'Média',
+  text: 'Texte',
+  details: 'Détails',
+  when: 'Quand',
+  audience: 'Diffusion',
+} as const;
+
+const AUDIENCES: ReadonlyArray<ChipOption<Audience>> = [
+  { id: 'public', label: 'Fil public', icon: <Icon name="globe" size={16} aria-hidden="true" /> },
+  { id: 'abonnies', label: 'Mes abonnés', icon: <Icon name="users" size={16} aria-hidden="true" /> },
+  { id: 'club', label: 'Un club', icon: <Icon name="lock" size={16} aria-hidden="true" /> },
 ];
 
-export function PostCreateForm({ open, onClose, user, onCreated }: PostCreateFormProps) {
-  const [kind, setKind] = useState<PostKind>('photo');
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [audience, setAudience] = useState<Audience>('public');
-  const [clubId, setClubId] = useState('');
-  const [clubs, setClubs] = useState<Array<{ id: string; name: string }>>([]);
-  const [location, setLocation] = useState('');
-  const [tags, setTags] = useState('');
+const INITIAL = {
+  title: '',
+  content: '',
+  location: '',
+  audience: 'public' as Audience,
+  clubId: '',
+  eventDate: '',
+  eventDuration: '',
+  eventMax: 10,
+};
+
+const textSchema = (kind: PostKind) =>
+  z.object({
+    title:
+      kind === 'billet' || kind === 'question'
+        ? z.string().trim().min(1, kind === 'question' ? 'Pose ta question.' : 'Le titre est requis.')
+        : z.string(),
+    content: kind === 'billet' ? z.string().trim().min(1, 'Le texte est requis.') : z.string(),
+  });
+
+const detailsSchema = z.object({
+  title: z.string().trim().min(1, 'Le titre de la sortie est requis.'),
+  content: z.string().trim().min(1, 'Décris la sortie en une phrase.'),
+});
+
+const whenSchema = z.object({
+  eventDate: z
+    .string()
+    .min(1, 'Choisis la date.')
+    .refine((value) => value >= todayIso(), 'La date doit être aujourd’hui ou plus tard.'),
+});
+
+export function PostCreateForm({ open, onClose, user, onCreated, format = 'photo' }: PostCreateFormProps) {
+  const steps = POST_STEPS[format];
+  const wizard = useWizard(steps.length);
+  const { values, patch, clear } = useDraftedForm('post', user?.id, INITIAL);
   const [files, setFiles] = useState<File[]>([]);
-  const [eventDate, setEventDate] = useState('');
-  const [eventDuration, setEventDuration] = useState('');
-  const [eventMax, setEventMax] = useState('10');
+  const [clubs, setClubs] = useState<Array<{ id: string; name: string }>>([]);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const { reset } = wizard;
+  useEffect(() => {
+    reset();
+    setError(null);
+  }, [format, reset]);
 
   useEffect(() => {
     if (!open || !user?.id) return;
@@ -59,38 +114,60 @@ export function PostCreateForm({ open, onClose, user, onCreated }: PostCreateFor
     };
   }, [open, user?.id]);
 
+  const current = steps[wizard.step] ?? 'text';
+  const hasMedia = files.length > 0;
+
+  // Les médias ne partent que sur le fil public : on le dit avant l'envoi, pas après l'échec.
+  const audienceOptions = useMemo(
+    () => AUDIENCES.map((option) => ({ ...option, disabled: hasMedia && option.id !== 'public' })),
+    [hasMedia],
+  );
+
+  const validateStep = (): string | null => {
+    if (current === 'media') {
+      return format === 'photo' && files.length === 0 ? 'Choisis au moins une photo ou une vidéo.' : null;
+    }
+    if (current === 'text') return firstIssue(textSchema(format), values);
+    if (current === 'details') return firstIssue(detailsSchema, values);
+    if (current === 'when') return firstIssue(whenSchema, values);
+    if (current === 'audience' && values.audience === 'club' && !values.clubId) return 'Choisis un club.';
+    return null;
+  };
+
   const submit = async () => {
-    setError(null);
-    if (!user?.id) return setError('Connecte-toi pour publier.');
-    if (kind === 'photo' && files.length === 0) return setError('Choisis au moins une photo ou vidéo.');
-    if (kind !== 'photo' && !title.trim()) return setError('Le titre est requis.');
-    if (kind === 'event' && !eventDate) return setError('La date de l’événement est requise.');
-    if (audience === 'club' && !clubId) return setError('Choisis un club.');
-    if (kind !== 'photo' && !content.trim()) return setError('Le texte est requis.');
+    if (!user?.id) {
+      setError('Connecte-toi pour publier.');
+      return;
+    }
     setBusy(true);
+    setError(null);
     try {
-      const mediaUrls = await uploadPostMedia(files, user.id, audience);
-      const cleanTags = tags.split(',').map((tag) => tag.trim()).filter(Boolean);
+      const title = values.title.trim();
+      const content = values.content.trim();
+      const location = values.location.trim();
+      const mediaUrls = await uploadPostMedia(files, user.id, values.audience, (done, total) =>
+        setProgress({ done, total }),
+      );
       let postId: string;
 
-      if (kind === 'event') {
+      if (format === 'event') {
         const supabase = createClient();
         const { data: event, error: eventError } = await supabase
           .from('events')
           .insert({
-            title: title.trim(),
+            title,
             type: 'rando',
             emoji: '🥾',
             organizer_id: user.id,
-            event_date: eventDate,
-            duration: eventDuration.trim(),
-            location: location.trim(),
+            event_date: values.eventDate,
+            duration: values.eventDuration.trim(),
+            location,
             country: 'France',
-            max_participants: Number(eventMax) || 10,
+            max_participants: values.eventMax,
             current_participants: 0,
-            description: content.trim(),
+            description: content,
             cover_image: mediaUrls[0] || '',
-            cover_alt: title.trim(),
+            cover_alt: title,
             shared_kitty: 0,
             kitty_goal: 0,
             status: 'upcoming',
@@ -100,121 +177,137 @@ export function PostCreateForm({ open, onClose, user, onCreated }: PostCreateFor
         if (eventError || !event) throw new Error(eventError?.message || 'Création de l’événement refusée.');
         postId = await insertCommunityPost({
           authorId: user.id,
-          content: `**${title.trim()}**\n\n📅 ${eventDate}${location.trim() ? ` · 📍 ${location.trim()}` : ''}\n\n${content.trim()}\n\n/evenements`,
+          content: `**${title}**\n\n📅 ${values.eventDate}${location ? ` · 📍 ${location}` : ''}\n\n${content}\n\n/evenements`,
           postType: 'share',
           mediaUrls,
-          audience,
-          clubId,
-          title: title.trim(),
+          audience: values.audience,
+          clubId: values.clubId,
+          title,
         });
       } else {
-        const locationLine = location.trim() ? `\n\n📍 ${location.trim()}` : '';
-        const fullContent =
-          kind !== 'photo' && title.trim() ? `**${title.trim()}**\n\n${content.trim()}` : content.trim();
+        const locationLine = location ? `\n\n📍 ${location}` : '';
+        const body = format === 'photo' ? content : [title && `**${title}**`, content].filter(Boolean).join('\n\n');
         postId = await insertCommunityPost({
           authorId: user.id,
-          content: `${fullContent}${locationLine}`,
-          postType: kind === 'question' ? 'question' : 'post',
+          content: `${body}${locationLine}`,
+          postType: format === 'question' ? 'question' : 'post',
           mediaUrls,
-          audience,
-          clubId,
-          title: title.trim() || null,
+          audience: values.audience,
+          clubId: values.clubId,
+          title: title || null,
         });
       }
 
-      onCreated('post', postId);
-      setTitle('');
-      setContent('');
+      clear();
       setFiles([]);
-      setLocation('');
-      setTags('');
+      wizard.reset();
+      onCreated('post', postId);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Publication impossible.');
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   };
 
+  const onNext = () => {
+    const problem = validateStep();
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    setError(null);
+    if (wizard.isLast) void submit();
+    else wizard.next();
+  };
+
+  const nextLabel = wizard.isLast
+    ? progress
+      ? `Envoi ${progress.done}/${progress.total}`
+      : format === 'event'
+        ? 'Proposer'
+        : 'Publier'
+    : 'Suivant';
+
   return (
-    <CommunityFormDrawer
-      open={open}
-      onClose={onClose}
-      ariaLabel="Créer une publication"
+    <WizardFrame
+      step={wizard.step}
+      total={wizard.total}
+      kicker={KICKERS[current]}
       error={error}
-      footer={<SubmitFooter label="Publier" busy={busy} onClick={() => void submit()} />}
+      busy={busy}
+      nextLabel={nextLabel}
+      onBack={() => {
+        setError(null);
+        wizard.back();
+      }}
+      onNext={onNext}
     >
-      <p className="lkdv-form-intro">Choisis le format, ajoute ton texte ou ton média, puis publie.</p>
-      <div className="lkdv-form-tabs" role="tablist" aria-label="Type de publication">
-        {TYPES.map((type) => (
-          <button key={type.id} type="button" aria-pressed={kind === type.id} onClick={() => setKind(type.id)}>
-            {type.label}
-          </button>
-        ))}
-      </div>
+      {current === 'media' ? <MediaTray files={files} onChange={setFiles} onError={setError} /> : null}
 
-      {kind !== 'photo' ? (
-        <Field label={kind === 'question' ? 'Question' : kind === 'event' ? 'Titre de la sortie' : 'Titre'}>
-          <TextInput value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Un titre clair" maxLength={120} />
-        </Field>
-      ) : null}
-
-      <Field label={kind === 'event' ? 'Description' : 'Texte'}>
-        <TextArea
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          placeholder={kind === 'question' ? 'Pose ta question à la communauté…' : 'Raconte, partage, demande…'}
-          maxLength={4000}
-        />
-      </Field>
-
-      {kind === 'photo' || kind === 'event' ? (
-        <MediaInput onChange={setFiles} label={kind === 'event' ? 'Photo de couverture (optionnel)' : 'Photos / vidéos'} />
-      ) : null}
-
-      <div className="lkdv-form-row">
-        <Field label="Lieu">
-          <TextInput value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Lac Blanc, Chamonix…" />
-        </Field>
-        <Field label="Tags">
-          <TextInput value={tags} onChange={(event) => setTags(event.target.value)} placeholder="rando, bivouac" />
-        </Field>
-      </div>
-
-      <Field label="Audience">
-        <Select value={audience} onChange={(event) => setAudience(event.target.value as Audience)}>
-          <option value="public">Fil public</option>
-          <option value="abonnies">Mes abonnés</option>
-          <option value="club">Un club</option>
-        </Select>
-      </Field>
-      {audience === 'club' ? (
-        <Field label="Club" hint={clubs.length === 0 ? 'Aucun club actif : rejoins un club d’abord.' : undefined}>
-          <Select value={clubId} onChange={(event) => setClubId(event.target.value)}>
-            <option value="">Choisir un club</option>
-            {clubs.map((club) => (
-              <option key={club.id} value={club.id}>{club.name}</option>
-            ))}
-          </Select>
-        </Field>
-      ) : null}
-
-      {kind === 'event' ? (
+      {current === 'text' ? (
         <>
-          <div className="lkdv-form-row">
-            <Field label="Date">
-              <TextInput type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} />
-            </Field>
-            <Field label="Durée">
-              <TextInput value={eventDuration} onChange={(event) => setEventDuration(event.target.value)} placeholder="2 jours" />
-            </Field>
-          </div>
-          <Field label="Participants max">
-            <TextInput type="number" min={2} max={50} value={eventMax} onChange={(event) => setEventMax(event.target.value)} />
-          </Field>
+          {format === 'billet' || format === 'question' ? (
+            <TextField
+              label={format === 'question' ? 'Ta question' : 'Titre'}
+              value={values.title}
+              onChange={(title) => patch({ title })}
+              maxLength={120}
+              placeholder={format === 'question' ? 'Quel sac pour le GR20 ?' : 'Un titre clair'}
+            />
+          ) : null}
+          <CountedTextArea
+            label={format === 'photo' ? 'Légende' : format === 'question' ? 'Précisions (facultatif)' : 'Texte'}
+            value={values.content}
+            onChange={(content) => patch({ content })}
+            max={4000}
+            placeholder={format === 'photo' ? 'Raconte ce moment… #bivouac' : 'Raconte, partage, demande…'}
+          />
+          <TextField label="Lieu" value={values.location} onChange={(location) => patch({ location })} placeholder="Lac Blanc, Chamonix…" />
         </>
       ) : null}
-    </CommunityFormDrawer>
+
+      {current === 'details' ? (
+        <>
+          <TextField label="Titre de la sortie" value={values.title} onChange={(title) => patch({ title })} maxLength={120} placeholder="Lac Blanc au lever du jour" />
+          <CountedTextArea label="Description" value={values.content} onChange={(content) => patch({ content })} max={1500} placeholder="Le programme, le niveau, le matériel…" />
+          <TextField label="Lieu" value={values.location} onChange={(location) => patch({ location })} placeholder="Chamonix" />
+        </>
+      ) : null}
+
+      {current === 'when' ? (
+        <>
+          <TextField label="Date" type="date" value={values.eventDate} min={todayIso()} onChange={(eventDate) => patch({ eventDate })} />
+          <TextField label="Durée" value={values.eventDuration} onChange={(eventDuration) => patch({ eventDuration })} placeholder="2 jours" />
+          <Stepper label="Participants max" value={values.eventMax} min={2} max={50} onChange={(eventMax) => patch({ eventMax })} />
+        </>
+      ) : null}
+
+      {current === 'audience' ? (
+        <>
+          <Chips
+            label="Qui peut voir ?"
+            options={audienceOptions}
+            value={values.audience}
+            onChange={(audience) => patch({ audience, clubId: audience === 'club' ? values.clubId : '' })}
+          />
+          {hasMedia ? <p className="lkdv-wz-hint">Les photos et vidéos sont réservées au fil public.</p> : null}
+          {values.audience === 'club' ? (
+            clubs.length === 0 ? (
+              <p className="lkdv-wz-hint">Aucun club actif : rejoins un club d’abord.</p>
+            ) : (
+              <Chips
+                label="Quel club ?"
+                options={clubs.map((club) => ({ id: club.id, label: club.name }))}
+                value={values.clubId}
+                onChange={(clubId) => patch({ clubId })}
+              />
+            )
+          ) : null}
+        </>
+      ) : null}
+    </WizardFrame>
   );
 }
 

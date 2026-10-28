@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/client';
-import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, SubmitFooter, TextArea, TextInput } from './form-fields';
-import { insertCommunityPost } from './upload';
+import { insertCommunityPost, uploadCoverImage } from './upload';
+import { Chips, CountedTextArea, ImagePicker, Stepper, TextField, type ChipOption } from './wizard/fields';
+import { firstIssue, todayIso } from './wizard/validate';
+import { useCreateFlow } from './wizard/useCreateFlow';
+import { useDraftedForm } from './wizard/useDraftedForm';
+import { WizardFrame } from './wizard/WizardFrame';
 
 export interface SortieCreateFormProps {
   open: boolean;
@@ -14,40 +17,68 @@ export interface SortieCreateFormProps {
   onCreated: (kind: 'sortie', id: string) => void;
 }
 
-export function SortieCreateForm({ open, onClose, user, onCreated }: SortieCreateFormProps) {
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
-  const [duration, setDuration] = useState('');
-  const [location, setLocation] = useState('');
-  const [max, setMax] = useState('10');
-  const [description, setDescription] = useState('');
-  const [cover, setCover] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const STEPS = ['what', 'when', 'who'] as const;
+type Step = (typeof STEPS)[number];
+const KICKERS: Record<Step, string> = { what: 'Quoi', when: 'Où & quand', who: 'Qui' };
 
-  const submit = async () => {
-    setError(null);
-    if (!user?.id) return setError('Connecte-toi pour créer une sortie.');
-    if (!title.trim() || !date) return setError('Titre et date sont requis.');
-    setBusy(true);
-    try {
+const DURATIONS: ReadonlyArray<ChipOption<string>> = [
+  { id: 'Demi-journée', label: 'Demi-journée' },
+  { id: '1 journée', label: '1 journée' },
+  { id: 'Week-end', label: 'Week-end' },
+  { id: 'Plusieurs jours', label: 'Plusieurs jours' },
+];
+
+const INITIAL = {
+  title: '',
+  description: '',
+  location: '',
+  date: '',
+  duration: '1 journée',
+  max: 10,
+};
+
+const whatSchema = z.object({ title: z.string().trim().min(1, 'Donne un titre à la sortie.') });
+const whenSchema = z.object({
+  date: z
+    .string()
+    .min(1, 'Choisis la date.')
+    .refine((value) => value >= todayIso(), 'La date doit être aujourd’hui ou plus tard.'),
+});
+
+export function SortieCreateForm({ onClose, user, onCreated }: SortieCreateFormProps) {
+  const { values, patch, clear } = useDraftedForm('sortie', user?.id, INITIAL);
+  const [cover, setCover] = useState<File | null>(null);
+
+  const flow = useCreateFlow<Step>({
+    steps: STEPS,
+    validate: (step) => {
+      if (step === 'what') return firstIssue(whatSchema, values);
+      if (step === 'when') return firstIssue(whenSchema, values);
+      return null;
+    },
+    submit: async () => {
+      if (!user?.id) throw new Error('Connecte-toi pour créer une sortie.');
       const supabase = createClient();
+      const coverUrl = await uploadCoverImage(cover, user.id);
+      const title = values.title.trim();
+      const location = values.location.trim();
+      const description = values.description.trim();
       const { data, error: insertError } = await supabase
         .from('events')
         .insert({
-          title: title.trim(),
+          title,
           type: 'rando',
           emoji: '🥾',
           organizer_id: user.id,
-          event_date: date,
-          duration: duration.trim(),
-          location: location.trim(),
+          event_date: values.date,
+          duration: values.duration,
+          location,
           country: 'France',
-          max_participants: Number(max) || 10,
+          max_participants: values.max,
           current_participants: 0,
-          description: description.trim(),
-          cover_image: cover.trim(),
-          cover_alt: title.trim(),
+          description,
+          cover_image: coverUrl ?? '',
+          cover_alt: title,
           shared_kitty: 0,
           kitty_goal: 0,
           status: 'upcoming',
@@ -58,61 +89,54 @@ export function SortieCreateForm({ open, onClose, user, onCreated }: SortieCreat
       try {
         await insertCommunityPost({
           authorId: user.id,
-          content: `**${title.trim()}**\n\n📅 ${date}${location.trim() ? ` · 📍 ${location.trim()}` : ''}\n\n${description.trim()}\n\n/evenements`,
+          content: `**${title}**\n\n📅 ${values.date}${location ? ` · 📍 ${location}` : ''}\n\n${description}\n\n/evenements`,
           postType: 'share',
-          imageUrl: cover.trim() || null,
-          title: title.trim(),
+          imageUrl: coverUrl,
+          title,
         });
       } catch {
-        setError('Sortie créée, mais la publication n’a pas pu être ajoutée.');
+        /* la sortie existe ; la publication d'annonce est facultative */
       }
+      clear();
+      setCover(null);
       onCreated('sortie', data.id);
-      setTitle('');
-      setDescription('');
-      setLocation('');
-      setCover('');
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Création impossible.');
-    } finally {
-      setBusy(false);
-    }
-  };
+    },
+  });
 
   return (
-    <CommunityFormDrawer
-      open={open}
-      onClose={onClose}
-      ariaLabel="Créer une sortie"
-      error={error}
-      footer={<SubmitFooter label="Créer la sortie" busy={busy} onClick={() => void submit()} />}
+    <WizardFrame
+      step={flow.wizard.step}
+      total={flow.wizard.total}
+      kicker={KICKERS[flow.current]}
+      error={flow.error}
+      busy={flow.busy}
+      nextLabel={flow.wizard.isLast ? 'Proposer la sortie' : 'Suivant'}
+      onBack={flow.onBack}
+      onNext={flow.onNext}
     >
-      <p className="lkdv-form-intro">Une sortie simple : date, lieu, participants. Le GPX se règle ensuite.</p>
-      <Field label="Titre">
-        <TextInput value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} placeholder="Lac Blanc au lever du jour" />
-      </Field>
-      <div className="lkdv-form-row">
-        <Field label="Date">
-          <TextInput type="date" value={date} onChange={(event) => setDate(event.target.value)} />
-        </Field>
-        <Field label="Durée">
-          <TextInput value={duration} onChange={(event) => setDuration(event.target.value)} placeholder="1 journée" />
-        </Field>
-      </div>
-      <Field label="Lieu">
-        <TextInput value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Chamonix" />
-      </Field>
-      <Field label="Participants max">
-        <TextInput type="number" min={2} max={50} value={max} onChange={(event) => setMax(event.target.value)} />
-      </Field>
-      <Field label="Description">
-        <TextArea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={1500} placeholder="Le programme, le niveau, le matériel…" />
-      </Field>
-      <Field label="Cover (URL)">
-        <TextInput value={cover} onChange={(event) => setCover(event.target.value)} placeholder="https://…" />
-      </Field>
-      <Link className="lkdv-form-link" href="/evenements" onClick={onClose}>Voir les sorties</Link>
-    </CommunityFormDrawer>
+      {flow.current === 'what' ? (
+        <>
+          <TextField label="Titre" value={values.title} onChange={(title) => patch({ title })} maxLength={120} placeholder="Lac Blanc au lever du jour" />
+          <CountedTextArea label="Le programme" value={values.description} onChange={(description) => patch({ description })} max={1500} placeholder="Le niveau, le matériel, le point de rendez-vous…" />
+        </>
+      ) : null}
+
+      {flow.current === 'when' ? (
+        <>
+          <TextField label="Lieu" value={values.location} onChange={(location) => patch({ location })} placeholder="Chamonix" />
+          <TextField label="Date" type="date" min={todayIso()} value={values.date} onChange={(date) => patch({ date })} />
+          <Chips label="Durée" options={DURATIONS} value={values.duration} onChange={(duration) => patch({ duration })} />
+        </>
+      ) : null}
+
+      {flow.current === 'who' ? (
+        <>
+          <Stepper label="Participants max" value={values.max} min={2} max={50} onChange={(max) => patch({ max })} />
+          <ImagePicker label="Photo de la sortie (facultatif)" file={cover} onChange={setCover} aspect="16 / 9" />
+        </>
+      ) : null}
+    </WizardFrame>
   );
 }
 

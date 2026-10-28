@@ -15,6 +15,11 @@ export default defineConfig({
   use: {
     baseURL: process.env.PW_BASE_URL || 'http://localhost:4000',
     trace: 'on-first-retry',
+    // Le service worker de l'app prend le contrôle de la page après le premier
+    // chargement et sert les GET lui-même : `page.route` ne les voit plus et les
+    // specs à fixture réseau (fil Communauté) échouent en `net::ERR_FAILED`
+    // après un rechargement. Les tests visuels doivent rester hermétiques.
+    serviceWorkers: 'block',
   },
   projects: [
     {

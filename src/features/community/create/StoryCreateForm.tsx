@@ -1,10 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
+import { z } from 'zod';
+import Icon from '@/components/ui/Icon';
 import { createClient } from '@/lib/supabase/client';
-import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
-import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, MediaInput, Select, SubmitFooter, TextArea } from './form-fields';
+import { prepareImage } from '@/lib/media/prepareImage';
+import { Chips, CountedTextArea, type ChipOption } from './wizard/fields';
+import { firstIssue } from './wizard/validate';
+import { MediaTray } from './wizard/MediaTray';
+import { useCreateFlow } from './wizard/useCreateFlow';
+import { useDraftedForm } from './wizard/useDraftedForm';
+import { WizardFrame } from './wizard/WizardFrame';
 
 export interface StoryCreateFormProps {
   open: boolean;
@@ -13,30 +19,50 @@ export interface StoryCreateFormProps {
   onCreated: (kind: 'story', id: string) => void;
 }
 
-export function StoryCreateForm({ open, onClose, user, onCreated }: StoryCreateFormProps) {
-  const [file, setFile] = useState<File | null>(null);
-  const [caption, setCaption] = useState('');
-  const [audience, setAudience] = useState<'public' | 'abonnies' | 'only_me'>('public');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const STEPS = ['media', 'share'] as const;
+type Step = (typeof STEPS)[number];
+const KICKERS: Record<Step, string> = { media: 'Média', share: 'Diffusion' };
 
-  const submit = async () => {
-    setError(null);
-    if (!user?.id) return setError('Connecte-toi pour publier une story.');
-    if (!file) return setError('Choisis une photo ou une vidéo.');
-    setBusy(true);
-    try {
+type Audience = 'public' | 'abonnies' | 'only_me';
+const AUDIENCES: ReadonlyArray<ChipOption<Audience>> = [
+  { id: 'public', label: 'Tout le monde', icon: <Icon name="globe" size={16} aria-hidden="true" /> },
+  { id: 'abonnies', label: 'Mes abonnés', icon: <Icon name="users" size={16} aria-hidden="true" /> },
+  { id: 'only_me', label: 'Moi', icon: <Icon name="lock" size={16} aria-hidden="true" /> },
+];
+
+const INITIAL = { caption: '', audience: 'public' as Audience };
+
+const shareSchema = z.object({
+  caption: z.string().max(280, 'La légende fait 280 caractères au plus.'),
+  audience: z.enum(['public', 'abonnies', 'only_me']),
+});
+
+export function StoryCreateForm({ onClose, user, onCreated }: StoryCreateFormProps) {
+  const { values, patch, clear } = useDraftedForm('story', user?.id, INITIAL);
+  const [files, setFiles] = useState<File[]>([]);
+
+  const flow = useCreateFlow<Step>({
+    steps: STEPS,
+    validate: (step) => {
+      if (step === 'media') return files.length === 0 ? 'Choisis une photo ou une vidéo.' : null;
+      return firstIssue(shareSchema, values);
+    },
+    submit: async () => {
+      const file = files[0];
+      if (!user?.id) throw new Error('Connecte-toi pour publier une story.');
+      if (!file) throw new Error('Choisis une photo ou une vidéo.');
       const supabase = createClient();
       const isVideo = file.type.startsWith('video/');
-      const cleaned = isVideo ? file : await stripImageMetadata(file);
+      const cleaned = isVideo ? file : await prepareImage(file);
       const contentType = cleaned.type || (isVideo ? 'video/mp4' : 'image/jpeg');
-      const ext = (file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')).toLowerCase();
+      const ext = (cleaned.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')).toLowerCase();
       const storyId = crypto.randomUUID();
       const path = `${user.id}/${storyId}/${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('stories-private')
         .upload(path, cleaned, { cacheControl: '3600', upsert: false, contentType });
       if (uploadError) throw new Error(uploadError.message);
+      const caption = values.caption.trim();
       const { error: insertError } = await supabase.from('post_stories').insert({
         id: storyId,
         author_id: user.id,
@@ -49,45 +75,42 @@ export function StoryCreateForm({ open, onClose, user, onCreated }: StoryCreateF
         composition_version: null,
         status: 'ready',
         client_request_id: crypto.randomUUID(),
-        caption: caption.trim() ? caption.trim().slice(0, 280) : null,
-        visibility: audience,
+        caption: caption ? caption.slice(0, 280) : null,
+        visibility: values.audience,
       });
       if (insertError) {
         await supabase.storage.from('stories-private').remove([path]).catch(() => {});
         throw new Error(insertError.message);
       }
+      clear();
+      setFiles([]);
       onCreated('story', storyId);
-      setFile(null);
-      setCaption('');
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Publication impossible.');
-    } finally {
-      setBusy(false);
-    }
-  };
+    },
+  });
 
   return (
-    <CommunityFormDrawer
-      open={open}
-      onClose={onClose}
-      ariaLabel="Créer une story"
-      error={error}
-      footer={<SubmitFooter label="Publier la story" busy={busy} onClick={() => void submit()} />}
+    <WizardFrame
+      step={flow.wizard.step}
+      total={flow.wizard.total}
+      kicker={KICKERS[flow.current]}
+      error={flow.error}
+      busy={flow.busy}
+      nextLabel={flow.wizard.isLast ? 'Publier la story' : 'Suivant'}
+      onBack={flow.onBack}
+      onNext={flow.onNext}
     >
-      <p className="lkdv-form-intro">Une photo ou une vidéo, une légende, une audience. 24 h.</p>
-      <MediaInput label="Photo ou vidéo" multiple={false} onChange={(files) => setFile(files[0] ?? null)} />
-      <Field label="Légende" hint="280 caractères max.">
-        <TextArea value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={280} placeholder="Un mot sur ce moment…" />
-      </Field>
-      <Field label="Audience">
-        <Select value={audience} onChange={(event) => setAudience(event.target.value as typeof audience)}>
-          <option value="public">Tout le monde</option>
-          <option value="abonnies">Mes abonnés</option>
-          <option value="only_me">Moi uniquement</option>
-        </Select>
-      </Field>
-    </CommunityFormDrawer>
+      {flow.current === 'media' ? (
+        <MediaTray files={files} onChange={(next) => setFiles(next.slice(-1))} onError={flow.setError} max={1} />
+      ) : null}
+
+      {flow.current === 'share' ? (
+        <>
+          <CountedTextArea label="Un mot sur ce moment" value={values.caption} onChange={(caption) => patch({ caption })} max={280} placeholder="Visible 24 h…" />
+          <Chips label="Qui la voit ?" options={AUDIENCES} value={values.audience} onChange={(audience) => patch({ audience })} />
+        </>
+      ) : null}
+    </WizardFrame>
   );
 }
 

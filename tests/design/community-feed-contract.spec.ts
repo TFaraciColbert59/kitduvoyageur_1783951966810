@@ -68,16 +68,17 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     expect(stories).not.toContain('conic-gradient');
   });
 
-  it('le drawer de création ouvre 6 formulaires, sans navigation', () => {
+  it('le drawer de création ouvre 6 formulaires en place dans la carte, sans navigation', () => {
     const sheet = read('src/features/community/create/CreateDrawer.tsx');
     for (const kind of ['post', 'carnet', 'sortie', 'kit', 'club', 'story']) {
       expect(sheet).toContain(`'${kind}'`);
     }
-    expect(sheet).toContain('EmbeddedFormContext.Provider');
+    expect(sheet).toContain('<DrawerShell');
+    expect(sheet).toContain('<CommunityCardDrawer');
+    expect(sheet).not.toContain('EmbeddedFormContext');
     expect(sheet).not.toContain('/communaute/publier');
-    const page = read('src/app/communaute/page.tsx');
     for (const form of ['PostCreateForm', 'StoryCreateForm', 'CarnetCreateForm', 'SortieCreateForm', 'KitCreateForm', 'ClubCreateForm']) {
-      expect(sheet).toContain(`<${form} {...common} />`);
+      expect(sheet).toContain(`<${form} {...common}`);
     }
   });
 

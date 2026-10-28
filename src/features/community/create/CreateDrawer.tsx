@@ -2,25 +2,33 @@
 
 import React, { useEffect, useState } from 'react';
 import Icon from '@/components/ui/Icon';
-import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
-import { CommunityDrawer } from '@/features/community/sections/CommunityDrawer';
-import { PostCreateForm } from './PostCreateForm';
+import { DrawerShell, type DrawerSecondaryItem, type DrawerTab } from '@/components/compte/drawer/shell/DrawerShell';
+import { CommunityCardDrawer } from '@/features/community/shell/CommunityCardDrawer';
+import { PostCreateForm, type PostKind } from './PostCreateForm';
 import { StoryCreateForm } from './StoryCreateForm';
 import { CarnetCreateForm } from './CarnetCreateForm';
 import { SortieCreateForm } from './SortieCreateForm';
 import { KitCreateForm } from './KitCreateForm';
 import { ClubCreateForm } from './ClubCreateForm';
-import { EmbeddedFormContext } from './EmbeddedFormContext';
 
 export type CreateKind = 'post' | 'carnet' | 'sortie' | 'kit' | 'club' | 'story';
 
-const TYPES: Array<{ id: CreateKind; label: string; icon: React.ReactNode }> = [
-  { id: 'post', label: 'Publication', icon: <Icon name="pencil" size={18} aria-hidden="true" /> },
-  { id: 'carnet', label: 'Carnet', icon: <Icon name="book-open" size={18} aria-hidden="true" /> },
-  { id: 'sortie', label: 'Sortie', icon: <Icon name="map" size={18} aria-hidden="true" /> },
-  { id: 'kit', label: 'Kit', icon: <Icon name="backpack" size={18} aria-hidden="true" /> },
-  { id: 'club', label: 'Club', icon: <Icon name="users" size={18} aria-hidden="true" /> },
-  { id: 'story', label: 'Story', icon: <Icon name="plus" size={18} aria-hidden="true" /> },
+/** Ordre de la capsule : icônes seules, `label` sert à `aria-label` et `title`. */
+export const CREATE_KINDS: ReadonlyArray<{ id: CreateKind; label: string; icon: string }> = [
+  { id: 'post', label: 'Publication', icon: 'pencil' },
+  { id: 'carnet', label: 'Carnet', icon: 'book-open' },
+  { id: 'sortie', label: 'Sortie', icon: 'map' },
+  { id: 'kit', label: 'Kit', icon: 'backpack' },
+  { id: 'club', label: 'Club', icon: 'users' },
+  { id: 'story', label: 'Story', icon: 'plus' },
+];
+
+/** Formats de publication, dans la sous-capsule de 30 px de l'onglet Publication. */
+const POST_FORMATS: ReadonlyArray<{ id: PostKind; label: string; icon: string }> = [
+  { id: 'photo', label: 'Photo ou vidéo', icon: 'image-plus' },
+  { id: 'billet', label: 'Billet', icon: 'file-text' },
+  { id: 'question', label: 'Question', icon: 'help-circle' },
+  { id: 'event', label: 'Événement', icon: 'calendar' },
 ];
 
 export interface CreateDrawerProps {
@@ -31,45 +39,63 @@ export interface CreateDrawerProps {
   initialKind?: CreateKind;
 }
 
-/** Un seul drawer de création : sélecteur en haut, formulaire adapté à l'intérieur. */
+function indexOfKind(kind: CreateKind): number {
+  return Math.max(0, CREATE_KINDS.findIndex((item) => item.id === kind));
+}
+
+/**
+ * Un seul drawer de création, en place dans la carte : capsule de 6 types
+ * (icônes seules) en haut, un formulaire par volet. Un re-clic sur l'onglet
+ * actif ferme le drawer.
+ */
 export function CreateDrawer({ open, onClose, user, onCreated, initialKind = 'post' }: CreateDrawerProps) {
-  const [kind, setKind] = useState<CreateKind>(initialKind);
+  const [index, setIndex] = useState(() => indexOfKind(initialKind));
+  const [formatIndex, setFormatIndex] = useState(0);
 
   useEffect(() => {
-    if (open) setKind(initialKind);
+    if (open) setIndex(indexOfKind(initialKind));
   }, [initialKind, open]);
 
-  const index = Math.max(0, TYPES.findIndex((item) => item.id === kind));
-  const common = { open, onClose, user, onCreated };
+  const common = { open: true, onClose, user, onCreated };
+
+  const renderers: Record<CreateKind, () => React.ReactNode> = {
+    post: () => <PostCreateForm {...common} format={POST_FORMATS[formatIndex]?.id ?? 'photo'} />,
+    story: () => <StoryCreateForm {...common} />,
+    carnet: () => <CarnetCreateForm {...common} />,
+    sortie: () => <SortieCreateForm {...common} />,
+    kit: () => <KitCreateForm {...common} />,
+    club: () => <ClubCreateForm {...common} />,
+  };
+
+  const tabs: DrawerTab[] = CREATE_KINDS.map((item) => ({
+    id: item.id,
+    label: item.label,
+    icon: <Icon name={item.icon} size={18} aria-hidden="true" />,
+    render: renderers[item.id],
+  }));
+
+  const secondaryItems: DrawerSecondaryItem[] = POST_FORMATS.map((format) => ({
+    id: format.id,
+    label: format.label,
+    icon: <Icon name={format.icon} size={15} aria-hidden="true" />,
+  }));
 
   return (
-    <CommunityDrawer
-      open={open}
-      onClose={onClose}
-      title="Créer"
-      ariaLabel="Créer dans l’application"
-    >
-      <div className="pt-1">
-        <CapsuleTabs
-          items={TYPES}
-          activeIndex={index}
-          onIndexChange={(next) => {
-            const type = TYPES[next];
-            if (type) setKind(type.id);
-          }}
-          ariaLabel="Type de création"
-          className="lkdv-create-selector"
-        />
-      </div>
-      <EmbeddedFormContext.Provider value>
-        {kind === 'post' ? <PostCreateForm {...common} /> : null}
-        {kind === 'story' ? <StoryCreateForm {...common} /> : null}
-        {kind === 'carnet' ? <CarnetCreateForm {...common} /> : null}
-        {kind === 'sortie' ? <SortieCreateForm {...common} /> : null}
-        {kind === 'kit' ? <KitCreateForm {...common} /> : null}
-        {kind === 'club' ? <ClubCreateForm {...common} /> : null}
-      </EmbeddedFormContext.Provider>
-    </CommunityDrawer>
+    <CommunityCardDrawer open={open} onClose={onClose} ariaLabel="Créer dans l’application" strict>
+      <DrawerShell
+        tabs={tabs}
+        activeIndex={index}
+        secondary={
+          CREATE_KINDS[index]?.id === 'post'
+            ? { items: secondaryItems, active: formatIndex, onChange: setFormatIndex, label: 'Format de publication' }
+            : undefined
+        }
+        onIndexChange={(next) => {
+          if (next === index) onClose();
+          else setIndex(next);
+        }}
+      />
+    </CommunityCardDrawer>
   );
 }
 
