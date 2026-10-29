@@ -16,14 +16,28 @@ L'environnement de travail a été restauré avant publication des premiers corr
 
 ## Priorités du premier lot
 
-- [ ] Purge des stories : vérifier auteur, bucket et origine des références avant suppression privilégiée.
-- [ ] Cache voyages/profil : isoler comptes et sessions, rejeter les réponses obsolètes.
+Les cases ci-dessous concernent l'implémentation source et ses tests locaux, jamais un déploiement ou une validation en production.
+
+- [x] Purge des stories : vérifier auteur, bucket et origine des références avant suppression privilégiée.
+- [x] Cache voyages/profil : isoler comptes et sessions, rejeter les réponses obsolètes.
 - [ ] Compte : neutraliser bootstrap et mutations tardifs d'une ancienne identité.
-- [ ] Courriels : échapper le texte à la frontière HTML et contrôler les liens.
+- [x] Courriels : échapper le texte à la frontière HTML et contrôler les liens.
 - [ ] Paiements : reprise idempotente des étapes, stock, remboursements et royalties; migration testée avant activation.
-- [ ] Provider global : paralléliser les lectures réellement indépendantes.
-- [ ] Aperçu OpenGraph : délai global couvrant aussi le corps de réponse et les redirections.
-- [ ] SLO : empêcher qu'une mesure insuffisante soit un succès de validation.
+- [x] Provider global : paralléliser les lectures réellement indépendantes.
+- [x] Aperçu OpenGraph : délai global couvrant aussi le corps de réponse et les redirections.
+- [x] SLO : empêcher qu'une mesure insuffisante soit un succès de validation.
+
+## Preuves du lot 1
+
+Commande d'intégration :
+
+```sh
+node_modules/.bin/vitest run --maxWorkers=2 src/lib/stories src/lib/notifications tests/notifications src/features/trips/client/__tests__/fetchMyTrips.test.ts src/contexts/__tests__/AuthContext.isolation.test.tsx src/features/trips/context/__tests__/ActiveTripContext.storage.test.ts src/features/hub/context/__tests__ tests/api/og-preview-deadline.spec.ts tests/observability/slo.spec.ts tests/observability/slo-load-gate.spec.ts
+```
+
+Résultat : 15 fichiers, 105 tests réussis. Revue indépendante supplémentaire : purge, courriel, OpenGraph et SLO, 64 tests réussis. Tests hors ligne, aucun courriel envoyé ni objet réel supprimé. Aucun gain chiffré de latence n'est revendiqué pour la parallélisation; les tests prouvent le démarrage concurrent de deux lectures indépendantes.
+
+Limites ouvertes : le bootstrap/runtime Compte doit encore recevoir ses gardes d'identité; l'expiration hors ligne conserve les règles préexistantes du cache local de voyages. Le transport HTTP ne fixe pas la résolution DNS validée (OpenGraph : risque distinct toujours à revalider). Les métriques SLO indépendantes restent des entrées de mesure à collecter réellement. Les paiements n'ont pas été modifiés par ce lot.
 
 ## Vérification
 

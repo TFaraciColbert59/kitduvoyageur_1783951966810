@@ -52,6 +52,7 @@ export const PHASE10_SLOS: readonly SloDefinition[] = [
   },
   {
     id: 'api_read_p95_ms',
+    minSample: 100,
     label: 'Lecture API p95',
     target: 300,
     comparator: 'lte',
@@ -68,6 +69,7 @@ export const PHASE10_SLOS: readonly SloDefinition[] = [
   },
   {
     id: 'http_5xx_ratio',
+    minSample: 100,
     label: 'Erreurs 5xx',
     target: 0.01,
     comparator: 'lte',
@@ -116,7 +118,18 @@ export const PHASE10_SLOS: readonly SloDefinition[] = [
   },
 ] as const;
 
-export type Phase10Measurements = Partial<Record<Phase10MeasurementKey, number | null>>;
+export interface SampleMeasurement {
+  value: number | null;
+  count: number | null;
+  valid: boolean;
+  verdict?: string;
+  reason?: string;
+}
+
+/** Numbers remain supported for instantaneous, independently measured metrics. */
+export type Phase10Measurements = Partial<
+  Record<Phase10MeasurementKey, number | SampleMeasurement | null>
+>;
 
 export interface SloEvaluation {
   id: Phase10MeasurementKey;
@@ -160,7 +173,9 @@ export function evaluateSlo(
   definition: SloDefinition,
   measurements: Phase10Measurements
 ): SloEvaluation {
-  const raw = measurements[definition.id];
+  const measurement = measurements[definition.id];
+  const sample = measurement != null && typeof measurement === 'object' ? measurement : null;
+  const raw = sample ? sample.value : measurement;
   const base = {
     id: definition.id,
     label: definition.label,
@@ -169,6 +184,20 @@ export function evaluateSlo(
     unit: definition.unit,
     source: definition.source,
   };
+  if (
+    sample &&
+    (!sample.valid ||
+      sample.count == null ||
+      !Number.isInteger(sample.count) ||
+      sample.count < (definition.minSample ?? 1))
+  ) {
+    return {
+      ...base,
+      observed: null,
+      status: 'insufficient_data',
+      reason: sample.reason ?? 'échantillon insuffisant ou invalide',
+    };
+  }
   if (raw == null || typeof raw !== 'number' || !Number.isFinite(raw)) {
     return { ...base, observed: null, status: 'insufficient_data', reason: 'mesure absente' };
   }
@@ -178,6 +207,14 @@ export function evaluateSlo(
       observed: raw,
       status: 'fail',
       reason: `observé ${formatValue(raw, definition.unit)} vs cible ${definition.comparator === 'gte' ? '≥' : definition.comparator === 'lte' ? '≤' : '='} ${formatValue(definition.target, definition.unit)}`,
+    };
+  }
+  if (sample?.verdict === 'fail') {
+    return {
+      ...base,
+      observed: raw,
+      status: 'insufficient_data',
+      reason: 'scénario source en échec',
     };
   }
   return {
@@ -196,9 +233,12 @@ export function evaluatePhase10Slos(
 ): Phase10SloReport {
   const evaluations = slos.map((definition) => evaluateSlo(definition, measurements));
   const failures = evaluations.filter((evaluation) => evaluation.status === 'fail');
-  const insufficient = evaluations.filter((evaluation) => evaluation.status === 'insufficient_data');
+  const insufficient = evaluations.filter(
+    (evaluation) => evaluation.status === 'insufficient_data'
+  );
   const alerts = failures.map(
-    (failure) => `[SLO ${failure.id}] ${failure.label} : ${failure.reason} (source : ${failure.source})`
+    (failure) =>
+      `[SLO ${failure.id}] ${failure.label} : ${failure.reason} (source : ${failure.source})`
   );
   return {
     generatedAt,
@@ -228,7 +268,8 @@ export function alertDecision(report: Phase10SloReport): {
       level: 'incomplete',
       page: false,
       messages: report.insufficient.map(
-        (evaluation) => `[SLO non mesuré] ${evaluation.id} — instrumentation requise (${evaluation.source})`
+        (evaluation) =>
+          `[SLO non mesuré] ${evaluation.id} — instrumentation requise (${evaluation.source})`
       ),
     };
   }

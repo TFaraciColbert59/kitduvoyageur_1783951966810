@@ -958,7 +958,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(20),
-        fetchMyTripsCached().catch(() => null),
+        fetchMyTripsCached(user.id).catch(() => null),
         fetch(`/api/identity/signature?userId=${encodeURIComponent(user.id)}`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         supabase
           .from('reward_accounts')
