@@ -85,7 +85,23 @@ policy `geo_pois`, contrainte de sous-types, import Overpass ciblé, réécritur
 capsule locale, barre basse unique, haptique `rigid`, flag, clé serveur, `?scene=`,
 Playwright, population masquée, avatars masqués).
 
-## 5. État de la livraison
+## 5. Recette finale
+
+`npm run explorer:verify` **vert deux fois de suite** (voir `VERIFY_LAST.md`) :
+
+| Étape | Résultat |
+|---|---|
+| `tsc --noEmit` | 0 erreur |
+| `next lint` | 0 erreur |
+| Vitest Explorer | **46 tests / 46** |
+| `next build` | `ƒ /explorer 27.6 kB · First Load JS 148 kB` (budget 170) |
+| Playwright `mobile-chromium` | **62 tests** (écrans, feuille, SOS, hors-ligne, a11y) |
+| Playwright `mobile-webkit` | idem |
+| axe | aucune violation sérieuse (4 scènes) |
+| greps | E4501C, TODO/mock, SERVICE_ROLE, projet fantôme, compas : vierges |
+| intrusion RLS | **11/11** |
+
+## 6. État de la livraison
 
 - Branche `feat/explorer-v2` poussée sur `origin` (rebasée sur `main` `52b7e4bd`).
 - **PR ouverte en brouillon : https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/119**
@@ -94,7 +110,7 @@ Playwright, population masquée, avatars masqués).
 - Gate `npm run explorer:verify` : voir `docs/explorer-v2/VERIFY_LAST.md`
   (artifact réel de la dernière exécution).
 
-## 6. Commandes de reproduction
+## 7. Commandes de reproduction
 
 ```bash
 npm ci

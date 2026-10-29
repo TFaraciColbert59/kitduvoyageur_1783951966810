@@ -73,7 +73,7 @@ test.describe('Explorer v2 · 41 écrans @explorer-v2', () => {
 
   for (const { scene, screen, minTabs, title } of SCREENS) {
     test(`${screen} (${scene}) @explorer-v2`, async ({ page }) => {
-      await page.goto(`/explorer?v2=1&scene=${scene}`, { waitUntil: 'domcontentloaded' });
+      await page.goto(`/explorer?v2=1&scene=${scene}`, { waitUntil: 'commit', timeout: 45_000 });
       await expect(root(page)).toHaveAttribute('data-scene', scene, { timeout: 45_000 });
       await expect(root(page).locator('.xp-sheet')).toBeVisible({ timeout: 30_000 });
       // Données pays/régions chargées : sans elles les titres retombent sur l'ISO.

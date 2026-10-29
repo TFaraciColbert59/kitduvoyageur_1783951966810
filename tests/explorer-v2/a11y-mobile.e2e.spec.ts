@@ -10,8 +10,21 @@ function root(page: Page) {
   return page.locator('.xp-root').last();
 }
 
+async function gotoScene(page: Page, url: string) {
+  // Sous charge, un `goto` peut être annulé par un rendu en cours : on réessaie.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await page.goto(url, { waitUntil: 'commit', timeout: 45_000 });
+      return;
+    } catch (error) {
+      if (attempt === 1) throw error;
+      await page.waitForTimeout(500);
+    }
+  }
+}
+
 async function openScene(page: Page, scene: string) {
-  await page.goto(`/explorer?v2=1&scene=${scene}`, { waitUntil: 'domcontentloaded' });
+  await gotoScene(page, `/explorer?v2=1&scene=${scene}`);
   const refuse = page.getByRole('button', { name: /^Refuser$/ });
   if (await refuse.count()) await refuse.first().click().catch(() => {});
   await expect(root(page)).toHaveAttribute('data-scene', scene, { timeout: 45_000 });

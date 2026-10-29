@@ -9,6 +9,19 @@ function root(page: Page) {
   return page.locator('.xp-root').last();
 }
 
+/** Navigation robuste : sous charge, un `goto` peut être annulé par le rendu. */
+async function gotoScene(page: Page, url: string) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await page.goto(url, { waitUntil: 'commit', timeout: 45_000 });
+      return;
+    } catch (error) {
+      if (attempt === 1) throw error;
+      await page.waitForTimeout(500);
+    }
+  }
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem(
@@ -21,13 +34,13 @@ test.beforeEach(async ({ page }) => {
 test.describe('Explorer v2 · états @explorer-v2', () => {
   test('mouvement réduit : caméra sans animation @explorer-v2', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/explorer?v2=1&scene=lieu', { waitUntil: 'domcontentloaded' });
+    await gotoScene(page, '/explorer?v2=1&scene=lieu');
     await expect(root(page)).toHaveAttribute('data-reduced-motion', 'true', { timeout: 45_000 });
     await expect(root(page).locator('.xp-sheet')).toBeVisible();
   });
 
   test('boussole : nord en haut / cap en haut @explorer-v2', async ({ page }) => {
-    await page.goto('/explorer?v2=1&scene=course', { waitUntil: 'domcontentloaded' });
+    await gotoScene(page, '/explorer?v2=1&scene=course');
     await expect(root(page).locator('.xp-activity-pill')).toBeVisible({ timeout: 45_000 });
     const compass = root(page).locator('.xp-icon-btn[aria-label="Boussole"]');
     await expect(compass).toBeVisible();
@@ -42,7 +55,7 @@ test.describe('Explorer v2 · états @explorer-v2', () => {
 
   test('10 pays tirés au hasard sont ouvrables @explorer-v2', async ({ page }) => {
     test.setTimeout(180_000);
-    await page.goto('/explorer?v2=1&scene=ia', { waitUntil: 'domcontentloaded' });
+    await gotoScene(page, '/explorer?v2=1&scene=ia');
     await expect(root(page).locator('.xp-sheet')).toBeVisible({ timeout: 45_000 });
     await page
       .waitForFunction(
@@ -69,7 +82,7 @@ test.describe('Explorer v2 · états @explorer-v2', () => {
     for (const pick of picks) {
       // Sous forte charge, un rendu peut être perdu : on réessaie une fois.
       if ((await page.locator('.xp-root').count()) === 0) {
-        await page.goto('/explorer?v2=1&scene=ia', { waitUntil: 'domcontentloaded' });
+        await gotoScene(page, '/explorer?v2=1&scene=ia');
         await expect(root(page).locator('.xp-sheet')).toBeVisible({ timeout: 30_000 });
       }
       // Tout se joue côté client : pas de rechargement de page entre les pays.
@@ -99,9 +112,9 @@ test.describe('Explorer v2 · états @explorer-v2', () => {
   });
 
   test('unités impériales pour les États-Unis @explorer-v2', async ({ page }) => {
-    await page.goto('/explorer?v2=1&scene=usa', { waitUntil: 'domcontentloaded' });
+    await gotoScene(page, '/explorer?v2=1&scene=usa');
     await expect(root(page)).toHaveAttribute('data-units', 'imperial', { timeout: 45_000 });
-    await page.goto('/explorer?v2=1&scene=pays', { waitUntil: 'domcontentloaded' });
+    await gotoScene(page, '/explorer?v2=1&scene=pays');
     await expect(root(page)).toHaveAttribute('data-units', 'metric', { timeout: 45_000 });
   });
 });

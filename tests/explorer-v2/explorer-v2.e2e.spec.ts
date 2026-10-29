@@ -49,8 +49,21 @@ async function dismissCookies(page: Page) {
     .catch(() => {});
 }
 
+async function gotoScene(page: Page, url: string) {
+  // Sous charge, un `goto` peut être annulé par un rendu en cours : on réessaie.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await page.goto(url, { waitUntil: 'commit', timeout: 45_000 });
+      return;
+    } catch (error) {
+      if (attempt === 1) throw error;
+      await page.waitForTimeout(500);
+    }
+  }
+}
+
 async function openScene(page: Page, scene: string) {
-  await page.goto(`/explorer?v2=1&scene=${scene}`, { waitUntil: 'domcontentloaded' });
+  await gotoScene(page, `/explorer?v2=1&scene=${scene}`);
   await dismissCookies(page);
   // Un premier chargement à froid (build neuf, cache vide) peut dépasser 15 s :
   // on attend que les données pays soient arrivées avant d'aller plus loin.

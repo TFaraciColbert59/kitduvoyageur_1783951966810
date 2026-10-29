@@ -1,6 +1,6 @@
 # VERIFY_LAST · Explorer v2
 
-- Exécuté : 2026-10-29T11:41:02.906Z
+- Exécuté : 2026-10-29T12:21:55.786Z
 - Mode : courant
 - Résultat : ❌ ÉCHEC — Playwright mobile-chromium rouge
 
@@ -8,21 +8,21 @@
 
 | Étape | Code | Durée |
 |---|---|---|
-| type-check | 0 | 7.6 s |
+| type-check | 0 | 8.1 s |
 | lint | 0 | 2.6 s |
-| vitest | 0 | 1.5 s |
-| build | 0 | 96.5 s |
-| playwright | 1 | 269.1 s |
+| vitest | 0 | 1.6 s |
+| build | 0 | 288.6 s |
+| playwright | 1 | 267.6 s |
 
 ## Journal
 
 ```
 # Explorer v2 · verify-all
 - racine : /Users/fr168256/Desktop/lkdv-explorer-v2
-- date : 2026-10-29T11:34:41.540Z
+- date : 2026-10-29T12:12:21.997Z
 
 ▶ type-check : npx tsc --noEmit
-✔ type-check (7.6 s)
+✔ type-check (8.1 s)
 
 ▶ lint : npx next lint
 22:7  Warning: 'PREMIER_JOUR' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
@@ -59,19 +59,19 @@ RUN  v4.1.11 /Users/fr168256/Desktop/lkdv-explorer-v2
 
  Test Files  3 passed (3)
       Tests  46 passed (46)
-   Start at  12:34:52
-   Duration  629ms (transform 125ms, setup 130ms, import 270ms, tests 74ms, environment 361ms)
+   Start at  13:12:33
+   Duration  621ms (transform 125ms, setup 107ms, import 253ms, tests 77ms, environment 321ms)
 
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
 Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
-(node:84855) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:88841) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:84856) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:88842) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:84854) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:88840) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-✔ vitest (1.5 s)
+✔ vitest (1.6 s)
 
 ▶ build : npx next build
 ├ ƒ /recompenses                                7.91 kB         266 kB
@@ -95,11 +95,11 @@ Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 ƒ  (Dynamic)  server-rendered on demand
 
  ⚠ Using edge runtime on a page currently disables static generation for that page
-(node:84933) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:89406) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:84937) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:89459) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
-✔ build (96.5 s)
+✔ build (288.6 s)
 … First Load JS /explorer introuvable dans le log de build (toléré hors phase 9)
 ✔ serveur de recette prêt sur :4028
 
