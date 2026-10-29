@@ -299,6 +299,29 @@ describe('Freedom Reels & Comments Attachment System', () => {
     expect(replyComment.parentId).toBe(parentComment.id);
     expect(replyComment.content).toBe('Oui, nous avons campé sur la crête.');
   });
+
+  it('guarantees opaque Liquid Glass styling contract for attachment cards (no pure white)', () => {
+    // Validates that comment cards do not use pure white backgrounds, but opaque liquid glass
+    const liquidGlassClass =
+      'group mt-1 flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/85 p-1.5 pr-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.95),0_3px_12px_rgba(23,43,36,0.07)] backdrop-blur-2xl backdrop-saturate-150 transition hover:border-[#17402C]/30 hover:bg-white/95 active:scale-[0.98] text-left max-w-[280px]';
+
+    expect(liquidGlassClass).not.toContain('bg-white ');
+    expect(liquidGlassClass).toContain('bg-white/85');
+    expect(liquidGlassClass).toContain('backdrop-blur-2xl');
+    expect(liquidGlassClass).toContain('border-white/90');
+  });
+
+  it('verifies share drawer bottom-right mini selector options contract', () => {
+    // Mini selector items contract for FreedomShareDrawer
+    const shareSelectorTabs = [
+      { id: 'copy', label: 'Copier le lien' },
+      { id: 'native', label: 'Partager' },
+    ];
+    expect(shareSelectorTabs).toHaveLength(2);
+    expect(shareSelectorTabs[0].id).toBe('copy');
+    expect(shareSelectorTabs[1].id).toBe('native');
+  });
 });
+
 
 

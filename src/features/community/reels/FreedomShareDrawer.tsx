@@ -6,6 +6,7 @@ import { Search, Link2, Share2, Send } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDragDismiss } from '@/hooks/gestures';
+import { SubCapsuleTabs } from '@/components/ui/CapsuleTabs';
 import { usePostShareTargets } from '@/features/community/feed/usePostShareTargets';
 import { createClient } from '@/lib/supabase/client';
 import type { FreedomReelItem } from './freedom-types';
@@ -71,6 +72,7 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
   const [query, setQuery] = useState('');
   const [realContacts, setRealContacts] = useState<RealContact[]>(FALLBACK_REAL_CONTACTS);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [shareTab, setShareTab] = useState(0);
 
   const { dragProps, handleProps, y } = useDragDismiss({
     onDismiss: () => {
@@ -235,29 +237,8 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
             />
           </div>
 
-          {/* Quick Action Buttons (Icons only, exactly matching feed style) */}
-          <div className="flex items-center justify-center gap-3 shrink-0 py-0.5">
-            <button
-              type="button"
-              className="grid size-10 place-items-center rounded-full border border-black/10 bg-white text-[#172B24] shadow-xs transition active:scale-90"
-              aria-label="Copier le lien"
-              onClick={() => void handleCopy()}
-            >
-              <Link2 size={18} />
-            </button>
-
-            <button
-              type="button"
-              className="grid size-10 place-items-center rounded-full border border-black/10 bg-white text-[#172B24] shadow-xs transition active:scale-90"
-              aria-label="Partager via l’appareil"
-              onClick={() => void handleNativeShare()}
-            >
-              <Share2 size={18} />
-            </button>
-          </div>
-
           {/* Contacts List with Real Avatars (no 'Conversation récente' label, right button with icon only) */}
-          <div className="flex-1 overflow-y-auto space-y-1 pr-0.5">
+          <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 pb-12">
             {displayedContacts.map((contact) => (
               <div
                 key={contact.id}
@@ -304,6 +285,27 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Floating Mini Selector in Bottom Right (Identique à celui de la page compte grille/sorties) */}
+        <div className="absolute right-3.5 bottom-3.5 z-20">
+          <SubCapsuleTabs
+            items={[
+              { id: 'copy', label: 'Copier le lien', icon: <Link2 size={15} /> },
+              { id: 'native', label: 'Partager', icon: <Share2 size={15} /> },
+            ]}
+            activeIndex={shareTab}
+            onIndexChange={(idx) => {
+              setShareTab(idx);
+              if (idx === 0) {
+                void handleCopy();
+              } else {
+                void handleNativeShare();
+              }
+            }}
+            ariaLabel="Options de partage"
+            placement="inline"
+          />
         </div>
       </motion.div>
     </div>

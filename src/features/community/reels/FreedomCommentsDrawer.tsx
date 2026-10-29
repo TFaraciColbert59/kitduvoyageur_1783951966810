@@ -244,9 +244,12 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
     });
   };
 
-  // Render attachment in sleek white card format with image/icon on the left, title on the right
+  // Render attachment in sleek opaque liquid glass card format with image/icon on the left, title on the right
+  const ATTACHMENT_CARD_CLASS =
+    'group mt-1 flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/85 p-1.5 pr-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.95),0_3px_12px_rgba(23,43,36,0.07)] backdrop-blur-2xl backdrop-saturate-150 transition hover:border-[#17402C]/30 hover:bg-white/95 active:scale-[0.98] text-left max-w-[280px]';
+
   const renderAttachment = (att: FreedomCommentAttachment) => {
-    // 1. Kit attachment: card fond blanc, image à gauche, titre à droite
+    // 1. Kit attachment: card liquid glass opaque, image à gauche, titre à droite
     if (att.type === 'kit' && att.kit) {
       const kitImage =
         att.kit.image_url ||
@@ -268,10 +271,10 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
               router.push(`/compte?tab=kits&kit=${encodeURIComponent(att.kit!.kit_id)}`);
             }
           }}
-          className="group mt-1 flex items-center gap-2.5 rounded-2xl border border-black/8 bg-white p-1.5 pr-3 shadow-xs transition hover:border-[#17402C]/30 hover:shadow-sm active:scale-[0.98] text-left max-w-[280px]"
+          className={ATTACHMENT_CARD_CLASS}
           aria-label={`Voir le kit ${att.kit.kit_name}`}
         >
-          <div className="size-10 shrink-0 overflow-hidden rounded-xl bg-[#E8F0E6] border border-black/5">
+          <div className="size-9 shrink-0 overflow-hidden rounded-xl bg-[#E8F0E6] border border-white/80 shadow-inner">
             <img
               src={kitImage}
               alt={att.kit.kit_name}
@@ -287,7 +290,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
       );
     }
 
-    // 2. GPX trace attachment: card fond blanc, icone tracé/randonnée à gauche, nom à droite
+    // 2. GPX trace attachment: card liquid glass opaque, icone tracé/randonnée à gauche, nom à droite
     if (att.type === 'gpx' && att.gpx) {
       return (
         <button
@@ -297,11 +300,11 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
             haptic('light');
             router.push(`/explorer?gpx=${encodeURIComponent(att.gpx!.name)}`);
           }}
-          className="group mt-1 flex items-center gap-2.5 rounded-2xl border border-black/8 bg-white p-1.5 pr-3 shadow-xs transition hover:border-[#17402C]/30 hover:shadow-sm active:scale-[0.98] text-left max-w-[280px]"
+          className={ATTACHMENT_CARD_CLASS}
           aria-label={`Voir le tracé ${att.gpx.name}`}
         >
-          <div className="size-10 shrink-0 rounded-xl bg-[#E8F0E6] flex items-center justify-center border border-black/5 text-[#17402C]">
-            <Route size={19} strokeWidth={2.2} />
+          <div className="size-9 shrink-0 rounded-xl bg-[#E8F0E6]/90 flex items-center justify-center border border-white/80 text-[#17402C] shadow-inner">
+            <Route size={18} strokeWidth={2.2} />
           </div>
           <div className="min-w-0 flex-1">
             <span className="block truncate text-xs font-semibold text-[#172B24] group-hover:text-[#17402C]">
@@ -312,7 +315,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
       );
     }
 
-    // 3. Product attachment: card fond blanc, image à gauche, nom à droite
+    // 3. Product attachment: card liquid glass opaque, image à gauche, nom à droite
     if (att.type === 'product' && att.product) {
       const prodImg = att.product.photo_url || '/assets/images/gear-tent-small.jpg';
       return (
@@ -323,10 +326,10 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
             haptic('light');
             router.push(`/materiel?product=${encodeURIComponent(att.product!.id || att.product!.name)}`);
           }}
-          className="group mt-1 flex items-center gap-2.5 rounded-2xl border border-black/8 bg-white p-1.5 pr-3 shadow-xs transition hover:border-[#17402C]/30 hover:shadow-sm active:scale-[0.98] text-left max-w-[280px]"
+          className={ATTACHMENT_CARD_CLASS}
           aria-label={`Voir le produit ${att.product.name}`}
         >
-          <div className="size-10 shrink-0 overflow-hidden rounded-xl bg-[#E8F0E6] border border-black/5">
+          <div className="size-9 shrink-0 overflow-hidden rounded-xl bg-[#E8F0E6] border border-white/80 shadow-inner">
             <img
               src={prodImg}
               alt={att.product.name}
@@ -342,7 +345,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
       );
     }
 
-    // 4. Trail attachment: card fond blanc, icone sentier à gauche, nom à droite
+    // 4. Trail attachment: card liquid glass opaque, icone sentier à gauche, nom à droite
     if (att.type === 'trail' && att.trail) {
       return (
         <button
@@ -352,11 +355,11 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
             haptic('light');
             router.push(`/explorer?trail=${encodeURIComponent(att.trail!.id || att.trail!.name)}`);
           }}
-          className="group mt-1 flex items-center gap-2.5 rounded-2xl border border-black/8 bg-white p-1.5 pr-3 shadow-xs transition hover:border-[#17402C]/30 hover:shadow-sm active:scale-[0.98] text-left max-w-[280px]"
+          className={ATTACHMENT_CARD_CLASS}
           aria-label={`Voir la randonnée ${att.trail.name}`}
         >
-          <div className="size-10 shrink-0 rounded-xl bg-[#E8F0E6] flex items-center justify-center border border-black/5 text-[#17402C]">
-            <Footprints size={19} strokeWidth={2.2} />
+          <div className="size-9 shrink-0 rounded-xl bg-[#E8F0E6]/90 flex items-center justify-center border border-white/80 text-[#17402C] shadow-inner">
+            <Footprints size={18} strokeWidth={2.2} />
           </div>
           <div className="min-w-0 flex-1">
             <span className="block truncate text-xs font-semibold text-[#172B24] group-hover:text-[#17402C]">
