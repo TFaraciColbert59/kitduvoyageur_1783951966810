@@ -342,6 +342,7 @@ function FreedomKitUsageMapFullDrawer({
 }) {
   const { haptic } = useHapticFeedback();
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   const { dragProps, handleProps, y } = useDragDismiss({
     onDismiss: () => {
@@ -373,17 +374,14 @@ function FreedomKitUsageMapFullDrawer({
 
         mapInstance.on('load', () => {
           if (isCancelled) return;
+          setMapLoaded(true);
+          // Affiche UNIQUEMENT les points du kit sur la carte, strictement aucun texte ni label
           for (const loc of USAGE_LOCATIONS) {
             const markerDiv = document.createElement('div');
-            markerDiv.className = 'group relative cursor-pointer';
+            markerDiv.className = 'relative flex items-center justify-center pointer-events-none select-none';
             markerDiv.innerHTML = `
-              <div class="relative flex items-center justify-center">
-                <span class="absolute size-5 rounded-full bg-[#17402C]/40 animate-ping"></span>
-                <span class="relative size-3.5 rounded-full bg-[#17402C] border-2 border-white shadow-md"></span>
-              </div>
-              <div class="absolute left-1/2 -translate-x-1/2 bottom-5 pointer-events-none whitespace-nowrap rounded-full bg-black/75 px-2 py-0.5 text-[9px] font-bold text-white backdrop-blur-md border border-white/20 shadow-sm opacity-90 transition group-hover:opacity-100">
-                ${loc.name.split('·')[0].trim()}
-              </div>
+              <span class="absolute size-4.5 rounded-full bg-emerald-400/50 animate-ping"></span>
+              <span class="relative size-3 rounded-full bg-emerald-500 border-2 border-white shadow-[0_2px_8px_rgba(0,0,0,0.45)]"></span>
             `;
             new Marker({ element: markerDiv })
               .setLngLat([loc.coords[0], loc.coords[1]])
@@ -428,33 +426,31 @@ function FreedomKitUsageMapFullDrawer({
           <span />
         </div>
 
-        {/* Vue monde plein drawer avec tous les points d'utilisation */}
+        {/* Vue monde plein drawer avec UNIQUEMENT les points d'utilisation du kit */}
         <div className="relative flex-1 w-full h-full overflow-hidden bg-[#15231c]">
           <div ref={mapContainerRef} className="size-full" />
 
-          {/* Points fallback avec texture satellite/relief si WebGL indisponible */}
-          <div className="absolute inset-0 pointer-events-none">
-            {USAGE_LOCATIONS.map((loc, idx) => {
-              // Projection sphérique équirectangulaire simple pour positionner les points
-              const xPercent = ((loc.coords[0] + 180) / 360) * 100;
-              const yPercent = ((90 - loc.coords[1]) / 180) * 100;
-              return (
-                <div
-                  key={idx}
-                  className="absolute pointer-events-auto -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
-                  style={{ left: `${xPercent}%`, top: `${yPercent}%` }}
-                >
-                  <div className="relative flex items-center justify-center">
-                    <span className="absolute size-4 rounded-full bg-emerald-400/40 animate-ping" />
-                    <span className="relative size-3 rounded-full bg-emerald-500 border border-white shadow-md" />
+          {/* Points fallback si WebGL indisponible (uniquement les points, aucun texte) */}
+          {!mapLoaded && (
+            <div className="absolute inset-0 pointer-events-none">
+              {USAGE_LOCATIONS.map((loc, idx) => {
+                const xPercent = ((loc.coords[0] + 180) / 360) * 100;
+                const yPercent = ((90 - loc.coords[1]) / 180) * 100;
+                return (
+                  <div
+                    key={idx}
+                    className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: `${xPercent}%`, top: `${yPercent}%` }}
+                  >
+                    <div className="relative flex items-center justify-center">
+                      <span className="absolute size-4.5 rounded-full bg-emerald-400/50 animate-ping" />
+                      <span className="relative size-3 rounded-full bg-emerald-500 border-2 border-white shadow-[0_2px_8px_rgba(0,0,0,0.45)]" />
+                    </div>
                   </div>
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-4 pointer-events-none whitespace-nowrap rounded-full bg-black/70 px-2 py-0.5 text-[8.5px] font-bold text-white backdrop-blur-md border border-white/20 shadow-sm opacity-90 transition group-hover:opacity-100">
-                    {loc.name.split('·')[0].trim()}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
