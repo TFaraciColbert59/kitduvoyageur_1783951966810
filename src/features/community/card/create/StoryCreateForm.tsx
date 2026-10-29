@@ -5,7 +5,8 @@ import { z } from 'zod';
 import Icon from '@/components/ui/Icon';
 import { createClient } from '@/lib/supabase/client';
 import { prepareImage } from '@/lib/media/prepareImage';
-import { Chips, CountedTextArea, type ChipOption } from './wizard/fields';
+import { Chips, CountedTextArea, useObjectUrl, type ChipOption } from './wizard/fields';
+import { PreviewCard } from './wizard/PreviewCard';
 import { firstIssue } from './wizard/validate';
 import { MediaTray, acceptMedia } from './wizard/MediaTray';
 import { StoryStage } from './StoryStage';
@@ -47,8 +48,13 @@ const shareSchema = z.object({
 });
 
 export function StoryCreateForm({ onClose, user, onCreated }: StoryCreateFormProps) {
-  const { values, patch, clear } = useDraftedForm('story', user?.id, INITIAL);
+  const { values, patch, clear, restored } = useDraftedForm('story', user?.id, INITIAL);
   const [files, setFiles] = useState<File[]>([]);
+  const AUDIENCE_HINT: Record<Audience, string> = {
+    public: 'Visible 24 h par toute la communauté.',
+    abonnies: 'Visible 24 h par tes abonnés seulement.',
+    only_me: 'Visible 24 h par toi seul : un brouillon à revoir.',
+  };
 
   const flow = useCreateFlow<Step>({
     steps: STEPS,
@@ -111,6 +117,7 @@ export function StoryCreateForm({ onClose, user, onCreated }: StoryCreateFormPro
       nextLabel={flow.wizard.isLast ? 'Publier la story' : 'Suivant'}
       onBack={flow.onBack}
       onNext={flow.onNext}
+      draft={{ restored, onDiscard: clear }}
     >
       {flow.current === 'media' && files[0] ? (
         <StoryStage
@@ -147,9 +154,27 @@ export function StoryCreateForm({ onClose, user, onCreated }: StoryCreateFormPro
             value={values.audience}
             onChange={(audience) => patch({ audience })}
           />
+          <p className="lkdv-wz-hint">{AUDIENCE_HINT[values.audience]}</p>
+          <StoryPreview file={files[0] ?? null} caption={values.caption} />
         </>
       ) : null}
     </WizardFrame>
+  );
+}
+
+/** Vignette de la story telle qu'elle partira (image ou première image de la vidéo). */
+function StoryPreview({ file, caption }: { file: File | null; caption: string }) {
+  const url = useObjectUrl(file);
+  const isVideo = Boolean(file?.type.startsWith('video/'));
+  return (
+    <div className="lkdv-wz-story-preview">
+      <div className="lkdv-wz-story-thumb" aria-hidden="true">
+        {url && isVideo ? <video src={url} muted playsInline preload="metadata" /> : null}
+        {/* eslint-disable-next-line @next/next/no-img-element -- aperçu local (blob:) */}
+        {url && !isVideo ? <img src={url} alt="" /> : null}
+      </div>
+      <PreviewCard kicker={isVideo ? 'Story · vidéo · 24 h' : 'Story · photo · 24 h'} title={caption.trim() || 'Sans légende'} meta={[]} />
+    </div>
   );
 }
 

@@ -19,6 +19,8 @@ export interface WizardFrameProps {
   onNext: () => void;
   /** Désactive le glissement (ex. étape plein écran qui gère ses propres gestes). */
   swipeDisabled?: boolean;
+  /** Saisie reprise d'un brouillon : bandeau discret avec « Effacer ». */
+  draft?: { restored: boolean; onDiscard: () => void };
   children: React.ReactNode;
 }
 
@@ -44,6 +46,7 @@ export function WizardFrame({
   onBack,
   onNext,
   swipeDisabled = false,
+  draft,
   children,
 }: WizardFrameProps) {
   const isLast = step === total - 1;
@@ -173,6 +176,14 @@ export function WizardFrame({
 
       <div className="lkdv-wz-body" key={step}>
         <div className="lkdv-wz-swipe" ref={swipeRef} data-bounce={bounce ?? undefined}>
+          {draft?.restored && step === 0 ? (
+            <p className="lkdv-wz-draft" role="status">
+              <span>Brouillon repris</span>
+              <button type="button" onClick={draft.onDiscard}>
+                Effacer
+              </button>
+            </p>
+          ) : null}
           {error ? (
             <p className="lkdv-wz-error" role="alert">
               {error}

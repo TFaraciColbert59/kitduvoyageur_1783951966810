@@ -71,19 +71,19 @@ test.describe('Créer — glissement entre étapes', () => {
   test('glisser à gauche sur une étape incomplète rebondit sans avancer, puis avance une fois remplie', async ({ page }) => {
     await openCreate(page, 'Sortie');
     const pane = page.getByRole('tabpanel', { name: 'Sortie', exact: true });
-    await expect(stepLabel(pane)).toHaveText('1/3');
+    await expect(stepLabel(pane)).toHaveText('1/4');
 
     await swipe(pane.locator('.lkdv-wz-body'), -140);
     await expect(pane.locator('.lkdv-wz-swipe')).toHaveAttribute('data-bounce', 'left');
-    await expect(stepLabel(pane)).toHaveText('1/3');
+    await expect(stepLabel(pane)).toHaveText('1/4');
     await expect(pane.getByRole('alert')).toBeVisible();
 
     await pane.getByLabel('Titre').fill('Lac Blanc au lever du jour');
     await swipe(pane.locator('.lkdv-wz-body'), -140);
-    await expect(stepLabel(pane)).toHaveText('2/3');
+    await expect(stepLabel(pane)).toHaveText('2/4');
 
     await swipe(pane.locator('.lkdv-wz-body'), 140);
-    await expect(stepLabel(pane)).toHaveText('1/3');
+    await expect(stepLabel(pane)).toHaveText('1/4');
   });
 
   test('glisser à droite sur la première étape ouvre l’onglet précédent (Carnet, créé par la carte)', async ({ page }) => {

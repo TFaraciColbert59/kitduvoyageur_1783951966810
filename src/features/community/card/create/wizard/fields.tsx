@@ -2,6 +2,7 @@
 
 import React, { useEffect, useId, useState } from 'react';
 import Icon from '@/components/ui/Icon';
+import { PlaceSearch } from '@/features/community/create/shared/PlaceSearch';
 
 /* ---------------------------------------------------------------------------
    Champs des formulaires en étapes. Cibles tactiles ≥ 44 px, libellés liés
@@ -25,7 +26,7 @@ export function TextField({
   onChange: (value: string) => void;
   placeholder?: string;
   maxLength?: number;
-  type?: 'text' | 'date' | 'number' | 'search';
+  type?: 'text' | 'date' | 'time' | 'number' | 'search';
   inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
   min?: string | number;
   max?: string | number;
@@ -268,6 +269,53 @@ export function ImagePicker({
           </button>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+/** Puces qui AJOUTENT une suggestion (mot-clé, phrase, catégorie) sans rien sélectionner. */
+export function QuickChips({
+  label,
+  options,
+  onPick,
+}: {
+  label: string;
+  options: ReadonlyArray<{ id: string; label: string }>;
+  onPick: (id: string) => void;
+}) {
+  if (options.length === 0) return null;
+  return (
+    <div className="lkdv-wz-field">
+      <span className="lkdv-wz-label">{label}</span>
+      <div className="lkdv-wz-chips lkdv-wz-chips--quick" role="group" aria-label={label}>
+        {options.map((option) => (
+          <button key={option.id} type="button" className="lkdv-wz-chip lkdv-wz-chip--quick" onClick={() => onPick(option.id)}>
+            <Icon name="plus" size={13} aria-hidden="true" />
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Lieu avec suggestions réelles (géocodage serveur) ; `onPick` reçoit les coordonnées choisies. */
+export function PlaceField({
+  label,
+  value,
+  onChange,
+  onPick,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  onPick?: (place: { label: string; lat: number; lon: number }) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="lkdv-wz-field lkdv-wz-place">
+      <PlaceSearch label={label} value={value} onChange={onChange} onPick={onPick} placeholder={placeholder} />
     </div>
   );
 }

@@ -6,7 +6,9 @@ import { Flower2, Infinity as InfinityIcon, Leaf, Snowflake, Sun } from 'lucide-
 import Icon from '@/components/ui/Icon';
 import { createClient } from '@/lib/supabase/client';
 import { insertCommunityPost, uploadCoverImage } from './upload';
-import { Chips, CountedTextArea, ImagePicker, TextField, type ChipOption } from './wizard/fields';
+import { Chips, CountedTextArea, ImagePicker, QuickChips, TextField, useObjectUrl, type ChipOption } from './wizard/fields';
+import { PreviewCard } from './wizard/PreviewCard';
+import { formatWeight, missingEssentials, weightByCategory } from './wizard/assist';
 import { firstIssue } from './wizard/validate';
 import { useCreateFlow } from './wizard/useCreateFlow';
 import { useDraftedForm } from './wizard/useDraftedForm';
@@ -59,11 +61,19 @@ const INITIAL = {
 
 const nameSchema = z.object({ name: z.string().trim().min(1, 'Donne un nom à ton kit.') });
 
+/** Teintes de la répartition du poids : encre, sauge et terre de la palette. */
+const WEIGHT_COLORS = ['#17402C', '#5B7F55', '#2E7D5B', '#A05A3C', 'rgba(23, 64, 44, 0.45)', 'rgba(91, 127, 85, 0.45)'];
+
 export function KitCreateForm({ onClose, user, onCreated }: KitCreateFormProps) {
-  const { values, patch, clear } = useDraftedForm('kit', user?.id, INITIAL);
+  const { values, patch, clear, restored } = useDraftedForm('kit', user?.id, INITIAL);
   const [cover, setCover] = useState<File | null>(null);
   const [picking, setPicking] = useState(false);
   const slots = Array.isArray(values.slots) ? values.slots : [];
+  const coverUrl = useObjectUrl(cover);
+  const byCategory = weightByCategory(slots);
+  const missing = missingEssentials(slots, values.season);
+  const summary = summarizeSlots(slots);
+  const seasonLabel = SEASONS.find((season) => season.id === values.season)?.label ?? '';
 
   const flow = useCreateFlow<Step>({
     steps: STEPS,
@@ -148,6 +158,7 @@ export function KitCreateForm({ onClose, user, onCreated }: KitCreateFormProps) 
       nextLabel={flow.wizard.isLast ? 'Créer le kit' : 'Suivant'}
       onBack={flow.onBack}
       onNext={flow.onNext}
+      draft={{ restored, onDiscard: () => { clear(); setCover(null); flow.setError(null); } }}
     >
       {flow.current === 'name' ? (
         <>
@@ -177,13 +188,33 @@ export function KitCreateForm({ onClose, user, onCreated }: KitCreateFormProps) 
           {slots.length > 0 ? (
             <p className="lkdv-kb-total" role="status">
               {slots.length} élément{slots.length > 1 ? 's' : ''}
-              {summarizeSlots(slots).weightG > 0
-                ? ` · ${(summarizeSlots(slots).weightG / 1000).toFixed(1).replace('.', ',')} kg`
-                : ''}
-              {summarizeSlots(slots).unknown > 0
-                ? ` · poids de ${summarizeSlots(slots).unknown} à vérifier`
-                : ''}
+              {summary.weightG > 0 ? ` · ${formatWeight(summary.weightG)}` : ''}
+              {summary.unknown > 0 ? ` · poids de ${summary.unknown} à vérifier` : ''}
             </p>
+          ) : null}
+          {byCategory.length > 1 ? (
+            <div className="lkdv-wz-weights" aria-label="Poids par catégorie">
+              <div className="lkdv-wz-weights-bar" aria-hidden="true">
+                {byCategory.map((row, index) => (
+                  <i key={row.category} style={{ width: `${row.share * 100}%`, background: WEIGHT_COLORS[index % WEIGHT_COLORS.length] }} />
+                ))}
+              </div>
+              <ul>
+                {byCategory.slice(0, 5).map((row, index) => (
+                  <li key={row.category}>
+                    <i style={{ background: WEIGHT_COLORS[index % WEIGHT_COLORS.length] }} aria-hidden="true" />
+                    {row.category} {formatWeight(row.weightG)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {slots.length > 0 && missing.length > 0 ? (
+            <QuickChips
+              label={`Il manque peut-être (${seasonLabel.toLowerCase()})`}
+              options={missing.map((label) => ({ id: label, label }))}
+              onPick={() => setPicking(true)}
+            />
           ) : null}
           {picking ? (
             <KitProductPicker
@@ -221,6 +252,17 @@ export function KitCreateForm({ onClose, user, onCreated }: KitCreateFormProps) 
             options={VISIBILITIES}
             value={values.visibility}
             onChange={(visibility) => patch({ visibility })}
+          />
+          <PreviewCard
+            kicker={`Kit · ${seasonLabel}`}
+            title={values.name}
+            meta={[
+              `${slots.length} élément${slots.length > 1 ? 's' : ''}`,
+              summary.weightG > 0 && formatWeight(summary.weightG),
+              values.visibility === 'public' ? 'Public' : 'Privé',
+            ]}
+            text={values.description}
+            image={coverUrl ?? slots.find((slot) => slot.image)?.image ?? null}
           />
         </>
       ) : null}

@@ -5,7 +5,9 @@ import { z } from 'zod';
 import Icon from '@/components/ui/Icon';
 import { createClient } from '@/lib/supabase/client';
 import { insertCommunityPost, uploadPostMedia } from './upload';
-import { Chips, CountedTextArea, Stepper, TextField, type ChipOption } from './wizard/fields';
+import { Chips, CountedTextArea, PlaceField, QuickChips, Stepper, TextField, useObjectUrl, type ChipOption } from './wizard/fields';
+import { PreviewCard } from './wizard/PreviewCard';
+import { appendTag, shortDay, suggestHashtags } from './wizard/assist';
 import { MediaTray } from './wizard/MediaTray';
 import { firstIssue, todayIso } from './wizard/validate';
 import { useDraftedForm } from './wizard/useDraftedForm';
@@ -81,7 +83,7 @@ const whenSchema = z.object({
 export function PostCreateForm({ open, onClose, user, onCreated, format = 'photo' }: PostCreateFormProps) {
   const steps = POST_STEPS[format];
   const wizard = useWizard(steps.length);
-  const { values, patch, clear } = useDraftedForm('post', user?.id, INITIAL);
+  const { values, patch, clear, restored } = useDraftedForm('post', user?.id, INITIAL);
   const [files, setFiles] = useState<File[]>([]);
   const [clubs, setClubs] = useState<Array<{ id: string; name: string }>>([]);
   const [busy, setBusy] = useState(false);
@@ -116,6 +118,11 @@ export function PostCreateForm({ open, onClose, user, onCreated, format = 'photo
 
   const current = steps[wizard.step] ?? 'text';
   const hasMedia = files.length > 0;
+  const firstImage = files.find((file) => file.type.startsWith('image/')) ?? null;
+  const previewUrl = useObjectUrl(current === 'audience' ? firstImage : null);
+  const hashtags = suggestHashtags(values.content).map((tag) => ({ id: tag, label: `#${tag}` }));
+  const FORMAT_LABEL: Record<PostKind, string> = { photo: 'Photo', billet: 'Billet', question: 'Question', event: 'Événement' };
+  const AUDIENCE_LABEL: Record<Audience, string> = { public: 'Fil public', abonnies: 'Mes abonnés', club: clubs.find((club) => club.id === values.clubId)?.name ?? 'Un club' };
 
   // Les médias ne partent que sur le fil public : on le dit avant l'envoi, pas après l'échec.
   const audienceOptions = useMemo(
@@ -243,6 +250,7 @@ export function PostCreateForm({ open, onClose, user, onCreated, format = 'photo
         wizard.back();
       }}
       onNext={onNext}
+      draft={{ restored, onDiscard: () => { clear(); setFiles([]); setError(null); } }}
     >
       {current === 'media' ? <MediaTray files={files} onChange={setFiles} onError={setError} /> : null}
 
@@ -264,7 +272,10 @@ export function PostCreateForm({ open, onClose, user, onCreated, format = 'photo
             max={4000}
             placeholder={format === 'photo' ? 'Raconte ce moment… #bivouac' : 'Raconte, partage, demande…'}
           />
-          <TextField label="Lieu" value={values.location} onChange={(location) => patch({ location })} placeholder="Lac Blanc, Chamonix…" />
+          {format !== 'question' ? (
+            <QuickChips label="Mots-clés" options={hashtags} onPick={(tag) => patch({ content: appendTag(values.content, tag) })} />
+          ) : null}
+          <PlaceField label="Lieu" value={values.location} onChange={(location) => patch({ location })} placeholder="Lac Blanc, Chamonix…" />
         </>
       ) : null}
 
@@ -272,7 +283,7 @@ export function PostCreateForm({ open, onClose, user, onCreated, format = 'photo
         <>
           <TextField label="Titre de la sortie" value={values.title} onChange={(title) => patch({ title })} maxLength={120} placeholder="Lac Blanc au lever du jour" />
           <CountedTextArea label="Description" value={values.content} onChange={(content) => patch({ content })} max={1500} placeholder="Le programme, le niveau, le matériel…" />
-          <TextField label="Lieu" value={values.location} onChange={(location) => patch({ location })} placeholder="Chamonix" />
+          <PlaceField label="Lieu" value={values.location} onChange={(location) => patch({ location })} placeholder="Chamonix" />
         </>
       ) : null}
 
@@ -305,6 +316,13 @@ export function PostCreateForm({ open, onClose, user, onCreated, format = 'photo
               />
             )
           ) : null}
+          <PreviewCard
+            kicker={FORMAT_LABEL[format]}
+            title={values.title || values.content.split('\n')[0] || ''}
+            meta={[values.location && `📍 ${values.location}`, format === 'event' && shortDay(values.eventDate), AUDIENCE_LABEL[values.audience], files.length > 1 && `${files.length} médias`]}
+            text={values.title ? values.content : values.content.split('\n').slice(1).join(' ')}
+            image={previewUrl}
+          />
         </>
       ) : null}
     </WizardFrame>

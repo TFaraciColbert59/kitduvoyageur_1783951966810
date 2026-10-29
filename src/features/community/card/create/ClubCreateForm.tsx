@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import Icon from '@/components/ui/Icon';
 import { createClient } from '@/lib/supabase/client';
 import { insertCommunityPost, uploadCoverImage } from './upload';
-import { Chips, CountedTextArea, ImagePicker, TextField, type ChipOption } from './wizard/fields';
+import { Chips, CountedTextArea, ImagePicker, PlaceField, QuickChips, TextField, useObjectUrl, type ChipOption } from './wizard/fields';
+import { PreviewCard } from './wizard/PreviewCard';
+import { CLUB_SPIRIT_TEMPLATES, appendSentence } from './wizard/assist';
 import { firstIssue } from './wizard/validate';
 import { moderateText, validateActivity } from './moderation';
 import { useCreateFlow } from './wizard/useCreateFlow';
@@ -67,8 +69,36 @@ function slugify(value: string) {
 }
 
 export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps) {
-  const { values, patch, clear } = useDraftedForm('club', user?.id, INITIAL);
+  const { values, patch, clear, restored } = useDraftedForm('club', user?.id, INITIAL);
   const [badge, setBadge] = useState<File | null>(null);
+  const badgeUrl = useObjectUrl(badge);
+  // Nom déjà pris ? Vérifié pendant la saisie (lecture seule, non bloquant).
+  const [nameTaken, setNameTaken] = useState<boolean | null>(null);
+  const trimmedName = values.name.trim();
+  useEffect(() => {
+    setNameTaken(null);
+    if (trimmedName.length < 3) return;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const escaped = trimmedName.replace(/[\\%_]/g, (char) => `\\${char}`);
+        const { data } = await createClient().from('clubs').select('id').ilike('name', escaped).limit(1);
+        if (!cancelled) setNameTaken(Array.isArray(data) && data.length > 0);
+      } catch {
+        /* vérification facultative */
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [trimmedName]);
+  const nameProblem = trimmedName ? moderateText(trimmedName) : null;
+  const activityProblem = values.category.trim() ? validateActivity(values.category) : null;
+  const spiritOptions = CLUB_SPIRIT_TEMPLATES.filter((sentence) => !values.description.includes(sentence)).map((sentence) => ({
+    id: sentence,
+    label: sentence.split(',')[0].replace(/\.$/, ''),
+  }));
 
   const flow = useCreateFlow<Step>({
     steps: STEPS,
@@ -146,6 +176,7 @@ export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps
       nextLabel={flow.wizard.isLast ? 'Créer le club' : 'Suivant'}
       onBack={flow.onBack}
       onNext={flow.onNext}
+      draft={{ restored, onDiscard: () => { clear(); setBadge(null); flow.setError(null); } }}
     >
       {flow.current === 'identity' ? (
         <>
@@ -163,6 +194,13 @@ export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps
             maxLength={80}
             placeholder="La Cordée du Vercors"
           />
+          {nameProblem ? (
+            <p className="lkdv-wz-inline" role="status">{nameProblem}</p>
+          ) : nameTaken ? (
+            <p className="lkdv-wz-inline" role="status">Un club porte déjà ce nom : ajoute ton massif ou ta ville pour le distinguer.</p>
+          ) : nameTaken === false ? (
+            <p className="lkdv-wz-inline" data-tone="ok" role="status">Nom disponible.</p>
+          ) : null}
           <TextField
             label="Activité"
             value={values.category}
@@ -170,6 +208,7 @@ export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps
             maxLength={40}
             placeholder="Randonnée, trail, ski…"
           />
+          {activityProblem ? <p className="lkdv-wz-inline" role="status">{activityProblem}</p> : null}
           <Chips
             label="Suggestions"
             options={CATEGORIES}
@@ -181,11 +220,10 @@ export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps
 
       {flow.current === 'spirit' ? (
         <>
-          <TextField
+          <PlaceField
             label="Massif ou ville"
             value={values.location}
             onChange={(location) => patch({ location })}
-            maxLength={80}
             placeholder="Vercors"
           />
           <CountedTextArea
@@ -194,6 +232,11 @@ export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps
             onChange={(description) => patch({ description })}
             max={1500}
             placeholder="Le niveau, le rythme, l’ambiance…"
+          />
+          <QuickChips
+            label="Phrases toutes prêtes"
+            options={spiritOptions}
+            onPick={(sentence) => patch({ description: appendSentence(values.description, sentence) })}
           />
         </>
       ) : null}
@@ -211,6 +254,14 @@ export function ClubCreateForm({ onClose, user, onCreated }: ClubCreateFormProps
               ? 'Tout le monde peut rejoindre en un geste.'
               : 'Tu valides chaque demande avant l’entrée dans le club.'}
           </p>
+          <PreviewCard
+            kicker={`Club · ${values.privacy === 'open' ? 'Ouvert' : 'Sur validation'}`}
+            title={values.name}
+            meta={[values.category, values.location && `📍 ${values.location}`, '1 membre']}
+            text={values.description}
+            image={badgeUrl}
+            round
+          />
         </>
       ) : null}
     </WizardFrame>
