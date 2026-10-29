@@ -191,7 +191,7 @@ function FreedomProductDetailDrawer({
 
   return (
     <div
-      className="freedom-drawer-backdrop !z-50"
+      className="freedom-drawer-backdrop !z-[10010]"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -201,7 +201,7 @@ function FreedomProductDetailDrawer({
       <motion.div
         {...dragProps}
         style={{ y }}
-        className="freedom-drawer-sheet !h-[74vh] !max-h-[80dvh] overflow-hidden flex flex-col"
+        className="freedom-drawer-sheet !h-[76vh] !max-h-[82dvh] !z-[10011] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Poignée pour fermer en glissant vers le bas */}
@@ -405,7 +405,7 @@ function FreedomKitUsageMapFullDrawer({
 
   return (
     <div
-      className="freedom-drawer-backdrop !z-50"
+      className="freedom-drawer-backdrop !z-[10010]"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -415,7 +415,7 @@ function FreedomKitUsageMapFullDrawer({
       <motion.div
         {...dragProps}
         style={{ y }}
-        className="freedom-drawer-sheet !h-[94vh] !max-h-[96dvh] overflow-hidden flex flex-col p-0"
+        className="freedom-drawer-sheet !h-[94vh] !max-h-[96dvh] !z-[10011] overflow-hidden flex flex-col p-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Poignée UNIQUE pour fermer en glissant vers le bas (Strictement aucun autre bouton) */}
@@ -547,9 +547,9 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
   // Available categories for selector
   const rawCategories = Array.from(new Set(products.map((p) => p.category)));
 
-  // Build items for real SubCapsuleTabs selector (identical to compte drawer)
+  // Build items for real SubCapsuleTabs selector (icônes seules, identique à celui de la page compte)
   const categorySelectorItems = [
-    { id: 'all', label: 'Pas trié', icon: <LayoutGrid size={15} /> },
+    { id: 'all', label: '', icon: <LayoutGrid size={15} /> },
     ...rawCategories.slice(0, 4).map((cat) => {
       const lower = cat.toLowerCase();
       const icon = lower.includes('bivouac') || lower.includes('sommeil') ? (
@@ -566,7 +566,7 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
 
       return {
         id: cat,
-        label: cat.split('/')[0].trim(),
+        label: '',
         icon,
       };
     }),

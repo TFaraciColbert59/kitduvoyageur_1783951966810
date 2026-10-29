@@ -291,8 +291,8 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
         <div className="absolute right-3.5 bottom-3.5 z-20">
           <SubCapsuleTabs
             items={[
-              { id: 'copy', label: 'Copier le lien', icon: <Link2 size={15} /> },
-              { id: 'native', label: 'Partager', icon: <Share2 size={15} /> },
+              { id: 'copy', label: '', icon: <Link2 size={15} /> },
+              { id: 'native', label: '', icon: <Share2 size={15} /> },
             ]}
             activeIndex={shareTab}
             onIndexChange={(idx) => {
