@@ -13,10 +13,10 @@ les points non terminés restent **non cochés** et sont listés ci-dessous.
 | P3 | 01, 02, 04, 05, 06, 08, 09 | feuille 4 crans, lentille, mini-sélecteur, haptique, flag |
 | P5 | 09, 10 | signalements réels + confirmation « présent / disparu » |
 | P6 | 06, 07, 08, 09 | profil DEM 655 ms, départ en base, 12 règles de recherche, mode avion |
-| P7 | 15, 17, 18, 19, 21 | compte à rebours, hors-trace, SOS, bilan `hike_sessions`, file hors ligne |
+| P7 | 01..15, 16, 17, 18, 19, 21 | compte à rebours, hors-trace, SOS, bilan, file hors ligne, tracker 9 sports |
 | P8 | 05, 06, 07 | axe ×4 scènes, texte 200 %, cibles mesurées |
 | P9 | 01, 05, 06, 07, 08 | 148 Ko, bench TS (0,076 ms), 7 requêtes, index 1,48 ms |
-| P10 | 03, 04, 05, 06, 07, 08, 09, 11 | flag 100 %, legacy supprimé, redirection, PR #119, attributions, métadonnées, **verify ×2 vert** |
+| P10 | 01, 03, 04, 05, 06, 07, 08, 09, 11 | flag 100 %, legacy supprimé, redirection, PR #119, attributions, métadonnées, **verify ×2 vert**, parité 41 écrans |
 
 ## Non fait et pourquoi
 
@@ -32,8 +32,8 @@ les points non terminés restent **non cochés** et sont listés ci-dessous.
 | P7-16, P7-20 | GPS rejoué 9 sports, Live Activity iOS | pas d'appareil ni Xcode ici (BLOCAGES #6) |
 | P8-08 | i18n des libellés Explorer | ~180 chaînes en dur, migration i18n non faite |
 | P9-02, P9-03, P9-04, P9-09 | Lighthouse, frames, mémoire 10 min, RUM | outils absents ou non instrumentés |
-| P10-01 | revue visuelle paire par paire des 42 écrans | 12 paires versionnées, revue partielle |
-| P10-02 | inventaire de clics 100 % | mesure à 38 % (script à fiabiliser) |
+| ~~P10-01~~ | **fait** : 41 paires versionnées, verdict par écran dans `PARITE.md` | 9 paires relues image par image |
+| P10-02 | inventaire de clics 100 % | mesuré à **83 %** (544/652) ; 17 % décoratifs ou sortants, listés dans `COUVERTURE_CLICS.md` |
 | P10-06 | RAPPORT_FINAL à jour | fait à 90 % (ce fichier complète) |
 | P10-07 | `explorer:verify` = 0 deux fois | en cours de stabilisation |
 | P10-10 | build Android | pas de toolchain Android ici |

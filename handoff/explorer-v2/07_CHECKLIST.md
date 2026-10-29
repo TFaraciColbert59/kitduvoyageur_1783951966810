@@ -163,7 +163,7 @@ Coche `[x]` uniquement avec une entrée correspondante dans `docs/explorer-v2/MI
 
 ## P10 · Bascule et finition
 
-- [ ] **P10-01** · `PARITE.md` : 42 paires de captures maquette/réel — _preuve : fichier + images_
+- [x] **P10-01** · `PARITE.md` : 42 paires de captures maquette/réel — _preuve : fichier + images_
 - [ ] **P10-02** · Inventaire de clics 100 % (`08_TESTS.md §3`) — _preuve : rapport de couverture_
 - [x] **P10-03** · Flag `explorer_v2_enabled` à 100 % — _preuve : SQL_
 - [x] **P10-04** · Legacy Explorer supprimé (ExplorerClient, ExplorerMap…) sans casser d’import — _preuve : `next build` + `rg ExplorerClient`_
