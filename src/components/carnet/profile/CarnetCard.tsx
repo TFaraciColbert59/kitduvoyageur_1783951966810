@@ -8,7 +8,6 @@ import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetMediaTabs } from './CarnetMediaTabs';
 import { CarnetPages, type CarnetPageId } from './CarnetPages';
 import { CarnetDayHeader } from './CarnetDayHeader';
-import { CarnetDayMomentList } from './CarnetDayInfo';
 import { useDayMotion, useDaySwipe } from './CarnetDaySwipe';
 import { extractCoords, projectToViewBox } from './traceGeometry';
 import type { CarnetDetail, CarnetMomentItem, CarnetParticipant } from '@/features/carnet/detail/types';
@@ -29,6 +28,8 @@ export interface CarnetCardProps {
   onRequireAuth: () => void;
   onOpenCarnet: () => void;
   onOpenStat: (stat: CarnetStatsTab) => void;
+  /** Ouvre le drawer Moments depuis la pastille de compte, en haut à droite. */
+  onOpenMoments?: () => void;
   onOpenPost: (index: number) => void;
   onDownloadGpx: () => void;
   likesPage?: React.ReactNode;
@@ -82,7 +83,8 @@ function withPhoto(moments: CarnetMomentItem[]): CarnetMomentItem[] {
 /**
  * Carte du carnet : mini tracé, pages de jour (Résumé → J1..Jn), statistiques,
  * récit sur une ligne, participants, médias en pages. Les informations de lieu
- * et de jour vivent dans le drawer Statistiques.
+ * et de jour vivent dans le drawer Statistiques ; la liste des moments (heure
+ * et lieu) dans le drawer Moments, ouvert par la pastille de compte.
  *
  * Le balayage horizontal de la carte change de **jour**, où qu'il commence —
  * en-tête, grille, volet — au doigt comme à la souris et au clavier. La capsule
@@ -99,6 +101,7 @@ export function CarnetCard({
   onRequireAuth,
   onOpenCarnet,
   onOpenStat,
+  onOpenMoments,
   onOpenPost,
   onDownloadGpx,
   likesPage = null,
@@ -157,7 +160,8 @@ export function CarnetCard({
   );
 
   /* Une seule page montée : les moments de la page affichée nourrissent la
-     grille. La liste des moments vit dans `CarnetDayMomentList`, sous la grille. */
+     grille. La liste des moments ne vit plus sous la grille : elle est dans le
+     drawer Moments, ouvert par la pastille de compte en haut à droite. */
   const dayTabs = useMemo(() => buildDayTabs(pageCount), [pageCount]);
 
   /* Les deux segments de la capsule : handler stable, donc la lentille et les
@@ -223,6 +227,7 @@ export function CarnetCard({
             day={day}
             cover={cover}
             onOpenStat={onOpenStat}
+            onOpenMoments={onOpenMoments}
           />
 
           {/* La carte ne garde que le récit, sur une ligne : les informations
@@ -274,10 +279,6 @@ export function CarnetCard({
               managePage={managePage}
             />
           </div>
-
-          {/* Les moments sous la grille : les photos gardent leur place, la
-              liste ajoute l'heure et le lieu de chaque moment. */}
-          <CarnetDayMomentList detail={detail} day={day} />
         </div>
       </div>
 

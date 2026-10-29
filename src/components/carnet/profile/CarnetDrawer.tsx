@@ -8,10 +8,11 @@ import { useScrollCut, useScrollTail } from './useScrollCut';
 
 /**
  * Un seul drawer, réduit à ce qui n'est pas dans le sélecteur du bas :
- * les statistiques (sous-drawer à trois volets) et le Partage.
- * Commentaires, J’aime et Gérer sont devenus des pages du carrousel.
+ * les statistiques (sous-drawer à trois volets), le Partage, et les Moments
+ * (la liste qui vivait sous la grille). Commentaires, J’aime et Gérer sont
+ * devenus des pages du carrousel.
  */
-export type CarnetDrawerId = 'stats' | 'share';
+export type CarnetDrawerId = 'stats' | 'share' | 'moments';
 
 export interface CarnetDrawerProps {
   drawer: CarnetDrawerId;
@@ -52,7 +53,10 @@ export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: Carn
   const closingRef = useRef(false);
   const timerRef = useRef<number | null>(null);
   const available = PANES;
-  const activeIndex = Math.max(0, available.findIndex((pane) => pane.id === drawer));
+  /* `-1` : le volet affiché (Moments) n'est pas un segment de la capsule. La
+     lentille s'éteint alors que la capsule garde sa géométrie et son pas —
+     même état « page hors sélecteur » que le carrousel de la carte. */
+  const activeIndex = available.findIndex((pane) => pane.id === drawer);
   const items: CarnetMediaTab[] = available.map((pane) => ({
     id: pane.id,
     label: pane.label,
@@ -138,7 +142,8 @@ export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: Carn
             <span
               className="ckp-th"
               aria-hidden="true"
-              style={{ '--i': activeIndex } as React.CSSProperties}
+              data-off={activeIndex < 0 ? 'true' : undefined}
+              style={{ '--i': Math.max(0, activeIndex) } as React.CSSProperties}
             />
             <CarnetMediaTabs
               items={items}

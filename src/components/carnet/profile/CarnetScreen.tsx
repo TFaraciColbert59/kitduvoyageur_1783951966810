@@ -21,6 +21,7 @@ import { dayFocusKey } from './dayTrace';
 import { CarnetMediaViewer } from './CarnetMediaViewer';
 import { CarnetMoreMenu } from './CarnetMoreMenu';
 import { CarnetStatsPane } from './panes/CarnetStatsPane';
+import { CarnetMomentsPane } from './panes/CarnetMomentsPane';
 import { CarnetLikesPane } from './panes/CarnetLikesPane';
 import { CarnetCommentsPane } from './panes/CarnetCommentsPane';
 import { CarnetSharePane } from './panes/CarnetSharePane';
@@ -163,6 +164,14 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     setDrawer('stats');
   }, []);
 
+  /* La pastille de compte ouvre les moments de la page affichée. Même feuille
+     que les autres volets ; à la fermeture, le focus revient à la pastille,
+     retrouvée par sa classe (le nœud est neuf). */
+  const openMoments = useCallback(() => {
+    returnFocusRef.current = '.ckp-daypill-count';
+    setDrawer('moments');
+  }, []);
+
   useEffect(() => {
     if (drawer) {
       drawerWasOpen.current = true;
@@ -267,6 +276,9 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             {drawer === 'share' ? (
               <CarnetSharePane url={shareUrl} title={detail.title} onCopied={copied} />
             ) : null}
+            {drawer === 'moments' ? (
+              <CarnetMomentsPane detail={detailView} day={activeDay} />
+            ) : null}
           </CarnetDrawer>
         ) : (
           <CarnetCard
@@ -279,6 +291,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             onRequireAuth={requireAuth}
             onOpenCarnet={openCarnetFromCard}
             onOpenStat={openStat}
+            onOpenMoments={openMoments}
             onOpenPost={openPost}
             onDownloadGpx={handleDownloadGpx}
             likesPage={

@@ -724,39 +724,50 @@ describe('CarnetCard — balayage Résumé → J1..Jn', () => {
 });
 
 /* =============================================================================
-   Informations du jour : lignes chiffrées et liste des moments
+   Moments : sortis de la carte, dans le drawer
    ============================================================================= */
 
-describe('CarnetCard — moments de la page', () => {
-  const moments = (container: HTMLElement) =>
-    [...container.querySelectorAll('.ckp-dayinfo-moment')].map((row) => [
-      row.querySelector('.ckp-dayinfo-time')?.textContent,
-      row.querySelector('.ckp-dayinfo-place')?.textContent,
-    ]);
-
-  it('liste les moments du jour avec leur heure et leur lieu', () => {
+describe('CarnetCard — la liste des moments a quitté la carte', () => {
+  it('ne peint plus aucune ligne de moment sous la grille, sur aucun jour', () => {
     const { container } = render(<CarnetCard {...withDays()} />);
-    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
-    expect(moments(container)).toEqual([['18:30', 'Col']]);
+    const card = container.querySelector('.ckp-card') as Element;
+    for (let page = 0; page < 4; page += 1) {
+      expect(container.querySelector('.ckp-dayinfo')).toBeNull();
+      expect(container.querySelector('.ckp-dayinfo-moments')).toBeNull();
+      expect(container.querySelectorAll('.ckp-dayinfo-moment')).toHaveLength(0);
+      fireEvent.keyDown(card, { key: 'ArrowRight' });
+    }
   });
 
-  it('écrit un tiret pour une heure ou un lieu absent', () => {
+  it('garde la grille 134 telle quelle : les photos restent seules sous le récit', () => {
     const { container } = render(<CarnetCard {...withDays()} />);
-    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
-    fireEvent.keyDown(container.querySelector('.ckp-card') as Element, { key: 'ArrowRight' });
-    expect(moments(container)).toEqual([
-      ['—', '—'],
-      ['—', '—'],
-    ]);
+    const grid = container.querySelector('.ckp-grid-wrap') as HTMLElement;
+    expect(grid).toBeTruthy();
+    const pane = container.querySelector('.ckp-day-pane') as HTMLElement;
+    /* Le dernier bloc de la page est le média : plus rien ne le suit. */
+    expect(pane.lastElementChild?.classList.contains('ckp-media')).toBe(true);
   });
 
-  it('préfixe les moments du Résumé par leur numéro de jour', () => {
-    const { container } = render(<CarnetCard {...withDays()} />);
-    expect(
-      [...container.querySelectorAll('.ckp-dayinfo-moment')].map(
-        (row) => row.querySelector('.ckp-dayinfo-day')?.textContent,
-      ),
-    ).toEqual(['J1', 'J2', 'J2']);
+  it('ouvre le drawer Moments depuis la pastille de compte', () => {
+    const onOpenMoments = vi.fn();
+    render(<CarnetCard {...withDays({ onOpenMoments })} />);
+    const pill = screen.getByRole('button', { name: 'Ouvrir les moments — 3 moments' });
+    expect(pill.textContent).toBe('3 moments');
+    fireEvent.click(pill);
+    expect(onOpenMoments).toHaveBeenCalledOnce();
+  });
+
+  it('compte les moments du jour affiché dans la pastille', () => {
+    render(<CarnetCard {...withDays({ onOpenMoments: noop })} />);
+    const card = screen.getByRole('region', { name: 'Carte du carnet' });
+    fireEvent.keyDown(card, { key: 'ArrowRight' });
+    expect(screen.getByRole('button', { name: 'Ouvrir les moments — 1 moment' })).toBeTruthy();
+  });
+
+  it('laisse la pastille inerte quand aucun drawer n’est branché', () => {
+    render(<CarnetCard {...withDays()} />);
+    expect(screen.queryByRole('button', { name: /^Ouvrir les moments/ })).toBeNull();
+    expect(document.querySelector('.ckp-daypill-count')?.textContent).toBe('3 moments');
   });
 });
 

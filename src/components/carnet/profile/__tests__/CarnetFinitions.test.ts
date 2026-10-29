@@ -156,7 +156,7 @@ describe('Anatomie de la feuille', () => {
   it('rythme 12 / 20 posé par `gap`, marges internes de 16 px', () => {
     expect(rule('.ckp-group {')).toMatch(/gap:\s*12px/);
     expect(rule('.ckp-pane-body {')).toMatch(/gap:\s*20px/);
-    expect(rule('.ckp-pane-share,\n.ckp-likes,\n.ckp-manage {')).toMatch(/gap:\s*20px/);
+    expect(rule('.ckp-pane-share,\n.ckp-pane-moments,\n.ckp-likes,\n.ckp-manage {')).toMatch(/gap:\s*20px/);
     expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*16px 16px 64px/);
     expect(rule('.ckp-stats {')).toMatch(/padding:\s*0/);
   });
@@ -504,7 +504,7 @@ describe('Typographie — lot B', () => {
       '.ckp-elev-axis span {',
       '.ckp-pane-meta {',
       '.ckp-kit-detail {',
-      '.ckp-dayinfo-day {',
+      '.ckp-daypill-count {',
     ]) {
       expect(rule(selector)).toMatch(/color:\s*#6B7A70/);
     }

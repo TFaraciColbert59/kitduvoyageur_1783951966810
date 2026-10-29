@@ -1,0 +1,407 @@
+{
+  "posts": {
+    "momentListInCard": false,
+    "grid": true,
+    "gridColumns": "134px 134px 134px",
+    "gridGap": "2px",
+    "tile": {
+      "w": 134,
+      "h": 134,
+      "radius": "2px"
+    },
+    "pill": {
+      "tag": "BUTTON",
+      "text": "15 moments",
+      "label": "Ouvrir les moments — 15 moments",
+      "box": {
+        "x": 337,
+        "y": 57.67,
+        "w": 67,
+        "h": 12.64
+      },
+      "color": "rgb(107, 122, 112)",
+      "font": ""
+    }
+  },
+  "moments": {
+    "sheet": {
+      "x": 12,
+      "y": 48,
+      "w": 406,
+      "h": 503
+    },
+    "headButtons": 2,
+    "headText": "",
+    "headTitle": false,
+    "rows": [
+      {
+        "label": "J1 · 07:40",
+        "value": "Col de Rousset",
+        "box": {
+          "x": 28,
+          "y": 97,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J1 · 13:20",
+        "value": "Pas de l’Aiguille",
+        "box": {
+          "x": 28,
+          "y": 157,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J1 · 19:30",
+        "value": "Cabane de Pré Peyret",
+        "box": {
+          "x": 28,
+          "y": 217,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J2 · 07:40",
+        "value": "Cabane de Pré Peyret",
+        "box": {
+          "x": 28,
+          "y": 285,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J2 · 13:20",
+        "value": "Tête des Chaudières",
+        "box": {
+          "x": 28,
+          "y": 345,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J2 · 19:30",
+        "value": "Font d’Urle",
+        "box": {
+          "x": 28,
+          "y": 405,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J3 · 07:40",
+        "value": "Font d’Urle",
+        "box": {
+          "x": 28,
+          "y": 473,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J3 · 13:20",
+        "value": "Grand Veymont",
+        "box": {
+          "x": 28,
+          "y": 533,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J3 · 19:30",
+        "value": "Bivouac des Hauts-Plateaux",
+        "box": {
+          "x": 28,
+          "y": 593,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J4 · 07:40",
+        "value": "Bivouac des Hauts-Plateaux",
+        "box": {
+          "x": 28,
+          "y": 661,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J4 · 13:20",
+        "value": "Pas de la Ville",
+        "box": {
+          "x": 28,
+          "y": 721,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J4 · 19:30",
+        "value": "Corrençon-en-Vercors",
+        "box": {
+          "x": 28,
+          "y": 781,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J5 · 07:40",
+        "value": "Corrençon-en-Vercors",
+        "box": {
+          "x": 28,
+          "y": 849,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J5 · 13:20",
+        "value": "Bois Barbu",
+        "box": {
+          "x": 28,
+          "y": 909,
+          "w": 374,
+          "h": 48
+        }
+      },
+      {
+        "label": "J5 · 19:30",
+        "value": "Col de Rousset",
+        "box": {
+          "x": 28,
+          "y": 969,
+          "w": 374,
+          "h": 48
+        }
+      }
+    ],
+    "rowHeight": 48,
+    "valueColumn": 197.13,
+    "valueTabular": "tabular-nums",
+    "hairline": {
+      "top": "0px",
+      "left": "16px",
+      "right": "16px",
+      "height": "0.5px",
+      "background": "rgba(23, 43, 36, 0.06)"
+    },
+    "emptyState": false
+  },
+  "capsuleMoments": {
+    "capsule": {
+      "x": 318,
+      "y": 509,
+      "w": 88,
+      "h": 30
+    },
+    "lens": {
+      "x": 320.5,
+      "y": 511.5,
+      "w": 41.5,
+      "h": 25
+    },
+    "lensOpacity": "0",
+    "lensTransform": "matrix(1, 0, 0, 1, 0, 0)",
+    "lensRadius": "999px",
+    "segment": {
+      "x": 320.5,
+      "y": 511.5,
+      "w": 41.5,
+      "h": 25
+    },
+    "n": "2",
+    "radius": "999px",
+    "background": "rgba(23, 43, 36, 0.06)",
+    "shadow": "rgba(23, 43, 36, 0.06) 0px 1px 1px 0px inset, rgba(255, 255, 255, 0.65) 0px -1px 0px 0px inset, rgba(23, 43, 36, 0.1) 0px 2px 8px 0px",
+    "blur": "blur(18px) saturate(1.6)",
+    "segments": [
+      "Statistiques",
+      "Partage"
+    ]
+  },
+  "capsuleStats": {
+    "capsule": {
+      "x": 318,
+      "y": 509,
+      "w": 88,
+      "h": 30
+    },
+    "lens": {
+      "x": 320.5,
+      "y": 511.5,
+      "w": 41.5,
+      "h": 25
+    },
+    "lensOpacity": "1",
+    "lensTransform": "matrix(1, 0, 0, 1, 0, 0)",
+    "lensRadius": "999px",
+    "segment": {
+      "x": 320.5,
+      "y": 511.5,
+      "w": 41.5,
+      "h": 25
+    },
+    "n": "2",
+    "radius": "999px",
+    "background": "rgba(23, 43, 36, 0.06)",
+    "shadow": "rgba(23, 43, 36, 0.06) 0px 1px 1px 0px inset, rgba(255, 255, 255, 0.65) 0px -1px 0px 0px inset, rgba(23, 43, 36, 0.1) 0px 2px 8px 0px",
+    "blur": "blur(18px) saturate(1.6)",
+    "segments": [
+      "Statistiques",
+      "Partage"
+    ]
+  },
+  "overflow": {
+    "430x932": {
+      "innerWidth": 430,
+      "innerHeight": 932,
+      "scrollWidth": 430,
+      "scrollHeight": 932,
+      "okX": true,
+      "okY": true
+    },
+    "768x1024": {
+      "innerWidth": 768,
+      "innerHeight": 1024,
+      "scrollWidth": 768,
+      "scrollHeight": 1024,
+      "okX": true,
+      "okY": true
+    },
+    "1440x900": {
+      "innerWidth": 1440,
+      "innerHeight": 900,
+      "scrollWidth": 1440,
+      "scrollHeight": 900,
+      "okX": true,
+      "okY": true
+    },
+    "768x1024-moments": {
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "scrollHeight": 1024,
+      "innerHeight": 1024,
+      "okX": true,
+      "okY": true
+    }
+  },
+  "momentsDay2": [
+    [
+      "07:40",
+      "Cabane de Pré Peyret"
+    ],
+    [
+      "13:20",
+      "Tête des Chaudières"
+    ],
+    [
+      "19:30",
+      "Font d’Urle"
+    ]
+  ],
+  "community": {
+    "hasFeed": true,
+    "feedPost": {
+      "box": [
+        410,
+        410
+      ],
+      "border-radius": "28px",
+      "box-shadow": "rgba(255, 255, 255, 0.18) 0px 0px 0px 0.5px inset, rgba(23, 43, 36, 0.16) 0px 10px 26px 0px",
+      "background-color": "rgb(23, 64, 44)"
+    },
+    "actions": {
+      "box": [
+        149,
+        40
+      ],
+      "border-radius": "999px",
+      "padding": "3px",
+      "gap": "4px",
+      "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.325) 55%, rgba(255, 255, 255, 0.404))",
+      "box-shadow": "rgba(255, 255, 255, 0.9) 0px 1px 0px 0px inset, rgba(255, 255, 255, 0.45) 0px -1px 1px 0px inset, rgba(255, 255, 255, 0.28) 1px 0px 1px 0px inset, rgba(255, 255, 255, 0.28) -1px 0px 1px 0px inset, rgba(255, 255, 255, 0.14) 0px 0px 12px 0px inset, rgba(23, 43, 36, 0.14) 0px 0px 0px 0.5px, rgba(23, 43, 36, 0.12) 0px 8px 22px 0px",
+      "backdrop-filter": "blur(7.2px) saturate(1.9) brightness(1.07)"
+    },
+    "actionBtn": {
+      "box": [
+        45,
+        34
+      ],
+      "border-radius": "50%",
+      "width": "45px",
+      "height": "34px",
+      "transition": "transform 0.15s",
+      "color": "rgb(23, 64, 44)",
+      "background-color": "rgba(0, 0, 0, 0)"
+    },
+    "morePill": {
+      "box": [
+        34,
+        34
+      ],
+      "border-radius": "999px",
+      "width": "34px",
+      "height": "34px",
+      "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(23, 43, 36, 0.08) 0px 0px 0px 0.5px, rgba(23, 43, 36, 0.08) 0px 2px 8px 0px",
+      "background-image": "linear-gradient(rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.325) 55%, rgba(255, 255, 255, 0.404))"
+    },
+    "author": null,
+    "gbtn": {
+      "box": [
+        38,
+        38
+      ],
+      "border-radius": "50%",
+      "width": "38px",
+      "height": "38px",
+      "box-shadow": "rgba(255, 255, 255, 0.9) 0px 1px 0px 0px inset, rgba(23, 43, 36, 0.08) 0px 2px 8px 0px",
+      "background-color": "rgba(255, 255, 255, 0.5)"
+    },
+    "text": {
+      "box": [
+        374,
+        63.89
+      ],
+      "font-family": "-apple-system, \"system-ui\", \"SF Pro Text\", \"SF Pro Display\", inter, \"inter Fallback\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+      "font-size": "15px",
+      "font-weight": "400",
+      "line-height": "21.3px",
+      "color": "rgb(23, 64, 44)"
+    },
+    "pourtoi": {
+      "box": [
+        77.14,
+        40
+      ],
+      "height": "40px",
+      "border-radius": "999px",
+      "padding": "0px 14px",
+      "font-size": "13px",
+      "font-weight": "600",
+      "box-shadow": "rgba(255, 255, 255, 0.95) 0px 1px 0px 0px inset, rgba(23, 43, 36, 0.08) 0px 0px 0px 0.5px, rgba(23, 43, 36, 0.08) 0px 2px 8px 0px"
+    },
+    "count": {
+      "box": [
+        7,
+        10.5
+      ],
+      "font-size": "10.5px",
+      "font-weight": "600",
+      "font-variant-numeric": "tabular-nums",
+      "color": "rgb(23, 64, 44)"
+    }
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ]
+}
