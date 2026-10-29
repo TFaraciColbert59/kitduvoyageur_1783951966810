@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Send, Plus, Image as ImageIcon, Heart, CornerDownRight, X } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useDragDismiss } from '@/hooks/gestures';
 import { KitCard } from '@/features/messaging/components/KitCard';
 import { GPXPreviewCard } from '@/features/messaging/components/GPXPreviewCard';
 import { ProductCard } from '@/features/messaging/components/ProductCard';
@@ -50,7 +52,16 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const touchStartY = useRef<number | null>(null);
+
+  const { dragProps, handleProps, y } = useDragDismiss({
+    onDismiss: () => {
+      haptic('light');
+      onClose();
+    },
+    mode: 'handle',
+    threshold: 75,
+    velocityThreshold: 350,
+  });
 
   // Load comments
   useEffect(() => {
@@ -158,22 +169,19 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
       aria-modal="true"
       aria-label="Commentaires"
     >
-      <div
+      <motion.div
+        {...dragProps}
+        style={{ y }}
         className="freedom-drawer-sheet"
         onClick={(e) => e.stopPropagation()}
-        onTouchStart={(e) => {
-          touchStartY.current = e.touches[0]?.clientY ?? null;
-        }}
-        onTouchMove={(e) => {
-          const start = touchStartY.current;
-          if (start === null) return;
-          const currentY = e.touches[0]?.clientY ?? start;
-          // Glisser vers le bas pour fermer
-          if (currentY - start > 110) onClose();
-        }}
       >
         {/* Grab Handle (pour fermer en glissant vers le bas) */}
-        <div className="freedom-drawer-grab" aria-hidden="true" onClick={onClose}>
+        <div
+          className="freedom-drawer-grab cursor-grab active:cursor-grabbing"
+          {...handleProps}
+          onClick={onClose}
+          aria-label="Fermer les commentaires"
+        >
           <span />
         </div>
 
@@ -420,7 +428,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
             </button>
           </form>
         </div>
-      </div>
+      </motion.div>
 
       {/* Rich Attachments Sheet (GPX, Kit, Équipement, Rando) */}
       {menuOpen && (

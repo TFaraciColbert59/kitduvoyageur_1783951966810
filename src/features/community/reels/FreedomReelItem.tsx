@@ -156,43 +156,39 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
     },
   );
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
-      touchStartXRef.current = e.touches[0].clientX;
-      touchStartYRef.current = e.touches[0].clientY;
+  // Track drag distance to differentiate between a tap (play/pause) and a swipe/scroll
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleSlidePointerDown = (e: React.PointerEvent) => {
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    isDraggingRef.current = false;
+  };
+
+  const handleSlidePointerMove = (e: React.PointerEvent) => {
+    if (!dragStartRef.current) return;
+    const dx = Math.abs(e.clientX - dragStartRef.current.x);
+    const dy = Math.abs(e.clientY - dragStartRef.current.y);
+    if (dx > 8 || dy > 8) {
+      isDraggingRef.current = true;
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartXRef.current === null || touchStartYRef.current === null) return;
-    const endX = e.changedTouches[0].clientX;
-    const endY = e.changedTouches[0].clientY;
-    const deltaX = endX - touchStartXRef.current;
-    const deltaY = endY - touchStartYRef.current;
-
-    if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
-      if (deltaX < -60) {
-        // Swipe Left: exit Freedom Reels
-        haptic('light');
-        onSwipeLeft?.();
-      } else if (deltaX > 60) {
-        // Swipe Right: go to author's profile
-        haptic('light');
-        onSwipeRight?.();
-      }
+  const handleSlideClick = (e: React.MouseEvent) => {
+    if (isDraggingRef.current) {
+      // Geste de glissement/swipe : ne pas déclencher pause/play intempestif
+      return;
     }
-
-    touchStartXRef.current = null;
-    touchStartYRef.current = null;
+    doubleTap.onClick(e);
   };
 
   return (
     <div
       className="freedom-reel-slide"
       id={`freedom-reel-${reel.id}`}
-      onClick={doubleTap.onClick}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      onClick={handleSlideClick}
+      onPointerDown={handleSlidePointerDown}
+      onPointerMove={handleSlidePointerMove}
       role="region"
       aria-label={`Reel Freedom de ${reel.author.name}`}
     >
@@ -238,7 +234,12 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
       ))}
 
       {/* 5. Left-Bottom Overlay: Author info, Caption, Minimal Kit Pill */}
-      <div className="freedom-bottom-meta" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="freedom-bottom-meta"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         {/* Author row (Clic redirige vers le profil) */}
         <div className="freedom-author-row">
           <button

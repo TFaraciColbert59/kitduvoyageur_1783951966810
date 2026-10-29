@@ -50,6 +50,8 @@ export const FreedomActionsPill: React.FC<FreedomActionsPillProps> = ({
       className="freedom-media-glass-pill"
       role="group"
       aria-label="Actions du reel Freedom"
+      onPointerDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     >
       {/* 1. Avatar de l'auteur cliquable (redirection vers le profil) avec badge de suivi (+) en verre */}
       <div className="freedom-avatar-anchor">

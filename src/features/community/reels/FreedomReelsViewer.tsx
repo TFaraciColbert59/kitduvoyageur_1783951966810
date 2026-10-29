@@ -142,6 +142,134 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
     [haptic, router],
   );
 
+  // Navigation helpers
+  const goToNextReel = useCallback(() => {
+    if (activeIndex < reels.length - 1) {
+      haptic('light');
+      const nextIdx = activeIndex + 1;
+      setActiveIndex(nextIdx);
+      const el = document.getElementById(`freedom-reel-${reels[nextIdx]?.id}`);
+      el?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [activeIndex, reels, haptic]);
+
+  const goToPrevReel = useCallback(() => {
+    if (activeIndex > 0) {
+      haptic('light');
+      const prevIdx = activeIndex - 1;
+      setActiveIndex(prevIdx);
+      const el = document.getElementById(`freedom-reel-${reels[prevIdx]?.id}`);
+      el?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [activeIndex, reels, haptic]);
+
+  // Master Gesture Controller (Pointer + Touch unifiés)
+  // - Swipe Gauche: Quitte Freedom Reels
+  // - Swipe Droite: Ouvre le profil du créateur
+  // - Swipe Haut / Bas (souris / desktop): Reel suivant / précédent
+  const gestureStateRef = useRef<{
+    startX: number;
+    startY: number;
+    startTime: number;
+    isDown: boolean;
+    triggered: boolean;
+    pointerType?: string;
+  }>({
+    startX: 0,
+    startY: 0,
+    startTime: 0,
+    isDown: false,
+    triggered: false,
+  });
+
+  const onGestureStart = (clientX: number, clientY: number, pointerType?: string) => {
+    if (activeCommentsReel || activeShareReel || activeKit || activeSound) return;
+    gestureStateRef.current = {
+      startX: clientX,
+      startY: clientY,
+      startTime: Date.now(),
+      isDown: true,
+      triggered: false,
+      pointerType,
+    };
+  };
+
+  const onGestureMove = (clientX: number, clientY: number) => {
+    const s = gestureStateRef.current;
+    if (!s.isDown || s.triggered) return;
+    if (activeCommentsReel || activeShareReel || activeKit || activeSound) return;
+
+    const deltaX = clientX - s.startX;
+    const deltaY = clientY - s.startY;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    // 1. Détection Swipe Horizontal (Gauche -> Quitter, Droite -> Profil)
+    if (absX >= 45 && absX > absY * 1.05) {
+      s.triggered = true;
+      if (deltaX < 0) {
+        // Swipe vers la gauche: Sortir d'ici
+        handleExit();
+      } else {
+        // Swipe vers la droite: Profil utilisateur
+        const current = reels[activeIndex];
+        if (current) handleAuthorProfile(current.author);
+      }
+      return;
+    }
+
+    // 2. Détection Glisser Vertical à la souris (Desktop)
+    if (s.pointerType === 'mouse' && absY >= 65 && absY > absX * 1.1) {
+      s.triggered = true;
+      if (deltaY < 0) {
+        goToNextReel();
+      } else {
+        goToPrevReel();
+      }
+    }
+  };
+
+  const onGestureEnd = (clientX: number, clientY: number) => {
+    const s = gestureStateRef.current;
+    if (!s.isDown) return;
+
+    if (!s.triggered && !activeCommentsReel && !activeShareReel && !activeKit && !activeSound) {
+      const deltaX = clientX - s.startX;
+      const deltaY = clientY - s.startY;
+      const absX = Math.abs(deltaX);
+      const absY = Math.abs(deltaY);
+      const elapsed = Date.now() - s.startTime;
+
+      // Flick rapide (< 350ms)
+      if (elapsed < 350) {
+        if (absX >= 35 && absX > absY) {
+          s.triggered = true;
+          if (deltaX < 0) {
+            handleExit();
+          } else {
+            const current = reels[activeIndex];
+            if (current) handleAuthorProfile(current.author);
+          }
+        } else if (s.pointerType === 'mouse' && absY >= 40 && absY > absX) {
+          s.triggered = true;
+          if (deltaY < 0) {
+            goToNextReel();
+          } else {
+            goToPrevReel();
+          }
+        }
+      }
+    }
+
+    gestureStateRef.current.isDown = false;
+    gestureStateRef.current.triggered = false;
+  };
+
+  const onGestureCancel = () => {
+    gestureStateRef.current.isDown = false;
+    gestureStateRef.current.triggered = false;
+  };
+
   // Keyboard navigation & gestures
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -153,20 +281,16 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
         if (current) handleAuthorProfile(current.author);
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        const next = Math.min(reels.length - 1, activeIndex + 1);
-        const el = document.getElementById(`freedom-reel-${reels[next]?.id}`);
-        el?.scrollIntoView({ behavior: 'smooth' });
+        goToNextReel();
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        const prev = Math.max(0, activeIndex - 1);
-        const el = document.getElementById(`freedom-reel-${reels[prev]?.id}`);
-        el?.scrollIntoView({ behavior: 'smooth' });
+        goToPrevReel();
       }
     };
 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeIndex, reels, activeCommentsReel, activeShareReel, activeKit, activeSound, handleExit, handleAuthorProfile]);
+  }, [activeIndex, reels, activeCommentsReel, activeShareReel, activeKit, activeSound, handleExit, handleAuthorProfile, goToNextReel, goToPrevReel]);
 
   const handleOpenKitFromReel = (kitId: string, kitName?: string) => {
     haptic('medium');
@@ -204,12 +328,34 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
         )}
       </header>
 
-      {/* Vertical Snap Scroll Reels Container */}
+      {/* Vertical Snap Scroll Reels Container with Unified Gesture Engine */}
       <main
         ref={containerRef}
         className="freedom-reels-container"
         tabIndex={0}
         aria-label="Flux de micro-vidéos Freedom"
+        onPointerDown={(e) => onGestureStart(e.clientX, e.clientY, e.pointerType)}
+        onPointerMove={(e) => onGestureMove(e.clientX, e.clientY)}
+        onPointerUp={(e) => onGestureEnd(e.clientX, e.clientY)}
+        onPointerCancel={onGestureCancel}
+        onTouchStart={(e) => {
+          if (e.touches.length === 1) {
+            onGestureStart(e.touches[0].clientX, e.touches[0].clientY, 'touch');
+          }
+        }}
+        onTouchMove={(e) => {
+          if (e.touches.length === 1) {
+            onGestureMove(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }}
+        onTouchEnd={(e) => {
+          if (e.changedTouches.length === 1) {
+            onGestureEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+          } else {
+            onGestureCancel();
+          }
+        }}
+        onTouchCancel={onGestureCancel}
       >
         {loading ? (
           <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-black text-white">

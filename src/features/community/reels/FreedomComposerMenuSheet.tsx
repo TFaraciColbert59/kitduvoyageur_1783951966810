@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { messagingService } from '@/features/messaging/services/messagingService';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useDragDismiss } from '@/hooks/gestures';
 import type { FreedomCommentAttachment } from './freedom-types';
 
 interface FreedomComposerMenuSheetProps {
@@ -51,7 +53,16 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
   const [_loadingTrails, setLoadingTrails] = useState(false);
   const [loadingKits, setLoadingKits] = useState(false);
   const gpxInputRef = useRef<HTMLInputElement>(null);
-  const touchStartY = useRef<number | null>(null);
+
+  const { dragProps, handleProps, y } = useDragDismiss({
+    onDismiss: () => {
+      haptic('light');
+      onClose();
+    },
+    mode: 'element',
+    threshold: 65,
+    velocityThreshold: 300,
+  });
 
   useEffect(() => {
     if (isOpen) setView('menu');
@@ -169,21 +180,19 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
       aria-modal="true"
       aria-label="Joindre au commentaire"
     >
-      <div
+      <motion.div
+        {...dragProps}
+        style={{ y }}
         className="freedom-drawer-sheet !max-h-[75vh] !h-auto"
         onClick={(e) => e.stopPropagation()}
-        onTouchStart={(e) => {
-          touchStartY.current = e.touches[0]?.clientY ?? null;
-        }}
-        onTouchMove={(e) => {
-          const start = touchStartY.current;
-          if (start === null) return;
-          const currentY = e.touches[0]?.clientY ?? start;
-          if (currentY - start > 110) onClose();
-        }}
       >
         {/* Grab Handle (glisser vers le bas pour fermer) */}
-        <div className="freedom-drawer-grab" aria-hidden="true" onClick={onClose}>
+        <div
+          className="freedom-drawer-grab cursor-grab active:cursor-grabbing"
+          {...handleProps}
+          onClick={onClose}
+          aria-label="Fermer le menu des pièces jointes"
+        >
           <span />
         </div>
 
@@ -450,7 +459,7 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Search, Link2, Share2, Send } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useDragDismiss } from '@/hooks/gestures';
 import { usePostShareTargets } from '@/features/community/feed/usePostShareTargets';
 import { createClient } from '@/lib/supabase/client';
 import type { FreedomReelItem } from './freedom-types';
@@ -70,7 +72,15 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
   const [realContacts, setRealContacts] = useState<RealContact[]>(FALLBACK_REAL_CONTACTS);
   const [sendingId, setSendingId] = useState<string | null>(null);
 
-  const touchStartY = useRef<number | null>(null);
+  const { dragProps, handleProps, y } = useDragDismiss({
+    onDismiss: () => {
+      haptic('light');
+      onClose();
+    },
+    mode: 'element',
+    threshold: 65,
+    velocityThreshold: 300,
+  });
 
   // Load real profiles from Supabase public_profiles view
   useEffect(() => {
@@ -190,23 +200,20 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
       aria-modal="true"
       aria-label="Partager la publication"
     >
-      {/* Fixed Max Height at exactly 50% screen height */}
-      <div
+      {/* Fixed Max Height at exactly 50% screen height with fluid drag dismiss */}
+      <motion.div
+        {...dragProps}
+        style={{ y }}
         className="freedom-drawer-sheet !h-[50vh] !max-h-[50dvh]"
         onClick={(e) => e.stopPropagation()}
-        onTouchStart={(e) => {
-          touchStartY.current = e.touches[0]?.clientY ?? null;
-        }}
-        onTouchMove={(e) => {
-          const start = touchStartY.current;
-          if (start === null) return;
-          const currentY = e.touches[0]?.clientY ?? start;
-          // Swipe down to dismiss
-          if (currentY - start > 100) onClose();
-        }}
       >
         {/* Grab Handle (Glisser vers le bas pour fermer, pas de croix 'X') */}
-        <div className="freedom-drawer-grab" aria-hidden="true" onClick={onClose}>
+        <div
+          className="freedom-drawer-grab cursor-grab active:cursor-grabbing"
+          {...handleProps}
+          onClick={onClose}
+          aria-label="Fermer le panneau de partage"
+        >
           <span />
         </div>
 
@@ -298,7 +305,7 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

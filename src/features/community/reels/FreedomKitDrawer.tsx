@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
   Compass,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useToast } from '@/contexts/ToastContext';
+import { useDragDismiss } from '@/hooks/gestures';
 import { createClient } from '@/lib/supabase/client';
 import type { KitSheetData } from '@/features/kits/types';
 
@@ -149,7 +151,15 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
   const [isAdded, setIsAdded] = useState(false);
   const [selectorOpen, setSelectorOpen] = useState(false);
 
-  const touchStartY = useRef<number | null>(null);
+  const { dragProps, handleProps, y } = useDragDismiss({
+    onDismiss: () => {
+      haptic('light');
+      onClose();
+    },
+    mode: 'handle',
+    threshold: 75,
+    velocityThreshold: 350,
+  });
 
   // Load kit details from DB and products from shop_products
   useEffect(() => {
@@ -267,27 +277,24 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
         onClick={onClose}
       />
 
-      {/* Drawer Card */}
-      <div
+      {/* Drawer Card with fluid drag dismiss */}
+      <motion.div
+        {...dragProps}
+        style={{ y }}
         className="freedom-drawer-card relative flex flex-col max-h-[82dvh] overflow-hidden"
-        onTouchStart={(e) => {
-          touchStartY.current = e.touches[0]?.clientY ?? null;
-        }}
-        onTouchMove={(e) => {
-          const start = touchStartY.current;
-          if (start === null) return;
-          const currentY = e.touches[0]?.clientY ?? start;
-          // Swipe down to dismiss
-          if (currentY - start > 110) onClose();
-        }}
       >
         {/* Pull Grab Bar */}
-        <div className="freedom-drawer-grab" aria-hidden="true" onClick={onClose}>
+        <div
+          className="freedom-drawer-grab cursor-grab active:cursor-grabbing"
+          {...handleProps}
+          onClick={onClose}
+          aria-label="Fermer le kit"
+        >
           <span />
         </div>
 
         {/* Header: Title + Lineage Only (No close cross 'X') */}
-        <div className="px-4 pb-3 border-b border-black/5 shrink-0">
+        <div className="px-4 pb-3 border-b border-black/5 shrink-0" {...handleProps}>
           <div className="flex items-center gap-1.5 mb-1">
             <span className="inline-flex items-center gap-1 rounded-full bg-[#17402C]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#17402C]">
               <Sparkles size={11} className="text-[#17402C]" />
@@ -471,7 +478,7 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
             <span>{isAdded ? 'Kit ajouté à mes kits !' : 'Ajouter à mes kits'}</span>
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

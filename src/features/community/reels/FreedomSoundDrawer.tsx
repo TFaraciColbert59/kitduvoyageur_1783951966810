@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { Music2, Play } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useDragDismiss } from '@/hooks/gestures';
 import type { FreedomReelItem } from './freedom-types';
 
 export interface FreedomSoundDrawerProps {
@@ -21,7 +23,16 @@ export const FreedomSoundDrawer: React.FC<FreedomSoundDrawerProps> = ({
   onSelectReel,
 }) => {
   const { haptic } = useHapticFeedback();
-  const touchStartY = useRef<number | null>(null);
+
+  const { dragProps, handleProps, y } = useDragDismiss({
+    onDismiss: () => {
+      haptic('light');
+      onClose();
+    },
+    mode: 'element',
+    threshold: 65,
+    velocityThreshold: 300,
+  });
 
   if (!isOpen) return null;
 
@@ -38,23 +49,20 @@ export const FreedomSoundDrawer: React.FC<FreedomSoundDrawerProps> = ({
       aria-modal="true"
       aria-label={`Piste audio : ${soundTitle}`}
     >
-      {/* 50% height max */}
-      <div
+      {/* 50% height max with fluid drag dismiss */}
+      <motion.div
+        {...dragProps}
+        style={{ y }}
         className="freedom-drawer-sheet !h-[50vh] !max-h-[50dvh]"
         onClick={(e) => e.stopPropagation()}
-        onTouchStart={(e) => {
-          touchStartY.current = e.touches[0]?.clientY ?? null;
-        }}
-        onTouchMove={(e) => {
-          const start = touchStartY.current;
-          if (start === null) return;
-          const currentY = e.touches[0]?.clientY ?? start;
-          // Swipe down to dismiss
-          if (currentY - start > 100) onClose();
-        }}
       >
         {/* Grab Handle (glisser vers le bas pour fermer, pas de croix 'X') */}
-        <div className="freedom-drawer-grab" aria-hidden="true" onClick={onClose}>
+        <div
+          className="freedom-drawer-grab cursor-grab active:cursor-grabbing"
+          {...handleProps}
+          onClick={onClose}
+          aria-label="Fermer le lecteur audio"
+        >
           <span />
         </div>
 
@@ -109,7 +117,7 @@ export const FreedomSoundDrawer: React.FC<FreedomSoundDrawerProps> = ({
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
