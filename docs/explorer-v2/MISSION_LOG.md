@@ -446,3 +446,42 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   et DEM. La file d'écritures (`offline/queue.ts`, clé d'idempotence) est vidée
   au retour du réseau.
 - Statut : OK
+
+### [P8-05..P8-07] Accessibilité mobile · 2026-10-29 09:30
+- Fichiers : `tests/explorer-v2/a11y-mobile.e2e.spec.ts`, `chrome/TopChrome.tsx`,
+  `sheet/ExplorerSheet.tsx`, `styles/explorer-v2.css`
+- Preuve : **12 tests verts sur 2 projets** —
+  axe sans violation sérieuse sur 4 scènes (monde, lieu, eau, course),
+  cibles tactiles mesurées par sonde le long des axes (lignes et onglets ≥ 44 px,
+  chrome 40 px conforme à la maquette + extension CSS portant la zone à 46 px),
+  texte à 200 % sans débordement horizontal.
+  Corrections apportées : interactif imbriqué supprimé dans la capsule de
+  recherche, zone défilante focusable, contrôle d'attribution natif désactivé
+  (liens de 14 px).
+- Statut : OK (VoiceOver réel non testé sur appareil)
+
+### [P9-01 / P9-05 / P9-06 / P9-07 / P9-08] Mesures · 2026-10-29 09:25
+- Preuves :
+  ```
+  next build         : ƒ /explorer 27.5 kB · First Load JS 148 kB   (budget 170)
+  bench-geo.mjs      : décimation 0,005 ms · rééchantillonnage 0,071 ms → TS suffisant
+  bench-requests.mjs : 7 requêtes de données au démarrage           (budget 12)
+  explain analyze    : geo_pois_latlon_idx → 1,48 ms pour 40 lignes
+  ```
+  Décision Rust/WASM : **non justifiée** (gain < 2×, 02_ARCHITECTURE §8), consignée.
+  Lighthouse CI non installé localement : la mesure reste dans le workflow CI.
+- Statut : OK (Lighthouse et mémoire 10 min non mesurés ici)
+
+### [P10-03..P10-05, P10-09, P10-11] Bascule · 2026-10-29 09:20
+- Preuves :
+  ```
+  select enabled from feature_flags where id='explorer_v2_enabled' → true
+  rg ExplorerClient src            → seulement LegacyExplorerFallback (supprimé ensuite)
+  git rm ExplorerClient/FilterPanel/ListCard/MobileHikeCarousel/OsmPoiSheet/TrailDetailPanel
+  curl /carte-interactive          → 307 http://localhost:4028/explorer
+  curl /explorer | grep og:title   → « Explorer · Le Kit du Voyageur »
+  /mentions-legales                → 30 tests verts (Sources Explorer v2 ajoutées)
+  ```
+  Attributions visibles en pied de page (`xp-attribution`) : OpenStreetMap,
+  OpenFreeMap, Natural Earth, AWS Terrain, MET Norway, Wikidata.
+- Statut : OK
