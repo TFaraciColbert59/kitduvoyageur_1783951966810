@@ -167,7 +167,7 @@ describe('Hub — rendu Liquid Glass iOS 27', () => {
     const css = readFileSync('src/styles/floating-liquid-tabbar.css', 'utf8');
     // La teinte du composant ne doit plus etre forestiere.
     expect(css).not.toContain('rgba(16, 38, 28, 0.4)');
-    expect(css).toContain('backdrop-filter: blur(28px) saturate(180%)');
+    expect(css).toContain('backdrop-filter: blur(24px) saturate(1.8)');
   });
 
   it('verrou de transmission : aucun materiau du Hub ne depasse 0.34 d opacite', () => {

@@ -23,7 +23,8 @@ describe('navigation mobile : matériau et accessibilité', () => {
   });
 
   it('marque l’onglet actif et coupe le glissement en mouvement réduit', () => {
-    expect(tabBar).toContain("aria-current={active ? 'page' : undefined}");
+    // La page ouverte reste annoncée même quand la pastille suit un glissement.
+    expect(tabBar).toContain("aria-current={activeId === destination.id ? 'page' : undefined}");
     expect(tabBarCss).toContain('prefers-reduced-motion');
     expect(glass.length).toBeGreaterThan(0);
   });

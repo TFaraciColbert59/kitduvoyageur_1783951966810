@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 
 import OfflineBanner from '@/components/mobile-nav/OfflineBanner';
 import FloatingLiquidTabBar from '@/components/mobile-nav/FloatingLiquidTabBar';
+import TabSwipeNavigator from '@/components/mobile-nav/TabSwipeNavigator';
 import SearchOverlay from '@/components/search/SearchOverlay';
 import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import { useSearchContext } from '@/contexts/SearchContext';
@@ -58,6 +59,7 @@ export default function MobileNavWrapper() {
       <div style={{ display: isNoNavRoute ? 'none' : 'contents' }} data-persistent-nav>
         <NavigationBar />
       </div>
+      {!isNoNavRoute && <TabSwipeNavigator />}
       {!isNoNavRoute && !isMapHeavyRoute && <SearchOverlay />}
       <OfflineBanner />
     </>
