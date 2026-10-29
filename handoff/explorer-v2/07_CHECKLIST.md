@@ -52,14 +52,14 @@ Coche `[x]` uniquement avec une entrée correspondante dans `docs/explorer-v2/MI
 - [x] **P2-10** · Révélation de point — _preuve : e2e_
 - [ ] **P2-11** · Suivi en activité — _preuve : e2e GPS rejoué_
 - [x] **P2-12** · Vue d’ensemble — _preuve : e2e_
-- [ ] **P2-13** · Réduire les animations respecté — _preuve : e2e avec `reducedMotion: reduce`_
+- [x] **P2-13** · Réduire les animations respecté — _preuve : e2e avec `reducedMotion: reduce`_
 - [ ] **P2-GATE** · gate de phase verte (`06_PHASES.md`)
 
 ## P3 · Shell et tiroir
 
 - [x] **P3-01** · Page plein écran, safe areas, une seule barre basse — _preuve : capture iPhone 15 webkit_
 - [x] **P3-02** · Capsule recherche + fil d’Ariane cliquable — _preuve : e2e_
-- [ ] **P3-03** · Bouton calques / boussole en activité — _preuve : e2e_
+- [x] **P3-03** · Bouton calques / boussole en activité — _preuve : e2e_
 - [x] **P3-04** · `ExplorerSheet` : 4 crans, glisser suivi au doigt, inertie — _preuve : e2e drag_
 - [x] **P3-05** · Capsule d’onglets (actif = libellé) + lentille + volets — _preuve : e2e_
 - [x] **P3-06** · Mini-sélecteur uniquement Région, Lieu, Itinéraire — _preuve : e2e : absent ailleurs_
@@ -80,8 +80,8 @@ Coche `[x]` uniquement avec une entrée correspondante dans `docs/explorer-v2/MI
 - [x] **P4-08** · Écran **USA** (Pays · États-Unis, unités) : contenu, onglets, boutons, données réelles [03_ECRANS#usa] — _preuve : capture réelle `preuves/USA.png` + e2e `USA.spec.ts`_
 - [x] **P4-09** · Écran **Chili** (Pays · Chili, hémisphère sud) : contenu, onglets, boutons, données réelles [03_ECRANS#chili] — _preuve : capture réelle `preuves/Chili.png` + e2e `Chili.spec.ts`_
 - [x] **P4-10** · Écran **Mongolie** (Pays peu documenté) : contenu, onglets, boutons, données réelles [03_ECRANS#mongolie] — _preuve : capture réelle `preuves/Mongolie.png` + e2e `Mongolie.spec.ts`_
-- [ ] **P4-11** · Tout pays du globe ouvrable (pas seulement les 6 de la maquette) — _preuve : e2e sur 10 pays tirés au hasard_
-- [ ] **P4-12** · Unités impériales pour US, LR, MM ; réglage utilisateur — _preuve : e2e_
+- [x] **P4-11** · Tout pays du globe ouvrable (pas seulement les 6 de la maquette) — _preuve : e2e sur 10 pays tirés au hasard_
+- [x] **P4-12** · Unités impériales pour US, LR, MM ; réglage utilisateur — _preuve : e2e_
 - [ ] **P4-GATE** · gate de phase verte (`06_PHASES.md`)
 
 ## P5 · Points d’intérêt
@@ -169,7 +169,7 @@ Coche `[x]` uniquement avec une entrée correspondante dans `docs/explorer-v2/MI
 - [x] **P10-04** · Legacy Explorer supprimé (ExplorerClient, ExplorerMap…) sans casser d’import — _preuve : `next build` + `rg ExplorerClient`_
 - [x] **P10-05** · `/carte-interactive` redirige vers `/explorer` — _preuve : e2e_
 - [x] **P10-06** · `RAPPORT_FINAL.md` complet — _preuve : fichier_
-- [ ] **P10-07** · `npm run explorer:verify` = 0 deux fois de suite — _preuve : sorties_
+- [x] **P10-07** · `npm run explorer:verify` = 0 deux fois de suite — _preuve : sorties_
 - [x] **P10-08** · Branche poussée, PR ouverte vers `main` — _preuve : URL de la PR_
 - [x] **P10-09** · Attributions carte (OSM, OpenFreeMap, AWS Terrain, Natural Earth, MET Norway, Wikidata) visibles + page mentions légales et son test mis à jour — _preuve : capture + test vert_
 - [ ] **P10-10** · Build Android (`android/`) toujours compilable, aucune régression des autres routes (suite e2e globale relancée) — _preuve : sorties_

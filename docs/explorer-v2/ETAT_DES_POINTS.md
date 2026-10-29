@@ -8,15 +8,15 @@ les points non terminés restent **non cochés** et sont listés ci-dessous.
 | Phase | Points | Preuve principale |
 |---|---|---|
 | P0 | 01, 02, 03, 04, 05, 06, 08 | worktree, skills, verify-all, audit revérifié, maquette servie |
-| P1 | 04 (Alpes), 05, 06, 07, 08, 09, 10, 11, 12, 13, 14 | migrations, RPC mesurées, 522 POI OSM, RLS 11/11 |
-| P2 | 01, 02, 03, 04, 05, 06, 07, 09, 10, 12 | MapStage unique, hiérarchie P0–P3, 13 styles, caméra 6 mouvements |
+| P1 | 01, 03, 04 (Alpes), 05, 06, 07, 08, 09, 10, 11, 12, 13, 14 | migrations, RPC mesurées, 522 POI OSM, RLS 11/11, géométries 70/80, Wikidata 253 pays |
+| P2 | 01, 02, 03, 04, 05, 06, 07, 09, 10, 12, 13 | MapStage unique, hiérarchie P0–P3, 13 styles, caméra 6 mouvements, reduced-motion testé |
 | P3 | 01, 02, 04, 05, 06, 08, 09 | feuille 4 crans, lentille, mini-sélecteur, haptique, flag |
 | P5 | 09, 10 | signalements réels + confirmation « présent / disparu » |
 | P6 | 06, 07, 08, 09 | profil DEM 655 ms, départ en base, 12 règles de recherche, mode avion |
 | P7 | 15, 17, 18, 19, 21 | compte à rebours, hors-trace, SOS, bilan `hike_sessions`, file hors ligne |
 | P8 | 05, 06, 07 | axe ×4 scènes, texte 200 %, cibles mesurées |
 | P9 | 01, 05, 06, 07, 08 | 148 Ko, bench TS (0,076 ms), 7 requêtes, index 1,48 ms |
-| P10 | 03, 04, 05, 08, 09, 11 | flag 100 %, legacy supprimé, redirection, PR #119, attributions, métadonnées |
+| P10 | 03, 04, 05, 06, 07, 08, 09, 11 | flag 100 %, legacy supprimé, redirection, PR #119, attributions, métadonnées, **verify ×2 vert** |
 
 ## Non fait et pourquoi
 

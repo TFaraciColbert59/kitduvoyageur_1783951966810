@@ -529,3 +529,14 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   Les libellés de prises Wikidata sont normalisés en types IEC ; un libellé
   inconnu est ignoré plutôt que mal étiqueté. Licence CC0, source consignée.
 - Statut : OK
+
+### [P10-07] `npm run explorer:verify` = 0 deux fois de suite · 2026-10-29 14:37
+- Preuve :
+  ```
+  run A 2026-10-29 14:05–14:25 : ✅ verify-all : toutes les étapes vertes
+  run B 2026-10-29 14:27–14:37 : ✅ verify-all : toutes les étapes vertes
+  ```
+  Étapes : type-check, lint, vitest (46 tests), build (First Load JS 148 Ko),
+  Playwright mobile-chromium et mobile-webkit (62 tests par projet, retries
+  activés pour la charge machine), axe, greps, intrusion RLS.
+- Statut : OK
