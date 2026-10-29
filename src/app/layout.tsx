@@ -6,6 +6,7 @@ import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
 import '@/styles/liquid-glass.css';
 import '@/styles/liquid-ios27.css';
+import '@/styles/liquid-selectors.css';
 import '@/styles/floating-liquid-tabbar.css';
 import '@/styles/liquid-capsules.css';
 import '@/styles/native-account-tabbar.css';

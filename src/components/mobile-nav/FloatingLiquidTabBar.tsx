@@ -24,13 +24,12 @@ const TAB_ICON: Record<Exclude<DestinationId, 'me'>, typeof House> = {
 let tabsWarmed = false;
 
 /**
- * Barre du bas, grammaire Instagram (iOS 26/27) :
- * - capsule claire flottante, icônes seules ;
- * - l'onglet actif a une icône pleine et une pastille grise derrière elle ;
- * - la pastille glisse d'un onglet à l'autre en s'étirant ;
- * - l'onglet Compte montre l'avatar ;
- * - on peut glisser le doigt le long de la barre : la pastille suit, le
- *   relâcher ouvre l'onglet ; toucher l'onglet déjà ouvert remonte en haut.
+ * Barre du bas, Liquid Glass façon Apple Music (iOS 26/27) :
+ * - capsule de verre clair flottante, icône + libellé ;
+ * - pastille de verre sous l'onglet actif, qui glisse en s'étirant ;
+ * - à l'appui, la pastille devient une goutte de verre qui déborde de la
+ *   capsule et suit le doigt le long de la barre ; relâcher ouvre l'onglet ;
+ * - l'onglet Compte montre l'avatar ; toucher l'onglet ouvert remonte en haut.
  * Changer d'onglet est instantané : les cinq pages sont préchargées.
  */
 export function FloatingLiquidTabBar() {
@@ -144,7 +143,8 @@ export function FloatingLiquidTabBar() {
     [pathname, router],
   );
 
-  // Glisser le doigt le long de la barre : la pastille suit, le relâcher choisit.
+  // Appui sur la barre : la goutte de verre se pose sous le doigt et le suit ;
+  // le relâcher ouvre l'onglet choisi.
   const barDrag = useRef<{ x: number; moved: boolean } | null>(null);
   const indexAt = (clientX: number) => {
     const rect = surfaceRef.current?.getBoundingClientRect();
@@ -162,7 +162,9 @@ export function FloatingLiquidTabBar() {
           className="lkdv-floating-tabbar-surface"
           data-dragging={dragIndex !== null ? 'true' : undefined}
           onPointerDown={(event) => {
+            if (event.button !== 0) return;
             barDrag.current = { x: event.clientX, moved: false };
+            setDragIndex(indexAt(event.clientX));
           }}
           onPointerMove={(event) => {
             const drag = barDrag.current;
@@ -178,11 +180,16 @@ export function FloatingLiquidTabBar() {
           onPointerUp={(event) => {
             const drag = barDrag.current;
             barDrag.current = null;
-            if (!drag?.moved) return;
+            if (!drag) return;
             const index = indexAt(event.clientX);
-            setDragIndex(null);
+            if (longPressFired.current) {
+              // Appui long sur Hub : le sélecteur d'aventures s'est ouvert.
+              setDragIndex(null);
+              return;
+            }
             longPressFired.current = true; // le clic qui suit ne doit rien refaire
             go(index);
+            setDragIndex(null);
           }}
           onPointerCancel={() => {
             barDrag.current = null;

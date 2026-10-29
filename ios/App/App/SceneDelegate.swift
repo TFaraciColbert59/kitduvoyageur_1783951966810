@@ -69,8 +69,8 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         tabBar.translatesAutoresizingMaskIntoConstraints = false
         tabBar.delegate = self
         tabBar.tintColor = UIColor(red: 23.0 / 255.0, green: 64.0 / 255.0, blue: 44.0 / 255.0, alpha: 1.0)
-        // Grammaire Instagram : icônes seules (le libellé reste lu par VoiceOver),
-        // icône pleine pour l'onglet actif.
+        // Barre système iOS 26+ (Liquid Glass, comme Apple Music) : icône +
+        // libellé, icône pleine pour l'onglet actif.
         let tabs: [(label: String, icon: String, selected: String)] = [
             ("Hub", "house", "house.fill"),
             ("Explorer", "safari", "safari.fill"),
@@ -80,7 +80,7 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         ]
         tabBar.items = tabs.enumerated().map { index, tab in
             let item = UITabBarItem(
-                title: nil,
+                title: tab.label,
                 image: UIImage(systemName: tab.icon),
                 selectedImage: UIImage(systemName: tab.selected)
             )
