@@ -326,7 +326,7 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
 
           {/* Map Overlay for Kit Usage Points */}
           {showUsageMap && (
-            <div className="mt-3 rounded-2xl border border-black/10 bg-[#F4F1EA] p-3 shadow-inner">
+            <div className="mt-3 rounded-2xl border border-black/10 bg-white/60 backdrop-blur-md p-3 shadow-inner">
               <div className="flex items-center justify-between pb-2 border-b border-black/5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#172B24]/70">
                   Points de validation terrain
@@ -464,7 +464,7 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
         </div>
 
         {/* Single Action Button: "Ajouter à mes kits" only */}
-        <div className="shrink-0 p-4 bg-[#FCFBF8] border-t border-black/5">
+        <div className="shrink-0 p-4 bg-white/60 backdrop-blur-xl border-t border-black/5">
           <button
             type="button"
             onClick={handleAddToMyKits}
