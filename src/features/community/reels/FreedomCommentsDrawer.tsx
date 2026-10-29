@@ -137,9 +137,9 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
           if (key) {
             void preloadPublicProfile(key, {
               id: c.author.id,
-              full_name: c.author.name,
+              name: c.author.name,
               handle: c.author.handle || undefined,
-              avatar_url: c.author.avatarUrl || null,
+              avatarUrl: c.author.avatarUrl || null,
             });
           }
         }
