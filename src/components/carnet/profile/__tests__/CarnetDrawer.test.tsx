@@ -67,6 +67,29 @@ describe('CarnetDrawer — coquille', () => {
     expect(onDrawerChange).toHaveBeenCalledWith('share');
   });
 
+  it('garde la capsule à deux segments et éteint la lentille sur le volet Moments', () => {
+    const { container } = render(
+      <CarnetDrawer drawer="moments" onDrawerChange={() => {}} onClose={() => {}}><p>moments</p></CarnetDrawer>,
+    );
+    /* Moments n'est pas un segment de la capsule : la géométrie ne bouge pas
+       (88 × 30, pas de 41,5), seule la lentille s'éteint. */
+    const capsule = container.querySelector('.ckp-capsule') as HTMLElement;
+    expect(capsule.style.getPropertyValue('--n')).toBe('2');
+    expect(screen.getAllByRole('tab').map((tab) => tab.getAttribute('aria-label'))).toEqual([
+      'Statistiques',
+      'Partage',
+    ]);
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab.getAttribute('aria-selected')).toBe('false');
+    }
+    const lens = capsule.querySelector(':scope > .ckp-th') as HTMLElement;
+    expect(lens.getAttribute('data-off')).toBe('true');
+    expect(lens.style.getPropertyValue('--i')).toBe('0');
+    /* Le contenu du volet est bien monté, l'en-tête ne porte aucun titre. */
+    expect(screen.getByText('moments')).toBeTruthy();
+    expect(container.querySelector('.ckp-drawer-head h1, .ckp-drawer-head h2')).toBeNull();
+  });
+
   it('change de volet au clavier, sans sortir de la capsule', () => {
     const onDrawerChange = vi.fn();
     render(<CarnetDrawer drawer="stats" onDrawerChange={onDrawerChange} onClose={() => {}}><p>v</p></CarnetDrawer>);

@@ -396,6 +396,74 @@ describe('CarnetScreen — fond identique à la page Compte', () => {
   });
 });
 
+describe('CarnetScreen — drawer Moments depuis la pastille de compte', () => {
+  const MOMENT = {
+    id: 'm1',
+    dayNumber: 1,
+    time: '07:40',
+    caption: null,
+    authorName: null,
+    place: 'Corrençon-en-Vercors',
+    imageUrl: 'https://cdn.test/1.jpg',
+  };
+  const WITH_MOMENTS = detail({
+    ...OWNER,
+    days: [{ ...CARD_DAYS[0], moments: [MOMENT] }, CARD_DAYS[1]],
+    moments: [MOMENT],
+    photoMoments: [MOMENT],
+    summary: { distanceKm: 106.4, elevationM: 2002, days: 2, moments: 1 },
+  });
+
+  it('la pastille de compte ouvre la feuille des moments, sans quitter la fiche', () => {
+    render(<CarnetScreen detail={WITH_MOMENTS} />);
+    /* La liste n'est plus sous la grille. */
+    expect(document.querySelector('.ckp-dayinfo')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvrir les moments — 1 moment' }));
+    expect(drawerOpen()).toBe(true);
+    const pane = document.querySelector('.ckp-pane-moments') as HTMLElement;
+    expect(pane).toBeTruthy();
+    const row = pane.querySelector('.ckp-field') as HTMLElement;
+    expect(row.querySelector('.ckp-field-label')?.textContent).toBe('J1 · 07:40');
+    expect(row.querySelector('.ckp-field-value')?.textContent).toBe('Corrençon-en-Vercors');
+  });
+
+  it('garde la capsule du drawer à deux segments, son pas de 41,5 et sa lentille', () => {
+    render(<CarnetScreen detail={WITH_MOMENTS} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvrir les moments — 1 moment' }));
+    const tablist = screen.getByRole('tablist', { name: 'Volets du carnet' });
+    expect(screen.getAllByRole('tab').map((tab) => tab.getAttribute('aria-label'))).toEqual([
+      'Statistiques',
+      'Partage',
+    ]);
+    const capsule = tablist.closest('.ckp-capsule') as HTMLElement;
+    expect(capsule.style.getPropertyValue('--n')).toBe('2');
+    /* Le volet Moments n'est pas un segment : aucune lentille allumée, mais la
+       capsule garde sa géométrie et sa matière. */
+    const lens = capsule.querySelector(':scope > .ckp-th') as HTMLElement;
+    expect(lens.getAttribute('data-off')).toBe('true');
+    expect(lens.style.getPropertyValue('--i')).toBe('0');
+  });
+
+  it('le volet Moments ne porte aucun titre : poignée et croix seulement', () => {
+    render(<CarnetScreen detail={WITH_MOMENTS} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvrir les moments — 1 moment' }));
+    const head = document.querySelector('.ckp-drawer-head') as HTMLElement;
+    expect(head.querySelectorAll('button').length).toBe(2);
+    expect(head.querySelector('h1, h2, h3')).toBeNull();
+    expect(head.textContent).toBe('');
+  });
+
+  it('suit la page de jour affichée', () => {
+    render(<CarnetScreen detail={WITH_MOMENTS} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Jour 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvrir les moments — 0 moment' }));
+    const pane = document.querySelector('.ckp-pane-moments') as HTMLElement;
+    /* Jour 2 n'a aucun moment : glyphe + tiret, aucun texte. */
+    expect(pane.querySelector('.ckp-empty-state .ckp-empty-dash')?.textContent).toBe('—');
+    expect(pane.textContent).toBe('—');
+  });
+});
+
 describe('CarnetScreen — focus rendu au déclencheur (lot F)', () => {
   it('rend le focus à la statistique qui a ouvert la feuille, après Échap', async () => {
     render(<CarnetScreen detail={OWNER} />);

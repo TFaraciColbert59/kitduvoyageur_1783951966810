@@ -142,6 +142,15 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   font: 500 11px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: 0; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
+/* Le compte de moments est le point d'entrée du drawer Moments : même texte,
+   même graisse, même encre que le marqueur d'avant, plus une cible de 44 px
+   qui n'élargit pas la ligne de 16 px. */
+button.ckp-daypill-count {
+  position: relative; padding: 0; border: 0; background: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+button.ckp-daypill-count::after { content: ''; position: absolute; inset: -14px -8px; }
+button.ckp-daypill-count:active { opacity: .6; }
 
 /* --- Identité ------------------------------------------------------------- */
 .ckp-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -726,20 +735,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 
 
-/* Liste des moments : heure 40 px puis lieu, et le jour seulement sur le
-   Résumé. Aucune phrase, aucune image — la grille 134 reste juste en dessous. */
-.ckp-dayinfo-moments { list-style: none; margin: 0 2px; padding: 0; display: flex; flex-direction: column; min-width: 0; }
-.ckp-dayinfo-moment {
-  display: flex; align-items: center; gap: 8px; min-height: 22px;
-  color: #6B7A70; font: 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
-  letter-spacing: 0;
-}
-.ckp-dayinfo-time {
-  flex: none; width: 40px; color: #17402c; font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-.ckp-dayinfo-place { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ckp-dayinfo-day { flex: none; color: #6B7A70; font-variant-numeric: tabular-nums; }
+/* La liste des moments a quitté la carte pour le drawer Moments : les règles
+   `.ckp-dayinfo-*` n'avaient plus aucun porteur. Le volet du drawer peint des
+   champs de 48 px du système (`.ckp-field`), pas une liste compacte. */
 
 /* --- Participants : pastilles auteur du fil Communauté, défilables -------- */
 .ckp-people {
@@ -1027,6 +1025,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    remet `margin: 0` ne peut plus écraser les 20 px d'air entre deux blocs. */
 .ckp-pane-body { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .ckp-pane-share,
+.ckp-pane-moments,
 .ckp-likes,
 .ckp-manage { display: flex; flex-direction: column; gap: 20px; min-width: 0; padding-top: 20px; }
 
@@ -1228,8 +1227,7 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 .ckp-liker,
 .ckp-day,
 .ckp-comment,
-.ckp-kit-row,
-.ckp-dayinfo-moment {
+.ckp-kit-row {
   position: relative;
   border-top: 0;
 }
@@ -1238,8 +1236,7 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 .ckp-liker + .ckp-liker::before,
 .ckp-day + .ckp-day::before,
 .ckp-comment + .ckp-comment::before,
-.ckp-kit-row + .ckp-kit-row::before,
-.ckp-dayinfo-moment + .ckp-dayinfo-moment::before {
+.ckp-kit-row + .ckp-kit-row::before {
   content: '';
   position: absolute;
   top: 0;

@@ -99,6 +99,11 @@ export interface CarnetDayHeaderProps {
   /** Couverture de la carte (mini tracé), laissée au parent. */
   cover: React.ReactNode;
   onOpenStat: (stat: CarnetStatsTab) => void;
+  /**
+   * Ouvre le drawer Moments. Sans handler, la pastille de compte reste un
+   * marqueur inerte : aucune cible cliquable n'est peinte pour rien.
+   */
+  onOpenMoments?: () => void;
 }
 
 /**
@@ -106,20 +111,41 @@ export interface CarnetDayHeaderProps {
  * les statistiques de la page — totaux du carnet sur le Résumé, chiffres du
  * jour sur J1..Jn. Le gabarit est celui du Compte : couverture 66 px, trois
  * statistiques de 19/700 sur une étiquette de 10,5/500.
+ *
+ * Le compte de moments, à droite de la pastille, est le point d'entrée du
+ * drawer Moments : même texte, même graisse, même encre, mais une cible de
+ * 44 px et l'anneau de focus de la carte. La liste des moments n'est plus
+ * peinte sous la grille.
  */
-export function CarnetDayHeader({ detail, day, cover, onOpenStat }: CarnetDayHeaderProps) {
+export function CarnetDayHeader({
+  detail,
+  day,
+  cover,
+  onOpenStat,
+  onOpenMoments,
+}: CarnetDayHeaderProps) {
   const stats = day ? dayStats(day) : summaryStats(detail);
   const label = dayPageLabel(day);
   const moments = dayPageMoments(detail, day);
+  const count = `${moments} moment${moments > 1 ? 's' : ''}`;
 
   return (
     <>
       <div className="ckp-daypill" aria-live="polite">
         <span className="ckp-daypill-dot" aria-hidden="true" />
         <b className="ckp-daypill-label">{label}</b>
-        <span className="ckp-daypill-count">
-          {moments} moment{moments > 1 ? 's' : ''}
-        </span>
+        {onOpenMoments ? (
+          <button
+            type="button"
+            className="ckp-daypill-count"
+            onClick={onOpenMoments}
+            aria-label={`Ouvrir les moments — ${count}`}
+          >
+            {count}
+          </button>
+        ) : (
+          <span className="ckp-daypill-count">{count}</span>
+        )}
       </div>
 
       <div className="ckp-head">
