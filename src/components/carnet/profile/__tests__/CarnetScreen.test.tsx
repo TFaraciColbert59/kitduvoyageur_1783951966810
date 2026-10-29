@@ -421,9 +421,10 @@ describe('CarnetScreen — drawer Moments depuis la pastille de compte', () => {
     expect(drawerOpen()).toBe(true);
     const pane = document.querySelector('.ckp-pane-moments') as HTMLElement;
     expect(pane).toBeTruthy();
-    const row = pane.querySelector('.ckp-field') as HTMLElement;
-    expect(row.querySelector('.ckp-field-label')?.textContent).toBe('J1 · 07:40');
-    expect(row.querySelector('.ckp-field-value')?.textContent).toBe('Corrençon-en-Vercors');
+    /* Une carte de moment : l'heure en pastille, le lieu sur son voile. */
+    const card = pane.querySelector('.ckp-moment-card') as HTMLElement;
+    expect(card.querySelector('.ckp-moment-time')?.textContent).toBe('07:40');
+    expect(card.querySelector('.ckp-moment-place')?.textContent).toBe('Corrençon-en-Vercors');
   });
 
   it('garde le sélecteur du drawer à trois segments et sa lentille sur Moments', () => {
@@ -457,11 +458,12 @@ describe('CarnetScreen — drawer Moments depuis la pastille de compte', () => {
     expect(screen.getByRole('tabpanel', { name: 'Dénivelé' })).toBeTruthy();
   });
 
-  it('le volet Moments ne porte aucun titre : poignée et croix seulement', () => {
+  it('le volet Moments ne porte aucun titre : la poignée seule', () => {
     render(<CarnetScreen detail={WITH_MOMENTS} />);
     fireEvent.click(screen.getByRole('button', { name: 'Ouvrir les moments — 1 moment' }));
     const head = document.querySelector('.ckp-drawer-head') as HTMLElement;
-    expect(head.querySelectorAll('button').length).toBe(2);
+    expect(head.querySelectorAll('button').length).toBe(1);
+    expect(head.querySelector('.ckp-drawer-close')).toBeNull();
     expect(head.querySelector('h1, h2, h3')).toBeNull();
     expect(head.textContent).toBe('');
   });
@@ -485,9 +487,9 @@ describe('CarnetScreen — focus rendu au déclencheur (lot F)', () => {
     trigger.focus();
     fireEvent.click(trigger);
     expect(drawerOpen()).toBe(true);
-    /* La fermeture joue la sortie de 160 ms, puis la carte est remontée. */
+    /* La fermeture joue la sortie de 180 ms, puis la carte est remontée. */
     fireEvent.keyDown(document, { key: 'Escape' });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 240));
     await new Promise((resolve) => window.requestAnimationFrame(() => resolve(null)));
     expect(drawerOpen()).toBe(false);
     const again = document.querySelector('.ckp-stat[data-stat="distance"]') as HTMLElement;

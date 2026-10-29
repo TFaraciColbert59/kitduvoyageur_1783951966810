@@ -2,11 +2,10 @@
 
 import React, { useMemo } from 'react';
 import Icon from '@/components/ui/Icon';
-import type { CarnetDay, CarnetDetail } from '@/features/carnet/detail/types';
-import { INFO_MISSING, momentRows } from '@/features/carnet/detail/dayinfo';
-import { CarnetField } from '../CarnetField';
+import { formatDayLabel } from '@/features/carnet/detail/format';
+import { INFO_MISSING } from '@/features/carnet/detail/dayinfo';
+import type { CarnetDay, CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
 import { CarnetEmpty } from '../CarnetStates';
-import { groupsOfThree } from '../groups';
 
 export interface CarnetMomentsPaneProps {
   detail: CarnetDetail;
@@ -14,22 +13,96 @@ export interface CarnetMomentsPaneProps {
   day: CarnetDay | null;
 }
 
+interface MomentGroup {
+  /** Numéro du jour, tel que le carnet le numérote. */
+  dayNumber: number;
+  /** `J2` — le repère du jour, toujours réel. */
+  dayLabel: string;
+  /** `27 sept.` — la date réelle du jour, `null` quand elle manque. */
+  dateLabel: string | null;
+  moments: CarnetMomentItem[];
+}
+
 /**
- * Volet « Moments » du drawer : la liste qui vivait sous la grille 134.
+ * Regroupe les moments par jour, dans l'ordre reçu du serveur. Aucun moment
+ * n'est déplacé, aucun jour n'est créé : un jour sans moment n'apparaît pas.
+ */
+function groupByDay(moments: CarnetMomentItem[], days: CarnetDay[]): MomentGroup[] {
+  const dateByIndex = new Map<number, string | null>();
+  for (const day of days) dateByIndex.set(day.index, formatDayLabel(day.date));
+
+  const groups = new Map<number, MomentGroup>();
+  for (const moment of moments) {
+    const dayNumber = Math.max(1, Math.round(moment.dayNumber));
+    const existing = groups.get(dayNumber);
+    if (existing) {
+      existing.moments.push(moment);
+      continue;
+    }
+    groups.set(dayNumber, {
+      dayNumber,
+      dayLabel: `J${dayNumber}`,
+      dateLabel: dateByIndex.get(dayNumber) ?? null,
+      moments: [moment],
+    });
+  }
+  return [...groups.values()].sort((a, b) => a.dayNumber - b.dayNumber);
+}
+
+/**
+ * Carte d'un moment : la photo en 4:3 (rayon 14), l'heure en pastille en haut
+ * à gauche, le lieu en bas sur un voile local de 18 %, puis la légende sous la
+ * photo, dans la surface de la carte — jamais à même le verre.
  *
- * Une ligne de liste du système par moment — 48 px, libellé à gauche (l'heure,
- * préfixée de son jour sur le Résumé), valeur à droite (le lieu, ellipse au
- * milieu quand il est long), filet de 0,5 px inséré de 16 px entre deux lignes,
- * trois lignes au plus par groupe puis 20 px d'air. Aucune donnée n'est
- * recalculée ici : `momentRows` rend l'heure et le lieu réels, et un tiret
- * quand l'un des deux manque. Aucun texte d'état vide : glyphe + `—`.
+ * Un moment sans photo garde la même carte : la surface du 4:3 porte le glyphe
+ * de l'horloge à 30 %, et le lieu passe sous le glyphe, dans la carte. Aucune
+ * image n'est inventée, aucune carte ne change de hauteur d'une colonne à
+ * l'autre.
+ */
+function MomentCard({ moment }: { moment: CarnetMomentItem }) {
+  const time = moment.time ?? INFO_MISSING;
+  const place = moment.place ?? INFO_MISSING;
+  const missingPlace = moment.place === null;
+  const caption = moment.caption?.trim() || null;
+
+  return (
+    <figure className="ckp-moment-card" data-nophoto={moment.imageUrl ? undefined : 'true'}>
+      <span className="ckp-moment-photo">
+        {moment.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- image distante du moment
+          <img src={moment.imageUrl} alt="" loading="lazy" draggable={false} />
+        ) : (
+          <span className="ckp-moment-glyph" aria-hidden="true">
+            <Icon name="clock" size={24} aria-hidden="true" />
+          </span>
+        )}
+        <span className="ckp-moment-time">{time}</span>
+        <span className="ckp-moment-place" data-missing={missingPlace ? 'true' : undefined}>
+          {place}
+        </span>
+      </span>
+      {caption ? <figcaption className="ckp-moment-caption">{caption}</figcaption> : null}
+    </figure>
+  );
+}
+
+/**
+ * Volet « Moments » du drawer : une carte par moment, deux colonnes.
+ *
+ * Les moments se regroupent par jour dès que la liste en couvre plusieurs :
+ * le repère du jour (`J2 · 27 sept.`) vit dans sa propre pastille, jamais à
+ * même le verre. Sur une page de jour, il n'y a qu'un groupe : le repère est
+ * alors porté par l'en-tête du drawer, la grille commence donc directement.
+ *
+ * Aucune donnée n'est recalculée : l'heure, le lieu et la légende sont ceux du
+ * moment ; une valeur absente s'écrit `—`. Aucun texte d'état vide : glyphe
+ * et tiret, comme partout dans la feuille.
  */
 export function CarnetMomentsPane({ detail, day }: CarnetMomentsPaneProps) {
-  const moments = useMemo(
-    () => momentRows(day ? day.moments : detail.moments, day === null),
-    [day, detail.moments],
-  );
-  const groups = useMemo(() => groupsOfThree(moments), [moments]);
+  const moments = useMemo(() => (day ? day.moments : detail.moments), [day, detail.moments]);
+  const groups = useMemo(() => groupByDay(moments, detail.days ?? []), [detail.days, moments]);
+  /* Le repère de jour n'a de sens que si la liste en couvre plusieurs. */
+  const withDayHeader = groups.length > 1;
 
   if (moments.length === 0) {
     return (
@@ -41,29 +114,23 @@ export function CarnetMomentsPane({ detail, day }: CarnetMomentsPaneProps) {
 
   return (
     <div className="ckp-pane ckp-pane-moments">
-      {groups.map((group, index) => (
-        <div className="ckp-group" key={index}>
-          {group.map((moment) => {
-            /* Le jour ne s'écrit que sur le Résumé, où plusieurs journées se
-               suivent : il ne remplace jamais l'heure, il la précède. */
-            const label = moment.day ? `${moment.day} · ${moment.time}` : moment.time;
-            /* Un lieu réellement absent garde la place de la valeur et prend la
-               teinte du tiret (`is-missing`), jamais l'encre d'une donnée. */
-            const place = moment.place === INFO_MISSING ? undefined : moment.place;
-            return (
-              <CarnetField
-                key={moment.id}
-                label={label}
-                value={place}
-                /* Un lieu se reconnaît par sa fin : colonne élargie, ellipse au
-                   milieu, valeur toujours alignée à droite. */
-                wide
-                mid
-                ariaLabel={`${label} — ${moment.place}`}
-              />
-            );
-          })}
-        </div>
+      {groups.map((group) => (
+        <section className="ckp-moment-day" key={group.dayNumber} aria-label={`Moments du jour ${group.dayNumber}`}>
+          {withDayHeader ? (
+            <p className="ckp-moment-daypill">
+              <b>{group.dayLabel}</b>
+              {group.dateLabel ? <span>{group.dateLabel}</span> : null}
+              <span className="ckp-moment-daycount">
+                {group.moments.length} {group.moments.length > 1 ? 'moments' : 'moment'}
+              </span>
+            </p>
+          ) : null}
+          <div className="ckp-moment-grid">
+            {group.moments.map((moment) => (
+              <MomentCard key={moment.id} moment={moment} />
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   );
