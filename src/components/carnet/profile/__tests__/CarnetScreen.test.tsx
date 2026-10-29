@@ -147,11 +147,11 @@ function drawerOpen() {
 }
 
 describe('CarnetScreen — drawer réduit à ce qui n’est pas dans le sélecteur', () => {
-  it('ne garde que Statistiques et Partage pour le propriétaire', () => {
+  it('ne garde que Statistiques, Moments et Partage pour le propriétaire', () => {
     render(<CarnetScreen detail={OWNER} />);
     fireEvent.click(screen.getByRole('button', { name: 'JOURS 7' }));
     const labels = screen.getAllByRole('tab').map((tab) => tab.getAttribute('aria-label'));
-    expect(labels).toEqual(['Statistiques', 'Partage']);
+    expect(labels).toEqual(['Statistiques', 'Moments', 'Partage']);
     expect(screen.getByRole('tab', { name: 'Statistiques' }).getAttribute('aria-selected')).toBe('true');
     /* Les volets devenus des pages ne sont plus des onglets du drawer. */
     expect(screen.queryByRole('tab', { name: 'Commentaires' })).toBeNull();
@@ -427,21 +427,35 @@ describe('CarnetScreen — drawer Moments depuis la pastille de compte', () => {
     expect(row.querySelector('.ckp-field-value')?.textContent).toBe('Corrençon-en-Vercors');
   });
 
-  it('garde la capsule du drawer à deux segments, son pas de 41,5 et sa lentille', () => {
+  it('garde le sélecteur du drawer à trois segments et sa lentille sur Moments', () => {
     render(<CarnetScreen detail={WITH_MOMENTS} />);
     fireEvent.click(screen.getByRole('button', { name: 'Ouvrir les moments — 1 moment' }));
     const tablist = screen.getByRole('tablist', { name: 'Volets du carnet' });
     expect(screen.getAllByRole('tab').map((tab) => tab.getAttribute('aria-label'))).toEqual([
       'Statistiques',
+      'Moments',
       'Partage',
     ]);
-    const capsule = tablist.closest('.ckp-capsule') as HTMLElement;
-    expect(capsule.style.getPropertyValue('--n')).toBe('2');
-    /* Le volet Moments n'est pas un segment : aucune lentille allumée, mais la
-       capsule garde sa géométrie et sa matière. */
-    const lens = capsule.querySelector(':scope > .ckp-th') as HTMLElement;
-    expect(lens.getAttribute('data-off')).toBe('true');
-    expect(lens.style.getPropertyValue('--i')).toBe('0');
+    const select = tablist.closest('.ckp-drawer-select') as HTMLElement;
+    expect(select.style.getPropertyValue('--n')).toBe('3');
+    /* Moments est un segment : la lentille est allumée sur son cran. */
+    const lens = select.querySelector(':scope > .ckp-th') as HTMLElement;
+    expect(lens.getAttribute('data-off')).toBeNull();
+    expect(lens.style.getPropertyValue('--i')).toBe('1');
+    /* Aucun sous-volet ici : pas de capsule de pied. */
+    expect(document.querySelector('.ckp-drawer-foot')).toBeNull();
+  });
+
+  it('peint les trois sous-volets statistiques dans la capsule de pied du drawer', () => {
+    render(<CarnetScreen detail={OWNER} />);
+    fireEvent.click(screen.getByRole('button', { name: 'JOURS 7' }));
+    const group = screen.getByRole('group', { name: 'Statistiques du carnet' });
+    expect(group.closest('.ckp-drawer-foot')).toBeTruthy();
+    const buttons = Array.from(group.querySelectorAll('button')).map((b) => b.getAttribute('aria-label'));
+    expect(buttons).toEqual(['Distance', 'Dénivelé', 'Jours']);
+    /* Le choix du sous-volet change bien le contenu du corps. */
+    fireEvent.click(screen.getByRole('button', { name: 'Dénivelé' }));
+    expect(screen.getByRole('tabpanel', { name: 'Dénivelé' })).toBeTruthy();
   });
 
   it('le volet Moments ne porte aucun titre : poignée et croix seulement', () => {

@@ -141,7 +141,7 @@ describe('Anatomie de la feuille', () => {
     expect(bar).toMatch(/height:\s*5px/);
     expect(bar).toMatch(/border-radius:\s*999px/);
     expect(rule('.ckp-grabber span::after {')).toMatch(/background-color:\s*rgba\(23, 43, 36, \.18\)/);
-    expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*16px 16px 64px/);
+    expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*24px 16px 64px/);
   });
 
   /* 2 — hauteur adaptative au contenu + réserve, plafond 503 px. */
@@ -157,15 +157,18 @@ describe('Anatomie de la feuille', () => {
     expect(rule('.ckp-group {')).toMatch(/gap:\s*12px/);
     expect(rule('.ckp-pane-body {')).toMatch(/gap:\s*20px/);
     expect(rule('.ckp-pane-share,\n.ckp-pane-moments,\n.ckp-likes,\n.ckp-manage {')).toMatch(/gap:\s*20px/);
-    expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*16px 16px 64px/);
+    expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*24px 16px 64px/);
     expect(rule('.ckp-stats {')).toMatch(/padding:\s*0/);
   });
 
   /* 6 / 7 / 8 — 24 px avant la première donnée, 20 px entre blocs, 64 en bas. */
-  it('20 px sous le sous-sélecteur, 20 px entre blocs, 64 px de réserve basse', () => {
-    expect(rule('.ckp-stats-seg {')).toMatch(/margin:\s*0 0 20px/);
+  it('24 px sous le sélecteur, 20 px entre blocs, 64 px de réserve basse', () => {
+    /* Les 24 px du premier bloc viennent du corps : sous le sélecteur des
+       volets, aucun décalage propre au volet ne vient s'y ajouter. */
+    expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*24px 16px 64px/);
+    expect(rule('.ckp-pane-share,\n.ckp-pane-moments { padding-top: 0; }')).toMatch(/padding-top:\s*0/);
     expect(rule('.ckp-elev {')).toMatch(/margin:\s*20px 0 0/);
-    expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*16px 16px 64px/);
+    expect(css).not.toMatch(/\.ckp-stats-seg/);
   });
 
   /* 7 — aucune section encadrée : ni titre, ni carte, ni rangée de réglage. */
@@ -278,11 +281,13 @@ describe('Champs de donnée', () => {
 });
 
 describe('Sous-sélecteur et capsule', () => {
-  /* 29 / 30 / 32 — 30 px non flottant, lentille 41,5 × 25, 3 × 41,5 + 5. */
-  it('sous-sélecteur 30 px, lentille 41,5 × 25, largeur 3 × 41,5 + 5', () => {
+  /* 29 / 30 / 32 — 30 px, lentille 41,5 × 25, 3 × 41,5 + 5. */
+  it('capsule 30 px, lentille 41,5 × 25, largeur 3 × 41,5 + 5', () => {
     const sub = rule('.ckp-sub {');
     expect(sub).toMatch(/height:\s*30px/);
     expect(sub).toMatch(/padding:\s*2\.5px/);
+    /* Le gabarit reste non flottant : c'est son porteur (`.ckp-drawer-foot`)
+       qui l'ancre à 12 px des bords bas et droit du drawer. */
     expect(sub).not.toMatch(/position:\s*absolute/);
     expect(sub).not.toMatch(/position:\s*fixed/);
     expect(rule('.ckp-sub--icons {')).toMatch(/width:\s*calc\(var\(--n, 3\) \* 41\.5px \+ 5px\)/);
@@ -293,18 +298,17 @@ describe('Sous-sélecteur et capsule', () => {
     expect(3 * 41.5 + 5).toBe(129.5);
   });
 
-  /* 34 / 36 — capsule à 12 px des bords, ombre de pose. */
-  it('capsule du drawer à 12 px des bords bas et droit, ombre 0 2px 8px', () => {
+  /* 34 / 36 — capsule des sous-volets à 12 px des bords, ombre de pose. */
+  it('capsule des sous-volets à 12 px des bords bas et droit, ombre 0 2px 8px', () => {
     const foot = rule('.ckp-drawer-foot {');
     expect(foot).toMatch(/position:\s*absolute/);
     expect(foot).toMatch(/right:\s*12px/);
     expect(foot).toMatch(/bottom:\s*12px/);
     expect(foot).toMatch(/height:\s*30px/);
-    expect(rule('.ckp-drawer-foot .ckp-capsule {')).toMatch(/0 2px 8px rgba\(23, 43, 36, \.10\)/);
-    /* Le pas de la capsule de la carte ne bouge pas : 41,5 × n + 5. */
-    expect(rule('.ckp-drawer-foot .ckp-capsule {')).toMatch(
-      /width:\s*calc\(var\(--n, 2\) \* 41\.5px \+ 5px\)/,
-    );
+    expect(rule('.ckp-drawer-foot .ckp-sub {')).toMatch(/0 2px 8px rgba\(23, 43, 36, \.10\)/);
+    /* Le pas de la capsule ne bouge pas : 41,5 × n + 5 (129,5 pour trois). */
+    expect(rule('.ckp-sub--icons {')).toMatch(/width:\s*calc\(var\(--n, 3\) \* 41\.5px \+ 5px\)/);
+    expect(3 * 41.5 + 5).toBe(129.5);
   });
 
   /* 35 — voile de 24 px, blanc .72 → transparent, en fin de course. */
@@ -571,7 +575,7 @@ describe('Rythme — lot C', () => {
 
   /* 22 / 23 — marges internes de 16 px, réserve basse de 64 px. */
   it('marges internes 16 px et réserve basse 64 px', () => {
-    expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*16px 16px 64px/);
+    expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*24px 16px 64px/);
     expect(rule('.ckp-page-pad--dense {')).toMatch(/padding:\s*0 0 64px/);
   });
 
@@ -835,5 +839,126 @@ describe('Mobile — lot F', () => {
   it('voile local rgba(10, 20, 14, .18) sous le texte des photos', () => {
     const veil = rule('.ckp-viewer-caption,\n.ckp-viewer-count {');
     expect(veil).toMatch(/background-color:\s*rgba\(10, 20, 14, \.18\)/);
+  });
+});
+
+/* =============================================================================
+   Drawer du carnet — refonte de l'intérieur (29 oct. 2026)
+   Le sélecteur 44 px des volets en haut, la capsule 30 px des sous-volets en bas
+   à droite, et des surfaces partout : aucun texte posé sur le verre.
+   ============================================================================= */
+describe('Drawer — sélecteur des volets (haut)', () => {
+  /* Barre pleine largeur, 44 px, rayon 999, fond .06 + inset, 16 px des bords. */
+  it('barre de 44 px, rayon 999, fond rgba(23, 43, 36, .06) et inset', () => {
+    const select = rule('.ckp-drawer-select {');
+    expect(select).toMatch(/margin:\s*16px 16px 0/);
+    expect(select).toMatch(/height:\s*44px/);
+    expect(select).toMatch(/padding:\s*3px/);
+    expect(select).toMatch(/border-radius:\s*999px/);
+    expect(select).toMatch(/background:\s*rgba\(23, 43, 36, \.06\)/);
+    expect(select).toMatch(/inset 0 1px 1px rgba\(23, 43, 36, \.06\)/);
+    /* Il vit dans le chrome qui ne défile pas, sous la poignée et la croix. */
+    expect(rule('.ckp-drawer-chrome {')).toMatch(/position:\s*relative/);
+    expect(rule('.ckp-drawer-chrome {')).toMatch(/flex:\s*none/);
+  });
+
+  /* Trois segments égaux : une colonne par volet, aucun gap. */
+  it('un segment par volet, colonnes égales, icône 18 + libellé 12,5/600', () => {
+    const tabs = rule('.ckp-drawer-select .ckp-tabs {');
+    expect(tabs).toMatch(/grid-template-columns:\s*repeat\(var\(--n, 3\), minmax\(0, 1fr\)\)/);
+    expect(tabs).toMatch(/gap:\s*0/);
+    expect(tabs).toMatch(/height:\s*38px/);
+    const button = rule('.ckp-drawer-select .ckp-tabs button {');
+    expect(button).toMatch(/font:\s*600 12\.5px\/1/);
+    expect(button).toMatch(/gap:\s*6px/);
+    expect(button).toMatch(/color:\s*#56665d/);
+    expect(rule(".ckp-drawer-select .ckp-tabs button[aria-selected='true'] {")).toMatch(
+      /color:\s*#17402C/,
+    );
+  });
+
+  /* Lentille blanche pleine largeur, qui glisse en 220 ms au pas de la barre. */
+  it('lentille au pas des segments, 220 ms cubic-bezier(.22, 1, .36, 1)', () => {
+    /* Le saut de ligne ancre la règle de base : la variante de mouvement réduit
+       porte le préfixe `.ckp-card--drawer` et ne doit pas être lue ici. */
+    const lens = rule('\n.ckp-drawer-select > .ckp-th {');
+    expect(lens).toMatch(/height:\s*38px/);
+    expect(lens).toMatch(/width:\s*calc\(\(100% - 6px\) \/ var\(--n, 3\)\)/);
+    expect(lens).toMatch(/translateX\(calc\(var\(--i, 0\) \* 100%\)\)/);
+    expect(lens).toMatch(/transition:\s*transform 220ms cubic-bezier\(\.22, 1, \.36, 1\)/);
+    expect(lens).toMatch(/background:\s*#fff/);
+  });
+
+  /* Mouvement réduit : aucune translation, quelle que soit la place de la règle. */
+  it('mouvement réduit : la lentille saute, sans translation', () => {
+    const blocks = css.split('@media (prefers-reduced-motion: reduce)').slice(1);
+    const all = blocks.join('\n');
+    expect(all).toMatch(
+      /\.ckp-card--drawer \.ckp-drawer-select > \.ckp-th \{ transition: none; \}/,
+    );
+  });
+});
+
+describe('Drawer — surfaces : aucun texte à même le verre', () => {
+  /* Champ 48 px, rayon 12, blanc .55, liseré .5 px. */
+  it('champ de 48 px sur sa carte, rayon 12, blanc .55 et liseré .5 px', () => {
+    const field = rule('.ckp-card--drawer .ckp-field {');
+    expect(field).toMatch(/height:\s*48px/);
+    expect(field).toMatch(/padding:\s*0 14px/);
+    expect(field).toMatch(/border-radius:\s*12px/);
+    expect(field).toMatch(/background:\s*rgba\(255, 255, 255, \.55\)/);
+    expect(field).toMatch(/inset 0 0 0 \.5px rgba\(23, 43, 36, \.10\)/);
+    /* L'erreur garde son liseré de 1 px #C13B34. */
+    expect(rule(".ckp-card--drawer .ckp-field[data-error='true'] {")).toMatch(
+      /inset 0 0 0 1px #C13B34/,
+    );
+    /* Deux surfaces ne portent pas de filet. */
+    expect(rule('.ckp-card--drawer .ckp-field + .ckp-field::before {')).toMatch(
+      /content:\s*none/,
+    );
+  });
+
+  /* Libellé 12/500 #8A968D à gauche, valeur 13/600 tabulaire à droite. */
+  it('libellé 12/500 #8A968D, valeur 13/600 tabulaire collée au bord droit', () => {
+    const label = rule('.ckp-card--drawer .ckp-field-label {');
+    expect(label).toMatch(/color:\s*#8A968D/);
+    expect(label).toMatch(/font:\s*500 12px\/1\.42/);
+    const value = rule('.ckp-card--drawer .ckp-field-value {');
+    expect(value).toMatch(/color:\s*#172B24/);
+    expect(value).toMatch(/font:\s*600 13px\/1\.42/);
+    expect(value).toMatch(/font-variant-numeric:\s*tabular-nums/);
+    expect(value).toMatch(/margin-left:\s*auto/);
+  });
+
+  /* Chiffre héros et état vide : chacun dans son bloc, rayon 18, blanc .55. */
+  it('héros et état vide dans une carte 18, padding 16 / 20', () => {
+    const hero = rule('.ckp-card--drawer .ckp-hero {');
+    expect(hero).toMatch(/border-radius:\s*18px/);
+    expect(hero).toMatch(/background:\s*rgba\(255, 255, 255, \.55\)/);
+    expect(hero).toMatch(/padding:\s*16px 20px/);
+    const empty = rule('.ckp-card--drawer .ckp-empty-state {');
+    expect(empty).toMatch(/border-radius:\s*18px/);
+    expect(empty).toMatch(/background:\s*rgba\(255, 255, 255, \.55\)/);
+    expect(empty).toMatch(/padding:\s*16px 20px/);
+    /* Glyphe de 32 px à 30 %, comme l'état vide du corps. */
+    expect(rule('.ckp-card--drawer .ckp-hero-glyph {')).toMatch(/opacity:\s*\.3/);
+    /* Le glyphe de l'état vide passe de 24 à 32 px dans la feuille. */
+    const glyph = rule('.ckp-card--drawer .ckp-hero-glyph > span,\n.ckp-card--drawer .ckp-hero-glyph > svg {');
+    expect(glyph).toMatch(/width:\s*32px/);
+    expect(glyph).toMatch(/height:\s*32px/);
+  });
+
+  /* Graphique et lignes de jour : eux aussi sur une surface. */
+  it('profil altimétrique et lignes de jour sur une carte', () => {
+    const elev = rule('.ckp-card--drawer .ckp-elev {');
+    expect(elev).toMatch(/background:\s*rgba\(255, 255, 255, \.55\)/);
+    expect(elev).toMatch(/border-radius:\s*18px/);
+    const day = rule('.ckp-card--drawer .ckp-day {');
+    expect(day).toMatch(/background:\s*rgba\(255, 255, 255, \.55\)/);
+    expect(day).toMatch(/border-radius:\s*12px/);
+    /* 12 px entre deux cartes de jour. */
+    expect(rule('.ckp-card--drawer .ckp-daylist,\n.ckp-card--drawer .ckp-list-group {')).toMatch(
+      /gap:\s*12px/,
+    );
   });
 });

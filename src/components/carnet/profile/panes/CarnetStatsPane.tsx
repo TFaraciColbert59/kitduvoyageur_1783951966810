@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import Icon from '@/components/ui/Icon';
 import { formatElevation, formatKm } from '@/features/carnet/detail/format';
 import { travelInfo } from '@/features/carnet/detail/dayinfo';
@@ -8,7 +8,7 @@ import { dayDrawerStats } from '@/features/carnet/detail/daydrawer';
 import { CARNET_STATS_TABS, summarizeCarnet, type CarnetStatsTab } from '@/features/carnet/detail/stats';
 import type { CarnetDay, CarnetDetail } from '@/features/carnet/detail/types';
 import { extractCoords, traceLengthKm } from '../traceGeometry';
-import { CarnetSubCapsule, type CarnetSubCapsuleItem } from '../CarnetSubCapsule';
+import type { CarnetSubCapsuleItem } from '../CarnetSubCapsule';
 import { CarnetField } from '../CarnetField';
 import { CarnetRollValue } from '../CarnetRollValue';
 import { CarnetDayRow } from './CarnetDayRow';
@@ -25,8 +25,12 @@ import {
 
 export interface CarnetStatsPaneProps {
   detail: CarnetDetail;
+  /**
+   * Volet statistique affiché. La navigation des trois volets vit dans la
+   * capsule de pied du drawer (Distance / Dénivelé / Jours), pas ici : le volet
+   * reçoit le choix, il ne le fabrique plus.
+   */
   tab: CarnetStatsTab;
-  onTabChange: (tab: CarnetStatsTab) => void;
   /**
    * Page de jour affichée sur la carte : `null` sur le Résumé. Quand un jour
    * est actif, les trois volets ne contiennent **que** les données de ce jour
@@ -43,7 +47,13 @@ const TAB_ICONS: Record<CarnetStatsTab, string> = {
   days: 'calendar-days',
 };
 
-const TABS: CarnetSubCapsuleItem[] = CARNET_STATS_TABS.map((item) => ({
+/**
+ * Sous-volets du volet Statistiques, tels que le drawer les peint dans sa
+ * capsule de pied (41,5 × n + 5) : trois icônes, nommées par `aria-label`.
+ * Exportés ici parce que ce sont les icônes et les libellés des statistiques,
+ * pas un détail de la coquille.
+ */
+export const STATS_SUBNAV_ITEMS: CarnetSubCapsuleItem[] = CARNET_STATS_TABS.map((item) => ({
   id: item.id,
   label: item.label,
   icon: <Icon name={TAB_ICONS[item.id]} size={16} aria-hidden="true" />,
@@ -134,12 +144,14 @@ const PROFILE_HEIGHT = 72;
 /**
  * Sous-drawer des trois statistiques de la carte.
  *
- * Anatomie : sous-sélecteur de 30 px à 16 px sous la poignée, 24 px d'air, bloc
- * héros, puis des groupes de trois champs de 48 px séparés par 20 px. Chaque
+ * Anatomie : le corps commence 24 px sous le sélecteur des volets, par le bloc
+ * héros posé sur sa propre carte, puis des groupes de trois champs de 48 px
+ * (chacun sur sa surface) séparés par 12 px, 20 px entre deux groupes. Chaque
  * libellé est un placeholder, chaque valeur une donnée réelle ; une valeur
- * absente est un tiret, jamais une phrase ni un zéro.
+ * absente est un tiret, jamais une phrase ni un zéro. Les trois volets se
+ * naviguent dans la capsule de pied du drawer, pas dans le corps.
  */
-export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: CarnetStatsPaneProps) {
+export function CarnetStatsPane({ detail, tab, day = null }: CarnetStatsPaneProps) {
   const stats = useMemo(() => summarizeCarnet(detail), [detail]);
   /* Lieu et informations de la page : mêmes dérivations que l'ancienne fiche,
      désormais peintes dans les volets concernés. */
@@ -277,8 +289,6 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
   /* Liste des jours : trois lignes par groupe, 20 px d'air entre deux. */
   const dayGroups = useMemo(() => groupsOfThree(stats.days), [stats.days]);
 
-  const changeTab = useCallback((id: string) => onTabChange(id as CarnetStatsTab), [onTabChange]);
-
   return (
     <div className="ckp-pane ckp-stats" ref={rootRef}>
       {/* Rappel de données au défilement : l'icône du sous-onglet et le total.
@@ -290,15 +300,6 @@ export function CarnetStatsPane({ detail, tab, onTabChange, day = null }: Carnet
           </span>
           <b>{`${hero[tab].value} ${hero[tab].unit}`}</b>
         </div>
-      </div>
-
-      <div className="ckp-stats-seg">
-        <CarnetSubCapsule
-          items={TABS}
-          active={tab}
-          onChange={changeTab}
-          ariaLabel="Statistiques du carnet"
-        />
       </div>
 
       {tab === 'distance' ? (

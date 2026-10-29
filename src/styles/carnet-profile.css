@@ -410,7 +410,7 @@ button.ckp-daypill-count:active { opacity: .6; }
 /* En-tête du drawer : ce sont les deux seuls éléments du haut — la poignée
    42 × 5 à 8 px du bord, et la croix 36 px. Le voile de coupure vit sous la
    poignée et n'apparaît qu'au défilement. */
-.ckp-drawer-head { position: relative; z-index: 6; flex: none; }
+.ckp-drawer-head { position: relative; z-index: 6; flex: none; height: 44px; }
 .ckp-grabber {
   display: grid; justify-items: center; align-items: start; width: 100%; height: 13px;
   margin: 0; padding: 8px 0 0; border: 0; background: none; cursor: pointer;
@@ -452,7 +452,7 @@ button.ckp-daypill-count:active { opacity: .6; }
   mask-image: linear-gradient(180deg, #000 34%, transparent);
 }
 .ckp-drawer-cut[data-on='true'] { opacity: 1; }
-.ckp-drawer-body { padding: 16px 16px 64px; padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); gap: 0; }
+.ckp-drawer-body { padding: 24px 16px 64px; padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); gap: 0; }
 /* Pied du drawer : la capsule d'onglets occupe la place exacte de celle de la
    carte d'identité — `right/bottom: 10px` dans la feuille, 30 px de haut, même
    verre, même lentille, même pas de 41,5 px. Largeur = 41,5 × n + 5 px de
@@ -462,17 +462,6 @@ button.ckp-daypill-count:active { opacity: .6; }
   position: absolute; right: 12px; bottom: 12px; z-index: 6;
   bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   display: flex; align-items: center; height: 30px;
-}
-.ckp-drawer-foot .ckp-capsule {
-  width: calc(var(--n, 2) * 41.5px + 5px);
-  box-shadow:
-    inset 0 1px 1px rgba(23, 43, 36, .06),
-    inset 0 -1px 0 rgba(255, 255, 255, .65),
-    0 2px 8px rgba(23, 43, 36, .10);
-}
-.ckp-drawer-foot .ckp-capsule .ckp-tabs {
-  width: calc(var(--n, 2) * 41.5px);
-  grid-template-columns: repeat(var(--n, 2), 41.5px);
 }
 @keyframes ckp-drawer-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 /* Zone de retour tactile : les 12 px du bas de la feuille portent le curseur
@@ -886,7 +875,6 @@ button.ckp-daypill-count:active { opacity: .6; }
    unité 13/500 sur la même ligne, contexte 11/500 sans fond, barre de
    répartition 6 px à 12 px sous le chiffre, aires et barres sans axe. */
 .ckp-stats { position: relative; padding: 0; }
-.ckp-stats-seg { display: flex; margin: 0 0 20px; }
 /* Aire altimétrique : 72 px, remplissage et trait seuls, aucun axe. */
 .ckp-elev { position: relative; margin: 20px 0 0; }
 .ckp-elev svg { display: block; width: 100%; height: 72px; }
@@ -909,12 +897,17 @@ button.ckp-daypill-count:active { opacity: .6; }
 
 /* En-tête collant : 40 px de verre, total en 12/600, révélé au défilement. */
 .ckp-stats-sticky { position: sticky; top: 0; z-index: 4; height: 0; pointer-events: none; }
+/* Le rappel de total au défilement ne flotte plus en bande sur le verre : il
+   devient une pastille de 30 px, à droite, sur sa propre surface blanche. */
 .ckp-stats-sticky > div {
-  position: absolute; left: -16px; right: -16px; top: 0; height: 40px;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 16px;
-  background: rgba(255, 255, 255, .88);
+  /* 16 px sous le haut du corps : le voile de coupe du chrome (16 px) ne
+     passe jamais sur la pastille. */
+  position: absolute; right: 0; top: 16px; height: 30px;
+  display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
   -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
-  border-bottom: .5px solid rgba(23, 43, 36, .06);
+  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .10), 0 2px 8px rgba(23, 43, 36, .10);
   opacity: 0; transition: opacity 160ms ease;
 }
 .ckp-stats-sticky[data-on='true'] > div { opacity: 1; }
@@ -1028,6 +1021,10 @@ button.ckp-daypill-count:active { opacity: .6; }
 .ckp-pane-moments,
 .ckp-likes,
 .ckp-manage { display: flex; flex-direction: column; gap: 20px; min-width: 0; padding-top: 20px; }
+/* Les deux volets du drawer prennent leurs 24 px du corps de la feuille : aucun
+   second décalage ne vient s'ajouter sous le sélecteur des volets. */
+.ckp-pane-share,
+.ckp-pane-moments { padding-top: 0; }
 
 /* --- 23-28. Champ de donnée : libellé placeholder, valeur à droite --------- */
 .ckp-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -1189,6 +1186,8 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
   .ckp-load, .ckp-empty-state { animation: ckp-fade-in 120ms linear both; }
   .ckp-page--next, .ckp-page--prev { animation: ckp-fade-in 120ms linear both; }
   .ckp-drawer-veil { transition: opacity 120ms linear; }
+  /* Sélecteur des volets : la lentille saute d'un cran à l'autre, sans glisser. */
+  .ckp-card--drawer .ckp-drawer-select > .ckp-th { transition: none; }
 }
 
 /* Une seule tuile garde le gabarit 134 (3 colonnes), jamais pleine largeur. */
@@ -1492,3 +1491,164 @@ html[data-ckp-sheet] body {
 
 /* Photo du carnet dans le rond 66 px (le tracé vit sur la carte du bas). */
 .ckp-cover--photo { width: 62px; height: 62px; border-radius: 50%; object-fit: cover; display: block; }
+
+/* =============================================================================
+   Drawer du carnet — refonte de l'intérieur (29 oct. 2026)
+   Un seul niveau de navigation visible à la fois : le sélecteur 44 px des
+   volets en haut de la feuille, la capsule 30 px des sous-volets en bas à
+   droite. Aucun texte n'est posé à même le verre : tout libellé, toute valeur,
+   tout compteur, tout état vide vit dans une surface (champ 48/12, pastille,
+   carte 18). Un seul accent : #17402C, réservé à l'état actif.
+   Tokens : #172B24 #17402C #56665D #6B7A70 #8A968D #C13B34 #B4BDB6.
+   ============================================================================= */
+
+/* --- Chrome : poignée + croix, sélecteur, voile de coupe ------------------- */
+/* Le chrome ne défile pas : poignée 42 × 5 et croix 36 px occupent les 44 px
+   du haut, le sélecteur vient 16 px dessous, et le voile de coupe se pose sous
+   l'ensemble — jamais sur un segment. */
+.ckp-drawer-chrome { position: relative; z-index: 6; flex: none; }
+.ckp-drawer-select {
+  position: relative; box-sizing: border-box;
+  margin: 16px 16px 0; height: 44px; padding: 3px; border-radius: 999px;
+  background: rgba(23, 43, 36, .06);
+  box-shadow: inset 0 1px 1px rgba(23, 43, 36, .06), inset 0 -1px 0 rgba(255, 255, 255, .65);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
+}
+/* Une seule lentille blanche, de la largeur exacte d'un segment : elle glisse
+   d'un cran par `translateX(100%)`, donc au pas de la barre. */
+.ckp-drawer-select > .ckp-th {
+  position: absolute; top: 3px; left: 3px; z-index: 0;
+  width: calc((100% - 6px) / var(--n, 3)); height: 38px; border-radius: 999px; background: #fff;
+  box-shadow: 0 1px 3px rgba(23, 43, 36, .18), 0 0 0 .5px rgba(23, 43, 36, .06);
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
+  pointer-events: none;
+}
+.ckp-drawer-select > .ckp-th[data-off='true'] { opacity: 0; }
+.ckp-drawer-select .ckp-tabs {
+  position: relative; z-index: 1; display: grid;
+  grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr));
+  gap: 0; width: 100%; height: 38px; padding: 0; border-radius: 999px;
+  background: none; box-shadow: none;
+}
+/* Segment : icône 18 + libellé 12,5/600, centrés, jamais de retour à la ligne. */
+.ckp-drawer-select .ckp-tabs button {
+  position: relative; z-index: 1; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; height: 38px; padding: 0 4px; border: 0; border-radius: 999px;
+  background: none; color: #56665d; cursor: pointer; overflow: hidden;
+  font: 600 12.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0; white-space: nowrap;
+  transition: color 160ms ease;
+}
+.ckp-drawer-select .ckp-tabs button > span:first-child { flex: none; display: inline-flex; }
+.ckp-drawer-select .ckp-tab-label {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ckp-drawer-select .ckp-tabs button[aria-selected='true'] { color: #17402C; }
+@media (hover: hover) {
+  .ckp-drawer-select .ckp-tabs button:hover { color: #17402C; }
+}
+.ckp-drawer-select .ckp-tabs button:focus-visible {
+  outline: 2px solid #17402C; outline-offset: -2px;
+}
+/* Capsule des sous-volets dans le pied : même verre que la carte, plus l'ombre
+   de pose qui la décolle de la feuille (12 px des bords bas et droit). */
+.ckp-drawer-foot .ckp-sub {
+  box-shadow:
+    inset 0 1px 1px rgba(23, 43, 36, .06),
+    inset 0 -1px 0 rgba(255, 255, 255, .65),
+    inset 0 0 0 .5px rgba(23, 43, 36, .08),
+    0 2px 8px rgba(23, 43, 36, .10);
+}
+
+/* --- Aucun texte à même le verre : le champ porte sa surface -------------- */
+/* Champ 48 px, rayon 12, blanc .55, liseré .5 px. Libellé 12/500 #8A968D à
+   gauche, valeur 13/600 tabulaire à droite, interligne 1,42 des deux côtés. */
+.ckp-card--drawer .ckp-field {
+  height: 48px; padding: 0 14px; margin: 0; gap: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .10);
+}
+.ckp-card--drawer .ckp-field[data-error='true'] { box-shadow: inset 0 0 0 1px #C13B34; }
+.ckp-card--drawer button.ckp-field:active,
+.ckp-card--drawer a.ckp-field:active { background-color: rgba(255, 255, 255, .74); }
+@media (hover: hover) {
+  .ckp-card--drawer button.ckp-field:hover,
+  .ckp-card--drawer a.ckp-field:hover { background-color: rgba(255, 255, 255, .74); }
+}
+.ckp-card--drawer .ckp-field-icon { color: #8A968D; }
+.ckp-card--drawer .ckp-field-label {
+  color: #8A968D; letter-spacing: 0;
+  font: 500 12px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-card--drawer .ckp-field-value {
+  /* La colonne de valeur reste large de 120 px, mais elle touche le bord droit
+     de la carte : les 55 px que le plafond du libellé laissait libres sont
+     absorbés par la marge, jamais par un vide entre la valeur et le liseré. */
+  margin-left: auto;
+  color: #172B24;
+  font: 600 13px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+.ckp-card--drawer .ckp-field.is-missing .ckp-field-value { color: #B4BDB6; }
+/* L'accent reste réservé à l'état actif et à l'action destructive. */
+.ckp-card--drawer .ckp-field[aria-pressed='true'] .ckp-field-value,
+.ckp-card--drawer .ckp-field[aria-pressed='true'] .ckp-field-icon { color: #17402C; }
+.ckp-card--drawer .ckp-field--danger .ckp-field-label,
+.ckp-card--drawer .ckp-field--danger .ckp-field-value { color: #C13B34; }
+/* Deux surfaces ne portent pas de filet : le vide entre deux cartes suffit. */
+.ckp-card--drawer .ckp-field + .ckp-field::before { content: none; display: none; }
+
+/* --- Chiffre héros dans son bloc : carte 18, blanc .55, 16/20 ------------- */
+.ckp-card--drawer .ckp-hero {
+  padding: 16px 20px; border-radius: 18px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .10);
+}
+/* Sans donnée : glyphe 32 px à 30 % et tiret, eux aussi dans le bloc. */
+.ckp-card--drawer .ckp-hero--empty { min-height: 56px; }
+.ckp-card--drawer .ckp-hero-glyph { opacity: .3; }
+.ckp-card--drawer .ckp-hero-glyph > span,
+.ckp-card--drawer .ckp-hero-glyph > svg { width: 32px; height: 32px; }
+.ckp-card--drawer .ckp-hero--empty .ckp-hero-num {
+  color: #8A968D;
+  font: 600 20px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+/* État vide d'un volet : même bloc, même glyphe de 32 px à 30 %. */
+.ckp-card--drawer .ckp-empty-state {
+  gap: 10px; padding: 16px 20px; border-radius: 18px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .10);
+}
+
+/* --- Graphiques et listes : une surface, jamais du texte sur le verre ----- */
+/* Le profil altimétrique, ses repères de jour et son sommet vivent dans une
+   carte : la valeur du point haut ne flotte plus sur le verre. */
+.ckp-card--drawer .ckp-elev {
+  margin: 0; padding: 12px 14px; border-radius: 18px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .10);
+}
+/* Ligne de jour : une carte de 12 px de rayon ; 12 px entre deux cartes, 20 px
+   entre deux groupes de trois. */
+.ckp-card--drawer .ckp-day {
+  padding: 0 14px; border-radius: 12px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .10);
+}
+.ckp-card--drawer .ckp-day + .ckp-day::before { content: none; display: none; }
+.ckp-card--drawer .ckp-daylist,
+.ckp-card--drawer .ckp-list-group { gap: 12px; }
+.ckp-card--drawer .ckp-day-nums b {
+  font: 600 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+/* Le récit respire : 12 px sous le texte, dans la carte. */
+.ckp-card--drawer .ckp-story { padding: 0 0 12px; }
+/* Récit replié : le déclencheur et le texte tiennent dans une carte. */
+.ckp-card--drawer .ckp-collapsible {
+  padding: 0 14px; border-radius: 12px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .10);
+}

@@ -2,7 +2,7 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CarnetStatsPane } from '../panes/CarnetStatsPane';
+import { CarnetStatsPane, STATS_SUBNAV_ITEMS } from '../panes/CarnetStatsPane';
 import type { CarnetDay, CarnetEtapeDay } from '@/features/carnet/detail/types';
 import { detail } from './fixtures';
 
@@ -73,35 +73,28 @@ const values = (root: ParentNode) =>
   [...root.querySelectorAll('.ckp-field-value')].map((node) => node.textContent);
 
 describe('CarnetStatsPane — sous-drawer statistiques', () => {
-  it('expose les trois sous-onglets en icônes seules, nommés par aria-label', () => {
-    render(<CarnetStatsPane detail={RICH} tab="distance" onTabChange={() => {}} />);
-    const group = screen.getByRole('group', { name: 'Statistiques du carnet' });
-    const buttons = Array.from(group.querySelectorAll('button'));
-    /* 31/32 : aucune étiquette texte, trois icônes, 3 × 41,5 + 5 de large. */
-    expect(buttons.map((button) => button.getAttribute('aria-label'))).toEqual([
-      'Distance',
-      'Dénivelé',
-      'Jours',
-    ]);
-    expect(buttons.every((button) => button.textContent === '')).toBe(true);
-    expect(buttons.every((button) => button.querySelector('span'))).toBe(true);
-    expect(group.className).toContain('ckp-sub--icons');
-    expect(group.querySelector(':scope > .ckp-th')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Distance' }).getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByRole('button', { name: 'Jours' }).getAttribute('aria-pressed')).toBe('false');
+  /* La navigation des trois volets a quitté le corps du sous-drawer : elle vit
+     dans la capsule de pied du drawer (12 px des bords bas et droit). Le volet
+     reçoit le choix, il ne le fabrique plus — et les trois icônes sont
+     exportées pour cette capsule. */
+  it('ne peint plus de sélecteur dans son corps : la navigation est au drawer', () => {
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="distance" />);
+    expect(container.querySelector('.ckp-sub')).toBeNull();
+    expect(container.querySelector('.ckp-stats-seg')).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Statistiques du carnet' })).toBeNull();
+    /* Le volet demandé est bien celui qui est monté. */
+    expect(screen.getByRole('tabpanel', { name: 'Distance' })).toBeTruthy();
+    expect(screen.queryByRole('tabpanel', { name: 'Dénivelé' })).toBeNull();
   });
 
-  it('remonte le sous-onglet choisi', () => {
-    const onTabChange = vi.fn();
-    render(<CarnetStatsPane detail={RICH} tab="distance" onTabChange={onTabChange} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Dénivelé' }));
-    expect(onTabChange).toHaveBeenCalledWith('elevation');
-    fireEvent.click(screen.getByRole('button', { name: 'Jours' }));
-    expect(onTabChange).toHaveBeenLastCalledWith('days');
+  it('exporte les trois sous-volets en icônes seules, nommés par leur libellé', () => {
+    expect(STATS_SUBNAV_ITEMS.map((item) => item.label)).toEqual(['Distance', 'Dénivelé', 'Jours']);
+    expect(STATS_SUBNAV_ITEMS.map((item) => item.id)).toEqual(['distance', 'elevation', 'days']);
+    expect(STATS_SUBNAV_ITEMS.every((item) => item.icon)).toBe(true);
   });
 
   it('distance : chiffre 40/700, unité accolée, barre, trois sous-valeurs', () => {
-    const { container } = render(<CarnetStatsPane detail={RICH} tab="distance" onTabChange={() => {}} />);
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="distance" />);
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
     expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('106,4');
     expect(panel.querySelector('.ckp-hero-unit')?.textContent).toBe('km');
@@ -116,7 +109,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   });
 
   it('distance : lieu, départ, arrivée, allure, cumul, trace, puis les jours', () => {
-    const { container } = render(<CarnetStatsPane detail={RICH} tab="distance" onTabChange={() => {}} />);
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="distance" />);
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
     const groups = [...panel.querySelectorAll('.ckp-group')];
     /* 20 : trois lignes au plus par groupe. */
@@ -148,7 +141,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
       place: { country: null, region: null, locality: null, lat: null, lng: null },
       summary: { distanceKm: null, elevationM: null, days: 0, moments: 0 },
     });
-    const { container } = render(<CarnetStatsPane detail={bare} tab="distance" onTabChange={() => {}} />);
+    const { container } = render(<CarnetStatsPane detail={bare} tab="distance" />);
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
     /* Sans donnée, le héros est une ligne : le tiret seul, pas d'unité, pas de
        piste de barre (une progression à 0 % traverserait toute la largeur). */
@@ -166,7 +159,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   });
 
   it('dénivelé : cumul, moyenne, maximum daté, jours documentés', () => {
-    const { container } = render(<CarnetStatsPane detail={RICH} tab="elevation" onTabChange={() => {}} />);
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="elevation" />);
     const panel = screen.getByRole('tabpanel', { name: 'Dénivelé' });
     expect(panel.querySelector('.ckp-hero-value')?.textContent).toMatch(/^2.002$/);
     expect(panel.querySelector('.ckp-hero-unit')?.textContent).toBe('m');
@@ -187,7 +180,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
       <CarnetStatsPane
         detail={detail({ etapes: [], elevationM: null, distanceKm: null })}
         tab="elevation"
-        onTabChange={() => {}}
+       
       />,
     );
     const panel = screen.getByRole('tabpanel', { name: 'Dénivelé' });
@@ -199,7 +192,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   });
 
   it('jours : numéro, date, trajet, distance, dénivelé, hébergement et moments', () => {
-    const { container } = render(<CarnetStatsPane detail={RICH} tab="days" onTabChange={() => {}} />);
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="days" />);
     const panel = screen.getByRole('tabpanel', { name: 'Jours' });
     expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('3');
     expect(panel.querySelector('.ckp-hero-unit')?.textContent).toBe('jours');
@@ -235,7 +228,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
         })}
         tab="distance"
         day={day}
-        onTabChange={() => {}}
+       
       />,
     );
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
@@ -267,7 +260,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
       points: [],
     };
     render(
-      <CarnetStatsPane detail={detail({ etapes: DAYS, days: [day] })} tab="distance" day={day} onTabChange={() => {}} />,
+      <CarnetStatsPane detail={detail({ etapes: DAYS, days: [day] })} tab="distance" day={day} />,
     );
     const panel = screen.getByRole('tabpanel', { name: 'Distance' });
     /* 106,4 km et 2 002 m vivent sur le Résumé : jamais en repli d'un jour. */
@@ -300,7 +293,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
         detail={detail({ etapes: DAYS, distanceKm: 106.4, elevationM: 2002, trace: TRACE })}
         tab="elevation"
         day={day}
-        onTabChange={() => {}}
+       
       />,
     );
     const panel = screen.getByRole('tabpanel', { name: 'Dénivelé' });
@@ -325,7 +318,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
       moments: [],
       points: [],
     };
-    render(<CarnetStatsPane detail={detail({ trace: TRACE })} tab="elevation" day={day} onTabChange={() => {}} />);
+    render(<CarnetStatsPane detail={detail({ trace: TRACE })} tab="elevation" day={day} />);
     const panel = screen.getByRole('tabpanel', { name: 'Dénivelé' });
     expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('—');
     expect(values(panel)).toEqual(['—', '—']);
@@ -342,7 +335,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
       moments: [],
       points: [],
     };
-    render(<CarnetStatsPane detail={RICH} tab="days" day={day} onTabChange={() => {}} />);
+    render(<CarnetStatsPane detail={RICH} tab="days" day={day} />);
     const panel = screen.getByRole('tabpanel', { name: 'Jours' });
     /* Plus de plage de dates : la date du jour seule. */
     expect(labels(panel)).toEqual(['jour', 'date']);
@@ -377,7 +370,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
         })}
         tab="days"
         day={day}
-        onTabChange={() => {}}
+       
       />,
     );
     const panel = screen.getByRole('tabpanel', { name: 'Jours' });
@@ -386,7 +379,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   });
 
   it('résumé : les drawers gardent les totaux du carnet', () => {
-    const { container } = render(<CarnetStatsPane detail={RICH} tab="days" onTabChange={() => {}} />);
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="days" />);
     const panel = screen.getByRole('tabpanel', { name: 'Jours' });
     expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('3');
     expect(labels(panel)).toEqual(['jour', 'date', 'dates']);
@@ -397,14 +390,14 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   });
 
   it('répartition : la part documentée pilote la barre, jamais une courbe sans donnée', () => {
-    const { container } = render(<CarnetStatsPane detail={RICH} tab="distance" onTabChange={() => {}} />);
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="distance" />);
     expect(container.querySelectorAll('.ckp-hero-bar i')).toHaveLength(1);
-    const full = render(<CarnetStatsPane detail={RICH} tab="days" onTabChange={() => {}} />);
+    const full = render(<CarnetStatsPane detail={RICH} tab="days" />);
     expect((full.container.querySelector('.ckp-hero-bar i') as HTMLElement).style.width).toBe('100%');
   });
 
   it('dénivelé : aire de 72 px, point culminant, trois repères, barres sans chiffres', () => {
-    const { container } = render(<CarnetStatsPane detail={RICH} tab="elevation" onTabChange={() => {}} />);
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="elevation" />);
     const svg = container.querySelector('.ckp-elev svg') as SVGElement;
     expect(svg).toBeTruthy();
     expect(svg.getAttribute('viewBox')).toBe('0 0 374 72');
@@ -420,7 +413,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   });
 
   it('jours : ligne de 56 px, pastille 22, deux colonnes de chiffres', () => {
-    const { container } = render(<CarnetStatsPane detail={RICH} tab="days" onTabChange={() => {}} />);
+    const { container } = render(<CarnetStatsPane detail={RICH} tab="days" />);
     const head = container.querySelector('.ckp-day .ckp-day-head') as HTMLElement;
     expect(head).toBeTruthy();
     const nums = [...container.querySelectorAll('.ckp-day .ckp-day-nums b')].map((n) => n.textContent);
@@ -439,7 +432,7 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
           summary: { distanceKm: null, elevationM: null, days: 0, moments: 0 },
         })}
         tab="days"
-        onTabChange={() => {}}
+       
       />,
     );
     const panel = screen.getByRole('tabpanel', { name: 'Jours' });
@@ -455,9 +448,9 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
   });
 
   it('le rouleau ne joue qu’une fois, à l’ouverture du volet', () => {
-    const { container, rerender } = render(<CarnetStatsPane detail={RICH} tab="distance" onTabChange={() => {}} />);
+    const { container, rerender } = render(<CarnetStatsPane detail={RICH} tab="distance" />);
     expect(container.querySelector('.ckp-roll')?.className).toContain('is-rolling');
-    rerender(<CarnetStatsPane detail={RICH} tab="days" onTabChange={() => {}} />);
+    rerender(<CarnetStatsPane detail={RICH} tab="days" />);
     /* Le changement de sous-onglet garde le fondu de 180 ms, pas le rouleau. */
     expect(container.querySelector('.ckp-roll')?.className).not.toContain('is-rolling');
     expect(container.querySelector('.ckp-hero')?.getAttribute('data-animate')).toBe('true');

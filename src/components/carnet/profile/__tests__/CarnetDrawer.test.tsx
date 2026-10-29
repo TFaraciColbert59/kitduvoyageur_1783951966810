@@ -7,7 +7,7 @@ import { CarnetDrawer } from '../CarnetDrawer';
 afterEach(() => cleanup());
 
 describe('CarnetDrawer — coquille', () => {
-  it('rend la poignée, la capsule et le volet', () => {
+  it('rend la poignée, le sélecteur des volets et le volet', () => {
     render(<CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>volet</p></CarnetDrawer>);
     expect(screen.getByRole('button', { name: 'Fermer le panneau' })).toBeTruthy();
     expect(screen.getByRole('tablist', { name: 'Volets du carnet' })).toBeTruthy();
@@ -15,11 +15,11 @@ describe('CarnetDrawer — coquille', () => {
     expect(screen.getByText('volet')).toBeTruthy();
   });
 
-  it('ne garde que deux volets : statistiques et partage', () => {
+  it('ne garde que trois volets : statistiques, moments et partage', () => {
     render(<CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>);
     const labels = screen.getAllByRole('tab').map((tab) => tab.getAttribute('aria-label'));
-    expect(labels).toEqual(['Statistiques', 'Partage']);
-    /* Les volets devenus des pages du carrousel quittent la capsule. */
+    expect(labels).toEqual(['Statistiques', 'Moments', 'Partage']);
+    /* Les volets devenus des pages du carrousel ne sont pas des segments. */
     expect(screen.queryByRole('tab', { name: 'Commentaires' })).toBeNull();
     expect(screen.queryByRole('tab', { name: 'J’aime' })).toBeNull();
     expect(screen.queryByRole('tab', { name: 'Gérer' })).toBeNull();
@@ -28,36 +28,51 @@ describe('CarnetDrawer — coquille', () => {
     expect(screen.queryByRole('tab', { name: 'Étapes' })).toBeNull();
   });
 
-  it('place la capsule d’onglets en bas à droite, hors de l’en-tête', () => {
+  it('place le sélecteur des volets en haut, hors de l’en-tête et du corps', () => {
     const { container } = render(
       <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>volet</p></CarnetDrawer>,
     );
     const tablist = screen.getByRole('tablist', { name: 'Volets du carnet' });
-    /* La capsule vit dans le pied de la feuille, pas sous la poignée. */
-    expect(tablist.closest('.ckp-drawer-foot')).toBeTruthy();
+    /* Le sélecteur 44 px vit sous l'en-tête, dans le chrome qui ne défile pas :
+       ni dans le corps, ni dans le pied, ni dans la tête. */
+    const select = tablist.closest('.ckp-drawer-select') as HTMLElement;
+    expect(select).toBeTruthy();
+    expect(select.closest('.ckp-drawer-chrome')).toBeTruthy();
     expect(tablist.closest('.ckp-drawer-head')).toBeNull();
+    expect(tablist.closest('.ckp-drawer-body')).toBeNull();
+    expect(tablist.closest('.ckp-drawer-foot')).toBeNull();
     /* Le haut ne garde que la poignée et la croix. */
     const head = container.querySelector('.ckp-drawer-head') as HTMLElement;
     expect(head.querySelectorAll('button').length).toBe(2);
     expect(head.querySelector('.ckp-grabber')).toBeTruthy();
     expect(head.querySelector('.ckp-drawer-close')).toBeTruthy();
     expect(head.querySelector('[role="tablist"]')).toBeNull();
-    /* Même capsule que la carte : largeur au pas de 41,5 px + 5, lentille blanche. */
-    const capsule = tablist.closest('.ckp-capsule') as HTMLElement;
-    expect(capsule.style.getPropertyValue('--n')).toBe('2');
-    expect(capsule.querySelector(':scope > .ckp-th')).toBeTruthy();
+    expect(head.textContent).toBe('');
+    /* Trois segments, une lentille blanche au pas de la barre. */
+    expect(select.style.getPropertyValue('--n')).toBe('3');
+    expect(select.querySelector(':scope > .ckp-th')).toBeTruthy();
+    /* Chaque segment porte son icône et son libellé visible. */
+    expect(screen.getAllByRole('tab').map((tab) => tab.querySelector('.ckp-tab-label')?.textContent)).toEqual([
+      'Statistiques',
+      'Moments',
+      'Partage',
+    ]);
   });
 
   it('nomme ses onglets comme les volets du drawer, sans panneau fantôme', () => {
     render(<CarnetDrawer drawer="share" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>);
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.map((tab) => tab.id)).toEqual(['carnet-drawer-tab-stats', 'carnet-drawer-tab-share']);
+    expect(tabs.map((tab) => tab.id)).toEqual([
+      'carnet-drawer-tab-stats',
+      'carnet-drawer-tab-moments',
+      'carnet-drawer-tab-share',
+    ]);
     /* Aucun `aria-controls` vers un `carnet-page-*` qui n'existe pas ici. */
     for (const tab of tabs) expect(tab.getAttribute('aria-controls')).toBeNull();
     const active = screen.getByRole('tab', { name: 'Partage' });
     expect(active.getAttribute('aria-selected')).toBe('true');
-    const lens = active.closest('.ckp-capsule')?.querySelector('.ckp-th') as HTMLElement;
-    expect(lens.style.getPropertyValue('--i')).toBe('1');
+    const lens = active.closest('.ckp-drawer-select')?.querySelector(':scope > .ckp-th') as HTMLElement;
+    expect(lens.style.getPropertyValue('--i')).toBe('2');
   });
 
   it('remonte le changement de volet', () => {
@@ -67,34 +82,77 @@ describe('CarnetDrawer — coquille', () => {
     expect(onDrawerChange).toHaveBeenCalledWith('share');
   });
 
-  it('garde la capsule à deux segments et éteint la lentille sur le volet Moments', () => {
+  it('allume la lentille sur le volet Moments — il est devenu un segment', () => {
     const { container } = render(
       <CarnetDrawer drawer="moments" onDrawerChange={() => {}} onClose={() => {}}><p>moments</p></CarnetDrawer>,
     );
-    /* Moments n'est pas un segment de la capsule : la géométrie ne bouge pas
-       (88 × 30, pas de 41,5), seule la lentille s'éteint. */
-    const capsule = container.querySelector('.ckp-capsule') as HTMLElement;
-    expect(capsule.style.getPropertyValue('--n')).toBe('2');
-    expect(screen.getAllByRole('tab').map((tab) => tab.getAttribute('aria-label'))).toEqual([
-      'Statistiques',
-      'Partage',
-    ]);
+    const select = container.querySelector('.ckp-drawer-select') as HTMLElement;
+    expect(select.style.getPropertyValue('--n')).toBe('3');
+    expect(select.querySelectorAll('[role="tab"]').length).toBe(3);
     for (const tab of screen.getAllByRole('tab')) {
-      expect(tab.getAttribute('aria-selected')).toBe('false');
+      expect(tab.getAttribute('aria-selected')).toBe(tab.getAttribute('aria-label') === 'Moments' ? 'true' : 'false');
     }
-    const lens = capsule.querySelector(':scope > .ckp-th') as HTMLElement;
-    expect(lens.getAttribute('data-off')).toBe('true');
-    expect(lens.style.getPropertyValue('--i')).toBe('0');
+    const lens = select.querySelector(':scope > .ckp-th') as HTMLElement;
+    expect(lens.getAttribute('data-off')).toBeNull();
+    expect(lens.style.getPropertyValue('--i')).toBe('1');
     /* Le contenu du volet est bien monté, l'en-tête ne porte aucun titre. */
     expect(screen.getByText('moments')).toBeTruthy();
     expect(container.querySelector('.ckp-drawer-head h1, .ckp-drawer-head h2')).toBeNull();
   });
 
-  it('change de volet au clavier, sans sortir de la capsule', () => {
+  it('change de volet au clavier, sans sortir du sélecteur', () => {
     const onDrawerChange = vi.fn();
     render(<CarnetDrawer drawer="stats" onDrawerChange={onDrawerChange} onClose={() => {}}><p>v</p></CarnetDrawer>);
     fireEvent.keyDown(screen.getByRole('tablist', { name: 'Volets du carnet' }), { key: 'ArrowRight' });
-    expect(onDrawerChange).toHaveBeenCalledWith('share');
+    expect(onDrawerChange).toHaveBeenCalledWith('moments');
+    fireEvent.keyDown(screen.getByRole('tablist', { name: 'Volets du carnet' }), { key: 'End' });
+    expect(onDrawerChange).toHaveBeenLastCalledWith('share');
+  });
+
+  it('ne peint aucune capsule de sous-volets quand le volet n’en a pas', () => {
+    const { container } = render(
+      <CarnetDrawer drawer="moments" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>,
+    );
+    expect(container.querySelector('.ckp-drawer-foot')).toBeNull();
+    expect(container.querySelector('.ckp-sub')).toBeNull();
+  });
+
+  it('peint les sous-volets dans une capsule de pied, à 12 px des bords', () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <CarnetDrawer
+        drawer="stats"
+        onDrawerChange={() => {}}
+        onClose={() => {}}
+        subNav={{
+          label: 'Statistiques du carnet',
+          items: [
+            { id: 'distance', label: 'Distance', icon: <span data-icon="route" /> },
+            { id: 'elevation', label: 'Dénivelé', icon: <span data-icon="mountain" /> },
+            { id: 'days', label: 'Jours', icon: <span data-icon="calendar-days" /> },
+          ],
+          active: 'elevation',
+          onChange,
+        }}
+      >
+        <p>v</p>
+      </CarnetDrawer>,
+    );
+    const foot = container.querySelector('.ckp-drawer-foot') as HTMLElement;
+    const sub = foot.querySelector('.ckp-sub') as HTMLElement;
+    expect(sub).toBeTruthy();
+    /* Hors du corps : la capsule ne défile pas avec le contenu. */
+    expect(sub.closest('.ckp-drawer-body')).toBeNull();
+    expect(sub.style.getPropertyValue('--n')).toBe('3');
+    expect(sub.className).toContain('ckp-sub--icons');
+    const group = screen.getByRole('group', { name: 'Statistiques du carnet' });
+    const buttons = Array.from(group.querySelectorAll('button'));
+    expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual(['Distance', 'Dénivelé', 'Jours']);
+    expect(buttons.map((b) => b.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
+    const lens = sub.querySelector(':scope > .ckp-th') as HTMLElement;
+    expect(lens.style.getPropertyValue('--i')).toBe('1');
+    fireEvent.click(buttons[2]);
+    expect(onChange).toHaveBeenCalledWith('days');
   });
 
   it('garde le focus sur la capsule quand le parent rend un onClose neuf', () => {

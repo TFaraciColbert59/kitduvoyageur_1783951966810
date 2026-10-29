@@ -12,7 +12,7 @@ import { useCarnetEngagement } from '@/features/carnet/detail/useCarnetEngagemen
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { CarnetTopBar } from './CarnetTopBar';
 import { CarnetCard } from './CarnetCard';
-import { CarnetDrawer, type CarnetDrawerId } from './CarnetDrawer';
+import { CarnetDrawer, type CarnetDrawerId, type CarnetDrawerSubNav } from './CarnetDrawer';
 import type { CarnetPageId } from './CarnetPages';
 import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetPostSheet } from './CarnetPostSheet';
@@ -20,7 +20,7 @@ import { CarnetMapCard } from './CarnetMapCard';
 import { dayFocusKey } from './dayTrace';
 import { CarnetMediaViewer } from './CarnetMediaViewer';
 import { CarnetMoreMenu } from './CarnetMoreMenu';
-import { CarnetStatsPane } from './panes/CarnetStatsPane';
+import { CarnetStatsPane, STATS_SUBNAV_ITEMS } from './panes/CarnetStatsPane';
 import { CarnetMomentsPane } from './panes/CarnetMomentsPane';
 import { CarnetLikesPane } from './panes/CarnetLikesPane';
 import { CarnetCommentsPane } from './panes/CarnetCommentsPane';
@@ -148,6 +148,19 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     startTransition(() => setStatTab(next));
   }, []);
 
+  /* Navigation des trois volets statistiques : elle vit dans la capsule de pied
+     du drawer (12 px du bord droit et du bas), pas dans le corps du volet. */
+  const selectStatTab = useCallback((id: string) => changeStatTab(id as CarnetStatsTab), [changeStatTab]);
+  const statsSubNav = useMemo<CarnetDrawerSubNav>(
+    () => ({
+      label: 'Statistiques du carnet',
+      items: STATS_SUBNAV_ITEMS,
+      active: statTab,
+      onChange: selectStatTab,
+    }),
+    [selectStatTab, statTab],
+  );
+
   /* La feuille remplace la carte : à la fermeture, le déclencheur est un nœud
      neuf. On retient donc son identité stable (`data-stat` ou le bouton
      « voir plus… ») et non son nœud, pour lui rendre le focus. */
@@ -269,9 +282,14 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
 
       <main className="ckp-screen-body">
         {drawer ? (
-          <CarnetDrawer drawer={drawer} onDrawerChange={setDrawer} onClose={closeDrawer}>
+          <CarnetDrawer
+            drawer={drawer}
+            onDrawerChange={setDrawer}
+            onClose={closeDrawer}
+            subNav={drawer === 'stats' ? statsSubNav : null}
+          >
             {drawer === 'stats' ? (
-              <CarnetStatsPane detail={detailView} tab={statTab} day={activeDay} onTabChange={changeStatTab} />
+              <CarnetStatsPane detail={detailView} tab={statTab} day={activeDay} />
             ) : null}
             {drawer === 'share' ? (
               <CarnetSharePane url={shareUrl} title={detail.title} onCopied={copied} />

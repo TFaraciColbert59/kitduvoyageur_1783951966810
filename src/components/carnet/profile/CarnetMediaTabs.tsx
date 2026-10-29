@@ -21,6 +21,11 @@ export interface CarnetMediaTabsProps {
    * carrousel ; `() => undefined` quand les volets n'ont pas de `tabpanel`.
    */
   panelIdFor?: (id: string) => string | undefined;
+  /**
+   * Segment avec libellé visible (sélecteur 44 px du drawer) : icône puis
+   * libellé. Absent, le segment reste une icône seule, comme sur la carte.
+   */
+  showLabel?: boolean;
 }
 
 /**
@@ -38,6 +43,7 @@ export function CarnetMediaTabs({
   ariaLabel,
   idPrefix = 'carnet-page-tab',
   panelIdFor = (id) => `carnet-page-${id}`,
+  showLabel = false,
 }: CarnetMediaTabsProps) {
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
   const count = items.length;
@@ -84,6 +90,7 @@ export function CarnetMediaTabs({
           onClick={() => onChange(index)}
         >
           {item.icon}
+          {showLabel ? <span className="ckp-tab-label">{item.label}</span> : null}
         </button>
       ))}
     </div>
