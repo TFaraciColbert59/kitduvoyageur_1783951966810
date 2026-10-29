@@ -1,5 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 
+declare global {
+  interface Window {
+    __xpMap?: {
+      getBearing: () => number;
+      getCenter: () => { lng: number; lat: number };
+    };
+  }
+}
+
 /**
  * États transverses (P2-13, P3-03, P4-11, P4-12) :
  * mouvement réduit, boussole, ouverture de 10 pays, unités impériales.

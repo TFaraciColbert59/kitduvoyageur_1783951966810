@@ -967,6 +967,118 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
   );
 }
 
+/** Chrono qui avance, formaté mm:ss ou h:mm:ss. */
+function useElapsed(startedAt: number | undefined): string {
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    if (!startedAt) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [startedAt]);
+  if (!startedAt) return '0:00';
+  const total = Math.max(0, Math.floor((now - startedAt) / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = total % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+    : `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
+  const activity = ctx.state.activity;
+  const elapsed = useElapsed(activity?.startedAt);
+  if (!activity) {
+    return <XpEmpty title="Aucune activité en cours" hint="Démarre une activité pour voir les métriques en direct." />;
+  }
+  const speed = activity.movingS > 0 ? (activity.distanceM / activity.movingS) * 3.6 : null;
+  const next = ctx.pois[0];
+  return (
+    <>
+      <div className="xp-chrono" aria-live="off">
+        {elapsed}
+      </div>
+      <XpMetrics
+        items={[
+          { label: 'Distance', value: formatDistance(activity.distanceM / 1000) },
+          { label: 'Allure', value: speed ? `${speed.toFixed(1).replace('.', ',')} km/h` : '—' },
+          { label: 'Temps', value: formatDuration(activity.movingS) },
+          { label: 'D+', value: `${Math.round(activity.elevGainM)} m` },
+        ]}
+      />
+      <XpEyebrow>Prochain repère</XpEyebrow>
+      {next ? (
+        <XpRows>
+          <XpRow
+            icon={POI_ICON[next.kind] ?? 'pin'}
+            title={next.name}
+            sub={`${
+              ctx.units === 'imperial'
+                ? formatImperialDistance(distanceKm(ctx.state.center, [next.lon, next.lat]))
+                : formatDistance(distanceKm(ctx.state.center, [next.lon, next.lat]))
+            } · ${POI_LABEL[next.kind] ?? next.kind}`}
+          />
+        </XpRows>
+      ) : (
+        <XpEmpty
+          title="Aucun repère devant"
+          hint="Aucun point d’eau ni refuge n’est enregistré sur la suite du parcours."
+        />
+      )}
+    </>
+  );
+}
+
+/** Tours : découpe réelle de la sortie si des points existent, sinon état vide. */
+function LiveLapsTab({ ctx, elapsedS }: { ctx: SheetContext; elapsedS: number }) {
+  const activity = ctx.state.activity;
+  if (!activity) {
+    return <XpEmpty title="Aucun tour" hint="Démarre une activité pour enregistrer des tours." />;
+  }
+  const km = activity.distanceM / 1000;
+  const laps = Math.floor(km);
+  if (laps < 1) {
+    return <XpEmpty title="Pas encore de tour" hint="Le premier kilomètre n’est pas terminé." />;
+  }
+  const pace = activity.movingS > 0 ? activity.movingS / km : 0;
+  return (
+    <XpRows>
+      {Array.from({ length: Math.min(laps, 12) }, (_, index) => (
+        <XpRow
+          key={`lap-${index + 1}`}
+          icon="repeat"
+          title={`Km ${index + 1}`}
+          sub={`${formatDuration(pace)} · allure moyenne`}
+          badge={{ label: index === laps - 1 ? 'en cours' : 'ok', tone: index === laps - 1 ? 'warn' : 'good' }}
+        />
+      ))}
+      <XpRow icon="clock" title="Temps total" sub={formatDuration(elapsedS)} />
+    </XpRows>
+  );
+}
+
+/** Sécurité en activité : numéro d'urgence réel du pays, SOS, partage. */
+function LiveSafetyTab({ ctx }: { ctx: SheetContext }) {
+  const emergency = ctx.country?.practical?.emergency_numbers?.general ?? null;
+  return (
+    <>
+      <XpEyebrow>Urgences · {ctx.country?.name ?? 'pays courant'}</XpEyebrow>
+      {emergency ? (
+        <XpRows>
+          <XpRow icon="shield" tone="bad" title={emergency} sub="Numéro d’urgence local (Wikidata)" />
+        </XpRows>
+      ) : (
+        <XpEmpty title="Numéro non documenté" hint="Aucun numéro d’urgence n’est enregistré pour ce pays." />
+      )}
+      <XpEyebrow>Partage</XpEyebrow>
+      <XpRows>
+        <XpRow icon="users" title="Abonnés mutuels" sub="Position partagée pendant la sortie" />
+        <XpRow icon="pause" title="Pause" sub="Suspend le suivi sans terminer la sortie" />
+      </XpRows>
+    </>
+  );
+}
+
 function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
   const { state } = ctx;
   const startSport = (sport: Sport) => {
@@ -997,37 +1109,36 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
   }
   if (kind === 'live') {
     const activity = state.activity;
+    const elapsed = activity ? Math.max(0, Math.floor((Date.now() - activity.startedAt) / 1000)) : 0;
     return [
       {
         id: 'direct',
         label: 'Direct',
         icon: 'pulse',
-        render: () =>
-          activity ? (
-            <>
-              <XpMetrics
-                items={[
-                  { label: 'Distance', value: formatDistance(activity.distanceM / 1000) },
-                  { label: 'D+', value: `${Math.round(activity.elevGainM)} m` },
-                  { label: 'Temps', value: `${Math.floor(activity.movingS / 60)} min` },
-                ]}
-              />
-              <XpEyebrow>Prochain repère</XpEyebrow>
-              {ctx.pois[0] ? (
-                <XpRows>
-                  <XpRow
-                    icon={POI_ICON[ctx.pois[0].kind] ?? 'pin'}
-                    title={ctx.pois[0].name}
-                    sub={`${formatDistance(distanceKm([activity && state.center[0], state.center[1]], [ctx.pois[0].lon, ctx.pois[0].lat]))} · ${POI_LABEL[ctx.pois[0].kind]}`}
-                  />
-                </XpRows>
-              ) : (
-                <XpEmpty title="Aucun repère devant" hint="Aucun point d’eau ni refuge n’est enregistré sur la suite du parcours." />
-              )}
-            </>
-          ) : (
-            <XpEmpty title="Aucune activité en cours" hint="Démarre une activité pour voir les métriques en direct." />
-          ),
+        render: () => <LiveDirectTab ctx={ctx} />,
+      },
+      {
+        id: 'tours',
+        label: 'Tours',
+        icon: 'repeat',
+        render: () => <LiveLapsTab ctx={ctx} elapsedS={elapsed} />,
+      },
+      {
+        id: 'coeur',
+        label: 'Cœur',
+        icon: 'heart',
+        render: () => (
+          <XpEmpty
+            title="Cardio indisponible"
+            hint="Aucune ceinture cardio n’est connectée : LKDV n’invente pas de fréquence cardiaque."
+          />
+        ),
+      },
+      {
+        id: 'securite',
+        label: 'Sécurité',
+        icon: 'shield',
+        render: () => <LiveSafetyTab ctx={ctx} />,
       },
     ];
   }
