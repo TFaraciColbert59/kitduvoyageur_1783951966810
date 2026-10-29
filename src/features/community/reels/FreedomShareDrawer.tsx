@@ -238,7 +238,7 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
           </div>
 
           {/* Contacts List with Real Avatars (no 'Conversation récente' label, right button with icon only) */}
-          <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 pb-12">
+          <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 pb-16">
             {displayedContacts.map((contact) => (
               <div
                 key={contact.id}
