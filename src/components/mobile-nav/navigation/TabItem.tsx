@@ -133,6 +133,8 @@ const TabItem = memo(function TabItem({
     }
   };
 
+  const lastCommunityClickRef = useRef<number>(0);
+
   const handleClick = (e: React.MouseEvent) => {
     if (longPressFiredRef.current) {
       longPressFiredRef.current = false;
@@ -142,6 +144,20 @@ const TabItem = memo(function TabItem({
     }
     // Une ouverture dans un autre onglet ne change pas l'onglet courant.
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+    if (destination.id === 'community') {
+      const now = Date.now();
+      const diff = now - lastCommunityClickRef.current;
+      lastCommunityClickRef.current = now;
+      if (diff > 0 && diff < 450) {
+        e.preventDefault();
+        lastCommunityClickRef.current = 0;
+        triggerHaptic('medium');
+        onPress('/communaute/reels');
+        return;
+      }
+    }
+
     onPress(destination.href);
     // Un retour de sélection seulement lorsque la destination active change.
     if (!isActive) triggerHaptic('selection');

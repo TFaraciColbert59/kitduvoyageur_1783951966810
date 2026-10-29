@@ -21,7 +21,7 @@ export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }:
 
   return (
     <>
-      <div className="lkdv-pourtoi-wrap">
+      <div className="lkdv-pourtoi-wrap gap-1.5">
         <button
           type="button"
           className="lkdv-pourtoi-pill"
@@ -30,6 +30,16 @@ export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }:
         >
           <span>Explorer</span>
         </button>
+        <Link
+          href="/communaute/reels"
+          className="lkdv-pourtoi-pill text-[#17402C] hover:text-[#FF4A6E] transition-colors"
+          aria-label="Ouvrir Freedom Reels plein écran"
+        >
+          <span className="flex items-center gap-1.5 font-bold">
+            <span className="size-2 rounded-full bg-[#FF4A6E]" />
+            Freedom
+          </span>
+        </Link>
       </div>
 
       <div className="lkdv-top-actions">

@@ -48,6 +48,28 @@ export function AccountBottomBar({
 } = {}) {
   const router = useRouter();
   const pathname = usePathname();
+  const lastCommunityClickRef = React.useRef<number>(0);
+
+  const handleTabClick = (tabId: string, href: string, e?: React.MouseEvent) => {
+    if (tabId === 'communaute') {
+      const now = Date.now();
+      const diff = now - lastCommunityClickRef.current;
+      lastCommunityClickRef.current = now;
+
+      // Double-click (< 450ms)
+      if (diff > 0 && diff < 450) {
+        if (e) e.preventDefault();
+        lastCommunityClickRef.current = 0;
+        router.push('/communaute/reels');
+        return;
+      }
+    }
+    if (e && href) {
+      // standard link behavior handles it, but if button:
+      router.push(href);
+    }
+  };
+
   return (
     <nav
       className="tb"
@@ -73,14 +95,23 @@ export function AccountBottomBar({
             key={tab.id}
             type="button"
             className={isActive ? 'on' : ''}
-            aria-label={tab.label}
+            aria-label={tab.id === 'communaute' ? `${tab.label} (double-clic pour Freedom Reels)` : tab.label}
             aria-current={isActive ? 'page' : undefined}
-            onClick={() => router.push(tab.href)}
+            onClick={(e) => handleTabClick(tab.id, tab.href, e)}
           >
             {content}
           </button>
         ) : (
-          <Link key={tab.id} href={tab.href} prefetch={false}>
+          <Link
+            key={tab.id}
+            href={tab.href}
+            prefetch={false}
+            onClick={(e) => {
+              if (tab.id === 'communaute') {
+                handleTabClick(tab.id, tab.href, e);
+              }
+            }}
+          >
             {content}
           </Link>
         );

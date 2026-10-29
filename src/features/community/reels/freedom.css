@@ -1,0 +1,478 @@
+/* Freedom - Lecteur Immersif Micro-Vidéos & Reels Outdoor */
+
+/* Viewport plein écran isolant */
+.freedom-reels-viewport {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  background-color: #000;
+  z-index: 9999;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+}
+
+/* Conteneur de défilement vertical avec snap scroll façon TikTok */
+.freedom-reels-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.freedom-reels-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Slide de micro-vidéo 100% plein écran */
+.freedom-reel-slide {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow: hidden;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Vidéo plein écran */
+.freedom-video-element {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  background-color: #000;
+}
+
+/* Gradient d'ombrage pour lisibilité parfaite des contrôles */
+.freedom-vignette-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.45) 0%,
+    transparent 18%,
+    transparent 65%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+  z-index: 10;
+}
+
+/* ==========================================================================
+   Pillule Liquid Glass Verticale — Style TikTok (Bord Droit)
+   Hérite directement de la grammaire Apple Liquid Glass de .lkdv-post-media-glass
+   ========================================================================== */
+.freedom-media-glass-pill {
+  position: absolute;
+  right: 12px;
+  bottom: calc(32px + env(safe-area-inset-bottom, 16px));
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.18));
+  -webkit-backdrop-filter: blur(20px) saturate(1.9) brightness(1.05);
+  backdrop-filter: blur(20px) saturate(1.9) brightness(1.05);
+  border: 0.5px solid rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 0 0 0.5px rgba(255, 255, 255, 0.36), 0 8px 24px rgba(10, 20, 14, 0.35);
+  pointer-events: auto;
+}
+
+/* Boutons d'actions dans la pillule */
+.freedom-glass-btn {
+  position: relative;
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.18s cubic-bezier(0.3, 1.4, 0.5, 1), color 0.18s ease;
+}
+
+.freedom-glass-btn:active {
+  transform: scale(0.88);
+}
+
+.freedom-glass-btn.on {
+  color: #FF6B8A !important;
+}
+
+.freedom-glass-btn svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.freedom-glass-btn.on svg {
+  animation: freedomHeartPop 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.freedom-glass-count {
+  color: rgba(255, 255, 255, 0.95);
+  font: 700 10.5px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  letter-spacing: -0.01em;
+}
+
+/* Avatar auteur avec badge de suivi (+) */
+.freedom-avatar-anchor {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+}
+
+.freedom-avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.freedom-follow-badge {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #FF4A6E;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+/* Disque de son animé façon vinyle */
+.freedom-sound-disc {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #181818, #363636, #181818, #363636, #181818);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+  animation: freedomSpin 6s linear infinite;
+}
+
+.freedom-sound-disc.is-paused {
+  animation-play-state: paused;
+}
+
+/* Informations Auteur & Légende en bas à gauche */
+.freedom-bottom-meta {
+  position: absolute;
+  left: 14px;
+  right: 76px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 16px));
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #fff;
+  pointer-events: auto;
+}
+
+.freedom-author-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.freedom-author-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.freedom-location-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 0.5px solid rgba(255, 255, 255, 0.25);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.freedom-caption-text {
+  font-size: 13.5px;
+  line-height: 1.38;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.freedom-caption-text.is-expanded {
+  -webkit-line-clamp: unset;
+}
+
+.freedom-audio-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* Barre de progression vidéo discrète au bas */
+.freedom-progress-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2.5px;
+  background: rgba(255, 255, 255, 0.25);
+  z-index: 35;
+}
+
+.freedom-progress-fill {
+  height: 100%;
+  background: #fff;
+  transition: width 0.1s linear;
+}
+
+/* Indicateur pause/play au centre */
+.freedom-center-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  z-index: 22;
+  pointer-events: none;
+  animation: freedomFadeIn 0.15s ease;
+}
+
+/* Cœur animé flottant sur double tap */
+.freedom-heart-burst {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.6);
+  color: #FF5A7A;
+  filter: drop-shadow(0 6px 18px rgba(255, 90, 122, 0.5));
+  z-index: 40;
+  animation: freedomHeartBurst 0.75s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+/* ==========================================================================
+   Drawers Demi-Écran (Commentaires & Partage)
+   Reprenant à l'identique la feuille de style des posts du fil LKDV
+   ========================================================================== */
+.freedom-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  animation: freedomFadeIn 0.22s ease-out;
+}
+
+.freedom-drawer-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  height: 72vh;
+  max-height: 85vh;
+  border-radius: 26px 26px 0 0;
+  background: #FCFBF8;
+  color: #172B24;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: freedomSlideUp 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+  padding-bottom: env(safe-area-inset-bottom, 12px);
+}
+
+.freedom-drawer-grab {
+  width: 100%;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  flex: none;
+}
+
+.freedom-drawer-grab span {
+  width: 36px;
+  height: 4.5px;
+  border-radius: 999px;
+  background: rgba(23, 43, 36, 0.25);
+}
+
+.freedom-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px 12px;
+  border-bottom: 0.5px solid rgba(23, 43, 36, 0.1);
+  flex: none;
+}
+
+.freedom-drawer-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #172B24;
+}
+
+.freedom-drawer-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(23, 64, 44, 0.08);
+  color: #172B24;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.freedom-drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 14px;
+}
+
+/* Compositeur de commentaire enrichi avec pièces jointes Messagerie */
+.freedom-comments-composer {
+  flex: none;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 0.5px solid rgba(23, 43, 36, 0.1);
+  background: #FCFBF8;
+}
+
+.freedom-composer-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.freedom-composer-input {
+  flex: 1;
+  height: 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(23, 43, 36, 0.18);
+  background: #FFFFFF;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #172B24;
+  outline: none;
+}
+
+.freedom-composer-input:focus {
+  border-color: #17402C;
+  box-shadow: 0 0 0 2px rgba(23, 64, 44, 0.15);
+}
+
+.freedom-composer-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: rgba(23, 64, 44, 0.08);
+  color: #17402C;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.freedom-composer-btn:active {
+  transform: scale(0.92);
+}
+
+.freedom-composer-btn.is-send {
+  background: #17402C;
+  color: #FFFFFF;
+}
+
+/* Animations */
+@keyframes freedomHeartPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+@keyframes freedomHeartBurst {
+  0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  35% { transform: translate(-50%, -50%) scale(1.25); opacity: 1; }
+  70% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%, -60px) scale(0.95); opacity: 0; }
+}
+
+@keyframes freedomSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes freedomFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes freedomSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}

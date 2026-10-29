@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { DESTINATIONS, hasExtendedNav } from './destinationRegistry';
 import { getNativeGlassDestination, shouldShowNativeGlass } from './nativeAccountRoutes';
 import { getNativePrefetchRoutes, nativeSyncKey } from './nativeNavigationPerformance';
-import WebNavigationBar from './navigation/WebNavigationBar';
 import FloatingLiquidTabBar from './FloatingLiquidTabBar';
 import NavigationPlateau from './navigation/NavigationPlateau';
 import DayPlateau from './navigation/DayPlateau';
@@ -84,9 +83,20 @@ export default function NavigationBar() {
     if (!iosNative) return;
     let cancelled = false;
     let handle: PluginListenerHandle | undefined;
+    const lastCommunityNativeTap = { current: 0 };
     nativeTabBar.addListener('tabSelected', ({ destination }) => {
       const tab = DESTINATIONS.find((item) => item.id === destination);
       if (!tab) return;
+      if (destination === 'community') {
+        const now = performance.now();
+        const diff = now - lastCommunityNativeTap.current;
+        lastCommunityNativeTap.current = now;
+        if (diff > 0 && diff < 500) {
+          lastCommunityNativeTap.current = 0;
+          router.push('/communaute/reels');
+          return;
+        }
+      }
       // Repeated tap on the already displayed root: stop the native pending
       // indicator immediately rather than waiting for an absent route update.
       if (currentRouteRef.current === tab.href) {

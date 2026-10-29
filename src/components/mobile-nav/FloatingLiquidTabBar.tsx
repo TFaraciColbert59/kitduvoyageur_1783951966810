@@ -1,7 +1,8 @@
 'use client';
 
+import { useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
 import {
   DESTINATIONS,
@@ -29,8 +30,23 @@ const TAB_ICON: Record<DestinationId, string> = {
  */
 export function FloatingLiquidTabBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const activeId = getActiveDestinationId(pathname);
   const activeIndex = Math.max(0, DESTINATIONS.findIndex((d) => d.id === activeId));
+  const lastCommunityClickRef = useRef<number>(0);
+
+  const handleTabClick = (destId: DestinationId, e: React.MouseEvent) => {
+    if (destId === 'community') {
+      const now = Date.now();
+      const diff = now - lastCommunityClickRef.current;
+      lastCommunityClickRef.current = now;
+      if (diff > 0 && diff < 450) {
+        e.preventDefault();
+        lastCommunityClickRef.current = 0;
+        router.push('/communaute/reels');
+      }
+    }
+  };
 
   return (
     <>
@@ -49,9 +65,10 @@ export function FloatingLiquidTabBar() {
                 key={destination.id}
                 href={destination.href}
                 prefetch={false}
-                aria-label={destination.ariaLabel}
+                aria-label={destination.id === 'community' ? `${destination.ariaLabel} (double-clic pour Freedom)` : destination.ariaLabel}
                 aria-current={active ? 'page' : undefined}
                 className={`lkdv-floating-tab${active ? ' is-active' : ''}`}
+                onClick={(e) => handleTabClick(destination.id, e)}
               >
                 <span className="lkdv-floating-tab-icon" aria-hidden="true">
                   <Icon name={TAB_ICON[destination.id]} size={24} strokeWidth={active ? 2.25 : 1.75} />
