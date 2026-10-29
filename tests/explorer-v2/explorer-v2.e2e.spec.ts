@@ -120,7 +120,10 @@ test.describe('Explorer v2 · @explorer-v2', () => {
     const before = (await sheet.boundingBox())?.height ?? 0;
     await root(page).locator('.xp-sheet-handle').click();
     await expect(sheet).toHaveAttribute('data-detent', 'low');
-    await page.waitForTimeout(450);
+    // La hauteur est animée : on attend qu'elle dépasse réellement le cran peek.
+    await expect
+      .poll(async () => (await sheet.boundingBox())?.height ?? 0, { timeout: 8000 })
+      .toBeGreaterThan(before + 20);
     const after = (await sheet.boundingBox())?.height ?? 0;
     expect(after).toBeGreaterThan(before + 20);
   });
