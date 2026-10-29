@@ -1,53 +1,55 @@
 # COUVERTURE_CLICS · Explorer v2
 
-- Date : 2026-10-28T12:38:42.787Z
+- Date : 2026-10-29T14:44:58.218Z
 - Base : http://localhost:4028
-- Couverture : **205/533 (38 %)**
+- Périmètre : boutons de la feuille, onglets, mini-sélecteur, chrome haut, barre basse, pastille d'activité
+- Couverture : **544/652 (83 %)**
 
-| Scène | Interactifs | Exercés | Non exercés |
-|---|---|---|---|
-| monde | 13 | 5 | 8 |
-| pays | 13 | 5 | 8 |
-| region | 13 | 5 | 8 |
-| lieu | 13 | 5 | 8 |
-| sommet | 13 | 5 | 8 |
-| eau | 13 | 5 | 8 |
-| rando | 13 | 5 | 8 |
-| depart | 13 | 5 | 8 |
-| ia | 13 | 5 | 8 |
-| calques | 13 | 5 | 8 |
-| offline | 13 | 5 | 8 |
-| lancer | 13 | 5 | 8 |
-| course | 13 | 5 | 8 |
-| kayak | 13 | 5 | 8 |
-| randolive | 13 | 5 | 8 |
-| velo | 13 | 5 | 8 |
-| ski | 13 | 5 | 8 |
-| escalade | 13 | 5 | 8 |
-| trail | 13 | 5 | 8 |
-| famille | 13 | 5 | 8 |
-| bivlive | 13 | 5 | 8 |
-| horstrace | 13 | 5 | 8 |
-| sos | 13 | 5 | 8 |
-| resume | 13 | 5 | 8 |
-| arriere | 13 | 5 | 8 |
-| bienvenue | 13 | 5 | 8 |
-| noloc | 13 | 5 | 8 |
-| nuit | 13 | 5 | 8 |
-| facile | 13 | 5 | 8 |
-| monde_jp | 13 | 5 | 8 |
-| japon | 13 | 5 | 8 |
-| nagano | 13 | 5 | 8 |
-| usa | 13 | 5 | 8 |
-| chili | 13 | 5 | 8 |
-| mongolie | 13 | 5 | 8 |
-| refuge | 13 | 5 | 8 |
-| bivouac | 13 | 5 | 8 |
-| vue | 13 | 5 | 8 |
-| danger | 13 | 5 | 8 |
-| acces | 13 | 5 | 8 |
-| ami | 13 | 5 | 8 |
+| Scène | Interactifs | Exercés |
+|---|---|---|
+| monde | 24 | 21 |
+| pays | 15 | 11 |
+| region | 18 | 14 |
+| lieu | 32 | 28 |
+| sommet | 16 | 11 |
+| eau | 18 | 13 |
+| rando | 16 | 12 |
+| depart | 12 | 8 |
+| ia | 9 | 5 |
+| calques | 12 | 8 |
+| offline | 10 | 7 |
+| lancer | 20 | 16 |
+| course | 13 | 13 |
+| kayak | 13 | 13 |
+| randolive | 13 | 13 |
+| velo | 13 | 13 |
+| ski | 13 | 13 |
+| escalade | 13 | 13 |
+| trail | 13 | 13 |
+| famille | 13 | 13 |
+| bivlive | 13 | 13 |
+| horstrace | 13 | 13 |
+| sos | 11 | 9 |
+| resume | 11 | 7 |
+| arriere | 13 | 13 |
+| bienvenue | 16 | 13 |
+| noloc | 16 | 14 |
+| nuit | 32 | 28 |
+| facile | 32 | 28 |
+| monde_jp | 23 | 21 |
+| japon | 15 | 12 |
+| nagano | 18 | 14 |
+| usa | 15 | 11 |
+| chili | 15 | 12 |
+| mongolie | 15 | 13 |
+| refuge | 15 | 11 |
+| bivouac | 15 | 11 |
+| vue | 15 | 11 |
+| danger | 14 | 11 |
+| acces | 14 | 10 |
+| ami | 15 | 11 |
 
-> Un élément « non exercé » est un bouton dont le clic ne produit aucun
-> événement du store : soit il est décoratif, soit son action n’est pas
-> encore branchée (voir `ETAT_DES_POINTS.md`).
+> Un élément « non exercé » ne produit aucun événement de store et ne change
+> pas d’état : soit il est décoratif (poignée, chips d’information), soit son
+> action est encore à brancher (voir `ETAT_DES_POINTS.md`). Les pastilles de
+> carte sont exclues : elles sont exercées par les specs e2e (repère → fiche).

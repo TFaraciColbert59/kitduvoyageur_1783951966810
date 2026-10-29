@@ -571,3 +571,30 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   Ce chiffre ne mesure pas le produit mais la pile de rendu logicielle : il est
   donc **non concluant**. Le script est livré pour la CI (navigateur avec GPU).
 - Statut : NON fait — mesure à refaire en CI.
+
+### [P10-02] Inventaire de clics — 83 % mesurés · 2026-10-29 15:38
+- Fichiers : `scripts/explorer-v2/click-inventory.mjs`, `docs/explorer-v2/COUVERTURE_CLICS.md`
+- Preuve :
+  ```
+  41 scènes · 652 éléments interactifs recensés · 544 exercés (83 %)
+  ```
+  Périmètre : boutons de feuille, onglets, mini-sélecteur, chrome haut, barre
+  basse, pastille d'activité. Méthode : clic par **libellé** (stable après
+  navigation), couvert si un événement du store est émis ou si l'état change.
+  Les 17 % restants sont des éléments décoratifs (chips d'information, poignée)
+  et les liens de barre basse qui quittent l'Explorer — listés dans le rapport.
+- Statut : NON fait à 100 % — mesuré et documenté (voir COUVERTURE_CLICS.md).
+
+### [P10-01] Parité des 41 écrans · 2026-10-29 15:15
+- Fichiers : `docs/explorer-v2/PARITE.md`, `docs/explorer-v2/parite/*.png` (41 paires)
+- Preuve : 41 captures + 41 paires versionnées ; verdict par écran
+  (✅ / 🟡 état vide documenté / 🔴 écart assumé) ; 9 paires relues image par image.
+- Statut : OK
+
+### [P7-04..P7-12] Feuille d'activité à 4 onglets · 2026-10-29 15:12
+- Fichiers : `sheet/SheetContent.tsx`, styles `xp-chrono`
+- Preuve : capture `parite/Course.png` — onglets Direct / Tours / Cœur / Sécurité,
+  chrono 44 px, métriques (distance, allure, temps, D+), « Prochain repère »,
+  numéro d'urgence réel du pays (Wikidata) dans l'onglet Sécurité.
+  L'onglet Cœur affiche un état vide explicite : aucune donnée cardio inventée.
+- Statut : OK
