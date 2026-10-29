@@ -204,16 +204,18 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
     const absX = Math.abs(deltaX);
     const absY = Math.abs(deltaY);
 
-    // 1. Détection Swipe Horizontal (Gauche -> Quitter, Droite -> Profil)
+    // 1. Détection Swipe Horizontal (Inversé selon demande utilisateur) :
+    // - Swipe Gauche (deltaX < 0) : Profil utilisateur créateur
+    // - Swipe Droite (deltaX > 0) : Quitter Freedom (Retour communauté)
     if (absX >= 45 && absX > absY * 1.05) {
       s.triggered = true;
       if (deltaX < 0) {
-        // Swipe vers la gauche: Sortir d'ici
-        handleExit();
-      } else {
-        // Swipe vers la droite: Profil utilisateur
+        // Swipe vers la gauche: Profil utilisateur (style TikTok)
         const current = reels[activeIndex];
         if (current) handleAuthorProfile(current.author);
+      } else {
+        // Swipe vers la droite: Sortir d'ici / Retour communauté
+        handleExit();
       }
       return;
     }
@@ -245,10 +247,12 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
         if (absX >= 35 && absX > absY) {
           s.triggered = true;
           if (deltaX < 0) {
-            handleExit();
-          } else {
+            // Flick vers la gauche -> Profil
             const current = reels[activeIndex];
             if (current) handleAuthorProfile(current.author);
+          } else {
+            // Flick vers la droite -> Quitter
+            handleExit();
           }
         } else if (s.pointerType === 'mouse' && absY >= 40 && absY > absX) {
           s.triggered = true;
@@ -274,11 +278,13 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (activeCommentsReel || activeShareReel || activeKit || activeSound) return;
-      if (e.key === 'Escape' || e.key === 'ArrowLeft') {
+      if (e.key === 'Escape') {
         handleExit();
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === 'ArrowLeft') {
         const current = reels[activeIndex];
         if (current) handleAuthorProfile(current.author);
+      } else if (e.key === 'ArrowRight') {
+        handleExit();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
         goToNextReel();
@@ -381,8 +387,8 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
                 onOpenKit={handleOpenKitFromReel}
                 onOpenSound={(snd) => setActiveSound(snd)}
                 onAuthorClick={() => handleAuthorProfile(reel.author)}
-                onSwipeLeft={handleExit}
-                onSwipeRight={() => handleAuthorProfile(reel.author)}
+                onSwipeLeft={() => handleAuthorProfile(reel.author)}
+                onSwipeRight={handleExit}
                 onLikeChange={(id, nextLiked, nextCount) => {
                   setReels((prev) =>
                     prev.map((item) =>

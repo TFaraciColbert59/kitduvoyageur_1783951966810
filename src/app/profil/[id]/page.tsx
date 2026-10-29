@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { createClient } from '@/lib/supabase/client';
-import { EmptyState, LoadingState } from '@/components/ui';
+import { LoadingState } from '@/components/ui';
 import ReportBlockModal, { type ReportTarget } from '@/components/ui/ReportBlockModal';
 import PublicProfileV2 from '@/components/profile/PublicProfileV2';
 import { PUBLIC_PROFILES_VIEW } from '@/lib/queries/publicProfilesCore';
@@ -22,113 +23,157 @@ import {
 } from '@/lib/supabase/queries-compte';
 
 /**
- * Profil public — même langage visuel que le drawer Profil.
+ * Profil public voyageur.
  *
- * La page ne fait que charger les données réelles ; toute la présentation est
- * portée par `PublicProfileV2` et le shell partagé du drawer. Aucun mock,
- * aucune fuite d'un profil privé : la visibilité est tranchée avant les
- * requêtes de contenu.
+ * Résout automatiquement par UUID ou par handle (@pseudo).
+ * En cas de profil introuvable ou inexistant, aucune page morte 404 :
+ * redirection automatique vers /communaute avec notification toast en haut.
  */
 export default function PublicProfilePage() {
   const params = useParams();
-  const profileId = typeof params?.id === 'string' ? params.id : '';
+  const router = useRouter();
+  const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
+  const rawParam = typeof params?.id === 'string' ? decodeURIComponent(params.id).trim() : '';
+  const cleanParam = rawParam.replace(/^@/, '');
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanParam);
+
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<CompteUserProfile | null>(null);
   const [carnets, setCarnets] = useState<CompteCarnet[]>([]);
   const [clubs, setClubs] = useState<CompteClubItem[]>([]);
   const [badges, setBadges] = useState<CompteBadgeItem[]>([]);
   const [activite, setActivite] = useState<CompteActiviteItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
 
-  const showToast = (message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(null), 3000);
+  const hasRedirectedRef = useRef(false);
+
+  const triggerNotFoundRedirect = () => {
+    if (hasRedirectedRef.current) return;
+    hasRedirectedRef.current = true;
+    toast('Ce profil voyageur est introuvable ou privé. Retour au flux communauté.', 'info');
+    router.replace('/communaute');
   };
 
   useEffect(() => {
-    if (!profileId) {
-      setLoading(false);
-      setNotFound(true);
+    if (!cleanParam) {
+      triggerNotFoundRedirect();
       return;
     }
+
     let cancelled = false;
 
-    async function loadProfile() {
+    async function resolveAndLoad() {
       setLoading(true);
-      setNotFound(false);
       try {
         const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
 
-        if (user?.id !== profileId) {
-          const { data: visibleProfile, error } = await supabase
+        let targetId: string | null = null;
+
+        if (isUUID) {
+          targetId = cleanParam;
+        } else {
+          // 1. Recherche par handle exact
+          let { data: byHandle } = await supabase
+            .from(PUBLIC_PROFILES_VIEW)
+            .select('id, handle')
+            .ilike('handle', cleanParam)
+            .maybeSingle();
+
+          // 2. Recherche avec conversion '_' <-> '.'
+          if (!byHandle) {
+            const dotted = cleanParam.replace(/_/g, '.');
+            const { data: byDotted } = await supabase
+              .from(PUBLIC_PROFILES_VIEW)
+              .select('id, handle')
+              .ilike('handle', dotted)
+              .maybeSingle();
+            if (byDotted) byHandle = byDotted;
+          }
+
+          // 3. Aliases créateurs Freedom
+          if (!byHandle && (cleanParam === 'thomas_mountains' || cleanParam === 'author-thomas-alps')) {
+            const { data: byThomas } = await supabase
+              .from(PUBLIC_PROFILES_VIEW)
+              .select('id, handle')
+              .ilike('handle', 'thomas.mercier')
+              .maybeSingle();
+            if (byThomas) byHandle = byThomas;
+          }
+
+          if (byHandle?.id) {
+            targetId = byHandle.id;
+          }
+        }
+
+        if (!targetId) {
+          if (!cancelled) triggerNotFoundRedirect();
+          return;
+        }
+
+        // Vérification de visibilité dans public_profiles
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+        const effectiveViewerId = currentUser?.id || authUser?.id;
+
+        if (effectiveViewerId !== targetId) {
+          const { data: visible, error } = await supabase
             .from(PUBLIC_PROFILES_VIEW)
             .select('id')
-            .eq('id', profileId)
+            .eq('id', targetId)
             .maybeSingle();
+
           if (cancelled) return;
-          if (error || !visibleProfile) {
-            setNotFound(true);
+          if (error || !visible) {
+            triggerNotFoundRedirect();
             return;
           }
         }
 
+        setResolvedUserId(targetId);
+
+        // Chargement des données réelles du profil
         const [profileData, carnetsData, clubsData, badgesData, activiteData] =
           await Promise.all([
-            fetchFullProfile(profileId),
-            fetchUserCarnets(profileId),
-            fetchUserClubs(profileId),
-            fetchUserBadges(profileId),
-            fetchUserActivities(profileId),
+            fetchFullProfile(targetId),
+            fetchUserCarnets(targetId),
+            fetchUserClubs(targetId),
+            fetchUserBadges(targetId),
+            fetchUserActivities(targetId),
           ]);
+
         if (cancelled) return;
         if (!profileData) {
-          setNotFound(true);
+          triggerNotFoundRedirect();
           return;
         }
+
         setProfile(profileData);
         setCarnets(carnetsData);
         setClubs(clubsData);
         setBadges(badgesData);
         setActivite(activiteData);
-      } catch {
-        if (!cancelled) setNotFound(true);
+      } catch (err) {
+        console.warn('[PublicProfilePage] Error loading profile:', err);
+        if (!cancelled) triggerNotFoundRedirect();
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
 
-    void loadProfile();
+    void resolveAndLoad();
     return () => {
       cancelled = true;
     };
-  }, [profileId]);
+  }, [cleanParam, isUUID, currentUser?.id]);
 
-  if (loading) {
+  if (loading || !profile) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[color:var(--sand-100)]">
         <LoadingState label="Chargement du profil voyageur…" />
-      </div>
-    );
-  }
-
-  if (notFound || !profile) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-6">
-        <div className="max-w-md rounded-3xl border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-8 text-center backdrop-blur-[var(--blur-lg)]">
-          <EmptyState
-            title="Profil introuvable"
-            description="Ce voyageur n’existe pas ou son profil est privé."
-            actionLabel="Explorer la communauté"
-            actionHref="/communaute"
-          />
-        </div>
       </div>
     );
   }
@@ -148,14 +193,14 @@ export default function PublicProfilePage() {
             void navigator.share(share).catch(() => undefined);
           } else {
             void navigator.clipboard?.writeText(window.location.href);
-            showToast('Lien du profil copié');
+            toast('Lien du profil copié', 'success');
           }
         }}
         onReport={
-          currentUser?.id && currentUser.id !== profileId
+          currentUser?.id && currentUser.id !== resolvedUserId
             ? () =>
                 setReportTarget({
-                  userId: profileId,
+                  userId: resolvedUserId || '',
                   userName:
                     `${profile.first_name || ''} ${profile.last_name || ''}`.trim() ||
                     'Voyageur',
@@ -164,18 +209,12 @@ export default function PublicProfilePage() {
         }
       />
 
-      {toast ? (
-        <div className="fixed bottom-24 left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-full border border-white/20 bg-[var(--lkv-primary)] px-5 py-2.5 text-xs font-bold text-white shadow-xl">
-          {toast}
-        </div>
-      ) : null}
-
       <ReportBlockModal
         target={reportTarget}
         onClose={() => setReportTarget(null)}
         onSuccess={() => {
           setReportTarget(null);
-          showToast('Merci, ton signalement a été transmis.');
+          toast('Merci, ton signalement a été transmis.', 'success');
         }}
       />
     </>

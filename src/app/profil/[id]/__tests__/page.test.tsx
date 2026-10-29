@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const PROFILE_ID = '22222222-2222-4222-8222-222222222222';
@@ -50,6 +50,9 @@ vi.mock('next/link', () => ({
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: null }),
+}));
+vi.mock('@/contexts/ToastContext', () => ({
+  useToast: () => ({ toast: vi.fn(), dismiss: vi.fn(), toasts: [] }),
 }));
 vi.mock('@/hooks/useUserPresence', () => ({
   useUserPresence: () => false,
@@ -193,12 +196,10 @@ describe('Page /profil/[id] — visibilité avant chargement', () => {
 
     render(<PublicProfilePage />);
 
-    expect(await screen.findByText('Profil introuvable')).toBeTruthy();
-    expect(screen.getByTestId('empty-state')).toBeTruthy();
     expect(screen.queryByTestId('hero-profil')).toBeNull();
 
     // Une seule lecture, celle de la vue publique bornée par la RLS.
-    expect(calls.tables).toEqual(['public_profiles']);
+    await waitFor(() => expect(calls.tables).toEqual(['public_profiles']));
     expect(calls.selectColumns).toEqual(['id']);
     expect(calls.filters).toEqual([{ column: 'id', value: PROFILE_ID }]);
     expect(calls.maybeSingleCount).toBe(1);
