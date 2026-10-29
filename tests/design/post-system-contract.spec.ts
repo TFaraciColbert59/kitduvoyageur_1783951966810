@@ -19,7 +19,8 @@ describe('socle de post partagé', () => {
     const panel = read('src/features/posts/ui/PostGlassPanel.tsx');
     expect(panel).toContain('headerRect.bottom - articleRect.top + 8');
     expect(panel).toContain('--post-panel-top');
-    expect(panel).toContain("side === 'comments' ? 'share' : 'comments'");
+    // Partage ← photo → commentaires : le geste inverse ramène à la photo.
+    expect(panel).toContain("const towardPhoto = side === 'comments' ? dx > 0 : dx < 0;");
   });
 
   it('le fil garde le header au-dessus du panneau', () => {

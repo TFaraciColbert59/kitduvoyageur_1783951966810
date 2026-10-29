@@ -35,8 +35,7 @@ const webNav = readFileSync(
     '..',
     'components',
     'mobile-nav',
-    'navigation',
-    'WebNavigationBar.tsx',
+    'FloatingLiquidTabBar.tsx',
   ),
   'utf8',
 );

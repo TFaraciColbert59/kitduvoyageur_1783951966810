@@ -1,15 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 
-const navigationSurface = readFileSync(
-  'src/components/mobile-nav/navigation/NavigationSurface.tsx',
-  'utf8',
+// Barre du bas unique de l'app (iOS 27) : les anciennes NavigationSurface,
+// WebNavigationBar et TabItem ont été supprimées.
+const floatingTabBar = readFileSync('src/components/mobile-nav/FloatingLiquidTabBar.tsx', 'utf8');
+const legacyNavGone = ['NavigationSurface', 'WebNavigationBar', 'TabItem', 'ProminentAction'].every(
+  (name) => !existsSync(`src/components/mobile-nav/navigation/${name}.tsx`),
 );
-const webNavigationBar = readFileSync(
-  'src/components/mobile-nav/navigation/WebNavigationBar.tsx',
-  'utf8',
-);
-const tabItem = readFileSync('src/components/mobile-nav/navigation/TabItem.tsx', 'utf8');
 const hubLiquid = readFileSync('src/styles/liquid-ios27.css', 'utf8');
 const hubMapLiquid = readFileSync(
   'src/features/hub/components/mobile/hub-map-liquid.css',
@@ -75,18 +72,14 @@ const progressionCompactCard = readFileSync(
 );
 
 describe('Hub — rendu Liquid Glass iOS 27', () => {
-  it('la navigation du Hub monte une vraie surface de réfraction', () => {
-    expect(navigationSurface).toContain("import LiquidGlass from '@/components/glass/LiquidGlass'");
-    expect(navigationSurface).toContain('opticalNavigation?: boolean');
-    expect(navigationSurface).toContain('priority="control"');
-    expect(navigationSurface).toContain('className="lkv-nav-refraction"');
-    expect(webNavigationBar).toContain('isHubSurfacePathname(pathname)');
-    expect(webNavigationBar).toContain('opticalNavigation={opticalNavigation}');
+  it('le Hub partage la barre du bas unique de l’app (plus d’ancienne surface)', () => {
+    expect(legacyNavGone).toBe(true);
+    expect(floatingTabBar).toContain('lkdv-floating-tabbar');
   });
 
-  it('la sélection active est une petite lentille interne et non une capsule opaque', () => {
-    expect(tabItem).toContain('className="lkv-nav-active-lens"');
-    expect(tabItem).not.toContain("background: 'var(--g2-bg)'");
+  it('la sélection active est une lentille interne qui glisse, pas une capsule opaque', () => {
+    expect(floatingTabBar).toContain('className="lkdv-floating-lens"');
+    expect(floatingTabBar).not.toContain("background: 'var(--g2-bg)'");
   });
 
   it('ne force plus tous les matériaux du Hub en blanc laiteux', () => {
@@ -170,14 +163,11 @@ describe('Hub — rendu Liquid Glass iOS 27', () => {
     }
   });
 
-  it('aligne la barre de navigation sur la recette Apple', () => {
+  it('aligne la barre de navigation sur la recette Apple (capsule système iOS 27)', () => {
+    const css = readFileSync('src/styles/floating-liquid-tabbar.css', 'utf8');
     // La teinte du composant ne doit plus etre forestiere.
-    expect(navigationSurface).toContain('glassTint="rgba(16, 16, 16, 0.14)"');
-    expect(navigationSurface).not.toContain('rgba(16, 38, 28, 0.4)');
-    expect(navigationSurface).toContain('shadow="0 8px 15px rgba(0, 0, 0, 0.02)"');
-    // Symbols : blanc plein actif, #D9D9D9 inactif.
-    expect(tabItem).toContain("'var(--hub-label-primary)'");
-    expect(tabItem).toContain("'var(--hub-symbol)'");
+    expect(css).not.toContain('rgba(16, 38, 28, 0.4)');
+    expect(css).toContain('backdrop-filter: blur(28px) saturate(180%)');
   });
 
   it('verrou de transmission : aucun materiau du Hub ne depasse 0.34 d opacite', () => {

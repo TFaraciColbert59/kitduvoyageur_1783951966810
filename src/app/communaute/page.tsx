@@ -10,7 +10,6 @@ import { CommunityCardShell } from '@/features/community/card/shell/CommunityCar
 import { CommunityFeedTopBar } from '@/features/community/feed/CommunityFeedTopBar';
 import { CommunityFeed } from '@/features/community/feed/CommunityFeed';
 import type { CreateKind } from '@/features/community/card/create/CreateDrawer';
-import type { ProposeKind } from '@/features/community/card/explore/ExplorerDrawer';
 import '@/styles/community-card.css';
 import type { SectionTabId } from '@/features/community/card/sections/sectionTabs';
 
@@ -74,7 +73,7 @@ function CommunauteFeedContent() {
   }, [toast]);
 
   const proposeCreate = useCallback(
-    (kind: ProposeKind) => {
+    (kind: CreateKind) => {
       if (!user?.id || user.is_anonymous) {
         requireAuth();
         return;
@@ -106,10 +105,10 @@ function CommunauteFeedContent() {
               setCreateMounted(true);
               setCreateOpen(true);
             }}
-            onOpenSection={(id) => {
+            onOpenSection={() => {
+              // « Explorer » ouvre directement la recherche de l'Explorer.
               setCreateOpen(false);
-              setSectionsTab(id);
-              setSectionsSearch(false);
+              setSectionsSearch(true);
               setSectionsMounted(true);
               setSectionsOpen(true);
             }}
@@ -148,6 +147,7 @@ function CommunauteFeedContent() {
             key={storiesRefreshKey}
             currentUser={user}
             showHeading={false}
+            onCreateStory={() => proposeCreate('story')}
           />
         }
       >

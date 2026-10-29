@@ -11,7 +11,7 @@
    réponses API privées (/api/hub, /api/materiel, /api/voyages…) en cache.
    ============================================================ */
 
-const CACHE_VERSION = 'lkdv-v10';
+const CACHE_VERSION = 'lkdv-v22';
 const STATIC_CACHE = `lkdv-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lkdv-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
@@ -123,19 +123,18 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('fonts.gstatic.com') ||
     url.hostname.includes('fonts.googleapis.com')
   ) {
-    // Network-First : un nouveau build doit toujours gagner sur un chunk en
-    // cache (c'était la cause des « anciennes versions » qui revenaient).
+    // Cache-First : les fichiers de `/_next/static/` portent l'empreinte de
+    // leur contenu (un nouveau build = de nouveaux noms), ils ne périment donc
+    // jamais. Les servir du cache rend chaque changement de page immédiat ;
+    // les anciennes versions ne reviennent pas (le HTML, lui, est toujours
+    // demandé au réseau et chaque version du SW purge les caches précédents).
     event.respondWith(
       caches.open(STATIC_CACHE).then(async (cache) => {
-        try {
-          const response = await fetch(request);
-          if (response.status === 200) cache.put(request, response.clone());
-          return response;
-        } catch {
-          const cached = await cache.match(request);
-          if (cached) return cached;
-          throw new Error('offline');
-        }
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        const response = await fetch(request);
+        if (response.status === 200) cache.put(request, response.clone());
+        return response;
       })
     );
     return;

@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 const LOADER = `/* LKDV service worker loader — versionné, jamais mis en cache. */
-importScripts('/sw-v17.js');
+importScripts('/sw-v18.js');
 `;
 
 export function GET() {

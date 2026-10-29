@@ -21,9 +21,10 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     expect(page).not.toContain('CommunityGrid');
   });
 
-  it('la pillule est texte « Pour toi » + chevron et la cloche va au Compte', () => {
+  it('la pilule « Explorer » ouvre la recherche et la cloche va au Compte', () => {
     const top = read('src/features/community/feed/CommunityFeedTopBar.tsx');
-    expect(top).toContain('Pour toi');
+    expect(top).toContain('<span>Explorer</span>');
+    expect(top).toContain('aria-label="Explorer et rechercher"');
     expect(top).toContain('/compte?tab=notifications');
     expect(top).not.toContain('AccountAuthorPill');
     expect(top).toContain('Rechercher dans la communauté');

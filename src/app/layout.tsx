@@ -6,7 +6,6 @@ import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
 import '@/styles/liquid-glass.css';
 import '@/styles/liquid-ios27.css';
-import '@/styles/apple-bottom-nav.css';
 import '@/styles/floating-liquid-tabbar.css';
 import '@/styles/liquid-capsules.css';
 import '@/styles/native-account-tabbar.css';
@@ -185,10 +184,14 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const activeTrip = await getActiveTrip();
-  const activeAdventure = await getActiveAdventure();
-  const cookieStore = await cookies();
-  const headerStore = await headers();
+  // Les deux lectures (et l'en-tête de requête) partent en même temps :
+  // un aller-retour base de données de moins avant le premier octet.
+  const [activeTrip, activeAdventure, cookieStore, headerStore] = await Promise.all([
+    getActiveTrip(),
+    getActiveAdventure(),
+    cookies(),
+    headers(),
+  ]);
   const locale = resolveLocale({
     cookie: cookieStore.get(LOCALE_COOKIE)?.value,
     acceptLanguage: headerStore.get('accept-language'),

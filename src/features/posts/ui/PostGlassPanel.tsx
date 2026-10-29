@@ -7,7 +7,8 @@ export interface PostGlassPanelProps {
   headerRef?: React.RefObject<HTMLElement | null>;
   topInset?: number;
   onClose: () => void;
-  onSwitch: (side: 'comments' | 'share') => void;
+  /** Conservé pour compatibilité : les gestes ne basculent plus d'un panneau à l'autre. */
+  onSwitch?: (side: 'comments' | 'share') => void;
   children: React.ReactNode;
 }
 
@@ -18,14 +19,16 @@ export interface PostGlassPanelProps {
  * - plein cadre de la carte (406×541) ;
  * - Échap, piège de focus, restitution au déclencheur ;
  * - blur coupé pendant le geste et en reduced-motion ;
- * - swipe horizontal : bascule commentaires ↔ partage ; vers le bas : ferme.
+ * - gestes : partage ← photo → commentaires. Le geste inverse de celui qui a
+ *   ouvert le panneau ramène à la photo (commentaires : vers la droite ; partage :
+ *   vers la gauche) ; vers le bas : ferme aussi. Le panneau garde ses gestes pour
+ *   lui (aucune propagation à la carte) et un geste ne déclenche qu'une action.
  */
 export function PostGlassPanel({
   side,
   headerRef,
   topInset = 64,
   onClose,
-  onSwitch,
   children,
 }: PostGlassPanelProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -63,13 +66,12 @@ export function PostGlassPanel({
   /* Focus : entrée dans le panneau, piège de tabulation, restitution. */
   useEffect(() => {
     const root = rootRef.current;
-    const article = root?.closest<HTMLElement>('.lkdv-feed-post');
     const previous = document.activeElement as HTMLElement | null;
     const focusFirst = () => {
       const first = root?.querySelector<HTMLElement>(
         'input, button, textarea, [href], [tabindex]:not([tabindex="-1"])',
       );
-      (first ?? root)?.focus?.();
+      (first ?? root)?.focus?.({ preventScroll: true });
     };
     const timer = window.setTimeout(focusFirst, 20);
     const onKey = (event: KeyboardEvent) => {
@@ -81,13 +83,11 @@ export function PostGlassPanel({
       }
       if (event.key !== 'Tab') return;
       const surface = root?.querySelector<HTMLElement>('.lkdv-post-panel');
-      const close = article?.querySelector<HTMLElement>('.lkdv-feed-post-close');
       const nodes = Array.from(
         (surface ?? root)?.querySelectorAll<HTMLElement>(
           'button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
         ) ?? [],
       ).filter((node) => node.getClientRects().length > 0);
-      if (close && close.getClientRects().length > 0) nodes.push(close);
       if (nodes.length === 0) return;
       const first = nodes[0];
       const last = nodes[nodes.length - 1];
@@ -103,7 +103,7 @@ export function PostGlassPanel({
     return () => {
       window.clearTimeout(timer);
       document.removeEventListener('keydown', onKey);
-      previous?.focus?.();
+      previous?.focus?.({ preventScroll: true });
     };
   }, [onClose]);
 
@@ -117,11 +117,13 @@ export function PostGlassPanel({
       tabIndex={-1}
       style={{ top: 'var(--post-panel-top, 64px)' }}
       onPointerDown={(event) => {
+        event.stopPropagation();
         if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
         pointerStart.current = { x: event.clientX, y: event.clientY };
         setGesture(true);
       }}
       onPointerMove={(event) => {
+        event.stopPropagation();
         const start = pointerStart.current;
         if (!start) return;
         const dx = event.clientX - start.x;
@@ -129,10 +131,13 @@ export function PostGlassPanel({
         if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
           pointerStart.current = null;
           setGesture(false);
-          onSwitch(side === 'comments' ? 'share' : 'comments');
+          // Retour à la photo par le geste inverse ; l'autre sens ne fait rien.
+          const towardPhoto = side === 'comments' ? dx > 0 : dx < 0;
+          if (towardPhoto) onClose();
         }
       }}
       onPointerUp={(event) => {
+        event.stopPropagation();
         const start = pointerStart.current;
         pointerStart.current = null;
         setGesture(false);
@@ -142,7 +147,8 @@ export function PostGlassPanel({
         const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
         if (dy > 70 && dy > Math.abs(dx) && (!body || body.scrollTop <= 0)) onClose();
       }}
-      onPointerCancel={() => {
+      onPointerCancel={(event) => {
+        event.stopPropagation();
         pointerStart.current = null;
         setGesture(false);
       }}

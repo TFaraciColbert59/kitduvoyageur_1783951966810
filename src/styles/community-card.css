@@ -2055,3 +2055,30 @@ html.lkdv-no-page-scroll body {
 .lkdv-ex-carousel:has(.lkdv-ex-card) .lkdv-ex-dots span {
   background: rgba(255, 255, 255, 0.6);
 }
+
+/* =============================================================================
+   Fil sur 100 % de la hauteur (2026-10-29)
+   La coquille est fixée à l'écran : la page ne bouge jamais, l'en-tête et les
+   stories restent en haut, seul le fil défile — jusqu'au bas de l'écran, sous
+   la barre du bas flottante. Le dernier post garde une marge pour passer au-dessus.
+   ============================================================================= */
+.lkdv-feed-shell--locked {
+  position: fixed;
+  inset: 0;
+  height: auto;
+}
+.lkdv-feed-shell--locked .lkdv-feed-column {
+  padding-bottom: 0;
+}
+.lkdv-feed-shell--locked .lkdv-feed-main {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+}
+/* L'en-tête et les stories ne déplacent jamais la page au doigt. */
+.lkdv-feed-shell--locked .lkdv-feed-header {
+  touch-action: manipulation;
+}
+.lkdv-feed-shell--locked .lkdv-feed-stories {
+  touch-action: pan-x;
+  overscroll-behavior: contain;
+}

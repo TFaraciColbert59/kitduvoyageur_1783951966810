@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { DESTINATIONS, hasExtendedNav } from './destinationRegistry';
 import { getNativeGlassDestination, shouldShowNativeGlass } from './nativeAccountRoutes';
 import { getNativePrefetchRoutes, nativeSyncKey } from './nativeNavigationPerformance';
-import WebNavigationBar from './navigation/WebNavigationBar';
 import FloatingLiquidTabBar from './FloatingLiquidTabBar';
 import NavigationPlateau from './navigation/NavigationPlateau';
 import DayPlateau from './navigation/DayPlateau';
@@ -220,7 +219,7 @@ export default function NavigationBar() {
   }, [iosNative]);
 
   if (iosNative && hiddenByEvent) return null;
-  // Avoid flashing the heavy WebNavigationBar for 1-2 frames at startup.
+  // Avoid flashing the web bar for 1-2 frames at startup.
   // If the plugin is absent/unresponsive, restore it in <= 750ms.
   if (nativeVisible && phase !== 'fallback') {
     return phase === 'active' && hasPlateau

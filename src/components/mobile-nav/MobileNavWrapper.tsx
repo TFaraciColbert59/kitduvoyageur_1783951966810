@@ -25,10 +25,8 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/connexion') ||
     pathname?.startsWith('/inscription') ||
     pathname?.startsWith('/checkout') ||
-    pathname === '/clubs' ||
-    pathname?.startsWith('/clubs') ||
-    pathname === '/profil' ||
-    pathname?.startsWith('/profil') ||
+    // Clubs et profils publics gardent la barre unique de l'app (iOS 27) :
+    // leurs anciennes barres intégrées ne sont plus affichées.
     // '/prepare' n'est PLUS dans cette liste : le preparateur d'aventure doit
     // garder la barre d'onglets. Elle en etait retiree parce que le flux
     // occupe tout l'ecran, mais l'effet reel etait l'inverse de l'intention —

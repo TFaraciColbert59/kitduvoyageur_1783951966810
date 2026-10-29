@@ -67,7 +67,7 @@ test('ouverte, la carte descend jusqu’en bas et la barre du bas s’efface ; g
 
 test('glisser à gauche ou à droite change d’onglet dans l’Explorer', async ({ page }) => {
   await open(page);
-  await page.getByRole('button', { name: 'Ouvrir les sections' }).click();
+  await page.getByRole('button', { name: 'Explorer et rechercher' }).click();
   const tabs = page.getByRole('tablist', { name: 'Sections' });
   await tabs.getByRole('tab', { name: 'Clubs', exact: true }).click();
   const pane = page.getByRole('tabpanel', { name: 'Clubs', exact: true });

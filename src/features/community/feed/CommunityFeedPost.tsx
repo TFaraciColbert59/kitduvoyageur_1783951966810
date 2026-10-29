@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReportSheet from '@/components/social/ReportSheet';
-import { Bookmark, Flag, Link2, MoreHorizontal, Repeat2, Trash2, X } from 'lucide-react';
+import { Bookmark, Flag, Link2, MoreHorizontal, Repeat2, Trash2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { PostAuthorPill } from './PostAuthorPill';
@@ -115,20 +115,23 @@ export function CommunityFeedPost({
   }, [closePanel, menuOpen, panel]);
 
   /* Verrou du fond (sans lutter contre le clavier virtuel) + remontée du
-     panneau au-dessus du clavier via le visual viewport. */
+     panneau au-dessus du clavier via le visual viewport. Dans la Communauté,
+     la page est déjà figée (seul le fil défile) : rien à verrouiller ni à
+     replacer, ce qui évite les sauts du fil pendant les gestes. */
   useEffect(() => {
     if (!panel || embedded) return;
     const y = panelScrollRef.current;
     const article = articleRef.current;
+    const pageLocked = document.documentElement.classList.contains('lkdv-no-page-scroll');
     const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    if (!pageLocked) document.body.style.overflow = 'hidden';
     const restore = () => {
       const viewport = window.visualViewport;
       if (viewport && viewport.height < window.innerHeight - 80) return;
       window.scrollTo(0, y);
     };
-    const frame = window.requestAnimationFrame(restore);
-    const interval = window.setInterval(restore, 32);
+    const frame = pageLocked ? 0 : window.requestAnimationFrame(restore);
+    const interval = pageLocked ? 0 : window.setInterval(restore, 32);
     const viewport = window.visualViewport;
     const updateKeyboard = () => {
       if (!article || !viewport) return;
@@ -142,10 +145,12 @@ export function CommunityFeedPost({
     viewport?.addEventListener('resize', updateKeyboard);
     viewport?.addEventListener('scroll', updateKeyboard);
     return () => {
-      window.cancelAnimationFrame(frame);
-      window.clearInterval(interval);
-      document.body.style.overflow = previous;
-      window.scrollTo(0, y);
+      if (!pageLocked) {
+        window.cancelAnimationFrame(frame);
+        window.clearInterval(interval);
+        document.body.style.overflow = previous;
+        window.scrollTo(0, y);
+      }
       viewport?.removeEventListener('resize', updateKeyboard);
       viewport?.removeEventListener('scroll', updateKeyboard);
       if (article) {
@@ -161,7 +166,7 @@ export function CommunityFeedPost({
     const timer = window.setTimeout(() => {
       articleRef.current
         ?.querySelector<HTMLElement>(
-          '.lkdv-post-panel input, .lkdv-post-panel button, .lkdv-feed-post-close',
+          '.lkdv-post-panel input, .lkdv-post-panel button',
         )
         ?.focus({ preventScroll: true });
     }, 30);
@@ -196,8 +201,16 @@ export function CommunityFeedPost({
       aria-label={`Publication de ${authorName(post)}`}
       data-keyboard="false"
       style={{ touchAction: 'pan-y' }}
+      /* Trois volets côte à côte : partage ← photo → messages. Depuis la photo,
+         glisser vers la gauche ouvre les messages, vers la droite le partage ;
+         le panneau se referme par le geste inverse (géré par PostGlassPanel).
+         Un seul geste = une seule bascule : le doigt est oublié dès qu'elle a lieu. */
       onPointerDown={(event) => {
-        if ((event.target as HTMLElement).closest('button,a,input')) return;
+        const target = event.target as HTMLElement;
+        if (panel || target.closest('button,a,input,textarea,.lkdv-post-panel-slot')) {
+          swipeStart.current = null;
+          return;
+        }
         swipeStart.current = { x: event.clientX, y: event.clientY };
         swiped.current = false;
       }}
@@ -207,20 +220,16 @@ export function CommunityFeedPost({
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
         if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+        swipeStart.current = null;
         swiped.current = true;
         setMenuOpen(false);
         openPanel(dx > 0 ? 'share' : 'comments');
       }}
-      onPointerUp={(event) => {
-        const start = swipeStart.current;
+      onPointerUp={() => {
         swipeStart.current = null;
-        if (!start || panel) return;
-        const dx = event.clientX - start.x;
-        const dy = event.clientY - start.y;
-        if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
-        swiped.current = true;
-        setMenuOpen(false);
-        openPanel(dx > 0 ? 'share' : 'comments');
+      }}
+      onPointerCancel={() => {
+        swipeStart.current = null;
       }}
     >
       {hasMedia && media ? (
@@ -266,30 +275,23 @@ export function CommunityFeedPost({
         <PostAuthorPill post={headerPost} />
       </div>
 
-      <button
-        type="button"
-        className="pmi-more-pill lkdv-feed-post-options"
-        aria-label="Options de la publication"
-        aria-expanded={menuOpen}
-        aria-controls={optionsId}
-        onClick={(event) => {
-          event.stopPropagation();
-          setMenuOpen((open) => !open);
-        }}
-      >
-        {menuOpen ? <X size={20} aria-hidden="true" /> : <MoreHorizontal size={20} aria-hidden="true" />}
-      </button>
-
-      {panel ? (
+      {/* Seul contrôle posé sur la photo : les trois points, en haut à droite.
+          Aucune croix — un panneau se referme par le geste inverse ou Échap. */}
+      {panel ? null : (
         <button
           type="button"
-          className="lkdv-feed-post-close"
-          aria-label="Fermer le panneau"
-          onClick={closePanel}
+          className="pmi-more-pill lkdv-feed-post-options"
+          aria-label="Options de la publication"
+          aria-expanded={menuOpen}
+          aria-controls={optionsId}
+          onClick={(event) => {
+            event.stopPropagation();
+            setMenuOpen((open) => !open);
+          }}
         >
-          <X size={20} aria-hidden="true" />
+          <MoreHorizontal size={20} aria-hidden="true" />
         </button>
-      ) : null}
+      )}
 
       {menuOpen ? (
         <div id={optionsId} className="lkdv-feed-options-rail" role="menu" aria-label="Options de la publication">

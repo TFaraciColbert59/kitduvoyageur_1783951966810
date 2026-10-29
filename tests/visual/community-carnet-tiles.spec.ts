@@ -39,9 +39,11 @@ async function openCarnets(page: Page) {
   await page.goto('/communaute', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.lkdv-feed-post').first()).toBeVisible();
   await fixture.signIn();
-  await page.getByRole('button', { name: 'Ouvrir les sections' }).click();
+  await page.getByRole('button', { name: 'Explorer et rechercher' }).click();
   const dialog = page.getByRole('dialog', { name: 'Explorer la communauté' });
   await expect(dialog).toBeVisible();
+  // « Explorer » ouvre la recherche : on passe sur l'onglet Carnets.
+  await page.getByRole('tablist', { name: 'Sections' }).getByRole('tab', { name: 'Carnets', exact: true }).click();
   await expect(page.locator('.lkdv-ct').first()).toBeVisible();
   return { dialog, posted };
 }
