@@ -280,6 +280,25 @@ describe('Freedom Reels & Comments Attachment System', () => {
       }
     }
   });
+
+  it('posts and preserves reply comments with parentId for proper threading', async () => {
+    const parentComment = await postReelComment(
+      'freedom-curated-1',
+      { id: 'user-parent', user_metadata: { full_name: 'Guillaume' } },
+      'Quelle vue magique !',
+    );
+    expect(parentComment.parentId).toBeNull();
+
+    const replyComment = await postReelComment(
+      'freedom-curated-1',
+      { id: 'user-child', user_metadata: { full_name: 'Camille' } },
+      'Oui, nous avons campé sur la crête.',
+      null,
+      parentComment.id,
+    );
+    expect(replyComment.parentId).toBe(parentComment.id);
+    expect(replyComment.content).toBe('Oui, nous avons campé sur la crête.');
+  });
 });
 
 

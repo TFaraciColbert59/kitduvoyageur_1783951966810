@@ -271,6 +271,7 @@ export const DEMO_FREEDOM_COMMENTS: Record<string, FreedomComment[]> = {
           kit_name: 'Pack Bivouac Glaciaire Ultra-léger',
           items_count: 14,
           total_weight_g: 4850,
+          image_url: '/assets/images/adventure-bivouac.jpg',
         },
       },
     },

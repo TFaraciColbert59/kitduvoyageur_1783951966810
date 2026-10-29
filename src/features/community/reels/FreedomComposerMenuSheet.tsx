@@ -294,6 +294,7 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
                           kit_id: k.id,
                           kit_name: k.name,
                           items_count: k.items_count || 10,
+                          image_url: '/assets/images/backpack.jpg',
                         },
                       });
                       onClose();

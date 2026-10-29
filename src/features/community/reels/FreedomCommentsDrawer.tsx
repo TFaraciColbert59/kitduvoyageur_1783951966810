@@ -1,14 +1,20 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Send, Plus, Image as ImageIcon, Heart, CornerDownRight, X } from 'lucide-react';
+import {
+  Send,
+  Plus,
+  Image as ImageIcon,
+  Heart,
+  CornerDownRight,
+  X,
+  Route,
+  Footprints,
+} from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDragDismiss } from '@/hooks/gestures';
-import { KitCard } from '@/features/messaging/components/KitCard';
-import { GPXPreviewCard } from '@/features/messaging/components/GPXPreviewCard';
-import { ProductCard } from '@/features/messaging/components/ProductCard';
-import { TrailCard } from '@/features/messaging/components/TrailCard';
 import { FreedomComposerMenuSheet } from './FreedomComposerMenuSheet';
 import { fetchReelComments, postReelComment } from './freedomReelsService';
 import {
@@ -25,6 +31,17 @@ export interface FreedomCommentsDrawerProps {
   onClose: () => void;
   onCommentsCountChange?: (count: number) => void;
   onOpenKit?: (kitId: string, kitName?: string) => void;
+}
+
+interface CommentThread {
+  comment: FreedomComment;
+  replies: FreedomComment[];
+}
+
+interface ReplyingTarget {
+  id: string;
+  authorName: string;
+  parentId: string;
 }
 
 function timeAgo(dateStr: string): string {
@@ -45,6 +62,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   onCommentsCountChange,
   onOpenKit,
 }) => {
+  const router = useRouter();
   const { haptic } = useHapticFeedback();
   const [comments, setComments] = useState<FreedomComment[]>(
     () => getPreloadedReelComments(reelId) ?? [],
@@ -54,7 +72,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<FreedomCommentAttachment | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<FreedomComment | null>(null);
+  const [replyingTo, setReplyingTo] = useState<ReplyingTarget | null>(null);
 
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,6 +119,50 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
     };
   }, [isOpen, reelId]);
 
+  // Threads hierarchy memo: nests replies under their root comment
+  const threads = useMemo<CommentThread[]>(() => {
+    const threadMap = new Map<string, CommentThread>();
+    const rootThreads: CommentThread[] = [];
+    const directReplies = new Map<string, FreedomComment[]>();
+
+    for (const c of comments) {
+      if (!c.parentId) {
+        const t: CommentThread = { comment: c, replies: [] };
+        threadMap.set(c.id, t);
+        rootThreads.push(t);
+      } else {
+        const list = directReplies.get(c.parentId) || [];
+        list.push(c);
+        directReplies.set(c.parentId, list);
+      }
+    }
+
+    for (const [parentId, replyList] of directReplies.entries()) {
+      const parentThread = threadMap.get(parentId);
+      if (parentThread) {
+        parentThread.replies.push(...replyList);
+      } else {
+        // If parentId belongs to a reply, attach to the root thread
+        let attached = false;
+        for (const t of rootThreads) {
+          if (t.replies.some((r) => r.id === parentId)) {
+            t.replies.push(...replyList);
+            attached = true;
+            break;
+          }
+        }
+        if (!attached) {
+          // Orphan comment promoted to root
+          for (const orphan of replyList) {
+            rootThreads.push({ comment: orphan, replies: [] });
+          }
+        }
+      }
+    }
+
+    return rootThreads;
+  }, [comments]);
+
   // Keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
@@ -121,13 +183,15 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
     haptic('light');
     setSubmitting(true);
 
+    const targetParentId = replyingTo?.parentId || null;
+
     try {
       const newComment = await postReelComment(
         reelId,
         currentUser,
         textToSend,
         pendingAttachment,
-        replyingTo?.id || null,
+        targetParentId,
       );
 
       setComments((prev) => {
@@ -140,7 +204,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
       setPendingAttachment(null);
       setReplyingTo(null);
 
-      // Scroll to bottom
+      // Scroll to bottom of comments list
       setTimeout(() => {
         listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
       }, 50);
@@ -180,6 +244,146 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
     });
   };
 
+  // Render attachment in sleek white card format with image/icon on the left, title on the right
+  const renderAttachment = (att: FreedomCommentAttachment) => {
+    // 1. Kit attachment: card fond blanc, image à gauche, titre à droite
+    if (att.type === 'kit' && att.kit) {
+      const kitImage =
+        att.kit.image_url ||
+        (att.kit.kit_name.toLowerCase().includes('bivouac')
+          ? '/assets/images/adventure-bivouac.jpg'
+          : att.kit.kit_name.toLowerCase().includes('camille')
+          ? '/assets/images/adventure-hiking.jpg'
+          : '/assets/images/backpack.jpg');
+
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            haptic('light');
+            if (onOpenKit) {
+              onOpenKit(att.kit!.kit_id, att.kit!.kit_name);
+            } else {
+              router.push(`/compte?tab=kits&kit=${encodeURIComponent(att.kit!.kit_id)}`);
+            }
+          }}
+          className="group mt-1 flex items-center gap-2.5 rounded-2xl border border-black/8 bg-white p-1.5 pr-3 shadow-xs transition hover:border-[#17402C]/30 hover:shadow-sm active:scale-[0.98] text-left max-w-[280px]"
+          aria-label={`Voir le kit ${att.kit.kit_name}`}
+        >
+          <div className="size-10 shrink-0 overflow-hidden rounded-xl bg-[#E8F0E6] border border-black/5">
+            <img
+              src={kitImage}
+              alt={att.kit.kit_name}
+              className="size-full object-cover"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="block truncate text-xs font-semibold text-[#172B24] group-hover:text-[#17402C]">
+              {att.kit.kit_name}
+            </span>
+          </div>
+        </button>
+      );
+    }
+
+    // 2. GPX trace attachment: card fond blanc, icone tracé/randonnée à gauche, nom à droite
+    if (att.type === 'gpx' && att.gpx) {
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            haptic('light');
+            router.push(`/explorer?gpx=${encodeURIComponent(att.gpx!.name)}`);
+          }}
+          className="group mt-1 flex items-center gap-2.5 rounded-2xl border border-black/8 bg-white p-1.5 pr-3 shadow-xs transition hover:border-[#17402C]/30 hover:shadow-sm active:scale-[0.98] text-left max-w-[280px]"
+          aria-label={`Voir le tracé ${att.gpx.name}`}
+        >
+          <div className="size-10 shrink-0 rounded-xl bg-[#E8F0E6] flex items-center justify-center border border-black/5 text-[#17402C]">
+            <Route size={19} strokeWidth={2.2} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="block truncate text-xs font-semibold text-[#172B24] group-hover:text-[#17402C]">
+              {att.gpx.name}
+            </span>
+          </div>
+        </button>
+      );
+    }
+
+    // 3. Product attachment: card fond blanc, image à gauche, nom à droite
+    if (att.type === 'product' && att.product) {
+      const prodImg = att.product.photo_url || '/assets/images/gear-tent-small.jpg';
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            haptic('light');
+            router.push(`/materiel?product=${encodeURIComponent(att.product!.id || att.product!.name)}`);
+          }}
+          className="group mt-1 flex items-center gap-2.5 rounded-2xl border border-black/8 bg-white p-1.5 pr-3 shadow-xs transition hover:border-[#17402C]/30 hover:shadow-sm active:scale-[0.98] text-left max-w-[280px]"
+          aria-label={`Voir le produit ${att.product.name}`}
+        >
+          <div className="size-10 shrink-0 overflow-hidden rounded-xl bg-[#E8F0E6] border border-black/5">
+            <img
+              src={prodImg}
+              alt={att.product.name}
+              className="size-full object-cover"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="block truncate text-xs font-semibold text-[#172B24] group-hover:text-[#17402C]">
+              {att.product.name}
+            </span>
+          </div>
+        </button>
+      );
+    }
+
+    // 4. Trail attachment: card fond blanc, icone sentier à gauche, nom à droite
+    if (att.type === 'trail' && att.trail) {
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            haptic('light');
+            router.push(`/explorer?trail=${encodeURIComponent(att.trail!.id || att.trail!.name)}`);
+          }}
+          className="group mt-1 flex items-center gap-2.5 rounded-2xl border border-black/8 bg-white p-1.5 pr-3 shadow-xs transition hover:border-[#17402C]/30 hover:shadow-sm active:scale-[0.98] text-left max-w-[280px]"
+          aria-label={`Voir la randonnée ${att.trail.name}`}
+        >
+          <div className="size-10 shrink-0 rounded-xl bg-[#E8F0E6] flex items-center justify-center border border-black/5 text-[#17402C]">
+            <Footprints size={19} strokeWidth={2.2} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="block truncate text-xs font-semibold text-[#172B24] group-hover:text-[#17402C]">
+              {att.trail.name}
+            </span>
+          </div>
+        </button>
+      );
+    }
+
+    // 5. User shared photo
+    if (att.type === 'photo' && att.photoUrl) {
+      return (
+        <div className="mt-1 overflow-hidden rounded-xl border border-black/10">
+          {/* eslint-disable-next-line @next/next/no-img-element -- user comment photo */}
+          <img
+            src={att.photoUrl}
+            alt="Photo partagée"
+            className="max-h-48 w-auto rounded-xl object-cover"
+          />
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -188,8 +392,12 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Commentaires"
+      aria-label="Commentaires de la vidéo"
     >
+      {/* Background Scrim */}
+      <div className="freedom-drawer-scrim" onClick={onClose} />
+
+      {/* Drawer Card (Liquid Glass, demi-hauteur 50% responsive) */}
       <motion.div
         {...dragProps}
         style={{ y }}
@@ -206,151 +414,200 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
           <span />
         </div>
 
-        {/* Note: Le titre "Commentaires" et la croix de fermeture ont été retirés selon la consigne */}
-
-        {/* Comments List */}
+        {/* Comments & Replies Threaded List */}
         <div ref={listRef} className="freedom-drawer-content space-y-4">
           {loading ? (
             <div className="flex h-36 items-center justify-center">
               <div className="size-6 animate-spin rounded-full border-2 border-[#17402C] border-t-transparent" />
             </div>
-          ) : comments.length === 0 ? (
+          ) : threads.length === 0 ? (
             <div className="flex h-44 flex-col items-center justify-center gap-2 text-center text-sm text-[#56665D]">
               <p className="font-semibold text-[#172B24]">Aucun commentaire pour l’instant.</p>
               <p className="text-xs">Soyez le premier voyageur à partager votre avis ou votre kit !</p>
             </div>
           ) : (
-            comments.map((comment) => (
-              <div key={comment.id} className="flex items-start gap-2.5">
-                {/* Avatar */}
-                <div className="size-8 shrink-0 overflow-hidden rounded-full bg-[#E5EAE3] border border-black/5">
-                  {comment.author.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- distant avatar
-                    <img
-                      src={comment.author.avatarUrl}
-                      alt={comment.author.name}
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <div className="grid size-full place-items-center text-xs font-bold text-[#17402C]">
-                      {comment.author.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-
-                {/* Comment Body */}
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-xs font-bold text-[#172B24]">
-                      {comment.author.name}
-                    </span>
-                    <span className="text-[10px] text-[#56665D]">
-                      {timeAgo(comment.createdAt)}
-                    </span>
-                  </div>
-
-                  {comment.content && (
-                    <p className="text-xs text-[#172B24] leading-relaxed">
-                      {comment.content}
-                    </p>
-                  )}
-
-                  {/* Rich Attachments (Kits, GPX, Product, Trail, Photo) */}
-                  {comment.attachment && (
-                    <div className="pt-1.5">
-                      {comment.attachment.type === 'kit' && comment.attachment.kit && (
-                        <KitCard
-                          meta={comment.attachment.kit}
-                          isMine={Boolean(currentUser?.id && comment.author.id === currentUser.id)}
-                          onOpen={(id) => onOpenKit?.(id, comment.attachment?.kit?.kit_name)}
+            threads.map((thread) => {
+              const root = thread.comment;
+              return (
+                <div key={root.id} className="space-y-2.5">
+                  {/* Root Comment Row */}
+                  <div className="flex items-start gap-2.5">
+                    {/* Avatar */}
+                    <div className="size-8 shrink-0 overflow-hidden rounded-full bg-[#E5EAE3] border border-black/5 mt-0.5">
+                      {root.author.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- distant avatar
+                        <img
+                          src={root.author.avatarUrl}
+                          alt={root.author.name}
+                          className="size-full object-cover"
                         />
-                      )}
-
-                      {comment.attachment.type === 'gpx' && comment.attachment.gpx && (
-                        <GPXPreviewCard
-                          fileName={comment.attachment.gpx.name}
-                          gpxUrl={comment.attachment.gpx.url}
-                          fileContent={comment.attachment.gpx.fileContent}
-                          isMine={Boolean(currentUser?.id && comment.author.id === currentUser.id)}
-                        />
-                      )}
-
-                      {comment.attachment.type === 'product' && comment.attachment.product && (
-                        <ProductCard
-                          meta={comment.attachment.product}
-                          isMine={Boolean(currentUser?.id && comment.author.id === currentUser.id)}
-                        />
-                      )}
-
-                      {comment.attachment.type === 'trail' && comment.attachment.trail && (
-                        <TrailCard
-                          meta={comment.attachment.trail}
-                          isMine={Boolean(currentUser?.id && comment.author.id === currentUser.id)}
-                        />
-                      )}
-
-                      {comment.attachment.type === 'photo' && comment.attachment.photoUrl && (
-                        <div className="overflow-hidden rounded-xl border border-black/10">
-                          {/* eslint-disable-next-line @next/next/no-img-element -- user comment photo */}
-                          <img
-                            src={comment.attachment.photoUrl}
-                            alt="Photo partagée"
-                            className="max-h-48 w-auto rounded-xl object-cover"
-                          />
+                      ) : (
+                        <div className="grid size-full place-items-center text-xs font-bold text-[#17402C]">
+                          {root.author.name.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
-                  )}
 
-                  {/* Reply Button */}
-                  <div className="pt-0.5">
+                    {/* Comment Body */}
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs font-bold text-[#172B24]">
+                          {root.author.name}
+                        </span>
+                        <span className="text-[10px] text-[#56665D]">
+                          {timeAgo(root.createdAt)}
+                        </span>
+                      </div>
+
+                      {root.content && (
+                        <p className="text-xs text-[#172B24] leading-relaxed">
+                          {root.content}
+                        </p>
+                      )}
+
+                      {/* Attachment (Kit fond blanc, GPX tracé, etc.) */}
+                      {root.attachment && renderAttachment(root.attachment)}
+
+                      {/* Reply Button */}
+                      <div className="pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            haptic('selection');
+                            setReplyingTo({
+                              id: root.id,
+                              authorName: root.author.name,
+                              parentId: root.id,
+                            });
+                            inputRef.current?.focus();
+                          }}
+                          className="text-[11px] font-semibold text-[#56665D] hover:text-[#17402C]"
+                        >
+                          Répondre
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Like Button on Root Comment */}
                     <button
                       type="button"
-                      onClick={() => {
-                        haptic('selection');
-                        setReplyingTo(comment);
-                        inputRef.current?.focus();
-                      }}
-                      className="text-[11px] font-semibold text-[#56665D] hover:text-[#17402C]"
+                      onClick={() => handleToggleLike(root.id)}
+                      className="flex flex-col items-center gap-0.5 pt-1 text-[#56665D] hover:text-[#FF2D55]"
+                      aria-label="Aimer le commentaire"
                     >
-                      Répondre
+                      <Heart
+                        size={14}
+                        fill={root.isLiked ? '#FF2D55' : 'none'}
+                        color={root.isLiked ? '#FF2D55' : 'currentColor'}
+                        strokeWidth={root.isLiked ? 0 : 2}
+                      />
+                      {root.likesCount > 0 && (
+                        <span className="text-[10px] font-medium">{root.likesCount}</span>
+                      )}
                     </button>
                   </div>
-                </div>
 
-                {/* Like Button on Comment */}
-                <button
-                  type="button"
-                  onClick={() => handleToggleLike(comment.id)}
-                  className="flex flex-col items-center gap-0.5 pt-1 text-[#56665D] hover:text-[#FF2D55]"
-                  aria-label="Aimer le commentaire"
-                >
-                  <Heart
-                    size={14}
-                    fill={comment.isLiked ? '#FF2D55' : 'none'}
-                    color={comment.isLiked ? '#FF2D55' : 'currentColor'}
-                    strokeWidth={comment.isLiked ? 0 : 2}
-                  />
-                  {comment.likesCount > 0 && (
-                    <span className="text-[10px] font-medium">{comment.likesCount}</span>
+                  {/* Nested Replies Thread (indented with left border) */}
+                  {thread.replies.length > 0 && (
+                    <div className="ml-7 space-y-2.5 border-l-2 border-[#17402C]/15 pl-3">
+                      {thread.replies.map((reply) => (
+                        <div key={reply.id} className="flex items-start gap-2">
+                          {/* Reply Avatar */}
+                          <div className="size-6 shrink-0 overflow-hidden rounded-full bg-[#E5EAE3] border border-black/5 mt-0.5">
+                            {reply.author.avatarUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element -- distant avatar
+                              <img
+                                src={reply.author.avatarUrl}
+                                alt={reply.author.name}
+                                className="size-full object-cover"
+                              />
+                            ) : (
+                              <div className="grid size-full place-items-center text-[10px] font-bold text-[#17402C]">
+                                {reply.author.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Reply Body */}
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-[11px] font-bold text-[#172B24]">
+                                {reply.author.name}
+                              </span>
+                              <span className="text-[9px] text-[#56665D]">
+                                {timeAgo(reply.createdAt)}
+                              </span>
+                            </div>
+
+                            {reply.content && (
+                              <p className="text-xs text-[#172B24] leading-relaxed">
+                                {reply.content}
+                              </p>
+                            )}
+
+                            {/* Reply Attachment */}
+                            {reply.attachment && renderAttachment(reply.attachment)}
+
+                            {/* Reply to this reply */}
+                            <div className="pt-0.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  haptic('selection');
+                                  setReplyingTo({
+                                    id: reply.id,
+                                    authorName: reply.author.name,
+                                    parentId: root.id,
+                                  });
+                                  inputRef.current?.focus();
+                                }}
+                                className="text-[10px] font-semibold text-[#56665D] hover:text-[#17402C]"
+                              >
+                                Répondre
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Like Button on Reply */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleLike(reply.id)}
+                            className="flex flex-col items-center gap-0.5 pt-0.5 text-[#56665D] hover:text-[#FF2D55]"
+                            aria-label="Aimer la réponse"
+                          >
+                            <Heart
+                              size={12}
+                              fill={reply.isLiked ? '#FF2D55' : 'none'}
+                              color={reply.isLiked ? '#FF2D55' : 'currentColor'}
+                              strokeWidth={reply.isLiked ? 0 : 2}
+                            />
+                            {reply.likesCount > 0 && (
+                              <span className="text-[9px] font-medium">{reply.likesCount}</span>
+                            )}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </button>
-              </div>
-            ))
+                </div>
+              );
+            })
           )}
         </div>
 
         {/* Replying Banner */}
         {replyingTo && (
-          <div className="flex items-center justify-between bg-black/5 px-4 py-1.5 text-xs text-[#172B24]">
+          <div className="flex items-center justify-between border-t border-black/5 bg-[#E8F0E6]/85 px-4 py-1.5 text-xs text-[#172B24]">
             <div className="flex items-center gap-1.5 truncate">
-              <CornerDownRight size={13} className="text-[#17402C]" />
-              <span>En réponse à <b>{replyingTo.author.name}</b></span>
+              <CornerDownRight size={13} className="text-[#17402C] shrink-0" />
+              <span>
+                En réponse à <strong className="text-[#17402C]">@{replyingTo.authorName}</strong>
+              </span>
             </div>
             <button
               type="button"
               onClick={() => setReplyingTo(null)}
-              className="text-xs font-semibold text-[#7A241C]"
+              className="text-xs font-semibold text-[#7A241C] hover:underline"
             >
               Annuler
             </button>
@@ -433,7 +690,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
               className="freedom-composer-input"
               placeholder={
                 replyingTo
-                  ? `Répondre à ${replyingTo.author.name}…`
+                  ? `Répondre à @${replyingTo.authorName}…`
                   : 'Ajouter un commentaire ou partager un kit…'
               }
               value={inputText}
