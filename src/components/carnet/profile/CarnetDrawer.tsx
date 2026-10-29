@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
 import { CarnetMediaTabs, type CarnetMediaTab } from './CarnetMediaTabs';
 import { CarnetSubCapsule, type CarnetSubCapsuleItem } from './CarnetSubCapsule';
@@ -14,6 +13,18 @@ import { useScrollCut, useScrollTail } from './useScrollCut';
  * devenus des pages du carrousel.
  */
 export type CarnetDrawerId = 'stats' | 'share' | 'moments';
+
+/** Part de la hauteur de la feuille au-delà de laquelle un glissement ferme. */
+export const DRAG_CLOSE_RATIO = 0.3;
+
+/**
+ * Décision de fermeture d'un glissement : le geste ferme au-delà de 30 % de la
+ * hauteur réelle de la feuille. Fonction pure, donc testable sans géométrie.
+ */
+export function closesOnDrag(distance: number, sheetHeight: number): boolean {
+  if (!Number.isFinite(distance) || !Number.isFinite(sheetHeight) || sheetHeight <= 0) return false;
+  return distance > sheetHeight * DRAG_CLOSE_RATIO;
+}
 
 /** Navigation des sous-volets du volet actif : capsule 30 px en bas à droite. */
 export interface CarnetDrawerSubNav {
@@ -46,9 +57,12 @@ const PANES: { id: CarnetDrawerId; label: string; icon: string }[] = [
 /**
  * Coquille de drawer du Compte : la carte devient le panneau.
  *
- * Anatomie mesurée : poignée 42 × 5 à 8 px du bord (6 px sous le doigt) et croix
- * de 36 px — la croix est posée en absolu, elle ne prend plus de ligne dans le
- * flux. Sous ces deux repères, le **sélecteur 44 px** du niveau drawer occupe
+ * Anatomie mesurée : la poignée 42 × 5 à 8 px du bord (6 px sous le doigt) est
+ * le **seul** repère de fermeture — aucune croix. Elle porte le nom accessible
+ * « Fermer le panneau », se tire vers le bas (la feuille suit le doigt) et
+ * ferme au-delà de 30 % de sa hauteur ; `Échap` reste la sortie clavier
+ * (WCAG 2.2, « dragging movements » : tout geste de glissement a une
+ * alternative). Sous ce repère, le **sélecteur 44 px** du niveau drawer occupe
  * toute la largeur (16 px des bords) : un segment par volet, icône 18 + libellé
  * 12,5/600, lentille blanche qui glisse au pas des segments. Le corps commence
  * 24 px plus bas, réserve de 64 px en bas, plafond de 503 px : au-delà, le corps
@@ -72,11 +86,20 @@ export function CarnetDrawer({
   /* Poignée pressée : la barre s'épaissit au doigt comme à la souris. L'état ne
      sert qu'au dessin (`data-press`), il ne déclenche aucun geste. */
   const [pressed, setPressed] = useState(false);
-  /* Sortie de 160 ms : la feuille joue son fondu avant que l'écran ne la
+  /* Sortie de 180 ms : la feuille joue son fondu avant que l'écran ne la
      démonte, donc la fermeture ne claque jamais. Aucune animation en boucle. */
   const [closing, setClosing] = useState(false);
   const closingRef = useRef(false);
   const timerRef = useRef<number | null>(null);
+  /* Glissement : la feuille suit le doigt (translation réelle), revient en
+     200 ms si le geste n'atteint pas 30 % de sa hauteur, et se ferme au-delà. */
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [returning, setReturning] = useState(false);
+  const dragStartRef = useRef<number | null>(null);
+  /* Un glissement se termine par un `click` : sans ce drapeau, relâcher la
+     poignée après 60 px fermerait la feuille comme un appui simple. */
+  const didDragRef = useRef(false);
   const available = PANES;
   /* Trois volets, trois segments : la lentille est toujours sur l'un d'eux. */
   const activeIndex = available.findIndex((pane) => pane.id === drawer);
@@ -97,8 +120,55 @@ export function CarnetDrawer({
     if (closingRef.current) return;
     closingRef.current = true;
     setClosing(true);
-    timerRef.current = window.setTimeout(() => onCloseRef.current(), 160);
+    timerRef.current = window.setTimeout(() => onCloseRef.current(), 180);
   }, []);
+
+  /* Hauteur réelle de la feuille : le seuil de 30 % se mesure sur elle, jamais
+     sur la fenêtre. */
+  const sheetHeight = () => ref.current?.getBoundingClientRect().height ?? 0;
+
+  const startDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    dragStartRef.current = event.clientY;
+    didDragRef.current = false;
+    setDragging(true);
+    setReturning(false);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* optionnel */
+    }
+  };
+
+  const moveDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (dragStartRef.current === null) return;
+    const distance = Math.max(0, event.clientY - dragStartRef.current);
+    if (distance > 8) didDragRef.current = true;
+    setDragY(distance);
+  };
+
+  const endDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (dragStartRef.current === null) return;
+    const distance = Math.max(0, event.clientY - dragStartRef.current);
+    dragStartRef.current = null;
+    setDragging(false);
+    try {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    } catch {
+      /* optionnel */
+    }
+    if (closesOnDrag(distance, sheetHeight())) {
+      /* Au-delà de 30 % : la feuille finit sa course vers le bas, puis l'écran
+         la démonte — la sortie n'est jamais un saut. */
+      setReturning(true);
+      setDragY(sheetHeight() || 480);
+      timerRef.current = window.setTimeout(() => onCloseRef.current(), 200);
+      closingRef.current = true;
+      return;
+    }
+    /* En deçà : retour élastique en 200 ms, sans fermer. */
+    setReturning(true);
+    setDragY(0);
+  };
 
   useEffect(() => {
     /* 48 — le focus revient au déclencheur à la fermeture, jamais au hasard. */
@@ -133,26 +203,49 @@ export function CarnetDrawer({
         aria-label="Panneau du carnet"
         aria-hidden={closing ? 'true' : undefined}
         data-closing={closing ? 'true' : undefined}
+        data-drag={dragging ? 'true' : undefined}
+        data-return={returning && !dragging ? 'true' : undefined}
+        style={dragY ? ({ '--ckp-drag': `${dragY}px` } as React.CSSProperties) : undefined}
       >
-        {/* Chrome du drawer : poignée + croix, puis le sélecteur des volets.
-            Le voile de coupe est posé sous l'ensemble, jamais sur un segment. */}
+        {/* Chrome du drawer : la poignée seule, puis le sélecteur des volets.
+            La poignée est le repère de fermeture : elle nomme l'action, se
+            glisse vers le bas et ferme sur un appui simple. Le voile de coupe
+            est posé sous l'ensemble, jamais sur un segment. */}
         <div className="ckp-drawer-chrome">
           <div className="ckp-drawer-head">
             <button
               type="button"
               className="ckp-grabber"
-              onClick={requestClose}
+              onClick={() => {
+                /* Un glissement ne vaut pas un appui : au-delà de 8 px, la
+                   fermeture a déjà été décidée par le geste. */
+                if (didDragRef.current) {
+                  didDragRef.current = false;
+                  return;
+                }
+                requestClose();
+              }}
               aria-label="Fermer le panneau"
               data-press={pressed ? 'true' : undefined}
-              onPointerDown={() => setPressed(true)}
-              onPointerUp={() => setPressed(false)}
-              onPointerCancel={() => setPressed(false)}
+              onPointerDown={(event) => {
+                setPressed(true);
+                startDrag(event);
+              }}
+              onPointerMove={moveDrag}
+              onPointerUp={(event) => {
+                setPressed(false);
+                endDrag(event);
+              }}
+              onPointerCancel={(event) => {
+                setPressed(false);
+                dragStartRef.current = null;
+                setDragging(false);
+                setReturning(true);
+                setDragY(0);
+              }}
               onPointerLeave={() => setPressed(false)}
             >
               <span aria-hidden="true" />
-            </button>
-            <button type="button" className="ckp-drawer-close" onClick={requestClose} aria-label="Fermer">
-              <X size={16} aria-hidden="true" />
             </button>
           </div>
           {/* Sélecteur du niveau drawer : 44 px, pleine largeur, 16 px des bords.

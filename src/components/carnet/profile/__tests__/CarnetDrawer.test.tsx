@@ -2,7 +2,17 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CarnetDrawer } from '../CarnetDrawer';
+import { CarnetDrawer, closesOnDrag } from '../CarnetDrawer';
+
+
+/** Événement pointeur daté : jsdom ne construit pas `clientY` tout seul. */
+function pointer(type: string, y: number) {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperty(event, 'clientY', { value: y });
+  Object.defineProperty(event, 'pointerId', { value: 1 });
+  Object.defineProperty(event, 'target', { value: null, writable: true });
+  return event;
+}
 
 afterEach(() => cleanup());
 
@@ -11,7 +21,8 @@ describe('CarnetDrawer — coquille', () => {
     render(<CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>volet</p></CarnetDrawer>);
     expect(screen.getByRole('button', { name: 'Fermer le panneau' })).toBeTruthy();
     expect(screen.getByRole('tablist', { name: 'Volets du carnet' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Fermer' })).toBeTruthy();
+    /* Aucun autre bouton de fermeture visible : la poignée suffit. */
+    expect(screen.queryByRole('button', { name: 'Fermer' })).toBeNull();
     expect(screen.getByText('volet')).toBeTruthy();
   });
 
@@ -41,11 +52,11 @@ describe('CarnetDrawer — coquille', () => {
     expect(tablist.closest('.ckp-drawer-head')).toBeNull();
     expect(tablist.closest('.ckp-drawer-body')).toBeNull();
     expect(tablist.closest('.ckp-drawer-foot')).toBeNull();
-    /* Le haut ne garde que la poignée et la croix. */
+    /* Le haut ne garde que la poignée — aucun autre bouton, aucune croix. */
     const head = container.querySelector('.ckp-drawer-head') as HTMLElement;
-    expect(head.querySelectorAll('button').length).toBe(2);
+    expect(head.querySelectorAll('button').length).toBe(1);
     expect(head.querySelector('.ckp-grabber')).toBeTruthy();
-    expect(head.querySelector('.ckp-drawer-close')).toBeTruthy();
+    expect(head.querySelector('.ckp-drawer-close')).toBeNull();
     expect(head.querySelector('[role="tablist"]')).toBeNull();
     expect(head.textContent).toBe('');
     /* Trois segments, une lentille blanche au pas de la barre. */
@@ -166,7 +177,7 @@ describe('CarnetDrawer — coquille', () => {
     expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Partage' }));
   });
 
-  it('ferme sur Échap et sur la poignée, après la sortie de 160 ms', () => {
+  it('ferme sur Échap et sur la poignée, après la sortie de 180 ms', () => {
     vi.useFakeTimers();
     const onClose = vi.fn();
     const { container } = render(
@@ -177,11 +188,11 @@ describe('CarnetDrawer — coquille', () => {
     const sheet = container.querySelector('.ckp-card--drawer') as HTMLElement;
     expect(sheet.getAttribute('data-closing')).toBe('true');
     expect(onClose).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(160);
+    vi.advanceTimersByTime(180);
     expect(onClose).toHaveBeenCalledTimes(1);
     /* Un second appui ne relance rien. */
     fireEvent.keyDown(document, { key: 'Escape' });
-    vi.advanceTimersByTime(160);
+    vi.advanceTimersByTime(180);
     expect(onClose).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
@@ -236,17 +247,17 @@ describe('CarnetDrawer — finitions du lot A', () => {
     expect(scrim.nextElementSibling?.classList.contains('ckp-card--drawer')).toBe(true);
   });
 
-  /* 8 — la croix reste dans le flux de l'en-tête même quand le corps défile. */
-  it('garde la croix de 36 px quand le corps défile', () => {
+  /* 8 — la poignée reste dans le flux de l'en-tête même quand le corps défile. */
+  it('garde la poignée dans l’en-tête quand le corps défile', () => {
     const { container } = render(
       <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>,
     );
     const body = container.querySelector('.ckp-drawer-body') as HTMLElement;
     body.scrollTop = 120;
     fireEvent.scroll(body);
-    const close = screen.getByRole('button', { name: 'Fermer' });
-    expect(close.classList.contains('ckp-drawer-close')).toBe(true);
-    expect(close.closest('.ckp-drawer-head')).toBeTruthy();
+    const grabber = screen.getByRole('button', { name: 'Fermer le panneau' });
+    expect(grabber.classList.contains('ckp-grabber')).toBe(true);
+    expect(grabber.closest('.ckp-drawer-head')).toBeTruthy();
   });
 });
 
@@ -284,11 +295,57 @@ describe('CarnetDrawer — mobile (lot F)', () => {
       <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={onClose}><p>v</p></CarnetDrawer>,
     );
     fireEvent.keyDown(document, { key: 'Escape' });
-    vi.advanceTimersByTime(160);
+    vi.advanceTimersByTime(180);
     expect(onClose).toHaveBeenCalledOnce();
     unmount();
     expect(document.activeElement).toBe(trigger);
     vi.useRealTimers();
     trigger.remove();
+  });
+});
+
+describe('CarnetDrawer — fermeture par glissement (29 oct. 2026)', () => {
+  /* La poignée est le seul repère de fermeture : elle nomme l'action. */
+  it('nomme la poignée et ne peint aucun autre bouton de fermeture', () => {
+    const { container } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>,
+    );
+    const grabber = screen.getByRole('button', { name: 'Fermer le panneau' });
+    expect(grabber.classList.contains('ckp-grabber')).toBe(true);
+    expect(container.querySelector('.ckp-drawer-close')).toBeNull();
+    /* Alternative clavier : `Échap` écoute le document, un seul bouton en tête. */
+    expect(container.querySelectorAll('.ckp-drawer-head button')).toHaveLength(1);
+  });
+
+  it('seuil de fermeture : 30 % de la hauteur de la feuille', () => {
+    /* 400 px de feuille : la fermeture commence au-delà de 120 px. */
+    expect(closesOnDrag(120, 400)).toBe(false);
+    expect(closesOnDrag(121, 400)).toBe(true);
+    /* Feuille non mesurée : aucun geste ne ferme (jamais de seuil inventé). */
+    expect(closesOnDrag(200, 0)).toBe(false);
+    expect(closesOnDrag(Number.NaN, 400)).toBe(false);
+  });
+
+  it('marque la feuille en glissement pendant le geste', () => {
+    const { container } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>,
+    );
+    const sheet = container.querySelector('.ckp-card--drawer') as HTMLElement;
+    const grabber = container.querySelector('.ckp-grabber') as HTMLElement;
+    fireEvent.pointerDown(grabber);
+    expect(sheet.getAttribute('data-drag')).toBe('true');
+    fireEvent.pointerUp(grabber);
+    expect(sheet.getAttribute('data-drag')).toBeNull();
+    expect(sheet.getAttribute('data-return')).toBe('true');
+  });
+
+  it('ferme sur Échap, sans aucun bouton de fermeture supplémentaire', () => {
+    vi.useFakeTimers();
+    const onClose = vi.fn();
+    render(<CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={onClose}><p>v</p></CarnetDrawer>);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    vi.advanceTimersByTime(180);
+    expect(onClose).toHaveBeenCalledOnce();
+    vi.useRealTimers();
   });
 });

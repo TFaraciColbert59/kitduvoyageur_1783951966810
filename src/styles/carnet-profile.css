@@ -376,8 +376,11 @@ button.ckp-daypill-count:active { opacity: .6; }
     0 0 0 .5px rgba(23, 43, 36, .12),
     0 -10px 34px rgba(23, 43, 36, .16);
   animation:
-    ckp-drawer-in 220ms cubic-bezier(.22, 1, .36, 1) both,
+    ckp-drawer-in 260ms cubic-bezier(.22, 1, .36, 1) both,
     ckp-drawer-lift 200ms cubic-bezier(.22, 1, .36, 1) both;
+  /* Le glissement du doigt écrit `--ckp-drag` : la feuille suit alors la
+     translation réelle, sans animation concurrente. */
+  transform: translateY(var(--ckp-drag, 0px));
   /* La feuille passe devant le voile de page ; son propre empilement (en-tête 6,
      pied 6, voiles 5/7/8) reste interne. */
   z-index: 3;
@@ -433,16 +436,6 @@ button.ckp-daypill-count:active { opacity: .6; }
 .ckp-grabber[data-press='true'] span { height: 6px; }
 .ckp-grabber:active span::after,
 .ckp-grabber[data-press='true'] span::after { background-color: rgba(23, 43, 36, .32); }
-.ckp-drawer-close {
-  position: absolute; top: 8px; right: 12px; flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px;
-  display: grid; place-items: center; cursor: pointer; color: #17402C;
-  background: rgba(255, 255, 255, .9);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(23, 43, 36, .06);
-  transition: transform .16s cubic-bezier(.22, 1, .36, 1);
-}
-/* Cible tactile de 44 px sans toucher au dessin de 36 px. */
-.ckp-drawer-close::after { content: ''; position: absolute; inset: -4px; border-radius: 999px; }
-.ckp-drawer-close:active { transform: scale(.94); }
 .ckp-drawer-cut {
   position: absolute; left: 0; right: 0; top: 100%; height: 16px; z-index: 7; pointer-events: none;
   opacity: 0; transition: opacity 160ms ease;
@@ -467,7 +460,21 @@ button.ckp-daypill-count:active { opacity: .6; }
   bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   display: flex; align-items: center; height: 30px;
 }
-@keyframes ckp-drawer-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+/* Ouverture : la feuille monte de 24 px en 260 ms, le contenu prend le relais
+   40 ms plus tard (il n'entre jamais en même temps que la feuille). */
+@keyframes ckp-drawer-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+.ckp-card--drawer .ckp-drawer-chrome,
+.ckp-card--drawer .ckp-drawer-body {
+  animation: ckp-drawer-content-in 260ms cubic-bezier(.22, 1, .36, 1) 40ms both;
+}
+@keyframes ckp-drawer-content-in { from { opacity: 0; } to { opacity: 1; } }
+/* Glissement : aucun fondu, aucune animation — la feuille est sous le doigt. */
+.ckp-card--drawer[data-drag='true'] { animation: none; transition: none; }
+/* Retour élastique : 200 ms, une seule propriété. */
+.ckp-card--drawer[data-return='true'] {
+  animation: none;
+  transition: transform 200ms cubic-bezier(.22, 1, .36, 1);
+}
 /* Zone de retour tactile : les 12 px du bas de la feuille portent le curseur
    `grab` du châssis. Aucun geste nouveau n'y est branché : le contenu s'arrête
    64 px plus haut, la zone ne masque donc rien. */
@@ -988,11 +995,14 @@ button.ckp-daypill-count:active { opacity: .6; }
 @keyframes ckp-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .ckp-card--drawer, .ckp-card--drawer[data-closing='true'] { animation: ckp-fade-in 120ms linear both; }
+  .ckp-card--drawer .ckp-drawer-chrome,
+  .ckp-card--drawer .ckp-drawer-body { animation: ckp-fade-in 120ms linear both; }
+  /* Aucune translation : ni au glissement, ni au retour. */
+  .ckp-card--drawer[data-drag='true'],
+  .ckp-card--drawer[data-return='true'] { transform: none; transition: none; }
   .ckp-page--next, .ckp-page--prev { animation: ckp-fade-in 120ms linear both; }
   .ckp-comment.is-new { animation: ckp-fade-in 120ms linear both; }
   .ckp-collapse, .ckp-collapse-chevron { transition: none; }
-  .ckp-drawer-close { transition: none; }
-  .ckp-drawer-close:active { transform: none; }
 }
 /* Barre journalière sans valeur : elle garde sa place, elle ne se peint pas. */
 .ckp-elev-bars i[data-empty='true'] { opacity: 0; }
@@ -1384,15 +1394,16 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
    transparence réduite en surface opaque, aucune animation en boucle.
    ============================================================================= */
 
-/* 38 — sortie de la feuille : fondu + 12 px, 160 ms, joué une seule fois.
-   L'écran attend la fin de cette animation avant de démonter la feuille. */
+/* 38 — sortie de la feuille : fondu + 16 px, 180 ms — toujours plus rapide que
+   l'entrée (260 ms). L'écran attend la fin de cette animation avant de
+   démonter la feuille. */
 .ckp-card--drawer[data-closing='true'] {
-  animation: ckp-drawer-out 160ms cubic-bezier(.22, 1, .36, 1) both;
+  animation: ckp-drawer-out 180ms cubic-bezier(.22, 1, .36, 1) both;
   pointer-events: none;
 }
 @keyframes ckp-drawer-out {
-  from { opacity: 1; transform: none; }
-  to { opacity: 0; transform: translateY(12px); }
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(16px); }
 }
 
 /* 41 — `prefers-reduced-transparency` : la feuille et ses surfaces redeviennent
@@ -1457,15 +1468,12 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 .ckp-mapcard-stack button:active {
   background-color: rgba(255, 255, 255, .55);
 }
-.ckp-drawer-close:active,
-.ckp-drawer-close:focus-visible { background: #fff; }
 .ckp-capsule .ckp-tabs button:focus-visible,
 .ckp-capsule .ckp-tabs button:active,
 .ckp-sub button:focus-visible,
 .ckp-sub button:active { color: #17402C; }
 @media (hover: hover) {
   .ckp-tile:hover { background-color: rgba(255, 255, 255, .55); }
-  .ckp-drawer-close:hover { background: #fff; }
   .ckp-pill:hover { background-color: rgba(255, 255, 255, .62); }
 }
 
@@ -1510,10 +1518,10 @@ html[data-ckp-sheet] body {
    Tokens : #172B24 #17402C #56665D #6B7A70 #8A968D #C13B34 #B4BDB6.
    ============================================================================= */
 
-/* --- Chrome : poignée + croix, sélecteur, voile de coupe ------------------- */
-/* Le chrome ne défile pas : poignée 42 × 5 et croix 36 px occupent les 44 px
-   du haut, le sélecteur vient 16 px dessous, et le voile de coupe se pose sous
-   l'ensemble — jamais sur un segment. */
+/* --- Chrome : poignée, sélecteur, voile de coupe --------------------------- */
+/* Le chrome ne défile pas : la poignée 42 × 5 occupe les 44 px du haut — elle
+   est le seul repère de fermeture —, le sélecteur vient 16 px dessous, et le
+   voile de coupe se pose sous l'ensemble, jamais sur un segment. */
 .ckp-drawer-chrome { position: relative; z-index: 6; flex: none; }
 .ckp-drawer-select {
   position: relative; box-sizing: border-box;
@@ -1659,4 +1667,84 @@ html[data-ckp-sheet] body {
   padding: 0 14px; border-radius: 12px;
   background: rgba(255, 255, 255, .55);
   box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .10);
+}
+
+/* =============================================================================
+   Volet Moments — cartes de moment (29 oct. 2026)
+   Une carte par moment, deux colonnes de 4:3. L'heure vit dans une pastille en
+   haut à gauche, le lieu sur un voile local de 18 % en bas de la photo, la
+   légende sous la photo — donc dans la carte, jamais sur le verre. Un moment
+   sans photo garde la carte : glyphe 24 px à 30 % et lieu dans la surface.
+   ============================================================================= */
+.ckp-moment-day { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+/* Repère de jour : une pastille, comme tous les libellés de la feuille. */
+.ckp-moment-daypill {
+  display: inline-flex; align-items: baseline; gap: 8px; align-self: flex-start;
+  min-height: 30px; margin: 0; padding: 6px 12px; border-radius: 999px;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .10);
+  color: #172B24; font: 500 12px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0; font-variant-numeric: tabular-nums;
+}
+.ckp-moment-daypill b { font: 600 12px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif); color: #17402C; }
+.ckp-moment-daypill span { color: #6B7A70; }
+.ckp-moment-daypill .ckp-moment-daycount { margin-left: 2px; color: #8A968D; font-size: 11px; }
+
+/* Grille 2 colonnes : gouttière de 12 px, cartes de hauteur libre. */
+.ckp-moment-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0;
+}
+.ckp-moment-card {
+  position: relative; display: flex; flex-direction: column; margin: 0; min-width: 0;
+  padding: 0; border-radius: 14px; overflow: hidden;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 0 0 .5px rgba(23, 43, 36, .10);
+}
+/* Photo : ratio 4:3 exact, rayon 14 en haut. */
+.ckp-moment-photo {
+  position: relative; display: block; aspect-ratio: 4 / 3; width: 100%;
+  background-color: rgba(23, 64, 44, .08); overflow: hidden;
+  border-radius: 14px 14px 0 0;
+}
+.ckp-moment-card[data-nophoto='true'] .ckp-moment-photo { border-radius: 14px; }
+.ckp-moment-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ckp-moment-glyph {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: #8A968D; opacity: .5;
+}
+/* Heure : pastille blanche de 20 px, lisible sur n'importe quelle photo. */
+.ckp-moment-time {
+  position: absolute; top: 8px; left: 8px; z-index: 1;
+  display: inline-flex; align-items: center; height: 20px; padding: 0 8px;
+  border-radius: 999px; background: rgba(255, 255, 255, .92); color: #172B24;
+  font: 600 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0; font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 3px rgba(23, 43, 36, .16);
+}
+/* Lieu : voile local de 18 % sous le texte, jamais un texte nu sur la photo. */
+.ckp-moment-place {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
+  display: block; padding: 8px 10px 9px;
+  background-color: rgba(10, 20, 14, .18);
+  color: #fff; text-shadow: 0 1px 2px rgba(10, 20, 14, .45);
+  font: 500 11.5px/1.25 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Sans photo, le lieu quitte la photo : il vit dans la carte, encre de valeur. */
+.ckp-moment-card[data-nophoto='true'] .ckp-moment-place {
+  position: static; padding: 0 10px 2px;
+  background-color: transparent; color: #172B24; text-shadow: none;
+}
+.ckp-moment-place[data-missing='true'] { color: rgba(255, 255, 255, .72); }
+.ckp-moment-card[data-nophoto='true'] .ckp-moment-place[data-missing='true'] { color: #B4BDB6; }
+/* Légende : deux lignes au plus, dans la carte. */
+.ckp-moment-caption {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin: 0; padding: 8px 10px 10px; min-width: 0;
+  color: #172B24; font: 500 11.5px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ckp-moment-card { transition: transform 160ms cubic-bezier(.22, 1, .36, 1); }
 }

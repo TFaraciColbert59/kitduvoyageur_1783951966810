@@ -116,17 +116,11 @@ describe('Anatomie du drawer — lot A', () => {
     expect(scrim).toMatch(/pointer-events:\s*none/);
   });
 
-  /* 8 — croix de 36 px, en absolu, jamais conditionnée à un état. */
-  it('croix de fermeture 36 px toujours visible', () => {
-    const close = rule('.ckp-drawer-close {');
-    expect(close).toMatch(/width:\s*36px/);
-    expect(close).toMatch(/height:\s*36px/);
-    expect(close).toMatch(/position:\s*absolute/);
-    expect(close).toMatch(/display:\s*grid/);
-    expect(close).not.toMatch(/opacity:\s*0/);
-    expect(close).not.toMatch(/visibility:\s*hidden/);
-    expect(close).not.toMatch(/display:\s*none/);
-    expect(css).not.toMatch(/\.ckp-drawer-close\[data-/);
+  /* 8 — plus aucune croix : la poignée est le seul repère de fermeture. */
+  it('aucune croix de fermeture dans la feuille', () => {
+    expect(css).not.toMatch(/\.ckp-drawer-close/);
+    /* La poignée porte la cible tactile de 44 px sans changer son dessin. */
+    expect(rule('.ckp-grabber::after {')).toMatch(/inset|top:\s*-18px/);
   });
 });
 
@@ -345,11 +339,14 @@ describe('États', () => {
 });
 
 describe('Mouvement', () => {
-  /* 43 — entrée du drawer : 12 px + fondu, 220 ms. */
-  it('entrée du drawer : translateY(12px) + fondu, 220 ms', () => {
+  /* 43 — entrée du drawer : 24 px + fondu, 260 ms, contenu décalé de 40 ms. */
+  it('entrée du drawer : translateY(24px) + fondu, 260 ms', () => {
     const keyframes = css.slice(css.indexOf('@keyframes ckp-drawer-in'));
-    expect(keyframes).toMatch(/translateY\(12px\)/);
-    expect(rule('.ckp-card.ckp-card--drawer {')).toMatch(/ckp-drawer-in 220ms cubic-bezier\(\.22, 1, \.36, 1\)/);
+    expect(keyframes).toMatch(/translateY\(24px\)/);
+    expect(rule('.ckp-card.ckp-card--drawer {')).toMatch(/ckp-drawer-in 260ms cubic-bezier\(\.22, 1, \.36, 1\)/);
+    /* Le contenu entre en fondu, 40 ms après la feuille. */
+    const content = css.slice(css.indexOf('.ckp-card--drawer .ckp-drawer-chrome'));
+    expect(content).toMatch(/ckp-drawer-content-in 260ms cubic-bezier\(\.22, 1, \.36, 1\) 40ms both/);
   });
 
   /* 44 — changement de sous-onglet : fondu + 8 px, 180 ms. */
@@ -683,11 +680,11 @@ describe('Composants — lot D', () => {
 });
 
 describe('Mouvement — lot E', () => {
-  /* 35 — entrée de feuille : 12 px + fondu, 220 ms, courbe du Compte. */
-  it('entrée de feuille : translateY(12px) + fondu, 220 ms', () => {
+  /* 35 — entrée de feuille : 24 px + fondu, 260 ms, courbe du Compte. */
+  it('entrée de feuille : translateY(24px) + fondu, 260 ms', () => {
     const keyframes = css.slice(css.indexOf('@keyframes ckp-drawer-in'));
-    expect(keyframes).toMatch(/translateY\(12px\)/);
-    expect(rule('.ckp-card.ckp-card--drawer {')).toMatch(/ckp-drawer-in 220ms cubic-bezier\(\.22, 1, \.36, 1\)/);
+    expect(keyframes).toMatch(/translateY\(24px\)/);
+    expect(rule('.ckp-card.ckp-card--drawer {')).toMatch(/ckp-drawer-in 260ms cubic-bezier\(\.22, 1, \.36, 1\)/);
   });
 
   /* 36 — changement de volet : fondu + 8 px, 180 ms. */
@@ -707,13 +704,13 @@ describe('Mouvement — lot E', () => {
     expect(css).not.toMatch(/infinite/);
   });
 
-  /* 38 — sortie de feuille : 160 ms, jouée avant le démontage. */
-  it('sortie de feuille : 160 ms, fondu + 12 px', () => {
+  /* 38 — sortie de feuille : 180 ms, plus rapide que l'entrée, avant démontage. */
+  it('sortie de feuille : 180 ms, fondu + 16 px', () => {
     expect(css).toMatch(
-      /\.ckp-card--drawer\[data-closing='true'\] \{\s*animation:\s*ckp-drawer-out 160ms cubic-bezier\(\.22, 1, \.36, 1\) both/,
+      /\.ckp-card--drawer\[data-closing='true'\] \{\s*animation:\s*ckp-drawer-out 180ms cubic-bezier\(\.22, 1, \.36, 1\) both/,
     );
     const keyframes = css.slice(css.indexOf('@keyframes ckp-drawer-out'));
-    expect(keyframes).toMatch(/translateY\(12px\)/);
+    expect(keyframes).toMatch(/translateY\(16px\)/);
     expect(keyframes.slice(0, keyframes.indexOf('@media'))).not.toMatch(/infinite/);
   });
 
@@ -758,6 +755,8 @@ describe('Mouvement — lot E', () => {
     expect(reduced).toMatch(/\.ckp-page--next, \.ckp-page--prev \{\s*animation:\s*ckp-fade-in 120ms linear both/);
     expect(reduced).toMatch(/\.ckp-comment\.is-new \{\s*animation:\s*ckp-fade-in 120ms linear both/);
     expect(reduced).toMatch(/\.ckp-collapse, \.ckp-collapse-chevron \{ transition: none; \}/);
+    /* Le contenu de la feuille se fond aussi en 120 ms, sans translation. */
+    expect(reduced).toMatch(/ckp-fade-in 120ms linear both/);
     /* Aucun fondu de 160 ms ne subsiste dans un bloc de mouvement réduit. */
     expect(reduced).not.toMatch(/ckp-fade-in 160ms/);
   });
@@ -796,8 +795,6 @@ describe('Mobile — lot F', () => {
     expect(rule('.ckp-capsule .ckp-tabs button::after {')).toMatch(/inset:\s*-9\.5px 0/);
     /* Sous-sélecteur : 25 px + 9,5 + 9,5. */
     expect(rule('.ckp-sub button::after {')).toMatch(/inset:\s*-9\.5px -4px/);
-    /* Croix de 36 px : + 4 + 4 = 44. */
-    expect(rule('.ckp-drawer-close::after {')).toMatch(/inset:\s*-4px/);
     /* Poignée de 13 px de haut : la cible descend jusqu'à 44 px. */
     expect(rule('.ckp-grabber::after {')).toMatch(/top:\s*-18px/);
     expect(rule('.ckp-grabber::after {')).toMatch(/bottom:\s*-13px/);
