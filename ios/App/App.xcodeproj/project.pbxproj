@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		762950BD8B152FC47081ED92 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9394F0A0256137BD2A5AA9C /* MainViewController.swift */; };
+		0B086AE908B95699C6C7AD09 /* LkdvLiveActivityPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4ABB57C04B1FB221DA84235 /* LkdvLiveActivityPlugin.swift */; };
+		47DB3E48B33B9668E5DF52A8 /* LkdvLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54A8494F2F096282AEF210F3 /* LkdvLiveActivityAttributes.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
@@ -19,6 +22,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		F9394F0A0256137BD2A5AA9C /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		D4ABB57C04B1FB221DA84235 /* LkdvLiveActivityPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LkdvLiveActivityPlugin.swift; sourceTree = "<group>"; };
+		54A8494F2F096282AEF210F3 /* LkdvLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LkdvLiveActivityAttributes.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,6 +50,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C7A6B8FBF2EFF9AD47140806 /* LiveActivity */ = {
+			isa = PBXGroup;
+			children = (
+				D4ABB57C04B1FB221DA84235 /* LkdvLiveActivityPlugin.swift */,
+				54A8494F2F096282AEF210F3 /* LkdvLiveActivityAttributes.swift */,
+			);
+			path = LiveActivity;
+			sourceTree = "<group>";
+		};
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
@@ -67,6 +82,8 @@
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				F9394F0A0256137BD2A5AA9C /* MainViewController.swift */,
+				C7A6B8FBF2EFF9AD47140806 /* LiveActivity */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -159,6 +176,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				762950BD8B152FC47081ED92 /* MainViewController.swift in Sources */,
+				0B086AE908B95699C6C7AD09 /* LkdvLiveActivityPlugin.swift in Sources */,
+				47DB3E48B33B9668E5DF52A8 /* LkdvLiveActivityAttributes.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

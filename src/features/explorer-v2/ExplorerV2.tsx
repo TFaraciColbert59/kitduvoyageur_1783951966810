@@ -11,6 +11,7 @@ import { ActivityPill, BottomBar } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
 import { Countdown, useLongPress } from './activity/Countdown';
 import { useGpsTracker } from './activity/useGpsTracker';
+import { endLiveActivity, startLiveActivity, updateLiveActivity } from './native/liveActivity';
 import { flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
@@ -256,6 +257,41 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   // ── démarrage d'activité (compte à rebours 3·2·1) ─────────────────────
   // Suivi GPS de l'activité en cours (métriques, hors-trace, caméra).
   useGpsTracker();
+
+  // Live Activity iOS (P7-20) : démarrage, mise à jour toutes les 5 s, fin.
+  const liveActivityRef = React.useRef<{ started: boolean; lastPush: number }>({ started: false, lastPush: 0 });
+  useEffect(() => {
+    const activity = state.activity;
+    if (!activity) {
+      if (liveActivityRef.current.started) {
+        liveActivityRef.current = { started: false, lastPush: 0 };
+        void endLiveActivity({
+          distanceM: 0,
+          elevGainM: 0,
+          movingS: 0,
+          paused: false,
+          offRoute: false,
+        });
+      }
+      return;
+    }
+    const payload = {
+      distanceM: activity.distanceM,
+      elevGainM: activity.elevGainM,
+      movingS: activity.movingS,
+      paused: activity.paused,
+      offRoute: activity.offRoute ?? false,
+    };
+    if (!liveActivityRef.current.started) {
+      liveActivityRef.current = { started: true, lastPush: Date.now() };
+      void startLiveActivity({ ...payload, sport: activity.sport, startedAt: activity.startedAt });
+      return;
+    }
+    const now = Date.now();
+    if (now - liveActivityRef.current.lastPush < 5000) return;
+    liveActivityRef.current.lastPush = now;
+    void updateLiveActivity(payload);
+  }, [state.activity]);
 
   const startWithCountdown = useCallback((sport: Sport) => {
     setPendingSport(sport);

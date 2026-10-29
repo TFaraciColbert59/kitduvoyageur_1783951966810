@@ -609,3 +609,23 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   un padding — `moveend` n'écrase plus le centre de l'état (sinon la caméra
   revenait au point de départ).
 - Statut : OK
+
+### [P7-20] Live Activity iOS (plugin Swift) · 2026-10-29 19:36
+- Fichiers : `ios/App/App/LiveActivity/LkdvLiveActivityPlugin.swift`,
+  `.../LkdvLiveActivityAttributes.swift`, `ios/App/App/MainViewController.swift`,
+  `Main.storyboard` (customClass), `Info.plist` (NSSupportsLiveActivities),
+  `src/features/explorer-v2/native/liveActivity.ts`
+- Preuve de compilation (Xcode 27.1, SDK iPhoneOS 27.1, destination device) :
+  ```
+  $ xcodebuild -project App.xcodeproj -scheme App -destination 'generic/platform=iOS' \
+      -sdk iphoneos CODE_SIGNING_ALLOWED=NO build
+  ** BUILD SUCCEEDED **
+  ```
+  Journal : `preuves/ios-build-liveactivity.log`.
+- Plugin : `LkdvLiveActivity` (CAPBridgedPlugin) — `isSupported`, `start`,
+  `update`, `end`, gardés par `@available(iOS 16.2, *)` et
+  `ActivityAuthorizationInfo().areActivitiesEnabled`. Enregistré par
+  `MainViewController.capacitorDidLoad()`. Pont JS no-op sur le web (2 tests).
+- Statut : OK pour la compilation et le pont. La **carte** de Live Activity
+  (widget extension) n'est pas ajoutée au projet : sans cible widget, l'activité
+  est créée mais iOS n'affiche pas de visuel. C'est le seul reste de P7-20.
