@@ -79,7 +79,7 @@ pages du carrousel).
 | Contenu | `ckp-drawer-content-in` **0,26 s** avec **délai 0,04 s** |
 | Fermeture | `ckp-drawer-out` **0,18 s** (plus rapide que l'entrée), fondu + `translateY(16px)` — mesuré à mi-course : `opacity .358`, `translateY(10,3px)` |
 | Glissement | translation réelle sous le doigt ; retour `transform .2s` |
-| Mouvement réduit | fondu **120 ms**, aucune translation (règles `data-drag` / `data-return` neutralisées) |
+| Mouvement réduit | fondu **120 ms**, aucune translation — vérifié en émulation `prefers-reduced-motion: reduce` : `animation-name` = `ckp-fade-in` sur la feuille **et** sur le corps, `transform: none` (la règle porte la même spécificité `.ckp-card.ckp-card--drawer` que l'ouverture, sinon la translation de 24 px survivait) |
 
 ## Bloc 7 — Commentaires et partage du post
 

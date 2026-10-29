@@ -994,7 +994,10 @@ button.ckp-daypill-count:active { opacity: .6; }
 /* --- Mouvement réduit : fondu de 160 ms, aucune translation ---------------- */
 @keyframes ckp-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .ckp-card--drawer, .ckp-card--drawer[data-closing='true'] { animation: ckp-fade-in 120ms linear both; }
+  /* Même spécificité que `.ckp-card.ckp-card--drawer` (2 classes) : sinon la
+     translation de 24 px de l'ouverture survivrait au mouvement réduit. */
+  .ckp-card.ckp-card--drawer,
+  .ckp-card.ckp-card--drawer[data-closing='true'] { animation: ckp-fade-in 120ms linear both; }
   .ckp-card--drawer .ckp-drawer-chrome,
   .ckp-card--drawer .ckp-drawer-body { animation: ckp-fade-in 120ms linear both; }
   /* Aucune translation : ni au glissement, ni au retour. */

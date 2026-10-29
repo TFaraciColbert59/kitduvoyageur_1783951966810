@@ -367,8 +367,11 @@ describe('Mouvement', () => {
     expect(reduced).toMatch(/\.ckp-roll\.is-rolling > b\s*\{\s*animation:\s*none/);
     expect(reduced).toMatch(/\.ckp-hero\[data-animate='true'\]\s*\{\s*animation:\s*ckp-fade-in 120ms/);
     expect(reduced).toMatch(/\.ckp-hero-bar i\s*\{\s*transition:\s*none/);
-    /* Mouvement réduit : la feuille ne glisse pas, elle fond en 120 ms. */
-    expect(css).toMatch(/\.ckp-card--drawer, \.ckp-card--drawer\[data-closing='true'\] \{\s*animation:\s*ckp-fade-in 120ms linear both/);
+    /* Mouvement réduit : la feuille ne glisse pas, elle fond en 120 ms — même
+       spécificité que l'ouverture (`.ckp-card.ckp-card--drawer`), sinon la
+       translation de 24 px survivrait. */
+    expect(css).toMatch(/\.ckp-card\.ckp-card--drawer,/);
+    expect(css).toMatch(/animation:\s*ckp-fade-in 120ms linear both/);
   });
 });
 
@@ -751,7 +754,7 @@ describe('Mouvement — lot E', () => {
       .slice(1)
       .map((block) => block.slice(0, block.indexOf('\n}')))
       .join('\n');
-    expect(reduced).toMatch(/\.ckp-card--drawer, \.ckp-card--drawer\[data-closing='true'\] \{\s*animation:\s*ckp-fade-in 120ms linear both/);
+    expect(reduced).toMatch(/\.ckp-card\.ckp-card--drawer,\s*\n\s*\.ckp-card\.ckp-card--drawer\[data-closing='true'\] \{ animation: ckp-fade-in 120ms linear both/);
     expect(reduced).toMatch(/\.ckp-page--next, \.ckp-page--prev \{\s*animation:\s*ckp-fade-in 120ms linear both/);
     expect(reduced).toMatch(/\.ckp-comment\.is-new \{\s*animation:\s*ckp-fade-in 120ms linear both/);
     expect(reduced).toMatch(/\.ckp-collapse, \.ckp-collapse-chevron \{ transition: none; \}/);
