@@ -66,11 +66,32 @@
 .voyage-cover{height:260px!important;}
 .lkdv-compte-v8 .voyage-card{flex:0 0 100%!important;height:260px!important;}
 .lkdv-compte-v8 .voyage-cover{height:260px!important;}
-/* Tous les sélecteurs de drawers reprennent la capsule du profil. */
-.lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule{width:100%!important;height:48px!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.65)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(23,43,36,.08)!important;}
-.lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule .sel-lens{top:4px!important;bottom:4px!important;left:3px!important;width:calc((100% - 6px)/var(--n,2))!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.26))!important;box-shadow:inset 0 1px 0 #fff,inset 0 -1px 1px rgba(255,255,255,.5),0 0 0 .5px rgba(23,43,36,.07),0 2px 8px rgba(23,43,36,.08)!important;}
-.lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule button{min-height:44px!important;height:100%!important;border-radius:999px!important;color:#56665D!important;}
-.lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule button[aria-selected="true"]{color:#17402C!important;}
+/* Tous les sélecteurs de drawers reprennent la capsule du profil (style Apple Liquid Glass iOS 27). */
+.lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule,
+.lkdv-compte-v8 .lkdv-slot-selector.lkdv-capsule,
+.lkdv-compte-v8 .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector{width:100%!important;height:48px!important;padding:2px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 46%,rgba(0,0,0,.12)),rgba(23,29,26,.76)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.18)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 -1px 1px rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.24)!important;}
+.lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule .sel-lens,
+.lkdv-compte-v8 .lkdv-slot-selector.lkdv-capsule .sel-lens,
+.lkdv-compte-v8 .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector .sel-lens{top:4px!important;bottom:4px!important;left:3px!important;width:calc((100% - 6px)/var(--n,2))!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.23),rgba(255,255,255,.1))!important;border:.5px solid rgba(255,255,255,.28)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 1px 4px rgba(0,0,0,.12)!important;}
+.lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule button,
+.lkdv-compte-v8 .lkdv-slot-selector.lkdv-capsule button,
+.lkdv-compte-v8 .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button{min-height:44px!important;height:100%!important;border-radius:999px!important;color:rgba(255,255,255,.62)!important;transition:color .2s ease!important;}
+.lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule button[aria-selected="true"],
+.lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule button.active,
+.lkdv-compte-v8 .lkdv-slot-selector.lkdv-capsule button[aria-selected="true"],
+.lkdv-compte-v8 .lkdv-slot-selector.lkdv-capsule button.active,
+.lkdv-compte-v8 .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button[aria-selected="true"],
+.lkdv-compte-v8 .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button.active{color:#d8f3de!important;}
+.lkdv-compte-v8 .lkdv-drawer-secondary .ig-tabs,
+.lkdv-compte-v8 .lkdv-slot-shell > .lkdv-lens-tabs{background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 46%,rgba(0,0,0,.12)),rgba(23,29,26,.76)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.18)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 -1px 1px rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.24)!important;}
+.lkdv-compte-v8 .lkdv-drawer-secondary .ig-tabs .ig-th,
+.lkdv-compte-v8 .lkdv-slot-shell > .lkdv-lens-tabs .ig-th{background:linear-gradient(180deg,rgba(255,255,255,.23),rgba(255,255,255,.1))!important;border:.5px solid rgba(255,255,255,.28)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 1px 4px rgba(0,0,0,.12)!important;}
+.lkdv-compte-v8 .lkdv-drawer-secondary .ig-tabs button,
+.lkdv-compte-v8 .lkdv-slot-shell > .lkdv-lens-tabs button{color:rgba(255,255,255,.62)!important;transition:color .2s ease!important;}
+.lkdv-compte-v8 .lkdv-drawer-secondary .ig-tabs button[aria-selected="true"],
+.lkdv-compte-v8 .lkdv-drawer-secondary .ig-tabs button.active,
+.lkdv-compte-v8 .lkdv-slot-shell > .lkdv-lens-tabs button.cur,
+.lkdv-compte-v8 .lkdv-slot-shell > .lkdv-lens-tabs button[aria-selected="true"]{color:#d8f3de!important;}
 
 /* Empreinte : même feuille de verre et même chrome que les autres drawers. */
 .lkdv-overlay-sheet.lkdv-seal-drawer{background:linear-gradient(180deg,rgba(255,255,255,.64),rgba(245,250,241,.48) 55%,rgba(255,255,255,.56))!important;-webkit-backdrop-filter:blur(28px) saturate(180%) brightness(1.04)!important;backdrop-filter:blur(28px) saturate(180%) brightness(1.04)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.12),0 12px 36px rgba(23,43,36,.18)!important;}
