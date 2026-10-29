@@ -13,7 +13,7 @@ import { Countdown, useLongPress } from './activity/Countdown';
 import { useGpsTracker } from './activity/useGpsTracker';
 import { endLiveActivity, startLiveActivity, updateLiveActivity } from './native/liveActivity';
 import { performSosCall, planSosCall, sosSimulated } from './activity/sosCall';
-import { flushQueue, listQueue } from './offline/queue';
+import { enqueue, flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
 import { XpIcon } from './ui/XpIcon';
@@ -124,6 +124,20 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   useEffect(() => {
     if (!online) return;
     void flushQueue(async (operation) => {
+      if (operation.kind === 'activity.finish') {
+        // Fin de sortie jouée hors ligne : rejouée avec sa clé d'idempotence
+        // (le serveur répond `duplicate` si elle a déjà été appliquée).
+        const { createClient } = await import('@/lib/supabase/client');
+        const { data } = await createClient().auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) return false;
+        const res = await fetch('/api/explorer/v2/activity/finish', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(operation.payload),
+        });
+        return res.ok;
+      }
       if (operation.kind !== 'report-confirm') return false;
       const res = await fetch('/api/explorer/v2/reports/confirm', {
         method: 'POST',
@@ -341,19 +355,15 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
           tone: 'ink' as const,
         }));
     }
-    // Hiérarchie de proximité (04_CARTE §1) : le repère le plus proche du
-    // centre gagne son type, ce qui garantit des pastilles dans la vue.
-    const seen = new Set<string>();
+    // Hiérarchie de proximité (04_CARTE §1) : on passe **tous** les repères
+    // nommés (bornés à 60) et c'est `selectVisiblePins` + `clusterPins` qui
+    // décident : priorité, puis distance, 6 max par cellule de 100 px, le reste
+    // en pastille chiffrée. Filtrer ici par type empêcherait toute agrégation.
     return pois
       .filter((poi) => poi.name && poi.name.trim().length > 1)
       .map((poi) => ({ poi, km: distanceKm(state.center, [poi.lon, poi.lat]) }))
       .sort((a, b) => a.km - b.km)
-      .filter(({ poi }) => {
-        if (seen.has(poi.kind)) return false;
-        seen.add(poi.kind);
-        return true;
-      })
-      .slice(0, 6)
+      .slice(0, 60)
       .map(({ poi, km }) => ({
         id: poi.id,
         kind: poi.kind,
@@ -438,13 +448,31 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
           if (!cancelled) useExplorerStore.setState({ summarySaved: 'unauthenticated' });
           return;
         }
+        // Clé d'idempotence : la fin de sortie peut être rejouée (hors ligne,
+        // réseau instable). Le serveur répond `duplicate` sans réécrire.
+        const idempotencyKey = `activity.finish:${sessionId}`;
         const res = await fetch('/api/explorer/v2/activity/finish', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId }),
+          body: JSON.stringify({ sessionId, idempotencyKey }),
         });
-        if (!cancelled) useExplorerStore.setState({ summarySaved: res.ok ? 'saved' : 'failed' });
+        if (res.ok) {
+          if (!cancelled) useExplorerStore.setState({ summarySaved: 'saved' });
+          return;
+        }
+        // Hors ligne : la fin de sortie entre dans la file d'écritures.
+        await enqueue({ key: idempotencyKey, kind: 'activity.finish', payload: { sessionId, idempotencyKey } });
+        const items = await listQueue();
+        setOfflineQueue(items.length);
+        if (!cancelled) useExplorerStore.setState({ summarySaved: 'failed' });
       } catch {
+        // Échec réseau : même traitement que hors ligne.
+        const idempotencyKey = `activity.finish:${sessionId}`;
+        await enqueue({ key: idempotencyKey, kind: 'activity.finish', payload: { sessionId, idempotencyKey } }).catch(
+          () => undefined,
+        );
+        const items = await listQueue().catch(() => []);
+        setOfflineQueue(items.length);
         if (!cancelled) useExplorerStore.setState({ summarySaved: 'failed' });
       }
     })();

@@ -148,11 +148,23 @@ check(
 const bSos = await rest('sos_alerts?select=*', { token: tokenB });
 check('B ne lit aucune alerte SOS', (bSos.json?.length ?? 0) === 0, `${bSos.json?.length ?? 0} ligne(s)`);
 
-const anonPois = await rest('geo_pois?select=osm_id&limit=3');
+// Table brute geo_pois : accès direct fermé (invariant Compas, RPC DEFINER obligatoire).
+const anonDirectPois = await rest('geo_pois?select=osm_id&limit=3');
 check(
-  'geo_pois lisible publiquement (anon)',
-  anonPois.status === 200 && (anonPois.json?.length ?? 0) > 0,
-  `HTTP ${anonPois.status}`,
+  'geo_pois fermé au public en direct (invariant Compas)',
+  anonDirectPois.status === 401 || anonDirectPois.status === 403 || (anonDirectPois.json?.length ?? 0) === 0,
+  `HTTP ${anonDirectPois.status}`,
+);
+
+// RPC dédiée explorer_pois : lisible publiquement avec colonnes filtrées.
+const anonRpcPois = await rest('rpc/explorer_pois', {
+  method: 'POST',
+  body: { p_min_lng: 6.8, p_min_lat: 45.9, p_max_lng: 6.9, p_max_lat: 46.0, p_limit: 3 },
+});
+check(
+  'RPC explorer_pois lisible publiquement (anon)',
+  anonRpcPois.status === 200 && Array.isArray(anonRpcPois.json) && anonRpcPois.json.length > 0,
+  `HTTP ${anonRpcPois.status}, ${anonRpcPois.json?.length ?? 0} POI(s)`,
 );
 
 const anonPractical = await rest('country_practical?select=iso_a2&limit=1');

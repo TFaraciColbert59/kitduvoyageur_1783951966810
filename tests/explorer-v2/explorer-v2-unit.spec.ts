@@ -10,7 +10,7 @@ import {
   followZoomForSpeed,
   overviewPadding,
 } from '@/features/explorer-v2/map/camera';
-import { poiPriority, selectVisiblePins, symbolSortKey } from '@/features/explorer-v2/map/hierarchy';
+import { clusterPins, poiPriority, selectVisiblePins, symbolSortKey } from '@/features/explorer-v2/map/hierarchy';
 import { TRACE_STYLES, traceStyleForRoute } from '@/features/explorer-v2/map/traceStyles';
 import {
   distanceKm,
@@ -332,5 +332,34 @@ describe('explorer-v2 · caméra', () => {
       [6.95, 46],
     ]);
     expect(boundsOfTrack(null)).toBeNull();
+  });
+});
+
+describe('explorer-v2 · agrégation des repères (04_CARTE §1)', () => {
+  const pin = (id: string, x: number, y: number, kind: 'water' | 'danger' | 'summit' = 'water') =>
+    ({ id, kind, x, y, distanceKm: 1 });
+
+  it('garde les repères individuels sous le seuil de 6 par cellule', () => {
+    const pins = Array.from({ length: 6 }, (_, index) => pin(`p${index}`, 10 + index, 10));
+    const result = clusterPins(pins, { maxPerCell: 6 });
+    expect(result.clusters).toEqual([]);
+    expect(result.pins).toHaveLength(6);
+  });
+
+  it('agrège une cellule surchargée en une pastille chiffrée', () => {
+    const pins = Array.from({ length: 7 }, (_, index) => pin(`p${index}`, 10 + index, 10));
+    const result = clusterPins(pins, { maxPerCell: 6 });
+    expect(result.pins).toHaveLength(0);
+    expect(result.clusters).toHaveLength(1);
+    expect(result.clusters[0].count).toBe(7);
+    expect(Math.round(result.clusters[0].x)).toBe(13);
+  });
+
+  it('agrège cellule par cellule (100 px)', () => {
+    const crowded = Array.from({ length: 8 }, (_, index) => pin(`a${index}`, 10 + index, 10));
+    const other = [pin('b1', 210, 10), pin('b2', 250, 40)];
+    const result = clusterPins([...crowded, ...other], { maxPerCell: 6 });
+    expect(result.clusters).toHaveLength(1);
+    expect(result.pins.map((entry) => entry.id).sort()).toEqual(['b1', 'b2']);
   });
 });

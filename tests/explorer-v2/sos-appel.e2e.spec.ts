@@ -30,7 +30,9 @@ test('SOS : numéro du pays affiché, aucun appel réel @explorer-v2', async ({ 
   await expect(page.locator('.xp-sos').first()).toBeVisible({ timeout: 45_000 });
   await page.waitForTimeout(1000);
 
-  const cursor = await page.evaluate(() => (window.__explorerEvents ?? []).length);
+  const cursor = await page.evaluate(
+    () => ((window as unknown as { __explorerEvents?: Array<{ event: string }> }).__explorerEvents ?? []).length,
+  );
   await page.locator('.xp-sos').first().dispatchEvent('pointerdown');
 
   // Le bandeau apparaît à la fin du compte à rebours (1,5 s de maintien + 5 s)
@@ -40,7 +42,10 @@ test('SOS : numéro du pays affiché, aucun appel réel @explorer-v2', async ({ 
   await expect(toast).toContainText(/\d{2,4}/);
 
   const events = await page.evaluate(
-    (from) => (window.__explorerEvents ?? []).slice(from).map((entry) => entry.event),
+    (from) =>
+      ((window as unknown as { __explorerEvents?: Array<{ event: string }> }).__explorerEvents ?? [])
+        .slice(from)
+        .map((entry) => entry.event),
     cursor,
   );
   expect(events).toContain('toast');

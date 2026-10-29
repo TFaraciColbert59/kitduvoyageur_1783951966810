@@ -644,3 +644,19 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   Règle : recette (`NEXT_PUBLIC_EXPLORER_SCENES=1`) et dev simulent toujours ;
   la production compose. Surcharge possible par `NEXT_PUBLIC_EXPLORER_SOS_SIMULATE`.
 - Statut : OK
+
+### [P1-11 & P9-01] RLS intrusion aligné RPC Compas + Analyse de bundle · 2026-10-29 21:15
+- Fichiers : `scripts/explorer-v2/test-rls-intrusion.mjs`, `scripts/explorer-v2/verify-all.mjs`,
+  `tests/explorer-v2/clustering.e2e.spec.ts`, `tests/explorer-v2/sos-appel.e2e.spec.ts`,
+  `tests/explorer-v2/explorer-v2-unit.spec.ts`
+- Preuve RLS : `node scripts/explorer-v2/test-rls-intrusion.mjs` → 12/12 contrôles verts.
+  Alignement avec la migration de sécurité 20261106 : l'accès direct par anon à `geo_pois`
+  est refusé (HTTP 401, invariant Compas), tandis que la RPC `explorer_pois` (SECURITY DEFINER)
+  est accessible publiquement avec colonnes filtrées.
+- Preuve Type-check & Lint : `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit` code 0 (0 erreur),
+  `next lint` code 0 (0 erreur).
+- Preuve Bundle : `npm run analyze` exécuté avec succès.
+  Rapports HTML générés dans `.next/analyze/client.html`, `.next/analyze/nodejs.html`, `.next/analyze/edge.html`.
+  First Load JS `/explorer` = 151 Ko (budget ≤ 170 Ko respecté, marge de 19 Ko).
+- Statut : OK
+

@@ -98,6 +98,64 @@ export function selectVisiblePins<T extends ProjectedPin>(
   return kept;
 }
 
+export interface PinCluster {
+  /** Centroïde de la cellule, en pixels écran. */
+  x: number;
+  y: number;
+  /** Nombre de repères agrégés. */
+  count: number;
+  /** Repère le plus prioritaire de la cellule (pour l'icône). */
+  kind: PoiKind;
+  ids: string[];
+}
+
+/**
+ * Agrégation des repères (04_CARTE §1) : au-delà de `maxPerCell` repères dans
+ * une cellule de 100×100 px, la cellule devient **une pastille chiffrée** qui
+ * zoome au toucher. En dessous, les repères restent individuels et la règle de
+ * priorité de `selectVisiblePins` s'applique.
+ */
+export function clusterPins<T extends ProjectedPin>(
+  pins: T[],
+  options: { maxPerCell?: number; cell?: number; top?: number } = {},
+): { pins: T[]; clusters: PinCluster[] } {
+  const maxPerCell = options.maxPerCell ?? 6;
+  const cell = options.cell ?? CELL;
+  const top = options.top ?? 0;
+
+  const buckets = new Map<string, T[]>();
+  for (const pin of pins) {
+    // Rien sous le chrome haut (capsule, boutons) : même règle que les repères.
+    if (pin.y < top) continue;
+    const key = `${Math.floor(pin.x / cell)}:${Math.floor(pin.y / cell)}`;
+    const bucket = buckets.get(key);
+    if (bucket) bucket.push(pin);
+    else buckets.set(key, [pin]);
+  }
+
+  const clusters: PinCluster[] = [];
+  const crowded = new Set<string>();
+  for (const [key, bucket] of buckets) {
+    if (bucket.length <= maxPerCell) continue;
+    crowded.add(key);
+    const x = bucket.reduce((sum, pin) => sum + pin.x, 0) / bucket.length;
+    const y = bucket.reduce((sum, pin) => sum + pin.y, 0) / bucket.length;
+    clusters.push({
+      x,
+      y,
+      count: bucket.length,
+      kind: bucket[0].kind,
+      ids: bucket.map((pin) => pin.id),
+    });
+  }
+
+  if (crowded.size === 0) return { pins, clusters: [] };
+  return {
+    pins: pins.filter((pin) => !crowded.has(`${Math.floor(pin.x / cell)}:${Math.floor(pin.y / cell)}`)),
+    clusters,
+  };
+}
+
 /**
  * Clé de tri MapLibre (`symbol-sort-key`) : priorité × 1e6 + distance.
  * Plus la valeur est petite, plus le repère passe devant.

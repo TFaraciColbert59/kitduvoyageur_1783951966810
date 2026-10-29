@@ -125,8 +125,9 @@ function readFirstLoadJS() {
     const lines = readFileSync(buildLogPath, 'utf8').split('\n');
     const routeLine = lines.find((l) => /^\s*[├└┌│ ]*\/explorer\s/.test(l));
     if (routeLine) {
-      const first = routeLine.match(/([\d.]+)\s*kB/);
-      if (first) return { kb: Number.parseFloat(first[1]), source: 'build-log' };
+      const matches = [...routeLine.matchAll(/([\d.]+)\s*kB/g)];
+      const total = matches[1]?.[1] ?? matches[0]?.[1];
+      if (total) return { kb: Number.parseFloat(total), source: 'build-log' };
     }
   }
   if (existsSync(manifestPath)) {

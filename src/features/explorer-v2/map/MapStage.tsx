@@ -5,7 +5,7 @@ import { Map as MapLibreMap, setWorkerUrl, type GeoJSONSource } from 'maplibre-g
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { GeoCollection } from '../data/hooks';
 import type { CameraIntent, Level, PoiKind } from '../state/types';
-import { selectVisiblePins } from './hierarchy';
+import { clusterPins, selectVisiblePins, type PinCluster } from './hierarchy';
 import {
   boundsOfTrack,
   flyToLevel,
@@ -99,6 +99,7 @@ export default function MapStage({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [overlay, setOverlay] = useState<Array<{ pin: MapPin; x: number; y: number }>>([]);
+  const [clusters, setClusters] = useState<PinCluster[]>([]);
   const [meScreen, setMeScreen] = useState<{ x: number; y: number } | null>(null);
   const [ready, setReady] = useState(false);
   const movedToRef = useRef<string>('');
@@ -493,6 +494,36 @@ export default function MapStage({
         next.push({ pin, x: point.x, y: point.y });
       }
       const sheetTop = map.getContainer().clientHeight - sheetHeightPx;
+      // Bande haute occupée par la capsule et les boutons ronds : aucun repère
+      // ni pastille ne doit s'y trouver (04_CARTE §1).
+      const chrome = document.querySelector('.xp-chrome') as HTMLElement | null;
+      const chromeBottom = chrome?.getBoundingClientRect().bottom ?? 96;
+      // Agrégation (04_CARTE §1) : au-delà de 6 repères dans 100×100 px, la
+      // cellule devient une pastille chiffrée qui zoome au toucher.
+      const clustered = clusterPins(
+        next
+          .map((item) => ({
+            id: item.pin.id,
+            kind: item.pin.kind as PoiKind,
+            x: item.x,
+            y: item.y,
+            distanceKm: item.pin.distanceKm ?? 0,
+            item,
+          }))
+          .filter((entry) => entry.y >= chromeBottom + 4 && entry.y <= sheetTop - 8),
+        { maxPerCell: 6, top: chromeBottom + 4 },
+      );
+      setClusters((current) => {
+        const same =
+          current.length === clustered.clusters.length &&
+          current.every(
+            (entry, index) =>
+              Math.abs(entry.x - (clustered.clusters[index]?.x ?? 0)) < 0.5 &&
+              Math.abs(entry.y - (clustered.clusters[index]?.y ?? 0)) < 0.5 &&
+              entry.count === clustered.clusters[index]?.count,
+          );
+        return same ? current : clustered.clusters;
+      });
       const kept = selectVisiblePins(
         next.map((item) => ({
           id: item.pin.id,
@@ -571,6 +602,26 @@ export default function MapStage({
             <span className="xp-me" style={{ left: meScreen.x, top: meScreen.y }} aria-label="Ma position" role="img" />
           </>
         ) : null}
+        {clusters.map((cluster) => (
+          <button
+            key={`cluster-${Math.round(cluster.x)}-${Math.round(cluster.y)}`}
+            type="button"
+            className="xp-cluster"
+            style={{ transform: `translate3d(${cluster.x}px, ${cluster.y}px, 0)` }}
+            onClick={() => {
+              const map = mapRef.current;
+              if (!map) return;
+              map.easeTo({
+                center: map.unproject([cluster.x, cluster.y]),
+                zoom: Math.min(16, map.getZoom() + 2),
+                duration: reducedMotion ? 0 : 500,
+              });
+            }}
+            aria-label={`${cluster.count} repères groupés — zoomer`}
+          >
+            {cluster.count}
+          </button>
+        ))}
         {overlay.map(({ pin, x, y }) => (
           <button
             key={pin.id}

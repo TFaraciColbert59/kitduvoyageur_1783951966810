@@ -1398,3 +1398,31 @@
   color: var(--xp-ink);
   text-align: center;
 }
+
+/* Pastille chiffrée d'agrégation (04_CARTE §1) : 6 repères max par 100×100 px,
+   au-delà la cellule devient un compteur qui zoome au toucher. */
+.xp-cluster {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--xp-paper);
+  background: var(--xp-ink);
+  border: 2px solid var(--xp-paper);
+  box-shadow: 0 3px 10px rgb(0 0 0 / 22%);
+  z-index: 3;
+}
+.xp-cluster::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 999px;
+}

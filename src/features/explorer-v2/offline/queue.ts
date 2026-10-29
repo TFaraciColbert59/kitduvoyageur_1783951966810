@@ -13,7 +13,7 @@ const STORE = 'outbox';
 
 export interface QueuedOperation {
   key: string;
-  kind: 'report' | 'report-confirm';
+  kind: 'report' | 'report-confirm' | 'activity.finish';
   payload: Record<string, unknown>;
   createdAt: number;
   attempts: number;
