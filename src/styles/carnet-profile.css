@@ -1489,3 +1489,6 @@ html[data-ckp-sheet] body {
 .ckp-viewer-count {
   background-color: rgba(10, 20, 14, .18);
 }
+
+/* Photo du carnet dans le rond 66 px (le tracé vit sur la carte du bas). */
+.ckp-cover--photo { width: 62px; height: 62px; border-radius: 50%; object-fit: cover; display: block; }

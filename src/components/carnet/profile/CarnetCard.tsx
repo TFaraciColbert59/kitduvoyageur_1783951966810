@@ -171,7 +171,8 @@ export function CarnetCard({
     [setDayPage],
   );
 
-  /* Couverture de la carte : le mini tracé réel, ou la pastille du carnet. */
+  /* Couverture de la carte : la photo du carnet, sinon ses initiales.
+     Le tracé reste sur la carte du bas, jamais ici. */
   const cover = (
     <button
       type="button"
@@ -179,27 +180,9 @@ export function CarnetCard({
       onClick={onOpenCarnet}
       aria-label="Ouvrir le carnet"
     >
-      {tracePath ? (
-        <span className="ckp-cover ckp-cover--trace" aria-hidden="true">
-          <svg viewBox="0 0 66 66" width="62" height="62" focusable="false">
-            <polyline
-              points={tracePath}
-              fill="none"
-              stroke="rgba(255,255,255,.9)"
-              strokeWidth="4.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <polyline
-              points={tracePath}
-              fill="none"
-              stroke="#17402c"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
+      {detail.coverImage ? (
+        // eslint-disable-next-line @next/next/no-img-element -- image distante du carnet
+        <img className="ckp-cover ckp-cover--photo" src={detail.coverImage} alt="" />
       ) : (
         <span className="ckp-cover ckp-cover--initial" aria-hidden="true">
           {(detail.destination ?? detail.title).charAt(0).toUpperCase()}

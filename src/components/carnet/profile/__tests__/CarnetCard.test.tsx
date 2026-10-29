@@ -53,17 +53,18 @@ describe('CarnetCard — carte du carnet', () => {
     expect(onOpenCarnet).toHaveBeenCalledOnce();
   });
 
-  it('remplace la photo de couverture par un mini tracé', () => {
-    const { container } = render(<CarnetCard {...base({ detail: detail({ trace: TRACE }) })} />);
-    expect(container.querySelector('.ckp-head img')).toBeNull();
-    const trace = container.querySelector('.ckp-cover--trace');
-    expect(trace).toBeTruthy();
-    expect(trace?.querySelector('polyline')?.getAttribute('points')).toBeTruthy();
+  it('affiche la photo du carnet dans le rond, jamais le tracé', () => {
+    const { container } = render(<CarnetCard {...base()} />);
+    const img = container.querySelector('.ckp-cover-btn img.ckp-cover--photo') as HTMLImageElement | null;
+    expect(img).toBeTruthy();
+    expect(img?.getAttribute('src')).toBe('https://cdn.test/cover.jpg');
+    expect(container.querySelector('.ckp-cover--trace')).toBeNull();
   });
 
-  it('garde les initiales quand il n’y a pas de trace', () => {
-    const { container } = render(<CarnetCard {...base({ detail: detail({ trace: null }) })} />);
-    expect(container.querySelector('.ckp-cover--initial')?.textContent).toBe('F');
+  it('garde les initiales quand le carnet n’a pas de photo', () => {
+    const { container } = render(<CarnetCard {...base({ detail: detail({ coverImage: null }) })} />);
+    expect(container.querySelector('.ckp-cover--photo')).toBeNull();
+    expect(container.querySelector('.ckp-cover--initial')).toBeTruthy();
   });
 
   it('ouvre le sous-drawer statistiques sur le bon volet depuis chaque statistique', () => {
