@@ -10,6 +10,7 @@ import { TopChrome } from './chrome/TopChrome';
 import { ActivityPill, BottomBar } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
 import { Countdown, useLongPress } from './activity/Countdown';
+import { useGpsTracker } from './activity/useGpsTracker';
 import { flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
@@ -75,6 +76,13 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   const [sheetHeight, setSheetHeight] = useState(176);
   const [pendingSport, setPendingSport] = useState<Sport | null>(null);
   const [offlineQueue, setOfflineQueue] = useState(0);
+  // Accès de recette à la machine d'état (lecture seule, jamais en production).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_EXPLORER_SCENES !== '1') return;
+    (window as unknown as { __xpStore?: unknown }).__xpStore = useExplorerStore;
+  }, []);
+
   const theme = state.theme ?? systemTheme;
   // Unités : réglage utilisateur prioritaire, sinon pays (US, Liberia, Myanmar).
   const imperialCountries = new Set(['US', 'LR', 'MM']);
@@ -246,6 +254,9 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   );
 
   // ── démarrage d'activité (compte à rebours 3·2·1) ─────────────────────
+  // Suivi GPS de l'activité en cours (métriques, hors-trace, caméra).
+  useGpsTracker();
+
   const startWithCountdown = useCallback((sport: Sport) => {
     setPendingSport(sport);
   }, []);
@@ -406,6 +417,16 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   }, [state.summary, state.summarySaved]);
 
   const activity = state.activity;
+
+  // Suivi : à chaque nouvelle position pendant l'activité, la caméra recadre
+  // (04_CARTE §3, P2-11). Le geste utilisateur interrompt le suivi (MapLibre).
+  useEffect(() => {
+    if (!activity) return;
+    const timer = window.setTimeout(() => {
+      useExplorerStore.setState({ camera: { type: 'follow' } });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [activity?.distanceM, activity?.sport]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!activity) return;
@@ -450,6 +471,7 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       data-countries={countries.length}
       data-reduced-motion={reducedMotion ? 'true' : 'false'}
       data-units={unitsForCountry}
+      data-center={`${state.center[1].toFixed(5)},${state.center[0].toFixed(5)}`}
       data-pins={pins.length}
       data-pois={pois.length}
       data-qc={countriesQuery.status}

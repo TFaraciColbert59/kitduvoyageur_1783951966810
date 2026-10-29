@@ -50,7 +50,7 @@ Coche `[x]` uniquement avec une entrée correspondante dans `docs/explorer-v2/MI
 - [x] **P2-08** · Survol de trace — _preuve : e2e + durée mesurée_
 - [x] **P2-09** · Orbite de sommet (pause au toucher, reprise 6 s) — _preuve : e2e_
 - [x] **P2-10** · Révélation de point — _preuve : e2e_
-- [ ] **P2-11** · Suivi en activité — _preuve : e2e GPS rejoué_
+- [x] **P2-11** · Suivi en activité — _preuve : e2e GPS rejoué_
 - [x] **P2-12** · Vue d’ensemble — _preuve : e2e_
 - [x] **P2-13** · Réduire les animations respecté — _preuve : e2e avec `reducedMotion: reduce`_
 - [ ] **P2-GATE** · gate de phase verte (`06_PHASES.md`)

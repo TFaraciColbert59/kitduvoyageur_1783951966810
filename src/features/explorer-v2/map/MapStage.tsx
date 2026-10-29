@@ -103,6 +103,9 @@ export default function MapStage({
   const [ready, setReady] = useState(false);
   const movedToRef = useRef<string>('');
   const orbitRef = useRef<number | null>(null);
+  // En suivi (ou en vue d'ensemble), la caméra applique un padding : le centre
+  // rendu par la carte n'est pas celui de l'état. On n'écrase donc pas l'état.
+  const suppressMoveEnd = useRef(false);
 
   // ── création de la carte (une seule fois) ──────────────────────────────
   useEffect(() => {
@@ -289,6 +292,7 @@ export default function MapStage({
     });
 
     map.on('moveend', () => {
+      if (suppressMoveEnd.current) return;
       const c = map.getCenter();
       onMoveEnd?.([c.lng, c.lat], map.getZoom());
     });
@@ -437,11 +441,19 @@ export default function MapStage({
       return;
     }
     if (cameraIntent.type === 'follow') {
+      suppressMoveEnd.current = true;
+      window.setTimeout(() => {
+        suppressMoveEnd.current = false;
+      }, 2500);
       const padding = followPadding(container.clientHeight, sheetHeightPx);
       followAt(map, center, map.getBearing(), 1.4, padding, reducedMotion);
       return;
     }
     if (cameraIntent.type === 'overview') {
+      suppressMoveEnd.current = true;
+      window.setTimeout(() => {
+        suppressMoveEnd.current = false;
+      }, 2500);
       const geometry = activityTrack?.features?.[0]?.geometry ?? null;
       const bounds = cameraIntent.bounds ?? boundsOfTrack(geometry);
       overviewOf(map, bounds, overviewPadding(container.clientWidth, sheetHeightPx), reducedMotion);

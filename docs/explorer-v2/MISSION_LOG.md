@@ -598,3 +598,14 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   numéro d'urgence réel du pays (Wikidata) dans l'onglet Sécurité.
   L'onglet Cœur affiche un état vide explicite : aucune donnée cardio inventée.
 - Statut : OK
+
+### [P2-11] Suivi en activité · 2026-10-29 18:15
+- Fichiers : `src/features/explorer-v2/activity/useGpsTracker.ts`, `map/MapStage.tsx`
+- Preuve : test e2e « suivi GPS : métriques et caméra » (3 passes vertes) —
+  6 positions rejouées via `window.__xpPushFix` : la pastille passe à 55 m, la
+  feuille affiche Distance 55 m / Allure / Temps / D+, et le centre de la carte
+  suit la position (relevé `window.__xpMap`).
+  Correctif produit associé : en suivi et en vue d'ensemble, la carte applique
+  un padding — `moveend` n'écrase plus le centre de l'état (sinon la caméra
+  revenait au point de départ).
+- Statut : OK
