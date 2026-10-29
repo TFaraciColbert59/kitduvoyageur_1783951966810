@@ -1292,3 +1292,31 @@
 .xp-primary:disabled {
   opacity: 0.5;
 }
+
+.xp-secondary {
+  width: 100%;
+  height: 40px;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  background: var(--xp-thumb);
+  box-shadow: var(--xp-thumb-shadow);
+  color: var(--xp-mut2);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+/* Pastille « hors ligne » avec le nombre d'écritures en attente. */
+.xp-offline-chip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(185, 138, 46, 0.9);
+  box-shadow: 0 4px 12px rgba(185, 138, 46, 0.32);
+  color: #2b1f05;
+  font-size: 11.5px;
+  font-weight: 700;
+}

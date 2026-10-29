@@ -9,6 +9,8 @@ import { TopChrome } from './chrome/TopChrome';
 import { ActivityPill, BottomBar } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
 import { Countdown, useLongPress } from './activity/Countdown';
+import { flushQueue, listQueue } from './offline/queue';
+import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
@@ -71,6 +73,7 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
   const [sheetHeight, setSheetHeight] = useState(176);
   const [pendingSport, setPendingSport] = useState<Sport | null>(null);
+  const [offlineQueue, setOfflineQueue] = useState(0);
   const theme = state.theme ?? systemTheme;
 
   // Scène de recette : appliquée **une seule fois**, de façon synchrone, côté
@@ -95,6 +98,31 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
 
   useEffect(() => {
     useExplorerStore.setState({ online });
+  }, [online]);
+
+  // Service worker de zone + file d'écritures hors ligne.
+  useEffect(() => {
+    void registerOfflineWorker();
+    void listQueue().then((items) => setOfflineQueue(items.length));
+  }, []);
+
+  useEffect(() => {
+    if (!online) return;
+    void flushQueue(async (operation) => {
+      if (operation.kind !== 'report-confirm') return false;
+      const res = await fetch('/api/explorer/v2/reports/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(operation.payload),
+      });
+      return res.ok;
+    }).then((result) => {
+      if (result.sent > 0) {
+        state.showToast({ title: `${result.sent} opération(s) synchronisée(s)`, tone: 'good' });
+      }
+      void listQueue().then((items) => setOfflineQueue(items.length));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [online]);
 
   useEffect(() => {
@@ -458,6 +486,8 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         onSearch={() => state.setSheet('search', 'full')}
         onBack={state.level > 0 ? state.goUp : undefined}
         onLayers={() => state.setSheet('layers', 'mid')}
+        offline={!online}
+        offlinePending={offlineQueue}
         activity={!!activity}
         onCompass={() => {
           haptic('compass');

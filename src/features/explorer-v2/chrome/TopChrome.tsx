@@ -17,6 +17,8 @@ export function TopChrome({
   activity,
   onCompass,
   northUp,
+  offline = false,
+  offlinePending = 0,
 }: {
   breadcrumb: BreadcrumbItem[];
   current: string;
@@ -26,6 +28,8 @@ export function TopChrome({
   activity?: boolean;
   onCompass?: () => void;
   northUp?: boolean;
+  offline?: boolean;
+  offlinePending?: number;
 }) {
   return (
     <div className="xp-chrome">
@@ -75,6 +79,13 @@ export function TopChrome({
           <XpIcon name="scan" size={15} />
         </button>
       </div>
+
+      {offline ? (
+        <span className="xp-offline-chip" role="status" aria-label="Hors ligne">
+          <XpIcon name="offline" size={14} />
+          {offlinePending > 0 ? <b>{offlinePending}</b> : null}
+        </span>
+      ) : null}
 
       {onBack ? (
         <button type="button" className="xp-icon-btn" onClick={onBack} aria-label="Revenir au niveau supérieur">

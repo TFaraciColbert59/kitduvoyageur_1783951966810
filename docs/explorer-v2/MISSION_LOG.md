@@ -429,3 +429,20 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   `{"kinds":["water"],"maxDistanceKm":8}` puis résultats BDD triés par distance
   (« Fontaine », « Font’haine »). Aucun modèle payant : règles déterministes.
 - Statut : OK
+
+### [P6-09 / P7-21] Zone hors ligne utilisable en mode avion · 2026-10-29 01:05
+- Fichiers : `public/explorer-v2-sw.js`, `src/features/explorer-v2/offline/{zone,queue}.ts`,
+  `sheet/SheetContent.tsx` (onglet Hors ligne), `chrome/TopChrome.tsx` (pastille)
+- Preuve (navigateur, `context.setOffline(true)` puis rechargement) :
+  ```
+  zone 87 tuiles · 10,4 Mo · 176 en cache
+  offline roots 1 · canvas 1 · data-ready 1
+  ```
+  Capture `preuves/hors-ligne-avion.png` : en mode avion, la page se recharge,
+  la carte affiche le relief et les repères depuis le cache, le bandeau
+  « Hors ligne — contenu en cache disponible » apparaît.
+  Ce qui est mis en cache : document `/explorer`, chunks `/_next/static`,
+  worker MapLibre, fonds GeoJSON, style OpenFreeMap, glyphes, tuiles vectorielles
+  et DEM. La file d'écritures (`offline/queue.ts`, clé d'idempotence) est vidée
+  au retour du réseau.
+- Statut : OK

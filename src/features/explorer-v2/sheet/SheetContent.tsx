@@ -3,6 +3,7 @@
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
 import { useNaturalSearch } from '../data/hooks';
+import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
 import {
   XpAvatars,
@@ -585,6 +586,12 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
             <XpRow icon="drop" title="Points d’eau" sub={String(ctx.pois.filter((p) => p.kind === 'water').length)} />
             <XpRow icon="house" title="Refuges" sub={String(ctx.pois.filter((p) => p.kind === 'refuge').length)} />
             <XpRow icon="tent" title="Bivouacs" sub={String(ctx.pois.filter((p) => p.kind === 'bivouac').length)} />
+            <XpRow
+              icon="offline"
+              title="Zone hors ligne"
+              sub="Télécharger la carte et les repères"
+              onClick={() => state.setSheet('offline', 'mid')}
+            />
           </XpRows>
         ),
       },
@@ -596,12 +603,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
         id: 'hors-ligne',
         label: 'Hors ligne',
         icon: 'offline',
-        render: () => (
-          <XpEmpty
-            title="Zone hors ligne"
-            hint="Le téléchargement de zone n’est pas encore activé : tu peux continuer à utiliser la carte si elle est déjà chargée."
-          />
-        ),
+        render: () => <OfflineTab ctx={ctx} />,
       },
     ];
   }
@@ -671,6 +673,102 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
  * exige un utilisateur connecté, et le formulaire ne prétend rien créer
  * tant que ce n'est pas le cas.
  */
+/**
+ * Zone hors ligne (05_DONNEES §7) : estimation avant téléchargement, taille
+ * réelle après, purge manuelle. Les tuiles partent dans le cache du service
+ * worker, les repères et itinéraires dans IndexedDB.
+ */
+function OfflineTab({ ctx }: { ctx: SheetContext }) {
+  const [zone, setZone] = React.useState<{ tiles: number; bytes: number; savedAt: number; ok?: number; failed?: number } | null>(null);
+  const [progress, setProgress] = React.useState<{ done: number; total: number; bytes: number } | null>(null);
+  const [busy, setBusy] = React.useState(false);
+
+  const bounds = React.useMemo(() => {
+    const [lng, lat] = ctx.state.center;
+    const span = 0.08;
+    return { west: lng - span, east: lng + span, south: lat - span / 2, north: lat + span / 2 };
+  }, [ctx.state.center]);
+
+  const estimate = React.useMemo(() => countTiles(bounds, 11, 14), [bounds]);
+
+  React.useEffect(() => {
+    void readZone().then((record) => {
+      if (record) setZone({ tiles: record.tiles, bytes: record.bytes, savedAt: record.savedAt, ok: record.ok, failed: record.failed });
+    });
+  }, []);
+
+  const download = async () => {
+    setBusy(true);
+    try {
+      const record = await downloadZone(
+        bounds,
+        { pois: ctx.pois, routes: ctx.routes },
+        { minZoom: 11, maxZoom: 14, onProgress: setProgress },
+      );
+      setZone({ tiles: record.tiles, bytes: record.bytes, savedAt: record.savedAt, ok: record.ok, failed: record.failed });
+      ctx.state.showToast({ title: 'Zone prête', sub: `${record.tiles} tuiles` });
+    } catch {
+      ctx.state.showToast({ title: 'Téléchargement interrompu', tone: 'warn' });
+    } finally {
+      setBusy(false);
+      setProgress(null);
+    }
+  };
+
+  const purge = async () => {
+    await purgeZone();
+    setZone(null);
+    ctx.state.showToast({ title: 'Zone supprimée' });
+  };
+
+  return (
+    <>
+      <XpMetrics
+        items={[
+          { label: 'Tuiles estimées', value: String(estimate) },
+          { label: 'Zoom', value: '11 → 14' },
+          { label: 'Repères', value: String(ctx.pois.length) },
+        ]}
+      />
+      {progress ? (
+        <XpEyebrow>{`Téléchargement ${progress.done}/${progress.total} · ${formatBytes(progress.bytes)}`}</XpEyebrow>
+      ) : null}
+      {zone ? (
+        <XpRows>
+          <XpRow
+            icon="offline"
+            tone="good"
+            title="Zone disponible hors ligne"
+            sub={`${zone.tiles} tuiles · ${formatBytes(zone.bytes)} · ${zone.ok ?? 0} en cache${
+              zone.failed ? ` · ${zone.failed} échec(s)` : ''
+            } · ${relativeDay(new Date(zone.savedAt).toISOString())}`}
+          />
+        </XpRows>
+      ) : (
+        <XpEyebrow>Aucune zone téléchargée</XpEyebrow>
+      )}
+      <button type="button" className="xp-primary" onClick={download} disabled={busy}>
+        {busy ? 'Téléchargement…' : zone ? 'Mettre à jour la zone' : 'Télécharger cette zone'}
+      </button>
+      {zone ? (
+        <button type="button" className="xp-secondary" onClick={purge}>
+          Supprimer la zone
+        </button>
+      ) : null}
+      <XpEmpty
+        title="Hors ligne"
+        hint="Les tuiles du fond et du relief sont conservées, ainsi que les repères et itinéraires de la zone."
+      />
+    </>
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes) return '—';
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
+  return `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} Mo`;
+}
+
 function DepartForm({ ctx }: { ctx: SheetContext }) {
   const today = new Date();
   const iso = (date: Date) => date.toISOString().slice(0, 10);
