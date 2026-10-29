@@ -3,6 +3,7 @@
 import type {
   CarnetItem,
   CountryDetails,
+  TerrainReport,
   TripItem,
   PoiItem,
   PlaceResponse,
@@ -38,9 +39,15 @@ export interface SheetContext {
   routes: RouteItem[];
   weather: WeatherResponse | undefined;
   carnets: CarnetItem[];
+  reports: TerrainReport[];
+  units: 'metric' | 'imperial';
   trips: TripItem[];
   selectedPoi: PoiItem | null;
   me: { lat: number; lng: number } | null;
+  /** Démarrage avec compte à rebours (le parent décide de l'animation). */
+  onStartSport?: (sport: Sport) => void;
+  /** Confirmer un signalement (« présent » / « disparu »). */
+  onConfirmReport?: (reportId: string, verdict: 'present' | 'gone') => void;
   locale: string;
 }
 
@@ -101,6 +108,18 @@ export function distanceKm(a: [number, number], b: [number, number]): number {
   const h =
     Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** Miles depuis des kilomètres (unités impériales). */
+export function formatImperialDistance(km: number): string {
+  const miles = km * 0.621371;
+  if (miles < 0.2) return `${Math.round(miles * 5280)} ft`;
+  return `${miles.toFixed(1).replace('.', ',')} mi`;
+}
+
+export function formatImperialElevation(meters: number | null | undefined): string | null {
+  if (meters === null || meters === undefined) return null;
+  return `${new Intl.NumberFormat('en-US').format(Math.round(meters * 3.28084))} ft`;
 }
 
 export function formatDistance(km: number): string {

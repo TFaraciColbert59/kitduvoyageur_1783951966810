@@ -2,12 +2,19 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import type { MapPin } from './map/MapStage';
 import { ExplorerSheet } from './sheet/ExplorerSheet';
 import { buildSheetModel } from './sheet/SheetContent';
 import { TopChrome } from './chrome/TopChrome';
 import { ActivityPill, BottomBar } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
+import { Countdown, useLongPress } from './activity/Countdown';
+import { useGpsTracker } from './activity/useGpsTracker';
+import { endLiveActivity, startLiveActivity, updateLiveActivity } from './native/liveActivity';
+import { performSosCall, planSosCall, sosSimulated } from './activity/sosCall';
+import { flushQueue, listQueue } from './offline/queue';
+import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
 import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
@@ -24,6 +31,7 @@ import {
   useSystemTheme,
   useWeather,
   useContent,
+  useReportsNear,
   type CountryFeatureProperties,
   type CarnetItem,
   type TripItem,
@@ -38,7 +46,7 @@ import {
   type RegionGroup,
   type SheetContext,
 } from './sheet/context';
-import type { PoiKind } from './state/types';
+import type { PoiKind, Sport } from './state/types';
 import '@/styles/explorer-v2.css';
 
 const MapStage = dynamic(() => import('./map/MapStage'), {
@@ -68,7 +76,20 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   const online = useOnline();
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
   const [sheetHeight, setSheetHeight] = useState(176);
+  const [pendingSport, setPendingSport] = useState<Sport | null>(null);
+  const [offlineQueue, setOfflineQueue] = useState(0);
+  // Accès de recette à la machine d'état (lecture seule, jamais en production).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_EXPLORER_SCENES !== '1') return;
+    (window as unknown as { __xpStore?: unknown }).__xpStore = useExplorerStore;
+  }, []);
+
   const theme = state.theme ?? systemTheme;
+  // Unités : réglage utilisateur prioritaire, sinon pays (US, Liberia, Myanmar).
+  const imperialCountries = new Set(['US', 'LR', 'MM']);
+  const unitsForCountry: 'metric' | 'imperial' =
+    state.units === 'imperial' || imperialCountries.has(state.geo) ? 'imperial' : 'metric';
 
   // Scène de recette : appliquée **une seule fois**, de façon synchrone, côté
   // client. Un effet pouvait être sauté selon l'ordre de montage (constaté en
@@ -92,6 +113,31 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
 
   useEffect(() => {
     useExplorerStore.setState({ online });
+  }, [online]);
+
+  // Service worker de zone + file d'écritures hors ligne.
+  useEffect(() => {
+    void registerOfflineWorker();
+    void listQueue().then((items) => setOfflineQueue(items.length));
+  }, []);
+
+  useEffect(() => {
+    if (!online) return;
+    void flushQueue(async (operation) => {
+      if (operation.kind !== 'report-confirm') return false;
+      const res = await fetch('/api/explorer/v2/reports/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(operation.payload),
+      });
+      return res.ok;
+    }).then((result) => {
+      if (result.sent > 0) {
+        state.showToast({ title: `${result.sent} opération(s) synchronisée(s)`, tone: 'good' });
+      }
+      void listQueue().then((items) => setOfflineQueue(items.length));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [online]);
 
   useEffect(() => {
@@ -147,6 +193,11 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
 
   // `center` est [lng, lat] ; `usePlace` attend (lat, lng).
   const { data: place } = usePlace(state.center[1], state.center[0], state.zoom, state.level >= 1);
+  const { data: reportsData } = useReportsNear(
+    state.center[1],
+    state.center[0],
+    state.level >= 2,
+  );
   const { data: carnetsData } = useContent('carnets', state.geo || null);
   const { data: tripsData } = useContent('trips', state.geo || null);
   const { data: weather } = useWeather(
@@ -170,6 +221,83 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       .sort((a, b) => a.km - b.km)[0].poi;
   }, [pois, state.center, state.selection]);
 
+  // ── confirmation d'un signalement terrain ─────────────────────────────
+  const onConfirmReport = useCallback(
+    async (reportId: string, verdict: 'present' | 'gone') => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) {
+          state.showToast({ title: 'Connecte-toi pour confirmer', tone: 'warn' });
+          return;
+        }
+        const res = await fetch('/api/explorer/v2/reports/confirm', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reportId, verdict }),
+        });
+        const json = (await res.json().catch(() => null)) as { result?: { status?: string } } | null;
+        if (!res.ok) {
+          state.showToast({ title: 'Confirmation refusée', sub: 'Réessaie plus tard', tone: 'warn' });
+          return;
+        }
+        haptic('back-on-route');
+        state.showToast({
+          title: verdict === 'present' ? 'Signalement confirmé' : 'Signalement marqué disparu',
+          sub: json?.result?.status === 'own_report' ? 'Tu ne peux pas confirmer ton propre signalement' : undefined,
+        });
+      } catch {
+        state.showToast({ title: 'Confirmation impossible', tone: 'warn' });
+      }
+    },
+    [state],
+  );
+
+  // ── démarrage d'activité (compte à rebours 3·2·1) ─────────────────────
+  // Suivi GPS de l'activité en cours (métriques, hors-trace, caméra).
+  useGpsTracker();
+
+  // Live Activity iOS (P7-20) : démarrage, mise à jour toutes les 5 s, fin.
+  const liveActivityRef = React.useRef<{ started: boolean; lastPush: number }>({ started: false, lastPush: 0 });
+  useEffect(() => {
+    const activity = state.activity;
+    if (!activity) {
+      if (liveActivityRef.current.started) {
+        liveActivityRef.current = { started: false, lastPush: 0 };
+        void endLiveActivity({
+          distanceM: 0,
+          elevGainM: 0,
+          movingS: 0,
+          paused: false,
+          offRoute: false,
+        });
+      }
+      return;
+    }
+    const payload = {
+      distanceM: activity.distanceM,
+      elevGainM: activity.elevGainM,
+      movingS: activity.movingS,
+      paused: activity.paused,
+      offRoute: activity.offRoute ?? false,
+    };
+    if (!liveActivityRef.current.started) {
+      liveActivityRef.current = { started: true, lastPush: Date.now() };
+      void startLiveActivity({ ...payload, sport: activity.sport, startedAt: activity.startedAt });
+      return;
+    }
+    const now = Date.now();
+    if (now - liveActivityRef.current.lastPush < 5000) return;
+    liveActivityRef.current.lastPush = now;
+    void updateLiveActivity(payload);
+  }, [state.activity]);
+
+  const startWithCountdown = useCallback((sport: Sport) => {
+    setPendingSport(sport);
+  }, []);
+
   // ── contexte de feuille ────────────────────────────────────────────────
   const ctx = useMemo<SheetContext>(
     () => ({
@@ -183,12 +311,16 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       routes,
       weather,
       carnets: (carnetsData ?? []) as CarnetItem[],
+      reports: reportsData ?? [],
+      units: unitsForCountry,
       trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
+      onStartSport: startWithCountdown,
+      onConfirmReport,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, carnetsData, tripsData, selectedPoi, me],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, startWithCountdown, onConfirmReport],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -251,6 +383,15 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     [state],
   );
 
+  // Mini-sélecteur « Survol 3D » sur un itinéraire : la caméra parcourt la trace.
+  useEffect(() => {
+    if (state.sheet !== 'trail') return;
+    if (state.mini !== 1) return;
+    useExplorerStore.setState({ camera: { type: 'flyover', routeId: state.selection?.id ?? '' } });
+  }, [state.sheet, state.mini, state.selection?.id]);
+
+  const longPress = useLongPress(() => state.setSheet('start', 'low'));
+
   const onPinClick = useCallback(
     (pin: MapPin) => {
       if (pin.kind === 'country') {
@@ -276,7 +417,53 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     return () => observer.disconnect();
   }, []);
 
+  // Enregistrement du bilan : uniquement pour une vraie session (UUID) et un
+  // utilisateur connecté ; sinon l'écran le dit sans mentir.
+  useEffect(() => {
+    const summary = state.summary;
+    if (!summary || state.summarySaved !== 'pending') return;
+    const sessionId = summary.sessionId;
+    if (!sessionId || !/^[0-9a-f-]{36}$/i.test(sessionId)) {
+      useExplorerStore.setState({ summarySaved: 'unauthenticated' });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) {
+          if (!cancelled) useExplorerStore.setState({ summarySaved: 'unauthenticated' });
+          return;
+        }
+        const res = await fetch('/api/explorer/v2/activity/finish', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        });
+        if (!cancelled) useExplorerStore.setState({ summarySaved: res.ok ? 'saved' : 'failed' });
+      } catch {
+        if (!cancelled) useExplorerStore.setState({ summarySaved: 'failed' });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state.summary, state.summarySaved]);
+
   const activity = state.activity;
+
+  // Suivi : à chaque nouvelle position pendant l'activité, la caméra recadre
+  // (04_CARTE §3, P2-11). Le geste utilisateur interrompt le suivi (MapLibre).
+  useEffect(() => {
+    if (!activity) return;
+    const timer = window.setTimeout(() => {
+      useExplorerStore.setState({ camera: { type: 'follow' } });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [activity?.distanceM, activity?.sport]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!activity) return;
@@ -298,7 +485,9 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     if (state.level >= 3 && state.regionId) {
       items.push({ label: state.regionId, onClick: () => state.setLevel(2) });
     }
-    return items;
+    // La capsule ne montre que le parent immédiat : au-delà, les libellés
+    // seraient tronqués à une lettre (constaté en recette).
+    return items.slice(-1);
   }, [country?.name, state]);
 
   const current =
@@ -317,6 +506,9 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       data-level={state.level}
       data-scene={state.scene ?? ''}
       data-countries={countries.length}
+      data-reduced-motion={reducedMotion ? 'true' : 'false'}
+      data-units={unitsForCountry}
+      data-center={`${state.center[1].toFixed(5)},${state.center[0].toFixed(5)}`}
       data-pins={pins.length}
       data-pois={pois.length}
       data-qc={countriesQuery.status}
@@ -340,7 +532,20 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         onPinClick={onPinClick}
         onMoveEnd={(center, zoom) => state.setCenter(center, zoom)}
         sheetHeightPx={sheetHeight}
+        cameraIntent={state.camera}
+        longPressHandlers={longPress}
       />
+
+      {pendingSport ? (
+        <Countdown
+          key={pendingSport}
+          onDone={() => {
+            state.startActivity(pendingSport);
+            setPendingSport(null);
+          }}
+          onCancel={() => setPendingSport(null)}
+        />
+      ) : null}
 
       <TopChrome
         breadcrumb={breadcrumb}
@@ -348,12 +553,14 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         onSearch={() => state.setSheet('search', 'full')}
         onBack={state.level > 0 ? state.goUp : undefined}
         onLayers={() => state.setSheet('layers', 'mid')}
+        offline={!online}
+        offlinePending={offlineQueue}
         activity={!!activity}
         onCompass={() => {
           haptic('compass');
-          state.patch({ orbitPaused: !state.orbitPaused });
+          state.toggleNorthUp();
         }}
-        northUp={state.orbitPaused}
+        northUp={state.northUp}
       />
 
       {state.toast ? (
@@ -395,16 +602,30 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
           }}
           onResult={(result) => {
             haptic(result === 'cancelled' ? 'tab' : 'sos-fired');
+            if (result === 'cancelled') {
+              state.showToast({ title: 'SOS annulé', sub: 'Aucune alerte envoyée' });
+              return;
+            }
+
+            // Production : le compte à rebours abouti compose le numéro
+            // d'urgence du pays (04_CARTE §6). Recette : aucun composeur,
+            // le numéro est affiché pour la recette.
+            const plan = planSosCall(country?.practical?.emergency_numbers?.general, {
+              simulated: sosSimulated(),
+            });
+            const dialled = performSosCall(plan);
+            const callSuffix = dialled
+              ? ` · appel ${plan.number}`
+              : ` · numéro ${plan.number} (appel simulé)`;
+
             state.showToast(
-              result === 'cancelled'
-                ? { title: 'SOS annulé', sub: 'Aucune alerte envoyée' }
-                : result === 'sent'
-                  ? { title: 'Alerte envoyée', sub: 'Position transmise', tone: 'bad' }
-                  : {
-                      title: 'Alerte non enregistrée',
-                      sub: 'Connecte-toi pour transmettre ta position',
-                      tone: 'warn',
-                    },
+              result === 'sent'
+                ? { title: 'Alerte envoyée', sub: `Position transmise${callSuffix}`, tone: 'bad' }
+                : {
+                    title: 'Alerte non enregistrée',
+                    sub: `Connecte-toi pour transmettre ta position${callSuffix}`,
+                    tone: 'warn',
+                  },
             );
           }}
         />
@@ -459,6 +680,12 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       ) : (
         <BottomBar />
       )}
+
+      {/* Attributions (P10-09) : obligatoires pour OSM, OpenFreeMap, AWS Terrain,
+          Natural Earth, MET Norway et Wikidata. Discret, mais toujours visible. */}
+      <Link className="xp-attribution" href="/mentions-legales">
+        © OpenStreetMap · OpenFreeMap · Natural Earth · AWS Terrain · MET Norway · Wikidata
+      </Link>
 
       <div aria-hidden="true" style={{ display: 'none' }} data-xp-icons>
         <XpIcon name="info" size={1} />

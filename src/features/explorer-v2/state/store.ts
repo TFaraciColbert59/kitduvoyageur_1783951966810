@@ -44,6 +44,8 @@ interface ExplorerActions {
   updateActivity: (patch: Partial<ActivityState>) => void;
   stopActivity: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
+  toggleNorthUp: () => void;
+  setUnits: (units: 'metric' | 'imperial') => void;
 }
 
 export type ExplorerStore = ExplorerState & ExplorerActions;
@@ -62,6 +64,8 @@ const initialState: ExplorerState = {
   online: true,
   locationPermission: 'prompt',
   orbitPaused: false,
+  northUp: true,
+  units: 'metric',
   reveal: false,
   background: false,
   center: [2.35, 48.85],
@@ -170,7 +174,18 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   },
 
   select: (selection, sheet, detent = 'mid') => {
-    set({ selection, sheet, detent, tab: 0, reveal: true });
+    const center = get().center;
+    set({
+      selection,
+      sheet,
+      detent,
+      tab: 0,
+      reveal: true,
+      camera:
+        selection.kind === 'trail'
+          ? { type: 'flyover', routeId: selection.id }
+          : { type: 'reveal', center },
+    });
     emit('select', { kind: selection.kind, id: selection.id, sheet });
   },
 
@@ -227,11 +242,27 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     set((state) => (state.activity ? { activity: { ...state.activity, ...patch } } : {})),
 
   stopActivity: () => {
-    set({ activity: undefined, sheet: 'summary', detent: 'full', camera: { type: 'overview' } });
+    const current = get().activity;
+    set({
+      activity: undefined,
+      summary: current ? { ...current, endedAt: Date.now() } : null,
+      summarySaved: 'pending',
+      sheet: 'summary',
+      detent: 'full',
+      camera: { type: 'overview' },
+    });
     emit('activity-stop', {});
   },
 
   setTheme: (theme) => set({ theme }),
+
+  toggleNorthUp: () => {
+    const next = !get().northUp;
+    set({ northUp: next, camera: { type: 'bearing', northUp: next } });
+    emit('compass', { northUp: next });
+  },
+
+  setUnits: (units) => set({ units }),
 }));
 
 export type { PoiKind };

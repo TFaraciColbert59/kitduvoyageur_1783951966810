@@ -284,6 +284,7 @@ export function ExplorerSheet({
           <div
             className="xp-sheet-scroll"
             role="tabpanel"
+            tabIndex={0}
             id={`xp-panel-${activeTab.id}`}
             aria-labelledby={`xp-tab-${activeTab.id}`}
             key={activeTab.id}
@@ -291,7 +292,9 @@ export function ExplorerSheet({
             {activeTab.render()}
           </div>
         ) : (
-          <div className="xp-sheet-scroll">{children}</div>
+          <div className="xp-sheet-scroll" tabIndex={0} aria-label={`Contenu : ${title}`}>
+            {children}
+          </div>
         )}
 
         {tabs && tabs.length > 1 && tabsBottom ? (

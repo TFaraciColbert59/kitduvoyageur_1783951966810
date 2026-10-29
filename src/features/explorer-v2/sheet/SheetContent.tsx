@@ -2,6 +2,9 @@
 
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
+import { useNaturalSearch } from '../data/hooks';
+import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
+import { ElevationProfile } from './ElevationProfile';
 import {
   XpAvatars,
   XpCard,
@@ -15,6 +18,8 @@ import {
 } from './blocks';
 import type { SheetTab } from './ExplorerSheet';
 import {
+  formatImperialDistance,
+  formatImperialElevation,
   POI_ICON,
   POI_LABEL,
   POI_TONE,
@@ -23,6 +28,8 @@ import {
   findRegionAt,
   formatDistance,
   formatElevation,
+  formatDuration,
+  relativeDay,
   type SheetContext,
 } from './context';
 import type { Sport } from '../state/types';
@@ -36,6 +43,17 @@ export interface SheetModel {
   actions: React.ReactNode;
   onBack?: () => void;
 }
+
+const CATEGORY_LABEL: Record<string, string> = {
+  water: 'Point d’eau',
+  snow_ice: 'Neige / glace',
+  danger: 'Danger',
+  closure: 'Fermeture',
+  obstacle: 'Obstacle',
+  mud: 'Boue',
+  rockfall: 'Chutes de pierres',
+  flood: 'Crue',
+};
 
 const SPORTS: Sport[] = ['course', 'rando', 'velo', 'kayak', 'trail', 'ski', 'escalade', 'famille', 'bivouac'];
 
@@ -458,6 +476,9 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
       ),
   };
 
+  const nearbyReports = ctx.reports
+    .filter((report) => report.category === 'water' || report.category === 'snow_ice')
+    .slice(0, 5);
   const etat: SheetTab = {
     id: 'etat',
     label: 'État',
@@ -474,7 +495,53 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
             />
           </XpRows>
           <XpEyebrow>Derniers signalements</XpEyebrow>
-          <XpEmpty title="Aucun signalement" hint="Personne n’a encore signalé l’état de cette eau." />
+          {nearbyReports.length === 0 ? (
+            <XpEmpty title="Aucun signalement" hint="Personne n’a encore signalé l’état de cette eau." />
+          ) : (
+            <XpRows>
+              {nearbyReports.map((report) => (
+                <XpRow
+                  key={report.id}
+                  icon={report.category === 'water' ? 'drop' : 'snow'}
+                  tone={report.category === 'water' ? 'water' : 'warn'}
+                  title={report.description ?? CATEGORY_LABEL[report.category] ?? report.category}
+                  sub={`${relativeDay(report.created_at)} · ${report.present_count} présent · ${report.gone_count} disparu`}
+                  badge={{ label: `${Math.round(report.distance_m)} m`, tone: 'muted' }}
+                />
+              ))}
+            </XpRows>
+          )}
+          <XpEyebrow>Confirmer l’état</XpEyebrow>
+          {nearbyReports.length === 0 ? (
+            <XpEmpty title="Rien à confirmer" hint="Aucun signalement actif autour de ce point." />
+          ) : (
+            <XpRows>
+              {nearbyReports.slice(0, 2).map((report) => (
+                <div className="xp-row xp-row-split" key={`confirm-${report.id}`}>
+                  <span className="xp-row-ico" data-tone="good" aria-hidden="true">
+                    <XpIcon name="check" size={15} />
+                  </span>
+                  <button
+                    type="button"
+                    className="xp-row-text"
+                    onClick={() => ctx.onConfirmReport?.(report.id, 'present')}
+                    aria-label={`Confirmer : toujours là — ${report.description ?? CATEGORY_LABEL[report.category]}`}
+                  >
+                    <span className="xp-row-title">Toujours là</span>
+                    <span className="xp-row-sub">{report.description ?? CATEGORY_LABEL[report.category]}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="xp-chip"
+                    onClick={() => ctx.onConfirmReport?.(report.id, 'gone')}
+                    aria-label={`Signaler disparu : ${report.description ?? CATEGORY_LABEL[report.category]}`}
+                  >
+                    Plus là
+                  </button>
+                </div>
+              ))}
+            </XpRows>
+          )}
         </>
       ) : (
         <XpEmpty title="État inconnu" hint="Ce point d’eau n’est pas encore enregistré." />
@@ -516,6 +583,12 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
             <XpRow icon="drop" title="Points d’eau" sub={String(ctx.pois.filter((p) => p.kind === 'water').length)} />
             <XpRow icon="house" title="Refuges" sub={String(ctx.pois.filter((p) => p.kind === 'refuge').length)} />
             <XpRow icon="tent" title="Bivouacs" sub={String(ctx.pois.filter((p) => p.kind === 'bivouac').length)} />
+            <XpRow
+              icon="offline"
+              title="Zone hors ligne"
+              sub="Télécharger la carte et les repères"
+              onClick={() => state.setSheet('offline', 'mid')}
+            />
           </XpRows>
         ),
       },
@@ -527,17 +600,23 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
         id: 'hors-ligne',
         label: 'Hors ligne',
         icon: 'offline',
-        render: () => (
-          <XpEmpty
-            title="Zone hors ligne"
-            hint="Le téléchargement de zone n’est pas encore activé : tu peux continuer à utiliser la carte si elle est déjà chargée."
-          />
-        ),
+        render: () => <OfflineTab ctx={ctx} />,
       },
     ];
   }
   if (kind === 'trail') {
     const route = ctx.routes.find((item) => String(item.id) === state.selection?.id) ?? ctx.routes[0];
+    const positions: Array<[number, number]> = [];
+    const walk = (value: unknown) => {
+      if (!Array.isArray(value)) return;
+      if (typeof value[0] === 'number' && typeof value[1] === 'number') {
+        positions.push([value[0] as number, value[1] as number]);
+        return;
+      }
+      for (const child of value) walk(child);
+    };
+    walk((route?.geojson as { coordinates?: unknown } | undefined)?.coordinates);
+
     return [
       {
         id: 'trace',
@@ -546,6 +625,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
         render: () =>
           route ? (
             <>
+              {positions.length > 1 ? <ElevationProfile positions={positions} /> : null}
               <XpMetrics
                 items={[
                   { label: 'Distance', value: route.distance_km ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : '—' },
@@ -568,7 +648,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
         id: 'quand',
         label: 'Quand',
         icon: 'cal',
-        render: () => <XpEmpty title="Aucun départ programmé" hint="Crée un départ pour inviter d’autres membres." />,
+        render: () => <DepartForm ctx={ctx} />,
       },
     ];
   }
@@ -585,16 +665,219 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
   return [{ id: 'info', label: 'Infos', icon: 'info', render: () => <XpEmpty title="Rien à afficher" hint="Aucune donnée pour cet écran." /> }];
 }
 
+/**
+ * Création d'un départ (P6-07). Écrit dans `trips` sous RLS : la requête
+ * exige un utilisateur connecté, et le formulaire ne prétend rien créer
+ * tant que ce n'est pas le cas.
+ */
+/**
+ * Zone hors ligne (05_DONNEES §7) : estimation avant téléchargement, taille
+ * réelle après, purge manuelle. Les tuiles partent dans le cache du service
+ * worker, les repères et itinéraires dans IndexedDB.
+ */
+function OfflineTab({ ctx }: { ctx: SheetContext }) {
+  const [zone, setZone] = React.useState<{ tiles: number; bytes: number; savedAt: number; ok?: number; failed?: number } | null>(null);
+  const [progress, setProgress] = React.useState<{ done: number; total: number; bytes: number } | null>(null);
+  const [busy, setBusy] = React.useState(false);
+
+  const bounds = React.useMemo(() => {
+    const [lng, lat] = ctx.state.center;
+    const span = 0.08;
+    return { west: lng - span, east: lng + span, south: lat - span / 2, north: lat + span / 2 };
+  }, [ctx.state.center]);
+
+  const estimate = React.useMemo(() => countTiles(bounds, 11, 14), [bounds]);
+
+  React.useEffect(() => {
+    void readZone().then((record) => {
+      if (record) setZone({ tiles: record.tiles, bytes: record.bytes, savedAt: record.savedAt, ok: record.ok, failed: record.failed });
+    });
+  }, []);
+
+  const download = async () => {
+    setBusy(true);
+    try {
+      const record = await downloadZone(
+        bounds,
+        { pois: ctx.pois, routes: ctx.routes },
+        { minZoom: 11, maxZoom: 14, onProgress: setProgress },
+      );
+      setZone({ tiles: record.tiles, bytes: record.bytes, savedAt: record.savedAt, ok: record.ok, failed: record.failed });
+      ctx.state.showToast({ title: 'Zone prête', sub: `${record.tiles} tuiles` });
+    } catch {
+      ctx.state.showToast({ title: 'Téléchargement interrompu', tone: 'warn' });
+    } finally {
+      setBusy(false);
+      setProgress(null);
+    }
+  };
+
+  const purge = async () => {
+    await purgeZone();
+    setZone(null);
+    ctx.state.showToast({ title: 'Zone supprimée' });
+  };
+
+  return (
+    <>
+      <XpMetrics
+        items={[
+          { label: 'Tuiles estimées', value: String(estimate) },
+          { label: 'Zoom', value: '11 → 14' },
+          { label: 'Repères', value: String(ctx.pois.length) },
+        ]}
+      />
+      {progress ? (
+        <XpEyebrow>{`Téléchargement ${progress.done}/${progress.total} · ${formatBytes(progress.bytes)}`}</XpEyebrow>
+      ) : null}
+      {zone ? (
+        <XpRows>
+          <XpRow
+            icon="offline"
+            tone="good"
+            title="Zone disponible hors ligne"
+            sub={`${zone.tiles} tuiles · ${formatBytes(zone.bytes)} · ${zone.ok ?? 0} en cache${
+              zone.failed ? ` · ${zone.failed} échec(s)` : ''
+            } · ${relativeDay(new Date(zone.savedAt).toISOString())}`}
+          />
+        </XpRows>
+      ) : (
+        <XpEyebrow>Aucune zone téléchargée</XpEyebrow>
+      )}
+      <button type="button" className="xp-primary" onClick={download} disabled={busy}>
+        {busy ? 'Téléchargement…' : zone ? 'Mettre à jour la zone' : 'Télécharger cette zone'}
+      </button>
+      {zone ? (
+        <button type="button" className="xp-secondary" onClick={purge}>
+          Supprimer la zone
+        </button>
+      ) : null}
+      <XpEmpty
+        title="Hors ligne"
+        hint="Les tuiles du fond et du relief sont conservées, ainsi que les repères et itinéraires de la zone."
+      />
+    </>
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes) return '—';
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
+  return `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} Mo`;
+}
+
+function DepartForm({ ctx }: { ctx: SheetContext }) {
+  const today = new Date();
+  const iso = (date: Date) => date.toISOString().slice(0, 10);
+  const inAWeek = new Date(today.getTime() + 7 * 86400000);
+  const [title, setTitle] = React.useState('');
+  const [place, setPlace] = React.useState('');
+  const [start, setStart] = React.useState(iso(inAWeek));
+  const [end, setEnd] = React.useState(iso(new Date(inAWeek.getTime() + 2 * 86400000)));
+  const [party, setParty] = React.useState(4);
+  const [status, setStatus] = React.useState<'idle' | 'sending' | 'created' | 'unauthenticated' | 'error'>('idle');
+
+  const submit = async () => {
+    setStatus('sending');
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        setStatus('unauthenticated');
+        ctx.state.showToast({ title: 'Connecte-toi pour créer un départ', tone: 'warn' });
+        return;
+      }
+      const res = await fetch('/api/explorer/v2/trips', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: data.session?.user?.id,
+          title: title.trim(),
+          destination: place.trim() || undefined,
+          countryCode: ctx.state.geo || undefined,
+          startDate: start,
+          endDate: end,
+          partySize: party,
+          activity: 'hiking',
+        }),
+      });
+      if (!res.ok) {
+        setStatus('error');
+        ctx.state.showToast({ title: 'Départ non créé', sub: `HTTP ${res.status}`, tone: 'warn' });
+        return;
+      }
+      setStatus('created');
+      ctx.state.showToast({ title: 'Départ créé', sub: title.trim() });
+    } catch {
+      setStatus('error');
+    }
+  };
+
+  const disabled = title.trim().length < 3 || status === 'sending';
+
+  return (
+    <>
+      <div className="xp-form">
+        <label>
+          <span>Titre</span>
+          <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Tour du Mont-Blanc en 4 jours" maxLength={120} />
+        </label>
+        <label>
+          <span>Lieu</span>
+          <input value={place} onChange={(event) => setPlace(event.target.value)} placeholder="Chamonix" maxLength={160} />
+        </label>
+        <div className="xp-form-row">
+          <label>
+            <span>Début</span>
+            <input type="date" value={start} onChange={(event) => setStart(event.target.value)} />
+          </label>
+          <label>
+            <span>Fin</span>
+            <input type="date" value={end} onChange={(event) => setEnd(event.target.value)} />
+          </label>
+        </div>
+        <label>
+          <span>Places</span>
+          <input
+            type="number"
+            min={1}
+            max={50}
+            value={party}
+            onChange={(event) => setParty(Number(event.target.value))}
+          />
+        </label>
+      </div>
+      <button type="button" className="xp-primary" onClick={submit} disabled={disabled}>
+        {status === 'sending' ? 'Création…' : 'Créer le départ'}
+      </button>
+      {status === 'unauthenticated' ? (
+        <XpEmpty title="Départ non créé" hint="Connecte-toi pour publier un départ." />
+      ) : null}
+      {status === 'created' ? (
+        <XpEmpty title="Départ publié" hint="Il apparaît maintenant dans les départs ouverts." />
+      ) : null}
+      <XpEyebrow>Départs ouverts</XpEyebrow>
+      <TripsTab ctx={ctx} where="autour d’ici" />
+    </>
+  );
+}
+
 function SearchTab({ ctx }: { ctx: SheetContext }) {
   const [query, setQuery] = React.useState('');
+  const { data, isFetching } = useNaturalSearch(
+    query,
+    ctx.state.center[1],
+    ctx.state.center[0],
+  );
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (q.length < 2) return { countries: [], pois: [] };
     return {
-      countries: ctx.countries.filter((country) => country.name.toLowerCase().includes(q)).slice(0, 5),
-      pois: ctx.pois.filter((poi) => poi.name.toLowerCase().includes(q)).slice(0, 5),
+      countries: q.length < 2 ? [] : ctx.countries.filter((country) => country.name.toLowerCase().includes(q)).slice(0, 4),
+      pois: data?.results ?? [],
     };
-  }, [ctx.countries, ctx.pois, query]);
+  }, [ctx.countries, data, query]);
 
   return (
     <>
@@ -615,7 +898,12 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
         }}
       />
       {query.trim().length < 2 ? (
-        <XpEmpty title="Cherche un lieu" hint="Tape au moins deux lettres pour lancer la recherche." />
+        <XpEmpty
+          title="Cherche un lieu"
+          hint="Tape deux lettres, ou une phrase : « un point d’eau à moins de 2 heures »."
+        />
+      ) : isFetching ? (
+        <XpEmpty title="Recherche…" hint="Analyse de la demande et interrogation de la base." />
       ) : results.countries.length === 0 && results.pois.length === 0 ? (
         <XpEmpty title="Aucun résultat" hint="Aucun pays ni repère ne correspond dans les données disponibles." />
       ) : (
@@ -638,6 +926,21 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
               </XpRows>
             </>
           ) : null}
+          {data?.filters ? (
+            <>
+              <XpEyebrow>Filtres compris</XpEyebrow>
+              <div className="xp-chiprow" aria-label="Filtres extraits de la demande">
+                <span className="xp-chip" aria-pressed="true">
+                  {data.filters.kinds.map((kind) => POI_LABEL[kind] ?? kind).join(' · ')}
+                </span>
+                {data.filters.maxDistanceKm ? (
+                  <span className="xp-chip">{data.filters.maxDistanceKm} km max</span>
+                ) : null}
+                {data.filters.easy ? <span className="xp-chip">facile</span> : null}
+                {data.filters.family ? <span className="xp-chip">famille</span> : null}
+              </div>
+            </>
+          ) : null}
           {results.pois.length > 0 ? (
             <>
               <XpEyebrow>Repères</XpEyebrow>
@@ -648,7 +951,10 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
                     icon={POI_ICON[poi.kind] ?? 'pin'}
                     tone={POI_TONE[poi.kind] ?? 'ink'}
                     title={poi.name}
-                    sub={POI_LABEL[poi.kind] ?? poi.kind}
+                    sub={`${POI_LABEL[poi.kind] ?? poi.kind} · ${
+                      ctx.units === 'imperial' ? formatImperialDistance(poi.distanceKm) : formatDistance(poi.distanceKm)
+                    }`}
+                    badge={poi.ele_m ? { label: formatElevation(poi.ele_m) ?? '', tone: 'muted' } : undefined}
                     onClick={() => ctx.state.select({ kind: poi.kind as never, id: poi.id }, poi.kind as never, 'mid')}
                   />
                 ))}
@@ -661,8 +967,124 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
   );
 }
 
+/** Chrono qui avance, formaté mm:ss ou h:mm:ss. */
+function useElapsed(startedAt: number | undefined): string {
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    if (!startedAt) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [startedAt]);
+  if (!startedAt) return '0:00';
+  const total = Math.max(0, Math.floor((now - startedAt) / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = total % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+    : `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+function LiveDirectTab({ ctx }: { ctx: SheetContext }) {
+  const activity = ctx.state.activity;
+  const elapsed = useElapsed(activity?.startedAt);
+  if (!activity) {
+    return <XpEmpty title="Aucune activité en cours" hint="Démarre une activité pour voir les métriques en direct." />;
+  }
+  const speed = activity.movingS > 0 ? (activity.distanceM / activity.movingS) * 3.6 : null;
+  const next = ctx.pois[0];
+  return (
+    <>
+      <div className="xp-chrono" aria-live="off">
+        {elapsed}
+      </div>
+      <XpMetrics
+        items={[
+          { label: 'Distance', value: formatDistance(activity.distanceM / 1000) },
+          { label: 'Allure', value: speed ? `${speed.toFixed(1).replace('.', ',')} km/h` : '—' },
+          { label: 'Temps', value: formatDuration(activity.movingS) },
+          { label: 'D+', value: `${Math.round(activity.elevGainM)} m` },
+        ]}
+      />
+      <XpEyebrow>Prochain repère</XpEyebrow>
+      {next ? (
+        <XpRows>
+          <XpRow
+            icon={POI_ICON[next.kind] ?? 'pin'}
+            title={next.name}
+            sub={`${
+              ctx.units === 'imperial'
+                ? formatImperialDistance(distanceKm(ctx.state.center, [next.lon, next.lat]))
+                : formatDistance(distanceKm(ctx.state.center, [next.lon, next.lat]))
+            } · ${POI_LABEL[next.kind] ?? next.kind}`}
+          />
+        </XpRows>
+      ) : (
+        <XpEmpty
+          title="Aucun repère devant"
+          hint="Aucun point d’eau ni refuge n’est enregistré sur la suite du parcours."
+        />
+      )}
+    </>
+  );
+}
+
+/** Tours : découpe réelle de la sortie si des points existent, sinon état vide. */
+function LiveLapsTab({ ctx, elapsedS }: { ctx: SheetContext; elapsedS: number }) {
+  const activity = ctx.state.activity;
+  if (!activity) {
+    return <XpEmpty title="Aucun tour" hint="Démarre une activité pour enregistrer des tours." />;
+  }
+  const km = activity.distanceM / 1000;
+  const laps = Math.floor(km);
+  if (laps < 1) {
+    return <XpEmpty title="Pas encore de tour" hint="Le premier kilomètre n’est pas terminé." />;
+  }
+  const pace = activity.movingS > 0 ? activity.movingS / km : 0;
+  return (
+    <XpRows>
+      {Array.from({ length: Math.min(laps, 12) }, (_, index) => (
+        <XpRow
+          key={`lap-${index + 1}`}
+          icon="repeat"
+          title={`Km ${index + 1}`}
+          sub={`${formatDuration(pace)} · allure moyenne`}
+          badge={{ label: index === laps - 1 ? 'en cours' : 'ok', tone: index === laps - 1 ? 'warn' : 'good' }}
+        />
+      ))}
+      <XpRow icon="clock" title="Temps total" sub={formatDuration(elapsedS)} />
+    </XpRows>
+  );
+}
+
+/** Sécurité en activité : numéro d'urgence réel du pays, SOS, partage. */
+function LiveSafetyTab({ ctx }: { ctx: SheetContext }) {
+  const emergency = ctx.country?.practical?.emergency_numbers?.general ?? null;
+  return (
+    <>
+      <XpEyebrow>Urgences · {ctx.country?.name ?? 'pays courant'}</XpEyebrow>
+      {emergency ? (
+        <XpRows>
+          <XpRow icon="shield" tone="bad" title={emergency} sub="Numéro d’urgence local (Wikidata)" />
+        </XpRows>
+      ) : (
+        <XpEmpty title="Numéro non documenté" hint="Aucun numéro d’urgence n’est enregistré pour ce pays." />
+      )}
+      <XpEyebrow>Partage</XpEyebrow>
+      <XpRows>
+        <XpRow icon="users" title="Abonnés mutuels" sub="Position partagée pendant la sortie" />
+        <XpRow icon="pause" title="Pause" sub="Suspend le suivi sans terminer la sortie" />
+      </XpRows>
+    </>
+  );
+}
+
 function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
   const { state } = ctx;
+  const startSport = (sport: Sport) => {
+    if (ctx.onStartSport) ctx.onStartSport(sport);
+    else state.startActivity(sport);
+  };
   if (kind === 'start') {
     return [
       {
@@ -677,7 +1099,7 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
                 icon={SPORT_META[sport].icon}
                 title={SPORT_META[sport].label}
                 sub="Démarrer maintenant"
-                onClick={() => state.startActivity(sport)}
+                onClick={() => startSport(sport)}
               />
             ))}
           </XpRows>
@@ -687,37 +1109,36 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
   }
   if (kind === 'live') {
     const activity = state.activity;
+    const elapsed = activity ? Math.max(0, Math.floor((Date.now() - activity.startedAt) / 1000)) : 0;
     return [
       {
         id: 'direct',
         label: 'Direct',
         icon: 'pulse',
-        render: () =>
-          activity ? (
-            <>
-              <XpMetrics
-                items={[
-                  { label: 'Distance', value: formatDistance(activity.distanceM / 1000) },
-                  { label: 'D+', value: `${Math.round(activity.elevGainM)} m` },
-                  { label: 'Temps', value: `${Math.floor(activity.movingS / 60)} min` },
-                ]}
-              />
-              <XpEyebrow>Prochain repère</XpEyebrow>
-              {ctx.pois[0] ? (
-                <XpRows>
-                  <XpRow
-                    icon={POI_ICON[ctx.pois[0].kind] ?? 'pin'}
-                    title={ctx.pois[0].name}
-                    sub={`${formatDistance(distanceKm([activity && state.center[0], state.center[1]], [ctx.pois[0].lon, ctx.pois[0].lat]))} · ${POI_LABEL[ctx.pois[0].kind]}`}
-                  />
-                </XpRows>
-              ) : (
-                <XpEmpty title="Aucun repère devant" hint="Aucun point d’eau ni refuge n’est enregistré sur la suite du parcours." />
-              )}
-            </>
-          ) : (
-            <XpEmpty title="Aucune activité en cours" hint="Démarre une activité pour voir les métriques en direct." />
-          ),
+        render: () => <LiveDirectTab ctx={ctx} />,
+      },
+      {
+        id: 'tours',
+        label: 'Tours',
+        icon: 'repeat',
+        render: () => <LiveLapsTab ctx={ctx} elapsedS={elapsed} />,
+      },
+      {
+        id: 'coeur',
+        label: 'Cœur',
+        icon: 'heart',
+        render: () => (
+          <XpEmpty
+            title="Cardio indisponible"
+            hint="Aucune ceinture cardio n’est connectée : LKDV n’invente pas de fréquence cardiaque."
+          />
+        ),
+      },
+      {
+        id: 'securite',
+        label: 'Sécurité',
+        icon: 'shield',
+        render: () => <LiveSafetyTab ctx={ctx} />,
       },
     ];
   }
@@ -737,12 +1158,68 @@ function ActivityTabs(ctx: SheetContext, kind: string): SheetTab[] {
     ];
   }
   if (kind === 'summary') {
+    const summary = state.summary ?? null;
     return [
       {
         id: 'bilan',
         label: 'Bilan',
         icon: 'star',
-        render: () => <XpEmpty title="Aucune sortie à résumer" hint="Termine une activité pour voir ton bilan." />,
+        render: () => {
+          if (!summary) {
+            return (
+              <XpEmpty
+                title="Aucune sortie à résumer"
+                hint="Termine une activité pour voir ton bilan."
+              />
+            );
+          }
+          const durationS = summary.movingS || (summary.endedAt - summary.startedAt) / 1000;
+          return (
+            <>
+              <XpMetrics
+                items={[
+                  { label: 'Distance', value: formatDistance(summary.distanceM / 1000) },
+                  { label: 'D+', value: `${Math.round(summary.elevGainM)} m` },
+                  { label: 'Durée', value: formatDuration(durationS) },
+                ]}
+              />
+              <XpEyebrow>Sortie</XpEyebrow>
+              <XpRows>
+                <XpRow
+                  icon={SPORT_META[summary.sport].icon}
+                  title={SPORT_META[summary.sport].label}
+                  sub={new Date(summary.startedAt).toLocaleString('fr-FR', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                />
+                <XpRow
+                  icon={state.summarySaved === 'saved' ? 'check' : 'alert'}
+                  tone={state.summarySaved === 'saved' ? 'good' : 'warn'}
+                  title={
+                    state.summarySaved === 'saved'
+                      ? 'Sortie enregistrée'
+                      : state.summarySaved === 'pending'
+                        ? 'Enregistrement en cours…'
+                        : state.summarySaved === 'unauthenticated'
+                          ? 'Sortie non enregistrée'
+                          : 'Enregistrement impossible'
+                  }
+                  sub={
+                    state.summarySaved === 'unauthenticated'
+                      ? 'Connecte-toi pour conserver tes sorties'
+                      : state.summarySaved === 'failed'
+                        ? 'Réessaie depuis ton compte'
+                        : undefined
+                  }
+                />
+              </XpRows>
+            </>
+          );
+        },
       },
     ];
   }

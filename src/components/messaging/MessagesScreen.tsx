@@ -1399,6 +1399,24 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     </button>
                   ) : null}
                 </div>
+
+                <div className="mfilter-bar">
+                  <SubCapsuleTabs
+                    items={FILTERS.map((item) => ({
+                      id: item.id,
+                      label: item.label,
+                      badge: item.id === 'requests' && pendingCount > 0 ? pendingCount : undefined,
+                    }))}
+                    activeIndex={Math.max(0, FILTERS.findIndex((item) => item.id === filter))}
+                    onIndexChange={(idx) => {
+                      const next = FILTERS[idx];
+                      if (next) changeFilter(next.id);
+                    }}
+                    ariaLabel="Filtrer les discussions"
+                    placement="inline"
+                    className="mfilters"
+                  />
+                </div>
                 <div className="card-scroll">
                   {query.trim().length >= 2 && !guest ? (
                     <div className="mresults">
@@ -1516,23 +1534,6 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                       ))
                     )}
                   </div>
-                </div>
-
-                <div className="mfilter-float">
-                  <SubCapsuleTabs
-                    items={FILTERS.map((item) => ({
-                      id: item.id,
-                      label: item.label,
-                      badge: item.id === 'requests' && pendingCount > 0 ? pendingCount : undefined,
-                    }))}
-                    activeIndex={Math.max(0, FILTERS.findIndex((item) => item.id === filter))}
-                    onIndexChange={(idx) => {
-                      const next = FILTERS[idx];
-                      if (next) changeFilter(next.id);
-                    }}
-                    ariaLabel="Filtrer les discussions"
-                    className="mfilters"
-                  />
                 </div>
               </div>
             </section>

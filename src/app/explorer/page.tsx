@@ -1,12 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { getTrails } from '@/lib/queries/trails';
-import { getAtlasDensity, type AtlasDensity } from '@/lib/queries/atlas';
 import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
-import { resolveUnifiedMapEnabled } from '@/lib/atlas/rollout';
-import LegacyExplorerFallback from '@/features/explorer-v2/LegacyExplorerFallback';
-import type { MapTrail } from '@/components/explorer/types';
 import ExplorerV2 from '@/features/explorer-v2/ExplorerV2';
 import { isSceneName, sceneEnabled } from '@/features/explorer-v2/state/scenes';
 
@@ -23,11 +18,10 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 60;
 export const dynamic = 'force-dynamic';
 
 interface ExplorerPageProps {
-  searchParams?: Promise<{ atlas?: string; v2?: string; scene?: string; lat?: string; lng?: string }>;
+  searchParams?: Promise<{ v2?: string; scene?: string; lat?: string; lng?: string }>;
 }
 
 /** Centre approximatif fourni par le réseau de diffusion (jamais bloquant). */
@@ -45,65 +39,31 @@ async function approximateCenter(): Promise<[number, number] | null> {
   return null;
 }
 
+/**
+ * `/explorer` sert l'Explorer v2 (P10-04 : le moteur legacy est supprimé).
+ *
+ * Le flag `explorer_v2_enabled` reste lu pour la traçabilité du rollout : à 0 %,
+ * la page renvoie quand même v2 — l'ancien moteur n'existe plus, et un retour
+ * arrière se fait par redéploiement du commit précédent.
+ */
 export default async function ExplorerPage({ searchParams }: ExplorerPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const flags = await currentFeatureFlags();
-
-  // Explorer v2 : piloté par le flag `explorer_v2_enabled` ; `?v2=1` reste le
-  // commutateur interne (développement, tests, recette) comme `?atlas=1` hier.
-  const v2Enabled =
-    flags.explorer_v2_enabled ||
-    (process.env.NODE_ENV !== 'production' && resolvedSearchParams?.v2 === '1') ||
-    // Recette sur build de production (CI, `next start`) : jamais actif en prod.
-    (process.env.EXPLORER_V2_E2E === '1' && resolvedSearchParams?.v2 === '1');
-
-  if (v2Enabled) {
-    const scene =
-      sceneEnabled() && resolvedSearchParams?.scene && isSceneName(resolvedSearchParams.scene)
-        ? resolvedSearchParams.scene
-        : null;
-
-    const queryLat = Number.parseFloat(resolvedSearchParams?.lat ?? '');
-    const queryLng = Number.parseFloat(resolvedSearchParams?.lng ?? '');
-    const initialCenter =
-      Number.isFinite(queryLat) && Number.isFinite(queryLng) && Math.abs(queryLat) <= 90
-        ? ([queryLng, queryLat] as [number, number])
-        : await approximateCenter();
-
-    return <ExplorerV2 initialScene={scene} initialCenter={initialCenter} />;
+  if (!flags.explorer_v2_enabled) {
+    console.warn('[explorer] flag explorer_v2_enabled à 0 — v2 servi quand même (legacy supprimé)');
   }
 
-  // ── Legacy (supprimé en phase 10 après la gate finale) ────────────────────
-  const unifiedMap = resolveUnifiedMapEnabled({
-    flagEnabled: flags.explorer_unified_map_enabled,
-    atlasParam: resolvedSearchParams?.atlas,
-  });
+  const scene =
+    sceneEnabled() && resolvedSearchParams?.scene && isSceneName(resolvedSearchParams.scene)
+      ? resolvedSearchParams.scene
+      : null;
 
-  const initialTrailsPromise = getTrails({
-    minLat: 45.9237 - 0.018,
-    maxLat: 45.9237 + 0.018,
-    minLng: 6.8694 - 0.026,
-    maxLng: 6.8694 + 0.026,
-    limit: 50,
-  }).catch((error) => {
-    console.error('[ExplorerPage] Error fetching initial trails:', error);
-    return [] as MapTrail[];
-  });
+  const queryLat = Number.parseFloat(resolvedSearchParams?.lat ?? '');
+  const queryLng = Number.parseFloat(resolvedSearchParams?.lng ?? '');
+  const initialCenter =
+    Number.isFinite(queryLat) && Number.isFinite(queryLng) && Math.abs(queryLat) <= 90
+      ? ([queryLng, queryLat] as [number, number])
+      : await approximateCenter();
 
-  const atlasDensityPromise: Promise<AtlasDensity> = unifiedMap
-    ? getAtlasDensity().catch((error) => {
-        console.error('[ExplorerPage] Error fetching atlas density:', error);
-        return { countries: [], cells: [] } satisfies AtlasDensity;
-      })
-    : Promise.resolve({ countries: [], cells: [] });
-
-  const [initialTrails, atlasDensity] = await Promise.all([initialTrailsPromise, atlasDensityPromise]);
-
-  return (
-    <LegacyExplorerFallback
-      initialTrails={initialTrails}
-      unifiedMap={unifiedMap}
-      atlasDensity={atlasDensity}
-    />
-  );
+  return <ExplorerV2 initialScene={scene} initialCenter={initialCenter} />;
 }

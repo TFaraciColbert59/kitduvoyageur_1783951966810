@@ -852,7 +852,7 @@
 .lkdv-messages .phone #card.cs > .card-scroll {
   /* Même marge que la barre de recherche (10 px). Spécificité (1,3,0) :
      au-dessus de `#card.cs > .card-scroll` (1,2,0) de la grammaire. */
-  padding: 4px 10px 54px !important;
+  padding: 4px 10px 14px !important;
 }
 .lkdv-messages .phone #card.cs > .card-scroll > .ig-grid-wrap {
   /* La grammaire annule le padding de la carte par des marges négatives
@@ -938,6 +938,11 @@
    Mêmes valeurs que `.ig-tabs` de la référence (compte-apple-hig.css:705-760) :
    hauteur 32, rayon 999, padding 2,5, lentille `.ig-th` 28 ms. Seules la largeur
    et le nombre de segments changent : 4 filtres listés, aucun menu. */
+.lkdv-messages .mfilter-bar {
+  padding: 4px 10px 6px;
+  display: flex;
+  align-items: center;
+}
 .lkdv-messages .mfilter-float {
   position: absolute;
   right: 12px;

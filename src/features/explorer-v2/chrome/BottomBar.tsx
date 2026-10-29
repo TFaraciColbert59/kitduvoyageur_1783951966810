@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { XpIcon } from '../ui/XpIcon';
 
@@ -8,7 +8,7 @@ const ITEMS = [
   { id: 'hub', href: '/hub', label: 'Hub', icon: 'house' },
   { id: 'communaute', href: '/communaute', label: 'Communauté', icon: 'users' },
   { id: 'explorer', href: '/explorer', label: 'Explorer', icon: 'compass' },
-  { id: 'messages', href: '/messages', label: 'Messages', icon: 'send' },
+  { id: 'messages', href: '/messagerie', label: 'Messages', icon: 'send' },
   { id: 'compte', href: '/compte', label: 'Compte', icon: 'userplus' },
 ];
 
@@ -37,6 +37,51 @@ export function BottomBar({ active = 'explorer' }: { active?: string }) {
         );
       })}
     </nav>
+  );
+}
+
+/**
+ * Arrêt de sortie par maintien 0,8 s (04_CARTE §4) : un simple toucher n'arrête
+ * rien, l'anneau se remplit et se vide au relâchement.
+ */
+function StopHoldButton({ onStop }: { onStop: () => void }) {
+  const [progress, setProgress] = useState(0);
+  const timer = useRef<number | null>(null);
+  const startedAt = useRef(0);
+
+  const clear = useCallback(() => {
+    if (timer.current) window.clearInterval(timer.current);
+    timer.current = null;
+    setProgress(0);
+  }, []);
+
+  const start = useCallback(() => {
+    clear();
+    startedAt.current = Date.now();
+    timer.current = window.setInterval(() => {
+      const ratio = Math.min(1, (Date.now() - startedAt.current) / 800);
+      setProgress(ratio);
+      if (ratio >= 1) {
+        clear();
+        onStop();
+      }
+    }, 40);
+  }, [clear, onStop]);
+
+  return (
+    <button
+      type="button"
+      className="xp-pill-btn xp-stop-hold"
+      data-tone="bad"
+      onPointerDown={start}
+      onPointerUp={clear}
+      onPointerCancel={clear}
+      aria-label="Arrêter la sortie : maintenir 0,8 seconde"
+      data-progress={progress.toFixed(2)}
+    >
+      <XpIcon name="stop" size={15} />
+      <span className="xp-stop-ring" aria-hidden="true" style={{ '--p': progress } as React.CSSProperties} />
+    </button>
   );
 }
 
@@ -76,15 +121,7 @@ export function ActivityPill({
       <button type="button" className="xp-pill-btn" onClick={onFlag} aria-label="Poser un repère">
         <XpIcon name="flag" size={15} />
       </button>
-      <button
-        type="button"
-        className="xp-pill-btn"
-        data-tone="bad"
-        onClick={onStop}
-        aria-label="Arrêter la sortie"
-      >
-        <XpIcon name="stop" size={15} />
-      </button>
+      <StopHoldButton onStop={onStop} />
     </div>
   );
 }
