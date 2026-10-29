@@ -93,7 +93,7 @@ Playwright, population masquée, avatars masqués).
 |---|---|
 | `tsc --noEmit` | 0 erreur |
 | `next lint` | 0 erreur |
-| Vitest Explorer | **46 tests / 46** |
+| Vitest Explorer | **61 tests / 61** |
 | `next build` | `ƒ /explorer 27.6 kB · First Load JS 148 kB` (budget 170) |
 | Playwright `mobile-chromium` | **62 tests** (écrans, feuille, SOS, hors-ligne, a11y) |
 | Playwright `mobile-webkit` | idem |
