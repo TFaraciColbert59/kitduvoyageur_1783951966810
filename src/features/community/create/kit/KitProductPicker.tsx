@@ -12,6 +12,7 @@ import { chunk, matchesQuery } from './catalog';
 import { SHOP_SOURCES, type KitSource, type PickerProduct } from './types';
 import { useKitCatalog } from './useKitCatalog';
 import { WearBar } from './WearBar';
+import { SubCapsuleTabs } from '@/components/ui/CapsuleTabs';
 
 const PER_PAGE = 4;
 
@@ -211,38 +212,30 @@ export function KitProductPicker({
 
               <div className="lkdv-kp-selectors">
                 {scope === 'boutique' ? (
-                  <div className="lkdv-kp-seg" role="tablist" aria-label="Rubrique de la boutique">
-                    {SHOP_SOURCES.map((entry) => (
-                      <button
-                        key={entry.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={shop === entry.id}
-                        onClick={() => setShop(entry.id)}
-                      >
-                        {entry.label}
-                      </button>
-                    ))}
-                  </div>
+                  <SubCapsuleTabs
+                    items={SHOP_SOURCES.map((entry) => ({
+                      id: entry.id,
+                      label: entry.label,
+                    }))}
+                    activeIndex={Math.max(0, SHOP_SOURCES.findIndex((entry) => entry.id === shop))}
+                    onIndexChange={(idx) => {
+                      const entry = SHOP_SOURCES[idx];
+                      if (entry) setShop(entry.id);
+                    }}
+                    ariaLabel="Rubrique de la boutique"
+                    className="lkdv-kp-seg"
+                  />
                 ) : null}
-                <div className="lkdv-kp-seg" role="tablist" aria-label="Source des produits">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={scope === 'inventory'}
-                    onClick={() => setScope('inventory')}
-                  >
-                    Inventaire
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={scope === 'boutique'}
-                    onClick={() => setScope('boutique')}
-                  >
-                    Boutique
-                  </button>
-                </div>
+                <SubCapsuleTabs
+                  items={[
+                    { id: 'inventory', label: 'Inventaire' },
+                    { id: 'boutique', label: 'Boutique' },
+                  ]}
+                  activeIndex={scope === 'inventory' ? 0 : 1}
+                  onIndexChange={(idx) => setScope(idx === 0 ? 'inventory' : 'boutique')}
+                  ariaLabel="Source des produits"
+                  className="lkdv-kp-seg"
+                />
               </div>
             </div>,
             host
