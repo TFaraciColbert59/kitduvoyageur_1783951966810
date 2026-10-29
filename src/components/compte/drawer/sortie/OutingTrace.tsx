@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Download, MapPin, Wind } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingDetail, OutingPoint } from '@/features/compte/server/sorties';
 import type { OutingWeather } from '@/features/compte/server/weather';
 import { ElevationProfile, TraceMap, formatDuration, formatNumber, weatherIcon } from './shared';
@@ -42,9 +43,6 @@ function WeatherBlock({ weather }: { weather: OutingWeather | null }) {
           <b>Météo</b>
           <span>Aucune donnée</span>
         </header>
-        <p className="lkdv-sortie-empty-line">
-          Météo non disponible pour cette sortie : aucune position GPS n’est rattachée.
-        </p>
       </section>
     );
   }
@@ -168,9 +166,9 @@ export function OutingTrace({ detail, onExport }: OutingTraceProps) {
 
       <WeatherBlock weather={detail.weather} />
 
-      <button type="button" className="lkdv-sortie-btn primary wide" onClick={onExport}>
-        <Download size={15} aria-hidden="true" /> Télécharger le GPX
-      </button>
+      <div className="lkdv-apill-row">
+        <ActionPill tone="primary" label="Télécharger le GPX" icon={<Download />} text="GPX" onClick={onExport} />
+      </div>
     </div>
   );
 }

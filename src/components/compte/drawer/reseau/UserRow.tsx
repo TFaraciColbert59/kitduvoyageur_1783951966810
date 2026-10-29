@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Check, Clock, MessageCircle, ShieldCheck, UserPlus } from 'lucide-react';
+import { Clock, MessageCircle, ShieldCheck, UserCheck, UserMinus, UserPlus } from 'lucide-react';
 import type { ReseauUser } from '@/features/compte/server/reseau';
 
 function initials(name: string) {
@@ -92,8 +92,7 @@ export function UserRow({ user, mode, busy, onFollow, onUnfollow }: UserRowProps
           onClick={handleFollowClick}
           aria-label={following ? `Retirer ${user.name} de tes abonnements` : `Suivre ${user.name}`}
         >
-          {following && !confirming ? <Check size={14} aria-hidden="true" /> : <UserPlus size={14} aria-hidden="true" />}
-          {following ? (confirming ? 'Retirer ?' : 'Abonné') : 'Suivre'}
+          {following ? (confirming ? <UserMinus size={16} aria-hidden="true" /> : <UserCheck size={16} aria-hidden="true" />) : <UserPlus size={16} aria-hidden="true" />}
         </button>
         <a
           href={`/messagerie?to=${encodeURIComponent(user.handle)}`}

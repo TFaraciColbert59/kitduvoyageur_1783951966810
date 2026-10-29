@@ -172,11 +172,13 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
             <div className="lkdv-reseau-request-actions">
               <button
                 type="button"
-                className="lkdv-reseau-follow on"
+                className="lkdv-reseau-follow is-accept"
                 disabled={busyId === request.id}
                 onClick={() => requestMutation.mutate({ request, action: 'accept' })}
+                aria-label="Accepter la demande"
+                title="Accepter"
               >
-                <Check size={14} aria-hidden="true" /> Accepter
+                <Check size={16} aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -207,13 +209,6 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
       return (
         <DrawerEmpty
           title={search || filter > 0 ? 'Aucun résultat' : tab === 0 ? 'Tu ne suis personne' : 'Personne ne te suit encore'}
-          hint={
-            search || filter > 0
-              ? 'Essaie un autre filtre ou une autre recherche.'
-              : tab === 0
-                ? 'Découvre des randonneurs de ton massif.'
-                : 'Partage ton profil pour développer ton réseau.'
-          }
         />
       );
     }
@@ -282,10 +277,7 @@ export function ReseauDrawer({ initialTab = 0 }: { initialTab?: number }) {
   if (!user) {
     return (
       <div className="lkdv-drawer-shell">
-        <DrawerAuthRequired
-          title="Connecte-toi pour voir ton réseau"
-          hint="Tes abonnés et tes demandes sont privés. La connexion prend quelques secondes."
-        />
+        <DrawerAuthRequired title="Connecte-toi pour voir ton réseau" />
       </div>
     );
   }
@@ -348,5 +340,9 @@ export const RESEAU_CSS = `
 .lkdv-reseau-new-row{display:grid!important;grid-template-columns:34px minmax(0,1fr) auto!important;align-items:center!important;gap:8px!important;}
 .lkdv-reseau-new-row .lkdv-reseau-strip-avatar{width:34px!important;height:34px!important;}
 .lkdv-reseau-new-badge{display:inline-flex!important;align-items:center!important;height:17px!important;padding:0 6px!important;border-radius:999px!important;background:rgba(61,122,82,.12)!important;color:#2C5E3E!important;font:600 8.5px var(--sf)!important;letter-spacing:.03em!important;text-transform:uppercase!important;}
+.lkdv-reseau-follow{width:40px!important;height:32px!important;padding:0!important;justify-content:center!important;background:#17402C!important;color:#fff!important;box-shadow:0 4px 12px rgba(23,64,44,.22)!important;}
+.lkdv-reseau-follow.on{background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.5))!important;color:#17402C!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 3px 10px rgba(23,43,36,.08)!important;}
+.lkdv-reseau-follow.confirm{background:rgba(179,58,44,.12)!important;color:#9C2F22!important;box-shadow:inset 0 0 0 .5px rgba(179,58,44,.25)!important;}
+.lkdv-reseau-icon{width:40px!important;height:32px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.5))!important;color:#17402C!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 3px 10px rgba(23,43,36,.08)!important;}
 @media (max-width:380px){.lkdv-reseau-row{grid-template-columns:40px minmax(0,1fr) auto!important;gap:7px!important;}.lkdv-reseau-avatar{width:40px!important;height:40px!important;}.lkdv-reseau-icon:nth-of-type(3){display:none!important;}}
 `;

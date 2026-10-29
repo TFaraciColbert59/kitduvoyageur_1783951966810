@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { UserMinus, UserPlus, Users } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingParticipant } from '@/features/compte/server/sorties';
 import { DrawerEmpty } from '../shell/DrawerShell';
 import { initials } from './shared';
@@ -45,20 +46,13 @@ export function OutingParticipants({ participants, canEdit, busy, onAdd, onRemov
               />
             </div>
           </label>
-          <button type="submit" className="lkdv-sortie-btn primary" disabled={busy || !handle.trim()}>
-            <UserPlus size={15} aria-hidden="true" /> {busy ? 'Ajout…' : 'Ajouter'}
-          </button>
+          <ActionPill type="submit" tone="primary" label="Ajouter le compagnon" icon={<UserPlus />} busy={busy} disabled={!handle.trim()} />
         </form>
       ) : null}
 
       {companions.length === 0 ? (
         <DrawerEmpty
           title="Sortie solo"
-          hint={
-            canEdit
-              ? 'Personne n’est encore rattaché à cette sortie. Invite un compagnon avec son handle.'
-              : 'Le propriétaire n’a pas encore ajouté de compagnon à cette sortie.'
-          }
           action={
             <span className="lkdv-sortie-hint-ico" aria-hidden="true">
               <Users size={20} />

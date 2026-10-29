@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Backpack, PackagePlus, Trash2 } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingGearItem, OutingKit } from '@/features/compte/server/sorties';
 import { DrawerEmpty } from '../shell/DrawerShell';
 import { generatedProductImage } from '../cards/productImage';
@@ -76,9 +77,7 @@ export function OutingGear({ gear, kit, missingGear, canEdit, busy, onAttach, on
               </small>
             </div>
             {canEdit && gear.length === 0 && kit.items.length > 0 ? (
-              <button type="button" className="lkdv-sortie-btn primary" onClick={onAttach} disabled={busy}>
-                <PackagePlus size={15} aria-hidden="true" /> {busy ? 'Ajout…' : 'Rattacher'}
-              </button>
+              <ActionPill tone="primary" label={`Rattacher ${kit.name}`} icon={<PackagePlus />} busy={busy} onClick={onAttach} />
             ) : null}
           </div>
         </section>
@@ -87,18 +86,7 @@ export function OutingGear({ gear, kit, missingGear, canEdit, busy, onAttach, on
       {gear.length === 0 ? (
         <DrawerEmpty
           title="Aucun matériel rattaché"
-          hint={
-            kit
-              ? 'Rattache le kit de cette sortie pour retrouver les objets réellement portés.'
-              : 'Cette sortie n’a pas de kit associé.'
-          }
-          action={
-            canEdit && kit && kit.items.length > 0 ? (
-              <button type="button" className="lkdv-sortie-btn ghost" onClick={onAttach} disabled={busy}>
-                <PackagePlus size={15} aria-hidden="true" /> Rattacher {kit.name}
-              </button>
-            ) : undefined
-          }
+          hint={kit ? undefined : 'Pas de kit associé.'}
         />
       ) : (
         <>

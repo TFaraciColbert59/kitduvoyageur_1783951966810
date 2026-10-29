@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { LogOut, Send, Share2, UserPlus } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import type { Club, ClubNextEvent } from './cards/ClubCard';
 import {
   finiteCountOrNull,
@@ -466,32 +468,16 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
 
         <div className="lkdv-club-actions">
           {membershipStatus === 'active' ? (
-            <button
-              type="button"
-              className="lkdv-club-btn danger"
-              onClick={() => void toggleMembership()}
-            >
-              Quitter
-            </button>
+            <ActionPill tone="danger" label="Quitter" icon={<LogOut />} onClick={() => void toggleMembership()} />
           ) : membershipStatus === null ? (
-            <button
-              type="button"
-              className="lkdv-club-btn primary"
-              onClick={() => void toggleMembership()}
-            >
-              Rejoindre
-            </button>
+            <ActionPill tone="primary" label="Rejoindre" icon={<UserPlus />} onClick={() => void toggleMembership()} />
           ) : (
             <span className="lkdv-club-role">
               {membershipStatus === 'pending' ? 'En attente' : 'Banni'}
             </span>
           )}
-          <button type="button" className="lkdv-club-btn" onClick={() => void shareClub(false)}>
-            Partager
-          </button>
-          <button type="button" className="lkdv-club-btn" onClick={() => void shareClub(true)}>
-            Inviter
-          </button>
+          <ActionPill label="Partager" icon={<Share2 />} onClick={() => void shareClub(false)} />
+          <ActionPill label="Inviter" icon={<Send />} onClick={() => void shareClub(true)} />
         </div>
 
         <p

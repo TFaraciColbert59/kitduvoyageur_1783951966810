@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Dog, HeartPulse, Plus, Trash2, UserPlus } from 'lucide-react';
+import { Check, Dog, HeartPulse, Plus, Trash2, UserPlus } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import Icon from '@/components/ui/Icon';
-import { Badge, Button, IconButton, Switch, type BadgeTone } from '@/components/ui';
+import { Badge, IconButton, Switch, type BadgeTone } from '@/components/ui';
 import type { HumanParticipant, DogParticipant } from '@/features/participants/types/participant.types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { carnetRoleLabel, dogLoadView, formatJoinDate, personInitials, teamRoleLabel } from '../../../mobile/teamEngine';
@@ -98,16 +99,9 @@ export function TeamMembersDrawer({
             <option value="editor">Éditeur — peut modifier</option>
             <option value="viewer">Lecteur — consultation seule</option>
           </select>
-          <Button
-            type="submit"
-            variant="primary"
-            fullWidth
-            loading={isPending}
-            icon={<UserPlus size={15} aria-hidden="true" />}
-            className="!py-3 text-sm font-bold"
-          >
-            {isPending ? 'Envoi…' : "Envoyer l'invitation"}
-          </Button>
+          <div className="lkdv-apill-dock">
+            <ActionPill type="submit" tone="primary" label="Envoyer l'invitation" icon={<UserPlus />} busy={isPending} />
+          </div>
         </form>
       )}
 
@@ -261,18 +255,17 @@ export function TeamCarnetDrawer({
                 </IconButton>
               )}
             </div>
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => {
-                triggerHaptic('selection');
-                onMedical(human);
-              }}
-              icon={<HeartPulse size={14} aria-hidden="true" />}
-              className="mt-2.5 !py-2.5 text-xs font-bold"
-            >
-              Fiche médicale / ICE
-            </Button>
+            <div className="lkdv-apill-row mt-2">
+              <ActionPill
+                label="Fiche médicale / ICE"
+                text="ICE"
+                icon={<HeartPulse />}
+                onClick={() => {
+                  triggerHaptic('selection');
+                  onMedical(human);
+                }}
+              />
+            </div>
           </li>
         ))}
       </ul>
@@ -334,15 +327,9 @@ export function TeamCarnetDrawer({
           aria-label="Téléphone du contact d'urgence ICE"
           className="glass-input w-full px-3 py-2.5 text-sm text-[var(--lkv-text-primary)] min-h-[44px]"
         />
-        <Button
-          type="submit"
-          variant="primary"
-          fullWidth
-          disabled={!firstName.trim()}
-          className="!py-3 text-sm font-bold"
-        >
-          Ajouter au carnet
-        </Button>
+        <div className="lkdv-apill-dock">
+          <ActionPill type="submit" tone="primary" label="Ajouter au carnet" icon={<Check />} disabled={!firstName.trim()} />
+        </div>
       </form>
     </GroupeDrawer>
   );
@@ -489,15 +476,9 @@ export function TeamDogsDrawer({
         <p className="text-[10.5px] font-medium text-[var(--lkv-text-primary)]/60">
           Capacité de portage estimée à 15 % du poids : {(Math.max(0, Number(weight) || 0) * 0.15).toFixed(1)} kg
         </p>
-        <Button
-          type="submit"
-          variant="primary"
-          fullWidth
-          disabled={!name.trim()}
-          className="!py-3 text-sm font-bold"
-        >
-          Ajouter le compagnon
-        </Button>
+        <div className="lkdv-apill-dock">
+          <ActionPill type="submit" tone="primary" label="Ajouter le compagnon" icon={<Check />} disabled={!name.trim()} />
+        </div>
       </form>
     </GroupeDrawer>
   );

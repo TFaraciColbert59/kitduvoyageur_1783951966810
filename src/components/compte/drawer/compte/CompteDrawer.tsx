@@ -128,7 +128,6 @@ export function CompteDrawer({ initialTab = 0 }: { initialTab?: number }) {
       <div className="lkdv-drawer-shell">
         <DrawerAuthRequired
           title="Connecte-toi pour accéder à ton compte"
-          hint="Commandes, notifications, réglages, profil et partage : tout est rattaché à ta session."
         />
       </div>
     );
@@ -286,6 +285,29 @@ export const COMPTE_CSS = `
 .lkdv-compte-share-note b{display:inline-flex!important;align-items:center!important;gap:5px!important;font:600 11.5px var(--sf)!important;color:#2C5E3E!important;}
 .lkdv-compte-share-note p{margin:0!important;font:400 11px/1.45 var(--sf)!important;color:var(--label2)!important;}
 .lkdv-compte-empty-ico{color:var(--label3)!important;}
+/* Harmonisation : boutons plus petits et plus légers, images en grand, pilules icône. */
+.lkdv-compte-btn{height:32px!important;padding:0 12px!important;font:600 11.5px var(--sf)!important;}
+.lkdv-compte-btn.primary{box-shadow:0 4px 12px rgba(23,64,44,.22)!important;}
+.lkdv-compte-btn.ghost{background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.5))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 3px 10px rgba(23,43,36,.08)!important;color:#17402C!important;}
+.lkdv-compte-share-actions{justify-content:center!important;}
+.lkdv-compte-share-note{flex-direction:row!important;align-items:center!important;gap:6px!important;margin:0!important;padding:8px 11px!important;font:500 11px var(--sf)!important;color:#2C5E3E!important;}
+.lkdv-compte-order-actions{justify-content:flex-end!important;gap:8px!important;}
+.lkdv-compte-edit-hero{position:relative!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;border-radius:20px!important;overflow:hidden!important;}
+.lkdv-compte-edit-hero.has-cover{min-height:178px!important;}
+.lkdv-compte-edit-cover{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;}
+.lkdv-compte-edit-hero.has-cover .lkdv-compte-edit-preview{position:relative!important;margin:8px!important;background:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,255,255,.52))!important;-webkit-backdrop-filter:blur(16px) saturate(1.6)!important;backdrop-filter:blur(16px) saturate(1.6)!important;}
+.lkdv-compte-edit-hero-tools{position:absolute!important;top:8px!important;right:8px!important;z-index:2!important;display:flex!important;gap:6px!important;}
+.lkdv-compte-edit-hero:not(.has-cover) .lkdv-compte-edit-hero-tools{position:static!important;order:2!important;justify-content:flex-end!important;margin-top:6px!important;}
+.lkdv-compte-edit-avatar{position:relative!important;overflow:visible!important;}
+.lkdv-compte-edit-avatar img{border-radius:50%!important;}
+.lkdv-compte-photo-pill{cursor:pointer!important;}
+.lkdv-compte-photo-pill input{position:absolute!important;inset:0!important;opacity:0!important;cursor:pointer!important;}
+.lkdv-compte-photo-pill[data-disabled]{opacity:.45!important;pointer-events:none!important;}
+.lkdv-compte-photo-pill.is-small{position:absolute!important;right:-8px!important;bottom:-6px!important;width:28px!important;min-width:28px!important;height:24px!important;}
+.lkdv-compte-photo-pill.is-small svg{width:13px!important;height:13px!important;}
+.lkdv-compte-edit-avatar-clear{position:absolute!important;left:8px!important;top:8px!important;z-index:2!important;}
+.lkdv-compte-savebar{gap:8px!important;}
+.lkdv-compte-setting-head .lkdv-compte-setting-pill{margin-left:auto!important;}
 @media (max-width:380px){.lkdv-compte-order-detail{grid-template-columns:1fr!important;}.lkdv-compte-link-row{grid-template-columns:74px minmax(0,1fr) 24px!important;}.lkdv-compte-share-qr img{width:156px!important;height:156px!important;}}
 @media (prefers-reduced-motion:reduce){.lkdv-compte-switch,.lkdv-compte-switch i,.lkdv-compte-btn{transition:none!important;}}
 `;

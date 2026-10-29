@@ -29,19 +29,16 @@ export function OutingComments({ kudos, comments, busy, onKudos, onComment, onDe
           <small>
             {kudos.users.length > 0
               ? kudos.users.map((user) => user.name).slice(0, 4).join(', ')
-              : 'Sois le premier à saluer cette sortie.'}
+              : null}
           </small>
         </div>
       </section>
 
       <div className="lkdv-sortie-comments-head">
         <b>{comments.length > 0 ? `${comments.length} commentaire${comments.length > 1 ? 's' : ''}` : 'Commentaires'}</b>
-        <span>Le fil de cette sortie.</span>
       </div>
 
-      {comments.length === 0 ? (
-        <p className="lkdv-sortie-empty-line">Sois le premier à réagir à cette sortie.</p>
-      ) : (
+      {comments.length === 0 ? null : (
         <ul className="lkdv-sortie-comments">
           {comments.map((comment) => (
             <li key={comment.id}>
