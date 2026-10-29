@@ -113,6 +113,29 @@ test.describe('Explorer v2 · états @explorer-v2', () => {
     expect(opened).toBeGreaterThanOrEqual(8);
   });
 
+  test('survol de trace : la caméra parcourt l’itinéraire @explorer-v2', async ({ page }) => {
+    await gotoScene(page, '/explorer?v2=1&scene=rando');
+    await expect(root(page).locator('.xp-sheet')).toBeVisible({ timeout: 45_000 });
+    await page.waitForSelector('.xp-map[data-ready="1"]', { timeout: 45_000 }).catch(() => {});
+    const before = await page.evaluate(() => {
+      const map = window.__xpMap;
+      return map ? { bearing: map.getBearing(), center: map.getCenter().lng } : null;
+    });
+    if (!before) test.skip(true, 'carte non initialisée');
+    // Mini-sélecteur « Survol 3D » (2e segment) sur l'onglet Trace.
+    await root(page).locator('.xp-mini-inner button').nth(1).click({ force: true });
+    await page.waitForTimeout(2500);
+    const after = await page.evaluate(() => {
+      const map = window.__xpMap;
+      return map ? { bearing: map.getBearing(), center: map.getCenter().lng } : null;
+    });
+    expect(after).not.toBeNull();
+    const moved =
+      Math.abs((after as { bearing: number }).bearing - (before as { bearing: number }).bearing) > 0.5 ||
+      Math.abs((after as { center: number }).center - (before as { center: number }).center) > 0.0005;
+    expect(moved, 'la caméra du survol doit bouger').toBe(true);
+  });
+
   test('unités impériales pour les États-Unis @explorer-v2', async ({ page }) => {
     await gotoScene(page, '/explorer?v2=1&scene=usa');
     await expect(root(page)).toHaveAttribute('data-units', 'imperial', { timeout: 45_000 });

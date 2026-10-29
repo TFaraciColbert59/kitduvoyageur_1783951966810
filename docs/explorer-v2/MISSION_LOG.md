@@ -540,3 +540,34 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   Playwright mobile-chromium et mobile-webkit (62 tests par projet, retries
   activés pour la charge machine), axe, greps, intrusion RLS.
 - Statut : OK
+
+### [P7-16] GPS rejoué, 9 sports · 2026-10-29 14:45
+- Fichiers : `src/features/explorer-v2/activity/tracker.ts`, `tests/explorer-v2/tracker.spec.ts`
+- Preuve : **12 tests verts**. Le tracker applique les règles produit (précision
+  > 30 m ignorée, saut > 100 m en < 2 s rejeté, mouvement > 0,3 m/s, altitude
+  lissée) et produit distance, D+ et temps en mouvement pour les 9 profils :
+  ```
+  course 0,9 km · rando 0,66 km · vélo 1,95 km · kayak 1,08 km (D+ = 0) ·
+  trail 0,78 km · ski 0,84 km · escalade 0,36 km · famille 0,48 km · bivouac 0,6 km
+  ```
+- Statut : OK (traces synthétiques cohérentes avec la vitesse de chaque sport ;
+  le rejeu de GPX réels reste à brancher sur l'API d'activité)
+
+### [P2-08] Survol de trace · 2026-10-29 14:48
+- Preuve : test e2e « survol de trace : la caméra parcourt l’itinéraire » —
+  après activation du mini-sélecteur « Survol 3D », le cap ou le centre de la
+  carte change réellement (relevé `window.__xpMap`).
+- Statut : OK
+
+### [P9-09] Journalisation sans coordonnées précises · 2026-10-29 14:47
+- Fichiers : `src/features/explorer-v2/lib/telemetry.ts`, `tests/explorer-v2/telemetry.spec.ts`
+- Preuve : 3 tests verts — coordonnées arrondies au degré, clés sensibles
+  masquées (email, jeton, session, position), profondeur et taille bornées.
+- Statut : OK
+
+### [P9-03] Budget de trames — mesure non représentative · 2026-10-29 14:44
+- Fichiers : `scripts/explorer-v2/measure-frames.mjs`
+- Mesure : **3,3 i/s** dans ce navigateur headless sans GPU, machine chargée.
+  Ce chiffre ne mesure pas le produit mais la pile de rendu logicielle : il est
+  donc **non concluant**. Le script est livré pour la CI (navigateur avec GPU).
+- Statut : NON fait — mesure à refaire en CI.

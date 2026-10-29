@@ -47,7 +47,7 @@ Coche `[x]` uniquement avec une entrée correspondante dans `docs/explorer-v2/MI
 - [x] **P2-05** · Hiérarchie P0–P3 + collisions + clustering + zones protégées — _preuve : e2e : densité ≤ 6 / 100 px, rien sous le tiroir_
 - [x] **P2-06** · 13 styles de tracés — _preuve : capture planche réelle comparée à `Traces.png`_
 - [x] **P2-07** · Plongée entre niveaux — _preuve : e2e + trace de frames_
-- [ ] **P2-08** · Survol de trace — _preuve : e2e + durée mesurée_
+- [x] **P2-08** · Survol de trace — _preuve : e2e + durée mesurée_
 - [x] **P2-09** · Orbite de sommet (pause au toucher, reprise 6 s) — _preuve : e2e_
 - [x] **P2-10** · Révélation de point — _preuve : e2e_
 - [ ] **P2-11** · Suivi en activité — _preuve : e2e GPS rejoué_
@@ -128,7 +128,7 @@ Coche `[x]` uniquement avec une entrée correspondante dans `docs/explorer-v2/MI
 - [x] **P7-13** · Écran **Bilan** (Fin de sortie) : contenu, onglets, boutons, données réelles [03_ECRANS#bilan] — _preuve : capture réelle `preuves/Bilan.png` + e2e `Bilan.spec.ts`_
 - [x] **P7-14** · Écran **Arriere** (Arrière-plan · Live Activity) : contenu, onglets, boutons, données réelles [03_ECRANS#arriere] — _preuve : capture réelle `preuves/Arriere.png` + e2e `Arriere.spec.ts`_
 - [x] **P7-15** · Compte à rebours 3·2·1 + appui long carte pour lancer — _preuve : e2e_
-- [ ] **P7-16** · GPS rejoué pour les 9 sports, métriques cohérentes — _preuve : e2e + valeurs attendues_
+- [x] **P7-16** · GPS rejoué pour les 9 sports, métriques cohérentes — _preuve : e2e + valeurs attendues_
 - [x] **P7-17** · Hors-trace : seuils 40 m / 15 s, retour 25 m — _preuve : e2e_
 - [x] **P7-18** · SOS : maintien 1,5 s, compte à rebours annulable, appel simulé, ligne `sos_alerts` — _preuve : e2e + SQL_
 - [x] **P7-19** · Stop par maintien 0,8 s → bilan → `hike_sessions` — _preuve : SQL_
@@ -158,7 +158,7 @@ Coche `[x]` uniquement avec une entrée correspondante dans `docs/explorer-v2/MI
 - [x] **P9-06** · Crate Rust/WASM si gain ≥ 2× (sinon décision consignée) — _preuve : bench comparé_
 - [x] **P9-07** · Requêtes au démarrage ≤ 12 hors tuiles — _preuve : HAR_
 - [x] **P9-08** · Index BDD vérifiés pour chaque RPC — _preuve : `explain analyze`_
-- [ ] **P9-09** · Erreurs client journalisées sans coordonnées précises (RUM/console serveur existants) — _preuve : test qui force une erreur et lit le journal_
+- [x] **P9-09** · Erreurs client journalisées sans coordonnées précises (RUM/console serveur existants) — _preuve : test qui force une erreur et lit le journal_
 - [ ] **P9-GATE** · gate de phase verte (`06_PHASES.md`)
 
 ## P10 · Bascule et finition

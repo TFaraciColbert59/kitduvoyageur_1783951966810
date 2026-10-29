@@ -124,7 +124,10 @@ export default function MapStage({
       maxPitch: 70,
     });
     mapRef.current = map;
-    if (process.env.NODE_ENV !== 'production') {
+    if (
+      process.env.NODE_ENV !== 'production' ||
+      process.env.NEXT_PUBLIC_EXPLORER_SCENES === '1'
+    ) {
       (window as unknown as { __xpMap?: MapLibreMap }).__xpMap = map;
     }
 
