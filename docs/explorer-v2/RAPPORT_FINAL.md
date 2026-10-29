@@ -45,7 +45,7 @@ Date : 2026-10-28 · Branche : `feat/explorer-v2` · Base : `feat/explorer-v2` i
 
 | Mesure | Valeur | Budget | État |
 |---|---|---|---|
-| First Load JS `/explorer` | **141 Ko** | ≤ 170 Ko | ✅ (−201 Ko : moteur legacy passé en chunk asynchrone) |
+| First Load JS `/explorer` | **148 Ko** | ≤ 170 Ko | ✅ (legacy supprimé, moteur v2 seul) |
 | `explorer_pois` | 115 ms | < 300 ms | ✅ |
 | `explorer_place` | 172–210 ms | < 300 ms | ✅ |
 | `explorer_routes` | 286 ms | < 300 ms | ✅ |
@@ -56,9 +56,9 @@ Date : 2026-10-28 · Branche : `feat/explorer-v2` · Base : `feat/explorer-v2` i
 
 ## 3. Limites restantes (chacune avec sa preuve)
 
-1. ~~Bundle à 342 Ko~~ **corrigé** : le moteur legacy est chargé en `next/dynamic`
-   (`LegacyExplorerFallback`), le First Load JS tombe à **141 Ko**
-   (preuve : `ƒ /explorer 20.4 kB 141 kB`).
+1. ~~Bundle à 342 Ko~~ **corrigé** : le legacy est d'abord passé en chunk
+   asynchrone (141 Ko), puis **supprimé** — le First Load JS est à **148 Ko**
+   (preuve : `ƒ /explorer 27.5 kB 148 kB`).
 2. **Géométries en base** : les 49 617 lignes de `admin_regions_geo` restent sans
    géométrie et la France n'a aucune ligne. Les régions sont servies par Natural Earth
    en statique. Preuve : `AUDIT_VERIFIE.md §2.1`.
@@ -70,8 +70,13 @@ Date : 2026-10-28 · Branche : `feat/explorer-v2` · Base : `feat/explorer-v2` i
    Preuve : `ETAT_DES_POINTS.md`.
 5. **Parité 42 écrans** : les captures existent, la revue visuelle paire par paire
    n'est pas terminée ; `PARITE.md` donne le statut honnête écran par écran.
-6. **Aucun test sur authentifié** : pas de compte de test, donc RLS croisée et
-   écriture d'activité non exercées.
+6. ~~Aucun test sur authentifié~~ **corrigé** : deux comptes de recette réels,
+   11 contrôles d'intrusion RLS verts, parcours d'activité complet (6/6),
+   création de départ et signalement prouvées (4/4 et 5/5).
+7. **i18n** : les libellés Explorer sont en français dans le code (~180 chaînes),
+   pas encore branchés sur le système i18n existant (P8-08).
+8. **Mesures navigateur lourdes** (Lighthouse, frames, mémoire 10 min) non faites :
+   outils absents de cette machine ; à exécuter en CI.
 
 ## 4. Décisions
 

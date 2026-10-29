@@ -485,3 +485,18 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   Attributions visibles en pied de page (`xp-attribution`) : OpenStreetMap,
   OpenFreeMap, Natural Earth, AWS Terrain, MET Norway, Wikidata.
 - Statut : OK
+
+### [P4/P5/P6/P7/P8] Les 41 écrans de la maquette · 2026-10-29 10:00
+- Fichiers : `tests/explorer-v2/screens.e2e.spec.ts`, `scripts/explorer-v2/capture-scenes.mjs`
+- Preuve :
+  ```
+  $ npx playwright test tests/explorer-v2/screens.e2e.spec.ts --project=mobile-chromium
+  41 passed (47.4s)
+  ```
+  Chaque écran a : une capture réelle (`docs/explorer-v2/preuves/screens/<Ecran>.png`),
+  une paire de parité quand elle est versionnée (`docs/explorer-v2/parite/`), et un
+  test structurel (titre réel non vide, nombre d'onglets annoncé par `03_ECRANS.md`,
+  une seule barre basse ou pastille d'activité, thème sombre pour `nuit`).
+  « Données réelles » suit `00_MISSION §6.4` : une source absente en base donne
+  l'état vide prévu, jamais une valeur inventée (danger, ami, avis).
+- Statut : OK

@@ -84,7 +84,7 @@ const tokenA = await signIn(accounts.a);
 const tokenB = await signIn(accounts.b);
 
 const sessionA = await rest(
-  `activity_sessions?select=id,user_id,share_level,status&user_id=eq.${accounts.a.userId}`,
+  `activity_sessions?select=id,user_id,share_level,status&user_id=eq.${accounts.a.userId}&status=eq.live`,
   { token: tokenA },
 );
 const sessionId = Array.isArray(sessionA.json) ? sessionA.json[0]?.id : null;

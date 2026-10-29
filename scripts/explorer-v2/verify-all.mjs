@@ -33,6 +33,20 @@ const args = process.argv.slice(2);
 const only = (args.find((a) => a.startsWith('--only=')) || '').slice('--only='.length);
 const finalMode = args.includes('--final');
 
+/** Charge `.env.local` (les scripts d'intrusion lisent `process.env`). */
+function loadLocalEnv() {
+  const path = join(ROOT, '.env.local');
+  if (!existsSync(path)) return {};
+  const values = {};
+  for (const line of readFileSync(path, 'utf8').split('\n')) {
+    const match = line.match(/^([A-Z0-9_]+)=(.*)$/);
+    if (match) values[match[1]] = match[2].trim();
+  }
+  return values;
+}
+
+const LOCAL_ENV = loadLocalEnv();
+
 function log(line = '') {
   LOG.push(line);
   process.stdout.write(`${line}\n`);
@@ -51,7 +65,7 @@ function run(step, cmd, cmdArgs, opts = {}) {
     // Playwright ne rend pas la main quand sa sortie est pipée dans cet
     // environnement : on hérite du terminal pour cette étape.
     stdio: opts.inherit ? 'inherit' : 'pipe',
-    env: { ...process.env, CI: '1', ...(opts.env || {}) },
+    env: { ...process.env, ...LOCAL_ENV, CI: '1', ...(opts.env || {}) },
     timeout: opts.timeout ?? 30 * 60 * 1000,
     maxBuffer: 64 * 1024 * 1024,
   });

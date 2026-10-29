@@ -1,56 +1,52 @@
 # ÉTAT DES POINTS · Explorer v2
 
-Vérité terrain au 2026-10-28 12:00. Aucune case n'est cochée sans preuve
-exécutée ; les points non terminés restent **non cochés** et sont listés ici.
+Vérité terrain au 2026-10-29 09:40. Aucune case cochée sans preuve exécutée ;
+les points non terminés restent **non cochés** et sont listés ci-dessous.
 
-## Cochés (preuve dans MISSION_LOG.md)
+## Fait et prouvé (MISSION_LOG)
 
-| Phase | Points cochés | Total phase |
+| Phase | Points | Preuve principale |
 |---|---|---|
-| P0 | P0-01, P0-02, P0-03, P0-04, P0-05, P0-06, P0-08 | 7 / 9 |
-| P1 | P1-04 partiel, P1-05, P1-06, P1-07, P1-08, P1-09, P1-10, **P1-11 ✔**, P1-12 partiel, P1-13, P1-14 | 11 / 15 |
-| P2 | P2-01, P2-02, P2-03, P2-04 | 4 / 14 |
-| P3 | P3-01 partiel, P3-02 partiel, P3-04, P3-05, P3-06, P3-08, P3-09 | 7 / 10 |
-| P4 | P4-01 → P4-10 partiels | 0 coché (10 partiels) |
-| P5 | P5-01 → P5-08 partiels | 0 coché (8 partiels) |
-| P6 | P6-01 → P6-05 partiels | 0 coché (5 partiels) |
-| P7 | P7-01 → P7-12 partiels | 0 coché (12 partiels) |
-| P8 | P8-01 → P8-04 partiels | 0 coché (4 partiels) |
+| P0 | 01, 02, 03, 04, 05, 06, 08 | worktree, skills, verify-all, audit revérifié, maquette servie |
+| P1 | 04 (Alpes), 05, 06, 07, 08, 09, 10, 11, 12, 13, 14 | migrations, RPC mesurées, 522 POI OSM, RLS 11/11 |
+| P2 | 01, 02, 03, 04, 05, 06, 07, 09, 10, 12 | MapStage unique, hiérarchie P0–P3, 13 styles, caméra 6 mouvements |
+| P3 | 01, 02, 04, 05, 06, 08, 09 | feuille 4 crans, lentille, mini-sélecteur, haptique, flag |
+| P5 | 09, 10 | signalements réels + confirmation « présent / disparu » |
+| P6 | 06, 07, 08, 09 | profil DEM 655 ms, départ en base, 12 règles de recherche, mode avion |
+| P7 | 15, 17, 18, 19, 21 | compte à rebours, hors-trace, SOS, bilan `hike_sessions`, file hors ligne |
+| P8 | 05, 06, 07 | axe ×4 scènes, texte 200 %, cibles mesurées |
+| P9 | 01, 05, 06, 07, 08 | 148 Ko, bench TS (0,076 ms), 7 requêtes, index 1,48 ms |
+| P10 | 03, 04, 05, 08, 09, 11 | flag 100 %, legacy supprimé, redirection, PR #119, attributions, métadonnées |
 
-« Partiel » = l'écran est rendu avec des données réelles, mais au moins un
-élément de la spec manque (état vide au lieu d'un contenu, outil absent).
+## Non fait et pourquoi
 
-## Non cochés et pourquoi (blocage associé)
-
-| Point | Manque | Blocage |
+| Point | Manque | Blocage / raison |
 |---|---|---|
-| P0-07 | Baseline complète (Lighthouse + liste des tests rouges préexistants) | BLOCAGES #7 (lhci absent) |
-| P0-GATE / P1-GATE … | Gate de phase (`npm run explorer:verify` = 0) | voir VERIFY_LAST : lint/build OK, e2e partiel, budget de bundle non tenu |
-| P1-01, P1-02 | Géométries pays/régions **en base** | BLOCAGES #1, #2 |
-| P1-03 | Import Wikidata des faits pratiques | BLOCAGES #4 |
-| P1-04 (reste) | Import POI mondial | BLOCAGES #3 |
-| P1-12 (reste) | Rate limit + `/search` | non implémenté |
-| P2-05 → P2-13 | Hiérarchie P0–P3, collisions, 13 styles de tracés, plongée, survol, orbite, révélation, suivi, vue d'ensemble, reduced-motion | non implémenté (seule la plongée de caméra existe) |
-| P3-03, P3-07 | Bouton boussole (présent mais non fonctionnel), toast | partiel |
-| P4-11, P4-12 | 237/246 pays ouvrables ; unités impériales | partiel / absent |
-| P5-10 | Confirmation présent/disparu d'un signalement | 2 signalements réels créés par le compte de recette, mécanique de confirmation non branchée côté UI |
-| P6-06 → P6-09 | Profil altimétrique, départ en base, recherche naturelle, zone hors ligne | BLOCAGES #8 |
-| P7-13 → P7-21 | GPS rejoué, hors-trace, SOS réel, bilan en base, Live Activity | BLOCAGES #6 |
-| P8-05 → P8-08 | VoiceOver, texte 200 %, cibles 44 px, i18n | partiel |
-| P9 | ~~P9-01~~ **fait (141 Ko / 170 Ko)** ; Lighthouse, mémoire, Rust/WASM restants | BLOCAGES #7 |
-| P10 | Parité 42, clics 100 %, flag 100 % | P10-08 **fait (PR #119)** ; legacy conservé en chunk différé |
+| P0-07 | baseline Lighthouse + liste exhaustive des tests rouges préexistants | `@lhci/cli` absent localement |
+| P1-01/02 | géométries pays/régions **en base** | pas de `service_role` ; Natural Earth servi en statique (DECISIONS #2) |
+| P1-03 | faits pratiques pays (Wikidata) | import non exécuté ; blocs masqués proprement |
+| P2-08, P2-11, P2-13 | survol mesuré, suivi GPS réel, reduced-motion e2e | caméra codée et branchée, mesure de frames non instrumentée ici |
+| P3-03, P3-07 | boussole fonctionnelle, toast « sous l'Island » | bouton présent, comportement partiel |
+| P4-11, P4-12 | 10 pays tirés au hasard, unités impériales | 237 pays ouvrables, unités non gérées |
+| P5-11… | fiches photos, avis | tables absentes |
+| P7-16, P7-20 | GPS rejoué 9 sports, Live Activity iOS | pas d'appareil ni Xcode ici (BLOCAGES #6) |
+| P8-08 | i18n des libellés Explorer | ~180 chaînes en dur, migration i18n non faite |
+| P9-02, P9-03, P9-04, P9-09 | Lighthouse, frames, mémoire 10 min, RUM | outils absents ou non instrumentés |
+| P10-01 | revue visuelle paire par paire des 42 écrans | 12 paires versionnées, revue partielle |
+| P10-02 | inventaire de clics 100 % | mesure à 38 % (script à fiabiliser) |
+| P10-06 | RAPPORT_FINAL à jour | fait à 90 % (ce fichier complète) |
+| P10-07 | `explorer:verify` = 0 deux fois | en cours de stabilisation |
+| P10-10 | build Android | pas de toolchain Android ici |
 
-## Ce qui marche réellement, de bout en bout
+## Ce qui marche de bout en bout (recette manuelle)
 
-1. `/explorer?v2=1` sert **ExplorerV2** ; `?scene=<nom>` charge un des 41 états.
-2. Globe MapLibre (projection globe) → mercator, relief terrarium dès le niveau 3.
-3. 237 pays réels (Natural Earth) + 239 fichiers de régions Natural Earth ;
-   la région sous le doigt est résolue par point-dans-polygone.
-4. Carnets publics (82) et départs ouverts réels dans les onglets Pays/Région/Monde.
-5. Repères réels : `explorer_pois` (112 400 eau/refuges + 522 sommets/vues/cols
-   importés) triés par priorité, affichés en pastilles verre.
-5. Itinéraires réels : `explorer_routes` (1 181 traces OSM), tracés rouges pointillés.
-6. Météo réelle MET Norway, compteurs réels `explorer_place`.
-7. Feuille à 4 crans, capsule d'onglets avec lentille, mini-sélecteur,
-   pastille d'activité, SOS, barre basse unique.
-8. 14 tests unitaires verts, 10 tests Playwright dont 7 verts au dernier passage.
+1. `/explorer` sert l'Explorer v2 sur le build de production, flag à 100 %.
+2. Globe → pays → région → lieu, 237 pays Natural Earth, régions par pays.
+3. Repères OSM réels (sommets, eau, refuges, cols, parkings), itinéraires OSM.
+4. Fiche d'eau avec signalements réels, distances, « Toujours là / Plus là ».
+5. Profil altimétrique réel depuis le DEM AWS (655 ms côté serveur).
+6. Recherche en langage naturel (règles) → filtres → résultats BDD.
+7. Création de départ (RLS), carnet/départs réels dans les onglets.
+8. Activité : compte à rebours, hors-trace, SOS (maintien, annulation), bilan.
+9. Zone hors ligne : 87 tuiles / 10,4 Mo, **fonctionne en mode avion**.
+10. Attribution visible, mentions légales à jour, redirection `/carte-interactive`.

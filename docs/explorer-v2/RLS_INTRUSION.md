@@ -1,6 +1,6 @@
 # RLS_INTRUSION · Explorer v2
 
-- Date : 2026-10-28T12:26:38.315Z
+- Date : 2026-10-29T08:55:36.267Z
 - Comptes : recette.lea@lkdv.test (A) · recette.yanis@lkdv.test (B, abonné mutuel)
 - Résultat : ✅ toutes les politiques tiennent
 
