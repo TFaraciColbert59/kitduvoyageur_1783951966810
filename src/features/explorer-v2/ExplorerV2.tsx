@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import type { MapPin } from './map/MapStage';
 import { ExplorerSheet } from './sheet/ExplorerSheet';
 import { buildSheetModel } from './sheet/SheetContent';
@@ -599,6 +600,12 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       ) : (
         <BottomBar />
       )}
+
+      {/* Attributions (P10-09) : obligatoires pour OSM, OpenFreeMap, AWS Terrain,
+          Natural Earth, MET Norway et Wikidata. Discret, mais toujours visible. */}
+      <Link className="xp-attribution" href="/mentions-legales">
+        © OpenStreetMap · OpenFreeMap · Natural Earth · AWS Terrain · MET Norway · Wikidata
+      </Link>
 
       <div aria-hidden="true" style={{ display: 'none' }} data-xp-icons>
         <XpIcon name="info" size={1} />

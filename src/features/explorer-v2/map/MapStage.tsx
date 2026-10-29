@@ -115,7 +115,9 @@ export default function MapStage({
       style: OPENFREEMAP_STYLE_URL,
       center,
       zoom,
-      attributionControl: { compact: true },
+      // Notre pied de page porte les attributions (P10-09) : le contrôle natif
+      // ajoutait des liens de 14 px, sous la cible tactile de 44 px.
+      attributionControl: false,
       dragRotate: true,
       pitchWithRotate: true,
       fadeDuration: 120,

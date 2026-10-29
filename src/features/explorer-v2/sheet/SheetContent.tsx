@@ -515,33 +515,28 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
           ) : (
             <XpRows>
               {nearbyReports.slice(0, 2).map((report) => (
-                <XpRow
-                  key={`confirm-${report.id}`}
-                  icon="check"
-                  tone="good"
-                  title="Toujours là"
-                  sub={report.description ?? CATEGORY_LABEL[report.category]}
-                  onClick={() => ctx.onConfirmReport?.(report.id, 'present')}
-                  trailing={
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      className="xp-chip"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        ctx.onConfirmReport?.(report.id, 'gone');
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key !== 'Enter' && event.key !== ' ') return;
-                        event.preventDefault();
-                        event.stopPropagation();
-                        ctx.onConfirmReport?.(report.id, 'gone');
-                      }}
-                    >
-                      Plus là
-                    </span>
-                  }
-                />
+                <div className="xp-row xp-row-split" key={`confirm-${report.id}`}>
+                  <span className="xp-row-ico" data-tone="good" aria-hidden="true">
+                    <XpIcon name="check" size={15} />
+                  </span>
+                  <button
+                    type="button"
+                    className="xp-row-text"
+                    onClick={() => ctx.onConfirmReport?.(report.id, 'present')}
+                    aria-label={`Confirmer : toujours là — ${report.description ?? CATEGORY_LABEL[report.category]}`}
+                  >
+                    <span className="xp-row-title">Toujours là</span>
+                    <span className="xp-row-sub">{report.description ?? CATEGORY_LABEL[report.category]}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="xp-chip"
+                    onClick={() => ctx.onConfirmReport?.(report.id, 'gone')}
+                    aria-label={`Signaler disparu : ${report.description ?? CATEGORY_LABEL[report.category]}`}
+                  >
+                    Plus là
+                  </button>
+                </div>
               ))}
             </XpRows>
           )}

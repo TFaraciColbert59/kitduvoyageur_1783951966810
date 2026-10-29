@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { XpIcon } from '../ui/XpIcon';
 
 export interface BreadcrumbItem {
@@ -34,6 +35,24 @@ export function TopChrome({
   return (
     <div className="xp-chrome">
       <div className="xp-search">
+        {breadcrumb
+          .filter((item) => item.label && item.label.trim().length > 0)
+          .map((item, index) => (
+            <button
+              key={`${item.label}-${index}`}
+              type="button"
+              className="xp-crumb-btn"
+              onClick={item.onClick}
+              aria-label={`Revenir à ${item.label}`}
+            >
+              {item.label}
+            </button>
+          ))}
+        {breadcrumb.length > 0 ? (
+          <span className="xp-crumb-sep" aria-hidden="true">
+            <XpIcon name="chevr" size={12} />
+          </span>
+        ) : null}
         <button
           type="button"
           className="xp-search-main"
@@ -41,51 +60,12 @@ export function TopChrome({
           aria-label={`Rechercher dans ${current}`}
         >
           <XpIcon name="search" size={16} />
-          {breadcrumb.length > 0 ? (
-            <>
-              {breadcrumb
-                .filter((item) => item.label && item.label.trim().length > 0)
-                .map((item, index) => (
-                <React.Fragment key={`${item.label}-${index}`}>
-                  <span
-                    className="xp-crumb-btn"
-                    role={item.onClick ? 'button' : undefined}
-                    tabIndex={item.onClick ? 0 : undefined}
-                    onClick={(event) => {
-                      if (!item.onClick) return;
-                      event.stopPropagation();
-                      item.onClick();
-                    }}
-                    onKeyDown={(event) => {
-                      if (!item.onClick) return;
-                      if (event.key !== 'Enter' && event.key !== ' ') return;
-                      event.preventDefault();
-                      event.stopPropagation();
-                      item.onClick();
-                    }}
-                  >
-                    {item.label}
-                  </span>
-                  <span className="xp-crumb-sep" aria-hidden="true">
-                    <XpIcon name="chevr" size={12} />
-                  </span>
-                </React.Fragment>
-              ))}
-            </>
-          ) : null}
           <span className="xp-crumb-current">{current}</span>
         </button>
         <button type="button" className="xp-scan-btn" onClick={onSearch} aria-label="Rechercher">
           <XpIcon name="scan" size={15} />
         </button>
       </div>
-
-      {offline ? (
-        <span className="xp-offline-chip" role="status" aria-label="Hors ligne">
-          <XpIcon name="offline" size={14} />
-          {offlinePending > 0 ? <b>{offlinePending}</b> : null}
-        </span>
-      ) : null}
 
       {onBack ? (
         <button type="button" className="xp-icon-btn" onClick={onBack} aria-label="Revenir au niveau supérieur">

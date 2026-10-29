@@ -60,6 +60,22 @@ export const DATA_SOURCES: DataSource[] = [
     ],
   },
   {
+    label: 'Explorer v2',
+    parts: [
+      'Frontières et régions : ',
+      { text: 'Natural Earth', href: 'https://www.naturalearthdata.com/' },
+      ' (domaine public, 1:50m et 1:10m) ; relief 3D : ',
+      { text: 'AWS Terrain Tiles', href: 'https://registry.opendata.aws/terrain-tiles/' },
+      ' (tuiles terrarium, open data) ; météo : ',
+      { text: 'MET Norway', href: 'https://www.met.no/' },
+      ' (Locationforecast 2.0, CC BY 4.0) ; points d’intérêt : ',
+      { text: 'OpenStreetMap', href: 'https://www.openstreetmap.org/copyright' },
+      ' via Overpass (ODbL) ; monnaies, prises et conduite : ',
+      { text: 'Wikidata', href: 'https://www.wikidata.org/' },
+      ' (CC0) ; recherche en langage naturel : analyseur de règles local LKDV.',
+    ],
+  },
+  {
     label: 'Recherche de lieux',
     parts: [
       'Photon (komoot) ; ',

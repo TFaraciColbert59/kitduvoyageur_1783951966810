@@ -126,6 +126,36 @@
   cursor: pointer;
 }
 
+/* Les contrôles du chrome font 30–40 px (gabarit de la maquette) : la zone
+   tactile est portée à 44 px par une extension invisible (P8-07). */
+.xp-icon-btn,
+.xp-search-main,
+.xp-scan-btn,
+.xp-round-ink,
+.xp-round-glass,
+.xp-crumb-btn,
+.xp-bottombar a,
+.xp-mini-inner button,
+.xp-tab {
+  position: relative;
+}
+.xp-icon-btn::after,
+.xp-search-main::after,
+.xp-scan-btn::after {
+  inset: -7px;
+}
+.xp-scan-btn::after,
+.xp-round-ink::after,
+.xp-round-glass::after,
+.xp-crumb-btn::after,
+.xp-bottombar a::after,
+.xp-mini-inner button::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 999px;
+}
+
 .xp-root :focus-visible {
   outline: 2px solid var(--xp-ink);
   outline-offset: 2px;
@@ -213,12 +243,7 @@
   font-weight: 600;
   color: var(--xp-txt);
 }
-.xp-search-main .xp-crumb {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
+
 .xp-search-main .xp-crumb-sep {
   opacity: 0.45;
   flex: none;
@@ -1319,4 +1344,44 @@
   color: #2b1f05;
   font-size: 11.5px;
   font-weight: 700;
+}
+
+/* Attributions cartographiques (P10-09) — au-dessus de la barre basse. */
+.xp-attribution {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 62px + var(--cookie-banner-h, 0px));
+  z-index: 6;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--xp-mut);
+  opacity: 0.72;
+  text-decoration: none;
+  pointer-events: auto;
+}
+.xp-attribution:hover {
+  opacity: 1;
+}
+
+/* Rangée à deux actions (confirmer / infirmer) sans bouton imbriqué. */
+.xp-row-split .xp-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  min-height: 44px;
+  justify-content: center;
+}
+
+/* Cible tactile élargie des pastilles de carte (visuel 28 px, zone 44 px). */
+.xp-pin::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 999px;
 }
