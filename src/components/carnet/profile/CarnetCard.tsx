@@ -197,7 +197,7 @@ export function CarnetCard({
           </svg>
         </span>
       ) : (
-        <span className="ckp-cover ckp-cover--initial">
+        <span className="ckp-cover ckp-cover--initial" aria-hidden="true">
           {(detail.destination ?? detail.title).charAt(0).toUpperCase()}
         </span>
       )}

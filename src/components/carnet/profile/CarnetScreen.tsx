@@ -1,6 +1,6 @@
 'use client';
 
-import React, { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import ReportSheet from '@/components/social/ReportSheet';
@@ -147,10 +147,37 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     startTransition(() => setStatTab(next));
   }, []);
 
+  /* La feuille remplace la carte : à la fermeture, le déclencheur est un nœud
+     neuf. On retient donc son identité stable (`data-stat` ou le bouton
+     « voir plus… ») et non son nœud, pour lui rendre le focus. */
+  const returnFocusRef = useRef<string | null>(null);
+  const drawerWasOpen = useRef(false);
+
   const openStat = useCallback((target: CarnetStatsTab) => {
+    const active = document.activeElement as HTMLElement | null;
+    const stat = active?.closest?.('[data-stat]') as HTMLElement | null;
+    if (stat?.dataset.stat) returnFocusRef.current = `[data-stat="${stat.dataset.stat}"]`;
+    else if (active?.classList?.contains('ckp-more')) returnFocusRef.current = '.ckp-more';
+    else returnFocusRef.current = `[data-stat="${target}"]`;
     setStatTab(target);
     setDrawer('stats');
   }, []);
+
+  useEffect(() => {
+    if (drawer) {
+      drawerWasOpen.current = true;
+      return;
+    }
+    if (!drawerWasOpen.current) return;
+    drawerWasOpen.current = false;
+    const selector = returnFocusRef.current;
+    returnFocusRef.current = null;
+    if (!selector) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>(selector)?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [drawer]);
 
   /* Ces deux bascules viennent du hook : on ne dépend que des fonctions,
      jamais de l'objet retourné (recréé à chaque rendu). */

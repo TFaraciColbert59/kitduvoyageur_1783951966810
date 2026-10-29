@@ -94,6 +94,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain;
   display: flex; flex-direction: column; gap: 8px;
   padding: 8px 12px 64px;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   scrollbar-width: none;
   /* Le balayage horizontal des jours reste livré au JS : le navigateur ne
      garde que le défilement vertical de la carte. */
@@ -256,6 +257,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    171 px pour Résumé + trois jours. Aucun gap. */
 .ckp-card-foot {
   position: absolute; right: 10px; bottom: 10px; z-index: 6;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   display: flex; align-items: center; height: 30px;
   max-width: calc(100% - 20px);
   padding: 0; border-radius: 0; background: none; box-shadow: none;
@@ -441,7 +443,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   mask-image: linear-gradient(180deg, #000 34%, transparent);
 }
 .ckp-drawer-cut[data-on='true'] { opacity: 1; }
-.ckp-drawer-body { padding: 16px 16px 64px; gap: 0; }
+.ckp-drawer-body { padding: 16px 16px 64px; padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); gap: 0; }
 /* Pied du drawer : la capsule d'onglets occupe la place exacte de celle de la
    carte d'identité — `right/bottom: 10px` dans la feuille, 30 px de haut, même
    verre, même lentille, même pas de 41,5 px. Largeur = 41,5 × n + 5 px de
@@ -449,6 +451,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    (52 px) laisse le contenu défiler au-dessus d'elle sans jamais passer dessous. */
 .ckp-drawer-foot {
   position: absolute; right: 12px; bottom: 12px; z-index: 6;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   display: flex; align-items: center; height: 30px;
 }
 .ckp-drawer-foot .ckp-capsule {
@@ -571,7 +574,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-sub:not(.ckp-sub--icons) button[aria-pressed='true'] {
   background: #fff; box-shadow: 0 1px 3px rgba(23, 43, 36, .14);
 }
-.ckp-sub button::after { content: ''; position: absolute; inset: -9px -4px; }
+/* Cible de 44 px : 25 + 9,5 + 9,5 (lot F, 44). */
+.ckp-sub button::after { content: ''; position: absolute; inset: -9.5px -4px; }
 @media (prefers-reduced-motion: reduce) {
   .ckp-sub > .ckp-th { transition: none; }
 }
@@ -689,8 +693,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-screen .tb { width: min(calc(100% - 28px), 402px); }
 .ckp-screen .tb .lens { opacity: 0; }
 
-.ckp-card :focus-visible, .ckp-screen-header :focus-visible { outline: 2px solid #17402c; outline-offset: 2px; border-radius: 8px; }
-.ckp-tile:focus-visible { outline-offset: -3px; border-radius: 2px; }
+.ckp-card :focus-visible, .ckp-screen-header :focus-visible { outline: 2px solid #17402C; outline-offset: 2px; border-radius: 8px; }
+.ckp-tile:focus-visible { border-radius: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
   .ckp-card--drawer { animation: none; }
@@ -812,7 +816,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
      carte (et de son badge) d'un seul tenant, sans mélange de plans. */
   z-index: 0;
 }
-.ckp-screen .tb { bottom: 16px; }
+.ckp-screen .tb { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 /* la carte d'identité garde sa marge basse pour ne pas coller à la carte */
 .ckp-card { margin-bottom: 0; }
 
@@ -826,7 +830,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   position: relative; overflow: clip; min-width: 0;
   touch-action: pan-y;
 }
-.ckp-pages:focus-visible { outline: 2px solid #17402c; outline-offset: 2px; border-radius: 14px; }
+.ckp-pages:focus-visible { outline: 2px solid #17402C; outline-offset: 2px; border-radius: 14px; }
 .ckp-page { min-width: 0; }
 /* Changement de volet : fondu + 8 px, 180 ms — la course verticale du
    sous-onglet, jamais un glissement horizontal (celui-là appartient aux jours). */
@@ -872,7 +876,12 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 
 /* Anneau de focus : la capsule garde ses segments. */
-.ckp-capsule .ckp-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c; }
+/* Les segments rognés par la capsule portent le même anneau, en contour
+   intérieur : la capsule ne laisse pas déborder un décalage de 2 px. */
+.ckp-capsule .ckp-tabs button:focus-visible {
+  outline: 2px solid #17402C !important;
+  outline-offset: -2px !important;
+}
 
 /* --- Sous-drawer statistiques --------------------------------------------
    Marges internes 16 px (20 px en haut). Chiffre principal 34/700 tabulaire,
@@ -970,12 +979,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    ============================================================================= */
 
 /* --- Focus : anneau 2 px #17402C à 2 px du contrôle (feuilles et volets) --- */
-.ckp-card--drawer :focus-visible,
-.ckp-pane :focus-visible,
-.ckp-post-sheet .lkdv-post-panel :focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px transparent, 0 0 0 4px #17402C;
-}
+/* Un seul anneau pour la feuille : 2 px de #17402C, décalés de 2 px (lot F). */
 
 /* --- Post du moment : légende « pseudo 13/600 puis texte 13/400 » ---------- */
 .ckp-post-sheet .lkdv-post-caption { font-size: 13px !important; line-height: 1.4 !important; font-weight: 400 !important; }
@@ -1172,7 +1176,7 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 .ckp-comments-gate .ckp-field { width: 100%; }
 
 /* 4/5/37. Les pages sorties du drawer : contenu à 16 px, 64 px de réserve. */
-.ckp-page-pad--dense { padding: 0 0 64px; gap: 0; }
+.ckp-page-pad--dense { padding: 0 0 64px; padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); gap: 0; }
 /* Le corps du post du Compte ne se cumule pas avec la gouttière dense. */
 .ckp-page-pad--dense .lkdv-post-panel-body { padding-left: 0; padding-right: 0; }
 .ckp-page-pad--dense .lkdv-post-panel-foot { padding-left: 0; padding-right: 0; }
@@ -1408,4 +1412,83 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
     background-color: #F4F7F3;
   }
   .ckp-scrim { display: none; }
+}
+
+/* =============================================================================
+   Lot F — mobile (43-50)
+   Zones sûres, cibles de 44 px, états hover = focus = tactile, anneau de focus
+   2 px + décalage 2, verrou de scroll, focus rendu, voile local, images
+   décoratives muettes.
+   ============================================================================= */
+
+/* 44 — toute cible tactile mesure au moins 44 px, sans changer le dessin. */
+.ckp-capsule .ckp-tabs button::after {
+  content: '';
+  position: absolute;
+  inset: -9.5px 0;
+  border-radius: 999px;
+}
+.ckp-grabber::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -18px;
+  bottom: -13px;
+}
+.ckp-mapcard-stack button,
+.ckp-viewer-nav { position: relative; }
+.ckp-mapcard-stack button::after,
+.ckp-viewer-nav::after { content: ''; position: absolute; inset: -5px; }
+.ckp-link { position: relative; min-height: 44px; display: inline-flex; align-items: center; }
+.ckp-link::after { content: ''; position: absolute; inset: -8px 0; }
+
+/* 45 — hover, focus et tactile donnent exactement le même état. */
+.ckp-field:focus-visible,
+.ckp-field:active,
+.ckp-row:focus-visible,
+.ckp-row:active,
+.ckp-tile:active,
+.ckp-pill:active,
+.ckp-mapcard-stack button:active {
+  background-color: rgba(255, 255, 255, .55);
+}
+.ckp-drawer-close:active,
+.ckp-drawer-close:focus-visible { background: #fff; }
+.ckp-capsule .ckp-tabs button:focus-visible,
+.ckp-capsule .ckp-tabs button:active,
+.ckp-sub button:focus-visible,
+.ckp-sub button:active { color: #17402C; }
+@media (hover: hover) {
+  .ckp-tile:hover { background-color: rgba(255, 255, 255, .55); }
+  .ckp-drawer-close:hover { background: #fff; }
+  .ckp-pill:hover { background-color: rgba(255, 255, 255, .62); }
+}
+
+/* 46 — anneau de focus : 2 px #17402C, décalé de 2 px, partout. */
+/* `!important` assumé : le shell global (`html[data-liquid-ios27] body …
+   button:focus-visible`) peint un anneau **blanc**, invisible sur ce verre
+   clair. La fiche garde son anneau d'encre, sur tous ses contrôles. */
+.ckp-screen :focus-visible {
+  outline: 2px solid #17402C !important;
+  outline-offset: 2px !important;
+}
+/* Les tuiles de la grille et le sous-sélecteur portent le même anneau. */
+.ckp-tile:focus-visible,
+.ckp-sub button:focus-visible {
+  outline: 2px solid #17402C !important;
+  outline-offset: 2px !important;
+}
+
+/* 47 — verrou de scroll du fond tant que la feuille est ouverte. */
+html[data-ckp-sheet],
+html[data-ckp-sheet] body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* 49 — voile local sous un texte posé sur une photo : .18, jamais plus. */
+.ckp-viewer-caption,
+.ckp-viewer-count {
+  background-color: rgba(10, 20, 14, .18);
 }

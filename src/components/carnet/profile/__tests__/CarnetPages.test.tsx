@@ -260,3 +260,17 @@ describe('CarnetPages — pages du carnet', () => {
     expect(screen.getByRole('button', { name: /Se connecter pour identifier/ })).toBeTruthy();
   });
 });
+
+describe('CarnetPages — images décoratives (lot F)', () => {
+  it('marque les tuiles muettes : alt vide et aria-hidden', () => {
+    const { container } = render(<CarnetPages {...base()} />);
+    const images = [...container.querySelectorAll('.ckp-tile img')];
+    expect(images.length).toBeGreaterThan(0);
+    for (const image of images) {
+      expect(image.getAttribute('alt')).toBe('');
+      expect(image.getAttribute('aria-hidden')).toBe('true');
+      /* La tuile porte le nom accessible, jamais l'image. */
+      expect(image.closest('button')?.getAttribute('aria-label')).toMatch(/^Moment \d+$/);
+    }
+  });
+});

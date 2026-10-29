@@ -129,6 +129,7 @@ const CarnetTile = React.memo(function CarnetTile({ moment, index, more, onOpen 
       <img
         src={moment.imageUrl ?? ''}
         alt=""
+        aria-hidden="true"
         loading={index < 3 ? 'eager' : 'lazy'}
         fetchPriority={index === 0 ? 'high' : undefined}
       />

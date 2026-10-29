@@ -773,3 +773,67 @@ describe('Mouvement — lot E', () => {
     expect(rule('.ckp-skeleton {')).toMatch(/ckp-shimmer 1\.4s ease-in-out 2/);
   });
 });
+
+describe('Mobile — lot F', () => {
+  /* 43 — la réserve, la capsule et la barre suivent la zone sûre. */
+  it('zones sûres : réserve, capsule et barre basse', () => {
+    expect(rule('.ckp-drawer-body {')).toMatch(/padding-bottom:\s*calc\(64px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+    expect(rule('.ckp-card-scroll {')).toMatch(/padding-bottom:\s*calc\(64px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+    expect(rule('.ckp-drawer-foot {')).toMatch(/bottom:\s*calc\(12px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+    expect(rule('.ckp-card-foot {')).toMatch(/bottom:\s*calc\(10px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+    expect(css).toMatch(/\.ckp-screen \.tb \{ bottom: calc\(16px \+ env\(safe-area-inset-bottom, 0px\)\); \}/);
+    /* La barre basse garde sa géométrie : seule sa position suit la zone. */
+    expect(css).toMatch(/\.ckp-screen \.tb \{ width: min\(calc\(100% - 28px\), 402px\); \}/);
+  });
+
+  /* 44 — tout contrôle mesure au moins 44 px de cible. */
+  it('cibles tactiles de 44 px sur les contrôles de 25 à 30 px', () => {
+    /* Segment de capsule : 25 px de dessin + 9,5 + 9,5 = 44. */
+    expect(rule('.ckp-capsule .ckp-tabs button::after {')).toMatch(/inset:\s*-9\.5px 0/);
+    /* Sous-sélecteur : 25 px + 9,5 + 9,5. */
+    expect(rule('.ckp-sub button::after {')).toMatch(/inset:\s*-9\.5px -4px/);
+    /* Croix de 36 px : + 4 + 4 = 44. */
+    expect(rule('.ckp-drawer-close::after {')).toMatch(/inset:\s*-4px/);
+    /* Poignée de 13 px de haut : la cible descend jusqu'à 44 px. */
+    expect(rule('.ckp-grabber::after {')).toMatch(/top:\s*-18px/);
+    expect(rule('.ckp-grabber::after {')).toMatch(/bottom:\s*-13px/);
+    /* Zone de retour tactile : le pouce a 12 px de prise en bas de feuille. */
+    expect(rule('.ckp-drawer-grip {')).toMatch(/height:\s*12px/);
+  });
+
+  /* 45 — hover, focus et tactile donnent le même état. */
+  it('hover = focus = tactile sur les lignes', () => {
+    const state = rule('.ckp-field:focus-visible,\n.ckp-field:active,');
+    expect(state).toMatch(/background-color:\s*rgba\(255, 255, 255, \.55\)/);
+    const hover = rule('button.ckp-field:hover, a.ckp-field:hover {');
+    expect(hover).toMatch(/background-color:\s*rgba\(255, 255, 255, \.55\)/);
+  });
+
+  /* 46 — anneau de focus 2 px #17402C, décalé de 2 px, partout. */
+  it('anneau de focus 2 px #17402C + décalage 2 partout', () => {
+    const ring = rule('.ckp-screen :focus-visible {');
+    expect(ring).toMatch(/outline:\s*2px solid #17402C !important/);
+    expect(ring).toMatch(/outline-offset:\s*2px !important/);
+    /* Les contrôles de la capsule et les tuiles portent le même anneau. */
+    expect(rule('.ckp-tile:focus-visible,\n.ckp-sub button:focus-visible {')).toMatch(
+      /outline:\s*2px solid #17402C !important/,
+    );
+    /* Le segment de capsule, rogné, garde le même anneau en contour intérieur. */
+    expect(rule('.ckp-capsule .ckp-tabs button:focus-visible {')).toMatch(
+      /outline:\s*2px solid #17402C !important/,
+    );
+    /* Plus aucun anneau en ombre de 4 px hérité. */
+    expect(css).not.toMatch(/0 0 0 4px #17402C/);
+  });
+
+  /* 47 — verrou de scroll du fond quand la feuille est ouverte. */
+  it('verrou de scroll du fond tant que la feuille est ouverte', () => {
+    expect(css).toMatch(/html\[data-ckp-sheet\],\nhtml\[data-ckp-sheet\] body \{\s*overflow: hidden;/);
+  });
+
+  /* 49 — voile local .18 sous un texte posé sur photo. */
+  it('voile local rgba(10, 20, 14, .18) sous le texte des photos', () => {
+    const veil = rule('.ckp-viewer-caption,\n.ckp-viewer-count {');
+    expect(veil).toMatch(/background-color:\s*rgba\(10, 20, 14, \.18\)/);
+  });
+});

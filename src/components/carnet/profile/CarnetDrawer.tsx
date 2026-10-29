@@ -73,7 +73,13 @@ export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: Carn
   }, []);
 
   useEffect(() => {
+    /* 48 — le focus revient au déclencheur à la fermeture, jamais au hasard. */
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     ref.current?.focus({ preventScroll: true });
+    /* 47 — le fond ne défile plus tant que la feuille est ouverte. */
+    const root = document.documentElement;
+    const hadLock = root.hasAttribute('data-ckp-sheet');
+    root.setAttribute('data-ckp-sheet', 'true');
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') requestClose();
     };
@@ -81,6 +87,8 @@ export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: Carn
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+      if (!hadLock) root.removeAttribute('data-ckp-sheet');
+      trigger?.focus({ preventScroll: true });
     };
   }, [requestClose]);
 
