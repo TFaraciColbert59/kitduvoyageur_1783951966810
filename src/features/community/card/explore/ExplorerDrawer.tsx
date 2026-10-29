@@ -351,7 +351,16 @@ export function ExplorerDrawer({
         : 'ready';
 
   return (
-    <CommunityCardDrawer open={open} onClose={onClose} ariaLabel="Explorer la communauté" strict>
+    <CommunityCardDrawer
+      open={open}
+      onClose={onClose}
+      ariaLabel="Explorer la communauté"
+      strict
+      onSwipeX={(direction) => {
+        const next = Math.max(0, Math.min(SECTION_TABS.length - 1, index + (direction === 'next' ? 1 : -1)));
+        if (next !== index) goTab(SECTION_TABS[next]?.id ?? 'recherche');
+      }}
+    >
       <DrawerShell
         tabs={tabs}
         activeIndex={index}

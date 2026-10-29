@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import Icon from '@/components/ui/Icon';
+import { ArrowRight, Check, ChevronLeft, Loader2 } from 'lucide-react';
 import { useWizardEdge } from './edge';
 import './wizard-polish.css';
 
@@ -167,11 +167,33 @@ export function WizardFrame({
         if (!busy && !nextDisabled) onNext();
       }}
     >
+      {/* En-tête compact : retour, étape, n/total et l'action en petite pilule (aucun gros bouton en bas). */}
       <div className="lkdv-wz-head">
+        {step > 0 && onBack ? (
+          <button type="button" className="lkdv-wz-pill lkdv-wz-back" aria-label="Étape précédente" title="Étape précédente" onClick={onBack} disabled={busy}>
+            <ChevronLeft size={17} aria-hidden="true" />
+          </button>
+        ) : null}
         <span className="lkdv-wz-kicker">{kicker}</span>
         <span className="lkdv-wz-count" aria-label={`Étape ${step + 1} sur ${total}`}>
           {step + 1}/{total}
         </span>
+        <button
+          type="submit"
+          className="lkdv-wz-pill lkdv-wz-next"
+          data-final={isLast ? 'true' : 'false'}
+          aria-label={busy ? `${nextLabel} — envoi en cours` : nextLabel}
+          title={nextLabel}
+          disabled={busy || nextDisabled}
+        >
+          {busy ? (
+            <Loader2 size={17} className="lkdv-wz-spin" aria-hidden="true" />
+          ) : isLast ? (
+            <Check size={18} aria-hidden="true" />
+          ) : (
+            <ArrowRight size={17} aria-hidden="true" />
+          )}
+        </button>
       </div>
 
       <div className="lkdv-wz-body" key={step}>
@@ -193,31 +215,6 @@ export function WizardFrame({
         </div>
       </div>
 
-      <div className="lkdv-wz-foot">
-        <div className="lkdv-wz-dots" aria-hidden="true">
-          {/* Au-delà de 8 étapes (carnet de plusieurs jours), le compteur n/total suffit. */}
-          {total <= 8
-            ? Array.from({ length: total }, (_, index) => (
-                <span key={index} data-on={index === step ? 'true' : 'false'} />
-              ))
-            : null}
-        </div>
-        {step > 0 && onBack ? (
-          <button
-            type="button"
-            className="lkdv-wz-back"
-            aria-label="Étape précédente"
-            onClick={onBack}
-            disabled={busy}
-          >
-            <Icon name="chevron-left" size={18} aria-hidden="true" />
-          </button>
-        ) : null}
-        <button type="submit" className="lkdv-wz-next" disabled={busy || nextDisabled}>
-          <span>{busy ? 'Envoi…' : nextLabel}</span>
-          {busy || isLast ? null : <Icon name="arrow-right" size={16} aria-hidden="true" />}
-        </button>
-      </div>
     </form>
   );
 }

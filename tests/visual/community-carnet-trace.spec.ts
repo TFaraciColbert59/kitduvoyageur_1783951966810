@@ -64,15 +64,15 @@ test('le tracé se colle aux chemins pendant le geste, avec distance et dénivel
   await expect(page.locator('.lkdv-map-stats')).toContainText(/m D\+/, { timeout: 10_000 });
   await page.screenshot({ path: testInfo.outputPath('carnet-trace.png') });
 
-  // Un second geste repart de la fin du tracé ; « annuler » le retire.
+  // Un second geste repart de la fin du tracé.
   const before = Number(await map.getAttribute('data-trace-points'));
   await page.mouse.move(box.x + 300, y - 70);
   await page.mouse.down();
   for (let step = 1; step <= 6; step += 1) await page.mouse.move(box.x + 300, y - 70 + step * 10);
   await page.mouse.up();
   await expect.poll(async () => Number(await map.getAttribute('data-trace-points')), { timeout: 15_000 }).toBeGreaterThan(before);
-  await page.getByRole('button', { name: 'Annuler le dernier tronçon' }).click();
-  await expect.poll(async () => Number(await map.getAttribute('data-trace-points'))).toBe(before);
+  // Sur la carte, seul « Tracer » reste : aucun autre bouton d'outil.
+  await expect(map.getByRole('button')).toHaveCount(1);
 });
 
 test('les jours sont dans la capsule en bas à droite', async ({ page }, testInfo) => {

@@ -137,3 +137,9 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-floating-tabbar {
   visibility: hidden;
   pointer-events: none;
 }
+
+/* Carte-drawer de la Communauté ouverte : elle occupe le bas de l'écran, la barre s'efface. */
+body:has(.lkdv-cd) .lkdv-floating-tabbar {
+  visibility: hidden;
+  pointer-events: none;
+}

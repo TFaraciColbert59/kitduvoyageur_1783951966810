@@ -5,7 +5,7 @@ import { Map as MapLibreMap, Marker, setWorkerUrl, type GeoJSONSource } from 'ma
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, CalendarDays, Settings2, Trash2, ImagePlus, Loader2, WifiOff, PenLine, Route, Type, AlignLeft, Flag, Check, Magnet, Undo2, Eraser, LocateFixed, Maximize2, Mountain } from 'lucide-react';
+import { Plus, CalendarDays, Settings2, Trash2, ImagePlus, Loader2, WifiOff, PenLine, Route, Type, AlignLeft, Check, Mountain } from 'lucide-react';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
 import { createClient } from '@/lib/supabase/client';
 import { createDefaults, createSchemas, type CarnetFormValues } from './engine/createSchemas';
@@ -114,13 +114,12 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
   const [segments, setSegments] = useState<Segment[]>([]);
   const trace = useMemo(() => joinSegments(segments.map((segment) => segment.points), MAX_TRACE_POINTS), [segments]);
   const km = useMemo(() => lengthKm(trace), [trace]);
-  const [magnet, setMagnet] = useState(true);
+  // Accrochage aux chemins toujours actif : la carte ne garde que le bouton « Tracer ».
+  const magnet = true;
   const [snapState, setSnapState] = useState<'idle' | 'loading' | 'error'>('idle');
   const [gain, setGain] = useState<number | null>(null);
   const [gainState, setGainState] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [confirmClear, setConfirmClear] = useState(false);
   const [mapReady, setMapReady] = useState(false);
-  const [zoom, setZoom] = useState(6);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const mapNode = useRef<HTMLDivElement | null>(null);
@@ -158,7 +157,6 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       renderWorldCopies: false,
     });
     mapRef.current = map;
-    map.on('zoomend', () => setZoom(map.getZoom()));
     map.on('load', () => {
       const round = { 'line-cap': 'round', 'line-join': 'round' } as const;
       map.addSource('carnet-trace', { type: 'geojson', data: EMPTY_FC as never });
@@ -502,39 +500,6 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
     map.zoomTo(map.getZoom() - event.deltaY * 0.0025, { animate: false, around: map.unproject([event.clientX - rect.left, event.clientY - rect.top]) });
   };
 
-  const undoSegment = () => {
-    cancelStroke();
-    setSegments((current) => current.slice(0, -1));
-  };
-
-  const clearTrace = () => {
-    if (!confirmClear) {
-      setConfirmClear(true);
-      window.setTimeout(() => setConfirmClear(false), 2800);
-      return;
-    }
-    cancelStroke();
-    setSegments([]);
-    setConfirmClear(false);
-  };
-
-  const fitTrace = () => {
-    const map = mapRef.current;
-    const points = traceRef.current;
-    if (!map || points.length < 2) return;
-    const lngs = points.map((point) => point[0]);
-    const lats = points.map((point) => point[1]);
-    map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: 56, maxZoom: 15, duration: 600 });
-  };
-
-  const locate = () => {
-    navigator.geolocation?.getCurrentPosition(
-      (position) => mapRef.current?.flyTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 14, duration: 900 }),
-      () => {},
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 },
-    );
-  };
-
   // Sélecteur des jours : publié vers la capsule en bas à droite de la carte-drawer quand elle existe.
   const daysApi = useRef({ select: (_index: number) => {}, addDay: () => {} });
   daysApi.current = {
@@ -586,29 +551,16 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       ariaLabel="Créer un carnet"
       error={submitError}
       footer={
-        <button type="button" className="lkdv-carnet-cta" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet">
-          {submitting ? <Loader2 size={16} className="lkdv-spin" aria-hidden="true" /> : <Flag size={16} aria-hidden="true" />}
-          <span>{submitting ? 'Création…' : 'Créer le carnet'}</span>
+        <button type="button" className="lkdv-carnet-cta" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet" title="Créer le carnet">
+          {submitting ? <Loader2 size={17} className="lkdv-spin" aria-hidden="true" /> : <Check size={18} aria-hidden="true" />}
         </button>
       }
     >
       <div className="lkdv-carnet-map" ref={mapNode} data-trace-points={trace.length} data-drawing={drawing ? 'true' : 'false'}>
-        <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => { if (drawing) cancelStroke(); setDrawing((value) => !value); }} aria-pressed={drawing} aria-label={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'} title={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}>
+        <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => { if (drawing && strokeRef.current && !strokeRef.current.ended) cancelStroke(); setDrawing((value) => !value); }} aria-pressed={drawing} aria-label={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'} title={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}>
           {drawing ? <Check size={16} aria-hidden="true" /> : <PenLine size={16} aria-hidden="true" />}
           <span>{drawing ? 'Terminer' : trace.length > 0 ? 'Continuer' : 'Tracer'}</span>
         </button>
-        <div className="lkdv-map-tools" role="toolbar" aria-label="Outils du tracé">
-          <button type="button" className={`lkdv-map-tool${magnet ? ' is-on' : ''}`} aria-pressed={magnet} onClick={() => setMagnet((value) => !value)} aria-label="Coller le tracé aux chemins" title={magnet ? 'Collé aux chemins' : 'Tracé libre (hors sentier)'}><Magnet size={17} aria-hidden="true" /></button>
-          <button type="button" className="lkdv-map-tool" onClick={undoSegment} disabled={segments.length === 0} aria-label="Annuler le dernier tronçon" title="Annuler le dernier tronçon"><Undo2 size={17} aria-hidden="true" /></button>
-          <button type="button" className={`lkdv-map-tool${confirmClear ? ' is-danger' : ''}`} onClick={clearTrace} disabled={segments.length === 0} aria-label={confirmClear ? 'Toucher encore pour effacer le tracé' : 'Effacer le tracé'} title="Effacer le tracé"><Eraser size={17} aria-hidden="true" />{confirmClear ? <span>Effacer ?</span> : null}</button>
-        </div>
-        <div className="lkdv-map-tools lkdv-map-tools--bottom">
-          {trace.length > 1 ? <button type="button" className="lkdv-map-tool" onClick={fitTrace} aria-label="Recentrer sur le tracé" title="Recentrer sur le tracé"><Maximize2 size={16} aria-hidden="true" /></button> : null}
-          <button type="button" className="lkdv-map-tool" onClick={locate} aria-label="Me localiser" title="Me localiser"><LocateFixed size={16} aria-hidden="true" /></button>
-        </div>
-        {!drawing && trace.length === 0 ? <p className="lkdv-map-hint">Touche « Tracer », puis glisse le doigt : le tracé se colle aux chemins au fil du geste.</p> : null}
-        {drawing && zoom < 10 ? <p className="lkdv-map-hint is-live">Zoome sur ton départ (deux doigts) : de près, le tracé suit les sentiers.</p> : null}
-        {drawing && zoom >= 10 && trace.length === 0 ? <p className="lkdv-map-hint is-live">Touche pour poser le départ, puis glisse ou touche plus loin. Deux doigts pour déplacer la carte.</p> : null}
         {trace.length > 1 || snapState !== 'idle' ? (
           <div className="lkdv-map-stats" aria-live="polite">
             {trace.length > 1 ? <span><Route size={12} aria-hidden="true" />{formatDistance(km)}</span> : null}

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { ArrowUpRight, BookOpen, CalendarCheck, CalendarPlus, ChevronLeft, UserCheck, UserPlus } from 'lucide-react';
 import type {
   CarnetRow,
   ClubRow,
@@ -70,7 +70,18 @@ function Cover({ item, className }: { item: ExplorerItem; className: string }) {
   );
 }
 
-/** Grande carte d'un carrousel : couverture, titre 19/700, contexte, description, action. */
+/** Icône de l'action principale : rejoindre / déjà membre, s'inscrire / inscrit, lire. */
+function ActionIcon({ item }: { item: ExplorerItem }) {
+  if (item.kind === 'club') return item.row.is_member ? <UserCheck size={17} aria-hidden="true" /> : <UserPlus size={17} aria-hidden="true" />;
+  if (item.kind === 'sortie') return item.row.is_registered ? <CalendarCheck size={17} aria-hidden="true" /> : <CalendarPlus size={17} aria-hidden="true" />;
+  return <BookOpen size={17} aria-hidden="true" />;
+}
+
+/**
+ * Grande carte d'un carrousel : l'image occupe toute la carte, rien ne la
+ * recouvre en dur. Titre et repères dans une pastille de verre, actions en
+ * petites pilules de verre ; pas de description (elle est sur la page).
+ */
 export function ExplorerCard({
   item,
   onOpen,
@@ -81,9 +92,9 @@ export function ExplorerCard({
   onAction: () => void;
 }) {
   const action = itemActionLabel(item);
-  const description = item.row.description?.trim();
+  const active = item.kind === 'club' ? Boolean(item.row.is_member) : item.kind === 'sortie' ? Boolean(item.row.is_registered) : false;
   return (
-    <article className="lkdv-ex-card">
+    <article className="lkdv-ex-card" data-cover={itemCover(item) ? 'true' : 'false'}>
       <button
         type="button"
         className="lkdv-ex-card-open"
@@ -91,25 +102,27 @@ export function ExplorerCard({
         aria-label={`Ouvrir ${itemTitle(item)}`}
       >
         <Cover item={item} className="lkdv-ex-card-cover" />
+      </button>
+      <div className="lkdv-ex-card-glass">
         <span className="lkdv-ex-card-body">
           <b>{itemTitle(item)}</b>
           <small>{itemMeta(item)}</small>
-          {description ? <span className="lkdv-ex-card-desc">{description}</span> : null}
         </span>
-      </button>
-      <div className="lkdv-ex-card-actions">
-        {action ? (
-          <button type="button" className="lkdv-ex-primary" onClick={onAction}>
-            {action}
+        <div className="lkdv-ex-card-actions">
+          <button
+            type="button"
+            className="lkdv-ex-pill"
+            data-on={active ? 'true' : 'false'}
+            onClick={action ? onAction : onOpen}
+            aria-label={action ?? 'Lire'}
+            title={action ?? 'Lire'}
+          >
+            <ActionIcon item={item} />
           </button>
-        ) : (
-          <button type="button" className="lkdv-ex-primary" onClick={onOpen}>
-            Lire
-          </button>
-        )}
-        <Link href={itemHref(item)} className="lkdv-ex-secondary">
-          Voir la page
-        </Link>
+          <Link href={itemHref(item)} className="lkdv-ex-pill" aria-label="Voir la page" title="Voir la page">
+            <ArrowUpRight size={17} aria-hidden="true" />
+          </Link>
+        </div>
       </div>
     </article>
   );
@@ -131,7 +144,7 @@ export function ExplorerMini({ item, onOpen }: { item: ExplorerItem; onOpen: () 
   );
 }
 
-/** Détail en place : remplace le carrousel dans la carte, avec retour. */
+/** Détail en place : remplace le carrousel dans la carte ; l'image remplit la carte, le reste est en verre. */
 export function ExplorerDetail({
   item,
   onBack,
@@ -144,26 +157,30 @@ export function ExplorerDetail({
   onClose: () => void;
 }) {
   const action = itemActionLabel(item);
+  const active = item.kind === 'club' ? Boolean(item.row.is_member) : item.kind === 'sortie' ? Boolean(item.row.is_registered) : false;
   const description = item.row.description?.trim();
   return (
     <section className="lkdv-ex-detail" aria-label={itemTitle(item)}>
-      <button type="button" className="lkdv-ex-back" onClick={onBack}>
-        <ChevronLeft size={18} aria-hidden="true" />
-        Retour
-      </button>
       <Cover item={item} className="lkdv-ex-detail-cover" />
-      <h3>{itemTitle(item)}</h3>
-      <p className="lkdv-ex-detail-meta">{itemMeta(item)}</p>
-      {description ? <p className="lkdv-ex-detail-desc">{description}</p> : null}
-      <div className="lkdv-ex-card-actions">
-        {action ? (
-          <button type="button" className="lkdv-ex-primary" onClick={onAction}>
-            {action}
-          </button>
-        ) : null}
-        <Link href={itemHref(item)} className="lkdv-ex-secondary" onClick={onClose}>
-          Voir la page
-        </Link>
+      <button type="button" className="lkdv-ex-pill lkdv-ex-back" onClick={onBack} aria-label="Retour" title="Retour">
+        <ChevronLeft size={18} aria-hidden="true" />
+      </button>
+      <div className="lkdv-ex-card-glass lkdv-ex-detail-glass">
+        <span className="lkdv-ex-card-body">
+          <b>{itemTitle(item)}</b>
+          <small>{itemMeta(item)}</small>
+          {description ? <span className="lkdv-ex-detail-desc">{description}</span> : null}
+        </span>
+        <div className="lkdv-ex-card-actions">
+          {action ? (
+            <button type="button" className="lkdv-ex-pill" data-on={active ? 'true' : 'false'} onClick={onAction} aria-label={action} title={action}>
+              <ActionIcon item={item} />
+            </button>
+          ) : null}
+          <Link href={itemHref(item)} className="lkdv-ex-pill" onClick={onClose} aria-label="Voir la page" title="Voir la page">
+            <ArrowUpRight size={17} aria-hidden="true" />
+          </Link>
+        </div>
       </div>
     </section>
   );

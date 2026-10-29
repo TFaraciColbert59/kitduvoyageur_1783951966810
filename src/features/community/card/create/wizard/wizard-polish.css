@@ -110,3 +110,41 @@
   min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none;
 }
 .lkdv-wz-field.lkdv-wz-place .lkdv-place-input input:focus-visible { box-shadow: none; }
+
+/* =============================================================================
+   Action en petite pilule dans l'en-tête (2026-10-29) : plus de gros bouton
+   « Suivant » / « Publier » en bas, toute la hauteur sert au contenu.
+   ============================================================================= */
+.lkdv-wz-head { display: flex; align-items: center; gap: 8px; padding: 0 2px 9px; }
+.lkdv-wz-head .lkdv-wz-kicker { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lkdv-wz-head .lkdv-wz-count { flex: none; }
+.lkdv-wz-head .lkdv-wz-pill {
+  position: relative; flex: none; display: grid; place-items: center;
+  width: 40px; min-width: 40px; height: 32px; min-height: 32px; padding: 0;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.5));
+  -webkit-backdrop-filter: blur(14px) saturate(1.6); backdrop-filter: blur(14px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 3px 10px rgba(23, 43, 36, 0.08);
+  color: #17402c; font: inherit;
+  transition: transform 0.12s ease, opacity 0.18s ease, background 0.18s ease;
+}
+/* Cible tactile 44 px sans grossir la pilule. */
+.lkdv-wz-head .lkdv-wz-pill::after { content: ''; position: absolute; inset: -6px -2px; }
+.lkdv-wz-head .lkdv-wz-next[data-final='true'] { background: #17402c; color: #fff; box-shadow: 0 4px 12px rgba(23, 64, 44, 0.24); }
+.lkdv-wz-head .lkdv-wz-pill:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+.lkdv-wz-head .lkdv-wz-pill:not(:disabled):active { transform: scale(0.94); }
+.lkdv-wz-spin { animation: lkdv-wz-spin 0.9s linear infinite; }
+@keyframes lkdv-wz-spin { to { transform: rotate(360deg); } }
+
+/* Brouillon repris : une ligne fine. */
+.lkdv-wz-draft { padding: 3px 4px 3px 12px; font-size: 12px; }
+.lkdv-wz-draft button { min-height: 28px; padding: 0 10px; font-size: 11.5px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-wz-spin { animation: none; }
+  .lkdv-wz-head .lkdv-wz-pill { transition: none; }
+}
+
+/* Le corps descend jusqu'au bas de la carte : l'entrée d'étape ne doit plus le pousser au-delà. */
+.lkdv-wz-body { animation-name: lkdv-wz-fade; }
+@keyframes lkdv-wz-fade { from { opacity: 0; } to { opacity: 1; } }

@@ -146,7 +146,15 @@ export function CreateDrawer({
     : undefined;
 
   return (
-    <CommunityCardDrawer open={open} onClose={onClose} ariaLabel="Créer dans l’application" strict>
+    <CommunityCardDrawer
+      open={open}
+      onClose={onClose}
+      ariaLabel="Créer dans l’application"
+      strict
+      onSwipeX={(direction) =>
+        setIndex((current) => Math.max(0, Math.min(CREATE_KINDS.length - 1, current + (direction === 'next' ? 1 : -1))))
+      }
+    >
       <WizardEdgeContext.Provider value={edge}>
         <DrawerShell
           tabs={tabs}
