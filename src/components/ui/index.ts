@@ -39,5 +39,6 @@ export { PriceTag, formatCurrencyEur, type PriceTagProps } from './PriceTag';
 export { StepIndicator, type StepIndicatorProps } from './StepIndicator';
 export { InsetGroupedList, InsetGroupedItem, type InsetGroupedListProps, type InsetGroupedItemProps } from './InsetGroupedList';
 export { SubTabBar, type SubTabBarProps, type SubTabItem } from './SubTabBar';
+export { CapsuleTabs, SubCapsuleTabs, type CapsuleTabItem, type CapsuleTabsProps, type SubCapsuleTabsProps } from './CapsuleTabs';
 export { CountryFlag, type CountryFlagProps } from './CountryFlag';
 

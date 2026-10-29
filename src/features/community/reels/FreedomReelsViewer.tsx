@@ -380,6 +380,7 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
 
   const handleOpenKitFromReel = (kitId: string, kitName?: string) => {
     haptic('medium');
+    setActiveCommentsReel(null);
     setActiveKit({ id: kitId, name: kitName });
   };
 

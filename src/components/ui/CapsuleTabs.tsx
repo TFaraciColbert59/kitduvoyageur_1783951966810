@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useCallback, type KeyboardEvent } from 'react';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface CapsuleTabItem {
   id: string;
   label: string;
   icon?: React.ReactNode;
+  /** Pastille ou compteur de notifications (ex: '8' messages non lus). */
+  badge?: React.ReactNode | number | string;
 }
 
 export interface CapsuleTabsProps {
@@ -14,6 +17,10 @@ export interface CapsuleTabsProps {
   onIndexChange: (index: number) => void;
   ariaLabel: string;
   className?: string;
+  /** Taille de la capsule : 'default' (48 px) ou 'sm' (30 px). Défaut : 'default'. */
+  size?: 'default' | 'sm';
+  /** Positionnement : 'inline' (dans le flux) ou 'float' (flottante). Défaut : 'inline'. */
+  placement?: 'inline' | 'float';
   /** Id DOM du bouton (utile au roving tabindex piloté par le parent). */
   idFor?: (id: string) => string;
   /**
@@ -25,15 +32,17 @@ export interface CapsuleTabsProps {
   dataSlot?: boolean;
   /** Affiche le libellé sous l'icône (capsule de section, 9,5 px). */
   showLabels?: boolean;
+  /** Déclenche une vibration haptique au changement d'onglet (défaut : true). */
+  enableHaptics?: boolean;
 }
 
 /**
- * Capsule principale 48 px du design de référence (`Compte / Profil`).
+ * Capsule principale (48 px) ou secondaire (30 px) du design de référence LKDV Apple Liquid Glass.
  *
  * Grammaire unique, portée par `src/styles/liquid-capsules.css` :
- * `.segc.lg-tabs.lens-on` + lentille `.sel-lens` pilotée par `--i`, glissement
- * 420 ms `cubic-bezier(.32,.72,0,1)`. Le composant ne porte aucune valeur
- * optique : il ne fait que produire le markup et l'interaction.
+ * - `size="default"` (48 px) : `.segc.lg-tabs.lens-on.lkdv-capsule` + lentille `.sel-lens`
+ * - `size="sm"` (30 px) : `.lkdv-lens-float` + lentille `.ig-th.lens`
+ * Lentille pilotée par `--i`, glissement 420 ms `cubic-bezier(.32,.72,0,1)`.
  *
  * Accessibilité : `role="tablist"`, `role="tab"`, `aria-selected`,
  * `aria-controls` sur l'actif seul, roving `tabIndex` (0 / -1),
@@ -45,23 +54,31 @@ export function CapsuleTabs({
   onIndexChange,
   ariaLabel,
   className = '',
+  size = 'default',
+  placement = 'inline',
   idFor,
   panelIdFor,
   dataSlot = false,
   showLabels = false,
+  enableHaptics = true,
 }: CapsuleTabsProps) {
+  const { haptic } = useHapticFeedback();
   const count = items.length;
   const safeIndex = count > 0 ? Math.max(0, Math.min(activeIndex, count - 1)) : 0;
+  const hasLabels = items.some((item) => Boolean(item.label));
 
-  const focusTab = useCallback((index: number) => {
-    const item = items[index];
-    if (!item || typeof document === 'undefined') return;
-    const id = idFor?.(item.id);
-    if (!id) return;
-    window.requestAnimationFrame(() => {
-      document.getElementById(id)?.focus();
-    });
-  }, [items, idFor]);
+  const focusTab = useCallback(
+    (index: number) => {
+      const item = items[index];
+      if (!item || typeof document === 'undefined') return;
+      const id = idFor?.(item.id);
+      if (!id) return;
+      window.requestAnimationFrame(() => {
+        document.getElementById(id)?.focus();
+      });
+    },
+    [items, idFor]
+  );
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (count === 0) return;
@@ -72,26 +89,43 @@ export function CapsuleTabs({
     else if (event.key === 'End') next = count - 1;
     if (next < 0) return;
     event.preventDefault();
-    if (next !== safeIndex) onIndexChange(next);
+    if (next !== safeIndex) {
+      if (enableHaptics) haptic('selection');
+      onIndexChange(next);
+    }
     focusTab(next);
   };
 
   if (count === 0) return null;
 
+  const isSmall = size === 'sm';
+
+  const containerClass = isSmall
+    ? `lkdv-lens-float ${placement === 'inline' ? 'is-inline' : ''} ${hasLabels ? 'has-labels' : ''} ${className}`.trim()
+    : `segc lg-tabs lens-on lkdv-capsule ${className}`.trim();
+
   return (
     <div
-      className={`segc lg-tabs lens-on lkdv-capsule ${className}`.trim()}
+      className={containerClass}
       role="tablist"
       aria-label={ariaLabel}
       aria-orientation="horizontal"
       onKeyDown={handleKeyDown}
       style={{ '--n': count } as React.CSSProperties}
     >
-      <span
-        className="sel-lens"
-        aria-hidden="true"
-        style={{ '--i': safeIndex } as React.CSSProperties}
-      />
+      {isSmall ? (
+        <span
+          className="ig-th lens"
+          aria-hidden="true"
+          style={{ '--i': safeIndex } as React.CSSProperties}
+        />
+      ) : (
+        <span
+          className="sel-lens"
+          aria-hidden="true"
+          style={{ '--i': safeIndex } as React.CSSProperties}
+        />
+      )}
       {items.map((item, index) => {
         const active = index === safeIndex;
         return (
@@ -108,18 +142,36 @@ export function CapsuleTabs({
             data-slot={dataSlot ? item.id : undefined}
             tabIndex={active ? 0 : -1}
             onClick={() => {
-              if (!active) onIndexChange(index);
+              if (!active) {
+                if (enableHaptics) haptic('selection');
+                onIndexChange(index);
+              }
             }}
           >
             {item.icon ? <span className="ic s">{item.icon}</span> : null}
-            {showLabels || !item.icon ? (
+            {showLabels || !item.icon || (isSmall && hasLabels) ? (
               <span className="lbl">{item.label}</span>
             ) : null}
+            {item.badge != null && (
+              <span className="badge-count" aria-hidden="true">
+                {item.badge}
+              </span>
+            )}
           </button>
         );
       })}
     </div>
   );
+}
+
+export type SubCapsuleTabsProps = Omit<CapsuleTabsProps, 'size'>;
+
+/**
+ * SubCapsuleTabs — Capsule secondaire compacte 30 px avec lentille fluide.
+ * Conforme à la grammaire Liquid Glass iOS 27 Apple.
+ */
+export function SubCapsuleTabs(props: SubCapsuleTabsProps) {
+  return <CapsuleTabs size="sm" {...props} />;
 }
 
 export default CapsuleTabs;
