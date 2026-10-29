@@ -46,22 +46,44 @@
 .lkdv-map-draw:active { transform: scale(0.97); }
 
 .lkdv-map-hint {
-  position: absolute; z-index: 6; left: 12px; right: 12px; bottom: 44px; margin: 0; padding: 9px 12px;
-  border-radius: 14px; background: rgba(255, 255, 255, 0.82); color: #17402c; text-align: center;
-  font: 600 12px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif);
+  position: absolute; z-index: 6; left: 12px; right: 60px; bottom: 12px; margin: 0; padding: 10px 12px;
+  border-radius: 14px; background: rgba(255, 255, 255, 0.86); color: #17402c;
+  font: 600 12.5px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif);
   -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); pointer-events: none;
+  box-shadow: 0 4px 14px rgba(10, 20, 14, 0.12);
 }
 .lkdv-map-hint.is-live { background: #17402c; color: #fff; }
-.lkdv-map-stats { position: absolute; z-index: 6; left: 10px; bottom: 10px; display: flex; gap: 6px; pointer-events: none; }
-.lkdv-map-stats span {
-  display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 9px; border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82); color: #17402c; font: 700 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-}
 
-.lkdv-snap-status { position: absolute; z-index: 30; right: 10px; top: 10px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; background: rgba(255, 255, 255, 0.9); color: #17402c; box-shadow: 0 0 0 0.5px rgba(23, 43, 36, 0.14); }
-.lkdv-snap-status.is-error { color: #a05a3c; }
-.lkdv-snap-status svg { animation: lkdv-carnet-spin 1s linear infinite; }
-.lkdv-snap-status.is-error svg { animation: none; }
+/* Outils du tracé : colonne de pastilles à droite (aimant, annuler, effacer ; recentrer, me localiser). */
+.lkdv-map-tools { position: absolute; z-index: 30; top: 10px; right: 10px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.lkdv-map-tools--bottom { top: auto; bottom: 12px; }
+.lkdv-map-tool {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 40px; height: 40px; padding: 0 11px;
+  border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.9); color: #17402c; cursor: pointer;
+  box-shadow: 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 6px 16px rgba(10, 20, 14, 0.14);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  font: 700 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease, opacity 0.18s ease;
+}
+.lkdv-map-tool::after { content: ''; position: absolute; inset: -2px; }
+.lkdv-map-tool { position: relative; }
+.lkdv-map-tool.is-on { background: #17402c; color: #fff; }
+.lkdv-map-tool.is-danger { background: #a05a3c; color: #fff; }
+.lkdv-map-tool:disabled { opacity: 0.42; cursor: default; }
+.lkdv-map-tool:not(:disabled):active { transform: scale(0.95); }
+.lkdv-map-tool:focus-visible, .lkdv-map-draw:focus-visible { outline: 2px solid #17402c; outline-offset: 2px; }
+
+/* Mesures du tracé : distance, dénivelé, état de l'accrochage. */
+.lkdv-map-stats { position: absolute; z-index: 6; left: 10px; bottom: 12px; right: 60px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+.lkdv-map-stats span {
+  display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9); color: #17402c; box-shadow: 0 2px 8px rgba(10, 20, 14, 0.1);
+  font: 700 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums;
+}
+.lkdv-map-stats span.is-busy { background: #17402c; color: #fff; }
+.lkdv-map-stats span.is-warn { background: #fff4ec; color: #8a4a2e; }
+.lkdv-carnet-map[data-drawing='true'] { box-shadow: inset 0 0 0 2px #17402c, 0 6px 18px rgba(10, 20, 14, 0.12); }
+
 .lkdv-spin { animation: lkdv-carnet-spin 1s linear infinite; }
 @keyframes lkdv-carnet-spin { to { transform: rotate(360deg); } }
 
@@ -171,3 +193,15 @@
 .lkdv-drawer-pane:has(.lkdv-carnet-map) > .lkdv-embedded-form { flex: 1 1 auto; min-height: 0; }
 .lkdv-drawer-pane:has(.lkdv-carnet-map) > .lkdv-embedded-form-footer { flex: none; background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; margin: 0 !important; padding: 6px 2px 4px !important; }
 .lkdv-embedded-form-footer:has(.lkdv-carnet-cta) { background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* Jours dans la capsule en bas à droite de la carte-drawer. */
+.lkdv-drawer-secondary .lkdv-day-num { font: 700 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums; }
+.lkdv-drawer-shell:has(.lkdv-carnet-map) .lkdv-drawer-secondary {
+  max-width: calc(100% - 20px) !important; overflow-x: auto; overflow-y: visible; scrollbar-width: none; border-radius: 9999px;
+}
+.lkdv-drawer-shell:has(.lkdv-carnet-map) .lkdv-drawer-secondary::-webkit-scrollbar { display: none; }
+.lkdv-drawer-pane:has(.lkdv-carnet-map) > .lkdv-embedded-form-footer { padding-bottom: 0 !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-map-tool { transition: none; }
+}

@@ -14,7 +14,9 @@ import { StoryCreateForm } from './StoryCreateForm';
 import { SortieCreateForm } from './SortieCreateForm';
 import { KitCreateForm } from './KitCreateForm';
 import { ClubCreateForm } from './ClubCreateForm';
+import { Plus, Settings2 } from 'lucide-react';
 import { EmbeddedFormContext } from '@/features/community/create/EmbeddedFormContext';
+import { CarnetDaysBridge, type CarnetDaySelector } from '@/features/community/create/carnet/carnetDaysBridge';
 import { WizardEdgeContext, type WizardEdgeHandler } from './wizard/edge';
 
 // Le carnet se crée par la carte (tracé, jours, moments) : on garde ce parcours tel quel dans la carte-drawer.
@@ -72,6 +74,8 @@ export function CreateDrawer({
 }: CreateDrawerProps) {
   const [index, setIndex] = useState(() => indexOfKind(initialKind));
   const [formatIndex, setFormatIndex] = useState(0);
+  // Jours du carnet, publiés par le formulaire pour la capsule en bas à droite.
+  const [carnetDays, setCarnetDays] = useState<CarnetDaySelector | null>(null);
 
   // `onClose` change à chaque rendu du parent : on les lit par référence pour que
   // l'onglet ne soit réinitialisé qu'à l'ouverture ou au changement de type demandé.
@@ -100,7 +104,9 @@ export function CreateDrawer({
     story: () => <StoryCreateForm {...common} />,
     carnet: () => (
       <EmbeddedFormContext.Provider value>
-        <CarnetMapDrawer {...common} />
+        <CarnetDaysBridge.Provider value={setCarnetDays}>
+          <CarnetMapDrawer {...common} />
+        </CarnetDaysBridge.Provider>
       </EmbeddedFormContext.Provider>
     ),
     sortie: () => <SortieCreateForm {...common} />,
@@ -121,6 +127,24 @@ export function CreateDrawer({
     icon: <Icon name={format.icon} size={15} aria-hidden="true" />,
   }));
 
+  const kind = CREATE_KINDS[index]?.id;
+  const daySecondary = kind === 'carnet' && carnetDays
+    ? {
+        items: [
+          { id: 'infos', label: 'Réglages du carnet', icon: <Settings2 size={14} aria-hidden="true" /> },
+          ...Array.from({ length: carnetDays.count }, (_, day) => ({
+            id: `jour-${day + 1}`,
+            label: `Jour ${day + 1}`,
+            icon: <span className="lkdv-day-num" aria-hidden="true">{day + 1}</span>,
+          })),
+          { id: 'ajouter', label: 'Ajouter un jour', icon: <Plus size={15} aria-hidden="true" /> },
+        ],
+        active: Math.min(carnetDays.active, carnetDays.count),
+        onChange: (next: number) => (next === carnetDays.count + 1 ? carnetDays.addDay() : carnetDays.select(next)),
+        label: 'Jours du carnet',
+      }
+    : undefined;
+
   return (
     <CommunityCardDrawer open={open} onClose={onClose} ariaLabel="Créer dans l’application" strict>
       <WizardEdgeContext.Provider value={edge}>
@@ -128,7 +152,9 @@ export function CreateDrawer({
           tabs={tabs}
           activeIndex={index}
           secondary={
-            CREATE_KINDS[index]?.id === 'post'
+            kind === 'carnet'
+              ? daySecondary
+              : kind === 'post'
               ? {
                   items: secondaryItems,
                   active: formatIndex,
