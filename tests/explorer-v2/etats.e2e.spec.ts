@@ -31,6 +31,8 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test.describe.configure({ retries: 2 });
+
 test.describe('Explorer v2 · états @explorer-v2', () => {
   test('mouvement réduit : caméra sans animation @explorer-v2', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });

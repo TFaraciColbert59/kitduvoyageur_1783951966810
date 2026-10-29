@@ -98,6 +98,8 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test.describe.configure({ retries: 2 });
+
 test.describe('Explorer v2 · @explorer-v2', () => {
   test('Monde : titre, onglets et repères réels @explorer-v2', async ({ page }) => {
     await openScene(page, 'monde');

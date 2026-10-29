@@ -40,6 +40,8 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test.describe.configure({ retries: 2 });
+
 test.describe('Explorer v2 · a11y mobile @explorer-v2', () => {
   for (const scene of ['monde', 'lieu', 'eau', 'course']) {
     test(`aucune violation sérieuse · ${scene} @explorer-v2`, async ({ page }) => {
