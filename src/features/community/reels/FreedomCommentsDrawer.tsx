@@ -21,6 +21,7 @@ import {
   getPreloadedReelComments,
   hasPreloadedReelComments,
   setPreloadedReelComments,
+  preloadPublicProfile,
 } from './reelsPreloadService';
 import type { FreedomComment, FreedomCommentAttachment } from './freedom-types';
 
@@ -31,6 +32,7 @@ export interface FreedomCommentsDrawerProps {
   onClose: () => void;
   onCommentsCountChange?: (count: number) => void;
   onOpenKit?: (kitId: string, kitName?: string) => void;
+  onNavigateToProfile?: (author: FreedomComment['author']) => void;
 }
 
 interface CommentThread {
@@ -61,6 +63,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   onClose,
   onCommentsCountChange,
   onOpenKit,
+  onNavigateToProfile,
 }) => {
   const router = useRouter();
   const { haptic } = useHapticFeedback();
@@ -88,6 +91,27 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
     velocityThreshold: 350,
   });
 
+  // Navigation vers le profil d'un auteur de commentaire (clic sur photo ou pseudo)
+  const handleNavigateToProfile = (author: FreedomComment['author']) => {
+    haptic('light');
+    if (onNavigateToProfile) {
+      onNavigateToProfile(author);
+      return;
+    }
+    onClose();
+    const handleOrId =
+      author.handle ||
+      (author.id && !author.id.startsWith('u-') && !author.id.startsWith('author-')
+        ? author.id
+        : author.name
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]/g, '.'));
+
+    router.push(`/profil/${encodeURIComponent(handleOrId)}`);
+  };
+
   // Load comments (with instant preloaded cache & background revalidation)
   useEffect(() => {
     if (!isOpen) return;
@@ -106,6 +130,19 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
         if (!alive) return;
         setComments(data);
         setPreloadedReelComments(reelId, data);
+
+        // Preload profiles in background for instant navigation
+        for (const c of data) {
+          const key = c.author.handle || c.author.id;
+          if (key) {
+            void preloadPublicProfile(key, {
+              id: c.author.id,
+              full_name: c.author.name,
+              handle: c.author.handle || undefined,
+              avatar_url: c.author.avatarUrl || null,
+            });
+          }
+        }
       })
       .catch((e) => {
         console.error('[Freedom] Error loading comments:', e);
@@ -435,8 +472,13 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
                 <div key={root.id} className="space-y-2.5">
                   {/* Root Comment Row */}
                   <div className="flex items-start gap-2.5">
-                    {/* Avatar */}
-                    <div className="size-8 shrink-0 overflow-hidden rounded-full bg-[#E5EAE3] border border-black/5 mt-0.5">
+                    {/* Avatar (cliquable vers le profil) */}
+                    <button
+                      type="button"
+                      onClick={() => handleNavigateToProfile(root.author)}
+                      className="size-8 shrink-0 overflow-hidden rounded-full bg-[#E5EAE3] border border-black/5 mt-0.5 transition-transform active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C]"
+                      aria-label={`Voir le profil de ${root.author.name}`}
+                    >
                       {root.author.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element -- distant avatar
                         <img
@@ -449,15 +491,19 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
                           {root.author.name.charAt(0).toUpperCase()}
                         </div>
                       )}
-                    </div>
+                    </button>
 
                     {/* Comment Body */}
-                    <div className="flex-1 space-y-1">
+                    <div className="flex-1 space-y-1 min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-xs font-bold text-[#172B24]">
+                        <button
+                          type="button"
+                          onClick={() => handleNavigateToProfile(root.author)}
+                          className="text-left text-xs font-bold text-[#172B24] hover:text-[#17402C] hover:underline cursor-pointer focus-visible:outline-none truncate"
+                        >
                           {root.author.name}
-                        </span>
-                        <span className="text-[10px] text-[#56665D]">
+                        </button>
+                        <span className="text-[10px] text-[#56665D] shrink-0">
                           {timeAgo(root.createdAt)}
                         </span>
                       </div>
@@ -515,8 +561,13 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
                     <div className="ml-7 space-y-2.5 border-l-2 border-[#17402C]/15 pl-3">
                       {thread.replies.map((reply) => (
                         <div key={reply.id} className="flex items-start gap-2">
-                          {/* Reply Avatar */}
-                          <div className="size-6 shrink-0 overflow-hidden rounded-full bg-[#E5EAE3] border border-black/5 mt-0.5">
+                          {/* Reply Avatar (cliquable vers le profil) */}
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateToProfile(reply.author)}
+                            className="size-6 shrink-0 overflow-hidden rounded-full bg-[#E5EAE3] border border-black/5 mt-0.5 transition-transform active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C]"
+                            aria-label={`Voir le profil de ${reply.author.name}`}
+                          >
                             {reply.author.avatarUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element -- distant avatar
                               <img
@@ -529,15 +580,19 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
                                 {reply.author.name.charAt(0).toUpperCase()}
                               </div>
                             )}
-                          </div>
+                          </button>
 
                           {/* Reply Body */}
-                          <div className="flex-1 space-y-1">
+                          <div className="flex-1 space-y-1 min-w-0">
                             <div className="flex items-baseline gap-2">
-                              <span className="text-[11px] font-bold text-[#172B24]">
+                              <button
+                                type="button"
+                                onClick={() => handleNavigateToProfile(reply.author)}
+                                className="text-left text-[11px] font-bold text-[#172B24] hover:text-[#17402C] hover:underline cursor-pointer focus-visible:outline-none truncate"
+                              >
                                 {reply.author.name}
-                              </span>
-                              <span className="text-[9px] text-[#56665D]">
+                              </button>
+                              <span className="text-[9px] text-[#56665D] shrink-0">
                                 {timeAgo(reply.createdAt)}
                               </span>
                             </div>

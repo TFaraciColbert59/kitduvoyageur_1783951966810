@@ -72,6 +72,7 @@ export interface FreedomComment {
   author: {
     id: string;
     name: string;
+    handle?: string | null;
     avatarUrl?: string | null;
   };
   content: string;

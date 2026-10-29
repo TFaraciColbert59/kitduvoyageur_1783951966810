@@ -514,6 +514,10 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
           currentUser={user}
           onClose={() => setActiveCommentsReel(null)}
           onOpenKit={handleOpenKitFromReel}
+          onNavigateToProfile={(author) => {
+            setActiveCommentsReel(null);
+            handleAuthorProfile(author as any);
+          }}
           onCommentsCountChange={(count) => {
             setReels((prev) =>
               prev.map((r) =>

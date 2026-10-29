@@ -241,6 +241,7 @@ export const DEMO_FREEDOM_COMMENTS: Record<string, FreedomComment[]> = {
       author: {
         id: 'u-antoine',
         name: 'Antoine Delorme',
+        handle: 'antoine.delorme',
         avatarUrl: '/assets/images/portrait-5.jpg',
       },
       content: 'Incroyable la lumière ! Tu avais quoi comme tente pour tenir à 3100m avec ce vent ?',
@@ -255,6 +256,7 @@ export const DEMO_FREEDOM_COMMENTS: Record<string, FreedomComment[]> = {
       author: {
         id: 'author-thomas-alps',
         name: 'Thomas Rivoire',
+        handle: 'thomas.rivoire',
         avatarUrl: '/assets/images/portrait-1.jpg',
       },
       content: 'Voici mon kit complet utilisé pour cette nuit, tout est pesé au gramme près :',
@@ -281,6 +283,7 @@ export const DEMO_FREEDOM_COMMENTS: Record<string, FreedomComment[]> = {
       author: {
         id: 'u-sophie',
         name: 'Sophie Marceau',
+        handle: 'sophie.marceau',
         avatarUrl: '/assets/images/portrait-6.jpg',
       },
       content: 'Pour ceux qui demandaient le tracé exact par l’arête sud, je vous le partage ici :',
@@ -450,6 +453,7 @@ export async function fetchReelComments(reelId: string, user?: any): Promise<Fre
             author: {
               id: row.author_id || 'anonymous',
               name: prof?.full_name || 'Voyageur',
+              handle: prof?.handle || null,
               avatarUrl: prof?.avatar_url || null,
             },
             content: text,
@@ -488,6 +492,12 @@ export async function postReelComment(
     author: {
       id: user?.id || 'me',
       name: user?.user_metadata?.full_name || 'Moi',
+      handle:
+        user?.user_metadata?.handle ||
+        user?.user_metadata?.user_name ||
+        (user?.user_metadata?.full_name
+          ? user.user_metadata.full_name.toLowerCase().replace(/\s+/g, '.')
+          : 'moi'),
       avatarUrl: user?.user_metadata?.avatar_url || null,
     },
     content: text.trim(),

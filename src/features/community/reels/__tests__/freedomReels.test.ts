@@ -174,6 +174,16 @@ describe('Freedom Reels & Comments Attachment System', () => {
     expect(updatedComments[updatedComments.length - 1].content).toBe('Test comment with kit');
   });
 
+  it('guarantees comment authors have valid names and handles for profile navigation', async () => {
+    const comments = await fetchReelComments('freedom-curated-1');
+    expect(comments.length).toBeGreaterThanOrEqual(3);
+    for (const c of comments) {
+      expect(c.author.name).toBeTruthy();
+      expect(c.author.id).toBeTruthy();
+      expect(c.author.handle).toBeTruthy();
+    }
+  });
+
   it('correctly preserves full GPX XML fileContent through serialization', () => {
     const fakeGpxXml = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="LKDV Outdoor">
