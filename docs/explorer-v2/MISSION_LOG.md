@@ -500,3 +500,16 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   « Données réelles » suit `00_MISSION §6.4` : une source absente en base donne
   l'état vide prévu, jamais une valeur inventée (danger, ami, avis).
 - Statut : OK
+
+### [P1-01] Géométries des pays en base · 2026-10-29 10:35
+- Fichiers : `scripts/explorer-v2/import-db-geometries.mjs`
+- Preuve :
+  ```
+  pays sans géométrie : 80 → mis à jour : 70 → restant : 10 / 246
+  ```
+  Source Natural Earth 1:50m puis 1:10m (domaine public), `geometry_source =
+  'natural_earth'`. Les 10 restants sont des dépendances dont le territoire est
+  déjà dans le polygone du pays parent (GF, GP, MQ, RE, YT → France ; CC, CX →
+  Australie ; SJ → Norvège ; TK → Nouvelle-Zélande ; BQ → Pays-Bas) : aucun
+  polygone propre n'existe dans Natural Earth, et en inventer un serait faux.
+- Statut : OK à 70/80 — les 10 cas sont expliqués, pas inventés.

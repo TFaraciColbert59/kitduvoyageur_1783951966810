@@ -42,6 +42,8 @@ const base: ExplorerState = {
   online: true,
   locationPermission: 'prompt',
   orbitPaused: false,
+  northUp: true,
+  units: 'metric',
   reveal: false,
   background: false,
   center: [2.35, 48.85],

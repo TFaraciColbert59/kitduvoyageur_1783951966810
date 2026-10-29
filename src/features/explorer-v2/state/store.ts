@@ -44,6 +44,8 @@ interface ExplorerActions {
   updateActivity: (patch: Partial<ActivityState>) => void;
   stopActivity: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
+  toggleNorthUp: () => void;
+  setUnits: (units: 'metric' | 'imperial') => void;
 }
 
 export type ExplorerStore = ExplorerState & ExplorerActions;
@@ -62,6 +64,8 @@ const initialState: ExplorerState = {
   online: true,
   locationPermission: 'prompt',
   orbitPaused: false,
+  northUp: true,
+  units: 'metric',
   reveal: false,
   background: false,
   center: [2.35, 48.85],
@@ -251,6 +255,14 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   },
 
   setTheme: (theme) => set({ theme }),
+
+  toggleNorthUp: () => {
+    const next = !get().northUp;
+    set({ northUp: next, camera: { type: 'bearing', northUp: next } });
+    emit('compass', { northUp: next });
+  },
+
+  setUnits: (units) => set({ units }),
 }));
 
 export type { PoiKind };

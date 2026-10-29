@@ -18,6 +18,8 @@ import {
 } from './blocks';
 import type { SheetTab } from './ExplorerSheet';
 import {
+  formatImperialDistance,
+  formatImperialElevation,
   POI_ICON,
   POI_LABEL,
   POI_TONE,
@@ -949,7 +951,9 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
                     icon={POI_ICON[poi.kind] ?? 'pin'}
                     tone={POI_TONE[poi.kind] ?? 'ink'}
                     title={poi.name}
-                    sub={`${POI_LABEL[poi.kind] ?? poi.kind} · ${formatDistance(poi.distanceKm)}`}
+                    sub={`${POI_LABEL[poi.kind] ?? poi.kind} · ${
+                      ctx.units === 'imperial' ? formatImperialDistance(poi.distanceKm) : formatDistance(poi.distanceKm)
+                    }`}
                     badge={poi.ele_m ? { label: formatElevation(poi.ele_m) ?? '', tone: 'muted' } : undefined}
                     onClick={() => ctx.state.select({ kind: poi.kind as never, id: poi.id }, poi.kind as never, 'mid')}
                   />

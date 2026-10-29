@@ -76,6 +76,10 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   const [pendingSport, setPendingSport] = useState<Sport | null>(null);
   const [offlineQueue, setOfflineQueue] = useState(0);
   const theme = state.theme ?? systemTheme;
+  // Unités : réglage utilisateur prioritaire, sinon pays (US, Liberia, Myanmar).
+  const imperialCountries = new Set(['US', 'LR', 'MM']);
+  const unitsForCountry: 'metric' | 'imperial' =
+    state.units === 'imperial' || imperialCountries.has(state.geo) ? 'imperial' : 'metric';
 
   // Scène de recette : appliquée **une seule fois**, de façon synchrone, côté
   // client. Un effet pouvait être sauté selon l'ordre de montage (constaté en
@@ -260,6 +264,7 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       weather,
       carnets: (carnetsData ?? []) as CarnetItem[],
       reports: reportsData ?? [],
+      units: unitsForCountry,
       trips: (tripsData ?? []) as TripItem[],
       selectedPoi,
       me,
@@ -267,7 +272,7 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       onConfirmReport,
       locale: 'fr-FR',
     }),
-    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, reportsData, carnetsData, tripsData, selectedPoi, me, startWithCountdown, onConfirmReport],
+    [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, startWithCountdown, onConfirmReport],
   );
 
   const model = useMemo(() => buildSheetModel(ctx), [ctx]);
@@ -443,6 +448,8 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       data-level={state.level}
       data-scene={state.scene ?? ''}
       data-countries={countries.length}
+      data-reduced-motion={reducedMotion ? 'true' : 'false'}
+      data-units={unitsForCountry}
       data-pins={pins.length}
       data-pois={pois.length}
       data-qc={countriesQuery.status}
@@ -492,9 +499,9 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         activity={!!activity}
         onCompass={() => {
           haptic('compass');
-          state.patch({ orbitPaused: !state.orbitPaused });
+          state.toggleNorthUp();
         }}
-        northUp={state.orbitPaused}
+        northUp={state.northUp}
       />
 
       {state.toast ? (

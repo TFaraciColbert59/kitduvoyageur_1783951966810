@@ -61,6 +61,7 @@ export type CameraIntent =
   | { type: 'flyover'; routeId: string }
   | { type: 'follow' }
   | { type: 'overview'; bounds?: [[number, number], [number, number]] }
+  | { type: 'bearing'; northUp: boolean }
   | { type: 'none' };
 
 export type Profile = 'solo' | 'famille' | 'enfants' | 'senior' | 'pmr' | 'sportif' | null;
@@ -106,6 +107,10 @@ export interface ExplorerState {
   online: boolean;
   locationPermission: 'granted' | 'denied' | 'prompt';
   orbitPaused: boolean;
+  /** Nord en haut (boussole) ; sinon cap en haut. */
+  northUp: boolean;
+  /** Unités d'affichage : métriques, ou impériales pour US/LR/MM. */
+  units: 'metric' | 'imperial';
   reveal: boolean;
   background: boolean;
   toast?: ToastMessage;

@@ -425,6 +425,10 @@ export default function MapStage({
     if (!map || !ready || !cameraIntent) return;
     const container = map.getContainer();
 
+    if (cameraIntent.type === 'bearing') {
+      if (cameraIntent.northUp) map.easeTo({ bearing: 0, duration: reducedMotion ? 0 : 400 });
+      return;
+    }
     if (cameraIntent.type === 'reveal') {
       revealAt(map, cameraIntent.center, reducedMotion);
       return;
