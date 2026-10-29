@@ -62,7 +62,9 @@ describe('Compte bootstrap — mapping réel', () => {
     const rows = mapOutings(
       [
         { id: 'h1', route_id: 1, started_at: '2026-09-01T06:00:00Z', ended_at: '2026-09-01T15:00:00Z', distance_km: 12.5, elevation_gain_m: 800, positions_timed: [], kit_id: 'k1' },
-        { id: 'h2', route_id: 2, started_at: '2026-10-28T06:00:00Z', ended_at: '2026-10-28T15:00:00Z' },
+        // Date volontairement lointaine : ce test comparait à « maintenant » et est
+    // devenu rouge le 29/10/2026 (bombe à retardement, pas une régression).
+    { id: 'h2', route_id: 2, started_at: '2099-01-01T06:00:00Z', ended_at: '2099-01-01T15:00:00Z' },
       ],
       [{ id: 1, name: 'Lac Blanc', region: 'Mont-Blanc' }, { id: 2, name: 'Néouvielle', region: 'Pyrénées' }]
     );

@@ -191,3 +191,4 @@ handoff/explorer-v2/maquette/
 
 # Explorer v2 — identifiants des comptes de recette (jamais versionnés)
 .secrets/
+.env*
