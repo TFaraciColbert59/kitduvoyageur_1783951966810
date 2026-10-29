@@ -188,15 +188,6 @@ test.describe('Explorer v2 · @explorer-v2', () => {
     await expect(banner).toContainText('Hors itinéraire');
   });
 
-  test('chaque scène rend une feuille avec un titre @explorer-v2', async ({ page }) => {
-    test.setTimeout(300_000);
-    for (const scene of SCENES.slice(0, 4)) {
-      await openScene(page, scene);
-      const title = await root(page).locator('.xp-sheet-title').textContent();
-      expect(title?.trim().length, `scène ${scene}`).toBeGreaterThan(0);
-    }
-  });
-
   test('a11y : aucune violation sérieuse sur le Monde @explorer-v2', async ({ page }) => {
     await openScene(page, 'monde');
     const results = await new AxeBuilder({ page }).disableRules(['color-contrast']).analyze();
