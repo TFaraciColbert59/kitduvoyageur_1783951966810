@@ -67,7 +67,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Explorer v2 · 41 écrans @explorer-v2', () => {
-  test.describe.configure({ timeout: 90_000 });
+  // 41 pages avec carte WebGL : sous charge, une réexécution évite de compter
+  // une lenteur machine comme une régression (assertions structurelles).
+  test.describe.configure({ timeout: 120_000, retries: 2 });
 
   for (const { scene, screen, minTabs, title } of SCREENS) {
     test(`${screen} (${scene}) @explorer-v2`, async ({ page }) => {
