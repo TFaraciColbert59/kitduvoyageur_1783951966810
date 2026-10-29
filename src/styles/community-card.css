@@ -2008,3 +2008,50 @@ html.lkdv-no-page-scroll body {
 .lkdv-ex-carousel:has(.lkdv-ex-card) {
   gap: 0;
 }
+
+/* =============================================================================
+   Tailles (2026-10-29) — Créer : plein écran, par-dessus la barre du haut.
+   Explorer : ancré en bas, 50 % de la hauteur au plus, voile au-dessus.
+   ============================================================================= */
+.lkdv-feed-shell--locked .lkdv-feed-column {
+  position: relative;
+}
+/* La carte pleine se place par rapport à la colonne entière, pas sous l'en-tête. */
+.lkdv-feed-shell--locked:has(.lkdv-cd[data-size='full']) .lkdv-feed-body {
+  position: static;
+}
+.lkdv-cd[data-size='full'] {
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: 12px;
+  right: 12px;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+}
+.lkdv-cd[data-size='half'] {
+  top: auto;
+  height: min(50dvh, 100%);
+}
+.lkdv-cd-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 29;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+.lkdv-cd[data-size='full'][data-keyboard='true'] {
+  bottom: max(0px, calc(var(--lkdv-cd-kb, 0px) - 8px - env(safe-area-inset-bottom, 0px)));
+}
+/* Créer plein écran : la barre du haut ne transparaît plus sous le verre. */
+.lkdv-feed-shell--locked:has(.lkdv-cd[data-size='full']) .lkdv-feed-header {
+  visibility: hidden;
+}
+/* Pagination lisible sur une image claire : verre fumé. */
+.lkdv-ex-carousel:has(.lkdv-ex-card) .lkdv-ex-dots {
+  background: rgba(11, 31, 23, 0.32);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25);
+}
+.lkdv-ex-carousel:has(.lkdv-ex-card) .lkdv-ex-dots span {
+  background: rgba(255, 255, 255, 0.6);
+}

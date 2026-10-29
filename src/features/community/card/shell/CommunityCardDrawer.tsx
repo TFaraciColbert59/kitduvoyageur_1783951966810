@@ -11,6 +11,11 @@ export interface CommunityCardDrawerProps {
   strict?: boolean;
   /** Glissement horizontal hors zone qui le gère déjà : onglet suivant ou précédent. */
   onSwipeX?: (direction: 'next' | 'prev') => void;
+  /**
+   * `full` : du haut de l'écran (par-dessus la barre du haut) jusqu'en bas (Créer).
+   * `half` : ancrée en bas, 50 % de la hauteur au plus, voile au-dessus qui ferme (Explorer).
+   */
+  size?: 'full' | 'half';
   children: React.ReactNode;
 }
 
@@ -56,7 +61,7 @@ type TouchTrack = {
  * vers le bas sur la poignée, touche Échap (et re-clic sur l'onglet actif,
  * géré par le contenu).
  */
-export function CommunityCardDrawer({ open, onClose, ariaLabel, strict = false, onSwipeX, children }: CommunityCardDrawerProps) {
+export function CommunityCardDrawer({ open, onClose, ariaLabel, strict = false, onSwipeX, size, children }: CommunityCardDrawerProps) {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef<number | null>(null);
   const restoreFocus = useRef<HTMLElement | null>(null);
@@ -161,9 +166,14 @@ export function CommunityCardDrawer({ open, onClose, ariaLabel, strict = false, 
   const keyboardOpen = keyboardInset > 0;
 
   return (
+    <>
+    {size === 'half' ? (
+      <button type="button" className="lkdv-cd-scrim" aria-label="Fermer" tabIndex={-1} onClick={onClose} />
+    ) : null}
     <div
       ref={cardRef}
       className="lkdv-cd"
+      data-size={size ?? 'card'}
       role="dialog"
       aria-label={ariaLabel}
       data-strict={strict ? 'true' : 'false'}
@@ -202,6 +212,7 @@ export function CommunityCardDrawer({ open, onClose, ariaLabel, strict = false, 
       </button>
       <div className="lkdv-cd-body">{children}</div>
     </div>
+    </>
   );
 }
 

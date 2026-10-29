@@ -356,6 +356,7 @@ export function ExplorerDrawer({
       onClose={onClose}
       ariaLabel="Explorer la communauté"
       strict
+      size="half"
       onSwipeX={(direction) => {
         const next = Math.max(0, Math.min(SECTION_TABS.length - 1, index + (direction === 'next' ? 1 : -1)));
         if (next !== index) goTab(SECTION_TABS[next]?.id ?? 'recherche');

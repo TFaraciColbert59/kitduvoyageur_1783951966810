@@ -151,6 +151,7 @@ export function CreateDrawer({
       onClose={onClose}
       ariaLabel="Créer dans l’application"
       strict
+      size="full"
       onSwipeX={(direction) =>
         setIndex((current) => Math.max(0, Math.min(CREATE_KINDS.length - 1, current + (direction === 'next' ? 1 : -1))))
       }
