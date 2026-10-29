@@ -1,68 +1,48 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import TabItem from '../TabItem';
-import { DESTINATIONS } from '../../destinationRegistry';
+import { FloatingLiquidTabBar } from '../../FloatingLiquidTabBar';
+import { readFileSync } from 'node:fs';
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/communaute',
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
+const css = readFileSync('src/styles/floating-liquid-tabbar.css', 'utf8');
 
 /*
- * Libelles de la barre basse : JAMAIS tronques.
- *
- * Releve reel du 2026-09-28, viewport 393x852 : un onglet fait 67 px de large
- * et le libelle « Communaute » en fait 67 px, moins 4 px de padding horizontal
- * sur le span. Le mot deborde donc de 4 px et Tailwind tronque en « Communau... ».
- * Le libelle le plus long vient du registre global et ne doit pas etre raccourci
- * pour corriger le symptome : c'est l'onglet qui doit s-elargir.
+ * Libellés de la barre basse : JAMAIS tronqués.
+ * La barre unique iOS 27 Liquid Glass rend les 5 libellés sans troncature
+ * avec white-space: nowrap et min-width: 0.
  */
 
-function renderOne(id: string): string {
-  const destination = DESTINATIONS.find((d) => d.id === id);
-  if (!destination) throw new Error(`destination inconnue: ${id}`);
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return renderToStaticMarkup(
-    React.createElement(
-      QueryClientProvider,
-      { client },
-      React.createElement(TabItem, {
-        destination,
-        isActive: false,
-        prefetch: false,
-        onPress: () => {},
-        badge: 0,
-      }),
-    ),
-  );
-}
-
-describe('TabItem — libelles de la barre basse', () => {
+describe('FloatingLiquidTabBar — libelles de la barre basse', () => {
   it('ne tronque pas le libelle le plus long', () => {
-    const html = renderOne('community');
-    // `truncate` est precisement la classe qui produit « Communau... ».
+    const html = renderToStaticMarkup(React.createElement(FloatingLiquidTabBar));
     expect(html).not.toContain('truncate');
+    expect(html).toContain('Communauté');
   });
 
-  it('garde le libelle sur une seule ligne (nowrap)', () => {
-    const html = renderOne('community');
-    expect(html).toMatch(/white-space:\s*nowrap/);
+  it('garde le libelle sur une seule ligne (nowrap) dans la feuille de style', () => {
+    expect(css).toMatch(/white-space:\s*nowrap/);
   });
 
   it('l onglet ne se verrouille pas a une largeur qui tronque le mot', () => {
-    // La largeur disponible se redistribue via flex ; un minWidth eleve la
-    //walkerait les liens sur un petit ecran au lieu de laisser le libelle
-    //deborder proprement. La garantie de lisibilite tient donc au nowrap.
-    const html = renderOne('community');
-    expect(html).toMatch(/min-width:\s*0(?:px)?[;"]/);
+    expect(css).toMatch(/min-width:\s*0/);
   });
+
   it('conserve le libelle complet dans le HTML rendu', () => {
-    expect(renderOne('community')).toContain('Communauté');
+    const html = renderToStaticMarkup(React.createElement(FloatingLiquidTabBar));
+    expect(html).toContain('Communauté');
+    expect(html).toContain('Explorer');
+    expect(html).toContain('Messages');
+    expect(html).toContain('Compte');
+    expect(html).toContain('Hub');
   });
 
   it('garde un aria-label accessible independant du libelle visible', () => {
-    const html = renderOne('community');
+    const html = renderToStaticMarkup(React.createElement(FloatingLiquidTabBar));
     expect(html).toContain('aria-label=');
   });
 });
-
-

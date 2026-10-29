@@ -7,7 +7,7 @@ import type { MapPin } from './map/MapStage';
 import { ExplorerSheet } from './sheet/ExplorerSheet';
 import { buildSheetModel } from './sheet/SheetContent';
 import { TopChrome } from './chrome/TopChrome';
-import { ActivityPill, BottomBar } from './chrome/BottomBar';
+import { ActivityPill } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
 import { Countdown, useLongPress } from './activity/Countdown';
 import { useGpsTracker } from './activity/useGpsTracker';
@@ -677,9 +677,7 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
           onFlag={() => state.showToast({ title: 'Repère posé', sub: 'Ajouté à ta sortie' })}
           onStop={() => state.stopActivity()}
         />
-      ) : (
-        <BottomBar />
-      )}
+      ) : null}
 
       {/* Attributions (P10-09) : obligatoires pour OSM, OpenFreeMap, AWS Terrain,
           Natural Earth, MET Norway et Wikidata. Discret, mais toujours visible. */}

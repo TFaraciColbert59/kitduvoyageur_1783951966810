@@ -19,7 +19,6 @@ import '@/components/compte/compte-v8.css';
 import '@/components/compte/compte-apple-hig.css';
 import '@/design/account/account-grammar-pins.css';
 import '@/components/messaging/messages-grammar.css';
-import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
 import { SubCapsuleTabs } from '@/components/ui/CapsuleTabs';
@@ -1604,10 +1603,6 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 <span>{deepLinkError}</span>
               </div>
             ) : null}
-
-            <nav className="lkdv-account-bar" aria-label="Navigation principale">
-              <AccountBottomBar renderAs="button" active="messages" badges={unreadTotal > 0 ? { messages: unreadTotal } : {}} />
-            </nav>
 
             {currentUserId ? (
               <ConversationOptionsSheet

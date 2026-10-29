@@ -1,44 +1,7 @@
 'use client';
 
 import React, { useCallback, useRef, useState } from 'react';
-import Link from 'next/link';
 import { XpIcon } from '../ui/XpIcon';
-
-const ITEMS = [
-  { id: 'hub', href: '/hub', label: 'Hub', icon: 'house' },
-  { id: 'communaute', href: '/communaute', label: 'Communauté', icon: 'users' },
-  { id: 'explorer', href: '/explorer', label: 'Explorer', icon: 'compass' },
-  { id: 'messages', href: '/messagerie', label: 'Messages', icon: 'send' },
-  { id: 'compte', href: '/compte', label: 'Compte', icon: 'userplus' },
-];
-
-export function BottomBar({ active = 'explorer' }: { active?: string }) {
-  return (
-    <nav className="xp-bottombar" aria-label="Navigation principale">
-      {ITEMS.map((item) => {
-        const isActive = item.id === active;
-        const isCenter = item.id === 'explorer';
-        return (
-          <Link
-            key={item.id}
-            href={item.href}
-            aria-current={isActive ? 'page' : undefined}
-            aria-label={item.label}
-            className={isCenter ? 'xp-bottombar-center' : undefined}
-          >
-            {isCenter ? (
-              <span>
-                <XpIcon name={item.icon} size={17} />
-              </span>
-            ) : (
-              <XpIcon name={item.icon} size={18} />
-            )}
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
 
 /**
  * Arrêt de sortie par maintien 0,8 s (04_CARTE §4) : un simple toucher n'arrête

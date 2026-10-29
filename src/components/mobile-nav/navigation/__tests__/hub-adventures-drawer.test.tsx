@@ -24,8 +24,8 @@ const source = readFileSync(
   'utf8',
 );
 const hubShell = readFileSync('src/features/hub/components/HubShell.tsx', 'utf8');
-const webNavigationBar = readFileSync(
-  'src/components/mobile-nav/navigation/WebNavigationBar.tsx',
+const floatingLiquidTabBar = readFileSync(
+  'src/components/mobile-nav/FloatingLiquidTabBar.tsx',
   'utf8',
 );
 const css = readFileSync(
@@ -300,24 +300,24 @@ describe('Tiroir « Tes aventures » — non-regression du cablage existant', ()
   });
 
   it('DR-31: le focus est restitue au declencheur a la fermeture', () => {
-    expect(webNavigationBar).toContain('hubTriggerRef');
-    expect(webNavigationBar).toContain('hub:switcher-state');
-    expect(webNavigationBar).toContain('trigger.focus()');
-    expect(webNavigationBar).toContain('drawerWasOpen.current && !open');
+    expect(floatingLiquidTabBar).toContain('hubTriggerRef');
+    expect(floatingLiquidTabBar).toContain('hub:switcher-state');
+    expect(floatingLiquidTabBar).toContain('trigger.focus()');
+    expect(floatingLiquidTabBar).toContain('drawerWasOpen.current && !open');
   });
 
   it('DR-32: la restitution du focus vise le declencheur REEL, apres Radix', () => {
     // Un `pointerdown` quelconque memorise plus tot ferait restituer le focus
     // sur un element sans rapport : on ne retient que le lien Hub.
-    expect(webNavigationBar).toContain(
+    expect(floatingLiquidTabBar).toContain(
       'const HUB_TRIGGER = \'nav[aria-label="Navigation principale"] a[href="/hub"]\';',
     );
-    expect(webNavigationBar).toContain('if (hubTrigger) hubTriggerRef.current = hubTrigger;');
+    expect(floatingLiquidTabBar).toContain('if (hubTrigger) hubTriggerRef.current = hubTrigger;');
     // Radix rend le focus apres notre evenement d’etat : la restitution
     // doit donc passer en double requestAnimationFrame pour passer DERNIER.
-    const restore = webNavigationBar.slice(
-      webNavigationBar.indexOf('const restoreTriggerFocus'),
-      webNavigationBar.indexOf('const onPointerDown'),
+    const restore = floatingLiquidTabBar.slice(
+      floatingLiquidTabBar.indexOf('const restoreTriggerFocus'),
+      floatingLiquidTabBar.indexOf('const onPointerDown'),
     );
     expect(restore).toContain('requestAnimationFrame');
     expect(restore).toContain('trigger.focus();');
@@ -340,10 +340,8 @@ describe('Tiroir « Tes aventures » — non-regression du cablage existant', ()
     expect(css).toMatch(/\.had-action--secondary \{[\s\S]{0,240}background: var\(--glass-bg-strong\)/);
   });
   it('DR-30: l’appui long sur Hub continue d’emettre le signal', () => {
-    expect(webNavigationBar).toContain(
-      "onLongPress={destination.id === 'adventures' ? openHubSwitcher",
-    );
-    expect(webNavigationBar).toContain('isHubSurfacePathname(pathname)');
-    expect(webNavigationBar).toContain('opticalNavigation={opticalNavigation}');
+    expect(floatingLiquidTabBar).toContain('triggerHubSwitcher');
+    expect(floatingLiquidTabBar).toContain('isHubSurfacePathname(pathname)');
+    expect(floatingLiquidTabBar).toContain("destination.id === 'adventures'");
   });
 });

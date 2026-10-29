@@ -306,7 +306,7 @@ export const PUBLIC_PROFILE_CSS = `
 .lkdv-public-profile .lkdv-slot-selector button .ic{display:grid!important;place-items:center!important;}
 .lkdv-public-profile .lkdv-slot-selector button{color:#56665D!important;}
 .lkdv-public-profile .lkdv-slot-selector button.active{color:#17402C!important;}
-.lkdv-public-drawer{flex:1!important;min-height:0!important;display:flex!important;flex-direction:column!important;}
+.lkdv-public-drawer{flex:1!important;min-height:0!important;display:flex!important;flex-direction:column!important;padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 72px)!important;}
 .lkdv-public-drawer>.lkdv-drawer-host{height:100%!important;min-height:0!important;}
 @media (min-width:768px){.lkdv-public-profile{padding:24px 0!important;}.lkdv-public-profile-frame{min-height:calc(100dvh - 48px)!important;height:calc(100dvh - 48px)!important;border-radius:30px!important;overflow:hidden!important;border:.5px solid rgba(255,255,255,.7)!important;}}
 @media (max-width:360px){.lkdv-public-stats span:nth-child(4){display:none!important;}}

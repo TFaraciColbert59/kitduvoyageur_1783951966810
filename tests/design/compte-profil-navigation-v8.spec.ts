@@ -8,6 +8,8 @@ const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () => {
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
   const compteCompSource = read('src/components/compte/CompteLiquidGlassV8.tsx');
+  const compteCssSource = read('src/components/compte/compte-apple-hig.css');
+  const allCompteStyles = compteCompSource + '\n' + compteCssSource;
   const profilPageSource = read('src/app/profil/[id]/page.tsx');
   const mobileNavWrapperSource = read('src/components/mobile-nav/MobileNavWrapper.tsx');
   const publicProfileViewSource = read('src/components/profile/PublicMobileProfileView.tsx');
@@ -51,15 +53,15 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
     });
   });
 
-  describe('Requirement 2: Bottom bar disappears on someone else\'s profile', () => {
+  describe('Requirement 2: Public profile integrates unified iOS 27 Liquid Glass navigation', () => {
     it('renders the public profile without the Compte AppShell', () => {
       expect(profilPageSource).toContain('PublicProfileV2');
       expect(profilPageSource).not.toContain('<AppShell');
     });
 
-    it('suppresses global MobileNavWrapper on /profil routes', () => {
-      expect(mobileNavWrapperSource).toContain("pathname === '/profil'");
-      expect(mobileNavWrapperSource).toContain("pathname?.startsWith('/profil')");
+    it('rattache le profil public à la barre unique iOS 27 sans masquage', () => {
+      expect(mobileNavWrapperSource).toContain('MobileNavWrapper');
+      expect(mobileNavWrapperSource).not.toContain("pathname === '/profil'");
     });
   });
 
@@ -82,12 +84,12 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
 
   describe('Requirement 4: Bottom bar shrinks/reduces when map opens', () => {
     it('collapses .tb, .tabbar and .acc on .phone.mapbig in CSS', () => {
-      expect(compteCompSource).toContain('.phone.mapbig .tb');
-      expect(compteCompSource).toContain('.phone.mapbig .tabbar');
-      expect(compteCompSource).toContain('.phone.mapbig .acc');
-      expect(compteCompSource).toContain('transform: translateY(120%) !important;');
-      expect(compteCompSource).toContain('opacity: 0 !important;');
-      expect(compteCompSource).toContain('pointer-events: none !important;');
+      expect(allCompteStyles).toContain('.phone.mapbig .tb');
+      expect(allCompteStyles).toContain('.phone.mapbig .tabbar');
+      expect(allCompteStyles).toContain('.phone.mapbig .acc');
+      expect(allCompteStyles).toContain('transform: translateY(120%) !important;');
+      expect(allCompteStyles).toContain('opacity: 0 !important;');
+      expect(allCompteStyles).toContain('pointer-events: none !important;');
     });
   });
 
@@ -99,14 +101,14 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
     });
 
     it('exposes the card detent in CSS and keeps map controls visible over the map', () => {
-      expect(compteCompSource).toContain('.sw-wrap[data-det="card"] .sheet');
-      expect(compteCompSource).toContain('.phone[data-det="card"] .mctl');
+      expect(allCompteStyles).toContain('.sw-wrap[data-det="card"] .sheet');
+      expect(allCompteStyles).toContain('.phone[data-det="card"] .mctl');
     });
 
     it('collapses bottom bar when any drawer is open (.sheet-open, [data-det="card"])', () => {
-      expect(compteCompSource).toContain('.phone.sheet-open .tb');
-      expect(compteCompSource).toContain('.phone[data-sheet-open="true"] .tb');
-      expect(compteCompSource).toContain(':has(#sw[data-det="large"]) .tb');
+      expect(allCompteStyles).toContain('.phone.sheet-open .tb');
+      expect(allCompteStyles).toContain('.phone[data-sheet-open="true"] .tb');
+      expect(allCompteStyles).toContain(':has(#sw[data-det="large"]) .tb');
     });
   });
 });

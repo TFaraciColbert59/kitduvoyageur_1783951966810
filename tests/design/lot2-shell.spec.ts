@@ -11,10 +11,10 @@ import { join } from 'path';
 
 const tokens = readFileSync('src/styles/tokens.css', 'utf8');
 const appShell = readFileSync('src/components/shell/AppShell.tsx', 'utf8');
-const tabBar = readFileSync('src/components/mobile-nav/navigation/WebNavigationBar.tsx', 'utf8');
-const navigationSurface = readFileSync('src/components/mobile-nav/navigation/NavigationSurface.tsx', 'utf8');
 const registry = readFileSync('src/components/mobile-nav/destinationRegistry.ts', 'utf8');
 const navigationBar = readFileSync('src/components/mobile-nav/NavigationBar.tsx', 'utf8');
+const floatingBar = readFileSync('src/components/mobile-nav/FloatingLiquidTabBar.tsx', 'utf8');
+const floatingCss = readFileSync('src/styles/floating-liquid-tabbar.css', 'utf8');
 const bottomNavReservation = readFileSync(
   'src/components/mobile-nav/navigation/bottom-nav-reservation.ts',
   'utf8',
@@ -98,17 +98,17 @@ describe('LOT 2 — navigation centralisée', () => {
     expect(registry).toContain('EXTENDED_NAV_PREFIXES');
   });
 
-  it('AppShell et WebNavigationBar utilisent le même prédicat', () => {
+  it('AppShell et NavigationBar utilisent le même prédicat', () => {
     expect(appShell).toContain('hasExtendedNav(pathname)');
-    expect(tabBar).toContain('hasExtendedNav(pathname)');
+    expect(navigationBar).toContain('hasExtendedNav(pathname)');
     // Plus de liste de routes dupliquée dans le shell.
     expect(appShell).not.toContain("pathname?.startsWith('/communaute')");
   });
 
-  it('NavigationSurface consomme la hauteur canonique et le matériau par tokens', () => {
-    expect(navigationSurface).toContain("height: 'var(--nav-height)'");
-    expect(navigationSurface).toContain('lkv-material-bar');
-    expect(navigationSurface).not.toContain('height: 52,');
+  it('FloatingLiquidTabBar consomme la hauteur canonique et le matériau par tokens', () => {
+    expect(floatingCss).toContain('z-index: var(--z-nav, 1250);');
+    expect(floatingCss).toContain('-webkit-backdrop-filter: blur(28px) saturate(180%)');
+    expect(floatingBar).toContain('lkdv-floating-tabbar');
   });
 
   it('NavigationBar conserve le fallback web et limite la barre native à iOS', () => {
@@ -116,7 +116,7 @@ describe('LOT 2 — navigation centralisée', () => {
     expect(navigationBar).toContain("Capacitor.getPlatform() === 'ios'");
     expect(navigationBar).toContain('getNativeGlassDestination(pathname)');
     expect(navigationBar).toContain('shouldShowNativeGlass(pathname)');
-    expect(navigationBar).toContain('<WebNavigationBar />');
+    expect(navigationBar).toContain('<FloatingLiquidTabBar />');
   });
 });
 

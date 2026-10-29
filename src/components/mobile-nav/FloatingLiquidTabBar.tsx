@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
@@ -10,6 +10,10 @@ import {
   type DestinationId,
 } from './destinationRegistry';
 import BottomNavReservation from './navigation/BottomNavReservation';
+import {
+  HUB_SWITCHER_AUTOPEN_KEY,
+  isHubSurfacePathname,
+} from '@/features/hub/context/adventureLists';
 
 const TAB_ICON: Record<DestinationId, string> = {
   adventures: 'home',
@@ -23,10 +27,12 @@ const TAB_ICON: Record<DestinationId, string> = {
  * Barre flottante Apple Liquid Glass (iOS 26/27).
  *
  * Référence : variante « floating » de Liquid Glass Tab Bars.
- * - une seule capsule de verre, 68 px, padding 7 ;
- * - l’onglet actif s’élargit et affiche son libellé ; les autres restent icône seule ;
- * - la sélection est une capsule teintée qui se morphe avec la largeur ;
- * - aucune ombre/rayon d’écran : tout est porté par la barre.
+ * - une seule capsule de verre, 52 px, padding 4 ;
+ * - tous les 5 onglets avec icône et libellé lisible ;
+ * - lentille de sélection qui glisse avec ressort physique ;
+ * - double-clic sur Communauté -> visionneuse Freedom Reels ;
+ * - appui long sur Hub -> ouverture du sélecteur d'aventures ;
+ * - barre UNIQUE pour toute l'application.
  */
 export function FloatingLiquidTabBar() {
   const pathname = usePathname();
@@ -34,8 +40,99 @@ export function FloatingLiquidTabBar() {
   const activeId = getActiveDestinationId(pathname);
   const activeIndex = Math.max(0, DESTINATIONS.findIndex((d) => d.id === activeId));
   const lastCommunityClickRef = useRef<number>(0);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFiredRef = useRef<boolean>(false);
+
+  // Restitution du focus au declencheur. Le tiroir « Tes aventures » est un
+  // dialog Radix monte ailleurs (HubShell) : sans ce relais, la fermeture
+  // laisserait le focus sur <body> et un utilisateur clavier devrait
+  // reparcourir toute la page.
+  //
+  // Deux precautions, apprises en navigation reelle :
+  // 1. on ne memorise QUE le declencheur reel (le lien Hub de la barre). Un
+  //    `pointerdown` quelconque memorise plus tot ferait restituer le focus
+  //    sur un element sans rapport avec l'ouverture ;
+  // 2. la restitution passe DERNIERE, en double `requestAnimationFrame` : le
+  //    Dialog Radix rend lui aussi le focus a la fermeture, apres notre
+  //    evenement d'etat, et ecrasait le declencheur au profit d'un enfant.
+  const hubTriggerRef = useRef<HTMLElement | null>(null);
+  const drawerWasOpen = useRef(false);
+  useEffect(() => {
+    const HUB_TRIGGER = 'nav[aria-label="Navigation principale"] a[href="/hub"]';
+    const restoreTriggerFocus = (recorded: HTMLElement | null) => {
+      const trigger =
+        (recorded && recorded.isConnected ? recorded : null) ??
+        document.querySelector<HTMLElement>(HUB_TRIGGER);
+      if (!trigger) return;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!trigger.isConnected) return;
+          trigger.focus();
+        });
+      });
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      const hubTrigger = target?.closest?.<HTMLElement>(HUB_TRIGGER) ?? null;
+      if (hubTrigger) hubTriggerRef.current = hubTrigger;
+    };
+    const onSwitcherState = (event: Event) => {
+      const open = (event as CustomEvent<{ open: boolean }>).detail?.open ?? false;
+      if (drawerWasOpen.current && !open) {
+        restoreTriggerFocus(hubTriggerRef.current);
+        hubTriggerRef.current = null;
+      }
+      drawerWasOpen.current = open;
+    };
+    window.addEventListener('pointerdown', onPointerDown, true);
+    window.addEventListener('hub:switcher-state', onSwitcherState);
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown, true);
+      window.removeEventListener('hub:switcher-state', onSwitcherState);
+    };
+  }, []);
+
+  const triggerHubSwitcher = useCallback(() => {
+    try {
+      if ('vibrate' in navigator) navigator.vibrate(25);
+    } catch {}
+
+    if (isHubSurfacePathname(pathname)) {
+      window.dispatchEvent(new CustomEvent('hub:open-switcher'));
+    } else {
+      try {
+        sessionStorage.setItem(HUB_SWITCHER_AUTOPEN_KEY, '1');
+      } catch {}
+      router.push('/hub');
+    }
+  }, [pathname, router]);
+
+  const handlePointerDown = (destId: DestinationId) => {
+    if (destId === 'adventures') {
+      longPressFiredRef.current = false;
+      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = setTimeout(() => {
+        longPressFiredRef.current = true;
+        triggerHubSwitcher();
+      }, 500);
+    }
+  };
+
+  const clearLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
   const handleTabClick = (destId: DestinationId, e: React.MouseEvent) => {
+    clearLongPress();
+    if (destId === 'adventures' && longPressFiredRef.current) {
+      e.preventDefault();
+      longPressFiredRef.current = false;
+      return;
+    }
+
     if (destId === 'community') {
       const now = Date.now();
       const diff = now - lastCommunityClickRef.current;
@@ -65,9 +162,24 @@ export function FloatingLiquidTabBar() {
                 key={destination.id}
                 href={destination.href}
                 prefetch={false}
-                aria-label={destination.id === 'community' ? `${destination.ariaLabel} (double-clic pour Freedom)` : destination.ariaLabel}
+                aria-label={
+                  destination.id === 'community'
+                    ? `${destination.ariaLabel} (double-clic pour Freedom)`
+                    : destination.id === 'adventures'
+                    ? `${destination.ariaLabel} (maintien pour changer d'aventure)`
+                    : destination.ariaLabel
+                }
                 aria-current={active ? 'page' : undefined}
                 className={`lkdv-floating-tab${active ? ' is-active' : ''}`}
+                onPointerDown={() => handlePointerDown(destination.id)}
+                onPointerUp={clearLongPress}
+                onPointerLeave={clearLongPress}
+                onContextMenu={(e) => {
+                  if (destination.id === 'adventures') {
+                    e.preventDefault();
+                    triggerHubSwitcher();
+                  }
+                }}
                 onClick={(e) => handleTabClick(destination.id, e)}
               >
                 <span className="lkdv-floating-tab-icon" aria-hidden="true">
