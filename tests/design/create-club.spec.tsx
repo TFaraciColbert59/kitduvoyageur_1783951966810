@@ -8,6 +8,7 @@ import {
   slugify,
 } from '@/features/community/create/ClubCreateForm';
 import { createDefaults, createSchemas } from '@/features/community/create/engine/createSchemas';
+import { COVER } from './_coverFixture';
 
 vi.mock('next/link', () => ({
   default: ({ children, ...props }: React.ComponentProps<'a'>) => <a {...props}>{children}</a>,
@@ -96,6 +97,7 @@ describe('ClubCreateForm', () => {
         ...createDefaults('club'),
         name: 'La Cordée',
         category: 'Randonnée',
+        cover: COVER,
       }).success,
     ).toBe(true);
     expect(
@@ -106,6 +108,23 @@ describe('ClubCreateForm', () => {
         joinQuestions: ['A', 'B', 'C', 'D'],
       }).success,
     ).toBe(false);
+  });
+
+  it('exige une image et modère l’activité', () => {
+    const base = { ...createDefaults('club'), name: 'La Cordée', category: 'Trail', cover: COVER };
+    expect(createSchemas.club.safeParse(base).success).toBe(true);
+
+    const noImage = createSchemas.club.safeParse({ ...base, cover: [] });
+    expect(noImage.success).toBe(false);
+    if (!noImage.success) {
+      expect(noImage.error.issues.map((issue) => issue.message)).toContain('Ajoute une image pour ton club : elle est obligatoire.');
+    }
+
+    for (const bad of ['', 'x', 'Trail 2026', 'porn', 'Club nazi', 'a'.repeat(41), 'https://exemple.fr']) {
+      expect(createSchemas.club.safeParse({ ...base, category: bad }).success, bad).toBe(false);
+    }
+    expect(createSchemas.club.safeParse({ ...base, category: 'Ski de randonnée' }).success).toBe(true);
+    expect(createSchemas.club.safeParse({ ...base, name: 'Club porn' }).success).toBe(false);
   });
 
   it('génère le slug et concatène les questions dans clubs.rules', () => {

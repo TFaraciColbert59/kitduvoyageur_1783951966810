@@ -1,17 +1,29 @@
 'use client';
 
-import React, { Suspense, useCallback, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { CommunityStoriesBar } from '@/components/communaute/CommunityStoriesBar';
-import { CommunityFeedShell } from '@/features/community/feed/CommunityFeedShell';
+import { CommunityCardShell } from '@/features/community/card/shell/CommunityCardShell';
 import { CommunityFeedTopBar } from '@/features/community/feed/CommunityFeedTopBar';
 import { CommunityFeed } from '@/features/community/feed/CommunityFeed';
-import { CreateDrawer, type CreateKind } from '@/features/community/create/CreateDrawer';
-import { CommunitySectionsDrawer } from '@/features/community/sections/CommunitySectionsDrawer';
-import { AccountBottomBar } from '@/components/account/AccountBottomBar';
-import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
+import type { CreateKind } from '@/features/community/card/create/CreateDrawer';
+import '@/styles/community-card.css';
+import type { SectionTabId } from '@/features/community/card/sections/sectionTabs';
+
+// Les deux drawers ne servent qu'au clic : hors du JS initial du fil. Leurs morceaux sont préchargés
+// quand le navigateur est au repos et au premier appui sur un bouton du haut, avant le clic.
+const loadCreateDrawer = () => import('@/features/community/card/create/CreateDrawer');
+const loadExplorerDrawer = () => import('@/features/community/card/explore/ExplorerDrawer');
+const CreateDrawer = dynamic(loadCreateDrawer, { ssr: false });
+const ExplorerDrawer = dynamic(loadExplorerDrawer, { ssr: false });
+
+function prefetchDrawers() {
+  void loadCreateDrawer();
+  void loadExplorerDrawer();
+}
 
 function CommunauteFeedContent() {
   const { user } = useAuth();
@@ -19,11 +31,25 @@ function CommunauteFeedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
+  // Monté au premier usage puis conservé : le brouillon et la position dans les volets survivent à la fermeture.
+  const [createMounted, setCreateMounted] = useState(false);
+  const [sectionsMounted, setSectionsMounted] = useState(false);
+  const [createKind, setCreateKind] = useState<CreateKind>('post');
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
   const [storiesRefreshKey, setStoriesRefreshKey] = useState(0);
   const [sectionsOpen, setSectionsOpen] = useState(false);
   const [sectionsTab, setSectionsTab] = useState<SectionTabId>('carnets');
   const [sectionsSearch, setSectionsSearch] = useState(false);
+
+  useEffect(() => {
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number }).requestIdleCallback;
+    if (idle) {
+      const handle = idle(prefetchDrawers, { timeout: 4000 });
+      return () => (window as Window & { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback?.(handle);
+    }
+    const timer = window.setTimeout(prefetchDrawers, 2500);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const initialPostId = searchParams?.get('post') ?? null;
   const initialCommentId = searchParams?.get('comment') ?? null;
@@ -46,12 +72,26 @@ function CommunauteFeedContent() {
     toast('Création publiée.', 'success');
   }, [toast]);
 
+  const proposeCreate = useCallback(
+    (kind: CreateKind) => {
+      if (!user?.id || user.is_anonymous) {
+        requireAuth();
+        return;
+      }
+      setSectionsOpen(false);
+      setSectionsSearch(false);
+      setCreateKind(kind);
+      setCreateMounted(true);
+      setCreateOpen(true);
+    },
+    [requireAuth, router, user?.id, user?.is_anonymous],
+  );
+
   return (
     <>
       <h1 className="sr-only">Communauté — Le Kit du Voyageur</h1>
 
-      <CommunityFeedShell
-        bottomBar={<AccountBottomBar active="communaute" />}
+      <CommunityCardShell
         topBar={
           <CommunityFeedTopBar
             user={user}
@@ -60,24 +100,54 @@ function CommunauteFeedContent() {
                 requireAuth();
                 return;
               }
+              setSectionsOpen(false);
+              setCreateKind('post');
+              setCreateMounted(true);
               setCreateOpen(true);
             }}
-            onOpenSection={(id) => {
-              setSectionsTab(id);
-              setSectionsSearch(false);
+            onOpenSection={() => {
+              // « Explorer » ouvre directement la recherche de l'Explorer.
+              setCreateOpen(false);
+              setSectionsSearch(true);
+              setSectionsMounted(true);
               setSectionsOpen(true);
             }}
             onSearch={() => {
+              setCreateOpen(false);
               setSectionsSearch(true);
+              setSectionsMounted(true);
               setSectionsOpen(true);
             }}
           />
+        }
+        drawerOpen={createOpen || sectionsOpen}
+        drawer={
+          <>
+            {createMounted ? (
+              <CreateDrawer open={createOpen} onClose={() => setCreateOpen(false)} user={user} onCreated={handleCreated} initialKind={createKind} />
+            ) : null}
+            {sectionsMounted ? (
+            <ExplorerDrawer
+              open={sectionsOpen}
+              initialTab={sectionsTab}
+              initialSearch={sectionsSearch}
+              user={user}
+              onClose={() => {
+                setSectionsOpen(false);
+                setSectionsSearch(false);
+              }}
+              onRequireAuth={requireAuth}
+              onPropose={proposeCreate}
+            />
+            ) : null}
+          </>
         }
         stories={
           <CommunityStoriesBar
             key={storiesRefreshKey}
             currentUser={user}
             showHeading={false}
+            onCreateStory={() => proposeCreate('story')}
           />
         }
       >
@@ -89,21 +159,7 @@ function CommunauteFeedContent() {
           onRequireAuth={requireAuth}
           refreshKey={feedRefreshKey}
         />
-      </CommunityFeedShell>
-
-      <CreateDrawer open={createOpen} onClose={() => setCreateOpen(false)} user={user} onCreated={handleCreated} />
-
-      <CommunitySectionsDrawer
-        open={sectionsOpen}
-        initialTab={sectionsTab}
-        initialSearch={sectionsSearch}
-        user={user}
-        onClose={() => {
-          setSectionsOpen(false);
-          setSectionsSearch(false);
-        }}
-        onRequireAuth={requireAuth}
-      />
+      </CommunityCardShell>
     </>
   );
 }

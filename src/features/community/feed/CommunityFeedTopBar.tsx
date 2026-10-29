@@ -14,7 +14,8 @@ export interface CommunityFeedTopBarProps {
 }
 
 /**
- * « Pour toi » + menu sections ; +, recherche, cloche (drawer Notifications du Compte).
+ * « Explorer » (ouvre directement la recherche de l'Explorer) ; +, recherche,
+ * cloche (drawer Notifications du Compte).
  */
 export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }: CommunityFeedTopBarProps) {
   const unread = useAccountUnreadCount(user?.id);
@@ -25,7 +26,7 @@ export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }:
         <button
           type="button"
           className="lkdv-pourtoi-pill"
-          aria-label="Ouvrir les sections"
+          aria-label="Explorer et rechercher"
           onClick={() => onOpenSection('carnets')}
         >
           <span>Explorer</span>

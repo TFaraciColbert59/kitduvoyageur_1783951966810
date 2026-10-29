@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Download, Pencil, Share2, ShieldCheck, Trash2, X } from 'lucide-react';
+import { Check, Download, Pencil, Share2, ShieldCheck, Trash2, X } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingDetail, OutingVisibility } from '@/features/compte/server/sorties';
 import { ElevationProfile, TraceMap, formatDate, formatDuration, formatNumber } from './shared';
 
@@ -54,6 +55,18 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
           <TraceMap points={detail.points} className="lkdv-sortie-hero-map" />
         )}
         <div className="lkdv-sortie-hero-scrim" aria-hidden="true" />
+        {!editing ? (
+          <div className="lkdv-sortie-hero-tools lkdv-apill-row">
+            <ActionPill tone="primary" label="Partager" icon={<Share2 />} onClick={onShare} />
+            {detail.canEdit ? <ActionPill label="Modifier" icon={<Pencil />} onClick={() => setEditing(true)} /> : null}
+            <ActionPill
+              label={detail.points.length < 2 ? 'Aucune trace GPS rattachée' : 'Télécharger le GPX'}
+              icon={<Download />}
+              onClick={onExport}
+              disabled={detail.points.length < 2}
+            />
+          </div>
+        ) : null}
         <div className="lkdv-sortie-hero-body">
           <div className="lkdv-sortie-hero-badges">
             {detail.verified ? (
@@ -126,38 +139,13 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
               <option value="collective_anonymized">Collectif anonymisé</option>
             </select>
           </label>
-          <div className="lkdv-sortie-edit-actions">
-            <button type="button" className="lkdv-sortie-btn ghost" onClick={() => setEditing(false)}>
-              Annuler
-            </button>
-            <button type="submit" className="lkdv-sortie-btn primary" disabled={saving || !title.trim()}>
-              {saving ? 'Enregistrement…' : 'Enregistrer'}
-            </button>
+          <div className="lkdv-sortie-edit-actions lkdv-apill-row">
+            <ActionPill label="Annuler" icon={<X />} onClick={() => setEditing(false)} />
+            <ActionPill type="submit" tone="primary" label="Enregistrer" icon={<Check />} busy={saving} disabled={!title.trim()} />
           </div>
         </form>
       ) : (
-        <>
-          {detail.notes ? <p className="lkdv-sortie-notes">{detail.notes}</p> : null}
-          <div className="lkdv-sortie-actions">
-            <button type="button" className="lkdv-sortie-btn primary" onClick={onShare}>
-              <Share2 size={15} aria-hidden="true" /> Partager
-            </button>
-            {detail.canEdit ? (
-              <button type="button" className="lkdv-sortie-btn ghost" onClick={() => setEditing(true)}>
-                <Pencil size={15} aria-hidden="true" /> Modifier
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="lkdv-sortie-btn ghost"
-              onClick={onExport}
-              disabled={detail.points.length < 2}
-              title={detail.points.length < 2 ? 'Aucune trace GPS rattachée' : 'Télécharger le GPX'}
-            >
-              <Download size={15} aria-hidden="true" /> GPX
-            </button>
-          </div>
-        </>
+        detail.notes ? <p className="lkdv-sortie-notes">{detail.notes}</p> : null
       )}
 
       <section className="lkdv-sortie-section">
@@ -173,25 +161,16 @@ export function OutingSummary({ detail, saving, onSave, onShare, onExport, onDel
           <b>Preuve terrain</b>
           <span>{detail.verified ? 'Trace GPS présente' : 'Sans trace GPS'}</span>
         </header>
-        <p className="lkdv-sortie-proof">
-          {detail.verified
-            ? 'Les chiffres de cette sortie proviennent de ta trace GPS enregistrée. Aucun chiffre n’est saisi à la main.'
-            : 'Cette sortie n’a pas de trace GPS rattachée. Les chiffres affichés sont ceux enregistrés au moment de la sortie.'}
-        </p>
       </section>
 
       {detail.canEdit ? (
         <section className="lkdv-sortie-danger">
           {confirmDelete ? (
             <>
-              <p>Supprimer définitivement cette sortie, ses photos, son matériel et ses échanges ?</p>
-              <div className="lkdv-sortie-edit-actions">
-                <button type="button" className="lkdv-sortie-btn ghost" onClick={() => setConfirmDelete(false)}>
-                  <X size={14} aria-hidden="true" /> Annuler
-                </button>
-                <button type="button" className="lkdv-sortie-btn danger" onClick={onDelete}>
-                  <Trash2 size={14} aria-hidden="true" /> Supprimer
-                </button>
+              <p>Supprimer la sortie et tout son contenu ?</p>
+              <div className="lkdv-sortie-edit-actions lkdv-apill-row">
+                <ActionPill label="Annuler" icon={<X />} onClick={() => setConfirmDelete(false)} />
+                <ActionPill tone="danger" label="Supprimer" icon={<Trash2 />} onClick={onDelete} />
               </div>
             </>
           ) : (

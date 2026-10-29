@@ -160,7 +160,7 @@ export function MemoriesSlot({
             {error}
           </p>
         ) : null}
-        <ul aria-label="Stories à la une" className="space-y-2">
+        <ul aria-label="Stories à la une" className="grid grid-cols-2 gap-2">
           {highlights.map((highlight) => (
             <HighlightCard
               key={highlight.id}
@@ -208,7 +208,6 @@ export function MemoriesSlot({
       >
         <SlotEmpty
           title="Aucun carnet publié"
-          hint="Tes sorties, tes lieux et tes albums apparaîtront ici après ta première aventure."
           action={
             <Link className="lkdv-slot-empty-cta" href="/carnets/nouveau">
               Créer un carnet

@@ -40,9 +40,20 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
   return (
     <li
       data-testid="outing-card"
-      className="flex h-[68px] min-h-[68px] items-center gap-2.5 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-2 backdrop-blur-[var(--blur-md)]"
+      data-cover={cover ? 'true' : undefined}
+      className={
+        cover
+          ? 'relative flex aspect-[16/9] items-end overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-muted,rgba(236,244,233,.9))]'
+          : 'flex h-[68px] min-h-[68px] items-center gap-2.5 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-2 backdrop-blur-[var(--blur-md)]'
+      }
     >
-      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-muted,rgba(236,244,233,.9))]">
+      <div
+        className={
+          cover
+            ? 'absolute inset-0'
+            : 'relative h-12 w-12 shrink-0 overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-muted,rgba(236,244,233,.9))]'
+        }
+      >
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element -- couverture distante fournie par le bootstrap
           <img
@@ -70,46 +81,55 @@ export function OutingCard({ outing }: { outing: OutingCardData }) {
         )}
       </div>
 
-      <div className="min-w-0 flex-1">
-        <h4 className="truncate text-[13px] font-semibold leading-tight text-[color:var(--label)]">
-          {outing.title}
-        </h4>
-        {metrics.length > 0 ? (
-          <p className="mt-0.5 truncate font-mono text-[10.5px] font-semibold text-[color:var(--lkv-primary)]">
-            {metrics.join(' · ')}
-          </p>
-        ) : null}
-        {hasMeta ? (
-          <p className="mt-0 truncate text-[10.5px] text-[color:var(--label2)]">
-            {[outing.mass, outing.date].filter(Boolean).join(' · ')}
-          </p>
-        ) : null}
-      </div>
+      {/* Avec une photo : elle occupe toute la carte, le texte passe sur du verre. */}
+      <div
+        className={
+          cover
+            ? 'relative m-1.5 flex min-w-0 flex-1 items-center gap-2 rounded-[var(--lkv-radius-sm)] border border-white/60 bg-white/60 px-2.5 py-1.5 backdrop-blur-[14px] backdrop-saturate-150'
+            : 'contents'
+        }
+      >
+        <div className="min-w-0 flex-1">
+          <h4 className="truncate text-[13px] font-semibold leading-tight text-[color:var(--label)]">
+            {outing.title}
+          </h4>
+          {metrics.length > 0 ? (
+            <p className="mt-0.5 truncate font-mono text-[10.5px] font-semibold text-[color:var(--lkv-primary)]">
+              {metrics.join(' · ')}
+            </p>
+          ) : null}
+          {hasMeta ? (
+            <p className="mt-0 truncate text-[10.5px] text-[color:var(--label2)]">
+              {[outing.mass, outing.date].filter(Boolean).join(' · ')}
+            </p>
+          ) : null}
+        </div>
 
-      <div className="flex shrink-0 flex-col items-end gap-1">
-        {outing.proven ? (
-          <span
-            aria-label="Trace GPS vérifiée"
-            className="inline-flex h-[19px] items-center gap-1 rounded-full bg-[color:var(--lkv-primary)] px-1.5 font-mono text-[9.5px] font-bold text-white"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              className="h-3 w-3"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          {outing.proven ? (
+            <span
+              aria-label="Trace GPS vérifiée"
+              className="inline-flex h-[19px] items-center gap-1 rounded-full bg-[color:var(--lkv-primary)] px-1.5 font-mono text-[9.5px] font-bold text-white"
             >
-              <path d="m5 12 5 5L19 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            GPS
-          </span>
-        ) : null}
-        {outing.photos.length > 0 ? (
-          <span className="font-mono text-[10px] font-semibold text-[color:var(--label2)]">
-            {photoCountLabel(outing.photos.length)}
-          </span>
-        ) : null}
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="h-3 w-3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+              >
+                <path d="m5 12 5 5L19 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              GPS
+            </span>
+          ) : null}
+          {outing.photos.length > 0 ? (
+            <span className="font-mono text-[10px] font-semibold text-[color:var(--label2)]">
+              {photoCountLabel(outing.photos.length)}
+            </span>
+          ) : null}
+        </div>
       </div>
     </li>
   );

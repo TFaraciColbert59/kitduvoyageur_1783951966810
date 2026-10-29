@@ -13,6 +13,7 @@ import {
 } from 'react-hook-form';
 import { z } from 'zod';
 import { createSchemas, type CreateKind } from './createSchemas';
+import { StepGuardContext, type StepGuard } from './stepGuard';
 import { useCreateDraft, setCreateDraftSubmitting } from './useCreateDraft';
 import {
   findStepForField,
@@ -179,6 +180,17 @@ export function CreateFormEngine<T extends FieldValues>({
     if (first) focusField(first);
   });
 
+  const stepGuard = useMemo<StepGuard>(
+    () => ({
+      canLeave: async (target) => {
+        const fields = stepFields?.[target];
+        if (!fields || fields.length === 0) return true;
+        return form.trigger([...fields] as FieldPath<T>[]);
+      },
+    }),
+    [form, stepFields],
+  );
+
   const api = useMemo<CreateFormEngineApi>(
     () => ({
       submit: () => {
@@ -200,7 +212,7 @@ export function CreateFormEngine<T extends FieldValues>({
       data-create-kind={kind}
       onSubmit={submit}
     >
-      {children(form, api)}
+      <StepGuardContext.Provider value={stepGuard}>{children(form, api)}</StepGuardContext.Provider>
       {serverError ? (
         <p className="lkdv-create-engine-error" role="alert">
           {serverError}

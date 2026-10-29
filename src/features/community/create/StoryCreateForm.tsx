@@ -15,6 +15,7 @@ import {
 } from './engine/createSchemas';
 import { CREATE_STEPS, StepPager } from './shared/StepPager';
 import { MediaPicker } from './shared/MediaPicker';
+import { StoryStage } from './shared/StoryStage';
 import { FormErrorSummary } from './shared/FormErrorSummary';
 import { FormPreview } from './shared/FormPreview';
 import { CreationSignature } from './shared/CreationSignature';
@@ -32,10 +33,12 @@ export interface StoryCreateFormProps {
 }
 
 const DEFAULTS = createDefaults('story');
-const STEPS = [CREATE_STEPS.story[0]];
+const STEPS = CREATE_STEPS.story;
 const LAST_STEP = STEPS.length - 1;
 const STEP_FIELDS = [
-  ['media', 'caption', 'overlayText', 'overlayLink', 'audience', 'replyPolicy', 'allowReshare'],
+  ['media'],
+  ['caption', 'overlayText', 'overlayLink'],
+  ['audience', 'replyPolicy', 'allowReshare'],
 ] as const;
 
 /**
@@ -248,6 +251,14 @@ export function StoryCreateForm({
                   L’envoi démarre dès la sélection. En cas d’échec, réessaie sans
                   reprendre la story.
                 </p>
+                {activeStep === 0 && (media[0]?.previewUrl || media[0]?.url) ? (
+                  <StoryStage
+                    src={media[0].previewUrl || media[0].url || ''}
+                    isVideo={(media[0].type || '').startsWith('video/')}
+                    onNext={() => void goNext()}
+                    onReplace={() => form.setValue('media', [], { shouldDirty: true })}
+                  />
+                ) : null}
               </div>
 
               <div>

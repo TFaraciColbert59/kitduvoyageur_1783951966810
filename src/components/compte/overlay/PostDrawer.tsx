@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, ChevronLeft, ChevronRight, Flag, Heart, Link2, MessageCircle, MoreHorizontal, Repeat2, Send, Share2, Trash2, X } from 'lucide-react';
+import { Bookmark, ChevronLeft, ChevronRight, Flag, Heart, Link2, MessageCircle, MoreHorizontal, Repeat2, RotateCcw, Send, Share2, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import { fetchPostDetail } from '@/features/community/posts/queries';
@@ -11,7 +11,8 @@ import {
   toggleCommentLike, togglePostLike, togglePostSave, updatePostComment,
 } from '@/features/community/posts/mutations';
 import { POST_REPORT_REASONS, postPermalink, type PostComment, type PostDetail, type ShareTarget } from '@/features/community/posts/types';
-import { DrawerButton, OverlaySheet } from './OverlaySheet';
+import { ActionPill } from '@/components/ui/ActionPill';
+import { OverlaySheet } from './OverlaySheet';
 import { PostCardSurface } from './PostCardSurface';
 import { PostCommentsPanel } from '@/features/community/feed/PostCommentsPanel';
 import { PostSharePanel } from '@/features/community/feed/PostSharePanel';
@@ -376,7 +377,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
       >
         <button type="button" className="lkdv-post-grab" aria-label="Fermer la publication" onPointerDown={startGrab} onPointerMove={moveGrab} onPointerUp={endGrab} onPointerCancel={() => { dragStartY.current = null; setDragY(0); }} onClick={() => { if (!didDragRef.current) onClose(); didDragRef.current = false; }} />
         {loading ? <div className="lkdv-overlay-empty"><p>Chargement…</p></div> : error || !post ? (
-          <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><DrawerButton onClick={() => void load()}>Réessayer</DrawerButton></div>
+          <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><ActionPill label="Réessayer" icon={<RotateCcw />} onClick={() => void load()} /></div>
         ) : (
           <>
             <div className="lkdv-post-swipe">
@@ -443,7 +444,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
             </button> : null}
           </div>
         ) : null}
-        {deleteOpen ? <div className="lkdv-post-confirm"><b>Supprimer cette publication ?</b><p>Cette action est définitive.</p><div><DrawerButton tone="ghost" onClick={() => setDeleteOpen(false)}>Annuler</DrawerButton><DrawerButton tone="danger" disabled={busy} onClick={() => void remove()}>Supprimer</DrawerButton></div></div> : null}
+        {deleteOpen ? <div className="lkdv-post-confirm"><b>Supprimer cette publication ?</b><p>Cette action est définitive.</p><div><ActionPill label="Annuler" icon={<X />} onClick={() => setDeleteOpen(false)} /><ActionPill tone="danger" label="Supprimer" icon={<Trash2 />} busy={busy} onClick={() => void remove()} /></div></div> : null}
         {toast ? <div className="lkdv-post-toast" role="status">{toast}</div> : null}
       </OverlaySheet>
 

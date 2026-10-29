@@ -106,10 +106,13 @@ export interface CommunityStoriesBarProps {
   variant?: 'rail' | 'highlights';
   /** Masque l'en-tête « Stories · N » quand le rail est en tête de page. */
   showHeading?: boolean;
+  /** Sans story publiée, le rond « Votre story » ouvre directement ce créateur
+   *  (drawer de création de story) au lieu du sélecteur de fichiers. */
+  onCreateStory?: () => void;
 }
 
 export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, CommunityStoriesBarProps>(
-  function CommunityStoriesBar({ currentUser, variant = 'rail', showHeading = true }, ref) {
+  function CommunityStoriesBar({ currentUser, variant = 'rail', showHeading = true, onCreateStory }, ref) {
   const [stories, setStories] = useState<StoryRow[]>([]);
   const [authors, setAuthors] = useState<Record<string, { name: string; avatar_url?: string }>>({});
   const [viewerStart, setViewerStart] = useState<number | null>(null);
@@ -744,7 +747,7 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
               type="button"
               disabled={uploading}
               aria-label="Publier une story (photo ou vidéo, 24 h)"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => (onCreateStory ? onCreateStory() : fileInputRef.current?.click())}
               className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
             >
               <span className="flex size-[64px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--blur-md)]">

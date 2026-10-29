@@ -2,11 +2,18 @@
 
 import React, { useMemo, useState } from 'react';
 import {
+  ArrowUpRight,
   Award,
   Backpack,
   Calendar,
+  CalendarCheck,
   CalendarPlus,
   Check,
+  ChevronLeft,
+  Copy,
+  Handshake,
+  RefreshCw,
+  UserRound,
   CloudSun,
   Compass,
   Download,
@@ -286,7 +293,6 @@ export function ClubDrawerHost({
           >
             <div className="club-drawer-sec-head">
               <b>Publier dans {activeClub.name}</b>
-              <span>Apparaît immédiatement dans le fil d’actu de la carte</span>
             </div>
             <div className="club-form-pills">
               <button
@@ -337,8 +343,8 @@ export function ClubDrawerHost({
                 required
               />
             </label>
-            <button type="submit" className="reseau-btn primary club-submit-pill">
-              Publier dans le fil du club
+            <button type="submit" className="reseau-btn primary club-submit-pill club-icon-pill" aria-label={'Publier dans le fil du club'} title={'Publier dans le fil du club'}>
+              <Check size={16} aria-hidden="true" />
             </button>
           </form>
         ),
@@ -366,7 +372,6 @@ export function ClubDrawerHost({
           >
             <div className="club-drawer-sec-head">
               <b>Proposer une sortie de cordée</b>
-              <span>Ajoute la trace sur la carte 3D et ouvre le covoiturage</span>
             </div>
             <label className="club-field-label">
               <span>Objectif / Sommet</span>
@@ -428,8 +433,8 @@ export function ClubDrawerHost({
                 onChange={(e) => setOutingCity(e.target.value)}
               />
             </label>
-            <button type="submit" className="reseau-btn primary club-submit-pill">
-              Lancer les inscriptions
+            <button type="submit" className="reseau-btn primary club-submit-pill club-icon-pill" aria-label={'Lancer les inscriptions'} title={'Lancer les inscriptions'}>
+              <Check size={16} aria-hidden="true" />
             </button>
           </form>
         ),
@@ -455,7 +460,6 @@ export function ClubDrawerHost({
           >
             <div className="club-drawer-sec-head">
               <b>Mutualiser un équipement dans le coffre</b>
-              <span>Prêtable aux membres vérifiés de {activeClub.name}</span>
             </div>
             <label className="club-field-label">
               <span>Pièce d’équipement</span>
@@ -497,8 +501,8 @@ export function ClubDrawerHost({
                 onChange={(e) => setGearCat(e.target.value)}
               />
             </label>
-            <button type="submit" className="reseau-btn primary club-submit-pill">
-              Ajouter au coffre de la tribu
+            <button type="submit" className="reseau-btn primary club-submit-pill club-icon-pill" aria-label={'Ajouter au coffre de la tribu'} title={'Ajouter au coffre de la tribu'}>
+              <Check size={16} aria-hidden="true" />
             </button>
           </form>
         ),
@@ -525,7 +529,6 @@ export function ClubDrawerHost({
           >
             <div className="club-drawer-sec-head">
               <b>Fonder une nouvelle tribu LKDV</b>
-              <span>Crée le territoire 3D, le coffre matériel et le fil dédié</span>
             </div>
             <label className="club-field-label">
               <span>Nom du club</span>
@@ -584,8 +587,8 @@ export function ClubDrawerHost({
                 Sur Cooptation (Privé)
               </button>
             </div>
-            <button type="submit" className="reseau-btn primary club-submit-pill">
-              Fonder le club et ouvrir sa carte
+            <button type="submit" className="reseau-btn primary club-submit-pill club-icon-pill" aria-label={'Fonder le club et ouvrir sa carte'} title={'Fonder le club et ouvrir sa carte'}>
+              <Check size={16} aria-hidden="true" />
             </button>
           </form>
         ),
@@ -680,10 +683,12 @@ export function ClubDrawerHost({
                       </button>
                       <button
                         type="button"
-                        className={`reseau-btn ${c.id === activeClub.id ? 'active' : 'primary'}`}
+                        className={`reseau-btn ${c.id === activeClub.id ? 'active' : 'primary'} club-icon-pill`}
                         onClick={() => onSelectClub(c.id)}
+                        aria-label={c.id === activeClub.id ? 'Club actif' : 'Ouvrir le club'}
+                        title={c.id === activeClub.id ? 'Club actif' : 'Ouvrir le club'}
                       >
-                        {c.id === activeClub.id ? 'Actif ✓' : 'Ouvrir'}
+                        {c.id === activeClub.id ? <Check size={16} aria-hidden="true" /> : <ArrowUpRight size={16} aria-hidden="true" />}
                       </button>
                     </div>
                   ))}
@@ -704,14 +709,16 @@ export function ClubDrawerHost({
                       </div>
                       <button
                         type="button"
-                        className="reseau-btn primary"
+                        className="reseau-btn primary club-icon-pill"
                         onClick={() => {
                           setTab(2);
                           setCurrentSub(0);
                           setInspectedOuting(o);
                         }}
+                        aria-label={'Voir la sortie'}
+                        title={'Voir la sortie'}
                       >
-                        Voir
+                        <ArrowUpRight size={16} aria-hidden="true" />
                       </button>
                     </div>
                   ))}
@@ -735,13 +742,15 @@ export function ClubDrawerHost({
                       </div>
                       <button
                         type="button"
-                        className="reseau-btn active"
+                        className="reseau-btn active club-icon-pill"
                         onClick={() => {
                           setTab(1);
                           setInspectedMember(m);
                         }}
+                        aria-label={'Fiche du membre'}
+                        title={'Fiche du membre'}
                       >
-                        Fiche
+                        <UserRound size={16} aria-hidden="true" />
                       </button>
                     </div>
                   ))}
@@ -789,10 +798,12 @@ export function ClubDrawerHost({
                     </button>
                     <button
                       type="button"
-                      className={`reseau-btn ${c.joined ? 'active' : 'primary'}`}
+                      className={`reseau-btn ${c.joined ? 'active' : 'primary'} club-icon-pill`}
                       onClick={() => onToggleJoinClub(c.id)}
+                      aria-label={c.joined ? 'Membre' : 'Rejoindre'}
+                      title={c.joined ? 'Membre' : 'Rejoindre'}
                     >
-                      {c.joined ? 'Membre ✓' : 'Rejoindre'}
+                      {c.joined ? <UserCheck size={16} aria-hidden="true" /> : <UserPlus size={16} aria-hidden="true" />}
                     </button>
                   </div>
                 );
@@ -816,10 +827,12 @@ export function ClubDrawerHost({
                 <b>Aperçu Cordée · {inspectedMember.name}</b>
                 <button
                   type="button"
-                  className="reseau-btn active"
+                  className="reseau-btn active club-icon-pill"
                   onClick={() => setInspectedMember(null)}
+                  aria-label={'Retour à la liste'}
+                  title={'Retour à la liste'}
                 >
-                  ← Retour liste
+                  <ChevronLeft size={16} aria-hidden="true" />
                 </button>
               </div>
               <div className="li nt" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
@@ -830,10 +843,12 @@ export function ClubDrawerHost({
                   </div>
                   <button
                     type="button"
-                    className={`reseau-btn ${inspectedMember.followed ? 'active' : 'primary'}`}
+                    className={`reseau-btn ${inspectedMember.followed ? 'active' : 'primary'} club-icon-pill`}
                     onClick={() => onToggleFollowMember(inspectedMember.handle)}
+                    aria-label={inspectedMember.followed ? 'Suivi' : 'Suivre'}
+                    title={inspectedMember.followed ? 'Suivi' : 'Suivre'}
                   >
-                    {inspectedMember.followed ? 'Suivi ✓' : 'Suivre'}
+                    {inspectedMember.followed ? <UserCheck size={16} aria-hidden="true" /> : <UserPlus size={16} aria-hidden="true" />}
                   </button>
                 </div>
                 <div className="club-skill-tags">
@@ -924,18 +939,22 @@ export function ClubDrawerHost({
                     {currentSub === 2 ? (
                       <button
                         type="button"
-                        className={`reseau-btn ${proposed ? 'active' : 'primary'}`}
+                        className={`reseau-btn ${proposed ? 'active' : 'primary'} club-icon-pill`}
                         onClick={() => setPartnerProposed((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
+                        aria-label={proposed ? 'Cordée proposée' : 'Proposer un binôme'}
+                        title={proposed ? 'Cordée proposée' : 'Proposer un binôme'}
                       >
-                        {proposed ? 'Cordée proposée ✓' : 'Binôme'}
+                        {proposed ? <Check size={16} aria-hidden="true" /> : <Handshake size={16} aria-hidden="true" />}
                       </button>
                     ) : (
                       <button
                         type="button"
-                        className={`reseau-btn ${m.followed ? 'active' : 'primary'}`}
+                        className={`reseau-btn ${m.followed ? 'active' : 'primary'} club-icon-pill`}
                         onClick={() => onToggleFollowMember(m.handle)}
+                        aria-label={m.followed ? 'Suivi' : 'Suivre'}
+                        title={m.followed ? 'Suivi' : 'Suivre'}
                       >
-                        {m.followed ? 'Suivi ✓' : 'Suivre'}
+                        {m.followed ? <UserCheck size={16} aria-hidden="true" /> : <UserPlus size={16} aria-hidden="true" />}
                       </button>
                     )}
                   </div>
@@ -960,10 +979,12 @@ export function ClubDrawerHost({
                 <b>Fiche Sortie & Covoiturage</b>
                 <button
                   type="button"
-                  className="reseau-btn active"
+                  className="reseau-btn active club-icon-pill"
                   onClick={() => setInspectedOuting(null)}
+                  aria-label={'Toutes les sorties'}
+                  title={'Toutes les sorties'}
                 >
-                  ← Toutes les sorties
+                  <ChevronLeft size={16} aria-hidden="true" />
                 </button>
               </div>
               <div className="li nt" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
@@ -985,26 +1006,30 @@ export function ClubDrawerHost({
                 <div className="club-form-pills" style={{ width: '100%', marginTop: 4 }}>
                   <button
                     type="button"
-                    className={`reseau-btn ${inspectedOuting.rsvpJoined ? 'active' : 'primary'}`}
+                    className={`reseau-btn ${inspectedOuting.rsvpJoined ? 'active' : 'primary'} club-icon-pill`}
                     onClick={() => onToggleRsvpOuting(inspectedOuting.id)}
+                    aria-label={inspectedOuting.rsvpJoined ? 'Inscrit à la sortie' : 'Participer'}
+                    title={inspectedOuting.rsvpJoined ? 'Inscrit à la sortie' : 'Participer'}
                   >
-                    {inspectedOuting.rsvpJoined ? 'Inscrit à la sortie ✓' : 'Participer (1-Tap RSVP)'}
+                    {inspectedOuting.rsvpJoined ? <CalendarCheck size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
                   </button>
                   <button
                     type="button"
-                    className="reseau-btn active"
+                    className="reseau-btn active club-icon-pill"
                     onClick={() => onFlyToCoords(inspectedOuting.lat, inspectedOuting.lng, inspectedOuting.title)}
+                    aria-label={'Trace 3D'}
+                    title={'Trace 3D'}
                   >
-                    <MapPin size={13} style={{ display: 'inline', marginRight: 4 }} />
-                    Trace 3D
+                    <MapPin size={16} aria-hidden="true" />
                   </button>
                   <button
                     type="button"
-                    className="reseau-btn active"
+                    className="reseau-btn active club-icon-pill"
                     onClick={() => onDownloadGpx(inspectedOuting)}
+                    aria-label={'Télécharger le GPX'}
+                    title={'Télécharger le GPX'}
                   >
-                    <Download size={13} style={{ display: 'inline', marginRight: 4 }} />
-                    GPX
+                    <Download size={16} aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -1040,10 +1065,12 @@ export function ClubDrawerHost({
                 </div>
                 <button
                   type="button"
-                  className="reseau-btn active"
+                  className="reseau-btn active club-icon-pill"
                   onClick={() => onFlyToCoords(activeClub.lat, activeClub.lng, `Météo ${activeClub.massif}`)}
+                  aria-label={'Carte 3D'}
+                  title={'Carte 3D'}
                 >
-                  Carte 3D
+                  <Mountain size={16} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -1088,27 +1115,32 @@ export function ClubDrawerHost({
                   {currentSub === 2 ? (
                     <button
                       type="button"
-                      className="reseau-btn primary"
+                      className="reseau-btn primary club-icon-pill"
                       onClick={() => onDownloadGpx(o)}
+                      aria-label={'Télécharger le GPX'}
+                      title={'Télécharger le GPX'}
                     >
-                      GPX ↓
+                      <Download size={16} aria-hidden="true" />
                     </button>
                   ) : (
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button
                         type="button"
-                        className={`reseau-btn ${o.rsvpJoined ? 'active' : 'primary'}`}
+                        className={`reseau-btn ${o.rsvpJoined ? 'active' : 'primary'} club-icon-pill`}
                         onClick={() => onToggleRsvpOuting(o.id)}
+                        aria-label={o.rsvpJoined ? 'Inscrit' : 'Participer'}
+                        title={o.rsvpJoined ? 'Inscrit' : 'Participer'}
                       >
-                        {o.rsvpJoined ? 'Inscrit ✓' : 'RSVP'}
+                        {o.rsvpJoined ? <CalendarCheck size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
                       </button>
                       <button
                         type="button"
-                        className="reseau-btn active"
-                        title="Créer un groupe d'expédition depuis cette sortie"
+                        className="reseau-btn active club-icon-pill"
                         onClick={() => onCreateGroupFromOuting(o)}
+                        aria-label="Créer un groupe d'expédition depuis cette sortie"
+                        title="Créer un groupe d'expédition depuis cette sortie"
                       >
-                        Groupe
+                        <Users size={16} aria-hidden="true" />
                       </button>
                     </div>
                   )}
@@ -1143,10 +1175,12 @@ export function ClubDrawerHost({
                   </div>
                   <button
                     type="button"
-                    className={`reseau-btn ${k.cloned ? 'active' : 'primary'}`}
+                    className={`reseau-btn ${k.cloned ? 'active' : 'primary'} club-icon-pill`}
                     onClick={() => onCloneStandardKit(k.id)}
+                    aria-label={k.cloned ? 'Cloné' : 'Cloner'}
+                    title={k.cloned ? 'Cloné' : 'Cloner'}
                   >
-                    {k.cloned ? 'Cloné ✓' : 'Cloner'}
+                    {k.cloned ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
                   </button>
                 </div>
               ))}
@@ -1176,14 +1210,16 @@ export function ClubDrawerHost({
                   </div>
                   <button
                     type="button"
-                    className="reseau-btn active"
+                    className="reseau-btn active club-icon-pill"
                     onClick={() => {
                       const cur = cordeeCarrier[item.key];
                       const next = carriers[(carriers.indexOf(cur) + 1) % carriers.length];
                       setCordeeCarrier((prev) => ({ ...prev, [item.key]: next }));
                     }}
+                    aria-label={'Changer'}
+                    title={'Changer'}
                   >
-                    Changer
+                    <RefreshCw size={16} aria-hidden="true" />
                   </button>
                 </div>
               ))}
@@ -1209,10 +1245,12 @@ export function ClubDrawerHost({
                   </div>
                   <button
                     type="button"
-                    className={`reseau-btn ${g.reservedByMe ? 'active' : 'primary'}`}
+                    className={`reseau-btn ${g.reservedByMe ? 'active' : 'primary'} club-icon-pill`}
                     onClick={() => onToggleReserveGear(g.id)}
+                    aria-label={g.reservedByMe ? 'Réservé' : 'Emprunter'}
+                    title={g.reservedByMe ? 'Réservé' : 'Emprunter'}
                   >
-                    {g.reservedByMe ? 'Réservé ✓' : 'Emprunter'}
+                    {g.reservedByMe ? <Check size={16} aria-hidden="true" /> : <Package size={16} aria-hidden="true" />}
                   </button>
                 </div>
               ))}
@@ -1318,12 +1356,11 @@ export function ClubDrawerHost({
                   <QrCode size={28} color="#17402C" aria-hidden="true" />
                   <div>
                     <div className="ttl"><span>Pass QR Terrain · {activeClub.name}</span></div>
-                    <div className="s2">Recrutement direct au refuge ou au parking</div>
                   </div>
                 </div>
                 <button
                   type="button"
-                  className="reseau-btn primary"
+                  className="reseau-btn primary club-icon-pill"
                   onClick={async () => {
                     try {
                       await navigator.clipboard?.writeText(`${window.location.origin}/clubs/${activeClub.id}`);
@@ -1333,8 +1370,10 @@ export function ClubDrawerHost({
                       // ignore
                     }
                   }}
+                  aria-label={copiedInvite ? 'Copié' : 'Copier le lien QR'}
+                  title={copiedInvite ? 'Copié' : 'Copier le lien QR'}
                 >
-                  {copiedInvite ? 'Copié ✓' : 'Lien QR'}
+                  {copiedInvite ? <Check size={16} aria-hidden="true" /> : <QrCode size={16} aria-hidden="true" />}
                 </button>
               </div>
             </div>

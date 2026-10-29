@@ -1,0 +1,48 @@
+/* =============================================================================
+   Liquid Glass LKDV — matière unique de la barre du bas et des sélecteurs
+
+   Une seule matière, reprise à l'identique de la barre d'onglets du Compte
+   (`.tb.lg` de compte-v8.css, « v7 : un seul style de capsule ») :
+   - capsule : verre clair translucide, flou 7 px, reflets sur le bord ;
+   - pastille au repos : verre plus clair sous l'option choisie ;
+   - à l'appui ou en glissant : la pastille devient une goutte de verre qui
+     déborde de la capsule (reflets irisés), comme dans Apple Music (iOS 26).
+   Aucune couleur nouvelle : valeurs existantes de compte-v8.css et du Compte.
+   ============================================================================= */
+
+:root {
+  --lg-ga: 0.19;
+  --lg-gb: 7px;
+  --lg-bar-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, calc(var(--lg-ga) + 0.3)),
+    rgba(255, 255, 255, calc(var(--lg-ga) + 0.14)) 55%,
+    rgba(255, 255, 255, calc(var(--lg-ga) + 0.22))
+  );
+  --lg-bar-blur: blur(var(--lg-gb)) saturate(1.9) brightness(1.07);
+  --lg-bar-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    inset 1px 0 1px rgba(255, 255, 255, 0.28),
+    inset -1px 0 1px rgba(255, 255, 255, 0.28),
+    inset 0 0 12px rgba(255, 255, 255, 0.14),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12);
+  --lg-thumb-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26));
+  --lg-thumb-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -1px 1px rgba(255, 255, 255, 0.5),
+    0 0 0 0.5px rgba(23, 43, 36, 0.07),
+    0 2px 8px rgba(23, 43, 36, 0.08);
+  --lg-drop-bg: rgba(255, 255, 255, 0.08);
+  --lg-drop-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.95),
+    inset 0 -1.5px 2px rgba(255, 255, 255, 0.6),
+    inset 2px 0 2px rgba(255, 120, 160, 0.18),
+    inset -2px 0 2px rgba(90, 170, 255, 0.2),
+    0 0 0 0.5px rgba(23, 43, 36, 0.1),
+    0 10px 26px rgba(23, 43, 36, 0.2);
+  --lg-ink: #172b24;
+  --lg-on: #17402c;
+  --lg-ease: cubic-bezier(0.32, 0.72, 0, 1);
+}

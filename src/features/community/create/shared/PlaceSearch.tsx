@@ -21,6 +21,8 @@ export interface PlaceSearchProps {
   hint?: string;
   id?: string;
   disabled?: boolean;
+  /** Lieu choisi dans la liste, avec ses coordonnées (ex. recentrer une carte). */
+  onPick?: (place: { label: string; lat: number; lon: number }) => void;
 }
 
 function labelFor(match: GeocodeMatch): string {
@@ -29,7 +31,7 @@ function labelFor(match: GeocodeMatch): string {
 }
 
 /** Recherche d'adresse réelle, via la route géocodage serveur LKDV. */
-export function PlaceSearch({ label, value, onChange, placeholder = 'Adresse, ville, lieu-dit…', hint, id, disabled }: PlaceSearchProps) {
+export function PlaceSearch({ label, value, onChange, placeholder = 'Adresse, ville, lieu-dit…', hint, id, disabled, onPick }: PlaceSearchProps) {
   const autoId = useId();
   const inputId = id ?? `place-${autoId}`;
   const [query, setQuery] = useState(value);
@@ -86,6 +88,7 @@ export function PlaceSearch({ label, value, onChange, placeholder = 'Adresse, vi
     selectedRef.current = true;
     setQuery(next);
     onChange(next);
+    if (Number.isFinite(match.lat) && Number.isFinite(match.lon)) onPick?.({ label: next, lat: match.lat, lon: match.lon });
     setMatches([]);
     setOpen(false);
   };

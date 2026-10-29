@@ -803,3 +803,32 @@
     animation: none;
   }
 }
+
+/* Glissement entre étapes : rebond quand l'étape est incomplète (ou qu'il n'y a rien de l'autre côté). */
+.lkdv-create-step-pane[data-bounce='left'] {
+  animation: lkdv-step-bounce-left 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+
+.lkdv-create-step-pane[data-bounce='right'] {
+  animation: lkdv-step-bounce-right 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+
+@keyframes lkdv-step-bounce-left {
+  0% { transform: translate3d(0, 0, 0); }
+  30% { transform: translate3d(-16px, 0, 0); }
+  62% { transform: translate3d(6px, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes lkdv-step-bounce-right {
+  0% { transform: translate3d(0, 0, 0); }
+  30% { transform: translate3d(16px, 0, 0); }
+  62% { transform: translate3d(-6px, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-create-step-pane[data-bounce] {
+    animation: none;
+  }
+}

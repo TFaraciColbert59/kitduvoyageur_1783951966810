@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { Camera, ImagePlus, Trash2, X } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingPhoto } from '@/features/compte/server/sorties';
 import { DrawerEmpty } from '../shell/DrawerShell';
 
@@ -37,14 +38,13 @@ export function OutingPhotos({ photos, canEdit, uploading, onUpload, onDelete }:
                 event.target.value = '';
               }}
             />
-            <button
-              type="button"
-              className="lkdv-sortie-btn primary"
-              disabled={uploading}
+            <ActionPill
+              tone="primary"
+              label="Ajouter une photo"
+              icon={<ImagePlus />}
+              busy={uploading}
               onClick={() => inputRef.current?.click()}
-            >
-              <ImagePlus size={15} aria-hidden="true" /> {uploading ? 'Envoi…' : 'Ajouter'}
-            </button>
+            />
           </>
         ) : null}
       </div>
@@ -52,16 +52,9 @@ export function OutingPhotos({ photos, canEdit, uploading, onUpload, onDelete }:
       {photos.length === 0 ? (
         <DrawerEmpty
           title="Aucune photo pour cette sortie"
-          hint={
-            canEdit
-              ? 'Ajoute la première photo : elle deviendra la couverture de la sortie.'
-              : 'Le propriétaire de cette sortie n’a pas encore ajouté de photo.'
-          }
           action={
             canEdit ? (
-              <button type="button" className="lkdv-sortie-btn ghost" onClick={() => inputRef.current?.click()}>
-                <Camera size={15} aria-hidden="true" /> Choisir une photo
-              </button>
+              <ActionPill label="Choisir une photo" icon={<Camera />} onClick={() => inputRef.current?.click()} />
             ) : undefined
           }
         />

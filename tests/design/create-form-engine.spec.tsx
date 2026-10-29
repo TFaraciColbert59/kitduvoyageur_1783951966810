@@ -8,6 +8,7 @@ import {
   createSchemas,
   type ClubFormValues,
 } from '@/features/community/create/engine/createSchemas';
+import { COVER } from './_coverFixture';
 
 afterEach(cleanup);
 
@@ -107,7 +108,8 @@ describe('createSchemas — validation des six types', () => {
     if (!result.success) {
       const messages = result.error.issues.map((issue) => issue.message);
       expect(messages).toContain('Le nom du club est requis.');
-      expect(messages).toContain('La catégorie est requise.');
+      expect(messages).toContain('Indique l’activité du club (ex. Randonnée, Trail, Ski…).');
+      expect(messages).toContain('Ajoute une image pour ton club : elle est obligatoire.');
     }
   });
 
@@ -166,7 +168,7 @@ describe('CreateFormEngine — moteur React Hook Form + Zod', () => {
     render(
       <CreateFormEngine<ClubFormValues>
         kind="club"
-        defaultValues={createDefaults('club')}
+        defaultValues={{ ...createDefaults('club'), cover: COVER }}
         onSubmit={onSubmit}
       >
         {(form) => (
@@ -198,7 +200,7 @@ describe('CreateFormEngine — moteur React Hook Form + Zod', () => {
     render(
       <CreateFormEngine<ClubFormValues>
         kind="club"
-        defaultValues={{ ...createDefaults('club'), name: 'La Cordée', category: 'Randonnée' }}
+        defaultValues={{ ...createDefaults('club'), name: 'La Cordée', category: 'Randonnée', cover: COVER }}
         onSubmit={onSubmit}
       >
         {(form) => (

@@ -24,7 +24,8 @@ final class LKDVBridgeViewController: CAPBridgeViewController {
 final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
     private let web: LKDVBridgeViewController
     private let tabBar = UITabBar()
-    private let tabIds = ["adventures", "community", "explorer", "messages", "me"]
+    // Même ordre que la barre web : Hub, Explorer, Communauté, Messages, Compte.
+    private let tabIds = ["adventures", "explorer", "community", "messages", "me"]
     private var barHeight: NSLayoutConstraint!
     private var isNativeVisible = false
     private var keyboardShown = false
@@ -68,13 +69,25 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
         tabBar.translatesAutoresizingMaskIntoConstraints = false
         tabBar.delegate = self
         tabBar.tintColor = UIColor(red: 23.0 / 255.0, green: 64.0 / 255.0, blue: 44.0 / 255.0, alpha: 1.0)
-        tabBar.items = [
-            UITabBarItem(title: "Hub", image: UIImage(systemName: "tent"), tag: 0),
-            UITabBarItem(title: "Communauté", image: UIImage(systemName: "person.2"), tag: 1),
-            UITabBarItem(title: "Explorer", image: UIImage(systemName: "safari"), tag: 2),
-            UITabBarItem(title: "Messages", image: UIImage(systemName: "message"), tag: 3),
-            UITabBarItem(title: "Compte", image: UIImage(systemName: "person.crop.circle"), tag: 4)
+        // Barre système iOS 26+ (Liquid Glass, comme Apple Music) : icône +
+        // libellé, icône pleine pour l'onglet actif.
+        let tabs: [(label: String, icon: String, selected: String)] = [
+            ("Hub", "house", "house.fill"),
+            ("Explorer", "safari", "safari.fill"),
+            ("Communauté", "person.2", "person.2.fill"),
+            ("Messages", "paperplane", "paperplane.fill"),
+            ("Compte", "person.crop.circle", "person.crop.circle.fill")
         ]
+        tabBar.items = tabs.enumerated().map { index, tab in
+            let item = UITabBarItem(
+                title: tab.label,
+                image: UIImage(systemName: tab.icon),
+                selectedImage: UIImage(systemName: tab.selected)
+            )
+            item.tag = index
+            item.accessibilityLabel = tab.label
+            return item
+        }
         tabBar.selectedItem = tabBar.items?[4]
         tabBar.isHidden = true
         view.addSubview(tabBar)

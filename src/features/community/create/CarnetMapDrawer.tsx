@@ -1,17 +1,19 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Map as MapLibreMap, Marker, setWorkerUrl } from 'maplibre-gl';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Map as MapLibreMap, Marker, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, MapPin, CalendarDays, Settings2, Trash2, ImagePlus, Check, Loader2, WifiOff } from 'lucide-react';
+import { Plus, CalendarDays, Settings2, Trash2, ImagePlus, Loader2, WifiOff, PenLine, Route, Type, AlignLeft, Check, Mountain } from 'lucide-react';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
 import { createClient } from '@/lib/supabase/client';
 import { createDefaults, createSchemas, type CarnetFormValues } from './engine/createSchemas';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
 import { PlaceSearch } from './shared/PlaceSearch';
 import { insertCommunityPost } from './upload';
+import { elevationGain, formatDistance, joinLines, joinSegments, lengthKm, pickWaypoints, removeSpurs, sampleAlong, smooth, type LngLat } from './carnet/traceEngine';
+import { useCarnetDaysBridge } from './carnet/carnetDaysBridge';
 import './carnet-map-drawer.css';
 
 type Moment = { id: string; label: string; note: string; media?: string; lng: number; lat: number };
@@ -21,6 +23,49 @@ const DEFAULT_CENTER: [number, number] = [6.87, 45.92];
 const MAX_TRACE_POINTS = 2000;
 const MAX_DAYS = 60;
 const MAX_MOMENTS = 50;
+/** Le routeur accepte 12 points de passage par requête (`MAX_ROUTE_POINTS`). */
+const ROUTE_MAX_POINTS = 12;
+/** Un point brut tous les 5 px de doigt : assez fin pour la forme, léger pour le routeur. */
+const SAMPLE_PX = 5;
+/** Le tracé s'accroche par morceaux de ~110 px pendant le geste. */
+const CHUNK_PX = 110;
+/** Précision du doigt pour réduire un morceau en points de passage. */
+const WAYPOINT_PX = 12;
+/** En dessous, pas de routage : le morceau est trop court pour changer de chemin. */
+const MIN_ROUTE_M = 12;
+/** Une requête au plus par seconde (limite du site : 60 par minute). */
+const MIN_ROUTE_INTERVAL_MS = 1000;
+const ROUTE_TIMEOUT_MS = 9000;
+
+type Segment = { id: string; points: LngLat[]; mode: 'chemin' | 'libre' };
+type Stroke = {
+  pointerId: number;
+  /** Points bruts du doigt. */
+  raw: LngLat[];
+  lastPx: [number, number];
+  /** Premier point brut pas encore accroché. */
+  pendingFrom: number;
+  pendingPx: number;
+  /** Partie déjà accrochée (commence à la fin du tracé existant). */
+  snapped: LngLat[];
+  anchored: boolean;
+  magnet: boolean;
+  inFlight: AbortController | null;
+  ended: boolean;
+  free: boolean;
+};
+
+const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const;
+
+function lineFeature(points: LngLat[], properties: Record<string, string>) {
+  return points.length >= 2 ? { type: 'Feature', properties, geometry: { type: 'LineString', coordinates: points } } : null;
+}
+
+function pointFeature(point: LngLat, kind: string) {
+  return { type: 'Feature', properties: { kind }, geometry: { type: 'Point', coordinates: point } };
+}
+
+const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 function clampCoordinate(value: number, min: number, max: number): number | null {
   return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : null;
@@ -66,8 +111,15 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
   const [days, setDays] = useState<Day[]>([]);
   const [active, setActive] = useState(0);
   const [drawing, setDrawing] = useState(false);
-  const [trace, setTrace] = useState<Array<[number, number]>>([]);
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const trace = useMemo(() => joinSegments(segments.map((segment) => segment.points), MAX_TRACE_POINTS), [segments]);
+  const km = useMemo(() => lengthKm(trace), [trace]);
+  // Accrochage aux chemins toujours actif : la carte ne garde que le bouton « Tracer ».
+  const magnet = true;
   const [snapState, setSnapState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [gain, setGain] = useState<number | null>(null);
+  const [gainState, setGainState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [mapReady, setMapReady] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const mapNode = useRef<HTMLDivElement | null>(null);
@@ -76,11 +128,19 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
   const daysRef = useRef<Day[]>([]);
   const markersRef = useRef<Marker[]>([]);
   const scroller = useRef<HTMLDivElement | null>(null);
-  const pointerRef = useRef(false);
-  const routeAbortRef = useRef<AbortController | null>(null);
+  const strokeRef = useRef<Stroke | null>(null);
+  const pointersRef = useRef(new Map<number, [number, number]>());
+  const pinchRef = useRef<{ cx: number; cy: number; dist: number } | null>(null);
+  const liveFrame = useRef<number | null>(null);
+  const lastRouteAt = useRef(0);
+  const publishDays = useCarnetDaysBridge();
 
   useEffect(() => { traceRef.current = trace; }, [trace]);
-  useEffect(() => () => { routeAbortRef.current?.abort(); }, []);
+  useEffect(() => () => {
+    strokeRef.current?.inFlight?.abort();
+    strokeRef.current = null;
+    if (liveFrame.current !== null) cancelAnimationFrame(liveFrame.current);
+  }, []);
   useEffect(() => { daysRef.current = days; }, [days]);
 
   useEffect(() => {
@@ -98,19 +158,63 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
     });
     mapRef.current = map;
     map.on('load', () => {
-      map.addSource('carnet-trace', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] }, properties: {} } });
-      map.addLayer({ id: 'carnet-trace-casing', type: 'line', source: 'carnet-trace', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': 'rgba(255,255,255,.92)', 'line-width': 7, 'line-blur': .4 } });
-      map.addLayer({ id: 'carnet-trace-line', type: 'line', source: 'carnet-trace', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#17402C', 'line-width': 3.2, 'line-opacity': .92 } });
+      const round = { 'line-cap': 'round', 'line-join': 'round' } as const;
+      map.addSource('carnet-trace', { type: 'geojson', data: EMPTY_FC as never });
+      map.addSource('carnet-live', { type: 'geojson', data: EMPTY_FC as never });
+      map.addSource('carnet-ends', { type: 'geojson', data: EMPTY_FC as never });
+      map.addLayer({ id: 'carnet-trace-casing', type: 'line', source: 'carnet-trace', layout: round, paint: { 'line-color': 'rgba(255,255,255,.95)', 'line-width': 8 } });
+      map.addLayer({ id: 'carnet-trace-line', type: 'line', source: 'carnet-trace', filter: ['==', ['get', 'mode'], 'chemin'], layout: round, paint: { 'line-color': '#17402C', 'line-width': 4 } });
+      map.addLayer({ id: 'carnet-trace-free', type: 'line', source: 'carnet-trace', filter: ['==', ['get', 'mode'], 'libre'], layout: round, paint: { 'line-color': '#A05A3C', 'line-width': 3.4, 'line-dasharray': [1.2, 1.4] } });
+      map.addLayer({ id: 'carnet-live-casing', type: 'line', source: 'carnet-live', layout: round, paint: { 'line-color': 'rgba(255,255,255,.9)', 'line-width': 7 } });
+      map.addLayer({ id: 'carnet-live-snapped', type: 'line', source: 'carnet-live', filter: ['==', ['get', 'kind'], 'snapped'], layout: round, paint: { 'line-color': '#2E7D5B', 'line-width': 4 } });
+      map.addLayer({ id: 'carnet-live-pending', type: 'line', source: 'carnet-live', filter: ['==', ['get', 'kind'], 'pending'], layout: round, paint: { 'line-color': '#17402C', 'line-width': 2.6, 'line-opacity': 0.55, 'line-dasharray': [0.6, 1.8] } });
+      map.addLayer({ id: 'carnet-ends', type: 'circle', source: 'carnet-ends', paint: { 'circle-radius': 6.5, 'circle-color': ['match', ['get', 'kind'], 'start', '#ffffff', '#17402C'], 'circle-stroke-color': ['match', ['get', 'kind'], 'start', '#17402C', '#ffffff'], 'circle-stroke-width': 3 } });
+      setMapReady(true);
     });
-    return () => { map.remove(); mapRef.current = null; };
+    return () => { map.remove(); mapRef.current = null; setMapReady(false); };
   }, [open]);
 
+  // Tracé validé : un trait par tronçon (plein = sur les chemins, tirets = libre), départ et arrivée.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
-    const source = map.getSource('carnet-trace') as any;
-    source?.setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: trace }, properties: {} });
-  }, [trace]);
+    if (!map || !mapReady) return;
+    const lines = segments.map((segment) => lineFeature(segment.points, { mode: segment.mode })).filter(Boolean);
+    (map.getSource('carnet-trace') as GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: lines } as never);
+    const ends = trace.length === 0 ? [] : [pointFeature(trace[0], 'start'), ...(trace.length > 1 ? [pointFeature(trace[trace.length - 1], 'end')] : [])];
+    (map.getSource('carnet-ends') as GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: ends } as never);
+  }, [segments, trace, mapReady]);
+
+  // Distance mesurée sur le tracé ; dénivelé lu sur le relief (au plus 100 échantillons).
+  useEffect(() => {
+    form.setValue('distanceKm', Math.min(10_000, Math.round(km * 10) / 10), { shouldDirty: trace.length > 1 });
+  }, [form, km, trace.length]);
+  useEffect(() => {
+    if (trace.length < 2) {
+      setGain(null);
+      setGainState('idle');
+      form.setValue('deniveleM', 0);
+      return;
+    }
+    const controller = new AbortController();
+    setGainState('loading');
+    const timer = window.setTimeout(async () => {
+      try {
+        const count = Math.max(2, Math.min(100, Math.round(km * 8) + 2));
+        const samples = sampleAlong(trace, count);
+        const points = samples.map(([lng, lat]) => `${lng.toFixed(5)},${lat.toFixed(5)}`).join(';');
+        const response = await fetch(`/api/elevation?points=${points}`, { signal: controller.signal });
+        if (!response.ok) throw new Error('elevation_unavailable');
+        const payload = await response.json();
+        const { gain: up } = elevationGain(Array.isArray(payload?.elevations) ? payload.elevations : []);
+        setGain(up);
+        setGainState('idle');
+        form.setValue('deniveleM', Math.min(30_000, up), { shouldDirty: true });
+      } catch {
+        if (!controller.signal.aborted) setGainState('error');
+      }
+    }, 700);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [form, km, trace]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -192,88 +296,225 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
     setDays((current) => current.map((entry) => entry.id === dayId ? { ...entry, moments: entry.moments.map((m) => m.id === momentId ? { ...m, ...patch } : m) } : entry));
   };
 
-  const drawStart = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!drawing) return;
-    routeAbortRef.current?.abort();
-    routeAbortRef.current = null;
-    setSnapState('idle');
-    pointerRef.current = true;
-    mapRef.current?.dragPan.disable();
-    addTracePoint(event);
-  };
-  const drawMove = (event: React.PointerEvent<HTMLDivElement>) => { if (drawing && pointerRef.current) addTracePoint(event); };
-  const simplify = (points: Array<[number, number]>, tolerance = 0.00012): Array<[number, number]> => {
-    if (points.length <= 3) return points;
-    const sq = tolerance * tolerance;
-    const getSqSegDist = (p: [number, number], a: [number, number], b: [number, number]) => {
-      let x = a[0]; let y = a[1]; let dx = b[0] - x; let dy = b[1] - y;
-      if (dx !== 0 || dy !== 0) {
-        const t = ((p[0] - x) * dx + (p[1] - y) * dy) / (dx * dx + dy * dy);
-        if (t > 1) { x = b[0]; y = b[1]; } else if (t > 0) { x += dx * t; y += dy * t; }
-      }
-      dx = p[0] - x; dy = p[1] - y;
-      return dx * dx + dy * dy;
-    };
-    const simplifyStep = (first: number, last: number, out: Array<[number, number]>) => {
-      let maxSq = sq; let index = 0;
-      for (let i = first + 1; i < last; i += 1) {
-        const dist = getSqSegDist(points[i], points[first], points[last]);
-        if (dist > maxSq) { index = i; maxSq = dist; }
-      }
-      if (maxSq > sq) {
-        if (index - first > 1) simplifyStep(first, index, out);
-        out.push(points[index]);
-        if (last - index > 1) simplifyStep(index, last, out);
-      }
-    };
-    const out: Array<[number, number]> = [points[0]];
-    simplifyStep(0, points.length - 1, out);
-    out.push(points[points.length - 1]);
-    return out.slice(0, 14);
+  /** Tolérance (degrés) équivalant à `px` pixels au zoom courant. */
+  const pixelTolerance = (px: number) => {
+    const map = mapRef.current;
+    if (!map) return 0.0001;
+    const a = map.unproject([0, 0]);
+    const b = map.unproject([px, px]);
+    return Math.max(Math.abs(b.lng - a.lng), Math.abs(b.lat - a.lat)) || 0.0001;
   };
 
-  const snapToPath = async () => {
-    const raw = traceRef.current;
-    if (raw.length < 3) return;
-    setSnapState('loading');
-    routeAbortRef.current?.abort();
-    const controller = new AbortController();
-    routeAbortRef.current = controller;
-    const timer = window.setTimeout(() => controller.abort(), 12_000);
+  /** Trait en cours : partie accrochée (pleine) et fin du geste en attente (pointillés). */
+  const renderLive = () => {
+    if (liveFrame.current !== null) return;
+    liveFrame.current = requestAnimationFrame(() => {
+      liveFrame.current = null;
+      const source = mapRef.current?.getSource('carnet-live') as GeoJSONSource | undefined;
+      if (!source) return;
+      const stroke = strokeRef.current;
+      if (!stroke) { source.setData(EMPTY_FC as never); return; }
+      const tail = stroke.snapped[stroke.snapped.length - 1];
+      const pending = [tail, ...stroke.raw.slice(stroke.pendingFrom)];
+      source.setData({ type: 'FeatureCollection', features: [lineFeature(stroke.snapped, { kind: 'snapped' }), lineFeature(pending, { kind: 'pending' })].filter(Boolean) } as never);
+    });
+  };
+
+  const fetchRoute = async (waypoints: LngLat[], signal: AbortSignal): Promise<LngLat[] | null> => {
     try {
-      const simplified = simplify(raw);
-      const points = simplified.map(([lng, lat]) => `${lng.toFixed(6)},${lat.toFixed(6)}`).join(';');
-      const response = await fetch(`/api/route?points=${points}&mode=pieton`, { signal: controller.signal });
+      const points = waypoints.map(([lng, lat]) => `${lng.toFixed(6)},${lat.toFixed(6)}`).join(';');
+      const response = await fetch(`/api/route?points=${points}&mode=pieton`, { signal });
+      if (!response.ok) return null;
       const payload = await response.json();
-      const legs = Array.isArray(payload.legs) ? payload.legs : [];
-      const geometry = legs.flatMap((leg: { geometry?: Array<[number, number]> }) => Array.isArray(leg.geometry) ? leg.geometry : []);
-      const safeGeometry = sanitizeTrace(geometry);
-      if (!response.ok || safeGeometry.length < 2) throw new Error('route_unavailable');
-      setTrace(safeGeometry);
-      setSnapState('idle');
+      const legs = Array.isArray(payload?.legs) ? payload.legs : [];
+      const geometry = sanitizeTrace(legs.flatMap((leg: { geometry?: Array<[number, number]> }) => (Array.isArray(leg.geometry) ? leg.geometry : [])));
+      return geometry.length >= 2 ? removeSpurs(geometry) : null;
     } catch {
-      setSnapState('error');
-    } finally {
-      window.clearTimeout(timer);
-      if (routeAbortRef.current === controller) routeAbortRef.current = null;
+      return null;
     }
   };
 
-  const drawEnd = () => {
-    pointerRef.current = false;
-    mapRef.current?.dragPan.enable();
-    void snapToPath();
+  const commitStroke = (stroke: Stroke) => {
+    if (strokeRef.current !== stroke) return;
+    strokeRef.current = null;
+    renderLive();
+    const points = sanitizeTrace(stroke.snapped);
+    // Un simple appui sans tracé existant pose le départ.
+    if (points.length >= 2 || (!stroke.anchored && points.length === 1)) {
+      setSegments((current) => [...current, { id: crypto.randomUUID(), points, mode: stroke.magnet && !stroke.free ? 'chemin' : 'libre' }]);
+      if (typeof navigator !== 'undefined') navigator.vibrate?.(8);
+    }
+    setSnapState(stroke.magnet && stroke.free ? 'error' : 'idle');
   };
-  const addTracePoint = (event: React.PointerEvent<HTMLDivElement>) => {
+
+  /**
+   * Accroche la partie en attente du geste : points de passage réduits à la
+   * forme du geste, routage piéton, retrait des allers-retours. Un détour
+   * démesuré ou un réseau absent donne un tronçon libre, lissé.
+   */
+  const flushChunk = async (stroke: Stroke): Promise<void> => {
+    if (stroke.inFlight || strokeRef.current !== stroke) return;
+    const end = stroke.raw.length;
+    const pending = stroke.raw.slice(stroke.pendingFrom, end);
+    if (pending.length > 0) {
+      const from = stroke.snapped[stroke.snapped.length - 1];
+      const chunk = [from, ...pending];
+      stroke.pendingPx = 0;
+      let piece: LngLat[] | null = null;
+      let routed = false;
+      if (stroke.magnet && lengthKm(chunk) * 1000 >= MIN_ROUTE_M) {
+        const waypoints = pickWaypoints(chunk, ROUTE_MAX_POINTS, pixelTolerance(WAYPOINT_PX));
+        const controller = new AbortController();
+        stroke.inFlight = controller;
+        setSnapState('loading');
+        const wait = MIN_ROUTE_INTERVAL_MS - (Date.now() - lastRouteAt.current);
+        if (wait > 0) await sleep(wait);
+        lastRouteAt.current = Date.now();
+        const timer = window.setTimeout(() => controller.abort(), ROUTE_TIMEOUT_MS);
+        const geometry = controller.signal.aborted ? null : await fetchRoute(waypoints, controller.signal);
+        window.clearTimeout(timer);
+        stroke.inFlight = null;
+        if (strokeRef.current !== stroke) return;
+        if (geometry && lengthKm(geometry) <= lengthKm(chunk) * 3 + 0.3) {
+          piece = geometry;
+          routed = true;
+        } else {
+          stroke.free = true;
+        }
+      } else if (stroke.magnet) {
+        piece = chunk;
+      }
+      if (!piece) piece = smooth(chunk);
+      stroke.snapped = routed && !stroke.anchored && stroke.snapped.length === 1 ? piece : joinLines(stroke.snapped, piece, 2);
+      stroke.pendingFrom = end;
+      renderLive();
+      setSnapState(stroke.magnet && stroke.free ? 'error' : 'idle');
+    }
+    if (strokeRef.current !== stroke) return;
+    if (stroke.raw.length > stroke.pendingFrom && (stroke.ended || stroke.pendingPx >= CHUNK_PX)) {
+      await flushChunk(stroke);
+      return;
+    }
+    if (stroke.ended) commitStroke(stroke);
+  };
+
+  const cancelStroke = () => {
+    const stroke = strokeRef.current;
+    if (!stroke) return;
+    stroke.inFlight?.abort();
+    strokeRef.current = null;
+    renderLive();
+    setSnapState('idle');
+  };
+
+  const layerPoint = (event: React.PointerEvent<HTMLDivElement>): { px: [number, number]; ll: LngLat } | null => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map) return null;
     const rect = event.currentTarget.getBoundingClientRect();
-    const point = map.unproject([event.clientX - rect.left, event.clientY - rect.top]);
-    const safeLng = clampCoordinate(point.lng, -180, 180);
-    const safeLat = clampCoordinate(point.lat, -90, 90);
-    if (safeLng === null || safeLat === null) return;
-    setTrace((current) => current.length >= MAX_TRACE_POINTS ? current : [...current, [safeLng, safeLat]]);
+    const px: [number, number] = [event.clientX - rect.left, event.clientY - rect.top];
+    const point = map.unproject(px);
+    const lng = clampCoordinate(point.lng, -180, 180);
+    const lat = clampCoordinate(point.lat, -90, 90);
+    return lng === null || lat === null ? null : { px, ll: [lng, lat] };
   };
+
+  const pinchState = () => {
+    const [a, b] = [...pointersRef.current.values()];
+    return { cx: (a[0] + b[0]) / 2, cy: (a[1] + b[1]) / 2, dist: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1 };
+  };
+
+  /** Deux doigts pendant le dessin : déplacer et zoomer la carte sans tracer. */
+  const applyPinch = () => {
+    const map = mapRef.current;
+    const previous = pinchRef.current;
+    const rect = mapNode.current?.getBoundingClientRect();
+    if (!map || !previous || !rect) return;
+    const next = pinchState();
+    map.panBy([previous.cx - next.cx, previous.cy - next.cy], { animate: false });
+    map.zoomTo(map.getZoom() + Math.log2(next.dist / previous.dist), { animate: false, around: map.unproject([next.cx - rect.left, next.cy - rect.top]) });
+    pinchRef.current = next;
+  };
+
+  const onDrawDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!drawing) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    pointersRef.current.set(event.pointerId, [event.clientX, event.clientY]);
+    if (pointersRef.current.size >= 2) {
+      // Le second doigt annule le trait commencé : le geste est un déplacement.
+      if (strokeRef.current && !strokeRef.current.ended) cancelStroke();
+      pinchRef.current = pinchState();
+      return;
+    }
+    if (strokeRef.current) return; // le trait précédent finit de s'accrocher
+    const hit = layerPoint(event);
+    if (!hit) return;
+    const anchor = traceRef.current[traceRef.current.length - 1];
+    strokeRef.current = {
+      pointerId: event.pointerId,
+      raw: [hit.ll],
+      lastPx: hit.px,
+      pendingFrom: anchor ? 0 : 1,
+      pendingPx: 0,
+      snapped: anchor ? [anchor] : [hit.ll],
+      anchored: Boolean(anchor),
+      magnet,
+      inFlight: null,
+      ended: false,
+      free: false,
+    };
+    renderLive();
+  };
+
+  const onDrawMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!pointersRef.current.has(event.pointerId)) return;
+    pointersRef.current.set(event.pointerId, [event.clientX, event.clientY]);
+    if (pinchRef.current && pointersRef.current.size >= 2) { applyPinch(); return; }
+    const stroke = strokeRef.current;
+    if (!stroke || stroke.pointerId !== event.pointerId || stroke.ended) return;
+    const hit = layerPoint(event);
+    if (!hit) return;
+    const dist = Math.hypot(hit.px[0] - stroke.lastPx[0], hit.px[1] - stroke.lastPx[1]);
+    if (dist < SAMPLE_PX || stroke.raw.length >= MAX_TRACE_POINTS) return;
+    stroke.raw.push(hit.ll);
+    stroke.lastPx = hit.px;
+    stroke.pendingPx += dist;
+    renderLive();
+    // Le tracé se colle au chemin pendant le geste, morceau par morceau.
+    if (stroke.magnet && !stroke.inFlight && stroke.pendingPx >= CHUNK_PX) void flushChunk(stroke);
+  };
+
+  const onDrawUp = (event: React.PointerEvent<HTMLDivElement>, cancelled: boolean) => {
+    pointersRef.current.delete(event.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = null;
+    const stroke = strokeRef.current;
+    if (!stroke || stroke.pointerId !== event.pointerId || stroke.ended) return;
+    if (cancelled) { cancelStroke(); return; }
+    stroke.ended = true;
+    if (!stroke.inFlight) void flushChunk(stroke);
+  };
+
+  const onDrawWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    const map = mapRef.current;
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (!map) return;
+    map.zoomTo(map.getZoom() - event.deltaY * 0.0025, { animate: false, around: map.unproject([event.clientX - rect.left, event.clientY - rect.top]) });
+  };
+
+  // Sélecteur des jours : publié vers la capsule en bas à droite de la carte-drawer quand elle existe.
+  const daysApi = useRef({ select: (_index: number) => {}, addDay: () => {} });
+  daysApi.current = {
+    select: (index: number) => { setActive(index); scrollToSlide(index); },
+    addDay,
+  };
+  useEffect(() => {
+    publishDays?.({
+      count: days.length,
+      active,
+      select: (index) => daysApi.current.select(index),
+      addDay: () => daysApi.current.addDay(),
+    });
+  }, [publishDays, days.length, active]);
+  useEffect(() => () => publishDays?.(null), [publishDays]);
 
   const submit = form.handleSubmit(async (values) => {
     setSubmitting(true); setSubmitError(null);
@@ -294,6 +535,12 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       try { await insertCommunityPost({ authorId: user.id, content: `**${values.title.trim() || 'Carnet'}**\n\n${values.description.trim() || values.destination}`, postType: 'share', audience: values.visibility === 'public' ? 'public' : 'abonnies', linkedCarnetId: data.id, title: values.title.trim() }); } catch { /* best effort */ }
       onCreated('carnet', data.id); onClose();
     } catch (error) { setSubmitError(error instanceof Error ? error.message : 'Création impossible.'); } finally { setSubmitting(false); }
+  }, (errors) => {
+    // Un envoi incomplet ne reste plus muet : message, et retour aux réglages du carnet.
+    const first = Object.values(errors).find((entry) => typeof entry?.message === 'string');
+    setSubmitError((first?.message as string | undefined) ?? 'Complète les informations du carnet.');
+    setActive(0);
+    scrollToSlide(0);
   });
 
   const title = form.watch('title'); const destination = form.watch('destination'); const startDate = form.watch('startDate'); const endDate = form.watch('endDate');
@@ -304,59 +551,59 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
       ariaLabel="Créer un carnet"
       error={submitError}
       footer={
-        <div className="lkdv-carnet-footer">
-          <div
-            className="ig-tabs lkdv-carnet-daybar"
-            style={{ '--n': days.length + 2, '--active': active } as React.CSSProperties}
-            role="tablist"
-            aria-label="Jours du carnet"
-          >
-            <span className="ig-th" aria-hidden="true" />
-            <button type="button" role="tab" aria-selected={active === 0} className={active === 0 ? 'is-active' : ''} onClick={() => { setActive(0); scrollToSlide(0); }} aria-label="Réglages du carnet"><Settings2 size={13} /></button>
-            {days.map((day, index) => (
-              <button key={day.id} type="button" role="tab" aria-selected={active === index + 1} className={active === index + 1 ? 'is-active' : ''} onClick={() => { setActive(index + 1); scrollToSlide(index + 1); }} aria-label={day.label}>{index + 1}</button>
-            ))}
-            <button type="button" role="tab" aria-selected={active === days.length + 1} className="lkdv-daybar-add" onClick={addDay} aria-label="Ajouter un jour"><Plus size={14} /></button>
-          </div>
-        </div>
+        <button type="button" className="lkdv-carnet-cta" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet" title="Créer le carnet">
+          {submitting ? <Loader2 size={17} className="lkdv-spin" aria-hidden="true" /> : <Check size={18} aria-hidden="true" />}
+        </button>
       }
     >
-      <div
-        className="lkdv-carnet-map"
-        ref={mapNode}
-        data-trace-points={trace.length}
-        data-drawing={drawing ? 'true' : 'false'}
-        onPointerDown={(event) => { if (drawing && (event.target === event.currentTarget || (event.target as HTMLElement).classList?.contains('maplibregl-canvas'))) drawStart(event); }}
-        onPointerMove={(event) => { if (drawing && (event.target === event.currentTarget || (event.target as HTMLElement).classList?.contains('maplibregl-canvas'))) drawMove(event); }}
-        onPointerUp={(event) => { if (drawing && (event.target === event.currentTarget || (event.target as HTMLElement).classList?.contains('maplibregl-canvas'))) drawEnd(); }}
-      >
-        <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => setDrawing((value) => !value)} aria-label={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'} title={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}><MapPin size={17} /></button>
-        {snapState !== 'idle' ? <span className={`lkdv-snap-status${snapState === 'error' ? ' is-error' : ''}`} aria-label={snapState === 'loading' ? 'Ajustement au chemin' : 'Tracé libre'}>{snapState === 'loading' ? <Loader2 size={14} /> : <WifiOff size={14} />}</span> : null}
-        <button type="button" className="lkdv-carnet-submit" onClick={() => void submit()} disabled={submitting} aria-label="Créer le carnet"><Check size={17} /></button>
+      <div className="lkdv-carnet-map" ref={mapNode} data-trace-points={trace.length} data-drawing={drawing ? 'true' : 'false'}>
+        <button type="button" className={`lkdv-map-draw${drawing ? ' is-on' : ''}`} onClick={() => { if (drawing && strokeRef.current && !strokeRef.current.ended) cancelStroke(); setDrawing((value) => !value); }} aria-pressed={drawing} aria-label={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'} title={drawing ? 'Terminer le tracé' : 'Dessiner le tracé'}>
+          {drawing ? <Check size={16} aria-hidden="true" /> : <PenLine size={16} aria-hidden="true" />}
+          <span>{drawing ? 'Terminer' : trace.length > 0 ? 'Continuer' : 'Tracer'}</span>
+        </button>
+        {trace.length > 1 || snapState !== 'idle' ? (
+          <div className="lkdv-map-stats" aria-live="polite">
+            {trace.length > 1 ? <span><Route size={12} aria-hidden="true" />{formatDistance(km)}</span> : null}
+            {trace.length > 1 ? <span><Mountain size={12} aria-hidden="true" />{gain !== null ? `${gain} m D+` : gainState === 'loading' ? '… D+' : '— D+'}</span> : null}
+            {snapState === 'loading' ? <span className="is-busy"><Loader2 size={12} className="lkdv-spin" aria-hidden="true" />Accrochage…</span> : null}
+            {snapState === 'error' ? <span className="is-warn"><WifiOff size={12} aria-hidden="true" />Pas de chemin : tracé libre</span> : null}
+          </div>
+        ) : null}
         <div
           className="lkdv-map-draw-layer"
           data-active={drawing ? 'true' : 'false'}
-          onPointerDown={drawStart}
-          onPointerMove={drawMove}
-          onPointerUp={drawEnd}
-          onPointerCancel={drawEnd}
+          onPointerDown={onDrawDown}
+          onPointerMove={onDrawMove}
+          onPointerUp={(event) => onDrawUp(event, false)}
+          onPointerCancel={(event) => onDrawUp(event, true)}
+          onWheel={onDrawWheel}
           aria-hidden="true"
         />
         <div className="lkdv-map-fade" aria-hidden="true" />
       </div>
+      {publishDays ? null : (
+        <div className="lkdv-carnet-daybar" role="tablist" aria-label="Jours du carnet">
+          <button type="button" role="tab" aria-selected={active === 0} className={active === 0 ? 'is-active' : ''} onClick={() => { setActive(0); scrollToSlide(0); }} aria-label="Réglages du carnet"><Settings2 size={14} aria-hidden="true" /><span>Infos</span></button>
+          {days.map((day, index) => (
+            <button key={day.id} type="button" role="tab" aria-selected={active === index + 1} className={active === index + 1 ? 'is-active' : ''} onClick={() => { setActive(index + 1); scrollToSlide(index + 1); }} aria-label={day.label}><span>J{index + 1}</span></button>
+          ))}
+          <button type="button" role="tab" aria-selected={active === days.length + 1} className="lkdv-daybar-add" onClick={addDay} aria-label="Ajouter un jour"><Plus size={14} aria-hidden="true" /><span>Jour</span></button>
+        </div>
+      )}
       <div className="lkdv-carnet-slider" ref={scroller}>
         <section className="lkdv-carnet-slide lkdv-carnet-base">
-          <input {...form.register('title')} placeholder="Titre du carnet" aria-label="Titre" />
-          <PlaceSearch label="Destination" value={destination} onChange={(value) => form.setValue('destination', value, { shouldDirty: true })} placeholder="Destination" />
+          <label className="lkdv-cf"><Type size={15} aria-hidden="true" /><input {...form.register('title')} placeholder="Titre du carnet" aria-label="Titre" /></label>
+          <PlaceSearch label="Destination" value={destination} onChange={(value) => form.setValue('destination', value, { shouldDirty: true })} onPick={(place) => mapRef.current?.flyTo({ center: [place.lon, place.lat], zoom: 11, duration: 900 })} placeholder="Destination" />
           <div className="lkdv-date-pills">
             <DatePill value={startDate} label="Début" onChange={(value) => form.setValue('startDate', value, { shouldDirty: true })} />
             <DatePill value={endDate} label="Fin" onChange={(value) => form.setValue('endDate', value, { shouldDirty: true })} />
           </div>
-          <textarea {...form.register('description')} placeholder="Récit, idée, points forts…" aria-label="Récit" rows={3} />
+          <label className="lkdv-cf lkdv-cf--area"><AlignLeft size={15} aria-hidden="true" /><textarea {...form.register('description')} placeholder="Récit, idée, points forts…" aria-label="Récit" rows={3} /></label>
         </section>
         {days.map((day, dayIndex) => (
           <section key={day.id} className="lkdv-carnet-slide lkdv-carnet-day" aria-label={day.label}>
             <div className="lkdv-day-moments">
+              {day.moments.length === 0 ? <p className="lkdv-day-empty">Ajoute un moment : étape, repas, point de vue…</p> : null}
               {day.moments.map((moment, momentIndex) => (
                 <div key={moment.id} className="lkdv-moment-row">
                   <span className="lkdv-moment-index">{momentIndex + 1}</span>
@@ -370,7 +617,7 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
                 </div>
               ))}
             </div>
-            <button type="button" className="lkdv-moment-add" onClick={() => addMoment(day.id)} aria-label="Ajouter un moment"><Plus size={16} /></button>
+            <button type="button" className="lkdv-moment-add" onClick={() => addMoment(day.id)} aria-label="Ajouter un moment"><Plus size={16} aria-hidden="true" /><span>Moment</span></button>
           </section>
         ))}
         <section className="lkdv-carnet-slide lkdv-carnet-add">

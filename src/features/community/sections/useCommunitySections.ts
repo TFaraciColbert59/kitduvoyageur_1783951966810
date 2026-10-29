@@ -12,6 +12,9 @@ export interface CarnetRow {
   author_id?: string | null;
   created_at?: string | null;
   author_name?: string;
+  like_count?: number;
+  comment_count?: number;
+  liked?: boolean;
 }
 
 export interface ClubRow {
@@ -47,9 +50,13 @@ export interface SectionsData {
   joinClub: (club: ClubRow) => Promise<boolean>;
   leaveClub: (club: ClubRow) => Promise<boolean>;
   toggleEvent: (event: EventRow) => Promise<boolean>;
+  toggleCarnetLike: (carnet: CarnetRow) => Promise<boolean>;
 }
 
-export function useCommunitySections(user: { id?: string } | null | undefined, enabled = true): SectionsData {
+export function useCommunitySections(
+  user: { id?: string } | null | undefined,
+  enabled = true
+): SectionsData {
   const [carnets, setCarnets] = useState<CarnetRow[]>([]);
   const [clubs, setClubs] = useState<ClubRow[]>([]);
   const [sorties, setSorties] = useState<EventRow[]>([]);
@@ -90,24 +97,67 @@ export function useCommunitySections(user: { id?: string } | null | undefined, e
       const carnetRows = (carnetsRes.data ?? []) as CarnetRow[];
       const clubRows = (clubsRes.data ?? []) as ClubRow[];
       const eventRows = (eventsRes.data ?? []) as EventRow[];
-      const profiles = await fetchPublicProfilesWith(supabase, carnetRows.map((row) => row.author_id));
+      const profiles = await fetchPublicProfilesWith(
+        supabase,
+        carnetRows.map((row) => row.author_id)
+      );
 
       let memberIds = new Set<string>();
       let registeredIds = new Set<string>();
       if (user?.id) {
         const [memberships, registrations] = await Promise.all([
-          supabase.from('club_members').select('club_id').eq('user_id', user.id).eq('status', 'active'),
+          supabase
+            .from('club_members')
+            .select('club_id')
+            .eq('user_id', user.id)
+            .eq('status', 'active'),
           supabase.from('event_participants').select('event_id').eq('user_id', user.id),
         ]);
-        memberIds = new Set((memberships.data ?? []).map((row: { club_id: string }) => row.club_id));
-        registeredIds = new Set((registrations.data ?? []).map((row: { event_id: string }) => row.event_id));
+        memberIds = new Set(
+          (memberships.data ?? []).map((row: { club_id: string }) => row.club_id)
+        );
+        registeredIds = new Set(
+          (registrations.data ?? []).map((row: { event_id: string }) => row.event_id)
+        );
+      }
+
+      // Compteurs de la tuile : tolérés en échec (la tuile s'affiche alors sans chiffres).
+      const carnetIds = carnetRows.map((row) => row.id);
+      const likeCounts = new Map<string, number>();
+      const commentCounts = new Map<string, number>();
+      const likedByMe = new Set<string>();
+      if (carnetIds.length > 0) {
+        const [likesRes, commentsRes] = await Promise.all([
+          supabase
+            .from('carnet_likes')
+            .select('carnet_id,user_id')
+            .in('carnet_id', carnetIds)
+            .limit(5000),
+          supabase
+            .from('carnet_comments')
+            .select('carnet_id')
+            .in('carnet_id', carnetIds)
+            .limit(5000),
+        ]);
+        for (const row of (likesRes.data ?? []) as Array<{ carnet_id: string; user_id: string }>) {
+          likeCounts.set(row.carnet_id, (likeCounts.get(row.carnet_id) ?? 0) + 1);
+          if (user?.id && row.user_id === user.id) likedByMe.add(row.carnet_id);
+        }
+        for (const row of (commentsRes.data ?? []) as Array<{ carnet_id: string }>) {
+          commentCounts.set(row.carnet_id, (commentCounts.get(row.carnet_id) ?? 0) + 1);
+        }
       }
 
       setCarnets(
         carnetRows.map((row) => ({
           ...row,
-          author_name: row.author_id ? profiles[row.author_id]?.full_name ?? 'Voyageur' : 'Voyageur',
-        })),
+          author_name: row.author_id
+            ? (profiles[row.author_id]?.full_name ?? 'Voyageur')
+            : 'Voyageur',
+          like_count: likeCounts.get(row.id) ?? 0,
+          comment_count: commentCounts.get(row.id) ?? 0,
+          liked: likedByMe.has(row.id),
+        }))
       );
       setClubs(clubRows.map((row) => ({ ...row, is_member: memberIds.has(row.id) })));
       setSorties(eventRows.map((row) => ({ ...row, is_registered: registeredIds.has(row.id) })));
@@ -130,11 +180,20 @@ export function useCommunitySections(user: { id?: string } | null | undefined, e
         .from('club_members')
         .insert({ club_id: club.id, user_id: user.id, role: 'member', status: 'active' });
       if (joinError) return false;
-      await supabase.from('clubs').update({ members_count: Number(club.members_count ?? 0) + 1 }).eq('id', club.id);
-      setClubs((prev) => prev.map((row) => (row.id === club.id ? { ...row, is_member: true, members_count: Number(row.members_count ?? 0) + 1 } : row)));
+      await supabase
+        .from('clubs')
+        .update({ members_count: Number(club.members_count ?? 0) + 1 })
+        .eq('id', club.id);
+      setClubs((prev) =>
+        prev.map((row) =>
+          row.id === club.id
+            ? { ...row, is_member: true, members_count: Number(row.members_count ?? 0) + 1 }
+            : row
+        )
+      );
       return true;
     },
-    [user?.id],
+    [user?.id]
   );
 
   const leaveClub = useCallback(
@@ -151,19 +210,67 @@ export function useCommunitySections(user: { id?: string } | null | undefined, e
         .from('clubs')
         .update({ members_count: Math.max(0, Number(club.members_count ?? 0) - 1) })
         .eq('id', club.id);
-      setClubs((prev) => prev.map((row) => (row.id === club.id ? { ...row, is_member: false, members_count: Math.max(0, Number(row.members_count ?? 0) - 1) } : row)));
+      setClubs((prev) =>
+        prev.map((row) =>
+          row.id === club.id
+            ? {
+                ...row,
+                is_member: false,
+                members_count: Math.max(0, Number(row.members_count ?? 0) - 1),
+              }
+            : row
+        )
+      );
       return true;
     },
-    [user?.id],
+    [user?.id]
+  );
+
+  const toggleCarnetLike = useCallback(
+    async (carnet: CarnetRow) => {
+      if (!user?.id) return false;
+      const supabase = createClient();
+      const next = !carnet.liked;
+      const apply = (liked: boolean, delta: number) =>
+        setCarnets((prev) =>
+          prev.map((row) =>
+            row.id === carnet.id
+              ? { ...row, liked, like_count: Math.max(0, (row.like_count ?? 0) + delta) }
+              : row
+          )
+        );
+      apply(next, next ? 1 : -1);
+      const { error: likeError } = next
+        ? await supabase
+            .from('carnet_likes')
+            .upsert(
+              { carnet_id: carnet.id, user_id: user.id, reaction: 'like' },
+              { onConflict: 'carnet_id,user_id' }
+            )
+        : await supabase
+            .from('carnet_likes')
+            .delete()
+            .eq('carnet_id', carnet.id)
+            .eq('user_id', user.id);
+      if (likeError) {
+        apply(!next, next ? -1 : 1);
+        return false;
+      }
+      return true;
+    },
+    [user?.id]
   );
 
   const toggleEvent = useCallback(
     async (event: EventRow) => {
       if (!user?.id) return false;
       const supabase = createClient();
-      const { data, error: rpcError } = await supabase.rpc(event.is_registered ? 'leave_event' : 'join_event', {
-        p_event_id: event.id,
-      });
+      const { data, error: rpcError } = await supabase.rpc(
+        event.is_registered ? 'leave_event' : 'join_event',
+        {
+          p_event_id: event.id,
+        }
+      );
       if (rpcError) return false;
       const result = (data ?? {}) as { current_participants?: number; status?: string };
       setSorties((prev) =>
@@ -174,15 +281,26 @@ export function useCommunitySections(user: { id?: string } | null | undefined, e
                 is_registered: !row.is_registered,
                 current_participants: result.current_participants ?? row.current_participants,
               }
-            : row,
-        ),
+            : row
+        )
       );
       return true;
     },
-    [user?.id],
+    [user?.id]
   );
 
-  return { carnets, clubs, sorties, loading, error, reload, joinClub, leaveClub, toggleEvent };
+  return {
+    carnets,
+    clubs,
+    sorties,
+    loading,
+    error,
+    reload,
+    joinClub,
+    leaveClub,
+    toggleEvent,
+    toggleCarnetLike,
+  };
 }
 
 export default useCommunitySections;

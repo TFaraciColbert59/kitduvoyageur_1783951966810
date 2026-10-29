@@ -5,13 +5,17 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
   Eye,
+  KeyRound,
   Lock,
+  LogOut,
   Monitor,
+  Play,
   Ruler,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
 import type { NotificationPrefs, ProfileSettings } from '@/features/compte/server/compte';
+import { ActionPill } from '@/components/ui/ActionPill';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { createClient } from '@/lib/supabase/client';
 import { fetchJson } from './shared';
@@ -120,13 +124,6 @@ export function SettingsPane() {
 
   return (
     <div className="lkdv-compte-pane">
-      <div className="lkdv-compte-settings-head">
-        <div>
-          <b>Réglages rapides</b>
-          <span>Ce que tu changes ici est enregistré immédiatement.</span>
-        </div>
-      </div>
-
       {message ? <p className="lkdv-compte-inline-status" role="status">{message}</p> : null}
 
       <section className="lkdv-compte-setting-card">
@@ -155,11 +152,6 @@ export function SettingsPane() {
             <i aria-hidden="true" />
           </button>
         </div>
-        <p>
-          {profile.visibility === 'public'
-            ? 'Ton profil, tes sorties publiques et ta cordée sont visibles par tous.'
-            : 'Seules les personnes que tu acceptes voient ton profil et tes sorties.'}
-        </p>
       </section>
 
       <section className="lkdv-compte-setting-card">
@@ -226,15 +218,13 @@ export function SettingsPane() {
             <b>Parcours de découverte</b>
             <small>Les bases de LKDV, à ton rythme</small>
           </div>
+          <ActionPill
+            className="lkdv-compte-setting-pill"
+            label="Reprendre le parcours"
+            icon={<Play />}
+            onClick={() => window.dispatchEvent(new Event('lkdv:onboarding-open'))}
+          />
         </div>
-        <p>Profil, première sortie, kit, cordée et partage : reprends le parcours quand tu veux.</p>
-        <button
-          type="button"
-          className="lkdv-compte-btn ghost"
-          onClick={() => window.dispatchEvent(new Event('lkdv:onboarding-open'))}
-        >
-          <Sparkles size={14} aria-hidden="true" /> Reprendre le parcours
-        </button>
       </section>
 
       <section className="lkdv-compte-setting-card">
@@ -250,20 +240,23 @@ export function SettingsPane() {
             <ShieldCheck size={13} aria-hidden="true" /> {profile.twoFaEnabled ? 'Protégé' : 'À activer'}
           </span>
         </div>
-        <div className="lkdv-compte-security-actions">
-          <button type="button" className="lkdv-compte-btn ghost" onClick={() => void sendPasswordReset()} disabled={securityBusy}>
-            <Lock size={14} aria-hidden="true" /> Changer mon mot de passe
-          </button>
-          <button
-            type="button"
-            className={`lkdv-compte-btn ${confirmSignOut ? 'danger' : 'ghost'}`}
+        <div className="lkdv-compte-security-actions lkdv-apill-row is-start">
+          <ActionPill
+            label="Changer mon mot de passe"
+            text="Mot de passe"
+            icon={<KeyRound />}
+            onClick={() => void sendPasswordReset()}
+            disabled={securityBusy}
+          />
+          <ActionPill
+            tone={confirmSignOut ? 'danger' : 'glass'}
+            label={confirmSignOut ? 'Confirmer la déconnexion' : 'Déconnecter mes autres appareils'}
+            text={confirmSignOut ? 'Confirmer' : 'Autres appareils'}
+            icon={<LogOut />}
             onClick={() => void signOutOthers()}
             disabled={securityBusy}
-          >
-            <ShieldCheck size={14} aria-hidden="true" /> {confirmSignOut ? 'Confirmer la déconnexion' : 'Déconnecter mes autres appareils'}
-          </button>
+          />
         </div>
-        <p>{profile.twoFaEnabled ? 'La double authentification est active sur ce compte.' : 'La double authentification n’est pas activée sur ce compte.'}</p>
       </section>
     </div>
   );

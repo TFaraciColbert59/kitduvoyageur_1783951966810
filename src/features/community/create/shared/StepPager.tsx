@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import { Square, ImagePlus, Pencil, Send, Sparkles, BookOpen, Map, Backpack, Camera, Share2, Users, Shield, Route, Check, UserPlus } from 'lucide-react';
 import type { CreateKind } from '../engine/createSchemas';
+import { useStepGuard } from '../engine/stepGuard';
 import './create-shared.css';
 
 export interface CreateStep {
@@ -69,6 +70,8 @@ export interface StepPagerProps {
   /** Regroupement de panes par étape (facultatif). */
   groups?: readonly (readonly number[])[];
   className?: string;
+  /** Capsule d'étapes rendue dans le formulaire (tiroir) plutôt que flottante sur la page. */
+  inline?: boolean;
 }
 
 /**
@@ -87,12 +90,33 @@ export function StepPager({
   actions,
   groups,
   className = '',
+  inline = false,
 }: StepPagerProps) {
   const count = steps.length;
   const safeIndex = count > 0 ? Math.max(0, Math.min(index, count - 1)) : 0;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const guard = useStepGuard();
+  const [bounce, setBounce] = useState<'left' | 'right' | null>(null);
+  const bounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panes = React.Children.toArray(children);
+  /** Petit rebond : la carte refuse d'avancer (étape incomplète) ou de reculer (première étape). */
+  const playBounce = (direction: 'left' | 'right') => {
+    setBounce(null);
+    window.requestAnimationFrame(() => setBounce(direction));
+    if (bounceTimer.current) clearTimeout(bounceTimer.current);
+    bounceTimer.current = setTimeout(() => setBounce(null), 420);
+  };
+  /** Avance seulement si l'étape courante est valide ; sinon rebond (les erreurs s'affichent). */
+  const advanceTo = async (target: number) => {
+    if (target <= safeIndex) {
+      changeStep(target);
+      return;
+    }
+    const ok = guard ? await guard.canLeave(safeIndex) : true;
+    if (ok) changeStep(target);
+    else playBounce('left');
+  };
   const changeStep = (next: number) => {
     onIndexChange(next);
     window.requestAnimationFrame(() => {
@@ -119,12 +143,12 @@ export function StepPager({
       ref={rootRef}
       className={`lkdv-create-step-pager ${className}`.trim()}
       onKeyDown={(event) => {
-        if (event.key === 'ArrowRight' && safeIndex < count - 1) changeStep(safeIndex + 1);
+        if (event.key === 'ArrowRight' && safeIndex < count - 1) void advanceTo(safeIndex + 1);
         if (event.key === 'ArrowLeft' && safeIndex > 0) changeStep(safeIndex - 1);
       }}
       onTouchStart={(event) => {
         const target = event.target as HTMLElement;
-        if (target.closest('input, textarea, select')) return;
+        if (target.closest('input, textarea, select, [data-no-swipe]')) return;
         const touch = event.touches[0];
         if (touch) touchStart.current = { x: touch.clientX, y: touch.clientY };
       }}
@@ -136,8 +160,14 @@ export function StepPager({
         const dx = touch.clientX - start.x;
         const dy = touch.clientY - start.y;
         if (Math.abs(dx) < 50 || Math.abs(dx) <= Math.abs(dy)) return;
-        if (dx < 0 && safeIndex < count - 1) changeStep(safeIndex + 1);
-        if (dx > 0 && safeIndex > 0) changeStep(safeIndex - 1);
+        if (dx < 0) {
+          if (safeIndex < count - 1) void advanceTo(safeIndex + 1);
+          else playBounce('left');
+        }
+        if (dx > 0) {
+          if (safeIndex > 0) changeStep(safeIndex - 1);
+          else playBounce('right');
+        }
       }}
     >
       <LensPager
@@ -150,6 +180,7 @@ export function StepPager({
           <section
             key={steps[safeIndex]?.id ?? safeIndex}
             className="lkdv-create-step-pane"
+            data-bounce={bounce ?? undefined}
             role="group"
             aria-roledescription="étape"
             aria-label={`${safeIndex + 1} sur ${count} — ${steps[safeIndex]?.label ?? ''}`}
@@ -169,7 +200,7 @@ export function StepPager({
         ))}
       </div>
 
-      {typeof document !== 'undefined'
+      {typeof document !== 'undefined' && !inline
         ? createPortal(
           <div className="lkdv-create-stepbar">
             <div className="lkdv-create-step-tabs" role="tablist" aria-label={label}>
@@ -189,7 +220,7 @@ export function StepPager({
               aria-label={step.label}
               aria-selected={stepIndex === safeIndex}
               className={stepIndex === safeIndex ? 'is-active' : ''}
-              onClick={() => changeStep(stepIndex)}
+              onClick={() => void advanceTo(stepIndex)}
             >
               {step.icon}
             </button>
@@ -215,7 +246,7 @@ export function StepPager({
               aria-label={step.label}
               aria-selected={stepIndex === safeIndex}
               className={stepIndex === safeIndex ? 'is-active' : ''}
-              onClick={() => changeStep(stepIndex)}
+              onClick={() => void advanceTo(stepIndex)}
             >
               {step.icon}
             </button>

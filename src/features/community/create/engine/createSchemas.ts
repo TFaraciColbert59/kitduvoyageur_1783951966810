@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { moderateText, validateActivity } from '../moderation';
 
 /**
  * Schémas de création des six types de contenu.
@@ -392,8 +393,15 @@ const kitSchema = z.object({
 });
 
 const clubSchema = z.object({
-  name: requiredText('Le nom du club est requis.', 80),
-  category: requiredText('La catégorie est requise.', 60),
+  name: requiredText('Le nom du club est requis.', 80).superRefine((value, ctx) => {
+    const issue = moderateText(value);
+    if (issue) ctx.addIssue({ code: 'custom', message: issue });
+  }),
+  /** Activité du club : libre, 2 à 40 lettres, modérée (liens, contacts, mots interdits). */
+  category: requiredText('Indique l’activité du club (ex. Randonnée, Trail, Ski…).', 40).superRefine((value, ctx) => {
+    const issue = validateActivity(value);
+    if (issue) ctx.addIssue({ code: 'custom', message: issue });
+  }),
   location: z.string().max(80, '80 caractères maximum.').default(''),
   description: z.string().max(1500, '1 500 caractères maximum.').default(''),
   privacy: z.enum(CLUB_PRIVACIES, { error: 'Choisis un mode d’adhésion.' }).default('open'),
@@ -411,7 +419,7 @@ const clubSchema = z.object({
     .default([]),
   /** Post d’accueil dans le fil du club : publié ou non. */
   welcomePost: z.boolean().default(true),
-  cover: mediaArray(1).default([]),
+  cover: mediaArray(1).min(1, 'Ajoute une image pour ton club : elle est obligatoire.').default([]),
 });
 
 // ---------------------------------------------------------------------------

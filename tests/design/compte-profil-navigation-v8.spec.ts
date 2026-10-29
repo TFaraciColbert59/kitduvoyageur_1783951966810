@@ -57,9 +57,8 @@ describe('Compte & Profil Navigation Requirements (iOS 27 Liquid Glass v8)', () 
       expect(profilPageSource).not.toContain('<AppShell');
     });
 
-    it('suppresses global MobileNavWrapper on /profil routes', () => {
-      expect(mobileNavWrapperSource).toContain("pathname === '/profil'");
-      expect(mobileNavWrapperSource).toContain("pathname?.startsWith('/profil')");
+    it('keeps the single app bar (iOS 27) on /profil routes', () => {
+      expect(mobileNavWrapperSource).not.toContain("pathname?.startsWith('/profil')");
     });
   });
 

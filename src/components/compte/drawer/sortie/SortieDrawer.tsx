@@ -324,7 +324,6 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
       <div className="lkdv-sortie-root">
         <DrawerAuthRequired
           title="Connecte-toi pour voir cette sortie"
-          hint="Les traces, photos, compagnons et échanges d’une sortie sont privés."
         />
       </div>
     );
@@ -567,6 +566,15 @@ export const SORTIE_CSS = `
 .lkdv-sortie-gear-weight{font-variant-numeric:tabular-nums!important;}
 /* 19. Toast au-dessus de la barre basse. */
 .lkdv-sortie-toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 10px 28px rgba(0,0,0,.28)!important;}
+/* Harmonisation : photo visible à 100 %, titre sur verre, actions en pilules sur l'image. */
+.lkdv-sortie-hero{min-height:236px!important;}
+.lkdv-sortie-hero.has-photo .lkdv-sortie-hero-scrim{display:none!important;}
+.lkdv-sortie-hero.has-photo .lkdv-sortie-hero-body{margin:8px!important;width:calc(100% - 16px)!important;padding:10px 12px!important;border-radius:16px!important;color:#172B24!important;background:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,255,255,.52))!important;-webkit-backdrop-filter:blur(16px) saturate(1.6)!important;backdrop-filter:blur(16px) saturate(1.6)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 0 0 .5px rgba(23,43,36,.12),0 6px 18px rgba(10,20,14,.14)!important;}
+.lkdv-sortie-hero.has-photo h2{font-size:17px!important;}
+.lkdv-sortie-hero-tools{position:absolute!important;top:8px!important;right:8px!important;z-index:2!important;}
+.lkdv-sortie-btn{height:32px!important;padding:0 12px!important;font-size:11.5px!important;}
+.lkdv-sortie-btn.ghost{background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.5))!important;color:#17402C!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 3px 10px rgba(23,43,36,.08)!important;}
+.lkdv-sortie-edit-actions{justify-content:flex-end!important;}
 /* 20. Mouvement réduit. */
 @media (prefers-reduced-motion:reduce){.lkdv-sortie-photo img,.lkdv-sortie-btn,.lkdv-sortie-hero{transition:none!important;animation:none!important;}}
 

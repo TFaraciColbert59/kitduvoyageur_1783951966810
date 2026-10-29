@@ -2,7 +2,6 @@
 
 import React, { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AccountBottomBar } from '@/components/account/AccountBottomBar';
 import ReportSheet from '@/components/social/ReportSheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -71,6 +70,11 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     onRequireAuth: requireAuth,
   });
   const comments = useCarnetComments({ carnetId: detail.id, user });
+
+  // Lien « commentaires » d'une tuile de la Communauté : ouvre directement la page des commentaires.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('commentaires') === '1') setPage('comments');
+  }, []);
 
   useEffect(() => {
     void engagement.registerView();
@@ -279,8 +283,6 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
           onReport={openReport}
         />
       ) : null}
-
-      <AccountBottomBar />
 
       {viewerIndex !== null ? (
         <CarnetMediaViewer

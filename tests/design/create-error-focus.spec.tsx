@@ -10,6 +10,7 @@ import {
 } from '@/features/community/create/engine/createSchemas';
 import { CREATE_STEPS, StepPager } from '@/features/community/create/shared/StepPager';
 import { FormErrorSummary } from '@/features/community/create/shared/FormErrorSummary';
+import { COVER } from './_coverFixture';
 
 afterEach(cleanup);
 
@@ -118,7 +119,7 @@ describe('focus des erreurs — étape avant champ', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Identité' }));
     await waitFor(() => expect(activeTabLabel()).toBe('Identité'));
 
-    fireEvent.click(screen.getByRole('button', { name: /Catégorie : La catégorie est requise/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Catégorie : Indique l’activité du club/ }));
 
     await waitFor(() => expect(activeTabLabel()).toBe('Univers'));
     await waitFor(() =>
@@ -136,7 +137,7 @@ describe('focus des erreurs — étape avant champ', () => {
       return (
         <CreateFormEngine<ClubFormValues>
           kind="club"
-          defaultValues={{ ...createDefaults('club'), name: 'La Cordée', category: 'Rando' }}
+          defaultValues={{ ...createDefaults('club'), name: 'La Cordée', category: 'Rando', cover: COVER }}
           onSubmit={onSubmit}
           step={step}
           stepFields={STEP_FIELDS}

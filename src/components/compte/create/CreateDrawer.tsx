@@ -2,21 +2,22 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Camera, Image as ImageIcon, Map, Mountain, Plus, Users } from 'lucide-react';
+import { BookOpen, Camera, Check, ChevronLeft, Image as ImageIcon, Map, Mountain, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
-import { DrawerButton, OverlaySheet } from '../overlay/OverlaySheet';
+import { ActionPill } from '@/components/ui/ActionPill';
+import { OverlaySheet } from '../overlay/OverlaySheet';
 
 type CreateType = 'post' | 'story' | 'carnet' | 'kit' | 'club' | 'trip';
 
 const CATALOG = [
-  { id: 'post' as const, title: 'Publication', subtitle: 'Photo, texte ou question', icon: <ImageIcon size={20} /> },
-  { id: 'story' as const, title: 'Story', subtitle: 'Visible 24 h', icon: <Camera size={20} /> },
-  { id: 'carnet' as const, title: 'Carnet', subtitle: 'Récit d’une aventure', icon: <BookOpen size={20} /> },
-  { id: 'kit' as const, title: 'Kit', subtitle: 'Compose ton sac', icon: <Mountain size={20} /> },
-  { id: 'club' as const, title: 'Club', subtitle: 'Rassemble ton groupe', icon: <Users size={20} /> },
-  { id: 'trip' as const, title: 'Voyage', subtitle: 'Prépare une aventure', icon: <Map size={20} /> },
+  { id: 'post' as const, title: 'Publication', icon: <ImageIcon size={22} /> },
+  { id: 'story' as const, title: 'Story', icon: <Camera size={22} /> },
+  { id: 'carnet' as const, title: 'Carnet', icon: <BookOpen size={22} /> },
+  { id: 'kit' as const, title: 'Kit', icon: <Mountain size={22} /> },
+  { id: 'club' as const, title: 'Club', icon: <Users size={22} /> },
+  { id: 'trip' as const, title: 'Voyage', icon: <Map size={22} /> },
 ];
 
 function errorMessage(error: unknown) {
@@ -68,27 +69,23 @@ export function CreateDrawer({ initialType, onClose, onCreated }: CreateDrawerPr
   return (
     <OverlaySheet
       title={type ? CATALOG.find((item) => item.id === type)?.title || 'Créer' : 'Créer'}
-      subtitle={type ? 'Tout se passe ici, sans quitter ton compte.' : 'Choisis ce que tu veux créer.'}
       onClose={onClose}
       headerRight={
         type ? (
-          <button type="button" className="lkdv-create-back" onClick={() => setType(null)}>
-            Tous les types
-          </button>
+          <ActionPill className="lkdv-create-back" label="Tous les types" icon={<ChevronLeft />} onClick={() => setType(null)} />
         ) : undefined
       }
     >
       {success ? (
-        <div className="lkdv-overlay-empty"><b>{success}</b><p>La création est enregistrée dans ton profil.</p></div>
+        <div className="lkdv-overlay-empty"><b>{success}</b></div>
       ) : !user ? (
-        <div className="lkdv-overlay-empty"><b>Connecte-toi pour créer</b><p>Ton compte te permet de publier et partager.</p></div>
+        <div className="lkdv-overlay-empty"><b>Connecte-toi pour créer</b></div>
       ) : !type ? (
         <div className="lkdv-create-catalog">
           {CATALOG.map((item) => (
             <button key={item.id} type="button" className="lkdv-create-card" onClick={() => setType(item.id)}>
-              <span className="lkdv-create-icon">{item.icon}</span>
-              <span><b>{item.title}</b><small>{item.subtitle}</small></span>
-              <Plus size={16} aria-hidden="true" />
+              <span className="lkdv-create-icon" aria-hidden="true">{item.icon}</span>
+              <b>{item.title}</b>
             </button>
           ))}
         </div>
@@ -104,6 +101,15 @@ export function CreateDrawer({ initialType, onClose, onCreated }: CreateDrawerPr
         </>
       )}
     </OverlaySheet>
+  );
+}
+
+/** Validation : une seule pilule icône, en bas à droite, toujours visible. */
+function SubmitDock({ label, busy, onSubmit }: { label: string; busy: boolean; onSubmit: () => void }) {
+  return (
+    <div className="lkdv-apill-dock">
+      <ActionPill tone="primary" label={label} icon={<Check />} busy={busy} onClick={onSubmit} />
+    </div>
   );
 }
 
@@ -158,7 +164,7 @@ function PostForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => 
           <option value="abonnies">Mes abonnés</option>
         </select>
       </Field>
-      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Publication…' : 'Publier'}</DrawerButton>
+      <SubmitDock label="Publier" busy={busy} onSubmit={() => onSubmit(submit)} />
     </div>
   );
 }
@@ -212,7 +218,7 @@ function StoryForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () =>
           <option value="only_me">Moi uniquement</option>
         </select>
       </Field>
-      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Publication…' : 'Publier la story'}</DrawerButton>
+      <SubmitDock label="Publier la story" busy={busy} onSubmit={() => onSubmit(submit)} />
     </div>
   );
 }
@@ -261,7 +267,7 @@ function CarnetForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () =
           <option value="private">Privé</option>
         </select>
       </Field>
-      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Création…' : 'Créer le carnet'}</DrawerButton>
+      <SubmitDock label="Créer le carnet" busy={busy} onSubmit={() => onSubmit(submit)} />
     </div>
   );
 }
@@ -300,7 +306,7 @@ function KitForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => P
         </select>
       </Field>
       <label className="lkdv-create-check"><input type="checkbox" checked={isPublic} onChange={(event) => setIsPublic(event.target.checked)} /> Kit public</label>
-      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Création…' : 'Créer le kit'}</DrawerButton>
+      <SubmitDock label="Créer le kit" busy={busy} onSubmit={() => onSubmit(submit)} />
     </div>
   );
 }
@@ -353,7 +359,7 @@ function ClubForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => 
           <option value="private">Privé</option>
         </select>
       </Field>
-      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Création…' : 'Créer le club'}</DrawerButton>
+      <SubmitDock label="Créer le club" busy={busy} onSubmit={() => onSubmit(submit)} />
     </div>
   );
 }
@@ -400,8 +406,7 @@ function TripForm({ busy, onSubmit }: { busy: boolean; onSubmit: (action: () => 
           <option value="public">Public</option>
         </select>
       </Field>
-      <DrawerButton tone="primary" disabled={busy} onClick={() => onSubmit(submit)}>{busy ? 'Création…' : 'Créer le voyage'}</DrawerButton>
-      <p className="lkdv-create-note">Tu pourras ouvrir le Compas ensuite pour construire l’itinéraire.</p>
+      <SubmitDock label="Créer le voyage" busy={busy} onSubmit={() => onSubmit(submit)} />
     </div>
   );
 }

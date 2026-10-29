@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, CheckCheck } from 'lucide-react';
 import type { NotificationItem } from '@/features/compte/server/compte';
+import { ActionPill } from '@/components/ui/ActionPill';
 import { DrawerEmpty, DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import {
   NOTIFICATION_GROUP_LABEL,
@@ -132,12 +133,9 @@ export function NotificationsPane({ filter = 0 }: { filter?: number }) {
       <div className="lkdv-compte-notif-head">
         <div>
           <b>{unread > 0 ? `${unread} non lue${unread > 1 ? 's' : ''}` : 'Tout est lu'}</b>
-          <span>Alertes, prêts et commandes.</span>
         </div>
         {unread > 0 ? (
-          <button type="button" className="lkdv-compte-btn ghost" onClick={() => void mark({ all: true })} disabled={busy}>
-            <CheckCheck size={14} aria-hidden="true" /> Tout lire
-          </button>
+          <ActionPill label="Tout lire" icon={<CheckCheck />} onClick={() => void mark({ all: true })} disabled={busy} />
         ) : null}
       </div>
 

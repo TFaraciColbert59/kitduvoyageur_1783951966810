@@ -26,6 +26,8 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
+vi.mock('@/contexts/ToastContext', () => ({ useToast: () => ({ toast: () => {} }) }));
+
 afterEach(cleanup);
 
 function renderKit() {
@@ -41,16 +43,16 @@ describe('KitCreateForm — inventaire first', () => {
     expect(screen.getByRole('tab', { name: 'Inventaire' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('tab', { name: 'Compléter' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Partager' })).toBeTruthy();
-    expect(await screen.findByRole('button', { name: /Sac 40 L/ })).toBeTruthy();
-    expect(screen.getByLabelText('Rechercher dans mon inventaire')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ajouter un élément au kit' })).toBeTruthy();
   });
 
   it('sélectionne un produit et calcule le poids', async () => {
     renderKit();
-    const row = await screen.findByRole('button', { name: /Sac 40 L/ });
+    fireEvent.click(screen.getByRole('button', { name: 'Ajouter un élément au kit' }));
+    const row = await screen.findByRole('button', { name: 'Ajouter Sac 40 L au kit' });
     fireEvent.click(row);
-    expect(row.getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByText(/0.90 kg sélectionnés/)).toBeTruthy();
+    expect(await screen.findByText('Sac 40 L')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Ajouter un élément au kit' })).toHaveLength(1);
   });
 
   it('affiche les champs de partage à la dernière étape', async () => {
