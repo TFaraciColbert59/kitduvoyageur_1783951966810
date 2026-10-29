@@ -163,3 +163,55 @@ describe('summarizeCarnet — statistiques réelles', () => {
     expect(summary.averageElevationM).toBeNull();
   });
 });
+
+describe('summarizeCarnet — statistiques ajoutées le 29 oct. 2026', () => {
+  it('compte les jours documentés, la durée totale et les moments réels', () => {
+    const summary = summarizeCarnet(
+      detail({
+        days: [
+          { index: 1, date: '2026-09-26', distanceKm: 12.4, elevationM: 620, durationS: 18000, moments: [moment({ id: 'm1' })], points: [] },
+          { index: 2, date: '2026-09-27', distanceKm: null, elevationM: null, durationS: 7200, moments: [], points: [] },
+          /* Jour réduit à deux points GPS : ni distance, ni D+, ni durée, ni
+             moment — il compte dans le total, pas dans la part documentée. */
+          { index: 3, date: '2026-09-28', distanceKm: null, elevationM: null, durationS: null, moments: [], points: [] },
+        ],
+        summary: { distanceKm: 12.4, elevationM: 620, days: 3, moments: 7 },
+      }),
+    );
+
+    /* Deux jours portent une donnée affichable sur trois ; le troisième n'a
+       que des points isolés. */
+    expect(summary.documentedDays).toBe(2);
+    /* 18 000 + 7 200 s : aucune durée inventée pour le jour sans relevé. */
+    expect(summary.totalDurationS).toBe(25200);
+    /* Le compte de moments vient du résumé des jours, jamais d'un compteur
+       décoratif de la table. */
+    expect(summary.momentsCount).toBe(7);
+  });
+
+  it('ne fabrique ni durée ni part documentée sans données réelles', () => {
+    const summary = summarizeCarnet(detail({ days: [], moments: [] }));
+    expect(summary.documentedDays).toBe(0);
+    expect(summary.totalDurationS).toBeNull();
+    expect(summary.momentsCount).toBe(0);
+    expect(summary.longestDay).toBeNull();
+    expect(summary.shortestDay).toBeNull();
+  });
+
+  it('donne le jour le plus long et le plus court parmi les distances connues', () => {
+    const summary = summarizeCarnet(
+      detail({
+        etapes: [
+          day({ id: 'd1', dayNumber: 1, distanceKm: 12.4 }),
+          day({ id: 'd2', dayNumber: 2, distanceKm: 21 }),
+          day({ id: 'd3', dayNumber: 3, distanceKm: null }),
+        ],
+      }),
+    );
+    expect(summary.longestDay?.dayNumber).toBe(2);
+    expect(summary.longestDay?.distanceKm).toBe(21);
+    expect(summary.shortestDay?.dayNumber).toBe(1);
+    /* Le jour sans distance n'est ni le plus court ni le plus long. */
+    expect(summary.daysWithDistance).toHaveLength(2);
+  });
+});

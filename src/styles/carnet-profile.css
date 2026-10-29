@@ -446,6 +446,10 @@ button.ckp-daypill-count:active { opacity: .6; }
 .ckp-drawer-cut {
   position: absolute; left: 0; right: 0; top: 100%; height: 16px; z-index: 7; pointer-events: none;
   opacity: 0; transition: opacity 160ms ease;
+  /* Le voile vit sur son propre calque : sans cela, Chromium rejoue les pixels
+     de la ligne qui vient de sortir sous le `backdrop-filter` et laisse une
+     valeur fantôme au-dessus du sélecteur pendant le défilement. */
+  transform: translateZ(0);
   border-top: .5px solid rgba(23, 43, 36, .06);
   -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   -webkit-mask-image: linear-gradient(180deg, #000 34%, transparent);
@@ -896,13 +900,17 @@ button.ckp-daypill-count:active { opacity: .6; }
 .ckp-elev-bars i { display: block; width: 4px; border-radius: 999px; background: rgba(23, 64, 44, .35); }
 
 /* En-tête collant : 40 px de verre, total en 12/600, révélé au défilement. */
-.ckp-stats-sticky { position: sticky; top: 0; z-index: 4; height: 0; pointer-events: none; }
+/* z-index 8 : la pastille passe au-dessus du voile de coupe (7), sinon sa
+   moitié haute est mangée par le flou du chrome. */
+.ckp-stats-sticky { position: sticky; top: 0; z-index: 8; height: 0; pointer-events: none; }
 /* Le rappel de total au défilement ne flotte plus en bande sur le verre : il
    devient une pastille de 30 px, à droite, sur sa propre surface blanche. */
 .ckp-stats-sticky > div {
-  /* 16 px sous le haut du corps : le voile de coupe du chrome (16 px) ne
-     passe jamais sur la pastille. */
-  position: absolute; right: 0; top: 16px; height: 30px;
+  /* La pastille chevauche la réserve haute du corps (-24 px), donc elle vit
+     dans la bande du voile de coupe, sous le sélecteur : elle ne recouvre
+     jamais une ligne de donnée, et sa valeur ne peut pas être lue comme celle
+     du champ qu'elle masquait auparavant. */
+  position: absolute; right: 0; top: -24px; height: 30px;
   display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, .92);

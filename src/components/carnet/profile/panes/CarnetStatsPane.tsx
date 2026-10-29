@@ -2,10 +2,15 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 import Icon from '@/components/ui/Icon';
-import { formatElevation, formatKm } from '@/features/carnet/detail/format';
+import { formatDuration, formatElevation, formatKm } from '@/features/carnet/detail/format';
 import { travelInfo } from '@/features/carnet/detail/dayinfo';
 import { dayDrawerStats } from '@/features/carnet/detail/daydrawer';
-import { CARNET_STATS_TABS, summarizeCarnet, type CarnetStatsTab } from '@/features/carnet/detail/stats';
+import {
+  CARNET_STATS_TABS,
+  summarizeCarnet,
+  type CarnetDayExtreme,
+  type CarnetStatsTab,
+} from '@/features/carnet/detail/stats';
 import type { CarnetDay, CarnetDetail } from '@/features/carnet/detail/types';
 import { extractCoords, traceLengthKm } from '../traceGeometry';
 import type { CarnetSubCapsuleItem } from '../CarnetSubCapsule';
@@ -72,6 +77,19 @@ function dplus(value: number | null): string {
 function perKm(value: number | null): string {
   if (value === null || !Number.isFinite(value) || value <= 0) return '—';
   return `${Math.round(value).toLocaleString('fr-FR')} m/km`;
+}
+
+/** `22,4 min/km` — l'allure moyenne réelle, `—` sans durée ni distance. */
+function paceMin(minutesPerKm: number | null): string {
+  if (minutesPerKm === null || !Number.isFinite(minutesPerKm) || minutesPerKm <= 0) return '—';
+  return `${minutesPerKm.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} min/km`;
+}
+
+/** `14,2 km · J2` — une valeur réelle et le jour qui la porte. */
+function dayValue(day: CarnetDayExtreme | null): string {
+  if (!day) return '—';
+  const label = formatKm(day.distanceKm);
+  return label ? `${label} · J${day.dayNumber}` : '—';
 }
 
 interface Hero {
@@ -396,6 +414,35 @@ export function CarnetStatsPane({ detail, tab, day = null }: CarnetStatsPaneProp
                 />
               </div>
 
+              {/* Durée, allure et densité : les trois valeurs qui ne se lisent
+                  sur aucune autre ligne du volet. */}
+              <div className="ckp-group">
+                <CarnetField
+                  label="allure moyenne"
+                  value={paceMin(stats.averagePaceMinPerKm)}
+                  ariaLabel={`allure moyenne ${paceMin(stats.averagePaceMinPerKm)}`}
+                />
+                <CarnetField
+                  label="durée totale"
+                  value={formatDuration(stats.totalDurationS) ?? ''}
+                  ariaLabel={`durée totale ${formatDuration(stats.totalDurationS) ?? '—'}`}
+                />
+                <CarnetField label="dénivelé par km" value={perKm(stats.elevationPerKm)} />
+              </div>
+
+              <div className="ckp-group">
+                <CarnetField
+                  label="jours"
+                  value={dayCount > 0 ? dayCount.toLocaleString('fr-FR') : ''}
+                  ariaLabel={`jours ${dayCount > 0 ? dayCount : '—'}`}
+                />
+                <CarnetField
+                  label="moments"
+                  value={stats.momentsCount > 0 ? stats.momentsCount.toLocaleString('fr-FR') : ''}
+                  ariaLabel={`moments ${stats.momentsCount > 0 ? stats.momentsCount : '—'}`}
+                />
+              </div>
+
               {distanceDays.length === 0 ? (
                 <div className="ckp-group">
                   <CarnetField label="distance par jour" value="" />
@@ -519,6 +566,27 @@ export function CarnetStatsPane({ detail, tab, day = null }: CarnetStatsPaneProp
             )}
           </div>
 
+          {dayView ? null : (
+            <div className="ckp-group">
+              <CarnetField
+                label="dénivelé max"
+                value={
+                  stats.maxElevationDay
+                    ? `${formatElevation(stats.maxElevationDay.elevationM) ?? '—'} D+ · J${stats.maxElevationDay.dayNumber}`
+                    : ''
+                }
+                wide
+                mid
+                ariaLabel={`dénivelé max ${stats.maxElevationDay ? formatElevation(stats.maxElevationDay.elevationM) ?? '—' : '—'}`}
+              />
+              <CarnetField
+                label="moyenne par jour"
+                value={dplus(stats.averageElevationM)}
+                ariaLabel={`moyenne par jour ${dplus(stats.averageElevationM)}`}
+              />
+            </div>
+          )}
+
           {dayView ? null : elevationDays.length === 0 ? (
             <div className="ckp-group">
               <CarnetField label="dénivelé par jour" value="" />
@@ -576,6 +644,29 @@ export function CarnetStatsPane({ detail, tab, day = null }: CarnetStatsPaneProp
                 />
                 <CarnetField label="date" value={travel.date ?? ''} />
                 <CarnetField label="dates" value={detail.dateRange ?? ''} wide />
+              </div>
+              {/* Part documentée et bornes réelles : aucune moyenne ne tient
+                  lieu de jour le plus long ni de jour le plus court. */}
+              <div className="ckp-group">
+                <CarnetField
+                  label="jours documentés"
+                  value={dayCount > 0 ? `${stats.documentedDays} / ${dayCount}` : ''}
+                  ariaLabel={`jours documentés ${dayCount > 0 ? `${stats.documentedDays} sur ${dayCount}` : '—'}`}
+                />
+                <CarnetField
+                  label="jour le plus long"
+                  value={dayValue(stats.longestDay)}
+                  wide
+                  mid
+                  ariaLabel={`jour le plus long ${dayValue(stats.longestDay)}`}
+                />
+                <CarnetField
+                  label="jour le plus court"
+                  value={dayValue(stats.shortestDay)}
+                  wide
+                  mid
+                  ariaLabel={`jour le plus court ${dayValue(stats.shortestDay)}`}
+                />
               </div>
               {dayGroups.length === 0 ? null : (
                 <div className="ckp-daylist">

@@ -124,11 +124,18 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
     expect(values(groups[1])[1]).toBe('106,4 km');
     expect(values(groups[1])[2]).toMatch(/^3 pts/);
     expect(groups[1].querySelectorAll('.ckp-field-icon > span')).toHaveLength(1);
-    expect(labels(groups[2])).toEqual(['JOUR 1 · 26 sept.', 'JOUR 2 · 27 sept.']);
-    expect(values(groups[2])).toEqual(['12,4 km', '14,2 km']);
+    /* Les trois valeurs qui ne se lisent nulle part ailleurs : allure moyenne,
+       durée totale et densité de dénivelé. Absentes des données → tiret. */
+    expect(labels(groups[2])).toEqual(['allure moyenne', 'durée totale', 'dénivelé par km']);
+    expect(values(groups[2])).toEqual(['—', '—', '19 m/km']);
+    /* Nombre de jours et nombre de moments, calculés sur la donnée réelle. */
+    expect(labels(groups[3])).toEqual(['jours', 'moments']);
+    expect(values(groups[3])).toEqual(['3', '1']);
+    expect(labels(groups[4])).toEqual(['JOUR 1 · 26 sept.', 'JOUR 2 · 27 sept.']);
+    expect(values(groups[4])).toEqual(['12,4 km', '14,2 km']);
     /* 22 : aucun chevron dans ces lignes. */
     expect(panel.querySelector('.ckp-field .chevron-right')).toBeNull();
-    expect(container.querySelectorAll('.ckp-group')).toHaveLength(3);
+    expect(container.querySelectorAll('.ckp-group')).toHaveLength(5);
   });
 
   it('distance : aucune donnée inventée quand tout manque', () => {
@@ -171,8 +178,11 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
     /* Le D+ du jour affiché passe ici : sur le Résumé, le héros porte le total. */
     expect(labels(groups[0])).toEqual(['dénivelé du jour', 'dénivelé par km', 'jours sans dénivelé']);
     expect(values(groups[0])).toEqual(['—', '19 m/km', '1']);
-    expect(labels(groups[1])).toEqual(['JOUR 1 · 26 sept.', 'JOUR 2 · 27 sept.']);
-    expect(values(groups[1])).toEqual(['1\u202f050 m D+', '700 m D+']);
+    /* Maximum daté et moyenne par jour : deux lignes, jamais un total répété. */
+    expect(labels(groups[1])).toEqual(['dénivelé max', 'moyenne par jour']);
+    expect(values(groups[1])).toEqual(['1\u202f050 m D+ · J1', '875 m D+']);
+    expect(labels(groups[2])).toEqual(['JOUR 1 · 26 sept.', 'JOUR 2 · 27 sept.']);
+    expect(values(groups[2])).toEqual(['1\u202f050 m D+', '700 m D+']);
   });
 
   it('dénivelé : état vide honnête, sans phrase', () => {
@@ -382,9 +392,24 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
     const { container } = render(<CarnetStatsPane detail={RICH} tab="days" />);
     const panel = screen.getByRole('tabpanel', { name: 'Jours' });
     expect(panel.querySelector('.ckp-hero-value')?.textContent).toBe('3');
-    expect(labels(panel)).toEqual(['jour', 'date', 'dates']);
-    /* Le Résumé garde ses agrégats : jours du carnet et plage de dates. */
-    expect(values(panel)).toEqual(['7', '—', '26 sept. – 2 oct. 2026']);
+    expect(labels(panel)).toEqual([
+      'jour',
+      'date',
+      'dates',
+      'jours documentés',
+      'jour le plus long',
+      'jour le plus court',
+    ]);
+    /* Le Résumé garde ses agrégats : jours du carnet et plage de dates, puis la
+       part documentée et les deux bornes réelles de distance. */
+    expect(values(panel)).toEqual([
+      '7',
+      '—',
+      '26 sept. – 2 oct. 2026',
+      '0 / 3',
+      '14,2 km · J2',
+      '12,4 km · J1',
+    ]);
     /* La liste complète des jours reste au Résumé. */
     expect(container.querySelectorAll('.ckp-day')).toHaveLength(3);
   });
@@ -441,6 +466,9 @@ describe('CarnetStatsPane — sous-drawer statistiques', () => {
       'jour',
       'date',
       'dates',
+      'jours documentés',
+      'jour le plus long',
+      'jour le plus court',
     ]);
     expect(container.textContent).not.toMatch(/Aucun jour renseigné/);
     expect(values(container).every((value) => value === '—')).toBe(true);
