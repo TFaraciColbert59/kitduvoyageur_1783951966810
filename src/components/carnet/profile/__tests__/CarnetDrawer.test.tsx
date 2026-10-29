@@ -85,12 +85,24 @@ describe('CarnetDrawer — coquille', () => {
     expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Partage' }));
   });
 
-  it('ferme sur Échap et sur la poignée', () => {
+  it('ferme sur Échap et sur la poignée, après la sortie de 160 ms', () => {
+    vi.useFakeTimers();
     const onClose = vi.fn();
-    render(<CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={onClose}><p>v</p></CarnetDrawer>);
+    const { container } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={onClose}><p>v</p></CarnetDrawer>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Fermer le panneau' }));
+    /* La feuille joue son fondu de sortie avant de disparaître. */
+    const sheet = container.querySelector('.ckp-card--drawer') as HTMLElement;
+    expect(sheet.getAttribute('data-closing')).toBe('true');
+    expect(onClose).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(160);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    /* Un second appui ne relance rien. */
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(onClose).toHaveBeenCalledTimes(2);
+    vi.advanceTimersByTime(160);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 });
 

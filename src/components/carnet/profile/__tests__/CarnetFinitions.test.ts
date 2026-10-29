@@ -37,14 +37,20 @@ function ruleFrom(marker: string): string {
 describe('Anatomie du drawer — lot A', () => {
   /* 1 — poignée 42 × 5 ; 6 px et .32 sous le doigt, en 120 ms. */
   it('poignée 42 × 5 qui s’épaissit à 6 px / .32 en 120 ms', () => {
+    /* Deux calques, une seule propriété animée par transition (lot E, 39) :
+       la hauteur sur la barre, la couleur sur son fond. */
     const bar = rule('.ckp-grabber span {');
     expect(bar).toMatch(/width:\s*42px/);
     expect(bar).toMatch(/height:\s*5px/);
-    expect(bar).toMatch(/transition:\s*height 120ms ease, background-color 120ms ease/);
-    const press = ruleFrom(".ckp-grabber[data-press='true']");
+    expect(bar).toMatch(/transition:\s*height 120ms ease/);
+    const paint = rule('.ckp-grabber span::after {');
+    expect(paint).toMatch(/background-color:\s*rgba\(23, 43, 36, \.18\)/);
+    expect(paint).toMatch(/transition:\s*background-color 120ms ease/);
+    const press = ruleFrom(".ckp-grabber[data-press='true'] span {");
     expect(press).toMatch(/height:\s*6px/);
-    expect(press).toMatch(/background:\s*rgba\(23, 43, 36, \.32\)/);
-    expect(ruleFrom('.ckp-grabber:active span')).toMatch(/height:\s*6px/);
+    const pressPaint = rule(".ckp-grabber[data-press='true'] span::after {");
+    expect(pressPaint).toMatch(/background-color:\s*rgba\(23, 43, 36, \.32\)/);
+    expect(ruleFrom('.ckp-grabber:active span,')).toMatch(/height:\s*6px/);
   });
 
   /* 2 — rayon du châssis en haut (24), bas refermé à 16 ; la carte ne bouge pas. */
@@ -134,7 +140,7 @@ describe('Anatomie de la feuille', () => {
     expect(bar).toMatch(/width:\s*42px/);
     expect(bar).toMatch(/height:\s*5px/);
     expect(bar).toMatch(/border-radius:\s*999px/);
-    expect(bar).toMatch(/background:\s*rgba\(23, 43, 36, \.18\)/);
+    expect(rule('.ckp-grabber span::after {')).toMatch(/background-color:\s*rgba\(23, 43, 36, \.18\)/);
     expect(rule('.ckp-drawer-body {')).toMatch(/padding:\s*16px 16px 64px/);
   });
 
@@ -360,8 +366,8 @@ describe('Mouvement', () => {
     expect(reduced).toMatch(/\.ckp-roll\.is-rolling > b\s*\{\s*animation:\s*none/);
     expect(reduced).toMatch(/\.ckp-hero\[data-animate='true'\]\s*\{\s*animation:\s*ckp-fade-in 120ms/);
     expect(reduced).toMatch(/\.ckp-hero-bar i\s*\{\s*transition:\s*none/);
-    /* Le fondu de 160 ms du drawer reste la règle des mouvements réduits. */
-    expect(css).toMatch(/\.ckp-card--drawer\s*\{\s*animation:\s*ckp-fade-in 160ms linear both/);
+    /* Mouvement réduit : la feuille ne glisse pas, elle fond en 120 ms. */
+    expect(css).toMatch(/\.ckp-card--drawer, \.ckp-card--drawer\[data-closing='true'\] \{\s*animation:\s*ckp-fade-in 120ms linear both/);
   });
 });
 
@@ -397,20 +403,21 @@ describe('Typographie et contraste', () => {
 
   /* Le contrôle de jetons porte sur les valeurs ajoutées par cette refonte. */
   it('aucune couleur littérale hors des jetons autorisés', () => {
-    /* #B4BDB6 est imposé par la retouche 24 (le `—` absent) ; #fff est la
-       lentille du sélecteur, déjà en place depuis le Compte. */
-    const tokens = new Set(['#172B24', '#17402C', '#56665D', '#6B7A70', '#8A968D', '#C13B34', '#B4BDB6']);
-    const additions = css.slice(css.indexOf('Anatomie des drawers et sous-drawers'));
-    const hex = additions.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];
+    /* Le contrôle porte sur toute la feuille du carnet, lots A à F compris. */
+    const tokens = new Set(['#172b24', '#17402c', '#56665d', '#6b7a70', '#8a968d', '#c13b34', '#b4bdb6']);
+    /* Exceptions nommées : lentille `#fff`, surface opaque `#F4F7F3` (lot E),
+       canvas de repli du Compte `#cfd6c8`, dégradé de la pastille de
+       couverture `#123726` / `#2e5c40`, masques `#000`. */
+    const allowed = new Set([...tokens, '#fff', '#ffffff', '#f4f7f3', '#cfd6c8', '#123726', '#2e5c40', '#000', '#000000']);
+    const hex = css.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];
     const offenders = hex
-      .filter((value) => !['#fff', '#ffffff'].includes(value.toLowerCase()))
-      .filter((value) => {
-        const long =
-          value.length === 4
-            ? `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`
-            : value;
-        return ![...tokens].some((token) => token.toLowerCase() === long.toLowerCase());
-      });
+      .map((value) => {
+        const lower = value.toLowerCase();
+        return lower.length === 4
+          ? `#${lower[1]}${lower[1]}${lower[2]}${lower[2]}${lower[3]}${lower[3]}`
+          : lower;
+      })
+      .filter((value) => !allowed.has(value));
     expect(offenders).toEqual([]);
   });
 });
@@ -648,12 +655,14 @@ describe('Composants — lot D', () => {
 
   /* 33 — section repliable : chevron 180° en 180 ms, 0fr → 1fr. */
   it('section repliable : chevron 180° / 180 ms et 0fr → 1fr', () => {
-    expect(rule('.ckp-collapse-chevron {')).toMatch(/transition:\s*transform 180ms/);
+    expect(ruleFrom('.ckp-collapse-chevron {\n  flex: none;')).toMatch(/transition:\s*transform 180ms/);
     expect(rule(".ckp-collapse-head[aria-expanded='true'] .ckp-collapse-chevron {")).toMatch(
       /transform:\s*rotate\(180deg\)/,
     );
     expect(rule('.ckp-collapse {')).toMatch(/grid-template-rows:\s*0fr/);
     expect(rule('.ckp-collapse {')).toMatch(/transition:\s*grid-template-rows 180ms/);
+    /* Le repli est aussi rendu par le mouvement réduit, sans transition. */
+    expect(css).toMatch(/\.ckp-collapse, \.ckp-collapse-chevron \{ transition: none; \}/);
     expect(rule(".ckp-collapse[data-open='true'] {")).toMatch(/grid-template-rows:\s*1fr/);
   });
 
@@ -666,5 +675,101 @@ describe('Composants — lot D', () => {
     const text = rule('.ckp-btn--text {');
     expect(text).toMatch(/font:\s*600 13px\/1\.15/);
     expect(text).toMatch(/color:\s*#56665D/);
+  });
+});
+
+describe('Mouvement — lot E', () => {
+  /* 35 — entrée de feuille : 12 px + fondu, 220 ms, courbe du Compte. */
+  it('entrée de feuille : translateY(12px) + fondu, 220 ms', () => {
+    const keyframes = css.slice(css.indexOf('@keyframes ckp-drawer-in'));
+    expect(keyframes).toMatch(/translateY\(12px\)/);
+    expect(rule('.ckp-card.ckp-card--drawer {')).toMatch(/ckp-drawer-in 220ms cubic-bezier\(\.22, 1, \.36, 1\)/);
+  });
+
+  /* 36 — changement de volet : fondu + 8 px, 180 ms. */
+  it('changement de volet : fondu + 8 px, 180 ms', () => {
+    expect(rule(".ckp-hero[data-animate='true'] {")).toMatch(/ckp-hero-in 180ms/);
+    const hero = css.slice(css.indexOf('@keyframes ckp-hero-in'));
+    expect(hero).toMatch(/translateY\(8px\)/);
+    expect(rule('.ckp-page--next {')).toMatch(/ckp-page-next 180ms/);
+    const page = css.slice(css.indexOf('@keyframes ckp-page-next'));
+    expect(page).toMatch(/translateY\(8px\)/);
+    expect(page.slice(0, page.indexOf('}'))).not.toMatch(/translateX/);
+  });
+
+  /* 37 — compteur rouleau : 400 ms, une seule fois. */
+  it('rouleau des valeurs : 400 ms, une fois', () => {
+    expect(rule('.ckp-roll.is-rolling > b {')).toMatch(/ckp-roll 400ms/);
+    expect(css).not.toMatch(/infinite/);
+  });
+
+  /* 38 — sortie de feuille : 160 ms, jouée avant le démontage. */
+  it('sortie de feuille : 160 ms, fondu + 12 px', () => {
+    expect(css).toMatch(
+      /\.ckp-card--drawer\[data-closing='true'\] \{\s*animation:\s*ckp-drawer-out 160ms cubic-bezier\(\.22, 1, \.36, 1\) both/,
+    );
+    const keyframes = css.slice(css.indexOf('@keyframes ckp-drawer-out'));
+    expect(keyframes).toMatch(/translateY\(12px\)/);
+    expect(keyframes.slice(0, keyframes.indexOf('@media'))).not.toMatch(/infinite/);
+  });
+
+  /* 39 — une seule propriété animée par transition. */
+  it('une propriété par transition, partout', () => {
+    /* On coupe sur les virgules de premier niveau : `cubic-bezier(.22, 1, .36, 1)`
+       contient des virgules qui ne séparent aucune propriété. */
+    const splitTop = (value: string) => {
+      const parts: string[] = [];
+      let depth = 0;
+      let current = '';
+      for (const char of value) {
+        if (char === '(') depth += 1;
+        if (char === ')') depth -= 1;
+        if (char === ',' && depth === 0) {
+          parts.push(current.trim());
+          current = '';
+          continue;
+        }
+        current += char;
+      }
+      parts.push(current.trim());
+      return parts;
+    };
+    const declarations = [...css.matchAll(/transition:\s*([^;]+);/g)].map((hit) => hit[1].trim());
+    expect(declarations.length).toBeGreaterThan(8);
+    for (const declaration of declarations) {
+      if (declaration === 'none') continue;
+      expect(splitTop(declaration).length, declaration).toBe(1);
+    }
+  });
+
+  /* 40 — mouvement réduit : fondus de 120 ms, aucune translation. */
+  it('mouvement réduit : fondus de 120 ms', () => {
+    /* Tous les blocs `prefers-reduced-motion` réunis. */
+    const reduced = css
+      .split('@media (prefers-reduced-motion: reduce)')
+      .slice(1)
+      .map((block) => block.slice(0, block.indexOf('\n}')))
+      .join('\n');
+    expect(reduced).toMatch(/\.ckp-card--drawer, \.ckp-card--drawer\[data-closing='true'\] \{\s*animation:\s*ckp-fade-in 120ms linear both/);
+    expect(reduced).toMatch(/\.ckp-page--next, \.ckp-page--prev \{\s*animation:\s*ckp-fade-in 120ms linear both/);
+    expect(reduced).toMatch(/\.ckp-comment\.is-new \{\s*animation:\s*ckp-fade-in 120ms linear both/);
+    expect(reduced).toMatch(/\.ckp-collapse, \.ckp-collapse-chevron \{ transition: none; \}/);
+    /* Aucun fondu de 160 ms ne subsiste dans un bloc de mouvement réduit. */
+    expect(reduced).not.toMatch(/ckp-fade-in 160ms/);
+  });
+
+  /* 41 — transparence réduite : surface opaque #F4F7F3, aucun flou. */
+  it('transparence réduite : surface opaque #F4F7F3', () => {
+    const block = css.slice(css.indexOf('@media (prefers-reduced-transparency: reduce)'));
+    expect(block).toMatch(/background-color:\s*#F4F7F3/);
+    expect(block).toMatch(/backdrop-filter:\s*none/);
+    expect(block).toMatch(/\.ckp-scrim \{ display: none; \}/);
+  });
+
+  /* 42 — aucune animation en boucle. */
+  it('aucune animation en boucle dans la feuille', () => {
+    expect(css).not.toMatch(/infinite/);
+    expect(rule('.ckp-load-bar::after {')).toMatch(/ckp-shimmer 1\.4s linear 2/);
+    expect(rule('.ckp-skeleton {')).toMatch(/ckp-shimmer 1\.4s ease-in-out 2/);
   });
 });

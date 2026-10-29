@@ -294,7 +294,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   background: none; color: #56665d; cursor: pointer;
   font: 600 11.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
   font-variant-numeric: tabular-nums; letter-spacing: 0;
-  transition: color .18s ease, transform .16s cubic-bezier(.22, 1, .36, 1);
+  transition: transform .16s cubic-bezier(.22, 1, .36, 1);
 }
 .ckp-capsule .ckp-tabs button[aria-selected='true'] { color: #17402c; }
 .ckp-capsule .ckp-tabs button:active { transform: scale(.94); }
@@ -405,13 +405,23 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   margin: 0; padding: 8px 0 0; border: 0; background: none; cursor: pointer;
 }
 .ckp-grabber span {
-  width: 42px; height: 5px; border-radius: 999px; background: rgba(23, 43, 36, .18);
-  transition: height 120ms ease, background-color 120ms ease;
+  position: relative; display: block;
+  width: 42px; height: 5px; border-radius: 999px; background: transparent;
+  transition: height 120ms ease;
+}
+/* Le fond est un second calque : une transition par propriété, jamais deux
+   propriétés dans la même transition. */
+.ckp-grabber span::after {
+  content: ''; position: absolute; inset: 0; border-radius: 999px;
+  background-color: rgba(23, 43, 36, .18);
+  transition: background-color 120ms ease;
 }
 /* Toucher — souris, doigt, stylet : la barre passe de 5 à 6 px et de .18 à .32
    en 120 ms, puis revient d'elle-même. Aucun geste n'est branché là. */
 .ckp-grabber:active span,
-.ckp-grabber[data-press='true'] span { height: 6px; background: rgba(23, 43, 36, .32); }
+.ckp-grabber[data-press='true'] span { height: 6px; }
+.ckp-grabber:active span::after,
+.ckp-grabber[data-press='true'] span::after { background-color: rgba(23, 43, 36, .32); }
 .ckp-drawer-close {
   position: absolute; top: 8px; right: 12px; flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px;
   display: grid; place-items: center; cursor: pointer; color: #17402C;
@@ -572,7 +582,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   display: inline-block; vertical-align: middle;
   position: relative; width: 36px; height: 20px; flex: none; padding: 2px;
   border-radius: 999px; background: rgba(23, 43, 36, .16);
-  transition: background 180ms ease;
+  transition: background-color 180ms ease;
 }
 .ckp-switch span { display: block; width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 4px rgba(23, 43, 36, .24); transition: transform 180ms cubic-bezier(.16, 1, .3, 1); }
 .ckp-switch.is-on { background: #17402c; }
@@ -693,7 +703,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   border-radius: 12px;
   background: linear-gradient(90deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .75), rgba(255, 255, 255, .45));
   background-size: 200% 100%;
-  animation: ckp-shimmer 1.4s ease-in-out infinite;
+  animation: ckp-shimmer 1.4s ease-in-out 2;
 }
 .ckp-skeleton--pill { width: 200px; height: 40px; border-radius: 999px; }
 .ckp-skeleton--round { width: 38px; height: 38px; border-radius: 999px; }
@@ -818,14 +828,16 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-pages:focus-visible { outline: 2px solid #17402c; outline-offset: 2px; border-radius: 14px; }
 .ckp-page { min-width: 0; }
-.ckp-page--next { animation: ckp-page-next 200ms cubic-bezier(.22, 1, .36, 1) both; }
-.ckp-page--prev { animation: ckp-page-prev 200ms cubic-bezier(.22, 1, .36, 1) both; }
+/* Changement de volet : fondu + 8 px, 180 ms — la course verticale du
+   sous-onglet, jamais un glissement horizontal (celui-là appartient aux jours). */
+.ckp-page--next { animation: ckp-page-next 180ms cubic-bezier(.22, 1, .36, 1) both; }
+.ckp-page--prev { animation: ckp-page-prev 180ms cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes ckp-page-next {
-  from { opacity: .35; transform: translateX(16px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
 @keyframes ckp-page-prev {
-  from { opacity: .35; transform: translateX(-16px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
 /* Les volets déplacés gardent la gouttière 12 px et le rythme vertical du drawer. */
@@ -972,9 +984,10 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 /* --- Mouvement réduit : fondu de 160 ms, aucune translation ---------------- */
 @keyframes ckp-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .ckp-card--drawer { animation: ckp-fade-in 160ms linear both; }
-  .ckp-page--next, .ckp-page--prev { animation: ckp-fade-in 160ms linear both; }
-  .ckp-comment.is-new { animation: ckp-fade-in 160ms linear both; }
+  .ckp-card--drawer, .ckp-card--drawer[data-closing='true'] { animation: ckp-fade-in 120ms linear both; }
+  .ckp-page--next, .ckp-page--prev { animation: ckp-fade-in 120ms linear both; }
+  .ckp-comment.is-new { animation: ckp-fade-in 120ms linear both; }
+  .ckp-collapse, .ckp-collapse-chevron { transition: none; }
   .ckp-drawer-close { transition: none; }
   .ckp-drawer-close:active { transform: none; }
 }
@@ -1132,7 +1145,7 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 .ckp-load-bar::after {
   content: ''; position: absolute; inset: 0; transform: translateX(-100%);
   background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .55) 50%, rgba(255, 255, 255, 0) 100%);
-  animation: ckp-shimmer 1.4s linear infinite;
+  animation: ckp-shimmer 1.4s linear 2;
 }
 @keyframes ckp-shimmer { to { transform: translateX(100%); } }
 .ckp-empty-state {
@@ -1171,6 +1184,7 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
   .ckp-hero-bar i { transition: none; }
   .ckp-load-bar::after { animation: none; }
   .ckp-load, .ckp-empty-state { animation: ckp-fade-in 120ms linear both; }
+  .ckp-page--next, .ckp-page--prev { animation: ckp-fade-in 120ms linear both; }
   .ckp-drawer-veil { transition: opacity 120ms linear; }
 }
 
@@ -1353,4 +1367,45 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
   color: #56665D;
   cursor: pointer;
   font: 600 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+/* =============================================================================
+   Lot E — mouvement (35-42)
+   Entrée 220 ms, volet 180 ms, rouleau 400 ms une seule fois, sortie 160 ms,
+   une propriété par transition, mouvement réduit en fondu de 120 ms,
+   transparence réduite en surface opaque, aucune animation en boucle.
+   ============================================================================= */
+
+/* 38 — sortie de la feuille : fondu + 12 px, 160 ms, joué une seule fois.
+   L'écran attend la fin de cette animation avant de démonter la feuille. */
+.ckp-card--drawer[data-closing='true'] {
+  animation: ckp-drawer-out 160ms cubic-bezier(.22, 1, .36, 1) both;
+  pointer-events: none;
+}
+@keyframes ckp-drawer-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(12px); }
+}
+
+/* 41 — `prefers-reduced-transparency` : la feuille et ses surfaces redeviennent
+   opaques (#F4F7F3), le flou disparaît, le voile de page aussi. */
+@media (prefers-reduced-transparency: reduce) {
+  .ckp-card,
+  .ckp-card--drawer {
+    background-image: none;
+    background-color: #F4F7F3;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .ckp-capsule,
+  .ckp-sub,
+  .ckp-title-pill,
+  .ckp-pill,
+  .ckp-stats-sticky > div,
+  .ckp-drawer-cut {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: #F4F7F3;
+  }
+  .ckp-scrim { display: none; }
 }

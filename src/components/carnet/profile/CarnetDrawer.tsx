@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
 import { CarnetMediaTabs, type CarnetMediaTab } from './CarnetMediaTabs';
@@ -46,6 +46,11 @@ export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: Carn
   /* Poignée pressée : la barre s'épaissit au doigt comme à la souris. L'état ne
      sert qu'au dessin (`data-press`), il ne déclenche aucun geste. */
   const [pressed, setPressed] = useState(false);
+  /* Sortie de 160 ms : la feuille joue son fondu avant que l'écran ne la
+     démonte, donc la fermeture ne claque jamais. Aucune animation en boucle. */
+  const [closing, setClosing] = useState(false);
+  const closingRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
   const available = PANES;
   const activeIndex = Math.max(0, available.findIndex((pane) => pane.id === drawer));
   const items: CarnetMediaTab[] = available.map((pane) => ({
@@ -59,14 +64,25 @@ export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: Carn
      volait le focus de la capsule à chaque changement de volet. */
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+
+  const requestClose = useCallback(() => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    setClosing(true);
+    timerRef.current = window.setTimeout(() => onCloseRef.current(), 160);
+  }, []);
+
   useEffect(() => {
     ref.current?.focus({ preventScroll: true });
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onCloseRef.current();
+      if (event.key === 'Escape') requestClose();
     };
     document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, []);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    };
+  }, [requestClose]);
 
   return (
     <>
@@ -79,12 +95,14 @@ export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: Carn
         tabIndex={-1}
         role="region"
         aria-label="Panneau du carnet"
+        aria-hidden={closing ? 'true' : undefined}
+        data-closing={closing ? 'true' : undefined}
       >
         <div className="ckp-drawer-head">
           <button
             type="button"
             className="ckp-grabber"
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Fermer le panneau"
             data-press={pressed ? 'true' : undefined}
             onPointerDown={() => setPressed(true)}
@@ -94,7 +112,7 @@ export function CarnetDrawer({ drawer, onDrawerChange, onClose, children }: Carn
           >
             <span aria-hidden="true" />
           </button>
-          <button type="button" className="ckp-drawer-close" onClick={onClose} aria-label="Fermer">
+          <button type="button" className="ckp-drawer-close" onClick={requestClose} aria-label="Fermer">
             <X size={16} aria-hidden="true" />
           </button>
           <span className="ckp-drawer-cut" data-on={scrolled ? 'true' : undefined} aria-hidden="true" />
