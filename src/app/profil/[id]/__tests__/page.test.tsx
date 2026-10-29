@@ -14,6 +14,10 @@
 import React from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  clearPreloadProfileCache,
+  setPreloadedPublicProfile,
+} from '@/features/community/reels/reelsPreloadService';
 
 const PROFILE_ID = '22222222-2222-4222-8222-222222222222';
 
@@ -177,6 +181,7 @@ const PROFILE = {
 };
 
 beforeEach(() => {
+  clearPreloadProfileCache();
   state.profileId = PROFILE_ID;
   queries.fetchFullProfile.mockReset().mockResolvedValue(PROFILE);
   queries.fetchUserCarnets.mockReset().mockResolvedValue([]);
@@ -247,5 +252,29 @@ describe('Page /profil/[id] — visibilité avant chargement', () => {
     expect(queries.fetchUserClubs).toHaveBeenCalledTimes(1);
     expect(queries.fetchUserBadges).toHaveBeenCalledTimes(1);
     expect(queries.fetchUserActivities).toHaveBeenCalledTimes(1);
+  });
+
+  it('profil préchargé en cache : affichage immédiat au premier rendu synchrone', async () => {
+    installClient({
+      viewer: null,
+      visibleProfile: { id: PROFILE_ID },
+    });
+
+    setPreloadedPublicProfile(PROFILE_ID, {
+      targetId: PROFILE_ID,
+      cleanKey: PROFILE_ID,
+      profile: PROFILE,
+      carnets: [],
+      clubs: [],
+      badges: [],
+      activite: [],
+      timestamp: Date.now(),
+    });
+
+    render(<PublicProfilePage />);
+
+    // Sans attendre waitFor : le hero-profil est déjà rendu immédiatement !
+    expect(screen.getByTestId('hero-profil')).toBeTruthy();
+    expect(screen.getByText('Léa')).toBeTruthy();
   });
 });

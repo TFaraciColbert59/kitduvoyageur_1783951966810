@@ -11,6 +11,11 @@ import { ProductCard } from '@/features/messaging/components/ProductCard';
 import { TrailCard } from '@/features/messaging/components/TrailCard';
 import { FreedomComposerMenuSheet } from './FreedomComposerMenuSheet';
 import { fetchReelComments, postReelComment } from './freedomReelsService';
+import {
+  getPreloadedReelComments,
+  hasPreloadedReelComments,
+  setPreloadedReelComments,
+} from './reelsPreloadService';
 import type { FreedomComment, FreedomCommentAttachment } from './freedom-types';
 
 export interface FreedomCommentsDrawerProps {
@@ -41,8 +46,10 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   onOpenKit,
 }) => {
   const { haptic } = useHapticFeedback();
-  const [comments, setComments] = useState<FreedomComment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState<FreedomComment[]>(
+    () => getPreloadedReelComments(reelId) ?? [],
+  );
+  const [loading, setLoading] = useState<boolean>(() => !hasPreloadedReelComments(reelId));
   const [inputText, setInputText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<FreedomCommentAttachment | null>(null);
@@ -63,16 +70,24 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
     velocityThreshold: 350,
   });
 
-  // Load comments
+  // Load comments (with instant preloaded cache & background revalidation)
   useEffect(() => {
     if (!isOpen) return;
     let alive = true;
-    setLoading(true);
+
+    const cached = getPreloadedReelComments(reelId);
+    if (cached) {
+      setComments(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
 
     fetchReelComments(reelId)
       .then((data) => {
         if (!alive) return;
         setComments(data);
+        setPreloadedReelComments(reelId, data);
       })
       .catch((e) => {
         console.error('[Freedom] Error loading comments:', e);
@@ -115,7 +130,11 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
         replyingTo?.id || null,
       );
 
-      setComments((prev) => [...prev, newComment]);
+      setComments((prev) => {
+        const next = [...prev, newComment];
+        setPreloadedReelComments(reelId, next);
+        return next;
+      });
       onCommentsCountChange?.(comments.length + 1);
       setInputText('');
       setPendingAttachment(null);
@@ -134,8 +153,8 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
 
   const handleToggleLike = (commentId: string) => {
     haptic('selection');
-    setComments((prev) =>
-      prev.map((c) => {
+    setComments((prev) => {
+      const next = prev.map((c) => {
         if (c.id !== commentId) return c;
         const nextLiked = !c.isLiked;
         return {
@@ -143,8 +162,10 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
           isLiked: nextLiked,
           likesCount: nextLiked ? c.likesCount + 1 : Math.max(0, c.likesCount - 1),
         };
-      }),
-    );
+      });
+      setPreloadedReelComments(reelId, next);
+      return next;
+    });
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

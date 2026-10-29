@@ -11,6 +11,14 @@ import { FreedomShareDrawer } from './FreedomShareDrawer';
 import { FreedomKitDrawer } from './FreedomKitDrawer';
 import { FreedomSoundDrawer } from './FreedomSoundDrawer';
 import { fetchFreedomReels } from './freedomReelsService';
+import {
+  isNetworkPermittingBackgroundPreload,
+  isFastNetworkConnection,
+  runWhenIdle,
+  preloadImage,
+  preloadPublicProfile,
+  preloadReelComments,
+} from './reelsPreloadService';
 import type { FreedomReelItem as ReelModel } from './freedom-types';
 import './freedom.css';
 
@@ -116,6 +124,78 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
     slides.forEach((slide) => observer.observe(slide));
     return () => observer.disconnect();
   }, [reels]);
+
+  // Background Preload (Network-aware & Idle-scheduled):
+  // 1. Profil de l'auteur du reel en cours pour navigation instantanée (0ms)
+  // 2. Commentaires du reel en cours pour ouverture instantanée sans spinner
+  // 3. Préchargement préventif du reel suivant si connexion rapide (4G / 5G / Wi-Fi)
+  useEffect(() => {
+    if (!isNetworkPermittingBackgroundPreload() || reels.length === 0) return;
+
+    const currentReel = reels[activeIndex];
+    if (!currentReel) return;
+
+    // Planifie le préchargement sur temps libre du CPU sans impacter les 60fps
+    const cancelIdle = runWhenIdle(() => {
+      // 1. Profil de l'auteur du reel actif
+      const author = currentReel.author;
+      const authorKey = author?.handle || author?.id;
+      if (authorKey) {
+        try {
+          router.prefetch(`/profil/${authorKey}`);
+        } catch {
+          // ignore
+        }
+        void preloadPublicProfile(authorKey, {
+          id: author.id,
+          name: author.name,
+          handle: author.handle,
+          avatarUrl: author.avatarUrl,
+        });
+      }
+
+      // Avatar image cache
+      if (author?.avatarUrl) {
+        preloadImage(author.avatarUrl);
+      }
+
+      // 2. Commentaires du reel actif
+      if (currentReel.id) {
+        void preloadReelComments(currentReel.id, user);
+      }
+
+      // 3. Si connexion très rapide, précharger le reel suivant de façon opportuniste
+      if (isFastNetworkConnection() && activeIndex + 1 < reels.length) {
+        const nextReel = reels[activeIndex + 1];
+        if (nextReel) {
+          const nextKey = nextReel.author?.handle || nextReel.author?.id;
+          if (nextKey) {
+            try {
+              router.prefetch(`/profil/${nextKey}`);
+            } catch {
+              // ignore
+            }
+            void preloadPublicProfile(nextKey, {
+              id: nextReel.author?.id,
+              name: nextReel.author?.name,
+              handle: nextReel.author?.handle,
+              avatarUrl: nextReel.author?.avatarUrl,
+            });
+          }
+          if (nextReel.author?.avatarUrl) {
+            preloadImage(nextReel.author.avatarUrl);
+          }
+          if (nextReel.id) {
+            void preloadReelComments(nextReel.id, user);
+          }
+        }
+      }
+    }, 1200);
+
+    return () => {
+      cancelIdle();
+    };
+  }, [activeIndex, reels, router, user]);
 
   // Handle Exit (Swipe Left or Escape)
   const handleExit = useCallback(() => {

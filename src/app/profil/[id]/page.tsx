@@ -21,6 +21,10 @@ import {
   type CompteBadgeItem,
   type CompteActiviteItem,
 } from '@/lib/supabase/queries-compte';
+import {
+  getPreloadedPublicProfile,
+  setPreloadedPublicProfile,
+} from '@/features/community/reels/reelsPreloadService';
 
 /**
  * Profil public voyageur.
@@ -39,13 +43,19 @@ export default function PublicProfilePage() {
   const cleanParam = rawParam.replace(/^@/, '');
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanParam);
 
-  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
-  const [profile, setProfile] = useState<CompteUserProfile | null>(null);
-  const [carnets, setCarnets] = useState<CompteCarnet[]>([]);
-  const [clubs, setClubs] = useState<CompteClubItem[]>([]);
-  const [badges, setBadges] = useState<CompteBadgeItem[]>([]);
-  const [activite, setActivite] = useState<CompteActiviteItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const initialBundle = cleanParam ? getPreloadedPublicProfile(cleanParam) : null;
+
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(
+    () => initialBundle?.targetId || null,
+  );
+  const [profile, setProfile] = useState<CompteUserProfile | null>(
+    () => initialBundle?.profile || null,
+  );
+  const [carnets, setCarnets] = useState<CompteCarnet[]>(() => initialBundle?.carnets || []);
+  const [clubs, setClubs] = useState<CompteClubItem[]>(() => initialBundle?.clubs || []);
+  const [badges, setBadges] = useState<CompteBadgeItem[]>(() => initialBundle?.badges || []);
+  const [activite, setActivite] = useState<CompteActiviteItem[]>(() => initialBundle?.activite || []);
+  const [loading, setLoading] = useState<boolean>(() => !initialBundle);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
 
   const hasRedirectedRef = useRef(false);
@@ -66,7 +76,10 @@ export default function PublicProfilePage() {
     let cancelled = false;
 
     async function resolveAndLoad() {
-      setLoading(true);
+      // Si nous n'avions pas de bundle préchargé, afficher l'état de chargement
+      if (!initialBundle) {
+        setLoading(true);
+      }
       try {
         const supabase = createClient();
 
@@ -156,9 +169,24 @@ export default function PublicProfilePage() {
         setClubs(clubsData);
         setBadges(badgesData);
         setActivite(activiteData);
+
+        // Met à jour le cache de préchargement
+        setPreloadedPublicProfile(cleanParam, {
+          targetId,
+          cleanKey: cleanParam,
+          profile: profileData,
+          carnets: carnetsData,
+          clubs: clubsData,
+          badges: badgesData,
+          activite: activiteData,
+          timestamp: Date.now(),
+        });
       } catch (err) {
         console.warn('[PublicProfilePage] Error loading profile:', err);
-        if (!cancelled) triggerNotFoundRedirect();
+        // Si nous avons déjà les données préchargées affichées, ne pas expulser l'utilisateur
+        if (!initialBundle && !cancelled) {
+          triggerNotFoundRedirect();
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
