@@ -9,7 +9,7 @@ import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import type { CarnetComment } from '@/features/carnet/detail/useCarnetComments';
 import { CarnetCommentsPane } from './panes/CarnetCommentsPane';
-import { CarnetSharePane } from './panes/CarnetSharePane';
+import { CarnetPostSharePanel } from './panes/CarnetPostSharePanel';
 
 type Pane = 'share' | 'post' | 'comments';
 const ORDER: Pane[] = ['share', 'post', 'comments'];
@@ -371,9 +371,9 @@ export function CarnetPostSheet({
                   <div className="lkdv-panel-grab" aria-hidden="true">
                     <span />
                   </div>
-                  <div className="lkdv-post-panel-body">
-                    <CarnetSharePane url={shareUrl} title={detail.title} onCopied={onCopied} />
-                  </div>
+                  {/* Même bloc que le partage du fil : corps, recherche, grille
+                      d'actions, lignes de destinataire et mini-barre. */}
+                  <CarnetPostSharePanel url={shareUrl} title={detail.title} onCopied={onCopied} />
                 </div>
               </div>
             ) : null}

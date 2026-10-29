@@ -1748,3 +1748,78 @@ html[data-ckp-sheet] body {
 @media (prefers-reduced-motion: no-preference) {
   .ckp-moment-card { transition: transform 160ms cubic-bezier(.22, 1, .36, 1); }
 }
+
+/* =============================================================================
+   Post du carnet — commentaires et partage dans le bloc du fil (29 oct. 2026)
+   Valeurs recopiées depuis les mesures du fil (`audit-post-communaute.md`) :
+   une autre feuille de la maison (`.lkdv-comment*` du Compte) redéfinissait ces
+   classes sur la fiche. Les règles ci-dessous, portées par `.ckp-post-sheet`,
+   rendent au post du carnet le corps, la ligne et les actions du fil.
+   Le carnet ne redéfinit rien du fil : il porte ses classes (`lkdv-comment*`,
+   `lkdv-search-box`, `lkdv-share-*`). Deux règles seulement sont ajoutées ici,
+   préfixées `lkdv-`, pour les deux éléments que le fil n'a pas.
+   ============================================================================= */
+.ckp-post-sheet .lkdv-post-panel-body { padding: 8px 12px 4px; }
+.ckp-post-sheet .lkdv-post-panel-foot { border-top: .5px solid rgba(23, 43, 36, .1); }
+.ckp-post-sheet .lkdv-comment { display: flex; align-items: flex-start; gap: 9px; }
+.ckp-post-sheet .lkdv-comment .lkdv-comment-av {
+  width: 30px; height: 30px; flex: none; border-radius: 50%; object-fit: cover;
+}
+.ckp-post-sheet .lkdv-comment .lkdv-comment-body { min-width: 0; flex: 1; }
+.ckp-post-sheet .lkdv-comment .lkdv-comment-head {
+  display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+}
+.ckp-post-sheet .lkdv-comment .lkdv-comment-head .lkdv-comment-name {
+  color: #17402c; font: 600 13px var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-post-sheet .lkdv-comment .lkdv-comment-time {
+  color: #56665d; font: 400 10.5px var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-post-sheet.lkdv-post-drawer .lkdv-comment .lkdv-comment-body p.lkdv-comment-text {
+  margin: 1px 0 0; color: #172b24; overflow-wrap: anywhere;
+  font: 400 13.5px/1.45 var(--font-sans, -apple-system, system-ui, sans-serif);
+  /* Le Compte force 12,5/1,35 `!important` sur la feuille de post : le partage
+     et les commentaires du carnet reprennent le corps du fil. */
+  font-size: 13.5px !important; line-height: 1.45 !important; color: #172b24 !important;
+}
+/* La grille de partage et la ligne de destinataire : valeurs du fil, mesurées
+   sur `/communaute` (4 colonnes de 92 px, ligne 8/2, filet de 0,5 px). */
+.ckp-post-sheet.lkdv-post-drawer .lkdv-share-actions {
+  display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  flex-wrap: nowrap !important; gap: 6px !important; padding: 10px 0 8px !important;
+}
+.ckp-post-sheet.lkdv-post-drawer .lkdv-share-conv {
+  display: flex !important; align-items: center !important;
+  gap: 9px !important; padding: 8px 2px !important;
+  border-bottom: .5px solid rgba(23, 43, 36, .08) !important;
+}
+.ckp-post-sheet.lkdv-post-drawer .lkdv-share-conv > a {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  min-height: 32px; padding: 0 10px; border-radius: 999px;
+  background: rgba(23, 64, 44, .1); color: #17402c; text-decoration: none;
+  font: 700 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-post-sheet.lkdv-post-drawer .lkdv-share-conv b {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 600 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-post-sheet.lkdv-post-drawer .lkdv-share-conv small {
+  color: #56665d; font: 500 10px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-post-sheet .lkdv-comment .lkdv-comment-actions {
+  display: flex; align-items: center; gap: 10px; margin-top: 2px;
+}
+.ckp-post-sheet .lkdv-comment .lkdv-comment-actions button,
+.ckp-post-sheet .lkdv-comment .lkdv-comment-actions a {
+  min-height: 0; padding: 0; border: 0; background: none; color: #56665d; cursor: pointer;
+  font: 600 11px var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+/* Le handle que la fiche affiche depuis toujours, dans la ligne de nom : même
+   teinte et même corps que la date relative du fil. */
+.lkdv-comment-name .lkdv-comment-handle {
+  margin-left: 5px; color: #56665d;
+  font: 500 10.5px var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: 0;
+}
+/* Capsule de tri des commentaires du carnet, sur la largeur du fil. */
+.lkdv-comments-sort { display: flex; margin: 0 0 8px; }

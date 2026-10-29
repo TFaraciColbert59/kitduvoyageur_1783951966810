@@ -23,7 +23,7 @@ const base = {
 describe('CarnetCommentsPane', () => {
   it('trie du plus récent au plus ancien par défaut', () => {
     const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} />);
-    const names = [...container.querySelectorAll('.ckp-comment-name')].map((n) => n.textContent);
+    const names = [...container.querySelectorAll('.lkdv-comment-name')].map((n) => n.textContent);
     expect(names).toEqual(['Rachid', 'Léonie']);
     expect(screen.getByRole('group', { name: 'Tri des commentaires' })).toBeTruthy();
   });
@@ -31,27 +31,40 @@ describe('CarnetCommentsPane', () => {
   it('bascule le tri en anciens', () => {
     const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} />);
     fireEvent.click(screen.getByRole('button', { name: 'anciens' }));
-    const names = [...container.querySelectorAll('.ckp-comment-name')].map((n) => n.textContent);
+    const names = [...container.querySelectorAll('.lkdv-comment-name')].map((n) => n.textContent);
     expect(names).toEqual(['Léonie', 'Rachid']);
   });
 
-  it('porte le handle réel et les métadonnées sous le texte', () => {
+  it('porte le handle réel et la date relative dans la ligne de nom', () => {
     const { container } = render(
       <CarnetCommentsPane
         comments={[{ ...COMMENTS[0], authorHandle: 'leonie' }]}
         {...base}
       />,
     );
-    expect(container.querySelector('.ckp-comment-handle')?.textContent).toBe('@leonie');
-    const row = container.querySelector('.ckp-comment') as HTMLElement;
-    const meta = row.querySelector('.ckp-comment-meta') as HTMLElement;
-    expect(meta.querySelector('time')?.textContent?.length).toBeGreaterThan(0);
-    expect(meta.querySelector('button')?.textContent).toBe('supprimer');
+    expect(container.querySelector('.lkdv-comment-handle')?.textContent).toBe('@leonie');
+    const row = container.querySelector('.lkdv-comment') as HTMLElement;
+    /* Même tête que le fil : nom puis date relative, sur une seule ligne. */
+    expect(row.querySelector('.lkdv-comment-name')?.textContent).toBe('Léonie@leonie');
+    expect(row.querySelector('.lkdv-comment-time time')?.textContent?.length).toBeGreaterThan(0);
+    expect(row.querySelector('.lkdv-comment-actions button')?.textContent).toBe('supprimer');
+  });
+
+  it('peint la ligne avec les classes du fil de la Communauté', () => {
+    const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} />);
+    const row = container.querySelector('.lkdv-comment') as HTMLElement;
+    expect(row.querySelector('.lkdv-comment-av.pmi-author-initial')?.textContent).toBe('R');
+    expect(row.querySelector('.lkdv-comment-body')).toBeTruthy();
+    expect(row.querySelector('.lkdv-comment-head')).toBeTruthy();
+    expect(row.querySelector('.lkdv-comment-text')?.textContent).toBe('Merci');
+    /* Aucune classe de la fiche ne subsiste dans la ligne. */
+    expect(container.querySelector('.ckp-comment')).toBeNull();
+    expect(container.querySelector('.ckp-comment-meta')).toBeNull();
   });
 
   it('anime l’entrée d’un nouveau commentaire, jamais la liste montée', () => {
     const { container, rerender } = render(<CarnetCommentsPane comments={COMMENTS} {...base} />);
-    expect(container.querySelectorAll('.ckp-comment.is-new')).toHaveLength(0);
+    expect(container.querySelectorAll('.lkdv-comment.is-new')).toHaveLength(0);
     rerender(
       <CarnetCommentsPane
         comments={[
@@ -61,31 +74,29 @@ describe('CarnetCommentsPane', () => {
         {...base}
       />,
     );
-    expect(container.querySelectorAll('.ckp-comment.is-new')).toHaveLength(1);
+    expect(container.querySelectorAll('.lkdv-comment.is-new')).toHaveLength(1);
   });
 
-  it('affiche l’état vide sans phrase : glyphe de 32 px et tiret', () => {
+  it('affiche l’état vide et la porte du fil, mot pour mot', () => {
     const { container } = render(<CarnetCommentsPane comments={[]} {...base} canWrite={false} currentUserId={null} />);
-    const empty = container.querySelector('.ckp-empty-state');
-    expect(empty?.querySelector('.ckp-empty-dash')?.textContent).toBe('—');
-    expect(container.querySelector('.ckp-empty-glyph > span')).toBeTruthy();
-    /* La porte d'authentification reste un geste, pas une phrase. */
+    /* Mêmes états que `PostCommentsPanel` : la phrase du fil, pas un glyphe. */
+    expect(screen.getByText('Sois le premier à répondre.')).toBeTruthy();
+    expect(container.querySelector('.lkdv-comments-gate')).toBeTruthy();
+    expect(container.querySelector('.lkdv-comments-gate p')?.textContent).toBe('Connectez-vous pour commenter.');
     expect(screen.getByRole('button', { name: 'Se connecter pour commenter' })).toBeTruthy();
-    expect(container.textContent).not.toMatch(/premier|Connectez-vous/);
+    expect(container.querySelector('.ckp-empty-state')).toBeNull();
   });
 
-  it('charge en squelette : 5 lignes de 48 px, aucun texte', () => {
+  it('charge avec le texte du fil, sans squelette', () => {
     const { container } = render(<CarnetCommentsPane comments={[]} {...base} loading />);
-    expect(container.querySelectorAll('.ckp-load-bar--row')).toHaveLength(5);
-    expect(container.querySelectorAll('.ckp-load-bar--hero')).toHaveLength(0);
-    expect(screen.queryByText('Chargement…')).toBeNull();
+    expect(screen.getByText('Chargement…')).toBeTruthy();
+    expect(container.querySelectorAll('.ckp-load-bar--row')).toHaveLength(0);
   });
 
-  it('charge en partie : les lignes connues restent, le reste attend', () => {
+  it('charge en partie : les lignes connues restent sous le texte du fil', () => {
     const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} loading />);
-    expect(container.querySelectorAll('.ckp-comment')).toHaveLength(2);
-    expect(container.querySelectorAll('.ckp-load-bar--row')).toHaveLength(2);
-    expect(container.querySelector('.ckp-comments-list')?.getAttribute('data-state')).toBe('partial');
+    expect(container.querySelectorAll('.lkdv-comment')).toHaveLength(2);
+    expect(screen.getByText('Chargement…')).toBeTruthy();
   });
 
   it('envoie un commentaire', async () => {

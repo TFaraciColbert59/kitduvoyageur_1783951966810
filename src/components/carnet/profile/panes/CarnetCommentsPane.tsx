@@ -2,9 +2,7 @@
 
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
-import Icon from '@/components/ui/Icon';
 import { CarnetSubCapsule } from '../CarnetSubCapsule';
-import { CarnetEmpty, CarnetSkeleton } from '../CarnetStates';
 import type { CarnetComment } from '@/features/carnet/detail/useCarnetComments';
 import { groupsOfThree } from '../groups';
 
@@ -69,30 +67,37 @@ const CarnetCommentRow = React.memo(function CarnetCommentRow({
 }: CarnetCommentRowProps) {
   const remove = useCallback(() => void onRemove(comment.id), [comment.id, onRemove]);
 
+  /* Même DOM, mêmes classes que la ligne du fil (`PostCommentsPanel`) : avatar
+     30, nom 13/600, date relative, texte 13,5/19,575, actions 11/600. Le handle
+     reste dans la ligne de nom — la fiche ne perd aucune donnée. */
   return (
-    <div id={`comment-${comment.id}`} className={`ckp-comment${isNew ? ' is-new' : ''}`}>
+    <div id={`comment-${comment.id}`} className={`lkdv-comment${isNew ? ' is-new' : ''}`}>
       {comment.authorAvatar ? (
         // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-        <img className="ckp-avatar" src={comment.authorAvatar} alt="" aria-hidden="true" />
+        <img className="lkdv-comment-av" src={comment.authorAvatar} alt="" aria-hidden="true" />
       ) : (
-        <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
+        <span className="lkdv-comment-av pmi-author-initial" aria-hidden="true">
           {comment.authorName.charAt(0).toUpperCase()}
         </span>
       )}
-      <div className="ckp-comment-body">
-        <div className="ckp-comment-head">
-          <span className="ckp-comment-name">{comment.authorName}</span>
-          {comment.authorHandle ? <span className="ckp-comment-handle">@{comment.authorHandle}</span> : null}
+      <div className="lkdv-comment-body">
+        <div className="lkdv-comment-head">
+          <span className="lkdv-comment-name">
+            {comment.authorName}
+            {comment.authorHandle ? <span className="lkdv-comment-handle">@{comment.authorHandle}</span> : null}
+          </span>
+          <span className="lkdv-comment-time">
+            <time dateTime={comment.createdAt}>{timeAgo(comment.createdAt)}</time>
+          </span>
         </div>
-        <p className="ckp-comment-text">{comment.content}</p>
-        <div className="ckp-comment-meta">
-          <time dateTime={comment.createdAt}>{timeAgo(comment.createdAt)}</time>
-          {mine ? (
+        <p className="lkdv-comment-text">{comment.content}</p>
+        {mine ? (
+          <div className="lkdv-comment-actions">
             <button type="button" onClick={remove}>
               supprimer
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -171,26 +176,23 @@ export function CarnetCommentsPane({
 
   return (
     <>
-      <div ref={listRef} className="lkdv-post-panel-body ckp-comments">
+      <div ref={listRef} className="lkdv-post-panel-body">
+        {/* Le tri est une donnée du carnet : il garde sa capsule, en tête de
+            liste, sur la largeur du fil. */}
         {comments.length > 1 ? (
-          <div className="ckp-comments-sort">
+          <div className="lkdv-comments-sort">
             <CarnetSubCapsule items={SORTS} active={sort} onChange={setSort} ariaLabel="Tri des commentaires" />
           </div>
         ) : null}
 
-        {loading && sorted.length === 0 ? <CarnetSkeleton rows={5} hero={false} /> : null}
-
+        {loading ? <p className="py-6 text-center text-[12px] text-[#56665D]">Chargement…</p> : null}
         {!loading && sorted.length === 0 ? (
-          <CarnetEmpty
-            icon={<Icon name="message-square" size={32} aria-hidden="true" />}
-            label="Aucun commentaire"
-          />
+          <p className="py-6 text-center text-[12px] text-[#56665D]">Sois le premier à répondre.</p>
         ) : null}
 
-        {sorted.length > 0 ? (
-          <div className="ckp-comments-list" data-state={loading ? 'partial' : 'ready'}>
-            {groups.map((group) => (
-              <div className="ckp-list-group" key={group[0]?.id ?? 'groupe'}>
+        {sorted.length > 0
+          ? groups.map((group) => (
+              <div key={group[0]?.id ?? 'groupe'}>
                 {group.map((comment) => (
                   <CarnetCommentRow
                     key={comment.id}
@@ -201,11 +203,8 @@ export function CarnetCommentsPane({
                   />
                 ))}
               </div>
-            ))}
-            {/* Chargement partiel : les lignes connues restent, le reste attend. */}
-            {loading ? <CarnetSkeleton rows={2} hero={false} /> : null}
-          </div>
-        ) : null}
+            ))
+          : null}
       </div>
 
       {canWrite ? (
@@ -214,7 +213,7 @@ export function CarnetCommentsPane({
             value={draft}
             onChange={setDraft}
             onSend={() => void submit()}
-            placeholder="ajouter un commentaire…"
+            placeholder="Ajouter un commentaire…"
             inputLabel="Ajouter un commentaire"
             ariaLabel="Publier le commentaire"
             busy={busy}
@@ -222,14 +221,9 @@ export function CarnetCommentsPane({
           />
         </div>
       ) : (
-        <div className="lkdv-comments-gate ckp-comments-gate">
-          <button
-            type="button"
-            className="ckp-btn--primary"
-            onClick={onRequireAuth}
-            aria-label="Se connecter pour commenter"
-          >
-            <Icon name="user" size={16} aria-hidden="true" />
+        <div className="lkdv-comments-gate">
+          <p>Connectez-vous pour commenter.</p>
+          <button type="button" onClick={onRequireAuth} aria-label="Se connecter pour commenter">
             Se connecter
           </button>
         </div>
