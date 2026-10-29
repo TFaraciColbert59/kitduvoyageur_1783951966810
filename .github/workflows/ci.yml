@@ -262,3 +262,56 @@ jobs:
         run: bash scripts/db/ci/run_pgtap.sh
         env:
           DATABASE_URL: ${{ steps.db.outputs.database-url }}
+
+  # Mesures de performance de l'Explorer v2 (P9-02, P9-03, P9-04).
+  #
+  # Le runner GitHub n'a pas de GPU : les trames sont **mesurées et publiées**
+  # mais ne bloquent pas (rendu SwiftShader). Ce qui bloque ici :
+  #   - la mémoire : croissance du tas JS < 40 Mo après 10 min d'activité ;
+  #   - les tâches longues : ≤ 40 au-delà de 50 ms sur la séquence.
+  # Les budgets de trames restent vérifiés en local/CI GPU via le même script.
+  perf-explorer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build (Explorer v2 + scènes de recette)
+        run: npm run build
+        env:
+          NODE_OPTIONS: '--max-old-space-size=5120'
+          EXPLORER_V2_E2E: '1'
+          NEXT_PUBLIC_EXPLORER_SCENES: '1'
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
+
+      - name: Serve the production build
+        run: |
+          EXPLORER_V2_E2E=1 npm run start > /tmp/server.log 2>&1 &
+          npx --yes wait-on http://localhost:4028/explorer --timeout 180000
+
+      - name: Measure frames, long tasks and memory
+        run: node scripts/explorer-v2/measure-perf.mjs --base=http://localhost:4028 --duration=600 --out=docs/explorer-v2/preuves/perf-ci.json
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
+
+      - name: Upload performance report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: explorer-v2-perf
+          path: docs/explorer-v2/preuves/perf-ci.json
+          retention-days: 30

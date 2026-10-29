@@ -4,10 +4,11 @@ import path from 'node:path';
 import { prepareVisualPage } from './_helpers/prepareVisualPage';
 
 /**
- * CHANTIER ATLAS — Phase 2
- * Preuve visuelle du moteur unique MapLibre (projection globe) derrière ?atlas=1.
- * Géolocalisation simulée côté Nord-France/Belgique (zone où les données réelles
- * sont concentrées) pour un rendu représentatif.
+ * Explorer v2 — preuve visuelle du moteur MapLibre (projection globe).
+ *
+ * Remplace les captures de l'ancien moteur ATLAS (`?atlas=1`,
+ * `data-testid="unified-explorer-map"`), supprimé en phase 10 (P10-04).
+ * Géolocalisation simulée côté Nord-France/Belgique, comme avant.
  */
 
 const OUT_DIR = path.join('docs', 'atlas', 'captures');
@@ -19,13 +20,13 @@ test.use({
 
 test.describe.configure({ timeout: 120_000 });
 
-test.describe('Explorateur unifié (MapLibre globe)', () => {
+test.describe('Explorer v2 (MapLibre globe)', () => {
   test('rend le canvas globe, zéro pageerror, capture par projet', async ({ page }, testInfo) => {
     const pageErrors: string[] = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
 
     // Service worker neutralisé : son cache « hors ligne » peut servir un HTML
-    // périmé et empêcher le chargement de la carte (même garde que shell.spec).
+    // périmé et empêcher le chargement de la carte.
     await page.addInitScript(() => {
       Object.defineProperty(navigator.serviceWorker, 'register', {
         value: () => new Promise<never>(() => {}),
@@ -36,181 +37,30 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
       });
     });
 
-    await prepareVisualPage(page, '/explorer?atlas=1');
+    await prepareVisualPage(page, '/explorer');
 
-    const mapRoot = page.getByTestId('unified-explorer-map');
+    const mapRoot = page.getByTestId('xp-map');
     await expect(mapRoot).toBeVisible();
-
     await expect(mapRoot.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 45_000 });
-    await expect(mapRoot).toHaveAttribute('data-atlas-ready', 'true', { timeout: 45_000 });
+    await expect(mapRoot).toHaveAttribute('data-ready', '1', { timeout: 45_000 });
 
-    // Laisse la géolocalisation + le fetch viewport (/api/hikes) alimenter la liste.
-    await page.waitForTimeout(7_000);
+    // Laisse les données pays/régions et les repères se poser.
+    await page.waitForTimeout(6_000);
 
     mkdirSync(OUT_DIR, { recursive: true });
     await page.screenshot({
-      path: path.join(OUT_DIR, `atlas-explorer-${testInfo.project.name}.png`),
+      path: path.join(OUT_DIR, `explorer-v2-${testInfo.project.name}.png`),
       fullPage: false,
     });
 
     expect(pageErrors, pageErrors.join('\n')).toHaveLength(0);
   });
 
-  test('clic direct sur un sentier de la carte → panneau de détail', async ({ page }, testInfo) => {
+  test('globe → pays : la caméra plonge et la feuille suit', async ({ page }, testInfo) => {
     test.skip(
       testInfo.project.name !== 'desktop-chrome',
-      'Clic carte vérifié sur desktop : en mobile le carrousel recouvre la zone centrale (sélection couverte par l’e2e via la liste).'
+      'Séquence de plongée capturée sur desktop (mobile couvert par les captures de parité).',
     );
-
-    // Le hook __atlasTestMap n'existe qu'en dev (ce spec tourne sur `npm run dev`).
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator.serviceWorker, 'register', {
-        value: () => new Promise<never>(() => {}),
-        configurable: true,
-      });
-    });
-
-    await prepareVisualPage(page, '/explorer?atlas=1');
-
-    const mapRoot = page.getByTestId('unified-explorer-map');
-    await expect(mapRoot).toHaveAttribute('data-atlas-ready', 'true', { timeout: 45_000 });
-
-    // Le hook de test n'existe qu'en dev : en CI (build prod + npm start), ce
-    // test est explicitement ignoré plutôt que d'échouer à tort.
-    const hasTestHook = await page.evaluate(() =>
-      Boolean((window as unknown as { __atlasTestMap?: unknown }).__atlasTestMap)
-    );
-    test.skip(!hasTestHook, 'hook __atlasTestMap indisponible (build prod) — vérifié en dev.');
-
-    // /explorer ouvre sur le globe : plongée explicite vers la vue locale.
-    await page.getByRole('button', { name: 'Explorer ma zone (vue locale)' }).click();
-    await page.waitForTimeout(6_000); // plongée + fetch viewport (sentiers)
-
-    const clickPoint = await page.evaluate(() => {
-      const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
-      if (!map) return null;
-      const features = map.queryRenderedFeatures({ layers: ['atlas-trails-points'] });
-      for (const feature of features) {
-        if (feature.geometry?.type !== 'Point') continue;
-        const point = map.project(feature.geometry.coordinates);
-        // Évite la zone couverte par la liste desktop (colonne gauche).
-        if (point.x > 420 && point.x < window.innerWidth - 80 && point.y > 90 && point.y < window.innerHeight - 120) {
-          return { x: point.x, y: point.y };
-        }
-      }
-      return null;
-    });
-    expect(clickPoint, 'aucun sentier rendu cliquable dans la zone sûre').not.toBeNull();
-
-    const box = await page.locator('canvas.maplibregl-canvas').boundingBox();
-    await page.mouse.click(box!.x + clickPoint!.x, box!.y + clickPoint!.y);
-
-    // Sélection carte → carte compacte (CTA /preparer-sentier), puis fiche complète.
-    await expect(page.getByRole('link', { name: 'Préparer' }).first()).toBeVisible({ timeout: 15_000 });
-    await page.getByRole('button', { name: 'Voir la fiche complète' }).click();
-    await expect(page.getByText('Préparer le matériel').first()).toBeVisible({ timeout: 15_000 });
-
-    // Parité legacy : le TRACÉ EXACT du sentier sélectionné est rendu (glow + ligne),
-    // alimenté par /api/hikes/[id] → geojson réel (jamais inventé).
-    await page.waitForTimeout(2_000);
-    const track = await page.evaluate(async () => {
-      const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
-      if (!map || !map.getLayer('atlas-trail-track-line')) return { layers: false, features: 0 };
-      const source = map.getSource('atlas-trail-track');
-      const data = source?.getData ? await source.getData() : null;
-      return { layers: true, features: data?.features?.length ?? 0 };
-    });
-    expect(track.layers).toBe(true);
-    expect(track.features).toBeGreaterThan(0);
-  });
-
-  test('paliers continent → globe : densité, sélection pays, chorégraphie caméra', async ({ page }, testInfo) => {
-    test.skip(
-      testInfo.project.name !== 'desktop-chrome',
-      'Séquence de paliers capturée sur desktop (mobile couvert par les captures de rendu).'
-    );
-
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator.serviceWorker, 'register', {
-        value: () => new Promise<never>(() => {}),
-        configurable: true,
-      });
-    });
-
-    await prepareVisualPage(page, '/explorer?atlas=1');
-    const mapRoot = page.getByTestId('unified-explorer-map');
-    await expect(mapRoot).toHaveAttribute('data-atlas-ready', 'true', { timeout: 45_000 });
-    await page.waitForTimeout(3_000);
-
-    const hasTestHook = await page.evaluate(() =>
-      Boolean((window as unknown as { __atlasTestMap?: unknown }).__atlasTestMap)
-    );
-    test.skip(!hasTestHook, 'hook __atlasTestMap indisponible (build prod) — vérifié en dev.');
-
-    // Palier continent : densité par pays (matview Phase 1).
-    await page.evaluate(() => {
-      const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
-      map?.jumpTo({ center: [2.5, 47.5], zoom: 5 });
-    });
-    await page.waitForTimeout(2_000);
-    await page.screenshot({ path: path.join(OUT_DIR, 'atlas-continent-desktop.png') });
-
-    // Sélection France : clic carte → carte pays avec densité réelle (962).
-    const francePoint = await page.evaluate(() => {
-      const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
-      if (!map) return null;
-      const point = map.project([2.2, 46.6]);
-      return { x: point.x, y: point.y };
-    });
-    expect(francePoint, 'projection France indisponible').not.toBeNull();
-    const canvasBox = await page.locator('canvas.maplibregl-canvas').boundingBox();
-    await page.mouse.click(canvasBox!.x + francePoint!.x, canvasBox!.y + francePoint!.y);
-    const countryCard = page.locator('[data-atlas-country-card="true"]');
-    await expect(countryCard).toBeVisible({ timeout: 10_000 });
-    await expect(countryCard).toContainText('France');
-    await page.screenshot({ path: path.join(OUT_DIR, 'atlas-france-selected.png') });
-
-    // Palier monde : globe (dézoom continu, atmosphère sage).
-    await page.evaluate(() => {
-      const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
-      map?.jumpTo({ center: [10, 25], zoom: 2 });
-    });
-    await page.waitForTimeout(2_500);
-    await page.screenshot({ path: path.join(OUT_DIR, 'atlas-globe-desktop.png') });
-    await expect(page.getByTestId('unified-explorer-map')).toHaveAttribute('data-atlas-ready', 'true');
-  });
-
-  test('Earth retiré : /pays redirige vers /explorer, /pays/fr garde son globe', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== 'desktop-chrome', 'smoke desktop');
-
-    const pageErrors: string[] = [];
-    page.on('pageerror', (error) => pageErrors.push(error.message));
-
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator.serviceWorker, 'register', {
-        value: () => new Promise<never>(() => {}),
-        configurable: true,
-      });
-    });
-
-    // « Earth » retiré : la racine /pays mène à l'explorateur unifié.
-    await page.goto('/pays', { waitUntil: 'domcontentloaded' });
-    await page.waitForURL('**/explorer', { timeout: 60_000 });
-    await expect(page.getByTestId('unified-explorer-map')).toHaveAttribute(
-      'data-atlas-ready',
-      'true',
-      { timeout: 45_000 }
-    );
-
-    // Les fiches pays restent servies avec leur globe MapLibre (sidebar).
-    await prepareVisualPage(page, '/pays/fr');
-    await expect(page.locator('canvas.maplibregl-canvas').first()).toBeVisible({ timeout: 45_000 });
-
-    expect(pageErrors, pageErrors.join('\n')).toHaveLength(0);
-  });
-
-  test('explorer : un moteur cartographique est toujours monté (jamais d’écran blanc)', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== 'desktop-chrome', 'vérifié sur desktop');
 
     await page.addInitScript(() => {
       Object.defineProperty(navigator.serviceWorker, 'register', {
@@ -220,48 +70,17 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
     });
 
     await prepareVisualPage(page, '/explorer');
-
-    // Le moteur servi dépend du flag `explorer_unified_map_enabled` (rollout) :
-    // legacy (Leaflet) quand off, unifié (MapLibre) quand on. Dans les deux cas
-    // un moteur DOIT être monté — jamais d'écran blanc.
-    // Rollback : `node scripts/atlas/set-rollout-flag.mjs --enabled false`.
-    const unifiedCount = await page.getByTestId('unified-explorer-map').count();
-    const legacyCount = await page.locator('.leaflet-container').count();
-    expect(unifiedCount + legacyCount).toBeGreaterThan(0);
-  });
-
-  test('dézoom molette borné : le globe reste cadré (minZoom)', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== 'desktop-chrome', 'vérifié sur desktop');
-
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator.serviceWorker, 'register', {
-        value: () => new Promise<never>(() => {}),
-        configurable: true,
-      });
+    const rootLocator = page.locator('.xp-root').last();
+    await expect(rootLocator.locator('.xp-sheet')).toBeVisible({ timeout: 45_000 });
+    await page.waitForFunction(() => document.querySelectorAll('.xp-pin').length > 0, undefined, {
+      timeout: 45_000,
     });
+    await page.screenshot({ path: path.join(OUT_DIR, 'explorer-v2-globe.png') });
 
-    await prepareVisualPage(page, '/explorer?atlas=1');
-    const mapRoot = page.getByTestId('unified-explorer-map');
-    await expect(mapRoot).toHaveAttribute('data-atlas-ready', 'true', { timeout: 45_000 });
-    await page.waitForTimeout(4_000); // plongée d'ouverture terminée
-
-    const hasTestHook = await page.evaluate(() =>
-      Boolean((window as unknown as { __atlasTestMap?: unknown }).__atlasTestMap)
-    );
-    test.skip(!hasTestHook, 'hook __atlasTestMap indisponible (build prod) — vérifié en dev.');
-
-    // Dézoom molette agressif : MapLibre v6 ne clampe pas la molette au minZoom,
-    // le verrou applicatif doit maintenir le globe cadré.
-    await page.mouse.move(950, 450);
-    for (let index = 0; index < 15; index += 1) {
-      await page.mouse.wheel(0, 400);
-      await page.waitForTimeout(60);
-    }
-    await page.waitForTimeout(1_000);
-
-    const zoom = await page.evaluate(
-      () => (window as unknown as { __atlasTestMap?: { getZoom(): number } }).__atlasTestMap?.getZoom()
-    );
-    expect(zoom).toBeGreaterThanOrEqual(1.2);
+    // Toucher un pays : niveau 1 + caméra qui descend.
+    await rootLocator.locator('.xp-pin').first().click({ force: true });
+    await expect(rootLocator).toHaveAttribute('data-level', '1', { timeout: 20_000 });
+    await page.waitForTimeout(2_500);
+    await page.screenshot({ path: path.join(OUT_DIR, 'explorer-v2-pays.png') });
   });
 });

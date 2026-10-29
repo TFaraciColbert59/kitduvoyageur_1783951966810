@@ -133,10 +133,12 @@ SELECT is(
   '2. RLS est activé sur les cinq tables'
 );
 
+-- 44 depuis l'Explorer v2 : `escalade-voie` rejoint le catalogue (05_DONNEES §4,
+-- mapping des 9 sports UI). Le seed d'origine reste à 43 lignes.
 SELECT is(
   (SELECT count(*)::integer FROM public.activity_catalog WHERE is_seed),
-  43,
-  '3. le seed publie exactement 43 activités'
+  44,
+  '3. le seed publie exactement 44 activités (43 + escalade-voie)'
 );
 
 SELECT ok(
@@ -153,7 +155,7 @@ SET LOCAL ROLE anon;
 
 SELECT is(
   (SELECT count(*)::integer FROM public.activity_catalog WHERE is_active),
-  43,
+  44,
   '5. anon voit uniquement le catalogue actif'
 );
 
@@ -508,7 +510,7 @@ SELECT is(
     FROM public.activity_catalog
     WHERE is_seed
   ),
-  43,
+  44,
   'le replay du seed ne duplique aucune activité'
 );
 
