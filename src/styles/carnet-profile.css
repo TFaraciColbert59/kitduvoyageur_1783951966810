@@ -94,6 +94,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain;
   display: flex; flex-direction: column; gap: 8px;
   padding: 8px 12px 64px;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   scrollbar-width: none;
   /* Le balayage horizontal des jours reste livré au JS : le navigateur ne
      garde que le défilement vertical de la carte. */
@@ -138,7 +139,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-daypill-count {
   margin-left: auto; flex: none; color: #6B7A70;
-  font: 500 10.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 500 11px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: 0; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
@@ -212,12 +213,12 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-more {
   position: relative; flex: none; margin: 0; padding: 0; border: 0; background: none;
-  color: #17402C; font: 500 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  color: #56665D; font: 600 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: -.14px; white-space: nowrap; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 /* Cible tactile de 44 px sans élargir la ligne visible. */
-.ckp-more::after { content: ''; position: absolute; inset: -12px -6px; }
+.ckp-more::after { content: ''; position: absolute; inset: -14px -8px; }
 .ckp-more:active { opacity: .6; }
 .ckp-author-line {
   display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
@@ -231,8 +232,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 .ckp-author-score {
   display: inline-flex; align-items: center; height: 16px; padding: 0 5px; border-radius: 999px;
-  background: rgba(255, 255, 255, .6); color: #56665d;
-  font: 700 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  background: rgba(255, 255, 255, .6); color: #56665D;
+  font: 500 11px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif); font-variant-numeric: tabular-nums;
 }
 .ckp-badge {
   display: inline-flex; align-items: center; gap: 3px; flex: none;
@@ -256,6 +257,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    171 px pour Résumé + trois jours. Aucun gap. */
 .ckp-card-foot {
   position: absolute; right: 10px; bottom: 10px; z-index: 6;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   display: flex; align-items: center; height: 30px;
   max-width: calc(100% - 20px);
   padding: 0; border-radius: 0; background: none; box-shadow: none;
@@ -294,7 +296,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   background: none; color: #56665d; cursor: pointer;
   font: 600 11.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
   font-variant-numeric: tabular-nums; letter-spacing: 0;
-  transition: color .18s ease, transform .16s cubic-bezier(.22, 1, .36, 1);
+  transition: transform .16s cubic-bezier(.22, 1, .36, 1);
 }
 .ckp-capsule .ckp-tabs button[aria-selected='true'] { color: #17402c; }
 .ckp-capsule .ckp-tabs button:active { transform: scale(.94); }
@@ -339,14 +341,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-tile-more {
   position: absolute; inset: 0; display: grid; place-items: center;
   background: rgba(10, 20, 14, .5); color: #fff;
-  font: 700 17px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 600 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
 }
-.ckp-grid-empty {
-  display: grid; place-items: center; gap: 6px; padding: 26px 18px;
-  background: rgba(255, 255, 255, .3); text-align: center; color: #56665d;
-}
-.ckp-grid-empty b { color: #172b24; font: 700 13px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
-.ckp-grid-empty p { margin: 0; max-width: 250px; font: 500 11.5px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
 /* La carte interne du carrousel a été retirée avec la page Parcours : la seule
    carte de la fiche est celle du bas (`.ckp-mapzone`, 40dvh). Les règles
@@ -411,13 +407,23 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   margin: 0; padding: 8px 0 0; border: 0; background: none; cursor: pointer;
 }
 .ckp-grabber span {
-  width: 42px; height: 5px; border-radius: 999px; background: rgba(23, 43, 36, .18);
-  transition: height 120ms ease, background-color 120ms ease;
+  position: relative; display: block;
+  width: 42px; height: 5px; border-radius: 999px; background: transparent;
+  transition: height 120ms ease;
+}
+/* Le fond est un second calque : une transition par propriété, jamais deux
+   propriétés dans la même transition. */
+.ckp-grabber span::after {
+  content: ''; position: absolute; inset: 0; border-radius: 999px;
+  background-color: rgba(23, 43, 36, .18);
+  transition: background-color 120ms ease;
 }
 /* Toucher — souris, doigt, stylet : la barre passe de 5 à 6 px et de .18 à .32
    en 120 ms, puis revient d'elle-même. Aucun geste n'est branché là. */
 .ckp-grabber:active span,
-.ckp-grabber[data-press='true'] span { height: 6px; background: rgba(23, 43, 36, .32); }
+.ckp-grabber[data-press='true'] span { height: 6px; }
+.ckp-grabber:active span::after,
+.ckp-grabber[data-press='true'] span::after { background-color: rgba(23, 43, 36, .32); }
 .ckp-drawer-close {
   position: absolute; top: 8px; right: 12px; flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px;
   display: grid; place-items: center; cursor: pointer; color: #17402C;
@@ -437,7 +443,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   mask-image: linear-gradient(180deg, #000 34%, transparent);
 }
 .ckp-drawer-cut[data-on='true'] { opacity: 1; }
-.ckp-drawer-body { padding: 16px 16px 64px; gap: 0; }
+.ckp-drawer-body { padding: 16px 16px 64px; padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); gap: 0; }
 /* Pied du drawer : la capsule d'onglets occupe la place exacte de celle de la
    carte d'identité — `right/bottom: 10px` dans la feuille, 30 px de haut, même
    verre, même lentille, même pas de 41,5 px. Largeur = 41,5 × n + 5 px de
@@ -445,6 +451,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    (52 px) laisse le contenu défiler au-dessus d'elle sans jamais passer dessous. */
 .ckp-drawer-foot {
   position: absolute; right: 12px; bottom: 12px; z-index: 6;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   display: flex; align-items: center; height: 30px;
 }
 .ckp-drawer-foot .ckp-capsule {
@@ -490,7 +497,6 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-pane-meta span { display: inline-flex; align-items: center; gap: 4px; }
 .ckp-pane-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .ckp-pane-list { display: flex; flex-direction: column; }
-.ckp-pane-empty { margin: 0; padding: 22px 0; text-align: center; color: #56665d; font: 500 12px/1.4 var(--font-sans, -apple-system, system-ui, sans-serif); }
 
 /* Réactions : ligne de 48 px, séparateur inséré de 16 px à gauche, valeur
    12/500 à droite. Aucune pastille, aucun cadre. */
@@ -532,7 +538,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-pill::after { content: ''; position: absolute; inset: -4px; }
 .ckp-pill:active { transform: scale(.96); }
 .ckp-pill svg { width: 16px; height: 16px; }
-.ckp-pill--primary { background: #17402c; color: #fff; box-shadow: 0 4px 14px rgba(23, 64, 44, .24); }
+.ckp-pill--primary { height: 48px; padding: 0 20px; font: 600 14px/1 var(--font-sans, -apple-system, system-ui, sans-serif); background: #17402c; color: #fff; box-shadow: 0 4px 14px rgba(23, 64, 44, .24); }
 .ckp-pill:disabled { opacity: .45; cursor: not-allowed; }
 
 /* Sous-sélecteur 30 px : même verre, même pas et même lentille que la capsule
@@ -568,7 +574,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-sub:not(.ckp-sub--icons) button[aria-pressed='true'] {
   background: #fff; box-shadow: 0 1px 3px rgba(23, 43, 36, .14);
 }
-.ckp-sub button::after { content: ''; position: absolute; inset: -9px -4px; }
+/* Cible de 44 px : 25 + 9,5 + 9,5 (lot F, 44). */
+.ckp-sub button::after { content: ''; position: absolute; inset: -9.5px -4px; }
 @media (prefers-reduced-motion: reduce) {
   .ckp-sub > .ckp-th { transition: none; }
 }
@@ -579,7 +586,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   display: inline-block; vertical-align: middle;
   position: relative; width: 36px; height: 20px; flex: none; padding: 2px;
   border-radius: 999px; background: rgba(23, 43, 36, .16);
-  transition: background 180ms ease;
+  transition: background-color 180ms ease;
 }
 .ckp-switch span { display: block; width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 4px rgba(23, 43, 36, .24); transition: transform 180ms cubic-bezier(.16, 1, .3, 1); }
 .ckp-switch.is-on { background: #17402c; }
@@ -604,8 +611,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 /* Entrée d'un nouveau commentaire : fondu + 6 px, aucun saut de liste. */
 .ckp-comment.is-new { animation: ckp-comment-in 180ms cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes ckp-comment-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.ckp-avatar { width: 28px; height: 28px; flex: none; border-radius: 999px; object-fit: cover; box-shadow: 0 0 0 .5px rgba(23, 43, 36, .10); }
-.ckp-avatar--initial { display: grid; place-items: center; background: rgba(23, 64, 44, .10); color: #17402c; font: 700 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.ckp-avatar { width: 28px; height: 28px; flex: none; border-radius: 999px; object-fit: cover; box-shadow: 0 0 0 1.5px #fff; }
+.ckp-avatar--initial { display: grid; place-items: center; background: rgba(23, 64, 44, .10); color: #17402c; font: 700 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .ckp-composer { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .ckp-composer input {
   flex: 1; min-width: 0; height: 36px; border: .5px solid rgba(23, 43, 36, .14); border-radius: 999px;
@@ -686,8 +693,8 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 .ckp-screen .tb { width: min(calc(100% - 28px), 402px); }
 .ckp-screen .tb .lens { opacity: 0; }
 
-.ckp-card :focus-visible, .ckp-screen-header :focus-visible { outline: 2px solid #17402c; outline-offset: 2px; border-radius: 8px; }
-.ckp-tile:focus-visible { outline-offset: -3px; border-radius: 2px; }
+.ckp-card :focus-visible, .ckp-screen-header :focus-visible { outline: 2px solid #17402C; outline-offset: 2px; border-radius: 8px; }
+.ckp-tile:focus-visible { border-radius: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
   .ckp-card--drawer { animation: none; }
@@ -700,7 +707,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   border-radius: 12px;
   background: linear-gradient(90deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .75), rgba(255, 255, 255, .45));
   background-size: 200% 100%;
-  animation: ckp-shimmer 1.4s ease-in-out infinite;
+  animation: ckp-shimmer 1.4s ease-in-out 2;
 }
 .ckp-skeleton--pill { width: 200px; height: 40px; border-radius: 999px; }
 .ckp-skeleton--round { width: 38px; height: 38px; border-radius: 999px; }
@@ -792,7 +799,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   position: absolute; left: 12px; bottom: 12px; z-index: 3;
   padding: 4px 8px; border-radius: 8px;
   background: rgba(255, 255, 255, .72); color: #17402c;
-  font: 700 9px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 600 11px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: .08em;
 }
 
@@ -809,7 +816,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
      carte (et de son badge) d'un seul tenant, sans mélange de plans. */
   z-index: 0;
 }
-.ckp-screen .tb { bottom: 16px; }
+.ckp-screen .tb { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 /* la carte d'identité garde sa marge basse pour ne pas coller à la carte */
 .ckp-card { margin-bottom: 0; }
 
@@ -823,16 +830,18 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
   position: relative; overflow: clip; min-width: 0;
   touch-action: pan-y;
 }
-.ckp-pages:focus-visible { outline: 2px solid #17402c; outline-offset: 2px; border-radius: 14px; }
+.ckp-pages:focus-visible { outline: 2px solid #17402C; outline-offset: 2px; border-radius: 14px; }
 .ckp-page { min-width: 0; }
-.ckp-page--next { animation: ckp-page-next 200ms cubic-bezier(.22, 1, .36, 1) both; }
-.ckp-page--prev { animation: ckp-page-prev 200ms cubic-bezier(.22, 1, .36, 1) both; }
+/* Changement de volet : fondu + 8 px, 180 ms — la course verticale du
+   sous-onglet, jamais un glissement horizontal (celui-là appartient aux jours). */
+.ckp-page--next { animation: ckp-page-next 180ms cubic-bezier(.22, 1, .36, 1) both; }
+.ckp-page--prev { animation: ckp-page-prev 180ms cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes ckp-page-next {
-  from { opacity: .35; transform: translateX(16px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
 @keyframes ckp-page-prev {
-  from { opacity: .35; transform: translateX(-16px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
 /* Les volets déplacés gardent la gouttière 12 px et le rythme vertical du drawer. */
@@ -867,7 +876,12 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 }
 
 /* Anneau de focus : la capsule garde ses segments. */
-.ckp-capsule .ckp-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px #17402c; }
+/* Les segments rognés par la capsule portent le même anneau, en contour
+   intérieur : la capsule ne laisse pas déborder un décalage de 2 px. */
+.ckp-capsule .ckp-tabs button:focus-visible {
+  outline: 2px solid #17402C !important;
+  outline-offset: -2px !important;
+}
 
 /* --- Sous-drawer statistiques --------------------------------------------
    Marges internes 16 px (20 px en haut). Chiffre principal 34/700 tabulaire,
@@ -950,9 +964,9 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    d'auth, il ne navigue pas) avec la matière du lien du Compte. */
 .ckp-post-sheet .lkdv-comments-gate button {
   display: inline-flex; align-items: center; justify-content: center;
-  min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px;
+  height: 48px; padding: 0 20px; border: 0; border-radius: 999px;
   background: var(--feed-ink, #17402c); color: #fff;
-  font: 700 12px var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer;
+  font: 600 14px/1 var(--font-sans, -apple-system, system-ui, sans-serif); cursor: pointer;
 }
 /* Le tri Récents / Anciens est une donnée du carnet : il se pose en tête de
    liste, sans déplacer le corps ni le pied du Compte. */
@@ -965,12 +979,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    ============================================================================= */
 
 /* --- Focus : anneau 2 px #17402C à 2 px du contrôle (feuilles et volets) --- */
-.ckp-card--drawer :focus-visible,
-.ckp-pane :focus-visible,
-.ckp-post-sheet .lkdv-post-panel :focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px transparent, 0 0 0 4px #17402C;
-}
+/* Un seul anneau pour la feuille : 2 px de #17402C, décalés de 2 px (lot F). */
 
 /* --- Post du moment : légende « pseudo 13/600 puis texte 13/400 » ---------- */
 .ckp-post-sheet .lkdv-post-caption { font-size: 13px !important; line-height: 1.4 !important; font-weight: 400 !important; }
@@ -979,9 +988,10 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
 /* --- Mouvement réduit : fondu de 160 ms, aucune translation ---------------- */
 @keyframes ckp-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  .ckp-card--drawer { animation: ckp-fade-in 160ms linear both; }
-  .ckp-page--next, .ckp-page--prev { animation: ckp-fade-in 160ms linear both; }
-  .ckp-comment.is-new { animation: ckp-fade-in 160ms linear both; }
+  .ckp-card--drawer, .ckp-card--drawer[data-closing='true'] { animation: ckp-fade-in 120ms linear both; }
+  .ckp-page--next, .ckp-page--prev { animation: ckp-fade-in 120ms linear both; }
+  .ckp-comment.is-new { animation: ckp-fade-in 120ms linear both; }
+  .ckp-collapse, .ckp-collapse-chevron { transition: none; }
   .ckp-drawer-close { transition: none; }
   .ckp-drawer-close:active { transform: none; }
 }
@@ -1075,8 +1085,8 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 .ckp-hero-num {
   display: flex; align-items: baseline; gap: 4px; margin: 0; min-width: 0;
   color: #17402C;
-  font: 700 40px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
-  letter-spacing: -1px; font-variant-numeric: tabular-nums;
+  font: 700 34px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: -.02em; font-variant-numeric: tabular-nums;
 }
 .ckp-hero-num[data-missing='true'] { color: #B4BDB6; }
 .ckp-hero-value {
@@ -1099,8 +1109,8 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 }
 /* 13. Trois sous-valeurs 12/600 tabulaires, alignées à gauche. */
 .ckp-hero-sub {
-  display: flex; align-items: baseline; gap: 16px; margin-top: 12px; min-width: 0;
-  color: #172B24; font: 600 12px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif);
+  display: flex; align-items: baseline; gap: 12px; margin-top: 12px; min-width: 0;
+  color: #172B24; font: 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
   letter-spacing: 0; font-variant-numeric: tabular-nums;
 }
 .ckp-hero-sub span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1116,7 +1126,7 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 /* Après `.ckp-hero-num[data-missing]` : même spécificité, l'ordre tranche. */
 .ckp-hero--empty .ckp-hero-num {
   color: #8A968D; letter-spacing: 0;
-  font: 600 20px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  font: 700 20px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
 }
 /* 44. Changement de sous-onglet : fondu + 8 px, 180 ms. */
 .ckp-hero[data-animate='true'] { animation: ckp-hero-in 180ms cubic-bezier(.22, 1, .36, 1) both; }
@@ -1134,12 +1144,12 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
   position: relative; display: block; overflow: hidden; border-radius: 12px;
   background: rgba(23, 43, 36, .06);
 }
-.ckp-load-bar--hero { height: 40px; border-radius: 10px; }
+.ckp-load-bar--hero { height: 34px; border-radius: 10px; }
 .ckp-load-bar--row { height: 48px; }
 .ckp-load-bar::after {
   content: ''; position: absolute; inset: 0; transform: translateX(-100%);
   background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .55) 50%, rgba(255, 255, 255, 0) 100%);
-  animation: ckp-shimmer 1.4s linear infinite;
+  animation: ckp-shimmer 1.4s linear 2;
 }
 @keyframes ckp-shimmer { to { transform: translateX(100%); } }
 .ckp-empty-state {
@@ -1166,7 +1176,7 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
 .ckp-comments-gate .ckp-field { width: 100%; }
 
 /* 4/5/37. Les pages sorties du drawer : contenu à 16 px, 64 px de réserve. */
-.ckp-page-pad--dense { padding: 0 0 64px; gap: 0; }
+.ckp-page-pad--dense { padding: 0 0 64px; padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); gap: 0; }
 /* Le corps du post du Compte ne se cumule pas avec la gouttière dense. */
 .ckp-page-pad--dense .lkdv-post-panel-body { padding-left: 0; padding-right: 0; }
 .ckp-page-pad--dense .lkdv-post-panel-foot { padding-left: 0; padding-right: 0; }
@@ -1178,9 +1188,9 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
   .ckp-hero-bar i { transition: none; }
   .ckp-load-bar::after { animation: none; }
   .ckp-load, .ckp-empty-state { animation: ckp-fade-in 120ms linear both; }
+  .ckp-page--next, .ckp-page--prev { animation: ckp-fade-in 120ms linear both; }
   .ckp-drawer-veil { transition: opacity 120ms linear; }
 }
-.ckp-empty-dash { font: 600 13px/1 var(--font-sans, -apple-system, system-ui, sans-serif); color: #8A968D; }
 
 /* Une seule tuile garde le gabarit 134 (3 colonnes), jamais pleine largeur. */
 .ckp-grid-wrap { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 2px; padding: 0; }
@@ -1267,4 +1277,218 @@ button.ckp-field:active, a.ckp-field:active { background-color: rgba(255, 255, 2
   bottom: 0;
   height: .5px;
   background: rgba(23, 43, 36, .06);
+}
+
+/* =============================================================================
+   Lot D — composants (25-34)
+   Carte de stat, ligne de liste, pastille, badge, en-tête de section, état vide,
+   squelette, erreur de champ, section repliable, boutons.
+   ============================================================================= */
+
+/* 26 — le chevron n'existe que sur une ligne qui navigue. */
+.ckp-field-chevron,
+.ckp-row-chevron {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: #56665D;
+}
+
+/* 29 — en-tête de section : 10,5/600, interlettrage .08em, #8A968D. */
+.ckp-section-head {
+  color: #8A968D;
+  font: 600 10.5px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* 32 — erreur de champ : liseré de 1 px et message de 11 px sous la ligne. */
+.ckp-field-wrap { display: flex; flex-direction: column; min-width: 0; }
+.ckp-field-error {
+  margin-top: 4px;
+  color: #C13B34;
+  font: 500 11px/1.42 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+/* 33 — section repliable : chevron 180° en 180 ms, ouverture 0fr → 1fr. */
+.ckp-collapsible { display: flex; flex-direction: column; min-width: 0; }
+.ckp-collapse-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.ckp-collapse-chevron {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: #8A968D;
+  transition: transform 180ms cubic-bezier(.22, 1, .36, 1);
+}
+.ckp-collapse-head[aria-expanded='true'] .ckp-collapse-chevron { transform: rotate(180deg); }
+.ckp-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 180ms cubic-bezier(.22, 1, .36, 1);
+}
+.ckp-collapse[data-open='true'] { grid-template-rows: 1fr; }
+.ckp-collapse > * { overflow: hidden; min-height: 0; }
+
+/* 34 — bouton primaire 48 / rayon 999 / 14-600 ; bouton texte 13/600 #56665D. */
+.ckp-btn--primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #17402C;
+  color: #fff;
+  cursor: pointer;
+  font: 600 14px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+.ckp-btn--primary:disabled { opacity: .45; cursor: not-allowed; }
+.ckp-btn--text {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: #56665D;
+  cursor: pointer;
+  font: 600 13px/1.15 var(--font-sans, -apple-system, system-ui, sans-serif);
+}
+
+/* =============================================================================
+   Lot E — mouvement (35-42)
+   Entrée 220 ms, volet 180 ms, rouleau 400 ms une seule fois, sortie 160 ms,
+   une propriété par transition, mouvement réduit en fondu de 120 ms,
+   transparence réduite en surface opaque, aucune animation en boucle.
+   ============================================================================= */
+
+/* 38 — sortie de la feuille : fondu + 12 px, 160 ms, joué une seule fois.
+   L'écran attend la fin de cette animation avant de démonter la feuille. */
+.ckp-card--drawer[data-closing='true'] {
+  animation: ckp-drawer-out 160ms cubic-bezier(.22, 1, .36, 1) both;
+  pointer-events: none;
+}
+@keyframes ckp-drawer-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(12px); }
+}
+
+/* 41 — `prefers-reduced-transparency` : la feuille et ses surfaces redeviennent
+   opaques (#F4F7F3), le flou disparaît, le voile de page aussi. */
+@media (prefers-reduced-transparency: reduce) {
+  .ckp-card,
+  .ckp-card--drawer {
+    background-image: none;
+    background-color: #F4F7F3;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .ckp-capsule,
+  .ckp-sub,
+  .ckp-title-pill,
+  .ckp-pill,
+  .ckp-stats-sticky > div,
+  .ckp-drawer-cut {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: #F4F7F3;
+  }
+  .ckp-scrim { display: none; }
+}
+
+/* =============================================================================
+   Lot F — mobile (43-50)
+   Zones sûres, cibles de 44 px, états hover = focus = tactile, anneau de focus
+   2 px + décalage 2, verrou de scroll, focus rendu, voile local, images
+   décoratives muettes.
+   ============================================================================= */
+
+/* 44 — toute cible tactile mesure au moins 44 px, sans changer le dessin. */
+.ckp-capsule .ckp-tabs button::after {
+  content: '';
+  position: absolute;
+  inset: -9.5px 0;
+  border-radius: 999px;
+}
+.ckp-grabber::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -18px;
+  bottom: -13px;
+}
+.ckp-mapcard-stack button,
+.ckp-viewer-nav { position: relative; }
+.ckp-mapcard-stack button::after,
+.ckp-viewer-nav::after { content: ''; position: absolute; inset: -5px; }
+.ckp-link { position: relative; min-height: 44px; display: inline-flex; align-items: center; }
+.ckp-link::after { content: ''; position: absolute; inset: -8px 0; }
+
+/* 45 — hover, focus et tactile donnent exactement le même état. */
+.ckp-field:focus-visible,
+.ckp-field:active,
+.ckp-row:focus-visible,
+.ckp-row:active,
+.ckp-tile:active,
+.ckp-pill:active,
+.ckp-mapcard-stack button:active {
+  background-color: rgba(255, 255, 255, .55);
+}
+.ckp-drawer-close:active,
+.ckp-drawer-close:focus-visible { background: #fff; }
+.ckp-capsule .ckp-tabs button:focus-visible,
+.ckp-capsule .ckp-tabs button:active,
+.ckp-sub button:focus-visible,
+.ckp-sub button:active { color: #17402C; }
+@media (hover: hover) {
+  .ckp-tile:hover { background-color: rgba(255, 255, 255, .55); }
+  .ckp-drawer-close:hover { background: #fff; }
+  .ckp-pill:hover { background-color: rgba(255, 255, 255, .62); }
+}
+
+/* 46 — anneau de focus : 2 px #17402C, décalé de 2 px, partout. */
+/* `!important` assumé : le shell global (`html[data-liquid-ios27] body …
+   button:focus-visible`) peint un anneau **blanc**, invisible sur ce verre
+   clair. La fiche garde son anneau d'encre, sur tous ses contrôles. */
+.ckp-screen :focus-visible {
+  outline: 2px solid #17402C !important;
+  outline-offset: 2px !important;
+}
+/* Les tuiles de la grille et le sous-sélecteur portent le même anneau. */
+.ckp-tile:focus-visible,
+.ckp-sub button:focus-visible {
+  outline: 2px solid #17402C !important;
+  outline-offset: 2px !important;
+}
+
+/* 47 — verrou de scroll du fond tant que la feuille est ouverte. */
+html[data-ckp-sheet],
+html[data-ckp-sheet] body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* 49 — voile local sous un texte posé sur une photo : .18, jamais plus. */
+.ckp-viewer-caption,
+.ckp-viewer-count {
+  background-color: rgba(10, 20, 14, .18);
 }

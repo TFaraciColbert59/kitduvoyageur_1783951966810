@@ -4,6 +4,7 @@ import React, { startTransition, useCallback, useMemo, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { SfIcon } from './sfIcons';
 import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
+import { CarnetEmpty } from './CarnetStates';
 import { CarnetEtapesPane } from './panes/CarnetEtapesPane';
 import { CarnetKitPane } from './panes/CarnetKitPane';
 import { CarnetNaturePane } from './panes/CarnetNaturePane';
@@ -128,6 +129,7 @@ const CarnetTile = React.memo(function CarnetTile({ moment, index, more, onOpen 
       <img
         src={moment.imageUrl ?? ''}
         alt=""
+        aria-hidden="true"
         loading={index < 3 ? 'eager' : 'lazy'}
         fetchPriority={index === 0 ? 'high' : undefined}
       />
@@ -233,15 +235,10 @@ export function CarnetPages({
           ) : emptyGrid ? (
             emptyGrid
           ) : (
-            <div className="ckp-grid-empty">
-              <Icon name="image-plus" size={20} aria-hidden="true" />
-              <b>Aucun moment pour l’instant.</b>
-              <p>
-                {detail.isOwner
-                  ? 'Ajoutez un moment depuis votre carnet.'
-                  : 'L’auteur n’a pas encore ajouté de photo.'}
-              </p>
-            </div>
+            <CarnetEmpty
+              icon={<Icon name="image-plus" size={32} aria-hidden="true" />}
+              label="Aucun moment"
+            />
           )
         ) : null}
 

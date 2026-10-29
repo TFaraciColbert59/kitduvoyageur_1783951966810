@@ -395,3 +395,22 @@ describe('CarnetScreen — fond identique à la page Compte', () => {
     expect(document.querySelector('.ckp-screen')).toBeTruthy();
   });
 });
+
+describe('CarnetScreen — focus rendu au déclencheur (lot F)', () => {
+  it('rend le focus à la statistique qui a ouvert la feuille, après Échap', async () => {
+    render(<CarnetScreen detail={OWNER} />);
+    const trigger = document.querySelector('.ckp-stat[data-stat="distance"]') as HTMLElement;
+    expect(trigger).toBeTruthy();
+    trigger.focus();
+    fireEvent.click(trigger);
+    expect(drawerOpen()).toBe(true);
+    /* La fermeture joue la sortie de 160 ms, puis la carte est remontée. */
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => window.requestAnimationFrame(() => resolve(null)));
+    expect(drawerOpen()).toBe(false);
+    const again = document.querySelector('.ckp-stat[data-stat="distance"]') as HTMLElement;
+    expect(again).toBeTruthy();
+    expect(document.activeElement).toBe(again);
+  });
+});

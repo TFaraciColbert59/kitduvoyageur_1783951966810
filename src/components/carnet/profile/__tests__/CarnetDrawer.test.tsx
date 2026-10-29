@@ -85,12 +85,24 @@ describe('CarnetDrawer — coquille', () => {
     expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Partage' }));
   });
 
-  it('ferme sur Échap et sur la poignée', () => {
+  it('ferme sur Échap et sur la poignée, après la sortie de 160 ms', () => {
+    vi.useFakeTimers();
     const onClose = vi.fn();
-    render(<CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={onClose}><p>v</p></CarnetDrawer>);
+    const { container } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={onClose}><p>v</p></CarnetDrawer>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Fermer le panneau' }));
+    /* La feuille joue son fondu de sortie avant de disparaître. */
+    const sheet = container.querySelector('.ckp-card--drawer') as HTMLElement;
+    expect(sheet.getAttribute('data-closing')).toBe('true');
+    expect(onClose).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(160);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    /* Un second appui ne relance rien. */
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(onClose).toHaveBeenCalledTimes(2);
+    vi.advanceTimersByTime(160);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 });
 
@@ -154,5 +166,48 @@ describe('CarnetDrawer — finitions du lot A', () => {
     const close = screen.getByRole('button', { name: 'Fermer' });
     expect(close.classList.contains('ckp-drawer-close')).toBe(true);
     expect(close.closest('.ckp-drawer-head')).toBeTruthy();
+  });
+});
+
+describe('CarnetDrawer — mobile (lot F)', () => {
+  it('verrouille le scroll du fond tant que la feuille est ouverte', () => {
+    const { unmount } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>,
+    );
+    expect(document.documentElement.getAttribute('data-ckp-sheet')).toBe('true');
+    unmount();
+    expect(document.documentElement.hasAttribute('data-ckp-sheet')).toBe(false);
+  });
+
+  it('rend le focus au déclencheur à la fermeture', () => {
+    const trigger = document.createElement('button');
+    trigger.textContent = 'déclencheur';
+    document.body.appendChild(trigger);
+    trigger.focus();
+    const { unmount } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={() => {}}><p>v</p></CarnetDrawer>,
+    );
+    expect(document.activeElement).not.toBe(trigger);
+    unmount();
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
+  it('ferme sur Échap et laisse le focus revenir au déclencheur', () => {
+    vi.useFakeTimers();
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    trigger.focus();
+    const onClose = vi.fn();
+    const { unmount } = render(
+      <CarnetDrawer drawer="stats" onDrawerChange={() => {}} onClose={onClose}><p>v</p></CarnetDrawer>,
+    );
+    fireEvent.keyDown(document, { key: 'Escape' });
+    vi.advanceTimersByTime(160);
+    expect(onClose).toHaveBeenCalledOnce();
+    unmount();
+    expect(document.activeElement).toBe(trigger);
+    vi.useRealTimers();
+    trigger.remove();
   });
 });

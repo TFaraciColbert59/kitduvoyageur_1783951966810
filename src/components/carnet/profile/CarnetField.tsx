@@ -21,8 +21,10 @@ export interface CarnetFieldProps {
   disabled?: boolean;
   /** Action destructive : réserve `#C13B34` au liseré et à l'encre. */
   tone?: 'default' | 'danger';
-  /** Erreur de la donnée : bordure 1 px `#C13B34`, aucun bandeau. */
+  /** Erreur de la donnée : liseré 1 px `#C13B34`, aucun bandeau. */
   error?: boolean;
+  /** Message de l'erreur : 11/500 `#C13B34` sous la ligne, jamais un bandeau. */
+  errorMessage?: string;
   /** Champ d'action sans donnée : la colonne de valeur disparaît. */
   showValue?: boolean;
   /** Valeur longue (lien) : la colonne fixe s'élargit, toujours ellipsée. */
@@ -42,11 +44,13 @@ export interface CarnetFieldProps {
 }
 
 /**
- * Ligne de donnée du drawer : un champ visuel de 48 px (rayon 12, fond
- * `rgba(255,255,255,.55)`), le libellé en placeholder à gauche (12/500
- * `#8A968D`, 46 % de large au plus, ellipse) et la valeur à droite dans une
- * colonne fixe de 120 px (13/600 tabulaire, `#172B24`). Une donnée absente
- * n'est jamais un vide : c'est `—` en `#B4BDB6`. Aucun chevron.
+ * Ligne de donnée du drawer : une ligne de 48 px sans cadre, le libellé en
+ * placeholder à gauche (13/500 `#6B7A70`, 46 % de large au plus, ellipse) et la
+ * valeur à droite dans une colonne fixe de 120 px (13/500 tabulaire,
+ * `#172B24`). Une donnée absente n'est jamais un vide : c'est `—` en
+ * `#B4BDB6`. Le chevron n'est peint que sur une ligne qui navigue (lien
+ * interne) ; une erreur ajoute un liseré de 1 px et son message de 11 px sous
+ * la ligne.
  */
 export function CarnetField({
   label,
@@ -58,6 +62,7 @@ export function CarnetField({
   disabled,
   tone = 'default',
   error,
+  errorMessage,
   showValue = true,
   wide,
   mid,
@@ -88,9 +93,24 @@ export function CarnetField({
   );
 
   const state = { 'data-error': error ? 'true' : undefined } as const;
+  /* 26 — chevron seulement si la ligne navigue : un lien interne. Une
+     destination externe garde son glyphe d'ouverture, fourni par l'appelant. */
+  const navigates = Boolean(href && href.startsWith('/'));
+
+  const withMessage = (node: React.ReactNode) => {
+    if (!error || !errorMessage) return node;
+    return (
+      <div className="ckp-field-wrap">
+        {node}
+        <span className="ckp-field-error" role="alert">
+          {errorMessage}
+        </span>
+      </div>
+    );
+  };
 
   if (onClick) {
-    return (
+    return withMessage(
       <button
         type="button"
         className={className}
@@ -102,12 +122,13 @@ export function CarnetField({
         {...state}
       >
         {inner}
-      </button>
+        {navigates ? <Chevron /> : null}
+      </button>,
     );
   }
 
   if (href) {
-    return (
+    return withMessage(
       <a
         className={className}
         href={href}
@@ -118,11 +139,12 @@ export function CarnetField({
         {...state}
       >
         {inner}
-      </a>
+        {navigates ? <Chevron /> : null}
+      </a>,
     );
   }
 
-  return (
+  return withMessage(
     <div
       className={className}
       aria-label={ariaLabel}
@@ -130,7 +152,19 @@ export function CarnetField({
       {...state}
     >
       {inner}
-    </div>
+      {navigates ? <Chevron /> : null}
+    </div>,
+  );
+}
+
+/** Chevron de navigation : 16 px, `#56665D`, jamais un glyphe décoratif nu. */
+function Chevron() {
+  return (
+    <span className="ckp-field-chevron" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+    </span>
   );
 }
 

@@ -131,6 +131,7 @@ export function CarnetDayHeader({ detail, day, cover, onOpenStat }: CarnetDayHea
               key={stat.label}
               type="button"
               className="ckp-stat"
+              data-stat={stat.tab}
               onClick={() => onOpenStat(stat.tab)}
               aria-label={`${stat.label} ${stat.value}`}
             >
