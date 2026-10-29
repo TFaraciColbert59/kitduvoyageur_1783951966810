@@ -9,6 +9,7 @@ import { FreedomReelItem } from './FreedomReelItem';
 import { FreedomCommentsDrawer } from './FreedomCommentsDrawer';
 import { FreedomShareDrawer } from './FreedomShareDrawer';
 import { FreedomKitDrawer } from './FreedomKitDrawer';
+import { FreedomSoundDrawer } from './FreedomSoundDrawer';
 import { fetchFreedomReels } from './freedomReelsService';
 import type { FreedomReelItem as ReelModel } from './freedom-types';
 import './freedom.css';
@@ -32,6 +33,7 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
   const [activeCommentsReel, setActiveCommentsReel] = useState<ReelModel | null>(null);
   const [activeShareReel, setActiveShareReel] = useState<ReelModel | null>(null);
   const [activeKit, setActiveKit] = useState<{ id: string; name?: string } | null>(null);
+  const [activeSound, setActiveSound] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -125,7 +127,7 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
     }
   }, [haptic, onClose, router]);
 
-  // Handle author profile navigation (Swipe Right)
+  // Handle author profile navigation (Swipe Right or click on avatar/handle)
   const handleAuthorProfile = useCallback(
     (author: ReelModel['author']) => {
       haptic('light');
@@ -143,7 +145,7 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
   // Keyboard navigation & gestures
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (activeCommentsReel || activeShareReel || activeKit) return;
+      if (activeCommentsReel || activeShareReel || activeKit || activeSound) return;
       if (e.key === 'Escape' || e.key === 'ArrowLeft') {
         handleExit();
       } else if (e.key === 'ArrowRight') {
@@ -164,11 +166,20 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeIndex, reels, activeCommentsReel, activeShareReel, activeKit, handleExit, handleAuthorProfile]);
+  }, [activeIndex, reels, activeCommentsReel, activeShareReel, activeKit, activeSound, handleExit, handleAuthorProfile]);
 
   const handleOpenKitFromReel = (kitId: string, kitName?: string) => {
     haptic('medium');
     setActiveKit({ id: kitId, name: kitName });
+  };
+
+  const handleSelectReelFromSound = (reelId: string) => {
+    const idx = reels.findIndex((r) => r.id === reelId);
+    if (idx >= 0) {
+      setActiveIndex(idx);
+      const el = document.getElementById(`freedom-reel-${reelId}`);
+      el?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const currentReel = reels[activeIndex];
@@ -222,6 +233,8 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
                 onOpenComments={(r) => setActiveCommentsReel(r)}
                 onOpenShare={(r) => setActiveShareReel(r)}
                 onOpenKit={handleOpenKitFromReel}
+                onOpenSound={(snd) => setActiveSound(snd)}
+                onAuthorClick={() => handleAuthorProfile(reel.author)}
                 onSwipeLeft={handleExit}
                 onSwipeRight={() => handleAuthorProfile(reel.author)}
                 onLikeChange={(id, nextLiked, nextCount) => {
@@ -249,6 +262,17 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
         />
       )}
 
+      {/* Sound Drawer (50% max height avec grille de posts à l'identique de la page compte) */}
+      {activeSound && (
+        <FreedomSoundDrawer
+          isOpen={Boolean(activeSound)}
+          soundTitle={activeSound}
+          allReels={reels}
+          onClose={() => setActiveSound(null)}
+          onSelectReel={handleSelectReelFromSound}
+        />
+      )}
+
       {/* Half-Screen Comments Drawer */}
       {activeCommentsReel && (
         <FreedomCommentsDrawer
@@ -267,7 +291,7 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
         />
       )}
 
-      {/* Half-Screen Share Drawer */}
+      {/* Half-Screen Share Drawer (max 50% height, style des posts) */}
       {activeShareReel && (
         <FreedomShareDrawer
           isOpen={Boolean(activeShareReel)}

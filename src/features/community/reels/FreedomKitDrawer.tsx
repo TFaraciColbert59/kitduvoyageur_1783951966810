@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  X,
   Compass,
   Check,
-  Share2,
-  Bookmark,
-  ShieldCheck,
-  Scale,
+  MapPin,
   Sparkles,
+  Layers,
+  ChevronDown,
 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useToast } from '@/contexts/ToastContext';
+import { createClient } from '@/lib/supabase/client';
 import type { KitSheetData } from '@/features/kits/types';
 
 export interface FreedomKitDrawerProps {
@@ -22,58 +22,115 @@ export interface FreedomKitDrawerProps {
   onClose: () => void;
 }
 
-interface EquipmentItem {
+export interface RealProductItem {
   id: string;
   name: string;
+  brand?: string | null;
   category: string;
-  weightG: number;
-  essential: boolean;
-  checked: boolean;
+  image: string;
+  weight_g: number;
+  price_eur?: number | null;
 }
 
-const PRESET_EQUIPMENT: Record<string, EquipmentItem[]> = {
-  'kit-alpine-ultra': [
-    { id: '1', name: 'Tente dôme 4 saisons géodésique', category: 'Bivouac', weightG: 1250, essential: true, checked: true },
-    { id: '2', name: 'Duvet Valandré Shocking Blue (-15°C)', category: 'Couchage', weightG: 1380, essential: true, checked: true },
-    { id: '3', name: 'Matelas Therm-a-Rest NeoAir XTherm', category: 'Couchage', weightG: 430, essential: true, checked: true },
-    { id: '4', name: 'Réchaud à gaz MSR WindBurner Duo', category: 'Cuisine', weightG: 430, essential: true, checked: true },
-    { id: '5', name: 'Piolet Petzl Glacier Literide', category: 'Alpinisme', weightG: 350, essential: true, checked: true },
-    { id: '6', name: 'Crampons Petzl Vasak Leverlock', category: 'Alpinisme', weightG: 790, essential: true, checked: true },
-    { id: '7', name: 'Trousse de premiers secours grand froid', category: 'Sécurité', weightG: 220, essential: true, checked: true },
-  ],
-  'kit-trek-fast': [
-    { id: '1', name: 'Sac à dos Fastpacking 28L Dyneema', category: 'Portage', weightG: 490, essential: true, checked: true },
-    { id: '2', name: 'Drap de soie ultra-léger thermique', category: 'Couchage', weightG: 120, essential: true, checked: true },
-    { id: '3', name: 'Veste imperméable Shakedry Gore-Tex', category: 'Vêtements', weightG: 150, essential: true, checked: true },
-    { id: '4', name: 'Gourde filtrante Katadyn BeFree 1.0L', category: 'Hydratation', weightG: 110, essential: true, checked: true },
-    { id: '5', name: 'Bâtons Black Diamond Distance Carbon Z', category: 'Marche', weightG: 280, essential: false, checked: true },
-    { id: '6', name: 'Lampe frontale Petzl Bindi 200 lm', category: 'Sécurité', weightG: 75, essential: true, checked: true },
-    { id: '7', name: 'Trousse d’urgence trail & ampoules', category: 'Sécurité', weightG: 180, essential: true, checked: true },
-  ],
-  'kit-packraft-safe': [
-    { id: '1', name: 'Gilet de sauvetage 70N eaux vives certifié', category: 'Sécurité', weightG: 850, essential: true, checked: true },
-    { id: '2', name: 'Combinaison étanche latex respirante', category: 'Vêtements', weightG: 1150, essential: true, checked: true },
-    { id: '3', name: 'Casque homologué sports d’eaux vives', category: 'Sécurité', weightG: 420, essential: true, checked: true },
-    { id: '4', name: 'Corde de sécurité flottante largable 20m', category: 'Sécurité', weightG: 620, essential: true, checked: true },
-    { id: '5', name: 'Pagaie carbone démontable 4 brins', category: 'Navigation', weightG: 890, essential: true, checked: true },
-    { id: '6', name: 'Couteau rivière à bout rond avec sifflet', category: 'Sécurité', weightG: 120, essential: true, checked: true },
-  ],
-  'kit-bikepack-ultra': [
-    { id: '1', name: 'Sacoche de selle étanche Apidura 14L', category: 'Bagagerie', weightG: 380, essential: true, checked: true },
-    { id: '2', name: 'Sacoche de guidon roll-top 9L', category: 'Bagagerie', weightG: 320, essential: true, checked: true },
-    { id: '3', name: 'Tarp Silnylon ultralight 3x3m avec haubans', category: 'Bivouac', weightG: 490, essential: true, checked: true },
-    { id: '4', name: 'Bivy respirant déperlant Outdoor Research', category: 'Bivouac', weightG: 240, essential: true, checked: true },
-    { id: '5', name: 'Multitool vélo Crankbrothers 19 fonctions', category: 'Outillage', weightG: 190, essential: true, checked: true },
-    { id: '6', name: 'Pompe haute pression compacte & cartouches CO2', category: 'Outillage', weightG: 190, essential: true, checked: true },
-  ],
-};
+const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
+  {
+    id: '82fa4b02-71c5-4871-8b48-93dbb442d2d0',
+    name: 'Tente de Camping 2 Personnes Pro Ultralight',
+    brand: 'BigBuy Outdoor',
+    category: 'Bivouac / Sommeil',
+    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/tente-de-camping-2-personnes-categorie-bigbuy/01.jpg',
+    weight_g: 2000,
+    price_eur: 75,
+  },
+  {
+    id: '72c47eb4-b821-4ec0-be80-48a5922d2829',
+    name: 'Tente Abri / Bâche de Survie Réfléchissante',
+    brand: 'BigBuy Outdoor',
+    category: 'Bivouac / Sommeil',
+    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/tente-abri-bache-de-survie-categorie-bigbuy/01.jpg',
+    weight_g: 500,
+    price_eur: 35,
+  },
+  {
+    id: '5f941fb5-ef05-45c1-a57c-fdf376bea25f',
+    name: 'Sac de Couchage Compressible Grand Froid',
+    brand: 'Tineo Outdoor',
+    category: 'Bivouac / Sommeil',
+    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/sac-de-couchage-enfant-tineo-summer-tifruits-6-mois-coton/01.jpg',
+    weight_g: 700,
+    price_eur: 32,
+  },
+  {
+    id: 'a33c85dd-7f10-4eda-b33d-cf7f13e5417c',
+    name: 'Sac à Dos de Randonnée Ergonomique 45L',
+    brand: 'BigBuy Outdoor',
+    category: 'Équipement du sac',
+    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/sac-a-dos-de-randonnee-categorie-bigbuy/01.jpg',
+    weight_g: 800,
+    price_eur: 55,
+  },
+  {
+    id: 'e65a2dd0-509d-41ae-bc32-148dbd45849a',
+    name: 'Organiseur de Sac & Housses de Compression Étanches',
+    brand: 'Luggan Outdoor',
+    category: 'Équipement du sac',
+    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/organiseur-voyage-suitcase-organiser-luggan-innovagoods-6-pieces/01.jpg',
+    weight_g: 100,
+    price_eur: 12,
+  },
+  {
+    id: '649ebc6b-9e65-4256-8c31-983a7617a38d',
+    name: 'Poncho Imperméable Respirant Coupe-Vent',
+    brand: 'BigBuy Outdoor',
+    category: 'Vêtements / Protection',
+    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/sac-a-dos-de-randonnee-categorie-bigbuy/01.jpg',
+    weight_g: 150,
+    price_eur: 12,
+  },
+  {
+    id: 'fbf49688-757f-4bb5-86ec-f347e8d95f1b',
+    name: 'Gourde Thermos Isotherme Acier Inoxydable',
+    brand: 'BigBuy Outdoor',
+    category: 'Hydratation',
+    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/tasse-thermos-avec-couvercle-fc-barcelona-acier-inoxydable/01.jpg',
+    weight_g: 150,
+    price_eur: 14,
+  },
+  {
+    id: '3f812f18-7b26-4a5d-8d07-a70ff6b46f0f',
+    name: 'Système d’Hydratation Flasque Souple & Filtre',
+    brand: 'BigBuy Outdoor',
+    category: 'Hydratation',
+    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/sac-a-dos-hydratation-bouteille-deau-spider-man-410-ml/01.jpg',
+    weight_g: 220,
+    price_eur: 45,
+  },
+  {
+    id: '0ce62ae3-6398-48d4-be3a-de2ff265c26f',
+    name: 'Lampe Frontale LED Rechargeable Spot 400',
+    brand: 'Black Diamond',
+    category: 'Sécurité / Éclairage',
+    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/lampe-frontale-led-rechargeable-black-diamond-spot-400/01.jpg',
+    weight_g: 90,
+    price_eur: 75,
+  },
+  {
+    id: 'e4c51d60-99ad-46e2-bf10-7a2ff701e61f',
+    name: 'Trousse Premiers Secours & Répulsif Montagne',
+    brand: 'Relec Pro',
+    category: 'Sécurité / Éclairage',
+    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/anti-moustique-relec-373445-spray-repulsif/01.jpg',
+    weight_g: 100,
+    price_eur: 10,
+  },
+];
 
-function formatGrams(g: number): string {
-  if (g >= 1000) {
-    return `${(g / 1000).toFixed(2).replace('.', ',')} kg`;
-  }
-  return `${g} g`;
-}
+const USAGE_LOCATIONS = [
+  { name: 'Arête des Cosmiques · Massif du Mont-Blanc', alt: '3 842 m', sessions: 18, coords: [45.877, 6.887] },
+  { name: 'Cirque de Gavarnie · Hautes-Pyrénées', alt: '2 400 m', sessions: 14, coords: [42.695, -0.007] },
+  { name: 'Gorges du Verdon · Provence-Alpes', alt: '950 m', sessions: 9, coords: [43.742, 6.388] },
+  { name: 'Plateau de l’Aubrac · Lozère', alt: '1 280 m', sessions: 7, coords: [44.621, 3.033] },
+];
 
 export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
   isOpen,
@@ -83,94 +140,114 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
 }) => {
   const router = useRouter();
   const { haptic } = useHapticFeedback();
+  const { toast } = useToast();
 
   const [kitData, setKitData] = useState<KitSheetData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState<EquipmentItem[]>([]);
-  const [savedToCarnet, setSavedToCarnet] = useState(false);
-  const [shareSuccess, setShareSuccess] = useState(false);
+  const [products, setProducts] = useState<RealProductItem[]>(FALLBACK_REAL_PRODUCTS);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Pas trié');
+  const [showUsageMap, setShowUsageMap] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
+  const [selectorOpen, setSelectorOpen] = useState(false);
 
+  const touchStartY = useRef<number | null>(null);
+
+  // Load kit details from DB and products from shop_products
   useEffect(() => {
     if (!isOpen) return;
 
-    // Load presets immediately so user never waits
-    const preset = PRESET_EQUIPMENT[kitId] || [
-      { id: '1', name: 'Abri bivouac ultraléger & haubans', category: 'Bivouac', weightG: 980, essential: true, checked: true },
-      { id: '2', name: 'Sac de couchage thermique 800 Cuin', category: 'Couchage', weightG: 820, essential: true, checked: true },
-      { id: '3', name: 'Système d’hydratation filtrant rapide', category: 'Hydratation', weightG: 140, essential: true, checked: true },
-      { id: '4', name: 'Réchaud titane compact & popote', category: 'Cuisine', weightG: 165, essential: true, checked: true },
-      { id: '5', name: 'Trousse de premiers secours & balise GPS', category: 'Sécurité', weightG: 260, essential: true, checked: true },
-    ];
-    setItems(preset);
+    let alive = true;
+    const supabase = createClient();
 
-    setLoading(true);
+    // 1. Fetch real kit from DB
     fetch(`/api/kits/${kitId}/sheet`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data) {
-          setKitData(data);
+        if (!alive) return;
+        if (data) setKitData(data);
+      })
+      .catch(() => {});
+
+    // 2. Fetch real products from shop_products with image
+    supabase
+      .from('shop_products')
+      .select('id, name, brand, category, image, weight_g, price_eur')
+      .not('image', 'is', null)
+      .neq('image', '')
+      .limit(20)
+      .then(({ data: sp }) => {
+        if (!alive) return;
+        if (sp && sp.length > 0) {
+          const mapped: RealProductItem[] = sp.map((p) => ({
+            id: p.id,
+            name: p.name,
+            brand: p.brand,
+            category: p.category || 'Équipement',
+            image: p.image,
+            weight_g: p.weight_g || 150,
+            price_eur: p.price_eur,
+          }));
+          setProducts(mapped);
         }
       })
-      .catch((err) => {
-        console.warn('[FreedomKitDrawer] Error fetching kit sheet:', err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      .catch(() => {});
+
+    return () => {
+      alive = false;
+    };
   }, [isOpen, kitId]);
 
   if (!isOpen) return null;
 
-  const kitName = kitData?.kit?.name || initialName || 'Kit Aventure LKDV';
-  const totalWeightG = items.reduce((acc, it) => (it.checked ? acc + it.weightG : acc), 0);
-  const checkedCount = items.filter((it) => it.checked).length;
+  const kitName = kitData?.kit?.name || initialName || 'Kit Aventure Outdoor';
+  const lineageRoot = kitData?.kit?.parent_name || 'Souche Fondatrice LKDV';
+  const generation = kitData?.kit?.generation ? `Génération ${kitData.kit.generation}` : 'Génération 1';
 
-  const handleToggleItem = (itemId: string) => {
-    haptic('selection');
-    setItems((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, checked: !item.checked } : item)),
-    );
-  };
+  // Available categories for selector
+  const rawCategories = Array.from(new Set(products.map((p) => p.category)));
+  const categoryOptions = ['Pas trié', ...rawCategories];
 
-  const handleEmporter = () => {
-    haptic('medium');
-    onClose();
-    router.push(`/explorer?kitId=${encodeURIComponent(kitId)}`);
-  };
+  const displayedProducts =
+    selectedCategory === 'Pas trié'
+      ? products
+      : products.filter((p) => p.category === selectedCategory);
 
-  const handleSaveToCarnet = () => {
+  // Group displayed products by category if "Pas trié"
+  const groupedProducts: Record<string, RealProductItem[]> = {};
+  if (selectedCategory === 'Pas trié') {
+    for (const p of displayedProducts) {
+      if (!groupedProducts[p.category]) groupedProducts[p.category] = [];
+      groupedProducts[p.category].push(p);
+    }
+  } else {
+    groupedProducts[selectedCategory] = displayedProducts;
+  }
+
+  const handleAddToMyKits = () => {
     haptic('success');
-    setSavedToCarnet(true);
-    try {
-      const savedKits = JSON.parse(localStorage.getItem('lkdv_saved_kits') || '[]');
-      if (!savedKits.includes(kitId)) {
-        savedKits.push(kitId);
-        localStorage.setItem('lkdv_saved_kits', JSON.stringify(savedKits));
-      }
-    } catch {
-      // localStorage may fail in restricted iframes
-    }
-    setTimeout(() => setSavedToCarnet(false), 2400);
-  };
+    setIsAdded(true);
 
-  const handleShare = async () => {
-    haptic('light');
-    const shareUrl = `${window.location.origin}/communaute/reels?kit=${kitId}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: kitName,
-          text: `Découvre le ${kitName} sur Le Kit du Voyageur !`,
-          url: shareUrl,
-        });
-        return;
-      } catch {
-        // user cancelled or unsupported
+    try {
+      const saved = JSON.parse(localStorage.getItem('lkdv_saved_kits') || '[]');
+      if (!saved.includes(kitId)) {
+        saved.push(kitId);
+        localStorage.setItem('lkdv_saved_kits', JSON.stringify(saved));
       }
+    } catch (e) {
+      console.warn('[Freedom] Local storage write error:', e);
     }
-    await navigator.clipboard?.writeText(shareUrl).catch(() => {});
-    setShareSuccess(true);
-    setTimeout(() => setShareSuccess(false), 2000);
+
+    // Show notification leading directly to the kit drawer in the compte page
+    toast(
+      'Kit ajouté à vos kits ! Tapez pour voir dans votre compte →',
+      'success',
+      4000,
+    );
+
+    // If tapped, navigate to compte page with kits drawer open
+    setTimeout(() => {
+      onClose();
+      router.push('/compte?tab=kits');
+    }, 900);
   };
 
   return (
@@ -183,158 +260,212 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
       {/* Background Scrim */}
       <div
         className="freedom-drawer-scrim"
-        onClick={() => {
-          haptic('light');
-          onClose();
-        }}
+        onClick={onClose}
       />
 
       {/* Drawer Card */}
-      <div className="freedom-drawer-card flex flex-col max-h-[82dvh] overflow-hidden">
-        {/* Pull Indicator Handle */}
-        <div className="freedom-drawer-handle" aria-hidden="true" />
+      <div
+        className="freedom-drawer-card relative flex flex-col max-h-[82dvh] overflow-hidden"
+        onTouchStart={(e) => {
+          touchStartY.current = e.touches[0]?.clientY ?? null;
+        }}
+        onTouchMove={(e) => {
+          const start = touchStartY.current;
+          if (start === null) return;
+          const currentY = e.touches[0]?.clientY ?? start;
+          // Swipe down to dismiss
+          if (currentY - start > 110) onClose();
+        }}
+      >
+        {/* Pull Grab Bar */}
+        <div className="freedom-drawer-grab" aria-hidden="true" onClick={onClose}>
+          <span />
+        </div>
 
-        {/* Drawer Header */}
-        <div className="freedom-drawer-header shrink-0 border-b border-black/5 pb-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#17402C]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#17402C]">
-                  <Sparkles size={11} className="text-[#17402C]" />
-                  Lignée Matériel Outdoor
-                </span>
-                {kitData?.trust?.endurance_score && (
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                    <ShieldCheck size={11} />
-                    {kitData.trust.endurance_score}/10
-                  </span>
-                )}
-              </div>
-              <h2 className="text-base font-bold text-[#172B24] leading-snug truncate">
-                {kitName}
-              </h2>
-            </div>
+        {/* Header: Title + Lineage Only (No close cross 'X') */}
+        <div className="px-4 pb-3 border-b border-black/5 shrink-0">
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#17402C]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#17402C]">
+              <Sparkles size={11} className="text-[#17402C]" />
+              Lignée LKDV · {generation}
+            </span>
+            <span className="text-[11px] font-medium text-black/50 truncate">
+              {lineageRoot}
+            </span>
+          </div>
 
+          <h2 className="text-lg font-extrabold text-[#172B24] leading-snug">
+            {kitName}
+          </h2>
+
+          {/* Button: Voir où ce kit a été utilisé */}
+          <div className="mt-2.5">
             <button
               type="button"
               onClick={() => {
                 haptic('light');
-                onClose();
+                setShowUsageMap(!showUsageMap);
               }}
-              className="grid size-8 place-items-center rounded-full bg-black/5 text-[#172B24] transition active:scale-90"
-              aria-label="Fermer la liste du kit"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#17402C]/20 bg-[#17402C]/5 px-3 py-1.5 text-xs font-semibold text-[#17402C] transition active:scale-95"
             >
-              <X size={18} />
+              <Compass size={13} />
+              <span>{showUsageMap ? 'Masquer la carte d’utilisation' : 'Voir où ce kit a été utilisé'}</span>
             </button>
           </div>
 
-          {/* Weight & Stats summary bar */}
-          <div className="mt-3 flex items-center justify-between rounded-xl bg-white/70 border border-black/5 px-3 py-2">
-            <div className="flex items-center gap-2">
-              <div className="grid size-8 place-items-center rounded-lg bg-[#17402C] text-white">
-                <Scale size={16} />
+          {/* Map Overlay for Kit Usage Points */}
+          {showUsageMap && (
+            <div className="mt-3 rounded-2xl border border-black/10 bg-[#F4F1EA] p-3 shadow-inner">
+              <div className="flex items-center justify-between pb-2 border-b border-black/5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#172B24]/70">
+                  Points de validation terrain
+                </span>
+                <span className="text-[10px] font-semibold text-[#17402C]">
+                  {USAGE_LOCATIONS.length} massifs éprouvés
+                </span>
               </div>
-              <div>
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-[#172B24]/60">
-                  Poids calculé
-                </div>
-                <div className="text-sm font-extrabold text-[#172B24]">
-                  {formatGrams(totalWeightG)}
-                </div>
-              </div>
-            </div>
 
-            <div className="text-right">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-[#172B24]/60">
-                Éléments
-              </div>
-              <div className="text-xs font-bold text-[#17402C]">
-                {checkedCount} / {items.length} sélectionnés
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons Row */}
-        <div className="shrink-0 grid grid-cols-3 gap-2 px-4 py-2.5 bg-black/[0.02] border-b border-black/5">
-          <button
-            type="button"
-            onClick={handleEmporter}
-            className="flex items-center justify-center gap-1.5 rounded-xl bg-[#17402C] px-2 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95"
-          >
-            <Compass size={14} />
-            <span>Emporter</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSaveToCarnet}
-            className={`flex items-center justify-center gap-1.5 rounded-xl border border-black/10 px-2 py-2 text-xs font-semibold transition active:scale-95 ${
-              savedToCarnet ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-white/80 text-[#172B24]'
-            }`}
-          >
-            {savedToCarnet ? <Check size={14} /> : <Bookmark size={14} />}
-            <span>{savedToCarnet ? 'Ajouté !' : 'Carnet'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleShare}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-black/10 bg-white/80 px-2 py-2 text-xs font-semibold text-[#172B24] transition active:scale-95"
-          >
-            <Share2 size={14} />
-            <span>{shareSuccess ? 'Copié !' : 'Partager'}</span>
-          </button>
-        </div>
-
-        {/* Gear Checklist List */}
-        <div className="flex-1 overflow-y-auto px-4 py-2 space-y-1.5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[#172B24]/60 pt-1 pb-0.5">
-            Équipement inclus dans cette trace
-          </div>
-
-          {items.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => handleToggleItem(item.id)}
-              className={`flex items-center justify-between rounded-xl p-2.5 transition cursor-pointer ${
-                item.checked
-                  ? 'bg-white border border-black/5 shadow-xs'
-                  : 'bg-black/[0.02] opacity-50'
-              }`}
-            >
-              <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                <div
-                  className={`grid size-5 shrink-0 place-items-center rounded-md border text-white transition ${
-                    item.checked
-                      ? 'border-[#17402C] bg-[#17402C]'
-                      : 'border-black/30 bg-white'
-                  }`}
-                >
-                  {item.checked && <Check size={12} strokeWidth={3} />}
-                </div>
-
-                <div className="min-w-0">
-                  <div className={`text-xs font-semibold truncate ${item.checked ? 'text-[#172B24]' : 'line-through text-black/50'}`}>
-                    {item.name}
+              <div className="mt-2 space-y-1.5">
+                {USAGE_LOCATIONS.map((loc, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between rounded-xl bg-white/80 px-2.5 py-1.5 text-xs"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <MapPin size={13} className="text-[#17402C] shrink-0" />
+                      <span className="font-semibold text-[#172B24] truncate">{loc.name}</span>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-2 text-[10px] text-black/60 font-mono">
+                      <span>{loc.alt}</span>
+                      <span className="font-bold text-[#17402C]">{loc.sessions} sorties</span>
+                    </div>
                   </div>
-                  <div className="text-[10px] text-black/50">
-                    {item.category} {item.essential && '· Recommandé'}
-                  </div>
-                </div>
+                ))}
               </div>
-
-              <span className="shrink-0 rounded-md bg-black/5 px-1.5 py-0.5 text-[10px] font-mono font-bold text-[#172B24]">
-                {formatGrams(item.weightG)}
-              </span>
-            </div>
-          ))}
-
-          {loading && (
-            <div className="py-2 text-center text-xs text-black/40">
-              Mise à jour de la lignée…
             </div>
           )}
+        </div>
+
+        {/* Products List Separated by Category */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+          {Object.entries(groupedProducts).map(([catName, catItems]) => (
+            <div key={catName} className="space-y-2">
+              <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#17402C] flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full bg-[#17402C]" />
+                <span>{catName}</span>
+                <span className="text-black/40 font-normal">({catItems.length})</span>
+              </div>
+
+              <div className="space-y-2">
+                {catItems.map((prod) => (
+                  <div
+                    key={prod.id}
+                    className="flex items-center gap-3 rounded-2xl border border-black/5 bg-white p-2.5 shadow-xs transition hover:shadow-sm"
+                  >
+                    {/* Product Image from DB */}
+                    <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-black/5 border border-black/5">
+                      {prod.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- DB product storage image
+                        <img
+                          src={prod.image}
+                          alt={prod.name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="grid h-full w-full place-items-center text-black/30">
+                          <Layers size={18} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-[#172B24] truncate leading-tight">
+                        {prod.name}
+                      </div>
+                      <div className="text-[11px] text-black/50 truncate mt-0.5">
+                        {prod.brand || prod.category}
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="rounded-md bg-black/5 px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#172B24]">
+                          {prod.weight_g >= 1000
+                            ? `${(prod.weight_g / 1000).toFixed(2)} kg`
+                            : `${prod.weight_g} g`}
+                        </span>
+                        {prod.price_eur ? (
+                          <span className="text-[10px] font-medium text-black/60">
+                            {prod.price_eur} €
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Floating Mini Category Selector in Bottom Right */}
+        <div className="absolute right-4 bottom-20 z-20">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                haptic('selection');
+                setSelectorOpen(!selectorOpen);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/85 px-3 py-1.5 text-xs font-bold text-[#172B24] shadow-md backdrop-blur-xl transition active:scale-95"
+              aria-label="Filtrer par catégorie"
+            >
+              <Layers size={13} className="text-[#17402C]" />
+              <span className="max-w-[110px] truncate">{selectedCategory}</span>
+              <ChevronDown size={12} className={`transition-transform ${selectorOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {selectorOpen && (
+              <div className="absolute right-0 bottom-full mb-2 w-48 rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-2xl animate-in fade-in zoom-in-95">
+                <div className="max-h-48 overflow-y-auto space-y-0.5">
+                  {categoryOptions.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => {
+                        haptic('selection');
+                        setSelectedCategory(cat);
+                        setSelectorOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium transition ${
+                        selectedCategory === cat
+                          ? 'bg-[#17402C] text-white font-bold'
+                          : 'text-[#172B24] hover:bg-black/5'
+                      }`}
+                    >
+                      <span className="truncate">{cat}</span>
+                      {selectedCategory === cat && <Check size={12} />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Single Action Button: "Ajouter à mes kits" only */}
+        <div className="shrink-0 p-4 bg-[#FCFBF8] border-t border-black/5">
+          <button
+            type="button"
+            onClick={handleAddToMyKits}
+            className={`w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold shadow-md transition active:scale-[0.98] ${
+              isAdded
+                ? 'bg-emerald-600 text-white'
+                : 'bg-[#17402C] text-white hover:bg-[#123323]'
+            }`}
+          >
+            {isAdded ? <Check size={18} strokeWidth={2.5} /> : <Compass size={18} />}
+            <span>{isAdded ? 'Kit ajouté à mes kits !' : 'Ajouter à mes kits'}</span>
+          </button>
         </div>
       </div>
     </div>

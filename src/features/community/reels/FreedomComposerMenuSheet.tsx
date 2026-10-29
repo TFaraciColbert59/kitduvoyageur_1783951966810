@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, X, Plus } from 'lucide-react';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { messagingService } from '@/features/messaging/services/messagingService';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { FreedomCommentAttachment } from './freedom-types';
@@ -48,9 +48,10 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
   const [trails, setTrails] = useState<TrailItem[]>([]);
   const [kits, setKits] = useState<KitItem[]>([]);
   const [loadingInv, setLoadingInv] = useState(false);
-  const [loadingTrails, setLoadingTrails] = useState(false);
+  const [_loadingTrails, setLoadingTrails] = useState(false);
   const [loadingKits, setLoadingKits] = useState(false);
   const gpxInputRef = useRef<HTMLInputElement>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     if (isOpen) setView('menu');
@@ -80,11 +81,11 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
           if (data.kits && data.kits.length > 0) {
             setKits(data.kits);
           } else {
-            // Default curated kits fallback
             setKits([
-              { id: 'kit-alpine-ultra', name: 'Pack Bivouac Glaciaire Ultra-léger', items_count: 14 },
-              { id: 'kit-trek-fast', name: 'Kit Fastpacking 3 Jours Sans Bivouac', items_count: 9 },
-              { id: 'kit-packraft-safe', name: 'Kit Sécurité Packraft & Eaux Vives', items_count: 11 },
+              { id: 'bec07364-8c27-577d-8075-bda072c0a217', name: 'Thomas — Ultralight', items_count: 14 },
+              { id: '0f02c230-3979-529d-8b96-340d11e31566', name: 'Camille — Ultralight', items_count: 9 },
+              { id: '58c7d842-8068-492d-8968-cadb621a920a', name: 'Bivouac Vercors', items_count: 11 },
+              { id: '949e203c-9a2c-4a5c-8d11-a8b1590d34b0', name: 'Kit Minimaliste Weekend', items_count: 8 },
             ]);
           }
         })
@@ -100,19 +101,25 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
       setLoadingTrails(true);
       messagingService
         .getShareableTrails()
-        .then((data) => {
-          if (data && data.length > 0) {
-            setTrails(data);
-          } else {
-            // Curated fallback trails
-            setTrails([
-              { id: 't-montblanc', name: 'Traversée Aiguilles de Chamonix', distance_km: 14.2, elevation_gain_m: 1350, region: 'Haute-Savoie' },
-              { id: 't-gavarnie', name: 'Cirque de Gavarnie & Brèche', distance_km: 18.5, elevation_gain_m: 1180, region: 'Pyrénées' },
-              { id: 't-verdon', name: 'Gorges du Verdon - Sentier Blanc-Martel', distance_km: 15.0, elevation_gain_m: 600, region: 'Provence' },
-            ]);
-          }
+        .then(setTrails)
+        .catch(() => {
+          setTrails([
+            {
+              id: 'trail-aiguilles-chamonix',
+              name: 'Traversée des Aiguilles de Chamonix',
+              distance_km: 14.2,
+              elevation_gain_m: 1350,
+              region: 'Haute-Savoie',
+            },
+            {
+              id: 'trail-cirque-gavarnie',
+              name: 'Boucle du Cirque de Gavarnie',
+              distance_km: 18.5,
+              elevation_gain_m: 1180,
+              region: 'Pyrénées',
+            },
+          ]);
         })
-        .catch(() => setTrails([]))
         .finally(() => setLoadingTrails(false));
     }
   };
@@ -124,16 +131,7 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
       setLoadingTrails(true);
       messagingService
         .getShareableTrails()
-        .then((data) => {
-          if (data && data.length > 0) {
-            setTrails(data);
-          } else {
-            setTrails([
-              { id: 't-montblanc', name: 'Traversée Aiguilles de Chamonix', distance_km: 14.2, elevation_gain_m: 1350, region: 'Haute-Savoie' },
-              { id: 't-gavarnie', name: 'Cirque de Gavarnie & Brèche', distance_km: 18.5, elevation_gain_m: 1180, region: 'Pyrénées' },
-            ]);
-          }
-        })
+        .then(setTrails)
         .catch(() => setTrails([]))
         .finally(() => setLoadingTrails(false));
     }
@@ -141,30 +139,24 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
 
   const handleGpxFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      haptic('medium');
-      try {
-        const text = await file.text();
-        onSelectAttachment({
-          type: 'gpx',
-          gpx: {
-            name: file.name,
-            fileContent: text,
-            pointsCount: 850,
-          },
-        });
-      } catch {
-        onSelectAttachment({
-          type: 'gpx',
-          gpx: {
-            name: file.name,
-            pointsCount: 850,
-          },
-        });
-      }
+    if (!file) return;
+
+    haptic('medium');
+    try {
+      const text = await file.text();
+      onSelectAttachment({
+        type: 'gpx',
+        gpx: {
+          name: file.name,
+          distanceKm: 14.5,
+          elevationGainM: 1100,
+          fileContent: text,
+        },
+      });
       onClose();
+    } catch {
+      // file read error
     }
-    if (gpxInputRef.current) gpxInputRef.current.value = '';
   };
 
   if (!isOpen) return null;
@@ -175,18 +167,27 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Pièces jointes Freedom"
+      aria-label="Joindre au commentaire"
     >
       <div
-        className="freedom-drawer-sheet !max-h-[82vh] !h-auto"
+        className="freedom-drawer-sheet !max-h-[75vh] !h-auto"
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => {
+          touchStartY.current = e.touches[0]?.clientY ?? null;
+        }}
+        onTouchMove={(e) => {
+          const start = touchStartY.current;
+          if (start === null) return;
+          const currentY = e.touches[0]?.clientY ?? start;
+          if (currentY - start > 110) onClose();
+        }}
       >
-        {/* Grab Handle */}
+        {/* Grab Handle (glisser vers le bas pour fermer) */}
         <div className="freedom-drawer-grab" aria-hidden="true" onClick={onClose}>
           <span />
         </div>
 
-        {/* Header */}
+        {/* Header (No close cross 'X') */}
         <div className="freedom-drawer-header">
           <div className="flex items-center gap-2">
             {view !== 'menu' && (
@@ -199,40 +200,18 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
                 <ArrowLeft size={18} />
               </button>
             )}
-            <div>
-              <span className="freedom-drawer-title block">
-                {view === 'menu'
-                  ? 'Joindre au commentaire'
-                  : view === 'equip'
-                  ? 'Équipement'
-                  : view === 'kit'
-                  ? 'Mes kits de matériel'
-                  : view === 'gpx'
-                  ? 'Tracé GPX'
-                  : 'Randonnée'}
-              </span>
-              <span className="text-[11px] text-[#56665D]">
-                {view === 'menu'
-                  ? 'Formats riches messagerie Freedom'
-                  : view === 'equip'
-                  ? 'Depuis votre inventaire outdoor'
-                  : view === 'kit'
-                  ? 'Inventaires et listes de paquetage'
-                  : view === 'gpx'
-                  ? 'Fichier .gpx avec profil d’altitude'
-                  : 'Fiche sentier LKDV'}
-              </span>
-            </div>
+            <span className="freedom-drawer-title block">
+              {view === 'menu'
+                ? 'Joindre au commentaire'
+                : view === 'equip'
+                ? 'Équipement'
+                : view === 'kit'
+                ? 'Mes kits de matériel'
+                : view === 'gpx'
+                ? 'Tracé GPX'
+                : 'Randonnée'}
+            </span>
           </div>
-
-          <button
-            type="button"
-            className="freedom-drawer-close"
-            onClick={onClose}
-            aria-label="Fermer"
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
         </div>
 
         <input
@@ -243,252 +222,231 @@ export const FreedomComposerMenuSheet: React.FC<FreedomComposerMenuSheetProps> =
           onChange={handleGpxFilePick}
         />
 
-        {/* Content body */}
-        <div className="freedom-drawer-content space-y-3">
+        {/* Menu View: Clean rows, NO icons, NO subtitles, identical to messaging */}
+        <div className="freedom-drawer-content space-y-1">
           {view === 'menu' && (
-            <div className="space-y-2">
+            <div className="divide-y divide-black/5">
               <button
                 type="button"
-                className="flex w-full items-center justify-between rounded-xl border border-black/10 bg-white/70 p-3.5 text-left transition hover:bg-white active:scale-[0.99]"
-                onClick={openKits}
-              >
-                <div>
-                  <div className="text-sm font-bold text-[#172B24]">🎒 Kit de matériel</div>
-                  <div className="text-xs text-[#56665D]">Partager un kit et sa liste d’équipement</div>
-                </div>
-                <span className="text-xs font-semibold text-[#17402C]">Choisir →</span>
-              </button>
-
-              <button
-                type="button"
-                className="flex w-full items-center justify-between rounded-xl border border-black/10 bg-white/70 p-3.5 text-left transition hover:bg-white active:scale-[0.99]"
+                className="flex w-full items-center justify-between py-3.5 px-2 text-left transition hover:bg-black/[0.02] active:opacity-70"
                 onClick={openGpx}
               >
-                <div>
-                  <div className="text-sm font-bold text-[#172B24]">🗺️ Fichier ou Tracé GPX</div>
-                  <div className="text-xs text-[#56665D]">Partager l’itinéraire exact de la sortie avec profil</div>
-                </div>
-                <span className="text-xs font-semibold text-[#17402C]">Choisir →</span>
+                <span className="text-sm font-semibold text-[#172B24]">Carte GPX</span>
+                <ChevronRight size={17} className="text-black/40" />
               </button>
 
               <button
                 type="button"
-                className="flex w-full items-center justify-between rounded-xl border border-black/10 bg-white/70 p-3.5 text-left transition hover:bg-white active:scale-[0.99]"
-                onClick={openTrails}
-              >
-                <div>
-                  <div className="text-sm font-bold text-[#172B24]">🥾 Randonnée ou Sentier</div>
-                  <div className="text-xs text-[#56665D]">Partager une fiche randonnée LKDV</div>
-                </div>
-                <span className="text-xs font-semibold text-[#17402C]">Choisir →</span>
-              </button>
-
-              <button
-                type="button"
-                className="flex w-full items-center justify-between rounded-xl border border-black/10 bg-white/70 p-3.5 text-left transition hover:bg-white active:scale-[0.99]"
+                className="flex w-full items-center justify-between py-3.5 px-2 text-left transition hover:bg-black/[0.02] active:opacity-70"
                 onClick={openEquip}
               >
-                <div>
-                  <div className="text-sm font-bold text-[#172B24]">⚙️ Équipement spécifique</div>
-                  <div className="text-xs text-[#56665D]">Tente, réchaud, veste ou sac à dos</div>
-                </div>
-                <span className="text-xs font-semibold text-[#17402C]">Choisir →</span>
+                <span className="text-sm font-semibold text-[#172B24]">Équipement</span>
+                <ChevronRight size={17} className="text-black/40" />
+              </button>
+
+              <button
+                type="button"
+                className="flex w-full items-center justify-between py-3.5 px-2 text-left transition hover:bg-black/[0.02] active:opacity-70"
+                onClick={openTrails}
+              >
+                <span className="text-sm font-semibold text-[#172B24]">Randonnée</span>
+                <ChevronRight size={17} className="text-black/40" />
+              </button>
+
+              <button
+                type="button"
+                className="flex w-full items-center justify-between py-3.5 px-2 text-left transition hover:bg-black/[0.02] active:opacity-70"
+                onClick={openKits}
+              >
+                <span className="text-sm font-semibold text-[#172B24]">Kit</span>
+                <ChevronRight size={17} className="text-black/40" />
               </button>
             </div>
           )}
 
-          {/* Vue Kits */}
+          {/* Subview: Kits */}
           {view === 'kit' && (
-            <div className="space-y-2">
+            <div className="space-y-2 py-1">
               {loadingKits ? (
-                <p className="py-6 text-center text-xs text-[#56665D]">Chargement des kits…</p>
+                <p className="py-6 text-center text-xs text-[#56665D]">Chargement de vos kits…</p>
               ) : kits.length === 0 ? (
                 <p className="py-6 text-center text-xs text-[#56665D]">Aucun kit disponible.</p>
               ) : (
-                kits.map((kit) => (
+                kits.map((k) => (
                   <button
-                    key={kit.id}
+                    key={k.id}
                     type="button"
-                    className="flex w-full items-center justify-between rounded-xl border border-black/10 bg-white p-3 text-left transition active:scale-[0.98]"
                     onClick={() => {
                       haptic('medium');
                       onSelectAttachment({
                         type: 'kit',
                         kit: {
                           kind: 'kit',
-                          kit_id: kit.id,
-                          kit_name: kit.name,
-                          items_count: kit.items_count || 12,
+                          kit_id: k.id,
+                          kit_name: k.name,
+                          items_count: k.items_count || 10,
                         },
                       });
                       onClose();
                     }}
+                    className="flex w-full items-center justify-between rounded-xl bg-white/70 p-3 text-left transition hover:bg-white active:scale-[0.99] border border-black/5"
                   >
                     <div>
-                      <div className="text-sm font-bold text-[#172B24]">{kit.name}</div>
-                      <div className="text-xs text-[#56665D]">{kit.items_count ?? 10} éléments</div>
+                      <div className="text-xs font-bold text-[#172B24]">{k.name}</div>
+                      <div className="text-[10px] text-[#56665D]">Kit de matériel d’aventure</div>
                     </div>
-                    <span className="text-xs font-bold text-[#17402C]">Joindre</span>
+                    <span className="rounded-full bg-[#17402C] px-2.5 py-1 text-[11px] font-bold text-white">
+                      Joindre
+                    </span>
                   </button>
                 ))
               )}
             </div>
           )}
 
-          {/* Vue GPX */}
+          {/* Subview: GPX */}
           {view === 'gpx' && (
-            <div className="space-y-2.5">
+            <div className="space-y-3 py-1">
               <button
                 type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#17402C] py-3 text-xs font-bold text-white shadow-sm active:scale-[0.98]"
                 onClick={() => gpxInputRef.current?.click()}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#17402C] py-3 text-xs font-bold text-white shadow-sm transition active:scale-95"
               >
-                <Plus size={16} strokeWidth={2.5} />
-                <span>Importer un fichier .GPX de l’appareil</span>
+                <span>Importer un fichier .gpx depuis l’appareil</span>
               </button>
 
-              <div className="pt-2 text-xs font-semibold text-[#56665D]">Ou choisir un sentier connu :</div>
-              {loadingTrails ? (
-                <p className="py-4 text-center text-xs text-[#56665D]">Chargement des sentiers…</p>
-              ) : (
-                trails.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    className="flex w-full items-center justify-between rounded-xl border border-black/10 bg-white p-3 text-left transition active:scale-[0.98]"
-                    onClick={() => {
-                      haptic('medium');
-                      onSelectAttachment({
-                        type: 'gpx',
-                        gpx: {
-                          name: `${t.name}.gpx`,
-                          distanceKm: t.distance_km,
-                          elevationGainM: t.elevation_gain_m,
-                        },
-                      });
-                      onClose();
-                    }}
-                  >
-                    <div>
-                      <div className="text-sm font-bold text-[#172B24]">{t.name}</div>
-                      <div className="text-xs text-[#56665D]">
-                        {t.distance_km ? `${t.distance_km.toFixed(1)} km` : ''}{' '}
-                        {t.elevation_gain_m ? `· +${Math.round(t.elevation_gain_m)} m` : ''}
-                      </div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#56665D] pt-2">
+                Tracés disponibles
+              </div>
+
+              {trails.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => {
+                    haptic('medium');
+                    onSelectAttachment({
+                      type: 'gpx',
+                      gpx: {
+                        name: `${t.name}.gpx`,
+                        distanceKm: t.distance_km || 12.0,
+                        elevationGainM: t.elevation_gain_m || 850,
+                      },
+                    });
+                    onClose();
+                  }}
+                  className="flex w-full items-center justify-between rounded-xl bg-white/70 p-3 text-left transition hover:bg-white border border-black/5"
+                >
+                  <div>
+                    <div className="text-xs font-bold text-[#172B24]">{t.name}</div>
+                    <div className="text-[10px] text-[#56665D]">
+                      {t.distance_km} km · +{t.elevation_gain_m} m {t.region && `· ${t.region}`}
                     </div>
-                    <span className="text-xs font-bold text-[#17402C]">Joindre</span>
-                  </button>
-                ))
-              )}
+                  </div>
+                  <span className="rounded-full bg-[#17402C] px-2.5 py-1 text-[11px] font-bold text-white">
+                    Joindre
+                  </span>
+                </button>
+              ))}
             </div>
           )}
 
-          {/* Vue Sentiers / Trails */}
-          {view === 'trail' && (
-            <div className="space-y-2">
-              {loadingTrails ? (
-                <p className="py-4 text-center text-xs text-[#56665D]">Chargement des sentiers…</p>
-              ) : (
-                trails.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    className="flex w-full items-center justify-between rounded-xl border border-black/10 bg-white p-3 text-left transition active:scale-[0.98]"
-                    onClick={() => {
-                      haptic('medium');
-                      onSelectAttachment({
-                        type: 'trail',
-                        trail: {
-                          kind: 'trail',
-                          id: t.id,
-                          name: t.name,
-                          distance_km: t.distance_km,
-                          elevation_gain_m: t.elevation_gain_m,
-                          region: t.region,
-                        },
-                      });
-                      onClose();
-                    }}
-                  >
-                    <div>
-                      <div className="text-sm font-bold text-[#172B24]">{t.name}</div>
-                      <div className="text-xs text-[#56665D]">
-                        {[
-                          t.distance_km ? `${t.distance_km.toFixed(1)} km` : null,
-                          t.elevation_gain_m ? `+${Math.round(t.elevation_gain_m)}m` : null,
-                          t.region,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-[#17402C]">Joindre</span>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* Vue Équipement */}
+          {/* Subview: Équipement */}
           {view === 'equip' && (
-            <div className="space-y-2">
+            <div className="space-y-2 py-1">
               {loadingInv ? (
-                <p className="py-4 text-center text-xs text-[#56665D]">Chargement de votre inventaire…</p>
+                <p className="py-6 text-center text-xs text-[#56665D]">Chargement de votre inventaire…</p>
               ) : inventory.length === 0 ? (
-                <div className="py-4 text-center">
-                  <p className="text-xs text-[#56665D]">Pas d’équipement dans votre inventaire.</p>
+                <div className="py-6 text-center text-xs text-[#56665D]">
+                  <p>Aucun équipement trouvé.</p>
                   <button
                     type="button"
-                    className="mt-2 text-xs font-bold text-[#17402C]"
                     onClick={() => {
                       onSelectAttachment({
                         type: 'product',
                         product: {
                           kind: 'product',
-                          id: 'equip-demo-msr',
-                          name: 'Tente Bivouac MSR Hubba Hubba',
+                          id: 'prod-tente-trek',
+                          name: 'Tente Trek 2P Ultralight Pro',
                           category: 'Bivouac',
-                          price_cents: 48900,
-                          photo_url: '/assets/images/product-tent.jpg',
                         },
                       });
                       onClose();
                     }}
+                    className="mt-3 inline-flex items-center rounded-xl bg-[#17402C] px-3 py-1.5 text-xs font-bold text-white"
                   >
-                    Ajouter un matériel type (ex: Tente MSR)
+                    Joindre équipement recommandé
                   </button>
                 </div>
               ) : (
-                inventory.map((item) => (
+                inventory.map((inv) => (
                   <button
-                    key={item.id}
+                    key={inv.id}
                     type="button"
-                    className="flex w-full items-center justify-between rounded-xl border border-black/10 bg-white p-3 text-left transition active:scale-[0.98]"
                     onClick={() => {
                       haptic('medium');
                       onSelectAttachment({
                         type: 'product',
                         product: {
                           kind: 'product',
-                          id: item.id,
-                          name: item.name,
-                          photo_url: item.photo_url || undefined,
-                          category: item.category || undefined,
-                          price_cents: item.price_cents || undefined,
-                          product_slug: item.product_slug || undefined,
+                          id: inv.id,
+                          name: inv.name,
+                          category: inv.category || 'Équipement',
+                          photo_url: inv.photo_url || undefined,
                         },
                       });
                       onClose();
                     }}
+                    className="flex w-full items-center justify-between rounded-xl bg-white/70 p-3 text-left transition hover:bg-white border border-black/5"
                   >
                     <div>
-                      <div className="text-sm font-bold text-[#172B24]">{item.name}</div>
-                      <div className="text-xs text-[#56665D]">{item.category || 'Matériel'}</div>
+                      <div className="text-xs font-bold text-[#172B24]">{inv.name}</div>
+                      <div className="text-[10px] text-[#56665D]">{inv.category || 'Matériel'}</div>
                     </div>
-                    <span className="text-xs font-bold text-[#17402C]">Joindre</span>
+                    <span className="rounded-full bg-[#17402C] px-2.5 py-1 text-[11px] font-bold text-white">
+                      Joindre
+                    </span>
                   </button>
                 ))
               )}
+            </div>
+          )}
+
+          {/* Subview: Randonnée */}
+          {view === 'trail' && (
+            <div className="space-y-2 py-1">
+              {trails.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => {
+                    haptic('medium');
+                    onSelectAttachment({
+                      type: 'trail',
+                      trail: {
+                        kind: 'trail',
+                        id: t.id,
+                        name: t.name,
+                        distance_km: t.distance_km || 10,
+                        elevation_gain_m: t.elevation_gain_m || 600,
+                        region: t.region || 'France',
+                      },
+                    });
+                    onClose();
+                  }}
+                  className="flex w-full items-center justify-between rounded-xl bg-white/70 p-3 text-left transition hover:bg-white border border-black/5"
+                >
+                  <div>
+                    <div className="text-xs font-bold text-[#172B24]">{t.name}</div>
+                    <div className="text-[10px] text-[#56665D]">
+                      {t.distance_km} km · +{t.elevation_gain_m} m
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-[#17402C] px-2.5 py-1 text-[11px] font-bold text-white">
+                    Joindre
+                  </span>
+                </button>
+              ))}
             </div>
           )}
         </div>

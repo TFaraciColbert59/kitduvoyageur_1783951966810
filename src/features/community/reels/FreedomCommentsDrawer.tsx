@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Plus, Image as ImageIcon, Heart, CornerDownRight } from 'lucide-react';
+import { Send, Plus, Image as ImageIcon, Heart, CornerDownRight, X } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { KitCard } from '@/features/messaging/components/KitCard';
 import { GPXPreviewCard } from '@/features/messaging/components/GPXPreviewCard';
@@ -52,19 +52,30 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const touchStartY = useRef<number | null>(null);
 
+  // Load comments
   useEffect(() => {
     if (!isOpen) return;
+    let alive = true;
     setLoading(true);
-    fetchReelComments(reelId, currentUser)
-      .then((data) => {
-        setComments(data);
-        onCommentsCountChange?.(data.length);
-      })
-      .catch(() => setComments([]))
-      .finally(() => setLoading(false));
-  }, [isOpen, reelId, currentUser, onCommentsCountChange]);
 
-  // Handle escape key
+    fetchReelComments(reelId)
+      .then((data) => {
+        if (!alive) return;
+        setComments(data);
+      })
+      .catch((e) => {
+        console.error('[Freedom] Error loading comments:', e);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [isOpen, reelId]);
+
+  // Keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -78,7 +89,9 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   }, [isOpen, menuOpen, onClose]);
 
   const handleSend = async () => {
-    if ((!inputText.trim() && !pendingAttachment) || submitting) return;
+    const textToSend = inputText.trim();
+    if ((!textToSend && !pendingAttachment) || submitting) return;
+
     haptic('light');
     setSubmitting(true);
 
@@ -86,7 +99,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
       const newComment = await postReelComment(
         reelId,
         currentUser,
-        inputText,
+        textToSend,
         pendingAttachment,
         replyingTo?.id || null,
       );
@@ -125,15 +138,14 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      haptic('light');
-      const url = URL.createObjectURL(file);
-      setPendingAttachment({
-        type: 'photo',
-        photoUrl: url,
-      });
-    }
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (!file) return;
+
+    haptic('medium');
+    const localUrl = URL.createObjectURL(file);
+    setPendingAttachment({
+      type: 'photo',
+      photoUrl: localUrl,
+    });
   };
 
   if (!isOpen) return null;
@@ -144,7 +156,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Discussion Freedom"
+      aria-label="Commentaires"
     >
       <div
         className="freedom-drawer-sheet"
@@ -156,65 +168,50 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
           const start = touchStartY.current;
           if (start === null) return;
           const currentY = e.touches[0]?.clientY ?? start;
-          const deltaY = currentY - start;
-          if (deltaY > 120 && (!listRef.current || listRef.current.scrollTop <= 0)) {
-            onClose();
-          }
+          // Glisser vers le bas pour fermer
+          if (currentY - start > 110) onClose();
         }}
       >
-        {/* Grab Handle */}
+        {/* Grab Handle (pour fermer en glissant vers le bas) */}
         <div className="freedom-drawer-grab" aria-hidden="true" onClick={onClose}>
           <span />
         </div>
 
-        {/* Header */}
-        <div className="freedom-drawer-header">
-          <span className="freedom-drawer-title">
-            Commentaires ({comments.length})
-          </span>
-          <button
-            type="button"
-            className="freedom-drawer-close"
-            onClick={onClose}
-            aria-label="Fermer les commentaires"
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
-        </div>
+        {/* Note: Le titre "Commentaires" et la croix de fermeture ont été retirés selon la consigne */}
 
-        {/* Comments Scrollable List */}
+        {/* Comments List */}
         <div ref={listRef} className="freedom-drawer-content space-y-4">
           {loading ? (
-            <p className="py-8 text-center text-xs text-[#56665D]">Chargement des commentaires…</p>
+            <div className="flex h-36 items-center justify-center">
+              <div className="size-6 animate-spin rounded-full border-2 border-[#17402C] border-t-transparent" />
+            </div>
           ) : comments.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-sm font-semibold text-[#172B24]">Aucun commentaire pour le moment.</p>
-              <p className="mt-1 text-xs text-[#56665D]">
-                Sois le premier à échanger ou partager un kit/trace GPX !
-              </p>
+            <div className="flex h-44 flex-col items-center justify-center gap-2 text-center text-sm text-[#56665D]">
+              <p className="font-semibold text-[#172B24]">Aucun commentaire pour l’instant.</p>
+              <p className="text-xs">Soyez le premier voyageur à partager votre avis ou votre kit !</p>
             </div>
           ) : (
             comments.map((comment) => (
-              <div key={comment.id} className="flex gap-2.5">
+              <div key={comment.id} className="flex items-start gap-2.5">
                 {/* Avatar */}
-                <div className="size-8 shrink-0 overflow-hidden rounded-full border border-black/10 bg-[#17402C]/10 text-center font-bold text-[#17402C]">
+                <div className="size-8 shrink-0 overflow-hidden rounded-full bg-[#E5EAE3] border border-black/5">
                   {comment.author.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                    // eslint-disable-next-line @next/next/no-img-element -- distant avatar
                     <img
                       src={comment.author.avatarUrl}
                       alt={comment.author.name}
                       className="size-full object-cover"
                     />
                   ) : (
-                    <span className="grid size-full place-items-center text-xs">
+                    <div className="grid size-full place-items-center text-xs font-bold text-[#17402C]">
                       {comment.author.name.charAt(0).toUpperCase()}
-                    </span>
+                    </div>
                   )}
                 </div>
 
-                {/* Body */}
+                {/* Comment Body */}
                 <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-baseline gap-2">
                     <span className="text-xs font-bold text-[#172B24]">
                       {comment.author.name}
                     </span>
@@ -258,85 +255,94 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
                       )}
 
                       {comment.attachment.type === 'photo' && comment.attachment.photoUrl && (
-                        <div className="max-w-[240px] overflow-hidden rounded-xl border border-black/10">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <div className="overflow-hidden rounded-xl border border-black/10">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- user comment photo */}
                           <img
                             src={comment.attachment.photoUrl}
-                            alt="Pièce jointe"
-                            className="max-h-48 w-full object-cover"
+                            alt="Photo partagée"
+                            className="max-h-48 w-auto rounded-xl object-cover"
                           />
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Actions (Reply, Like count) */}
-                  <div className="flex items-center gap-3 pt-1 text-[11px] font-semibold text-[#56665D]">
+                  {/* Reply Button */}
+                  <div className="pt-0.5">
                     <button
                       type="button"
                       onClick={() => {
+                        haptic('selection');
                         setReplyingTo(comment);
                         inputRef.current?.focus();
                       }}
-                      className="hover:text-[#17402C]"
+                      className="text-[11px] font-semibold text-[#56665D] hover:text-[#17402C]"
                     >
                       Répondre
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleToggleLike(comment.id)}
-                      className={`flex items-center gap-1 ${comment.isLiked ? 'text-[#FF4A6E]' : 'hover:text-[#17402C]'}`}
-                    >
-                      <Heart
-                        size={12}
-                        fill={comment.isLiked ? 'currentColor' : 'none'}
-                        strokeWidth={2}
-                      />
-                      <span>{comment.likesCount > 0 ? comment.likesCount : ''}</span>
-                    </button>
                   </div>
                 </div>
+
+                {/* Like Button on Comment */}
+                <button
+                  type="button"
+                  onClick={() => handleToggleLike(comment.id)}
+                  className="flex flex-col items-center gap-0.5 pt-1 text-[#56665D] hover:text-[#FF2D55]"
+                  aria-label="Aimer le commentaire"
+                >
+                  <Heart
+                    size={14}
+                    fill={comment.isLiked ? '#FF2D55' : 'none'}
+                    color={comment.isLiked ? '#FF2D55' : 'currentColor'}
+                    strokeWidth={comment.isLiked ? 0 : 2}
+                  />
+                  {comment.likesCount > 0 && (
+                    <span className="text-[10px] font-medium">{comment.likesCount}</span>
+                  )}
+                </button>
               </div>
             ))
           )}
         </div>
 
-        {/* Replying banner */}
+        {/* Replying Banner */}
         {replyingTo && (
-          <div className="flex items-center justify-between border-t border-black/5 bg-[#F0EDE6] px-4 py-1.5 text-xs text-[#56665D]">
-            <span className="flex items-center gap-1">
-              <CornerDownRight size={12} />
-              En réponse à <b className="text-[#172B24]">{replyingTo.author.name}</b>
-            </span>
+          <div className="flex items-center justify-between bg-black/5 px-4 py-1.5 text-xs text-[#172B24]">
+            <div className="flex items-center gap-1.5 truncate">
+              <CornerDownRight size={13} className="text-[#17402C]" />
+              <span>En réponse à <b>{replyingTo.author.name}</b></span>
+            </div>
             <button
               type="button"
               onClick={() => setReplyingTo(null)}
-              className="text-xs font-bold text-[#7A241C]"
+              className="text-xs font-semibold text-[#7A241C]"
             >
               Annuler
             </button>
           </div>
         )}
 
-        {/* Pending Attachment Preview Chip */}
+        {/* Pending Attachment Preview Banner */}
         {pendingAttachment && (
-          <div className="flex items-center justify-between border-t border-black/10 bg-[#E8F0E6] px-4 py-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#17402C]">
+          <div className="flex items-center justify-between border-t border-black/5 bg-[#E8F0E6] px-4 py-2 text-xs font-semibold text-[#17402C]">
+            <div className="flex items-center gap-2 truncate">
               {pendingAttachment.type === 'kit' && (
-                <span>🎒 Kit : {pendingAttachment.kit?.kit_name || 'Matériel'}</span>
+                <span>Kit : {pendingAttachment.kit?.kit_name || 'Matériel'}</span>
               )}
               {pendingAttachment.type === 'gpx' && (
-                <span>🗺️ GPX : {pendingAttachment.gpx?.name || 'Tracé'}</span>
+                <span>Tracé GPX : {pendingAttachment.gpx?.name || 'Tracé'}</span>
               )}
               {pendingAttachment.type === 'product' && (
-                <span>⚙️ Équipement : {pendingAttachment.product?.name}</span>
+                <span>Équipement : {pendingAttachment.product?.name}</span>
               )}
               {pendingAttachment.type === 'trail' && (
-                <span>🥾 Randonnée : {pendingAttachment.trail?.name}</span>
+                <span>Randonnée : {pendingAttachment.trail?.name}</span>
               )}
-              {pendingAttachment.type === 'photo' && <span>📷 Photo prête</span>}
+              {pendingAttachment.type === 'photo' && (
+                <span>Photo prête à l’envoi</span>
+              )}
             </div>
+
             <button
               type="button"
               onClick={() => setPendingAttachment(null)}
@@ -402,29 +408,32 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
 
             {/* Send Button */}
             <button
-              type="submit"
+              type="button"
+              onClick={() => void handleSend()}
               disabled={(!inputText.trim() && !pendingAttachment) || submitting}
               className={`freedom-composer-btn is-send ${
                 (!inputText.trim() && !pendingAttachment) || submitting ? 'opacity-40' : ''
               }`}
               aria-label="Publier le commentaire"
             >
-              <Send size={16} />
+              <Send size={18} />
             </button>
           </form>
         </div>
+      </div>
 
-        {/* Attachment Choice Drawer */}
+      {/* Rich Attachments Sheet (GPX, Kit, Équipement, Rando) */}
+      {menuOpen && (
         <FreedomComposerMenuSheet
           isOpen={menuOpen}
-          onClose={() => setMenuOpen(false)}
           currentUserId={currentUser?.id}
+          onClose={() => setMenuOpen(false)}
           onSelectAttachment={(att) => {
             setPendingAttachment(att);
-            inputRef.current?.focus();
+            setMenuOpen(false);
           }}
         />
-      </div>
+      )}
     </div>
   );
 };

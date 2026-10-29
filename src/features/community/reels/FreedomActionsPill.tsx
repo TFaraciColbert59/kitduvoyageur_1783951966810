@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Heart, MessageCircle, Send, Plus } from 'lucide-react';
+import { Heart, MessageCircle, Send, Plus, Check } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { FreedomReelItem } from './freedom-types';
 
@@ -17,6 +17,8 @@ export interface FreedomActionsPillProps {
   onComment: () => void;
   onShare: () => void;
   onFollow?: () => void;
+  onAuthorClick?: () => void;
+  onOpenSound?: () => void;
 }
 
 function formatCount(n: number): string {
@@ -38,6 +40,8 @@ export const FreedomActionsPill: React.FC<FreedomActionsPillProps> = ({
   onComment,
   onShare,
   onFollow,
+  onAuthorClick,
+  onOpenSound,
 }) => {
   const { haptic } = useHapticFeedback();
 
@@ -47,33 +51,49 @@ export const FreedomActionsPill: React.FC<FreedomActionsPillProps> = ({
       role="group"
       aria-label="Actions du reel Freedom"
     >
-      {/* 1. Avatar de l'auteur avec badge de suivi (+) */}
+      {/* 1. Avatar de l'auteur cliquable (redirection vers le profil) avec badge de suivi (+) en verre */}
       <div className="freedom-avatar-anchor">
-        {reel.author.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- distant avatar
-          <img
-            src={reel.author.avatarUrl}
-            alt={reel.author.name}
-            className="freedom-avatar-img"
-          />
-        ) : (
-          <div className="freedom-avatar-img grid place-items-center bg-[#17402C] text-xs font-bold text-white">
-            {reel.author.name.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            haptic('light');
+            onAuthorClick?.();
+          }}
+          className="block size-full rounded-full transition active:scale-95"
+          aria-label={`Voir le profil de ${reel.author.name}`}
+        >
+          {reel.author.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- distant avatar
+            <img
+              src={reel.author.avatarUrl}
+              alt={reel.author.name}
+              className="freedom-avatar-img"
+            />
+          ) : (
+            <div className="freedom-avatar-img grid place-items-center bg-[#17402C] text-xs font-bold text-white">
+              {reel.author.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </button>
 
-        {onFollow && !following && (
+        {/* Follow Badge (+) avec background VERRE liquide (pas rose) */}
+        {onFollow && (
           <button
             type="button"
-            className="freedom-follow-badge"
-            aria-label={`Suivre ${reel.author.name}`}
+            className={`freedom-follow-badge${following ? ' is-following' : ''}`}
+            aria-label={following ? `Abonné à ${reel.author.name}` : `Suivre ${reel.author.name}`}
             onClick={(e) => {
               e.stopPropagation();
               haptic('medium');
               onFollow();
             }}
           >
-            <Plus size={11} strokeWidth={3} aria-hidden="true" />
+            {following ? (
+              <Check size={11} strokeWidth={3} aria-hidden="true" />
+            ) : (
+              <Plus size={11} strokeWidth={3} aria-hidden="true" />
+            )}
           </button>
         )}
       </div>
@@ -129,13 +149,19 @@ export const FreedomActionsPill: React.FC<FreedomActionsPillProps> = ({
         <span className="freedom-glass-count">{formatCount(sharesCount)}</span>
       </button>
 
-      {/* 5. Disque audio vinyle rotatif */}
-      <div
+      {/* 5. Disque audio vinyle rotatif (clic ouvre le Sound Drawer) */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          haptic('light');
+          onOpenSound?.();
+        }}
         className={`freedom-sound-disc${isPlaying ? '' : ' is-paused'}`}
-        aria-hidden="true"
+        aria-label={`Piste audio : ${reel.soundTitle}`}
       >
         <div className="size-2 rounded-full bg-white shadow-sm" />
-      </div>
+      </button>
     </div>
   );
 };

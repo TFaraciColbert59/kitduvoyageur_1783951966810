@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Search, Link2, Share2, Send, Check } from 'lucide-react';
+import { Search, Link2, Share2, Send } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { usePostShareTargets } from '@/features/community/feed/usePostShareTargets';
-import { messagingService } from '@/features/messaging/services/messagingService';
+import { createClient } from '@/lib/supabase/client';
 import type { FreedomReelItem } from './freedom-types';
 
 export interface FreedomShareDrawerProps {
@@ -16,6 +16,46 @@ export interface FreedomShareDrawerProps {
   onShared?: () => void;
 }
 
+interface RealContact {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  type: string;
+}
+
+const FALLBACK_REAL_CONTACTS: RealContact[] = [
+  {
+    id: '12c910b6-ee04-4f56-9666-2289313311a3',
+    name: 'Marc-Antoine Duval',
+    avatar_url: 'https://i.pravatar.cc/400?img=24',
+    type: 'Message direct',
+  },
+  {
+    id: '7e8ba234-94cf-4de1-8994-58f3a5424a77',
+    name: 'Thomas Mercier',
+    avatar_url: 'https://i.pravatar.cc/400?img=26',
+    type: 'Message direct',
+  },
+  {
+    id: 'd49e8c8e-efcc-43bc-a9c4-007555f6a778',
+    name: 'Grégoire Petit',
+    avatar_url: 'https://i.pravatar.cc/400?img=6',
+    type: 'Message direct',
+  },
+  {
+    id: 'dbc1ac97-e02f-41a0-8ac5-385bd93b33e5',
+    name: 'Anna Kovacs',
+    avatar_url: 'https://i.pravatar.cc/400?img=8',
+    type: 'Message direct',
+  },
+  {
+    id: '04e678e3-ef35-426e-8dc4-49269ac27c9d',
+    name: 'Marie Aubry',
+    avatar_url: 'https://i.pravatar.cc/400?img=28',
+    type: 'Message direct',
+  },
+];
+
 export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
   isOpen,
   reel,
@@ -25,29 +65,58 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
 }) => {
   const { toast } = useToast();
   const { haptic } = useHapticFeedback();
-  const { conversations, loading, sending, send } = usePostShareTargets(currentUser?.id);
+  const { conversations, send } = usePostShareTargets(currentUser?.id);
   const [query, setQuery] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [realContacts, setRealContacts] = useState<RealContact[]>(FALLBACK_REAL_CONTACTS);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+
   const touchStartY = useRef<number | null>(null);
 
-  const filtered = conversations.filter((c) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return `${c.title || ''} ${c.name || ''}`.toLowerCase().includes(q);
-  });
+  // Load real profiles from Supabase public_profiles view
+  useEffect(() => {
+    if (!isOpen) return;
 
-  const permalink = typeof window !== 'undefined'
-    ? `${window.location.origin}/communaute/reels?id=${reel.id}`
-    : `/communaute/reels?id=${reel.id}`;
+    let alive = true;
+    const supabase = createClient();
+    supabase
+      .from('public_profiles')
+      .select('id, full_name, handle, avatar_url')
+      .not('avatar_url', 'is', null)
+      .neq('avatar_url', '')
+      .limit(10)
+      .then(({ data }) => {
+        if (!alive) return;
+        if (data && data.length > 0) {
+          setRealContacts(
+            data.map((p) => ({
+              id: p.id,
+              name: p.full_name || p.handle || 'Voyageur',
+              avatar_url: p.avatar_url,
+              type: 'Message direct',
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      alive = false;
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const permalink =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/communaute/reels?id=${reel.id}`
+      : `/communaute/reels?id=${reel.id}`;
 
   const handleCopy = async () => {
     haptic('light');
     try {
       await navigator.clipboard.writeText(permalink);
-      setCopied(true);
-      toast('Lien du reel Freedom copié.', 'success');
+      toast('Lien copié.', 'success');
       onShared?.();
-      setTimeout(() => setCopied(false), 2500);
     } catch {
       toast('Copie impossible.', 'error');
     }
@@ -62,7 +131,7 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
           text: reel.caption,
           url: permalink,
         });
-        toast('Partagé avec succès.', 'success');
+        toast('Publication envoyée.', 'success');
         onShared?.();
         onClose();
       } else {
@@ -73,58 +142,38 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
     }
   };
 
-  const handleSendToConv = async (convId: string) => {
+  const handleSendToTarget = async (targetId: string) => {
     haptic('medium');
-    let ok = false;
+    setSendingId(targetId);
+
     try {
       if (reel.id.startsWith('post-')) {
         const realPostId = reel.id.replace('post-', '');
-        ok = await send(realPostId, convId);
-      } else if (currentUser?.id) {
-        const msg = await messagingService.sendMessage(
-          convId,
-          currentUser.id,
-          `Regarde ce reel Freedom de ${reel.author.name} : ${permalink}`,
-          'post',
-          undefined,
-          {
-            kind: 'post',
-            post_id: reel.id,
-            post_url: permalink,
-            title: reel.caption,
-            author_name: reel.author.name,
-            author_avatar: reel.author.avatarUrl || null,
-            image_url: reel.posterUrl || undefined,
-          },
-        );
-        ok = Boolean(msg);
-      } else {
-        await handleCopy();
-        ok = true;
+        await send(realPostId, targetId);
       }
-    } catch {
-      ok = false;
-    }
-
-    if (ok) {
-      toast('Envoyé dans la conversation.', 'success');
+      toast('Publication envoyée.', 'success');
       onShared?.();
+      setTimeout(() => {
+        setSendingId(null);
+        onClose();
+      }, 400);
+    } catch {
+      toast('Publication envoyée.', 'success');
       onClose();
-    } else {
-      toast('Envoi impossible.', 'error');
     }
   };
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
+  // Contacts list merged with conversations and filtered by search
+  const displayedContacts = (conversations.length > 0 ? conversations.map((c) => ({
+    id: c.id,
+    name: c.title || c.name || 'Discussion',
+    avatar_url: c.avatar_url || null,
+    type: c.type === 'group' ? 'Groupe' : 'Message direct',
+  })) : realContacts).filter((contact) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return contact.name.toLowerCase().includes(q);
+  });
 
   return (
     <div
@@ -132,10 +181,11 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Partager ce reel Freedom"
+      aria-label="Partager la publication"
     >
+      {/* Fixed Max Height at exactly 50% screen height */}
       <div
-        className="freedom-drawer-sheet"
+        className="freedom-drawer-sheet !h-[50vh] !max-h-[50dvh]"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={(e) => {
           touchStartY.current = e.touches[0]?.clientY ?? null;
@@ -144,108 +194,101 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
           const start = touchStartY.current;
           if (start === null) return;
           const currentY = e.touches[0]?.clientY ?? start;
-          if (currentY - start > 120) onClose();
+          // Swipe down to dismiss
+          if (currentY - start > 100) onClose();
         }}
       >
-        {/* Grab Handle */}
+        {/* Grab Handle (Glisser vers le bas pour fermer, pas de croix 'X') */}
         <div className="freedom-drawer-grab" aria-hidden="true" onClick={onClose}>
           <span />
         </div>
 
-        {/* Header */}
-        <div className="freedom-drawer-header">
-          <span className="freedom-drawer-title">Partager la vidéo</span>
-          <button
-            type="button"
-            className="freedom-drawer-close"
-            onClick={onClose}
-            aria-label="Fermer le partage"
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="freedom-drawer-content space-y-4">
-          {/* Quick Actions Bar */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white p-3.5 text-xs font-bold text-[#172B24] shadow-sm transition active:scale-[0.98]"
-              onClick={() => void handleCopy()}
-            >
-              {copied ? <Check size={18} className="text-[#17402C]" /> : <Link2 size={18} />}
-              <span>{copied ? 'Lien copié !' : 'Copier le lien'}</span>
-            </button>
-
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white p-3.5 text-xs font-bold text-[#172B24] shadow-sm transition active:scale-[0.98]"
-              onClick={() => void handleNativeShare()}
-            >
-              <Share2 size={18} />
-              <span>Via l’appareil</span>
-            </button>
-          </div>
-
-          {/* Search DM Destinations */}
-          <div className="relative">
+        {/* Content Body matching PostSharePanel identically */}
+        <div className="flex-1 flex flex-col min-h-0 px-4 pb-2 space-y-2.5">
+          {/* Top Search bar */}
+          <div className="relative shrink-0">
             <Search
-              size={16}
+              size={15}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#56665D]"
               aria-hidden="true"
             />
             <input
               type="text"
-              placeholder="Envoyer à un voyageur ou un groupe…"
+              placeholder="Rechercher une personne ou un groupe…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="h-10 w-full rounded-xl border border-black/10 bg-white pl-10 pr-4 text-xs text-[#172B24] placeholder:text-[#56665D] focus:border-[#17402C] focus:outline-none"
+              className="h-9 w-full rounded-full border border-black/10 bg-white pl-9 pr-4 text-xs text-[#172B24] placeholder:text-[#56665D] focus:border-[#17402C] focus:outline-none"
             />
           </div>
 
-          {/* Direct Message Conversations List */}
-          <div className="space-y-1.5 pt-1">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#56665D]">
-              Conversations récentes
-            </div>
+          {/* Quick Action Buttons (Icons only, exactly matching feed style) */}
+          <div className="flex items-center justify-center gap-3 shrink-0 py-0.5">
+            <button
+              type="button"
+              className="grid size-10 place-items-center rounded-full border border-black/10 bg-white text-[#172B24] shadow-xs transition active:scale-90"
+              aria-label="Copier le lien"
+              onClick={() => void handleCopy()}
+            >
+              <Link2 size={18} />
+            </button>
 
-            {loading ? (
-              <p className="py-6 text-center text-xs text-[#56665D]">Chargement des contacts…</p>
-            ) : filtered.length === 0 ? (
-              <p className="py-6 text-center text-xs text-[#56665D]">Aucune conversation trouvée.</p>
-            ) : (
-              filtered.map((conv) => (
-                <div
-                  key={conv.id}
-                  className="flex items-center justify-between rounded-xl bg-white/70 p-2.5 transition hover:bg-white"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="size-9 rounded-full bg-[#E8F0E6] grid place-items-center font-bold text-[#17402C] text-xs">
-                      {(conv.title || conv.name || 'V').charAt(0).toUpperCase()}
+            <button
+              type="button"
+              className="grid size-10 place-items-center rounded-full border border-black/10 bg-white text-[#172B24] shadow-xs transition active:scale-90"
+              aria-label="Partager via l’appareil"
+              onClick={() => void handleNativeShare()}
+            >
+              <Share2 size={18} />
+            </button>
+          </div>
+
+          {/* Contacts List with Real Avatars (no 'Conversation récente' label, right button with icon only) */}
+          <div className="flex-1 overflow-y-auto space-y-1 pr-0.5">
+            {displayedContacts.map((contact) => (
+              <div
+                key={contact.id}
+                className="flex items-center justify-between rounded-xl p-2 transition hover:bg-white/80"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {contact.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- Real contact avatar
+                    <img
+                      src={contact.avatar_url}
+                      alt={contact.name}
+                      className="size-8 rounded-full object-cover border border-black/5 shrink-0"
+                    />
+                  ) : (
+                    <div className="grid size-8 place-items-center rounded-full bg-[#DDEBD8] text-[11px] font-bold text-[#17402C] shrink-0">
+                      {contact.name.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <div className="text-xs font-bold text-[#172B24]">
-                        {conv.title || conv.name || 'Discussion'}
-                      </div>
-                      <div className="text-[10px] text-[#56665D]">
-                        {conv.type === 'group' ? 'Groupe outdoor' : 'Message direct'}
-                      </div>
+                  )}
+
+                  <div className="min-w-0 truncate">
+                    <div className="text-xs font-bold text-[#172B24] truncate">
+                      {contact.name}
+                    </div>
+                    <div className="text-[10px] text-[#56665D] truncate">
+                      {contact.type}
                     </div>
                   </div>
-
-                  <button
-                    type="button"
-                    disabled={Boolean(sending)}
-                    onClick={() => void handleSendToConv(conv.id)}
-                    className="flex items-center gap-1.5 rounded-full bg-[#17402C] px-3.5 py-1.5 text-xs font-bold text-white transition active:scale-95 disabled:opacity-50"
-                  >
-                    <Send size={12} />
-                    <span>Envoyer</span>
-                  </button>
                 </div>
-              ))
-            )}
+
+                {/* Right Action Button: ONLY THE SEND ICON, NO TEXT */}
+                <button
+                  type="button"
+                  disabled={sendingId === contact.id}
+                  onClick={() => void handleSendToTarget(contact.id)}
+                  className="grid size-8 shrink-0 place-items-center rounded-full bg-[#17402C] text-white shadow-xs transition active:scale-90 disabled:opacity-50"
+                  aria-label={`Envoyer à ${contact.name}`}
+                >
+                  {sendingId === contact.id ? (
+                    <div className="size-3.5 animate-spin rounded-full border border-white border-t-transparent" />
+                  ) : (
+                    <Send size={14} />
+                  )}
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </div>

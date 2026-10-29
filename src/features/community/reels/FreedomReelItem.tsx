@@ -16,9 +16,11 @@ export interface FreedomReelItemProps {
   onOpenComments: (reel: ReelModel) => void;
   onOpenShare: (reel: ReelModel) => void;
   onOpenKit?: (kitId: string, kitName?: string) => void;
+  onOpenSound?: (soundTitle: string) => void;
   onLikeChange?: (reelId: string, liked: boolean, count: number) => void;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
+  onAuthorClick?: () => void;
 }
 
 export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
@@ -30,9 +32,11 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
   onOpenComments,
   onOpenShare,
   onOpenKit,
+  onOpenSound,
   onLikeChange,
   onSwipeLeft,
   onSwipeRight,
+  onAuthorClick,
 }) => {
   const { haptic } = useHapticFeedback();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -51,7 +55,7 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
 
-  // Synchronize active play/pause with high reliability and WebKit autoplay recovery
+  // Synchronize active play/pause with WebKit autoplay recovery
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -63,7 +67,6 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
         playPromise
           .then(() => setIsPlaying(true))
           .catch(() => {
-            // WebKit policy may require muted autoplay before first tactile interaction
             if (!video.muted) {
               video.muted = true;
               video
@@ -82,7 +85,7 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
     }
   }, [isActive, globalMuted]);
 
-  // Clean up media decoder when item is unmounted to free GPU resources
+  // Clean up media decoder when unmounted
   useEffect(() => {
     const video = videoRef.current;
     return () => {
@@ -94,7 +97,6 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
     };
   }, []);
 
-  // Track progress
   const handleTimeUpdate = () => {
     const video = videoRef.current;
     if (!video || !video.duration) return;
@@ -102,7 +104,7 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
     setProgress(pct);
   };
 
-  // Toggle Play / Pause on single tap
+  // Toggle Play / Pause on single tap: soft, épuré, icon max 15px sans background
   const handleTogglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -114,18 +116,17 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
         .then(() => {
           setIsPlaying(true);
           setShowCenterIcon('play');
-          setTimeout(() => setShowCenterIcon(null), 550);
+          setTimeout(() => setShowCenterIcon(null), 400);
         })
         .catch(() => {});
     } else {
       video.pause();
       setIsPlaying(false);
       setShowCenterIcon('pause');
-      setTimeout(() => setShowCenterIcon(null), 550);
+      setTimeout(() => setShowCenterIcon(null), 400);
     }
   }, [haptic]);
 
-  // Handle Like action
   const handleLike = useCallback(() => {
     const nextLiked = !liked;
     const nextCount = nextLiked ? likesCount + 1 : Math.max(0, likesCount - 1);
@@ -134,7 +135,6 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
     onLikeChange?.(reel.id, nextLiked, nextCount);
   }, [liked, likesCount, onLikeChange, reel.id]);
 
-  // Double tap gesture with floating heart burst at tap coordinates
   const doubleTap = useDoubleTap(
     () => {
       haptic('medium');
@@ -156,9 +156,6 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
     },
   );
 
-  // Horizontal Swipe Gestures
-  // Swipe Left -> Exit to Communauté
-  // Swipe Right -> Author's Profile
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 1) {
       touchStartXRef.current = e.touches[0].clientX;
@@ -173,7 +170,6 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
     const deltaX = endX - touchStartXRef.current;
     const deltaY = endY - touchStartYRef.current;
 
-    // Check if it's primarily a horizontal swipe (> 60px horizontal, with dominance over vertical movement)
     if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
       if (deltaX < -60) {
         // Swipe Left: exit Freedom Reels
@@ -215,16 +211,16 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
         onPause={() => setIsPlaying(false)}
       />
 
-      {/* 2. Top & Bottom gradient vignettes for perfect readability */}
+      {/* 2. Top & Bottom subtle vignettes */}
       <div className="freedom-vignette-overlay" aria-hidden="true" />
 
-      {/* 3. Center Pause / Play indicator */}
+      {/* 3. Center Pause / Play indicator: ÉPURÉ, SANS BACKGROUND, 15PX MAX */}
       {showCenterIcon && (
         <div className="freedom-center-state" aria-hidden="true">
           {showCenterIcon === 'play' ? (
-            <Play size={32} fill="white" />
+            <Play size={15} fill="white" strokeWidth={0} />
           ) : (
-            <Pause size={32} fill="white" />
+            <Pause size={15} fill="white" strokeWidth={0} />
           )}
         </div>
       )}
@@ -243,9 +239,19 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
 
       {/* 5. Left-Bottom Overlay: Author info, Caption, Minimal Kit Pill */}
       <div className="freedom-bottom-meta" onClick={(e) => e.stopPropagation()}>
-        {/* Author row (Location removed from bottom: now displayed at top center) */}
+        {/* Author row (Clic redirige vers le profil) */}
         <div className="freedom-author-row">
-          <span className="freedom-author-name">@{reel.author.handle}</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              haptic('light');
+              onAuthorClick?.();
+            }}
+            className="freedom-author-name text-left hover:underline focus:outline-none"
+          >
+            @{reel.author.handle}
+          </button>
         </div>
 
         {/* Caption */}
@@ -256,7 +262,7 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
           {reel.caption}
         </p>
 
-        {/* Minimal Kit Pill: ONLY kit name, everything else removed */}
+        {/* Minimal Kit Pill: ONLY kit name */}
         {reel.linkedKit && onOpenKit && (
           <div className="pt-1">
             <button
@@ -274,7 +280,7 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
         )}
       </div>
 
-      {/* 6. Vertical Liquid Glass Pill on Right Edge (Style TikTok) */}
+      {/* 6. Vertical Translucent Liquid Glass Pill on Right Edge */}
       <FreedomActionsPill
         reel={reel}
         liked={liked}
@@ -287,9 +293,11 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
         onComment={() => onOpenComments(reel)}
         onShare={() => onOpenShare(reel)}
         onFollow={() => {
-          setFollowing(true);
+          setFollowing(!following);
           haptic('medium');
         }}
+        onAuthorClick={onAuthorClick}
+        onOpenSound={() => onOpenSound?.(reel.soundTitle)}
       />
 
       {/* 7. Subtle Video Progress Bar at the very bottom */}
