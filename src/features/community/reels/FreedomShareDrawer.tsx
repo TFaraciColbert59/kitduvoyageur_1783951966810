@@ -78,13 +78,16 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
 
     let alive = true;
     const supabase = createClient();
-    supabase
-      .from('public_profiles')
-      .select('id, full_name, handle, avatar_url')
-      .not('avatar_url', 'is', null)
-      .neq('avatar_url', '')
-      .limit(10)
-      .then(({ data }) => {
+
+    const loadContacts = async () => {
+      try {
+        const { data } = await supabase
+          .from('public_profiles')
+          .select('id, full_name, handle, avatar_url')
+          .not('avatar_url', 'is', null)
+          .neq('avatar_url', '')
+          .limit(10);
+
         if (!alive) return;
         if (data && data.length > 0) {
           setRealContacts(
@@ -96,8 +99,12 @@ export const FreedomShareDrawer: React.FC<FreedomShareDrawerProps> = ({
             })),
           );
         }
-      })
-      .catch(() => {});
+      } catch (err) {
+        console.warn('[FreedomShareDrawer] Error loading contacts:', err);
+      }
+    };
+
+    void loadContacts();
 
     return () => {
       alive = false;

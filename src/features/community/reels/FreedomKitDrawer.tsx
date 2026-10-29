@@ -168,13 +168,15 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
       .catch(() => {});
 
     // 2. Fetch real products from shop_products with image
-    supabase
-      .from('shop_products')
-      .select('id, name, brand, category, image, weight_g, price_eur')
-      .not('image', 'is', null)
-      .neq('image', '')
-      .limit(20)
-      .then(({ data: sp }) => {
+    const loadProducts = async () => {
+      try {
+        const { data: sp } = await supabase
+          .from('shop_products')
+          .select('id, name, brand, category, image, weight_g, price_eur')
+          .not('image', 'is', null)
+          .neq('image', '')
+          .limit(20);
+
         if (!alive) return;
         if (sp && sp.length > 0) {
           const mapped: RealProductItem[] = sp.map((p) => ({
@@ -188,8 +190,11 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
           }));
           setProducts(mapped);
         }
-      })
-      .catch(() => {});
+      } catch (err) {
+        console.warn('[FreedomKitDrawer] Error loading products:', err);
+      }
+    };
+    void loadProducts();
 
     return () => {
       alive = false;
@@ -240,7 +245,6 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
     toast(
       'Kit ajouté à vos kits ! Tapez pour voir dans votre compte →',
       'success',
-      4000,
     );
 
     // If tapped, navigate to compte page with kits drawer open
