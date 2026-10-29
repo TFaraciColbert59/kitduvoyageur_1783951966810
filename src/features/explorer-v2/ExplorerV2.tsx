@@ -12,6 +12,7 @@ import { SosButton } from './chrome/SosButton';
 import { Countdown, useLongPress } from './activity/Countdown';
 import { useGpsTracker } from './activity/useGpsTracker';
 import { endLiveActivity, startLiveActivity, updateLiveActivity } from './native/liveActivity';
+import { performSosCall, planSosCall, sosSimulated } from './activity/sosCall';
 import { flushQueue, listQueue } from './offline/queue';
 import { registerOfflineWorker } from './offline/zone';
 import { offRouteLabel } from './activity/offRoute';
@@ -601,16 +602,30 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
           }}
           onResult={(result) => {
             haptic(result === 'cancelled' ? 'tab' : 'sos-fired');
+            if (result === 'cancelled') {
+              state.showToast({ title: 'SOS annulé', sub: 'Aucune alerte envoyée' });
+              return;
+            }
+
+            // Production : le compte à rebours abouti compose le numéro
+            // d'urgence du pays (04_CARTE §6). Recette : aucun composeur,
+            // le numéro est affiché pour la recette.
+            const plan = planSosCall(country?.practical?.emergency_numbers?.general, {
+              simulated: sosSimulated(),
+            });
+            const dialled = performSosCall(plan);
+            const callSuffix = dialled
+              ? ` · appel ${plan.number}`
+              : ` · numéro ${plan.number} (appel simulé)`;
+
             state.showToast(
-              result === 'cancelled'
-                ? { title: 'SOS annulé', sub: 'Aucune alerte envoyée' }
-                : result === 'sent'
-                  ? { title: 'Alerte envoyée', sub: 'Position transmise', tone: 'bad' }
-                  : {
-                      title: 'Alerte non enregistrée',
-                      sub: 'Connecte-toi pour transmettre ta position',
-                      tone: 'warn',
-                    },
+              result === 'sent'
+                ? { title: 'Alerte envoyée', sub: `Position transmise${callSuffix}`, tone: 'bad' }
+                : {
+                    title: 'Alerte non enregistrée',
+                    sub: `Connecte-toi pour transmettre ta position${callSuffix}`,
+                    tone: 'warn',
+                  },
             );
           }}
         />

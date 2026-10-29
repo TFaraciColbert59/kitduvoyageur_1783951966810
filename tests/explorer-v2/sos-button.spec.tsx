@@ -91,4 +91,31 @@ describe('Explorer v2 · bouton SOS', () => {
     fireEvent.keyDown(screen.getByRole('button', { name: /SOS/i }), { key: 'Enter' });
     expect(screen.getByRole('button', { name: /annuler/i })).toBeTruthy();
   });
+
+  it('aboutit à un appel simulé en recette (aucun composeur ouvert)', async () => {
+    // Le composant reste simulé : il ne touche pas à `window.location`.
+    // Le numéro composé est décidé par l'appelant (ExplorerV2) selon
+    // `NODE_ENV` / `NEXT_PUBLIC_EXPLORER_SCENES` — vérifié ici par un espion
+    // sur l'API de navigation.
+    const assign = vi.fn();
+    const original = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...original, href: '', assign },
+    });
+
+    render(<SosButton onSend={vi.fn()} onResult={vi.fn()} simulate />);
+    const button = screen.getByRole('button', { name: /SOS/i });
+    fireEvent.pointerDown(button);
+    act(() => {
+      vi.advanceTimersByTime(1600);
+    });
+    act(() => {
+      vi.advanceTimersByTime(5200);
+    });
+
+    expect(window.location.href).toBe('');
+    expect(assign).not.toHaveBeenCalled();
+    Object.defineProperty(window, 'location', { configurable: true, value: original });
+  });
 });

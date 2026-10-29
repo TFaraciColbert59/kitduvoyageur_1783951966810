@@ -1,8 +1,8 @@
 # RLS_INTRUSION · Explorer v2
 
-- Date : 2026-10-29T13:34:34.445Z
+- Date : 2026-10-29T19:09:49.205Z
 - Comptes : recette.lea@lkdv.test (A) · recette.yanis@lkdv.test (B, abonné mutuel)
-- Résultat : ✅ toutes les politiques tiennent
+- Résultat : ❌ 1 échec(s)
 
 | Contrôle | Résultat | Détail |
 |---|---|---|
@@ -14,6 +14,6 @@
 | B ne peut pas modifier la session de A | OK | HTTP 200, 0 ligne(s) |
 | B ne peut pas créer une session au nom de A | OK | HTTP 403 |
 | B ne lit aucune alerte SOS | OK | 0 ligne(s) |
-| geo_pois lisible publiquement (anon) | OK | HTTP 200 |
+| geo_pois lisible publiquement (anon) | ÉCHEC | HTTP 401 |
 | country_practical lisible publiquement | OK | HTTP 200 |
 | osm_poi_cache fermé au public | OK | HTTP 200 |

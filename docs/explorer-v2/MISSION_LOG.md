@@ -629,3 +629,18 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
 - Statut : OK pour la compilation et le pont. La **carte** de Live Activity
   (widget extension) n'est pas ajoutée au projet : sans cible widget, l'activité
   est créée mais iOS n'affiche pas de visuel. C'est le seul reste de P7-20.
+
+### [P7-18] SOS : composition du numéro en production, simule en recette · 2026-10-29 20:10
+- Fichiers : `activity/sosCall.ts`, `ExplorerV2.tsx` (bloc `onResult`), `tests/explorer-v2/sos-call.spec.ts`,
+  `tests/explorer-v2/sos-appel.e2e.spec.ts`
+- Preuve production (unitaire, décision isolée + navigation injectée) :
+  ```
+  planSosCall('118', { simulated: false }) → { action: 'dial', number: '118' }
+  performSosCall(plan, spy) → spy('tel:118')
+  pays sans donnée → tel:112
+  ```
+- Preuve recette (e2e, 3 passes) : maintien 1,5 s + compte à rebours 5 s →
+  bandeau « … · numéro 112 (appel simulé) », aucune navigation (URL toujours https).
+  Règle : recette (`NEXT_PUBLIC_EXPLORER_SCENES=1`) et dev simulent toujours ;
+  la production compose. Surcharge possible par `NEXT_PUBLIC_EXPLORER_SOS_SIMULATE`.
+- Statut : OK
