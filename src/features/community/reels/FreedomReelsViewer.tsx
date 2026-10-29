@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Volume2, VolumeX, Plus, Sparkles } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { useKitSheet } from '@/features/kits/KitSheetContext';
 import { FreedomReelItem } from './FreedomReelItem';
 import { FreedomCommentsDrawer } from './FreedomCommentsDrawer';
 import { FreedomShareDrawer } from './FreedomShareDrawer';
+import { FreedomKitDrawer } from './FreedomKitDrawer';
 import { fetchFreedomReels } from './freedomReelsService';
 import type { FreedomReelItem as ReelModel } from './freedom-types';
 import './freedom.css';
@@ -25,18 +25,17 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
   const router = useRouter();
   const { user } = useAuth();
   const { haptic } = useHapticFeedback();
-  const { openKit } = useKitSheet();
 
   const [reels, setReels] = useState<ReelModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [globalMuted, setGlobalMuted] = useState(false);
   const [activeCommentsReel, setActiveCommentsReel] = useState<ReelModel | null>(null);
   const [activeShareReel, setActiveShareReel] = useState<ReelModel | null>(null);
+  const [activeKit, setActiveKit] = useState<{ id: string; name?: string } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Hide global navigation and native iOS bar for 100% immersion
+  // Hide global navigation and native bottom bar for 100% immersive experience
   useEffect(() => {
     document.body.dataset.freedomOpen = 'true';
     window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
@@ -116,7 +115,7 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
     return () => observer.disconnect();
   }, [reels]);
 
-  // Handle Exit
+  // Handle Exit (Swipe Left or Escape)
   const handleExit = useCallback(() => {
     haptic('light');
     if (onClose) {
@@ -126,12 +125,30 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
     }
   }, [haptic, onClose, router]);
 
-  // Keyboard navigation
+  // Handle author profile navigation (Swipe Right)
+  const handleAuthorProfile = useCallback(
+    (author: ReelModel['author']) => {
+      haptic('light');
+      if (author.handle) {
+        router.push(`/profil/${author.handle}`);
+      } else if (author.id) {
+        router.push(`/profil/${author.id}`);
+      } else {
+        router.push('/compte');
+      }
+    },
+    [haptic, router],
+  );
+
+  // Keyboard navigation & gestures
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (activeCommentsReel || activeShareReel) return;
-      if (e.key === 'Escape') {
+      if (activeCommentsReel || activeShareReel || activeKit) return;
+      if (e.key === 'Escape' || e.key === 'ArrowLeft') {
         handleExit();
+      } else if (e.key === 'ArrowRight') {
+        const current = reels[activeIndex];
+        if (current) handleAuthorProfile(current.author);
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
         const next = Math.min(reels.length - 1, activeIndex + 1);
@@ -142,69 +159,38 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
         const prev = Math.max(0, activeIndex - 1);
         const el = document.getElementById(`freedom-reel-${reels[prev]?.id}`);
         el?.scrollIntoView({ behavior: 'smooth' });
-      } else if (e.key === 'm' || e.key === 'M') {
-        setGlobalMuted((v) => !v);
       }
     };
 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeIndex, reels, activeCommentsReel, activeShareReel, handleExit]);
+  }, [activeIndex, reels, activeCommentsReel, activeShareReel, activeKit, handleExit, handleAuthorProfile]);
 
-  const handleOpenKitFromReel = (kitId: string) => {
+  const handleOpenKitFromReel = (kitId: string, kitName?: string) => {
     haptic('medium');
-    openKit(kitId, 'messaging');
+    setActiveKit({ id: kitId, name: kitName });
   };
+
+  const currentReel = reels[activeIndex];
 
   return (
     <div className="freedom-reels-viewport">
-      {/* Top Floating Navigation Header */}
-      <header className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-3.5 pt-[max(12px,var(--safe-top,12px))] pointer-events-none">
-        {/* Left: Back Button */}
-        <button
-          type="button"
-          onClick={handleExit}
-          className="pointer-events-auto grid size-10 place-items-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur-md transition active:scale-90"
-          aria-label="Retour à la communauté"
-        >
-          <ArrowLeft size={20} />
-        </button>
-
-        {/* Center: Brand Badge "Freedom" */}
-        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/20 bg-black/45 px-3.5 py-1.5 backdrop-blur-md">
-          <Sparkles size={14} className="text-[#64D2FF]" />
-          <span className="text-xs font-extrabold tracking-wide text-white">
-            FREEDOM
-          </span>
-          <span className="text-[10px] font-semibold text-white/70">· Outdoor</span>
-        </div>
-
-        {/* Right: Sound toggle and Create reel */}
-        <div className="pointer-events-auto flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              haptic('selection');
-              setGlobalMuted(!globalMuted);
-            }}
-            className="grid size-10 place-items-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur-md transition active:scale-90"
-            aria-label={globalMuted ? 'Activer le son' : 'Couper le son'}
-          >
-            {globalMuted ? <VolumeX size={19} /> : <Volume2 size={19} />}
-          </button>
-
+      {/* Top Center Location Header (Volume, page name, back arrow and plus button removed) */}
+      <header className="absolute inset-x-0 top-0 z-30 flex items-center justify-center px-4 pt-[max(14px,var(--safe-top,14px))] pointer-events-none">
+        {currentReel?.location && (
           <button
             type="button"
             onClick={() => {
               haptic('light');
-              router.push('/communaute?create=story');
+              router.push(`/explorer?q=${encodeURIComponent(currentReel.location || '')}`);
             }}
-            className="grid size-10 place-items-center rounded-full bg-[#17402C] text-white shadow-lg transition active:scale-90"
-            aria-label="Créer une micro-vidéo"
+            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/45 px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur-xl transition active:scale-95"
+            aria-label={`Explorer le lieu ${currentReel.location}`}
           >
-            <Plus size={20} strokeWidth={2.5} />
+            <MapPin size={12} className="text-[#64D2FF]" />
+            <span className="max-w-[260px] truncate">{currentReel.location}</span>
           </button>
-        </div>
+        )}
       </header>
 
       {/* Vertical Snap Scroll Reels Container */}
@@ -232,11 +218,12 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
                 reel={reel}
                 isActive={isActive}
                 isPreload={isPreload}
-                globalMuted={globalMuted}
-                onToggleMute={() => setGlobalMuted(!globalMuted)}
+                globalMuted={false}
                 onOpenComments={(r) => setActiveCommentsReel(r)}
                 onOpenShare={(r) => setActiveShareReel(r)}
                 onOpenKit={handleOpenKitFromReel}
+                onSwipeLeft={handleExit}
+                onSwipeRight={() => handleAuthorProfile(reel.author)}
                 onLikeChange={(id, nextLiked, nextCount) => {
                   setReels((prev) =>
                     prev.map((item) =>
@@ -252,6 +239,16 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
         )}
       </main>
 
+      {/* Kit Drawer */}
+      {activeKit && (
+        <FreedomKitDrawer
+          isOpen={Boolean(activeKit)}
+          kitId={activeKit.id}
+          initialName={activeKit.name}
+          onClose={() => setActiveKit(null)}
+        />
+      )}
+
       {/* Half-Screen Comments Drawer */}
       {activeCommentsReel && (
         <FreedomCommentsDrawer
@@ -259,6 +256,7 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
           reelId={activeCommentsReel.id}
           currentUser={user}
           onClose={() => setActiveCommentsReel(null)}
+          onOpenKit={handleOpenKitFromReel}
           onCommentsCountChange={(count) => {
             setReels((prev) =>
               prev.map((r) =>

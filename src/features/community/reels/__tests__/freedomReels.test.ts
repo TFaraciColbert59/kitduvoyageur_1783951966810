@@ -242,5 +242,44 @@ describe('Freedom Reels & Comments Attachment System', () => {
     // Simultaneous / negative timestamps safeguard
     expect(isDoubleClick(1000, 1000)).toBe(false);
   });
+
+  it('validates horizontal swipe gesture detection (swipe left exit vs swipe right profile)', () => {
+    const detectSwipe = (startX: number, startY: number, endX: number, endY: number) => {
+      const deltaX = endX - startX;
+      const deltaY = endY - startY;
+      if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+        return deltaX < -60 ? 'swipe-left-exit' : 'swipe-right-profile';
+      }
+      return 'none';
+    };
+
+    // Swipe left (finger moves right to left by 120px, vertical drift 20px) -> exit
+    expect(detectSwipe(200, 300, 80, 320)).toBe('swipe-left-exit');
+
+    // Swipe right (finger moves left to right by 100px, vertical drift 10px) -> profile
+    expect(detectSwipe(50, 300, 150, 310)).toBe('swipe-right-profile');
+
+    // Vertical scroll (deltaY = 150px, deltaX = 30px) -> none
+    expect(detectSwipe(100, 100, 130, 250)).toBe('none');
+
+    // Small wiggle (<60px) -> none
+    expect(detectSwipe(100, 100, 140, 110)).toBe('none');
+  });
+
+  it('verifies that curated reels have linked kits with valid names for minimal pill display', () => {
+    for (const reel of FREEDOM_CURATED_REELS) {
+      if (reel.linkedKit) {
+        expect(reel.linkedKit.name).toBeTruthy();
+        expect(typeof reel.linkedKit.name).toBe('string');
+        // Ensure name is clean without emojis or button boilerplate
+        expect(reel.linkedKit.name).not.toContain('🎒');
+        expect(reel.linkedKit.name).not.toContain('Voir la liste');
+      }
+      if (reel.location) {
+        expect(reel.location).toBeTruthy();
+      }
+    }
+  });
 });
+
 

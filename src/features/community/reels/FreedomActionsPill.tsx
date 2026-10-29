@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Heart, MessageCircle, Send, Backpack, Plus } from 'lucide-react';
+import { Heart, MessageCircle, Send, Plus } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { FreedomReelItem } from './freedom-types';
 
@@ -17,7 +17,6 @@ export interface FreedomActionsPillProps {
   onComment: () => void;
   onShare: () => void;
   onFollow?: () => void;
-  onOpenKit?: () => void;
 }
 
 function formatCount(n: number): string {
@@ -39,7 +38,6 @@ export const FreedomActionsPill: React.FC<FreedomActionsPillProps> = ({
   onComment,
   onShare,
   onFollow,
-  onOpenKit,
 }) => {
   const { haptic } = useHapticFeedback();
 
@@ -131,24 +129,7 @@ export const FreedomActionsPill: React.FC<FreedomActionsPillProps> = ({
         <span className="freedom-glass-count">{formatCount(sharesCount)}</span>
       </button>
 
-      {/* 5. Kit lié ou Matériel d'expédition */}
-      {(reel.linkedKit || reel.linkedKitId) && onOpenKit && (
-        <button
-          type="button"
-          className="freedom-glass-btn"
-          aria-label={`Voir le kit lié : ${reel.linkedKit?.name || 'Kit aventure'}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            haptic('medium');
-            onOpenKit();
-          }}
-        >
-          <Backpack size={22} strokeWidth={2.2} aria-hidden="true" />
-          <span className="freedom-glass-count">Kit</span>
-        </button>
-      )}
-
-      {/* 6. Disque audio vinyle rotatif */}
+      {/* 5. Disque audio vinyle rotatif */}
       <div
         className={`freedom-sound-disc${isPlaying ? '' : ' is-paused'}`}
         aria-hidden="true"

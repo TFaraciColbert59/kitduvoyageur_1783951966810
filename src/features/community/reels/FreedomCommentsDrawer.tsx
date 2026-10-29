@@ -17,6 +17,7 @@ export interface FreedomCommentsDrawerProps {
   currentUser?: any;
   onClose: () => void;
   onCommentsCountChange?: (count: number) => void;
+  onOpenKit?: (kitId: string, kitName?: string) => void;
 }
 
 function timeAgo(dateStr: string): string {
@@ -35,6 +36,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   currentUser,
   onClose,
   onCommentsCountChange,
+  onOpenKit,
 }) => {
   const { haptic } = useHapticFeedback();
   const [comments, setComments] = useState<FreedomComment[]>([]);
@@ -231,7 +233,11 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
                   {comment.attachment && (
                     <div className="pt-1.5">
                       {comment.attachment.type === 'kit' && comment.attachment.kit && (
-                        <KitCard meta={comment.attachment.kit} isMine={comment.isOwner} />
+                        <KitCard
+                          meta={comment.attachment.kit}
+                          isMine={comment.isOwner}
+                          onOpen={(id) => onOpenKit?.(id, comment.attachment?.kit?.kit_name)}
+                        />
                       )}
 
                       {comment.attachment.type === 'gpx' && comment.attachment.gpx && (
