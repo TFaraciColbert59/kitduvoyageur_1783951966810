@@ -41,7 +41,7 @@ test.describe('Explorer v2 · états @explorer-v2', () => {
   });
 
   test('10 pays tirés au hasard sont ouvrables @explorer-v2', async ({ page }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(180_000);
     await page.goto('/explorer?v2=1&scene=ia', { waitUntil: 'domcontentloaded' });
     await expect(root(page).locator('.xp-sheet')).toBeVisible({ timeout: 45_000 });
     await page
@@ -61,20 +61,18 @@ test.describe('Explorer v2 · états @explorer-v2', () => {
         const { iso_a2, name } = feature.properties;
         if (iso_a2 && name) seen.set(iso_a2, name);
       }
-      const entries = [...seen.entries()].sort(() => Math.random() - 0.5).slice(0, 10);
-      return entries.map(([iso, name]) => ({ iso, name }));
+      return [...seen.entries()].sort(() => Math.random() - 0.5).slice(0, 10).map(([iso, name]) => ({ iso, name }));
     });
     expect(picks).toHaveLength(10);
 
     let opened = 0;
     for (const pick of picks) {
-      // Recherche réelle dans la feuille, puis ouverture du pays.
+      // Tout se joue côté client : pas de rechargement de page entre les pays.
       const input = root(page).locator('.xp-searchinput');
-      // WebKit ne déclenche pas toujours `onChange` avec `fill()`.
-      await input.click();
-      await input.pressSequentially(pick.name.slice(0, 12), { delay: 15 });
+      await input.waitFor({ state: 'visible', timeout: 15_000 });
+      await input.fill('');
+      await input.fill(pick.name);
       const row = root(page).locator('.xp-row', { hasText: pick.name }).first();
-      // La recherche interroge l'API : laisser le temps à la ligne d'apparaître.
       const visible = await row
         .waitFor({ state: 'visible', timeout: 15_000 })
         .then(() => true)
@@ -85,12 +83,10 @@ test.describe('Explorer v2 · états @explorer-v2', () => {
       const title = (await root(page).locator('.xp-sheet-title').textContent()) ?? '';
       expect(title.length).toBeGreaterThan(0);
       opened += 1;
-      // Retour à la recherche pour le pays suivant.
-      await page.goto('/explorer?v2=1&scene=ia', { waitUntil: 'domcontentloaded' });
-      await expect(root(page).locator('.xp-sheet')).toBeVisible({ timeout: 30_000 });
-      await page.waitForTimeout(300);
+      // Retour à la recherche par la capsule (client-side, instantané).
+      await root(page).locator('.xp-search-main').click({ force: true });
+      await expect(root(page).locator('.xp-searchinput')).toBeVisible({ timeout: 15_000 });
     }
-    // Au moins 8 des 10 pays tirés au hasard doivent être trouvables et ouvrables.
     expect(opened).toBeGreaterThanOrEqual(8);
   });
 
