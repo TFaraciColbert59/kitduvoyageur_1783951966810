@@ -27,8 +27,8 @@ function base(overrides: Partial<React.ComponentProps<typeof CarnetCard>> = {}) 
   return {
     detail: detail({
       photoMoments: [
-        { id: 'm1', dayNumber: 3, time: '18:30', caption: 'Bivouac', authorName: null, place: 'Col', imageUrl: 'https://cdn.test/1.jpg' },
-        { id: 'm2', dayNumber: 4, time: null, caption: null, authorName: null, place: null, imageUrl: 'https://cdn.test/2.jpg' },
+        { id: 'm1', dayNumber: 3, time: '18:30', caption: 'Bivouac', place: 'Col', imageUrl: 'https://cdn.test/1.jpg' },
+        { id: 'm2', dayNumber: 4, time: null, caption: null, place: null, imageUrl: 'https://cdn.test/2.jpg' },
       ],
     }),
     page: 'posts' as const,
@@ -415,7 +415,6 @@ const M1 = {
   dayNumber: 1,
   time: '18:30',
   caption: 'Bivouac',
-  authorName: null,
   place: 'Col',
   imageUrl: 'https://cdn.test/1.jpg',
 };
@@ -424,7 +423,6 @@ const M2 = {
   dayNumber: 2,
   time: null,
   caption: null,
-  authorName: null,
   place: null,
   imageUrl: 'https://cdn.test/2.jpg',
 };

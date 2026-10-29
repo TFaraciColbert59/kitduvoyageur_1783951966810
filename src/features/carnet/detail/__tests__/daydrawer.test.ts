@@ -34,7 +34,7 @@ const detail = (overrides: Partial<CarnetDetail> = {}): CarnetDetail => ({
   author: null,
   participants: [],
   stats: [],
-  engagement: { likes: 0, comments: 0, views: 0, liked: false, favorited: false },
+  engagement: { likes: 0, comments: 0, liked: false, favorited: false },
   likers: [],
   moments: [],
   photoMoments: [],

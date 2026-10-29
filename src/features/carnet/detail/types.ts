@@ -14,7 +14,6 @@ export interface CarnetRow {
   verified: boolean | null;
   likes_count: number | null;
   comments_count: number | null;
-  views_count: number | null;
   distance_km: number | string | null;
   denivele_m: number | string | null;
   groupe_id: string | null;
@@ -71,7 +70,6 @@ export interface MomentRow {
   jour_numero: number | null;
   heure: string | null;
   citation: string | null;
-  auteur_nom: string | null;
   lieu: string | null;
   image_url: string | null;
 }
@@ -112,7 +110,6 @@ export interface CarnetMomentItem {
   dayNumber: number;
   time: string | null;
   caption: string | null;
-  authorName: string | null;
   place: string | null;
   imageUrl: string | null;
 }
@@ -214,8 +211,6 @@ export interface CarnetParticipant {
 /** Ligne de participation telle que lue en base, avec son profil public éventuel. */
 export interface ParticipantRow {
   user_id: string | null;
-  /** Rôle brut de la colonne `role` (`guest`, `collaborator`…), conservé tel quel. */
-  role: string | null;
   /** Table d'origine : `carnet_collaborators` ou `hike_session_participants`. */
   source: 'collaborator' | 'participant';
   profile: AuthorRow | null;
@@ -224,7 +219,6 @@ export interface ParticipantRow {
 export interface CarnetEngagement {
   likes: number;
   comments: number;
-  views: number;
   liked: boolean;
   favorited: boolean;
 }

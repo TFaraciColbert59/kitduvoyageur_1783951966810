@@ -63,7 +63,7 @@ const RICH = detail({
   etapes: DAYS,
   trace: TRACE,
   moments: [
-    { id: 'm1', dayNumber: 1, time: '18:30', caption: 'Bivouac au col', authorName: null, place: 'Col', imageUrl: null },
+    { id: 'm1', dayNumber: 1, time: '18:30', caption: 'Bivouac au col', place: 'Col', imageUrl: null },
   ],
 });
 

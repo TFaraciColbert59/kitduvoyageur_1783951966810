@@ -30,8 +30,8 @@ function base(overrides: Partial<React.ComponentProps<typeof CarnetPages>> = {})
     detail: detail({
       isOwner: true,
       photoMoments: [
-        { id: 'm1', dayNumber: 1, time: null, caption: null, authorName: null, place: null, imageUrl: 'https://cdn.test/1.jpg' },
-        { id: 'm2', dayNumber: 1, time: null, caption: null, authorName: null, place: null, imageUrl: 'https://cdn.test/2.jpg' },
+        { id: 'm1', dayNumber: 1, time: null, caption: null, place: null, imageUrl: 'https://cdn.test/1.jpg' },
+        { id: 'm2', dayNumber: 1, time: null, caption: null, place: null, imageUrl: 'https://cdn.test/2.jpg' },
       ],
       etapes: [DAY],
     }),

@@ -16,7 +16,6 @@ const CARNET: CarnetRow = {
   verified: false,
   likes_count: 0,
   comments_count: 0,
-  views_count: 0,
   distance_km: null,
   denivele_m: null,
   groupe_id: null,
@@ -27,7 +26,7 @@ const CARNET: CarnetRow = {
 const AUTHOR = { id: 'u1', full_name: 'Léa Fontaine', handle: 'lea.fontaine', avatar_url: 'a1.jpg', trust_score: 94 };
 
 const participant = (userId: string, source: ParticipantRow['source'], profile: ParticipantRow['profile'] = null) =>
-  ({ user_id: userId, role: 'guest', source, profile }) satisfies ParticipantRow;
+  ({ user_id: userId, source, profile }) satisfies ParticipantRow;
 
 function input(overrides: Partial<BuildCarnetDetailInput> = {}): BuildCarnetDetailInput {
   return {
@@ -113,7 +112,7 @@ describe('participants réels du carnet', () => {
 
   it('ignore une ligne de participation sans user_id', () => {
     const detail = buildCarnetDetail(
-      input({ participants: [{ user_id: null, role: 'guest', source: 'participant', profile: null }] }),
+      input({ participants: [{ user_id: null, source: 'participant', profile: null }] }),
     );
     expect(detail.participants.map((p) => p.userId)).toEqual(['u1']);
   });

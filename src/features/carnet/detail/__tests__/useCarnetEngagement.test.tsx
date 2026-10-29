@@ -37,7 +37,7 @@ beforeEach(() => {
   failWrites = false;
 });
 
-const INITIAL = { likes: 6, comments: 3, views: 40, liked: false, favorited: false };
+const INITIAL = { likes: 6, comments: 3, liked: false, favorited: false };
 
 describe('useCarnetEngagement', () => {
   it('like de façon optimiste et écrit carnet_likes', async () => {

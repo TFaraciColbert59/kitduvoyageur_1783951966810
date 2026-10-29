@@ -16,7 +16,6 @@ const CARNET: CarnetRow = {
   verified: false,
   likes_count: 6,
   comments_count: 3,
-  views_count: 2320,
   distance_km: 106.4,
   denivele_m: 2002,
   groupe_id: null,
@@ -43,7 +42,7 @@ function input(overrides: Partial<BuildCarnetDetailInput> = {}): BuildCarnetDeta
 describe('buildCarnetDetail — identité', () => {
   it('reprend les compteurs réels du carnet', () => {
     const detail = buildCarnetDetail(input());
-    expect(detail.engagement).toEqual({ likes: 6, comments: 3, views: 2320, liked: false, favorited: false });
+    expect(detail.engagement).toEqual({ likes: 6, comments: 3, liked: false, favorited: false });
   });
 
   it('ne fabrique aucun auteur quand la ligne est absente', () => {
@@ -186,9 +185,9 @@ describe('buildCarnetDetail — jours, moments, kit', () => {
     const detail = buildCarnetDetail(
       input({
         moments: [
-          { id: 'm1', jour_numero: 2, heure: '18:30', citation: 'Bivouac au col.', auteur_nom: 'Camille', lieu: 'Col de la Seigne', image_url: 'https://cdn.test/1.jpg' },
-          { id: 'm2', jour_numero: 2, heure: '20:10', citation: 'Ciel dégagé.', auteur_nom: null, lieu: null, image_url: null },
-          { id: 'm3', jour_numero: 4, heure: null, citation: null, auteur_nom: null, lieu: 'Courmayeur', image_url: 'https://cdn.test/2.jpg' },
+          { id: 'm1', jour_numero: 2, heure: '18:30', citation: 'Bivouac au col.', lieu: 'Col de la Seigne', image_url: 'https://cdn.test/1.jpg' },
+          { id: 'm2', jour_numero: 2, heure: '20:10', citation: 'Ciel dégagé.', lieu: null, image_url: null },
+          { id: 'm3', jour_numero: 4, heure: null, citation: null, lieu: 'Courmayeur', image_url: 'https://cdn.test/2.jpg' },
         ],
       }),
     );
@@ -203,8 +202,8 @@ describe('buildCarnetDetail — jours, moments, kit', () => {
     const detail = buildCarnetDetail(
       input({
         moments: [
-          { id: 'm1', jour_numero: 1, heure: null, citation: 'a', auteur_nom: null, lieu: null, image_url: 'https://cdn.test/1.jpg' },
-          { id: 'm2', jour_numero: 1, heure: null, citation: 'b', auteur_nom: null, lieu: null, image_url: null },
+          { id: 'm1', jour_numero: 1, heure: null, citation: 'a', lieu: null, image_url: 'https://cdn.test/1.jpg' },
+          { id: 'm2', jour_numero: 1, heure: null, citation: 'b', lieu: null, image_url: null },
         ],
       }),
     );

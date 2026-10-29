@@ -13,7 +13,6 @@ const M1: CarnetMomentItem = {
   dayNumber: 1,
   time: '07:40',
   caption: 'Lever de soleil',
-  authorName: null,
   place: 'Corrençon-en-Vercors',
   imageUrl: 'https://cdn.test/1.jpg',
 };
@@ -22,7 +21,6 @@ const M2: CarnetMomentItem = {
   dayNumber: 2,
   time: null,
   caption: null,
-  authorName: null,
   place: null,
   imageUrl: 'https://cdn.test/2.jpg',
 };
@@ -31,7 +29,6 @@ const M3: CarnetMomentItem = {
   dayNumber: 2,
   time: '19:05',
   caption: null,
-  authorName: null,
   place: 'Refuge de Bellachat',
   imageUrl: null,
 };

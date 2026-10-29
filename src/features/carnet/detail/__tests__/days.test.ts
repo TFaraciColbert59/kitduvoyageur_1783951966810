@@ -32,7 +32,6 @@ function moment(overrides: Partial<MomentRow> = {}): MomentRow {
     jour_numero: 1,
     heure: null,
     citation: null,
-    auteur_nom: null,
     lieu: null,
     image_url: null,
     ...overrides,

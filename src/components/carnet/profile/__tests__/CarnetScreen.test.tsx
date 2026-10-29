@@ -402,7 +402,6 @@ describe('CarnetScreen — drawer Moments depuis la pastille de compte', () => {
     dayNumber: 1,
     time: '07:40',
     caption: null,
-    authorName: null,
     place: 'Corrençon-en-Vercors',
     imageUrl: 'https://cdn.test/1.jpg',
   };

@@ -17,7 +17,6 @@ const CARNET: CarnetRow = {
   verified: true,
   likes_count: 6,
   comments_count: 3,
-  views_count: 12,
   distance_km: 106.4,
   denivele_m: 2002,
   groupe_id: null,

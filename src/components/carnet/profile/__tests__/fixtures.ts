@@ -1,7 +1,7 @@
 import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
 
 export function moment(id: string, imageUrl: string | null): CarnetMomentItem {
-  return { id, dayNumber: 1, time: null, caption: null, authorName: null, place: null, imageUrl };
+  return { id, dayNumber: 1, time: null, caption: null, place: null, imageUrl };
 }
 
 export const DETAIL: CarnetDetail = {
@@ -25,7 +25,7 @@ export const DETAIL: CarnetDetail = {
     { key: 'elevation', label: 'DÉNIVELÉ +', value: '2 002 m' },
     { key: 'days', label: 'JOURS', value: '7' },
   ],
-  engagement: { likes: 22, comments: 3, views: 2320, liked: false, favorited: false },
+  engagement: { likes: 22, comments: 3, liked: false, favorited: false },
   likers: [],
   moments: [moment('m1', 'https://cdn.test/1.jpg')],
   photoMoments: [moment('m1', 'https://cdn.test/1.jpg')],

@@ -175,7 +175,6 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     engagement: {
       likes: input.counts?.likes ?? toNumber(carnet.likes_count) ?? 0,
       comments: input.counts?.comments ?? toNumber(carnet.comments_count) ?? 0,
-      views: toNumber(carnet.views_count) ?? 0,
       liked: input.liked,
       favorited: input.favorited,
     },

@@ -171,7 +171,6 @@ export function toMomentItems(rows: MomentRow[]): CarnetMomentItem[] {
     dayNumber: row.jour_numero ?? 1,
     time: row.heure ?? null,
     caption: row.citation?.trim() || null,
-    authorName: row.auteur_nom?.trim() || null,
     place: row.lieu?.trim() || null,
     imageUrl: row.image_url?.trim() || null,
   }));

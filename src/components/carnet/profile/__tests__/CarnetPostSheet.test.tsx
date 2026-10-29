@@ -13,8 +13,8 @@ const DETAIL = detail({
   startDate: '2026-04-25',
   endDate: '2026-05-06',
   photoMoments: [
-    { id: 'm1', dayNumber: 3, time: '18:30', caption: 'Bivouac au col', authorName: null, place: 'Col de la Seigne', imageUrl: 'https://cdn.test/1.jpg' },
-    { id: 'm2', dayNumber: 4, time: null, caption: null, authorName: null, place: null, imageUrl: 'https://cdn.test/2.jpg' },
+    { id: 'm1', dayNumber: 3, time: '18:30', caption: 'Bivouac au col', place: 'Col de la Seigne', imageUrl: 'https://cdn.test/1.jpg' },
+    { id: 'm2', dayNumber: 4, time: null, caption: null, place: null, imageUrl: 'https://cdn.test/2.jpg' },
   ],
 });
 

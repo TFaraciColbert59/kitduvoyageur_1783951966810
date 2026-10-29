@@ -17,7 +17,6 @@ function carnet(overrides: Partial<CarnetRow> = {}): CarnetRow {
     verified: null,
     likes_count: null,
     comments_count: null,
-    views_count: null,
     distance_km: null,
     denivele_m: null,
     groupe_id: null,

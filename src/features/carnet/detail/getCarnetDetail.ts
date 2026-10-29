@@ -16,14 +16,12 @@ import type {
 interface CollaboratorRow {
   carnet_id: string | null;
   user_id: string | null;
-  role: string | null;
   created_at: string | null;
 }
 
 interface SessionParticipantRow {
   session_id: string;
   user_id: string;
-  role: string;
   created_at: string;
 }
 
@@ -41,7 +39,6 @@ const CARNET_COLUMNS = [
   'verified',
   'likes_count',
   'comments_count',
-  'views_count',
   'distance_km',
   'denivele_m',
   'groupe_id',
@@ -149,7 +146,7 @@ export async function getCarnetDetail(id: string) {
         : Promise.resolve({ data: [] as HebergementRow[] }),
       supabase
         .from('carnet_moments')
-        .select('id, jour_numero, heure, citation, auteur_nom, lieu, image_url')
+        .select('id, jour_numero, heure, citation, lieu, image_url')
         .eq('carnet_id', carnet.id)
         .order('jour_numero', { ascending: true })
         .order('created_at', { ascending: true }),
@@ -179,7 +176,7 @@ export async function getCarnetDetail(id: string) {
          de la fiche : on garde ce qui est lisible, sans rien inventer. */
       supabase
         .from('carnet_collaborators')
-        .select('carnet_id, user_id, role, created_at')
+        .select('carnet_id, user_id, created_at')
         .eq('carnet_id', carnet.id)
         .order('created_at', { ascending: true }),
       /* Toutes les sorties du carnet, sans la limite de 10 de `hikeResult` :
@@ -206,7 +203,7 @@ export async function getCarnetDetail(id: string) {
     sessionIds.length > 0
       ? await supabase
           .from('hike_session_participants')
-          .select('session_id, user_id, role, created_at')
+          .select('session_id, user_id, created_at')
           .in('session_id', sessionIds)
       : { data: [] as SessionParticipantRow[] };
 
@@ -233,13 +230,11 @@ export async function getCarnetDetail(id: string) {
   const participants = [
     ...collabRows.map((row) => ({
       user_id: row.user_id,
-      role: row.role,
       source: 'collaborator' as const,
       profile: (participantProfiles[row.user_id ?? ''] as unknown as AuthorRow) ?? null,
     })),
     ...sessionParticipantRows.map((row) => ({
       user_id: row.user_id,
-      role: row.role,
       source: 'participant' as const,
       profile: (participantProfiles[row.user_id ?? ''] as unknown as AuthorRow) ?? null,
     })),
