@@ -281,7 +281,7 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
       <motion.div
         {...dragProps}
         style={{ y }}
-        className="freedom-drawer-card relative flex flex-col max-h-[82dvh] overflow-hidden"
+        className="freedom-drawer-card relative flex flex-col h-[78vh] max-h-[82dvh] overflow-hidden"
       >
         {/* Pull Grab Bar */}
         <div

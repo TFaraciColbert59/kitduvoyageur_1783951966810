@@ -172,7 +172,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
       <motion.div
         {...dragProps}
         style={{ y }}
-        className="freedom-drawer-sheet"
+        className="freedom-drawer-sheet h-[68vh] max-h-[75dvh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Grab Handle (pour fermer en glissant vers le bas) */}
@@ -240,7 +240,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
                       {comment.attachment.type === 'kit' && comment.attachment.kit && (
                         <KitCard
                           meta={comment.attachment.kit}
-                          isMine={comment.isOwner}
+                          isMine={Boolean(currentUser?.id && comment.author.id === currentUser.id)}
                           onOpen={(id) => onOpenKit?.(id, comment.attachment?.kit?.kit_name)}
                         />
                       )}
@@ -250,16 +250,22 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
                           fileName={comment.attachment.gpx.name}
                           gpxUrl={comment.attachment.gpx.url}
                           fileContent={comment.attachment.gpx.fileContent}
-                          isMine={comment.isOwner}
+                          isMine={Boolean(currentUser?.id && comment.author.id === currentUser.id)}
                         />
                       )}
 
                       {comment.attachment.type === 'product' && comment.attachment.product && (
-                        <ProductCard meta={comment.attachment.product} isMine={comment.isOwner} />
+                        <ProductCard
+                          meta={comment.attachment.product}
+                          isMine={Boolean(currentUser?.id && comment.author.id === currentUser.id)}
+                        />
                       )}
 
                       {comment.attachment.type === 'trail' && comment.attachment.trail && (
-                        <TrailCard meta={comment.attachment.trail} isMine={comment.isOwner} />
+                        <TrailCard
+                          meta={comment.attachment.trail}
+                          isMine={Boolean(currentUser?.id && comment.author.id === currentUser.id)}
+                        />
                       )}
 
                       {comment.attachment.type === 'photo' && comment.attachment.photoUrl && (
