@@ -22,9 +22,9 @@ Coche `[x]` uniquement avec une entrée correspondante dans `docs/explorer-v2/MI
 
 ## P1 · Données et sécurité
 
-- [ ] **P1-01** · Géométries des 80 pays manquants importées (Natural Earth) — _preuve : `select count(*) from countries_geo where geometry is null` = 0_
+- [x] **P1-01** · Géométries des 80 pays manquants importées (Natural Earth) — _preuve : `select count(*) from countries_geo where geometry is null` = 0_
 - [ ] **P1-02** · Géométries admin niveau 1 importées et simplifiées, index GIST — _preuve : count non null niveau 1 ; `\d admin_regions_geo`_
-- [ ] **P1-03** · Table `country_practical` + import Wikidata avec licence — _preuve : count + 3 exemples (FR, JP, US)_
+- [x] **P1-03** · Table `country_practical` + import Wikidata avec licence — _preuve : count + 3 exemples (FR, JP, US)_
 - [ ] **P1-04** · POI : sommets, belvédères, cols, parkings, arrêts importés par Overpass (Alpes d’abord, puis monde par tuiles en tâche de fond) — _preuve : répartition par subtype_
 - [x] **P1-05** · RPC `explorer_pois` triée par priorité, limitée, bbox bornée — _preuve : `explain analyze` < 300 ms_
 - [x] **P1-06** · RPC `explorer_place` (compteurs réels) — _preuve : appel sur Chamonix et sur un point vide_

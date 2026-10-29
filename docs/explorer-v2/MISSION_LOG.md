@@ -513,3 +513,19 @@ Les points **non** cochés sont listés dans `ETAT_DES_POINTS.md` avec leur bloc
   Australie ; SJ → Norvège ; TK → Nouvelle-Zélande ; BQ → Pays-Bas) : aucun
   polygone propre n'existe dans Natural Earth, et en inventer un serait faux.
 - Statut : OK à 70/80 — les 10 cas sont expliqués, pas inventés.
+
+### [P1-03] Faits pratiques pays depuis Wikidata · 2026-10-29 10:35
+- Fichiers : `scripts/explorer-v2/import-wikidata.mjs`
+- Preuve :
+  ```
+  lignes Wikidata : 1382 · pays avec au fait : 259 · lignes à écrire : 253
+  pays pratiques en base : 253
+  FR {"emergency_numbers":{"general":"112"},"plug_types":["Type E","Type C"],"driving_side":"right"}
+  JP {"emergency_numbers":{"general":"118"},"plug_types":["Type A","Type B"],"driving_side":"left"}
+  US {"emergency_numbers":{"general":"911"},"plug_types":["Type B","Type A"],"driving_side":"right"}
+  ```
+  Écran Pratique du Japon (capture `preuves/pratique-japon.png`) :
+  urgence 118, prises Type A/B, conduite à gauche, fuseau UTC+9.
+  Les libellés de prises Wikidata sont normalisés en types IEC ; un libellé
+  inconnu est ignoré plutôt que mal étiqueté. Licence CC0, source consignée.
+- Statut : OK

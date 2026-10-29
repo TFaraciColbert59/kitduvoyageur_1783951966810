@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     const [countries, practical] = await Promise.all([
       pgrest<CountryRow[]>(
         `countries_geo?select=iso_a2,name,continent,capital,currency_code,currency_name,phone_code,timezone,languages,area_km2${filter}&order=name.asc`,
-        { revalidate: 86400 },
+        { revalidate: 3600 },
       ),
       pgrest<PracticalRow[]>(
         `country_practical?select=iso_a2,emergency_numbers,plug_types,driving_side,units${filter}`,

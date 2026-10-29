@@ -1349,12 +1349,13 @@
 /* Attributions cartographiques (P10-09) — au-dessus de la barre basse. */
 .xp-attribution {
   position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 62px + var(--cookie-banner-h, 0px));
-  z-index: 6;
-  text-align: center;
-  font-size: 9px;
+  left: 14px;
+  right: 14px;
+  /* Juste sous la capsule de recherche : ne recouvre jamais la feuille. */
+  top: calc(env(safe-area-inset-top, 0px) + 52px);
+  z-index: 4;
+  text-align: left;
+  font-size: 8.5px;
   font-weight: 500;
   color: var(--xp-mut);
   opacity: 0.72;
