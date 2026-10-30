@@ -66,20 +66,26 @@ function Thumb({ story }: { story: StoryThumb }) {
  * `story_highlights` / `story_highlight_items`, protégées par la RLS du
  * propriétaire.
  */
-export function HighlightEditDrawer({ hlId }: { hlId: string }) {
+export function HighlightEditDrawer({ hlId, hlTitle = '' }: { hlId: string; hlTitle?: string }) {
+  // Sélection générée automatiquement (sac, carnets) : pas encore en base. On la
+  // compose ici puis on la crée à l'enregistrement.
+  const isDraft = !UUID.test(hlId);
   const [tab, setTab] = useState(0);
-  const [state, setState] = useState<'loading' | 'ready' | 'error' | 'unsupported'>('loading');
+  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [data, setData] = useState<HighlightState | null>(null);
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; tone: 'ok' | 'error' } | null>(null);
 
   const load = useCallback(async () => {
-    if (!UUID.test(hlId)) {
-      setState('unsupported');
-      return;
-    }
     try {
+      if (isDraft) {
+        const { available } = await fetchJson<{ available: StoryThumb[] }>('/api/compte/highlights');
+        setData({ id: '', title: hlTitle, coverStoryId: null, stories: [], available });
+        setTitle(hlTitle || 'Ma sélection');
+        setState('ready');
+        return;
+      }
       const next = await fetchJson<HighlightState>(`/api/compte/highlights/${hlId}`);
       setData(next);
       setTitle(next.title);
@@ -87,7 +93,7 @@ export function HighlightEditDrawer({ hlId }: { hlId: string }) {
     } catch {
       setState('error');
     }
-  }, [hlId]);
+  }, [hlId, hlTitle, isDraft]);
 
   useEffect(() => {
     void load();
@@ -118,6 +124,32 @@ export function HighlightEditDrawer({ hlId }: { hlId: string }) {
 
   const patch = (body: Record<string, unknown>, okText: string) => {
     if (!data) return;
+    if (isDraft) {
+      // Brouillon local : rien n'est écrit tant que la sélection n'est pas créée.
+      setData((current) => {
+        if (!current) return current;
+        const next = { ...current };
+        if (typeof body.coverStoryId === 'string') next.coverStoryId = body.coverStoryId;
+        if (typeof body.addStoryId === 'string') {
+          const story = current.available.find((item) => item.id === body.addStoryId);
+          if (story) {
+            next.stories = [...current.stories, story];
+            next.available = current.available.filter((item) => item.id !== story.id);
+          }
+        }
+        if (typeof body.removeStoryId === 'string') {
+          const story = current.stories.find((item) => item.id === body.removeStoryId);
+          if (story) {
+            next.stories = current.stories.filter((item) => item.id !== story.id);
+            next.available = [story, ...current.available];
+            if (current.coverStoryId === story.id) next.coverStoryId = null;
+          }
+        }
+        return next;
+      });
+      setMessage({ text: okText, tone: 'ok' });
+      return;
+    }
     void run(
       () =>
         fetchJson(`/api/compte/highlights/${data.id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(
@@ -128,9 +160,37 @@ export function HighlightEditDrawer({ hlId }: { hlId: string }) {
     );
   };
 
+  const createHighlight = async () => {
+    const next = title.trim().slice(0, TITLE_MAX);
+    if (!data || !next) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      await fetchJson('/api/compte/highlights', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: next,
+          coverStoryId: data.coverStoryId ?? data.stories[0]?.id ?? null,
+          storyIds: data.stories.map((story) => story.id),
+        }),
+      });
+      changed();
+      (window as unknown as { __lkdvCompteAct?: (action: string) => void }).__lkdvCompteAct?.('closeSheet');
+    } catch {
+      setMessage({ text: 'La création a échoué. Réessaie.', tone: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const saveTitle = () => {
     const next = title.trim().slice(0, TITLE_MAX);
-    if (next) patch({ title: next }, 'Titre enregistré.');
+    if (!next) return;
+    if (isDraft) {
+      void createHighlight();
+      return;
+    }
+    patch({ title: next }, 'Titre enregistré.');
   };
   const setCover = (storyId: string) => patch({ coverStoryId: storyId }, 'Couverture modifiée.');
   const addStory = (storyId: string) => patch({ addStoryId: storyId }, 'Story ajoutée.');
@@ -180,17 +240,19 @@ export function HighlightEditDrawer({ hlId }: { hlId: string }) {
           </label>
           <ActionPill
             tone="primary"
-            text="Enregistrer"
-            label="Enregistrer le titre"
+            text={isDraft ? 'Créer la sélection' : 'Enregistrer'}
+            label={isDraft ? 'Créer la sélection à la une' : 'Enregistrer le titre'}
             icon={<Check size={16} aria-hidden="true" />}
             busy={busy}
-            disabled={!title.trim() || title.trim() === data?.title}
+            disabled={!title.trim() || (!isDraft && title.trim() === data?.title)}
             onClick={saveTitle}
           />
           {status}
-          <button type="button" className="lkdv-hl-danger" onClick={() => void removeAlbum()} disabled={busy}>
-            <Trash2 size={15} aria-hidden="true" /> Retirer des stories à la une
-          </button>
+          {isDraft ? null : (
+            <button type="button" className="lkdv-hl-danger" onClick={() => void removeAlbum()} disabled={busy}>
+              <Trash2 size={15} aria-hidden="true" /> Retirer des stories à la une
+            </button>
+          )}
         </div>
       ),
     },
@@ -294,17 +356,6 @@ export function HighlightEditDrawer({ hlId }: { hlId: string }) {
       </div>
     );
   }
-  if (state === 'unsupported') {
-    return (
-      <div className="lkdv-drawer-shell">
-        <DrawerEmpty
-          title="Sélection automatique"
-          hint="Cette story à la une est générée à partir de ton sac et de tes carnets : elle n'est pas modifiable."
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="lkdv-compte-root">
       <DrawerShell tabs={tabs} activeIndex={tab} onIndexChange={setTab} />

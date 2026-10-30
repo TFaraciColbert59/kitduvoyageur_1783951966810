@@ -1890,7 +1890,7 @@ let renderSheet = function() {
       : kind === "sortie"
         ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
         : kind === "highlight"
-          ? { hlId: sh.hlId || (sh.extra && sh.extra.hlId) || "" }
+          ? { hlId: sh.hlId || (sh.extra && sh.extra.hlId) || "", hlTitle: sh.hlTitle || (sh.extra && sh.extra.hlTitle) || "" }
           : { tab: drawerHintTab || 0 };
     if (root && typeof window.__lkdvMountDrawer === "function") {
       try { window.__lkdvMountDrawer(root, kind, props); } catch (err) {
@@ -2932,7 +2932,7 @@ const PINIC = 'M9 3h6l-1 6 3 3H7l3-3-1-6ZM12 12v8';
 
 /* ---------- Highlights & stories ---------- */
 hlList = function () {
-  if (Array.isArray(HIGHLIGHTS) && HIGHLIGHTS.length > 1) return [...HIGHLIGHTS, { id: 'hl5', title: 'Nouveau', mass: 'm1', step: 0, sub: 'Ajouter un moment terrain à la une' }];
+  if (Array.isArray(HIGHLIGHTS) && HIGHLIGHTS.some((h) => h && h.id !== 'hl5')) return [...HIGHLIGHTS.filter((h) => h && h.id !== 'hl5'), { id: 'hl5', title: 'Nouveau', mass: 'm1', step: 0, sub: 'Ajouter un moment terrain à la une' }];
   const items = [];
   if (typeof totalW === 'function' && totalW() > 0) {
     items.push({

@@ -1481,7 +1481,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         ) : drawerMount.kind === 'sortie' ? (
           <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
         ) : drawerMount.kind === 'highlight' ? (
-          <HighlightEditDrawer hlId={String(drawerMount.props?.hlId || '')} />
+          <HighlightEditDrawer hlId={String(drawerMount.props?.hlId || '')} hlTitle={String(drawerMount.props?.hlTitle || '')} />
         ) : drawerMount.kind === 'compte' ? (
           <CompteDrawer initialTab={Number(drawerMount.props?.tab) || 0} />
         ) : (
