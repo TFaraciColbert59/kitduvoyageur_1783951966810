@@ -42,6 +42,8 @@ export default defineConfig({
     // n'était sélectionnée ni par Playwright (testMatch) ni par Vitest
     // (tests/e2e exclu), donc jamais exécutée.
     'tests/e2e/compte-map-zoom.spec.ts',
+    // Explorer v2 (08_TESTS.md) : specs dédiées, taguées @explorer-v2.
+    'tests/explorer-v2/*.e2e.spec.ts',
   ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -95,5 +97,10 @@ export default defineConfig({
         url: 'http://localhost:4028',
         reuseExistingServer: true,
         timeout: 120_000,
+        env: {
+          PORT: '4028',
+          EXPLORER_V2_E2E: '1',
+          NEXT_PUBLIC_EXPLORER_SCENES: '1',
+        },
       },
 });

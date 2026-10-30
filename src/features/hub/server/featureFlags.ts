@@ -10,6 +10,7 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   hub_sortie_enabled: false,
   hub_collectif_enabled: false,
   explorer_unified_map_enabled: false,
+  explorer_v2_enabled: false,
   updatedAt: 0,
   source: 'fallback',
 };
@@ -46,6 +47,7 @@ export async function currentFeatureFlags(): Promise<FeatureFlags> {
       hub_sortie_enabled: byId.get('hub_sortie_enabled') ?? false,
       hub_collectif_enabled: byId.get('hub_collectif_enabled') ?? false,
       explorer_unified_map_enabled: byId.get('explorer_unified_map_enabled') ?? false,
+      explorer_v2_enabled: byId.get('explorer_v2_enabled') ?? false,
       updatedAt: Date.now(),
       source: 'rpc',
     };

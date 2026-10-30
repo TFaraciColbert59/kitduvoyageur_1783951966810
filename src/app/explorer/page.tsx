@@ -1,62 +1,69 @@
 import React from 'react';
-import { getTrails } from '@/lib/queries/trails';
-import { getAtlasDensity, type AtlasDensity } from '@/lib/queries/atlas';
+import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
-import { resolveUnifiedMapEnabled } from '@/lib/atlas/rollout';
-import ExplorerClient from '@/components/explorer/ExplorerClient';
-import type { MapTrail } from '@/components/explorer/types';
+import ExplorerV2 from '@/features/explorer-v2/ExplorerV2';
+import { isSceneName, sceneEnabled } from '@/features/explorer-v2/state/scenes';
 
-export const revalidate = 60;
+export const metadata: Metadata = {
+  title: 'Explorer · Le Kit du Voyageur',
+  description:
+    'Le globe, les pays, les régions et le sentier : carte 3D, points d’eau, refuges, itinéraires et activités en direct.',
+  openGraph: {
+    title: 'Explorer · Le Kit du Voyageur',
+    description:
+      'Du globe au sentier : repères réels, itinéraires OSM, points d’eau et suivi d’activité.',
+    type: 'website',
+    locale: 'fr_FR',
+  },
+};
+
 export const dynamic = 'force-dynamic';
 
 interface ExplorerPageProps {
-  searchParams?: Promise<{ atlas?: string }>;
+  searchParams?: Promise<{ v2?: string; scene?: string; lat?: string; lng?: string }>;
 }
 
+/** Centre approximatif fourni par le réseau de diffusion (jamais bloquant). */
+async function approximateCenter(): Promise<[number, number] | null> {
+  try {
+    const h = await headers();
+    const lat = Number.parseFloat(h.get('x-vercel-ip-latitude') ?? '');
+    const lng = Number.parseFloat(h.get('x-vercel-ip-longitude') ?? '');
+    if (Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+      return [lng, lat];
+    }
+  } catch {
+    /* aucun en-tête géographique : le client demandera la position */
+  }
+  return null;
+}
+
+/**
+ * `/explorer` sert l'Explorer v2 (P10-04 : le moteur legacy est supprimé).
+ *
+ * Le flag `explorer_v2_enabled` reste lu pour la traçabilité du rollout : à 0 %,
+ * la page renvoie quand même v2 — l'ancien moteur n'existe plus, et un retour
+ * arrière se fait par redéploiement du commit précédent.
+ */
 export default async function ExplorerPage({ searchParams }: ExplorerPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-
-  // CHANTIER ATLAS Phase 7 — rollout progressif via le système de flags existant.
-  // `?atlas=1` reste le switch interne (tests/équipe) ; le flag global gouverne
-  // le trafic réel et permet un rollback instantané (moteur legacy conservé).
   const flags = await currentFeatureFlags();
-  const unifiedMap = resolveUnifiedMapEnabled({
-    flagEnabled: flags.explorer_unified_map_enabled,
-    atlasParam: resolvedSearchParams?.atlas,
-  });
+  if (!flags.explorer_v2_enabled) {
+    console.warn('[explorer] flag explorer_v2_enabled à 0 — v2 servi quand même (legacy supprimé)');
+  }
 
-  // P1 — chargement serveur parallèle : sentiers initiaux et densité ATLAS ne
-  // dépendent pas l'un de l'autre. Chaque source garde son propre repli explicite.
-  const initialTrailsPromise = getTrails({
-    minLat: 45.9237 - 0.018,
-    maxLat: 45.9237 + 0.018,
-    minLng: 6.8694 - 0.026,
-    maxLng: 6.8694 + 0.026,
-    limit: 50,
-  }).catch((error) => {
-    console.error('[ExplorerPage] Error fetching initial trails:', error);
-    return [] as MapTrail[];
-  });
+  const scene =
+    sceneEnabled() && resolvedSearchParams?.scene && isSceneName(resolvedSearchParams.scene)
+      ? resolvedSearchParams.scene
+      : null;
 
-  // Paliers continent/région : densités matérialisées (Phase 1), uniquement utile
-  // au moteur unifié — aucun coût sur le chemin legacy Leaflet.
-  const atlasDensityPromise: Promise<AtlasDensity> = unifiedMap
-    ? getAtlasDensity().catch((error) => {
-        console.error('[ExplorerPage] Error fetching atlas density:', error);
-        return { countries: [], cells: [] } satisfies AtlasDensity;
-      })
-    : Promise.resolve({ countries: [], cells: [] });
+  const queryLat = Number.parseFloat(resolvedSearchParams?.lat ?? '');
+  const queryLng = Number.parseFloat(resolvedSearchParams?.lng ?? '');
+  const initialCenter =
+    Number.isFinite(queryLat) && Number.isFinite(queryLng) && Math.abs(queryLat) <= 90
+      ? ([queryLng, queryLat] as [number, number])
+      : await approximateCenter();
 
-  const [initialTrails, atlasDensity] = await Promise.all([
-    initialTrailsPromise,
-    atlasDensityPromise,
-  ]);
-
-  return (
-    <ExplorerClient
-      initialTrails={initialTrails}
-      unifiedMap={unifiedMap}
-      atlasDensity={atlasDensity}
-    />
-  );
+  return <ExplorerV2 initialScene={scene} initialCenter={initialCenter} />;
 }

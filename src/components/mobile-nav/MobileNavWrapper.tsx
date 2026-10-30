@@ -42,7 +42,10 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/communaute/reels/') ||
     // Carte vivante 3D plein écran immersive avec scrubber d'altitude
     pathname === '/carte-3d' ||
-    pathname?.startsWith('/carte-3d');
+    pathname?.startsWith('/carte-3d') ||
+    // Explorer v2 : la page porte sa propre barre basse (une seule barre visible,
+    // 00_MISSION §8) — la barre globale est masquée pour éviter le doublon.
+    pathname === '/explorer';
 
 
   // Hide general top site navigation on map-heavy views to allow full-screen map focus

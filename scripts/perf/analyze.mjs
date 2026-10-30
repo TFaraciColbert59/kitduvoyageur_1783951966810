@@ -13,7 +13,13 @@ const command = isWindows ? 'npm.cmd' : 'npm';
 console.log('[analyze] build avec ANALYZE=true...');
 const result = spawnSync(command, ['run', 'build'], {
   stdio: 'inherit',
-  env: { ...process.env, ANALYZE: 'true' },
+  env: {
+    ...process.env,
+    ANALYZE: 'true',
+    NODE_OPTIONS: process.env.NODE_OPTIONS || '--max-old-space-size=8192',
+    NEXT_PUBLIC_EXPLORER_SCENES: process.env.NEXT_PUBLIC_EXPLORER_SCENES || '1',
+    EXPLORER_V2_E2E: process.env.EXPLORER_V2_E2E || '1',
+  },
   shell: isWindows,
 });
 
