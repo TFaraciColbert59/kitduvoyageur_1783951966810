@@ -807,6 +807,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       act('openStep', '3:3');
     } else if (initialTab === 'parametres') {
       act('openAccountDrawer', 2);
+    } else if (initialTab === 'kits' || initialTab === 'kit') {
+      (window as any).__lkdvOpenSlot?.('kit');
     } else if (initialTab === 'progression') {
       act('sealzoom');
     }

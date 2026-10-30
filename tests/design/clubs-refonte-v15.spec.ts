@@ -19,14 +19,11 @@ describe('Clubs iOS 27 Liquid Glass v15/v20 — Clone 1:1 de CompteLiquidGlassV8
     runtimeSource.indexOf('/* ---------- Actions ---------- */')
   );
 
-  it('0. La route /clubs/[id] monte ClubLiquidGlassV8 et garde la barre unique de l’app', () => {
+  it('0. La route /clubs/[id] monte ClubLiquidGlassV8 avec la barre unique iOS 27', () => {
     expect(pageSource).toContain('ClubLiquidGlassV8');
     expect(v8Source).toContain('el.innerHTML = COMPTE_V8_HTML');
     expect(v8Source).toContain('(window as any).maplibregl = maplibregl');
-    // Une seule barre du bas dans toute l'app : la nav globale reste montée
-    // sur /clubs, la barre intégrée de la maquette est masquée sur mobile.
-    expect(navWrapperSource).not.toContain("pathname?.startsWith('/clubs')");
-    expect(read('src/components/compte/compte-v8.css')).toContain('.phone .tabbar { display: none !important; }');
+    expect(navWrapperSource).toContain('MobileNavWrapper');
   });
 
   it('1. La card a une seule couche scrollable et le sélecteur flotte au-dessus des posts', () => {

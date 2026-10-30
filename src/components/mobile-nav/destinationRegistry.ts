@@ -74,7 +74,7 @@ export const DESTINATIONS: readonly Destination[] = [
     label: { fr: 'Communauté', en: 'Community', es: 'Comunidad', de: 'Community', it: 'Comunità' },
     ariaLabel: 'Communauté, clubs, événements',
     iconName: 'users',
-    matchPaths: ['/communaute', '/carnets', '/clubs'],
+    matchPaths: ['/communaute', '/communaute/reels', '/carnets', '/clubs'],
   },
   {
     id: 'messages',
@@ -123,7 +123,7 @@ const EXTENDED_NAV_PREFIXES: readonly string[] = [
   '/messagerie',
 ];
 
-const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/communaute'];
+const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/communaute', '/communaute/reels'];
 
 /** Vrai si la route possède un plateau de navigation secondaire. */
 export function hasExtendedNav(pathname: string | null | undefined): boolean {

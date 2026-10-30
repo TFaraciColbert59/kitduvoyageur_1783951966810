@@ -21,6 +21,7 @@ import '@/design/account/account-grammar-pins.css';
 import '@/components/messaging/messages-grammar.css';
 import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
+import { SubCapsuleTabs } from '@/components/ui/CapsuleTabs';
 import Icon from '@/components/ui/Icon';
 import dynamic from 'next/dynamic';
 import type { ReportTarget } from '@/components/ui/ReportBlockModal';
@@ -1397,6 +1398,24 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     </button>
                   ) : null}
                 </div>
+
+                <div className="mfilter-bar">
+                  <SubCapsuleTabs
+                    items={FILTERS.map((item) => ({
+                      id: item.id,
+                      label: item.label,
+                      badge: item.id === 'requests' && pendingCount > 0 ? pendingCount : undefined,
+                    }))}
+                    activeIndex={Math.max(0, FILTERS.findIndex((item) => item.id === filter))}
+                    onIndexChange={(idx) => {
+                      const next = FILTERS[idx];
+                      if (next) changeFilter(next.id);
+                    }}
+                    ariaLabel="Filtrer les discussions"
+                    placement="inline"
+                    className="mfilters"
+                  />
+                </div>
                 <div className="card-scroll">
                   {query.trim().length >= 2 && !guest ? (
                     <div className="mresults">
@@ -1513,28 +1532,6 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                         />
                       ))
                     )}
-                  </div>
-                </div>
-
-                <div className="mfilter-float">
-                  <div className="ig-tabs mfilters" role="tablist" aria-label="Filtrer les discussions">
-                    <span className="ig-th" style={{ transform: `translateX(${Math.max(0, FILTERS.findIndex((item) => item.id === filter)) * 100}%)` }} aria-hidden="true" />
-                    {FILTERS.map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={filter === item.id}
-                        className="mfilters-btn"
-                        onClick={() => {
-                          haptic('light');
-                          changeFilter(item.id);
-                        }}
-                      >
-                        {item.label}
-                        {item.id === 'requests' && pendingCount > 0 ? <b className="mrow-badge">{pendingCount}</b> : null}
-                      </button>
-                    ))}
                   </div>
                 </div>
               </div>

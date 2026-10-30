@@ -1,7 +1,8 @@
 /* ============================================================
-   LKDV — Service Worker v4 (SEC-1 : isolation inter-comptes)
+   LKDV — Service Worker v18 (fichiers JS/CSS servis depuis le cache,
+   anciens caches purgés).
    Stratégies :
-   - CacheFirst : polices, chunks Next.js statiques
+   - CacheFirst : polices, chunks Next.js statiques (hachés et immuables)
    - StaleWhileRevalidate : images publiques tierces + API PUBLIQUES uniquement
    - Navigation : Network-First, cache HTML réservé aux routes PUBLIQUES
      (liste blanche) ; les routes authentifiées ne sont JAMAIS mises en cache.
@@ -11,7 +12,7 @@
    réponses API privées (/api/hub, /api/materiel, /api/voyages…) en cache.
    ============================================================ */
 
-const CACHE_VERSION = 'lkdv-v22';
+const CACHE_VERSION = 'lkdv-v18';
 const STATIC_CACHE = `lkdv-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lkdv-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
@@ -82,7 +83,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 2. Activation & purge des anciens caches (versions précédentes incluses)
+// 2. Activation & purge des anciens caches (versions précédentes purgées)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -97,7 +98,6 @@ self.addEventListener('activate', (event) => {
 });
 
 // 3. Purge des données privées (déconnexion / changement d'utilisateur).
-// AuthContext poste { type: 'LKDV_PURGE_PRIVATE' } au SW à chaque changement d'user.id.
 self.addEventListener('message', (event) => {
   const data = event.data || {};
   if (data.type === 'LKDV_PURGE_PRIVATE') {
@@ -118,31 +118,30 @@ self.addEventListener('fetch', (event) => {
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
   // -- Stratégie A : Polices & Chunks JS/CSS Next.js (Cache-First) --
+  // Fichiers JS/CSS servis directement depuis le cache pour la réactivité,
+  // et mis en cache lors de la première requête réseau s'ils n'y sont pas encore.
   if (
     url.pathname.startsWith('/_next/static/') ||
     url.hostname.includes('fonts.gstatic.com') ||
     url.hostname.includes('fonts.googleapis.com')
   ) {
-    // Cache-First : les fichiers de `/_next/static/` portent l'empreinte de
-    // leur contenu (un nouveau build = de nouveaux noms), ils ne périment donc
-    // jamais. Les servir du cache rend chaque changement de page immédiat ;
-    // les anciennes versions ne reviennent pas (le HTML, lui, est toujours
-    // demandé au réseau et chaque version du SW purge les caches précédents).
     event.respondWith(
       caches.open(STATIC_CACHE).then(async (cache) => {
         const cached = await cache.match(request);
         if (cached) return cached;
-        const response = await fetch(request);
-        if (response.status === 200) cache.put(request, response.clone());
-        return response;
+        try {
+          const response = await fetch(request);
+          if (response.status === 200) cache.put(request, response.clone());
+          return response;
+        } catch {
+          throw new Error('offline');
+        }
       })
     );
     return;
   }
 
   // -- Stratégie B : Images PUBLIQUES (Stale-While-Revalidate, cache dédié) --
-  // URLs signées Supabase : le token varie par session → jamais de collision
-  // inter-comptes ; l'image n'est resservie qu'en cas d'échec réseau.
   if (
     request.destination === 'image' ||
     url.pathname.match(/\.(png|jpg|jpeg|svg|webp|avif)$/) ||
@@ -167,8 +166,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   // -- Stratégie C : API GET — uniquement les endpoints publics (SWR) --
-  // Toute autre API (hub, materiel, voyages, trips, equipages, carnets…) :
-  // réseau seul, JAMAIS mis en cache (SEC-1).
   if (isPublicApi(url.pathname)) {
     event.respondWith(
       caches.open(RUNTIME_CACHE).then(async (cache) => {
@@ -215,8 +212,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   // -- Stratégie D : Navigation HTML --
-  // Network-First. Mise en cache UNIQUEMENT si la route est publique.
-  // Routes authentifiées : jamais cachees ; fallback offline.html.
   if (request.mode === 'navigate') {
     const publicNav = url.origin === self.location.origin && isPublicNavigation(url.pathname);
     event.respondWith(
@@ -233,8 +228,6 @@ self.addEventListener('fetch', (event) => {
             const cached = await caches.match(request);
             if (cached) return cached;
           }
-          // Compas sans réseau : la page hors ligne relit l'aventure gardée sur
-          // l'appareil (IndexedDB) ; aucune page privée n'est en cache.
           if (url.pathname.startsWith('/compas')) {
             const horsLigne = await caches.match('/hors-ligne');
             if (horsLigne) return horsLigne;
@@ -247,10 +240,6 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// P2 (C-19) — LRU borné pour les tuiles : sans limite, une session de
-// randonnée peut saturer le quota d'origine et faire évacuer TOUT le storage
-// de l'origine (caches statiques, IndexedDB, packs offline). Borne 3000
-// entrées, éviction FIFO simple à chaque dépassement, jamais bloquante.
 const TILE_CACHE_MAX_ENTRIES = 3000;
 
 async function evictTilesIfOverflowing(cache) {
@@ -258,8 +247,6 @@ async function evictTilesIfOverflowing(cache) {
     const keys = await cache.keys();
     if (keys.length <= TILE_CACHE_MAX_ENTRIES) return;
     const overflow = keys.length - TILE_CACHE_MAX_ENTRIES;
-    // keys() liste dans l'ordre d'insertion pour un cache rempli
-    // séquentiellement : FIFO approxime le LRU à coût constant.
     for (let i = 0; i < overflow; i += 1) {
       await cache.delete(keys[i]);
     }

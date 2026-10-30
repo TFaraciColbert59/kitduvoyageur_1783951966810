@@ -7,9 +7,17 @@ import type { KitMessageMeta } from '../types/messaging.types';
 
 /**
  * Carte inline d'un message de type 'kit' — la lignée circule dans les DM.
- * Clic → ouvre le KitSheet (le kit n'habite pas une adresse).
+ * Clic → ouvre le KitSheet ou le drawer kit parent.
  */
-export function KitCard({ meta, isMine }: { meta: KitMessageMeta; isMine: boolean }) {
+export function KitCard({
+  meta,
+  isMine,
+  onOpen,
+}: {
+  meta: KitMessageMeta;
+  isMine: boolean;
+  onOpen?: (kitId: string) => void;
+}) {
   const { haptic } = useHapticFeedback();
   const { openKit } = useKitSheet();
 
@@ -18,7 +26,11 @@ export function KitCard({ meta, isMine }: { meta: KitMessageMeta; isMine: boolea
       variant="interactive"
       onClick={() => {
         haptic('light');
-        openKit(meta.kit_id, 'messaging');
+        if (onOpen) {
+          onOpen(meta.kit_id);
+        } else {
+          openKit(meta.kit_id, 'messaging');
+        }
       }}
       className={`block w-full max-w-[280px] space-y-[var(--space-1)] p-[var(--space-4)] text-left ${
         isMine

@@ -104,4 +104,55 @@ describe('CapsuleTabs — capsule principale 48 px', () => {
     );
     expect(container.firstChild).toBeNull();
   });
+
+  it('affiche les badges sur les onglets qui en portent', () => {
+    const itemsWithBadges: CapsuleTabItem[] = [
+      { id: '1', label: 'Toutes' },
+      { id: '2', label: 'Directs', badge: 8 },
+    ];
+    render(
+      <CapsuleTabs items={itemsWithBadges} activeIndex={0} onIndexChange={() => {}} ariaLabel="Badges" />
+    );
+    const badge = screen.getByText('8');
+    expect(badge.className).toBe('badge-count');
+  });
+});
+
+describe('SubCapsuleTabs — capsule secondaire 30 px', () => {
+  it('rend la classe lkdv-lens-float et la lentille ig-th lens', () => {
+    const { container } = render(
+      <CapsuleTabs
+        items={ITEMS}
+        activeIndex={0}
+        onIndexChange={() => {}}
+        ariaLabel="Sous-sections"
+        size="sm"
+        placement="float"
+      />
+    );
+    const tablist = screen.getByRole('tablist', { name: 'Sous-sections' });
+    expect(tablist.className).toContain('lkdv-lens-float');
+    expect(tablist.className).not.toContain('is-inline');
+
+    const lens = container.querySelectorAll('.ig-th.lens');
+    expect(lens).toHaveLength(1);
+    expect((lens[0] as HTMLElement).style.getPropertyValue('--i')).toBe('0');
+  });
+
+  it('gère le placement inline et les libellés', () => {
+    render(
+      <CapsuleTabs
+        items={ITEMS}
+        activeIndex={2}
+        onIndexChange={() => {}}
+        ariaLabel="En ligne"
+        size="sm"
+        placement="inline"
+      />
+    );
+    const tablist = screen.getByRole('tablist', { name: 'En ligne' });
+    expect(tablist.className).toContain('lkdv-lens-float');
+    expect(tablist.className).toContain('is-inline');
+    expect(tablist.className).toContain('has-labels');
+  });
 });

@@ -185,6 +185,51 @@
   height: 15px;
 }
 
+/* --- Capsule secondaire en ligne & support libellés/badges ---------------- */
+
+.lkdv-lens-float.is-inline {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  top: auto;
+  margin: 0 auto;
+}
+
+.lkdv-lens-float.has-labels {
+  width: auto;
+  max-width: 100%;
+}
+
+.lkdv-lens-float.has-labels button {
+  padding: 0 12px;
+  font: 600 11px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+}
+
+.lkdv-lens-float .badge-count {
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 12px;
+  background: var(--lkv-primary, #17402c);
+  color: #fff;
+}
+
+.lkdv-capsule .badge-count {
+  margin-left: 6px;
+  padding: 1.5px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  background: var(--lkv-primary, #17402c);
+  color: #fff;
+}
+
 /* --- Réduction de mouvement ---------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {

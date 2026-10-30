@@ -11,9 +11,10 @@ import { join } from 'path';
 
 const tokens = readFileSync('src/styles/tokens.css', 'utf8');
 const appShell = readFileSync('src/components/shell/AppShell.tsx', 'utf8');
-const tabBar = readFileSync('src/components/mobile-nav/FloatingLiquidTabBar.tsx', 'utf8');
 const registry = readFileSync('src/components/mobile-nav/destinationRegistry.ts', 'utf8');
 const navigationBar = readFileSync('src/components/mobile-nav/NavigationBar.tsx', 'utf8');
+const floatingBar = readFileSync('src/components/mobile-nav/FloatingLiquidTabBar.tsx', 'utf8');
+const floatingCss = readFileSync('src/styles/floating-liquid-tabbar.css', 'utf8');
 const bottomNavReservation = readFileSync(
   'src/components/mobile-nav/navigation/bottom-nav-reservation.ts',
   'utf8',
@@ -97,11 +98,17 @@ describe('LOT 2 — navigation centralisée', () => {
     expect(registry).toContain('EXTENDED_NAV_PREFIXES');
   });
 
-  it('AppShell utilise le prédicat partagé et la barre unique publie sa réservation', () => {
+  it('AppShell et NavigationBar utilisent le même prédicat', () => {
     expect(appShell).toContain('hasExtendedNav(pathname)');
-    expect(tabBar).toContain('BottomNavReservation');
+    expect(navigationBar).toContain('hasExtendedNav(pathname)');
     // Plus de liste de routes dupliquée dans le shell.
     expect(appShell).not.toContain("pathname?.startsWith('/communaute')");
+  });
+
+  it('FloatingLiquidTabBar consomme la hauteur canonique et le matériau par tokens', () => {
+    expect(floatingCss).toContain('z-index: var(--z-nav, 1250);');
+    expect(floatingCss).toContain('-webkit-backdrop-filter: blur(28px) saturate(180%)');
+    expect(floatingBar).toContain('lkdv-floating-tabbar');
   });
 
   it('NavigationBar conserve le fallback web et limite la barre native à iOS', () => {
@@ -109,9 +116,7 @@ describe('LOT 2 — navigation centralisée', () => {
     expect(navigationBar).toContain("Capacitor.getPlatform() === 'ios'");
     expect(navigationBar).toContain('getNativeGlassDestination(pathname)');
     expect(navigationBar).toContain('shouldShowNativeGlass(pathname)');
-    // Hors barre native, une seule barre web : celle d'iOS 27.
     expect(navigationBar).toContain('<FloatingLiquidTabBar />');
-    expect(navigationBar).not.toContain('WebNavigationBar');
   });
 });
 

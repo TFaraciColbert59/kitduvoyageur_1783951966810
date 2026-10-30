@@ -38,6 +38,9 @@ export interface KitMessageMeta {
   kind: 'kit';
   kit_id: string;
   kit_name: string;
+  items_count?: number;
+  total_weight_g?: number;
+  image_url?: string | null;
 }
 
 /** Payload d'une publication de la communauté partagée en conversation (message_type = 'post'). */

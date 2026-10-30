@@ -12,6 +12,12 @@
   ],
   "active": [
     {
+      "source": "/messages",
+      "destination": "/messagerie",
+      "permanent": true,
+      "note": "Alias de commodité pour la messagerie"
+    },
+    {
       "source": "/partir-librement",
       "destination": "/compas",
       "permanent": true,
@@ -40,12 +46,6 @@
       "destination": "/communaute",
       "permanent": true,
       "note": "Index des clubs supprime ; les fiches /clubs/[id] restent servies."
-    },
-    {
-      "source": "/communaute/reels",
-      "destination": "/communaute",
-      "permanent": true,
-      "note": "Visionneuse reels supprimee."
     },
     {
       "source": "/communaute/decouvrir",

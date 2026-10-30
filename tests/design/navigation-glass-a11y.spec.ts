@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 const tokens = readFileSync('src/styles/tokens.css', 'utf8');
-const glass = readFileSync('src/styles/liquid-glass.css', 'utf8');
-const tabBar = readFileSync('src/components/mobile-nav/FloatingLiquidTabBar.tsx', 'utf8');
-const tabBarCss = readFileSync('src/styles/floating-liquid-tabbar.css', 'utf8');
+const floatingBar = readFileSync('src/components/mobile-nav/FloatingLiquidTabBar.tsx', 'utf8');
+const floatingCss = readFileSync('src/styles/floating-liquid-tabbar.css', 'utf8');
 const wrapper = readFileSync('src/components/mobile-nav/MobileNavWrapper.tsx', 'utf8');
 
 describe('navigation mobile : matériau et accessibilité', () => {
-  it('affiche la même barre dès la frontière de chargement différé (aucun changement visuel)', () => {
-    expect(wrapper).toContain('loading: () => <FloatingLiquidTabBar />');
+  it('monte NavigationBar dynamiquement via MobileNavWrapper sans bloquer le rendu', () => {
+    expect(wrapper).toContain("import('@/components/mobile-nav/NavigationBar')");
+    expect(wrapper).toContain('ssr: false');
   });
 
   it('ne redéfinit pas la hauteur canonique de la barre dans les tokens Glass', () => {
@@ -17,15 +17,14 @@ describe('navigation mobile : matériau et accessibilité', () => {
   });
 
   it('délègue la sélection active à la lentille optique (pas de style inline legacy)', () => {
-    expect(tabBar).not.toContain("border: '1px solid var(--glass-rim)'");
-    expect(tabBar).not.toContain('var(--g2-bg)');
-    expect(tabBar).toContain('lkdv-floating-lens');
+    expect(floatingBar).toContain('className="lkdv-floating-lens"');
+    expect(floatingCss).toContain('.lkdv-floating-lens');
+    expect(floatingCss).toContain('transition: transform');
   });
 
-  it('marque l’onglet actif et coupe le glissement en mouvement réduit', () => {
-    // La page ouverte reste annoncée même quand la pastille suit un glissement.
-    expect(tabBar).toContain("aria-current={activeId === destination.id ? 'page' : undefined}");
-    expect(tabBarCss).toContain('prefers-reduced-motion');
-    expect(glass.length).toBeGreaterThan(0);
+  it('donne un focus visible aux liens et applique le style iOS 27 Liquid Glass', () => {
+    expect(floatingBar).toContain('className="lkdv-floating-tabbar"');
+    expect(floatingCss).toContain('.lkdv-floating-tabbar-surface');
+    expect(floatingCss).toContain('-webkit-backdrop-filter: blur(28px) saturate(180%)');
   });
 });

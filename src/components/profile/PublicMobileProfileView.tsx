@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useUserPresence } from '@/hooks/useUserPresence';
 import Icon from '@/components/ui/AppIcon';
+import { LayoutGrid, BookOpen, Users, Shield, Zap } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -405,11 +406,11 @@ export default function PublicMobileProfileView({
           <div className="flex min-w-0 flex-1 items-center">
             <Tabs
               options={[
-                { id: 'tout', label: 'Récits', icon: '⚡' },
-                { id: 'posts', label: 'Publications', icon: '▦' },
-                { id: 'carnets', label: 'Carnets', icon: '📖' },
-                { id: 'clubs', label: 'Clubs', icon: '⛺' },
-                { id: 'badges', label: 'Badges', icon: '🛡️' },
+                { id: 'tout', label: 'Récits', icon: <Zap size={15} aria-hidden="true" /> },
+                { id: 'posts', label: 'Publications', icon: <LayoutGrid size={15} aria-hidden="true" /> },
+                { id: 'carnets', label: 'Carnets', icon: <BookOpen size={15} aria-hidden="true" /> },
+                { id: 'clubs', label: 'Clubs', icon: <Users size={15} aria-hidden="true" /> },
+                { id: 'badges', label: 'Badges', icon: <Shield size={15} aria-hidden="true" /> },
               ]}
               value={tab}
               onChange={(id) => {

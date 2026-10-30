@@ -10,6 +10,7 @@ import type React from 'react';
 import {
   AdjustmentsHorizontalIcon,
   ArrowUturnLeftIcon,
+  BookmarkIcon,
   BriefcaseIcon,
   BuildingOfficeIcon,
   ChartBarIcon,
@@ -20,6 +21,7 @@ import {
   EyeSlashIcon,
   FlagIcon,
   HandThumbUpIcon,
+  HeartIcon,
   KeyIcon,
   NoSymbolIcon,
   PrinterIcon,
@@ -33,6 +35,7 @@ import {
 import {
   AdjustmentsHorizontalIcon as AdjustmentsHorizontalIconSolid,
   ArrowUturnLeftIcon as ArrowUturnLeftIconSolid,
+  BookmarkIcon as BookmarkIconSolid,
   BriefcaseIcon as BriefcaseIconSolid,
   BuildingOfficeIcon as BuildingOfficeIconSolid,
   ChartBarIcon as ChartBarIconSolid,
@@ -43,6 +46,7 @@ import {
   EyeSlashIcon as EyeSlashIconSolid,
   FlagIcon as FlagIconSolid,
   HandThumbUpIcon as HandThumbUpIconSolid,
+  HeartIcon as HeartIconSolid,
   KeyIcon as KeyIconSolid,
   NoSymbolIcon as NoSymbolIconSolid,
   PrinterIcon as PrinterIconSolid,
@@ -57,6 +61,7 @@ import {
 export const HERO_OUTLINE: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   AdjustmentsHorizontalIcon,
   ArrowUturnLeftIcon,
+  BookmarkIcon,
   BriefcaseIcon,
   BuildingOfficeIcon,
   ChartBarIcon,
@@ -67,6 +72,7 @@ export const HERO_OUTLINE: Record<string, React.ComponentType<React.SVGProps<SVG
   EyeSlashIcon,
   FlagIcon,
   HandThumbUpIcon,
+  HeartIcon,
   KeyIcon,
   NoSymbolIcon,
   PrinterIcon,
@@ -80,6 +86,7 @@ export const HERO_OUTLINE: Record<string, React.ComponentType<React.SVGProps<SVG
 export const HERO_SOLID: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   AdjustmentsHorizontalIcon: AdjustmentsHorizontalIconSolid,
   ArrowUturnLeftIcon: ArrowUturnLeftIconSolid,
+  BookmarkIcon: BookmarkIconSolid,
   BriefcaseIcon: BriefcaseIconSolid,
   BuildingOfficeIcon: BuildingOfficeIconSolid,
   ChartBarIcon: ChartBarIconSolid,
@@ -90,6 +97,7 @@ export const HERO_SOLID: Record<string, React.ComponentType<React.SVGProps<SVGSV
   EyeSlashIcon: EyeSlashIconSolid,
   FlagIcon: FlagIconSolid,
   HandThumbUpIcon: HandThumbUpIconSolid,
+  HeartIcon: HeartIconSolid,
   KeyIcon: KeyIconSolid,
   NoSymbolIcon: NoSymbolIconSolid,
   PrinterIcon: PrinterIconSolid,

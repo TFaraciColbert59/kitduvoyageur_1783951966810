@@ -186,6 +186,7 @@ scratch/
 .vercel
 .vinext/
 .cloudflare/
+.env*
 
 # Explorer v2 — cache de génération des fonds Natural Earth
 .cache/explorer-v2/

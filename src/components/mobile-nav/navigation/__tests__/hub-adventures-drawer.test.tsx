@@ -24,8 +24,10 @@ const source = readFileSync(
   'utf8',
 );
 const hubShell = readFileSync('src/features/hub/components/HubShell.tsx', 'utf8');
-// Barre du bas unique (iOS 27) : porte l'appui long sur Hub.
-const tabBar = readFileSync('src/components/mobile-nav/FloatingLiquidTabBar.tsx', 'utf8');
+const floatingLiquidTabBar = readFileSync(
+  'src/components/mobile-nav/FloatingLiquidTabBar.tsx',
+  'utf8',
+);
 const css = readFileSync(
   'src/components/mobile-nav/navigation/hubAdventuresDrawer.css',
   'utf8',
@@ -297,16 +299,40 @@ describe('Tiroir « Tes aventures » — non-regression du cablage existant', ()
     expect(hubShell).toContain('useAndroidHubBackNav');
   });
 
+  it('DR-31: le focus est restitue au declencheur a la fermeture', () => {
+    expect(floatingLiquidTabBar).toContain('hubTriggerRef');
+    expect(floatingLiquidTabBar).toContain('hub:switcher-state');
+    expect(floatingLiquidTabBar).toContain('trigger.focus()');
+    expect(floatingLiquidTabBar).toContain('drawerWasOpen.current && !open');
+  });
+
+  it('DR-32: la restitution du focus vise le declencheur REEL, apres Radix', () => {
+    // Un `pointerdown` quelconque memorise plus tot ferait restituer le focus
+    // sur un element sans rapport : on ne retient que le lien Hub.
+    expect(floatingLiquidTabBar).toContain(
+      'const HUB_TRIGGER = \'nav[aria-label="Navigation principale"] a[href="/hub"]\';',
+    );
+    expect(floatingLiquidTabBar).toContain('if (hubTrigger) hubTriggerRef.current = hubTrigger;');
+    // Radix rend le focus apres notre evenement d’etat : la restitution
+    // doit donc passer en double requestAnimationFrame pour passer DERNIER.
+    const restore = floatingLiquidTabBar.slice(
+      floatingLiquidTabBar.indexOf('const restoreTriggerFocus'),
+      floatingLiquidTabBar.indexOf('const onPointerDown'),
+    );
+    expect(restore).toContain('requestAnimationFrame');
+    expect(restore).toContain('trigger.focus();');
+    expect(restore).not.toContain('a[href], button, [tabindex]');
+  });
   it('DR-33: la barre d’onglets sort de l’echelle visuelle pendant le dialogue', () => {
     // Sous le verre du Sheet (z 50) la barre (z 40) se devinait dans la
     // derniere ligne : le tiroir doit se lire comme une surface pleine.
     expect(source).toContain("export const OPEN_ATTRIBUTE = 'data-had-open';");
     expect(source).toContain('root.setAttribute(OPEN_ATTRIBUTE, ');
     expect(source).toContain('return () => root.removeAttribute(OPEN_ATTRIBUTE);');
-    expect(css).toContain("html[data-had-open='true'] .lkdv-floating-tabbar {");
+    expect(css).toContain("html[data-had-open='true'] .lkv-nav-surface {");
     // `opacity` et non `visibility` : la barre doit rester focusable pour
     // que la restitution du focus dispose encore de sa cible.
-    const start = css.indexOf("html[data-had-open='true'] .lkdv-floating-tabbar {");
+    const start = css.indexOf("html[data-had-open='true'] .lkv-nav-surface {");
     const navRule = css.slice(start, start + 240);
     expect(navRule).toContain('opacity: 0;');
     expect(navRule).not.toContain('visibility: hidden');
@@ -314,9 +340,8 @@ describe('Tiroir « Tes aventures » — non-regression du cablage existant', ()
     expect(css).toMatch(/\.had-action--secondary \{[\s\S]{0,240}background: var\(--glass-bg-strong\)/);
   });
   it('DR-30: l’appui long sur Hub continue d’emettre le signal', () => {
-    expect(tabBar).toContain("if (destination.id === 'adventures') startLongPress();");
-    expect(tabBar).toContain("new CustomEvent('hub:open-switcher')");
-    expect(tabBar).toContain('isHubSurfacePathname(pathname)');
-    expect(tabBar).toContain('HUB_SWITCHER_AUTOPEN_KEY');
+    expect(floatingLiquidTabBar).toContain('triggerHubSwitcher');
+    expect(floatingLiquidTabBar).toContain('isHubSurfacePathname(pathname)');
+    expect(floatingLiquidTabBar).toContain("destination.id === 'adventures'");
   });
 });
