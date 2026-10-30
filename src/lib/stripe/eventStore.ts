@@ -5,8 +5,8 @@
  * (`event_id`). Une livraison dupliquée (retry Stripe, double livraison)
  * rencontre la violation d'unicité 23505 et n'est jamais retraitée.
  *
- * En cas d'échec de traitement, la réservation est supprimée pour que le retry
- * Stripe puisse reprendre l'événement — jamais de perte silencieuse.
+ * Le checkout transactionnel reprend les réservations processing après échec
+ * ou crash. Les autres handlers libèrent leur réservation après une exception.
  * Aucun appel réseau ici : uniquement le client Supabase service_role injecté.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -15,7 +15,7 @@ import { summarizeStripeEvent, type StripeEventLike } from './events';
 export const STRIPE_EVENTS_TABLE = 'stripe_events';
 
 export interface BeginStripeEventResult {
-  /** Vrai si c'est la première livraison (réservation acquise). */
+  /** Vrai si le traitement doit s'exécuter (première livraison ou reprise sûre). */
   firstDelivery: boolean;
   eventId: string;
 }
@@ -59,7 +59,13 @@ export async function beginStripeEvent(
 
   if (error) {
     if (errorCode(error) === '23505') {
-      return { firstDelivery: false, eventId: summary.eventId };
+      const { data: existing, error: readError } = await client.from(STRIPE_EVENTS_TABLE)
+        .select('status, type').eq('event_id', summary.eventId).maybeSingle();
+      if (readError || !existing) throw new Error('stripe_events: état de réservation indisponible');
+      // Checkout effects are serialized and idempotent in PostgreSQL. A worker
+      // crash must not turn a durable processing row into a permanent success.
+      return { firstDelivery: summary.type === 'checkout.session.completed' &&
+        existing.type === summary.type && existing.status === 'processing', eventId: summary.eventId };
     }
     throw new Error(`stripe_events: réservation impossible — ${errorMessage(error)}`);
   }
@@ -75,11 +81,11 @@ export async function markStripeEventProcessed(
   client: SupabaseClient,
   eventId: string
 ): Promise<void> {
-  const { error } = await client
+  const { data, error } = await client
     .from(STRIPE_EVENTS_TABLE)
     .update({ status: 'processed', processed_at: new Date().toISOString() })
-    .eq('event_id', eventId);
-  if (error) {
+    .eq('event_id', eventId).select('event_id').maybeSingle();
+  if (error || data?.event_id !== eventId) {
     throw new Error(`stripe_events: marquage impossible — ${errorMessage(error)}`);
   }
 }

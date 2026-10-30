@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
-import { fetchMyTripsCached } from '@/features/trips/client/fetchMyTrips';
+import { fetchMyTripsCached, getMyTripsSessionGeneration, isMyTripsSessionCurrent } from '@/features/trips/client/fetchMyTrips';
 import { initCompteLiquidGlassRuntime } from './compte-liquid-glass-v8-runtime';
 import type {
   SlotId,
@@ -425,6 +425,12 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
   const initializedRef = useRef(false);
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
+  const sessionGeneration = getMyTripsSessionGeneration();
+  const identityRef = useRef(user?.id ?? null);
+  identityRef.current = user?.id ?? null;
+  const runtimeEpochRef = useRef(0);
+  const requestEpochRef = useRef(0);
+  const pendingLogoutRef = useRef<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced'>('idle');
   const [activeHandle, setActiveHandle] = useState<string>('tony_frc');
   const bootstrapPayloadRef = useRef<unknown>(null);
@@ -485,26 +491,36 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
 
   const triggerAct = useCallback((action: string, val?: any) => {
+    if (identityRef.current !== (user?.id ?? null) || getMyTripsSessionGeneration() !== sessionGeneration) return;
     if (typeof window !== 'undefined' && typeof (window as any).__lkdvCompteAct === 'function') {
       (window as any).__lkdvCompteAct(action, val);
     }
-  }, []);
+  }, [user?.id, sessionGeneration]);
 
-  useEffect(() => {
-    window.__lkdvCompteMapOpenOuting = (id: string) => {
-      triggerAct('openOutingDrawer', id);
-    };
-    return () => {
-      delete window.__lkdvCompteMapOpenOuting;
-    };
-  }, [triggerAct]);
-
-  // Setup runtime & real browser/API action handlers
-  useEffect(() => {
+  // Rebuild identity-owned DOM before the next account can paint.
+  useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el || initializedRef.current) return;
     initializedRef.current = true;
-
+    const owner = user?.id ?? null;
+    const generation = getMyTripsSessionGeneration();
+    const epoch = ++runtimeEpochRef.current;
+    const isCurrent = () => runtimeEpochRef.current === epoch && identityRef.current === owner
+      && (owner === null || isMyTripsSessionCurrent(owner, generation));
+    window.__lkdvCompteMapOpenOuting = (id: string) => {
+      if (!isCurrent()) return;
+      triggerAct('openOutingDrawer', id);
+    };
+    bootstrapPayloadRef.current = null;
+    bootstrapPhaseRef.current = 'idle';
+    accountVisibilityRef.current = null;
+    signatureVisibilityRef.current = null;
+    lastSlotMountRef.current = null;
+    setSlotMount(null);
+    setDrawerMount(null);
+    setBootstrapPhase('idle');
+    setMapVisible(false);
+    setActiveHandle('visiteur');
     el.innerHTML = COMPTE_V8_HTML;
     const mapNode = el.querySelector<HTMLElement>('#maplibre-compte-canvas');
     if (mapNode) setMapRoot(mapNode);
@@ -513,6 +529,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     // contenu React (coquille, sélecteur .ig-tabs, swipe) à cet hôte. Le
     // montage est mémorisé : il sera rejoué quand le bootstrap répondra.
     (window as any).__lkdvMountSlot = (root: HTMLElement, slotId: string, S: any) => {
+      if (!isCurrent()) return;
       const pending: PendingSlotMount = {
         root: root ?? null,
         slotId: slotId || 'vitrine',
@@ -522,6 +539,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       setSlotMount(deriveSlotMount(pending, bootstrapPayloadRef.current, bootstrapPhaseRef.current));
     };
     (window as any).__lkdvUnmountSlot = () => {
+      if (!isCurrent()) return;
       lastSlotMountRef.current = null;
       setSlotMount(null);
     };
@@ -529,21 +547,25 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     // Drawers Réseau, Sortie et Compte : contenu React monté dans la feuille
     // runtime, sans fermer/rouvrir le drawer.
     (window as any).__lkdvMountDrawer = (root: HTMLElement, kind: string, props: any) => {
-      if (!root) return;
+      if (!isCurrent() || !root) return;
       setDrawerMount({ root, kind, props });
     };
     (window as any).__lkdvUnmountDrawer = () => {
+      if (!isCurrent()) return;
       setDrawerMount(null);
     };
 
-    const cleanup = initCompteLiquidGlassRuntime(el);
+    const cleanup = initCompteLiquidGlassRuntime(el, { userId: owner, isCurrent });
 
     // Register real catalog lookup for the Scan sheet
     (window as any).__lkdvScanLookup = async (query: string, cb: (item: any) => void) => {
+      if (!isCurrent()) return;
       try {
         const res = await fetch(`/api/materiel/search?q=${encodeURIComponent(query)}`);
+        if (!isCurrent()) return;
         if (res.ok) {
           const json = await res.json();
+          if (!isCurrent()) return;
           const hit = (json.items || json.results || json.products || [])[0];
           if (hit) {
             cb({
@@ -563,6 +585,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           }
         }
       } catch (_) {}
+      if (!isCurrent()) return;
       cb({
         id: 'scan_' + Date.now(),
         n: query,
@@ -580,6 +603,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
     // Register direct profile navigation helper
     (window as any).__lkdvNavigateProfile = (userHandle: string) => {
+      if (!isCurrent()) return;
       const clean = String(userHandle || '').replace(/^@/, '').trim();
       if (clean) {
         router.push(`/profil/${encodeURIComponent(clean)}`);
@@ -588,6 +612,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
     // Register real browser & backend action handlers
     (window as any).__lkdvOnAction = async (action: string, val: any, S: any) => {
+      if (!isCurrent()) return;
       const handle = S?.profile?.handle || 'visiteur';
       const profileUrl = `${window.location.origin}/u/${handle}`;
 
@@ -624,13 +649,16 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         const dump = typeof (window as any).__lkdvGetState === 'function' ? (window as any).__lkdvGetState() : { S };
         if (val === 'full') {
           try {
-            const res = await fetch('/api/user/export', { cache: 'no-store' }).catch(() => fetch('/api/account/export'));
+            const res = await fetch('/api/user/export', { cache: 'no-store' }).catch(() => isCurrent() ? fetch('/api/account/export') : Promise.reject(new Error('stale_account')));
+            if (!isCurrent()) return;
             if (res.ok) {
               const text = await res.text();
+              if (!isCurrent()) return;
               triggerBrowserDownload(`lkdv-export-rgpd-${handle}.json`, text, 'application/json;charset=utf-8');
               return;
             }
           } catch (_) {}
+          if (!isCurrent()) return;
           const fallbackBundle = {
             schema: 'lkdv.gdpr.export.v1',
             exportedAt: new Date().toISOString(),
@@ -677,7 +705,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         }
       } else if (action === 'stgear') {
         try {
-          localStorage.setItem('lkdv_forked_kit_v1', JSON.stringify({
+          localStorage.setItem(`lkdv_forked_kit_v1:${owner ?? 'guest'}`, JSON.stringify({
             forkedAt: new Date().toISOString(),
             sourceHandle: handle,
             items: S?.invs || [],
@@ -693,20 +721,21 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           const supabase = createClient();
           const { data: auth } = await supabase.auth.getUser();
           const me = auth?.user;
-          if (!me) return;
+          if (!isCurrent() || !me || me.id !== owner) return;
           const clean = val.replace(/^@/, '').trim();
           const { data: target } = await supabase
             .from('public_profiles')
             .select('id')
             .eq('handle', clean)
             .maybeSingle();
-          if (!target?.id || target.id === me.id) return;
+          if (!isCurrent() || !target?.id || target.id === me.id) return;
           const { data: existing } = await supabase
             .from('user_follows')
             .select('id')
             .eq('follower_id', me.id)
             .eq('following_id', target.id)
             .maybeSingle();
+          if (!isCurrent()) return;
           if (existing?.id) {
             await supabase.from('user_follows').delete().eq('id', existing.id);
           } else {
@@ -715,13 +744,16 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         } catch (_) {}
       } else if (action === 'signout') {
         try {
+          pendingLogoutRef.current = owner;
           await signOut();
-          router.push('/connexion');
         } catch (_) {}
       }
     };
 
     return () => {
+      ++runtimeEpochRef.current;
+      ++requestEpochRef.current;
+      for (const key of ['__lkdvCompteMapOpenOuting', '__lkdvScanLookup', '__lkdvNavigateProfile', '__lkdvOnAction', '__lkdvOnMutate', '__lkdvHydrateCompte', '__lkdvGetState', '__lkdvCompteAct', '__lkdvOpenSlot', '__lkdvSetSlot', '__lkdvSetProfileVisibility', '__lkdvSetSignatureVisibility']) delete (window as any)[key];
       delete (window as any).__lkdvMountSlot;
       delete (window as any).__lkdvUnmountSlot;
       delete (window as any).__lkdvMountDrawer;
@@ -732,7 +764,16 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       initialTabAppliedRef.current = false;
       initializedRef.current = false;
     };
-  }, [router, signOut]);
+  }, [router, signOut, user?.id, sessionGeneration, triggerAct]);
+
+  useEffect(() => {
+    if (!pendingLogoutRef.current) return;
+    if (user && user.id !== pendingLogoutRef.current) pendingLogoutRef.current = null;
+    else if (!authLoading && !user) {
+      pendingLogoutRef.current = null;
+      router.push('/connexion');
+    }
+  }, [user, authLoading, router]);
 
   /**
    * Applique le deep link `?tab=` une fois le rôle connu.
@@ -780,6 +821,13 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
 
   // Hydrate with live Supabase user data
   const syncSupabaseProfile = useCallback(async () => {
+    const owner = user?.id ?? null;
+    const generation = getMyTripsSessionGeneration();
+    const epoch = ++requestEpochRef.current;
+    const runtimeEpoch = runtimeEpochRef.current;
+    const isCurrent = () => requestEpochRef.current === epoch && runtimeEpochRef.current === runtimeEpoch
+      && identityRef.current === owner && (owner === null || isMyTripsSessionCurrent(owner, generation));
+    if (!isCurrent()) return;
     const respondProfileVisibilityUnavailable = (
       value: unknown,
       meta?: CompteMutationMeta
@@ -788,6 +836,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         value,
         previous: toAccountVisibility(meta?.previousProfileVisibility),
         onRollback: (previous) => {
+          if (!isCurrent()) return;
           try {
             window.__lkdvSetProfileVisibility?.(previous);
           } catch (_) {}
@@ -796,6 +845,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           );
         },
         onFailed: (detail) => {
+          if (!isCurrent()) return;
           window.dispatchEvent(
             new CustomEvent<ProfileVisibilityEventDetail>(PROFILE_VISIBILITY_EVENT, {
               detail: {
@@ -851,6 +901,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       _S: any,
       meta?: CompteMutationMeta
     ) => {
+      if (!isCurrent()) return;
       if (k === 'profilevis') respondProfileVisibilityUnavailable(value, meta);
       else if (k === 'vis') respondSignatureVisibilityUnavailable(value, meta);
     };
@@ -972,6 +1023,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           .eq('status', 'active'),
       ]);
 
+      if (!isCurrent()) return;
       const hasUserCarnets = Array.isArray(carnetsRes.data) && carnetsRes.data.length > 0;
       const userClubs = (clubsRes.data || [])
         .map((cm: any) => ({
@@ -1047,8 +1099,10 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       // l'hôte ne peut pas afficher les entrées propriétaire.
       try {
         const bootRes = await fetch('/api/compte/bootstrap');
+        if (!isCurrent()) return;
         if (!bootRes.ok) throw new Error(`bootstrap_http_${bootRes.status}`);
         const payload = await bootRes.json();
+        if (!isCurrent()) return;
         bootstrapPayloadRef.current = payload;
         if (payload?.error) throw new Error(String(payload.error));
         const bootVisibility =
@@ -1086,6 +1140,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         }
         setBootstrapPhaseState('ready');
       } catch (_) {
+        if (!isCurrent()) return;
         // Échec explicite : le drawer montre l'erreur et propose de réessayer,
         // il ne se présente jamais comme un compte vide.
         bootstrapPayloadRef.current = null;
@@ -1093,8 +1148,9 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
       } finally {
         // Le runtime a pu monter le drawer avant la réponse : on rejoue le
         // dernier montage avec le rôle et le payload désormais connus.
-        refreshSlotMountRef.current();
+        if (isCurrent()) refreshSlotMountRef.current();
       }
+      if (!isCurrent()) return;
 
       // Hook up mutation callback to persist changes back to Supabase & API routes
       (window as any).__lkdvOnMutate = async (
@@ -1103,6 +1159,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         S: any,
         meta?: CompteMutationMeta
       ) => {
+        if (!isCurrent()) return;
         try {
           if (k === 'profilevis') {
             // Confidentialité du compte : `public` | `prive`, exactement les
@@ -1118,6 +1175,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
               value: update.profile_visibility,
               previous,
               onPersisted: (value) => {
+                if (!isCurrent()) return;
                 accountVisibilityRef.current = value;
                 const boot = bootstrapPayloadRef.current as any;
                 if (boot) {
@@ -1142,6 +1200,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                 );
               },
               onRollback: (value) => {
+                if (!isCurrent()) return;
                 // Retour exact : le runtime ne doit jamais afficher une
                 // confidentialité qui n'a pas été écrite.
                 try {
@@ -1152,6 +1211,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                 );
               },
               onFailed: (detail) => {
+                if (!isCurrent()) return;
                 window.dispatchEvent(
                   new CustomEvent<ProfileVisibilityEventDetail>(
                     PROFILE_VISIBILITY_EVENT,
@@ -1179,6 +1239,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
               value: S.vis,
               previous: meta?.previousSignatureVisibility,
               onPersisted: (value) => {
+                if (!isCurrent()) return;
                 signatureVisibilityRef.current = value;
                 const boot = bootstrapPayloadRef.current as any;
                 if (boot) {
@@ -1203,11 +1264,13 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                 );
               },
               onRollback: (index) => {
+                if (!isCurrent()) return;
                 try {
                   window.__lkdvSetSignatureVisibility?.(index);
                 } catch (_) {}
               },
               onFailed: (detail) => {
+                if (!isCurrent()) return;
                 window.dispatchEvent(
                   new CustomEvent<SignatureVisibilityEventDetail>(
                     SIGNATURE_VISIBILITY_EVENT,
@@ -1237,6 +1300,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
                 .from('carnets')
                 .update({ visibility: 'public' })
                 .eq('id', draftCarnet.realId);
+              if (!isCurrent()) return;
               requestCarnetPublicationAward(draftCarnet.realId, user.id);
             }
           } else if (k === 'additem') {
@@ -1259,6 +1323,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         } catch (_) {}
       };
     } catch {
+      if (!isCurrent()) return;
       setSyncStatus('idle');
       // Une lecture Supabase ratée avant le bootstrap ne doit pas laisser la
       // coquille en chargement perpétuel : c'est un échec explicite.
@@ -1267,7 +1332,7 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         refreshSlotMountRef.current();
       }
     }
-  }, [user, setBootstrapPhaseState]);
+  }, [user, setBootstrapPhaseState, sessionGeneration]);
 
   useEffect(() => {
     retryBootstrapRef.current = () => {

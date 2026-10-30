@@ -188,9 +188,47 @@ export function nextSheetFocus(sheet, active, shift) {
   return null;
 }
 
-export function initCompteLiquidGlassRuntime(rootContainer) {
+export function initCompteLiquidGlassRuntime(rootContainer, account = {}) {
   if (!rootContainer) return () => {};
   window.__LKDV_NEXT_PROD = true;
+  // The host div is reused; keep DOM reads attached to this account's tree.
+  const accountRoot = rootContainer.querySelector('.stage') || rootContainer;
+  let disposed = false;
+  let exportedActions = null;
+  let interactionState = null;
+  const isCurrent = () => !disposed && (!account.isCurrent || account.isCurrent());
+  const storageKey = key => `${key}:${account.userId || 'guest'}`;
+  const timers = new Set();
+  const frames = new Set();
+  // Every deferred runtime callback belongs to this account instance.
+  const setTimeout = (callback, delay, ...args) => {
+    const id = window.setTimeout(() => {
+      timers.delete(id);
+      if (isCurrent()) callback(...args);
+    }, delay);
+    timers.add(id);
+    return id;
+  };
+  const clearTimeout = id => { timers.delete(id); window.clearTimeout(id); };
+  const requestAnimationFrame = callback => {
+    const id = window.requestAnimationFrame ? window.requestAnimationFrame(time => {
+      frames.delete(id);
+      if (isCurrent()) callback(time);
+    }) : setTimeout(() => { frames.delete(id); callback(Date.now()); }, 16);
+    frames.add(id);
+    return id;
+  };
+  const cancelAnimationFrame = id => {
+    frames.delete(id);
+    if (window.cancelAnimationFrame) window.cancelAnimationFrame(id);
+    else clearTimeout(id);
+  };
+  const fetch = async (...args) => {
+    if (!isCurrent()) throw new Error('stale_account');
+    const response = await globalThis.fetch(...args);
+    if (!isCurrent()) throw new Error('stale_account');
+    return response;
+  };
 
   if (typeof globalThis.requestAnimationFrame === 'undefined') {
     globalThis.requestAnimationFrame = typeof window.requestAnimationFrame === 'function'
@@ -225,7 +263,7 @@ export function initCompteLiquidGlassRuntime(rootContainer) {
   try {
     (function() {
 
-const $ = id => document.getElementById(id);
+const $ = id => accountRoot.querySelector(`[id="${id}"]`);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const fmt = n => Math.round(n).toLocaleString('fr-FR') + ' €';
@@ -752,6 +790,7 @@ let whatIf = function(a, v) {
 /* ---------- Dynamic Island ---------- */
 let isT = null;
 let island = function(t, sub, undoable) {
+  if (!isCurrent()) return;
   $("isn").innerHTML = `<div class="t"><b>${t}</b>${sub ? `<span>${sub}</span>` : ""}</div>${undoable ? `<button data-a="undo" aria-label="Annuler">Annuler</button>` : ""}`;
   $("island").dataset.s = "note";
   let sr = $("live-status");
@@ -768,8 +807,10 @@ let island = function(t, sub, undoable) {
   clearTimeout(isT);
   isT = setTimeout(islandRest, 3800);
 }
-let islandRest = function() { $("island").dataset.s = G.live ? "live" : "idle"; }
+let islandRest = function() {
+  if (!isCurrent()) return; $("island").dataset.s = G.live ? "live" : "idle"; }
 let islandNext = function() {
+  if (!isCurrent()) return;
   const D = derive(), N = nextDecision(D);
   if (!N) { island("Tout est à jour", "Empreinte @tony_frc, inventaire et hors-ligne synchronisés", false); return; }
   $("isn").innerHTML = `<div class="t"><b>${N.t}</b><span>Prochaine action · ${STEPL[N.step]}</span></div><button data-a="nextgo">Appliquer</button>`;
@@ -1208,6 +1249,7 @@ let card = function() {
 }
 
 let renderTop = function() {
+  if (!isCurrent()) return;
   const D = derive(), N = nextDecision(D), ns = N ? N.step : null;
   G.next = N;
   $("phone").classList.toggle("hasnext", ns != null);
@@ -1751,6 +1793,7 @@ let sheetSlideDir = 0;
 let drawerHintMode = 'followers';
 let drawerHintTab = 0;
 let renderSheet = function() {
+  if (!isCurrent()) return;
   const sheetEl = $("sheet");
   if (!sheetEl) return;
   sheetEl.tabIndex = -1;
@@ -1909,7 +1952,7 @@ ${footerHtml ? `<div class="sh-f">${footerHtml}</div>` : ""}${Dd.footer ? `<div 
       ghost.style.transform = `translateX(${dir > 0 ? "-102%" : "102%"})`;
       ghost.style.opacity = "0.2";
     });
-    window.setTimeout(() => ghost.remove(), 480);
+    setTimeout(() => ghost.remove(), 480);
     const fresh = $("sheet").querySelector(".sh-b");
     if (fresh) fresh.dataset.slide = dir > 0 ? "1" : "-1";
   }
@@ -2002,6 +2045,7 @@ const captureSheetOpener = () => {
     : null;
 };
 let finishClose = function() {
+  if (!isCurrent()) return;
   if (!G.closing) return;
   G.closing = false;
   clearTimeout(G.closeT); G.closeT = null;
@@ -2066,6 +2110,7 @@ const animateSheetIn = () => {
   se._animT = setTimeout(() => se.classList.remove("anim-in"), 820);
 };
 let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
+  if (!isCurrent()) return;
   cancelClose();
   const wasBig = !!S.big;
   if (S.big) { S.big = false; applyShell(); }
@@ -2089,6 +2134,7 @@ let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
 }
 /* Entrée publique du drawer Profil v2 : sélectionne le slot puis ouvre la feuille. */
 window.__lkdvOpenSlot = function(slotId) {
+  if (!isCurrent()) return;
   S.step = 0;
   S.slot = slotIdOf(slotId);
   openSheet("step", 0, "large");
@@ -2097,6 +2143,7 @@ window.__lkdvOpenSlot = function(slotId) {
 /* Changement de slot SANS rouvrir la feuille : le contenu glisse côté React,
    la carte du bas et son badge suivent le slot sélectionné. */
 window.__lkdvSetSlot = function(slotId) {
+  if (!isCurrent()) return;
   const id = slotIdOf(slotId);
   S.slot = id;
   const sheet = $("sheet");
@@ -2242,6 +2289,7 @@ let applyShell = function() {
 }
 
 let refresh = function(map) {
+  if (!isCurrent()) return;
   renderTop();
   if (map) drawMap();
   renderAcc();
@@ -2256,6 +2304,7 @@ let refresh = function(map) {
    jour sauf `renderSheet()`, qui reconstruirait `#lkdv-slot-root` et
    démonterait le slot en pleine persistance (état d'attente perdu). */
 let refreshWithoutSheet = function(map) {
+  if (!isCurrent()) return;
   renderTop();
   if (map) drawMap();
   renderAcc();
@@ -2291,6 +2340,7 @@ let say = function(txt) {
 }
 
 let act = function(a, v, meta) {
+  if (!isCurrent()) return;
   if (a === "setvis") {
     /* Visibilité exacte : `'public'` → 2, `'prive'` → 0. Les index 0/1/2 du
        menu historique restent acceptés. Valeur inconnue = rejet sans mutation ;
@@ -2338,7 +2388,7 @@ let act = function(a, v, meta) {
   }
   switch (a) {
     case "openPostModal": if (typeof EXA !== "undefined" && EXA.openPostModal) EXA.openPostModal(v); break;
-    case "closePostModal": if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal(); break;
+    case "closePostModal": if (exportedActions?.closePostModal) exportedActions.closePostModal(); break;
     case "toggleLikePost": if (typeof EXA !== "undefined" && EXA.toggleLikePost) EXA.toggleLikePost(v); break;
     case "toggleSavePost": if (typeof EXA !== "undefined" && EXA.toggleSavePost) EXA.toggleSavePost(v); break;
     case "sharePost": if (typeof EXA !== "undefined" && EXA.sharePost) EXA.sharePost(v); break;
@@ -2580,7 +2630,8 @@ phone.addEventListener("pointerup", () => { if (G.lp) { if (G.lp.fired) { G.sup 
 phone.addEventListener("pointercancel", () => { if (G.lp) { clearTimeout(G.lp.t); G.lp = null; } });
 
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && window.__X && window.__X.activePostId) {
+  if (!isCurrent()) return;
+  if (e.key === "Escape" && interactionState?.activePostId) {
     const menu = document.getElementById('pmi_options_menu');
     const trigger = document.querySelector('#post_modal_instagram [data-a="openPostOptions"]');
     if (menu && !menu.hidden) {
@@ -2589,13 +2640,13 @@ document.addEventListener("keydown", e => {
       if (trigger) { trigger.setAttribute('aria-expanded', 'false'); trigger.focus({ preventScroll: true }); }
       return;
     }
-    if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal();
+    if (exportedActions?.closePostModal) exportedActions.closePostModal();
   }
 });
 
 phone.addEventListener("click", e => {
   if (e.target.id === "post_modal_instagram" || (e.target.classList && e.target.classList.contains("post-modal-instagram")) || (e.target.closest && e.target.closest('[data-a="closePostModal"]'))) {
-    if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal();
+    if (exportedActions?.closePostModal) exportedActions.closePostModal();
     return;
   }
   if (Date.now() < G.sup && G.supEl && G.supEl.contains(e.target)) { G.sup = 0; e.preventDefault(); return; }
@@ -2791,7 +2842,8 @@ window.__QR={"n":37,"rows":["1111111011101010010100110111001111111","10000010010
 /* ================= Compte — 50 améliorations : couche d'extension (override des fonctions du générateur) ================= */
 (() => {
 const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0 };
-window.__X = X;
+// Interaction state stays inside the owning runtime.
+interactionState = X;
 {
   const st = document.createElement('div'); st.className = 'story'; st.id = 'story'; st.setAttribute('role', 'dialog'); st.setAttribute('aria-label', 'Story à la une'); phone.appendChild(st);
   const sh = document.createElement('div'); sh.className = 'sunshade'; sh.setAttribute('aria-hidden', 'true'); $('map').insertBefore(sh, $('mgrab'));
@@ -2968,6 +3020,7 @@ function slideView(sl) {
   return { body: `<div class="st-card gear"><div class="tot">${(tot / 1000).toFixed(2).replace('.', ',')} kg</div>${rows}</div>`, foot: `<b>Sac du moment · ${S.invs.length} objets</b><small>${KITS_LINEAGE.length ? KITS_LINEAGE.length + ' kit(s) enregistré(s)' : 'Aucun kit enregistré'}</small><div class="st-act"><button class="st-btn p" data-a="stgear">Dupliquer ce kit dans mon Compas</button></div>` };
 }
 function renderStory() {
+  if (!isCurrent()) return;
   const el = $('story'); if (!el) return; if (!X.story) { el.classList.remove('on'); return; }
   const st = storyFor(X.story.id), n = st.slides.length, i = X.story.i, v = slideView(st.slides[i]);
   const h = hlList().find(q => q.id === X.story.id) || { id: X.story.id, title: st.title };
@@ -3012,6 +3065,7 @@ async function loadStoryEngagement() {
   renderStory();
 }
 function openStory(id) {
+  if (!isCurrent()) return;
   X.viewersOpen = false; X.storyClosing = false; X.storyDragMoved = false;
   X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false;
   const el = $('story');
@@ -3027,7 +3081,7 @@ function dismissStory(distance = 0) {
   el.style.transform = `translateY(${Math.max(distance, 932)}px)`;
   el.style.opacity = '0';
   haptic(8);
-  window.setTimeout(() => {
+  setTimeout(() => {
     if (X.story !== storyRef) return;
     X.story = null; X.storyClosing = false;
     el.classList.remove('on', 'closing', 'dragging');
@@ -3525,7 +3579,7 @@ MUT.additem = () => {
   if (S.invs.some(p => p.id === SCAN_DB.id)) return 'Déjà dans ton kit';
   S.invs.push({ ...SCAN_DB });
   try {
-    localStorage.setItem('lkdv_inventory_items_v1', JSON.stringify(S.invs));
+    localStorage.setItem(storageKey('lkdv_inventory_items_v1'), JSON.stringify(S.invs));
   } catch (_) {}
   notifyHostAction('additem', SCAN_DB);
   return SCAN_DB.b + ' ' + SCAN_DB.n + ' ajouté au kit actif';
@@ -4020,12 +4074,14 @@ function applyAccountBootstrap(data) {
 }
 
 const notifyHostAction = (a, v) => {
+  if (!isCurrent()) return;
   if (typeof window.__lkdvOnAction === 'function') {
     try { window.__lkdvOnAction(a, v, S); } catch (_) {}
   }
 };
 /* ---------- Point 3 : Modal Post Instagram (100 % Réplique Native Liquid Glass) ---------- */
 function renderPostModal(postId) {
+  if (!isCurrent()) return;
   let modalEl = $("post_modal_instagram");
   if (!modalEl) {
     modalEl = document.createElement("div");
@@ -4055,7 +4111,7 @@ function renderPostModal(postId) {
       if (e.target === modalEl || (e.target.closest && e.target.closest('[data-a="closePostModal"]'))) {
         e.preventDefault();
         e.stopPropagation();
-        if (typeof EXA !== "undefined" && EXA.closePostModal) EXA.closePostModal();
+        if (exportedActions?.closePostModal) exportedActions.closePostModal();
       }
     });
   }
@@ -4689,10 +4745,10 @@ var EXA = {
   openAccountDrawer: tab => { const next = Number.isFinite(Number(tab)) ? Math.max(0, Math.min(4, Number(tab))) : 0; drawerHintTab = next; X.drawerTab = next; openSheet('account_drawer', 0, 'large'); haptic(8); },
   signout: () => {
     closeVisMenu(true);
-    island('Déconnexion effectuée', 'À bientôt sur les sentiers LKDV', false);
+    island('Déconnexion…', 'Fermeture de ta session', false);
     haptic([10, 30]);
     notifyHostAction('signout');
-    setTimeout(() => { window.location.href = '/connexion'; }, 400);
+    // The React auth host redirects only once sign-out is confirmed.
   },
   openDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
   drawerTab: v => { const next = clamp(+v, 0, 4); drawerHintTab = next; sheetSlideDir = next >= (X.drawerTab || 0) ? 1 : -1; X.drawerTab = next; renderSheet(); haptic(6); },
@@ -4768,7 +4824,7 @@ var EXA = {
     if (b && b.value.trim()) S.vaultData.blood = b.value.trim();
     if (d && d.value.trim()) S.vaultData.doctor = d.value.trim();
     X.vaultEdit = 0;
-    try { localStorage.setItem('lkdv_device_medical_vault_v1', JSON.stringify(S.vaultData)); } catch (_) {}
+    try { localStorage.setItem(storageKey('lkdv_device_medical_vault_v1'), JSON.stringify(S.vaultData)); } catch (_) {}
     renderSheet();
     island('Coffre médical mis à jour', 'Stocké uniquement dans le Keychain local de cet appareil', false);
     notifyHostAction('vaultsave', S.vaultData);
@@ -4778,7 +4834,7 @@ var EXA = {
     X.scan = 1;
     haptic([10, 30, 10]);
     try {
-      localStorage.setItem('lkdv_inventory_items_v1', JSON.stringify(S.invs));
+      localStorage.setItem(storageKey('lkdv_inventory_items_v1'), JSON.stringify(S.invs));
     } catch (_) {}
     renderSheet();
     notifyHostAction('doscan', SCAN_DB);
@@ -4788,6 +4844,7 @@ var EXA = {
     const q = qEl && qEl.value ? qEl.value.trim() : '';
     if (q && typeof window.__lkdvScanLookup === 'function') {
       window.__lkdvScanLookup(q, item => {
+        if (!isCurrent()) return;
         if (item) {
           Object.assign(SCAN_DB, item);
           X.scan = 1;
@@ -4835,9 +4892,20 @@ var EXA = {
   kitsim: v => { const k = KITS_LINEAGE.find(q => q.id === v); const gain = Math.round(10 * 85 * .03 * .7 * (k.endur / 100) * 100) / 100;
     $('ctx').innerHTML = `<div class="box"><div class="lg pv"><b>${k.n}</b><div class="ef"><span>Endurance actuelle</span><span>${k.endur} %</span></div><div class="ef"><span>Reprises actuelles</span><span>${k.prop}</span></div><div class="ef"><span>Si +10 reprises commandées</span><span style="color:var(--good)">≈ +${fmtE(gain)}</span></div><div class="s2" style="margin-top:6px">Estimation indicative : panier moyen 85 €, 3 % dont 70 % à la souche, pondéré par l'endurance. Aucun crédit n'est généré avant preuve terrain.</div></div><div class="lg menu"><button class="p" data-a="stgear">Partager ce kit (G+1)</button><button data-a="ctxno">Fermer</button></div></div>`; $('ctx').classList.add('on'); haptic(12); }
 };
+// Guard the complete exported action surface, including captured references.
+for (const name of Object.keys(EXA)) {
+  const action = EXA[name];
+  if (typeof action !== 'function') continue;
+  EXA[name] = function (...args) {
+    if (!isCurrent()) return;
+    return action.apply(this, args);
+  };
+}
+exportedActions = EXA;
 try { window.EXA = EXA; } catch (_) {}
 const _act = act;
 act = function (a, v, meta) {
+  if (!isCurrent()) return;
   if ($('ctx').classList.contains('on') && a !== 'ctxok' && a !== 'ctxno') closeCtx();
   if (['stab', 'fnext', 'fprev', 'pg', 'det', 'cycle'].includes(a) && !S.sh) return;
   if (EXA[a]) return EXA[a](v);
@@ -4903,7 +4971,7 @@ const storyEl = $('story'); if (storyEl) {
     storyEl.classList.remove('dragging');
     if (dy > 110) { dismissStory(dy); return; }
     storyEl.style.transform = ''; storyEl.style.opacity = '';
-    window.setTimeout(() => { X.storyDragMoved = false; }, 40);
+    setTimeout(() => { X.storyDragMoved = false; }, 40);
   };
   storyEl.addEventListener('pointerup', endPointer);
   storyEl.addEventListener('pointercancel', endPointer);
@@ -4915,7 +4983,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && X.story) {
 function persistLocalState() {
   if (!window.__LKDV_NEXT_PROD) return;
   try {
-    localStorage.setItem('lkdv_compte_v8_state_v1', JSON.stringify({
+    localStorage.setItem(storageKey('lkdv_compte_v8_state_v1'), JSON.stringify({
       vis: S.vis,
       pins: S.pins,
       note: S.note,
@@ -4933,9 +5001,9 @@ function persistLocalState() {
 
 if (window.__LKDV_NEXT_PROD) {
   try {
-    const savedVault = localStorage.getItem('lkdv_device_medical_vault_v1');
+    const savedVault = localStorage.getItem(storageKey('lkdv_device_medical_vault_v1'));
     if (savedVault) Object.assign(S.vaultData, JSON.parse(savedVault));
-    const savedState = localStorage.getItem('lkdv_compte_v8_state_v1');
+    const savedState = localStorage.getItem(storageKey('lkdv_compte_v8_state_v1'));
     if (savedState) {
       const st = JSON.parse(savedState);
       if (typeof st.vis === 'number') S.vis = st.vis;
@@ -4955,6 +5023,7 @@ if (window.__LKDV_NEXT_PROD) {
 
 const _doMut = doMut;
 doMut = function (k, v, meta) {
+  if (!isCurrent()) return;
   /* Le pont a besoin de l'état d'avant mutation pour rétablir une
      confidentialité ou une visibilité d'empreinte dont l'écriture échoue
      (ou sans compte connecté). */
@@ -4978,43 +5047,25 @@ window.__lkdvCompteAct = act;
    pont de mutation (sinon la tentative échouée se rejouerait en boucle). Le
    drawer React n'est jamais démonté : son état d'attente peut se résoudre. */
 window.__lkdvSetProfileVisibility = function(value) {
+  if (!isCurrent()) return;
   const target = resolveProfileVis(value);
   if (target == null || S.profileVisibility === target) return;
   setProfileVisibility(target);
   refreshWithoutSheet(true);
 };
 window.__lkdvSetSignatureVisibility = function(value) {
+  if (!isCurrent()) return;
   const target = applySetVis(S.vis, value);
   if (target == null || S.vis === target) return;
   S.vis = target;
   persistLocalState();
   refreshWithoutSheet(true);
 };
-window.__lkdvGetState = () => ({ S, CARNETS, OUTINGS, CLUBS, KITS_LINEAGE, ORDERS, SPECIES });
+window.__lkdvGetState = () => isCurrent() ? ({ S, CARNETS, OUTINGS, CLUBS, KITS_LINEAGE, ORDERS, SPECIES }) : null;
 
-/* Les highlights viennent de la BDD : on resynchronise le rail depuis le
-   bootstrap même si l'hydratation initiale a été interrompue. */
-async function syncHighlightsFromBootstrap() {
-  try {
-    const res = await fetch('/api/compte/bootstrap', { credentials: 'include', headers: { Accept: 'application/json' } });
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!Array.isArray(data.highlights) || data.highlights.length === 0) return;
-    HIGHLIGHTS = data.highlights.map((h) => ({
-      id: h.id,
-      title: h.title || 'Story',
-      sub: `${h.items || 0} story${(h.items || 0) === 1 ? '' : 's'}`,
-      mass: '',
-      step: 2,
-      coverImage: h.coverImage || null,
-      stories: h.stories || [],
-    }));
-    if (typeof renderTop === 'function') renderTop();
-  } catch (_) {}
-}
-if (typeof window !== 'undefined') setTimeout(() => { void syncHighlightsFromBootstrap(); }, 120);
-
+/* Highlights are hydrated by the host bootstrap; no duplicate account request. */
 window.__lkdvHydrateCompte = function (data) {
+  if (!isCurrent()) return;
   if (!data) return;
   if (data.replace === true) {
     if (Array.isArray(data.carnets)) CARNETS = data.carnets;
@@ -5193,7 +5244,7 @@ refresh(true);
 
 
 // Global state accessor for debugging and test suites
-window.__lkdvGetState = () => ({
+window.__lkdvGetState = () => isCurrent() ? ({
   S,
   G,
   CARNETS,
@@ -5202,9 +5253,10 @@ window.__lkdvGetState = () => ({
   ORDERS,
   ORDERS_BOOKINGS,
   KITS_LINEAGE,
-});
+}) : null;
 
 window.__lkdvCompteAct = (actionName, val, meta) => {
+  if (!isCurrent()) return;
   try {
     if (typeof act === 'function') {
       act(actionName, val, meta);
@@ -5219,6 +5271,7 @@ window.__lkdvCompteAct = (actionName, val, meta) => {
 // complets ; cette variante ne sert qu'aux patches partiels du profil.
 const hydrateAccountReplace = window.__lkdvHydrateCompte;
 window.__lkdvHydrateCompte = (data) => {
+  if (!isCurrent()) return;
   if (!data || typeof data !== 'object') return;
   if (data.replace === true) {
     hydrateAccountReplace(data);
@@ -5433,10 +5486,19 @@ if (typeof refresh === 'function') refresh(true);
   }
 
   return () => {
+    disposed = true;
+    if (window.EXA === exportedActions) delete window.EXA;
+    for (const id of timers) window.clearTimeout(id);
+    timers.clear();
+    for (const id of frames) {
+      if (window.cancelAnimationFrame) window.cancelAnimationFrame(id);
+      else window.clearTimeout(id);
+    }
+    frames.clear();
     /* Cycle de vie : le snapshot de contexte ne doit pas survivre au montage. */
     mapContextLayerSnapshot = null;
     /* Un démontage avec drawer ouvert ne doit pas laisser `#phone` inerte. */
-    applySheetModalState(document.getElementById("sheet"), false);
+    applySheetModalState(accountRoot.querySelector("#sheet"), false);
     if (window.__lkdvCompteMapRO) {
       try { window.__lkdvCompteMapRO.disconnect(); } catch (_) {}
       window.__lkdvCompteMapRO = null;

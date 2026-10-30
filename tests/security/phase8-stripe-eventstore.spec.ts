@@ -24,6 +24,21 @@ const EVENT = {
 };
 
 describe('Phase 8 — idempotence des événements Stripe', () => {
+  it('resumes a checkout left processing after a worker crash', async () => {
+    const fake = createFakeSupabase({ duplicateEvent: true, eventStatus: 'processing' });
+    await expect(beginStripeEvent(fake.client, EVENT)).resolves.toMatchObject({ firstDelivery: true });
+  });
+
+  it('does not resume other event kinds without a transactional handler', async () => {
+    const fake = createFakeSupabase({ duplicateEvent: true, eventStatus: 'processing' });
+    await expect(beginStripeEvent(fake.client, { ...EVENT, type: 'charge.refunded' }))
+      .resolves.toMatchObject({ firstDelivery: false });
+  });
+
+  it('refuses success if the event reservation disappeared before marking', async () => {
+    const fake = createFakeSupabase({ missingEventOnUpdate: true });
+    await expect(markStripeEventProcessed(fake.client, EVENT.id)).rejects.toThrow(/marquage impossible/);
+  });
   it('TEST-PHASE8-STRIPE-IDEM-01: première livraison réservée (status processing)', async () => {
     const fake = createFakeSupabase();
 

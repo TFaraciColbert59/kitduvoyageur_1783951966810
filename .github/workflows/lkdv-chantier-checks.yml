@@ -39,3 +39,39 @@ jobs:
           tests/observability/slo.spec.ts tests/observability/slo-load-gate.spec.ts
           tests/audit/seed-demo-credentials.spec.ts
           tests/audit/audit-scripts-static.spec.ts tests/audit/fix-round-1.spec.ts
+          src/components/compte/__tests__/ProfileDrawerBootstrap.test.tsx
+          tests/design/compte-profile-visibility.spec.ts
+          tests/security/phase8-stripe-webhook.spec.ts
+          tests/security/phase8-stripe-eventstore.spec.ts tests/security/phase8-stripe-events.spec.ts
+          tests/checkout/stripe-metadata.spec.ts tests/checkout/stripe-entitlements.spec.ts
+          tests/checkout/stripe-fulfillment.spec.ts
+
+  stripe-postgres-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: lkdv_stripe_retry_test
+        ports:
+          - '127.0.0.1:5432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 22
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Replay real SQL and concurrent sessions in disposable local database
+        run: node tests/sql/stripe-checkout-concurrency.mjs
+        env:
+          LOCAL_TEST_DATABASE_URL: postgres://postgres@127.0.0.1:5432/lkdv_stripe_retry_test

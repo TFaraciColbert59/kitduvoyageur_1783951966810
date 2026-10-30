@@ -59,6 +59,14 @@ async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; erro
   const validatedItems: ValidatedItem[] = [];
 
   for (const item of items) {
+    // The order_items foreign key and stock journal use shop_products. Never
+    // charge an otherwise valid legacy kit/catalog row that cannot be fulfilled.
+    const { data: canonical, error: canonicalError } = await supabase
+      .from('shop_products').select('id').eq('id', item.id).maybeSingle();
+    if (canonicalError || !canonical) {
+      errors.push(`Cet article est temporairement indisponible : ${item.name}`);
+      continue;
+    }
     // Try to find in products table
     const { data: product, error: productError } = await supabase
       .from('products')
@@ -216,7 +224,7 @@ export async function POST(request: NextRequest) {
 
     // Panier trop long pour les metadata Stripe → checkout_intents (service)
     if (plan.needsIntent && plan.intentPayload) {
-      await getServiceClient().from('checkout_intents').upsert(
+      const { error: intentError } = await getServiceClient().from('checkout_intents').upsert(
         {
           id: plan.metadata.intent_id,
           user_id: userId,
@@ -225,6 +233,7 @@ export async function POST(request: NextRequest) {
         },
         { onConflict: 'id' }
       );
+      if (intentError) throw new Error('Enregistrement du panier de paiement indisponible');
     }
 
     // Dynamic import to avoid build errors when Stripe is not installed
@@ -240,6 +249,7 @@ export async function POST(request: NextRequest) {
           currency: 'eur',
           product_data: {
             name: item.name,
+            metadata: { product_id: item.id },
             ...(item.image ? { images: [item.image] } : {}),
           },
           unit_amount: item.unitAmount,

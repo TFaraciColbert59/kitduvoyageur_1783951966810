@@ -20,7 +20,7 @@ Les cases ci-dessous concernent l'implémentation source et ses tests locaux, ja
 
 - [x] Purge des stories : vérifier auteur, bucket et origine des références avant suppression privilégiée.
 - [x] Cache voyages/profil : isoler comptes et sessions, rejeter les réponses obsolètes.
-- [ ] Compte : neutraliser bootstrap et mutations tardifs d'une ancienne identité.
+- [x] Compte : neutraliser bootstrap et mutations tardifs d'une ancienne identité.
 - [x] Courriels : échapper le texte à la frontière HTML et contrôler les liens.
 - [ ] Paiements : reprise idempotente des étapes, stock, remboursements et royalties; migration testée avant activation.
 - [x] Provider global : paralléliser les lectures réellement indépendantes.
@@ -37,7 +37,7 @@ node_modules/.bin/vitest run --maxWorkers=2 src/lib/stories src/lib/notification
 
 Résultat : 15 fichiers, 105 tests réussis. Revue indépendante supplémentaire : purge, courriel, OpenGraph et SLO, 64 tests réussis. Tests hors ligne, aucun courriel envoyé ni objet réel supprimé. Aucun gain chiffré de latence n'est revendiqué pour la parallélisation; les tests prouvent le démarrage concurrent de deux lectures indépendantes.
 
-Limites ouvertes : le bootstrap/runtime Compte doit encore recevoir ses gardes d'identité; l'expiration hors ligne conserve les règles préexistantes du cache local de voyages. Le transport HTTP ne fixe pas la résolution DNS validée (OpenGraph : risque distinct toujours à revalider). Les métriques SLO indépendantes restent des entrées de mesure à collecter réellement. Les paiements n'ont pas été modifiés par ce lot.
+Limites du lot 1 : le bootstrap/runtime Compte nécessitait encore ses gardes d'identité (traitées au lot 2); l'expiration hors ligne conserve les règles préexistantes du cache local de voyages. Le transport HTTP ne fixe pas la résolution DNS validée (OpenGraph : risque distinct toujours à revalider). Les métriques SLO indépendantes restent des entrées de mesure à collecter réellement. Les paiements n'ont pas été modifiés par le lot 1.
 
 ## Vérification
 
@@ -52,6 +52,18 @@ Preuves locales : 66 tests ciblés sur 5 fichiers; intégration sécurité/fiabi
 La suite générale du commit de base `f7d18e9` a été rejouée dans un worktree indépendant : 1 064 fichiers réussis, 45 en échec, 5 ignorés; 12 758 tests réussis, 114 en échec, 51 ignorés. Ces résultats ne sont pas une validation générale verte. Le navigateur Chromium reste indisponible localement : le téléchargement Playwright échoue. La CI ajoutée doit encore être observée après publication.
 
 Les identifiants retirés restent dans l'historique Git : cette modification ne prouve aucune rotation de compte. Compte, reprise Stripe et optimisation de compilation restent des lots séparés tant que leurs dernières revues et vérifications ne sont pas terminées.
+
+### Lot 2 — isolation Compte et reprise Stripe
+
+- [x] Compte : rejeter les lectures, recherches, exports, écritures et callbacks d'une identité ou session expirée; reconstruire le runtime avant l'affichage du nouveau compte et séparer son stockage local par utilisateur.
+- [x] Compte : annuler minuteries/animations, neutraliser les anciennes actions globales et supprimer le bootstrap redondant. La navigation de déconnexion attend l'identité locale vide du provider; elle ne prouve pas une déconnexion distante réussie.
+- [x] Stripe : migration de reprise transactionnelle préparée et rejouée sur une base isolée; prix payés conservés, stock/encaissement/droits idempotents, reprises après panne et barrière de remboursement.
+- [x] Stripe : refuser un nouveau paiement sans produit canonique représentable, un panier externalisé non enregistré ou une lecture d'attribution en erreur.
+- [x] Compilation : retirer le callback webpack vide qui désactivait le worker par défaut de Next. Build complet avec lint/typage et génération des 50 pages réussi, heap maximal configuré à 4 Gio; aucun gain chiffré de latence ou mémoire n'est déduit de ce seul passage.
+
+Revue indépendante Compte : tous les blocages corrigés; 22 tests d'intégration réels JSDOM réussis, plus 14 tests de visibilité. Revue indépendante Stripe : aucun nouveau blocage restant dans le diff. Rejeu SQL PostgreSQL 18.6/PGlite 0.5.13 : 160 instructions réussies, fonctions historiques incluses. Intégration locale : 244 tests sur 26 fichiers réussis. Le workflow du commit `2fb0a28` est réellement terminé avec succès : https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/41017944567.
+
+Le nouveau job PostgreSQL natif doit encore exécuter les scénarios multi-connexions après publication. La migration doit précéder le webhook lors d'une future livraison; aucune migration, paiement, modification de données ou publication de production n'a eu lieu. Les limites financières historiques restent explicites dans `docs/security/AUDVA03-stripe-checkout-resume.md`, notamment les remboursements précédant toute commande et les deltas concurrents. Aucun test navigateur réel ni validation visuelle exhaustive n'est revendiqué.
 
 Chaque lot doit conserver commande, résultat, commit et limites. Les tests ciblés sont rejoués après intégration. Les tests généraux en échec doivent être comparés au même commit de base avant attribution. Une correction source n'est pas une validation en production.
 
