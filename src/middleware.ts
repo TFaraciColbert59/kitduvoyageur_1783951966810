@@ -12,6 +12,38 @@ function isProtected(pathname: string) {
   );
 }
 
+/**
+ * L'app est réservée aux personnes connectées : toutes ses pages renvoient
+ * vers /connexion sans session. Restent publiques : la page d'accueil, les
+ * pages légales et de contact, la connexion et l'inscription.
+ */
+const APP_ROUTES = [
+  '/hub',
+  '/communaute',
+  '/messagerie',
+  '/explorer',
+  '/compte',
+  '/compas',
+  '/carnets',
+  '/clubs',
+  '/profil',
+  '/panier',
+  '/pays',
+  '/carbone',
+  '/carte-interactive',
+];
+
+function isAppRoute(pathname: string) {
+  return APP_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
+}
+
+/** Présence d'une session Supabase (cookie `sb-…-auth-token`, découpé ou non). */
+function hasSessionCookie(request: NextRequest) {
+  return request.cookies
+    .getAll()
+    .some((cookie) => /^sb-.+-auth-token(\.\d+)?$/.test(cookie.name) && Boolean(cookie.value));
+}
+
 function isAdmin(pathname: string) {
   return ADMIN_ROUTES.some(
     (r) => pathname === r || pathname.startsWith(r + '/')
@@ -42,6 +74,17 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = `/profil/${compteProfile[1]}`;
     return NextResponse.redirect(url, 301);
+  }
+
+  // ─── Connexion obligatoire pour l'app ─────────────────────────────────────
+  // Contrôle sans appel réseau (cookie de session) : la session elle-même est
+  // vérifiée par l'app et par chaque route API.
+  if (isAppRoute(pathname) && !hasSessionCookie(request)) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/connexion';
+    loginUrl.search = '';
+    loginUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(loginUrl);
   }
 
   // ─── Auth protection ──────────────────────────────────────────────────────
@@ -149,7 +192,27 @@ export const config = {
     '/admin/:path*',
     '/checkout/:path*',
     '/compte/:path*',
+    '/pays',
     '/pays/:path*',
+    // Connexion obligatoire : pages de l'app (APP_ROUTES).
+    '/hub',
+    '/hub/:path*',
+    '/communaute',
+    '/communaute/:path*',
+    '/messagerie',
+    '/messagerie/:path*',
+    '/explorer',
+    '/explorer/:path*',
+    '/compte',
+    '/compas',
+    '/compas/:path*',
+    '/carnets/:path*',
+    '/clubs/:path*',
+    '/profil',
+    '/profil/:path*',
+    '/panier',
+    '/carbone',
+    '/carte-interactive',
     // H5/H-AUTO-42 : chemins redirigés (le matcher explicite est requis, sinon
     // le redirect ne tire jamais). Littéral obligatoire : Next refuse le spread
     // dans config.matcher — la synchro avec LEGACY_REDIRECTS est testée

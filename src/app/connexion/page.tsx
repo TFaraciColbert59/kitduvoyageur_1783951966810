@@ -145,9 +145,11 @@ function AuthForm() {
   };
 
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center px-[var(--space-4)] pb-[var(--space-12)] pt-20 sm:pt-24">
+    <div className="lkdv-auth flex min-h-[100dvh] items-center justify-center px-[var(--space-4)] pb-[var(--space-12)] pt-16 sm:pt-24">
       <div className="w-full max-w-[420px]">
         <div className="mb-[var(--space-6)] text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element -- logo local de l'app */}
+          <img className="lkdv-auth-logo" src="/assets/images/lkdv-boot-logo.png" alt="Le Kit du Voyageur" width={96} height={96} />
           <h1 className="text-[length:var(--lkv-text-title-sm)] font-bold tracking-tight text-[color:var(--glass-label)] sm:text-[length:var(--lkv-text-title-lg)]">
             {t(mode === 'connexion' ? 'auth.signInTitle' : 'auth.signUpTitle')}
           </h1>

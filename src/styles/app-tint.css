@@ -69,3 +69,48 @@ html body .lkdv-feed-shell::after {
   border-radius: 999px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
 }
+
+/* =============================================================================
+   Page d'authentification (/connexion, onglets Connexion / Inscription)
+   Même matière que le reste de l'app : verre clair, encre forêt, logo LKDV.
+   Les variables sont redéfinies dans `.lkdv-auth` seulement.
+   ============================================================================= */
+.lkdv-auth {
+  --glass-label: #10301f;
+  --glass-label-secondary: #2e4a3b;
+  --glass-label-muted: #6b7a71;
+  --lkv-text-primary: #17402c;
+  --lkv-text-muted: #3f5448;
+  --lkv-border-subtle: rgba(23, 64, 44, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.78);
+  --glass-bg-medium: rgba(255, 255, 255, 0.72);
+  --card-tint-strong: rgba(255, 255, 255, 0.5);
+  --btn-tint: rgba(255, 255, 255, 0.82);
+  --btn-glass-border: rgba(255, 255, 255, 0.9);
+  color: #10301f;
+}
+.lkdv-auth-logo {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 14px;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(10, 20, 14, 0.25);
+}
+.lkdv-auth h1,
+.lkdv-auth h1 + p {
+  color: #fff;
+  text-shadow: 0 1px 10px rgba(10, 20, 14, 0.45);
+}
+.lkdv-auth input {
+  color: #10301f;
+}
+.lkdv-auth input::placeholder {
+  color: #6b7a71;
+}
+.lkdv-auth .rounded-\[var\(--lkv-radius-card\)\] {
+  background: var(--lg-bar-bg, rgba(255, 255, 255, 0.55));
+  -webkit-backdrop-filter: var(--lg-bar-blur, blur(14px));
+  backdrop-filter: var(--lg-bar-blur, blur(14px));
+  box-shadow: var(--lg-bar-shadow, 0 10px 30px rgba(23, 43, 36, 0.14));
+}

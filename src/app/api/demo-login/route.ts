@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { createClient as createAdminClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,10 +37,27 @@ async function demoSession(): Promise<
   });
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    return { ok: false, error: 'Connexion démo impossible pour le moment.', status: 401 };
+  if (!error) return { ok: true, pending };
+
+  // Secours : si le mot de passe enregistré ne correspond plus (réinitialisé
+  // côté Supabase), on ouvre la session du compte démo par un lien de
+  // connexion généré côté serveur avec la clé de service. Rien ne quitte le
+  // serveur : le jeton est consommé immédiatement par `verifyOtp`.
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (serviceKey) {
+    const admin = createAdminClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: link, error: linkError } = await admin.auth.admin.generateLink({ type: 'magiclink', email });
+    const tokenHash = link?.properties?.hashed_token;
+    if (!linkError && tokenHash) {
+      pending.length = 0;
+      const { error: otpError } = await supabase.auth.verifyOtp({ type: 'magiclink', token_hash: tokenHash });
+      if (!otpError) return { ok: true, pending };
+    }
+    console.error('[demo-login] secours lien de connexion :', linkError?.message ?? 'jeton absent ou refusé');
   }
-  return { ok: true, pending };
+  return { ok: false, error: 'Connexion démo impossible pour le moment.', status: 401 };
 }
 
 function applyCookies(response: NextResponse, pending: PendingCookie[]) {
