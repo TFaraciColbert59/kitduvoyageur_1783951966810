@@ -16,8 +16,10 @@ the SLO remains a failure even when A15's verdict is `fail`.
 
 `--metrics metrics.json` accepts independently collected measurements keyed by
 the nine `Phase10MeasurementKey` identifiers. Instantaneous numbers remain
-supported. Sample measurements use `{ "value": 100, "count": 100, "valid": true }`;
-sample-based read latency and 5xx measurements enforce the 100-sample minimum.
+supported for definitions without a sample minimum. Sample measurements use
+`{ "value": 100, "count": 100, "valid": true }`; sample-based read latency and 5xx
+measurements require this structure, literal `valid: true`, and an integer count
+of at least 100. Bare numbers cannot bypass these requirements through `--metrics`.
 The supplied A14/A15 evidence takes precedence over `--metrics`. These files are
 local evidence inputs, not production instrumentation or proof of capacity.
 

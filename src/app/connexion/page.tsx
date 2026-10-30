@@ -342,7 +342,7 @@ function AuthForm() {
                 Connexion démo
               </a>
               <p className="mt-2 text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
-                Accès direct au compte démo <strong>demo@lkdv.app</strong>, sans identifiants.
+                Découvrez les fonctionnalités avec le compte de démonstration.
               </p>
             </div>
           )}

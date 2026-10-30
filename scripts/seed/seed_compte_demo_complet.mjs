@@ -25,6 +25,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import { readSeedDemoCredentials } from './seed_demo_credentials.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
@@ -49,6 +50,8 @@ function loadEnv(file) {
 
 loadEnv(ENV_FILE);
 
+const { email: DEMO_EMAIL, password: DEMO_PASSWORD } = readSeedDemoCredentials();
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!SUPABASE_URL || !SERVICE_ROLE) {
@@ -60,8 +63,6 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
 });
 
 const DEMO_ID = 'd5451f35-db9f-4575-9114-6d3b79550bbc';
-const DEMO_EMAIL = 'demo@lkdv.app';
-const DEMO_PASSWORD = 'DemoLKDV2026!';
 
 const COMPANIONS = {
   marie: '3612c45b-d3d7-4e3c-921f-686953ee69e9',
@@ -977,7 +978,7 @@ async function main() {
       },
     })
   );
-  note(`mot de passe réinitialisé (${DEMO_PASSWORD})`);
+  note('mot de passe réinitialisé');
 
   // Les compagnons de la cordée sont des comptes de démonstration : la vue
   // `public_profiles` exclut `is_demo = true`, ce qui rendait les prêts et la
@@ -1750,7 +1751,6 @@ async function main() {
   // ── 13. Résumé ─────────────────────────────────────────────────────────────
   console.log('\n=== TERMINÉ ===');
   console.log(`Compte   : ${DEMO_EMAIL}`);
-  console.log(`Mot de passe : ${DEMO_PASSWORD}`);
   console.log('\nÀ vérifier sur /compte :');
   for (const line of summary) console.log(` • ${line}`);
 }

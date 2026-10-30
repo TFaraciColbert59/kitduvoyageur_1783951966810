@@ -50,8 +50,8 @@ describe('Phase 10 — SLO & alertes comme code (TEST-P10-SLO)', () => {
     expect(evaluateSlo(PHASE10_SLOS[0], { api_availability_ratio: 0.9989 }).status).toBe('fail');
 
     const read = PHASE10_SLOS.find((slo) => slo.id === 'api_read_p95_ms') as SloDefinition;
-    expect(evaluateSlo(read, { api_read_p95_ms: 299 }).status).toBe('pass');
-    expect(evaluateSlo(read, { api_read_p95_ms: 301 }).status).toBe('fail');
+    expect(evaluateSlo(read, { api_read_p95_ms: { value: 299, count: 100, valid: true } }).status).toBe('pass');
+    expect(evaluateSlo(read, { api_read_p95_ms: { value: 301, count: 100, valid: true } }).status).toBe('fail');
 
     const rls = PHASE10_SLOS.find((slo) => slo.id === 'rls_violations') as SloDefinition;
     expect(evaluateSlo(rls, { rls_violations: 0 }).status).toBe('pass');
@@ -66,8 +66,8 @@ describe('Phase 10 — SLO & alertes comme code (TEST-P10-SLO)', () => {
     const report = evaluatePhase10Slos(
       {
         api_availability_ratio: 0.9999,
-        api_read_p95_ms: 142,
-        http_5xx_ratio: 0.002,
+        api_read_p95_ms: { value: 142, count: 100, valid: true },
+        http_5xx_ratio: { value: 0.002, count: 100, valid: true },
         destructive_syncs: 0,
         rls_violations: 1,
         carnet_entry_loss: 0,
@@ -93,7 +93,7 @@ describe('Phase 10 — SLO & alertes comme code (TEST-P10-SLO)', () => {
 
   it('TEST-P10-SLO-05: tout vert n’est « complet » que si toutes les mesures sont présentes', () => {
     const partial = evaluatePhase10Slos({
-      api_read_p95_ms: 100,
+      api_read_p95_ms: { value: 100, count: 100, valid: true },
       jobs_pending_events: 0,
     });
     expect(partial.ok).toBe(true);
@@ -104,9 +104,9 @@ describe('Phase 10 — SLO & alertes comme code (TEST-P10-SLO)', () => {
 
     const full = evaluatePhase10Slos({
       api_availability_ratio: 0.9999,
-      api_read_p95_ms: 100,
+      api_read_p95_ms: { value: 100, count: 100, valid: true },
       api_write_p95_ms: 200,
-      http_5xx_ratio: 0,
+      http_5xx_ratio: { value: 0, count: 100, valid: true },
       destructive_syncs: 0,
       rls_violations: 0,
       carnet_entry_loss: 0,

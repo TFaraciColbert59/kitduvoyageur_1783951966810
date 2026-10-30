@@ -184,9 +184,17 @@ export function evaluateSlo(
     unit: definition.unit,
     source: definition.source,
   };
+  if (definition.minSample != null && !sample) {
+    return {
+      ...base,
+      observed: null,
+      status: 'insufficient_data',
+      reason: 'mesure échantillonnée requise avec effectif et validité',
+    };
+  }
   if (
     sample &&
-    (!sample.valid ||
+    (sample.valid !== true ||
       sample.count == null ||
       !Number.isInteger(sample.count) ||
       sample.count < (definition.minSample ?? 1))

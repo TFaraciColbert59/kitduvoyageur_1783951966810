@@ -1,0 +1,41 @@
+name: LKDV chantier regressions
+
+on:
+  push:
+    branches: ['codex/lkdv-autonomous-2026-10-29']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lkdv-chantier-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_OPTIONS: --max-old-space-size=5120
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 22
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Type check
+        run: npm run type-check
+      - name: Offline security and reliability regressions
+        run: >-
+          npx vitest run --maxWorkers=2
+          src/lib/stories src/lib/notifications tests/notifications
+          src/features/trips/client/__tests__
+          src/contexts/__tests__/AuthContext.isolation.test.tsx
+          src/features/trips/context/__tests__/ActiveTripContext.storage.test.ts
+          src/features/hub/context/__tests__
+          tests/api/og-preview-deadline.spec.ts
+          tests/observability/slo.spec.ts tests/observability/slo-load-gate.spec.ts
+          tests/audit/seed-demo-credentials.spec.ts
+          tests/audit/audit-scripts-static.spec.ts tests/audit/fix-round-1.spec.ts

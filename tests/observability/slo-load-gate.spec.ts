@@ -17,9 +17,9 @@ const healthy = {
 };
 const metrics = {
   api_availability_ratio: 1,
-  api_read_p95_ms: 100,
+  api_read_p95_ms: { value: 100, count: 100, valid: true },
   api_write_p95_ms: 200,
-  http_5xx_ratio: 0,
+  http_5xx_ratio: { value: 0, count: 100, valid: true },
   destructive_syncs: 0,
   rls_violations: 0,
   carnet_entry_loss: 0,
@@ -33,6 +33,27 @@ const evaluate = (conditions: object) =>
   );
 
 describe('A15 SLO validity gate', () => {
+  it.each(['api_read_p95_ms', 'http_5xx_ratio'] as const)(
+    'rejects scalar evidence for sampled metric %s',
+    (id) => {
+      const report = evaluatePhase10Slos({ ...metrics, [id]: 0 });
+      expect(report.complete).toBe(false);
+      expect(report.insufficient.map((item) => item.id)).toEqual([id]);
+    }
+  );
+
+  it.each([
+    { value: 0, count: 99, valid: true },
+    { value: 0, count: 100.5, valid: true },
+    { value: 0, count: 100, valid: false },
+    { value: 0, count: 100, valid: 'yes' },
+  ])('rejects incomplete or nonliteral validity evidence %j', (sample) => {
+    expect(evaluatePhase10Slos({
+      ...metrics,
+      api_read_p95_ms: sample as typeof metrics.api_read_p95_ms,
+    }).complete).toBe(false);
+  });
+
   it.each([
     { count: 1 },
     { count: 99 },
@@ -109,6 +130,26 @@ describe('A15 SLO validity gate', () => {
       expect(child.error).toBeUndefined();
       expect(child.status, child.stderr).toBe(expected);
       expect(JSON.parse(child.stdout).exitCode).toBe(expected);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('actual CLI cannot bypass sample evidence with healthy scalar metrics', () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'slo-scalar-'));
+    try {
+      const fixture = path.join(directory, 'metrics.json');
+      writeFileSync(fixture, JSON.stringify({
+        ...metrics,
+        api_read_p95_ms: 100,
+        http_5xx_ratio: 0,
+      }));
+      const child = spawnSync(process.execPath,
+        ['--import', 'tsx', 'scripts/ops/phase10_slo_check.ts', '--metrics', fixture, '--json'],
+        { cwd: process.cwd(), encoding: 'utf8', timeout: 15000 });
+      expect(child.error).toBeUndefined();
+      expect(child.status, child.stderr).toBe(2);
+      expect(JSON.parse(child.stdout).exitCode).toBe(2);
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }

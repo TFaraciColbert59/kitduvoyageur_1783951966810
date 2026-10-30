@@ -41,6 +41,18 @@ Limites ouvertes : le bootstrap/runtime Compte doit encore recevoir ses gardes d
 
 ## Vérification
 
+### Reprise du 30 octobre — contrôles de fiabilité et secrets de démo
+
+- [x] Fermer le contournement SLO par une valeur scalaire : les indicateurs échantillonnés exigent un objet, `valid === true` et un effectif entier suffisant.
+- [x] Retirer les identifiants du seed et la publication de son mot de passe, y compris le chemin indirect `note` → résumé → journal. Les variables explicites sont validées avant création du client.
+- [x] Ajouter une CI dédiée à la branche du chantier : typage et régressions hors ligne, runner Ubuntu standard, aucun secret ni déploiement, cache ou artefact ajouté.
+
+Preuves locales : 66 tests ciblés sur 5 fichiers; intégration sécurité/fiabilité du lot 1 avec les nouveaux contrôles : 149 tests sur 18 fichiers. Contrôle TypeScript complet sans émission : code de sortie 0. La revue indépendante a repéré la fuite indirecte du seed; elle a été corrigée et son test a été reproduit rouge puis vert.
+
+La suite générale du commit de base `f7d18e9` a été rejouée dans un worktree indépendant : 1 064 fichiers réussis, 45 en échec, 5 ignorés; 12 758 tests réussis, 114 en échec, 51 ignorés. Ces résultats ne sont pas une validation générale verte. Le navigateur Chromium reste indisponible localement : le téléchargement Playwright échoue. La CI ajoutée doit encore être observée après publication.
+
+Les identifiants retirés restent dans l'historique Git : cette modification ne prouve aucune rotation de compte. Compte, reprise Stripe et optimisation de compilation restent des lots séparés tant que leurs dernières revues et vérifications ne sont pas terminées.
+
 Chaque lot doit conserver commande, résultat, commit et limites. Les tests ciblés sont rejoués après intégration. Les tests généraux en échec doivent être comparés au même commit de base avant attribution. Une correction source n'est pas une validation en production.
 
 Les écrans, cartes, données réelles, base, API, accessibilité, animations, mode hors ligne, mobile et mesures de performance restent dans le périmètre intégral du bundle. Cette première liste ne clôture aucune des 16 phases.
