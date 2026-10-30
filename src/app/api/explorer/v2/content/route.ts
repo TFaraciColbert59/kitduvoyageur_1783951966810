@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
   try {
     if (kind === 'carnets') {
-      const filter = iso ? `&country_iso=eq.${iso}` : '';
+      const filter = iso ? `&country_iso=in.(${iso.toLowerCase()},${iso.toUpperCase()})` : '';
       const rows = await pgrest<
         Array<{
           id: string;
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const filter = iso ? `&destination_country_code=eq.${iso}` : '';
+    const filter = iso ? `&destination_country_code=in.(${iso.toLowerCase()},${iso.toUpperCase()})` : '';
     const rows = await pgrest<
       Array<{
         id: string;
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
       }>
     >(
       `trips?select=id,title,destination_name,start_date,end_date,difficulty,primary_activity,party_size` +
-        `&status=in.(planned,active)&visibility=eq.public${filter}&order=start_date.asc&limit=${limit}`,
+        `&visibility=eq.public${filter}&order=start_date.asc.nullslast&limit=${limit}`,
       { revalidate: 300 },
     );
     return NextResponse.json(

@@ -329,7 +329,9 @@ export default function MapStage({
         lngLat?: { lng: number; lat: number };
       }) => {
         const props = event.features?.[0]?.properties;
-        const group = typeof props?.group === 'string' ? props.group : null;
+        const group =
+          (typeof props?.group === 'string' && props.group.trim().length > 0 ? props.group : null) ||
+          (typeof props?.name === 'string' && props.name.trim().length > 0 ? props.name : null);
         if (!group || !onRegionClick) return;
         const target = event.lngLat ?? map.getCenter();
         onRegionClick(group, [target.lng, target.lat]);

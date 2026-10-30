@@ -193,8 +193,11 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     return findCountryAt(countriesGeo, state.center);
   }, [countriesGeo, state.center]);
 
-  const activeGeo = state.geo || detectedCountry?.iso_a2 || (state.level >= 1 ? 'FR' : null);
-  const isoForRegions = activeGeo || (state.level >= 1 ? 'FR' : null);
+  // `center` est [lng, lat] ; `usePlace` attend (lat, lng).
+  const { data: place } = usePlace(state.center[1], state.center[0], state.zoom, state.level >= 1);
+
+  const activeGeo = state.geo || detectedCountry?.iso_a2 || place?.place?.countryCode || null;
+  const isoForRegions = activeGeo;
   const { data: regionsGeo } = useRegionsGeo(isoForRegions);
   const { data: country } = useCountryDetails(activeGeo);
 
@@ -231,8 +234,6 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     return [...groups.values()].sort((a, b) => b.units - a.units);
   }, [regionsGeo]);
 
-  // `center` est [lng, lat] ; `usePlace` attend (lat, lng).
-  const { data: place } = usePlace(state.center[1], state.center[0], state.zoom, state.level >= 1);
   const { data: reportsData } = useReportsNear(
     state.center[1],
     state.center[0],
@@ -402,10 +403,10 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   const pins = useMemo<MapPin[]>(() => {
     if (state.level === 0) {
       return countries
-        .filter((entry) => entry.center && ['FR', 'NP', 'JO', 'IS', 'ES', 'JP', 'US', 'CL', 'MN', 'NO', 'MA', 'CH', 'IT'].includes(entry.iso))
+        .filter((entry) => entry.center)
         .map((entry) => ({ entry, km: distanceKm(state.center, entry.center as [number, number]) }))
         .sort((a, b) => a.km - b.km)
-        .slice(0, 8)
+        .slice(0, 10)
         .map(({ entry, km }) => ({
           id: `country-${entry.iso}`,
           kind: 'country',
