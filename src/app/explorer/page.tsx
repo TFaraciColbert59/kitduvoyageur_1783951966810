@@ -53,8 +53,11 @@ export default async function ExplorerPage({ searchParams }: ExplorerPageProps) 
     console.warn('[explorer] flag explorer_v2_enabled à 0 — v2 servi quand même (legacy supprimé)');
   }
 
+  const host = (await headers()).get('host') ?? '';
+  const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1');
+
   const scene =
-    sceneEnabled() && resolvedSearchParams?.scene && isSceneName(resolvedSearchParams.scene)
+    (isLocal || sceneEnabled()) && resolvedSearchParams?.scene && isSceneName(resolvedSearchParams.scene)
       ? resolvedSearchParams.scene
       : null;
 

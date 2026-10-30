@@ -46,6 +46,8 @@ interface ExplorerActions {
   setTheme: (theme: 'light' | 'dark') => void;
   toggleNorthUp: () => void;
   setUnits: (units: 'metric' | 'imperial') => void;
+  setMapBaseStyle: (style: 'relief' | 'satellite' | 'plan') => void;
+  toggleLayer: (layerId: string) => void;
 }
 
 export type ExplorerStore = ExplorerState & ExplorerActions;
@@ -70,6 +72,15 @@ const initialState: ExplorerState = {
   background: false,
   center: [2.35, 48.85],
   zoom: 1.6,
+  mapBaseStyle: 'relief',
+  layerVisibility: {
+    routes: true,
+    water: true,
+    refuges: true,
+    dangers: true,
+    snow: true,
+    slope: false,
+  },
 };
 
 let toastSeq = 0;
@@ -263,6 +274,19 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   },
 
   setUnits: (units) => set({ units }),
+
+  setMapBaseStyle: (mapBaseStyle) => {
+    set({ mapBaseStyle });
+    emit('map-style', { style: mapBaseStyle });
+  },
+
+  toggleLayer: (layerId) =>
+    set((state) => ({
+      layerVisibility: {
+        ...state.layerVisibility,
+        [layerId]: !state.layerVisibility?.[layerId],
+      },
+    })),
 }));
 
 export type { PoiKind };

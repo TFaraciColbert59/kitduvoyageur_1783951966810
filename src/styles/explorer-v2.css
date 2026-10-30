@@ -314,6 +314,9 @@
 .xp-sheet[data-dragging='true'] {
   transition: none;
 }
+.xp-sheet[data-detent='full'] {
+  z-index: 8;
+}
 .xp-sheet-handle {
   flex: none;
   height: 18px;

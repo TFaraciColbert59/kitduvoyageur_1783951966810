@@ -89,6 +89,37 @@ export interface WeatherResponse {
 /** Centre d'une géométrie (moyenne des anneaux extérieurs, suffisant pour viser). */
 export function geometryCenter(geometry: GeoFeature['geometry']): Position | null {
   if (!geometry) return null;
+  const rawCoords = geometry.coordinates as unknown;
+  if (geometry.type === 'Polygon' && Array.isArray(rawCoords) && Array.isArray(rawCoords[0])) {
+    const ring = rawCoords[0] as unknown as Position[];
+    let sx = 0;
+    let sy = 0;
+    for (const pt of ring) {
+      if (Array.isArray(pt) && typeof pt[0] === 'number' && typeof pt[1] === 'number') {
+        sx += pt[0];
+        sy += pt[1];
+      }
+    }
+    return ring.length > 0 ? [sx / ring.length, sy / ring.length] : null;
+  }
+  if (geometry.type === 'MultiPolygon' && Array.isArray(rawCoords)) {
+    let largest: Position[] = [];
+    for (const poly of rawCoords as unknown as Position[][][]) {
+      const ring = poly?.[0];
+      if (Array.isArray(ring) && ring.length > largest.length) {
+        largest = ring;
+      }
+    }
+    if (largest.length > 0) {
+      let sx = 0;
+      let sy = 0;
+      for (const pt of largest) {
+        sx += pt[0];
+        sy += pt[1];
+      }
+      return [sx / largest.length, sy / largest.length];
+    }
+  }
   const coords = geometry.coordinates as unknown;
   const points: Position[] = [];
   const walk = (value: unknown) => {

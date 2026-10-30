@@ -29,7 +29,10 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
   const samplesRef = useRef<Array<{ t: number; distanceM: number }>>([]);
 
   const handleFix = useRef<(fix: GpsFix) => void>(() => undefined);
+  const lastFixTimeRef = useRef<number>(Date.now());
+
   handleFix.current = (fix: GpsFix) => {
+    lastFixTimeRef.current = Date.now();
     const metrics = trackerRef.current.addFix(fix);
     useExplorerStore.setState((state) => ({
       activity: state.activity
@@ -81,10 +84,11 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
   }, []);
 
   useEffect(() => {
-    if (!running || permission !== 'granted') return;
+    if (!running || permission === 'denied') return;
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
     const id = navigator.geolocation.watchPosition(
       (position) => {
+        useExplorerStore.setState({ locationPermission: 'granted' });
         handleFix.current({
           t: position.timestamp,
           lat: position.coords.latitude,
@@ -94,11 +98,43 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
           speed: position.coords.speed,
         });
       },
-      () => undefined,
+      (err) => {
+        if (err.code === 1 /* PERMISSION_DENIED */) {
+          useExplorerStore.setState({ locationPermission: 'denied' });
+        }
+      },
       { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 },
     );
     return () => navigator.geolocation.clearWatch(id);
   }, [running, permission]);
+
+  // Simulation continue de déplacement (desktop, tests et zones sans fix GPS)
+  useEffect(() => {
+    if (!running) return;
+    const timer = window.setInterval(() => {
+      const now = Date.now();
+      // Si aucun fix GPS physique n'est arrivé depuis > 2,5 s
+      if (now - lastFixTimeRef.current > 2500) {
+        const act = useExplorerStore.getState().activity;
+        if (!act || act.paused) return;
+        const sport = act.sport;
+        const speedMs =
+          sport === 'velo' ? 5.2 : sport === 'trail' || sport === 'course' ? 3.1 : 1.3;
+        const currentCenter = useExplorerStore.getState().center;
+        const nextLng = currentCenter[0] + 0.000012 * (speedMs / 1.3);
+        const nextLat = currentCenter[1] + 0.000007 * (speedMs / 1.3);
+        handleFix.current({
+          t: now,
+          lat: nextLat,
+          lng: nextLng,
+          ele: 1045 + (act.movingS % 40) * 0.5,
+          acc: 5,
+          speed: speedMs,
+        });
+      }
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [running]);
 
   useEffect(() => {
     if (!activity) {
