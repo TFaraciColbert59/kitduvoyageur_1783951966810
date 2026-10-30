@@ -151,7 +151,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
     >
       {hasMedia ? (
         video ? (
-          <CommunityVideo src={media!} className="lkdv-feed-post-video" />
+          <CommunityVideo src={media!} poster={post.media_urls?.find((url) => !isVideoMedia(url)) || undefined} className="lkdv-feed-post-video" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element -- média communautaire distant
           <img
