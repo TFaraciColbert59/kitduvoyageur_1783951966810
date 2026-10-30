@@ -11,6 +11,10 @@ export interface PostDetail {
   content: string;
   imageUrl: string | null;
   mediaUrls: string[];
+  soundtrackUrl?: string | null;
+  soundtrackTitle?: string | null;
+  soundtrackCreator?: string | null;
+  soundtrackSourceUrl?: string | null;
   createdAt: string;
   audience: string;
   author: PostAuthor | null;
