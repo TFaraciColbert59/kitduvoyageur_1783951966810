@@ -16,6 +16,9 @@ import { PostCommentsPanel } from '@/features/community/feed/PostCommentsPanel';
 import { PostSharePanel } from '@/features/community/feed/PostSharePanel';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 import { PostAuthorPill } from '@/features/community/feed/PostAuthorPill';
+import CommunityVideo from '@/components/communaute/CommunityVideo';
+import { CommunityPostSoundtrack } from '@/features/community/feed/CommunityPostSoundtrack';
+import { isCommunityVideoUrl } from '@/lib/community/media';
 
 type Pane = 'share' | 'post' | 'comments';
 const ORDER: Pane[] = ['share', 'post', 'comments'];
@@ -360,7 +363,22 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                 <div className="lkdv-post-main">
                   {currentMedia ? (
                     <div className="lkdv-post-media-wrap">
-                      <div className="lkdv-post-media" onPointerDown={onMediaPointerDown} onPointerUp={onMediaPointerUp} onDoubleClick={burstLike}><img src={currentMedia} alt="" draggable={false} />{burst > 0 ? <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true"><Heart size={82} fill="currentColor" /></span> : null}</div>
+                      <div className="lkdv-post-media" onPointerDown={onMediaPointerDown} onPointerUp={onMediaPointerUp} onDoubleClick={burstLike}>
+                        {isCommunityVideoUrl(currentMedia)
+                          ? <CommunityVideo src={currentMedia} />
+                          : <img src={currentMedia} alt={post.title || 'Publication'} draggable={false} />}
+                        {burst > 0 ? <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true"><Heart size={82} fill="currentColor" /></span> : null}
+                      </div>
+                      {post.soundtrackUrl ? (
+                        <div className="absolute bottom-3 left-3 z-20 max-w-[65%]" onPointerDown={(event) => event.stopPropagation()}>
+                          <CommunityPostSoundtrack
+                            url={post.soundtrackUrl}
+                            title={post.soundtrackTitle}
+                            creator={post.soundtrackCreator}
+                            sourceUrl={post.soundtrackSourceUrl}
+                          />
+                        </div>
+                      ) : null}
                       {media.length > 1 ? <><button type="button" className="lkdv-post-media-nav is-left" aria-label="Précédent" onClick={() => setMediaIndex((i) => Math.max(0, i - 1))}><ChevronLeft size={18} /></button><button type="button" className="lkdv-post-media-nav is-right" aria-label="Suivant" onClick={() => setMediaIndex((i) => Math.min(media.length - 1, i + 1))}><ChevronRight size={18} /></button><span className="lkdv-post-media-count">{mediaIndex + 1}/{media.length}</span></> : null}
                       <div className="lkdv-post-media-glass">
                         <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label={`Aimer (${post.likesCount})`} aria-pressed={post.userLiked}>
