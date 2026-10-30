@@ -33,6 +33,22 @@ function toForm(profile: ProfileSettings): FormState {
   };
 }
 
+const HANDLE_MIN = 3;
+
+/** Ajoute `https://` à un lien saisi sans schéma ; renvoie `null` si ce n'est pas une adresse web. */
+function normalizeUrl(raw: string): string | null {
+  const value = raw.trim();
+  if (!value) return null;
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value : `https://${value}`;
+  try {
+    const url = new URL(withScheme);
+    if (!['http:', 'https:'].includes(url.protocol) || !url.hostname.includes('.')) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 function completeness(form: FormState): { percent: number; missing: string[] } {
   const checks: Array<{ label: string; ok: boolean }> = [
     { label: 'Ajouter une photo de profil', ok: Boolean(form.avatarUrl.trim()) },
@@ -77,6 +93,14 @@ export function EditProfilePane() {
     setForm((current) => (current ? { ...current, [key]: value } : current));
   };
 
+  const dirty = JSON.stringify(form) !== JSON.stringify(toForm(query.data));
+  const handleError =
+    form.handle.length > 0 && form.handle.length < HANDLE_MIN ? `Au moins ${HANDLE_MIN} caractères.` : null;
+  const linkErrors = form.links.map((link) =>
+    link.url.trim() && !normalizeUrl(link.url) ? 'Adresse web invalide.' : null,
+  );
+  const invalid = !form.name.trim() || !form.handle.trim() || Boolean(handleError) || linkErrors.some(Boolean);
+
   const uploadPhoto = async (file: File | undefined, key: 'avatarUrl' | 'coverUrl') => {
     if (!file || !query.data) return;
     setBusy(true);
@@ -119,7 +143,9 @@ export function EditProfilePane() {
           location: form.location,
           avatarUrl: form.avatarUrl || null,
           coverUrl: form.coverUrl || null,
-          links: form.links.filter((link) => link.url.trim()),
+          links: form.links
+            .filter((link) => link.url.trim())
+            .map((link) => ({ ...link, url: normalizeUrl(link.url) ?? link.url.trim() })),
           visibility: form.visibility,
         }),
       });
@@ -203,7 +229,13 @@ export function EditProfilePane() {
       <section className="lkdv-compte-form">
         <label>
           <span>Nom affiché</span>
-          <input value={form.name} onChange={(event) => set('name', event.target.value)} maxLength={80} />
+          <input
+            value={form.name}
+            onChange={(event) => set('name', event.target.value)}
+            maxLength={80}
+            autoComplete="name"
+            enterKeyHint="next"
+          />
         </label>
         <label>
           <span>Handle</span>
@@ -214,8 +246,14 @@ export function EditProfilePane() {
               onChange={(event) => set('handle', event.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
               maxLength={24}
               placeholder="ton_handle"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              aria-invalid={Boolean(handleError)}
+              enterKeyHint="next"
             />
           </div>
+          {handleError ? <small className="lkdv-compte-field-error" role="alert">{handleError}</small> : null}
         </label>
         <label>
           <span>Bio · {form.bio.length}/160</span>
@@ -279,6 +317,11 @@ export function EditProfilePane() {
                   }}
                   placeholder="https://…"
                   maxLength={300}
+                  inputMode="url"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  aria-invalid={Boolean(linkErrors[index])}
                   aria-label={`URL du lien ${index + 1}`}
                 />
                 <button
@@ -289,6 +332,9 @@ export function EditProfilePane() {
                 >
                   <Trash2 size={14} aria-hidden="true" />
                 </button>
+                {linkErrors[index] ? (
+                  <small className="lkdv-compte-field-error" role="alert">{linkErrors[index]}</small>
+                ) : null}
               </div>
             ))
           )}
@@ -299,17 +345,21 @@ export function EditProfilePane() {
         <p className={`lkdv-compte-inline-status ${message.tone}`} role="status">
           {message.text}
         </p>
+      ) : dirty ? (
+        <p className="lkdv-compte-inline-status" role="status">
+          Modifications non enregistrées
+        </p>
       ) : null}
 
       <div className="lkdv-compte-savebar">
-        <ActionPill label="Annuler" icon={<RotateCcw />} onClick={reset} disabled={busy} />
+        <ActionPill label="Annuler" icon={<RotateCcw />} onClick={reset} disabled={busy || !dirty} />
         <ActionPill
           tone="primary"
           label={busy ? 'Enregistrement en cours' : 'Enregistrer le profil'}
           icon={<Check />}
           busy={busy}
           onClick={() => void save()}
-          disabled={!form.name.trim() || !form.handle.trim()}
+          disabled={invalid || !dirty}
         />
       </div>
 

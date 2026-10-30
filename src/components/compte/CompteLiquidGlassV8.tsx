@@ -80,6 +80,10 @@ const SortieDrawer = dynamic(
   () => import('./drawer/sortie/SortieDrawer').then((mod) => mod.SortieDrawer),
   { ssr: false }
 );
+const HighlightEditDrawer = dynamic(
+  () => import('./drawer/compte/HighlightEditDrawer').then((mod) => mod.HighlightEditDrawer),
+  { ssr: false, loading: () => <div style={{ padding: 16 }}>Chargement…</div> }
+);
 const CompteDrawer = dynamic(
   () => import('./drawer/compte/CompteDrawer').then((mod) => mod.CompteDrawer),
   { ssr: false }
@@ -1336,6 +1340,13 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     }
   }, [user, setBootstrapPhaseState, sessionGeneration]);
 
+  // Une story à la une a été modifiée dans son tiroir : on relit le profil.
+  useEffect(() => {
+    const onHighlightsChanged = () => { void syncSupabaseProfile(); };
+    window.addEventListener('lkdv:highlights-changed', onHighlightsChanged);
+    return () => window.removeEventListener('lkdv:highlights-changed', onHighlightsChanged);
+  }, [syncSupabaseProfile]);
+
   useEffect(() => {
     retryBootstrapRef.current = () => {
       void syncSupabaseProfile();
@@ -1469,6 +1480,8 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
           <ReseauDrawer initialTab={drawerMount.props?.tab === 'followers' ? 1 : 0} />
         ) : drawerMount.kind === 'sortie' ? (
           <SortieDrawer outingId={String(drawerMount.props?.outingId || '')} />
+        ) : drawerMount.kind === 'highlight' ? (
+          <HighlightEditDrawer hlId={String(drawerMount.props?.hlId || '')} />
         ) : drawerMount.kind === 'compte' ? (
           <CompteDrawer initialTab={Number(drawerMount.props?.tab) || 0} />
         ) : (

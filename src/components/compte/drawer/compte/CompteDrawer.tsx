@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Archive,
   Bell,
@@ -44,24 +44,9 @@ export function CompteDrawer({ initialTab = 0 }: { initialTab?: number }) {
   const { user, loading: authLoading } = useAuth();
   const [tab, setTab] = useState(Math.max(0, Math.min(initialTab, 4)));
 
-  // Le drawer Compte contient des formulaires longs (profil, réglages, partage) :
-  // on lui donne une hauteur utile sans toucher aux autres feuilles du runtime.
-  useEffect(() => {
-    const sheet = document.getElementById('sheet');
-    if (!sheet) return;
-    const wrapper = sheet.parentElement as HTMLElement | null;
-    const previousSheet = sheet.style.height;
-    const previousWrapper = wrapper?.style.height ?? '';
-    const height = 'min(76dvh, 720px)';
-    sheet.style.height = height;
-    // Le wrapper `.sw-wrap` porte l'overflow hidden et la hauteur du détent :
-    // sans lui, la feuille est visuellement coupée à l'ancienne hauteur.
-    if (wrapper) wrapper.style.height = height;
-    return () => {
-      sheet.style.height = previousSheet;
-      if (wrapper) wrapper.style.height = previousWrapper;
-    };
-  }, []);
+  // Aucune hauteur forcée : la feuille épouse les bornes exactes de la card
+  // (`.sw-wrap[data-det="card"]`), comme tous les autres tiroirs de la page.
+  // Les formulaires longs défilent dans le corps de la feuille.
   const [orderFilter, setOrderFilter] = useState(0);
   const [notificationFilter, setNotificationFilter] = useState(0);
 
@@ -212,6 +197,8 @@ export const COMPTE_CSS = `
 .lkdv-compte-settings-head span{display:block!important;font:400 11px var(--sf)!important;color:var(--label3)!important;}
 .lkdv-compte-inline-status{display:inline-flex!important;align-items:center!important;gap:4px!important;margin:0!important;padding:6px 10px!important;border-radius:10px!important;background:rgba(61,122,82,.1)!important;color:#2C5E3E!important;font:600 11px var(--sf)!important;}
 .lkdv-compte-inline-status.error{background:rgba(179,58,44,.1)!important;color:#9C2F22!important;}
+.lkdv-compte-field-error{display:block!important;margin:2px 4px 0!important;font:600 11px var(--sf)!important;color:#9C2F22!important;}
+.lkdv-compte-link-row .lkdv-compte-field-error{flex-basis:100%!important;}
 .lkdv-compte-setting-card{display:flex!important;flex-direction:column!important;gap:8px!important;padding:12px!important;border-radius:18px!important;background:rgba(255,255,255,.52)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08)!important;}
 .lkdv-compte-setting-head{display:grid!important;grid-template-columns:34px minmax(0,1fr) auto!important;align-items:center!important;gap:9px!important;}
 .lkdv-compte-setting-ico{width:34px!important;height:34px!important;border-radius:11px!important;display:grid!important;place-items:center!important;background:rgba(23,64,44,.07)!important;color:#17402C!important;}

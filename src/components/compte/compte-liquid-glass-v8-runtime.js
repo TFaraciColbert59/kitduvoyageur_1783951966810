@@ -1855,7 +1855,7 @@ let renderSheet = function() {
     }
     return;
   }
-  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie" };
+  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", story_edit_drawer: "highlight" };
   if (REACT_DRAWERS[sh.k]) {
     const kind = REACT_DRAWERS[sh.k];
     if (typeof window.__lkdvUnmountSlot === "function") {
@@ -1866,7 +1866,7 @@ let renderSheet = function() {
     }
     const label = kind === "reseau"
       ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
-      : kind === "sortie" ? "Sortie" : "Compte & Activité";
+      : kind === "sortie" ? "Sortie" : kind === "highlight" ? "Story à la une" : "Compte & Activité";
     const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
     $("sheet").setAttribute("aria-label", label);
     $("sheet").innerHTML = `<div class="grab" data-drag>
@@ -1889,7 +1889,9 @@ let renderSheet = function() {
       ? { tab: drawerHintMode || "followers" }
       : kind === "sortie"
         ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
-        : { tab: drawerHintTab || 0 };
+        : kind === "highlight"
+          ? { hlId: sh.hlId || (sh.extra && sh.extra.hlId) || "" }
+          : { tab: drawerHintTab || 0 };
     if (root && typeof window.__lkdvMountDrawer === "function") {
       try { window.__lkdvMountDrawer(root, kind, props); } catch (err) {
         console.warn("[CompteLiquidGlassV8] drawer mount failed:", err);
@@ -1912,7 +1914,7 @@ let renderSheet = function() {
   }
   if (sh.tab >= Dd.flow.length) sh.tab = 0;
   const F = Dd.flow[sh.tab], T = F.r(), fk = [sh.k, sh.id, sh.tab, sh.det, S.step].join("|");
-  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || sh.k === "account_drawer" || sh.k === "create_menu" || sh.k === "story_action_sheet" || sh.k === "outing_drawer" || sh.k === "step";
+  const isIdentityOrCustom = sh.k === "edit_profile_full" || sh.k === "followers_sheet" || sh.k === "user_profile_preview" || sh.k === "account_drawer" || sh.k === "story_edit_drawer" || sh.k === "create_menu" || sh.k === "story_action_sheet" || sh.k === "outing_drawer" || sh.k === "step";
   const per = isIdentityOrCustom ? 999 : Math.max(1, Math.min(T.per[sh.det === "large" ? 1 : 0], G.fit[fk] || 99));
   const pages = Math.max(1, Math.ceil(T.rows.length / per));
   if (sh.page >= pages) sh.page = pages - 1;
@@ -2521,7 +2523,7 @@ phone.addEventListener("contextmenu", e => {
     const hlId = hlBtn.dataset.hlId || hlBtn.dataset.v;
     if (hlId && hlId !== "hl5") {
       const hl = hlList().find(q => q.id === hlId) || { id: hlId, title: "Story à la une" };
-      openSheet("story_action_sheet", 0, "large", { hlId: hl.id, hlTitle: hl.title });
+      openSheet("story_edit_drawer", 0, "card", { hlId: hl.id, hlTitle: hl.title });
       haptic(10);
       return;
     }
@@ -2578,7 +2580,7 @@ phone.addEventListener("pointerdown", e => {
       hlBtn.classList.add("bump");
       setTimeout(() => hlBtn.classList.remove("bump"), 300);
       haptic(14);
-      openSheet("story_action_sheet", 0, "large", { hlId: hl.id, hlTitle: hl.title });
+      openSheet("story_edit_drawer", 0, "card", { hlId: hl.id, hlTitle: hl.title });
     }, 500)
   };
 });
@@ -3849,6 +3851,12 @@ const EXK = {
         ]
       })
     }]
+  }),
+  story_edit_drawer: () => ({
+    title: "Story à la une",
+    peek: "Titre, couverture et stories de la sélection",
+    noFooter: true,
+    flow: [{ l: "Story à la une", r: () => ({ per: [3, 5], title: "Story à la une", rows: [] }) }]
   }),
   account_drawer: () => {
     const tab = clamp(X.drawerTab || 0, 0, 4);
