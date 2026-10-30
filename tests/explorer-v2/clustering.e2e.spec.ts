@@ -33,7 +33,7 @@ test('pastille chiffrée puis zoom au toucher @explorer-v2', async ({ page }) =>
       }
     ).__xpMap;
     if (!map) return;
-    map.jumpTo({ center: [6.8694, 45.9237], zoom: 12 });
+    map.jumpTo({ center: [6.8694, 45.9237], zoom: 11.3 });
   });
 
   const cluster = root(page).locator('.xp-cluster').first();

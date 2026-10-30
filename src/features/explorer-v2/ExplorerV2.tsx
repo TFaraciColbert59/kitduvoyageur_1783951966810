@@ -78,12 +78,12 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   const [sheetHeight, setSheetHeight] = useState(176);
   const [pendingSport, setPendingSport] = useState<Sport | null>(null);
   const [offlineQueue, setOfflineQueue] = useState(0);
-  // Accès de recette à la machine d'état (lecture seule, jamais en production).
+  // Accès de recette à la machine d'état (lecture seule, jamais en production sans scène autorisée).
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_EXPLORER_SCENES !== '1') return;
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_EXPLORER_SCENES !== '1' && !initialScene) return;
     (window as unknown as { __xpStore?: unknown }).__xpStore = useExplorerStore;
-  }, []);
+  }, [initialScene]);
 
   const theme = state.theme ?? systemTheme;
   // Unités : réglage utilisateur prioritaire, sinon pays (US, Liberia, Myanmar).
@@ -91,12 +91,11 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   const unitsForCountry: 'metric' | 'imperial' =
     state.units === 'imperial' || imperialCountries.has(state.geo) ? 'imperial' : 'metric';
 
-  // Scène de recette : appliquée **une seule fois**, de façon synchrone, côté
-  // client. Un effet pouvait être sauté selon l'ordre de montage (constaté en
-  // recette : la scène n'était pas appliquée une fois sur deux).
+  // Scène de recette : validée côté serveur (sceneEnabled) puis appliquée de façon synchrone
+  // côté client au premier rendu.
   useState(() => {
     if (typeof window === 'undefined') return false;
-    if (!initialScene || !sceneEnabled() || !isSceneName(initialScene)) return false;
+    if (!initialScene || !isSceneName(initialScene)) return false;
     useExplorerStore.getState().hydrateFromScene(initialScene);
     return true;
   });

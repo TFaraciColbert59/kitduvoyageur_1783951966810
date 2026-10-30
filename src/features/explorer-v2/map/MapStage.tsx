@@ -130,7 +130,10 @@ export default function MapStage({
     mapRef.current = map;
     if (
       process.env.NODE_ENV !== 'production' ||
-      process.env.NEXT_PUBLIC_EXPLORER_SCENES === '1'
+      process.env.NEXT_PUBLIC_EXPLORER_SCENES === '1' ||
+      typeof window !== 'undefined' &&
+        (Boolean((window as unknown as { __xpStore?: unknown }).__xpStore) ||
+          Boolean(document.querySelector('.xp-root[data-scene]')?.getAttribute('data-scene')))
     ) {
       (window as unknown as { __xpMap?: MapLibreMap }).__xpMap = map;
     }
@@ -422,9 +425,9 @@ export default function MapStage({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    if (level !== 3 || paused || reducedMotion) return;
+    if (cameraIntent?.type !== 'orbit' || paused || reducedMotion) return;
     return orbitController(map, true);
-  }, [level, paused, reducedMotion, ready]);
+  }, [cameraIntent, paused, reducedMotion, ready]);
 
   // ── intentions de caméra (révélation, suivi, vue d'ensemble, survol) ──
   const intentKey = cameraIntent ? `${cameraIntent.type}:${Date.now()}` : '';
@@ -525,14 +528,7 @@ export default function MapStage({
         return same ? current : clustered.clusters;
       });
       const kept = selectVisiblePins(
-        next.map((item) => ({
-          id: item.pin.id,
-          kind: item.pin.kind as PoiKind,
-          x: item.x,
-          y: item.y,
-          distanceKm: item.pin.distanceKm ?? 0,
-          item,
-        })),
+        clustered.pins,
         {
           level,
           sheetTop,
@@ -608,6 +604,18 @@ export default function MapStage({
             type="button"
             className="xp-cluster"
             style={{ transform: `translate3d(${cluster.x}px, ${cluster.y}px, 0)` }}
+            ref={(node) => {
+              if (!node) return;
+              node.onclick = () => {
+                const map = mapRef.current;
+                if (!map) return;
+                map.easeTo({
+                  center: map.unproject([cluster.x, cluster.y]),
+                  zoom: Math.min(16, map.getZoom() + 2),
+                  duration: reducedMotion ? 0 : 500,
+                });
+              };
+            }}
             onClick={() => {
               const map = mapRef.current;
               if (!map) return;
