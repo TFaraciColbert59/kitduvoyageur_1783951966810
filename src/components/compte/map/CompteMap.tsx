@@ -191,6 +191,32 @@ function ensureLayer(map: MapLibreMap, id: string, create: () => void) {
   if (!map.getLayer(id)) create();
 }
 
+/**
+ * Hauteur de carte recouverte par la barre du bas (barre web flottante ou
+ * barre native iOS), mesurée à l'écran : le cadrage, les fiches et les
+ * mentions de la carte se placent au-dessus d'elle.
+ */
+function bottomBarOverlap(container: HTMLElement): number {
+  if (typeof document === 'undefined') return 0;
+  const mapBottom = container.getBoundingClientRect().bottom;
+  const webBar = document.querySelector<HTMLElement>('.lkdv-floating-tabbar-surface');
+  let barTop = Number.POSITIVE_INFINITY;
+  if (webBar && webBar.offsetParent !== null) barTop = webBar.getBoundingClientRect().top;
+  const nativeHeight = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--lkv-native-bar-height') || '',
+  );
+  if (document.documentElement.hasAttribute('data-native-glass-nav') && Number.isFinite(nativeHeight)) {
+    barTop = Math.min(barTop, window.innerHeight - nativeHeight);
+  }
+  if (!Number.isFinite(barTop)) return 0;
+  return Math.max(0, Math.round(mapBottom - barTop) + 8);
+}
+
+/** Ajoute la hauteur recouverte par la barre du bas au bas du cadrage. */
+function withBarInset<T extends { bottom: number }>(padding: T, container: HTMLElement): T {
+  return { ...padding, bottom: padding.bottom + bottomBarOverlap(container) };
+}
+
 export function CompteMap({
   authState,
   context,
@@ -535,10 +561,10 @@ export function CompteMap({
         [traceBounds[2], traceBounds[3]],
       ],
       {
-        padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
+        padding: withBarInset(paddingForViewport(map.getContainer().getBoundingClientRect(), {
           sheetOpen: false,
           mapbig: map.getContainer().clientHeight > 500,
-        }),
+        }), map.getContainer()),
         maxZoom: 14,
         pitch: 45,
         bearing: -18,
@@ -604,10 +630,10 @@ export function CompteMap({
         [intent.bounds[2], intent.bounds[3]],
       ],
       {
-        padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
+        padding: withBarInset(paddingForViewport(map.getContainer().getBoundingClientRect(), {
           sheetOpen: context.mode !== 'overview',
           mapbig: map.getContainer().clientHeight > 500,
-        }),
+        }), map.getContainer()),
         maxZoom: intent.maxZoom,
         pitch: context.mode === 'sortie' ? 45 : 0,
         duration: reduced ? 0 : context.mode === 'sortie' ? 1200 : 800,
@@ -677,10 +703,10 @@ export function CompteMap({
         [bounds[2], bounds[3]],
       ],
       {
-        padding: paddingForViewport(map.getContainer().getBoundingClientRect(), {
+        padding: withBarInset(paddingForViewport(map.getContainer().getBoundingClientRect(), {
           sheetOpen: context.mode !== 'overview',
           mapbig: map.getContainer().clientHeight > 500,
-        }),
+        }), map.getContainer()),
         maxZoom: 11,
         duration: prefersReducedMotion() ? 0 : 900,
         essential: true,

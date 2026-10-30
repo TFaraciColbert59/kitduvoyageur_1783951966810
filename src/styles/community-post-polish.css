@@ -209,3 +209,117 @@ html body .freedom-drawer-header:not(#lkdv-post-polish) {
     animation: none;
   }
 }
+
+/* --- Panneau Partage ----------------------------------------------------------
+   Liste des personnes en haut, compacte et défilante ; recherche seule, petite,
+   en bas à droite (style de la barre d'action) ; copier / envoyer vers une app
+   en haut à droite de la carte, au gabarit des « ··· ». */
+html body .lkdv-share-panel:not(#lkdv-post-polish) {
+  display: flex;
+  flex-direction: column;
+}
+html body .lkdv-share-panel .lkdv-share-list:not(#lkdv-post-polish) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 12px 64px;
+}
+html body .lkdv-share-panel .lkdv-share-conv:not(#lkdv-post-polish) {
+  min-height: 44px;
+  padding: 5px 2px;
+  gap: 10px;
+}
+html body .lkdv-share-panel .lkdv-share-conv img:not(#lkdv-post-polish),
+html body .lkdv-share-panel .lkdv-share-conv > span:first-child:not(#lkdv-post-polish) {
+  width: 30px;
+  height: 30px;
+}
+html body .lkdv-share-panel .lkdv-share-conv b:not(#lkdv-post-polish) {
+  font-size: 13px;
+}
+html body .lkdv-share-panel .lkdv-share-conv small:not(#lkdv-post-polish) {
+  font-size: 10.5px;
+}
+html body .lkdv-share-panel .lkdv-share-conv button:not(#lkdv-post-polish) {
+  width: 36px;
+  min-height: 32px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.lkdv-share-search {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 132px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.46) 55%, rgba(255, 255, 255, 0.6));
+  -webkit-backdrop-filter: blur(18px) saturate(1.9);
+  backdrop-filter: blur(18px) saturate(1.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 4px 14px rgba(10, 20, 14, 0.16);
+  color: #17402c;
+  transition: width 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.lkdv-share-search:focus-within {
+  width: calc(100% - 20px);
+}
+.lkdv-share-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  color: #10301f;
+  font-size: 14px;
+}
+.lkdv-share-search input::placeholder {
+  color: #56665d;
+}
+
+.lkdv-share-top {
+  position: absolute;
+  top: var(--post-pill-top, 10px);
+  right: 10px;
+  z-index: 35;
+  display: flex;
+  gap: 8px;
+}
+.lkdv-share-top button {
+  width: var(--post-pill-h, 44px);
+  height: var(--post-pill-h, 44px);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bar-glass-bg, rgba(255, 255, 255, 0.6));
+  -webkit-backdrop-filter: var(--bar-glass-blur, blur(14px));
+  backdrop-filter: var(--bar-glass-blur, blur(14px));
+  box-shadow: var(--bar-thumb-shadow, 0 2px 8px rgba(23, 43, 36, 0.12));
+  color: #17402c;
+  cursor: pointer;
+  animation: lkdv-share-top-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.lkdv-share-top button:nth-child(2) {
+  animation-delay: 40ms;
+}
+.lkdv-share-top button:active {
+  transform: scale(0.94);
+}
+@keyframes lkdv-share-top-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-share-top button { animation: none; }
+  .lkdv-share-search { transition: none; }
+}

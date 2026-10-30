@@ -428,8 +428,9 @@ export async function fetchFreedomReels(_user?: any): Promise<FreedomReelItem[]>
  * Load comments for a specific reel, parsing rich attachments.
  */
 export async function fetchReelComments(reelId: string, user?: any): Promise<FreedomComment[]> {
-  // Check local demo cache first
-  const demoList = DEMO_FREEDOM_COMMENTS[reelId];
+  // Commentaires de démonstration : seulement pour les reels de démo. Un post
+  // réel (`post-…`) ne lit que la base, sans doublon local.
+  const demoList = reelId.startsWith('post-') ? null : DEMO_FREEDOM_COMMENTS[reelId];
   const list: FreedomComment[] = demoList ? [...demoList] : [];
 
   // If this is a real DB post reel (`post-UUID`), query Supabase post_comments
@@ -447,6 +448,17 @@ export async function fetchReelComments(reelId: string, user?: any): Promise<Fre
       if (rows && rows.length > 0) {
         const authorIds = rows.map((r) => r.author_id).filter(Boolean);
         const profiles = await fetchPublicProfilesWith(supabase, authorIds);
+        // « J'aime » réels des commentaires (même table que le fil).
+        const likeCounts = new Map<string, number>();
+        const liked = new Set<string>();
+        const { data: likes } = await supabase
+          .from('post_comment_likes')
+          .select('comment_id, user_id')
+          .in('comment_id', rows.map((r) => r.id));
+        for (const like of (likes ?? []) as Array<{ comment_id: string; user_id: string }>) {
+          likeCounts.set(like.comment_id, (likeCounts.get(like.comment_id) ?? 0) + 1);
+          if (user?.id && like.user_id === user.id) liked.add(like.comment_id);
+        }
 
         for (const row of rows) {
           const { text, attachment } = parseCommentContent(row.content);
@@ -462,8 +474,8 @@ export async function fetchReelComments(reelId: string, user?: any): Promise<Fre
             },
             content: text,
             createdAt: row.created_at,
-            likesCount: 0,
-            isLiked: false,
+            likesCount: likeCounts.get(row.id) ?? 0,
+            isLiked: liked.has(row.id),
             isOwner: Boolean(user?.id && row.author_id === user.id),
             attachment,
             parentId: row.parent_id,
@@ -538,11 +550,11 @@ export async function postReelComment(
     }
   }
 
-  // Also update local cache for curated demo reels
-  if (!DEMO_FREEDOM_COMMENTS[reelId]) {
-    DEMO_FREEDOM_COMMENTS[reelId] = [];
+  // Cache local réservé aux reels de démonstration (un post réel relit la base).
+  if (!reelId.startsWith('post-')) {
+    if (!DEMO_FREEDOM_COMMENTS[reelId]) DEMO_FREEDOM_COMMENTS[reelId] = [];
+    DEMO_FREEDOM_COMMENTS[reelId].push(localComment);
   }
-  DEMO_FREEDOM_COMMENTS[reelId].push(localComment);
 
   return localComment;
 }
@@ -565,9 +577,9 @@ export function warmFreedomReels(user?: any): Promise<FreedomReelItem[]> {
   reelsInflight = fetchFreedomReels(user)
     .then((data) => {
       reelsCache = data;
-      // Les deux premières vidéos commencent à se mettre en mémoire tout de
+      // Les cinq premières vidéos commencent à se mettre en mémoire tout de
       // suite : à l'ouverture, elles démarrent sans attente.
-      data.slice(0, 2).forEach((reel) => bufferVideo(reel.videoUrl));
+      data.slice(0, 5).forEach((reel) => bufferVideo(reel.videoUrl));
       return data;
     })
     .finally(() => {
@@ -579,7 +591,7 @@ export function warmFreedomReels(user?: any): Promise<FreedomReelItem[]> {
 const bufferedVideos = new Map<string, HTMLVideoElement>();
 
 /** Met une vidéo en mémoire tampon dans un élément caché (rien n'est lu ni affiché). */
-function bufferVideo(url?: string | null) {
+export function bufferVideo(url?: string | null) {
   if (typeof document === 'undefined' || !url || bufferedVideos.has(url)) return;
   const video = document.createElement('video');
   video.preload = 'auto';
@@ -588,8 +600,8 @@ function bufferVideo(url?: string | null) {
   video.src = url;
   video.load();
   bufferedVideos.set(url, video);
-  // On garde au plus 4 éléments pour ne pas saturer la mémoire.
-  if (bufferedVideos.size > 4) {
+  // On garde au plus 8 éléments (5 devant + marge) pour ne pas saturer la mémoire.
+  if (bufferedVideos.size > 8) {
     const oldest = bufferedVideos.keys().next().value as string;
     const stale = bufferedVideos.get(oldest);
     if (stale) {
@@ -598,4 +610,15 @@ function bufferVideo(url?: string | null) {
     }
     bufferedVideos.delete(oldest);
   }
+}
+
+/** Enregistre ou retire un « j'aime » sur le commentaire d'un post réel. */
+export async function setPostCommentLike(commentId: string, userId: string, liked: boolean): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = liked
+    ? await supabase
+        .from('post_comment_likes')
+        .upsert({ user_id: userId, comment_id: commentId }, { onConflict: 'user_id,comment_id', ignoreDuplicates: true })
+    : await supabase.from('post_comment_likes').delete().eq('user_id', userId).eq('comment_id', commentId);
+  return !error;
 }

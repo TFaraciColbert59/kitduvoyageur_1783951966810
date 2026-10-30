@@ -226,7 +226,8 @@
 .lkdv-map-attribution {
   position: absolute;
   right: 10px;
-  bottom: 72px;
+  /* Au-dessus de la barre du bas (web ou native iOS, plus haute). */
+  bottom: max(72px, calc(var(--bottom-nav-height, 60px) + 12px));
   z-index: 7;
   height: 22px;
   padding: 0 8px;
@@ -1007,3 +1008,10 @@
 }
 .lkdv-map-overlay .lkdv-map-poi:hover,
 .lkdv-map-overlay .lkdv-map-poi:active { background: rgba(255,255,255,.42) !important; }
+
+/* Fiches de la carte (callouts) : jamais sous la barre du bas. La fiche
+   s'ouvre au-dessus du repère ; un repère trop bas fait remonter la fiche. */
+.lkdv-map-callout {
+  max-height: calc(100% - var(--bottom-nav-height, 60px) - 24px);
+  overflow-y: auto;
+}

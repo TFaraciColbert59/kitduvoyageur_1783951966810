@@ -1601,7 +1601,15 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   Hors ligne — vos messages restent en brouillon local et partiront au retour du réseau.
                 </div>
               ) : null}
-              <div className="map" style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: 'calc(70px + var(--kb-inset, 0px))' }}>
+              <div className="map" style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  // Réserve la hauteur réelle de la barre du bas (barre web ou
+                  // barre native iOS, plus haute) : la barre de saisie et ses
+                  // actions restent toujours visibles au-dessus.
+                  paddingBottom: 'calc(max(70px, var(--bottom-nav-height, 70px)) + var(--kb-inset, 0px))',
+                }}>
                 {selected ? (
                   <div className="mpane in" data-conversation={selected.id}>
                     <button
