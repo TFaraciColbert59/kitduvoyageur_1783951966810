@@ -89,5 +89,10 @@ export default defineConfig({
         url: 'http://localhost:4028',
         reuseExistingServer: true,
         timeout: 120_000,
+        env: {
+          PORT: '4028',
+          EXPLORER_V2_E2E: '1',
+          NEXT_PUBLIC_EXPLORER_SCENES: '1',
+        },
       },
 });

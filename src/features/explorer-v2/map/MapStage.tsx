@@ -298,7 +298,9 @@ export default function MapStage({
     map.on('moveend', () => {
       if (suppressMoveEnd.current) return;
       const c = map.getCenter();
-      onMoveEnd?.([c.lng, c.lat], map.getZoom());
+      const z = map.getZoom();
+      movedToRef.current = `${level}:${c.lng.toFixed(3)}:${c.lat.toFixed(3)}`;
+      onMoveEnd?.([c.lng, c.lat], z);
     });
 
     return () => {
@@ -415,11 +417,11 @@ export default function MapStage({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    const key = `${level}:${zoom.toFixed(2)}:${center[0].toFixed(3)}:${center[1].toFixed(3)}`;
+    const key = `${level}:${center[0].toFixed(3)}:${center[1].toFixed(3)}`;
     if (movedToRef.current === key) return;
     movedToRef.current = key;
     flyToLevel(map, center as [number, number], level, reducedMotion);
-  }, [level, center, zoom, ready, reducedMotion]);
+  }, [level, center, ready, reducedMotion]);
 
   // ── orbite de sommet (pause au toucher, reprise après 6 s) ────────────
   useEffect(() => {
