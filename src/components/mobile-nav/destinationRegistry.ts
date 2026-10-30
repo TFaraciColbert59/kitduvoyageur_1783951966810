@@ -123,7 +123,10 @@ const EXTENDED_NAV_PREFIXES: readonly string[] = [
   '/messagerie',
 ];
 
-const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/communaute', '/communaute/reels'];
+// La messagerie porte son filtre dans sa propre card (capsule en bas à droite) :
+// l'ancien plateau « Toutes / Directs / Groupes / Demandes » posé sur la barre
+// du bas (app iOS native) est supprimé.
+const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/communaute', '/communaute/reels', '/messagerie'];
 
 /** Vrai si la route possède un plateau de navigation secondaire. */
 export function hasExtendedNav(pathname: string | null | undefined): boolean {

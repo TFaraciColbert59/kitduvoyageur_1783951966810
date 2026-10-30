@@ -147,3 +147,50 @@ html body .phone .ig-tabs-float .ig-tabs button.active:not(#lkdv-tabbar-glass),
 html body .phone .ig-tabs-float .ig-tabs button[aria-selected='true']:not(#lkdv-tabbar-glass) {
   color: var(--lg-on) !important;
 }
+
+/* --- Gabarit identique à la barre du bas (variante flottante Apple Music) ---
+   Capsule 56 px, pastille inscrite à 4 px, icônes 22 px : mêmes proportions que
+   `.lkdv-floating-tabbar-surface` (60 px / pastille 52 px / icônes 26 px),
+   ramenées à la largeur d'un tiroir. */
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-drawer-tabs.lkdv-capsule:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-slot-selector.lkdv-capsule:not(#lkdv-tabbar-glass) {
+  height: 56px !important;
+  min-height: 56px !important;
+  padding: 4px !important;
+  border-radius: 999px !important;
+}
+
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-capsule button:not(#lkdv-tabbar-glass) {
+  height: 48px !important;
+  min-height: 48px !important;
+  border-radius: 999px !important;
+}
+
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button .ic:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button .ic:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-capsule button .ic:not(#lkdv-tabbar-glass) {
+  width: 24px !important;
+  height: 24px !important;
+}
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button .ic svg:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button .ic svg:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-capsule button .ic svg:not(#lkdv-tabbar-glass) {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector .sel-lens:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-capsule .sel-lens:not(#lkdv-tabbar-glass) {
+  top: 4px !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  height: auto !important;
+  width: calc((100% - 8px) / var(--n, 2)) !important;
+  border-radius: 999px !important;
+  transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}

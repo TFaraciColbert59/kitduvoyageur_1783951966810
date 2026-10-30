@@ -14,7 +14,7 @@ import { POST_REPORT_REASONS, postPermalink, type PostComment, type PostDetail, 
 import { ActionPill } from '@/components/ui/ActionPill';
 import { OverlaySheet } from './OverlaySheet';
 import { PostCardSurface } from './PostCardSurface';
-import { PostCommentsPanel } from '@/features/community/feed/PostCommentsPanel';
+import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomCommentsDrawer';
 import { PostSharePanel } from '@/features/community/feed/PostSharePanel';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 import { PostAuthorPill } from '@/features/community/feed/PostAuthorPill';
@@ -420,7 +420,16 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                   <div className="lkdv-community-panel-slot" data-side="comments" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
                     <div className="lkdv-post-panel-author"><PostAuthorPill post={feedPost} /></div>
                     <button type="button" className="lkdv-post-panel-close" onClick={() => { setPane('post'); void refreshDetail(); }} aria-label="Retour à la photo"><X size={16} /></button>
-                    <PostCommentsPanel post={feedPost} user={user} onClose={() => setPane('post')} focusCommentId={initialCommentId} />
+                    <div className="lkdv-post-panel lkdv-post-panel--freedom">
+                      <FreedomCommentsDrawer
+                        variant="panel"
+                        isOpen
+                        reelId={`post-${feedPost.id}`}
+                        currentUser={user}
+                        focusCommentId={initialCommentId}
+                        onClose={() => setPane('post')}
+                      />
+                    </div>
                   </div>
                 ) : null}
               </div>

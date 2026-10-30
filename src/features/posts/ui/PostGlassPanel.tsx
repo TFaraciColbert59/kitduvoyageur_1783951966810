@@ -35,6 +35,27 @@ export function PostGlassPanel({
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const [gesture, setGesture] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  // Clic fantôme iOS : le bouton « Commenter » est à l'endroit exact où le
+  // champ de saisie apparaît. Pendant l'ouverture, le panneau ignore les
+  // touchers et retire tout focus pris par un champ : le clavier ne s'ouvre
+  // qu'à un vrai appui sur le champ, une fois le panneau posé.
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    const root = rootRef.current;
+    const guard = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) target.blur();
+    };
+    root?.addEventListener('focusin', guard);
+    const timer = window.setTimeout(() => {
+      root?.removeEventListener('focusin', guard);
+      setArmed(true);
+    }, 650);
+    return () => {
+      window.clearTimeout(timer);
+      root?.removeEventListener('focusin', guard);
+    };
+  }, []);
   const leaveTimer = useRef<number | null>(null);
 
   /* Sortie animée : le panneau repart vers le côté d'où il est venu, puis le
@@ -141,6 +162,7 @@ export function PostGlassPanel({
       data-side={side}
       data-gesture={gesture ? 'true' : undefined}
       data-leaving={leaving ? 'true' : undefined}
+      data-armed={armed ? 'true' : 'false'}
       tabIndex={-1}
       style={{ top: 'var(--post-panel-top, 64px)' }}
       onPointerDown={(event) => {

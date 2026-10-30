@@ -12,7 +12,7 @@ import { Bookmark, Flag, Link2, MoreHorizontal, Repeat2, Trash2 } from 'lucide-r
 import { useToast } from '@/contexts/ToastContext';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { CommunityPostMedia } from './CommunityPostMedia';
-import { PostCommentsPanel } from './PostCommentsPanel';
+import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomCommentsDrawer';
 import { PostSharePanel } from './PostSharePanel';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
 import type { FeedPost } from './useCommunityFeed';
@@ -90,7 +90,7 @@ export function CommunityFeedPost({
       setMenuOpen(false);
       setMenuClosing(false);
       action();
-    }, 210);
+    }, 300);
   };
 
   const openPanel = (next: 'comments' | 'share') => {
@@ -118,6 +118,26 @@ export function CommunityFeedPost({
     document.addEventListener('pointerdown', close);
     return () => document.removeEventListener('pointerdown', close);
   }, [menuOpen]);
+
+  /* Les « ··· » prennent exactement la hauteur de la pastille auteur, mesurée
+     (elle varie avec la police et la taille d'écran de l'appareil). */
+  useEffect(() => {
+    const article = articleRef.current;
+    const pill = headerRef.current?.querySelector<HTMLElement>('.lkdv-post-author');
+    if (!article || !pill) return;
+    const sync = () => {
+      const rect = pill.getBoundingClientRect();
+      const box = article.getBoundingClientRect();
+      if (rect.height > 0) {
+        article.style.setProperty('--post-pill-h', `${Math.round(rect.height)}px`);
+        article.style.setProperty('--post-pill-top', `${Math.round(rect.top - box.top)}px`);
+      }
+    };
+    sync();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(sync) : null;
+    observer?.observe(pill);
+    return () => observer?.disconnect();
+  }, []);
 
   /* Échap : ferme d’abord le menu, puis le panneau. */
   useEffect(() => {
@@ -216,6 +236,7 @@ export function CommunityFeedPost({
 
   if (deleted) return null;
 
+
   return (
     <article
       ref={articleRef}
@@ -225,7 +246,7 @@ export function CommunityFeedPost({
       data-keyboard="false"
       style={{
         touchAction: 'pan-y',
-        ...(mediaRatio && !panel
+        ...(mediaRatio
           ? { aspectRatio: String(Math.min(1.91, Math.max(406 / 541, mediaRatio))) }
           : null),
       }}
@@ -320,7 +341,7 @@ export function CommunityFeedPost({
             setMenuOpen((open) => !open);
           }}
         >
-          <MoreHorizontal size={20} aria-hidden="true" />
+          <MoreHorizontal size={26} strokeWidth={2.4} aria-hidden="true" />
         </button>
       )}
 
@@ -329,6 +350,7 @@ export function CommunityFeedPost({
           <button
             type="button"
             role="menuitem"
+            style={{ '--i': 0 } as React.CSSProperties}
             aria-label={saved ? 'Retirer des enregistrements' : 'Enregistrer'}
             onClick={(event) => tapItem(event, () => void toggleSave())}
           >
@@ -337,6 +359,7 @@ export function CommunityFeedPost({
           <button
             type="button"
             role="menuitem"
+            style={{ '--i': 1 } as React.CSSProperties}
             aria-label="Copier le lien"
             onClick={(event) =>
               tapItem(event, () => {
@@ -354,6 +377,7 @@ export function CommunityFeedPost({
           <button
             type="button"
             role="menuitem"
+            style={{ '--i': 2 } as React.CSSProperties}
             aria-label="Republier"
             onClick={(event) => tapItem(event, () => void share())}
           >
@@ -362,6 +386,7 @@ export function CommunityFeedPost({
           <button
             type="button"
             role="menuitem"
+            style={{ '--i': 3 } as React.CSSProperties}
             aria-label="Signaler"
             onClick={(event) => tapItem(event, () => setReportOpen(true))}
           >
@@ -371,6 +396,7 @@ export function CommunityFeedPost({
             <button
               type="button"
               role="menuitem"
+            style={{ '--i': 4 } as React.CSSProperties}
               aria-label="Supprimer"
               className="is-danger"
               onClick={(event) =>
@@ -411,13 +437,18 @@ export function CommunityFeedPost({
       {panel === 'comments' ? (
         <PostGlassPanel side="comments" headerRef={headerRef} onClose={closePanel} onSwitch={setPanel}>
           <div className="lkdv-feed-panel-surface">
-            <PostCommentsPanel
-              post={post}
-              user={user}
-              onClose={closePanel}
-              onRequireAuth={onRequireAuth}
-              focusCommentId={initialCommentId}
-            />
+<div className="lkdv-post-panel lkdv-post-panel--freedom">
+              <FreedomCommentsDrawer
+                variant="panel"
+                isOpen
+                reelId={`post-${post.id}`}
+                currentUser={user}
+                focusCommentId={initialCommentId}
+                onClose={closePanel}
+                onRequireAuth={onRequireAuth ? () => onRequireAuth('comment') : undefined}
+                onCommentsCountChange={(count) => setCounts((value) => ({ ...value, comments: count }))}
+              />
+            </div>
           </div>
         </PostGlassPanel>
       ) : null}

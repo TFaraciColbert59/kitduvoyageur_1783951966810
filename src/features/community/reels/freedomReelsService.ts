@@ -75,10 +75,14 @@ export function parseCommentContent(content: string): {
  * High-definition vertical outdoor micro-video presets (9:16 format outdoor immersion)
  * Guarantees instantaneous, 60fps cinematic playback even when offline or before remote uploads.
  */
+/* Vidéos de démonstration servies par l'app (public/videos/freedom, 540×960,
+   H.264, `faststart`, 0,2 à 0,5 Mo) : l'ancien stockage public de Google
+   (gtv-videos-bucket) refuse désormais l'accès, ces reels ne se chargeaient
+   jamais. */
 export const FREEDOM_CURATED_REELS: FreedomReelItem[] = [
   {
     id: 'freedom-curated-1',
-    videoUrl: '/earth-bg.mp4',
+    videoUrl: '/videos/freedom/freedom-1.mp4',
     posterUrl: '/assets/images/adventure-bivouac.jpg',
     caption: 'Bivouac suspendu face au Mont-Blanc à 3100m. Le lever de soleil parfait après 7h d’ascension alpine 🏔️🏕️ #bivouac #alpinisme #freedom #montblanc',
     tags: ['bivouac', 'alpinisme', 'freedom', 'montblanc', 'outdoor'],
@@ -116,7 +120,7 @@ export const FREEDOM_CURATED_REELS: FreedomReelItem[] = [
   },
   {
     id: 'freedom-curated-2',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    videoUrl: '/videos/freedom/freedom-2.mp4',
     posterUrl: '/assets/images/adventure-hiking.jpg',
     caption: 'Passage engagé sur l’arête des Pyrénées espagnoles. Pas de vent, une visibilité infinie jusqu’à la Méditerranée ⛰️☀️ #trekking #pyrenees #liberte',
     tags: ['trekking', 'pyrenees', 'arête', 'outdoor'],
@@ -154,7 +158,7 @@ export const FREEDOM_CURATED_REELS: FreedomReelItem[] = [
   },
   {
     id: 'freedom-curated-3',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+    videoUrl: '/videos/freedom/freedom-3.mp4',
     posterUrl: '/assets/images/adventure-kayak.jpg',
     caption: 'Descente sauvage en packraft dans les gorges du Verdon au lever du jour. L’eau émeraude pour nous seuls 🛶🌊 #packraft #verdon #outdooradventure',
     tags: ['packraft', 'verdon', 'gorges', 'kayak'],
@@ -192,7 +196,7 @@ export const FREEDOM_CURATED_REELS: FreedomReelItem[] = [
   },
   {
     id: 'freedom-curated-4',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    videoUrl: '/videos/freedom/freedom-4.mp4',
     posterUrl: '/assets/images/community-morning.jpg',
     caption: 'Traversée gravel de l’Aubrac au coucher du soleil. Un silence absolu, du vent et des pistes infinies 🚲🌾 #gravel #bikepacking #aubrac #freedom',
     tags: ['gravel', 'bikepacking', 'aubrac', 'cycling'],

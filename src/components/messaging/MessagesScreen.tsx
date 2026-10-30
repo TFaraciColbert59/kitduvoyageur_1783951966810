@@ -1387,7 +1387,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>Messages</span>
                 </button>
                 <div className="ig-top-r">
-                  <NotificationBell userId={currentUserId ?? undefined} className="lg gbtn ig-top-btn" />
+                  <NotificationBell userId={currentUserId ?? undefined} />
                 </div>
               </div>
 
@@ -1554,49 +1554,48 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
               </div>
             </section>
 
-            <button
-              type="button"
-              className="msplit"
-              role="separator"
-              aria-orientation="horizontal"
-              aria-label="Régler la hauteur des discussions et de la conversation"
-              aria-valuenow={split}
-              onPointerDown={(event) => {
-                event.currentTarget.setPointerCapture(event.pointerId);
-                splitDrag.current = { startY: event.clientY, startSplit: split };
-                setSplitting(true);
-              }}
-              onPointerMove={(event) => {
-                const drag = splitDrag.current;
-                if (!drag) return;
-                setSplit(clampSplit(drag.startSplit + (event.clientY - drag.startY)));
-              }}
-              onPointerUp={() => {
-                if (!splitDrag.current) return;
-                splitDrag.current = null;
-                setSplitting(false);
-                persistSplit(split);
-              }}
-              onPointerCancel={() => {
-                splitDrag.current = null;
-                setSplitting(false);
-              }}
-              onDoubleClick={() => {
-                setSplit(SPLIT_DEFAULT);
-                persistSplit(SPLIT_DEFAULT);
-              }}
-              onKeyDown={(event) => {
-                if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
-                event.preventDefault();
-                const next = clampSplit(split + (event.key === 'ArrowDown' ? 24 : -24));
-                setSplit(next);
-                persistSplit(next);
-              }}
-            >
-              <Icon name="chevrons-up-down" size={18} aria-hidden="true" />
-            </button>
-
             <section className="mapzone" aria-label="Conversation">
+              <button
+                type="button"
+                className="msplit"
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label="Régler la hauteur des discussions et de la conversation"
+                aria-valuenow={split}
+                onPointerDown={(event) => {
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  splitDrag.current = { startY: event.clientY, startSplit: split };
+                  setSplitting(true);
+                }}
+                onPointerMove={(event) => {
+                  const drag = splitDrag.current;
+                  if (!drag) return;
+                  setSplit(clampSplit(drag.startSplit + (event.clientY - drag.startY)));
+                }}
+                onPointerUp={() => {
+                  if (!splitDrag.current) return;
+                  splitDrag.current = null;
+                  setSplitting(false);
+                  persistSplit(split);
+                }}
+                onPointerCancel={() => {
+                  splitDrag.current = null;
+                  setSplitting(false);
+                }}
+                onDoubleClick={() => {
+                  setSplit(SPLIT_DEFAULT);
+                  persistSplit(SPLIT_DEFAULT);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+                  event.preventDefault();
+                  const next = clampSplit(split + (event.key === 'ArrowDown' ? 24 : -24));
+                  setSplit(next);
+                  persistSplit(next);
+                }}
+              >
+                <span aria-hidden="true" />
+              </button>
               {offline ? (
                 <div className="moffline" role="status">
                   Hors ligne — vos messages restent en brouillon local et partiront au retour du réseau.

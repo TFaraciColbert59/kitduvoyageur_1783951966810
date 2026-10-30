@@ -1757,36 +1757,42 @@
   display: none !important;
 }
 
-/* Poignée de réglage de la hauteur des deux cards : chevron en haut de la conversation. */
-.lkdv-messages .msplit {
+/* Poignée de réglage de la hauteur des deux cards : une simple barre
+   d'encoche en haut de la card de conversation, comme celle d'un tiroir. */
+.lkdv-messages .mapzone > .msplit {
   position: absolute;
+  top: 2px;
   left: 50%;
-  top: var(--msg-split, 302px);
   z-index: 8;
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 28px;
-  margin-top: -2px;
+  width: 88px;
+  height: 22px;
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  background: none;
+  box-shadow: none;
   transform: translateX(-50%);
-  background: var(--lg-bar-bg);
-  -webkit-backdrop-filter: var(--lg-bar-blur);
-  backdrop-filter: var(--lg-bar-blur);
-  box-shadow: var(--lg-bar-shadow);
-  color: var(--lg-ink);
   cursor: ns-resize;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
-.lkdv-messages .msplit:focus-visible {
+.lkdv-messages .mapzone > .msplit > span {
+  display: block;
+  width: 36px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(23, 43, 36, 0.24);
+  transition: background 0.2s ease, width 0.2s ease;
+}
+.lkdv-messages .phone[data-splitting='true'] .mapzone > .msplit > span {
+  width: 44px;
+  background: rgba(23, 43, 36, 0.38);
+}
+.lkdv-messages .mapzone > .msplit:focus-visible {
   outline: 2px solid #5b7f55;
   outline-offset: 2px;
-}
-.lkdv-messages .phone[data-splitting='true'] .msplit {
-  transform: translateX(-50%) scale(1.06);
+  border-radius: 999px;
 }
 
 /* Filtre compact : il ne recouvre que le coin bas-droit de la card. */

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -24,6 +25,7 @@ import {
   preloadPublicProfile,
 } from './reelsPreloadService';
 import type { FreedomComment, FreedomCommentAttachment } from './freedom-types';
+import './freedom.css';
 
 export interface FreedomCommentsDrawerProps {
   isOpen: boolean;
@@ -33,6 +35,16 @@ export interface FreedomCommentsDrawerProps {
   onCommentsCountChange?: (count: number) => void;
   onOpenKit?: (kitId: string, kitName?: string) => void;
   onNavigateToProfile?: (author: FreedomComment['author']) => void;
+  /**
+   * `drawer` : feuille plein écran de Freedom. `panel` : même liste, mêmes
+   * fonctions et même composer, posés dans le panneau d'un post (fil,
+   * Compte, Messages) sans feuille ni voile.
+   */
+  variant?: 'drawer' | 'panel';
+  /** Visiteur sans compte : envoi refusé, on l'invite à se connecter. */
+  onRequireAuth?: () => void;
+  /** Commentaire à amener à l'écran à l'ouverture (lien profond). */
+  focusCommentId?: string | null;
 }
 
 interface CommentThread {
@@ -64,6 +76,9 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   onCommentsCountChange,
   onOpenKit,
   onNavigateToProfile,
+  variant = 'drawer',
+  onRequireAuth,
+  focusCommentId = null,
 }) => {
   const router = useRouter();
   const { haptic } = useHapticFeedback();
@@ -78,6 +93,25 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   const [replyingTo, setReplyingTo] = useState<ReplyingTarget | null>(null);
 
   const listRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  // Le champ ne prend le focus qu'à un vrai appui, jamais à l'ouverture
+  // (clic fantôme iOS sur le bouton qui a ouvert les commentaires).
+  const [inputArmed, setInputArmed] = useState(false);
+  useEffect(() => {
+    if (!isOpen) return;
+    setInputArmed(false);
+    const timer = window.setTimeout(() => setInputArmed(true), 650);
+    return () => window.clearTimeout(timer);
+  }, [isOpen]);
+  // Dans un post, le tiroir des pièces jointes (kit, GPX, équipement…) s'ouvre
+  // par-dessus la carte du post et en épouse les bords.
+  const [sheetHost, setSheetHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (variant !== 'panel') return;
+    const host =
+      panelRef.current?.closest<HTMLElement>('.lkdv-post-panel-slot, .lkdv-community-panel-slot, .lkdv-feed-post') ?? null;
+    setSheetHost(host);
+  }, [variant]);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -200,6 +234,13 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
     return rootThreads;
   }, [comments]);
 
+  // Lien profond vers un commentaire : on l'amène au centre une fois la liste chargée.
+  useEffect(() => {
+    if (!focusCommentId || loading) return;
+    const target = listRef.current?.querySelector<HTMLElement>(`[data-comment-id="${focusCommentId}"]`);
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focusCommentId, loading, comments]);
+
   // Keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
@@ -216,6 +257,10 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   const handleSend = async () => {
     const textToSend = inputText.trim();
     if ((!textToSend && !pendingAttachment) || submitting) return;
+    if (!currentUser?.id && onRequireAuth) {
+      onRequireAuth();
+      return;
+    }
 
     haptic('light');
     setSubmitting(true);
@@ -426,34 +471,8 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      className="freedom-drawer-backdrop"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Commentaires de la vidéo"
-    >
-      {/* Background Scrim */}
-      <div className="freedom-drawer-scrim" onClick={onClose} />
-
-      {/* Drawer Card (Liquid Glass, demi-hauteur 50% responsive) */}
-      <motion.div
-        {...dragProps}
-        style={{ y }}
-        className="freedom-drawer-sheet h-[68vh] max-h-[75dvh]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Grab Handle (pour fermer en glissant vers le bas) */}
-        <div
-          className="freedom-drawer-grab cursor-grab active:cursor-grabbing"
-          {...handleProps}
-          onClick={onClose}
-          aria-label="Fermer les commentaires"
-        >
-          <span />
-        </div>
-
+  const body = (
+    <>
         {/* Comments & Replies Threaded List */}
         <div ref={listRef} className="freedom-drawer-content space-y-4">
           {loading ? (
@@ -469,7 +488,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
             threads.map((thread) => {
               const root = thread.comment;
               return (
-                <div key={root.id} className="space-y-2.5">
+                <div key={root.id} className="space-y-2.5" data-comment-id={root.id}>
                   {/* Root Comment Row */}
                   <div className="flex items-start gap-2.5">
                     {/* Avatar (cliquable vers le profil) */}
@@ -753,6 +772,10 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
               }
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
+              onFocus={(e) => {
+                if (!inputArmed) e.currentTarget.blur();
+              }}
+              style={inputArmed ? undefined : { pointerEvents: 'none' }}
               aria-label="Votre commentaire"
             />
 
@@ -770,8 +793,11 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
             </button>
           </form>
         </div>
-      </motion.div>
+    </>
+  );
 
+  const menuSheet = (
+    <>
       {/* Rich Attachments Sheet (GPX, Kit, Équipement, Rando) */}
       {menuOpen && (
         <FreedomComposerMenuSheet
@@ -784,6 +810,54 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
           }}
         />
       )}
+    </>
+  );
+
+  if (variant === 'panel') {
+    return (
+      <div ref={panelRef} className="freedom-comments-panel" role="region" aria-label="Commentaires de la publication">
+        {body}
+        {menuOpen && sheetHost
+          ? createPortal(<div className="freedom-sheet-host">{menuSheet}</div>, sheetHost)
+          : menuOpen
+            ? menuSheet
+            : null}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="freedom-drawer-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Commentaires de la vidéo"
+    >
+      {/* Background Scrim */}
+      <div className="freedom-drawer-scrim" onClick={onClose} />
+
+      {/* Drawer Card (Liquid Glass, demi-hauteur 50% responsive) */}
+      <motion.div
+        {...dragProps}
+        style={{ y }}
+        className="freedom-drawer-sheet h-[68vh] max-h-[75dvh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Grab Handle (pour fermer en glissant vers le bas) */}
+        <div
+          className="freedom-drawer-grab cursor-grab active:cursor-grabbing"
+          {...handleProps}
+          onClick={onClose}
+          aria-label="Fermer les commentaires"
+        >
+          <span />
+        </div>
+
+        {body}
+      </motion.div>
+
+      {menuSheet}
     </div>
   );
 };
