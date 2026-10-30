@@ -14,8 +14,7 @@
  * `insufficient_data` : jamais un faux « pass ».
  *
  * Exécution : `npx tsx scripts/ops/phase10_slo_check.ts --health h.json --load l.json`
- * Codes de sortie : 0 aucun SLO en échec (des mesures peuvent manquer) ·
- *                   1 au moins un SLO en échec · 2 configuration illisible.
+ * Codes de sortie : 0 succès complet · 1 échec · 2 incomplet/configuration.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -48,6 +47,10 @@ export interface LoadLike {
         p95Ms?: number | null;
         total?: number | null;
         status5xx?: number | null;
+        count?: number | null;
+        status4xx?: number | null;
+        errors?: number | null;
+        evaluation?: { verdict?: string };
       }
     | undefined
   >;
@@ -77,10 +80,39 @@ export function measurementsFromLoad(input: unknown): Phase10Measurements {
   if (!conditions || conditions.skipped) return {};
   const p95 = numberOrNull(conditions.p95Ms);
   const total = numberOrNull(conditions.total);
-  const status5xx = numberOrNull(conditions.status5xx) ?? 0;
+  const status5xx = numberOrNull(conditions.status5xx);
+  const count = numberOrNull(conditions.count);
+  const status4xx = numberOrNull(conditions.status4xx);
+  const errors = numberOrNull(conditions.errors);
+  const verdict = conditions.evaluation?.verdict;
+  const valid =
+    count != null &&
+    Number.isInteger(count) &&
+    count >= 100 &&
+    total != null &&
+    Number.isInteger(total) &&
+    total === count &&
+    status5xx != null &&
+    Number.isInteger(status5xx) &&
+    status5xx >= 0 &&
+    status5xx <= total &&
+    status4xx === 0 &&
+    errors === 0 &&
+    (verdict === 'pass' || verdict === 'fail');
+  const sample = {
+    count,
+    valid,
+    verdict,
+    reason: valid
+      ? undefined
+      : 'échantillon A15 insuffisant ou invalide (compteurs/verdict/4xx/réseau)',
+  };
   return {
-    api_read_p95_ms: p95,
-    http_5xx_ratio: total && total > 0 ? status5xx / total : null,
+    api_read_p95_ms: { ...sample, value: p95 },
+    http_5xx_ratio: {
+      ...sample,
+      value: total && total > 0 && status5xx != null ? status5xx / total : null,
+    },
   };
 }
 
@@ -96,15 +128,17 @@ function readJson(file: string): unknown {
 
 function parseArgs(argv: string[]) {
   const args: {
+    metrics: string | null;
     health: string | null;
     load: string | null;
     aiUsage: string | null;
     json: boolean;
     out: string | null;
-  } = { health: null, load: null, aiUsage: null, json: false, out: null };
+  } = { metrics: null, health: null, load: null, aiUsage: null, json: false, out: null };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--health') args.health = argv[++index] ?? null;
+    if (arg === '--metrics') args.metrics = argv[++index] ?? null;
+    else if (arg === '--health') args.health = argv[++index] ?? null;
     else if (arg === '--load') args.load = argv[++index] ?? null;
     else if (arg === '--ai-usage') args.aiUsage = argv[++index] ?? null;
     else if (arg === '--json') args.json = true;
@@ -119,6 +153,18 @@ export async function main(argv = process.argv.slice(2), log = console.log): Pro
   const sources: string[] = [];
 
   try {
+    // Independent measurements can complete the SLOs not covered by A14/A15.
+    // Apply A14/A15 afterwards so invalid load evidence cannot be masked.
+    if (args.metrics) {
+      const metrics = readJson(args.metrics);
+      if (!metrics || typeof metrics !== 'object' || Array.isArray(metrics))
+        throw new Error('metrics: objet requis');
+      for (const definition of PHASE10_SLOS) {
+        if (definition.id in metrics)
+          measurements[definition.id] = (metrics as Phase10Measurements)[definition.id];
+      }
+      sources.push(`metrics=${args.metrics}`);
+    }
     if (args.health) {
       Object.assign(measurements, measurementsFromHealth(readJson(args.health)));
       sources.push(`health=${args.health}`);
@@ -159,7 +205,12 @@ export async function main(argv = process.argv.slice(2), log = console.log): Pro
     insufficient: report.insufficient.map((item) => item.id),
     decision,
     aiBudget,
-    exitCode: report.ok ? 0 : 1,
+    exitCode:
+      !report.ok || aiBudget?.status === 'quota_exceeded'
+        ? 1
+        : report.complete && (!aiBudget || aiBudget.status === 'within_budget')
+          ? 0
+          : 2,
   };
 
   if (args.out) {
@@ -186,7 +237,9 @@ export async function main(argv = process.argv.slice(2), log = console.log): Pro
     if (aiBudget) {
       log(`--- Budget IA : ${aiBudget.status} (${aiBudget.reason}) ---`);
       for (const check of aiBudget.checks) {
-        log(`- ${check.ok === null ? 'INSUFFICIENT' : check.ok ? 'ok' : 'DÉPASSÉ'} : ${check.detail}`);
+        log(
+          `- ${check.ok === null ? 'INSUFFICIENT' : check.ok ? 'ok' : 'DÉPASSÉ'} : ${check.detail}`
+        );
       }
     }
     log(
@@ -200,11 +253,12 @@ export async function main(argv = process.argv.slice(2), log = console.log): Pro
     );
   }
 
-  return report.ok ? 0 : 1;
+  return output.exitCode;
 }
 
 const invokedDirectly =
-  typeof process.argv[1] === 'string' && process.argv[1].replace(/\\/g, '/').endsWith('phase10_slo_check.ts');
+  typeof process.argv[1] === 'string' &&
+  process.argv[1].replace(/\\/g, '/').endsWith('phase10_slo_check.ts');
 
 if (invokedDirectly) {
   main().then((code) => {

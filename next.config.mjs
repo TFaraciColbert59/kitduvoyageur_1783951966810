@@ -85,10 +85,6 @@ const nextConfig = {
         : false,
   },
 
-  webpack: (config) => {
-    return config;
-  },
-
   async redirects() {
     // P6 : AUCUNE liste de 301 en dur. Tout est derive de la source unique
     // src/constants/routeRegistry.json (via route-redirects.config.mjs).

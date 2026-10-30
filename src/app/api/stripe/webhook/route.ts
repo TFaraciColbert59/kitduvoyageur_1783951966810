@@ -29,9 +29,9 @@ export const dynamic = 'force-dynamic';
  * PHASE 8 (durcissement) :
  * - Vérification de signature conservée (`constructEvent`, corps brut) ;
  * - Idempotence ÉVÉNEMENT : `public.stripe_events` réserve l'événement par son
- *   `id` (service_role). Un doublon est acquitté sans retraitement. En cas
- *   d'échec de traitement, la réservation est libérée pour laisser Stripe
- *   réessayer (jamais de perte silencieuse) ;
+ *   `id` (service_role). Les événements traités sont acquittés. Le checkout
+ *   reprend une réservation processing sous verrou transactionnel ; les
+ *   autres handlers libèrent leur réservation après exception ;
  * - Classification explicite : paiement (`checkout.session.completed`),
  *   renouvellement (`invoice.paid`/`payment_succeeded`), échec
  *   (`invoice.payment_failed`), remboursement (`charge.refunded`), annulation
@@ -44,7 +44,7 @@ export const dynamic = 'force-dynamic';
  * `record_order_encashment_event` (service_role, idempotent par event_id) est
  * la SEULE source d'émission fidélité (10 crédits/€ marchandises) — les
  * triggers legacy d'émission-par-statut ont été retirés. Un échec de cet
- * encaissement fait échouer l'événement (réservation libérée, Stripe rejoue) :
+ * encaissement fait échouer l'événement (réservation conservée, Stripe rejoue) :
  * jamais de perte silencieuse. Les remboursements émettent l'événement inverse
  * borné par ce qui a été réellement encaissé.
  */
@@ -53,228 +53,131 @@ interface CheckoutProcessingResult {
   duplicate: boolean;
 }
 
-/**
- * Encaissement fidélité (T38) — la preuve d'encaissement est la seule source
- * d'émission de crédits (10 crédits/€ de marchandises). Idempotent par
- * `stripe:<sessionId>` : un rejeu (retry Stripe ou chemin `duplicate`) ne
- * double jamais. Un échec PROPAGE : l'événement reste non traité (réservation
- * libérée) et Stripe rejouera — jamais de perte silencieuse.
- */
-async function encashCardOrder(
-  supabase: SupabaseClient,
-  orderId: string,
-  sessionId: string,
-  merchandiseCents: number,
-  buyerId: string | null
-): Promise<void> {
-  if (!buyerId || merchandiseCents <= 0) return;
-  const { error } = await supabase.rpc('record_order_encashment_event', {
-    p_event_id: `stripe:${sessionId}`,
-    p_order_id: orderId,
-    p_kind: 'payment',
-    p_merchandise_cents: merchandiseCents,
-  });
-  if (error) {
-    throw new Error(`encaissement fidélité refusé (${error.code ?? 'erreur'})`);
-  }
-}
-
-/**
- * Traite `checkout.session.completed` : entitlements, commande, articles,
- * déstockage, part créateur. Retourne `duplicate: true` si la session a déjà
- * produit une commande (retry métier).
- */
+/** Resume every required effect; an existing order is not proof of completion. */
 async function processCheckoutSessionCompleted(
   stripe: Stripe,
   supabase: SupabaseClient,
   event: StripeEventLike
 ): Promise<CheckoutProcessingResult> {
-  const session = event.data?.object;
-  const sessionId = typeof session?.id === 'string' ? session.id : '';
-  if (!sessionId) {
-    throw new Error('checkout.session.completed sans identifiant de session');
-  }
-
-  // Retrieve with expanded line items (fallback uniquement)
-  const expandedSession = await stripe.checkout.sessions.retrieve(sessionId, {
-    expand: ['line_items'],
-  });
-
-  const userId = (expandedSession.metadata?.user_id as string) || null;
+  const sessionId = typeof event.data?.object?.id === 'string' ? event.data.object.id : '';
+  if (!sessionId) throw new Error('checkout.session.completed sans identifiant de session');
+  const expandedSession = await stripe.checkout.sessions.retrieve(sessionId);
+  const userId = expandedSession.metadata?.user_id || null;
   const buyerId = userId && userId !== 'anonymous' ? userId : null;
-  // Montant marchandises en centimes (hors livraison) — base d'émission.
-  const merchandiseCents = Math.max(0, Math.round(Number(expandedSession.amount_subtotal || 0)));
-
-  // Idempotence métier : un index UNIQUE stripe_session_id (les NULL restent permis)
-  const { data: existingOrder } = await supabase
-    .from('orders')
-    .select('id')
-    .eq('stripe_session_id', sessionId)
-    .maybeSingle();
-
-  if (existingOrder) {
-    // Rejeu de session après incident : la commande existe déjà mais
-    // l'encaissement a pu échouer — on le re-tente (idempotent), jamais les
-    // autres effets (commande, stock, grants créés une seule fois).
-    await encashCardOrder(supabase, existingOrder.id, sessionId, merchandiseCents, buyerId);
-    return { duplicate: true };
+  let items: StripeCartItemRef[] = parseMetadataItems(expandedSession.metadata?.items);
+  const intentId = expandedSession.metadata?.intent_id;
+  if (items.length === 0 && intentId) {
+    const { data, error } = await supabase.from('checkout_intents').select('payload')
+      .eq('id', intentId).maybeSingle();
+    if (error) throw new Error('lecture du panier de paiement impossible');
+    if (Array.isArray(data?.payload)) items = data.payload as StripeCartItemRef[];
   }
 
-  // A13 (S3) — plan/pass éventuels portés par les métadonnées Stripe
-  // existantes : grant d'entitlements best-effort, jamais bloquant (sans
-  // plan/pass reconnu, aucune lecture ni écriture).
-  if (userId && userId !== 'anonymous') {
-    try {
-      await grantEntitlementsFromMetadata(supabase, userId, expandedSession.metadata);
-    } catch (grantError) {
-      console.error('⚠️ Webhook: grant entitlements échoué', grantError);
-    }
-  }
-
-  let items: StripeCartItemRef[] = parseMetadataItems(
-    expandedSession.metadata?.items as string | undefined
-  );
-
-  // Panier externalisé (dépassement limite 500) → checkout_intents
-  if (items.length === 0 && expandedSession.metadata?.intent_id) {
-    const { data: intent } = await supabase
-      .from('checkout_intents')
-      .select('payload')
-      .eq('id', expandedSession.metadata.intent_id as string)
-      .eq('status', 'pending')
-      .maybeSingle();
-    if (intent) {
-      items = (intent.payload as StripeCartItemRef[]) ?? [];
-      await supabase
-        .from('checkout_intents')
-        .update({ status: 'used' })
-        .eq('id', expandedSession.metadata.intent_id as string);
-    }
-  }
-
-  // Dernier recours : line_items Stripe (SANS id → ne créera aucun
-  // order_items ; la commande reste tracée)
-  if (items.length === 0 && expandedSession.line_items?.data) {
-    items = expandedSession.line_items.data.map((li) => ({
-      id: '',
-      name: li.description || 'Produit',
-      quantity: li.quantity || 1,
-    }));
-  }
-
-  const orderNumber = `KDV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-  const shippingAddr = expandedSession.shipping_details?.address || {};
-  const subtotalEur = ((expandedSession.amount_subtotal || 0) as number) / 100;
-  const shippingEur = ((expandedSession.shipping_cost?.amount_total as number) || 0) / 100;
-  const totalEur = ((expandedSession.amount_total || 0) as number) / 100;
-
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .insert({
-      user_id: userId && userId !== 'anonymous' ? userId : null,
-      order_number: orderNumber,
-      status: 'confirmed',
-      payment_method: 'card',
-      shipping_address: shippingAddr,
-      items,
-      subtotal_eur: subtotalEur,
-      shipping_eur: shippingEur,
-      total_eur: totalEur,
-      notes: `Stripe session: ${sessionId}`,
-      stripe_session_id: sessionId,
-    })
-    .select('id')
-    .single();
-
-  if (orderError || !order) {
-    throw new Error(
-      `création commande échouée: ${orderError?.message ?? 'Unknown database error'}`
-    );
-  }
-
-  // Encaissement fidélité (T38) : preuve serveur du paiement carte — émet les
-  // crédits (10 crédits/€ marchandises). Échec ⇒ événement non traité, Stripe
-  // rejouera (chemin `duplicate` ci-dessus).
-  await encashCardOrder(supabase, order.id, sessionId, merchandiseCents, buyerId);
-
-  // ── order_items + déstockage (product_id depuis les items validés) ──
-  const createdOrderItemIds: { productId: string; orderItemId: string; totalCents: number }[] = [];
-  for (const item of items) {
-    if (!item.id) continue;
-
-    const qty = item.quantity || 1;
-
-    // Prix TOUJOURS côté serveur (products) — jamais la métadata client.
-    let unitPrice = 0;
-    let productName = item.name || '';
-    let productSlug = '';
-    const { data: productRow } = await supabase
-      .from('products')
-      .select('price_eur, name, slug')
-      .eq('id', item.id)
-      .maybeSingle();
-    if (productRow && productRow.price_eur != null) {
-      unitPrice = Number(productRow.price_eur);
-      productName = productName || productRow.name || '';
-      productSlug = productSlug || productRow.slug || '';
-    }
-    if (unitPrice <= 0) {
-      unitPrice = Number(expandedSession.amount_total) / 100 / Math.max(1, items.length * qty);
-    }
-
-    const { data: orderItemRow, error: itemError } = await supabase
-      .from('order_items')
-      .insert({
-        order_id: order.id,
-        product_id: item.id,
-        product_slug: productSlug,
-        product_name: productName,
-        quantity: qty,
-        unit_price_eur: unitPrice,
-        total_price_eur: unitPrice * qty,
-        transaction_type: 'achat',
-      })
-      .select('id')
-      .single();
-    if (itemError || !orderItemRow) {
-      console.error(`❌ Webhook: order_items ${item.id}`, itemError);
-      continue;
-    }
-    createdOrderItemIds.push({
-      productId: item.id,
-      orderItemId: orderItemRow.id,
-      totalCents: Math.round(unitPrice * 100 * qty),
+  // Stripe is the price source. Catalog prices may have changed since payment.
+  // Explicit product metadata maps new sessions; legacy sessions retain their
+  // server-created descriptions and quantities only when the mapping is unique.
+  const paidLines: Stripe.LineItem[] = [];
+  let after: string | undefined;
+  for (;;) {
+    const page = await stripe.checkout.sessions.listLineItems(sessionId, {
+      limit: 100, expand: ['data.price.product'], ...(after ? { starting_after: after } : {}),
     });
-
-    try {
-      await supabase.rpc('decrement_stock_on_order', {
-        p_product_id: item.id,
-        p_quantity: qty,
-        p_order_id: order.id,
-        p_user_id: userId && userId !== 'anonymous' ? userId : null,
-      });
-    } catch (stockErr) {
-      console.error(`⚠️ Webhook: échec déstockage ${item.id}`, stockErr);
+    paidLines.push(...page.data);
+    if (!page.has_more) break;
+    const last = page.data.at(-1)?.id;
+    if (!last || last === after) throw new Error('pagination Stripe sans progression');
+    after = last;
+  }
+  const validLegacyItems = items.every((item) => item && typeof item.id === 'string' &&
+    item.id.length > 0 && typeof item.name === 'string' && Number.isSafeInteger(item.quantity) && item.quantity > 0);
+  let usedLegacyMapping = false;
+  const lines = paidLines.map((line) => {
+    const product = line.price?.product;
+    const mappedId = product && typeof product === 'object' && !product.deleted
+      ? product.metadata?.product_id : undefined;
+    let productId = mappedId || '';
+    if (!productId && validLegacyItems) {
+      const candidates = new Set(items.filter((item) => item.name === line.description &&
+        item.quantity === line.quantity).map((item) => item.id));
+      if (candidates.size === 1) {
+        productId = [...candidates][0];
+        usedLegacyMapping = true;
+      }
+    }
+    if (!productId || !Number.isSafeInteger(line.quantity) || (line.quantity ?? 0) <= 0 ||
+        !Number.isSafeInteger(line.amount_total) || line.amount_total < 0) {
+      throw new Error('ligne de paiement non réconciliable');
+    }
+    return { product_id: productId, quantity: line.quantity!, total_cents: line.amount_total };
+  });
+  if (usedLegacyMapping) {
+    const expected = new Map<string, number>();
+    const actual = new Map<string, number>();
+    for (const item of items) expected.set(item.id, (expected.get(item.id) || 0) + item.quantity);
+    for (const line of lines) actual.set(line.product_id, (actual.get(line.product_id) || 0) + line.quantity);
+    if (expected.size !== actual.size || [...expected].some(([id, quantity]) => actual.get(id) !== quantity)) {
+      throw new Error('panier historique non réconciliable');
     }
   }
+  // Empty line lists are accepted only for metadata-only grants, not a lost cart.
+  if (lines.length === 0 && items.length > 0) throw new Error('articles Stripe manquants');
+  const merchandiseCents = paidLines.reduce((total, line) => total + line.amount_total, 0);
+  if (!Number.isSafeInteger(merchandiseCents)) throw new Error('montant Stripe invalide');
+  const { data: existingOrder, error: readError } = await supabase.from('orders')
+    .select('id').eq('stripe_session_id', sessionId).maybeSingle();
+  if (readError) throw new Error('lecture commande impossible');
+  let order = existingOrder;
+  if (!order) {
+    const inserted = await supabase.from('orders').insert({
+      user_id: buyerId,
+      order_number: `KDV-${crypto.randomUUID()}`,
+      status: 'confirmed', payment_method: 'card',
+      shipping_address: expandedSession.shipping_details?.address || {}, items,
+      subtotal_eur: (expandedSession.amount_subtotal || 0) / 100,
+      shipping_eur: (expandedSession.shipping_cost?.amount_total || 0) / 100,
+      total_eur: (expandedSession.amount_total || 0) / 100,
+      notes: `Stripe session: ${sessionId}`, stripe_session_id: sessionId,
+    }).select('id').single();
+    order = inserted.data;
+    if (inserted.error?.code === '23505') {
+      const concurrent = await supabase.from('orders').select('id')
+        .eq('stripe_session_id', sessionId).maybeSingle();
+      if (concurrent.error) throw new Error('lecture commande concurrente impossible');
+      order = concurrent.data;
+    } else if (inserted.error) throw new Error('création commande impossible');
+  }
+  if (!order) throw new Error('commande de paiement introuvable');
+  const { data: resumed, error: resumeError } = await supabase.rpc('resume_stripe_checkout', {
+    p_order_id: order.id, p_session_id: sessionId, p_lines: lines,
+    p_merchandise_cents: merchandiseCents, p_metadata: expandedSession.metadata || {},
+  });
+  if (resumeError || !resumed || typeof resumed.terminal !== 'boolean' || !Array.isArray(resumed.items)) {
+    throw new Error('reprise transactionnelle du paiement impossible');
+  }
+  if (resumed.terminal) return { duplicate: Boolean(existingOrder) };
+  const createdOrderItemIds = resumed.items as {
+    productId: string; orderItemId: string; totalCents: number;
+  }[];
 
   // ── Part créateur (Lot 6) : attribution depuis metadata.kit_ref validé ──
   const kitRef = expandedSession.metadata?.kit_ref as string | undefined;
   if (kitRef && createdOrderItemIds.length > 0 && buyerId) {
     try {
-      const { data: kitRow } = await supabase
+      const { data: kitRow, error: kitError } = await supabase
         .from('materiel_kits')
         .select('user_id, ancestors')
         .eq('id', kitRef)
         .maybeSingle();
+      if (kitError) throw new Error('lecture kit impossible');
       if (kitRow) {
         const ancestors = (kitRow.ancestors as string[] | null) ?? [];
         const ancestorOwners = new Map<string, string>();
         if (ancestors.length > 0) {
-          const { data: ancKits } = await supabase
+          const { data: ancKits, error: ancestorsError } = await supabase
             .from('materiel_kits')
             .select('id, user_id')
             .in('id', ancestors);
+          if (ancestorsError) throw new Error('lecture ancêtres impossible');
           for (const a of (ancKits ?? []) as { id: string; user_id: string }[]) {
             ancestorOwners.set(a.id, a.user_id);
           }
@@ -286,11 +189,12 @@ async function processCheckoutSessionCompleted(
           const owner = ancestorOwners.get(ancId);
           if (owner) gaps.push({ beneficiaryId: owner, generationGap: gap });
         }
-        const { data: cfgRow } = await supabase
+        const { data: cfgRow, error: configError } = await supabase
           .from('royalty_config')
           .select('value')
           .eq('key', 'global')
           .maybeSingle();
+        if (configError) throw new Error('lecture barème impossible');
         const rateBps =
           (cfgRow?.value as { global_bps?: number } | null)?.global_bps ??
           DEFAULT_ROYALTY_GLOBAL_BPS;
@@ -304,29 +208,32 @@ async function processCheckoutSessionCompleted(
             buyerId,
           });
           if (shares.length === 0) continue;
-          await supabase.rpc('insert_kit_attribution', {
+          const { error: attributionError } = await supabase.rpc('insert_kit_attribution', {
             p_kit_id: kitRef,
             p_order_item_id: oi.orderItemId,
             p_product_id: oi.productId,
             p_amount_cents: oi.totalCents,
             p_rate_bps: rateBps,
-            p_shares: JSON.stringify(
-              shares.map((s) => ({
+            p_shares: shares.map((s) => ({
                 beneficiary_id: s.beneficiaryId,
                 generation_gap: s.generationGap,
                 share_cents: s.shareCents,
-              }))
-            ),
+              })),
             p_buyer_user_id: buyerId,
           });
+          if (attributionError) throw new Error('attribution refusée');
         }
       }
     } catch (attrErr) {
-      console.error('⚠️ Webhook: attribution échouée', attrErr);
+      throw new Error('attribution du paiement impossible', { cause: attrErr });
     }
   }
 
-  return { duplicate: false };
+  if (intentId) {
+    const { error } = await supabase.from('checkout_intents').update({ status: 'used' }).eq('id', intentId);
+    if (error) throw new Error('finalisation panier de paiement impossible');
+  }
+  return { duplicate: Boolean(existingOrder) };
 }
 
 /**
@@ -493,8 +400,11 @@ export async function POST(request: NextRequest) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur webhook';
     console.error('❌ Webhook error:', message);
-    // Libère la réservation : le retry Stripe pourra reprendre l'événement.
-    await releaseStripeEvent(supabase, summary.eventId);
+    // Checkout retains its durable row: concurrent resumptions are serialized
+    // by the order lock, and no failing worker can delete a successful mark.
+    if (classifyStripeEvent(event) !== 'checkout_completed') {
+      await releaseStripeEvent(supabase, summary.eventId);
+    }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -136,55 +136,57 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
   }, [activeKey]);
 
   const reloadAdventures = useCallback(async (): Promise<void> => {
-    if (!userId || !cacheKey) return;
-    await reloadUserTrips();
-    if (!mountedRef.current) return;
-    try {
-      const res = await fetch('/api/hub/adventures', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Adventures unavailable');
-      const data = await res.json();
-      if (!mountedRef.current) return;
-      const next: AdventuresCache = {
-        groups: Array.isArray(data?.groups) ? data.groups : [],
-        possession: {
-          itemsCount: Number(data?.possession?.items ?? 0),
-          loansCount: Number(data?.possession?.loans ?? 0),
-          alertsCount: Number(data?.possession?.alerts ?? 0),
-        },
-        pendingInvites: Number(data?.pendingInvites ?? 0),
-      };
-      setCache(next);
-      if (!initialSelectionResolved.current && initialAdventure?.nature === 'collectif' && next.groups.some((group) => group.id === initialAdventure.id)) {
-        setActiveAdventureState((current) => current ?? initialAdventure);
-      } else if (!initialSelectionResolved.current && initialAdventure?.nature === 'possession') {
-        setActiveAdventureState((current) => current ?? initialAdventure);
-      }
-      if (initialAdventure?.nature !== 'sortie') initialSelectionResolved.current = true;
+    if (!userId || !cacheKey || !mountedRef.current) return;
+    const tripsReload = reloadUserTrips();
+    const hubReload = (async () => {
       try {
-        localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), ...next }));
-      } catch {
-        /* stockage indisponible */
-      }
-    } catch {
-      try {
+        const res = await fetch('/api/hub/adventures', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Adventures unavailable');
+        const data = await res.json();
         if (!mountedRef.current) return;
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          setCache({
-            groups: Array.isArray(parsed?.groups) ? parsed.groups : [],
-            possession: {
-              itemsCount: Number(parsed?.possession?.itemsCount ?? 0),
-              loansCount: Number(parsed?.possession?.loansCount ?? 0),
-              alertsCount: Number(parsed?.possession?.alertsCount ?? 0),
-            },
-            pendingInvites: Number(parsed?.pendingInvites ?? 0),
-          });
+        const next: AdventuresCache = {
+          groups: Array.isArray(data?.groups) ? data.groups : [],
+          possession: {
+            itemsCount: Number(data?.possession?.items ?? 0),
+            loansCount: Number(data?.possession?.loans ?? 0),
+            alertsCount: Number(data?.possession?.alerts ?? 0),
+          },
+          pendingInvites: Number(data?.pendingInvites ?? 0),
+        };
+        setCache(next);
+        if (!initialSelectionResolved.current && initialAdventure?.nature === 'collectif' && next.groups.some((group) => group.id === initialAdventure.id)) {
+          setActiveAdventureState((current) => current ?? initialAdventure);
+        } else if (!initialSelectionResolved.current && initialAdventure?.nature === 'possession') {
+          setActiveAdventureState((current) => current ?? initialAdventure);
+        }
+        if (initialAdventure?.nature !== 'sortie') initialSelectionResolved.current = true;
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), ...next }));
+        } catch {
+          /* stockage indisponible */
         }
       } catch {
-        /* ignoré */
+        try {
+          if (!mountedRef.current) return;
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            setCache({
+              groups: Array.isArray(parsed?.groups) ? parsed.groups : [],
+              possession: {
+                itemsCount: Number(parsed?.possession?.itemsCount ?? 0),
+                loansCount: Number(parsed?.possession?.loansCount ?? 0),
+                alertsCount: Number(parsed?.possession?.alertsCount ?? 0),
+              },
+              pendingInvites: Number(parsed?.pendingInvites ?? 0),
+            });
+          }
+        } catch {
+          /* ignoré */
+        }
       }
-    }
+    })();
+    await Promise.all([tripsReload, hubReload]);
   }, [userId, cacheKey, reloadUserTrips, initialAdventure]);
 
   useEffect(() => {

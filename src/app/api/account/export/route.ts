@@ -7,6 +7,7 @@ import {
   createSupabaseGdprExportClient,
   gdprExportFileName,
   GDPR_EXPORT_SCHEMA_VERSION,
+  GdprExportIncompleteError,
 } from '@/server/gdprExport';
 
 export const dynamic = 'force-dynamic';
@@ -53,6 +54,13 @@ export async function GET() {
       },
     });
   } catch (error) {
+    if (error instanceof GdprExportIncompleteError) {
+      return NextResponse.json({
+        error: 'Export incomplet',
+        code: 'EXPORT_INCOMPLETE',
+        details: 'Aucune archive partielle n’a été fournie. Réessayez plus tard ou contactez le support.',
+      }, { status: 503, headers: { 'cache-control': 'no-store' } });
+    }
     console.error(
       '[account/export] erreur inattendue:',
       error instanceof Error ? error.message : 'inconnue'

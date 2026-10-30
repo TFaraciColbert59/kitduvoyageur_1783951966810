@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronAuthorized } from '@/lib/cron/auth';
 import { createClient } from '@supabase/supabase-js';
+import { storyPurgeReference } from '@/lib/stories/purgeReference';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,53 +40,59 @@ export async function GET(request: NextRequest) {
     // 1. Lot de stories expirées non archivées (les plus anciennes d'abord).
     const { data: expired, error: selectError } = await supabase
       .from('post_stories')
-      .select('id, image_url, storage_bucket, storage_path')
+      .select('id, author_id, image_url, storage_bucket, storage_path')
       .lt('expires_at', new Date().toISOString())
       .is('archived_at', null)
       .order('expires_at', { ascending: true })
       .limit(BATCH_SIZE);
     if (selectError) throw selectError;
-    if (!expired?.length) return NextResponse.json({ purged: 0, objects: 0, nextBatch: false });
+    if (!expired?.length)
+      return NextResponse.json({ purged: 0, objects: 0, skippedMedia: 0, nextBatch: false });
 
     const privateObjects: string[] = [];
     const legacyObjects: string[] = [];
+    let skippedMedia = 0;
     for (const row of expired) {
-      const r = row as {
-        image_url?: string | null;
-        storage_bucket?: string | null;
-        storage_path?: string | null;
-      };
-      if (r.storage_path && r.storage_bucket === 'stories-private') {
-        privateObjects.push(r.storage_path);
+      const reference = storyPurgeReference(row, supabaseUrl);
+      if (!reference) {
+        skippedMedia++;
         continue;
       }
-      const url = r.image_url || '';
-      const marker = '/carnet-media/';
-      const index = url.indexOf(marker);
-      if (index >= 0) legacyObjects.push(url.slice(index + marker.length));
+      const paths = reference.bucket === 'stories-private' ? privateObjects : legacyObjects;
+      if (!paths.includes(reference.path)) paths.push(reference.path);
     }
 
     // 2. Objets Storage d'abord : si l'objet échoue, la ligne reste (retry).
+    let objects = 0;
     if (privateObjects.length > 0) {
-      const { error } = await supabase.storage.from('stories-private').remove(privateObjects);
+      const { data, error } = await supabase.storage.from('stories-private').remove(privateObjects);
       if (error) throw error;
+      objects += data?.length ?? 0;
     }
     if (legacyObjects.length > 0) {
-      const { error } = await supabase.storage.from('carnet-media').remove(legacyObjects);
+      const { data, error } = await supabase.storage.from('carnet-media').remove(legacyObjects);
       if (error) throw error;
+      objects += data?.length ?? 0;
     }
 
     // 3. Lignes ensuite.
     const ids = expired.map((row) => (row as { id: string }).id);
-    const { error: deleteError } = await supabase.from('post_stories').delete().in('id', ids);
+    // Invalid references are never sent to Storage; remove their expired rows
+    // too so hostile metadata cannot permanently occupy the oldest batch.
+    const { data: deleted, error: deleteError } = await supabase
+      .from('post_stories')
+      .delete()
+      .in('id', ids)
+      .select('id');
     if (deleteError) throw deleteError;
 
     console.log(
-      `✅ purge-stories: ${ids.length} stories, ${privateObjects.length + legacyObjects.length} objets`
+      `✅ purge-stories: ${deleted?.length ?? 0} stories, ${objects} objets, ${skippedMedia} médias ignorés`
     );
     return NextResponse.json({
-      purged: ids.length,
-      objects: privateObjects.length + legacyObjects.length,
+      purged: deleted?.length ?? 0,
+      objects,
+      skippedMedia,
       nextBatch: ids.length === BATCH_SIZE,
     });
   } catch (err) {

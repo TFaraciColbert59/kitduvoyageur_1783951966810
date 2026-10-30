@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "codex/lkdv-autonomous-2026-10-29": false
+    }
+  },
   "regions": [
     "cdg1"
   ],

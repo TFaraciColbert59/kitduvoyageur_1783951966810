@@ -24,6 +24,9 @@ type NativeTabBarPlugin = {
   addListener(eventName: 'tabSelected', listener: (event: NativeTabSelection) => void): Promise<PluginListenerHandle>;
 };
 const nativeTabBar = registerPlugin<NativeTabBarPlugin>('LKDVAccountTabBar');
+// The UIWindow host outlives React route mounts. All instances must share its
+// revision sequence, including the hide sent by an excluded route's cleanup.
+let nativeTabBarRevision = 0;
 
 function NativeSecondaryPlateau({ pathname, showDay }: { pathname: string | null; showDay: boolean }) {
   const controller = useNavigationPlateau(pathname);
@@ -142,17 +145,18 @@ export default function NavigationBar() {
     const syncKey = nativeSyncKey({ visible: nativeVisible, selectedId }, pathname);
     if (lastSyncRef.current === syncKey) return;
     lastSyncRef.current = syncKey;
-    const revision = ++revisionRef.current;
+    const revision = ++nativeTabBarRevision;
+    revisionRef.current = revision;
     let cancelled = false;
     const timer = nativeVisible ? window.setTimeout(() => {
-      if (!cancelled && revision === revisionRef.current && phase === 'checking') {
+      if (!cancelled && revision === revisionRef.current && revision === nativeTabBarRevision && phase === 'checking') {
         setPhase('fallback');
       }
     }, 750) : undefined;
 
     nativeTabBar.setVisible({ visible: nativeVisible, selectedId, revision })
       .then(({ active, height }) => {
-        if (cancelled || revision !== revisionRef.current) return;
+        if (cancelled || revision !== revisionRef.current || revision !== nativeTabBarRevision) return;
         if (timer !== undefined) window.clearTimeout(timer);
         if (active && nativeVisible) {
           if (typeof height === 'number' && Number.isFinite(height) && height > 0) {
@@ -167,7 +171,7 @@ export default function NavigationBar() {
         }
       })
       .catch(() => {
-        if (cancelled || revision !== revisionRef.current) return;
+        if (cancelled || revision !== revisionRef.current || revision !== nativeTabBarRevision) return;
         if (timer !== undefined) window.clearTimeout(timer);
         setPhase('fallback');
       });
@@ -210,10 +214,14 @@ export default function NavigationBar() {
   useEffect(() => {
     if (!iosNative) return;
     return () => {
+      // A newer mount already owns the shared native host and its CSS state.
+      if (revisionRef.current !== nativeTabBarRevision) return;
+      lastSyncRef.current = ''; // React StrictMode may replay these effects.
       document.documentElement.removeAttribute('data-native-glass-nav');
       document.documentElement.removeAttribute('data-native-glass-plateau');
       document.documentElement.style.removeProperty('--lkv-native-bar-height');
-      const revision = ++revisionRef.current;
+      const revision = ++nativeTabBarRevision;
+      revisionRef.current = revision;
       nativeTabBar.setVisible({ visible: false, revision }).catch(() => {});
     };
   }, [iosNative]);

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState, ReactNode, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { setMyTripsAuthUser, invalidateMyTripsSession } from '@/features/trips/client/fetchMyTrips';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface UserProfile {
@@ -80,102 +81,113 @@ export const useAuth = (): AuthContextValue => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const raw = window.sessionStorage.getItem('lkdv:profile:current');
-      return raw ? (JSON.parse(raw) as UserProfile) : null;
-    } catch {
-      return null;
-    }
-  });
+  // A cached profile is never painted until auth confirms its owner.
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const supabase = useMemo(() => createClient(), []);
   const demoAutoLoginTried = useRef(false);
+  const identity = useRef<{ userId: string | null; generation: number }>({ userId: null, generation: 0 });
+  const lastCacheOwner = useRef<string | null>(null);
+  const authRevision = useRef(0);
+  const mounted = useRef(true);
+  const profileRequest = useRef<{ userId: string; generation: number; promise: Promise<void> } | null>(null);
+  const profileKey = (userId: string) => `lkdv:profile:${userId}`;
+  const isCurrent = useCallback((userId: string, generation: number) =>
+    mounted.current && identity.current.userId === userId && identity.current.generation === generation, []);
 
-  const profileRequest = useRef<Promise<void> | null>(null);
-  const PROFILE_CACHE_PREFIX = 'lkdv:profile:';
+  const publishProfile = useCallback((data: UserProfile, userId: string, generation: number) => {
+    if (data.id !== userId || !isCurrent(userId, generation)) return;
+    setProfile(data);
+    try { window.sessionStorage.setItem(profileKey(userId), JSON.stringify(data)); } catch { /* optional cache */ }
+  }, [isCurrent]);
 
   const ensureProfile = useCallback(async (authUser: User) => {
-    // Le profil est déjà peint depuis le cache : on rafraîchit en fond, une
-    // seule fois, sans relancer de requête concurrente.
-    if (profileRequest.current) return profileRequest.current;
+    const generation = identity.current.generation;
+    if (!isCurrent(authUser.id, generation)) return;
+    const previous = profileRequest.current;
+    if (previous?.userId === authUser.id && previous.generation === generation) return previous.promise;
     const run = (async () => {
-    try {
-      const { data: existing } = await supabase
-        .from('user_profiles')
-        .select('id,email,full_name,avatar_url,trust_score,loyalty_points,loyalty_level,bio,location,xp,level')
-        .eq('id', authUser.id)
-        .maybeSingle();
-
-      if (existing) {
-        setProfile(existing as UserProfile);
-        try {
-          window.sessionStorage.setItem('lkdv:profile:current', JSON.stringify(existing));
-        } catch {
-          /* quota : le cache n'est qu'un accélérateur */
+      try {
+        const { data: existing, error } = await supabase
+          .from('user_profiles')
+          .select('id,email,full_name,avatar_url,trust_score,loyalty_points,loyalty_level,bio,location,xp,level')
+          .eq('id', authUser.id)
+          .maybeSingle();
+        if (!isCurrent(authUser.id, generation) || error) return;
+        if (existing) {
+          publishProfile(existing as UserProfile, authUser.id, generation);
+          return;
         }
-        return;
-      }
-
-      // Profile missing — create it (fallback if trigger didn't fire)
-      const fullName =
-        (authUser.user_metadata?.full_name as string) ||
-        authUser.email?.split('@')[0] ||
-        '';
-
-      const { data: created } = await supabase
-        .from('user_profiles')
-        .upsert(
-          {
-            id: authUser.id,
-            email: authUser.email ?? '',
-            full_name: fullName,
-          },
-          { onConflict: 'id' }
-        )
-        .select()
-        .single();
-
-      if (created) setProfile(created as UserProfile);
-    } catch {
-      // Silently fail
-    }
+        const fullName = (authUser.user_metadata?.full_name as string) || authUser.email?.split('@')[0] || '';
+        const { data: created } = await supabase
+          .from('user_profiles')
+          .upsert({ id: authUser.id, email: authUser.email ?? '', full_name: fullName }, { onConflict: 'id' })
+          .select().single();
+        if (created) publishProfile(created as UserProfile, authUser.id, generation);
+      } catch { /* Keep this account's confirmed cache available offline. */ }
     })();
-    profileRequest.current = run.finally(() => {
-      profileRequest.current = null;
+    const request = { userId: authUser.id, generation, promise: run };
+    profileRequest.current = request;
+    void run.finally(() => {
+      if (profileRequest.current === request) profileRequest.current = null;
     });
-    return profileRequest.current;
-  }, [supabase]);
+    return run;
+  }, [supabase, isCurrent, publishProfile]);
+
+  const applySession = useCallback((nextSession: Session | null, newSession = false) => {
+    const nextId = nextSession?.user.id ?? null;
+    const previousId = identity.current.userId;
+    // Invalidate before publishing state: already-resolved requests can resume
+    // before React renders/unmounts the previous account's providers.
+    setMyTripsAuthUser(nextId, newSession);
+    if (previousId !== nextId || newSession) {
+      identity.current = { userId: nextId, generation: identity.current.generation + 1 };
+      profileRequest.current = null;
+      setProfile(null);
+      try {
+        window.sessionStorage.removeItem('lkdv:profile:current');
+        const previousOwner = lastCacheOwner.current;
+        if (previousOwner && previousOwner !== nextId && (nextId || navigator.onLine)) {
+          window.sessionStorage.removeItem(profileKey(previousOwner));
+        }
+        if (nextId) {
+          const raw = window.sessionStorage.getItem(profileKey(nextId));
+          const cached = raw ? JSON.parse(raw) as UserProfile : null;
+          if (cached?.id === nextId) setProfile(cached);
+        }
+      } catch { /* optional cache */ }
+    }
+    if (nextId) lastCacheOwner.current = nextId;
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
+    if (nextSession?.user) void ensureProfile(nextSession.user);
+    setLoading(false);
+  }, [ensureProfile]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        ensureProfile(session.user);
-      }
+    mounted.current = true;
+    try { window.sessionStorage.removeItem('lkdv:profile:current'); } catch { /* optional cache */ }
+    const initialRevision = authRevision.current;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      authRevision.current += 1;
+      applySession(nextSession, event === 'SIGNED_IN' || event === 'SIGNED_OUT');
+    });
+    void supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      if (mounted.current && authRevision.current === initialRevision) applySession(initialSession);
     }).catch((err) => {
       console.error('[AuthContext] getSession error:', err);
     }).finally(() => {
-      setLoading(false);
+      if (mounted.current && authRevision.current === initialRevision) setLoading(false);
     });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        ensureProfile(session.user);
-      } else {
-        setProfile(null);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase, ensureProfile]);
+    return () => {
+      mounted.current = false;
+      authRevision.current += 1;
+      identity.current.generation += 1;
+      profileRequest.current = null;
+      setMyTripsAuthUser(null);
+      subscription.unsubscribe();
+    };
+  }, [supabase, applySession]);
 
   // SEC-1 — Isolation inter-comptes : tout changement d'utilisateur connecté
   // (connexion d'un autre compte ou déconnexion) purge les caches privés du
@@ -233,13 +245,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [supabase]);
 
   const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    // Voluntary logout must also discard the last owner after an offline
+    // SIGNED_OUT(null), where user is already null but local data was retained.
+    const owner = lastCacheOwner.current;
+    authRevision.current += 1;
+    identity.current = { userId: null, generation: identity.current.generation + 1 };
+    profileRequest.current = null;
+    setMyTripsAuthUser(null);
+    invalidateMyTripsSession();
+    setSession(null);
+    setUser(null);
     setProfile(null);
-    // Déconnexion volontaire : rien du compte ne reste sur l'appareil.
+    lastCacheOwner.current = null;
+    try {
+      window.sessionStorage.removeItem('lkdv:profile:current');
+      if (owner) window.sessionStorage.removeItem(profileKey(owner));
+    } catch { /* optional cache */ }
     void import('@/lib/offlineStorage')
       .then((m) => m.purgeCompasSnapshots(null))
       .catch(() => undefined);
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   }, [supabase]);
 
   const getCurrentUser = useCallback(async () => {
@@ -252,11 +278,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const getUserProfile = useCallback(async (): Promise<UserProfile | null> => {
     if (!user) return null;
+    const generation = identity.current.generation;
+    if (!isCurrent(user.id, generation)) return null;
     const { data, error } = await supabase.from('user_profiles').select('id,email,full_name,avatar_url,trust_score,loyalty_points,loyalty_level,bio,location,xp,level').eq('id', user.id).single();
-    if (error) return null;
-    setProfile(data as UserProfile);
+    if (error || !data || data.id !== user.id || !isCurrent(user.id, generation)) return null;
+    publishProfile(data as UserProfile, user.id, generation);
     return data as UserProfile;
-  }, [supabase, user]);
+  }, [supabase, user, isCurrent, publishProfile]);
 
   const refreshProfile = useCallback(async () => {
     if (!user) return;

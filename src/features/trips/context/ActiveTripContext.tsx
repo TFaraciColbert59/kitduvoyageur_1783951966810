@@ -1,6 +1,6 @@
 'use client';
 
-import { fetchMyTripsCached } from '@/features/trips/client/fetchMyTrips';
+import { fetchMyTripsCached, getMyTripsSessionGeneration, isMyTripsSessionCurrent } from '@/features/trips/client/fetchMyTrips';
 
 import React, { createContext, useContext, useState, useTransition, useCallback, useEffect } from 'react';
 import type { ActiveTripData, TripLite } from './activeTripSchema';
@@ -115,9 +115,10 @@ function ActiveTripProviderForUser({ userId, initialTrip, children }: ActiveTrip
   // Y3.3 — cache userTrips (localStorage) + premier chargement serveur
   const reloadUserTrips = useCallback(async (): Promise<void> => {
     if (!userId || !tripsKey) return;
+    const generation = getMyTripsSessionGeneration();
     try {
-      const data = await fetchMyTripsCached();
-      if (!mountedRef.current) return;
+      const data = await fetchMyTripsCached(userId);
+      if (!mountedRef.current || !isMyTripsSessionCurrent(userId, generation)) return;
       const trips = (Array.isArray(data?.trips) ? data.trips : []) as TripLite[];
       setUserTrips(trips);
       if (!initialSelectionResolved.current && initialTrip && trips.some((trip) => trip.id === initialTrip.id)) {
@@ -132,7 +133,7 @@ function ActiveTripProviderForUser({ userId, initialTrip, children }: ActiveTrip
     } catch {
       // fallback sur le cache local
       try {
-        if (!mountedRef.current) return;
+        if (!mountedRef.current || !isMyTripsSessionCurrent(userId, generation)) return;
         const cached = localStorage.getItem(tripsKey);
         if (cached) {
           const parsed = JSON.parse(cached);

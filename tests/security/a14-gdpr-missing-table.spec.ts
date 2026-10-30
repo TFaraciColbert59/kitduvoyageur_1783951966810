@@ -11,14 +11,21 @@ import { createSupabaseGdprDeleteDeps } from '@/server/gdprDelete';
 type Err = { code?: string; message: string };
 function fake(errors: Record<string, Err>) {
   return {
-    from: (table: string) => ({
-      select: () => ({
-        eq: async () =>
+    from: (table: string) => {
+      const query = {
+        select: () => query,
+        eq: () => query,
+        order: () => query,
+        range: () => query,
+        abortSignal: () => query,
+        then: (resolve: (value: unknown) => unknown) => Promise.resolve(
           errors[table]
             ? { data: null, count: null, error: errors[table] }
-            : { data: [], count: 0, error: null },
-      }),
-    }),
+            : { data: [], count: 0, error: null }
+        ).then(resolve),
+      };
+      return query;
+    },
   } as never;
 }
 
@@ -52,11 +59,11 @@ describe('export RGPD : table optionnelle absente', () => {
 
   it('une autre table absente, ou un refus de droits sur user_traveller : l’erreur reste', async () => {
     const other = createSupabaseGdprExportClient(fake({ saved_trails: MISSING_PG }));
-    await expect(other.selectByUser('saved_trails', 'user_id', 'u1')).rejects.toThrow(/saved_trails/);
+    await expect(other.selectByUser('saved_trails', 'user_id', 'u1')).rejects.toThrow(/Export incomplet/);
     const denied = createSupabaseGdprExportClient(
       fake({ user_traveller: { code: '42501', message: 'permission denied for table user_traveller' } })
     );
-    await expect(denied.selectByUser('user_traveller', 'user_id', 'u1')).rejects.toThrow(/permission denied/);
+    await expect(denied.selectByUser('user_traveller', 'user_id', 'u1')).rejects.toThrow(/Export incomplet/);
   });
 });
 

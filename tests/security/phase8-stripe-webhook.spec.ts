@@ -22,6 +22,7 @@ const stripeMock = vi.hoisted(() => ({
   constructEvent: vi.fn(),
   retrieve: vi.fn(),
   list: vi.fn(),
+  listLineItems: vi.fn(),
 }));
 
 const supabaseMock = vi.hoisted(() => ({ createClient: vi.fn() }));
@@ -31,7 +32,7 @@ vi.mock('stripe', () => ({
   default: class FakeStripe {
     webhooks = { constructEvent: stripeMock.constructEvent };
     checkout = {
-      sessions: { retrieve: stripeMock.retrieve, list: stripeMock.list },
+      sessions: { retrieve: stripeMock.retrieve, list: stripeMock.list, listLineItems: stripeMock.listLineItems },
     };
   },
 }));
@@ -110,12 +111,122 @@ describe('Phase 8 — webhook Stripe (mocks, zéro réseau)', () => {
       ...CHECKOUT_SESSION,
       line_items: { data: [] },
     });
+    stripeMock.listLineItems.mockResolvedValue({ data: [{ id: 'li_1', description: 'Sac test', quantity: 2, amount_total: 5000 }], has_more: false });
     stripeMock.list.mockResolvedValue({ data: [{ id: 'cs_test_phase8' }] });
     grantMock.mockResolvedValue({ applied: true });
   });
 
   afterEach(() => {
     restoreEnv();
+  });
+
+  it('resumes an interrupted order instead of stopping at its existence', async () => {
+    const fake = installFake({ existingOrder: true, duplicateEvent: true, eventStatus: 'processing' });
+    stripeMock.constructEvent.mockReturnValue(event('checkout.session.completed', CHECKOUT_SESSION));
+    const response = await POST(request('{}'));
+    expect(response.status).toBe(200);
+    expect(fake.calls.rpcs.find((call) => call.fn === 'resume_stripe_checkout')?.args.p_order_id)
+      .toBe('order-existing');
+    expect(fake.calls.deletes).toEqual([]);
+  });
+
+  it.each(['error', 'throw'] as const)('retains a failed transaction for retry (%s)', async (failure) => {
+    const fake = installFake({ rpcFailures: { resume_stripe_checkout: failure } });
+    stripeMock.constructEvent.mockReturnValue(event('checkout.session.completed', CHECKOUT_SESSION));
+    expect((await POST(request('{}'))).status).toBe(500);
+    expect(fake.calls.deletes).toEqual([]);
+    expect(fake.calls.updates.some((call) => call.table === 'stripe_events')).toBe(false);
+  });
+
+  it('reads every Stripe page and uses paid amounts and explicit product ids', async () => {
+    const fake = installFake({ product: { price_eur: 999, name: 'changed', slug: 'changed' } });
+    stripeMock.constructEvent.mockReturnValue(event('checkout.session.completed', CHECKOUT_SESSION));
+    stripeMock.listLineItems.mockResolvedValueOnce({
+      data: [{ id: 'li_1', quantity: 1, amount_total: 1200, price: { product: { metadata: { product_id: 'prod-b' } } } }],
+      has_more: true,
+    }).mockResolvedValueOnce({
+      data: [{ id: 'li_2', quantity: 2, amount_total: 3800, price: { product: { metadata: { product_id: 'prod-a' } } } }],
+      has_more: false,
+    });
+    expect((await POST(request('{}'))).status).toBe(200);
+    expect(stripeMock.listLineItems).toHaveBeenNthCalledWith(2, CHECKOUT_SESSION.id,
+      expect.objectContaining({ starting_after: 'li_1' }));
+    expect(fake.calls.rpcs.find((call) => call.fn === 'resume_stripe_checkout')?.args.p_lines).toEqual([
+      { product_id: 'prod-b', quantity: 1, total_cents: 1200 },
+      { product_id: 'prod-a', quantity: 2, total_cents: 3800 },
+    ]);
+    expect(fake.calls.inserts.some((call) => call.table === 'order_items')).toBe(false);
+  });
+
+  it('fails closed for an ambiguous legacy product mapping', async () => {
+    const fake = installFake();
+    stripeMock.constructEvent.mockReturnValue(event('checkout.session.completed', CHECKOUT_SESSION));
+    stripeMock.listLineItems.mockResolvedValue({ data: [{ id: 'li_1', quantity: 3, amount_total: 5000 }], has_more: false });
+    expect((await POST(request('{}'))).status).toBe(500);
+    expect(fake.calls.rpcs).toEqual([]);
+    expect(fake.calls.updates.some((call) => call.table === 'stripe_events')).toBe(false);
+  });
+
+  it('maps reordered legacy lines by their server descriptions rather than their position', async () => {
+    const fake = installFake();
+    stripeMock.constructEvent.mockReturnValue(event('checkout.session.completed', CHECKOUT_SESSION));
+    stripeMock.retrieve.mockResolvedValue({ ...CHECKOUT_SESSION, metadata: {
+      ...CHECKOUT_SESSION.metadata,
+      items: JSON.stringify([{ id: 'prod-a', name: 'A', quantity: 1 }, { id: 'prod-b', name: 'B', quantity: 1 }]),
+    } });
+    stripeMock.listLineItems.mockResolvedValue({ data: [
+      { id: 'li_b', description: 'B', quantity: 1, amount_total: 3000 },
+      { id: 'li_a', description: 'A', quantity: 1, amount_total: 2000 },
+    ], has_more: false });
+    expect((await POST(request('{}'))).status).toBe(200);
+    expect(fake.calls.rpcs.find((call) => call.fn === 'resume_stripe_checkout')?.args.p_lines).toEqual([
+      { product_id: 'prod-b', quantity: 1, total_cents: 3000 },
+      { product_id: 'prod-a', quantity: 1, total_cents: 2000 },
+    ]);
+  });
+
+  it('refuses indistinguishable legacy product names and quantities', async () => {
+    const fake = installFake();
+    stripeMock.constructEvent.mockReturnValue(event('checkout.session.completed', CHECKOUT_SESSION));
+    stripeMock.retrieve.mockResolvedValue({ ...CHECKOUT_SESSION, metadata: {
+      ...CHECKOUT_SESSION.metadata,
+      items: JSON.stringify([{ id: 'prod-a', name: 'Same', quantity: 1 }, { id: 'prod-b', name: 'Same', quantity: 1 }]),
+    } });
+    stripeMock.listLineItems.mockResolvedValue({ data: [
+      { id: 'li_a', description: 'Same', quantity: 1, amount_total: 3000 },
+      { id: 'li_b', description: 'Same', quantity: 1, amount_total: 2000 },
+    ], has_more: false });
+    expect((await POST(request('{}'))).status).toBe(500);
+    expect(fake.calls.rpcs).toEqual([]);
+  });
+
+  it('does not acknowledge a failed creator attribution', async () => {
+    const fake = installFake({
+      kit: { user_id: 'creator', ancestors: [] },
+      resumeItems: [{ productId: 'prod-1', orderItemId: 'oi-1', totalCents: 5000 }],
+      rpcFailures: { insert_kit_attribution: 'error' },
+    });
+    stripeMock.retrieve.mockResolvedValue({ ...CHECKOUT_SESSION, metadata: { ...CHECKOUT_SESSION.metadata, kit_ref: 'kit-1' } });
+    stripeMock.constructEvent.mockReturnValue(event('checkout.session.completed', CHECKOUT_SESSION));
+    expect((await POST(request('{}'))).status).toBe(500);
+    expect(fake.calls.deletes).toEqual([]);
+    const shares = fake.calls.rpcs.find((call) => call.fn === 'insert_kit_attribution')?.args.p_shares;
+    expect(Array.isArray(shares)).toBe(true);
+    expect(shares).toEqual([expect.objectContaining({ beneficiary_id: 'creator', generation_gap: 0 })]);
+  });
+
+  it.each(['kit', 'ancestors', 'config'] as const)('retains checkout when attribution %s cannot be read', async (failedRead) => {
+    const fake = installFake({
+      kit: { user_id: 'creator', ancestors: ['parent-kit'] },
+      resumeItems: [{ productId: 'prod-1', orderItemId: 'oi-1', totalCents: 5000 }],
+      selectErrors: failedRead === 'kit' ? ['materiel_kits'] : failedRead === 'config' ? ['royalty_config'] : [],
+      ancestorReadError: failedRead === 'ancestors',
+    });
+    stripeMock.retrieve.mockResolvedValue({ ...CHECKOUT_SESSION, metadata: { ...CHECKOUT_SESSION.metadata, kit_ref: 'kit-1' } });
+    stripeMock.constructEvent.mockReturnValue(event('checkout.session.completed', CHECKOUT_SESSION));
+    expect((await POST(request('{}'))).status).toBe(500);
+    expect(fake.calls.deletes).toEqual([]);
+    expect(fake.calls.updates.some((call) => call.table === 'stripe_events')).toBe(false);
   });
 
   it('TEST-PHASE8-STRIPE-01: sans STRIPE_WEBHOOK_SECRET ⇒ 503, aucun constructEvent', async () => {
@@ -177,24 +288,22 @@ describe('Phase 8 — webhook Stripe (mocks, zéro réseau)', () => {
     const tables = fake.calls.inserts.map((i) => i.table);
     expect(tables).toContain('stripe_events');
     expect(tables).toContain('orders');
-    expect(tables).toContain('order_items');
+    expect(tables).not.toContain('order_items');
     const orderRow = fake.calls.inserts.find((i) => i.table === 'orders')?.row;
     expect(orderRow).toMatchObject({
       stripe_session_id: 'cs_test_phase8',
       total_eur: 50,
       user_id: CHECKOUT_SESSION.metadata.user_id,
     });
-    expect(fake.calls.rpcs.map((r) => r.fn)).toContain('decrement_stock_on_order');
     expect(fake.calls.rpcs).toContainEqual({
-      fn: 'record_order_encashment_event',
+      fn: 'resume_stripe_checkout',
       args: {
-        p_event_id: 'stripe:cs_test_phase8',
-        p_order_id: 'order-1',
-        p_kind: 'payment',
-        p_merchandise_cents: 5000,
+        p_order_id: 'order-1', p_session_id: CHECKOUT_SESSION.id,
+        p_lines: [{ product_id: 'prod-1', quantity: 2, total_cents: 5000 }],
+        p_merchandise_cents: 5000, p_metadata: CHECKOUT_SESSION.metadata,
       },
     });
-    expect(grantMock).toHaveBeenCalledWith(expect.anything(), CHECKOUT_SESSION.metadata.user_id, CHECKOUT_SESSION.metadata);
+    expect(grantMock).not.toHaveBeenCalled();
     expect(
       fake.calls.updates.find((u) => u.table === 'stripe_events')?.row
     ).toMatchObject({ status: 'processed' });
@@ -283,12 +392,11 @@ describe('Phase 8 — webhook Stripe (mocks, zéro réseau)', () => {
     expect(await response.json()).toMatchObject({ received: true, duplicate: true });
     expect(fake.calls.inserts.filter((i) => i.table === 'orders')).toHaveLength(0);
     expect(fake.calls.rpcs).toContainEqual({
-      fn: 'record_order_encashment_event',
+      fn: 'resume_stripe_checkout',
       args: {
-        p_event_id: 'stripe:cs_test_phase8',
-        p_order_id: 'order-existing',
-        p_kind: 'payment',
-        p_merchandise_cents: 5000,
+        p_order_id: 'order-existing', p_session_id: CHECKOUT_SESSION.id,
+        p_lines: [{ product_id: 'prod-1', quantity: 2, total_cents: 5000 }],
+        p_merchandise_cents: 5000, p_metadata: CHECKOUT_SESSION.metadata,
       },
     });
   });
@@ -355,7 +463,7 @@ describe('Phase 8 — webhook Stripe (mocks, zéro réseau)', () => {
     const response = await POST(request('{"id":"evt_phase8_boom"}'));
 
     expect(response.status).toBe(500);
-    expect(fake.calls.deletes.some((d) => d.table === 'stripe_events')).toBe(true);
+    expect(fake.calls.deletes.some((d) => d.table === 'stripe_events')).toBe(false);
     expect(fake.calls.updates.some((u) => u.table === 'stripe_events')).toBe(false);
   });
 });

@@ -1,4 +1,7 @@
-export declare function initCompteLiquidGlassRuntime(rootContainer: HTMLElement | null): () => void;
+export declare function initCompteLiquidGlassRuntime(
+  rootContainer: HTMLElement | null,
+  account?: { userId?: string | null; isCurrent?: () => boolean }
+): () => void;
 
 /** `'public'` → 2, `'prive'` → 0 ; index historiques 0|1|2 acceptés ; inconnu → null. */
 export declare function resolveSetVis(value: unknown): number | null;

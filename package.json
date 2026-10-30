@@ -58,7 +58,7 @@
     "seed:demo": "node scripts/seed/seed_massive_demo.mjs",
     "supabase:status": "supabase status",
     "mobile:sync": "npx cap sync",
-    "mobile:build": "npm run build && npx cap sync",
+    "mobile:build": "npm run build && node scripts/mobile/sync-release.mjs",
     "mobile:open:ios": "npx cap open ios",
     "mobile:open:android": "npx cap open android",
     "verify:invariants": "node scripts/verify/ci_invariants.mjs",

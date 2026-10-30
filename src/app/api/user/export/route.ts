@@ -5,6 +5,7 @@ import {
   buildGdprExport,
   createSupabaseGdprExportClient,
   gdprExportFileName,
+  GdprExportIncompleteError,
 } from '@/server/gdprExport';
 
 export const dynamic = 'force-dynamic';
@@ -50,10 +51,17 @@ export async function GET() {
         'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
-  } catch (err: any) {
-    console.error('[LKDV /api/user/export] Erreur export RGPD:', err);
+  } catch (err: unknown) {
+    if (err instanceof GdprExportIncompleteError) {
+      return NextResponse.json({
+        error: 'Export incomplet',
+        code: 'EXPORT_INCOMPLETE',
+        details: 'Aucune archive partielle n’a été fournie. Réessayez plus tard ou contactez le support.',
+      }, { status: 503, headers: { 'cache-control': 'no-store' } });
+    }
+    console.error('[LKDV /api/user/export] Échec inattendu de génération');
     return NextResponse.json(
-      { error: err?.message || 'Erreur interne lors de la génération de l’export RGPD' },
+      { error: 'Erreur interne lors de la génération de l’export RGPD' },
       { status: 500 }
     );
   }

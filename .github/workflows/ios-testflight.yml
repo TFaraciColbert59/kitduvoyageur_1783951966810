@@ -67,7 +67,7 @@ jobs:
           npx vitest run src/components/mobile-nav/__tests__/native-account-routes.test.ts tests/design/lot2-shell.spec.ts
           npm run build
           node scripts/verify/verify_capacitor_server.mjs
-          npx cap sync ios
+          node scripts/mobile/sync-release.mjs ios
           node scripts/verify/verify_capacitor_server.mjs ios/App/App/capacitor.config.json --config-only
       - name: Install Apple distribution identity
         shell: bash

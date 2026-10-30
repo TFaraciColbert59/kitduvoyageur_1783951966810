@@ -56,7 +56,7 @@ jobs:
         run: node scripts/verify/verify_capacitor_server.mjs
 
       - name: Capacitor sync
-        run: npx cap sync ios
+        run: node scripts/mobile/sync-release.mjs ios
 
       - name: Verify embedded Capacitor configuration
         run: node scripts/verify/verify_capacitor_server.mjs ios/App/App/capacitor.config.json --config-only

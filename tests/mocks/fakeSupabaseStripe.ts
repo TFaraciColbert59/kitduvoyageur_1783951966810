@@ -7,6 +7,12 @@ import { vi } from 'vitest';
 export interface FakeSupabaseConfig {
   /** Insert stripe_events renvoie une violation d'unicité 23505. */
   duplicateEvent?: boolean;
+  eventStatus?: 'processing' | 'processed';
+  missingEventOnUpdate?: boolean;
+  resumeTerminal?: boolean;
+  resumeItems?: { productId: string; orderItemId: string; totalCents: number }[];
+  selectErrors?: string[];
+  ancestorReadError?: boolean;
   /** Une commande existe déjà pour la session. */
   existingOrder?: boolean;
   /** Erreur d'infrastructure sur l'insert stripe_events. */
@@ -66,7 +72,7 @@ export function createFakeSupabase(config: FakeSupabaseConfig = {}): {
     }
     if (op === 'update') {
       calls.updates.push({ table, row: payload as Record<string, unknown> });
-      return { data: null, error: null };
+      return { data: table === 'stripe_events' && !config.missingEventOnUpdate ? { event_id: 'evt_idem_1' } : null, error: null };
     }
     if (op === 'delete') {
       calls.deletes.push({ table });
@@ -76,6 +82,7 @@ export function createFakeSupabase(config: FakeSupabaseConfig = {}): {
       if (config.order !== undefined) return { data: config.order, error: null };
       return { data: config.existingOrder ? { id: 'order-existing' } : null, error: null };
     }
+    if (table === 'stripe_events') return { data: { status: config.eventStatus ?? 'processed', type: 'checkout.session.completed' }, error: null };
     if (table === 'products') return { data: config.product ?? null, error: null };
     if (table === 'materiel_kits') return { data: config.kit ?? null, error: null };
     if (table === 'royalty_config') return { data: config.royalty ?? null, error: null };
@@ -84,6 +91,10 @@ export function createFakeSupabase(config: FakeSupabaseConfig = {}): {
   }
 
   function resolve(table: string, op: string, payload: unknown): { data: unknown; error: unknown } {
+    if (op === 'select' && (config.selectErrors?.includes(table) ||
+      (table === 'materiel_kits' && payload !== undefined && config.ancestorReadError))) {
+      return { data: null, error: { code: '500', message: 'fixture read unavailable' } };
+    }
     if (op === 'select' && table === 'materiel_kits' && payload !== undefined) {
       return { data: payload, error: null };
     }
@@ -91,7 +102,14 @@ export function createFakeSupabase(config: FakeSupabaseConfig = {}): {
   }
 
   function builder(table: string) {
-    const state = { op: 'select', payload: undefined as unknown };
+    const state = { op: 'select', payload: undefined as unknown, eventId: undefined as unknown };
+    const resolveState = () => {
+      const result = resolve(table, state.op, state.payload);
+      if (table === 'stripe_events' && state.op === 'update' && !config.missingEventOnUpdate) {
+        result.data = { event_id: state.eventId };
+      }
+      return result;
+    };
     const self: Record<string, unknown> = {};
     const chain = () => self;
     Object.assign(self, {
@@ -110,7 +128,10 @@ export function createFakeSupabase(config: FakeSupabaseConfig = {}): {
         state.op = 'delete';
         return chain();
       },
-      eq: () => chain(),
+      eq: (key: string, value: unknown) => {
+        if (key === 'event_id') state.eventId = value;
+        return chain();
+      },
       in: () => {
         if (table === 'materiel_kits' && state.op === 'select') {
           state.payload = config.ancestorKits ?? [];
@@ -119,10 +140,10 @@ export function createFakeSupabase(config: FakeSupabaseConfig = {}): {
       },
       order: () => chain(),
       limit: () => chain(),
-      maybeSingle: async () => resolve(table, state.op, state.payload),
+      maybeSingle: async () => resolveState(),
       single: async () => resolveSingle(table, state.op, state.payload),
       then: (resolveFn: (value: unknown) => unknown) =>
-        Promise.resolve(resolve(table, state.op, state.payload)).then(resolveFn),
+        Promise.resolve(resolveState()).then(resolveFn),
     });
     return self;
   }
@@ -134,6 +155,7 @@ export function createFakeSupabase(config: FakeSupabaseConfig = {}): {
       const failure = config.rpcFailures?.[fn];
       if (failure === 'throw') throw new Error(`${fn}: réseau indisponible`);
       if (failure === 'error') return { data: null, error: { code: 'P0001', message: `${fn} refusée` } };
+      if (fn === 'resume_stripe_checkout') return { data: { terminal: config.resumeTerminal ?? false, items: config.resumeItems ?? [] }, error: null };
       return { data: null, error: null };
     }),
   };
