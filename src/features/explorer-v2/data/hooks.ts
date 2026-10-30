@@ -54,6 +54,9 @@ export interface RouteItem {
 export interface PlaceResponse {
   place: {
     regionName: string | null;
+    placeName?: string | null;
+    countryCode?: string | null;
+    elevationM?: number | null;
     counts: { routes: number; water: number; refuges: number; reports: number };
   } | null;
   pois: PoiItem[];

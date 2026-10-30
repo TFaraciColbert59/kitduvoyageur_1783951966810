@@ -7,22 +7,22 @@ import { AdventureIntelligenceHub } from '@/features/adventure-intelligence/ui';
 import { ItineraryAdventureCockpit } from '@/features/hub/components/mobile/itinerary/ItineraryAdventureCockpit';
 import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
 import { traceStage } from '@/lib/perf/ssrTrace';
-import HubLoading from './loading';
+import RouteLoading from '@/components/shell/RouteLoading';
 
 // Hub auth/cookie-driven : jamais prerenderee statiquement au build.
 export const dynamic = 'force-dynamic';
 
 /**
  * H3.4 — Layout de segment du hub voyageur (miroir voyages/[slug]/layout).
- * P0-3 (Loi 1) — le shell HTML part immédiatement : le squelette BENTO
- * (hub/loading.tsx) est envoyé comme fallback du <Suspense>, puis le hub
+ * P0-3 (Loi 1) — le shell HTML part immédiatement : RouteLoading
+ * est envoyé comme fallback du <Suspense>, puis le hub
  * complet (nav + contenu) streame dès que la cascade serveur est terminée.
  * L'attente n'est plus un écran mort.
  */
 export default function HubLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Suspense fallback={<HubLoading />}>
+      <Suspense fallback={<RouteLoading label="Chargement de l’aventure…" />}>
         <HubLayoutAsync>{children}</HubLayoutAsync>
       </Suspense>
     </>

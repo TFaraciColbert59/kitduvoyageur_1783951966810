@@ -33,6 +33,9 @@ interface RouteRow {
 
 interface PlaceRow {
   regionName: string | null;
+  placeName?: string | null;
+  countryCode?: string | null;
+  elevationM?: number | null;
   counts: {
     routes: number;
     water: number;
