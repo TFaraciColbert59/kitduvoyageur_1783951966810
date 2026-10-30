@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
 import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
-import { useAccountUnreadCount } from './useAccountUnreadCount';
+import { NotificationBell } from '@/components/ui/NotificationBell';
 
 export interface CommunityFeedTopBarProps {
   user: any;
@@ -18,8 +17,6 @@ export interface CommunityFeedTopBarProps {
  * cloche (drawer Notifications du Compte).
  */
 export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }: CommunityFeedTopBarProps) {
-  const unread = useAccountUnreadCount(user?.id);
-
   return (
     <>
       <div className="lkdv-pourtoi-wrap gap-1.5">
@@ -40,14 +37,7 @@ export function CommunityFeedTopBar({ user, onCreate, onOpenSection, onSearch }:
         <button type="button" className="gbtn" aria-label="Rechercher dans la communauté" onClick={onSearch}>
           <Icon name="search" size={17} aria-hidden="true" />
         </button>
-        <Link
-          href="/compte?tab=notifications"
-          className="lkdv-notif-wrap gbtn"
-          aria-label={unread > 0 ? `Notifications, ${unread} non lues` : 'Notifications'}
-        >
-          <Icon name="bell" size={17} aria-hidden="true" />
-          {unread > 0 ? <span className="lkdv-notif-badge">{unread > 99 ? '99+' : unread}</span> : null}
-        </Link>
+        <NotificationBell userId={user?.id} />
       </div>
     </>
   );

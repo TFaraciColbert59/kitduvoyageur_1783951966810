@@ -22,6 +22,7 @@ import '@/components/messaging/messages-grammar.css';
 import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
 import { SubCapsuleTabs } from '@/components/ui/CapsuleTabs';
+import { NotificationBell } from '@/components/ui/NotificationBell';
 import Icon from '@/components/ui/Icon';
 import dynamic from 'next/dynamic';
 import type { ReportTarget } from '@/components/ui/ReportBlockModal';
@@ -1359,17 +1360,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>Messages</span>
                 </button>
                 <div className="ig-top-r">
-                  <button
-                    type="button"
-                    className="lg gbtn ig-top-btn"
-                    aria-label="Notifications"
-                    onClick={() => router.push('/compte?tab=notifications')}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M6.2 9.4a5.8 5.8 0 0 1 11.6 0c0 4.1 1.6 5.6 1.6 5.6H4.6s1.6-1.5 1.6-5.6Z" />
-                      <path d="M10 18.2a2 2 0 0 0 4 0" />
-                    </svg>
-                  </button>
+                  <NotificationBell userId={currentUserId ?? undefined} className="lg ig-top-btn" />
                 </div>
               </div>
 
@@ -1399,23 +1390,6 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   ) : null}
                 </div>
 
-                <div className="mfilter-bar">
-                  <SubCapsuleTabs
-                    items={FILTERS.map((item) => ({
-                      id: item.id,
-                      label: item.label,
-                      badge: item.id === 'requests' && pendingCount > 0 ? pendingCount : undefined,
-                    }))}
-                    activeIndex={Math.max(0, FILTERS.findIndex((item) => item.id === filter))}
-                    onIndexChange={(idx) => {
-                      const next = FILTERS[idx];
-                      if (next) changeFilter(next.id);
-                    }}
-                    ariaLabel="Filtrer les discussions"
-                    placement="inline"
-                    className="mfilters"
-                  />
-                </div>
                 <div className="card-scroll">
                   {query.trim().length >= 2 && !guest ? (
                     <div className="mresults">
@@ -1534,6 +1508,22 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     )}
                   </div>
                 </div>
+                {/* Filtre des discussions : capsule flottante en bas à droite de la card. */}
+                <SubCapsuleTabs
+                  items={FILTERS.map((item) => ({
+                    id: item.id,
+                    label: item.label,
+                    badge: item.id === 'requests' && pendingCount > 0 ? pendingCount : undefined,
+                  }))}
+                  activeIndex={Math.max(0, FILTERS.findIndex((item) => item.id === filter))}
+                  onIndexChange={(idx) => {
+                    const next = FILTERS[idx];
+                    if (next) changeFilter(next.id);
+                  }}
+                  ariaLabel="Filtrer les discussions"
+                  placement="float"
+                  className="mfilters"
+                />
               </div>
             </section>
 

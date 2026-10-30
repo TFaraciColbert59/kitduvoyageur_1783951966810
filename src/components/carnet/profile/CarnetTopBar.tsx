@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
-import { useAccountUnreadCount } from '@/features/community/feed/useAccountUnreadCount';
+import { NotificationBell } from '@/components/ui/NotificationBell';
+import { useAuth } from '@/contexts/AuthContext';
 import { SfIcon } from './sfIcons';
 
 export interface CarnetTopBarProps {
@@ -32,7 +32,7 @@ export function CarnetTopBar({
   menuOpen = false,
   onOpenMenu,
 }: CarnetTopBarProps) {
-  const unread = useAccountUnreadCount(undefined);
+  const { user } = useAuth();
 
   return (
     <div className="ckp-topbar">
@@ -62,14 +62,7 @@ export function CarnetTopBar({
         <button type="button" className="gbtn" aria-label="Créer" onClick={onCreate}>
           <Icon name="plus" size={18} aria-hidden="true" />
         </button>
-        <Link
-          href="/compte?tab=notifications"
-          className="gbtn ckp-notif"
-          aria-label={unread > 0 ? `Notifications, ${unread} non lues` : 'Notifications'}
-        >
-          <Icon name="bell" size={17} aria-hidden="true" />
-          {unread > 0 ? <span className="ckp-notif-badge">{unread > 99 ? '99+' : unread}</span> : null}
-        </Link>
+        <NotificationBell userId={user?.id} className="gbtn ckp-notif" badgeClassName="ckp-notif-badge" />
         {onOpenMenu ? (
           <span className="ckp-more-anchor">
             <button

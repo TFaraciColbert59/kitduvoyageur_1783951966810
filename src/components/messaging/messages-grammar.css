@@ -950,9 +950,13 @@
   z-index: 6;
 }
 .lkdv-messages .mfilters {
-  position: relative !important;
+  /* Capsule flottante en bas à droite de la card des discussions. */
+  position: absolute !important;
   top: auto !important;
-  right: auto !important;
+  right: 12px !important;
+  bottom: 10px !important;
+  left: auto !important;
+  z-index: 6 !important;
   width: auto !important;
   max-width: none !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
@@ -1737,4 +1741,25 @@
 }
 .lkdv-messages .mcard-kit .mcard-txt b {
   font-weight: 650;
+}
+
+/* Card des discussions : 10 % de hauteur en moins. La card prend 9/10 de
+   l'espace libre de la colonne, un espaceur vide prend le 1/10 restant. */
+.lkdv-messages .phone .top > #card.cs {
+  flex: 9 1 0 !important;
+}
+.lkdv-messages .phone .top::after {
+  content: '';
+  flex: 1 1 0;
+  min-height: 0;
+  pointer-events: none;
+}
+
+/* Un seul sélecteur de filtre, dans la card : aucune capsule flottante
+   supplémentaire ne doit s'afficher au-dessus de la barre du bas. */
+.lkdv-messages .phone > .ig-tabs-float,
+.lkdv-messages .phone > .lkdv-lens-float,
+.lkdv-messages .phone > .mfilter-float,
+.lkdv-messages .mapzone .lkdv-lens-float:not(.mfilters) {
+  display: none !important;
 }
