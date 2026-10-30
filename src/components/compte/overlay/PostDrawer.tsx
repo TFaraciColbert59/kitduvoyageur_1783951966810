@@ -365,7 +365,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                     <div className="lkdv-post-media-wrap">
                       <div className="lkdv-post-media" onPointerDown={onMediaPointerDown} onPointerUp={onMediaPointerUp} onDoubleClick={burstLike}>
                         {isCommunityVideoUrl(currentMedia)
-                          ? <CommunityVideo src={currentMedia} />
+                          ? <CommunityVideo src={currentMedia} poster={media.find((url) => !isCommunityVideoUrl(url)) || undefined} />
                           : <img src={currentMedia} alt={post.title || 'Publication'} draggable={false} />}
                         {burst > 0 ? <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true"><Heart size={82} fill="currentColor" /></span> : null}
                       </div>
