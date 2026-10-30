@@ -18,3 +18,11 @@
 *.tsbuildinfo
 /.env.local
 .env*.local
+
+# Artefacts de build locaux (worktrees de chantier) : > 100 Mo, refusés par l upload.
+/.next-ckp
+/.next-demo-dev
+/.next-post-dev
+/.next-build-check
+/.next-dev
+/.next-e2e

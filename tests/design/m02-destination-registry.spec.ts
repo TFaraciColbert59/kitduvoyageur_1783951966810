@@ -65,10 +65,10 @@ describe('M02 — registre des destinations (navigation mobile)', () => {
     expect(getActiveDestinationId('/hub/kit')).toBe('adventures');
     expect(getActiveDestinationId('/explorer')).toBe('explorer');
     expect(getActiveDestinationId('/pays/france')).toBe('explorer');
-    // Phase 3 — Matériel n'est plus une destination : il reste rattaché au Hub.
-    expect(getActiveDestinationId('/materiel')).toBe('adventures');
+    // /materiel a été supprimée le 24/10/2026.
+    expect(getActiveDestinationId('/materiel')).toBeNull();
     expect(getActiveDestinationId('/communaute')).toBe('community');
-    expect(getActiveDestinationId('/communaute/publier')).toBe('community');
+    expect(getActiveDestinationId('/communaute/decouvrir')).toBe('community');
     expect(getActiveDestinationId('/messagerie')).toBe('messages');
     expect(getActiveDestinationId('/compte')).toBe('me');
     expect(getActiveDestinationId('/progression')).toBe('me');

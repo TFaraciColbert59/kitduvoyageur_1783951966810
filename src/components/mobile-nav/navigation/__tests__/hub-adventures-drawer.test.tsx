@@ -24,10 +24,8 @@ const source = readFileSync(
   'utf8',
 );
 const hubShell = readFileSync('src/features/hub/components/HubShell.tsx', 'utf8');
-const webNavigationBar = readFileSync(
-  'src/components/mobile-nav/navigation/WebNavigationBar.tsx',
-  'utf8',
-);
+// Barre du bas unique (iOS 27) : porte l'appui long sur Hub.
+const tabBar = readFileSync('src/components/mobile-nav/FloatingLiquidTabBar.tsx', 'utf8');
 const css = readFileSync(
   'src/components/mobile-nav/navigation/hubAdventuresDrawer.css',
   'utf8',
@@ -99,7 +97,7 @@ describe('Tiroir « Tes aventures » — actions', () => {
     expect(actions[0].href).toBe('/compas?nouvelle=1');
     expect(actions[1].id).toBe('libre');
     expect(actions[1].label).toBe('Partir librement');
-    expect(actions[1].href).toBe('/partir-librement');
+    expect(actions[1].href).toBe('/compas');
   });
 
   it('DR-04: les deux routes sont absolues et distinctes — aucune route morte', () => {
@@ -299,40 +297,16 @@ describe('Tiroir « Tes aventures » — non-regression du cablage existant', ()
     expect(hubShell).toContain('useAndroidHubBackNav');
   });
 
-  it('DR-31: le focus est restitue au declencheur a la fermeture', () => {
-    expect(webNavigationBar).toContain('hubTriggerRef');
-    expect(webNavigationBar).toContain('hub:switcher-state');
-    expect(webNavigationBar).toContain('trigger.focus()');
-    expect(webNavigationBar).toContain('drawerWasOpen.current && !open');
-  });
-
-  it('DR-32: la restitution du focus vise le declencheur REEL, apres Radix', () => {
-    // Un `pointerdown` quelconque memorise plus tot ferait restituer le focus
-    // sur un element sans rapport : on ne retient que le lien Hub.
-    expect(webNavigationBar).toContain(
-      'const HUB_TRIGGER = \'nav[aria-label="Navigation principale"] a[href="/hub"]\';',
-    );
-    expect(webNavigationBar).toContain('if (hubTrigger) hubTriggerRef.current = hubTrigger;');
-    // Radix rend le focus apres notre evenement d’etat : la restitution
-    // doit donc passer en double requestAnimationFrame pour passer DERNIER.
-    const restore = webNavigationBar.slice(
-      webNavigationBar.indexOf('const restoreTriggerFocus'),
-      webNavigationBar.indexOf('const onPointerDown'),
-    );
-    expect(restore).toContain('requestAnimationFrame');
-    expect(restore).toContain('trigger.focus();');
-    expect(restore).not.toContain('a[href], button, [tabindex]');
-  });
   it('DR-33: la barre d’onglets sort de l’echelle visuelle pendant le dialogue', () => {
     // Sous le verre du Sheet (z 50) la barre (z 40) se devinait dans la
     // derniere ligne : le tiroir doit se lire comme une surface pleine.
     expect(source).toContain("export const OPEN_ATTRIBUTE = 'data-had-open';");
     expect(source).toContain('root.setAttribute(OPEN_ATTRIBUTE, ');
     expect(source).toContain('return () => root.removeAttribute(OPEN_ATTRIBUTE);');
-    expect(css).toContain("html[data-had-open='true'] .lkv-nav-surface {");
+    expect(css).toContain("html[data-had-open='true'] .lkdv-floating-tabbar {");
     // `opacity` et non `visibility` : la barre doit rester focusable pour
     // que la restitution du focus dispose encore de sa cible.
-    const start = css.indexOf("html[data-had-open='true'] .lkv-nav-surface {");
+    const start = css.indexOf("html[data-had-open='true'] .lkdv-floating-tabbar {");
     const navRule = css.slice(start, start + 240);
     expect(navRule).toContain('opacity: 0;');
     expect(navRule).not.toContain('visibility: hidden');
@@ -340,13 +314,9 @@ describe('Tiroir « Tes aventures » — non-regression du cablage existant', ()
     expect(css).toMatch(/\.had-action--secondary \{[\s\S]{0,240}background: var\(--glass-bg-strong\)/);
   });
   it('DR-30: l’appui long sur Hub continue d’emettre le signal', () => {
-    expect(webNavigationBar).toContain(
-      "onHubLongPress={openHubSwitcher ?? undefined}",
-    );
-    const bottomBar = readFileSync('src/components/navigation/IOS27BottomBar.tsx', 'utf8');
-    expect(bottomBar).toContain('if (idx === 0 && onHubLongPress)');
-    expect(bottomBar).toContain('onHubLongPress();');
-    expect(webNavigationBar).toContain('isHubSurfacePathname(pathname)');
-    expect(webNavigationBar).toContain('opticalNavigation={opticalNavigation}');
+    expect(tabBar).toContain("if (destination.id === 'adventures') startLongPress();");
+    expect(tabBar).toContain("new CustomEvent('hub:open-switcher')");
+    expect(tabBar).toContain('isHubSurfacePathname(pathname)');
+    expect(tabBar).toContain('HUB_SWITCHER_AUTOPEN_KEY');
   });
 });

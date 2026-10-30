@@ -1,13 +1,28 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Camera, FileText, HelpCircle, CalendarDays } from 'lucide-react';
+import { Controller, type FieldPath } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
-import { Field, MediaInput, Select, SubmitFooter, TextArea, TextInput } from './form-fields';
-import { insertCommunityPost, uploadPostMedia } from './upload';
-
-type PostKind = 'photo' | 'billet' | 'question' | 'event';
-type Audience = 'public' | 'abonnies' | 'club';
+import { Field, Select, SubmitFooter, SwitchField, TextArea, TextInput } from './form-fields';
+import { insertCommunityPost, createPostMediaUploader } from './upload';
+import { CreateFormEngine } from './engine/CreateFormEngine';
+import {
+  createDefaults,
+  CREATE_FIELD_LABELS,
+  type PostFormValues,
+  type PostKind,
+} from './engine/createSchemas';
+import { StepPager, CREATE_STEPS } from './shared/StepPager';
+import { MediaPicker } from './shared/MediaPicker';
+import { TagChips } from './shared/TagChips';
+import { NumberStepper } from './shared/NumberStepper';
+import { FormErrorSummary } from './shared/FormErrorSummary';
+import { FormPreview } from './shared/FormPreview';
+import { CreationSignature } from './shared/CreationSignature';
+import { PlaceSearch } from './shared/PlaceSearch';
+import { CaptionRuler, PollBalance } from './shared/InfoCards';
 
 export interface PostCreateFormProps {
   open: boolean;
@@ -16,28 +31,77 @@ export interface PostCreateFormProps {
   onCreated: (kind: 'post', id: string) => void;
 }
 
-const TYPES: Array<{ id: PostKind; label: string }> = [
-  { id: 'photo', label: 'Photo / vidéo' },
-  { id: 'billet', label: 'Billet' },
-  { id: 'question', label: 'Question' },
-  { id: 'event', label: 'Événement' },
+const POST_DEFAULTS = createDefaults('post');
+const STEPS = [CREATE_STEPS.post[0]];
+const LAST_STEP = STEPS.length - 1;
+const STEP_FIELDS = [
+  ['kind', 'media', 'title', 'content', 'eventDate', 'eventDuration', 'eventMax', 'location', 'tags', 'pollOptions', 'audience', 'clubId', 'allowComments', 'allowLikes', 'scheduledAt'],
+] as const;
+
+const TYPES: Array<{ id: PostKind; label: string; hint: string; icon: React.ReactNode }> = [
+  { id: 'photo', label: 'Photo / vidéo', hint: 'Montrer un moment', icon: <Camera size={15} aria-hidden="true" /> },
+  { id: 'billet', label: 'Billet', hint: 'Raconter une histoire', icon: <FileText size={15} aria-hidden="true" /> },
+  { id: 'question', label: 'Question', hint: 'Demander à la communauté', icon: <HelpCircle size={15} aria-hidden="true" /> },
+  { id: 'event', label: 'Événement', hint: 'Donner rendez-vous', icon: <CalendarDays size={15} aria-hidden="true" /> },
 ];
 
-export function PostCreateForm({ open, onClose, user, onCreated }: PostCreateFormProps) {
-  const [kind, setKind] = useState<PostKind>('photo');
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [audience, setAudience] = useState<Audience>('public');
-  const [clubId, setClubId] = useState('');
+export interface PostSnapshotPayload {
+  schema: 'lkdv.post.options.v1';
+  options: { allow_comments: boolean; allow_likes: boolean };
+  scheduled_at: string | null;
+  poll: { options: string[] } | null;
+  /** Compatible `Record<string, unknown>` pour l’écriture jsonb. */
+  [key: string]: unknown;
+}
+
+/**
+ * Métadonnées de publication écrites dans `community_posts.snapshot_payload`.
+ *
+ * Le snapshot n’est autorisé que sur une audience publique (trigger
+ * `reject_public_media_on_restricted_post`). Il est donc construit ici, pur et
+ * testable, puis omis à la soumission pour `abonnies` / `club`.
+ */
+export function buildPostSnapshot(values: PostFormValues): PostSnapshotPayload {
+  const pollOptions = values.pollOptions
+    .map((option) => option.trim())
+    .filter(Boolean);
+  return {
+    schema: 'lkdv.post.options.v1',
+    options: {
+      allow_comments: values.allowComments,
+      allow_likes: values.allowLikes,
+    },
+    scheduled_at: values.scheduledAt || null,
+    poll: pollOptions.length >= 2 ? { options: pollOptions } : null,
+  };
+}
+
+function InlineError({ message }: { message?: string }) {
+  return message ? (
+    <span className="lkdv-form-error-inline" role="alert">
+      {message}
+    </span>
+  ) : null;
+}
+
+export function PostCreateForm({
+  open,
+  onClose,
+  user,
+  onCreated,
+  step,
+  onStepChange,
+}: PostCreateFormProps & { step?: number; onStepChange?: (step: number) => void }) {
+  const [internalStep, setInternalStep] = useState(0);
   const [clubs, setClubs] = useState<Array<{ id: string; name: string }>>([]);
-  const [location, setLocation] = useState('');
-  const [tags, setTags] = useState('');
-  const [files, setFiles] = useState<File[]>([]);
-  const [eventDate, setEventDate] = useState('');
-  const [eventDuration, setEventDuration] = useState('');
-  const [eventMax, setEventMax] = useState('10');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const activeStep = Math.max(0, Math.min(LAST_STEP, step ?? internalStep));
+
+  const setStep = (next: number) => {
+    const safe = Math.max(0, Math.min(LAST_STEP, next));
+    setInternalStep(safe);
+    onStepChange?.(safe);
+  };
 
   useEffect(() => {
     if (!open || !user?.id) return;
@@ -59,162 +123,431 @@ export function PostCreateForm({ open, onClose, user, onCreated }: PostCreateFor
     };
   }, [open, user?.id]);
 
-  const submit = async () => {
-    setError(null);
-    if (!user?.id) return setError('Connecte-toi pour publier.');
-    if (kind === 'photo' && files.length === 0) return setError('Choisis au moins une photo ou vidéo.');
-    if (kind !== 'photo' && !title.trim()) return setError('Le titre est requis.');
-    if (kind === 'event' && !eventDate) return setError('La date de l’événement est requise.');
-    if (audience === 'club' && !clubId) return setError('Choisis un club.');
-    if (kind !== 'photo' && !content.trim()) return setError('Le texte est requis.');
-    setBusy(true);
-    try {
-      const mediaUrls = await uploadPostMedia(files, user.id, audience);
-      const cleanTags = tags.split(',').map((tag) => tag.trim()).filter(Boolean);
-      let postId: string;
+  const uploader = useMemo(
+    () => (user?.id ? createPostMediaUploader(user.id) : undefined),
+    [user?.id],
+  );
 
-      if (kind === 'event') {
-        const supabase = createClient();
-        const { data: event, error: eventError } = await supabase
-          .from('events')
-          .insert({
-            title: title.trim(),
-            type: 'rando',
-            emoji: '🥾',
-            organizer_id: user.id,
-            event_date: eventDate,
-            duration: eventDuration.trim(),
-            location: location.trim(),
-            country: 'France',
-            max_participants: Number(eventMax) || 10,
-            current_participants: 0,
-            description: content.trim(),
-            cover_image: mediaUrls[0] || '',
-            cover_alt: title.trim(),
-            shared_kitty: 0,
-            kitty_goal: 0,
-            status: 'upcoming',
-          })
-          .select('id')
-          .single();
-        if (eventError || !event) throw new Error(eventError?.message || 'Création de l’événement refusée.');
-        postId = await insertCommunityPost({
-          authorId: user.id,
-          content: `**${title.trim()}**\n\n📅 ${eventDate}${location.trim() ? ` · 📍 ${location.trim()}` : ''}\n\n${content.trim()}\n\n/evenements`,
-          postType: 'share',
-          mediaUrls,
-          audience,
-          clubId,
-          title: title.trim(),
-        });
-      } else {
-        const locationLine = location.trim() ? `\n\n📍 ${location.trim()}` : '';
-        const fullContent =
-          kind !== 'photo' && title.trim() ? `**${title.trim()}**\n\n${content.trim()}` : content.trim();
-        postId = await insertCommunityPost({
-          authorId: user.id,
-          content: `${fullContent}${locationLine}`,
-          postType: kind === 'question' ? 'question' : 'post',
-          mediaUrls,
-          audience,
-          clubId,
-          title: title.trim() || null,
-        });
-      }
-
-      onCreated('post', postId);
-      setTitle('');
-      setContent('');
-      setFiles([]);
-      setLocation('');
-      setTags('');
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Publication impossible.');
-    } finally {
-      setBusy(false);
+  const submit = async (values: PostFormValues) => {
+    if (!user?.id) throw new Error('Connecte-toi pour publier.');
+    if (values.audience !== 'public' && values.media.length > 0) {
+      throw new Error('Les médias ne sont autorisés que pour une publication publique.');
     }
+    if (values.media.some((item) => item.status === 'uploading')) {
+      throw new Error('Attends la fin de l’envoi des médias.');
+    }
+    if (values.media.some((item) => item.status === 'error')) {
+      throw new Error('Un média n’a pas pu être envoyé. Réessaie ou supprime-le.');
+    }
+    const mediaUrls = values.media
+      .map((item) => item.url)
+      .filter((url): url is string => Boolean(url));
+    if (values.kind === 'photo' && mediaUrls.length === 0) {
+      throw new Error('Choisis au moins une photo ou une vidéo.');
+    }
+
+    // La base refuse un snapshot sur une audience restreinte : on ne l’envoie
+    // que pour une publication publique.
+    const snapshotPayload =
+      values.audience === 'public' ? buildPostSnapshot(values) : null;
+
+    let postId: string;
+    if (values.kind === 'event') {
+      const supabase = createClient();
+      const { data: event, error: eventError } = await supabase
+        .from('events')
+        .insert({
+          title: values.title.trim(),
+          type: 'rando',
+          emoji: '🥾',
+          organizer_id: user.id,
+          event_date: values.eventDate,
+          duration: values.eventDuration.trim(),
+          location: values.location.trim(),
+          country: 'France',
+          max_participants: values.eventMax,
+          current_participants: 0,
+          description: values.content.trim(),
+          cover_image: mediaUrls[0] || '',
+          cover_alt: values.title.trim(),
+          shared_kitty: 0,
+          kitty_goal: 0,
+          status: 'upcoming',
+        })
+        .select('id')
+        .single();
+      if (eventError || !event) {
+        throw new Error(eventError?.message || 'Création de l’événement refusée.');
+      }
+      postId = await insertCommunityPost({
+        authorId: user.id,
+        content: `**${values.title.trim()}**\n\n📅 ${values.eventDate}${
+          values.location.trim() ? ` · 📍 ${values.location.trim()}` : ''
+        }\n\n${values.content.trim()}\n\n/evenements`,
+        postType: 'share',
+        mediaUrls,
+        audience: values.audience,
+        clubId: values.clubId,
+        title: values.title.trim(),
+        snapshotPayload,
+      });
+    } else {
+      const fullContent =
+        values.kind !== 'photo' && values.title.trim()
+          ? `**${values.title.trim()}**\n\n${values.content.trim()}`
+          : values.content.trim();
+      const locationLine = values.location.trim() ? `\n\n📍 ${values.location.trim()}` : '';
+      postId = await insertCommunityPost({
+        authorId: user.id,
+        content: `${fullContent}${locationLine}`,
+        postType: values.kind === 'question' ? 'question' : 'post',
+        mediaUrls,
+        audience: values.audience,
+        clubId: values.clubId,
+        title: values.title.trim() || null,
+        snapshotPayload,
+      });
+    }
+
+    onCreated('post', postId);
+    setStep(0);
+    onClose();
   };
 
   return (
-    <CommunityFormDrawer
-      open={open}
-      onClose={onClose}
-      ariaLabel="Créer une publication"
-      error={error}
-      footer={<SubmitFooter label="Publier" busy={busy} onClick={() => void submit()} />}
+    <CreateFormEngine<PostFormValues>
+      kind="post"
+      defaultValues={POST_DEFAULTS}
+      onSubmit={submit}
+      resetOnSuccess
+      draftKey="post"
+      step={activeStep}
+      onStepChange={setStep}
+      stepFields={STEP_FIELDS}
+      onError={(message) => setSubmitError(message)}
     >
-      <p className="lkdv-form-intro">Choisis le format, ajoute ton texte ou ton média, puis publie.</p>
-      <div className="lkdv-form-tabs" role="tablist" aria-label="Type de publication">
-        {TYPES.map((type) => (
-          <button key={type.id} type="button" aria-pressed={kind === type.id} onClick={() => setKind(type.id)}>
-            {type.label}
-          </button>
-        ))}
-      </div>
+      {(form, api) => {
+        const kind = form.watch('kind');
+        const errors = form.formState.errors;
+        const previewValues = form.watch();
+        const pollOptions = form.watch('pollOptions');
+        const pollEnabled = pollOptions.length > 0;
+        const pollAllowed = kind === 'question' || kind === 'billet';
+        const goNext = async () => {
+          const fields = STEP_FIELDS[activeStep] ?? [];
+          const valid = await form.trigger([...fields]);
+          if (valid) setStep(activeStep + 1);
+        };
+        const onPrimary = () => {
+          if (activeStep < LAST_STEP) {
+            void goNext();
+            return;
+          }
+          api.submit();
+        };
+        const setPollOptions = (next: string[]) =>
+          form.setValue('pollOptions', next, {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
+        const selectKind = (type: PostKind) => {
+          form.setValue('kind', type, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true,
+          });
+          // Le sondage n’est proposé que pour les billets et les questions :
+          // changer de format ne doit pas publier d’options devenues invisibles.
+          if (type !== 'question' && type !== 'billet') setPollOptions([]);
+        };
 
-      {kind !== 'photo' ? (
-        <Field label={kind === 'question' ? 'Question' : kind === 'event' ? 'Titre de la sortie' : 'Titre'}>
-          <TextInput value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Un titre clair" maxLength={120} />
-        </Field>
-      ) : null}
+        return (
+          <CommunityFormDrawer
+            open={open}
+            onClose={onClose}
+            ariaLabel="Créer une publication"
+            error={submitError}
+            footer={
+              <SubmitFooter
+                label={activeStep < LAST_STEP ? 'Continuer' : 'Publier'}
+                busy={form.formState.isSubmitting}
+                onClick={onPrimary}
+              />
+            }
+          >
+            <FormErrorSummary
+              errors={errors}
+              labels={CREATE_FIELD_LABELS}
+              onFocusField={api.focusField}
+            />
+            <FormPreview kind="post" values={previewValues} />
+            <CreationSignature kind="post" values={previewValues} />
 
-      <Field label={kind === 'event' ? 'Description' : 'Texte'}>
-        <TextArea
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          placeholder={kind === 'question' ? 'Pose ta question à la communauté…' : 'Raconte, partage, demande…'}
-          maxLength={4000}
-        />
-      </Field>
+            <StepPager
+              steps={STEPS}
+              index={activeStep}
+              onIndexChange={setStep}
+              actions={
+                activeStep > 0 ? (
+                  <button
+                    type="button"
+                    className="lkdv-create-step-back"
+                    onClick={() => setStep(activeStep - 1)}
+                  >
+                    Retour
+                  </button>
+                ) : null
+              }
+            >
+              <div>
+                <div className="lkdv-form-tabs" role="group" aria-label="Type de publication">
+                  {TYPES.map((type) => (
+                    <button
+                      key={type.id}
+                      type="button"
+                      aria-pressed={kind === type.id}
+                      onClick={() =>
+                        form.setValue('kind', type.id, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                          shouldTouch: true,
+                        })
+                      }
+                    >
+                      <span className="lkdv-format-icon">{type.icon}</span>
+                      <span className="lkdv-format-copy">
+                        <b>{type.label}</b>
+                        <small>{type.hint}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <InlineError message={errors.kind?.message} />
+              </div>
 
-      {kind === 'photo' || kind === 'event' ? (
-        <MediaInput onChange={setFiles} label={kind === 'event' ? 'Photo de couverture (optionnel)' : 'Photos / vidéos'} />
-      ) : null}
+              <div>
+                <Controller
+                  control={form.control}
+                  name="media"
+                  render={({ field }) => (
+                    <MediaPicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      max={10}
+                      label={
+                        kind === 'event'
+                          ? 'Photo de couverture (optionnel)'
+                          : 'Photos / vidéos'
+                      }
+                      upload={uploader}
+                      fieldName="media"
+                    />
+                  )}
+                />
+                <InlineError message={errors.media?.message as string | undefined} />
+                <p className="lkdv-form-note">
+                  Les médias ne sont pas autorisés pour une audience restreinte.
+                </p>
+              </div>
 
-      <div className="lkdv-form-row">
-        <Field label="Lieu">
-          <TextInput value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Lac Blanc, Chamonix…" />
-        </Field>
-        <Field label="Tags">
-          <TextInput value={tags} onChange={(event) => setTags(event.target.value)} placeholder="rando, bivouac" />
-        </Field>
-      </div>
+              <div>
+                {kind === 'event' ? (
+                  <Field
+                    required
+                    label="Titre de l’événement"
+                  >
+                    <TextInput
+                      {...form.register('title')}
+                      placeholder="Un titre clair"
+                      maxLength={120}
+                    />
+                    <InlineError message={errors.title?.message} />
+                  </Field>
+                ) : null}
 
-      <Field label="Audience">
-        <Select value={audience} onChange={(event) => setAudience(event.target.value as Audience)}>
-          <option value="public">Fil public</option>
-          <option value="abonnies">Mes abonnés</option>
-          <option value="club">Un club</option>
-        </Select>
-      </Field>
-      {audience === 'club' ? (
-        <Field label="Club" hint={clubs.length === 0 ? 'Aucun club actif : rejoins un club d’abord.' : undefined}>
-          <Select value={clubId} onChange={(event) => setClubId(event.target.value)}>
-            <option value="">Choisir un club</option>
-            {clubs.map((club) => (
-              <option key={club.id} value={club.id}>{club.name}</option>
-            ))}
-          </Select>
-        </Field>
-      ) : null}
+                <Field label={kind === 'event' ? 'Description' : 'Texte'} required>
+                  <TextArea
+                    {...form.register('content')}
+                    placeholder={
+                      kind === 'question'
+                        ? 'Pose ta question à la communauté…'
+                        : 'Raconte, partage, demande…'
+                    }
+                    maxLength={4000}
+                  />
+                  <InlineError message={errors.content?.message} />
+                  <CaptionRuler value={form.watch('content')} max={4000} />
+                </Field>
 
-      {kind === 'event' ? (
-        <>
-          <div className="lkdv-form-row">
-            <Field label="Date">
-              <TextInput type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} />
-            </Field>
-            <Field label="Durée">
-              <TextInput value={eventDuration} onChange={(event) => setEventDuration(event.target.value)} placeholder="2 jours" />
-            </Field>
-          </div>
-          <Field label="Participants max">
-            <TextInput type="number" min={2} max={50} value={eventMax} onChange={(event) => setEventMax(event.target.value)} />
-          </Field>
-        </>
-      ) : null}
-    </CommunityFormDrawer>
+                <div className="lkdv-form-row">
+                  <Controller
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <PlaceSearch label="Lieu" value={field.value} onChange={field.onChange} placeholder="Lac Blanc, Chamonix…" />
+                    )}
+                  />
+                  <InlineError message={errors.location?.message} />
+                  <Controller
+                    control={form.control}
+                    name="tags"
+                    render={({ field }) => (
+                      <TagChips
+                        value={field.value}
+                        onChange={field.onChange}
+                        label="Tags"
+                        suggestions={['rando', 'bivouac', 'ski', 'vélo']}
+                      />
+                    )}
+                  />
+                </div>
+
+                {kind === 'event' ? (
+                  <>
+                    <div className="lkdv-form-row">
+                      <Field label="Date">
+                        <TextInput type="date" {...form.register('eventDate')} />
+                        <InlineError message={errors.eventDate?.message} />
+                      </Field>
+                      <Field label="Durée">
+                        <TextInput
+                          {...form.register('eventDuration')}
+                          placeholder="2 jours"
+                        />
+                        <InlineError message={errors.eventDuration?.message} />
+                      </Field>
+                    </div>
+                    <Controller
+                      control={form.control}
+                      name="eventMax"
+                      render={({ field }) => (
+                        <NumberStepper
+                          label="Participants max"
+                          value={field.value}
+                          onChange={field.onChange}
+                          min={2}
+                          max={50}
+                          unit="pers."
+                        />
+                      )}
+                    />
+                    <InlineError message={errors.eventMax?.message} />
+                  </>
+                ) : null}
+
+                {pollAllowed ? (
+                  <div>
+                    <SwitchField
+                      label="Sondage"
+                      checked={pollEnabled}
+                      onChange={(enabled) => setPollOptions(enabled ? ['', ''] : [])}
+                    />
+                    {pollEnabled ? (
+                      <>
+                        {pollOptions.map((option, index) => (
+                          <div key={index} className="lkdv-form-row lkdv-poll-option">
+                            <Field
+                              label={`Option ${index + 1}`}
+                              htmlFor={`post-poll-${index}`}
+                            >
+                              <Controller
+                                control={form.control}
+                                name={`pollOptions.${index}` as FieldPath<PostFormValues>}
+                                render={({ field }) => (
+                                  <TextInput
+                                    {...field}
+                                    id={`post-poll-${index}`}
+                                    placeholder={`Option ${index + 1}`}
+                                    maxLength={80}
+                                  />
+                                )}
+                              />
+                              <InlineError
+                                message={
+                                  errors.pollOptions?.[index]?.message as string | undefined
+                                }
+                              />
+                            </Field>
+                            <button
+                              type="button"
+                              className="lkdv-create-step-back"
+                              aria-label={`Retirer l’option ${index + 1}`}
+                              onClick={() =>
+                                setPollOptions(
+                                  pollOptions.filter((_, entry) => entry !== index),
+                                )
+                              }
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        {pollOptions.length < 4 ? (
+                          <button
+                            type="button"
+                            className="lkdv-create-step-back"
+                            aria-label="Ajouter une option"
+                            onClick={() => setPollOptions([...pollOptions, ''])}
+                          >
+                            +
+                          </button>
+                        ) : null}
+                        <PollBalance options={pollOptions} />
+                        <InlineError
+                          message={errors.pollOptions?.message as string | undefined}
+                        />
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+
+              <div>
+                <Field label="Audience">
+                  <Select {...form.register('audience')}>
+                    <option value="public">Fil public</option>
+                    <option value="abonnies">Mes abonnés</option>
+                    <option value="club">Un club</option>
+                  </Select>
+                  <InlineError message={errors.audience?.message} />
+                </Field>
+                {form.watch('audience') === 'club' ? (
+                  <Field
+                    label="Club"
+                    hint={
+                      clubs.length === 0 ? 'Aucun club actif : rejoins un club d’abord.' : undefined
+                    }
+                  >
+                    <Select {...form.register('clubId')}>
+                      <option value="">Choisir un club</option>
+                      {clubs.map((club) => (
+                        <option key={club.id} value={club.id}>
+                          {club.name}
+                        </option>
+                      ))}
+                    </Select>
+                    <InlineError message={errors.clubId?.message} />
+                  </Field>
+                ) : null}
+
+                <Field
+                  label="Publication programmée"
+                  hint="Vide = publication immédiate."
+                  htmlFor="post-scheduled-at"
+                >
+                  <TextInput
+                    id="post-scheduled-at"
+                    type="datetime-local"
+                    {...form.register('scheduledAt')}
+                  />
+                  <InlineError message={errors.scheduledAt?.message} />
+                </Field>
+              </div>
+            </StepPager>
+          </CommunityFormDrawer>
+        );
+      }}
+    </CreateFormEngine>
   );
 }
 

@@ -7,13 +7,10 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 v20 — finitions, gestes et post plein cadre', () => {
-  const source =
-    read('src/components/compte/CompteLiquidGlassV8.tsx') +
-    '\n' + read('src/components/compte/compte-v8.css') +
-    '\n' + read('src/components/compte/compte-apple-hig.css');
+  const source = read('src/components/compte/CompteLiquidGlassV8.tsx');
   const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
   const start = source.indexOf('Compte iOS 27 v20');
-  const v20 = source.slice(start);
+  const v20 = source.slice(start, source.indexOf('`;', start));
 
   it('1. Les drawers touchent les bords, le corps garde sa respiration', () => {
     expect(start).toBeGreaterThan(-1);

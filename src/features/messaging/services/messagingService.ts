@@ -415,11 +415,11 @@ export const messagingService = {
     const supabase = createClient();
 
     // 1. Obtenir les membres associés à l'utilisateur depuis conversation_members
-    let memberData: { conversation_id: string; unread_count?: number; is_muted?: boolean; is_archived?: boolean }[] = [];
+    let memberData: { conversation_id: string; unread_count?: number; is_muted?: boolean; is_archived?: boolean; left_at?: string | null }[] = [];
 
     const { data: cmData, error: cmError } = await supabase
       .from('conversation_members')
-      .select('conversation_id, unread_count, is_muted, is_archived, status')
+      .select('conversation_id, unread_count, is_muted, is_archived, status, left_at')
       .eq('user_id', userId);
 
     if (cmError) {
@@ -428,7 +428,9 @@ export const messagingService = {
       throw new Error('Impossible de charger vos conversations.');
     }
 
-    memberData = cmData ?? [];
+    // Un fil « supprimé pour moi » (left_at) sort de ma liste : l'autre
+    // participant garde l'historique, rien n'est effacé en base.
+    memberData = (cmData ?? []).filter((member) => !member.left_at);
 
     if (memberData.length === 0) {
       return [];
@@ -852,13 +854,42 @@ export const messagingService = {
     }
 
     const fileExt = (file.name.split('.').pop() || 'bin').toLowerCase();
+
+    // iOS et macOS signalent souvent les .gpx en `application/octet-stream` :
+    // le bucket n'accepte qu'une liste blanche de MIME, on déduit donc le type
+    // depuis l'extension avant l'upload (sinon 400 et pièce perdue).
+    const MIME_BY_EXT: Record<string, string> = {
+      gpx: 'application/gpx+xml',
+      geojson: 'application/geo+json',
+      json: 'application/json',
+      kml: 'application/vnd.google-earth.kml+xml',
+      kmz: 'application/vnd.google-earth.kmz',
+      pdf: 'application/pdf',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+      heic: 'image/heic',
+      m4a: 'audio/mp4',
+      mp3: 'audio/mpeg',
+      wav: 'audio/wav',
+      mp4: 'video/mp4',
+      mov: 'video/quicktime',
+      txt: 'text/plain',
+    };
+    const declared = file.type && file.type !== 'application/octet-stream' ? file.type : '';
+    const contentType = declared || MIME_BY_EXT[fileExt] || 'application/octet-stream';
+    const uploadBody =
+      contentType === file.type
+        ? file
+        : new File([file], file.name, { type: contentType, lastModified: file.lastModified });
     // Chemin 2 segments {conversationId}/{userId}/{file} : requis par les policies storage
     // (INSERT exige 2e segment = auth.uid(), DELETE exige 2e segment = expéditeur)
     const fileName = `${conversationId}/${user.id}/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
     const { error } = await supabase.storage
       .from('message-attachments')
-      .upload(fileName, file, { cacheControl: '3600', upsert: false });
+      .upload(fileName, uploadBody, { cacheControl: '3600', upsert: false, contentType });
 
     if (error) {
       // F-006 : jamais d'URL blob locale présentée comme un envoi réussi.
@@ -955,6 +986,29 @@ export const messagingService = {
       .select('blocked_id')
       .eq('blocker_id', userId);
     return data ? data.map((b) => b.blocked_id) : [];
+  },
+
+  /**
+   * Supprime la conversation POUR MOI : `left_at` la masque dans ma liste
+   * (`getConversations`), sans toucher aux messages ni à l'autre participant.
+   */
+  async deleteConversationForMe(conversationId: string, userId: string): Promise<boolean> {
+    if (conversationId.startsWith('demo-conv-')) {
+      if (demoConversationsCache) {
+        demoConversationsCache = demoConversationsCache.filter((conv) => conv.id !== conversationId);
+      }
+      return true;
+    }
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('conversation_members')
+      .update({ left_at: new Date().toISOString() })
+      .eq('conversation_id', conversationId)
+      .eq('user_id', userId);
+
+    if (error) console.error('Erreur deleteConversationForMe:', error.message);
+    return !error;
   },
 
   async updateMemberPreferences(

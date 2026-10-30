@@ -50,7 +50,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
       {/* Bouton Retour */}
       <div>
         <Link
-          href="/lieux"
+          href="/explorer"
           className="inline-flex items-center gap-2 py-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-muted)] no-underline transition-colors hover:text-[color:var(--lkv-text-primary)]"
         >
           <Icon name="arrow-left" className="h-4 w-4" />

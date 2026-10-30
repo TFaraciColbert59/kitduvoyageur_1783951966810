@@ -1,19 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
-import { withdrawBodySchema } from '@/features/rewards/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/rewards/withdraw
- * Demande de retrait du cash legacy déjà acquis (droit conservé), idempotente.
- *
- * Corps validé par zod (montant à deux décimales, fournisseur fermé,
- * coordonnées bornées) ; le message SQL n'est jamais renvoyé au client et les
- * coordonnées ne sont jamais journalisées.
+ * Demande un retrait d'argent réel (cash-out) de manière sécurisée et idempotente.
  */
+
+const WithdrawSchema = z.object({
+  // Montant en centimes, borné (1 € à 10 000 €) : jamais un flottant client.
+  amount: z.number().int().min(100).max(1_000_000),
+  payment_provider: z.enum(['bank_transfer', 'stripe']).default('bank_transfer'),
+  idempotency_key: z.string().uuid(),
+  metadata: z.record(z.string(), z.union([z.string().max(300), z.number(), z.boolean()])).optional().default({}),
+});
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
@@ -32,30 +37,28 @@ export async function POST(req: NextRequest) {
     });
     if (limited) return limited;
 
-    const parsed = withdrawBodySchema.safeParse(await req.json().catch(() => null));
+    const parsed = WithdrawSchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) {
       return NextResponse.json({ error: 'Paramètres de retrait invalides ou manquants' }, { status: 400 });
     }
     const { amount, payment_provider, idempotency_key, metadata } = parsed.data;
 
+    // Call stored procedure
     const { data: withdrawalId, error } = await supabase.rpc('request_withdrawal', {
       p_amount: amount,
       p_payment_provider: payment_provider,
       p_idempotency_key: idempotency_key,
-      p_metadata: metadata,
+      p_metadata: metadata
     });
 
     if (error) {
-      console.warn('[rewards/withdraw] RPC refusée', error.code ?? 'sans code');
-      return NextResponse.json(
-        { error: 'Demande de retrait refusée. Vérifiez votre solde disponible et les conditions de retrait.' },
-        { status: 400 }
-      );
+      console.warn('[rewards/withdraw] RPC error:', error.message);
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     return NextResponse.json({ success: true, withdrawalId });
-  } catch (err) {
-    console.error('[rewards/withdraw] Unexpected error:', err instanceof Error ? err.name : 'inconnue');
+  } catch (err: any) {
+    console.error('[rewards/withdraw] Unexpected error:', err);
     return NextResponse.json({ error: 'Erreur serveur inattendue' }, { status: 500 });
   }
 }

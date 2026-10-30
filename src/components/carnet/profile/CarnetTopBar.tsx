@@ -1,74 +1,90 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
-import { AccountRoundButton } from '@/components/account/AccountRoundButton';
+import { useAccountUnreadCount } from '@/features/community/feed/useAccountUnreadCount';
+import { SfIcon } from './sfIcons';
 
 export interface CarnetTopBarProps {
   title: string;
-  coverImage: string | null;
-  saved: boolean;
-  scrolled?: boolean;
-  onBack: () => void;
-  onShare: () => void;
-  onSave: () => void;
-  onMenu: () => void;
-  onTitleClick: () => void;
-  /** Menu ··· rendu sous son bouton (même ancrage que le Compte). */
+  onOpenCarnet: () => void;
+  onCreate?: () => void;
+  /** Menu contextuel `···` (CarnetMoreMenu), ancré dans la barre. */
   menu?: React.ReactNode;
+  menuOpen?: boolean;
+  onOpenMenu?: () => void;
 }
 
 /**
- * Top bar du Compte transposée : retour rond 38, pilule titre (cover 24 +
- * titre 12,5/700), trois `.gbtn` 38 à droite. Hauteur 52 + safe area.
+ * Barre du haut de la fiche : pilule 40 avec chevron, puis les `.gbtn` 38
+ * (créer, notifications) et le menu `···` en dernière position.
+ *
+ * Le `···` vivait dans le sélecteur du bas ; il remonte ici, à la place de la
+ * loupe. Le menu garde exactement ses entrées et son comportement : seule son
+ * ancre change.
  */
 export function CarnetTopBar({
   title,
-  coverImage,
-  saved,
-  scrolled = false,
-  onBack,
-  onShare,
-  onSave,
-  onMenu,
-  onTitleClick,
+  onOpenCarnet,
+  onCreate,
   menu = null,
+  menuOpen = false,
+  onOpenMenu,
 }: CarnetTopBarProps) {
+  const unread = useAccountUnreadCount(undefined);
+
   return (
-    <div className="ckp-topbar" data-scrolled={scrolled ? 'true' : 'false'}>
-      <span className="ckp-topbar-veil" aria-hidden="true" />
-
-      <div className="ckp-top-left">
-        <AccountRoundButton label="Retour" onClick={onBack}>
-          <Icon name="arrow-left" size={18} aria-hidden="true" />
-        </AccountRoundButton>
-
-        <button type="button" className="ckp-title-pill" onClick={onTitleClick} title={title}>
-          {coverImage ? (
-            // eslint-disable-next-line @next/next/no-img-element -- couverture distante, même source que la carte
-            <img className="ckp-title-cover" src={coverImage} alt="" />
-          ) : (
-            <span className="ckp-title-cover ckp-title-cover--empty" aria-hidden="true">
-              {title.charAt(0).toUpperCase()}
-            </span>
-          )}
-          <b>{title}</b>
-        </button>
-      </div>
+    <div className="ckp-topbar">
+      <button
+        type="button"
+        className="ckp-title-pill"
+        onClick={onOpenCarnet}
+        aria-label={`Carnet ${title}`}
+      >
+        <b>{title}</b>
+        <svg
+          className="ckp-title-chevron"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <path d="M7 10l5 5 5-5" />
+        </svg>
+      </button>
 
       <div className="ckp-top-actions">
-        <AccountRoundButton label="Partager" onClick={onShare}>
-          <Icon name="send" size={17} aria-hidden="true" />
-        </AccountRoundButton>
-        <AccountRoundButton label="Enregistrer" onClick={onSave} pressed={saved}>
-          <Icon name="bookmark" size={17} aria-hidden="true" />
-        </AccountRoundButton>
-        <span className="ckp-more-anchor">
-          <AccountRoundButton label="Options du carnet" onClick={onMenu}>
-            <Icon name="more-horizontal" size={18} aria-hidden="true" />
-          </AccountRoundButton>
-          {menu}
-        </span>
+        <button type="button" className="gbtn" aria-label="Créer" onClick={onCreate}>
+          <Icon name="plus" size={18} aria-hidden="true" />
+        </button>
+        <Link
+          href="/compte?tab=notifications"
+          className="gbtn ckp-notif"
+          aria-label={unread > 0 ? `Notifications, ${unread} non lues` : 'Notifications'}
+        >
+          <Icon name="bell" size={17} aria-hidden="true" />
+          {unread > 0 ? <span className="ckp-notif-badge">{unread > 99 ? '99+' : unread}</span> : null}
+        </Link>
+        {onOpenMenu ? (
+          <span className="ckp-more-anchor">
+            <button
+              type="button"
+              className="gbtn"
+              aria-label="Plus d’options"
+              aria-expanded={menuOpen}
+              aria-controls={menu ? 'carnet-more-menu' : undefined}
+              onClick={onOpenMenu}
+            >
+              <SfIcon name="ellipsis" size={17} />
+            </button>
+            {menu}
+          </span>
+        ) : null}
       </div>
     </div>
   );

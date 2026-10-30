@@ -46,7 +46,6 @@
 .lkdv-compte-v8 .lkdv-kit-menu{position:absolute!important;top:38px!important;right:0!important;width:164px!important;padding:5px!important;border-radius:16px!important;background:rgba(250,252,248,.97)!important;border:.5px solid rgba(23,43,36,.12)!important;box-shadow:0 14px 36px rgba(10,20,14,.2)!important;display:flex!important;flex-direction:column!important;}
 .lkdv-compte-v8 .lkdv-kit-menu button{min-height:34px!important;padding:0 10px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#172B24!important;font:500 12px/1 var(--sf)!important;text-align:left!important;cursor:pointer!important;}
 .lkdv-compte-v8 .lkdv-kit-menu button:active{background:rgba(23,43,36,.06)!important;}
-.lkdv-compte-v8 .lkdv-kit-actions{display:none!important;}
 /* Réseau : ne prend plus toute la hauteur de la carte. */
 #sheet:has(.lkdv-drawer-root[data-kind="reseau"]){height:min(68dvh,600px)!important;max-height:min(68dvh,600px)!important;}
 .lkdv-compte-v8 .lkdv-compte-notif-avatar{border:0!important;padding:0!important;cursor:pointer!important;}
@@ -84,3 +83,113 @@
 .lkdv-seal-drawer .lkdv-seal-grid{gap:4px 6px!important;}
 .lkdv-seal-drawer .lkdv-seal-grid>div{min-height:29px!important;padding:4px 8px!important;background:rgba(255,255,255,.46)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.07)!important;}
 .lkdv-seal-drawer .lkdv-seal-note{font-size:10px!important;max-width:310px!important;}
+
+/* Upload local des photos de profil. */
+.lkdv-compte-upload-field{display:flex;flex-direction:column;gap:6px;}
+.lkdv-compte-upload-field>span{font:600 11.5px var(--sf);color:var(--label);}
+.lkdv-compte-upload-field>small{font:400 10px/1.35 var(--sf);color:var(--label2);}
+.lkdv-compte-upload-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.lkdv-compte-filebtn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.6);box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1);color:#17402c;font:600 11.5px var(--sf);cursor:pointer;}
+.lkdv-compte-filebtn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.lkdv-compte-fileclear{border:0;background:transparent;color:#8a3b2c;font:600 11px var(--sf);cursor:pointer;padding:8px 4px;}
+.lkdv-compte-savebar{background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+
+/* Mes clubs : même lecture verticale que les sorties. */
+.lkdv-club-rail{display:flex!important;flex-direction:column!important;gap:6px!important;overflow:visible!important;padding:0!important;margin:0!important;}
+.lkdv-club-item{flex:0 0 auto!important;flex-basis:auto!important;width:100%!important;}
+.lkdv-club-card{min-height:76px!important;display:grid!important;grid-template-columns:38px minmax(0,1fr) 22px!important;grid-template-rows:auto auto!important;column-gap:9px!important;align-items:center!important;padding:10px 11px!important;border-radius:16px!important;background:rgba(255,255,255,.5)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.08)!important;text-align:left!important;}
+.lkdv-club-top{grid-column:1!important;grid-row:1/3!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.lkdv-club-badge{width:38px!important;height:38px!important;border-radius:50%!important;font-size:16px!important;}
+.lkdv-club-role{display:none!important;}
+.lkdv-club-name{grid-column:2!important;grid-row:1!important;font:600 13px/1.2 var(--sf)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-club-cat,.lkdv-club-members{grid-column:2!important;grid-row:2!important;font:500 10.5px/1.25 var(--sf)!important;color:var(--label2)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lkdv-club-members{display:none!important;}
+.lkdv-club-next{display:none!important;}
+.lkdv-club-open{grid-column:3!important;grid-row:1/3!important;width:22px!important;height:22px!important;display:grid!important;place-items:center!important;overflow:hidden!important;font-size:0!important;color:var(--label3)!important;background:transparent!important;box-shadow:none!important;}
+.lkdv-club-open svg{width:15px!important;height:15px!important;stroke:currentColor;fill:none;}
+
+/* Le sélecteur du sous-drawer reste visible et au-dessus. */
+.lkdv-kit-card .lkdv-kit-selector{display:grid!important;opacity:1!important;visibility:visible!important;z-index:60!important;bottom:8px!important;right:12px!important;}
+.lkdv-kit-card[data-view="2"] .lkdv-kit-selector{display:grid!important;opacity:1!important;}
+
+/* Un seul sélecteur de kit visible à la fois : pas d'empilement de 9 capsules. */
+.lkdv-kit-card[data-view="0"] .lkdv-kit-selector{opacity:0!important;pointer-events:none!important;}
+.lkdv-kit-card[data-view="0"]:hover .lkdv-kit-selector,
+.lkdv-kit-card[data-view="0"]:focus-within .lkdv-kit-selector{opacity:1!important;pointer-events:auto!important;}
+.lkdv-kit-card[data-view="1"] .lkdv-kit-selector,
+.lkdv-kit-card[data-view="2"] .lkdv-kit-selector{opacity:1!important;pointer-events:auto!important;}
+
+/* Les sélecteurs restent accessibles sur toutes les cartes kit, sans hover mobile. */
+.lkdv-kit-card[data-view="0"] .lkdv-kit-selector{
+  opacity:1!important;
+  pointer-events:auto!important;
+  z-index:25!important;
+}
+.lkdv-kit-card[data-view="1"] .lkdv-kit-selector,
+.lkdv-kit-card[data-view="2"] .lkdv-kit-selector{
+  z-index:25!important;
+}
+
+/* Drawer Modifier le profil : plus de voile blanc, bords intégrés, CTA icône. */
+#sheet .lkdv-compte-savebar {
+  background: transparent !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  margin: 2px 0 0 !important;
+  padding: 8px 0 calc(2px + env(safe-area-inset-bottom, 0px)) !important;
+  border-radius: 16px !important;
+}
+#sheet .lkdv-compte-edit { padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important; }
+#sheet .lkdv-compte-edit .lkdv-compte-form label > span { border-radius: 12px 12px 0 0 !important; }
+#sheet .lkdv-compte-edit input,
+#sheet .lkdv-compte-edit textarea,
+#sheet .lkdv-compte-edit select { border-radius: 12px !important; }
+#sheet .lkdv-compte-note { margin: 2px 0 0 !important; opacity: .75 !important; }
+#sheet .lkdv-compte-save-icon { width: 42px !important; min-width: 42px !important; height: 38px !important; padding: 0 !important; border-radius: 999px !important; display: grid !important; place-items: center !important; }
+#sheet .lkdv-compte-save-spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; animation: saveSpin .7s linear infinite; }
+@keyframes saveSpin { to { transform: rotate(360deg); } }
+
+/* Le panneau d'édition doit respirer : hauteur utile et défilement interne. */
+#sheet:has(.lkdv-compte-edit) {
+  max-height: calc(100dvh - 128px) !important;
+  overflow: hidden !important;
+}
+#sheet .lkdv-compte-edit {
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* Drawer édition : coins arrondis de bout en bout + scroll haut/bas fluide. */
+#sheet:has(.lkdv-compte-edit) {
+  border-radius: 28px !important;
+  overflow: hidden !important;
+  height: min(78dvh, 728px) !important;
+}
+#sheet:has(.lkdv-compte-edit) .lkdv-drawer-viewport,
+#sheet:has(.lkdv-compte-edit) .lkdv-drawer-track,
+#sheet:has(.lkdv-compte-edit) .lkdv-drawer-pane {
+  border-radius: 0 0 28px 28px !important;
+}
+#sheet .lkdv-drawer-pane {
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  scroll-padding: 10px 0 calc(26px + env(safe-area-inset-bottom, 0px)) !important;
+  padding-bottom: calc(26px + env(safe-area-inset-bottom, 0px)) !important;
+}
+#sheet .lkdv-compte-edit {
+  overflow: visible !important;
+  height: auto !important;
+  padding-bottom: 0 !important;
+  border-radius: 20px !important;
+}
+#sheet .lkdv-compte-edit .lkdv-compte-form,
+#sheet .lkdv-compte-edit .lkdv-compte-edit-preview {
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+#sheet .lkdv-compte-savebar { border-radius: 0 0 22px 22px !important; }

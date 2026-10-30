@@ -68,7 +68,7 @@ export default function CatalogLookup() {
             </Button>
             <Link
               className="min-h-11 inline-flex items-center underline"
-              href={'/produit/' + encodeURIComponent(product.slug)}
+              href={'/explorer/' + encodeURIComponent(product.slug)}
             >
               Voir la fiche
             </Link>

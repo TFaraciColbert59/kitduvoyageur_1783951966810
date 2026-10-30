@@ -7,7 +7,6 @@ import path from 'node:path';
  *
  * Périmètre : tout fichier .ts/.tsx sous
  *   src/features/trips/**, src/app/voyages/**, src/app/groupes/**,
- *   src/app/ai-configurator/**
  * 12 règles ; chaque violation reportée fichier:ligne:extrait.
  *
  * Règles 1-7 = X-D70 reprises. Règles 8-12 = ajoutées (unification.md §5.2).
@@ -27,7 +26,6 @@ const SCOPE_DIRS = [
   'src/features/trips',
   'src/app/voyages',
   'src/app/groupes',
-  'src/app/ai-configurator',
   'src/features/materiel',
   'src/app/materiel',
 ];

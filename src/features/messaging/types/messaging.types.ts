@@ -79,6 +79,8 @@ export interface Conversation {
   mute_until?: string | null;
   is_archived?: boolean;
   status?: 'active' | 'pending' | 'rejected';
+  /** Supprimé pour moi (`conversation_members.left_at`) : le fil est masqué. */
+  left_at?: string | null;
 }
 
 export interface ConversationMember {

@@ -219,7 +219,7 @@ export default function ExplorerMobileHikeCarousel({
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2 border-t border-[color:var(--lkv-border)] pt-1.5">
                     <Link
-                      href={`/preparer-sentier/${trail.id}`}
+                      href="/compas"
                       prefetch={false}
                       onClick={(e) => {
                         e.stopPropagation();

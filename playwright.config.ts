@@ -38,6 +38,10 @@ export default defineConfig({
     'tests/e2e/compte-drawer-v2.spec.ts',
     'tests/e2e/community-feed-actions.spec.ts',
     'tests/e2e/compte-map.spec.ts',
+    // Hiérarchie de zoom de la carte du Compte : sans cette ligne, la spec
+    // n'était sélectionnée ni par Playwright (testMatch) ni par Vitest
+    // (tests/e2e exclu), donc jamais exécutée.
+    'tests/e2e/compte-map-zoom.spec.ts',
   ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -63,15 +67,19 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     // iPhone 14 Pro : le device Playwright sélectionne WebKit (moteur Safari).
+    // La spec de hiérarchie de zoom est une recette desktop de cette vague :
+    // elle tourne une seule fois (projet desktop), d'où les `testIgnore`.
     {
       name: 'mobile-webkit',
       grepInvert: /@local-web/,
+      testIgnore: 'tests/e2e/compte-map-zoom.spec.ts',
       use: { ...devices['iPhone 14 Pro'] },
     },
     // Même gabarit tactile en Chromium — ne remplace pas une preuve Safari.
     {
       name: 'mobile-chromium',
       grepInvert: /@local-web|@webkit/,
+      testIgnore: 'tests/e2e/compte-map-zoom.spec.ts',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 430, height: 932 },

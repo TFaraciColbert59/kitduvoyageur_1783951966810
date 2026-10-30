@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { UserMinus, UserPlus, Users } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import type { OutingParticipant } from '@/features/compte/server/sorties';
 import { DrawerEmpty } from '../shell/DrawerShell';
 import { initials } from './shared';
@@ -44,20 +46,13 @@ export function OutingParticipants({ participants, canEdit, busy, onAdd, onRemov
               />
             </div>
           </label>
-          <button type="submit" className="lkdv-sortie-btn primary" disabled={busy || !handle.trim()}>
-            <UserPlus size={15} aria-hidden="true" /> {busy ? 'Ajout…' : 'Ajouter'}
-          </button>
+          <ActionPill type="submit" tone="primary" label="Ajouter le compagnon" icon={<UserPlus />} busy={busy} disabled={!handle.trim()} />
         </form>
       ) : null}
 
       {companions.length === 0 ? (
         <DrawerEmpty
           title="Sortie solo"
-          hint={
-            canEdit
-              ? 'Personne n’est encore rattaché à cette sortie. Invite un compagnon avec son handle.'
-              : 'Le propriétaire n’a pas encore ajouté de compagnon à cette sortie.'
-          }
           action={
             <span className="lkdv-sortie-hint-ico" aria-hidden="true">
               <Users size={20} />
@@ -68,6 +63,11 @@ export function OutingParticipants({ participants, canEdit, busy, onAdd, onRemov
         <ul className="lkdv-sortie-people">
           {participants.map((person) => (
             <li key={person.id}>
+              <Link
+                className="lkdv-sortie-person-link"
+                href={`/profil/${encodeURIComponent(person.userId)}`}
+                aria-label={`Voir le profil de ${person.name}`}
+              >
               <span className="lkdv-sortie-avatar" aria-hidden="true">
                 {person.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -82,6 +82,7 @@ export function OutingParticipants({ participants, canEdit, busy, onAdd, onRemov
                   @{person.handle} · {person.isOwner ? 'organisateur' : person.role}
                 </small>
               </div>
+              </Link>
               {canEdit && !person.isOwner ? (
                 <button
                   type="button"

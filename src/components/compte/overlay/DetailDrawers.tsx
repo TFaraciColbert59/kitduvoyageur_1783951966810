@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Award, BadgeCheck, Lock } from 'lucide-react';
+import { Award, BadgeCheck, Compass, Heart, Lock, UserCheck, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchSavedPosts } from '@/features/community/posts/queries';
 import type { SavedPost } from '@/features/community/posts/types';
-import { DrawerButton, OverlaySheet } from './OverlaySheet';
+import { ActionPill } from '@/components/ui/ActionPill';
+import { OverlaySheet } from './OverlaySheet';
 import { formatElevation, formatKm } from '@/lib/format/metrics';
 
 export interface BadgeRow { id: string; name?: string; description?: string; rarity?: string; earned?: boolean; earnedAt?: string; requirement?: string; requirementValue?: number; points?: number }
@@ -31,15 +32,15 @@ export function SavedPostsDrawer({ onClose, onOpenPost }: { onClose: () => void;
     return () => { cancelled = true; };
   }, []);
   return (
-    <OverlaySheet title="Enregistrements" subtitle="Tes publications sauvegardées, privées." onClose={onClose}>
+    <OverlaySheet title="Enregistrements" onClose={onClose}>
       {loading ? <div className="lkdv-overlay-empty"><p>Chargement…</p></div> : items.length === 0 ? (
-        <div className="lkdv-overlay-empty"><b>Aucun enregistrement</b><p>Enregistre une publication pour la retrouver ici.</p><DrawerButton onClick={onClose}>Explorer</DrawerButton></div>
+        <div className="lkdv-overlay-empty"><b>Aucun enregistrement</b><ActionPill label="Explorer" icon={<Compass />} onClick={onClose} /></div>
       ) : (
         <div className="lkdv-saved-grid">
           {items.map((item) => (
             <button key={item.id} type="button" className="lkdv-saved-card" onClick={() => onOpenPost(item.id)}>
               <span className="lkdv-saved-media">{item.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : <span className="lkdv-saved-placeholder">LKDV</span>}</span>
-              <span className="lkdv-saved-body"><b>{item.title}</b><small>{item.author?.name || 'Voyageur'} · {item.likesCount} j’aime</small></span>
+              <span className="lkdv-saved-body"><b>{item.title}</b><small>{item.author?.name || 'Voyageur'} · {item.likesCount} <Heart size={10} aria-hidden="true" /><span className="sr-only">j’aime</span></small></span>
             </button>
           ))}
         </div>
@@ -51,7 +52,7 @@ export function SavedPostsDrawer({ onClose, onOpenPost }: { onClose: () => void;
 export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeRow; onClose: () => void }) {
   const earned = Boolean(badge.earned);
   return (
-    <OverlaySheet title="Trophée" subtitle={earned ? 'Obtenu' : 'À débloquer'} onClose={onClose} nested>
+    <OverlaySheet title="Trophée" onClose={onClose} nested>
       <div className="lkdv-badge-detail">
         <span className={`lkdv-badge-detail-medal ${earned ? 'is-earned' : ''}`}>{earned ? <Award size={34} /> : <Lock size={26} />}</span>
         <h3>{badge.name || 'Trophée'}</h3>
@@ -61,6 +62,7 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeRow; onClose:
           <div><dt>Statut</dt><dd>{earned ? 'Obtenu' : 'Verrouillé'}</dd></div>
           {earned && badge.earnedAt ? <div><dt>Date</dt><dd>{new Date(badge.earnedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</dd></div> : null}
           {badge.requirement ? <div><dt>Condition</dt><dd>{badge.requirement}{badge.requirementValue ? ` · ${badge.requirementValue}` : ''}</dd></div> : null}
+          {badge.points ? <div><dt>Récompense</dt><dd>{badge.points} points</dd></div> : null}
         </dl>
       </div>
     </OverlaySheet>
@@ -69,11 +71,15 @@ export function BadgeDetailSheet({ badge, onClose }: { badge: BadgeRow; onClose:
 
 export function GearDetailSheet({ item, onClose }: { item: GearRowData; onClose: () => void }) {
   return (
-    <OverlaySheet title="Matériel" subtitle={item.brand || 'Inventaire'} onClose={onClose} nested>
+    <OverlaySheet title="Matériel" onClose={onClose} nested>
       <div className="lkdv-gear-detail">
-        <div className="lkdv-gear-detail-hero">{item.photo_url ? <img src={item.photo_url} alt="" /> : <span>{item.name?.charAt(0).toUpperCase() || 'L'}</span>}</div>
-        <h3>{item.name || 'Objet'}</h3>
-        <p>{item.category || 'Matériel LKDV'}</p>
+        <div className={`lkdv-gear-detail-hero${item.photo_url ? ' has-photo' : ''}`}>
+          {item.photo_url ? <img src={item.photo_url} alt="" /> : <span>{item.name?.charAt(0).toUpperCase() || 'L'}</span>}
+          <span className="lkdv-gear-detail-glass">
+            <h3>{item.name || 'Objet'}</h3>
+            <p>{[item.brand, item.category].filter(Boolean).join(' · ') || 'Matériel'}</p>
+          </span>
+        </div>
         <dl>
           <div><dt>Poids</dt><dd>{item.weight_g ? `${item.weight_g} g` : '—'}</dd></div>
           <div><dt>État</dt><dd>{item.condition || '—'}</dd></div>
@@ -99,7 +105,6 @@ export function TrustDetailSheet({ data, trustScore, onClose }: { data: Bootstra
           <div><b>{trust?.rating == null ? '—' : trust.rating.toFixed(1)}</b><span>Note moyenne</span></div>
         </div>
         {trust?.onTimeRate == null ? <p className="lkdv-trust-detail-empty">Aucun retour noté pour le moment.</p> : null}
-        <p className="lkdv-trust-detail-note">Chaque prêt est agrégé sans révéler l’historique détaillé des autres membres.</p>
       </div>
     </OverlaySheet>
   );
@@ -129,7 +134,6 @@ export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onCl
           <polygon points={radar(values)} fill="rgba(23,64,44,.16)" stroke="#17402c" strokeWidth="2" /><circle cx="80" cy="80" r="4" fill="#17402c" />
         </svg></div>
         <div className="lkdv-seal-grid">{labels.map((label, i) => <div key={label}><span>{label}</span><b>{displays[i]}</b></div>)}</div>
-        <p className="lkdv-seal-note">Chaque branche s’allonge avec tes kilomètres réels. Aucun grade, aucun rang, aucun classement entre membres.</p>
       </div>
     </OverlaySheet>
   );
@@ -171,7 +175,17 @@ export function ProfilePreviewDrawer({ userId, onClose }: { userId: string; onCl
             <div><h3>{profile.full_name || profile.handle || 'Voyageur'}</h3><p>@{profile.handle || 'voyageur'}{profile.location ? ` · ${profile.location}` : ''}</p><small><BadgeCheck size={13} /> Confiance {profile.trust_score ?? 0}/100</small></div>
           </div>
           {profile.bio ? <p className="lkdv-profile-preview-bio">{profile.bio}</p> : null}
-          <div className="lkdv-profile-preview-actions">{user?.id !== profile.id ? <DrawerButton tone={following ? 'secondary' : 'primary'} onClick={() => void toggle()}>{following ? 'Abonné' : 'Suivre'}</DrawerButton> : null}<DrawerButton tone="ghost" onClick={onClose}>Fermer</DrawerButton></div>
+          {user?.id !== profile.id ? (
+            <div className="lkdv-apill-row is-start lkdv-profile-preview-actions">
+              <ActionPill
+                tone={following ? 'glass' : 'primary'}
+                label={following ? 'Abonné' : 'Suivre'}
+                aria-pressed={following}
+                icon={following ? <UserCheck /> : <UserPlus />}
+                onClick={() => void toggle()}
+              />
+            </div>
+          ) : null}
         </div>
       )}
     </OverlaySheet>

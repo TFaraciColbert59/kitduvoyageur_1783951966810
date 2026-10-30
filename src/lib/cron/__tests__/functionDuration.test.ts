@@ -143,7 +143,8 @@ describe('maxDuration et CLAIM_MS', () => {
     }
     // La page de laboratoire (`/dev/compas`, ouverte en développement seulement) héberge le même écran :
     // elle déclare la même durée que `/compas`, sinon une préparation lancée d'elle serait coupée plus tôt.
-    expect(hosts.sort()).toEqual(['src/app/compas/page.tsx', 'src/app/dev/compas-v5/page.tsx', 'src/app/dev/compas/page.tsx']);
+    expect(hosts.sort()).toEqual(['src/app/compas/page.tsx', 'src/app/dev/compas-v5/page.tsx']);
+
     const durationOf = (file: string) =>
       Number(/export\s+const\s+maxDuration\s*=\s*(\d+)/.exec(readFileSync(path.join(ROOT, file), 'utf8'))?.[1]);
     for (const file of hosts) expect(durationOf(file), file).toBe(durationOf('src/app/compas/page.tsx'));

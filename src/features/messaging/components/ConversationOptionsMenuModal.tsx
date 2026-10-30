@@ -1,11 +1,9 @@
 'use client';
 
-import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import { Button, ListItem } from '@/components/ui';
+import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import type { Conversation } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
-import { MobileSheet } from './MobileSheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface ConversationOptionsMenuModalProps {
@@ -71,102 +69,137 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
   };
 
   return (
-    <MobileSheet isOpen={isOpen} onClose={onClose} title="Options de conversation">
+    <AccountDrawerHost
+      open={isOpen}
+      title="Options de conversation"
+      subtitle={conversation.other_member?.full_name || conversation.title || undefined}
+      onClose={onClose}
+      onBack={showMuteSubmenu ? () => setShowMuteSubmenu(false) : undefined}
+    >
       {showMuteSubmenu ? (
-        <div className="animate-fade-in space-y-[var(--space-2)]">
-          <h4 className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
-            Masquer les notifications
-          </h4>
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={() => handleMuteToggle(1)}
-            title="Pendant 1 heure"
-            className="min-h-[52px]"
-          />
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={() => handleMuteToggle(8)}
-            title="Pendant 8 heures"
-            className="min-h-[52px]"
-          />
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={() => handleMuteToggle(undefined)}
-            title="Jusqu'à réactivation (Toujours)"
-            className="min-h-[52px]"
-          />
-          <Button type="button" variant="ghost" fullWidth onClick={() => setShowMuteSubmenu(false)}>
-            Retour
-          </Button>
+        <div>
+          <div className="li nt">
+            <div>
+              <div className="ttl">Pendant 1 heure</div>
+              <div className="s2">Les notifications reviennent ensuite</div>
+            </div>
+            <button
+              type="button"
+              className="mbtn"
+              disabled={loading}
+              onClick={() => handleMuteToggle(1)}
+            >
+              Muet
+            </button>
+          </div>
+
+          <div className="li nt">
+            <div>
+              <div className="ttl">Pendant 8 heures</div>
+              <div className="s2">Les notifications reviennent ensuite</div>
+            </div>
+            <button
+              type="button"
+              className="mbtn"
+              disabled={loading}
+              onClick={() => handleMuteToggle(8)}
+            >
+              Muet
+            </button>
+          </div>
+
+          <div className="li nt">
+            <div>
+              <div className="ttl">Jusqu’à réactivation (Toujours)</div>
+              <div className="s2">Reste muet jusqu’à ce que vous réactiviez</div>
+            </div>
+            <button
+              type="button"
+              className="mbtn"
+              disabled={loading}
+              onClick={() => handleMuteToggle(undefined)}
+            >
+              Muet
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="space-y-[var(--space-2)]">
-          {/* Mute Button */}
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={() => {
-              if (isMuted) {
-                handleMuteToggle(0);
-              } else {
-                setShowMuteSubmenu(true);
-              }
-            }}
-            className="min-h-[52px]"
-            leading={
-              isMuted ? (
-                <Icon name="bell" className="size-4 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
-              ) : (
-                <Icon name="bell-off" className="size-4 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />
-              )
-            }
-            title={
-              isMuted ? 'Réactiver les notifications' : 'Masquer les notifications (Mute)'
-            }
-            trailing={
-              isMuted ? (
-                <Icon name="check" className="size-4 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
-              ) : undefined
-            }
-          />
-
-          {/* Archive Button */}
-          <ListItem
-            as="div"
-            disabled={loading}
-            onClick={handleArchiveToggle}
-            className="min-h-[52px]"
-            leading={<Icon name="archive" className="size-4 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
-            title={isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
-            trailing={
-              isArchived ? (
-                <Icon name="check" className="size-4 text-[color:var(--lkv-secondary-ink)]" aria-hidden="true" />
-              ) : undefined
-            }
-          />
-
-          {/* Report & Block Button */}
-          {conversation.other_member && (
-            <ListItem
-              as="div"
+        <div>
+          <div className="li nt">
+            <div>
+              <div className="ttl">
+                {isMuted ? 'Réactiver les notifications' : 'Masquer les notifications'}
+              </div>
+              <div className="s2">
+                {isMuted ? 'Vous ne recevez plus d’alerte' : 'Choisir une durée de silence'}
+              </div>
+              {isMuted ? (
+                <div className="tags">
+                  <span className="tg p">Muet</span>
+                </div>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="mbtn"
+              disabled={loading}
               onClick={() => {
-                onClose();
-                onOpenReportBlock();
+                if (isMuted) {
+                  handleMuteToggle(0);
+                } else {
+                  setShowMuteSubmenu(true);
+                }
               }}
-              className="mt-[var(--space-2)] min-h-[52px] text-[color:var(--lkv-danger-dark)]"
-              leading={<Icon name="shield-alert" className="size-4 text-[color:var(--lkv-danger)]" aria-hidden="true" />}
-              title={
-                <span className="text-[color:var(--lkv-danger-dark)]">
-                  Signaler ou Bloquer {conversation.other_member.full_name}
-                </span>
-              }
-            />
-          )}
+            >
+              {isMuted ? 'Réactiver' : 'Choisir'}
+            </button>
+          </div>
+
+          <div className="li nt">
+            <div>
+              <div className="ttl">
+                {isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
+              </div>
+              <div className="s2">
+                {isArchived ? 'Revenir dans la liste principale' : 'Sortir de la liste principale'}
+              </div>
+              {isArchived ? (
+                <div className="tags">
+                  <span className="tg">Archivée</span>
+                </div>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="mbtn"
+              disabled={loading}
+              onClick={handleArchiveToggle}
+            >
+              {isArchived ? 'Désarchiver' : 'Archiver'}
+            </button>
+          </div>
+
+          {conversation.other_member ? (
+            <div className="li nt">
+              <div>
+                <div className="ttl">{`Signaler ou bloquer ${conversation.other_member.full_name}`}</div>
+                <div className="s2">Contenu inapproprié</div>
+              </div>
+              <button
+                type="button"
+                className="mbtn"
+                style={{ color: 'var(--bad)' }}
+                onClick={() => {
+                  onClose();
+                  onOpenReportBlock();
+                }}
+              >
+                Signaler
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
-    </MobileSheet>
+    </AccountDrawerHost>
   );
 };

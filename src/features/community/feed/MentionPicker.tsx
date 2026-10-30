@@ -225,9 +225,9 @@ export function MentionPicker({ query, onSelect, onClose, className }: MentionPi
   return (
     <div
       className={cn(
-        'lkdv-mention-picker w-full max-w-[340px] overflow-hidden rounded-control',
+        'lkdv-mention-picker w-full max-w-[340px] overflow-hidden rounded-2xl',
         'border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] p-1',
-        'text-[color:var(--feed-ink)] shadow-elevation-3',
+        'text-[color:var(--feed-ink)] shadow-lg',
         'backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset',
         className
       )}
@@ -271,7 +271,7 @@ export function MentionPicker({ query, onSelect, onClose, className }: MentionPi
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => choose(profile)}
                 className={cn(
-                  'flex cursor-pointer list-none items-center gap-2.5 rounded-md px-2 py-1.5',
+                  'flex cursor-pointer list-none items-center gap-2.5 rounded-xl px-2 py-1.5',
                   'transition-colors duration-100 motion-reduce:transition-none',
                   active
                     ? 'bg-[color:var(--lkv-hover-surface)]'

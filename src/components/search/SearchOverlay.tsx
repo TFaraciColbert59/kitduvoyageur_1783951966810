@@ -54,7 +54,7 @@ export default function SearchOverlay() {
       haptic('success');
       addSearch(trimmed);
       closeSearch();
-      router.push(`/boutique?q=${encodeURIComponent(trimmed)}`);
+      router.push(`/explorer?q=${encodeURIComponent(trimmed)}`);
     },
     [query, addSearch, closeSearch, router, haptic]
   );
@@ -64,7 +64,7 @@ export default function SearchOverlay() {
       haptic('light');
       addSearch(q);
       closeSearch();
-      router.push(`/boutique?q=${encodeURIComponent(q)}`);
+      router.push(`/explorer?q=${encodeURIComponent(q)}`);
     },
     [addSearch, closeSearch, router, haptic]
   );

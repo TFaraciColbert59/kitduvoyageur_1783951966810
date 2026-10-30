@@ -12,7 +12,7 @@ import type { Locale } from '@/lib/i18n/locale';
  * - labels FR/EN/ES/DE/IT statiques portés par le registre ; le helper
  *   `getDestinationLabel(id, locale)` lit la locale demandée ;
  *
- * Note : `/materiel` est une surface réelle et autonome (plus aucun alias 307
+ * Note : `/hub` est une surface réelle et autonome (plus aucun alias 307
  * vers /hub) ; la destination Matériel ouvre directement cette surface.
  */
 export type DestinationId =
@@ -38,7 +38,7 @@ export interface Destination {
 }
 
 /* Phase 3 (final) — 5 destinations, ordre définitif :
-   HUB · COMMUNAUTÉ · EXPLORER · MESSAGES · COMPTE.
+   HUB · EXPLORER · COMMUNAUTÉ · MESSAGES · COMPTE.
    Matériel n'est plus une destination principale (accessible via Hub,
    préparation, voyage, départ) ; le hamburger est supprimé. */
 export const DESTINATIONS: readonly Destination[] = [
@@ -47,39 +47,17 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/hub',
     label: { fr: 'Hub', en: 'Hub', es: 'Hub', de: 'Hub', it: 'Hub' },
     ariaLabel: 'Hub : aventure active, préparation et voyages',
-    iconName: 'tent',
+    iconName: 'home',
     matchPaths: [
       '/hub',
-      '/voyages',
       '/groupes',
       '/equipages',
       '/mes-aventures',
       '/preparation',
-      '/prepare',
       '/compas',
       '/terrain',
       '/alertes',
       '/recommandations',
-      '/materiel',
-      '/kits',
-    ],
-  },
-  {
-    id: 'community',
-    href: '/communaute',
-    label: { fr: 'Communauté', en: 'Community', es: 'Comunidad', de: 'Community', it: 'Comunità' },
-    ariaLabel: 'Communauté, clubs, événements',
-    iconName: 'users',
-    matchPaths: [
-      '/communaute',
-      '/communaute-pro',
-      '/clubs',
-      '/carnets',
-      '/entraide',
-      '/createurs',
-      '/experts',
-      '/evenements',
-      '/feed',
     ],
   },
   {
@@ -88,14 +66,22 @@ export const DESTINATIONS: readonly Destination[] = [
     label: { fr: 'Explorer', en: 'Explore', es: 'Explorar', de: 'Entdecken', it: 'Esplora' },
     ariaLabel: 'Explorer les sentiers, pays et destinations',
     iconName: 'compass',
-    matchPaths: ['/explorer', '/carte-3d', '/hors-ligne', '/pays'],
+    matchPaths: ['/explorer', '/pays'],
+  },
+  {
+    id: 'community',
+    href: '/communaute',
+    label: { fr: 'Communauté', en: 'Community', es: 'Comunidad', de: 'Community', it: 'Comunità' },
+    ariaLabel: 'Communauté, clubs, événements',
+    iconName: 'users',
+    matchPaths: ['/communaute', '/carnets', '/clubs'],
   },
   {
     id: 'messages',
     href: '/messagerie',
     label: { fr: 'Messages', en: 'Messages', es: 'Mensajes', de: 'Nachrichten', it: 'Messaggi' },
     ariaLabel: 'Messages : conversations et demandes',
-    iconName: 'message-square',
+    iconName: 'send',
     matchPaths: ['/messagerie'],
   },
   {
@@ -103,7 +89,7 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/compte',
     label: { fr: 'Compte', en: 'Account', es: 'Cuenta', de: 'Konto', it: 'Account' },
     ariaLabel: 'Mon compte voyageur et ma progression',
-    iconName: 'user',
+    iconName: 'user-circle',
     matchPaths: ['/compte', '/connexion', '/inscription', '/profil', '/progression'],
   },
 ] as const;
@@ -129,18 +115,15 @@ export function getDestinationLabel(id: DestinationId, locale: Locale): string {
  * toute page qui affiche un plateau de sous-navigation doit être déclarée ici.
  */
 const EXTENDED_NAV_PREFIXES: readonly string[] = [
-  '/clubs',
-  '/carnets',
+  '/communaute',
+  '/communaute',
   '/pays',
   // `/communaute` n'est plus un plateau texte : la capsule des six espaces
   // (48 px, `CommunitySpaces`) est le seul sélecteur local.
-  '/entraide',
-  '/evenements',
   '/messagerie',
-  '/voyages',
 ];
 
-const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/carnets/nouveau'];
+const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/communaute'];
 
 /** Vrai si la route possède un plateau de navigation secondaire. */
 export function hasExtendedNav(pathname: string | null | undefined): boolean {

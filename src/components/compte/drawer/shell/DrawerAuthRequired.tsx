@@ -12,7 +12,7 @@ import { LogIn, ShieldCheck } from 'lucide-react';
  */
 export function DrawerAuthRequired({
   title = 'Connecte-toi pour retrouver tes données',
-  hint = 'Tes commandes, notifications, abonnés et sorties sont privés. La connexion prend quelques secondes.',
+  hint,
 }: {
   title?: string;
   hint?: string;
@@ -23,11 +23,10 @@ export function DrawerAuthRequired({
         <ShieldCheck size={22} />
       </span>
       <b>{title}</b>
-      <p>{hint}</p>
+      {hint ? <p>{hint}</p> : null}
       <a className="lkdv-drawer-auth-cta" href="/connexion?redirect=/compte">
         <LogIn size={15} aria-hidden="true" /> Se connecter
       </a>
-      <small>Tu reviens directement sur ton compte après la connexion.</small>
     </div>
   );
 }

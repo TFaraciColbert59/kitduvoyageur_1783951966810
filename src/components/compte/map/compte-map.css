@@ -432,7 +432,7 @@
 .phone.mapbig .lkdv-map-state,
 .lkdv-map-root[data-map-empty='true'] .lkdv-map-state {
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -447,3 +447,563 @@
     animation: none !important;
   }
 }
+
+/* Marqueurs massif : pastille de verre lisible, nom révélé à la sélection. */
+.lkdv-map-massif {
+  width: 36px !important;
+  height: 36px !important;
+  gap: 6px;
+  padding: 0 9px !important;
+  border: 1.5px solid rgba(47, 107, 69, 0.42);
+  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(244,250,241,.76));
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 0 0.5px rgba(23,43,36,.12),
+    0 6px 16px rgba(23,43,36,.16),
+    0 0 0 6px rgba(255,255,255,.2);
+  color: #17402c;
+  font-size: 12px !important;
+  transition: width .24s cubic-bezier(.32,.72,0,1), background .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.lkdv-map-massif b { color: #2f6b45; font-size: 12px; }
+.lkdv-map-massif-name {
+  display: none;
+  max-width: 118px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+}
+.lkdv-map-massif:hover,
+.lkdv-map-massif:focus-visible,
+.lkdv-map-massif.is-selected {
+  width: auto !important;
+  background: linear-gradient(180deg, #2f6b45, #17402c);
+  border-color: rgba(255,255,255,.5);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 8px 20px rgba(10,20,14,.26), 0 0 0 6px rgba(255,255,255,.16);
+}
+.lkdv-map-massif:hover b,
+.lkdv-map-massif:focus-visible b,
+.lkdv-map-massif.is-selected b { color: #d8f3de; }
+.lkdv-map-massif:hover .lkdv-map-massif-name,
+.lkdv-map-massif:focus-visible .lkdv-map-massif-name,
+.lkdv-map-massif.is-selected .lkdv-map-massif-name { display: inline; }
+
+/* POIs : pastille + libellé, lisibles dès le zoom sentier. */
+.lkdv-map-poi {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 150px;
+  height: 24px;
+  padding: 0 9px 0 5px;
+  border: .5px solid rgba(255,255,255,.85);
+  border-radius: 999px;
+  background: rgba(255,255,255,.9);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(12px) saturate(180%);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 .5px rgba(23,43,36,.1), 0 4px 10px rgba(23,43,36,.14);
+  color: #17402c;
+  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  cursor: pointer;
+  transform: none;
+}
+.lkdv-map-poi-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: #2f6b45;
+  box-shadow: 0 0 0 2.5px rgba(255,255,255,.95);
+}
+.lkdv-map-poi-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lkdv-map-poi:hover,
+.lkdv-map-poi:active {
+  background: #17402c;
+  color: #fff;
+}
+.lkdv-map-poi:hover .lkdv-map-poi-dot,
+.lkdv-map-poi:active .lkdv-map-poi-dot { background: #d8f3de; }
+
+/* Bande carte courte : POI en pastilles rondes ; libellés réservés à la grande carte. */
+.lkdv-map-poi.is-compact {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  justify-content: center;
+}
+.lkdv-map-poi.is-compact .lkdv-map-poi-label { display: none; }
+.lkdv-map-poi.is-compact .lkdv-map-poi-dot { width: 9px; height: 9px; }
+
+/* — Design unifié des éléments de carte — */
+.lkdv-map-massif {
+  width: 34px !important;
+  height: 34px !important;
+  gap: 4px !important;
+  padding: 0 8px !important;
+  border: 1px solid rgba(47,107,69,.35) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(244,250,241,.68)) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.8) !important;
+  backdrop-filter: blur(18px) saturate(1.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.1), 0 6px 16px rgba(23,43,36,.14) !important;
+  color: #17402c !important;
+  font-size: 11px !important;
+}
+.lkdv-map-massif-ico { width: 13px; height: 13px; display: grid; place-items: center; flex: none; color: #2f6b45; }
+.lkdv-map-massif-ico svg { width: 13px; height: 13px; display: block; }
+.lkdv-map-massif b { font-size: 11px !important; color: #2f6b45 !important; }
+.lkdv-map-massif-name { font-size: 10px !important; }
+.lkdv-map-massif:hover, .lkdv-map-massif:focus-visible, .lkdv-map-massif.is-selected {
+  background: linear-gradient(180deg, #2f6b45, #17402c) !important;
+  color: #fff !important;
+}
+.lkdv-map-massif:hover .lkdv-map-massif-ico, .lkdv-map-massif.is-selected .lkdv-map-massif-ico { color: #d8f3de; }
+.lkdv-map-massif:hover b, .lkdv-map-massif.is-selected b { color: #d8f3de !important; }
+
+/* POI : pastille de verre 26 px, icône seule, aucune étiquette au repos. */
+.lkdv-map-poi {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  padding: 0 !important;
+  /* Sans `!important` : `CompteMap.positionEntry` masque une entrée hors cadre
+     avec un `display:none` inline, que la présence de bande (plus bas, avec
+     `!important`) reste seule à pouvoir contredire. */
+  display: grid;
+  place-items: center !important;
+  border: .5px solid rgba(255,255,255,.85) !important;
+  border-radius: 999px !important;
+  background: rgba(252,255,250,.82) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.8) !important;
+  backdrop-filter: blur(16px) saturate(1.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.1), 0 3px 9px rgba(23,43,36,.12) !important;
+  color: #2f6b45 !important;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+.lkdv-map-poi-ico { width: 14px !important; height: 14px !important; display: grid; place-items: center; }
+.lkdv-map-poi-ico svg { width: 14px !important; height: 14px !important; display: block; }
+.lkdv-map-poi:hover, .lkdv-map-poi:active { background: #17402c !important; color: #d8f3de !important; }
+
+/* Carnet : pastille ambrée, icône livre, distincte des POI. */
+.lkdv-map-carnet {
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: .5px solid rgba(255,255,255,.9);
+  border-radius: 999px;
+  background: rgba(255,247,228,.9);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  backdrop-filter: blur(16px) saturate(1.8);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 .5px rgba(120,88,24,.16), 0 3px 9px rgba(120,88,24,.16);
+  color: #8a641f;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+.lkdv-map-carnet-ico { width: 14px; height: 14px; display: grid; place-items: center; }
+.lkdv-map-carnet-ico svg { width: 14px; height: 14px; display: block; }
+.lkdv-map-carnet:hover, .lkdv-map-carnet:active { background: #8a641f; color: #fff7e4; }
+
+/* Apparition cinématique de la fiche et du marqueur sélectionné. */
+.lkdv-map-callout {
+  animation: mapCalloutIn .42s cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes mapCalloutIn {
+  from { opacity: 0; transform: translateY(10px) scale(.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.lkdv-map-massif.is-selected .lkdv-map-massif-ico {
+  animation: mapPinPulse 1.4s cubic-bezier(.32,.72,0,1) infinite;
+}
+@keyframes mapPinPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.18); opacity: .8; }
+}
+
+/* Calque DOM au-dessus de la carte : positions calculées par map.project. */
+.lkdv-map-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 6 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+.lkdv-map-overlay > * {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  pointer-events: auto !important;
+  will-change: transform;
+}
+
+/* Priorité de superposition (spec : selected > poi > carnet > massif).
+   Quand deux boutons se recouvrent, c'est le z-index qui décide du clic, pas
+   l'ordre du DOM (les massifs sont insérés avant les POI). Le POI doit donc
+   passer devant le massif qu'il recouvre, le carnet devant le massif, et la
+   sélection devant tout le monde. Le sélecteur de sélection est composé
+   (0,3,0) : il reste gagnant même après les règles de type et le bloc agrégat
+   (0,2,0), quel que soit leur ordre dans le fichier. */
+.lkdv-map-overlay .lkdv-map-massif { z-index: 2 !important; }
+.lkdv-map-overlay .lkdv-map-carnet { z-index: 3 !important; }
+.lkdv-map-overlay .lkdv-map-poi { z-index: 4 !important; }
+.lkdv-map-overlay .lkdv-map-massif.is-selected,
+.lkdv-map-overlay .lkdv-map-poi.is-selected,
+.lkdv-map-overlay .lkdv-map-carnet.is-selected { z-index: 6 !important; }
+
+/* Fiche carte : capsule de verre compacte, CTA pilule comme les boutons du Compte. */
+.lkdv-map-callout {
+  width: 202px !important;
+  max-width: calc(100vw - 32px);
+  padding: 10px 11px 10px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(247,252,245,.58)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.98),
+    0 0 0 .5px rgba(23,43,36,.12),
+    0 10px 26px rgba(16,32,24,.16) !important;
+}
+.lkdv-map-callout b {
+  padding-right: 18px !important;
+  font: 650 12.5px/1.25 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  letter-spacing: -.01em;
+}
+.lkdv-map-callout-badge {
+  margin-top: 3px !important;
+  padding: 2px 6px !important;
+  font-size: 9px !important;
+  background: rgba(47,107,69,.12) !important;
+  color: #2f6b45 !important;
+}
+.lkdv-map-callout p {
+  margin: 2px 0 8px !important;
+  font: 500 10.5px/1.35 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  color: #4a6252 !important;
+}
+.lkdv-map-callout-close {
+  top: 4px !important;
+  right: 4px !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  background: rgba(23,43,36,.07) !important;
+}
+.lkdv-map-callout-cta {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px !important;
+  padding: 0 12px !important;
+  border-radius: 999px !important;
+  background: #17402c !important;
+  color: #fff !important;
+  font: 600 11px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 3px 8px rgba(16,32,24,.18) !important;
+}
+.lkdv-map-callout-cta:active { transform: scale(.97); }
+
+/* Fiche carte réellement transparente : le tracé reste visible dessous. */
+.lkdv-map-callout {
+  background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(247,252,245,.18)) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(150%) !important;
+  backdrop-filter: blur(10px) saturate(150%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 0 0 .5px rgba(23,43,36,.1), 0 6px 18px rgba(16,32,24,.1) !important;
+  text-shadow: 0 1px 2px rgba(255,255,255,.55);
+}
+
+/* Marqueurs carte : icône seule, très discrets, sans chiffre ni libellé. */
+.lkdv-map-overlay .lkdv-map-massif {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  border-width: .5px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 .5px rgba(23,43,36,.1), 0 3px 8px rgba(23,43,36,.13) !important;
+}
+.lkdv-map-overlay .lkdv-map-massif:hover,
+.lkdv-map-overlay .lkdv-map-massif:focus-visible,
+.lkdv-map-overlay .lkdv-map-massif.is-selected {
+  width: 24px !important;
+  padding: 0 !important;
+}
+.lkdv-map-overlay .lkdv-map-massif-ico,
+.lkdv-map-overlay .lkdv-map-massif-ico svg { width: 12px !important; height: 12px !important; }
+.lkdv-map-overlay .lkdv-map-massif b,
+.lkdv-map-overlay .lkdv-map-massif-name { display: none !important; }
+
+.lkdv-map-overlay .lkdv-map-poi {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+}
+.lkdv-map-overlay .lkdv-map-poi-ico,
+.lkdv-map-overlay .lkdv-map-poi-ico svg { width: 11px !important; height: 11px !important; }
+
+.lkdv-map-overlay .lkdv-map-carnet {
+  width: 21px !important;
+  height: 21px !important;
+}
+.lkdv-map-overlay .lkdv-map-carnet-ico,
+.lkdv-map-overlay .lkdv-map-carnet-ico svg { width: 11px !important; height: 11px !important; }
+
+/* Zone de tap confortable sans agrandir le visuel. */
+.lkdv-map-overlay .lkdv-map-massif::after,
+.lkdv-map-overlay .lkdv-map-poi::after,
+.lkdv-map-overlay .lkdv-map-carnet::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 999px;
+}
+
+/* Verre liquide translucide : la carte reste lisible au travers. */
+.lkdv-map-callout {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,.08) 42%, rgba(255,255,255,.16) 100%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(190%) brightness(1.06) !important;
+  backdrop-filter: blur(22px) saturate(190%) brightness(1.06) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.72),
+    inset 0 -1px 0 rgba(255,255,255,.18),
+    0 0 0 .5px rgba(23,43,36,.12),
+    0 10px 26px rgba(12,26,18,.12) !important;
+}
+.lkdv-map-callout::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(120% 80% at 12% 0%, rgba(255,255,255,.55), transparent 46%),
+    radial-gradient(90% 70% at 100% 100%, rgba(180,220,190,.22), transparent 55%);
+  pointer-events: none;
+}
+.lkdv-map-callout b,
+.lkdv-map-callout p {
+  text-shadow: 0 1px 2px rgba(255,255,255,.75), 0 0 8px rgba(255,255,255,.28);
+}
+.lkdv-map-callout-cta {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.lkdv-map-callout b { color: #0b2418 !important; text-shadow: 0 1px 1px rgba(255,255,255,.95), 0 0 12px rgba(255,255,255,.65) !important; }
+.lkdv-map-callout p { color: #294838 !important; text-shadow: 0 1px 1px rgba(255,255,255,.9) !important; }
+.lkdv-map-callout-badge { background: rgba(255,255,255,.55) !important; color: #17402c !important; text-shadow: none !important; }
+
+/* POI : fond transparent à 95 %, seule l'icône reste lisible. */
+.lkdv-map-overlay .lkdv-map-poi {
+  background: rgba(255,255,255,.05) !important;
+  -webkit-backdrop-filter: blur(4px) saturate(120%) !important;
+  backdrop-filter: blur(4px) saturate(120%) !important;
+  border-color: rgba(255,255,255,.22) !important;
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.18) !important;
+}
+.lkdv-map-overlay .lkdv-map-poi-ico {
+  filter: drop-shadow(0 1px 2px rgba(255,255,255,.95)) drop-shadow(0 0 1px rgba(23,43,36,.35));
+}
+.lkdv-map-overlay .lkdv-map-poi:hover,
+.lkdv-map-overlay .lkdv-map-poi:active {
+  background: rgba(255,255,255,.14) !important;
+}
+
+/* Tous les points à très haute transparence : seul le glyphe reste. */
+.lkdv-map-overlay .lkdv-map-poi {
+  background: rgba(255,255,255,.02) !important;
+  border-color: rgba(255,255,255,.14) !important;
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.10) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.lkdv-map-overlay .lkdv-map-carnet {
+  background: rgba(255,247,228,.08) !important;
+  border-color: rgba(255,255,255,.18) !important;
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.12) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.lkdv-map-overlay .lkdv-map-carnet-ico { filter: drop-shadow(0 1px 2px rgba(255,255,255,.95)); }
+.lkdv-map-overlay .lkdv-map-massif {
+  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(244,250,241,.05)) !important;
+  border-color: rgba(255,255,255,.18) !important;
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.12) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.lkdv-map-overlay .lkdv-map-massif-ico { filter: drop-shadow(0 1px 2px rgba(255,255,255,.95)); }
+
+/* Uniformisation : tous les points à ~95 % de transparence. */
+.lkdv-map-overlay .lkdv-map-massif {
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)) !important;
+}
+.lkdv-map-overlay .lkdv-map-carnet {
+  background: rgba(255,247,228,.05) !important;
+}
+
+/* +10 % d'opacité sur tous les points. */
+.lkdv-map-overlay .lkdv-map-poi {
+  background: rgba(255,255,255,.12) !important;
+  border-color: rgba(255,255,255,.24) !important;
+}
+.lkdv-map-overlay .lkdv-map-carnet {
+  background: rgba(255,247,228,.15) !important;
+  border-color: rgba(255,255,255,.26) !important;
+}
+.lkdv-map-overlay .lkdv-map-massif {
+  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.12)) !important;
+  border-color: rgba(255,255,255,.26) !important;
+}
+.lkdv-map-overlay .lkdv-map-poi:hover,
+.lkdv-map-overlay .lkdv-map-poi:active { background: rgba(255,255,255,.22) !important; }
+
+/* Tous les marqueurs partagent exactement la même opacité. */
+.lkdv-map-overlay .lkdv-map-poi,
+.lkdv-map-overlay .lkdv-map-carnet,
+.lkdv-map-overlay .lkdv-map-massif {
+  background: rgba(255,255,255,.12) !important;
+  background-image: none !important;
+  border-color: rgba(255,255,255,.24) !important;
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.12) !important;
+}
+.lkdv-map-overlay .lkdv-map-carnet { background-color: rgba(255,247,228,.12) !important; }
+
+/* Même rendu pour tous : bord et halo quasi invisibles. */
+.lkdv-map-overlay .lkdv-map-poi,
+.lkdv-map-overlay .lkdv-map-carnet,
+.lkdv-map-overlay .lkdv-map-massif {
+  border-color: rgba(255,255,255,.10) !important;
+  box-shadow: none !important;
+}
+
+/* Retour au verre translucide, et taille constante : petits points au dezoom. */
+.lkdv-map-overlay .lkdv-map-poi {
+  background: rgba(255,255,255,.08) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(160%) !important;
+  backdrop-filter: blur(10px) saturate(160%) !important;
+  border: .5px solid rgba(255,255,255,.34) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55) !important;
+}
+.lkdv-map-overlay .lkdv-map-carnet {
+  background: rgba(255,247,228,.10) !important;
+  border-color: rgba(255,255,255,.30) !important;
+}
+.lkdv-map-overlay .lkdv-map-massif {
+  background: rgba(255,255,255,.10) !important;
+  border-color: rgba(255,255,255,.30) !important;
+}
+
+/* ---------- Bandes de zoom : seule autorité de présence et de taille ----------
+
+   La hiérarchie est portée par `data-zoom-band` sur `.lkdv-map-root`, posé par
+   `CompteMap` depuis `resolveMapZoomConfig` (Monde < 4.5, Pays < 6.5,
+   Région < 10, Lieu au-delà). Ces règles doublent la décision du JS : un point
+   que la bande cache ne doit jamais revenir par une règle de style.
+
+   Les tailles de référence restent celles de l'overlay — massif 24 px, POI
+   20 px, carnet 21 px, agrégat 22 px — et une bande ne les change que par
+   exception explicite (le point de 7 px en Monde/Pays). Aucun
+   `transform: scale()` piloté par le zoom : la taille est fixe par bande, un
+   marqueur ne grossit donc jamais quand on dézoome. */
+
+/* Monde, Pays et Région : les POI n'existent qu'en bande Lieu. */
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-poi,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-poi {
+  display: none !important;
+}
+
+/* Monde et Pays : les carnets n'apparaissent qu'à partir de la Région. */
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-carnet,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-carnet {
+  display: none !important;
+}
+
+/* Monde et Pays : un massif isolé (ou une sélection) est un point, pas une
+   pastille. Même rendu qu'auparavant en vue large, mais décidé par la bande et
+   non plus par un seuil `is-far` indépendant, qui faisait grossir le marqueur
+   de 7 px à 24 px à l'intérieur même de la bande Région. */
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-massif,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-massif {
+  width: 7px !important;
+  height: 7px !important;
+  min-width: 7px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(47,107,69,.52) !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.45) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.lkdv-map-root[data-zoom-band='world'] .lkdv-map-massif-ico,
+.lkdv-map-root[data-zoom-band='country'] .lkdv-map-massif-ico {
+  display: none !important;
+}
+
+/* Agrégats de massifs (bandes Monde/Pays) : un point de 22 px par groupe.
+   Un agrégat est un massif : même niveau de superposition (z-index 2), le
+   compteur reste lisible à l'échelle des points simples (7 px en vue large). */
+.lkdv-map-overlay .lkdv-map-cluster {
+  z-index: 2 !important;
+  /* Comme les POI : le `display:none` inline du hors-cadre doit gagner. */
+  display: grid;
+  place-items: center !important;
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, .5) !important;
+  border-radius: 50% !important;
+  background: rgba(47, 107, 69, .7) !important;
+  color: #fff !important;
+  font: 700 10px var(--sf, -apple-system, 'SF Pro Text', Inter, system-ui, sans-serif) !important;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .35),
+    0 2px 6px rgba(16, 32, 24, .22) !important;
+}
+.lkdv-map-overlay .lkdv-map-cluster:hover,
+.lkdv-map-overlay .lkdv-map-cluster:focus-visible {
+  background: rgba(23, 64, 44, .88) !important;
+}
+.lkdv-map-overlay .lkdv-map-cluster:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, .9);
+  outline-offset: 2px;
+}
+
+/* Les contrôles de carte restent toujours visibles et cliquables pendant un déplacement. */
+.mapzone .lkdv-map-controls,
+.mapzone .lkdv-map-scale,
+.mapzone .map-badge-3d {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: 60 !important;
+}
+.lkdv-map-controls button,
+.lkdv-map-scale button { pointer-events: auto !important; }
+
+/* POI plus présents, sans redevenir opaques. */
+.lkdv-map-overlay .lkdv-map-poi {
+  background: rgba(255,255,255,.30) !important;
+  border-color: rgba(255,255,255,.48) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(170%) !important;
+  backdrop-filter: blur(12px) saturate(170%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.65) !important;
+}
+.lkdv-map-overlay .lkdv-map-poi:hover,
+.lkdv-map-overlay .lkdv-map-poi:active { background: rgba(255,255,255,.42) !important; }

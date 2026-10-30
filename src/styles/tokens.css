@@ -191,9 +191,6 @@
   /* Phase 3 (final) — géométrie premium nettement plus ronde, UNE famille :
      contrôles 18, boutons 20, cartes 28, grandes cartes 32, feuilles 36,
      barre de navigation 32. Rayon concentrique = parent − padding. */
-  /* Device preview frame: preserve the hardware silhouette in the UI lab. */
-  --lkv-radius-device-frame: 54px;
-  --lkv-radius-device-screen: 44px;
   --lkv-radius-xs: 10px;
   --lkv-radius-sm: 14px;
   --lkv-radius-md: 18px;

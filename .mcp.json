@@ -1,36 +1,17 @@
 {
   "mcpServers": {
-    "github": {
+    "maestro": {
       "type": "stdio",
-      "command": "node",
+      "command": "cmd.exe",
       "args": [
-        "C:\\Users\\farac\\AppData\\Local\\Programs\\nodejs\\node_modules\\@modelcontextprotocol\\server-github\\dist\\index.js"
+        "/c",
+        "C:\\Users\\Tony\\.maestro\\maestro\\bin\\maestro.bat",
+        "mcp"
       ],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
-      }
-    },
-    "supabase": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "C:\\Users\\farac\\AppData\\Local\\Programs\\nodejs\\node_modules\\@supabase\\mcp-server-supabase\\dist\\cli.js",
-        "--project-ref",
-        "icxyvwzfjbflcbqukpfz"
-      ],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
-      }
-    },
-    "cloudflare": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "C:\\Users\\farac\\AppData\\Local\\Programs\\nodejs\\node_modules\\@cloudflare\\mcp-server-cloudflare\\dist\\index.js"
-      ],
-      "env": {
-        "CLOUDFLARE_API_TOKEN": "${CLOUDFLARE_API_TOKEN}",
-        "CLOUDFLARE_ACCOUNT_ID": "${CLOUDFLARE_ACCOUNT_ID}"
+        "JAVA_HOME": "C:\\Users\\Tony\\.antigravity\\extensions\\redhat.java-1.55.0-win32-x64\\jre\\21.0.11-win32-x86_64",
+        "MAESTRO_CLI_NO_ANALYTICS": "1",
+        "MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED": "true"
       }
     }
   }

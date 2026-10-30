@@ -1,6 +1,8 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
+import { pickCarnetTrace } from './trace';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type {
   AuthorRow,
   CarnetRow,
@@ -10,6 +12,20 @@ import type {
   KitItemRow,
   MomentRow,
 } from './types';
+
+interface CollaboratorRow {
+  carnet_id: string | null;
+  user_id: string | null;
+  role: string | null;
+  created_at: string | null;
+}
+
+interface SessionParticipantRow {
+  session_id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+}
 
 const CARNET_COLUMNS = [
   'id',
@@ -31,12 +47,18 @@ const CARNET_COLUMNS = [
   'groupe_id',
   'lieu_depart',
   'lieu_arrivee',
+  'country_iso',
 ].join(', ');
 
 /**
  * Lit un carnet, son auteur, ses étapes, ses moments, son kit et l'engagement
  * du lecteur avec le client serveur (cookies) — la RLS voit donc la session :
  * un carnet privé reste lisible par son propriétaire.
+ *
+ * La trace vient des `hike_sessions` liées au carnet : la policy
+ * `hike_sessions_select_owner_or_public_carnet` autorise déjà la lecture
+ * anonyme des sorties d'un carnet public (vérifié à la clé anon), donc aucune
+ * policy supplémentaire et aucun client à privilèges élevés ne sont nécessaires.
  *
  * Retourne `null` si le carnet n'existe pas ou n'est pas lisible : la route
  * traduit cela en `notFound()`.
@@ -56,20 +78,59 @@ export async function getCarnetDetail(id: string) {
   if (carnetError || !carnetData) return null;
   const carnet = carnetData as unknown as CarnetRow;
 
-  const [authorResult, hikeResult, etapesResult, hebergementsResult, momentsResult, kitResult] =
-    await Promise.all([
+  /* Tout ce qui ne dépend que du carnet part dans le même `Promise.all` :
+     auteur, sorties, étapes, hébergements, moments, kit, collaborateurs,
+     identifiants de sorties, j'aime et favori du lecteur. Une seule vague de
+     requêtes, donc un seul aller-retour au lieu de quatre. */
+  const viewerFlags: Promise<[{ data: unknown }, { data: unknown }]> = viewerId
+    ? Promise.all([
+        supabase
+          .from('carnet_likes')
+          .select('carnet_id')
+          .eq('carnet_id', carnet.id)
+          .eq('user_id', viewerId)
+          .maybeSingle(),
+        supabase
+          .from('carnet_favorites')
+          .select('carnet_id')
+          .eq('carnet_id', carnet.id)
+          .eq('user_id', viewerId)
+          .maybeSingle(),
+      ])
+    : Promise.resolve([{ data: null }, { data: null }] as [{ data: unknown }, { data: unknown }]);
+
+  const [
+    [
+      authorResult,
+      hikeResult,
+      etapesResult,
+      hebergementsResult,
+      momentsResult,
+      kitResult,
+      likesRows,
+      likesTotal,
+      commentsTotal,
+      collabResult,
+      sessionIdResult,
+    ],
+    [likeResult, favoriteResult],
+  ] = await Promise.all([
+    Promise.all([
       supabase
         .from('public_profiles')
         .select('id, full_name, handle, avatar_url, trust_score')
         .eq('id', carnet.author_id ?? '')
         .maybeSingle(),
+      /* Toutes les sorties du carnet : la plus récente porte les statistiques,
+         la plus récente *avec une trace* porte le parcours 3D. */
       supabase
         .from('hike_sessions')
-        .select('id, carnet_id, distance_km, elevation_gain_m, duration_seconds, started_at, positions_geojson')
+        .select(
+          'id, carnet_id, distance_km, elevation_gain_m, duration_seconds, started_at, positions_geojson, positions_timed',
+        )
         .eq('carnet_id', carnet.id)
         .order('started_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+        .limit(10),
       carnet.groupe_id
         ? supabase
             .from('groupe_etapes')
@@ -97,28 +158,104 @@ export async function getCarnetDetail(id: string) {
         .select('id, nom, detail, poids_g, couleur_tag, sort_order')
         .eq('carnet_id', carnet.id)
         .order('sort_order', { ascending: true }),
-    ]);
-
-  const [likesCount, commentsCount] = await Promise.all([
-    supabase.from('carnet_likes').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
-    supabase.from('carnet_comments').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
+      /* Réactions réelles : les 50 dernières lignes, plus le total exact. */
+      supabase
+        .from('carnet_likes')
+        .select('user_id, reaction, created_at')
+        .eq('carnet_id', carnet.id)
+        .order('created_at', { ascending: false })
+        .limit(50),
+      /* Deux compteurs lus, un seul coût réseau : voir `counts` en bas de
+         fonction — la valeur rendue est identique à l'ancienne, requête de trop
+         en moins. */
+      supabase.from('carnet_likes').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
+      /* Comptage réel des commentaires (le total des j'aime était affiché). */
+      supabase.from('carnet_comments').select('carnet_id', { count: 'exact', head: true }).eq('carnet_id', carnet.id),
+      /* Participants réels : collaborateurs du carnet + présents des sorties du
+         carnet. Les deux lectures passent par le client à cookies, donc par la RLS :
+         `carnet_collaborators_read_scoped` laisse lire les carnets publics, et
+         `hike_participants_select` (via `can_view_hike_session`) ne rend que les
+         sorties visibles pour ce lecteur. Un refus de la RLS n'est pas une erreur
+         de la fiche : on garde ce qui est lisible, sans rien inventer. */
+      supabase
+        .from('carnet_collaborators')
+        .select('carnet_id, user_id, role, created_at')
+        .eq('carnet_id', carnet.id)
+        .order('created_at', { ascending: true }),
+      /* Toutes les sorties du carnet, sans la limite de 10 de `hikeResult` :
+         les présents d'une sortie ancienne comptent aussi. */
+      supabase
+        .from('hike_sessions')
+        .select('id, started_at')
+        .eq('carnet_id', carnet.id)
+        .order('started_at', { ascending: false }),
+    ]),
+    viewerFlags,
   ]);
 
-  let liked = false;
-  let favorited = false;
-  if (viewerId) {
-    const [likeResult, favoriteResult] = await Promise.all([
-      supabase.from('carnet_likes').select('carnet_id').eq('carnet_id', carnet.id).eq('user_id', viewerId).maybeSingle(),
-      supabase.from('carnet_favorites').select('carnet_id').eq('carnet_id', carnet.id).eq('user_id', viewerId).maybeSingle(),
-    ]);
-    liked = Boolean(likeResult.data);
-    favorited = Boolean(favoriteResult.data);
-  }
+  const likeRows = (likesRows.data ?? []) as Array<{ user_id: string; reaction: string | null }>;
+
+  const sessions = ((hikeResult as { data?: HikeSessionRow[] | null }).data ?? []) as HikeSessionRow[];
+
+  const sessionIds = ((sessionIdResult.data ?? []) as Array<{ id: string }>).map((row) => row.id);
+
+  /* Cette lecture dépend des identifiants de sorties : elle ne peut pas partir
+     dans le même `Promise.all`. Un refus RLS (rôle anonyme sans le `EXECUTE` de
+     `can_view_hike_session`) rend `data: null` : on lit `[]`, sans erreur. */
+  const sessionParticipantsResult =
+    sessionIds.length > 0
+      ? await supabase
+          .from('hike_session_participants')
+          .select('session_id, user_id, role, created_at')
+          .in('session_id', sessionIds)
+      : { data: [] as SessionParticipantRow[] };
+
+  const collabRows = ((collabResult.data ?? []) as CollaboratorRow[]).filter((row) => row.user_id);
+  const sessionParticipantRows = ((sessionParticipantsResult.data ?? []) as SessionParticipantRow[]).filter(
+    (row) => row.user_id,
+  );
+
+  /* Les deux jointures de profils sont indépendantes : une seule vague. */
+  const [likeProfiles, participantProfiles] = await Promise.all([
+    fetchPublicProfilesWith(supabase as never, likeRows.map((row) => row.user_id)),
+    fetchPublicProfilesWith(supabase as never, [
+      ...collabRows.map((row) => row.user_id),
+      ...sessionParticipantRows.map((row) => row.user_id),
+    ]),
+  ]);
+
+  const likers = likeRows.map((row) => ({
+    user_id: row.user_id,
+    reaction: row.reaction,
+    profile: (likeProfiles[row.user_id] as unknown as AuthorRow) ?? null,
+  }));
+
+  const participants = [
+    ...collabRows.map((row) => ({
+      user_id: row.user_id,
+      role: row.role,
+      source: 'collaborator' as const,
+      profile: (participantProfiles[row.user_id ?? ''] as unknown as AuthorRow) ?? null,
+    })),
+    ...sessionParticipantRows.map((row) => ({
+      user_id: row.user_id,
+      role: row.role,
+      source: 'participant' as const,
+      profile: (participantProfiles[row.user_id ?? ''] as unknown as AuthorRow) ?? null,
+    })),
+  ];
+
+  const liked = Boolean(likeResult.data);
+  const favorited = Boolean(favoriteResult.data);
 
   return buildCarnetDetail({
     carnet,
     author: (authorResult.data as unknown as AuthorRow) ?? null,
-    hikeSession: (hikeResult.data as unknown as HikeSessionRow) ?? null,
+    hikeSession: sessions[0] ?? null,
+    /* Toutes les sorties datent leurs propres points : c'est la matière de
+       `buildDays` (un carnet de sept jours peut compter sept sorties). */
+    sessions,
+    trace: pickCarnetTrace(sessions),
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],
     hebergements: (hebergementsResult.data as unknown as HebergementRow[]) ?? [],
     moments: (momentsResult.data as unknown as MomentRow[]) ?? [],
@@ -126,9 +263,13 @@ export async function getCarnetDetail(id: string) {
     viewerId,
     liked,
     favorited,
+    likers,
+    participants,
     counts: {
-      likes: likesCount.count ?? 0,
-      comments: commentsCount.count ?? 0,
+      likes: likesTotal.count ?? likeRows.length,
+      /* Vrai comptage des commentaires (le total des j'aime était affiché par
+         erreur : la requête `carnet_comments` était jetée). */
+      comments: commentsTotal.count ?? 0,
     },
   });
 }

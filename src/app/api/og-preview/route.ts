@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { lookup } from 'node:dns/promises';
 import { SITE_CONTACT_URL } from '@/lib/userAgent';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { clientIpFromHeaders } from '@/lib/rate-limit/clientIp';
 import {
   parsePublicHttpUrl,
   assertHostResolvesPublic,
@@ -26,6 +28,15 @@ const resolveAll: Lookup = async (hostname) => {
  *   - timeout, taille lue et type de contenu bornés.
  */
 export async function POST(req: NextRequest) {
+  // Proxy sortant public : borne par IP avant toute résolution DNS.
+  const limited = await enforceRateLimit(clientIpFromHeaders(req.headers), {
+    scope: 'og-preview',
+    limit: 20,
+    windowMs: 60_000,
+    failMode: 'closed',
+  });
+  if (limited) return limited;
+
   try {
     const { url } = await req.json();
 

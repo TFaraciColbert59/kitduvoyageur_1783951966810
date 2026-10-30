@@ -781,9 +781,11 @@ function BadgesLens({ badges }: { badges: BadgeItem[] }) {
   const earnedCount = earned.length;
   const total = badges.length;
   const progress = next ? badgeProgress(earnedCount, total) : null;
-  // Les trophées sont des souvenirs : aucun bonus de points n'est attribué
-  // (badges.points_reward vaut 0 partout, aucun producteur), donc jamais promis.
-  const nextMeta = next ? next.rarity?.trim() ?? '' : '';
+  const nextMeta = next
+    ? [next.rarity?.trim(), next.points ? `+${formatInteger(next.points)} pts` : '']
+        .filter(Boolean)
+        .join(' · ')
+    : '';
 
   return (
     <div

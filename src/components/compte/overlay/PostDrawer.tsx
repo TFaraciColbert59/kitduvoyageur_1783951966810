@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, ChevronLeft, ChevronRight, Flag, Heart, Link2, MessageCircle, MoreHorizontal, Repeat2, Send, Share2, Trash2, X } from 'lucide-react';
+import { Bookmark, ChevronLeft, ChevronRight, Flag, Heart, Link2, MessageCircle, MoreHorizontal, Repeat2, RotateCcw, Send, Share2, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import { fetchPostDetail } from '@/features/community/posts/queries';
@@ -11,7 +11,9 @@ import {
   toggleCommentLike, togglePostLike, togglePostSave, updatePostComment,
 } from '@/features/community/posts/mutations';
 import { POST_REPORT_REASONS, postPermalink, type PostComment, type PostDetail, type ShareTarget } from '@/features/community/posts/types';
-import { DrawerButton, OverlaySheet } from './OverlaySheet';
+import { ActionPill } from '@/components/ui/ActionPill';
+import { OverlaySheet } from './OverlaySheet';
+import { PostCardSurface } from './PostCardSurface';
 import { PostCommentsPanel } from '@/features/community/feed/PostCommentsPanel';
 import { PostSharePanel } from '@/features/community/feed/PostSharePanel';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
@@ -82,6 +84,10 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   const tapStartRef = useRef<{ x: number; y: number } | null>(null);
   const [burst, setBurst] = useState(0);
   const [likePulse, setLikePulse] = useState(0);
+  const [dragY, setDragY] = useState(0);
+  const [grabbing, setGrabbing] = useState(false);
+  const dragStartY = useRef<number | null>(null);
+  const didDragRef = useRef(false);
 
   const haptic = (pattern: number | number[] = 8) => {
     try { navigator.vibrate?.(pattern); } catch { /* optionnel */ }
@@ -335,6 +341,32 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   const submitCommentRef = useRef(submitComment);
   submitCommentRef.current = submitComment;
 
+  const startGrab = (event: React.PointerEvent<HTMLButtonElement>) => {
+    dragStartY.current = event.clientY;
+    didDragRef.current = false;
+    setGrabbing(true);
+    try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* optionnel */ }
+  };
+  const moveGrab = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (dragStartY.current === null) return;
+    const distance = Math.max(0, event.clientY - dragStartY.current);
+    if (distance > 4) didDragRef.current = true;
+    setDragY(distance);
+  };
+  const endGrab = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (dragStartY.current === null) return;
+    const distance = Math.max(0, event.clientY - dragStartY.current);
+    dragStartY.current = null;
+    setGrabbing(false);
+    try { event.currentTarget.releasePointerCapture?.(event.pointerId); } catch { /* optionnel */ }
+    if (distance > 70) {
+      setDragY(520);
+      window.setTimeout(onClose, 300);
+    } else {
+      setDragY(0);
+    }
+  };
+
   return (
     <>
       <OverlaySheet
@@ -342,10 +374,13 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
         onClose={onClose}
         className="lkdv-post-drawer lkdv-post-glass-sheet"
         heading={feedPost ? <PostAuthorPill post={feedPost} /> : undefined}
+        dragY={dragY}
+        dragActive={grabbing}
         headerRight={<button type="button" className={`lkdv-post-options-trigger${optionsOpen ? ' is-open' : ''}`} aria-label={optionsOpen ? 'Fermer le menu' : 'Options'} aria-expanded={optionsOpen} onClick={() => setOptionsOpen((v) => !v)}>{optionsOpen ? <X size={18} /> : <MoreHorizontal size={18} />}</button>}
       >
+        <button type="button" className="lkdv-post-grab" aria-label="Fermer la publication" onPointerDown={startGrab} onPointerMove={moveGrab} onPointerUp={endGrab} onPointerCancel={() => { dragStartY.current = null; setDragY(0); }} onClick={() => { if (!didDragRef.current) onClose(); didDragRef.current = false; }} />
         {loading ? <div className="lkdv-overlay-empty"><p>Chargement…</p></div> : error || !post ? (
-          <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><DrawerButton onClick={() => void load()}>Réessayer</DrawerButton></div>
+          <div className="lkdv-overlay-empty" role="alert"><b>Publication indisponible</b><p>{error}</p><ActionPill label="Réessayer" icon={<RotateCcw />} onClick={() => void load()} /></div>
         ) : (
           <>
             <div className="lkdv-post-swipe">
@@ -353,56 +388,45 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'share' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="share" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
-                    <button type="button" className="lkdv-post-panel-close" onClick={onClose} aria-label="Fermer"><X size={16} /></button>
+                    <div className="lkdv-post-panel-author"><PostAuthorPill post={feedPost} /></div>
+                    <button type="button" className="lkdv-post-panel-close" onClick={() => { setPane('post'); void refreshDetail(); }} aria-label="Retour à la photo"><X size={16} /></button>
                     <PostSharePanel post={feedPost} user={user} onClose={() => { setPane('post'); void refreshDetail(); }} />
                   </div>
                 ) : null}
               </div>
 
               <div className="lkdv-lens-pane lkdv-post-pane">
-                <div className="lkdv-post-main">
-                  {currentMedia ? (
-                    <div className="lkdv-post-media-wrap">
-                      <div className="lkdv-post-media" onPointerDown={onMediaPointerDown} onPointerUp={onMediaPointerUp} onDoubleClick={burstLike}>
-                        {isCommunityVideoUrl(currentMedia)
-                          ? <CommunityVideo src={currentMedia} poster={media.find((url) => !isCommunityVideoUrl(url)) || undefined} />
-                          : <img src={currentMedia} alt={post.title || 'Publication'} draggable={false} />}
-                        {burst > 0 ? <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true"><Heart size={82} fill="currentColor" /></span> : null}
-                      </div>
-                      {post.soundtrackUrl ? (
-                        <div className="absolute bottom-3 left-3 z-20 max-w-[65%]" onPointerDown={(event) => event.stopPropagation()}>
-                          <CommunityPostSoundtrack
-                            url={post.soundtrackUrl}
-                            title={post.soundtrackTitle}
-                            creator={post.soundtrackCreator}
-                            sourceUrl={post.soundtrackSourceUrl}
-                          />
-                        </div>
-                      ) : null}
-                      {media.length > 1 ? <><button type="button" className="lkdv-post-media-nav is-left" aria-label="Précédent" onClick={() => setMediaIndex((i) => Math.max(0, i - 1))}><ChevronLeft size={18} /></button><button type="button" className="lkdv-post-media-nav is-right" aria-label="Suivant" onClick={() => setMediaIndex((i) => Math.min(media.length - 1, i + 1))}><ChevronRight size={18} /></button><span className="lkdv-post-media-count">{mediaIndex + 1}/{media.length}</span></> : null}
-                      <div className="lkdv-post-media-glass">
-                        <button type="button" className={post.userLiked ? 'on' : ''} onClick={() => void like()} aria-label={`Aimer (${post.likesCount})`} aria-pressed={post.userLiked}>
-                          <Heart key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} size={16} fill={post.userLiked ? 'currentColor' : 'none'} />
-                          <span key={`likes-${post.likesCount}`} className="lkdv-post-action-count">{formatCount(post.likesCount)}</span>
-                        </button>
-                        <button type="button" onClick={() => { haptic(6); setPane('comments'); }} aria-label={`Commenter (${post.commentsCount})`}>
-                          <MessageCircle size={16} />
-                          <span key={`comments-${post.commentsCount}`} className="lkdv-post-action-count">{formatCount(post.commentsCount)}</span>
-                        </button>
-                        <button type="button" onClick={() => { haptic(6); setPane('share'); }} aria-label={`Partager (${post.sharesCount})`}>
-                          <Send size={16} />
-                          <span key={`shares-${post.sharesCount}`} className="lkdv-post-action-count">{formatCount(post.sharesCount)}</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
+                <PostCardSurface
+                  mediaUrls={media}
+                  mediaIndex={mediaIndex}
+                  onMediaIndexChange={setMediaIndex}
+                  likesCount={post.likesCount}
+                  commentsCount={post.commentsCount}
+                  sharesCount={post.sharesCount}
+                  liked={post.userLiked}
+                  onLike={() => void like()}
+                  onComment={() => { haptic(6); setPane('comments'); }}
+                  onShare={() => { haptic(6); setPane('share'); }}
+                  onMediaDoubleClick={burstLike}
+                  onMediaPointerDown={onMediaPointerDown}
+                  onMediaPointerUp={onMediaPointerUp}
+                  burst={burst}
+                  likePulse={likePulse}
+                  isVideo={isCommunityVideoUrl(currentMedia ?? '')}
+                  videoPoster={media.find((url) => !isCommunityVideoUrl(url)) || undefined}
+                  soundtrack={post.soundtrackUrl ? {
+                    url: post.soundtrackUrl,
+                    title: post.soundtrackTitle,
+                    creator: post.soundtrackCreator,
+                    sourceUrl: post.soundtrackSourceUrl,
+                  } : null}
+                />
               </div>
-
               <div className="lkdv-lens-pane lkdv-post-pane">
                 {pane === 'comments' && feedPost ? (
                   <div className="lkdv-community-panel-slot" data-side="comments" onPointerDown={onPanelPointerDown} onPointerUp={onPanelPointerUp} onPointerCancel={() => { panelStart.current = null; }}>
-                    <button type="button" className="lkdv-post-panel-close" onClick={onClose} aria-label="Fermer"><X size={16} /></button>
+                    <div className="lkdv-post-panel-author"><PostAuthorPill post={feedPost} /></div>
+                    <button type="button" className="lkdv-post-panel-close" onClick={() => { setPane('post'); void refreshDetail(); }} aria-label="Retour à la photo"><X size={16} /></button>
                     <PostCommentsPanel post={feedPost} user={user} onClose={() => setPane('post')} focusCommentId={initialCommentId} />
                   </div>
                 ) : null}
@@ -431,7 +455,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
             </button> : null}
           </div>
         ) : null}
-        {deleteOpen ? <div className="lkdv-post-confirm"><b>Supprimer cette publication ?</b><p>Cette action est définitive.</p><div><DrawerButton tone="ghost" onClick={() => setDeleteOpen(false)}>Annuler</DrawerButton><DrawerButton tone="danger" disabled={busy} onClick={() => void remove()}>Supprimer</DrawerButton></div></div> : null}
+        {deleteOpen ? <div className="lkdv-post-confirm"><b>Supprimer cette publication ?</b><p>Cette action est définitive.</p><div><ActionPill label="Annuler" icon={<X />} onClick={() => setDeleteOpen(false)} /><ActionPill tone="danger" label="Supprimer" icon={<Trash2 />} busy={busy} onClick={() => void remove()} /></div></div> : null}
         {toast ? <div className="lkdv-post-toast" role="status">{toast}</div> : null}
       </OverlaySheet>
 

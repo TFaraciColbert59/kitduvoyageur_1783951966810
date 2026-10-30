@@ -245,7 +245,7 @@
    ouvert on la sort de l’echelle visuelle. `opacity` et non `visibility` :
    la barre reste focusable, et la restitution du focus (qui passe apres la
    fermeture) dispose toujours de sa cible. */
-html[data-had-open='true'] .lkv-nav-surface {
+html[data-had-open='true'] .lkdv-floating-tabbar {
   opacity: 0;
   pointer-events: none;
   transition:

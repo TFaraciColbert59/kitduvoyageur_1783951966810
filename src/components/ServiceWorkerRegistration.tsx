@@ -16,15 +16,26 @@ export default function ServiceWorkerRegistration() {
     if (process.env.NODE_ENV !== 'production') return;
     if (isNative() || !('serviceWorker' in navigator)) return;
 
+    let reloading = false;
+    const onControllerChange = () => {
+      if (reloading) return;
+      reloading = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+
     const register = () => {
-      navigator.serviceWorker.register('/sw.js').then(
-        (registration) => {
-          console.info('ServiceWorker registration successful with scope: ', registration.scope);
-        },
-        (err) => {
-          console.info('ServiceWorker registration failed: ', err);
-        }
-      );
+      navigator.serviceWorker
+        .register('/sw.js?v=22', { updateViaCache: 'none' })
+        .then((registration) => registration.update())
+        .then(
+          (registration) => {
+            console.info('ServiceWorker registration successful with scope: ', registration?.scope);
+          },
+          (err) => {
+            console.info('ServiceWorker registration failed: ', err);
+          }
+        );
     };
 
     if (document.readyState === 'complete') {
@@ -32,7 +43,10 @@ export default function ServiceWorkerRegistration() {
       return;
     }
     window.addEventListener('load', register, { once: true });
-    return () => window.removeEventListener('load', register);
+    return () => {
+      window.removeEventListener('load', register);
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+    };
   }, []);
 
   return null;

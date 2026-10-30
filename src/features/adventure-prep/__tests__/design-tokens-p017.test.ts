@@ -72,7 +72,9 @@ for (const { file, css } of sources) {
   });
 }
 
-const orphelins = referenced.filter((r) => !declared.has(r.token));
+// Variables posées à l'exécution par le Compte (style inline), invisibles en CSS.
+const INLINE_RUNTIME = new Set(['--p', '--c', '--bgc', '--n']);
+const orphelins = referenced.filter((r) => !declared.has(r.token) && !INLINE_RUNTIME.has(r.token));
 
 describe("P0.17 — jetons CSS references sans etre definis", () => {
   it("la feuille du preparateur est bien lue (garde-fou du test lui-meme)", () => {

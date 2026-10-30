@@ -3,12 +3,13 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, ExternalLink, HelpCircle, Package, ShoppingBag } from 'lucide-react';
+import { ChevronDown, HelpCircle, Package, ShoppingBag, Truck } from 'lucide-react';
 import {
   ORDER_STEPS,
   orderStageLabel,
   type OrderSummary,
 } from '@/features/compte/server/compte';
+import { ActionPill } from '@/components/ui/ActionPill';
 import { DrawerEmpty, DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { fetchJson, formatMoney, formatOrderDate } from './shared';
 
@@ -40,7 +41,6 @@ export function OrdersPane({ filter = 0 }: { filter?: number }) {
         <b>
           {active} en cours · {past} passée{past > 1 ? 's' : ''}
         </b>
-        <span>Suivi réel de tes achats LKDV.</span>
       </div>
 
       {filtered.length === 0 ? (
@@ -53,8 +53,8 @@ export function OrdersPane({ filter = 0 }: { filter?: number }) {
           }
           action={
             orders.length === 0 ? (
-              <Link href="/boutique" className="lkdv-compte-btn primary">
-                <ShoppingBag size={15} aria-hidden="true" /> Découvrir la boutique
+              <Link href="/boutique" className="lkdv-apill is-primary has-text">
+                <ShoppingBag aria-hidden="true" /> <span>Boutique</span>
               </Link>
             ) : undefined
           }
@@ -76,7 +76,7 @@ export function OrdersPane({ filter = 0 }: { filter?: number }) {
                 </header>
 
                 {cancelled ? (
-                  <p className="lkdv-compte-order-cancel">Cette commande a été annulée. Aucun paiement n’est prélevé.</p>
+                  <p className="lkdv-compte-order-cancel">Commande annulée, rien n’est prélevé.</p>
                 ) : (
                   <div className="lkdv-compte-stepper" aria-label={`Suivi : ${orderStageLabel(order.status)}`}>
                     {ORDER_STEPS.map((step, index) => (
@@ -110,28 +110,33 @@ export function OrdersPane({ filter = 0 }: { filter?: number }) {
                   <b>{formatMoney(order.totalCents)}</b>
                 </div>
 
-                <div className="lkdv-compte-order-actions">
+                <div className="lkdv-compte-order-actions lkdv-apill-row">
                   {order.trackingUrl ? (
                     <a
-                      className="lkdv-compte-btn primary"
+                      className="lkdv-apill is-primary"
                       href={order.trackingUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label="Suivre le colis"
+                      title="Suivre le colis"
                     >
-                      <ExternalLink size={14} aria-hidden="true" /> Suivre
+                      <Truck aria-hidden="true" />
                     </a>
                   ) : null}
-                  <Link className="lkdv-compte-btn ghost" href={`/contact?commande=${encodeURIComponent(order.reference)}`}>
-                    <HelpCircle size={14} aria-hidden="true" /> Aide
+                  <Link
+                    className="lkdv-apill"
+                    href={`/contact?commande=${encodeURIComponent(order.reference)}`}
+                    aria-label="Aide sur la commande"
+                    title="Aide sur la commande"
+                  >
+                    <HelpCircle aria-hidden="true" />
                   </Link>
-                  <button
-                    type="button"
-                    className="lkdv-compte-btn ghost"
+                  <ActionPill
+                    label="Détails"
+                    icon={<ChevronDown style={{ transform: expanded ? 'rotate(180deg)' : undefined }} />}
                     onClick={() => setOpenId(expanded ? null : order.id)}
                     aria-expanded={expanded}
-                  >
-                    <ChevronDown size={14} aria-hidden="true" /> Détails
-                  </button>
+                  />
                 </div>
 
                 {expanded ? (

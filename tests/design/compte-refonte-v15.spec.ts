@@ -7,10 +7,7 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 Liquid Glass v15 — sélecteur superposé, drawers sur les bords de la card & post minimal', () => {
-  const v8Source =
-    read('src/components/compte/CompteLiquidGlassV8.tsx') +
-    '\n' + read('src/components/compte/compte-v8.css') +
-    '\n' + read('src/components/compte/compte-apple-hig.css');
+  const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx');
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
   const v15Source = v8Source.slice(v8Source.indexOf('Compte iOS 27 v15'));
   const finalCard = runtimeSource.slice(runtimeSource.lastIndexOf('card = function ()'));

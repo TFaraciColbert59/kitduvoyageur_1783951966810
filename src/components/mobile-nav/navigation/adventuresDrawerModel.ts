@@ -60,7 +60,7 @@ export const FREE_ACTION: DrawerAction = {
   id: 'libre',
   label: 'Partir librement',
   description: 'Sans préparation, tu pars tout de suite.',
-  href: '/partir-librement',
+  href: '/compas',
   icon: 'navigation',
   variant: 'secondary',
 };

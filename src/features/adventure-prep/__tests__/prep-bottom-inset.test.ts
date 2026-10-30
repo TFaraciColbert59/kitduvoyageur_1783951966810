@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
  *   `--prep-bottom-inset` calcule 68 px au lieu des 108 px requis
  *
  * La cause etait un `--bottom-nav-height` publie uniquement par `AppShell`,
- * dont `/prepare` n'est pas descendant. Deux garde-fous ici :
+ * dont `/compas` n'est pas descendant. Deux garde-fous ici :
  *   1. `--prep-bottom-inset` doit TOUJOURS passer par la variable publiee,
  *      jamais par une valeur figee ;
  *   2. la barre doit publier la variable (le greffon est monte par
@@ -35,8 +35,7 @@ const webNav = readFileSync(
     '..',
     'components',
     'mobile-nav',
-    'navigation',
-    'WebNavigationBar.tsx',
+    'FloatingLiquidTabBar.tsx',
   ),
   'utf8',
 );

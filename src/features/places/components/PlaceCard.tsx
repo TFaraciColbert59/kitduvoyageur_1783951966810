@@ -20,7 +20,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
 
   return (
     <div className="group relative flex h-full flex-col">
-      <Link href={`/lieux/${place.slug}`} className="block flex-1 no-underline">
+      <Link href={'/explorer'} className="block flex-1 no-underline">
         <Card
           variant="interactive"
           className="flex h-full flex-col justify-between p-5"

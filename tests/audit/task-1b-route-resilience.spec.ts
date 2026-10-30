@@ -368,7 +368,8 @@ describe('Task 1B — configuration et contexts', () => {
     // et next.config.mjs la derive. On interroge la source unique.
     const sources = ACTIVE_ROUTES.map((route) => route.source);
 
-    expect(sources).not.toContain('/boutique');
+    // Depuis le 24/10/2026, /boutique est redirigée vers /explorer.
+    expect(sources).toContain('/boutique');
     expect(sources).not.toContain('/manifeste');
     // /carte-interactive reste une page cartographique vivante : la
     // rediriger vers /prepare supprimerait la carte (D-17).

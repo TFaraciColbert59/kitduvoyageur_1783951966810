@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import dynamic from 'next/dynamic';
 import { SlotSelector } from './SlotSelector';
 import { LENS_ICONS } from './lensIcons';
 import {
@@ -14,13 +13,47 @@ import {
   type Visibility,
 } from './SlotShell';
 import { PrivateAccountLock, profileIdentityFromPayload } from './PrivateAccountLock';
-const VitrineSlot = dynamic(() => import('./slots/VitrineSlot').then((mod) => mod.VitrineSlot), { ssr: false });
-const KitSlot = dynamic(() => import('./slots/KitSlot').then((mod) => mod.KitSlot), { ssr: false });
-const LoansSlot = dynamic(() => import('./slots/LoansSlot').then((mod) => mod.LoansSlot), { ssr: false });
-const MemoriesSlot = dynamic(() => import('./slots/MemoriesSlot').then((mod) => mod.MemoriesSlot), { ssr: false });
-const CommunitySlot = dynamic(() => import('./slots/CommunitySlot').then((mod) => mod.CommunitySlot), { ssr: false });
+import { KitSlot } from './slots/KitSlot';
+import { LoansSlot } from './slots/LoansSlot';
+import { MemoriesSlot } from './slots/MemoriesSlot';
+import { CommunitySlot } from './slots/CommunitySlot';
+import { VitrineSlot } from './slots/VitrineSlot';
 
 export type { SlotId, Viewer, Visibility } from './SlotShell';
+
+class SlotErrorBoundary extends React.Component<
+  { children: React.ReactNode; resetKey: string },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidUpdate(previous: { resetKey: string }) {
+    if (previous.resetKey !== this.props.resetKey && this.state.error) {
+      this.setState({ error: null });
+    }
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="lkdv-slot-error" role="alert">
+          <b>Ce volet n’a pas pu s’afficher.</b>
+          <p>Les autres volets du profil restent disponibles.</p>
+          <button type="button" onClick={() => this.setState({ error: null })}>
+            Réessayer
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+
 
 
 export interface ProfileDrawerHostProps {
@@ -224,7 +257,11 @@ export function ProfileDrawerHost({
         state={state}
         onRetry={onRetry}
         errorLabel="Impossible de charger ce profil."
-        renderLens={(lens) => renderSlotContent(slot, lens, slotPayload, viewer)}
+        renderLens={(lens) => (
+          <SlotErrorBoundary resetKey={`${slot}-${lens.id}`}>
+            {renderSlotContent(slot, lens, slotPayload, viewer)}
+          </SlotErrorBoundary>
+        )}
         selector={<SlotSelector activeSlot={slot} onSlotChange={handleSlotChange} />}
       />
       </div>

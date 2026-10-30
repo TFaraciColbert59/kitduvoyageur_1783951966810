@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { wearPercent } from './WearGauge';
 import { formatEuro, formatHistoryLine, formatWeight } from './format';
 import { generatedProductImage } from './productImage';
-import { FileText, GitFork, Layers, LayoutGrid, Package, Share2 } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Coins, Compass, Download, FileText, GitFork, History, Layers, LayoutGrid, Package, Share2 } from 'lucide-react';
 
 export type KitViewer = 'owner' | 'visitor';
 
@@ -20,6 +20,13 @@ export interface KitProductView {
   brand: string | null;
   description: string | null;
   image: string | null;
+  priceCents?: number | null;
+  purchaseDate?: string | null;
+  maintenanceDueAt?: string | null;
+  isLent?: boolean | null;
+  status?: string | null;
+  location?: string | null;
+  tags?: string[] | null;
 }
 
 export interface KitEntry {
@@ -54,7 +61,7 @@ export interface KitCardProps {
   payload?: unknown;
 }
 
-type ActionKind = 'fork' | 'share' | 'sheet' | 'royalties' | 'history' | 'discovery';
+type ActionKind = 'fork' | 'share' | 'sheet' | 'royalties' | 'history' | 'discovery' | 'export' | 'calendar';
 
 interface ActionPanel {
   title: string;
@@ -62,11 +69,22 @@ interface ActionPanel {
   href?: string;
 }
 
+interface KitInsight {
+  title: string;
+  lines: string[];
+}
+
 interface KitSheetResponse {
   kit?: {
     name?: string | null;
+    description?: string | null;
     parent_name?: string | null;
     is_public?: boolean | null;
+    is_souche?: boolean | null;
+    total_weight_g?: number | null;
+    generation?: number | null;
+    field_proven_count?: number | null;
+    created_at?: string | null;
   } | null;
   journal?: unknown;
   trust?: {
@@ -191,12 +209,40 @@ function kitIdOf(kit: KitEntry): string {
  * référencement, royalties, historique, découverte) : aucune route n'est
  * réinventée, aucune donnée n'est simulée.
  */
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function kitProductImage(product: KitProductView, size = 96): string {
   return product.image || generatedProductImage(product.name, size);
 }
 
 function kitFact(value: string | null | undefined): string {
   return value?.trim() || '—';
+}
+
+function kitDateLabel(value: string | null | undefined): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function kitStatusLabel(value: string | null | undefined): string {
+  const key = value?.trim().toLowerCase();
+  if (!key) return '';
+  if (key === 'available' || key === 'disponible') return 'Disponible';
+  if (key === 'maintenance') return 'Entretien';
+  if (key === 'lost' || key === 'perdu') return 'Perdu';
+  if (key === 'retired' || key === 'retire') return 'Retiré';
+  return value!.trim();
 }
 
 function kitPriorityLabel(value: string | null | undefined): string {
@@ -227,7 +273,6 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
     Math.round(firstNumber(kit.quantity) ?? products.reduce((total, product) => total + product.quantity, 0))
   ) || kitItemCount(kit);
   const wear = wearPercent(kit.outings);
-  const generation = kitGeneration(kit);
   const [view, setView] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(products[0]?.id ?? null);
   const [dragX, setDragX] = useState(0);
@@ -237,8 +282,17 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<ActionPanel | null>(null);
+  const [insights, setInsights] = useState<KitInsight[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
 
   const selectedProduct = products.find((product) => product.id === selectedId) ?? products[0] ?? null;
+  const selectedIndex = Math.max(0, products.findIndex((product) => product.id === selectedProduct?.id));
+  const goProduct = (delta: number) => {
+    if (products.length < 2) return;
+    const next = (selectedIndex + delta + products.length) % products.length;
+    setSelectedId(products[next].id);
+    haptic(7);
+  };
 
   useEffect(() => {
     setView(0);
@@ -249,6 +303,92 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
   useEffect(() => {
     if (!selectedId && products[0]) setSelectedId(products[0].id);
   }, [products, selectedId]);
+
+  useEffect(() => {
+    if (view !== 2 || !kitId) return;
+    let cancelled = false;
+    setInsightsLoading(true);
+    setInsights([]);
+    const json = async (url: string, init?: RequestInit) => {
+      try {
+        const response = await fetch(url, init);
+        return response.ok ? await response.json() : null;
+      } catch {
+        return null;
+      }
+    };
+    Promise.all([
+      json(`/api/kits/${encodeURIComponent(kitId)}/sheet`),
+      json('/api/kits/my-royalties'),
+      json(`/api/materiel/kits/${encodeURIComponent(kitId)}/history`),
+      json('/api/kits/discovery'),
+    ]).then(([sheet, royalties, history, discovery]) => {
+      if (cancelled) return;
+      const sections: KitInsight[] = [];
+      if (sheet) {
+        const data = sheet as KitSheetResponse;
+        const sheetName = firstString(data.kit?.name, name);
+        const lines: string[] = [];
+        const description = firstString(data.kit?.description);
+        if (description) lines.push(description);
+        const totalWeight = firstNumber(data.kit?.total_weight_g);
+        if (totalWeight !== null && totalWeight > 0) lines.push(`Poids total : ${formatWeight(totalWeight)}.`);
+        const generation = firstNumber(data.kit?.generation);
+        if (generation !== null && generation > 0) lines.push(`Génération : G${Math.round(generation)}.`);
+        if (data.kit?.is_souche) lines.push('Kit souche.');
+        const proven = firstNumber(data.kit?.field_proven_count);
+        if (proven !== null && proven > 0) lines.push(`${Math.round(proven)} preuve${Math.round(proven) === 1 ? '' : 's'} terrain.`);
+        const parentName = firstString(data.kit?.parent_name);
+        if (parentName) lines.push(`Adapté de ${parentName}.`);
+        const endurance = firstNumber(data.trust?.endurance_score);
+        if (endurance !== null) lines.push(`Indice d’endurance : ${endurance.toFixed(2)}.`);
+        const sessions = firstNumber(data.trust?.sessions_count);
+        if (sessions !== null) lines.push(`Sorties suivies : ${Math.round(sessions)}.`);
+        if (data.kit?.is_public) lines.push('Kit public : visible dans la découverte.');
+        const created = kitDateLabel(data.kit?.created_at);
+        if (created) lines.push(`Créé le ${created}.`);
+        if (lines.length) sections.push({ title: `Fiche · ${sheetName}`, lines });
+      }
+      if (royalties) {
+        const data = royalties as { shares?: RoyaltyShare[]; ledger?: RoyaltyLedgerEntry[] };
+        const shares = Array.isArray(data.shares) ? data.shares : [];
+        const ledger = Array.isArray(data.ledger) ? data.ledger : [];
+        const shareCents = shares.reduce((total, share) => total + Number(share.share_cents ?? 0), 0);
+        const ledgerCents = ledger.reduce((total, entry) => entry.entry_type === 'credit' ? total + Number(entry.amount_cents ?? 0) : total, 0);
+        const lines = [
+          `${shares.length} part${shares.length > 1 ? 's' : ''} créateur.`,
+          `Crédit boutique : ${formatEuro(ledgerCents / 100) ?? '0,00 €'}.`,
+        ];
+        if (shareCents > 0) lines.push(`Parts cumulées : ${formatEuro(shareCents / 100)}.`);
+        sections.push({ title: 'Royalties', lines });
+      }
+      if (history) {
+        const data = history as { entries?: HistoryEntry[] };
+        const entries = Array.isArray(data.entries) ? data.entries : [];
+        const lines = entries.map(formatHistoryLine).filter((line): line is string => Boolean(line)).slice(0, 5);
+        if (lines.length) sections.push({ title: 'Historique', lines });
+      }
+      if (discovery) {
+        const data = discovery as { lineages?: DiscoveryLineage[]; items?: DiscoveryItem[] };
+        const lineages = Array.isArray(data.lineages) ? data.lineages : [];
+        const items = Array.isArray(data.items) ? data.items : [];
+        const lines = [
+          ...lineages.slice(0, 3).map((lineage) => {
+            const lineageName = firstString(lineage.kit_name) || 'Lignée';
+            const endurance = firstNumber(lineage.endurance_score);
+            return endurance === null ? lineageName : `${lineageName} · endurance ${endurance.toFixed(2)}`;
+          }),
+          ...items.slice(0, 2).map((item) => {
+            const kept = firstNumber(item.kept_count);
+            return kept === null ? 'Objet conservé sur le terrain.' : `Objet gardé dans ${Math.round(kept)} fork${Math.round(kept) === 1 ? '' : 's'}.`;
+          }),
+        ];
+        if (lines.length) sections.push({ title: 'Découverte', lines });
+      }
+      setInsights(sections);
+    }).finally(() => { if (!cancelled) setInsightsLoading(false); });
+    return () => { cancelled = true; };
+  }, [view, kitId, name]);
 
   const haptic = (pattern: number | number[] = 8) => {
     try { navigator.vibrate?.(pattern); } catch { /* optionnel */ }
@@ -517,36 +657,40 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
     );
   };
 
+  const exportKit = () => {
+    const id = requireKitId();
+    if (!id) return;
+    void run(
+      'export',
+      async () => {
+        const response = await fetch('/api/materiel/export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ format: 'json', scope: 'kit', kit_id: id }),
+        });
+        if (!response.ok) throw new KitActionError('Export du kit indisponible.');
+        downloadBlob(await response.blob(), `kit-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.json`);
+        setNotice('Export du kit téléchargé.');
+      },
+      'Export du kit indisponible.'
+    );
+  };
+
+  const exportCalendar = () => {
+    void run(
+      'calendar',
+      async () => {
+        const response = await fetch('/api/materiel/calendar');
+        if (!response.ok) throw new KitActionError('Calendrier indisponible.');
+        downloadBlob(await response.blob(), 'retours-prets.ics');
+        setNotice('Calendrier des retours téléchargé.');
+      },
+      'Calendrier indisponible.'
+    );
+  };
+
   const owner = viewerMode === 'owner';
   const actionDisabled = !kitId || busy !== null;
-  const kitFeedback = (
-    <>
-      {panel ? (
-        <section className="lkdv-kit-panel" role="region" aria-label={panel.title}>
-          <h4>{panel.title}</h4>
-          {panel.lines.map((line, index) => <p key={`${panel.title}-${index}`}>{line}</p>)}
-          {panel.href ? <a className="lkdv-kit-panel-link" href={panel.href}>Ouvrir le lien</a> : null}
-        </section>
-      ) : null}
-      {notice ? <p className="lkdv-kit-notice" role="status">{notice}</p> : null}
-      {error ? <p className="lkdv-kit-error" role="alert">{error}</p> : null}
-    </>
-  );
-  const kitActions = owner ? (
-    <div className="lkdv-kit-direct-actions" role="group" aria-label={`Actions du kit ${name}`}>
-      <button type="button" disabled={actionDisabled} onClick={() => void forkKit()} aria-label="Récupérer"><GitFork size={15} /><span>Récupérer</span></button>
-      <button type="button" disabled={actionDisabled} onClick={() => void shareKit()} aria-label="Partager"><Share2 size={15} /><span>Partager</span></button>
-      <button type="button" disabled={actionDisabled} onClick={() => openSheet()} aria-label="Fiche"><FileText size={15} /><span>Fiche</span></button>
-      <details className="lkdv-kit-more-actions">
-        <summary>Autres actions du kit</summary>
-        <div>
-          <button type="button" disabled={actionDisabled} onClick={openRoyalties} aria-label="Royalties">Royalties</button>
-          <button type="button" disabled={actionDisabled} onClick={openHistory} aria-label="Historique">Historique</button>
-          <button type="button" disabled={actionDisabled} onClick={openDiscovery} aria-label="Découvrir">Découvrir</button>
-        </div>
-      </details>
-    </div>
-  ) : null;
   const trackStyle: React.CSSProperties = {
     transform: `translateX(calc(${-view * 100}% + ${dragX}px))`,
   };
@@ -569,7 +713,7 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
       >
         <div className={`lkdv-kit-track${dragging ? ' is-dragging' : ''}`} style={trackStyle}>
           <section className="lkdv-kit-pane" data-view="base" aria-hidden={view !== 0}>
-            <div className={`lkdv-kit-base${!products.length ? ' lkdv-kit-base--empty' : ''}`}>
+            <div className="lkdv-kit-base">
               <div className="lkdv-kit-base-main">
                 <h3 className="lkdv-kit-name">{name}</h3>
                 <p className="lkdv-kit-base-meta">
@@ -577,14 +721,6 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                   <span aria-hidden="true">·</span>
                   <span>{quantity} pièce{quantity === 1 ? '' : 's'}</span>
                 </p>
-                <div className="lkdv-kit-lineage" role="group" aria-label={`Filiation du kit ${name}`}>
-                  {[1, 2, 3].map((step) => (
-                    <React.Fragment key={step}>
-                      {step > 1 ? <span aria-hidden="true">→</span> : null}
-                      <span aria-current={step === generation ? 'step' : undefined}>G{step}</span>
-                    </React.Fragment>
-                  ))}
-                </div>
                 <div
                   className="lkdv-kit-wear"
                   data-due={wear !== null && wear >= 80 ? 'true' : 'false'}
@@ -598,7 +734,6 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                   <i style={{ width: `${wear ?? 0}%` }} />
                 </div>
               </div>
-              {!products.length ? <>{kitFeedback}{kitActions}</> : null}
               <div className="lkdv-kit-rail" aria-label={`Produits du kit ${name}`}>
                 {products.length ? products.map((product) => (
                   <button
@@ -643,7 +778,16 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
               {selectedProduct ? (
                 <div className="lkdv-kit-product-scroll">
                   <div className="lkdv-kit-product-hero">
-                    <img src={kitProductImage(selectedProduct, 192)} alt="" loading="lazy" decoding="async" draggable={false} />
+                    <div className="lkdv-kit-product-visual">
+                      <img src={kitProductImage(selectedProduct, 192)} alt="" loading="lazy" decoding="async" draggable={false} />
+                      {products.length > 1 ? (
+                        <>
+                          <button type="button" className="lkdv-kit-product-nav is-left" aria-label="Produit précédent" onClick={() => goProduct(-1)}><ChevronLeft size={14} /></button>
+                          <button type="button" className="lkdv-kit-product-nav is-right" aria-label="Produit suivant" onClick={() => goProduct(1)}><ChevronRight size={14} /></button>
+                          <span className="lkdv-kit-product-index">{selectedIndex + 1}/{products.length}</span>
+                        </>
+                      ) : null}
+                    </div>
                     <div className="lkdv-kit-product-identity">
                       <h3>{selectedProduct.name}</h3>
                       {(selectedProduct.brand || selectedProduct.category) ? (
@@ -653,6 +797,8 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                         {selectedProduct.category ? <span>{selectedProduct.category}</span> : null}
                         {selectedProduct.priority ? <span data-tone="priority">{kitPriorityLabel(selectedProduct.priority)}</span> : null}
                         {selectedProduct.vital ? <span data-tone="vital">Vital</span> : null}
+                        {selectedProduct.isLent ? <span data-tone="vital">Prêté</span> : null}
+                        {selectedProduct.status ? <span data-tone="priority">{kitStatusLabel(selectedProduct.status)}</span> : null}
                       </div>
                     </div>
                   </div>
@@ -670,8 +816,26 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                       <div><span>Poids</span><b>{formatWeight(selectedProduct.weightG)}</b></div>
                       <div><span>Quantité</span><b>×{selectedProduct.quantity}</b></div>
                       {selectedProduct.condition ? <div><span>État</span><b>{kitFact(selectedProduct.condition)}</b></div> : null}
+                      {owner && selectedProduct.priceCents ? <div><span>Prix</span><b>{formatEuro(selectedProduct.priceCents / 100)}</b></div> : null}
+                      {owner && selectedProduct.purchaseDate ? <div><span>Acheté le</span><b>{kitDateLabel(selectedProduct.purchaseDate)}</b></div> : null}
                     </div>
                   </section>
+
+                  {owner && (selectedProduct.maintenanceDueAt || selectedProduct.location) ? (
+                    <section className="lkdv-kit-product-section">
+                      <h4>Suivi</h4>
+                      <div className="lkdv-kit-facts">
+                        {selectedProduct.maintenanceDueAt ? <div><span>Entretien</span><b>{kitDateLabel(selectedProduct.maintenanceDueAt)}</b></div> : null}
+                        {selectedProduct.location ? <div><span>Rangement</span><b>{selectedProduct.location}</b></div> : null}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {selectedProduct.tags && selectedProduct.tags.length > 0 ? (
+                    <div className="lkdv-kit-product-chips">
+                      {selectedProduct.tags.slice(0, 6).map((tag) => <span key={tag}>{tag}</span>)}
+                    </div>
+                  ) : null}
 
                   {selectedProduct.description ? (
                     <section className="lkdv-kit-product-section">
@@ -680,8 +844,23 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
                     </section>
                   ) : null}
 
-                  {kitFeedback}
-                  {kitActions}
+                  {insightsLoading ? <p className="lkdv-kit-insight-loading">Chargement des informations…</p> : null}
+                  {insights.map((insight) => (
+                    <section key={insight.title} className="lkdv-kit-insight" aria-label={insight.title}>
+                      <h4>{insight.title}</h4>
+                      {insight.lines.map((line) => <p key={`${insight.title}-${line}`}>{line}</p>)}
+                    </section>
+                  ))}
+
+                  {panel ? (
+                    <section className="lkdv-kit-panel" role="region" aria-label={panel.title}>
+                      <h4>{panel.title}</h4>
+                      {panel.lines.map((line, index) => <p key={`${panel.title}-${index}`}>{line}</p>)}
+                      {panel.href ? <a className="lkdv-kit-panel-link" href={panel.href}>Ouvrir le lien</a> : null}
+                    </section>
+                  ) : null}
+                  {notice ? <p className="lkdv-kit-notice" role="status">{notice}</p> : null}
+                  {error ? <p className="lkdv-kit-error" role="alert">{error}</p> : null}
                 </div>
               ) : (
                 <p className="lkdv-kit-empty">Choisis un produit dans la composition.</p>
@@ -730,16 +909,13 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-card-v2[data-view="2"] .lkdv-kit-pane[data-view="product"]{opacity:1!important;transform:none!important;}
 .lkdv-kit-track.is-dragging .lkdv-kit-pane{transition:none!important;}
 .lkdv-kit-base{display:grid!important;grid-template-columns:72px minmax(0,1fr)!important;gap:8px!important;height:100%!important;min-width:0!important;}
-.lkdv-kit-base--empty{display:flex!important;flex-direction:column!important;overflow-y:auto!important;overscroll-behavior:contain!important;}
-.lkdv-kit-base--empty .lkdv-kit-base-main{flex:none!important;}
-.lkdv-kit-base--empty .lkdv-kit-rail{display:none!important;}
 .lkdv-kit-base-main{grid-column:2!important;grid-row:1!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:7px!important;min-width:0!important;}
 .lkdv-kit-name{margin:0!important;font:700 15.5px/1.18 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;letter-spacing:-.015em!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
 .lkdv-kit-base-meta{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:4px!important;margin:0!important;font:500 11.5px/1.25 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif)!important;color:var(--label2,#56665D)!important;font-variant-numeric:tabular-nums!important;}
 .lkdv-kit-wear{height:4px!important;border-radius:999px!important;background:rgba(23,43,36,.1)!important;overflow:hidden!important;margin-top:2px!important;}
 .lkdv-kit-wear i{display:block!important;height:100%!important;border-radius:999px!important;background:linear-gradient(90deg,#5B7F55,#3D7A52)!important;transition:width .3s ease!important;}
 .lkdv-kit-wear[data-due="true"] i{background:linear-gradient(90deg,#C9A34A,#A97D22)!important;}
-.lkdv-kit-rail{grid-column:1!important;grid-row:1!important;display:flex!important;flex-direction:column!important;gap:6px!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:2px 1px!important;scrollbar-width:none!important;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;}
+.lkdv-kit-rail{grid-column:1!important;grid-row:1!important;align-self:start!important;height:calc(100% + 48px)!important;margin-bottom:-48px!important;display:flex!important;flex-direction:column!important;gap:6px!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:2px 1px!important;scrollbar-width:none!important;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;mask-image:linear-gradient(180deg,transparent 0,#000 8px,#000 calc(100% - 8px),transparent 100%)!important;}
 .lkdv-kit-rail::-webkit-scrollbar{display:none!important;}
 .lkdv-kit-rail-item{width:52px!important;height:52px!important;flex:none!important;padding:0!important;border:0!important;border-radius:12px!important;overflow:hidden!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;cursor:pointer!important;transition:transform .2s cubic-bezier(.3,1.4,.5,1)!important;}
 .lkdv-kit-rail-item:active{transform:scale(.93)!important;}
@@ -757,7 +933,12 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-comp-txt small{font:500 10px/1.25 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-product-scroll{display:flex!important;flex-direction:column!important;gap:7px!important;padding-bottom:48px!important;}
 .lkdv-kit-product-hero{display:flex!important;align-items:center!important;gap:11px!important;min-width:0!important;}
-.lkdv-kit-product-hero img{width:92px!important;height:92px!important;flex:none!important;border-radius:14px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
+.lkdv-kit-product-visual{position:relative!important;flex:none!important;}
+.lkdv-kit-product-hero img{width:112px!important;height:112px!important;flex:none!important;border-radius:14px!important;object-fit:cover!important;background:rgba(236,244,233,.8)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
+.lkdv-kit-product-nav{position:absolute!important;top:50%!important;z-index:4!important;width:24px!important;height:24px!important;margin-top:-12px!important;padding:0!important;border:.5px solid rgba(255,255,255,.75)!important;border-radius:999px!important;background:rgba(255,255,255,.72)!important;-webkit-backdrop-filter:blur(12px)!important;backdrop-filter:blur(12px)!important;color:#17402C!important;display:grid!important;place-items:center!important;cursor:pointer!important;}
+.lkdv-kit-product-nav.is-left{left:4px!important;}
+.lkdv-kit-product-nav.is-right{right:4px!important;}
+.lkdv-kit-product-index{position:absolute!important;right:5px!important;bottom:5px!important;padding:1px 5px!important;border-radius:999px!important;background:rgba(10,20,14,.5)!important;color:#fff!important;font:600 8px/1.2 var(--sf)!important;}
 .lkdv-kit-product-hero h3{margin:0!important;font:700 15px/1.18 var(--sf)!important;color:var(--label,#17402C)!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;}
 .lkdv-kit-product-hero p{margin:3px 0 0!important;font:500 10.5px/1.25 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-facts{display:grid!important;grid-template-columns:1fr 1fr!important;gap:4px!important;}
@@ -772,19 +953,17 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-product-context{margin:0!important;font:500 10px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .lkdv-kit-product-section{display:flex!important;flex-direction:column!important;gap:4px!important;}
 .lkdv-kit-product-section h4{margin:0!important;font:700 9.5px/1.2 var(--sf)!important;color:var(--label2,#56665D)!important;text-transform:uppercase!important;letter-spacing:.06em!important;}
+.lkdv-kit-insight{display:flex!important;flex-direction:column!important;gap:3px!important;padding:7px 9px!important;border-radius:11px!important;background:rgba(255,255,255,.34)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;}
+.lkdv-kit-insight h4{margin:0!important;font:700 9px/1.2 var(--sf)!important;color:var(--label2,#56665D)!important;text-transform:uppercase!important;letter-spacing:.05em!important;}
+.lkdv-kit-insight p{margin:0!important;font:400 10px/1.35 var(--sf)!important;color:var(--label2,#56665D)!important;}
+.lkdv-kit-insight-loading{margin:0!important;font:400 10px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-product-desc{margin:0!important;font:400 11px/1.4 var(--sf)!important;color:var(--label2,#56665D)!important;}
 .lkdv-kit-vital{align-self:flex-start!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.1)!important;color:#17402C!important;font:700 9px/1.2 var(--sf)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
-.lkdv-kit-lineage{display:flex;align-items:center;gap:5px;font:500 9px/1.2 var(--sf);color:var(--label2);}
-.lkdv-kit-lineage [aria-current="step"]{font-weight:700;color:var(--tint);}
-.lkdv-kit-more-actions{grid-column:1/-1;}
-.lkdv-kit-more-actions summary{display:list-item;min-height:44px;align-content:center;font:600 10px/1.2 var(--sf);cursor:pointer;}
-.lkdv-kit-more-actions>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
-.lkdv-kit-more-actions>div button{min-height:44px!important;}
-.lkdv-kit-direct-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin-top:1px!important;}
-.lkdv-kit-direct-actions button{display:flex!important;align-items:center!important;justify-content:center!important;gap:4px!important;height:32px!important;min-height:32px!important;padding:0 5px!important;border:.5px solid rgba(255,255,255,.75)!important;border-radius:999px!important;background:rgba(255,255,255,.4)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;color:#17402C!important;font:600 9px/1 var(--sf)!important;cursor:pointer!important;white-space:nowrap!important;}
-.lkdv-kit-direct-actions button:active{transform:scale(.95)!important;}
-.lkdv-kit-direct-actions button:disabled{opacity:.45!important;}
 .lkdv-kit-empty{display:grid!important;place-items:center!important;height:100%!important;margin:0!important;font:500 11px/1.3 var(--sf)!important;color:var(--label2,#56665D)!important;text-align:center!important;}
+.lkdv-kit-actions{display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:3px!important;margin-top:1px!important;max-width:270px!important;}
+.lkdv-kit-actions button{width:30px!important;height:30px!important;min-height:30px!important;padding:0!important;border:.5px solid rgba(255,255,255,.75)!important;border-radius:999px!important;background:rgba(255,255,255,.4)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;color:#17402C!important;display:grid!important;place-items:center!important;cursor:pointer!important;}
+.lkdv-kit-actions button:active{transform:scale(.9)!important;}
+.lkdv-kit-actions button:disabled{opacity:.4!important;cursor:default!important;}
 .lkdv-kit-selector{position:absolute!important;left:auto!important;right:10px!important;bottom:9px!important;z-index:30!important;pointer-events:auto!important;display:grid!important;grid-auto-flow:column!important;grid-auto-columns:32px!important;height:30px!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.65)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(23,43,36,.08)!important;box-sizing:border-box!important;}
 .lkdv-kit-lens{position:absolute!important;top:2px!important;bottom:2px!important;left:2px!important;width:32px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72))!important;box-shadow:0 2px 8px rgba(23,64,44,.12),inset 0 1px 0 #fff!important;transform:translateX(calc(var(--i,0) * 32px))!important;transition:transform .3s cubic-bezier(.22,1,.36,1)!important;z-index:1!important;pointer-events:none!important;}
 .lkdv-kit-selector button{position:relative!important;z-index:2!important;display:grid!important;place-items:center!important;width:32px!important;height:26px!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#56665D!important;cursor:pointer!important;}

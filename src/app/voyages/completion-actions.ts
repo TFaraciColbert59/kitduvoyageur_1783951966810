@@ -164,7 +164,7 @@ export async function updateTripStatusAction(
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
       revalidatePath(tripSegmentPath(tripSlug, ''));
-      revalidatePath('/voyages');
+      revalidatePath('/hub');
     }
 
     return {
@@ -235,7 +235,7 @@ export async function publishTripCarnetAction(
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
       revalidatePath(tripSegmentPath(tripSlug, ''));
-      revalidatePath('/carnets');
+      revalidatePath('/communaute');
     }
 
     return {
@@ -294,7 +294,7 @@ export async function submitTripFieldReviewsAction(
     const tripSlug = formData.get('tripSlug')?.toString();
     if (tripSlug) {
       revalidatePath(tripSegmentPath(tripSlug, ''));
-      revalidatePath('/lieux');
+      revalidatePath('/explorer');
     }
 
     return {

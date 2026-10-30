@@ -324,7 +324,6 @@ export function SortieDrawer({ outingId = '' }: { outingId?: string }) {
       <div className="lkdv-sortie-root">
         <DrawerAuthRequired
           title="Connecte-toi pour voir cette sortie"
-          hint="Les traces, photos, compagnons et échanges d’une sortie sont privés."
         />
       </div>
     );
@@ -382,11 +381,15 @@ export const SORTIE_CSS = `
 .lkdv-sortie-badge{display:inline-flex!important;align-items:center!important;gap:4px!important;height:22px!important;padding:0 9px!important;border-radius:999px!important;font:600 10.5px var(--sf)!important;background:rgba(255,255,255,.24)!important;color:inherit!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)!important;backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;}
 .lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge{background:rgba(255,255,255,.65)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.08)!important;}
 .lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.proof{background:rgba(23,64,44,.88)!important;color:#fff!important;}
-.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.status.planned{background:rgba(185,138,46,.92)!important;color:#fff!important;}
-.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.status.ongoing{background:rgba(61,122,82,.92)!important;color:#fff!important;}
+.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.planned{background:rgba(185,138,46,.92)!important;color:#fff!important;}
+.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.ongoing{background:rgba(61,122,82,.92)!important;color:#fff!important;}
+.lkdv-sortie-badge.state.done{background:rgba(23,64,44,.62)!important;color:#fff!important;box-shadow:inset 0 0 0 .5px rgba(47,107,69,.24)!important;}
+.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.done{background:rgba(23,64,44,.72)!important;color:#fff!important;}
 .lkdv-sortie-badge.proof{background:rgba(23,64,44,.82)!important;color:#fff!important;}
-.lkdv-sortie-badge.status.planned{background:rgba(185,138,46,.9)!important;color:#fff!important;}
-.lkdv-sortie-badge.status.ongoing{background:rgba(61,122,82,.92)!important;color:#fff!important;}
+.lkdv-sortie-badge.state.planned{background:rgba(185,138,46,.9)!important;color:#fff!important;}
+.lkdv-sortie-badge.state.ongoing{background:rgba(61,122,82,.92)!important;color:#fff!important;}
+.lkdv-sortie-badge.state.done{background:rgba(23,64,44,.62)!important;color:#fff!important;box-shadow:inset 0 0 0 .5px rgba(47,107,69,.24)!important;}
+.lkdv-sortie-hero:not(.has-photo) .lkdv-sortie-badge.state.done{background:rgba(23,64,44,.72)!important;color:#fff!important;}
 .lkdv-sortie-hero h2{margin:0!important;font:650 21px/1.15 var(--sf)!important;letter-spacing:-.02em!important;color:inherit!important;}
 .lkdv-sortie-hero p{margin:0!important;font:500 12px/1.35 var(--sf)!important;opacity:.9!important;}
 .lkdv-sortie-hero-with{opacity:.78!important;}
@@ -513,6 +516,91 @@ export const SORTIE_CSS = `
 .lkdv-sortie-toast.error{background:rgba(120,32,24,.94)!important;}
 @media (max-width:370px){.lkdv-sortie-tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important;}.lkdv-sortie-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}}
 @media (prefers-reduced-motion:reduce){.lkdv-sortie-btn{transition:none!important;}}
+/* — Passe de finition du drawer Sortie (20 améliorations) — */
+/* 1. Hauteur de héros adaptative, jamais écrasée par le drawer court. */
+.lkdv-sortie-hero{min-height:clamp(170px,28dvh,210px)!important;}
+/* 2. Bord de verre cohérent avec les autres surfaces. */
+.lkdv-sortie-hero{box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 0 0 .5px rgba(23,43,36,.12),0 10px 28px rgba(23,43,36,.12)!important;}
+/* 3. Titre limité à deux lignes sur mobile. */
+.lkdv-sortie-hero-body h2{display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;font-size:19px!important;line-height:1.12!important;letter-spacing:-.02em!important;}
+/* 4. Scrim plus lisible sur photo claire. */
+.lkdv-sortie-hero.has-photo .lkdv-sortie-hero-scrim{background:linear-gradient(180deg,rgba(8,20,14,.02) 18%,rgba(8,20,14,.78) 100%)!important;}
+/* 5. Badges compacts et alignés. */
+.lkdv-sortie-hero-badges{gap:5px!important;margin-bottom:6px!important;}
+.lkdv-sortie-badge{height:21px!important;padding:0 8px!important;font-size:10px!important;}
+/* 6. Quatre tuiles toujours sur une ligne, sans écrasement. */
+.lkdv-sortie-tiles{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important;}
+.lkdv-sortie-tiles>div{min-width:0!important;padding:7px 8px!important;border-radius:14px!important;}
+.lkdv-sortie-tiles b{font-size:12.5px!important;}
+.lkdv-sortie-tiles small{font-size:8.5px!important;letter-spacing:.04em!important;}
+/* 7. Barre d’actions collante au-dessus de la navigation. */
+.lkdv-sortie-actions{position:sticky!important;bottom:0!important;z-index:6!important;margin:2px -2px 0!important;padding:8px 2px calc(2px + env(safe-area-inset-bottom,0px))!important;background:linear-gradient(180deg,rgba(246,250,243,0),rgba(246,250,243,.94) 42%)!important;}
+/* 8. Boutons d’action homogènes et tactiles. */
+.lkdv-sortie-actions .lkdv-sortie-btn{min-height:38px!important;flex:1 1 0!important;justify-content:center!important;padding:0 10px!important;}
+/* 9. Récit replié proprement. */
+.lkdv-sortie-notes{display:-webkit-box!important;-webkit-line-clamp:5!important;-webkit-box-orient:vertical!important;overflow:hidden!important;font-size:12px!important;line-height:1.5!important;}
+/* 10. Sections aérées et lisibles. */
+.lkdv-sortie-section{padding:10px!important;border-radius:16px!important;background:rgba(255,255,255,.44)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;}
+.lkdv-sortie-section>header{gap:8px!important;align-items:baseline!important;}
+/* 11. En-têtes de section plus compacts. */
+.lkdv-sortie-section>header b{font-size:11.5px!important;}
+.lkdv-sortie-section>header span{font-size:9.5px!important;}
+/* 12. Photos en grille régulière avec ratio stable. */
+.lkdv-sortie-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;}
+/* 13. Tuile photo nette et légère. */
+.lkdv-sortie-photo{aspect-ratio:1/1!important;border-radius:15px!important;overflow:hidden!important;box-shadow:inset 0 0 0 .5px rgba(23,43,36,.1),0 4px 12px rgba(23,43,36,.08)!important;}
+.lkdv-sortie-photo img{width:100%!important;height:100%!important;object-fit:cover!important;transition:transform .35s cubic-bezier(.22,1,.36,1)!important;}
+.lkdv-sortie-photo:active img{transform:scale(1.03)!important;}
+/* 14. États vides plus doux. */
+.lkdv-sortie-pane .lkdv-sortie-empty-line{padding:20px 12px!important;border-radius:16px!important;background:rgba(255,255,255,.36)!important;}
+/* 15. Focus visible cohérent. */
+.lkdv-sortie-btn:focus-visible,.lkdv-sortie-photo:focus-visible,.lkdv-sortie-kudos-btn:focus-visible{outline:2px solid #17402c!important;outline-offset:2px!important;}
+/* 16. Lightbox plus immersive. */
+.lkdv-sortie-lightbox{background:rgba(5,12,8,.94)!important;backdrop-filter:blur(18px)!important;}
+/* 17. Commentaires respirants. */
+.lkdv-sortie-comments{gap:8px!important;}
+.lkdv-sortie-comment-head b{font-size:12px!important;}
+/* 18. Matériel lisible. */
+.lkdv-sortie-gear{gap:6px!important;}
+.lkdv-sortie-gear-name{font-size:12px!important;}
+.lkdv-sortie-gear-weight{font-variant-numeric:tabular-nums!important;}
+/* 19. Toast au-dessus de la barre basse. */
+.lkdv-sortie-toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 10px 28px rgba(0,0,0,.28)!important;}
+/* Harmonisation : photo visible à 100 %, titre sur verre, actions en pilules sur l'image. */
+.lkdv-sortie-hero{min-height:236px!important;}
+.lkdv-sortie-hero.has-photo .lkdv-sortie-hero-scrim{display:none!important;}
+.lkdv-sortie-hero.has-photo .lkdv-sortie-hero-body{margin:8px!important;width:calc(100% - 16px)!important;padding:10px 12px!important;border-radius:16px!important;color:#172B24!important;background:linear-gradient(180deg,rgba(255,255,255,.74),rgba(255,255,255,.52))!important;-webkit-backdrop-filter:blur(16px) saturate(1.6)!important;backdrop-filter:blur(16px) saturate(1.6)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 0 0 .5px rgba(23,43,36,.12),0 6px 18px rgba(10,20,14,.14)!important;}
+.lkdv-sortie-hero.has-photo h2{font-size:17px!important;}
+.lkdv-sortie-hero-tools{position:absolute!important;top:8px!important;right:8px!important;z-index:2!important;}
+.lkdv-sortie-btn{height:32px!important;padding:0 12px!important;font-size:11.5px!important;}
+.lkdv-sortie-btn.ghost{background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.5))!important;color:#17402C!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.14),0 3px 10px rgba(23,43,36,.08)!important;}
+.lkdv-sortie-edit-actions{justify-content:flex-end!important;}
+/* 20. Mouvement réduit. */
+@media (prefers-reduced-motion:reduce){.lkdv-sortie-photo img,.lkdv-sortie-btn,.lkdv-sortie-hero{transition:none!important;animation:none!important;}}
+
+/* Matériel : vraies cartes produit + navigation par catégorie. */
+.lkdv-sortie-product-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;}
+.lkdv-sortie-product{position:relative!important;display:flex!important;flex-direction:column!important;min-width:0!important;border-radius:16px!important;overflow:hidden!important;background:rgba(255,255,255,.52)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.08)!important;}
+.lkdv-sortie-product-visual{position:relative!important;aspect-ratio:1.15/1!important;background:#e8eee5!important;}
+.lkdv-sortie-product-visual img{width:100%!important;height:100%!important;object-fit:cover!important;}
+.lkdv-sortie-product-status{position:absolute!important;left:6px!important;bottom:6px!important;padding:2px 7px!important;border-radius:999px!important;background:rgba(23,64,44,.86)!important;color:#fff!important;font:600 8.5px/1.2 var(--sf)!important;}
+.lkdv-sortie-product-body{display:flex!important;flex-direction:column!important;gap:2px!important;padding:7px 8px 8px!important;min-width:0!important;}
+.lkdv-sortie-product-body>b{font:600 11.5px/1.2 var(--sf)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;color:var(--label)!important;}
+.lkdv-sortie-product-body>small{font:500 9px/1.2 var(--sf)!important;color:var(--label2)!important;}
+.lkdv-sortie-product-wear{display:flex!important;align-items:center!important;gap:5px!important;margin-top:4px!important;}
+.lkdv-sortie-product-wear>span{font:500 8px/1 var(--sf)!important;color:var(--label3)!important;letter-spacing:.02em!important;}
+.lkdv-sortie-product-wear>i{flex:1!important;height:4px!important;border-radius:999px!important;background:rgba(23,43,36,.1)!important;overflow:hidden!important;}
+.lkdv-sortie-product-wear u{display:block!important;height:100%!important;border-radius:999px!important;background:linear-gradient(90deg,#5B7F55,#C89A3B)!important;text-decoration:none!important;}
+.lkdv-sortie-product .lkdv-sortie-gear-remove{position:absolute!important;top:5px!important;right:5px!important;width:24px!important;height:24px!important;border-radius:50%!important;background:rgba(12,24,18,.55)!important;color:#fff!important;}
+.lkdv-sortie-gear-pane{padding-bottom:52px!important;position:relative!important;}
+.lkdv-sortie-category-bar{position:absolute!important;left:0!important;right:0!important;bottom:0!important;z-index:7!important;display:flex!important;gap:4px!important;overflow-x:auto!important;padding:8px 2px calc(4px + env(safe-area-inset-bottom,0px))!important;margin:0 -2px!important;background:linear-gradient(180deg,rgba(246,250,243,0),rgba(246,250,243,.96) 45%)!important;scrollbar-width:none!important;}
+.lkdv-sortie-category-bar::-webkit-scrollbar{display:none!important;}
+.lkdv-sortie-category-bar button{flex:none!important;height:30px!important;padding:0 11px!important;border:0!important;border-radius:999px!important;background:rgba(255,255,255,.6)!important;color:var(--label2)!important;font:600 10.5px/1 var(--sf)!important;box-shadow:inset 0 0 0 .5px rgba(23,43,36,.08)!important;}
+.lkdv-sortie-category-bar button.on{background:#17402c!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)!important;}
+
+.lkdv-sortie-person-link{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;flex:1!important;color:inherit!important;text-decoration:none!important;}
+.lkdv-sortie-person-link:active{opacity:.7!important;}
+
 `;
 
 export default SortieDrawer;

@@ -49,9 +49,18 @@ export function CommunityFeed({
 
   if (loading) {
     return (
-      <div className="lkdv-feed-list" aria-label="Chargement du fil">
-        {[0, 1].map((index) => (
-          <div key={index} className="lkdv-feed-skeleton" aria-hidden="true" />
+      <div className="lkdv-feed-list" aria-label="Chargement du fil" aria-busy="true">
+        {[0, 1, 2].map((index) => (
+          <div key={index} className="lkdv-feed-skeleton" aria-hidden="true">
+            <span className="lkdv-feed-skeleton-head">
+              <span className="lkdv-feed-skeleton-avatar" />
+              <span className="lkdv-feed-skeleton-lines">
+                <span />
+                <span />
+              </span>
+            </span>
+            <span className="lkdv-feed-skeleton-media" />
+          </div>
         ))}
       </div>
     );
@@ -81,7 +90,7 @@ export function CommunityFeed({
   return (
     <>
       <div className="lkdv-feed-list">
-        {posts.map((post) => (
+        {posts.map((post, index) => (
           <CommunityFeedPost
             key={post.id}
             post={post}
@@ -89,6 +98,7 @@ export function CommunityFeed({
             onRequireAuth={onRequireAuth}
             initialPanel={initialCommentId && post.id === initialPostId ? 'comments' : null}
             initialCommentId={initialCommentId}
+            mediaPriority={index < 2}
           />
         ))}
       </div>

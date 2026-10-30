@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { submitUrls, submitSitemap } from '@/lib/seo/indexnow';
+import { isCronAuthorized } from '@/lib/cron/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,10 @@ export async function POST(req: NextRequest) {
       const data = await req.json();
 
       if (data?.action === 'sitemap') {
+        // Soumission massive : réservée au planificateur.
+        if (!isCronAuthorized(req)) {
+          return NextResponse.json({ error: 'forbidden' }, { status: 401 });
+        }
         const result = await submitSitemap();
         return NextResponse.json(result, { status: result.ok ? 200 : 502 });
       }

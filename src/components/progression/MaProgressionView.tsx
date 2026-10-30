@@ -1445,7 +1445,7 @@ export default function MaProgressionView({
           </button>
         )}
         <Link
-          href="/recompenses"
+          href="/compte"
           className="mt-3 inline-flex min-h-[44px] items-center text-xs font-bold text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         >
           {t('progression.seeAllRewards')}
@@ -1466,15 +1466,21 @@ export default function MaProgressionView({
         <PassportSection status={passport.status} discoveries={passport.discoveries} />
       </ProgressionSection>
 
-      {/* Lien économique distinct : les points dépensables vivent dans
-          Récompenses (/fidelite y redirige) ; les XP ne s'y convertissent pas. */}
+      {/* Liens économiques distincts : récompenses utilisables et fidélité historique. */}
       <section aria-label={t('progression.rewardsAndLoyaltyAria')} className="flex flex-wrap gap-2">
         <Link
-          href="/recompenses"
+          href="/compte"
           className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
         >
           <Gift size={14} aria-hidden="true" />
           <span>{t('progression.rewards')}</span>
+        </Link>
+        <Link
+          href="/compte"
+          className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
+        >
+          <Award size={14} aria-hidden="true" />
+          <span>{t('progression.loyalty')}</span>
         </Link>
       </section>
     </div>

@@ -151,7 +151,7 @@ describe('createGroupFromClub — action serveur', () => {
     ]);
     // L'utilisateur courant n'est jamais invité (organizer posé par la DB).
     expect(JSON.stringify(invites?.payload)).not.toContain(USER_ID);
-    expect(mockedRevalidate).toHaveBeenCalledWith('/clubs', 'layout');
+    expect(mockedRevalidate).toHaveBeenCalledWith('/communaute', 'layout');
   });
 
   it('(d) échec d\'invitation non bloquant : le groupe reste créé', async () => {

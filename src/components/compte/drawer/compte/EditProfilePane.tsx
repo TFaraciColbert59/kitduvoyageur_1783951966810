@@ -2,10 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Link2, Plus, Save, Sparkles, Trash2, UserRound } from 'lucide-react';
+import { Camera, Check, Link2, Plus, RotateCcw, Sparkles, Trash2, X } from 'lucide-react';
 import type { ProfileLink, ProfileSettings } from '@/features/compte/server/compte';
+import { ActionPill } from '@/components/ui/ActionPill';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { fetchJson, initials } from './shared';
+import { createClient } from '@/lib/supabase/client';
 
 interface FormState {
   name: string;
@@ -75,6 +77,30 @@ export function EditProfilePane() {
     setForm((current) => (current ? { ...current, [key]: value } : current));
   };
 
+  const uploadPhoto = async (file: File | undefined, key: 'avatarUrl' | 'coverUrl') => {
+    if (!file || !query.data) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const extension = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const path = `profiles/${query.data.id}/${key === 'avatarUrl' ? 'avatar' : 'cover'}-${Date.now()}.${extension}`;
+      const supabase = createClient();
+      const { error } = await supabase.storage.from('carnet-media').upload(path, file, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: file.type || 'image/jpeg',
+      });
+      if (error) throw error;
+      const { data: publicUrl } = supabase.storage.from('carnet-media').getPublicUrl(path);
+      set(key, publicUrl.publicUrl);
+      setMessage({ text: 'Photo prête, enregistre ton profil.', tone: 'ok' });
+    } catch (error) {
+      setMessage({ text: error instanceof Error ? error.message : 'Envoi de la photo impossible', tone: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const reset = () => {
     if (query.data) setForm(toForm(query.data));
     setMessage(null);
@@ -109,37 +135,56 @@ export function EditProfilePane() {
 
   return (
     <div className="lkdv-compte-pane lkdv-compte-edit">
-      <section className="lkdv-compte-edit-preview">
-        <div className="lkdv-compte-edit-avatar" aria-hidden="true">
-          {form.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={form.avatarUrl} alt="" loading="lazy" />
-          ) : (
-            initials(form.name || 'LKDV')
-          )}
+      <section className={`lkdv-compte-edit-hero${form.coverUrl ? ' has-cover' : ''}`}>
+        {form.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="lkdv-compte-edit-cover" src={form.coverUrl} alt="" loading="lazy" />
+        ) : null}
+        <div className="lkdv-compte-edit-hero-tools">
+          <PhotoPill label={form.coverUrl ? 'Changer la couverture' : 'Choisir une couverture'} disabled={busy} onFile={(file) => void uploadPhoto(file, 'coverUrl')} />
+          {form.coverUrl ? <ActionPill label="Retirer la couverture" icon={<X />} onClick={() => set('coverUrl', '')} /> : null}
         </div>
-        <div>
-          <b>{form.name || 'Ton nom'}</b>
-          <small>@{form.handle || 'handle'}</small>
-          {form.location ? <span>{form.location}</span> : null}
-        </div>
-        <div className="lkdv-compte-ring" aria-label={`Profil complété à ${stats.percent} %`}>
-          <svg viewBox="0 0 36 36" aria-hidden="true">
-            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(23,43,36,.1)" strokeWidth="3" />
-            <circle
-              cx="18"
-              cy="18"
-              r="15"
-              fill="none"
-              stroke="#3D7A52"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeDasharray={`${(stats.percent / 100) * 94.2} 94.2`}
-              transform="rotate(-90 18 18)"
+        <div className="lkdv-compte-edit-preview">
+          <div className="lkdv-compte-edit-avatar">
+            {form.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={form.avatarUrl} alt="" loading="lazy" />
+            ) : (
+              <span aria-hidden="true">{initials(form.name || 'LKDV')}</span>
+            )}
+            <PhotoPill
+              small
+              label={form.avatarUrl ? 'Changer la photo' : 'Choisir une photo'}
+              disabled={busy}
+              onFile={(file) => void uploadPhoto(file, 'avatarUrl')}
             />
-          </svg>
-          <b>{stats.percent}%</b>
+          </div>
+          <div>
+            <b>{form.name || 'Ton nom'}</b>
+            <small>@{form.handle || 'handle'}</small>
+            {form.location ? <span>{form.location}</span> : null}
+          </div>
+          <div className="lkdv-compte-ring" aria-label={`Profil complété à ${stats.percent} %`}>
+            <svg viewBox="0 0 36 36" aria-hidden="true">
+              <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(23,43,36,.1)" strokeWidth="3" />
+              <circle
+                cx="18"
+                cy="18"
+                r="15"
+                fill="none"
+                stroke="#3D7A52"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={`${(stats.percent / 100) * 94.2} 94.2`}
+                transform="rotate(-90 18 18)"
+              />
+            </svg>
+            <b>{stats.percent}%</b>
+          </div>
         </div>
+        {form.avatarUrl ? (
+          <ActionPill className="lkdv-compte-edit-avatar-clear" label="Retirer la photo" icon={<X />} onClick={() => set('avatarUrl', '')} />
+        ) : null}
       </section>
 
       {stats.missing.length > 0 ? (
@@ -153,31 +198,9 @@ export function EditProfilePane() {
             ))}
           </ul>
         </section>
-      ) : (
-        <p className="lkdv-compte-inline-status">
-          <Check size={13} aria-hidden="true" /> Ton profil est complet.
-        </p>
-      )}
+      ) : null}
 
       <section className="lkdv-compte-form">
-        <label>
-          <span>Photo de profil (URL)</span>
-          <input
-            value={form.avatarUrl}
-            onChange={(event) => set('avatarUrl', event.target.value)}
-            placeholder="https://…"
-            inputMode="url"
-          />
-        </label>
-        <label>
-          <span>Photo de couverture (URL)</span>
-          <input
-            value={form.coverUrl}
-            onChange={(event) => set('coverUrl', event.target.value)}
-            placeholder="https://…"
-            inputMode="url"
-          />
-        </label>
         <label>
           <span>Nom affiché</span>
           <input value={form.name} onChange={(event) => set('name', event.target.value)} maxLength={80} />
@@ -279,18 +302,28 @@ export function EditProfilePane() {
       ) : null}
 
       <div className="lkdv-compte-savebar">
-        <button type="button" className="lkdv-compte-btn ghost" onClick={reset} disabled={busy}>
-          Annuler
-        </button>
-        <button type="button" className="lkdv-compte-btn primary" onClick={() => void save()} disabled={busy || !form.name.trim() || !form.handle.trim()}>
-          {busy ? 'Enregistrement…' : <><Save size={15} aria-hidden="true" /> Enregistrer</>}
-        </button>
+        <ActionPill label="Annuler" icon={<RotateCcw />} onClick={reset} disabled={busy} />
+        <ActionPill
+          tone="primary"
+          label={busy ? 'Enregistrement en cours' : 'Enregistrer le profil'}
+          icon={<Check />}
+          busy={busy}
+          onClick={() => void save()}
+          disabled={!form.name.trim() || !form.handle.trim()}
+        />
       </div>
 
-      <p className="lkdv-compte-note">
-        <UserRound size={13} aria-hidden="true" /> Les changements de handle et de visibilité s’appliquent immédiatement à ton profil public.
-      </p>
     </div>
+  );
+}
+
+/** Pilule appareil photo posée sur l'image : le champ fichier reste natif. */
+function PhotoPill({ label, disabled, small = false, onFile }: { label: string; disabled?: boolean; small?: boolean; onFile: (file: File | undefined) => void }) {
+  return (
+    <label className={`lkdv-apill lkdv-compte-photo-pill${small ? ' is-small' : ''}`} aria-label={label} title={label} data-disabled={disabled || undefined}>
+      <Camera aria-hidden="true" />
+      <input type="file" accept="image/*" aria-label={label} disabled={disabled} onChange={(event) => onFile(event.target.files?.[0])} />
+    </label>
   );
 }
 

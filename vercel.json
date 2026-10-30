@@ -1,10 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["cdg1"],
+  "regions": [
+    "cdg1"
+  ],
   "crons": [
     {
       "path": "/api/cron/daily",
       "schedule": "0 3 * * *"
     }
-  ]
+  ],
+  "buildCommand": "NODE_OPTIONS=--max-old-space-size=8192 next build --no-lint"
 }

@@ -170,7 +170,7 @@ export function __resetRouteCache(): void {
  * importent tous les deux. La base se touche par `lib/ai/serviceClient.ts`,
  * qui commence par `import 'server-only'` : l inclure dans ce graphe fait
  * tomber TOUTES les routes en 500 (`ModuleBuildError` sur `/`, `/hub`,
- * `/prepare`).
+ * `/compas`).
  *
  * Un `import()` PARSEUX ne sauve rien. C est le piege : webpack resout un
  * litteral de chaine dans le graphe STATIQUE, donc `serviceClient` y entrait

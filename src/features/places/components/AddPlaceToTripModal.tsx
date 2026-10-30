@@ -118,7 +118,7 @@ export function AddPlaceToTripModal({
               </p>
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Link href={`/voyages/${successResult.tripSlug}/itineraire`} className="flex-1 no-underline">
+                <Link href="/hub" className="flex-1 no-underline">
                   <Button
                     variant="primary"
                     fullWidth

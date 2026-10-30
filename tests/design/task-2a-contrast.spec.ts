@@ -7,7 +7,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import postcss from 'postcss';
 import tailwindcss from 'tailwindcss';
-import tailwindConfig from '../../tailwind.config.js';
+import tailwindConfig from '../../tailwind.config.cjs';
 import { Tabs } from '@/components/ui/Tabs';
 
 type RGB = [number, number, number];

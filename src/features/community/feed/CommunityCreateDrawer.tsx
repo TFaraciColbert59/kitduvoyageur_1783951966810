@@ -35,18 +35,16 @@ export function CommunityCreateDrawer({ open, onOpenChange, onOpenForm }: Commun
             key={tile.kind}
             type="button"
             className="lkdv-create-tile"
+            aria-label={`${tile.title} — ${tile.subtitle}`}
             onClick={() => {
               onOpenChange(false);
               onOpenForm(tile.kind);
             }}
           >
             <span className="ico" aria-hidden="true"><Icon name={tile.icon} size={22} /></span>
-            <b>{tile.title}</b>
-            <small>{tile.subtitle}</small>
           </button>
         ))}
       </div>
-      <p className="lkdv-create-hint">Tout reste dans ton univers LKDV.</p>
     </CommunityDrawer>
   );
 }

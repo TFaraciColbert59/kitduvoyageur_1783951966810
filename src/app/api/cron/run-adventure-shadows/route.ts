@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isCronAuthorized } from '@/lib/cron/auth';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import {
   createSupabaseShadowClient,
@@ -16,9 +17,8 @@ export const dynamic = 'force-dynamic';
  * les défauts en contexte cron). Aucun flag activé ⇒ aucun échantillon lu.
  */
 export async function POST(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+  // Comparaison en temps constant (même helper que /api/cron/daily).
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

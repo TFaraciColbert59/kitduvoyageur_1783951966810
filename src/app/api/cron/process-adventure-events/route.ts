@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isCronAuthorized } from '@/lib/cron/auth';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import {
   processAdventureEvents,
@@ -47,9 +48,8 @@ function message(error: unknown): string {
  * `attempts < 5`, puis il reste `failed` (état terminal).
  */
 export async function POST(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+  // Comparaison en temps constant (même helper que /api/cron/daily).
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

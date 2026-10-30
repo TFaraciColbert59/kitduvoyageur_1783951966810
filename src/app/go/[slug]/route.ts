@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const link = await getAffiliateLinkBySlug(slug);
 
   if (!link || !link.is_active || !isValidAffiliateTargetUrl(link.target_url, true)) {
-    return NextResponse.redirect(new URL('/voyages', request.url), 302);
+    return NextResponse.redirect(new URL('/hub', request.url), 302);
   }
 
   // 2. Extraire les métadonnées de requête pour la traçabilité éthique RGPD
@@ -44,6 +44,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
     return NextResponse.redirect(finalTargetUrl, 307);
   } catch (err) {
     console.error('[/go/[slug]] Erreur lors de la construction d’URL affiliée :', err);
-    return NextResponse.redirect(new URL('/voyages', request.url), 302);
+    return NextResponse.redirect(new URL('/hub', request.url), 302);
   }
 }

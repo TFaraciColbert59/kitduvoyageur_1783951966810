@@ -132,7 +132,7 @@ describe('updateTripNoteAction — action serveur', () => {
       tripId: TRIP_ID,
       content: 'Récit du jour 1',
     });
-    expect(mockedRevalidate).toHaveBeenCalledWith('/voyages/tour-du-lac-blanc');
+    expect(mockedRevalidate).toHaveBeenCalledWith('/hub');
     expect(mockedRevalidate).toHaveBeenCalledWith('/hub/itineraire');
   });
 

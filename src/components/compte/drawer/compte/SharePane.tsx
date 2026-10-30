@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Copy, ExternalLink, QrCode, Share2, ShieldCheck } from 'lucide-react';
 import type { ProfileSettings, ShareStats } from '@/features/compte/server/compte';
+import { ActionPill } from '@/components/ui/ActionPill';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { fetchJson, initials } from './shared';
 
@@ -116,16 +117,11 @@ export function SharePane() {
 
         <p className="lkdv-compte-share-url">{absoluteUrl || 'Lien indisponible'}</p>
 
-        <div className="lkdv-compte-share-actions">
-          <button type="button" className="lkdv-compte-btn primary" onClick={() => void share()}>
-            <Share2 size={15} aria-hidden="true" /> Partager
-          </button>
-          <button type="button" className="lkdv-compte-btn ghost" onClick={() => void copy()}>
-            {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-            {copied ? 'Copié' : 'Copier'}
-          </button>
-          <Link className="lkdv-compte-btn ghost" href={stats.url || '/profil'} target="_blank">
-            <ExternalLink size={15} aria-hidden="true" /> Voir
+        <div className="lkdv-compte-share-actions lkdv-apill-row">
+          <ActionPill tone="primary" label="Partager" icon={<Share2 />} onClick={() => void share()} />
+          <ActionPill label={copied ? 'Copié' : 'Copier'} icon={copied ? <Check /> : <Copy />} onClick={() => void copy()} />
+          <Link className="lkdv-apill" href={stats.url || '/profil'} target="_blank" aria-label="Voir le profil" title="Voir le profil">
+            <ExternalLink aria-hidden="true" />
           </Link>
         </div>
       </div>
@@ -145,15 +141,9 @@ export function SharePane() {
         </div>
       </div>
 
-      <section className="lkdv-compte-share-note">
-        <b>
-          <ShieldCheck size={14} aria-hidden="true" /> Ton profil privé reste sur invitation
-        </b>
-        <p>
-          Partager ce lien n’ouvre pas ton profil privé : seules les personnes que tu acceptes
-          voient tes sorties.
-        </p>
-      </section>
+      <p className="lkdv-compte-share-note">
+        <ShieldCheck size={14} aria-hidden="true" /> Profil privé : sur invitation seulement.
+      </p>
     </div>
   );
 }

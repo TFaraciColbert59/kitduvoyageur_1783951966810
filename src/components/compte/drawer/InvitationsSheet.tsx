@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { Ban, Check, Copy, Link2, RotateCcw, X } from 'lucide-react';
+import { ActionPill } from '@/components/ui/ActionPill';
 import { profileInvitationPath } from '@/lib/invitationPaths';
 import './InvitationsSheet.css';
 
@@ -259,27 +261,20 @@ export function InvitationsSheet({ onClose, fetcher }: InvitationsSheetProps) {
         {phase === 'error' ? (
           <div className="lkdv-invitations-state" role="alert">
             <p>{error}</p>
-            <button
-              type="button"
-              className="lkdv-invitations-secondary"
-              onClick={() => void load()}
-            >
-              Réessayer
-            </button>
+            <ActionPill label="Réessayer" icon={<RotateCcw />} onClick={() => void load()} />
           </div>
         ) : null}
 
         {phase === 'ready' ? (
           <>
             <div className="lkdv-invitations-actions">
-              <button
-                type="button"
-                className="lkdv-invitations-primary"
+              <ActionPill
+                tone="primary"
+                label="Créer un lien"
+                icon={<Link2 />}
+                busy={busy === 'create'}
                 onClick={() => void createInvitation()}
-                disabled={busy === 'create'}
-              >
-                {busy === 'create' ? 'Création…' : 'Créer un lien'}
-              </button>
+              />
             </div>
 
             {feedback ? (
@@ -305,49 +300,43 @@ export function InvitationsSheet({ onClose, fetcher }: InvitationsSheetProps) {
                       </div>
                       <div className="lkdv-invitations-row-actions">
                         {status === 'pending' ? (
-                          <button
-                            type="button"
-                            className="lkdv-invitations-secondary"
-                            aria-label={`Copier le lien de l’invitation ${invitation.id}`}
+                          <ActionPill
+                            label={`Copier le lien de l’invitation ${invitation.id}`}
+                            title={copiedToken === invitation.id ? 'Copié' : 'Copier'}
+                            icon={copiedToken === invitation.id ? <Check /> : <Copy />}
                             onClick={() => void copyInvitation(invitation)}
-                          >
-                            {copiedToken === invitation.id ? 'Copié' : 'Copier'}
-                          </button>
+                          />
                         ) : null}
                         {invitation.status !== 'revoked' && status !== 'expired' ? (
                           confirmRevoke === invitation.id ? (
                             <>
-                              <button
-                                type="button"
-                                className="lkdv-invitations-danger"
-                                aria-label={`Confirmer la révocation de l’invitation ${invitation.id}`}
+                              <ActionPill
+                                tone="danger"
+                                label={`Confirmer la révocation de l’invitation ${invitation.id}`}
+                                title="Confirmer"
+                                icon={<Check />}
                                 onClick={() => {
                                   setConfirmRevoke(null);
                                   void revokeInvitation(invitation);
                                 }}
                                 disabled={busy === invitation.id}
-                              >
-                                Confirmer ?
-                              </button>
-                              <button
-                                type="button"
-                                className="lkdv-invitations-secondary"
-                                aria-label={`Annuler la révocation de l’invitation ${invitation.id}`}
+                              />
+                              <ActionPill
+                                label={`Annuler la révocation de l’invitation ${invitation.id}`}
+                                title="Annuler"
+                                icon={<X />}
                                 onClick={() => setConfirmRevoke(null)}
-                              >
-                                Annuler
-                              </button>
+                              />
                             </>
                           ) : (
-                            <button
-                              type="button"
-                              className="lkdv-invitations-danger"
-                              aria-label={`Révoquer l’invitation ${invitation.id}`}
+                            <ActionPill
+                              tone="danger"
+                              label={`Révoquer l’invitation ${invitation.id}`}
+                              title="Révoquer"
+                              icon={<Ban />}
                               onClick={() => setConfirmRevoke(invitation.id)}
                               disabled={busy === invitation.id}
-                            >
-                              Révoquer
-                            </button>
+                            />
                           )
                         ) : null}
                       </div>

@@ -1,0 +1,233 @@
+/*
+ * Barre du bas — Liquid Glass façon Apple Music (iOS 26/27) :
+ * capsule de verre clair flottante (matière commune, liquid-selectors.css),
+ * icône + libellé, pastille de verre sous l'onglet actif. À l'appui ou en
+ * glissant le doigt, la pastille devient une goutte de verre qui déborde de
+ * la capsule et suit le doigt ; elle glisse d'un onglet à l'autre en s'étirant.
+ * La barre ne bouge jamais : seule la pastille se déplace.
+ */
+@media (max-width: 767px) {
+  .lkdv-floating-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+    z-index: var(--z-nav, 1250);
+    display: flex;
+    justify-content: center;
+    padding: 0 14px;
+    pointer-events: none;
+    touch-action: manipulation;
+  }
+
+  .lkdv-floating-tabbar-surface {
+    position: relative;
+    width: min(440px, calc(100vw - 28px));
+    height: 60px;
+    display: flex;
+    align-items: stretch;
+    padding: 4px;
+    border-radius: 999px;
+    background: var(--lg-bar-bg);
+    -webkit-backdrop-filter: var(--lg-bar-blur);
+    backdrop-filter: var(--lg-bar-blur);
+    box-shadow: var(--lg-bar-shadow);
+    pointer-events: auto;
+    box-sizing: border-box;
+    overflow: visible;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Pastille de verre sous l'onglet actif (largeur d'un cinquième). */
+  .lkdv-floating-lens {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / 5);
+    border-radius: 999px;
+    z-index: 0;
+    background: var(--lg-thumb-bg);
+    box-shadow: var(--lg-thumb-shadow);
+    transform-origin: center;
+    will-change: transform;
+    pointer-events: none;
+    transition:
+      scale 0.32s var(--lg-ease),
+      background 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  /* Appui ou glissement : goutte de verre qui déborde de 6 px et suit le doigt. */
+  .lkdv-floating-tabbar-surface[data-dragging='true'] .lkdv-floating-lens {
+    scale: 1.1 1.24;
+    background: var(--lg-drop-bg);
+    box-shadow: var(--lg-drop-shadow);
+    transition:
+      transform 0.16s var(--lg-ease),
+      scale 0.22s var(--lg-ease),
+      background 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  .lkdv-floating-tab {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border-radius: 999px;
+    color: var(--lg-ink);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  .lkdv-floating-tab:focus-visible {
+    outline: 2px solid #5b7f55;
+    outline-offset: -4px;
+  }
+
+  .lkdv-floating-tab-icon {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    transition: transform 0.2s var(--lg-ease);
+  }
+
+  .lkdv-floating-tab-icon > svg {
+    width: 23px;
+    height: 23px;
+  }
+
+  /* Sous la goutte, l'onglet grossit légèrement (loupe du verre). */
+  .lkdv-floating-tabbar-surface[data-dragging='true'] .lkdv-floating-tab.is-active .lkdv-floating-tab-icon {
+    transform: scale(1.14);
+  }
+
+  .lkdv-floating-tab.is-active {
+    color: var(--lg-on);
+  }
+
+  .lkdv-floating-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    object-fit: cover;
+    display: block;
+    background: #e5eee2;
+    box-shadow: 0 0 0 1px rgba(23, 43, 36, 0.12);
+  }
+  .lkdv-floating-avatar.is-empty {
+    background: linear-gradient(160deg, #dfe9db, #b9ceb4);
+  }
+  .lkdv-floating-tab.is-active .lkdv-floating-avatar {
+    box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--lg-on);
+  }
+
+  .lkdv-floating-tab-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+    line-height: 12px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  .lkdv-floating-tab.is-active .lkdv-floating-tab-label {
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .lkdv-floating-lens,
+  .lkdv-floating-tab-icon,
+  .lkdv-floating-tabbar-surface[data-dragging='true'] .lkdv-floating-lens {
+    transition: none;
+  }
+  .lkdv-floating-tabbar-surface[data-dragging='true'] .lkdv-floating-lens {
+    scale: none;
+  }
+  .lkdv-floating-tabbar-surface[data-dragging='true'] .lkdv-floating-tab.is-active .lkdv-floating-tab-icon {
+    transform: none;
+  }
+}
+
+/* Aucune barre de navigation globale par-dessus une story plein écran. */
+body:has(.story.on) .lkdv-floating-tabbar {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Le bandeau cookies ne doit pas recouvrir le compteur de vues d'une story. */
+body:has(.story.on) [aria-label="Gestion des cookies"] {
+  display: none !important;
+}
+
+/* Barre unique, montée une fois à la racine : elle ne disparaît que lorsqu'un
+   tiroir (feuille communauté, formulaire, story) s'ouvre par-dessus. */
+body:has(.lkdv-drawer-layer) .lkdv-floating-tabbar,
+body:has(.lkdv-form-layer) .lkdv-floating-tabbar,
+body:has([role="dialog"][aria-label^="Story de"]) .lkdv-floating-tabbar {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Carte-drawer de la Communauté ouverte : elle occupe le bas de l'écran, la barre s'efface. */
+body:has(.lkdv-cd) .lkdv-floating-tabbar {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Chargement d'une route (RouteLoading) : fond de l'app seul, spinner différé. */
+.lkdv-route-loading {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.lkdv-route-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 2.5px solid rgba(23, 64, 44, 0.16);
+  border-top-color: #17402c;
+  opacity: 0;
+  animation: lkdv-route-spin 0.8s linear infinite, lkdv-route-appear 0.2s ease 0.3s forwards;
+}
+@keyframes lkdv-route-spin { to { transform: rotate(360deg); } }
+@keyframes lkdv-route-appear { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-route-spinner { animation: lkdv-route-appear 0.2s ease 0.3s forwards; }
+}
+
+/* Passage d'onglet au doigt (TabSwipeNavigator) : la page voisine arrive en
+   carte arrondie, sous la barre du bas, sur la toile de l'app. */
+.lkdv-tab-swipe-card {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-nav, 1250) - 1);
+  display: grid;
+  place-items: center;
+  border-radius: 38px;
+  overflow: hidden;
+  pointer-events: none;
+  will-change: transform;
+  background: linear-gradient(var(--lkv-app-bg-scrim), var(--lkv-app-bg-scrim)),
+    var(--lkv-app-bg-image-portrait) center / cover no-repeat var(--lkv-app-bg-fallback);
+}
+.lkdv-tab-swipe-card.is-account {
+  background: var(--account-canvas-image) var(--account-canvas-position) / cover no-repeat var(--account-canvas-bg);
+}

@@ -5,14 +5,16 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
 import OfflineBanner from '@/components/mobile-nav/OfflineBanner';
-import NavigationSurface from '@/components/mobile-nav/navigation/NavigationSurface';
+import FloatingLiquidTabBar from '@/components/mobile-nav/FloatingLiquidTabBar';
+import TabSwipeNavigator from '@/components/mobile-nav/TabSwipeNavigator';
 import SearchOverlay from '@/components/search/SearchOverlay';
 import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import { useSearchContext } from '@/contexts/SearchContext';
 
 const NavigationBar = dynamic(() => import('@/components/mobile-nav/NavigationBar'), {
   ssr: false,
-  loading: () => <NavigationSurface loading label="Chargement de la navigation" />,
+  // Même barre que le rendu final : aucun changement visuel au chargement.
+  loading: () => <FloatingLiquidTabBar />,
 });
 
 export default function MobileNavWrapper() {
@@ -24,8 +26,16 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/connexion') ||
     pathname?.startsWith('/inscription') ||
     pathname?.startsWith('/checkout') ||
-    // Laboratoire de la barre : elle y est rendue dans la maquette iPhone.
-    pathname?.startsWith('/dev/bottombar-ios27') ||
+    // Clubs et profils publics gardent la barre unique de l'app (iOS 27) :
+    // leurs anciennes barres intégrées ne sont plus affichées.
+    // '/prepare' n'est PLUS dans cette liste : le preparateur d'aventure doit
+    // garder la barre d'onglets. Elle en etait retiree parce que le flux
+    // occupe tout l'ecran, mais l'effet reel etait l'inverse de l'intention —
+    // aucun moyen de quitter l'ecran, puisque AppShell ne rend que la
+    // reservation de place et jamais la barre elle-meme. Voir
+    // AdventurePrepScreen.
+    // Égalité stricte conservee pour les autres routes '/prepare*' :
+    // '/preparer-randonnee' et '/preparer-sentier' gardent leur navigation.
     // A Reel is a true full-screen viewer with its own close/back controls.
     // Never overlay the shared web OR Capacitor tab bar on its media.
     pathname === '/communaute/reels' ||
@@ -34,9 +44,6 @@ export default function MobileNavWrapper() {
     pathname === '/carte-3d' ||
     pathname?.startsWith('/carte-3d');
 
-  if (isNoNavRoute) {
-    return <OfflineBanner />;
-  }
 
   // Hide general top site navigation on map-heavy views to allow full-screen map focus
   const isMapHeavyRoute = 
@@ -44,19 +51,16 @@ export default function MobileNavWrapper() {
     pathname?.startsWith(HUB_DEPART_HREF) || 
     pathname?.startsWith('/carte-interactive');
 
-  if (isMapHeavyRoute) {
-    return (
-      <>
-        <NavigationBar />
-        <OfflineBanner />
-      </>
-    );
-  }
-
+  // La barre reste montée en permanence (une seule instance, détachée des
+  // pages) : changer de page ne la démonte jamais. Les routes plein écran la
+  // masquent par CSS seulement.
   return (
     <>
-      <NavigationBar />
-      <SearchOverlay />
+      <div style={{ display: isNoNavRoute ? 'none' : 'contents' }} data-persistent-nav>
+        <NavigationBar />
+      </div>
+      {!isNoNavRoute && <TabSwipeNavigator />}
+      {!isNoNavRoute && !isMapHeavyRoute && <SearchOverlay />}
       <OfflineBanner />
     </>
   );

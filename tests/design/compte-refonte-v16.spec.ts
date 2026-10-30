@@ -7,10 +7,7 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 v16 — la card défile au lieu d’écraser les posts', () => {
-  const source =
-    read('src/components/compte/CompteLiquidGlassV8.tsx') +
-    '\n' + read('src/components/compte/compte-v8.css') +
-    '\n' + read('src/components/compte/compte-apple-hig.css');
+  const source = read('src/components/compte/CompteLiquidGlassV8.tsx');
   const v16 = source.slice(source.indexOf('Compte iOS 27 v16'));
 
   it('1. Les blocs du conteneur scrollable gardent leur hauteur naturelle', () => {

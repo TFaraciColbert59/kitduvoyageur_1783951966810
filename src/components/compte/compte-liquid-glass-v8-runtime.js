@@ -113,7 +113,7 @@ export function applySetNationality(current, value) {
    Les menus/popovers/dialogues restent hors de cette liste pour rester
    utilisables depuis une feuille. */
 const SHEET_BACKGROUND_SELECTOR =
-  '#phone > .status, #phone > .island, #phone > .top, #phone > .mapzone, #phone > .tabbar, #phone > .home';
+  '#phone > .status, #phone > .island, #phone > .top, #phone > .tabbar, #phone > .home';
 const SHEET_FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 /** Photographie de l'état inert/aria-hidden avant ouverture, par feuille. */
@@ -296,10 +296,10 @@ const seg = (a, labels, sel, extra = "") => `<div class="segc" role="group" ${ex
 
 const STEPL = ["Identité", "Aventures", "Carnets", "Lignées", "Réglages"];
 const TABS = [
+  ["hub", "HUB", IC.hub],
   ["explorer", "Explorer", IC.globe],
-  ["compas", "Compas", "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8 4.8-2.2Z"],
-  ["materiel", "Matériel", IC.bag],
-  ["hub", "Hub", IC.hub],
+  ["communaute", "Communauté", IC.people],
+  ["messagerie", "Messages", IC.send],
   ["compte", "Compte", IC.user]
 ];
 
@@ -559,12 +559,12 @@ const S = {
      de `vis`. `null` = pas encore connue : le bootstrap hôte fait foi. */
   profileVisibility: null,
   profile: {
-    handle: "tony_frc",
-    name: "Тоny",
-    followersCount: 1080,
-    followingCount: 142,
-    followersLabel: "1 080",
-    bioLine: "· Alpes & Pyrénées · Bivouac léger",
+    handle: "",
+    name: "",
+    followersCount: 0,
+    followingCount: 0,
+    followersLabel: "0",
+    bioLine: "",
     avatarUrl: null,
     isGuest: false,
     isDemo: true,
@@ -984,7 +984,7 @@ let scrub = function(clientX) {
 }
 
 let renderTB = function() {
-  $("tb").innerHTML = `<span class="lens" id="lens" style="transform:translateX(400%)"></span>${TABS.map((t, i) => `<button data-a="ttab" data-v="${i}" class="${i === 4 ? "on" : ""}" aria-label="${t[1]}" ${i === 4 ? 'aria-current="page"' : ""}>${t[2] ? ic(t[2]) : ""}</button>`).join("")}`;
+  $("tb").innerHTML = `<span class="lens" id="lens" style="transform:translateX(400%)"></span>${TABS.map((t, i) => `<button data-a="ttab" data-v="${i}" class="${i === 4 ? "on" : ""}" aria-label="${t[1]}" ${i === 4 ? 'aria-current="page"' : ""}>${t[2] ? ic(t[2]) : ""}<span>${t[1]}</span></button>`).join("")}`;
 }
 
 /* ---------- Lentille réfractive Liquid Glass ---------- */
@@ -1060,7 +1060,7 @@ let renderIgTabContent = function(D) {
       { id: "o1", focus: "m:m1", top: "Compas J-4", bot: "3 Vallées", stat: "58 km", multi: false, act: "openOuting" },
       { id: "sp1", focus: "m:m3", top: "Herbier IA", bot: "4 espèces", stat: "98 %", multi: false, act: "openSpecies" }
     ];
-    return `<div class="ig-grid" role="region" aria-label="Grille des publications de @tony_frc">${tiles.map(t => `
+    return `<div class="ig-grid" role="region" aria-label="Grille des publications">${tiles.map(t => `
       <button class="ig-tile" data-a="${t.act || "openCarnet"}" data-v="${t.id}" data-focus="${t.focus}" ${t.act === "pubdraft" ? 'data-sim="1"' : ""} aria-label="${esc(t.bot)} · ${esc(t.top)}">
         ${tileArt(t.id)}
         <div class="t-top">
@@ -1148,38 +1148,39 @@ let card = function() {
   const shortSig = S.vis === 0
     ? "Empreinte privée (toi seul·e)"
     : "quatorze sorties, cinq saisons · Pyrénées, Mont-Blanc, Vercors";
-  const aviImg = TONY_AVATAR
-    ? `<img src="${TONY_AVATAR}" alt="Photo de profil @tony_frc">`
-    : `<span style="font:700 22px var(--sf);color:#17402C">T</span>`;
+  const avatarUrl = (S.profile && S.profile.avatarUrl) || '';
+  const aviImg = avatarUrl
+    ? `<img src="${avatarUrl}" alt="Photo de profil">`
+    : `<span style="font:700 22px var(--sf);color:#17402C">…</span>`;
 
   return `
   <!-- Barre des 2 onglets (Grille | Sorties) — Style Capsule Bottom Bar Haut Droite -->
-  <div class="ig-tabs" role="tablist" aria-label="Contenus du profil @tony_frc">
+  <div class="ig-tabs" role="tablist" aria-label="Contenus du profil">
     <span class="ig-th lens" style="transform:translateX(${S.igTab * 100}%)"></span>
     <button role="tab" aria-selected="${S.igTab === 0}" data-a="igtab" data-v="0" aria-label="Grille des publications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
     <button role="tab" aria-selected="${S.igTab === 1}" data-a="igtab" data-v="1" aria-label="Sorties et voyages faits"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></button>
   </div>
 
-  <!-- En-tête Instagram @tony_frc -->
+  <!-- En-tête Instagram (identité hydratée) -->
   <div class="ig-header">
     <div class="ig-left">
-      <button class="ig-avi-wrap" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d'empreinte de @tony_frc">
+      <button class="ig-avi-wrap" data-a="openStep" data-v="0:2" aria-label="Avatar et Sceau d'empreinte du profil">
         <span class="ig-avi-in">${aviImg}</span>
         <span class="ig-seal-bdg" title="Sceau d'empreinte déterministe (ADR-010)">${renderSeal(16, 0.85)}</span>
       </button>
     </div>
     <div class="ig-right">
-      <div class="ig-stats" role="group" aria-label="Statistiques du profil @tony_frc">
+      <div class="ig-stats" role="group" aria-label="Statistiques du profil">
         <button class="ig-stat" data-a="igtab" data-v="0" aria-label="${D.pubCount} publications">
           <b class="num">${D.pubCount}</b>
           <span>publications</span>
         </button>
-        <button class="ig-stat" data-a="openFollowers" aria-label="1 080 followers">
-          <b class="num">1 080</b>
+        <button class="ig-stat" data-a="openFollowers" aria-label="${S.profile.followersLabel || 0} followers">
+          <b class="num">${S.profile.followersLabel || 0}</b>
           <span>followers</span>
         </button>
-        <button class="ig-stat" data-a="openFollowing" aria-label="${D.followingCount} suivi(e)s">
-          <b class="num">${D.followingCount}</b>
+        <button class="ig-stat" data-a="openFollowing" aria-label="${S.profile.followingCount || 0} suivi(e)s">
+          <b class="num">${S.profile.followingCount || 0}</b>
           <span>suivi(e)s</span>
         </button>
       </div>
@@ -1188,9 +1189,9 @@ let card = function() {
 
   <!-- Bio Instagram @tony_frc : 🇮🇹🇫🇷 + Empreinte GPS + Lignée -->
   <div class="ig-bio">
-    <div class="ig-bio-flags">${FLAGS_IT_FR} <span>· Alpes & Pyrénées · Bivouac léger</span></div>
+    <div class="ig-bio-flags">${FLAGS_IT_FR} <span>${S.profile.bioLine || 'Chargement du profil…'}</span></div>
     <div class="ig-bio-emp" title="Calculée uniquement depuis tes sorties GPS vérifiées"><i></i><span>${shortSig}</span></div>
-    <button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/tony_frc · ${D.totalProp} reprises · +${fmtE(D.totalCredit)}</span></button>
+    <button class="ig-bio-link" data-a="openStep" data-v="3:0"><span>kitduvoyageur.fr/${S.profile.handle || '…'} · ${D.totalProp} reprises · +${fmtE(D.totalCredit)}</span></button>
   </div>
 
   <!-- Stories À la une (Highlights Instagram) -->
@@ -1211,8 +1212,8 @@ let renderTop = function() {
   G.next = N;
   $("phone").classList.toggle("hasnext", ns != null);
   $("top").innerHTML = `<div class="ig-top">
-    <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil @tony_frc · Visibilité : ${VIS_LABELS[S.vis]}">
-      <span>tony_frc</span>
+    <button class="lg ig-handle rp" id="rpvis" data-a="vismenu" aria-haspopup="menu" aria-label="Profil · Visibilité : ${VIS_LABELS[S.vis]}">
+      <span>${S.profile.handle || '…'}</span>
     </button>
     <div class="ig-top-r">
       <button class="lg gbtn" data-a="openCreate" aria-label="Créer dans l'application">${ic(IC.plus, "s")}</button>
@@ -1220,8 +1221,8 @@ let renderTop = function() {
       <button class="lg gbtn" data-a="openDrawer" aria-label="Menu Commandes, Notifications et Paramètres">${ic(IC.sliders, "s")}</button>
     </div>
   </div>
-  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil @tony_frc">
-    <b>Тоny · @tony_frc <span class="flag-badge">IT · FR</span> ${AI}</b>
+  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au profil">
+    <b>${S.profile.name || 'Chargement…'} · @${S.profile.handle || '…'} <span class="flag-badge">IT · FR</span> ${AI}</b>
     <span>${D.sigText}</span>
   </button>
   <div class="card cs" id="card">${card()}</div>`;
@@ -1526,19 +1527,18 @@ let defs = function() {
           }
         },
         {
-          /* Récompenses (chantier du 25 oct. 2026) : le détail — solde du
-             journal, objectif, catalogue, historique — vit dans le tiroir React
-             `rewards_drawer`. Ici, une simple entrée : aucun solde n'est
-             affiché depuis l'état local (valeurs de maquette avant hydratation),
-             le tiroir lit le solde canonique et distingue inconnu de zéro. */
-          l: "Récompenses",
+          l: "Fidélité",
           r: () => {
+            const pts = Number((S.profile && S.profile.loyaltyPoints) || 0);
             return {
               per: [4, 6],
-              title: "Récompenses",
+              title: "Programme fidélité",
               rows: [
-                `<div class="li nt"><div><div class="ttl"><span>Points, objectif et historique</span></div><div class="s2">Votre solde de points, l’objectif choisi, le catalogue et l’historique. Choisir un objectif ne dépense aucun point ; les XP restent dans Progression.</div></div></div>`,
-                `<button class="mbtn p" style="width:100%;height:44px;justify-content:center;font-size:13px;" data-a="openRewards">Ouvrir mes récompenses</button>`
+                `<div class="sumline" style="margin-bottom:8px"><span>Solde actuel <b class="num" style="color:var(--tint);font-size:16px;">${pts.toLocaleString('fr-FR')} pts</b></span></div>`,
+                pts > 0
+                  ? `<div class="li nt"><div><div class="ttl"><span>Points disponibles</span></div><div class="s2">Utilisables selon les avantages du programme.</div></div><span class="tg confirmed">${pts.toLocaleString('fr-FR')} pts</span></div>`
+                  : `<div style="padding:24px 14px;text-align:center;color:var(--label2);font:400 12px/1.4 var(--sf);">Aucun point fidélité pour le moment. Vos points apparaîtront après vos commandes et sorties éligibles.</div>`,
+                `<div class="li nt"><div><div class="ttl"><span>Avantages</span></div><div class="s2">Les paliers et récompenses disponibles s’afficheront ici.</div></div></div>`
               ]
             };
           }
@@ -1679,7 +1679,7 @@ const FLI_SVG = {
   "Inventaire": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
   "Prêts": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   "Prêts & Locations": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-  "Récompenses": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  "Fidélité": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
   "Parrainage": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
   "Parcours": ic(IC.route, 's'),
   "Météo": ic(IC.sun, 's'),
@@ -1812,7 +1812,7 @@ let renderSheet = function() {
     }
     return;
   }
-  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie", rewards_drawer: "recompenses" };
+  const REACT_DRAWERS = { account_drawer: "compte", followers_sheet: "reseau", outing_drawer: "sortie" };
   if (REACT_DRAWERS[sh.k]) {
     const kind = REACT_DRAWERS[sh.k];
     if (typeof window.__lkdvUnmountSlot === "function") {
@@ -1823,7 +1823,7 @@ let renderSheet = function() {
     }
     const label = kind === "reseau"
       ? (drawerHintMode === "following" ? "Abonnements" : "Abonnés")
-      : kind === "sortie" ? "Sortie" : kind === "recompenses" ? "Récompenses" : "Compte & Activité";
+      : kind === "sortie" ? "Sortie" : "Compte & Activité";
     const back = S.stk.length ? `<button class="lg gbtn sm sh-back" data-a="close" aria-label="Retour">${ic(IC.chevL, "s")}</button>` : "";
     $("sheet").setAttribute("aria-label", label);
     $("sheet").innerHTML = `<div class="grab" data-drag>
@@ -1846,9 +1846,7 @@ let renderSheet = function() {
       ? { tab: drawerHintMode || "followers" }
       : kind === "sortie"
         ? { outingId: sh.outingId || (sh.extra && sh.extra.outingId) || "" }
-        : kind === "recompenses"
-          ? { tab: sh.rewardsTab || 0 }
-          : { tab: drawerHintTab || 0 };
+        : { tab: drawerHintTab || 0 };
     if (root && typeof window.__lkdvMountDrawer === "function") {
       try { window.__lkdvMountDrawer(root, kind, props); } catch (err) {
         console.warn("[CompteLiquidGlassV8] drawer mount failed:", err);
@@ -2075,6 +2073,8 @@ let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
   if (wasBig) setTimeout(syncCardBounds, 620);
   captureSheetOpener();
   S.sh = { k, tab, page: 0, det, ...extra };
+  const sheetEl = $("sheet");
+  if (sheetEl) sheetEl.dataset.kind = String(k || "");
   if (S.sh.det !== "closed") S.sh.det = "card";
   S.callout = null; S.popv = false; S.mopts = false;
   const phoneEl = $("phone");
@@ -2772,13 +2772,16 @@ let fit = function() {
 }
 window.addEventListener("resize", () => { fit(); syncCardBounds(); }); fit();
 let fitVB = function() {
-  const tm = $("tm"), w = tm.clientWidth, h = tm.clientHeight;
+  const tm = $("tm");
+  if (!tm) return;
+  const w = tm.clientWidth, h = tm.clientHeight;
   if (!w || !h) return;
   const vh = (370 * h) / w;
   tm.setAttribute("viewBox", `0 ${(150 - vh / 2).toFixed(1)} 370 ${vh.toFixed(1)}`);
 }
-try { new ResizeObserver(fitVB).observe($("map")); } catch (e) { window.addEventListener("resize", fitVB); }
-fitVB();
+const mapFitEl = $("map");
+try { if (mapFitEl) new ResizeObserver(fitVB).observe(mapFitEl); else window.addEventListener("resize", fitVB); } catch (e) { window.addEventListener("resize", fitVB); }
+try { fitVB(); } catch (e) { window.addEventListener("resize", fitVB); }
 renderTop(); drawMap(); renderAcc(); renderTB(); renderMctl(); renderMopts(); renderCallout(); renderSheet(); renderPopv(); applyShell(); applyGlass();
 
 
@@ -2834,14 +2837,14 @@ S.extraHl = [];
 S.spPins = [];
 S.traveller.nats = ['France'];
 S.profile = {
-  handle: 'tony_frc',
-  name: 'Тоny',
-  followersLabel: '1 080',
-  followersCount: 1080,
-  followingCount: 339,
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-  bioLine: 'IT·FR · Haute montagne · Minimalisme',
-  sigText: '14 sorties · 182 km · 13,4 k m D+',
+  handle: '',
+  name: '',
+  followersLabel: '0',
+  followersCount: 0,
+  followingCount: 0,
+  avatarUrl: null,
+  bioLine: '',
+  sigText: '',
   isGuest: false,
   storeCreditEur: 42.50,
   loyaltyPoints: 1450
@@ -2875,6 +2878,7 @@ const PINIC = 'M9 3h6l-1 6 3 3H7l3-3-1-6ZM12 12v8';
 
 /* ---------- Highlights & stories ---------- */
 hlList = function () {
+  if (Array.isArray(HIGHLIGHTS) && HIGHLIGHTS.length > 1) return [...HIGHLIGHTS, { id: 'hl5', title: 'Nouveau', mass: 'm1', step: 0, sub: 'Ajouter un moment terrain à la une' }];
   const items = [];
   if (typeof totalW === 'function' && totalW() > 0) {
     items.push({
@@ -2901,7 +2905,11 @@ hlList = function () {
   return items;
 };
 
-const hlCover = h => hlArt(h.id);
+const hlCover = h => {
+  if (h && h.coverImage) return `<img src="${esc(h.coverImage)}" alt="" loading="lazy" decoding="async" />`;
+  return hlArt(h.id);
+};
+
 const unseen = () => 0;
 
 const STORIES = {
@@ -2910,6 +2918,21 @@ const STORIES = {
 };
 
 const storyFor = id => {
+  const real = Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS.find((h) => h.id === id) : null;
+  if (real) {
+    const slides = Array.isArray(real.stories) && real.stories.length
+      ? real.stories.map((story) => ({
+          k: 'image',
+          src: story.image,
+          storyId: story.id,
+          t: story.caption || real.title || 'Story',
+          s: 'Story à la une',
+        }))
+      : [real.coverImage
+          ? { k: 'image', src: real.coverImage, t: real.title || 'Story', s: 'Story à la une' }
+          : { k: 'photo', art: real.id, t: real.title || 'Story', s: 'Story à la une' }];
+    return { title: real.title || 'Story', slides };
+  }
   if (STORIES[id]) return STORIES[id];
   if (id.startsWith('hl_ca_')) {
     const cId = id.slice(6);
@@ -2926,11 +2949,13 @@ const storyFor = id => {
   return { title: 'Story', slides: [] };
 };
 function slideView(sl) {
+  if (!sl) return { body: '', foot: '' };
   if (sl.k === 'trace') {
     const a = prof(sl.seed, 16); const pts = a.map((v, i) => [24 + i * (252 / 15), 215 - v * 175 + (i % 3) * 5]);
     const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
     return { body: `<div class="st-card"><div class="st-bg">${cover(sl.seed, 330)}</div><svg class="tr" viewBox="0 0 300 250" aria-label="Trace GPS animée"><path class="st-draw" pathLength="1" d="${d}"/><circle cx="${pts[0][0]}" cy="${pts[0][1]}" r="6" fill="#96B391" stroke="#fff" stroke-width="2"/><circle cx="${pts[15][0]}" cy="${pts[15][1]}" r="7" fill="#fff" stroke="#17402C" stroke-width="2.5"/></svg><span class="st-chip a">${sl.wx}</span><span class="st-chip b">${sl.km} · GPS ✓</span></div>`, foot: `<b>${sl.t}</b><small>${sl.s}</small>` };
   }
+  if (sl.k === 'image') return { body: `<div class="st-card photo"><img src="${esc(sl.src)}" alt="" loading="lazy" decoding="async" /></div>`, foot: `<b>${esc(sl.t)}</b><small>${esc(sl.s)}</small>` };
   if (sl.k === 'photo') return { body: `<div class="st-card photo">${tileArt(sl.art)}</div>`, foot: `<b>${sl.t}</b><small>${sl.s}</small>` };
   if (sl.k === 'stats') return { body: `<div class="st-card stats">${sl.items.map(i => `<div><b>${i[0]}</b><span>${i[1]}</span></div>`).join('')}</div>`, foot: `<b>${sl.t}</b><small>${sl.s}</small>` };
   if (sl.k === 'species') {
@@ -2946,15 +2971,71 @@ function renderStory() {
   const el = $('story'); if (!el) return; if (!X.story) { el.classList.remove('on'); return; }
   const st = storyFor(X.story.id), n = st.slides.length, i = X.story.i, v = slideView(st.slides[i]);
   const h = hlList().find(q => q.id === X.story.id) || { id: X.story.id, title: st.title };
+  const storyId = st.slides[i] && st.slides[i].storyId;
+  const eng = X.storyEng || null;
+  const viewers = eng && Array.isArray(eng.viewers) ? eng.viewers : [];
+  const engage = `<button type="button" class="st-viewcount" data-a="stviews" aria-label="Voir les personnes qui ont vu cette story">◉ ${eng ? eng.viewCount : 0}</button>`;
+  const viewerList = viewers.length ? viewers.map((person) => {
+    const profileKey = person.id || person.handle || '';
+    const when = person.viewedAt ? new Date(person.viewedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : 'vu';
+    return `<button type="button" class="st-viewer-row" data-a="openUserProfile" data-v="${esc(profileKey)}" aria-label="Voir le profil de ${esc(person.name || 'Voyageur')}"><span class="st-viewer-av">${person.avatarUrl ? `<img src="${esc(person.avatarUrl)}" alt="">` : esc((person.name || 'V').charAt(0).toUpperCase())}</span><span class="st-viewer-txt"><b>${esc(person.name || 'Voyageur')}</b><small>@${esc(person.handle || 'voyageur')}</small></span><span class="st-viewer-time">${when}</span><svg class="st-viewer-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
+  }).join('') : '<p class="st-viewer-empty">Aucune vue pour le moment.</p>';
+  const viewersPanel = `<div class="st-viewers${X.viewersOpen ? ' on' : ''}" role="dialog" aria-modal="true" aria-label="Personnes ayant vu cette story"><button type="button" class="st-viewers-scrim" data-a="stviewclose" aria-label="Fermer"></button><div class="st-viewers-sheet"><div class="st-viewers-head"><span class="st-viewers-title"><b>Vues</b><small>${eng ? eng.viewCount : 0} personne${(eng ? eng.viewCount : 0) === 1 ? '' : 's'}</small></span><button type="button" class="st-viewers-close" data-a="stviewclose" aria-label="Fermer">×</button></div><div class="st-viewers-list" role="list">${viewerList}</div></div></div>`;
+  const storyAvatar = (S.profile && S.profile.avatarUrl) || TONY_AVATAR;
+  const storyName = (S.profile && S.profile.name) || 'Léa Fontaine';
   el.innerHTML = `<div class="st-bar">${st.slides.map((_, j) => `<i class="${j < i ? 'done' : j === i ? 'cur' : ''}"><b></b></i>`).join('')}</div>
-  <div class="st-head"><span class="st-av">${hlCover(h)}</span><b>${h.title}</b><small>@tony_frc · il y a 2 j</small><button class="st-x" data-a="stclose" aria-label="Fermer la story" style="font-weight:700;font-size:16px">×</button></div>
+  <div class="st-head">
+    <div class="lkdv-post-author st-author"><img class="lkdv-post-author-av" src="${esc(storyAvatar)}" alt=""><span class="lkdv-post-author-txt"><span class="lkdv-post-author-line"><b>${esc(storyName)}</b></span><span class="lkdv-post-author-meta">il y a 2 j</span></span></div>
+    <div class="lkdv-story-options st-options">
+      <button type="button" class="st-options-btn" data-a="stoptions" aria-label="Options de la story" aria-expanded="false"><span class="st-dots" aria-hidden="true">•••</span><span class="st-close-x" aria-hidden="true">×</span></button>
+      <div class="lkdv-story-options-rail st-options-rail" role="menu" aria-label="Options de la story">
+        <button type="button" role="menuitem" data-a="stviews" aria-label="Voir les vues"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12s4-7 10.5-7 10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button type="button" role="menuitem" data-a="stclose" aria-label="Fermer la story"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+    </div>
+  </div>
   <div class="st-body">${v.body}</div>
   <button class="st-zone l" data-a="stprev" aria-label="Précédent"></button><button class="st-zone r" data-a="stnext" aria-label="Suivant"></button>
-  <div class="st-foot">${v.foot}</div>`;
+  ${engage}
+  ${viewersPanel}`;
   el.classList.add('on'); el.classList.remove('hold');
 }
-function openStory(id) { X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false; renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); }
-function closeStory() { X.story = null; renderStory(); }
+async function loadStoryEngagement() {
+  const s = X.story; if (!s) return;
+  const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId;
+  if (!storyId) { X.storyEng = null; renderStory(); return; }
+  try {
+    await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'view' }) });
+    const res = await fetch(`/api/stories/${storyId}/engagement`);
+    X.storyEng = res.ok ? await res.json() : null;
+  } catch (_) { X.storyEng = null; }
+  renderStory();
+}
+function openStory(id) {
+  X.viewersOpen = false; X.storyClosing = false; X.storyDragMoved = false;
+  X.story = { id, i: 0 }; X.seen[id] = 1; closeVisMenu(true); S.popv = false;
+  const el = $('story');
+  if (el) { el.classList.remove('closing', 'dragging'); el.style.transform = ''; el.style.opacity = ''; }
+  renderPopv(); renderStory(); renderTop(); lensSoon(); haptic(8); void loadStoryEngagement();
+  requestAnimationFrame(() => { if (X.story) $('story')?.classList.add('on'); });
+}
+function dismissStory(distance = 0) {
+  const el = $('story'); const storyRef = X.story;
+  if (!el || !storyRef || X.storyClosing) return;
+  X.storyClosing = true; X.viewersOpen = false;
+  el.classList.remove('dragging'); el.classList.add('closing');
+  el.style.transform = `translateY(${Math.max(distance, 932)}px)`;
+  el.style.opacity = '0';
+  haptic(8);
+  window.setTimeout(() => {
+    if (X.story !== storyRef) return;
+    X.story = null; X.storyClosing = false;
+    el.classList.remove('on', 'closing', 'dragging');
+    el.style.transform = ''; el.style.opacity = '';
+    renderStory();
+  }, 300);
+}
+function closeStory() { dismissStory(0); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
 const tileMedia = t => t.coverImage ? `<img class="art" src="${esc(t.coverImageSmall || t.coverImage)}" alt="" loading="lazy" decoding="async" />` : tileArt(t.art);
@@ -3569,7 +3650,7 @@ const EXK = {
           cover ? `<div class="outing-hero" style="background-image:url('${cover}')"></div>` : '',
           `<div class="ttl" style="font-size:16px"><span>${o.title}</span>${o.proven ? '<span class="tg confirmed">GPS ✓</span>' : ''}</div>`,
           `<div class="s2">${o.date || 'Sortie'} · ${o.mass}${comp ? ' · avec ' + comp : ''}</div>`,
-          `<div class="sgrid"><div><small>Distance</small><b>${Number(o.km || 0).toLocaleString('fr-FR')} km</b></div><div><small>Dénivelé</small><b>+${Number(o.dplus || 0).toLocaleString('fr-FR')} m</b></div><div><small>Alt. max</small><b>${o.maxAlt ? o.maxAlt + ' m' : '—'}</b></div><div><small>Statut</small><b>${o.status === 'upcoming' ? 'À venir' : 'Terminée'}</b></div></div>`,
+          `<div class="sgrid"><div><small>Distance</small><b>${Number(o.km || 0).toLocaleString('fr-FR')} km</b></div><div><small>Dénivelé</small><b>+${Number(o.dplus || 0).toLocaleString('fr-FR')} m</b></div><div><small>Alt. max</small><b>${o.maxAlt ? o.maxAlt + ' m' : '—'}</b></div><div><small>Statut</small><span class="sg-status ${o.status === 'upcoming' ? 'is-upcoming' : 'is-done'}">${o.status === 'upcoming' ? 'À venir' : 'Terminée'}</span></div></div>`,
           note('Les données de cette sortie proviennent de votre trace GPS enregistrée.')
         ] }) },
         { l: 'Photos', icon: 'camera', r: () => ({ per: [8, 10], title: '', rows: photos.length ? [
@@ -4614,7 +4695,6 @@ var EXA = {
     setTimeout(() => { window.location.href = '/connexion'; }, 400);
   },
   openDrawer: () => { X.drawerTab = 0; openSheet('account_drawer', 0, 'large'); haptic(8); },
-  openRewards: v => { openSheet('rewards_drawer', 0, 'large', { rewardsTab: +v === 1 ? 1 : 0 }); haptic(8); },
   drawerTab: v => { const next = clamp(+v, 0, 4); drawerHintTab = next; sheetSlideDir = next >= (X.drawerTab || 0) ? 1 : -1; X.drawerTab = next; renderSheet(); haptic(6); },
   toggleReseau: v => { X.reseauMode = v; refresh(false); haptic(8); },
   togglefollow: v => {
@@ -4732,8 +4812,13 @@ var EXA = {
   vismsg: () => { island('Maquette visiteur', 'La messagerie du Hub est inactive dans la prévisualisation', false); notifyHostAction('vismsg'); },
   openHighlight: v => { if (v === 'hl5') openSheet('newhl', 0, 'large'); else openStory(v); },
   stclose: () => closeStory(),
-  stprev: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); } else { s.i = 0; renderStory(); } },
-  stnext: () => { if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); },
+  stoptions: () => { const box = document.querySelector('.st-options'); const btn = document.querySelector('.st-options-btn'); const on = box ? box.classList.toggle('on') : false; if (btn) btn.setAttribute('aria-expanded', on ? 'true' : 'false'); haptic(6); },
+  stviews: () => { X.viewersOpen = true; const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.add('on'); haptic(6); },
+  stviewclose: () => { X.viewersOpen = false; const panel = document.querySelector('.st-viewers'); if (panel) panel.classList.remove('on'); },
+  stlike: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; if (!storyId) return; const liked = Boolean(X.storyEng && X.storyEng.liked); try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: liked ? 'unlike' : 'like' }) }); if (res.ok) { const data = await res.json(); X.storyEng = { ...(X.storyEng || {}), liked: data.liked, likeCount: data.likeCount }; haptic(10); renderStory(); } } catch (_) {} },
+  stcomment: async () => { const s = X.story; if (!s) return; const st = storyFor(s.id); const slide = st.slides[s.i]; const storyId = slide && slide.storyId; const input = $('st-comment-input'); const content = input ? input.value.trim() : ''; if (!storyId || !content) return; try { const res = await fetch(`/api/stories/${storyId}/engagement`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'comment', content }) }); if (res.ok) { if (input) input.value = ''; haptic(8); void loadStoryEngagement(); } } catch (_) {} },
+  stprev: () => { if (X.storyDragMoved) { X.storyDragMoved = false; return; } if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i > 0) { s.i--; renderStory(); void loadStoryEngagement(); } else { s.i = 0; renderStory(); void loadStoryEngagement(); } },
+  stnext: () => { if (X.storyDragMoved) { X.storyDragMoved = false; return; } if (X.hold > 250) return; const s = X.story; if (!s) return; if (s.i >= storyFor(s.id).slides.length - 1) { closeStory(); return; } s.i++; renderStory(); void loadStoryEngagement(); },
   stgear: () => { island('Kit dupliqué dans ton Compas', 'Auto-fork neutre : aucune propagation ni part créateur', false); notifyHostAction('stgear', S.invs); },
   sppin: v => { doMut('sppin', v); renderStory(); },
   viewtoggle: () => { X.feed = !X.feed; refresh(false); },
@@ -4786,7 +4871,43 @@ phone.addEventListener('pointerover', e => {
 });
 phone.addEventListener('pointerout', e => { if (!X.hov) return; const t = e.target.closest && e.target.closest('.ig-tile[data-focus]'); if (!t || (e.relatedTarget && t.contains(e.relatedTarget))) return; X.hov = false; if (!S.sh && !S.callout) { S.focus = null; drawMap(); } });
 phone.addEventListener('scroll', e => { const t = e.target; if (!t.classList || !t.classList.contains('ig-feed')) return; if (t.scrollTop > 10 && !S.tabMin) { S.tabMin = true; applyShell(); } else if (t.scrollTop < 2 && S.tabMin) { S.tabMin = false; applyShell(); } }, true);
-const storyEl = $('story'); if (storyEl) storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
+const storyEl = $('story'); if (storyEl) {
+  storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
+  storyEl.addEventListener('focusin', e => { if (e.target.closest('#st-comment-input')) storyEl.classList.add('hold'); });
+  storyEl.addEventListener('focusout', e => { if (e.target.closest('#st-comment-input')) storyEl.classList.remove('hold'); });
+
+  let pointerStart = null;
+  storyEl.addEventListener('pointerdown', e => {
+    if (!X.story || X.storyClosing) return;
+    if (e.target.closest('.st-head, .st-options, .st-options-rail, .st-viewers, .st-viewcount, .st-x, input, button:not(.st-zone)')) return;
+    pointerStart = { x: e.clientX, y: e.clientY, dy: 0, id: e.pointerId };
+    storyEl.classList.add('dragging');
+    try { storyEl.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  storyEl.addEventListener('pointermove', e => {
+    if (!pointerStart || e.pointerId !== pointerStart.id) return;
+    const dx = Math.abs(e.clientX - pointerStart.x);
+    const dy = Math.max(0, e.clientY - pointerStart.y);
+    pointerStart.dy = dy;
+    if (dy > 8 && dy > dx) {
+      X.storyDragMoved = true;
+      if (e.cancelable) e.preventDefault();
+      storyEl.style.transform = `translateY(${dy}px)`;
+      storyEl.style.opacity = String(Math.max(0.35, 1 - dy / 700));
+    }
+  }, { passive: false });
+  const endPointer = e => {
+    if (!pointerStart) return;
+    const dy = pointerStart.dy;
+    pointerStart = null;
+    storyEl.classList.remove('dragging');
+    if (dy > 110) { dismissStory(dy); return; }
+    storyEl.style.transform = ''; storyEl.style.opacity = '';
+    window.setTimeout(() => { X.storyDragMoved = false; }, 40);
+  };
+  storyEl.addEventListener('pointerup', endPointer);
+  storyEl.addEventListener('pointercancel', endPointer);
+}
 if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', e => { if (e.gamma != null) phone.style.setProperty('--la', (140 + e.gamma * 1.6).toFixed(0) + 'deg'); });
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && X.story) { e.stopImmediatePropagation(); closeStory(); } }, true);
@@ -4870,6 +4991,29 @@ window.__lkdvSetSignatureVisibility = function(value) {
   refreshWithoutSheet(true);
 };
 window.__lkdvGetState = () => ({ S, CARNETS, OUTINGS, CLUBS, KITS_LINEAGE, ORDERS, SPECIES });
+
+/* Les highlights viennent de la BDD : on resynchronise le rail depuis le
+   bootstrap même si l'hydratation initiale a été interrompue. */
+async function syncHighlightsFromBootstrap() {
+  try {
+    const res = await fetch('/api/compte/bootstrap', { credentials: 'include', headers: { Accept: 'application/json' } });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!Array.isArray(data.highlights) || data.highlights.length === 0) return;
+    HIGHLIGHTS = data.highlights.map((h) => ({
+      id: h.id,
+      title: h.title || 'Story',
+      sub: `${h.items || 0} story${(h.items || 0) === 1 ? '' : 's'}`,
+      mass: '',
+      step: 2,
+      coverImage: h.coverImage || null,
+      stories: h.stories || [],
+    }));
+    if (typeof renderTop === 'function') renderTop();
+  } catch (_) {}
+}
+if (typeof window !== 'undefined') setTimeout(() => { void syncHighlightsFromBootstrap(); }, 120);
+
 window.__lkdvHydrateCompte = function (data) {
   if (!data) return;
   if (data.replace === true) {
@@ -4885,6 +5029,17 @@ window.__lkdvHydrateCompte = function (data) {
     if (Array.isArray(data.kits)) KITS_LINEAGE = data.kits;
     if (Array.isArray(data.species)) SPECIES = data.species;
     if (Array.isArray(data.stories)) STORY_HIGHLIGHTS = data.stories;
+    if (Array.isArray(data.highlights)) {
+      HIGHLIGHTS = data.highlights.map((h) => ({
+        id: h.id,
+        title: h.title || 'Story',
+        sub: `${h.items || 0} story${(h.items || 0) === 1 ? '' : 's'}`,
+        mass: '',
+        step: 2,
+        coverImage: h.coverImage || null,
+        stories: h.stories || [],
+      }));
+    }
     if (Array.isArray(data.massifs)) {
       MASSIFS = data.massifs;
       S.massifs = data.massifs;

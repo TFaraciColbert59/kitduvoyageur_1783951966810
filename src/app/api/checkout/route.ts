@@ -162,6 +162,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Panier vide' }, { status: 400 });
     }
 
+    // Retour Stripe : seulement une URL de notre site (jamais un domaine client).
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin).replace(/\/$/, '');
+    const isOurUrl = (value: string) => {
+      if (typeof value !== 'string' || !value) return false;
+      try {
+        const parsedUrl = new URL(value, siteUrl);
+        return parsedUrl.origin === new URL(siteUrl).origin;
+      } catch {
+        return false;
+      }
+    };
+    const safeSuccessUrl = isOurUrl(successUrl) ? successUrl : `${siteUrl}/panier?paiement=succes`;
+    const safeCancelUrl = isOurUrl(cancelUrl) ? cancelUrl : `${siteUrl}/panier?paiement=annule`;
+
     // Validate prices server-side against database
     const validation = await validatePrices(items);
     if (!validation.valid) {
@@ -170,8 +184,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.com';
 
     // ── Metadata : construites UNIQUEMENT depuis les items validés serveur ──
     // user_id vient des cookies (jamais du body client).
@@ -234,8 +246,8 @@ export async function POST(request: NextRequest) {
         },
         quantity: item.quantity,
       })),
-      success_url: successUrl || `${siteUrl}/checkout?success=true`,
-      cancel_url: cancelUrl || `${siteUrl}/panier`,
+      success_url: safeSuccessUrl,
+      cancel_url: safeCancelUrl,
       shipping_address_collection: { allowed_countries: ['FR', 'BE', 'CH', 'LU', 'MC'] },
       metadata: plan.metadata,
     });

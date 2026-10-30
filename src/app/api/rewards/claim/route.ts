@@ -1,25 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabase } from '@/lib/ai/serviceClient';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * POST /api/rewards/claim — FERMÉE (chantier Récompenses, 25 oct. 2026).
- *
- * Cette route relayait `action_type`, `target_id` et `metadata` fournis par le
- * client à `claim_reward_points` avec le rôle service : un message de groupe
- * (cible = le groupe, pas le message) ou un carnet suffisait à créditer des
- * points économiques sans que le fait soit vérifié en base. L'émission sociale
- * reste fermée tant que son financement et sa preuve ne sont pas démontrés
- * (docs/research/2026-10-25-recompenses-lkdv/AUDIT-RECONCILIATION.md).
- *
- * Les anciens clients reçoivent un refus explicite et sans effet ; aucun droit
- * déjà acquis n'est touché. Les nouveaux gains passent par
- * `rewards_award_points` (décision unique par fait, plafonds), fermé lui aussi.
+ * POST /api/rewards/claim
+ * Enregistre une contribution utilisateur et calcule les points associés.
  */
-export async function POST(_req: NextRequest) {
-  return NextResponse.json(
-    { error: 'emission_closed', message: 'Les gains sociaux ne sont pas ouverts.' },
-    { status: 410 }
-  );
+
+const ClaimSchema = z.object({
+  action_type: z.string().min(2).max(64),
+  target_id: z.string().uuid(),
+  target_type: z.enum(['hike', 'carnet', 'review', 'place', 'trail', 'contribution']),
+  metadata: z.record(z.string(), z.union([z.string().max(500), z.number(), z.boolean()])).optional().default({}),
+});
+
+export async function POST(req: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Authentification requise' }, { status: 401 });
+    }
+
+    // Phase 8 — points = ressource monétaire : fail-closed si le limiteur
+    // distribué est configuré mais injoignable.
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'rewards-claim',
+      limit: 30,
+      windowMs: 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return limited;
+
+    const parsed = ClaimSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Données de contribution invalides' }, { status: 400 });
+    }
+    const { action_type, target_id, target_type, metadata } = parsed.data;
+
+    // Phase de stabilisation : la RPC d'attribution est service_role uniquement
+    // (REVOKE authenticated). L'identité vient de la session vérifiée ci-dessus ;
+    // le client ne fournit jamais points ni compétences.
+    const service = getServiceSupabase();
+    if (!service) {
+      return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
+    }
+    const { data: contributionId, error } = await service.rpc('claim_reward_points', {
+      p_user_id: user.id,
+      p_action_type: action_type,
+      p_target_id: target_id,
+      p_target_type: target_type,
+      p_metadata: metadata
+    });
+
+    if (error) {
+      console.warn('[rewards/claim] RPC error:', error.message);
+      return NextResponse.json({ error: 'Contribution refusée' }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, contributionId });
+  } catch (err: any) {
+    console.error('[rewards/claim] Unexpected error:', err);
+    return NextResponse.json({ error: 'Erreur serveur inattendue' }, { status: 500 });
+  }
 }

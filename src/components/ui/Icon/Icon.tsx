@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { HERO_OUTLINE, HERO_SOLID } from './heroicons.generated';
+import { INSTAGRAM_FILLED, INSTAGRAM_GLYPHS } from './instagram.generated';
 import { resolveMaskFile } from './registry';
 import type { IconGlyphProps, IconProps } from './types';
 
@@ -76,6 +77,31 @@ export default function Icon({
   }
 
   if (source !== 'animated') {
+    // Glyphes « à la Instagram » en premier : traits arrondis fins, couleur du texte.
+    const InstagramGlyph = INSTAGRAM_GLYPHS[name];
+    if (InstagramGlyph) {
+      const filled = variant === 'solid' || INSTAGRAM_FILLED.has(name);
+      return (
+        <span
+          {...(title || onClick ? { role: 'img', 'aria-label': title || name } : { 'aria-hidden': true })}
+          title={title}
+          onClick={disabled ? undefined : onClick}
+          className={`inline-flex items-center justify-center select-none shrink-0 ${
+            disabled ? 'opacity-50 cursor-not-allowed' : onClick ? 'cursor-pointer hover:opacity-80' : ''
+          } ${className}`}
+          style={{ width: size, height: size, color, ...style }}
+          {...props}
+        >
+          <InstagramGlyph
+            size={size}
+            strokeWidth={strokeWidth ?? 1.75}
+            fill={filled ? 'currentColor' : 'none'}
+            aria-hidden="true"
+          />
+        </span>
+      );
+    }
+
     const maskFile = resolveMaskFile(name, variant);
     if (maskFile) {
       const iconSrc = `/icons/${maskFile.split('/').map(encodeURIComponent).join('/')}`;
@@ -103,7 +129,6 @@ export default function Icon({
             maskPosition: 'center',
             WebkitMaskPosition: 'center',
             ...style,
-            ...(maskFile.startsWith('lkdv/') ? { backgroundColor: '#17402C' } : {}),
           }}
           {...props}
         />

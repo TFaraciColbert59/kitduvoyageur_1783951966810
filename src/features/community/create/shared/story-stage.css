@@ -1,0 +1,65 @@
+/* Story : le média prend la place du fond du drawer. */
+.lkdv-story-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  border-radius: inherit;
+  background: #0b1f17;
+}
+
+.lkdv-story-media {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.lkdv-story-media img,
+.lkdv-story-media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-story-next {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 0 0.5px rgba(11, 31, 23, 0.14),
+    0 6px 18px rgba(11, 31, 23, 0.3);
+  color: #17402c;
+  cursor: pointer;
+}
+
+/* La feuille grandit pour montrer le média en grand ; la capsule, les sélecteurs et la barre d'étapes se cachent. */
+.lkdv-half-drawer:has(.lkdv-story-stage) {
+  height: min(86dvh, 760px) !important;
+  max-height: min(86dvh, 760px) !important;
+  background: #0b1f17 !important;
+}
+
+.lkdv-half-drawer:has(.lkdv-story-stage) .lkdv-drawer-grab {
+  position: relative;
+  z-index: 45;
+}
+
+.lkdv-half-drawer:has(.lkdv-story-stage) .lkdv-drawer-grab span {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+body:has(.lkdv-story-stage) .lkdv-create-stepbar {
+  display: none !important;
+}

@@ -8,6 +8,7 @@ import {
   Bus,
   CalendarPlus,
   Car,
+  Check,
   ChevronDown,
   ChevronUp,
   Copy,
@@ -31,6 +32,7 @@ import {
   transportLabel,
   type DaySummary,
 } from '../../../mobile/itineraryEngine';
+import { ActionPill } from '@/components/ui/ActionPill';
 import { GroupeDrawer } from '../groupe/GroupeDrawer';
 import { Switch } from '@/components/ui';
 
@@ -132,36 +134,27 @@ export function ItineraryDaysDrawer({
               </button>
 
               {canEdit && (
-                <div className="mt-2.5 flex items-center gap-2 border-t border-black/5 pt-2.5">
-                  <button
-                    type="button"
-                    onClick={() => onInsertAfter(day.day)}
-                    disabled={isPending}
-                    aria-label={`Insérer une journée après le jour ${day.day}`}
-                    className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center gap-1 !py-2 text-[10.5px] font-bold disabled:opacity-50"
-                  >
-                    <CalendarPlus size={13} aria-hidden="true" />
-                    Insérer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDuplicate(day.day)}
-                    disabled={isPending}
-                    aria-label={`Dupliquer le jour ${day.day}`}
-                    className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center gap-1 !py-2 text-[10.5px] font-bold disabled:opacity-50"
-                  >
-                    <Copy size={13} aria-hidden="true" />
-                    Dupliquer
-                  </button>
-                  <button
-                    type="button"
+                <div className="lkdv-apill-row mt-2.5 border-t border-black/5 pt-2.5">
+                  <ActionPill
+                    tone="danger"
+                    label={`Supprimer le jour ${day.day}`}
+                    icon={<Trash2 />}
                     onClick={() => onDelete(day.day)}
                     disabled={isPending || days.length <= 1}
-                    aria-label={`Supprimer le jour ${day.day}`}
-                    className="glass-circle-btn h-11 w-11 shrink-0 !text-[var(--lkv-danger)] disabled:opacity-40"
-                  >
-                    <Trash2 size={15} aria-hidden="true" />
-                  </button>
+                    className="mr-auto"
+                  />
+                  <ActionPill
+                    label={`Insérer une journée après le jour ${day.day}`}
+                    icon={<CalendarPlus />}
+                    onClick={() => onInsertAfter(day.day)}
+                    disabled={isPending}
+                  />
+                  <ActionPill
+                    label={`Dupliquer le jour ${day.day}`}
+                    icon={<Copy />}
+                    onClick={() => onDuplicate(day.day)}
+                    disabled={isPending}
+                  />
                 </div>
               )}
             </li>
@@ -266,55 +259,12 @@ export function ItineraryStepDrawer({
           </div>
 
           {canEdit && (
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={onEdit}
-                className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
-              >
-                <Pencil size={15} aria-hidden="true" />
-                Modifier l&apos;étape
-              </button>
-              {daysCount > 1 && (
-                <button
-                  type="button"
-                  onClick={onMove}
-                  className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
-                >
-                  <ArrowRightLeft size={15} aria-hidden="true" />
-                  Déplacer vers un autre jour
-                </button>
-              )}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={onMoveUp}
-                  disabled={isPending || !canMoveUp}
-                  aria-label="Monter l'étape"
-                  className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold disabled:opacity-50"
-                >
-                  <ChevronUp size={15} aria-hidden="true" />
-                  Monter
-                </button>
-                <button
-                  type="button"
-                  onClick={onMoveDown}
-                  disabled={isPending || !canMoveDown}
-                  aria-label="Descendre l'étape"
-                  className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold disabled:opacity-50"
-                >
-                  <ChevronDown size={15} aria-hidden="true" />
-                  Descendre
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={onDelete}
-                className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold text-[var(--lkv-danger)]"
-              >
-                <Trash2 size={15} aria-hidden="true" />
-                Supprimer l&apos;étape
-              </button>
+            <div className="lkdv-apill-row">
+              <ActionPill tone="danger" label="Supprimer l'étape" icon={<Trash2 />} onClick={onDelete} className="mr-auto" />
+              <ActionPill label="Monter l'étape" icon={<ChevronUp />} onClick={onMoveUp} disabled={isPending || !canMoveUp} />
+              <ActionPill label="Descendre l'étape" icon={<ChevronDown />} onClick={onMoveDown} disabled={isPending || !canMoveDown} />
+              {daysCount > 1 && <ActionPill label="Déplacer vers un autre jour" icon={<ArrowRightLeft />} onClick={onMove} />}
+              <ActionPill tone="primary" label="Modifier l'étape" icon={<Pencil />} onClick={onEdit} />
             </div>
           )}
         </div>
@@ -472,13 +422,15 @@ export function ItineraryStepFormDrawer({
           aria-label="Description de l'étape"
           className="glass-input w-full px-3 py-2.5 text-sm text-[var(--lkv-text-primary)]"
         />
-        <button
-          type="submit"
-          disabled={isPending}
-          className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center !py-3 text-sm font-bold disabled:opacity-50"
-        >
-          {isPending ? 'Enregistrement…' : step ? 'Enregistrer les modifications' : "Ajouter l'étape"}
-        </button>
+        <div className="lkdv-apill-dock">
+          <ActionPill
+            type="submit"
+            tone="primary"
+            label={step ? 'Enregistrer les modifications' : "Ajouter l'étape"}
+            icon={<Check />}
+            busy={isPending}
+          />
+        </div>
       </form>
     </GroupeDrawer>
   );
@@ -600,14 +552,9 @@ export function ItineraryPoiFormDrawer({
           aria-label="Notes du point d'intérêt"
           className="glass-input w-full px-3 py-2.5 text-sm text-[var(--lkv-text-primary)]"
         />
-        <button
-          type="submit"
-          disabled={isPending || !coords}
-          className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold disabled:opacity-50"
-        >
-          <MapPin size={15} aria-hidden="true" />
-          {isPending ? 'Enregistrement…' : 'Ajouter le point'}
-        </button>
+        <div className="lkdv-apill-dock">
+          <ActionPill type="submit" tone="primary" label="Ajouter le point" icon={<Check />} busy={isPending} disabled={!coords} />
+        </div>
       </form>
     </GroupeDrawer>
   );
@@ -669,18 +616,24 @@ export function ItineraryPoiDetailDrawer({
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => onToggleVisited(!poi.visited)}
-            disabled={isPending}
-            aria-pressed={poi.visited}
-            className={`glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !px-4 text-sm font-bold disabled:opacity-50 ${
-              poi.visited ? 'primary' : ''
-            }`}
-          >
-            {poi.visited ? <Eye size={15} aria-hidden="true" /> : <EyeOff size={15} aria-hidden="true" />}
-            {poi.visited ? 'Visité' : 'Marquer comme visité'}
-          </button>
+          <div className="lkdv-apill-row">
+            <ActionPill
+              tone="danger"
+              label="Supprimer le point"
+              icon={<Trash2 />}
+              onClick={onDelete}
+              disabled={isPending}
+              className="mr-auto"
+            />
+            <ActionPill
+              tone={poi.visited ? 'primary' : 'glass'}
+              label={poi.visited ? 'Visité' : 'Marquer comme visité'}
+              aria-pressed={poi.visited}
+              icon={poi.visited ? <Eye /> : <EyeOff />}
+              onClick={() => onToggleVisited(!poi.visited)}
+              disabled={isPending}
+            />
+          </div>
 
           <label className="glass-sub-card block space-y-2 rounded-2xl p-3.5">
             <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/70">
@@ -703,15 +656,6 @@ export function ItineraryPoiDetailDrawer({
             </select>
           </label>
 
-          <button
-            type="button"
-            onClick={onDelete}
-            disabled={isPending}
-            className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold text-[var(--lkv-danger)] disabled:opacity-50"
-          >
-            <Trash2 size={15} aria-hidden="true" />
-            Supprimer le point
-          </button>
         </div>
       )}
     </GroupeDrawer>

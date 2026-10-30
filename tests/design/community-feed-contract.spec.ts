@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 
 const read = (path: string) => readFileSync(path, 'utf8');
+/** Vrai si un fichier source de la Communauté mentionne encore ce nom (import ou usage). */
+const page = (name: string) =>
+  ['src/app/communaute/page.tsx', 'src/features/community/card/explore/ExplorerDrawer.tsx', 'src/features/community/card/create/CreateDrawer.tsx'].some((file) => read(file).includes(name));
 
 describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () => {
   it('la page assemble les tiroirs 50 %, la recherche et le feed avec la navigation unifiée', () => {
@@ -11,41 +14,39 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     expect(page).not.toContain('<AccountBottomBar');
     expect(read('src/components/mobile-nav/MobileNavWrapper.tsx')).toContain('<NavigationBar />');
     expect(page).toContain('<CreateDrawer');
-    expect(page).toContain('CommunitySectionsDrawer');
+    expect(page).toContain('ExplorerDrawer');
     expect(page).toContain('onSearch');
     expect(page).not.toContain('AccountCreateSheet');
     expect(page).not.toContain('CommunityHeroCard');
     expect(page).not.toContain('CommunityGrid');
   });
 
-  it('la pillule est texte « Pour toi » + chevron et la cloche va au Compte', () => {
+  it('la pilule « Explorer » ouvre la recherche et la cloche va au Compte', () => {
     const top = read('src/features/community/feed/CommunityFeedTopBar.tsx');
-    expect(top).toContain('Pour toi');
+    expect(top).toContain('<span>Explorer</span>');
+    expect(top).toContain('aria-label="Explorer et rechercher"');
     expect(top).toContain('/compte?tab=notifications');
     expect(top).not.toContain('AccountAuthorPill');
     expect(top).toContain('Rechercher dans la communauté');
   });
 
-  it('le demi-tiroir est plafonné à 50dvh et le sélecteur fait 48 px', () => {
-    const css = read('src/styles/community-feed.css');
-    expect(css).toMatch(/\.lkdv-half-drawer[\s\S]*height: 50dvh/);
-    expect(css).toMatch(/\.lkdv-half-drawer[\s\S]*max-height: 50dvh/);
-    expect(css).toMatch(/\.lkdv-tab-selector[\s\S]*height: 48px/);
-    expect(css).toMatch(/\.lkdv-tab-lens[\s\S]*width: calc/);
+  it('les drawers sont des cartes en place (plus de demi-tiroir modal)', () => {
+    const css = read('src/styles/community-card.css');
+    expect(css).toMatch(/\.lkdv-cd\s*\{[\s\S]*border-radius:\s*24px/);
+    const explorer = read('src/features/community/card/explore/ExplorerDrawer.tsx');
+    expect(explorer).toContain('<DrawerShell');
+    expect(explorer).toContain('<CommunityCardDrawer');
+    for (const old of ['CommunityDrawer', 'CommunityTabSelector', 'CommunitySectionsDrawer']) {
+      expect(page(old), old).toBe(false);
+    }
   });
 
-  it('toutes les cartes sont carrées, texte compris', () => {
+  it('les cartes ont un ratio réservé, le texte reste auto', () => {
     const css = read('src/styles/community-feed.css');
     expect(css).toContain('.lkdv-feed-post--text');
-    // Le contrat de swipe remplace l’ancien post texte à hauteur automatique.
-    // Vérifier chaque règle évite qu’un override tardif annule le carré.
-    const textBlocks = [...css.matchAll(/\.lkdv-feed-post--text\s*\{([^}]*)\}/g)].map((match) => match[1]);
-    expect(textBlocks.length).toBeGreaterThan(0);
-    expect(textBlocks.join(' ')).toMatch(/aspect-ratio:\s*1\s*\/\s*1/);
-    for (const block of textBlocks) {
-      expect(block).not.toMatch(/aspect-ratio:\s*auto/);
-      expect(block).not.toMatch(/(?:min|max)-height:\s*(?:120px|100cqw)/);
-    }
+    expect(css).toMatch(/\.lkdv-feed-post[\s\S]*aspect-ratio: 406 \/ 541/);
+    expect(css).toMatch(/\.lkdv-feed-post--text[\s\S]*aspect-ratio: auto/);
+    expect(css).toContain('height: auto');
     const post = read('src/features/community/feed/CommunityFeedPost.tsx');
     expect(post).toContain('PostAuthorPill');
     expect(post).toContain('PostCommentsPanel');
@@ -68,17 +69,19 @@ describe('Communauté v3 — contrat du fil, des tiroirs et des panneaux', () =>
     expect(stories).not.toContain('conic-gradient');
   });
 
-  it('le drawer de création ouvre 6 formulaires, sans navigation', () => {
-    const sheet = read('src/features/community/create/CreateDrawer.tsx');
+  it('le drawer de création ouvre 6 formulaires en place dans la carte, sans navigation', () => {
+    const sheet = read('src/features/community/card/create/CreateDrawer.tsx');
     for (const kind of ['post', 'carnet', 'sortie', 'kit', 'club', 'story']) {
       expect(sheet).toContain(`'${kind}'`);
     }
-    expect(sheet).toContain('EmbeddedFormContext.Provider');
+    expect(sheet).toContain('<DrawerShell');
+    expect(sheet).toContain('<CommunityCardDrawer');
     expect(sheet).not.toContain('/communaute/publier');
-    const page = read('src/app/communaute/page.tsx');
-    for (const form of ['PostCreateForm', 'StoryCreateForm', 'CarnetCreateForm', 'SortieCreateForm', 'KitCreateForm', 'ClubCreateForm']) {
-      expect(sheet).toContain(`<${form} {...common} />`);
+    for (const form of ['PostCreateForm', 'StoryCreateForm', 'SortieCreateForm', 'KitCreateForm', 'ClubCreateForm']) {
+      expect(sheet).toContain(`<${form} {...common}`);
     }
+    // Le carnet se crée par la carte (CarnetMapDrawer), jamais par un second formulaire à étapes.
+    expect(sheet).not.toContain('CarnetCreateForm');
   });
 
   it('les anciens composants du hub et les feuilles remplacées ont disparu', () => {

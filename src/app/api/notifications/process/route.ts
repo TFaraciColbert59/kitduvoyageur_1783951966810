@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import { isCronAuthorized } from '@/lib/cron/auth';
 import {
   currentHourInZone,
   isWithinQuietHours,
@@ -47,6 +48,10 @@ if (vapidPublicKey && vapidPrivateKey) {
  * Peut être appelé par un webhook de base de données, un worker ou un cron job.
  */
 export async function POST(req: NextRequest) {
+  // Route planifiée : sans secret, elle déverse des emails et des push.
+  if (!isCronAuthorized(req)) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 401 });
+  }
   try {
     // 1. Fetch pending deliveries (A-186 : jamais celles reportées par les
     // heures calmes — `scheduled_after` doit être dépassé).

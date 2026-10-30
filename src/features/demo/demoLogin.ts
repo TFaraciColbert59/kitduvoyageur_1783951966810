@@ -31,8 +31,7 @@ export async function demoLoginAction(): Promise<
   { success: true } | { success: false; error: string }
 > {
   const creds = demoCredentials();
-  if (!creds || (await anonymousSignInsEnabled()))
-    return { success: false, error: 'Compte de démonstration indisponible.' };
+  if (!creds) return { success: false, error: 'Compte de démonstration indisponible.' };
   try {
     const h = await headers();
     const ip = clientIpFromHeaders(h);

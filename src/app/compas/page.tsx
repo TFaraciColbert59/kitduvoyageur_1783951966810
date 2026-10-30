@@ -16,7 +16,7 @@ import { aiEnabled } from '@/lib/ai/aiMode';
 import '@/features/compas/compas.css';
 
 /**
- * Compas — le préparateur de voyage (il remplace `/prepare`, qui redirige ici),
+ * Compas — le préparateur de voyage (il remplace `/compas`, qui redirige ici),
  * branché sur les données réelles de l'aventure active du hub.
  *
  * Trois états, une seule route :

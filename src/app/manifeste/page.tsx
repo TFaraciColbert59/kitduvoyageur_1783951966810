@@ -101,7 +101,7 @@ export default function ManifestePage() {
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/boutique" className="glass-capsule-btn primary">
+              <Link href="/explorer" className="glass-capsule-btn primary">
                 <span>Voir la boutique</span>
                 <Icon name="arrow-right" size={14} />
               </Link>
@@ -145,7 +145,7 @@ export default function ManifestePage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Link href="/boutique" className="glass-capsule-btn primary">
+              <Link href="/explorer" className="glass-capsule-btn primary">
                 <span>Voir la boutique</span>
                 <Icon name="arrow-right" size={13} />
               </Link>

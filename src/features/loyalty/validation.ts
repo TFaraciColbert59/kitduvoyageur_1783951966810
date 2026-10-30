@@ -1,12 +1,9 @@
 /**
  * Phase 1 — validation PURE des corps des routes loyalty (sans IO).
  *
- * Les points ne viennent JAMAIS du client. La source earn est préfixée par
- * producteur pour éviter toute collision d'idempotence avec les autres
- * écritures du journal. Depuis le chantier Récompenses (25 oct. 2026), le
- * montant réellement versé vient de `reward_config.points_program` via
- * `rewards_award_points` (fermé par défaut) ; `points` ci-dessous ne sert plus
- * qu'à documenter l'ancien barème.
+ * Le barème des gains vit ici et nulle part ailleurs : les points ne viennent
+ * JAMAIS du client. La source earn est préfixée par producteur pour éviter
+ * toute collision d'idempotence avec les autres écritures du journal.
  */
 
 export const EARN_ACTIONS: Record<string, { points: number; sourcePrefix: string }> = {

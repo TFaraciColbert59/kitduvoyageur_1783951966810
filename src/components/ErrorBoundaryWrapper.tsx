@@ -20,8 +20,16 @@ export default class ErrorBoundaryWrapper extends Component<Props, State> {
     return { hasError: true };
   }
 
+  private retried = false;
+
   componentDidCatch(error: Error) {
     console.error('ErrorBoundaryWrapper caught:', error);
+    // Une erreur transitoire (navigation, carte, hydratation) ne doit pas
+    // condamner toute l'application : on retente un rendu une seule fois.
+    if (!this.retried) {
+      this.retried = true;
+      window.setTimeout(() => this.setState({ hasError: false }), 600);
+    }
   }
 
   render() {
@@ -31,7 +39,7 @@ export default class ErrorBoundaryWrapper extends Component<Props, State> {
           <h1 className="mb-[var(--space-4)]">Une erreur est survenue</h1>
           <p className="mb-[var(--space-8)] text-[color:var(--lkv-forest-100)]">L'application a rencontré un problème inattendu.</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => this.setState({ hasError: false })}
             className="min-h-[var(--lkv-touch-min)] cursor-pointer rounded-[var(--lkv-radius-sm)] border-none bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-6)] py-3 font-semibold text-[color:var(--lkv-text-primary)]"
           >
             Réessayer

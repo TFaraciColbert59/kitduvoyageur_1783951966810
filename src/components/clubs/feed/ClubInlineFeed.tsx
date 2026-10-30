@@ -197,8 +197,9 @@ function ClubPostCard({
             setPanel(null);
             return;
           }
+          // Partage ← photo → commentaires : le geste inverse ramène à la photo.
           if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-            setPanel(panel === 'comments' ? 'share' : 'comments');
+            if (panel === 'comments' ? dx > 0 : dx < 0) setPanel(null);
           }
           return;
         }

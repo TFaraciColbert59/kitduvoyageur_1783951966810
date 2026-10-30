@@ -16,7 +16,7 @@ import { z } from 'zod';
  */
 
 /** Page du parcours (formulaire d'e-mail, puis choix du mot de passe). */
-export const KEEP_TRIAL_PATH = '/compte/garder-mon-essai';
+export const KEEP_TRIAL_PATH = '/compte';
 /** Retour du lien de confirmation (via /auth/callback) : la page sait que l'e-mail vient d'être confirmé. */
 export const KEEP_TRIAL_RETURN = KEEP_TRIAL_PATH + '?lien=ok';
 

@@ -1,6 +1,18 @@
 import { expect, type Page } from '@playwright/test';
 
-const AUTHOR_ID = '00000000-0000-4000-8000-000000000101';
+/** En-têtes CORS permissifs pour les réponses simulées (origine de la page reprise telle quelle). */
+export const cors = (route: { request: () => { headers: () => Record<string, string> } }) => {
+  const origin = route.request().headers()['origin'] ?? '*';
+  return {
+    'access-control-allow-origin': origin,
+    'access-control-allow-credentials': 'true',
+    'access-control-allow-headers': '*',
+    'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+    'access-control-expose-headers': '*',
+  };
+};
+
+export const AUTHOR_ID = '00000000-0000-4000-8000-000000000101';
 const profile = {
   id: AUTHOR_ID,
   full_name: 'Camille Martin',
@@ -20,7 +32,14 @@ export async function installCommunityFeedFixture(page: Page) {
       necessary: true, analytics: false, marketing: false, version: '1',
     }));
   });
+  // Les requêtes authentifiées portent `authorization`/`apikey` : le navigateur envoie
+  // d'abord une pré-vérification CORS (OPTIONS) qu'il faut accepter, sinon la requête
+  // réelle échoue avec `net::ERR_FAILED` et le fil affiche « n'a pas pu être chargé ».
   await page.route('**/rest/v1/**', async (route) => {
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers: cors(route) });
+      return;
+    }
     const url = new URL(route.request().url());
     const table = url.pathname.split('/').at(-1);
     let data: unknown = [];
@@ -44,10 +63,13 @@ export async function installCommunityFeedFixture(page: Page) {
       // AuthProvider uses maybeSingle(), which requests an object response.
       data = { ...profile, email: 'camille@example.invalid' };
     }
-    await route.fulfill({ json: data });
+    await route.fulfill({ json: data, headers: cors(route) });
   });
   // Authentication is opt-in below. A guest has no session or auth request.
-  await page.route('**/auth/v1/**', (route) => route.fulfill({ json: { ...profile, aud: 'authenticated', role: 'authenticated', is_anonymous: false } }));
+  await page.route('**/auth/v1/**', (route) =>
+    route.request().method() === 'OPTIONS'
+      ? route.fulfill({ status: 204, headers: cors(route) })
+      : route.fulfill({ headers: cors(route), json: { ...profile, aud: 'authenticated', role: 'authenticated', is_anonymous: false } }));
   await page.route('**/api/compte/compte/notifications', (route) =>
     route.fulfill({ json: { notifications: [], unread: 0 } }));
 
