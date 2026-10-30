@@ -68,6 +68,11 @@ empêche également la création d'un paiement.
   prouve pas la concurrence entre connexions. Son résultat CI doit être vérifié
   séparément avant clôture de ce contrôle.
 
+Le rejeu natif a ensuite réellement réussi sur PostgreSQL 17 dans la CI du
+commit `ffbbd734` : un seul effet après deux reprises concurrentes, et aucune
+attribution après la barrière de remboursement. Job :
+https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/41019892499/job/123944564536.
+
 ## Ordre de livraison et limites
 
 1. Sauvegarder et réconcilier les commandes historiques ambiguës sur une copie.

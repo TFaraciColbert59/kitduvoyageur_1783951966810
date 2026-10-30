@@ -9,6 +9,21 @@ const scriptPath = fileURLToPath(
   new URL('../scripts/verify/verify_capacitor_server.mjs', import.meta.url)
 );
 const temporaryDirectories: string[] = [];
+const releaseSecurityFlags = {
+  cleartext: false,
+  allowMixedContent: false,
+  webContentsDebuggingEnabled: false,
+};
+
+function releaseConfig(url: string) {
+  return {
+    server: { url, cleartext: releaseSecurityFlags.cleartext },
+    android: {
+      allowMixedContent: releaseSecurityFlags.allowMixedContent,
+      webContentsDebuggingEnabled: releaseSecurityFlags.webContentsDebuggingEnabled,
+    },
+  };
+}
 
 async function createFetchPreload(source: string) {
   const directory = await mkdtemp(join(tmpdir(), 'capacitor-server-'));
@@ -102,7 +117,7 @@ globalThis.fetch = async (input, init) => {
 };`
     );
     const configPath = join(directory, 'capacitor.config.json');
-    await writeFile(configPath, JSON.stringify({ server: { url: serverUrl } }));
+    await writeFile(configPath, JSON.stringify(releaseConfig(serverUrl)));
 
     const result = runCheck(serverUrl, preloadPath, configPath);
 
@@ -237,7 +252,7 @@ globalThis.fetch = async (input, init) => {
 };`
     );
     const configPath = join(directory, 'capacitor.config.json');
-    await writeFile(configPath, JSON.stringify({ server: { url: serverUrl } }));
+    await writeFile(configPath, JSON.stringify(releaseConfig(serverUrl)));
 
     const result = runCheck(serverUrl, preloadPath, configPath, true);
 
@@ -264,6 +279,20 @@ globalThis.fetch = async (input, init) => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('configuration Capacitor embarquée');
     expect(result.stdout).not.toContain('NETWORK_REQUESTED');
+    expectUrlNotLeaked(result, serverUrl);
+  });
+
+  it.each(['cleartext', 'allowMixedContent', 'webContentsDebuggingEnabled'])('bloque une configuration embarquée qui active %s', async (flag) => {
+    const serverUrl = 'https://mobile.example';
+    const { directory } = await createFetchPreload('');
+    const configPath = join(directory, 'capacitor.config.json');
+    const config = releaseConfig(serverUrl);
+    if (flag === 'cleartext') config.server.cleartext = true;
+    else config.android[flag as keyof typeof config.android] = true;
+    await writeFile(configPath, JSON.stringify(config));
+    const result = runCheck(serverUrl, undefined, configPath, true);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('sécurité release');
     expectUrlNotLeaked(result, serverUrl);
   });
 });

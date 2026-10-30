@@ -45,6 +45,10 @@ jobs:
           tests/security/phase8-stripe-eventstore.spec.ts tests/security/phase8-stripe-events.spec.ts
           tests/checkout/stripe-metadata.spec.ts tests/checkout/stripe-entitlements.spec.ts
           tests/checkout/stripe-fulfillment.spec.ts
+          tests/security/gdpr-export-pagination.spec.ts
+          tests/security/a14-gdpr-account.spec.ts tests/security/a14-gdpr-missing-table.spec.ts
+          tests/capacitor-release-config.spec.ts tests/capacitor-release-sync.spec.ts
+          tests/capacitor-server.spec.ts src/components/mobile-nav/__tests__
 
   stripe-postgres-concurrency:
     runs-on: ubuntu-latest

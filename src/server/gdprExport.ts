@@ -122,9 +122,44 @@ export interface GdprExportBundle {
   counts: Record<string, number>;
 }
 
-function assertNoError(error: { message: string } | null, scope: string): void {
-  if (error) throw new Error(`export RGPD ${scope}: ${error.message}`);
+/** A partial export must never be served as a successful portability archive. */
+export class GdprExportIncompleteError extends Error {
+  constructor() {
+    super('Export incomplet : les données n’ont pas pu être réunies intégralement.');
+    this.name = 'GdprExportIncompleteError';
+  }
 }
+
+export interface GdprExportLimits {
+  maxRows: number;
+  maxBytes: number;
+  maxRequests: number;
+  timeoutMs: number;
+}
+
+// Shared by all table reads and the three concurrent child-table reads.
+const DEFAULT_EXPORT_LIMITS: GdprExportLimits = {
+  maxRows: 50_000,
+  maxBytes: 10 * 1024 * 1024,
+  maxRequests: 500,
+  timeoutMs: 20_000,
+};
+const EXPORT_PAGE_SIZE = 250;
+const PLAN_ID_BATCH_SIZE = 100;
+
+// These tables have no `id`. Include the complete primary key so ordering stays
+// deterministic even when several rows share a season, report or scope.
+const EXPORT_ORDER_EXCEPTIONS: Readonly<Record<string, readonly string[]>> = {
+  terrain_report_contributors: ['report_id', 'user_id'],
+  offline_sync_operations: ['user_id', 'idempotency_key'],
+  user_entitlements: ['user_id'],
+  user_season_progress: ['user_id', 'season_id'],
+  progression_decisions: ['idempotency_key'],
+  progression_leaderboard_agg: ['season_id', 'scope_type', 'scope_id', 'user_id'],
+  user_territory: ['user_id'],
+  user_territory_private: ['user_id'],
+  user_traveller: ['user_id'],
+};
 
 /**
  * Construit l'export complet d'un utilisateur. Lecture seule, aucun effet de
@@ -156,10 +191,14 @@ export async function buildGdprExport(
     .filter((id): id is string => id !== null);
 
   const plans: GdprPlanExport[] = [];
+  for (const table of GDPR_PLAN_CHILD_TABLES) counts[table] = 0;
   if (planIds.length > 0) {
     const [versions, decisions, engineRuns] = await Promise.all(
       GDPR_PLAN_CHILD_TABLES.map((table) => client.selectByColumn(table, 'plan_id', planIds))
     );
+    counts.adventure_plan_versions = versions.length;
+    counts.adventure_plan_decisions = decisions.length;
+    counts.adventure_engine_runs = engineRuns.length;
     for (const plan of planRows) {
       const planId = String(plan.id);
       const pick = (rows: Record<string, unknown>[]) =>
@@ -198,30 +237,109 @@ export function gdprExportFileName(now = new Date()): string {
 
 /** Adaptateur service_role (routes uniquement, après authentification). */
 export function createSupabaseGdprExportClient(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  overrides: Partial<GdprExportLimits> = {}
 ): GdprExportClient {
+  const limits = { ...DEFAULT_EXPORT_LIMITS, ...overrides };
+  if (Object.values(limits).some((value) => !Number.isSafeInteger(value) || value < 1)) {
+    throw new GdprExportIncompleteError();
+  }
+  const signal = AbortSignal.timeout(limits.timeoutMs);
+  let rowCount = 0;
+  let bytes = 0;
+  let requests = 0;
+  const check = () => {
+    if (signal.aborted) throw new GdprExportIncompleteError();
+  };
+  const startRequest = () => {
+    check();
+    requests += 1;
+    if (requests > limits.maxRequests) throw new GdprExportIncompleteError();
+  };
+  const retain = (rows: Record<string, unknown>[]) => {
+    check();
+    rowCount += rows.length;
+    bytes += Buffer.byteLength(JSON.stringify(rows), 'utf8');
+    if (rowCount > limits.maxRows || bytes > limits.maxBytes) {
+      throw new GdprExportIncompleteError();
+    }
+  };
+  const readAll = async (
+    table: string,
+    column: string,
+    value: string | string[],
+    optional: boolean
+  ): Promise<Record<string, unknown>[]> => {
+    const order = EXPORT_ORDER_EXCEPTIONS[table] ?? ['id'];
+    const rows: Record<string, unknown>[] = [];
+    const seen = new Set<string>();
+    let expected: number | null = null;
+    do {
+      startRequest();
+      let query = supabase.from(table).select('*', { count: 'exact' });
+      query = Array.isArray(value) ? query.in(column, value) : query.eq(column, value);
+      for (const key of order) query = query.order(key, { ascending: true });
+      const { data, error, count } = await query
+        .range(rows.length, rows.length + EXPORT_PAGE_SIZE - 1)
+        .abortSignal(signal);
+      check();
+      if (error) {
+        if (optional && rows.length === 0 && isMissingRelation(error)) return [];
+        throw new GdprExportIncompleteError();
+      }
+      if (count == null || !Number.isSafeInteger(count) || count < 0 || !Array.isArray(data)) {
+        throw new GdprExportIncompleteError();
+      }
+      if (expected !== null && count !== expected) throw new GdprExportIncompleteError();
+      expected = count;
+      if (count - rows.length > limits.maxRows - rowCount ||
+        data.length > EXPORT_PAGE_SIZE || data.length > count - rows.length ||
+        (data.length === 0 && rows.length < count)) {
+        throw new GdprExportIncompleteError();
+      }
+      for (const row of data as Record<string, unknown>[]) {
+        const keys = order.map((key) => row[key]);
+        if (keys.some((key) => typeof key !== 'string' && typeof key !== 'number')) {
+          throw new GdprExportIncompleteError();
+        }
+        const identity = JSON.stringify(keys);
+        if (seen.has(identity)) throw new GdprExportIncompleteError();
+        seen.add(identity);
+      }
+      retain(data);
+      rows.push(...data);
+      // Advance by the actual response length: the hosted API may enforce a
+      // lower row cap than our requested range. Its exact total remains binding.
+    } while (rows.length < expected);
+    return rows;
+  };
   return {
     async selectProfile(userId) {
+      startRequest();
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', userId)
+        .abortSignal(signal)
         .maybeSingle();
-      assertNoError(error, 'user_profiles');
+      check();
+      if (error) throw new GdprExportIncompleteError();
+      if (data) retain([data as Record<string, unknown>]);
       return (data as Record<string, unknown> | null) ?? null;
     },
 
     async selectByUser(table, userColumn, userId) {
-      const { data, error } = await supabase.from(table).select('*').eq(userColumn, userId);
-      if (error && GDPR_OPTIONAL_TABLES.has(table) && isMissingRelation(error)) return [];
-      assertNoError(error, table);
-      return (data ?? []) as Record<string, unknown>[];
+      return readAll(table, userColumn, userId, GDPR_OPTIONAL_TABLES.has(table));
     },
 
     async selectByColumn(table, column, values) {
-      const { data, error } = await supabase.from(table).select('*').in(column, values);
-      assertNoError(error, table);
-      return (data ?? []) as Record<string, unknown>[];
+      const rows: Record<string, unknown>[] = [];
+      const uniqueValues = [...new Set(values)];
+      for (let offset = 0; offset < uniqueValues.length; offset += PLAN_ID_BATCH_SIZE) {
+        rows.push(...await readAll(table, column,
+          uniqueValues.slice(offset, offset + PLAN_ID_BATCH_SIZE), false));
+      }
+      return rows;
     },
   };
 }

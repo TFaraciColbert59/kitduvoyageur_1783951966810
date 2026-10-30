@@ -65,6 +65,19 @@ Revue indépendante Compte : tous les blocages corrigés; 22 tests d'intégratio
 
 Le nouveau job PostgreSQL natif doit encore exécuter les scénarios multi-connexions après publication. La migration doit précéder le webhook lors d'une future livraison; aucune migration, paiement, modification de données ou publication de production n'a eu lieu. Les limites financières historiques restent explicites dans `docs/security/AUDVA03-stripe-checkout-resume.md`, notamment les remboursements précédant toute commande et les deltas concurrents. Aucun test navigateur réel ni validation visuelle exhaustive n'est revendiqué.
 
+Actualisation après publication : **les deux jobs de la CI `ffbbd734` sont réussis**, y compris le véritable rejeu PostgreSQL 17 et les deux scénarios multi-connexions. Preuve : https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/41019892499. Cela ne valide pas une migration du schéma complet de production.
+
+### Lot 3 — export RGPD et release mobile
+
+- [x] Export : pagination sur toutes les tables du registre existant et leurs enfants, ordre par clé primaire, contrôle des totaux, plages avançant du nombre de lignes reçu et lots de 100 identifiants de plans.
+- [x] Export : budgets communs de lignes, octets source, requêtes et durée; aucune archive partielle acquittée en cas d'erreur ou de limite. Sujet toujours issu de la session authentifiée.
+- [x] Mobile : séquence native partagée au niveau du module et gardes de propriétaire sur les réponses différées; une ancienne instance ne peut écraser la hauteur de navigation d'une nouvelle.
+- [x] Release : configuration Capacitor sécurisée par défaut, opt-in de développement explicite, wrapper Node portable imposant le mode production et refusant le serveur de développement. `mobile:build` et les workflows iOS existants utilisent ce wrapper; leurs déclencheurs sont inchangés.
+
+Export : 33 tests sur 3 fichiers réussis, incluant le vrai SDK Supabase sur un transport PostgREST simulé, limites de 37/1 000 lignes, 1 203 enfants, clés composites, pannes et annulation. Mobile : 65 tests sur 6 fichiers réussis. Revues indépendantes : aucun blocage restant dans ces deux lots. Typage complet local réussi (heap 4 Gio).
+
+Limites : pagination sans instantané transactionnel commun; un export dépassant les limites demande un traitement asynchrone encore absent (réponse explicite 503). Pas de lecture des données réelles de production, pas de compilation native signée ni test UIKit sur appareil. Une recréation complète du WebView conservant son hôte natif reste à vérifier. Ces cases clôturent les correctifs source décrits, jamais l'ensemble du chantier.
+
 Chaque lot doit conserver commande, résultat, commit et limites. Les tests ciblés sont rejoués après intégration. Les tests généraux en échec doivent être comparés au même commit de base avant attribution. Une correction source n'est pas une validation en production.
 
 Les écrans, cartes, données réelles, base, API, accessibilité, animations, mode hors ligne, mobile et mesures de performance restent dans le périmètre intégral du bundle. Cette première liste ne clôture aucune des 16 phases.

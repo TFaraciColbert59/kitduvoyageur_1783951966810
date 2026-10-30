@@ -83,6 +83,13 @@ if (configPath) {
   if (config?.server?.url !== serverUrlValue) {
     fail('La configuration Capacitor embarquée ne correspond pas à CAPACITOR_SERVER_URL.');
   }
+  if (
+    config?.server?.cleartext !== false ||
+    config?.android?.allowMixedContent !== false ||
+    config?.android?.webContentsDebuggingEnabled !== false
+  ) {
+    fail('La configuration Capacitor embarquée ne respecte pas les flags de sécurité release.');
+  }
 }
 
 if (configOnly) {

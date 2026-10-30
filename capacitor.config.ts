@@ -2,12 +2,12 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const serverUrl = process.env.CAPACITOR_SERVER_URL;
 
-// M06 — séparation dev / release : le trafic en clair (cleartext HTTP,
-// mixed-content Android) n'est autorisé que pour un serveur de développement
-// local. `CAPACITOR_DEV_SERVER=1` force explicitement ce mode (utile quand
-// NODE_ENV n'est pas positionné) ; toute release exige HTTPS.
-const isDevServer =
-  process.env.NODE_ENV !== "production" || process.env.CAPACITOR_DEV_SERVER === "1";
+// Capacitor CLI does not inherit Next.js build mode. Fail closed even when
+// NODE_ENV is unset; local development requires an explicit opt-in.
+const isDevServer = process.env.CAPACITOR_DEV_SERVER === "1";
+if (isDevServer && process.env.NODE_ENV === "production") {
+  throw new Error("[capacitor.config] CAPACITOR_DEV_SERVER est interdit pour une build release.");
+}
 const allowCleartext = isDevServer;
 
 if (!isDevServer && serverUrl && !serverUrl.startsWith("https://")) {
@@ -89,7 +89,7 @@ const config: CapacitorConfig = {
     backgroundColor: "#FBFAF6",
     allowMixedContent: allowCleartext,
     captureInput: true,
-    webContentsDebuggingEnabled: process.env.NODE_ENV !== "production",
+    webContentsDebuggingEnabled: isDevServer,
   },
 };
 

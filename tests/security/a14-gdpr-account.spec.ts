@@ -138,7 +138,7 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
     expect(bundle.plans[0].decisions).toHaveLength(1);
     expect(bundle.plans[0].engineRuns).toHaveLength(1);
     expect(bundle.counts.hike_sessions).toBe(1);
-    expect(bundle.counts.total).toBe(3);
+    expect(bundle.counts.total).toBe(6);
   });
 
   it('TEST-A14-GDPR-EXPORT-03: route export sans session ⇒ 401', async () => {
