@@ -62,6 +62,10 @@ export interface MapStageProps {
   cameraIntent?: CameraIntent | null;
   /** Appui long sur la carte (départ d'activité). */
   longPressHandlers?: Record<string, unknown>;
+  /** Fond de carte : relief 3D, satellite ou plan vectoriel. */
+  mapBaseStyle?: 'relief' | 'satellite' | 'plan';
+  /** Calques de données : sentiers, eau, refuges, etc. */
+  layerVisibility?: Record<string, boolean>;
 }
 
 const TERRAIN_SOURCE = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
@@ -95,6 +99,8 @@ export default function MapStage({
   sheetHeightPx = 176,
   cameraIntent = null,
   longPressHandlers,
+  mapBaseStyle = 'relief',
+  layerVisibility,
 }: MapStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -176,6 +182,26 @@ export default function MapStage({
             attribution: 'Relief : AWS Terrain Tiles (open data)',
           });
         }
+        if (!map.getSource('xp-terrain-hillshade')) {
+          map.addSource('xp-terrain-hillshade', {
+            type: 'raster-dem',
+            tiles: [TERRAIN_SOURCE],
+            encoding: 'terrarium',
+            tileSize: 256,
+            maxzoom: 13,
+          });
+        }
+        if (!map.getSource('xp-satellite')) {
+          map.addSource('xp-satellite', {
+            type: 'raster',
+            tiles: [
+              'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            ],
+            tileSize: 256,
+            maxzoom: 19,
+            attribution: '© Esri · Earthstar Geographics',
+          });
+        }
         if (!map.getLayer('xp-countries-fill')) {
           map.addLayer({
             id: 'xp-countries-fill',
@@ -240,11 +266,23 @@ export default function MapStage({
             paint: { 'line-color': '#17402C', 'line-width': 4, 'line-opacity': 0.9 },
           });
         }
+        if (!map.getLayer('xp-satellite-layer')) {
+          map.addLayer(
+            {
+              id: 'xp-satellite-layer',
+              type: 'raster',
+              source: 'xp-satellite',
+              layout: { visibility: 'none' },
+              paint: { 'raster-opacity': 1 },
+            },
+            'xp-countries-fill',
+          );
+        }
         if (!map.getLayer('xp-hillshade')) {
           map.addLayer({
             id: 'xp-hillshade',
             type: 'hillshade',
-            source: 'xp-terrain',
+            source: 'xp-terrain-hillshade',
             layout: { visibility: 'none' },
             paint: {
               'hillshade-shadow-color': '#17402C',
@@ -383,7 +421,7 @@ export default function MapStage({
     canvas.style.filter = dark ? 'brightness(0.72) saturate(0.85) contrast(1.02)' : '';
   }, [theme, ready]);
 
-  // ── projection et relief selon le niveau ───────────────────────────────
+  // ── projection, fond et relief selon le niveau et le style ─────────────
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
@@ -402,26 +440,51 @@ export default function MapStage({
       /* aucune couche d'étiquettes */
     }
 
-    const hillshade = map.getLayer('xp-hillshade');
-    if (hillshade) {
-      map.setLayoutProperty('xp-hillshade', 'visibility', level >= 3 ? 'visible' : 'none');
-    }
-    try {
-      map.setTerrain(level >= 3 ? { source: 'xp-terrain', exaggeration: 1.3 } : null);
-    } catch {
-      /* DEM indisponible */
-    }
-  }, [level, ready]);
+    const isSat = mapBaseStyle === 'satellite';
+    const isRelief = mapBaseStyle === 'relief' || !mapBaseStyle;
 
-  // ── caméra : plongée entre niveaux ─────────────────────────────────────
+    if (map.getLayer('xp-satellite-layer')) {
+      map.setLayoutProperty('xp-satellite-layer', 'visibility', isSat ? 'visible' : 'none');
+    }
+
+    const updateTerrainAndHillshade = () => {
+      const z = map.getZoom();
+      const showTerrain = isRelief && (level >= 3 || z >= 9.5);
+      const showHillshade = isRelief && (level >= 2 || z >= 7.5);
+
+      if (map.getLayer('xp-hillshade')) {
+        map.setLayoutProperty(
+          'xp-hillshade',
+          'visibility',
+          showHillshade ? 'visible' : 'none',
+        );
+      }
+      try {
+        map.setTerrain(
+          showTerrain ? { source: 'xp-terrain', exaggeration: 1.3 } : null,
+        );
+      } catch {
+        /* DEM indisponible */
+      }
+    };
+
+    updateTerrainAndHillshade();
+    map.on('zoom', updateTerrainAndHillshade);
+    return () => {
+      map.off('zoom', updateTerrainAndHillshade);
+    };
+  }, [level, mapBaseStyle, ready]);
+
+  // ── calques de données interactifs ─────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready) return;
-    const key = `${level}:${center[0].toFixed(3)}:${center[1].toFixed(3)}`;
-    if (movedToRef.current === key) return;
-    movedToRef.current = key;
-    flyToLevel(map, center as [number, number], level, reducedMotion);
-  }, [level, center, ready, reducedMotion]);
+    if (!map || !ready || !layerVisibility) return;
+    const showRoutes = layerVisibility.routes !== false;
+    if (map.getLayer('xp-routes-line') && map.getLayer('xp-routes-casing')) {
+      map.setLayoutProperty('xp-routes-line', 'visibility', showRoutes ? 'visible' : 'none');
+      map.setLayoutProperty('xp-routes-casing', 'visibility', showRoutes ? 'visible' : 'none');
+    }
+  }, [layerVisibility, ready]);
 
   // ── orbite de sommet (pause au toucher, reprise après 6 s) ────────────
   useEffect(() => {
@@ -431,13 +494,34 @@ export default function MapStage({
     return orbitController(map, true);
   }, [cameraIntent, paused, reducedMotion, ready]);
 
-  // ── intentions de caméra (révélation, suivi, vue d'ensemble, survol) ──
-  const intentKey = cameraIntent ? `${cameraIntent.type}:${Date.now()}` : '';
+  // ── intentions de caméra (plongée, révélation, suivi, vue d'ensemble, survol) ──
+  const intentKey = cameraIntent
+    ? cameraIntent.type === 'level'
+      ? `level:${cameraIntent.level}:${cameraIntent.center.join(',')}`
+      : cameraIntent.type === 'reveal'
+        ? `reveal:${cameraIntent.center.join(',')}`
+        : cameraIntent.type === 'bearing'
+          ? `bearing:${cameraIntent.northUp}`
+          : cameraIntent.type === 'flyover'
+            ? `flyover:${cameraIntent.routeId}`
+            : cameraIntent.type === 'follow'
+              ? `follow:${me ? `${me.lat.toFixed(5)},${me.lng.toFixed(5)}` : center.join(',')}`
+              : cameraIntent.type
+    : '';
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !cameraIntent) return;
     const container = map.getContainer();
 
+    if (cameraIntent.type === 'level') {
+      suppressMoveEnd.current = true;
+      window.setTimeout(() => {
+        suppressMoveEnd.current = false;
+      }, 1500);
+      flyToLevel(map, cameraIntent.center, cameraIntent.level, reducedMotion);
+      return;
+    }
     if (cameraIntent.type === 'bearing') {
       if (cameraIntent.northUp) map.easeTo({ bearing: 0, duration: reducedMotion ? 0 : 400 });
       return;
@@ -452,7 +536,8 @@ export default function MapStage({
         suppressMoveEnd.current = false;
       }, 2500);
       const padding = followPadding(container.clientHeight, sheetHeightPx);
-      followAt(map, center, map.getBearing(), 1.4, padding, reducedMotion);
+      const targetPos: [number, number] = me ? [me.lng, me.lat] : center;
+      followAt(map, targetPos, map.getBearing(), 1.4, padding, reducedMotion);
       return;
     }
     if (cameraIntent.type === 'overview') {

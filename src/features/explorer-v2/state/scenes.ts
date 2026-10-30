@@ -320,6 +320,12 @@ export function isSceneName(value: string | null | undefined): value is SceneNam
 
 /** `?scene=` n'est accepté qu'en développement et en test. */
 export function sceneEnabled(): boolean {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') {
+      return true;
+    }
+  }
   return (
     process.env.NODE_ENV !== 'production' ||
     process.env.NEXT_PUBLIC_EXPLORER_SCENES === '1' ||

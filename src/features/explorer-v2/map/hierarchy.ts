@@ -29,8 +29,9 @@ const PRIORITY_TABLE: Record<PoiKind, Priority[]> = {
 };
 
 /** Priorité d'un repère pour un niveau donné. */
-export function poiPriority(kind: PoiKind, level: Level): Priority {
-  const row = PRIORITY_TABLE[kind];
+export function poiPriority(kind: PoiKind | string, level: Level): Priority {
+  if (kind === 'country') return 0;
+  const row = PRIORITY_TABLE[kind as PoiKind];
   if (!row) return 3;
   return row[level] ?? 3;
 }

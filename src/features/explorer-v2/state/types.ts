@@ -117,6 +117,10 @@ export interface ExplorerState {
   /** Centre courant de la carte, tenu à jour pour les requêtes de données. */
   center: [number, number];
   zoom: number;
+  /** Fond de carte : relief 3D, satellite ou plan vectoriel. */
+  mapBaseStyle?: 'relief' | 'satellite' | 'plan';
+  /** Visibilité des calques de données. */
+  layerVisibility?: Record<string, boolean>;
   /** Scène de test/parité (?scene=), désactivée en production. */
   scene?: string;
 }

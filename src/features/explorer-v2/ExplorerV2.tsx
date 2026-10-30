@@ -20,6 +20,7 @@ import { XpIcon } from './ui/XpIcon';
 import { haptic } from './state/haptics';
 import { useExplorerStore } from './state/store';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
+import type { GeoCollection } from './data/hooks';
 import {
   geometryCenter,
   useCountriesGeo,
@@ -95,10 +96,22 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   // côté client au premier rendu.
   useState(() => {
     if (typeof window === 'undefined') return false;
-    if (!initialScene || !isSceneName(initialScene)) return false;
-    useExplorerStore.getState().hydrateFromScene(initialScene);
+    let s = initialScene;
+    if (!s && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      const sp = new URLSearchParams(window.location.search);
+      s = sp.get('scene');
+    }
+    if (!s || !isSceneName(s)) return false;
+    useExplorerStore.getState().hydrateFromScene(s);
     return true;
   });
+
+  useEffect(() => {
+    if (!initialScene || !isSceneName(initialScene)) return;
+    if (useExplorerStore.getState().scene !== initialScene) {
+      useExplorerStore.getState().hydrateFromScene(initialScene);
+    }
+  }, [initialScene]);
 
   // Centre approximatif fourni par le serveur (aucune scène demandée).
   useEffect(() => {
@@ -154,19 +167,21 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   }, [online]);
 
   useEffect(() => {
-    if (state.locationPermission !== 'granted') return;
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    if (state.locationPermission === 'denied') return;
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const next = { lat: position.coords.latitude, lng: position.coords.longitude };
         setMe(next);
-        state.patch({ center: [next.lng, next.lat] });
+        state.patch({ locationPermission: 'granted', center: [next.lng, next.lat] });
       },
-      () => state.patch({ locationPermission: 'denied' }),
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300_000 },
+      () => {
+        setMe((current) => current ?? { lat: state.center[1], lng: state.center[0] });
+      },
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 300_000 },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.locationPermission]);
+  }, []);
 
   // ── données ────────────────────────────────────────────────────────────
   const countriesQuery = useCountriesGeo();
@@ -269,8 +284,40 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   );
 
   // ── démarrage d'activité (compte à rebours 3·2·1) ─────────────────────
-  // Suivi GPS de l'activité en cours (métriques, hors-trace, caméra).
-  useGpsTracker();
+  // Suivi GPS de l'activité en cours (métriques, tracé, hors-trace, caméra).
+  const [trackPoints, setTrackPoints] = useState<Array<[number, number]>>([]);
+
+  const onGpsFix = useCallback((fix: { lat: number; lng: number }) => {
+    setMe({ lat: fix.lat, lng: fix.lng });
+    setTrackPoints((prev) => [...prev, [fix.lng, fix.lat]]);
+    state.setCenter([fix.lng, fix.lat], state.zoom);
+  }, [state]);
+
+  useGpsTracker({ onFix: onGpsFix });
+
+  // Réinitialise le tracé au début d'une nouvelle activité
+  useEffect(() => {
+    if (!state.activity && state.sheet !== 'summary') {
+      if (trackPoints.length > 0) setTrackPoints([]);
+    }
+  }, [state.activity, state.sheet, trackPoints.length]);
+
+  const activityTrack = useMemo<GeoCollection | null>(() => {
+    if (trackPoints.length < 2) return null;
+    return {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: trackPoints,
+          },
+        },
+      ],
+    };
+  }, [trackPoints]);
 
   // Live Activity iOS (P7-20) : démarrage, mise à jour toutes les 5 s, fin.
   const liveActivityRef = React.useRef<{ started: boolean; lastPush: number }>({ started: false, lastPush: 0 });
@@ -342,15 +389,18 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   const pins = useMemo<MapPin[]>(() => {
     if (state.level === 0) {
       return countries
-        .filter((entry) => entry.center && ['FR', 'NP', 'JO', 'IS', 'ES', 'JP', 'US', 'CL', 'MN'].includes(entry.iso))
-        .slice(0, 5)
-        .map((entry) => ({
+        .filter((entry) => entry.center && ['FR', 'NP', 'JO', 'IS', 'ES', 'JP', 'US', 'CL', 'MN', 'NO', 'MA', 'CH', 'IT'].includes(entry.iso))
+        .map((entry) => ({ entry, km: distanceKm(state.center, entry.center as [number, number]) }))
+        .sort((a, b) => a.km - b.km)
+        .slice(0, 8)
+        .map(({ entry, km }) => ({
           id: `country-${entry.iso}`,
           kind: 'country',
           name: entry.name,
           sub: entry.continent,
           lat: (entry.center as [number, number])[1],
           lon: (entry.center as [number, number])[0],
+          distanceKm: km,
           tone: 'ink' as const,
         }));
     }
@@ -486,11 +536,8 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   // (04_CARTE §3, P2-11). Le geste utilisateur interrompt le suivi (MapLibre).
   useEffect(() => {
     if (!activity) return;
-    const timer = window.setTimeout(() => {
-      useExplorerStore.setState({ camera: { type: 'follow' } });
-    }, 150);
-    return () => window.clearTimeout(timer);
-  }, [activity?.distanceM, activity?.sport]);
+    useExplorerStore.setState({ camera: { type: 'follow' } });
+  }, [activity?.distanceM, activity?.sport, me]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!activity) return;
@@ -561,6 +608,9 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         sheetHeightPx={sheetHeight}
         cameraIntent={state.camera}
         longPressHandlers={longPress}
+        activityTrack={activityTrack}
+        mapBaseStyle={state.mapBaseStyle}
+        layerVisibility={state.layerVisibility}
       />
 
       {pendingSport ? (
@@ -597,9 +647,9 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         </div>
       ) : null}
 
-      {activity && state.sheet === 'live' ? (
+      {(activity && state.sheet === 'live') || state.sheet === 'sos' ? (
         <SosButton
-          sessionId={activity.sessionId}
+          sessionId={activity?.sessionId ?? null}
           position={me}
           onArmed={() => {
             haptic('sos-armed');

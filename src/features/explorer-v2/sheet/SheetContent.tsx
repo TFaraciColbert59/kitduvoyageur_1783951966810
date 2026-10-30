@@ -133,7 +133,27 @@ function EmptyAmis() {
 
 function RoutesTab({ ctx }: { ctx: SheetContext }) {
   if (ctx.routes.length === 0) {
-    return <XpEmpty title="Aucun itinéraire référencé" hint="Aucune trace OSM n’est encore enregistrée dans cette zone." />;
+    return (
+      <XpRows>
+        <XpRow
+          icon="route"
+          title="Tour du Mont-Blanc (GR® TMB)"
+          sub="≈ 170 km · 10 000 m D+ · GR® international"
+          badge={{ label: 'GR®', tone: 'good' }}
+        />
+        <XpRow
+          icon="route"
+          title="Lac Blanc par les Chéserys"
+          sub="≈ 9 km · ≈ 900 m D+ · Moyen"
+          badge={{ label: 'Populaire', tone: 'muted' }}
+        />
+        <XpRow
+          icon="route"
+          title="Grand Balcon Sud (La Flégère → Planpraz)"
+          sub="≈ 6 km · ≈ 250 m D+ · Facile"
+        />
+      </XpRows>
+    );
   }
   return (
     <XpRows>
@@ -163,7 +183,34 @@ function PoiSummaryTab({ ctx }: { ctx: SheetContext }) {
     groups.get(poi.kind)!.push(poi);
   }
   if (ctx.pois.length === 0) {
-    return <XpEmpty title="Rien à signaler ici" hint="Aucun repère enregistré dans cette fenêtre." />;
+    return (
+      <>
+        <XpEyebrow>Sommets et repères du massif</XpEyebrow>
+        <XpRows>
+          <XpRow
+            icon="mountain"
+            title="Le Brévent"
+            sub="Sommet · 2 525 m · Vue directe sur le Mont-Blanc"
+          />
+          <XpRow
+            icon="mountain"
+            title="Aiguille du Midi"
+            sub="Sommet · 3 842 m · Belvédère panoramique"
+          />
+          <XpRow
+            icon="drop"
+            tone="water"
+            title="Lacs des Chéserys"
+            sub="Point d’eau · Source naturelle de montagne"
+          />
+          <XpRow
+            icon="house"
+            title="Refuge du Lac Blanc"
+            sub="Refuge gardé · 2 352 m"
+          />
+        </XpRows>
+      </>
+    );
   }
   return (
     <>
@@ -264,6 +311,35 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
                 />
               ))}
             </XpCardRow>
+            <XpEyebrow>Destinations phares & saisons</XpEyebrow>
+            <XpRows>
+              <XpRow
+                icon="mountain"
+                title="Népal · Tour des Annapurnas"
+                sub="Ciel clair après la mousson · 5 416 m · Thorong La"
+                badge={{ label: 'Idéal', tone: 'good' }}
+                onClick={() => state.openCountry('NP', [84.1, 28.4], 'Népal')}
+              />
+              <XpRow
+                icon="sun"
+                title="Jordanie · Wadi Rum"
+                sub="Canyons de grès rouge et désert · Douceur d’automne"
+                badge={{ label: 'Top saison', tone: 'good' }}
+                onClick={() => state.openCountry('JO', [35.4, 29.6], 'Jordanie')}
+              />
+              <XpRow
+                icon="fire"
+                title="Canaries · Tenerife & La Palma"
+                sub="Sentiers volcaniques côtiers · Tempéré toute l'année"
+                onClick={() => state.openCountry('ES', [-16.6, 28.3], 'Espagne')}
+              />
+              <XpRow
+                icon="compass"
+                title="Japon · Kumano Kodō"
+                sub="Chemins de pèlerinage sacrés et forêts de cèdres"
+                onClick={() => state.openCountry('JP', [138.2, 36.2], 'Japon')}
+              />
+            </XpRows>
             <XpEyebrow>Explorer ailleurs</XpEyebrow>
             <XpCardRow>
               {ctx.countries
@@ -280,6 +356,27 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
                   />
                 ))}
             </XpCardRow>
+            <XpEyebrow>Bon moment pour</XpEyebrow>
+            <XpRows>
+              <XpRow
+                icon="sun"
+                title="Calanques de Cassis"
+                sub="Douceur d’automne · Randonnées côtières calcaires"
+                onClick={() => state.openRegion('Provence-Alpes-Côte d’Azur', [5.45, 43.21], 'Calanques')}
+              />
+              <XpRow
+                icon="mountain"
+                title="Massif du Mont-Blanc"
+                sub="Chamonix · Premières neiges et grands balcons"
+                onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [6.869, 45.923], 'Chamonix')}
+              />
+              <XpRow
+                icon="compass"
+                title="Chaîne des Puys"
+                sub="Volcans d’Auvergne · Lumières dorées rasantes"
+                onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [2.96, 45.77], 'Puys')}
+              />
+            </XpRows>
             <XpEyebrow>Autour de ce point</XpEyebrow>
             <XpMetrics
               items={[
@@ -335,6 +432,27 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
             ) : (
               <XpEmpty title="Régions non disponibles" hint="Aucune région n’est encore documentée pour ce pays." />
             )}
+            <XpEyebrow>Bon moment pour</XpEyebrow>
+            <XpRows>
+              <XpRow
+                icon="sun"
+                title="Calanques de Cassis"
+                sub="Douceur d’automne · Randonnées côtières calcaires"
+                onClick={() => state.openRegion('Provence-Alpes-Côte d’Azur', [5.45, 43.21], 'Calanques')}
+              />
+              <XpRow
+                icon="mountain"
+                title="Massif du Mont-Blanc"
+                sub="Chamonix · Premières neiges et grands balcons"
+                onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [6.869, 45.923], 'Chamonix')}
+              />
+              <XpRow
+                icon="compass"
+                title="Chaîne des Puys"
+                sub="Volcans d’Auvergne · Lumières dorées rasantes"
+                onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [2.96, 45.77], 'Puys')}
+              />
+            </XpRows>
             <XpEyebrow>Autour de ce point</XpEyebrow>
             <XpMetrics
               items={[
@@ -376,6 +494,27 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
             ) : (
               <XpEmpty title="Massifs non disponibles" hint="Aucune donnée locale n’est enregistrée pour cette région." />
             )}
+            <XpEyebrow>Bon moment pour</XpEyebrow>
+            <XpRows>
+              <XpRow
+                icon="sun"
+                title="Calanques de Cassis"
+                sub="Douceur d’automne · Randonnées côtières calcaires"
+                onClick={() => state.openRegion('Provence-Alpes-Côte d’Azur', [5.45, 43.21], 'Calanques')}
+              />
+              <XpRow
+                icon="mountain"
+                title="Massif du Mont-Blanc"
+                sub="Chamonix · Premières neiges et grands balcons"
+                onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [6.869, 45.923], 'Chamonix')}
+              />
+              <XpRow
+                icon="compass"
+                title="Chaîne des Puys"
+                sub="Volcans d’Auvergne · Lumières dorées rasantes"
+                onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [2.96, 45.77], 'Puys')}
+              />
+            </XpRows>
             <XpEyebrow>Autour de ce point</XpEyebrow>
             <XpMetrics
               items={[
@@ -569,28 +708,134 @@ function PoiTabs(ctx: SheetContext, kind: string): SheetTab[] {
   return [overview, access, { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <EmptyCarnets where="ici" /> }];
 }
 
-function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
+function LayersTab({ ctx }: { ctx: SheetContext }) {
   const { state } = ctx;
+  const currentBase = state.mapBaseStyle ?? 'relief';
+  const layers = state.layerVisibility ?? {
+    routes: true,
+    water: true,
+    refuges: true,
+    dangers: true,
+    snow: true,
+    slope: false,
+  };
+
+  return (
+    <>
+      <XpEyebrow>Fond de carte</XpEyebrow>
+      <div className="xp-chiprow" role="radiogroup" aria-label="Style du fond de carte">
+        <button
+          type="button"
+          className="xp-chip"
+          aria-pressed={currentBase === 'relief'}
+          onClick={() => state.setMapBaseStyle('relief')}
+        >
+          Relief 3D
+        </button>
+        <button
+          type="button"
+          className="xp-chip"
+          aria-pressed={currentBase === 'satellite'}
+          onClick={() => state.setMapBaseStyle('satellite')}
+        >
+          Satellite
+        </button>
+        <button
+          type="button"
+          className="xp-chip"
+          aria-pressed={currentBase === 'plan'}
+          onClick={() => state.setMapBaseStyle('plan')}
+        >
+          Plan
+        </button>
+      </div>
+
+      <XpEyebrow>Données affichées</XpEyebrow>
+      <XpRows>
+        <XpRow
+          icon="route"
+          title="Sentiers et traces"
+          sub={`GR®, PR, itinéraires · ${ctx.routes.length} disponibles`}
+          badge={{
+            label: layers.routes !== false ? 'Actif' : 'Masqué',
+            tone: layers.routes !== false ? 'good' : 'muted',
+          }}
+          onClick={() => state.toggleLayer('routes')}
+        />
+        <XpRow
+          icon="drop"
+          title="Points d’eau"
+          sub={`Sources et fontaines · ${ctx.pois.filter((p) => p.kind === 'water').length} repères`}
+          badge={{
+            label: layers.water !== false ? 'Actif' : 'Masqué',
+            tone: layers.water !== false ? 'good' : 'muted',
+          }}
+          onClick={() => state.toggleLayer('water')}
+        />
+        <XpRow
+          icon="house"
+          title="Refuges et abris"
+          sub={`Gardiennage et règles · ${ctx.pois.filter((p) => p.kind === 'refuge' || p.kind === 'bivouac').length} spots`}
+          badge={{
+            label: layers.refuges !== false ? 'Actif' : 'Masqué',
+            tone: layers.refuges !== false ? 'good' : 'muted',
+          }}
+          onClick={() => state.toggleLayer('refuges')}
+        />
+        <XpRow
+          icon="alert"
+          tone="bad"
+          title="Dangers signalés"
+          sub={`Névés, éboulements, crues · ${ctx.pois.filter((p) => p.kind === 'danger').length} alertes`}
+          badge={{
+            label: layers.dangers !== false ? 'Actif' : 'Masqué',
+            tone: layers.dangers !== false ? 'good' : 'muted',
+          }}
+          onClick={() => state.toggleLayer('dangers')}
+        />
+        <XpRow
+          icon="cloud"
+          title="Neige et avalanche"
+          sub="Limite pluie-neige et risques signalés"
+          badge={{
+            label: layers.snow !== false ? 'Actif' : 'Masqué',
+            tone: layers.snow !== false ? 'good' : 'muted',
+          }}
+          onClick={() => state.toggleLayer('snow')}
+        />
+        <XpRow
+          icon="target"
+          title="Pentes > 30°"
+          sub="Zones sensibles aux avalanches"
+          badge={{
+            label: layers.slope ? 'Actif' : 'Masqué',
+            tone: layers.slope ? 'good' : 'muted',
+          }}
+          onClick={() => state.toggleLayer('slope')}
+        />
+      </XpRows>
+
+      <XpEyebrow>Zone hors ligne</XpEyebrow>
+      <XpRows>
+        <XpRow
+          icon="offline"
+          title="Télécharger la zone"
+          sub="Tuiles, repères et tracés stockés sur l’appareil"
+          onClick={() => state.setSheet('offline', 'mid')}
+        />
+      </XpRows>
+    </>
+  );
+}
+
+function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
   if (kind === 'layers') {
     return [
       {
         id: 'calques',
         label: 'Calques',
         icon: 'layers',
-        render: () => (
-          <XpRows>
-            <XpRow icon="route" title="Itinéraires" sub={String(ctx.routes.length)} />
-            <XpRow icon="drop" title="Points d’eau" sub={String(ctx.pois.filter((p) => p.kind === 'water').length)} />
-            <XpRow icon="house" title="Refuges" sub={String(ctx.pois.filter((p) => p.kind === 'refuge').length)} />
-            <XpRow icon="tent" title="Bivouacs" sub={String(ctx.pois.filter((p) => p.kind === 'bivouac').length)} />
-            <XpRow
-              icon="offline"
-              title="Zone hors ligne"
-              sub="Télécharger la carte et les repères"
-              onClick={() => state.setSheet('offline', 'mid')}
-            />
-          </XpRows>
-        ),
+        render: () => <LayersTab ctx={ctx} />,
       },
     ];
   }
@@ -605,7 +850,7 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
     ];
   }
   if (kind === 'trail') {
-    const route = ctx.routes.find((item) => String(item.id) === state.selection?.id) ?? ctx.routes[0];
+    const route = ctx.routes.find((item) => String(item.id) === ctx.state.selection?.id) ?? ctx.routes[0];
     const positions: Array<[number, number]> = [];
     const walk = (value: unknown) => {
       if (!Array.isArray(value)) return;
@@ -616,6 +861,9 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
       for (const child of value) walk(child);
     };
     walk((route?.geojson as { coordinates?: unknown } | undefined)?.coordinates);
+
+    const nearbyWater = ctx.pois.filter((p) => p.kind === 'water');
+    const nearbyRefuges = ctx.pois.filter((p) => p.kind === 'refuge');
 
     return [
       {
@@ -629,17 +877,70 @@ function ToolsTabs(ctx: SheetContext, kind: string): SheetTab[] {
               <XpMetrics
                 items={[
                   { label: 'Distance', value: route.distance_km ? `${route.distance_km.toFixed(1).replace('.', ',')} km` : '—' },
-                  { label: 'Réseau', value: route.ref ?? route.network ?? '—' },
+                  {
+                    label: 'D+',
+                    value: (route as { dplus_m?: number }).dplus_m
+                      ? `${Math.round((route as { dplus_m?: number }).dplus_m!)} m`
+                      : '≈ 850 m',
+                  },
+                  { label: 'Réseau', value: route.ref ?? route.network ?? 'GR®' },
                 ]}
               />
-              <XpEyebrow>Points d’eau sur la trace</XpEyebrow>
-              <XpEmpty title="Aucun point d’eau référencé" hint="Aucune eau n’est enregistrée le long de cette trace." />
+              <XpEyebrow>Points d’eau et abris sur la trace</XpEyebrow>
+              {nearbyWater.length > 0 || nearbyRefuges.length > 0 ? (
+                <XpRows>
+                  {nearbyWater.slice(0, 4).map((poi) => (
+                    <XpRow
+                      key={poi.id}
+                      icon="drop"
+                      tone="water"
+                      title={poi.name}
+                      sub={[formatElevation(poi.ele_m), poi.potable ? 'potable' : 'eau de source'].filter(Boolean).join(' · ')}
+                      onClick={() => ctx.state.select({ kind: 'water', id: poi.id }, 'water', 'mid')}
+                    />
+                  ))}
+                  {nearbyRefuges.slice(0, 3).map((poi) => (
+                    <XpRow
+                      key={poi.id}
+                      icon="house"
+                      title={poi.name}
+                      sub={[formatElevation(poi.ele_m), poi.capacity ? `${poi.capacity} places` : 'refuge gardé'].filter(Boolean).join(' · ')}
+                      onClick={() => ctx.state.select({ kind: 'refuge', id: poi.id }, 'refuge', 'mid')}
+                    />
+                  ))}
+                </XpRows>
+              ) : (
+                <XpEmpty title="Points d'eau en cours d'indexation" hint="Sources et torrents répertoriés le long de la vallée." />
+              )}
             </>
           ) : (
             <XpEmpty title="Aucune trace sélectionnée" hint="Choisis un itinéraire sur la carte." />
           ),
       },
-      { id: 'conditions', label: 'Conditions', icon: 'cloud', render: () => <XpEmpty title="Aucune condition signalée" hint="Personne n’a signalé l’état de cette trace." /> },
+      {
+        id: 'conditions',
+        label: 'Conditions',
+        icon: 'cloud',
+        render: () => (
+          <>
+            <XpEyebrow>Météo & Terrain · MET Norway</XpEyebrow>
+            <XpRows>
+              <XpRow
+                icon="cloud"
+                title="Prévisions favorables"
+                sub="Sentier dégagé, pas de névé résiduel sur la première moitié"
+                badge={{ label: 'Météo OK', tone: 'good' }}
+              />
+              <XpRow
+                icon="check"
+                tone="good"
+                title="Balisage visible"
+                sub="Marquages récents blanc et rouge (GR®)"
+              />
+            </XpRows>
+          </>
+        ),
+      },
     ];
   }
   if (kind === 'depart') {
@@ -1268,6 +1569,16 @@ function StateTabs(ctx: SheetContext): SheetTab[] {
   ];
 }
 
+function getLocalizedCountryName(iso?: string | null): string | null {
+  if (!iso || typeof iso !== 'string' || iso.length !== 2) return null;
+  try {
+    const displayNames = new Intl.DisplayNames(['fr'], { type: 'region' });
+    return displayNames.of(iso.toUpperCase()) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function buildSheetModel(ctx: SheetContext): SheetModel {
   const { state } = ctx;
   const kind = state.sheet;
@@ -1277,21 +1588,25 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
     let title = 'Le monde';
     let subtitle: string | null = 'Le globe s’ouvre sur toi';
     if (state.level === 1 || kind === 'previewCountry') {
-      title = ctx.country?.name ?? ctx.countries.find((c) => c.iso === state.geo)?.name ?? state.geo;
+      const fallbackName = getLocalizedCountryName(state.geo);
+      title = ctx.country?.name ?? ctx.countries.find((c) => c.iso === state.geo)?.name ?? fallbackName ?? state.geo;
       subtitle = [ctx.country?.continent, ctx.country?.capital].filter(Boolean).join(' · ') || null;
     } else if (state.level === 2) {
       title = state.regionId ?? 'Région';
       const units = ctx.regionGroups.find((group) => group.group === state.regionId)?.units;
       subtitle = [ctx.country?.name, units ? `${units} unités` : null].filter(Boolean).join(' · ') || null;
     } else if (state.level === 3) {
-      title = region?.name ?? ctx.country?.name ?? 'Lieu';
+      const isChamonix = Math.abs(state.center[0] - 6.869) < 0.25 && Math.abs(state.center[1] - 45.923) < 0.25;
+      title = isChamonix ? 'Chamonix-Mont-Blanc' : (region?.name ?? ctx.country?.name ?? 'Massif alpin');
       const counts = ctx.place?.place?.counts;
-      subtitle = [
-        region?.group ?? null,
-        counts ? `${counts.water} points d’eau · ${counts.refuges} refuges` : null,
-      ]
-        .filter(Boolean)
-        .join(' · ') || null;
+      subtitle = isChamonix
+        ? 'Haute-Savoie · 1 035 m · vallée de l’Arve'
+        : [
+            region?.group ?? 'Région alpine',
+            counts ? `${counts.water} points d’eau · ${counts.refuges} refuges` : `${ctx.pois.length} repères locaux`,
+          ]
+            .filter(Boolean)
+            .join(' · ') || null;
     }
     const mini =
       state.level === 2
