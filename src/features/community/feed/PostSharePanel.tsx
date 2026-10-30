@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from '@/components/ui/Icon';
 import { useToast } from '@/contexts/ToastContext';
 import { usePostShareTargets } from './usePostShareTargets';
@@ -62,90 +63,76 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
     }
   };
 
+  // Copier le lien / partager vers une app : en haut à droite de la carte, à
+  // la place et au gabarit des « ··· » (même hauteur que la pastille auteur).
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [topHost, setTopHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setTopHost(rootRef.current?.closest<HTMLElement>('.lkdv-feed-post') ?? null);
+  }, []);
+
+  const topActions = (
+    <div className="lkdv-share-top" role="group" aria-label="Partager ailleurs">
+      <button type="button" aria-label={copied ? 'Lien copié' : 'Copier le lien'} onClick={() => void copy()}>
+        <Icon name="link" size={20} aria-hidden="true" />
+      </button>
+      <button type="button" aria-label="Envoyer vers une autre app" onClick={() => void shareNative()}>
+        <Icon name="share" size={20} aria-hidden="true" />
+      </button>
+    </div>
+  );
+
   return (
-    <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Partager la publication">
-      <div className="lkdv-panel-grab" aria-hidden="true"><span /></div>
-
-      <div className="lkdv-post-panel-body">
-        <div className="lkdv-search-box">
-          <Icon name="search" size={16} aria-hidden="true" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Rechercher une personne ou un groupe…"
-            aria-label="Rechercher un destinataire"
-          />
-        </div>
-        <div className="lkdv-share-actions">
-          <button
-            type="button"
-            className="lkdv-share-action"
-            aria-label="Envoyer en message"
-            onClick={() => document.getElementById(`share-conv-${post.id}`)?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            <span className="ico"><Icon name="send" size={19} aria-hidden="true" /></span>
+    <div ref={rootRef} className="lkdv-post-panel lkdv-share-panel" role="dialog" aria-modal="true" aria-label="Partager la publication">
+      <div id={`share-conv-${post.id}`} className="lkdv-post-panel-body lkdv-share-list">
+        {!user?.id ? (
+          <button type="button" className="lkdv-section-action" aria-label="Se connecter pour envoyer" onClick={() => onRequireAuth?.('comment')}>
+            <Icon name="lock" size={18} aria-hidden="true" />
           </button>
-          <button type="button" className="lkdv-share-action" aria-label={copied ? 'Lien copié' : 'Copier le lien'} onClick={() => void copy()}>
-            <span className="ico"><Icon name="link" size={19} aria-hidden="true" /></span>
-          </button>
-          <button type="button" className="lkdv-share-action" aria-label="Partager via l’appareil" onClick={() => void shareNative()}>
-            <span className="ico">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 3v12M8 7l4-4 4 4M6 11v9h12v-9" />
-              </svg>
-            </span>
-          </button>
-        </div>
-
-        <div id={`share-conv-${post.id}`} className="lkdv-share-targets">
-          {!user?.id ? (
-            <button type="button" className="lkdv-section-action" aria-label="Se connecter pour envoyer" onClick={() => onRequireAuth?.('comment')}>
-              <Icon name="lock" size={18} aria-hidden="true" />
-            </button>
-          ) : loading ? (
-            <p className="lkdv-section-loading">Chargement des conversations…</p>
-          ) : filteredConversations.length === 0 ? (
-            <p className="lkdv-section-empty">Aucun destinataire trouvé.</p>
-          ) : (
-            filteredConversations.map((conversation) => {
-              const title = conversation.title || conversation.name || 'Conversation';
-              return (
-                <div key={conversation.id} className="lkdv-share-conv">
-                  <Avatar url={conversation.avatar_url} name={title} />
-                  <div>
-                    <b>{title}</b>
-                    <small>{conversation.type === 'group' ? 'Groupe' : 'Message privé'}</small>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={sending === conversation.id}
-                    aria-label={`Envoyer à ${title}`}
-                    onClick={async () => {
-                      const ok = await send(post.id, conversation.id);
-                      toast(ok ? 'Publication envoyée.' : 'Envoi impossible.', ok ? 'success' : 'error');
-                      if (ok) onClose();
-                    }}
-                  >
-                    {sending === conversation.id ? '…' : <Icon name="send" size={16} aria-hidden="true" />}
-                  </button>
+        ) : loading ? (
+          <p className="lkdv-section-loading">Chargement des conversations…</p>
+        ) : filteredConversations.length === 0 ? (
+          <p className="lkdv-section-empty">{query.trim() ? 'Aucun destinataire trouvé.' : 'Aucune conversation pour l’instant.'}</p>
+        ) : (
+          filteredConversations.map((conversation) => {
+            const title = conversation.title || conversation.name || 'Conversation';
+            return (
+              <div key={conversation.id} className="lkdv-share-conv">
+                <Avatar url={conversation.avatar_url} name={title} />
+                <div>
+                  <b>{title}</b>
+                  <small>{conversation.type === 'group' ? 'Groupe' : 'Message privé'}</small>
                 </div>
-              );
-            })
-          )}
-        </div>
+                <button
+                  type="button"
+                  disabled={sending === conversation.id}
+                  aria-label={`Envoyer à ${title}`}
+                  onClick={async () => {
+                    const ok = await send(post.id, conversation.id);
+                    toast(ok ? 'Publication envoyée.' : 'Envoi impossible.', ok ? 'success' : 'error');
+                    if (ok) onClose();
+                  }}
+                >
+                  {sending === conversation.id ? '…' : <Icon name="send" size={15} aria-hidden="true" />}
+                </button>
+              </div>
+            );
+          })
+        )}
       </div>
 
-      <div className="lkdv-share-mini" role="group" aria-label="Actions de partage">
-        <button type="button" aria-label="Envoyer en message" onClick={() => document.getElementById(`share-conv-${post.id}`)?.scrollIntoView({ behavior: 'smooth' })}>
-          <Icon name="send" size={17} aria-hidden="true" />
-        </button>
-        <button type="button" aria-label="Copier le lien" onClick={() => void copy()}>
-          <Icon name="link" size={17} aria-hidden="true" />
-        </button>
-        <button type="button" aria-label="Partager via l’appareil" onClick={() => void shareNative()}>
-          <Icon name="share" size={17} aria-hidden="true" />
-        </button>
-      </div>
+      {/* Recherche : seule commande du bas, petite, au style de la barre d'action. */}
+      <label className="lkdv-share-search">
+        <Icon name="search" size={15} aria-hidden="true" />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Rechercher"
+          aria-label="Rechercher une personne ou un groupe"
+        />
+      </label>
+
+      {topHost ? createPortal(topActions, topHost) : topActions}
     </div>
   );
 }

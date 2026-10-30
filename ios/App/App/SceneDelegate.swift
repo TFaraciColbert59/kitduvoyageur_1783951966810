@@ -79,13 +79,16 @@ final class LKDVNativeTabBarHost: UIViewController, UITabBarDelegate {
             ("Compte", "person.crop.circle", "person.crop.circle.fill")
         ]
         tabBar.items = tabs.enumerated().map { index, tab in
+            // Icônes seules : aucun libellé sous les icônes, barre plus fine.
+            // Le nom reste lu par VoiceOver (accessibilityLabel).
             let item = UITabBarItem(
-                title: tab.label,
+                title: nil,
                 image: UIImage(systemName: tab.icon),
                 selectedImage: UIImage(systemName: tab.selected)
             )
             item.tag = index
             item.accessibilityLabel = tab.label
+            item.imageInsets = UIEdgeInsets(top: 5, left: 0, bottom: -5, right: 0)
             return item
         }
         tabBar.selectedItem = tabBar.items?[4]

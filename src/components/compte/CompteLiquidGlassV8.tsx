@@ -1369,8 +1369,12 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
     syncSupabaseProfile();
   }, [syncSupabaseProfile]);
 
+  // Tant que le vrai profil n'est pas chargé, la carte reste un verre vide qui
+  // scintille : la maquette par défaut du runtime ne s'affiche jamais.
+  const booting = authLoading || Boolean(user && (bootstrapPhase === 'idle' || bootstrapPhase === 'loading'));
+
   return (
-    <div className="lkdv-compte-v8" data-theme="light">
+    <div className="lkdv-compte-v8" data-theme="light" data-boot={booting ? 'loading' : 'ready'}>
       <style dangerouslySetInnerHTML={{ __html: DRAWER_V2_CSS }} />
       {/* Sub-navigation bar: live Supabase status + direct routes + quick actions (accessible sentinel) */}
       <div className="sr-only" aria-hidden="true" inert>

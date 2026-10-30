@@ -32,7 +32,7 @@ const config: CapacitorConfig = {
   appId: "com.lekitduvoyageur.app",
   appName: "Le Kit du Voyageur",
   webDir: "public",
-  backgroundColor: "#FBFAF6",
+  backgroundColor: "#17402C",
   server: serverUrl
     ? {
         url: serverUrl,
@@ -46,12 +46,15 @@ const config: CapacitorConfig = {
       },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1200,
+      // Le logo reste affiché jusqu'à ce que l'app soit prête
+      // (NativeAppBootstrap masque l'écran dès la première page peinte) ;
+      // 4 s au plus si la page tarde, jamais d'écran blanc entre les deux.
+      launchShowDuration: 4000,
       launchAutoHide: true,
       backgroundColor: "#17402C",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
-      showSpinner: true,
+      showSpinner: false,
       androidSpinnerStyle: "small",
       iosSpinnerStyle: "small",
       spinnerColor: "#FBFAF6",
@@ -80,13 +83,13 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: "never",
-    backgroundColor: "#FBFAF6",
+    backgroundColor: "#17402C",
     preferredContentMode: "mobile",
     handleApplicationNotifications: true,
     scheme: "lkdv",
   },
   android: {
-    backgroundColor: "#FBFAF6",
+    backgroundColor: "#17402C",
     allowMixedContent: allowCleartext,
     captureInput: true,
     webContentsDebuggingEnabled: isDevServer,

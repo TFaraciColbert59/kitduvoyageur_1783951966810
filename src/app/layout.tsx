@@ -11,6 +11,8 @@ import '@/styles/floating-liquid-tabbar.css';
 import '@/styles/liquid-capsules.css';
 import '@/styles/drawer-selectors-tabbar.css';
 import '@/styles/community-post-polish.css';
+import '@/styles/app-tint.css';
+import { BootScreen } from '@/components/shell/BootScreen';
 import '@/styles/native-account-tabbar.css';
 import '@/styles/community-social.css';
 import '@/styles/account-glass.css';
@@ -288,6 +290,7 @@ export default async function RootLayout({
       >
         {/* Toile unique LKDV — fond d'écran de toutes les routes */}
         <div className="lkv-app-background" aria-hidden="true" />
+        <BootScreen />
         <LocaleProvider initialLocale={locale}>
         <AuthProvider>
           <ActiveTripProvider initialTrip={activeTrip}>

@@ -55,7 +55,7 @@ export function CommunityFeedPost({
   const [deleted, setDeleted] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
   // Proportions de la photo : la carte épouse sa hauteur, plafonnée à la
-  // hauteur actuelle (406 × 541) et jamais plus plate que 1,91 : 1.
+  // hauteur actuelle (406 × 541) et jamais plus basse qu'un carré parfait.
   const [mediaRatio, setMediaRatio] = useState<number | null>(null);
   const headerPost = {
     ...post,
@@ -247,7 +247,7 @@ export function CommunityFeedPost({
       style={{
         touchAction: 'pan-y',
         ...(mediaRatio
-          ? { aspectRatio: String(Math.min(1.91, Math.max(406 / 541, mediaRatio))) }
+          ? { aspectRatio: String(Math.min(1, Math.max(406 / 541, mediaRatio))) }
           : null),
       }}
       /* Trois volets côte à côte : partage ← photo → messages. Depuis la photo,

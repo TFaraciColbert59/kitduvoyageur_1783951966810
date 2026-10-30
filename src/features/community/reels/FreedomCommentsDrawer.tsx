@@ -17,7 +17,7 @@ import {
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDragDismiss } from '@/hooks/gestures';
 import { FreedomComposerMenuSheet } from './FreedomComposerMenuSheet';
-import { fetchReelComments, postReelComment } from './freedomReelsService';
+import { fetchReelComments, postReelComment, setPostCommentLike } from './freedomReelsService';
 import {
   getPreloadedReelComments,
   hasPreloadedReelComments,
@@ -159,7 +159,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
       setLoading(true);
     }
 
-    fetchReelComments(reelId)
+    fetchReelComments(reelId, currentUser)
       .then((data) => {
         if (!alive) return;
         setComments(data);
@@ -188,7 +188,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
     return () => {
       alive = false;
     };
-  }, [isOpen, reelId]);
+  }, [isOpen, reelId, currentUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- seul l’identifiant compte
 
   // Threads hierarchy memo: nests replies under their root comment
   const threads = useMemo<CommentThread[]>(() => {
@@ -299,6 +299,25 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
 
   const handleToggleLike = (commentId: string) => {
     haptic('selection');
+    const target = comments.find((c) => c.id === commentId);
+    // Post réel : le « j'aime » est enregistré en base (annulé si refusé).
+    if (reelId.startsWith('post-')) {
+      if (!currentUser?.id) {
+        onRequireAuth?.();
+        return;
+      }
+      const nextLiked = !target?.isLiked;
+      void setPostCommentLike(commentId, currentUser.id, nextLiked).then((ok) => {
+        if (ok) return;
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId
+              ? { ...c, isLiked: !nextLiked, likesCount: Math.max(0, c.likesCount + (nextLiked ? -1 : 1)) }
+              : c,
+          ),
+        );
+      });
+    }
     setComments((prev) => {
       const next = prev.map((c) => {
         if (c.id !== commentId) return c;

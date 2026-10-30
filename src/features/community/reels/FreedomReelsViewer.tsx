@@ -10,7 +10,7 @@ import { FreedomCommentsDrawer } from './FreedomCommentsDrawer';
 import { FreedomShareDrawer } from './FreedomShareDrawer';
 import { FreedomKitDrawer } from './FreedomKitDrawer';
 import { FreedomSoundDrawer } from './FreedomSoundDrawer';
-import { peekFreedomReels, warmFreedomReels } from './freedomReelsService';
+import { bufferVideo, peekFreedomReels, warmFreedomReels } from './freedomReelsService';
 import {
   isNetworkPermittingBackgroundPreload,
   isFastNetworkConnection,
@@ -21,6 +21,9 @@ import {
 } from './reelsPreloadService';
 import type { FreedomReelItem as ReelModel } from './freedom-types';
 import './freedom.css';
+
+/** Nombre de vidéos chargées à l'avance devant la vidéo en cours. */
+const PRELOAD_AHEAD = 5;
 
 export interface FreedomReelsViewerProps {
   initialReelId?: string | null;
@@ -103,6 +106,12 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
       alive = false;
     };
   }, [user, initialReelId]);
+
+  // Fenêtre glissante : à chaque vidéo regardée, les 5 suivantes sont mises en
+  // mémoire tampon (indépendamment de leur montage dans le DOM).
+  useEffect(() => {
+    reels.slice(activeIndex + 1, activeIndex + 1 + PRELOAD_AHEAD).forEach((reel) => bufferVideo(reel.videoUrl));
+  }, [activeIndex, reels]);
 
   // Observer to track which reel is currently visible in the snap viewport
   useEffect(() => {
@@ -462,7 +471,10 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
         ) : (
           reels.map((reel, index) => {
             const isActive = index === activeIndex;
-            const isPreload = Math.abs(index - activeIndex) <= 1;
+            // Les 5 vidéos suivantes (et la précédente) se chargent en arrière-plan :
+            // le temps de regarder les 4 du dessus, la 5e est prête.
+            const isPreload =
+              (index > activeIndex && index <= activeIndex + PRELOAD_AHEAD) || index === activeIndex - 1;
 
             return (
               <FreedomReelItem
