@@ -1,0 +1,119 @@
+/* =============================================================================
+   Sélecteurs des tiroirs du Compte = même verre que la barre du bas
+
+   La barre du bas (`floating-liquid-tabbar.css`) et les sélecteurs des tiroirs
+   (profil, slots, sections, mini-capsules) partagent désormais une seule
+   matière, celle de `liquid-selectors.css` (variables `--lg-*`) :
+   capsule de verre clair, pastille de verre sous l'option choisie, icônes
+   encre, option active en forest.
+
+   Ce fichier est chargé en dernier : les tiroirs portaient trois couches de
+   verre sombre (`compte-apple-hig.css`, `compte-drawers.css`, styles injectés
+   par `DrawerShell` / `SlotShell`). `:not(#lkdv-tabbar-glass)` n'exclut rien
+   (aucun élément n'a cet id) ; il ajoute seulement la spécificité d'un
+   identifiant pour passer devant ces couches sans toucher à leur source.
+   La géométrie des capsules pilotées par `--n` / `--i` est alignée sur la
+   barre (padding 4 px, pastille inscrite à 4 px) ; celle des capsules dont la
+   pastille est positionnée par script (`.flow`, `.segc` du Compte) reste
+   inchangée : seule la matière est reprise.
+   ============================================================================= */
+
+/* --- Capsules principales : verre de la barre -------------------------------- */
+
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-capsule:not(#lkdv-tabbar-glass),
+html body .phone .sheet .segc.lg-tabs:not(#lkdv-tabbar-glass),
+html body .phone .sheet .flow:not(#lkdv-tabbar-glass),
+html body .phone .sheet .reseau-toggle:not(#lkdv-tabbar-glass) {
+  background: var(--lg-bar-bg) !important;
+  -webkit-backdrop-filter: var(--lg-bar-blur) !important;
+  backdrop-filter: var(--lg-bar-blur) !important;
+  border: 0 !important;
+  box-shadow: var(--lg-bar-shadow) !important;
+}
+
+/* Gabarit des capsules à lentille pilotée par `--n` / `--i` : comme la barre. */
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector:not(#lkdv-tabbar-glass) {
+  padding: 4px !important;
+}
+
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector .sel-lens:not(#lkdv-tabbar-glass) {
+  top: 4px !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  width: calc((100% - 8px) / var(--n, 2)) !important;
+}
+
+/* --- Pastille de verre sous l'option choisie ---------------------------------- */
+
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector .sel-lens:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-capsule .sel-lens:not(#lkdv-tabbar-glass),
+html body .phone .sheet .sel-lens:not(#lkdv-tabbar-glass),
+html body .phone .sheet .segc .th:not(#lkdv-tabbar-glass) {
+  background: var(--lg-thumb-bg) !important;
+  border: 0 !important;
+  box-shadow: var(--lg-thumb-shadow) !important;
+}
+
+/* --- Icônes : encre au repos, forest sur l'option active ---------------------- */
+
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-capsule button:not(#lkdv-tabbar-glass),
+html body .phone .sheet .segc button:not(#lkdv-tabbar-glass),
+html body .phone .sheet .flow button:not(#lkdv-tabbar-glass),
+html body .phone .sheet .reseau-toggle button:not(#lkdv-tabbar-glass) {
+  color: var(--lg-ink) !important;
+}
+
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button.active:not(#lkdv-tabbar-glass),
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button[aria-selected='true']:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button.active:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button[aria-selected='true']:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-capsule button.active:not(#lkdv-tabbar-glass),
+html body .lkdv-compte-v8 .lkdv-capsule button[aria-selected='true']:not(#lkdv-tabbar-glass),
+html body .phone .sheet .segc button.active:not(#lkdv-tabbar-glass),
+html body .phone .sheet .segc button.cur:not(#lkdv-tabbar-glass),
+html body .phone .sheet .segc button[aria-selected='true']:not(#lkdv-tabbar-glass),
+html body .phone .sheet .flow button.active:not(#lkdv-tabbar-glass),
+html body .phone .sheet .flow button.cur:not(#lkdv-tabbar-glass),
+html body .phone .sheet .flow button[aria-selected='true']:not(#lkdv-tabbar-glass),
+html body .phone .sheet .reseau-toggle button.active:not(#lkdv-tabbar-glass),
+html body .phone .sheet .reseau-toggle button[aria-selected='true']:not(#lkdv-tabbar-glass) {
+  color: var(--lg-on) !important;
+}
+
+html body .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button:focus-visible:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector button:focus-visible:not(#lkdv-tabbar-glass) {
+  outline: 2px solid #5b7f55 !important;
+  outline-offset: -4px !important;
+}
+
+/* --- Mini-capsules du bas des tiroirs (30 px) : même verre -------------------- */
+
+html body .lkdv-slot-shell > .lkdv-lens-tabs:not(#lkdv-tabbar-glass) {
+  background: var(--lg-bar-bg) !important;
+  -webkit-backdrop-filter: var(--lg-bar-blur) !important;
+  backdrop-filter: var(--lg-bar-blur) !important;
+  border: 0 !important;
+  box-shadow: var(--lg-bar-shadow) !important;
+}
+
+html body .lkdv-slot-shell > .lkdv-lens-tabs .ig-th:not(#lkdv-tabbar-glass) {
+  background: var(--lg-thumb-bg) !important;
+  border: 0 !important;
+  box-shadow: var(--lg-thumb-shadow) !important;
+}
+
+html body .lkdv-slot-shell > .lkdv-lens-tabs button:not(#lkdv-tabbar-glass) {
+  color: var(--lg-ink) !important;
+}
+
+html body .lkdv-slot-shell > .lkdv-lens-tabs button[aria-selected='true']:not(#lkdv-tabbar-glass),
+html body .lkdv-slot-shell > .lkdv-lens-tabs button.active:not(#lkdv-tabbar-glass) {
+  color: var(--lg-on) !important;
+}

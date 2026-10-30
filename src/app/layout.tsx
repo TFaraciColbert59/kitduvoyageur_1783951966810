@@ -9,6 +9,7 @@ import '@/styles/liquid-ios27.css';
 import '@/styles/liquid-selectors.css';
 import '@/styles/floating-liquid-tabbar.css';
 import '@/styles/liquid-capsules.css';
+import '@/styles/drawer-selectors-tabbar.css';
 import '@/styles/native-account-tabbar.css';
 import '@/styles/community-social.css';
 import '@/styles/account-glass.css';

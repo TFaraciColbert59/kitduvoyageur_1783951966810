@@ -23,12 +23,16 @@ const TAB_ICON: Record<DestinationId, string> = {
   me: 'user-circle',
 };
 
+/** Taille unique du glyphe : les 5 onglets ont exactement la même empreinte. */
+const ICON_SIZE = 26;
+
 /**
  * Barre flottante Apple Liquid Glass (iOS 26/27).
  *
  * Référence : variante « floating » de Liquid Glass Tab Bars.
  * - une seule capsule de verre, 52 px, padding 4 ;
- * - tous les 5 onglets avec icône et libellé lisible ;
+ * - 5 onglets, icône seule (le nom reste dans `aria-label`), même taille
+ *   pour tous : la pastille ne change jamais de dimension ;
  * - lentille de sélection qui glisse avec ressort physique ;
  * - double-clic sur Communauté -> visionneuse Freedom Reels ;
  * - appui long sur Hub -> ouverture du sélecteur d'aventures ;
@@ -183,9 +187,8 @@ export function FloatingLiquidTabBar() {
                 onClick={(e) => handleTabClick(destination.id, e)}
               >
                 <span className="lkdv-floating-tab-icon" aria-hidden="true">
-                  <Icon name={TAB_ICON[destination.id]} size={24} strokeWidth={active ? 2.25 : 1.75} />
+                  <Icon name={TAB_ICON[destination.id]} size={ICON_SIZE} strokeWidth={active ? 2.25 : 1.75} />
                 </span>
-                <span className="lkdv-floating-tab-label">{destination.label.fr}</span>
               </Link>
             );
           })}
