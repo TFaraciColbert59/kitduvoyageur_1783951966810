@@ -21,7 +21,6 @@ const APP_ROUTES = [
   '/hub',
   '/communaute',
   '/messagerie',
-  '/explorer',
   '/compte',
   '/compas',
   '/carnets',
