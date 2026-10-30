@@ -26,6 +26,8 @@ export function normalizeEmergencyNumber(raw: string | null | undefined): string
 
 /** Vrai si le compte est simulé (recette, dev, tests). */
 export function sosSimulated(): boolean {
+  if (typeof window !== 'undefined' && (window as unknown as { __xpSimulateSos?: boolean }).__xpSimulateSos) return true;
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) return true;
   // 1. drapeau explicite (recette, CI) ;
   if (process.env.NEXT_PUBLIC_EXPLORER_SOS_SIMULATE === '1') return true;
   if (process.env.NEXT_PUBLIC_EXPLORER_SOS_SIMULATE === '0') return false;
