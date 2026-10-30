@@ -714,10 +714,11 @@ button.mb:active{background:var(--fill2)}
 
 /* Grille photo 3 colonnes Instagram (3x2 visible immédiatement) */
 .ig-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
-.ig-tile{position:relative;height:68px;border-radius:10px;overflow:hidden;border:0;padding:0;cursor:pointer;background:#17402C;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35);text-align:left;transition:transform .15s}
+.ig-tile{position:relative;height:68px;border-radius:10px;overflow:hidden;border:0;padding:0;cursor:pointer;background:#0d1e15!important;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35);text-align:left;transition:transform .15s;display:flex!important;align-items:center!important;justify-content:center!important}
 .ig-tile:active{transform:scale(.96)}
-.ig-tile svg.art{width:100%;height:100%;display:block}
-.ig-tile img.art, .ig-tile img{width:100%;height:100%;object-fit:cover;display:block}
+.ig-tile .ig-tile-bg{position:absolute;inset:-8px;background-size:cover;background-position:center;filter:blur(14px) brightness(.38) saturate(1.25);transform:scale(1.15);pointer-events:none;opacity:.78;z-index:0}
+.ig-tile svg.art{width:100%;height:100%;display:block;position:relative;z-index:1}
+.ig-tile img.art, .ig-tile img{position:relative;z-index:1;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain!important;display:block}
 .ig-tile .t-top{position:absolute;top:4px;left:5px;right:5px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
 .ig-tile .t-pill{padding:1.5px 5px;border-radius:6px;background:rgba(12,24,18,.58);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font:600 8.8px/1.15 var(--sf);letter-spacing:.01em}
 .ig-tile .t-pill.draft{background:rgba(251,241,220,.92);color:#8a6418}
@@ -1092,6 +1093,9 @@ button.mb:active{background:var(--fill2)}
     height: auto !important;
     aspect-ratio: 1 / 1.05 !important;
     border-radius: 9px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
   .t-pill {
     font-size: 8px !important;

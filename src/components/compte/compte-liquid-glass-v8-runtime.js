@@ -364,64 +364,16 @@ let renderSeal = function(size = 18, density = 0.82) {
   </svg>`;
 }
 
-/* ---------- Illustrations SVG des tuiles Instagram (3 publications + sorties terrain) ---------- */
+/* ---------- Illustrations photos réelles des tuiles Instagram (non cropées, contain + fond ambiant) ---------- */
 let tileArt = function(kind) {
-  if (kind === "ca2") {
-    return `<svg class="art" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">
-      <defs><linearGradient id="g_ca2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1E4D3B"/><stop offset=".55" stop-color="#4A7C66"/><stop offset="1" stop-color="#223D33"/></linearGradient></defs>
-      <rect width="120" height="120" fill="url(#g_ca2)"/>
-      <circle cx="90" cy="24" r="10" fill="#F9E7B2" opacity=".88"/>
-      <polygon points="0,78 34,32 68,78" fill="#2A5844"/>
-      <polygon points="34,32 46,48 24,50" fill="#F4F7F3" opacity=".9"/>
-      <polygon points="42,78 78,24 120,78" fill="#17402C"/>
-      <polygon points="78,24 93,46 65,44" fill="#fff" opacity=".92"/>
-      <rect y="76" width="120" height="44" fill="#326356" opacity=".85"/>
-      <path d="M10 88 H110 M22 96 H98 M35 104 H85" stroke="rgba(255,255,255,.32)" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>`;
-  }
-  if (kind === "ca1") {
-    return `<svg class="art" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">
-      <defs><linearGradient id="g_ca1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#284E3A"/><stop offset=".6" stop-color="#6B8E62"/><stop offset="1" stop-color="#203A2B"/></linearGradient></defs>
-      <rect width="120" height="120" fill="url(#g_ca1)"/>
-      <polygon points="0,84 42,36 88,84" fill="#355E45"/>
-      <polygon points="48,84 88,38 120,84" fill="#1F422F"/>
-      <polygon points="42,82 60,56 78,82" fill="#E8C068"/>
-      <polygon points="60,56 60,82 78,82" fill="#CFA144"/>
-    </svg>`;
-  }
-  if (kind === "ca3") {
-    return `<svg class="art" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">
-      <defs><linearGradient id="g_ca3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#264653"/><stop offset="1" stop-color="#17402C"/></linearGradient></defs>
-      <rect width="120" height="120" fill="url(#g_ca3)"/>
-      <polygon points="0,90 48,26 98,90" fill="#3B6E5C"/>
-      <polygon points="48,26 68,54 32,54" fill="#F2F6F5"/>
-      <path d="M48 54 Q60 72 42 115" fill="none" stroke="#fff" stroke-width="5" opacity=".75" stroke-linecap="round"/>
-    </svg>`;
-  }
-  if (kind === "ca0") {
-    return `<svg class="art" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">
-      <defs><linearGradient id="g_ca0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B362A"/><stop offset="1" stop-color="#4A6B49"/></linearGradient></defs>
-      <rect width="120" height="120" fill="url(#g_ca0)"/>
-      <circle cx="28" cy="24" r="1.5" fill="#fff"/><circle cx="72" cy="18" r="1.8" fill="#fff"/><circle cx="96" cy="30" r="1.4" fill="#fff"/>
-      <path d="M0 68 L35 52 L92 48 L120 66 L120 120 L0 120 Z" fill="#2A4D39"/>
-      <path d="M18 92 Q58 64 104 78" fill="none" stroke="#DCEAD7" stroke-width="2.2" stroke-dasharray="3 3"/>
-    </svg>`;
-  }
-  if (kind === "o1") {
-    return `<svg class="art" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">
-      <rect width="120" height="120" fill="#224936"/>
-      <path d="M0 84 Q30 40 60 66 T120 44 L120 120 L0 120 Z" fill="#3B694E"/>
-      <path d="M14 92 Q45 48 72 68 T108 36" fill="none" stroke="#fff" stroke-width="2.6" stroke-dasharray="4 4" stroke-linecap="round"/>
-      <circle cx="14" cy="92" r="4" fill="#5B7F55" stroke="#fff" stroke-width="1.5"/>
-      <circle cx="108" cy="36" r="4.5" fill="#17402C" stroke="#fff" stroke-width="1.5"/>
-    </svg>`;
-  }
-  return `<svg class="art" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">
-    <rect width="120" height="120" fill="#2D5A43"/>
-    <circle cx="60" cy="54" r="24" fill="rgba(255,255,255,.16)"/>
-    <path d="M36 58 Q60 34 84 58 Q68 48 60 62 Q52 48 36 58 Z" fill="#fff" opacity=".9"/>
-  </svg>`;
-}
+  let src = "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=480&q=80";
+  if (kind === "ca2") src = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=480&q=80";
+  else if (kind === "ca1") src = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=480&q=80";
+  else if (kind === "ca3") src = "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=480&q=80";
+  else if (kind === "ca0") src = "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=480&q=80";
+  else if (kind === "o1") src = "https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=480&q=80";
+  return `<span class="ig-tile-bg" aria-hidden="true" style="background-image:url('${src}')"></span><img class="art" src="${src}" alt="" loading="lazy" decoding="async" />`;
+};
 
 /* ---------- Données du Compte @tony_frc (alignées sur Supabase LKDV) ---------- */
 var hlList = () => (Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS : []);
@@ -3159,7 +3111,9 @@ function dismissStory(distance = 0) {
 function closeStory() { dismissStory(0); }
 
 /* ---------- Tuiles / grille (11-15, 21) ---------- */
-const tileMedia = t => t.coverImage ? `<img class="art" src="${esc(t.coverImageSmall || t.coverImage)}" alt="" loading="lazy" decoding="async" />` : tileArt(t.art);
+const tileMedia = t => t.coverImage
+  ? `<span class="ig-tile-bg" aria-hidden="true" style="background-image:url('${esc(t.coverImageSmall || t.coverImage)}')"></span><img class="art" src="${esc(t.coverImageSmall || t.coverImage)}" alt="" loading="lazy" decoding="async" />`
+  : tileArt(t.art);
 let TILES = function () {
   if (!Array.isArray(CARNETS) || CARNETS.length === 0) return [];
   return CARNETS.map((c, idx) => {
