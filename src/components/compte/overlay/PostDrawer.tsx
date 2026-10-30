@@ -19,7 +19,6 @@ import { PostSharePanel } from '@/features/community/feed/PostSharePanel';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 import { PostAuthorPill } from '@/features/community/feed/PostAuthorPill';
 import CommunityVideo from '@/components/communaute/CommunityVideo';
-import { CommunityPostSoundtrack } from '@/features/community/feed/CommunityPostSoundtrack';
 import { isCommunityVideoUrl } from '@/lib/community/media';
 
 type Pane = 'share' | 'post' | 'comments';
@@ -414,12 +413,6 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
                   likePulse={likePulse}
                   isVideo={isCommunityVideoUrl(currentMedia ?? '')}
                   videoPoster={media.find((url) => !isCommunityVideoUrl(url)) || undefined}
-                  soundtrack={post.soundtrackUrl ? {
-                    url: post.soundtrackUrl,
-                    title: post.soundtrackTitle,
-                    creator: post.soundtrackCreator,
-                    sourceUrl: post.soundtrackSourceUrl,
-                  } : null}
                 />
               </div>
               <div className="lkdv-lens-pane lkdv-post-pane">

@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
+import { warmFreedomReels } from '@/features/community/reels/freedomReelsService';
 import {
   DESTINATIONS,
   getActiveDestinationId,
@@ -96,6 +97,27 @@ export function FloatingLiquidTabBar() {
     };
   }, []);
 
+  // Freedom (double-clic sur Communauté) doit s'ouvrir instantanément : on
+  // précharge la route et la liste des reels dès que la barre est affichée.
+  const warmFreedom = useCallback(() => {
+    try {
+      router.prefetch('/communaute/reels');
+    } catch {}
+    void warmFreedomReels().catch(() => {});
+  }, [router]);
+
+  useEffect(() => {
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const handle = w.requestIdleCallback ? w.requestIdleCallback(warmFreedom) : window.setTimeout(warmFreedom, 1200);
+    return () => {
+      if (w.cancelIdleCallback && w.requestIdleCallback) w.cancelIdleCallback(handle);
+      else window.clearTimeout(handle);
+    };
+  }, [warmFreedom]);
+
   const triggerHubSwitcher = useCallback(() => {
     try {
       if ('vibrate' in navigator) navigator.vibrate(25);
@@ -112,6 +134,7 @@ export function FloatingLiquidTabBar() {
   }, [pathname, router]);
 
   const handlePointerDown = (destId: DestinationId) => {
+    if (destId === 'community') warmFreedom();
     if (destId === 'adventures') {
       longPressFiredRef.current = false;
       if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);

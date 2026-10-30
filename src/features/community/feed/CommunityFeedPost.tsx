@@ -7,7 +7,7 @@ import { AccountActionPill } from '@/components/account/AccountActionPill';
 import { PostAuthorPill } from './PostAuthorPill';
 import { AccountMoreMenu } from '@/components/account/AccountMoreMenu';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
-import { CommunityPostSoundtrack } from './CommunityPostSoundtrack';
+import { deletePost } from '@/features/community/posts/mutations';
 import { Bookmark, Flag, Link2, MoreHorizontal, Repeat2, Trash2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
@@ -52,6 +52,7 @@ export function CommunityFeedPost({
     onRequireAuth,
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleted, setDeleted] = useState(false);
   const headerPost = {
     ...post,
     title: null,
@@ -196,6 +197,8 @@ export function CommunityFeedPost({
     };
   }, [panel, embedded]);
 
+  if (deleted) return null;
+
   return (
     <article
       ref={articleRef}
@@ -270,17 +273,6 @@ export function CommunityFeedPost({
         <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>
       )}
 
-      {post.soundtrack_url ? (
-        <div className="absolute bottom-3 left-3 z-20 max-w-[65%]" onPointerDown={(event) => event.stopPropagation()}>
-          <CommunityPostSoundtrack
-            url={post.soundtrack_url}
-            title={post.soundtrack_title}
-            creator={post.soundtrack_creator}
-            sourceUrl={post.soundtrack_source_url}
-          />
-        </div>
-      ) : null}
-
       <div
         ref={headerRef}
         className="lkdv-feed-post-top"
@@ -290,9 +282,10 @@ export function CommunityFeedPost({
         <PostAuthorPill post={headerPost} />
       </div>
 
-      {/* Seul contrôle posé sur la photo : les trois points, en haut à droite.
-          Aucune croix — un panneau se referme par le geste inverse ou Échap. */}
-      {panel ? null : (
+      {/* Seul contrôle posé sur la photo : les trois points, en haut à droite,
+          uniquement sur un post avec photo ou vidéo. Aucune croix — un panneau
+          se referme par le geste inverse ou Échap. */}
+      {panel || !hasMedia ? null : (
         <button
           type="button"
           className="pmi-more-pill lkdv-feed-post-options"
@@ -365,7 +358,17 @@ export function CommunityFeedPost({
               role="menuitem"
               aria-label="Supprimer"
               className="is-danger"
-              onClick={() => setMenuOpen(false)}
+              onClick={() => {
+                setMenuOpen(false);
+                if (!window.confirm('Supprimer cette publication ?')) return;
+                void deletePost(post.id).then(
+                  () => {
+                    setDeleted(true);
+                    toast('Publication supprimée.', 'success');
+                  },
+                  () => toast('La suppression a échoué.', 'error'),
+                );
+              }}
             >
               <Trash2 size={19} aria-hidden="true" />
             </button>

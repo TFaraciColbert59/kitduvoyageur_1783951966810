@@ -1,0 +1,95 @@
+/* =============================================================================
+   Post de la Communauté — finitions
+   - « ··· » : uniquement sur un post avec photo, en haut à droite, à la même
+     hauteur et à la même distance du bord que la pastille auteur (en haut à
+     gauche) ; 44 px comme elle ;
+   - menu déplié : les boutons apparaissent en cascade, avec un léger ressort ;
+   - panneaux commentaires / partage : glissement plus long et plus doux, sortie
+     animée (le composant pose `data-leaving`).
+   Chargé en dernier ; `:not(#lkdv-post-polish)` n'exclut rien, il ajoute la
+   spécificité d'un identifiant pour passer devant les couches précédentes de
+   `community-feed.css` sans les réécrire.
+   ============================================================================= */
+
+html body .lkdv-feed-post > .pmi-more-pill.lkdv-feed-post-options:not(#lkdv-post-polish) {
+  top: 10px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  margin: 0 !important;
+}
+
+html body .lkdv-feed-options-rail:not(#lkdv-post-polish) {
+  top: 62px;
+  right: 10px;
+  gap: 8px;
+}
+
+html body .lkdv-feed-options-rail > button:not(#lkdv-post-polish) {
+  width: 44px;
+  height: 44px;
+  opacity: 0;
+  transform-origin: top right;
+  animation: lkdv-rail-item-in 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  transition: transform 0.16s ease;
+}
+html body .lkdv-feed-options-rail > button:nth-child(1):not(#lkdv-post-polish) { animation-delay: 0ms; }
+html body .lkdv-feed-options-rail > button:nth-child(2):not(#lkdv-post-polish) { animation-delay: 45ms; }
+html body .lkdv-feed-options-rail > button:nth-child(3):not(#lkdv-post-polish) { animation-delay: 90ms; }
+html body .lkdv-feed-options-rail > button:nth-child(4):not(#lkdv-post-polish) { animation-delay: 135ms; }
+html body .lkdv-feed-options-rail > button:nth-child(5):not(#lkdv-post-polish) { animation-delay: 180ms; }
+
+@keyframes lkdv-rail-item-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.82); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Panneaux : glissement doux à l'entrée, sortie animée. */
+html body .lkdv-feed-post .lkdv-post-panel-slot:not(#lkdv-post-polish) {
+  animation-duration: 0.46s;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+html body .lkdv-feed-post .lkdv-post-panel-slot[data-side='comments'][data-leaving='true']:not(#lkdv-post-polish) {
+  animation: lkdv-panel-out-right 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+html body .lkdv-feed-post .lkdv-post-panel-slot[data-side='share'][data-leaving='true']:not(#lkdv-post-polish) {
+  animation: lkdv-panel-out-left 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+@keyframes lkdv-panel-out-right {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0.85; }
+}
+@keyframes lkdv-panel-out-left {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-100%); opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .lkdv-feed-options-rail > button:not(#lkdv-post-polish) {
+    animation: none;
+    opacity: 1;
+  }
+  html body .lkdv-feed-post .lkdv-post-panel-slot[data-leaving='true']:not(#lkdv-post-polish) {
+    animation: none;
+  }
+}
+
+/* Freedom : tiroirs commentaires / partage = même verre que les panneaux des posts. */
+html body .freedom-drawer-sheet:not(#lkdv-post-polish),
+html body .freedom-drawer-card:not(#lkdv-post-polish) {
+  background: var(--post-glass-bg);
+  -webkit-backdrop-filter: var(--post-glass-blur);
+  backdrop-filter: var(--post-glass-blur);
+  border: 0;
+  border-radius: var(--post-radius) var(--post-radius) 0 0;
+  box-shadow: var(--post-glass-shadow);
+  animation-duration: 0.42s;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+html body .freedom-drawer-header:not(#lkdv-post-polish) {
+  border-bottom: 0;
+}

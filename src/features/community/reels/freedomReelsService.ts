@@ -354,7 +354,7 @@ export async function fetchFreedomReels(_user?: any): Promise<FreedomReelItem[]>
           isLiked: false,
           isSaved: false,
           soundTitle: 'Ambiance sonore terrain LKDV',
-          location: 'Massif alpin',
+          location: '',
         });
       }
     }
@@ -402,7 +402,7 @@ export async function fetchFreedomReels(_user?: any): Promise<FreedomReelItem[]>
           isSaved: false,
           linkedKitId: post.linked_kit_id || null,
           soundTitle: 'Audio original terrain',
-          location: 'Outdoor',
+          location: '',
         });
       }
     }
@@ -541,4 +541,30 @@ export async function postReelComment(
   DEMO_FREEDOM_COMMENTS[reelId].push(localComment);
 
   return localComment;
+}
+
+/* Chargement instantané : les reels sont préchauffés dès que la barre du bas
+   est affichée (et à l'appui sur Communauté). Le visionneur démarre alors sur
+   la dernière liste connue, sans écran de chargement ; elle est rafraîchie en
+   arrière-plan pour l'ouverture suivante. */
+let reelsCache: FreedomReelItem[] | null = null;
+let reelsInflight: Promise<FreedomReelItem[]> | null = null;
+
+/** Dernière liste de reels connue, ou `null` si rien n'a encore été chargé. */
+export function peekFreedomReels(): FreedomReelItem[] | null {
+  return reelsCache;
+}
+
+/** Charge (ou rafraîchit) la liste en partageant un seul appel en vol. */
+export function warmFreedomReels(user?: any): Promise<FreedomReelItem[]> {
+  if (reelsInflight) return reelsInflight;
+  reelsInflight = fetchFreedomReels(user)
+    .then((data) => {
+      reelsCache = data;
+      return data;
+    })
+    .finally(() => {
+      reelsInflight = null;
+    });
+  return reelsInflight;
 }

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { PostGlassPanel } from '../PostGlassPanel';
 
 // jsdom n'a pas PointerEvent : un MouseEvent porte clientX/clientY.
@@ -33,12 +33,20 @@ function setup(side: 'comments' | 'share') {
   return { onClose, onParentDown, swipe };
 }
 
+/** La fermeture est animée (260 ms) : on laisse la sortie se jouer avant d'asserter. */
+const finishExit = () => act(() => { vi.advanceTimersByTime(300); });
+
 describe('PostGlassPanel — gestes', () => {
-  afterEach(cleanup);
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   it('commentaires : glisser vers la droite ramène à la photo', () => {
     const { onClose, swipe } = setup('comments');
     swipe(80);
+    finishExit();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -51,6 +59,7 @@ describe('PostGlassPanel — gestes', () => {
   it('partage : glisser vers la gauche ramène à la photo', () => {
     const { onClose, swipe } = setup('share');
     swipe(-80);
+    finishExit();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

@@ -3,7 +3,6 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, Heart, MessageCircle, Send } from 'lucide-react';
 import CommunityVideo from '@/components/communaute/CommunityVideo';
-import { CommunityPostSoundtrack } from '@/features/community/feed/CommunityPostSoundtrack';
 
 export interface PostCardSurfaceProps {
   mediaUrls: string[];
@@ -24,13 +23,6 @@ export interface PostCardSurfaceProps {
   isVideo?: boolean;
   /** Image de poster affichee avant la lecture de la video. */
   videoPoster?: string;
-  /** Bande-son optionnelle (CC0) avec credits. */
-  soundtrack?: {
-    url?: string | null;
-    title?: string | null;
-    creator?: string | null;
-    sourceUrl?: string | null;
-  } | null;
 }
 
 function formatCount(value: number) {
@@ -59,7 +51,6 @@ export function PostCardSurface({
   likePulse = 0,
   isVideo = false,
   videoPoster,
-  soundtrack,
 }: PostCardSurfaceProps) {
   const currentMedia = mediaUrls[Math.min(mediaIndex, Math.max(0, mediaUrls.length - 1))] ?? null;
   if (!currentMedia) return null;
@@ -84,17 +75,6 @@ export function PostCardSurface({
             </span>
           ) : null}
         </div>
-
-        {soundtrack?.url ? (
-          <div className="absolute bottom-3 left-3 z-20 max-w-[65%]" onPointerDown={(event) => event.stopPropagation()}>
-            <CommunityPostSoundtrack
-              url={soundtrack.url}
-              title={soundtrack.title}
-              creator={soundtrack.creator}
-              sourceUrl={soundtrack.sourceUrl}
-            />
-          </div>
-        ) : null}
 
         {mediaUrls.length > 1 ? (
           <>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface PostGlassPanelProps {
   side: 'comments' | 'share';
@@ -28,12 +28,39 @@ export function PostGlassPanel({
   side,
   headerRef,
   topInset = 64,
-  onClose,
+  onClose: onClosed,
   children,
 }: PostGlassPanelProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const [gesture, setGesture] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const leaveTimer = useRef<number | null>(null);
+
+  /* Sortie animée : le panneau repart vers le côté d'où il est venu, puis le
+     parent le démonte. Sans mouvement réduit, fermeture immédiate. */
+  const onClose = useCallback(() => {
+    if (leaveTimer.current !== null) return;
+    const reduce =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      onClosed();
+      return;
+    }
+    setLeaving(true);
+    leaveTimer.current = window.setTimeout(() => {
+      leaveTimer.current = null;
+      onClosed();
+    }, 260);
+  }, [onClosed]);
+
+  useEffect(
+    () => () => {
+      if (leaveTimer.current !== null) window.clearTimeout(leaveTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     const root = rootRef.current;
@@ -67,11 +94,10 @@ export function PostGlassPanel({
   useEffect(() => {
     const root = rootRef.current;
     const previous = document.activeElement as HTMLElement | null;
+    /* Le focus va au panneau lui-même, jamais au champ de saisie : le clavier
+       ne s'ouvre qu'à l'appui sur « Écrire un commentaire ». */
     const focusFirst = () => {
-      const first = root?.querySelector<HTMLElement>(
-        'input, button, textarea, [href], [tabindex]:not([tabindex="-1"])',
-      );
-      (first ?? root)?.focus?.({ preventScroll: true });
+      root?.focus?.({ preventScroll: true });
     };
     const timer = window.setTimeout(focusFirst, 20);
     const onKey = (event: KeyboardEvent) => {
@@ -114,6 +140,7 @@ export function PostGlassPanel({
       className="lkdv-post-panel-slot"
       data-side={side}
       data-gesture={gesture ? 'true' : undefined}
+      data-leaving={leaving ? 'true' : undefined}
       tabIndex={-1}
       style={{ top: 'var(--post-panel-top, 64px)' }}
       onPointerDown={(event) => {

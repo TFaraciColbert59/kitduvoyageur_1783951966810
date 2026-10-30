@@ -10,7 +10,7 @@ import { FreedomCommentsDrawer } from './FreedomCommentsDrawer';
 import { FreedomShareDrawer } from './FreedomShareDrawer';
 import { FreedomKitDrawer } from './FreedomKitDrawer';
 import { FreedomSoundDrawer } from './FreedomSoundDrawer';
-import { fetchFreedomReels } from './freedomReelsService';
+import { peekFreedomReels, warmFreedomReels } from './freedomReelsService';
 import {
   isNetworkPermittingBackgroundPreload,
   isFastNetworkConnection,
@@ -35,9 +35,14 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
   const { user } = useAuth();
   const { haptic } = useHapticFeedback();
 
-  const [reels, setReels] = useState<ReelModel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeIndex, setActiveIndex] = useState(0);
+  // Liste préchauffée par la barre du bas : ouverture sans écran de chargement.
+  const [reels, setReels] = useState<ReelModel[]>(() => peekFreedomReels() ?? []);
+  const [loading, setLoading] = useState(() => peekFreedomReels() === null);
+  const [activeIndex, setActiveIndex] = useState(() => {
+    const cached = peekFreedomReels();
+    const found = initialReelId && cached ? cached.findIndex((r) => r.id === initialReelId) : -1;
+    return found >= 0 ? found : 0;
+  });
   const [activeCommentsReel, setActiveCommentsReel] = useState<ReelModel | null>(null);
   const [activeShareReel, setActiveShareReel] = useState<ReelModel | null>(null);
   const [activeKit, setActiveKit] = useState<{ id: string; name?: string } | null>(null);
@@ -74,10 +79,13 @@ export const FreedomReelsViewer: React.FC<FreedomReelsViewerProps> = ({
   // Fetch reels
   useEffect(() => {
     let alive = true;
-    setLoading(true);
-    fetchFreedomReels(user)
+    const hadCache = peekFreedomReels() !== null;
+    if (!hadCache) setLoading(true);
+    warmFreedomReels(user)
       .then((data) => {
-        if (!alive) return;
+        // Liste déjà affichée depuis le cache : on ne la remplace pas sous le
+        // doigt, le rafraîchissement sert à l'ouverture suivante.
+        if (!alive || hadCache) return;
         setReels(data);
         if (initialReelId) {
           const idx = data.findIndex((r) => r.id === initialReelId);
