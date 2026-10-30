@@ -77,7 +77,9 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
         <Icon name="link" size={20} aria-hidden="true" />
       </button>
       <button type="button" aria-label="Envoyer vers une autre app" onClick={() => void shareNative()}>
-        <Icon name="share" size={20} aria-hidden="true" />
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 3v12M8 7l4-4 4 4M6 11v9h12v-9" />
+        </svg>
       </button>
     </div>
   );
