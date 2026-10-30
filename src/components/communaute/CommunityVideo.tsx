@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
 
 /** One active video at a time, always muted by default. Pauses off-screen/tab hidden. */
-export default function CommunityVideo({ src, className = '' }: { src: string; className?: string }) {
+export default function CommunityVideo({ src, className = '', poster }: { src: string; className?: string; poster?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -61,7 +61,8 @@ export default function CommunityVideo({ src, className = '' }: { src: string; c
       <video
         ref={ref}
         src={src}
-        className="size-full object-contain"
+        poster={poster}
+        className="size-full object-cover"
         preload="metadata"
         playsInline
         loop
