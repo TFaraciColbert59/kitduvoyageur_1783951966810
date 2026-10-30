@@ -28,7 +28,7 @@
 
 Les 10 vidéos sont insérées dans `community_posts` sous l'ID idempotent `md5('lkdv-cc0-video-2026:' || slug)::uuid`. La source originale est dans le contenu.
 
-## Pistes CC0 utilisées (5 sources uniques, 12 associations)
+## Pistes CC0 utilisées (6 sources uniques, 12 associations)
 
 - [Nocturne op. 9 n°2 de Chopin, enregistrement de Membeth](https://commons.wikimedia.org/wiki/File:Chopin.Nocturne.Es-Dur.opus.9.2.ogg).
 - [Sanna river rapids — Jarrod Stanley](https://commons.wikimedia.org/wiki/File:Sanna_river_rapids.ogg).
