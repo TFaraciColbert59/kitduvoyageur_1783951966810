@@ -214,3 +214,33 @@
   overflow: hidden !important;
 }
 #sheet .lkdv-compte-savebar { border-radius: 0 0 22px 22px !important; }
+
+/* Chargement du profil : la carte et les pastilles du haut restent vides
+   (verre seul, léger scintillement) au lieu d'afficher la maquette par défaut
+   du runtime avant les vraies données de l'utilisateur. */
+.lkdv-compte-v8[data-boot='loading'] #phone .ig-top > *,
+.lkdv-compte-v8[data-boot='loading'] #card > * {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.lkdv-compte-v8 #card > *,
+.lkdv-compte-v8 #phone .ig-top > * {
+  transition: opacity 0.28s ease;
+}
+.lkdv-compte-v8[data-boot='loading'] #card::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0.12));
+  background-size: 200% 100%;
+  animation: lkdv-compte-boot-shimmer 1.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes lkdv-compte-boot-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-compte-v8[data-boot='loading'] #card::after { animation: none; }
+}
