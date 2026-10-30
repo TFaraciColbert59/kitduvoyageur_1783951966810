@@ -1666,47 +1666,24 @@ async function main() {
     )
   );
 
-  await run(
-    'couvertures des albums',
-    supabase
-      .from('story_highlights')
-      .update({ cover_story_id: '4ccb209d-92fc-5789-848c-6814a50a9940' })
-      .eq('owner_id', DEMO_ID)
-      .eq('title', 'Alpes')
-  );
-  await run(
-    'couvertures des albums',
-    supabase
-      .from('story_highlights')
-      .update({ cover_story_id: '3fba1282-27ee-5f36-be44-0d54035f5586' })
-      .eq('owner_id', DEMO_ID)
-      .eq('title', 'Islande')
-  );
-  await run(
-    'couvertures des albums',
-    supabase
-      .from('story_highlights')
-      .update({ cover_story_id: 'aa3882eb-4856-5081-a044-48264977b45d' })
-      .eq('owner_id', DEMO_ID)
-      .eq('title', 'Bivouacs')
-  );
-  await run(
-    'couvertures des albums',
-    supabase
-      .from('story_highlights')
-      .update({ cover_story_id: '27dc3f7a-bd3a-5514-9b6b-d8ca6826bb7d' })
-      .eq('owner_id', DEMO_ID)
-      .eq('title', 'Dolomites')
-  );
-  await run(
-    'couvertures des albums',
-    supabase
-      .from('story_highlights')
-      .update({ cover_story_id: '3f58566d-2516-5f2a-a222-b3b8f4218df0' })
-      .eq('owner_id', DEMO_ID)
-      .eq('title', 'Lille')
-  );
-  note('18 stories actives, 3 nouvelles, 5 albums avec couvertures distinctes');
+  const HIGHLIGHT_COVERS = [
+    { title: 'Dolomites', cover_story_id: 'f1a10001-0000-4000-8000-000000000001' },
+    { title: 'Bivouac Vercors', cover_story_id: 'f1a10002-0000-4000-8000-000000000001' },
+    { title: 'Lacs & refuges', cover_story_id: 'f1a10003-0000-4000-8000-000000000001' },
+    { title: 'GR20', cover_story_id: 'f1a10004-0000-4000-8000-000000000001' },
+    { title: 'Sac 780 g', cover_story_id: 'f1a10005-0000-4000-8000-000000000001' },
+  ];
+  for (const hl of HIGHLIGHT_COVERS) {
+    await run(
+      `couverture album ${hl.title}`,
+      supabase
+        .from('story_highlights')
+        .update({ cover_story_id: hl.cover_story_id })
+        .eq('owner_id', DEMO_ID)
+        .eq('title', hl.title)
+    );
+  }
+  note('20 stories de highlights + 3 stories actives sur 5 albums avec couvertures distinctes');
 
   // ── 12. Notifications et commandes ─────────────────────────────────────────
   await run(

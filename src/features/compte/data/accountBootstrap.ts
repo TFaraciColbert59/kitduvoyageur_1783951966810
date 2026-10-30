@@ -2030,6 +2030,12 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
         .filter((id): id is string => typeof id === 'string' && id.length > 0)
     ),
   ];
+  const highlightStoryIds = [
+    ...new Set([
+      ...highlightRows.map((r) => r.cover_story_id),
+      ...highlightItems.map((item) => item.story_id),
+    ].filter((id): id is string => typeof id === 'string' && id.length > 0)),
+  ];
 
   const [
     relationProfiles,
@@ -2037,6 +2043,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     clubEventParticipantRows,
     recommendedCatalogKits,
     recommendedMaterialKits,
+    highlightStories,
   ] = await Promise.all([
     relationIds.length
       ? safeRows<FollowProfileRow>(
@@ -2085,6 +2092,16 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
             .in('id', recommendedKitIds)
         )
       : Promise.resolve([] as ClubMaterialKitRow[]),
+    // Stories archivées rattachées aux albums « À la une » (évite la troncature
+    // du plafond de 12 stories actives du flux).
+    highlightStoryIds.length
+      ? safeRows<StoryRow>(
+          supabase
+            .from('post_stories')
+            .select('id,caption,media_type,created_at,storage_path,image_url')
+            .in('id', highlightStoryIds)
+        )
+      : Promise.resolve([] as StoryRow[]),
   ]);
 
   const profileById = new Map<string, CompanionProfileRow>();
@@ -2162,7 +2179,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     list.push(item);
     highlightItemsByHighlight.set(item.highlight_id, list);
   }
-  const storyById = new Map(storyRows.map((row) => [row.id, row]));
+  const storyById = new Map([...storyRows, ...highlightStories].map((row) => [row.id, row]));
 
   const challengeProgress = new Map<string, { progress: number; completed: boolean }>();
   for (const row of userChallengeRows) {

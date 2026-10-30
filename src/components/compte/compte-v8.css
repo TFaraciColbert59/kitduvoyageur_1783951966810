@@ -717,6 +717,7 @@ button.mb:active{background:var(--fill2)}
 .ig-tile{position:relative;height:68px;border-radius:10px;overflow:hidden;border:0;padding:0;cursor:pointer;background:#17402C;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35);text-align:left;transition:transform .15s}
 .ig-tile:active{transform:scale(.96)}
 .ig-tile svg.art{width:100%;height:100%;display:block}
+.ig-tile img.art, .ig-tile img{width:100%;height:100%;object-fit:cover;display:block}
 .ig-tile .t-top{position:absolute;top:4px;left:5px;right:5px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
 .ig-tile .t-pill{padding:1.5px 5px;border-radius:6px;background:rgba(12,24,18,.58);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font:600 8.8px/1.15 var(--sf);letter-spacing:.01em}
 .ig-tile .t-pill.draft{background:rgba(251,241,220,.92);color:#8a6418}
@@ -760,6 +761,7 @@ button.mb:active{background:var(--fill2)}
 .ig-hl-ring{background:conic-gradient(from var(--la,140deg),rgba(23,64,44,.7),rgba(91,127,85,.45),rgba(255,255,255,.9),rgba(23,64,44,.7))!important}
 .ig-hl.seen .ig-hl-ring{opacity:.5;filter:saturate(.4)}
 .ig-hl-in svg{display:block}
+.ig-hl-in img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
 
 /* Barre de filtres + bascule grille/fil (15, 14) */
 .ig-filt{display:flex;align-items:center;gap:5px;margin:-1px 0 -1px}
@@ -1278,8 +1280,27 @@ button.mb:active{background:var(--fill2)}
 .st-head .st-options { position: relative !important; top: auto !important; right: auto !important; margin: 0 !important; flex: none !important; align-self: flex-start !important; }
 .st-head .st-options-btn { width: 38px !important; height: 38px !important; margin: 0 !important; }
 
-/* Story : aucun texte, aucune barre basse. Seul le compteur de vues. */
-.st-foot, .st-engage { display: none !important; }
+/* Story : barre basse de composition masquée, légende visible et compteur de vues */
+.st-engage { display: none !important; }
+.st-foot {
+  display: flex !important;
+  right: 84px !important;
+  left: 16px !important;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+  padding: 0 !important;
+  background: none !important;
+  pointer-events: none;
+}
+.st-foot b {
+  color: #fff !important;
+  font: 700 14.5px/1.2 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,.75) !important;
+}
+.st-foot small {
+  color: rgba(255,255,255,.9) !important;
+  font: 500 11.5px/1.25 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,.75) !important;
+}
 .st-viewcount {
   position: absolute !important;
   right: 16px !important;

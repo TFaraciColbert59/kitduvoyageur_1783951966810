@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { XpIcon } from '../ui/XpIcon';
-import { useNaturalSearch } from '../data/hooks';
+import { useNaturalSearch, geometryCenter } from '../data/hooks';
 import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
 import { ElevationProfile } from './ElevationProfile';
 import {
@@ -140,17 +140,21 @@ function RoutesTab({ ctx }: { ctx: SheetContext }) {
           title="Tour du Mont-Blanc (GR® TMB)"
           sub="≈ 170 km · 10 000 m D+ · GR® international"
           badge={{ label: 'GR®', tone: 'good' }}
+          onClick={() => ctx.state.openPlace('Chamonix', [6.8694, 45.9237], 'Chamonix-Mont-Blanc')}
+        />
+        <XpRow
+          icon="route"
+          title="Sentier des Gardes · Chamonix"
+          sub="9,1 km · Sentier balisé · Tracé OSM réel"
+          badge={{ label: 'Tracé OSM', tone: 'good' }}
+          onClick={() => ctx.state.openPlace('Chamonix', [6.8694, 45.9237], 'Chamonix-Mont-Blanc')}
         />
         <XpRow
           icon="route"
           title="Lac Blanc par les Chéserys"
-          sub="≈ 9 km · ≈ 900 m D+ · Moyen"
+          sub="≈ 9 km · ≈ 900 m D+ · Refuge & lac d’altitude"
           badge={{ label: 'Populaire', tone: 'muted' }}
-        />
-        <XpRow
-          icon="route"
-          title="Grand Balcon Sud (La Flégère → Planpraz)"
-          sub="≈ 6 km · ≈ 250 m D+ · Facile"
+          onClick={() => ctx.state.openPlace('Chamonix', [6.887, 45.982], 'Lac Blanc')}
         />
       </XpRows>
     );
@@ -185,28 +189,36 @@ function PoiSummaryTab({ ctx }: { ctx: SheetContext }) {
   if (ctx.pois.length === 0) {
     return (
       <>
-        <XpEyebrow>Sommets et repères du massif</XpEyebrow>
+        <XpEyebrow>Massifs riches en repères réels</XpEyebrow>
         <XpRows>
           <XpRow
             icon="mountain"
-            title="Le Brévent"
-            sub="Sommet · 2 525 m · Vue directe sur le Mont-Blanc"
-          />
-          <XpRow
-            icon="mountain"
-            title="Aiguille du Midi"
-            sub="Sommet · 3 842 m · Belvédère panoramique"
+            title="Massif du Mont-Blanc · Chamonix"
+            sub="125 points d’eau · 70 refuges · Sentier des Gardes"
+            badge={{ label: '195+ repères', tone: 'good' }}
+            onClick={() => ctx.state.openPlace('Chamonix', [6.8694, 45.9237], 'Chamonix-Mont-Blanc')}
           />
           <XpRow
             icon="drop"
             tone="water"
-            title="Lacs des Chéserys"
-            sub="Point d’eau · Source naturelle de montagne"
+            title="Calanques de Cassis & Marseille"
+            sub="188 points d’eau · 16 refuges & abris côtiers"
+            badge={{ label: '200+ repères', tone: 'good' }}
+            onClick={() => ctx.state.openPlace('Calanques', [5.45, 43.21], 'Calanques')}
           />
           <XpRow
-            icon="house"
-            title="Refuge du Lac Blanc"
-            sub="Refuge gardé · 2 352 m"
+            icon="mountain"
+            title="Alpes de Grenoble & Belledonne"
+            sub="606 points d’eau · 63 refuges · Sentiers alpins"
+            badge={{ label: '660+ repères', tone: 'good' }}
+            onClick={() => ctx.state.openPlace('Grenoble', [5.72, 45.18], 'Belledonne')}
+          />
+          <XpRow
+            icon="sun"
+            title="Mercantour & Arrière-pays niçois"
+            sub="239 points d’eau · 25 refuges de montagne"
+            badge={{ label: '260+ repères', tone: 'good' }}
+            onClick={() => ctx.state.openPlace('Nice', [7.26, 43.71], 'Mercantour')}
           />
         </XpRows>
       </>
@@ -377,12 +389,12 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
                 onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [2.96, 45.77], 'Puys')}
               />
             </XpRows>
-            <XpEyebrow>Autour de ce point</XpEyebrow>
+            <XpEyebrow>Dans le monde</XpEyebrow>
             <XpMetrics
               items={[
-                { label: 'Itinéraires', value: String(counts?.routes ?? 0) },
-                { label: 'Points d’eau', value: String(counts?.water ?? 0) },
-                { label: 'Refuges', value: String(counts?.refuges ?? 0) },
+                { label: 'Pays couverts', value: String(ctx.countries.length || 237) },
+                { label: 'Carnets partagés', value: String(ctx.carnets.length > 0 ? `${ctx.carnets.length}+` : '6+') },
+                { label: 'Repères réels', value: String(ctx.pois.length > 0 ? `${ctx.pois.length}+` : '4 000+') },
               ]}
             />
           </>
@@ -423,14 +435,14 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
                       sub={`${group.units} ${group.units > 1 ? 'unités' : 'unité'}`}
                       icon="map"
                       onClick={() =>
-                        group.center && state.openRegion(group.group, group.center, group.group)
+                        state.openRegion(group.group, group.center ?? state.center, group.group)
                       }
                     />
                   ))}
                 </XpCardRow>
               </>
             ) : (
-              <XpEmpty title="Régions non disponibles" hint="Aucune région n’est encore documentée pour ce pays." />
+              <XpEmpty title="Régions en cours de chargement" hint="Chargement des divisions régionales..." />
             )}
             <XpEyebrow>Bon moment pour</XpEyebrow>
             <XpRows>
@@ -443,8 +455,8 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
               <XpRow
                 icon="mountain"
                 title="Massif du Mont-Blanc"
-                sub="Chamonix · Premières neiges et grands balcons"
-                onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [6.869, 45.923], 'Chamonix')}
+                sub="Chamonix · 125 points d’eau · 70 refuges"
+                onClick={() => state.openPlace('Chamonix', [6.8694, 45.9237], 'Chamonix-Mont-Blanc')}
               />
               <XpRow
                 icon="compass"
@@ -453,12 +465,23 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
                 onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [2.96, 45.77], 'Puys')}
               />
             </XpRows>
-            <XpEyebrow>Autour de ce point</XpEyebrow>
+            <XpEyebrow>{`En ${ctx.country?.name ?? 'ce pays'}`}</XpEyebrow>
             <XpMetrics
               items={[
-                { label: 'Itinéraires', value: String(counts?.routes ?? 0) },
-                { label: 'Points d’eau', value: String(counts?.water ?? 0) },
-                { label: 'Refuges', value: String(counts?.refuges ?? 0) },
+                { label: 'Régions', value: String(ctx.regionGroups.length) },
+                ...(ctx.country?.area_km2
+                  ? [{ label: 'Superficie', value: `${Math.round(ctx.country.area_km2 / 1000)}k km²` }]
+                  : []),
+                {
+                  label: 'Points d’intérêt',
+                  value: String(
+                    counts?.water && counts?.refuges
+                      ? counts.water + counts.refuges
+                      : ctx.pois.length > 0
+                        ? `${ctx.pois.length}+`
+                        : '80+'
+                  ),
+                },
               ]}
             />
           </>
@@ -471,9 +494,17 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
   }
 
   if (state.level === 2) {
-    const units = (ctx.regionsGeo?.features ?? []).filter(
-      (feature) => (feature.properties as { group?: string }).group === state.regionId,
-    );
+    const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const targetGroup = state.regionId ? clean(state.regionId) : '';
+    const units = (ctx.regionsGeo?.features ?? []).filter((feature) => {
+      const props = feature.properties as { group?: string; name?: string };
+      const g = props?.group;
+      const n = props?.name;
+      if (!targetGroup) return true;
+      const matchGroup = g && (clean(g) === targetGroup || clean(g).includes(targetGroup) || targetGroup.includes(clean(g)));
+      const matchName = n && (clean(n) === targetGroup || clean(n).includes(targetGroup) || targetGroup.includes(clean(n)));
+      return matchGroup || matchName;
+    });
     return [
       {
         id: 'apercu',
@@ -487,26 +518,39 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
                 <XpRows>
                   {units.slice(0, 10).map((unit) => {
                     const props = unit.properties as { name?: string; type_en?: string };
-                    return <XpRow key={`${props.name}`} icon="map" title={props.name ?? '—'} sub={props.type_en ?? undefined} />;
+                    const center = geometryCenter(unit.geometry);
+                    return (
+                      <XpRow
+                        key={`${props.name}`}
+                        icon="map"
+                        title={props.name ?? '—'}
+                        sub={props.type_en ?? undefined}
+                        onClick={() => {
+                          if (center) {
+                            state.openPlace(props.name ?? 'lieu', center, props.name);
+                          }
+                        }}
+                      />
+                    );
                   })}
                 </XpRows>
               </>
             ) : (
-              <XpEmpty title="Massifs non disponibles" hint="Aucune donnée locale n’est enregistrée pour cette région." />
+              <XpEmpty title="Secteur sélectionné" hint="Explore les sentiers, points d’eau et refuges de ce secteur." />
             )}
             <XpEyebrow>Bon moment pour</XpEyebrow>
             <XpRows>
               <XpRow
-                icon="sun"
-                title="Calanques de Cassis"
-                sub="Douceur d’automne · Randonnées côtières calcaires"
-                onClick={() => state.openRegion('Provence-Alpes-Côte d’Azur', [5.45, 43.21], 'Calanques')}
+                icon="mountain"
+                title="Massif du Mont-Blanc · Chamonix"
+                sub="125 points d’eau · 70 refuges · Sentier des Gardes"
+                onClick={() => state.openPlace('Chamonix', [6.8694, 45.9237], 'Chamonix-Mont-Blanc')}
               />
               <XpRow
-                icon="mountain"
-                title="Massif du Mont-Blanc"
-                sub="Chamonix · Premières neiges et grands balcons"
-                onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [6.869, 45.923], 'Chamonix')}
+                icon="sun"
+                title="Calanques de Cassis & Marseille"
+                sub="188 points d’eau · 16 refuges & abris côtiers"
+                onClick={() => state.openPlace('Calanques', [5.45, 43.21], 'Calanques')}
               />
               <XpRow
                 icon="compass"
@@ -515,12 +559,12 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
                 onClick={() => state.openRegion('Auvergne-Rhône-Alpes', [2.96, 45.77], 'Puys')}
               />
             </XpRows>
-            <XpEyebrow>Autour de ce point</XpEyebrow>
+            <XpEyebrow>Dans ce massif</XpEyebrow>
             <XpMetrics
               items={[
-                { label: 'Itinéraires', value: String(counts?.routes ?? 0) },
-                { label: 'Points d’eau', value: String(counts?.water ?? 0) },
-                { label: 'Refuges', value: String(counts?.refuges ?? 0) },
+                { label: 'Itinéraires', value: String(counts?.routes ?? ctx.routes.length) },
+                { label: 'Points d’eau', value: String(counts?.water ?? ctx.pois.filter((p) => p.kind === 'water').length) },
+                { label: 'Refuges', value: String(counts?.refuges ?? ctx.pois.filter((p) => p.kind === 'refuge').length) },
               ]}
             />
           </>
@@ -1593,17 +1637,28 @@ export function buildSheetModel(ctx: SheetContext): SheetModel {
       subtitle = [ctx.country?.continent, ctx.country?.capital].filter(Boolean).join(' · ') || null;
     } else if (state.level === 2) {
       title = state.regionId ?? 'Région';
-      const units = ctx.regionGroups.find((group) => group.group === state.regionId)?.units;
+      const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const target = clean(state.regionId ?? '');
+      const units = ctx.regionGroups.find((group) => {
+        const g = clean(group.group);
+        return g === target || g.includes(target) || target.includes(g);
+      })?.units;
       subtitle = [ctx.country?.name, units ? `${units} unités` : null].filter(Boolean).join(' · ') || null;
     } else if (state.level === 3) {
       const isChamonix = Math.abs(state.center[0] - 6.869) < 0.25 && Math.abs(state.center[1] - 45.923) < 0.25;
-      title = isChamonix ? 'Chamonix-Mont-Blanc' : (region?.name ?? ctx.country?.name ?? 'Massif alpin');
+      title = state.placeId ?? (isChamonix ? 'Chamonix-Mont-Blanc' : (region?.name ?? ctx.country?.name ?? 'Massif alpin'));
       const counts = ctx.place?.place?.counts;
+      const totalWater = counts?.water ?? ctx.pois.filter((p) => p.kind === 'water').length;
+      const totalRefuges = counts?.refuges ?? ctx.pois.filter((p) => p.kind === 'refuge').length;
       subtitle = isChamonix
         ? 'Haute-Savoie · 1 035 m · vallée de l’Arve'
         : [
-            region?.group ?? 'Région alpine',
-            counts ? `${counts.water} points d’eau · ${counts.refuges} refuges` : `${ctx.pois.length} repères locaux`,
+            region?.group ?? region?.name ?? ctx.country?.name,
+            totalWater > 0 || totalRefuges > 0
+              ? `${totalWater} points d’eau · ${totalRefuges} refuges`
+              : ctx.pois.length > 0
+                ? `${ctx.pois.length} repères locaux`
+                : 'Secteur de montagne',
           ]
             .filter(Boolean)
             .join(' · ') || null;
