@@ -281,8 +281,6 @@ export function CommunityFeedPost({
         </div>
       ) : null}
 
-      <div ref={headerRef} className="lkdv-feed-post-top">
-        <PostAuthorPill post={post} />
       <div
         ref={headerRef}
         className="lkdv-feed-post-top"
