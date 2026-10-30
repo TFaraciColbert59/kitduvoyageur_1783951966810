@@ -312,21 +312,27 @@ export default function MapStage({
       setReady(true);
       onReady?.();
 
-      const handleCountry = (event: { features?: Array<{ properties?: Record<string, unknown> }> }) => {
+      const handleCountry = (event: {
+        features?: Array<{ properties?: Record<string, unknown> }>;
+        lngLat?: { lng: number; lat: number };
+      }) => {
         const props = event.features?.[0]?.properties;
         const iso = typeof props?.iso_a2 === 'string' ? props.iso_a2 : null;
         const name = typeof props?.name === 'string' ? props.name : '';
         if (!iso || !onCountryClick) return;
-        const lngLat = map.getCenter();
-        onCountryClick(iso, name, [lngLat.lng, lngLat.lat]);
+        const target = event.lngLat ?? map.getCenter();
+        onCountryClick(iso, name, [target.lng, target.lat]);
       };
 
-      const handleRegion = (event: { features?: Array<{ properties?: Record<string, unknown> }> }) => {
+      const handleRegion = (event: {
+        features?: Array<{ properties?: Record<string, unknown> }>;
+        lngLat?: { lng: number; lat: number };
+      }) => {
         const props = event.features?.[0]?.properties;
         const group = typeof props?.group === 'string' ? props.group : null;
         if (!group || !onRegionClick) return;
-        const lngLat = map.getCenter();
-        onRegionClick(group, [lngLat.lng, lngLat.lat]);
+        const target = event.lngLat ?? map.getCenter();
+        onRegionClick(group, [target.lng, target.lat]);
       };
 
       map.on('click', 'xp-countries-fill', handleCountry as never);

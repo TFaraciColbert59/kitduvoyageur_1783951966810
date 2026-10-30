@@ -3,6 +3,7 @@
 import type {
   CarnetItem,
   CountryDetails,
+  CountryFeatureProperties,
   TerrainReport,
   TripItem,
   PoiItem,
@@ -176,6 +177,28 @@ export function findRegionAt(
   for (const feature of geo.features) {
     const geometry = feature.geometry;
     const props = feature.properties as unknown as RegionFeatureProperties;
+    if (!geometry) continue;
+    const polygons: number[][][][] =
+      geometry.type === 'Polygon'
+        ? [geometry.coordinates as number[][][]]
+        : geometry.type === 'MultiPolygon'
+          ? (geometry.coordinates as number[][][][])
+          : [];
+    for (const polygon of polygons) {
+      if (polygon[0] && pointInRing(point, polygon[0])) return props;
+    }
+  }
+  return null;
+}
+
+export function findCountryAt(
+  geo: GeoCollection | undefined,
+  point: [number, number],
+): CountryFeatureProperties | null {
+  if (!geo) return null;
+  for (const feature of geo.features) {
+    const geometry = feature.geometry;
+    const props = feature.properties as unknown as CountryFeatureProperties;
     if (!geometry) continue;
     const polygons: number[][][][] =
       geometry.type === 'Polygon'

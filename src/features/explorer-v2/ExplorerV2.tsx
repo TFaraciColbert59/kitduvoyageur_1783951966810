@@ -39,6 +39,7 @@ import {
 } from './data/hooks';
 import {
   distanceKm,
+  findCountryAt,
   findRegionAt,
   formatDistance,
   formatDuration,
@@ -186,9 +187,16 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   // ── données ────────────────────────────────────────────────────────────
   const countriesQuery = useCountriesGeo();
   const countriesGeo = countriesQuery.data;
-  const isoForRegions = state.level >= 2 ? state.geo || null : null;
+
+  // Détection automatique du pays sous le curseur si non défini
+  const detectedCountry = useMemo(() => {
+    return findCountryAt(countriesGeo, state.center);
+  }, [countriesGeo, state.center]);
+
+  const activeGeo = state.geo || detectedCountry?.iso_a2 || (state.level >= 1 ? 'FR' : null);
+  const isoForRegions = activeGeo || (state.level >= 1 ? 'FR' : null);
   const { data: regionsGeo } = useRegionsGeo(isoForRegions);
-  const { data: country } = useCountryDetails(state.geo || null);
+  const { data: country } = useCountryDetails(activeGeo);
 
   const countries = useMemo<CountryEntry[]>(() => {
     if (!countriesGeo) return [];
@@ -213,8 +221,12 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       const group = props.group ?? props.name ?? '—';
       const center = geometryCenter(feature.geometry);
       const current = groups.get(group);
-      if (current) current.units += 1;
-      else groups.set(group, { group, units: 1, center });
+      if (current) {
+        current.units += 1;
+        if (!current.center && center) current.center = center;
+      } else {
+        groups.set(group, { group, units: 1, center });
+      }
     }
     return [...groups.values()].sort((a, b) => b.units - a.units);
   }, [regionsGeo]);
@@ -226,8 +238,9 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     state.center[0],
     state.level >= 2,
   );
-  const { data: carnetsData } = useContent('carnets', state.geo || null);
-  const { data: tripsData } = useContent('trips', state.geo || null);
+  const contentGeo = state.level >= 1 ? activeGeo : null;
+  const { data: carnetsData } = useContent('carnets', contentGeo);
+  const { data: tripsData } = useContent('trips', contentGeo);
   const { data: weather } = useWeather(
     state.selection ? state.center[1] : null,
     state.selection ? state.center[0] : null,

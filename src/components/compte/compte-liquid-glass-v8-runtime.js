@@ -330,6 +330,11 @@ const hlArt = id => {
   if (id === "hl4") return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6.5V5a3 3 0 0 1 6 0v1.5M6 10.5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-8.5ZM9.5 14h5v4h-5z"/></svg>`;
   return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
 };
+var hlCover = h => {
+  const img = h && (h.coverImage || (Array.isArray(h.stories) && h.stories[0]?.image) || h.image || h.carnet?.coverImage);
+  if (img) return `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" />`;
+  return hlArt(h ? h.id : '');
+};
 const seg = (a, labels, sel, extra = "") => `<div class="segc" role="group" ${extra}>${labels.map((l, i) => `<button data-a="${a}" data-v="${i}" aria-pressed="${sel === i}">${l}</button>`).join("")}<span class="th" style="width:calc((100% - 4px)/${labels.length});transform:translateX(${Math.max(0, sel) * 100}%);${sel < 0 ? "opacity:0" : ""}"></span></div>`;
 
 const STEPL = ["Identité", "Aventures", "Carnets", "Lignées", "Réglages"];
@@ -420,14 +425,69 @@ let tileArt = function(kind) {
 
 /* ---------- Données du Compte @tony_frc (alignées sur Supabase LKDV) ---------- */
 var hlList = () => (Array.isArray(HIGHLIGHTS) ? HIGHLIGHTS : []);
-let HIGHLIGHTS = [{ id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }];
 let _MOCK_HIGHLIGHTS = [
-  { id: "hl1", title: "Alpes IT·FR", mass: "m2", step: 1, sub: "5 sorties · Mont-Blanc & Grand Paradis · 94 km" },
-  { id: "hl2", title: "Néouvielle", mass: "m1", step: 2, sub: "Bivouac 3 jours · 2 450 m · 18 photos" },
-  { id: "hl3", title: "Vercors", mass: "m3", step: 2, sub: "Traversée Hauts Plateaux · 34 km · Gypaète" },
-  { id: "hl4", title: "Sac 4,8kg", mass: "m1", step: 3, sub: "Kit souche G1 · 91 % d'endurance terrain" },
-  { id: "hl5", title: "Nouveau", mass: "m1", step: 0, sub: "Ajouter un moment terrain à la une" }
+  {
+    id: "hl1",
+    title: "Dolomites",
+    coverImage: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=480&q=80",
+    stories: [
+      { id: "s1", image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1080&q=80", caption: "Tre Cime di Lavaredo au crépuscule doré" },
+      { id: "s2", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1080&q=80", caption: "Reflet du matin au Lago di Braies" },
+      { id: "s3", image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?auto=format&fit=crop&w=1080&q=80", caption: "Cinque Torri · passage aérien sur la vire" },
+      { id: "s4", image: "https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?auto=format&fit=crop&w=1080&q=80", caption: "Arrivée au Rifugio Locatelli à 2 405 m" }
+    ],
+    sub: "4 stories · Tre Cime & Lago di Braies"
+  },
+  {
+    id: "hl2",
+    title: "Bivouac Vercors",
+    coverImage: "https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?auto=format&fit=crop&w=480&q=80",
+    stories: [
+      { id: "s5", image: "https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?auto=format&fit=crop&w=1080&q=80", caption: "Campement sous la Voie Lactée aux Hauts Plateaux" },
+      { id: "s6", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1080&q=80", caption: "Premier rayon de soleil sur le Grand Veymont" },
+      { id: "s7", image: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=1080&q=80", caption: "Bivouac sauvage au Pas de l’Aiguille" },
+      { id: "s8", image: "https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=1080&q=80", caption: "Matin givré : premier café au réchaud" }
+    ],
+    sub: "4 stories · Nuit étoilée & Grand Veymont"
+  },
+  {
+    id: "hl3",
+    title: "Lacs & refuges",
+    coverImage: "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=480&q=80",
+    stories: [
+      { id: "s9", image: "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=1080&q=80", caption: "Miroir du Lac Blanc face au Mont-Blanc" },
+      { id: "s10", image: "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1080&q=80", caption: "Refuge perché au-dessus des glaciers" },
+      { id: "s11", image: "https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?auto=format&fit=crop&w=1080&q=80", caption: "Baignade à l’eau glaciaire au Lac d’Anterne" },
+      { id: "s12", image: "https://images.unsplash.com/photo-1517824806704-9040b037703b?auto=format&fit=crop&w=1080&q=80", caption: "Chaleur du refuge à la tombée de la nuit" }
+    ],
+    sub: "4 stories · Lac Blanc & Couvercle"
+  },
+  {
+    id: "hl4",
+    title: "GR20",
+    coverImage: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=480&q=80",
+    stories: [
+      { id: "s13", image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1080&q=80", caption: "Les crêtes minérales des Aiguilles de Bavella" },
+      { id: "s14", image: "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=1080&q=80", caption: "Passage engagé sur les dalles de granit" },
+      { id: "s15", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1080&q=80", caption: "Vue sur la mer Méditerranée depuis la crête" },
+      { id: "s16", image: "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1080&q=80", caption: "Source glacée providentielle au km 18" }
+    ],
+    sub: "4 stories · Bavella & crêtes corses"
+  },
+  {
+    id: "hl5",
+    title: "Sac 780 g",
+    coverImage: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=480&q=80",
+    stories: [
+      { id: "s17", image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1080&q=80", caption: "Inventaire complet du sac ultralight · 780 g" },
+      { id: "s18", image: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1080&q=80", caption: "Chaussures de trail et bâtons carbone" },
+      { id: "s19", image: "https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=1080&q=80", caption: "Popote titane et filtre à eau 110 g" },
+      { id: "s20", image: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=1080&q=80", caption: "Tarp monté sur bâtons entre les mélèzes" }
+    ],
+    sub: "4 stories · Matériel ultralight & pesée"
+  }
 ];
+let HIGHLIGHTS = JSON.parse(JSON.stringify(_MOCK_HIGHLIGHTS));
 
 let STORY_HIGHLIGHTS = [];
 
@@ -460,10 +520,10 @@ const OUTING_COVERS = [
 ];
 
 let _MOCK_CARNETS = [
-  { id: "ca2", title: "Reflet du Mont-Blanc au Lac Blanc", short: "Mont-Blanc 🇮🇹🇫🇷", mass: "Haute-Savoie", massId: "m2", date: "Publié · 19 sept.", status: "pub", photos: 9, species: ["Bouquetin des Alpes"], likes: 64, views: 420, quote: "Montée avant 7 h pour le miroir parfait sans vent.", x: 292, y: 104, h: 200 },
-  { id: "ca1", title: "Trois jours autour du Néouvielle", short: "Néouvielle", mass: "Hautes-Pyrénées", massId: "m1", date: "Publié · 15 août", status: "pub", photos: 18, species: ["Gentiane de Koch", "Marmotte"], likes: 48, views: 312, quote: "Lacs glacés à l'aube et granit doré au camp d'Aubert.", x: 70, y: 158, h: 165 },
-  { id: "ca3", title: "Glacier Blanc & Pré de Mme Carle", short: "Écrins", mass: "Écrins", massId: "m4", date: "Publié · 14 juil.", status: "pub", photos: 15, species: ["Aigle royal", "Edelweiss"], likes: 39, views: 255, quote: "Traces de crampons sur le névé matinal.", x: 282, y: 184, h: 32 },
-  { id: "ca0", title: "Traversée du Vercors, bivouac", short: "Vercors", mass: "Vercors", massId: "m3", date: "Brouillon prêt · 30 août", status: "draft", photos: 12, species: ["Gypaète barbu", "Chamois"], likes: 27, views: 180, quote: "Bivouac sous les étoiles au pas de l'Aiguille, source du km 14 à sec.", x: 204, y: 146, h: 145 }
+  { id: "ca2", title: "Reflet du Mont-Blanc au Lac Blanc", short: "Mont-Blanc 🇮🇹🇫🇷", mass: "Haute-Savoie", massId: "m2", date: "Publié · 19 sept.", status: "pub", photos: 9, species: ["Bouquetin des Alpes"], likes: 64, views: 420, quote: "Montée avant 7 h pour le miroir parfait sans vent.", x: 292, y: 104, h: 200, coverImage: "https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=600&q=80" },
+  { id: "ca1", title: "Trois jours autour du Néouvielle", short: "Néouvielle", mass: "Hautes-Pyrénées", massId: "m1", date: "Publié · 15 août", status: "pub", photos: 18, species: ["Gentiane de Koch", "Marmotte"], likes: 48, views: 312, quote: "Lacs glacés à l'aube et granit doré au camp d'Aubert.", x: 70, y: 158, h: 165, coverImage: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80" },
+  { id: "ca3", title: "Glacier Blanc & Pré de Mme Carle", short: "Écrins", mass: "Écrins", massId: "m4", date: "Publié · 14 juil.", status: "pub", photos: 15, species: ["Aigle royal", "Edelweiss"], likes: 39, views: 255, quote: "Traces de crampons sur le névé matinal.", x: 282, y: 184, h: 32, coverImage: "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=600&q=80" },
+  { id: "ca0", title: "Traversée du Vercors, bivouac", short: "Vercors", mass: "Vercors", massId: "m3", date: "Brouillon prêt · 30 août", status: "draft", photos: 12, species: ["Gypaète barbu", "Chamois"], likes: 27, views: 180, quote: "Bivouac sous les étoiles au pas de l'Aiguille, source du km 14 à sec.", x: 204, y: 146, h: 145, coverImage: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=600&q=80" }
 ];
 let CARNETS = JSON.parse(JSON.stringify(_MOCK_CARNETS));
 
@@ -1238,7 +1298,7 @@ let card = function() {
   <!-- Stories À la une (Highlights Instagram) -->
   <div class="ig-hl-row" role="region" aria-label="Stories à la une">
     ${HIGHLIGHTS.map(h => `<button class="ig-hl" data-a="openHighlight" data-v="${h.id}" aria-label="Story à la une ${h.title}">
-      <span class="ig-hl-ring"><span class="ig-hl-in">${hlArt(h.id)}</span></span>
+      <span class="ig-hl-ring"><span class="ig-hl-in">${hlCover(h)}</span></span>
       <span>${h.title}</span>
     </button>`).join("")}
   </div>
@@ -2951,7 +3011,8 @@ hlList = function () {
         sub: (c.photos || 0) + ' photos · ' + (c.likes || 0) + ' mentions',
         mass: c.mass || 'Alpes',
         step: 2,
-        carnet: c
+        carnet: c,
+        coverImage: c.coverImage || c.cover_image || null
       });
     });
   }
@@ -2959,9 +3020,10 @@ hlList = function () {
   return items;
 };
 
-const hlCover = h => {
-  if (h && h.coverImage) return `<img src="${esc(h.coverImage)}" alt="" loading="lazy" decoding="async" />`;
-  return hlArt(h.id);
+hlCover = h => {
+  const img = h && (h.coverImage || (Array.isArray(h.stories) && h.stories[0]?.image) || h.image || h.carnet?.coverImage);
+  if (img) return `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" />`;
+  return hlArt(h ? h.id : '');
 };
 
 const unseen = () => 0;
@@ -2995,7 +3057,9 @@ const storyFor = id => {
       return {
         title: c.title || 'Carnet de voyage',
         slides: [
-          { k: 'photo', art: c.id, t: c.title, s: c.quote || "Carnet d'expédition" }
+          c.coverImage
+            ? { k: 'image', src: c.coverImage, t: c.title, s: c.quote || "Carnet d'expédition" }
+            : { k: 'photo', art: c.id, t: c.title, s: c.quote || "Carnet d'expédition" }
         ]
       };
     }
@@ -3050,6 +3114,7 @@ function renderStory() {
     </div>
   </div>
   <div class="st-body">${v.body}</div>
+  ${v.foot ? `<div class="st-foot">${v.foot}</div>` : ''}
   <button class="st-zone l" data-a="stprev" aria-label="Précédent"></button><button class="st-zone r" data-a="stnext" aria-label="Suivant"></button>
   ${engage}
   ${viewersPanel}`;
@@ -4070,6 +4135,17 @@ function applyAccountBootstrap(data) {
   if (Array.isArray(data.tribu)) TRIBU = data.tribu;
     if (Array.isArray(data.notifications)) S.notifications = data.notifications;
   if (Array.isArray(data.clubs)) { CLUBS = data.clubs; S.clubs = data.clubs; }
+  if (Array.isArray(data.highlights)) {
+    HIGHLIGHTS = data.highlights.map((h) => ({
+      id: h.id,
+      title: h.title || 'Story',
+      sub: `${h.items || 0} story${(h.items || 0) === 1 ? '' : 's'}`,
+      mass: '',
+      step: 2,
+      coverImage: h.coverImage || null,
+      stories: h.stories || [],
+    }));
+  }
   if (data.profile && typeof data.profile === "object") Object.assign(S.profile, data.profile);
   try {
     renderTop();

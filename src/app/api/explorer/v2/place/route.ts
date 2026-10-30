@@ -46,7 +46,8 @@ function windowFor(zoom: number): { dLat: number; dLng: number } {
   if (zoom >= 13) return { dLat: 0.05, dLng: 0.08 };
   if (zoom >= 11) return { dLat: 0.12, dLng: 0.2 };
   if (zoom >= 8) return { dLat: 0.5, dLng: 0.8 };
-  return { dLat: 1.2, dLng: 2 };
+  if (zoom >= 5) return { dLat: 1.2, dLng: 1.8 };
+  return { dLat: 1.8, dLng: 2.8 };
 }
 
 /**
@@ -94,9 +95,11 @@ export async function GET(request: Request) {
       ).catch(() => [] as RouteRow[]),
     ]);
 
+    const placeData = Array.isArray(place) ? (place[0] ?? null) : (place ?? null);
+
     return NextResponse.json(
       {
-        place: place[0] ?? null,
+        place: placeData,
         pois,
         routes,
         window: { dLat, dLng },
