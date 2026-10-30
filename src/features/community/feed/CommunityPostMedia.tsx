@@ -22,6 +22,8 @@ export interface CommunityPostMediaProps {
   inert?: boolean;
   /** Un swipe vient de se terminer : ne pas transformer le relâchement en like. */
   shouldIgnoreClick?: () => boolean;
+  /** Proportions réelles du média (largeur / hauteur), pour adapter la hauteur de la carte. */
+  onRatio?: (ratio: number) => void;
 }
 
 function formatCount(value: number) {
@@ -51,6 +53,7 @@ export function CommunityPostMedia({
   onShare,
   inert = false,
   shouldIgnoreClick,
+  onRatio,
 }: CommunityPostMediaProps) {
   const [failed, setFailed] = useState(false);
   const clickTimer = useRef<number | null>(null);
@@ -116,7 +119,11 @@ export function CommunityPostMedia({
               muted
               loop
               playsInline
-              preload="metadata"
+              preload="auto"
+              onLoadedMetadata={(event) => {
+                const el = event.currentTarget;
+                if (el.videoWidth && el.videoHeight) onRatio?.(el.videoWidth / el.videoHeight);
+              }}
               onError={() => setFailed(true)}
             />
           ) : (
@@ -130,6 +137,14 @@ export function CommunityPostMedia({
               decoding="async"
               fetchPriority={priority ? 'high' : 'auto'}
               draggable={false}
+              ref={(el) => {
+                // Image déjà en cache avant l'hydratation : `onLoad` ne partirait pas.
+                if (el && el.complete && el.naturalWidth && el.naturalHeight) onRatio?.(el.naturalWidth / el.naturalHeight);
+              }}
+              onLoad={(event) => {
+                const el = event.currentTarget;
+                if (el.naturalWidth && el.naturalHeight) onRatio?.(el.naturalWidth / el.naturalHeight);
+              }}
               onError={() => setFailed(true)}
             />
           )}

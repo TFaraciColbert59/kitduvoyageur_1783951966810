@@ -201,7 +201,7 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
         playsInline
         loop
         muted={globalMuted}
-        preload={isActive ? 'auto' : isPreload ? 'metadata' : 'none'}
+        preload={isActive || isPreload ? 'auto' : 'none'}
         onTimeUpdate={handleTimeUpdate}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}

@@ -825,7 +825,12 @@
    La carte (liste) tient le haut, la zone de conversation occupe le reste.
    La barre basse reste visible : la zone réserve sa hauteur (padding 64). */
 .lkdv-messages .phone {
-  grid-template-rows: 335px minmax(0, 1fr) !important;
+  /* Hauteur de la card des discussions : 302 px par défaut (335 px − 10 %),
+     réglable avec la poignée `.msplit` ; la conversation prend tout le reste. */
+  grid-template-rows: var(--msg-split, 302px) minmax(0, 1fr) !important;
+}
+.lkdv-messages .phone[data-splitting='true'] {
+  transition: none !important;
 }
 .lkdv-messages .phone .card {
   display: flex !important;
@@ -1743,18 +1748,6 @@
   font-weight: 650;
 }
 
-/* Card des discussions : 10 % de hauteur en moins. La card prend 9/10 de
-   l'espace libre de la colonne, un espaceur vide prend le 1/10 restant. */
-.lkdv-messages .phone .top > #card.cs {
-  flex: 9 1 0 !important;
-}
-.lkdv-messages .phone .top::after {
-  content: '';
-  flex: 1 1 0;
-  min-height: 0;
-  pointer-events: none;
-}
-
 /* Un seul sélecteur de filtre, dans la card : aucune capsule flottante
    supplémentaire ne doit s'afficher au-dessus de la barre du bas. */
 .lkdv-messages .phone > .ig-tabs-float,
@@ -1762,4 +1755,42 @@
 .lkdv-messages .phone > .mfilter-float,
 .lkdv-messages .mapzone .lkdv-lens-float:not(.mfilters) {
   display: none !important;
+}
+
+/* Poignée de réglage de la hauteur des deux cards : chevron en haut de la conversation. */
+.lkdv-messages .msplit {
+  position: absolute;
+  left: 50%;
+  top: var(--msg-split, 302px);
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 28px;
+  margin-top: -2px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: var(--lg-bar-bg);
+  -webkit-backdrop-filter: var(--lg-bar-blur);
+  backdrop-filter: var(--lg-bar-blur);
+  box-shadow: var(--lg-bar-shadow);
+  color: var(--lg-ink);
+  cursor: ns-resize;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.lkdv-messages .msplit:focus-visible {
+  outline: 2px solid #5b7f55;
+  outline-offset: 2px;
+}
+.lkdv-messages .phone[data-splitting='true'] .msplit {
+  transform: translateX(-50%) scale(1.06);
+}
+
+/* Filtre compact : il ne recouvre que le coin bas-droit de la card. */
+.lkdv-messages .mfilters button {
+  padding: 0 8px !important;
+  font-size: 10.5px !important;
 }

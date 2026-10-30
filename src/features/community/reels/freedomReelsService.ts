@@ -561,10 +561,37 @@ export function warmFreedomReels(user?: any): Promise<FreedomReelItem[]> {
   reelsInflight = fetchFreedomReels(user)
     .then((data) => {
       reelsCache = data;
+      // Les deux premières vidéos commencent à se mettre en mémoire tout de
+      // suite : à l'ouverture, elles démarrent sans attente.
+      data.slice(0, 2).forEach((reel) => bufferVideo(reel.videoUrl));
       return data;
     })
     .finally(() => {
       reelsInflight = null;
     });
   return reelsInflight;
+}
+
+const bufferedVideos = new Map<string, HTMLVideoElement>();
+
+/** Met une vidéo en mémoire tampon dans un élément caché (rien n'est lu ni affiché). */
+function bufferVideo(url?: string | null) {
+  if (typeof document === 'undefined' || !url || bufferedVideos.has(url)) return;
+  const video = document.createElement('video');
+  video.preload = 'auto';
+  video.muted = true;
+  video.playsInline = true;
+  video.src = url;
+  video.load();
+  bufferedVideos.set(url, video);
+  // On garde au plus 4 éléments pour ne pas saturer la mémoire.
+  if (bufferedVideos.size > 4) {
+    const oldest = bufferedVideos.keys().next().value as string;
+    const stale = bufferedVideos.get(oldest);
+    if (stale) {
+      stale.removeAttribute('src');
+      stale.load();
+    }
+    bufferedVideos.delete(oldest);
+  }
 }

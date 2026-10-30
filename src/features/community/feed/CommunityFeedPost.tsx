@@ -53,6 +53,10 @@ export function CommunityFeedPost({
   );
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleted, setDeleted] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
+  // Proportions de la photo : la carte épouse sa hauteur, plafonnée à la
+  // hauteur actuelle (406 × 541) et jamais plus plate que 1,91 : 1.
+  const [mediaRatio, setMediaRatio] = useState<number | null>(null);
   const headerPost = {
     ...post,
     title: null,
@@ -75,6 +79,19 @@ export function CommunityFeedPost({
   const video = isVideoMedia(media);
   const hasMedia = Boolean(media);
   const optionsId = `feed-options-${post.id}`;
+
+  /** Appui sur une action du menu : le bouton « pop », le menu se replie, puis l'action part. */
+  const tapItem = (event: React.MouseEvent<HTMLButtonElement>, action: () => void) => {
+    event.stopPropagation();
+    if (menuClosing) return;
+    event.currentTarget.classList.add('is-tapped');
+    setMenuClosing(true);
+    window.setTimeout(() => {
+      setMenuOpen(false);
+      setMenuClosing(false);
+      action();
+    }, 210);
+  };
 
   const openPanel = (next: 'comments' | 'share') => {
     panelScrollRef.current = window.scrollY;
@@ -206,7 +223,12 @@ export function CommunityFeedPost({
       className={hasMedia ? 'lkdv-feed-post' : 'lkdv-feed-post lkdv-feed-post--text'}
       aria-label={`Publication de ${authorName(post)}`}
       data-keyboard="false"
-      style={{ touchAction: 'pan-y' }}
+      style={{
+        touchAction: 'pan-y',
+        ...(mediaRatio && !panel
+          ? { aspectRatio: String(Math.min(1.91, Math.max(406 / 541, mediaRatio))) }
+          : null),
+      }}
       /* Trois volets côte à côte : partage ← photo → messages. Depuis la photo,
          glisser vers la gauche ouvre les messages, vers la droite le partage ;
          le panneau se referme par le geste inverse (géré par PostGlassPanel).
@@ -244,6 +266,7 @@ export function CommunityFeedPost({
           isVideo={video}
           poster={post.media_urls?.find((url) => !isVideoMedia(url)) ?? undefined}
           alt={post.image_alt ?? null}
+          onRatio={setMediaRatio}
           priority={mediaPriority}
           likesCount={counts.likes}
           commentsCount={counts.comments}
@@ -302,15 +325,12 @@ export function CommunityFeedPost({
       )}
 
       {menuOpen ? (
-        <div id={optionsId} className="lkdv-feed-options-rail" role="menu" aria-label="Options de la publication">
+        <div id={optionsId} className={`lkdv-feed-options-rail${menuClosing ? ' is-closing' : ''}`} role="menu" aria-label="Options de la publication">
           <button
             type="button"
             role="menuitem"
             aria-label={saved ? 'Retirer des enregistrements' : 'Enregistrer'}
-            onClick={() => {
-              setMenuOpen(false);
-              void toggleSave();
-            }}
+            onClick={(event) => tapItem(event, () => void toggleSave())}
           >
             <Bookmark size={19} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" />
           </button>
@@ -318,15 +338,16 @@ export function CommunityFeedPost({
             type="button"
             role="menuitem"
             aria-label="Copier le lien"
-            onClick={() => {
-              setMenuOpen(false);
-              void copyLink().then((ok) =>
-                toast(
-                  ok ? 'Lien copié.' : 'Copie impossible.',
-                  ok ? 'success' : 'error',
-                ),
-              );
-            }}
+            onClick={(event) =>
+              tapItem(event, () => {
+                void copyLink().then((ok) =>
+                  toast(
+                    ok ? 'Lien copié.' : 'Copie impossible.',
+                    ok ? 'success' : 'error',
+                  ),
+                );
+              })
+            }
           >
             <Link2 size={19} aria-hidden="true" />
           </button>
@@ -334,10 +355,7 @@ export function CommunityFeedPost({
             type="button"
             role="menuitem"
             aria-label="Republier"
-            onClick={() => {
-              setMenuOpen(false);
-              void share();
-            }}
+            onClick={(event) => tapItem(event, () => void share())}
           >
             <Repeat2 size={19} aria-hidden="true" />
           </button>
@@ -345,10 +363,7 @@ export function CommunityFeedPost({
             type="button"
             role="menuitem"
             aria-label="Signaler"
-            onClick={() => {
-              setMenuOpen(false);
-              setReportOpen(true);
-            }}
+            onClick={(event) => tapItem(event, () => setReportOpen(true))}
           >
             <Flag size={19} aria-hidden="true" />
           </button>
@@ -358,17 +373,18 @@ export function CommunityFeedPost({
               role="menuitem"
               aria-label="Supprimer"
               className="is-danger"
-              onClick={() => {
-                setMenuOpen(false);
-                if (!window.confirm('Supprimer cette publication ?')) return;
-                void deletePost(post.id).then(
-                  () => {
-                    setDeleted(true);
-                    toast('Publication supprimée.', 'success');
-                  },
-                  () => toast('La suppression a échoué.', 'error'),
-                );
-              }}
+              onClick={(event) =>
+                tapItem(event, () => {
+                  if (!window.confirm('Supprimer cette publication ?')) return;
+                  void deletePost(post.id).then(
+                    () => {
+                      setDeleted(true);
+                      toast('Publication supprimée.', 'success');
+                    },
+                    () => toast('La suppression a échoué.', 'error'),
+                  );
+                })
+              }
             >
               <Trash2 size={19} aria-hidden="true" />
             </button>

@@ -28,6 +28,22 @@ export function CommunityFeed({
 }: CommunityFeedProps) {
   const { posts, loading, loadingMore, hasMore, error, loadMore, refresh } = useCommunityFeed(userId);
   const deepLinkDone = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Défilement infini : la page suivante se charge avant d'atteindre le bas
+  // du fil, sans bouton.
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) void loadMore();
+      },
+      { rootMargin: '900px 0px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore, posts.length]);
 
   useEffect(() => {
     if (refreshKey > 0) void refresh();
@@ -104,10 +120,8 @@ export function CommunityFeed({
       </div>
 
       {hasMore ? (
-        <div className="lkdv-feed-more">
-          <button type="button" onClick={() => void loadMore()} disabled={loadingMore}>
-            {loadingMore ? 'Chargement…' : 'Charger plus'}
-          </button>
+        <div ref={sentinelRef} className="lkdv-feed-more" aria-hidden={!loadingMore} aria-live="polite">
+          {loadingMore ? <span className="lkdv-feed-more-spin" role="status" aria-label="Chargement" /> : null}
         </div>
       ) : (
         <p className="py-5 text-center text-[11px] text-[#56665D]">Tu as tout vu.</p>

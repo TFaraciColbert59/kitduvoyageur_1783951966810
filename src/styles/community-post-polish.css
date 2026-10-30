@@ -93,3 +93,76 @@ html body .freedom-drawer-card:not(#lkdv-post-polish) {
 html body .freedom-drawer-header:not(#lkdv-post-polish) {
   border-bottom: 0;
 }
+
+/* Défilement infini : zone sentinelle discrète avec un petit indicateur. */
+html body .lkdv-feed-more:not(#lkdv-post-polish) {
+  display: grid;
+  place-items: center;
+  min-height: 56px;
+  padding: 8px 0 24px;
+}
+.lkdv-feed-more-spin {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2.5px solid rgba(23, 64, 44, 0.16);
+  border-top-color: #17402c;
+  animation: lkdv-route-spin 0.8s linear infinite;
+}
+
+/* Posts sans photo : surface claire et texte plus grand, lisibles sur n'importe quel fond. */
+html body .lkdv-feed-post.lkdv-feed-post--text:not(#lkdv-post-polish) {
+  min-height: 220px;
+  max-height: 541px;
+  padding: 76px 22px 30px;
+  background: linear-gradient(180deg, rgba(250, 248, 245, 0.95), rgba(250, 248, 245, 0.9));
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  overflow-y: auto;
+}
+html body .lkdv-feed-post--text:not(#lkdv-post-polish)::after {
+  display: none;
+}
+html body .lkdv-feed-post--text .lkdv-feed-post-text:not(#lkdv-post-polish) {
+  max-height: none;
+  overflow: visible;
+  color: #172b24;
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+}
+
+/* ··· : capsule de même hauteur que la pastille auteur. */
+html body .lkdv-feed-post > .pmi-more-pill.lkdv-feed-post-options:not(#lkdv-post-polish) {
+  width: 72px;
+  border-radius: 999px;
+}
+
+/* Menu : repli animé (sortie en cascade inverse) et « pop » du bouton touché. */
+html body .lkdv-feed-options-rail.is-closing > button:not(#lkdv-post-polish) {
+  animation: lkdv-rail-item-out 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+html body .lkdv-feed-options-rail.is-closing > button:nth-child(5):not(#lkdv-post-polish) { animation-delay: 0ms; }
+html body .lkdv-feed-options-rail.is-closing > button:nth-child(4):not(#lkdv-post-polish) { animation-delay: 20ms; }
+html body .lkdv-feed-options-rail.is-closing > button:nth-child(3):not(#lkdv-post-polish) { animation-delay: 40ms; }
+html body .lkdv-feed-options-rail.is-closing > button:nth-child(2):not(#lkdv-post-polish) { animation-delay: 60ms; }
+html body .lkdv-feed-options-rail.is-closing > button:nth-child(1):not(#lkdv-post-polish) { animation-delay: 80ms; }
+html body .lkdv-feed-options-rail > button.is-tapped:not(#lkdv-post-polish) {
+  animation: lkdv-rail-item-pop 0.2s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+@keyframes lkdv-rail-item-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-8px) scale(0.82); }
+}
+@keyframes lkdv-rail-item-pop {
+  0% { opacity: 1; transform: scale(1); }
+  45% { opacity: 1; transform: scale(1.22); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html body .lkdv-feed-options-rail.is-closing > button:not(#lkdv-post-polish),
+  html body .lkdv-feed-options-rail > button.is-tapped:not(#lkdv-post-polish) {
+    animation: none;
+    opacity: 0;
+  }
+}

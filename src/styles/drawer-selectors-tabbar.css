@@ -117,3 +117,33 @@ html body .lkdv-slot-shell > .lkdv-lens-tabs button[aria-selected='true']:not(#l
 html body .lkdv-slot-shell > .lkdv-lens-tabs button.active:not(#lkdv-tabbar-glass) {
   color: var(--lg-on) !important;
 }
+
+/* --- Capsule flottante du bas des tiroirs (Commandes, Notifications…) : même verre --- */
+
+html body .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs:not(#lkdv-tabbar-glass),
+html body .phone .ig-tabs-float .ig-tabs:not(#lkdv-tabbar-glass) {
+  background: var(--lg-bar-bg) !important;
+  -webkit-backdrop-filter: var(--lg-bar-blur) !important;
+  backdrop-filter: var(--lg-bar-blur) !important;
+  border: 0 !important;
+  box-shadow: var(--lg-bar-shadow) !important;
+}
+
+html body .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs .ig-th:not(#lkdv-tabbar-glass),
+html body .phone .ig-tabs-float .ig-tabs .ig-th:not(#lkdv-tabbar-glass) {
+  background: var(--lg-thumb-bg) !important;
+  border: 0 !important;
+  box-shadow: var(--lg-thumb-shadow) !important;
+}
+
+html body .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button:not(#lkdv-tabbar-glass),
+html body .phone .ig-tabs-float .ig-tabs button:not(#lkdv-tabbar-glass) {
+  color: var(--lg-ink) !important;
+}
+
+html body .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button.active:not(#lkdv-tabbar-glass),
+html body .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button[aria-selected='true']:not(#lkdv-tabbar-glass),
+html body .phone .ig-tabs-float .ig-tabs button.active:not(#lkdv-tabbar-glass),
+html body .phone .ig-tabs-float .ig-tabs button[aria-selected='true']:not(#lkdv-tabbar-glass) {
+  color: var(--lg-on) !important;
+}

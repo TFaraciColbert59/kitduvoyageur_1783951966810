@@ -2,8 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Check, Image as ImageIcon, Layers, Plus, Trash2, Type, X } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { createClient } from '@/lib/supabase/client';
+import { fetchJson } from './shared';
 import { ActionPill } from '@/components/ui/ActionPill';
 import { DrawerEmpty, DrawerError, DrawerShell, DrawerSkeleton, type DrawerTab } from '../shell/DrawerShell';
 import './HighlightEditDrawer.css';
@@ -68,7 +67,6 @@ function Thumb({ story }: { story: StoryThumb }) {
  * propriétaire.
  */
 export function HighlightEditDrawer({ hlId }: { hlId: string }) {
-  const { user } = useAuth();
   const [tab, setTab] = useState(0);
   const [state, setState] = useState<'loading' | 'ready' | 'error' | 'unsupported'>('loading');
   const [data, setData] = useState<HighlightState | null>(null);
@@ -81,49 +79,15 @@ export function HighlightEditDrawer({ hlId }: { hlId: string }) {
       setState('unsupported');
       return;
     }
-    if (!user?.id) return;
     try {
-      const supabase = createClient();
-      const [{ data: hl, error: hlError }, { data: items }, { data: mine }] = await Promise.all([
-        supabase.from('story_highlights').select('id,title,cover_story_id').eq('id', hlId).maybeSingle(),
-        supabase.from('story_highlight_items').select('story_id,position').eq('highlight_id', hlId).order('position', { ascending: true }),
-        supabase
-          .from('post_stories')
-          .select('id,image_url,storage_path,media_type,caption')
-          .eq('author_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(80),
-      ]);
-      if (hlError || !hl) {
-        setState('error');
-        return;
-      }
-      const inAlbumIds = ((items ?? []) as Array<{ story_id: string }>).map((item) => item.story_id);
-      const mineRows = (mine ?? []) as StoryRow[];
-      const known = new Map(mineRows.map((row) => [row.id, row]));
-      const missing = inAlbumIds.filter((id) => !known.has(id));
-      if (missing.length > 0) {
-        const { data: extra } = await supabase
-          .from('post_stories')
-          .select('id,image_url,storage_path,media_type,caption')
-          .in('id', missing);
-        for (const row of (extra ?? []) as StoryRow[]) known.set(row.id, row);
-      }
-      const stories = inAlbumIds.map((id) => known.get(id)).filter((row): row is StoryRow => Boolean(row)).map(toThumb);
-      const inAlbum = new Set(inAlbumIds);
-      setData({
-        id: hl.id as string,
-        title: (hl.title as string) || '',
-        coverStoryId: (hl.cover_story_id as string | null) ?? null,
-        stories,
-        available: mineRows.filter((row) => !inAlbum.has(row.id)).map(toThumb),
-      });
-      setTitle((hl.title as string) || '');
+      const next = await fetchJson<HighlightState>(`/api/compte/highlights/${hlId}`);
+      setData(next);
+      setTitle(next.title);
       setState('ready');
     } catch {
       setState('error');
     }
-  }, [hlId, user?.id]);
+  }, [hlId]);
 
   useEffect(() => {
     void load();
@@ -152,50 +116,37 @@ export function HighlightEditDrawer({ hlId }: { hlId: string }) {
     [changed, load],
   );
 
-  const supabase = createClient();
-
-  const saveTitle = () => {
-    const next = title.trim().slice(0, TITLE_MAX);
-    if (!next || !data) return;
-    void run(() => supabase.from('story_highlights').update({ title: next }).eq('id', data.id), 'Titre enregistré.');
-  };
-
-  const setCover = (storyId: string) => {
-    if (!data) return;
-    void run(
-      () => supabase.from('story_highlights').update({ cover_story_id: storyId }).eq('id', data.id),
-      'Couverture modifiée.',
-    );
-  };
-
-  const addStory = (storyId: string) => {
+  const patch = (body: Record<string, unknown>, okText: string) => {
     if (!data) return;
     void run(
       () =>
-        supabase
-          .from('story_highlight_items')
-          .insert({ highlight_id: data.id, story_id: storyId, position: data.stories.length }),
-      'Story ajoutée.',
+        fetchJson(`/api/compte/highlights/${data.id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(
+          () => ({ error: null }),
+          (error: Error) => ({ error: { message: error.message } }),
+        ),
+      okText,
     );
   };
 
-  const removeStory = (storyId: string) => {
-    if (!data) return;
-    void run(
-      () => supabase.from('story_highlight_items').delete().eq('highlight_id', data.id).eq('story_id', storyId),
-      'Story retirée.',
-    );
+  const saveTitle = () => {
+    const next = title.trim().slice(0, TITLE_MAX);
+    if (next) patch({ title: next }, 'Titre enregistré.');
   };
+  const setCover = (storyId: string) => patch({ coverStoryId: storyId }, 'Couverture modifiée.');
+  const addStory = (storyId: string) => patch({ addStoryId: storyId }, 'Story ajoutée.');
+  const removeStory = (storyId: string) => patch({ removeStoryId: storyId }, 'Story retirée.');
 
   const removeAlbum = async () => {
     if (!data || !window.confirm('Retirer cette sélection de tes stories à la une ?')) return;
     setBusy(true);
-    const { error } = await supabase.from('story_highlights').delete().eq('id', data.id);
-    setBusy(false);
-    if (error) {
+    try {
+      await fetchJson(`/api/compte/highlights/${data.id}`, { method: 'DELETE' });
+    } catch {
+      setBusy(false);
       setMessage({ text: 'La suppression a échoué. Réessaie.', tone: 'error' });
       return;
     }
+    setBusy(false);
     changed();
     (window as unknown as { __lkdvCompteAct?: (action: string) => void }).__lkdvCompteAct?.('closeSheet');
   };

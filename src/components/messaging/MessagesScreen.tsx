@@ -1098,6 +1098,27 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const { haptic } = useHapticFeedback();
   const router = useRouter();
   const phone = useRef<HTMLDivElement>(null);
+  // Hauteur de la card des discussions, réglable en tirant la poignée (mémorisée).
+  const SPLIT_KEY = 'lkdv:messages:split';
+  const SPLIT_DEFAULT = 302;
+  const [split, setSplit] = useState<number>(SPLIT_DEFAULT);
+  const [splitting, setSplitting] = useState(false);
+  const splitDrag = useRef<{ startY: number; startSplit: number } | null>(null);
+  useEffect(() => {
+    try {
+      const saved = Number(window.localStorage.getItem(SPLIT_KEY));
+      if (Number.isFinite(saved) && saved >= 160) setSplit(saved);
+    } catch {}
+  }, []);
+  const clampSplit = useCallback((value: number) => {
+    const total = phone.current?.getBoundingClientRect().height ?? 700;
+    return Math.round(Math.min(Math.max(value, 190), Math.max(260, total - 220)));
+  }, []);
+  const persistSplit = (value: number) => {
+    try {
+      window.localStorage.setItem(SPLIT_KEY, String(value));
+    } catch {}
+  };
   const searchRef = useRef<HTMLInputElement>(null);
   const { conversations, loading, error, refreshConversations } = useConversations(currentUserId ?? undefined);
 
@@ -1340,7 +1361,13 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
       <h1 className="sr-only">Messagerie</h1>
       <div className="stage">
         <div className="pwrap">
-          <div className={`phone hasnext${surfaceOpen ? ' sheet-open' : ''}`} id="phone" ref={phone}>
+          <div
+            className={`phone hasnext${surfaceOpen ? ' sheet-open' : ''}`}
+            id="phone"
+            ref={phone}
+            data-splitting={splitting ? 'true' : undefined}
+            style={{ '--msg-split': `${split}px` } as React.CSSProperties}
+          >
             <div
               className="bg"
               style={{ backgroundImage: "url('/assets/images/account-bg.webp')" }}
@@ -1360,7 +1387,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>Messages</span>
                 </button>
                 <div className="ig-top-r">
-                  <NotificationBell userId={currentUserId ?? undefined} className="lg ig-top-btn" />
+                  <NotificationBell userId={currentUserId ?? undefined} className="lg gbtn ig-top-btn" />
                 </div>
               </div>
 
@@ -1526,6 +1553,48 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 />
               </div>
             </section>
+
+            <button
+              type="button"
+              className="msplit"
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label="Régler la hauteur des discussions et de la conversation"
+              aria-valuenow={split}
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                splitDrag.current = { startY: event.clientY, startSplit: split };
+                setSplitting(true);
+              }}
+              onPointerMove={(event) => {
+                const drag = splitDrag.current;
+                if (!drag) return;
+                setSplit(clampSplit(drag.startSplit + (event.clientY - drag.startY)));
+              }}
+              onPointerUp={() => {
+                if (!splitDrag.current) return;
+                splitDrag.current = null;
+                setSplitting(false);
+                persistSplit(split);
+              }}
+              onPointerCancel={() => {
+                splitDrag.current = null;
+                setSplitting(false);
+              }}
+              onDoubleClick={() => {
+                setSplit(SPLIT_DEFAULT);
+                persistSplit(SPLIT_DEFAULT);
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+                event.preventDefault();
+                const next = clampSplit(split + (event.key === 'ArrowDown' ? 24 : -24));
+                setSplit(next);
+                persistSplit(next);
+              }}
+            >
+              <Icon name="chevrons-up-down" size={18} aria-hidden="true" />
+            </button>
 
             <section className="mapzone" aria-label="Conversation">
               {offline ? (
