@@ -71,7 +71,66 @@ export interface ExplorerV2Props {
   initialCenter?: [number, number] | null;
 }
 
-export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Props) {
+interface ExplorerErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ExplorerErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  ExplorerErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error): ExplorerErrorBoundaryState {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[ExplorerV2 caught]', error, info);
+    try {
+      fetch('/api/dev/client-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          error: error?.message ?? String(error),
+          stack: error?.stack,
+          componentStack: info?.componentStack,
+          href: typeof window !== 'undefined' ? window.location.href : '',
+        }),
+      }).catch(() => {});
+    } catch {}
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="xp-root flex min-h-screen flex-col items-center justify-center p-6 text-center text-white bg-[color:var(--glass-bg-dark)]">
+          <h2 className="mb-2 text-xl font-bold">Explorer temporairement indisponible</h2>
+          <p className="mb-4 text-sm opacity-80">Un module de la carte a rencontré un imprévu.</p>
+          {this.state.error?.message && (
+            <div className="mb-4 max-w-md overflow-auto rounded bg-red-950/80 p-3 text-left font-mono text-xs text-red-200">
+              <p className="font-bold">{this.state.error.message}</p>
+              {this.state.error.stack && (
+                <pre className="mt-1 whitespace-pre-wrap text-[10px] opacity-80">{this.state.error.stack}</pre>
+              )}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="rounded-full bg-[var(--lkv-action,#2F6F78)] px-6 py-3 font-semibold text-white shadow-lg active:scale-95"
+          >
+            Réessayer
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const state = useExplorerStore();
   const systemTheme = useSystemTheme();
   const reducedMotion = useReducedMotion();
@@ -196,31 +255,36 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
   // `center` est [lng, lat] ; `usePlace` attend (lat, lng).
   const { data: place } = usePlace(state.center[1], state.center[0], state.zoom, state.level >= 1);
 
-  const activeGeo = state.geo || detectedCountry?.iso_a2 || place?.place?.countryCode || null;
+  const detectedIso = detectedCountry?.iso_a2 ? String(detectedCountry.iso_a2).toUpperCase() : null;
+  const placeIso = place?.place?.countryCode ? String(place.place.countryCode).toUpperCase() : null;
+  const storeIso = state.geo ? String(state.geo).toUpperCase() : null;
+  const activeGeo = storeIso || detectedIso || placeIso || null;
   const isoForRegions = activeGeo;
   const { data: regionsGeo } = useRegionsGeo(isoForRegions);
   const { data: country } = useCountryDetails(activeGeo);
 
   const countries = useMemo<CountryEntry[]>(() => {
-    if (!countriesGeo) return [];
+    if (!countriesGeo || !Array.isArray(countriesGeo.features)) return [];
     return countriesGeo.features
+      .filter((feature) => feature && feature.properties)
       .map((feature) => {
         const props = feature.properties as unknown as CountryFeatureProperties;
         return {
-          iso: props.iso_a2,
-          name: props.name,
+          iso: props.iso_a2 ? String(props.iso_a2).toUpperCase() : '',
+          name: props.name ?? '',
           continent: props.continent ?? null,
           center: geometryCenter(feature.geometry),
         };
       })
-      .filter((entry) => !!entry.iso);
+      .filter((entry) => Boolean(entry.iso && entry.name));
   }, [countriesGeo]);
 
   const regionGroups = useMemo<RegionGroup[]>(() => {
-    if (!regionsGeo) return [];
+    if (!regionsGeo || !Array.isArray(regionsGeo.features)) return [];
     const groups = new Map<string, RegionGroup>();
     for (const feature of regionsGeo.features) {
-      const props = feature.properties as unknown as { group?: string; name?: string };
+      if (!feature) continue;
+      const props = (feature.properties ?? {}) as unknown as { group?: string; name?: string };
       const group = props.group ?? props.name ?? '—';
       const center = geometryCenter(feature.geometry);
       const current = groups.get(group);
@@ -401,10 +465,14 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
 
   // ── repères de carte ───────────────────────────────────────────────────
   const pins = useMemo<MapPin[]>(() => {
+    const center = Array.isArray(state.center) && Number.isFinite(state.center[0]) && Number.isFinite(state.center[1])
+      ? state.center
+      : ([2.35, 48.85] as [number, number]);
+
     if (state.level === 0) {
       return countries
-        .filter((entry) => entry.center)
-        .map((entry) => ({ entry, km: distanceKm(state.center, entry.center as [number, number]) }))
+        .filter((entry) => entry.center && Number.isFinite(entry.center[0]) && Number.isFinite(entry.center[1]))
+        .map((entry) => ({ entry, km: distanceKm(center, entry.center as [number, number]) }))
         .sort((a, b) => a.km - b.km)
         .slice(0, 10)
         .map(({ entry, km }) => ({
@@ -422,9 +490,9 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
     // nommés (bornés à 60) et c'est `selectVisiblePins` + `clusterPins` qui
     // décident : priorité, puis distance, 6 max par cellule de 100 px, le reste
     // en pastille chiffrée. Filtrer ici par type empêcherait toute agrégation.
-    return pois
-      .filter((poi) => poi.name && poi.name.trim().length > 1)
-      .map((poi) => ({ poi, km: distanceKm(state.center, [poi.lon, poi.lat]) }))
+    return (pois ?? [])
+      .filter((poi) => poi && poi.name && poi.name.trim().length > 1 && Number.isFinite(poi.lat) && Number.isFinite(poi.lon))
+      .map((poi) => ({ poi, km: distanceKm(center, [poi.lon, poi.lat]) }))
       .sort((a, b) => a.km - b.km)
       .slice(0, 60)
       .map(({ poi, km }) => ({
@@ -437,7 +505,7 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         distanceKm: km,
         tone: (poi.kind === 'water' ? 'water' : poi.kind === 'bivouac' ? 'warn' : 'ink') as MapPin['tone'],
       }));
-  }, [countries, pois, state.level]);
+  }, [countries, pois, state.level, state.center]);
 
   // ── actions ────────────────────────────────────────────────────────────
   const onCountryClick = useCallback(
@@ -596,7 +664,7 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
       data-countries={countries.length}
       data-reduced-motion={reducedMotion ? 'true' : 'false'}
       data-units={unitsForCountry}
-      data-center={`${state.center[1].toFixed(5)},${state.center[0].toFixed(5)}`}
+      data-center={`${(state.center?.[1] ?? 48.85).toFixed(5)},${(state.center?.[0] ?? 2.35).toFixed(5)}`}
       data-pins={pins.length}
       data-pois={pois.length}
       data-qc={countriesQuery.status}
@@ -782,6 +850,14 @@ export default function ExplorerV2({ initialScene, initialCenter }: ExplorerV2Pr
         <XpIcon name="info" size={1} />
       </div>
     </div>
+  );
+}
+
+export default function ExplorerV2(props: ExplorerV2Props) {
+  return (
+    <ExplorerErrorBoundary>
+      <ExplorerV2Inner {...props} />
+    </ExplorerErrorBoundary>
   );
 }
 

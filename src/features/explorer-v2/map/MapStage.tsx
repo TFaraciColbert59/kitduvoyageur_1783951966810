@@ -120,20 +120,24 @@ export default function MapStage({
     setReady(false);
     setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
-    const map = new MapLibreMap({
-      container: containerRef.current,
-      style: OPENFREEMAP_STYLE_URL,
-      center,
-      zoom,
-      // Notre pied de page porte les attributions (P10-09) : le contrôle natif
-      // ajoutait des liens de 14 px, sous la cible tactile de 44 px.
-      attributionControl: false,
-      dragRotate: true,
-      pitchWithRotate: true,
-      fadeDuration: 120,
-      maxPitch: 70,
-    });
-    mapRef.current = map;
+    let map: MapLibreMap;
+    try {
+      map = new MapLibreMap({
+        container: containerRef.current,
+        style: OPENFREEMAP_STYLE_URL,
+        center: Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1]) ? center : [2.35, 48.85],
+        zoom: Number.isFinite(zoom) ? zoom : 1.6,
+        attributionControl: false,
+        dragRotate: true,
+        pitchWithRotate: true,
+        fadeDuration: 120,
+        maxPitch: 70,
+      });
+      mapRef.current = map;
+    } catch (caught) {
+      console.error('[MapStage] MapLibre creation caught:', caught);
+      return;
+    }
     if (
       process.env.NODE_ENV !== 'production' ||
       process.env.NEXT_PUBLIC_EXPLORER_SCENES === '1' ||
@@ -426,7 +430,9 @@ export default function MapStage({
       /* propriétés absentes : aucune conséquence */
     }
     const canvas = map.getCanvas();
-    canvas.style.filter = dark ? 'brightness(0.72) saturate(0.85) contrast(1.02)' : '';
+    if (canvas?.style) {
+      canvas.style.filter = dark ? 'brightness(0.72) saturate(0.85) contrast(1.02)' : '';
+    }
   }, [theme, ready]);
 
   // ── projection, fond et relief selon le niveau et le style ─────────────
@@ -584,14 +590,24 @@ export default function MapStage({
     const project = () => {
       frame = 0;
       const next: Array<{ pin: MapPin; x: number; y: number }> = [];
+      const container = map.getContainer();
+      if (!container) return;
+      const cWidth = container.clientWidth || 390;
+      const cHeight = container.clientHeight || 844;
+
       for (const pin of pins) {
-        const point = map.project([pin.lon, pin.lat]);
-        if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
-        if (point.x < -80 || point.x > map.getContainer().clientWidth + 80) continue;
-        if (point.y < -60 || point.y > map.getContainer().clientHeight + 60) continue;
-        next.push({ pin, x: point.x, y: point.y });
+        if (!pin || !Number.isFinite(pin.lon) || !Number.isFinite(pin.lat)) continue;
+        try {
+          const point = map.project([pin.lon, pin.lat]);
+          if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+          if (point.x < -80 || point.x > cWidth + 80) continue;
+          if (point.y < -60 || point.y > cHeight + 60) continue;
+          next.push({ pin, x: point.x, y: point.y });
+        } catch {
+          continue;
+        }
       }
-      const sheetTop = map.getContainer().clientHeight - sheetHeightPx;
+      const sheetTop = cHeight - sheetHeightPx;
       // Bande haute occupée par la capsule et les boutons ronds : aucun repère
       // ni pastille ne doit s'y trouver (04_CARTE §1).
       const chrome = document.querySelector('.xp-chrome') as HTMLElement | null;
@@ -628,8 +644,8 @@ export default function MapStage({
           level,
           sheetTop,
           viewport: {
-            width: map.getContainer().clientWidth,
-            height: map.getContainer().clientHeight,
+            width: cWidth,
+            height: cHeight,
           },
         },
       ).map((entry) => entry.item);
@@ -644,13 +660,17 @@ export default function MapStage({
           );
         return same ? current : kept;
       });
-      if (me) {
-        const point = map.project([me.lng, me.lat]);
-        setMeScreen((current) =>
-          current && Math.abs(current.x - point.x) < 0.5 && Math.abs(current.y - point.y) < 0.5
-            ? current
-            : { x: point.x, y: point.y },
-        );
+      if (me && Number.isFinite(me.lng) && Number.isFinite(me.lat)) {
+        try {
+          const point = map.project([me.lng, me.lat]);
+          if (point && Number.isFinite(point.x) && Number.isFinite(point.y)) {
+            setMeScreen((current) =>
+              current && Math.abs(current.x - point.x) < 0.5 && Math.abs(current.y - point.y) < 0.5
+                ? current
+                : { x: point.x, y: point.y },
+            );
+          }
+        } catch {}
       }
     };
 

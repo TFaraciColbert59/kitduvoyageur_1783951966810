@@ -184,22 +184,24 @@ export function useCountriesGeo() {
 }
 
 export function useRegionsGeo(iso: string | null) {
+  const cleanIso = iso && typeof iso === 'string' && iso.trim().length === 2 ? iso.trim().toUpperCase() : null;
   return useQuery({
-    queryKey: ['xp', 'regions-geo', iso],
-    enabled: !!iso,
-    queryFn: () => fetchJson<GeoCollection>(`/data/explorer-v2/regions/${iso}.geojson`),
+    queryKey: ['xp', 'regions-geo', cleanIso],
+    enabled: !!cleanIso,
+    queryFn: () => fetchJson<GeoCollection>(`/data/explorer-v2/regions/${cleanIso}.geojson`),
     staleTime: 24 * 60 * 60 * 1000,
     retry: 1,
   });
 }
 
 export function useCountryDetails(iso: string | null) {
+  const cleanIso = iso && typeof iso === 'string' && iso.trim().length === 2 ? iso.trim().toUpperCase() : null;
   return useQuery({
-    queryKey: ['xp', 'country', iso],
-    enabled: !!iso,
-    queryFn: () => fetchJson<{ countries: CountryDetails[] }>(`/api/explorer/v2/countries?iso=${iso}`),
+    queryKey: ['xp', 'country', cleanIso],
+    enabled: !!cleanIso,
+    queryFn: () => fetchJson<{ countries: CountryDetails[] }>(`/api/explorer/v2/countries?iso=${cleanIso}`),
     staleTime: 60 * 60 * 1000,
-    select: (data) => data.countries[0] ?? null,
+    select: (data) => data.countries?.[0] ?? null,
   });
 }
 

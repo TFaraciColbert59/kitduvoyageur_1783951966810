@@ -100,7 +100,10 @@ export const SPORT_META: Record<Sport, { label: string; icon: string }> = {
   bivouac: { label: 'Bivouac', icon: 'tent' },
 };
 
-export function distanceKm(a: [number, number], b: [number, number]): number {
+export function distanceKm(a?: [number, number] | null, b?: [number, number] | null): number {
+  if (!a || !b || !Number.isFinite(a[0]) || !Number.isFinite(a[1]) || !Number.isFinite(b[0]) || !Number.isFinite(b[1])) {
+    return 0;
+  }
   const R = 6371;
   const dLat = ((b[1] - a[1]) * Math.PI) / 180;
   const dLng = ((b[0] - a[0]) * Math.PI) / 180;
@@ -157,10 +160,14 @@ export function relativeDay(iso: string | null): string {
 
 /** Point dans un anneau (ray casting) — sélection du département sous le doigt. */
 export function pointInRing(point: [number, number], ring: number[][]): boolean {
+  if (!point || !Array.isArray(ring) || ring.length < 3) return false;
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
-    const [xi, yi] = ring[i];
-    const [xj, yj] = ring[j];
+    const ptI = ring[i];
+    const ptJ = ring[j];
+    if (!ptI || !ptJ || typeof ptI[0] !== 'number' || typeof ptI[1] !== 'number') continue;
+    const [xi, yi] = ptI;
+    const [xj, yj] = ptJ;
     const intersect =
       yi > point[1] !== yj > point[1] &&
       point[0] < ((xj - xi) * (point[1] - yi)) / (yj - yi || Number.EPSILON) + xi;
@@ -173,8 +180,9 @@ export function findRegionAt(
   geo: GeoCollection | undefined,
   point: [number, number],
 ): RegionFeatureProperties | null {
-  if (!geo) return null;
+  if (!geo || !Array.isArray(geo.features) || !point || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return null;
   for (const feature of geo.features) {
+    if (!feature) continue;
     const geometry = feature.geometry;
     const props = feature.properties as unknown as RegionFeatureProperties;
     if (!geometry) continue;
@@ -185,7 +193,7 @@ export function findRegionAt(
           ? (geometry.coordinates as number[][][][])
           : [];
     for (const polygon of polygons) {
-      if (polygon[0] && pointInRing(point, polygon[0])) return props;
+      if (polygon && polygon[0] && pointInRing(point, polygon[0])) return props;
     }
   }
   return null;
@@ -195,8 +203,9 @@ export function findCountryAt(
   geo: GeoCollection | undefined,
   point: [number, number],
 ): CountryFeatureProperties | null {
-  if (!geo) return null;
+  if (!geo || !Array.isArray(geo.features) || !point || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return null;
   for (const feature of geo.features) {
+    if (!feature) continue;
     const geometry = feature.geometry;
     const props = feature.properties as unknown as CountryFeatureProperties;
     if (!geometry) continue;
@@ -207,7 +216,7 @@ export function findCountryAt(
           ? (geometry.coordinates as number[][][][])
           : [];
     for (const polygon of polygons) {
-      if (polygon[0] && pointInRing(point, polygon[0])) return props;
+      if (polygon && polygon[0] && pointInRing(point, polygon[0])) return props;
     }
   }
   return null;
