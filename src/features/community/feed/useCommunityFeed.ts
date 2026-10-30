@@ -22,6 +22,10 @@ export interface FeedPost {
   image_url?: string | null;
   image_alt?: string | null;
   media_urls?: string[] | null;
+  soundtrack_url?: string | null;
+  soundtrack_title?: string | null;
+  soundtrack_creator?: string | null;
+  soundtrack_source_url?: string | null;
   post_type?: string | null;
   created_at?: string;
   likes_count?: number | null;
