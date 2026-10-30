@@ -7,6 +7,8 @@ import { AccountActionPill } from '@/components/account/AccountActionPill';
 import { PostAuthorPill } from './PostAuthorPill';
 import { AccountMoreMenu } from '@/components/account/AccountMoreMenu';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
+import CommunityVideo from '@/components/communaute/CommunityVideo';
+import { CommunityPostSoundtrack } from './CommunityPostSoundtrack';
 import { useToast } from '@/contexts/ToastContext';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
@@ -149,19 +151,7 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
     >
       {hasMedia ? (
         video ? (
-          <>
-            <video
-              className="lkdv-feed-post-video"
-              src={media!}
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              onClick={handleMediaClick}
-              aria-label={`Vidéo de ${authorName(post)}`}
-            />
-            <span className="lkdv-feed-post-play" aria-hidden="true">▶</span>
-          </>
+          <CommunityVideo src={media!} className="lkdv-feed-post-video" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element -- média communautaire distant
           <img
@@ -176,6 +166,17 @@ export function CommunityFeedPost({ post, user, onRequireAuth, initialPanel = nu
       ) : (
         <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>
       )}
+
+      {post.soundtrack_url ? (
+        <div className="absolute bottom-3 left-3 z-20 max-w-[65%]" onPointerDown={(event) => event.stopPropagation()}>
+          <CommunityPostSoundtrack
+            url={post.soundtrack_url}
+            title={post.soundtrack_title}
+            creator={post.soundtrack_creator}
+            sourceUrl={post.soundtrack_source_url}
+          />
+        </div>
+      ) : null}
 
       <div ref={headerRef} className="lkdv-feed-post-top">
         <PostAuthorPill post={post} />
