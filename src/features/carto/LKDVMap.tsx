@@ -125,6 +125,9 @@ export default function LKDVMap({
         attributionControl: false,
       });
       mapRef.current = map;
+      // Accès de recette (captures, diagnostic du style). Instances multiples
+      // possibles : c'est la dernière montée qui gagne.
+      (window as unknown as { __lkdvMap?: MapLibreMap }).__lkdvMap = map;
 
       const markReady = () => {
         if (cancelled) return;
