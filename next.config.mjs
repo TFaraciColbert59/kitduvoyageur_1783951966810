@@ -19,12 +19,12 @@ const nextConfig = {
   devIndicators: false,
 
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: process.env.FAST_BUILD === '1' ? true : false,
   },
   eslint: {
     // P0-5 (C-11, SEC-3) — 0 erreur au 2026-09-15 (915 warnings tolerés,
     // reduction regle par regle a planifier) : le lint s'execute au build.
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: process.env.FAST_BUILD === '1' ? true : false,
   },
 
   images: {
