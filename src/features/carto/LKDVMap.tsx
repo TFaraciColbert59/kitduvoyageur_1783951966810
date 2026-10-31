@@ -96,9 +96,13 @@ export default function LKDVMap({
 
     (async () => {
       const maplibre = await import('maplibre-gl');
-      // TOS Maptoolkit §9 : 10 requêtes non cachées/s en non enregistré. MapLibre
-      // peut lancer des dizaines de tuiles d'un coup → 429. On plafonne.
+      // TOS Maptoolkit §9 : 10 requêtes non cachées/s en non enregistré.
+      // `setMaxParallelImageRequests` ne couvre que les images ; les tuiles
+      // vectorielles passent par le protocole throttlé (seau à jetons 8/s).
       maplibre.setMaxParallelImageRequests(6);
+      // NOTE : le protocole throttlé (`throttle.ts`) est prêt et testé mais PAS
+      // branché : sa première mise en œuvre vidait les sources vectorielles.
+      // À rebrancher après diagnostic (docs/carto/BLOCAGES.md · B1).
       let style: StyleSpecification;
       try {
         const official = await loadOfficialStyle();

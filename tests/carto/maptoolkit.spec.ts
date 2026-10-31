@@ -108,3 +108,31 @@ describe('carto · construction du style', () => {
     expect(built.layers.some((layer) => layer.id === 'lkdv-satellite-raster')).toBe(true);
   });
 });
+
+describe('carto · débit Maptoolkit (TOS §9)', () => {
+  it('réécrit les sources Maptoolkit vers le protocole throttlé, URLs officielles conservées', async () => {
+    const { throttleStyleSources, throttleUrl, unthrottleUrl, isMaptoolkitUrl } = await import('@/features/carto/throttle');
+    const style = {
+      version: 8,
+      sources: {
+        mtk: { type: 'vector', url: 'https://tiles.maptoolkit.org/mtk-contours.json' },
+        rocks: { type: 'raster', tiles: ['https://tiles.maptoolkit.org/v1/rocks/{z}/{x}/{y}.png'] },
+        other: { type: 'raster', tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'] },
+      },
+      layers: [],
+    };
+    const throttled = throttleStyleSources(style) as {
+      sources: Record<string, { url?: string; tiles?: string[] }>;
+    };
+    expect(throttled.sources.mtk.url).toBe('lkdv-mtk://tiles.maptoolkit.org/mtk-contours.json');
+    expect(throttled.sources.rocks.tiles?.[0]).toContain('lkdv-mtk://tiles.maptoolkit.org/');
+    // Une source non-Maptoolkit n'est pas touchée.
+    expect(throttled.sources.other.tiles?.[0]).toContain('https://s3.amazonaws.com/');
+    // Aller-retour exact.
+    expect(unthrottleUrl(throttleUrl('https://tiles.maptoolkit.org/x/1/2/3.mvt'))).toBe(
+      'https://tiles.maptoolkit.org/x/1/2/3.mvt',
+    );
+    expect(isMaptoolkitUrl('https://fonts.maptoolkit.org/Noto/0-255.pbf')).toBe(true);
+    expect(isMaptoolkitUrl('https://tiles.openfreemap.org/planet')).toBe(false);
+  });
+});
