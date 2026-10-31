@@ -31,11 +31,20 @@ les couches vectorielles (sentiers, eau, labels) restent vides dès qu'un 429 to
 3. **Repli de base** : OpenFreeMap (déjà dans le projet, sans limite) comme fond
    par défaut, Maptoolkit en couche optionnelle — s'éloigne de la référence imposée.
 
-## B2 — Clé ArcGIS absente *(bloquant satellite)*
+## B2 — Clé ArcGIS : **résolu** ✅ *(2026-10-31 19:50)*
 
-`NEXT_PUBLIC_ARCGIS_API_KEY` n'est pas dans `.env.local`. L'hybride satellite est
-codé et testé (`withSatelliteBase`), mais **aucune capture satellite n'est possible**
-sans clé. Quota ArcGIS : 2 M tuiles/mois, puis coupure.
+Clé fournie par Tony (`ARCGIS_ID` + `NEXT_PUBLIC_ARCGIS_API_KEY`, stockées dans
+`.env.local`, jamais commitées). Vérifications :
+
+| Test | Résultat |
+|---|---|
+| `World_Imagery/tile/12/1450/2124?token=<clé>` | **200**, JPEG 256×256, 8 086 octets |
+| même URL **sans** token | 200 mais **63 octets** (tuile vide) → clé indispensable |
+| `static-basemap-tiles` outdoor (vecteur) avec la clé | **401** → seul World_Imagery est autorisé |
+
+L'hybride est donc **prouvé** : 24 tuiles ArcGIS 200 + relief 3D Maptoolkit,
+capture `preuves/carto-hybride-satellite.png`, attribution
+« © Maptoolkit © Openstreetmap · Powered by Esri ».
 
 ## B3 — Éligibilité Community License *(à confirmer avant production)*
 

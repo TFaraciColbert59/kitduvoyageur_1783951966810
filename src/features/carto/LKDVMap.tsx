@@ -87,6 +87,8 @@ export default function LKDVMap({
   const mapRef = React.useRef<MapLibreMap | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [ready, setReady] = React.useState(false);
+  // Hybride effectif : dépend de la présence de la clé ArcGIS.
+  const hybrid = base === 'hybrid' && Boolean(process.env.NEXT_PUBLIC_ARCGIS_API_KEY);
 
   // Création de l'instance : une seule fois par montage.
   React.useEffect(() => {
@@ -168,6 +170,38 @@ export default function LKDVMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Bascule Maptoolkit ⇄ hybride satellite : on reconstruit le style (les
+  // sources Maptoolkit restent identiques, seule la couche raster s'ajoute).
+  React.useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const official = await loadOfficialStyle();
+        if (cancelled) return;
+        map.setStyle(
+          buildCartoStyle(official, {
+            base,
+            terrain3d,
+            arcgisKey: process.env.NEXT_PUBLIC_ARCGIS_API_KEY,
+          }),
+        );
+        map.once('styledata', () => {
+          if (terrain3d && map.getSource('rgb-tiles')) {
+            map.setTerrain({ source: 'rgb-tiles', exaggeration: 1.1 });
+          }
+        });
+      } catch (error) {
+        console.error('[carto] bascule de base', error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [base]);
+
   // Terrain dynamique.
   React.useEffect(() => {
     const map = mapRef.current;
@@ -188,7 +222,7 @@ export default function LKDVMap({
   }, [center[0], center[1], zoom]);
 
   return (
-    <div className={`lkdv-map ${className ?? ''}`.trim()}>
+    <div className={`lkdv-map ${className ?? ''}`.trim()} data-base={base} data-ready={ready ? '1' : '0'}>
       <div className="lkdv-map-canvas" ref={containerRef} data-testid="lkdv-map" />
       {children}
       {/* Attribution Maptoolkit obligatoire (TOS §8) : logo ≥ 24 px + liens. */}
@@ -200,6 +234,11 @@ export default function LKDVMap({
         <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer">
           © Openstreetmap
         </a>
+        {hybrid ? (
+          <a href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">
+            Powered by Esri
+          </a>
+        ) : null}
       </div>
       {error ? <p className="lkdv-map-error">{error}</p> : null}
     </div>
