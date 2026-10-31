@@ -29,6 +29,8 @@ export interface CommunityFeedPostProps {
   /** Rendu dans un message : le panneau ne verrouille pas la page et ne la
    *  rescrolle pas (le fil de discussion gère son propre défilement). */
   embedded?: boolean;
+  /** Appelé après suppression réussie du post (ferme le tiroir hôte). */
+  onDeleted?: () => void;
 }
 
 /**
@@ -44,6 +46,7 @@ export function CommunityFeedPost({
   initialCommentId = null,
   mediaPriority = false,
   embedded = false,
+  onDeleted,
 }: CommunityFeedPostProps) {
   const { toast } = useToast();
   const { liked, saved, toggleLike, toggleSave, share, copyLink, report } = usePostInteractions(
@@ -405,6 +408,7 @@ export function CommunityFeedPost({
                   void deletePost(post.id).then(
                     () => {
                       setDeleted(true);
+                      onDeleted?.();
                       toast('Publication supprimée.', 'success');
                     },
                     () => toast('La suppression a échoué.', 'error'),
