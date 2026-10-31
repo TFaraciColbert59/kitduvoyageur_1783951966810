@@ -102,3 +102,20 @@ et `N/A` sont motivés. Dernière mise à jour : 31/10/2026.
       supprimé ; `recharts` et les modules partagés ont été vérifiés.
 - [x] Rapport final honnête avec blocages (`docs/cleanup/RAPPORT_FINAL.md`),
       verdict Rust (`RUST_VERDICT.md`), bundle (`BUNDLE.md`).
+
+
+---
+
+## Intégration progressive (soir)
+
+- [x] PR #125 → #135 fusionnées dans `main`, chacune après `build` +
+      `lighthouse` + `bundle-analysis` + `build-ios` verts (ou docs only).
+- [x] `npm ci` réparé en production de branche : la CI installe désormais.
+- [x] 47 contrats Compte restaurés sans toucher aux assertions.
+- [x] 4 bugs réels corrigés (a11y drawer, lien clubs, `var()` sans repli,
+      jeton `--xp-paper` manquant).
+- [x] 7 fichiers morts supprimés via quarantaine réversible, build exit 0.
+- [x] Baseline mobile labo (WebKit + Chromium bridé) mesurée, limites écrites ;
+      mesure physique `BLOCKED` (WebDriverAgent absent).
+- [ ] CI `quality-gates` verte : reste la dette de contrats design et les zones
+      gelées — hors périmètre autorisé.

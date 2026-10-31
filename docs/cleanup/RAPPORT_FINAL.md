@@ -259,3 +259,71 @@ origin/main..<branche>`, 55 fichiers) : **aucun chemin ne contient `hub` ou
 `src/features/hub`, `src/app/hub`, `src/features/compas`, `src/app/compas` :
 **0 import**. `recharts`, utilisé par `src/features/hub/components/menu/BudgetDonut.tsx`,
 a été conservé pour cette raison.
+
+
+---
+
+# Troisième passe — intégration progressive et corrections (31/10/2026 soir)
+
+## PRs fusionnées dans `main` (dans l'ordre)
+
+| PR | Objet | Preuves de fusion |
+|---|---|---|
+| #125 | outillage audit/quarantaine + `npm ci` réparé | `build`, `lighthouse`, `bundle-analysis`, `build-ios` verts |
+| #126 | P0 géo : boucle OOM, vrai worker, clé de profil, GPS de test, fallback garanti | 44 tests, build vert |
+| #127 | baseline, audit SQL, verdict Rust, CI classée, rapport | docs + scripts uniquement |
+| #128 | portes CI gouvernance design + credential littéral | Gate 2.5 verte, 1096 tests verts au run |
+| #129 | GPX : points fantômes, extraction unifiée, optimisation rejetée | 9 tests, build vert |
+| #130 | 12 dépendances sans usage retirées | build vert, 778 → 771 dossiers |
+| #131 | contrats Compte restaurés après extraction CSS | 62 → 5 échecs sur le cluster, 47 tests restaurés |
+| #133 | 7 fichiers sans usage supprimés (quarantaine réversible) | build exit 0 |
+| #134 | banc mobile WebKit/Chromium bridé + baseline Explorer | mesures 3 passes, JSON |
+| #135 | 4 bugs réels (a11y drawer, lien clubs, `var()` sans repli, jeton manquant) | 24 tests ciblés |
+
+Aucune fusion n'a touché le HUB ni le Compas ; les 55 fichiers modifiés ne
+contiennent aucun chemin `hub`/`compas` (vérifié par `git diff --name-only`).
+
+## Tests préexistants : traitement réel
+
+- **Compte (13 fichiers v9→v21 + v8)** : cause identifiée = extraction des CSS
+  hors du TSX. Les contrats lisent désormais TSX + CSS avec un découpage par
+  version équivalent ; **assertions inchangées**. 62 → 5 échecs.
+- **a11y, clubs, tokens, CSS** : 4 bugs réels corrigés (mapzone non inertée,
+  lien `/clubs` cassé, `var(--lkdv-progress)` sans repli, `--xp-paper` manquant).
+- **Reste** : ~45–48 échecs selon la charge, sur les mêmes familles :
+  contrats de création Communauté (~17, cause identifiée : pager réduit à une
+  étape alors que le contrat en attend quatre — décision produit),
+  `community-feed-contract` (4), zones gelées HUB/Compas (~6),
+  contrats Compte résiduels (5), cartes/`preconnect` (2), divers design (~8),
+  tests d'intégration instables sous charge (`ProfileDrawerBootstrap`, audits).
+- **Aucun test désactivé, aucun skip ajouté, aucune assertion affaiblie.**
+
+## Code mort
+
+7 fichiers sans aucune référence entrante (graphe d'imports complet + grep
+repo) retirés via quarantaine réversible : 23 951 octets, manifeste sha256.
+Les ~80 autres candidats sans référence datent tous des refontes du 25–30/10 :
+conservés pour ne pas détruire du travail récent non branché.
+
+## Mesures mobiles (labo émulées, 3 passes)
+
+| Métrique | WebKit iPhone 16 Pro | Chromium CPU ×4 + Slow 4G |
+|---|---:|---:|
+| LCP | 396 ms (336–556) | **3 024 ms** (3 008–3 040) |
+| FCP | 319 ms | 972 ms |
+| Long tasks | 0 | 7–11 (637–938 ms) |
+| CLS | 0 | 0 |
+
+- **Aucune amélioration globale revendiquée** : pas de mesure avant équivalente.
+- Sous bridage mobile, l'objectif LCP ≤ 2 s **n'est pas tenu** (3,0 s) ;
+  7–11 long tasks signalent un risque d'INP.
+- **Appareil physique** : iPhone 16 Pro apparié détecté, mais instrumentation
+  WebDriverAgent/XCUITest absente → **BLOCKED** (causes dans `MOBILE_PERF.md`).
+
+## État final
+
+`main` contient les 10 PRs. La CI reste rouge sur `quality-gates` (dette de
+tests de contrats design + zones gelées) et sur `database-gates`/`perf-explorer`
+(dépendances d'environnement). Les portes qui bloquaient tout (`npm ci`,
+gate de gouvernance, credential littéral) sont vertes. **Chantier PARTIEL**,
+jamais annoncé terminé.

@@ -110,3 +110,29 @@ Un lot « contrats design » par écran, avec : capture de l'état actuel, mise 
 jour du test (ou de l'UI) justifiée, revue visuelle, un commit par écran.
 Sans ce lot, `quality-gates` restera rouge — ce n'est pas un problème de code
 applicatif mais de dette de tests.
+
+
+---
+
+# Mise à jour après intégration (même journée)
+
+Les PR #128 (gouvernance + credentials), #131 (contrats Compte), #133 (code
+mort), #135 (4 bugs réels) sont fusionnées. Mesure sur les 48 fichiers
+initialement rouges, sur `main` à jour :
+
+`606 tests exécutés · ~589–601 passent · 45–48 échouent selon la charge`
+
+Les échecs restants se répartissent ainsi :
+
+| Famille | Volume | Cause / décision |
+|---|---:|---|
+| Création Communauté (`create-*`) | ~17 | Le pager du formulaire est réduit à **une** étape alors que le contrat en attend quatre (Format/Médias/Détails/Publication). Décision produit requise. |
+| `community-feed-contract` | 4 | Contrat d'assemblage du fil (drawers/recherche) non satisfait par le rendu actuel. |
+| Contrats Compte résiduels | 5 | Divergences réelles de design (variables de verre v17/v18, lentille v21, `openSheet` v11, `tileArt` v13, endpoint v8) — arbitrage design. |
+| Zones gelées HUB/Compas | ~6 | **Interdit de toucher** par mandat. |
+| Cartes | 2 | `preconnect` du layout partagé, scan trop large. |
+| Divers design | ~8 | `navigation-glass-a11y`, `lot2-shell`, `m02`, `task-2a`, `stories-viewer`, `icon-resolution`, `camera`. |
+| Tests d'intégration instables | 0–7 | `ProfileDrawerBootstrap`, audits sous charge : varient d'une exécution à l'autre, sans lien avec ce chantier. |
+
+Aucun de ces tests n'a été désactivé ou affaibli ; les causes sont documentées
+au cas par cas.
