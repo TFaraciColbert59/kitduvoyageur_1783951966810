@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchPostDetail } from '@/features/community/posts/queries';
 import type { PostDetail } from '@/features/community/posts/types';
 import { ActionPill } from '@/components/ui/ActionPill';
-import { OverlaySheet } from './OverlaySheet';
+import { PostSheet } from './PostSheet';
 import CommunityFeedPost from '@/features/community/feed/CommunityFeedPost';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 
@@ -100,11 +100,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
   }, [post?.location]);
 
   return (
-    <OverlaySheet
-      title={post?.author?.name || 'Publication'}
-      onClose={onClose}
-      className="lkdv-post-drawer lkdv-post-glass-sheet"
-    >
+    <PostSheet title={post?.author?.name || 'Publication'} onClose={onClose}>
       {loading ? (
         <div className="lkdv-overlay-empty"><p>Chargement…</p></div>
       ) : error || !feedPost ? (
@@ -114,20 +110,16 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
           <ActionPill label="Réessayer" icon={<RotateCcw />} onClick={() => void load()} />
         </div>
       ) : (
-        /* La feuille est portée hors du fil : on rend les jetons de verre du fil
-           (pastille auteur, capsule) pour que le bloc soit identique à la Communauté. */
-        <div className="lkdv-account-glass">
-          <CommunityFeedPost
-            embedded
-            post={feedPost}
-            user={user}
-            initialPanel={initialPane === 'post' ? null : initialPane}
-            initialCommentId={initialCommentId}
-            onDeleted={() => { onDeleted?.(); onClose(); }}
-          />
-        </div>
+        <CommunityFeedPost
+          embedded
+          post={feedPost}
+          user={user}
+          initialPanel={initialPane === 'post' ? null : initialPane}
+          initialCommentId={initialCommentId}
+          onDeleted={() => { onDeleted?.(); onClose(); }}
+        />
       )}
-    </OverlaySheet>
+    </PostSheet>
   );
 }
 

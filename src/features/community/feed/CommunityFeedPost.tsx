@@ -15,6 +15,7 @@ import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomComment
 import { PostSharePanel } from './PostSharePanel';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
 import type { FeedPost } from './useCommunityFeed';
+import type { PostSource } from './postSource';
 
 export interface CommunityFeedPostProps {
   post: FeedPost;
@@ -30,6 +31,8 @@ export interface CommunityFeedPostProps {
   embedded?: boolean;
   /** Appelé après suppression réussie du post (ferme le tiroir hôte). */
   onDeleted?: () => void;
+  /** Autre origine de données (carnet, club…) : même bloc, autres données. */
+  source?: PostSource;
 }
 
 /**
@@ -46,13 +49,28 @@ export function CommunityFeedPost({
   mediaPriority = false,
   embedded = false,
   onDeleted,
+  source,
 }: CommunityFeedPostProps) {
   const { toast } = useToast();
-  const { liked, saved, toggleLike, toggleSave, share, copyLink, report } = usePostInteractions(
-    post,
-    user,
-    onRequireAuth,
-  );
+  const community = usePostInteractions(post, user, onRequireAuth);
+  const { share, report } = community;
+  const liked = source ? source.liked : community.liked;
+  const saved = source ? source.saved : community.saved;
+  const toggleLike = async () => {
+    if (source) {
+      await source.onToggleLike();
+      return 'ok' as const;
+    }
+    return community.toggleLike();
+  };
+  const toggleSave = async () => {
+    if (source) {
+      await source.onToggleSave?.();
+      return;
+    }
+    await community.toggleSave();
+  };
+  const copyLink = async () => (source ? (source.onCopyLink ? await source.onCopyLink() : false) : community.copyLink());
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
@@ -64,11 +82,14 @@ export function CommunityFeedPost({
     title: null,
     author: post.author ? { ...post.author, location: null, trust_score: null } : post.author,
   };
-  const [counts, setCounts] = useState({
+  const [localCounts, setCounts] = useState({
     likes: post.likes_count ?? 0,
     comments: post.comments_count ?? 0,
     shares: post.shares_count ?? 0,
   });
+  const counts = source
+    ? { likes: source.likes, comments: source.comments, shares: source.shares ?? 0 }
+    : localCounts;
   const [reportOpen, setReportOpen] = useState(false);
   const [panel, setPanel] = useState<'comments' | 'share' | null>(initialPanel);
   const panelScrollRef = useRef(0);
@@ -77,7 +98,10 @@ export function CommunityFeedPost({
   const headerRef = useRef<HTMLDivElement | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
-  const media = firstMedia(post);
+  const sourceMedia = source?.media ?? null;
+  const media = sourceMedia
+    ? (sourceMedia.urls[Math.max(0, Math.min(sourceMedia.index, sourceMedia.urls.length - 1))] ?? null)
+    : firstMedia(post);
   const video = isVideoMedia(media);
   const hasMedia = Boolean(media);
   const optionsId = `feed-options-${post.id}`;
@@ -96,6 +120,10 @@ export function CommunityFeedPost({
   };
 
   const handleLike = () => {
+    if (source) {
+      void source.onToggleLike();
+      return;
+    }
     setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? -1 : 1)) }));
     void toggleLike().then((result) => {
       if (result === 'error') {
@@ -248,7 +276,7 @@ export function CommunityFeedPost({
   if (deleted) return null;
 
 
-  return (
+  const articleEl = (
     <article
       ref={articleRef}
       id={`feed-post-${post.id}`}
@@ -299,6 +327,7 @@ export function CommunityFeedPost({
           poster={post.media_urls?.find((url) => !isVideoMedia(url)) ?? undefined}
           alt={post.image_alt ?? null}
           onRatio={setMediaRatio}
+          nav={sourceMedia && sourceMedia.urls.length > 1 ? { count: sourceMedia.urls.length, index: sourceMedia.index, onChange: sourceMedia.onIndexChange } : undefined}
           priority={mediaPriority}
           likesCount={counts.likes}
           commentsCount={counts.comments}
@@ -362,7 +391,7 @@ export function CommunityFeedPost({
 
       {menuOpen ? (
         <div id={optionsId} className={`lkdv-feed-options-rail${menuClosing ? ' is-closing' : ''}`} role="menu" aria-label="Options de la publication">
-          <button
+          {!source || source.onToggleSave ? <button
             type="button"
             role="menuitem"
             style={{ '--i': 0 } as React.CSSProperties}
@@ -370,8 +399,8 @@ export function CommunityFeedPost({
             onClick={(event) => tapItem(event, () => void toggleSave())}
           >
             <Bookmark size={19} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" />
-          </button>
-          <button
+          </button> : null}
+          {!source || source.onCopyLink ? <button
             type="button"
             role="menuitem"
             style={{ '--i': 1 } as React.CSSProperties}
@@ -388,26 +417,26 @@ export function CommunityFeedPost({
             }
           >
             <Link2 size={19} aria-hidden="true" />
-          </button>
-          <button
+          </button> : null}
+          {!source || source.onRepost ? <button
             type="button"
             role="menuitem"
             style={{ '--i': 2 } as React.CSSProperties}
             aria-label="Republier"
-            onClick={(event) => tapItem(event, () => void share())}
+            onClick={(event) => tapItem(event, () => void (source ? source.onRepost?.() : share()))}
           >
             <Repeat2 size={19} aria-hidden="true" />
-          </button>
-          <button
+          </button> : null}
+          {!source || source.onReport ? <button
             type="button"
             role="menuitem"
             style={{ '--i': 3 } as React.CSSProperties}
             aria-label="Signaler"
-            onClick={(event) => tapItem(event, () => setReportOpen(true))}
+            onClick={(event) => tapItem(event, () => (source ? source.onReport?.() : setReportOpen(true)))}
           >
             <Flag size={19} aria-hidden="true" />
-          </button>
-          {user?.id === post.author_id ? (
+          </button> : null}
+          {!source && user?.id === post.author_id ? (
             <button
               type="button"
               role="menuitem"
@@ -453,6 +482,12 @@ export function CommunityFeedPost({
       {panel === 'comments' ? (
         <PostGlassPanel side="comments" headerRef={headerRef} onClose={closePanel} onSwitch={setPanel}>
           <div className="lkdv-feed-panel-surface">
+            {source ? (
+              <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Commentaires">
+                <div className="lkdv-panel-grab" aria-hidden="true"><span /></div>
+                {source.renderComments({ onClose: closePanel })}
+              </div>
+            ) : (
 <div className="lkdv-post-panel lkdv-post-panel--freedom">
               <FreedomCommentsDrawer
                 variant="panel"
@@ -465,18 +500,26 @@ export function CommunityFeedPost({
                 onCommentsCountChange={(count) => setCounts((value) => ({ ...value, comments: count }))}
               />
             </div>
+            )}
           </div>
         </PostGlassPanel>
       ) : null}
       {panel === 'share' ? (
         <PostGlassPanel side="share" headerRef={headerRef} onClose={closePanel} onSwitch={setPanel}>
           <div className="lkdv-feed-panel-surface">
-            <PostSharePanel
-              post={post}
-              user={user}
-              onClose={closePanel}
-              onRequireAuth={onRequireAuth}
-            />
+            {source ? (
+              <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Partager">
+                <div className="lkdv-panel-grab" aria-hidden="true"><span /></div>
+                <div className="lkdv-post-panel-body">{source.renderShare({ onClose: closePanel })}</div>
+              </div>
+            ) : (
+              <PostSharePanel
+                post={post}
+                user={user}
+                onClose={closePanel}
+                onRequireAuth={onRequireAuth}
+              />
+            )}
           </div>
         </PostGlassPanel>
       ) : null}
@@ -487,6 +530,15 @@ export function CommunityFeedPost({
         </Link>
       )}
     </article>
+  );
+
+  return source?.footer ? (
+    <div className="lkdv-feed-post-stack">
+      {articleEl}
+      <div className="lkdv-feed-post-footer">{source.footer}</div>
+    </div>
+  ) : (
+    articleEl
   );
 }
 

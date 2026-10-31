@@ -1,9 +1,14 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CarnetPostSheet, momentDate } from '../CarnetPostSheet';
 import { detail } from './fixtures';
+
+vi.mock('@/contexts/ToastContext', () => ({ useToast: () => ({ toast: () => {} }) }));
+vi.mock('@/features/community/reels/FreedomCommentsDrawer', () => ({ FreedomCommentsDrawer: () => null }));
+vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({}) }));
+vi.mock('@/lib/native/ui', () => ({ shareNativeURL: async () => false }));
 
 afterEach(() => cleanup());
 
@@ -46,101 +51,74 @@ function base(overrides: Partial<React.ComponentProps<typeof CarnetPostSheet>> =
   };
 }
 
-describe('CarnetPostSheet — post du moment dans la forme du post du Compte', () => {
-  it('reprend la feuille du Compte : verre, poignée, en-tête auteur, trois panneaux', () => {
-    const { container } = render(<CarnetPostSheet {...base()} />);
-    const sheet = container.ownerDocument.querySelector('.lkdv-overlay-sheet');
-    expect(sheet?.className).toContain('lkdv-post-drawer');
-    expect(sheet?.className).toContain('lkdv-post-glass-sheet');
-    expect(container.ownerDocument.querySelector('.lkdv-post-grab')).toBeTruthy();
-    expect(container.ownerDocument.querySelector('.lkdv-post-author-line b')?.textContent).toBe('Camille Rochat');
-    /* Le pager des trois panneaux, comme le post du Compte. */
-    const pager = container.ownerDocument.querySelector('.lkdv-lens-pager');
-    expect(pager?.getAttribute('data-lens-index')).toBe('1');
-    expect(container.ownerDocument.querySelectorAll('.lkdv-lens-pane.lkdv-post-pane')).toHaveLength(3);
+describe('CarnetPostSheet — le bloc post de la Communauté, alimenté par le carnet', () => {
+  it('rend le bloc du fil dans la feuille du Compte avec le média du moment', () => {
+    render(<CarnetPostSheet {...base()} />);
+    const container = document.body;
+    expect(container.querySelector('.lkdv-post-glass-sheet')).toBeTruthy();
+    expect(container.querySelector('.lkdv-feed-post')).toBeTruthy();
+    expect(container.querySelector('.lkdv-post-media img')?.getAttribute('src')).toBe('https://cdn.test/1.jpg');
+    expect(screen.getByRole('group', { name: 'Actions de la publication' })).toBeTruthy();
+    expect(container.querySelector('.lkdv-post-author')?.textContent).toContain('Camille Rochat');
   });
 
-  it('peint le média du moment et la barre d’actions du Compte', () => {
-    const { container } = render(<CarnetPostSheet {...base()} />);
-    const doc = container.ownerDocument;
-    expect(doc.querySelector('.lkdv-post-media img')?.getAttribute('src')).toBe('https://cdn.test/1.jpg');
-    const glass = doc.querySelector('.lkdv-post-media-glass');
-    expect(glass?.querySelectorAll('button')).toHaveLength(3);
-    expect(screen.getByRole('button', { name: 'Aimer (22)' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Commenter (3)' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Partager' })).toBeTruthy();
-  });
-
-  it('affiche le contenu réel du moment : jour, heure, lieu, date et légende', () => {
-    const { container } = render(<CarnetPostSheet {...base()} />);
-    const doc = container.ownerDocument;
-    expect(doc.querySelector('.lkdv-post-likes')?.textContent).toBe('Jour 3 · 18:30 · Col de la Seigne · 27 avril 2026');
-    expect(doc.querySelector('.lkdv-post-caption .ckp-post-pseudo')?.textContent).toBe('Camille Rochat');
-    expect(doc.querySelector('.lkdv-post-caption')?.textContent).toBe('Camille Rochat Bivouac au col');
+  it('affiche le contenu réel du moment sous la carte : jour, heure, lieu, date et légende', () => {
+    render(<CarnetPostSheet {...base()} />);
+    const container = document.body;
+    const footer = container.querySelector('.lkdv-feed-post-footer')?.textContent ?? '';
+    expect(footer).toContain('Jour 3 · 18:30 · Col de la Seigne');
+    expect(footer).toContain('27 avril 2026');
+    expect(footer).toContain('Bivouac au col');
   });
 
   it('navigue d’un moment à l’autre par les flèches du média', () => {
     const onIndexChange = vi.fn();
-    const { container } = render(<CarnetPostSheet {...base({ onIndexChange })} />);
-    expect(container.ownerDocument.querySelector('.lkdv-post-media-count')?.textContent).toBe('1/2');
+    render(<CarnetPostSheet {...base({ onIndexChange })} />);
     fireEvent.click(screen.getByRole('button', { name: 'Moment suivant' }));
     expect(onIndexChange).toHaveBeenCalledWith(1);
     fireEvent.click(screen.getByRole('button', { name: 'Moment précédent' }));
     expect(onIndexChange).toHaveBeenLastCalledWith(1);
+    expect(screen.getByText('1/2')).toBeTruthy();
   });
 
-  it('aime le carnet depuis la barre d’actions, sans inventer d’état', () => {
+  it('aime le carnet depuis la capsule, sans inventer d’état', () => {
     const onLike = vi.fn();
     render(<CarnetPostSheet {...base({ onLike })} />);
-    const heart = screen.getByRole('button', { name: 'Aimer (22)' });
-    expect(heart.getAttribute('aria-pressed')).toBe('false');
-    fireEvent.click(heart);
-    expect(onLike).toHaveBeenCalledOnce();
-  });
-
-  it('ouvre le panneau de partage avec le lien réel du carnet', () => {
-    const { container } = render(<CarnetPostSheet {...base()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Partager' }));
-    const doc = container.ownerDocument;
-    expect(doc.querySelector('.lkdv-community-panel-slot')?.getAttribute('data-side')).toBe('share');
-    expect(screen.getByRole('button', { name: /Copier le lien/ })).toBeTruthy();
-    expect(doc.querySelector('.lkdv-lens-pager')?.getAttribute('data-lens-index')).toBe('0');
+    const like = screen.getByRole('button', { name: /^Aimer \(/ });
+    expect(like.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(like);
+    expect(onLike).toHaveBeenCalledTimes(1);
   });
 
   it('ouvre le panneau des commentaires du carnet', () => {
-    const { container } = render(<CarnetPostSheet {...base()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Commenter (3)' }));
-    const doc = container.ownerDocument;
-    expect(doc.querySelector('.lkdv-community-panel-slot')?.getAttribute('data-side')).toBe('comments');
+    render(<CarnetPostSheet {...base()} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Commenter \(/ }));
+    expect(screen.getByRole('dialog', { name: 'Commentaires' })).toBeTruthy();
     expect(screen.getByText('Superbe')).toBeTruthy();
-    expect(screen.getByRole('textbox', { name: 'Ajouter un commentaire' })).toBeTruthy();
-    expect(doc.querySelector('.lkdv-lens-pager')?.getAttribute('data-lens-index')).toBe('2');
-    /* Retour à la photo depuis le panneau. */
-    fireEvent.click(screen.getByRole('button', { name: 'Retour à la photo' }));
-    expect(doc.querySelector('.lkdv-lens-pager')?.getAttribute('data-lens-index')).toBe('1');
   });
 
-  it('ouvre la photo au clavier, sans voler le double-tap qui aime', () => {
-    const onOpenViewer = vi.fn();
-    render(<CarnetPostSheet {...base({ onOpenViewer })} />);
-    const media = screen.getByRole('button', { name: 'Agrandir la photo' });
-    fireEvent.keyDown(media, { key: 'Enter' });
-    expect(onOpenViewer).toHaveBeenCalledWith(0);
+  it('ouvre le panneau de partage avec le lien réel du carnet', () => {
+    render(<CarnetPostSheet {...base()} />);
+    const container = document.body;
+    fireEvent.click(screen.getByRole('button', { name: /^Partager \(/ }));
+    expect(screen.getByRole('dialog', { name: 'Partager' })).toBeTruthy();
+    expect(container.textContent).toContain('lkdv.test/carnets/c1');
   });
 
-  it('garde l’en-tête du Compte : ··· ouvre les actions réelles du carnet', () => {
-    const onSave = vi.fn();
-    const onReport = vi.fn();
-    const { container } = render(<CarnetPostSheet {...base({ onSave, onReport })} />);
-    const doc = container.ownerDocument;
-    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
-    expect(doc.querySelector('.lkdv-post-options-menu')?.getAttribute('role')).toBe('menu');
-    expect(doc.querySelectorAll('.lkdv-post-options-menu button')).toHaveLength(4);
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Enregistrer' }));
-    expect(onSave).toHaveBeenCalledOnce();
-    fireEvent.click(screen.getByRole('button', { name: 'Options' }));
+  it('··· ouvre les actions réelles du carnet (enregistrer, copier, signaler) et pas « Republier »', async () => {
+    vi.useFakeTimers();
+    const onSave = vi.fn(); const onReport = vi.fn();
+    render(<CarnetPostSheet {...base({ onSave, onReport })} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Options de la publication' }));
+    expect(screen.getByRole('menuitem', { name: 'Enregistrer' })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: 'Copier le lien' })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Republier' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Supprimer' })).toBeNull();
     fireEvent.click(screen.getByRole('menuitem', { name: 'Signaler' }));
-    expect(onReport).toHaveBeenCalledOnce();
+    await act(async () => { vi.advanceTimersByTime(400); });
+    expect(onReport).toHaveBeenCalledTimes(1);
+    expect(onSave).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 
   it('ferme par la poignée de la feuille', () => {

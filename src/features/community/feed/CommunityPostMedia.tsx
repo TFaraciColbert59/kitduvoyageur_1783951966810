@@ -2,7 +2,7 @@
 
 import { EngagementBar, LikeIcon } from '@/components/social-kit';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ImageOff } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ImageOff } from 'lucide-react';
 
 export interface CommunityPostMediaProps {
   media: string;
@@ -25,6 +25,8 @@ export interface CommunityPostMediaProps {
   shouldIgnoreClick?: () => boolean;
   /** Proportions réelles du média (largeur / hauteur), pour adapter la hauteur de la carte. */
   onRatio?: (ratio: number) => void;
+  /** Plusieurs médias (moments d'un carnet) : flèches et compteur. */
+  nav?: { count: number; index: number; onChange: (index: number) => void };
 }
 
 /**
@@ -48,6 +50,7 @@ export function CommunityPostMedia({
   inert = false,
   shouldIgnoreClick,
   onRatio,
+  nav,
 }: CommunityPostMediaProps) {
   const [failed, setFailed] = useState(false);
   const clickTimer = useRef<number | null>(null);
@@ -149,6 +152,17 @@ export function CommunityPostMedia({
           ) : null}
         </div>
 
+        {nav ? (
+          <>
+            <button type="button" className="lkdv-post-media-nav is-left" aria-label="Moment précédent" onClick={(event) => { event.stopPropagation(); nav.onChange((nav.index - 1 + nav.count) % nav.count); }}>
+              <ChevronLeft size={18} aria-hidden="true" />
+            </button>
+            <button type="button" className="lkdv-post-media-nav is-right" aria-label="Moment suivant" onClick={(event) => { event.stopPropagation(); nav.onChange((nav.index + 1) % nav.count); }}>
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
+            <span className="lkdv-post-media-count">{nav.index + 1}/{nav.count}</span>
+          </>
+        ) : null}
         <EngagementBar
           likesCount={likesCount}
           commentsCount={commentsCount}
