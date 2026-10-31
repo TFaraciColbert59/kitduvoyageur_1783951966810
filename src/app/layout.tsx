@@ -18,6 +18,7 @@ import '@/styles/community-social.css';
 import '@/styles/account-glass.css';
 import '@/styles/community-feed.css';
 import '@/styles/carnet-profile.css';
+import '@/styles/hub-tokens.css';
 import '@/features/posts/ui/post-system.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';

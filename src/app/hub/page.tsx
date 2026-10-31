@@ -8,6 +8,9 @@ import { CollectifMenu } from '@/features/hub/components/menu/CollectifMenu';
 import { PhaseLiveView, PhaseRecountView } from '@/features/hub/components/menu/PhaseViews';
 import { HubResumeBanner } from '@/features/hub/components/HubResumeBanner';
 
+import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
+import { HubCampShell } from '@/features/hub/components/HubCampShell';
+
 export const metadata = {
   title: 'Hub — Le Kit du Voyageur',
   description: 'Votre aventure active : matériel, voyage et groupe au même endroit.',
@@ -23,14 +26,28 @@ function daysUntil(dateStr: string | null | undefined, now: number): number | nu
 /**
  * Hub V4 — RACINE = MENU de cartes-onglets (remplace l'aperçu hero).
  * ?phase=live|recount → surfaces de phase (cockpit terrain / raconter).
+ * Gated by hub_camp_v1: renders HubCampShell when flag is true.
  */
 export default async function HubPage({
   searchParams,
 }: {
   searchParams: Promise<{ phase?: string }>;
 }) {
-  const { phase } = await searchParams;
+  const flags = await currentFeatureFlags();
   const data = await getHubAdventureData();
+
+  if (flags.hub_camp_v1) {
+    const sp = await searchParams;
+    return (
+      <HubCampShell
+        adventure={data.adventure}
+        trip={data.trip}
+        searchParams={sp}
+      />
+    );
+  }
+
+  const { phase } = await searchParams;
 
   if (data.input.kind === 'sortie' && data.trip) {
     const stats = await getHubTripStats(data.trip.id);

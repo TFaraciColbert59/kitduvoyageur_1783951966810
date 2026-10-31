@@ -1,6 +1,8 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui';
+import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
+import { HubCampShell } from '@/features/hub/components/HubCampShell';
 import { getHubAdventureData, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
 import {
   EMPTY_OVERVIEW,
@@ -58,6 +60,20 @@ export default async function HubSectionPage({
   searchParams: Promise<{ product_id?: string; id?: string; route?: string; onglet?: string; jour?: string }>;
 }) {
   const [{ section }, sp] = await Promise.all([params, searchParams]);
+  const flags = await currentFeatureFlags();
+
+  if (flags.hub_camp_v1) {
+    const data = await getHubAdventureData();
+    return (
+      <HubCampShell
+        initialDrawer={section}
+        adventure={data.adventure}
+        trip={data.trip}
+        searchParams={sp}
+      />
+    );
+  }
+
   const def = hubSectionRegistry.find((d) => d.segment === section);
   if (!def) notFound();
   // Le Compas est le seul préparateur : l'ancien cockpit « Préparation »
