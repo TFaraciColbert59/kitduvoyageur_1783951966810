@@ -53,12 +53,23 @@ const nextConfig = {
   ],
 
   allowedDevOrigins: [
+    '192.168.1.81:4028',
+    '192.168.1.81:4000',
+    '192.168.1.81:3000',
+    '192.168.1.81',
+    'localhost:4028',
+    '127.0.0.1:4028',
+    '192.168.1.123:4028',
     '192.168.1.123:4000',
     'localhost:4000',
     '127.0.0.1:4000',
     '192.168.1.123:3000',
     'localhost:3000',
     '127.0.0.1:3000',
+    'capacitor://localhost',
+    'lkdv://localhost',
+    '*.local',
+    '*.local:4028',
   ],
   experimental: {
     optimizePackageImports: [
