@@ -7,7 +7,9 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Droite, Actions dans Drawer, Carte 3D Fiabilisée & Post Téléportation', () => {
-  const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx');
+  // Les règles de style ont été extraites dans des feuilles dédiées : on lit la
+  // source TSX *et* les CSS, sans toucher aux assertions de contrat.
+  const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx') + '\n' + read('src/components/compte/compte-apple-hig.css') + '\n' + read('src/components/compte/compte-v8.css');
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
 
   it('1. Profile Header layout minimaliste : avatar sans nom/pseudo en dessous dans card(), stats recentrées', () => {

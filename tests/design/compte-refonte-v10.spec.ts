@@ -6,7 +6,9 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 Liquid Glass v10 — Refonte Profil, Sélecteurs & Drawers', () => {
-  const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx');
+  // Les règles de style ont été extraites dans des feuilles dédiées : on lit la
+  // source TSX *et* les CSS, sans toucher aux assertions de contrat.
+  const v8Source = read('src/components/compte/CompteLiquidGlassV8.tsx') + '\n' + read('src/components/compte/compte-apple-hig.css') + '\n' + read('src/components/compte/compte-v8.css');
   const runtimeSource = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
 
   it('1. La photo de profil est agrandie (>= 80px sur mobile)', () => {

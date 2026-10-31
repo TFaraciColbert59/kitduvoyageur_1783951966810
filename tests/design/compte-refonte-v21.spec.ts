@@ -12,7 +12,9 @@ const lastRuleBody = (css: string, pattern: RegExp) => {
 };
 
 describe('Compte iOS 27 v21 — surface de scroll et sélecteur exact', () => {
-  const source = read('src/components/compte/CompteLiquidGlassV8.tsx');
+  // Les règles de style ont été extraites dans des feuilles dédiées : on lit la
+  // source TSX *et* les CSS, sans toucher aux assertions de contrat.
+  const source = read('src/components/compte/CompteLiquidGlassV8.tsx') + '\n' + read('src/components/compte/compte-apple-hig.css') + '\n' + read('src/components/compte/compte-v8.css');
   const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
 
   it('1. La feuille est plein bord, le corps garde 12 px et le bas dégagé', () => {
