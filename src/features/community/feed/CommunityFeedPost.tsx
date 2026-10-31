@@ -10,7 +10,7 @@ import { deletePost } from '@/features/community/posts/mutations';
 import { Bookmark, Flag, Link2, MoreHorizontal, Repeat2, Trash2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { EngagementBar } from '@/components/social-kit';
-import { isHorizontalSwipe, isVerticalDismiss } from '@/hooks/gestures';
+import { isHorizontalSwipe, isVerticalDismiss, useTouchSwipe } from '@/hooks/gestures';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { CommunityPostMedia } from './CommunityPostMedia';
 import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomCommentsDrawer';
@@ -279,6 +279,30 @@ export function CommunityFeedPost({
     };
   }, [panel, embedded]);
 
+  /* Tactile : balayages gauche/droite (commentaires, partage) et vers le bas (fermer la feuille).
+     Événements touch natifs : sur iPhone, pointer* est annulé dès que le navigateur défile. */
+  useTouchSwipe(articleRef, {
+    enabled: !panel,
+    ignore: (target) => Boolean((target as HTMLElement | null)?.closest?.('input,textarea,select,.lkdv-post-panel-slot')),
+    onSwipeLeft: () => {
+      swiped.current = true;
+      setMenuOpen(false);
+      openPanel('comments');
+    },
+    onSwipeRight: () => {
+      swiped.current = true;
+      setMenuOpen(false);
+      openPanel('share');
+    },
+    onSwipeDown: onDismissGesture
+      ? () => {
+          swiped.current = true;
+          setMenuOpen(false);
+          onDismissGesture();
+        }
+      : undefined,
+  });
+
   if (deleted) return null;
 
 
@@ -301,6 +325,8 @@ export function CommunityFeedPost({
          le panneau se referme par le geste inverse (géré par PostGlassPanel).
          Un seul geste = une seule bascule : le doigt est oublié dès qu'elle a lieu. */
       onPointerDown={(event) => {
+        // Le tactile est géré par useTouchSwipe (événements touch, fiables sur iPhone) ; ici la souris.
+        if (event.pointerType === 'touch') return;
         const target = event.target as HTMLElement;
         if (panel || target.closest('input,textarea,select,.lkdv-post-panel-slot')) {
           swipeStart.current = null;
@@ -310,6 +336,7 @@ export function CommunityFeedPost({
         swiped.current = false;
       }}
       onPointerMove={(event) => {
+        if (event.pointerType === 'touch') return;
         const start = swipeStart.current;
         if (!start || panel) return;
         const dx = event.clientX - start.x;

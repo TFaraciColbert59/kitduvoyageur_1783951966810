@@ -10,6 +10,8 @@
  * appelle `useHapticFeedback` dans ses callbacks.
  */
 export { useSwipe } from './useSwipe';
+export type { TouchSwipeOptions, TouchSwipeHandlers } from './useTouchSwipe';
+export { useTouchSwipe } from './useTouchSwipe';
 export type { UseDoubleTapOptions } from './useDoubleTap';
 export { useDoubleTap } from './useDoubleTap';
 export type { UseLongPressOptions } from './useLongPress';
