@@ -1,6 +1,6 @@
 
 <--- Last few GCs --->
-= [11694:0x78c000000]     2548 ms: Incremental Mark-Compact (reduce) 253.7 (255.3) -> 253.7 (255.3) MB, pooled: 0.0 MB, 275.32 / 0.00 ms (+ 0.0 ms in 1 steps since start of marking, biggest step 0.0 ms, walltime since start of marking 278 ms) (average mu = [11694:0x78c000000]     2807 ms: Incremental Mark-Compact (reduce) 254.4 (255.8) -> 254.4 (255.8) MB, pooled: 0.0 MB, 219.49 / 0.00 ms (+ 0.0 ms in 1 steps since start of marking, biggest step 0.0 ms, walltime since start of marking 221 ms) (average mu = 
+= [11694:0x78c000000]     2548 ms: Incremental Mark-Compact (reduce) 253.7 (255.3) -> 253.7 (255.3) MB, pooled: 0.0 MB, 275.32 / 0.00 ms (+ 0.0 ms in 1 steps since start of marking, biggest step 0.0 ms, walltime since start of marking 278 ms) (average mu = [11694:0x78c000000]     2807 ms: Incremental Mark-Compact (reduce) 254.4 (255.8) -> 254.4 (255.8) MB, pooled: 0.0 MB, 219.49 / 0.00 ms (+ 0.0 ms in 1 steps since start of marking, biggest step 0.0 ms, walltime since start of marking 221 ms) (average mu =
 FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
 ----- Native stack trace -----
 
@@ -15,7 +15,7 @@ FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaS
  9: 0x100f27f68 v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [/Users/fr168256/.hermes/node/bin/node]
 10: 0x101398d90 v8::internal::Runtime_AllocateInOldGeneration(int, unsigned long*, v8::internal::Isolate*) [/Users/fr168256/.hermes/node/bin/node]
 11: 0x101a6ccac Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit [/Users/fr168256/.hermes/node/bin/node]
-12: 0x116107058 
+12: 0x116107058
 13: 0x1019c9424 Builtins_InterpreterEntryTrampoline [/Users/fr168256/.hermes/node/bin/node]
 14: 0x101a0a22c Builtins_GeneratorPrototypeNext [/Users/fr168256/.hermes/node/bin/node]
 15: 0x1019c6788 Builtins_JSEntryTrampoline [/Users/fr168256/.hermes/node/bin/node]
