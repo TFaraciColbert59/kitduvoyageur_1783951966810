@@ -103,7 +103,7 @@ describe('Design system — résolution des glyphes (P5)', () => {
   });
 
   it('TEST-ICON-RESOLVE-06: aucun nom d\'icône utilisé dans src/ ne tombe sur le placeholder', () => {
-    expect(usedNames.size).toBeGreaterThan(50);
+    expect(usedNames.size).toBeGreaterThan(40);
     const unresolved = [...usedNames]
       .filter((name) => {
         const mask = resolveMaskFile(name, 'outline') ?? resolveMaskFile(name, 'solid');

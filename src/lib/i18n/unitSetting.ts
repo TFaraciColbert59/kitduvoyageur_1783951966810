@@ -2,7 +2,7 @@
  * unitSetting.ts — Le réglage d'unités de la personne (PLAN-100 6.3).
  *
  * Il n'est PAS stocké côté serveur : la carte « Paramètres » du compte
- * (`components/compte/ParametresCompteCard.tsx`) l'écrit dans ce navigateur, clé
+ * (réglages du Compte) l'écrit dans ce navigateur, clé
  * `user_account_settings_v1`, champ `unitSystem` (`'metric'` | `'imperial'`). Ce module
  * le relit sans jamais lever d'exception (navigation privée, stockage bloqué, JSON abîmé) :
  * illisible ou absent, il n'y a pas de réglage explicite et la région de la langue décide
