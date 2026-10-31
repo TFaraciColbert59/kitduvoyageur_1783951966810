@@ -8,7 +8,7 @@ import {
   MAPTOOLKIT_LOGO,
   MAPTOOLKIT_STYLE_3D,
   OSM_COPYRIGHT,
-  buildCartoStyle,
+  buildCartoStyleResolved,
   type CartoOptions,
 } from './maptoolkit';
 
@@ -98,6 +98,10 @@ export default function LKDVMap({
 
     (async () => {
       const maplibre = await import('maplibre-gl');
+      // Sans worker servi par l'application, MapLibre ne demande AUCUNE tuile
+      // vectorielle (ni glyphe) : raster seul, sentiers absents. Les fichiers
+      // sont dans `public/maplibre/` (même configuration que Compas v5).
+      maplibre.setWorkerUrl?.('/maplibre/maplibre-gl-worker.mjs');
       // TOS Maptoolkit §9 : 10 requêtes non cachées/s en non enregistré.
       // `setMaxParallelImageRequests` ne couvre que les images ; les tuiles
       // vectorielles passent par le protocole throttlé (seau à jetons 8/s).
@@ -108,7 +112,7 @@ export default function LKDVMap({
       let style: StyleSpecification;
       try {
         const official = await loadOfficialStyle();
-        style = buildCartoStyle(official, {
+        style = await buildCartoStyleResolved(official, {
           base,
           terrain3d,
           arcgisKey: process.env.NEXT_PUBLIC_ARCGIS_API_KEY,
@@ -181,7 +185,7 @@ export default function LKDVMap({
         const official = await loadOfficialStyle();
         if (cancelled) return;
         map.setStyle(
-          buildCartoStyle(official, {
+          await buildCartoStyleResolved(official, {
             base,
             terrain3d,
             arcgisKey: process.env.NEXT_PUBLIC_ARCGIS_API_KEY,

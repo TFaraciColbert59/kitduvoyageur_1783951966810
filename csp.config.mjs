@@ -29,7 +29,10 @@ export const CSP_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hcaptcha.com https://*.hcaptcha.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https: https://upload.wikimedia.org",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://*.arcgis.com https://*.arcgisonline.com https://s3.amazonaws.com https://tiles.openfreemap.org https://hcaptcha.com https://*.hcaptcha.com https://api.stripe.com",
+  // Chantier CARTO : base Maptoolkit (tuiles, glyphes, sprites, styles) et
+  // satellite ArcGIS. Sans ces hôtes, le navigateur bloque toutes les tuiles
+  // vectorielles Maptoolkit (constat : 0 requête `.mvt`, carte sans sentiers).
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://*.arcgis.com https://*.arcgisonline.com https://s3.amazonaws.com https://tiles.openfreemap.org https://tiles.maptoolkit.org https://styles.maptoolkit.org https://fonts.maptoolkit.org https://icons.maptoolkit.org https://www.maptoolkit.org https://hcaptcha.com https://*.hcaptcha.com https://api.stripe.com",
   'frame-src https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com',
   "worker-src 'self' blob:",
   'report-uri /api/csp-report',

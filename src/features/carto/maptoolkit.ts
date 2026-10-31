@@ -16,7 +16,8 @@ import type { LayerSpecification, StyleSpecification } from 'maplibre-gl';
 
 export const MAPTOOLKIT_STYLE_2D = 'https://styles.maptoolkit.org/hiking.json';
 export const MAPTOOLKIT_STYLE_3D = 'https://styles.maptoolkit.org/hiking-3d.json';
-export const MAPTOOLKIT_LOGO = 'https://www.maptoolkit.org/assets/maptoolkit-attribution.png';
+/** Logo officiel auto-heberge (inchange) : evite d'ouvrir img-src a un hote de plus. */
+export const MAPTOOLKIT_LOGO = '/carto/maptoolkit-attribution.png';
 export const MAPTOOLKIT_COPYRIGHT = 'https://www.maptoolkit.com/copyright/';
 export const OSM_COPYRIGHT = 'https://www.openstreetmap.org/copyright';
 
@@ -157,6 +158,53 @@ export function withSatelliteBase(
   return { ...style, sources, layers: dimmed };
 }
 
+/**
+ * Résout les sources distantes (`url: TileJSON`) en `tiles` explicites.
+ *
+ * MapLibre 6 n'émet aucune requête de tuile pour une source vectorielle
+ * déclarée par `url` dans certains contextes (constaté : 0 requête `.mvt`,
+ * `querySourceFeatures` vide, alors que le TileJSON répond 200). Inliner les
+ * tuiles règle le problème — et reste conforme au TOS Maptoolkit §11 : les URLs
+ * de tuiles restent celles des domaines officiels.
+ */
+export async function inlineRemoteSources(style: StyleSpecification): Promise<StyleSpecification> {
+  const sources: Record<string, unknown> = {};
+  for (const [name, source] of Object.entries(style.sources)) {
+    const candidate = source as { url?: string; type?: string };
+    if (!candidate.url) {
+      sources[name] = source;
+      continue;
+    }
+    try {
+      const response = await fetch(candidate.url, { cache: 'force-cache' });
+      if (!response.ok) throw new Error(String(response.status));
+      const tilejson = (await response.json()) as {
+        tiles?: string[];
+        minzoom?: number;
+        maxzoom?: number;
+        attribution?: string;
+        bounds?: [number, number, number, number];
+      };
+      if (!tilejson.tiles?.length) throw new Error('tiles absentes');
+      // `url: undefined` est refusé par la validation de style (« url: string
+      // expected »), ce qui vidait la source : on retire la clé.
+      const { url: _ignored, ...rest } = candidate;
+      sources[name] = {
+        ...rest,
+        tiles: tilejson.tiles,
+        minzoom: tilejson.minzoom ?? 0,
+        maxzoom: tilejson.maxzoom ?? 22,
+        ...(tilejson.attribution ? { attribution: tilejson.attribution } : {}),
+        ...(tilejson.bounds ? { bounds: tilejson.bounds } : {}),
+      };
+    } catch (error) {
+      console.warn('[carto] TileJSON non résolu', name, error);
+      sources[name] = source;
+    }
+  }
+  return { ...style, sources: sources as StyleSpecification['sources'] };
+}
+
 /** Active/désactive le terrain 3D (DEM Maptoolkit `rgb-tiles`). */
 export function withTerrain(style: StyleSpecification, enabled: boolean): StyleSpecification {
   if (!enabled) {
@@ -164,6 +212,15 @@ export function withTerrain(style: StyleSpecification, enabled: boolean): StyleS
     return rest;
   }
   return { ...style, terrain: style.terrain ?? { source: 'rgb-tiles', exaggeration: 1 } };
+}
+
+/** Construit le style final **avec sources inlinées** (recommandé). */
+export async function buildCartoStyleResolved(
+  official: StyleSpecification,
+  options: CartoOptions = DEFAULT_CARTO_OPTIONS,
+): Promise<StyleSpecification> {
+  const inlined = await inlineRemoteSources(official);
+  return buildCartoStyle(inlined, options);
 }
 
 /** Construit le style final à partir du JSON officiel téléchargé. */
