@@ -1,0 +1,11 @@
+# Parité ancienne implémentation (route API f89f5665) vs moteur partagé geo/track.ts
+# 500 traces aléatoires déterministes, pas de 80 m, décimation 400 points.
+# Harnais reproductible : voir le script associé parity-harness.ts.txt (copie verbatim de l ancien code, extension .txt pour ne pas entrer dans le type-check du projet).
+
+{
+  "cases": 500,
+  "samples": 137319,
+  "mismatches": 0,
+  "maxDistDiff": 0,
+  "maxPosDiff": 0
+}

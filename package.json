@@ -82,7 +82,6 @@
     "audit:prep-contrast": "node scripts/audit/measure_prep_contrast.mjs",
     "audit:prep-contrast:selftest": "node scripts/audit/measure_prep_contrast.mjs --selftest",
     "visual:sheet": "node scripts/visual/contact-sheet.mjs",
-    "design:diff": "node scripts/design/visual-diff.mjs",
     "seed:y": "node scripts/seed/seed_y_profiles.mjs",
     "ops:healthcheck": "node scripts/ops/a14_healthcheck.mjs",
     "ops:backup-restore": "powershell -ExecutionPolicy Bypass -File scripts/ops/a14_backup_restore_test.ps1",
@@ -93,13 +92,14 @@
     "analyze": "node scripts/perf/analyze.mjs",
     "cleanup:audit": "node scripts/cleanup/audit.mjs",
     "cleanup:quarantine": "node scripts/cleanup/quarantine.mjs",
+    "cleanup:test": "node --test tests/cleanup/*.node-test.mjs",
     "dev:vinext": "vite dev --port 3001",
     "build:vinext": "vite build",
     "start:vinext": "vite preview",
     "deploy:vinext": "vinext-cloudflare deploy",
     "explorer:verify": "node scripts/explorer-v2/verify-all.mjs",
     "explorer:clicks": "node scripts/explorer-v2/click-inventory.mjs",
-    "explorer:shots": "node scripts/explorer-v2/parite.mjs"
+    "explorer:bench:geo": "mkdir -p node_modules/.cache && esbuild scripts/explorer-v2/bench-geo.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/lkdv-bench-geo.mjs --log-level=warning && node node_modules/.cache/lkdv-bench-geo.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
