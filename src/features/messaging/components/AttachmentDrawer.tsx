@@ -12,24 +12,11 @@ import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachmentUrl';
 import { TraceMap, type TraceLineString } from './TraceMap';
 import type { Message } from '../types/messaging.types';
+import { GPXEngine } from '@/features/hiking/gpx/GPXEngine';
 
 export interface AttachmentDrawerProps {
   message: Message | null;
   onClose: () => void;
-}
-
-/** Extrait les points lat/lon d'un fichier GPX (trkpt ou rtept). */
-export function parseGpxPoints(xml: string): [number, number][] {
-  const points: [number, number][] = [];
-  const re = /<(?:trkpt|rtept|wpt)\b[^>]*\blat="(-?\d+(?:\.\d+)?)"[^>]*\blon="(-?\d+(?:\.\d+)?)"/g;
-  let match = re.exec(xml);
-  while (match) {
-    const lat = Number.parseFloat(match[1]);
-    const lon = Number.parseFloat(match[2]);
-    if (Number.isFinite(lat) && Number.isFinite(lon)) points.push([lon, lat]);
-    match = re.exec(xml);
-  }
-  return points;
 }
 
 function AttachmentGpx({ content }: { content: string }) {
@@ -55,7 +42,7 @@ function AttachmentGpx({ content }: { content: string }) {
 
   const geojson = useMemo<TraceLineString | null>(() => {
     if (!xml) return null;
-    const coords = parseGpxPoints(xml);
+    const coords = GPXEngine.extractCoordinates(xml);
     return coords.length > 1 ? { type: 'LineString', coordinates: coords } : null;
   }, [xml]);
 
