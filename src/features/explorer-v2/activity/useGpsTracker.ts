@@ -5,6 +5,7 @@ import { ActivityTracker, type GpsFix } from './tracker';
 import { haptic } from '../state/haptics';
 import { evaluateOffRoute, type OffRouteState } from './offRoute';
 import { useExplorerStore } from '../state/store';
+import { gpsSimulationEnabled } from './gpsSimulation';
 
 /**
  * Suivi GPS d'une activité (04_CARTE §4, P2-11).
@@ -108,9 +109,11 @@ export function useGpsTracker({ distanceToRouteM, onFix }: TrackerOptions = {}) 
     return () => navigator.geolocation.clearWatch(id);
   }, [running, permission]);
 
-  // Simulation continue de déplacement (desktop, tests et zones sans fix GPS)
+  // Simulation continue de déplacement : réservée aux fixtures de recette/test.
+  // Jamais en production (cf. incident P0 : traces fictives en session réelle).
   useEffect(() => {
     if (!running) return;
+    if (!gpsSimulationEnabled()) return;
     const timer = window.setInterval(() => {
       const now = Date.now();
       // Si aucun fix GPS physique n'est arrivé depuis > 2,5 s
