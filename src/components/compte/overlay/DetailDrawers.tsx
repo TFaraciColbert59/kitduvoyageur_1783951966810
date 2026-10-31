@@ -1,7 +1,8 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React, { useEffect, useState } from 'react';
-import { Award, BadgeCheck, Compass, Heart, Lock, UserCheck, UserPlus } from 'lucide-react';
+import { Award, BadgeCheck, Compass, Lock, UserCheck, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchSavedPosts } from '@/features/community/posts/queries';
@@ -40,7 +41,7 @@ export function SavedPostsDrawer({ onClose, onOpenPost }: { onClose: () => void;
           {items.map((item) => (
             <button key={item.id} type="button" className="lkdv-saved-card" onClick={() => onOpenPost(item.id)}>
               <span className="lkdv-saved-media">{item.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : <span className="lkdv-saved-placeholder">LKDV</span>}</span>
-              <span className="lkdv-saved-body"><b>{item.title}</b><small>{item.author?.name || 'Voyageur'} · {item.likesCount} <Heart size={10} aria-hidden="true" /><span className="sr-only">j’aime</span></small></span>
+              <span className="lkdv-saved-body"><b>{item.title}</b><small>{item.author?.name || 'Voyageur'} · {item.likesCount} <LikeIcon size={10} /><span className="sr-only">j’aime</span></small></span>
             </button>
           ))}
         </div>

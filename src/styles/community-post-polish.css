@@ -34,7 +34,7 @@ html body .lkdv-feed-options-rail > button:not(#lkdv-post-polish) {
   opacity: 0;
   transform-origin: center;
   will-change: transform, opacity;
-  animation: lkdv-rail-unroll 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: lkdv-rail-unroll 0.48s var(--ease-glass) forwards;
   animation-delay: calc(var(--i, 0) * 38ms);
 }
 
@@ -54,7 +54,7 @@ html body .lkdv-feed-options-rail > button:not(#lkdv-post-polish) {
 
 html body .lkdv-feed-options-rail.is-closing > button:not(#lkdv-post-polish) {
   opacity: 1;
-  animation: lkdv-rail-rollup 0.26s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  animation: lkdv-rail-rollup 0.26s var(--lkv-ease) forwards;
   animation-delay: calc((4 - var(--i, 0)) * 22ms);
 }
 
@@ -71,7 +71,7 @@ html body .lkdv-feed-options-rail.is-closing > button:not(#lkdv-post-polish) {
 
 /* Appui sur une action : léger rebond du bouton touché pendant le repli. */
 html body .lkdv-feed-options-rail.is-closing > button.is-tapped:not(#lkdv-post-polish) {
-  animation: lkdv-rail-tap 0.26s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  animation: lkdv-rail-tap 0.26s var(--motion-ease-standard) forwards;
   animation-delay: 0ms;
 }
 
@@ -93,16 +93,16 @@ html body .lkdv-feed-options-rail.is-closing > button.is-tapped:not(#lkdv-post-p
 /* --- Panneaux commentaires / partage ---------------------------------------- */
 html body .lkdv-feed-post .lkdv-post-panel-slot:not(#lkdv-post-polish) {
   animation-duration: 0.46s;
-  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  animation-timing-function: var(--motion-ease-standard);
   backface-visibility: hidden;
   transform: translateZ(0);
 }
 html body .lkdv-feed-post .lkdv-post-panel-slot[data-side='comments'][data-leaving='true']:not(#lkdv-post-polish) {
-  animation: lkdv-panel-out-right 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: lkdv-panel-out-right 0.26s var(--lkv-ease) forwards;
   pointer-events: none;
 }
 html body .lkdv-feed-post .lkdv-post-panel-slot[data-side='share'][data-leaving='true']:not(#lkdv-post-polish) {
-  animation: lkdv-panel-out-left 0.26s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: lkdv-panel-out-left 0.26s var(--lkv-ease) forwards;
   pointer-events: none;
 }
 @keyframes lkdv-panel-out-right {
@@ -190,7 +190,7 @@ html body .freedom-drawer-card:not(#lkdv-post-polish) {
   border-radius: var(--post-radius) var(--post-radius) 0 0;
   box-shadow: var(--post-glass-shadow);
   animation-duration: 0.42s;
-  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  animation-timing-function: var(--motion-ease-standard);
 }
 html body .freedom-drawer-header:not(#lkdv-post-polish) {
   border-bottom: 0;
@@ -266,7 +266,7 @@ html body .lkdv-share-panel .lkdv-share-conv button:not(#lkdv-post-polish) {
   backdrop-filter: blur(18px) saturate(1.9);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 4px 14px rgba(10, 20, 14, 0.16);
   color: #17402c;
-  transition: width 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: width 0.32s var(--motion-ease-standard);
 }
 .lkdv-share-search:focus-within {
   width: calc(100% - 20px);
@@ -307,7 +307,7 @@ html body .lkdv-share-panel .lkdv-share-conv button:not(#lkdv-post-polish) {
   box-shadow: var(--bar-thumb-shadow, 0 2px 8px rgba(23, 43, 36, 0.12));
   color: #17402c;
   cursor: pointer;
-  animation: lkdv-share-top-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: lkdv-share-top-in 0.32s var(--ease-glass) both;
 }
 .lkdv-share-top button:nth-child(2) {
   animation-delay: 40ms;

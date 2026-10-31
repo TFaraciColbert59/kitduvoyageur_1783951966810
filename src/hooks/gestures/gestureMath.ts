@@ -34,6 +34,21 @@ export function isMoveBeyondTolerance(
   return Math.abs(dx) > tolerancePx || Math.abs(dy) > tolerancePx;
 }
 
+// ── Balayage horizontal (post : commentaires ← photo → partage) ───────────
+
+export const DEFAULT_SWIPE_THRESHOLD_PX = 48;
+/** Le geste doit être plus horizontal que vertical d'au moins ce rapport. */
+export const SWIPE_AXIS_RATIO = 1.2;
+
+/** Vrai si (dx, dy) est un balayage horizontal franc : même seuil dans tous les posts et panneaux. */
+export function isHorizontalSwipe(
+  dx: number,
+  dy: number,
+  thresholdPx: number = DEFAULT_SWIPE_THRESHOLD_PX
+): boolean {
+  return Math.abs(dx) > thresholdPx && Math.abs(dx) > Math.abs(dy) * SWIPE_AXIS_RATIO;
+}
+
 // ── Drag-to-dismiss (framer-motion) ───────────────────────────────────────
 
 export const DEFAULT_DISMISS_THRESHOLD_PX = 80;

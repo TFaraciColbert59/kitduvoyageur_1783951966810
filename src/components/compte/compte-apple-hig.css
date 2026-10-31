@@ -7,7 +7,7 @@
 .voyages-swipe-hint { font-size: 11px; font-weight: 600; color: var(--tint); opacity: 0.85; }
 .voyages-carousel { display: flex; overflow-x: auto; gap: 14px; padding: 6px 16px 12px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .voyages-carousel::-webkit-scrollbar { display: none; }
-.voyage-card { flex: 0 0 250px; scroll-snap-align: start; border-radius: 20px; overflow: hidden; background: rgba(255, 255, 255, 0.72); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8); border: 0.5px solid rgba(23, 43, 36, 0.12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08); cursor: pointer; transition: transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1); display: flex; flex-direction: column; }
+.voyage-card { flex: 0 0 250px; scroll-snap-align: start; border-radius: 20px; overflow: hidden; background: rgba(255, 255, 255, 0.72); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8); border: 0.5px solid rgba(23, 43, 36, 0.12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08); cursor: pointer; transition: transform 0.2s var(--ease-spring); display: flex; flex-direction: column; }
 .voyage-card:active { transform: scale(0.97); }
 .voyage-cover { position: relative; width: 100%; height: 125px; overflow: hidden; background: #17402C; }
 .voyage-cover-fallback { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,0.78); background: radial-gradient(circle at 28% 18%, rgba(91,143,106,0.78), rgba(23,64,44,1) 72%); }
@@ -99,15 +99,15 @@
 .chip:active,
 .tb button:active {
   transform: scale(0.96) !important;
-  transition: transform 0.12s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+  transition: transform 0.12s var(--ease-spring) !important;
 }
 
 /* Spring motion for iOS sheets */
 .sheet {
-  transition: top 0.48s cubic-bezier(0.25, 1, 0.5, 1),
-              bottom 0.48s cubic-bezier(0.25, 1, 0.5, 1),
-              left 0.48s cubic-bezier(0.25, 1, 0.5, 1),
-              right 0.48s cubic-bezier(0.25, 1, 0.5, 1),
+  transition: top 0.48s var(--ease-glass),
+              bottom 0.48s var(--ease-glass),
+              left 0.48s var(--ease-glass),
+              right 0.48s var(--ease-glass),
               border-radius 0.48s !important;
   box-shadow: inset 0 1.5px 0 rgba(255,255,255,.95),
               inset 0 -1px 1px rgba(255,255,255,.5),
@@ -124,7 +124,7 @@
    Top : calc(69% - 46px), Carte : 1fr restant (équilibre parfait Apple ~536px / ~308px) */
 .phone {
   grid-template-rows: calc(69% - 46px) 1fr !important;
-  transition: grid-template-rows 0.55s cubic-bezier(0.32, 0.72, 0, 1) !important;
+  transition: grid-template-rows 0.55s var(--motion-ease-standard) !important;
 }
 .phone.mapbig {
   grid-template-rows: 144px 1fr !important;
@@ -236,7 +236,7 @@
   background: rgba(233, 237, 224, 0.88);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  transition: opacity 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.45s ease;
+  transition: opacity 0.45s var(--ease-glass), visibility 0.45s ease;
   pointer-events: auto;
 }
 
@@ -348,7 +348,7 @@
   background: #17402C !important;
   color: #fff !important;
   box-shadow: 0 0 32px rgba(64, 192, 87, 0.6) !important;
-  transition: all 0.28s cubic-bezier(0.3, 1.4, 0.5, 1) !important;
+  transition: all 0.28s var(--ease-spring) !important;
 }
 
 /* 3D Massifs & Photo Markers (Pure Text & Apple Liquid Glass) */
@@ -641,7 +641,7 @@
   place-items: center !important;
   background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(235,242,236,0.65)) !important;
   box-shadow: 0 4px 18px rgba(23, 64, 44, 0.16), inset 0 1px 0 rgba(255,255,255,0.95), 0 0 0 1.5px rgba(91,127,85,0.3) !important;
-  transition: transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1) !important;
+  transition: transform 0.2s var(--ease-spring) !important;
 }
 .ig-avi-wrap:active {
   transform: scale(0.96) !important;
@@ -738,7 +738,7 @@
   border-radius: 9999px !important;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42)) !important;
   box-shadow: inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, 0.5), 0 0 0 0.5px rgba(23, 43, 36, 0.07), 0 2px 8px rgba(23, 43, 36, 0.08) !important;
-  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+  transition: transform 0.28s var(--ease-spring) !important;
   z-index: 1 !important;
 }
 @media (prefers-color-scheme: dark) {
@@ -1172,10 +1172,10 @@
   opacity: 0 !important;
   pointer-events: none !important;
   transform: translateY(120%) !important;
-  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
+  transition: opacity 0.25s ease, transform 0.35s var(--motion-ease-standard) !important;
 }
 .tb, .acc, .tabbar {
-  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), left 0.5s cubic-bezier(0.32, 0.72, 0, 1), right 0.5s cubic-bezier(0.32, 0.72, 0, 1), height 0.5s cubic-bezier(0.32, 0.72, 0, 1) !important;
+  transition: opacity 0.25s ease, transform 0.35s var(--motion-ease-standard), left 0.5s var(--motion-ease-standard), right 0.5s var(--motion-ease-standard), height 0.5s var(--motion-ease-standard) !important;
 }
 
 /* Point 7 — Sorties Tab Cleanup */
@@ -1551,7 +1551,7 @@
   border-radius: 9999px !important;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.75)) !important;
   box-shadow: 0 2px 8px rgba(23, 64, 44, 0.12), inset 0 1px 0 #ffffff !important;
-  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+  transition: transform 0.28s var(--ease-spring) !important;
   z-index: 1 !important;
   pointer-events: none !important;
 }
@@ -1665,7 +1665,7 @@
   border-radius: 9999px !important;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.26)) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06), 0 2px 8px rgba(23, 64, 44, 0.1) !important;
-  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+  transition: transform 0.28s var(--ease-spring) !important;
 }
 .ig-tabs button[aria-selected="true"] {
   color: #17402C !important;
@@ -1874,7 +1874,7 @@
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.22)) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06), 0 2px 8px rgba(23, 64, 44, 0.1) !important;
   transform: translateX(calc(var(--i, 0) * 100%)) !important;
-  transition: transform 0.28s cubic-bezier(0.3, 1.35, 0.4, 1) !important;
+  transition: transform 0.28s var(--ease-spring) !important;
   z-index: 1 !important;
   pointer-events: none !important;
 }
@@ -2226,7 +2226,7 @@
   to { opacity: 1; transform: none; }
 }
 .sheet.anim-in .sh-b > * {
-  animation: sheetRowIn 0.32s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
+  animation: sheetRowIn 0.32s var(--ease-spring) both;
 }
 .sheet.anim-in .sh-b > *:nth-child(2) { animation-delay: 0.025s; }
 .sheet.anim-in .sh-b > *:nth-child(3) { animation-delay: 0.05s; }
@@ -2971,7 +2971,7 @@
   border-radius: inherit !important;
   pointer-events: auto !important;
   transform: translateY(100%);
-  transition: transform .54s cubic-bezier(.32, .72, 0, 1) !important;
+  transition: transform .54s var(--motion-ease-standard) !important;
   will-change: transform;
 }
 .sw-wrap[data-det="card"].in .sheet { transform: translateY(0); }
@@ -3004,7 +3004,7 @@
 .phone .sheet .flow button,
 .phone .sheet .segc button,
 .phone .sheet .reseau-toggle button {
-  transition: transform .12s cubic-bezier(.2, .9, .4, 1.2), color .2s !important;
+  transition: transform .12s var(--ease-spring), color .2s !important;
 }
 .phone .sheet .flow button:active,
 .phone .sheet .segc button:active,
@@ -3073,7 +3073,7 @@
   background: #17402C !important;
   text-align: left !important;
   cursor: pointer !important;
-  transition: transform .2s cubic-bezier(.3, 1.4, .5, 1) !important;
+  transition: transform .2s var(--ease-spring) !important;
 }
 .voyage-card:active { transform: scale(.98); }
 .voyage-cover { position: absolute !important; inset: 0 !important; height: auto !important; }
@@ -3157,25 +3157,25 @@
 }
 
 /* Compte iOS 27 v20 — marges, respiration et mouvement */
-.sw-wrap[data-det="card"] .sheet { transition: transform .72s cubic-bezier(.16,1,.3,1) !important; }
+.sw-wrap[data-det="card"] .sheet { transition: transform .72s var(--ease-out) !important; }
 .phone .sheet { padding: 0 !important; }
 .phone .sheet .sh-b { padding: 4px 12px calc(20px + env(safe-area-inset-bottom)) !important; }
 .phone .sheet .sh-f { padding-bottom: 4px !important; }
 .phone .sheet .li.nt,
 .phone .sheet .reseau-user-row,
 .phone .sheet .oc { margin-inline: 0 !important; }
-.sheet.anim-in .sh-b > * { animation: sheetRowIn .45s cubic-bezier(.2,.8,.2,1) both; }
+.sheet.anim-in .sh-b > * { animation: sheetRowIn .45s var(--ease-glass) both; }
 .sheet.anim-in .sh-b > *:nth-child(2) { animation-delay: .03s; }
 .sheet.anim-in .sh-b > *:nth-child(3) { animation-delay: .06s; }
 .sheet.anim-in .sh-b > *:nth-child(4) { animation-delay: .09s; }
 .ig-swipe-view { position: relative; will-change: transform; }
 .ig-swipe-view[data-tab="0"] { touch-action: pan-y; }
 .ig-swipe-view.swiping { transition: none !important; }
-.ig-swipe-view.settle { transition: transform .22s cubic-bezier(.2,.8,.2,1) !important; }
+.ig-swipe-view.settle { transition: transform .22s var(--ease-glass) !important; }
 .ig-swipe-view.out-left { transform: translateX(-18%) !important; opacity: .55; transition: transform .18s ease, opacity .18s ease !important; }
 .ig-swipe-view.out-right { transform: translateX(18%) !important; opacity: .55; transition: transform .18s ease, opacity .18s ease !important; }
-.ig-swipe-view.in-left { animation: igSwipeInLeft .32s cubic-bezier(.2,.8,.2,1) both; }
-.ig-swipe-view.in-right { animation: igSwipeInRight .32s cubic-bezier(.2,.8,.2,1) both; }
+.ig-swipe-view.in-left { animation: igSwipeInLeft .32s var(--ease-glass) both; }
+.ig-swipe-view.in-right { animation: igSwipeInRight .32s var(--ease-glass) both; }
 @keyframes igSwipeInLeft { from { transform: translateX(-18%); opacity: .55; } to { transform: none; opacity: 1; } }
 @keyframes igSwipeInRight { from { transform: translateX(18%); opacity: .55; } to { transform: none; opacity: 1; } }
 .phone .sheet .flow,

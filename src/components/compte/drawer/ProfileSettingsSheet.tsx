@@ -1118,7 +1118,7 @@ export function ProfileSettingsSheet({
  */
 const PROFILE_SETTINGS_CSS = `
 .lkdv-settings-scrim{position:fixed;inset:0;z-index:1200;display:flex;align-items:flex-end;justify-content:center;background:rgba(12,24,19,.34);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:lkdv-settings-fade .18s ease-out;}
-.lkdv-settings-sheet{width:100%;max-width:430px;max-height:min(88dvh,780px);display:flex;flex-direction:column;overflow:hidden;border-radius:26px 26px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(247,249,245,.98));color:var(--label,#172B24);font:400 14px/1.35 var(--sf,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif);box-shadow:0 -12px 40px rgba(23,43,36,.22),inset 0 1px 0 #fff;animation:lkdv-settings-up .28s cubic-bezier(.16,1,.3,1);}
+.lkdv-settings-sheet{width:100%;max-width:430px;max-height:min(88dvh,780px);display:flex;flex-direction:column;overflow:hidden;border-radius:26px 26px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(247,249,245,.98));color:var(--label,#172B24);font:400 14px/1.35 var(--sf,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif);box-shadow:0 -12px 40px rgba(23,43,36,.22),inset 0 1px 0 #fff;animation:lkdv-settings-up .28s var(--ease-out);}
 .lkdv-settings-head{display:flex;align-items:center;gap:12px;flex:none;padding:18px 18px 12px;border-bottom:.5px solid var(--sep,rgba(23,43,36,.1));}
 .lkdv-settings-head-txt{flex:1;min-width:0;}
 .lkdv-settings-kicker{margin:0 0 2px;font:600 11px/1.2 var(--sf,-apple-system,BlinkMacSystemFont,sans-serif);letter-spacing:.04em;text-transform:uppercase;color:var(--accent,#5B7F55);}

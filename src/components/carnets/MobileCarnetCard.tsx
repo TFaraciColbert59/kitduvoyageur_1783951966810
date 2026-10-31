@@ -1,5 +1,6 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
@@ -124,12 +125,7 @@ export default function MobileCarnetCard({
             className={`w-auto px-[10px] ${carnet.user_liked ? 'bg-[color:var(--lkv-danger-bg)] text-[color:var(--lkv-danger)]' : ''}`}
           >
             <span className="inline-flex items-center gap-[var(--space-1)]">
-              <Icon
-                name="HeartIcon"
-                size={13}
-                className={carnet.user_liked ? 'fill-[color:var(--lkv-danger)] text-[color:var(--lkv-danger)]' : ''}
-                aria-hidden="true"
-              />
+              <LikeIcon active={Boolean(carnet.user_liked)} size={13} />
               <span className="tabular-nums">{carnet.likes_count || 0}</span>
             </span>
           </IconButton>

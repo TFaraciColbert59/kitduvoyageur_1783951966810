@@ -1,7 +1,9 @@
 'use client';
 
+import { DEFAULT_MOVE_TOLERANCE_PX } from '@/hooks/gestures';
+import { LikeIcon } from '@/components/social-kit';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Play, Pause, Heart } from 'lucide-react';
+import { Play, Pause } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDoubleTap } from '@/hooks/gestures';
 import { FreedomActionsPill } from './FreedomActionsPill';
@@ -169,7 +171,7 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
     if (!dragStartRef.current) return;
     const dx = Math.abs(e.clientX - dragStartRef.current.x);
     const dy = Math.abs(e.clientY - dragStartRef.current.y);
-    if (dx > 8 || dy > 8) {
+    if (dx > DEFAULT_MOVE_TOLERANCE_PX || dy > DEFAULT_MOVE_TOLERANCE_PX) {
       isDraggingRef.current = true;
     }
   };
@@ -229,7 +231,7 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
           style={{ left: burst.x, top: burst.y }}
           aria-hidden="true"
         >
-          <Heart size={88} fill="#FF5A7A" strokeWidth={0} />
+          <LikeIcon plain size={88} />
         </span>
       ))}
 

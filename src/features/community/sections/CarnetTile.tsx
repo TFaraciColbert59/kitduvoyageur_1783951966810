@@ -1,8 +1,9 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React from 'react';
 import Link from 'next/link';
-import { Heart, MessageCircle } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import type { CarnetRow } from '@/features/community/sections/useCommunitySections';
 
 /**
@@ -47,7 +48,7 @@ export function CarnetTile({
             data-on={carnet.liked ? 'true' : 'false'}
             onClick={() => onLike(carnet)}
           >
-            <Heart size={13} aria-hidden="true" />
+            <LikeIcon size={13} />
             {likes}
           </button>
           <Link

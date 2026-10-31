@@ -25,7 +25,7 @@ describe('Community v2: video, gallery and reproduction', () => {
     expect(canShowCommunityReproduction('7b26072b-8f7c-4880-a90d-22fe61bf66c2')).toBe(true);
   });
   it('imports only RLS-visible, public kits via authorized server endpoint', () => {
-    const post = readFileSync('src/components/communaute/CommunityPostCard.tsx', 'utf8');
+    const post = readFileSync('src/features/community/feed/PostAttachments.tsx', 'utf8');
     const fork = readFileSync('src/app/api/materiel/fork/route.ts', 'utf8');
     expect(post).toContain("from('materiel_kits')");
     expect(post).toContain(".eq('is_public', true)");

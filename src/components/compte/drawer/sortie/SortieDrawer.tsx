@@ -549,7 +549,7 @@ export const SORTIE_CSS = `
 .lkdv-sortie-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;}
 /* 13. Tuile photo nette et légère. */
 .lkdv-sortie-photo{aspect-ratio:1/1!important;border-radius:15px!important;overflow:hidden!important;box-shadow:inset 0 0 0 .5px rgba(23,43,36,.1),0 4px 12px rgba(23,43,36,.08)!important;}
-.lkdv-sortie-photo img{width:100%!important;height:100%!important;object-fit:cover!important;transition:transform .35s cubic-bezier(.22,1,.36,1)!important;}
+.lkdv-sortie-photo img{width:100%!important;height:100%!important;object-fit:cover!important;transition:transform .35s var(--ease-glass)!important;}
 .lkdv-sortie-photo:active img{transform:scale(1.03)!important;}
 /* 14. États vides plus doux. */
 .lkdv-sortie-pane .lkdv-sortie-empty-line{padding:20px 12px!important;border-radius:16px!important;background:rgba(255,255,255,.36)!important;}

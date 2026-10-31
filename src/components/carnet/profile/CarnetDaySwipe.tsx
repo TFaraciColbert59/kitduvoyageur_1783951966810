@@ -14,6 +14,7 @@ import { swipeStep } from './CarnetPages';
  * propre geste dans `.ckp-pages` : un balayage commencé dans la grille ne
  * change donc jamais de jour.
  */
+/** Miroir de `--motion-control-duration` (tokens.css) : 220 ms. */
 export const DAY_SWIPE_MS = 220;
 
 export type DayDirection = 'next' | 'prev';

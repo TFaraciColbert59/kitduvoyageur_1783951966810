@@ -206,7 +206,7 @@ export const COMPTE_CSS = `
 .lkdv-compte-setting-head small{display:block!important;font:500 10.5px var(--sf)!important;color:var(--label2)!important;}
 .lkdv-compte-setting-card>p{margin:0!important;font:400 11.5px/1.45 var(--sf)!important;color:var(--label3)!important;}
 .lkdv-compte-switch{width:42px!important;height:25px!important;border:0!important;border-radius:999px!important;background:rgba(23,43,36,.14)!important;padding:2px!important;cursor:pointer!important;transition:background .22s ease!important;flex:none!important;}
-.lkdv-compte-switch i{display:block!important;width:21px!important;height:21px!important;border-radius:50%!important;background:#fff!important;box-shadow:0 1px 4px rgba(0,0,0,.18)!important;transition:transform .22s cubic-bezier(.32,.72,0,1)!important;}
+.lkdv-compte-switch i{display:block!important;width:21px!important;height:21px!important;border-radius:50%!important;background:#fff!important;box-shadow:0 1px 4px rgba(0,0,0,.18)!important;transition:transform .22s var(--motion-ease-standard)!important;}
 .lkdv-compte-switch.on{background:#3D7A52!important;}
 .lkdv-compte-switch.on i{transform:translateX(17px)!important;}
 .lkdv-compte-prefs{display:flex!important;gap:5px!important;flex-wrap:wrap!important;}

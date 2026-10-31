@@ -1,9 +1,9 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React from 'react';
 import {
   Bell,
-  Heart,
   MessageCircle,
   Package,
   ShieldCheck,
@@ -72,7 +72,7 @@ export const NOTIFICATION_GROUP_LABEL: Record<NotificationGroup, string> = {
 export function notificationIcon(type: string): React.ReactNode {
   const value = type.toLowerCase();
   if (value.includes('follow')) return <UserPlus size={15} aria-hidden="true" />;
-  if (value.includes('like')) return <Heart size={15} aria-hidden="true" />;
+  if (value.includes('like')) return <LikeIcon size={15} />;
   if (value.includes('comment') || value.includes('message')) return <MessageCircle size={15} aria-hidden="true" />;
   if (value.includes('group')) return <Users size={15} aria-hidden="true" />;
   if (value.includes('order') || value.includes('commande')) return <ShoppingBag size={15} aria-hidden="true" />;

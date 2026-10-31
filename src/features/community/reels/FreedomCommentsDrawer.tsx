@@ -8,7 +8,6 @@ import {
   Send,
   Plus,
   Image as ImageIcon,
-  Heart,
   CornerDownRight,
   X,
   Route,
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDragDismiss } from '@/hooks/gestures';
+import { CommentItem, type SocialComment } from '@/components/social-kit';
 import { FreedomComposerMenuSheet } from './FreedomComposerMenuSheet';
 import { fetchReelComments, postReelComment, setPostCommentLike } from './freedomReelsService';
 import {
@@ -506,185 +506,32 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
           ) : (
             threads.map((thread) => {
               const root = thread.comment;
+              const toSocial = (c: FreedomComment): SocialComment => ({
+                id: c.id,
+                authorName: c.author.name,
+                authorAvatarUrl: c.author.avatarUrl,
+                content: c.content || null,
+                timeLabel: timeAgo(c.createdAt),
+                likes: c.likesCount,
+                liked: Boolean(c.isLiked),
+                isOwner: false,
+                attachment: c.attachment ? renderAttachment(c.attachment) : undefined,
+              });
+              const rawById = new Map<string, FreedomComment>([[root.id, root], ...thread.replies.map((r): [string, FreedomComment] => [r.id, r])]);
               return (
-                <div key={root.id} className="space-y-2.5" data-comment-id={root.id}>
-                  {/* Root Comment Row */}
-                  <div className="flex items-start gap-2.5">
-                    {/* Avatar (cliquable vers le profil) */}
-                    <button
-                      type="button"
-                      onClick={() => handleNavigateToProfile(root.author)}
-                      className="size-8 shrink-0 overflow-hidden rounded-full bg-[#E5EAE3] border border-black/5 mt-0.5 transition-transform active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C]"
-                      aria-label={`Voir le profil de ${root.author.name}`}
-                    >
-                      {root.author.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- distant avatar
-                        <img
-                          src={root.author.avatarUrl}
-                          alt={root.author.name}
-                          className="size-full object-cover"
-                        />
-                      ) : (
-                        <div className="grid size-full place-items-center text-xs font-bold text-[#17402C]">
-                          {root.author.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </button>
-
-                    {/* Comment Body */}
-                    <div className="flex-1 space-y-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleNavigateToProfile(root.author)}
-                          className="text-left text-xs font-bold text-[#172B24] hover:text-[#17402C] hover:underline cursor-pointer focus-visible:outline-none truncate"
-                        >
-                          {root.author.name}
-                        </button>
-                        <span className="text-[10px] text-[#56665D] shrink-0">
-                          {timeAgo(root.createdAt)}
-                        </span>
-                      </div>
-
-                      {root.content && (
-                        <p className="text-xs text-[#172B24] leading-relaxed">
-                          {root.content}
-                        </p>
-                      )}
-
-                      {/* Attachment (Kit fond blanc, GPX tracé, etc.) */}
-                      {root.attachment && renderAttachment(root.attachment)}
-
-                      {/* Reply Button */}
-                      <div className="pt-0.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            haptic('selection');
-                            setReplyingTo({
-                              id: root.id,
-                              authorName: root.author.name,
-                              parentId: root.id,
-                            });
-                            inputRef.current?.focus();
-                          }}
-                          className="text-[11px] font-semibold text-[#56665D] hover:text-[#17402C]"
-                        >
-                          Répondre
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Like Button on Root Comment */}
-                    <button
-                      type="button"
-                      onClick={() => handleToggleLike(root.id)}
-                      className="flex flex-col items-center gap-0.5 pt-1 text-[#56665D] hover:text-[#FF2D55]"
-                      aria-label="Aimer le commentaire"
-                    >
-                      <Heart
-                        size={14}
-                        fill={root.isLiked ? '#FF2D55' : 'none'}
-                        color={root.isLiked ? '#FF2D55' : 'currentColor'}
-                        strokeWidth={root.isLiked ? 0 : 2}
-                      />
-                      {root.likesCount > 0 && (
-                        <span className="text-[10px] font-medium">{root.likesCount}</span>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Nested Replies Thread (indented with left border) */}
-                  {thread.replies.length > 0 && (
-                    <div className="ml-7 space-y-2.5 border-l-2 border-[#17402C]/15 pl-3">
-                      {thread.replies.map((reply) => (
-                        <div key={reply.id} className="flex items-start gap-2">
-                          {/* Reply Avatar (cliquable vers le profil) */}
-                          <button
-                            type="button"
-                            onClick={() => handleNavigateToProfile(reply.author)}
-                            className="size-6 shrink-0 overflow-hidden rounded-full bg-[#E5EAE3] border border-black/5 mt-0.5 transition-transform active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C]"
-                            aria-label={`Voir le profil de ${reply.author.name}`}
-                          >
-                            {reply.author.avatarUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element -- distant avatar
-                              <img
-                                src={reply.author.avatarUrl}
-                                alt={reply.author.name}
-                                className="size-full object-cover"
-                              />
-                            ) : (
-                              <div className="grid size-full place-items-center text-[10px] font-bold text-[#17402C]">
-                                {reply.author.name.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                          </button>
-
-                          {/* Reply Body */}
-                          <div className="flex-1 space-y-1 min-w-0">
-                            <div className="flex items-baseline gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleNavigateToProfile(reply.author)}
-                                className="text-left text-[11px] font-bold text-[#172B24] hover:text-[#17402C] hover:underline cursor-pointer focus-visible:outline-none truncate"
-                              >
-                                {reply.author.name}
-                              </button>
-                              <span className="text-[9px] text-[#56665D] shrink-0">
-                                {timeAgo(reply.createdAt)}
-                              </span>
-                            </div>
-
-                            {reply.content && (
-                              <p className="text-xs text-[#172B24] leading-relaxed">
-                                {reply.content}
-                              </p>
-                            )}
-
-                            {/* Reply Attachment */}
-                            {reply.attachment && renderAttachment(reply.attachment)}
-
-                            {/* Reply to this reply */}
-                            <div className="pt-0.5">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  haptic('selection');
-                                  setReplyingTo({
-                                    id: reply.id,
-                                    authorName: reply.author.name,
-                                    parentId: root.id,
-                                  });
-                                  inputRef.current?.focus();
-                                }}
-                                className="text-[10px] font-semibold text-[#56665D] hover:text-[#17402C]"
-                              >
-                                Répondre
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Like Button on Reply */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleLike(reply.id)}
-                            className="flex flex-col items-center gap-0.5 pt-0.5 text-[#56665D] hover:text-[#FF2D55]"
-                            aria-label="Aimer la réponse"
-                          >
-                            <Heart
-                              size={12}
-                              fill={reply.isLiked ? '#FF2D55' : 'none'}
-                              color={reply.isLiked ? '#FF2D55' : 'currentColor'}
-                              strokeWidth={reply.isLiked ? 0 : 2}
-                            />
-                            {reply.likesCount > 0 && (
-                              <span className="text-[9px] font-medium">{reply.likesCount}</span>
-                            )}
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                <div key={root.id} data-comment-id={root.id}>
+                  <CommentItem
+                    comment={{ ...toSocial(root), replies: thread.replies.map(toSocial) }}
+                    canInteract
+                    replyOnReplies
+                    onLike={(c) => handleToggleLike(c.id)}
+                    onOpenProfile={(c) => { const raw = rawById.get(c.id); if (raw) handleNavigateToProfile(raw.author); }}
+                    onReply={(c) => {
+                      haptic('selection');
+                      setReplyingTo({ id: c.id, authorName: c.authorName, parentId: root.id });
+                      inputRef.current?.focus();
+                    }}
+                  />
                 </div>
               );
             })

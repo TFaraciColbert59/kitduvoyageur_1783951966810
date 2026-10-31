@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Card } from '@/components/ui';
 import { Button, IconButton } from '@/components/ui';
 import { Chip } from '@/components/ui';
-import CommunityPostCard, { type CommunityPostItem } from '@/components/communaute/CommunityPostCard';
+import CommunityFeedPost from '@/features/community/feed/CommunityFeedPost';
+import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 import { GlassLabSurface } from './GlassLabSurface';
 import { resolveGlassEngine, type GlassEngine } from './glassLabPolicy';
 import { useGlassCapabilities } from './useGlassCapabilities';
@@ -48,7 +49,7 @@ const viewportWidths: Record<string, string | undefined> = {
 };
 
 /* Fixtures de posts façon Twitter — données locales de démonstration uniquement. */
-const demoPosts: CommunityPostItem[] = [
+const demoPosts: Array<Record<string, any> & { id: string; user_id: string }> = [
   {
     id: 'demo-post-1',
     user_id: 'demo-user',
@@ -175,7 +176,7 @@ export default function GlassLab() {
         <div className={styles.content} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <p className={styles.eyebrow}>Posts communauté · image plein-bord, boutons en verre par-dessus, 200 caractères</p>
           {demoPosts.map((post) => (
-            <CommunityPostCard key={post.id} post={post} user={{ id: post.user_id }} />
+            <CommunityFeedPost key={post.id} embedded post={post as unknown as FeedPost} user={{ id: post.user_id }} />
           ))}
         </div>
       </section>

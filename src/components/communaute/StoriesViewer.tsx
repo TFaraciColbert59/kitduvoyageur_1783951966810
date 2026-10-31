@@ -1,5 +1,12 @@
 'use client';
 
+import {
+  DEFAULT_DISMISS_THRESHOLD_PX,
+  DEFAULT_DOUBLE_TAP_WINDOW_MS,
+  DEFAULT_SWIPE_THRESHOLD_PX,
+  isMoveBeyondTolerance,
+} from '@/hooks/gestures';
+import { SHEET_EXIT_MS } from '@/design/motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
@@ -34,12 +41,13 @@ export interface StoryUser {
 }
 
 const STORY_DURATION_MS = 5000;
-const SWIPE_CLOSE_PX = 110;
-const SWIPE_NAV_PX = 60;
+// Seuils de gestes partagés avec les posts et les feuilles (hooks/gestures) : un seul réglage.
+const SWIPE_CLOSE_PX = DEFAULT_DISMISS_THRESHOLD_PX;
+const SWIPE_NAV_PX = DEFAULT_SWIPE_THRESHOLD_PX;
 const TAP_MS = 350;
 const VIEW_RECORD_MS = 1000;
-const DOUBLE_TAP_MS = 320;
-const DOUBLE_TAP_PX = 48;
+const DOUBLE_TAP_MS = DEFAULT_DOUBLE_TAP_WINDOW_MS;
+const DOUBLE_TAP_PX = DEFAULT_SWIPE_THRESHOLD_PX;
 
 /**
  * Visionneur de stories plein écran, gestes façon Instagram :
@@ -323,7 +331,7 @@ export default function StoriesViewer({
     if (Math.abs(dy) > SWIPE_CLOSE_PX) {
       setDragY(dy > 0 ? 900 : 0);
       setDragOpacity(0);
-      window.setTimeout(onClose, 190);
+      window.setTimeout(onClose, SHEET_EXIT_MS);
       return;
     }
     setDragY(0);
@@ -334,7 +342,7 @@ export default function StoriesViewer({
       else prev();
       return;
     }
-    if (dt < TAP_MS && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+    if (dt < TAP_MS && !isMoveBeyondTolerance(dx, dy)) {
       const w = window.innerWidth;
       if (needsTap) {
         setNeedsTap(false);

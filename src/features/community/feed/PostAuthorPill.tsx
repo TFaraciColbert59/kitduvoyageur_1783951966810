@@ -9,18 +9,26 @@ import { timeAgo } from './feed-utils';
  * Pillule auteur du post (screen 2) : avatar 32, nom, badge de confiance,
  * méta `lieu · spot · temps`. Même verre que le reste.
  */
-export function PostAuthorPill({ post }: { post: FeedPost }) {
+export interface PostAuthorPillOverrides {
+  /** Remplace le lien profil par une action (ex. centrer la carte). */
+  onClick?: () => void;
+  meta?: string;
+  badge?: string;
+}
+
+export function PostAuthorPill({ post, onClick, meta: metaOverride, badge }: { post: FeedPost } & PostAuthorPillOverrides) {
   const author = post.author;
   const name = author?.full_name || 'Voyageur LKDV';
   const id = author?.id || post.author_id || '';
   const href = id ? `/profil/${id}` : '/communaute';
   const place = typeof post.title === 'string' ? post.title : '';
   const location = typeof author?.location === 'string' ? author.location : '';
-  const meta = [location, place, timeAgo(post.created_at)].filter(Boolean).join(' · ');
+  const meta = metaOverride ?? [location, place, timeAgo(post.created_at)].filter(Boolean).join(' · ');
   const trust = typeof author?.trust_score === 'number' ? author.trust_score : null;
 
-  return (
-    <Link href={href} className="lkdv-post-author" aria-label={`${name}${meta ? ` — ${meta}` : ''}`}>
+  const label = `${name}${meta ? ` — ${meta}` : ''}`;
+  const body = (
+    <>
       {author?.avatar_url ? (
         // eslint-disable-next-line @next/next/no-img-element -- avatar distant
         <img className="lkdv-post-author-av" src={author.avatar_url} alt="" />
@@ -41,9 +49,23 @@ export function PostAuthorPill({ post }: { post: FeedPost }) {
               {Math.round(trust)}
             </span>
           ) : null}
+          {badge ? <span className="lkdv-post-author-badge">{badge}</span> : null}
         </span>
         <span className="lkdv-post-author-meta">{meta || timeAgo(post.created_at)}</span>
       </span>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button type="button" className="lkdv-post-author" aria-label={label} onClick={onClick}>
+        {body}
+      </button>
+    );
+  }
+  return (
+    <Link href={href} className="lkdv-post-author" aria-label={label}>
+      {body}
     </Link>
   );
 }

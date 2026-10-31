@@ -80,7 +80,7 @@ export function CommunityCardDrawer({ open, onClose, ariaLabel, strict = false, 
   const resetDrag = () => {
     const card = cardRef.current;
     if (!card) return;
-    card.style.transition = 'translate 0.24s cubic-bezier(0.32, 0.72, 0, 1)';
+    card.style.transition = 'translate 0.24s var(--motion-ease-standard)';
     card.style.translate = '';
   };
 

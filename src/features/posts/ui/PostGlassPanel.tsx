@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { isHorizontalSwipe, shouldDismiss } from '@/hooks/gestures';
+import { SHEET_EXIT_MS, prefersReducedMotion } from '@/design/motion';
 
 export interface PostGlassPanelProps {
   side: 'comments' | 'share';
@@ -32,7 +34,7 @@ export function PostGlassPanel({
   children,
 }: PostGlassPanelProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const pointerStart = useRef<{ x: number; y: number; t: number } | null>(null);
   const [gesture, setGesture] = useState(false);
   const [leaving, setLeaving] = useState(false);
   // Clic fantôme iOS : le bouton « Commenter » est à l'endroit exact où le
@@ -62,10 +64,7 @@ export function PostGlassPanel({
      parent le démonte. Sans mouvement réduit, fermeture immédiate. */
   const onClose = useCallback(() => {
     if (leaveTimer.current !== null) return;
-    const reduce =
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
+    if (prefersReducedMotion()) {
       onClosed();
       return;
     }
@@ -73,7 +72,7 @@ export function PostGlassPanel({
     leaveTimer.current = window.setTimeout(() => {
       leaveTimer.current = null;
       onClosed();
-    }, 260);
+    }, SHEET_EXIT_MS);
   }, [onClosed]);
 
   useEffect(
@@ -168,7 +167,7 @@ export function PostGlassPanel({
       onPointerDown={(event) => {
         event.stopPropagation();
         if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
-        pointerStart.current = { x: event.clientX, y: event.clientY };
+        pointerStart.current = { x: event.clientX, y: event.clientY, t: performance.now() };
         setGesture(true);
       }}
       onPointerMove={(event) => {
@@ -177,7 +176,7 @@ export function PostGlassPanel({
         if (!start) return;
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
-        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+        if (isHorizontalSwipe(dx, dy)) {
           pointerStart.current = null;
           setGesture(false);
           // Retour à la photo par le geste inverse ; l'autre sens ne fait rien.
@@ -194,7 +193,9 @@ export function PostGlassPanel({
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
         const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
-        if (dy > 70 && dy > Math.abs(dx) && (!body || body.scrollTop <= 0)) onClose();
+        // Même décision de fermeture que toutes les feuilles : seuil ou flick (hooks/gestures).
+        const elapsed = Math.max(1, performance.now() - start.t);
+        if (dy > 0 && dy > Math.abs(dx) && shouldDismiss(dy, (dy / elapsed) * 1000) && (!body || body.scrollTop <= 0)) onClose();
       }}
       onPointerCancel={(event) => {
         event.stopPropagation();

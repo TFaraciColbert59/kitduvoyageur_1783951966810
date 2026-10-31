@@ -82,16 +82,6 @@ vi.mock('@/components/Footer', () => ({ default: () => <footer /> }));
 vi.mock('@/components/shell/AppShell', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
-vi.mock('@/components/compte/HeroProfil', () => ({
-  default: ({ profile }: { profile: { first_name: string } }) => (
-    <div data-testid="hero-profil">{profile.first_name}</div>
-  ),
-}));
-vi.mock('@/components/compte/StatsBandeau', () => ({ default: () => null }));
-vi.mock('@/components/compte/MesCarnetsCard', () => ({ default: () => null }));
-vi.mock('@/components/compte/MesClubsCard', () => ({ default: () => null }));
-vi.mock('@/components/compte/BadgesCard', () => ({ default: () => null }));
-vi.mock('@/components/compte/ConstanceCard', () => ({ default: () => null }));
 vi.mock('@/components/profile/PublicProfileV2', () => ({
   default: ({ profile }: { profile: { first_name?: string; full_name?: string; handle?: string } }) => (
     <div data-testid="hero-profil">{profile.first_name || profile.full_name || profile.handle || 'profil'}</div>

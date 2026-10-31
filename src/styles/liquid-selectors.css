@@ -44,5 +44,5 @@
     0 10px 26px rgba(23, 43, 36, 0.2);
   --lg-ink: #172b24;
   --lg-on: #17402c;
-  --lg-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --lg-ease: var(--motion-ease-standard);
 }

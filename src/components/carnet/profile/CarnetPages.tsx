@@ -1,5 +1,6 @@
 'use client';
 
+import { isHorizontalSwipe } from '@/hooks/gestures';
 import React, { startTransition, useCallback, useMemo, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { SfIcon } from './sfIcons';
@@ -124,12 +125,10 @@ const CarnetTile = React.memo(function CarnetTile({ moment, index, more, onOpen 
   );
 });
 
-const SWIPE_MIN_PX = 40;
-
 /** Pas de page pour un geste horizontal : 1 (page suivante), -1, ou 0 (rien). */
 export function swipeStep(dx: number, dy: number): -1 | 0 | 1 {
   if (!Number.isFinite(dx) || !Number.isFinite(dy)) return 0;
-  if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) <= Math.abs(dy) * 1.2) return 0;
+  if (!isHorizontalSwipe(dx, dy)) return 0;
   return dx < 0 ? 1 : -1;
 }
 
