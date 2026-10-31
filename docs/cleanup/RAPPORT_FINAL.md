@@ -224,7 +224,9 @@ Les modules partagés touchés (`tailwind.config.cjs`, `GPXEngine`,
 | `build`, `lighthouse`, `bundle-analysis`, `build-ios` | ✅ vertes (PR #125 et dérivées) |
 | Gate 2.5 design governance | ✅ corrigée (#128) |
 | Audit credentials | ✅ corrigée (#128) |
-| `npm test` | ❌ 102 échecs **preexistants**, classés ; test HUB/Compas bloqués par le gel |
+| `npm test` | ❌ **preuves CI #128** : Gate 2.5 passe, puis `npm test` = **37 fichiers / 1096 tests verts**, échecs sur les contrats design préexistants ; tests HUB/Compas bloqués par le gel |
+| `visual-tests` | ❌ sur **toutes** les PRs, y compris #125 qui ne touche aucune UI → préexistant (snapshots) |
+| `Workers Builds` (Cloudflare) | ❌ sur toutes les PRs → job externe préexistant |
 | `database-gates` (pgTAP), `perf-explorer` (mesure 600 s) | ❌ dépendent d'une base/CI dediée, préexistants |
 
 Conclusion inchangée : chantier **PARTIEL**, jamais « terminé ». Les PRs sont
@@ -246,3 +248,14 @@ parallèle (elles partagent le commit #125 pour `npm ci`).
 5. **Ne pas retirer `@radix-ui/react-dialog`** (dialogue partagé) ni
    `@tailwindcss/typography` (plugin actif) : faux positifs de l'audit
    automatique.
+
+
+## Preuve d'isolement des zones gelées
+
+Union des fichiers modifiés par les six branches (`git diff --name-only
+origin/main..<branche>`, 55 fichiers) : **aucun chemin ne contient `hub` ou
+`compas`**. Les modules partagés modifiés (Communauté, `GPXEngine`,
+`AttachmentDrawer`, `tailwind.config.cjs`) ont été recherchés dans
+`src/features/hub`, `src/app/hub`, `src/features/compas`, `src/app/compas` :
+**0 import**. `recharts`, utilisé par `src/features/hub/components/menu/BudgetDonut.tsx`,
+a été conservé pour cette raison.
