@@ -7,6 +7,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import {
+  loadCartoStyle,
+  MAPTOOLKIT_LOGO,
+  MAPTOOLKIT_COPYRIGHT,
+  OSM_COPYRIGHT,
+} from '@/features/carto/maptoolkit';
+import '@/features/carto/carto.css';
 
 export type TraceLineString = { type: 'LineString'; coordinates: [number, number][] };
 
@@ -28,9 +35,16 @@ export function TraceMap({ geojson, height = 260 }: TraceMapProps) {
       try {
         const maplibregl = await import('maplibre-gl');
         if (cancelled || !containerRef.current) return;
+        let style: any;
+        try {
+          style = await loadCartoStyle({ base: 'hybrid', terrain3d: true });
+        } catch {
+          style = createMapStyle('satellite');
+        }
+        if (cancelled || !containerRef.current) return;
         const instance = new maplibregl.Map({
           container: containerRef.current,
-          style: createMapStyle('satellite'),
+          style: style,
           interactive: true,
           attributionControl: false,
         });
@@ -64,5 +78,20 @@ export function TraceMap({ geojson, height = 260 }: TraceMapProps) {
 
   if (error) return <div className="mattach-map-error">{error}</div>;
 
-  return <div className="mattach-map" ref={containerRef} style={{ height }} aria-label="Carte du tracé" />;
+  return (
+    <div className="mattach-map relative overflow-hidden" ref={containerRef} style={{ height }} aria-label="Carte du tracé">
+      <div
+        className="lkdv-map-attribution"
+        style={{ position: 'absolute', right: 6, bottom: 6, zIndex: 10 }}
+      >
+        <img src={MAPTOOLKIT_LOGO} alt="Maptoolkit" height={20} loading="lazy" />
+        <a href={MAPTOOLKIT_COPYRIGHT} target="_blank" rel="noopener noreferrer">
+          © Maptoolkit
+        </a>
+        <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer">
+          © Openstreetmap
+        </a>
+      </div>
+    </div>
+  );
 }

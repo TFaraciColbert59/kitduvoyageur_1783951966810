@@ -105,15 +105,19 @@ export function applyLkdvIdentity(style: StyleSpecification): StyleSpecification
 }
 
 /**
- * Insère la couche satellite **sous** toutes les couches du style, et atténue
- * les aplats pour laisser voir l'imagerie. Les sentiers, courbes, symboles et
- * POI restent au-dessus.
+ * Insère la couche satellite **sous** toutes les couches du style.
+ * Si `visible` est true (mode hybride), les aplats sont atténués pour laisser voir l'imagerie.
+ * Si `visible` est false (mode standard), la couche satellite est masquée (`layout.visibility: 'none'`).
+ * La bascule se fait ensuite à l'exécution via `setLayoutProperty` et `setPaintProperty`
+ * pour **ne jamais reconstruire le style** (ce qui perdrait le worker et les tuiles vectorielles).
  */
-export function withSatelliteBase(
+export function withSatelliteLayer(
   style: StyleSpecification,
   arcgisKey: string,
+  visible = false,
   vectorOpacity = 0.35,
 ): StyleSpecification {
+  if (style.sources['lkdv-satellite']) return style;
   const sources: StyleSpecification['sources'] = {
     ...style.sources,
     'lkdv-satellite': {
@@ -127,17 +131,20 @@ export function withSatelliteBase(
     },
   };
 
+  const layers = [...style.layers];
+  const index = layers.findIndex((layer) => layer.type === 'background');
   const satelliteLayer = {
     id: 'lkdv-satellite-raster',
     type: 'raster' as const,
     source: 'lkdv-satellite',
+    layout: { visibility: (visible ? 'visible' : 'none') as 'visible' | 'none' },
     paint: { 'raster-opacity': 1 },
   };
+  layers.splice(index + 1, 0, satelliteLayer as LayerSpecification);
 
-  // Sous le style : juste après la couche `background` (ou en tête).
-  const layers = [...style.layers];
-  const index = layers.findIndex((layer) => layer.type === 'background');
-  layers.splice(index + 1, 0, satelliteLayer);
+  if (!visible) {
+    return { ...style, sources, layers };
+  }
 
   const dimmed = layers.map((layer): LayerSpecification => {
     if (layer.id === 'lkdv-satellite-raster') return layer;
@@ -156,6 +163,19 @@ export function withSatelliteBase(
   });
 
   return { ...style, sources, layers: dimmed };
+}
+
+/**
+ * Insère la couche satellite **sous** toutes les couches du style, et atténue
+ * les aplats pour laisser voir l'imagerie. Les sentiers, courbes, symboles et
+ * POI restent au-dessus.
+ */
+export function withSatelliteBase(
+  style: StyleSpecification,
+  arcgisKey: string,
+  vectorOpacity = 0.35,
+): StyleSpecification {
+  return withSatelliteLayer(style, arcgisKey, true, vectorOpacity);
 }
 
 /**
@@ -229,8 +249,51 @@ export function buildCartoStyle(
   options: CartoOptions = DEFAULT_CARTO_OPTIONS,
 ): StyleSpecification {
   let style = applyLkdvIdentity(official);
-  if (options.base === 'hybrid' && options.arcgisKey) {
-    style = withSatelliteBase(style, options.arcgisKey, options.hybridVectorOpacity ?? 0.35);
+  if (options.arcgisKey) {
+    style = withSatelliteLayer(
+      style,
+      options.arcgisKey,
+      options.base === 'hybrid',
+      options.hybridVectorOpacity ?? 0.35,
+    );
   }
   return withTerrain(style, options.terrain3d);
+}
+
+/** Opacités d'origine des aplats, pour restaurer en sortie d'hybride. */
+export function fillOpacityOf(layer: LayerSpecification): number | undefined {
+  if (layer.type !== 'fill') return undefined;
+  const paint = layer.paint as Record<string, unknown> | undefined;
+  const value = paint?.['fill-opacity'];
+  return typeof value === 'number' ? value : undefined;
+}
+
+let officialStylePromise: Promise<StyleSpecification> | null = null;
+
+/** Charge le style officiel Maptoolkit Hiking 3D une seule fois (mis en cache mémoire). */
+export function loadOfficialStyle(): Promise<StyleSpecification> {
+  if (!officialStylePromise) {
+    officialStylePromise = fetch(MAPTOOLKIT_STYLE_3D, { cache: 'force-cache' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`style Maptoolkit ${response.status}`);
+        return response.json() as Promise<StyleSpecification>;
+      })
+      .catch((error) => {
+        officialStylePromise = null;
+        throw error;
+      });
+  }
+  return officialStylePromise;
+}
+
+/** Charge le style Maptoolkit résolu avec options LKDV (terrain, satellite ArcGIS, aplats). */
+export async function loadCartoStyle(
+  options: Partial<CartoOptions> = {},
+): Promise<StyleSpecification> {
+  const official = await loadOfficialStyle();
+  return buildCartoStyleResolved(official, {
+    ...DEFAULT_CARTO_OPTIONS,
+    arcgisKey: process.env.NEXT_PUBLIC_ARCGIS_API_KEY,
+    ...options,
+  });
 }

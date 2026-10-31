@@ -1,20 +1,20 @@
 'use client';
 import Icon from '@/components/ui/Icon';
-import React, { useEffect, useRef, useState } from 'react';
-import 'leaflet/dist/leaflet.css';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import { CompassIcon as Compass } from '@/components/icons/compass';
 import { NavigationIcon as Navigation } from '@/components/icons/navigation';
 import { LayersIcon as Layers } from '@/components/icons/layers';
 import { Minimize2Icon as Minimize2 } from '@/components/icons/minimize-2';
 import { DownloadIcon as DownloadAnimated } from '@/components/icons/download';
 import { Maximize2Icon as Maximize2Animated } from '@/components/icons/maximize-2';
-import { Skeleton } from '@/components/ui/Skeleton';
 import { Sheet } from '@/components/ui/Sheet';
 import { Card, Chip, EmptyState, IconButton } from '@/components/ui';
 import { formatDistanceKm } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
 import type { MapTrail } from '@/components/explorer/types';
-import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import LKDVMap from '@/features/carto/LKDVMap';
+import '@/features/carto/carto.css';
 
 interface DepartMapProps {
   trail: MapTrail | null;
@@ -34,7 +34,7 @@ function extractCoords(geojson: any): [number, number][][] {
   if (g.type === 'LineString') {
     const pts = (g.coordinates as number[][])
       .filter((pt) => pt.length >= 2 && isFinite(pt[0]) && isFinite(pt[1]))
-      .map((pt) => [pt[1], pt[0]] as [number, number]);
+      .map((pt) => [pt[0], pt[1]] as [number, number]);
     return pts.length > 0 ? [pts] : [];
   }
   if (g.type === 'MultiLineString') {
@@ -42,7 +42,7 @@ function extractCoords(geojson: any): [number, number][][] {
       .map((line) =>
         line
           .filter((pt) => pt.length >= 2 && isFinite(pt[0]) && isFinite(pt[1]))
-          .map((pt) => [pt[1], pt[0]] as [number, number])
+          .map((pt) => [pt[0], pt[1]] as [number, number])
       )
       .filter((line) => line.length > 0);
   }
@@ -50,137 +50,74 @@ function extractCoords(geojson: any): [number, number][][] {
 }
 
 export function DepartMap({ trail, height = '240px', className, embedded = false }: DepartMapProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-  const polyRef = useRef<any>(null);
-  const tileLayerRef = useRef<any>(null);
-
-  const [loaded, setLoaded] = useState(false);
+  const mapRef = useRef<MapLibreMap | null>(null);
   const [tileMode, setTileMode] = useState<TileMode>('topo');
   const [showTilePicker, setShowTilePicker] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isOfflineSaved, setIsOfflineSaved] = useState(false);
 
-  useEffect(() => {
-    if (!trail) return;
-    let cancelled = false;
+  const lines = useMemo(() => extractCoords(trail?.geojson), [trail?.geojson]);
+  const startLngLat: [number, number] = useMemo(() => {
+    if (lines[0]?.[0]) return lines[0][0];
+    return [trail?.lng || 6.86, trail?.lat || 45.83];
+  }, [lines, trail?.lat, trail?.lng]);
 
-    async function initMap() {
-      if (!containerRef.current || mapRef.current) return;
-
-      const L = (await import('leaflet')).default;
-      if (cancelled || !containerRef.current) return;
-
-      const lines = extractCoords(trail?.geojson);
-      const startPt: [number, number] = lines[0]?.[0] || [trail?.lat || 45.83, trail?.lng || 6.86];
-
-      const map = L.map(containerRef.current, {
-        zoomControl: false,
-        attributionControl: false,
-        center: startPt,
-        zoom: 12,
-      });
-
-      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
-      L.control.attribution({ prefix: false }).addTo(map);
-      const initialTiles = leafletTiles(tileMode);
-      const tileLayer = L.tileLayer(initialTiles.url, { ...initialTiles.options, maxZoom: 18 }).addTo(map);
-
-      tileLayerRef.current = tileLayer;
-
-      // Tracé principal GPX
-      if (lines.length > 0) {
-        const poly = L.polyline(lines, {
-          color: 'var(--lkv-primary)',
-          weight: 4,
-          opacity: 0.9,
-          lineJoin: 'round',
-        }).addTo(map);
-
-        polyRef.current = poly;
-        try {
-          map.fitBounds(poly.getBounds(), { padding: [24, 24] });
-        } catch {}
-
-        // Marqueurs Départ / Arrivée
-        const startIcon = L.divIcon({
-          className: 'custom-pin-start',
-          html: `<div style="background-color:var(--lkv-primary-hover);width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
-          iconSize: [12, 12],
-          iconAnchor: [6, 6],
-        });
-        L.marker(lines[0][0], { icon: startIcon })
-          .addTo(map)
-          .bindPopup('<strong>Point de départ</strong>');
-
-        const lastLine = lines[lines.length - 1];
-        const endPt = lastLine[lastLine.length - 1];
-        const endIcon = L.divIcon({
-          className: 'custom-pin-end',
-          html: `<div style="background-color:var(--lkv-danger);width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
-          iconSize: [12, 12],
-          iconAnchor: [6, 6],
-        });
-        L.marker(endPt, { icon: endIcon }).addTo(map).bindPopup('<strong>Arrivée</strong>');
-      } else {
-        // Point unique si pas de ligne
-        const pinIcon = L.divIcon({
-          className: 'custom-pin-center',
-          html: `<div style="background-color:var(--lkv-primary);width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>`,
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
-        });
-        L.marker(startPt, { icon: pinIcon })
-          .addTo(map)
-          .bindPopup(`<strong>${trail?.name || 'Point de départ'}</strong>`);
-      }
-
+  const handleReady = useCallback(
+    async (map: MapLibreMap) => {
       mapRef.current = map;
-      setLoaded(true);
+      if (lines.length === 0) return;
 
-      // Force recalcul dimensions
-      setTimeout(() => {
-        if (mapRef.current) {
-          mapRef.current.invalidateSize();
-          if (polyRef.current) {
-            try {
-              mapRef.current.fitBounds(polyRef.current.getBounds(), { padding: [24, 24] });
-            } catch {}
-          }
-        }
-      }, 100);
+      const maplibregl = await import('maplibre-gl');
+      const allCoords = lines.flat();
 
-      setTimeout(() => {
-        if (mapRef.current) {
-          mapRef.current.invalidateSize();
-        }
-      }, 350);
-
-      // Auto-refresh layout on container resize
-      const ro = new ResizeObserver(() => {
-        if (mapRef.current) {
-          mapRef.current.invalidateSize();
-        }
-      });
-
-      if (containerRef.current) {
-        ro.observe(containerRef.current);
+      if (!map.getSource('depart-track-source')) {
+        map.addSource('depart-track-source', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: {
+              type: lines.length > 1 ? 'MultiLineString' : 'LineString',
+              coordinates: lines.length > 1 ? lines : lines[0],
+            },
+            properties: {},
+          },
+        });
       }
-    }
 
-    initMap();
-
-    return () => {
-      cancelled = true;
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
+      if (!map.getLayer('depart-track-casing')) {
+        map.addLayer({
+          id: 'depart-track-casing',
+          type: 'line',
+          source: 'depart-track-source',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#FFFFFF', 'line-width': 7, 'line-opacity': 0.95 },
+        });
       }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trail]);
 
-  // État vide si aucun tracé
+      if (!map.getLayer('depart-track-main')) {
+        map.addLayer({
+          id: 'depart-track-main',
+          type: 'line',
+          source: 'depart-track-source',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#17402C', 'line-width': 4.5, 'line-opacity': 1.0 },
+        });
+      }
+
+      try {
+        const bounds = allCoords.reduce(
+          (b, c) => b.extend(c as [number, number]),
+          new maplibregl.LngLatBounds(
+            allCoords[0] as [number, number],
+            allCoords[0] as [number, number],
+          ),
+        );
+        map.fitBounds(bounds, { padding: 24, duration: 0 });
+      } catch {}
+    },
+    [lines],
+  );
+
   if (!trail) {
     return (
       <Card className="p-5 text-center">
@@ -200,23 +137,27 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
     );
   }
 
-  const handleTileChange = async (mode: TileMode) => {
+  const handleTileChange = (mode: TileMode) => {
     setTileMode(mode);
     setShowTilePicker(false);
-    if (!mapRef.current || !tileLayerRef.current) return;
-    // Taille de tuile différente selon le fond (512 ou 256 px) : la couche est remplacée.
-    const L = (await import('leaflet')).default;
-    const next = leafletTiles(mode);
-    mapRef.current.removeLayer(tileLayerRef.current);
-    tileLayerRef.current = L.tileLayer(next.url, { ...next.options, maxZoom: 18 }).addTo(mapRef.current);
   };
 
-  const handleRecenter = () => {
-    if (!mapRef.current) return;
-    if (polyRef.current) {
-      mapRef.current.fitBounds(polyRef.current.getBounds(), { padding: [24, 24] });
-    } else if (trail?.lat && trail?.lng) {
-      mapRef.current.setView([trail.lat, trail.lng], 12);
+  const handleRecenter = async () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const allCoords = lines.flat();
+    if (allCoords.length > 0) {
+      const maplibregl = await import('maplibre-gl');
+      const bounds = allCoords.reduce(
+        (b, c) => b.extend(c as [number, number]),
+        new maplibregl.LngLatBounds(
+          allCoords[0] as [number, number],
+          allCoords[0] as [number, number],
+        ),
+      );
+      map.fitBounds(bounds, { padding: 24, duration: 400 });
+    } else {
+      map.easeTo({ center: startLngLat, zoom: 12, duration: 400 });
     }
   };
 
@@ -258,110 +199,127 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
         {/* Contrôles d'action rapide Liquid Glass */}
         <div className="flex items-center gap-1.5 shrink-0">
           <IconButton
-            variant="glass"
-            onClick={handleDownloadGPX}
-            className="text-[color:var(--lkv-text-primary)]"
-            title="Exporter le tracé"
-            aria-label="Exporter le tracé"
+            size="sm"
+            variant="ghost"
+            className="rounded-full bg-white/50 backdrop-blur-xs text-[color:var(--lkv-text-primary)] hover:bg-white/70"
+            onClick={handleRecenter}
+            aria-label="Recentrer sur le départ"
+            title="Recentrer"
           >
-            {isOfflineSaved ? (
-              <Icon name="check" size={14} className="text-[var(--lkv-forest-600-ink)]" />
-            ) : (
-              <DownloadAnimated size={14} />
-            )}
+            <Navigation size={14} />
           </IconButton>
+
+          <IconButton
+            size="sm"
+            variant="ghost"
+            className={cn(
+              "rounded-full bg-white/50 backdrop-blur-xs text-[color:var(--lkv-text-primary)] hover:bg-white/70",
+              showTilePicker && "bg-white text-[var(--lkv-primary)] shadow-xs"
+            )}
+            onClick={() => setShowTilePicker(!showTilePicker)}
+            aria-label="Changer de fond de carte"
+            title="Fonds de carte"
+          >
+            <Layers size={14} />
+          </IconButton>
+
+          <IconButton
+            size="sm"
+            variant="ghost"
+            className={cn(
+              "rounded-full bg-white/50 backdrop-blur-xs text-[color:var(--lkv-text-primary)] hover:bg-white/70",
+              isOfflineSaved && "text-[var(--lkv-primary-hover)]"
+            )}
+            onClick={handleDownloadGPX}
+            aria-label="Télécharger le fichier trace GPX/GeoJSON"
+            title="Sauvegarder la trace"
+          >
+            <DownloadAnimated size={14} />
+          </IconButton>
+
           {!embedded && (
             <IconButton
-              variant="glass"
-              onClick={() => setIsFullscreen((v) => !v)}
-              className="text-[color:var(--lkv-text-primary)]"
-              title={isFullscreen ? 'Réduire' : 'Plein écran'}
-              aria-label={
-                isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'
-              }
+              size="sm"
+              variant="ghost"
+              className="rounded-full bg-white/50 backdrop-blur-xs text-[color:var(--lkv-text-primary)] hover:bg-white/70"
+              onClick={() => setIsFullscreen(true)}
+              aria-label="Agrandir la carte en plein écran"
+              title="Plein écran"
             >
-              {isFullscreen ? <Minimize2 size={14} /> : <Maximize2Animated size={14} />}
+              <Maximize2Animated size={14} />
             </IconButton>
           )}
         </div>
       </div>
 
-      {/* ════ ZONE DE RENDU LEAFLET AVEC HAUTEUR PIXEL STRICTE GARANTIE ════ */}
-      <div
-        className="relative w-full overflow-hidden"
-        style={{ height: actualHeight, minHeight: actualHeight }}
-      >
-        {!loaded && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/5">
-            <Skeleton className="w-full h-full rounded-none" />
-          </div>
-        )}
-        <div
-          ref={containerRef}
-          className="w-full h-full"
-          style={{ height: actualHeight, minHeight: actualHeight }}
+      {/* ════ ZONE CARTE ════ */}
+      <div className="relative w-full overflow-hidden" style={{ height: actualHeight }}>
+        <LKDVMap
+          center={startLngLat}
+          zoom={12}
+          base={tileMode === 'satellite' ? 'hybrid' : 'maptoolkit'}
+          terrain3d={true}
+          interactive={true}
+          onReady={handleReady}
         />
 
-        {/* Boutons flottants de contrôle Liquid Glass */}
-        <div className="absolute right-2.5 top-2.5 z-[var(--z-fab)] flex flex-col gap-1.5">
-          <IconButton
-            variant="glass"
-            onClick={handleRecenter}
-            className="text-[color:var(--lkv-text-primary)] shadow-md"
-            title="Recentrer le tracé"
-            aria-label="Recentrer le tracé"
-          >
-            <Navigation size={15} />
-          </IconButton>
-          <IconButton
-            variant="glass"
-            onClick={() => setShowTilePicker((v) => !v)}
-            className="text-[color:var(--lkv-text-primary)] shadow-md"
-            title="Changer de fond de carte"
-            aria-label="Changer de fond de carte"
-            aria-expanded={showTilePicker}
-          >
-            <Layers size={15} />
-          </IconButton>
-        </div>
-
-        {/* Sélecteur de tuiles */}
+        {/* ── Menu Calques Déroulant ── */}
         {showTilePicker && (
-          <div className="absolute right-14 top-2.5 z-[var(--z-drawer)] flex flex-col gap-1 rounded-2xl border border-black/10 bg-white/95 p-1.5 text-[11px] font-semibold text-[color:var(--lkv-text-primary)] shadow-xl">
+          <div className="absolute top-3 right-3 z-30 flex flex-col gap-1.5 p-2 bg-white/90 backdrop-blur-md rounded-2xl border border-white/60 shadow-lg animate-in fade-in zoom-in-95 duration-150">
+            <span className="text-[10px] font-bold text-[color:var(--lkv-text-muted)] px-1 uppercase tracking-wider">
+              Fond de carte
+            </span>
             <Chip
               selected={tileMode === 'topo'}
               onClick={() => handleTileChange('topo')}
-              className="justify-start text-left"
+              className="text-xs justify-start"
             >
-              IGN Topo
-            </Chip>
-            <Chip
-              selected={tileMode === 'osm'}
-              onClick={() => handleTileChange('osm')}
-              className="justify-start text-left"
-            >
-              OpenStreetMap
+              Maptoolkit Hiking
             </Chip>
             <Chip
               selected={tileMode === 'satellite'}
               onClick={() => handleTileChange('satellite')}
-              className="justify-start text-left"
+              className="text-xs justify-start"
             >
-              Satellite
+              Hybride Satellite HD
+            </Chip>
+            <Chip
+              selected={tileMode === 'osm'}
+              onClick={() => handleTileChange('osm')}
+              className="text-xs justify-start"
+            >
+              Plan Vectoriel
             </Chip>
           </div>
         )}
       </div>
 
+      {/* ════ MODALE PLEIN ÉCRAN ════ */}
       {!embedded && (
         <Sheet
           open={isFullscreen}
           onOpenChange={setIsFullscreen}
-          title="Carte du tracé"
+          title={trail.name}
+          description="Aperçu immersif du tracé GPX de votre départ"
         >
-          <DepartMap trail={trail} embedded />
+          <div className="relative w-full h-[75dvh] flex flex-col rounded-3xl overflow-hidden border border-white/40 shadow-2xl">
+            <div className="absolute top-3 right-3 z-30">
+              <IconButton
+                size="sm"
+                variant="secondary"
+                className="rounded-full bg-white/80 backdrop-blur-md shadow-md"
+                onClick={() => setIsFullscreen(false)}
+                aria-label="Fermer la vue plein écran"
+              >
+                <Minimize2 size={16} />
+              </IconButton>
+            </div>
+            <DepartMap trail={trail} height="100%" embedded={true} />
+          </div>
         </Sheet>
       )}
     </Card>
   );
 }
+
+export default DepartMap;

@@ -7,6 +7,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, CalendarDays, Settings2, Trash2, ImagePlus, Loader2, WifiOff, PenLine, Route, Type, AlignLeft, Check, Mountain } from 'lucide-react';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import {
+  loadCartoStyle,
+  MAPTOOLKIT_LOGO,
+  MAPTOOLKIT_COPYRIGHT,
+  OSM_COPYRIGHT,
+} from '@/features/carto/maptoolkit';
+import '@/features/carto/carto.css';
 import { createClient } from '@/lib/supabase/client';
 import { createDefaults, createSchemas, type CarnetFormValues } from './engine/createSchemas';
 import { CommunityFormDrawer } from './CommunityFormDrawer';
@@ -146,32 +153,50 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
   useEffect(() => {
     if (!open || !mapNode.current || mapRef.current) return;
     setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
-    const map = new MapLibreMap({
-      container: mapNode.current,
-      style: createMapStyle('topo'),
-      center: DEFAULT_CENTER,
-      zoom: 6,
-      minZoom: 2,
-      maxZoom: 17,
-      attributionControl: false,
-      renderWorldCopies: false,
-    });
-    mapRef.current = map;
-    map.on('load', () => {
-      const round = { 'line-cap': 'round', 'line-join': 'round' } as const;
-      map.addSource('carnet-trace', { type: 'geojson', data: EMPTY_FC as never });
-      map.addSource('carnet-live', { type: 'geojson', data: EMPTY_FC as never });
-      map.addSource('carnet-ends', { type: 'geojson', data: EMPTY_FC as never });
-      map.addLayer({ id: 'carnet-trace-casing', type: 'line', source: 'carnet-trace', layout: round, paint: { 'line-color': 'rgba(255,255,255,.95)', 'line-width': 8 } });
-      map.addLayer({ id: 'carnet-trace-line', type: 'line', source: 'carnet-trace', filter: ['==', ['get', 'mode'], 'chemin'], layout: round, paint: { 'line-color': '#17402C', 'line-width': 4 } });
-      map.addLayer({ id: 'carnet-trace-free', type: 'line', source: 'carnet-trace', filter: ['==', ['get', 'mode'], 'libre'], layout: round, paint: { 'line-color': '#A05A3C', 'line-width': 3.4, 'line-dasharray': [1.2, 1.4] } });
-      map.addLayer({ id: 'carnet-live-casing', type: 'line', source: 'carnet-live', layout: round, paint: { 'line-color': 'rgba(255,255,255,.9)', 'line-width': 7 } });
-      map.addLayer({ id: 'carnet-live-snapped', type: 'line', source: 'carnet-live', filter: ['==', ['get', 'kind'], 'snapped'], layout: round, paint: { 'line-color': '#2E7D5B', 'line-width': 4 } });
-      map.addLayer({ id: 'carnet-live-pending', type: 'line', source: 'carnet-live', filter: ['==', ['get', 'kind'], 'pending'], layout: round, paint: { 'line-color': '#17402C', 'line-width': 2.6, 'line-opacity': 0.55, 'line-dasharray': [0.6, 1.8] } });
-      map.addLayer({ id: 'carnet-ends', type: 'circle', source: 'carnet-ends', paint: { 'circle-radius': 6.5, 'circle-color': ['match', ['get', 'kind'], 'start', '#ffffff', '#17402C'], 'circle-stroke-color': ['match', ['get', 'kind'], 'start', '#17402C', '#ffffff'], 'circle-stroke-width': 3 } });
-      setMapReady(true);
-    });
-    return () => { map.remove(); mapRef.current = null; setMapReady(false); };
+    let cancelled = false;
+
+    void (async () => {
+      let initialStyle: any;
+      try {
+        initialStyle = await loadCartoStyle({ base: 'maptoolkit', terrain3d: true });
+      } catch {
+        initialStyle = createMapStyle('topo');
+      }
+      if (cancelled || !mapNode.current) return;
+
+      const map = new MapLibreMap({
+        container: mapNode.current,
+        style: initialStyle,
+        center: DEFAULT_CENTER,
+        zoom: 6,
+        minZoom: 2,
+        maxZoom: 17,
+        attributionControl: false,
+        renderWorldCopies: false,
+      });
+      mapRef.current = map;
+      map.on('load', () => {
+        const round = { 'line-cap': 'round', 'line-join': 'round' } as const;
+        map.addSource('carnet-trace', { type: 'geojson', data: EMPTY_FC as never });
+        map.addSource('carnet-live', { type: 'geojson', data: EMPTY_FC as never });
+        map.addSource('carnet-ends', { type: 'geojson', data: EMPTY_FC as never });
+        map.addLayer({ id: 'carnet-trace-casing', type: 'line', source: 'carnet-trace', layout: round, paint: { 'line-color': 'rgba(255,255,255,.95)', 'line-width': 8 } });
+        map.addLayer({ id: 'carnet-trace-line', type: 'line', source: 'carnet-trace', filter: ['==', ['get', 'mode'], 'chemin'], layout: round, paint: { 'line-color': '#17402C', 'line-width': 4 } });
+        map.addLayer({ id: 'carnet-trace-free', type: 'line', source: 'carnet-trace', filter: ['==', ['get', 'mode'], 'libre'], layout: round, paint: { 'line-color': '#A05A3C', 'line-width': 3.4, 'line-dasharray': [1.2, 1.4] } });
+        map.addLayer({ id: 'carnet-live-casing', type: 'line', source: 'carnet-live', layout: round, paint: { 'line-color': 'rgba(255,255,255,.9)', 'line-width': 7 } });
+        map.addLayer({ id: 'carnet-live-snapped', type: 'line', source: 'carnet-live', filter: ['==', ['get', 'kind'], 'snapped'], layout: round, paint: { 'line-color': '#2E7D5B', 'line-width': 4 } });
+        map.addLayer({ id: 'carnet-live-pending', type: 'line', source: 'carnet-live', filter: ['==', ['get', 'kind'], 'pending'], layout: round, paint: { 'line-color': '#17402C', 'line-width': 2.6, 'line-opacity': 0.55, 'line-dasharray': [0.6, 1.8] } });
+        map.addLayer({ id: 'carnet-ends', type: 'circle', source: 'carnet-ends', paint: { 'circle-radius': 6.5, 'circle-color': ['match', ['get', 'kind'], 'start', '#ffffff', '#17402C'], 'circle-stroke-color': ['match', ['get', 'kind'], 'start', '#17402C', '#ffffff'], 'circle-stroke-width': 3 } });
+        setMapReady(true);
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+      mapRef.current?.remove();
+      mapRef.current = null;
+      setMapReady(false);
+    };
   }, [open]);
 
   // Tracé validé : un trait par tronçon (plein = sur les chemins, tirets = libre), départ et arrivée.
@@ -579,6 +604,18 @@ export function CarnetMapDrawer({ open, onClose, user, onCreated }: {
           onWheel={onDrawWheel}
           aria-hidden="true"
         />
+        <div
+          className="lkdv-map-attribution"
+          style={{ position: 'absolute', right: 8, bottom: 8, zIndex: 10 }}
+        >
+          <img src={MAPTOOLKIT_LOGO} alt="Maptoolkit" height={24} loading="lazy" />
+          <a href={MAPTOOLKIT_COPYRIGHT} target="_blank" rel="noopener noreferrer">
+            © Maptoolkit
+          </a>
+          <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer">
+            © Openstreetmap
+          </a>
+        </div>
         <div className="lkdv-map-fade" aria-hidden="true" />
       </div>
       {publishDays ? null : (

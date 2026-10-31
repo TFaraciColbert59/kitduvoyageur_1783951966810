@@ -23,6 +23,13 @@ import { useToast } from '@/contexts/ToastContext';
 import { useDragDismiss } from '@/hooks/gestures';
 import { SubCapsuleTabs } from '@/components/ui/CapsuleTabs';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import {
+  loadCartoStyle,
+  MAPTOOLKIT_LOGO,
+  MAPTOOLKIT_COPYRIGHT,
+  OSM_COPYRIGHT,
+} from '@/features/carto/maptoolkit';
+import '@/features/carto/carto.css';
 import { createClient } from '@/lib/supabase/client';
 import type { KitSheetData } from '@/features/kits/types';
 
@@ -359,11 +366,17 @@ function FreedomKitUsageMapFullDrawer({
     let mapInstance: any = null;
     let isCancelled = false;
 
-    import('maplibre-gl').then(({ Map, Marker }) => {
+    import('maplibre-gl').then(async ({ Map, Marker }) => {
       if (isCancelled || !mapContainerRef.current) return;
 
       try {
-        const style = createMapStyle('satellite');
+        let style: any;
+        try {
+          style = await loadCartoStyle({ base: 'hybrid', terrain3d: true });
+        } catch {
+          style = createMapStyle('satellite');
+        }
+        if (isCancelled || !mapContainerRef.current) return;
         mapInstance = new Map({
           container: mapContainerRef.current,
           style: style,
@@ -429,6 +442,23 @@ function FreedomKitUsageMapFullDrawer({
         {/* Vue monde plein drawer avec UNIQUEMENT les points d'utilisation du kit */}
         <div className="relative flex-1 w-full h-full overflow-hidden bg-[#15231c]">
           <div ref={mapContainerRef} className="size-full" />
+          <div
+            className="lkdv-map-attribution"
+            style={{ position: 'absolute', right: 8, bottom: 8, zIndex: 10 }}
+          >
+            <img src={MAPTOOLKIT_LOGO} alt="Maptoolkit" height={24} loading="lazy" />
+            <a href={MAPTOOLKIT_COPYRIGHT} target="_blank" rel="noopener noreferrer">
+              © Maptoolkit
+            </a>
+            <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer">
+              © Openstreetmap
+            </a>
+            {Boolean(process.env.NEXT_PUBLIC_ARCGIS_API_KEY) ? (
+              <a href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">
+                Powered by Esri
+              </a>
+            ) : null}
+          </div>
 
           {/* Points fallback si WebGL indisponible (uniquement les points, aucun texte) */}
           {!mapLoaded && (

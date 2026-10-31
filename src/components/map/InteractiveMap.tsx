@@ -24,6 +24,12 @@ import {
   Tabs,
 } from '@/components/ui';
 import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import {
+  MAPTOOLKIT_LOGO,
+  MAPTOOLKIT_COPYRIGHT,
+  OSM_COPYRIGHT,
+} from '@/features/carto/maptoolkit';
+import '@/features/carto/carto.css';
 
 interface MapTrail {
   id: string;
@@ -1131,6 +1137,24 @@ const LINK_ICON =
             </Card>
           </div>
         )}
+
+        <div
+          className="lkdv-map-attribution"
+          style={{ position: 'absolute', right: 8, bottom: 8, zIndex: 10 }}
+        >
+          <img src={MAPTOOLKIT_LOGO} alt="Maptoolkit" height={24} loading="lazy" />
+          <a href={MAPTOOLKIT_COPYRIGHT} target="_blank" rel="noopener noreferrer">
+            © Maptoolkit
+          </a>
+          <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer">
+            © Openstreetmap
+          </a>
+          {Boolean(process.env.NEXT_PUBLIC_ARCGIS_API_KEY) ? (
+            <a href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">
+              Powered by Esri
+            </a>
+          ) : null}
+        </div>
       </div>
     </div>
   );

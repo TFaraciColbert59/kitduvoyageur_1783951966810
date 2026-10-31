@@ -24,6 +24,14 @@ import {
   traceStyleForRoute,
 } from './traceStyles';
 import { OPENFREEMAP_STYLE_URL } from '@/components/map/engine/standardBase';
+import {
+  loadOfficialStyle,
+  buildCartoStyleResolved,
+  MAPTOOLKIT_LOGO,
+  MAPTOOLKIT_COPYRIGHT,
+  OSM_COPYRIGHT,
+} from '@/features/carto/maptoolkit';
+import '@/features/carto/carto.css';
 
 export interface MapPin {
   id: string;
@@ -119,36 +127,51 @@ export default function MapStage({
     if (!containerRef.current || mapRef.current) return;
     setReady(false);
     setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+    let cancelled = false;
 
-    let map: MapLibreMap;
-    try {
-      map = new MapLibreMap({
-        container: containerRef.current,
-        style: OPENFREEMAP_STYLE_URL,
-        center: Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1]) ? center : [2.35, 48.85],
-        zoom: Number.isFinite(zoom) ? zoom : 1.6,
-        attributionControl: false,
-        dragRotate: true,
-        pitchWithRotate: true,
-        fadeDuration: 120,
-        maxPitch: 70,
-      });
-      mapRef.current = map;
-    } catch (caught) {
-      console.error('[MapStage] MapLibre creation caught:', caught);
-      return;
-    }
-    if (
-      process.env.NODE_ENV !== 'production' ||
-      process.env.NEXT_PUBLIC_EXPLORER_SCENES === '1' ||
-      typeof window !== 'undefined' &&
-        (Boolean((window as unknown as { __xpStore?: unknown }).__xpStore) ||
-          Boolean(document.querySelector('.xp-root[data-scene]')?.getAttribute('data-scene')))
-    ) {
-      (window as unknown as { __xpMap?: MapLibreMap }).__xpMap = map;
-    }
+    void (async () => {
+      let initialStyle: any = OPENFREEMAP_STYLE_URL;
+      try {
+        const official = await loadOfficialStyle();
+        initialStyle = await buildCartoStyleResolved(official, {
+          base: mapBaseStyle === 'satellite' ? 'hybrid' : 'maptoolkit',
+          terrain3d: mapBaseStyle === 'relief' || !mapBaseStyle,
+          arcgisKey: process.env.NEXT_PUBLIC_ARCGIS_API_KEY,
+        });
+      } catch (err) {
+        console.warn('[MapStage] Maptoolkit style fallback to OpenFreeMap:', err);
+      }
+      if (cancelled || !containerRef.current || mapRef.current) return;
 
-    map.on('load', () => {
+      let map: MapLibreMap;
+      try {
+        map = new MapLibreMap({
+          container: containerRef.current,
+          style: initialStyle,
+          center: Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1]) ? center : [2.35, 48.85],
+          zoom: Number.isFinite(zoom) ? zoom : 1.6,
+          attributionControl: false,
+          dragRotate: true,
+          pitchWithRotate: true,
+          fadeDuration: 120,
+          maxPitch: 70,
+        });
+        mapRef.current = map;
+      } catch (caught) {
+        console.error('[MapStage] MapLibre creation caught:', caught);
+        return;
+      }
+      if (
+        process.env.NODE_ENV !== 'production' ||
+        process.env.NEXT_PUBLIC_EXPLORER_SCENES === '1' ||
+        typeof window !== 'undefined' &&
+          (Boolean((window as unknown as { __xpStore?: unknown }).__xpStore) ||
+            Boolean(document.querySelector('.xp-root[data-scene]')?.getAttribute('data-scene')))
+      ) {
+        (window as unknown as { __xpMap?: MapLibreMap }).__xpMap = map;
+      }
+
+      map.on('load', () => {
       map.setProjection({ type: 'globe' });
       try {
         map.setSky({
@@ -345,17 +368,19 @@ export default function MapStage({
       map.on('click', 'xp-regions-fill', handleRegion as never);
     });
 
-    map.on('moveend', () => {
-      if (suppressMoveEnd.current) return;
-      const c = map.getCenter();
-      const z = map.getZoom();
-      movedToRef.current = `${level}:${c.lng.toFixed(3)}:${c.lat.toFixed(3)}`;
-      onMoveEnd?.([c.lng, c.lat], z);
-    });
+      map.on('moveend', () => {
+        if (suppressMoveEnd.current) return;
+        const c = map.getCenter();
+        const z = map.getZoom();
+        movedToRef.current = `${level}:${c.lng.toFixed(3)}:${c.lat.toFixed(3)}`;
+        onMoveEnd?.([c.lng, c.lat], z);
+      });
+    })();
 
     return () => {
+      cancelled = true;
       if (orbitRef.current) window.clearInterval(orbitRef.current);
-      map.remove();
+      mapRef.current?.remove();
       mapRef.current = null;
       setReady(false);
     };
@@ -457,6 +482,20 @@ export default function MapStage({
     const isSat = mapBaseStyle === 'satellite';
     const isRelief = mapBaseStyle === 'relief' || !mapBaseStyle;
 
+    if (map.getLayer('lkdv-satellite-raster')) {
+      map.setLayoutProperty('lkdv-satellite-raster', 'visibility', isSat ? 'visible' : 'none');
+      const style = map.getStyle();
+      if (style?.layers) {
+        for (const layer of style.layers) {
+          if (layer.id === 'lkdv-satellite-raster') continue;
+          if (layer.type === 'fill') {
+            map.setPaintProperty(layer.id, 'fill-opacity', isSat ? 0.35 : 1);
+          } else if (layer.type === 'background') {
+            map.setPaintProperty(layer.id, 'background-opacity', isSat ? 0 : 1);
+          }
+        }
+      }
+    }
     if (map.getLayer('xp-satellite-layer')) {
       map.setLayoutProperty('xp-satellite-layer', 'visibility', isSat ? 'visible' : 'none');
     }
@@ -474,8 +513,13 @@ export default function MapStage({
         );
       }
       try {
+        const demSource = map.getSource('rgb-tiles')
+          ? 'rgb-tiles'
+          : map.getSource('xp-terrain')
+            ? 'xp-terrain'
+            : null;
         map.setTerrain(
-          showTerrain ? { source: 'xp-terrain', exaggeration: 1.3 } : null,
+          showTerrain && demSource ? { source: demSource, exaggeration: 1.2 } : null,
         );
       } catch {
         /* DEM indisponible */
@@ -766,6 +810,30 @@ export default function MapStage({
             </span>
           </button>
         ))}
+      </div>
+      {/* Attribution Maptoolkit & OpenStreetMap & Esri (obligatoire TOS §8) */}
+      <div
+        className="lkdv-map-attribution"
+        data-testid="xp-attribution"
+        style={{
+          position: 'absolute',
+          right: 8,
+          bottom: sheetHeightPx + 8,
+          zIndex: 10,
+        }}
+      >
+        <img src={MAPTOOLKIT_LOGO} alt="Maptoolkit" height={24} loading="lazy" />
+        <a href={MAPTOOLKIT_COPYRIGHT} target="_blank" rel="noopener noreferrer">
+          © Maptoolkit
+        </a>
+        <a href={OSM_COPYRIGHT} target="_blank" rel="noopener noreferrer">
+          © Openstreetmap
+        </a>
+        {mapBaseStyle === 'satellite' && Boolean(process.env.NEXT_PUBLIC_ARCGIS_API_KEY) ? (
+          <a href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">
+            Powered by Esri
+          </a>
+        ) : null}
       </div>
     </div>
   );

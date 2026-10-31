@@ -107,6 +107,14 @@ describe('carto · construction du style', () => {
     expect(built.layers.length).toBe(official.layers.length + 1);
     expect(built.layers.some((layer) => layer.id === 'lkdv-satellite-raster')).toBe(true);
   });
+
+  it('génère un calque satellite masqué en mode standard pour bascule sans reconstruction', () => {
+    if (!official) return;
+    const built = buildCartoStyle(official, { base: 'maptoolkit', terrain3d: true, arcgisKey: 'K' });
+    const satLayer = built.layers.find((layer) => layer.id === 'lkdv-satellite-raster');
+    expect(satLayer).toBeDefined();
+    expect((satLayer as { layout?: { visibility?: string } })?.layout?.visibility).toBe('none');
+  });
 });
 
 describe('carto · débit Maptoolkit (TOS §9)', () => {

@@ -11,6 +11,7 @@ import {
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import { loadCartoStyle } from '@/features/carto/maptoolkit';
 import { prefersReducedMotion } from '@/components/map/engine/camera';
 import {
   cameraForScale,
@@ -303,45 +304,60 @@ export function CompteMap({
     }
 
     setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
-    const instance = new MapLibreMap({
-      container: containerRef.current,
-      style: createMapStyle('satellite'),
-      center: DEFAULT_CENTER,
-      zoom: 4.2,
-      minZoom: 1.2,
-      maxZoom: 18,
-      maxPitch: 70,
-      attributionControl: false,
-      renderWorldCopies: false,
-      locale: { 'Map.Title': 'Carte du compte' },
-    });
-    mapRef.current = instance;
-    setMap(instance);
-    (window as unknown as { __lkdvCompteMapInstance?: MapLibreMap }).__lkdvCompteMapInstance =
-      instance;
+    let cancelled = false;
+    let observer: ResizeObserver | null = null;
+    let timeout: number | null = null;
 
-    const observer =
-      typeof ResizeObserver !== 'undefined'
-        ? new ResizeObserver(() => instance.resize())
-        : null;
-    observer?.observe(containerRef.current);
+    void (async () => {
+      let initialStyle: any;
+      try {
+        initialStyle = await loadCartoStyle({ base: 'hybrid', terrain3d: true });
+      } catch {
+        initialStyle = createMapStyle('satellite');
+      }
+      if (cancelled || !containerRef.current) return;
 
-    const timeout = window.setTimeout(() => setStyleFailed(true), 4000);
-    instance.on('style.load', () => {
-      window.clearTimeout(timeout);
-      setStyleFailed(false);
-      setReady(true);
-    });
-    instance.on('zoomend', () => {
-      const zoom = instance.getZoom();
-      setScale(zoom < 4 ? 'globe' : zoom < 11 ? 'massif' : 'sentier');
-    });
+      const instance = new MapLibreMap({
+        container: containerRef.current,
+        style: initialStyle,
+        center: DEFAULT_CENTER,
+        zoom: 4.2,
+        minZoom: 1.2,
+        maxZoom: 18,
+        maxPitch: 70,
+        attributionControl: false,
+        renderWorldCopies: false,
+        locale: { 'Map.Title': 'Carte du compte' },
+      });
+      mapRef.current = instance;
+      setMap(instance);
+      (window as unknown as { __lkdvCompteMapInstance?: MapLibreMap }).__lkdvCompteMapInstance =
+        instance;
+
+      observer =
+        typeof ResizeObserver !== 'undefined'
+          ? new ResizeObserver(() => instance.resize())
+          : null;
+      if (containerRef.current) observer?.observe(containerRef.current);
+
+      timeout = window.setTimeout(() => setStyleFailed(true), 4000);
+      instance.on('style.load', () => {
+        if (timeout) window.clearTimeout(timeout);
+        setStyleFailed(false);
+        setReady(true);
+      });
+      instance.on('zoomend', () => {
+        const zoom = instance.getZoom();
+        setScale(zoom < 4 ? 'globe' : zoom < 11 ? 'massif' : 'sentier');
+      });
+    })();
 
     return () => {
-      window.clearTimeout(timeout);
+      cancelled = true;
+      if (timeout) window.clearTimeout(timeout);
       observer?.disconnect();
+      mapRef.current?.remove();
       mapRef.current = null;
-      instance.remove();
     };
   }, []);
 

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import 'leaflet/dist/leaflet.css';
-import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import React, { useMemo } from 'react';
+import type { Map as MapLibreMap } from 'maplibre-gl';
+import LKDVMap from '@/features/carto/LKDVMap';
+import '@/features/carto/carto.css';
 import { extractCoords } from './traceGeometry';
 
 export interface CarnetTraceMapProps {
@@ -13,113 +14,87 @@ export interface CarnetTraceMapProps {
 }
 
 /**
- * Carte de la fiche : mêmes tuiles, même crédit et même trace que le Compte
- * (Leaflet, sans Card ni Button : le bloc porte sa propre géométrie).
+ * Carte de la fiche carnet : propulsée par LKDVMap (Maptoolkit Hiking 3D unifié).
+ * Remplace l'ancien rendu Leaflet pour une expérience 3D fluide et cohérente sur iPhone.
  */
 export function CarnetTraceMap({ trace, className = '' }: CarnetTraceMapProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<any>(null);
-  const [ready, setReady] = useState(false);
+  const coords = useMemo(() => extractCoords(trace), [trace]);
+  const center: [number, number] = useMemo(
+    () => (coords.length > 0 ? [coords[0][1], coords[0][0]] : [6.8694, 45.9237]),
+    [coords],
+  );
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    let mounted = true;
+  const handleReady = React.useCallback(
+    async (map: MapLibreMap) => {
+      if (coords.length < 2) return;
+      const maplibregl = await import('maplibre-gl');
+      const lineCoords = coords.map(([lat, lng]) => [lng, lat]);
 
-    if (mapRef.current) {
-      mapRef.current.remove?.();
-      mapRef.current = null;
-    }
-    try {
-      delete (container as any)._leaflet_id;
-    } catch {
-      /* Leaflet conserve un id : sans effet hors dev */
-    }
-
-    void import('leaflet').then((L) => {
-      if (!mounted) return;
-      const coords = extractCoords(trace);
-      const map = L.map(container, {
-        center: coords[0] ?? [45.9, 6.9],
-        zoom: coords.length > 0 ? 10 : 4,
-        zoomControl: false,
-        attributionControl: false,
-        dragging: coords.length > 0,
-        scrollWheelZoom: false,
-      });
-      mapRef.current = map;
-
-      L.control.attribution({ prefix: false }).addTo(map);
-      const tiles = leafletTiles('osm');
-      L.tileLayer(tiles.url, { ...tiles.options, keepBuffer: 4 }).addTo(map);
-
-      if (coords.length > 0) {
-        const halo = L.polyline(coords, {
-          color: '#ffffff',
-          weight: 7,
-          opacity: 0.9,
-          lineCap: 'round',
-        }).addTo(map);
-        L.polyline(coords, { color: '#17402C', weight: 4.5, opacity: 1, lineCap: 'round' }).addTo(map);
-        L.circleMarker(coords[0], {
-          radius: 6,
-          color: '#fff',
-          fillColor: '#17402C',
-          fillOpacity: 1,
-          weight: 2,
-        }).addTo(map);
-        L.circleMarker(coords[coords.length - 1], {
-          radius: 6,
-          color: '#fff',
-          fillColor: '#3d7a52',
-          fillOpacity: 1,
-          weight: 2,
-        }).addTo(map);
-        try {
-          map.fitBounds(halo.getBounds(), { padding: [26, 26] });
-        } catch {
-          /* bounds dégénérés : la vue initiale suffit */
-        }
+      if (!map.getSource('carnet-trace-source')) {
+        map.addSource('carnet-trace-source', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: lineCoords,
+            },
+            properties: {},
+          },
+        });
       }
 
-      window.setTimeout(() => {
-        try {
-          map.invalidateSize();
-        } catch {
-          /* carte démontée entre-temps */
-        }
-      }, 120);
-      setReady(true);
-    });
+      if (!map.getLayer('carnet-trace-halo')) {
+        map.addLayer({
+          id: 'carnet-trace-halo',
+          type: 'line',
+          source: 'carnet-trace-source',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#ffffff', 'line-width': 7, 'line-opacity': 0.9 },
+        });
+      }
 
-    const observer = new ResizeObserver(() => {
+      if (!map.getLayer('carnet-trace-main')) {
+        map.addLayer({
+          id: 'carnet-trace-main',
+          type: 'line',
+          source: 'carnet-trace-source',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#17402C', 'line-width': 4.5, 'line-opacity': 1 },
+        });
+      }
+
       try {
-        mapRef.current?.invalidateSize();
+        const bounds = lineCoords.reduce(
+          (b, c) => b.extend(c as [number, number]),
+          new maplibregl.LngLatBounds(
+            lineCoords[0] as [number, number],
+            lineCoords[0] as [number, number],
+          ),
+        );
+        map.fitBounds(bounds, { padding: 28, duration: 0 });
       } catch {
-        /* noop */
+        /* bounds dégénérés : vue initiale */
       }
-    });
-    observer.observe(container);
-
-    return () => {
-      mounted = false;
-      observer.disconnect();
-      try {
-        mapRef.current?.remove?.();
-      } catch {
-        /* noop */
-      }
-      mapRef.current = null;
-    };
-  }, [trace]);
+    },
+    [coords],
+  );
 
   return (
     <div
       className={`ckp-map-canvas ${className}`.trim()}
-      ref={containerRef}
-      data-ready={ready ? 'true' : 'false'}
+      style={{ position: 'relative', width: '100%', height: '100%', minHeight: 220 }}
       aria-label="Carte du parcours"
-    />
+    >
+      <LKDVMap
+        center={center}
+        zoom={coords.length > 0 ? 11 : 5}
+        base="maptoolkit"
+        terrain3d={true}
+        interactive={coords.length > 0}
+        onReady={handleReady}
+      />
+    </div>
   );
 }
 

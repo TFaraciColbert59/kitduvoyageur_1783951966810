@@ -5,16 +5,27 @@ import { Compass, Globe2, Layers, MapPin, Minus, Mountain, Plus } from 'lucide-r
 import type { MapModeConfig } from '@/features/compte/map/types';
 import type { MapScale } from '@/features/compte/map/camera';
 
+import {
+  MAPTOOLKIT_COPYRIGHT,
+  MAPTOOLKIT_LOGO,
+  OSM_COPYRIGHT,
+} from '@/features/carto/maptoolkit';
+
 export function CompteMapAttribution() {
   return (
     <div className="lkdv-map-attribution">
-      <a href="https://www.esri.com" target="_blank" rel="noreferrer noopener">
-        Powered by Esri
+      <img src={MAPTOOLKIT_LOGO} alt="Maptoolkit" height={24} loading="lazy" />
+      <a href={MAPTOOLKIT_COPYRIGHT} target="_blank" rel="noreferrer noopener">
+        © Maptoolkit
       </a>
-      <span aria-hidden="true"> · </span>
-      <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer noopener">
+      <a href={OSM_COPYRIGHT} target="_blank" rel="noreferrer noopener">
         © OpenStreetMap
       </a>
+      {Boolean(process.env.NEXT_PUBLIC_ARCGIS_API_KEY) ? (
+        <a href="https://www.esri.com" target="_blank" rel="noreferrer noopener">
+          Powered by Esri
+        </a>
+      ) : null}
     </div>
   );
 }

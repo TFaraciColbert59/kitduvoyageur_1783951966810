@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card } from '@/components/ui';
-import 'leaflet/dist/leaflet.css';
-import { leafletTiles } from '@/components/map/engine/leafletTiles';
+import type { Map as MapLibreMap } from 'maplibre-gl';
+import LKDVMap from '@/features/carto/LKDVMap';
+import '@/features/carto/carto.css';
 
 interface ParcoursCardProps {
   groupId?: string;
@@ -14,144 +15,87 @@ interface ParcoursCardProps {
 }
 
 export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-
   const startLat = Number(trail?.start_lat ?? (trail?.lat ?? 45.33));
   const startLng = Number(trail?.start_lng ?? (trail?.lng ?? 5.82));
-  // F-009 : aucune métrique inventée — null si la donnée n'existe pas.
   const distanceKm = meta?.distanceKm ?? trail?.distance_km ?? null;
   const elevationGain = meta?.elevationGain ?? trail?.elevation_gain ?? null;
   const trailName = trail?.name ?? meta?.massif ?? 'Traversée du massif';
 
-  useEffect(() => {
-    if (!containerRef.current || typeof window === 'undefined') return;
-    let isCancelled = false;
+  const routeCoords: [number, number][] = useMemo(() => {
+    if (trail?.geojson?.coordinates && Array.isArray(trail.geojson.coordinates)) {
+      return trail.geojson.coordinates.map((pt: [number, number]) => [pt[0], pt[1]]);
+    }
+    const dist = Number(distanceKm) || 15;
+    const r = (dist / 111) * 0.3;
+    return [
+      [startLng, startLat],
+      [startLng + r * 0.25, startLat + r * 0.35],
+      [startLng + r * 0.65, startLat + r * 0.7],
+      [startLng + r * 0.3, startLat + r * 0.85],
+      [startLng + r * 0.8, startLat + r * 1.1],
+      [startLng + r * 1.15, startLat + r * 0.75],
+      [startLng + r * 0.85, startLat + r * 0.25],
+      [startLng, startLat],
+    ];
+  }, [distanceKm, startLat, startLng, trail?.geojson?.coordinates]);
 
-    import('leaflet').then((L) => {
-      if (isCancelled || !containerRef.current) return;
-      const container = containerRef.current;
+  const handleReady = useCallback(
+    async (map: MapLibreMap) => {
+      if (routeCoords.length < 2) return;
+      const maplibregl = await import('maplibre-gl');
 
-      if (mapRef.current) {
-        try { mapRef.current.remove(); } catch {}
-        mapRef.current = null;
-      }
-      if ((container as any)._leaflet_id) {
-        try { delete (container as any)._leaflet_id; } catch {}
-      }
-
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      });
-
-      const map = L.map(container, {
-        center: [startLat, startLng],
-        zoom: 12,
-        zoomControl: false,
-        attributionControl: false,
-      });
-
-      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
-      L.control.attribution({ prefix: false }).addTo(map);
-      const tiles = leafletTiles('osm');
-      L.tileLayer(tiles.url, { ...tiles.options, maxZoom: 18, keepBuffer: 6 }).addTo(map);
-
-      let routeCoords: [number, number][] = [];
-      if (trail?.geojson?.coordinates && Array.isArray(trail.geojson.coordinates)) {
-        routeCoords = trail.geojson.coordinates.map((pt: [number, number]) => [pt[1], pt[0]]);
-      } else {
-        const dist = Number(distanceKm) || 15;
-        const r = (dist / 111) * 0.3;
-        routeCoords = [
-          [startLat, startLng],
-          [startLat + r * 0.35, startLng + r * 0.25],
-          [startLat + r * 0.7, startLng + r * 0.65],
-          [startLat + r * 0.85, startLng + r * 0.3],
-          [startLat + r * 1.1, startLng + r * 0.8],
-          [startLat + r * 0.75, startLng + r * 1.15],
-          [startLat + r * 0.25, startLng + r * 0.85],
-          [startLat, startLng],
-        ];
-      }
-      L.polyline(routeCoords, {
-        color: '#FFFFFF',
-        weight: 8,
-        opacity: 0.95,
-        lineCap: 'round',
-        lineJoin: 'round',
-      }).addTo(map);
-
-      const polyline = L.polyline(routeCoords, {
-        color: '#17402C',
-        weight: 5,
-        opacity: 1.0,
-        lineCap: 'round',
-        lineJoin: 'round',
-      }).addTo(map);
-
-      if (routeCoords.length > 0) {
-        map.fitBounds(polyline.getBounds(), { padding: [28, 28] });
+      if (!map.getSource('parcours-trace-source')) {
+        map.addSource('parcours-trace-source', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: routeCoords,
+            },
+            properties: {},
+          },
+        });
       }
 
-      L.circleMarker(routeCoords[0], {
-        radius: 7,
-        color: '#FFFFFF',
-        fillColor: '#17402C',
-        fillOpacity: 1,
-        weight: 2.5,
-      }).addTo(map).bindPopup(`📍 <strong>Départ</strong> : ${trailName}`);
+      if (!map.getLayer('parcours-trace-halo')) {
+        map.addLayer({
+          id: 'parcours-trace-halo',
+          type: 'line',
+          source: 'parcours-trace-source',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#FFFFFF', 'line-width': 8, 'line-opacity': 0.95 },
+        });
+      }
 
-      const midIndex = Math.floor(routeCoords.length / 2);
-      if (midIndex > 0 && midIndex < routeCoords.length - 1) {
-        L.circleMarker(routeCoords[midIndex], {
-          radius: 5,
-          color: '#FFFFFF',
-          fillColor: '#D97746',
-          fillOpacity: 1,
-          weight: 2,
-        }).addTo(map).bindPopup(
-          elevationGain != null
-            ? `⛰️ <strong>Point haut (+${elevationGain}m)</strong>`
-            : '⛰️ <strong>Point haut</strong>'
+      if (!map.getLayer('parcours-trace-main')) {
+        map.addLayer({
+          id: 'parcours-trace-main',
+          type: 'line',
+          source: 'parcours-trace-source',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#17402C', 'line-width': 5, 'line-opacity': 1.0 },
+        });
+      }
+
+      try {
+        const bounds = routeCoords.reduce(
+          (b, c) => b.extend(c as [number, number]),
+          new maplibregl.LngLatBounds(
+            routeCoords[0] as [number, number],
+            routeCoords[0] as [number, number],
+          ),
         );
-      }
-
-      mapRef.current = map;
-
-      setTimeout(() => {
-        if (!isCancelled && mapRef.current) {
-          mapRef.current.invalidateSize();
-          mapRef.current.fitBounds(polyline.getBounds(), { padding: [28, 28] });
-        }
-      }, 250);
-    });
-
-    return () => {
-      isCancelled = true;
-      if (mapRef.current) {
-        try { mapRef.current.remove(); } catch {}
-        mapRef.current = null;
-      }
-      if (containerRef.current) {
-        try { delete (containerRef.current as any)._leaflet_id; } catch {}
-      }
-    };
-  }, [startLat, startLng, trailName, distanceKm, elevationGain]);
+        map.fitBounds(bounds, { padding: 28, duration: 0 });
+      } catch {}
+    },
+    [routeCoords],
+  );
 
   const handleDownloadGpx = () => {
-    const offset = 0.015;
-    const routeCoords = [
-      [startLat, startLng],
-      [startLat + offset * 0.6, startLng + offset * 0.8],
-      [startLat + offset * 1.2, startLng + offset * 1.5],
-      [startLat + offset * 1.8, startLng + offset * 2.0],
-    ];
     const trackPoints = routeCoords
-      .map(([lat, lon], i) =>
-        `      <trkpt lat="${lat}" lon="${lon}"><ele>${800 + i * 150}</ele></trkpt>`
+      .map(([lng, lat], i) =>
+        `      <trkpt lat="${lat}" lon="${lng}"><ele>${800 + i * 150}</ele></trkpt>`,
       )
       .join('\n');
     const gpx = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Le Kit du Voyageur" xmlns="http://www.topografix.com/GPX/1/1">\n  <trk>\n    <name>${trailName}</name>\n    <trkseg>\n${trackPoints}\n    </trkseg>\n  </trk>\n</gpx>`;
@@ -206,7 +150,14 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
       </p>
 
       <div className="relative mb-[var(--space-3)] h-48 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] sm:h-56">
-        <div ref={containerRef} className="z-0 h-full w-full" />
+        <LKDVMap
+          center={[startLng, startLat]}
+          zoom={12}
+          base="maptoolkit"
+          terrain3d={true}
+          interactive={true}
+          onReady={handleReady}
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-[var(--space-4)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
