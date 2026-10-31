@@ -1,6 +1,7 @@
 'use client';
 
 import { EngagementBar, LikeIcon } from '@/components/social-kit';
+import { DEFAULT_DOUBLE_TAP_WINDOW_MS } from '@/hooks/gestures';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, ImageOff } from 'lucide-react';
 
@@ -77,7 +78,7 @@ export function CommunityPostMedia({
     clickTimer.current = window.setTimeout(() => {
       clickTimer.current = null;
       onLike();
-    }, 220);
+    }, DEFAULT_DOUBLE_TAP_WINDOW_MS);
   }, [onLike]);
 
   return (

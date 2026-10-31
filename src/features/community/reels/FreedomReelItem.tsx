@@ -1,5 +1,6 @@
 'use client';
 
+import { DEFAULT_MOVE_TOLERANCE_PX } from '@/hooks/gestures';
 import { LikeIcon } from '@/components/social-kit';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Play, Pause } from 'lucide-react';
@@ -170,7 +171,7 @@ export const FreedomReelItem: React.FC<FreedomReelItemProps> = ({
     if (!dragStartRef.current) return;
     const dx = Math.abs(e.clientX - dragStartRef.current.x);
     const dy = Math.abs(e.clientY - dragStartRef.current.y);
-    if (dx > 8 || dy > 8) {
+    if (dx > DEFAULT_MOVE_TOLERANCE_PX || dy > DEFAULT_MOVE_TOLERANCE_PX) {
       isDraggingRef.current = true;
     }
   };

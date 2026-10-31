@@ -644,10 +644,10 @@ describe('CarnetCard — capsule des drawers et mouvement du balayage', () => {
 
   it('glisse d’un jour en 220 ms, sans translation sous mouvement réduit', () => {
     expect(rule('.ckp-day--next {')).toMatch(
-      /animation:\s*ckp-day-next 220ms cubic-bezier\(\.22, 1, \.36, 1\)/,
+      /animation:\s*ckp-day-next 220ms var\(--ease-glass\)/,
     );
     expect(rule('.ckp-day--prev {')).toMatch(
-      /animation:\s*ckp-day-prev 220ms cubic-bezier\(\.22, 1, \.36, 1\)/,
+      /animation:\s*ckp-day-prev 220ms var\(--ease-glass\)/,
     );
     const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce) {\n  .ckp-day--next'));
     expect(reduced).toMatch(/\.ckp-day--next, \.ckp-day--prev \{ animation: none; \}/);

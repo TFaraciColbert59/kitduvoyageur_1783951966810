@@ -306,7 +306,7 @@ function ConversationFeedRow({
           transform: `translate3d(${dx}px,0,0)`,
           transition: dragging
             ? 'none'
-            : 'transform .3s cubic-bezier(.32,1.15,.5,1)',
+            : 'transform .3s var(--ease-spring)',
           textAlign: 'left',
           cursor: 'pointer',
         }}

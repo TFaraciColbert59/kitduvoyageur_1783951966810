@@ -83,4 +83,20 @@ export const UI_INVENTORY: InventoryEntry[] = [
     status: 'unifie',
     usedBy: ['Compte (PostDrawer)', 'Carnet (CarnetPostSheet)'],
   },
+  {
+    id: 'motion',
+    label: 'Mouvement : courbes et durées',
+    canonical: 'src/styles/tokens.css (--motion-ease-*, --ease-*, --dur-*) + src/design/motion.ts',
+    status: 'unifie',
+    usedBy: ['Toute l’app hors Hub et Compas : 193 courbes écrites à la main remplacées par les jetons (verrou tests/design/motion-unique.spec.ts)'],
+    reste: ['Compas et Hub (interdits)', 'Courbes de framer-motion (tableaux) : à reprendre par composant'],
+  },
+  {
+    id: 'gestures',
+    label: 'Gestes : balayage, fermeture, tap, double-tap',
+    canonical: 'src/hooks/gestures (gestureMath : 48 px balayage, 80 px ou flick pour fermer, 8 px de tolérance, 300 ms double-tap)',
+    status: 'unifie',
+    usedBy: ['Bloc post (CommunityFeedPost, CommunityPostMedia)', 'Panneau verre (PostGlassPanel)', 'Feuille de post (PostSheet)', 'Stories (StoriesViewer)', 'Lentilles (LensPager)', 'Pages du carnet (CarnetPages)', 'Freedom (useDragDismiss, FreedomReelItem)'],
+    reste: ['ImageViewer (zoom/pinch : geste différent), Sheet et Modal (animation CSS sans geste)'],
+  },
 ];

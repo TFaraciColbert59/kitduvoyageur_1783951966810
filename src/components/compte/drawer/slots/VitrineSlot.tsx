@@ -1087,7 +1087,7 @@ export const VITRINE_CSS = `
 .lkdv-next-badge-txt small{font-family:var(--sf);font-weight:400;font-size:10px;line-height:1.25;color:var(--label2);}
 .lkdv-badge-progress-label{display:block;margin-top:7px;font-family:var(--sf);font-weight:600;font-size:8.5px;line-height:1;letter-spacing:.05em;text-transform:uppercase;color:var(--label2);}
 .lkdv-badge-progress{height:6px;margin-top:3px;border-radius:99px;background:var(--fill,rgba(23,43,36,.09));overflow:hidden;}
-.lkdv-badge-progress i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent,#5B7F55),var(--tint,#17402C));transition:width .35s cubic-bezier(.16,1,.3,1);}
+.lkdv-badge-progress i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent,#5B7F55),var(--tint,#17402C));transition:width .35s var(--ease-out);}
 .lkdv-badge-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;list-style:none;margin:6px 0 0;padding:0;}
 .lkdv-badge-grid>li{min-width:0;}
 .lkdv-vitrine .lkdv-badge-toggle{display:inline-flex;align-items:center;justify-content:center;height:44px;min-height:44px;padding:0 12px;border-radius:999px;font-size:11px;line-height:1;white-space:nowrap;}

@@ -9,6 +9,7 @@ import { deletePost } from '@/features/community/posts/mutations';
 import { Bookmark, Flag, Link2, MoreHorizontal, Repeat2, Trash2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { EngagementBar } from '@/components/social-kit';
+import { isHorizontalSwipe } from '@/hooks/gestures';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { CommunityPostMedia } from './CommunityPostMedia';
 import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomCommentsDrawer';
@@ -308,7 +309,7 @@ export function CommunityFeedPost({
         if (!start || panel) return;
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
-        if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+        if (!isHorizontalSwipe(dx, dy)) return;
         swipeStart.current = null;
         swiped.current = true;
         setMenuOpen(false);

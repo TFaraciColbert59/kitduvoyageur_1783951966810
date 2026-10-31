@@ -42,7 +42,7 @@ describe('Lentille du sélecteur — gabarit du segment actif', () => {
 
   it('glisse par transform, au pas exact du segment', () => {
     expect(lens).toMatch(/transform:\s*translateX\(calc\(var\(--i, 0\) \* 41\.5px\)\)/);
-    expect(lens).toMatch(/transition:\s*transform 220ms cubic-bezier\(\.22, 1, \.36, 1\)/);
+    expect(lens).toMatch(/transition:\s*transform 220ms var\(--ease-glass\)/);
   });
 
   it('n’anime ni la largeur ni l’opacité', () => {

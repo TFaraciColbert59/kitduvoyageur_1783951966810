@@ -5,7 +5,7 @@
 }
 .lkdv-like { transition: transform 160ms ease, color 160ms ease; }
 .lkdv-like.on { color: var(--lkdv-like); }
-.lkdv-like.is-pop { animation: lkdv-like-pop 320ms cubic-bezier(.32,.72,0,1); }
+.lkdv-like.is-pop { animation: lkdv-like-pop 320ms var(--motion-ease-standard); }
 @keyframes lkdv-like-pop { 0% { transform: scale(.7); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .lkdv-like.is-pop { animation: none; } }
 .lkdv-like-btn { display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0; }

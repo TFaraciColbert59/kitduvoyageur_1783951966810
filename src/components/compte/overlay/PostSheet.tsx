@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { shouldDismiss } from '@/hooks/gestures';
+import { DEFAULT_MOVE_TOLERANCE_PX, shouldDismiss } from '@/hooks/gestures';
+import { SHEET_EXIT_MS } from '@/design/motion';
 import { OverlaySheet } from './OverlaySheet';
 
 export interface PostSheetProps {
@@ -33,7 +34,7 @@ export function PostSheet({ title, onClose, className = '', children }: PostShee
   const move = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (dragStartY.current === null) return;
     const distance = Math.max(0, event.clientY - dragStartY.current);
-    if (distance > 4) didDragRef.current = true;
+    if (distance > DEFAULT_MOVE_TOLERANCE_PX / 2) didDragRef.current = true;
     setDragY(distance);
   };
   const end = (event: React.PointerEvent<HTMLButtonElement>) => {
@@ -46,7 +47,7 @@ export function PostSheet({ title, onClose, className = '', children }: PostShee
     const elapsed = Math.max(1, performance.now() - startedAt.current);
     if (shouldDismiss(distance, (distance / elapsed) * 1000)) {
       setDragY(520);
-      window.setTimeout(onClose, 300);
+      window.setTimeout(onClose, SHEET_EXIT_MS);
     } else {
       setDragY(0);
     }
