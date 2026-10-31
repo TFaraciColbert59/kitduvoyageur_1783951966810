@@ -1,0 +1,105 @@
+/**
+ * LKDV HUB DESIGN SYSTEM — src/features/hub/styles/hub-tokens.css
+ *
+ * Feuille de tokens dédiée aux composants du HUB Camp de base et du Kit Studio.
+ * RÈGLES :
+ * 1. Consomme exclusivement les variables canoniques --lkv-* de src/styles/tokens.css.
+ * 2. Zéro couleur hexadécimale littérale dans ce fichier (y compris dans les commentaires).
+ * 3. Ombres portées basées sur l'encre rgba(11, 31, 23, ...), jamais d'ombre noire pure.
+ * 4. Dimensions dynamiques dvh et safe-areas Apple HIG.
+ */
+
+:root {
+  /* ── 1. Surfaces & Toile de Fond ── */
+  --hub-bg: var(--lkv-surface);
+  --hub-bg-fallback: var(--lkv-app-bg-fallback);
+  --hub-bg-scrim: var(--lkv-app-bg-scrim);
+  --hub-surface: var(--lkv-surface);
+  --hub-surface-card: var(--lkv-surface-card);
+  --hub-surface-paper: var(--lkv-surface-paper);
+  --hub-surface-elevated: var(--lkv-surface-elevated);
+  --hub-surface-muted: var(--lkv-surface-muted);
+
+  /* ── 2. Couleurs de Marque & Actions ── */
+  --hub-primary: var(--lkv-primary);
+  --hub-primary-hover: var(--lkv-primary-hover);
+  --hub-primary-soft: var(--lkv-primary-soft);
+  --hub-primary-subtle: var(--lkv-primary-subtle);
+  --hub-primary-rgb: var(--lkv-primary-rgb);
+
+  --hub-action: var(--lkv-action);
+  --hub-action-hover: var(--lkv-action-hover);
+  --hub-action-soft: var(--lkv-action-soft);
+  --hub-action-rgb: var(--lkv-action-rgb);
+
+  --hub-secondary: var(--lkv-secondary);
+  --hub-secondary-hover: var(--lkv-secondary-hover);
+  --hub-secondary-subtle: var(--lkv-secondary-subtle);
+
+  /* ── 3. Palette Matières Sac 3D (dérivée des tokens canoniques) ── */
+  --hub-bag-forest: var(--lkv-primary);
+  --hub-bag-pine: var(--lkv-action);
+  --hub-bag-moss: var(--lkv-secondary);
+  --hub-bag-ochre: var(--lkv-warning);
+  --hub-bag-terracotta: var(--lkv-danger);
+  --hub-bag-sand: var(--lkv-surface-muted);
+  --hub-bag-slate: var(--lkv-text-secondary);
+  --hub-bag-ink: var(--lkv-text-primary);
+
+  /* ── 4. Typographie Sémantique ── */
+  --hub-text-primary: var(--lkv-text-primary);
+  --hub-text-secondary: var(--lkv-text-secondary);
+  --hub-text-muted: var(--lkv-text-muted);
+  --hub-text-subtle: var(--lkv-text-subtle);
+  --hub-text-inverted: var(--lkv-text-inverted);
+
+  /* ── 5. Bordures & Champs ── */
+  --hub-border: var(--lkv-border);
+  --hub-border-subtle: var(--lkv-border-subtle);
+  --hub-border-strong: var(--lkv-border-strong);
+  --hub-field-bg: var(--lkv-field-bg);
+  --hub-field-border: var(--lkv-field-border);
+
+  /* ── 6. Statuts Terrain ── */
+  --hub-success: var(--lkv-success);
+  --hub-success-bg: var(--lkv-success-bg);
+  --hub-warning: var(--lkv-warning);
+  --hub-warning-bg: var(--lkv-warning-bg);
+  --hub-danger: var(--lkv-danger);
+  --hub-danger-bg: var(--lkv-danger-bg);
+
+  /* ── 7. Cibles Tactiles & Rayons Concentriques ── */
+  --hub-touch-min: var(--lkv-touch-min);
+  --hub-touch-comfortable: var(--lkv-touch-comfortable);
+  --hub-radius-card: var(--lkv-radius-card);
+  --hub-radius-sheet: var(--lkv-radius-sheet);
+  --hub-radius-pill: var(--lkv-radius-full);
+  --hub-radius-control: var(--lkv-radius-control);
+  --hub-radius-button: var(--lkv-radius-button);
+
+  /* ── 8. Safe Areas Dynamiques & Espacement Mobile ── */
+  --hub-height: 100dvh;
+  --hub-safe-top: env(safe-area-inset-top, 0px);
+  --hub-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --hub-safe-left: env(safe-area-inset-left, 0px);
+  --hub-safe-right: env(safe-area-inset-right, 0px);
+  --hub-bottom-spacer: calc(62px + 12px + 12px + env(safe-area-inset-bottom, 0px));
+  --hub-subdrawer-spacer: calc(56px + env(safe-area-inset-bottom, 0px));
+
+  /* ── 9. Matière Verre, Voile Studio & Ombres d'Encre ── */
+  --hub-backdrop-scrim: rgba(11, 31, 23, 0.44);
+  --hub-studio-veil-bg: rgba(11, 31, 23, 0.72);
+  --hub-glass-lens-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.23), rgba(255, 255, 255, 0.10));
+  --hub-glass-capsule-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 46%, rgba(11, 31, 23, 0.12)), rgba(23, 29, 26, 0.76);
+  --hub-glass-blur: blur(28px) saturate(180%);
+  --hub-glass-border: 0.5px solid rgba(255, 255, 255, 0.18);
+  --hub-glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), inset 0 -1px 1px rgba(255, 255, 255, 0.06), 0 10px 30px rgba(11, 31, 23, 0.24);
+  --hub-sheet-shadow: 0 -10px 32px rgba(11, 31, 23, 0.18);
+
+  /* ── 10. Transitions & Animations (transform / opacity uniquement) ── */
+  --hub-lens-duration: var(--dur-slow, 420ms);
+  --hub-lens-easing: cubic-bezier(0.32, 0.72, 0, 1);
+  --hub-pane-duration: 360ms;
+  --hub-pane-easing: cubic-bezier(0.22, 0.8, 0.25, 1);
+  --hub-veil-duration: 180ms;
+}

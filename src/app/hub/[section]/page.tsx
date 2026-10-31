@@ -3,7 +3,11 @@ import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui';
 import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
 import { HubCampShell } from '@/features/hub/components/HubCampShell';
-import { getHubAdventureData, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
+import {
+  buildHubCounts,
+  getHubAdventureData,
+  getHubTripStats,
+} from '@/features/hub/server/getHubAdventureData';
 import {
   EMPTY_OVERVIEW,
   getTripBookingOverview,
@@ -27,52 +31,51 @@ import { GearSection } from '@/features/hub/components/menu/GearSection';
 import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
-import { SectionLoading } from './sectionViews.client';
-import { ItineraryPlannerClient } from './sectionViews.client';
-import { ItineraryMobileExperience } from './sectionViews.client';
-import { TripTeamView } from './sectionViews.client';
-import { ParticipantsManager } from './sectionViews.client';
-import { TeamMobileExperience } from './sectionViews.client';
-import { ChecklistMobileExperience } from './sectionViews.client';
-import { DocsMobileExperience } from './sectionViews.client';
-import { SafetyMobileExperience } from './sectionViews.client';
-import { JournalMobileExperience } from './sectionViews.client';
-import { TripBudgetView } from './sectionViews.client';
-import { TripDocumentsView } from './sectionViews.client';
-import { TripChecklistView } from './sectionViews.client';
-import { TripSafetyView } from './sectionViews.client';
-import { TripNotesView } from './sectionViews.client';
-import { TripExportView } from './sectionViews.client';
-import { ExportMobileExperience } from './sectionViews.client';
-import { HubGroupeCockpit } from './sectionViews.client';
+import {
+  ChecklistMobileExperience,
+  DocsMobileExperience,
+  ExportMobileExperience,
+  HubGroupeCockpit,
+  ItineraryMobileExperience,
+  ItineraryPlannerClient,
+  JournalMobileExperience,
+  ParticipantsManager,
+  SafetyMobileExperience,
+  TeamMobileExperience,
+  TripBudgetView,
+  TripChecklistView,
+  TripDocumentsView,
+  TripExportView,
+  TripNotesView,
+  TripSafetyView,
+  TripTeamView,
+} from './sectionViews.client';
 
 /**
  * Étape 2 — Section active du hub (URL-driven, registre). LE rendu canonique :
  * les sections sortie sont composées ici (plus de délégation /voyages/*), la
  * section groupe est gérée in-hub (plus de renvoi vers /groupes). Nature
- * incompatible → 404.
+ * incompatible → 404 (hors hub_camp_v1 qui ouvre le tiroir correspondant).
  */
 export default async function HubSectionPage({
   params,
   searchParams,
 }: {
   params: Promise<{ section: string }>;
-  searchParams: Promise<{ product_id?: string; id?: string; route?: string; onglet?: string; jour?: string }>;
+  searchParams: Promise<{
+    product_id?: string;
+    id?: string;
+    route?: string;
+    onglet?: string;
+    jour?: string;
+    sub?: string;
+  }>;
 }) {
-  const [{ section }, sp] = await Promise.all([params, searchParams]);
-  const flags = await currentFeatureFlags();
-
-  if (flags.hub_camp_v1) {
-    const data = await getHubAdventureData();
-    return (
-      <HubCampShell
-        initialDrawer={section}
-        adventure={data.adventure}
-        trip={data.trip}
-        searchParams={sp}
-      />
-    );
-  }
+  const [{ section }, sp, flags] = await Promise.all([
+    params,
+    searchParams,
+    currentFeatureFlags(),
+  ]);
 
   const def = hubSectionRegistry.find((d) => d.segment === section);
   if (!def) notFound();
@@ -81,6 +84,43 @@ export default async function HubSectionPage({
   if (def.id === 'preparation') redirect('/compas?etape=kit');
 
   const data = await getHubAdventureData();
+
+  if (flags.hub_camp_v1) {
+    const servable = isHubSectionServable(def, data.adventure.nature);
+    const serverSectionNode = servable ? (
+      <>
+        {def.id === 'inventaire' && <HubInventaireSection productId={sp.product_id} />}
+        {def.id === 'kit' && <HubKitSection />}
+        {def.id === 'depart' && <HubDepartSection departId={sp.id} route={sp.route} />}
+        {def.id === 'disponibilite' && <HubDisponibiliteSection />}
+        {def.id === 'alertes' && <HubAlertesSection />}
+        {def.id === 'oublis' && <HubOublisSection />}
+        {def.id === 'invitations' && <HubInvitationsSection />}
+        {def.id === 'voyages-lies' && data.adventure.nature === 'collectif' && (
+          <HubVoyagesLiesSection adventure={data.adventure} />
+        )}
+        {data.adventure.nature === 'collectif' && def.id === 'groupe' && (
+          <HubGroupeCockpit groupId={data.adventure.id} initialTab={sp.onglet} />
+        )}
+        {data.adventure.nature === 'sortie' && data.trip && (
+          <SortieSection sectionId={def.id} slug={data.trip.slug} jour={sp.jour} />
+        )}
+      </>
+    ) : undefined;
+
+    return (
+      <HubCampShell
+        initialDrawer={section}
+        adventure={data.adventure}
+        trip={data.trip}
+        hiking={data.hiking}
+        counts={buildHubCounts(data)}
+        searchParams={sp}
+        drawerContent={serverSectionNode}
+      />
+    );
+  }
+
   if (!isHubSectionServable(def, data.adventure.nature)) notFound();
 
   return (
@@ -117,8 +157,6 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
 
   switch (sectionId) {
     case 'itinerary': {
-      // P2 (C-20) — un seul client, steps déjà chargés par loadTripSection
-      // (getTripBySlug inclut trip_steps) : plus de refetch ni de shadowing.
       const initialSteps: PlannerStep[] = (trip.steps || []).map((s: any) => ({
         id: s.id,
         trip_id: s.trip_id,
@@ -164,14 +202,12 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
     case 'groupe':
       return (
         <>
-          {/* Desktop : équipiers (comptes) + carnet local — inchangé */}
           <div className="hidden lg:block space-y-4">
             <TripTeamView trip={trip} />
             <div aria-label="Carnet des participants">
               <ParticipantsManager />
             </div>
           </div>
-          {/* Mobile / tablette : expérience rails + tiroirs */}
           <div className="lg:hidden">
             <TeamMobileExperience trip={trip} />
           </div>
@@ -179,10 +215,6 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
       );
     case 'budget': {
       if (!trip.permissions.canManageBudget) notFound();
-      // W6 (P4) : le hub lit enfin `bookings` et `cart_lines`. Le panier est
-      // filtre par l'appelant et par lui seul : c'est l'ID de session qui fait
-      // foi, jamais `trip.user_id` (le panier d'un collegue n'est pas le
-      // mien). Sans session, l'apercu reste vide plutot que deviner.
       const { data: userData } = await supabase.auth.getUser();
       const overview = userData?.user
         ? await getTripBookingOverview(supabase, { tripId: trip.id, userId: userData.user.id })
@@ -260,8 +292,6 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
         </>
       );
     case 'export': {
-      // P0-2 (C-06) — wrapper cache React partagé avec le layout : les 5
-      // requêtes stats ne tournent qu'une fois par requête, jamais 2×.
       const stats = await getHubTripStats(trip.id);
       const budgetSummary = calculateBudgetSummary(
         { estimated_budget: trip.estimated_budget, budget_currency: trip.budget_currency },

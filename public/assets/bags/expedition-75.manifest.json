@@ -1,0 +1,217 @@
+{
+  "schema": 1,
+  "modelId": "expedition-75",
+  "label": "Sac d'expédition 75 L",
+  "generator": "generate-bag.mjs",
+  "generatedBy": "procedural",
+  "license": "LKDV — généré par code, aucun asset tiers",
+  "units": "meters",
+  "origin": "centre du sol du sac (y=0 au fond)",
+  "capabilities": {
+    "rotatable": true,
+    "openable": true,
+    "hasInterior": true,
+    "customizableParts": [
+      "body",
+      "interior",
+      "lid",
+      "lid-buckle",
+      "front-pocket",
+      "side-pocket-l",
+      "side-pocket-r",
+      "shoulder-strap-l",
+      "shoulder-strap-r",
+      "hip-belt",
+      "compression-strap-l-1",
+      "compression-strap-r-1",
+      "compression-strap-l-2",
+      "compression-strap-r-2",
+      "compression-strap-l-3",
+      "compression-strap-r-3"
+    ],
+    "badgeAnchors": [
+      "badge-body-front",
+      "badge-lid",
+      "badge-front-pocket"
+    ],
+    "attachmentPoints": [
+      "attach-top",
+      "attach-bottom",
+      "attach-side-l",
+      "attach-side-r"
+    ]
+  },
+  "hasHinge": true,
+  "declaredCapacityL": 75,
+  "boundingBoxM": {
+    "w": 0.5771,
+    "h": 0.92,
+    "d": 0.4573
+  },
+  "slots": [
+    {
+      "id": "interior-bottom",
+      "kind": "interior",
+      "capacityL": 33.75,
+      "maxItems": null,
+      "anchor": [
+        0,
+        0.1716,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "interior-top",
+      "kind": "interior",
+      "capacityL": 26.25,
+      "maxItems": null,
+      "anchor": [
+        0,
+        0.48360000000000003,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "lid-pocket",
+      "kind": "pocket",
+      "capacityL": 3.75,
+      "maxItems": 4,
+      "anchor": [
+        0,
+        0.79,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "front-pocket",
+      "kind": "pocket",
+      "capacityL": 4.5,
+      "maxItems": 6,
+      "anchor": [
+        0,
+        0.23399999999999999,
+        0.2
+      ],
+      "normal": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "side-pocket-l",
+      "kind": "pocket",
+      "capacityL": 3,
+      "maxItems": 2,
+      "anchor": [
+        -0.22999999999999998,
+        0.2028,
+        0
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "side-pocket-r",
+      "kind": "pocket",
+      "capacityL": 3,
+      "maxItems": 2,
+      "anchor": [
+        0.22999999999999998,
+        0.2028,
+        0
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "attach-top",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0,
+        0.8,
+        -0.03
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "attach-bottom",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0,
+        0.02,
+        0
+      ],
+      "normal": [
+        0,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "attach-side-l",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        -0.21,
+        0.39,
+        0
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "attach-side-r",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0.21,
+        0.39,
+        0
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "budget": {
+    "triangles": 5160,
+    "fileBytes": 383812
+  }
+}

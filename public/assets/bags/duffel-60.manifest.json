@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "modelId": "duffel-60",
+  "label": "Sac de voyage 60 L",
+  "generator": "generate-bag.mjs",
+  "generatedBy": "procedural",
+  "license": "LKDV — généré par code, aucun asset tiers",
+  "units": "meters",
+  "origin": "centre du sol du sac (y=0 au fond)",
+  "capabilities": {
+    "rotatable": true,
+    "openable": false,
+    "hasInterior": false,
+    "customizableParts": [
+      "body",
+      "side-pocket-l",
+      "side-pocket-r",
+      "shoulder-strap-l",
+      "shoulder-strap-r",
+      "compression-strap-l-1",
+      "compression-strap-r-1",
+      "compression-strap-l-2",
+      "compression-strap-r-2"
+    ],
+    "badgeAnchors": [
+      "badge-body-front"
+    ],
+    "attachmentPoints": [
+      "attach-top",
+      "attach-bottom",
+      "attach-side-l",
+      "attach-side-r"
+    ]
+  },
+  "hasHinge": false,
+  "declaredCapacityL": 60,
+  "boundingBoxM": {
+    "w": 0.756,
+    "h": 0.37,
+    "d": 0.4114
+  },
+  "slots": [
+    {
+      "id": "side-pocket-l",
+      "kind": "pocket",
+      "capacityL": 2.4,
+      "maxItems": 2,
+      "anchor": [
+        -0.36,
+        0.078,
+        0
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "side-pocket-r",
+      "kind": "pocket",
+      "capacityL": 2.4,
+      "maxItems": 2,
+      "anchor": [
+        0.36,
+        0.078,
+        0
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "attach-top",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0,
+        0.32,
+        -0.03
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "attach-bottom",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0,
+        0.02,
+        0
+      ],
+      "normal": [
+        0,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "attach-side-l",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        -0.33999999999999997,
+        0.15,
+        0
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "attach-side-r",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0.33999999999999997,
+        0.15,
+        0
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "budget": {
+    "triangles": 2700,
+    "fileBytes": 201176
+  }
+}

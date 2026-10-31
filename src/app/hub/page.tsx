@@ -1,4 +1,8 @@
-import { getHubAdventureData, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
+import {
+  buildHubCounts,
+  getHubAdventureData,
+  getHubTripStats,
+} from '@/features/hub/server/getHubAdventureData';
 import { getMaterielSummary } from '@/features/materiel/services/getMaterielSummary';
 import { getGroupeMenuSummary } from '@/features/hub/server/getGroupeMenu';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
@@ -31,23 +35,27 @@ function daysUntil(dateStr: string | null | undefined, now: number): number | nu
 export default async function HubPage({
   searchParams,
 }: {
-  searchParams: Promise<{ phase?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const flags = await currentFeatureFlags();
-  const data = await getHubAdventureData();
+  const [flags, data, sp] = await Promise.all([
+    currentFeatureFlags(),
+    getHubAdventureData(),
+    searchParams,
+  ]);
 
   if (flags.hub_camp_v1) {
-    const sp = await searchParams;
     return (
       <HubCampShell
         adventure={data.adventure}
         trip={data.trip}
+        hiking={data.hiking}
+        counts={buildHubCounts(data)}
         searchParams={sp}
       />
     );
   }
 
-  const { phase } = await searchParams;
+  const phase = typeof sp.phase === 'string' ? sp.phase : undefined;
 
   if (data.input.kind === 'sortie' && data.trip) {
     const stats = await getHubTripStats(data.trip.id);

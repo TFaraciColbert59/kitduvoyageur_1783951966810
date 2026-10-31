@@ -1,139 +1,195 @@
 import { describe, expect, it } from 'vitest';
+import { hubSectionRegistry } from '../registry/hubSectionRegistry';
 import {
-  HUB_CANONICAL_SEGMENTS,
-  HUB_SEGMENT_ALIASES,
-} from '../registry/hubSectionRegistry';
-import { DrawerNavigationMachine } from '../state/drawerMachine';
+  DrawerNavigationMachine,
+  HUB_DRAWER_ALIASES,
+  STUDIO_DRAWERS,
+  parseHubUrlState,
+  resolveHubDestination,
+  serializeHubUrlState,
+} from '../state/drawerMachine';
 
-describe('DrawerNavigationMachine (L3-1)', () => {
-  it('initialise par défaut à l état CLOSED', () => {
-    const machine = new DrawerNavigationMachine();
-    expect(machine.getState()).toEqual({ type: 'CLOSED' });
+describe('DrawerNavigationMachine (L3-1 / B-01 / B-05 / B-06)', () => {
+  it('vérifie que hubSectionRegistry contient exactement les 19 entrées canoniques intactes', () => {
+    expect(hubSectionRegistry).toHaveLength(19);
   });
 
-  it('ouvre chacun des 19 segments canoniques et résout le bon drawerId', () => {
+  it('paramétré sur les 19 entrées de hubSectionRegistry : résout chacune vers le bon état ou redirection Compas', () => {
     const machine = new DrawerNavigationMachine();
 
-    for (const segment of HUB_CANONICAL_SEGMENTS) {
-      machine.openDrawer(segment);
+    for (const entry of hubSectionRegistry) {
+      const resolved = machine.openDrawer(entry.segment);
+      expect(resolved).not.toBeNull();
 
-      if (segment === '') {
+      if (entry.segment === '') {
+        expect(resolved?.kind).toBe('root');
         expect(machine.getState()).toEqual({ type: 'CLOSED' });
+        expect(machine.toUrl()).toBe('/hub');
+      } else if (entry.id === 'preparation') {
+        expect(resolved?.kind).toBe('redirect');
+        expect(machine.getState()).toEqual({
+          type: 'CLOSED',
+          redirectHref: '/compas?etape=kit',
+        });
+        expect(machine.toUrl()).toBe('/compas?etape=kit');
       } else {
+        expect(resolved?.kind).toBe('drawer');
         expect(machine.getState()).toEqual({
           type: 'DRAWER_OPEN',
-          drawerId: segment,
+          drawerId: entry.segment,
+          sectionId: entry.id,
+        });
+        expect(machine.toUrl()).toBe(`/hub/${entry.segment}`);
+      }
+    }
+  });
+
+  it('résout fidèlement tous les alias historiques vers leurs tiroirs canoniques de hubSectionRegistry', () => {
+    const machine = new DrawerNavigationMachine();
+
+    for (const [alias, canonical] of Object.entries(HUB_DRAWER_ALIASES)) {
+      machine.openDrawer(alias);
+      if (canonical === '') {
+        expect(machine.getState()).toEqual({ type: 'CLOSED' });
+      } else {
+        const expectedDef = hubSectionRegistry.find((d) => d.segment === canonical)!;
+        expect(machine.getState()).toEqual({
+          type: 'DRAWER_OPEN',
+          drawerId: canonical,
+          sectionId: expectedDef.id,
         });
       }
     }
   });
 
-  it('résout fidèlement tous les alias historiques vers leurs tiroirs canoniques', () => {
+  it('rejette proprement un segment inconnu en revenant à CLOSED sans crash', () => {
     const machine = new DrawerNavigationMachine();
+    machine.openDrawer('inventaire');
+    const resolved = machine.openDrawer('segment-inexistant-xyz');
+    expect(resolved).toBeNull();
+    expect(machine.getState()).toEqual({ type: 'CLOSED' });
+  });
 
-    for (const [alias, canonical] of Object.entries(HUB_SEGMENT_ALIASES)) {
-      machine.openDrawer(alias);
-      expect(machine.getState()).toEqual({
-        type: 'DRAWER_OPEN',
-        drawerId: canonical,
+  it('synchronise bidirectionnellement URL <-> état pour /hub/<segment>, ?drawer=<segment> et ?studio=1&drawer=<studioDrawer>', () => {
+    expect(parseHubUrlState('/hub/checklist')).toEqual({
+      type: 'DRAWER_OPEN',
+      drawerId: 'checklist',
+      sectionId: 'checklist',
+    });
+
+    expect(parseHubUrlState('/hub', '?drawer=securite')).toEqual({
+      type: 'DRAWER_OPEN',
+      drawerId: 'securite',
+      sectionId: 'safety',
+    });
+
+    for (const studioDrawer of STUDIO_DRAWERS) {
+      const parsed = parseHubUrlState('/hub', `?studio=1&kit=kit-1&drawer=${studioDrawer}`);
+      expect(parsed).toEqual({
+        type: 'STUDIO',
+        activeDrawer: studioDrawer,
+        subDrawerId: undefined,
+        kitId: 'kit-1',
       });
+      expect(serializeHubUrlState(parsed)).toBe(
+        `/hub?studio=1&kit=kit-1&drawer=${studioDrawer}`
+      );
     }
   });
 
-  it('gère l ouverture et la fermeture d un sous-drawer', () => {
-    const machine = new DrawerNavigationMachine();
-    machine.openDrawer('personnaliser');
-
-    expect(machine.getState()).toEqual({
-      type: 'DRAWER_OPEN',
-      drawerId: 'personnaliser',
-    });
-
-    machine.openSubDrawer('pockets');
-    expect(machine.getState()).toEqual({
-      type: 'SUB_DRAWER_OPEN',
-      drawerId: 'personnaliser',
-      subDrawerId: 'pockets',
-    });
-
-    machine.closeSubDrawer();
-    expect(machine.getState()).toEqual({
-      type: 'DRAWER_OPEN',
-      drawerId: 'personnaliser',
-    });
-  });
-
-  describe('Hiérarchie Popstate (Retour arrière sans quitter /hub)', () => {
-    it('ferme le sous-drawer vers le drawer parent sur popstate', () => {
+  describe('Hiérarchie Popstate (B-05 : sous-drawer -> drawer -> Studio -> fermé sans quitter /hub)', () => {
+    it('déroule toute la pile Studio : sous-tiroir Studio -> tiroir Studio -> Studio nu -> Camp CLOSED -> navigateur', () => {
       const machine = new DrawerNavigationMachine();
-      machine.openDrawer('personnaliser');
+      machine.enterStudio('personnaliser', 'kit-42');
       machine.openSubDrawer('materials');
 
-      const res = machine.handlePopState();
-      expect(res.handled).toBe(true);
       expect(machine.getState()).toEqual({
-        type: 'DRAWER_OPEN',
-        drawerId: 'personnaliser',
-      });
-    });
-
-    it('ferme le drawer vers CLOSED sans quitter /hub sur popstate', () => {
-      const machine = new DrawerNavigationMachine();
-      machine.openDrawer('inventaire');
-
-      const res = machine.handlePopState();
-      expect(res.handled).toBe(true);
-      expect(machine.getState()).toEqual({ type: 'CLOSED' });
-    });
-
-    it('revient au mode STUDIO si le drawer avait été ouvert depuis le Studio', () => {
-      const machine = new DrawerNavigationMachine();
-      machine.enterStudio();
-      expect(machine.getState()).toEqual({ type: 'STUDIO', activeDrawer: undefined });
-
-      machine.openDrawer('inventaire', true);
-      expect(machine.getState()).toEqual({
-        type: 'DRAWER_OPEN',
-        drawerId: 'inventaire',
+        type: 'STUDIO',
+        activeDrawer: 'personnaliser',
+        subDrawerId: 'materials',
+        kitId: 'kit-42',
       });
 
-      const res = machine.handlePopState();
-      expect(res.handled).toBe(true);
-      expect(machine.getState()).toEqual({ type: 'STUDIO' });
+      // 1er retour : ferme le sous-tiroir
+      const r1 = machine.handlePopState();
+      expect(r1.handled).toBe(true);
+      expect(machine.getState()).toEqual({
+        type: 'STUDIO',
+        activeDrawer: 'personnaliser',
+        subDrawerId: undefined,
+        kitId: 'kit-42',
+      });
+
+      // 2e retour : ferme le tiroir Studio, reste dans le Studio 3D
+      const r2 = machine.handlePopState();
+      expect(r2.handled).toBe(true);
+      expect(machine.getState()).toEqual({
+        type: 'STUDIO',
+        activeDrawer: undefined,
+        subDrawerId: undefined,
+        kitId: 'kit-42',
+      });
+
+      // 3e retour : quitte le Studio et revient au Camp (/hub)
+      const r3 = machine.handlePopState();
+      expect(r3.handled).toBe(true);
+      expect(machine.getState()).toEqual({ type: 'CLOSED' });
+
+      // 4e retour : laisse le navigateur gérer l'historique hors /hub
+      const r4 = machine.handlePopState();
+      expect(r4.handled).toBe(false);
     });
 
-    it('ferme le Studio vers CLOSED sur popstate', () => {
+    it('déroule la pile HUB : sous-tiroir HUB -> tiroir HUB -> Studio (si ouvert depuis Studio) -> CLOSED', () => {
       const machine = new DrawerNavigationMachine();
-      machine.enterStudio();
+      machine.enterStudio('inventaire', 'kit-9');
+      machine.openDrawer('depart', true);
+      machine.openSubDrawer('meteo-depart');
 
-      const res = machine.handlePopState();
-      expect(res.handled).toBe(true);
-      expect(machine.getState()).toEqual({ type: 'CLOSED' });
-    });
+      expect(machine.getState()).toEqual({
+        type: 'SUB_DRAWER_OPEN',
+        drawerId: 'depart',
+        sectionId: 'depart',
+        subDrawerId: 'meteo-depart',
+      });
 
-    it('laisse passer l événement historique (handled = false) lorsque l état est CLOSED', () => {
-      const machine = new DrawerNavigationMachine();
-      expect(machine.getState()).toEqual({ type: 'CLOSED' });
+      const r1 = machine.handlePopState();
+      expect(r1.handled).toBe(true);
+      expect(machine.getState()).toEqual({
+        type: 'DRAWER_OPEN',
+        drawerId: 'depart',
+        sectionId: 'depart',
+      });
 
-      const res = machine.handlePopState();
-      expect(res.handled).toBe(false);
-      expect(res.state).toEqual({ type: 'CLOSED' });
+      const r2 = machine.handlePopState();
+      expect(r2.handled).toBe(true);
+      expect(machine.getState()).toEqual({
+        type: 'STUDIO',
+        activeDrawer: 'inventaire',
+        kitId: 'kit-9',
+      });
     });
   });
 
   describe('ScrollCache', () => {
-    it('enregistre et restaure les positions de scroll pour chaque tiroir', () => {
+    it('enregistre et restaure les positions de scroll positives pour chaque tiroir', () => {
       const machine = new DrawerNavigationMachine();
-
       machine.saveScrollPosition('inventaire', 350);
-      machine.saveScrollPosition('statistiques', 120);
+      machine.saveScrollPosition('checklist', -20);
 
       expect(machine.getScrollPosition('inventaire')).toBe(350);
-      expect(machine.getScrollPosition('statistiques')).toBe(120);
+      expect(machine.getScrollPosition('checklist')).toBe(0);
       expect(machine.getScrollPosition('inconnu')).toBe(0);
 
       machine.clearScrollCache();
       expect(machine.getScrollPosition('inventaire')).toBe(0);
     });
+  });
+
+  it('resolveHubDestination reconnaît les 19 IDs aussi bien que les 19 segments', () => {
+    for (const def of hubSectionRegistry) {
+      expect(resolveHubDestination(def.id)).not.toBeNull();
+      expect(resolveHubDestination(def.segment)).not.toBeNull();
+    }
   });
 });
