@@ -7,10 +7,21 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 v17 — matière bottom bar unifiée & profil aéré', () => {
-  const source = read('src/components/compte/CompteLiquidGlassV8.tsx');
+  // Les règles de style ont été extraites dans des feuilles dédiées : on lit la
+  // source TSX *et* les CSS, sans toucher aux assertions de contrat.
+  const source = read('src/components/compte/CompteLiquidGlassV8.tsx') + '\n' + read('src/components/compte/compte-apple-hig.css') + '\n' + read('src/components/compte/compte-v8.css');
   const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
-  const v17Start = source.indexOf('Compte iOS 27 v17');
-  const v17 = source.slice(v17Start, source.indexOf('`;', v17Start));
+  const cssSource = read('src/components/compte/compte-apple-hig.css') + '\n' + read('src/components/compte/compte-v8.css');
+  /** Bloc CSS de la version, borné par la version suivante (même intention que l'ancien découpage). */
+  const sectionOf = (marker: string) => {
+    const from = cssSource.indexOf(marker);
+    if (from < 0) return '';
+    const rest = cssSource.slice(from + marker.length);
+    const next = rest.search(/Compte iOS 27 v\d+/);
+    return cssSource.slice(from, next < 0 ? cssSource.length : from + marker.length + next);
+  };
+
+  const v17 = sectionOf('Compte iOS 27 v17');
 
   // Entrées de sélecteur exactes (commentaires retirés, espaces normalisés) :
   // un `toContain` sur la liste ne peut pas être satisfait par un fragment d'un autre sélecteur.
