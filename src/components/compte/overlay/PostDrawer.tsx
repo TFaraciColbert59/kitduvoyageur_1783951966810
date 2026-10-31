@@ -114,14 +114,18 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
           <ActionPill label="Réessayer" icon={<RotateCcw />} onClick={() => void load()} />
         </div>
       ) : (
-        <CommunityFeedPost
-          embedded
-          post={feedPost}
-          user={user}
-          initialPanel={initialPane === 'post' ? null : initialPane}
-          initialCommentId={initialCommentId}
-          onDeleted={() => { onDeleted?.(); onClose(); }}
-        />
+        /* La feuille est portée hors du fil : on rend les jetons de verre du fil
+           (pastille auteur, capsule) pour que le bloc soit identique à la Communauté. */
+        <div className="lkdv-account-glass">
+          <CommunityFeedPost
+            embedded
+            post={feedPost}
+            user={user}
+            initialPanel={initialPane === 'post' ? null : initialPane}
+            initialCommentId={initialCommentId}
+            onDeleted={() => { onDeleted?.(); onClose(); }}
+          />
+        </div>
       )}
     </OverlaySheet>
   );

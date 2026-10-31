@@ -252,7 +252,7 @@ export function CommunityFeedPost({
     <article
       ref={articleRef}
       id={`feed-post-${post.id}`}
-      className={hasMedia ? 'lkdv-feed-post' : 'lkdv-feed-post lkdv-feed-post--text'}
+      className={`${hasMedia ? 'lkdv-feed-post' : 'lkdv-feed-post lkdv-feed-post--text'}${panel ? ' has-panel' : ''}`}
       aria-label={`Publication de ${authorName(post)}`}
       data-keyboard="false"
       style={{

@@ -32,3 +32,12 @@ button.lkdv-comment-name { cursor: pointer; }
 .lkdv-feed-post .lkdv-post-media-glass.is-ink .lkdv-post-action-count { color: #17402c; }
 .lkdv-feed-post .lkdv-post-media-glass.is-ink button.on,
 .lkdv-feed-post .lkdv-post-media-glass.is-ink .lkdv-like.on { color: var(--lkdv-like); }
+
+/* Panneau ouvert sur un post texte : le texte du post ne transparaît plus derrière le verre. */
+.lkdv-feed-post--text.has-panel .lkdv-feed-post-text {
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-feed-post--text.has-panel .lkdv-feed-post-text { transition: none; }
+}
