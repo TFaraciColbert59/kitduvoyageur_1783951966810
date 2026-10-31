@@ -1,0 +1,17 @@
+# Démonstration outil de quarantaine (31/10/2026, branche docs)
+
+$ npm run cleanup:quarantine -- --paths src/features/explorer-v2/geo/dem.ts --reason "démonstration outil : plan sans déplacement"
+Quarantaine 2026-10-31T15-20-30-781Z — 1 fichier(s), DRY RUN (rien n’a bougé)
+Raison : démonstration outil : plan sans déplacement
+  src/features/explorer-v2/geo/dem.ts (2670 o, sha256 f8a697ac9cb1…)
+Manifeste prévu : .cleanup-trash/2026-10-31T15-20-30-781Z/manifest.json
+Restauration : node scripts/cleanup/quarantine.mjs --restore 2026-10-31T15-20-30-781Z
+Relancer avec --apply --yes pour déplacer réellement les fichiers.
+
+$ npm run cleanup:quarantine -- --paths supabase/migrations/0001_init.sql --reason "test refus"
+quarantine (refus) : chemin protégé refusé : supabase/migrations/0001_init.sql
+
+$ npm run cleanup:quarantine -- --paths docs/cleanup/notes-fantomes.md --reason "test refus"
+quarantine (refus) : fichier non suivi par git (travail en cours ou chemin faux) : docs/cleanup/notes-fantomes.md
+
+# Conclusion : aucun déplacement (DRY RUN), refus des chemins protégés et non suivis.

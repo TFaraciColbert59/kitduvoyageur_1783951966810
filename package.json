@@ -98,7 +98,8 @@
     "start:vinext": "vite preview",
     "deploy:vinext": "vinext-cloudflare deploy",
     "explorer:verify": "node scripts/explorer-v2/verify-all.mjs",
-    "explorer:clicks": "node scripts/explorer-v2/click-inventory.mjs"
+    "explorer:clicks": "node scripts/explorer-v2/click-inventory.mjs",
+    "explorer:bench:geo": "mkdir -p node_modules/.cache && esbuild scripts/explorer-v2/bench-geo.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/lkdv-bench-geo.mjs --log-level=warning && node node_modules/.cache/lkdv-bench-geo.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

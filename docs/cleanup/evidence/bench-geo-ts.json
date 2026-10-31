@@ -1,0 +1,88 @@
+{
+  "generatedAt": "2026-10-31T15:17:19.186Z",
+  "runs": 15,
+  "results": [
+    {
+      "scenario": "track-1000",
+      "points": 1000,
+      "meters": 12000,
+      "runs": 15,
+      "engine": "ts",
+      "samples": 167,
+      "decimate": {
+        "p50": 0.002,
+        "p95": 0.02,
+        "min": 0.002,
+        "max": 0.02
+      },
+      "resample": {
+        "p50": 0.084,
+        "p95": 0.731,
+        "min": 0.077,
+        "max": 0.731
+      },
+      "total": {
+        "p50": 0.269,
+        "p95": 6.404,
+        "min": 0.157,
+        "max": 6.404
+      },
+      "wallMs": 11.6
+    },
+    {
+      "scenario": "track-10000",
+      "points": 10000,
+      "meters": 120000,
+      "runs": 15,
+      "engine": "ts",
+      "samples": 1664,
+      "decimate": {
+        "p50": 0.016,
+        "p95": 0.028,
+        "min": 0.003,
+        "max": 0.028
+      },
+      "resample": {
+        "p50": 0.13,
+        "p95": 0.482,
+        "min": 0.112,
+        "max": 0.482
+      },
+      "total": {
+        "p50": 0.399,
+        "p95": 0.679,
+        "min": 0.289,
+        "max": 0.679
+      },
+      "wallMs": 6.7
+    },
+    {
+      "scenario": "track-100000",
+      "points": 100000,
+      "meters": 1200000,
+      "runs": 15,
+      "engine": "ts",
+      "samples": 16357,
+      "decimate": {
+        "p50": 0.006,
+        "p95": 0.022,
+        "min": 0.002,
+        "max": 0.022
+      },
+      "resample": {
+        "p50": 0.525,
+        "p95": 1.507,
+        "min": 0.293,
+        "max": 1.507
+      },
+      "total": {
+        "p50": 1.429,
+        "p95": 2.448,
+        "min": 1.119,
+        "max": 2.448
+      },
+      "wallMs": 22.3
+    }
+  ],
+  "verdict": "TS suffisant : le pire cas mesuré tient dans le budget de frame (16 ms), un moteur WASM n’apporte pas de gain end-to-end démontrable."
+}
