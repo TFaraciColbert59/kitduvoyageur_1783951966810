@@ -843,9 +843,7 @@ html:has(.ckp-screen), body:has(.ckp-screen) {
    carte d'identité (12/48/406 × 541 à 430 × 932), comme le post du Compte. */
 /* Le compteur de médias du Compte tombe sous l'en-tête (le `×` le recouvre).
    Ici il compte les moments du carnet : il reste lisible, juste sous la barre. */
-.ckp-post-sheet .lkdv-post-media-count { top: 56px; }
 /* Les flèches de navigation reprennent la pastille du Compte, jamais un glyphe nu. */
-.ckp-post-sheet .lkdv-post-media-nav { line-height: 0; }
 
 /* Panneaux du post : aucun padding propre. Le corps reprend celui du Compte
    (`.lkdv-post-panel-body` : 2px 12px 4px) et le composer vit dans

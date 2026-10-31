@@ -4324,6 +4324,23 @@ var EXA = {
       haptic(8);
       return;
     }
+    /* L'hôte React (le post du fil) n'est pas encore monté : on attend qu'il le soit au lieu
+       d'afficher l'ancien modal du runtime, qui se superposait au nouveau post.
+       L'ancien modal reste disponible derrière `window.__lkdvLegacyPostModal` (diagnostic). */
+    if (typeof window !== 'undefined' && !window.__lkdvLegacyPostModal) {
+      let tries = 0;
+      const timer = window.setInterval(() => {
+        tries += 1;
+        if (typeof window.__lkdvOpenPost === 'function') {
+          window.clearInterval(timer);
+          window.__lkdvOpenPost(realId);
+          haptic(8);
+        } else if (tries > 50) {
+          window.clearInterval(timer);
+        }
+      }, 100);
+      return;
+    }
     X.activePostId = id;
     X.postOpener = document.activeElement;
     syncCardBounds();

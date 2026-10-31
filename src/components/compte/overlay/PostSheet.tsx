@@ -59,6 +59,7 @@ export function PostSheet({ title, onClose, className = '', children }: PostShee
       className={`lkdv-post-drawer lkdv-post-glass-sheet ${className}`.trim()}
       dragY={dragY}
       dragActive={grabbing}
+      hideClose
     >
       <button
         type="button"

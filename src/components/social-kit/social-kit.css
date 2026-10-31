@@ -68,3 +68,26 @@ button.lkdv-comment-name { cursor: pointer; }
 .lkdv-comment.is-new { animation: lkdv-comment-in 220ms ease-out; }
 @keyframes lkdv-comment-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .lkdv-comment.is-new { animation: none; } }
+
+/* Feuille de post : le bloc du fil porte déjà la pastille auteur. L'en-tête de
+   OverlaySheet (titre = nom de l'auteur) n'est conservé que pour les lecteurs
+   d'écran (aria-labelledby), jamais affiché : plus de nom en double sous la pastille. */
+.lkdv-compte-overlay .lkdv-post-glass-sheet .lkdv-overlay-header {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Badge de rôle dans la pastille auteur : jamais sur deux lignes. */
+.lkdv-post-author-badge { white-space: nowrap; flex: none; }
