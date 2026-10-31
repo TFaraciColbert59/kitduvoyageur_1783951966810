@@ -39,8 +39,8 @@ ou de base de données.
 | PR | Branche | Contenu | CI observée |
 |---|---|---|---|
 | [#125](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/125) | `chore/lkdv-cleanup-perf-2026` | outillage audit/quarantaine, lockfile, scripts | `build` ✅, `lighthouse` ✅, `bundle-analysis` ✅, `build-ios` ✅ ; `quality-gates` ❌ (tests préexistants), `database-gates` ❌ (pgTAP préexistant), `perf-explorer` ❌ (mesure 600 s, réseau) |
-| [#126](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/126) | `fix/explorer-geo-p0` (base = #125) | correction P0 géo + worker + GPS | dépend de #125 pour `npm ci` |
-| [#127](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/127) | `docs/lkdv-cleanup-baseline` (base = #126) | baseline, audit SQL, verdict Rust, banc, checklist | docs uniquement |
+| [#126](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/126) | `fix/explorer-geo-p0` (empile #125) | correction P0 géo + worker + GPS | `build` ✅, `lighthouse` ✅, `bundle-analysis` ✅, `build-ios` ✅ ; `quality-gates`/`database-gates`/`perf-explorer` ❌ préexistants |
+| [#127](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/127) | `docs/lkdv-cleanup-baseline` (empile #126) | baseline, audit SQL, verdict Rust, banc, checklist, rapport | 1er run `build` ❌ (harnais de preuve en `.ts` hors périmètre) → corrigé, puis `build` ✅, `lighthouse` ✅, `bundle-analysis` ✅ |
 
 Ordre de fusion : **#125 → #126 → #127**. Aucune fusion automatique n'est
 effectuée : la décision revient au propriétaire du dépôt.
@@ -56,7 +56,15 @@ npm run build (placeholders CI)                                 → ✓ Compiled
 npm ci                                                          → exit 0 (après resynchronisation)
 npm run explorer:bench:geo -- --runs=15                          → voir docs/cleanup/evidence/
 npm run cleanup:audit                                           → 9 514 fichiers, 276,8 MiB, 0 script cassé
+node /tmp/parity.mjs (ancien vs nouveau moteur)                 → 500 traces, 137 319 échantillons,
+                                                                  0 divergence, écarts max 0 / 0
+curl POST /api/explorer/v2/profile (next start local)           → HTTP 200 en 5,5 ms, 34 points
+                                                                  monotones, DEM réel ; payloads
+                                                                  invalides → HTTP 400
 ```
+
+Preuves archivées : `docs/cleanup/evidence/` (OOM legacy, parité, smoke API,
+banc, démonstration quarantaine).
 
 ### Suite complète `npm test` — baseline rouge, prouvée préexistante
 
@@ -108,7 +116,8 @@ sur la branche. La CI `quality-gates` échoue d'ailleurs sur
 | Rust/WASM non mesuré | `cargo`/`rustup`/`brew` absents ; `curl | bash` interdit | verdict fondé sur la mesure TS et le budget de frame |
 | LCP/INP/FPS/mémoire mobile | aucune preview déployée, aucun appareil/simulateur | non mesuré, jamais inventé |
 | RLS multi-comptes, plans `EXPLAIN ANALYZE` | pas de base de staging autorisée, production interdite | lecture seule (`pg_stat_statements`, catalogue) |
-| E2E Playwright | base de test absente (`LKDV_E2E_ENABLED` non activé) | tests unitaires + build |
+| E2E Playwright | base de test absente (`LKDV_E2E_ENABLED` non activé) | tests unitaires + build + smoke HTTP de la route profil |
+| Workers Builds (Cloudflare) | job externe au dépôt, échoue aussi sur les autres branches | non exploitable comme signal de cette PR |
 
 ## 7. Production
 
