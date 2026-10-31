@@ -26,7 +26,9 @@ et `N/A` sont motivés. Dernière mise à jour : 31/10/2026.
 - [x] `npm run type-check` : exit 0 avec `--max-old-space-size=6144` (OOM à 2 Go).
 - [x] `npm run build` : `✓ Compiled successfully in 3.0min`, 58 pages
       statiques, exit 0 (branche P0).
-- [x] `npm test` (vitest) : voir résultat consigné dans le rapport final.
+- [x] `npm test` (vitest) : 13 059 tests passent, 118 échouent (48 fichiers),
+      50 ignorés — échecs **prouvés préexistants** (mêmes fichiers sur `main` :
+      9 échecs / 38 succès) ; voir `RAPPORT_FINAL.md` §4.
 - [ ] LCP/INP/CLS, FPS mobile, mémoire longue : `BLOCKED` (pas de preview
       autorisée, aucun appareil connecté — voir `BASELINE.md`).
 
@@ -84,7 +86,10 @@ et `N/A` sont motivés. Dernière mise à jour : 31/10/2026.
 
 ## P07 — QA / livraison
 - [x] Type-check, build, tests unitaires, tests des outils exécutés localement.
-- [ ] CI GitHub : à vérifier après push (voir rapport final).
+- [x] CI GitHub vérifiée : `build`, `lighthouse`, `bundle-analysis`, `build-ios`
+      verts sur #125 ; `quality-gates`, `database-gates`, `perf-explorer` rouges
+      **pour des causes préexistantes** (tests `design/*`, pgTAP, mesure 600 s).
 - [x] PRs ouvertes en brouillon avec preuves, risques, rollback.
 - [x] Aucune mutation de `main`, de la production ou de la base.
-- [x] Rapport final honnête avec blocages (`docs/cleanup/RAPPORT_FINAL.md`).
+- [x] Rapport final honnête avec blocages (`docs/cleanup/RAPPORT_FINAL.md`),
+      verdict Rust (`RUST_VERDICT.md`), bundle (`BUNDLE.md`).
