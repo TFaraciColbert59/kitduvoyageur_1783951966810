@@ -169,7 +169,17 @@ export function useKitStudio({
   apiClient,
 }: UseKitStudioOptions): UseKitStudioResult {
   const [state, dispatch] = useReducer(kitConfigurationReducer, initialConfig);
+
+  // ── Synchronous State & Queue Tracking Refs ──
+  // latestStateRef guarantees synchronous state access across chained microtasks without React closure staleness
+  const latestStateRef = useRef<KitConfiguration>(initialConfig);
+  // snapshotRef holds the latest server-confirmed state (for resetToSnapshot)
   const snapshotRef = useRef<KitConfiguration>(initialConfig);
+  // mutationQueueRef serializes all optimistic executions into a strict FIFO promise chain
+  const mutationQueueRef = useRef<Promise<void>>(Promise.resolve());
+  // pendingCountRef tracks in-flight queued operations to prevent isSaving flicker
+  const pendingCountRef = useRef<number>(0);
+
   const [isSaving, setIsSaving] = useState(false);
   const [activeError, setActiveError] = useState<string | null>(null);
 
@@ -181,7 +191,7 @@ export function useKitStudio({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          kitId: state.kitId,
+          kitId: latestStateRef.current.kitId,
           clientRevision,
           mutation,
         }),
@@ -194,74 +204,104 @@ export function useKitStudio({
 
       return response.json();
     },
-    [state.kitId]
+    []
   );
 
   const executeOptimisticMutation = useCallback(
-    async (mutation: KitMutationPayload, action: KitAction) => {
-      // 1. Validation locale Zod
+    (mutation: KitMutationPayload, action: KitAction): Promise<void> => {
+      // 1. Validation locale Zod synchrone immédiate (échoue avant la mise en file)
       const parseResult = kitMutationPayloadSchema.safeParse(mutation);
       if (!parseResult.success) {
         const msg = parseResult.error.issues[0]?.message || 'Validation locale échouée';
         setActiveError(msg);
-        throw new Error(msg);
+        return Promise.reject(new Error(msg));
       }
 
-      // 2. Capture du snapshot avant mutation
-      const priorSnapshot = state;
-      snapshotRef.current = priorSnapshot;
-      setActiveError(null);
+      pendingCountRef.current += 1;
       setIsSaving(true);
 
-      // 3. Application optimiste (incrémente révision)
-      dispatch(action);
+      const runMutationTask = async () => {
+        // 2. Capture de l'état préalable exact pour CETTE mutation
+        const priorState = latestStateRef.current;
+        setActiveError(null);
 
-      try {
-        const caller = apiClient || defaultApiCall;
-        const result = await caller(mutation, priorSnapshot.revision + 1);
+        // 3. Calcul synchrone de l'état optimiste via le réducteur pur
+        const optimisticState = kitConfigurationReducer(priorState, action);
 
-        if (result && typeof result.revision === 'number') {
-          // Si le serveur a attribué une révision plus récente, synchronise
-          if (result.revision > priorSnapshot.revision + 1) {
-            dispatch({
-              type: 'state/reconcile',
-              payload: {
-                serverState: {
-                  ...state,
-                  revision: result.revision,
-                },
-              },
-            });
+        // Détermination de la révision cible monotone
+        const targetRevision =
+          optimisticState.revision > priorState.revision
+            ? optimisticState.revision
+            : priorState.revision + 1;
+
+        const finalOptimisticState: KitConfiguration =
+          optimisticState.revision === targetRevision
+            ? optimisticState
+            : { ...optimisticState, revision: targetRevision };
+
+        // Mise à jour immédiate de la référence synchrone et notification React
+        latestStateRef.current = finalOptimisticState;
+        dispatch(action);
+
+        try {
+          const caller = apiClient || defaultApiCall;
+          const result = await caller(mutation, targetRevision);
+
+          let confirmedState = finalOptimisticState;
+          if (result && typeof result.revision === 'number') {
+            if (result.revision > targetRevision) {
+              confirmedState = {
+                ...finalOptimisticState,
+                revision: result.revision,
+              };
+              dispatch({
+                type: 'state/reconcile',
+                payload: { serverState: confirmedState },
+              });
+            }
+          }
+
+          // Avancement de l'état confirmé et du snapshot
+          latestStateRef.current = confirmedState;
+          snapshotRef.current = confirmedState;
+
+          if (onSaveSuccess) {
+            onSaveSuccess(confirmedState);
+          }
+        } catch (err: any) {
+          // 4. Échec isolé : rollback UNIQUEMENT vers priorState (isole les mutations précédentes)
+          latestStateRef.current = priorState;
+          dispatch({
+            type: 'state/reset',
+            payload: { initialState: priorState },
+          });
+
+          const errorMsg = err?.message || 'Échec de l’enregistrement';
+          setActiveError(errorMsg);
+
+          if (onSaveError) {
+            onSaveError(err instanceof Error ? err : new Error(errorMsg), priorState);
+          }
+
+          // Propagation de l'erreur à l'appelant individuel
+          throw err instanceof Error ? err : new Error(errorMsg);
+        } finally {
+          pendingCountRef.current = Math.max(0, pendingCountRef.current - 1);
+          if (pendingCountRef.current === 0) {
+            setIsSaving(false);
           }
         }
+      };
 
-        // Snapshot avancé sur l'état confirmé
-        snapshotRef.current = {
-          ...state,
-          revision: result?.revision ?? (priorSnapshot.revision + 1),
-        };
+      // Chaînage séquentiel dans la file de promesses
+      const taskPromise = mutationQueueRef.current.then(runMutationTask);
 
-        if (onSaveSuccess) {
-          onSaveSuccess(snapshotRef.current);
-        }
-      } catch (err: any) {
-        // 4. Échec : rollback immédiat vers le snapshot
-        dispatch({
-          type: 'state/reset',
-          payload: { initialState: priorSnapshot },
-        });
+      // Maintien de la file vivante même en cas de rejet d'une tâche précédente
+      mutationQueueRef.current = taskPromise.catch(() => {});
 
-        const errorMsg = err?.message || 'Échec de l’enregistrement';
-        setActiveError(errorMsg);
-
-        if (onSaveError) {
-          onSaveError(err instanceof Error ? err : new Error(errorMsg), priorSnapshot);
-        }
-      } finally {
-        setIsSaving(false);
-      }
+      return taskPromise;
     },
-    [state, apiClient, defaultApiCall, onSaveSuccess, onSaveError]
+    [apiClient, defaultApiCall, onSaveSuccess, onSaveError]
   );
 
   const moveItem = useCallback(
@@ -427,6 +467,7 @@ export function useKitStudio({
   );
 
   const resetToSnapshot = useCallback(() => {
+    latestStateRef.current = snapshotRef.current;
     dispatch({
       type: 'state/reset',
       payload: { initialState: snapshotRef.current },

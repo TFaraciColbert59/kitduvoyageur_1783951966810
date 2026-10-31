@@ -60,35 +60,74 @@ export function kitConfigurationReducer(
       const targetSlot = slotId && state.slots[slotId] ? slotId : null;
 
       const existingIndex = state.items.findIndex((i) => i.id === item.id);
+      const updatedSlots: Record<SlotId, SlotState> = { ...state.slots };
       let updatedItems: KitItem[];
 
       if (existingIndex >= 0) {
-        // Increment quantity if item already exists in kit
-        updatedItems = state.items.map((i, idx) =>
-          idx === existingIndex
-            ? { ...i, quantity: Math.max(1, i.quantity + Math.max(1, item.quantity)) }
-            : i
-        );
+        const existingItem = state.items[existingIndex];
+        const oldSlotId = existingItem.slotId;
+        const addQuantity = Math.max(1, item.quantity ?? 1);
+        const newQuantity = Math.max(1, existingItem.quantity + addQuantity);
+
+        // If targetSlot is specified and differs from existing slot, move item to targetSlot
+        if (targetSlot && targetSlot !== oldSlotId) {
+          // Remove from previous slot
+          if (oldSlotId && updatedSlots[oldSlotId]) {
+            updatedSlots[oldSlotId] = {
+              ...updatedSlots[oldSlotId],
+              itemIds: updatedSlots[oldSlotId].itemIds.filter((id) => id !== item.id),
+            };
+          }
+
+          // Add to new slot
+          const curSlot = updatedSlots[targetSlot];
+          if (!curSlot.itemIds.includes(item.id)) {
+            updatedSlots[targetSlot] = {
+              ...curSlot,
+              itemIds: [...curSlot.itemIds, item.id],
+            };
+          }
+
+          const newSlotOrder = updatedSlots[targetSlot].itemIds.indexOf(item.id);
+
+          updatedItems = state.items.map((i, idx) =>
+            idx === existingIndex
+              ? {
+                  ...i,
+                  quantity: newQuantity,
+                  slotId: targetSlot,
+                  slotOrder: newSlotOrder >= 0 ? newSlotOrder : null,
+                }
+              : i
+          );
+        } else {
+          // No slot specified or same slot: retain existing slot assignment without phantom references
+          updatedItems = state.items.map((i, idx) =>
+            idx === existingIndex
+              ? { ...i, quantity: newQuantity }
+              : i
+          );
+        }
       } else {
+        if (targetSlot && updatedSlots[targetSlot]) {
+          const curSlot = updatedSlots[targetSlot];
+          if (!curSlot.itemIds.includes(item.id)) {
+            updatedSlots[targetSlot] = {
+              ...curSlot,
+              itemIds: [...curSlot.itemIds, item.id],
+            };
+          }
+        }
+
         const newItem: KitItem = {
           ...item,
           quantity: Math.max(1, item.quantity ?? 1),
           slotId: targetSlot,
-          slotOrder: targetSlot ? (state.slots[targetSlot]?.itemIds.length ?? 0) : null,
+          slotOrder: targetSlot && updatedSlots[targetSlot]
+            ? updatedSlots[targetSlot].itemIds.indexOf(item.id)
+            : null,
         };
         updatedItems = [...state.items, newItem];
-      }
-
-      // Update slot references
-      const updatedSlots: Record<SlotId, SlotState> = { ...state.slots };
-      if (targetSlot && updatedSlots[targetSlot]) {
-        const curSlot = updatedSlots[targetSlot];
-        if (!curSlot.itemIds.includes(item.id)) {
-          updatedSlots[targetSlot] = {
-            ...curSlot,
-            itemIds: [...curSlot.itemIds, item.id],
-          };
-        }
       }
 
       return {
