@@ -117,6 +117,7 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
           initialPanel={initialPane === 'post' ? null : initialPane}
           initialCommentId={initialCommentId}
           onDeleted={() => { onDeleted?.(); onClose(); }}
+          onDismissGesture={onClose}
         />
       )}
     </PostSheet>

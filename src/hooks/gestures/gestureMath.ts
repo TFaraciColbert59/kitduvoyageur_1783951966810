@@ -54,6 +54,12 @@ export function isHorizontalSwipe(
 export const DEFAULT_DISMISS_THRESHOLD_PX = 80;
 export const DEFAULT_DISMISS_VELOCITY_PX_S = 500;
 
+/** Vrai si (dx, dy) est un glissement vers le bas franc (fermer une feuille depuis son contenu). */
+export function isVerticalDismiss(dx: number, dy: number, thresholdPx: number = DEFAULT_DISMISS_THRESHOLD_PX): boolean {
+  return dy > thresholdPx && dy > Math.abs(dx) * SWIPE_AXIS_RATIO;
+}
+
+
 /**
  * Décision de fermeture au drag : dépasser le seuil de déplacement OU
  * donner un coup sec (velocity) vers le bas, comme un swipe IG stories.

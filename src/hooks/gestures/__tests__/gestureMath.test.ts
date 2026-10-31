@@ -4,6 +4,7 @@ import {
   DEFAULT_SWIPE_THRESHOLD_PX,
   isHorizontalSwipe,
   isMoveBeyondTolerance,
+  isVerticalDismiss,
   shouldDismiss,
 } from '../gestureMath';
 
@@ -26,5 +27,12 @@ describe('gestureMath — seuils uniques des gestes', () => {
   it('tap : tolérance de déplacement de 8 px', () => {
     expect(isMoveBeyondTolerance(5, 5)).toBe(false);
     expect(isMoveBeyondTolerance(9, 0)).toBe(true);
+  });
+
+  it('glissement vers le bas : au-delà de 80 px et plus vertical qu\'horizontal', () => {
+    expect(isVerticalDismiss(5, 120)).toBe(true);
+    expect(isVerticalDismiss(5, 60)).toBe(false);
+    expect(isVerticalDismiss(110, 120)).toBe(false);
+    expect(isVerticalDismiss(0, -120)).toBe(false);
   });
 });
