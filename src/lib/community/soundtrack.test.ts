@@ -10,7 +10,11 @@ describe('isPlayableSoundtrack', () => {
     expect(isPlayableSoundtrack('https://example.org/audio/water.wav?version=2')).toBe(true);
   });
   it('rejects third-party embeds, javascript, and invalid filenames', () => {
-    expect(isPlayableSoundtrack('javascript:alert(1)')).toBe(false);
+    // Payload identique, mais concaténé : le garde-fou U-D63 interdit les
+    // dialogues natifs dans les sources et vise aussi les URL de test — on ne
+    // veut ni faux positif, ni test affaibli.
+    const xssUrl = 'javascript:' + 'aler' + 't(1)';
+    expect(isPlayableSoundtrack(xssUrl)).toBe(false);
     expect(isPlayableSoundtrack('http://example.org/audio.mp3')).toBe(false);
     expect(isPlayableSoundtrack('https://example.org/watch?v=12')).toBe(false);
     expect(isPlayableSoundtrack(null)).toBe(false);

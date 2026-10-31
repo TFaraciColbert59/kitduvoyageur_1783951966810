@@ -82,7 +82,7 @@ export function CommunityPostSoundtrack({ url, title, creator, sourceUrl }: Prop
       </button>
       {creator ? <span className="truncate text-[10px] text-white/75">Par {creator}</span> : null}
       {failed ? (
-        <span className="text-[10px] text-amber-200">Lecture impossible sur cet appareil.</span>
+        <span className="text-[10px] text-lkv-warning">Lecture impossible sur cet appareil.</span>
       ) : null}
       {validSource ? (
         <a href={validSource} rel="noopener noreferrer" target="_blank" className="text-[10px] text-white/75 underline underline-offset-2">

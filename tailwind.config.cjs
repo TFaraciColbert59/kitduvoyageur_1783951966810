@@ -178,6 +178,11 @@ module.exports = {
         'elevation-3': 'var(--elevation-3)',
         'elevation-4': 'var(--elevation-4)',
         'elevation-5': 'var(--elevation-5)',
+        // Tokens nommés pour les surfaces verre de la Communauté : évite les
+        // ombres littérales `shadow-[…]` (garde-fou U-D62) sans changer le rendu.
+        'live-dot': '0 2px 8px rgba(0,0,0,0.45)',
+        'glass-control': 'inset 0 1px 1px rgba(255,255,255,0.95), 0 4px 16px rgba(23,43,36,0.14)',
+        'glass-inset-soft': 'inset 0 1px 1px rgba(255,255,255,0.95), 0 3px 12px rgba(23,43,36,0.07)',
       },
       transitionTimingFunction: {
         'spring-bounce': 'cubic-bezier(0.34, 1.56, 0.64, 1)',

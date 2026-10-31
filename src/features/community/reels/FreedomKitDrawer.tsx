@@ -43,13 +43,22 @@ export interface RealProductItem {
   price_eur?: number | null;
 }
 
+/**
+ * URL publique d'une image produit sans figer l'hôte Supabase dans le code
+ * (le projet change selon l'environnement ; le littéral est interdit par le
+ * garde-fou d'audit `audit-scripts-static`).
+ */
+const SUPABASE_PUBLIC_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '');
+const publicProductImage = (path: string) =>
+  `${SUPABASE_PUBLIC_URL}/storage/v1/object/public/product-images/${path}`;
+
 const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
   {
     id: '82fa4b02-71c5-4871-8b48-93dbb442d2d0',
     name: 'Tente de Camping 2 Personnes Pro Ultralight',
     brand: 'BigBuy Outdoor',
     category: 'Bivouac / Sommeil',
-    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/tente-de-camping-2-personnes-categorie-bigbuy/01.jpg',
+    image: publicProductImage('tente-de-camping-2-personnes-categorie-bigbuy/01.jpg'),
     weight_g: 2000,
     price_eur: 75,
   },
@@ -58,7 +67,7 @@ const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
     name: 'Tente Abri / Bâche de Survie Réfléchissante',
     brand: 'BigBuy Outdoor',
     category: 'Bivouac / Sommeil',
-    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/tente-abri-bache-de-survie-categorie-bigbuy/01.jpg',
+    image: publicProductImage('tente-abri-bache-de-survie-categorie-bigbuy/01.jpg'),
     weight_g: 500,
     price_eur: 35,
   },
@@ -67,7 +76,7 @@ const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
     name: 'Sac de Couchage Compressible Grand Froid',
     brand: 'Tineo Outdoor',
     category: 'Bivouac / Sommeil',
-    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/sac-de-couchage-enfant-tineo-summer-tifruits-6-mois-coton/01.jpg',
+    image: publicProductImage('sac-de-couchage-enfant-tineo-summer-tifruits-6-mois-coton/01.jpg'),
     weight_g: 700,
     price_eur: 32,
   },
@@ -76,7 +85,7 @@ const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
     name: 'Sac à Dos de Randonnée Ergonomique 45L',
     brand: 'BigBuy Outdoor',
     category: 'Équipement du sac',
-    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/sac-a-dos-de-randonnee-categorie-bigbuy/01.jpg',
+    image: publicProductImage('sac-a-dos-de-randonnee-categorie-bigbuy/01.jpg'),
     weight_g: 800,
     price_eur: 55,
   },
@@ -85,7 +94,7 @@ const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
     name: 'Organiseur de Sac & Housses de Compression Étanches',
     brand: 'Luggan Outdoor',
     category: 'Équipement du sac',
-    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/organiseur-voyage-suitcase-organiser-luggan-innovagoods-6-pieces/01.jpg',
+    image: publicProductImage('organiseur-voyage-suitcase-organiser-luggan-innovagoods-6-pieces/01.jpg'),
     weight_g: 100,
     price_eur: 12,
   },
@@ -94,7 +103,7 @@ const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
     name: 'Poncho Imperméable Respirant Coupe-Vent',
     brand: 'BigBuy Outdoor',
     category: 'Vêtements / Protection',
-    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/sac-a-dos-de-randonnee-categorie-bigbuy/01.jpg',
+    image: publicProductImage('sac-a-dos-de-randonnee-categorie-bigbuy/01.jpg'),
     weight_g: 150,
     price_eur: 12,
   },
@@ -103,7 +112,7 @@ const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
     name: 'Gourde Thermos Isotherme Acier Inoxydable',
     brand: 'BigBuy Outdoor',
     category: 'Hydratation',
-    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/tasse-thermos-avec-couvercle-fc-barcelona-acier-inoxydable/01.jpg',
+    image: publicProductImage('tasse-thermos-avec-couvercle-fc-barcelona-acier-inoxydable/01.jpg'),
     weight_g: 150,
     price_eur: 14,
   },
@@ -112,7 +121,7 @@ const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
     name: 'Système d’Hydratation Flasque Souple & Filtre',
     brand: 'BigBuy Outdoor',
     category: 'Hydratation',
-    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/sac-a-dos-hydratation-bouteille-deau-spider-man-410-ml/01.jpg',
+    image: publicProductImage('sac-a-dos-hydratation-bouteille-deau-spider-man-410-ml/01.jpg'),
     weight_g: 220,
     price_eur: 45,
   },
@@ -121,7 +130,7 @@ const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
     name: 'Lampe Frontale LED Rechargeable Spot 400',
     brand: 'Black Diamond',
     category: 'Sécurité / Éclairage',
-    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/lampe-frontale-led-rechargeable-black-diamond-spot-400/01.jpg',
+    image: publicProductImage('lampe-frontale-led-rechargeable-black-diamond-spot-400/01.jpg'),
     weight_g: 90,
     price_eur: 75,
   },
@@ -130,7 +139,7 @@ const FALLBACK_REAL_PRODUCTS: RealProductItem[] = [
     name: 'Trousse Premiers Secours & Répulsif Montagne',
     brand: 'Relec Pro',
     category: 'Sécurité / Éclairage',
-    image: 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/product-images/anti-moustique-relec-373445-spray-repulsif/01.jpg',
+    image: publicProductImage('anti-moustique-relec-373445-spray-repulsif/01.jpg'),
     weight_g: 100,
     price_eur: 10,
   },
@@ -380,8 +389,8 @@ function FreedomKitUsageMapFullDrawer({
             const markerDiv = document.createElement('div');
             markerDiv.className = 'relative flex items-center justify-center pointer-events-none select-none';
             markerDiv.innerHTML = `
-              <span class="absolute size-4.5 rounded-full bg-emerald-400/50 animate-ping"></span>
-              <span class="relative size-3 rounded-full bg-emerald-500 border-2 border-white shadow-[0_2px_8px_rgba(0,0,0,0.45)]"></span>
+              <span class="absolute size-4.5 rounded-full bg-lkv-success opacity-50 animate-ping"></span>
+              <span class="relative size-3 rounded-full bg-lkv-success border-2 border-white shadow-live-dot"></span>
             `;
             new Marker({ element: markerDiv })
               .setLngLat([loc.coords[0], loc.coords[1]])
@@ -443,8 +452,8 @@ function FreedomKitUsageMapFullDrawer({
                     style={{ left: `${xPercent}%`, top: `${yPercent}%` }}
                   >
                     <div className="relative flex items-center justify-center">
-                      <span className="absolute size-4.5 rounded-full bg-emerald-400/50 animate-ping" />
-                      <span className="relative size-3 rounded-full bg-emerald-500 border-2 border-white shadow-[0_2px_8px_rgba(0,0,0,0.45)]" />
+                      <span className="absolute size-4.5 rounded-full bg-lkv-success opacity-50 animate-ping" />
+                      <span className="relative size-3 rounded-full bg-lkv-success border-2 border-white shadow-live-dot" />
                     </div>
                   </div>
                 );
@@ -763,7 +772,7 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
             type="button"
             onClick={handleAddToMyKits}
             aria-label="Enregistrer dans mes kits"
-            className={`absolute right-3.5 bottom-3.5 z-20 flex size-9 items-center justify-center rounded-full border border-white/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.95),0_4px_16px_rgba(23,43,36,0.14)] backdrop-blur-2xl transition active:scale-90 ${
+            className={`absolute right-3.5 bottom-3.5 z-20 flex size-9 items-center justify-center rounded-full border border-white/80 shadow-glass-control backdrop-blur-2xl transition active:scale-90 ${
               isAdded
                 ? 'bg-[#17402C] text-white'
                 : 'bg-white/85 text-[#17402C] hover:bg-white'
