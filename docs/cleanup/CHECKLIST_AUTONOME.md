@@ -32,7 +32,7 @@ et `N/A` sont motivés. Dernière mise à jour : 31/10/2026.
 - [ ] LCP/INP/CLS, FPS mobile, mémoire longue : `BLOCKED` (pas de preview
       autorisée, aucun appareil connecté — voir `BASELINE.md`).
 
-## P02 — Stabilité
+## P02 — Stabilité (2ᵉ passe)
 - [x] `resampleTrack` : OOM reproduit (exit 134, trace conservée), corrigé,
       tests rouges/verts (24 cas) — `docs/cleanup/evidence/`.
 - [x] Worker géo réel : `new Worker(new URL(...))`, protocole typé corrélé,
@@ -41,18 +41,22 @@ et `N/A` sont motivés. Dernière mise à jour : 31/10/2026.
       (mutation interne détectée, réponse tardive ignorée).
 - [x] Simulation GPS : impossible en production, opt-in + armement explicite,
       test d'inertie par défaut.
+- [x] **Fallback worker garanti** : `postMessage` en échec, `error` et
+      `messageerror` basculent sur le thread principal — plus jamais de
+      `loading` éternel. Bootstrap testable (`workerServer.ts`), 44 tests.
 - [x] Parcours carte/GPS/GPX : contrats conservés (mêmes nombres de points,
       mêmes champs de réponse API) ; build OK.
 
-## P03 — Nettoyage
+## P03 — Nettoyage (2ᵉ passe)
 - [x] Scripts `package.json` réconciliés : `cleanup:audit` et
       `cleanup:quarantine` fonctionnels, `design:diff`/`explorer:shots` retirés
       (fichiers absents, casse déjà documentée dans `docs/audit`).
 - [x] Doublons géo : 3 implémentations de haversine/décimation/rééchantillonnage
       → 1 moteur partagé + 1 module DEM, tests de parité.
 - [x] Outil de quarantaine avec manifeste/restauration : 8 tests node:test.
-- [ ] Dépendances inutilisées : audit livré, **aucun retrait** (risque > gain,
-      garde `rocketCritical` du `package.json`) — décision motivée.
+- [x] Dépendances inutilisées : **12 retirées avec preuve repo entière**,
+      `recharts` conservé car utilisé par le HUB (zone gelée), build exit 0.
+      `node_modules` 778 → 771 dossiers ; aucun gain bundle revendiqué.
 - [ ] Modules géants (> 800 lignes) : inventoriés, non scindés (hors budget,
       risque visuel) — `N/A` pour ce chantier.
 - [ ] `any` (452) / `eslint-disable` (128) : comptés, non migrés (changement
@@ -77,19 +81,24 @@ et `N/A` sont motivés. Dernière mise à jour : 31/10/2026.
       par la mesure TS.
 - [x] Fallback TS : c'est le seul moteur livré, testé (40 tests).
 
-## P06 — Front / 3D / médias
+## P06 — Front / 3D / médias / GPX
 - [x] Bundle baseline mesuré route par route (`docs/cleanup/BUNDLE.md`) :
       shared 105 kB, Explorer 156 kB, Hub 554–596 kB, Compas 537 kB.
 - [ ] Optimisations bundle : aucune retenue — les pistes (dynamic import Hub,
       allègement Compas) exigent une validation visuelle E2E indisponible ici.
+- [x] **GPX** : points fantômes supprimés, extraction unifiée (hiking +
+      messagerie), optimisation de parsing **mesurée puis rejetée** (x0.26 à
+      x0.93) ; après retour, x0.96–x1.03. Banc `npm run perf:gpx` livré.
 - [ ] iOS/Android natif, FPS, 3D : `BLOCKED` (aucun appareil/simulateur).
 
-## P07 — QA / livraison
+## P07 — QA / livraison (2ᵉ passe)
 - [x] Type-check, build, tests unitaires, tests des outils exécutés localement.
 - [x] CI GitHub vérifiée : `build`, `lighthouse`, `bundle-analysis`, `build-ios`
       verts sur #125 ; `quality-gates`, `database-gates`, `perf-explorer` rouges
       **pour des causes préexistantes** (tests `design/*`, pgTAP, mesure 600 s).
 - [x] PRs ouvertes en brouillon avec preuves, risques, rollback.
 - [x] Aucune mutation de `main`, de la production ou de la base.
+- [x] **Zones gelées** : aucun fichier HUB/Compas créé, modifié, déplacé ou
+      supprimé ; `recharts` et les modules partagés ont été vérifiés.
 - [x] Rapport final honnête avec blocages (`docs/cleanup/RAPPORT_FINAL.md`),
       verdict Rust (`RUST_VERDICT.md`), bundle (`BUNDLE.md`).

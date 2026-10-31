@@ -1,0 +1,152 @@
+{
+  "generatedAt": "2026-10-31T16:37:22.562Z",
+  "runs": 7,
+  "results": {
+    "export": [
+      {
+        "points": 1000,
+        "gpxBytes": 91899,
+        "export": {
+          "before": {
+            "p50": 1.05,
+            "p95": 1.5,
+            "min": 1.03,
+            "max": 1.5
+          },
+          "after": {
+            "p50": 1.38,
+            "p95": 2,
+            "min": 1.19,
+            "max": 2
+          },
+          "medianRatio": 0.76
+        },
+        "extract": {
+          "before": {
+            "p50": 0.38,
+            "p95": 0.39,
+            "min": 0.32,
+            "max": 0.39
+          },
+          "after": {
+            "p50": 0.44,
+            "p95": 0.61,
+            "min": 0.37,
+            "max": 0.61
+          },
+          "medianRatio": 0.85
+        }
+      },
+      {
+        "points": 5000,
+        "gpxBytes": 459153,
+        "export": {
+          "before": {
+            "p50": 5.79,
+            "p95": 7.11,
+            "min": 5.44,
+            "max": 7.11
+          },
+          "after": {
+            "p50": 6.27,
+            "p95": 8.24,
+            "min": 6.09,
+            "max": 8.24
+          },
+          "medianRatio": 0.92
+        },
+        "extract": {
+          "before": {
+            "p50": 1.42,
+            "p95": 1.5,
+            "min": 1.41,
+            "max": 1.5
+          },
+          "after": {
+            "p50": 1.7,
+            "p95": 2.1,
+            "min": 1.67,
+            "max": 2.1
+          },
+          "medianRatio": 0.83
+        }
+      },
+      {
+        "points": 20000,
+        "gpxBytes": 1838098,
+        "export": {
+          "before": {
+            "p50": 22.83,
+            "p95": 27.89,
+            "min": 21.57,
+            "max": 27.89
+          },
+          "after": {
+            "p50": 24.66,
+            "p95": 27.07,
+            "min": 23.89,
+            "max": 27.07
+          },
+          "medianRatio": 0.93
+        },
+        "extract": {
+          "before": {
+            "p50": 6.05,
+            "p95": 6.98,
+            "min": 5.95,
+            "max": 6.98
+          },
+          "after": {
+            "p50": 7.52,
+            "p95": 7.9,
+            "min": 6.89,
+            "max": 7.9
+          },
+          "medianRatio": 0.81
+        }
+      }
+    ],
+    "parse": [
+      {
+        "points": 1000,
+        "gpxBytes": 91899,
+        "parity": true,
+        "parse": {
+          "before": {
+            "p50": 37.26,
+            "p95": 39.16,
+            "min": 35.13,
+            "max": 39.16
+          },
+          "after": {
+            "p50": 54.09,
+            "p95": 55.81,
+            "min": 52.54,
+            "max": 55.81
+          },
+          "medianRatio": 0.69
+        }
+      },
+      {
+        "points": 5000,
+        "gpxBytes": 459153,
+        "parity": true,
+        "parse": {
+          "before": {
+            "p50": 191.96,
+            "p95": 201.01,
+            "min": 180,
+            "max": 201.01
+          },
+          "after": {
+            "p50": 724.81,
+            "p95": 776.09,
+            "min": 694.02,
+            "max": 776.09
+          },
+          "medianRatio": 0.26
+        }
+      }
+    ]
+  }
+}

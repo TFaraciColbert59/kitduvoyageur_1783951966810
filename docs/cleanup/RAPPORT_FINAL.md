@@ -41,6 +41,9 @@ ou de base de données.
 | [#125](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/125) | `chore/lkdv-cleanup-perf-2026` | outillage audit/quarantaine, lockfile, scripts | `build` ✅, `lighthouse` ✅, `bundle-analysis` ✅, `build-ios` ✅ ; `quality-gates` ❌ (tests préexistants), `database-gates` ❌ (pgTAP préexistant), `perf-explorer` ❌ (mesure 600 s, réseau) |
 | [#126](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/126) | `fix/explorer-geo-p0` (empile #125) | correction P0 géo + worker + GPS | `build` ✅, `lighthouse` ✅, `bundle-analysis` ✅, `build-ios` ✅ ; `quality-gates`/`database-gates`/`perf-explorer` ❌ préexistants |
 | [#127](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/127) | `docs/lkdv-cleanup-baseline` (empile #126) | baseline, audit SQL, verdict Rust, banc, checklist, rapport | 1er run `build` ❌ (harnais de preuve en `.ts` hors périmètre) → corrigé, puis `build` ✅, `lighthouse` ✅, `bundle-analysis` ✅ |
+| [#128](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/128) | `fix/ci-design-governance` | portes CI gouvernance design (U-D61/62/63) + audit credential littéral | `tests/design/unification` 5/5, `audit-scripts-static` 9/9, build ✅ |
+| [#129](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/129) | `perf/gpx-engine` | points fantômes GPX, extraction unifiée, optimisation mesurée puis rejetée | tests GPX 9/9, `perf:gpx` (ratios ≈1 après revert) |
+| [#130](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/130) | `chore/deps-prune` | 12 dépendances sans usage retirées, `recharts` conservé (HUB) | `npm run build` exit 0 |
 
 Ordre de fusion : **#125 → #126 → #127**. Aucune fusion automatique n'est
 effectuée : la décision revient au propriétaire du dépôt.
@@ -137,3 +140,109 @@ aucun `git push` sur `main`, aucune écriture en base (toutes les requêtes SQL
 5. Lot « dépendances » séparé, un paquet par commit, avec E2E.
 6. Réévaluer Rust/WASM uniquement si un profil terrain montre > 16 ms de calcul
    géo (voir conditions de réouverture dans `RUST_VERDICT.md`).
+
+
+---
+
+# Deuxième passe — 31/10/2026 (reprise après revue)
+
+## Réconciliation avec `main`
+
+`origin/main` a avancé de 2 commits (`next.config.mjs` uniquement :
+`FAST_BUILD`, `allowedDevOrigins`). Les trois branches du chantier ont été
+rebasées sur `d065897e` et repoussées. Le worktree `unified/latest`
+(102 commits d'avance, non poussés, 2 fichiers non suivis) n'a **jamais** été
+modifié.
+
+## Worker géo — dégradation garantie (PR #126)
+
+Trois impasses laissaient le profil en `loading` éternel, sans erreur :
+
+1. `postMessage` qui lève → aucun calcul de repli lancé ;
+2. événement `error` du worker (chunk introuvable, CSP, crash) → aucun listener ;
+3. `messageerror` → idem.
+
+Correctif : listeners `message`/`error`/`messageerror`, terminaison du worker
+fautif et bascule immédiate sur le calcul thread principal ; bootstrap extrait
+dans `workers/workerServer.ts` (testable hors navigateur), sans rejet non géré.
+Preuve : **44 tests** (5 serveur, 10 hook, 5 protocole, 24 moteur), `tsc` exit 0.
+
+## Causes CI traitées (PR #128)
+
+- **Gate 2.5 design governance** (bloquait `quality-gates` avant les tests) :
+  classes froides, ombres littérales et `window.confirm` remplacés par tokens et
+  `lkvConfirm` ; `tests/design/unification` **5/5**.
+- **Garde-fou credentials** : l'URL Supabase était en dur 10 fois dans
+  `FreedomKitDrawer` (Communauté) → `NEXT_PUBLIC_SUPABASE_URL` ;
+  `audit-scripts-static` **9/9**.
+- Les 102 tests restants sont **preexistants** et classés dans
+  `docs/cleanup/CI_FAILURES.md` : contrats de design `compte-refonte-v9…v21`
+  (≈60), contrats création Communauté (≈17), zones gelées HUB/Compas (≈6),
+  cartes/`preconnect` (2), divers (≈12). Aucun n'est causé par ce chantier ;
+  les corriger exige des décisions produit/visuelles ou la réouverture des zones
+  gelées. **Aucun test n'a été désactivé ni affaibli.**
+
+## GPX (PR #129) — un bug réel, une optimisation rejetée
+
+Bug corrigé : un `<trkpt>` sans `lat`/`lon` devenait `(0, …)` (point fantôme au
+large du Golfe de Guinée) ; altitude `NaN` et date invalide corrigées ; l'aperçu
+GPX de la messagerie réutilise `GPXEngine.extractCoordinates` (borné à 50 000
+points).
+
+Optimisation (lecture DOM directe, export `join`) **mesurée puis rejetée** :
+
+| Trace | parse avant/après | export avant/après | extract |
+|---|---|---|---|
+| 1 000 pts | x0.69 | x0.76 | x0.85 |
+| 5 000 pts | **x0.26** | x0.92 | x0.83 |
+| 20 000 pts | — | x0.93 | x0.81 |
+
+Après retour au code d'origine : **x0.96 à x1.03**. Aucun gain GPX revendiqué :
+le banc `npm run perf:gpx` reste dans le dépôt pour rejouer la décision.
+
+## Dépendances (PR #130)
+
+12 paquets sans aucun import (vérifié dans tout le dépôt, configs incluses)
+retirés : `@dnd-kit/*`, 5 `@radix-ui/react-*`, `react-dropzone`,
+`react-day-picker`, `vaul`, `liquid-glass-react`. `recharts` est **conservé** :
+il est utilisé par `src/features/hub/components/menu/BudgetDonut.tsx` (zone
+gelée). `npm run build` → exit 0, `node_modules` 778 → 771 dossiers.
+
+## Zones protégées
+
+Aucun fichier du HUB ni du Compas n'a été créé, modifié, déplacé ou supprimé.
+Les modules partagés touchés (`tailwind.config.cjs`, `GPXEngine`,
+`AttachmentDrawer`, `FreedomKitDrawer`, `CommunityFeedPost`,
+`CommunityPostSoundtrack`, `FreedomCommentsDrawer`, `HighlightEditDrawer`) ont
+été vérifiés : aucun n'est importé par le HUB ou le Compas. `recharts` (HUB) et
+`@radix-ui/react-dialog` (dialogue partagé) ont été explicitement conservés.
+
+## État final de la CI
+
+| Porte | État |
+|---|---|
+| `build`, `lighthouse`, `bundle-analysis`, `build-ios` | ✅ vertes (PR #125 et dérivées) |
+| Gate 2.5 design governance | ✅ corrigée (#128) |
+| Audit credentials | ✅ corrigée (#128) |
+| `npm test` | ❌ 102 échecs **preexistants**, classés ; test HUB/Compas bloqués par le gel |
+| `database-gates` (pgTAP), `perf-explorer` (mesure 600 s) | ❌ dépendent d'une base/CI dediée, préexistants |
+
+Conclusion inchangée : chantier **PARTIEL**, jamais « terminé ». Les PRs sont
+prêtes à relire, dans l'ordre **#125 → #126 → #127**, avec #128/#129/#130 en
+parallèle (elles partagent le commit #125 pour `npm ci`).
+
+## Rulings de la deuxième passe
+
+1. **Ne pas corriger les 102 tests de contrats design** : modifier l'UI sans
+   recette visuelle serait un pari, modifier les tests serait un masquage.
+   Coût si erroné : la CI reste rouge plus longtemps.
+2. **Rejeter l'optimisation GPX** malgré le travail investi : les mesures
+   appariées montrent une régression jusqu'à 3,8×. Coût : aucun gain GPX.
+3. **Conserver `recharts`** malgré l'audit automatique : le HUB l'utilise.
+   Coût : une dépendance de plus.
+4. **Ne pas toucher au `preconnect` du layout** pour faire passer un scan :
+   layout partagé avec HUB/Compas, et le retrait dégraderait la latence.
+   Coût : 1 test carte reste rouge.
+5. **Ne pas retirer `@radix-ui/react-dialog`** (dialogue partagé) ni
+   `@tailwindcss/typography` (plugin actif) : faux positifs de l'audit
+   automatique.
