@@ -9,7 +9,6 @@ import { ActionPill } from '@/components/ui/ActionPill';
 import { OverlaySheet } from './OverlaySheet';
 import CommunityFeedPost from '@/features/community/feed/CommunityFeedPost';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
-import { PostAuthorPill } from '@/features/community/feed/PostAuthorPill';
 
 type Pane = 'share' | 'post' | 'comments';
 
@@ -105,7 +104,6 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
       title={post?.author?.name || 'Publication'}
       onClose={onClose}
       className="lkdv-post-drawer lkdv-post-glass-sheet"
-      heading={feedPost ? <PostAuthorPill post={feedPost} /> : undefined}
     >
       {loading ? (
         <div className="lkdv-overlay-empty"><p>Chargement…</p></div>
