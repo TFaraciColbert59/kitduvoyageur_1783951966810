@@ -77,7 +77,7 @@ export function WizardFrame({
   const settle = useCallback(() => {
     const el = swipeRef.current;
     if (!el) return;
-    el.style.transition = 'transform 0.22s cubic-bezier(0.22, 0.8, 0.25, 1)';
+    el.style.transition = 'transform 0.22s var(--ease-glass)';
     el.style.transform = '';
   }, []);
 

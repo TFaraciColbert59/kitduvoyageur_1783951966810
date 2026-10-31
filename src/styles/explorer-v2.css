@@ -310,7 +310,7 @@
   z-index: 5;
   touch-action: none;
   overflow: hidden;
-  transition: height 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: height 0.34s var(--motion-ease-standard);
   will-change: height;
 }
 .xp-sheet[data-dragging='true'] {
@@ -453,7 +453,7 @@
     inset 0 1px 0 #fff, inset 0 -1px 1px rgba(255, 255, 255, 0.5), 0 0 0 0.5px rgba(23, 43, 36, 0.07),
     0 2px 8px rgba(23, 43, 36, 0.08);
   transform: translateX(calc(var(--i, 0) * 100%));
-  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 0.38s var(--motion-ease-standard);
   pointer-events: none;
   z-index: 1;
 }
@@ -529,7 +529,7 @@
   background: var(--xp-thumb);
   box-shadow: var(--xp-thumb-shadow);
   transform: translateX(calc(var(--i, 0) * 100%));
-  transition: transform 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 0.34s var(--motion-ease-standard);
   pointer-events: none;
 }
 .xp-mini-inner button {
@@ -1163,7 +1163,7 @@
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  animation: xpCount 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: xpCount 1s var(--ease-glass) both;
 }
 .xp-countdown-cancel {
   padding: 9px 18px;

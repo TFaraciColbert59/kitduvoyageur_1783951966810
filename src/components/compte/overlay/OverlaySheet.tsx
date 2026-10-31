@@ -137,7 +137,7 @@ export function OverlaySheet({
         aria-labelledby="lkdv-overlay-title"
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        style={{ transform: `translateY(${dragY}px)`, transition: dragActive ? 'none' : 'transform .28s cubic-bezier(.22,1,.36,1)' }}
+        style={{ transform: `translateY(${dragY}px)`, transition: dragActive ? 'none' : 'transform .28s var(--ease-glass)' }}
       >
         <header className="lkdv-overlay-header">
           {heading ? (

@@ -1,7 +1,8 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React from 'react';
-import { Heart, MessageCircle, Send, Plus, Check } from 'lucide-react';
+import { MessageCircle, Send, Plus, Check } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { FreedomReelItem } from './freedom-types';
 
@@ -112,12 +113,7 @@ export const FreedomActionsPill: React.FC<FreedomActionsPillProps> = ({
           onLike();
         }}
       >
-        <Heart
-          size={24}
-          fill={liked ? 'currentColor' : 'none'}
-          strokeWidth={liked ? 0 : 2.2}
-          aria-hidden="true"
-        />
+        <LikeIcon active={liked} size={24} />
         <span className="freedom-glass-count">{formatCount(likesCount)}</span>
       </button>
 

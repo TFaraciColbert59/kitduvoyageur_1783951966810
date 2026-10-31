@@ -1562,7 +1562,7 @@ function bindSelectorPress() {
       if (!b || i < 0) return;
       press = { i, x: e.clientX };
       sel.classList.add("pressing");
-      lens.style.setProperty("transition", "transform .18s cubic-bezier(.2,.9,.3,1.2)", "important");
+      lens.style.setProperty("transition", "transform .18s var(--ease-spring)", "important");
       lens.style.setProperty("transform", `translateX(${i * 100}%)`, "important");
       haptic(4);
     });
@@ -1574,7 +1574,7 @@ function bindSelectorPress() {
       const nearest = clamp(Math.floor((e.clientX - r.left) / w), 0, buttons.length - 1);
       if (nearest === press.i) return;
       press.i = nearest;
-      lens.style.setProperty("transition", "transform .16s cubic-bezier(.2,.9,.3,1.15)", "important");
+      lens.style.setProperty("transition", "transform .16s var(--ease-spring)", "important");
       lens.style.setProperty("transform", `translateX(${nearest * 100}%)`, "important");
     });
     const end = () => {
@@ -1632,7 +1632,7 @@ let startSheetClose = function() {
   const se = $("sheet");
   if (se) {
     se.inert = true;
-    se.style.setProperty("transition", "transform .56s cubic-bezier(.16,1,.3,1)", "important");
+    se.style.setProperty("transition", "transform .56s var(--ease-out)", "important");
     se.style.transform = "translateY(100%)";
   }
   clearTimeout(G.closeT);
@@ -2222,7 +2222,7 @@ phone.addEventListener("click", e => {
     }
     const v = dy / Math.max(1, performance.now() - t);
     const close = dy > h * DRAG_RATIO || v > 0.55;
-    sh.style.setProperty("transition", "transform .34s cubic-bezier(.32,.72,0,1)", "important");
+    sh.style.setProperty("transition", "transform .34s var(--motion-ease-standard)", "important");
     sh.style.transform = close ? `translateY(${h}px)` : "translateY(0)";
     if (close) {
       G.closing = true; sh.inert = true;

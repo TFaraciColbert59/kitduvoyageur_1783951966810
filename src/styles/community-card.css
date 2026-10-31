@@ -99,7 +99,7 @@ html.lkdv-no-page-scroll body {
     0 8px 22px rgba(23, 43, 36, 0.1);
   color: var(--label);
   font-family: var(--sf);
-  animation: lkdv-cd-in 0.38s cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation: lkdv-cd-in 0.38s var(--motion-ease-standard) both;
 }
 
 @keyframes lkdv-cd-in {
@@ -187,7 +187,7 @@ html.lkdv-no-page-scroll body {
     inset 0 -1px 1px rgba(255, 255, 255, 0.4),
     0 0 0 0.5px rgba(23, 43, 36, 0.06),
     0 2px 8px rgba(23, 43, 36, 0.08);
-  transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 0.42s var(--motion-ease-standard);
   z-index: 1;
   pointer-events: none;
 }
@@ -270,11 +270,11 @@ html.lkdv-no-page-scroll body {
 }
 
 .lkdv-wz-swipe[data-bounce='left'] {
-  animation: lkdv-wz-bounce-left 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  animation: lkdv-wz-bounce-left 0.4s var(--ease-spring) both;
 }
 
 .lkdv-wz-swipe[data-bounce='right'] {
-  animation: lkdv-wz-bounce-right 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  animation: lkdv-wz-bounce-right 0.4s var(--ease-spring) both;
 }
 
 @keyframes lkdv-wz-bounce-left {
@@ -297,7 +297,7 @@ html.lkdv-no-page-scroll body {
   flex: 1 1 auto;
   min-height: 0;
   gap: 10px;
-  animation: lkdv-wz-in 0.32s cubic-bezier(0.22, 0.8, 0.25, 1) both;
+  animation: lkdv-wz-in 0.32s var(--ease-glass) both;
 }
 
 @keyframes lkdv-wz-in {
@@ -550,7 +550,7 @@ html.lkdv-no-page-scroll body {
   height: 6px;
   border-radius: 50%;
   background: rgba(23, 43, 36, 0.2);
-  transition: width 0.28s cubic-bezier(0.32, 0.72, 0, 1), background 0.2s ease;
+  transition: width 0.28s var(--motion-ease-standard), background 0.2s ease;
 }
 
 .lkdv-wz-dots span[data-on='true'] {
@@ -937,7 +937,7 @@ html.lkdv-no-page-scroll body {
   height: 6px;
   border-radius: 50%;
   background: rgba(23, 43, 36, 0.2);
-  transition: width 0.28s cubic-bezier(0.32, 0.72, 0, 1), background 0.2s ease;
+  transition: width 0.28s var(--motion-ease-standard), background 0.2s ease;
 }
 
 .lkdv-ex-dots span[data-on='true'] {
@@ -1475,7 +1475,7 @@ html.lkdv-no-page-scroll body {
   box-shadow:
     inset 0 1px 0 #fff,
     0 -6px 22px rgba(11, 31, 23, 0.12);
-  animation: lkdv-cd-in 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation: lkdv-cd-in 0.3s var(--motion-ease-standard) both;
 }
 
 .lkdv-kp-head {

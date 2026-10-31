@@ -1,7 +1,9 @@
 'use client';
 
+import { EngagementBar, LikeIcon } from '@/components/social-kit';
+import { DEFAULT_DOUBLE_TAP_WINDOW_MS } from '@/hooks/gestures';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Heart, ImageOff, MessageCircle, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ImageOff } from 'lucide-react';
 
 export interface CommunityPostMediaProps {
   media: string;
@@ -24,13 +26,8 @@ export interface CommunityPostMediaProps {
   shouldIgnoreClick?: () => boolean;
   /** Proportions réelles du média (largeur / hauteur), pour adapter la hauteur de la carte. */
   onRatio?: (ratio: number) => void;
-}
-
-function formatCount(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return '0';
-  if (value < 1000) return String(value);
-  const k = value / 1000;
-  return `${k >= 10 ? Math.round(k) : k.toFixed(1).replace('.0', '')} k`;
+  /** Plusieurs médias (moments d'un carnet) : flèches et compteur. */
+  nav?: { count: number; index: number; onChange: (index: number) => void };
 }
 
 /**
@@ -54,6 +51,7 @@ export function CommunityPostMedia({
   inert = false,
   shouldIgnoreClick,
   onRatio,
+  nav,
 }: CommunityPostMediaProps) {
   const [failed, setFailed] = useState(false);
   const clickTimer = useRef<number | null>(null);
@@ -80,7 +78,7 @@ export function CommunityPostMedia({
     clickTimer.current = window.setTimeout(() => {
       clickTimer.current = null;
       onLike();
-    }, 220);
+    }, DEFAULT_DOUBLE_TAP_WINDOW_MS);
   }, [onLike]);
 
   return (
@@ -150,54 +148,31 @@ export function CommunityPostMedia({
           )}
           {burst > 0 ? (
             <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true">
-              <Heart size={82} fill="currentColor" />
+              <LikeIcon plain size={82} />
             </span>
           ) : null}
         </div>
 
-        <div className="lkdv-post-media-glass" role="group" aria-label="Actions de la publication">
-          <button
-            type="button"
-            className={liked ? 'on' : ''}
-            onClick={(event) => {
-              event.stopPropagation();
-              onLike();
-            }}
-            aria-label={`Aimer (${likesCount})`}
-            aria-pressed={liked}
-          >
-            <Heart size={18} fill={liked ? 'currentColor' : 'none'} aria-hidden="true" />
-            <span className="lkdv-post-action-count" aria-hidden="true">
-              {formatCount(likesCount)}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onComment();
-            }}
-            aria-label={`Commenter (${commentsCount})`}
-          >
-            <MessageCircle size={18} aria-hidden="true" />
-            <span className="lkdv-post-action-count" aria-hidden="true">
-              {formatCount(commentsCount)}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onShare();
-            }}
-            aria-label={`Partager (${sharesCount})`}
-          >
-            <Send size={18} aria-hidden="true" />
-            <span className="lkdv-post-action-count" aria-hidden="true">
-              {formatCount(sharesCount)}
-            </span>
-          </button>
-        </div>
+        {nav ? (
+          <>
+            <button type="button" className="lkdv-post-media-nav is-left" aria-label="Moment précédent" onClick={(event) => { event.stopPropagation(); nav.onChange((nav.index - 1 + nav.count) % nav.count); }}>
+              <ChevronLeft size={18} aria-hidden="true" />
+            </button>
+            <button type="button" className="lkdv-post-media-nav is-right" aria-label="Moment suivant" onClick={(event) => { event.stopPropagation(); nav.onChange((nav.index + 1) % nav.count); }}>
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
+            <span className="lkdv-post-media-count">{nav.index + 1}/{nav.count}</span>
+          </>
+        ) : null}
+        <EngagementBar
+          likesCount={likesCount}
+          commentsCount={commentsCount}
+          sharesCount={sharesCount}
+          liked={liked}
+          onLike={onLike}
+          onComment={onComment}
+          onShare={onShare}
+        />
       </div>
     </div>
   );

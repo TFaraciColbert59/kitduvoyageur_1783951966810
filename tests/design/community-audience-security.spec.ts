@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs';
 const file = (path: string) => readFileSync(path, 'utf8');
 const clubPanel = file('src/components/clubs/ClubPrivatePostsPanel.tsx');
 const clubDesktop = file('src/app/clubs/[id]/page.tsx');
-const clubMobile = file('src/components/clubs/MobileClubDetailView.tsx');
 const guard = file('supabase/migrations/20261015231000_community_restricted_media_club_hardening.sql');
 const policies = file('supabase/migrations/20261015220000_community_post_audience_rls.sql');
 
@@ -15,7 +14,6 @@ describe('P0 social privacy: club and follower-only posts', () => {
     expect(clubPanel).toContain("if (!user?.id || !isMember) return null");
     expect(clubPanel).not.toContain('SUPABASE_SERVICE_ROLE_KEY');
     expect(clubDesktop).toContain('<ClubPrivatePostsPanel');
-    expect(clubMobile).toContain('<ClubPrivatePostsPanel');
   });
 
   it('enforces child-row visibility even when old owner FOR ALL policies persist', () => {

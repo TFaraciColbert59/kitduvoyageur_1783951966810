@@ -10,7 +10,7 @@ const TAB_ROOTS = new Set(DESTINATIONS.map((destination) => destination.href));
  * P1-3 (C-17) — Transition de page en CSS pur : framer-motion sort du graphe
  * du layout racine (exclu du bundle partagé des 272 routes). Courbe, durée et
  * prefers-reduced-motion identiques à l'ancienne version framer-motion
- * (opacité 0.92 -> 1, 80 ms, cubic-bezier(.16,1,.3,1)) — keyframes dans
+ * (opacité 0.92 -> 1, 80 ms, var(--ease-out)) — keyframes dans
  * globals.css (classe .lkv-page-fade).
  *
  * Les cinq onglets de la barre du bas changent sans aucun fondu, comme sur

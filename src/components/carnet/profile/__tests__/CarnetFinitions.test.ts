@@ -233,7 +233,7 @@ describe('Mouvement', () => {
   it('entrée du drawer : translateY(12px) + fondu, 220 ms', () => {
     const keyframes = css.slice(css.indexOf('@keyframes ckp-drawer-in'));
     expect(keyframes).toMatch(/translateY\(12px\)/);
-    expect(rule('.ckp-card.ckp-card--drawer {')).toMatch(/ckp-drawer-in 220ms cubic-bezier\(\.22, 1, \.36, 1\)/);
+    expect(rule('.ckp-card.ckp-card--drawer {')).toMatch(/ckp-drawer-in 220ms var\(--ease-glass\)/);
   });
 
   /* 44 — changement de sous-onglet : fondu + 8 px, 180 ms. */

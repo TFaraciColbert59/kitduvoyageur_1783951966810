@@ -75,7 +75,7 @@ const COMMUNITY_SLOT_CSS = `
 .lkdv-challenge-meta span{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:999px;background:rgba(23,43,36,.06);font:500 10px/1 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label2,#56665D);white-space:nowrap;}
 .lkdv-challenge-meta .lkdv-challenge-xp{background:rgba(185,138,46,.15);color:#7A5A17;font-weight:600;}
 .lkdv-challenge-bar{height:5px;border-radius:999px;background:rgba(23,43,36,.08);overflow:hidden;}
-.lkdv-challenge-bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#96B391,#3D7A52);transition:width .35s cubic-bezier(.3,1,.4,1);}
+.lkdv-challenge-bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#96B391,#3D7A52);transition:width .35s var(--ease-glass);}
 .lkdv-challenge-deadline{margin:0;font:500 10.5px/1.2 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label2,#56665D);}
 .lkdv-comm-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:0 12px;border:0;border-radius:14px;background:rgba(255,255,255,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 .5px rgba(23,43,36,.06);font:600 12.5px/1 var(--sf,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);color:var(--label,#172B24);cursor:pointer;text-align:left;}
 .lkdv-comm-toggle svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s ease;}
@@ -87,7 +87,7 @@ const COMMUNITY_SLOT_CSS = `
 .lkdv-club-rail::-webkit-scrollbar{display:none;}
 .lkdv-club-item{display:flex;min-width:0;scroll-snap-align:start;}
 .lkdv-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
-.lkdv-club-card{box-sizing:border-box;width:100%;min-height:184px;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:12px 13px 11px;border:0;border-radius:20px;text-align:left;background:linear-gradient(165deg,rgba(255,255,255,.72),rgba(236,244,233,.6));box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.09),0 6px 16px rgba(23,43,36,.06);color:var(--label,#172B24);cursor:pointer;transition:transform .22s cubic-bezier(.3,1.3,.4,1),box-shadow .22s;}
+.lkdv-club-card{box-sizing:border-box;width:100%;min-height:184px;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:12px 13px 11px;border:0;border-radius:20px;text-align:left;background:linear-gradient(165deg,rgba(255,255,255,.72),rgba(236,244,233,.6));box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 0 0 .5px rgba(23,43,36,.09),0 6px 16px rgba(23,43,36,.06);color:var(--label,#172B24);cursor:pointer;transition:transform .22s var(--ease-spring),box-shadow .22s;}
 .lkdv-club-card:active{transform:scale(.98);}
 .lkdv-club-card:focus-visible{outline:none;box-shadow:inset 0 0 0 1.6px rgba(23,64,44,.5),inset 0 1px 0 #fff,0 6px 16px rgba(23,43,36,.08);}
 .lkdv-club-top{display:flex;align-items:center;gap:7px;min-width:0;}

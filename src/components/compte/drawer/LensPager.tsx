@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { DEFAULT_MOVE_TOLERANCE_PX, DEFAULT_SWIPE_THRESHOLD_PX } from '@/hooks/gestures';
+import { DURATION } from '@/design/motion';
 
-/** Seuil de déclenchement d'un changement de lentille par swipe (plan §3.2). */
-export const LENS_SWIPE_THRESHOLD = 30;
-/** Durée du snap de fin de swipe (plan §3.2). */
-export const LENS_SNAP_MS = 420;
+/** Seuil de déclenchement d'un changement de lentille par swipe : le seuil unique des gestes (hooks/gestures). */
+export const LENS_SWIPE_THRESHOLD = DEFAULT_SWIPE_THRESHOLD_PX;
+/** Durée du snap de fin de swipe : `--dur-slow` (tokens.css). */
+export const LENS_SNAP_MS = DURATION.slow;
 /** Courbe du snap de fin de swipe (plan §3.2). */
-export const LENS_SNAP_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
+export const LENS_SNAP_EASING = 'var(--ease-glass)';
 
 type DragAxis = 'pending' | 'x' | 'y';
 
@@ -218,7 +220,7 @@ export function LensPager({
     const dy = event.clientY - drag.startY;
 
     if (drag.axis === 'pending') {
-      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dx) < DEFAULT_MOVE_TOLERANCE_PX && Math.abs(dy) < DEFAULT_MOVE_TOLERANCE_PX) return;
       drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
       if (drag.axis === 'x') {
         try {

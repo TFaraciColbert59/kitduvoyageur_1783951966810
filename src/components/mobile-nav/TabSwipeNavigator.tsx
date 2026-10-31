@@ -21,7 +21,7 @@ const GAP = 10;
 const RADIUS = 38;
 const EDGE = 18;
 const DURATION = 280;
-const EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
+const EASE = 'var(--motion-ease-standard)';
 
 const OWN_GESTURES =
   'input, textarea, select, [contenteditable="true"], video, canvas, .maplibregl-map, .leaflet-container, ' +

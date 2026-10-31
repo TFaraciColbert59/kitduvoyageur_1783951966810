@@ -42,7 +42,7 @@ export interface CapsuleTabsProps {
  * Grammaire unique, portée par `src/styles/liquid-capsules.css` :
  * - `size="default"` (48 px) : `.segc.lg-tabs.lens-on.lkdv-capsule` + lentille `.sel-lens`
  * - `size="sm"` (30 px) : `.lkdv-lens-float` + lentille `.ig-th.lens`
- * Lentille pilotée par `--i`, glissement 420 ms `cubic-bezier(.32,.72,0,1)`.
+ * Lentille pilotée par `--i`, glissement 420 ms `var(--motion-ease-standard)`.
  *
  * Accessibilité : `role="tablist"`, `role="tab"`, `aria-selected`,
  * `aria-controls` sur l'actif seul, roving `tabIndex` (0 / -1),

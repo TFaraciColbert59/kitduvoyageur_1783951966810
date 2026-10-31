@@ -310,8 +310,8 @@ body .phone.sheet-open[data-det="card"] .map-scale-selector,body .phone.sheet-op
 .lkdv-slot-slide{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}
 .lkdv-slot-stage{position:relative!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;}
 
-.lkdv-slot-slide[data-dir="1"] .lkdv-slot-panel{animation:lkdv-slot-in-right .34s cubic-bezier(.22,.8,.25,1)!important;}
-.lkdv-slot-slide[data-dir="-1"] .lkdv-slot-panel{animation:lkdv-slot-in-left .34s cubic-bezier(.22,.8,.25,1)!important;}
+.lkdv-slot-slide[data-dir="1"] .lkdv-slot-panel{animation:lkdv-slot-in-right .34s var(--ease-glass)!important;}
+.lkdv-slot-slide[data-dir="-1"] .lkdv-slot-panel{animation:lkdv-slot-in-left .34s var(--ease-glass)!important;}
 @keyframes lkdv-slot-in-right{from{opacity:0;transform:translateX(16px) scale(.995)}to{opacity:1;transform:none}}
 @keyframes lkdv-slot-in-left{from{opacity:0;transform:translateX(-16px) scale(.995)}to{opacity:1;transform:none}}
 .lkdv-slot-panel{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;}

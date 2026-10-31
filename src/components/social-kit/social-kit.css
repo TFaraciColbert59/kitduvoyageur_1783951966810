@@ -1,0 +1,93 @@
+/* Socle social unique : like, commentaire. Importé une fois (layout racine). */
+:root {
+  --lkdv-like: #e0245e;
+  --lkdv-like-on-glass: #ff5a7a;
+}
+.lkdv-like { transition: transform 160ms ease, color 160ms ease; }
+.lkdv-like.on { color: var(--lkdv-like); }
+.lkdv-like.is-pop { animation: lkdv-like-pop 320ms var(--motion-ease-standard); }
+@keyframes lkdv-like-pop { 0% { transform: scale(.7); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .lkdv-like.is-pop { animation: none; } }
+.lkdv-like-btn { display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0; }
+.lkdv-like-btn.on { color: var(--lkdv-like); }
+.lkdv-like-btn--comment { min-height: 24px; font: 500 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif; color: #56665d; }
+.lkdv-like-btn--comment.on { color: var(--lkdv-like); }
+.lkdv-post-media-glass .lkdv-like-btn.on, .lkdv-feed-post .lkdv-post-media-glass .lkdv-like.on { color: var(--lkdv-like-on-glass); }
+.lkdv-comment-name { background: transparent; border: 0; padding: 0; cursor: default; text-align: left; }
+button.lkdv-comment-name { cursor: pointer; }
+.lkdv-comment-readonly-likes { font-size: 10px; color: #56665d; }
+
+/* Capsule d'actions sur un post texte (fond verre clair) : encre au lieu de blanc. */
+.lkdv-feed-post--text .lkdv-post-media-glass {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 6;
+}
+.lkdv-feed-post .lkdv-post-media-glass.is-ink {
+  background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.42));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 .5px rgba(23,43,36,.12), 0 4px 14px rgba(23,43,36,.12);
+}
+.lkdv-feed-post .lkdv-post-media-glass.is-ink button,
+.lkdv-feed-post .lkdv-post-media-glass.is-ink .lkdv-post-action-count { color: #17402c; }
+.lkdv-feed-post .lkdv-post-media-glass.is-ink button.on,
+.lkdv-feed-post .lkdv-post-media-glass.is-ink .lkdv-like.on { color: var(--lkdv-like); }
+
+/* Panneau ouvert sur un post texte : le texte du post ne transparaît plus derrière le verre. */
+.lkdv-feed-post--text.has-panel .lkdv-feed-post-text {
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-feed-post--text.has-panel .lkdv-feed-post-text { transition: none; }
+}
+
+/* Flèches et compteur des posts à plusieurs médias (moments d'un carnet). */
+.lkdv-feed-post .lkdv-post-media-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 4; width: 34px; height: 34px; border: 0; border-radius: 999px; display: grid; place-items: center; background: rgba(255,255,255,.84); color: #17402c; cursor: pointer; line-height: 0; }
+.lkdv-feed-post .lkdv-post-media-nav.is-left { left: 8px; }
+.lkdv-feed-post .lkdv-post-media-nav.is-right { right: 8px; }
+.lkdv-feed-post .lkdv-post-media-count { position: absolute; right: 10px; top: 64px; z-index: 4; padding: 3px 7px; border-radius: 999px; background: rgba(10,20,14,.55); color: #fff; font: 600 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); }
+
+/* Texte sous la carte d'un post piloté par une autre source (jour · lieu · légende). */
+.lkdv-feed-post-stack { display: flex; flex-direction: column; gap: 8px; }
+.lkdv-feed-post-footer { padding: 0 6px; color: #17402c; font: 400 13px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-feed-post-footer .lkdv-post-likes { margin: 0 0 2px; color: #56665d; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-feed-post-footer .lkdv-post-caption { margin: 0; }
+
+/* Pièces jointes d'un post : kit à reproduire, carnet instantané. */
+.lkdv-post-attachments { display: flex; flex-direction: column; gap: 8px; padding: 0 6px; }
+.lkdv-post-snapshot { display: flex; flex-direction: column; overflow: hidden; border-radius: 18px; background: linear-gradient(180deg, rgba(255,255,255,.486), rgba(255,255,255,.384)); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.08), 0 8px 22px rgba(23,43,36,.1); color: #17402c; }
+.lkdv-post-snapshot img { width: 100%; aspect-ratio: 16 / 7; object-fit: cover; display: block; }
+.lkdv-post-snapshot-body { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; font: 400 12px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-post-snapshot-body b { font-weight: 700; font-size: 13px; }
+.lkdv-post-snapshot-body small, .lkdv-post-snapshot-body p { margin: 0; color: #56665d; }
+.lkdv-post-snapshot-tag { font: 600 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: .1em; text-transform: uppercase; color: #56665d; }
+
+/* Commentaire : pseudo discret, arrivée d'un nouveau commentaire. */
+.lkdv-comment-handle { color: #6a7a70; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-comment.is-new { animation: lkdv-comment-in 220ms ease-out; }
+@keyframes lkdv-comment-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .lkdv-comment.is-new { animation: none; } }
+
+/* Feuille de post : le bloc du fil porte déjà la pastille auteur. L'en-tête de
+   OverlaySheet (titre = nom de l'auteur) n'est conservé que pour les lecteurs
+   d'écran (aria-labelledby), jamais affiché : plus de nom en double sous la pastille. */
+.lkdv-compte-overlay .lkdv-post-glass-sheet .lkdv-overlay-header {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Badge de rôle dans la pastille auteur : jamais sur deux lignes. */
+.lkdv-post-author-badge { white-space: nowrap; flex: none; }

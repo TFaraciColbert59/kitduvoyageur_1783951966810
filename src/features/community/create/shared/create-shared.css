@@ -742,7 +742,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
     0 0 0 0.5px rgba(23, 43, 36, 0.14),
     0 18px 48px rgba(23, 43, 36, 0.22);
-  animation: lkdv-create-confirm-in 180ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation: lkdv-create-confirm-in 180ms var(--motion-ease-standard) both;
 }
 
 .lkdv-create-confirm b {
@@ -806,11 +806,11 @@
 
 /* Glissement entre étapes : rebond quand l'étape est incomplète (ou qu'il n'y a rien de l'autre côté). */
 .lkdv-create-step-pane[data-bounce='left'] {
-  animation: lkdv-step-bounce-left 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  animation: lkdv-step-bounce-left 0.4s var(--ease-spring) both;
 }
 
 .lkdv-create-step-pane[data-bounce='right'] {
-  animation: lkdv-step-bounce-right 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  animation: lkdv-step-bounce-right 0.4s var(--ease-spring) both;
 }
 
 @keyframes lkdv-step-bounce-left {

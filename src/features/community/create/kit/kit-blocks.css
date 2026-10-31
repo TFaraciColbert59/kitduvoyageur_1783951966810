@@ -420,7 +420,7 @@
   height: 6px;
   border-radius: 50%;
   background: rgba(23, 43, 36, 0.2);
-  transition: width 0.28s cubic-bezier(0.32, 0.72, 0, 1), background 0.2s ease;
+  transition: width 0.28s var(--motion-ease-standard), background 0.2s ease;
 }
 
 .lkdv-kc-dots span[data-on='true'] {

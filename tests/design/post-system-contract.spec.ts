@@ -34,7 +34,7 @@ describe('socle de post partagé', () => {
   });
 
   it('le post Compte reprend la même feuille de verre', () => {
-    const drawer = read('src/components/compte/overlay/PostDrawer.tsx');
+    const drawer = read('src/components/compte/overlay/PostSheet.tsx');
     expect(drawer).toContain('lkdv-post-glass-sheet');
     const css = read('src/features/posts/ui/post-system.css');
     expect(css).toContain('.lkdv-post-glass-sheet');

@@ -299,7 +299,7 @@
   font: 700 11px -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
   cursor: pointer;
   transition:
-    transform 180ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 180ms var(--motion-ease-standard),
     opacity 180ms ease-out;
 }
 
@@ -464,7 +464,7 @@
     0 0 0 6px rgba(255,255,255,.2);
   color: #17402c;
   font-size: 12px !important;
-  transition: width .24s cubic-bezier(.32,.72,0,1), background .2s ease, color .2s ease, box-shadow .2s ease;
+  transition: width .24s var(--motion-ease-standard), background .2s ease, color .2s ease, box-shadow .2s ease;
 }
 .lkdv-map-massif b { color: #2f6b45; font-size: 12px; }
 .lkdv-map-massif-name {
@@ -614,14 +614,14 @@
 
 /* Apparition cinématique de la fiche et du marqueur sélectionné. */
 .lkdv-map-callout {
-  animation: mapCalloutIn .42s cubic-bezier(.22, 1, .36, 1) both;
+  animation: mapCalloutIn .42s var(--ease-glass) both;
 }
 @keyframes mapCalloutIn {
   from { opacity: 0; transform: translateY(10px) scale(.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .lkdv-map-massif.is-selected .lkdv-map-massif-ico {
-  animation: mapPinPulse 1.4s cubic-bezier(.32,.72,0,1) infinite;
+  animation: mapPinPulse 1.4s var(--motion-ease-standard) infinite;
 }
 @keyframes mapPinPulse {
   0%, 100% { transform: scale(1); opacity: 1; }

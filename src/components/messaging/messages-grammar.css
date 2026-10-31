@@ -838,7 +838,7 @@
   transform-origin: top center;
   transition:
     opacity 0.24s ease,
-    transform 0.44s cubic-bezier(0.32, 0.72, 0, 1);
+    transform 0.44s var(--motion-ease-standard);
 }
 .lkdv-messages .top {
   padding-bottom: 6px;
@@ -881,7 +881,7 @@
 
 /* ---------- Apparition des rangées (décalée), fondu sortant géré en JS ---------- */
 .lkdv-messages .mfeed-item {
-  animation: mrow-in 0.32s cubic-bezier(0.3, 1.2, 0.4, 1) both;
+  animation: mrow-in 0.32s var(--ease-spring) both;
   animation-delay: calc(var(--i, 0) * 22ms);
 }
 @keyframes mrow-in {
@@ -905,7 +905,7 @@
      coûte de la mémoire. L'animation d'entrée se suffit à elle-même. */
 }
 .lkdv-messages .mpane.in {
-  animation: mpane-in 0.36s cubic-bezier(0.22, 1, 0.3, 1) both;
+  animation: mpane-in 0.36s var(--ease-glass) both;
 }
 /* Une fois l'entrée jouée, on coupe l'animation : la rejouer ferait sauter
    le volet à chaque re-render de la liste. */
@@ -1082,7 +1082,7 @@
   border-radius: 18px;
   /* Le glissement horizontal nous revient, le vertical reste au scroll natif. */
   touch-action: pan-y;
-  transition: background 0.2s, transform 0.16s cubic-bezier(0.3, 1.4, 0.5, 1);
+  transition: background 0.2s, transform 0.16s var(--ease-spring);
 }
 .lkdv-messages .ig-feed-row:active {
   transform: scale(0.985);
@@ -1103,10 +1103,10 @@
 /* Changement de filtre : la liste glisse dans le sens du filtre choisi,
    au lieu du fondu mort (l'état `listFading` ne faisait qu'un aller-retour). */
 .lkdv-messages .ig-grid-wrap.slide-next {
-  animation: mlist-next 0.26s cubic-bezier(0.22, 1, 0.3, 1) both;
+  animation: mlist-next 0.26s var(--ease-glass) both;
 }
 .lkdv-messages .ig-grid-wrap.slide-prev {
-  animation: mlist-prev 0.26s cubic-bezier(0.22, 1, 0.3, 1) both;
+  animation: mlist-prev 0.26s var(--ease-glass) both;
 }
 @keyframes mlist-next {
   from {
@@ -1193,7 +1193,7 @@
   100% { transform: scale(1); }
 }
 .lkdv-messages .mcomposer .msend.on {
-  animation: msend-pop 0.24s cubic-bezier(0.3, 1.4, 0.5, 1);
+  animation: msend-pop 0.24s var(--ease-spring);
 }
 /* Une bulle qui arrive respire une fois, sans déplacer le fil. */
 @keyframes bub-in {
@@ -1201,7 +1201,7 @@
   to { opacity: 1; transform: none; }
 }
 .lkdv-messages .bub {
-  animation: bub-in 0.18s cubic-bezier(0.22, 1, 0.3, 1);
+  animation: bub-in 0.18s var(--ease-glass);
 }
 /* Pastille non lue : une pulsation discrète à l'apparition. */
 @keyframes badge-pop {
@@ -1210,11 +1210,11 @@
   100% { transform: scale(1); }
 }
 .lkdv-messages .mrow-badge {
-  animation: badge-pop 0.32s cubic-bezier(0.3, 1.4, 0.5, 1);
+  animation: badge-pop 0.32s var(--ease-spring);
 }
 /* Pillule auteur : appui vivant. */
 .lkdv-messages .mpill {
-  transition: transform 0.16s cubic-bezier(0.3, 1.4, 0.5, 1), box-shadow 0.2s;
+  transition: transform 0.16s var(--ease-spring), box-shadow 0.2s;
 }
 .lkdv-messages .mpill:active {
   transform: scale(0.97);

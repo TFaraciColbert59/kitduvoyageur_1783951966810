@@ -463,11 +463,25 @@ describe('Compte — isolation entre identités', () => {
     await act(async () => (window as any).__lkdvHydrateCompte({ replace: true, carnets: [{ id: 'b-post', title: 'B', visibility: 'public' }] }));
     // Exercise the runtime modal fallback rather than the React overlay seam.
     delete (window as any).__lkdvOpenPost;
+    (window as any).__lkdvLegacyPostModal = true;
     await act(async () => (window as any).EXA.openPostModal('b-post'));
     const modal = document.getElementById('post_modal_instagram')!;
     expect(modal.classList.contains('open')).toBe(true);
     await act(async () => fireEvent.keyDown(document, { key: 'Escape' }));
     expect(modal.classList.contains('open')).toBe(false);
+    delete (window as any).__lkdvLegacyPostModal;
+  });
+
+  it('sans hôte React monté, le runtime attend le post du fil au lieu d’ouvrir l’ancien modal superposé', async () => {
+    await renderCompte();
+    delete (window as any).__lkdvOpenPost;
+    delete (window as any).__lkdvLegacyPostModal;
+    const opened = vi.fn();
+    await act(async () => (window as any).EXA.openPostModal('c-post'));
+    expect(document.getElementById('post_modal_instagram')?.classList.contains('open')).toBe(false);
+    (window as any).__lkdvOpenPost = opened;
+    await act(async () => { await new Promise((resolve) => window.setTimeout(resolve, 300)); });
+    expect(opened).toHaveBeenCalledWith('c-post');
   });
 
   it('une déconnexion tardive de A ne redirige pas B', async () => {

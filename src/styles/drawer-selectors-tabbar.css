@@ -192,5 +192,5 @@ html body .lkdv-compte-v8 .lkdv-capsule .sel-lens:not(#lkdv-tabbar-glass) {
   height: auto !important;
   width: calc((100% - 8px) / var(--n, 2)) !important;
   border-radius: 999px !important;
-  transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1) !important;
+  transition: transform 0.42s var(--motion-ease-standard) !important;
 }

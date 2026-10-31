@@ -42,8 +42,6 @@ const P6_TOUCHED_FILES = [
   'src/app/connexion/page.tsx',
   'src/app/compte/page.tsx',
   'src/components/progression/MaProgressionView.tsx',
-  'src/components/compte/TabsCompte.tsx',
-  'src/components/compte/CompteLeftSidebar.tsx',
   'src/components/mobile-nav/destinationRegistry.ts',
 ];
 

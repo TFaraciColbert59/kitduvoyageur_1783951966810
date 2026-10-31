@@ -98,18 +98,18 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('LensPager — seuil, verrou d’axe et snap', () => {
-  it('ignore un déplacement sous le seuil de 24 px', () => {
+  it('ignore un déplacement sous le seuil partagé de 48 px', () => {
     render(<Harness />);
-    swipe(200, 100, 180, 101);
+    swipe(200, 100, 170, 101); // 30 px : au-dessus de l'ancien seuil (24), sous le seuil unique (48)
     expect(lensIndex()).toBe('0');
     expect(document.querySelector('.flow [role=tab][aria-selected=true]')?.textContent).toBe(
       'Lentille 0'
     );
   });
 
-  it('passe à la lentille suivante au-delà de 24 px et resynchronise .flow', () => {
+  it('passe à la lentille suivante au-delà du seuil partagé de 48 px et resynchronise .flow', () => {
     render(<Harness />);
-    swipe(200, 100, 168, 102);
+    swipe(200, 100, 140, 102); // 60 px
     expect(lensIndex()).toBe('1');
     expect(document.querySelector('.flow [role=tab][aria-selected=true]')?.textContent).toBe(
       'Lentille 1'
