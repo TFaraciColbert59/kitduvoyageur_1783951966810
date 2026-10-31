@@ -25,11 +25,14 @@ const EMPTY: [number, number][] = [];
  *
  * - un seul worker pour la durée de vie du hook, terminé au démontage ;
  * - requêtes corrélées par `id` : la dernière gagne, une réponse tardive d'une
- *   trace remplacée est ignorée (l'ancienne clé `length:premier-point` laissait
- *   passer les mutations internes) ;
+ *   trace remplacée est ignorée ;
  * - clé de cache = empreinte de **tout** le contenu + `stepM`/`demZoom` ;
- * - fallback main-thread si les module workers ne sont pas disponibles
- *   (WebView bridée) — même implémentation, même DEM.
+ * - fallback main-thread si les module workers ne sont pas disponibles, si
+ *   `postMessage` échoue, ou si le worker émet `error`/`messageerror` (chunk
+ *   introuvable, CSP, crash) : le calcul ne reste **jamais** bloqué en
+ *   `loading` ;
+ * - une erreur de calcul renvoyée par le worker (`ok: false`) expose `error`,
+ *   elle n'est pas maquillée en résultat.
  */
 export function useGeoProfile(
   positions: Array<[number, number]> | null,
@@ -67,9 +70,23 @@ export function useGeoProfile(
     }
   };
 
+  const forgetWorker = (worker: Worker) => {
+    try {
+      worker.terminate();
+    } catch {
+      // Déjà terminé : rien à faire.
+    }
+    if (workerRef.current === worker) workerRef.current = null;
+    workerBrokenRef.current = true;
+  };
+
   useEffect(() => {
     return () => {
-      workerRef.current?.terminate();
+      try {
+        workerRef.current?.terminate();
+      } catch {
+        // Déjà terminé.
+      }
       workerRef.current = null;
     };
   }, []);
@@ -86,58 +103,89 @@ export function useGeoProfile(
     setState('loading');
 
     let cancelled = false;
+    /** Nettoyage additionnel (abandon du fallback en cours). */
+    let detachFallback: (() => void) | undefined;
+
     const accept = (result: ProfileResult) => {
       if (cancelled || requestId !== requestIdRef.current || result.id !== requestId) return;
       setProfile(result);
       setState('ready');
     };
 
+    /** Calcul dans le thread principal : même contrat, même DEM. */
+    const startFallback = () => {
+      let active = true;
+      void import('../geo/profile')
+        .then(({ buildProfile }) =>
+          buildProfile({ id: requestId, positions: positionsRef.current, stepM, demZoom }),
+        )
+        .then((result) => {
+          if (active) accept(result);
+        })
+        .catch(() => {
+          if (active) setState('error');
+        });
+      detachFallback = () => {
+        active = false;
+      };
+    };
+
     const worker = ensureWorker();
-    if (worker) {
-      const onMessage = (event: MessageEvent<GeoWorkerResponse>) => {
-        const response = event.data;
-        if (!response || response.id !== requestId) return;
-        worker.removeEventListener('message', onMessage);
-        if (response.ok) accept(response.result);
-        else if (!cancelled) setState('error');
-      };
-      worker.addEventListener('message', onMessage);
-      const request: GeoWorkerRequest = {
-        protocolVersion: GEO_PROTOCOL_VERSION,
-        id: requestId,
-        op: 'profile',
-        positions: positionsRef.current,
-        stepM,
-        demZoom,
-      };
-      try {
-        worker.postMessage(request);
-      } catch {
-        worker.removeEventListener('message', onMessage);
-        workerRef.current?.terminate();
-        workerRef.current = null;
-        workerBrokenRef.current = true;
-      }
-      return () => {
-        cancelled = true;
-        worker.removeEventListener('message', onMessage);
-      };
+    if (!worker) {
+      startFallback();
+      return () => detachFallback?.();
     }
 
-    // Fallback : import paresseux du module de calcul (jamais du bootstrap worker).
-    let active = true;
-    void import('../geo/profile')
-      .then(({ buildProfile }) =>
-        buildProfile({ id: requestId, positions: positionsRef.current, stepM, demZoom }),
-      )
-      .then((result) => {
-        if (active) accept(result);
-      })
-      .catch(() => {
-        if (active) setState('error');
-      });
+    const onMessage = (event: MessageEvent<GeoWorkerResponse>) => {
+      const response = event.data;
+      if (!response || response.id !== requestId) return;
+      worker.removeEventListener('message', onMessage);
+      worker.removeEventListener('error', onWorkerFailure);
+      worker.removeEventListener('messageerror', onWorkerFailure);
+      if (response.ok) accept(response.result);
+      else if (!cancelled) setState('error');
+    };
+
+    /**
+     * Défaillance d'**infrastructure** (le worker n'a pas pu charger son chunk,
+     * a crashé, ou n'a pas pu recevoir le message) : on termine le worker et on
+     * calcule immédiatement dans le thread principal. Ne jamais laisser la
+     * feuille en « chargement » à cause d'un worker mort.
+     */
+    const onWorkerFailure = () => {
+      worker.removeEventListener('message', onMessage);
+      worker.removeEventListener('error', onWorkerFailure);
+      worker.removeEventListener('messageerror', onWorkerFailure);
+      forgetWorker(worker);
+      if (cancelled || requestId !== requestIdRef.current) return;
+      startFallback();
+    };
+
+    worker.addEventListener('message', onMessage);
+    worker.addEventListener('error', onWorkerFailure);
+    worker.addEventListener('messageerror', onWorkerFailure);
+
+    const request: GeoWorkerRequest = {
+      protocolVersion: GEO_PROTOCOL_VERSION,
+      id: requestId,
+      op: 'profile',
+      positions: positionsRef.current,
+      stepM,
+      demZoom,
+    };
+    try {
+      worker.postMessage(request);
+    } catch {
+      // Message non sérialisable ou worker invalide : fallback immédiat.
+      onWorkerFailure();
+    }
+
     return () => {
-      active = false;
+      cancelled = true;
+      worker.removeEventListener('message', onMessage);
+      worker.removeEventListener('error', onWorkerFailure);
+      worker.removeEventListener('messageerror', onWorkerFailure);
+      detachFallback?.();
     };
   }, [revision, enabled, stepM, demZoom]);
 

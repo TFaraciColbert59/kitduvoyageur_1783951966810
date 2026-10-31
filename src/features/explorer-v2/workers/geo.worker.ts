@@ -5,24 +5,10 @@
  *
  * Toute la mathématique vit dans `../geo/track.ts` et `../geo/profile.ts`, que
  * le fallback main-thread importe sans exécuter ce fichier (aucun accès `self`
- * hors worker). Reçoit des requêtes `GeoWorkerRequest`, répond toujours avec le
- * même `id`, et n'échange que des structures sérialisables.
+ * hors worker). Le câblage des messages vit dans `./workerServer.ts` pour être
+ * testé sans navigateur.
  */
 import { buildProfile } from '../geo/profile';
-import {
-  GEO_PROTOCOL_VERSION,
-  createGeoMessageHandler,
-  type GeoWorkerResponse,
-} from './protocol';
+import { attachGeoWorkerServer, type WorkerScopeLike } from './workerServer';
 
-const scope = self as unknown as DedicatedWorkerGlobalScope;
-const handleMessage = createGeoMessageHandler((request) => buildProfile(request));
-
-scope.addEventListener('message', (event: MessageEvent<unknown>) => {
-  void handleMessage(event.data).then((response: GeoWorkerResponse | null) => {
-    if (!response) return;
-    scope.postMessage(response);
-  });
-});
-
-export { GEO_PROTOCOL_VERSION };
+attachGeoWorkerServer(self as unknown as WorkerScopeLike, (request) => buildProfile(request));
