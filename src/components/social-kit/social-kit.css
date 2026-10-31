@@ -99,3 +99,12 @@ button.lkdv-comment-name { cursor: pointer; }
 .lkdv-post-panel-slot * {
   touch-action: pan-y;
 }
+
+/* Le panneau commentaires/partage couvre toute la carte (top: 0, règle du fil) : son contenu doit
+   commencer SOUS la pastille de l'auteur, sinon le premier commentaire passe derrière elle.
+   `--post-panel-top` est la hauteur réelle de la pastille + 8 px, mesurée par PostGlassPanel.
+   `!important` : une règle plus spécifique du fil remet le padding à 0. */
+.lkdv-feed-post .lkdv-post-panel-slot .lkdv-post-panel {
+  box-sizing: border-box !important;
+  padding-top: var(--post-panel-top, 64px) !important;
+}
