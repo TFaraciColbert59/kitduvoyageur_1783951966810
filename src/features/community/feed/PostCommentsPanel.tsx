@@ -2,8 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/Icon';
 import { useToast } from '@/contexts/ToastContext';
+import { CommentItem, type SocialComment } from '@/components/social-kit';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 import { usePostComments, type FeedComment } from './usePostComments';
 import { MentionPicker } from './MentionPicker';
@@ -18,18 +18,6 @@ export interface PostCommentsPanelProps {
   onClose: () => void;
   onRequireAuth?: (reason: CommunityAuthReason) => void;
   focusCommentId?: string | null;
-}
-
-function Avatar({ url, name }: { url?: string | null; name?: string | null }) {
-  if (url) {
-    // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-    return <img className="lkdv-comment-av" src={url} alt="" />;
-  }
-  return (
-    <span className="lkdv-comment-av pmi-author-initial" aria-hidden="true">
-      {(name || 'V').charAt(0).toUpperCase()}
-    </span>
-  );
 }
 
 export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCommentId = null }: PostCommentsPanelProps) {
@@ -93,15 +81,33 @@ export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCom
     setBusy(false);
   };
 
-  const renderComment = (comment: FeedComment) => (
-    <div key={comment.id} id={`comment-${comment.id}`} className="lkdv-comment">
-      <Avatar url={comment.author?.avatar_url} name={comment.author?.full_name} />
-      <div className="lkdv-comment-body">
-        <div className="lkdv-comment-head">
-          <span className="lkdv-comment-name">{comment.author?.full_name || 'Voyageur'}</span>
-          <span className="lkdv-comment-time">{timeAgo(comment.created_at)}</span>
-        </div>
-        {editing?.id === comment.id ? (
+  const toSocial = (comment: FeedComment): SocialComment => ({
+    id: comment.id,
+    authorName: comment.author?.full_name || 'Voyageur',
+    authorAvatarUrl: comment.author?.avatar_url,
+    content: renderMentions(comment.content),
+    timeLabel: timeAgo(comment.created_at),
+    likes: comment.likes,
+    liked: Boolean(comment.userLiked),
+    isOwner: Boolean(comment.isOwner),
+    replies: comment.replies.map(toSocial),
+  });
+
+  const renderComment = (comment: FeedComment) => {
+    const findRaw = (list: FeedComment[], id: string): FeedComment | undefined =>
+      list.reduce<FeedComment | undefined>((found, c) => found ?? (c.id === id ? c : findRaw(c.replies, id)), undefined);
+    const raw = (id: string) => findRaw(comments, id);
+    return (
+      <CommentItem
+        key={comment.id}
+        comment={toSocial(comment)}
+        canInteract={canWrite}
+        onLike={(c) => void toggleLike(c.id)}
+        onReply={(c) => { setReplyTo({ id: c.id, name: c.authorName }); inputRef.current?.focus(); }}
+        onEdit={(c) => setEditing({ id: c.id, text: raw(c.id)?.content ?? '' })}
+        onDelete={(c) => void remove(c.id)}
+        onReport={(c) => void reportComment(c.id)}
+        editor={editing?.id === comment.id ? (
           <div className="mt-1 flex items-center gap-2">
             <input
               value={editing.text}
@@ -109,48 +115,13 @@ export function PostCommentsPanel({ post, user, onClose, onRequireAuth, focusCom
               className="lkdv-comment-edit-input"
               aria-label="Modifier le commentaire"
             />
-            <button type="button" className="lkdv-comment-edit-action is-primary" onClick={() => { void edit(comment.id, editing.text); setEditing(null); }}>
-              OK
-            </button>
+            <button type="button" className="lkdv-comment-edit-action is-primary" onClick={() => { void edit(comment.id, editing.text); setEditing(null); }}>OK</button>
             <button type="button" className="lkdv-comment-edit-action" onClick={() => setEditing(null)}>Annuler</button>
           </div>
-        ) : (
-          <p className="lkdv-comment-text">{renderMentions(comment.content)}</p>
-        )}
-        <div className="lkdv-comment-actions">
-          {canWrite ? (
-            <>
-              <button
-                type="button"
-                className={comment.userLiked ? 'liked' : ''}
-                onClick={() => void toggleLike(comment.id)}
-                aria-label="J'aime ce commentaire"
-                aria-pressed={comment.userLiked}
-              >
-                ♥ {comment.likes > 0 ? comment.likes : ''}
-              </button>
-              <button type="button" onClick={() => { setReplyTo({ id: comment.id, name: comment.author?.full_name || 'Voyageur' }); inputRef.current?.focus(); }}>
-                Répondre
-              </button>
-              {comment.isOwner ? (
-                <>
-                  <button type="button" onClick={() => setEditing({ id: comment.id, text: comment.content })}>Modifier</button>
-                  <button type="button" onClick={() => void remove(comment.id)}>Supprimer</button>
-                </>
-              ) : (
-                <button type="button" onClick={() => void reportComment(comment.id)}>Signaler</button>
-              )}
-            </>
-          ) : (
-            <span className="text-[10px] text-[#56665D]">{comment.likes > 0 ? `♥ ${comment.likes}` : ''}</span>
-          )}
-        </div>
-        {comment.replies.length > 0 ? (
-          <div className="lkdv-comment-replies">{comment.replies.map((reply) => renderComment(reply))}</div>
-        ) : null}
-      </div>
-    </div>
-  );
+        ) : undefined}
+      />
+    );
+  };
 
   return (
     <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Commentaires de la publication">

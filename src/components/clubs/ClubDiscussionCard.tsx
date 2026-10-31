@@ -1,4 +1,5 @@
 'use client';
+import { LikeIcon } from '@/components/social-kit';
 import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -378,20 +379,7 @@ export default function ClubDiscussionCard({
                         aria-pressed={isUserLiked}
                         className="px-[var(--space-3)]"
                       >
-                        <motion.svg
-                          whileTap={{ scale: 1.3 }}
-                          transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                          viewBox="0 0 24 24"
-                          className="h-4 w-4 transition-transform motion-reduce:transition-none"
-                          fill={isUserLiked ? 'var(--lkv-danger)' : 'none'}
-                          stroke={isUserLiked ? 'var(--lkv-danger)' : 'currentColor'}
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                        </motion.svg>
+                        <LikeIcon active={isUserLiked} size={16} />
                         <span className="font-mono">{msg.likes || 0}</span>
                       </Button>
                       <Button

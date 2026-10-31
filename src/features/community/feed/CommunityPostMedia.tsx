@@ -1,7 +1,8 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Heart, ImageOff, MessageCircle, Send } from 'lucide-react';
+import { ImageOff, MessageCircle, Send } from 'lucide-react';
 
 export interface CommunityPostMediaProps {
   media: string;
@@ -150,7 +151,7 @@ export function CommunityPostMedia({
           )}
           {burst > 0 ? (
             <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true">
-              <Heart size={82} fill="currentColor" />
+              <LikeIcon plain size={82} />
             </span>
           ) : null}
         </div>
@@ -166,7 +167,7 @@ export function CommunityPostMedia({
             aria-label={`Aimer (${likesCount})`}
             aria-pressed={liked}
           >
-            <Heart size={18} fill={liked ? 'currentColor' : 'none'} aria-hidden="true" />
+            <LikeIcon active={liked} size={18} />
             <span className="lkdv-post-action-count" aria-hidden="true">
               {formatCount(likesCount)}
             </span>

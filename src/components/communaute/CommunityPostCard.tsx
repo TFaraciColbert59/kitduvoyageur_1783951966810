@@ -1,5 +1,6 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -71,30 +72,7 @@ export const timeAgo = (dateStr: string) => {
 
 // Heart SVG Icon helper for crisp rendering
 export function HeartSvg({ filled = false, className = '' }: { filled?: boolean; className?: string }) {
-  if (filled) {
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className={`size-3.5 scale-110 text-[color:var(--lkv-danger)] transition-transform duration-200 ${className}`}
-      >
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-      </svg>
-    );
-  }
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={`size-3.5 text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-danger)] ${className}`}
-    >
-      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-    </svg>
-  );
+  return <LikeIcon active={filled} size={14} className={className} />;
 }
 
 export default function CommunityPostCard({
@@ -1024,9 +1002,7 @@ export default function CommunityPostCard({
                 transition={{ duration: 0.7, times: [0, 0.25, 0.6, 1], ease: 'easeOut' }}
                 onAnimationComplete={() => setHeartBurst(0)}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="size-20 text-[color:var(--lkv-danger)] drop-shadow-lg">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                </svg>
+                <LikeIcon plain size={80} className="text-[color:var(--lkv-danger)] drop-shadow-lg" />
               </motion.div>
             )}
           </AnimatePresence>

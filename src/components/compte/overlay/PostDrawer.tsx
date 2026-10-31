@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, ChevronLeft, ChevronRight, Flag, Heart, Link2, MessageCircle, MoreHorizontal, Repeat2, RotateCcw, Send, Share2, Trash2, X } from 'lucide-react';
+import { Bookmark, ChevronLeft, ChevronRight, Flag, Link2, MessageCircle, MoreHorizontal, Repeat2, RotateCcw, Send, Share2, Trash2, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import { fetchPostDetail } from '@/features/community/posts/queries';
@@ -464,38 +464,6 @@ export function PostDrawer({ postId, initialPane = 'post', initialCommentId = nu
       {reportOpen && post ? <ReportPicker title="Signaler la publication" onClose={() => setReportOpen(false)} onPick={(reason) => void doReport(reason)} /> : null}
       {reportComment ? <ReportPicker title="Signaler le commentaire" onClose={() => setReportComment(null)} onPick={(reason) => void doReportComment(reason)} /> : null}
     </>
-  );
-}
-
-type CommentTools = {
-  editing: PostComment | null;
-  editText: string;
-  setEditText: (value: string) => void;
-  setEditing: (comment: PostComment | null) => void;
-  saveEdit: () => Promise<void>;
-  removeComment: (comment: PostComment) => Promise<void>;
-  likeComment: (comment: PostComment) => Promise<void>;
-  setReplyTo: (comment: PostComment | null) => void;
-  setReportComment: (comment: PostComment | null) => void;
-  register: (id: string, node: HTMLDivElement | null) => void;
-};
-
-function renderComment(comment: PostComment, isReply: boolean, tools: CommentTools) {
-  return (
-    <div key={comment.id} ref={(node) => tools.register(comment.id, node)} className={`lkdv-comment ${isReply ? 'is-reply' : ''}`}>
-      <Avatar name={comment.author?.name || 'Voyageur'} url={comment.author?.avatarUrl} />
-      <div className="lkdv-comment-body">
-        <div className="lkdv-comment-head"><b>{comment.author?.name || 'Voyageur'}</b><small>@{comment.author?.handle || 'voyageur'} · {ago(comment.createdAt)}</small></div>
-        {tools.editing?.id === comment.id ? (
-          <div className="lkdv-comment-edit"><textarea value={tools.editText} onChange={(event) => tools.setEditText(event.target.value)} /><div><button type="button" onClick={() => tools.setEditing(null)}>Annuler</button><button type="button" onClick={() => void tools.saveEdit()}>Enregistrer</button></div></div>
-        ) : <p>{comment.content}</p>}
-        <div className="lkdv-comment-actions">
-          <button type="button" className={comment.userLiked ? 'on' : ''} onClick={() => void tools.likeComment(comment)}><Heart size={13} fill={comment.userLiked ? 'currentColor' : 'none'} />{comment.likesCount || ''}</button>
-          {!isReply ? <button type="button" onClick={() => tools.setReplyTo(comment)}>Répondre</button> : null}
-          {comment.isOwner ? <><button type="button" onClick={() => { tools.setEditing(comment); tools.setEditText(comment.content); }}>Modifier</button><button type="button" onClick={() => void tools.removeComment(comment)}>Supprimer</button></> : <button type="button" onClick={() => tools.setReportComment(comment)}>Signaler</button>}
-        </div>
-      </div>
-    </div>
   );
 }
 

@@ -1,7 +1,8 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React, { useState } from 'react';
-import { Heart, Send, Trash2 } from 'lucide-react';
+import { Send, Trash2 } from 'lucide-react';
 import type { OutingComment, OutingKudos } from '@/features/compte/server/sorties';
 import { initials, relativeTime } from './shared';
 
@@ -21,7 +22,7 @@ export function OutingComments({ kudos, comments, busy, onKudos, onComment, onDe
     <div className="lkdv-sortie-pane">
       <section className={`lkdv-sortie-kudos ${kudos.mine ? 'mine' : ''}`}>
         <button type="button" className="lkdv-sortie-kudos-btn" onClick={onKudos} disabled={busy} aria-pressed={kudos.mine}>
-          <Heart size={18} aria-hidden="true" fill={kudos.mine ? 'currentColor' : 'none'} />
+          <LikeIcon active={kudos.mine} size={18} />
           <span>{kudos.count > 0 ? kudos.count : ''}</span>
         </button>
         <div>

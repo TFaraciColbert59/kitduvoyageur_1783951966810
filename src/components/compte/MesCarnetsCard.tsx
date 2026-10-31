@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -89,7 +90,7 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
             <div className="p-4 pt-0 border-t border-[color:var(--lkv-primary)]/5 mt-2 flex items-center justify-between text-xs font-mono font-bold text-[color:var(--lkv-forest-600-ink)]/70">
               {item.status === 'Publié' ? (
                 <div className="flex items-center gap-3 w-full justify-between pt-2">
-                  <span className="flex items-center gap-1"><Icon name="HeartIcon" size={14} className="text-[color:var(--lkv-secondary-ink)]" /> {item.likes}</span>
+                  <span className="flex items-center gap-1"><LikeIcon size={14} /> {item.likes}</span>
                   <span className="flex items-center gap-1"><Icon name="EyeIcon" size={14} className="text-[color:var(--lkv-text-muted)]" /> {item.views}</span>
                   <span className="flex items-center gap-1"><Icon name="ChatBubbleLeftIcon" size={14} className="text-[color:var(--lkv-info)]" /> {item.comments}</span>
                 </div>

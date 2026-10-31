@@ -1,7 +1,8 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React from 'react';
-import { ChevronLeft, ChevronRight, Heart, MessageCircle, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageCircle, Send } from 'lucide-react';
 import CommunityVideo from '@/components/communaute/CommunityVideo';
 
 export interface PostCardSurfaceProps {
@@ -71,7 +72,7 @@ export function PostCardSurface({
           )}
           {burst > 0 ? (
             <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true">
-              <Heart size={82} fill="currentColor" />
+              <LikeIcon plain size={82} />
             </span>
           ) : null}
         </div>
@@ -90,7 +91,7 @@ export function PostCardSurface({
 
         <div className="lkdv-post-media-glass">
           <button type="button" className={liked ? 'on' : ''} onClick={onLike} aria-label={`Aimer (${likesCount})`} aria-pressed={liked}>
-            <Heart key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} size={16} fill={liked ? 'currentColor' : 'none'} />
+            <LikeIcon active={liked} size={18} pulseKey={likePulse} />
             <span key={`likes-${likesCount}`} className="lkdv-post-action-count">{formatCount(likesCount)}</span>
           </button>
           <button type="button" onClick={onComment} aria-label={`Commenter (${commentsCount})`}>

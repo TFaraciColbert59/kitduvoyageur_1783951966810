@@ -1,7 +1,8 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React, { useMemo, useRef, useState } from 'react';
-import { Bookmark, ChevronLeft, ChevronRight, Flag, Heart, Link2, MessageCircle, Send, X } from 'lucide-react';
+import { Bookmark, ChevronLeft, ChevronRight, Flag, Link2, MessageCircle, Send, X } from 'lucide-react';
 import { LensPager } from '@/components/compte/drawer/LensPager';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { PostAuthorPill } from '@/features/community/feed/PostAuthorPill';
@@ -402,7 +403,7 @@ export function CarnetPostSheet({
                     <img src={moment.imageUrl} alt={moment.caption ?? ''} draggable={false} />
                     {burst > 0 ? (
                       <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true">
-                        <Heart size={82} fill="currentColor" />
+                        <LikeIcon plain size={82} />
                       </span>
                     ) : null}
                   </div>
@@ -439,7 +440,7 @@ export function CarnetPostSheet({
                       aria-label={`Aimer (${detail.engagement.likes})`}
                       aria-pressed={detail.engagement.liked}
                     >
-                      <Heart key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} size={16} fill={detail.engagement.liked ? 'currentColor' : 'none'} />
+                      <LikeIcon active={detail.engagement.liked} size={18} pulseKey={likePulse} />
                       <span className="lkdv-post-action-count">{formatCount(detail.engagement.likes)}</span>
                     </button>
                     <button

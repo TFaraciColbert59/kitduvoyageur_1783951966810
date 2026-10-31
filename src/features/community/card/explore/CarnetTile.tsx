@@ -1,5 +1,6 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
@@ -47,7 +48,7 @@ export function CarnetTile({
             data-on={carnet.liked ? 'true' : 'false'}
             onClick={() => onLike(carnet)}
           >
-            <Icon name="heart" size={13} aria-hidden="true" />
+            <LikeIcon size={13} />
             {likes}
           </button>
           <Link

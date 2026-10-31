@@ -1,4 +1,5 @@
 'use client';
+import { LikeIcon } from '@/components/social-kit';
 import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -506,7 +507,7 @@ function CarnetCard({ carnet, isNew }: { carnet: CarnetDB; isNew: boolean }) {
       {/* Stats footer */}
       <div className="px-4 py-3 flex items-center justify-between text-xs font-mono font-bold text-[color:var(--lkv-text-muted)]">
         <span className="flex items-center gap-1.5 text-[color:var(--lkv-secondary-ink)]">
-          <Icon name="HeartIcon" size={13} />
+          <LikeIcon size={13} />
           {fmtNum(carnet.likes_count || 0)}
         </span>
         <span className="flex items-center gap-1.5 text-[color:var(--lkv-text-muted)]">

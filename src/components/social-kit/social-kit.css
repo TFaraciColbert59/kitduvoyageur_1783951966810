@@ -1,0 +1,18 @@
+/* Socle social unique : like, commentaire. Importé une fois (layout racine). */
+:root {
+  --lkdv-like: #e0245e;
+  --lkdv-like-on-glass: #ff5a7a;
+}
+.lkdv-like { transition: transform 160ms ease, color 160ms ease; }
+.lkdv-like.on { color: var(--lkdv-like); }
+.lkdv-like.is-pop { animation: lkdv-like-pop 320ms cubic-bezier(.32,.72,0,1); }
+@keyframes lkdv-like-pop { 0% { transform: scale(.7); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .lkdv-like.is-pop { animation: none; } }
+.lkdv-like-btn { display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0; }
+.lkdv-like-btn.on { color: var(--lkdv-like); }
+.lkdv-like-btn--comment { min-height: 24px; font: 500 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif; color: #56665d; }
+.lkdv-like-btn--comment.on { color: var(--lkdv-like); }
+.lkdv-post-media-glass .lkdv-like-btn.on, .lkdv-feed-post .lkdv-post-media-glass .lkdv-like.on { color: var(--lkdv-like-on-glass); }
+.lkdv-comment-name { background: transparent; border: 0; padding: 0; cursor: default; text-align: left; }
+button.lkdv-comment-name { cursor: pointer; }
+.lkdv-comment-readonly-likes { font-size: 10px; color: #56665d; }

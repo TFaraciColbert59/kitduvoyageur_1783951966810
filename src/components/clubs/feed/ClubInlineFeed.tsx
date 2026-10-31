@@ -1,5 +1,6 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React, { useRef, useState } from 'react';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 
@@ -210,9 +211,7 @@ function ClubPostCard({
     >
       {showHeartPop ? (
         <span className="club-heart-pop" aria-hidden="true">
-          <svg width="72" height="72" viewBox="0 0 24 24" fill="#e0245e" stroke="#fff" strokeWidth="1.5">
-            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-          </svg>
+          <LikeIcon plain size={72} />
         </span>
       ) : null}
 
@@ -388,19 +387,7 @@ function ClubPostCard({
             aria-pressed={Boolean(post.liked)}
             onClick={() => onToggleLike(post.id)}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill={post.liked ? '#e0245e' : 'none'}
-              stroke={post.liked ? '#e0245e' : 'currentColor'}
-              strokeWidth="2.1"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-            </svg>
+            <LikeIcon active={Boolean(post.liked)} size={18} />
           </button>
           <button
             type="button"

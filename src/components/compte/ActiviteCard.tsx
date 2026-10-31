@@ -1,5 +1,6 @@
 'use client';
 
+import { LikeIcon } from '@/components/social-kit';
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
@@ -16,7 +17,7 @@ export default function ActiviteCard({ activites }: ActiviteCardProps) {
       case 'like':
         return (
           <div className="w-5.5 h-5.5 rounded-full bg-[color:var(--lkv-danger)]/10 text-[color:var(--lkv-danger)] flex items-center justify-center shrink-0">
-            <Icon name="HeartIcon" size={11} />
+            <LikeIcon size={11} />
           </div>
         );
       case 'badge':
