@@ -16,6 +16,8 @@
   --xp-mut2: #3f4f46;
   --xp-txt: #172b24;
   --xp-good: #3d7a52;
+  /* Fond des pastilles de cluster : jeton manquant (var() sans repli auparavant). */
+  --xp-paper: #ffffff;
   --xp-font:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', Inter, system-ui,
     'Segoe UI', Roboto, sans-serif;

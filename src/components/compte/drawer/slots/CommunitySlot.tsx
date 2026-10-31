@@ -272,7 +272,7 @@ function ClubsLens({ clubs }: { clubs: Club[] }) {
       <div className="lkdv-comm">
         <CommunityEmpty icon="○">
           <p>Aucun club.</p>
-          <Link className="lkdv-comm-link" href="/clubs">
+          <Link className="lkdv-comm-link" href="/communaute">
             Découvrir des clubs
           </Link>
         </CommunityEmpty>

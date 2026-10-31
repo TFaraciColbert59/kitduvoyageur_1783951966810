@@ -113,7 +113,7 @@ export function applySetNationality(current, value) {
    Les menus/popovers/dialogues restent hors de cette liste pour rester
    utilisables depuis une feuille. */
 const SHEET_BACKGROUND_SELECTOR =
-  '#phone > .status, #phone > .island, #phone > .top, #phone > .tabbar, #phone > .home';
+  '#phone > .status, #phone > .island, #phone > .top, #phone > .mapzone, #phone > .tabbar, #phone > .home';
 const SHEET_FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 /** Photographie de l'état inert/aria-hidden avant ouverture, par feuille. */
