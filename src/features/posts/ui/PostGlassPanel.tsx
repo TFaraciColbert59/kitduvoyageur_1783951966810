@@ -35,6 +35,7 @@ export function PostGlassPanel({
 }: PostGlassPanelProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const pointerStart = useRef<{ x: number; y: number; t: number } | null>(null);
+  const swipedRef = useRef(false);
   const [gesture, setGesture] = useState(false);
   const [leaving, setLeaving] = useState(false);
   // Clic fantôme iOS : le bouton « Commenter » est à l'endroit exact où le
@@ -164,9 +165,20 @@ export function PostGlassPanel({
       data-armed={armed ? 'true' : 'false'}
       tabIndex={-1}
       style={{ top: 'var(--post-panel-top, 64px)' }}
+      onClickCapture={(event) => {
+        // Un balayage qui démarre sur un bouton ne doit pas le déclencher au relâchement.
+        if (swipedRef.current) {
+          swipedRef.current = false;
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }}
       onPointerDown={(event) => {
         event.stopPropagation();
-        if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
+        swipedRef.current = false;
+        // Seuls les champs de saisie gardent leur geste (sélection du texte) : un balayage
+        // peut partir d'un bouton, d'une ligne ou d'un lien (liste de partage, commentaires).
+        if ((event.target as HTMLElement).closest('input,textarea,select')) return;
         pointerStart.current = { x: event.clientX, y: event.clientY, t: performance.now() };
         setGesture(true);
       }}
@@ -178,6 +190,7 @@ export function PostGlassPanel({
         const dy = event.clientY - start.y;
         if (isHorizontalSwipe(dx, dy)) {
           pointerStart.current = null;
+          swipedRef.current = true;
           setGesture(false);
           // Retour à la photo par le geste inverse ; l'autre sens ne fait rien.
           const towardPhoto = side === 'comments' ? dx > 0 : dx < 0;

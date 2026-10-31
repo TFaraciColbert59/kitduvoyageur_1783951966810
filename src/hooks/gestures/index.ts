@@ -25,6 +25,7 @@ export {
   DEFAULT_SWIPE_THRESHOLD_PX,
   SWIPE_AXIS_RATIO,
   isHorizontalSwipe,
+  isVerticalDismiss,
   isWithinTapWindow,
   isMoveBeyondTolerance,
   shouldDismiss,

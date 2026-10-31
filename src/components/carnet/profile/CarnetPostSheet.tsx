@@ -164,6 +164,7 @@ export function CarnetPostSheet({
         user={currentUserId ? { id: currentUserId, is_anonymous: !canWrite } : null}
         source={source}
         onRequireAuth={onRequireAuth}
+        onDismissGesture={onClose}
       />
     </PostSheet>
   );

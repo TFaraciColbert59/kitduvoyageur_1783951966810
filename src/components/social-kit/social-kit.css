@@ -91,3 +91,11 @@ button.lkdv-comment-name { cursor: pointer; }
 
 /* Badge de rôle dans la pastille auteur : jamais sur deux lignes. */
 .lkdv-post-author-badge { white-space: nowrap; flex: none; }
+
+/* Panneau commentaires/partage : le geste horizontal appartient au panneau (retour à la photo),
+   pas au navigateur — sinon le toucher est annulé (pointercancel) et le balayage ne part jamais.
+   Le défilement vertical de la liste reste natif. */
+.lkdv-post-panel-slot,
+.lkdv-post-panel-slot * {
+  touch-action: pan-y;
+}

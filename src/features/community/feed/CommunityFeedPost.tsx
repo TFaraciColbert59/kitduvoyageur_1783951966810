@@ -10,7 +10,7 @@ import { deletePost } from '@/features/community/posts/mutations';
 import { Bookmark, Flag, Link2, MoreHorizontal, Repeat2, Trash2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { EngagementBar } from '@/components/social-kit';
-import { isHorizontalSwipe } from '@/hooks/gestures';
+import { isHorizontalSwipe, isVerticalDismiss } from '@/hooks/gestures';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { CommunityPostMedia } from './CommunityPostMedia';
 import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomCommentsDrawer';
@@ -36,6 +36,8 @@ export interface CommunityFeedPostProps {
   onDeleted?: () => void;
   /** Autre origine de données (carnet, club…) : même bloc, autres données. */
   source?: PostSource;
+  /** Glissement vers le bas sur la carte (post porté par une feuille) : ferme la feuille hôte. */
+  onDismissGesture?: () => void;
 }
 
 /**
@@ -53,6 +55,7 @@ export function CommunityFeedPost({
   embedded = false,
   onDeleted,
   source,
+  onDismissGesture,
 }: CommunityFeedPostProps) {
   const { toast } = useToast();
   const community = usePostInteractions(post, user, onRequireAuth);
@@ -287,7 +290,8 @@ export function CommunityFeedPost({
       aria-label={`Publication de ${authorName(post)}`}
       data-keyboard="false"
       style={{
-        touchAction: 'pan-y',
+        // Dans une feuille, la carte ne défile pas : le glissement vers le bas lui appartient.
+        touchAction: onDismissGesture && !panel ? 'none' : 'pan-y',
         ...(mediaRatio
           ? { aspectRatio: String(Math.min(1, Math.max(406 / 541, mediaRatio))) }
           : null),
@@ -298,7 +302,7 @@ export function CommunityFeedPost({
          Un seul geste = une seule bascule : le doigt est oublié dès qu'elle a lieu. */
       onPointerDown={(event) => {
         const target = event.target as HTMLElement;
-        if (panel || target.closest('button,a,input,textarea,.lkdv-post-panel-slot')) {
+        if (panel || target.closest('input,textarea,select,.lkdv-post-panel-slot')) {
           swipeStart.current = null;
           return;
         }
@@ -310,11 +314,26 @@ export function CommunityFeedPost({
         if (!start || panel) return;
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
+        if (onDismissGesture && isVerticalDismiss(dx, dy)) {
+          swipeStart.current = null;
+          swiped.current = true;
+          setMenuOpen(false);
+          onDismissGesture();
+          return;
+        }
         if (!isHorizontalSwipe(dx, dy)) return;
         swipeStart.current = null;
         swiped.current = true;
         setMenuOpen(false);
         openPanel(dx > 0 ? 'share' : 'comments');
+      }}
+      onClickCapture={(event) => {
+        // Un balayage qui démarre sur la capsule ou la pastille ne doit pas déclencher leur action.
+        if (swiped.current && (event.target as HTMLElement).closest('button,a')) {
+          swiped.current = false;
+          event.preventDefault();
+          event.stopPropagation();
+        }
       }}
       onPointerUp={() => {
         swipeStart.current = null;
