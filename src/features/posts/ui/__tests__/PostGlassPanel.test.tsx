@@ -170,4 +170,9 @@ describe('PostGlassPanel — gestes', () => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
+
+  it('le contenu du panneau commence sous la pastille de l\'auteur (premier commentaire jamais masqué)', () => {
+    const css = readFileSync(join(process.cwd(), 'src/components/social-kit/social-kit.css'), 'utf8');
+    expect(css).toMatch(/\.lkdv-feed-post \.lkdv-post-panel-slot \.lkdv-post-panel\s*\{[^}]*padding-top:\s*var\(--post-panel-top, 64px\)/);
+  });
 });
