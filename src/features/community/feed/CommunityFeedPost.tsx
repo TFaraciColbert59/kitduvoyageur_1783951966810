@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReportSheet from '@/components/social/ReportSheet';
 import { PostAuthorPill } from './PostAuthorPill';
+import { lkvConfirm } from '@/components/ui/dialogs';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
 import { deletePost } from '@/features/community/posts/mutations';
 import { Bookmark, Flag, Link2, MoreHorizontal, Repeat2, Trash2 } from 'lucide-react';
@@ -461,15 +462,23 @@ export function CommunityFeedPost({
               className="is-danger"
               onClick={(event) =>
                 tapItem(event, () => {
-                  if (!window.confirm('Supprimer cette publication ?')) return;
-                  void deletePost(post.id).then(
-                    () => {
-                      setDeleted(true);
-                      onDeleted?.();
-                      toast('Publication supprimée.', 'success');
-                    },
-                    () => toast('La suppression a échoué.', 'error'),
-                  );
+                  // U-D63 : plus de window.confirm — dialogue canonique LKDV.
+                  void lkvConfirm({
+                    title: 'Supprimer la publication',
+                    message: 'Supprimer cette publication ?',
+                    confirmLabel: 'Supprimer',
+                    variant: 'destructive',
+                  }).then((confirmed) => {
+                    if (!confirmed) return;
+                    void deletePost(post.id).then(
+                      () => {
+                        setDeleted(true);
+                        onDeleted?.();
+                        toast('Publication supprimée.', 'success');
+                      },
+                      () => toast('La suppression a échoué.', 'error'),
+                    );
+                  });
                 })
               }
             >

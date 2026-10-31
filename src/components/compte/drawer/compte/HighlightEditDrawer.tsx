@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Check, Image as ImageIcon, Layers, Plus, Trash2, Type, X } from 'lucide-react';
 import { fetchJson } from './shared';
 import { ActionPill } from '@/components/ui/ActionPill';
+import { lkvConfirm } from '@/components/ui/dialogs';
 import { DrawerEmpty, DrawerError, DrawerShell, DrawerSkeleton, type DrawerTab } from '../shell/DrawerShell';
 import './HighlightEditDrawer.css';
 
@@ -197,7 +198,15 @@ export function HighlightEditDrawer({ hlId, hlTitle = '' }: { hlId: string; hlTi
   const removeStory = (storyId: string) => patch({ removeStoryId: storyId }, 'Story retirée.');
 
   const removeAlbum = async () => {
-    if (!data || !window.confirm('Retirer cette sélection de tes stories à la une ?')) return;
+    if (!data) return;
+    // U-D63 : plus de window.confirm — dialogue canonique LKDV (ConfirmHost).
+    const confirmed = await lkvConfirm({
+      title: 'Retirer cette sélection',
+      message: 'Retirer cette sélection de tes stories à la une ?',
+      confirmLabel: 'Retirer',
+      variant: 'destructive',
+    });
+    if (!confirmed) return;
     setBusy(true);
     try {
       await fetchJson(`/api/compte/highlights/${data.id}`, { method: 'DELETE' });

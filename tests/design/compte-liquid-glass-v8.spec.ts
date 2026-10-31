@@ -7,7 +7,9 @@ const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
 
 describe('Compte iOS 27 Liquid Glass v8 (@tony_frc + 50 improvements + Live Supabase/API)', () => {
   const v8Source =
-    read('src/components/compte/CompteLiquidGlassV8.tsx') +
+    // Les règles de style ont été extraites dans des feuilles dédiées : on lit la
+    // source TSX *et* les CSS, sans toucher aux assertions de contrat.
+    read('src/components/compte/CompteLiquidGlassV8.tsx') + '\n' + read('src/components/compte/compte-apple-hig.css') + '\n' + read('src/components/compte/compte-v8.css') +
     '\n' +
     read('src/components/compte/compte-liquid-glass-v8-runtime.js');
   const mobileSource = read('src/components/compte/MobileCompteV2.tsx');
