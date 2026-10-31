@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
+import { shouldDismiss } from '@/hooks/gestures';
 import { OverlaySheet } from './OverlaySheet';
 
 export interface PostSheetProps {
@@ -20,9 +21,11 @@ export function PostSheet({ title, onClose, className = '', children }: PostShee
   const [grabbing, setGrabbing] = useState(false);
   const dragStartY = useRef<number | null>(null);
   const didDragRef = useRef(false);
+  const startedAt = useRef(0);
 
   const start = (event: React.PointerEvent<HTMLButtonElement>) => {
     dragStartY.current = event.clientY;
+    startedAt.current = performance.now();
     didDragRef.current = false;
     setGrabbing(true);
     try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* optionnel */ }
@@ -39,7 +42,9 @@ export function PostSheet({ title, onClose, className = '', children }: PostShee
     dragStartY.current = null;
     setGrabbing(false);
     try { event.currentTarget.releasePointerCapture?.(event.pointerId); } catch { /* optionnel */ }
-    if (distance > 70) {
+    // Mêmes seuils et même flick que toutes les feuilles de l'app (hooks/gestures).
+    const elapsed = Math.max(1, performance.now() - startedAt.current);
+    if (shouldDismiss(distance, (distance / elapsed) * 1000)) {
       setDragY(520);
       window.setTimeout(onClose, 300);
     } else {
