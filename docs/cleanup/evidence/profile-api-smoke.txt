@@ -1,0 +1,14 @@
+# Smoke test de la route refactorée /api/explorer/v2/profile (serveur de production local, 31/10/2026)
+
+$ npx next start -p 4031
+✓ Ready in 398ms
+
+$ curl -X POST /api/explorer/v2/profile  (3 points, stepM=80, demZoom=10)
+HTTP=200 time=0.0055s size=849
+{"points":34,"distance_m":2709,"gain_m":36,"loss_m":5,"min_m":1035,"max_m":1066,"source":"aws-terrarium","samples":34,"monotonic":true}
+
+$ 1 seul point
+{"error":"trace invalide"} HTTP=400
+
+$ longitude 200 (hors bornes)
+{"error":"trace invalide"} HTTP=400
