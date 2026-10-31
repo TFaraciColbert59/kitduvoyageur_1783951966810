@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { isHorizontalSwipe, shouldDismiss } from '@/hooks/gestures';
+import { isHorizontalSwipe, shouldDismiss, useTouchSwipe } from '@/hooks/gestures';
 import { SHEET_EXIT_MS, prefersReducedMotion } from '@/design/motion';
 
 export interface PostGlassPanelProps {
@@ -75,6 +75,28 @@ export function PostGlassPanel({
       onClosed();
     }, SHEET_EXIT_MS);
   }, [onClosed]);
+
+  /* Tactile (iPhone) : événements touch, jamais annulés par le défilement. Retour à la photo par le
+     geste inverse de celui qui a ouvert le panneau ; vers le bas ferme aussi (liste en haut). */
+  const scrollAtStart = useRef(0);
+  useTouchSwipe(rootRef, {
+    ignore: (target) => Boolean((target as HTMLElement | null)?.closest?.('input,textarea,select')),
+    onSwipeRight: () => {
+      if (side !== 'comments') return;
+      swipedRef.current = true;
+      onClose();
+    },
+    onSwipeLeft: () => {
+      if (side !== 'share') return;
+      swipedRef.current = true;
+      onClose();
+    },
+    onSwipeDown: () => {
+      if (scrollAtStart.current > 0) return;
+      swipedRef.current = true;
+      onClose();
+    },
+  });
 
   useEffect(
     () => () => {
@@ -165,6 +187,10 @@ export function PostGlassPanel({
       data-armed={armed ? 'true' : 'false'}
       tabIndex={-1}
       style={{ top: 'var(--post-panel-top, 64px)' }}
+      onTouchStartCapture={(event) => {
+        const body = (event.target as HTMLElement).closest('.lkdv-post-panel-body') as HTMLElement | null;
+        scrollAtStart.current = body ? body.scrollTop : 0;
+      }}
       onClickCapture={(event) => {
         // Un balayage qui démarre sur un bouton ne doit pas le déclencher au relâchement.
         if (swipedRef.current) {
@@ -175,6 +201,11 @@ export function PostGlassPanel({
       }}
       onPointerDown={(event) => {
         event.stopPropagation();
+        // Le tactile est géré par useTouchSwipe (événements touch, fiables sur iPhone).
+        if (event.pointerType === 'touch') {
+          swipedRef.current = false;
+          return;
+        }
         swipedRef.current = false;
         // Seuls les champs de saisie gardent leur geste (sélection du texte) : un balayage
         // peut partir d'un bouton, d'une ligne ou d'un lien (liste de partage, commentaires).
@@ -184,6 +215,7 @@ export function PostGlassPanel({
       }}
       onPointerMove={(event) => {
         event.stopPropagation();
+        if (event.pointerType === 'touch') return;
         const start = pointerStart.current;
         if (!start) return;
         const dx = event.clientX - start.x;
@@ -199,6 +231,7 @@ export function PostGlassPanel({
       }}
       onPointerUp={(event) => {
         event.stopPropagation();
+        if (event.pointerType === 'touch') return;
         const start = pointerStart.current;
         pointerStart.current = null;
         setGesture(false);

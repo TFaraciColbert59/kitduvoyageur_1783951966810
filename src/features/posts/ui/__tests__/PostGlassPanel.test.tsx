@@ -114,4 +114,60 @@ describe('PostGlassPanel — gestes', () => {
     const css = readFileSync(join(process.cwd(), 'src/components/social-kit/social-kit.css'), 'utf8');
     expect(css).toMatch(/\.lkdv-post-panel-slot,\s*\.lkdv-post-panel-slot \*\s*\{\s*touch-action:\s*pan-y;/);
   });
+
+  describe('tactile (événements touch, cas iPhone où pointercancel coupe le geste)', () => {
+    function touch(el: Element, type: string, x: number, y: number) {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      const point = { clientX: x, clientY: y, identifier: 1, target: el };
+      Object.defineProperty(event, 'touches', { value: type === 'touchend' ? [] : [point] });
+      Object.defineProperty(event, 'changedTouches', { value: [point] });
+      el.dispatchEvent(event);
+    }
+    const swipe = (el: Element, from: [number, number], to: [number, number], drift = 25) => {
+      touch(el, 'touchstart', from[0], from[1]);
+      for (let i = 1; i <= 8; i += 1) {
+        const t = i / 8;
+        touch(el, 'touchmove', from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t + Math.sin(t * Math.PI) * drift);
+      }
+      touch(el, 'touchend', to[0], to[1]);
+    };
+
+    it('commentaires : balayage à droite (avec dérive) ramène à la photo', () => {
+      const onClose = vi.fn();
+      const { container } = render(<PostGlassPanel side="comments" onClose={onClose}><div className="lkdv-post-panel-body">contenu</div></PostGlassPanel>);
+      swipe(container.querySelector('.lkdv-post-panel-body') as Element, [100, 200], [300, 205]);
+      finishExit();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('partage : balayage à gauche depuis un bouton ramène à la photo', () => {
+      const onClose = vi.fn();
+      const { container } = render(<PostGlassPanel side="share" onClose={onClose}><button type="button">Envoyer</button></PostGlassPanel>);
+      swipe(container.querySelector('button') as Element, [320, 200], [120, 190]);
+      finishExit();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('le mauvais sens ne fait rien (commentaires : balayage à gauche)', () => {
+      const onClose = vi.fn();
+      const { container } = render(<PostGlassPanel side="comments" onClose={onClose}><div>contenu</div></PostGlassPanel>);
+      swipe(container.querySelector('.lkdv-post-panel-slot > div') as Element, [320, 200], [120, 200]);
+      finishExit();
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('vers le bas ferme quand la liste est en haut, pas quand elle a défilé', () => {
+      const onClose = vi.fn();
+      const { container } = render(<PostGlassPanel side="comments" onClose={onClose}><div className="lkdv-post-panel-body">liste</div></PostGlassPanel>);
+      const body = container.querySelector('.lkdv-post-panel-body') as HTMLElement;
+      Object.defineProperty(body, 'scrollTop', { value: 120, configurable: true });
+      swipe(body, [200, 100], [205, 280], 0);
+      finishExit();
+      expect(onClose).not.toHaveBeenCalled();
+      Object.defineProperty(body, 'scrollTop', { value: 0, configurable: true });
+      swipe(body, [200, 100], [205, 280], 0);
+      finishExit();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
 });
