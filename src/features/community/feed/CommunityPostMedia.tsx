@@ -1,8 +1,8 @@
 'use client';
 
-import { LikeIcon } from '@/components/social-kit';
+import { EngagementBar, LikeIcon } from '@/components/social-kit';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ImageOff, MessageCircle, Send } from 'lucide-react';
+import { ImageOff } from 'lucide-react';
 
 export interface CommunityPostMediaProps {
   media: string;
@@ -25,13 +25,6 @@ export interface CommunityPostMediaProps {
   shouldIgnoreClick?: () => boolean;
   /** Proportions réelles du média (largeur / hauteur), pour adapter la hauteur de la carte. */
   onRatio?: (ratio: number) => void;
-}
-
-function formatCount(value: number) {
-  if (!Number.isFinite(value) || value <= 0) return '0';
-  if (value < 1000) return String(value);
-  const k = value / 1000;
-  return `${k >= 10 ? Math.round(k) : k.toFixed(1).replace('.0', '')} k`;
 }
 
 /**
@@ -156,49 +149,15 @@ export function CommunityPostMedia({
           ) : null}
         </div>
 
-        <div className="lkdv-post-media-glass" role="group" aria-label="Actions de la publication">
-          <button
-            type="button"
-            className={liked ? 'on' : ''}
-            onClick={(event) => {
-              event.stopPropagation();
-              onLike();
-            }}
-            aria-label={`Aimer (${likesCount})`}
-            aria-pressed={liked}
-          >
-            <LikeIcon active={liked} size={18} />
-            <span className="lkdv-post-action-count" aria-hidden="true">
-              {formatCount(likesCount)}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onComment();
-            }}
-            aria-label={`Commenter (${commentsCount})`}
-          >
-            <MessageCircle size={18} aria-hidden="true" />
-            <span className="lkdv-post-action-count" aria-hidden="true">
-              {formatCount(commentsCount)}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onShare();
-            }}
-            aria-label={`Partager (${sharesCount})`}
-          >
-            <Send size={18} aria-hidden="true" />
-            <span className="lkdv-post-action-count" aria-hidden="true">
-              {formatCount(sharesCount)}
-            </span>
-          </button>
-        </div>
+        <EngagementBar
+          likesCount={likesCount}
+          commentsCount={commentsCount}
+          sharesCount={sharesCount}
+          liked={liked}
+          onLike={onLike}
+          onComment={onComment}
+          onShare={onShare}
+        />
       </div>
     </div>
   );

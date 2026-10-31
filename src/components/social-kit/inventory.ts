@@ -31,6 +31,14 @@ export const UI_INVENTORY: InventoryEntry[] = [
     reste: ['StoriesViewer (Icon heart), CommunityPostCard (HeartSvg délègue déjà), CompasCards (gelé)'],
   },
   {
+    id: 'engagement-bar',
+    label: 'Capsule d’actions (like · commenter · partager)',
+    canonical: 'src/components/social-kit/EngagementBar.tsx',
+    status: 'partiel',
+    usedBy: ['Fil Communauté et Compte (photo, vidéo ET post texte)'],
+    reste: ['CarnetPostSheet', 'ClubInlineFeed (boutons pmi-post-btn locaux)', 'Freedom (rail vertical, format distinct)'],
+  },
+  {
     id: 'like-button',
     label: "Bouton « j'aime » + compteur",
     canonical: 'src/components/social-kit/LikeButton.tsx',

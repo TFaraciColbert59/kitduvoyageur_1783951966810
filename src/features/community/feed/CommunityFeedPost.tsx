@@ -3,13 +3,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import ReportSheet from '@/components/social/ReportSheet';
-import { AccountActionPill } from '@/components/account/AccountActionPill';
 import { PostAuthorPill } from './PostAuthorPill';
-import { AccountMoreMenu } from '@/components/account/AccountMoreMenu';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
 import { deletePost } from '@/features/community/posts/mutations';
 import { Bookmark, Flag, Link2, MoreHorizontal, Repeat2, Trash2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import { EngagementBar } from '@/components/social-kit';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { CommunityPostMedia } from './CommunityPostMedia';
 import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomCommentsDrawer';
@@ -94,6 +93,15 @@ export function CommunityFeedPost({
       setMenuClosing(false);
       action();
     }, 300);
+  };
+
+  const handleLike = () => {
+    setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? -1 : 1)) }));
+    void toggleLike().then((result) => {
+      if (result === 'error') {
+        setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? 1 : -1)) }));
+      }
+    });
   };
 
   const openPanel = (next: 'comments' | 'share') => {
@@ -302,22 +310,26 @@ export function CommunityFeedPost({
             swiped.current = false;
             return true;
           }}
-          onLike={() => {
-            setCounts((value) => ({ ...value, likes: Math.max(0, value.likes + (liked ? -1 : 1)) }));
-            void toggleLike().then((result) => {
-              if (result === 'error') {
-                setCounts((value) => ({
-                  ...value,
-                  likes: Math.max(0, value.likes + (liked ? 1 : -1)),
-                }));
-              }
-            });
-          }}
+          onLike={handleLike}
           onComment={() => openPanel('comments')}
           onShare={() => openPanel('share')}
         />
       ) : (
-        <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>
+        <>
+          <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>
+          {panel ? null : (
+            <EngagementBar
+              tone="ink"
+              likesCount={counts.likes}
+              commentsCount={counts.comments}
+              sharesCount={counts.shares}
+              liked={liked}
+              onLike={handleLike}
+              onComment={() => openPanel('comments')}
+              onShare={() => openPanel('share')}
+            />
+          )}
+        </>
       )}
 
       <div
