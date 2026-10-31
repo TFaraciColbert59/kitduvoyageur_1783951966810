@@ -8,6 +8,8 @@ export interface SocialComment {
   id: string;
   authorName: string;
   authorHandle?: string | null;
+  /** Badge de rôle (guide, encadrant…) à côté du nom. */
+  authorBadge?: string | null;
   authorAvatarUrl?: string | null;
   content: React.ReactNode;
   timeLabel: string;
@@ -78,6 +80,7 @@ export function CommentItem({
           ) : (
             <span className="lkdv-comment-name">{comment.authorName}</span>
           )}
+          {comment.authorBadge ? <span className="lkdv-post-author-badge">{comment.authorBadge}</span> : null}
           <span className="lkdv-comment-time">{comment.timeLabel}</span>
         </div>
         {editor ?? <p className="lkdv-comment-text">{comment.content}</p>}

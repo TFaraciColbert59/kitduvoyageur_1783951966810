@@ -125,9 +125,12 @@ describe('Clubs iOS 27 Liquid Glass v15/v20 — Clone 1:1 de CompteLiquidGlassV8
     const feedSource = read('src/components/clubs/feed/ClubInlineFeed.tsx');
     expect(v8Source).toContain('ClubInlineFeed');
     expect(runtimeSource).toContain('id="lkdv-club-feed-root"');
-    expect(feedSource).toContain('PostGlassPanel');
+    // Le post du club est le bloc de la Communauté (PostSource) : même panneau verre, même carte.
+    const block = read('src/features/community/feed/CommunityFeedPost.tsx');
+    expect(feedSource).toContain('CommunityFeedPost');
     expect(feedSource).toContain('lkdv-feed-list');
-    expect(feedSource).toContain('lkdv-feed-post');
+    expect(block).toContain('PostGlassPanel');
+    expect(block).toContain('lkdv-feed-post');
   });
 
   it('12. Adaptation Club Oct 24 : Drawers & Sous-Drawers in-card (DrawerShell 48px + 30px) pour Cordée, Sorties, Coffre Kit & Gouvernance', () => {

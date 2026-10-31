@@ -53,3 +53,12 @@ button.lkdv-comment-name { cursor: pointer; }
 .lkdv-feed-post-footer { padding: 0 6px; color: #17402c; font: 400 13px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .lkdv-feed-post-footer .lkdv-post-likes { margin: 0 0 2px; color: #56665d; font: 500 11px/1.3 var(--font-sans, -apple-system, system-ui, sans-serif); }
 .lkdv-feed-post-footer .lkdv-post-caption { margin: 0; }
+
+/* Pièces jointes d'un post : kit à reproduire, carnet instantané. */
+.lkdv-post-attachments { display: flex; flex-direction: column; gap: 8px; padding: 0 6px; }
+.lkdv-post-snapshot { display: flex; flex-direction: column; overflow: hidden; border-radius: 18px; background: linear-gradient(180deg, rgba(255,255,255,.486), rgba(255,255,255,.384)); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 0 0 .5px rgba(23,43,36,.08), 0 8px 22px rgba(23,43,36,.1); color: #17402c; }
+.lkdv-post-snapshot img { width: 100%; aspect-ratio: 16 / 7; object-fit: cover; display: block; }
+.lkdv-post-snapshot-body { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; font: 400 12px/1.35 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-post-snapshot-body b { font-weight: 700; font-size: 13px; }
+.lkdv-post-snapshot-body small, .lkdv-post-snapshot-body p { margin: 0; color: #56665d; }
+.lkdv-post-snapshot-tag { font: 600 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: .1em; text-transform: uppercase; color: #56665d; }

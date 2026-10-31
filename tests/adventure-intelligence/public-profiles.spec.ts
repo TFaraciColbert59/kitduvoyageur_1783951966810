@@ -129,7 +129,6 @@ describe('F1 — profils publics (TEST-A10-F1)', () => {
       'src/app/communaute/page.tsx',
       'src/components/pays/PaysCarnetsList.tsx',
       'src/components/pays/BouteilleALaMer.tsx',
-      'src/components/communaute/CommentItem.tsx',
       'src/app/clubs/[id]/page.tsx',
       'src/components/groupes/VoyageursCard.tsx',
       'src/components/groupes/TachesCard.tsx',

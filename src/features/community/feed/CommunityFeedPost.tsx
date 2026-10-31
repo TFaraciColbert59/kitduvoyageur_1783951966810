@@ -13,6 +13,7 @@ import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { CommunityPostMedia } from './CommunityPostMedia';
 import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomCommentsDrawer';
 import { PostSharePanel } from './PostSharePanel';
+import { PostAttachments } from './PostAttachments';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
 import type { FeedPost } from './useCommunityFeed';
 import type { PostSource } from './postSource';
@@ -361,19 +362,21 @@ export function CommunityFeedPost({
         </>
       )}
 
+      {panel ? null : source?.overlay}
+
       <div
         ref={headerRef}
         className="lkdv-feed-post-top"
         inert={Boolean(panel)}
         aria-hidden={panel ? true : undefined}
       >
-        <PostAuthorPill post={headerPost} />
+        <PostAuthorPill post={headerPost} onClick={source?.author?.onClick} meta={source?.author?.meta} badge={source?.author?.badge} />
       </div>
 
-      {/* Seul contrôle posé sur la photo : les trois points, en haut à droite,
-          uniquement sur un post avec photo ou vidéo. Aucune croix — un panneau
+      {/* Seul contrôle posé sur la carte : les trois points, en haut à droite
+          (photo, vidéo ou texte). Aucune croix — un panneau
           se referme par le geste inverse ou Échap. */}
-      {panel || !hasMedia ? null : (
+      {panel ? null : (
         <button
           type="button"
           className="pmi-more-pill lkdv-feed-post-options"
@@ -436,6 +439,18 @@ export function CommunityFeedPost({
           >
             <Flag size={19} aria-hidden="true" />
           </button> : null}
+          {source?.menuExtras?.map((extra, i) => (
+            <button
+              key={extra.id}
+              type="button"
+              role="menuitem"
+              style={{ '--i': 4 + i } as React.CSSProperties}
+              aria-label={extra.label}
+              onClick={(event) => tapItem(event, extra.onSelect)}
+            >
+              {extra.icon}
+            </button>
+          ))}
           {!source && user?.id === post.author_id ? (
             <button
               type="button"
@@ -532,10 +547,12 @@ export function CommunityFeedPost({
     </article>
   );
 
-  return source?.footer ? (
+  const hasAttachments = !source && (Boolean(post.linked_kit_id) || Boolean(post.snapshot_payload));
+  return source?.footer || hasAttachments ? (
     <div className="lkdv-feed-post-stack">
       {articleEl}
-      <div className="lkdv-feed-post-footer">{source.footer}</div>
+      {source?.footer ? <div className="lkdv-feed-post-footer">{source.footer}</div> : null}
+      {hasAttachments ? <PostAttachments post={post} userId={user?.id} /> : null}
     </div>
   ) : (
     articleEl

@@ -33,4 +33,10 @@ export interface PostSource {
   renderShare: (ctx: { onClose: () => void }) => React.ReactNode;
   /** Texte sous la carte (jour · lieu · légende d'un moment). */
   footer?: React.ReactNode;
+  /** Éléments posés sur la carte hors panneau (puces de sortie, RSVP…). */
+  overlay?: React.ReactNode;
+  /** Entrées de menu `···` propres à l'origine (« Voir en 3D », « Fiche sortie »). */
+  menuExtras?: Array<{ id: string; label: string; icon: React.ReactNode; onSelect: () => void }>;
+  /** Pastille auteur : action au tap (au lieu du lien profil), méta et badge propres. */
+  author?: { onClick?: () => void; meta?: string; badge?: string; pinned?: boolean };
 }
