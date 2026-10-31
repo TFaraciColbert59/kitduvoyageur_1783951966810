@@ -380,8 +380,8 @@ function FreedomKitUsageMapFullDrawer({
             const markerDiv = document.createElement('div');
             markerDiv.className = 'relative flex items-center justify-center pointer-events-none select-none';
             markerDiv.innerHTML = `
-              <span class="absolute size-4.5 rounded-full bg-emerald-400/50 animate-ping"></span>
-              <span class="relative size-3 rounded-full bg-emerald-500 border-2 border-white shadow-[0_2px_8px_rgba(0,0,0,0.45)]"></span>
+              <span class="absolute size-4.5 rounded-full bg-lkv-success opacity-50 animate-ping"></span>
+              <span class="relative size-3 rounded-full bg-lkv-success border-2 border-white shadow-live-dot"></span>
             `;
             new Marker({ element: markerDiv })
               .setLngLat([loc.coords[0], loc.coords[1]])
@@ -443,8 +443,8 @@ function FreedomKitUsageMapFullDrawer({
                     style={{ left: `${xPercent}%`, top: `${yPercent}%` }}
                   >
                     <div className="relative flex items-center justify-center">
-                      <span className="absolute size-4.5 rounded-full bg-emerald-400/50 animate-ping" />
-                      <span className="relative size-3 rounded-full bg-emerald-500 border-2 border-white shadow-[0_2px_8px_rgba(0,0,0,0.45)]" />
+                      <span className="absolute size-4.5 rounded-full bg-lkv-success opacity-50 animate-ping" />
+                      <span className="relative size-3 rounded-full bg-lkv-success border-2 border-white shadow-live-dot" />
                     </div>
                   </div>
                 );
@@ -763,7 +763,7 @@ export const FreedomKitDrawer: React.FC<FreedomKitDrawerProps> = ({
             type="button"
             onClick={handleAddToMyKits}
             aria-label="Enregistrer dans mes kits"
-            className={`absolute right-3.5 bottom-3.5 z-20 flex size-9 items-center justify-center rounded-full border border-white/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.95),0_4px_16px_rgba(23,43,36,0.14)] backdrop-blur-2xl transition active:scale-90 ${
+            className={`absolute right-3.5 bottom-3.5 z-20 flex size-9 items-center justify-center rounded-full border border-white/80 shadow-glass-control backdrop-blur-2xl transition active:scale-90 ${
               isAdded
                 ? 'bg-[#17402C] text-white'
                 : 'bg-white/85 text-[#17402C] hover:bg-white'

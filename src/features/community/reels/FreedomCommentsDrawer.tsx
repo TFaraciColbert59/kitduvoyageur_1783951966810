@@ -347,7 +347,7 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
 
   // Render attachment in sleek opaque liquid glass card format with image/icon on the left, title on the right
   const ATTACHMENT_CARD_CLASS =
-    'group mt-1 flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/85 p-1.5 pr-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.95),0_3px_12px_rgba(23,43,36,0.07)] backdrop-blur-2xl backdrop-saturate-150 transition hover:border-[#17402C]/30 hover:bg-white/95 active:scale-[0.98] text-left max-w-[280px]';
+    'group mt-1 flex items-center gap-2.5 rounded-2xl border border-white/90 bg-white/85 p-1.5 pr-3 shadow-glass-inset-soft backdrop-blur-2xl backdrop-saturate-150 transition hover:border-[#17402C]/30 hover:bg-white/95 active:scale-[0.98] text-left max-w-[280px]';
 
   const renderAttachment = (att: FreedomCommentAttachment) => {
     // 1. Kit attachment: card liquid glass opaque, image à gauche, titre à droite
