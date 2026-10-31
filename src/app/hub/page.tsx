@@ -6,6 +6,7 @@ import { SortieMenu } from '@/features/hub/components/menu/SortieMenu';
 import { PossessionMenu } from '@/features/hub/components/menu/PossessionMenu';
 import { CollectifMenu } from '@/features/hub/components/menu/CollectifMenu';
 import { PhaseLiveView, PhaseRecountView } from '@/features/hub/components/menu/PhaseViews';
+import { HubResumeBanner } from '@/features/hub/components/HubResumeBanner';
 
 export const metadata = {
   title: 'Hub — Le Kit du Voyageur',
@@ -48,26 +49,39 @@ export default async function HubPage({
       return <PhaseRecountView trip={data.trip} />;
     }
     return (
-      <SortieMenu
-        trip={data.trip}
-        stats={stats}
-        pendingInvites={data.pendingInvites}
-        daysUntil={daysUntil(data.trip.start_date, Date.now())}
-        phase={phaseDetails.phase}
-        hiking={data.hiking}
-        checklist={data.checklist}
-        itemImages={data.itemImages}
-        dayIndex={phaseDetails.dayIndex}
-        preparation={data.preparation}
-      />
+      <div className="space-y-4">
+        <HubResumeBanner adventure={data.adventure} />
+        <SortieMenu
+          trip={data.trip}
+          stats={stats}
+          pendingInvites={data.pendingInvites}
+          daysUntil={daysUntil(data.trip.start_date, Date.now())}
+          phase={phaseDetails.phase}
+          hiking={data.hiking}
+          checklist={data.checklist}
+          itemImages={data.itemImages}
+          dayIndex={phaseDetails.dayIndex}
+          preparation={data.preparation}
+        />
+      </div>
     );
   }
 
   if (data.input.kind === 'collectif' && data.adventure.nature === 'collectif') {
     const summary = await getGroupeMenuSummary(data.adventure.id);
-    return <CollectifMenu summary={summary} linkedTripSlug={data.linkedTripSlug} />;
+    return (
+      <div className="space-y-4">
+        <HubResumeBanner adventure={data.adventure} />
+        <CollectifMenu summary={summary} linkedTripSlug={data.linkedTripSlug} />
+      </div>
+    );
   }
 
   const summary = await getMaterielSummary();
-  return <PossessionMenu summary={summary} />;
+  return (
+    <div className="space-y-4">
+      <HubResumeBanner adventure={data.adventure} />
+      <PossessionMenu summary={summary} />
+    </div>
+  );
 }

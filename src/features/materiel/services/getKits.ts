@@ -11,7 +11,16 @@ export interface KitListItem {
   updated_at: string;
   item_count: number;
   checked_count: number;
+  isShowcase?: boolean;
   items: { name: string; category: string | null; weight_g: number; quantity: number; product_ownership_id?: string | null }[];
+}
+
+export type GetKitsState = 'ok' | 'empty' | 'error';
+
+export interface GetKitsResult {
+  kits: KitListItem[];
+  state: GetKitsState;
+  error?: string | null;
 }
 
 const SHOWCASE_KITS: KitListItem[] = [
@@ -26,6 +35,7 @@ const SHOWCASE_KITS: KitListItem[] = [
     updated_at: new Date().toISOString(),
     item_count: 12,
     checked_count: 9,
+    isShowcase: true,
     items: [
       { name: 'Tente MSR Hubba Hubba NX 2P', category: 'Bivouac', weight_g: 1720, quantity: 1 },
       { name: 'Sac à dos Osprey Atmos AG 50L', category: 'Portage', weight_g: 1980, quantity: 1 },
@@ -48,6 +58,7 @@ const SHOWCASE_KITS: KitListItem[] = [
     updated_at: new Date(Date.now() - 86400000).toISOString(),
     item_count: 9,
     checked_count: 7,
+    isShowcase: true,
     items: [
       { name: 'Tarp ultralight Zpacks Duplex', category: 'Bivouac', weight_g: 550, quantity: 1 },
       { name: 'Sac à dos Hyperlite 40L', category: 'Portage', weight_g: 890, quantity: 1 },
@@ -67,6 +78,7 @@ const SHOWCASE_KITS: KitListItem[] = [
     updated_at: new Date(Date.now() - 2 * 86400000).toISOString(),
     item_count: 14,
     checked_count: 11,
+    isShowcase: true,
     items: [
       { name: 'Tente 4 saisons Ferrino Blizzard', category: 'Bivouac', weight_g: 2600, quantity: 1 },
       { name: 'Sac Deuter Aircontact 60+10', category: 'Portage', weight_g: 2400, quantity: 1 },
@@ -77,21 +89,36 @@ const SHOWCASE_KITS: KitListItem[] = [
   },
 ];
 
-/** getKits — kits utilisateur avec stats de complétude (Server-only, RLS). */
-export async function getKits(): Promise<KitListItem[]> {
+/** getKits — kits utilisateur avec états stricts (ok | empty | error). */
+export async function getKits(): Promise<GetKitsResult> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return SHOWCASE_KITS;
+
+    // 1. Visiteur non connecté : kits vitrines avec isShowcase: true
+    if (!user) {
+      return { kits: SHOWCASE_KITS, state: 'ok' };
+    }
 
     const { data, error } = await supabase
       .from('materiel_kits')
       .select('id, name, description, season, total_weight_g, is_favorite, is_trashed, updated_at, materiel_kit_items(name, category, weight_g, quantity, is_checked, product_ownership_id)')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false });
-    if (error || !data || data.length === 0) return SHOWCASE_KITS;
 
-    return data.map((k) => {
+    // 2. Erreur base de données
+    if (error) {
+      console.error('getKits query error', error);
+      return { kits: [], state: 'error', error: error.message };
+    }
+
+    // 3. Utilisateur connecté sans aucun kit
+    if (!data || data.length === 0) {
+      return { kits: [], state: 'empty' };
+    }
+
+    // 4. Utilisateur connecté avec kits réels
+    const kits: KitListItem[] = data.map((k) => {
       const kitItems = (k.materiel_kit_items ?? []) as { name: string; category: string | null; weight_g: number; quantity: number; is_checked: boolean; product_ownership_id: string | null }[];
       return {
         id: k.id,
@@ -104,6 +131,7 @@ export async function getKits(): Promise<KitListItem[]> {
         updated_at: k.updated_at,
         item_count: kitItems.length,
         checked_count: kitItems.filter((i) => i.is_checked).length,
+        isShowcase: false,
         items: kitItems.map((i) => ({
           name: i.name ?? 'Article',
           category: i.category,
@@ -113,8 +141,14 @@ export async function getKits(): Promise<KitListItem[]> {
         })),
       };
     });
+
+    return { kits, state: 'ok' };
   } catch (err) {
-    console.error('getKits fallback to showcase', err);
-    return SHOWCASE_KITS;
+    console.error('getKits unexpected exception', err);
+    return {
+      kits: [],
+      state: 'error',
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
   }
 }

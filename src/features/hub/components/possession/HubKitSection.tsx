@@ -18,13 +18,14 @@ import { getKitHistory } from '@/features/materiel/services/getKitHistory';
  * /materiel/kits redirige 307 ici (H-AUTO-42).
  */
 export async function HubKitSection() {
-  const [kits, inventory, publicKits, products] = await Promise.all([
+  const [kitsResult, inventory, publicKits, products] = await Promise.all([
     getKits(),
     getInventory(),
     getPublicKits(),
     getProductSuggestions(undefined, 24),
   ]);
-  const primaryKit = kits.find((k) => !k.is_trashed && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(k.id)) ?? null;
+  const kits = kitsResult.kits;
+  const primaryKit = kits.find((k) => !k.is_trashed && !k.isShowcase) ?? null;
   const history = primaryKit ? await getKitHistory(primaryKit.id) : [];
 
   return (
