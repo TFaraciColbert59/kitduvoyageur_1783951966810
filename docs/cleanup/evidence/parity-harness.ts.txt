@@ -1,7 +1,7 @@
 // ARCHIVE DE PREUVE — ne pas importer dans le produit.
 // Copie verbatim des anciennes fonctions de src/app/api/explorer/v2/profile/route.ts
 // (commit f89f5665) pour prouver la parité avec geo/track.ts. Exécution :
-//   esbuild docs/cleanup/evidence/parity-harness.ts --bundle --platform=node --format=esm --outfile=/tmp/parity.mjs
+//   esbuild --loader=ts docs/cleanup/evidence/parity-harness.ts.txt --bundle --platform=node --format=esm --outfile=/tmp/parity.mjs
 //   node /tmp/parity.mjs
 import { resampleTrack, decimateTrack, summarizeElevation, trackDistanceM } from '/Users/fr168256/lkdv-chantier-cleanup/src/features/explorer-v2/geo/track';
 const R = 6371000;
