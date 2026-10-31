@@ -52,7 +52,7 @@ describe('L0-1c: KitManager edit form item retention', () => {
     cleanup();
   });
 
-  it('openEdit sème selectedItems depuis k.items (ÉCHOUE SUR CODE ACTUEL)', async () => {
+  it('ouvrir l\'édition d\'un kit à 2 articles → 2 cases cochées', async () => {
     render(<KitManager kits={[mockKit]} inventory={mockInventory} />);
 
     const editButton = screen.getByRole('button', { name: /modifier/i });
@@ -65,7 +65,7 @@ describe('L0-1c: KitManager edit form item retention', () => {
     expect(checkboxDuvet.checked).toBe(true);
   });
 
-  it('Renommer un kit sans modifier les articles omet le champ items du payload (ÉCHOUE SUR CODE ACTUEL)', async () => {
+  it('renommer un kit ne vide pas ses articles', async () => {
     render(<KitManager kits={[mockKit]} inventory={mockInventory} />);
     const editButton = screen.getByRole('button', { name: /modifier/i });
     fireEvent.click(editButton);
