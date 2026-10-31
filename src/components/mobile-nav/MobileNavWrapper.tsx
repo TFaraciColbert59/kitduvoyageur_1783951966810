@@ -31,7 +31,9 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/communaute/reels/') ||
     // Carte vivante 3D plein écran immersive
     pathname === '/carte-3d' ||
-    pathname?.startsWith('/carte-3d');
+    pathname?.startsWith('/carte-3d') ||
+    // Aperçu interne du composant cartographique partagé (chantier CARTO)
+    pathname === '/carto-preview';
 
   if (isNoNavRoute) {
     return <OfflineBanner />;

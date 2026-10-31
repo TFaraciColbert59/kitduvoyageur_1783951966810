@@ -16,7 +16,7 @@ import type { LayerSpecification, StyleSpecification } from 'maplibre-gl';
 
 export const MAPTOOLKIT_STYLE_2D = 'https://styles.maptoolkit.org/hiking.json';
 export const MAPTOOLKIT_STYLE_3D = 'https://styles.maptoolkit.org/hiking-3d.json';
-export const MAPTOOLKIT_LOGO = 'https://www.maptoolkit.org/assets/logo/maptoolkit-logo.svg';
+export const MAPTOOLKIT_LOGO = 'https://www.maptoolkit.org/assets/maptoolkit-attribution.png';
 export const MAPTOOLKIT_COPYRIGHT = 'https://www.maptoolkit.com/copyright/';
 export const OSM_COPYRIGHT = 'https://www.openstreetmap.org/copyright';
 
