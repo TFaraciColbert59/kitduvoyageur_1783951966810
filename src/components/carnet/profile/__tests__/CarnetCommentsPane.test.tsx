@@ -23,7 +23,7 @@ const base = {
 describe('CarnetCommentsPane', () => {
   it('trie du plus récent au plus ancien par défaut', () => {
     const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} />);
-    const names = [...container.querySelectorAll('.ckp-comment-name')].map((n) => n.textContent);
+    const names = [...container.querySelectorAll('.lkdv-comment-name')].map((n) => n.textContent);
     expect(names).toEqual(['Rachid', 'Léonie']);
     expect(screen.getByRole('group', { name: 'Tri des commentaires' })).toBeTruthy();
   });
@@ -31,7 +31,7 @@ describe('CarnetCommentsPane', () => {
   it('bascule le tri en anciens', () => {
     const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} />);
     fireEvent.click(screen.getByRole('button', { name: 'anciens' }));
-    const names = [...container.querySelectorAll('.ckp-comment-name')].map((n) => n.textContent);
+    const names = [...container.querySelectorAll('.lkdv-comment-name')].map((n) => n.textContent);
     expect(names).toEqual(['Léonie', 'Rachid']);
   });
 
@@ -42,16 +42,15 @@ describe('CarnetCommentsPane', () => {
         {...base}
       />,
     );
-    expect(container.querySelector('.ckp-comment-handle')?.textContent).toBe('@leonie');
-    const row = container.querySelector('.ckp-comment') as HTMLElement;
-    const meta = row.querySelector('.ckp-comment-meta') as HTMLElement;
-    expect(meta.querySelector('time')?.textContent?.length).toBeGreaterThan(0);
-    expect(meta.querySelector('button')?.textContent).toBe('supprimer');
+    expect(container.querySelector('.lkdv-comment-handle')?.textContent).toBe('@leonie');
+    const row = container.querySelector('.lkdv-comment') as HTMLElement;
+    expect(row.querySelector('.lkdv-comment-time')?.textContent?.length).toBeGreaterThan(0);
+    expect([...row.querySelectorAll('.lkdv-comment-actions button')].map((b) => b.textContent)).toEqual(['Supprimer']);
   });
 
   it('anime l’entrée d’un nouveau commentaire, jamais la liste montée', () => {
     const { container, rerender } = render(<CarnetCommentsPane comments={COMMENTS} {...base} />);
-    expect(container.querySelectorAll('.ckp-comment.is-new')).toHaveLength(0);
+    expect(container.querySelectorAll('.lkdv-comment.is-new')).toHaveLength(0);
     rerender(
       <CarnetCommentsPane
         comments={[
@@ -61,7 +60,7 @@ describe('CarnetCommentsPane', () => {
         {...base}
       />,
     );
-    expect(container.querySelectorAll('.ckp-comment.is-new')).toHaveLength(1);
+    expect(container.querySelectorAll('.lkdv-comment.is-new')).toHaveLength(1);
   });
 
   it('affiche l’état vide sans phrase : glyphe de 32 px et tiret', () => {
@@ -83,7 +82,7 @@ describe('CarnetCommentsPane', () => {
 
   it('charge en partie : les lignes connues restent, le reste attend', () => {
     const { container } = render(<CarnetCommentsPane comments={COMMENTS} {...base} loading />);
-    expect(container.querySelectorAll('.ckp-comment')).toHaveLength(2);
+    expect(container.querySelectorAll('.lkdv-comment')).toHaveLength(2);
     expect(container.querySelectorAll('.ckp-load-bar--row')).toHaveLength(2);
     expect(container.querySelector('.ckp-comments-list')?.getAttribute('data-state')).toBe('partial');
   });

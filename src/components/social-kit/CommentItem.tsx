@@ -34,6 +34,8 @@ export interface CommentItemProps {
   onOpenProfile?: (comment: SocialComment) => void;
   /** Zone d'édition en ligne : remplace le texte quand non nulle. */
   editor?: React.ReactNode;
+  /** Le commentaire vient d'arriver : fondu + 6 px (classe `is-new`). */
+  isNew?: boolean;
   /** Autorise « Répondre » aussi sur les réponses (le parent reste le commentaire racine). */
   replyOnReplies?: boolean;
 }
@@ -67,9 +69,10 @@ export function CommentItem({
   onOpenProfile,
   editor,
   replyOnReplies = false,
+  isNew = false,
 }: CommentItemProps) {
   return (
-    <div id={`comment-${comment.id}`} className={`lkdv-comment ${isReply ? 'is-reply' : ''}`}>
+    <div id={`comment-${comment.id}`} className={`lkdv-comment ${isReply ? 'is-reply' : ''}${isNew ? ' is-new' : ''}`}>
       <CommentAvatar name={comment.authorName} url={comment.authorAvatarUrl} />
       <div className="lkdv-comment-body">
         <div className="lkdv-comment-head">
@@ -80,6 +83,7 @@ export function CommentItem({
           ) : (
             <span className="lkdv-comment-name">{comment.authorName}</span>
           )}
+          {comment.authorHandle ? <span className="lkdv-comment-handle">@{comment.authorHandle}</span> : null}
           {comment.authorBadge ? <span className="lkdv-post-author-badge">{comment.authorBadge}</span> : null}
           <span className="lkdv-comment-time">{comment.timeLabel}</span>
         </div>
@@ -88,7 +92,7 @@ export function CommentItem({
         <div className="lkdv-comment-actions">
           {canInteract ? (
             <>
-              <LikeButton variant="comment" liked={comment.liked} count={comment.likes} onToggle={() => onLike?.(comment)} />
+              {onLike ? <LikeButton variant="comment" liked={comment.liked} count={comment.likes} onToggle={() => onLike(comment)} /> : null}
               {(!isReply || replyOnReplies) && onReply ? (
                 <button type="button" onClick={() => onReply(comment)}>Répondre</button>
               ) : null}

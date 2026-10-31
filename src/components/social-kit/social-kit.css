@@ -62,3 +62,9 @@ button.lkdv-comment-name { cursor: pointer; }
 .lkdv-post-snapshot-body b { font-weight: 700; font-size: 13px; }
 .lkdv-post-snapshot-body small, .lkdv-post-snapshot-body p { margin: 0; color: #56665d; }
 .lkdv-post-snapshot-tag { font: 600 9.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif); letter-spacing: .1em; text-transform: uppercase; color: #56665d; }
+
+/* Commentaire : pseudo discret, arrivée d'un nouveau commentaire. */
+.lkdv-comment-handle { color: #6a7a70; font: 500 11px/1.2 var(--font-sans, -apple-system, system-ui, sans-serif); }
+.lkdv-comment.is-new { animation: lkdv-comment-in 220ms ease-out; }
+@keyframes lkdv-comment-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .lkdv-comment.is-new { animation: none; } }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { CommentItem, type SocialComment } from '@/components/social-kit';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 import Icon from '@/components/ui/Icon';
 import { CarnetSubCapsule } from '../CarnetSubCapsule';
@@ -66,35 +67,22 @@ const CarnetCommentRow = React.memo(function CarnetCommentRow({
   mine,
   onRemove,
 }: CarnetCommentRowProps) {
-  const remove = useCallback(() => void onRemove(comment.id), [comment.id, onRemove]);
-
-  return (
-    <div id={`comment-${comment.id}`} className={`ckp-comment${isNew ? ' is-new' : ''}`}>
-      {comment.authorAvatar ? (
-        // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-        <img className="ckp-avatar" src={comment.authorAvatar} alt="" />
-      ) : (
-        <span className="ckp-avatar ckp-avatar--initial" aria-hidden="true">
-          {comment.authorName.charAt(0).toUpperCase()}
-        </span>
-      )}
-      <div className="ckp-comment-body">
-        <div className="ckp-comment-head">
-          <span className="ckp-comment-name">{comment.authorName}</span>
-          {comment.authorHandle ? <span className="ckp-comment-handle">@{comment.authorHandle}</span> : null}
-        </div>
-        <p className="ckp-comment-text">{comment.content}</p>
-        <div className="ckp-comment-meta">
-          <time dateTime={comment.createdAt}>{timeAgo(comment.createdAt)}</time>
-          {mine ? (
-            <button type="button" onClick={remove}>
-              supprimer
-            </button>
-          ) : null}
-        </div>
-      </div>
-    </div>
+  const social = useMemo<SocialComment>(
+    () => ({
+      id: comment.id,
+      authorName: comment.authorName,
+      authorHandle: comment.authorHandle,
+      authorAvatarUrl: comment.authorAvatar,
+      content: comment.content,
+      timeLabel: timeAgo(comment.createdAt),
+      likes: 0,
+      liked: false,
+      isOwner: mine,
+    }),
+    [comment, mine],
   );
+  const remove = useCallback(() => void onRemove(comment.id), [comment.id, onRemove]);
+  return <CommentItem comment={social} canInteract isNew={isNew} onDelete={remove} />;
 });
 
 /**

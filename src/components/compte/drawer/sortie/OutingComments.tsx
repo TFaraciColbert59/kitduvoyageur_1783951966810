@@ -1,10 +1,10 @@
 'use client';
 
-import { LikeIcon } from '@/components/social-kit';
 import React, { useState } from 'react';
-import { Send, Trash2 } from 'lucide-react';
+import { CommentItem, LikeIcon } from '@/components/social-kit';
+import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 import type { OutingComment, OutingKudos } from '@/features/compte/server/sorties';
-import { initials, relativeTime } from './shared';
+import { relativeTime } from './shared';
 
 export interface OutingCommentsProps {
   kudos: OutingKudos;
@@ -40,63 +40,43 @@ export function OutingComments({ kudos, comments, busy, onKudos, onComment, onDe
       </div>
 
       {comments.length === 0 ? null : (
-        <ul className="lkdv-sortie-comments">
+        <div className="lkdv-comments-list">
           {comments.map((comment) => (
-            <li key={comment.id}>
-              <span className="lkdv-sortie-avatar small" aria-hidden="true">
-                {comment.author.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={comment.author.avatarUrl} alt="" loading="lazy" />
-                ) : (
-                  initials(comment.author.name)
-                )}
-              </span>
-              <div>
-                <div className="lkdv-sortie-comment-head">
-                  <b>{comment.author.name}</b>
-                  <small>@{comment.author.handle}</small>
-                  <span>{relativeTime(comment.createdAt)}</span>
-                </div>
-                <p>{comment.body}</p>
-              </div>
-              {comment.mine ? (
-                <button
-                  type="button"
-                  className="lkdv-sortie-comment-delete"
-                  onClick={() => onDelete(comment.id)}
-                  disabled={busy}
-                  aria-label="Supprimer mon commentaire"
-                >
-                  <Trash2 size={13} aria-hidden="true" />
-                </button>
-              ) : null}
-            </li>
+            <CommentItem
+              key={comment.id}
+              canInteract
+              comment={{
+                id: comment.id,
+                authorName: comment.author.name,
+                authorHandle: comment.author.handle,
+                authorAvatarUrl: comment.author.avatarUrl,
+                content: comment.body,
+                timeLabel: relativeTime(comment.createdAt),
+                likes: 0,
+                liked: false,
+                isOwner: comment.mine,
+              }}
+              onDelete={busy ? undefined : () => onDelete(comment.id)}
+            />
           ))}
-        </ul>
+        </div>
       )}
 
-      <form
-        className="lkdv-sortie-composer"
-        onSubmit={(event) => {
-          event.preventDefault();
+      <PostReplyComposer
+        value={body}
+        onChange={setBody}
+        onSend={() => {
           const value = body.trim();
           if (!value) return;
           onComment(value);
           setBody('');
         }}
-      >
-        <textarea
-          value={body}
-          onChange={(event) => setBody(event.target.value)}
-          rows={2}
-          maxLength={1000}
-          placeholder="Écrire un commentaire…"
-          aria-label="Ton commentaire"
-        />
-        <button type="submit" className="lkdv-sortie-send" disabled={busy || !body.trim()} aria-label="Envoyer le commentaire">
-          <Send size={16} aria-hidden="true" />
-        </button>
-      </form>
+        placeholder="Écrire un commentaire…"
+        inputLabel="Ton commentaire"
+        ariaLabel="Envoyer le commentaire"
+        busy={busy}
+        maxLength={1000}
+      />
     </div>
   );
 }
