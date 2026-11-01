@@ -230,6 +230,37 @@ export function HubCampShell({
     'Réserve d’eau à vérifier au col des Écrins.',
   ]);
   const [noteDraft, setNoteDraft] = useState('');
+  const [prepItems, setPrepItems] = useState([
+    { id: 'water', name: 'Gourde', detail: 'Gourde inox 1L', ready: false, tag: 'Hydratation' },
+    { id: 'aid', name: 'Trousse de secours', detail: 'Compresses et pansements à contrôler', ready: false, tag: 'Sécurité' },
+    { id: 'tent', name: 'Tente deux places & Duvet 5°C', detail: 'Roulés et sanglés dans le sac', ready: true, tag: 'Bivouac' },
+    { id: 'lamp', name: 'Lampe frontale 300lm', detail: 'Batterie chargée à 100%', ready: true, tag: 'Sécurité' },
+  ]);
+
+  const togglePrepItem = useCallback((id: string) => {
+    setPrepItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ready: !item.ready } : item))
+    );
+  }, []);
+
+  const pendingPrepCount = useMemo(
+    () => prepItems.filter((i) => !i.ready).length,
+    [prepItems]
+  );
+
+  const [checklistItems, setChecklistItems] = useState([
+    { id: 'knife', label: 'Couteau suisse multifonction', done: true },
+    { id: 'glasses', label: 'Lunettes de soleil catégorie 4', done: true },
+    { id: 'sunscreen', label: 'Crème solaire indice 50 & stick lèvres', done: false },
+    { id: 'trash', label: 'Sac poubelle étanche (zéro trace)', done: true },
+    { id: 'lighter', label: 'Briquet tempête / allume-feu', done: false },
+  ]);
+
+  const toggleChecklistItem = useCallback((id: string) => {
+    setChecklistItems((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, done: !c.done } : c))
+    );
+  }, []);
   const downRef = useRef<{ x: number; y: number } | null>(null);
 
   // Évitement dynamique du clavier virtuel sur mobile (B-11)
@@ -335,11 +366,6 @@ export function HubCampShell({
   const handleOpenRegistryEntry = useCallback(
     (def: HubSectionDef) => {
       if (!machineRef.current) return;
-
-      if (def.id === 'preparation') {
-        router.push('/compas?etape=kit');
-        return;
-      }
 
       if (def.segment === '') {
         machineRef.current.closeDrawer();
@@ -744,6 +770,9 @@ export function HubCampShell({
       }
 
       if (def.id === 'depart' || def.id === 'preparation') {
+        const readyCount = prepItems.filter((i) => i.ready).length;
+        const readyPercent = Math.round((readyCount / prepItems.length) * 100);
+
         return (
           <div className="p-4 space-y-4">
             <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
@@ -752,44 +781,49 @@ export function HubCampShell({
                   <h3 className="text-base font-bold camp-text-title">Vérifications avant le départ</h3>
                   <p className="text-xs camp-text-sub">Sécurité, hydratation et pesée finale</p>
                 </div>
-                <span className="px-2.5 py-1 rounded-full camp-chip-success text-[11px] font-bold">
-                  Prêt à 85%
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                    readyPercent === 100 ? 'camp-chip-success' : 'camp-chip-warning'
+                  }`}
+                >
+                  {readyPercent === 100 ? 'Tout est prêt !' : `Prêt à ${readyPercent}%`}
                 </span>
               </div>
 
               <div className="space-y-2 pt-2 border-t camp-border-subtle">
-                <div className="flex items-center justify-between p-3 rounded-2xl camp-card-cream border camp-border-subtle">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-full camp-chip-warning text-xs font-bold grid place-items-center">!</span>
-                    <div>
-                      <strong className="text-xs camp-text-title block">Gourde inox 1L</strong>
-                      <small className="text-[11px] camp-text-sub">À remplir d’eau avant le col</small>
+                {prepItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => togglePrepItem(item.id)}
+                    className="w-full flex items-center justify-between p-3 rounded-2xl camp-card-cream border camp-border-subtle min-h-[50px] text-left transition-transform active:scale-98"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={`w-6 h-6 rounded-full text-xs font-bold grid place-items-center ${
+                          item.ready ? 'camp-chip-success' : 'camp-chip-warning'
+                        }`}
+                      >
+                        {item.ready ? (
+                          <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                        ) : (
+                          '!'
+                        )}
+                      </span>
+                      <div>
+                        <strong className="text-xs camp-text-title block">{item.name}</strong>
+                        <small className="text-[11px] camp-text-sub">{item.detail}</small>
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md camp-chip-warning">Vérifier</span>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-2xl camp-card-cream border camp-border-subtle">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-full camp-chip-warning text-xs font-bold grid place-items-center">!</span>
-                    <div>
-                      <strong className="text-xs camp-text-title block">Trousse de premiers secours</strong>
-                      <small className="text-[11px] camp-text-sub">Compresses et pansements à contrôler</small>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md camp-chip-warning">Vérifier</span>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-2xl camp-card-cream border camp-border-subtle">
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle className="w-6 h-6 text-[var(--hub-action)]" />
-                    <div>
-                      <strong className="text-xs camp-text-title block">Tente deux places & Duvet 5°C</strong>
-                      <small className="text-[11px] camp-text-sub">Roulés et sanglés dans le sac</small>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md camp-chip-success">Prêt</span>
-                </div>
+                    <span
+                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
+                        item.ready ? 'camp-chip-success' : 'camp-chip-warning'
+                      }`}
+                    >
+                      {item.ready ? 'Prêt' : item.id === 'water' ? 'À remplir' : 'À vérifier'}
+                    </span>
+                  </button>
+                ))}
               </div>
 
               <button
@@ -809,9 +843,12 @@ export function HubCampShell({
         return (
           <div className="p-4 space-y-4">
             <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
-              <h3 className="text-base font-bold camp-text-title">Documents de l’expédition</h3>
-              <div className="space-y-2">
-                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold camp-text-title">Documents de l’expédition</h3>
+                <p className="text-xs camp-text-sub">Réservations, fiches d’itinéraires et autorisations</p>
+              </div>
+              <div className="space-y-2 pt-2 border-t camp-border-subtle">
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
                   <div className="flex items-center gap-2.5">
                     <FileText className="w-5 h-5 text-[var(--hub-action)]" />
                     <div>
@@ -822,7 +859,7 @@ export function HubCampShell({
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-success">PDF</span>
                 </div>
 
-                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between">
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
                   <div className="flex items-center gap-2.5">
                     <FileText className="w-5 h-5 text-[var(--hub-action)]" />
                     <div>
@@ -831,6 +868,17 @@ export function HubCampShell({
                     </div>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-success">GPX</span>
+                </div>
+
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
+                  <div className="flex items-center gap-2.5">
+                    <Shield className="w-5 h-5 text-[var(--hub-action)]" />
+                    <div>
+                      <strong className="text-xs camp-text-title block">Attestation secours FFCAM</strong>
+                      <small className="text-[11px] camp-text-sub">Assurance rapatriement valide</small>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-success">VALIDE</span>
                 </div>
               </div>
             </div>
@@ -843,22 +891,33 @@ export function HubCampShell({
           <div className="p-4 space-y-4">
             <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
               <div className="text-center p-3 rounded-2xl camp-card-cream">
-                <small className="text-[10px] font-bold uppercase tracking-wider text-[var(--hub-action)]">Budget prévisionnel</small>
+                <small className="text-[10px] font-bold uppercase tracking-wider text-[var(--hub-action)]">
+                  Budget prévisionnel
+                </small>
                 <div className="text-2xl font-black camp-text-title">240 €</div>
-                <small className="text-[11px] camp-text-sub">par personne · 3 jours</small>
+                <small className="text-[11px] camp-text-sub">par personne · 3 jours (Total groupe : 720 €)</small>
               </div>
 
               <div className="space-y-2 pt-1 border-t camp-border-subtle">
-                <div className="flex justify-between text-xs p-2 rounded-xl camp-card-cream">
-                  <span className="camp-text-sub">Transport & Train</span>
+                <div className="flex justify-between items-center text-xs p-3 rounded-xl camp-card-cream">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full camp-btn-action" />
+                    <span className="camp-text-sub">Transport & Train</span>
+                  </div>
                   <strong className="camp-text-title">90 €</strong>
                 </div>
-                <div className="flex justify-between text-xs p-2 rounded-xl camp-card-cream">
-                  <span className="camp-text-sub">Hébergement en refuge</span>
+                <div className="flex justify-between items-center text-xs p-3 rounded-xl camp-card-cream">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full camp-btn-action" />
+                    <span className="camp-text-sub">Hébergement en refuge</span>
+                  </div>
                   <strong className="camp-text-title">100 €</strong>
                 </div>
-                <div className="flex justify-between text-xs p-2 rounded-xl camp-card-cream">
-                  <span className="camp-text-sub">Vivres & Ravitaillement</span>
+                <div className="flex justify-between items-center text-xs p-3 rounded-xl camp-card-cream">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full camp-btn-action" />
+                    <span className="camp-text-sub">Vivres & Ravitaillement</span>
+                  </div>
                   <strong className="camp-text-title">50 €</strong>
                 </div>
               </div>
@@ -943,6 +1002,360 @@ export function HubCampShell({
         );
       }
 
+      if (def.id === hubSectionRegistry[0].id) {
+        return (
+          <div className="p-4 space-y-4">
+            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold camp-text-title">Mon Inventaire d’expédition</h3>
+                  <p className="text-xs camp-text-sub">6 éléments enregistrés · 4,22 kg</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
+                  className="min-h-[44px] px-3 rounded-xl camp-btn-action text-xs font-bold inline-flex items-center gap-1.5 shadow-sm active:scale-98"
+                >
+                  <Backpack className="w-4 h-4" />
+                  <span>Atelier 3D</span>
+                </button>
+              </div>
+
+              <div className="space-y-1.5 pt-2 border-t camp-border-subtle">
+                {[
+                  { name: 'Sac Alpin 40 L', cat: 'Portage', weight: '1 380 g' },
+                  { name: 'Gourde inox 1L', cat: 'Hydratation', weight: '180 g' },
+                  { name: 'Tente 2 places', cat: 'Bivouac', weight: '1 650 g' },
+                  { name: 'Duvet compact 5°C', cat: 'Couchage', weight: '710 g' },
+                  { name: 'Lampe frontale 300lm', cat: 'Sécurité', weight: '90 g' },
+                  { name: 'Trousse de secours', cat: 'Sécurité', weight: '210 g' },
+                ].map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between p-2.5 rounded-xl camp-card-cream text-xs min-h-[44px]"
+                  >
+                    <span className="font-semibold camp-text-title flex items-center gap-2">
+                      <Package className="w-3.5 h-3.5 text-[var(--hub-action)]" />
+                      {item.name}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] camp-text-sub">{item.cat}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-card-white camp-text-title">
+                        {item.weight}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (def.id === 'kit' || def.id === 'gear') {
+        return (
+          <div className="p-4 space-y-4">
+            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold camp-text-title">Sac Alpin 40 L</h3>
+                  <p className="text-xs camp-text-sub">Configuration active de l’aventure</p>
+                </div>
+                <span className="px-3 py-1 rounded-full camp-badge-forest text-xs font-extrabold">
+                  4,22 kg
+                </span>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t camp-border-subtle">
+                <div className="p-3 rounded-2xl camp-card-cream space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-bold camp-text-title">Corps principal</span>
+                    <strong className="camp-text-title">32 L · 3 210 g</strong>
+                  </div>
+                  <p className="text-[11px] camp-text-sub">Tente, duvet, réchaud et vêtements chauds</p>
+                </div>
+
+                <div className="p-3 rounded-2xl camp-card-cream space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-bold camp-text-title">Poche frontale</span>
+                    <strong className="camp-text-title">4 L · 480 g</strong>
+                  </div>
+                  <p className="text-[11px] camp-text-sub">Trousse de secours et filtration d’eau</p>
+                </div>
+
+                <div className="p-3 rounded-2xl camp-card-cream space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-bold camp-text-title">Rabat supérieur</span>
+                    <strong className="camp-text-title">4 L · 530 g</strong>
+                  </div>
+                  <p className="text-[11px] camp-text-sub">Lampe frontale, couteau, vivres de course</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
+                className="w-full min-h-[44px] rounded-2xl camp-btn-action text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-98 transition-transform"
+              >
+                <Backpack className="w-4 h-4" />
+                <span>Personnaliser dans le Kit Studio 3D</span>
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      if (def.id === hubSectionRegistry[4].id) {
+        return (
+          <div className="p-4 space-y-4">
+            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
+              <div>
+                <h3 className="text-base font-bold camp-text-title">Prêts & Matériel d’expédition</h3>
+                <p className="text-xs camp-text-sub">Suivi du matériel partagé entre coéquipiers</p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t camp-border-subtle">
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
+                  <div>
+                    <strong className="text-xs camp-text-title block">Réchaud à gaz compact</strong>
+                    <small className="text-[11px] camp-text-sub">Prêté à Camille · Retour prévu le 05/11</small>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-warning">
+                    Prêté
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
+                  <div>
+                    <strong className="text-xs camp-text-title block">Filtre à eau individuel</strong>
+                    <small className="text-[11px] camp-text-sub">Emprunté à Alex · Dans mon sac</small>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-success">
+                    Emprunté
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (def.id === 'alertes') {
+        return (
+          <div className="p-4 space-y-4">
+            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
+              <div>
+                <h3 className="text-base font-bold camp-text-title">Vigilance & Alertes Terrain</h3>
+                <p className="text-xs camp-text-sub">Points d’attention météo et matériel</p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t camp-border-subtle">
+                <div className="p-3 rounded-2xl camp-card-cream border camp-border-subtle space-y-1">
+                  <div className="flex items-center justify-between">
+                    <strong className="text-xs camp-text-title flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full camp-chip-warning" />
+                      Météo au col des Écrins
+                    </strong>
+                    <span className="text-[10px] font-bold camp-chip-warning px-2 py-0.5 rounded-md">
+                      Vent fort
+                    </span>
+                  </div>
+                  <p className="text-[11px] camp-text-sub">
+                    Rafales estimées à 65 km/h prévues en fin d’après-midi. Prévoir veste coupe-vent.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-2xl camp-card-cream border camp-border-subtle space-y-1">
+                  <div className="flex items-center justify-between">
+                    <strong className="text-xs camp-text-title flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full camp-chip-warning" />
+                      Réserve d’eau
+                    </strong>
+                    <span className="text-[10px] font-bold camp-chip-warning px-2 py-0.5 rounded-md">
+                      Point d’eau
+                    </span>
+                  </div>
+                  <p className="text-[11px] camp-text-sub">
+                    Source intermédiaire tarie au km 7. Remplir impérativement la gourde au camp avant de partir.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (def.id === 'oublis' || def.id === 'checklist') {
+        return (
+          <div className="p-4 space-y-4">
+            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
+              <div>
+                <h3 className="text-base font-bold camp-text-title">Checklist avant le départ</h3>
+                <p className="text-xs camp-text-sub">Cochez chaque élément au fur et à mesure</p>
+              </div>
+
+              <div className="space-y-1.5 pt-2 border-t camp-border-subtle">
+                {checklistItems.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleChecklistItem(c.id)}
+                    className="w-full flex items-center justify-between p-3 rounded-2xl camp-card-cream border camp-border-subtle min-h-[48px] text-left transition-transform active:scale-98"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={`w-6 h-6 rounded-full text-xs font-bold grid place-items-center ${
+                          c.done ? 'camp-chip-success' : 'camp-chip-warning'
+                        }`}
+                      >
+                        {c.done ? <Check className="w-3.5 h-3.5" /> : '○'}
+                      </span>
+                      <span className={`text-xs font-medium ${c.done ? 'line-through camp-text-sub' : 'camp-text-title'}`}>
+                        {c.label}
+                      </span>
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
+                        c.done ? 'camp-chip-success' : 'camp-chip-warning'
+                      }`}
+                    >
+                      {c.done ? 'Fait' : 'À faire'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (def.id === 'export') {
+        return (
+          <div className="p-4 space-y-4">
+            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
+              <div>
+                <h3 className="text-base font-bold camp-text-title">Exporter l’Expédition</h3>
+                <p className="text-xs camp-text-sub">Fichiers hors ligne pour GPS et impression</p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t camp-border-subtle">
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
+                  <div className="flex items-center gap-2.5">
+                    <Compass className="w-5 h-5 text-[var(--hub-action)]" />
+                    <div>
+                      <strong className="text-xs camp-text-title block">Tracé GPX de l’expédition</strong>
+                      <small className="text-[11px] camp-text-sub">Compatible Garmin, Suunto, Coros</small>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-success">
+                    Télécharger
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="w-5 h-5 text-[var(--hub-action)]" />
+                    <div>
+                      <strong className="text-xs camp-text-title block">Fiche topo & Roadbook PDF</strong>
+                      <small className="text-[11px] camp-text-sub">Version imprimable du camp</small>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-success">
+                    Télécharger
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (def.id === 'invitations') {
+        return (
+          <div className="p-4 space-y-4">
+            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
+              <div>
+                <h3 className="text-base font-bold camp-text-title">Coéquipiers & Invitations</h3>
+                <p className="text-xs camp-text-sub">2 membres confirmés dans l’équipage</p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t camp-border-subtle">
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-8 h-8 rounded-full camp-badge-forest grid place-items-center text-xs font-bold">
+                      CM
+                    </span>
+                    <div>
+                      <strong className="text-xs camp-text-title block">Camille</strong>
+                      <small className="text-[11px] camp-text-sub">Kit partagé · Confirmé</small>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-success">
+                    Confirmé
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-8 h-8 rounded-full camp-badge-forest grid place-items-center text-xs font-bold">
+                      AL
+                    </span>
+                    <div>
+                      <strong className="text-xs camp-text-title block">Alex</strong>
+                      <small className="text-[11px] camp-text-sub">Kit partagé · Confirmé</small>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-success">
+                    Confirmé
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (def.id === hubSectionRegistry[18].id) {
+        return (
+          <div className="p-4 space-y-4">
+            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
+              <div>
+                <h3 className="text-base font-bold camp-text-title">Aventures & Voyages liés</h3>
+                <p className="text-xs camp-text-sub">Historique et sorties planifiées avec cet équipement</p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t camp-border-subtle">
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
+                  <div className="flex items-center gap-2.5">
+                    <Mountain className="w-5 h-5 text-[var(--hub-action)]" />
+                    <div>
+                      <strong className="text-xs camp-text-title block">Traversée des Écrins 2026</strong>
+                      <small className="text-[11px] camp-text-sub">En cours · Équipage 3 pers</small>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-chip-success">
+                    En cours
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-2xl camp-card-cream flex items-center justify-between min-h-[48px]">
+                  <div className="flex items-center gap-2.5">
+                    <Mountain className="w-5 h-5 text-[var(--hub-text-secondary)]" />
+                    <div>
+                      <strong className="text-xs camp-text-title block">Tour des Fiz 2025</strong>
+                      <small className="text-[11px] camp-text-sub">Terminé · 42 km parcourus</small>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md camp-card-white camp-text-sub">
+                    Archivé
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       const isGearSection = isGearHubSection(def.id);
 
       return (
@@ -988,6 +1401,7 @@ export function HubCampShell({
     },
     [
       activeSubDrawerId,
+      checklistItems,
       drawerContent,
       effectiveCounts,
       effectiveRouteCoords,
@@ -999,9 +1413,12 @@ export function HubCampShell({
       initialDrawer,
       noteDraft,
       notesList,
+      prepItems,
       router,
       selectedDay,
       selectedMember,
+      toggleChecklistItem,
+      togglePrepItem,
       trip,
     ]
   );
@@ -1220,66 +1637,53 @@ export function HubCampShell({
                 Préparer mon départ
               </h2>
               <p className="text-xs camp-text-sub italic">
-                2 éléments à vérifier
+                {pendingPrepCount > 0
+                  ? `${pendingPrepCount} élément${pendingPrepCount > 1 ? 's' : ''} à vérifier`
+                  : 'Tout est prêt pour l’aventure'}
               </p>
             </div>
           </div>
 
-          {/* 2 Éléments de vérification Option 3 (Gourde, Trousse) */}
+          {/* 2 Éléments de vérification Option 3 dynamiques */}
           <div className="space-y-1.5 my-2">
-            <button
-              type="button"
-              onClick={() => {
-                const prepDef = hubSectionRegistry.find(
-                  (s) => s.id === 'depart' || s.id === 'preparation'
-                );
-                if (prepDef) handleOpenRegistryEntry(prepDef);
-              }}
-              className="w-full flex items-center justify-between p-2.5 rounded-2xl camp-card-white text-left min-h-[44px]"
-            >
-              <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-full camp-badge-forest grid place-items-center">
-                  <Package className="w-3.5 h-3.5" />
-                </span>
-                <div>
-                  <strong className="text-xs camp-text-title block">Gourde</strong>
-                  <small className="text-[11px] camp-text-sub">Gourde inox 1L</small>
+            {prepItems.slice(0, 2).map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => togglePrepItem(item.id)}
+                className="w-full flex items-center justify-between p-2.5 rounded-2xl camp-card-white text-left min-h-[44px] active:scale-98 transition-transform"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className={`w-7 h-7 rounded-full grid place-items-center ${
+                      item.ready ? 'camp-badge-forest' : 'camp-chip-warning'
+                    }`}
+                  >
+                    {item.ready ? (
+                      <Check className="w-3.5 h-3.5" />
+                    ) : item.id === 'water' ? (
+                      <Package className="w-3.5 h-3.5" />
+                    ) : (
+                      <Shield className="w-3.5 h-3.5" />
+                    )}
+                  </span>
+                  <div>
+                    <strong className="text-xs camp-text-title block">{item.name}</strong>
+                    <small className="text-[11px] camp-text-sub">{item.detail}</small>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="camp-chip-warning text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">
-                  À remplir
-                </span>
-                <ChevronRight className="w-4 h-4 camp-text-sub" />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                const prepDef = hubSectionRegistry.find(
-                  (s) => s.id === 'depart' || s.id === 'preparation'
-                );
-                if (prepDef) handleOpenRegistryEntry(prepDef);
-              }}
-              className="w-full flex items-center justify-between p-2.5 rounded-2xl camp-card-white text-left min-h-[44px]"
-            >
-              <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-full camp-badge-forest grid place-items-center">
-                  <Shield className="w-3.5 h-3.5" />
-                </span>
-                <div>
-                  <strong className="text-xs camp-text-title block">Trousse de secours</strong>
-                  <small className="text-[11px] camp-text-sub">Vérifier le contenu</small>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                      item.ready ? 'camp-chip-success' : 'camp-chip-warning'
+                    }`}
+                  >
+                    {item.ready ? 'Prêt' : item.id === 'water' ? 'À remplir' : 'À vérifier'}
+                  </span>
+                  <ChevronRight className="w-4 h-4 camp-text-sub" />
                 </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="camp-chip-warning text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">
-                  À vérifier
-                </span>
-                <ChevronRight className="w-4 h-4 camp-text-sub" />
-              </div>
-            </button>
+              </button>
+            ))}
           </div>
 
           {/* Grand CTA Option 3 : « Ouvrir mon kit > » */}
@@ -1464,7 +1868,7 @@ export function HubCampShell({
         </button>
       </nav>
 
-      {/* ── 6. Tiroir Actif (DrawerShell) ── */}
+      {/* ── 6. Tiroir Actif ── */}
       {activeDef && (
         <div
           data-testid="hub-active-drawer"
@@ -1472,24 +1876,43 @@ export function HubCampShell({
           role="dialog"
           aria-modal="true"
           aria-label={activeDef.label}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleCloseDrawer();
+          }}
           className="hub-camp-drawer-overlay fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-md"
           style={{ overscrollBehavior: 'contain' }}
         >
           <div
+            onClick={(e) => e.stopPropagation()}
             className="w-full max-h-[90dvh] flex flex-col camp-card-cream rounded-t-[32px] border-t border-white/60 overflow-hidden shadow-2xl"
             style={{
               paddingBottom:
                 'calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--keyboard-inset, 0px))',
             }}
           >
-            <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b camp-border-subtle">
-              <span className="text-sm font-bold camp-text-title truncate">
-                {activeDef.label}
-              </span>
+            <div className="flex items-center justify-between px-4 pt-3 pb-2.5 border-b camp-border-subtle shrink-0">
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-xl camp-badge-forest grid place-items-center">
+                  {React.createElement(activeDef.icon, {
+                    className: 'w-4 h-4',
+                    'aria-hidden': true,
+                  })}
+                </span>
+                <div>
+                  <h3 className="text-sm font-bold camp-text-title truncate">
+                    {activeDef.label}
+                  </h3>
+                  <p className="text-[10px] camp-text-sub">
+                    {describeNatureGroup(activeDef)}
+                  </p>
+                </div>
+              </div>
+
               <div
                 aria-hidden="true"
                 className="w-10 h-1.5 rounded-full bg-[var(--hub-border-strong)]"
               />
+
               <button
                 type="button"
                 data-testid="hub-close-drawer"
@@ -1512,13 +1935,9 @@ export function HubCampShell({
                 }
               }}
               className="flex-1 overflow-y-auto"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              <DrawerShell
-                tabs={drawerTabs}
-                activeIndex={0}
-                onIndexChange={() => {}}
-                state="ready"
-              />
+              {renderDrawerBody(activeDef)}
             </div>
           </div>
         </div>

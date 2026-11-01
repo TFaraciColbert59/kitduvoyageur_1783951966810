@@ -797,44 +797,51 @@ export function KitStudioView({
 
       {/* 4. Feuille du tiroir actif du Studio (C-12 : isole ses gestes de la scène 3D) */}
       {loadState === 'ready' && activeDrawer && (
-        <div
-          data-testid={`studio-active-drawer-${activeDrawer}`}
-          data-drawer-sheet="true"
-          onPointerDown={() => {
-            drawerDragActiveRef.current = true;
-          }}
-          onPointerUp={() => {
-            drawerDragActiveRef.current = false;
-          }}
-          onPointerCancel={() => {
-            drawerDragActiveRef.current = false;
-          }}
-          className="fixed inset-x-0 bottom-0 z-50 max-h-[66dvh] flex flex-col bg-[var(--hub-surface-card)] border-t border-[var(--hub-border)] rounded-t-[28px] overflow-hidden"
-          style={{
-            boxShadow: 'var(--hub-sheet-shadow)',
-            paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
-          }}
-        >
-          <div className="px-4 pt-2.5 pb-1.5 flex items-center justify-between border-b border-[var(--hub-border-subtle)] shrink-0">
-            <span className="text-xs font-bold uppercase tracking-wider text-[var(--hub-primary)]">
-              {drawerButtons.find((b) => b.id === activeDrawer)?.label ?? activeDrawer}
-            </span>
-            <div
-              data-drawer-handle="true"
-              className="w-10 h-1.5 rounded-full bg-[var(--hub-border-strong)]"
-            />
-            <button
-              type="button"
-              data-testid="studio-close-drawer-btn"
-              onClick={handleCloseDrawer}
-              aria-label="Fermer le tiroir de l’atelier"
-              className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-[var(--hub-text-muted)] hover:text-[var(--hub-text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
-            >
-              <X className="w-5 h-5" aria-hidden="true" />
-            </button>
-          </div>
+        <>
+          <div
+            data-testid="studio-drawer-backdrop"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs transition-opacity"
+            onClick={handleCloseDrawer}
+            aria-hidden="true"
+          />
+          <div
+            data-testid={`studio-active-drawer-${activeDrawer}`}
+            data-drawer-sheet="true"
+            onPointerDown={() => {
+              drawerDragActiveRef.current = true;
+            }}
+            onPointerUp={() => {
+              drawerDragActiveRef.current = false;
+            }}
+            onPointerCancel={() => {
+              drawerDragActiveRef.current = false;
+            }}
+            className="fixed inset-x-0 bottom-0 z-50 h-[68dvh] max-h-[68dvh] flex flex-col bg-[var(--hub-surface-card)] border-t border-[var(--hub-border)] rounded-t-[28px] overflow-hidden"
+            style={{
+              boxShadow: 'var(--hub-sheet-shadow)',
+              paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
+            }}
+          >
+            <div className="px-4 pt-2.5 pb-1.5 flex items-center justify-between border-b border-[var(--hub-border-subtle)] shrink-0">
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--hub-primary)]">
+                {drawerButtons.find((b) => b.id === activeDrawer)?.label ?? activeDrawer}
+              </span>
+              <div
+                data-drawer-handle="true"
+                className="w-10 h-1.5 rounded-full bg-[var(--hub-border-strong)]"
+              />
+              <button
+                type="button"
+                data-testid="studio-close-drawer-btn"
+                onClick={handleCloseDrawer}
+                aria-label="Fermer le tiroir de l’atelier"
+                className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-[var(--hub-text-muted)] hover:text-[var(--hub-text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
+              >
+                <X className="w-5 h-5" aria-hidden="true" />
+              </button>
+            </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto pt-2">
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden pt-1">
             {activeDrawer === 'inventaire' && (
               <InventaireDrawer
                 config={displayedConfig}
@@ -923,6 +930,7 @@ export function KitStudioView({
             )}
           </div>
         </div>
+        </>
       )}
     </div>
   );

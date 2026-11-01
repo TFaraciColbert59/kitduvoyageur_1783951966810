@@ -261,19 +261,35 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(247, 243, 233, 0.94);
+  background: rgba(247, 243, 233, 0.96);
   backdrop-filter: blur(28px) saturate(130%);
   -webkit-backdrop-filter: blur(28px) saturate(130%);
   border: 0.5px solid rgba(255, 255, 255, 0.65);
   border-bottom: 0;
-  border-radius: 30px 30px 0 0;
+  border-radius: 32px 32px 0 0;
   box-shadow: 0 -8px 36px rgba(11, 31, 23, 0.22);
-  padding: 6px 16px;
+  padding: 8px 18px;
   padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   max-height: 82dvh;
+  color: #172B24 !important;
+}
+
+.camp-bottom-card h2 {
+  color: #172B24 !important;
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.4px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+.camp-bottom-card p {
+  color: #56665D !important;
+  font-size: 12px !important;
+  margin-top: 2px !important;
 }
 
 .camp-panel-grip {
