@@ -760,14 +760,28 @@ export function KitStudioView({
         )}
       </main>
 
-      {/* 3. Barre capsule inférieure des 6 tiroirs du Studio */}
+      {/* 3. Barre capsule inférieure des tiroirs du Studio (Apple Liquid Glass iOS 27) */}
       {loadState === 'ready' && (
         <nav
           aria-label="Tiroirs de l’atelier Kit Studio"
           data-studio-ui="true"
-          className="px-3 pt-2 shrink-0"
+          className="px-3 pt-2 pb-2 shrink-0"
         >
-          <div className="p-1.5 rounded-full bg-[var(--hub-surface-card)] border border-[var(--hub-border)] flex items-center justify-between gap-1 overflow-x-auto">
+          <div
+            className="hub-drawer-capsule"
+            style={
+              {
+                '--n': visibleDrawerButtons.length,
+                '--i': Math.max(
+                  0,
+                  visibleDrawerButtons.findIndex((b) => b.id === activeDrawer)
+                ),
+              } as React.CSSProperties
+            }
+          >
+            {activeDrawer && (
+              <span className="sel-lens" aria-hidden="true" />
+            )}
             {visibleDrawerButtons.map((btn) => {
               const active = activeDrawer === btn.id;
               return (
@@ -779,11 +793,7 @@ export function KitStudioView({
                   onClick={() =>
                     active ? handleCloseDrawer() : onSelectDrawer(btn.id)
                   }
-                  className={`min-h-[44px] px-3 rounded-full text-xs font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap flex-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
-                    active
-                      ? 'bg-[var(--hub-primary)] text-[var(--hub-text-inverted)]'
-                      : 'text-[var(--hub-text-secondary)] hover:text-[var(--hub-text-primary)]'
-                  }`}
+                  className={active ? 'active' : ''}
                 >
                   {btn.icon}
                   <span className="hidden sm:inline">{btn.label}</span>
@@ -795,12 +805,12 @@ export function KitStudioView({
         </nav>
       )}
 
-      {/* 4. Feuille du tiroir actif du Studio (C-12 : isole ses gestes de la scène 3D) */}
+      {/* 4. Feuille du tiroir actif du Studio (Liquid Glass iOS 27 .lkdv-seal-drawer) */}
       {loadState === 'ready' && activeDrawer && (
         <>
           <div
             data-testid="studio-drawer-backdrop"
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs transition-opacity"
+            className="hub-camp-drawer-overlay"
             onClick={handleCloseDrawer}
             aria-hidden="true"
           />
@@ -816,13 +826,12 @@ export function KitStudioView({
             onPointerCancel={() => {
               drawerDragActiveRef.current = false;
             }}
-            className="fixed inset-x-0 bottom-0 z-50 h-[68dvh] max-h-[68dvh] flex flex-col bg-[var(--hub-surface-card)] border-t border-[var(--hub-border)] rounded-t-[28px] overflow-hidden"
+            className="hub-camp-drawer-sheet fixed inset-x-0 bottom-0 z-50 h-[72dvh] max-h-[72dvh] flex flex-col"
             style={{
-              boxShadow: 'var(--hub-sheet-shadow)',
-              paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
+              paddingBottom: 'max(14px, env(safe-area-inset-bottom, 0px))',
             }}
           >
-            <div className="px-4 pt-2.5 pb-1.5 flex items-center justify-between border-b border-[var(--hub-border-subtle)] shrink-0">
+            <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-[var(--hub-border-subtle)] shrink-0">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--hub-primary)]">
                 {drawerButtons.find((b) => b.id === activeDrawer)?.label ?? activeDrawer}
               </span>
@@ -835,7 +844,7 @@ export function KitStudioView({
                 data-testid="studio-close-drawer-btn"
                 onClick={handleCloseDrawer}
                 aria-label="Fermer le tiroir de l’atelier"
-                className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-[var(--hub-text-muted)] hover:text-[var(--hub-text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
+                className="camp-glass-close-btn"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>

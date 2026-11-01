@@ -1879,12 +1879,12 @@ export function HubCampShell({
           onClick={(e) => {
             if (e.target === e.currentTarget) handleCloseDrawer();
           }}
-          className="hub-camp-drawer-overlay fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-md"
+          className="hub-camp-drawer-overlay"
           style={{ overscrollBehavior: 'contain' }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-h-[90dvh] flex flex-col camp-card-cream rounded-t-[32px] border-t border-white/60 overflow-hidden shadow-2xl"
+            className="hub-camp-drawer-sheet w-full max-h-[90dvh] flex flex-col"
             style={{
               paddingBottom:
                 'calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--keyboard-inset, 0px))',
@@ -1918,7 +1918,7 @@ export function HubCampShell({
                 data-testid="hub-close-drawer"
                 onClick={handleCloseDrawer}
                 aria-label="Fermer le tiroir"
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full camp-text-sub hover:camp-text-title transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
+                className="camp-glass-close-btn"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>
