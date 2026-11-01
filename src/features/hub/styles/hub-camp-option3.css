@@ -408,3 +408,51 @@
   background: rgba(18, 47, 38, 0.08);
   color: #3B5246;
 }
+
+/* ── Classes utilitaires Option 3 conformes H-D85 ── */
+.camp-chip-success {
+  background: var(--hub-primary-subtle);
+  color: var(--hub-primary);
+}
+.camp-chip-warning {
+  background: var(--hub-warning-bg);
+  color: var(--hub-warning);
+}
+.camp-chip-danger {
+  background: var(--hub-danger-bg);
+  color: var(--hub-danger);
+}
+.camp-card-white {
+  background: var(--hub-surface-card);
+  border: 0.5px solid var(--hub-border);
+}
+.camp-card-cream {
+  background: var(--hub-surface);
+  border: 0.5px solid var(--hub-border-subtle);
+}
+.camp-btn-primary {
+  background: var(--hub-primary);
+  color: var(--hub-text-inverted);
+}
+.camp-btn-action {
+  background: var(--hub-action);
+  color: var(--hub-text-inverted);
+}
+.camp-btn-outline {
+  background: var(--hub-surface-card);
+  border: 1px solid var(--hub-action);
+  color: var(--hub-action);
+}
+.camp-text-title {
+  color: var(--hub-text-primary);
+}
+.camp-text-sub {
+  color: var(--hub-text-secondary);
+}
+.camp-badge-forest {
+  background: var(--hub-primary-subtle);
+  color: var(--hub-primary);
+}
+.camp-border-subtle {
+  border-color: var(--hub-border-subtle);
+}

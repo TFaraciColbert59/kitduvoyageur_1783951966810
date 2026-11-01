@@ -242,7 +242,8 @@ export function KitStudioView({
         syncedBootstrapIdRef.current = `${data.activeKit.kitId}:${data.activeKit.revision}`;
         setLoadState('ready');
       }
-    } catch {
+    } catch (err) {
+      console.error('[KitStudioView] loadBootstrap error:', err);
       setLoadState('error');
     }
   }, [requestedKitId]);
@@ -329,7 +330,8 @@ export function KitStudioView({
       setKitName(created?.kit?.name || 'Mon sac d’expédition');
       setIsLocalDraft(false);
       setLoadState('ready');
-    } catch {
+    } catch (err) {
+      console.error('[KitStudioView] loadBootstrap error:', err);
       setLoadState('error');
     }
   };
