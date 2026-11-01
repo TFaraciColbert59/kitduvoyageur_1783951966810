@@ -1,5 +1,5 @@
 -- Mission Fusée, phase 1, lot 1 (risque nul) — à appliquer par Tony (SQL Editor), rollback :
--- supabase/migrations_down/20261101120000_perf_p1_rls_initplan_duplicate_indexes.down.sql
+-- supabase/migrations_down/20261108000000_perf_p1_rls_initplan_duplicate_indexes.down.sql
 --
 -- 1) Advisor auth_rls_initplan : 8 politiques réévaluaient auth.uid() pour chaque ligne.
 --    `(select auth.uid())` est évalué une fois par requête (InitPlan). Même sémantique, mêmes

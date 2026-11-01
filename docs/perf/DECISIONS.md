@@ -5,7 +5,7 @@
 | # | Date | Décision | Pourquoi | Statut |
 |---|---|---|---|---|
 | F-01 | 01/11 | Baseline serveur et bundle relevée avant tout changement (`PERF_BASELINE.md`) | Phase 0 non négociable | fait |
-| F-02 | 01/11 | Lot 1 base (8 `auth_rls_initplan`, 2 index en double) écrit avec rollback : `supabase/migrations/20261101120000_perf_p1_rls_initplan_duplicate_indexes.sql` | Risque nul, même sémantique | **écrit, non appliqué** (application en production réservée à Tony) ; validation à blanc en transaction annulée non faite (confirmation Supabase restée sans réponse) |
+| F-02 | 01/11 | Lot 1 base (8 `auth_rls_initplan`, 2 index en double) écrit avec rollback : `supabase/migrations/20261108000000_perf_p1_rls_initplan_duplicate_indexes.sql` | Risque nul, même sémantique | **écrit, non appliqué** (application en production réservée à Tony) ; validation à blanc en transaction annulée non faite (confirmation Supabase restée sans réponse) |
 | F-04 | 01/11 | `pg_stat_statements` remis à zéro le 01/11 à 07:35 UTC (D-01, autonomie accordée par Tony le 01/11) | Les cumuls du 07/09 sont conservés dans la baseline ; mesurer l'usage actuel (Explorer v2) et l'effet des changements | fait |
 | F-05 | 01/11 | Chronométrage serveur du Compas (`traceStage`, no-op hors `LKDV_TRACE_SSR=1`), variable activée sur les aperçus de la branche seulement | Mesurer avant de changer : RUM Compas TTFB p75 4,2 s | fait |
 | F-06 | 01/11 | **Boucle de rechargement de /explorer corrigée** (2 service workers sur la portée « / ») : portée propre pour l'Explorer, rechargement réservé au worker de l'app. Test de non-régression | 12 rechargements en 15 s en production → 0 constaté sur l'aperçu | fait (`2265e0b`) |
@@ -49,5 +49,5 @@
 | R-05 | Communauté : la vignette vidéo du fil (LCP 3,3 s) servie en image redimensionnée et prioritaire | LCP −1 à −2 s | faible | |
 | R-06 | HUB : publier la réservation de la barre du bas (rail de jours) dès le rendu serveur | CLS 0,022 → 0 | faible à moyen | |
 | R-07 | Compas : rendu serveur sans attendre `getHubAdventureData` complet (`lists`, `checklist`, liens affiliés inutiles au Compas), mise en cache des appels externes par aventure | −200 à −600 ms serveur | moyen | |
-| R-08 | Base : appliquer le lot 1 (`20261101120000`), puis surface d'API `api` (D-03) | rechargements de schéma ~1,7 s évités | moyen | migrations en production : Tony |
+| R-08 | Base : appliquer le lot 1 (`20261108000000`), puis surface d'API `api` (D-03) | rechargements de schéma ~1,7 s évités | moyen | migrations en production : Tony |
 | R-09 | RUM : accepter les mesures des visiteurs anonymes (sendBeacon, débit limité) et exclure les comptes de banc de test | mesure terrain fiable | faible | |
