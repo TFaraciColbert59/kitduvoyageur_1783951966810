@@ -189,6 +189,34 @@ const OPTION3_MEMBERS = [
   },
 ];
 
+interface CampPlacement {
+  x: number;
+  y: number;
+  testId?: string;
+}
+
+const CAMP_HOTSPOT_POSITIONS: readonly CampPlacement[] = [
+  /* 0: inventaire   */ { x: 22, y: 72 },
+  /* 1: kit          */ { x: 28, y: 56, testId: 'hub-hotspot-bag' },
+  /* 2: preparation  */ { x: 38, y: 38 },
+  /* 3: depart       */ { x: 14, y: 38, testId: 'hub-hotspot-fire' },
+  /* 4: disponibilite*/ { x: 50, y: 72 },
+  /* 5: alertes      */ { x: 18, y: 14 },
+  /* 6: oublis       */ { x: 40, y: 47 },
+  /* 7: overview     */ { x: 22, y: 25 },
+  /* 8: itinerary    */ { x: 82, y: 24, testId: 'hub-hotspot-route' },
+  /* 9: gear         */ { x: 52, y: 56 },
+  /* 10: groupe      */ { x: 82, y: 36, testId: 'hub-hotspot-group' },
+  /* 11: budget      */ { x: 78, y: 72 },
+  /* 12: docs        */ { x: 78, y: 56 },
+  /* 13: checklist   */ { x: 14, y: 47 },
+  /* 14: safety      */ { x: 50, y: 14 },
+  /* 15: journal     */ { x: 64, y: 38 },
+  /* 16: export      */ { x: 52, y: 25 },
+  /* 17: invitations */ { x: 82, y: 47 },
+  /* 18: voyages-lies*/ { x: 82, y: 14 },
+];
+
 export function HubCampShell({
   initialDrawer,
   trip,
@@ -868,78 +896,44 @@ export function HubCampShell({
         </div>
       </header>
 
-      {/* ── 3. Hotspots Tactiles sur le Décor ── */}
+      {/* ── 3. Hotspots Tactiles sur le Décor (19 Modules du Camp) ── */}
       <div className="camp-locations" aria-label="Objets du camp">
-        {/* 🎒 Mon kit */}
-        <button
-          type="button"
-          data-testid="hub-hotspot-bag"
-          className="hotspot hotspot-bag"
-          onClick={() => {
-            setFocus('bag');
-            handleEnterStudio(DEFAULT_STUDIO_DRAWER);
-          }}
-        >
-          <span className="hotspot-icon">
-            <Backpack className="w-4 h-4" aria-hidden="true" />
-          </span>
-          <span>Mon kit</span>
-        </button>
+        {hubSectionRegistry.map((def, idx) => {
+          const pos = CAMP_HOTSPOT_POSITIONS[idx] ?? { x: 50, y: 50 };
+          const IconComp = def.icon;
+          const count = def.counter(effectiveCounts);
+          const testId = pos.testId ?? `hub-hotspot-${def.id}`;
 
-        {/* 🗺️ Itinéraire */}
-        <button
-          type="button"
-          data-testid="hub-hotspot-route"
-          className="hotspot hotspot-route"
-          onClick={() => {
-            setFocus('route');
-            const routeDef = hubSectionRegistry.find(
-              (s) => s.id === 'itinerary' || s.segment === 'itineraire'
-            );
-            if (routeDef) handleOpenRegistryEntry(routeDef);
-          }}
-        >
-          <span className="hotspot-icon">
-            <Compass className="w-4 h-4" aria-hidden="true" />
-          </span>
-          <span>Itinéraire</span>
-        </button>
-
-        {/* 👥 Le groupe */}
-        <button
-          type="button"
-          data-testid="hub-hotspot-group"
-          className="hotspot hotspot-tents"
-          onClick={() => {
-            setFocus('group');
-            const groupDef = hubSectionRegistry.find((s) => s.id === 'groupe');
-            if (groupDef) handleOpenRegistryEntry(groupDef);
-          }}
-        >
-          <span className="hotspot-icon">
-            <Users className="w-4 h-4" aria-hidden="true" />
-          </span>
-          <span>Le groupe</span>
-        </button>
-
-        {/* 🔥 Mon départ */}
-        <button
-          type="button"
-          data-testid="hub-hotspot-fire"
-          className="hotspot hotspot-fire"
-          onClick={() => {
-            setFocus('prep');
-            const prepDef = hubSectionRegistry.find(
-              (s) => s.id === 'depart' || s.id === 'preparation'
-            );
-            if (prepDef) handleOpenRegistryEntry(prepDef);
-          }}
-        >
-          <span className="hotspot-icon">
-            <Flame className="w-4 h-4" aria-hidden="true" />
-          </span>
-          <span>Mon départ</span>
-        </button>
+          return (
+            <button
+              key={def.id}
+              type="button"
+              data-testid={testId}
+              data-section-id={def.id}
+              className={`hotspot hotspot-${def.id}`}
+              style={{
+                left: `${pos.x}%`,
+                top: `${pos.y}%`,
+              }}
+              onClick={() => {
+                if (def.id === 'kit') {
+                  handleEnterStudio(DEFAULT_STUDIO_DRAWER);
+                } else {
+                  handleOpenRegistryEntry(def);
+                }
+              }}
+              aria-label={def.label}
+            >
+              <span className="hotspot-icon">
+                <IconComp className="w-3.5 h-3.5" aria-hidden="true" />
+              </span>
+              <span className="hotspot-label">{def.label}</span>
+              {count !== null && count > 0 && (
+                <span className="hotspot-badge">{count}</span>
+              )}
+            </button>
+          );
+        })}
 
         {/* 🔄 Recentrer la scène */}
         <button
@@ -955,255 +949,31 @@ export function HubCampShell({
         </button>
       </div>
 
-      {/* ── 4. Volet Inférieur Coulissant Option 3 (Préparer mon départ & Liquid Glass) ── */}
-      <div className="camp-bottom-card" data-testid="hub-camp-bottom-panel">
+      {/* ── 4. Pilule Légère Flottante au-dessus de la BottomBar (Option 3 épurée) ── */}
+      <div className="camp-floating-pill-container" data-testid="hub-camp-bottom-panel">
         <button
           type="button"
-          className="camp-panel-grip w-full flex items-center justify-center py-1"
-          aria-label={modulesOpen ? 'Replier les modules' : 'Déplier les modules'}
-          onClick={() => setModulesOpen((prev) => !prev)}
-        >
-          <span className="w-10 h-1 rounded-full bg-[var(--hub-border-strong)]" />
-        </button>
-
-        {/* Option 3 Hero Card : Préparer mon départ */}
-        <div className="pb-1">
-          <div className="flex items-center justify-between py-1">
-            <div>
-              <h2 className="text-base font-bold camp-text-title tracking-tight">
-                Préparer mon départ
-              </h2>
-              <p className="text-xs camp-text-sub italic">
-                {pendingPrepCount > 0
-                  ? `${pendingPrepCount} élément${pendingPrepCount > 1 ? 's' : ''} à vérifier`
-                  : 'Tout est prêt pour l’aventure'}
-              </p>
-            </div>
-          </div>
-
-          {/* 2 Éléments de vérification Option 3 dynamiques */}
-          <div className="space-y-1.5 my-2">
-            {prepItems.slice(0, 2).map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => togglePrepItem(item.id)}
-                className="w-full flex items-center justify-between p-2.5 rounded-2xl camp-card-white text-left min-h-[44px] active:scale-98 transition-transform"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span
-                    className={`w-7 h-7 rounded-full grid place-items-center ${
-                      item.ready ? 'camp-badge-forest' : 'camp-chip-warning'
-                    }`}
-                  >
-                    {item.ready ? (
-                      <Check className="w-3.5 h-3.5" />
-                    ) : item.id === 'water' ? (
-                      <Package className="w-3.5 h-3.5" />
-                    ) : (
-                      <Shield className="w-3.5 h-3.5" />
-                    )}
-                  </span>
-                  <div>
-                    <strong className="text-xs camp-text-title block">{item.name}</strong>
-                    <small className="text-[11px] camp-text-sub">{item.detail}</small>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                      item.ready ? 'camp-chip-success' : 'camp-chip-warning'
-                    }`}
-                  >
-                    {item.ready ? 'Prêt' : item.id === 'water' ? 'À remplir' : 'À vérifier'}
-                  </span>
-                  <ChevronRight className="w-4 h-4 camp-text-sub" />
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Grand CTA Option 3 : « Ouvrir mon kit > » */}
-          <button
-            type="button"
-            data-testid="hub-enter-studio-cta"
-            onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
-            className="w-full min-h-[46px] rounded-full camp-btn-primary text-sm font-bold flex items-center justify-center gap-2 shadow-md active:scale-98 transition-transform mb-1.5"
-          >
-            <span>Ouvrir mon kit</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Bandeau discret de reprise < 24h (B-03 / B-04) */}
-        <HubResumeBanner adventure={adventure} />
-
-        {/* État d'erreur réseau non bloquant avec bouton Réessayer (A-07) */}
-        {syncError && (
-          <div
-            data-testid="hub-sync-error"
-            className="my-1.5 p-2 rounded-xl camp-chip-warning text-xs flex items-center justify-between"
-          >
-            <span>{syncError}</span>
-            <button
-              type="button"
-              className="px-2 py-1 rounded-lg camp-btn-action text-xs font-bold"
-              onClick={() => {
-                void refreshCampContext();
-              }}
-            >
-              Réessayer
-            </button>
-          </div>
-        )}
-
-        {/* État de projet vide */}
-        {isEmptyProject && (
-          <div
-            data-testid="hub-empty-project-state"
-            className="my-1.5 p-3 rounded-2xl camp-card-white space-y-2"
-          >
-            <p className="text-xs camp-text-title font-medium">
-              Préparez votre premier sac dans le Kit Studio ou planifiez une aventure.
-            </p>
-            <div className="flex gap-2">
-              <Link
-                href={HUB_NEW_HREF}
-                data-testid="hub-empty-create-activity"
-                className="px-3 py-1.5 rounded-xl camp-btn-action text-xs font-semibold inline-flex items-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Créer</span>
-              </Link>
-              <button
-                type="button"
-                data-testid="hub-empty-open-studio"
-                onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
-                className="px-3 py-1.5 rounded-xl camp-card-white border camp-border-subtle camp-text-title text-xs font-semibold inline-flex items-center gap-1"
-              >
-                <Backpack className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Premier kit</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Accordéon des 19 modules canoniques */}
-        <button
-          type="button"
-          className="camp-modules-toggle"
-          onClick={() => setModulesOpen((prev) => !prev)}
-        >
-          <span>{modulesOpen ? 'Masquer les 19 modules' : 'Tous les modules du camp (19)'}</span>
-          {modulesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-        </button>
-
-        {modulesOpen && (
-          <div className="camp-modules-grid">
-            {hubSectionRegistry.map((def) => {
-              const IconComp = def.icon;
-              const badgeCount = def.counter(effectiveCounts);
-              const tileKey = def.segment || 'overview';
-              const isRootSelected = def.segment === '' && !activeDef;
-              const isSelected = isRootSelected || activeDef?.id === def.id;
-
-              return (
-                <button
-                  key={def.id}
-                  type="button"
-                  data-testid={`hub-section-tile-${tileKey}`}
-                  data-section-id={def.id}
-                  aria-current={isSelected ? 'true' : undefined}
-                  onClick={() => handleOpenRegistryEntry(def)}
-                  className="camp-module-pill"
-                >
-                  <div className="camp-module-icon">
-                    <IconComp className="w-4 h-4" aria-hidden="true" />
-                  </div>
-                  <span className="camp-module-name">{def.label}</span>
-                  {badgeCount !== null && (
-                    <span className="camp-module-badge">{badgeCount}</span>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Carte intégrée dans les modules */}
-            <div className="col-span-2 pt-2">
-              <div className="flex items-center justify-between px-1 pb-1">
-                <span className="text-[11px] font-bold camp-text-title flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-[var(--hub-action)]" aria-hidden="true" />
-                  Tracé de l’expédition
-                </span>
-                <span className="text-[10px] camp-text-sub">MapLibre</span>
-              </div>
-              <CampMap routeCoords={effectiveRouteCoords} title={effectiveTitle} />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── 5. Barre de Navigation Native Liquid Glass ── */}
-      <nav className="camp-nav" aria-label="Navigation LKDV">
-        <button
-          type="button"
+          data-testid="hub-camp-floating-pill"
           onClick={() => {
-            const routeDef = hubSectionRegistry.find(
-              (s) => s.id === 'itinerary' || s.segment === 'itineraire'
-            );
-            if (routeDef) handleOpenRegistryEntry(routeDef);
+            const departDef = hubSectionRegistry[3];
+            handleOpenRegistryEntry(departDef);
           }}
-          className="flex flex-col items-center gap-0.5 min-h-[44px]"
+          className="camp-floating-pill"
+          aria-label="Préparer mon départ"
         >
-          <Compass className="w-5 h-5" />
-          <small className="text-[10px]">Earth</small>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => router.push('/compas')}
-          className="flex flex-col items-center gap-0.5 min-h-[44px]"
-        >
-          <MapPin className="w-5 h-5" />
-          <small className="text-[10px]">Compas</small>
-        </button>
-
-        <button
-          type="button"
-          className="active flex flex-col items-center gap-0.5 min-h-[44px]"
-          aria-current="page"
-          onClick={() => {
-            if (activeDef) handleCloseDrawer();
-          }}
-        >
-          <span className="nav-icon-circle w-8 h-8 rounded-full camp-btn-primary grid place-items-center">
-            <Mountain className="w-4 h-4" />
+          <span className="camp-pill-icon-badge">
+            <Flame className="w-3.5 h-3.5" aria-hidden="true" />
           </span>
-          <small className="text-[10px] font-bold text-[var(--hub-primary)]">HUB</small>
-          <span className="nav-dot w-1 h-1 rounded-full bg-[var(--hub-primary)]" />
+          <span className="camp-pill-content">
+            <strong className="camp-pill-title">Préparer mon départ</strong>
+            <span className="camp-pill-separator">•</span>
+            <span className="camp-pill-status">
+              {pendingPrepCount > 0 ? `${pendingPrepCount} à vérifier` : 'Tout est prêt'}
+            </span>
+          </span>
+          <ChevronRight className="w-4 h-4 camp-pill-chevron" aria-hidden="true" />
         </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            const groupDef = hubSectionRegistry.find((s) => s.id === 'groupe');
-            if (groupDef) handleOpenRegistryEntry(groupDef);
-          }}
-          className="flex flex-col items-center gap-0.5 min-h-[44px]"
-        >
-          <Users className="w-5 h-5" />
-          <small className="text-[10px]">Communauté</small>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => router.push('/compte')}
-          className="flex flex-col items-center gap-0.5 min-h-[44px]"
-        >
-          <Package className="w-5 h-5" />
-          <small className="text-[10px]">Compte</small>
-        </button>
-      </nav>
+      </div>
 
       {/* ── 6. Tiroir Actif ── */}
       {activeDef && (

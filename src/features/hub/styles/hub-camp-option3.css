@@ -174,65 +174,62 @@
 .hotspot {
   position: absolute;
   pointer-events: auto;
-  border: 0.5px solid rgba(255, 255, 255, 0.75);
+  border: 0.5px solid rgba(255, 255, 255, 0.82);
   border-radius: 9999px;
-  background: rgba(248, 245, 236, 0.90);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  color: #122F26;
-  padding: 9px 14px;
+  background: rgba(248, 245, 236, 0.94);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  color: #172B24 !important;
+  padding: 6px 12px 6px 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px !important;
+  gap: 6px;
+  font-size: 11px !important;
   font-weight: 700;
-  box-shadow: 0 6px 20px rgba(9, 25, 18, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 16px rgba(9, 25, 18, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s, background 0.2s;
   min-height: 44px;
   min-width: 44px;
+  z-index: 6;
 }
 
 .hotspot:hover,
 .hotspot:active {
-  transform: scale(1.05);
+  transform: translate(-50%, -50%) scale(1.08);
   background: #FAF8F0;
-  box-shadow: 0 10px 28px rgba(9, 25, 18, 0.35);
+  box-shadow: 0 10px 24px rgba(9, 25, 18, 0.35);
+  z-index: 12;
 }
 
 .hotspot-icon {
   width: 22px;
   height: 22px;
+  border-radius: 50%;
+  background: rgba(45, 122, 88, 0.12);
   display: grid;
   place-items: center;
-  color: #174E37;
+  color: #1E6B4C;
+  flex-shrink: 0;
 }
 
-/* Positions absolues calibrées sur Option 3 */
-.hotspot-bag {
-  left: 29%;
-  top: 49%;
-  background: rgba(248, 245, 236, 0.95);
-  border-color: rgba(45, 122, 88, 0.6);
+.hotspot-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #172B24;
+  letter-spacing: -0.2px;
 }
 
-.hotspot-bag .hotspot-icon {
-  color: #2D7A58;
-}
-
-.hotspot-route {
-  right: 6%;
-  top: 34%;
-}
-
-.hotspot-tents {
-  right: 7%;
-  top: 24%;
-}
-
-.hotspot-fire {
-  left: 5%;
-  top: 40%;
+.hotspot-badge {
+  font-size: 9.5px;
+  font-weight: 750;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  background: #174E37;
+  color: #FAF8F0;
+  line-height: 1.2;
 }
 
 .scene-reset {
@@ -254,176 +251,84 @@
   box-shadow: 0 4px 14px rgba(11, 31, 23, 0.2);
 }
 
-/* ── 4. Panneau Bas Liquid Glass (Volet coulissant) ── */
-.camp-bottom-card {
+/* ── 4. Pilule Légère Flottante au-dessus de la BottomBar (Option 3 épurée) ── */
+.camp-floating-pill-container {
   position: absolute;
-  z-index: 15;
   left: 0;
   right: 0;
-  bottom: 0;
-  background: rgba(247, 243, 233, 0.96);
-  backdrop-filter: blur(28px) saturate(130%);
-  -webkit-backdrop-filter: blur(28px) saturate(130%);
-  border: 0.5px solid rgba(255, 255, 255, 0.65);
-  border-bottom: 0;
-  border-radius: 32px 32px 0 0;
-  box-shadow: 0 -8px 36px rgba(11, 31, 23, 0.22);
-  padding: 8px 18px;
-  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   display: flex;
-  flex-direction: column;
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-  max-height: 82dvh;
-  color: #172B24 !important;
-}
-
-.camp-bottom-card h2 {
-  color: #172B24 !important;
-  font-size: 19px !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.4px !important;
-  line-height: 1.2 !important;
-  margin: 0 !important;
-}
-
-.camp-bottom-card p {
-  color: #56665D !important;
-  font-size: 12px !important;
-  margin-top: 2px !important;
-}
-
-.camp-panel-grip {
-  height: 20px;
-  width: 100%;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 4px;
-}
-
-.camp-panel-grip span {
-  height: 4.5px;
-  width: 40px;
-  background: #A6AFA6;
-  border-radius: 9999px;
-}
-
-.camp-summary-row {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 6px 0 10px;
+  padding: 0 16px;
+  pointer-events: none;
+  z-index: 25;
 }
 
-.camp-summary-copy h3 {
-  font-size: 16px;
-  font-weight: 750;
-  letter-spacing: -0.3px;
-  margin: 0;
-  color: #122F26;
-  line-height: 1.25;
-}
-
-.camp-summary-copy p {
-  font-size: 12px;
-  color: #586960;
-  margin: 2px 0 0;
-  line-height: 1.35;
-}
-
-.camp-summary-badge {
-  padding: 6px 12px;
-  border-radius: 9999px;
-  background: rgba(45, 122, 88, 0.12);
-  color: #1C5A3E;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-/* ── 5. Grille Accordéon des Modules (Tirable ou repliable) ── */
-.camp-modules-toggle {
-  display: flex;
+.camp-floating-pill {
+  pointer-events: auto;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 10px 4px 6px;
-  border: 0;
-  border-top: 1px solid rgba(18, 47, 38, 0.08);
-  background: none;
-  font-size: 11.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #4A5E53;
-  cursor: pointer;
-}
-
-.camp-modules-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-  padding: 8px 0 12px;
-  max-height: 42dvh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.camp-module-pill {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 0.5px solid rgba(18, 47, 38, 0.1);
-  border-radius: 18px;
-  text-align: left;
-  color: #122F26;
+  padding: 8px 18px;
+  min-height: 44px;
+  border-radius: 9999px;
+  background: rgba(248, 245, 236, 0.94);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(45, 122, 88, 0.28);
+  box-shadow: 0 8px 24px rgba(9, 25, 18, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  color: #172B24;
   cursor: pointer;
-  transition: transform 0.12s, background 0.12s;
-  min-height: 48px;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s;
 }
 
-.camp-module-pill:active {
-  transform: scale(0.97);
-  background: #FFFFFF;
+.camp-floating-pill:hover,
+.camp-floating-pill:active {
+  transform: translateY(-2px) scale(1.02);
+  background: #FAF8F0;
+  box-shadow: 0 12px 28px rgba(9, 25, 18, 0.32);
 }
 
-.camp-module-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  background: rgba(45, 122, 88, 0.1);
-  color: #2D7A58;
+.camp-pill-icon-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(45, 122, 88, 0.14);
   display: grid;
   place-items: center;
-  flex-shrink: 0;
+  color: #1E6B4C;
 }
 
-.camp-module-name {
-  font-size: 12.5px;
-  font-weight: 650;
-  line-height: 1.2;
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.camp-pill-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.camp-module-badge {
-  font-size: 10px;
+.camp-pill-title {
+  font-size: 13px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 9999px;
-  background: rgba(18, 47, 38, 0.08);
-  color: #3B5246;
+  color: #172B24;
+  letter-spacing: -0.2px;
 }
+
+.camp-pill-separator {
+  color: #8C9990;
+  font-size: 10px;
+}
+
+.camp-pill-status {
+  font-size: 12px;
+  color: #56665D;
+  font-weight: 600;
+}
+
+.camp-pill-chevron {
+  color: #56665D;
+}
+
+
 
 /* ── Classes utilitaires Option 3 conformes H-D85 ── */
 .camp-chip-success {
@@ -480,7 +385,7 @@
 }
 
 /* Encre forest sombre garantie sur toutes les surfaces claires & cartes */
-.camp-bottom-card,
+.camp-floating-pill,
 .hub-camp-drawer-sheet,
 .camp-card-white,
 .camp-card-cream {
