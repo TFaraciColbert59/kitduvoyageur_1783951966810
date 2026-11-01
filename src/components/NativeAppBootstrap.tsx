@@ -10,7 +10,6 @@ import {
   statusBarThemeForPath,
   setupNativeAppListeners,
 } from "@/lib/native";
-import { purgeExpiredCache } from "@/lib/storage/cacheDB";
 import { supportsNativeIOSUI, syncNativeUIRoute } from "@/lib/native/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCriticalCacheReady } from "@/components/ReactQueryProvider";
@@ -42,8 +41,11 @@ export default function NativeAppBootstrap() {
     if (paintedRef.current && revealReadyRef.current) dismissSplash();
   }, [dismissSplash]);
 
+  // Dexie (cacheDB) est chargé à la demande : il sort du JS initial de la mise en page racine.
   useEffect(() => {
-    purgeExpiredCache().catch(() => {});
+    import("@/lib/storage/cacheDB")
+      .then(({ purgeExpiredCache }) => purgeExpiredCache())
+      .catch(() => {});
   }, []);
 
   // Auth and IndexedDB may resolve after the first paint. Keep the native

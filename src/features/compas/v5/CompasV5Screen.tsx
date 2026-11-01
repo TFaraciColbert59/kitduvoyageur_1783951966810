@@ -12,7 +12,6 @@ import { useCompasController } from '../components/useCompasController';
 import type { StepFlow } from '../components/compasTypes';
 import { V5Context, type V5Api } from './context';
 import { Island } from './Island';
-import { LegacyHost } from './LegacyHost';
 import { selectDays } from './model/trip';
 import { compasV5ExtrasAction } from './server/extrasAction';
 import { TopBar } from './TopBar';
@@ -20,6 +19,11 @@ import { TripCard, ViewSwitch } from './TripCard';
 import { EMPTY_EXTRAS, type V5Extras, type V5Space, type V5StayOption } from './types';
 import { V5Sheet } from './V5Sheet';
 import './v5.css';
+
+// Tiroirs classiques (CompasSheets, lourds) : chargés à part, rendus seulement quand un tiroir est ouvert.
+// Préchargés au repos (voir l'effet dans CompasV5Screen) pour que la première ouverture n'attende pas le réseau.
+const loadLegacyHost = () => import('./LegacyHost').then((m) => m.LegacyHost);
+const LegacyHost = dynamic(loadLegacyHost, { ssr: false });
 
 const LiveMap = dynamic(() => import('./map/LiveMap').then((m) => m.LiveMap), {
   ssr: false,
@@ -56,6 +60,17 @@ export function CompasV5Screen({ data: rawData, initialStep }: { data: CompasDat
   const c = useCompasController(rawData, { onOpen: () => setMapBig(false) });
   const { data, model, t, locale, ctl, stack, setStack, toast, setToast, prep, setPrep } = c;
   const canEdit = data.canEdit;
+
+  /* ---- Précharge les tiroirs classiques au repos : la première ouverture n'attend pas le réseau ---- */
+  useEffect(() => {
+    const preload = () => void loadLegacyHost().catch(() => undefined);
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(preload, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(preload, 1500);
+    return () => window.clearTimeout(id);
+  }, []);
 
   const days = useMemo(() => selectDays(data, locale), [data, locale]);
   const people = Math.max(1, model.crew.size);
