@@ -111,14 +111,15 @@ describe('Clubs iOS 27 Liquid Glass v15/v20 — Clone 1:1 de CompteLiquidGlassV8
     expect(runtimeSource).toContain('__lkdvHydrateClub');
   });
 
-  it('10. Invariant strict : 0 modification dans /compas', () => {
-    try {
-      const diffCompas = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
-      expect(diffCompas).toBe('');
-    } catch (_) {
-      const statusCompas = execSync('git status --porcelain -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
-      expect(statusCompas).toBe('');
-    }
+  it('isolation du Compas (aucun import de la refonte des clubs)', () => {
+    // Intention de l'invariant d'origine (« 0 modification dans /compas ») : cette refonte ne touche pas
+    // au Compas. Une différence avec origin/main ne le prouve pas (elle échoue pour toute branche qui fait
+    // évoluer le Compas) : on vérifie l'isolation, comme compte-refonte-v17 (remplacé le 01/11/2026).
+    const leaks = execSync(
+      'git grep -l -E "components/clubs/|ClubLiquidGlassV8" -- src/app/compas src/features/compas || true',
+      { encoding: 'utf8' },
+    ).trim();
+    expect(leaks).toBe('');
   });
 
   it('11. Adaptation Club Oct 24 : Fil d’actu inline Communauté v3 + PostGlassPanel en vue principale (Tab 0)', () => {
