@@ -45,6 +45,13 @@
   padding: 0 0 16px;
 }
 
+/* Valeur que l'alignement de CommunityFeedShell calcule (même vide au-dessus qu'au-dessous, soit le
+   padding-bottom) : posée d'emblée, le premier affichage est déjà le bon et le script ne corrige plus
+   que les cas atypiques (avant : décalage de 16 px après l'hydratation, CLS 0,017). */
+.lkdv-feed-stories--aligned {
+  margin-top: 16px;
+}
+
 .lkdv-feed-main {
   padding-top: 0;
 }

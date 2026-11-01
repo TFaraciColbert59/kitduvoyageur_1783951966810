@@ -142,7 +142,7 @@ for (const surface of SURFACES) {
       await page.goto(`${base}${surface}`, { waitUntil: 'domcontentloaded', timeout: 90_000 });
       // Certaines surfaces gardent des connexions ouvertes : `load` plafonné, jamais bloquant.
       await page.waitForLoadState('load', { timeout: 20_000 }).catch(() => undefined);
-      await page.waitForTimeout(THROTTLE ? 4000 : 2000);
+      await page.waitForTimeout(THROTTLE ? 8000 : 2000);
     } catch (e) {
       error = String(e).slice(0, 200);
     }
