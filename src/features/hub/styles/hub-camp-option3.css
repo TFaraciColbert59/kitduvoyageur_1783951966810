@@ -929,8 +929,64 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 }
 
 /* 8. Voile inférieur des tiroirs du Studio */
-nav[aria-label="Tiroirs de l’atelier Kit Studio"] {
+nav[aria-label="Tiroirs de l’atelier Kit Studio"],
+nav[aria-label="Sélection des éléments à personnaliser"] {
   background: linear-gradient(180deg, transparent, rgba(10, 20, 14, 0.14)) !important;
+}
+
+/* 9. Cartes slide studio & micro-animations iOS 27 */
+.studio-slide-card {
+  will-change: transform, box-shadow;
+  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.24s ease, border-color 0.24s ease !important;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.studio-slide-card:active {
+  transform: scale(0.96) !important;
+}
+
+/* Fluidification du défilement horizontal sans barre de scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Mini-sélecteur de couleur en bas à droite (.lkdv-drawer-secondary .ig-tabs) */
+.hub-camp-drawer-sheet .lkdv-drawer-secondary {
+  position: absolute !important;
+  right: 14px !important;
+  bottom: 18px !important;
+  z-index: 50 !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-secondary .ig-tabs {
+  display: flex !important;
+  align-items: center !important;
+  height: 38px !important;
+  padding: 3px 4px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 4px 16px rgba(10, 20, 14, 0.12), inset 0 1px 0 #fff !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-secondary .ig-tabs button {
+  min-width: 32px !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

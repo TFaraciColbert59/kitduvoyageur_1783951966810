@@ -666,7 +666,7 @@ export function KitStudioView({
     return map;
   }, [bootstrap?.badges]);
 
-  const effectiveListMode = viewMode === 'list' || degradedReason !== null;
+  const effectiveListMode = viewMode === 'list';
 
   const drawerButtons: Array<{
     id: StudioDrawer;
