@@ -53,6 +53,7 @@ import {
 import { CampMap } from './CampMap';
 import { HubResumeBanner } from './HubResumeBanner';
 import { KitStudioView } from '@/features/kit-studio/components/KitStudioView';
+import { HubItineraryDrawer, HubGroupeDrawer, HubDepartDrawer } from './drawers';
 import {
   DocsMobileExperience,
   ItineraryMobileExperience,
@@ -565,277 +566,34 @@ export function HubCampShell({
       const sectionCount = def.counter(effectiveCounts);
 
       if (def.id === 'itinerary') {
-        if (trip) {
-          return (
-            <div className="p-3 space-y-3">
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  data-testid="hub-open-subdrawer"
-                  onClick={() => handleOpenSubDrawer('actions')}
-                  className="min-h-[44px] px-3 rounded-xl bg-[var(--hub-surface)] border border-[var(--hub-border)] text-xs font-semibold text-[var(--hub-text-primary)]"
-                >
-                  Options d’itinéraire
-                </button>
-              </div>
-              <ItineraryMobileExperience trip={trip} initialSteps={trip.steps || []} />
-            </div>
-          );
-        }
-
-        // Option 3 — Vue Itinéraire alpine complète
-        const currentDay = OPTION3_DAYS[selectedDay] ?? OPTION3_DAYS[0];
         return (
-          <div className="p-4 space-y-4">
-            {/* Sélecteur de journées en pilules */}
-            <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Journées">
-              {OPTION3_DAYS.map((d, i) => (
-                <button
-                  key={d.title}
-                  type="button"
-                  role="tab"
-                  aria-selected={selectedDay === i}
-                  onClick={() => setSelectedDay(i)}
-                  className={`min-h-[44px] px-4 rounded-2xl text-xs font-bold transition-all shrink-0 ${
-                    selectedDay === i
-                      ? 'camp-btn-action shadow-md'
-                      : 'camp-card-white camp-text-title'
-                  }`}
-                >
-                  Jour {i + 1}
-                </button>
-              ))}
-            </div>
-
-            {/* Carte de la journée active */}
-            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
-              <div>
-                <span className="text-[11px] font-bold tracking-wider uppercase text-[var(--hub-action)]">
-                  JOUR {selectedDay + 1}
-                </span>
-                <h3 className="text-base font-bold camp-text-title leading-tight">
-                  {currentDay.title}
-                </h3>
-                <p className="text-xs camp-text-sub mt-0.5">{currentDay.place}</p>
-              </div>
-
-              {/* Stats clés */}
-              <div className="grid grid-cols-3 gap-2 py-1">
-                <div className="p-2.5 rounded-xl camp-card-cream text-center">
-                  <span className="text-[10px] font-bold uppercase camp-text-sub block">Distance</span>
-                  <strong className="text-xs font-extrabold camp-text-title">{currentDay.distance}</strong>
-                </div>
-                <div className="p-2.5 rounded-xl camp-card-cream text-center">
-                  <span className="text-[10px] font-bold uppercase camp-text-sub block">Durée</span>
-                  <strong className="text-xs font-extrabold camp-text-title">{currentDay.time}</strong>
-                </div>
-                <div className="p-2.5 rounded-xl camp-card-cream text-center">
-                  <span className="text-[10px] font-bold uppercase camp-text-sub block">Dénivelé</span>
-                  <strong className="text-xs font-extrabold text-[var(--hub-action)]">{currentDay.up}</strong>
-                </div>
-              </div>
-
-              {/* Étapes du parcours */}
-              <div className="space-y-2 pt-1 border-t camp-border-subtle">
-                <span className="text-xs font-bold camp-text-title block">Étapes de la traversée :</span>
-                {currentDay.steps.map((st, idx) => (
-                  <div key={st} className="flex items-center gap-3 text-xs camp-text-title">
-                    <span className="w-5 h-5 rounded-full camp-badge-forest text-[11px] font-bold grid place-items-center shrink-0">
-                      {idx + 1}
-                    </span>
-                    <span className="font-medium">{st}</span>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const prepDef = hubSectionRegistry.find(
-                    (s) => s.id === 'depart' || s.id === 'preparation'
-                  );
-                  if (prepDef) handleOpenRegistryEntry(prepDef);
-                }}
-                className="w-full min-h-[44px] rounded-2xl camp-btn-action text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-98 transition-transform"
-              >
-                <span>Préparer cette journée</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Carte intégrée */}
-            <div className="rounded-3xl overflow-hidden border camp-border-subtle">
-              <CampMap routeCoords={effectiveRouteCoords} title={effectiveTitle} />
-            </div>
-          </div>
+          <HubItineraryDrawer
+            trip={trip}
+            effectiveRouteCoords={effectiveRouteCoords}
+            effectiveTitle={effectiveTitle}
+            onOpenDepart={() => {
+              const prepDef = hubSectionRegistry.find(
+                (s) => s.id === 'depart' || s.id === 'preparation'
+              );
+              if (prepDef) handleOpenRegistryEntry(prepDef);
+            }}
+          />
         );
       }
 
       if (def.id === 'groupe') {
-        if (trip) {
-          return (
-            <div className="p-3 space-y-3">
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  data-testid="hub-open-subdrawer"
-                  onClick={() => handleOpenSubDrawer('actions')}
-                  className="min-h-[44px] px-3 rounded-xl bg-[var(--hub-surface)] border border-[var(--hub-border)] text-xs font-semibold text-[var(--hub-text-primary)]"
-                >
-                  Options de groupe
-                </button>
-              </div>
-              <TeamMobileExperience trip={trip} />
-            </div>
-          );
-        }
-
-        // Option 3 — Vue Équipage & Matériel Partagé complète
-        const member = OPTION3_MEMBERS[selectedMember] ?? OPTION3_MEMBERS[0];
         return (
-          <div className="p-4 space-y-4">
-            {/* Rail des membres */}
-            <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Membres de l’expédition">
-              {OPTION3_MEMBERS.map((m, i) => (
-                <button
-                  key={m.name}
-                  type="button"
-                  role="tab"
-                  aria-selected={selectedMember === i}
-                  onClick={() => setSelectedMember(i)}
-                  className={`min-h-[44px] px-3.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
-                    selectedMember === i
-                      ? 'camp-btn-action shadow-md'
-                      : 'camp-card-white camp-text-title'
-                  }`}
-                >
-                  <span className="w-6 h-6 rounded-full bg-white/20 grid place-items-center text-[10px]">
-                    {m.initials}
-                  </span>
-                  <span>{m.name}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-bold camp-text-title">
-                    {selectedMember === 0 ? 'Mon sac personnel' : `Le sac de ${member.name}`}
-                  </h3>
-                  <p className="text-xs camp-text-sub">{member.role}</p>
-                </div>
-                <span className="px-3 py-1 rounded-full camp-badge-forest text-xs font-extrabold">
-                  {member.weight}
-                </span>
-              </div>
-
-              <div className="space-y-2 pt-2 border-t camp-border-subtle">
-                <span className="text-xs font-bold camp-text-title block">Équipements attribués :</span>
-                {member.items.map((it, idx) => (
-                  <div key={it} className="flex items-center justify-between p-2.5 rounded-xl camp-card-cream text-xs">
-                    <span className="font-semibold camp-text-title flex items-center gap-2">
-                      <Package className="w-3.5 h-3.5 text-[var(--hub-action)]" />
-                      {it}
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full camp-card-white camp-text-sub">
-                      {idx === 1 ? 'Partagé' : 'Personnel'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {selectedMember === 0 ? (
-                <button
-                  type="button"
-                  onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
-                  className="w-full min-h-[44px] rounded-2xl camp-btn-action text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-98 transition-transform"
-                >
-                  <Backpack className="w-4 h-4" />
-                  <span>Modifier dans le Kit Studio</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
-                  className="w-full min-h-[44px] rounded-2xl camp-btn-outline text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-98 transition-transform"
-                >
-                  <Users className="w-4 h-4" />
-                  <span>Consulter en 3D dans le Kit Studio</span>
-                </button>
-              )}
-            </div>
-          </div>
+          <HubGroupeDrawer
+            onEnterStudio={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
+          />
         );
       }
 
       if (def.id === 'depart' || def.id === 'preparation') {
-        const readyCount = prepItems.filter((i) => i.ready).length;
-        const readyPercent = Math.round((readyCount / prepItems.length) * 100);
-
         return (
-          <div className="p-4 space-y-4">
-            <div className="p-4 rounded-3xl camp-card-white shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-bold camp-text-title">Vérifications avant le départ</h3>
-                  <p className="text-xs camp-text-sub">Sécurité, hydratation et pesée finale</p>
-                </div>
-                <span
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                    readyPercent === 100 ? 'camp-chip-success' : 'camp-chip-warning'
-                  }`}
-                >
-                  {readyPercent === 100 ? 'Tout est prêt !' : `Prêt à ${readyPercent}%`}
-                </span>
-              </div>
-
-              <div className="space-y-2 pt-2 border-t camp-border-subtle">
-                {prepItems.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => togglePrepItem(item.id)}
-                    className="w-full flex items-center justify-between p-3 rounded-2xl camp-card-cream border camp-border-subtle min-h-[50px] text-left transition-transform active:scale-98"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className={`w-6 h-6 rounded-full text-xs font-bold grid place-items-center ${
-                          item.ready ? 'camp-chip-success' : 'camp-chip-warning'
-                        }`}
-                      >
-                        {item.ready ? (
-                          <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                        ) : (
-                          '!'
-                        )}
-                      </span>
-                      <div>
-                        <strong className="text-xs camp-text-title block">{item.name}</strong>
-                        <small className="text-[11px] camp-text-sub">{item.detail}</small>
-                      </div>
-                    </div>
-                    <span
-                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
-                        item.ready ? 'camp-chip-success' : 'camp-chip-warning'
-                      }`}
-                    >
-                      {item.ready ? 'Prêt' : item.id === 'water' ? 'À remplir' : 'À vérifier'}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
-                className="w-full min-h-[44px] rounded-2xl camp-btn-action text-xs font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-98 transition-transform"
-              >
-                <Backpack className="w-4 h-4" />
-                <span>Ouvrir Kit Studio 3D</span>
-              </button>
-            </div>
-          </div>
+          <HubDepartDrawer
+            onEnterStudio={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
+          />
         );
       }
 
@@ -1926,16 +1684,7 @@ export function HubCampShell({
 
             <div
               ref={drawerScrollRef}
-              onScroll={(e) => {
-                if (activeDef.segment) {
-                  machineRef.current?.saveScrollPosition(
-                    activeDef.segment,
-                    e.currentTarget.scrollTop
-                  );
-                }
-              }}
-              className="flex-1 overflow-y-auto"
-              style={{ WebkitOverflowScrolling: 'touch' }}
+              className="flex-1 min-h-0 flex flex-col overflow-hidden"
             >
               {renderDrawerBody(activeDef)}
             </div>

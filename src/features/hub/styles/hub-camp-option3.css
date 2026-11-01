@@ -676,6 +676,42 @@
   transform: scale(0.95);
 }
 
+/* ── 7. Interdiction stricte du scroll vertical sur les tiroirs du Hub ── */
+.hub-camp-drawer-sheet {
+  height: min(78dvh, 660px) !important;
+  max-height: min(78dvh, 660px) !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell {
+  height: 100% !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 0 14px 14px !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-viewport {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-pane {
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  height: 100% !important;
+  padding: 0 !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary {
+  position: absolute !important;
+  right: 14px !important;
+  bottom: 12px !important;
+  z-index: 15 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hub-camp-drawer-sheet {
     animation: none !important;
