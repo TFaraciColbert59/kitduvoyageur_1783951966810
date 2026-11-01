@@ -147,44 +147,22 @@ export function OptionsDrawer({
         </div>
       )}
 
-      {/* 1. Bascule 3D / Liste persistante (D-16) */}
+      {/* 1. Rendu 3D immersif permanent */}
       <section className="p-4 rounded-2xl bg-[var(--hub-surface-card)] border border-[var(--hub-border)] space-y-2.5">
         <div className="text-xs font-bold uppercase tracking-wider text-[var(--hub-text-muted)]">
           Mode de représentation de l’atelier
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
+        <div className="flex items-center gap-2">
+          <div
             data-testid="options-view-mode-3d"
-            aria-pressed={viewMode === '3d'}
-            onClick={() => handleToggleViewMode('3d')}
-            className={`min-h-[44px] px-3 rounded-xl border text-xs font-semibold inline-flex items-center justify-center gap-1.5 ${
-              viewMode === '3d'
-                ? 'bg-[var(--hub-primary)] border-[var(--hub-primary)] text-[var(--hub-text-inverted)]'
-                : 'bg-[var(--hub-surface)] border-[var(--hub-border)] text-[var(--hub-text-primary)]'
-            }`}
+            className="flex-1 min-h-[44px] px-3.5 rounded-xl border border-[var(--hub-primary)] bg-[var(--hub-primary)] text-[var(--hub-text-inverted)] text-xs font-semibold inline-flex items-center justify-center gap-2"
           >
             <Eye className="w-4 h-4" aria-hidden="true" />
-            <span>Scène 3D</span>
-          </button>
-
-          <button
-            type="button"
-            data-testid="options-view-mode-list"
-            aria-pressed={viewMode === 'list'}
-            onClick={() => handleToggleViewMode('list')}
-            className={`min-h-[44px] px-3 rounded-xl border text-xs font-semibold inline-flex items-center justify-center gap-1.5 ${
-              viewMode === 'list'
-                ? 'bg-[var(--hub-primary)] border-[var(--hub-primary)] text-[var(--hub-text-inverted)]'
-                : 'bg-[var(--hub-surface)] border-[var(--hub-border)] text-[var(--hub-text-primary)]'
-            }`}
-          >
-            <List className="w-4 h-4" aria-hidden="true" />
-            <span>Mode Liste</span>
-          </button>
+            <span>Scène 3D Interactive</span>
+          </div>
         </div>
         <p className="text-xs text-[var(--hub-text-secondary)]">
-          Le mode Liste offre 100 % des commandes d’inventaire, de pesée et de personnalisation sans solliciter le processeur graphique.
+          L’atelier fonctionne exclusivement en rendu 3D interactif temps réel.
         </p>
       </section>
 

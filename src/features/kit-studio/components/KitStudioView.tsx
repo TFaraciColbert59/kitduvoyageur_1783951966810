@@ -771,33 +771,6 @@ export function KitStudioView({
             </div>
           </div>
         </div>
-
-        {/* Sélecteur direct 3D / Liste (cible >= 44px, persistant D-16) */}
-        <button
-          type="button"
-          data-testid="studio-quick-mode-toggle"
-          onClick={() =>
-            handleChangeViewMode(effectiveListMode ? '3d' : 'list')
-          }
-          aria-label={
-            effectiveListMode
-              ? 'Passer en scène 3D interactive'
-              : 'Passer en mode Liste'
-          }
-          className="min-h-[44px] px-3.5 rounded-full bg-[var(--hub-surface)] border border-[var(--hub-border)] text-xs font-semibold text-[var(--hub-primary)] inline-flex items-center gap-1.5 shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
-        >
-          {effectiveListMode ? (
-            <>
-              <Eye className="w-4 h-4" aria-hidden="true" />
-              <span>3D</span>
-            </>
-          ) : (
-            <>
-              <List className="w-4 h-4" aria-hidden="true" />
-              <span>Liste</span>
-            </>
-          )}
-        </button>
       </header>
 
       {/* Bandeau lecture seule explicite lors de l'inspection d'un coéquipier (E-02, E-07) */}
@@ -880,65 +853,28 @@ export function KitStudioView({
         )}
 
         {loadState === 'ready' && (
-          <>
-            {effectiveListMode ? (
-              <BagListView
-                config={displayedConfig}
-                totals={displayedTotals}
-                degradedReason={degradedReason}
-                readOnly={isReadOnlyPeer}
-                ownerLabel={inspectedMember?.memberName ?? null}
-                onToggleChecked={
-                  isReadOnlyPeer
-                    ? undefined
-                    : (id, checked) => void studio.toggleItemChecked(id, checked)
-                }
-                onUpdateQuantity={
-                  isReadOnlyPeer
-                    ? undefined
-                    : (id, qty) => void studio.updateItemQuantity(id, qty)
-                }
-                onMoveItem={
-                  isReadOnlyPeer
-                    ? undefined
-                    : (id, slot) => void studio.moveItem(id, slot)
-                }
-                onRemoveItem={
-                  isReadOnlyPeer
-                    ? undefined
-                    : (id) => void studio.removeItem(id)
-                }
-                onOpenDrawer={
-                  isReadOnlyPeer
-                    ? undefined
-                    : (d) => onSelectDrawer(d)
-                }
-              />
-            ) : (
-              <BagScene
-                config={displayedConfig}
-                focusedPartId={focusedPartId}
-                activeDrawerOpen={Boolean(activeDrawer)}
-                isCoveredByOpaqueSheet={false}
-                isUiGestureActive={() => drawerDragActiveRef.current}
-                badgeCatalog={badgeCatalogMap}
-                readOnly={isReadOnlyPeer}
-                onSelectPart={
-                  isReadOnlyPeer
-                    ? undefined
-                    : (partId) => {
-                        const targetPart =
-                          partId === 'shoulder-strap-r' ? 'shoulder-strap-l' : partId;
-                        setFocusedPartId(targetPart);
-                        onSelectDrawer('personnaliser');
-                      }
-                }
-                onManifestLoaded={handleManifestLoaded}
-                onDegraded={(reason) => setDegradedReason(reason)}
-                externalIntent={externalIntent}
-              />
-            )}
-          </>
+          <BagScene
+            config={displayedConfig}
+            focusedPartId={focusedPartId}
+            activeDrawerOpen={Boolean(activeDrawer)}
+            isCoveredByOpaqueSheet={false}
+            isUiGestureActive={() => drawerDragActiveRef.current}
+            badgeCatalog={badgeCatalogMap}
+            readOnly={isReadOnlyPeer}
+            onSelectPart={
+              isReadOnlyPeer
+                ? undefined
+                : (partId) => {
+                    const targetPart =
+                      partId === 'shoulder-strap-r' ? 'shoulder-strap-l' : partId;
+                    setFocusedPartId(targetPart);
+                    onSelectDrawer('personnaliser');
+                  }
+            }
+            onManifestLoaded={handleManifestLoaded}
+            onDegraded={(reason) => setDegradedReason(reason)}
+            externalIntent={externalIntent}
+          />
         )}
       </main>
 
@@ -1011,12 +947,12 @@ export function KitStudioView({
             onPointerCancel={() => {
               drawerDragActiveRef.current = false;
             }}
-            className="hub-camp-drawer-sheet h-[56dvh] max-h-[56dvh] flex flex-col"
+            className="hub-camp-drawer-sheet h-[40dvh] max-h-[40dvh] flex flex-col"
             style={{
-              paddingBottom: 'max(14px, env(safe-area-inset-bottom, 0px))',
+              paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
             }}
           >
-            <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-[var(--hub-border-subtle)] shrink-0">
+            <div className="px-4 py-1.5 flex items-center justify-between border-b border-[var(--hub-border-subtle)] shrink-0">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--hub-primary)]">
                 {activeDrawer === 'personnaliser' && focusedPartId
                   ? `Personnaliser — ${STUDIO_CUSTOM_PARTS.find((p) => p.id === focusedPartId)?.label ?? focusedPartId}`

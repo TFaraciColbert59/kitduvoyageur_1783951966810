@@ -929,7 +929,7 @@ export function HubCampShell({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="hub-camp-drawer-sheet w-full max-h-[90dvh] flex flex-col"
+            className="hub-camp-drawer-sheet w-full max-h-[40dvh] h-[40dvh] flex flex-col"
             style={{
               paddingBottom:
                 'calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--keyboard-inset, 0px))',

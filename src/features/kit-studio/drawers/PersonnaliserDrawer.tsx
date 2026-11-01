@@ -86,7 +86,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
 
   if (partId === 'body') {
     return (
-      <svg viewBox="0 0 100 120" className="w-20 h-24 drop-shadow-md transition-all duration-300" aria-hidden="true">
+      <svg viewBox="0 0 100 120" className="w-11 h-12 drop-shadow-md transition-all duration-300" aria-hidden="true">
         <defs>
           <linearGradient id="vis-body-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={activeColor} stopOpacity="1" />
@@ -107,7 +107,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
 
   if (partId === 'lid') {
     return (
-      <svg viewBox="0 0 100 80" className="w-20 h-16 drop-shadow-md transition-all duration-300" aria-hidden="true">
+      <svg viewBox="0 0 100 80" className="w-11 h-9 drop-shadow-md transition-all duration-300" aria-hidden="true">
         <defs>
           <linearGradient id="vis-lid-grad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor={activeColor} stopOpacity="1" />
@@ -127,7 +127,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
 
   if (partId === 'front-pocket') {
     return (
-      <svg viewBox="0 0 90 90" className="w-18 h-18 drop-shadow-md transition-all duration-300" aria-hidden="true">
+      <svg viewBox="0 0 90 90" className="w-10 h-10 drop-shadow-md transition-all duration-300" aria-hidden="true">
         <defs>
           <linearGradient id="vis-pocket-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={activeColor} />
@@ -143,7 +143,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
 
   if (partId === 'shoulder-strap-l' || partId === 'shoulder-strap-r' || partId === 'straps') {
     return (
-      <svg viewBox="0 0 80 100" className="w-16 h-20 drop-shadow-md transition-all duration-300" aria-hidden="true">
+      <svg viewBox="0 0 80 100" className="w-9 h-11 drop-shadow-md transition-all duration-300" aria-hidden="true">
         <defs>
           <linearGradient id="vis-strap-grad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
@@ -160,7 +160,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
 
   if (partId === 'hip-belt') {
     return (
-      <svg viewBox="0 0 100 60" className="w-20 h-12 drop-shadow-md transition-all duration-300" aria-hidden="true">
+      <svg viewBox="0 0 100 60" className="w-12 h-8 drop-shadow-md transition-all duration-300" aria-hidden="true">
         <defs>
           <linearGradient id="vis-belt-grad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#09140e" />
@@ -175,7 +175,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
   }
 
   return (
-    <svg viewBox="0 0 70 70" className="w-14 h-14 drop-shadow-md transition-all duration-300" aria-hidden="true">
+    <svg viewBox="0 0 70 70" className="w-8 h-8 drop-shadow-md transition-all duration-300" aria-hidden="true">
       <defs>
         <linearGradient id="vis-buckle-grad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#d8e8dc" />
@@ -274,9 +274,9 @@ export function PersonnaliserDrawer({
     }
 
     return (
-      <div data-testid="studio-personnaliser-pane" className="flex flex-col justify-between h-full pb-4">
+      <div data-testid="studio-personnaliser-pane" className="flex flex-col justify-start h-full">
         {/* Slide card horizontal des pièces sélectionnables avec aperçu 3D volumétrique */}
-        <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory py-2 px-1">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1 px-1">
           {customizableParts.map((partId) => {
             const isSelected = partId === activePart;
             const isCustomized = Boolean(config.bag.parts[partId]);
@@ -288,26 +288,34 @@ export function PersonnaliserDrawer({
                 data-testid={`personnaliser-part-btn-${partId}`}
                 aria-pressed={isSelected}
                 onClick={() => handleChoosePart(partId)}
-                className={`min-w-[130px] w-[130px] h-[165px] shrink-0 snap-center rounded-3xl border flex flex-col items-center justify-between p-3.5 transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
+                className={`min-w-[95px] w-[95px] h-[98px] shrink-0 snap-center rounded-3xl border flex flex-col items-center justify-between p-2 transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
                   isSelected
-                    ? 'bg-[var(--hub-primary-subtle)] border-2 border-[var(--hub-primary)] shadow-md scale-[1.02]'
+                    ? 'is-selected'
                     : 'bg-[var(--hub-surface-card)] border-[var(--hub-border)] hover:border-[var(--hub-border-strong)]'
                 }`}
               >
                 {/* Rendu 3D stylisé de l'élément sélectionnable */}
-                <div className="w-full flex-1 flex items-center justify-center py-1">
+                <div className="w-full flex-1 flex items-center justify-center py-0.5">
                   <PartVisual3D partId={partId} color={partColor} />
                 </div>
 
-                {/* Nom épuré de la pièce */}
-                <div className="w-full flex items-center justify-center gap-1.5 pt-1">
-                  <span className="text-xs font-bold text-[var(--hub-text-primary)] truncate text-center">
+                {/* Nom épuré de la pièce — fond verre et texte blanc quand sélectionné */}
+                <div className="w-full flex items-center justify-center gap-1 pt-0.5">
+                  <span
+                    className={`text-[11px] truncate text-center transition-colors duration-300 ${
+                      isSelected
+                        ? 'text-white font-bold'
+                        : 'text-[var(--hub-text-primary)] font-medium'
+                    }`}
+                  >
                     {getPartLabel(partId)}
                   </span>
                   {isCustomized && (
                     <span
                       aria-label="Pièce personnalisée"
-                      className="w-1.5 h-1.5 rounded-full bg-[var(--hub-secondary)] shrink-0"
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        isSelected ? 'bg-white' : 'bg-[var(--hub-secondary)]'
+                      }`}
                     />
                   )}
                 </div>
@@ -321,18 +329,18 @@ export function PersonnaliserDrawer({
 
   // 2. Volet Gabarit : Slide card à la Apple avec texte épuré genre "45L" au centre
   const renderBagModelsPane = () => (
-    <div data-testid="studio-bag-models-pane" className="flex flex-col justify-between h-full pb-4">
+    <div data-testid="studio-bag-models-pane" className="flex flex-col justify-start h-full">
       {lostSlotsReport && (
         <div
           data-testid="bag-switch-lost-slots-banner"
           role="status"
-          className="p-3 rounded-2xl bg-[var(--hub-surface-muted)] border border-[var(--hub-border)] space-y-1 text-xs"
+          className="p-2 rounded-2xl bg-[var(--hub-surface-muted)] border border-[var(--hub-border)] space-y-0.5 text-xs mb-1"
         >
           <div className="font-bold text-[var(--hub-primary)]">
             {lostSlotsReport.nextBagLabel}
           </div>
           {lostSlotsReport.displacedItems.length > 0 && (
-            <div className="text-[var(--hub-warning)]">
+            <div className="text-[var(--hub-warning)] text-[11px]">
               {lostSlotsReport.displacedItems.length} équipement(s) replacé(s) en « Non rangé »
             </div>
           )}
@@ -340,7 +348,7 @@ export function PersonnaliserDrawer({
       )}
 
       {/* Slide card gabarits à la Apple */}
-      <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory py-4 px-1">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1 px-1">
         {BUILTIN_BAG_MODELS.map((bag) => {
           const isCurrent = config.bag.modelId === bag.modelId;
           const isBusy = switchingBagId === bag.modelId;
@@ -352,18 +360,24 @@ export function PersonnaliserDrawer({
               aria-pressed={isCurrent}
               disabled={isBusy}
               onClick={() => handleSwitchBagModel(bag.modelId)}
-              className={`min-w-[125px] w-[125px] h-[150px] shrink-0 snap-center rounded-3xl border flex flex-col items-center justify-center p-3 transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
+              className={`min-w-[95px] w-[95px] h-[98px] shrink-0 snap-center rounded-3xl border flex flex-col items-center justify-center p-2 transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
                 isCurrent
-                  ? 'bg-[var(--hub-primary-subtle)] border-2 border-[var(--hub-primary)] shadow-md scale-[1.02]'
+                  ? 'is-selected'
                   : 'bg-[var(--hub-surface-card)] border-[var(--hub-border)] hover:border-[var(--hub-border-strong)]'
               }`}
             >
               {/* Texte épuré moderne pas trop grand au centre de la card, genre 45L à la Apple */}
-              <div className="text-3xl font-extrabold tracking-tight text-[var(--hub-text-primary)] font-sans">
+              <div
+                className={`transition-all duration-300 font-sans ${
+                  isCurrent
+                    ? 'text-2xl font-extrabold tracking-tight text-white'
+                    : 'text-xl font-bold text-[var(--hub-text-primary)]'
+                }`}
+              >
                 {bag.capacityL}L
               </div>
               {isCurrent && (
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--hub-primary)] mt-3" />
+                <span className="w-1.5 h-1.5 rounded-full bg-white mt-1 shadow-sm" />
               )}
             </button>
           );
@@ -374,8 +388,8 @@ export function PersonnaliserDrawer({
 
   // 3. Volet Matière technique PBR
   const renderMaterialsPane = () => (
-    <div data-testid="studio-materials-pane" className="space-y-3 pb-4">
-      <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory py-3 px-1">
+    <div data-testid="studio-materials-pane" className="space-y-1 pb-1">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1 px-1">
         {BAG_MATERIAL_PRESETS.map((preset) => {
           const selected = currentPartConfig.material === preset.id;
           return (
@@ -389,25 +403,37 @@ export function PersonnaliserDrawer({
                   void onCustomizePart(activePart, { material: preset.id });
                 }
               }}
-              className={`min-w-[150px] w-[150px] h-[145px] shrink-0 snap-center rounded-3xl border flex flex-col justify-between p-4 text-left transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
+              className={`min-w-[120px] w-[120px] h-[98px] shrink-0 snap-center rounded-3xl border flex flex-col justify-between p-2.5 text-left transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
                 selected
-                  ? 'bg-[var(--hub-primary-subtle)] border-2 border-[var(--hub-primary)] shadow-md'
+                  ? 'is-selected'
                   : 'bg-[var(--hub-surface-card)] border-[var(--hub-border)]'
               }`}
             >
-              <div className="text-xs font-bold text-[var(--hub-text-primary)]">
+              <div
+                className={`text-xs font-bold transition-colors duration-300 ${
+                  selected ? 'text-white' : 'text-[var(--hub-text-primary)]'
+                }`}
+              >
                 {preset.label}
               </div>
-              <div className="text-[11px] text-[var(--hub-text-secondary)] line-clamp-3">
+              <div
+                className={`text-[10px] line-clamp-2 transition-colors duration-300 ${
+                  selected ? 'text-white/85' : 'text-[var(--hub-text-secondary)]'
+                }`}
+              >
                 {preset.description}
               </div>
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[10px] uppercase font-semibold text-[var(--hub-text-muted)]">
+              <div className="flex items-center justify-between pt-0.5">
+                <span
+                  className={`text-[9px] uppercase font-semibold transition-colors duration-300 ${
+                    selected ? 'text-white/70' : 'text-[var(--hub-text-muted)]'
+                  }`}
+                >
                   Finition
                 </span>
                 {selected && (
                   <Check
-                    className="w-4 h-4 text-[var(--hub-primary)] shrink-0"
+                    className="w-3.5 h-3.5 text-white shrink-0"
                     aria-hidden="true"
                   />
                 )}
@@ -444,18 +470,25 @@ export function PersonnaliserDrawer({
   const colorSecondary =
     tabIndex === 0 && activePart
       ? {
-          items: BAG_COLOR_SWATCHES.map((swatch) => ({
-            id: swatch.id,
-            label: swatch.label,
-            icon: (
-              <span
-                aria-hidden="true"
-                data-testid={`personnaliser-color-${swatch.id}`}
-                className="w-4 h-4 rounded-full border border-white/90 block shadow-sm"
-                style={{ background: swatch.token }}
-              />
-            ),
-          })),
+          items: BAG_COLOR_SWATCHES.map((swatch) => {
+            const isSwatchActive =
+              swatch.token === currentPartConfig.color ||
+              swatch.id === currentPartConfig.color;
+            return {
+              id: swatch.id,
+              label: swatch.label,
+              icon: (
+                <span
+                  aria-hidden="true"
+                  data-testid={`personnaliser-color-${swatch.id}`}
+                  className={`w-3.5 h-3.5 rounded-full border border-white/90 block shadow-xs transition-transform duration-200 ${
+                    isSwatchActive ? 'scale-110 ring-1 ring-white' : 'opacity-85'
+                  }`}
+                  style={{ background: swatch.token }}
+                />
+              ),
+            };
+          }),
           active: Math.max(
             0,
             BAG_COLOR_SWATCHES.findIndex(

@@ -477,7 +477,8 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 .hub-camp-drawer-sheet {
   position: relative;
   width: 100%;
-  max-height: min(92dvh, 840px);
+  height: 40dvh !important;
+  max-height: 40dvh !important;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -667,10 +668,10 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   transform: scale(0.95);
 }
 
-/* ── 7. Interdiction stricte du scroll vertical sur les tiroirs du Hub ── */
+/* ── 7. Interdiction stricte du scroll vertical sur les tiroirs du Hub (Hauteur max 40%) ── */
 .hub-camp-drawer-sheet {
-  height: min(78dvh, 660px) !important;
-  max-height: min(78dvh, 660px) !important;
+  height: 40dvh !important;
+  max-height: 40dvh !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell {
@@ -700,55 +701,89 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   padding: 0 !important;
 }
 
-.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary {
-  position: absolute !important;
-  right: 16px !important;
-  bottom: calc(30px + env(safe-area-inset-bottom, 0px)) !important;
-  z-index: 50 !important;
+.hub-camp-drawer-sheet .lkdv-drawer-shell[data-secondary="true"] {
+  padding-bottom: 38px !important;
 }
 
-.hub-camp-drawer-sheet .lkdv-drawer-secondary .ig-tabs {
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs {
+  height: 40px !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button {
+  min-height: 36px !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary {
+  position: absolute !important;
+  right: 12px !important;
+  bottom: 8px !important;
+  left: auto !important;
+  top: auto !important;
+  z-index: 45 !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: flex-end !important;
+  pointer-events: none !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -14px -8px -8px -14px !important;
+  border-radius: 9999px !important;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 72%) !important;
+  filter: blur(6px) !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  pointer-events: auto !important;
   display: grid !important;
   grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)) !important;
   align-items: center !important;
-  height: 32px !important;
-  padding: 3px !important;
+  width: calc(var(--n, 2) * 24px + 6px) !important;
+  max-width: 250px !important;
+  height: 28px !important;
+  padding: 2px !important;
   border-radius: 9999px !important;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.88),
-    rgba(240, 245, 238, 0.68) 50%,
-    rgba(255, 255, 255, 0.8)
-  ) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.9),
-    0 4px 14px rgba(10, 20, 14, 0.12) !important;
-  position: relative !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.44) 55%, rgba(255, 255, 255, 0.54)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 6px 18px rgba(23, 43, 36, 0.12) !important;
   box-sizing: border-box !important;
 }
 
-.hub-camp-drawer-sheet .lkdv-drawer-secondary .ig-tabs .ig-th {
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs .ig-th {
   position: absolute !important;
-  top: 3px !important;
-  bottom: 3px !important;
-  left: 3px !important;
-  width: calc((100% - 6px) / var(--n, 2)) !important;
+  top: 2px !important;
+  bottom: 2px !important;
+  left: 2px !important;
+  width: calc((100% - 4px) / var(--n, 2)) !important;
+  height: calc(100% - 4px) !important;
   border-radius: 9999px !important;
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(255, 255, 255, 1) !important;
-  box-shadow: 0 1px 4px rgba(23, 43, 36, 0.16) !important;
-  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.72)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.98), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 1px 4px rgba(23, 43, 36, 0.16) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  z-index: 1 !important;
 }
 
-.hub-camp-drawer-sheet .lkdv-drawer-secondary .ig-tabs button {
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button {
   position: relative !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  height: 26px !important;
+  height: 100% !important;
+  min-height: 24px !important;
+  padding: 0 4px !important;
   border: 0 !important;
   background: none !important;
   font-size: 11px !important;
@@ -756,11 +791,15 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   color: #56665D !important;
   cursor: pointer !important;
   z-index: 2 !important;
-  padding: 0 10px !important;
+  transition: transform 0.18s ease !important;
 }
 
-.hub-camp-drawer-sheet .lkdv-drawer-secondary .ig-tabs button.active,
-.hub-camp-drawer-sheet .lkdv-drawer-secondary .ig-tabs button[aria-selected="true"] {
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button:active {
+  transform: scale(0.9) !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button.active,
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button[aria-selected="true"] {
   color: #172B24 !important;
   font-weight: 700 !important;
 }
@@ -934,16 +973,50 @@ nav[aria-label="Sélection des éléments à personnaliser"] {
   background: linear-gradient(180deg, transparent, rgba(10, 20, 14, 0.14)) !important;
 }
 
-/* 9. Cartes slide studio & micro-animations iOS 27 */
+/* 9. Cartes slide studio & micro-animations Liquid Glass iOS 27 */
 .studio-slide-card {
-  will-change: transform, box-shadow;
-  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.24s ease, border-color 0.24s ease !important;
+  will-change: transform, box-shadow, background, border-color;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 0.26s ease,
+              background 0.26s ease !important;
   -webkit-user-select: none;
   user-select: none;
+  background: rgba(255, 255, 255, 0.55) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 8px rgba(10, 20, 14, 0.06) !important;
 }
 
 .studio-slide-card:active {
   transform: scale(0.96) !important;
+}
+
+/* Mise en avant sélection : fond de la card en verre et texte en blanc avec animation smooth et élégante */
+.studio-slide-card.is-selected {
+  background: linear-gradient(
+    145deg,
+    rgba(23, 48, 36, 0.88) 0%,
+    rgba(14, 30, 22, 0.94) 100%
+  ) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.05) !important;
+  backdrop-filter: blur(28px) saturate(190%) brightness(1.05) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.52) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.65),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.25),
+    0 8px 24px rgba(10, 25, 18, 0.28),
+    0 2px 6px rgba(0, 0, 0, 0.12) !important;
+  transform: scale(1.03) !important;
+}
+
+.studio-slide-card.is-selected * {
+  color: #ffffff !important;
+}
+
+.studio-slide-card.is-selected svg {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
 }
 
 /* Fluidification du défilement horizontal sans barre de scroll */
@@ -954,39 +1027,6 @@ nav[aria-label="Sélection des éléments à personnaliser"] {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
   -webkit-overflow-scrolling: touch !important;
-}
-
-/* Mini-sélecteur de couleur en bas à droite (.lkdv-drawer-secondary .ig-tabs) */
-.hub-camp-drawer-sheet .lkdv-drawer-secondary {
-  position: absolute !important;
-  right: 14px !important;
-  bottom: 18px !important;
-  z-index: 50 !important;
-}
-
-.hub-camp-drawer-sheet .lkdv-drawer-secondary .ig-tabs {
-  display: flex !important;
-  align-items: center !important;
-  height: 38px !important;
-  padding: 3px 4px !important;
-  border-radius: 9999px !important;
-  background: rgba(255, 255, 255, 0.88) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
-  backdrop-filter: blur(24px) saturate(190%) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
-  box-shadow: 0 4px 16px rgba(10, 20, 14, 0.12), inset 0 1px 0 #fff !important;
-}
-
-.hub-camp-drawer-sheet .lkdv-drawer-secondary .ig-tabs button {
-  min-width: 32px !important;
-  min-height: 32px !important;
-  height: 32px !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-radius: 9999px !important;
-  cursor: pointer !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
