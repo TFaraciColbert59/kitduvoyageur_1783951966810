@@ -43,32 +43,8 @@ html body .lkdv-feed-shell::after {
   pointer-events: none;
 }
 
-/* Écran de démarrage (BootScreen) : logo au centre, vert forêt, fondu de sortie. */
-.lkdv-boot {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483000;
-  display: grid;
-  place-items: center;
-  background: #17402c;
-  opacity: 1;
-  transition: opacity 0.38s ease;
-  pointer-events: none;
-  /* Filet de sécurité : si le JavaScript n'arrive pas, l'écran s'efface seul. */
-  animation: lkdv-boot-out 0.4s ease 6s forwards;
-}
-@keyframes lkdv-boot-out {
-  to { opacity: 0; visibility: hidden; }
-}
-.lkdv-boot[data-phase='leaving'] {
-  opacity: 0;
-}
-.lkdv-boot img {
-  width: 128px;
-  height: 128px;
-  border-radius: 999px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
-}
+/* L'écran de démarrage plein écran (BootScreen) a été retiré le 01/11/2026 : il masquait le contenu
+   rendu par le serveur jusqu'à l'hydratation (jusqu'à 6 s sur mobile). L'app native garde son écran natif. */
 
 /* =============================================================================
    Page d'authentification (/connexion, onglets Connexion / Inscription)
