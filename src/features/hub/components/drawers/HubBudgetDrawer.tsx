@@ -222,8 +222,8 @@ export function HubBudgetDrawer() {
     activeTab === 0
       ? {
           items: [
-            { id: 'total', label: 'Total', icon: <CreditCard className="w-3.5 h-3.5" aria-hidden="true" /> },
-            { id: 'pers', label: 'Par pers', icon: <PieChart className="w-3.5 h-3.5" aria-hidden="true" /> },
+            { id: 'total', label: 'Total', icon: <span className="text-[11px] font-bold">Total</span> },
+            { id: 'pers', label: 'Par pers', icon: <span className="text-[11px] font-bold">Pers</span> },
           ],
           active: scopeIndex,
           onChange: setScopeIndex,
@@ -234,7 +234,7 @@ export function HubBudgetDrawer() {
             items: POSTES.map((p) => ({
               id: p.id,
               label: p.label,
-              icon: <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{p.label}</span>,
             })),
             active: posteIndex,
             onChange: setPosteIndex,
@@ -244,7 +244,7 @@ export function HubBudgetDrawer() {
             items: EQUILIBRE.map((e) => ({
               id: e.id,
               label: e.label,
-              icon: <Users2 className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{e.label}</span>,
             })),
             active: memberIndex,
             onChange: setMemberIndex,

@@ -207,7 +207,7 @@ export function HubJournalDrawer() {
           items: JOURNAL_DAYS.map((d) => ({
             id: d.id,
             label: d.label,
-            icon: <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />,
+            icon: <span className="text-[11px] font-bold">{d.label}</span>,
           })),
           active: dayIndex,
           onChange: setDayIndex,
@@ -218,7 +218,7 @@ export function HubJournalDrawer() {
             items: WEATHER_OBSERVATIONS.map((w) => ({
               id: w.id,
               label: w.label,
-              icon: <CloudSun className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{w.label}</span>,
             })),
             active: weatherIndex,
             onChange: setWeatherIndex,
@@ -228,7 +228,7 @@ export function HubJournalDrawer() {
             items: NATURE_SPOTS.map((n) => ({
               id: n.id,
               label: n.label,
-              icon: <Eye className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{n.label}</span>,
             })),
             active: natureIndex,
             onChange: setNatureIndex,

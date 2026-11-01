@@ -236,7 +236,7 @@ export function HubDocsDrawer() {
           items: RESERVATIONS.map((r) => ({
             id: r.id,
             label: r.label,
-            icon: <Building2 className="w-3.5 h-3.5" aria-hidden="true" />,
+            icon: <span className="text-[11px] font-bold">{r.label}</span>,
           })),
           active: resIndex,
           onChange: setResIndex,
@@ -247,7 +247,7 @@ export function HubDocsDrawer() {
             items: SAFETY_DOCS.map((s) => ({
               id: s.id,
               label: s.label,
-              icon: <Shield className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{s.label}</span>,
             })),
             active: safetyIndex,
             onChange: setSafetyIndex,
@@ -257,7 +257,7 @@ export function HubDocsDrawer() {
             items: INSURANCES.map((i) => ({
               id: i.id,
               label: i.label,
-              icon: <FileText className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{i.label}</span>,
             })),
             active: insIndex,
             onChange: setInsIndex,

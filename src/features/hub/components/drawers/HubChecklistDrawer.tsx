@@ -213,7 +213,7 @@ export function HubChecklistDrawer({ onEnterStudio }: { onEnterStudio?: () => vo
           items: VITAL_ITEMS.map((v) => ({
             id: v.id,
             label: v.label,
-            icon: <CheckSquare className="w-3.5 h-3.5" aria-hidden="true" />,
+            icon: <span className="text-[11px] font-bold">{v.label}</span>,
           })),
           active: vitalIndex,
           onChange: setVitalIndex,
@@ -224,7 +224,7 @@ export function HubChecklistDrawer({ onEnterStudio }: { onEnterStudio?: () => vo
             items: BIVOUAC_ITEMS.map((b) => ({
               id: b.id,
               label: b.label,
-              icon: <Flame className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{b.label}</span>,
             })),
             active: bivouacIndex,
             onChange: setBivouacIndex,
@@ -234,7 +234,7 @@ export function HubChecklistDrawer({ onEnterStudio }: { onEnterStudio?: () => vo
             items: CLOTHING_ITEMS.map((c) => ({
               id: c.id,
               label: c.label,
-              icon: <Shirt className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{c.label}</span>,
             })),
             active: clothIndex,
             onChange: setClothIndex,

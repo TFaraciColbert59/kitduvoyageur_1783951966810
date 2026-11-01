@@ -198,7 +198,7 @@ export function HubSafetyDrawer() {
           items: EMERGENCY_CONTACTS.map((e) => ({
             id: e.id,
             label: e.label,
-            icon: <PhoneCall className="w-3.5 h-3.5" aria-hidden="true" />,
+            icon: <span className="text-[11px] font-bold">{e.label}</span>,
           })),
           active: emIndex,
           onChange: setEmIndex,
@@ -209,7 +209,7 @@ export function HubSafetyDrawer() {
             items: WEATHER_RISKS.map((r) => ({
               id: r.id,
               label: r.label,
-              icon: <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{r.label}</span>,
             })),
             active: riskIndex,
             onChange: setRiskIndex,
@@ -219,7 +219,7 @@ export function HubSafetyDrawer() {
             items: PROTOCOLS.map((p) => ({
               id: p.id,
               label: p.label,
-              icon: <ShieldAlert className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{p.label}</span>,
             })),
             active: protoIndex,
             onChange: setProtoIndex,

@@ -270,7 +270,7 @@ export function HubGearDrawer({ onEnterStudio }: HubGearDrawerProps) {
           items: BAG_ZONES.map((z) => ({
             id: z.id,
             label: z.label,
-            icon: <Package className="w-3.5 h-3.5" aria-hidden="true" />,
+            icon: <span className="text-[11px] font-bold">{z.label}</span>,
           })),
           active: zoneIndex,
           onChange: setZoneIndex,
@@ -281,7 +281,7 @@ export function HubGearDrawer({ onEnterStudio }: HubGearDrawerProps) {
             items: SHARED_GROUPS.map((g) => ({
               id: g.id,
               label: g.label,
-              icon: <Layers className="w-3.5 h-3.5" aria-hidden="true" />,
+              icon: <span className="text-[11px] font-bold">{g.label}</span>,
             })),
             active: sharedIndex,
             onChange: setSharedIndex,
@@ -289,8 +289,8 @@ export function HubGearDrawer({ onEnterStudio }: HubGearDrawerProps) {
           }
         : {
             items: [
-              { id: 'moi', label: 'Moi', icon: <Scale className="w-3.5 h-3.5" aria-hidden="true" /> },
-              { id: 'groupe', label: 'Groupe', icon: <Layers className="w-3.5 h-3.5" aria-hidden="true" /> },
+              { id: 'moi', label: 'Moi', icon: <span className="text-[11px] font-bold">Moi</span> },
+              { id: 'groupe', label: 'Groupe', icon: <span className="text-[11px] font-bold">Groupe</span> },
             ],
             active: balanceIndex,
             onChange: setBalanceIndex,
