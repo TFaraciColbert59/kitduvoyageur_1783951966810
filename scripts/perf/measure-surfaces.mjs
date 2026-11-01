@@ -179,10 +179,14 @@ await browser.close();
 
 fs.writeFileSync(path.join(outDir, 'measures.json'), JSON.stringify({ base, throttle: THROTTLE, runs: RUNS, at: new Date().toISOString(), results }, null, 2));
 
+// Centile par interpolation linéaire (la médiane de 4 valeurs = moyenne des 2e et 3e).
 const q = (arr, p) => {
   const s = arr.filter((v) => v != null && Number.isFinite(v)).sort((a, b) => a - b);
   if (!s.length) return null;
-  return Math.round(s[Math.min(s.length - 1, Math.floor(p * (s.length - 1) + 0.5))]);
+  const pos = p * (s.length - 1);
+  const lo = Math.floor(pos);
+  const hi = Math.min(s.length - 1, lo + 1);
+  return Math.round(s[lo] + (s[hi] - s[lo]) * (pos - lo));
 };
 console.info(`\n${base} — ${THROTTLE ? 'mobile ralenti (CPU ×4, 150 ms, 1,6 Mbit/s)' : 'sans ralentissement'} — ${RUNS} passages (hors préchauffage)`);
 console.info('surface      | TTFB méd/p75 | FCP méd/p75 | LCP méd/p75 | visible méd/p75 | CLS max | JS Ko | arrivée');

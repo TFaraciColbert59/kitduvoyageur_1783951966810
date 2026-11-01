@@ -37,3 +37,17 @@
 | D-05 | Monter Next 15.5 → 16 pour `cacheComponents` / PPR | maintenant / après les phases données et carte | Après : montée majeure, gain non mesurable tant que les routes restent toutes dynamiques |
 | D-06 | Taille de l'instance Supabase | garder / monter d'un cran (payant) | Garder (budget 0 €) tant que D-03 et D-04 n'ont pas été mesurés |
 | D-07 | Supprimer les 186 index jamais utilisés | après vérification contrainte/job rare | Par lots, en excluant les index qui portent une contrainte et ceux des tables touchées par des tâches rares (cron quotidien, purges) ; vérifier d'abord la date de remise à zéro de `pg_stat_user_indexes` |
+
+## Reste à faire (classé par gain estimé, au 01/11/2026)
+
+| # | Chantier | Gain estimé | Risque | Note |
+|---|---|---|---|---|
+| R-01 | **Mettre en production** le lot de la branche (boucle de l'Explorer surtout : défaut actif en production) | Explorer utilisable ~5,7 s plus tôt pour tous | faible (testé, relu) ; changement visible : écran de démarrage retiré | décision de Tony (CLAUDE.md : pas de production sans accord) |
+| R-02 | Carte : précharger les chunks MapLibre par leur nom haché dès le HTML, worker MapLibre versionné avec cache long (servi aujourd'hui en `max-age=0`), différer les données et glyphes après `map:first-paint`, couper les préchargements d'autres routes pendant le chargement de l'Explorer | premiers pixels −3 à −5 s (estimé) | moyen | piste du rapport ingénieur du 01/11 |
+| R-03 | Carte : couches de données en tuiles vectorielles (PMTiles / Martin) | gros gain sur zoom/pan et mémoire | élevé | mission §9.1 |
+| R-04 | Poids JS : framer-motion → `LazyMotion` (72 fichiers), séparer `dict.compas` du dictionnaire de base, page Compte (runtime v8 de 95 Ko) | −50 à −100 Ko par surface | moyen | |
+| R-05 | Communauté : la vignette vidéo du fil (LCP 3,3 s) servie en image redimensionnée et prioritaire | LCP −1 à −2 s | faible | |
+| R-06 | HUB : publier la réservation de la barre du bas (rail de jours) dès le rendu serveur | CLS 0,022 → 0 | faible à moyen | |
+| R-07 | Compas : rendu serveur sans attendre `getHubAdventureData` complet (`lists`, `checklist`, liens affiliés inutiles au Compas), mise en cache des appels externes par aventure | −200 à −600 ms serveur | moyen | |
+| R-08 | Base : appliquer le lot 1 (`20261101120000`), puis surface d'API `api` (D-03) | rechargements de schéma ~1,7 s évités | moyen | migrations en production : Tony |
+| R-09 | RUM : accepter les mesures des visiteurs anonymes (sendBeacon, débit limité) et exclure les comptes de banc de test | mesure terrain fiable | faible | |
