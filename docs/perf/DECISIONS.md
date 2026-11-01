@@ -5,7 +5,7 @@
 | # | Date | Décision | Pourquoi | Statut |
 |---|---|---|---|---|
 | F-01 | 01/11 | Baseline serveur et bundle relevée avant tout changement (`PERF_BASELINE.md`) | Phase 0 non négociable | fait |
-| F-02 | 01/11 | Lot 1 base (8 `auth_rls_initplan`, 2 index en double) écrit avec rollback : `supabase/migrations/20261108000000_perf_p1_rls_initplan_duplicate_indexes.sql` | Risque nul, même sémantique | **écrit, non appliqué** (application en production réservée à Tony) ; validation à blanc en transaction annulée non faite (confirmation Supabase restée sans réponse) |
+| F-02 | 01/11 | Lot 1 base (8 `auth_rls_initplan`, 2 index en double) écrit avec rollback : `supabase/migrations/20261108000000_perf_p1_rls_initplan_duplicate_indexes.sql` | Risque nul, même sémantique | **appliqué en production le 01/11** (SQL Editor) et inscrit au registre des migrations ; vérifié : 8/8 politiques en `(select auth.uid())`, 0 index en double ; advisors : `auth_rls_initplan` 8 → 0, `duplicate_index` 2 → 0 ; CI database-gates verte (pgTAP 1600/1600) |
 | F-04 | 01/11 | `pg_stat_statements` remis à zéro le 01/11 à 07:35 UTC (D-01, autonomie accordée par Tony le 01/11) | Les cumuls du 07/09 sont conservés dans la baseline ; mesurer l'usage actuel (Explorer v2) et l'effet des changements | fait |
 | F-05 | 01/11 | Chronométrage serveur du Compas (`traceStage`, no-op hors `LKDV_TRACE_SSR=1`), variable activée sur les aperçus de la branche seulement | Mesurer avant de changer : RUM Compas TTFB p75 4,2 s | fait |
 | F-06 | 01/11 | **Boucle de rechargement de /explorer corrigée** (2 service workers sur la portée « / ») : portée propre pour l'Explorer, rechargement réservé au worker de l'app. Test de non-régression | 12 rechargements en 15 s en production → 0 constaté sur l'aperçu | fait (`2265e0b`) |
@@ -31,7 +31,7 @@
 | # | Décision | Options | Recommandation |
 |---|---|---|---|
 | D-01 | Remettre `pg_stat_statements` à zéro pour une baseline « 24 h propres » | oui / non | Oui, **après** commit de cette baseline (les cumuls du 07/09 y sont conservés) |
-| D-02 | Appliquer le lot 1 (F-02) en production | SQL Editor | Oui ; puis relancer l'advisor : `auth_rls_initplan` doit tomber à 0 |
+| D-02 | ~~Appliquer le lot 1 (F-02) en production~~ | fait le 01/11 | `auth_rls_initplan` à 0 |
 | D-03 | Restreindre l'exposition PostgREST à un schéma `api` (vues + RPC appelées par le front) | migration progressive / big bang | Progressif : créer `api`, migrer les appels surface par surface, puis retirer `public` des schémas exposés. Change le contrat d'API de tout le front |
 | D-04 | Realtime : retirer `post_comments` de la publication ; décider du sort du rafraîchissement temps réel du HUB (aujourd'hui inopérant car ses 18 tables ne sont pas publiées) | (a) Broadcast from Database par voyage/groupe ; (b) supprimer ces souscriptions mortes | (b) tout de suite (aucune régression possible : rien n'arrive aujourd'hui), (a) ensuite si le temps réel du HUB est voulu |
 | D-05 | Monter Next 15.5 → 16 pour `cacheComponents` / PPR | maintenant / après les phases données et carte | Après : montée majeure, gain non mesurable tant que les routes restent toutes dynamiques |
@@ -42,7 +42,7 @@
 
 | # | Chantier | Gain estimé | Risque | Note |
 |---|---|---|---|---|
-| R-01 | **Mettre en production** le lot de la branche (boucle de l'Explorer surtout : défaut actif en production) | Explorer utilisable ~5,7 s plus tôt pour tous | faible (testé, relu) ; changement visible : écran de démarrage retiré | décision de Tony (CLAUDE.md : pas de production sans accord) |
+| R-01 | ~~**Mettre en production** le lot de la branche~~ (fait : PR #140, `3b60aff`, vérifié en production le 01/11) (boucle de l'Explorer surtout : défaut actif en production) | Explorer utilisable ~5,7 s plus tôt pour tous | faible (testé, relu) ; changement visible : écran de démarrage retiré | décision de Tony (CLAUDE.md : pas de production sans accord) |
 | R-02 | Carte : précharger les chunks MapLibre par leur nom haché dès le HTML, worker MapLibre versionné avec cache long (servi aujourd'hui en `max-age=0`), différer les données et glyphes après `map:first-paint`, couper les préchargements d'autres routes pendant le chargement de l'Explorer | premiers pixels −3 à −5 s (estimé) | moyen | piste du rapport ingénieur du 01/11 |
 | R-03 | Carte : couches de données en tuiles vectorielles (PMTiles / Martin) | gros gain sur zoom/pan et mémoire | élevé | mission §9.1 |
 | R-04 | Poids JS : framer-motion → `LazyMotion` (72 fichiers), séparer `dict.compas` du dictionnaire de base, page Compte (runtime v8 de 95 Ko) | −50 à −100 Ko par surface | moyen | |
