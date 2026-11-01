@@ -21,7 +21,7 @@ export const DEFAULT_BAG_CAPABILITIES: BagCapabilities = {
   rotatable: true,
   openable: true,
   hasInterior: true,
-  customizableParts: ['body', 'lid', 'front-pocket', 'side-pocket-l', 'side-pocket-r', 'shoulder-strap-l', 'shoulder-strap-r', 'hip-belt'],
+  customizableParts: ['body', 'lid', 'front-pocket', 'side-pocket-l', 'side-pocket-r', 'shoulder-strap-l', 'shoulder-strap-r', 'hip-belt', 'lid-buckle'],
   badgeAnchors: ['badge-body-front', 'badge-lid', 'badge-front-pocket'],
   attachmentPoints: ['attach-top', 'attach-bottom', 'attach-side-l', 'attach-side-r'],
 };

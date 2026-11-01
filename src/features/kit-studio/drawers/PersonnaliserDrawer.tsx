@@ -178,12 +178,12 @@ export function PersonnaliserDrawer({
 
     return (
       <div data-testid="studio-personnaliser-pane" className="space-y-5 pb-8">
-        {/* 1. Sélecteur de pièce ciblée (D-04) */}
-        <section className="space-y-2" aria-label="Pièce du sac à personnaliser">
+        {/* 1. Sélecteur horizontal compact de sous-pièces (D-04) */}
+        <section className="space-y-1.5" aria-label="Pièce du sac à personnaliser">
           <div className="px-1 text-xs font-bold uppercase tracking-wider text-[var(--hub-text-muted)]">
-            1. Choisir la pièce ({customizableParts.length})
+            Détail de la pièce ({customizableParts.length})
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
             {customizableParts.map((partId) => {
               const isSelected = partId === activePart;
               const isCustomized = Boolean(config.bag.parts[partId]);
@@ -194,7 +194,7 @@ export function PersonnaliserDrawer({
                   data-testid={`personnaliser-part-btn-${partId}`}
                   aria-pressed={isSelected}
                   onClick={() => handleChoosePart(partId)}
-                  className={`min-h-[44px] px-3.5 rounded-2xl border text-xs font-semibold inline-flex items-center gap-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
+                  className={`min-h-[44px] px-3 rounded-full border text-xs font-semibold inline-flex items-center gap-1.5 shrink-0 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
                     isSelected
                       ? 'bg-[var(--hub-primary)] border-[var(--hub-primary)] text-[var(--hub-text-inverted)]'
                       : 'bg-[var(--hub-surface-card)] border-[var(--hub-border)] text-[var(--hub-text-primary)]'
@@ -204,7 +204,7 @@ export function PersonnaliserDrawer({
                   {isCustomized && (
                     <span
                       aria-label="Pièce personnalisée"
-                      className="w-2 h-2 rounded-full bg-[var(--hub-secondary)]"
+                      className="w-1.5 h-1.5 rounded-full bg-[var(--hub-secondary)]"
                     />
                   )}
                 </button>

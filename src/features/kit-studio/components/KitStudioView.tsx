@@ -10,14 +10,19 @@ import {
   ArrowLeft,
   Award,
   BarChart3,
+  CircleDot,
+  Compass,
   Eye,
+  Folder,
   GitBranch,
   List,
   Package,
   Palette,
   Plus,
   Settings,
+  Shield,
   ShieldCheck,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { DrawerEmpty, DrawerError, DrawerSkeleton } from '@/components/ui/drawer';
@@ -27,6 +32,52 @@ import { BagListView } from '../list/BagListView';
 import { BagScene, type BadgeCatalogMeta } from '../scene/BagScene';
 import type { BagManifest } from '../scene/bag/parts';
 import type { CameraIntent } from '../scene/camera/intents';
+
+export interface StudioCustomPartTarget {
+  id: PartId;
+  label: string;
+  shortLabel: string;
+  icon: React.ReactNode;
+}
+
+export const STUDIO_CUSTOM_PARTS: StudioCustomPartTarget[] = [
+  {
+    id: 'body',
+    label: 'Corps',
+    shortLabel: 'Corps',
+    icon: <Package className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />,
+  },
+  {
+    id: 'lid',
+    label: 'Rabat',
+    shortLabel: 'Rabat',
+    icon: <Shield className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />,
+  },
+  {
+    id: 'front-pocket',
+    label: 'Poche',
+    shortLabel: 'Poche',
+    icon: <Folder className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />,
+  },
+  {
+    id: 'shoulder-strap-l',
+    label: 'Bretelles',
+    shortLabel: 'Bret.',
+    icon: <Compass className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />,
+  },
+  {
+    id: 'hip-belt',
+    label: 'Ceinture',
+    shortLabel: 'Ceint.',
+    icon: <CircleDot className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />,
+  },
+  {
+    id: 'lid-buckle',
+    label: 'Boucles',
+    shortLabel: 'Boucl.',
+    icon: <Sparkles className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />,
+  },
+];
 import {
   createInitialKitConfiguration,
   DEFAULT_BAG_CAPABILITIES,
@@ -579,6 +630,27 @@ export function KitStudioView({
     [displayedConfig]
   );
   const isReadOnlyPeer = inspectedMember !== null;
+
+  // Sélection directe d'une pièce du sac pour personnalisation depuis la barre capsule
+  const handleSelectPartTarget = useCallback(
+    (partId: PartId) => {
+      if (isReadOnlyPeer) return;
+
+      // Toggle : si le tiroir Personnaliser est déjà ouvert sur cette pièce, le fermer
+      if (activeDrawer === 'personnaliser' && focusedPartId === partId) {
+        handleCloseDrawer();
+        return;
+      }
+
+      setFocusedPartId(partId);
+      emitCameraIntent({
+        kind: 'focus-part',
+        partId,
+      });
+      onSelectDrawer('personnaliser');
+    },
+    [activeDrawer, focusedPartId, handleCloseDrawer, isReadOnlyPeer, emitCameraIntent, onSelectDrawer]
+  );
   const weightSummary = formatWeightSummary(displayedTotals);
 
   const badgeCatalogMap = useMemo(() => {
@@ -855,7 +927,9 @@ export function KitStudioView({
                   isReadOnlyPeer
                     ? undefined
                     : (partId) => {
-                        setFocusedPartId(partId);
+                        const targetPart =
+                          partId === 'shoulder-strap-r' ? 'shoulder-strap-l' : partId;
+                        setFocusedPartId(targetPart);
                         onSelectDrawer('personnaliser');
                       }
                 }
@@ -868,44 +942,48 @@ export function KitStudioView({
         )}
       </main>
 
-      {/* 3. Barre capsule inférieure des tiroirs du Studio (Apple Liquid Glass iOS 27) */}
+      {/* 3. Barre capsule inférieure : Sélection des éléments à personnaliser (Apple Liquid Glass iOS 27) */}
       {loadState === 'ready' && (
         <nav
-          aria-label="Tiroirs de l’atelier Kit Studio"
+          aria-label="Sélection des éléments à personnaliser"
           data-studio-ui="true"
-          className="px-3 pt-2 pb-2 shrink-0"
+          className="px-3 pt-2 pb-2 shrink-0 relative z-[2010]"
+          style={{
+            paddingBottom: 'max(10px, env(safe-area-inset-bottom, 0px))',
+          }}
         >
           <div
             className="hub-drawer-capsule"
             style={
               {
-                '--n': visibleDrawerButtons.length,
+                '--n': STUDIO_CUSTOM_PARTS.length,
                 '--i': Math.max(
                   0,
-                  visibleDrawerButtons.findIndex((b) => b.id === activeDrawer)
+                  STUDIO_CUSTOM_PARTS.findIndex((p) => p.id === focusedPartId)
                 ),
               } as React.CSSProperties
             }
           >
-            {activeDrawer && (
-              <span className="sel-lens" aria-hidden="true" />
-            )}
-            {visibleDrawerButtons.map((btn) => {
-              const active = activeDrawer === btn.id;
+            {activeDrawer === 'personnaliser' &&
+              focusedPartId &&
+              STUDIO_CUSTOM_PARTS.some((p) => p.id === focusedPartId) && (
+                <span className="sel-lens" aria-hidden="true" />
+              )}
+            {STUDIO_CUSTOM_PARTS.map((target) => {
+              const active =
+                activeDrawer === 'personnaliser' && focusedPartId === target.id;
               return (
                 <button
-                  key={btn.id}
+                  key={target.id}
                   type="button"
-                  data-testid={`studio-open-drawer-${btn.id}`}
+                  data-testid={`studio-part-target-${target.id}`}
                   aria-pressed={active}
-                  onClick={() =>
-                    active ? handleCloseDrawer() : onSelectDrawer(btn.id)
-                  }
+                  onClick={() => handleSelectPartTarget(target.id)}
                   className={active ? 'active' : ''}
                 >
-                  {btn.icon}
-                  <span className="hidden sm:inline">{btn.label}</span>
-                  <span className="sm:hidden">{btn.label.slice(0, 6)}</span>
+                  {target.icon}
+                  <span className="hidden sm:inline">{target.label}</span>
+                  <span className="sm:hidden">{target.shortLabel}</span>
                 </button>
               );
             })}
@@ -940,7 +1018,9 @@ export function KitStudioView({
           >
             <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-[var(--hub-border-subtle)] shrink-0">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--hub-primary)]">
-                {drawerButtons.find((b) => b.id === activeDrawer)?.label ?? activeDrawer}
+                {activeDrawer === 'personnaliser' && focusedPartId
+                  ? `Personnaliser — ${STUDIO_CUSTOM_PARTS.find((p) => p.id === focusedPartId)?.label ?? focusedPartId}`
+                  : drawerButtons.find((b) => b.id === activeDrawer)?.label ?? activeDrawer}
               </span>
               <div
                 data-drawer-handle="true"
@@ -996,7 +1076,17 @@ export function KitStudioView({
                 config={displayedConfig}
                 selectedPartId={focusedPartId}
                 onFocusPart={(pid) => setFocusedPartId(pid)}
-                onCustomizePart={(pid, patch) => studio.customizePart(pid, patch)}
+                onCustomizePart={(pid, patch) => {
+                  void studio.customizePart(pid, patch);
+                  if (
+                    pid === 'shoulder-strap-l' &&
+                    displayedConfig.bag.capabilities.customizableParts.includes(
+                      'shoulder-strap-r'
+                    )
+                  ) {
+                    void studio.customizePart('shoulder-strap-r', patch);
+                  }
+                }}
                 onSelectBagModel={(mid, caps, capL, slots) =>
                   studio.selectBagModel(mid, caps, capL, slots)
                 }

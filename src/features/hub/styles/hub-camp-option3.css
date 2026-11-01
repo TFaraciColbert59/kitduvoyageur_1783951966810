@@ -461,6 +461,7 @@
   background: rgba(10, 20, 14, 0.12) !important;
   backdrop-filter: blur(1.5px) !important;
   -webkit-backdrop-filter: blur(1.5px) !important;
+  bottom: calc(58px + max(10px, env(safe-area-inset-bottom, 0px))) !important;
 }
 
 /* Disparition fluide de la barre de navigation basse quand un tiroir ou Kit Studio est ouvert */
