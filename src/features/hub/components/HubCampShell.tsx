@@ -7,13 +7,20 @@ import {
   ArrowLeft,
   ArrowRight,
   Backpack,
+  ChevronDown,
+  ChevronUp,
   Compass,
+  Flame,
   MapPin,
+  Mountain,
   Package,
   Plus,
+  RotateCw,
   Sliders,
+  Users,
   X,
 } from 'lucide-react';
+import '../styles/hub-camp-option3.css';
 import { DrawerEmpty, DrawerShell, type DrawerTab } from '@/components/ui/drawer';
 import { useKeyboardInsets } from '@/hooks/useKeyboardInsets';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
@@ -154,6 +161,10 @@ export function HubCampShell({
     alerts?: number;
   }>({});
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [focus, setFocus] = useState<'camp' | 'bag' | 'route' | 'group' | 'prep'>('camp');
+  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [modulesOpen, setModulesOpen] = useState(false);
+  const downRef = useRef<{ x: number; y: number } | null>(null);
 
   // Évitement dynamique du clavier virtuel sur mobile (B-11)
   useKeyboardInsets();
@@ -615,151 +626,265 @@ export function HubCampShell({
   return (
     <div
       data-testid="hub-camp-shell"
-      className="hub-camp-shell-root flex flex-col w-full min-h-[100dvh] bg-[var(--hub-bg)] text-[var(--hub-text-primary)]"
+      className="hub-camp-option3-root flex flex-col w-full h-[100dvh] relative overflow-hidden"
       style={{
-        paddingTop: 'max(12px, var(--hub-safe-top))',
-        paddingBottom: 'max(16px, var(--hub-safe-bottom))',
-        paddingLeft: 'var(--hub-safe-left)',
-        paddingRight: 'var(--hub-safe-right)',
         boxSizing: 'border-box',
       }}
     >
-      {/* ── 1. En-tête du Camp de Base ── */}
-      <header className="px-4 py-3 flex items-center justify-between gap-3 border-b border-[var(--hub-border-subtle)] bg-[var(--hub-surface-card)]">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-10 h-10 rounded-2xl bg-[var(--hub-primary-subtle)] flex items-center justify-center text-[var(--hub-primary)] shrink-0">
-            <Backpack className="w-5 h-5" aria-hidden="true" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-base font-bold text-[var(--hub-primary)] leading-tight truncate">
-              {effectiveTitle}
-            </h1>
-            <p className="text-xs text-[var(--hub-text-muted)] truncate">
-              {trip?.destination || (adventure?.nature === 'collectif' ? 'Équipage actif' : 'Camp de Base')} • Vue d’ensemble
-            </p>
-          </div>
-        </div>
+      {/* ── 1. Le Monde Alpin (Arrière-plan immersif panoramique) ── */}
+      <div
+        className={`camp-world focus-${focus}`}
+        style={
+          {
+            '--pan-x': `${offset.x}px`,
+            '--pan-y': `${offset.y}px`,
+          } as React.CSSProperties
+        }
+        onPointerDown={(e) => {
+          downRef.current = { x: e.clientX, y: e.clientY };
+        }}
+        onPointerMove={(e) => {
+          if (!downRef.current) return;
+          setOffset({
+            x: Math.max(-14, Math.min(14, (e.clientX - downRef.current.x) * 0.08)),
+            y: Math.max(-10, Math.min(10, (e.clientY - downRef.current.y) * 0.05)),
+          });
+        }}
+        onPointerUp={() => {
+          downRef.current = null;
+        }}
+        onPointerLeave={() => {
+          downRef.current = null;
+        }}
+      >
+        <img
+          className="camp-landscape"
+          src="/assets/camp/camp-golden.jpg"
+          alt="Camp au bord d’un lac turquoise des Alpes, tentes, feu et sac dans la lumière dorée"
+          draggable={false}
+        />
+      </div>
 
+      {/* ── 2. En-tête Flottant Liquid Glass ── */}
+      <header className="camp-header">
         <button
           type="button"
-          data-testid="hub-enter-studio-header"
-          onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
-          className="min-h-[44px] min-w-[44px] px-3.5 rounded-full bg-[var(--hub-action)] text-[var(--hub-text-inverted)] text-xs font-semibold flex items-center gap-1.5 transition-transform active:scale-95 shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--hub-action)]"
+          className="camp-identity"
+          onClick={() => {
+            const overviewDef =
+              hubSectionRegistry.find((s) => s.segment === '') ?? hubSectionRegistry[0];
+            handleOpenRegistryEntry(overviewDef);
+          }}
+          aria-label="Camp de base"
         >
-          <Package className="w-4 h-4" aria-hidden="true" />
-          <span>Kit Studio</span>
+          <span className="camp-identity-icon">
+            <Mountain className="w-5 h-5" aria-hidden="true" />
+          </span>
+          <span>
+            <strong>{effectiveTitle}</strong>
+            <small>
+              {trip?.destination ||
+                (adventure?.nature === 'collectif' ? 'Équipage actif' : 'Camp de Base')}
+            </small>
+          </span>
         </button>
+
+        <div className="camp-header-actions">
+          <button
+            type="button"
+            data-testid="hub-enter-studio-header"
+            onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
+            className="camp-header-btn camp-header-btn-studio"
+            aria-label="Ouvrir Kit Studio 3D"
+          >
+            <Package className="w-4 h-4" aria-hidden="true" />
+            <span>Kit Studio</span>
+          </button>
+        </div>
       </header>
 
-      {/* ── 2. Corps Principal du Camp ── */}
-      <main
-        inert={Boolean(activeDef) || undefined}
-        aria-hidden={activeDef ? 'true' : undefined}
-        className="flex-1 flex flex-col p-4 gap-5 overflow-y-auto"
-      >
-        {/* Bandeau discret de reprise < 24h, zéro redirection automatique (B-03 / B-04) */}
-        <HubResumeBanner adventure={adventure} />
-
-        {/* État d'erreur réseau non bloquant avec bouton Réessayer (A-07) */}
-        {syncError && (
-          <div data-testid="hub-sync-error" className="rounded-2xl border border-[var(--hub-border)] bg-[var(--hub-surface-card)]">
-            <div className="lkdv-drawer-state" data-state="error" role="alert">
-              <p>
-                <b>Synchronisation du Camp interrompue</b>
-              </p>
-              <p>{syncError}</p>
-              <button
-                type="button"
-                className="lkdv-drawer-retry min-h-[44px]"
-                onClick={() => {
-                  void refreshCampContext();
-                }}
-              >
-                Réessayer
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* État explicite de projet vide sans coordonnées fictives (B-09) */}
-        {isEmptyProject && (
-          <section
-            data-testid="hub-empty-project-state"
-            aria-label="Aucun projet actif"
-            className="p-4 rounded-3xl bg-[var(--hub-surface-card)] border border-[var(--hub-border)] space-y-3"
-          >
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--hub-secondary)]">
-                Premier bivouac
-              </span>
-              <h2 className="text-sm font-bold text-[var(--hub-text-primary)]">
-                Aucune sortie ni inventaire actif pour l’instant
-              </h2>
-              <p className="text-xs text-[var(--hub-text-secondary)]">
-                Préparez votre premier sac dans le Kit Studio ou planifiez un itinéraire réel dans le Compas.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href={HUB_NEW_HREF}
-                data-testid="hub-empty-create-activity"
-                className="min-h-[44px] px-4 rounded-2xl bg-[var(--hub-primary)] text-[var(--hub-text-inverted)] text-xs font-semibold inline-flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
-              >
-                <Plus className="w-4 h-4" aria-hidden="true" />
-                <span>Créer une activité</span>
-              </Link>
-              <button
-                type="button"
-                data-testid="hub-empty-open-studio"
-                onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
-                className="min-h-[44px] px-4 rounded-2xl bg-[var(--hub-surface)] border border-[var(--hub-border)] text-[var(--hub-text-primary)] text-xs font-semibold inline-flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
-              >
-                <Backpack className="w-4 h-4" aria-hidden="true" />
-                <span>Créer mon premier kit</span>
-              </button>
-            </div>
-          </section>
-        )}
-
-        {/* Carte d'entrée vers le Kit Studio 3D */}
-        <section
-          aria-label="Atelier Kit Studio"
-          className="p-4 rounded-3xl bg-[var(--hub-surface-card)] border border-[var(--hub-border)] flex items-center justify-between gap-4"
+      {/* ── 3. Hotspots Tactiles sur le Décor ── */}
+      <div className="camp-locations" aria-label="Objets du camp">
+        {/* 🎒 Mon kit */}
+        <button
+          type="button"
+          data-testid="hub-hotspot-bag"
+          className="hotspot hotspot-bag"
+          onClick={() => {
+            setFocus('bag');
+            handleEnterStudio(DEFAULT_STUDIO_DRAWER);
+          }}
         >
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold tracking-wider uppercase text-[var(--hub-secondary)]">
-              Atelier d’équipement
-            </span>
-            <h2 className="text-base font-bold text-[var(--hub-primary)]">
-              Kit Studio 3D & Sac à dos
-            </h2>
-            <p className="text-xs text-[var(--hub-text-secondary)]">
-              Organisation par poches, pesée honnête g / kg, personnalisation et insignes.
+          <span className="hotspot-icon">
+            <Backpack className="w-4 h-4" aria-hidden="true" />
+          </span>
+          <span>Mon kit</span>
+        </button>
+
+        {/* 🗺️ Itinéraire */}
+        <button
+          type="button"
+          data-testid="hub-hotspot-route"
+          className="hotspot hotspot-route"
+          onClick={() => {
+            setFocus('route');
+            const routeDef = hubSectionRegistry.find(
+              (s) => s.id === 'itinerary' || s.segment === 'itineraire'
+            );
+            if (routeDef) handleOpenRegistryEntry(routeDef);
+          }}
+        >
+          <span className="hotspot-icon">
+            <Compass className="w-4 h-4" aria-hidden="true" />
+          </span>
+          <span>Itinéraire</span>
+        </button>
+
+        {/* 👥 Le groupe */}
+        <button
+          type="button"
+          data-testid="hub-hotspot-group"
+          className="hotspot hotspot-tents"
+          onClick={() => {
+            setFocus('group');
+            const groupDef = hubSectionRegistry.find((s) => s.id === 'groupe');
+            if (groupDef) handleOpenRegistryEntry(groupDef);
+          }}
+        >
+          <span className="hotspot-icon">
+            <Users className="w-4 h-4" aria-hidden="true" />
+          </span>
+          <span>Le groupe</span>
+        </button>
+
+        {/* 🔥 Mon départ */}
+        <button
+          type="button"
+          data-testid="hub-hotspot-fire"
+          className="hotspot hotspot-fire"
+          onClick={() => {
+            setFocus('prep');
+            const prepDef = hubSectionRegistry.find(
+              (s) => s.id === 'depart' || s.id === 'preparation'
+            );
+            if (prepDef) handleOpenRegistryEntry(prepDef);
+          }}
+        >
+          <span className="hotspot-icon">
+            <Flame className="w-4 h-4" aria-hidden="true" />
+          </span>
+          <span>Mon départ</span>
+        </button>
+
+        {/* 🔄 Recentrer la scène */}
+        <button
+          type="button"
+          className="scene-reset"
+          aria-label="Recentrer le camp"
+          onClick={() => {
+            setOffset({ x: 0, y: 0 });
+            setFocus('camp');
+          }}
+        >
+          <RotateCw className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+
+      {/* ── 4. Volet Inférieur Coulissant Liquid Glass (Modules & Synthèse) ── */}
+      <div className="camp-bottom-card">
+        <button
+          type="button"
+          className="camp-panel-grip"
+          aria-label={modulesOpen ? 'Replier les modules' : 'Déplier les modules'}
+          onClick={() => setModulesOpen((prev) => !prev)}
+        >
+          <span />
+        </button>
+
+        <div className="camp-summary-row">
+          <div className="camp-summary-copy">
+            <h3>{effectiveTitle}</h3>
+            <p>
+              {isEmptyProject
+                ? 'Aucun projet actif — commencez par composer votre sac'
+                : `${effectiveCounts.items ?? 0} objets en sac · ${effectiveCounts.alerts ?? 0} alerte${(effectiveCounts.alerts ?? 0) > 1 ? 's' : ''}`}
             </p>
           </div>
           <button
             type="button"
             data-testid="hub-enter-studio-cta"
             onClick={() => handleEnterStudio()}
-            className="min-h-[44px] min-w-[44px] px-4 rounded-2xl bg-[var(--hub-primary)] text-[var(--hub-text-inverted)] text-xs font-semibold flex items-center gap-2 active:scale-95 transition-transform shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--hub-action)]"
+            className="camp-summary-badge"
           >
-            <Sliders className="w-4 h-4" aria-hidden="true" />
-            <span>Ouvrir</span>
+            Atelier 3D →
           </button>
-        </section>
+        </div>
 
-        {/* Grille des 19 entrées canoniques de hubSectionRegistry (B-01) */}
-        <section aria-label="Sections du Camp de base" className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--hub-text-muted)]">
-              Modules du Camp de base
-            </h2>
-            <span className="text-xs text-[var(--hub-text-subtle)]">
-              {hubSectionRegistry.length} sections
-            </span>
+        {/* Bandeau discret de reprise < 24h (B-03 / B-04) */}
+        <HubResumeBanner adventure={adventure} />
+
+        {/* État d'erreur réseau non bloquant avec bouton Réessayer (A-07) */}
+        {syncError && (
+          <div
+            data-testid="hub-sync-error"
+            className="my-1.5 p-2 rounded-xl bg-amber-950/60 border border-amber-600/40 text-xs text-amber-100 flex items-center justify-between"
+          >
+            <span>{syncError}</span>
+            <button
+              type="button"
+              className="px-2 py-1 rounded-lg bg-amber-600 text-white font-bold text-[11px]"
+              onClick={() => {
+                void refreshCampContext();
+              }}
+            >
+              Réessayer
+            </button>
           </div>
+        )}
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+        {/* État de projet vide */}
+        {isEmptyProject && (
+          <div
+            data-testid="hub-empty-project-state"
+            className="my-1.5 p-3 rounded-2xl bg-white/70 border border-[#122F26]/10 space-y-2"
+          >
+            <p className="text-xs text-[#122F26] font-medium">
+              Préparez votre premier sac dans le Kit Studio ou planifiez une aventure.
+            </p>
+            <div className="flex gap-2">
+              <Link
+                href={HUB_NEW_HREF}
+                data-testid="hub-empty-create-activity"
+                className="px-3 py-1.5 rounded-xl bg-[#2D7A58] text-white text-xs font-semibold inline-flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Créer</span>
+              </Link>
+              <button
+                type="button"
+                data-testid="hub-empty-open-studio"
+                onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
+                className="px-3 py-1.5 rounded-xl bg-white text-[#122F26] border border-[#122F26]/20 text-xs font-semibold inline-flex items-center gap-1"
+              >
+                <Backpack className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Premier kit</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Accordéon des 19 modules canoniques */}
+        <button
+          type="button"
+          className="camp-modules-toggle"
+          onClick={() => setModulesOpen((prev) => !prev)}
+        >
+          <span>{modulesOpen ? 'Masquer les 19 modules' : 'Tous les modules du camp (19)'}</span>
+          {modulesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+        </button>
+
+        {modulesOpen && (
+          <div className="camp-modules-grid">
             {hubSectionRegistry.map((def) => {
               const IconComp = def.icon;
               const badgeCount = def.counter(effectiveCounts);
@@ -775,58 +900,35 @@ export function HubCampShell({
                   data-section-id={def.id}
                   aria-current={isSelected ? 'true' : undefined}
                   onClick={() => handleOpenRegistryEntry(def)}
-                  className={`min-h-[60px] min-w-[44px] p-3 rounded-2xl border transition-colors flex items-center gap-3 text-left group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--hub-action)] ${
-                    isSelected
-                      ? 'bg-[var(--hub-primary-subtle)] border-[var(--hub-primary)]'
-                      : 'bg-[var(--hub-surface-card)] border-[var(--hub-border)] hover:border-[var(--hub-border-strong)] active:bg-[var(--hub-surface-muted)]'
-                  }`}
+                  className="camp-module-pill"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-[var(--hub-surface)] flex items-center justify-center shrink-0 text-[var(--hub-action)]">
-                    <IconComp className="w-5 h-5" aria-hidden="true" />
+                  <div className="camp-module-icon">
+                    <IconComp className="w-4 h-4" aria-hidden="true" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-1.5">
-                      <span className="text-xs font-bold text-[var(--hub-text-primary)] truncate">
-                        {def.label}
-                      </span>
-                      {badgeCount !== null && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-[var(--hub-surface)] text-[10px] font-bold text-[var(--hub-text-secondary)] shrink-0">
-                          {badgeCount}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-[var(--hub-text-muted)] truncate">
-                      {def.id === 'preparation'
-                        ? 'Vers Compas'
-                        : def.segment === ''
-                          ? 'Racine du Camp'
-                          : describeNatureGroup(def)}
-                    </div>
-                  </div>
+                  <span className="camp-module-name">{def.label}</span>
+                  {badgeCount !== null && (
+                    <span className="camp-module-badge">{badgeCount}</span>
+                  )}
                 </button>
               );
             })}
+
+            {/* Carte intégrée dans les modules */}
+            <div className="col-span-2 pt-2">
+              <div className="flex items-center justify-between px-1 pb-1">
+                <span className="text-[11px] font-bold text-[#3B5246] flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-[#2D7A58]" aria-hidden="true" />
+                  Tracé de l’expédition
+                </span>
+                <span className="text-[10px] text-[#586960]">MapLibre</span>
+              </div>
+              <CampMap routeCoords={effectiveRouteCoords} title={effectiveTitle} />
+            </div>
           </div>
-        </section>
+        )}
+      </div>
 
-        {/* ── 3. Carte du Camp de base en bas de /hub sous WebGLArbiter (B-08 / C-04 / C-05) ── */}
-        <section aria-label="Carte de l’expédition" className="space-y-2.5 pt-1">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--hub-text-muted)] flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[var(--hub-action)]" aria-hidden="true" />
-              <span>Tracé de l’expédition</span>
-            </h2>
-            <span className="text-xs text-[var(--hub-text-subtle)]">MapLibre GL</span>
-          </div>
-
-          <CampMap
-            routeCoords={effectiveRouteCoords}
-            title={effectiveTitle}
-          />
-        </section>
-      </main>
-
-      {/* ── 4. Tiroir Actif (DrawerShell) ── */}
+      {/* ── 5. Tiroir Actif (DrawerShell) ── */}
       {activeDef && (
         <div
           data-testid="hub-active-drawer"
@@ -834,31 +936,30 @@ export function HubCampShell({
           role="dialog"
           aria-modal="true"
           aria-label={activeDef.label}
-          className="hub-camp-drawer-overlay fixed inset-0 z-50 flex flex-col justify-end bg-[var(--hub-backdrop-scrim)] backdrop-blur-sm"
+          className="hub-camp-drawer-overlay fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-md"
           style={{ overscrollBehavior: 'contain' }}
         >
           <div
-            className="w-full max-h-[90dvh] flex flex-col bg-[var(--hub-surface-card)] rounded-t-[32px] border-t border-[var(--hub-border)] overflow-hidden"
+            className="w-full max-h-[90dvh] flex flex-col bg-[#F7F3E9] rounded-t-[32px] border-t border-white/60 overflow-hidden shadow-2xl"
             style={{
-              boxShadow: 'var(--hub-sheet-shadow)',
               paddingBottom:
-                'calc(max(16px, var(--hub-safe-bottom)) + var(--keyboard-inset, 0px))',
+                'calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--keyboard-inset, 0px))',
             }}
           >
-            <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-[var(--hub-border-subtle)]">
-              <span className="text-xs font-bold text-[var(--hub-text-primary)] truncate">
+            <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-[#122F26]/10">
+              <span className="text-sm font-bold text-[#122F26] truncate">
                 {activeDef.label}
               </span>
               <div
                 aria-hidden="true"
-                className="w-10 h-1.5 rounded-full bg-[var(--hub-border-strong)]"
+                className="w-10 h-1.5 rounded-full bg-[#122F26]/20"
               />
               <button
                 type="button"
                 data-testid="hub-close-drawer"
                 onClick={handleCloseDrawer}
                 aria-label="Fermer le tiroir"
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-[var(--hub-text-muted)] hover:text-[var(--hub-text-primary)] hover:bg-[var(--hub-surface)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-[#122F26]/70 hover:text-[#122F26] hover:bg-[#122F26]/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#2D7A58]"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>
