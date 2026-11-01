@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
 import { warmFreedomReels } from '@/features/community/reels/freedomReelsService';
+import { evaluateCurrentPrefetchPolicy } from '@/lib/perf/networkPrefs';
 import {
   DESTINATIONS,
   getActiveDestinationId,
@@ -98,7 +99,7 @@ export function FloatingLiquidTabBar() {
   }, []);
 
   // Freedom (double-clic sur Communauté) doit s'ouvrir instantanément : on
-  // précharge la route et la liste des reels dès que la barre est affichée.
+  // précharge la route et la liste des reels (au repos si le réseau le permet, sinon au premier appui).
   const warmFreedom = useCallback(() => {
     try {
       router.prefetch('/communaute/reels');
@@ -111,7 +112,14 @@ export function FloatingLiquidTabBar() {
       requestIdleCallback?: (cb: () => void) => number;
       cancelIdleCallback?: (id: number) => void;
     };
-    const handle = w.requestIdleCallback ? w.requestIdleCallback(warmFreedom) : window.setTimeout(warmFreedom, 1200);
+    // Au repos, seulement si la politique réseau autorise le préchargement de données (4G connue, sans
+    // économie de données) : les vidéos mises en mémoire (≈ 1,4 Mo) volaient sinon la bande passante de la
+    // page en cours, sur toutes les pages. Ailleurs, l'appui sur Communauté (premier tap du double tap qui
+    // ouvre Freedom) déclenche le même préchargement, à l'intention de la personne.
+    const warmIfAllowed = () => {
+      if (evaluateCurrentPrefetchPolicy().allowData) warmFreedom();
+    };
+    const handle = w.requestIdleCallback ? w.requestIdleCallback(warmIfAllowed) : window.setTimeout(warmIfAllowed, 1200);
     return () => {
       if (w.cancelIdleCallback && w.requestIdleCallback) w.cancelIdleCallback(handle);
       else window.clearTimeout(handle);
