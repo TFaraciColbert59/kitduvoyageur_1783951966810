@@ -8,6 +8,8 @@
  * réelle et conserve en IndexedDB les données de la zone (repères, itinéraires).
  */
 
+import { EXPLORER_SW_PATH, EXPLORER_SW_SCOPE } from '@/lib/pwa/serviceWorkerScopes';
+
 export interface ZoneBounds {
   west: number;
   south: number;
@@ -64,7 +66,8 @@ async function getZone<T>(key: string): Promise<T | null> {
 export async function registerOfflineWorker(): Promise<ServiceWorkerRegistration | null> {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return null;
   try {
-    await navigator.serviceWorker.register('/explorer-v2-sw.js', { scope: '/' });
+    // Portée propre : sur `/`, il remplaçait le worker de l'app et la page se rechargeait en boucle.
+    await navigator.serviceWorker.register(EXPLORER_SW_PATH, { scope: EXPLORER_SW_SCOPE });
     // `ready` attend l'activation : sans cela, le premier téléchargement part
     // avant que le worker ne contrôle la page (constaté en recette).
     return await Promise.race([

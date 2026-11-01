@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { isNative } from '@/lib/native/platform';
+import { APP_SW_PATH, shouldReloadOnControllerChange } from '@/lib/pwa/serviceWorkerScopes';
 
 /**
  * Enregistrement du service worker — production, web uniquement.
@@ -18,7 +19,9 @@ export default function ServiceWorkerRegistration() {
 
     let reloading = false;
     const onControllerChange = () => {
-      if (reloading) return;
+      // Seule une nouvelle version du worker de l'app justifie un rechargement : le worker
+      // de l'Explorer qui prend la main sur ses pages ne doit pas relancer la page.
+      if (reloading || !shouldReloadOnControllerChange(navigator.serviceWorker.controller?.scriptURL)) return;
       reloading = true;
       window.location.reload();
     };
@@ -26,7 +29,7 @@ export default function ServiceWorkerRegistration() {
 
     const register = () => {
       navigator.serviceWorker
-        .register('/sw.js?v=22', { updateViaCache: 'none' })
+        .register(`${APP_SW_PATH}?v=22`, { updateViaCache: 'none' })
         .then((registration) => registration.update())
         .then(
           (registration) => {
