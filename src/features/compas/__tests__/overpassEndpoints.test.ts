@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -30,7 +30,9 @@ function sourceFiles(): string[] {
     .map((f) => f.replace(/\\/g, '/'))
     .filter((f) => /\.(?:ts|tsx|js|jsx|mjs|cjs|json)$/.test(f))
     .filter((f) => !/(?:^|\/)__tests__\//.test(f) && !/\.(?:test|spec)\.[a-z]+$/.test(f))
-    .map((f) => path.join(root, f));
+    .map((f) => path.join(root, f))
+    // Un dossier de route peut porter une extension (`src/app/sw.js/route.ts`) : ne lire que des fichiers.
+    .filter((f) => statSync(f).isFile());
 }
 
 /** Tout nom d'hôte qui désigne une instance Overpass (ou un miroir connu), dans le code comme dans les commentaires. */
