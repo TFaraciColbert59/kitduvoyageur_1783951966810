@@ -809,7 +809,7 @@ export function KitStudioView({
       {loadState === 'ready' && activeDrawer && (
         <div
           data-testid="studio-drawer-backdrop"
-          className="hub-camp-drawer-overlay"
+          className="hub-camp-drawer-overlay kit-studio-drawer-backdrop"
           onClick={handleCloseDrawer}
         >
           <div
@@ -825,7 +825,7 @@ export function KitStudioView({
             onPointerCancel={() => {
               drawerDragActiveRef.current = false;
             }}
-            className="hub-camp-drawer-sheet h-[72dvh] max-h-[72dvh] flex flex-col"
+            className="hub-camp-drawer-sheet h-[56dvh] max-h-[56dvh] flex flex-col"
             style={{
               paddingBottom: 'max(14px, env(safe-area-inset-bottom, 0px))',
             }}

@@ -252,16 +252,19 @@
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 20px;
-  min-height: 46px;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
   border-radius: 9999px;
   /* Recette Apple Swift iOS 27 : ultraThinMaterial + specular highlight */
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.48),
-    rgba(255, 255, 255, 0.22) 55%,
-    rgba(255, 255, 255, 0.32)
+    rgba(255, 255, 255, 0.52),
+    rgba(255, 255, 255, 0.24) 55%,
+    rgba(255, 255, 255, 0.36)
   ) !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.08) !important;
   backdrop-filter: blur(28px) saturate(190%) brightness(1.08) !important;
@@ -271,7 +274,7 @@
     inset 0 -1px 1px rgba(255, 255, 255, 0.45),
     inset 1px 0 1px rgba(255, 255, 255, 0.25),
     inset -1px 0 1px rgba(255, 255, 255, 0.25),
-    0 10px 28px rgba(9, 25, 18, 0.22) !important;
+    0 8px 22px rgba(9, 25, 18, 0.2) !important;
   color: #172B24 !important;
   cursor: pointer;
   user-select: none;
@@ -281,18 +284,27 @@
 
 .camp-floating-pill:hover,
 .camp-floating-pill:active {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-2px) scale(1.06);
   border: none !important;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.62),
-    rgba(255, 255, 255, 0.34) 55%,
-    rgba(255, 255, 255, 0.44)
+    rgba(255, 255, 255, 0.68),
+    rgba(255, 255, 255, 0.38) 55%,
+    rgba(255, 255, 255, 0.48)
   ) !important;
   box-shadow:
     inset 0 1.5px 1px rgba(255, 255, 255, 0.98),
     inset 0 -1.5px 2px rgba(255, 255, 255, 0.6),
-    0 14px 34px rgba(9, 25, 18, 0.28) !important;
+    0 10px 26px rgba(9, 25, 18, 0.26) !important;
+}
+
+.camp-pill-dots {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  color: #172B24 !important;
+  margin-top: -4px;
 }
 
 .camp-pill-icon-badge {
@@ -442,6 +454,13 @@
   -webkit-backdrop-filter: blur(14px) !important;
   overscroll-behavior: contain;
   transition: opacity 0.28s ease;
+}
+
+/* Dans Kit Studio : le sac 3D reste net et visible au-dessus du tiroir (KIT_STUDIO_SPEC §3) */
+.hub-camp-drawer-overlay.kit-studio-drawer-backdrop {
+  background: rgba(10, 20, 14, 0.12) !important;
+  backdrop-filter: blur(1.5px) !important;
+  -webkit-backdrop-filter: blur(1.5px) !important;
 }
 
 /* Disparition fluide de la barre de navigation basse quand un tiroir ou Kit Studio est ouvert */

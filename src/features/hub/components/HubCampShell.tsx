@@ -22,7 +22,6 @@ import {
   Mountain,
   Package,
   Plus,
-  RotateCw,
   Shield,
   Sliders,
   Users,
@@ -860,44 +859,6 @@ export function HubCampShell({
         />
       </div>
 
-      {/* ── 2. En-tête Flottant Liquid Glass ── */}
-      <header className="camp-header">
-        <button
-          type="button"
-          className="camp-identity"
-          onClick={() => {
-            const overviewDef =
-              hubSectionRegistry.find((s) => s.segment === '') ?? hubSectionRegistry[0];
-            handleOpenRegistryEntry(overviewDef);
-          }}
-          aria-label="Camp de base"
-        >
-          <span className="camp-identity-icon">
-            <Mountain className="w-5 h-5" aria-hidden="true" />
-          </span>
-          <span>
-            <strong>{effectiveTitle}</strong>
-            <small>
-              {trip?.destination ||
-                (adventure?.nature === 'collectif' ? 'Équipage actif' : 'Camp de Base')}
-            </small>
-          </span>
-        </button>
-
-        <div className="camp-header-actions">
-          <button
-            type="button"
-            data-testid="hub-enter-studio-header"
-            onClick={() => handleEnterStudio()}
-            className="camp-header-btn camp-header-btn-studio"
-            aria-label="Ouvrir Kit Studio 3D"
-          >
-            <Package className="w-4 h-4" aria-hidden="true" />
-            <span>Kit Studio</span>
-          </button>
-        </div>
-      </header>
-
       {/* ── 3. Zones Tactiles Directes sur le Décor Alpin (0 pilule polluante) ── */}
       <div className="camp-locations" aria-label="Objets du camp">
         {hubSectionRegistry.map((def, idx) => {
@@ -932,22 +893,9 @@ export function HubCampShell({
             </button>
           );
         })}
-
-        {/* 🔄 Recentrer la scène */}
-        <button
-          type="button"
-          className="scene-reset"
-          aria-label="Recentrer le camp"
-          onClick={() => {
-            setOffset({ x: 0, y: 0 });
-            setFocus('camp');
-          }}
-        >
-          <RotateCw className="w-4 h-4" aria-hidden="true" />
-        </button>
       </div>
 
-      {/* ── 4. Pilule Légère Flottante au-dessus de la BottomBar (Option 3 épurée) ── */}
+      {/* ── 4. Pilule Légère Flottante au-dessus de la BottomBar (Option 3 : « ... » uniquement) ── */}
       <div className="camp-floating-pill-container" data-testid="hub-camp-bottom-panel">
         <button
           type="button"
@@ -957,19 +905,11 @@ export function HubCampShell({
             handleOpenRegistryEntry(departDef);
           }}
           className="camp-floating-pill"
-          aria-label="Préparer mon départ"
+          aria-label="Actions du camp"
         >
-          <span className="camp-pill-icon-badge">
-            <Flame className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="camp-pill-dots" aria-hidden="true">
+            ...
           </span>
-          <span className="camp-pill-content">
-            <strong className="camp-pill-title">Préparer mon départ</strong>
-            <span className="camp-pill-separator">•</span>
-            <span className="camp-pill-status">
-              {pendingPrepCount > 0 ? `${pendingPrepCount} à vérifier` : 'Tout est prêt'}
-            </span>
-          </span>
-          <ChevronRight className="w-4 h-4 camp-pill-chevron" aria-hidden="true" />
         </button>
       </div>
 
