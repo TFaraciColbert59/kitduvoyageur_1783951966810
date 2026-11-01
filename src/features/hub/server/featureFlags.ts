@@ -26,6 +26,12 @@ async function readLocalHubCampOverride(): Promise<boolean | undefined> {
   if (process.env.VERCEL_ENV === 'production') {
     return undefined;
   }
+  // Essai sur appareil via un serveur local (`LKDV_LOCAL_HUB_CAMP=1 next start`) : la
+  // WebView native n'a pas de moyen de poser le cookie ci-dessous. Opt-in explicite,
+  // inopérant tant que la variable n'est pas définie et jamais honoré en production Vercel.
+  if (process.env.LKDV_LOCAL_HUB_CAMP === '1') return true;
+  if (process.env.LKDV_LOCAL_HUB_CAMP === '0') return false;
+
   try {
     const headerStore = await headers();
     const host = (headerStore.get('host') || '').split(':')[0];
