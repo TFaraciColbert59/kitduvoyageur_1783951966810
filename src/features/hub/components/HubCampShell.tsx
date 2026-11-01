@@ -199,19 +199,19 @@ interface CampPlacement {
 
 const CAMP_HOTSPOT_POSITIONS: readonly CampPlacement[] = [
   /* 0: inventaire   */ { x: 22, y: 74, w: 90, h: 80 },
-  /* 1: kit (sac)    */ { x: 38, y: 52, w: 110, h: 120, testId: 'hub-hotspot-bag' },
-  /* 2: preparation  */ { x: 36, y: 40, w: 80, h: 75 },
-  /* 3: depart       */ { x: 14, y: 52, w: 80, h: 75 },
-  /* 4: disponibilite*/ { x: 50, y: 74, w: 85, h: 75 },
+  /* 1: kit (sac)    */ { x: 40, y: 54, w: 120, h: 120, testId: 'hub-hotspot-bag' },
+  /* 2: preparation  */ { x: 36, y: 38, w: 80, h: 75 },
+  /* 3: depart       */ { x: 12, y: 52, w: 80, h: 75 },
+  /* 4: disponibilite*/ { x: 52, y: 74, w: 85, h: 75 },
   /* 5: alertes      */ { x: 18, y: 14, w: 95, h: 80 },
-  /* 6: oublis       */ { x: 42, y: 48, w: 75, h: 75 },
+  /* 6: oublis       */ { x: 26, y: 48, w: 75, h: 75 },
   /* 7: overview     */ { x: 22, y: 25, w: 90, h: 75 },
   /* 8: itinerary    */ { x: 80, y: 23, w: 95, h: 85, testId: 'hub-hotspot-route' },
-  /* 9: gear         */ { x: 54, y: 56, w: 85, h: 75 },
-  /* 10: groupe (feu)*/ { x: 14, y: 38, w: 95, h: 90, testId: 'hub-hotspot-fire' },
+  /* 9: gear         */ { x: 44, y: 64, w: 90, h: 80 },
+  /* 10: groupe (feu)*/ { x: 14, y: 36, w: 95, h: 90, testId: 'hub-hotspot-fire' },
   /* 11: budget (table)*/ { x: 78, y: 68, w: 95, h: 85 },
   /* 12: docs (carte)*/ { x: 78, y: 56, w: 85, h: 75 },
-  /* 13: checklist   */ { x: 14, y: 64, w: 80, h: 75 },
+  /* 13: checklist   */ { x: 12, y: 66, w: 80, h: 75 },
   /* 14: safety      */ { x: 50, y: 13, w: 100, h: 80 },
   /* 15: journal     */ { x: 64, y: 38, w: 80, h: 75 },
   /* 16: export      */ { x: 52, y: 25, w: 80, h: 75 },
@@ -888,7 +888,7 @@ export function HubCampShell({
           <button
             type="button"
             data-testid="hub-enter-studio-header"
-            onClick={() => handleEnterStudio(DEFAULT_STUDIO_DRAWER)}
+            onClick={() => handleEnterStudio()}
             className="camp-header-btn camp-header-btn-studio"
             aria-label="Ouvrir Kit Studio 3D"
           >
@@ -920,8 +920,8 @@ export function HubCampShell({
                 height: `${height}px`,
               }}
               onClick={() => {
-                if (def.id === 'kit') {
-                  handleEnterStudio(DEFAULT_STUDIO_DRAWER);
+                if (def.id === 'kit' || def.id === 'gear') {
+                  handleEnterStudio();
                 } else {
                   handleOpenRegistryEntry(def);
                 }

@@ -542,7 +542,7 @@ export function KitStudioView({
       data-view-mode={effectiveListMode ? 'list' : '3d'}
       data-readonly={isReadOnlyPeer ? 'true' : 'false'}
       data-lighting-preset={autoAmbience ? lightingPreset : 'atelier-neutre'}
-      className="fixed inset-0 z-40 flex flex-col bg-[var(--hub-bg)] text-[var(--hub-text-primary)]"
+      className="fixed inset-0 z-50 flex flex-col bg-[var(--hub-bg)] text-[var(--hub-text-primary)]"
       style={{
         paddingTop: 'max(10px, env(safe-area-inset-top, 0px))',
         paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
@@ -555,7 +555,7 @@ export function KitStudioView({
         style={{
           background: 'var(--hub-studio-veil-bg)',
           opacity: veilVisible ? 1 : 0,
-          transitionDuration: 'var(--hub-veil-duration)',
+          transitionDuration: 'var(--hub-veil-duration, 180ms)',
         }}
       />
 
@@ -575,7 +575,7 @@ export function KitStudioView({
           <div className="min-w-0">
             <h1
               data-testid="studio-kit-title"
-              className="text-sm font-bold text-[var(--hub-primary)] truncate"
+              className="text-sm font-bold text-[var(--hub-text-primary)] truncate"
             >
               {isReadOnlyPeer
                 ? `${inspectedMember.kit.name} (${inspectedMember.memberName})`
@@ -807,16 +807,15 @@ export function KitStudioView({
 
       {/* 4. Feuille du tiroir actif du Studio (Liquid Glass iOS 27 .lkdv-seal-drawer) */}
       {loadState === 'ready' && activeDrawer && (
-        <>
-          <div
-            data-testid="studio-drawer-backdrop"
-            className="hub-camp-drawer-overlay"
-            onClick={handleCloseDrawer}
-            aria-hidden="true"
-          />
+        <div
+          data-testid="studio-drawer-backdrop"
+          className="hub-camp-drawer-overlay"
+          onClick={handleCloseDrawer}
+        >
           <div
             data-testid={`studio-active-drawer-${activeDrawer}`}
             data-drawer-sheet="true"
+            onClick={(e) => e.stopPropagation()}
             onPointerDown={() => {
               drawerDragActiveRef.current = true;
             }}
@@ -826,7 +825,7 @@ export function KitStudioView({
             onPointerCancel={() => {
               drawerDragActiveRef.current = false;
             }}
-            className="hub-camp-drawer-sheet fixed inset-x-0 bottom-0 z-50 h-[72dvh] max-h-[72dvh] flex flex-col"
+            className="hub-camp-drawer-sheet h-[72dvh] max-h-[72dvh] flex flex-col"
             style={{
               paddingBottom: 'max(14px, env(safe-area-inset-bottom, 0px))',
             }}
@@ -939,8 +938,8 @@ export function KitStudioView({
             )}
           </div>
         </div>
-        </>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
 }

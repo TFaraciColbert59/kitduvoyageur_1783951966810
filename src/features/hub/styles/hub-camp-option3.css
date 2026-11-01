@@ -190,6 +190,11 @@
   z-index: 8;
 }
 
+.camp-touch-target[data-section-id="kit"],
+.camp-touch-target[data-section-id="gear"] {
+  z-index: 12;
+}
+
 .camp-touch-ripple {
   width: 100%;
   height: 100%;
@@ -260,13 +265,12 @@
   ) !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.08) !important;
   backdrop-filter: blur(28px) saturate(190%) brightness(1.08) !important;
-  border: 0.75px solid rgba(255, 255, 255, 0.92) !important;
+  border: none !important;
   box-shadow:
-    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.95),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.5),
-    inset 1px 0 1px rgba(255, 255, 255, 0.3),
-    inset -1px 0 1px rgba(255, 255, 255, 0.3),
-    0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    inset 1px 0 1px rgba(255, 255, 255, 0.25),
+    inset -1px 0 1px rgba(255, 255, 255, 0.25),
     0 10px 28px rgba(9, 25, 18, 0.22) !important;
   color: #172B24 !important;
   cursor: pointer;
@@ -278,6 +282,7 @@
 .camp-floating-pill:hover,
 .camp-floating-pill:active {
   transform: translateY(-2px) scale(1.02);
+  border: none !important;
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.62),
@@ -439,7 +444,8 @@
   transition: opacity 0.28s ease;
 }
 
-/* Disparition fluide de la barre de navigation basse quand un tiroir est ouvert */
+/* Disparition fluide de la barre de navigation basse quand un tiroir ou Kit Studio est ouvert */
+body:has([data-testid="kit-studio-view"]) .lkdv-floating-tabbar,
 body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   opacity: 0 !important;
   pointer-events: none !important;
@@ -652,7 +658,7 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell[data-secondary="true"] .lkdv-drawer-viewport {
-  padding-bottom: 42px !important;
+  padding-bottom: 64px !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-pane {
@@ -668,7 +674,7 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary {
   position: absolute !important;
   right: 16px !important;
-  bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  bottom: calc(30px + env(safe-area-inset-bottom, 0px)) !important;
   z-index: 50 !important;
 }
 
