@@ -149,6 +149,39 @@ export default function WebVitalsReporter() {
     return () => cancelAnimationFrame(frame);
   }, [recordExperience]);
 
+  // Repères de la carte Explorer (MapStage pose `map:first-paint` et `map:interactive`).
+  // Valeur = ms depuis le début de la navigation du document, donc seulement pour la
+  // page chargée à froid : une arrivée par navigation client ne serait pas comparable
+  // (LKDV_NAVIGATION la couvre). Une seule mesure par nom et par chargement.
+  const hardLoadPath = useRef<string | null>(null);
+  const mapRecorded = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (typeof PerformanceObserver === "undefined") return;
+    if (hardLoadPath.current === null) hardLoadPath.current = window.location.pathname;
+    const metricNames: Record<string, string> = {
+      "map:first-paint": "MAP_FIRST_PAINT",
+      "map:interactive": "MAP_INTERACTIVE",
+    };
+    let observer: PerformanceObserver | null = null;
+    try {
+      observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const name = metricNames[entry.name];
+          if (!name || mapRecorded.current.has(name)) continue;
+          const route = (entry as PerformanceMark).detail?.route;
+          if (typeof route !== "string" || route !== hardLoadPath.current) continue;
+          mapRecorded.current.add(name);
+          recordExperience(name, entry.startTime, route);
+        }
+      });
+      // `buffered` : les repères posés avant l'hydratation de ce composant sont relus.
+      observer.observe({ type: "mark", buffered: true });
+    } catch {
+      // Type d'entrée non pris en charge : aucune mesure de carte, rien d'autre ne change.
+    }
+    return () => observer?.disconnect();
+  }, [recordExperience]);
+
   const reportVital = useCallback<Parameters<typeof useReportWebVitals>[0]>((metric) => {
     enqueue({
       event: "web_vitals",

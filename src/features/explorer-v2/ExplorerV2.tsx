@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import './map/prefetchMapStage';
 import type { MapPin } from './map/MapStage';
 import { ExplorerSheet } from './sheet/ExplorerSheet';
 import { buildSheetModel } from './sheet/SheetContent';

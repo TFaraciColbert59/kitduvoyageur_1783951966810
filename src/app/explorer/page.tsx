@@ -1,6 +1,8 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
+import { preconnect, preload } from 'react-dom';
+import { OPENFREEMAP_STYLE_URL } from '@/components/map/engine/standardBase';
 import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
 import ExplorerV2 from '@/features/explorer-v2/ExplorerV2';
 import { isSceneName, sceneEnabled } from '@/features/explorer-v2/state/scenes';
@@ -19,6 +21,9 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
+
+/** TileJSON référencé par le style `positron` (`sources.openmaptiles.url`). */
+const OPENFREEMAP_PLANET_TILEJSON_URL = `${new URL(OPENFREEMAP_STYLE_URL).origin}/planet`;
 
 interface ExplorerPageProps {
   searchParams?: Promise<{ v2?: string; scene?: string; lat?: string; lng?: string }>;
@@ -47,6 +52,17 @@ async function approximateCenter(): Promise<[number, number] | null> {
  * arrière se fait par redéploiement du commit précédent.
  */
 export default async function ExplorerPage({ searchParams }: ExplorerPageProps) {
+  // Fond de carte : connexion ouverte et style demandés dès le HTML, avant le JS.
+  // MapLibre charge le style par `fetch` (mode cors, identifiants « same-origin »,
+  // donc sans cookie vers un autre domaine) : `crossOrigin: 'anonymous'` aligne la
+  // précharge sur cette requête pour qu'elle soit réutilisée, et le même mode
+  // aligne la connexion préchauffée sur celle de la requête réelle.
+  preconnect(new URL(OPENFREEMAP_STYLE_URL).origin, { crossOrigin: 'anonymous' });
+  preload(OPENFREEMAP_STYLE_URL, { as: 'fetch', crossOrigin: 'anonymous' });
+  // Deuxième saut obligatoire : le style `positron` pointe vers ce TileJSON (≈19 Ko,
+  // mis en cache une heure) qui donne l'URL versionnée des tuiles vectorielles.
+  preload(OPENFREEMAP_PLANET_TILEJSON_URL, { as: 'fetch', crossOrigin: 'anonymous' });
+
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const flags = await currentFeatureFlags();
   if (!flags.explorer_v2_enabled) {

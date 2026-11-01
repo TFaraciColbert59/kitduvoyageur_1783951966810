@@ -73,6 +73,19 @@ const TERRAIN_SOURCE = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/
 const EMPTY: GeoCollection = { type: 'FeatureCollection', features: [] };
 
 /**
+ * Repères RUM de la carte, lus par `WebVitalsReporter` (MAP_FIRST_PAINT / MAP_INTERACTIVE).
+ * `detail.route` permet d'écarter les navigations client : la valeur rapportée est le temps
+ * depuis le début de la navigation du document.
+ */
+function markMap(name: 'map:first-paint' | 'map:interactive'): void {
+  try {
+    performance.mark(name, { detail: { route: window.location.pathname } });
+  } catch {
+    /* Performance API indisponible : la carte ne dépend jamais de la mesure */
+  }
+}
+
+/**
  * Scène cartographique unique de l'Explorer v2 (02_ARCHITECTURE.md §4).
  * Un seul composant monte la carte ; changer de niveau ne recrée jamais la
  * carte. Projection globe aux niveaux 0–1, mercator à partir du niveau 2.
@@ -147,6 +160,20 @@ export default function MapStage({
     ) {
       (window as unknown as { __xpMap?: MapLibreMap }).__xpMap = map;
     }
+
+    // Premiers pixels : premier rendu GL une fois le style chargé (fond de carte peint).
+    let styleLoaded = false;
+    const onStyleData = () => {
+      styleLoaded = true;
+      map.off('styledata', onStyleData);
+    };
+    const onFirstRender = () => {
+      if (!styleLoaded) return;
+      map.off('render', onFirstRender);
+      markMap('map:first-paint');
+    };
+    map.on('styledata', onStyleData);
+    map.on('render', onFirstRender);
 
     map.on('load', () => {
       map.setProjection({ type: 'globe' });
@@ -315,6 +342,7 @@ export default function MapStage({
 
       setReady(true);
       onReady?.();
+      markMap('map:interactive');
 
       const handleCountry = (event: {
         features?: Array<{ properties?: Record<string, unknown> }>;
