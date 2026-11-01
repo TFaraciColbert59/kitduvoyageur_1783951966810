@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { execSync } from 'node:child_process';
 
 const root = process.cwd();
 const read = (rel: string) => readFileSync(resolve(root, rel), 'utf8');
@@ -71,8 +72,14 @@ describe('Compte iOS 27 Liquid Glass v10 — Refonte Profil, Sélecteurs & Drawe
     expect(runtimeSource).toContain('Paramètres');
   });
 
-  it('9. Invariant strict : strictement 0 modification dans /compas', () => {
-    // Vérification que le plan garantit zéro modification compas
-    expect(true).toBe(true);
+  it('isolation du Compas (aucun import de la refonte du compte)', () => {
+    // Intention de l'invariant d'origine (« 0 modification dans /compas ») : cette refonte ne touche pas
+    // au Compas. Une différence avec origin/main ne le prouve pas (elle échoue pour toute branche qui fait
+    // évoluer le Compas) : on vérifie l'isolation, comme compte-refonte-v17 (remplacé le 01/11/2026).
+    const leaks = execSync(
+      'git grep -l -E "components/compte/|CompteLiquidGlassV8" -- src/app/compas src/features/compas || true',
+      { encoding: 'utf8' },
+    ).trim();
+    expect(leaks).toBe('');
   });
 });

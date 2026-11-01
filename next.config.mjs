@@ -71,6 +71,16 @@ const nextConfig = {
     '*.local',
     '*.local:4028',
   ],
+  // Drapeaux de langue figés au build, y compris absents (valeur vide = langue éteinte) :
+  // une variable NEXT_PUBLIC_ absente n'est pas inlinée par Next, donc le bundler ne
+  // pourrait pas élaguer les dictionnaires des langues éteintes (src/lib/i18n/translations).
+  // Même sémantique que `isLocaleEnabled` (seule la valeur '1' active une langue).
+  env: {
+    NEXT_PUBLIC_I18N_EN_ENABLED: process.env.NEXT_PUBLIC_I18N_EN_ENABLED ?? '',
+    NEXT_PUBLIC_I18N_ES_ENABLED: process.env.NEXT_PUBLIC_I18N_ES_ENABLED ?? '',
+    NEXT_PUBLIC_I18N_DE_ENABLED: process.env.NEXT_PUBLIC_I18N_DE_ENABLED ?? '',
+    NEXT_PUBLIC_I18N_IT_ENABLED: process.env.NEXT_PUBLIC_I18N_IT_ENABLED ?? '',
+  },
   experimental: {
     optimizePackageImports: [
       '@heroicons/react/24/outline',

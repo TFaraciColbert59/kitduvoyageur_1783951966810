@@ -12,7 +12,6 @@ import '@/styles/liquid-capsules.css';
 import '@/styles/drawer-selectors-tabbar.css';
 import '@/styles/community-post-polish.css';
 import '@/styles/app-tint.css';
-import { BootScreen } from '@/components/shell/BootScreen';
 import '@/styles/native-account-tabbar.css';
 import '@/styles/community-social.css';
 import '@/styles/account-glass.css';
@@ -236,9 +235,9 @@ export default async function RootLayout({
             première requête de données ne paie pas le handshake TLS. */}
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} crossOrigin="anonymous" />
         <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} />
-        <link rel="preconnect" href="https://static.rocket.new" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://server.arcgisonline.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://ibasemaps-api.arcgis.com" crossOrigin="anonymous" />
+        {/* Pas de préconnexion vers des hôtes absents du premier affichage (Rocket est bloqué par la CSP,
+            ArcGIS ne sert qu'aux vues satellite / anciennes cartes) : sur mobile, chaque préconnexion
+            inutile coûte DNS + TCP + TLS et concurrence les ressources de la page. */}
 
         {/* JSON-LD Structured Data */}
         <script
@@ -291,7 +290,6 @@ export default async function RootLayout({
       >
         {/* Toile unique LKDV — fond d'écran de toutes les routes */}
         <div className="lkv-app-background" aria-hidden="true" />
-        <BootScreen />
         <LocaleProvider initialLocale={locale}>
         <AuthProvider>
           <ActiveTripProvider initialTrip={activeTrip}>

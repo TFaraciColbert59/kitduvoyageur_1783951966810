@@ -63,7 +63,7 @@ export function CommunityFeedShell({ topBar, stories, bottomBar, children }: Com
       <div className="lkdv-feed-column">
         <header ref={headerRef} className="lkdv-feed-header">{topBar}</header>
         {stories ? (
-          <div ref={storiesRef} className="lkdv-feed-stories">
+          <div ref={storiesRef} className="lkdv-feed-stories lkdv-feed-stories--aligned">
             {stories}
           </div>
         ) : null}

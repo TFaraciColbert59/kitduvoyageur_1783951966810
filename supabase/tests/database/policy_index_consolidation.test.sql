@@ -29,8 +29,11 @@ SELECT is(
   0, '6. Indexes dupliqués supprimés');
 SELECT is(
   (SELECT count(*)::int FROM pg_indexes
-    WHERE schemaname='public' AND indexname IN ('idx_community_posts_author_id','idx_community_posts_created','idx_post_comments_post')),
-  3, '7. Indexes conservés présents');
+    -- idx_community_posts_author_id a été retiré le 22/10 (20261022101000_drawer_profile_index_hygiene),
+    -- couvert par le composite community_posts_author_created_idx (author_id, created_at desc) :
+    -- l'accès par auteur reste indexé.
+    WHERE schemaname='public' AND indexname IN ('community_posts_author_created_idx','idx_community_posts_created','idx_post_comments_post')),
+  3, '7. Indexes conservés présents (accès par auteur couvert par le composite)');
 -- Aucun groupe de policies permissives strictement identique ne subsiste
 -- sur les tables du périmètre communauté.
 SELECT is(

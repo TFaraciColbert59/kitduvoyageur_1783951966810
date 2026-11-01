@@ -3,10 +3,7 @@
 import React, { createContext, useContext, useState, useTransition, useCallback, useEffect, useMemo } from 'react';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  parseStoredAdventure,
-  type ActiveAdventureData,
-} from './adventureSchema';
+import type { ActiveAdventureData } from './adventureSchema';
 import { setActiveAdventureAction, clearActiveAdventureAction } from './activeAdventureServer';
 import {
   adventureKey,
@@ -114,6 +111,7 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
   const [isPending, startTransition] = useTransition();
   const mountedRef = React.useRef(true);
   const initialSelectionResolved = React.useRef(false);
+  const userChoseRef = React.useRef(false);
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
@@ -123,16 +121,23 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
   const sectionsKey = adventureStorageKey(LAST_SECTION_KEY, userId);
 
   // Restauration au montage (le hub s'ouvre sur l'aventure, jamais une liste d'abord).
+  // La validation (zod) est chargée à la demande : elle sort du JS initial de la mise en page racine.
+  // `userChoseRef` empêche la valeur stockée d'écraser un choix fait pendant le chargement.
   useEffect(() => {
-    if (activeKey) {
+    if (!activeKey) return;
+    let cancelled = false;
+    (async () => {
       try {
         const stored = localStorage.getItem(activeKey);
+        if (stored === null) return;
+        const { parseStoredAdventure } = await import('./adventureSchema');
         const parsed = parseStoredAdventure(stored);
-        if (parsed) setActiveAdventureState(parsed);
+        if (parsed && !cancelled && !userChoseRef.current) setActiveAdventureState(parsed);
       } catch {
         /* stockage indisponible */
       }
-    }
+    })();
+    return () => { cancelled = true; };
   }, [activeKey]);
 
   const reloadAdventures = useCallback(async (): Promise<void> => {
@@ -234,6 +239,7 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
   const persist = useCallback(async (data: ActiveAdventureData | null): Promise<boolean> => {
     if (!activeKey || !mountedRef.current) return false;
     initialSelectionResolved.current = true;
+    userChoseRef.current = true;
     const previous = activeAdventureRef.current;
     const applyLocal = (value: ActiveAdventureData | null) => {
       setActiveAdventureState(value);

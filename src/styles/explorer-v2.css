@@ -176,6 +176,15 @@
   border: 0;
 }
 
+/* La scène Explorer est fixe, plein écran et opaque (`.xp-root` : fond --xp-map-bg) dès le
+   premier rendu serveur : la toile LKDV (z-index -1) n'y est jamais visible. On la retire
+   pour ne pas télécharger l'image de fond (≈220 Ko) en concurrence avec MapLibre et le
+   style de la carte. `[data-theme]` exclut l'écran d'erreur, qui n'est pas opaque.
+   Même procédé que `.lkdv-map-page` dans tailwind.css. */
+body:has(.xp-root[data-theme]) .lkv-app-background {
+  display: none !important;
+}
+
 /* ── Carte ─────────────────────────────────────────────────────────────── */
 .xp-root .xp-map {
   position: absolute !important;

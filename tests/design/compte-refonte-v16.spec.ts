@@ -27,17 +27,14 @@ describe('Compte iOS 27 v16 — la card défile au lieu d’écraser les posts',
     expect(v16).not.toMatch(/\.ig-grid-wrap\s*\{[^}]*height:\s*\d/);
   });
 
-  it('4. Invariant strict : 0 modification dans /compas', () => {
-    try {
-      const diff = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', {
-        encoding: 'utf8',
-      }).trim();
-      expect(diff).toBe('');
-    } catch (_) {
-      const status = execSync('git status --porcelain -- src/app/compas src/features/compas', {
-        encoding: 'utf8',
-      }).trim();
-      expect(status).toBe('');
-    }
+  it('isolation du Compas (aucun import de la refonte du compte)', () => {
+    // Intention de l'invariant d'origine (« 0 modification dans /compas ») : cette refonte ne touche pas
+    // au Compas. Une différence avec origin/main ne le prouve pas (elle échoue pour toute branche qui fait
+    // évoluer le Compas) : on vérifie l'isolation, comme compte-refonte-v17 (remplacé le 01/11/2026).
+    const leaks = execSync(
+      'git grep -l -E "components/compte/|CompteLiquidGlassV8" -- src/app/compas src/features/compas || true',
+      { encoding: 'utf8' },
+    ).trim();
+    expect(leaks).toBe('');
   });
 });

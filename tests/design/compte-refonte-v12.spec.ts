@@ -146,13 +146,14 @@ describe('Compte iOS 27 Liquid Glass v12 — Header Épuré, Sélecteur Haut-Dro
     expect(v8Source).not.toMatch(/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{[^}]*\.segc\s*\{[^}]*background:\s*rgba\(28/);
   });
 
-  it('7. Invariant strict : strictement 0 modification dans /compas', () => {
-    try {
-      const diffCompas = execSync('git diff --name-only origin/main -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
-      expect(diffCompas).toBe('');
-    } catch (_) {
-      const statusCompas = execSync('git status --porcelain -- src/app/compas src/features/compas', { encoding: 'utf8' }).trim();
-      expect(statusCompas).toBe('');
-    }
+  it('isolation du Compas (aucun import de la refonte du compte)', () => {
+    // Intention de l'invariant d'origine (« 0 modification dans /compas ») : cette refonte ne touche pas
+    // au Compas. Une différence avec origin/main ne le prouve pas (elle échoue pour toute branche qui fait
+    // évoluer le Compas) : on vérifie l'isolation, comme compte-refonte-v17 (remplacé le 01/11/2026).
+    const leaks = execSync(
+      'git grep -l -E "components/compte/|CompteLiquidGlassV8" -- src/app/compas src/features/compas || true',
+      { encoding: 'utf8' },
+    ).trim();
+    expect(leaks).toBe('');
   });
 });

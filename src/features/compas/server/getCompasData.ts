@@ -22,6 +22,7 @@ import type { TravellerContext } from '../engine/traveller';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
+import { traceStage } from '@/lib/perf/ssrTrace';
 import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
 import {
   getActiveProviderMode,
@@ -480,8 +481,13 @@ async function loadPendingInvites(
   }
 }
 
-export async function getCompasData(): Promise<CompasData | null> {
-  const hub = await getHubAdventureData();
+/** Données du Compas ; chronométrée en entier quand LKDV_TRACE_SSR=1 (`compas.total`). */
+export function getCompasData(): Promise<CompasData | null> {
+  return traceStage('compas.total', getCompasDataUntraced);
+}
+
+async function getCompasDataUntraced(): Promise<CompasData | null> {
+  const hub = await traceStage('compas.hub', () => getHubAdventureData());
   const trip = hub.trip;
   if (!trip) return null;
 
@@ -494,15 +500,17 @@ export async function getCompasData(): Promise<CompasData | null> {
   const locale = await getRequestLocale();
   const units = await getRequestUnits(locale);
 
-  const [inventory, bookings, shop, pendingInvites, profile, traveller] = await Promise.all([
-    loadInventory(client, viewerId),
-    loadBookings(client, trip.id),
-    loadShop(client),
-    loadPendingInvites(client, trip.id),
-    readProfile(client as never, viewerId),
-    // Sa propre devise, par la RLS de la personne ; jamais pour un essai sans compte.
-    readTraveller(client, user?.is_anonymous === true ? null : viewerId),
-  ]);
+  const [inventory, bookings, shop, pendingInvites, profile, traveller] = await traceStage('compas.wave1', () =>
+    Promise.all([
+      traceStage('compas.inventory', () => loadInventory(client, viewerId)),
+      traceStage('compas.bookings', () => loadBookings(client, trip.id)),
+      traceStage('compas.shop', () => loadShop(client)),
+      traceStage('compas.invites', () => loadPendingInvites(client, trip.id)),
+      traceStage('compas.profile', () => readProfile(client as never, viewerId)),
+      // Sa propre devise, par la RLS de la personne ; jamais pour un essai sans compte.
+      traceStage('compas.traveller', () => readTraveller(client, user?.is_anonymous === true ? null : viewerId)),
+    ])
+  );
 
   const members = toMembers(trip, hub.group?.members ?? []);
   const compasMeta = readCompasMeta(trip.metadata);
@@ -615,8 +623,8 @@ export async function getCompasData(): Promise<CompasData | null> {
   // Normales NASA POWER du lieu (gardées 30 jours) : froid, pluie, chaleur au-delà de la prévision.
   const kitPoint = origin ?? anchorPoint(trip.metadata);
   const hasDates = plans.some((d) => d.date != null) || Boolean(trip.start_date);
-  const [weather, routePois, officialAlerts, elevation, fx, climateNormals, placesAltitude, budgetFx] = await Promise.all([
-    getCompasWeather({
+  const [weather, routePois, officialAlerts, elevation, fx, climateNormals, placesAltitude, budgetFx] = await traceStage('compas.wave2', () => Promise.all([
+    traceStage('compas.weather', () => getCompasWeather({
       origin,
       tripDays: plans
         .filter((d) => d.date != null && d.lat != null && d.lon != null)
@@ -627,28 +635,28 @@ export async function getCompasData(): Promise<CompasData | null> {
           lon: d.lon as number,
         })),
       timeZone: zone,
-    }),
-    routeId != null ? loadRoutePois(client, routeId) : Promise.resolve([]),
-    getOfficialAlerts({
+    })),
+    traceStage('compas.routePois', () => (routeId != null ? loadRoutePois(client, routeId) : Promise.resolve([]))),
+    traceStage('compas.alerts', () => getOfficialAlerts({
       point: origin,
       from: trip.start_date ?? null,
       to: trip.end_date ?? trip.start_date ?? null,
       timeZone: zone,
-    }),
+    })),
     // Le tracé ne dépend pas de la météo : le brouillon suffit. Sans tracé réel, le profil des lignes droites
     // entre les étapes ne sert qu'à l'affichage (jamais au kit).
-    getRouteElevation(hasRealTrack ? trackCoords : draft.route.coords),
-    getEurRate(input.trip.budgetCurrency ?? 'EUR'),
-    kitPoint && hasDates ? getClimateNormals(kitPoint.lat, kitPoint.lon) : Promise.resolve(null),
+    traceStage('compas.elevation', () => getRouteElevation(hasRealTrack ? trackCoords : draft.route.coords)),
+    traceStage('compas.eurRate', () => getEurRate(input.trip.budgetCurrency ?? 'EUR')),
+    traceStage('compas.climate', () => (kitPoint && hasDates ? getClimateNormals(kitPoint.lat, kitPoint.lon) : Promise.resolve(null))),
     // Altitude de secours du kit : sans tracé réel, le relief des lieux du voyage (jamais une valeur par pays).
-    pointsAltitudeRange(points.filter((p) => p.kind === 'step')),
-    getBudgetFx({
+    traceStage('compas.placesAltitude', () => pointsAltitudeRange(points.filter((p) => p.kind === 'step'))),
+    traceStage('compas.budgetFx', () => getBudgetFx({
       tripCurrency: input.trip.budgetCurrency ?? 'EUR',
       traveller: traveller.currency,
       // La devise du pays de destination (ISO 4217) : null quand la liste n'en donne pas.
       destination: currencyOfCountry(destinationCountryCode(trip)),
-    }),
-  ]);
+    })),
+  ]));
   input.weather = toWeatherInput(weather);
 
   const estimatedIds = new Set(
