@@ -192,29 +192,31 @@ const OPTION3_MEMBERS = [
 interface CampPlacement {
   x: number;
   y: number;
+  w?: number;
+  h?: number;
   testId?: string;
 }
 
 const CAMP_HOTSPOT_POSITIONS: readonly CampPlacement[] = [
-  /* 0: inventaire   */ { x: 22, y: 72 },
-  /* 1: kit          */ { x: 28, y: 56, testId: 'hub-hotspot-bag' },
-  /* 2: preparation  */ { x: 38, y: 38 },
-  /* 3: depart       */ { x: 14, y: 38, testId: 'hub-hotspot-fire' },
-  /* 4: disponibilite*/ { x: 50, y: 72 },
-  /* 5: alertes      */ { x: 18, y: 14 },
-  /* 6: oublis       */ { x: 40, y: 47 },
-  /* 7: overview     */ { x: 22, y: 25 },
-  /* 8: itinerary    */ { x: 82, y: 24, testId: 'hub-hotspot-route' },
-  /* 9: gear         */ { x: 52, y: 56 },
-  /* 10: groupe      */ { x: 82, y: 36, testId: 'hub-hotspot-group' },
-  /* 11: budget      */ { x: 78, y: 72 },
-  /* 12: docs        */ { x: 78, y: 56 },
-  /* 13: checklist   */ { x: 14, y: 47 },
-  /* 14: safety      */ { x: 50, y: 14 },
-  /* 15: journal     */ { x: 64, y: 38 },
-  /* 16: export      */ { x: 52, y: 25 },
-  /* 17: invitations */ { x: 82, y: 47 },
-  /* 18: voyages-lies*/ { x: 82, y: 14 },
+  /* 0: inventaire   */ { x: 22, y: 74, w: 90, h: 80 },
+  /* 1: kit (sac)    */ { x: 38, y: 52, w: 110, h: 120, testId: 'hub-hotspot-bag' },
+  /* 2: preparation  */ { x: 36, y: 40, w: 80, h: 75 },
+  /* 3: depart       */ { x: 14, y: 52, w: 80, h: 75 },
+  /* 4: disponibilite*/ { x: 50, y: 74, w: 85, h: 75 },
+  /* 5: alertes      */ { x: 18, y: 14, w: 95, h: 80 },
+  /* 6: oublis       */ { x: 42, y: 48, w: 75, h: 75 },
+  /* 7: overview     */ { x: 22, y: 25, w: 90, h: 75 },
+  /* 8: itinerary    */ { x: 80, y: 23, w: 95, h: 85, testId: 'hub-hotspot-route' },
+  /* 9: gear         */ { x: 54, y: 56, w: 85, h: 75 },
+  /* 10: groupe (feu)*/ { x: 14, y: 38, w: 95, h: 90, testId: 'hub-hotspot-fire' },
+  /* 11: budget (table)*/ { x: 78, y: 68, w: 95, h: 85 },
+  /* 12: docs (carte)*/ { x: 78, y: 56, w: 85, h: 75 },
+  /* 13: checklist   */ { x: 14, y: 64, w: 80, h: 75 },
+  /* 14: safety      */ { x: 50, y: 13, w: 100, h: 80 },
+  /* 15: journal     */ { x: 64, y: 38, w: 80, h: 75 },
+  /* 16: export      */ { x: 52, y: 25, w: 80, h: 75 },
+  /* 17: invitations */ { x: 84, y: 35, w: 100, h: 90, testId: 'hub-hotspot-group' },
+  /* 18: voyages-lies*/ { x: 84, y: 14, w: 90, h: 75 },
 ];
 
 export function HubCampShell({
@@ -896,13 +898,13 @@ export function HubCampShell({
         </div>
       </header>
 
-      {/* ── 3. Hotspots Tactiles sur le Décor (19 Modules du Camp) ── */}
+      {/* ── 3. Zones Tactiles Directes sur le Décor Alpin (0 pilule polluante) ── */}
       <div className="camp-locations" aria-label="Objets du camp">
         {hubSectionRegistry.map((def, idx) => {
           const pos = CAMP_HOTSPOT_POSITIONS[idx] ?? { x: 50, y: 50 };
-          const IconComp = def.icon;
-          const count = def.counter(effectiveCounts);
           const testId = pos.testId ?? `hub-hotspot-${def.id}`;
+          const width = pos.w ?? 64;
+          const height = pos.h ?? 64;
 
           return (
             <button
@@ -910,10 +912,12 @@ export function HubCampShell({
               type="button"
               data-testid={testId}
               data-section-id={def.id}
-              className={`hotspot hotspot-${def.id}`}
+              className="camp-touch-target"
               style={{
                 left: `${pos.x}%`,
                 top: `${pos.y}%`,
+                width: `${width}px`,
+                height: `${height}px`,
               }}
               onClick={() => {
                 if (def.id === 'kit') {
@@ -924,13 +928,7 @@ export function HubCampShell({
               }}
               aria-label={def.label}
             >
-              <span className="hotspot-icon">
-                <IconComp className="w-3.5 h-3.5" aria-hidden="true" />
-              </span>
-              <span className="hotspot-label">{def.label}</span>
-              {count !== null && count > 0 && (
-                <span className="hotspot-badge">{count}</span>
-              )}
+              <span className="camp-touch-ripple" aria-hidden="true" />
             </button>
           );
         })}
