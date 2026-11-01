@@ -309,6 +309,43 @@ export function KitStudioView({
     useState<AestheticLightingPreset>('auto');
 
   const drawerDragActiveRef = useRef<boolean>(false);
+  const [isDrawerCollapsed, setIsDrawerCollapsed] = useState<boolean>(false);
+
+  const triggerHaptic = useCallback((duration = 10) => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(duration);
+      } catch {}
+    }
+  }, []);
+
+  // Détection du geste Swipe vers la gauche avec le doigt pour quitter l’atelier et revenir au Camp
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        time: performance.now(),
+      };
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current || e.changedTouches.length === 0) return;
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const deltaX = endX - touchStartRef.current.x;
+    const deltaY = endY - touchStartRef.current.y;
+    const deltaTime = performance.now() - touchStartRef.current.time;
+    touchStartRef.current = null;
+
+    // Swipe vers la gauche franc : deltaX < -50px, composante horizontale dominante
+    if (deltaX < -50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.1 && deltaTime < 900) {
+      onExitStudio();
+    }
+  }, [onExitStudio]);
 
   const initialEmptyConfig = useMemo(
     () =>
@@ -716,18 +753,28 @@ export function KitStudioView({
     ? drawerButtons.filter((b) => b.allowedInReadOnly)
     : drawerButtons;
 
+  const effectiveDrawer = activeDrawer ?? 'personnaliser';
+
   return (
     <div
       data-testid="kit-studio-view"
       data-view-mode={effectiveListMode ? 'list' : '3d'}
       data-readonly={isReadOnlyPeer ? 'true' : 'false'}
       data-lighting-preset={autoAmbience ? lightingPreset : 'atelier-neutre'}
-      className="fixed inset-0 z-50 flex flex-col bg-[var(--hub-bg)] text-[var(--hub-text-primary)]"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="fixed inset-0 z-50 flex flex-col bg-[var(--hub-bg)] text-[var(--hub-text-primary)] select-none overflow-hidden"
       style={{
-        paddingTop: 'max(10px, env(safe-area-inset-top, 0px))',
-        paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
+        paddingTop: 0,
+        paddingBottom: 0,
       }}
     >
+      <h1 className="sr-only">
+        {isReadOnlyPeer
+          ? `${inspectedMember.kit.name} (${inspectedMember.memberName})`
+          : kitName}
+      </h1>
+
       {/* Voile de transition plein écran (180 ms, opacity uniquement — ADR-002, G-03) */}
       <div
         aria-hidden="true"
@@ -738,40 +785,6 @@ export function KitStudioView({
           transitionDuration: 'var(--hub-veil-duration, 180ms)',
         }}
       />
-
-      {/* 1. Barre supérieure du Studio */}
-      <header className="px-3.5 py-2 flex items-center justify-between gap-2 border-b border-[var(--hub-border-subtle)] bg-[var(--hub-surface-card)] shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <button
-            type="button"
-            data-testid="studio-exit-btn"
-            onClick={onExitStudio}
-            aria-label="Quitter l’atelier et revenir au Camp de Base"
-            className="min-h-[44px] min-w-[44px] rounded-full bg-[var(--hub-surface)] border border-[var(--hub-border)] flex items-center justify-center text-[var(--hub-primary)] shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
-          >
-            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-          </button>
-
-          <div className="min-w-0">
-            <h1
-              data-testid="studio-kit-title"
-              className="text-sm font-bold text-[var(--hub-text-primary)] truncate"
-            >
-              {isReadOnlyPeer
-                ? `${inspectedMember.kit.name} (${inspectedMember.memberName})`
-                : kitName}
-            </h1>
-            <div
-              data-testid="studio-header-weight"
-              className="text-xs text-[var(--hub-text-secondary)] truncate"
-            >
-              {weightSummary.fullLabel} • {displayedTotals.checkedCount}/
-              {displayedTotals.itemCount} prêt
-              {displayedTotals.checkedCount > 1 ? 's' : ''}
-            </div>
-          </div>
-        </div>
-      </header>
 
       {/* Bandeau lecture seule explicite lors de l'inspection d'un coéquipier (E-02, E-07) */}
       {isReadOnlyPeer && inspectedMember && (
@@ -808,8 +821,12 @@ export function KitStudioView({
         </div>
       )}
 
-      {/* 2. Zone centrale : Chargement / Erreur (A-07) / Vide honnête (D-03) / Scène 3D XOR Liste */}
-      <main className="flex-1 min-h-0 relative flex flex-col overflow-hidden">
+      {/* 1. Zone 3D supérieure : sac parfaitement centré verticalement et horizontalement */}
+      <main
+        className={`w-full relative flex flex-col overflow-hidden shrink-0 transition-all duration-300 ${
+          isDrawerCollapsed ? 'flex-1 min-h-0' : 'h-[62dvh] max-h-[62dvh]'
+        }`}
+      >
         {loadState === 'loading' && (
           <div className="p-6 max-w-md mx-auto w-full">
             <DrawerSkeleton />
@@ -856,7 +873,7 @@ export function KitStudioView({
           <BagScene
             config={displayedConfig}
             focusedPartId={focusedPartId}
-            activeDrawerOpen={Boolean(activeDrawer)}
+            activeDrawerOpen={!isDrawerCollapsed}
             isCoveredByOpaqueSheet={false}
             isUiGestureActive={() => drawerDragActiveRef.current}
             badgeCatalog={badgeCatalogMap}
@@ -865,10 +882,12 @@ export function KitStudioView({
               isReadOnlyPeer
                 ? undefined
                 : (partId) => {
+                    triggerHaptic(10);
                     const targetPart =
                       partId === 'shoulder-strap-r' ? 'shoulder-strap-l' : partId;
                     setFocusedPartId(targetPart);
                     onSelectDrawer('personnaliser');
+                    setIsDrawerCollapsed(false);
                   }
             }
             onManifestLoaded={handleManifestLoaded}
@@ -878,103 +897,76 @@ export function KitStudioView({
         )}
       </main>
 
-      {/* 3. Barre capsule inférieure : Sélection des éléments à personnaliser (Apple Liquid Glass iOS 27) */}
-      {loadState === 'ready' && (
-        <nav
-          aria-label="Sélection des éléments à personnaliser"
-          data-studio-ui="true"
-          className="px-3 pt-2 pb-2 shrink-0 relative z-[2010]"
-          style={{
-            paddingBottom: 'max(10px, env(safe-area-inset-bottom, 0px))',
-          }}
-        >
-          <div
-            className="hub-drawer-capsule"
-            style={
-              {
-                '--n': STUDIO_CUSTOM_PARTS.length,
-                '--i': Math.max(
-                  0,
-                  STUDIO_CUSTOM_PARTS.findIndex((p) => p.id === focusedPartId)
-                ),
-              } as React.CSSProperties
-            }
+      {/* 2. Pilule flottante « ... » au centre (quand le tiroir est baissé, comme sur la page Hub) */}
+      {loadState === 'ready' && isDrawerCollapsed && (
+        <div className="studio-floating-pill-container" data-testid="studio-pill-container">
+          <button
+            type="button"
+            data-testid="studio-floating-pill"
+            onClick={() => {
+              triggerHaptic(14);
+              setIsDrawerCollapsed(false);
+            }}
+            className="camp-floating-pill active:scale-90 transition-transform"
+            aria-label="Ouvrir le tiroir de personnalisation"
           >
-            {activeDrawer === 'personnaliser' &&
-              focusedPartId &&
-              STUDIO_CUSTOM_PARTS.some((p) => p.id === focusedPartId) && (
-                <span className="sel-lens" aria-hidden="true" />
-              )}
-            {STUDIO_CUSTOM_PARTS.map((target) => {
-              const active =
-                activeDrawer === 'personnaliser' && focusedPartId === target.id;
-              return (
-                <button
-                  key={target.id}
-                  type="button"
-                  data-testid={`studio-part-target-${target.id}`}
-                  aria-pressed={active}
-                  onClick={() => handleSelectPartTarget(target.id)}
-                  className={active ? 'active' : ''}
-                >
-                  {target.icon}
-                  <span className="hidden sm:inline">{target.label}</span>
-                  <span className="sm:hidden">{target.shortLabel}</span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
+            <span className="camp-pill-dots" aria-hidden="true">
+              ...
+            </span>
+          </button>
+        </div>
       )}
 
-      {/* 4. Feuille du tiroir actif du Studio (Liquid Glass iOS 27 .lkdv-seal-drawer) */}
-      {loadState === 'ready' && activeDrawer && (
+      {/* 3. Feuille du tiroir en bas (Liquid Glass iOS 27 — 30dvh exploitant tout le bas de l'écran, 0 texte "personnaliser", 0 croix, encoche centrée) */}
+      {loadState === 'ready' && !isDrawerCollapsed && (
         <div
-          data-testid="studio-drawer-backdrop"
-          className="hub-camp-drawer-overlay kit-studio-drawer-backdrop"
-          onClick={handleCloseDrawer}
+          data-testid={`studio-active-drawer-${effectiveDrawer}`}
+          data-drawer-sheet="true"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={() => {
+            drawerDragActiveRef.current = true;
+          }}
+          onPointerUp={() => {
+            drawerDragActiveRef.current = false;
+          }}
+          onPointerCancel={() => {
+            drawerDragActiveRef.current = false;
+          }}
+          className="hub-camp-drawer-sheet h-[30dvh] max-h-[30dvh] w-full shrink-0 flex flex-col z-30 transition-all duration-300"
+          style={{
+            paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
+          }}
         >
+          {/* Encoche centrée pour baisser le tiroir (zéro texte "personnaliser", zéro croix) */}
           <div
-            data-testid={`studio-active-drawer-${activeDrawer}`}
-            data-drawer-sheet="true"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={() => {
-              drawerDragActiveRef.current = true;
+            role="button"
+            tabIndex={0}
+            data-testid="studio-collapse-drawer-btn"
+            onClick={() => {
+              triggerHaptic(12);
+              setIsDrawerCollapsed(true);
             }}
-            onPointerUp={() => {
-              drawerDragActiveRef.current = false;
-            }}
-            onPointerCancel={() => {
-              drawerDragActiveRef.current = false;
-            }}
-            className="hub-camp-drawer-sheet h-[40dvh] max-h-[40dvh] flex flex-col"
-            style={{
-              paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
-            }}
+            aria-label="Baisser le tiroir"
+            className="w-full flex items-center justify-center pt-2 pb-1 cursor-pointer shrink-0 group active:scale-95 transition-transform"
           >
-            <div className="px-4 py-1.5 flex items-center justify-between border-b border-[var(--hub-border-subtle)] shrink-0">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--hub-primary)]">
-                {activeDrawer === 'personnaliser' && focusedPartId
-                  ? `Personnaliser — ${STUDIO_CUSTOM_PARTS.find((p) => p.id === focusedPartId)?.label ?? focusedPartId}`
-                  : drawerButtons.find((b) => b.id === activeDrawer)?.label ?? activeDrawer}
-              </span>
-              <div
-                data-drawer-handle="true"
-                className="w-10 h-1.5 rounded-full bg-[var(--hub-border-strong)]"
-              />
-              <button
-                type="button"
-                data-testid="studio-close-drawer-btn"
-                onClick={handleCloseDrawer}
-                aria-label="Fermer le tiroir de l’atelier"
-                className="camp-glass-close-btn"
-              >
-                <X className="w-5 h-5" aria-hidden="true" />
-              </button>
-            </div>
+            <div
+              data-drawer-handle="true"
+              className="w-10 h-1.5 rounded-full bg-[var(--hub-border-strong)] transition-all duration-200 group-hover:w-12 group-hover:bg-[var(--hub-primary)] shadow-2xs"
+            />
+          </div>
+          <button
+            type="button"
+            data-testid="studio-close-drawer-btn"
+            onClick={() => {
+              triggerHaptic(10);
+              setIsDrawerCollapsed(true);
+            }}
+            className="sr-only"
+            aria-hidden="true"
+          />
 
-            <div className="flex-1 min-h-0 flex flex-col overflow-hidden pt-1">
-            {activeDrawer === 'inventaire' && (
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden pt-0.5">
+            {effectiveDrawer === 'inventaire' && (
               <InventaireDrawer
                 config={displayedConfig}
                 totals={displayedTotals}
@@ -1007,7 +999,7 @@ export function KitStudioView({
               />
             )}
 
-            {activeDrawer === 'personnaliser' && !isReadOnlyPeer && (
+            {effectiveDrawer === 'personnaliser' && !isReadOnlyPeer && (
               <PersonnaliserDrawer
                 config={displayedConfig}
                 selectedPartId={focusedPartId}
@@ -1029,21 +1021,21 @@ export function KitStudioView({
               />
             )}
 
-            {activeDrawer === 'statistiques' && (
+            {effectiveDrawer === 'statistiques' && (
               <StatistiquesDrawer
                 config={displayedConfig}
                 totals={displayedTotals}
               />
             )}
 
-            {activeDrawer === 'lignee' && !isReadOnlyPeer && (
+            {effectiveDrawer === 'lignee' && !isReadOnlyPeer && (
               <LigneeDrawer
                 kitId={displayedConfig.kitId}
                 initialLineage={bootstrap?.lineage}
               />
             )}
 
-            {activeDrawer === 'insignes' && !isReadOnlyPeer && (
+            {effectiveDrawer === 'insignes' && !isReadOnlyPeer && (
               <InsignesDrawer
                 config={displayedConfig}
                 badges={bootstrap?.badges ?? []}
@@ -1055,7 +1047,7 @@ export function KitStudioView({
               />
             )}
 
-            {activeDrawer === 'options' && !isReadOnlyPeer && (
+            {effectiveDrawer === 'options' && !isReadOnlyPeer && (
               <OptionsDrawer
                 kitName={kitName}
                 viewMode={effectiveListMode ? 'list' : '3d'}
@@ -1072,8 +1064,60 @@ export function KitStudioView({
             )}
           </div>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+
+      {/* 4. Barre de sélection des éléments de la page Kit Studio (Apple Liquid Glass iOS 27) */}
+      {loadState === 'ready' && (
+        <nav
+          aria-label="Sélection des éléments à personnaliser"
+          data-studio-ui="true"
+          className="px-3 pt-1 pb-1.5 shrink-0 relative z-[2010] w-full"
+          style={{
+            paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
+          }}
+        >
+          <div
+            className="hub-drawer-capsule"
+            style={
+              {
+                '--n': STUDIO_CUSTOM_PARTS.length,
+                '--i': Math.max(
+                  0,
+                  STUDIO_CUSTOM_PARTS.findIndex((p) => p.id === focusedPartId)
+                ),
+              } as React.CSSProperties
+            }
+          >
+            {focusedPartId &&
+              STUDIO_CUSTOM_PARTS.some((p) => p.id === focusedPartId) && (
+                <span className="sel-lens" aria-hidden="true" />
+              )}
+            {STUDIO_CUSTOM_PARTS.map((target) => {
+              const active = focusedPartId === target.id;
+              return (
+                <button
+                  key={target.id}
+                  type="button"
+                  data-testid={`studio-part-target-${target.id}`}
+                  aria-pressed={active}
+                  onClick={() => {
+                    triggerHaptic(10);
+                    handleSelectPartTarget(target.id);
+                    if (isDrawerCollapsed) {
+                      setIsDrawerCollapsed(false);
+                    }
+                  }}
+                  className={active ? 'active' : ''}
+                >
+                  {target.icon}
+                  <span className="hidden sm:inline">{target.label}</span>
+                  <span className="sm:hidden">{target.shortLabel}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
+    </div>
+  );
 }

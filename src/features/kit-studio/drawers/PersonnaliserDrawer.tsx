@@ -37,6 +37,14 @@ export interface DisplacedSlotReport {
   displacedItems: Array<{ id: string; name: string; lostSlotLabel: string }>;
 }
 
+function triggerHaptic(duration = 10) {
+  if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate(duration);
+    } catch {}
+  }
+}
+
 /**
  * D-06 : Calcule la liste exacte des objets dont le slot actuel disparaît sur le nouveau sac.
  */
@@ -86,7 +94,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
 
   if (partId === 'body') {
     return (
-      <svg viewBox="0 0 100 120" className="w-11 h-12 drop-shadow-md transition-all duration-300" aria-hidden="true">
+      <svg viewBox="0 0 100 120" className="w-6 h-7 drop-shadow-xs transition-all duration-300" aria-hidden="true">
         <defs>
           <linearGradient id="vis-body-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={activeColor} stopOpacity="1" />
@@ -107,7 +115,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
 
   if (partId === 'lid') {
     return (
-      <svg viewBox="0 0 100 80" className="w-11 h-9 drop-shadow-md transition-all duration-300" aria-hidden="true">
+      <svg viewBox="0 0 100 80" className="w-7 h-5 drop-shadow-xs transition-all duration-300" aria-hidden="true">
         <defs>
           <linearGradient id="vis-lid-grad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor={activeColor} stopOpacity="1" />
@@ -127,7 +135,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
 
   if (partId === 'front-pocket') {
     return (
-      <svg viewBox="0 0 90 90" className="w-10 h-10 drop-shadow-md transition-all duration-300" aria-hidden="true">
+      <svg viewBox="0 0 90 90" className="w-6 h-6 drop-shadow-xs transition-all duration-300" aria-hidden="true">
         <defs>
           <linearGradient id="vis-pocket-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={activeColor} />
@@ -143,7 +151,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
 
   if (partId === 'shoulder-strap-l' || partId === 'shoulder-strap-r' || partId === 'straps') {
     return (
-      <svg viewBox="0 0 80 100" className="w-9 h-11 drop-shadow-md transition-all duration-300" aria-hidden="true">
+      <svg viewBox="0 0 80 100" className="w-5 h-7 drop-shadow-xs transition-all duration-300" aria-hidden="true">
         <defs>
           <linearGradient id="vis-strap-grad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
@@ -160,7 +168,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
 
   if (partId === 'hip-belt') {
     return (
-      <svg viewBox="0 0 100 60" className="w-12 h-8 drop-shadow-md transition-all duration-300" aria-hidden="true">
+      <svg viewBox="0 0 100 60" className="w-7 h-4 drop-shadow-xs transition-all duration-300" aria-hidden="true">
         <defs>
           <linearGradient id="vis-belt-grad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#09140e" />
@@ -175,7 +183,7 @@ function PartVisual3D({ partId, color }: { partId: PartId; color?: string }) {
   }
 
   return (
-    <svg viewBox="0 0 70 70" className="w-8 h-8 drop-shadow-md transition-all duration-300" aria-hidden="true">
+    <svg viewBox="0 0 70 70" className="w-5 h-5 drop-shadow-xs transition-all duration-300" aria-hidden="true">
       <defs>
         <linearGradient id="vis-buckle-grad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#d8e8dc" />
@@ -219,12 +227,14 @@ export function PersonnaliserDrawer({
   }, [selectedPartId, customizableParts, activePart]);
 
   const handleChoosePart = (partId: PartId) => {
+    triggerHaptic(10);
     setActivePart(partId);
     onFocusPart(partId);
   };
 
   const handleSwitchBagModel = async (modelId: string) => {
     if (modelId === config.bag.modelId) return;
+    triggerHaptic(14);
     setSwitchingBagId(modelId);
     try {
       const manifest = await fetchBagManifest(modelId);
@@ -276,7 +286,7 @@ export function PersonnaliserDrawer({
     return (
       <div data-testid="studio-personnaliser-pane" className="flex flex-col justify-start h-full">
         {/* Slide card horizontal des pièces sélectionnables avec aperçu 3D volumétrique */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1 px-1">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-0.5 px-0.5">
           {customizableParts.map((partId) => {
             const isSelected = partId === activePart;
             const isCustomized = Boolean(config.bag.parts[partId]);
@@ -288,21 +298,21 @@ export function PersonnaliserDrawer({
                 data-testid={`personnaliser-part-btn-${partId}`}
                 aria-pressed={isSelected}
                 onClick={() => handleChoosePart(partId)}
-                className={`min-w-[95px] w-[95px] h-[98px] shrink-0 snap-center rounded-3xl border flex flex-col items-center justify-between p-2 transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
+                className={`min-w-[80px] w-[80px] h-[72px] shrink-0 snap-center rounded-2xl border flex flex-col items-center justify-between p-1.5 pb-1 transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
                   isSelected
                     ? 'is-selected'
                     : 'bg-[var(--hub-surface-card)] border-[var(--hub-border)] hover:border-[var(--hub-border-strong)]'
                 }`}
               >
                 {/* Rendu 3D stylisé de l'élément sélectionnable */}
-                <div className="w-full flex-1 flex items-center justify-center py-0.5">
+                <div className="w-full flex-1 flex items-center justify-center">
                   <PartVisual3D partId={partId} color={partColor} />
                 </div>
 
                 {/* Nom épuré de la pièce — fond verre et texte blanc quand sélectionné */}
-                <div className="w-full flex items-center justify-center gap-1 pt-0.5">
+                <div className="w-full flex items-center justify-center gap-0.5">
                   <span
-                    className={`text-[11px] truncate text-center transition-colors duration-300 ${
+                    className={`text-[11px] leading-tight truncate text-center transition-colors duration-300 ${
                       isSelected
                         ? 'text-white font-bold'
                         : 'text-[var(--hub-text-primary)] font-medium'
@@ -313,7 +323,7 @@ export function PersonnaliserDrawer({
                   {isCustomized && (
                     <span
                       aria-label="Pièce personnalisée"
-                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      className={`w-1 h-1 rounded-full shrink-0 ${
                         isSelected ? 'bg-white' : 'bg-[var(--hub-secondary)]'
                       }`}
                     />
@@ -334,13 +344,13 @@ export function PersonnaliserDrawer({
         <div
           data-testid="bag-switch-lost-slots-banner"
           role="status"
-          className="p-2 rounded-2xl bg-[var(--hub-surface-muted)] border border-[var(--hub-border)] space-y-0.5 text-xs mb-1"
+          className="p-1 rounded-xl bg-[var(--hub-surface-muted)] border border-[var(--hub-border)] space-y-0.5 text-[10px] mb-0.5"
         >
           <div className="font-bold text-[var(--hub-primary)]">
             {lostSlotsReport.nextBagLabel}
           </div>
           {lostSlotsReport.displacedItems.length > 0 && (
-            <div className="text-[var(--hub-warning)] text-[11px]">
+            <div className="text-[var(--hub-warning)] text-[9px]">
               {lostSlotsReport.displacedItems.length} équipement(s) replacé(s) en « Non rangé »
             </div>
           )}
@@ -348,7 +358,7 @@ export function PersonnaliserDrawer({
       )}
 
       {/* Slide card gabarits à la Apple */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1 px-1">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-0.5 px-0.5">
         {BUILTIN_BAG_MODELS.map((bag) => {
           const isCurrent = config.bag.modelId === bag.modelId;
           const isBusy = switchingBagId === bag.modelId;
@@ -360,7 +370,7 @@ export function PersonnaliserDrawer({
               aria-pressed={isCurrent}
               disabled={isBusy}
               onClick={() => handleSwitchBagModel(bag.modelId)}
-              className={`min-w-[95px] w-[95px] h-[98px] shrink-0 snap-center rounded-3xl border flex flex-col items-center justify-center p-2 transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
+              className={`min-w-[80px] w-[80px] h-[72px] shrink-0 snap-center rounded-2xl border flex flex-col items-center justify-center p-1.5 transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
                 isCurrent
                   ? 'is-selected'
                   : 'bg-[var(--hub-surface-card)] border-[var(--hub-border)] hover:border-[var(--hub-border-strong)]'
@@ -370,14 +380,14 @@ export function PersonnaliserDrawer({
               <div
                 className={`transition-all duration-300 font-sans ${
                   isCurrent
-                    ? 'text-2xl font-extrabold tracking-tight text-white'
-                    : 'text-xl font-bold text-[var(--hub-text-primary)]'
+                    ? 'text-xl font-extrabold tracking-tight text-white'
+                    : 'text-lg font-bold text-[var(--hub-text-primary)]'
                 }`}
               >
                 {bag.capacityL}L
               </div>
               {isCurrent && (
-                <span className="w-1.5 h-1.5 rounded-full bg-white mt-1 shadow-sm" />
+                <span className="w-1.5 h-1.5 rounded-full bg-white mt-1 shadow-xs" />
               )}
             </button>
           );
@@ -389,7 +399,7 @@ export function PersonnaliserDrawer({
   // 3. Volet Matière technique PBR
   const renderMaterialsPane = () => (
     <div data-testid="studio-materials-pane" className="space-y-1 pb-1">
-      <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1 px-1">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-0.5 px-0.5">
         {BAG_MATERIAL_PRESETS.map((preset) => {
           const selected = currentPartConfig.material === preset.id;
           return (
@@ -399,25 +409,26 @@ export function PersonnaliserDrawer({
               data-testid={`personnaliser-material-${preset.id}`}
               aria-pressed={selected}
               onClick={() => {
+                triggerHaptic(10);
                 if (activePart) {
                   void onCustomizePart(activePart, { material: preset.id });
                 }
               }}
-              className={`min-w-[120px] w-[120px] h-[98px] shrink-0 snap-center rounded-3xl border flex flex-col justify-between p-2.5 text-left transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
+              className={`min-w-[105px] w-[105px] h-[72px] shrink-0 snap-center rounded-2xl border flex flex-col justify-between p-1.5 pb-1 text-left transition-all duration-300 studio-slide-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
                 selected
                   ? 'is-selected'
                   : 'bg-[var(--hub-surface-card)] border-[var(--hub-border)]'
               }`}
             >
               <div
-                className={`text-xs font-bold transition-colors duration-300 ${
+                className={`text-xs leading-tight font-bold transition-colors duration-300 ${
                   selected ? 'text-white' : 'text-[var(--hub-text-primary)]'
                 }`}
               >
                 {preset.label}
               </div>
               <div
-                className={`text-[10px] line-clamp-2 transition-colors duration-300 ${
+                className={`text-[9.5px] leading-snug line-clamp-2 transition-colors duration-300 ${
                   selected ? 'text-white/85' : 'text-[var(--hub-text-secondary)]'
                 }`}
               >
@@ -425,7 +436,7 @@ export function PersonnaliserDrawer({
               </div>
               <div className="flex items-center justify-between pt-0.5">
                 <span
-                  className={`text-[9px] uppercase font-semibold transition-colors duration-300 ${
+                  className={`text-[8.5px] uppercase font-semibold transition-colors duration-300 ${
                     selected ? 'text-white/70' : 'text-[var(--hub-text-muted)]'
                   }`}
                 >
@@ -433,7 +444,7 @@ export function PersonnaliserDrawer({
                 </span>
                 {selected && (
                   <Check
-                    className="w-3.5 h-3.5 text-white shrink-0"
+                    className="w-3 h-3 text-white shrink-0"
                     aria-hidden="true"
                   />
                 )}
@@ -481,7 +492,7 @@ export function PersonnaliserDrawer({
                 <span
                   aria-hidden="true"
                   data-testid={`personnaliser-color-${swatch.id}`}
-                  className={`w-3.5 h-3.5 rounded-full border border-white/90 block shadow-xs transition-transform duration-200 ${
+                  className={`w-3 h-3 rounded-full border border-white/90 block shadow-xs transition-transform duration-200 ${
                     isSwatchActive ? 'scale-110 ring-1 ring-white' : 'opacity-85'
                   }`}
                   style={{ background: swatch.token }}
@@ -498,6 +509,7 @@ export function PersonnaliserDrawer({
             )
           ),
           onChange: (index: number) => {
+            triggerHaptic(8);
             const swatch = BAG_COLOR_SWATCHES[index];
             if (swatch && activePart) {
               void onCustomizePart(activePart, { color: swatch.token });
@@ -511,7 +523,10 @@ export function PersonnaliserDrawer({
     <DrawerShell
       tabs={tabs}
       activeIndex={tabIndex}
-      onIndexChange={setTabIndex}
+      onIndexChange={(idx) => {
+        triggerHaptic(10);
+        setTabIndex(idx);
+      }}
       secondary={colorSecondary}
     />
   );

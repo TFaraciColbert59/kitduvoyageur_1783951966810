@@ -477,8 +477,8 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 .hub-camp-drawer-sheet {
   position: relative;
   width: 100%;
-  height: 40dvh !important;
-  max-height: 40dvh !important;
+  height: 30dvh !important;
+  max-height: 30dvh !important;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -668,17 +668,18 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   transform: scale(0.95);
 }
 
-/* ── 7. Interdiction stricte du scroll vertical sur les tiroirs du Hub (Hauteur max 40%) ── */
+/* ── 7. Interdiction stricte du scroll vertical sur les tiroirs du Hub (Hauteur max 30%) ── */
 .hub-camp-drawer-sheet {
-  height: 40dvh !important;
-  max-height: 40dvh !important;
+  height: 30dvh !important;
+  max-height: 30dvh !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell {
   height: 100% !important;
   flex: 1 1 auto !important;
   min-height: 0 !important;
-  padding: 0 14px 14px !important;
+  padding: 0 10px 4px !important;
+  gap: 4px !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-viewport {
@@ -688,7 +689,7 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell[data-secondary="true"] .lkdv-drawer-viewport {
-  padding-bottom: 64px !important;
+  padding-bottom: 34px !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-pane {
@@ -702,21 +703,54 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell[data-secondary="true"] {
-  padding-bottom: 38px !important;
+  padding-bottom: 26px !important;
 }
 
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav {
+  padding: 1px 0 !important;
+}
+
+/* Sélecteur du haut (onglets du tiroir) : ZERO TEXTE, UNIQUEMENT DES ICÔNES */
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs {
-  height: 40px !important;
+  height: 32px !important;
+  width: 136px !important;
+  max-width: 136px !important;
+  margin: 0 auto !important;
+  padding: 2px !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens {
+  top: 2px !important;
+  bottom: 2px !important;
+  left: 2px !important;
+  border-radius: 9999px !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button {
-  min-height: 36px !important;
+  min-height: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button span:not(.ic) {
+  display: none !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button .ic {
+  width: 16px !important;
+  height: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary {
   position: absolute !important;
   right: 12px !important;
-  bottom: 8px !important;
+  bottom: 6px !important;
   left: auto !important;
   top: auto !important;
   z-index: 45 !important;
@@ -729,14 +763,15 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary::before {
   content: "" !important;
   position: absolute !important;
-  inset: -14px -8px -8px -14px !important;
+  inset: -10px -6px -6px -10px !important;
   border-radius: 9999px !important;
   background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 72%) !important;
-  filter: blur(6px) !important;
+  filter: blur(5px) !important;
   pointer-events: none !important;
   z-index: -1 !important;
 }
 
+/* Sélecteur du bas à droite (nuancier de couleurs) : ZERO TEXTE, UNIQUEMENT PASTILLES / ICÔNES */
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs {
   position: relative !important;
   top: auto !important;
@@ -747,30 +782,74 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   display: grid !important;
   grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)) !important;
   align-items: center !important;
-  width: calc(var(--n, 2) * 24px + 6px) !important;
-  max-width: 250px !important;
-  height: 28px !important;
-  padding: 2px !important;
+  width: calc(var(--n, 2) * 22px + 8px) !important;
+  max-width: 190px !important;
+  height: 24px !important;
+  padding: 1.5px !important;
   border-radius: 9999px !important;
-  background: rgba(255, 255, 255, 0.65) !important;
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.44) 55%, rgba(255, 255, 255, 0.54)) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
-  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.45) 55%, rgba(255, 255, 255, 0.58)) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(24px) saturate(180%) brightness(1.04) !important;
   border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 6px 18px rgba(23, 43, 36, 0.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 4px 12px rgba(23, 43, 36, 0.1) !important;
   box-sizing: border-box !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button span:not([data-testid*="personnaliser-color-"]) {
+  display: none !important;
+}
+
+/* Pilule flottante de Kit Studio « ... » au-dessus de la barre des éléments */
+.studio-floating-pill-container {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  z-index: 40;
+  animation: studioPillBounceIn 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes studioPillBounceIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.88);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Retrait strict de 100% des éléments en haut de l'écran dans Kit Studio */
+[data-testid="kit-studio-view"] header,
+[data-testid="kit-studio-view"] [data-testid="studio-recenter-btn"],
+[data-testid="kit-studio-view"] [data-studio-ui="true"]:has([data-testid="studio-recenter-btn"]) {
+  display: none !important;
+}
+
+/* Suppression absolue de la bottombar globale de l'app sur Kit Studio */
+body:has([data-testid="kit-studio-view"]) .lkdv-floating-tabbar,
+body:has([data-testid="kit-studio-view"]) [data-testid="bottom-tab-bar"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs .ig-th {
   position: absolute !important;
-  top: 2px !important;
-  bottom: 2px !important;
-  left: 2px !important;
-  width: calc((100% - 4px) / var(--n, 2)) !important;
-  height: calc(100% - 4px) !important;
+  top: 1.5px !important;
+  bottom: 1.5px !important;
+  left: 1.5px !important;
+  width: calc((100% - 3px) / var(--n, 2)) !important;
+  height: calc(100% - 3px) !important;
   border-radius: 9999px !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.72)) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.98), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 1px 4px rgba(23, 43, 36, 0.16) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.75)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.98), inset 0 -1px 1px rgba(255, 255, 255, 0.35), 0 1px 3px rgba(23, 43, 36, 0.14) !important;
   border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
   transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
   z-index: 1 !important;
@@ -782,11 +861,11 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   align-items: center !important;
   justify-content: center !important;
   height: 100% !important;
-  min-height: 24px !important;
-  padding: 0 4px !important;
+  min-height: 19px !important;
+  padding: 0 !important;
   border: 0 !important;
   background: none !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 600 !important;
   color: #56665D !important;
   cursor: pointer !important;
@@ -795,7 +874,7 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button:active {
-  transform: scale(0.9) !important;
+  transform: scale(0.85) !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button.active,
