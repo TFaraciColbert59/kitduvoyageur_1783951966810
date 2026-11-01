@@ -466,10 +466,10 @@
   color: var(--hub-action);
 }
 .camp-text-title {
-  color: var(--hub-text-primary);
+  color: #172B24 !important;
 }
 .camp-text-sub {
-  color: var(--hub-text-secondary);
+  color: #56665D !important;
 }
 .camp-badge-forest {
   background: var(--hub-primary-subtle);
@@ -477,6 +477,40 @@
 }
 .camp-border-subtle {
   border-color: var(--hub-border-subtle);
+}
+
+/* Encre forest sombre garantie sur toutes les surfaces claires & cartes */
+.camp-bottom-card,
+.hub-camp-drawer-sheet,
+.camp-card-white,
+.camp-card-cream {
+  --hub-text-primary: #172B24 !important;
+  --hub-text-secondary: #56665D !important;
+  --hub-text-muted: #8E9B93 !important;
+  --label: #172B24 !important;
+  --label2: #56665D !important;
+  --label3: rgba(23, 43, 36, 0.44) !important;
+  color: #172B24 !important;
+}
+
+.camp-card-white strong,
+.camp-card-white b,
+.camp-card-white h2,
+.camp-card-white h3,
+.camp-card-white h4,
+.camp-card-cream strong,
+.camp-card-cream b,
+.camp-card-cream h2,
+.camp-card-cream h3,
+.camp-card-cream h4 {
+  color: #172B24 !important;
+}
+
+.camp-card-white small,
+.camp-card-white p,
+.camp-card-cream small,
+.camp-card-cream p {
+  color: #56665D !important;
 }
 
 /* ==========================================================================
