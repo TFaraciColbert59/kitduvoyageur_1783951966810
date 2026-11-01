@@ -91,7 +91,40 @@ Poids « First Load JS » rapporté par Next (compressé). Budget mission : < 12
 
 Autres faits : 809 fichiers `'use client'` sous `src/` ; aucune route principale statique ni PPR ; `optimizePackageImports` déjà configuré ; images AVIF/WebP déjà activées ; Service Worker présent (`src/app/sw.js`, `explorer-v2-sw.js`). Le build local exige `NODE_OPTIONS=--max-old-space-size=8192` (la vérification de types dépasse 2 Go).
 
-## 4. Ce qui n'est pas encore mesuré (et pourquoi)
+## 4. Terrain : RUM des utilisateurs réels (30 jours au 01/11, `hub_telemetry`, mobile, en ms)
+
+Source : `web_vitals` et `experience_metric` envoyés par `WebVitalsReporter`. Mobile = largeur < 768 px. Groupes ≥ 15 mesures.
+
+| Surface | n (TTFB) | TTFB p75 | FCP p75 | LCP p75 | INP p75 | Navigation interne p75 |
+|---|---|---|---|---|---|---|
+| `/compas` | 1 001 | **4 181** (p95 13 261) | 4 361 | 3 114 | — | — |
+| `/hub` | 143 | 242 | **3 567** | **4 743** | — | 600 |
+| `/compte` | 1 204 | 996 | 2 077 | 4 128 | 122 | 384 |
+| `/communaute` | 552 | 1 112 | 1 512 | 4 220 | 128 | 444 |
+| `/explorer` | 154 | 559 | 676 | **5 600** (n = 33) | 136 | 560 |
+| `/` | 186 | 882 | 1 440 | 1 530 | — | — |
+| `/connexion` | 555 | 918 | 1 664 | 2 828 | — | — |
+
+> **Correction du 01/11 (après analyse par compte)** : 998 des 1 007 mesures TTFB du Compas viennent d'**un seul compte** (2 oct. → 1er nov.), très probablement le banc de test automatisé du Compas (préparations IA en rafale). Le tableau ci-dessus est donc biaisé. Sans ce compte, mobile, 30 jours :
+>
+> | Surface | personnes | TTFB p75 | FCP p75 | LCP p75 | INP p75 |
+> |---|---|---|---|---|---|
+> | `/compas` | 8 | 1 680 (n = 10) | 2 719 (n = 18) | — | — |
+> | `/hub` | 5 | 173 | 3 574 | 4 978 | — |
+> | `/compte` | 13-16 | 970 | 1 974 | 4 081 | 112 |
+> | `/communaute` | 7-11 | 1 010 | 1 443 | 3 246 | 132 |
+> | `/explorer` | 3 | 516 | 640 | 5 600 | 136 |
+> | `/` | 1-2 | 846 | 1 368 | 1 508 | — |
+>
+> Peu de personnes réelles : c'est une tendance, pas une statistique. La mesure de laboratoire (§6) devient la référence principale.
+
+Lecture (sur le tableau brut, à nuancer par la correction ci-dessus) :
+- **Compas** : la lenteur est serveur (TTFB ≈ FCP). La page attend, avant d'envoyer un octet, les données du HUB puis météo, alertes, relief, change et normales climatiques (délai maximal de 5 à 6 s par appel externe). « Chaque action du Compas recharge cette page » (commentaire du code) : chaque geste paie ce délai.
+- **HUB** : le serveur répond vite (242 ms) mais le premier affichage arrive à 3,6 s : blocage côté navigateur (554 Ko de JS).
+- **Explorer** : coquille rapide (FCP 676 ms) mais LCP à 5,6 s : le contenu principal (carte) arrive tard.
+- INP correct partout où il est mesuré (≈ 120-140 ms) ; CLS non remonté en quantité suffisante.
+
+## 5. Ce qui n'est pas encore mesuré (et pourquoi)
 
 | Mesure | Statut | Ce qu'il faut |
 |---|---|---|
@@ -100,3 +133,24 @@ Autres faits : 809 fichiers `'use client'` sous `src/` ; aucune route principale
 | Traces Chrome 4G / CPU ×4 des 6 surfaces avec `demo@lkdv.app` | Non faites | Aperçu Vercel + jeton de partage + session démo |
 | Poids réel de MapLibre et des données de l'Explorer, taille des réponses `/api/trails` | Non mesuré | Trace réseau sur l'aperçu |
 | Baseline `pg_stat_statements` « 24 h propres » | Non faite | Remise à zéro décidée par Tony (D-01) |
+
+## 6. Laboratoire : référence reproductible (01/11/2026)
+
+Script : `scripts/perf/measure-surfaces.mjs` (Playwright, iPhone 393 × 852, **cache froid** = contexte neuf à chaque passage, profil Lighthouse mobile : CPU × 4, RTT 150 ms, 1,6 Mbit/s descendant). Médiane / p75 sur 3 à 4 passages après un passage de préchauffage. « Visible » = effacement de l'écran de démarrage plein écran (`.lkdv-boot`) s'il existe, sinon LCP. Version mesurée : aperçu `2265e0b` (code de `main` + correctif de la boucle de l'Explorer, sans allègement), redéployé avec la connexion démo (`DEMO_AUTO_LOGIN`, aperçus de la branche seulement), compte `demo@lkdv.app`, lecture seule.
+
+| Surface | TTFB | FCP | LCP | Visible | CLS |
+|---|---|---|---|---|---|
+| `/hub` | 534 / 565 | 1 088 / 1 236 | 1 088 / 1 236 | > fin de mesure (écran de démarrage encore là ~4 s après `load`) | 0 |
+| `/compas` | 454 / 479 | 980 / 1 160 | 980 / 1 160 | 1 532 / 1 837 | 0 |
+| `/compte` | 491 / 524 | 1 048 / 1 196 | 1 048 / 1 244 | 1 818 / 1 848 | 0 |
+| `/communaute` | 577 / 722 | 1 068 / 1 092 | 1 264 / 1 276 | 1 671 / 1 708 | 0 |
+| `/explorer` | 593 / 608 | 1 576 / 1 656 | 3 260 / 3 268 | **7 732 / 7 746** | 0 |
+| `/` (sans session) | 315 | 840 | 860 | — | 0 |
+| `/connexion` (sans session) | 209 | 652 | 652 | — | 0 |
+
+Rendu serveur chronométré (`LKDV_TRACE_SSR=1`, aperçu, région de la fonction `cdg1`) :
+- HUB : `layout.adventure` 370-930 ms (dont `lists` 130-390, `trip.full` 140-390, `trip.enrich` 80-200), `layout.intelligence` 50-100.
+- Compas : `compas.total` 870-1 450 ms = `compas.hub` 370-680 + `wave1` 45 + `wave2` 450-730 (météo, relief du tracé et altitude des lieux, caches froids sur un déploiement neuf).
+- Le Compas répond pourtant en 0,4-0,5 s au premier octet grâce à `loading.tsx` (squelette diffusé d'abord).
+
+Chronologie de l'Explorer à cache froid (mobile ralenti) : JS de la mise en page et de la page de 1,2 à ~6 s ; **MapLibre (256 Ko) ne part qu'à 7,4 s** (import au rendu client), style de la carte demandé à 11 s ; l'élément LCP est le logo de l'écran de démarrage (PNG de 119 Ko).

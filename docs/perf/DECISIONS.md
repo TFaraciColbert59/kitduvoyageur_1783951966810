@@ -6,6 +6,14 @@
 |---|---|---|---|---|
 | F-01 | 01/11 | Baseline serveur et bundle relevée avant tout changement (`PERF_BASELINE.md`) | Phase 0 non négociable | fait |
 | F-02 | 01/11 | Lot 1 base (8 `auth_rls_initplan`, 2 index en double) écrit avec rollback : `supabase/migrations/20261101120000_perf_p1_rls_initplan_duplicate_indexes.sql` | Risque nul, même sémantique | **écrit, non appliqué** (application en production réservée à Tony) ; validation à blanc en transaction annulée non faite (confirmation Supabase restée sans réponse) |
+| F-04 | 01/11 | `pg_stat_statements` remis à zéro le 01/11 à 07:35 UTC (D-01, autonomie accordée par Tony le 01/11) | Les cumuls du 07/09 sont conservés dans la baseline ; mesurer l'usage actuel (Explorer v2) et l'effet des changements | fait |
+| F-05 | 01/11 | Chronométrage serveur du Compas (`traceStage`, no-op hors `LKDV_TRACE_SSR=1`), variable activée sur les aperçus de la branche seulement | Mesurer avant de changer : RUM Compas TTFB p75 4,2 s | fait |
+| F-06 | 01/11 | **Boucle de rechargement de /explorer corrigée** (2 service workers sur la portée « / ») : portée propre pour l'Explorer, rechargement réservé au worker de l'app. Test de non-régression | 12 rechargements en 15 s en production → 0 constaté sur l'aperçu | fait (`2265e0b`) |
+| F-07 | 01/11 | Allègement du JS : dictionnaires des langues éteintes, zod, Radix Dialog, Dexie (purge) hors mise en page racine ; MapLibre et moteur de la page club, tiroirs Communauté et Compas à la demande | Mise en page racine 518 → 332 Ko ; tableau Next : club 677 → 342, Communauté 413 → 329, Compas 537 → 387, HUB 554 → 403 | fait (`ee9240b`), relu |
+| F-08 | 01/11 | Tests « 0 modification dans /compas » (refontes compte v10-v16, clubs v15) remplacés par une vérification d'isolation (comme v17+) | Échouaient sur toute branche touchant au Compas, sans rapport avec le produit | fait (`f647afb`) |
+| F-09 | 01/11 | **Écran de démarrage plein écran (BootScreen) retiré** sur le web | Masquait le contenu rendu par le serveur jusqu'à l'hydratation (Explorer : contenu visible à 7,7 s en mobile ralenti) ; contraire à la règle « aucun spinner plein écran ». **Changement visible** : réversible en une ligne (`git revert`). L'app native garde son écran natif (`NativeAppBootstrap`) | fait sur la branche, à valider par Tony avant production |
+| F-10 | 01/11 | Logo PNG 121 Ko → WebP sans perte 82 Ko (identique au pixel sur le fond de l'app) ; 3 préconnexions inutiles retirées de la mise en page racine (Rocket bloqué par la CSP, ArcGIS) | Octets et connexions concurrentes sur toutes les pages | fait |
+| F-11 | 01/11 | Garde-fou CI `npm run perf:budget` (poids JS par surface, union mise en page + page) | Phase 8 : empêcher la régression | fait |
 | F-03 | 01/11 | Garder le RUM existant (`WebVitalsReporter` → `hub_telemetry`) plutôt qu'ajouter `web-vitals` ou Speed Insights | Déjà en place, déjà en lots, budget 0 € | adopté |
 
 ## Écarté
@@ -14,6 +22,9 @@
 |---|---|---|
 | E-01 | Indexer les 165 clés étrangères en bloc | La mission elle-même demande l'ordre mesuré ; les pointes viennent d'abord d'une contention systémique (voir baseline §2) |
 | E-02 | Traiter `hike_sessions` par un index | Le plan mesure 4 ms ; l'index adéquat existe déjà |
+| E-04 | `experimental.staleTimes.dynamic` (cache du routeur client) pour des onglets instantanés | Certaines mutations passent par des routes API sans invalider le cache du routeur : risque d'afficher un état périmé (« like » qui disparaît) ; à faire surface par surface après audit |
+| E-05 | Compression avec perte du logo (WebP q92, 29 Ko) | Écart visible (PSNR 35 dB) : refusée, version sans perte retenue |
+| E-03 | Retirer `post_comments` de la publication Realtime | Ajoutée volontairement (`20261021093000_worldwide_security_hardening.sql`), peu d'écritures : gain négligeable face au risque de casser une fonction prévue |
 
 ## En attente de Tony (décisions irréversibles ou en production)
 

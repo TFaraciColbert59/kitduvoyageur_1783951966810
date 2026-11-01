@@ -58,6 +58,9 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
 
+      - name: Gate 4b — Budget JS par surface (Mission Fusée, anti-régression)
+        run: npm run perf:budget
+
       # Le job `e2e-compas` rejoue ce build : inutile de le refaire (5 à 10 min).
       # `.next` est un dossier caché : include-hidden-files est indispensable.
       - name: Conserver le build pour l'E2E du Compas
