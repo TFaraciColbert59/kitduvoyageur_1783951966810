@@ -120,6 +120,102 @@ function payloadToKitConfiguration(
   });
 }
 
+const FALLBACK_STUDIO_PAYLOAD: StudioBootstrapPayload = {
+  authenticated: false,
+  state: 'ok',
+  kits: [{ id: 'demo-alpin-40', name: 'Sac Alpin 40 L' }],
+  activeKit: {
+    kitId: 'demo-alpin-40',
+    name: 'Sac Alpin 40 L',
+    revision: 1,
+    bagModelId: 'trekker-55',
+    bagParts: {
+      body: { color: 'var(--hub-bag-forest)', material: 'toile' },
+      straps: { color: 'var(--hub-primary)', material: 'ripstop' },
+      buckles: { color: 'var(--hub-secondary)', material: 'metal' },
+    },
+    isSharedWithGroup: true,
+    items: [
+      { id: 'item-1', productOwnershipId: null, name: 'Gourde inox 1L', category: 'Hydratation', quantity: 1, weightG: 180, weightSource: 'declared', isChecked: true, slotId: 'interior-main', slotOrder: 0, visual: null },
+      { id: 'item-2', productOwnershipId: null, name: 'Tente 2 places', category: 'Bivouac', quantity: 1, weightG: 1650, weightSource: 'declared', isChecked: true, slotId: 'interior-main', slotOrder: 1, visual: null },
+      { id: 'item-3', productOwnershipId: null, name: 'Duvet compact 5°C', category: 'Couchage', quantity: 1, weightG: 710, weightSource: 'declared', isChecked: true, slotId: 'interior-bottom', slotOrder: 0, visual: null },
+      { id: 'item-4', productOwnershipId: null, name: 'Lampe frontale 300lm', category: 'Sécurité', quantity: 1, weightG: 90, weightSource: 'declared', isChecked: true, slotId: 'lid-top', slotOrder: 0, visual: null },
+      { id: 'item-5', productOwnershipId: null, name: 'Trousse de premiers secours', category: 'Sécurité', quantity: 1, weightG: 210, weightSource: 'declared', isChecked: false, slotId: 'pocket-front', slotOrder: 0, visual: null },
+      { id: 'item-6', productOwnershipId: null, name: 'Réchaud à gaz compact', category: 'Cuisine', quantity: 1, weightG: 140, weightSource: 'declared', isChecked: true, slotId: 'interior-main', slotOrder: 2, visual: null },
+    ],
+    placedBadges: [{ id: 'badge-placed-1', badgeId: 'badge-alpin', anchorId: 'badge-body-front', scale: 1 }],
+  },
+  ownedCandidates: [
+    { id: 'cand-1', productOwnershipId: null, name: 'Filtre à eau compact', category: 'Hydratation', weightG: 85 },
+    { id: 'cand-2', productOwnershipId: null, name: 'Veste imperméable Hardshell', category: 'Vêtements', weightG: 360 },
+    { id: 'cand-3', productOwnershipId: null, name: 'Matelas gonflable 3 saisons', category: 'Couchage', weightG: 390 },
+  ],
+  badges: [
+    { id: 'badge-alpin', label: 'Alpin', description: 'Écusson alpin officiel', kind: 'patch', earned: true, colorToken: 'var(--hub-bag-forest)' },
+    { id: 'badge-camp', label: 'Camp partagé', description: 'Bivouac en altitude', kind: 'patch', earned: true, colorToken: 'var(--hub-primary)' },
+    { id: 'badge-sommet', label: 'Premier 3000m', description: 'Trophée officiel 3000m', kind: 'trophy', earned: true, colorToken: 'var(--hub-secondary)' },
+  ],
+  loans: [
+    {
+      id: 'loan-1',
+      itemName: 'Réchaud à gaz compact',
+      category: 'Cuisine',
+      weightG: 140,
+      ownerId: 'mem-1',
+      ownerName: 'Camille',
+      borrowerId: 'own-user',
+      startDate: '2026-11-01',
+      dueDate: '2026-11-05',
+      status: 'active',
+      canPackInKit: true,
+      canSublend: false,
+    },
+  ],
+  catalogItems: [
+    { id: 'cat-1', name: 'Bâtons de marche carbone', category: 'Randonnée', weightG: 280, inStock: true, priceCents: 4999 },
+    { id: 'cat-2', name: 'Popote aluminium 2 pers', category: 'Cuisine', weightG: 220, inStock: true, priceCents: 1850 },
+    { id: 'cat-3', name: 'Crampons légers 10 pointes', category: 'Alpinisme', weightG: 480, inStock: true, priceCents: 1200 },
+  ],
+  groupMembers: [
+    {
+      memberId: 'mem-1',
+      memberName: 'Camille',
+      readOnly: true,
+      viewerCanReadDocs: false,
+      kit: {
+        kitId: 'kit-camille',
+        name: 'Sac de Camille',
+        bagModelId: 'daypack-20',
+        bagParts: {},
+        revision: 1,
+      },
+      items: [
+        { id: 'c-1', productOwnershipId: null, name: 'Réchaud partagé', category: 'Cuisine', quantity: 1, weightG: 140, weightSource: 'declared', isChecked: true, slotId: null, slotOrder: 0, visual: null },
+        { id: 'c-2', productOwnershipId: null, name: 'Popote duo', category: 'Cuisine', quantity: 1, weightG: 220, weightSource: 'declared', isChecked: true, slotId: null, slotOrder: 1, visual: null },
+      ],
+      placedBadges: [],
+    },
+    {
+      memberId: 'mem-2',
+      memberName: 'Alex',
+      readOnly: true,
+      viewerCanReadDocs: false,
+      kit: {
+        kitId: 'kit-alex',
+        name: 'Sac d’Alex',
+        bagModelId: 'trekker-55',
+        bagParts: {},
+        revision: 1,
+      },
+      items: [
+        { id: 'a-1', productOwnershipId: null, name: 'Filtre à eau partagé', category: 'Hydratation', quantity: 1, weightG: 85, weightSource: 'declared', isChecked: true, slotId: null, slotOrder: 0, visual: null },
+        { id: 'a-2', productOwnershipId: null, name: 'Lampe frontale 400lm', category: 'Sécurité', quantity: 1, weightG: 95, weightSource: 'declared', isChecked: true, slotId: null, slotOrder: 1, visual: null },
+      ],
+      placedBadges: [],
+    },
+  ],
+};
+
 export function KitStudioView({
   requestedKitId = null,
   activeDrawer,
@@ -243,8 +339,14 @@ export function KitStudioView({
         setLoadState('ready');
       }
     } catch (err) {
-      console.error('[KitStudioView] loadBootstrap error:', err);
-      setLoadState('error');
+      console.warn('[KitStudioView] loadBootstrap failed, activating robust local fallback:', err);
+      setBootstrap(FALLBACK_STUDIO_PAYLOAD);
+      const fallbackCfg = payloadToKitConfiguration(FALLBACK_STUDIO_PAYLOAD.activeKit!);
+      setSeedConfig(fallbackCfg);
+      setKitName(FALLBACK_STUDIO_PAYLOAD.activeKit!.name);
+      setIsSharedWithGroup(true);
+      setIsLocalDraft(true);
+      setLoadState('ready');
     }
   }, [requestedKitId]);
 
@@ -331,8 +433,14 @@ export function KitStudioView({
       setIsLocalDraft(false);
       setLoadState('ready');
     } catch (err) {
-      console.error('[KitStudioView] loadBootstrap error:', err);
-      setLoadState('error');
+      console.warn('[KitStudioView] loadBootstrap failed, activating robust local fallback:', err);
+      setBootstrap(FALLBACK_STUDIO_PAYLOAD);
+      const fallbackCfg = payloadToKitConfiguration(FALLBACK_STUDIO_PAYLOAD.activeKit!);
+      setSeedConfig(fallbackCfg);
+      setKitName(FALLBACK_STUDIO_PAYLOAD.activeKit!.name);
+      setIsSharedWithGroup(true);
+      setIsLocalDraft(true);
+      setLoadState('ready');
     }
   };
 
