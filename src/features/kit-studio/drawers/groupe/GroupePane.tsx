@@ -15,6 +15,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw, ShieldCheck, Users } from 'lucide-react';
 import { DrawerEmpty, DrawerError, DrawerSkeleton, LensPager } from '@/components/ui/drawer';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { DEFAULT_BAG_CAPABILITIES } from '../../state/kitConfiguration';
 import { formatWeightSummary, selectDerivedTotals } from '../../state/selectors';
 import type { KitConfiguration, KitItem, PartConfig, PartId } from '../../state/types';
@@ -108,6 +109,7 @@ export function GroupePane({
   inspectedMemberId,
   onInspectMember,
 }: GroupePaneProps) {
+  const { haptic } = useHapticFeedback();
   const [members, setMembers] = useState<SharedGroupMemberKit[]>(initialMembers ?? []);
   const [loading, setLoading] = useState<boolean>(!initialMembers && Boolean(tripId || crewId));
   const [error, setError] = useState<string | null>(null);
@@ -207,6 +209,7 @@ export function GroupePane({
   }, [inspectedMemberId, lenses]);
 
   const handleSelectLens = (index: number) => {
+    haptic('selection');
     const target = lenses[index];
     if (!target || target.kind === 'self') {
       onInspectMember(null, null);
@@ -230,7 +233,7 @@ export function GroupePane({
   }
 
   return (
-    <div data-testid="studio-groupe-pane" className="space-y-4 pb-8">
+    <div data-testid="studio-groupe-pane" className="space-y-4 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
       {departedNotice && (
         <div
           data-testid="groupe-departed-banner"
@@ -277,7 +280,10 @@ export function GroupePane({
           <button
             type="button"
             data-testid="groupe-refresh-btn"
-            onClick={fetchGroupKits}
+            onClick={() => {
+              haptic('light');
+              void fetchGroupKits();
+            }}
             aria-label="Actualiser les kits partagés du groupe"
             className="min-h-[44px] min-w-[44px] rounded-full bg-[var(--hub-surface-card)] border border-[var(--hub-border)] flex items-center justify-center text-[var(--hub-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
           >

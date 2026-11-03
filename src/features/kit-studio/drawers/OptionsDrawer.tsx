@@ -17,6 +17,7 @@
 import React, { useEffect, useState } from 'react';
 import { Eye, List, Pencil, Share2, Sun, Volume2, VolumeX } from 'lucide-react';
 import { DrawerShell, type DrawerTab } from '@/components/ui/drawer';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { AestheticLightingPreset } from '@/features/hub/ambience/environment';
 import {
   getHubSoundController,
@@ -76,6 +77,7 @@ export function OptionsDrawer({
   soundController,
   readOnly = false,
 }: OptionsDrawerProps) {
+  const { haptic } = useHapticFeedback();
   const [tabIndex, setTabIndex] = useState<number>(0);
   const controller = soundController ?? getHubSoundController();
 
@@ -94,6 +96,7 @@ export function OptionsDrawer({
   }, [controller]);
 
   const handleToggleViewMode = (mode: StudioViewMode) => {
+    haptic('light');
     writePersistedStudioViewMode(mode);
     onChangeViewMode(mode);
     setStatusNotice(
@@ -105,6 +108,7 @@ export function OptionsDrawer({
 
   // D-19 : Geste utilisateur explicite -> seul moment où enableFromUserGesture() est appelé
   const handleToggleSoundFromGesture = async () => {
+    haptic('light');
     if (soundSnap.isMuted) {
       await controller.enableFromUserGesture();
       controller.playTactileTick();
@@ -120,12 +124,14 @@ export function OptionsDrawer({
     if (readOnly || !onRenameKit) return;
     const trimmed = nameDraft.trim();
     if (!trimmed || trimmed === kitName) return;
+    haptic('light');
     await onRenameKit(trimmed);
     setStatusNotice(`Nom du kit mis à jour : « ${trimmed} » (articles conservés).`);
   };
 
   const handleShareToggle = async () => {
     if (readOnly || !onToggleShareWithGroup) return;
+    haptic('light');
     const next = !isSharedWithGroup;
     await onToggleShareWithGroup(next);
     setStatusNotice(
@@ -136,7 +142,7 @@ export function OptionsDrawer({
   };
 
   const renderDisplayAndSoundPane = () => (
-    <div data-testid="studio-options-display-pane" className="space-y-4 pb-8">
+    <div data-testid="studio-options-display-pane" className="space-y-4 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
       {statusNotice && (
         <div
           data-testid="options-status-notice"
@@ -220,7 +226,10 @@ export function OptionsDrawer({
               type="button"
               data-testid="options-ambience-auto-toggle"
               aria-pressed={autoAmbienceEnabled}
-              onClick={() => onToggleAutoAmbience(!autoAmbienceEnabled)}
+              onClick={() => {
+                haptic('light');
+                onToggleAutoAmbience(!autoAmbienceEnabled);
+              }}
               className="min-h-[44px] px-3 rounded-xl border border-[var(--hub-border)] bg-[var(--hub-surface)] text-xs font-semibold text-[var(--hub-text-primary)]"
             >
               {autoAmbienceEnabled ? 'Ambiance auto : Oui' : 'Ambiance auto : Non'}
@@ -237,9 +246,10 @@ export function OptionsDrawer({
               id="options-lighting-preset"
               data-testid="options-lighting-select"
               value={lightingPreset}
-              onChange={(e) =>
-                onChangeLightingPreset(e.target.value as AestheticLightingPreset)
-              }
+              onChange={(e) => {
+                haptic('selection');
+                onChangeLightingPreset(e.target.value as AestheticLightingPreset);
+              }}
               className="w-full min-h-[44px] px-3 rounded-xl bg-[var(--hub-field-bg)] border border-[var(--hub-field-border)] text-xs text-[var(--hub-text-primary)]"
             >
               <option value="auto">Automatique (selon données réelles disponibles)</option>
@@ -254,7 +264,7 @@ export function OptionsDrawer({
   );
 
   const renderKitAndSharingPane = () => (
-    <div data-testid="studio-options-sharing-pane" className="space-y-4 pb-8">
+    <div data-testid="studio-options-sharing-pane" className="space-y-4 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
       {/* Renommage sûr du kit (A-01 : ne touche jamais aux articles) */}
       {!readOnly && onRenameKit && (
         <form
@@ -335,5 +345,14 @@ export function OptionsDrawer({
     },
   ];
 
-  return <DrawerShell tabs={tabs} activeIndex={tabIndex} onIndexChange={setTabIndex} />;
+  return (
+    <DrawerShell
+      tabs={tabs}
+      activeIndex={tabIndex}
+      onIndexChange={(idx) => {
+        haptic('selection');
+        setTabIndex(idx);
+      }}
+    />
+  );
 }

@@ -77,7 +77,7 @@ const SECONDARY_DAYS: DrawerSecondaryItem[] = [
 
 const SECONDARY_MAP: DrawerSecondaryItem[] = [
   { id: 'trace', label: 'Tracé GPS', icon: <Route className="w-3.5 h-3.5" aria-hidden="true" /> },
-  { id: 'relief', label: 'Relief 3D', icon: <Mountain className="w-3.5 h-3.5" aria-hidden="true" /> },
+  { id: 'relief', label: 'Relief', icon: <Mountain className="w-3.5 h-3.5" aria-hidden="true" /> },
 ];
 
 const SECONDARY_POINTS: DrawerSecondaryItem[] = [

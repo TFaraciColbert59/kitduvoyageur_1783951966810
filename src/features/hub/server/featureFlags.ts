@@ -12,7 +12,7 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   hub_collectif_enabled: false,
   explorer_unified_map_enabled: false,
   explorer_v2_enabled: false,
-  hub_camp_v1: false,
+  hub_camp_v1: true,
   updatedAt: 0,
   source: 'fallback',
 };
@@ -46,7 +46,8 @@ async function readLocalHubCampOverride(): Promise<boolean | undefined> {
     const raw = cookieStore.get('lkv_ff_hub_camp_v1')?.value;
     if (raw === '1' || raw === 'true') return true;
     if (raw === '0' || raw === 'false') return false;
-    return undefined;
+    // Sur simulateur ou appareil mobile local (ex. iPhone / WebView native), activer par défaut
+    return true;
   } catch {
     return undefined;
   }

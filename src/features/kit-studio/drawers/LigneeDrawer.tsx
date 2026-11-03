@@ -20,6 +20,7 @@ import {
   DrawerSkeleton,
   type DrawerTab,
 } from '@/components/ui/drawer';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface SafeLineageJournalEntry {
   id: string;
@@ -154,6 +155,7 @@ export interface LigneeDrawerProps {
 }
 
 export function LigneeDrawer({ kitId, initialLineage }: LigneeDrawerProps) {
+  const { haptic } = useHapticFeedback();
   const [tabIndex, setTabIndex] = useState<number>(0);
   const [sheet, setSheet] = useState<KitLineageSheetView | null>(() =>
     initialLineage !== undefined ? normalizeKitLineageSheet(kitId, initialLineage) : null
@@ -202,7 +204,7 @@ export function LigneeDrawer({ kitId, initialLineage }: LigneeDrawerProps) {
     if (!sheet) return null;
 
     return (
-      <div data-testid="studio-lignee-pane" className="space-y-4 pb-8">
+      <div data-testid="studio-lignee-pane" className="space-y-4 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
         {/* Statut de lignée & kit souche (D-14 : vocabulaire public exact) */}
         <div className="p-4 rounded-2xl bg-[var(--hub-surface-card)] border border-[var(--hub-border)] space-y-2.5">
           <div className="flex items-center justify-between gap-2">
@@ -274,7 +276,7 @@ export function LigneeDrawer({ kitId, initialLineage }: LigneeDrawerProps) {
     }
 
     return (
-      <div data-testid="studio-lignee-journal" className="space-y-2.5 pb-8">
+      <div data-testid="studio-lignee-journal" className="space-y-2.5 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
         {sheet.journal.map((entry) => (
           <div
             key={entry.id}
@@ -312,5 +314,14 @@ export function LigneeDrawer({ kitId, initialLineage }: LigneeDrawerProps) {
     },
   ];
 
-  return <DrawerShell tabs={tabs} activeIndex={tabIndex} onIndexChange={setTabIndex} />;
+  return (
+    <DrawerShell
+      tabs={tabs}
+      activeIndex={tabIndex}
+      onIndexChange={(idx) => {
+        haptic('selection');
+        setTabIndex(idx);
+      }}
+    />
+  );
 }

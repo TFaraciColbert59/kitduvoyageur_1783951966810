@@ -461,15 +461,22 @@
   background: rgba(10, 20, 14, 0.12) !important;
   backdrop-filter: blur(1.5px) !important;
   -webkit-backdrop-filter: blur(1.5px) !important;
-  bottom: calc(58px + max(10px, env(safe-area-inset-bottom, 0px))) !important;
+  bottom: 0 !important;
 }
 
-/* Disparition fluide de la barre de navigation basse quand un tiroir ou Kit Studio est ouvert */
+/* Disparition stricte et absolue de la barre de navigation basse quand un tiroir ou Kit Studio est ouvert */
+html[data-kit-studio-open='true'] .lkdv-floating-tabbar,
+body[data-kit-studio-open='true'] .lkdv-floating-tabbar,
+html[data-hub-drawer-open='true'] .lkdv-floating-tabbar,
+body[data-hub-drawer-open='true'] .lkdv-floating-tabbar,
 body:has([data-testid="kit-studio-view"]) .lkdv-floating-tabbar,
+body:has([data-testid="kit-studio-view"]) [data-testid="bottom-tab-bar"],
 body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
+  display: none !important;
   opacity: 0 !important;
+  visibility: hidden !important;
   pointer-events: none !important;
-  transform: translateY(120%) !important;
+  transform: translateY(150%) !important;
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease !important;
 }
 
@@ -477,29 +484,28 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 .hub-camp-drawer-sheet {
   position: relative;
   width: 100%;
-  height: 30dvh !important;
-  max-height: 30dvh !important;
+  margin-top: auto !important;
+  height: 56dvh;
+  max-height: 56dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 28px 28px 0 0;
-  /* Texture translucide exacte de la page Compte (.sheet de compte-apple-hig.css) */
+  border-radius: 26px 26px 0 0;
+  /* Texture de fond exacte des drawers de la page Compte (.lkdv-overlay-sheet) */
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.88),
-    rgba(247, 250, 244, 0.76) 42%,
-    rgba(255, 255, 255, 0.84)
+    rgba(255, 255, 255, 0.94),
+    rgba(242, 247, 238, 0.94) 45%,
+    rgba(255, 255, 255, 0.96)
   ) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(190%) brightness(1.05) !important;
-  backdrop-filter: blur(32px) saturate(190%) brightness(1.05) !important;
-  border-top: 0.5px solid rgba(255, 255, 255, 0.95) !important;
-  border-left: 0.5px solid rgba(255, 255, 255, 0.7) !important;
-  border-right: 0.5px solid rgba(255, 255, 255, 0.7) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border-top: 0.5px solid rgba(23, 43, 36, 0.12) !important;
+  border-left: 0.5px solid rgba(23, 43, 36, 0.12) !important;
+  border-right: 0.5px solid rgba(23, 43, 36, 0.12) !important;
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.5),
-    0 0 0 0.5px rgba(23, 43, 36, 0.12),
-    0 -12px 40px rgba(10, 20, 14, 0.22) !important;
+    0 -1px 0 rgba(255, 255, 255, 0.9),
+    0 -18px 50px rgba(10, 20, 14, 0.22) !important;
   animation: lkdv-sheet-slide-up 0.34s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -668,10 +674,14 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   transform: scale(0.95);
 }
 
-/* ── 7. Interdiction stricte du scroll vertical sur les tiroirs du Hub (Hauteur max 30%) ── */
+/* ── 7. Tiroirs du Hub & Studio : ancrage strict en bas de page ── */
 .hub-camp-drawer-sheet {
-  height: 30dvh !important;
-  max-height: 30dvh !important;
+  margin-top: auto !important;
+}
+
+[data-testid="kit-studio-view"] .hub-camp-drawer-sheet {
+  height: 38dvh !important;
+  max-height: 42dvh !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell {
@@ -693,7 +703,7 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-pane {
-  overflow-y: hidden !important;
+  overflow-y: auto !important;
   overflow-x: hidden !important;
   display: flex !important;
   flex-direction: column !important;
@@ -712,23 +722,25 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
 
 /* Sélecteur du haut (onglets du tiroir) : ZERO TEXTE, UNIQUEMENT DES ICÔNES */
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs {
-  height: 32px !important;
-  width: 136px !important;
-  max-width: 136px !important;
-  margin: 0 auto !important;
-  padding: 2px !important;
+  height: 48px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 4px !important;
+  box-sizing: border-box !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens {
-  top: 2px !important;
-  bottom: 2px !important;
-  left: 2px !important;
+  top: 4px !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  width: calc((100% - 8px) / var(--n, 2)) !important;
   border-radius: 9999px !important;
 }
 
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button {
-  min-height: 28px !important;
-  height: 28px !important;
+  min-height: 44px !important;
+  height: 44px !important;
   padding: 0 !important;
   display: flex !important;
   align-items: center !important;
@@ -747,10 +759,47 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   justify-content: center !important;
 }
 
+/* Sélecteur de pièces au sommet du tiroir Kit Studio */
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .hub-drawer-capsule {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 34px !important;
+  margin: 0 auto !important;
+  padding: 2px !important;
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: minmax(0, 1fr) !important;
+  gap: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .hub-drawer-capsule .sel-lens {
+  top: 2px !important;
+  bottom: 2px !important;
+  left: 2px !important;
+  border-radius: 9999px !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .hub-drawer-capsule button {
+  min-height: 28px !important;
+  height: 28px !important;
+  padding: 0 4px !important;
+  font-size: 11px !important;
+  gap: 3px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .hub-drawer-capsule button .hub-capsule-badge {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+}
+
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary {
   position: absolute !important;
   right: 12px !important;
-  bottom: 6px !important;
+  bottom: max(10px, env(safe-area-inset-bottom, 10px)) !important;
   left: auto !important;
   top: auto !important;
   z-index: 45 !important;
@@ -771,7 +820,7 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   z-index: -1 !important;
 }
 
-/* Sélecteur du bas à droite (nuancier de couleurs) : ZERO TEXTE, UNIQUEMENT PASTILLES / ICÔNES */
+/* Sélecteur du bas à droite (3 modes : Pièce, Gabarit, Matière — style grille/sortie de la page Compte) */
 .hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs {
   position: relative !important;
   top: auto !important;
@@ -780,32 +829,62 @@ body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
   left: auto !important;
   pointer-events: auto !important;
   display: grid !important;
-  grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)) !important;
   align-items: center !important;
-  width: calc(var(--n, 2) * 22px + 8px) !important;
-  max-width: 190px !important;
-  height: 24px !important;
-  padding: 1.5px !important;
+  width: calc(var(--n, 3) * 32px + 6px) !important;
+  max-width: 120px !important;
+  height: 30px !important;
+  padding: 2px !important;
   border-radius: 9999px !important;
   background: rgba(255, 255, 255, 0.72) !important;
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.45) 55%, rgba(255, 255, 255, 0.58)) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.04) !important;
-  backdrop-filter: blur(24px) saturate(180%) brightness(1.04) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 4px 12px rgba(23, 43, 36, 0.1) !important;
-  box-sizing: border-box !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.48) 55%, rgba(255, 255, 255, 0.62)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 4px 16px rgba(10, 20, 14, 0.12) !important;
 }
 
-.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button span:not([data-testid*="personnaliser-color-"]) {
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs .ig-th {
+  position: absolute !important;
+  top: 2px !important;
+  bottom: 2px !important;
+  left: 2px !important;
+  width: calc((100% - 4px) / var(--n, 3)) !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.82)) !important;
+  box-shadow: 0 1px 4px rgba(23, 43, 36, 0.14), inset 0 1px 0 #fff !important;
+  z-index: 1 !important;
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button {
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 26px !important;
+  height: 26px !important;
+  background: none !important;
+  border: 0 !important;
+  color: #56665D !important;
+  cursor: pointer !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button.active {
+  color: #172B24 !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button span:not(.ic) {
   display: none !important;
 }
 
-/* Pilule flottante de Kit Studio « ... » au-dessus de la barre des éléments */
+/* Pilule flottante de Kit Studio « ... » au bas de l'écran quand le tiroir est replié */
 .studio-floating-pill-container {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  bottom: max(16px, env(safe-area-inset-bottom, 16px));
   display: flex;
   justify-content: center;
   align-items: center;
@@ -887,10 +966,27 @@ body:has([data-testid="kit-studio-view"]) [data-testid="bottom-tab-bar"] {
    UNIFICATION DESIGN SYSTEM — KIT STUDIO & HUB (Apple Liquid Glass iOS 27)
    ========================================================================== */
 
-/* 1. Variables tokens forcées en mode clair Apple pour tous les tiroirs et le Kit Studio */
+/* 1. Variables tokens et fond d'écran applicatif unifié pour Kit Studio */
+[data-testid="kit-studio-view"] {
+  background-color: var(--lkv-app-bg-fallback, #F5F7F3) !important;
+  background-image: linear-gradient(var(--lkv-app-bg-scrim), var(--lkv-app-bg-scrim)),
+    var(--lkv-app-bg-image-portrait) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+@media (min-aspect-ratio: 1 / 1) {
+  [data-testid="kit-studio-view"] {
+    background-image: linear-gradient(var(--lkv-app-bg-scrim), var(--lkv-app-bg-scrim)),
+      var(--lkv-app-bg-image-landscape) !important;
+  }
+}
+
 .hub-camp-drawer-sheet,
 [data-testid="kit-studio-view"] {
-  --hub-bg: #F4F6F0 !important;
+  --hub-bg: transparent !important;
   --hub-surface: rgba(255, 255, 255, 0.72) !important;
   --hub-surface-card: rgba(255, 255, 255, 0.88) !important;
   --hub-surface-paper: rgba(255, 255, 255, 0.95) !important;
@@ -957,21 +1053,63 @@ body:has([data-testid="kit-studio-view"]) [data-testid="bottom-tab-bar"] {
   font-weight: 700 !important;
 }
 
-/* 3. Cartes de contenu dans tous les tiroirs du Studio et du Hub */
+/* 3. Cartes de contenu dans tous les tiroirs du Studio et du Hub (texture de la page Compte) */
 .hub-camp-drawer-sheet [class*="bg-[var(--hub-surface-card)]"],
 .hub-camp-drawer-sheet [class*="bg-[var(--hub-surface)]"],
-[data-testid="kit-studio-view"] [class*="bg-[var(--hub-surface-card)]"],
-[data-testid="kit-studio-view"] [class*="bg-[var(--hub-surface)]"] {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.92),
-    rgba(248, 251, 246, 0.82)
-  ) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+[data-testid="kit-studio-view"] .hub-camp-drawer-sheet [class*="bg-[var(--hub-surface-card)]"],
+[data-testid="kit-studio-view"] .hub-camp-drawer-sheet [class*="bg-[var(--hub-surface)]"] {
+  background: rgba(255, 255, 255, 0.58) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 2px 10px rgba(10, 20, 14, 0.05) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 0.5px rgba(23, 43, 36, 0.08),
+    0 4px 16px rgba(10, 20, 14, 0.06) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
   color: #172B24 !important;
+}
+
+/* 3b. Barre de progression Liquid Glass ultra fine — Poids du sac */
+.studio-liquid-weight-bar {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top, 16px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.studio-weight-label {
+  font-size: 11px;
+  font-weight: 550;
+  color: var(--hub-text-secondary, #56665D);
+  letter-spacing: 0.02em;
+  margin-bottom: 5px;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.85);
+}
+
+.studio-progress-track {
+  width: 140px;
+  height: 3.5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 1px 4px rgba(10, 20, 14, 0.06), inset 0 0.5px 0.5px rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+}
+
+.studio-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1E6B4C, #2E8B62);
+  box-shadow: 0 0 6px rgba(30, 107, 76, 0.35);
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* 4. Formulaires et sélecteurs dans les tiroirs */
