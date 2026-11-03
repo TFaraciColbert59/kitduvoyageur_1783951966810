@@ -62,6 +62,9 @@ async function readLocalHubCampOverride(): Promise<boolean | undefined> {
  */
 export async function currentFeatureFlags(): Promise<FeatureFlags> {
   const localCampOverride = await readLocalHubCampOverride();
+  // QA sur les déploiements de preview Vercel : le camp doit être visible
+  // sans activer le flag global en production (la base n'a pas encore la ligne).
+  const previewCamp = process.env.VERCEL_ENV === 'preview';
 
   try {
     const supabase = await createClient();
@@ -92,7 +95,7 @@ export async function currentFeatureFlags(): Promise<FeatureFlags> {
       hub_collectif_enabled: byId.get('hub_collectif_enabled') ?? false,
       explorer_unified_map_enabled: byId.get('explorer_unified_map_enabled') ?? false,
       explorer_v2_enabled: byId.get('explorer_v2_enabled') ?? false,
-      hub_camp_v1: localCampOverride ?? byId.get('hub_camp_v1') ?? false,
+      hub_camp_v1: localCampOverride ?? (previewCamp ? true : byId.get('hub_camp_v1') ?? false),
       updatedAt: Date.now(),
       source: 'rpc',
     };
