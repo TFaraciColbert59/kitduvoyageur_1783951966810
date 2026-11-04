@@ -114,7 +114,10 @@ export function CommunityFeed({
             onRequireAuth={onRequireAuth}
             initialPanel={initialCommentId && post.id === initialPostId ? 'comments' : null}
             initialCommentId={initialCommentId}
-            mediaPriority={index < 2}
+            // Seule la première carte est au-dessus de la ligne de flottaison :
+            // précharger la deuxième en `high` volait la bande passante du
+            // premier média (LCP) et du CSS. Les suivantes se chargent à lazy.
+            mediaPriority={index === 0}
           />
         ))}
       </div>
