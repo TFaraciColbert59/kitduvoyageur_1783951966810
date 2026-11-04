@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { shareNativeURL } from '@/lib/native/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -29,6 +29,11 @@ export function usePostInteractions(
   const [saved, setSaved] = useState(Boolean(post.user_saved));
   const [likesCount, setLikesCount] = useState(Number(post.likes_count ?? 0));
   const [busy, setBusy] = useState(false);
+  // Verrous synchrones : `busy` (état React) ne change qu'au rendu suivant,
+  // donc deux clics dans la même tâche pouvaient lancer deux RPC toggle et
+  // inverser deux fois le like. Ces refs sont posées avant le premier await.
+  const likeLockRef = useRef(false);
+  const saveLockRef = useRef(false);
 
   const permalink = `/communaute?post=${post.id}`;
   const isGuest = !user?.id;
@@ -39,52 +44,63 @@ export function usePostInteractions(
       onRequireAuth?.('like');
       return 'auth';
     }
-    if (busy) return 'error';
+    if (likeLockRef.current) return 'error';
+    likeLockRef.current = true;
     setBusy(true);
     const previous = liked;
     const previousCount = likesCount;
     setLiked(!previous);
     setLikesCount(Math.max(0, previousCount + (previous ? -1 : 1)));
     triggerHaptic('light');
-    const { error } = await createClient().rpc('toggle_community_post_like', { p_post_id: post.id });
-    if (error) {
-      setLiked(previous);
-      setLikesCount(previousCount);
-      triggerHaptic('error');
-      setBusy(false);
-      if (isAuthDenied(error)) {
-        onRequireAuth?.('like');
-        return 'auth';
+    try {
+      const { error } = await createClient().rpc('toggle_community_post_like', { p_post_id: post.id });
+      if (error) {
+        // Retour à l'état exact d'avant : le serveur n'a rien changé.
+        setLiked(previous);
+        setLikesCount(previousCount);
+        triggerHaptic('error');
+        if (isAuthDenied(error)) {
+          onRequireAuth?.('like');
+          return 'auth';
+        }
+        return 'error';
       }
-      return 'error';
+      return 'ok';
+    } finally {
+      likeLockRef.current = false;
+      setBusy(false);
     }
-    setBusy(false);
-    return 'ok';
-  }, [busy, isGuest, liked, likesCount, onRequireAuth, post.id, triggerHaptic]);
+  }, [isGuest, liked, likesCount, onRequireAuth, post.id, triggerHaptic]);
 
   const toggleSave = useCallback(async (): Promise<CommunityActionResult> => {
     if (isGuest || isAnonymous) {
       onRequireAuth?.('save');
       return 'auth';
     }
+    if (saveLockRef.current) return 'error';
+    saveLockRef.current = true;
     const next = !saved;
     setSaved(next);
-    const supabase = createClient();
-    const { error } = next
-      ? await supabase.from('post_saves').upsert(
-          { user_id: user!.id, post_id: post.id },
-          { onConflict: 'user_id,post_id', ignoreDuplicates: true },
-        )
-      : await supabase.from('post_saves').delete().eq('user_id', user!.id).eq('post_id', post.id);
-    if (error) {
-      setSaved(!next);
-      if (isAuthDenied(error)) {
-        onRequireAuth?.('save');
-        return 'auth';
+    try {
+      const supabase = createClient();
+      const { error } = next
+        ? await supabase.from('post_saves').upsert(
+            { user_id: user!.id, post_id: post.id },
+            { onConflict: 'user_id,post_id', ignoreDuplicates: true },
+          )
+        : await supabase.from('post_saves').delete().eq('user_id', user!.id).eq('post_id', post.id);
+      if (error) {
+        setSaved(!next);
+        if (isAuthDenied(error)) {
+          onRequireAuth?.('save');
+          return 'auth';
+        }
+        return 'error';
       }
-      return 'error';
+      return 'ok';
+    } finally {
+      saveLockRef.current = false;
     }
-    return 'ok';
   }, [isAnonymous, isGuest, onRequireAuth, post.id, saved, user]);
 
   const share = useCallback(async (): Promise<CommunityShareResult> => {
