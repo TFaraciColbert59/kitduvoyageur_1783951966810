@@ -50,7 +50,9 @@ async function measure(server, warmup) {
   });
   await page.goto(`${server.base}/communaute`, { waitUntil: 'domcontentloaded', timeout: 90_000 });
   await page.waitForTimeout(8000);
-  const data = await page.evaluate(() => {
+  // Le service worker peut provoquer un rechargement unique : on relit après
+  // la navigation au lieu de perdre le passage.
+  const read = () => page.evaluate(() => {
     const nav = performance.getEntriesByType('navigation')[0];
     const resources = performance.getEntriesByType('resource');
     return {
@@ -70,6 +72,17 @@ async function measure(server, warmup) {
       path: location.pathname,
     };
   });
+  let data;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      data = await read();
+      break;
+    } catch {
+      await page.waitForLoadState('domcontentloaded', { timeout: 30_000 }).catch(() => {});
+      await page.waitForTimeout(1500);
+    }
+  }
+  if (!data) data = { error: 'evaluate-failed' };
   await context.close();
   return { server: server.name, warmup, ...data };
 }
