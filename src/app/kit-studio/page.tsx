@@ -1,9 +1,28 @@
-import { KitStudioClient } from '@/features/kit-studio/ui/KitStudioClient';
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { KitStudioView } from '@/features/kit-studio/components/KitStudioView';
+import type { StudioDrawer } from '@/features/hub/state/drawerMachine';
 
 /**
- * Kit Studio v2 : un seul écran (sac 3D + tiroir). Étage 1 : le kit est lu en local côté client
- * (kitRepository) ; la page serveur ne porte ni secret ni donnée de session en v1.
+ * Kit Studio — version du hub camp (tiroirs, sac 3D, insignes, inventaire).
+ * La vue est la même que celle montée dans le hub (`?studio=1`) : une seule implémentation.
+ * Les données viennent de /api/kit-studio/configuration ; aucun jeu de démonstration.
  */
 export default function KitStudioPage() {
-  return <KitStudioClient />;
+  const router = useRouter();
+  const [drawer, setDrawer] = useState<StudioDrawer | undefined>(undefined);
+  const [subDrawerId, setSubDrawerId] = useState<string | undefined>(undefined);
+
+  return (
+    <KitStudioView
+      activeDrawer={drawer}
+      subDrawerId={subDrawerId}
+      onSelectDrawer={(next) => {
+        setDrawer(next);
+        setSubDrawerId(undefined);
+      }}
+      onExitStudio={() => router.push('/hub')}
+    />
+  );
 }
