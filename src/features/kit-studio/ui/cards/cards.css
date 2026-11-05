@@ -1,0 +1,341 @@
+/* Cartes du tiroir (SPEC-DRAWER §Cartes). Encre rgba(23,43,36,…) seulement : aucune bordure ni ombre colorée. */
+.ks-cards {
+  --gap: 8px;
+  /* côté d'une carte : (min(100vw, 560px) − 2·12 − 24 − 2·8) / 3 */
+  --W: calc((min(100vw, 560px) - 2 * 12px - 24px - 2 * 8px) / 3);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 18px;
+  bottom: 48px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ks-rail {
+  display: flex;
+  gap: var(--gap);
+  /* trois cartes + deux intervalles : jamais un quart de carte */
+  width: calc(var(--W) * 3 + var(--gap) * 2);
+  height: var(--W);
+  flex: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  animation: ks-rail-in 0.42s var(--ks-ease) backwards;
+}
+.ks-rail::-webkit-scrollbar {
+  display: none;
+}
+@keyframes ks-rail-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.ks-card {
+  flex: 0 0 var(--W);
+  width: var(--W);
+  height: var(--W);
+  position: relative;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  scroll-snap-align: start;
+  touch-action: pan-x;
+  cursor: pointer;
+  color: var(--ks-ink);
+  font-family: var(--ks-font);
+  -webkit-tap-highlight-color: transparent;
+  background: linear-gradient(158deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.4) 62%, rgba(255, 255, 255, 0.52));
+  box-shadow:
+    inset 0 1px 0 var(--ks-white),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px var(--ks-ink-10),
+    0 6px 16px var(--ks-ink-12),
+    0 1px 3px var(--ks-ink-08);
+  transition:
+    transform 0.38s var(--ks-spring),
+    box-shadow 0.3s,
+    background 0.3s,
+    opacity 0.25s;
+}
+/* halo derrière l'objet */
+.ks-card::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 92%;
+  height: 70%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.35) 58%, transparent);
+}
+.ks-card:active {
+  transform: scale(0.97);
+}
+.ks-card:focus-visible {
+  outline: 2px solid var(--ks-ink);
+  outline-offset: 2px;
+}
+
+/* modèle 3D au centre : zone objet inset 0 6px 52px 6px */
+.ks-card__obj {
+  position: absolute;
+  inset: 0 6px 52px 6px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.ks-card__obj .ks-thumb__img {
+  transform: translateY(-4%);
+  transition: transform 0.5s var(--ks-spring);
+}
+.ks-card:active .ks-card__obj .ks-thumb__img {
+  transform: translateY(-8%) scale(1.06);
+}
+.ks-card__gl {
+  display: grid;
+  place-items: center;
+  color: var(--ks-ink);
+}
+.ks-card__gl svg {
+  width: 42%;
+  height: 42%;
+  filter: drop-shadow(0 3px 4px var(--ks-ink-13));
+}
+
+/* légende : bas droite, nom 11,5/600 sur deux lignes, sous-titre 10,5 */
+.ks-card__cap {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 9px;
+  display: block;
+  text-align: right;
+  pointer-events: none;
+}
+.ks-card__cap b {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font: 600 11.5px/1.14 var(--ks-font);
+  letter-spacing: -0.015em;
+  color: var(--ks-ink);
+}
+.ks-card__cap small {
+  display: block;
+  margin-top: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 500 10.5px/1.2 var(--ks-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--ks-ink-2);
+  opacity: 0.85;
+}
+
+/* sélection : surface plus claire, ombre plus marquée, pastille ✓ encre. Pas de bordure. */
+.ks-card--on {
+  background: var(--ks-white);
+  box-shadow:
+    inset 0 1px 0 var(--ks-white),
+    0 0 0 0.5px var(--ks-ink-14),
+    0 10px 22px var(--ks-ink-20),
+    0 2px 5px var(--ks-ink-10);
+}
+.ks-card__ck {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ks-ink);
+  pointer-events: none;
+}
+.ks-card__ck svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: var(--ks-white);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* indisponible */
+.ks-card[aria-disabled='true'] {
+  opacity: 0.45;
+}
+.ks-card--add {
+  background: rgba(255, 255, 255, 0.3);
+}
+.ks-card--lift {
+  opacity: 0.3;
+}
+.ks-card--try {
+  transform: scale(1.04);
+  box-shadow:
+    inset 0 1px 0 var(--ks-white),
+    0 0 0 0.5px var(--ks-ink-14),
+    0 12px 26px var(--ks-ink-20);
+}
+
+/* zone pleine / option refusée : la carte clignote (aucun toast) */
+.ks-card--blink {
+  animation: ks-blink 0.7s var(--ks-ease);
+}
+@keyframes ks-blink {
+  0%,
+  40%,
+  80% {
+    opacity: 0.35;
+    transform: scale(1.06);
+  }
+  20%,
+  60%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* objet qui suit le doigt */
+.ks-flyer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 40;
+  width: 88px;
+  height: 88px;
+  border-radius: 26px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: linear-gradient(158deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.5));
+  box-shadow:
+    inset 0 1px 0 var(--ks-white),
+    0 0 0 0.5px var(--ks-ink-10),
+    0 14px 30px var(--ks-ink-20);
+  transition: box-shadow 0.2s;
+}
+.ks-flyer--armed {
+  box-shadow:
+    inset 0 1px 0 var(--ks-white),
+    0 0 0 0.5px var(--ks-ink-14),
+    0 18px 36px var(--ks-ink-25);
+}
+.ks-flyer--land {
+  transition:
+    transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.3s;
+}
+.ks-flyer .ks-thumb {
+  width: 90%;
+  height: 90%;
+}
+
+/* barre basse : mode + ↺, points, familles / options */
+.ks-modegrp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ks-undo {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: var(--ks-ink);
+  cursor: pointer;
+  background: var(--ks-bar-bg);
+  -webkit-backdrop-filter: var(--ks-bar-blur);
+  backdrop-filter: var(--ks-bar-blur);
+  box-shadow: var(--ks-bar-shadow);
+  transition: transform 0.3s var(--ks-spring);
+}
+.ks-undo:active {
+  transform: scale(0.9);
+}
+.ks-ci {
+  display: grid;
+  place-items: center;
+}
+.ks-ci svg {
+  width: 18px;
+  height: 18px;
+}
+.ks-sdots {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  pointer-events: none !important;
+}
+.ks-sdots[hidden] {
+  display: none;
+}
+.ks-sdots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ks-ink-2);
+  opacity: 0.3;
+  transition:
+    width 0.35s var(--ks-spring),
+    opacity 0.25s;
+}
+.ks-sdots i.cur {
+  width: 14px;
+  border-radius: 3px;
+  background: var(--ks-ink);
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ks-rail,
+  .ks-card--blink {
+    animation: none;
+  }
+  .ks-card,
+  .ks-card__obj .ks-thumb__img,
+  .ks-flyer--land {
+    transition: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .ks-card {
+    background: var(--ks-paper);
+  }
+  .ks-card--on {
+    background: var(--ks-white);
+  }
+}
+@media (prefers-contrast: more) {
+  .ks-card {
+    box-shadow: 0 0 0 1px var(--ks-ink-2);
+  }
+}

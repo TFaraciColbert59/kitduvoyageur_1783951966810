@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Card, Divider } from '@/components/ui';
 import { DepartWeightBreakdown } from '@/features/materiel/components/depart/DepartWeightBreakdown';
 import { DepartChecklist } from '@/features/materiel/components/depart/DepartChecklist';
@@ -40,6 +41,13 @@ export function DepartSacSection({ depart, kitItems, isRealKit }: DepartSacSecti
           <div className="glass-progress-fill" style={{ width: `${checklistPct}%` }} />
         </div>
       </header>
+
+      <Link
+        href="/kit-studio"
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--lkv-text-primary)] underline underline-offset-4"
+      >
+        Ouvrir le Kit Studio
+      </Link>
 
       <DepartWeightBreakdown
         breakdown={depart.weightBreakdown}

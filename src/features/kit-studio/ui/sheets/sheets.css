@@ -1,0 +1,324 @@
+/* Feuilles Sac/Pièce et Commande (contenu des pages du tiroir). Maquette Kit_Studio_v2.html l.201-368.
+   Aucune bordure colorée : surfaces d'encre claire, sélection = surface plus claire. */
+.ks-sh-ph {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 4px;
+}
+.ks-sh-t17 {
+  font: 600 17px/1.2 var(--ks-font);
+  letter-spacing: -0.01em;
+}
+.ks-sh-t13 {
+  font: 500 13px/1.4 var(--ks-font);
+  color: var(--ks-ink-2);
+  margin: 0;
+}
+.ks-sh-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-top: 6px;
+}
+.ks-sh-big {
+  font: 700 34px/1 var(--ks-font);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ks-sh-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.ks-sh-cap > div {
+  display: grid;
+  grid-template-columns: 76px 1fr 72px;
+  align-items: center;
+  gap: 10px;
+  font: 500 12.5px/1 var(--ks-font);
+  color: var(--ks-ink-2);
+}
+.ks-sh-cap i {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--ks-ink-08);
+  position: relative;
+  overflow: hidden;
+}
+.ks-sh-cap i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: var(--p);
+  border-radius: 3px;
+  background: var(--c, var(--ks-green));
+}
+.ks-sh-cap b {
+  font: 600 12.5px/1 var(--ks-font);
+  color: var(--ks-ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ks-sh-plist {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ks-sh-plist > div {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  background: var(--ks-ink-06);
+  border-radius: 14px;
+  padding: 9px 10px;
+  min-width: 0;
+}
+.ks-sh-plist i {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex: none;
+  box-shadow: inset 0 0 0 0.5px var(--ks-ink-20);
+}
+.ks-sh-plist span {
+  min-width: 0;
+}
+.ks-sh-plist b,
+.ks-sh-row b {
+  display: block;
+  font: 600 14px/1.25 var(--ks-font);
+}
+.ks-sh-plist b {
+  font-size: 12.5px;
+}
+.ks-sh-plist small {
+  display: block;
+  font: 500 11px/1.25 var(--ks-font);
+  color: var(--ks-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ks-sh-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ks-sh-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: var(--ks-ink-06);
+}
+.ks-sh-row > .ks-sh-txt {
+  flex: 1;
+  min-width: 0;
+}
+.ks-sh-row small {
+  display: block;
+  margin-top: 2px;
+  font: 500 12px/1.3 var(--ks-font);
+  color: var(--ks-ink-2);
+}
+.ks-sh-rg {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: var(--ks-ink-10);
+  color: var(--ks-on);
+}
+.ks-sh-rg[data-on='true'] {
+  background: var(--ks-green);
+  color: var(--ks-white);
+}
+.ks-sh-rg .ks-icon {
+  width: 19px;
+  height: 19px;
+}
+.ks-sh-price {
+  font: 600 13px/1 var(--ks-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--ks-ink-2);
+  white-space: nowrap;
+}
+.ks-sh-price[data-own='true'] {
+  color: var(--ks-on);
+}
+.ks-sh-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 4px 2px;
+}
+.ks-sh-total b {
+  font: 700 28px/1 var(--ks-font);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ks-sh-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--ks-ink-06);
+  font: 500 13px/1.45 var(--ks-font);
+  color: var(--ks-on);
+}
+.ks-sh-pts {
+  display: flex;
+  gap: 4px;
+}
+.ks-sh-pts i {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--ks-ink-08);
+}
+.ks-sh-pts i[data-on='true'] {
+  background: var(--ks-green);
+}
+.ks-sw {
+  position: relative;
+  flex: none;
+  width: 52px;
+  height: 32px;
+  cursor: pointer;
+}
+.ks-sw input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.ks-sw i {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--ks-ink-14);
+  transition: background 0.25s;
+}
+.ks-sw b {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--ks-white);
+  box-shadow: 0 0 0 0.5px var(--ks-ink-08), 0 3px 8px var(--ks-ink-20);
+  transition: transform 0.38s var(--ks-spring);
+}
+.ks-sw input:checked + i {
+  background: var(--ks-green);
+}
+.ks-sw input:checked ~ b {
+  transform: translateX(20px);
+}
+.ks-sw input[aria-disabled='true'] + i {
+  opacity: 0.45;
+}
+.ks-gbtn,
+.ks-quiet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ks-bar-bg);
+  -webkit-backdrop-filter: var(--ks-bar-blur);
+  backdrop-filter: var(--ks-bar-blur);
+  box-shadow: var(--ks-bar-shadow);
+  font: 600 14.5px/1 var(--ks-font);
+  letter-spacing: -0.01em;
+  color: var(--ks-on);
+  cursor: pointer;
+}
+.ks-gbtn .ks-icon {
+  width: 19px;
+  height: 19px;
+}
+.ks-gbtn[data-pro='true'] {
+  color: var(--ks-white);
+  background: var(--ks-on);
+}
+.ks-gbtn[data-wide='true'] {
+  align-self: stretch;
+  min-height: 50px;
+  font-size: 16px;
+}
+.ks-gbtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ks-gbtn:active:not(:disabled),
+.ks-quiet:active {
+  transform: scale(1.03);
+}
+.ks-sh-acts {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ks-sh-msg {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--ks-ink-08);
+  font: 600 13px/1.4 var(--ks-font);
+  color: var(--ks-warn-ink);
+}
+.ks-sh-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 8px 0 2px;
+  border: 0;
+  background: none;
+  font: 600 14px/1 var(--ks-font);
+  color: var(--ks-on);
+  cursor: pointer;
+}
+.ks-sh-back .ks-icon {
+  width: 20px;
+  height: 20px;
+}
+.ks-sh-lin {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ks-sh-chain {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ks-sh-chain span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ks-ink-08);
+  font: 600 12px/1 var(--ks-font);
+}
+.ks-sh-chain span[data-me='true'] {
+  background: var(--ks-on);
+  color: var(--ks-white);
+}
+.ks-sh-chain em {
+  width: 12px;
+  height: 2px;
+  background: var(--ks-ink-14);
+}

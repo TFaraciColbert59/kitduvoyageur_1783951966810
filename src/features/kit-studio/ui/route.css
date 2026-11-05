@@ -1,0 +1,74 @@
+/* Écran Kit Studio : scène plein écran, squelette, erreur. Couleurs via les variables --ks-* de kit-studio.css. */
+.ks-stage {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--ks-paper);
+  color: var(--ks-ink);
+  font-family: var(--ks-font);
+}
+.ks-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+.ks-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--ks-ink-2);
+}
+.ks-skel-dock {
+  transform: translate(-50%, 0);
+  visibility: visible;
+}
+.ks-skel-row {
+  display: flex;
+  gap: var(--gap, 8px);
+  padding: 24px 12px 12px;
+}
+.ks-skel-card {
+  flex: 1 1 0;
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  background: var(--ks-ink-06);
+  animation: ks-skel 1.4s ease-in-out infinite;
+}
+@keyframes ks-skel {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ks-skel-card {
+    animation: none;
+  }
+}
+.ks-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+.ks-error-mark {
+  margin: 0;
+  font-size: 36px;
+  color: var(--ks-warn-ink);
+}
+.ks-error-text {
+  margin: 0;
+  max-width: 28ch;
+  color: var(--ks-ink-2);
+}
