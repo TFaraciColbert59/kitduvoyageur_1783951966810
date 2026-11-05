@@ -1,5 +1,6 @@
 import type { AIProvider, AIRequest, AITier } from './types';
 import { ProviderError } from './types';
+import { readOpenAICompatibleSse } from './openaiSse';
 
 /**
  * Adapter NVIDIA NIM (build.nvidia.com) — endpoint gratuit, appel direct.
@@ -86,6 +87,7 @@ export const nvidiaProvider: AIProvider = {
   name: 'nvidia',
   isAvailable: nimAvailable,
   complete: (req) => nimComplete(req, { model: nvidiaModelFor(req.tier), thinking: req.tier !== 'fast', timeoutMs: TIMEOUT_MS[req.tier] }),
+  stream: (req) => nimStream(req, { model: nvidiaModelFor(req.tier), thinking: req.tier !== 'fast', timeoutMs: TIMEOUT_MS[req.tier] }),
 };
 
 /** Le modèle expert, sans raisonnement (sa connaissance suffit, sa réponse reste courte). */
@@ -93,6 +95,7 @@ export const nvidiaExpertProvider: AIProvider = {
   name: 'nvidia-expert',
   isAvailable: nimAvailable,
   complete: (req) => nimComplete(req, { model: NIM_EXPERT_MODEL, thinking: false, timeoutMs: EXPERT_TIMEOUT_MS }),
+  stream: (req) => nimStream(req, { model: NIM_EXPERT_MODEL, thinking: false, timeoutMs: EXPERT_TIMEOUT_MS }),
 };
 
 async function nimComplete(
@@ -175,6 +178,81 @@ async function nimComplete(
     if (error instanceof ProviderError) throw error;
     // Abort => timeout. On ne remonte pas le message brut du runtime, qui
     // pourrait contenir l'URL complete et donc le contexte de l'appel.
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new ProviderError('NVIDIA NIM: delai depasse', 504);
+    }
+    throw new ProviderError('NVIDIA NIM: echec reseau', 502);
+  } finally {
+    clearTimeout(timer);
+    req.signal?.removeEventListener('abort', surAbandon);
+  }
+}
+
+/**
+ * Flux NVIDIA. Même contrat, mêmes garde-fous que `nimComplete` : la clé ne
+ * sort jamais, le raisonnement n'est jamais affiché (seul `delta.content` est
+ * rendu), et `[DONE]` / une erreur terminent le flux explicitement.
+ */
+async function* nimStream(
+  req: AIRequest,
+  call: { model: string; thinking: boolean; timeoutMs: number }
+): AsyncGenerator<string> {
+  const apiKey = process.env.NVIDIA_API_KEY;
+  if (!apiKey || apiKey.trim().length === 0) {
+    throw new ProviderError('Cle NVIDIA absente', 503);
+  }
+  if (req.plugins && req.plugins.length > 0) {
+    throw new ProviderError('NVIDIA NIM: recherche web non prise en charge', 501);
+  }
+  if (req.json) {
+    // Un JSON structuré doit être validé en entier avant toute écriture métier:
+    // le streaming d'un objet partiel n'a pas de contrat sûr.
+    throw new ProviderError('NVIDIA NIM: streaming JSON non pris en charge', 400);
+  }
+
+  const thinkingDisabled = !call.thinking;
+  const reasoningBudget =
+    !thinkingDisabled && req.reasoningBudget
+      ? Math.min(req.reasoningBudget, req.maxTokens - MIN_COMPLETION_BUFFER)
+      : undefined;
+  const useReasoning = !thinkingDisabled && reasoningBudget != null && reasoningBudget >= MIN_REASONING;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), call.timeoutMs);
+  const surAbandon = () => controller.abort();
+  if (req.signal) {
+    if (req.signal.aborted) controller.abort();
+    else req.signal.addEventListener('abort', surAbandon, { once: true });
+  }
+
+  try {
+    const res = await fetch(NIM_CHAT_URL, {
+      method: 'POST',
+      headers: nimHeaders(apiKey),
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: call.model,
+        max_tokens: req.maxTokens,
+        temperature: 0.4,
+        top_p: 0.95,
+        stream: true,
+        messages: [
+          { role: 'system', content: req.system },
+          { role: 'user', content: req.prompt },
+        ],
+        chat_template_kwargs: { enable_thinking: !thinkingDisabled },
+        ...(useReasoning ? { reasoning_budget: reasoningBudget } : {}),
+      }),
+    });
+    if (!res.ok) {
+      throw new ProviderError(`NVIDIA NIM HTTP ${res.status}`, res.status);
+    }
+    if (!res.body) {
+      throw new ProviderError('NVIDIA NIM: flux illisible', 502);
+    }
+    yield* readOpenAICompatibleSse(res.body, controller.signal);
+  } catch (error) {
+    if (error instanceof ProviderError) throw error;
     if (error instanceof Error && error.name === 'AbortError') {
       throw new ProviderError('NVIDIA NIM: delai depasse', 504);
     }

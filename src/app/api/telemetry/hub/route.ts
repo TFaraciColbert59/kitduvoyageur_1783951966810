@@ -6,6 +6,14 @@ export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 const EVENT_RE = /^[a-z][a-z0-9_]{2,40}$/;
+/**
+ * Version réellement servie, pour comparer le RUM avant/après un déploiement.
+ * Le client ne peut pas la falsifier : elle vient de l'environnement Vercel.
+ */
+const APP_VERSION =
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
+  process.env.NEXT_PUBLIC_APP_VERSION ||
+  'dev';
 
 /**
  * H7.2 — Ingestion batchée de télémétrie hub.
@@ -62,6 +70,7 @@ export async function POST(req: Request) {
       session_id: sessionId,
       event_name: ev.event,
       payload: ev.payload ?? {},
+      app_version: APP_VERSION,
     });
   }
 

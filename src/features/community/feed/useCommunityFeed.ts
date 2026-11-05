@@ -75,6 +75,13 @@ interface FeedState {
   error: string | null;
 }
 
+/** Curseur stable `(created_at, id)` : une insertion ou une suppression entre
+ *  deux pages ne décale plus l'offset et ne saute plus de publication. */
+interface FeedCursor {
+  createdAt: string;
+  id: string;
+}
+
 /**
  * Fil Communauté : uniquement `community_posts`, par pages de 10.
  * Auteurs via `public_profiles`, états like/favori en une passe.
@@ -89,12 +96,12 @@ export function useCommunityFeed(userId?: string) {
     error: null,
   });
   const requestIdRef = useRef(0);
-  const offsetRef = useRef(0);
+  const cursorRef = useRef<FeedCursor | null>(null);
   const inFlightRef = useRef<AbortController | null>(null);
   const loadingMoreRef = useRef(false);
 
   const fetchPage = useCallback(
-    async (offset: number, replace: boolean) => {
+    async (cursor: FeedCursor | null, replace: boolean) => {
       const requestId = ++requestIdRef.current;
       // Une nouvelle page annule la précédente : le résultat tardif ne peut
       // plus écraser un état plus récent, et la requête réseau cesse.
@@ -110,15 +117,20 @@ export function useCommunityFeed(userId?: string) {
 
       try {
         const supabase = createClient();
-        // `id` départage deux publications créées dans la même milliseconde :
-        // sans lui, l'offset peut sauter ou répéter une ligne entre deux pages.
-        const { data, error } = await supabase
+        // Curseur `(created_at, id)` plutôt qu'offset : une publication
+        // insérée ou supprimée entre deux pages ne décale plus la suivante.
+        // `id` départage deux publications créées dans la même milliseconde.
+        let query = supabase
           .from('community_posts')
           .select(FEED_COLUMNS)
           .order('created_at', { ascending: false })
-          .order('id', { ascending: false })
-          .range(offset, offset + PAGE_SIZE - 1)
-          .abortSignal(controller.signal);
+          .order('id', { ascending: false });
+        if (cursor) {
+          query = query.or(
+            `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`,
+          );
+        }
+        const { data, error } = await query.limit(PAGE_SIZE).abortSignal(controller.signal);
 
         if (requestId !== requestIdRef.current) return;
         if (error) throw error;
@@ -178,7 +190,11 @@ export function useCommunityFeed(userId?: string) {
         });
 
         if (requestId !== requestIdRef.current) return;
-        offsetRef.current = offset + rows.length;
+        const last = rows[rows.length - 1];
+        if (replace && rows.length === 0) cursorRef.current = null;
+        else if (last?.created_at && last.id) {
+          cursorRef.current = { createdAt: last.created_at, id: last.id };
+        }
         setState((prev) => {
           const nextPosts = replace
             ? enriched
@@ -208,7 +224,8 @@ export function useCommunityFeed(userId?: string) {
   );
 
   useEffect(() => {
-    void fetchPage(0, true);
+    cursorRef.current = null;
+    void fetchPage(null, true);
     return () => inFlightRef.current?.abort();
   }, [fetchPage]);
 
@@ -218,14 +235,15 @@ export function useCommunityFeed(userId?: string) {
     if (loadingMoreRef.current || !state.hasMore) return;
     loadingMoreRef.current = true;
     try {
-      await fetchPage(offsetRef.current, false);
+      await fetchPage(cursorRef.current, false);
     } finally {
       loadingMoreRef.current = false;
     }
   }, [fetchPage, state.hasMore]);
 
   const refresh = useCallback(async () => {
-    await fetchPage(0, true);
+    cursorRef.current = null;
+    await fetchPage(null, true);
   }, [fetchPage]);
 
   return { ...state, loadMore, refresh };

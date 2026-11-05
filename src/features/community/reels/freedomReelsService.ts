@@ -577,9 +577,11 @@ export function warmFreedomReels(user?: any): Promise<FreedomReelItem[]> {
   reelsInflight = fetchFreedomReels(user)
     .then((data) => {
       reelsCache = data;
-      // Les cinq premières vidéos commencent à se mettre en mémoire tout de
-      // suite : à l'ouverture, elles démarrent sans attente.
-      data.slice(0, 5).forEach((reel) => bufferVideo(reel.videoUrl));
+      // On ne met PAS les vidéos en mémoire ici : ce préchauffage est appelé
+      // au repos par la barre du bas, sur toutes les pages. `preload=auto`
+      // téléchargeait cinq WebM complets (jusqu'à 21,6 Mo mesurés) pour un
+      // écran que la personne n'a pas ouvert. Le viewer met en tampon les
+      // vidéos utiles à l'ouverture et à l'avance (FreedomReelsViewer).
       return data;
     })
     .finally(() => {

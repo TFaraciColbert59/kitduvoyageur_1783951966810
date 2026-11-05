@@ -63,7 +63,7 @@ export async function siteAiVerdict(now: Date = new Date()): Promise<SiteCapVerd
   }
 }
 
-const askAISchema = z.object({
+export const askAISchema = z.object({
   feature: z.string().min(1).max(64),
   tier: z.enum(['heavy', 'fast']),
   quotaTier: z.enum(['heavy', 'fast']).optional(),

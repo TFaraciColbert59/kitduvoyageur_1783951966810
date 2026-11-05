@@ -113,9 +113,9 @@ export function FloatingLiquidTabBar() {
       cancelIdleCallback?: (id: number) => void;
     };
     // Au repos, seulement si la politique réseau autorise le préchargement de données (4G connue, sans
-    // économie de données) : les vidéos mises en mémoire (≈ 1,4 Mo) volaient sinon la bande passante de la
-    // page en cours, sur toutes les pages. Ailleurs, l'appui sur Communauté (premier tap du double tap qui
-    // ouvre Freedom) déclenche le même préchargement, à l'intention de la personne.
+    // économie de données) : on ne précharge que la LISTE des reels, jamais les fichiers vidéo. Le
+    // viewer met en tampon les vidéos à l'ouverture ; le préchauffage de page ne doit pas télécharger
+    // 21,6 Mo de WebM pour un écran non ouvert.
     const warmIfAllowed = () => {
       if (evaluateCurrentPrefetchPolicy().allowData) warmFreedom();
     };

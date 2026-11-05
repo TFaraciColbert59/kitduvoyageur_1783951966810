@@ -118,16 +118,19 @@ export function CommunityPostMedia({
             </span>
           ) : isVideo ? (
             <video
-              src={media}
+              // Le fil n'a aucun contrôle de lecture : la carte est une
+              // vignette. Sans `src`, le navigateur ne télécharge pas le WebM
+              // (21,6 Mo mesurés sur 190 posts avec `preload=none` seul) ;
+              // le poster optimisé reste affiché. Un futur bouton play devra
+              // poser `src` au geste.
+              src={poster ? undefined : media}
               poster={optimizedPoster}
               width={1080}
               height={1440}
               muted
               loop
               playsInline
-              // Aucune lecture automatique : `auto` téléchargeait la vidéo
-              // entière (plusieurs Mo) pour une carte qui ne la joue pas.
-              preload="metadata"
+              preload="none"
               onLoadedMetadata={(event) => {
                 const el = event.currentTarget;
                 if (el.videoWidth && el.videoHeight) onRatio?.(el.videoWidth / el.videoHeight);

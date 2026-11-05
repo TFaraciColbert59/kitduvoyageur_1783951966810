@@ -93,6 +93,14 @@ export interface AIProvider {
   isAvailable(): boolean;
   /** Retourne le texte brut. Throw en cas d'échec → askAI gère le fallback. */
   complete(req: AIRequest): Promise<string>;
+  /**
+   * Flux de deltas texte, optionnel. Le premier `next()` doit rendre le premier
+   * token utile (jamais un heartbeat) ; une erreur après ce premier token ne
+   * doit pas être remplacée silencieusement par un autre modèle. Les
+   * garde-fous (quota, auth, feature, mode IA) restent dans `askAIStream`,
+   * jamais dans l'adaptateur.
+   */
+  stream?(req: AIRequest): AsyncIterable<string>;
 }
 
 /** Erreur transport normalisée (status HTTP ou timeout) — jamais de clé dedans. */

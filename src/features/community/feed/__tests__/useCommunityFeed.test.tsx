@@ -1,13 +1,14 @@
 // @vitest-environment jsdom
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCommunityFeed } from '../useCommunityFeed';
 
 const calls = vi.hoisted(() => ({
   select: [] as string[],
   orders: [] as Array<[string, unknown]>,
-  ranges: [] as Array<[number, number]>,
+  limits: [] as number[],
+  ors: [] as string[],
   aborted: 0,
   likes: 0,
   saves: 0,
@@ -24,8 +25,12 @@ function thenable(result: unknown) {
     calls.orders.push([column, options]);
     return builder;
   });
-  builder.range = vi.fn((from: number, to: number) => {
-    calls.ranges.push([from, to]);
+  builder.limit = vi.fn((value: number) => {
+    calls.limits.push(value);
+    return builder;
+  });
+  builder.or = vi.fn((filter: string) => {
+    calls.ors.push(filter);
     return builder;
   });
   builder.eq = vi.fn(() => builder);
@@ -38,6 +43,14 @@ function thenable(result: unknown) {
   return builder;
 }
 
+const postRows = Array.from({ length: 20 }, (_, index) => ({
+  id: `post-${index + 1}`,
+  author_id: 'author-1',
+  content: 'Bonjour',
+  created_at: new Date(Date.UTC(2026, 10, 4, 10, 0, 20 - index)).toISOString(),
+}));
+let postPage = 0;
+
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     from: (table: string) => {
@@ -49,15 +62,10 @@ vi.mock('@/lib/supabase/client', () => ({
         calls.saves += 1;
         return thenable({ data: [], error: null });
       }
+      const page = postPage;
+      postPage += 1;
       return thenable({
-        data: [
-          {
-            id: 'post-1',
-            author_id: 'author-1',
-            content: 'Bonjour',
-            created_at: '2026-11-04T10:00:00.000Z',
-          },
-        ],
+        data: postRows.slice(page * 10, page * 10 + 10),
         error: null,
       });
     },
@@ -75,8 +83,10 @@ describe('useCommunityFeed — lecture bornée', () => {
   beforeEach(() => {
     calls.select = [];
     calls.orders = [];
-    calls.ranges = [];
+    calls.limits = [];
+    calls.ors = [];
     calls.aborted = 0;
+    postPage = 0;
     calls.likes = 0;
     calls.saves = 0;
     calls.profiles = 0;
@@ -96,12 +106,29 @@ describe('useCommunityFeed — lecture bornée', () => {
       ['created_at', { ascending: false }],
       ['id', { ascending: false }],
     ]);
-    expect(calls.ranges).toEqual([[0, 9]]);
+    expect(calls.limits).toEqual([10]);
+    expect(calls.ors).toEqual([]);
     expect(calls.profiles).toBe(1);
     expect(calls.likes).toBe(1);
     expect(calls.saves).toBe(1);
     expect(calls.aborted).toBe(3);
-    expect(result.current.posts).toHaveLength(1);
+    expect(result.current.posts).toHaveLength(10);
     expect(result.current.posts[0].user_liked).toBe(true);
+  });
+
+  it('charge la page suivante avec le curseur de la dernière ligne, pas un offset', async () => {
+    const { result } = renderHook(() => useCommunityFeed('user-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.posts).toHaveLength(10);
+
+    await act(async () => {
+      await result.current.loadMore();
+    });
+
+    expect(result.current.posts).toHaveLength(20);
+    expect(calls.limits).toEqual([10, 10]);
+    expect(calls.ors).toHaveLength(1);
+    expect(calls.ors[0]).toContain('created_at.lt.');
+    expect(calls.ors[0]).toContain('id.lt.post-10');
   });
 });
