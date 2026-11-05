@@ -31,3 +31,6 @@
 | T21 | coordinateur (Sonnet) | 14 | fait (kg, couleur, vignettes, cible 44 px) | captures avant/après |
 | T22 | Opus (ks-reviewer) | 9 | fait : 2 bloquants, 6 importants, 8 mineurs | `docs/kit-studio/REVIEW.md` |
 | T23 | coordinateur (Sonnet) | 16 | bloquants + importants fermés sauf centimes | tsc module 0, vitest 264 |
+| T24 | coordinateur (Sonnet) | 22 | fait : PR #142, squash `0d6021b4d`, prod `dpl_EY42umy…` | E2E WebKit 6/6 sur la prod |
+| T25 | CI (build-ios) | — | IPA non signée ; appareil physique indisponible | fiche `ios/RUN-ON-IPHONE.md` |
+| T26 | coordinateur (Haiku) | 7 | fait | `docs/kit-studio/RAPPORT-FINAL.md` |

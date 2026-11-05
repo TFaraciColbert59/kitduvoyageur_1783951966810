@@ -10,7 +10,8 @@
 ## Preuves
 - Tests unitaires du module : **264 / 264 verts** (`npx vitest run src/features/kit-studio`).
 - Suite complète : 33 fichiers / **49 tests rouges** (mesure de départ sur `main` : 33 fichiers / 54 rouges) — aucun test rouge imputable au chantier.
-- E2E **WebKit mobile 402 × 874** : 6 parcours verts, en local **et sur l'aperçu Vercel** (https://kitduvoyageur-1783951966810-6t2g6e40u.vercel.app).
+- E2E **WebKit mobile 402 × 874** : 6 parcours verts en local, sur l'aperçu Vercel de la PR, et **sur la production** (https://kitduvoyageur-1783951966810-ekdumwy6i.vercel.app/kit-studio, déploiement `dpl_EY42umycVmFQ43VoretDBTrRxzAH` du commit `0d6021b4d`).
+- Fusion : PR #142, squash `0d6021b4d` sur `main`. `https://koosmoweb.fr` n'a pas pu être résolu depuis l'environnement de recette (DNS sortant filtré) : contrôle fait sur l'alias `*.vercel.app` du même déploiement.
 - Captures de référence : `docs/kit-studio/captures/kit-studio-402x874.png` (+ 393×852, 430×932, 360×800) et la maquette `reference-402x874.png` pour comparaison.
 - Portes `scripts/verify-kit-studio.sh` : vert (typage complet, eslint 0, vitest, aucune couleur littérale, `/compas` intact, vie privée, identité).
 - Revue indépendante T22 (`docs/kit-studio/REVIEW.md`) : 2 bloquants et 6 importants fermés ; dette documentée.
