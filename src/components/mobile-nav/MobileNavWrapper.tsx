@@ -31,7 +31,10 @@ export default function MobileNavWrapper() {
     pathname?.startsWith('/communaute/reels/') ||
     // Carte vivante 3D plein écran immersive
     pathname === '/carte-3d' ||
-    pathname?.startsWith('/carte-3d');
+    pathname?.startsWith('/carte-3d') ||
+    // Kit Studio : scène 3D plein écran avec son propre tiroir
+    pathname === '/kit-studio' ||
+    pathname?.startsWith('/kit-studio/');
 
   if (isNoNavRoute) {
     return <OfflineBanner />;
