@@ -89,7 +89,11 @@ export function CardsView({ zone = 'bag', projectZone, highlightZone, onAdd }: C
     [],
   );
   const later = (fn: () => void, ms: number) => {
-    timers.current.push(setTimeout(fn, ms));
+    const id = setTimeout(() => {
+      timers.current = timers.current.filter((t) => t !== id);
+      fn();
+    }, ms);
+    timers.current.push(id);
   };
 
   const refuse = useCallback(

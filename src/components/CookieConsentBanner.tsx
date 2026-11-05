@@ -20,8 +20,11 @@ export default function CookieConsentBanner() {
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // Dans l'application mobile native (iOS / Android) ou sur la carte 3D, aucune bannière cookie
+    // Dans l'application mobile native (iOS / Android), sur la carte 3D et dans le Kit Studio
+    // (écran plein cadre avec son propre tiroir bas), aucune bannière cookie : elle recouvrirait
+    // les seules commandes de l'écran. Le consentement se recueille sur les pages classiques.
     if (isNative() || pathname === '/explorer' || pathname?.startsWith('/explorer')) return;
+    if (pathname === '/kit-studio' || pathname?.startsWith('/kit-studio/')) return;
 
     const stored = getStoredConsent();
     if (!stored || stored.version !== CONSENT_VERSION) {

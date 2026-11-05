@@ -4,6 +4,7 @@ import { useKitStore } from '../store/kitStore';
 import { useUiStore } from '../store/uiStore';
 import { S } from '../ui/strings';
 import { createKitScene, type KitScene } from './createScene';
+import { setScene } from './sceneRef';
 
 /** Canvas plein écran : crée la scène, relaie l'état du store, libère tout au démontage. */
 export default function SceneView() {
@@ -25,22 +26,21 @@ export default function SceneView() {
       return;
     }
     scene.setDrawerOpen(useUiStore.getState().dockOpen);
+    setScene(scene);
     const offKit = useKitStore.subscribe((s, prev) => {
       if (s.kit !== prev.kit) scene.update(s.kit);
     });
     const offUi = useUiStore.subscribe((s, prev) => {
       if (s.dockOpen !== prev.dockOpen) scene.setDrawerOpen(s.dockOpen);
     });
-    const onResize = () => scene.resize();
-    window.addEventListener('resize', onResize);
-    const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(onResize) : null;
-    ro?.observe(el);
+    // Le redimensionnement est déjà tenu par createScene (ResizeObserver interne) : rien à doubler ici.
     return () => {
       offKit();
       offUi();
-      window.removeEventListener('resize', onResize);
-      ro?.disconnect();
+      setScene(null);
       scene.dispose();
+      // Le moteur de vignettes partage un second contexte WebGL : on le libère en quittant l'écran.
+      void import('./thumbnails').then((m) => m.disposeThumbnailEngine()).catch(() => undefined);
     };
   }, []);
 

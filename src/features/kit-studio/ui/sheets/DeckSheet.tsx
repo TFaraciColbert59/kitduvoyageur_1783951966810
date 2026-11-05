@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent } from 'react';
 import { ZONE_NAMES } from '../../domain/catalog';
 import { SLOT_LABEL, decide, deckCurrent, deckSummary, lighten, slotOf } from '../../domain/deck';
@@ -44,6 +44,7 @@ interface Drag { sx: number; sy: number; t: number; dx: number; dy: number }
 
 export function DeckSheet({ state, deck, onDeck, onState, onQuit }: DeckSheetProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const leaveTimer = useRef<number | null>(null);
   const drag = useRef<Drag | null>(null);
   const [dragging, setDragging] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -51,6 +52,13 @@ export function DeckSheet({ state, deck, onDeck, onState, onQuit }: DeckSheetPro
   const words = fill ? TXT.fill : TXT.debrief;
   const id = deckCurrent(deck);
   const pct = (deck.i / Math.max(1, deck.list.length)) * 100;
+
+  useEffect(
+    () => () => {
+      if (leaveTimer.current !== null) window.clearTimeout(leaveTimer.current);
+    },
+    [],
+  );
 
   const reset = () => {
     const el = cardRef.current;
@@ -69,7 +77,8 @@ export function DeckSheet({ state, deck, onDeck, onState, onQuit }: DeckSheetPro
       setLeaving(true);
       el.style.transform = `translateX(${yes ? 120 : -120}%) rotate(${yes ? 9 : -9}deg)`;
       el.style.opacity = '0';
-      window.setTimeout(() => {
+      leaveTimer.current = window.setTimeout(() => {
+        leaveTimer.current = null;
         reset();
         setLeaving(false);
         onDeck(decide(deck, yes));

@@ -24,6 +24,10 @@ import './sheets/deck.css';
  * Contenu du tiroir hors vue Cartes (maquette Kit_Studio_v2.html : .vsheet / .vdeck).
  * Les feuilles sont contrôlées : elles produisent un état ou une intention, l'hôte applique.
  */
+/** Un état, et non une intention : seule cette forme peut être appliquée au store. */
+const isKitState = (n: unknown): n is KitState =>
+  typeof n === 'object' && n !== null && 'version' in n && 'kitId' in n && 'kits' in n;
+
 export function SheetHost() {
   const { haptic } = useHapticFeedback();
   const offline = useOffline();
@@ -91,7 +95,7 @@ export function SheetHost() {
               }
               return;
             }
-            apply(n as KitState);
+            if (isKitState(n)) apply(n);
           }}
         />
       </div>
@@ -117,7 +121,7 @@ export function SheetHost() {
               useKitStore.getState().pack(intent.id, zone);
               return;
             }
-            apply(n as KitState);
+            if (isKitState(n)) apply(n);
           }}
         />
       </div>

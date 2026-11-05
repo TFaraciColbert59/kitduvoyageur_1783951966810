@@ -63,7 +63,10 @@ export async function load(): Promise<KitState | null> {
     const text = await (await backend()).get(KIT_STORAGE_KEY);
     if (!text) return null;
     return parseKitState(migrate(JSON.parse(text) as unknown));
-  } catch {
+  } catch (e) {
+    // État local illisible (version inconnue, schéma cassé) : on repart de l'état initial,
+    // mais on le dit — sans quoi un kit perdu ressemble à un kit jamais enregistré.
+    console.warn('[kit-studio] état local ignoré :', e instanceof Error ? e.message : e);
     return null;
   }
 }

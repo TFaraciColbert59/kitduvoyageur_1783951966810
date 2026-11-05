@@ -31,6 +31,8 @@ export function cog(s: KitState): Cog {
       z += m * p[2] * sc[2];
     }
   }
+  // Sac vide (aucune pièce pesée) : pas de centre de gravité, jamais NaN dans le SVG.
+  if (!(M > 0)) return { x: 0, y: 0, z: 0 };
   return { x: x / M, y: y / M, z: z / M };
 }
 

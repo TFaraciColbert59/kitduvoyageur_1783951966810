@@ -369,7 +369,6 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
   }
 
   function resources(s: Stage): { res: ThumbResources; cleanup(object: Object3D | null): void } {
-    const mats: Material[] = [];
     const geo = (key: string, make: () => BufferGeometry): BufferGeometry => {
       const hit = sharedGeos.get(key);
       if (hit) return hit;
@@ -383,15 +382,12 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
       geometry: geo,
       roundedBox: (w, h, d, r, seg = 8) => geo(`rbox:${w.toFixed(3)}:${h.toFixed(3)}:${d.toFixed(3)}:${r.toFixed(3)}:${seg}`, () => roundedBox(w, h, d, r, seg)),
       material(color, roughness = 0.78, map = null) {
-        const m = s.tracker.material(new MeshStandardMaterial({ color: makeColor(color), roughness, map }));
-        mats.push(m);
-        return m;
+        return s.tracker.material(new MeshStandardMaterial({ color: makeColor(color), roughness, map }));
       },
     };
     return {
       res,
       cleanup(object) {
-        for (const m of mats) m.dispose();
         object?.traverse((o) => {
           if (!(o instanceof Mesh)) return;
           const g: BufferGeometry = o.geometry;

@@ -11,7 +11,7 @@ Les chaînes proviennent de `src/features/kit-studio/ui/strings.ts` (objet `S`).
 - [x] Chaque bouton icône porte un `aria-label` : poignée (`Drawer/Grab.tsx:52`), bouton flottant (`Drawer/Grab.tsx:71`), onglets (`Drawer/Capsule.tsx:76`), pilule (`Pill.tsx:61`).
 - [x] Pictos décoratifs masqués (`icons.tsx:30`, `Pill.tsx:62`).
 - [ ] Contrastes AA : non mesurés. Le contour de focus utilise `--ks-on` (`kit-studio.css:7`), contraste à calculer sur fond `--ks-paper` avant de cocher.
-- [ ] Pages mockup : aucun composant « cartes », « bilan », « fiche », « commande », « deck » n'existe encore dans `ui/`. Les chaînes sont prêtes dans `strings.ts`, la checklist ne peut pas être cochée pour eux.
+- [x] Pages de la maquette montées après la revue T22 : cartes (`cards/CardsView.tsx`), Bilan et Fiche (`sheets/BilanSheet.tsx`, `ItemSheet.tsx`), Sac et Commande (`sheets/BagSheet.tsx`, `OrderSheet.tsx`), deck (`sheets/DeckSheet.tsx`), toutes montées par `ui/SheetHost.tsx` dans le tiroir. Vérifiées par `tests/e2e-kit-studio/kit-studio.spec.ts` sur WebKit mobile.
 
 ## Composants existants
 
@@ -33,7 +33,7 @@ Les chaînes proviennent de `src/features/kit-studio/ui/strings.ts` (objet `S`).
 - [x] Rôle `tablist`/`radiogroup` et libellé du groupe (`Capsule.tsx:61-62`), `aria-selected` ou `aria-checked` (`Capsule.tsx:75`).
 - [x] Flèches, Début et Fin (`Capsule.tsx:42-55`).
 - [x] Tabulation itinérante, un seul `tabIndex=0` (`Capsule.tsx:77`).
-- [ ] Cible ≥ 44 px : **non conforme au-delà de 4 boutons**. La largeur passe à 38 px (`Capsule.tsx:26`, `kit-studio.css:339`). L'extension `::after` (`kit-studio.css:354-357`) n'agit qu'en hauteur (`inset: -10px 0`). À corriger ou à justifier dans SPEC-DRAWER.
+- [x] Cible ≥ 44 px : le visuel reste à 38-44 px, la zone de toucher fait `max(44px, --bw)` × 44 px par `::after` (`kit-studio.css:344-353`), sans déplacer la lentille ni chevaucher le bouton voisin (corrigé en T23).
 
 ### Pilule (`Pill.tsx`)
 - [x] Bouton à libellé fourni par l'appelant (`Pill.tsx:61`), libellé type `S.pill.open` (« Ouvrir le bilan »).

@@ -15,7 +15,7 @@ const CAPTURES = 'docs/kit-studio/captures';
 
 /** Le squelette de `loading.tsx` garde la même racine : on vise l'écran hydraté (celui qui porte la pilule). */
 const DOCK = 'section.ks-dock:not(.ks-skel-dock)';
-const root = (page: Page) => page.locator('.ks-root').filter({ has: page.locator('button.ks-pill') }).first();
+const root = (page: Page) => page.locator('.ks-root:visible').last();
 const pill = (page: Page) => page.locator('button.ks-pill').first();
 const dockOf = (page: Page) => page.locator(DOCK).first();
 

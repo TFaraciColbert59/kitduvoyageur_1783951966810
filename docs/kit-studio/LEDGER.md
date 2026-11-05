@@ -24,3 +24,10 @@
 | T14 | Sonnet · moyen | 37 | fait (5 écarts setPartOption/mutate → T14b) | vitest cards 8/8 |
 | T11 | Sonnet · élevé | 51 | fait (visuel → T19) | vitest scène 31, module 264/264 |
 | — | coordinateur | — | contrat KitState, tsconfig.kit-studio.json (12 s) | tsc module 0 erreur |
+| T14b | coordinateur (Sonnet) | 12 | fait | vitest store 25/25, module 264/264 |
+| T18b | coordinateur (Sonnet) | 18 | fait : SheetHost, deck, apply() | E2E WebKit, pilule → Bilan |
+| T19 | coordinateur (Sonnet) | 26 | fait (4 tailles, 6 parcours) | `tests/e2e-kit-studio`, captures |
+| T20 | coordinateur (Haiku) | 6 | fait | `scripts/verify-kit-studio.sh` vert |
+| T21 | coordinateur (Sonnet) | 14 | fait (kg, couleur, vignettes, cible 44 px) | captures avant/après |
+| T22 | Opus (ks-reviewer) | 9 | fait : 2 bloquants, 6 importants, 8 mineurs | `docs/kit-studio/REVIEW.md` |
+| T23 | coordinateur (Sonnet) | 16 | bloquants + importants fermés sauf centimes | tsc module 0, vitest 264 |

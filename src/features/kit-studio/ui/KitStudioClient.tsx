@@ -9,6 +9,7 @@ import { useKitStore } from '../store/kitStore';
 import { AUTO_OPEN_MS, useUiStore } from '../store/uiStore';
 import { CardsSlot } from './cards/CardsSlot';
 import { SheetHost } from './SheetHost';
+import { getScene } from '../scene/sceneRef';
 import { Dock } from './Drawer/Dock';
 import { OfflineContext, useOffline } from './offline';
 import { Pill } from './Pill';
@@ -119,7 +120,14 @@ export function KitStudioClient() {
           onClick={openBilan}
         />
         <Dock open={dockOpen} label={label} onClose={closeDock} dockRef={dockRef}>
-          {view === 'cards' ? <CardsSlot /> : <SheetHost />}
+          {view === 'cards' ? (
+            <CardsSlot
+              projectZone={(z) => getScene()?.projectZone(z) ?? null}
+              highlightZone={(z) => getScene()?.highlightZone(z)}
+            />
+          ) : (
+            <SheetHost />
+          )}
         </Dock>
       </div>
     </OfflineContext.Provider>
