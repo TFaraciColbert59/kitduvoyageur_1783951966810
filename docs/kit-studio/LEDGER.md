@@ -15,4 +15,8 @@
 | T06 | Sonnet · moyen | 25 | fait | vitest balance 22/22 (oracle maquette) |
 | T17 | Haiku · bas | 33 | fait | vitest strings+drawer 13/13 |
 | T16a | Sonnet · moyen | 31 | fait (Sac, Commande) | vitest sheets.order 9/9 |
+| T09 | Sonnet · moyen | 19 | fait (branche Preferences native non testée) | vitest store 25/25 |
+| T16b | Sonnet · moyen | 14 | fait (glisser non testé par PointerEvent) | vitest deck 12/12 |
+| T15 | Sonnet · moyen | 34 | fait (menu « … » non ancré) | vitest sheets.bilan+order 18/18 |
+| T12 | Sonnet · élevé | 33 | fait (temps GPU réel → T19) | vitest thumbnails 18/18 |
 | — | coordinateur | — | contrat KitState, tsconfig.kit-studio.json (12 s) | tsc module 0 erreur |
