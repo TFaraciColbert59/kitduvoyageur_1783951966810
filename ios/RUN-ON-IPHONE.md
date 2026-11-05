@@ -5,6 +5,10 @@
 - Un agent ne peut ni brancher, ni déverrouiller, ni approuver la confiance d'un iPhone : tout est préparé ici, il reste les gestes physiques de Tony.
 - Écran de référence : iPhone 16 Pro, 402 × 874 pt. Captures de recette : `docs/kit-studio/captures/kit-studio-402x874.png`.
 
+## URL chargée par la coque
+`koosmoweb.fr` est le domaine du projet, mais **il n'a aucun enregistrement DNS** au 05/11/2026 (whois : NS AFNIC par défaut ; vérification externe : `NO_RECORDS`). Tant que la zone n'existe pas, la coque doit pointer sur un domaine qui répond : le déploiement de production vérifié `https://kitduvoyageur-1783951966810-ekdumwy6i.vercel.app`.
+Pour basculer sur le domaine : chez le registrar, `A @ → 76.76.21.21` et `CNAME www → cname.vercel-dns.com` (valeurs exactes affichées par Vercel ▸ Settings ▸ Domains), puis `CAPACITOR_SERVER_URL=https://koosmoweb.fr bash scripts/ios-install.sh`.
+
 ## Voie A — Mac avec Xcode (recommandée)
 1. `export IOS_TEAM_ID=<Personal Team>` (Xcode ▸ Réglages ▸ Comptes, 10 caractères). Ne jamais committer cette valeur.
 2. Brancher l'iPhone, le déverrouiller, toucher « Faire confiance ».
