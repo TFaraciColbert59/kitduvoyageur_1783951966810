@@ -33,3 +33,11 @@
 - `scripts/verify-kit-studio.sh` (T20) : vert. `tsc -p .` complet demande `--max-old-space-size=6144` sur ce Mac de 8 Go (sinon SIGABRT).
 - T22 (relecteur indépendant) : 2 bloquants, 6 importants, 8 mineurs (`REVIEW.md`). T23 ferme les deux bloquants (scène branchée au tiroir via `scene/sceneRef.ts` : projection de zone et éclairage ; `disposeThumbnailEngine()` appelé en quittant l'écran) et les importants sauf la conversion euros/centimes de `totals.buy/rent`, consignée comme dette.
 - Ce qui n'est **pas** prouvé : rendu sur l'iPhone 16 Pro physique (absent), VoiceOver, contraste AA mesuré, budget de chunk 3D mesuré en gzip.
+
+## 2026-11-05 — production (T24 → T26)
+- PR #142 (branche `claude/kit-studio-v2`), CI : `build`, `build-ios`, `lighthouse`, `bundle-analysis`, `database-gates` verts ; `quality-gates`, `visual-tests` et `Workers Builds` en échec **comme sur `main`** avant la fusion (mêmes jobs, mêmes causes).
+- Aperçu Vercel de la PR : E2E WebKit 6/6 verts avant fusion.
+- Fusion squash dans `main` : `0d6021b4d`. Déploiement de production `dpl_EY42umycVmFQ43VoretDBTrRxzAH` (commit identique).
+- Production vérifiée après build : `/kit-studio` HTTP 200, page réelle (pas l'écran « Deployment is building »), **E2E WebKit 6/6 verts sur l'URL de production**. `https://koosmoweb.fr` ne résout pas depuis cet environnement (DNS sortant filtré) : vérification faite sur l'alias `*.vercel.app` du déploiement.
+- T25 : l'iPhone 16 Pro est enregistré mais **indisponible** (`xcrun devicectl` : unavailable). L'app Capacitor charge le site déployé : une app déjà installée affiche le Kit Studio sans rebuild. Fiche `ios/RUN-ON-IPHONE.md` ; IPA non signée produite par `build-ios` (CI verte).
+- T26 : `RAPPORT-FINAL.md`. Dette ouverte : conversion euros/centimes de `totals.buy/rent`.
