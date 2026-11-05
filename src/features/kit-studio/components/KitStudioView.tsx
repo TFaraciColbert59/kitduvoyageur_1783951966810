@@ -29,6 +29,8 @@ import { DrawerEmpty, DrawerError, DrawerSkeleton } from '@/components/ui/drawer
 import type { AestheticLightingPreset } from '@/features/hub/ambience/environment';
 import type { StudioDrawer } from '@/features/hub/state/drawerMachine';
 import { BagListView } from '../list/BagListView';
+// Styles du camp (tiroir, pilule, monde) : la vue est aussi montée hors du hub, sur /kit-studio.
+import '../../hub/styles/hub-camp-option3.css';
 import { BagScene, type BadgeCatalogMeta } from '../scene/BagScene';
 import type { BagManifest } from '../scene/bag/parts';
 import type { CameraIntent } from '../scene/camera/intents';
