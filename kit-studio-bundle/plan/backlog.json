@@ -1,0 +1,418 @@
+[
+ {
+  "id": "T00",
+  "title": "Bootstrap, branche, mesure de départ",
+  "agent": "ks-ops",
+  "depends": [],
+  "max_turns": 10,
+  "files": [
+   "scripts/bootstrap.sh",
+   "docs/kit-studio/JOURNAL.md"
+  ],
+  "acceptance": "Branche claude/kit-studio-v2 créée ; agents, skills, MCP installés ; tsc, lint et Vitest de départ consignés (nombre d'échecs déjà présents noté, pour ne pas les imputer au chantier).",
+  "wave": 1
+ },
+ {
+  "id": "T01",
+  "title": "Plan du dépôt (REPO-MAP)",
+  "agent": "ks-scout",
+  "depends": [
+   "T00"
+  ],
+  "max_turns": 12,
+  "files": [
+   "docs/kit-studio/REPO-MAP.md"
+  ],
+  "acceptance": "Fichier ≤ 150 lignes : tokens --lkv-*, MobileNavWrapper/HIDE_CHROME_PREFIXES, hooks haptiques, @capacitor/preferences, schéma materiel_kits/trip_items (migrations), scripts verify/*, config Playwright, commandes de test exactes.",
+  "wave": 2
+ },
+ {
+  "id": "T02",
+  "title": "Ajouter three et vérifier CSP/transpile",
+  "agent": "ks-ops",
+  "depends": [
+   "T00"
+  ],
+  "max_turns": 10,
+  "files": [
+   "package.json",
+   "package-lock.json",
+   "next.config.mjs"
+  ],
+  "acceptance": "three + @types/three fixés ; next build non cassé ; aucune URL externe ajoutée à la CSP.",
+  "wave": 2
+ },
+ {
+  "id": "T03",
+  "title": "Générer le catalogue brut depuis la maquette",
+  "agent": "ks-scribe",
+  "depends": [
+   "T00"
+  ],
+  "max_turns": 12,
+  "files": [
+   "scripts/port-catalog.mjs",
+   "src/features/kit-studio/domain/catalog.ts"
+  ],
+  "acceptance": "Script reproductible lisant reference/Kit_Studio_actuel.html (l. 535-751) ; 39 objets, 2 sacs, 4 coloris, 6 modules, 3 kits, 8 zones, 6 familles ; TS typé ; test de comptage.",
+  "wave": 2
+ },
+ {
+  "id": "T04",
+  "title": "Palette par tokens + format",
+  "agent": "ks-builder",
+  "depends": [
+   "T03",
+   "T01"
+  ],
+  "max_turns": 20,
+  "files": [
+   "domain/palette.ts",
+   "domain/format.ts",
+   "__tests__/format.test.ts"
+  ],
+  "acceptance": "Aucune couleur littérale hors palette.ts ; formats g/kg/€/% avec espaces insécables testés ; test échoue si un hex apparaît ailleurs dans kit-studio/.",
+  "wave": 3
+ },
+ {
+  "id": "T05",
+  "title": "Domaine : totaux, capacités, place restante",
+  "agent": "ks-builder",
+  "depends": [
+   "T03"
+  ],
+  "max_turns": 25,
+  "files": [
+   "domain/totals.ts",
+   "__tests__/totals.test.ts"
+  ],
+  "acceptance": "totals, capOf, room, effG, bagWeight portés (l. 700-860 de la maquette) ; un test par règle, cas limites inclus.",
+  "wave": 3
+ },
+ {
+  "id": "T06",
+  "title": "Domaine : équilibre, blocages, « Prêt à N % »",
+  "agent": "ks-builder",
+  "depends": [
+   "T05"
+  ],
+  "max_turns": 25,
+  "files": [
+   "domain/balance.ts",
+   "domain/blockers.ts",
+   "__tests__/balance.test.ts"
+  ],
+  "acceptance": "cog/cogState, blockers, gain de préparation ; tests dont « trop loin du dos » et « trousse périmée ».",
+  "wave": 4
+ },
+ {
+  "id": "T07",
+  "title": "Domaine : rangement, échange, rangement auto",
+  "agent": "ks-builder",
+  "depends": [
+   "T05"
+  ],
+  "max_turns": 25,
+  "files": [
+   "domain/packing.ts",
+   "domain/swap.ts",
+   "__tests__/packing.test.ts"
+  ],
+  "acceptance": "pack, unpack, swap, relocate, autopack ; zone pleine → zone alternative ; déterministe.",
+  "wave": 4
+ },
+ {
+  "id": "T08",
+  "title": "Domaine : pièces, points d'attache, commande",
+  "agent": "ks-builder",
+  "depends": [
+   "T03"
+  ],
+  "max_turns": 25,
+  "files": [
+   "domain/parts.ts",
+   "domain/attach.ts",
+   "domain/order.ts",
+   "__tests__/order.test.ts"
+  ],
+  "acceptance": "pieces, pieceState, ptsCap/ptsUsed, toOrder, orderTotal ; total en centimes entiers.",
+  "wave": 3
+ },
+ {
+  "id": "T09",
+  "title": "Store et persistance étage 1 (local)",
+  "agent": "ks-builder",
+  "depends": [
+   "T05",
+   "T07",
+   "T08"
+  ],
+  "max_turns": 25,
+  "files": [
+   "store/*",
+   "services/kitRepository.ts",
+   "domain/schema.ts",
+   "__tests__/store.test.ts"
+  ],
+  "acceptance": "zustand ; zod valide toute lecture ; clé lkdv-kit-studio:v1 ; migration de version testée ; hors ligne OK ; pile d'annulation.",
+  "wave": 5
+ },
+ {
+  "id": "T10",
+  "title": "Scène : cycle de vie et sac procédural",
+  "agent": "ks-3d",
+  "depends": [
+   "T02",
+   "T03"
+  ],
+  "max_turns": 40,
+  "files": [
+   "scene/createScene.ts",
+   "scene/bagBuilder.ts",
+   "scene/lifecycle.ts",
+   "__tests__/scene.lifecycle.test.ts"
+  ],
+  "acceptance": "Boucle à la demande, perte/restauration de contexte, dispose complet (renderer.info.memory stable sur 20 cycles), sac et pièces conformes à la maquette (captures comparées).",
+  "wave": 4
+ },
+ {
+  "id": "T11",
+  "title": "Scène : objets, fantômes, caméra de zone, gestes",
+  "agent": "ks-3d",
+  "depends": [
+   "T10"
+  ],
+  "max_turns": 40,
+  "files": [
+   "scene/itemMesh.ts",
+   "scene/ghosts.ts",
+   "scene/camera.ts",
+   "scene/gestures.ts"
+  ],
+  "acceptance": "Orbite, inclinaison, pincement, double toucher, glisser d'objet ; alternatives clavier ; caméra pilotée par dk (SPEC-DRAWER).",
+  "wave": 5
+ },
+ {
+  "id": "T12",
+  "title": "Vignettes 3D (moteur + cache)",
+  "agent": "ks-3d",
+  "depends": [
+   "T10"
+  ],
+  "max_turns": 30,
+  "files": [
+   "scene/thumbnails.ts",
+   "__tests__/thumbnails.test.ts"
+  ],
+  "acceptance": "Un renderer partagé, clé de cache, file d'attente, repli SVG ; 12 vignettes < 600 ms mesurées.",
+  "wave": 5
+ },
+ {
+  "id": "T13",
+  "title": "Tiroir : coque, poignée, capsules, pager, pilule",
+  "agent": "ks-builder",
+  "depends": [
+   "T01"
+  ],
+  "max_turns": 25,
+  "files": [
+   "ui/Drawer/*",
+   "ui/Pill.tsx",
+   "ui/kit-studio.css",
+   "__tests__/drawer.test.tsx"
+  ],
+  "acceptance": "Hauteur 30 % toutes vues ; pilule à 2 px ; capsules icônes seules ; focus et Échap ; mouvement réduit.",
+  "wave": 3
+ },
+ {
+  "id": "T14",
+  "title": "Cartes : rail, carte, capsules de familles et de mode",
+  "agent": "ks-builder",
+  "depends": [
+   "T09",
+   "T12",
+   "T13"
+  ],
+  "max_turns": 25,
+  "files": [
+   "ui/cards/*"
+  ],
+  "acceptance": "3 cartes visibles, nom 2 lignes max sans chevauchement, sélection sans bordure colorée, glisser vers le sac.",
+  "wave": 6
+ },
+ {
+  "id": "T15",
+  "title": "Feuilles Bilan et Fiche objet",
+  "agent": "ks-builder",
+  "depends": [
+   "T06",
+   "T13"
+  ],
+  "max_turns": 25,
+  "files": [
+   "ui/sheets/BilanSheet.tsx",
+   "ui/sheets/ItemSheet.tsx"
+  ],
+  "acceptance": "4 pages Bilan, fiche (mesures en grille, Échanger, Histoire) ; scroll confiné ; aucun élément sous la barre basse.",
+  "wave": 6
+ },
+ {
+  "id": "T16",
+  "title": "Feuilles Sac/Pièce, Commande, Deck",
+  "agent": "ks-builder",
+  "depends": [
+   "T08",
+   "T13"
+  ],
+  "max_turns": 25,
+  "files": [
+   "ui/sheets/BagSheet.tsx",
+   "ui/sheets/OrderSheet.tsx",
+   "ui/sheets/DeckSheet.tsx"
+  ],
+  "acceptance": "Commander vit dans le tiroir ; total exact ; deck valide carte par carte ; pas de flux de paiement.",
+  "wave": 6
+ },
+ {
+  "id": "T17",
+  "title": "Libellés, aria, textes",
+  "agent": "ks-scribe",
+  "depends": [
+   "T13"
+  ],
+  "max_turns": 12,
+  "files": [
+   "ui/strings.ts"
+  ],
+  "acceptance": "Toutes les chaînes FR centralisées ; chaque bouton icône a un aria-label ; liste de contrôle a11y remplie.",
+  "wave": 4
+ },
+ {
+  "id": "T18",
+  "title": "Route, chrome masqué, lien d'entrée, hors ligne",
+  "agent": "ks-builder",
+  "depends": [
+   "T09",
+   "T13",
+   "T10"
+  ],
+  "max_turns": 25,
+  "files": [
+   "src/app/kit-studio/*",
+   "MobileNavWrapper.tsx",
+   "lien hub/matériel"
+  ],
+  "acceptance": "/kit-studio rend sans tab bar ; lien depuis le hub ou le matériel (jamais depuis /compas) ; loading/error ; dynamic ssr:false pour la scène.",
+  "wave": 6
+ },
+ {
+  "id": "T19",
+  "title": "E2E WebKit mobile + référence visuelle",
+  "agent": "ks-builder",
+  "depends": [
+   "T14",
+   "T15",
+   "T16",
+   "T18"
+  ],
+  "max_turns": 25,
+  "files": [
+   "tests/e2e-kit-studio/*"
+  ],
+  "acceptance": "Parcours complet à 402×874 ; 4 tailles ; balayage « aucune bordure colorée » ; captures de référence enregistrées.",
+  "wave": 7
+ },
+ {
+  "id": "T20",
+  "title": "Portes automatiques (a11y, perf, vie privée, tsc, lint)",
+  "agent": "ks-ops",
+  "depends": [
+   "T19"
+  ],
+  "max_turns": 10,
+  "files": [
+   "scripts/verify-kit-studio.sh"
+  ],
+  "acceptance": "Script vert ou liste d'échecs ≤ 30 lignes ; garde-fou /compas intact.",
+  "wave": 8
+ },
+ {
+  "id": "T21",
+  "title": "Correctifs du lot 1",
+  "agent": "ks-builder",
+  "depends": [
+   "T20"
+  ],
+  "max_turns": 25,
+  "files": [],
+  "acceptance": "Tous les échecs de T20 corrigés, test de non-régression ajouté pour chacun.",
+  "wave": 9
+ },
+ {
+  "id": "T22",
+  "title": "Relecture indépendante (architecture, données, sécurité, fuites)",
+  "agent": "ks-reviewer",
+  "depends": [
+   "T21"
+  ],
+  "max_turns": 20,
+  "files": [
+   "docs/kit-studio/REVIEW.md"
+  ],
+  "acceptance": "≤ 30 lignes : bloquants / importants / mineurs, chacun avec fichier:ligne et correction proposée.",
+  "wave": 10
+ },
+ {
+  "id": "T23",
+  "title": "Correctifs de la relecture",
+  "agent": "ks-builder",
+  "depends": [
+   "T22"
+  ],
+  "max_turns": 25,
+  "files": [],
+  "acceptance": "Bloquants et importants fermés avec test ; mineurs consignés.",
+  "wave": 11
+ },
+ {
+  "id": "T24",
+  "title": "PR, CI, fusion, production, contrôle, retour arrière si besoin",
+  "agent": "ks-ops",
+  "depends": [
+   "T23"
+  ],
+  "max_turns": 12,
+  "files": [],
+  "acceptance": "CI verte, fusion sur main, déploiement vérifié sur l'URL de production (HTTP 200, route rend, capture), sinon retour arrière immédiat.",
+  "wave": 12
+ },
+ {
+  "id": "T25",
+  "title": "Build iOS et installation sur l'iPhone 16 Pro",
+  "agent": "ks-ops",
+  "depends": [
+   "T24"
+  ],
+  "max_turns": 12,
+  "files": [
+   "ios/RUN-ON-IPHONE.md"
+  ],
+  "acceptance": "Sur Mac relié : app installée et lancée ; sinon IPA de la CI + fiche de 5 minutes prête (voir ios/RUN-ON-IPHONE.md).",
+  "wave": 13
+ },
+ {
+  "id": "T26",
+  "title": "Rapport final et grand livre",
+  "agent": "ks-scribe",
+  "depends": [
+   "T25"
+  ],
+  "max_turns": 8,
+  "files": [
+   "docs/kit-studio/RAPPORT-FINAL.md",
+   "docs/kit-studio/LEDGER.md"
+  ],
+  "acceptance": "Livré, preuves, part de tours par modèle, limites, action restante pour Tony (s'il y en a une).",
+  "wave": 14
+ }
+]

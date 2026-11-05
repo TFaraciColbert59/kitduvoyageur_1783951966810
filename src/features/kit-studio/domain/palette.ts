@@ -1,0 +1,43 @@
+// Couleurs brutes de la maquette : seul fichier du domaine autorisé à contenir de l'hexadécimal.
+// <generated>
+// généré par scripts/port-catalog.mjs : ne pas éditer ce bloc
+export type MaterialKey = 'm-2d482a' | 'm-3d6038' | 'm-1e301c' | 'm-9bbda7' | 'm-789972' | 'm-96b391' | 'm-f0f5ee' | 'm-b5aba0' | 'm-d4ccc0' | 'm-5b554a' | 'm-1f4251' | 'm-2a5a6e' | 'm-10222b' | 'm-a8c8d4' | 'm-365233' | 'm-5b7f55' | 'm-4c7746' | 'm-3e6b7a' | 'm-b8ad8a' | 'm-c9c0a3' | 'm-17402c' | 'm-968c81' | 'm-2c3530' | 'm-7a7365' | 'm-b08a4e' | 'm-998f70' | 'm-7aaab8' | 'm-141916' | 'm-3f3b34' | 'm-e8e2d9' | 'm-a8443a' | 'm-c9a86a' | 'm-5a8a9a' | 'm-e4c695' | 'm-4b6b7c' | 'm-e8e6df';
+export const RAW_MATERIALS: Readonly<Record<MaterialKey, string>> = {
+  'm-2d482a': '#2D482A',
+  'm-3d6038': '#3D6038',
+  'm-1e301c': '#1E301C',
+  'm-9bbda7': '#9BBDA7',
+  'm-789972': '#789972',
+  'm-96b391': '#96B391',
+  'm-f0f5ee': '#F0F5EE',
+  'm-b5aba0': '#B5ABA0',
+  'm-d4ccc0': '#D4CCC0',
+  'm-5b554a': '#5B554A',
+  'm-1f4251': '#1F4251',
+  'm-2a5a6e': '#2A5A6E',
+  'm-10222b': '#10222B',
+  'm-a8c8d4': '#A8C8D4',
+  'm-365233': '#365233',
+  'm-5b7f55': '#5B7F55',
+  'm-4c7746': '#4C7746',
+  'm-3e6b7a': '#3E6B7A',
+  'm-b8ad8a': '#B8AD8A',
+  'm-c9c0a3': '#C9C0A3',
+  'm-17402c': '#17402C',
+  'm-968c81': '#968C81',
+  'm-2c3530': '#2C3530',
+  'm-7a7365': '#7A7365',
+  'm-b08a4e': '#B08A4E',
+  'm-998f70': '#998F70',
+  'm-7aaab8': '#7AAAB8',
+  'm-141916': '#141916',
+  'm-3f3b34': '#3F3B34',
+  'm-e8e2d9': '#E8E2D9',
+  'm-a8443a': '#A8443A',
+  'm-c9a86a': '#C9A86A',
+  'm-5a8a9a': '#5A8A9A',
+  'm-e4c695': '#E4C695',
+  'm-4b6b7c': '#4B6B7C',
+  'm-e8e6df': '#E8E6DF',
+};
+// </generated>
