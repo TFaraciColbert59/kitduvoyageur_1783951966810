@@ -19,6 +19,7 @@ function isProtected(pathname: string) {
  */
 const APP_ROUTES = [
   '/hub',
+  '/kit-studio',
   '/communaute',
   '/messagerie',
   '/compte',
