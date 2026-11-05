@@ -12,7 +12,9 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   hub_collectif_enabled: false,
   explorer_unified_map_enabled: false,
   explorer_v2_enabled: false,
-  hub_camp_v1: false,
+  // Le hub camp est le hub par défaut : la ligne `hub_camp_v1` de public.feature_flags
+  // peut le couper (enabled=false) sans redéploiement. Absente = actif.
+  hub_camp_v1: true,
   updatedAt: 0,
   source: 'fallback',
 };
@@ -91,7 +93,7 @@ export async function currentFeatureFlags(): Promise<FeatureFlags> {
       hub_collectif_enabled: byId.get('hub_collectif_enabled') ?? false,
       explorer_unified_map_enabled: byId.get('explorer_unified_map_enabled') ?? false,
       explorer_v2_enabled: byId.get('explorer_v2_enabled') ?? false,
-      hub_camp_v1: localCampOverride ?? byId.get('hub_camp_v1') ?? false,
+      hub_camp_v1: localCampOverride ?? byId.get('hub_camp_v1') ?? DEFAULT_FLAGS.hub_camp_v1,
       updatedAt: Date.now(),
       source: 'rpc',
     };
