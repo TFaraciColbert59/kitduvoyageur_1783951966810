@@ -267,4 +267,22 @@ NVIDIA), `perf:budget` vert sur les 8 surfaces. Le build local exige toujours
 
 ## 14. Livraison
 
-À compléter après le déploiement : SHA, URL, vérification vidéo et IA en production.
+- **SHA production : `45d32c93`**, déploiement `dpl_H17JSipzMudAuDb1qBixUMYm657F`,
+  URL vérifiée : `https://kitduvoyageur-1783951966810-ncsx3vtcc.vercel.app`.
+- `/communaute` (session de test) : 10 posts, 4 cartes vidéo `src=null`,
+  `preload=none`, poster optimisé, **0 octet WebM** ; `/hub` et `/compas` rendent.
+- **IA réelle en production** : `POST /api/ai/chat-completion` avec `stream:true`,
+  session valide → 200 `text/event-stream`, premier token **828 ms**, total **984 ms**,
+  texte « Bonjour ! Je te souhaite un excellent voyage. », provider `nvidia`,
+  modèle `nvidia/nemotron-3.5-lightning-30b-a3b`, `degraded:false`. Sans session → 401.
+- En-têtes production : `/assets` 1 jour, `/maplibre` 1 heure, `_next/static`
+  immutable, `X-Vercel-Cache: HIT` ; aucune erreur runtime serveur sur la dernière heure.
+- RUM : des lignes `app_version = 45d32c9` sont déjà écrites (`web_vitals`,
+  `experience_metric`) ; elles viennent du compte de test et sont à exclure des p75.
+- **WebKit Playwright** : `/communaute` (10 posts), `/hub`, `/compas`, `/compte`
+  rendent. Deux incidents moteur : l'enregistrement `sw.js` est refusé
+  (« access control checks ») et `/hub` émet un rejet de promesse `[object Event]`.
+  Ce sont des constats WebKit navigateur, **pas** un test iPhone/WKWebView.
+- **Chromium `/compte`** : quatre erreurs client `appendChild` (chunk `5032`,
+  effet liquid-glass) sans blocage du rendu. Défaut préexistant probable, à traiter
+  hors de ce lot.
