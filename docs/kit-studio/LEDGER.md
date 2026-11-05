@@ -13,4 +13,6 @@
 | T10 | Sonnet · élevé | 36 | fait (rendu GPU non vérifié → T19) | vitest scene.lifecycle 10/10, 20 cycles sans fuite (faux renderer) |
 | T07 | Sonnet · moyen | 24 | fait | vitest packing 24/24 |
 | T06 | Sonnet · moyen | 25 | fait | vitest balance 22/22 (oracle maquette) |
+| T17 | Haiku · bas | 33 | fait | vitest strings+drawer 13/13 |
+| T16a | Sonnet · moyen | 31 | fait (Sac, Commande) | vitest sheets.order 9/9 |
 | — | coordinateur | — | contrat KitState, tsconfig.kit-studio.json (12 s) | tsc module 0 erreur |
