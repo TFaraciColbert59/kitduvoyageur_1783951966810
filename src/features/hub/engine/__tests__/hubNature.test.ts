@@ -16,6 +16,7 @@ const BASE_FLAGS: FeatureFlags = {
   hub_collectif_enabled: true,
   explorer_unified_map_enabled: false,
   explorer_v2_enabled: false,
+  hub_camp_v1: false,
   updatedAt: 0,
   source: 'fallback',
 };

@@ -9,7 +9,7 @@ describe('Compte drawer v2 — sélecteur, swipe et carte contexte', () => {
   it('réutilise ig-tabs, gère le swipe et la carte contexte', () => {
     const runtime = read('src/components/compte/compte-liquid-glass-v8-runtime.js');
     const selector = read('src/components/compte/drawer/SlotSelector.tsx');
-    const pager = read('src/components/compte/drawer/LensPager.tsx');
+    const pager = read('src/components/ui/drawer/LensPager.tsx');
     expect(runtime).toContain('__lkdvOpenSlot');
     expect(runtime).toContain('lkdv-slot-root');
     expect(runtime).toContain('notifyMapContext');

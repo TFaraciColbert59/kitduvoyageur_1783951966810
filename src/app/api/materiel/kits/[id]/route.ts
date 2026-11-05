@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { materielKitSchema } from '@/lib/schemas/materiel';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 type Params = { params: Promise<{ id: string }> };
 
-/** PATCH /api/materiel/kits/:id — mettre à jour un kit (remplace ses articles). */
+/** PATCH /api/materiel/kits/:id — mettre à jour un kit (remplace ses articles atomiquement). */
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const supabase = await createClient();
@@ -15,7 +16,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
 
     const { id } = await params;
-    const parsed = materielKitSchema.partial().safeParse(await req.json());
+    const body = await req.json();
+
+    const patchSchema = materielKitSchema.partial().extend({
+      allowEmptyItems: z.boolean().optional(),
+    });
+
+    const parsed = patchSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message ?? 'Données invalides' },
@@ -23,43 +30,69 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       );
     }
 
-    const { items, ...patch } = parsed.data;
+    const { items, allowEmptyItems = false, ...patch } = parsed.data;
 
-    const { data, error } = await supabase
-      .from('materiel_kits')
-      .update({ ...patch, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .select('*')
-      .single();
-    if (error) throw error;
+    // 1. Traitement des articles via RPC atomique si le champ items est fourni
+    if (items !== undefined) {
+      if (items.length === 0 && !allowEmptyItems) {
+        return NextResponse.json(
+          { error: 'Vidage non intentionnel refusé. Passer allowEmptyItems: true pour confirmer le vidage.' },
+          { status: 409 }
+        );
+      }
 
-    if (items) {
-      await supabase.from('materiel_kit_items').delete().eq('kit_id', id);
-      if (items.length > 0) {
-        const rows = items.map((i) => ({
-          kit_id: id,
-          user_id: user.id,
-          product_ownership_id: i.product_ownership_id ?? null,
-          name: i.name,
-          category: i.category,
-          weight_g: i.weight_g,
-          quantity: i.quantity,
-          is_checked: i.is_checked,
-        }));
-        const { error: itemsError } = await supabase.from('materiel_kit_items').insert(rows);
-        if (itemsError) throw itemsError;
+      const { error: rpcError } = await supabase.rpc('replace_kit_items', {
+        p_kit_id: id,
+        p_items: items,
+        p_allow_empty: allowEmptyItems,
+      });
+
+      if (rpcError) {
+        if (rpcError.code === '23514') {
+          return NextResponse.json({ error: rpcError.message }, { status: 409 });
+        }
+        if (rpcError.code === '42501') {
+          return NextResponse.json({ error: 'Kit introuvable ou non autorisé' }, { status: 403 });
+        }
+        if (rpcError.code === '28000') {
+          return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+        }
+        throw rpcError;
       }
     }
 
-    await supabase.from('materiel_kit_history').insert({
-      kit_id: id,
-      user_id: user.id,
-      action: 'updated',
-      payload: patch,
-    });
+    // 2. Mise à jour des attributs du kit si présents
+    let updatedKit = null;
+    if (Object.keys(patch).length > 0) {
+      const { data, error } = await supabase
+        .from('materiel_kits')
+        .update({ ...patch, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select('*')
+        .single();
 
-    return NextResponse.json({ kit: data });
+      if (error) throw error;
+      updatedKit = data;
+
+      await supabase.from('materiel_kit_history').insert({
+        kit_id: id,
+        user_id: user.id,
+        action: 'updated',
+        payload: patch,
+      });
+    } else {
+      const { data, error } = await supabase
+        .from('materiel_kits')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
+      if (error) throw error;
+      updatedKit = data;
+    }
+
+    return NextResponse.json({ kit: updatedKit });
   } catch (err) {
     console.error('PATCH /api/materiel/kits/:id', err);
     return NextResponse.json(

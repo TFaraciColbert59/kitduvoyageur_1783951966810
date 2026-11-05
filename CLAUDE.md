@@ -33,7 +33,7 @@ Tony travaille en autonomie complète : **carte blanche, budget 0 €**. Il ne v
 - Next.js 15 (App Router) · React 19 · TypeScript strict · Tailwind · Supabase (PostgreSQL + PostGIS) · Stripe (server-side).
 - **Web : Vercel uniquement. Mobile : Capacitor uniquement** (`capacitor.config.ts`, `ios/`, `android/`). Aucune autre plateforme (Netlify, GitHub Pages, Cloudflare, Firebase, Render, Fly, Railway, Expo/React Native) : ni config, ni plugin, ni workflow, ni dépendance.
 - **IA** : NVIDIA NIM en direct (Nemotron 3.5 Lightning), décision de Tony du 2026-10-07. Pas d'OpenRouter dans l'app. L'IA ne fournit jamais un lieu, un prix ou une date dans le Compas : elle relit et conseille. Exceptions décidées par Tony le 2026-10-14 (« utilise l'IA au maximum ») : le modèle « expert » Nemotron 3 Ultra 550B (même appel direct, Lightning en relais) propose les lieux d'un itinéraire et la ville de base d'une destination inconnue, et, pour un sentier nommé (`isNamedTrail`, `engine/intent.ts`) dont le tracé n'est pas suivi sur OpenStreetMap (tronçon dit comme « GR20 sud », Tour du Mont-Blanc, HRP en toutes lettres, Laugavegur, Stevenson…), les étapes habituelles ; chaque lieu proposé est vérifié sur la carte, et IA éteinte, muette ou sans lieu retrouvé, le calcul habituel s'applique, annoncé. Un code GR numéroté sans tronçon dit suit d'abord son tracé OpenStreetMap. Quota IA par personne et par jour : 120 « heavy » / 400 « fast » (`check_and_increment_ai_quota`) ; plafond du site `AI_DAILY_CAP` (2 000).
-- **Météo** : MET Norway (CC BY 4.0) + NASA POWER, gratuits, usage commercial permis. **Cartes** : Leaflet + tuiles OSM / OpenFreeMap ; jamais d'URL de tuiles qui exige une clé sans clé (`tests/map/leafletTiles`). **3D** : react-globe.gl + three.js.
+- **Météo** : MET Norway (CC BY 4.0) + NASA POWER, gratuits, usage commercial permis. **Cartes** : Leaflet + tuiles OSM / OpenFreeMap ; jamais d'URL de tuiles qui exige une clé sans clé (`tests/map/leafletTiles`). **3D** : `three@0.180.0` (MIT, seule dépendance 3D) pour le Kit Studio (sacs procéduraux `tools/bag-generator/`, ADR-001) ; cartes WebGL via `maplibre-gl`. Un seul contexte WebGL vivant à la fois (`WebGLArbiter`, ADR-002). `react-globe.gl` n'est plus une dépendance.
 - Fichiers à ne pas modifier : `.env.example`, `tsconfig.json` (sauf nécessité globale), scripts npm `dev` et `build`.
 
 ### Sécurité
@@ -52,7 +52,7 @@ Tony travaille en autonomie complète : **carte blanche, budget 0 €**. Il ne v
 - `typescript.ignoreBuildErrors = false` et `eslint.ignoreDuringBuilds = false` : le lint et le typage tournent au build, 0 erreur ESLint sur le dépôt. Aucun bypass.
 - Portes de qualité : `npm run lint` · `npm run type-check` · `npm run build` · `node scripts/validate-country-cache.mjs`. Le workflow est à `.github/ci.yml` (à déplacer vers `.github/workflows/ci.yml` depuis l'interface GitHub).
 - Tests : `npm test` (Vitest), `npm run test:unit` avant tout commit majeur, E2E `npm run test:e2e*`, visuel `npm run test:visual`, accessibilité `npm run test:a11y`.
-- `transpilePackages: ['react-globe.gl', 'three', 'lucide-react']` (`next.config.mjs`). Redirections permanentes : `/shop`, `/catalogue/*` → `/boutique`.
+- Aucun `transpilePackages` dans `next.config.mjs`. Redirections permanentes : `/shop`, `/catalogue/*` → `/boutique`.
 
 ---
 

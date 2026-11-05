@@ -78,7 +78,11 @@ export async function middleware(request: NextRequest) {
   // ─── Connexion obligatoire pour l'app ─────────────────────────────────────
   // Contrôle sans appel réseau (cookie de session) : la session elle-même est
   // vérifiée par l'app et par chaque route API.
-  if (isAppRoute(pathname) && !hasSessionCookie(request)) {
+  // En mode local de test du camp de base (LKDV_LOCAL_HUB_CAMP=1), /hub est accessible sans session.
+  const isLocalHubCamp =
+    process.env.LKDV_LOCAL_HUB_CAMP === '1' &&
+    (pathname === '/hub' || pathname.startsWith('/hub/'));
+  if (isAppRoute(pathname) && !hasSessionCookie(request) && !isLocalHubCamp) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/connexion';
     loginUrl.search = '';

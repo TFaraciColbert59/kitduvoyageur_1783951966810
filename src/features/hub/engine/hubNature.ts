@@ -26,6 +26,8 @@ export interface FeatureFlags {
   explorer_unified_map_enabled: boolean;
   /** Explorer v2 — bascule de la page /explorer (00_MISSION §10). */
   explorer_v2_enabled: boolean;
+  /** Lot L1-L7 — Refonte du HUB Camp de Base et Kit Studio 3D (hub_camp_v1). */
+  hub_camp_v1: boolean;
   updatedAt: number;
   source: 'rpc' | 'cache' | 'fallback';
 }

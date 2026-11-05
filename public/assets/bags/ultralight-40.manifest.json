@@ -1,0 +1,164 @@
+{
+  "schema": 1,
+  "modelId": "ultralight-40",
+  "label": "Sac ultraléger 40 L",
+  "generator": "generate-bag.mjs",
+  "generatedBy": "procedural",
+  "license": "LKDV — généré par code, aucun asset tiers",
+  "units": "meters",
+  "origin": "centre du sol du sac (y=0 au fond)",
+  "capabilities": {
+    "rotatable": true,
+    "openable": true,
+    "hasInterior": true,
+    "customizableParts": [
+      "body",
+      "interior",
+      "lid",
+      "front-pocket",
+      "shoulder-strap-l",
+      "shoulder-strap-r",
+      "hip-belt",
+      "compression-strap-l-1",
+      "compression-strap-r-1",
+      "compression-strap-l-2",
+      "compression-strap-r-2"
+    ],
+    "badgeAnchors": [
+      "badge-body-front",
+      "badge-lid",
+      "badge-front-pocket"
+    ],
+    "attachmentPoints": [
+      "attach-top",
+      "attach-bottom",
+      "attach-side-l",
+      "attach-side-r"
+    ]
+  },
+  "hasHinge": true,
+  "declaredCapacityL": 40,
+  "boundingBoxM": {
+    "w": 0.4832,
+    "h": 0.73,
+    "d": 0.3771
+  },
+  "slots": [
+    {
+      "id": "interior-bottom",
+      "kind": "interior",
+      "capacityL": 18,
+      "maxItems": null,
+      "anchor": [
+        0,
+        0.132,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "interior-top",
+      "kind": "interior",
+      "capacityL": 14,
+      "maxItems": null,
+      "anchor": [
+        0,
+        0.372,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "front-pocket",
+      "kind": "pocket",
+      "capacityL": 2.4,
+      "maxItems": 6,
+      "anchor": [
+        0,
+        0.18,
+        0.16
+      ],
+      "normal": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "attach-top",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0,
+        0.62,
+        -0.022000000000000002
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "attach-bottom",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0,
+        0.02,
+        0
+      ],
+      "normal": [
+        0,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "attach-side-l",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        -0.18,
+        0.3,
+        0
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "attach-side-r",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0.18,
+        0.3,
+        0
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "budget": {
+    "triangles": 3372,
+    "fileBytes": 251724
+  }
+}

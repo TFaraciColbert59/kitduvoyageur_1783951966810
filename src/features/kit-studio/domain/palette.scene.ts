@@ -107,3 +107,23 @@ export const GHOST_HALO_STOPS: readonly (readonly [number, string])[] = [
   [0.3, rgba(GHOST_GLOW, 0.7)],
   [1, rgba(GHOST_GLOW, 0)],
 ];
+
+/* ───────────── Illustration du tiroir Personnaliser (drawers/PersonnaliserDrawer.tsx) ─────────────
+   Dégradés et ombres du dessin SVG : mêmes valeurs que la branche hub-camp-3d, nommées ici pour que
+   le tiroir n'écrive aucune couleur littérale (garde-fou `__tests__/palette.test.ts`). */
+export const DRAWER_ART = {
+  shade: '#0a140e',
+  shadeDeep: '#0d1b13',
+  shadeInk: '#0b1610',
+  shadeNight: '#09140e',
+  shadeAbyss: '#08100b',
+  shellDark: '#172820',
+  shellMid: '#2d3b34',
+  shellDeep: '#172b24',
+  highlight: '#d8e8dc',
+  white: '#ffffff',
+  white25: 'rgba(255,255,255,0.25)',
+  white20: 'rgba(255,255,255,0.2)',
+  white12: 'rgba(255,255,255,0.12)',
+  ink30: 'rgba(0,0,0,0.3)',
+} as const;

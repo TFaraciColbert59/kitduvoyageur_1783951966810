@@ -22,13 +22,14 @@ export async function HubDepartSection({
   departId?: string;
   route?: string;
 }) {
-  const [depart, kits, inventory, loans, products] = await Promise.all([
+  const [depart, kitsResult, inventory, loans, products] = await Promise.all([
     getDepartDetail(departId, route),
     getKits(),
     getInventory(),
     getLoans(),
     getProductSuggestions(undefined, 8),
   ]);
+  const kits = kitsResult.kits;
 
   const weather = depart.trail?.lat && depart.trail?.lng
     ? await getWeather(depart.trail.lat, depart.trail.lng, depart.trail.name)
