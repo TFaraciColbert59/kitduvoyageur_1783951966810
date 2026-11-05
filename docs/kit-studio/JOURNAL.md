@@ -17,4 +17,10 @@
 - Décision : le coordinateur pose le contrat d'état `domain/types.ts` (KitState immuable : kits vivants, config par sac, jour, own/order, objets ajoutés) et `domain/state.ts` (createInitialState, currentKit/Bag/Config, getItem, zoneOf, withKit) pour que T05/T07/T08/T09 écrivent contre la même forme. Coût si faux : renommages mécaniques.
 - Décision : les couleurs littérales de la scène (textures canvas, décor) vivent dans `domain/palette.scene.ts` ; le garde-fou `verify-kit-studio.sh` exclut désormais `domain/palette*` (et non plus seulement `palette.ts`).
 - Décision : T10 teste le cycle de vie avec un faux renderer injecté (pas de WebGL en Node) ; `renderer.info.memory` réel et comparaison visuelle reportés en E2E WebKit (T19).
-- Décision : T13 livre des composants contrôlés par props ; le branchement au store se fait en T09/T14. Résultats de T01-T03 NON vérifiés. Reprendre : vérifier T01-T03 (tests, diff), remplir le LEDGER, puis vague 3 (T04, T05, T08, T13).
+- Décision : T13 livre des composants contrôlés par props ; le branchement au store se fait en T09/T14.
+- Constat (T17) : capsule à plus de 4 boutons → cible de 38 px < 44 px (Capsule.tsx:26, kit-studio.css:339). À corriger en T21 : zone tactile étendue par `::after` sans changer le visuel. Contrastes AA non mesurés → T20 (a11y).
+- Constat (T10) : PCFSoftShadowMap retiré en three r186 → PCFShadowMap ; `LEGACY_COLOR_LOOK` reproduit le rendu r149, à trancher sur capture en T19.
+- Contrôles CI lancés en local avant la PR : `tests/design/unification.spec.ts` 5/5 vert ; `scripts/verify/ci_invariants.mjs` et `verify:icons` en échec **déjà sur main** (7 noms d'icônes non résolus dans StoriesViewer, CarnetTile, MessagesScreen) : 0 occurrence kit-studio, hors périmètre.
+- Outils : pas de CLI `gh` sur ce Mac → PR via le serveur MCP GitHub ; `git ls-remote origin` OK, main inchangé (45d32c936) depuis la base du worktree.
+- Écarts `setPartOption`/`mutate()` (5) relevés par T14 → tâche T14b, alignement par oracle exécutant la maquette.
+- Constat (T06) : le kit TMB initial est « Trop loin du dos » (z ≈ −4e-6) et prêt à 54 % : comportement identique à la maquette, conservé. Résultats de T01-T03 NON vérifiés. Reprendre : vérifier T01-T03 (tests, diff), remplir le LEDGER, puis vague 3 (T04, T05, T08, T13).

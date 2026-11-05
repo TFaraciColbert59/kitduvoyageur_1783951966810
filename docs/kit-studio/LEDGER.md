@@ -19,4 +19,8 @@
 | T16b | Sonnet · moyen | 14 | fait (glisser non testé par PointerEvent) | vitest deck 12/12 |
 | T15 | Sonnet · moyen | 34 | fait (menu « … » non ancré) | vitest sheets.bilan+order 18/18 |
 | T12 | Sonnet · élevé | 33 | fait (temps GPU réel → T19) | vitest thumbnails 18/18 |
+| T17b | Haiku · bas | 13 | fait (accessoires sans glyphe → repli) | vitest glyphs 7/7 |
+| T18 | Sonnet · moyen | 40 | fait (budget 520 Ko provisoire) | vitest route 5/5, dev /kit-studio HTTP 200 |
+| T14 | Sonnet · moyen | 37 | fait (5 écarts setPartOption/mutate → T14b) | vitest cards 8/8 |
+| T11 | Sonnet · élevé | 51 | fait (visuel → T19) | vitest scène 31, module 264/264 |
 | — | coordinateur | — | contrat KitState, tsconfig.kit-studio.json (12 s) | tsc module 0 erreur |
