@@ -88,3 +88,22 @@ export const LOOK_REFLECT = '#DDE3E0';
 export const LOOK_METAL = '#B5ABA0';
 export const LOOK_EMISSIVE_REFLECT = '#FFFFFF';
 export const BAG_MOUTH = '#0C140F';
+
+/* ───────────── Vignettes 3D des cartes (maquette l.1195-1209) ───────────── */
+export const THUMB_HEMI_SKY = '#FFFFFF';
+export const THUMB_HEMI_GROUND = '#C9D4C6';
+export const THUMB_FILL = '#DDEBFF';
+
+/* ───────────── Objets rangés : teintes de détail (hors coloris du catalogue) ───────────── */
+export const ITEM_LENS = '#FFF6DD';
+export const ITEM_SCREEN = '#1D2A24';
+export const ITEM_BLADE = '#CFD6D2';
+export const ITEM_CROSS = '#FFFFFF';
+/** Objets manquants (« fantômes ») : filaire ambre et halo. */
+export const GHOST_COLOR = '#C89A3B';
+const GHOST_GLOW: Rgb = [200, 154, 59];
+export const GHOST_HALO_STOPS: readonly (readonly [number, string])[] = [
+  [0, rgba(GHOST_GLOW, 1)],
+  [0.3, rgba(GHOST_GLOW, 0.7)],
+  [1, rgba(GHOST_GLOW, 0)],
+];

@@ -10,6 +10,7 @@ export interface ResourceCounts {
 }
 
 interface SharedEntry { readonly geometry: BufferGeometry; refs: number }
+interface SharedMaterial { readonly material: Material; refs: number }
 
 export class ResourceTracker {
   private readonly geos = new Set<BufferGeometry>();
@@ -18,6 +19,8 @@ export class ResourceTracker {
   private readonly targets = new Set<WebGLRenderTarget>();
   private readonly shared = new Map<string, SharedEntry>();
   private readonly sharedKeyOf = new Map<BufferGeometry, string>();
+  private readonly sharedMats = new Map<string, SharedMaterial>();
+  private readonly sharedMatKeyOf = new Map<Material, string>();
 
   geometry<T extends BufferGeometry>(g: T): T {
     this.geos.add(g);
@@ -67,6 +70,30 @@ export class ResourceTracker {
     }
   }
 
+  /** Matériau partagé par clé, compté par référence (objets du sac et vignettes). */
+  acquireMaterial<T extends Material>(key: string, factory: () => T): T {
+    const hit = this.sharedMats.get(key);
+    if (hit) { hit.refs += 1; return hit.material as T; }
+    const material = this.material(factory());
+    this.sharedMats.set(key, { material, refs: 1 });
+    this.sharedMatKeyOf.set(material, key);
+    return material;
+  }
+
+  /** Rend un matériau : libéré tout de suite s'il est privé, à la dernière référence s'il est partagé. */
+  releaseMaterial(m: Material): void {
+    const key = this.sharedMatKeyOf.get(m);
+    if (key === undefined) { m.dispose(); return; }
+    const entry = this.sharedMats.get(key);
+    if (!entry) return;
+    entry.refs -= 1;
+    if (entry.refs <= 0) {
+      this.sharedMats.delete(key);
+      this.sharedMatKeyOf.delete(m);
+      m.dispose();
+    }
+  }
+
   /** Force la recompilation des matériaux (ex. ombres coupées). */
   markMaterialsDirty(): void {
     for (const m of this.mats) m.needsUpdate = true;
@@ -84,5 +111,7 @@ export class ResourceTracker {
     for (const r of [...this.targets]) r.dispose();
     this.shared.clear();
     this.sharedKeyOf.clear();
+    this.sharedMats.clear();
+    this.sharedMatKeyOf.clear();
   }
 }

@@ -7,7 +7,7 @@ import {
 } from 'three';
 import type { BufferGeometry, Texture } from 'three';
 import { BAGS, FINISHES, MATERIALS } from '../domain/catalog';
-import type { BagId, ConfigSet, MaterialKey, PartConfig } from '../domain/catalog';
+import type { BagId, ConfigSet, MaterialKey, PartConfig, PartNameId, ZoneId } from '../domain/catalog';
 import { RAW_MATERIALS } from '../domain/palette';
 import { BAG_MOUTH, LOOK_COVER, LOOK_EMISSIVE_REFLECT, LOOK_FALLBACK, LOOK_METAL, LOOK_REFLECT } from '../domain/palette.scene';
 import { makeColor, paint } from './color';
@@ -21,6 +21,10 @@ type Slot = PartKey | 'acc';
 type Role = 'fabric' | 'pad' | 'mesh' | 'web' | 'accent' | 'cover' | 'reflect' | 'metal';
 type V3 = readonly [number, number, number];
 
+/** Direction de séparation des pièces (maquette PEX l.1007) et zone de chaque partie. */
+const PEX: Readonly<Record<PartKey, V3>> = { lid: [0, 1, 0], front: [0, 0, 1], sides: [1, 0, 0], hip: [1, -0.3, -0.4], harness: [0, 0, -1], body: [0, 0, 0] };
+const PART_ZONE: Readonly<Record<PartKey, ZoneId>> = { body: 'main', lid: 'lid', front: 'front', sides: 'sides', hip: 'hip', harness: 'back' };
+
 const SLOTS: readonly Slot[] = ['body', 'lid', 'front', 'sides', 'hip', 'harness', 'acc'];
 
 interface Piece {
@@ -32,6 +36,10 @@ interface Piece {
   readonly stretch: boolean;
   readonly baseOpacity: number;
   readonly colTo: Color;
+  /** Position de repos et direction de séparation (pièces séparées). */
+  readonly home: Vector3;
+  readonly dir: Vector3;
+  readonly zone: ZoneId;
   rTo: number;
   pop: number;
   pe: number;
@@ -40,8 +48,31 @@ interface Piece {
 
 interface Extra { readonly stretch?: boolean; readonly baseOpacity?: number }
 
+/** Réglages visuels pilotés par la scène à chaque image (aucune allocation : l'objet est réutilisé). */
+export interface BagFx {
+  /** Zone sous la caméra et force de la mise en avant (0..1). */
+  focus: ZoneId;
+  focusAmt: number;
+  /** Zone ciblée par un glisser de carte (ou 'bag' pour tout le sac), éclairée. */
+  highlight: ZoneId | null;
+  /** Pièces séparées des objets (0..1) : le sac pâlit. */
+  exploded: number;
+  /** Pièces du sac séparées (mode Apparence, 0..1). */
+  separation: number;
+  /** true : mode Gestion (couvercle ouvert sur la zone Principal, zones éclairées) ; false : Apparence. */
+  gestion: boolean;
+  /** Pièce sélectionnée en mode Apparence (null : aucune). */
+  part: PartNameId | null;
+}
+
+/** Résultat d'un tir de rayon sur le sac. */
+export interface BagHit { readonly zone: ZoneId; readonly part: PartNameId }
+
 export interface BagHandle {
   readonly group: Group;
+  readonly fx: BagFx;
+  /** Pièces du sac touchables (le tableau est remplacé quand les pièces changent : relire à chaque tir). */
+  pickables(): readonly Mesh[];
   /** Applique bag + config. Renvoie true si quelque chose a changé (pièces ou apparence). */
   sync(bagId: BagId, config: ConfigSet): boolean;
   /** Avance les amortissements (couleurs, apparition, échelle) ; true tant que ça bouge. */
@@ -50,7 +81,7 @@ export interface BagHandle {
 }
 
 /** Boîte arrondie lisse (normales continues) : maquette l.980. */
-function roundedBox(w: number, h: number, d: number, radius: number, seg = 8): BoxGeometry {
+export function roundedBox(w: number, h: number, d: number, radius: number, seg = 8): BoxGeometry {
   const r = Math.min(radius, w / 2, h / 2, d / 2) * 0.999;
   const g = new BoxGeometry(w, h, d, seg, seg, seg);
   const p = g.getAttribute('position');
@@ -132,6 +163,7 @@ export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: 
   lidPivot.position.set(0, 0.66, -0.26);
   group.add(lidPivot);
   groups.lid = lidPivot;
+  const lidGroup = lidPivot;
 
   const mouthMat = tr.material(new MeshBasicMaterial({ color: makeColor(BAG_MOUTH), transparent: true }));
   const mouth = new Mesh(tr.geometry(new CircleGeometry(1, 40)), mouthMat);
@@ -150,6 +182,13 @@ export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: 
   let disposed = false;
 
   const popSpeed = reducedMotion ? 60 : 3.4;
+  const fx: BagFx = { focus: 'bag', focusAmt: 0, highlight: null, exploded: 0, separation: 0, gestion: true, part: null };
+  const accentC = new Color();
+  const whiteC = makeColor(LOOK_EMISSIVE_REFLECT);
+  let hasLid = false;
+  let isRoll = false;
+  let lid = 0;
+  let opApplied = 1;
 
   function add(slot: Slot, part: PartKey, role: Role, geometry: BufferGeometry, pos: V3, rot?: V3, extra?: Extra): Piece {
     const bo = extra?.baseOpacity ?? 1;
@@ -164,9 +203,13 @@ export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: 
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     groups[slot].add(mesh);
+    const d = PEX[part];
+    const side = part === 'sides' || part === 'hip' ? (Math.sign(pos[0]) || 1) : 1;
+    mesh.userData = { part, role, zone: PART_ZONE[part] };
     const piece: Piece = {
       mesh, slot, part, role, stretch: extra?.stretch ?? false, baseOpacity: bo,
-      colTo: new Color(), rTo: 0.82, pop: 0, pe: 1, fresh: true,
+      colTo: new Color(), home: mesh.position.clone(), dir: new Vector3(d[0] * side, d[1], d[2]), zone: PART_ZONE[part],
+      rTo: 0.82, pop: 0, pe: 1, fresh: true,
     };
     pieces.push(piece);
     return piece;
@@ -318,16 +361,20 @@ export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: 
       if (mt.map !== L.map) { mt.map = L.map; mt.needsUpdate = true; }
       if (instant || p.fresh) { mt.color.copy(p.colTo); mt.roughness = L.r; p.fresh = false; }
     }
+    paint(accentC, hexOf(c.accent));
   }
 
-  function updateMouth(c: ConfigSet): void {
-    const a = effLid(c) !== 'none' ? 0 : c.body.shape === 'roll' ? 0 : 0.92;
+  /** Bouche du sac : visible sans couvercle (sauf roulé) ou couvercle ouvert ; s'efface quand les objets se séparent. */
+  function updateMouth(): void {
+    const a = hasLid ? Math.min(1, lid * 1.4) : isRoll ? 0 : 0.92;
     mouth.visible = a > 0.03;
-    mouthMat.opacity = a;
+    mouthMat.opacity = a * (1 - fx.exploded * 0.85);
   }
 
   return {
     group,
+    fx,
+    pickables: () => pieces.map((p) => p.mesh),
     sync(bagId, c) {
       if (disposed) return false;
       const key = JSON.stringify(c);
@@ -345,7 +392,9 @@ export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: 
       current = { bagId, key };
       config = c;
       applyLook(c, first || bagChanged);
-      updateMouth(c);
+      hasLid = effLid(c) !== 'none';
+      isRoll = c.body.shape === 'roll';
+      updateMouth();
       group.scale.copy(scale);
       group.position.y = GROUND_Y + BAG_HALF_HEIGHT * scale.y;
       return true;
@@ -364,6 +413,17 @@ export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: 
       group.scale.copy(scale);
       group.position.y = GROUND_Y + BAG_HALF_HEIGHT * scale.y;
       const k = damp(9, dt);
+      const op = 1 - fx.exploded * 0.8;
+      const opChanged = Math.abs(op - opApplied) > 0.0005;
+      opApplied = op;
+      const kHi = damp(10, dt);
+      const dist = fx.separation * 0.34;
+      const lidT = fx.gestion && hasLid
+        ? clamp((fx.focus === 'main' ? fx.focusAmt : 0) + (fx.highlight === 'main' ? 1 : 0) + fx.exploded * 0.7, 0, 1)
+        : 0;
+      if (Math.abs(lidT - lid) > 0.002) { lid += (lidT - lid) * damp(reducedMotion ? 60 : 7, dt); moving = true; } else lid = lidT;
+      lidGroup.rotation.x = -1.8 * lid;
+      updateMouth();
       for (const p of pieces) {
         const mt = p.mesh.material;
         const dc = Math.abs(mt.color.r - p.colTo.r) + Math.abs(mt.color.g - p.colTo.g) + Math.abs(mt.color.b - p.colTo.b);
@@ -374,6 +434,30 @@ export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: 
         const pe = p.pop >= 1 ? 1 : 0.88 + 0.12 * backOut(p.pop);
         if (pe !== 1 || p.pe !== 1) p.mesh.scale.setScalar(pe);
         p.pe = pe;
+
+        // Éclairage : zone ciblée / zone au premier plan (Gestion) ou pièce sélectionnée (Apparence).
+        let hi = 0;
+        if (fx.gestion) {
+          hi = fx.highlight !== null && (p.zone === fx.highlight || fx.highlight === 'bag') ? 0.32
+            : p.zone === fx.focus && fx.focus !== 'bag' && fx.focusAmt > 0.4 ? 0.14 : 0;
+          mt.emissive.copy(accentC);
+        } else {
+          const sel = fx.part;
+          const on = sel === 'all' || (sel === 'webbing' ? p.role === 'web' : sel !== null && p.part === sel && p.role !== 'web');
+          hi = on ? (sel === 'all' ? 0.03 : 0.1) : 0;
+          mt.emissive.copy(whiteC);
+        }
+        if (p.role === 'reflect') { mt.emissive.copy(whiteC); hi += 0.3; }
+        const dh = hi - mt.emissiveIntensity;
+        if (Math.abs(dh) > 0.002) { mt.emissiveIntensity += dh * kHi; moving = true; } else mt.emissiveIntensity = hi;
+
+        if (opChanged || mt.opacity !== p.baseOpacity * op) {
+          mt.opacity = p.baseOpacity * op;
+          mt.depthWrite = p.baseOpacity === 1 && op > 0.95;
+          const t = p.baseOpacity < 1 || op < 0.999;
+          if (mt.transparent !== t) mt.transparent = t;
+        }
+        if (dist > 0 || p.mesh.position.distanceToSquared(p.home) > 1e-10) p.mesh.position.copy(p.home).addScaledVector(p.dir, dist);
       }
       return moving;
     },
