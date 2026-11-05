@@ -6,8 +6,8 @@ say(){ printf '%-34s %s\n' "$1" "$2"; }
 # 1. Garde-fou /compas
 if git diff --name-only origin/main...HEAD 2>/dev/null | grep -E '^src/(app|features)/compas/' >/dev/null; then say "compas intact" "ÉCHEC"; fail=1; else say "compas intact" ok; fi
 # 2. Couleurs littérales hors palette
-n=$(grep -rEn '#[0-9a-fA-F]{3,8}\b|rgba\(0, ?0, ?0' $KS src/app/kit-studio --include=*.ts --include=*.tsx --include=*.css 2>/dev/null | grep -v 'domain/palette.ts' | grep -v '__tests__' | wc -l)
-[ "$n" -eq 0 ] && say "couleurs littérales" ok || { say "couleurs littérales" "ÉCHEC ($n)"; grep -rEn '#[0-9a-fA-F]{3,8}\b|rgba\(0, ?0, ?0' $KS src/app/kit-studio --include=*.ts --include=*.tsx --include=*.css | grep -v 'domain/palette.ts' | head -10; fail=1; }
+n=$(grep -rEn '#[0-9a-fA-F]{3,8}\b|rgba\(0, ?0, ?0' $KS src/app/kit-studio --include=*.ts --include=*.tsx --include=*.css 2>/dev/null | grep -v 'domain/palette' | grep -v '__tests__' | wc -l)
+[ "$n" -eq 0 ] && say "couleurs littérales" ok || { say "couleurs littérales" "ÉCHEC ($n)"; grep -rEn '#[0-9a-fA-F]{3,8}\b|rgba\(0, ?0, ?0' $KS src/app/kit-studio --include=*.ts --include=*.tsx --include=*.css | grep -v 'domain/palette' | head -10; fail=1; }
 # 3. innerHTML et console.log
 n=$(grep -rEn 'innerHTML|dangerouslySetInnerHTML|console\.log' $KS src/app/kit-studio 2>/dev/null | grep -v __tests__ | wc -l)
 [ "$n" -eq 0 ] && say "innerHTML / console.log" ok || { say "innerHTML / console.log" "ÉCHEC ($n)"; fail=1; }

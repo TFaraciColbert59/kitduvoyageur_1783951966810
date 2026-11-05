@@ -1768,9 +1768,9 @@ export const PRESETS: Readonly<Record<ColorwayId, ConfigSet>> = {
 };
 
 // Maquette Kit_Studio_actuel.html, l.649 : function preset(
-/** Configuration par défaut d'un coloris (fonction pure, lecture seule). */
+/** Configuration par défaut d'un coloris (fonction pure, renvoie une copie profonde). */
 export function preset(cw: ColorwayId): ConfigSet {
-  return PRESETS[cw];
+  return structuredClone(PRESETS[cw]) as ConfigSet;
 }
 
 // Maquette Kit_Studio_actuel.html, l.650 : const CFG=

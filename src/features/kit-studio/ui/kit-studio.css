@@ -1,0 +1,473 @@
+/* Kit Studio v2 : tiroir, poignée, capsules, pager, pilule.
+   Mesures : kit-studio-bundle/spec/SPEC-DRAWER.md. Les composants vivent dans un conteneur .ks-root. */
+.ks-root {
+  /* Encres, teintes et verre (mappés sur les variables --lkv-* du design system) */
+  --ks-ink: var(--lkv-ink-900, rgb(23 43 36));
+  --ks-ink-2: var(--lkv-ink-700, rgb(86 102 93));
+  --ks-on: var(--lkv-forest-800, rgb(23 64 44));
+  --ks-green: var(--lkv-forest-500, rgb(58 122 82));
+  --ks-warn: var(--lkv-warn, rgb(200 154 59));
+  --ks-warn-ink: var(--lkv-amber-800, rgb(118 80 20));
+  --ks-paper: var(--lkv-surface, rgb(250 249 245));
+  --ks-white: rgb(255 255 255);
+  --ks-font: var(--font-sf, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', Inter, 'Segoe UI', Roboto, sans-serif);
+
+  /* Définitions d'encre et de lumière (seuls endroits où figurent les rgba) */
+  --ks-ink-08: rgba(23, 43, 36, 0.08);
+  --ks-ink-10: rgba(23, 43, 36, 0.1);
+  --ks-ink-12: rgba(23, 43, 36, 0.12);
+  --ks-ink-14: rgba(23, 43, 36, 0.14);
+  --ks-ink-28: rgba(23, 43, 36, 0.28);
+  --ks-ink-45: rgba(23, 43, 36, 0.45);
+  --ks-ink-25: rgba(23, 43, 36, 0.25);
+  --ks-ink-13: rgba(23, 43, 36, 0.13);
+  --ks-ink-06: rgba(23, 43, 36, 0.06);
+  --ks-ink-07: rgba(23, 43, 36, 0.07);
+  --ks-ink-20: rgba(23, 43, 36, 0.2);
+  --ks-ring-bg: rgba(23, 64, 44, 0.14);
+  --ks-w-95: rgba(255, 255, 255, 0.95);
+  --ks-w-90: rgba(255, 255, 255, 0.9);
+  --ks-w-60: rgba(255, 255, 255, 0.6);
+  --ks-w-55: rgba(255, 255, 255, 0.55);
+  --ks-w-45: rgba(255, 255, 255, 0.45);
+  --ks-w-40: rgba(255, 255, 255, 0.4);
+
+  /* Gabarit du tiroir */
+  --gx: 12px;
+  --gb: max(12px, env(safe-area-inset-bottom, 0px));
+  --dh: 30vh;
+  --dh: 30dvh;
+  --gap: 8px;
+  --W: calc((min(100vw, 560px) - 2 * var(--gx) - 24px - 2 * var(--gap)) / 3);
+  --sheet-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --ks-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ks-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --ks-dock-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.486), rgba(255, 255, 255, 0.384));
+  --ks-dock-blur: blur(25.2px) saturate(1.8) brightness(1.05);
+  --ks-dock-shadow:
+    inset 0 1px 0 var(--ks-w-95), inset 0 -1px 1px var(--ks-w-40), 0 0 0 0.5px var(--ks-ink-10),
+    0 8px 22px var(--ks-ink-10), 0 -14px 44px var(--ks-ink-13), 0 -2px 10px var(--ks-ink-06);
+  --ks-bar-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.49),
+    rgba(255, 255, 255, 0.33) 55%,
+    rgba(255, 255, 255, 0.41)
+  );
+  --ks-bar-blur: blur(7px) saturate(1.9) brightness(1.07);
+  --ks-bar-shadow:
+    inset 0 1px 0 var(--ks-w-90), inset 0 -1px 1px var(--ks-w-45), 0 0 0 0.5px var(--ks-ink-14),
+    0 8px 22px var(--ks-ink-12);
+  --ks-thumb-bg: linear-gradient(180deg, var(--ks-w-60), rgba(255, 255, 255, 0.26));
+  --ks-thumb-shadow:
+    inset 0 1px 0 var(--ks-white), inset 0 -1px 1px var(--ks-w-45), 0 0 0 0.5px var(--ks-ink-07),
+    0 2px 8px var(--ks-ink-08);
+  --ks-drop-shadow:
+    inset 0 1.5px 1px var(--ks-w-95), inset 0 -1.5px 2px var(--ks-w-60), 0 0 0 0.5px var(--ks-ink-10),
+    0 10px 26px var(--ks-ink-20);
+  --ks-rim-glow: linear-gradient(180deg, var(--ks-w-55), transparent 34%);
+
+  font-family: var(--ks-font);
+  color: var(--ks-ink);
+}
+
+.ks-root *,
+.ks-root *::before,
+.ks-root *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Pilule du poids : en haut fermée, posée 2 px au-dessus du tiroir ouvert (--ks-ity calculé par Pill) */
+.ks-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+  pointer-events: none;
+  transform: translateY(var(--ks-ity, 0px));
+  transition: transform 0.62s var(--sheet-ease);
+}
+.ks-pill {
+  pointer-events: auto;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ks-bar-bg);
+  -webkit-backdrop-filter: var(--ks-bar-blur);
+  backdrop-filter: var(--ks-bar-blur);
+  color: var(--ks-on);
+  font: 600 15px/1 var(--ks-font);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  box-shadow: var(--ks-bar-shadow);
+  cursor: pointer;
+  transition:
+    transform 0.32s var(--ks-spring),
+    box-shadow 0.2s;
+}
+.ks-pill:active {
+  transform: scale(1.05);
+  box-shadow: var(--ks-drop-shadow);
+}
+.ks-ring {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  transform: rotate(-90deg);
+}
+.ks-ring-bg {
+  fill: none;
+  stroke: var(--ks-ring-bg);
+  stroke-width: 2.6;
+}
+.ks-ring-fg {
+  fill: none;
+  stroke: var(--ks-green);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.5s var(--ks-ease);
+}
+.ks-kg {
+  font-variant-numeric: tabular-nums;
+}
+.ks-flag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--ks-warn-ink);
+}
+.ks-flag i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ks-warn);
+}
+
+/* Grabber flottant (tiroir fermé) */
+.ks-grabber {
+  position: absolute;
+  left: 50%;
+  bottom: max(6px, env(safe-area-inset-bottom, 0px));
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 15px;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  transform: translateX(-50%);
+  transition: opacity 0.3s;
+}
+.ks-grabber::before {
+  content: '';
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ks-white);
+  opacity: 0.92;
+  box-shadow: 0 1px 4px var(--ks-ink-25);
+}
+.ks-grabber[data-hidden='true'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Tiroir */
+.ks-dock {
+  position: absolute;
+  left: 50%;
+  bottom: var(--gb);
+  z-index: 30;
+  width: calc(min(100vw, 560px) - 2 * var(--gx));
+  height: var(--dh);
+  max-height: var(--dh);
+  transform: translate(-50%, calc(100% + var(--gb) + 28px));
+  border-radius: 24px;
+  background: var(--ks-dock-bg);
+  -webkit-backdrop-filter: var(--ks-dock-blur);
+  backdrop-filter: var(--ks-dock-blur);
+  box-shadow: var(--ks-dock-shadow);
+  color: var(--ks-on);
+  overflow: hidden;
+  touch-action: none;
+  visibility: hidden;
+  transition:
+    transform 0.55s var(--sheet-ease),
+    height 0.5s var(--sheet-ease),
+    visibility 0s 0.55s;
+}
+.ks-dock[data-open='true'] {
+  transform: translate(-50%, 0);
+  visibility: visible;
+  transition:
+    transform 0.55s var(--sheet-ease),
+    height 0.5s var(--sheet-ease),
+    visibility 0s 0s;
+}
+.ks-dock.ks-drag {
+  transition: none;
+}
+.ks-dock:focus {
+  outline: none;
+}
+.ks-dock::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--ks-rim-glow);
+  mix-blend-mode: soft-light;
+  opacity: 0.8;
+}
+
+/* Poignée : 18 px de zone tactile, barre 44 x 5 */
+.ks-grab {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+.ks-grab::before {
+  content: '';
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ks-ink-28);
+  transition:
+    width 0.25s var(--ks-ease),
+    background 0.25s;
+}
+.ks-grab:active::before {
+  width: 56px;
+  background: var(--ks-ink-45);
+}
+.ks-grab::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 -26px;
+}
+
+/* Zone des cartes : colonne centrée entre la poignée et la barre basse */
+.ks-body {
+  position: absolute;
+  inset: 18px 0 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.ks-sheet {
+  position: absolute;
+  inset: 18px 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Barre basse : 30 px */
+.ks-dstrip {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 4;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+.ks-dstrip > * {
+  pointer-events: auto;
+}
+
+/* Capsules à lentille */
+.ks-caps {
+  position: relative;
+  flex: none;
+  display: flex;
+  height: 30px;
+  padding: 2.5px;
+  border-radius: 999px;
+  background: var(--ks-bar-bg);
+  -webkit-backdrop-filter: var(--ks-bar-blur);
+  backdrop-filter: var(--ks-bar-blur);
+  box-shadow: var(--ks-bar-shadow);
+  touch-action: none;
+  transition:
+    transform 0.32s var(--ks-spring),
+    opacity 0.2s;
+}
+.ks-caps[hidden] {
+  display: none;
+}
+.ks-caps button {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--bw, 44px);
+  height: 25px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ks-ink);
+  opacity: 0.72;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    opacity 0.2s,
+    transform 0.3s var(--ks-spring);
+}
+.ks-caps button::after {
+  content: '';
+  position: absolute;
+  inset: -10px 0;
+}
+.ks-caps button:active {
+  transform: scale(0.9);
+}
+.ks-caps button[aria-checked='true'],
+.ks-caps button[aria-selected='true'] {
+  color: var(--ks-on);
+  opacity: 1;
+}
+.ks-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ks-lens {
+  position: absolute;
+  top: 2.5px;
+  bottom: 2.5px;
+  left: 2.5px;
+  width: 0;
+  border-radius: 999px;
+  background: var(--ks-thumb-bg);
+  box-shadow: var(--ks-thumb-shadow);
+  transform: translateX(var(--x, 0px));
+  transition:
+    transform 0.42s var(--ks-spring),
+    width 0.3s var(--ks-ease),
+    opacity 0.2s;
+}
+.ks-caps[data-none='true'] .ks-lens {
+  opacity: 0;
+}
+
+/* Pager : pages horizontales aimantées, défilement vertical confiné */
+.ks-pager {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 46px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  -webkit-mask-image: linear-gradient(180deg, black calc(100% - 16px), transparent);
+  mask-image: linear-gradient(180deg, black calc(100% - 16px), transparent);
+}
+.ks-pager::-webkit-scrollbar {
+  display: none;
+}
+.ks-page {
+  flex: 0 0 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 16px 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  scrollbar-width: none;
+  touch-action: pan-x pan-y;
+}
+.ks-page::-webkit-scrollbar {
+  display: none;
+}
+
+.ks-root :focus-visible {
+  outline: 2px solid var(--ks-on);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ks-dock,
+  .ks-top,
+  .ks-pill,
+  .ks-caps,
+  .ks-caps button,
+  .ks-ring-fg,
+  .ks-grab::before {
+    transition-duration: 0.01ms;
+    transition-delay: 0s;
+  }
+  .ks-lens {
+    transition: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .ks-dock,
+  .ks-caps {
+    background: var(--ks-paper);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .ks-dock {
+    box-shadow: 0 0 0 1.5px var(--ks-ink-2);
+  }
+  .ks-dock::after {
+    display: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .ks-caps button {
+    opacity: 1;
+  }
+  .ks-grab::before {
+    background: var(--ks-ink);
+  }
+}

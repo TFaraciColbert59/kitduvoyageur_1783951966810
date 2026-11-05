@@ -11,4 +11,10 @@
   - T02 : three@0.186.0 + @types/three@0.186.0 exacts, REVISION 186, next.config/csp inchangés.
   - T03 : port-catalog.mjs → catalog.ts + palette.ts (36 matières), 12 tests verts annoncés. Renommages : MATS→MATERIALS, FIN→FINISHES, COLS→SWATCHES, SHAPES→SHAPE_OPTIONS, ACC→ACCESSORIES, VS→VISUAL_PATHS, ALT→ALTERNATIVES, CFG→DEFAULT_CONFIG (retenus). À corriger : preset() renvoie un objet partagé mutable → renvoyer une copie (à faire dans T04/T09).
 - Mesure de départ (origin/main 45d32c936, avant tout changement) : `tsc` 0 erreur ; Vitest **33 fichiers / 54 tests rouges** (13 215 verts) — déjà présents, hors chantier (ex. ProfileDrawerBootstrap, CarnetPostSheet, hub-adventures-drawer, MentionPicker) ; `next lint` : avertissements seulement.
-- Vérifié par le coordinateur : Vitest kit-studio 12/12 verts ; 0 hex dans catalog.ts ; REPO-MAP 91 lignes. Résultats de T01-T03 NON vérifiés. Reprendre : vérifier T01-T03 (tests, diff), remplir le LEDGER, puis vague 3 (T04, T05, T08, T13).
+- Vérifié par le coordinateur : Vitest kit-studio 12/12 verts ; 0 hex dans catalog.ts ; REPO-MAP 91 lignes. Commit 2a9095f8d.
+
+## Vague 3 (T04, T05, T08, T13, T10 en parallèle)
+- Décision : le coordinateur pose le contrat d'état `domain/types.ts` (KitState immuable : kits vivants, config par sac, jour, own/order, objets ajoutés) et `domain/state.ts` (createInitialState, currentKit/Bag/Config, getItem, zoneOf, withKit) pour que T05/T07/T08/T09 écrivent contre la même forme. Coût si faux : renommages mécaniques.
+- Décision : les couleurs littérales de la scène (textures canvas, décor) vivent dans `domain/palette.scene.ts` ; le garde-fou `verify-kit-studio.sh` exclut désormais `domain/palette*` (et non plus seulement `palette.ts`).
+- Décision : T10 teste le cycle de vie avec un faux renderer injecté (pas de WebGL en Node) ; `renderer.info.memory` réel et comparaison visuelle reportés en E2E WebKit (T19).
+- Décision : T13 livre des composants contrôlés par props ; le branchement au store se fait en T09/T14. Résultats de T01-T03 NON vérifiés. Reprendre : vérifier T01-T03 (tests, diff), remplir le LEDGER, puis vague 3 (T04, T05, T08, T13).

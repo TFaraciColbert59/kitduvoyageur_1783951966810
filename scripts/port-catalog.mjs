@@ -268,7 +268,7 @@ const body = [
   decl('ANCHORS', 'ANCH', 'Readonly<Partial<Record<ZoneId, Vec3>>>', ANCH),
   decl('ALTERNATIVES', 'ALT', 'Readonly<Record<string, readonly Alternative[]>>', ALTERNATIVES),
   decl('PRESETS', 'preset', 'Readonly<Record<ColorwayId, ConfigSet>>', PRESETS),
-  `${origin('preset')}\n/** Configuration par défaut d'un coloris (fonction pure, lecture seule). */\nexport function preset(cw: ColorwayId): ConfigSet {\n  return PRESETS[cw];\n}\n`,
+  `${origin('preset')}\n/** Configuration par défaut d'un coloris (fonction pure, renvoie une copie profonde). */\nexport function preset(cw: ColorwayId): ConfigSet {\n  return structuredClone(PRESETS[cw]) as ConfigSet;\n}\n`,
   decl('DEFAULT_CONFIG', 'CFG', 'Readonly<Record<BagId, ConfigSet>>', CFG),
 ].join('\n');
 
