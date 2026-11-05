@@ -19,7 +19,6 @@ function isProtected(pathname: string) {
  */
 const APP_ROUTES = [
   '/hub',
-  '/kit-studio',
   '/communaute',
   '/messagerie',
   '/compte',
@@ -201,8 +200,6 @@ export const config = {
     // Connexion obligatoire : pages de l'app (APP_ROUTES).
     '/hub',
     '/hub/:path*',
-    '/kit-studio',
-    '/kit-studio/:path*',
     '/communaute',
     '/communaute/:path*',
     '/messagerie',
