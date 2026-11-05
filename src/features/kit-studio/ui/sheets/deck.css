@@ -1,0 +1,137 @@
+/* Deck « Remplir le sac » / « Débrief » dans le tiroir. Maquette Kit_Studio_v2.html l.353-365, 424-426.
+   Aucune bordure colorée : surfaces claires, ombre portée. */
+.ks-dk {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.ks-dk-prog {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ks-ink-08);
+  margin: 0 28px 10px;
+  overflow: hidden;
+}
+.ks-dk-prog i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--ks-on);
+  transition: width 0.4s var(--ks-ease);
+}
+.ks-dk-card {
+  position: relative;
+  min-height: 88px;
+  padding: 12px 14px;
+  border-radius: 20px;
+  background: var(--ks-w-55);
+  box-shadow: inset 0 1px 0 var(--ks-w-95), 0 0 0 0.5px var(--ks-ink-08);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  touch-action: none;
+  cursor: grab;
+  transition: transform 0.38s var(--ks-ease), opacity 0.22s;
+}
+.ks-dk-card[data-drag='true'] {
+  transition: none;
+}
+.ks-dk-card:focus-visible {
+  outline: 2px solid var(--ks-on);
+  outline-offset: 2px;
+}
+.ks-dk-ig {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--ks-white);
+}
+.ks-dk-ig .ks-icon {
+  width: 24px;
+  height: 24px;
+}
+.ks-dk-t {
+  display: block;
+  font: 600 17px/1.2 var(--ks-font);
+}
+.ks-dk-s {
+  display: block;
+  margin-top: 3px;
+  font: 500 13px/1.35 var(--ks-font);
+  color: var(--ks-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.ks-dk-flag {
+  position: absolute;
+  top: -12px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font: 700 12px/1 var(--ks-font);
+  opacity: 0;
+  transition: opacity 0.1s;
+  pointer-events: none;
+}
+.ks-dk-flag[data-side='yes'] {
+  right: 16px;
+  background: var(--ks-on);
+  color: var(--ks-white);
+}
+.ks-dk-flag[data-side='no'] {
+  left: 16px;
+  background: var(--ks-white);
+  color: var(--ks-ink);
+  box-shadow: 0 1px 4px var(--ks-ink-14);
+}
+.ks-dk-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.ks-dk-btn,
+.ks-dk-quiet {
+  min-height: 44px;
+  font: 600 15px/1 var(--ks-font);
+  color: var(--ks-ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ks-dk-btn {
+  flex: 1;
+  border: 0;
+  border-radius: 14px;
+  background: var(--ks-w-55);
+  box-shadow: 0 0 0 0.5px var(--ks-ink-10);
+}
+.ks-dk-btn[data-side='yes'] {
+  background: var(--ks-on);
+  color: var(--ks-white);
+}
+.ks-dk-quiet {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ks-on);
+}
+.ks-dk-sum {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+.ks-dk-acts {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ks-dk-card,
+  .ks-dk-prog i,
+  .ks-dk-flag {
+    transition: none;
+  }
+}
