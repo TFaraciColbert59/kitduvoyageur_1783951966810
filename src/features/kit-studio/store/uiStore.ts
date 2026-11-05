@@ -1,5 +1,6 @@
 // État d'interface (éphémère, non persisté) : tiroir, vue, mode, sélection, feuille ouverte.
 import { create } from 'zustand';
+import type { Deck } from '../domain/deck';
 
 export type View = 'cards' | 'sheet' | 'deck';
 export type Mode = 'content' | 'appearance';
@@ -17,6 +18,8 @@ interface UiStore {
   readonly category: string | null;
   readonly part: string | null;
   readonly sheet: SheetState | null;
+  /** Deck « Remplir le sac » / « Débrief » en cours (null = aucun). */
+  readonly deck: Deck | null;
   /** Jeton de l'ouverture automatique armée (null = rien en attente). */
   readonly pendingOpen: number | null;
 
@@ -27,6 +30,7 @@ interface UiStore {
   setCategory(c: string | null): void;
   setPart(p: string | null): void;
   openSheet(kind: SheetKind, id?: string): void;
+  setDeck(deck: Deck | null): void;
   setSheetPage(page: number): void;
   closeSheet(): void;
   /** Arme l'ouverture automatique ; renvoie son jeton. */
@@ -47,6 +51,7 @@ export const useUiStore = create<UiStore>()((set, get) => ({
   category: null,
   part: null,
   sheet: null,
+  deck: null,
   pendingOpen: null,
 
   setDockOpen: (open) => set({ dockOpen: open, pendingOpen: null }),
@@ -61,6 +66,7 @@ export const useUiStore = create<UiStore>()((set, get) => ({
     if (sheet) set({ sheet: { ...sheet, page } });
   },
   closeSheet: () => set({ sheet: null }),
+  setDeck: (deck) => set({ deck, pendingOpen: null }),
 
   armOpen: () => {
     const token = ++seq;

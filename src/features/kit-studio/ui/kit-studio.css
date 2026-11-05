@@ -331,6 +331,17 @@
 .ks-caps[hidden] {
   display: none;
 }
+/* Cible tactile de 44 px : le visuel reste à 25 px, la zone de toucher s'étend sans rien déplacer (T21). */
+.ks-caps button::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--bw, 44px);
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+}
 .ks-caps button {
   position: relative;
   z-index: 1;
@@ -470,4 +481,17 @@
   .ks-grab::before {
     background: var(--ks-ink);
   }
+}
+
+/* Contenu du tiroir hors vue Cartes : feuilles (Bilan, Fiche, Sac, Commande) et deck.
+   Maquette : .vsheet / .vdeck, mêmes marges que .vcards. */
+.ks-sheetview {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 18px;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }

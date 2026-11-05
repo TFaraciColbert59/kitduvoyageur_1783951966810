@@ -7,7 +7,7 @@ import {
   PlaneGeometry, SphereGeometry, Sprite, SpriteMaterial, Texture, TorusGeometry,
 } from 'three';
 import type { BufferGeometry, Material } from 'three';
-import type { Ghost, Item } from '../domain/catalog';
+import type { Ghost, Item, MaterialKey } from '../domain/catalog';
 import { RAW_MATERIALS } from '../domain/palette';
 import { GHOST_COLOR, GHOST_HALO_STOPS, ITEM_BLADE, ITEM_CROSS, ITEM_LENS, ITEM_SCREEN } from '../domain/palette.scene';
 import { roundedBox } from './bagBuilder';
@@ -16,10 +16,14 @@ import { clamp } from './math';
 import type { ResourceTracker } from './resources';
 
 /** Forme minimale pour dessiner un objet (un Item, un objet ajouté, ou une vignette sur mesure). */
-export type ItemLike = Pick<Item, 'sh' | 'gl' | 'L' | 'color'> & {
+export type ItemLike = Pick<Item, 'sh' | 'gl' | 'L'> & {
   readonly id: string;
+  /** Matière du catalogue ; ignorée quand `hex` porte déjà la teinte résolue. */
+  readonly color?: MaterialKey;
   readonly cons?: string;
   readonly planned?: unknown;
+  /** Couleur déjà résolue (vignettes : la teinte du catalogue y est passée en hexadécimal). */
+  readonly hex?: string;
 };
 
 /** Échelle de base d'un objet (userData.s du groupe) : le volume (litres) borné, ajusté par forme. */
@@ -38,7 +42,7 @@ interface Spec {
   readonly ghost: boolean;
 }
 
-const hexOf = (item: Pick<Item, 'color'>): string => RAW_MATERIALS[item.color];
+const hexOf = (item: Pick<ItemLike, 'color'>): string => (item.color ? RAW_MATERIALS[item.color] : '');
 
 /** Taille de base selon le volume (maquette : cbrt(L) × 0,2 borné). */
 const baseScale = (L: number): number => clamp(Math.cbrt(Math.max(L || 0.3, 0.05)) * 0.2, 0.1, 0.4);
@@ -277,7 +281,7 @@ function ghostMaterial(): MeshBasicMaterial {
  */
 export function itemMesh(item: ItemLike, res: ResourceTracker, fabric: Texture | null = null): Group {
   const group = build(
-    { id: item.id, sh: item.sh, gl: item.gl, L: item.L, hex: hexOf(item), planned: Boolean(item.planned), ghost: false },
+    { id: item.id, sh: item.sh, gl: item.gl, L: item.L, hex: item.hex ?? hexOf(item), planned: Boolean(item.planned), ghost: false },
     res,
     fabric,
   );

@@ -18,8 +18,11 @@ const PRIORITY_VISIBLE = 10;
 const PRIORITY_LOW = 0;
 
 /** Three n'entre dans le chunk de l'interface qu'à la première vignette demandée. */
-function sharedEngine(): Promise<ThumbnailEngine> {
-  return import('../scene/thumbnails').then((m) => m.getThumbnailEngine());
+async function sharedEngine(): Promise<ThumbnailEngine> {
+  const m = await import('../scene/thumbnails');
+  const { registerThumbBuilders } = await import('../scene/thumbBuilders');
+  registerThumbBuilders();
+  return m.getThumbnailEngine();
 }
 
 /** Vignette 3D d'une carte : image mise en cache par le moteur partagé, repli SVG sinon. */

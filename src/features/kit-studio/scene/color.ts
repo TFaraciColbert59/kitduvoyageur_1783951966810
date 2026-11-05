@@ -5,7 +5,7 @@
 // teintes exactes du catalogue (plus sombres) : à trancher sur capture (E2E).
 import { Color, LinearSRGBColorSpace } from 'three';
 
-export const LEGACY_COLOR_LOOK = true;
+export const LEGACY_COLOR_LOOK = false;
 
 export function paint(target: Color, hex: string): Color {
   return LEGACY_COLOR_LOOK ? target.setStyle(hex, LinearSRGBColorSpace) : target.setStyle(hex);

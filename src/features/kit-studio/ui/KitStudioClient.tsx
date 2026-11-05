@@ -8,6 +8,7 @@ import { totals } from '../domain/totals';
 import { useKitStore } from '../store/kitStore';
 import { AUTO_OPEN_MS, useUiStore } from '../store/uiStore';
 import { CardsSlot } from './cards/CardsSlot';
+import { SheetHost } from './SheetHost';
 import { Dock } from './Drawer/Dock';
 import { OfflineContext, useOffline } from './offline';
 import { Pill } from './Pill';
@@ -82,8 +83,15 @@ export function KitStudioClient() {
     return () => window.removeEventListener('keydown', onKey, true);
   }, [haptic, closeDock]);
 
+  // Pilule : ouvre le Bilan, ou le referme si c'est déjà lui qui est affiché (maquette pillTap).
   const openBilan = () => {
     const ui = useUiStore.getState();
+    if (ui.view === 'sheet' && ui.sheet?.kind === 'bilan') {
+      ui.closeSheet();
+      ui.setView('cards');
+      haptic('light');
+      return;
+    }
     ui.openSheet('bilan');
     ui.setView('sheet');
     ui.setDockOpen(true);
@@ -91,9 +99,10 @@ export function KitStudioClient() {
   };
 
   const bl = blockers(kit);
-  const kg = totals(kit).onBack;
+  // `totals` compte en grammes ; la pilule affiche des kilos (maquette : wt(bagWeight())).
+  const kg = totals(kit).onBack / 1000;
   const ready = readiness(bl, cogState(cog(kit)));
-  const label = sheet ? SHEET_TITLES[sheet.kind] : S.cards.addToBag;
+  const label = view === 'deck' ? S.deck.title : sheet ? SHEET_TITLES[sheet.kind] : S.cards.addToBag;
 
   return (
     <OfflineContext.Provider value={offline}>
@@ -110,7 +119,7 @@ export function KitStudioClient() {
           onClick={openBilan}
         />
         <Dock open={dockOpen} label={label} onClose={closeDock} dockRef={dockRef}>
-          <CardsSlot />
+          {view === 'cards' ? <CardsSlot /> : <SheetHost />}
         </Dock>
       </div>
     </OfflineContext.Provider>

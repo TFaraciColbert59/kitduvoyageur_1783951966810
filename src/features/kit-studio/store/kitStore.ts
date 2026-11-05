@@ -27,6 +27,8 @@ interface KitStore {
   readonly canUndo: boolean;
 
   hydrate(): Promise<void>;
+  /** Applique un état produit par une feuille (domaine pur) ; annulable par défaut. */
+  apply(next: KitState, undoable?: boolean): boolean;
   undo(): boolean;
   /** Écrit tout de suite l'état en attente (fin de session, passage en arrière-plan). */
   flush(): Promise<void>;
@@ -74,6 +76,10 @@ export const useKitStore = create<KitStore>()((set, get) => {
     hydrated: false,
     undoStack: [],
     canUndo: false,
+
+    apply(next, undoable = true) {
+      return commit(next, undoable);
+    },
 
     async hydrate() {
       const saved = await repo.load();
