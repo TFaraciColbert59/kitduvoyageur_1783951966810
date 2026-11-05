@@ -10,4 +10,7 @@
 | T05 | Sonnet · moyen | 22 | fait | vitest totals 39/39, valeurs issues de la maquette exécutée |
 | T08 | Sonnet · moyen | 23 | fait | vitest order 14/14 |
 | T13 | Sonnet · moyen | 32 | fait | vitest drawer 9/9, eslint ui 0 |
+| T10 | Sonnet · élevé | 36 | fait (rendu GPU non vérifié → T19) | vitest scene.lifecycle 10/10, 20 cycles sans fuite (faux renderer) |
+| T07 | Sonnet · moyen | 24 | fait | vitest packing 24/24 |
+| T06 | Sonnet · moyen | 25 | fait | vitest balance 22/22 (oracle maquette) |
 | — | coordinateur | — | contrat KitState, tsconfig.kit-studio.json (12 s) | tsc module 0 erreur |

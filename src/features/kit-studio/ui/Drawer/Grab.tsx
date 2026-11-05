@@ -1,5 +1,6 @@
 'use client';
 import { useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import { S } from '../strings';
 
 interface GrabProps {
   /** Décalage vertical du doigt pendant le glissement (null = fin du geste). */
@@ -9,7 +10,7 @@ interface GrabProps {
 }
 
 /** Poignée du tiroir : zone tactile 18 px, barre 44 x 5. Toucher ou glisser vers le bas ferme. */
-export function Grab({ onDrag, onClose, label = 'Fermer le tiroir' }: GrabProps) {
+export function Grab({ onDrag, onClose, label = S.drawer.grab }: GrabProps) {
   const drag = useRef<{ sy: number; t: number; on: boolean; id: number } | null>(null);
 
   const down = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -62,7 +63,7 @@ export function Grab({ onDrag, onClose, label = 'Fermer le tiroir' }: GrabProps)
 }
 
 /** « Grabber » flottant 140 x 30 : prend le relais quand le tiroir est fermé. */
-export function Grabber({ open, onOpen, label = 'Ouvrir le tiroir' }: { open: boolean; onOpen: () => void; label?: string }) {
+export function Grabber({ open, onOpen, label = S.drawer.grabOpen }: { open: boolean; onOpen: () => void; label?: string }) {
   return (
     <button
       type="button"

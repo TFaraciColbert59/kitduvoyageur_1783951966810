@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, type ReactNode } from 'react';
+import { S, pageText } from '../strings';
 
 interface PagerProps {
   pages: readonly ReactNode[];
@@ -10,7 +11,7 @@ interface PagerProps {
 }
 
 /** Pages horizontales aimantées ; chaque page défile verticalement sans propager le geste. */
-export function Pager({ pages, page, onPageChange, label = 'Pages' }: PagerProps) {
+export function Pager({ pages, page, onPageChange, label = S.a11y.pages }: PagerProps) {
   const el = useRef<HTMLDivElement>(null);
   const current = useRef(page);
 
@@ -38,7 +39,7 @@ export function Pager({ pages, page, onPageChange, label = 'Pages' }: PagerProps
   return (
     <div ref={el} className="ks-pager" role="group" aria-label={label} onScroll={onScroll}>
       {pages.map((p, i) => (
-        <div key={i} className="ks-page" role="group" aria-label={`Page ${i + 1} sur ${pages.length}`}>
+        <div key={i} className="ks-page" role="group" aria-label={pageText(i + 1, pages.length)}>
           {p}
         </div>
       ))}

@@ -1,5 +1,6 @@
 'use client';
 import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { alertsText, kgText } from './strings';
 
 const CIRC = 47.12; // 2 * PI * 7.5
 
@@ -62,9 +63,9 @@ export function Pill({ kg, ratio, alerts, open, dockRef, viewKey, label, onClick
           <circle cx="10" cy="10" r="7.5" className="ks-ring-bg" />
           <circle cx="10" cy="10" r="7.5" className="ks-ring-fg" style={{ strokeDasharray: dash }} />
         </svg>
-        <span className="ks-kg">{kg.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg</span>
+        <span className="ks-kg">{kgText(kg)}</span>
         {alerts > 0 && (
-          <span className="ks-flag" aria-hidden="true">
+          <span className="ks-flag" aria-label={alertsText(alerts)} role="img">
             <i />
             <b>{alerts}</b>
           </span>
