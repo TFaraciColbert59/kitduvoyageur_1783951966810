@@ -1,48 +1,19 @@
 import { create } from 'zustand';
-import { HubStoreState, BaseCampState, ActionState, HubAlert } from '../types/hub.types';
+import { HubStoreState, BaseCampState, ActionState } from '../types/hub.types';
 import { calculatePrepScore, calculateTrekCountdown } from '../services/prepScoreCalculator';
-import { HUB_DEPART_HREF, hubSectionHref } from '../registry/hubSectionRegistry';
 
-const HUB_STORAGE_KEY = 'lkdv_hub_state_v1';
-
-const DEFAULT_ALERTS: HubAlert[] = [
-  {
-    id: 'alert-gear-1',
-    source: 'gear',
-    severity: 'warning',
-    title: 'Filtre à eau manquant',
-    message: 'Votre liste de matériel ne comporte aucun filtre à eau certifié.',
-    actionLabel: 'Ajouter au sac',
-    actionHref: hubSectionHref({ nature: 'possession' }, 'kit'),
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'alert-weather-1',
-    source: 'weather',
-    severity: 'info',
-    title: 'Baisse nocturne attendue',
-    message: 'Températures négatives en altitude au Col de la Seigne (-2°C ressenti).',
-    actionLabel: 'Voir météo',
-    actionHref: HUB_DEPART_HREF,
-    createdAt: new Date().toISOString(),
-  },
-];
+const HUB_STORAGE_KEY = 'lkdv_hub_state_v2';
 
 const initialBaseCamp: BaseCampState = {
-  trekId: 'trek-demo-1',
-  trekName: 'Tour du Mont-Blanc — Étape 1',
-  destination: 'Les Houches → Refuge Miage',
-  departureDate: new Date(Date.now() + 86400000 * 3 + 3600000 * 4).toISOString(), // in ~3 days
+  trekId: null,
+  trekName: '',
+  destination: '',
+  departureDate: null,
   countdown: null,
-  prepScore: 78,
-  prepBreakdown: {
-    gearScore: 28,
-    weatherScore: 25,
-    safetyScore: 15,
-    routeOfflineScore: 10,
-  },
-  activeAlerts: DEFAULT_ALERTS,
-  lastSyncAt: new Date().toISOString(),
+  prepScore: null,
+  prepBreakdown: null,
+  activeAlerts: [],
+  lastSyncAt: null,
 };
 
 const initialAction: ActionState = {
@@ -54,22 +25,26 @@ const initialAction: ActionState = {
   altitudeMeters: null,
   elevationGainMeters: 0,
   distanceTraveledKm: 0,
-  nextWater: {
-    name: 'Source de Miage',
-    distanceMeters: 1450,
-    elevationDeltaMeters: 120,
-    estimatedTimeMinutes: 28,
-    isReliable: true,
-    coordinates: { lat: 45.832, lng: 6.758 },
-  },
-  hydrationLevelPercent: 85,
-  batteryLevel: 0.92,
+  nextWater: null,
+  hydrationLevelPercent: null,
+  batteryLevel: null,
   isUltraSaveActive: false,
   sosState: 'idle',
   sosArmingProgress: 0,
 };
 
+export function purgeLegacyHubStorage(): void {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.removeItem('lkdv_hub_state_v1');
+    } catch {
+      // Ignore
+    }
+  }
+}
+
 function loadStoredState(): Partial<HubStoreState> {
+  purgeLegacyHubStorage();
   if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(HUB_STORAGE_KEY);
@@ -101,7 +76,7 @@ export const useHubStore = create<HubStoreState>((set, get) => {
   const baseCampState: BaseCampState = {
     ...initialBaseCamp,
     ...(stored.baseCamp || {}),
-    countdown: calculateTrekCountdown(stored.baseCamp?.departureDate || initialBaseCamp.departureDate),
+    countdown: calculateTrekCountdown(stored.baseCamp?.departureDate || null),
   };
 
   const actionState: ActionState = {
@@ -111,7 +86,7 @@ export const useHubStore = create<HubStoreState>((set, get) => {
 
   return {
     isTrekActive: stored.isTrekActive ?? false,
-    activeTrekId: stored.activeTrekId ?? 'trek-demo-1',
+    activeTrekId: stored.activeTrekId ?? null,
     baseCamp: baseCampState,
     action: actionState,
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
@@ -245,3 +220,9 @@ export const useHubStore = create<HubStoreState>((set, get) => {
     },
   };
 });
+
+const originalGetState = useHubStore.getState;
+useHubStore.getState = () => {
+  purgeLegacyHubStorage();
+  return originalGetState();
+};

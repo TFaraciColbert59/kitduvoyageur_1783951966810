@@ -1,0 +1,1118 @@
+/* ==========================================================================
+   LKDV CAMP DE BASE — OPTION 3 (ALPINE PANORAMA & LIQUID GLASS)
+   ========================================================================== */
+
+.hub-camp-option3-root {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #172D24;
+  color: #122F26;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── 1. Le Monde Alpin (Arrière-plan immersif) ── */
+.camp-world {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  cursor: grab;
+}
+
+.camp-world:active {
+  cursor: grabbing;
+}
+
+.camp-landscape {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transform: translate(var(--pan-x, 0px), var(--pan-y, 0px)) scale(1.02);
+  transition: transform 0.65s cubic-bezier(0.22, 0.75, 0.15, 1);
+  transform-origin: 48% 48%;
+  pointer-events: none;
+}
+
+.camp-world.focus-bag .camp-landscape {
+  transform: translate(var(--pan-x, 0px), -12%) scale(1.36);
+  transform-origin: 45% 54%;
+}
+
+.camp-world.focus-route .camp-landscape {
+  transform: translate(-7%, -6%) scale(1.22);
+  transform-origin: 80% 40%;
+}
+
+.camp-world.focus-group .camp-landscape {
+  transform: translate(-5%, 2%) scale(1.18);
+  transform-origin: 78% 38%;
+}
+
+.camp-world.focus-prep .camp-landscape {
+  transform: translate(6%, -4%) scale(1.18);
+  transform-origin: 20% 50%;
+}
+
+/* ── 2. En-tête Flottant Liquid Glass ── */
+.camp-header {
+  position: absolute;
+  z-index: 25;
+  top: max(10px, calc(env(safe-area-inset-top, 0px) + 6px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 480px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 6px 4px 8px;
+  background: rgba(18, 38, 30, 0.78);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 0.5px solid rgba(255, 255, 255, 0.24);
+  border-radius: 9999px;
+  box-shadow: 0 8px 26px rgba(9, 24, 18, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.camp-identity {
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  color: #F8F6EB;
+  text-align: left;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.camp-identity-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #E2ECE5;
+  flex-shrink: 0;
+}
+
+.camp-identity strong {
+  font-size: 13px;
+  letter-spacing: -0.2px;
+  font-weight: 700;
+  display: block;
+  line-height: 1.25;
+  color: #F8F6EB;
+}
+
+.camp-identity small {
+  display: block;
+  font-size: 11px;
+  color: rgba(248, 246, 235, 0.75);
+  white-space: nowrap;
+  max-width: 170px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.camp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.camp-header-btn {
+  border: 0;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.camp-header-btn:active {
+  transform: scale(0.96);
+}
+
+.camp-header-btn-studio {
+  background: #2D7A58;
+  color: #FFFFFF;
+  box-shadow: 0 2px 10px rgba(45, 122, 88, 0.4);
+}
+
+.camp-header-btn-menu {
+  background: rgba(255, 255, 255, 0.14);
+  color: #F8F6EB;
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
+}
+
+/* ── 3. Hotspots Tactiles sur le Décor ── */
+.camp-locations {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ── Zones tactiles directes sur les éléments du camp alpin (invisibles au repos, 0 pilule polluante) ── */
+.camp-touch-target {
+  position: absolute;
+  pointer-events: auto;
+  border: 0 !important;
+  background: transparent !important;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  min-height: 48px;
+  touch-action: manipulation;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 8;
+}
+
+.camp-touch-target[data-section-id="kit"],
+.camp-touch-target[data-section-id="gear"] {
+  z-index: 12;
+}
+
+.camp-touch-ripple {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.camp-touch-target:hover .camp-touch-ripple,
+.camp-touch-target:active .camp-touch-ripple,
+.camp-touch-target:focus-visible .camp-touch-ripple {
+  opacity: 1;
+  transform: scale(1.08);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+}
+
+.scene-reset {
+  position: absolute;
+  right: 16px;
+  top: calc(max(10px, calc(env(safe-area-inset-top, 0px) + 6px)) + 64px);
+  width: 38px;
+  height: 38px;
+  border: 0.5px solid rgba(255, 255, 255, 0.6);
+  background: rgba(248, 245, 236, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #122F26;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(11, 31, 23, 0.2);
+}
+
+/* ── 4. Pilule Liquid Glass iOS 27 (Swift Apple officiel) au-dessus de la BottomBar ── */
+.camp-floating-pill-container {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.camp-floating-pill {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-radius: 9999px;
+  /* Recette Apple Swift iOS 27 : ultraThinMaterial + specular highlight */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.52),
+    rgba(255, 255, 255, 0.24) 55%,
+    rgba(255, 255, 255, 0.36)
+  ) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.08) !important;
+  backdrop-filter: blur(28px) saturate(190%) brightness(1.08) !important;
+  border: none !important;
+  box-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    inset 1px 0 1px rgba(255, 255, 255, 0.25),
+    inset -1px 0 1px rgba(255, 255, 255, 0.25),
+    0 8px 22px rgba(9, 25, 18, 0.2) !important;
+  color: #172B24 !important;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.24s ease, background 0.2s ease;
+}
+
+.camp-floating-pill:hover,
+.camp-floating-pill:active {
+  transform: translateY(-2px) scale(1.06);
+  border: none !important;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.68),
+    rgba(255, 255, 255, 0.38) 55%,
+    rgba(255, 255, 255, 0.48)
+  ) !important;
+  box-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.98),
+    inset 0 -1.5px 2px rgba(255, 255, 255, 0.6),
+    0 10px 26px rgba(9, 25, 18, 0.26) !important;
+}
+
+.camp-pill-dots {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  color: #172B24 !important;
+  margin-top: -4px;
+}
+
+.camp-pill-icon-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: rgba(30, 107, 76, 0.14) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 3px rgba(23, 43, 36, 0.1) !important;
+  display: grid;
+  place-items: center;
+  color: #1E6B4C !important;
+  flex-shrink: 0;
+}
+
+.camp-pill-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.camp-pill-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #172B24 !important;
+  letter-spacing: -0.2px;
+}
+
+.camp-pill-separator {
+  color: #8C9990;
+  font-size: 10px;
+}
+
+.camp-pill-status {
+  font-size: 12px;
+  color: #4A5E53 !important;
+  font-weight: 600;
+}
+
+.camp-pill-chevron {
+  color: #4A5E53 !important;
+}
+
+
+
+/* ── Classes utilitaires Option 3 conformes H-D85 ── */
+.camp-chip-success {
+  background: var(--hub-primary-subtle);
+  color: var(--hub-primary);
+}
+.camp-chip-warning {
+  background: var(--hub-warning-bg);
+  color: var(--hub-warning);
+}
+.camp-chip-danger {
+  background: var(--hub-danger-bg);
+  color: var(--hub-danger);
+}
+.camp-card-white {
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 16px rgba(23, 43, 36, 0.08);
+}
+.camp-card-cream {
+  background: rgba(255, 255, 255, 0.56);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 0.5px solid rgba(255, 255, 255, 0.75);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 2px 8px rgba(23, 43, 36, 0.05);
+}
+.camp-btn-primary {
+  background: var(--hub-primary);
+  color: var(--hub-text-inverted);
+}
+.camp-btn-action {
+  background: var(--hub-action);
+  color: var(--hub-text-inverted);
+}
+.camp-btn-outline {
+  background: var(--hub-surface-card);
+  border: 1px solid var(--hub-action);
+  color: var(--hub-action);
+}
+.camp-text-title {
+  color: #172B24 !important;
+}
+.camp-text-sub {
+  color: #56665D !important;
+}
+.camp-badge-forest {
+  background: var(--hub-primary-subtle);
+  color: var(--hub-primary);
+}
+.camp-border-subtle {
+  border-color: var(--hub-border-subtle);
+}
+
+/* Encre forest sombre garantie sur toutes les surfaces claires & cartes */
+.camp-floating-pill,
+.hub-camp-drawer-sheet,
+.camp-card-white,
+.camp-card-cream {
+  --hub-text-primary: #172B24 !important;
+  --hub-text-secondary: #56665D !important;
+  --hub-text-muted: #8E9B93 !important;
+  --label: #172B24 !important;
+  --label2: #56665D !important;
+  --label3: rgba(23, 43, 36, 0.44) !important;
+  color: #172B24 !important;
+}
+
+.camp-card-white strong,
+.camp-card-white b,
+.camp-card-white h2,
+.camp-card-white h3,
+.camp-card-white h4,
+.camp-card-cream strong,
+.camp-card-cream b,
+.camp-card-cream h2,
+.camp-card-cream h3,
+.camp-card-cream h4 {
+  color: #172B24 !important;
+}
+
+.camp-card-white small,
+.camp-card-white p,
+.camp-card-cream small,
+.camp-card-cream p {
+  color: #56665D !important;
+}
+
+/* ==========================================================================
+   LIQUID GLASS iOS 27 — DESIGN SYSTEM TIROIRS (HUB & KIT STUDIO)
+   ========================================================================== */
+
+/* ── 1. Voile d'arrière-plan ── */
+.hub-camp-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000 !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: rgba(10, 20, 14, 0.46) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  overscroll-behavior: contain;
+  transition: opacity 0.28s ease;
+}
+
+/* Dans Kit Studio : le sac 3D reste net et visible au-dessus du tiroir (KIT_STUDIO_SPEC §3) */
+.hub-camp-drawer-overlay.kit-studio-drawer-backdrop {
+  background: rgba(10, 20, 14, 0.12) !important;
+  backdrop-filter: blur(1.5px) !important;
+  -webkit-backdrop-filter: blur(1.5px) !important;
+  bottom: calc(58px + max(10px, env(safe-area-inset-bottom, 0px))) !important;
+}
+
+/* Disparition fluide de la barre de navigation basse quand un tiroir ou Kit Studio est ouvert */
+body:has([data-testid="kit-studio-view"]) .lkdv-floating-tabbar,
+body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(120%) !important;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease !important;
+}
+
+/* ── 2. Coquille feuille de verre Liquid Glass iOS 27 (.lkdv-seal-drawer / .sheet) ── */
+.hub-camp-drawer-sheet {
+  position: relative;
+  width: 100%;
+  height: 30dvh !important;
+  max-height: 30dvh !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 28px 28px 0 0;
+  /* Texture translucide exacte de la page Compte (.sheet de compte-apple-hig.css) */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.88),
+    rgba(247, 250, 244, 0.76) 42%,
+    rgba(255, 255, 255, 0.84)
+  ) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(190%) brightness(1.05) !important;
+  backdrop-filter: blur(32px) saturate(190%) brightness(1.05) !important;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+  border-left: 0.5px solid rgba(255, 255, 255, 0.7) !important;
+  border-right: 0.5px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.5),
+    0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    0 -12px 40px rgba(10, 20, 14, 0.22) !important;
+  animation: lkdv-sheet-slide-up 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes lkdv-sheet-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ── 3. Capsule primaire Liquid Glass 48px avec lentille (.sel-lens) — Style Apple HIG clair ── */
+.hub-drawer-capsule {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  height: 48px;
+  padding: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.82),
+    rgba(240, 245, 238, 0.6) 45%,
+    rgba(255, 255, 255, 0.74)
+  ) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.06) !important;
+  backdrop-filter: blur(28px) saturate(190%) brightness(1.06) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 4px 16px rgba(10, 20, 14, 0.08) !important;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.hub-drawer-capsule .sel-lens {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--n, 2));
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(255, 255, 255, 0.88)
+  ) !important;
+  border: 0.5px solid rgba(255, 255, 255, 1) !important;
+  box-shadow:
+    0 2px 8px rgba(23, 64, 44, 0.12),
+    inset 0 1px 0 #ffffff !important;
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1) !important;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hub-drawer-capsule button {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  height: 100%;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  box-shadow: none;
+  color: #56665D !important;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  transition: color 0.18s ease !important;
+  white-space: nowrap;
+}
+
+.hub-drawer-capsule button.active,
+.hub-drawer-capsule button[aria-pressed="true"],
+.hub-drawer-capsule button[aria-selected="true"] {
+  color: #172B24 !important;
+  font-weight: 700 !important;
+}
+
+.hub-drawer-capsule button:focus-visible {
+  outline: 2px solid #1E6B4C !important;
+  outline-offset: 2px !important;
+}
+
+/* ── 4. Cartes de contenu Liquid Glass (.camp-card-glass / .lkdv-trust-card) ── */
+.camp-card-glass {
+  background: rgba(255, 255, 255, 0.76) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.88) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 16px rgba(23, 43, 36, 0.08) !important;
+  border-radius: 20px;
+}
+
+/* ── 5. Boutons pilule de verre (.camp-glass-pill) ── */
+.camp-glass-pill {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.68) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  backdrop-filter: blur(14px) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 2px 8px rgba(23, 43, 36, 0.08) !important;
+  color: var(--hub-text-primary);
+  font-size: 12px;
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.camp-glass-pill:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.88) !important;
+}
+
+/* ── 6. Bouton de fermeture circulaire en verre ── */
+.camp-glass-close-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.65) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 2px 8px rgba(23, 43, 36, 0.08) !important;
+  color: var(--hub-text-secondary);
+  cursor: pointer;
+  transition: transform 0.12s ease, color 0.15s ease;
+}
+
+.camp-glass-close-btn:hover {
+  color: var(--hub-text-primary);
+}
+
+.camp-glass-close-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── 7. Interdiction stricte du scroll vertical sur les tiroirs du Hub (Hauteur max 30%) ── */
+.hub-camp-drawer-sheet {
+  height: 30dvh !important;
+  max-height: 30dvh !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell {
+  height: 100% !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 0 10px 4px !important;
+  gap: 4px !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-viewport {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell[data-secondary="true"] .lkdv-drawer-viewport {
+  padding-bottom: 34px !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-pane {
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  height: 100% !important;
+  padding: 0 !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell[data-secondary="true"] {
+  padding-bottom: 26px !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav {
+  padding: 1px 0 !important;
+}
+
+/* Sélecteur du haut (onglets du tiroir) : ZERO TEXTE, UNIQUEMENT DES ICÔNES */
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs {
+  height: 32px !important;
+  width: 136px !important;
+  max-width: 136px !important;
+  margin: 0 auto !important;
+  padding: 2px !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens {
+  top: 2px !important;
+  bottom: 2px !important;
+  left: 2px !important;
+  border-radius: 9999px !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button {
+  min-height: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button span:not(.ic) {
+  display: none !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button .ic {
+  width: 16px !important;
+  height: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary {
+  position: absolute !important;
+  right: 12px !important;
+  bottom: 6px !important;
+  left: auto !important;
+  top: auto !important;
+  z-index: 45 !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: flex-end !important;
+  pointer-events: none !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -10px -6px -6px -10px !important;
+  border-radius: 9999px !important;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 72%) !important;
+  filter: blur(5px) !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+/* Sélecteur du bas à droite (nuancier de couleurs) : ZERO TEXTE, UNIQUEMENT PASTILLES / ICÔNES */
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  pointer-events: auto !important;
+  display: grid !important;
+  grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)) !important;
+  align-items: center !important;
+  width: calc(var(--n, 2) * 22px + 8px) !important;
+  max-width: 190px !important;
+  height: 24px !important;
+  padding: 1.5px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.45) 55%, rgba(255, 255, 255, 0.58)) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(24px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 4px 12px rgba(23, 43, 36, 0.1) !important;
+  box-sizing: border-box !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button span:not([data-testid*="personnaliser-color-"]) {
+  display: none !important;
+}
+
+/* Pilule flottante de Kit Studio « ... » au-dessus de la barre des éléments */
+.studio-floating-pill-container {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  z-index: 40;
+  animation: studioPillBounceIn 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes studioPillBounceIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.88);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Retrait strict de 100% des éléments en haut de l'écran dans Kit Studio */
+[data-testid="kit-studio-view"] header,
+[data-testid="kit-studio-view"] [data-testid="studio-recenter-btn"],
+[data-testid="kit-studio-view"] [data-studio-ui="true"]:has([data-testid="studio-recenter-btn"]) {
+  display: none !important;
+}
+
+/* Suppression absolue de la bottombar globale de l'app sur Kit Studio */
+body:has([data-testid="kit-studio-view"]) .lkdv-floating-tabbar,
+body:has([data-testid="kit-studio-view"]) [data-testid="bottom-tab-bar"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs .ig-th {
+  position: absolute !important;
+  top: 1.5px !important;
+  bottom: 1.5px !important;
+  left: 1.5px !important;
+  width: calc((100% - 3px) / var(--n, 2)) !important;
+  height: calc(100% - 3px) !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.75)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.98), inset 0 -1px 1px rgba(255, 255, 255, 0.35), 0 1px 3px rgba(23, 43, 36, 0.14) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  z-index: 1 !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+  min-height: 19px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: #56665D !important;
+  cursor: pointer !important;
+  z-index: 2 !important;
+  transition: transform 0.18s ease !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button:active {
+  transform: scale(0.85) !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button.active,
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-secondary .ig-tabs button[aria-selected="true"] {
+  color: #172B24 !important;
+  font-weight: 700 !important;
+}
+
+/* ==========================================================================
+   UNIFICATION DESIGN SYSTEM — KIT STUDIO & HUB (Apple Liquid Glass iOS 27)
+   ========================================================================== */
+
+/* 1. Variables tokens forcées en mode clair Apple pour tous les tiroirs et le Kit Studio */
+.hub-camp-drawer-sheet,
+[data-testid="kit-studio-view"] {
+  --hub-bg: #F4F6F0 !important;
+  --hub-surface: rgba(255, 255, 255, 0.72) !important;
+  --hub-surface-card: rgba(255, 255, 255, 0.88) !important;
+  --hub-surface-paper: rgba(255, 255, 255, 0.95) !important;
+  --hub-surface-muted: rgba(23, 43, 36, 0.05) !important;
+  --hub-field-bg: rgba(255, 255, 255, 0.85) !important;
+  --hub-field-border: rgba(23, 43, 36, 0.12) !important;
+  --hub-border: rgba(23, 43, 36, 0.09) !important;
+  --hub-border-subtle: rgba(23, 43, 36, 0.06) !important;
+  --hub-border-strong: rgba(23, 43, 36, 0.2) !important;
+  --hub-text-primary: #172B24 !important;
+  --hub-text-secondary: #56665D !important;
+  --hub-text-muted: #8E9B93 !important;
+  --hub-primary: #17402C !important;
+  --hub-primary-subtle: rgba(30, 107, 76, 0.12) !important;
+  --hub-action: #1E6B4C !important;
+  --hub-action-hover: #155239 !important;
+  --label: #172B24 !important;
+  --label2: #56665D !important;
+  --label3: rgba(23, 43, 36, 0.44) !important;
+  color: #172B24 !important;
+}
+
+/* 2. Onglets DrawerShell en Liquid Glass clair (suppression du fond sombre noir) */
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs,
+[data-testid="kit-studio-view"] .lkdv-drawer-shell .lkdv-drawer-topnav .segc.lkdv-drawer-tabs {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.82),
+    rgba(240, 245, 238, 0.6) 45%,
+    rgba(255, 255, 255, 0.74)
+  ) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.06) !important;
+  backdrop-filter: blur(28px) saturate(190%) brightness(1.06) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 4px 16px rgba(10, 20, 14, 0.08) !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens,
+[data-testid="kit-studio-view"] .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs .sel-lens {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(255, 255, 255, 0.88)
+  ) !important;
+  border: 0.5px solid rgba(255, 255, 255, 1) !important;
+  box-shadow:
+    0 2px 8px rgba(23, 64, 44, 0.12),
+    inset 0 1px 0 #ffffff !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button,
+[data-testid="kit-studio-view"] .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button {
+  color: #56665D !important;
+}
+
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button.active,
+.hub-camp-drawer-sheet .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button[aria-selected="true"],
+[data-testid="kit-studio-view"] .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button.active,
+[data-testid="kit-studio-view"] .lkdv-drawer-shell .lkdv-drawer-topnav .lkdv-drawer-tabs button[aria-selected="true"] {
+  color: #172B24 !important;
+  font-weight: 700 !important;
+}
+
+/* 3. Cartes de contenu dans tous les tiroirs du Studio et du Hub */
+.hub-camp-drawer-sheet [class*="bg-[var(--hub-surface-card)]"],
+.hub-camp-drawer-sheet [class*="bg-[var(--hub-surface)]"],
+[data-testid="kit-studio-view"] [class*="bg-[var(--hub-surface-card)]"],
+[data-testid="kit-studio-view"] [class*="bg-[var(--hub-surface)]"] {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(248, 251, 246, 0.82)
+  ) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 10px rgba(10, 20, 14, 0.05) !important;
+  color: #172B24 !important;
+}
+
+/* 4. Formulaires et sélecteurs dans les tiroirs */
+.hub-camp-drawer-sheet input,
+.hub-camp-drawer-sheet select,
+[data-testid="kit-studio-view"] input,
+[data-testid="kit-studio-view"] select {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 0.5px solid rgba(23, 43, 36, 0.14) !important;
+  color: #172B24 !important;
+  box-shadow: inset 0 1px 2px rgba(23, 43, 36, 0.04) !important;
+}
+
+.hub-camp-drawer-sheet input::placeholder,
+[data-testid="kit-studio-view"] input::placeholder {
+  color: #8E9B93 !important;
+}
+
+/* 5. Boutons d'action dans les tiroirs : vert forêt profond */
+.hub-camp-drawer-sheet button[type="submit"],
+.hub-camp-drawer-sheet [class*="bg-[var(--hub-action)]"],
+.hub-camp-drawer-sheet [class*="bg-[var(--hub-primary)]"] {
+  background: #17402C !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(23, 64, 44, 0.22) !important;
+}
+
+.hub-camp-drawer-sheet [class*="bg-[var(--hub-primary-subtle)]"],
+[data-testid="kit-studio-view"] [class*="bg-[var(--hub-primary-subtle)]"] {
+  background: rgba(30, 107, 76, 0.12) !important;
+  color: #17402C !important;
+}
+
+/* 6. En-tête supérieur du Kit Studio : Liquid Glass clair */
+[data-testid="kit-studio-view"] header {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(247, 250, 244, 0.8) 50%,
+    rgba(255, 255, 255, 0.86)
+  ) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 10px rgba(10, 20, 14, 0.05) !important;
+}
+
+[data-testid="kit-studio-view"] header button {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(244, 248, 240, 0.75)
+  ) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: inset 0 1px 0 #fff, 0 2px 6px rgba(10, 20, 14, 0.08) !important;
+  color: #172B24 !important;
+}
+
+/* 7. Bouton « Recentrer le sac » Liquid Glass */
+[data-testid="studio-recenter-btn"] {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.88),
+    rgba(242, 246, 239, 0.7)
+  ) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 14px rgba(10, 20, 14, 0.12) !important;
+  color: #172B24 !important;
+}
+
+/* 8. Voile inférieur des tiroirs du Studio */
+nav[aria-label="Tiroirs de l’atelier Kit Studio"],
+nav[aria-label="Sélection des éléments à personnaliser"] {
+  background: linear-gradient(180deg, transparent, rgba(10, 20, 14, 0.14)) !important;
+}
+
+/* 9. Cartes slide studio & micro-animations Liquid Glass iOS 27 */
+.studio-slide-card {
+  will-change: transform, box-shadow, background, border-color;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 0.26s ease,
+              background 0.26s ease !important;
+  -webkit-user-select: none;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.55) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 8px rgba(10, 20, 14, 0.06) !important;
+}
+
+.studio-slide-card:active {
+  transform: scale(0.96) !important;
+}
+
+/* Mise en avant sélection : fond de la card en verre et texte en blanc avec animation smooth et élégante */
+.studio-slide-card.is-selected {
+  background: linear-gradient(
+    145deg,
+    rgba(23, 48, 36, 0.88) 0%,
+    rgba(14, 30, 22, 0.94) 100%
+  ) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.05) !important;
+  backdrop-filter: blur(28px) saturate(190%) brightness(1.05) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.52) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.65),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.25),
+    0 8px 24px rgba(10, 25, 18, 0.28),
+    0 2px 6px rgba(0, 0, 0, 0.12) !important;
+  transform: scale(1.03) !important;
+}
+
+.studio-slide-card.is-selected * {
+  color: #ffffff !important;
+}
+
+.studio-slide-card.is-selected svg {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+}
+
+/* Fluidification du défilement horizontal sans barre de scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-camp-drawer-sheet {
+    animation: none !important;
+  }
+  .hub-drawer-capsule .sel-lens {
+    transition: none !important;
+  }
+}

@@ -128,4 +128,36 @@
 
 ---
 
-*Les décisions D-01 à D-23 structurent `PLAN.md`. D-19 à D-23 documentent le WIP déjà livré ; toute déviation future doit être ajoutée ici, pas exécutée en silence.*
+### D-24 — Partage de kit au groupe : drapeau dédié `is_shared_with_group` (L7-1, décision Tony)
+**Contexte :** `materiel_kits.is_public` est déjà utilisé par `20261014231000_public_shared_kit_items_rls.sql` pour exposer les articles d'un kit public à **tous** les utilisateurs `authenticated` (kits vitrines / partage public). Réutiliser `is_public` pour le partage restreint à l'équipage exposerait un kit de groupe à l'ensemble de la plateforme.
+**Décision :** ajouter `is_shared_with_group boolean not null default false` sur `public.materiel_kits`, vérifié par `public.can_read_member_kit(target_user, target_kit)` conjointement à l'appartenance active au même voyage/équipage (`trip_collaborators` / `trip_participants` / `crew_members`). Lecture seule (`SELECT`), aucune écriture ouverte, `REVOKE EXECUTE FROM PUBLIC, anon`.
+**Raison :** séparation stricte entre publication publique (`is_public`) et consultation interne à l'équipage (`is_shared_with_group`).
+
+### D-25 — Arbitrage mono-contexte WebGL obligatoire (`WebGLArbiter`, ADR-002 / M0)
+**Contexte :** iOS WKWebView ne garantit pas la survie simultanée d'un contexte MapLibre GL et d'un contexte Three.js sans éviction GPU (`webglcontextlost`).
+**Décision :** imposer `camp-map` XOR `bag-scene` via `WebGLArbiter`. L'entrée au Kit Studio sauvegarde `{ center, zoom, pitch, bearing }` et détruit la carte ; la sortie démonte Three.js et restaure la carte. Une unique tentative de restauration est effectuée sur `webglcontextlost` avant bascule définitive en `DEGRADED` (mode Liste).
+**Raison :** fiabilité sur iPhone d'entrée de gamme et respect du budget batterie (pause hors écran et libération après 30 s en arrière-plan).
+
+### D-26 — Sacs 3D procéduraux `.glb` + manifestes d'honnêteté (`tools/bag-generator/`, ADR-003)
+**Contexte :** aucun asset 3D binaire tiers libre et modulaire par pièce n'existe dans le dépôt ; un maillage monobloc ne peut pas ouvrir honnêtement son rabat.
+**Décision :** générer les 5 modèles (`.glb` + `.manifest.json` + `bags.index.json`) par code (`npm run assets:bags`, validés par `npm run assets:validate`), avec matériaux isolés par pièce et contrat `BagCapabilities`. Un sac `openable: false` (`duffel-60`) n'expose aucune charnière et délègue son intérieur à `BagListView`.
+**Raison :** zéro licence tierce opaque, budget géométrique maîtrisé (< 6 000 triangles, < 380 Ko par sac) et honnêteté visuelle totale.
+
+### D-27 — Zéro nouvelle route Next.js, `hubSectionRegistry` intact (ADR-005 / ADR-006)
+**Contexte :** `hubSectionRegistry.ts` gouverne les 19 entrées canoniques de `/hub`.
+**Décision :** ne créer aucun `page.tsx` ; conserver `hubSectionRegistry.ts` intact (y compris la redirection `/hub/preparation -> /compas?etape=kit`) ; piloter les tiroirs et le Kit Studio (`?studio=1&drawer=...`) via `DrawerNavigationMachine` derrière le feature flag `hub_camp_v1` (`false` par défaut) en extrayant uniquement `DrawerShell` et `LensPager` depuis Compte.
+**Raison :** préserve tous les liens profonds `/hub/<segment>`, évite toute régression hors flag, et interdit toute fuite de maquette (`scripts/verify/hub_no_mockup.mjs`).
+
+### D-28 — Remplacement atomique des articles et poids inconnu `NULL` (L0-1)
+**Contexte :** l'ancien `DELETE` + `INSERT` non transactionnel dans `PATCH /api/materiel/kits/[id]` détruisait le kit en cas d'erreur d'insertion ou de tableau vide accidentel, et ramenait un poids inconnu à `0`.
+**Décision :** RPC transactionnelle `public.replace_kit_items(p_kit_id, p_items, p_allow_empty)` refusant le vidage involontaire (`23514`), vérifiant la propriété (`42501`), incrémentant `studio_revision`, et préservant `NULL` pour les poids inconnus (`nullif(item->>'weight_g', '')::integer`).
+**Raison :** zéro perte silencieuse de données et intégrité arithmétique des pesées (`unknownWeightCount` distinct de `0 g`).
+
+### D-29 — Exclusion du Lot L8 (`CampScene` 3D décorative, décision Tony L8-0)
+**Contexte :** le Lot L8 (scène 3D de campement procédurale) était conditionnel.
+**Décision :** exclure L8. Le HUB Camp de base conserve la carte réelle MapLibre (`CampMap`) sous `WebGLArbiter`.
+**Raison :** concentrer le budget GPU, JS et batterie sur la carte terrain réelle et le Kit Studio 3D fonctionnel.
+
+---
+
+*Les décisions D-01 à D-29 structurent le dépôt. Toute déviation future doit être ajoutée ici, pas exécutée en silence.*

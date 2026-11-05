@@ -1,0 +1,215 @@
+{
+  "schema": 1,
+  "modelId": "trekker-55",
+  "label": "Sac de trek 55 L",
+  "generator": "generate-bag.mjs",
+  "generatedBy": "procedural",
+  "license": "LKDV — généré par code, aucun asset tiers",
+  "units": "meters",
+  "origin": "centre du sol du sac (y=0 au fond)",
+  "capabilities": {
+    "rotatable": true,
+    "openable": true,
+    "hasInterior": true,
+    "customizableParts": [
+      "body",
+      "interior",
+      "lid",
+      "lid-buckle",
+      "front-pocket",
+      "side-pocket-l",
+      "side-pocket-r",
+      "shoulder-strap-l",
+      "shoulder-strap-r",
+      "hip-belt",
+      "compression-strap-l-1",
+      "compression-strap-r-1",
+      "compression-strap-l-2",
+      "compression-strap-r-2"
+    ],
+    "badgeAnchors": [
+      "badge-body-front",
+      "badge-lid",
+      "badge-front-pocket"
+    ],
+    "attachmentPoints": [
+      "attach-top",
+      "attach-bottom",
+      "attach-side-l",
+      "attach-side-r"
+    ]
+  },
+  "hasHinge": true,
+  "declaredCapacityL": 55,
+  "boundingBoxM": {
+    "w": 0.5302,
+    "h": 0.8076,
+    "d": 0.4172
+  },
+  "slots": [
+    {
+      "id": "interior-bottom",
+      "kind": "interior",
+      "capacityL": 24.75,
+      "maxItems": null,
+      "anchor": [
+        0,
+        0.1496,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "interior-top",
+      "kind": "interior",
+      "capacityL": 19.25,
+      "maxItems": null,
+      "anchor": [
+        0,
+        0.42160000000000003,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "lid-pocket",
+      "kind": "pocket",
+      "capacityL": 2.75,
+      "maxItems": 4,
+      "anchor": [
+        0,
+        0.6900000000000001,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "front-pocket",
+      "kind": "pocket",
+      "capacityL": 3.3,
+      "maxItems": 6,
+      "anchor": [
+        0,
+        0.20400000000000001,
+        0.18
+      ],
+      "normal": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "side-pocket-l",
+      "kind": "pocket",
+      "capacityL": 2.2,
+      "maxItems": 2,
+      "anchor": [
+        -0.21500000000000002,
+        0.1768,
+        0
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "side-pocket-r",
+      "kind": "pocket",
+      "capacityL": 2.2,
+      "maxItems": 2,
+      "anchor": [
+        0.21500000000000002,
+        0.1768,
+        0
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "attach-top",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0,
+        0.7000000000000001,
+        -0.026000000000000002
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "attach-bottom",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0,
+        0.02,
+        0
+      ],
+      "normal": [
+        0,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "attach-side-l",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        -0.195,
+        0.34,
+        0
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "attach-side-r",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0.195,
+        0.34,
+        0
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "budget": {
+    "triangles": 4704,
+    "fileBytes": 349932
+  }
+}

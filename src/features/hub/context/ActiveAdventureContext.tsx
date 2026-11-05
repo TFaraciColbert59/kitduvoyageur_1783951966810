@@ -41,8 +41,17 @@ export interface ActiveAdventureContextValue {
   suggestion: AdventureSuggestion | null;
   /** Mémoire de section par aventure (clé stable → sectionId). */
   getLastSection: (key: string) => string | null;
+  /** Mémoire horodatée de section par aventure (clé stable → record). */
+  getLastSectionRecord: (key: string) => LastSectionRecord | null;
   setLastSection: (key: string, sectionId: string) => void;
 }
+
+export interface LastSectionRecord {
+  sectionId: string;
+  timestamp: number;
+}
+
+export const SECTION_RESUME_MAX_AGE_MS = 86_400_000; // 24 hours (24 * 60 * 60 * 1000 ms)
 
 const ACTIVE_KEY = 'lkdv_active_adventure';
 const LAST_SECTION_KEY = 'lkdv_adventure_last_section';
@@ -71,11 +80,30 @@ const EMPTY_CACHE: AdventuresCache = {
   pendingInvites: 0,
 };
 
-function readLastSections(storageKey: string): Record<string, string> {
+export function readLastSectionsRaw(storageKey: string): Record<string, LastSectionRecord> {
   try {
     const raw = localStorage.getItem(storageKey);
     const parsed: unknown = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, string> : {};
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const result: Record<string, LastSectionRecord> = {};
+    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof v === 'string') {
+        // Legacy record: missing timestamp -> assigned 0 so treated as expired (>= 24h)
+        result[k] = { sectionId: v, timestamp: 0 };
+      } else if (
+        v &&
+        typeof v === 'object' &&
+        'sectionId' in v &&
+        typeof (v as { sectionId: unknown }).sectionId === 'string'
+      ) {
+        const item = v as { sectionId: string; timestamp?: unknown };
+        result[k] = {
+          sectionId: item.sectionId,
+          timestamp: typeof item.timestamp === 'number' ? item.timestamp : 0,
+        };
+      }
+    }
+    return result;
   } catch {
     return {};
   }
@@ -305,20 +333,31 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
     [activeAdventure],
   );
 
-  const getLastSection = useCallback((key: string): string | null => {
+  const getLastSectionRecord = useCallback((key: string): LastSectionRecord | null => {
     if (!sectionsKey) return null;
     try {
-      return readLastSections(sectionsKey)[key] ?? null;
+      return readLastSectionsRaw(sectionsKey)[key] ?? null;
     } catch {
       return null;
     }
   }, [sectionsKey]);
 
+  const getLastSection = useCallback((key: string): string | null => {
+    return getLastSectionRecord(key)?.sectionId ?? null;
+  }, [getLastSectionRecord]);
+
   const setLastSection = useCallback((key: string, sectionId: string) => {
     if (!sectionsKey) return;
     try {
-      const map = { ...readLastSections(sectionsKey), [key]: sectionId };
-      localStorage.setItem(sectionsKey, JSON.stringify(map));
+      const current = readLastSectionsRaw(sectionsKey);
+      const updated: Record<string, LastSectionRecord> = {
+        ...current,
+        [key]: {
+          sectionId,
+          timestamp: Date.now(),
+        },
+      };
+      localStorage.setItem(sectionsKey, JSON.stringify(updated));
     } catch {
       /* ignoré */
     }
@@ -337,6 +376,7 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
         reloadAdventures,
         suggestion,
         getLastSection,
+        getLastSectionRecord,
         setLastSection,
       }}
     >
@@ -362,6 +402,7 @@ const fallbackActiveAdventureContext: ActiveAdventureContextValue = {
   reloadAdventures: async () => {},
   suggestion: null,
   getLastSection: () => null,
+  getLastSectionRecord: () => null,
   setLastSection: () => {},
 };
 

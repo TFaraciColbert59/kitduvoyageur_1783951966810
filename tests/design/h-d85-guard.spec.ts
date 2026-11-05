@@ -99,11 +99,19 @@ const RULE13_ALLOWLIST = [
   // H-AUTO-41 : isHubSurfacePathname teste la RACINE /hub (entrée du hub,
   // pas une URL de section) pour décider si le switcher est monté.
   'src/features/hub/context/adventureLists.ts',
+  // Machine d'états pure des drawers (sérialisation d'URL /hub/<segment>, alias legacy → segments du registre, testée).
+  'src/features/hub/state/drawerMachine.ts',
+  // Tests unitaires de la machine d'états et de la reprise (assertions sur URL littérales : tests, hors règle).
+  'src/features/hub/__tests__/drawerMachine.test.ts',
+  'src/features/hub/__tests__/hub-resume.test.tsx',
 ];
 
 /** Fichiers autorisés à nommer des segments/ids hub en littéral (règle 14). */
 const RULE14_ALLOWLIST = [
   'src/features/hub/engine/hubProfileEngine.ts',
+  // Machine d'états pure des drawers (alias legacy → segments canoniques du registre, testée) — même niveau que le moteur.
+  'src/features/hub/state/drawerMachine.ts',
+  'src/features/hub/__tests__/drawerMachine.test.ts',
   'src/features/hub/registry/hubSectionRegistry.ts',
   'src/features/hub/registry/hubWidgetRegistry.ts',
   // Catalogue central des widgets du hub universel (registre de même niveau).

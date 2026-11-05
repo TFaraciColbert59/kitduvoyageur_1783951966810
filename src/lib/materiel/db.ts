@@ -96,29 +96,59 @@ export async function getHistory(userId: string, limit = 200): Promise<OfflineHi
 }
 
 /** Synchronise le store local avec le serveur (diff timestamps, merge optimiste). */
-export async function syncOffline(userId: string) {
+export async function syncOffline(_userId: string) {
   const dirtyGear = await getDirtyGear();
   const dirtyKits = await getDirtyKits();
 
-  // Push local dirty records
+  const syncedGearIds: string[] = [];
+  const syncedKitIds: string[] = [];
+
+  // 1. Push local dirty gear
   for (const item of dirtyGear) {
-    await fetch('/api/materiel/items', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item.data),
-    }).catch(() => {});
+    try {
+      const res = await fetch('/api/materiel/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item.data),
+      });
+      if (res.ok) {
+        syncedGearIds.push(item.id);
+      }
+    } catch {
+      // Erreur réseau : conservation de l'état dirty
+    }
   }
 
+  // 2. Push local dirty kits
   for (const kit of dirtyKits) {
-    await fetch(`/api/materiel/kits/${kit.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(kit.data),
-    }).catch(() => {});
+    const data = kit.data as { items?: unknown[]; allowEmptyItems?: boolean } | undefined;
+    // Garde-fou client : refus de propager un vidage d'articles sans drapeau explicite
+    if (Array.isArray(data?.items) && data.items.length === 0 && !data.allowEmptyItems) {
+      continue;
+    }
+
+    try {
+      const res = await fetch(`/api/materiel/kits/${kit.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(kit.data),
+      });
+      if (res.ok) {
+        syncedKitIds.push(kit.id);
+      }
+    } catch {
+      // Erreur réseau : conservation de l'état dirty
+    }
   }
 
-  await markGearSynced(dirtyGear.map((g) => g.id));
-  await markKitsSynced(dirtyKits.map((k) => k.id));
+  // Seuls les succès confirmés sont marqués synchronisés
+  await markGearSynced(syncedGearIds);
+  await markKitsSynced(syncedKitIds);
 
-  return { pushedGear: dirtyGear.length, pushedKits: dirtyKits.length };
+  return {
+    pushedGear: syncedGearIds.length,
+    pushedKits: syncedKitIds.length,
+    failedGear: dirtyGear.length - syncedGearIds.length,
+    failedKits: dirtyKits.length - syncedKitIds.length,
+  };
 }

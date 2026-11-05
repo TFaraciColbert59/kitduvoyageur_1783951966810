@@ -1,0 +1,4 @@
+/**
+ * Pont d'import global vers la feuille canonique du HUB (Lot L2-2).
+ */
+@import '../features/hub/styles/hub-tokens.css';
