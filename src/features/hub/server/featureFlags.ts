@@ -12,9 +12,10 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   hub_collectif_enabled: false,
   explorer_unified_map_enabled: false,
   explorer_v2_enabled: false,
-  // Hub V4 par défaut, comme la livraison du bundle (0d6021b4d) : le hub camp
-  // s'active par la ligne hub_camp_v1 de public.feature_flags, sans redéploiement.
-  hub_camp_v1: false,
+  // Le hub camp 3D (refonte du 3 novembre) est le hub par défaut.
+  // La ligne hub_camp_v1 de public.feature_flags reste prioritaire : enabled=false
+  // le coupe sans redéploiement.
+  hub_camp_v1: true,
   updatedAt: 0,
   source: 'fallback',
 };
