@@ -720,7 +720,7 @@ export function BagScene({
       data-render-paused={renderPaused ? 'true' : 'false'}
       role="region"
       aria-label={`Scène 3D interactive : ${bagLabel}`}
-      className="relative w-full h-full min-h-[280px] select-none overflow-hidden bg-[var(--hub-surface)]"
+      className="relative w-full h-full min-h-[280px] select-none overflow-hidden bg-transparent"
       onPointerDown={(e) => {
         gestureController.handlePointerDown({
           pointerId: e.pointerId,

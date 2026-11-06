@@ -157,8 +157,9 @@ body:has(.story.on) .lkdv-floating-tabbar {
   pointer-events: none !important;
 }
 
-/* Le bandeau cookies ne doit pas recouvrir le compteur de vues d'une story. */
-body:has(.story.on) [aria-label="Gestion des cookies"] {
+/* Le bandeau cookies ne doit pas recouvrir le compteur de vues d'une story ni le studio 3D. */
+body:has(.story.on) [aria-label="Gestion des cookies"],
+body:has([data-testid="kit-studio-view"]) [aria-label="Gestion des cookies"] {
   display: none !important;
 }
 
@@ -171,12 +172,25 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-floating-tabbar {
   pointer-events: none;
 }
 
-/* Carte-drawer de la Communauté ouverte : elle occupe le bas de l'écran, la barre s'efface. */
+/* Carte-drawer de la Communauté ouverte ou Kit Studio : la barre s'efface totalement */
+html[data-kit-studio-open='true'] .lkdv-floating-tabbar,
+body[data-kit-studio-open='true'] .lkdv-floating-tabbar,
+html[data-hub-drawer-open='true'] .lkdv-floating-tabbar,
+body[data-hub-drawer-open='true'] .lkdv-floating-tabbar,
 body:has(.lkdv-cd) .lkdv-floating-tabbar,
 body:has([data-testid="kit-studio-view"]) .lkdv-floating-tabbar,
 body:has(.hub-camp-drawer-overlay) .lkdv-floating-tabbar {
-  visibility: hidden;
-  pointer-events: none;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(150%) !important;
+}
+
+html[data-kit-studio-open='true'],
+html[data-hub-drawer-open='true'] {
+  --bottom-nav-height: 0px !important;
+  --lkv-native-web-reserve: 0px !important;
 }
 
 /* Chargement d'une route (RouteLoading) : fond de l'app seul, spinner différé. */

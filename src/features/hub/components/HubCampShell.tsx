@@ -1,34 +1,10 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import {
-  ArrowLeft,
-  ArrowRight,
-  Backpack,
-  BookOpen,
-  Check,
-  CheckCircle,
-  ChevronDown,
-  ChevronRight,
-  ChevronUp,
-  Clock,
-  Compass,
-  DollarSign,
-  FileText,
-  Flame,
-  MapPin,
-  Mountain,
-  Package,
-  Plus,
-  Shield,
-  Sliders,
-  Users,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Backpack, Compass, Mountain, Package, X } from 'lucide-react';
 import '../styles/hub-camp-option3.css';
-import { DrawerEmpty, DrawerShell, type DrawerTab } from '@/components/ui/drawer';
 import { useKeyboardInsets } from '@/hooks/useKeyboardInsets';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import type { ActiveAdventureData } from '../context/adventureSchema';
@@ -43,14 +19,11 @@ import {
   DEFAULT_STUDIO_DRAWER,
   DrawerNavigationMachine,
   hubDrawerUrl,
-  isGearHubSection,
   parseHubUrlState,
   serializeHubUrlState,
   type DrawerMachineState,
   type StudioDrawer,
 } from '../state/drawerMachine';
-import { CampMap } from './CampMap';
-import { HubResumeBanner } from './HubResumeBanner';
 import { KitStudioView } from '@/features/kit-studio/components/KitStudioView';
 import {
   HubItineraryDrawer,
@@ -63,13 +36,37 @@ import {
   HubJournalDrawer,
   HubChecklistDrawer,
 } from './drawers';
-import {
-  DocsMobileExperience,
-  ItineraryMobileExperience,
-  JournalMobileExperience,
-  SafetyMobileExperience,
-  TeamMobileExperience,
-} from '@/app/hub/[section]/sectionViews.client';
+
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Déclencheur à refocaliser après fermeture. L'URL du tiroir est une vraie
+ * route Next (`/hub` → `/hub/<segment>`) : le shell est remonté au changement
+ * d'URL, donc la référence DOM du déclencheur ne survit pas. On mémorise son
+ * `data-testid` en sessionStorage (survit au remontage et aux chunks de route),
+ * puis l'instance rendue sur `/hub` le restitue.
+ */
+const FOCUS_RETURN_STORAGE_KEY = 'lkdv:hub-drawer-focus-return';
+
+function rememberDrawerFocusReturn(testId: string | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (testId) window.sessionStorage.setItem(FOCUS_RETURN_STORAGE_KEY, testId);
+    else window.sessionStorage.removeItem(FOCUS_RETURN_STORAGE_KEY);
+  } catch {
+    /* stockage indisponible (mode privé) : le focus reste géré par la référence DOM */
+  }
+}
+
+function peekDrawerFocusReturn(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage.getItem(FOCUS_RETURN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
 
 export interface HubCampShellProps {
   initialDrawer?: string;
@@ -131,63 +128,6 @@ function adventureResumeKey(adventure?: ActiveAdventureData | null): string | nu
   return null;
 }
 
-function describeNatureGroup(def: HubSectionDef): string {
-  if (def.natures.includes('possession')) return 'Équipement';
-  if (def.natures.includes('collectif') && !def.natures.includes('sortie')) return 'Équipage';
-  return 'Terrain & Sortie';
-}
-
-const OPTION3_DAYS = [
-  {
-    title: 'Le sentier du lac',
-    place: 'Prairies et rives turquoise',
-    distance: '8,4 km',
-    time: '3 h 10',
-    up: '+420 m',
-    steps: ['Départ du camp', 'Point de vue du lac', 'Retour par les prairies'],
-  },
-  {
-    title: 'Le col des Écrins',
-    place: 'Une journée en altitude',
-    distance: '12,6 km',
-    time: '5 h 20',
-    up: '+870 m',
-    steps: ['Petit-déjeuner au camp', 'Montée vers le col', 'Pause au panorama', 'Descente vers le lac'],
-  },
-  {
-    title: 'Le chemin du retour',
-    place: 'Une dernière lumière sur le lac',
-    distance: '6,2 km',
-    time: '2 h 15',
-    up: '+180 m',
-    steps: ['Ranger le camp', 'Sentier de la forêt', 'Fin de l’aventure'],
-  },
-];
-
-const OPTION3_MEMBERS = [
-  {
-    name: 'Moi (TF)',
-    initials: 'TF',
-    role: 'Mon kit · propriétaire',
-    weight: '4,22 kg',
-    items: ['Sac Alpin 40 L', 'Gourde inox 1L', 'Tente deux places', 'Trousse de secours'],
-  },
-  {
-    name: 'Camille',
-    initials: 'CM',
-    role: 'Kit partagé · lecture seule',
-    weight: '3,86 kg',
-    items: ['Sac de randonnée', 'Réchaud partagé', 'Popote', 'Tasse isotherme'],
-  },
-  {
-    name: 'Alex',
-    initials: 'AL',
-    role: 'Kit partagé · lecture seule',
-    weight: '4,05 kg',
-    items: ['Sac de randonnée', 'Filtre à eau partagé', 'Duvet', 'Lampe frontale'],
-  },
-];
-
 interface CampPlacement {
   x: number;
   y: number;
@@ -218,6 +158,14 @@ const CAMP_HOTSPOT_POSITIONS: readonly CampPlacement[] = [
   /* 18: voyages-lies*/ { x: 84, y: 14, w: 90, h: 75 },
 ];
 
+/** `data-testid` de la zone tactile du camp qui ouvre une section du registre. */
+function hotspotTestIdForSection(sectionId: string | null | undefined): string | null {
+  if (!sectionId) return null;
+  const index = hubSectionRegistry.findIndex((entry) => entry.id === sectionId);
+  if (index < 0) return null;
+  return CAMP_HOTSPOT_POSITIONS[index]?.testId ?? `hub-hotspot-${sectionId}`;
+}
+
 export function HubCampShell({
   initialDrawer,
   trip,
@@ -238,6 +186,13 @@ export function HubCampShell({
   const machineRef = useRef<DrawerNavigationMachine | null>(null);
   const lastSyncedUrlRef = useRef<string>('');
   const drawerScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Accessibilité du tiroir : piège de focus, Échap, restitution au déclencheur.
+  const titleId = useId();
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const drawerOpenRef = useRef(false);
 
   if (!machineRef.current) {
     const parsed = parseHubUrlState(initialPathname, initialSearch);
@@ -444,6 +399,9 @@ export function HubCampShell({
     ) {
       machineRef.current.saveScrollPosition(navState.drawerId, drawerScrollRef.current.scrollTop);
     }
+    if (navState.type === 'DRAWER_OPEN' || navState.type === 'SUB_DRAWER_OPEN') {
+      rememberDrawerFocusReturn(hotspotTestIdForSection(navState.sectionId));
+    }
     machineRef.current.closeDrawer();
     pushMachineUrl(machineRef.current.getState());
   }, [navState, pushMachineUrl]);
@@ -535,6 +493,181 @@ export function HubCampShell({
         : null,
     [activeDrawerSegment]
   );
+
+  const isDrawerOpen = activeDef !== null;
+
+  // Barre flottante masquée tant qu'un tiroir est ouvert (un seul état, pas un par volet).
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isDrawerOpen) return;
+    window.dispatchEvent(
+      new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } })
+    );
+    document.documentElement.setAttribute('data-hub-drawer-open', 'true');
+    document.body.setAttribute('data-hub-drawer-open', 'true');
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } })
+      );
+      document.documentElement.removeAttribute('data-hub-drawer-open');
+      document.body.removeAttribute('data-hub-drawer-open');
+    };
+  }, [isDrawerOpen]);
+
+  // Scroll lock symétrique + fond inert/aria-hidden + restitution du focus.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isDrawerOpen) return;
+
+    drawerOpenRef.current = true;
+
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    const backdropStates: Array<{
+      node: HTMLElement;
+      hadInert: boolean;
+      ariaHidden: string | null;
+    }> = [];
+    const root = shellRef.current;
+    if (root) {
+      for (const child of Array.from(root.children)) {
+        if (!(child instanceof HTMLElement)) continue;
+        if (child.getAttribute('data-testid') === 'hub-active-drawer') continue;
+        backdropStates.push({
+          node: child,
+          hadInert: child.hasAttribute('inert'),
+          ariaHidden: child.getAttribute('aria-hidden'),
+        });
+        child.setAttribute('inert', '');
+        child.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    return () => {
+      drawerOpenRef.current = false;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.paddingRight = previousBodyPaddingRight;
+
+      for (const state of backdropStates) {
+        if (!state.hadInert) state.node.removeAttribute('inert');
+        if (state.ariaHidden === null) state.node.removeAttribute('aria-hidden');
+        else state.node.setAttribute('aria-hidden', state.ariaHidden);
+      }
+
+      const trigger = restoreFocusRef.current;
+      restoreFocusRef.current = null;
+      if (trigger?.isConnected) {
+        window.requestAnimationFrame(() => {
+          if (!drawerOpenRef.current && trigger.isConnected) {
+            trigger.focus({ preventScroll: true });
+          }
+        });
+      }
+    };
+  }, [isDrawerOpen]);
+
+  // Retour de focus au déclencheur sur l'instance fraîchement montée par /hub.
+  // (Le shell est remonté par la navigation, donc l'effet de démontage ci-dessus
+  // ne peut pas cibler le bouton d'origine.)
+  useEffect(() => {
+    if (isDrawerOpen) return;
+    const testId = peekDrawerFocusReturn();
+    if (!testId) return;
+    let cancelled = false;
+    const frame = window.requestAnimationFrame(() => {
+      if (cancelled) return;
+      const target = document.querySelector<HTMLElement>(
+        `[data-testid="${testId.replace(/"/g, '\\"')}"]`
+      );
+      if (!target) return;
+      target.focus({ preventScroll: true });
+      if (document.activeElement === target) rememberDrawerFocusReturn(null);
+    });
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
+    // Volontairement au montage uniquement : c'est la nouvelle instance qui
+    // possède le déclencheur rendu par la route /hub.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Focus initial / après changement de volet : toujours dans la feuille.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isDrawerOpen) return;
+    const frame = window.requestAnimationFrame(() => {
+      const sheet = sheetRef.current;
+      if (!sheet) return;
+      if (document.activeElement instanceof HTMLElement && sheet.contains(document.activeElement)) {
+        return;
+      }
+      const preferred =
+        sheet.querySelector<HTMLElement>('[data-testid="hub-close-subdrawer"]') ??
+        sheet.querySelector<HTMLElement>('[data-testid="hub-close-drawer"]') ??
+        sheet;
+      preferred.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isDrawerOpen, activeDrawerSegment, activeSubDrawerId]);
+
+  // Piège de focus aux bornes + Échap (volet ouvert le plus haut d'abord).
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isDrawerOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (activeSubDrawerId) handleCloseSubDrawer();
+        else handleCloseDrawer();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const sheet = sheetRef.current;
+      if (!sheet) return;
+      const focusables = Array.from(
+        sheet.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+      ).filter(
+        (node) =>
+          node.getClientRects().length > 0 &&
+          !node.hasAttribute('disabled') &&
+          !node.closest('[inert]') &&
+          !node.closest('[aria-hidden="true"]')
+      );
+
+      if (focusables.length === 0) {
+        event.preventDefault();
+        sheet.focus({ preventScroll: true });
+        return;
+      }
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (!(active instanceof HTMLElement) || !sheet.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isDrawerOpen, activeSubDrawerId, handleCloseDrawer, handleCloseSubDrawer]);
 
   const renderDrawerBody = useCallback(
     (def: HubSectionDef) => {
@@ -722,8 +855,6 @@ export function HubCampShell({
         );
       }
 
-      const isGearSection = isGearHubSection(def.id);
-
       return (
         <div className="p-4 space-y-4">
           <div className="p-4 rounded-2xl bg-[var(--hub-surface)] border border-[var(--hub-border)] flex items-start justify-between gap-3">
@@ -789,19 +920,6 @@ export function HubCampShell({
     ]
   );
 
-  const drawerTabs: DrawerTab[] = useMemo(() => {
-    if (!activeDef) return [];
-    const IconComp = activeDef.icon;
-    return [
-      {
-        id: activeDef.segment || activeDef.id,
-        label: activeDef.label,
-        icon: <IconComp className="w-4 h-4" aria-hidden="true" />,
-        render: () => renderDrawerBody(activeDef),
-      },
-    ];
-  }, [activeDef, renderDrawerBody]);
-
   // Mode plein écran Kit Studio (?studio=1, zéro nouvelle route Next.js — B-02 / C-04)
   if (navState.type === 'STUDIO') {
     return (
@@ -819,6 +937,7 @@ export function HubCampShell({
 
   return (
     <div
+      ref={shellRef}
       data-testid="hub-camp-shell"
       className="hub-camp-option3-root flex flex-col w-full h-[100dvh] relative overflow-hidden"
       style={{
@@ -880,7 +999,9 @@ export function HubCampShell({
                 width: `${width}px`,
                 height: `${height}px`,
               }}
-              onClick={() => {
+              onClick={(event) => {
+                restoreFocusRef.current = event.currentTarget;
+                rememberDrawerFocusReturn(testId);
                 if (def.id === 'kit' || def.id === 'gear') {
                   handleEnterStudio();
                 } else {
@@ -900,7 +1021,9 @@ export function HubCampShell({
         <button
           type="button"
           data-testid="hub-camp-floating-pill"
-          onClick={() => {
+          onClick={(event) => {
+            restoreFocusRef.current = event.currentTarget;
+            rememberDrawerFocusReturn('hub-camp-floating-pill');
             const departDef = hubSectionRegistry[3];
             handleOpenRegistryEntry(departDef);
           }}
@@ -920,7 +1043,7 @@ export function HubCampShell({
           data-drawer-segment={activeDef.segment}
           role="dialog"
           aria-modal="true"
-          aria-label={activeDef.label}
+          aria-labelledby={titleId}
           onClick={(e) => {
             if (e.target === e.currentTarget) handleCloseDrawer();
           }}
@@ -928,50 +1051,46 @@ export function HubCampShell({
           style={{ overscrollBehavior: 'contain' }}
         >
           <div
+            ref={sheetRef}
+            tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
-            className="hub-camp-drawer-sheet w-full max-h-[20dvh] h-[20dvh] flex flex-col"
+            className="hub-camp-drawer-sheet w-full max-h-[56dvh] h-[56dvh] flex flex-col"
             style={{
               paddingBottom:
                 'calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--keyboard-inset, 0px))',
             }}
           >
-            <div className="flex items-center justify-between px-4 pt-3 pb-2.5 border-b camp-border-subtle shrink-0">
-              <div className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-xl camp-badge-forest grid place-items-center">
+            <div className="relative flex items-center justify-between gap-2 px-3 pt-3 pb-1.5 border-b camp-border-subtle shrink-0">
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute left-1/2 top-1.5 h-1.5 w-10 -translate-x-1/2 rounded-full bg-[var(--hub-border-strong)]"
+              />
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg camp-badge-forest">
                   {React.createElement(activeDef.icon, {
-                    className: 'w-4 h-4',
+                    className: 'h-4 w-4',
                     'aria-hidden': true,
                   })}
                 </span>
-                <div>
-                  <h3 className="text-sm font-bold camp-text-title truncate">
-                    {activeDef.label}
-                  </h3>
-                  <p className="text-[10px] camp-text-sub">
-                    {describeNatureGroup(activeDef)}
-                  </p>
-                </div>
+                <h3 id={titleId} className="truncate text-[13px] font-bold camp-text-title">
+                  {activeDef.label}
+                </h3>
               </div>
-
-              <div
-                aria-hidden="true"
-                className="w-10 h-1.5 rounded-full bg-[var(--hub-border-strong)]"
-              />
 
               <button
                 type="button"
                 data-testid="hub-close-drawer"
                 onClick={handleCloseDrawer}
                 aria-label="Fermer le tiroir"
-                className="camp-glass-close-btn"
+                className="camp-glass-close-btn h-8 w-8"
               >
-                <X className="w-5 h-5" aria-hidden="true" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
 
             <div
               ref={drawerScrollRef}
-              className="flex-1 min-h-0 flex flex-col overflow-hidden"
+              className="flex-1 min-h-0 flex flex-col overflow-y-auto overscroll-contain"
             >
               {renderDrawerBody(activeDef)}
             </div>
