@@ -15,6 +15,7 @@
 import React, { useEffect, useState } from 'react';
 import { Backpack, Check, Palette, Sliders } from 'lucide-react';
 import { DrawerEmpty, DrawerShell, type DrawerTab } from '@/components/ui/drawer';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { fetchBagManifest } from '../scene/bag/loader';
 import { BAG_COLOR_SWATCHES, BAG_MATERIAL_PRESETS } from '../scene/bag/materials';
 import { DRAWER_ART } from '../domain/palette.scene';
@@ -36,14 +37,6 @@ export interface DisplacedSlotReport {
   previousBagId: string | null;
   nextBagLabel: string;
   displacedItems: Array<{ id: string; name: string; lostSlotLabel: string }>;
-}
-
-function triggerHaptic(duration = 10) {
-  if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-    try {
-      navigator.vibrate(duration);
-    } catch {}
-  }
 }
 
 /**
@@ -205,6 +198,7 @@ export function PersonnaliserDrawer({
   onCustomizePart,
   onSelectBagModel,
 }: PersonnaliserDrawerProps) {
+  const { haptic } = useHapticFeedback();
   const [tabIndex, setTabIndex] = useState<number>(0);
   const customizableParts = config.bag.capabilities.customizableParts;
 
@@ -228,14 +222,14 @@ export function PersonnaliserDrawer({
   }, [selectedPartId, customizableParts, activePart]);
 
   const handleChoosePart = (partId: PartId) => {
-    triggerHaptic(10);
+    haptic('light');
     setActivePart(partId);
     onFocusPart(partId);
   };
 
   const handleSwitchBagModel = async (modelId: string) => {
     if (modelId === config.bag.modelId) return;
-    triggerHaptic(14);
+    haptic('light');
     setSwitchingBagId(modelId);
     try {
       const manifest = await fetchBagManifest(modelId);
@@ -285,7 +279,10 @@ export function PersonnaliserDrawer({
     }
 
     return (
-      <div data-testid="studio-personnaliser-pane" className="flex flex-col justify-start h-full">
+      <div
+        data-testid="studio-personnaliser-pane"
+        className="flex flex-1 min-h-0 w-full flex-col justify-start overflow-y-auto overscroll-contain pb-2"
+      >
         {/* Slide card horizontal des pièces sélectionnables avec aperçu 3D volumétrique */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-0.5 px-0.5">
           {customizableParts.map((partId) => {
@@ -334,13 +331,50 @@ export function PersonnaliserDrawer({
             );
           })}
         </div>
+
+        {/* Nuancier de pastilles de couleur tactiles pour la pièce sélectionnée */}
+        <div className="flex items-center gap-2 px-1 pt-1 overflow-x-auto no-scrollbar">
+          {BAG_COLOR_SWATCHES.map((swatch) => {
+            const isSwatchActive =
+              swatch.token === currentPartConfig.color ||
+              swatch.id === currentPartConfig.color;
+            return (
+              <button
+                key={swatch.id}
+                type="button"
+                data-testid={`personnaliser-color-${swatch.id}`}
+                onClick={() => {
+                  haptic('light');
+                  if (activePart) {
+                    void onCustomizePart(activePart, { color: swatch.token });
+                  }
+                }}
+                className={`w-7 h-7 rounded-full border border-white/90 shrink-0 shadow-xs transition-transform duration-200 flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)] ${
+                  isSwatchActive
+                    ? 'scale-110 ring-2 ring-[var(--hub-primary)] ring-offset-1'
+                    : 'opacity-85 hover:opacity-100 hover:scale-105'
+                }`}
+                style={{ background: swatch.token }}
+                title={swatch.label}
+                aria-label={swatch.label}
+              >
+                {isSwatchActive && (
+                  <Check className="w-3.5 h-3.5 text-white drop-shadow" aria-hidden="true" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   };
 
   // 2. Volet Gabarit : Slide card à la Apple avec texte épuré genre "45L" au centre
   const renderBagModelsPane = () => (
-    <div data-testid="studio-bag-models-pane" className="flex flex-col justify-start h-full">
+    <div
+      data-testid="studio-bag-models-pane"
+      className="flex flex-1 min-h-0 w-full flex-col justify-start overflow-y-auto overscroll-contain pb-2"
+    >
       {lostSlotsReport && (
         <div
           data-testid="bag-switch-lost-slots-banner"
@@ -399,7 +433,10 @@ export function PersonnaliserDrawer({
 
   // 3. Volet Matière technique PBR
   const renderMaterialsPane = () => (
-    <div data-testid="studio-materials-pane" className="space-y-1 pb-1">
+    <div
+      data-testid="studio-materials-pane"
+      className="space-y-1 pb-2 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain"
+    >
       <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-0.5 px-0.5">
         {BAG_MATERIAL_PRESETS.map((preset) => {
           const selected = currentPartConfig.material === preset.id;
@@ -410,7 +447,7 @@ export function PersonnaliserDrawer({
               data-testid={`personnaliser-material-${preset.id}`}
               aria-pressed={selected}
               onClick={() => {
-                triggerHaptic(10);
+                haptic('light');
                 if (activePart) {
                   void onCustomizePart(activePart, { material: preset.id });
                 }
@@ -478,57 +515,14 @@ export function PersonnaliserDrawer({
     },
   ];
 
-  // Mini sélecteur en bas à droite : uniquement les pastilles de couleur sans texte
-  const colorSecondary =
-    tabIndex === 0 && activePart
-      ? {
-          items: BAG_COLOR_SWATCHES.map((swatch) => {
-            const isSwatchActive =
-              swatch.token === currentPartConfig.color ||
-              swatch.id === currentPartConfig.color;
-            return {
-              id: swatch.id,
-              label: swatch.label,
-              icon: (
-                <span
-                  aria-hidden="true"
-                  data-testid={`personnaliser-color-${swatch.id}`}
-                  className={`w-3 h-3 rounded-full border border-white/90 block shadow-xs transition-transform duration-200 ${
-                    isSwatchActive ? 'scale-110 ring-1 ring-white' : 'opacity-85'
-                  }`}
-                  style={{ background: swatch.token }}
-                />
-              ),
-            };
-          }),
-          active: Math.max(
-            0,
-            BAG_COLOR_SWATCHES.findIndex(
-              (s) =>
-                s.token === currentPartConfig.color ||
-                s.id === currentPartConfig.color
-            )
-          ),
-          onChange: (index: number) => {
-            triggerHaptic(8);
-            const swatch = BAG_COLOR_SWATCHES[index];
-            if (swatch && activePart) {
-              void onCustomizePart(activePart, { color: swatch.token });
-            }
-          },
-          label: 'Nuancier de couleurs',
-        }
-      : undefined;
-
   return (
     <DrawerShell
       tabs={tabs}
       activeIndex={tabIndex}
       onIndexChange={(idx) => {
-        triggerHaptic(10);
+        haptic('selection');
         setTabIndex(idx);
       }}
-      secondary={colorSecondary}
     />
   );
 }

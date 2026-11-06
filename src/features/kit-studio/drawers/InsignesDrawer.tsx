@@ -16,6 +16,7 @@
 import React, { useMemo, useState } from 'react';
 import { Award, Lock, MapPin, Pin, Shield, Trash2 } from 'lucide-react';
 import { DrawerEmpty, DrawerShell, type DrawerTab } from '@/components/ui/drawer';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { getAnchorLabel } from '../scene/bag/parts';
 import type { AnchorId, KitConfiguration } from '../state/types';
 
@@ -139,6 +140,7 @@ export function InsignesDrawer({
   onPlaceBadge,
   onRemoveBadge,
 }: InsignesDrawerProps) {
+  const { haptic } = useHapticFeedback();
   const [tabIndex, setTabIndex] = useState<number>(0);
   const supportedAnchors = config.bag.capabilities.badgeAnchors;
 
@@ -165,6 +167,7 @@ export function InsignesDrawer({
 
   const handlePinBadge = async (badgeId: string, anchorOverride?: AnchorId) => {
     if (readOnly) return;
+    haptic('light');
     const anchor = anchorOverride || selectedAnchorId || supportedAnchors[0] || '';
     const check = validateBadgePlacement({
       badgeId,
@@ -186,7 +189,7 @@ export function InsignesDrawer({
   };
 
   const renderEarnedPane = () => (
-    <div data-testid="studio-insignes-earned-pane" className="space-y-3 pb-8">
+    <div data-testid="studio-insignes-earned-pane" className="space-y-3 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
       {placementMessage && (
         <div
           data-testid="insignes-placement-feedback"
@@ -258,7 +261,7 @@ export function InsignesDrawer({
   );
 
   const renderLockedPane = () => (
-    <div data-testid="studio-insignes-locked-pane" className="space-y-3 pb-8">
+    <div data-testid="studio-insignes-locked-pane" className="space-y-3 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
       <p className="px-1 text-xs text-[var(--hub-text-secondary)]">
         Les trophées sont attribués uniquement par le serveur lors de vos étapes réelles validées.
       </p>
@@ -300,7 +303,7 @@ export function InsignesDrawer({
   );
 
   const renderPinnedPane = () => (
-    <div data-testid="studio-insignes-pinned-pane" className="space-y-3 pb-8">
+    <div data-testid="studio-insignes-pinned-pane" className="space-y-3 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
       {config.placedBadges.length === 0 ? (
         <div className="p-4 rounded-2xl bg-[var(--hub-surface-card)] border border-[var(--hub-border)]">
           <DrawerEmpty
@@ -333,7 +336,10 @@ export function InsignesDrawer({
                 <button
                   type="button"
                   data-testid={`insigne-remove-${placed.id}`}
-                  onClick={() => onRemoveBadge(placed.id)}
+                  onClick={() => {
+                    haptic('light');
+                    void onRemoveBadge(placed.id);
+                  }}
                   aria-label={`Retirer l’insigne ${def?.label ?? placed.badgeId}`}
                   className="min-h-[44px] min-w-[44px] rounded-xl border border-[var(--hub-border)] bg-[var(--hub-surface)] text-[var(--hub-danger)] flex items-center justify-center shrink-0"
                 >
@@ -360,7 +366,7 @@ export function InsignesDrawer({
     }
 
     return (
-      <div data-testid="studio-insignes-placement-pane" className="space-y-4 pb-8">
+      <div data-testid="studio-insignes-placement-pane" className="space-y-4 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
         <div className="p-4 rounded-2xl bg-[var(--hub-surface-card)] border border-[var(--hub-border)] space-y-3">
           <div className="space-y-1.5">
             <label
@@ -402,7 +408,10 @@ export function InsignesDrawer({
                     type="button"
                     data-testid={`insigne-anchor-btn-${anchorId}`}
                     aria-pressed={active}
-                    onClick={() => setSelectedAnchorId(anchorId)}
+                    onClick={() => {
+                      haptic('selection');
+                      setSelectedAnchorId(anchorId);
+                    }}
                     className={`min-h-[44px] px-3.5 rounded-xl border text-xs font-semibold ${
                       active
                         ? 'bg-[var(--hub-primary)] border-[var(--hub-primary)] text-[var(--hub-text-inverted)]'
@@ -484,5 +493,14 @@ export function InsignesDrawer({
     },
   ];
 
-  return <DrawerShell tabs={tabs} activeIndex={tabIndex} onIndexChange={setTabIndex} />;
+  return (
+    <DrawerShell
+      tabs={tabs}
+      activeIndex={tabIndex}
+      onIndexChange={(idx) => {
+        haptic('selection');
+        setTabIndex(idx);
+      }}
+    />
+  );
 }

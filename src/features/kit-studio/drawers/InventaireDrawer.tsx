@@ -25,6 +25,7 @@ import {
   X,
 } from 'lucide-react';
 import { DrawerEmpty, DrawerShell, type DrawerTab } from '@/components/ui/drawer';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { getSlotLabel } from '../scene/bag/parts';
 import { formatWeight, formatWeightSummary } from '../state/selectors';
 import type { DerivedTotals, KitConfiguration, KitItem, SlotId } from '../state/types';
@@ -145,6 +146,7 @@ export function InventaireDrawer({
   onToggleChecked,
   onMoveItem,
 }: InventaireDrawerProps) {
+  const { haptic } = useHapticFeedback();
   const initialIdx =
     initialSubTab === 'acquisition' ? 1 : initialSubTab === 'groupe' ? 2 : 0;
   const [tabIndex, setTabIndex] = useState<number>(initialIdx);
@@ -238,6 +240,7 @@ export function InventaireDrawer({
     if (readOnly) return;
     const trimmed = newItemName.trim();
     if (!trimmed) return;
+    haptic('light');
 
     const rawWeight = newItemWeightInput.trim();
     const parsedWeight =
@@ -282,6 +285,7 @@ export function InventaireDrawer({
 
   const handleAddCandidate = async (candidate: OwnedInventoryCandidate) => {
     if (readOnly) return;
+    haptic('light');
     const defaultSlot: SlotId | null = config.slots['interior-bottom']
       ? 'interior-bottom'
       : slotEntries[0]?.id ?? null;
@@ -311,7 +315,7 @@ export function InventaireDrawer({
   const pendingLoansCount = loans.filter((l) => l.status === 'pending').length;
 
   const renderMyInventoryPane = () => (
-    <div data-testid="studio-inventaire-pane" className="space-y-4 pb-8">
+    <div data-testid="studio-inventaire-pane" className="space-y-4 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
       {/* Barre de recherche, catégorie, filtre et tri (D-01) */}
       <div className="space-y-2.5">
         <div className="relative">
@@ -602,7 +606,10 @@ export function InventaireDrawer({
                   <button
                     type="button"
                     data-testid={`inventaire-check-${item.id}`}
-                    onClick={() => onToggleChecked(item.id, !item.isChecked)}
+                    onClick={() => {
+                      haptic('light');
+                      void onToggleChecked(item.id, !item.isChecked);
+                    }}
                     aria-pressed={item.isChecked}
                     aria-label={
                       item.isChecked
@@ -672,7 +679,10 @@ export function InventaireDrawer({
                   <button
                     type="button"
                     data-testid={`inventaire-remove-${item.id}`}
-                    onClick={() => onRemoveItem(item.id)}
+                    onClick={() => {
+                      haptic('light');
+                      void onRemoveItem(item.id);
+                    }}
                     aria-label={`Retirer ${item.name}`}
                     className="min-h-[44px] min-w-[44px] rounded-xl border border-[var(--hub-border)] bg-[var(--hub-surface)] text-[var(--hub-danger)] flex items-center justify-center"
                   >
@@ -691,7 +701,10 @@ export function InventaireDrawer({
           <button
             type="button"
             data-testid="inventaire-je-pars-btn"
-            onClick={() => setShowDepartureCheck((v) => !v)}
+            onClick={() => {
+              haptic('light');
+              setShowDepartureCheck((v) => !v);
+            }}
             aria-expanded={showDepartureCheck}
             className="w-full min-h-[48px] px-4 rounded-2xl bg-[var(--hub-primary)] text-[var(--hub-text-inverted)] text-sm font-bold flex items-center justify-center gap-2"
           >
@@ -790,7 +803,10 @@ export function InventaireDrawer({
     <DrawerShell
       tabs={tabs}
       activeIndex={tabIndex}
-      onIndexChange={setTabIndex}
+      onIndexChange={(idx) => {
+        haptic('selection');
+        setTabIndex(idx);
+      }}
       state={loadState}
       onRetry={onRetryLoad}
     />

@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { BookmarkPlus, Eye, Handshake, ShoppingBag, X } from 'lucide-react';
 import { DrawerEmpty } from '@/components/ui/drawer';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { formatWeight } from '../../state/selectors';
 import type { KitConfiguration, KitItem } from '../../state/types';
 import {
@@ -35,15 +36,18 @@ export function AcquisitionPane({
   loans = [],
   onAddPlannedItem,
 }: AcquisitionPaneProps) {
+  const { haptic } = useHapticFeedback();
   const [activePreview, setActivePreview] = useState<TransientPreviewResult | null>(null);
   const [reservationNotice, setReservationNotice] = useState<string | null>(null);
 
   const handlePreview = (item: AcquisitionCatalogItem) => {
+    haptic('light');
     const { preview } = createTransientPreview(item, config);
     setActivePreview(preview);
   };
 
   const handlePlanItem = async (item: AcquisitionCatalogItem) => {
+    haptic('light');
     const planned = createPlannedReservation(item, null);
     await onAddPlannedItem(planned.item);
     setReservationNotice(
@@ -54,6 +58,7 @@ export function AcquisitionPane({
   const handleAddLoanToKit = async (loan: MemberLoanRecord) => {
     const view = formatMemberLoan(loan);
     if (!view.canAddAsLoanedToKit) return;
+    haptic('light');
     const id =
       typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
         ? crypto.randomUUID()
@@ -76,7 +81,7 @@ export function AcquisitionPane({
   };
 
   return (
-    <div data-testid="studio-acquisition-pane" className="space-y-5 pb-8">
+    <div data-testid="studio-acquisition-pane" className="space-y-5 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
       {/* Bandeau d'aperçu éphémère (F-01 : zéro écriture dans le kit) */}
       {activePreview && (
         <div
@@ -100,7 +105,10 @@ export function AcquisitionPane({
           </div>
           <button
             type="button"
-            onClick={() => setActivePreview(null)}
+            onClick={() => {
+              haptic('light');
+              setActivePreview(null);
+            }}
             aria-label="Fermer l’aperçu temporaire"
             className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center text-[var(--hub-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hub-action)]"
           >

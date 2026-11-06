@@ -15,6 +15,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { BarChart3, Bookmark, GitCompare, Trash2 } from 'lucide-react';
 import { DrawerEmpty, DrawerShell, type DrawerTab } from '@/components/ui/drawer';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { formatWeight, selectDerivedTotals } from '../state/selectors';
 import type { DerivedTotals, KitConfiguration } from '../state/types';
 
@@ -114,6 +115,7 @@ export interface StatistiquesDrawerProps {
 }
 
 export function StatistiquesDrawer({ config, totals }: StatistiquesDrawerProps) {
+  const { haptic } = useHapticFeedback();
   const [tabIndex, setTabIndex] = useState<number>(0);
   const [snapshots, setSnapshots] = useState<KitComparisonSnapshot[]>([]);
   const [snapshotLabel, setSnapshotLabel] = useState<string>('');
@@ -152,6 +154,7 @@ export function StatistiquesDrawer({ config, totals }: StatistiquesDrawerProps) 
 
   const handlePinSnapshot = (e: React.FormEvent) => {
     e.preventDefault();
+    haptic('light');
     const snap = createConfigSnapshot(
       config,
       snapshotLabel || `Variante #${snapshots.length + 1}`
@@ -163,6 +166,7 @@ export function StatistiquesDrawer({ config, totals }: StatistiquesDrawerProps) 
   };
 
   const handleDeleteSnapshot = (id: string) => {
+    haptic('light');
     const next = snapshots.filter((s) => s.id !== id);
     persistSnapshots(next);
     if (selectedSnapshotId === id) {
@@ -187,7 +191,7 @@ export function StatistiquesDrawer({ config, totals }: StatistiquesDrawerProps) 
     snapshots.find((s) => s.id === selectedSnapshotId) ?? snapshots[0] ?? null;
 
   const renderMetricsPane = () => (
-    <div data-testid="studio-statistiques-pane" className="space-y-4 pb-8">
+    <div data-testid="studio-statistiques-pane" className="space-y-4 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
       {/* Cartes de pesée : masse prévue vs masse cochée + alerte objets non pesés (C-03, D-08) */}
       <div className="grid grid-cols-2 gap-2.5">
         <div className="p-3.5 rounded-2xl bg-[var(--hub-surface-card)] border border-[var(--hub-border)] space-y-1">
@@ -305,7 +309,7 @@ export function StatistiquesDrawer({ config, totals }: StatistiquesDrawerProps) 
       : 0;
 
     return (
-      <div data-testid="studio-compare-pane" className="space-y-4 pb-8">
+      <div data-testid="studio-compare-pane" className="space-y-4 pb-8 flex-1 min-h-0 w-full overflow-y-auto overscroll-contain">
         {/* Épinglage d'une variante sans écraser l'état courant (D-11) */}
         <form
           onSubmit={handlePinSnapshot}
@@ -449,5 +453,14 @@ export function StatistiquesDrawer({ config, totals }: StatistiquesDrawerProps) 
     },
   ];
 
-  return <DrawerShell tabs={tabs} activeIndex={tabIndex} onIndexChange={setTabIndex} />;
+  return (
+    <DrawerShell
+      tabs={tabs}
+      activeIndex={tabIndex}
+      onIndexChange={(idx) => {
+        haptic('selection');
+        setTabIndex(idx);
+      }}
+    />
+  );
 }

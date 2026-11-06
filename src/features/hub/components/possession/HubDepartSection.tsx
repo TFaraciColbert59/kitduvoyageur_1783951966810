@@ -40,7 +40,7 @@ export async function HubDepartSection({
     .map((k) => ({ id: k.id, name: k.name }));
 
   return (
-    <div className="md:h-full min-h-[70dvh] flex flex-col min-h-0">
+    <div className="md:h-full flex flex-col min-h-0">
       <Suspense fallback={<DepartCockpitSkeleton />}>
         <div className="hidden lg:block">
           <DepartDesktopView

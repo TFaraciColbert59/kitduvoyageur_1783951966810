@@ -29,8 +29,8 @@ export async function HubKitSection() {
   const history = primaryKit ? await getKitHistory(primaryKit.id) : [];
 
   return (
-    <div className="md:h-full min-h-[70dvh] flex flex-col min-h-0 md:overflow-y-auto no-scrollbar">
-      <div className="md:h-full md:min-h-[70dvh] flex flex-col min-h-0 shrink-0">
+    <div className="md:h-full flex flex-col min-h-0 md:overflow-y-auto no-scrollbar">
+      <div className="md:h-full flex flex-col min-h-0 shrink-0">
         <KitsCockpit
           kits={kits}
           inventory={inventory}

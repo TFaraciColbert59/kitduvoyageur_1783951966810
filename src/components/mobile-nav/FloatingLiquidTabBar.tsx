@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
@@ -45,9 +45,21 @@ export function FloatingLiquidTabBar() {
   const router = useRouter();
   const activeId = getActiveDestinationId(pathname);
   const activeIndex = Math.max(0, DESTINATIONS.findIndex((d) => d.id === activeId));
+  const [hiddenByEvent, setHiddenByEvent] = useState(false);
   const lastCommunityClickRef = useRef<number>(0);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ hide?: boolean }>).detail;
+      if (typeof detail?.hide === 'boolean') {
+        setHiddenByEvent(detail.hide);
+      }
+    };
+    window.addEventListener('lkdv-toggle-bottom-bar', handler);
+    return () => window.removeEventListener('lkdv-toggle-bottom-bar', handler);
+  }, []);
 
   // Restitution du focus au declencheur. Le tiroir « Tes aventures » est un
   // dialog Radix monte ailleurs (HubShell) : sans ce relais, la fermeture
@@ -179,6 +191,8 @@ export function FloatingLiquidTabBar() {
       }
     }
   };
+
+  if (hiddenByEvent) return null;
 
   return (
     <>

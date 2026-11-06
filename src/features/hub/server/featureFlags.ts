@@ -48,7 +48,8 @@ async function readLocalHubCampOverride(): Promise<boolean | undefined> {
     const raw = cookieStore.get('lkv_ff_hub_camp_v1')?.value;
     if (raw === '1' || raw === 'true') return true;
     if (raw === '0' || raw === 'false') return false;
-    return undefined;
+    // Sur simulateur ou appareil mobile local (ex. iPhone / WebView native), activer par défaut
+    return true;
   } catch {
     return undefined;
   }
@@ -63,6 +64,9 @@ async function readLocalHubCampOverride(): Promise<boolean | undefined> {
  */
 export async function currentFeatureFlags(): Promise<FeatureFlags> {
   const localCampOverride = await readLocalHubCampOverride();
+  // QA sur les déploiements de preview Vercel : le camp doit être visible
+  // sans activer le flag global en production (la base n'a pas encore la ligne).
+  const previewCamp = process.env.VERCEL_ENV === 'preview';
 
   try {
     const supabase = await createClient();
@@ -93,7 +97,8 @@ export async function currentFeatureFlags(): Promise<FeatureFlags> {
       hub_collectif_enabled: byId.get('hub_collectif_enabled') ?? false,
       explorer_unified_map_enabled: byId.get('explorer_unified_map_enabled') ?? false,
       explorer_v2_enabled: byId.get('explorer_v2_enabled') ?? false,
-      hub_camp_v1: localCampOverride ?? byId.get('hub_camp_v1') ?? DEFAULT_FLAGS.hub_camp_v1,
+      hub_camp_v1:
+        localCampOverride ?? (previewCamp ? true : byId.get('hub_camp_v1') ?? DEFAULT_FLAGS.hub_camp_v1),
       updatedAt: Date.now(),
       source: 'rpc',
     };
