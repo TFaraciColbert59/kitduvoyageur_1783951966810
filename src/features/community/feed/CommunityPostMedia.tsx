@@ -2,6 +2,7 @@
 
 import { EngagementBar, LikeIcon } from '@/components/social-kit';
 import { DEFAULT_DOUBLE_TAP_WINDOW_MS } from '@/hooks/gestures';
+import Image from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, ImageOff } from 'lucide-react';
 
@@ -56,6 +57,13 @@ export function CommunityPostMedia({
   const [failed, setFailed] = useState(false);
   const clickTimer = useRef<number | null>(null);
   const mediaLabel = alt?.trim() || 'Média de la publication';
+  // Le poster d'une vidéo est une image distante comme les autres : sans
+  // passage par l'optimiseur, il partait en 1600 px / 500 Ko pour une carte
+  // de 393 px. Une seule largeur suffit ici (pas de srcset sur `poster`).
+  const optimizedPoster =
+    poster && !poster.startsWith('/_next/image')
+      ? `/_next/image?url=${encodeURIComponent(poster)}&w=828&q=75`
+      : poster;
 
   useEffect(() => {
     setFailed(false);
@@ -110,14 +118,19 @@ export function CommunityPostMedia({
             </span>
           ) : isVideo ? (
             <video
-              src={media}
-              poster={poster}
+              // Le fil n'a aucun contrôle de lecture : la carte est une
+              // vignette. Sans `src`, le navigateur ne télécharge pas le WebM
+              // (21,6 Mo mesurés sur 190 posts avec `preload=none` seul) ;
+              // le poster optimisé reste affiché. Un futur bouton play devra
+              // poser `src` au geste.
+              src={poster ? undefined : media}
+              poster={optimizedPoster}
               width={1080}
               height={1440}
               muted
               loop
               playsInline
-              preload="auto"
+              preload="none"
               onLoadedMetadata={(event) => {
                 const el = event.currentTarget;
                 if (el.videoWidth && el.videoHeight) onRatio?.(el.videoWidth / el.videoHeight);
@@ -125,14 +138,17 @@ export function CommunityPostMedia({
               onError={() => setFailed(true)}
             />
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element -- média distant du fil
-            <img
+            // Même rendu, mais l'optimiseur sert une largeur adaptée (AVIF/WebP)
+            // au lieu du JPEG 1600 px d'origine. Les dimensions 1080×1440
+            // réservent la place avant chargement (CLS 0).
+            <Image
               src={media}
               alt={mediaLabel}
               width={1080}
               height={1440}
-              loading={priority ? 'eager' : 'lazy'}
-              decoding="async"
+              sizes="(max-width: 544px) calc(100vw - 24px), 496px"
+              priority={priority}
+              loading={priority ? undefined : 'lazy'}
               fetchPriority={priority ? 'high' : 'auto'}
               draggable={false}
               ref={(el) => {

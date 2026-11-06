@@ -218,6 +218,30 @@ const nextConfig = {
         source: '/_next/static/media/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
+      // Assets publics non hachés : ils étaient servis en `max-age=0,
+      // must-revalidate`, donc revalidés à chaque visite (worker MapLibre de
+      // 482 Ko compris). Une journée de fraîcheur puis du stale-while-revalidate
+      // évite ces allers-retours sans figer un ancien asset après déploiement.
+      {
+        source: '/assets/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      {
+        source: '/icons/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      {
+        // Le worker doit rester aligné sur la version de MapLibre : une heure
+        // de fraîcheur, pas un an.
+        source: '/maplibre/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=86400' },
+        ],
+      },
     ];
   },
 

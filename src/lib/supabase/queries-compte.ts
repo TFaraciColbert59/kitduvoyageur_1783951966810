@@ -278,7 +278,9 @@ export async function fetchUserCarnets(userId: string): Promise<CompteCarnet[]> 
   const supabase = createClient();
   const { data } = await supabase
     .from('carnets')
-    .select('*')
+    // Projection des seules colonnes mappées ci-dessous : la carte Compte
+    // n'affiche ni contenu, ni GPS, ni métadonnées de carnet.
+    .select('id, title, visibility, cover_image, likes_count, views_count, comments_count, created_at')
     .eq('author_id', userId)
     .order('created_at', { ascending: false });
 
@@ -320,7 +322,7 @@ export async function fetchUserOrders(userId: string): Promise<CompteCommande[]>
   const supabase = createClient();
   const { data } = await supabase
     .from('orders')
-    .select('*')
+    .select('id, items, order_number, total_eur, status, created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
@@ -383,7 +385,7 @@ export async function fetchUserActivities(userId: string): Promise<CompteActivit
   const supabase = createClient();
   const { data } = await supabase
     .from('activities')
-    .select('*')
+    .select('id, title, created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(20);

@@ -21,6 +21,7 @@ interface FallbackKitPayload {
     cover_image_url: string | null;
     tags: string[] | null;
     created_at: string;
+    isShowcase: boolean;
   };
   journal: {
     birth?: { origin: string; created_at: string; generation: number };
@@ -72,6 +73,7 @@ const FALLBACK_KITS: Record<string, FallbackKitPayload> = {
       cover_image_url: '/assets/images/portrait-1.jpg',
       tags: ['alpinisme', 'glacier', 'bivouac', 'ultralight'],
       created_at: '2026-09-15T08:00:00.000Z',
+      isShowcase: true,
     },
     journal: {
       birth: { origin: 'souche_editoriale', created_at: '2026-09-15T08:00:00.000Z', generation: 1 },
@@ -113,7 +115,7 @@ const FALLBACK_KITS: Record<string, FallbackKitPayload> = {
       total_weight_g: 3200,
       is_public: true,
       is_souche: true,
-      origin: 'configurateur',
+      origin: 'souche_editoriale',
       generation: 2,
       forked_from: null,
       parent_name: 'Souche Fastpack Pyrénées',
@@ -121,9 +123,10 @@ const FALLBACK_KITS: Record<string, FallbackKitPayload> = {
       cover_image_url: '/assets/images/adventure-hiking.jpg',
       tags: ['fastpacking', 'trail', 'pyrenees'],
       created_at: '2026-09-20T08:00:00.000Z',
+      isShowcase: true,
     },
     journal: {
-      birth: { origin: 'configurateur', created_at: '2026-09-20T08:00:00.000Z', generation: 2 },
+      birth: { origin: 'souche_editoriale', created_at: '2026-09-20T08:00:00.000Z', generation: 2 },
       lineage: { fork_count: 17, max_generation: 2 },
       field: { session_count: 19, total_km: 260, total_elevation_gain_m: 14200, regions: [{ region: 'Pyrénées Centrales', sessions: 19 }] },
     },
@@ -155,7 +158,7 @@ const FALLBACK_KITS: Record<string, FallbackKitPayload> = {
       total_weight_g: 4100,
       is_public: true,
       is_souche: true,
-      origin: 'manuel',
+      origin: 'souche_editoriale',
       generation: 1,
       forked_from: null,
       parent_name: null,
@@ -163,9 +166,10 @@ const FALLBACK_KITS: Record<string, FallbackKitPayload> = {
       cover_image_url: '/assets/images/adventure-kayak.jpg',
       tags: ['packraft', 'securite', 'verdon', 'eau-vive'],
       created_at: '2026-09-10T08:00:00.000Z',
+      isShowcase: true,
     },
     journal: {
-      birth: { origin: 'manuel', created_at: '2026-09-10T08:00:00.000Z', generation: 1 },
+      birth: { origin: 'souche_editoriale', created_at: '2026-09-10T08:00:00.000Z', generation: 1 },
       lineage: { fork_count: 22, max_generation: 2 },
       field: { session_count: 31, total_km: 190, total_elevation_gain_m: 800, regions: [{ region: 'Gorges du Verdon', sessions: 22 }, { region: 'Ubaye', sessions: 9 }] },
     },
@@ -205,6 +209,7 @@ const FALLBACK_KITS: Record<string, FallbackKitPayload> = {
       cover_image_url: '/assets/images/community-morning.jpg',
       tags: ['bikepacking', 'gravel', 'tarp', 'aubrac'],
       created_at: '2026-09-25T08:00:00.000Z',
+      isShowcase: true,
     },
     journal: {
       birth: { origin: 'souche_editoriale', created_at: '2026-09-25T08:00:00.000Z', generation: 1 },
@@ -231,56 +236,6 @@ const FALLBACK_KITS: Record<string, FallbackKitPayload> = {
   },
 };
 
-function createGenericFallback(id: string): FallbackKitPayload {
-  const cleanName = id
-    .replace(/^kit-/, '')
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-
-  return {
-    kit: {
-      id,
-      user_id: 'outdoor-community',
-      name: `Kit ${cleanName || 'Aventure LKDV'}`,
-      description: 'Kit de matériel optimisé pour l’expédition outdoor en autonomie.',
-      total_weight_g: 4500,
-      is_public: true,
-      is_souche: true,
-      origin: 'souche_editoriale',
-      generation: 1,
-      forked_from: null,
-      parent_name: null,
-      field_proven_count: 12,
-      cover_image_url: null,
-      tags: ['outdoor', 'aventure', 'bivouac'],
-      created_at: new Date().toISOString(),
-    },
-    journal: {
-      birth: { origin: 'souche_editoriale', created_at: new Date().toISOString(), generation: 1 },
-      lineage: { fork_count: 12, max_generation: 1 },
-      field: { session_count: 12, total_km: 180, total_elevation_gain_m: 6400 },
-    },
-    trust: {
-      propagation_score: 8.8,
-      endurance_score: 9.1,
-      fork_users_unique: 12,
-      sessions_count: 12,
-      season_count: 2,
-      region_count: 1,
-      essential_count: 8,
-      never_used_count: 0,
-      has_min_sessions: true,
-    },
-    survival: [
-      { kit_id: id, item_key: 'Abri bivouac & couchage thermique', product_id: null, kept_count: 12, dropped_count: 0, total_pairs: 12 },
-      { kit_id: id, item_key: 'Système d’hydratation filtrant', product_id: null, kept_count: 11, dropped_count: 1, total_pairs: 12 },
-      { kit_id: id, item_key: 'Trousse de secours & navigation', product_id: null, kept_count: 12, dropped_count: 0, total_pairs: 12 },
-    ],
-    royalty_enabled: false,
-  };
-}
-
 /**
  * GET /api/kits/[id]/sheet
  * Assemble la fiche d'un kit (KitSheet, Lot 5) — l'objet circule, il n'a pas
@@ -290,7 +245,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const { id } = await params;
 
-    // Check pre-configured fallback curated kits
+    // Kits éditoriaux vitrine explicites (souche_editoriale, isShowcase: true)
     if (FALLBACK_KITS[id]) {
       return NextResponse.json(FALLBACK_KITS[id]);
     }
@@ -307,9 +262,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       .eq('id', id)
       .maybeSingle();
 
-    if (error || !kit) {
-      // Graceful fallback: return generated kit so the UI never crashes or shows a blocking error
-      return NextResponse.json(createGenericFallback(id));
+    if (error) {
+      return NextResponse.json(
+        { error: error.message || 'Erreur lors de la lecture du kit' },
+        { status: 500 }
+      );
+    }
+
+    if (!kit) {
+      return NextResponse.json(
+        { error: 'Kit introuvable' },
+        { status: 404 }
+      );
     }
 
     const kitRow = kit as unknown as {
@@ -337,7 +301,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     return NextResponse.json({
-      kit: { ...kitRow, parent_name: parentName },
+      kit: { ...kitRow, parent_name: parentName, isShowcase: false },
       journal,
       trust,
       survival: survival ?? [],

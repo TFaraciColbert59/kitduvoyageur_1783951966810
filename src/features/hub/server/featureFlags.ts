@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { cookies, headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import type { FeatureFlags } from '../engine/hubNature';
 
@@ -11,9 +12,47 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   hub_collectif_enabled: false,
   explorer_unified_map_enabled: false,
   explorer_v2_enabled: false,
+  // Le hub camp est le hub par défaut : la ligne `hub_camp_v1` de public.feature_flags
+  // peut le couper (enabled=false) sans redéploiement. Absente = actif.
+  hub_camp_v1: true,
   updatedAt: 0,
   source: 'fallback',
 };
+
+/**
+ * En environnement local / CI E2E uniquement (jamais sur Vercel production),
+ * permet au cookie `lkv_ff_hub_camp_v1=1|0` de basculer `hub_camp_v1` afin de
+ * vérifier en tests E2E les deux chemins (`flag off` vs `flag on`, critère I-05).
+ */
+async function readLocalHubCampOverride(): Promise<boolean | undefined> {
+  if (process.env.VERCEL_ENV === 'production') {
+    return undefined;
+  }
+  // Essai sur appareil via un serveur local (`LKDV_LOCAL_HUB_CAMP=1 next start`) : la
+  // WebView native n'a pas de moyen de poser le cookie ci-dessous. Opt-in explicite,
+  // inopérant tant que la variable n'est pas définie et jamais honoré en production Vercel.
+  if (process.env.LKDV_LOCAL_HUB_CAMP === '1') return true;
+  if (process.env.LKDV_LOCAL_HUB_CAMP === '0') return false;
+
+  try {
+    const headerStore = await headers();
+    const host = (headerStore.get('host') || '').split(':')[0];
+    const isLocalHost =
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '' ||
+      process.env.NODE_ENV !== 'production';
+    if (!isLocalHost) return undefined;
+
+    const cookieStore = await cookies();
+    const raw = cookieStore.get('lkv_ff_hub_camp_v1')?.value;
+    if (raw === '1' || raw === 'true') return true;
+    if (raw === '0' || raw === 'false') return false;
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * H4.2 — Lit les feature flags via RPC `current_feature_flags()`
@@ -23,6 +62,8 @@ export const DEFAULT_FLAGS: FeatureFlags = {
  * Jamais de throw : repli sur DEFAULT_FLAGS si table absente / RPC manquant.
  */
 export async function currentFeatureFlags(): Promise<FeatureFlags> {
+  const localCampOverride = await readLocalHubCampOverride();
+
   try {
     const supabase = await createClient();
 
@@ -39,7 +80,11 @@ export async function currentFeatureFlags(): Promise<FeatureFlags> {
     }
 
     const { data, error } = await supabase.rpc(rpcName, rpcParams);
-    if (error || !Array.isArray(data)) return DEFAULT_FLAGS;
+    if (error || !Array.isArray(data)) {
+      return localCampOverride === undefined
+        ? DEFAULT_FLAGS
+        : { ...DEFAULT_FLAGS, hub_camp_v1: localCampOverride };
+    }
     const byId = new Map((data as { id: string; enabled: boolean }[]).map((r) => [r.id, r.enabled]));
     return {
       hub_all_enabled: byId.get('hub_all_enabled') ?? true,
@@ -48,10 +93,13 @@ export async function currentFeatureFlags(): Promise<FeatureFlags> {
       hub_collectif_enabled: byId.get('hub_collectif_enabled') ?? false,
       explorer_unified_map_enabled: byId.get('explorer_unified_map_enabled') ?? false,
       explorer_v2_enabled: byId.get('explorer_v2_enabled') ?? false,
+      hub_camp_v1: localCampOverride ?? byId.get('hub_camp_v1') ?? DEFAULT_FLAGS.hub_camp_v1,
       updatedAt: Date.now(),
       source: 'rpc',
     };
   } catch {
-    return DEFAULT_FLAGS;
+    return localCampOverride === undefined
+      ? DEFAULT_FLAGS
+      : { ...DEFAULT_FLAGS, hub_camp_v1: localCampOverride };
   }
 }

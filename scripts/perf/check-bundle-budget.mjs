@@ -29,6 +29,9 @@ const BUDGETS = {
   '/communaute': { segments: ['/layout', '/communaute/page'], maxKb: 460 },
   '/compte': { segments: ['/layout', '/compte/page'], maxKb: 460 },
   '/explorer': { segments: ['/layout', '/explorer/layout', '/explorer/page'], maxKb: 390 },
+  // Kit Studio : layout + page (three embarqué, chargé en dynamique). Plafond provisoire 520 Ko gzip
+  // = socle racine (~350) + 180 Ko pour la page hors three partagé ; à resserrer après la première mesure (T19).
+  '/kit-studio': { segments: ['/layout', '/kit-studio/layout', '/kit-studio/page'], maxKb: 520 },
   // Mise en page racine seule : chargée par toutes les pages.
   '(mise en page racine)': { segments: ['/layout'], maxKb: 350 },
 };

@@ -34,8 +34,8 @@ export interface BaseCampState {
   destination: string;
   departureDate: string | null;
   countdown: TrekCountdown | null;
-  prepScore: number; // 0 - 100
-  prepBreakdown: PrepBreakdown;
+  prepScore: number | null; // 0 - 100 or null if unknown
+  prepBreakdown: PrepBreakdown | null;
   activeAlerts: HubAlert[];
   lastSyncAt: string | null;
 }
@@ -70,7 +70,7 @@ export interface ActionState {
   elevationGainMeters: number;
   distanceTraveledKm: number;
   nextWater: NextWaterPoint | null;
-  hydrationLevelPercent: number; // 0 - 100
+  hydrationLevelPercent: number | null; // 0 - 100 or null if unknown
   batteryLevel: number | null; // 0 - 1
   isUltraSaveActive: boolean;
   sosState: 'idle' | 'arming' | 'triggered' | 'cancelled';

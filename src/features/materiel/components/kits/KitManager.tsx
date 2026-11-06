@@ -13,6 +13,14 @@ const SEASONS = ['printemps', 'ete', 'automne', 'hiver', 'toute_saison'];
 const FIELD_CLASS =
   'min-h-[var(--control-height-md)] rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
+function areSetsEqual(a: Set<string>, b: Set<string>): boolean {
+  if (a.size !== b.size) return false;
+  for (const item of a) {
+    if (!b.has(item)) return false;
+  }
+  return true;
+}
+
 /** W-K — gestion CRUD des kits (créer / éditer / supprimer), connecté Supabase en Liquid Glass. */
 export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory: InventoryItem[] }) {
   const router = useRouter();
@@ -23,14 +31,35 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
   const [season, setSeason] = useState('toute_saison');
   const [description, setDescription] = useState('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [initialItemIds, setInitialItemIds] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
   const openCreate = () => {
-    setEditing(null); setName(''); setSeason('toute_saison'); setDescription(''); setSelectedItems(new Set()); setOpen(true);
+    setEditing(null);
+    setName('');
+    setSeason('toute_saison');
+    setDescription('');
+    setSelectedItems(new Set());
+    setInitialItemIds(new Set());
+    setOpen(true);
   };
   const openEdit = (k: KitListItem) => {
-    setEditing(k); setName(k.name); setSeason(k.season ?? 'toute_saison'); setDescription(k.description ?? '');
-    setSelectedItems(new Set());
+    setEditing(k);
+    setName(k.name);
+    setSeason(k.season ?? 'toute_saison');
+    setDescription(k.description ?? '');
+
+    const seeded = new Set<string>();
+    for (const item of k.items ?? []) {
+      if (item.product_ownership_id) {
+        seeded.add(item.product_ownership_id);
+      } else {
+        const match = inventory.find((inv) => inv.name === item.name);
+        if (match) seeded.add(match.id);
+      }
+    }
+    setSelectedItems(seeded);
+    setInitialItemIds(new Set(seeded));
     setOpen(true);
   };
 
@@ -54,7 +83,22 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
       quantity: 1,
       is_checked: false,
     }));
-    const payload = { name: name.trim(), season, description: description || null, items };
+
+    const itemsChanged = !editing || !areSetsEqual(selectedItems, initialItemIds);
+
+    const payload: Record<string, any> = {
+      name: name.trim(),
+      season,
+      description: description || null,
+    };
+
+    if (itemsChanged) {
+      payload.items = items;
+      if (items.length === 0) {
+        payload.allowEmptyItems = true;
+      }
+    }
+
     try {
       const url = editing ? `/api/materiel/kits/${editing.id}` : '/api/materiel/kits';
       const res = await fetch(url, {
@@ -62,12 +106,15 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Erreur');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Erreur');
+      }
       toast(editing ? 'Kit modifié' : 'Kit créé', 'success');
       setOpen(false);
       router.refresh();
-    } catch {
-      toast('Erreur', 'error');
+    } catch (err: any) {
+      toast(err.message || 'Erreur', 'error');
     } finally {
       setSaving(false);
     }
@@ -88,6 +135,24 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
           + Nouveau kit
         </Button>
       </div>
+
+      {kits && kits.length > 0 && (
+        <ul className="mt-3 flex flex-col gap-2">
+          {kits.map((k) => (
+            <li key={k.id} className="flex items-center justify-between gap-2 rounded-lg border border-[var(--lkv-border)] p-2">
+              <span className="font-medium text-xs sm:text-sm text-[var(--lkv-text-primary)] truncate">{k.name}</span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button size="sm" variant="secondary" onClick={() => openEdit(k)}>
+                  Modifier
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => remove(k)}>
+                  Supprimer
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <Modal open={open} onOpenChange={setOpen} title={editing ? 'Modifier le kit' : 'Nouveau kit'}>
         <div className="flex flex-col gap-3.5">

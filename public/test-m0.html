@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>M0 — Coexistence WebGL Dual-Context (MapLibre + Three.js)</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --lkv-primary: #17402C;
+      --lkv-accent: #3A7353;
+      --lkv-bg: #0D1612;
+      --lkv-surface: rgba(19, 32, 26, 0.85);
+      --lkv-border: rgba(255, 255, 255, 0.12);
+      --lkv-text: #F2F5F3;
+      --lkv-text-dim: #9EB0A6;
+      --lkv-danger: #E05252;
+      --lkv-success: #4CAF50;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--lkv-bg);
+      color: var(--lkv-text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    header#hud {
+      background: var(--lkv-surface);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--lkv-border);
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+    .hud-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .hud-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFF;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-ok { background: rgba(76, 175, 80, 0.2); color: var(--lkv-success); border: 1px solid var(--lkv-success); }
+    .badge-warn { background: rgba(224, 82, 82, 0.2); color: var(--lkv-danger); border: 1px solid var(--lkv-danger); }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      font-size: 11px;
+    }
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--lkv-border);
+      border-radius: 6px;
+      padding: 4px 6px;
+      text-align: center;
+    }
+    .metric-card .val { font-size: 14px; font-weight: 800; color: #FFF; }
+    .metric-card .lbl { font-size: 9px; color: var(--lkv-text-dim); text-transform: uppercase; }
+    main#viewport {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      min-height: 0;
+    }
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      border-bottom: 1px solid var(--lkv-border);
+      min-height: 0;
+    }
+    .canvas-label {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.65);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid var(--lkv-border);
+      pointer-events: none;
+    }
+    footer#controls {
+      background: var(--lkv-surface);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--lkv-border);
+      padding: 8px 12px;
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      justify-content: space-between;
+    }
+    button.btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--lkv-border);
+      color: var(--lkv-text);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    button.btn.active {
+      background: var(--lkv-accent);
+      color: #FFF;
+      border-color: var(--lkv-accent);
+    }
+    button.btn-danger {
+      border-color: rgba(224, 82, 82, 0.4);
+      color: var(--lkv-danger);
+    }
+    #three-test-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header id="hud">
+    <div class="hud-row">
+      <div class="hud-title">
+        <span>Tâche M0 : Dual WebGL</span>
+        <span id="badge-map" class="badge badge-ok">Map: OK</span>
+        <span id="badge-three" class="badge badge-ok">3D: OK</span>
+      </div>
+      <div>
+        <button id="btn-copy" class="btn">📋 Copier JSON</button>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="metric-card"><div class="val" id="val-fps">--</div><div class="lbl">FPS Actuel</div></div>
+      <div class="metric-card"><div class="val" id="val-p95">--</div><div class="lbl">FPS p95</div></div>
+      <div class="metric-card"><div class="val" id="val-dropped">0</div><div class="lbl">Drop (&gt;33ms)</div></div>
+      <div class="metric-card"><div class="val" id="val-losses">0</div><div class="lbl">Pertes Ctx</div></div>
+    </div>
+  </header>
+
+  <main id="viewport">
+    <div id="maplibre-test-container" class="canvas-container">
+      <div class="canvas-label">1. MapLibre GL (Topographie / Relief)</div>
+    </div>
+    <div id="three-test-container" class="canvas-container">
+      <div class="canvas-label">2. Three.js (Kit Bag 3D Mesh)</div>
+    </div>
+  </main>
+
+  <footer id="controls">
+    <div style="display:flex; gap:4px;">
+      <button class="btn active" id="btn-stress-1">Nominal</button>
+      <button class="btn" id="btn-stress-2">Charge Hub</button>
+      <button class="btn" id="btn-stress-3">Stress Limite</button>
+    </div>
+    <button class="btn btn-danger" id="btn-trigger-loss">Perte Ctx</button>
+  </footer>
+
+  <script>
+    // FrameRateTracker implementing sliding 600-frame window for p95 FPS calculation
+    class FrameRateTracker {
+      constructor() {
+        this.frameDeltas = [];
+        this.lastTimestamp = performance.now();
+        this.droppedCount = 0;
+      }
+      tick() {
+        const now = performance.now();
+        const delta = now - this.lastTimestamp;
+        this.lastTimestamp = now;
+        if (delta > 0 && delta < 1000) {
+          this.frameDeltas.push(delta);
+          if (this.frameDeltas.length > 600) this.frameDeltas.shift();
+          if (delta > 33.33) this.droppedCount++;
+        }
+      }
+      getStats() {
+        if (this.frameDeltas.length === 0) return { currentFps: 0, p95Fps: 0, droppedFrames: 0 };
+        const sorted = [...this.frameDeltas].sort((a, b) => a - b);
+        const p95Delta = sorted[Math.floor(sorted.length * 0.95)] || 16.6;
+        const currentDelta = this.frameDeltas[this.frameDeltas.length - 1] || 16.6;
+        return {
+          currentFps: Math.min(120, Math.round(1000 / currentDelta)),
+          p95Fps: Math.min(120, Math.round(1000 / p95Delta)),
+          droppedFrames: this.droppedCount,
+        };
+      }
+    }
+
+    const telemetry = {
+      startTime: Date.now(),
+      events: [],
+      device: navigator.userAgent,
+      contextLosses: 0,
+      logEvent(name, data) {
+        this.events.push({ time: Date.now() - this.startTime, name, data });
+      }
+    };
+
+    const tracker = new FrameRateTracker();
+    let stressLevel = 1;
+    let threeMeshes = [];
+    let threeRenderer, threeScene, threeCamera;
+    let mapInstance = null;
+
+    // 1. Initialize MapLibre GL
+    function initMapLibre() {
+      const container = document.getElementById('maplibre-test-container');
+      try {
+        if (typeof maplibregl === 'undefined') {
+          container.innerHTML += '<div style="color:#FFF;padding:20px;">MapLibre GL script unavailable (offline).</div>';
+          return;
+        }
+        mapInstance = new maplibregl.Map({
+          container: 'maplibre-test-container',
+          style: {
+            version: 8,
+            sources: {
+              'osm': {
+                type: 'raster',
+                tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                tileSize: 256,
+                attribution: '© OpenStreetMap contributors',
+              }
+            },
+            layers: [{ id: 'osm-layer', type: 'raster', source: 'osm', minzoom: 0, maxzoom: 19 }]
+          },
+          center: [6.865, 45.832], // Mont-Blanc
+          zoom: 12,
+          pitch: 45,
+          bearing: 0,
+          interactive: true,
+        });
+
+        const canvas = mapInstance.getCanvas();
+        canvas.addEventListener('webglcontextlost', (e) => {
+          e.preventDefault();
+          telemetry.contextLosses++;
+          document.getElementById('badge-map').textContent = 'Map: LOST';
+          document.getElementById('badge-map').className = 'badge badge-warn';
+          telemetry.logEvent('MAP_CONTEXT_LOST', { timestamp: performance.now() });
+        });
+        canvas.addEventListener('webglcontextrestored', () => {
+          document.getElementById('badge-map').textContent = 'Map: OK';
+          document.getElementById('badge-map').className = 'badge badge-ok';
+          telemetry.logEvent('MAP_CONTEXT_RESTORED', { timestamp: performance.now() });
+        });
+      } catch (err) {
+        console.error('MapLibre init error', err);
+      }
+    }
+
+    // 2. Initialize Three.js or WebGL2 Fallback
+    function initThree() {
+      const container = document.getElementById('three-test-container');
+      const width = container.clientWidth || 390;
+      const height = container.clientHeight || 400;
+
+      if (typeof THREE !== 'undefined') {
+        threeScene = new THREE.Scene();
+        threeCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+        threeCamera.position.set(0, 1, 4);
+
+        threeRenderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        threeRenderer.setSize(width, height);
+        threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
+        container.appendChild(threeRenderer.domElement);
+
+        const canvas = threeRenderer.domElement;
+        canvas.addEventListener('webglcontextlost', (e) => {
+          e.preventDefault();
+          telemetry.contextLosses++;
+          document.getElementById('badge-three').textContent = '3D: LOST';
+          document.getElementById('badge-three').className = 'badge badge-warn';
+          telemetry.logEvent('THREE_CONTEXT_LOST', { timestamp: performance.now() });
+        });
+        canvas.addEventListener('webglcontextrestored', () => {
+          document.getElementById('badge-three').textContent = '3D: OK';
+          document.getElementById('badge-three').className = 'badge badge-ok';
+          telemetry.logEvent('THREE_CONTEXT_RESTORED', { timestamp: performance.now() });
+        });
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        threeScene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(2, 4, 3);
+        threeScene.add(dirLight);
+
+        rebuildMeshes();
+      } else {
+        // Direct WebGL2 fallback if Three CDN unavailable
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        container.appendChild(canvas);
+        const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+        if (gl) {
+          gl.clearColor(0.08, 0.15, 0.11, 1.0);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+        }
+      }
+    }
+
+    function rebuildMeshes() {
+      if (!threeScene) return;
+      threeMeshes.forEach((m) => threeScene.remove(m));
+      threeMeshes = [];
+
+      const count = stressLevel === 1 ? 1 : stressLevel === 2 ? 3 : 10;
+      const geometry = new THREE.TorusKnotGeometry(0.7, 0.22, 100, 16);
+      const material = new THREE.MeshStandardMaterial({
+        color: 0x2A7353,
+        roughness: 0.35,
+        metalness: 0.2,
+      });
+
+      for (let i = 0; i < count; i++) {
+        const mesh = new THREE.Mesh(geometry, material);
+        if (count > 1) {
+          mesh.position.x = (i - (count - 1) / 2) * 1.4;
+          mesh.scale.set(0.6, 0.6, 0.6);
+        }
+        threeScene.add(mesh);
+        threeMeshes.push(mesh);
+      }
+    }
+
+    // 3. Render and Animation Loop
+    function renderLoop() {
+      tracker.tick();
+
+      // Animate MapLibre
+      if (mapInstance && mapInstance.loaded()) {
+        const currentBearing = mapInstance.getBearing();
+        mapInstance.setBearing((currentBearing + 0.3) % 360);
+        const pitch = 45 + Math.sin(Date.now() / 1500) * 10;
+        mapInstance.setPitch(pitch);
+      }
+
+      // Animate Three.js
+      if (threeRenderer && threeScene && threeCamera) {
+        threeMeshes.forEach((m, idx) => {
+          m.rotation.x += 0.01 * (idx + 1);
+          m.rotation.y += 0.015;
+        });
+        threeRenderer.render(threeScene, threeCamera);
+      }
+
+      // Update HUD metrics
+      const stats = tracker.getStats();
+      document.getElementById('val-fps').textContent = stats.currentFps;
+      document.getElementById('val-p95').textContent = stats.p95Fps;
+      document.getElementById('val-dropped').textContent = stats.droppedFrames;
+      document.getElementById('val-losses').textContent = telemetry.contextLosses;
+
+      requestAnimationFrame(renderLoop);
+    }
+
+    // 4. UI Controls
+    document.getElementById('btn-stress-1').onclick = () => {
+      stressLevel = 1;
+      updateActiveBtn('btn-stress-1');
+      rebuildMeshes();
+    };
+    document.getElementById('btn-stress-2').onclick = () => {
+      stressLevel = 2;
+      updateActiveBtn('btn-stress-2');
+      rebuildMeshes();
+    };
+    document.getElementById('btn-stress-3').onclick = () => {
+      stressLevel = 3;
+      updateActiveBtn('btn-stress-3');
+      rebuildMeshes();
+    };
+
+    function updateActiveBtn(id) {
+      ['btn-stress-1', 'btn-stress-2', 'btn-stress-3'].forEach((b) => {
+        document.getElementById(b).classList.toggle('active', b === id);
+      });
+    }
+
+    document.getElementById('btn-trigger-loss').onclick = () => {
+      if (threeRenderer) {
+        const gl = threeRenderer.getContext();
+        const ext = gl.getExtension('WEBGL_lose_context');
+        if (ext) {
+          ext.loseContext();
+          setTimeout(() => ext.restoreContext(), 2000);
+        }
+      }
+    };
+
+    document.getElementById('btn-copy').onclick = () => {
+      const stats = tracker.getStats();
+      const payload = {
+        device: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        stressLevel,
+        currentFps: stats.currentFps,
+        p95Fps: stats.p95Fps,
+        droppedFrames: stats.droppedFrames,
+        contextLosses: telemetry.contextLosses,
+        events: telemetry.events,
+      };
+      navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
+        .then(() => alert('Télémétrie copiée dans le presse-papier !'))
+        .catch(() => alert('Copie échouée'));
+    };
+
+    window.addEventListener('resize', () => {
+      const container = document.getElementById('three-test-container');
+      if (threeRenderer && threeCamera && container) {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        threeCamera.aspect = w / h;
+        threeCamera.updateProjectionMatrix();
+        threeRenderer.setSize(w, h);
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initMapLibre();
+      initThree();
+      requestAnimationFrame(renderLoop);
+    });
+  </script>
+</body>
+</html>

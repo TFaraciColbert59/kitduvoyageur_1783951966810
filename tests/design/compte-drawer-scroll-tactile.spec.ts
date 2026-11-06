@@ -32,7 +32,7 @@ describe('Compte — scroll tactile des rails dans le pager', () => {
   });
 
   it('délègue au scroller détecté par data-hscroll', () => {
-    const pager = read('src/components/compte/drawer/LensPager.tsx');
+    const pager = read('src/components/ui/drawer/LensPager.tsx');
     expect(pager).toContain('[data-hscroll]');
     expect(pager).toContain("touchAction = 'auto'");
   });

@@ -35,6 +35,8 @@ export default defineConfig({
   testMatch: [
     'scripts/e2e/*.spec.ts',
     'scripts/e2e/**/*.spec.ts',
+    // Kit Studio v2 (T19) : parcours mobile dédiés.
+    'tests/e2e-kit-studio/*.spec.ts',
     'tests/e2e/compte-drawer-v2.spec.ts',
     'tests/e2e/community-feed-actions.spec.ts',
     'tests/e2e/compte-map.spec.ts',

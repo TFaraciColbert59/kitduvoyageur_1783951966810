@@ -46,15 +46,19 @@ export function indexPublicProfiles(
 
 export async function fetchPublicProfilesWith(
   supabase: SupabaseClient,
-  ids: Array<string | null | undefined>
+  ids: Array<string | null | undefined>,
+  signal?: AbortSignal
 ): Promise<Record<string, PublicProfile>> {
   const wanted = limitPublicProfileIds(ids);
   if (wanted.length === 0) return {};
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from(PUBLIC_PROFILES_VIEW)
       .select(PUBLIC_PROFILES_SELECT)
       .in('id', wanted);
+    // Le fil peut annuler sa page : le profil n'a plus de raison de courir.
+    if (signal) query = query.abortSignal(signal);
+    const { data, error } = await query;
     if (error) return {};
     return indexPublicProfiles(data as unknown as PublicProfile[] | null);
   } catch {

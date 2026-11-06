@@ -3,6 +3,7 @@ import { getHubAdventureData, buildHubCounts, getHubTripStats } from '@/features
 import { getAdventureIntelligence } from '@/features/hub/server/getAdventureIntelligence';
 import { deriveHubProfile, type HubSectionId } from '@/features/hub/engine/hubProfileEngine';
 import { HubShell } from '@/features/hub/components/HubShell';
+import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
 import { AdventureIntelligenceHub } from '@/features/adventure-intelligence/ui';
 import { ItineraryAdventureCockpit } from '@/features/hub/components/mobile/itinerary/ItineraryAdventureCockpit';
 import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
@@ -30,7 +31,21 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
 }
 
 async function HubLayoutAsync({ children }: { children: React.ReactNode }) {
-  const data = await traceStage('layout.adventure', () => getHubAdventureData());
+  const [flags, data] = await Promise.all([
+    currentFeatureFlags(),
+    traceStage('layout.adventure', () => getHubAdventureData()),
+  ]);
+
+  if (flags.hub_camp_v1) {
+    return (
+      <TripAffiliateProvider
+        value={{ links: data.affiliateLinks, bookingByStepId: data.bookingByStepId }}
+      >
+        {children}
+      </TripAffiliateProvider>
+    );
+  }
+
   // Données décoratives : jamais bloquantes pour le rendu du hub (un incident
   // sur l'intelligence ou les stats ne doit pas blanchir la page).
   const intelligence = await traceStage('layout.intelligence', () =>

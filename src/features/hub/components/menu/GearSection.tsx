@@ -41,17 +41,15 @@ export async function GearSection({
   itemImages?: TripItemImage[];
   availableProducts?: ShopProductReference[];
 }) {
-  const [allKits, alerts, loans, inventory] = await Promise.all([
+  const [kitsResult, alerts, loans, inventory] = await Promise.all([
     getKits(),
     getAlerts(),
     getLoans(),
     getInventory(),
   ]);
 
-  // Utilisateur connecté : uniquement les vrais kits (les ids showcase ne
-  // sont pas des UUID — jamais de vitrine pour un kit de sortie).
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const realKits = allKits.filter((k) => !k.is_trashed && UUID_RE.test(k.id));
+  const allKits = kitsResult.kits;
+  const realKits = allKits.filter((k) => !k.is_trashed && !k.isShowcase);
 
   // Ordre de repli : trip.kit_id → favori → plus récemment mis à jour
   // (getKits trie déjà par updated_at desc).

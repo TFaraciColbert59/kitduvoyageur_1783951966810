@@ -1,0 +1,196 @@
+{
+  "schema": 1,
+  "modelId": "daypack-22",
+  "label": "Sac à dos journée 22 L",
+  "generator": "generate-bag.mjs",
+  "generatedBy": "procedural",
+  "license": "LKDV — généré par code, aucun asset tiers",
+  "units": "meters",
+  "origin": "centre du sol du sac (y=0 au fond)",
+  "capabilities": {
+    "rotatable": true,
+    "openable": true,
+    "hasInterior": true,
+    "customizableParts": [
+      "body",
+      "interior",
+      "lid",
+      "lid-zip",
+      "front-pocket",
+      "side-pocket-l",
+      "side-pocket-r",
+      "shoulder-strap-l",
+      "shoulder-strap-r",
+      "compression-strap-l-1",
+      "compression-strap-r-1"
+    ],
+    "badgeAnchors": [
+      "badge-body-front",
+      "badge-lid",
+      "badge-front-pocket"
+    ],
+    "attachmentPoints": [
+      "attach-top",
+      "attach-bottom",
+      "attach-side-l",
+      "attach-side-r"
+    ]
+  },
+  "hasHinge": true,
+  "declaredCapacityL": 22,
+  "boundingBoxM": {
+    "w": 0.416,
+    "h": 0.53,
+    "d": 0.3369
+  },
+  "slots": [
+    {
+      "id": "interior-bottom",
+      "kind": "interior",
+      "capacityL": 9.9,
+      "maxItems": null,
+      "anchor": [
+        0,
+        0.1012,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "interior-top",
+      "kind": "interior",
+      "capacityL": 7.699999999999999,
+      "maxItems": null,
+      "anchor": [
+        0,
+        0.2852,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "front-pocket",
+      "kind": "pocket",
+      "capacityL": 1.3199999999999998,
+      "maxItems": 6,
+      "anchor": [
+        0,
+        0.138,
+        0.14
+      ],
+      "normal": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "side-pocket-l",
+      "kind": "pocket",
+      "capacityL": 0.88,
+      "maxItems": 2,
+      "anchor": [
+        -0.19,
+        0.11960000000000001,
+        0
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "side-pocket-r",
+      "kind": "pocket",
+      "capacityL": 0.88,
+      "maxItems": 2,
+      "anchor": [
+        0.19,
+        0.11960000000000001,
+        0
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "attach-top",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0,
+        0.48000000000000004,
+        -0.018
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "attach-bottom",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0,
+        0.02,
+        0
+      ],
+      "normal": [
+        0,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "attach-side-l",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        -0.17,
+        0.23,
+        0
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "attach-side-r",
+      "kind": "attachment",
+      "capacityL": null,
+      "maxItems": 2,
+      "anchor": [
+        0.17,
+        0.23,
+        0
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "budget": {
+    "triangles": 4020,
+    "fileBytes": 298780
+  }
+}

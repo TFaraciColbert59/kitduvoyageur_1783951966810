@@ -63,7 +63,9 @@ const STATUS_BAR_THEMES: Record<StatusBarTheme, { dark: boolean; color: string }
 /** Le thème de la page : le Compas (et ses sous-pages) a le sien, rien d'autre. */
 export function statusBarThemeForPath(pathname: string | null | undefined): StatusBarTheme {
   if (!pathname) return "default";
-  return pathname === "/compas" || pathname.startsWith("/compas/") ? "compas" : "default";
+  // Le Kit Studio est clair uniquement, comme le Compas : même barre d'état.
+  const light = ["/compas", "/kit-studio"].some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  return light ? "compas" : "default";
 }
 
 /** Un échec d'une étape (fond sur iOS, plugin absent) ne bloque ni les autres ni la suite. */

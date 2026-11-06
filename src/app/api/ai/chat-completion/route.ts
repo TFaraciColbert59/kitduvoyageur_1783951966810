@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { completion } from '@rocketnew/llm-sdk';
 import { createClient } from '@/lib/supabase/server';
 import { askAI } from '@/lib/ai/askAI';
-import { resolveAiMode, derivePromptAndSystem, buildSsePayload } from '@/lib/ai/requestMode';
+import { askAIStream } from '@/lib/ai/askAIStream';
+import { resolveAiMode, derivePromptAndSystem } from '@/lib/ai/requestMode';
 import { rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -37,24 +38,6 @@ function formatErrorResponse(error: unknown, provider?: string) {
     details: error instanceof Error ? error.message : String(error),
     statusCode,
   };
-}
-
-function sseResponse(payload: string): NextResponse {
-  const encoder = new TextEncoder();
-  const readable = new ReadableStream({
-    start(controller) {
-      controller.enqueue(encoder.encode(payload));
-      controller.close();
-    },
-  });
-
-  return new NextResponse(readable, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
-  });
 }
 
 export async function POST(request: NextRequest) {
@@ -179,7 +162,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await askAI({
+    const aiRequest = {
       feature: 'chat-completion',
       tier: body.task,
       system: derived.system,
@@ -188,13 +171,67 @@ export async function POST(request: NextRequest) {
       reasoningBudget: body.reasoningBudget,
       cacheTtlSeconds: 0, // chat = personnel : pas de cache
       userId,
-    });
+    } as const;
 
     if (body.stream) {
-      // Contrat SSE conservé pour les clients existants (réponse complète en un chunk).
-      return sseResponse(buildSsePayload(result.text, result.degraded));
+      // Flux réel provider → port IA → HTTP → client. Les précontrôles
+      // (auth, quota, plafond du site, feature, modèle autorisé) sont ceux
+      // d'askAIStream, pas ceux d'une route provider parallèle.
+      const streamed = await askAIStream({ ...aiRequest, signal: request.signal });
+      const encoder = new TextEncoder();
+      const readable = new ReadableStream({
+        async start(controller) {
+          const send = (payload: unknown) => {
+            if (request.signal.aborted) return;
+            try {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+            } catch {
+              /* le client a fermé le flux */
+            }
+          };
+          send({ type: 'start' });
+          try {
+            for await (const delta of streamed.stream) {
+              send({ type: 'chunk', chunk: { choices: [{ delta: { content: delta } }] } });
+            }
+            send({
+              type: 'done',
+              model: streamed.model,
+              provider: streamed.provider,
+              degraded: streamed.degraded,
+              cached: streamed.cached,
+              failureReason: streamed.failureReason,
+            });
+          } catch (streamError) {
+            console.error('API Route stream error:', {
+              feature: 'chat-completion',
+              details: streamError instanceof Error ? streamError.message : String(streamError),
+            });
+            send({ type: 'error', error: 'AI stream failed', details: 'flux_interrompu' });
+          } finally {
+            try {
+              controller.close();
+            } catch {
+              /* déjà fermé */
+            }
+          }
+        },
+        cancel() {
+          // `request.signal` est déjà liée à la déconnexion ; le générateur
+          // provider est annulé par son `finally`.
+        },
+      });
+      return new NextResponse(readable, {
+        headers: {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        },
+      });
     }
 
+    const result = await askAI(aiRequest);
     return NextResponse.json({
       text: result.text,
       model: result.model,
