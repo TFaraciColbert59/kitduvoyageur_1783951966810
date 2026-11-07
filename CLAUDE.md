@@ -162,6 +162,9 @@ Doctrine : « rien ne s'affiche sans preuve terrain » ; un rôle auto-déclaré
 - Moteurs purs (TDD, déterministes) : `features/trips/engine/` (`tripWizardEngine`, `plannerEngine` Naismith + Haversine, `contextualKitEngine` altitude > 2400 m, `budgetEngine` `simplifyDebts`, `exportEngine`, `carnetConversionEngine`), `features/places/engine/` (`ethicalBlurring` ~500 m, `placeScoreEngine`), `features/affiliation/engine/affiliateEngine.ts` (anti-open-redirect, hachage RGPD, HMAC).
 - Conformité DGCCRF : composant `<AffiliateDisclosure />` obligatoire et `rel="sponsored nofollow"`.
 
+### Carnets de bord (refonte en cours)
+- Référence : `docs/carnets/PROPOSITION-UI.md` (66 propositions, état du code, maquette `docs/carnets/maquette-carnets-de-bord.html`). Décision de Tony du 07/11/2026 : hiérarchie **Visiteur** (constate) / **Participant** (modifie, via un crayon `.gbtn` en haut à gauche, style de la cloche) ; un carnet est toujours rattaché à un groupe ou à un voyageur seul, suivi des participants sur les deux.
+
 ### Compte, panier, SEO
 - Compte : `useAuth()` + `fetchDashboardData(user.id)` (`src/lib/supabase/queries-compte.ts` : `fetchFullProfile`, `fetchUserCarnets`, `fetchUserClubs`, `fetchUserOrders`, `fetchUserBadges`, `fetchUserActivities`, `fetchNextTrip`, `fetchDashboardData`). Pas de données factices ; données optionnelles gardées (`data?.field`).
 - Panier : `addToCart(item, quantity = 1)`, `updateQuantity(id, quantity)`, `removeFromCart(id)`, `getCartTotals(items)` → `{ totalItems, totalPriceEur, totalWeightG, savedEur }`.
