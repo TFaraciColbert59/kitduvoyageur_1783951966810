@@ -22,7 +22,6 @@ import {
   TrendingUp,
   Timer,
   Wallet,
-  Heart,
   Radio,
   Share2,
   ChevronLeft,
@@ -33,6 +32,7 @@ import {
   Send,
   Trash2,
 } from 'lucide-react';
+import LikeIcon from '@/components/social-kit/LikeIcon';
 import { SlotShell, type SlotId, type SlotLens } from '@/components/compte/drawer/SlotShell';
 import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
 import type {
@@ -188,7 +188,7 @@ export function CarnetDrawerV2({
       ],
       equipage: [
         { id: 'participants', label: 'Participants', icon: <Users size={15} /> },
-        { id: 'reactions', label: 'Réactions', icon: <Heart size={15} /> },
+        { id: 'reactions', label: 'Réactions', icon: <LikeIcon size={15} /> },
         { id: 'suivre', label: 'Suivre', icon: <Radio size={15} /> },
       ],
     };
@@ -1143,7 +1143,7 @@ export function CarnetDrawerV2({
                   }}
                   onClick={reactions.toggleLike}
                 >
-                  <Heart size={15} fill={reactions.liked ? '#fff' : 'none'} />
+                  <LikeIcon size={15} active={reactions.liked} />
                   <span>{reactions.liked ? 'Aimé' : 'J’aime'}</span>
                 </button>
               </div>

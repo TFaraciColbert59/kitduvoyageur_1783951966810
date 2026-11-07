@@ -197,7 +197,7 @@ export const config = {
     '/compte/:path*',
     '/pays',
     '/pays/:path*',
-    // Connexion obligatoire : pages de l'app (APP_ROUTES).
+    // Connexion obligatoire : pages de l’app (APP_ROUTES).
     '/hub',
     '/hub/:path*',
     '/communaute',
