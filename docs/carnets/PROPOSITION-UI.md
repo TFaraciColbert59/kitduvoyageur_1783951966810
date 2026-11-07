@@ -143,3 +143,25 @@ Ce qui rend la page sûre, accessible et cohérente avec le design système.
 - Côté UI : `detail.viewerRole` remplace `isOwner` ; crayon `.gbtn` en haut à gauche si `viewerRole !== 'visitor'` ; le crayon bascule la fiche en mode édition (chaque carte montre ses actions) ; l'auteur garde en plus l'onglet Gérer (rôles, visibilité, suppression).
 - Ce que voit le visiteur : réglé par l'owner par chapitre (budget et position différée privés par défaut ; documents jamais).
 - Suivi croisé : la fiche du groupe liste ses carnets et l'activité de chaque participant ; le carnet affiche les participants du groupe avec leurs contributions (moments par personne).
+
+## 5. Architecture de la fiche (décision de Tony, 07/11/2026)
+
+**Principe** : on garde l'unique fiche existante `/carnets/[id]` (`CarnetScreen`). Pas de nouvelle page.
+- **En haut, la carte qui glisse** : page 0 = Résumé global, puis J1, J2… (`useDaySwipe`, déjà en place). Seule la partie haute change.
+- **En bas, la carte 3D fixe** (`CarnetMapCard` → `CompteMap`) : elle ne bouge jamais de place ; seuls ses éléments changent pour concorder avec la page du haut. Résumé = tracé entier + repères de nuit ; jour n = tracé entier atténué, tracé du jour en avant, départ/arrivée, caméra cadrée sur le jour.
+- **Un seul état de jour**, porté par `CarnetScreen` : il survit à l'ouverture d'un tiroir ; carte, tiroirs et capsule lisent la même valeur. Glisser à l'horizontale = changer de jour, partout (y compris dans un tiroir) ; changer de sous-tiroir = un toucher.
+
+**Capsule du bas de la carte : 5 tiroirs (icônes seules), chacun avec sa sous-capsule 30 px.** Sur le Résumé un tiroir montre tout le voyage ; sur un jour, uniquement ce jour.
+
+| Tiroir | Sous-tiroirs | Résumé | Jour |
+|---|---|---|---|
+| Fil de bord | Moments · Médias · Rencontres · Nature | carte postale de chaque jour | frise horaire du jour |
+| Route | Étapes · Altitude · Nuit · Météo et ciel | toutes les étapes + GPX | étape du jour ; toucher une étape fait voler la carte |
+| Sac | Kit · Verdicts · Poids | kit entier, « Reprendre ce kit » | objets cités ce jour |
+| Chiffres | Distance · Dénivelé · Durée · Budget | barres par jour | valeurs du jour vs moyenne |
+| Équipage | Participants · J'aime · Commentaires · Suivre | tout l'équipage | qui était là, échanges du jour |
+
+- **Crayon** `.gbtn` 38 px en haut à gauche (style de la cloche), participants seulement : bascule la fiche en mode modification.
+- **Menu ···** : Enregistrer, Partager, Copier le lien, Signaler ; propriétaire : Gérer (rôles, visibilité, export, suppression). La page Gérer et le volet Partage quittent le carrousel.
+- **Visiteur** : un sous-tiroir non autorisé est masqué (pas grisé) ; documents jamais, budget et position privés par défaut.
+- Correspondance avec l'existant : pages du carrousel Posts/Parcours/Étapes/Matériel/Nature/J'aime/Commentaires/Gérer et tiroir Stats/Partage → redistribués dans les 5 tiroirs ci-dessus.
