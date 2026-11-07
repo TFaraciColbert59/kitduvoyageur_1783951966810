@@ -1,0 +1,27 @@
+Banc de parité — référence contre elle-même (KS_APP_URL=reference)
+Date : 2026-11-05 · Chromium SwiftShader · Playwright 1.63.0 · three 0.149.0
+
+  ✓  1 tests/kit-studio/parity.spec.ts:77:1 › moteur : valeurs de référence identiques (8.5s)
+  ✓  2 tests/kit-studio/parity.spec.ts:113:1 › scénario : textes et images identiques (10.3m)
+  2 passed (10.4m)
+
+Écarts d'image par étape :
+01-accueil	0.00 %
+02-zone-principal	0.01 %
+03-bilan	0.00 %
+04-bilan-pret	0.00 %
+05-remplir-carte	0.01 %
+06-retour	0.00 %
+07-inventaire	0.00 %
+08-recherche	0.00 %
+09-fiche-objet	0.00 %
+10-menu-objet	0.00 %
+11-apparence	0.00 %
+12-modules	0.00 %
+13-ajout-modules	0.00 %
+14-corps-bloque	0.00 %
+15-corps-28	0.00 %
+16-commande	0.00 %
+17-precommande	0.00 %
+18-confirmation	0.00 %
+19-inventaire-one	0.00 %
