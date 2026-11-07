@@ -82,13 +82,20 @@ export interface MomentRow {
 export interface KitItemRow {
   id: string;
   nom: string | null;
-  detail: string | null;
-  poids_g: number | null;
-  couleur_tag: string | null;
-  sort_order: number | null;
+  detail?: string | null;
+  poids_g?: number | null;
+  couleur_tag?: string | null;
+  sort_order?: number | null;
   verdict?: string | null;
   verdict_note?: string | null;
   jours_utilises?: number[] | null;
+  verdict_status?: string | null;
+  verdict_notes?: string | null;
+  verdict_rating?: number | null;
+  rating?: number | null;
+  categorie?: string | null;
+  quantite?: number | null;
+  porteur_label?: string | null;
 }
 
 export interface AuthorRow {
@@ -391,8 +398,9 @@ export interface BuildCarnetDetailInput {
    * (`pickCarnetTrace`). Absente, on retombe sur la trace de `hikeSession`.
    */
   trace?: unknown | null;
-  etapes: EtapeRow[];
-  hebergements: HebergementRow[];
+  etapes?: EtapeRow[];
+  steps?: CarnetStepRow[];
+  hebergements?: HebergementRow[];
   moments: MomentRow[];
   kitItems: KitItemRow[];
   viewerId: string | null;
