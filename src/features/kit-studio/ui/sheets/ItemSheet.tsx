@@ -1,9 +1,10 @@
 'use client';
 import { useState, type CSSProperties } from 'react';
-import { FAMILIES, ZONE_NAMES } from '../../domain/catalog';
+import { ZONE_NAMES } from '../../domain/catalog';
 import { formatEuro, formatLitres, formatWeight } from '../../domain/format';
 import { unpack } from '../../domain/packing';
 import { RAW_MATERIALS } from '../../domain/palette';
+import { studioData } from '../../domain/studioData';
 import { currentKit, getItem, zoneOf } from '../../domain/state';
 import { addPlanned, altsFor, swapItem } from '../../domain/swap';
 import { effG } from '../../domain/totals';
@@ -56,7 +57,7 @@ export function ItemSheet({ state, itemId, page, onPage, onAction, onBack }: Ite
   const k = currentKit(state);
   const z = zoneOf(state, itemId);
   const ex = it as { planned?: 'shop' | 'rent'; eur?: number; day?: number };
-  const fam = FAMILIES.find((f) => f.id === it.fam)?.n ?? '';
+  const fam = studioData().families.find((f) => f.id === it.fam)?.n ?? '';
   const color = RAW_MATERIALS[it.color];
   const fg = onSwatch(color);
   const alts = z ? altsFor(state, itemId) : [];

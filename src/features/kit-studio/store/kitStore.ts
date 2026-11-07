@@ -1,6 +1,7 @@
 // Store du kit (zustand, sans middleware persist) : état KitState + actions qui appellent le domaine PUR.
 // Chaque action renvoie le résultat du domaine pour que l'UI réagisse (haptique, clignotement) sans toast.
-// Sauvegarde différée de 300 ms via le repository ; annulation par instantanés (20 max).
+// Sauvegarde différée de 600 ms (local + serveur si un handler est injecté) ; annulation par instantanés (20 max).
+// Échec d'écriture serveur : retour à l'état enregistré + HUD « Non enregistré · réessaie » (sync='error').
 import { create } from 'zustand';
 import { addPlanned, swapItem } from '../domain/swap';
 import { autopack, pack, setBag, unpack } from '../domain/packing';
@@ -8,21 +9,31 @@ import type { PackResult } from '../domain/packing';
 import { confirmOrder, toOrder } from '../domain/order';
 import { toggleModule } from '../domain/attach';
 import { setMod } from '../domain/parts';
-import { createInitialState, currentKit } from '../domain/state';
+import { createInitialState, currentKit, registryHasKit } from '../domain/state';
+import { isDemoStudioData } from '../domain/studioData';
 import type { Alternative, BagId, KitId, ModuleId, PartNameId, ZoneId } from '../domain/catalog';
 import type { AnyItemId, KitState } from '../domain/types';
 import * as repo from '../services/kitRepository';
+import { getStudioSyncHandler } from '../services/studioSync';
 import { setPartOption } from './partOption';
 import type { OptionCat, OptionResult } from './partOption';
 
-export const SAVE_DELAY_MS = 300;
+export const SAVE_DELAY_MS = 600;
 export const UNDO_MAX = 20;
+
+/** État d'enregistrement affiché par le HUD du studio. */
+export type SyncStatus = 'idle' | 'saving' | 'error';
 
 export interface ActionResult { readonly ok: boolean; readonly reason?: string }
 
 interface KitStore {
   readonly kit: KitState;
   readonly hydrated: boolean;
+  /** Dernier état effectivement enregistré (local + serveur) : cible du retour arrière. */
+  readonly lastSaved: KitState;
+  /** État optimiste dont l'écriture serveur a échoué (rejoué par `retry`). */
+  readonly failed: KitState | null;
+  readonly sync: SyncStatus;
   readonly undoStack: readonly KitState[];
   readonly canUndo: boolean;
 
@@ -32,6 +43,8 @@ interface KitStore {
   undo(): boolean;
   /** Écrit tout de suite l'état en attente (fin de session, passage en arrière-plan). */
   flush(): Promise<void>;
+  /** Rejoue l'écriture optimiste qui a échoué (HUD « réessaie »). */
+  retry(): Promise<boolean>;
 
   pack(id: AnyItemId, zone: ZoneId): PackResult;
   unpack(id: AnyItemId): ActionResult;
@@ -48,15 +61,45 @@ interface KitStore {
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 
-function scheduleSave(get: () => KitStore): void {
+type Get = () => KitStore;
+type Set = (partial: Partial<KitStore>) => void;
+
+/** Écrit l'état courant : d'abord le miroir local (hors-ligne), puis les écritures serveur. */
+async function persist(get: Get, set: Set): Promise<void> {
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
+  const target = get().kit;
+  set({ sync: 'saving' });
+  try {
+    await repo.save(target);
+    const handler = getStudioSyncHandler();
+    if (handler) await handler(get().lastSaved, target);
+    set({ lastSaved: target, failed: null, sync: 'idle' });
+  } catch {
+    // Échec réseau/RLS : l'écran revient à l'état réellement enregistré, la tentative est gardée
+    // pour que « réessaie » la rejoue. Aucun état incohérent ne reste affiché.
+    set({ kit: get().lastSaved, failed: target, sync: 'error', undoStack: [], canUndo: false });
+  }
+}
+
+function scheduleSave(get: Get, set: Set): void {
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => {
     timer = null;
-    void repo.save(get().kit);
+    void persist(get, set);
   }, SAVE_DELAY_MS);
 }
 
+/** L'état local est-il compatible avec le registre de données actif ? */
+function compatibleWithRegistry(state: KitState): boolean {
+  if (!registryHasKit(state.kitId)) return false;
+  return Object.keys(state.kits).every((id) => registryHasKit(id as KitId));
+}
+
 export const useKitStore = create<KitStore>()((set, get) => {
+  const initial = createInitialState();
   /** Applique un nouvel état. `undoable` : empile l'ancien état (au plus UNDO_MAX). */
   const commit = (next: KitState, undoable: boolean): boolean => {
     const prev = get().kit;
@@ -67,13 +110,16 @@ export const useKitStore = create<KitStore>()((set, get) => {
     } else {
       set({ kit: next });
     }
-    scheduleSave(get);
+    scheduleSave(get, set);
     return true;
   };
 
   return {
-    kit: createInitialState(),
+    kit: initial,
     hydrated: false,
+    lastSaved: initial,
+    failed: null,
+    sync: 'idle',
     undoStack: [],
     canUndo: false,
 
@@ -83,7 +129,12 @@ export const useKitStore = create<KitStore>()((set, get) => {
 
     async hydrate() {
       const saved = await repo.load();
-      set({ kit: saved ?? createInitialState(), hydrated: true, undoStack: [], canUndo: false });
+      // Données de démonstration : le kit local est relu tel quel (comportement existant).
+      // Données serveur : le kit local n'est relu que s'il est compatible avec le registre
+      // (mêmes kits) ; sinon un état neuf est construit à partir de la donnée serveur.
+      const usable = saved !== null && (isDemoStudioData() || compatibleWithRegistry(saved));
+      const kit = usable ? saved : createInitialState();
+      set({ kit, hydrated: true, lastSaved: kit, failed: null, sync: 'idle', undoStack: [], canUndo: false });
     },
 
     undo() {
@@ -95,7 +146,7 @@ export const useKitStore = create<KitStore>()((set, get) => {
       const restored: KitState = { ...last, kitId: cur.kitId, day: cur.day };
       const rest = stack.slice(0, -1);
       set({ kit: restored, undoStack: rest, canUndo: rest.length > 0 });
-      scheduleSave(get);
+      scheduleSave(get, set);
       return true;
     },
 
@@ -103,7 +154,15 @@ export const useKitStore = create<KitStore>()((set, get) => {
       if (!timer) return;
       clearTimeout(timer);
       timer = null;
-      await repo.save(get().kit);
+      await persist(get, set);
+    },
+
+    async retry() {
+      const failed = get().failed;
+      if (!failed) return false;
+      set({ kit: failed, failed: null, sync: 'idle' });
+      await persist(get, set);
+      return get().sync === 'idle';
     },
 
     pack(id, zone) {

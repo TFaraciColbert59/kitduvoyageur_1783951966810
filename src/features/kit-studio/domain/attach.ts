@@ -1,26 +1,30 @@
 // Points d'attache : capacité, usage, ajout de module. Pur.
 // Maquette Kit_Studio_v2.html l.705-706 (ptsCap, ptsUsed), l.1735-1736 (toggleMod).
-import { MODULE_IDS, ONE } from './catalog';
+// Catalogue ONE lu dans le registre runtime.
+import { MODULE_IDS } from './catalog';
 import type { ModuleId } from './catalog';
 import { modOn, setMod } from './parts';
 import { currentKit } from './state';
+import { studioData } from './studioData';
 import type { KitState } from './types';
 
 export type AttachHost = 'chassis' | 'corps';
 
 /** Points disponibles sur un hôte (maquette ptsCap). */
 export function ptsCap(s: KitState, host: AttachHost): number {
-  return host === 'chassis' ? ONE.chassis.pts : ONE.corps[currentKit(s).bag].pts;
+  const one = studioData().one;
+  return host === 'chassis' ? one.chassis.pts : one.corps[currentKit(s).bag].pts;
 }
 
 /** Points occupés par les modules actifs d'un hôte (maquette ptsUsed). */
 export function ptsUsed(s: KitState, host: AttachHost): number {
-  return MODULE_IDS.filter((m) => ONE.mods[m].host === host && modOn(s, m)).reduce((a, m) => a + ONE.mods[m].pts, 0);
+  const one = studioData().one;
+  return MODULE_IDS.filter((m) => one.mods[m].host === host && modOn(s, m)).reduce((a, m) => a + one.mods[m].pts, 0);
 }
 
 /** Un module absent peut-il être ajouté ? (refus si points insuffisants, maquette toggleMod). */
 export function canAddModule(s: KitState, m: ModuleId): boolean {
-  const M = ONE.mods[m];
+  const M = studioData().one.mods[m];
   return ptsCap(s, M.host) - ptsUsed(s, M.host) >= M.pts;
 }
 
