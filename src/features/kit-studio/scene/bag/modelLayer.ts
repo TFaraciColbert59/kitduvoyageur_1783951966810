@@ -28,6 +28,12 @@ import { applyAllCustomizations } from './materials';
 import { loadBagAsset, type BagAssetProvider, type BagLoadResult, type LoadedBagAsset } from './loader';
 import { applyAtlasAppearance, type AtlasMaps } from './atlas';
 import { chargerTextureDonnee } from './loader';
+import { resolveBagAttachmentAnchors } from '../../domain/bagAnchorsTable';
+import {
+  AVAILABLE_3D_MODULE_MANIFESTS,
+  createModuleAttachmentController,
+  type ModuleAttachmentController,
+} from './moduleLoader';
 
 /** Adresse de la tuile de trame, partagée par tous les sacs : une seule texture pour la gamme. */
 const TRAME_URL = '/assets/materials/weave-normal.webp';
@@ -88,6 +94,8 @@ export interface BagModelRuntimeInfo {
   readonly declaredCapacityL: number | null;
   /** Personnalisation de couleur : jamais appliquée à un atlas entier (spec §4.6). */
   readonly colorCustomization: BagColorCustomization;
+  /** Vrai quand au moins un maillage 3D de module est livré en production (§ 4.3). */
+  readonly modules3dAvailable?: boolean;
   /** Raison de la dégradation, si dégradée. */
   readonly reason: string | null;
 }
@@ -111,6 +119,8 @@ export interface BagModelLayer {
   load(modelId: string | null | undefined): Promise<BagModelRuntimeInfo>;
   /** Applique la configuration d'apparence du studio au maillage chargé. */
   setAppearance(config: ConfigSet): void;
+  /** Contrôleur d'accroche des modules 3D sur les points d'ancrage du sac chargé. */
+  attachments(): ModuleAttachmentController | null;
   info(): BagModelRuntimeInfo;
   dispose(): void;
 }
@@ -124,6 +134,7 @@ const DEGRADED_INFO: BagModelRuntimeInfo = {
   capabilities: null,
   declaredCapacityL: null,
   colorCustomization: 'procedural',
+  modules3dAvailable: AVAILABLE_3D_MODULE_MANIFESTS.length > 0,
   reason: null,
 };
 
@@ -143,6 +154,7 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
   let info: BagModelRuntimeInfo = DEGRADED_INFO;
   let loaded: LoadedBagAsset | null = null;
   let model: BagModel | null = null;
+  let attachmentCtrl: ModuleAttachmentController | null = null;
   let appearance: ConfigSet | null = null;
   let atlasMaps: AtlasMaps = { zones: null, weaveNormal: null };
   let loadToken = 0;
@@ -155,6 +167,10 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
   };
 
   const clearLoaded = (): void => {
+    if (attachmentCtrl) {
+      attachmentCtrl.dispose();
+      attachmentCtrl = null;
+    }
     if (!loaded) return;
     holder.remove(loaded.root);
     loaded.dispose();
@@ -222,8 +238,11 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
       // s'éteint, et elle est alors annoncée indisponible plutôt que fausse.
       if (result.manifest.texturedSource) {
         const adresse = result.manifest.zonesMapUrl;
-        const zones = deps.provider?.fetchZonesMap
-          ? await deps.provider.fetchZonesMap(wanted, adresse).catch(() => null)
+        const fetchZones = deps.provider
+          ? deps.provider.fetchZonesMap
+          : (_id: string, url?: string) => (url ? chargerTextureDonnee(url) : Promise.resolve(null));
+        const zones = fetchZones
+          ? await fetchZones(wanted, adresse).catch(() => null)
           : null;
         atlasMaps = { zones, weaveNormal: zones ? await tramePartagee() : null };
       } else {
@@ -243,21 +262,40 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
         colorCustomization = atlasMaps.zones ? 'available' : 'unavailable-no-mask';
       }
 
+      const provisionalAnchors = resolveBagAttachmentAnchors(result.manifest);
+      const allAnchorSpecs =
+        result.anchors.size > 0
+          ? [...result.anchors.values()].map((a) => ({
+              id: a.id,
+              position: a.position,
+              normal: a.normal,
+            }))
+          : provisionalAnchors;
+      attachmentCtrl = createModuleAttachmentController(result.root, allAnchorSpecs);
+      const anchorIds =
+        result.anchors.size > 0
+          ? [...result.anchors.keys()]
+          : provisionalAnchors.map((a) => a.id);
+
       return emit({
         status: 'glb',
         modelId: wanted,
         label: result.manifest.label,
         parts: [...result.parts.keys()],
-        anchors: [...result.anchors.keys()],
+        anchors: anchorIds,
         capabilities: result.capabilities,
         declaredCapacityL: model.declaredCapacityL,
         colorCustomization,
+        modules3dAvailable: AVAILABLE_3D_MODULE_MANIFESTS.length > 0,
         reason: null,
       });
     },
     setAppearance(config) {
       appearance = config;
       applyAppearance();
+    },
+    attachments() {
+      return attachmentCtrl;
     },
     info() {
       return info;

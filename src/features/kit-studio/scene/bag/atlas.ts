@@ -174,6 +174,10 @@ function greffer(mat: MateriauGreffe): GreffeState {
     rigidRough: { value: RIGID_ROUGHNESS },
   };
 
+  // Clé de cache constante : distingue le programme greffé du MeshPhysicalMaterial natif de
+  // three, sans jamais dépendre de la couleur ni d'un uniforme (changer de coloris ne recompile pas).
+  mat.customProgramCacheKey = () => 'lkdv-atlas-zones-v1';
+
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
 
@@ -182,7 +186,9 @@ function greffer(mat: MateriauGreffe): GreffeState {
       '#include <uv_vertex>\n  vTrameUv = uv1;'
     );
 
-    sh.fragmentShader = `
+    sh.fragmentShader = sh.fragmentShader
+      // Les uniformes et lkdvZones() doivent suivre <uv_pars_fragment>, où vMapUv est déclaré.
+      .replace('#include <uv_pars_fragment>', `#include <uv_pars_fragment>
 uniform sampler2D zonesMap;
 uniform sampler2D weaveMap;
 uniform vec3 tintColor;
@@ -191,8 +197,11 @@ uniform float weaveStrength;
 uniform float fabricRough;
 uniform float rigidRough;
 varying vec2 vTrameUv;
+#ifdef USE_MAP
 vec3 lkdvZones() { return texture2D(zonesMap, vMapUv).rgb; }
-` + sh.fragmentShader
+#else
+vec3 lkdvZones() { return vec3(0.0); }
+#endif`)
       // Teinte : la couleur du token multiplie la LUMINANCE de l'albédo, elle ne la remplace pas.
       // C'est ce qui fait survivre les plis, les coutures et l'usure à un changement de coloris.
       .replace('#include <map_fragment>', `#include <map_fragment>
@@ -225,10 +234,12 @@ vec3 lkdvZones() { return texture2D(zonesMap, vMapUv).rgb; }
       // Lueur textile : le tissu et les sangles l'ont, les boucles ne l'ont pas. Sans cette
       // modulation, allumer le sheen fait virer les boucles noires au vert pâle.
       .replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
+#ifdef USE_SHEEN
   {
     vec3 z = lkdvZones();
     material.sheenColor *= min(1.0, z.r + z.g) * (1.0 - z.b);
-  }`);
+  }
+#endif`);
   };
 
   const state: GreffeState = { uniforms };
@@ -237,17 +248,20 @@ vec3 lkdvZones() { return texture2D(zonesMap, vMapUv).rgb; }
   return state;
 }
 
-/** Convertit un matériau standard en matériau physique, en conservant toutes ses cartes. */
+/** Convertit un matériau standard en matériau physique et active la lueur textile (sheen). */
 function versPhysique(mat: THREE.MeshStandardMaterial): THREE.MeshPhysicalMaterial {
+  let phys: THREE.MeshPhysicalMaterial;
   if ((mat as THREE.MeshPhysicalMaterial).isMeshPhysicalMaterial) {
-    return mat as THREE.MeshPhysicalMaterial;
+    phys = mat as THREE.MeshPhysicalMaterial;
+  } else {
+    phys = new THREE.MeshPhysicalMaterial();
+    THREE.MeshStandardMaterial.prototype.copy.call(phys, mat);
+    phys.defines = { STANDARD: '', PHYSICAL: '' };
+    phys.name = mat.name;
   }
-  const phys = new THREE.MeshPhysicalMaterial();
-  THREE.MeshStandardMaterial.prototype.copy.call(phys, mat);
-  phys.name = mat.name;
   phys.sheen = 1;
   phys.sheenRoughness = 0.7;
-  phys.sheenColor = new THREE.Color(SHEEN_COLOR);
+  phys.sheenColor.setHex(SHEEN_COLOR);
   return phys;
 }
 
@@ -278,7 +292,15 @@ export function applyAtlasAppearance(
       const std = brut as THREE.MeshStandardMaterial;
       // Seul le matériau qui porte l'atlas est concerné. L'écusson et son support ont leurs
       // propres UV, hors de la carte de zones : les toucher les colorerait au hasard.
-      if (!std.map) return;
+      if (
+        !std.map ||
+        mesh.name === 'LKDV_LOGO' ||
+        mesh.name === 'LKDV_ECUSSON_SUPPORT' ||
+        std.name === 'LKDV_MARQUAGE_PIERRE' ||
+        std.name === 'LKDV_Ecusson_Tisse'
+      ) {
+        return;
+      }
 
       const phys = versPhysique(std);
       if (phys !== std) {

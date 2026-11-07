@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "moduleId": "module-poche-test",
+  "label": "Poche avant modulaire 2,5 L (fixture)",
+  "units": "meters",
+  "boundingBoxM": {
+    "w": 0.14,
+    "h": 0.18,
+    "d": 0.08
+  },
+  "glbUrl": "/assets/modules/module-poche-test.glb",
+  "platine": {
+    "position": [
+      0,
+      0.09,
+      -0.04
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ]
+  },
+  "texturedSource": false
+}

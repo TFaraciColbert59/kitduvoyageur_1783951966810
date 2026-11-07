@@ -7,13 +7,25 @@ import { createKitScene, type KitScene } from './createScene';
 import type { BagModelRuntimeInfo } from './bag/modelLayer';
 import { setScene } from './sceneRef';
 
-/** Annonce lisible (aria-live) de l'état du sac maillé : jamais de teinte sur un atlas entier. */
-function bagModelNotice(info: BagModelRuntimeInfo): string | null {
+/** Annonce lisible (aria-live) de l'état du sac maillé : jamais de teinte sur un atlas entier, ni d'état vide muet pour les modules 3D. */
+export function bagModelNotice(
+  info: BagModelRuntimeInfo,
+  mode?: string | null,
+  category?: string | null,
+): string | null {
   if (info.status === 'degraded') {
     return 'Modèle 3D indisponible : le sac est construit par code.';
   }
   if (info.status === 'glb' && info.colorCustomization === 'unavailable-no-mask') {
     return 'Personnalisation de couleur indisponible pour ce sac : son masque de zone tissu manque.';
+  }
+  if (
+    info.status === 'glb' &&
+    info.modules3dAvailable === false &&
+    mode === 'appearance' &&
+    category === 'mod'
+  ) {
+    return 'Modules 3D en cours de production : aucun maillage de module n’est encore livré pour ce sac.';
   }
   return null;
 }
@@ -23,6 +35,8 @@ export default function SceneView() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [failed, setFailed] = useState(false);
   const [bagModel, setBagModel] = useState<BagModelRuntimeInfo | null>(null);
+  const mode = useUiStore((s) => s.mode);
+  const category = useUiStore((s) => s.category);
 
   useEffect(() => {
     const el = canvas.current;
@@ -58,7 +72,7 @@ export default function SceneView() {
     };
   }, []);
 
-  const notice = bagModel ? bagModelNotice(bagModel) : null;
+  const notice = bagModel ? bagModelNotice(bagModel, mode, category) : null;
 
   return (
     <>
