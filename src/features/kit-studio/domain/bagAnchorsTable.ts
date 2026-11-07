@@ -1,140 +1,142 @@
 /**
  * src/features/kit-studio/domain/bagAnchorsTable.ts
- * Table lisible des points d'accroche provisoires des sacs LKDV ONE (§ 4.2).
+ * Table des 6 points d'accroche audités des sacs LKDV ONE (§ 4.1) et règle géométrique de
+ * compatibilité module ↔ sac avec garde de 15 % au bord (§ 4.2).
  *
- * Les cinq manifestes `public/assets/bags/lkdv-one-*.manifest.json` déclarent aujourd'hui
- * `attachmentPoints: []`. Cette table isolée propose un jeu initial cohérent (façade haute,
- * façade basse, flanc gauche, flanc droit, dessus) déduit des dimensions réelles `boundingBoxM`
- * de chaque sac, dans le repère du modèle (`y = 0` au centre du sol, `+z` vers la façade avant,
- * `-x` flanc gauche, `+x` flanc droit, `+y` vers le haut).
+ * IMPORTANT — Portée des coordonnées :
+ * Ces coordonnées valent **pour le rendu du Studio et non pour la fabrication** : elles décrivent
+ * un maillage photogrammétrique, pas un patron de coupe, et la position des coutures reste inconnue.
  *
- * Tony peut retoucher directement les coordonnées ou les étiquettes dans `LKDV_ONE_PROVISIONAL_ANCHORS`
- * sans toucher au code du chargeur ni de la scène. Dès qu'un manifeste de sac déclarera ses
- * propres emplacements `kind: 'attachment'`, ceux du manifeste prendront automatiquement le dessus.
+ * Audit géométrique sur les cinq sacs (sondage de planéité sur les maillages, ~260 centres
+ * candidats par face, composition de zone sous une empreinte de 80 × 54 mm, notation pondérée sur
+ * neuf critères) :
+ * - Une ancre par sac (`facade`), deux sur le 80 L (`facade` + `flanc-droit`).
+ * - Les emplacements `dos`, `dessous`, `top-lid` et les flancs des quatre premiers sacs sont
+ *   écartés (et non simplement affaiblis) : le dos est le harnais contre les lombaires (note 0 en
+ *   ergonomie, rédhibitoire), le dessous est la face qu'on pose au sol, et les flancs des petits
+ *   sacs bâillent jusqu'à 7,62 mm.
  */
 
 import type { BagAnchorSpec, BagManifest, BoundingBoxM, Vec3Tuple } from './bagModel';
 
-export type BagAnchorZone = 'facade' | 'flanc-gauche' | 'flanc-droit' | 'dessus';
+export type BagAnchorZone = 'facade' | 'flanc-droit';
 
-export interface ProvisionalBagAnchor extends BagAnchorSpec {
+export interface AuditedBagAnchor extends BagAnchorSpec {
   readonly label: string;
   readonly zone: BagAnchorZone;
-  /** Vecteur « haut » local optionnel pour verrouiller le roulis de la platine. */
-  readonly up?: Vec3Tuple;
+  /** Vecteur « haut » local pour verrouiller le roulis de la platine. */
+  readonly up: Vec3Tuple;
 }
 
-/**
- * Calcule un jeu standard de 5 points d'accroche à partir d'une boîte englobante `boundingBoxM`.
- * Utile pour vérifier la cohérence géométrique ou couvrir un gabarit non listé.
- */
-export function deriveAnchorsFromBoundingBox(bbox: BoundingBoxM): readonly ProvisionalBagAnchor[] {
-  const halfW = round4(bbox.w * 0.46);
-  const frontZ = round4(bbox.d * 0.48);
-  const sideZ = round4(bbox.d * 0.04);
-  const topZ = round4(-bbox.d * 0.05);
+/** Alias conservé pour la compatibilité de typage du chargeur et des contrôleurs. */
+export type ProvisionalBagAnchor = AuditedBagAnchor;
 
-  return [
+/**
+ * Garde au bord de 15 % appliquée sur la largeur et la hauteur de la face porteuse du sac (§ 4.2).
+ */
+export const MODULE_FACE_MARGIN_RATIO = 0.15;
+
+/**
+ * Les six ancres auditées des cinq sacs LKDV ONE — une par sac (`facade`), deux sur le 80 L
+ * (`facade` et `flanc-droit`).
+ *
+ * Repère de chaque sac : origine au centre du fond, Y vers le haut, +Z vers la façade.
+ * Ces coordonnées valent pour le rendu du Studio et non pour la fabrication : elles décrivent un
+ * maillage photogrammétrique, pas un patron de coupe, et la position des coutures reste inconnue.
+ */
+export const LKDV_ONE_AUDITED_ANCHORS: Readonly<Record<string, readonly AuditedBagAnchor[]>> = {
+  'lkdv-one-15': [
     {
-      id: 'front-upper',
-      label: 'Façade haute',
+      id: 'facade',
+      label: 'Façade',
       zone: 'facade',
-      position: [0, round4(bbox.h * 0.62), frontZ],
+      position: [0, 0.171, 0.113],
+      normal: [0, 0, 1],
+      up: [0, 1, 0],
+    },
+  ],
+  'lkdv-one-25': [
+    {
+      id: 'facade',
+      label: 'Façade',
+      zone: 'facade',
+      position: [0, 0.229, 0.107],
+      normal: [0, 0, 1],
+      up: [0, 1, 0],
+    },
+  ],
+  'lkdv-one-45': [
+    {
+      id: 'facade',
+      label: 'Façade',
+      zone: 'facade',
+      position: [0, 0.213, 0.124],
+      normal: [0, 0, 1],
+      up: [0, 1, 0],
+    },
+  ],
+  'lkdv-one-60': [
+    {
+      id: 'facade',
+      label: 'Façade',
+      zone: 'facade',
+      position: [0, 0.164, 0.138],
+      normal: [0, 0, 1],
+      up: [0, 1, 0],
+    },
+  ],
+  'lkdv-one-80': [
+    {
+      id: 'facade',
+      label: 'Façade',
+      zone: 'facade',
+      position: [0, 0.362, 0.182],
       normal: [0, 0, 1],
       up: [0, 1, 0],
     },
     {
-      id: 'front-lower',
-      label: 'Façade basse',
-      zone: 'facade',
-      position: [0, round4(bbox.h * 0.30), frontZ],
-      normal: [0, 0, 1],
-      up: [0, 1, 0],
-    },
-    {
-      id: 'side-left',
-      label: 'Flanc gauche',
-      zone: 'flanc-gauche',
-      position: [-halfW, round4(bbox.h * 0.42), sideZ],
-      normal: [-1, 0, 0],
-      up: [0, 1, 0],
-    },
-    {
-      id: 'side-right',
+      id: 'flanc-droit',
       label: 'Flanc droit',
       zone: 'flanc-droit',
-      position: [halfW, round4(bbox.h * 0.42), sideZ],
+      position: [0.178, 0.476, 0.092],
       normal: [1, 0, 0],
       up: [0, 1, 0],
     },
+  ],
+} as const;
+
+/** Alias maintenu pour les imports existants qui référencent `LKDV_ONE_PROVISIONAL_ANCHORS`. */
+export const LKDV_ONE_PROVISIONAL_ANCHORS = LKDV_ONE_AUDITED_ANCHORS;
+
+/**
+ * Dérive l'ancre de façade unique à partir d'une boîte englobante `boundingBoxM` pour un gabarit
+ * non répertorié (jamais de dos, de dessous ni de rabat supérieur).
+ */
+export function deriveAnchorsFromBoundingBox(bbox: BoundingBoxM): readonly AuditedBagAnchor[] {
+  return [
     {
-      id: 'top-lid',
-      label: 'Dessus (rabat)',
-      zone: 'dessus',
-      position: [0, round4(bbox.h * 0.96), topZ],
-      normal: [0, 1, 0],
-      up: [0, 0, -1],
+      id: 'facade',
+      label: 'Façade',
+      zone: 'facade',
+      position: [0, round4(bbox.h * 0.36), round4(bbox.d * 0.44)],
+      normal: [0, 0, 1],
+      up: [0, 1, 0],
     },
   ];
 }
 
 /**
- * Table éditable par Tony — coordonnées en mètres dans le repère de chaque sac LKDV ONE.
- *
- * Dimensions de référence (`boundingBoxM` des manifestes) :
- * - `lkdv-one-15` : w = 0.2840 m, h = 0.4600 m, d = 0.2341 m
- * - `lkdv-one-25` : w = 0.2883 m, h = 0.5200 m, d = 0.2193 m
- * - `lkdv-one-45` : w = 0.4329 m, h = 0.6600 m, d = 0.3083 m
- * - `lkdv-one-60` : w = 0.4172 m, h = 0.7400 m, d = 0.3390 m
- * - `lkdv-one-80` : w = 0.5445 m, h = 0.8000 m, d = 0.3745 m
- */
-export const LKDV_ONE_PROVISIONAL_ANCHORS: Readonly<Record<string, readonly ProvisionalBagAnchor[]>> = {
-  'lkdv-one-15': [
-    { id: 'front-upper', label: 'Façade haute',   zone: 'facade',       position: [0,       0.2852,  0.1124], normal: [0, 0, 1],  up: [0, 1, 0] },
-    { id: 'front-lower', label: 'Façade basse',   zone: 'facade',       position: [0,       0.1380,  0.1124], normal: [0, 0, 1],  up: [0, 1, 0] },
-    { id: 'side-left',   label: 'Flanc gauche',   zone: 'flanc-gauche', position: [-0.1306, 0.1932,  0.0094], normal: [-1, 0, 0], up: [0, 1, 0] },
-    { id: 'side-right',  label: 'Flanc droit',    zone: 'flanc-droit',  position: [0.1306,  0.1932,  0.0094], normal: [1, 0, 0],  up: [0, 1, 0] },
-    { id: 'top-lid',     label: 'Dessus (rabat)', zone: 'dessus',       position: [0,       0.4416, -0.0117], normal: [0, 1, 0],  up: [0, 0, -1] },
-  ],
-  'lkdv-one-25': [
-    { id: 'front-upper', label: 'Façade haute',   zone: 'facade',       position: [0,       0.3224,  0.1053], normal: [0, 0, 1],  up: [0, 1, 0] },
-    { id: 'front-lower', label: 'Façade basse',   zone: 'facade',       position: [0,       0.1560,  0.1053], normal: [0, 0, 1],  up: [0, 1, 0] },
-    { id: 'side-left',   label: 'Flanc gauche',   zone: 'flanc-gauche', position: [-0.1326, 0.2184,  0.0088], normal: [-1, 0, 0], up: [0, 1, 0] },
-    { id: 'side-right',  label: 'Flanc droit',    zone: 'flanc-droit',  position: [0.1326,  0.2184,  0.0088], normal: [1, 0, 0],  up: [0, 1, 0] },
-    { id: 'top-lid',     label: 'Dessus (rabat)', zone: 'dessus',       position: [0,       0.4992, -0.0110], normal: [0, 1, 0],  up: [0, 0, -1] },
-  ],
-  'lkdv-one-45': [
-    { id: 'front-upper', label: 'Façade haute',   zone: 'facade',       position: [0,       0.4092,  0.1480], normal: [0, 0, 1],  up: [0, 1, 0] },
-    { id: 'front-lower', label: 'Façade basse',   zone: 'facade',       position: [0,       0.1980,  0.1480], normal: [0, 0, 1],  up: [0, 1, 0] },
-    { id: 'side-left',   label: 'Flanc gauche',   zone: 'flanc-gauche', position: [-0.1991, 0.2772,  0.0123], normal: [-1, 0, 0], up: [0, 1, 0] },
-    { id: 'side-right',  label: 'Flanc droit',    zone: 'flanc-droit',  position: [0.1991,  0.2772,  0.0123], normal: [1, 0, 0],  up: [0, 1, 0] },
-    { id: 'top-lid',     label: 'Dessus (rabat)', zone: 'dessus',       position: [0,       0.6336, -0.0154], normal: [0, 1, 0],  up: [0, 0, -1] },
-  ],
-  'lkdv-one-60': [
-    { id: 'front-upper', label: 'Façade haute',   zone: 'facade',       position: [0,       0.4588,  0.1627], normal: [0, 0, 1],  up: [0, 1, 0] },
-    { id: 'front-lower', label: 'Façade basse',   zone: 'facade',       position: [0,       0.2220,  0.1627], normal: [0, 0, 1],  up: [0, 1, 0] },
-    { id: 'side-left',   label: 'Flanc gauche',   zone: 'flanc-gauche', position: [-0.1919, 0.3108,  0.0136], normal: [-1, 0, 0], up: [0, 1, 0] },
-    { id: 'side-right',  label: 'Flanc droit',    zone: 'flanc-droit',  position: [0.1919,  0.3108,  0.0136], normal: [1, 0, 0],  up: [0, 1, 0] },
-    { id: 'top-lid',     label: 'Dessus (rabat)', zone: 'dessus',       position: [0,       0.7104, -0.0170], normal: [0, 1, 0],  up: [0, 0, -1] },
-  ],
-  'lkdv-one-80': [
-    { id: 'front-upper', label: 'Façade haute',   zone: 'facade',       position: [0,       0.4960,  0.1798], normal: [0, 0, 1],  up: [0, 1, 0] },
-    { id: 'front-lower', label: 'Façade basse',   zone: 'facade',       position: [0,       0.2400,  0.1798], normal: [0, 0, 1],  up: [0, 1, 0] },
-    { id: 'side-left',   label: 'Flanc gauche',   zone: 'flanc-gauche', position: [-0.2505, 0.3360,  0.0150], normal: [-1, 0, 0], up: [0, 1, 0] },
-    { id: 'side-right',  label: 'Flanc droit',    zone: 'flanc-droit',  position: [0.2505,  0.3360,  0.0150], normal: [1, 0, 0],  up: [0, 1, 0] },
-    { id: 'top-lid',     label: 'Dessus (rabat)', zone: 'dessus',       position: [0,       0.7680, -0.0187], normal: [0, 1, 0],  up: [0, 0, -1] },
-  ],
-} as const;
-
-/**
  * Résout les points d'accroche d'un sac :
- * 1. Si le manifeste déclare déjà des emplacements `kind === 'attachment'`, ils font foi.
- * 2. Sinon, si le modèle figure dans `LKDV_ONE_PROVISIONAL_ANCHORS`, on renvoie la table éditable.
- * 3. À défaut, on dérive les 5 points standards depuis `manifest.boundingBoxM`.
+ * 1. Si le modèle figure dans `LKDV_ONE_AUDITED_ANCHORS`, ses ancres auditées font foi.
+ * 2. Sinon, si le manifeste déclare des emplacements `kind === 'attachment'`, on les utilise.
+ * 3. À défaut, on dérive l'ancre de façade depuis `manifest.boundingBoxM`.
  */
 export function resolveBagAttachmentAnchors(
   manifest: Pick<BagManifest, 'modelId' | 'boundingBoxM' | 'slots'>,
-): readonly ProvisionalBagAnchor[] {
+): readonly AuditedBagAnchor[] {
+  const tableEntry = LKDV_ONE_AUDITED_ANCHORS[manifest.modelId];
+  if (tableEntry) return tableEntry;
+
   const fromManifest = manifest.slots.filter((s) => s.kind === 'attachment');
   if (fromManifest.length > 0) {
     return fromManifest.map((s) => ({
@@ -143,17 +145,82 @@ export function resolveBagAttachmentAnchors(
       zone: inferZoneFromNormal(s.normal),
       position: [...s.anchor] as Vec3Tuple,
       normal: [...s.normal] as Vec3Tuple,
+      up: [0, 1, 0] as Vec3Tuple,
     }));
   }
-  const tableEntry = LKDV_ONE_PROVISIONAL_ANCHORS[manifest.modelId];
-  if (tableEntry) return tableEntry;
   return deriveAnchorsFromBoundingBox(manifest.boundingBoxM);
 }
 
+/**
+ * Dimensions utiles `(faceWidthM, faceHeightM)` de la face porteuse d'une ancre sur un sac.
+ * - Sur `facade` (normale selon `±Z`), la face porteuse a pour largeur `bagBbox.w` et hauteur `bagBbox.h`.
+ * - Sur `flanc-droit` (normale selon `±X`), la face porteuse a pour largeur `bagBbox.d` et hauteur `bagBbox.h`.
+ */
+export function getAnchorFaceDimensionsM(
+  bagBbox: BoundingBoxM,
+  anchorZone: BagAnchorZone = 'facade',
+): { readonly faceWidthM: number; readonly faceHeightM: number } {
+  const faceWidthM = anchorZone === 'flanc-droit' ? bagBbox.d : bagBbox.w;
+  return { faceWidthM, faceHeightM: bagBbox.h };
+}
+
+/**
+ * Vérifie par calcul géométrique (sans liste figée d'identifiants) si un module de boîte
+ * `moduleBbox` (`w × h`) rentre sur une face de sac `bagBbox` avec une garde au bord de 15 %
+ * (`MODULE_FACE_MARGIN_RATIO = 0.15`, soit au plus 85 % de la largeur et 85 % de la hauteur de la face).
+ */
+export function doesModuleFitBagFace(
+  moduleBbox: Pick<BoundingBoxM, 'w' | 'h'>,
+  bagBbox: BoundingBoxM,
+  anchorZone: BagAnchorZone = 'facade',
+  marginRatio: number = MODULE_FACE_MARGIN_RATIO,
+): boolean {
+  const { faceWidthM, faceHeightM } = getAnchorFaceDimensionsM(bagBbox, anchorZone);
+  const usableFactor = Math.max(0, 1 - marginRatio);
+  const maxWidthM = faceWidthM * usableFactor;
+  const maxHeightM = faceHeightM * usableFactor;
+  return moduleBbox.w <= maxWidthM + 1e-6 && moduleBbox.h <= maxHeightM + 1e-6;
+}
+
+/**
+ * Vérifie si un module rentre sur au moins l'une des ancres auditées du sac avec la garde de 15 %.
+ */
+export function doesModuleFitBag(
+  moduleItem: { readonly boundingBoxM: Pick<BoundingBoxM, 'w' | 'h'> },
+  bag: Pick<BagManifest, 'modelId' | 'boundingBoxM'> & {
+    readonly slots?: BagManifest['slots'];
+  },
+  marginRatio: number = MODULE_FACE_MARGIN_RATIO,
+): boolean {
+  const anchors = resolveBagAttachmentAnchors({
+    modelId: bag.modelId,
+    boundingBoxM: bag.boundingBoxM,
+    slots: bag.slots ?? [],
+  });
+  return anchors.some((anchor) =>
+    doesModuleFitBagFace(moduleItem.boundingBoxM, bag.boundingBoxM, anchor.zone, marginRatio),
+  );
+}
+
+/**
+ * Filtre une liste de modules pour ne retenir que ceux dont la boîte englobante rentre sur le sac
+ * avec la garde au bord de 15 % (§ 4.2).
+ */
+export function filterCompatibleModulesForBag<
+  T extends { readonly boundingBoxM: Pick<BoundingBoxM, 'w' | 'h'> },
+>(
+  modules: readonly T[],
+  bag: Pick<BagManifest, 'modelId' | 'boundingBoxM'> & {
+    readonly slots?: BagManifest['slots'];
+  },
+  marginRatio: number = MODULE_FACE_MARGIN_RATIO,
+): readonly T[] {
+  return modules.filter((mod) => doesModuleFitBag(mod, bag, marginRatio));
+}
+
 function inferZoneFromNormal(normal: Vec3Tuple): BagAnchorZone {
-  const [nx, ny, nz] = normal;
-  if (Math.abs(ny) >= Math.abs(nx) && Math.abs(ny) >= Math.abs(nz)) return 'dessus';
-  if (Math.abs(nx) >= Math.abs(nz)) return nx < 0 ? 'flanc-gauche' : 'flanc-droit';
+  const [nx, , nz] = normal;
+  if (Math.abs(nx) > Math.abs(nz)) return 'flanc-droit';
   return 'facade';
 }
 
