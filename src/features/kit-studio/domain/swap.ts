@@ -36,7 +36,7 @@ export function addPlanned(s: KitState, a: Alternative, ref?: AnyItem, fn?: stri
     fn: ref?.fn ?? fn ?? '',
     sh: a.sh,
     gl: a.gl,
-    g: a.g as number,
+    g: a.g, // règle C-03 : une alternative non pesée reste null
     L: ref?.L || 0.6,
     color: a.color,
     zones: ref?.zones ?? ['main'],

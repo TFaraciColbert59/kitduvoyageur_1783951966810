@@ -25,7 +25,8 @@ export interface Bag { readonly id: BagId; readonly n: string; readonly g: numbe
 export interface Colorway { readonly id: ColorwayId; readonly n: string; readonly body: MaterialKey; readonly pocket: MaterialKey; readonly trim: MaterialKey; readonly accent: MaterialKey; }
 export interface Item {
   readonly id: ItemId; readonly n: string; readonly fam: FamilyId; readonly fn: string; readonly sh: string; readonly gl: string;
-  readonly g: number; readonly L: number; readonly color: MaterialKey; readonly zones: readonly ZoneId[];
+  /** Poids en grammes ; `null` = inconnu (jamais 0 : règle C-03). */
+  readonly g: number | null; readonly L: number; readonly color: MaterialKey; readonly zones: readonly ZoneId[];
   readonly state: string; readonly loc: string; readonly trips: number;
   readonly vital?: number; readonly temp?: string; readonly bought?: string; readonly price?: number; readonly care?: string;
   readonly expired?: string; readonly cons?: string; readonly dry?: number; readonly cabinBan?: number; readonly lentTo?: string; readonly until?: string;

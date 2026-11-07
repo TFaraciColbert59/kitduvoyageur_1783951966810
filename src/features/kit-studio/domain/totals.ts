@@ -95,11 +95,16 @@ export function bagWeight(s: KitState): number {
   return Math.round(g);
 }
 
-/** maquette v2 l.869 (effG) : poids effectif d'un objet ; les consommables dépendent du jour. */
+/**
+ * maquette v2 l.869 (effG) : poids effectif d'un objet ; les consommables dépendent du jour.
+ * Poids inconnu (`null`, règle C-03) : n'entre pas dans les sommes (0 g effectif) mais reste
+ * compté à part par `totals().unknown` — jamais confondu avec un objet réellement à 0 g.
+ */
 export function effG(s: KitState, item: AnyItem): number {
   const k = currentKit(s);
-  if ((item.g as number | null | undefined) == null) return 0;
-  if (!item.cons) return item.g;
+  const g = item.g;
+  if (g == null) return 0;
+  if (!item.cons) return g;
   if (k.cabin && item.cons === 'water') return item.dry ?? 0;
   const d = s.day;
   const left = k.days - d + 1;
@@ -107,15 +112,15 @@ export function effG(s: KitState, item: AnyItem): number {
   const cd = Math.min(carry - ((d - 1) % carry), left);
   switch (item.cons) {
     case 'water':
-      return item.g;
+      return g;
     case 'food':
-      return k.food ? k.food.perDay * cd : item.g;
+      return k.food ? k.food.perDay * cd : g;
     case 'snack':
       return 120 * cd;
     case 'gas':
       return 140 + Math.max(0, 230 - 25 * (d - 1));
     default:
-      return item.g;
+      return g;
   }
 }
 

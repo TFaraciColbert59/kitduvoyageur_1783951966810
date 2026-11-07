@@ -21,6 +21,7 @@ const KIT = '11111111-1111-4111-8111-111111111111';
 const KIT_ITEM = '22222222-2222-4222-8222-222222222222';
 const OWNED_1 = '33333333-3333-4333-8333-333333333333';
 const OWNED_2 = '44444444-4444-4444-8444-444444444444';
+const OWNED_3 = '55555555-5555-4555-8555-555555555555';
 
 function tables(over: Record<string, unknown[]> = {}) {
   return {
@@ -36,6 +37,7 @@ function tables(over: Record<string, unknown[]> = {}) {
     product_ownership: [
       { id: OWNED_1, user_id: USER, name: 'Duvet', category: 'couchage', weight_g: 820, function_id: 'sleep' },
       { id: OWNED_2, user_id: USER, name: 'Gourde', category: 'eau', weight_g: 150, function_id: 'water' },
+      { id: OWNED_3, user_id: USER, name: 'Objet non pesé', category: null, weight_g: null, function_id: null },
     ],
     one_preorders: [{ id: 'pre-1', total_cents: 14800 }],
     ...over,
@@ -146,6 +148,17 @@ describe('saveKitItemPlacement (service)', () => {
       kit_id: KIT, user_id: USER, name: 'Gourde', category: 'eau', weight_g: 150,
       function_id: 'water', zone: 'sides', slot: null, load_order: null,
     });
+  });
+
+  it('conserve un poids inconnu (null) à l’insertion — règle C-03, jamais 0 g', async () => {
+    const db = fake();
+    const r = await saveKitItemPlacementFor(db, USER, {
+      kitId: KIT, itemId: OWNED_3, zone: 'main', slot: null, loadOrder: null,
+    });
+    expect(r.ok).toBe(true);
+    const created = db.tables.materiel_kit_items.find((i) => i.product_ownership_id === OWNED_3);
+    expect(created).toMatchObject({ weight_g: null });
+    expect(created!.weight_g).not.toBe(0);
   });
 
   it('refuse un objet absent de l’inventaire et un kit non détenu', async () => {
