@@ -111,11 +111,17 @@ export function CarnetPostSheet({
     return parts.length > 0 ? parts.join(' · ') : null;
   }, [createdAt, moment]);
 
+  const momentEng = moment?.id && detail.momentEngagement ? detail.momentEngagement[moment.id] : null;
+  const isMomentLiked = momentEng ? momentEng.userLiked : detail.engagement.liked;
+  const isMomentSaved = momentEng ? momentEng.userSaved : saved;
+  const momentLikes = momentEng ? momentEng.likesCount : detail.engagement.likes;
+  const momentCommentsCount = momentEng ? momentEng.commentsCount : detail.engagement.comments;
+
   const source: PostSource = {
-    liked: detail.engagement.liked,
-    saved,
-    likes: detail.engagement.likes,
-    comments: detail.engagement.comments,
+    liked: isMomentLiked,
+    saved: isMomentSaved,
+    likes: momentLikes,
+    comments: momentCommentsCount,
     onToggleLike: onLike,
     onToggleSave: onSave,
     onCopyLink: async () => {

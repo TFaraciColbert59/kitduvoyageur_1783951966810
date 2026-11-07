@@ -9,6 +9,8 @@ import type {
   CarnetNightItem,
   CarnetParticipant,
   CarnetStatItem,
+  CarnetViewerRole,
+  CarnetKitVerdictItem,
   KitVerdictType,
 } from './types';
 

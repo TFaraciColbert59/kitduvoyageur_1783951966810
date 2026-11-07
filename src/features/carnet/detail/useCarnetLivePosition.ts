@@ -32,7 +32,7 @@ export function useCarnetLivePosition({
   const watchIdRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
 
-  const isParticipant = viewerRole === 'owner' || viewerRole === 'co_author';
+  const isParticipant = viewerRole === 'participant';
 
   // Broadcast GPS updates to Supabase (participants only)
   const sendLocationUpdate = useCallback(
