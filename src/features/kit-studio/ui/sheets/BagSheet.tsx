@@ -8,7 +8,7 @@ import type { AttachHost } from '../../domain/attach';
 import { formatEuro, formatLitres, formatWeight } from '../../domain/format';
 import { colorwaySwatch } from '../../domain/palette';
 import { modOn, pieceCw, pieceInfo, pieceState } from '../../domain/parts';
-import { bagWeight, capOf, totalCap, totals } from '../../domain/totals';
+import { bagWeight, capOf, toCents, totalCap, totals } from '../../domain/totals';
 import { currentBag, currentKit } from '../../domain/state';
 import type { KitState, PieceKey } from '../../domain/types';
 import { Pager } from '../Drawer/Pager';
@@ -61,7 +61,7 @@ interface BagSheetProps {
 
 function stateText(state: KitState, key: PieceKey): string {
   const s = pieceState(state, key);
-  return s === 'own' ? TXT.own : s === 'order' ? TXT.preordered : `${TXT.toOrder} · ${formatEuro(pieceInfo(key).eur * 100)}`;
+  return s === 'own' ? TXT.own : s === 'order' ? TXT.preordered : `${TXT.toOrder} · ${formatEuro(toCents(pieceInfo(key).eur))}`;
 }
 
 function Pts({ state, host }: { state: KitState; host: AttachHost }) {
@@ -107,7 +107,7 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
     const blocked = !on && !canAddModule(state, m);
     const key: PieceKey = `mod:${m}`;
     const ps = pieceState(state, key);
-    const price = ps === 'own' ? TXT.own.toLowerCase() : ps === 'order' ? TXT.preordered.toLowerCase() : formatEuro(M.eur * 100);
+    const price = ps === 'own' ? TXT.own.toLowerCase() : ps === 'order' ? TXT.preordered.toLowerCase() : formatEuro(toCents(M.eur));
     return (
       <li className="ks-sh-row" key={m}>
         <span className="ks-sh-rg" data-on={on}>

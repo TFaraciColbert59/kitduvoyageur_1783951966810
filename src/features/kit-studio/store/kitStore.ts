@@ -8,7 +8,7 @@ import { autopack, pack, setBag, unpack } from '../domain/packing';
 import type { PackResult } from '../domain/packing';
 import { confirmOrder, toOrder } from '../domain/order';
 import { toggleModule } from '../domain/attach';
-import { setMod } from '../domain/parts';
+import { modOn, setMod } from '../domain/parts';
 import { createInitialState, currentKit, registryHasKit } from '../domain/state';
 import { isDemoStudioData } from '../domain/studioData';
 import type { Alternative, BagId, KitId, ModuleId, PartNameId, ZoneId } from '../domain/catalog';
@@ -199,8 +199,13 @@ export const useKitStore = create<KitStore>()((set, get) => {
     },
 
     toggleModule(m, on) {
-      const ok = commit(toggleModule(get().kit, m, on), true);
-      return ok ? { ok } : { ok, reason: 'points' };
+      const cur = get().kit;
+      const next = toggleModule(cur, m, on);
+      // Le domaine renvoie le même état pour deux causes distinctes : module déjà dans l'état visé
+      // (« noop ») ou points d'attache insuffisants (« points »). L'appelant doit pouvoir les distinguer.
+      if (next === cur) return { ok: false, reason: modOn(cur, m) === on ? 'noop' : 'points' };
+      commit(next, true);
+      return { ok: true };
     },
 
     setPartOption(part, cat, value) {

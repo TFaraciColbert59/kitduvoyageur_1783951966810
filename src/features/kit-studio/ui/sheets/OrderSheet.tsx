@@ -59,6 +59,23 @@ interface OrderSheetProps {
 
 export const ORDER_PAGE_LABELS: readonly string[] = TXT.pages;
 
+/**
+ * Page courante d'une feuille : la prop `page` pilote si elle est fournie, sinon un état local.
+ * Jamais les deux à la fois — l'ancien doublon `own`/`page` laissait l'état local diverger de la prop.
+ */
+export function useControlledPage(
+  page: number | undefined,
+  onPageChange?: (page: number) => void,
+): readonly [number, (page: number) => void] {
+  const [own, setOwn] = useState(page ?? 0);
+  const current = page ?? own;
+  const setPage = (n: number) => {
+    if (page === undefined) setOwn(n);
+    onPageChange?.(n);
+  };
+  return [current, setPage];
+}
+
 function PieceRow({ line }: { line: OrderLine }) {
   const sw = colorwaySwatch(studioData().colorways[line.colorway]);
   const tint = line.key === 'chassis' ? sw.trim : line.key.startsWith('corps') ? sw.body : sw.pocket;
@@ -94,13 +111,8 @@ function InfoRow({ icon, title, text }: { icon: 'info' | 'cal' | 'clock' | 'swap
 
 /** Feuille Commande : lignes de pièces, total, validation (sans paiement). Composant contrôlé. */
 export function OrderSheet({ state, onConfirmOrder, offline = false, page, onPageChange }: OrderSheetProps) {
-  const [own, setOwn] = useState(0);
+  const [p, setPage] = useControlledPage(page, onPageChange);
   const [step, setStep] = useState<'list' | 'pre'>('list');
-  const p = page ?? own;
-  const setPage = (n: number) => {
-    setOwn(n);
-    onPageChange?.(n);
-  };
 
   const lines = orderLines(state);
   const pending = toOrder(state);

@@ -10,8 +10,8 @@
  */
 
 import * as THREE from 'three';
-import type { PartConfig, PartId } from '../../state/types';
-import type { FabricMapBank } from './fabricMaps';
+import type { BagPartAppearance, BagPartId } from '../../domain/bagModel';
+import type { FabricDetailProvider } from '../textures';
 
 export interface BagMaterialPreset {
   id: string;
@@ -118,7 +118,7 @@ export const BAG_COLOR_SWATCHES: readonly BagColorSwatch[] = [
 ] as const;
 
 const FINISH_OVERRIDES: Record<
-  NonNullable<PartConfig['finish']>,
+  NonNullable<BagPartAppearance['finish']>,
   { roughness: number; metalness: number }
 > = {
   matte: { roughness: 0.88, metalness: 0.01 },
@@ -166,6 +166,16 @@ export function resolveTokenToThreeColor(colorSpec: string | undefined): THREE.C
     }
   }
 
+  // Couleur de catalogue (`#RRGGBB`) : seule forme produite par `domain/palette.ts`
+  // quand une configuration de pièce lue du serveur porte une couleur brute.
+  if (colorSpec.startsWith('#')) {
+    try {
+      return new THREE.Color(colorSpec);
+    } catch {
+      return null;
+    }
+  }
+
   return null;
 }
 
@@ -174,10 +184,10 @@ export function resolveTokenToThreeColor(colorSpec: string | undefined): THREE.C
  * Retourne `true` si la pièce a été trouvée et modifiée, `false` sinon.
  */
 export function applyPartCustomization(
-  partsMap: ReadonlyMap<PartId, THREE.Mesh>,
-  partId: PartId,
-  config: PartConfig | undefined,
-  fabricMaps?: FabricMapBank | null
+  partsMap: ReadonlyMap<BagPartId, THREE.Mesh>,
+  partId: BagPartId,
+  config: BagPartAppearance | undefined,
+  fabricMaps?: FabricDetailProvider | null
 ): boolean {
   const mesh = partsMap.get(partId);
   if (!mesh || !config) return false;
@@ -221,9 +231,9 @@ export function applyPartCustomization(
 }
 
 export function applyAllCustomizations(
-  partsMap: ReadonlyMap<PartId, THREE.Mesh>,
-  partsConfig: Record<PartId, PartConfig>,
-  fabricMaps?: FabricMapBank | null
+  partsMap: ReadonlyMap<BagPartId, THREE.Mesh>,
+  partsConfig: Record<BagPartId, BagPartAppearance>,
+  fabricMaps?: FabricDetailProvider | null
 ): number {
   let count = 0;
   for (const [partId, cfg] of Object.entries(partsConfig)) {

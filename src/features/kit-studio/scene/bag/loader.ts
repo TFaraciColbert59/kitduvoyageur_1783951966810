@@ -4,15 +4,14 @@
  *
  * Parses glTF 2.0 binary directly into Three.js scene objects with:
  * - Isolated `THREE.MeshStandardMaterial` per mesh (guarantees D-04 part isolation)
- * - Named `parts: Map<PartId, THREE.Mesh>`
+ * - Named `parts: Map<BagPartId, THREE.Mesh>`
  * - Named `anchors: Map<string, BagAnchorSpec>`
- * - Hinge extraction (`hinges: Map<PartId, BagHingeSpec>`), strictly gated by `manifest.capabilities.openable`
+ * - Hinge extraction (`hinges: Map<BagPartId, BagHingeSpec>`), strictly gated by `manifest.capabilities.openable`
  * - Graceful degradation (`status: 'degraded'`) on missing/corrupt GLB or manifest without throwing
  */
 
 import * as THREE from 'three';
-import type { BagCapabilities, PartId } from '../../state/types';
-import type { Vec3Tuple } from '../camera/intents';
+import type { BagCapabilities, BagPartId, Vec3Tuple } from '../../domain/bagModel';
 import {
   DEGRADED_BAG_CAPABILITIES,
   type BagAnchorSpec,
@@ -41,9 +40,9 @@ export interface LoadedBagScene {
   manifest: BagManifest;
   capabilities: BagCapabilities;
   root: THREE.Group;
-  parts: Map<PartId, THREE.Mesh>;
+  parts: Map<BagPartId, THREE.Mesh>;
   anchors: Map<string, BagAnchorSpec>;
-  hinges: Map<PartId, BagHingeSpec>;
+  hinges: Map<BagPartId, BagHingeSpec>;
   dispose: () => void;
 }
 
@@ -54,9 +53,9 @@ export interface DegradedBagScene {
   manifest: BagManifest | null;
   capabilities: BagCapabilities;
   root: null;
-  parts: Map<PartId, THREE.Mesh>;
+  parts: Map<BagPartId, THREE.Mesh>;
   anchors: Map<string, BagAnchorSpec>;
-  hinges: Map<PartId, BagHingeSpec>;
+  hinges: Map<BagPartId, BagHingeSpec>;
   dispose: () => void;
 }
 
@@ -375,9 +374,9 @@ export async function loadBagAsset(
     const root = new THREE.Group();
     root.name = `bag-scene:${safeId}`;
 
-    const parts = new Map<PartId, THREE.Mesh>();
+    const parts = new Map<BagPartId, THREE.Mesh>();
     const anchors = new Map<string, BagAnchorSpec>();
-    const hinges = new Map<PartId, BagHingeSpec>();
+    const hinges = new Map<BagPartId, BagHingeSpec>();
     const geometriesToDispose: THREE.BufferGeometry[] = [];
     const materialsToDispose: THREE.Material[] = [];
 
