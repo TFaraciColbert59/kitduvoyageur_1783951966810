@@ -28,7 +28,7 @@ jobs:
       # publie. Sans aucune des trois, verify_capacitor_server.mjs echoue
       # volontairement : mieux vaut aucun IPA qu un IPA qui affiche un
       # ecran de connexion au serveur.
-      CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL || vars.CAPACITOR_SERVER_URL || 'https://kitduvoyageur-1783951966810-ruddy.vercel.app' }}
+      CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL || vars.CAPACITOR_SERVER_URL || 'https://kitduvoyageur-1783951966810-git-main-tonyfaracip-3325s-projects.vercel.app' }}
 
     steps:
       - name: Checkout
