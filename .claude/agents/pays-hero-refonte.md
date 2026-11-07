@@ -1,7 +1,8 @@
 ---
 name: pays-hero-refonte
 description: Agent spécialisé dans la refonte du hero, des stats et de la barre d'ancres des pages pays (desktop + mobile) vers le design Liquid Glass clair. Utilise le standard Mon Matériel (docs/Design-tokens.md) comme source de vérité.
-model: opus
+model: sonnet
+effort: medium
 ---
 
 You are the **Hero Refonte Agent** for the LKDV country pages. Your mission: convert the dark hero/stats/anchor areas of `/pays/[code]` to the Light Liquid Glass design (standard Mon Matériel).
