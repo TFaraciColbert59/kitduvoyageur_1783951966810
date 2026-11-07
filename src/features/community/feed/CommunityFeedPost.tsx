@@ -138,12 +138,37 @@ export function CommunityFeedPost({
     });
   };
 
+  const centerPost = useCallback(() => {
+    if (embedded) return;
+    const article = articleRef.current;
+    if (!article) return;
+    article.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest',
+    });
+  }, [embedded]);
+
   const openPanel = (next: 'comments' | 'share') => {
     panelScrollRef.current = window.scrollY;
     panelTriggerRef.current = document.activeElement as HTMLElement | null;
     setMenuOpen(false);
     setPanel(next);
+    centerPost();
   };
+
+  /* Recentrer le post dans la vue à l'ouverture des commentaires ou du partage */
+  useEffect(() => {
+    if (!panel || embedded) return;
+    const timer = window.setTimeout(() => {
+      articleRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest',
+      });
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, [panel, embedded]);
 
   const closePanel = useCallback(() => {
     setPanel(null);
