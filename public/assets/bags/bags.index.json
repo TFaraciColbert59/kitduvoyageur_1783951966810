@@ -50,6 +50,81 @@
       "parts": 9,
       "slots": 6,
       "valid": true
+    },
+    {
+      "modelId": "lkdv-one-15",
+      "label": "LKDV ONE 15 L",
+      "triangles": 26330,
+      "bytes": 479588,
+      "openable": false,
+      "parts": 1,
+      "slots": 0,
+      "valid": true,
+      "source": "imported",
+      "tiers": [
+        "web",
+        "hd"
+      ]
+    },
+    {
+      "modelId": "lkdv-one-25",
+      "label": "LKDV ONE 25 L",
+      "triangles": 24393,
+      "bytes": 552936,
+      "openable": false,
+      "parts": 1,
+      "slots": 0,
+      "valid": true,
+      "source": "imported",
+      "tiers": [
+        "web",
+        "hd"
+      ]
+    },
+    {
+      "modelId": "lkdv-one-45",
+      "label": "LKDV ONE 45 L",
+      "triangles": 34638,
+      "bytes": 630516,
+      "openable": false,
+      "parts": 1,
+      "slots": 0,
+      "valid": true,
+      "source": "imported",
+      "tiers": [
+        "web",
+        "hd"
+      ]
+    },
+    {
+      "modelId": "lkdv-one-60",
+      "label": "LKDV ONE 60 L",
+      "triangles": 31178,
+      "bytes": 546504,
+      "openable": false,
+      "parts": 1,
+      "slots": 0,
+      "valid": true,
+      "source": "imported",
+      "tiers": [
+        "web",
+        "hd"
+      ]
+    },
+    {
+      "modelId": "lkdv-one-80",
+      "label": "LKDV ONE 80 L",
+      "triangles": 32457,
+      "bytes": 578524,
+      "openable": false,
+      "parts": 1,
+      "slots": 0,
+      "valid": true,
+      "source": "imported",
+      "tiers": [
+        "web",
+        "hd"
+      ]
     }
   ]
 }

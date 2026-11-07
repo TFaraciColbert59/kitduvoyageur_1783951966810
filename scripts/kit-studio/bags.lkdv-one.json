@@ -1,0 +1,10 @@
+{
+  "comment": "Gamme LKDV ONE. Les hauteurs viennent de 02_SPECS_ELEMENTS.csv (hauteur_mm du corps). L'importateur met le modèle à l'échelle sur la hauteur hors tout de son enveloppe : bretelles et ceinture débordent donc un peu en largeur, ce qui est normal et attendu.",
+  "models": [
+    { "code": "B15", "modelId": "lkdv-one-15", "label": "LKDV ONE 15 L", "heightM": 0.46, "capacityL": 15 },
+    { "code": "B25", "modelId": "lkdv-one-25", "label": "LKDV ONE 25 L", "heightM": 0.52, "capacityL": 25 },
+    { "code": "B45", "modelId": "lkdv-one-45", "label": "LKDV ONE 45 L", "heightM": 0.66, "capacityL": 45 },
+    { "code": "B60", "modelId": "lkdv-one-60", "label": "LKDV ONE 60 L", "heightM": 0.74, "capacityL": 60 },
+    { "code": "B80", "modelId": "lkdv-one-80", "label": "LKDV ONE 80 L", "heightM": 0.80, "capacityL": 80 }
+  ]
+}

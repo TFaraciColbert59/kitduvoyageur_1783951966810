@@ -18,7 +18,9 @@ import {
   type BagAnchorSpec,
   type BagHingeSpec,
   type BagManifest,
+  type BagTier,
 } from './parts';
+import { chooseBagTier, readDeviceProfile, resolveBagAssetUrl, type DeviceProfile } from './tier';
 
 const GLTF_MAGIC = 0x46546c67; // "glTF"
 const JSON_CHUNK_TYPE = 0x4e4f534a; // "JSON"
@@ -64,7 +66,12 @@ export type BagLoadResult = LoadedBagScene | DegradedBagScene;
 
 export interface BagAssetProvider {
   fetchManifest: (modelId: string) => Promise<BagManifest>;
-  fetchGlb: (modelId: string) => Promise<ArrayBuffer>;
+  /**
+   * `url` est l'adresse résolue par le manifeste pour le palier retenu. Elle est absente pour un
+   * modèle du générateur maison, qui n'a qu'un fichier à côté de son manifeste : le fournisseur
+   * retombe alors sur le chemin historique. Un fournisseur de test peut l'ignorer.
+   */
+  fetchGlb: (modelId: string, url?: string) => Promise<ArrayBuffer>;
 }
 
 const defaultBrowserProvider: BagAssetProvider = {
@@ -75,8 +82,9 @@ const defaultBrowserProvider: BagAssetProvider = {
     }
     return res.json();
   },
-  async fetchGlb(modelId: string): Promise<ArrayBuffer> {
-    const res = await fetch(`/assets/bags/${encodeURIComponent(modelId)}.glb`);
+  async fetchGlb(modelId: string, url?: string): Promise<ArrayBuffer> {
+    const cible = url ?? `/assets/bags/${encodeURIComponent(modelId)}.glb`;
+    const res = await fetch(cible);
     if (!res.ok) {
       throw new Error(`Modèle 3D introuvable pour ${modelId} (HTTP ${res.status})`);
     }
@@ -130,21 +138,109 @@ interface GltfJson {
       baseColorFactor?: [number, number, number, number];
       metallicFactor?: number;
       roughnessFactor?: number;
+      baseColorTexture?: { index: number };
+      metallicRoughnessTexture?: { index: number };
     };
+    normalTexture?: { index: number; scale?: number };
+    occlusionTexture?: { index: number };
     doubleSided?: boolean;
   }>;
+  textures?: Array<{
+    source?: number;
+    /** EXT_texture_webp range la source ici au lieu de `source`. */
+    extensions?: { EXT_texture_webp?: { source: number } };
+  }>;
+  images?: Array<{ bufferView?: number; mimeType?: string; uri?: string }>;
   accessors?: Array<{
     bufferView: number;
     byteOffset?: number;
     componentType: number;
     count: number;
     type: string;
+    /** KHR_mesh_quantization : l'entier porte une valeur réelle ramenée dans [-1, 1] ou [0, 1]. */
+    normalized?: boolean;
   }>;
   bufferViews?: Array<{
     buffer: number;
     byteOffset?: number;
     byteLength: number;
+    byteStride?: number;
+    extensions?: {
+      EXT_meshopt_compression?: {
+        buffer: number;
+        byteOffset?: number;
+        byteLength: number;
+        byteStride: number;
+        count: number;
+        mode: 'ATTRIBUTES' | 'TRIANGLES' | 'INDICES';
+        filter?: 'NONE' | 'OCTAHEDRAL' | 'QUATERNION' | 'EXPONENTIAL';
+      };
+    };
   }>;
+  extensionsUsed?: string[];
+  extensionsRequired?: string[];
+}
+
+/**
+ * Déplie les vues compressées en meshopt.
+ *
+ * Le palier « web » des sacs importés est compressé : c'est ce qui fait tenir un maillage texturé
+ * de 35 000 triangles dans 600 Ko au lieu de 2 Mo. Le décodeur pèse 32 Ko et décode à plus d'un
+ * gigaoctet par seconde ; il n'est chargé que lorsqu'un fichier en a besoin, donc les sacs du
+ * générateur maison ne le paient jamais.
+ *
+ * Les vues décodées sont recopiées dans un binaire neuf, et les décalages réécrits en conséquence :
+ * tout ce qui lit les accesseurs ensuite ignore que le fichier était compressé.
+ */
+async function decodeMeshopt(
+  json: GltfJson,
+  bin: Uint8Array
+): Promise<{ json: GltfJson; bin: Uint8Array }> {
+  const vues = json.bufferViews ?? [];
+  if (!vues.some((v) => v.extensions?.EXT_meshopt_compression)) return { json, bin };
+
+  const { MeshoptDecoder } = await import('three/examples/jsm/libs/meshopt_decoder.module.js');
+  await MeshoptDecoder.ready;
+
+  // Taille de chaque vue une fois dépliée, puis un seul binaire qui les contient toutes.
+  const tailles = vues.map((v) => {
+    const c = v.extensions?.EXT_meshopt_compression;
+    return c ? c.count * c.byteStride : v.byteLength;
+  });
+  const alignee = (n: number) => (n % 4 ? n + (4 - (n % 4)) : n);
+  const decalages: number[] = [];
+  let total = 0;
+  for (const t of tailles) {
+    decalages.push(total);
+    total += alignee(t);
+  }
+
+  const sortie = new Uint8Array(total);
+  vues.forEach((v, i) => {
+    const c = v.extensions?.EXT_meshopt_compression;
+    const cible = sortie.subarray(decalages[i], decalages[i] + tailles[i]);
+    if (c) {
+      const source = bin.subarray(
+        (c.byteOffset ?? 0),
+        (c.byteOffset ?? 0) + c.byteLength
+      );
+      MeshoptDecoder.decodeGltfBuffer(cible, c.count, c.byteStride, source, c.mode, c.filter ?? 'NONE');
+    } else {
+      cible.set(bin.subarray(v.byteOffset ?? 0, (v.byteOffset ?? 0) + v.byteLength));
+    }
+  });
+
+  const jsonDeplie: GltfJson = {
+    ...json,
+    bufferViews: vues.map((v, i) => {
+      const { extensions, ...reste } = v;
+      void extensions;
+      return { ...reste, byteOffset: decalages[i], byteLength: tailles[i] };
+    }),
+    extensionsUsed: json.extensionsUsed?.filter((e) => e !== 'EXT_meshopt_compression'),
+    extensionsRequired: json.extensionsRequired?.filter((e) => e !== 'EXT_meshopt_compression'),
+  };
+  return { json: jsonDeplie, bin: sortie };
 }
 
 export function parseGlbBuffer(buffer: ArrayBuffer): { json: GltfJson; bin: Uint8Array } {
@@ -189,6 +285,27 @@ export function parseGlbBuffer(buffer: ArrayBuffer): { json: GltfJson; bin: Uint
   return { json, bin };
 }
 
+const COMPONENT_BYTE = 5120;
+const COMPONENT_UBYTE = 5121;
+const COMPONENT_SHORT = 5122;
+/** Diviseurs de déquantification de la spécification glTF, par componentType. */
+const QUANT_DIVISEUR: Record<number, number> = {
+  [COMPONENT_BYTE]: 127,
+  [COMPONENT_UBYTE]: 255,
+  [COMPONENT_SHORT]: 32767,
+  [COMPONENT_USHORT]: 65535,
+};
+
+/** Taille d'un composant, en octets, par componentType glTF. */
+const TAILLE_COMPOSANT: Record<number, number> = {
+  [COMPONENT_BYTE]: 1,
+  [COMPONENT_UBYTE]: 1,
+  [COMPONENT_SHORT]: 2,
+  [COMPONENT_USHORT]: 2,
+  [COMPONENT_UINT]: 4,
+  [COMPONENT_FLOAT]: 4,
+};
+
 function readAccessorArray(
   json: GltfJson,
   bin: Uint8Array,
@@ -200,24 +317,76 @@ function readAccessorArray(
   if (!view) throw new Error(`BufferView glTF ${accessor.bufferView} introuvable`);
 
   const itemSize = TYPE_COMPONENTS[accessor.type] ?? 1;
-  const totalValues = accessor.count * itemSize;
-  const startByte = bin.byteOffset + (view.byteOffset ?? 0) + (accessor.byteOffset ?? 0);
+  const octetsComposant = TAILLE_COMPOSANT[accessor.componentType];
+  if (octetsComposant === undefined) {
+    throw new Error(`ComponentType glTF non supporté : ${accessor.componentType}`);
+  }
+  const octetsElement = octetsComposant * itemSize;
+  const debut = bin.byteOffset + (view.byteOffset ?? 0) + (accessor.byteOffset ?? 0);
+  // Le pas d'entrelacement. Un fichier du générateur maison n'en a pas : les données y sont
+  // serrées. Un fichier compressé en meshopt en a presque toujours un, parce que chaque élément y
+  // est aligné sur quatre octets — une position en trois entiers courts occupe six octets dans un
+  // pas de huit. Le lire comme s'il était serré mélange le maillage sans lever la moindre erreur.
+  const pas = view.byteStride && view.byteStride > 0 ? view.byteStride : octetsElement;
+  const serre = pas === octetsElement;
 
-  // Copy into aligned typed array so arbitrary byte offsets never throw RangeError
-  if (accessor.componentType === COMPONENT_FLOAT) {
-    const byteLen = totalValues * 4;
-    const aligned = bin.buffer.slice(startByte, startByte + byteLen);
-    return { array: new Float32Array(aligned), itemSize };
+  const vue = new DataView(bin.buffer);
+  const lireComposant = (octet: number): number => {
+    switch (accessor.componentType) {
+      case COMPONENT_BYTE: return vue.getInt8(octet);
+      case COMPONENT_UBYTE: return vue.getUint8(octet);
+      case COMPONENT_SHORT: return vue.getInt16(octet, true);
+      case COMPONENT_USHORT: return vue.getUint16(octet, true);
+      case COMPONENT_UINT: return vue.getUint32(octet, true);
+      default: return vue.getFloat32(octet, true);
+    }
+  };
+
+  // KHR_mesh_quantization : positions, normales et UV arrivent en entiers normalisés, et c'est ce
+  // qui fait tenir un maillage texturé de 35 000 triangles dans 600 Ko. On les ramène en flottants
+  // selon les règles de la spécification glTF ; l'échelle réelle est restituée par la
+  // transformation du nœud, que le chargeur lit déjà.
+  if (accessor.normalized === true) {
+    const diviseur = QUANT_DIVISEUR[accessor.componentType];
+    if (diviseur === undefined) {
+      throw new Error(`ComponentType normalisé non supporté : ${accessor.componentType}`);
+    }
+    const signe = accessor.componentType === COMPONENT_BYTE || accessor.componentType === COMPONENT_SHORT;
+    const sortie = new Float32Array(accessor.count * itemSize);
+    for (let i = 0; i < accessor.count; i++) {
+      for (let c = 0; c < itemSize; c++) {
+        const v = lireComposant(debut + i * pas + c * octetsComposant) / diviseur;
+        sortie[i * itemSize + c] = signe ? Math.max(v, -1) : v;
+      }
+    }
+    return { array: sortie, itemSize };
   }
-  if (accessor.componentType === COMPONENT_USHORT) {
-    const byteLen = totalValues * 2;
-    const aligned = bin.buffer.slice(startByte, startByte + byteLen);
-    return { array: new Uint16Array(aligned), itemSize };
+
+  // Chemin serré : une seule copie, comme avant. C'est celui des cinq sacs du générateur maison.
+  if (serre) {
+    const longueur = accessor.count * octetsElement;
+    const aligne = bin.buffer.slice(debut, debut + longueur);
+    if (accessor.componentType === COMPONENT_FLOAT) return { array: new Float32Array(aligne), itemSize };
+    if (accessor.componentType === COMPONENT_USHORT) return { array: new Uint16Array(aligne), itemSize };
+    if (accessor.componentType === COMPONENT_UINT) return { array: new Uint32Array(aligne), itemSize };
+    throw new Error(`ComponentType glTF non supporté : ${accessor.componentType}`);
   }
-  if (accessor.componentType === COMPONENT_UINT) {
-    const byteLen = totalValues * 4;
-    const aligned = bin.buffer.slice(startByte, startByte + byteLen);
-    return { array: new Uint32Array(aligned), itemSize };
+
+  // Chemin entrelacé : élément par élément, au pas déclaré.
+  if (accessor.componentType === COMPONENT_FLOAT
+    || accessor.componentType === COMPONENT_USHORT
+    || accessor.componentType === COMPONENT_UINT) {
+    const sortie = accessor.componentType === COMPONENT_FLOAT
+      ? new Float32Array(accessor.count * itemSize)
+      : accessor.componentType === COMPONENT_USHORT
+        ? new Uint16Array(accessor.count * itemSize)
+        : new Uint32Array(accessor.count * itemSize);
+    for (let i = 0; i < accessor.count; i++) {
+      for (let c = 0; c < itemSize; c++) {
+        sortie[i * itemSize + c] = lireComposant(debut + i * pas + c * octetsComposant);
+      }
+    }
+    return { array: sortie, itemSize };
   }
   throw new Error(`ComponentType glTF non supporté : ${accessor.componentType}`);
 }
@@ -329,7 +498,53 @@ function buildPrimitiveGeometry(
   return geometry;
 }
 
-function createIsolatedMaterial(json: GltfJson, matIdx: number | undefined): THREE.MeshStandardMaterial {
+/**
+ * Construit les textures portées par le fichier lui-même.
+ *
+ * Un sac importé tient toute son apparence dans son atlas : les boucles noires, les fermetures, les
+ * coutures et l'écusson n'existent nulle part ailleurs. Sans cette étape, le Studio affichait un
+ * aplat de couleur — c'est exactement le défaut qu'on corrige.
+ *
+ * Décodage par `createImageBitmap`, absent hors navigateur (jsdom, rendu serveur). Dans ce cas la
+ * fonction rend une table vide et les matériaux gardent leurs facteurs : le sac s'affiche en uni
+ * plutôt que de faire échouer le chargement.
+ */
+async function chargerTextures(json: GltfJson, bin: Uint8Array): Promise<Map<number, THREE.Texture>> {
+  const table = new Map<number, THREE.Texture>();
+  const textures = json.textures ?? [];
+  if (textures.length === 0) return table;
+  if (typeof createImageBitmap !== 'function' || typeof Blob === 'undefined') return table;
+
+  await Promise.all(textures.map(async (tex, index) => {
+    const source = tex.extensions?.EXT_texture_webp?.source ?? tex.source;
+    const image = source != null ? json.images?.[source] : undefined;
+    if (!image || image.bufferView == null) return;
+    const vue = json.bufferViews?.[image.bufferView];
+    if (!vue) return;
+    try {
+      const octets = bin.subarray(vue.byteOffset ?? 0, (vue.byteOffset ?? 0) + vue.byteLength);
+      const bitmap = await createImageBitmap(
+        new Blob([octets as unknown as BlobPart], { type: image.mimeType ?? 'image/png' })
+      );
+      const texture = new THREE.Texture(bitmap as unknown as HTMLImageElement);
+      // glTF range ses UV avec l'origine en haut à gauche : pas de retournement, comme GLTFLoader.
+      texture.flipY = false;
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.needsUpdate = true;
+      table.set(index, texture);
+    } catch {
+      // Un format que le navigateur ne décode pas : le matériau garde son facteur de couleur.
+    }
+  }));
+  return table;
+}
+
+function createIsolatedMaterial(
+  json: GltfJson,
+  matIdx: number | undefined,
+  textures: Map<number, THREE.Texture> = new Map()
+): THREE.MeshStandardMaterial {
   const def = matIdx !== undefined ? json.materials?.[matIdx] : undefined;
   const pbr = def?.pbrMetallicRoughness;
   const base = pbr?.baseColorFactor ?? [0.24, 0.35, 0.29, 1];
@@ -342,12 +557,56 @@ function createIsolatedMaterial(json: GltfJson, matIdx: number | undefined): THR
     side: def?.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
   });
   material.name = def?.name ?? 'bag-material';
+
+  // Les cartes du fichier, quand il en porte. L'espace colorimétrique compte : seule la couleur de
+  // base est en sRGB ; une normale ou une rugosité lue en sRGB donnerait un relief et un brillant
+  // faux, sans message d'erreur.
+  const couleur = pbr?.baseColorTexture?.index;
+  if (couleur != null) {
+    const t = textures.get(couleur);
+    if (t) {
+      t.colorSpace = THREE.SRGBColorSpace;
+      material.map = t;
+      // Le facteur multiplie la carte : laissé à sa valeur, il assombrirait l'atlas.
+      if (!pbr?.baseColorFactor) material.color.setRGB(1, 1, 1);
+    }
+  }
+  const normale = def?.normalTexture?.index;
+  if (normale != null) {
+    const t = textures.get(normale);
+    if (t) {
+      t.colorSpace = THREE.NoColorSpace;
+      material.normalMap = t;
+      const echelle = def?.normalTexture?.scale;
+      if (typeof echelle === 'number') material.normalScale.set(echelle, echelle);
+    }
+  }
+  const metalRug = pbr?.metallicRoughnessTexture?.index;
+  if (metalRug != null) {
+    const t = textures.get(metalRug);
+    if (t) {
+      // glTF regroupe les deux dans une seule image : vert = rugosité, bleu = métal.
+      t.colorSpace = THREE.NoColorSpace;
+      material.roughnessMap = t;
+      material.metalnessMap = t;
+      if (pbr?.roughnessFactor === undefined) material.roughness = 1;
+      if (pbr?.metallicFactor === undefined) material.metalness = 1;
+    }
+  }
   return material;
+}
+
+export interface LoadBagOptions {
+  /** Signaux de l'appareil. Lus dans le navigateur si rien n'est fourni. */
+  device?: DeviceProfile;
+  /** Préférence explicite de la personne ; l'économie de données la dépasse quand même. */
+  preferredTier?: BagTier | null;
 }
 
 export async function loadBagAsset(
   modelId: string | null | undefined,
-  provider: BagAssetProvider = defaultBrowserProvider
+  provider: BagAssetProvider = defaultBrowserProvider,
+  options: LoadBagOptions = {}
 ): Promise<BagLoadResult> {
   const safeId = modelId?.trim() || '';
   if (!safeId) {
@@ -367,13 +626,22 @@ export async function loadBagAsset(
 
   let manifest: BagManifest | null = null;
   try {
-    const [loadedManifest, glbBuffer] = await Promise.all([
-      provider.fetchManifest(safeId),
-      provider.fetchGlb(safeId),
-    ]);
+    // Le manifeste vient d'abord : c'est lui qui dit quels paliers existent et où ils sont. Un
+    // aller-retour de plus sur un fichier de deux kilo-octets, contre le risque de télécharger
+    // quarante mégaoctets à un appareil qui ne peut pas les porter.
+    const loadedManifest = await provider.fetchManifest(safeId);
     manifest = loadedManifest;
+    const profile = options.device ?? readDeviceProfile();
+    const decision = chooseBagTier(loadedManifest, {
+      ...profile,
+      override: options.preferredTier ?? profile.override ?? null,
+    });
+    const assetUrl = resolveBagAssetUrl(loadedManifest, decision.tier) ?? undefined;
+    const glbBuffer = await provider.fetchGlb(safeId, assetUrl);
 
-    const { json, bin } = parseGlbBuffer(glbBuffer);
+    const brut = parseGlbBuffer(glbBuffer);
+    const { json, bin } = await decodeMeshopt(brut.json, brut.bin);
+    const textures = await chargerTextures(json, bin);
     const root = new THREE.Group();
     root.name = `bag-scene:${safeId}`;
 
@@ -394,7 +662,7 @@ export async function loadBagAsset(
         const geometry = buildPrimitiveGeometry(json, bin, meshDef.primitives);
 
         // Chaque pièce reçoit SON propre matériau cloné pour garantir l'isolation D-04
-        const material = createIsolatedMaterial(json, meshDef.primitives[0]?.material);
+        const material = createIsolatedMaterial(json, meshDef.primitives[0]?.material, textures);
         geometriesToDispose.push(geometry);
         materialsToDispose.push(material);
 
@@ -483,6 +751,12 @@ export async function loadBagAsset(
       }
       for (const m of materialsToDispose) {
         m.dispose();
+      }
+      // Les textures de l'atlas sont partagées entre plusieurs matériaux : les libérer ici, une
+      // fois chacune, plutôt qu'avec le premier matériau qui tombe. Un atlas 1024² oublié, c'est
+      // quatre mégaoctets de mémoire vidéo retenus à chaque changement de sac.
+      for (const t of textures.values()) {
+        t.dispose();
       }
       root.clear();
     };

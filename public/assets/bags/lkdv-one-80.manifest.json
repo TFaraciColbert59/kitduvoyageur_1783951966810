@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "modelId": "lkdv-one-80",
+  "label": "LKDV ONE 80 L",
+  "generator": "import-model.mjs",
+  "generatedBy": "imported",
+  "license": "LKDV — maillage importé, matière et couleur appliquées par le Studio",
+  "units": "meters",
+  "origin": "centre du sol du sac (y=0 au fond)",
+  "capabilities": {
+    "rotatable": true,
+    "openable": false,
+    "hasInterior": false,
+    "customizableParts": [],
+    "badgeAnchors": [],
+    "attachmentPoints": []
+  },
+  "hasHinge": false,
+  "declaredCapacityL": 80,
+  "boundingBoxM": {
+    "w": 0.5445,
+    "h": 0.8,
+    "d": 0.3745
+  },
+  "slots": [],
+  "texturedSource": true,
+  "budget": {
+    "triangles": 32457,
+    "fileBytes": 44114288
+  },
+  "assets": {
+    "web": {
+      "url": "/assets/bags/lkdv-one-80.glb",
+      "bytes": 578524,
+      "triangles": 32457
+    },
+    "hd": {
+      "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/bag-models/lkdv-one-80.hd.glb",
+      "bytes": 44114288,
+      "triangles": 960207
+    }
+  }
+}

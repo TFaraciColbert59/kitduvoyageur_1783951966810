@@ -171,6 +171,7 @@
     "@axe-core/playwright": "^4.13.0",
     "@cloudflare/vite-plugin": "^2.0.0-beta.v.4",
     "@eslint/eslintrc": "^3",
+    "@gltf-transform/cli": "^4.2.1",
     "@next/bundle-analyzer": "^16.3.5",
     "@phosphor-icons/core": "^2.1.1",
     "@playwright/mcp": "0.0.82",

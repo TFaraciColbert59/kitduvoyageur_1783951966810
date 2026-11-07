@@ -33,6 +33,23 @@ export interface BagSlotManifestEntry {
   normal: Vec3Tuple;
 }
 
+/**
+ * Palier de qualité d'un maillage.
+ *
+ * `web` part avec le déploiement : moins de 900 Ko, tout appareil le charge.
+ * `hd` est le master, servi depuis le dépôt distant et réservé aux appareils dont on a la preuve
+ * qu'ils le supportent. Sans preuve, on sert `web` : un sac qui met trente secondes à venir est
+ * pire qu'un sac un peu moins fin.
+ */
+export type BagTier = 'web' | 'hd';
+
+export interface BagTierAsset {
+  /** Absolue pour un master distant, commençant par « / » pour un fichier du déploiement. */
+  url: string;
+  bytes: number;
+  triangles: number;
+}
+
 export interface BagManifest {
   schema: number;
   modelId: string;
@@ -51,6 +68,13 @@ export interface BagManifest {
     triangles: number;
     fileBytes: number;
   };
+  /**
+   * Où trouver le maillage, par palier. Absent sur les modèles du générateur maison, qui n'ont
+   * qu'un fichier à côté de leur manifeste : le chargeur retombe alors sur le chemin historique.
+   */
+  assets?: Partial<Record<BagTier, BagTierAsset>>;
+  /** Vrai quand le maillage porte son propre atlas : la couleur ne se change pas sans masque. */
+  texturedSource?: boolean;
 }
 
 export interface BagIndexEntry {

@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "modelId": "lkdv-one-60",
+  "label": "LKDV ONE 60 L",
+  "generator": "import-model.mjs",
+  "generatedBy": "imported",
+  "license": "LKDV — maillage importé, matière et couleur appliquées par le Studio",
+  "units": "meters",
+  "origin": "centre du sol du sac (y=0 au fond)",
+  "capabilities": {
+    "rotatable": true,
+    "openable": false,
+    "hasInterior": false,
+    "customizableParts": [],
+    "badgeAnchors": [],
+    "attachmentPoints": []
+  },
+  "hasHinge": false,
+  "declaredCapacityL": 60,
+  "boundingBoxM": {
+    "w": 0.4172,
+    "h": 0.74,
+    "d": 0.339
+  },
+  "slots": [],
+  "texturedSource": true,
+  "budget": {
+    "triangles": 31178,
+    "fileBytes": 45510936
+  },
+  "assets": {
+    "web": {
+      "url": "/assets/bags/lkdv-one-60.glb",
+      "bytes": 546504,
+      "triangles": 31178
+    },
+    "hd": {
+      "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/bag-models/lkdv-one-60.hd.glb",
+      "bytes": 45510936,
+      "triangles": 1003275
+    }
+  }
+}

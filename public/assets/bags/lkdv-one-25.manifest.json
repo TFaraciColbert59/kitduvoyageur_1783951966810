@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "modelId": "lkdv-one-25",
+  "label": "LKDV ONE 25 L",
+  "generator": "import-model.mjs",
+  "generatedBy": "imported",
+  "license": "LKDV — maillage importé, matière et couleur appliquées par le Studio",
+  "units": "meters",
+  "origin": "centre du sol du sac (y=0 au fond)",
+  "capabilities": {
+    "rotatable": true,
+    "openable": false,
+    "hasInterior": false,
+    "customizableParts": [],
+    "badgeAnchors": [],
+    "attachmentPoints": []
+  },
+  "hasHinge": false,
+  "declaredCapacityL": 25,
+  "boundingBoxM": {
+    "w": 0.2883,
+    "h": 0.52,
+    "d": 0.2193
+  },
+  "slots": [],
+  "texturedSource": true,
+  "budget": {
+    "triangles": 24393,
+    "fileBytes": 37519572
+  },
+  "assets": {
+    "web": {
+      "url": "/assets/bags/lkdv-one-25.glb",
+      "bytes": 552936,
+      "triangles": 24393
+    },
+    "hd": {
+      "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/bag-models/lkdv-one-25.hd.glb",
+      "bytes": 37519572,
+      "triangles": 730184
+    }
+  }
+}
