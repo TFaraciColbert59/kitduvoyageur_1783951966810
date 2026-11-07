@@ -295,6 +295,12 @@ export async function loadBagAsset(
         } else {
           geometry.computeVertexNormals();
         }
+        // Sans TEXCOORD_0, aucune matière ne peut se poser : les anciens GLB n'en avaient pas,
+        // un modèle produit hors du générateur (Meshy) en a toujours.
+        if (prim.attributes.TEXCOORD_0 !== undefined) {
+          const uv = readAccessorArray(json, bin, prim.attributes.TEXCOORD_0);
+          geometry.setAttribute('uv', new THREE.BufferAttribute(uv.array, uv.itemSize));
+        }
         if (prim.indices !== undefined) {
           const idx = readAccessorArray(json, bin, prim.indices);
           geometry.setIndex(new THREE.BufferAttribute(idx.array, 1));

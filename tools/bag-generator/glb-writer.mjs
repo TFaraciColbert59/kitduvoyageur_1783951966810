@@ -113,6 +113,17 @@ export function writeGLB(root, { generator = 'lkdv-glb-writer' } = {}) {
         );
       }
 
+      // Coordonnées de texture : les géométries three en produisent, et sans elles aucune
+      // matière ne peut se poser sur le sac. Elles étaient calculées puis jetées à l'export.
+      if (g.attributes.uv) {
+        const uv = g.attributes.uv;
+        const uvArray = uv.array instanceof Float32Array
+          ? uv.array : new Float32Array(uv.array);
+        attributes.TEXCOORD_0 = pushAccessor(
+          uvArray, CT.FLOAT, 'VEC2', uv.count, TARGET.ARRAY_BUFFER
+        );
+      }
+
       const primitive = { attributes, material: getMaterial(object3d.material), mode: 4 };
 
       if (g.index) {

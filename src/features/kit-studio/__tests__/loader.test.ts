@@ -82,6 +82,22 @@ describe('Bag GLB + Manifest Loader (Lot L4-2 / C-13 / D-04 / H-07)', () => {
     }
   );
 
+  it.each(indexJson.models)(
+    '$modelId porte des coordonnées de texture sur toutes ses pièces, sans quoi aucune matière ne peut se poser',
+    async (entry) => {
+      const loaded = await loadBagAsset(entry.modelId, fsProvider);
+      expect(loaded.status).toBe('ready');
+      if (loaded.status !== 'ready') return;
+
+      for (const [partId, mesh] of loaded.parts) {
+        const uv = mesh.geometry.getAttribute('uv');
+        expect(uv, `pièce ${partId} sans uv`).toBeDefined();
+        expect(uv.itemSize).toBe(2);
+        expect(uv.count).toBe(mesh.geometry.getAttribute('position').count);
+      }
+    }
+  );
+
   it('retourne status: degraded sans crash lorsque le fichier GLB est manquant ou corrompu', async () => {
     const missing = await loadBagAsset('modele-fantome-999', fsProvider);
     expect(missing.status).toBe('degraded');
