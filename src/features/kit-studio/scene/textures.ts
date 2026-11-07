@@ -12,14 +12,39 @@ import {
   HAZE_FAR_STOPS, HAZE_MID_STOPS, MEADOW_STOPS, RIDGE_FAR, RIDGE_MID, RIDGE_NEAR, SKY_STOPS, SNOW, SUN_STOPS,
   TEX_BASE, WOOD_JOINT, WOOD_PLANK_COUNT, inkA, whiteA, woodPlank, woodVein,
 } from '../domain/palette.scene';
-import { FABRIC_REPEAT } from './bag/fabricMaps';
 import type { ResourceTracker } from './resources';
 
-export type FabricKind = 'ripstop' | 'cordura' | 'dcf' | 'xpac' | 'waxed' | 'mesh' | 'pad' | 'web' | 'heather';
-const FABRIC_KINDS: readonly FabricKind[] = ['ripstop', 'cordura', 'dcf', 'xpac', 'waxed', 'mesh', 'pad', 'web', 'heather'];
+/**
+ * Pas physique de la trame : une image couvre 100 mm de tissu réel. Avec des UV exprimées en
+ * mètres (§2 de la spec matières), la répétition correcte est donc exactement 10, sans réglage
+ * à l'œil. Une seule source pour la scène ET la couche GLB.
+ */
+export const FABRIC_TILE_M = 0.1;
+export const FABRIC_REPEAT = 1 / FABRIC_TILE_M;
+
+export type FabricKind = 'ripstop' | 'cordura' | 'dcf' | 'xpac' | 'waxed' | 'brushed-pet' | 'mesh' | 'pad' | 'web' | 'heather';
+const FABRIC_KINDS: readonly FabricKind[] = ['ripstop', 'cordura', 'dcf', 'xpac', 'waxed', 'brushed-pet', 'mesh', 'pad', 'web', 'heather'];
 export const isFabricKind = (s: string): s is FabricKind => (FABRIC_KINDS as readonly string[]).includes(s);
 
-export interface TextureBank {
+/**
+ * Cartes de détail d'une matière, pour les sacs chargés depuis un GLB.
+ * L'albédo est NEUTRE et clair (moyenne 235/255) : la couleur vient du token, par
+ * multiplication `mat.color × mat.map` — jamais de coloris cuit dans l'image.
+ */
+export interface FabricMaps {
+  /** Carte de détail neutre, à multiplier par la couleur du token. */
+  readonly albedo: Texture;
+  /** Carte de relief en espace tangent OpenGL, ou `null` si le tissu n'a pas de relevé. */
+  readonly normal: Texture | null;
+}
+
+/** Ce que `applyPartCustomization` attend du banc : les cartes de détail d'un preset. */
+export interface FabricDetailProvider {
+  /** Cartes du preset, ou `null` si ce preset n'a pas de relevé photographique. */
+  forPreset(presetId: string | undefined): FabricMaps | null;
+}
+
+export interface TextureBank extends FabricDetailProvider {
   /** Texture de tissu (créée à la première demande, partagée ensuite). Nom inconnu : ripstop. */
   fabric(name: string): Texture;
   /** Carte de relief du tissu, pour les matières relevées sur du tissu réel. `null` pour les autres. */
@@ -30,8 +55,26 @@ export interface TextureBank {
   dispose(): void;
 }
 
+/**
+ * Relevé de tissu utilisé par chaque preset de matière de la couche GLB
+ * (`bag/materials.ts` BAG_MATERIAL_PRESETS).
+ * `ballistic-nylon` partage la trame du Cordura : ce sont deux armures toile de nylon
+ * lourdes, que seule la densité sépare — et la densité est déjà portée par la rugosité du
+ * preset. Mieux vaut la bonne armure partagée qu'une trame inventée.
+ */
+const FABRIC_BY_PRESET: Readonly<Record<string, string>> = {
+  'cordura-matte': 'cordura',
+  'ballistic-nylon': 'cordura',
+  'ripstop-ultralight': 'ripstop',
+  'waxed-canvas': 'waxed',
+  'recycled-pet': 'brushed-pet',
+};
+
+/** Presets qui disposent d'un relevé de tissu. Exporté pour les tests et l'inventaire. */
+export const PRESETS_WITH_FABRIC_MAPS: readonly string[] = Object.keys(FABRIC_BY_PRESET);
+
 /** Les quatre matières dont on a un relevé photographique dans public/assets/materials. */
-const PHOTO_FABRICS: ReadonlySet<FabricKind> = new Set<FabricKind>(['ripstop', 'cordura', 'xpac', 'waxed']);
+const PHOTO_FABRICS: ReadonlySet<FabricKind> = new Set<FabricKind>(['ripstop', 'cordura', 'xpac', 'waxed', 'brushed-pet']);
 const MATERIALS_URL = '/assets/materials';
 
 /**
@@ -285,6 +328,23 @@ const FABRIC: Readonly<Record<FabricKind, { readonly repeat: number; readonly dr
       grain(x, 6);
     },
   },
+  'brushed-pet': {
+    repeat: 8,
+    draw: (x) => {
+      // Repli dessiné du polyester recyclé brossé : grain fin sans direction. L'image réelle
+      // « brushed-pet » du lot D se pose par-dessus dès qu'elle est chargée.
+      grain(x, 30);
+      x.strokeStyle = whiteA(0.16);
+      for (let i = 0; i < 120; i++) {
+        const px = Math.random() * 128;
+        const py = Math.random() * 128;
+        x.beginPath();
+        x.moveTo(px, py);
+        x.lineTo(px + 4, py + (Math.random() - 0.5) * 3);
+        x.stroke();
+      }
+    },
+  },
   heather: {
     repeat: 6,
     draw: (x) => {
@@ -379,6 +439,17 @@ export function createTextureBank(tr: ResourceTracker, maxAnisotropy: number): T
   return {
     fabric,
     fabricNormal,
+    /**
+     * Cartes de détail d'un preset de matière. Fusion de l'ancien `bag/fabricMaps.ts` :
+     * un seul banc de textures pour la scène survivante. Les textures sont celles de
+     * `fabric()` / `fabricNormal()`, donc suivies par le `ResourceTracker` et libérées avec lui.
+     */
+    forPreset(presetId) {
+      if (!presetId) return null;
+      const fabricName = FABRIC_BY_PRESET[presetId];
+      if (!fabricName) return null;
+      return { albedo: fabric(fabricName), normal: fabricNormal(fabricName) };
+    },
     panorama,
     wood: woodTex,
     dispose() {

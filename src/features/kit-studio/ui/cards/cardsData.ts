@@ -7,7 +7,7 @@ import { modOn } from '../../domain/parts';
 import { studioData } from '../../domain/studioData';
 import { candidates } from '../../domain/packing';
 import { currentConfig, currentKit } from '../../domain/state';
-import { effG } from '../../domain/totals';
+import { effG, toCents } from '../../domain/totals';
 import type { ExtraItem, KitState } from '../../domain/types';
 import { bagThumb, colorwayThumb, itemThumb, swatchThumb } from '../../scene/thumbSpecs';
 import type { ReadVar, ThumbRef } from '../../scene/thumbSpecs';
@@ -120,7 +120,7 @@ export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readV
       const on = modOn(s, m);
       const off = !on && !canAddModule(s, m);
       const owned = !!(s.own[`mod:${m}`] || s.order[`mod:${m}`]);
-      const sub = on ? 'Monté' : off ? 'Plus de place' : owned ? 'À toi' : `+${formatEuro(M.eur * 100)}`;
+      const sub = on ? 'Monté' : off ? 'Plus de place' : owned ? 'À toi' : `+${formatEuro(toCents(M.eur))}`;
       return {
         id: m, kind: 'opt', name: M.n, sub, label: `${M.n}${on ? ', monté' : ''}${off ? ', indisponible' : ''}`,
         thumb: null, glyph: M.gl, selected: on, disabled: off,

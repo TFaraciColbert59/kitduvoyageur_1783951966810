@@ -196,11 +196,11 @@ export function BilanSheet({ state, page, onPage, onAction, onBack }: BilanSheet
       {tp.map((x) => (
         <p key={x.id + x.t} className="ks-bl-t13 ks-bl-tip">{`${x.t}${NB}: ${x.s}`}</p>
       ))}
-      {(t.buy > 0 || t.rent > 0) && (
+      {(t.buyCents > 0 || t.rentCents > 0) && (
         <p className="ks-bl-t13">
           {[
-            t.buy ? `${S.bilan.bought}${NB}: ${formatEuro(t.buy * 100)}` : '',
-            t.rent ? `${S.bilan.rented}${NB}: ${formatEuro(t.rent * 100)} pour ${k.days}${NB}jours` : '',
+            t.buyCents ? `${S.bilan.bought}${NB}: ${formatEuro(t.buyCents)}` : '',
+            t.rentCents ? `${S.bilan.rented}${NB}: ${formatEuro(t.rentCents)} pour ${k.days}${NB}jours` : '',
             t.unknown ? `${t.unknown} poids inconnu${t.unknown > 1 ? 's' : ''}` : '',
           ]
             .filter(Boolean)

@@ -8,10 +8,14 @@ import {
 import type { Camera, PerspectiveCamera, ShadowMapType, ToneMapping } from 'three';
 import { LIGHT_HEMI_GROUND, LIGHT_HEMI_SKY, LIGHT_RIM, LIGHT_SUN, WOOD_TINT } from '../domain/palette.scene';
 import { currentConfig, currentKit } from '../domain/state';
+import { BAGS } from '../domain/catalog';
 import type { PartNameId, ZoneId } from '../domain/catalog';
 import type { KitState } from '../domain/types';
 import { createBag } from './bagBuilder';
 import type { BagHandle } from './bagBuilder';
+import { createBagModelLayer, selectBagRenderSource } from './bag/modelLayer';
+import type { BagModelLayer, BagModelRuntimeInfo } from './bag/modelLayer';
+import type { BagAssetProvider } from './bag/loader';
 import { createCameraRig } from './camera';
 import type { CameraRig } from './camera';
 import { makeColor } from './color';
@@ -19,7 +23,7 @@ import { attachGestures } from './gestures';
 import type { GestureCallbacks, GestureTarget, ScenePick } from './gestures';
 import { createObjectLayer } from './objects';
 import type { ObjectFrame, ObjectLayer } from './objects';
-import { GROUND_Y, TABLE } from './layout';
+import { BAG_HALF_HEIGHT, GROUND_Y, TABLE } from './layout';
 import { createFrameMeter, createLifecycle } from './lifecycle';
 import { clamp } from './math';
 import { ResourceTracker } from './resources';
@@ -67,6 +71,15 @@ export interface KitSceneOptions extends GestureCallbacks {
   readonly onZoneChange?: (zone: ZoneId) => void;
   /** Fabrique de renderer (tests) ; défaut : WebGLRenderer. */
   readonly rendererFactory?: RendererFactory;
+  /**
+   * Force un modèle GLB (lien profond / donnée serveur à venir / test). `null` ou absent :
+   * la source est décidée par le mapping corps → maillage, puis repli procédural.
+   */
+  readonly bagModelId?: string | null;
+  /** État du sac maillé : chargé, dégradé (repli procédural), ou personnalisation indisponible. */
+  readonly onBagModel?: (info: BagModelRuntimeInfo) => void;
+  /** Source des fichiers de sacs (tests, assets hors réseau) ; défaut : `/assets/bags/`. */
+  readonly bagAssetProvider?: BagAssetProvider;
   /** Perte (true) ou retour (false) du contexte WebGL : l'interface peut afficher une image fixe en attendant. */
   readonly onContextChange?: (lost: boolean) => void;
 }
@@ -93,6 +106,8 @@ export interface SceneInfo {
   };
   /** Objets rangés vivants, fantômes, objets en train de sortir. */
   readonly objects: { readonly items: number; readonly ghosts: number; readonly dying: number };
+  /** Sac affiché : maillage GLB ou repli procédural, parties et ancrages réels. */
+  readonly bagModel: BagModelRuntimeInfo;
 }
 
 export interface KitScene {
@@ -125,10 +140,23 @@ export interface KitScene {
 export const SHADOW_BUDGET_MS = 24;
 const SHADOW_MAP_SIZE = 1024;
 
+/**
+ * Hauteur de composition du sac procédural courant, en mètres : sert uniquement à mettre un
+ * maillage GLB à l'échelle de la table (les GLB livrés sont à l'échelle réelle du produit,
+ * la scène de la maquette est stylisée). Les UV restent en mètres : la trame physique des
+ * textures n'est pas modifiée par cette adaptation de composition.
+ */
+function proceduralBagHeightM(state: KitState): number {
+  const bag = currentKit(state).bag;
+  const scaleY = BAGS[bag]?.sc?.[1] ?? 1;
+  return 2 * BAG_HALF_HEIGHT * scaleY;
+}
+
 interface World {
   readonly scene: Scene;
   readonly tr: ResourceTracker;
   readonly bag: BagHandle;
+  readonly bagModel: BagModelLayer;
   readonly objects: ObjectLayer;
   readonly sun: DirectionalLight;
   fitBackdrop(): void;
@@ -142,9 +170,15 @@ interface WorldOptions {
   readonly reducedMotion: boolean;
   readonly shadows: boolean;
   readonly safeTop?: () => number;
+  /** Modèle GLB forcé (null = décidé par le mapping corps → maillage). */
+  readonly bagModelId?: string | null;
+  /** Notre sac courant, pour l'échelle de composition et le rechargement. */
+  readonly state: KitState;
+  readonly onBagModel?: (info: BagModelRuntimeInfo) => void;
+  readonly bagAssetProvider?: BagAssetProvider;
 }
 
-function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop }: WorldOptions): World {
+function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop, bagModelId, state, onBagModel, bagAssetProvider }: WorldOptions): World {
   const camera: PerspectiveCamera = rig.camera;
   const tr = new ResourceTracker();
   const tex = createTextureBank(tr, maxAnisotropy);
@@ -199,8 +233,22 @@ function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop }: Wor
     root: scene, tr, bag, camera, viewport: () => rig.viewport(), fabric: tex.fabric('ripstop'), reducedMotion, safeTop,
   });
 
+  // Le sac maillé (GLB) recouvre le sac procédural quand un modèle existe ; sinon le
+  // procédural reste seul en scène. Le chargement est asynchrone : aucune exception.
+  const selected = selectBagRenderSource(bagModelId, currentKit(state).bag);
+  const bagModel = createBagModelLayer({
+    scene,
+    textures: tex,
+    proceduralBag: bag.group,
+    targetHeightM: () => proceduralBagHeightM(state),
+    onChange: onBagModel,
+    provider: bagAssetProvider,
+  });
+  void bagModel.load(selected.kind === 'glb' ? selected.modelId : null);
+  bagModel.setAppearance(currentConfig(state));
+
   return {
-    scene, tr, bag, objects, sun,
+    scene, tr, bag, bagModel, objects, sun,
     fitBackdrop() {
       const D = 40;
       const hh = 2 * D * Math.tan(MathUtils.degToRad(camera.fov / 2));
@@ -223,6 +271,7 @@ function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop }: Wor
     dispose() {
       camera.remove(backdrop);
       objects.dispose();
+      bagModel.dispose();
       bag.dispose();
       scene.clear();
       sun.shadow.dispose();
@@ -259,6 +308,7 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
   let highlighted: ZoneId | null = null;
   const worldOptions = (): WorldOptions => ({
     rig, maxAnisotropy: renderer.capabilities.getMaxAnisotropy(), reducedMotion: options.reducedMotion, shadows, safeTop: options.safeTop,
+    bagModelId: options.bagModelId, state, onBagModel: options.onBagModel, bagAssetProvider: options.bagAssetProvider,
   });
   let world = buildWorld(worldOptions());
   rig.setWorld({
@@ -267,6 +317,18 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
   });
   rig.onZoneChange(options.onZoneChange ?? null);
   const objectFrame: ObjectFrame = { focus: 'bag', arcAmt: 0, ex: 0, pos: 1, ghostsOn: true };
+
+  /** Source de rendu pour l'état courant (GLB déclaré, sinon procédural). */
+  const renderSource = (current: KitState) => selectBagRenderSource(options.bagModelId, currentKit(current).bag);
+
+  /** Recharge le maillage quand la source a changé (changement de corps, retour de contexte). */
+  const reloadBagModel = (): void => {
+    if (disposed) return;
+    const source = renderSource(state);
+    void world.bagModel.load(source.kind === 'glb' ? source.modelId : null).then(() => {
+      if (!disposed) lifecycle.invalidate();
+    });
+  };
 
   const disableShadows = (): void => {
     if (!shadows) return;
@@ -325,6 +387,7 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
       world.bag.sync(currentKit(state).bag, currentConfig(state));
       world.objects.sync(state);
       refreshPose();
+      reloadBagModel();
       lastTime = null;
       options.onContextChange?.(false);
     },
@@ -398,6 +461,9 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
       if (lifecycle.isFrozen()) return; // appliqué à la reconstruction, au retour du contexte
       const bagChanged = world.bag.sync(currentKit(next).bag, currentConfig(next));
       const objChanged = world.objects.sync(next);
+      // La configuration d'apparence s'applique au maillage chargé (couleurs, matière, finition).
+      world.bagModel.setAppearance(currentConfig(next));
+      if (bagChanged && renderSource(state).kind === 'glb') reloadBagModel();
       if (bagChanged || objChanged) { refreshPose(); lifecycle.invalidate(); }
     },
     setDrawerOpen(open) {
@@ -480,6 +546,7 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
           explodedTarget: rig.explodedTarget(),
         },
         objects: world.objects.counts(),
+        bagModel: world.bagModel.info(),
       };
     },
   };

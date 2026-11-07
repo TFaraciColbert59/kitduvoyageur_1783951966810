@@ -12,6 +12,15 @@ const CAP_ZONES: readonly CapacityZoneId[] = ['lid', 'main', 'front', 'sides', '
 type PlannedFields = { readonly eur?: number; readonly day?: number; readonly planned?: 'shop' | 'rent' };
 type AnyItem = Item | ExtraItem;
 
+/**
+ * Seule conversion euros → centimes du domaine. `formatEuro` (format.ts:28) attend des centimes ;
+ * les prix du registre (`pieceInfo().eur`, objets ajoutés `eur`/`day`) sont en euros.
+ * Un prix affiché ne doit jamais être multiplié à la main par 100 ailleurs.
+ */
+export function toCents(eur: number): number {
+  return Math.round(eur * 100);
+}
+
 /** Bilan complet (maquette totals() l.884-886 v2). Nom d'origine entre parenthèses. */
 export interface Totals {
   /** Poids de base : sac + objets non consommables, hors porté (base). */
@@ -32,6 +41,10 @@ export interface Totals {
   readonly buy: number;
   /** Total des locations prévues en euros sur la durée du kit (rent). */
   readonly rent: number;
+  /** Total des achats prévus en centimes : seule conversion, faite ici (buy × 100). */
+  readonly buyCents: number;
+  /** Total des locations prévues en centimes : seule conversion, faite ici (rent × 100). */
+  readonly rentCents: number;
   /** Nombre d'objets au poids inconnu (unknown). */
   readonly unknown: number;
   /** Poids sur le dos = base + consommables (back). */
@@ -167,7 +180,8 @@ export function totals(s: KitState): Totals {
   }
   return {
     baseWeight: base, consumables: cons, worn, usedVolume: used, capacity: totalCap(s),
-    volumeByZone: vol, weightByZone: zg, buy, rent, unknown, onBack: base + cons,
+    volumeByZone: vol, weightByZone: zg, buy, rent, buyCents: toCents(buy), rentCents: toCents(rent),
+    unknown, onBack: base + cons,
   };
 }
 

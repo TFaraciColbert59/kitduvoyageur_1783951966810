@@ -1,93 +1,33 @@
 /**
  * src/features/kit-studio/scene/bag/parts.ts
- * Canonical bag catalog, part labels, and slot definitions (Lot L4-2).
- */
-
-import type {
-  AnchorId,
-  BagCapabilities,
-  PartId,
-  SlotId,
-  SlotState,
-} from '../../state/types';
-import type { BoundingBoxM, Vec3Tuple } from '../camera/intents';
-
-export interface BagHingeSpec {
-  axis: Vec3Tuple;
-  pivot: Vec3Tuple;
-  maxAngleRad: number;
-}
-
-export interface BagAnchorSpec {
-  id: string;
-  position: Vec3Tuple;
-  normal: Vec3Tuple;
-}
-
-export interface BagSlotManifestEntry {
-  id: SlotId;
-  kind: 'interior' | 'pocket' | 'attachment';
-  capacityL: number | null;
-  maxItems: number | null;
-  anchor: Vec3Tuple;
-  normal: Vec3Tuple;
-}
-
-/**
- * Palier de qualité d'un maillage.
+ * Catalogue des pièces, emplacements et ancres d'un sac maillé (couche GLB survivante).
  *
- * `web` part avec le déploiement : moins de 900 Ko, tout appareil le charge.
- * `hd` est le master, servi depuis le dépôt distant et réservé aux appareils dont on a la preuve
- * qu'ils le supportent. Sans preuve, on sert `web` : un sac qui met trente secondes à venir est
- * pire qu'un sac un peu moins fin.
+ * Depuis P3, les TYPES du manifeste vivent dans le domaine pur
+ * (`domain/bagModel.ts`) : slots, points d'attache, ancrages d'insigne, capacité déclarée
+ * et capacités y sont définis, sans dépendance à three ni au DOM. Ce module ne garde que
+ * les libellés d'affichage et les ré-exports attendus par la couche de chargement.
  */
-export type BagTier = 'web' | 'hd';
 
-export interface BagTierAsset {
-  /** Absolue pour un master distant, commençant par « / » pour un fichier du déploiement. */
-  url: string;
-  bytes: number;
-  triangles: number;
-}
+import type { BagPartId, BagSlotId } from '../../domain/bagModel';
 
-export interface BagManifest {
-  schema: number;
-  modelId: string;
-  label: string;
-  generator: string;
-  generatedBy: string;
-  license: string;
-  units: 'meters';
-  origin: string;
-  capabilities: BagCapabilities;
-  hasHinge: boolean;
-  declaredCapacityL: number | null;
-  boundingBoxM: BoundingBoxM;
-  slots: BagSlotManifestEntry[];
-  budget: {
-    triangles: number;
-    fileBytes: number;
-  };
-  /**
-   * Où trouver le maillage, par palier. Absent sur les modèles du générateur maison, qui n'ont
-   * qu'un fichier à côté de leur manifeste : le chargeur retombe alors sur le chemin historique.
-   */
-  assets?: Partial<Record<BagTier, BagTierAsset>>;
-  /** Vrai quand le maillage porte son propre atlas : la couleur ne se change pas sans masque. */
-  texturedSource?: boolean;
-}
+export type {
+  BagAnchorSpec,
+  BagCapabilities,
+  BagHingeSpec,
+  BagIndexEntry,
+  BagManifest,
+  BagSlotId,
+  BagSlotKind,
+  BagSlotManifestEntry,
+} from '../../domain/bagModel';
+export {
+  BUILTIN_BAG_MODELS,
+  DEGRADED_BAG_CAPABILITIES,
+  bagModelFromManifest,
+  declaredCapacityL,
+} from '../../domain/bagModel';
 
-export interface BagIndexEntry {
-  modelId: string;
-  label: string;
-  triangles: number;
-  bytes: number;
-  openable: boolean;
-  parts: number;
-  slots: number;
-  valid: boolean;
-}
-
+/** Libellés des pièces d'un sac GLB. */
 export const BAG_PART_LABELS: Readonly<Record<string, string>> = {
   body: 'Corps principal',
   interior: 'Doublure intérieure',
@@ -104,10 +44,9 @@ export const BAG_PART_LABELS: Readonly<Record<string, string>> = {
   'compression-strap-r-1': 'Sangle compression D1',
   'compression-strap-l-2': 'Sangle compression G2',
   'compression-strap-r-2': 'Sangle compression D2',
-  'compression-strap-l-3': 'Sangle compression G3',
-  'compression-strap-r-3': 'Sangle compression D3',
 };
 
+/** Libellés des emplacements d'un sac GLB. */
 export const BAG_SLOT_LABELS: Readonly<Record<string, string>> = {
   'interior-bottom': 'Fond du sac (lourd / couchage)',
   'interior-top': 'Haut du sac (accès rapide)',
@@ -121,84 +60,22 @@ export const BAG_SLOT_LABELS: Readonly<Record<string, string>> = {
   'attach-side-r': 'Accroche externe droite',
 };
 
-export const BAG_ANCHOR_LABELS: Readonly<Record<AnchorId, string>> = {
+/** Libellés des ancrages d'insigne d'un sac GLB. */
+export const BAG_ANCHOR_LABELS: Readonly<Record<string, string>> = {
   'badge-body-front': 'Face avant du corps',
   'badge-lid': 'Dessus du rabat',
   'badge-front-pocket': 'Poche frontale',
 };
 
-export function getPartLabel(partId: PartId): string {
+export function getPartLabel(partId: BagPartId): string {
   return BAG_PART_LABELS[partId] ?? partId;
 }
 
-export function getSlotLabel(slotId: SlotId | null): string {
+export function getSlotLabel(slotId: BagSlotId | null): string {
   if (!slotId) return 'Non rangé';
   return BAG_SLOT_LABELS[slotId] ?? slotId;
 }
 
-export function getAnchorLabel(anchorId: AnchorId): string {
+export function getAnchorLabel(anchorId: string): string {
   return BAG_ANCHOR_LABELS[anchorId] ?? anchorId;
 }
-
-export function manifestSlotsToSlotStates(manifest: BagManifest): SlotState[] {
-  return manifest.slots.map((s) => ({
-    id: s.id,
-    kind: s.kind,
-    capacityL: typeof s.capacityL === 'number' ? Number(s.capacityL.toFixed(2)) : null,
-    maxItems: s.maxItems ?? null,
-    itemIds: [],
-  }));
-}
-
-export const DEGRADED_BAG_CAPABILITIES: BagCapabilities = {
-  rotatable: false,
-  openable: false,
-  hasInterior: false,
-  customizableParts: [],
-  badgeAnchors: [],
-  attachmentPoints: [],
-};
-
-export const BUILTIN_BAG_MODELS: readonly {
-  modelId: string;
-  label: string;
-  capacityL: number;
-  openable: boolean;
-  summary: string;
-}[] = [
-  {
-    modelId: 'daypack-22',
-    label: 'Sac à dos journée 22 L',
-    capacityL: 22,
-    openable: true,
-    summary: 'Sortie à la journée, ouverture zippée, poches latérales.',
-  },
-  {
-    modelId: 'ultralight-40',
-    label: 'Sac ultraléger 40 L',
-    capacityL: 40,
-    openable: true,
-    summary: 'Fermeture enroulée rolltop, profil épuré grande randonnée.',
-  },
-  {
-    modelId: 'trekker-55',
-    label: 'Sac de trek 55 L',
-    capacityL: 55,
-    openable: true,
-    summary: 'Rabat articulé, ceinture porteuse, 10 emplacements dédiés.',
-  },
-  {
-    modelId: 'expedition-75',
-    label: 'Sac d’expédition 75 L',
-    capacityL: 75,
-    openable: true,
-    summary: 'Haut volume autonomie longue, triple compression.',
-  },
-  {
-    modelId: 'duffel-60',
-    label: 'Sac de voyage 60 L',
-    capacityL: 60,
-    openable: false,
-    summary: 'Volume monobloc robuste (extérieur 3D, rangement intérieur en Liste).',
-  },
-] as const;
