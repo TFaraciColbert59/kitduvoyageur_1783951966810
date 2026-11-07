@@ -15,6 +15,7 @@ import { BAG_HALF_HEIGHT, GROUND_Y } from './layout';
 import { backOut, clamp, damp, lerp } from './math';
 import type { ResourceTracker } from './resources';
 import type { TextureBank } from './textures';
+import { uvMeters } from './uv';
 
 type PartKey = 'body' | 'lid' | 'front' | 'sides' | 'hip' | 'harness';
 type Slot = PartKey | 'acc';
@@ -197,6 +198,11 @@ export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: 
       paint(material.emissive, LOOK_EMISSIVE_REFLECT);
       material.emissiveIntensity = 0.3;
     }
+    // Les pièces en tissu nu portent une trame photographique répétée au pas physique : leurs UV
+    // doivent être en mètres, pas en 0..1. `uvMeters` est idempotent, donc une géométrie partagée
+    // qui repasse ici à chaque reconstruction n'est pas remise à l'échelle deux fois.
+    if (role === 'fabric') uvMeters(geometry);
+
     const mesh = new Mesh(geometry, material);
     mesh.position.set(pos[0], pos[1], pos[2]);
     if (rot) mesh.rotation.set(rot[0], rot[1], rot[2]);

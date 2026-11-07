@@ -12,6 +12,7 @@ import {
   HAZE_FAR_STOPS, HAZE_MID_STOPS, MEADOW_STOPS, RIDGE_FAR, RIDGE_MID, RIDGE_NEAR, SKY_STOPS, SNOW, SUN_STOPS,
   TEX_BASE, WOOD_JOINT, WOOD_PLANK_COUNT, inkA, whiteA, woodPlank, woodVein,
 } from '../domain/palette.scene';
+import { FABRIC_REPEAT } from './bag/fabricMaps';
 import type { ResourceTracker } from './resources';
 
 export type FabricKind = 'ripstop' | 'cordura' | 'dcf' | 'xpac' | 'waxed' | 'mesh' | 'pad' | 'web' | 'heather';
@@ -34,11 +35,18 @@ const PHOTO_FABRICS: ReadonlySet<FabricKind> = new Set<FabricKind>(['ripstop', '
 const MATERIALS_URL = '/assets/materials';
 
 /**
- * Répétition des relevés photographiques. Chaque image couvre 100 mm de tissu réel ; le corps du sac
- * fait 0,78 unité de scène pour ~0,34 m : la tuile se répète donc ~3,5 fois sur une face.
- * Les textures dessinées par code gardent leur propre valeur, calée sur leur motif.
+ * Répétition des relevés photographiques, au pas physique : chaque image couvre 100 mm de tissu
+ * réel, donc la tuile se répète 10 fois par mètre. Valable parce que les pièces de tissu nu du sac
+ * reçoivent des UV en mètres (`uvMeters`, appelé depuis `bagBuilder.add()`).
+ *
+ * Les textures dessinées par code gardent leur propre valeur, calée sur leur motif et sur des UV
+ * normalisées 0..1.
+ *
+ * Limite connue : les objets du catalogue (`itemMesh.ts`) partagent leurs géométries par clé entre
+ * objets de tailles différentes, et ne peuvent donc pas porter d'UV en mètres — une géométrie
+ * partagée n'a pas d'échelle propre. Sur eux, la trame reste approximative.
  */
-const PHOTO_FABRIC_REPEAT = 3.5;
+const PHOTO_FABRIC_REPEAT = FABRIC_REPEAT;
 
 /** Encodage du vecteur (0, 0, 1) : surface plane. Ce n'est pas une couleur de charte. */
 const FLAT_NORMAL = 'rgb(128, 128, 255)';
