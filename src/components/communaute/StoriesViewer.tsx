@@ -547,7 +547,7 @@ export default function StoriesViewer({
               <Icon name="link" size={18} aria-hidden="true" />
             </button>
             <button type="button" role="menuitem" aria-label="Partager" title="Partager" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); void shareStory(); setOptionsOpen(false); }}>
-              <Icon name="repeat" size={18} aria-hidden="true" />
+              <Icon name="share2" size={18} aria-hidden="true" />
             </button>
             {user.id !== myUserId && onReport ? (
               <button type="button" role="menuitem" aria-label="Signaler" title="Signaler" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onReport(user, slide); setOptionsOpen(false); }}>
@@ -556,7 +556,7 @@ export default function StoriesViewer({
             ) : null}
             {user.id === myUserId && slide.storyId && onDelete ? (
               <button type="button" role="menuitem" aria-label="Retirer ma story" title="Retirer ma story" className="is-danger" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onDelete(slide); setOptionsOpen(false); }}>
-                <Icon name="trash" size={18} aria-hidden="true" />
+                <Icon name="trash2" size={18} aria-hidden="true" />
               </button>
             ) : null}
           </div>

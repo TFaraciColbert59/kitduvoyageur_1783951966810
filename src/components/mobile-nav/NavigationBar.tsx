@@ -76,10 +76,10 @@ export default function NavigationBar() {
       const detail = (event as CustomEvent<{ hide?: boolean }>).detail;
       if (typeof detail?.hide === 'boolean') {
         setHiddenByEvent(detail.hide);
-        if (detail.hide && iosNative) {
+        if (iosNative) {
           const revision = ++nativeTabBarRevision;
           revisionRef.current = revision;
-          nativeTabBar.setVisible({ visible: false, revision }).catch(() => {});
+          nativeTabBar.setVisible({ visible: !detail.hide, revision }).catch(() => {});
         }
       }
     };

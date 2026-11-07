@@ -88,11 +88,11 @@ const MUTE_PRESETS = [
   { label: 'Désactiver', minutes: null },
 ] as const;
 
-const FILTERS: Array<{ id: FilterId; label: string; icon: string }> = [
-  { id: 'all', label: 'Toutes', icon: 'M4 6h16v12H4z' },
-  { id: 'direct', label: 'Directs', icon: 'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 20c.8-3.8 3.8-6 8-6s7.2 2.2 8 6' },
-  { id: 'group', label: 'Groupes', icon: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 19c.5-3 2.8-5 6-5s5.5 2 6 5M16 10a2.5 2.5 0 1 0 0-5M17 14c2 .4 3.3 2 3.8 4.4' },
-  { id: 'requests', label: 'Demandes', icon: 'M12 3a6 6 0 0 0-6 6v4l-2 4h16l-2-4V9a6 6 0 0 0-6-6Zm-2 17a2 2 0 0 0 4 0' },
+const FILTERS: Array<{ id: FilterId; label: string; icon: React.ReactNode }> = [
+  { id: 'all', label: 'Toutes', icon: <Icon name="message-square" className="size-3.5" aria-hidden="true" /> },
+  { id: 'direct', label: 'Directs', icon: <Icon name="user" className="size-3.5" aria-hidden="true" /> },
+  { id: 'group', label: 'Groupes', icon: <Icon name="users" className="size-3.5" aria-hidden="true" /> },
+  { id: 'requests', label: 'Demandes', icon: <Icon name="bell" className="size-3.5" aria-hidden="true" /> },
 ];
 
 function initials(name: string): string {
@@ -1548,11 +1548,12 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                     )}
                   </div>
                 </div>
-                {/* Filtre des discussions : capsule flottante en bas à droite de la card. */}
+                {/* Filtre des discussions : capsule compacte en bas à droite de la card. */}
                 <SubCapsuleTabs
                   items={FILTERS.map((item) => ({
                     id: item.id,
                     label: item.label,
+                    icon: item.icon,
                     badge: item.id === 'requests' && pendingCount > 0 ? pendingCount : undefined,
                   }))}
                   activeIndex={Math.max(0, FILTERS.findIndex((item) => item.id === filter))}
@@ -1562,6 +1563,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   }}
                   ariaLabel="Filtrer les discussions"
                   placement="float"
+                  showLabels={false}
                   className="mfilters"
                 />
               </div>

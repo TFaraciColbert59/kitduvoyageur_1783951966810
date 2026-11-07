@@ -959,16 +959,16 @@
   z-index: 6;
 }
 .lkdv-messages .mfilters {
-  /* Capsule flottante en bas à droite de la card des discussions — style identique au sélecteur Grille/Sorties de Compte. */
+  /* Capsule flottante en bas à droite de la card des discussions — format compact raccourci (116px) style Compte. */
   position: absolute !important;
   top: auto !important;
   right: 12px !important;
   bottom: 10px !important;
   left: auto !important;
   z-index: 6 !important;
-  width: auto !important;
-  max-width: none !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  width: 116px !important;
+  max-width: 116px !important;
+  grid-template-columns: repeat(4, 1fr) !important;
   height: 30px !important;
   padding: 2.5px !important;
   border-radius: 9999px !important;
@@ -1005,10 +1005,15 @@
   cursor: pointer !important;
   border-radius: 9999px !important;
   transition: color 0.18s ease, transform 0.12s ease !important;
-  padding: 0 7px !important;
-  font: 600 10.2px/1 var(--sf) !important;
-  letter-spacing: -0.1px !important;
-  gap: 3px !important;
+  padding: 0 !important;
+}
+.lkdv-messages .mfilters button .lbl {
+  display: none !important;
+}
+.lkdv-messages .mfilters button .ic {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 .lkdv-messages .mfilters button:active {
   transform: scale(0.92) !important;
@@ -1018,13 +1023,16 @@
 }
 .lkdv-messages .mfilters .badge-count,
 .lkdv-messages .mfilters .mrow-badge {
-  min-width: 13px !important;
-  height: 13px !important;
-  font: 700 8.5px/13px var(--sf) !important;
+  position: absolute !important;
+  top: 1px !important;
+  right: 1px !important;
+  min-width: 11px !important;
+  height: 11px !important;
+  font: 700 7.5px/11px var(--sf) !important;
   background: var(--warn) !important;
   color: var(--tint-ink) !important;
   border-radius: 999px !important;
-  padding: 0 3px !important;
+  padding: 0 2.5px !important;
 }
 
 /* Indicateur de saisie : trois points qui respirent (pas de texte décoratif). */

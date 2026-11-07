@@ -149,14 +149,17 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   }, [initialScene]);
 
   useEffect(() => {
-    if (typeof document === 'undefined') return;
+    if (typeof window === 'undefined') return;
     if (sheetOpen) {
       document.documentElement.dataset.explorerSheetOpen = 'true';
+      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
     } else {
       delete document.documentElement.dataset.explorerSheetOpen;
+      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
     }
     return () => {
       delete document.documentElement.dataset.explorerSheetOpen;
+      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
     };
   }, [sheetOpen]);
 
@@ -885,9 +888,9 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           onFlag={() => state.showToast({ title: 'Repère posé', sub: 'Ajouté à ta sortie' })}
           onStop={() => state.stopActivity()}
         />
-      ) : (
+      ) : !sheetOpen ? (
         <BottomBar />
-      )}
+      ) : null}
 
       {/* Attributions (P10-09) : obligatoires pour OSM, OpenFreeMap, AWS Terrain,
           Natural Earth, MET Norway et Wikidata. Discret, mais toujours visible. */}

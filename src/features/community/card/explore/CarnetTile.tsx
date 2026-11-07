@@ -56,7 +56,7 @@ export function CarnetTile({
             aria-label={`Commentaires : ${comments}`}
             onClick={onNavigate}
           >
-            <Icon name="message-circle" size={13} aria-hidden="true" />
+            <Icon name="message-square" size={13} aria-hidden="true" />
             {comments}
           </Link>
         </span>
