@@ -3463,7 +3463,6 @@ let bindIgSwipe = function () {
     }
     igSwipe = null;
     const target = e.target;
-    const target = e.target;
     // Ne pas capturer le swipe de grille si l'utilisateur fait défiler les sorties ou les stories horizontalement
     if (target && target.closest) {
       if (target.closest('.st-wrap, .stories-wrap, .ig-stories, .story, .ig-hl-row')) return;
