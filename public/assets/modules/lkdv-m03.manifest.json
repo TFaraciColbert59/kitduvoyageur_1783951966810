@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "moduleId": "lkdv-m03",
+  "code": "M03",
+  "label": "Poche GPS",
+  "units": "meters",
+  "origin": "glb",
+  "glbUrl": "/assets/modules/lkdv-m03.glb",
+  "texturedSource": true,
+  "boundingBoxM": {
+    "w": 0.0773,
+    "h": 0.15,
+    "d": 0.0516
+  },
+  "cotesReferenceMm": {
+    "w": 78,
+    "h": 150,
+    "d": 38
+  },
+  "orientation": {
+    "up": "Y",
+    "front": "+Z",
+    "back": "-Z",
+    "bakedInGlbRoot": true,
+    "rootYawDegInGlb": 0,
+    "bakedScaleFactor": 0.0791,
+    "loadRotationDeg": [
+      0,
+      0,
+      0
+    ],
+    "loadScale": 1
+  },
+  "platine": {
+    "position": [
+      0,
+      0.075,
+      -0.0258
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "textureSize": 512,
+  "reserve": null,
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  },
+  "assets": {
+    "web": {
+      "url": "/assets/modules/lkdv-m03.glb",
+      "bytes": 297232,
+      "triangles": 11733,
+      "textureSize": 512
+    },
+    "hd": {
+      "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/module-models/lkdv-m03.hd.glb",
+      "bytes": 1054900,
+      "triangles": 11733,
+      "textureSize": 512
+    }
+  }
+}

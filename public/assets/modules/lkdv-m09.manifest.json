@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "moduleId": "lkdv-m09",
+  "code": "M09",
+  "label": "Porte-tente",
+  "units": "meters",
+  "origin": "procedural",
+  "boundingBoxM": {
+    "w": 0.46,
+    "h": 0.16,
+    "d": 0.16
+  },
+  "cotesReferenceMm": {
+    "w": 460,
+    "h": 160,
+    "d": 160
+  },
+  "referenceState": "charge",
+  "orientation": {
+    "up": "Y",
+    "front": "+Z",
+    "back": "-Z",
+    "bakedInGlbRoot": true,
+    "rootYawDegInGlb": 0,
+    "loadRotationDeg": [
+      0,
+      0,
+      0
+    ],
+    "loadScale": 1
+  },
+  "platine": {
+    "position": [
+      0,
+      0.08,
+      -0.08
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "reserve": null,
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  }
+}

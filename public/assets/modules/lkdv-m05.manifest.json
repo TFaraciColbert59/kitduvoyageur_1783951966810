@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "moduleId": "lkdv-m05",
+  "code": "M05",
+  "label": "Grande poche cargo",
+  "units": "meters",
+  "origin": "glb",
+  "glbUrl": "/assets/modules/lkdv-m05.glb",
+  "texturedSource": true,
+  "boundingBoxM": {
+    "w": 0.2618,
+    "h": 0.38,
+    "d": 0.1587
+  },
+  "cotesReferenceMm": {
+    "w": 260,
+    "h": 380,
+    "d": 120
+  },
+  "orientation": {
+    "up": "Y",
+    "front": "+Z",
+    "back": "-Z",
+    "bakedInGlbRoot": true,
+    "rootYawDegInGlb": 180,
+    "bakedScaleFactor": 0.2001,
+    "loadRotationDeg": [
+      0,
+      0,
+      0
+    ],
+    "loadScale": 1
+  },
+  "platine": {
+    "position": [
+      0,
+      0.19,
+      -0.0793
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "textureSize": 1024,
+  "reserve": "Détails de dos (filet et sangles) projetés sur la façade et le dos.",
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  },
+  "assets": {
+    "web": {
+      "url": "/assets/modules/lkdv-m05.glb",
+      "bytes": 389368,
+      "triangles": 11299,
+      "textureSize": 1024
+    },
+    "hd": {
+      "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/module-models/lkdv-m05.hd.glb",
+      "bytes": 1415056,
+      "triangles": 11299,
+      "textureSize": 1024
+    }
+  }
+}

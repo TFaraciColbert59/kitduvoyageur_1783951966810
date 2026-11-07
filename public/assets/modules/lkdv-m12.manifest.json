@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "moduleId": "lkdv-m12",
+  "code": "M12",
+  "label": "Porte-casque",
+  "units": "meters",
+  "origin": "procedural",
+  "boundingBoxM": {
+    "w": 0.28,
+    "h": 0.3,
+    "d": 0.2
+  },
+  "cotesReferenceMm": {
+    "w": 280,
+    "h": 300,
+    "d": 200
+  },
+  "referenceState": "filet_concave_sans_casque",
+  "orientation": {
+    "up": "Y",
+    "front": "+Z",
+    "back": "-Z",
+    "bakedInGlbRoot": true,
+    "rootYawDegInGlb": 0,
+    "loadRotationDeg": [
+      0,
+      0,
+      0
+    ],
+    "loadScale": 1
+  },
+  "platine": {
+    "position": [
+      0,
+      0.15,
+      -0.1
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "reserve": null,
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  }
+}
