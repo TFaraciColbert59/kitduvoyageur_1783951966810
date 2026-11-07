@@ -5,6 +5,7 @@
   "label": "Porte-matelas",
   "units": "meters",
   "origin": "procedural",
+  "fitRule": "porteur",
   "boundingBoxM": {
     "w": 0.56,
     "h": 0.15,

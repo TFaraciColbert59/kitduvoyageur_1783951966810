@@ -16,8 +16,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 95, "h": 210, "d": 95 },
-      "reserve": null
+      "cotesReferenceMm": {
+        "w": 95,
+        "h": 210,
+        "d": 95
+      },
+      "reserve": null,
+      "fitRule": "face"
     },
     {
       "code": "M02",
@@ -27,8 +32,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 90, "h": 170, "d": 30 },
-      "reserve": null
+      "cotesReferenceMm": {
+        "w": 90,
+        "h": 170,
+        "d": 30
+      },
+      "reserve": null,
+      "fitRule": "face"
     },
     {
       "code": "M03",
@@ -38,8 +48,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 78, "h": 150, "d": 38 },
-      "reserve": null
+      "cotesReferenceMm": {
+        "w": 78,
+        "h": 150,
+        "d": 38
+      },
+      "reserve": null,
+      "fitRule": "face"
     },
     {
       "code": "M04",
@@ -49,8 +64,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 180,
-      "cotesReferenceMm": { "w": 150, "h": 200, "d": 55 },
-      "reserve": "Mélange recto/verso dans la texture : pictogramme projeté au dos et marquage sombre sur la façade."
+      "cotesReferenceMm": {
+        "w": 150,
+        "h": 200,
+        "d": 55
+      },
+      "reserve": "Mélange recto/verso dans la texture : pictogramme projeté au dos et marquage sombre sur la façade.",
+      "fitRule": "face"
     },
     {
       "code": "M05",
@@ -60,8 +80,13 @@
       "textureSize": 1024,
       "maxWebBytes": 716800,
       "rootYawDegInGlb": 180,
-      "cotesReferenceMm": { "w": 260, "h": 380, "d": 120 },
-      "reserve": "Détails de dos (filet et sangles) projetés sur la façade et le dos."
+      "cotesReferenceMm": {
+        "w": 260,
+        "h": 380,
+        "d": 120
+      },
+      "reserve": "Détails de dos (filet et sangles) projetés sur la façade et le dos.",
+      "fitRule": "face"
     },
     {
       "code": "M06",
@@ -71,8 +96,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 180, "h": 250, "d": 70 },
-      "reserve": null
+      "cotesReferenceMm": {
+        "w": 180,
+        "h": 250,
+        "d": 70
+      },
+      "reserve": null,
+      "fitRule": "face"
     },
     {
       "code": "M07",
@@ -82,8 +112,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 240, "h": 320, "d": 80 },
-      "reserve": "Filet aux faces et trous géométriques irréguliers."
+      "cotesReferenceMm": {
+        "w": 240,
+        "h": 320,
+        "d": 80
+      },
+      "reserve": "Filet aux faces et trous géométriques irréguliers.",
+      "fitRule": "face"
     },
     {
       "code": "M08",
@@ -93,8 +128,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 40, "h": 320, "d": 45 },
-      "reserve": null
+      "cotesReferenceMm": {
+        "w": 40,
+        "h": 320,
+        "d": 45
+      },
+      "reserve": null,
+      "fitRule": "face"
     },
     {
       "code": "M13",
@@ -104,8 +144,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 60, "h": 450, "d": 70 },
-      "reserve": null
+      "cotesReferenceMm": {
+        "w": 60,
+        "h": 450,
+        "d": 70
+      },
+      "reserve": null,
+      "fitRule": "face"
     },
     {
       "code": "M15",
@@ -115,8 +160,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 150, "h": 110, "d": 65 },
-      "reserve": "Superposition sombre autour de la croix."
+      "cotesReferenceMm": {
+        "w": 150,
+        "h": 110,
+        "d": 65
+      },
+      "reserve": "Superposition sombre autour de la croix.",
+      "fitRule": "face"
     },
     {
       "code": "M16",
@@ -126,8 +176,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 180,
-      "cotesReferenceMm": { "w": 95, "h": 165, "d": 40 },
-      "reserve": "Écusson peu lisible de face."
+      "cotesReferenceMm": {
+        "w": 95,
+        "h": 165,
+        "d": 40
+      },
+      "reserve": "Écusson peu lisible de face.",
+      "fitRule": "face"
     },
     {
       "code": "M17",
@@ -137,8 +192,13 @@
       "textureSize": 1024,
       "maxWebBytes": 716800,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 300, "h": 380, "d": 25 },
-      "reserve": null
+      "cotesReferenceMm": {
+        "w": 300,
+        "h": 380,
+        "d": 25
+      },
+      "reserve": null,
+      "fitRule": "face"
     },
     {
       "code": "M18",
@@ -148,8 +208,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 170, "h": 210, "d": 115 },
-      "reserve": null
+      "cotesReferenceMm": {
+        "w": 170,
+        "h": 210,
+        "d": 115
+      },
+      "reserve": null,
+      "fitRule": "face"
     },
     {
       "code": "M19",
@@ -159,8 +224,13 @@
       "textureSize": 512,
       "maxWebBytes": 409600,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 250, "h": 380, "d": 120 },
-      "reserve": null
+      "cotesReferenceMm": {
+        "w": 250,
+        "h": 380,
+        "d": 120
+      },
+      "reserve": null,
+      "fitRule": "face"
     },
     {
       "code": "M20",
@@ -170,8 +240,13 @@
       "textureSize": 1024,
       "maxWebBytes": 716800,
       "rootYawDegInGlb": 0,
-      "cotesReferenceMm": { "w": 300, "h": 380, "d": 22 },
-      "reserve": null
+      "cotesReferenceMm": {
+        "w": 300,
+        "h": 380,
+        "d": 22
+      },
+      "reserve": null,
+      "fitRule": "face"
     }
   ],
   "proceduralModules": [
@@ -180,45 +255,70 @@
       "moduleId": "lkdv-m09",
       "label": "Porte-tente",
       "origin": "procedural",
-      "cotesReferenceMm": { "w": 460, "h": 160, "d": 160 },
+      "cotesReferenceMm": {
+        "w": 460,
+        "h": 160,
+        "d": 160
+      },
       "referenceState": "charge",
-      "reserve": null
+      "reserve": null,
+      "fitRule": "porteur"
     },
     {
       "code": "M10",
       "moduleId": "lkdv-m10",
       "label": "Porte-matelas",
       "origin": "procedural",
-      "cotesReferenceMm": { "w": 560, "h": 150, "d": 150 },
+      "cotesReferenceMm": {
+        "w": 560,
+        "h": 150,
+        "d": 150
+      },
       "referenceState": "ouvert_sans_matelas",
-      "reserve": null
+      "reserve": null,
+      "fitRule": "porteur"
     },
     {
       "code": "M11",
       "moduleId": "lkdv-m11",
       "label": "Porte-sac de couchage",
       "origin": "procedural",
-      "cotesReferenceMm": { "w": 420, "h": 230, "d": 230 },
+      "cotesReferenceMm": {
+        "w": 420,
+        "h": 230,
+        "d": 230
+      },
       "referenceState": "ouvert_sans_sac_de_couchage",
-      "reserve": null
+      "reserve": null,
+      "fitRule": "porteur"
     },
     {
       "code": "M12",
       "moduleId": "lkdv-m12",
       "label": "Porte-casque",
       "origin": "procedural",
-      "cotesReferenceMm": { "w": 280, "h": 300, "d": 200 },
+      "cotesReferenceMm": {
+        "w": 280,
+        "h": 300,
+        "d": 200
+      },
       "referenceState": "filet_concave_sans_casque",
-      "reserve": null
+      "reserve": null,
+      "fitRule": "porteur"
     },
     {
       "code": "M14",
       "moduleId": "lkdv-m14",
       "label": "Porte-skis (paire, A-frame)",
       "origin": "procedural",
-      "cotesReferenceMm": { "w": 90, "h": 1700, "d": 90 },
+      "cotesReferenceMm": {
+        "w": 90,
+        "h": 1700,
+        "d": 90
+      },
       "referenceState": "lame_droite_sans_skis",
-      "reserve": null
+      "reserve": null,
+      "fitRule": "porteur"
     }
   ]
 }

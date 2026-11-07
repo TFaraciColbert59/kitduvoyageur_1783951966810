@@ -5,6 +5,7 @@
   "label": "Poche batterie",
   "units": "meters",
   "origin": "glb",
+  "fitRule": "face",
   "glbUrl": "/assets/modules/lkdv-m16.glb",
   "texturedSource": true,
   "boundingBoxM": {

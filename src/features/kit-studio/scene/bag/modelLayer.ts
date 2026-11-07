@@ -55,12 +55,17 @@ export type BagRenderSource =
   | { readonly kind: 'procedural' };
 
 /**
- * Mapping « corps du studio » → modèle GLB. Vide aujourd'hui : les cinq maillages livrés
- * sont des sacs de démonstration (22/40/55/75/60 L) et aucun ne correspond aux corps 28/42 L
- * du catalogue. Le jour où un maillage est produit pour un corps, il s'ajoute ici (ou le
- * manifeste/registre serveur fournit l'identifiant) — sans toucher à la scène.
+ * Mapping « corps du studio » → modèle GLB.
+ * Rapprochement par capacité (et non correspondance de produit) :
+ * - b42 (Corps 42 L) → lkdv-one-45 (+3 L)
+ * - b28 (Corps 28 L) → lkdv-one-25 (-3 L)
+ * Les trois autres modèles LKDV ONE (15 L, 60 L, 80 L) n'ont pas de corps correspondant
+ * dans le catalogue actuel du Studio (qui n'en compte que deux : b42 et b28).
  */
-const GLB_MODEL_BY_BAG: Readonly<Record<string, string>> = {};
+export const GLB_MODEL_BY_BAG: Readonly<Record<string, string>> = {
+  b42: 'lkdv-one-45',
+  b28: 'lkdv-one-25',
+};
 
 /** Modèle GLB d'un corps du studio, ou `null` si le corps se construit par code. */
 export function glbModelForBag(bagId: string | null | undefined): string | null {
@@ -101,6 +106,8 @@ export interface BagModelRuntimeInfo {
   readonly modules3dAvailable?: boolean;
   /** Message utilisateur en cas de refus de pose sur un point d'accroche déjà occupé (§ 4.3). */
   readonly attachmentNotice?: string | null;
+  /** Identifiants des modules 3D actuellement montés sur les ancres du sac. */
+  readonly mountedModules?: readonly string[];
   /** Raison de la dégradation, si dégradée. */
   readonly reason: string | null;
 }
@@ -276,9 +283,24 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
               normal: a.normal,
             }))
           : provisionalAnchors;
+      const getMountedModuleIds = (): readonly string[] => {
+        if (!attachmentCtrl) return [];
+        return attachmentCtrl
+          .listAnchors()
+          .map((a) => attachmentCtrl!.getMountedModule(a.id)?.moduleId)
+          .filter((id): id is string => Boolean(id));
+      };
+
       attachmentCtrl = createModuleAttachmentController(result.root, allAnchorSpecs, {
         onNoticeChange(notice) {
-          emit({ ...info, attachmentNotice: notice });
+          emit({ ...info, attachmentNotice: notice, mountedModules: getMountedModuleIds() });
+        },
+        onAttachmentChange() {
+          emit({
+            ...info,
+            attachmentNotice: attachmentCtrl?.getLastRejectionNotice() ?? null,
+            mountedModules: getMountedModuleIds(),
+          });
         },
       });
       const anchorIds =

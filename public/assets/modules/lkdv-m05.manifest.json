@@ -5,6 +5,7 @@
   "label": "Grande poche cargo",
   "units": "meters",
   "origin": "glb",
+  "fitRule": "face",
   "glbUrl": "/assets/modules/lkdv-m05.glb",
   "texturedSource": true,
   "boundingBoxM": {

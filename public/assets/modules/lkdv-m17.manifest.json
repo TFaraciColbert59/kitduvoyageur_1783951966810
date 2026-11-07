@@ -5,6 +5,7 @@
   "label": "Support panneau solaire",
   "units": "meters",
   "origin": "glb",
+  "fitRule": "face",
   "glbUrl": "/assets/modules/lkdv-m17.glb",
   "texturedSource": true,
   "boundingBoxM": {

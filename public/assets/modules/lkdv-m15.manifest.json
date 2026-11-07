@@ -5,6 +5,7 @@
   "label": "Poche pharmacie",
   "units": "meters",
   "origin": "glb",
+  "fitRule": "face",
   "glbUrl": "/assets/modules/lkdv-m15.glb",
   "texturedSource": true,
   "boundingBoxM": {

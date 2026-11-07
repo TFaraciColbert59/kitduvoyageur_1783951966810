@@ -20,7 +20,7 @@
 
 import * as THREE from 'three';
 import type { BagAnchorId, BagAnchorSpec, BoundingBoxM, Vec3Tuple } from '../../domain/bagModel';
-import type { ProvisionalBagAnchor } from '../../domain/bagAnchorsTable';
+import type { ModuleFitRule, ProvisionalBagAnchor } from '../../domain/bagAnchorsTable';
 import { decodeGlbBufferToScene } from './loader';
 
 /**
@@ -106,6 +106,7 @@ export interface ModuleManifest {
   readonly label: string;
   readonly units: 'meters';
   readonly origin?: ModuleOrigin;
+  readonly fitRule?: ModuleFitRule;
   readonly boundingBoxM: BoundingBoxM;
   readonly cotesReferenceMm?: { readonly w: number; readonly h: number; readonly d: number };
   readonly referenceState?: string;
@@ -138,6 +139,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Porte-gourde',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m01.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.1098, h: 0.21, d: 0.1187 },
@@ -164,6 +166,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Poche téléphone',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m02.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.0864, h: 0.17, d: 0.043 },
@@ -190,6 +193,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Poche GPS',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m03.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.0773, h: 0.15, d: 0.0516 },
@@ -216,6 +220,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Poche multifonction',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m04.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.1386, h: 0.2, d: 0.0761 },
@@ -243,6 +248,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Grande poche cargo',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m05.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.2618, h: 0.38, d: 0.1587 },
@@ -269,6 +275,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Poche étanche',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m06.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.1641, h: 0.25, d: 0.0772 },
@@ -295,6 +302,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Poche filet',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m07.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.2237, h: 0.32, d: 0.097 },
@@ -321,6 +329,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Porte-bâtons',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m08.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.0449, h: 0.32, d: 0.0448 },
@@ -347,6 +356,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Porte-piolets',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m13.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.0831, h: 0.45, d: 0.0831 },
@@ -373,6 +383,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Poche pharmacie',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m15.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.1552, h: 0.11, d: 0.0598 },
@@ -399,6 +410,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Poche batterie',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m16.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.088, h: 0.165, d: 0.0443 },
@@ -425,6 +437,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Support panneau solaire',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m17.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.2855, h: 0.38, d: 0.0478 },
@@ -451,6 +464,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Poche photo',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m18.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.1571, h: 0.21, d: 0.1079 },
@@ -477,6 +491,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Sacoche détachable',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m19.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.2426, h: 0.38, d: 0.1374 },
@@ -503,6 +518,7 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Panneau frontal interchangeable',
     units: 'meters',
     origin: 'glb',
+    fitRule: 'face',
     glbUrl: '/assets/modules/lkdv-m20.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.2663, h: 0.38, d: 0.0404 },
@@ -536,6 +552,7 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Porte-tente',
     units: 'meters',
     origin: 'procedural',
+    fitRule: 'porteur',
     boundingBoxM: { w: 0.46, h: 0.16, d: 0.16 },
     cotesReferenceMm: { w: 460, h: 160, d: 160 },
     referenceState: 'charge',
@@ -559,6 +576,7 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Porte-matelas',
     units: 'meters',
     origin: 'procedural',
+    fitRule: 'porteur',
     boundingBoxM: { w: 0.56, h: 0.15, d: 0.15 },
     cotesReferenceMm: { w: 560, h: 150, d: 150 },
     referenceState: 'ouvert_sans_matelas',
@@ -582,6 +600,7 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Porte-sac de couchage',
     units: 'meters',
     origin: 'procedural',
+    fitRule: 'porteur',
     boundingBoxM: { w: 0.42, h: 0.23, d: 0.23 },
     cotesReferenceMm: { w: 420, h: 230, d: 230 },
     referenceState: 'ouvert_sans_sac_de_couchage',
@@ -605,6 +624,7 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Porte-casque',
     units: 'meters',
     origin: 'procedural',
+    fitRule: 'porteur',
     boundingBoxM: { w: 0.28, h: 0.3, d: 0.2 },
     cotesReferenceMm: { w: 280, h: 300, d: 200 },
     referenceState: 'filet_concave_sans_casque',
@@ -628,6 +648,7 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     label: 'Porte-skis (paire, A-frame)',
     units: 'meters',
     origin: 'procedural',
+    fitRule: 'porteur',
     boundingBoxM: { w: 0.09, h: 1.7, d: 0.09 },
     cotesReferenceMm: { w: 90, h: 1700, d: 90 },
     referenceState: 'lame_droite_sans_skis',
@@ -720,6 +741,9 @@ export function validateModuleManifest(raw: unknown, expectedModuleId?: string):
   const origin: ModuleOrigin = m.origin === 'procedural' ? 'procedural' : 'glb';
   if (m.origin !== undefined && m.origin !== 'glb' && m.origin !== 'procedural') {
     throw new Error(`Origine de module invalide : ${String(m.origin)}`);
+  }
+  if (m.fitRule !== undefined && m.fitRule !== 'face' && m.fitRule !== 'porteur') {
+    throw new Error(`fitRule invalide : ${String(m.fitRule)}`);
   }
   const bbox = m.boundingBoxM as Record<string, unknown> | undefined;
   if (
@@ -1101,7 +1125,7 @@ export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group
   return group;
 }
 
-const defaultModuleProvider: ModuleAssetProvider = {
+export const defaultModuleProvider: ModuleAssetProvider = {
   async fetchManifest(moduleId: string): Promise<unknown> {
     const builtin = BUILTIN_MANIFEST_BY_ID.get(moduleId);
     if (typeof fetch !== 'function') {
@@ -1339,6 +1363,8 @@ export function formatModuleAttachFailureNotice(
 export interface ModuleAttachmentControllerOptions {
   /** Appelé à chaque refus de pose (message utilisateur) ou remise à zéro (`null`). */
   readonly onNoticeChange?: (notice: string | null) => void;
+  /** Appelé à chaque modification du montage d'un module (attachement, détachement). */
+  readonly onAttachmentChange?: () => void;
 }
 
 export interface ModuleAttachmentController {
@@ -1446,6 +1472,7 @@ export function createModuleAttachmentController(
     bagRoot.add(module.root);
     occupied.set(anchorId, module);
     setNotice(null);
+    options?.onAttachmentChange?.();
 
     const forwardVec = new THREE.Vector3(
       moduleOutward[0],
@@ -1476,6 +1503,7 @@ export function createModuleAttachmentController(
       mounted.root.parent.remove(mounted.root);
     }
     setNotice(null);
+    options?.onAttachmentChange?.();
     return mounted;
   };
 
@@ -1497,6 +1525,7 @@ export function createModuleAttachmentController(
       mounted.dispose();
     }
     setNotice(null);
+    options?.onAttachmentChange?.();
   };
 
   return {

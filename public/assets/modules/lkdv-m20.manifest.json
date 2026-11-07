@@ -5,6 +5,7 @@
   "label": "Panneau frontal interchangeable",
   "units": "meters",
   "origin": "glb",
+  "fitRule": "face",
   "glbUrl": "/assets/modules/lkdv-m20.glb",
   "texturedSource": true,
   "boundingBoxM": {

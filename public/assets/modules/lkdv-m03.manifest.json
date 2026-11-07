@@ -5,6 +5,7 @@
   "label": "Poche GPS",
   "units": "meters",
   "origin": "glb",
+  "fitRule": "face",
   "glbUrl": "/assets/modules/lkdv-m03.glb",
   "texturedSource": true,
   "boundingBoxM": {

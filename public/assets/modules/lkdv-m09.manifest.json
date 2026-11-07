@@ -5,6 +5,7 @@
   "label": "Porte-tente",
   "units": "meters",
   "origin": "procedural",
+  "fitRule": "porteur",
   "boundingBoxM": {
     "w": 0.46,
     "h": 0.16,

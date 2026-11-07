@@ -12,6 +12,14 @@ import type { ExtraItem, KitState } from '../../domain/types';
 import { bagThumb, colorwayThumb, itemThumb, swatchThumb } from '../../scene/thumbSpecs';
 import type { ReadVar, ThumbRef } from '../../scene/thumbSpecs';
 import { S, tileLabel } from '../strings';
+import { glbModelForBag } from '../../scene/bag/modelLayer';
+import { AVAILABLE_3D_MODULE_MANIFESTS } from '../../scene/bag/moduleLoader';
+import {
+  calculateModuleOverflowNotice,
+  filterCompatibleModulesForBag,
+  LKDV_ONE_BAG_BBOXES,
+} from '../../domain/bagAnchorsTable';
+import { getScene } from '../../scene/sceneRef';
 
 export type OptionCat = 'shape' | 'mod' | 'col';
 export type CardKind = 'item' | 'bag' | 'opt' | 'add';
@@ -29,6 +37,8 @@ export interface CardModel {
   readonly disabled: boolean;
   /** Raison de l'indisponibilité (jamais affichée en toast). */
   readonly why?: string;
+  /** Mention explicite de débordement pour les modules porteurs. */
+  readonly overflowNotice?: string;
   readonly zones?: readonly ZoneId[];
 }
 
@@ -114,8 +124,40 @@ export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readV
     });
   }
   if (cat === 'mod') {
+    const out: CardModel[] = [];
+    const glbModel = glbModelForBag(k.bag);
+    if (glbModel && LKDV_ONE_BAG_BBOXES[glbModel]) {
+      const bagBbox = LKDV_ONE_BAG_BBOXES[glbModel];
+      const bagStub = {
+        modelId: glbModel,
+        boundingBoxM: bagBbox,
+      };
+      const compatible = filterCompatibleModulesForBag(AVAILABLE_3D_MODULE_MANIFESTS, bagStub);
+      const ctrl = getScene()?.getAttachments?.() ?? null;
+      for (const m of compatible) {
+        const on = ctrl
+          ? ctrl.listAnchors().some((a) => ctrl.getMountedModule(a.id)?.moduleId === m.moduleId)
+          : false;
+        const overflow = calculateModuleOverflowNotice(m, bagStub);
+        const sub = on ? 'Monté' : (overflow ?? m.code ?? 'Disponible');
+        out.push({
+          id: m.moduleId,
+          kind: 'opt',
+          name: m.label,
+          sub,
+          label: `${m.code ? `${m.code} · ` : ''}${m.label}${overflow ? ` (${overflow})` : ''}${on ? ', monté' : ''}`,
+          thumb: null,
+          glyph: 'cube',
+          selected: on,
+          disabled: false,
+          why: overflow ?? undefined,
+          overflowNotice: overflow ?? undefined,
+        });
+      }
+    }
+
     const mods = studioData().one.mods;
-    return MODULE_IDS.filter((m) => part === 'all' || mods[m].part === part).map((m: ModuleId) => {
+    const legacyCards: CardModel[] = MODULE_IDS.filter((m) => part === 'all' || mods[m].part === part).map((m: ModuleId): CardModel => {
       const M = mods[m];
       const on = modOn(s, m);
       const off = !on && !canAddModule(s, m);
@@ -127,6 +169,8 @@ export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readV
         why: off ? 'Plus de points d’attache libres. Retire un module.' : undefined,
       };
     });
+    out.push(...legacyCards);
+    return out;
   }
   const colorways = studioData().colorways;
   const ids = Object.keys(colorways) as ColorwayId[];

@@ -32,6 +32,7 @@ import {
   LKDV_ONE_AUDITED_ANCHORS,
   LKDV_ONE_PROVISIONAL_ANCHORS,
   MODULE_FACE_MARGIN_RATIO,
+  calculateModuleOverflowNotice,
   doesModuleFitBag,
   filterCompatibleModulesForBag,
   resolveBagAttachmentAnchors,
@@ -491,5 +492,100 @@ describe('Deux origines de module : cohabitation des 15 modules .glb et des 5 mo
     m10.dispose();
     m11.dispose();
     m14.dispose();
+  });
+});
+
+describe('5. Règle porteurs vs face et mention explicite de débordement (Avenant Suite Porteurs)', () => {
+  it('déclare explicitement fitRule ("face" ou "porteur") sans jamais la déduire du nom ni de origin', () => {
+    for (const m of AVAILABLE_3D_MODULE_MANIFESTS) {
+      expect(m.fitRule).toBeDefined();
+      expect(['face', 'porteur']).toContain(m.fitRule);
+    }
+
+    const porteurs = AVAILABLE_3D_MODULE_MANIFESTS.filter((m) => m.fitRule === 'porteur');
+    expect(porteurs.map((m) => m.code).sort()).toEqual(['M09', 'M10', 'M11', 'M12', 'M14']);
+
+    const faces = AVAILABLE_3D_MODULE_MANIFESTS.filter((m) => m.fitRule === 'face');
+    expect(faces).toHaveLength(15);
+  });
+
+  it('verrouille les deux sens : M14 proposé sur les 5 sacs avec sa mention de débordement, et M05 toujours refusé sur le 15 L', () => {
+    const bag15 = lireBagManifest('lkdv-one-15');
+    const bag25 = lireBagManifest('lkdv-one-25');
+    const bag45 = lireBagManifest('lkdv-one-45');
+    const bag60 = lireBagManifest('lkdv-one-60');
+    const bag80 = lireBagManifest('lkdv-one-80');
+    const allBags = [bag15, bag25, bag45, bag60, bag80];
+
+    const m14 = AVAILABLE_3D_MODULE_MANIFESTS.find((m) => m.code === 'M14');
+    expect(m14).toBeDefined();
+    if (!m14) return;
+
+    // 1. M14 est proposé sur les 5 sacs
+    for (const bag of allBags) {
+      expect(doesModuleFitBag(m14, bag), `M14 doit être proposé sur ${bag.modelId}`).toBe(true);
+      const notice = calculateModuleOverflowNotice(m14, bag);
+      expect(notice).toBeTruthy();
+      expect(notice).toMatch(/dépasse de \d+ cm au-dessus du sac/);
+    }
+
+    // Mention calculée exacte sur le 15 L :
+    // Ancre à y=0.171 m, platine à y=0.85 m, haut du module à 0.171 + (1.70 - 0.85) = 1.021 m.
+    // Haut du sac 15 L à 0.460 m. Débordement au-dessus = 1.021 - 0.460 = 0.561 m -> 56 cm.
+    const notice15 = calculateModuleOverflowNotice(m14, bag15);
+    expect(notice15).toBe('dépasse de 56 cm au-dessus du sac');
+
+    // 2. M05 est toujours refusé sur le 15 L et le 25 L (poche trop large pour la face à 85 %)
+    const m05 = AVAILABLE_3D_MODULE_MANIFESTS.find((m) => m.code === 'M05');
+    expect(m05).toBeDefined();
+    if (!m05) return;
+    expect(doesModuleFitBag(m05, bag15)).toBe(false);
+    expect(doesModuleFitBag(m05, bag25)).toBe(false);
+    expect(doesModuleFitBag(m05, bag45)).toBe(true);
+
+    // 3. M10 (porte-matelas) est proposé sur les 5 sacs (avec débordement latéral calculé sur 15 L)
+    const m10 = AVAILABLE_3D_MODULE_MANIFESTS.find((m) => m.code === 'M10');
+    expect(m10).toBeDefined();
+    if (!m10) return;
+    for (const bag of allBags) {
+      expect(doesModuleFitBag(m10, bag), `M10 doit être proposé sur ${bag.modelId}`).toBe(true);
+    }
+    // Sur le 15 L (largeur 284 mm) : M10 fait 560 mm -> déborde de 276 mm (~28 cm)
+    const noticeM10_15 = calculateModuleOverflowNotice(m10, bag15);
+    expect(noticeM10_15).toBe('dépasse de 28 cm en largeur');
+
+    // 4. Comptes totaux exacts sur les 20 modules
+    expect(filterCompatibleModulesForBag(AVAILABLE_3D_MODULE_MANIFESTS, bag15)).toHaveLength(15);
+    expect(filterCompatibleModulesForBag(AVAILABLE_3D_MODULE_MANIFESTS, bag25)).toHaveLength(16);
+    expect(filterCompatibleModulesForBag(AVAILABLE_3D_MODULE_MANIFESTS, bag45)).toHaveLength(20);
+    expect(filterCompatibleModulesForBag(AVAILABLE_3D_MODULE_MANIFESTS, bag60)).toHaveLength(20);
+    expect(filterCompatibleModulesForBag(AVAILABLE_3D_MODULE_MANIFESTS, bag80)).toHaveLength(20);
+  });
+
+  it('valide fitRule dans validateModuleManifest et rejette les valeurs non reconnues', () => {
+    const valid = validateModuleManifest({
+      schema: 1,
+      moduleId: 'lkdv-test',
+      label: 'Test',
+      units: 'meters',
+      origin: 'procedural',
+      fitRule: 'porteur',
+      boundingBoxM: { w: 0.1, h: 0.1, d: 0.1 },
+      platine: { position: [0, 0.05, -0.05], normal: [0, 0, -1] },
+    });
+    expect(valid.fitRule).toBe('porteur');
+
+    expect(() =>
+      validateModuleManifest({
+        schema: 1,
+        moduleId: 'lkdv-test',
+        label: 'Test',
+        units: 'meters',
+        origin: 'procedural',
+        fitRule: 'inconnu',
+        boundingBoxM: { w: 0.1, h: 0.1, d: 0.1 },
+        platine: { position: [0, 0.05, -0.05], normal: [0, 0, -1] },
+      }),
+    ).toThrow(/fitRule invalide/);
   });
 });

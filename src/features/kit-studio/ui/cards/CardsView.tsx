@@ -17,6 +17,7 @@ import { FamilyCapsule } from './FamilyCapsule';
 import { ModeCapsule } from './ModeCapsule';
 import { addCard, catsFor, colorValue, contentCards, optionCards } from './cardsData';
 import type { CardModel, OptionCat } from './cardsData';
+import { getScene, subscribeScene } from '../../scene/sceneRef';
 import { useCardGestures } from './useCardGestures';
 import './cards.css';
 
@@ -68,11 +69,17 @@ export function CardsView({ zone = 'bag', projectZone, highlightZone, onAdd }: C
   const cats = catsFor(part);
   const cat: OptionCat = (cats as readonly string[]).includes(category ?? '') ? (category as OptionCat) : cats[0];
 
+  const [sceneRev, setSceneRev] = useState(0);
+  useEffect(() => {
+    return subscribeScene(() => setSceneRev((r) => r + 1));
+  }, []);
+
   const cards = useMemo<readonly CardModel[]>(() => {
+    void sceneRev;
     if (mode === 'appearance') return optionCards(kit, part, cat);
     const list = contentCards(kit, zone, family);
     return list.length ? list : [addCard()];
-  }, [mode, kit, part, cat, zone, family]);
+  }, [mode, kit, part, cat, zone, family, sceneRev]);
 
   const [page, setPage] = useState(0);
   const [blink, setBlink] = useState<string | null>(null);
@@ -138,6 +145,26 @@ export function CardsView({ zone = 'bag', projectZone, highlightZone, onAdd }: C
         if (!r.ok) refuse(card.id);
         else haptic('medium');
         return r.ok;
+      }
+      if (cat === 'mod') {
+        const scene = getScene();
+        if (scene && typeof scene.attachModule === 'function') {
+          const ctrl = scene.getAttachments?.();
+          const isMounted = ctrl?.listAnchors().some((a) => ctrl.getMountedModule(a.id)?.moduleId === card.id);
+          if (isMounted) {
+            scene.detachModule(card.id);
+            haptic('light');
+            return true;
+          }
+          scene.attachModule(card.id).then((res) => {
+            if (res.ok) {
+              haptic('medium');
+            } else {
+              refuse(card.id);
+            }
+          });
+          return true;
+        }
       }
       const value = cat === 'col' ? colorValue(part, card.id) : (card.id as ModuleId);
       const r = store.setPartOption(part, cat, value);

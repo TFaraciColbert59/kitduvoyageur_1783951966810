@@ -5,6 +5,7 @@
   "label": "Porte-skis (paire, A-frame)",
   "units": "meters",
   "origin": "procedural",
+  "fitRule": "porteur",
   "boundingBoxM": {
     "w": 0.09,
     "h": 1.7,

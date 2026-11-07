@@ -5,6 +5,7 @@
   "label": "Poche filet",
   "units": "meters",
   "origin": "glb",
+  "fitRule": "face",
   "glbUrl": "/assets/modules/lkdv-m07.glb",
   "texturedSource": true,
   "boundingBoxM": {

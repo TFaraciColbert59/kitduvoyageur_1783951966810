@@ -55,17 +55,21 @@ function makeLayer() {
 }
 
 describe('Choix de la source de rendu du sac', () => {
-  it('repli procédural par défaut : aucun maillage n’est déclaré pour les corps 28/42 L', () => {
-    expect(glbModelForBag('b42')).toBeNull();
-    expect(glbModelForBag('b28')).toBeNull();
-    expect(selectBagRenderSource(null, 'b42')).toEqual({ kind: 'procedural' });
+  it('rapprochement par capacité pour b42 et b28, repli procédural si inconnu ou non défini', () => {
+    expect(glbModelForBag('b42')).toBe('lkdv-one-45');
+    expect(glbModelForBag('b28')).toBe('lkdv-one-25');
+    expect(selectBagRenderSource(null, 'b42')).toEqual({ kind: 'glb', modelId: 'lkdv-one-45' });
+    expect(selectBagRenderSource(null, 'b28')).toEqual({ kind: 'glb', modelId: 'lkdv-one-25' });
+    expect(glbModelForBag('inconnu')).toBeNull();
+    expect(selectBagRenderSource(null, 'inconnu')).toEqual({ kind: 'procedural' });
     expect(selectBagRenderSource(undefined, undefined)).toEqual({ kind: 'procedural' });
   });
 
   it('un modèle explicite (lien profond, donnée serveur, test) force le GLB', () => {
     expect(selectBagRenderSource('daypack-22', 'b42')).toEqual({ kind: 'glb', modelId: 'daypack-22' });
-    // Une chaîne vide ou blanche ne force rien.
-    expect(selectBagRenderSource('  ', 'b42')).toEqual({ kind: 'procedural' });
+    // Une chaîne vide ou blanche ne force rien et retombe sur le GLB du sac ou le procédural.
+    expect(selectBagRenderSource('  ', 'b42')).toEqual({ kind: 'glb', modelId: 'lkdv-one-45' });
+    expect(selectBagRenderSource('  ', 'inconnu')).toEqual({ kind: 'procedural' });
   });
 });
 

@@ -5,6 +5,7 @@
   "label": "Poche multifonction",
   "units": "meters",
   "origin": "glb",
+  "fitRule": "face",
   "glbUrl": "/assets/modules/lkdv-m04.glb",
   "texturedSource": true,
   "boundingBoxM": {

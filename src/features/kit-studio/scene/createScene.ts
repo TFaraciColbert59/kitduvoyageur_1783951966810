@@ -30,6 +30,10 @@ import { clamp } from './math';
 import { ResourceTracker } from './resources';
 import type { ResourceCounts } from './resources';
 import { createTextureBank } from './textures';
+import type { BagAnchorId } from '../domain/bagModel';
+import type { AttachModuleResult, LoadedModuleAsset, ModuleAttachmentController } from './bag/moduleLoader';
+import { loadModuleAsset } from './bag/moduleLoader';
+import { notifySceneUpdate } from './sceneRef';
 
 /** Sous-ensemble de WebGLRenderer utilisé par la scène : permet d'injecter un faux renderer en test (pas de WebGL en Node). */
 export interface RendererLike {
@@ -136,6 +140,12 @@ export interface KitScene {
   resize(): void;
   dispose(): void;
   info(): SceneInfo;
+  /** Attache un module 3D sur une ancre libre (ou ciblée). */
+  attachModule(moduleId: string, anchorId?: BagAnchorId): Promise<AttachModuleResult>;
+  /** Détache le module monté sur l'ancre ou correspondant au moduleId. */
+  detachModule(anchorOrModuleId?: string): LoadedModuleAsset | null;
+  /** Contrôleur d'accroche actif sur le maillage courant. */
+  getAttachments(): ModuleAttachmentController | null;
 }
 
 export const SHADOW_BUDGET_MS = 24;
@@ -581,6 +591,93 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
         objects: world.objects.counts(),
         bagModel: world.bagModel.info(),
       };
+    },
+    async attachModule(moduleId: string, anchorId?: BagAnchorId): Promise<AttachModuleResult> {
+      const ctrl = world.bagModel.attachments();
+      if (!ctrl) {
+        return {
+          ok: false,
+          anchorId: anchorId ?? 'facade',
+          reason: 'anchor-not-found',
+          userMessage: 'Aucun point d’accroche disponible sur ce sac.',
+        };
+      }
+      const targetAnchor =
+        anchorId ??
+        ctrl.listAnchors().find((a) => !ctrl.isOccupied(a.id))?.id ??
+        ctrl.listAnchors()[0]?.id ??
+        'facade';
+
+      const provider = options.bagAssetProvider
+        ? {
+            fetchManifest: async (id: string) => {
+              if (options.bagAssetProvider?.fetchManifest) {
+                try {
+                  return await options.bagAssetProvider.fetchManifest(id);
+                } catch {
+                  // fallback
+                }
+              }
+              const { defaultModuleProvider } = await import('./bag/moduleLoader');
+              return defaultModuleProvider.fetchManifest(id);
+            },
+            fetchGlb: async (id: string, url?: string) => {
+              if (options.bagAssetProvider?.fetchGlb) {
+                try {
+                  return await options.bagAssetProvider.fetchGlb(id);
+                } catch {
+                  // fallback
+                }
+              }
+              const { defaultModuleProvider } = await import('./bag/moduleLoader');
+              return defaultModuleProvider.fetchGlb(id, url);
+            },
+          }
+        : undefined;
+
+      const loaded = await loadModuleAsset(moduleId, provider);
+      if (loaded.status !== 'ready') {
+        return {
+          ok: false,
+          anchorId: targetAnchor,
+          reason: 'anchor-not-found',
+          userMessage: `Impossible de charger le module ${moduleId}.`,
+        };
+      }
+      const res = ctrl.attach(loaded, targetAnchor);
+      if (res.ok) {
+        refreshPose();
+        lifecycle.invalidate();
+      }
+      notifySceneUpdate();
+      return res;
+    },
+    detachModule(anchorOrModuleId?: string): LoadedModuleAsset | null {
+      const ctrl = world.bagModel.attachments();
+      if (!ctrl) return null;
+      let targetAnchor: BagAnchorId | undefined;
+      for (const a of ctrl.listAnchors()) {
+        const mounted = ctrl.getMountedModule(a.id);
+        if (mounted && (a.id === anchorOrModuleId || mounted.moduleId === anchorOrModuleId)) {
+          targetAnchor = a.id;
+          break;
+        }
+      }
+      if (!targetAnchor && anchorOrModuleId && ctrl.isOccupied(anchorOrModuleId as BagAnchorId)) {
+        targetAnchor = anchorOrModuleId as BagAnchorId;
+      }
+      targetAnchor ??= ctrl.listAnchors().find((a) => ctrl.isOccupied(a.id))?.id;
+      if (!targetAnchor) return null;
+      const detached = ctrl.detach(targetAnchor);
+      if (detached) {
+        refreshPose();
+        lifecycle.invalidate();
+      }
+      notifySceneUpdate();
+      return detached;
+    },
+    getAttachments(): ModuleAttachmentController | null {
+      return world.bagModel.attachments();
     },
   };
 }

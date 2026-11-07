@@ -5,6 +5,7 @@
   "label": "Poche photo",
   "units": "meters",
   "origin": "glb",
+  "fitRule": "face",
   "glbUrl": "/assets/modules/lkdv-m18.glb",
   "texturedSource": true,
   "boundingBoxM": {
