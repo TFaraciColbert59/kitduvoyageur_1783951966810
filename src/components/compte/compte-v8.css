@@ -712,9 +712,9 @@ button.mb:active{background:var(--fill2)}
 .ig-tabs button[aria-selected="true"]{color:var(--tint)}
 .ig-tabs .ig-th{position:absolute;top:2px;bottom:2px;left:2px;width:calc((100% - 4px)/4);border-radius:10px;background:rgba(255,255,255,.86);box-shadow:0 2px 6px rgba(23,43,36,.1),inset 0 1px 0 #fff;transition:transform .32s var(--ease-spring)}
 
-/* Grille photo 3 colonnes Instagram (remplissage carré intégral, pas de bandes vides, espacement 2 mm) */
-.ig-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.ig-tile{position:relative;width:100%;aspect-ratio:1/1!important;height:auto!important;min-height:unset!important;border-radius:10px;overflow:hidden;border:0;padding:0;cursor:pointer;background:#0d1e15!important;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35);text-align:left;transition:transform .15s;display:flex!important;align-items:center!important;justify-content:center!important}
+/* Grille photo 3 colonnes Instagram (séparation de 1px max pareil pour les bords) */
+.ig-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px!important}
+.ig-tile{position:relative;width:100%;aspect-ratio:1/1!important;height:auto!important;min-height:unset!important;border-radius:1px!important;overflow:hidden;border:0;padding:0;cursor:pointer;background:#0d1e15!important;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35);text-align:left;transition:transform .15s;display:flex!important;align-items:center!important;justify-content:center!important}
 .ig-tile:active{transform:scale(.96)}
 .ig-tile .ig-tile-bg{display:none!important}
 .ig-tile svg.art{width:100%;height:100%;display:block;position:relative;z-index:1}
@@ -779,7 +779,7 @@ button.mb:active{background:var(--fill2)}
 .ig-tile .t-prog i{display:block;height:100%;background:#E8C068}
 .ig-tile.dim,.ig-feed-row.dim{opacity:.26;filter:saturate(.35)}
 .ig-tile.lit,.ig-feed-row.lit{box-shadow:0 0 0 2px #5B7F55,0 4px 10px rgba(23,64,44,.28)}
-.ig-grid-wrap{display:flex;flex-direction:column;gap:8px;margin:4px 8px 8px;border-radius:14px;overflow:hidden}
+.ig-grid-wrap{display:flex;flex-direction:column;gap:1px!important;margin:1px!important;padding:1px!important;border-radius:4px!important;overflow:hidden}
 .ig-empty{display:grid;place-items:center;text-align:center;min-height:100px;padding:10px;border-radius:14px;background:rgba(255,255,255,.4);font:500 11.5px/1.35 var(--sf);color:var(--label2);gap:6px}
 .stat-bump{display:inline-block;animation:statbump .5s var(--ease-spring)}
 @keyframes statbump{0%{transform:scale(.7);opacity:.3}100%{transform:none;opacity:1}}

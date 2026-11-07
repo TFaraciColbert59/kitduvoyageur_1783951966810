@@ -6,8 +6,10 @@ import type {
   CarnetEtapeDay,
   CarnetDetail,
   CarnetMomentItem,
+  CarnetNightItem,
   CarnetParticipant,
   CarnetStatItem,
+  KitVerdictType,
 } from './types';
 
 const UNTITLED = 'Carnet sans titre';
@@ -155,6 +157,25 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
      (`pickCarnetTrace`), pas forcément celle qui donne les statistiques. */
   const trace = input.trace ?? hikeSession?.positions_geojson ?? null;
 
+  const nights: CarnetNightItem[] =
+    input.nights && input.nights.length > 0
+      ? input.nights
+      : (input.hebergements ?? []).map((h) => ({
+          id: h.id,
+          dayNumber: h.apres_jour_numero ?? 1,
+          name: h.nom?.trim() || 'Hébergement',
+          type: (['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre'].includes(
+            (h as { type_hebergement?: string | null }).type_hebergement ?? ''
+          )
+            ? (h as { type_hebergement?: string | null }).type_hebergement
+            : 'refuge') as CarnetNightItem['type'],
+          altitudeM: toNumber(h.altitude_m),
+          infos: h.prix_note || h.note || null,
+          lat: null,
+          lng: null,
+          mapRefugeId: null,
+        }));
+
   return {
     id: carnet.id,
     title: carnet.title?.trim() || carnet.destination?.trim() || UNTITLED,
@@ -199,11 +220,23 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
         detail: k.detail?.trim() || null,
         weightG: toNumber(k.poids_g),
         color: k.couleur_tag ?? null,
+        verdict: (k.verdict as KitVerdictType) || null,
+        verdictNote: k.verdict_note ?? null,
+        joursUtilises: k.jours_utilises ?? [],
       })),
     },
     trace,
     place: buildCarnetPlace(carnet, trace),
     distanceKm,
     elevationM,
+    viewerRole: input.viewerRole ?? (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor'),
+    nights,
+    dayReactions: input.dayReactions ?? {},
+    momentEngagement: input.momentEngagement ?? {},
+    kitVerdicts: input.kitVerdicts ?? {},
+    livePosition: input.livePosition ?? null,
+    publicZone: input.publicZone ?? null,
+    budget: input.budget ?? null,
+    liveSharing: Boolean(carnet.live_sharing),
   };
 }

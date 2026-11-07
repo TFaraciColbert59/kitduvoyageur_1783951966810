@@ -22,6 +22,8 @@ export interface CarnetRow {
   lieu_arrivee: string | null;
   /** Code ISO 3166-1 alpha-2 réel de la colonne `carnets.country_iso`. */
   country_iso?: string | null;
+  trip_id?: string | null;
+  live_sharing?: boolean | null;
 }
 
 export interface HikeSessionRow {
@@ -64,6 +66,7 @@ export interface HebergementRow {
   altitude_m: number | null;
   note: string | null;
   hote: string | null;
+  type_hebergement?: string | null;
 }
 
 export interface MomentRow {
@@ -83,6 +86,9 @@ export interface KitItemRow {
   poids_g: number | null;
   couleur_tag: string | null;
   sort_order: number | null;
+  verdict?: string | null;
+  verdict_note?: string | null;
+  jours_utilises?: number[] | null;
 }
 
 export interface AuthorRow {
@@ -171,12 +177,17 @@ export interface CarnetEtapeDay {
   overnight: string | null;
 }
 
+export type KitVerdictType = 'essentiel' | 'utile' | 'jamais_servi' | 'defaillant' | 'manquait';
+
 export interface CarnetKitItemRow {
   id: string;
   name: string;
   detail: string | null;
   weightG: number | null;
   color: string | null;
+  verdict?: KitVerdictType | null;
+  verdictNote?: string | null;
+  joursUtilises?: number[];
 }
 
 export interface CarnetKit {
@@ -243,6 +254,74 @@ export interface CarnetPlace {
   lng: number | null;
 }
 
+export type CarnetViewerRole = 'participant' | 'visitor';
+
+export interface CarnetNightItem {
+  id: string;
+  dayNumber: number;
+  name: string;
+  type: 'refuge' | 'gite' | 'bivouac' | 'hotel' | 'camping' | 'autre';
+  altitudeM: number | null;
+  infos: string | null;
+  lat: number | null;
+  lng: number | null;
+  mapRefugeId: string | null;
+}
+
+export interface CarnetDayReactionItem {
+  dayNumber: number;
+  likesCount: number;
+  commentsCount: number;
+  userLiked: boolean;
+}
+
+export interface CarnetMomentEngagementItem {
+  momentId: string;
+  likesCount: number;
+  commentsCount: number;
+  userLiked: boolean;
+  userSaved: boolean;
+}
+
+export interface CarnetKitVerdictItem {
+  itemId: string;
+  verdict: KitVerdictType | null;
+  verdictNote: string | null;
+  joursUtilises: number[];
+}
+
+export interface CarnetLivePosition {
+  lat: number;
+  lng: number;
+  accuracyM: number | null;
+  recordedAt: string;
+  userId: string;
+}
+
+export interface CarnetPublicZone {
+  zoneLabel: string;
+  latApprox: number | null;
+  lngApprox: number | null;
+  recordedAt: string;
+}
+
+export interface CarnetBudgetItem {
+  id: string;
+  label: string;
+  amountCents: number;
+  currency: string;
+  category: string | null;
+  paidByUserId: string | null;
+  date: string | null;
+}
+
+export interface CarnetBudget {
+  totalCents: number;
+  currency: string;
+  perPersonCents: number | null;
+  items: CarnetBudgetItem[];
+}
+
 export interface CarnetDetail {
   id: string;
   title: string;
@@ -285,6 +364,15 @@ export interface CarnetDetail {
   place: CarnetPlace;
   distanceKm: number | null;
   elevationM: number | null;
+  viewerRole?: CarnetViewerRole;
+  nights?: CarnetNightItem[];
+  dayReactions?: Record<number, CarnetDayReactionItem>;
+  momentEngagement?: Record<string, CarnetMomentEngagementItem>;
+  kitVerdicts?: Record<string, CarnetKitVerdictItem>;
+  livePosition?: CarnetLivePosition | null;
+  publicZone?: CarnetPublicZone | null;
+  budget?: CarnetBudget | null;
+  liveSharing?: boolean;
 }
 
 export interface BuildCarnetDetailInput {
@@ -323,4 +411,12 @@ export interface BuildCarnetDetailInput {
    * nombre décoratif (constat de recette : 22 en colonne, 3 lignes réelles).
    */
   counts?: { likes: number; comments: number };
+  nights?: CarnetNightItem[];
+  dayReactions?: Record<number, CarnetDayReactionItem>;
+  momentEngagement?: Record<string, CarnetMomentEngagementItem>;
+  kitVerdicts?: Record<string, CarnetKitVerdictItem>;
+  livePosition?: CarnetLivePosition | null;
+  publicZone?: CarnetPublicZone | null;
+  budget?: CarnetBudget | null;
+  viewerRole?: CarnetViewerRole;
 }

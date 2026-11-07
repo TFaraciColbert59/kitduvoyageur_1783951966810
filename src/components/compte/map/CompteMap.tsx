@@ -33,7 +33,7 @@ import { CompteMapFallback } from './CompteMapFallback';
 import { CompteMapState } from './CompteMapState';
 import './compte-map.css';
 
-const DEFAULT_CENTER: [number, number] = [2.5, 46.5];
+const DEFAULT_CENTER: [number, number] = [2.35, 46.6];
 
 export type CompteMapAuthState = 'loading' | 'guest' | 'owner' | 'error';
 
@@ -307,7 +307,7 @@ export function CompteMap({
       container: containerRef.current,
       style: createMapStyle('satellite'),
       center: DEFAULT_CENTER,
-      zoom: 5.6,
+      zoom: 6.1,
       minZoom: 1.2,
       maxZoom: 18,
       maxPitch: 70,

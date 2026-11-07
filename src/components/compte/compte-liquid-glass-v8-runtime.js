@@ -331,9 +331,16 @@ const hlArt = id => {
   return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
 };
 var hlCover = h => {
-  const img = h && (h.coverImage || (Array.isArray(h.stories) && h.stories[0]?.image) || h.image || h.carnet?.coverImage);
+  const img = h && (h.coverImage || (Array.isArray(h.stories) && (h.stories[0]?.image || h.stories[0]?.media_url)) || h.image || h.carnet?.coverImage || h.carnet?.cover_image);
   if (img) return `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" />`;
-  return hlArt(h ? h.id : '');
+  if (h && h.id === 'hl4') return hlArt('hl4');
+  if (h && h.id === 'hl5') return hlArt('hl5');
+  const fallback = ["https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=600&q=80"];
+  const num = h ? (parseInt(String(h.id).replace(/\D/g, ''), 10) || 0) : 0;
+  return `<img src="${fallback[num % fallback.length]}" alt="" loading="lazy" decoding="async" />`;
 };
 const seg = (a, labels, sel, extra = "") => `<div class="segc" role="group" ${extra}>${labels.map((l, i) => `<button data-a="${a}" data-v="${i}" aria-pressed="${sel === i}">${l}</button>`).join("")}<span class="th" style="width:calc((100% - 4px)/${labels.length});transform:translateX(${Math.max(0, sel) * 100}%);${sel < 0 ? "opacity:0" : ""}"></span></div>`;
 
@@ -2498,7 +2505,7 @@ let act = function(a, v, meta) {
       if (window.__lkdvCompteMap3D) {
         try {
           window.__lkdvCompteMap3D.flyTo({
-            center: [2.5, 46.5], zoom: 5.6, pitch: 0, bearing: 0,
+            center: [2.35, 46.6], zoom: 6.1, pitch: 0, bearing: 0,
             essential: true,
           });
           island("Échelle nationale", "Vue d'ensemble de ton empreinte terrain", false);
@@ -2974,9 +2981,16 @@ hlList = function () {
 };
 
 hlCover = h => {
-  const img = h && (h.coverImage || (Array.isArray(h.stories) && h.stories[0]?.image) || h.image || h.carnet?.coverImage);
+  const img = h && (h.coverImage || (Array.isArray(h.stories) && (h.stories[0]?.image || h.stories[0]?.media_url)) || h.image || h.carnet?.coverImage || h.carnet?.cover_image);
   if (img) return `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" />`;
-  return hlArt(h ? h.id : '');
+  if (h && h.id === 'hl4') return hlArt('hl4');
+  if (h && h.id === 'hl5') return hlArt('hl5');
+  const fallback = ["https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=600&q=80",
+                    "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=600&q=80"];
+  const num = h ? (parseInt(String(h.id).replace(/\D/g, ''), 10) || 0) : 0;
+  return `<img src="${fallback[num % fallback.length]}" alt="" loading="lazy" decoding="async" />`;
 };
 
 const unseen = () => 0;
@@ -4800,7 +4814,7 @@ var EXA = {
     const map = window.__lkdvCompteMap3D;
     if (preset === 'ORBITE') {
       if (map && typeof map.flyTo === 'function') {
-        map.flyTo({ center: [2.5, 46.5], zoom: 5.6, pitch: 0, bearing: 0, duration: 2000, essential: true });
+        map.flyTo({ center: [2.35, 46.6], zoom: 6.1, pitch: 0, bearing: 0, duration: 2000, essential: true });
       }
       island('Échelle Nationale', 'Empreinte nationale @tony_frc · 5 massifs foulés', false);
     } else if (preset === 'MASSIF') {

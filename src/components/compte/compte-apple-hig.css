@@ -2098,14 +2098,14 @@
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   scrollbar-width: none !important;
-  padding: 2px 2px 8px !important;
+  padding: 2px !important;
   gap: 8px !important;
-  scroll-padding-block: 8px !important;
+  scroll-padding-block: 2px !important;
 }
 .sw-wrap[data-det="card"] .sh-b::-webkit-scrollbar { display: none !important; }
 .sw-wrap[data-det="card"] .scrim { opacity: 0 !important; pointer-events: none !important; }
 .sheet {
-  padding: 0 13px calc(11px + env(safe-area-inset-bottom, 0px)) !important;
+  padding: 2px !important;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.92) 42%, rgba(255, 255, 255, 0.95)) !important;
   -webkit-backdrop-filter: blur(32px) saturate(190%) brightness(1.05) !important;
   backdrop-filter: blur(32px) saturate(190%) brightness(1.05) !important;
