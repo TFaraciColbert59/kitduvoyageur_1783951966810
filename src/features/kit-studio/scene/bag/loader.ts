@@ -36,7 +36,9 @@ const TYPE_COMPONENTS: Record<string, number> = {
   VEC4: 4,
 };
 
-export interface LoadedBagScene {
+import type { AtlasPixelBuffer } from './atlas';
+
+export interface LoadedBagAsset {
   status: 'ready';
   modelId: string;
   manifest: BagManifest;
@@ -48,7 +50,7 @@ export interface LoadedBagScene {
   dispose: () => void;
 }
 
-export interface DegradedBagScene {
+export interface DegradedBagAsset {
   status: 'degraded';
   modelId: string;
   reason: string;
@@ -61,7 +63,7 @@ export interface DegradedBagScene {
   dispose: () => void;
 }
 
-export type BagLoadResult = LoadedBagScene | DegradedBagScene;
+export type BagLoadResult = LoadedBagAsset | DegradedBagAsset;
 
 export interface BagAssetProvider {
   fetchManifest: (modelId: string) => Promise<BagManifest>;
@@ -71,6 +73,10 @@ export interface BagAssetProvider {
    * retombe alors sur le chemin historique. Un fournisseur de test peut l'ignorer.
    */
   fetchGlb: (modelId: string, url?: string) => Promise<ArrayBuffer>;
+  /** Carte de zones à 3 canaux pour les modèles texturés (Avenant § 4). */
+  fetchZonesMap?: (modelId: string) => Promise<AtlasPixelBuffer | null>;
+  /** Albédo délié de la lumière pour les modèles texturés (Avenant § 4). */
+  fetchUnlitAlbedo?: (modelId: string) => Promise<AtlasPixelBuffer | null>;
 }
 
 const defaultBrowserProvider: BagAssetProvider = {
@@ -543,13 +549,13 @@ function createIsolatedMaterial(
   json: GltfJson,
   matIdx: number | undefined,
   textures: Map<number, THREE.Texture> = new Map()
-): THREE.MeshStandardMaterial {
+): THREE.MeshPhysicalMaterial {
   const def = matIdx !== undefined ? json.materials?.[matIdx] : undefined;
   const pbr = def?.pbrMetallicRoughness;
   const base = pbr?.baseColorFactor ?? [0.24, 0.35, 0.29, 1];
   const color = new THREE.Color().setRGB(base[0], base[1], base[2]);
 
-  const material = new THREE.MeshStandardMaterial({
+  const material = new THREE.MeshPhysicalMaterial({
     color,
     roughness: pbr?.roughnessFactor ?? 0.85,
     metalness: pbr?.metallicFactor ?? 0.0,

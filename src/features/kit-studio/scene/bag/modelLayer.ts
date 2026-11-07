@@ -20,13 +20,13 @@ import type { BagCapabilities, BagModel, BagPartAppearance, Vec3Tuple } from '..
 import {
   bagModelFromManifest,
   bagPartAppearances,
-  DEGRADED_BAG_CAPABILITIES,
   isBuiltinBagModel,
 } from '../../domain/bagModel';
 import type { ConfigSet } from '../../domain/catalog';
-import { BAG_HALF_HEIGHT, GROUND_Y } from '../layout';
+import { GROUND_Y } from '../layout';
 import { applyAllCustomizations } from './materials';
-import { loadBagAsset, type BagAssetProvider, type BagLoadResult, type LoadedBagScene } from './loader';
+import { loadBagAsset, type BagAssetProvider, type BagLoadResult, type LoadedBagAsset } from './loader';
+import { applyAtlasAppearance, loadZonesMap, type AtlasPixelBuffer } from './atlas';
 import type { TextureBank } from '../textures';
 
 /** Source de rendu choisie pour le sac courant. */
@@ -130,9 +130,10 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
   scene.add(holder);
 
   let info: BagModelRuntimeInfo = DEGRADED_INFO;
-  let loaded: LoadedBagScene | null = null;
+  let loaded: LoadedBagAsset | null = null;
   let model: BagModel | null = null;
   let appearance: ConfigSet | null = null;
+  let zonesMap: AtlasPixelBuffer | null = null;
   let loadToken = 0;
   let disposed = false;
 
@@ -148,18 +149,20 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
     loaded.dispose();
     loaded = null;
     model = null;
+    zonesMap = null;
     holder.visible = false;
     proceduralBag.visible = true;
   };
 
   const applyAppearance = (): void => {
     if (!loaded || !appearance) return;
-    applyAppearanceToLoaded(loaded, appearance, textures);
+    applyAppearanceToLoaded(loaded, appearance, textures, zonesMap);
   };
 
-  const place = (result: LoadedBagScene): void => {
+  const place = (result: LoadedBagAsset): void => {
     const manifest = result.manifest;
-    const scale = compositionScale(manifest.boundingBoxM.h, deps.targetHeightM());
+    const isImported = Boolean(manifest.texturedSource || manifest.generatedBy === 'imported');
+    const scale = isImported ? 1 : compositionScale(manifest.boundingBoxM.h, deps.targetHeightM());
     result.root.scale.setScalar(scale);
     // Origine du manifeste : centre du sol du sac (y = 0 au fond) → posé sur la table.
     result.root.position.set(0, GROUND_Y, 0);
@@ -203,15 +206,26 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
 
       loaded = result;
       model = bagModelFromManifest(result.manifest);
+      const hasAtlas = Boolean(result.manifest.texturedSource);
+      if (hasAtlas) {
+        zonesMap = await loadZonesMap(wanted, deps.provider);
+      } else {
+        zonesMap = null;
+      }
+
       place(result);
       holder.add(result.root);
       holder.visible = true;
       proceduralBag.visible = false;
       applyAppearance();
 
-      // Règle §4.6 : l'atlas d'un maillage texturé garde sa matière ; la couleur n'est
-      // personnalisable que si un masque de zone tissu existe (voir `atlas.ts` en P3.2).
-      const hasAtlas = Boolean((result as LoadedBagScene & { hasAtlas?: boolean }).hasAtlas);
+      // Règle §4.6 / Avenant §4 : l'atlas d'un maillage texturé garde sa matière ; la couleur n'est
+      // personnalisable que si une carte de zones existe (D-07).
+      let colorCustomization: BagColorCustomization = 'procedural';
+      if (hasAtlas) {
+        colorCustomization = zonesMap ? 'available' : 'unavailable-no-mask';
+      }
+
       return emit({
         status: 'glb',
         modelId: wanted,
@@ -220,7 +234,7 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
         anchors: [...result.anchors.keys()],
         capabilities: result.capabilities,
         declaredCapacityL: model.declaredCapacityL,
-        colorCustomization: hasAtlas ? 'unavailable-no-mask' : 'procedural',
+        colorCustomization,
         reason: null,
       });
     },
@@ -252,11 +266,16 @@ export function appearanceEntries(config: ConfigSet): Record<string, BagPartAppe
  * couleur, matière (preset de trame) et finition. Exporté pour être testé sans scène.
  */
 export function applyAppearanceToLoaded(
-  loaded: LoadedBagScene,
+  loaded: LoadedBagAsset,
   config: ConfigSet,
   textures: TextureBank,
+  customZonesMap?: AtlasPixelBuffer | null,
 ): void {
-  applyAllCustomizations(loaded.parts, appearanceEntries(config), textures);
+  if (loaded.manifest.texturedSource) {
+    applyAtlasAppearance(loaded, config, customZonesMap ?? null);
+  } else {
+    applyAllCustomizations(loaded.parts, appearanceEntries(config), textures);
+  }
 }
 
 export { isBuiltinBagModel };

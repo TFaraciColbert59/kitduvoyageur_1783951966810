@@ -3,8 +3,9 @@
 // store : l'état courant est passé à createKitScene() puis à update().
 import {
   ACESFilmicToneMapping, BoxGeometry, DirectionalLight, HemisphereLight, MathUtils, Mesh, MeshBasicMaterial,
-  MeshStandardMaterial, PCFShadowMap, PlaneGeometry, Scene, SRGBColorSpace, WebGLRenderer,
+  MeshStandardMaterial, PCFShadowMap, PlaneGeometry, PMREMGenerator, Scene, SRGBColorSpace, WebGLRenderer,
 } from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { Camera, PerspectiveCamera, ShadowMapType, ToneMapping } from 'three';
 import { LIGHT_HEMI_GROUND, LIGHT_HEMI_SKY, LIGHT_RIM, LIGHT_SUN, WOOD_TINT } from '../domain/palette.scene';
 import { currentConfig, currentKit } from '../domain/state';
@@ -176,13 +177,30 @@ interface WorldOptions {
   readonly state: KitState;
   readonly onBagModel?: (info: BagModelRuntimeInfo) => void;
   readonly bagAssetProvider?: BagAssetProvider;
+  readonly renderer?: RendererLike;
 }
 
-function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop, bagModelId, state, onBagModel, bagAssetProvider }: WorldOptions): World {
+function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop, bagModelId, state, onBagModel, bagAssetProvider, renderer }: WorldOptions): World {
   const camera: PerspectiveCamera = rig.camera;
   const tr = new ResourceTracker();
   const tex = createTextureBank(tr, maxAnisotropy);
   const scene = new Scene();
+
+  // Avenant §4 : Carte d'environnement procédurale (RoomEnvironment + PMREMGenerator)
+  // apporte les reflets naturels pour les matériaux PBR, particulièrement sur la zone B (boucles rigides).
+  let pmrem: PMREMGenerator | null = null;
+  let roomEnv: Scene | null = null;
+  let envTexture: import('three').Texture | null = null;
+  if (renderer && typeof (renderer as any).getRenderTarget === 'function') {
+    try {
+      pmrem = new PMREMGenerator(renderer as any);
+      roomEnv = new RoomEnvironment();
+      envTexture = pmrem.fromScene(roomEnv).texture;
+      scene.environment = envTexture;
+    } catch {
+      // Ignoré en environnement headless / tests sans WebGL
+    }
+  }
 
   // Lumières : intensités × π pour retrouver le rendu de la maquette (three r149, éclairage non physique).
   scene.add(new HemisphereLight(makeColor(LIGHT_HEMI_SKY), makeColor(LIGHT_HEMI_GROUND), 0.72 * Math.PI));
@@ -274,6 +292,19 @@ function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop, bagMo
       bagModel.dispose();
       bag.dispose();
       scene.clear();
+      if (envTexture) {
+        envTexture.dispose();
+        envTexture = null;
+      }
+      if (pmrem) {
+        pmrem.dispose();
+        pmrem = null;
+      }
+      if (roomEnv) {
+        roomEnv.clear();
+        roomEnv = null;
+      }
+      scene.environment = null;
       sun.shadow.dispose();
       tex.dispose();
       tr.disposeAll();
@@ -308,7 +339,7 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
   let highlighted: ZoneId | null = null;
   const worldOptions = (): WorldOptions => ({
     rig, maxAnisotropy: renderer.capabilities.getMaxAnisotropy(), reducedMotion: options.reducedMotion, shadows, safeTop: options.safeTop,
-    bagModelId: options.bagModelId, state, onBagModel: options.onBagModel, bagAssetProvider: options.bagAssetProvider,
+    bagModelId: options.bagModelId, state, onBagModel: options.onBagModel, bagAssetProvider: options.bagAssetProvider, renderer,
   });
   let world = buildWorld(worldOptions());
   rig.setWorld({

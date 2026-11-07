@@ -166,4 +166,47 @@ describe('Chargement du maillage dans la scène survivante', () => {
     const info = await layer.load('daypack-22');
     expect(info.status).toBe('procedural');
   });
+
+  it('modèle importé texturé : sans carte de zones annonce unavailable-no-mask et garde scale 1', async () => {
+    const { layer, scene } = makeLayer();
+    const info = await layer.load('lkdv-one-45');
+    expect(info.status).toBe('glb');
+    expect(info.modelId).toBe('lkdv-one-45');
+    expect(info.colorCustomization).toBe('unavailable-no-mask');
+    const holder = scene.children.find((child) => child.name === 'bag-model-layer');
+    expect(holder).toBeDefined();
+    const root = holder!.children[0];
+    // Échelle préservée à 1 pour les modèles importés (avenant 7 nov)
+    expect(root.scale.y).toBe(1);
+    layer.dispose();
+  });
+
+  it('modèle importé texturé : avec carte de zones annonce available', async () => {
+    const scene = new THREE.Scene();
+    const procedural = new THREE.Group();
+    scene.add(procedural);
+    const tr = new ResourceTracker();
+    const textures = createTextureBank(tr, 4);
+
+    const providerWithZones: BagAssetProvider = {
+      ...fsProvider,
+      async fetchZonesMap() {
+        return { width: 16, height: 16, data: new Uint8ClampedArray(16 * 16 * 4) };
+      },
+    };
+
+    const layer = createBagModelLayer({
+      scene,
+      textures,
+      proceduralBag: procedural,
+      targetHeightM: () => 1.45,
+      provider: providerWithZones,
+    });
+
+    const info = await layer.load('lkdv-one-45');
+    expect(info.status).toBe('glb');
+    expect(info.colorCustomization).toBe('available');
+    layer.dispose();
+    textures.dispose();
+  });
 });
