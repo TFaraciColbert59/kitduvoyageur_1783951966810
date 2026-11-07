@@ -8,7 +8,7 @@ import { ITEMS } from '../domain/catalog';
 import { Glyph, resolveGlyph } from '../ui/Glyph';
 import { CATEGORY_GLYPHS, GLYPHS } from '../ui/glyphs.generated';
 
-const BUNDLE = resolve(process.cwd(), 'kit-studio-bundle/reference/Kit_Studio_v2.html');
+const BUNDLE = resolve(process.cwd(), 'tests/fixtures/kit-studio/Kit_Studio_v2.html');
 const COLOR_LITERAL = /#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/;
 
 function sourceGlKeyCount(): number | null {

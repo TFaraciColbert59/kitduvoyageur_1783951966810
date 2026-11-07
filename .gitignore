@@ -198,3 +198,6 @@ handoff/explorer-v2/maquette/
 # Explorer v2 — identifiants des comptes de recette (jamais versionnés)
 .secrets/
 .env*
+
+# Matériel de briefing des agents : pas du code source.
+kit-studio-bundle/

@@ -36,7 +36,6 @@ const TYPE_COMPONENTS: Record<string, number> = {
   VEC4: 4,
 };
 
-import type { AtlasPixelBuffer } from './atlas';
 
 export interface LoadedBagAsset {
   status: 'ready';
@@ -73,10 +72,11 @@ export interface BagAssetProvider {
    * retombe alors sur le chemin historique. Un fournisseur de test peut l'ignorer.
    */
   fetchGlb: (modelId: string, url?: string) => Promise<ArrayBuffer>;
-  /** Carte de zones à 3 canaux pour les modèles texturés (Avenant § 4). */
-  fetchZonesMap?: (modelId: string) => Promise<AtlasPixelBuffer | null>;
-  /** Albédo délié de la lumière pour les modèles texturés (Avenant § 4). */
-  fetchUnlitAlbedo?: (modelId: string) => Promise<AtlasPixelBuffer | null>;
+  /**
+   * Carte de zones d'un modèle texturé : rouge le tissu, vert les sangles, bleu le rigide.
+   * Rend `null` quand le sac n'en a pas — la personnalisation est alors annoncée indisponible.
+   */
+  fetchZonesMap?: (modelId: string, url?: string) => Promise<THREE.Texture | null>;
 }
 
 const defaultBrowserProvider: BagAssetProvider = {
@@ -95,6 +95,11 @@ const defaultBrowserProvider: BagAssetProvider = {
     }
     return res.arrayBuffer();
   },
+  async fetchZonesMap(modelId: string, url?: string): Promise<THREE.Texture | null> {
+    // Pas d'adresse au manifeste : ce sac n'a pas de carte de zones, et c'est un état normal.
+    if (!url) return null;
+    return chargerTextureDonnee(url);
+  }
 };
 
 /**
@@ -790,5 +795,30 @@ export async function loadBagAsset(
       hinges: new Map(),
       dispose: () => {},
     };
+  }
+}
+
+/**
+ * Charge une texture de DONNÉES — carte de zones, trame — et non une couleur.
+ *
+ * Deux réglages comptent et ne se voient pas : `NoColorSpace`, parce qu'une carte lue en sRGB
+ * verrait ses seuils déplacés, et `flipY = false`, la convention glTF. Rend `null` plutôt que de
+ * lever : un sac sans carte s'affiche, simplement sans personnalisation.
+ */
+export async function chargerTextureDonnee(url: string): Promise<THREE.Texture | null> {
+  if (typeof createImageBitmap !== 'function' || typeof fetch !== 'function') return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const bitmap = await createImageBitmap(await res.blob());
+    const tex = new THREE.Texture(bitmap as unknown as HTMLImageElement);
+    tex.colorSpace = THREE.NoColorSpace;
+    tex.flipY = false;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.needsUpdate = true;
+    return tex;
+  } catch {
+    return null;
   }
 }

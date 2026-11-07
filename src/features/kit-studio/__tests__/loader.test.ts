@@ -188,8 +188,16 @@ describe('Gamme LKDV ONE — maillages importés texturés', () => {
       fs.readFileSync(path.join(BAGS, `${entry.modelId}.manifest.json`), 'utf8')
     ) as BagManifest;
     expect(manifest.texturedSource).toBe(true);
-    // Teinter « body » repeindrait l'atlas entier, boucles et écusson compris.
-    expect(manifest.capabilities.customizableParts).toEqual([]);
+    // La personnalisation de couleur n'est annoncée que si la carte de zones existe : teinter sans
+    // elle repeindrait l'atlas entier, boucles et écusson compris. Avec la carte, la teinte est
+    // bornée au tissu, et la capacité devient honnête.
+    expect(manifest.capabilities.customizableParts).toEqual(
+      manifest.zonesMapUrl ? ['body'] : []
+    );
+    if (manifest.zonesMapUrl) {
+      expect(manifest.zonesMapUrl).toBe(`/assets/bags/${entry.modelId}.zones.webp`);
+      expect(fs.existsSync(path.join(BAGS, `${entry.modelId}.zones.webp`))).toBe(true);
+    }
     expect(manifest.capabilities.openable).toBe(false);
     expect(manifest.capabilities.badgeAnchors).toEqual([]);
     expect(manifest.slots).toEqual([]);

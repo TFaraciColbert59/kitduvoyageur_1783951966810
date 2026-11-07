@@ -23,7 +23,7 @@ import {
 import { RAW_MATERIALS } from '../domain/palette';
 
 const HTML = readFileSync(
-  fileURLToPath(new URL('../../../../kit-studio-bundle/reference/Kit_Studio_actuel.html', import.meta.url)),
+  fileURLToPath(new URL('../../../../tests/fixtures/kit-studio/Kit_Studio_actuel.html', import.meta.url)),
   'utf8',
 );
 const invStart = HTML.indexOf('const INV=[');

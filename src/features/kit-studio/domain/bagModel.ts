@@ -117,6 +117,11 @@ export interface BagManifest {
   readonly assets?: Partial<Record<BagTier, BagTierAsset>>;
   /** Vrai quand le maillage porte son propre atlas : la couleur ne se change pas sans masque. */
   readonly texturedSource?: boolean;
+  /**
+   * Adresse de la carte de zones, dans les UV de l'atlas : rouge le tissu, vert les sangles, bleu
+   * le rigide. Son absence laisse l'atlas intact et la personnalisation indisponible.
+   */
+  readonly zonesMapUrl?: string;
 }
 
 /** Entrée de `public/assets/bags/bags.index.json`. */

@@ -1,308 +1,308 @@
 /**
  * src/features/kit-studio/scene/bag/atlas.ts
- * Système de personnalisation par atlas texturé — Avenant du 7 novembre après-midi (§ 4).
+ * Apparence des sacs importés texturés — avenant du 7 novembre, § 4.
  *
- * Pour les modèles LKDV ONE importés (source: "imported", texturedSource: true) :
- * - Carte de zones à 3 canaux (R = tissu, V = sangles/textile technique, B = rigide : boucles, fermetures, écusson)
- * - Albédo délié de la lumière
- * - Teinte du token uniquement sur la zone rouge (multiplication de luminance)
- * - Lueur textile (MeshPhysicalMaterial, sheenColorMap) uniquement sur les zones R+V (éteint sur B)
- * - Trame tissée physique greffée par-dessus l'atlas, pondérée par la zone textile
- * - Zone bleue rigide : rugosité plus basse pour faire ressortir les reflets spéculaires
- * - Absence gracieuse des cartes : si la carte de zones est absente, l'atlas reste tel quel,
- *   aucune teinte n'est appliquée, aucun sheen n'est allumé, et la personnalisation est annoncée indisponible.
+ * Un sac LKDV ONE (`texturedSource: true`) porte toute son apparence dans un atlas : le tissu
+ * olive, les sangles, les boucles noires, les fermetures et l'écusson y cohabitent dans une seule
+ * image et un seul matériau. Pour traiter chaque famille différemment, il faut savoir où elle est :
+ * c'est le rôle de la **carte de zones**, trois canaux dans les UV de l'atlas — rouge pour le
+ * tissu, vert pour les sangles et le textile technique, bleu pour les pièces rigides.
+ *
+ * Ce que cette carte permet, et que rien ne permettait sans elle :
+ * - teinter la seule zone tissu, en multipliant la luminance de l'albédo plutôt qu'en la
+ *   remplaçant, pour que les plis et les coutures survivent à un changement de couleur ;
+ * - allumer la lueur textile (`sheen`) sur le tissu et les sangles, et la laisser éteinte sur les
+ *   boucles — sans masque, allumer le sheen fait virer les boucles noires au vert pâle ;
+ * - greffer une trame tissée à l'échelle physique sur les seules zones textiles ;
+ * - baisser la rugosité des pièces rigides, pour qu'elles accrochent un reflet net.
+ *
+ * TOUT SE PASSE DANS LE SHADER, et c'est un choix, pas une commodité. La version précédente
+ * recomposait trois textures de 2048×2048 sur le processeur à chaque changement de couleur : douze
+ * millions d'opérations et cinquante mégaoctets d'allocation sur le fil principal, soit un gel à
+ * chaque clic dans un configurateur dont le propos est justement d'essayer des coloris. Ici, un
+ * changement de couleur écrit une valeur dans un paramètre et ne coûte rien.
+ *
+ * La trame est une tuile répétée, échantillonnée dans un second jeu d'UV **exprimé en mètres**
+ * (`uv1`, projection en boîte). C'est la seule façon d'obtenir un tissage à pas constant : l'atlas
+ * d'un modèle importé n'a ni échelle ni orientation homogènes, donc une trame peinte dans ses
+ * coordonnées se déformerait d'une région à l'autre. Elle ne peut pas non plus venir de l'atlas
+ * lui-même : 1024 pixels sur un sac de 66 cm font 0,9 pixel par millimètre, pour un fil de 0,4 mm.
+ *
+ * Sans carte de zones, rien ne s'allume : l'atlas reste strictement tel quel et la personnalisation
+ * de couleur est annoncée indisponible. Teinter l'atlas entier repeindrait les boucles et
+ * l'écusson, et c'est précisément le défaut qu'on corrige.
  */
 
 import * as THREE from 'three';
-import type { BagAssetProvider, LoadedBagAsset } from './loader';
+import type { LoadedBagAsset } from './loader';
 import { resolveTokenToThreeColor } from './materials';
 import type { ConfigSet } from '../../domain/catalog';
 
-export interface AtlasPixelBuffer {
-  readonly width: number;
-  readonly height: number;
-  readonly data: Uint8ClampedArray | Uint8Array;
-}
+/** Côté d'une tuile de trame, en mètres. Même convention que `scene/bag/fabricMaps.ts`. */
+export const WEAVE_TILE_M = 0.1;
 
-export interface ProcessAtlasOptions {
-  /** Texture ou buffer d'albédo de base (atlas d'origine). */
-  readonly baseAlbedo: AtlasPixelBuffer;
-  /** Carte de zones 3 canaux (R=tissu, V=sangles, B=rigide). Si absente : atlas tel quel. */
-  readonly zonesMap?: AtlasPixelBuffer | null;
-  /** Albédo délié de la lumière (optionnel ; si absent, retombe sur baseAlbedo). */
-  readonly unlitAlbedo?: AtlasPixelBuffer | null;
-  /** Couleur du token résolue (composantes 0..1 pour r, g, b). */
-  readonly tokenColor?: { r: number; g: number; b: number } | null;
-  /** Rugosité de base pour le tissu (défaut : 0.82). */
-  readonly fabricRoughness?: number;
-  /** Rugosité pour la zone rigide B (défaut : 0.25). */
-  readonly rigidRoughness?: number;
-  /** Activer la trame tissée physique (défaut : true). */
-  readonly weaveEnabled?: boolean;
-}
+/** Rugosité par famille. Le tissu mate, le rigide accroche un reflet. */
+export const FABRIC_ROUGHNESS = 0.82;
+export const RIGID_ROUGHNESS = 0.25;
 
-export interface ProcessAtlasResult {
-  /** Buffer d'albédo résultant (teinté zone rouge, trame physique pondérée). */
-  readonly albedo: AtlasPixelBuffer;
-  /** Buffer de sheen (actif R+V, 0 sur B). Null si pas de carte de zones. */
-  readonly sheenMap: AtlasPixelBuffer | null;
-  /** Buffer de rugosité (B plus bas, R/V tissu). Null si pas de carte de zones. */
-  readonly roughnessMap: AtlasPixelBuffer | null;
-  /** Vrai si la personnalisation a pu être appliquée grâce à la présence de la carte de zones. */
-  readonly customized: boolean;
-}
+/** Couleur de la lueur textile : une olive claire, jamais blanche, qui reste crédible sur du tissu. */
+export const SHEEN_COLOR = 0xbfd79a;
 
-/** Calcule la luminance relative Rec. 709 d'un triplet RGB (0..255). */
-export function calculateLuminance(r: number, g: number, b: number): number {
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/** Crée un nouveau buffer RGBA vierge. */
-export function createPixelBuffer(
-  width: number,
-  height: number,
-  fill?: readonly [number, number, number, number],
-): AtlasPixelBuffer {
-  const data = new Uint8ClampedArray(width * height * 4);
-  if (fill) {
-    const [r, g, b, a] = fill;
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = r;
-      data[i + 1] = g;
-      data[i + 2] = b;
-      data[i + 3] = a;
-    }
-  }
-  return { width, height, data };
+export interface AtlasMaps {
+  /** Carte de zones dans les UV de l'atlas. Son absence éteint toute la personnalisation. */
+  readonly zones: THREE.Texture | null;
+  /** Tuile de trame tissée, répétée à l'échelle physique. Facultative. */
+  readonly weaveNormal?: THREE.Texture | null;
 }
 
 /**
- * Traite les buffers de l'atlas selon les spécifications de l'avenant § 4.
- * Fonction pure et entièrement déterministe, testable sans contexte WebGL.
+ * Réglages passés au shader. Fonction pure : c'est ici que se décide ce qui s'allume, et les tests
+ * portent dessus. Le shader applique ces valeurs, il n'en invente aucune.
  */
-export function processAtlasBuffers(options: ProcessAtlasOptions): ProcessAtlasResult {
-  const { baseAlbedo, zonesMap, unlitAlbedo, tokenColor } = options;
+export interface AtlasUniforms {
+  /** Couleur de teinte du tissu, ou `null` quand le token n'en impose aucune. */
+  readonly tint: { r: number; g: number; b: number } | null;
+  readonly fabricRoughness: number;
+  readonly rigidRoughness: number;
+  readonly weaveStrength: number;
+  /** Faux quand la carte de zones manque : le matériau doit alors rester intact. */
+  readonly enabled: boolean;
+}
 
-  // Garde-fou absolu : si la carte de zones est absente, l'atlas reste STRICTEMENT tel quel.
-  // Pas de teinte, pas de sheen, pas de modification des boucles.
-  if (!zonesMap) {
+/**
+ * Déduit les réglages de la configuration du studio et de la présence des cartes.
+ *
+ * Deux garde-fous tiennent dans cette fonction, et c'est pour ça qu'elle est séparée du rendu :
+ * sans carte de zones rien ne s'allume, et sans tuile de trame la force de trame est nulle.
+ */
+export function atlasUniformsFor(config: ConfigSet, maps: AtlasMaps): AtlasUniforms {
+  if (!maps.zones) {
     return {
-      albedo: baseAlbedo,
-      sheenMap: null,
-      roughnessMap: null,
-      customized: false,
+      tint: null,
+      fabricRoughness: FABRIC_ROUGHNESS,
+      rigidRoughness: RIGID_ROUGHNESS,
+      weaveStrength: 0,
+      enabled: false,
     };
   }
-
-  const { width, height } = baseAlbedo;
-  const unlitSource = unlitAlbedo ?? baseAlbedo;
-
-  const outAlbedoData = new Uint8ClampedArray(width * height * 4);
-  const outSheenData = new Uint8ClampedArray(width * height * 4);
-  const outRoughnessData = new Uint8ClampedArray(width * height * 4);
-
-  const fabricRoughness = options.fabricRoughness ?? 0.82;
-  const rigidRoughness = options.rigidRoughness ?? 0.25;
-  const weaveEnabled = options.weaveEnabled ?? true;
-
-  const totalPixels = width * height;
-
-  for (let p = 0; p < totalPixels; p++) {
-    const i = p * 4;
-
-    // Coordonnées 2D du texel
-    const x = p % width;
-    const y = Math.floor(p / width);
-
-    // Canaux de la carte de zones : R = tissu, V = sangles, B = rigide
-    const zR = zonesMap.data[i] ?? 0;
-    const zV = zonesMap.data[i + 1] ?? 0;
-    const zB = zonesMap.data[i + 2] ?? 0;
-
-    const wR = zR / 255;
-    const wV = zV / 255;
-    const wB = zB / 255;
-
-    // Texel d'albédo délié source (ou base)
-    const uR = unlitSource.data[i] ?? 0;
-    const uG = unlitSource.data[i + 1] ?? 0;
-    const uB = unlitSource.data[i + 2] ?? 0;
-    const uA = unlitSource.data[i + 3] ?? 255;
-
-    // 1. Teinte du token : uniquement sur la zone rouge (R), multiplication de luminance
-    let cR = uR;
-    let cG = uG;
-    let cB = uB;
-
-    if (tokenColor && wR > 0) {
-      const lum = calculateLuminance(uR, uG, uB);
-      const tintedR = tokenColor.r * lum;
-      const tintedG = tokenColor.g * lum;
-      const tintedB = tokenColor.b * lum;
-
-      cR = (1 - wR) * uR + wR * tintedR;
-      cG = (1 - wR) * uG + wR * tintedG;
-      cB = (1 - wR) * uB + wR * tintedB;
-    }
-
-    // 2. Trame tissée répétée à l'échelle physique : greffée par-dessus l'atlas, pondérée par la zone textile (R+V)
-    if (weaveEnabled) {
-      const wTextile = Math.min(1.0, wR + wV);
-      if (wTextile > 0) {
-        // Modulation d'armure textile subtile (pas physique régulier)
-        const weaveMod = 1.0 + 0.07 * Math.sin(x * 0.45) * Math.cos(y * 0.45);
-        const factor = (1 - wTextile) + wTextile * weaveMod;
-        cR = Math.min(255, Math.max(0, cR * factor));
-        cG = Math.min(255, Math.max(0, cG * factor));
-        cB = Math.min(255, Math.max(0, cB * factor));
-      }
-    }
-
-    outAlbedoData[i] = Math.round(cR);
-    outAlbedoData[i + 1] = Math.round(cG);
-    outAlbedoData[i + 2] = Math.round(cB);
-    outAlbedoData[i + 3] = uA;
-
-    // 3. Lueur textile (sheen) : uniquement zones R + V ; strictly 0 sur la zone rigide B
-    const textilePresence = Math.min(1.0, wR + wV);
-    const sheenIntensity = Math.max(0, textilePresence * (1 - wB));
-    const sheenByte = Math.round(sheenIntensity * 255);
-
-    outSheenData[i] = sheenByte;
-    outSheenData[i + 1] = sheenByte;
-    outSheenData[i + 2] = sheenByte;
-    outSheenData[i + 3] = 255;
-
-    // 4. Rugosité : la zone bleue B reçoit une rugosité plus basse
-    const roughness = (1 - wB) * fabricRoughness + wB * rigidRoughness;
-    const roughnessByte = Math.round(Math.min(1, Math.max(0, roughness)) * 255);
-
-    outRoughnessData[i] = roughnessByte;
-    outRoughnessData[i + 1] = roughnessByte;
-    outRoughnessData[i + 2] = roughnessByte;
-    outRoughnessData[i + 3] = 255;
-  }
-
+  const spec = config.body?.col;
+  const color = spec ? resolveTokenToThreeColor(spec) : null;
   return {
-    albedo: { width, height, data: outAlbedoData },
-    sheenMap: { width, height, data: outSheenData },
-    roughnessMap: { width, height, data: outRoughnessData },
-    customized: true,
+    tint: color ? { r: color.r, g: color.g, b: color.b } : null,
+    fabricRoughness: FABRIC_ROUGHNESS,
+    rigidRoughness: RIGID_ROUGHNESS,
+    weaveStrength: maps.weaveNormal ? 1 : 0,
+    enabled: true,
   };
 }
 
-/** Crée une THREE.DataTexture à partir d'un AtlasPixelBuffer. */
-export function createDataTexture(buffer: AtlasPixelBuffer, isColor = false): THREE.DataTexture {
-  const tex = new THREE.DataTexture(
-    buffer.data,
-    buffer.width,
-    buffer.height,
-    THREE.RGBAFormat,
-    THREE.UnsignedByteType,
-  );
-  if (isColor) {
-    tex.colorSpace = THREE.SRGBColorSpace;
-  }
-  tex.wrapS = THREE.RepeatWrapping;
-  tex.wrapT = THREE.RepeatWrapping;
-  tex.needsUpdate = true;
-  return tex;
-}
-
-/** Charge la carte de zones pour un modèle donné si le fournisseur le propose ou via asset. */
-export async function loadZonesMap(
-  modelId: string,
-  provider?: BagAssetProvider,
-): Promise<AtlasPixelBuffer | null> {
-  if (provider?.fetchZonesMap) {
-    try {
-      return await provider.fetchZonesMap(modelId);
-    } catch {
-      return null;
-    }
-  }
-  return null;
+/** Luminance relative Rec. 709, en composantes 0..1. C'est la formule qu'applique aussi le shader. */
+export function luminance(r: number, g: number, b: number): number {
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
 /**
- * Applique la personnalisation issue de l'avenant § 4 aux matériaux d'un sac importé texturé.
- * Met à jour le matériau physique (MeshPhysicalMaterial) en place sans recharger la scène.
+ * Pose un second jeu d'UV exprimé en mètres, par projection en boîte selon la normale dominante.
+ *
+ * Idempotent : une géométrie partagée entre plusieurs pièces passe ici à chaque reconstruction, et
+ * la projeter deux fois multiplierait l'échelle.
+ */
+export function applyMeterUvs(geometry: THREE.BufferGeometry, tileM = WEAVE_TILE_M): void {
+  if (geometry.userData.uvMetersWeave === true) return;
+  const pos = geometry.getAttribute('position');
+  const nrm = geometry.getAttribute('normal');
+  if (!pos || !nrm) return;
+  const scale = 1 / tileM;
+  const uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    const ax = Math.abs(nrm.getX(i));
+    const ay = Math.abs(nrm.getY(i));
+    const az = Math.abs(nrm.getZ(i));
+    let u: number;
+    let v: number;
+    if (ay >= ax && ay >= az) {
+      u = pos.getX(i); v = pos.getZ(i);
+    } else if (ax >= az) {
+      u = pos.getZ(i); v = pos.getY(i);
+    } else {
+      u = pos.getX(i); v = pos.getY(i);
+    }
+    uv[i * 2] = u * scale;
+    uv[i * 2 + 1] = v * scale;
+  }
+  geometry.setAttribute('uv1', new THREE.BufferAttribute(uv, 2));
+  geometry.userData.uvMetersWeave = true;
+}
+
+interface GreffeUniforms {
+  zonesMap: { value: THREE.Texture | null };
+  weaveMap: { value: THREE.Texture | null };
+  tintColor: { value: THREE.Color };
+  tintAmount: { value: number };
+  weaveStrength: { value: number };
+  fabricRough: { value: number };
+  rigidRough: { value: number };
+}
+
+/** Les paramètres vivants d'un matériau déjà greffé, pour les mettre à jour sans tout refaire. */
+interface GreffeState {
+  uniforms: GreffeUniforms;
+}
+
+const GREFFE = Symbol.for('lkdv.atlas.greffe');
+
+type MateriauGreffe = THREE.MeshPhysicalMaterial & { [GREFFE]?: GreffeState };
+
+/**
+ * Greffe la lecture de la carte de zones sur un matériau, une fois pour toutes.
+ *
+ * Le shader standard de three ne sait pas traiter un matériau par régions ; on l'étend aux endroits
+ * prévus pour ça. Chaque insertion est commentée parce qu'elle dépend du nom d'un bloc de three, et
+ * qu'une montée de version peut les renommer.
+ */
+function greffer(mat: MateriauGreffe): GreffeState {
+  const existant = mat[GREFFE];
+  if (existant) return existant;
+
+  const uniforms: GreffeUniforms = {
+    zonesMap: { value: null },
+    weaveMap: { value: null },
+    tintColor: { value: new THREE.Color(1, 1, 1) },
+    tintAmount: { value: 0 },
+    weaveStrength: { value: 0 },
+    fabricRough: { value: FABRIC_ROUGHNESS },
+    rigidRough: { value: RIGID_ROUGHNESS },
+  };
+
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, uniforms);
+
+    sh.vertexShader = 'attribute vec2 uv1;\nvarying vec2 vTrameUv;\n' + sh.vertexShader.replace(
+      '#include <uv_vertex>',
+      '#include <uv_vertex>\n  vTrameUv = uv1;'
+    );
+
+    sh.fragmentShader = `
+uniform sampler2D zonesMap;
+uniform sampler2D weaveMap;
+uniform vec3 tintColor;
+uniform float tintAmount;
+uniform float weaveStrength;
+uniform float fabricRough;
+uniform float rigidRough;
+varying vec2 vTrameUv;
+vec3 lkdvZones() { return texture2D(zonesMap, vMapUv).rgb; }
+` + sh.fragmentShader
+      // Teinte : la couleur du token multiplie la LUMINANCE de l'albédo, elle ne la remplace pas.
+      // C'est ce qui fait survivre les plis, les coutures et l'usure à un changement de coloris.
+      .replace('#include <map_fragment>', `#include <map_fragment>
+  {
+    float zTissu = lkdvZones().r;
+    if (tintAmount > 0.0 && zTissu > 0.0) {
+      float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+      diffuseColor.rgb = mix(diffuseColor.rgb, tintColor * lum, zTissu * tintAmount);
+    }
+  }`)
+      // Rugosité : le rigide est plus poli que le tissu, donc il accroche un reflet net.
+      .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+  {
+    vec3 z = lkdvZones();
+    float cible = mix(fabricRough, rigidRough, z.b);
+    roughnessFactor = mix(roughnessFactor, roughnessFactor * cible / max(fabricRough, 1e-4), max(z.r + z.g, z.b));
+  }`)
+      // Trame : une tuile en mètres, mélangée aux normales de l'atlas, sur les seules zones
+      // textiles. Mélange « whiteout » : on additionne les pentes et on renormalise.
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  {
+    vec3 z = lkdvZones();
+    float textile = min(1.0, z.r + z.g);
+    if (weaveStrength > 0.0 && textile > 0.0) {
+      vec3 d = texture2D(weaveMap, vTrameUv).xyz * 2.0 - 1.0;
+      float k = weaveStrength * textile;
+      normal = normalize(vec3(normal.xy + d.xy * k, normal.z));
+    }
+  }`)
+      // Lueur textile : le tissu et les sangles l'ont, les boucles ne l'ont pas. Sans cette
+      // modulation, allumer le sheen fait virer les boucles noires au vert pâle.
+      .replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
+  {
+    vec3 z = lkdvZones();
+    material.sheenColor *= min(1.0, z.r + z.g) * (1.0 - z.b);
+  }`);
+  };
+
+  const state: GreffeState = { uniforms };
+  mat[GREFFE] = state;
+  mat.needsUpdate = true;
+  return state;
+}
+
+/** Convertit un matériau standard en matériau physique, en conservant toutes ses cartes. */
+function versPhysique(mat: THREE.MeshStandardMaterial): THREE.MeshPhysicalMaterial {
+  if ((mat as THREE.MeshPhysicalMaterial).isMeshPhysicalMaterial) {
+    return mat as THREE.MeshPhysicalMaterial;
+  }
+  const phys = new THREE.MeshPhysicalMaterial();
+  THREE.MeshStandardMaterial.prototype.copy.call(phys, mat);
+  phys.name = mat.name;
+  phys.sheen = 1;
+  phys.sheenRoughness = 0.7;
+  phys.sheenColor = new THREE.Color(SHEEN_COLOR);
+  return phys;
+}
+
+/**
+ * Applique l'apparence du studio à un sac importé texturé.
+ *
+ * Rend `true` quand la personnalisation a réellement pu s'appliquer. Un `false` n'est pas une
+ * erreur : c'est l'état honnête d'un sac dont la carte de zones n'existe pas encore, et l'interface
+ * doit alors annoncer la personnalisation indisponible plutôt que d'afficher une couleur fausse.
  */
 export function applyAtlasAppearance(
   loaded: LoadedBagAsset,
   config: ConfigSet,
-  zonesMap: AtlasPixelBuffer | null,
-  unlitAlbedo?: AtlasPixelBuffer | null,
+  maps: AtlasMaps,
 ): boolean {
-  if (!loaded.manifest.texturedSource) {
-    return false;
-  }
+  if (!loaded.manifest.texturedSource) return false;
 
-  // Résolution de la couleur du token (ex: config.body.col)
-  const tokenSpec = config.body?.col;
-  const threeColor = tokenSpec ? resolveTokenToThreeColor(tokenSpec) : null;
-  const tokenRgb = threeColor ? { r: threeColor.r, g: threeColor.g, b: threeColor.b } : null;
+  const reglages = atlasUniformsFor(config, maps);
+  if (!reglages.enabled) return false;
 
-  // Récupérer le matériau racine ou les matériaux des parties
-  let applied = false;
-  loaded.root.traverse((child) => {
-    const mesh = child as THREE.Mesh;
+  let applique = false;
+  loaded.root.traverse((noeud) => {
+    const mesh = noeud as THREE.Mesh;
     if (!mesh.isMesh || !mesh.material) return;
+    const materiaux = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
 
-    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    for (let mat of materials) {
-      if (!(mat instanceof THREE.MeshStandardMaterial)) continue;
+    materiaux.forEach((brut, index) => {
+      const std = brut as THREE.MeshStandardMaterial;
+      // Seul le matériau qui porte l'atlas est concerné. L'écusson et son support ont leurs
+      // propres UV, hors de la carte de zones : les toucher les colorerait au hasard.
+      if (!std.map) return;
 
-      // Si le matériau a une carte de base (l'atlas)
-      const baseMap = mat.map;
-      if (!zonesMap) {
-        // Garde-fou : carte absente => pas de sheen, pas de teinte
-        if (mat instanceof THREE.MeshPhysicalMaterial) {
-          mat.sheen = 0;
-          mat.sheenColorMap = null;
-        }
-        mat.needsUpdate = true;
-        continue;
+      const phys = versPhysique(std);
+      if (phys !== std) {
+        if (Array.isArray(mesh.material)) mesh.material[index] = phys;
+        else mesh.material = phys;
       }
 
-      // Si le matériau n'est pas encore un MeshPhysicalMaterial, on peut lui configurer ses propriétés physiques
-      const physMat = mat as THREE.MeshPhysicalMaterial;
+      if (maps.weaveNormal) applyMeterUvs(mesh.geometry);
 
-      // Si nous avons une image utilisable dans baseMap pour en extraire un buffer
-      const img = baseMap?.image as { width?: number; height?: number; data?: unknown } | undefined;
-      const hasValidData =
-        img &&
-        typeof img.width === 'number' &&
-        typeof img.height === 'number' &&
-        (img.data instanceof Uint8Array || img.data instanceof Uint8ClampedArray);
-
-      const baseBuffer: AtlasPixelBuffer = hasValidData
-        ? { width: img.width!, height: img.height!, data: img.data as Uint8Array | Uint8ClampedArray }
-        : createPixelBuffer(zonesMap.width, zonesMap.height, [180, 180, 180, 255]);
-
-      const result = processAtlasBuffers({
-        baseAlbedo: baseBuffer,
-        zonesMap,
-        unlitAlbedo,
-        tokenColor: tokenRgb,
-      });
-
-      if (result.customized && result.sheenMap && result.roughnessMap) {
-        const albedoTex = createDataTexture(result.albedo, true);
-        const sheenTex = createDataTexture(result.sheenMap, false);
-        const roughTex = createDataTexture(result.roughnessMap, false);
-
-        physMat.map = albedoTex;
-        physMat.sheen = 1.0;
-        physMat.sheenColor = new THREE.Color(1, 1, 1);
-        physMat.sheenColorMap = sheenTex;
-        physMat.sheenRoughness = 0.5;
-        physMat.roughnessMap = roughTex;
-        physMat.needsUpdate = true;
-        applied = true;
+      const { uniforms } = greffer(phys as MateriauGreffe);
+      uniforms.zonesMap.value = maps.zones;
+      uniforms.weaveMap.value = maps.weaveNormal ?? null;
+      uniforms.weaveStrength.value = reglages.weaveStrength;
+      uniforms.fabricRough.value = reglages.fabricRoughness;
+      uniforms.rigidRough.value = reglages.rigidRoughness;
+      if (reglages.tint) {
+        uniforms.tintColor.value.setRGB(reglages.tint.r, reglages.tint.g, reglages.tint.b);
+        uniforms.tintAmount.value = 1;
+      } else {
+        uniforms.tintAmount.value = 0;
       }
-    }
+      applique = true;
+    });
   });
 
-  return applied;
+  return applique;
 }
