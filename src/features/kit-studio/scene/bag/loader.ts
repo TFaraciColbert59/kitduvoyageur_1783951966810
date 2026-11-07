@@ -111,6 +111,8 @@ interface GltfJson {
     translation?: [number, number, number];
     rotation?: [number, number, number, number];
     scale?: [number, number, number];
+    /** glTF autorise une matrice 4×4 colonne-majeur à la place du triplet TRS, jamais les deux. */
+    matrix?: number[];
     extras?: Record<string, any>;
   }>;
   meshes?: Array<{
@@ -409,9 +411,20 @@ export async function loadBagAsset(
         obj.name = n.name ?? '';
       }
 
-      if (n.translation) obj.position.set(n.translation[0], n.translation[1], n.translation[2]);
-      if (n.rotation) obj.quaternion.set(n.rotation[0], n.rotation[1], n.rotation[2], n.rotation[3]);
-      if (n.scale) obj.scale.set(n.scale[0], n.scale[1], n.scale[2]);
+      // Un nœud glTF porte soit un triplet TRS, soit une matrice — jamais les deux. Le générateur
+      // maison n'écrit que du TRS, mais un fichier venu d'ailleurs (Meshy, et l'importateur qui pose
+      // sa mise à l'échelle sur un nœud racine) utilise la matrice. L'ignorer laissait le modèle à
+      // son échelle d'origine, sans la moindre erreur.
+      if (Array.isArray(n.matrix) && n.matrix.length === 16) {
+        obj.matrixAutoUpdate = false;
+        obj.matrix.fromArray(n.matrix);
+        obj.matrix.decompose(obj.position, obj.quaternion, obj.scale);
+        obj.matrixAutoUpdate = true;
+      } else {
+        if (n.translation) obj.position.set(n.translation[0], n.translation[1], n.translation[2]);
+        if (n.rotation) obj.quaternion.set(n.rotation[0], n.rotation[1], n.rotation[2], n.rotation[3]);
+        if (n.scale) obj.scale.set(n.scale[0], n.scale[1], n.scale[2]);
+      }
 
       if (n.extras) {
         obj.userData = { ...n.extras };

@@ -173,6 +173,10 @@ describe('Importateur de modèle externe vers le Kit Studio', () => {
         '--height', String(HEIGHT_M),
         '--capacity', String(CAPACITY_L),
         '--yaw', '-90',
+        // Ce bloc teste le mode « géométrie seule » : fusion des primitives et UV reprojetées en
+        // mètres. Le fichier d'essai porte une matière, donc le mode automatique le conserverait ;
+        // on le force ici, et le mode « texture conservée » a son propre bloc plus bas.
+        '--textures', 'drop',
         '--out', outDir,
       ],
       { encoding: 'utf8' }
@@ -264,5 +268,130 @@ describe('Importateur de modèle externe vers le Kit Studio', () => {
         { encoding: 'utf8', stdio: 'pipe' }
       )
     ).toThrow();
+  });
+});
+
+/**
+ * Mode « texture conservée », le défaut pour un modèle Meshy retexturé.
+ *
+ * Ce que ces tests protègent : l'atlas porte les boucles noires, les fermetures et l'écusson, que
+ * rien d'autre dans le Studio ne sait produire. Une reprojection d'UV ou une reconstruction du
+ * fichier les détruirait sans bruit. On vérifie donc que le binaire passe intact et que la mise en
+ * place tient dans la matrice d'un nœud racine.
+ */
+describe('Importateur — mode texture conservée', () => {
+  let dir = '';
+  let out = '';
+  let log = '';
+  const ID = 'test-modele-texture';
+
+  const prov: BagAssetProvider = {
+    async fetchManifest(modelId: string): Promise<BagManifest> {
+      return JSON.parse(fs.readFileSync(path.join(out, `${modelId}.manifest.json`), 'utf8'));
+    },
+    async fetchGlb(modelId: string): Promise<ArrayBuffer> {
+      const buf = fs.readFileSync(path.join(out, `${modelId}.glb`));
+      return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+    },
+  };
+
+  const readJson = (file: string) => {
+    const buf = fs.readFileSync(file);
+    const len = buf.readUInt32LE(12);
+    return JSON.parse(buf.subarray(20, 20 + len).toString('utf8'));
+  };
+
+  beforeAll(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lkdv-import-tex-'));
+    out = path.join(dir, 'out');
+    const input = path.join(dir, 'faux-meshy-texture.glb');
+    fs.writeFileSync(input, buildFakeImportedGlb());
+    log = execFileSync(
+      process.execPath,
+      [
+        path.join(process.cwd(), 'tools', 'bag-generator', 'import-model.mjs'),
+        '--in', input,
+        '--model-id', ID,
+        '--label', 'Modèle texturé de test',
+        '--height', String(HEIGHT_M),
+        '--capacity', String(CAPACITY_L),
+        '--yaw', '-90',
+        '--out', out,
+      ],
+      { encoding: 'utf8' }
+    );
+  });
+
+  afterAll(() => {
+    if (dir) fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('conserve l’atlas par défaut, sans qu’on le demande, et le dit', () => {
+    expect(log).toMatch(/conservé\s*:\s*2 matériau\(x\), 1 image\(s\)/);
+    const json = readJson(path.join(out, `${ID}.glb`));
+    expect(json.images).toHaveLength(1);
+    expect(json.materials).toHaveLength(2);
+  });
+
+  it('ne réécrit aucune donnée : les accesseurs d’origine sont tous là', () => {
+    const avant = readJson(path.join(dir, 'faux-meshy-texture.glb'));
+    const apres = readJson(path.join(out, `${ID}.glb`));
+    expect(apres.accessors).toEqual(avant.accessors);
+    expect(apres.bufferViews).toEqual(avant.bufferViews);
+    expect(apres.meshes).toEqual(avant.meshes);
+  });
+
+  it('pose la mise à l’échelle et le centrage sur un nœud racine ajouté', () => {
+    const avant = readJson(path.join(dir, 'faux-meshy-texture.glb'));
+    const apres = readJson(path.join(out, `${ID}.glb`));
+    expect(apres.nodes).toHaveLength(avant.nodes.length + 1);
+    const racine = apres.nodes[apres.scenes[apres.scene ?? 0].nodes[0]];
+    expect(racine.name).toBe(`bag:${ID}`);
+    expect(racine.matrix).toHaveLength(16);
+    // Les anciennes racines de scène sont devenues ses enfants : rien n'est perdu en route.
+    expect(racine.children).toEqual(avant.scenes[avant.scene ?? 0].nodes);
+  });
+
+  it('place le sac à la bonne hauteur, posé sur le sol', async () => {
+    const loaded = await loadBagAsset(ID, prov);
+    expect(loaded.status).toBe('ready');
+    const boite = new THREE.Box3().setFromObject(loaded.root!);
+    const taille = boite.getSize(new THREE.Vector3());
+    expect(taille.y).toBeCloseTo(HEIGHT_M, 3);
+    expect(boite.min.y).toBeCloseTo(0, 3);
+    // Le cap est corrigé comme dans l'autre mode : plus large que profond.
+    expect(taille.x).toBeGreaterThan(taille.z);
+  });
+
+  it('n’annonce pas une personnalisation de couleur qu’il ne sait pas tenir', async () => {
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(out, `${ID}.manifest.json`), 'utf8')
+    ) as BagManifest & { tier: string; texturedSource: boolean };
+    // Teinter « body » repeindrait l'atlas entier, boucles et écusson compris : tant qu'aucun masque
+    // de zone tissu n'existe, l'honnêteté est de déclarer la personnalisation indisponible (D-07).
+    expect(manifest.capabilities.customizableParts).toEqual([]);
+    expect(manifest.texturedSource).toBe(true);
+    expect(manifest.tier).toBe('web');
+  });
+
+  it('refuse un master haute densité au palier web, et l’accepte au palier hd', () => {
+    const input = path.join(dir, 'faux-meshy-texture.glb');
+    const lancer = (extra: string[]) => execFileSync(
+      process.execPath,
+      [
+        path.join(process.cwd(), 'tools', 'bag-generator', 'import-model.mjs'),
+        '--in', input,
+        '--model-id', 'test-palier',
+        '--label', 'Palier',
+        '--height', String(HEIGHT_M),
+        '--capacity', String(CAPACITY_L),
+        '--out', out,
+        ...extra,
+      ],
+      { encoding: 'utf8', stdio: 'pipe' }
+    );
+    // Le plafond web ramené à 10 triangles simule un master hors budget.
+    expect(() => lancer(['--max-tri', '10'])).toThrow();
+    expect(lancer(['--tier', 'hd'])).toMatch(/palier\s*:\s*hd/);
   });
 });
