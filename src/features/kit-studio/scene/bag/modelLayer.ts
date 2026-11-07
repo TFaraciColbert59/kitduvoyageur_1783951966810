@@ -41,7 +41,10 @@ let trameEnCours: Promise<THREE.Texture | null> | null = null;
 
 /** Charge la tuile de trame une seule fois ; les sacs suivants réutilisent la même texture. */
 function tramePartagee(): Promise<THREE.Texture | null> {
-  trameEnCours ??= chargerTextureDonnee(TRAME_URL);
+  trameEnCours ??= chargerTextureDonnee(TRAME_URL).then((tex) => {
+    if (tex) tex.anisotropy = 8;
+    return tex;
+  });
   return trameEnCours;
 }
 import type { TextureBank } from '../textures';

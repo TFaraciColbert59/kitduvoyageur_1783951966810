@@ -202,9 +202,11 @@ function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop, bagMo
     }
   }
 
-  // Lumières : intensités × π pour retrouver le rendu de la maquette (three r149, éclairage non physique).
+  // Lumières : avec RoomEnvironment PMREM actif, le soleil direct est ramené à 0.8π (contre 1.65π
+  // sans IBL) pour éviter de brûler les hautes lumières du tissu dé-éclairé tout en gardant le
+  // micro-relief rasant de l'armure 2×2 et le reflet net des boucles rigides.
   scene.add(new HemisphereLight(makeColor(LIGHT_HEMI_SKY), makeColor(LIGHT_HEMI_GROUND), 0.72 * Math.PI));
-  const sun = new DirectionalLight(makeColor(LIGHT_SUN), 1.65 * Math.PI);
+  const sun = new DirectionalLight(makeColor(LIGHT_SUN), (envTexture ? 0.8 : 1.65) * Math.PI);
   sun.position.set(2.6, 4.6, 3.0);
   sun.castShadow = shadows;
   sun.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);

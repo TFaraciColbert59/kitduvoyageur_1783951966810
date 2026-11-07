@@ -35,7 +35,7 @@ fi
 # Le typage complet dépasse le tas Node par défaut sur un Mac de 8 Go.
 if NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=6144}" npx tsc --noEmit -p . >/tmp/ks-tsc.log 2>&1; then say typage ok; else say typage ÉCHEC; tail -10 /tmp/ks-tsc.log; fail=1; fi
 if npx eslint $KS $APP --max-warnings=0 >/tmp/ks-eslint.log 2>&1; then say eslint ok; else say eslint ÉCHEC; tail -15 /tmp/ks-eslint.log; fail=1; fi
-if npx vitest run $KS --reporter=dot >/tmp/ks-vitest.log 2>&1; then say vitest ok; else say vitest ÉCHEC; tail -15 /tmp/ks-vitest.log; fail=1; fi
+if npx vitest run $KS --maxWorkers=2 --reporter=dot >/tmp/ks-vitest.log 2>&1; then say vitest ok; else say vitest ÉCHEC; tail -15 /tmp/ks-vitest.log; fail=1; fi
 
 # 6. Conformité identité / vie privée existantes.
 for s in scripts/verify/identity_compliance.mjs scripts/verify/traveller_privacy.mjs; do

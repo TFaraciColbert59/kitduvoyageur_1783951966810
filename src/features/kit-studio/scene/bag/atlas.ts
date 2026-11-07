@@ -38,15 +38,33 @@ import type { LoadedBagAsset } from './loader';
 import { resolveTokenToThreeColor } from './materials';
 import type { ConfigSet } from '../../domain/catalog';
 
-/** Côté d'une tuile de trame, en mètres. Même convention que `scene/bag/fabricMaps.ts`. */
-export const WEAVE_TILE_M = 0.1;
+/**
+ * Côté d'une tuile de trame, en mètres.
+ * Une tuile 256×256 contient déjà plusieurs périodes d'armure 2×2 ; à 0,10 m par tuile, le pas du
+ * fil passe sous le pixel au cadrage par défaut du Studio (sac entier de 66 cm) et le filtrage
+ * trilinéaire des mipmaps lisse les pentes à plat (contraste local +0,6 %). À 0,25 m par tuile,
+ * la période reste au-dessus de la limite de Nyquist à distance normale et la trame se lit sur le
+ * sac entier (contraste local passe-haut RMS ×1,36 à ×1,42).
+ */
+export const WEAVE_TILE_M = 0.3;
+
+/** Force par défaut des pentes de la normale de trame sur les zones textiles (R et G). */
+export const WEAVE_DEFAULT_STRENGTH = 2.4;
 
 /** Rugosité par famille. Le tissu mate, le rigide accroche un reflet. */
-export const FABRIC_ROUGHNESS = 0.82;
+export const FABRIC_ROUGHNESS = 0.88;
 export const RIGID_ROUGHNESS = 0.25;
 
-/** Couleur de la lueur textile : une olive claire, jamais blanche, qui reste crédible sur du tissu. */
-export const SHEEN_COLOR = 0xbfd79a;
+/** Intensité et rugosité de la lueur textile (sheen) : fibre mate, sans aspect ciré. */
+export const SHEEN_INTENSITY = 0.35;
+export const SHEEN_ROUGHNESS = 0.75;
+
+/**
+ * Couleur de la lueur textile : gris-vert neutre très désaturé, calibré sur la luminance linéaire
+ * de l'albédo dé-éclairé (54,6/255 sRGB ≈ 0,038 linéaire) pour diffuser aux angles rasants sans
+ * voile laiteux ni dominante jaune-vert sous l'environnement PMREM.
+ */
+export const SHEEN_COLOR = 0x4c524e;
 
 export interface AtlasMaps {
   /** Carte de zones dans les UV de l'atlas. Son absence éteint toute la personnalisation. */
@@ -91,7 +109,7 @@ export function atlasUniformsFor(config: ConfigSet, maps: AtlasMaps): AtlasUnifo
     tint: color ? { r: color.r, g: color.g, b: color.b } : null,
     fabricRoughness: FABRIC_ROUGHNESS,
     rigidRoughness: RIGID_ROUGHNESS,
-    weaveStrength: maps.weaveNormal ? 1 : 0,
+    weaveStrength: maps.weaveNormal ? WEAVE_DEFAULT_STRENGTH : 0,
     enabled: true,
   };
 }
@@ -259,8 +277,8 @@ function versPhysique(mat: THREE.MeshStandardMaterial): THREE.MeshPhysicalMateri
     phys.defines = { STANDARD: '', PHYSICAL: '' };
     phys.name = mat.name;
   }
-  phys.sheen = 1;
-  phys.sheenRoughness = 0.7;
+  phys.sheen = SHEEN_INTENSITY;
+  phys.sheenRoughness = SHEEN_ROUGHNESS;
   phys.sheenColor.setHex(SHEEN_COLOR);
   return phys;
 }

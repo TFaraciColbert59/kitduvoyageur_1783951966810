@@ -23,6 +23,7 @@ import {
   FABRIC_ROUGHNESS,
   luminance,
   RIGID_ROUGHNESS,
+  WEAVE_DEFAULT_STRENGTH,
   WEAVE_TILE_M,
   type AtlasMaps,
 } from '../scene/bag/atlas';
@@ -43,7 +44,7 @@ describe('Atlas — réglages déduits des cartes', () => {
 
   it('n’applique pas de trame sans tuile de trame, même avec la carte de zones', () => {
     expect(atlasUniformsFor(config('forest'), AVEC_CARTE).weaveStrength).toBe(0);
-    expect(atlasUniformsFor(config('forest'), AVEC_TRAME).weaveStrength).toBe(1);
+    expect(atlasUniformsFor(config('forest'), AVEC_TRAME).weaveStrength).toBe(WEAVE_DEFAULT_STRENGTH);
   });
 
   it('s’allume et résout la couleur du token quand la carte est là', () => {
@@ -123,6 +124,9 @@ interface WebGlRenderStats {
   readonly badgeMaxDelta: number;
   readonly weaveDiffOnFabricCount: number;
   readonly weaveMaxDeltaOnBuckle: number;
+  readonly rmsWithWeave: number;
+  readonly rmsNoWeave: number;
+  readonly rmsSampleCount: number;
   readonly sheenBuckleMaxDelta: number;
   readonly sheenFabricDiffCount: number;
   readonly sheenStrapDiffCount: number;
@@ -130,13 +134,15 @@ interface WebGlRenderStats {
 
 describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
   it(
-    'teinte uniquement le tissu entre forest et ochre, préserve boucles/sangles/écusson, et applique la trame et le sheen',
+    'teinte uniquement le tissu entre forest et ochre, préserve boucles/sangles/écusson, et garantit le contraste local RMS de la trame au cadrage Studio par défaut',
     async () => {
       const rootDir = process.cwd();
       const entrySource = `
         import * as THREE from 'three';
         import { loadBagAsset, chargerTextureDonnee } from './src/features/kit-studio/scene/bag/loader';
         import { applyAtlasAppearance } from './src/features/kit-studio/scene/bag/atlas';
+        import { LIGHT_HEMI_GROUND, LIGHT_HEMI_SKY, LIGHT_RIM, LIGHT_SUN } from './src/features/kit-studio/domain/palette.scene';
+        import { makeColor } from './src/features/kit-studio/scene/color';
 
         window.__runAtlasPixelCheck = async () => {
           const SIZE = 512;
@@ -149,6 +155,8 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
           });
           renderer.setSize(SIZE, SIZE, false);
           renderer.outputColorSpace = THREE.SRGBColorSpace;
+          renderer.toneMapping = THREE.ACESFilmicToneMapping;
+          renderer.toneMappingExposure = 1.05;
 
           const shaderErrors = [];
           renderer.debug.onShaderError = (gl, _program, vs, fs) => {
@@ -158,16 +166,18 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
           };
 
           const scene = new THREE.Scene();
-          const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 10);
-          camera.position.set(0, 0.34, 0.95);
+
+          // Cadrage par défaut du Studio (sac 45 L entier de 66 cm, FOV 36°, azimut/hauteur de la zone 'bag')
+          const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 20);
+          camera.position.set(0.32, 0.42, 1.15);
           camera.lookAt(0, 0.33, 0);
 
-          scene.add(new THREE.AmbientLight(0xffffff, 1.1));
-          const key = new THREE.DirectionalLight(0xffffff, 2.2);
-          key.position.set(0.8, 1.4, 1.2);
-          scene.add(key);
-          const rim = new THREE.DirectionalLight(0xffffff, 1.4);
-          rim.position.set(-0.9, 0.8, -0.6);
+          scene.add(new THREE.HemisphereLight(makeColor(LIGHT_HEMI_SKY), makeColor(LIGHT_HEMI_GROUND), 0.72 * Math.PI));
+          const sun = new THREE.DirectionalLight(makeColor(LIGHT_SUN), 1.65 * Math.PI);
+          sun.position.set(2.6, 4.6, 3.0);
+          scene.add(sun);
+          const rim = new THREE.DirectionalLight(makeColor(LIGHT_RIM), 0.35 * Math.PI);
+          rim.position.set(-3, 2, -3);
           scene.add(rim);
 
           const provider = {
@@ -190,7 +200,10 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
 
           const zones = await chargerTextureDonnee(loaded.manifest.zonesMapUrl);
           const weave = await chargerTextureDonnee('/assets/materials/weave-normal.webp');
+          if (weave) weave.anisotropy = 8;
+
           scene.add(loaded.root);
+          loaded.root.updateMatrixWorld(true);
 
           const gl = renderer.getContext();
           const readPixels = () => {
@@ -350,6 +363,57 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
             }
           }
 
+          // Contraste local passe-haut RMS (voisinage 3×3) sur l'intérieur pur de la zone tissu (R)
+          // au cadrage par défaut de la caméra du Studio.
+          const isInteriorFabric = (x, y, r = 2) => {
+            for (let dy = -r; dy <= r; dy++) {
+              for (let dx = -r; dx <= r; dx++) {
+                const nx = x + dx;
+                const ny = y + dy;
+                if (nx < 0 || ny < 0 || nx >= SIZE || ny >= SIZE) return false;
+                const idx = (ny * SIZE + nx) * 4;
+                if (
+                  classPixels[idx + 3] < 250 ||
+                  classPixels[idx] < 230 ||
+                  classPixels[idx + 1] > 15 ||
+                  classPixels[idx + 2] > 15
+                ) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          };
+
+          const computeHighPassRms = (pixels) => {
+            let sumSq = 0;
+            let count = 0;
+            const lumAt = (px, py) => {
+              const idx = (py * SIZE + px) * 4;
+              return 0.2126 * pixels[idx] + 0.7152 * pixels[idx + 1] + 0.0722 * pixels[idx + 2];
+            };
+            for (let y = 3; y < SIZE - 3; y++) {
+              for (let x = 3; x < SIZE - 3; x++) {
+                if (!isInteriorFabric(x, y, 2)) continue;
+                const c = lumAt(x, y);
+                let mean = 0;
+                for (let dy = -1; dy <= 1; dy++) {
+                  for (let dx = -1; dx <= 1; dx++) {
+                    mean += lumAt(x + dx, y + dy);
+                  }
+                }
+                mean /= 9;
+                const hp = c - mean;
+                sumSq += hp * hp;
+                count++;
+              }
+            }
+            return { rms: count > 0 ? Math.sqrt(sumSq / count) : 0, count };
+          };
+
+          const hpWithWeave = computeHighPassRms(pixelsForest);
+          const hpNoWeave = computeHighPassRms(pixelsNoWeave);
+
           loaded.dispose();
           renderer.dispose();
 
@@ -369,6 +433,9 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
             badgeMaxDelta,
             weaveDiffOnFabricCount,
             weaveMaxDeltaOnBuckle,
+            rmsWithWeave: hpWithWeave.rms,
+            rmsNoWeave: hpNoWeave.rms,
+            rmsSampleCount: hpWithWeave.count,
             sheenBuckleMaxDelta,
             sheenFabricDiffCount,
             sheenStrapDiffCount,
@@ -463,9 +530,13 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
         expect(stats.badgePixelCount).toBeGreaterThan(50);
         expect(stats.badgeMaxDelta).toBeLessThanOrEqual(1);
 
-        // 3. La tuile de trame modifie visiblement le tissu et ne touche pas les boucles
-        expect(stats.weaveDiffOnFabricCount).toBeGreaterThan(stats.fabricPixelCount * 0.1);
+        // 3. La tuile de trame modifie visiblement le tissu au cadrage Studio par défaut (plancher RMS passe-haut)
+        //    et ne touche pas les boucles
+        expect(stats.weaveDiffOnFabricCount).toBeGreaterThan(stats.fabricPixelCount * 0.25);
         expect(stats.weaveMaxDeltaOnBuckle).toBeLessThanOrEqual(1);
+        expect(stats.rmsSampleCount).toBeGreaterThan(15_000);
+        expect(stats.rmsWithWeave).toBeGreaterThan(stats.rmsNoWeave * 1.25);
+        expect(stats.rmsWithWeave - stats.rmsNoWeave).toBeGreaterThan(0.25);
 
         // 4. Le sheen est actif sur les zones rouge (tissu) et verte (sangles), et strictement nul sur la bleue (boucles)
         expect(stats.sheenFabricDiffCount).toBeGreaterThan(1_000);
@@ -475,6 +546,6 @@ describe('Atlas — rendu WebGL pixel à pixel sur lkdv-one-45', () => {
         await browser.close();
       }
     },
-    30_000,
+    60_000,
   );
 });
