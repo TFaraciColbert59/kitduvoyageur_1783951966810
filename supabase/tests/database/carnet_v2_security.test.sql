@@ -76,6 +76,8 @@ VALUES
 -- ----------------------------------------------------------------------------
 -- Test 1 & 2 : Fonctions canoniques sous session auteur / collaborateur / visiteur
 -- ----------------------------------------------------------------------------
+SET LOCAL ROLE authenticated;
+
 -- Sous session auteur
 SET LOCAL "request.jwt.claims" = '{"sub": "c2000000-0000-4000-8000-000000000001", "role": "authenticated"}';
 SELECT is(public.is_carnet_participant('c2100000-0000-4000-8000-000000000001'), true, 'Auteur est participant du carnet privé');
