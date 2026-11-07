@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "moduleId": "lkdv-m10",
+  "code": "M10",
+  "label": "Porte-matelas",
+  "units": "meters",
+  "origin": "procedural",
+  "boundingBoxM": {
+    "w": 0.56,
+    "h": 0.15,
+    "d": 0.15
+  },
+  "cotesReferenceMm": {
+    "w": 560,
+    "h": 150,
+    "d": 150
+  },
+  "referenceState": "ouvert_sans_matelas",
+  "orientation": {
+    "up": "Y",
+    "front": "+Z",
+    "back": "-Z",
+    "yawDeg": 0
+  },
+  "platine": {
+    "position": [
+      0,
+      0.075,
+      -0.075
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "reserve": null,
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  }
+}

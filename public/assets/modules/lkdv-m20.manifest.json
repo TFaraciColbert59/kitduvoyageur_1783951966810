@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "moduleId": "lkdv-m20",
+  "code": "M20",
+  "label": "Panneau frontal interchangeable",
+  "units": "meters",
+  "origin": "glb",
+  "glbUrl": "/assets/modules/lkdv-m20.glb",
+  "texturedSource": true,
+  "boundingBoxM": {
+    "w": 0.2663,
+    "h": 0.38,
+    "d": 0.0404
+  },
+  "cotesReferenceMm": {
+    "w": 280,
+    "h": 380,
+    "d": 15
+  },
+  "orientation": {
+    "up": "Y",
+    "front": "+Z",
+    "back": "-Z",
+    "yawDeg": 0
+  },
+  "platine": {
+    "position": [
+      0,
+      0.19,
+      -0.0202
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "textureSize": 1024,
+  "reserve": null,
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  },
+  "assets": {
+    "web": {
+      "url": "/assets/modules/lkdv-m20.glb",
+      "bytes": 360436,
+      "triangles": 10529,
+      "textureSize": 1024
+    },
+    "hd": {
+      "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/module-models/lkdv-m20.hd.glb",
+      "bytes": 6526016,
+      "triangles": 10529,
+      "textureSize": 2048
+    }
+  }
+}
