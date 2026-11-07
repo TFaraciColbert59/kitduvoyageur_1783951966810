@@ -203,7 +203,8 @@ export function PostGlassPanel({
         if (!start) return;
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
-        if (isHorizontalSwipe(dx, dy) && dx < -40) {
+        const towardPhoto = side === 'comments' ? dx > 0 : dx < 0;
+        if (isHorizontalSwipe(dx, dy) && (dx < -40 || towardPhoto)) {
           pointerStart.current = null;
           swipedRef.current = true;
           setGesture(false);
