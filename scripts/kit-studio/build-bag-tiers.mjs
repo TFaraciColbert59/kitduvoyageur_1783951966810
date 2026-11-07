@@ -96,6 +96,9 @@ function main() {
   const table = JSON.parse(readFileSync(arg('--table', join('scripts', 'kit-studio', 'bags.lkdv-one.json')), 'utf8'));
   const seulement = arg('--only');
   const base = arg('--base', BASE_DEFAUT).replace(/\/+$/, '');
+  // Dossier des cartes de zones produites par prepare-bag-atlas.mjs. Sans lui, les sacs restent
+  // affichables mais leur personnalisation de couleur est annoncée indisponible (D-07).
+  const dossierZones = arg('--zones');
   const modeles = table.models.filter((m) => !seulement || m.code === seulement);
   if (modeles.length === 0) throw new Error(`aucun modèle ne correspond à --only ${seulement}`);
 
@@ -141,9 +144,25 @@ function main() {
 
     // 4. Un seul manifeste, qui déclare les deux paliers. Le palier web fait foi pour tout le
     //    reste : c'est lui qui est servi par défaut, donc ses chiffres sont ceux à respecter.
+    // La carte de zones voyage à côté du GLB : c'est elle qui dit où est le tissu, donc ce que la
+    // couleur choisie a le droit de teindre. Sans elle, teinter repeindrait boucles et écusson.
+    let zonesMapUrl;
+    if (dossierZones) {
+      const src = join(resolve(dossierZones), `${modele.code}.zones.webp`);
+      if (existsSync(src)) {
+        const dest = join(SORTIE_WEB, `${modele.modelId}.zones.webp`);
+        copyFileSync(src, dest);
+        zonesMapUrl = `/assets/bags/${modele.modelId}.zones.webp`;
+        console.log(`zones       : ${Math.round(statSync(dest).size / 1024)} Ko`);
+      } else {
+        console.log(`zones       : absente pour ${modele.code}, personnalisation indisponible`);
+      }
+    }
+
     const manifeste = {
       ...manifestWeb,
       tier: undefined,
+      zonesMapUrl,
       assets: {
         web: {
           url: `/assets/bags/${modele.modelId}.glb`,
@@ -158,6 +177,13 @@ function main() {
       },
     };
     delete manifeste.tier;
+    if (zonesMapUrl === undefined) delete manifeste.zonesMapUrl;
+    // La personnalisation de couleur redevient possible dès qu'un masque existe : la teinte ne
+    // touchera que la zone tissu. Sans masque, la liste reste vide et l'interface le dit.
+    manifeste.capabilities = {
+      ...manifeste.capabilities,
+      customizableParts: zonesMapUrl ? ['body'] : [],
+    };
     writeFileSync(join(SORTIE_WEB, `${modele.modelId}.manifest.json`), JSON.stringify(manifeste, null, 2));
 
     // `source` distingue les deux familles de l'index : les sacs du générateur maison, découpés en

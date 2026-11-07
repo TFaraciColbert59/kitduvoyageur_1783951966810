@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SOURCE = resolve(root, 'kit-studio-bundle/reference/Kit_Studio_v2.html');
+const SOURCE = resolve(root, 'tests/fixtures/kit-studio/Kit_Studio_v2.html');
 const TARGET = resolve(root, 'src/features/kit-studio/ui/glyphs.generated.ts');
 
 const SUPPORTED_TAGS = new Set(['rect', 'path', 'circle', 'line', 'polyline', 'polygon', 'ellipse']);

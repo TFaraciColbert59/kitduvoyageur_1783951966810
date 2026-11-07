@@ -26,7 +26,24 @@ import type { ConfigSet } from '../../domain/catalog';
 import { GROUND_Y } from '../layout';
 import { applyAllCustomizations } from './materials';
 import { loadBagAsset, type BagAssetProvider, type BagLoadResult, type LoadedBagAsset } from './loader';
-import { applyAtlasAppearance, loadZonesMap, type AtlasPixelBuffer } from './atlas';
+import { applyAtlasAppearance, type AtlasMaps } from './atlas';
+import { chargerTextureDonnee } from './loader';
+import { resolveBagAttachmentAnchors } from '../../domain/bagAnchorsTable';
+import {
+  AVAILABLE_3D_MODULE_MANIFESTS,
+  createModuleAttachmentController,
+  type ModuleAttachmentController,
+} from './moduleLoader';
+
+/** Adresse de la tuile de trame, partagée par tous les sacs : une seule texture pour la gamme. */
+const TRAME_URL = '/assets/materials/weave-normal.webp';
+let trameEnCours: Promise<THREE.Texture | null> | null = null;
+
+/** Charge la tuile de trame une seule fois ; les sacs suivants réutilisent la même texture. */
+function tramePartagee(): Promise<THREE.Texture | null> {
+  trameEnCours ??= chargerTextureDonnee(TRAME_URL);
+  return trameEnCours;
+}
 import type { TextureBank } from '../textures';
 
 /** Source de rendu choisie pour le sac courant. */
@@ -77,6 +94,8 @@ export interface BagModelRuntimeInfo {
   readonly declaredCapacityL: number | null;
   /** Personnalisation de couleur : jamais appliquée à un atlas entier (spec §4.6). */
   readonly colorCustomization: BagColorCustomization;
+  /** Vrai quand au moins un maillage 3D de module est livré en production (§ 4.3). */
+  readonly modules3dAvailable?: boolean;
   /** Raison de la dégradation, si dégradée. */
   readonly reason: string | null;
 }
@@ -100,6 +119,8 @@ export interface BagModelLayer {
   load(modelId: string | null | undefined): Promise<BagModelRuntimeInfo>;
   /** Applique la configuration d'apparence du studio au maillage chargé. */
   setAppearance(config: ConfigSet): void;
+  /** Contrôleur d'accroche des modules 3D sur les points d'ancrage du sac chargé. */
+  attachments(): ModuleAttachmentController | null;
   info(): BagModelRuntimeInfo;
   dispose(): void;
 }
@@ -113,6 +134,7 @@ const DEGRADED_INFO: BagModelRuntimeInfo = {
   capabilities: null,
   declaredCapacityL: null,
   colorCustomization: 'procedural',
+  modules3dAvailable: AVAILABLE_3D_MODULE_MANIFESTS.length > 0,
   reason: null,
 };
 
@@ -132,8 +154,9 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
   let info: BagModelRuntimeInfo = DEGRADED_INFO;
   let loaded: LoadedBagAsset | null = null;
   let model: BagModel | null = null;
+  let attachmentCtrl: ModuleAttachmentController | null = null;
   let appearance: ConfigSet | null = null;
-  let zonesMap: AtlasPixelBuffer | null = null;
+  let atlasMaps: AtlasMaps = { zones: null, weaveNormal: null };
   let loadToken = 0;
   let disposed = false;
 
@@ -144,19 +167,23 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
   };
 
   const clearLoaded = (): void => {
+    if (attachmentCtrl) {
+      attachmentCtrl.dispose();
+      attachmentCtrl = null;
+    }
     if (!loaded) return;
     holder.remove(loaded.root);
     loaded.dispose();
     loaded = null;
     model = null;
-    zonesMap = null;
+    atlasMaps = { zones: null, weaveNormal: null };
     holder.visible = false;
     proceduralBag.visible = true;
   };
 
   const applyAppearance = (): void => {
     if (!loaded || !appearance) return;
-    applyAppearanceToLoaded(loaded, appearance, textures, zonesMap);
+    applyAppearanceToLoaded(loaded, appearance, textures, atlasMaps);
   };
 
   const place = (result: LoadedBagAsset): void => {
@@ -206,11 +233,20 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
 
       loaded = result;
       model = bagModelFromManifest(result.manifest);
-      const hasAtlas = Boolean(result.manifest.texturedSource);
-      if (hasAtlas) {
-        zonesMap = await loadZonesMap(wanted, deps.provider);
+      // Les cartes d'un sac texturé : la zone, qui dit où est le tissu, et la trame, partagée par
+      // toute la gamme. Chacune peut manquer sans empêcher l'affichage — seule la personnalisation
+      // s'éteint, et elle est alors annoncée indisponible plutôt que fausse.
+      if (result.manifest.texturedSource) {
+        const adresse = result.manifest.zonesMapUrl;
+        const fetchZones = deps.provider
+          ? deps.provider.fetchZonesMap
+          : (_id: string, url?: string) => (url ? chargerTextureDonnee(url) : Promise.resolve(null));
+        const zones = fetchZones
+          ? await fetchZones(wanted, adresse).catch(() => null)
+          : null;
+        atlasMaps = { zones, weaveNormal: zones ? await tramePartagee() : null };
       } else {
-        zonesMap = null;
+        atlasMaps = { zones: null, weaveNormal: null };
       }
 
       place(result);
@@ -222,25 +258,44 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
       // Règle §4.6 / Avenant §4 : l'atlas d'un maillage texturé garde sa matière ; la couleur n'est
       // personnalisable que si une carte de zones existe (D-07).
       let colorCustomization: BagColorCustomization = 'procedural';
-      if (hasAtlas) {
-        colorCustomization = zonesMap ? 'available' : 'unavailable-no-mask';
+      if (result.manifest.texturedSource) {
+        colorCustomization = atlasMaps.zones ? 'available' : 'unavailable-no-mask';
       }
+
+      const provisionalAnchors = resolveBagAttachmentAnchors(result.manifest);
+      const allAnchorSpecs =
+        result.anchors.size > 0
+          ? [...result.anchors.values()].map((a) => ({
+              id: a.id,
+              position: a.position,
+              normal: a.normal,
+            }))
+          : provisionalAnchors;
+      attachmentCtrl = createModuleAttachmentController(result.root, allAnchorSpecs);
+      const anchorIds =
+        result.anchors.size > 0
+          ? [...result.anchors.keys()]
+          : provisionalAnchors.map((a) => a.id);
 
       return emit({
         status: 'glb',
         modelId: wanted,
         label: result.manifest.label,
         parts: [...result.parts.keys()],
-        anchors: [...result.anchors.keys()],
+        anchors: anchorIds,
         capabilities: result.capabilities,
         declaredCapacityL: model.declaredCapacityL,
         colorCustomization,
+        modules3dAvailable: AVAILABLE_3D_MODULE_MANIFESTS.length > 0,
         reason: null,
       });
     },
     setAppearance(config) {
       appearance = config;
       applyAppearance();
+    },
+    attachments() {
+      return attachmentCtrl;
     },
     info() {
       return info;
@@ -269,10 +324,10 @@ export function applyAppearanceToLoaded(
   loaded: LoadedBagAsset,
   config: ConfigSet,
   textures: TextureBank,
-  customZonesMap?: AtlasPixelBuffer | null,
+  customMaps?: AtlasMaps | null,
 ): void {
   if (loaded.manifest.texturedSource) {
-    applyAtlasAppearance(loaded, config, customZonesMap ?? null);
+    applyAtlasAppearance(loaded, config, customMaps ?? { zones: null, weaveNormal: null });
   } else {
     applyAllCustomizations(loaded.parts, appearanceEntries(config), textures);
   }

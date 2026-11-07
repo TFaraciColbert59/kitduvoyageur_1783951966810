@@ -191,7 +191,8 @@ describe('Chargement du maillage dans la scène survivante', () => {
     const providerWithZones: BagAssetProvider = {
       ...fsProvider,
       async fetchZonesMap() {
-        return { width: 16, height: 16, data: new Uint8ClampedArray(16 * 16 * 4) };
+        // Une carte minuscule suffit : ce qu'on teste est sa présence, pas son contenu.
+        return new THREE.DataTexture(new Uint8Array(16 * 16 * 4), 16, 16);
       },
     };
 
