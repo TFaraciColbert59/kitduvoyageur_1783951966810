@@ -1,0 +1,184 @@
+{
+  "schema": 1,
+  "series": "LKDV ONE — Modules 3D (Lot I-C + 5 modules procéduraux)",
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  },
+  "modules": [
+    {
+      "code": "M03",
+      "moduleId": "lkdv-m03",
+      "label": "Poche GPS",
+      "origin": "glb",
+      "textureSize": 512,
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 80, "h": 150, "d": 45 },
+      "reserve": null
+    },
+    {
+      "code": "M04",
+      "moduleId": "lkdv-m04",
+      "label": "Poche multifonction",
+      "origin": "glb",
+      "textureSize": 512,
+      "yawDeg": 180,
+      "cotesReferenceMm": { "w": 120, "h": 200, "d": 70 },
+      "reserve": "Mélange recto/verso dans la texture : pictogramme projeté au dos et marquage sombre sur la façade."
+    },
+    {
+      "code": "M05",
+      "moduleId": "lkdv-m05",
+      "label": "Grande poche cargo",
+      "origin": "glb",
+      "textureSize": 1024,
+      "yawDeg": 180,
+      "cotesReferenceMm": { "w": 280, "h": 380, "d": 120 },
+      "reserve": "Détails de dos (filet et sangles) projetés sur la façade et le dos."
+    },
+    {
+      "code": "M06",
+      "moduleId": "lkdv-m06",
+      "label": "Poche étanche",
+      "origin": "glb",
+      "textureSize": 512,
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 180, "h": 250, "d": 80 },
+      "reserve": null
+    },
+    {
+      "code": "M07",
+      "moduleId": "lkdv-m07",
+      "label": "Poche filet",
+      "origin": "glb",
+      "textureSize": 512,
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 220, "h": 320, "d": 90 },
+      "reserve": "Filet aux faces et trous géométriques irréguliers."
+    },
+    {
+      "code": "M08",
+      "moduleId": "lkdv-m08",
+      "label": "Porte-bâtons",
+      "origin": "glb",
+      "textureSize": 512,
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 60, "h": 320, "d": 50 },
+      "reserve": null
+    },
+    {
+      "code": "M15",
+      "moduleId": "lkdv-m15",
+      "label": "Poche pharmacie",
+      "origin": "glb",
+      "textureSize": 512,
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 150, "h": 110, "d": 70 },
+      "reserve": "Superposition sombre autour de la croix."
+    },
+    {
+      "code": "M16",
+      "moduleId": "lkdv-m16",
+      "label": "Poche batterie",
+      "origin": "glb",
+      "textureSize": 512,
+      "yawDeg": 180,
+      "cotesReferenceMm": { "w": 95, "h": 165, "d": 45 },
+      "reserve": "Écusson peu lisible de face."
+    },
+    {
+      "code": "M17",
+      "moduleId": "lkdv-m17",
+      "label": "Support panneau solaire",
+      "origin": "glb",
+      "textureSize": 1024,
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 280, "h": 380, "d": 25 },
+      "reserve": null
+    },
+    {
+      "code": "M18",
+      "moduleId": "lkdv-m18",
+      "label": "Poche photo",
+      "origin": "glb",
+      "textureSize": 512,
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 160, "h": 210, "d": 110 },
+      "reserve": null
+    },
+    {
+      "code": "M19",
+      "moduleId": "lkdv-m19",
+      "label": "Sacoche détachable",
+      "origin": "glb",
+      "textureSize": 512,
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 280, "h": 380, "d": 120 },
+      "reserve": null
+    },
+    {
+      "code": "M20",
+      "moduleId": "lkdv-m20",
+      "label": "Panneau frontal interchangeable",
+      "origin": "glb",
+      "textureSize": 1024,
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 280, "h": 380, "d": 15 },
+      "reserve": null
+    }
+  ],
+  "proceduralModules": [
+    {
+      "code": "M09",
+      "moduleId": "lkdv-m09",
+      "label": "Porte-tente",
+      "origin": "procedural",
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 460, "h": 160, "d": 160 },
+      "referenceState": "charge",
+      "reserve": null
+    },
+    {
+      "code": "M10",
+      "moduleId": "lkdv-m10",
+      "label": "Porte-matelas",
+      "origin": "procedural",
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 560, "h": 150, "d": 150 },
+      "referenceState": "ouvert_sans_matelas",
+      "reserve": null
+    },
+    {
+      "code": "M11",
+      "moduleId": "lkdv-m11",
+      "label": "Porte-sac de couchage",
+      "origin": "procedural",
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 420, "h": 230, "d": 230 },
+      "referenceState": "ouvert_sans_sac_de_couchage",
+      "reserve": null
+    },
+    {
+      "code": "M12",
+      "moduleId": "lkdv-m12",
+      "label": "Porte-casque",
+      "origin": "procedural",
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 280, "h": 300, "d": 200 },
+      "referenceState": "filet_concave_sans_casque",
+      "reserve": null
+    },
+    {
+      "code": "M14",
+      "moduleId": "lkdv-m14",
+      "label": "Porte-skis (paire, A-frame)",
+      "origin": "procedural",
+      "yawDeg": 0,
+      "cotesReferenceMm": { "w": 90, "h": 1700, "d": 90 },
+      "referenceState": "lame_droite_sans_skis",
+      "reserve": null
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "moduleId": "lkdv-m07",
+  "code": "M07",
+  "label": "Poche filet",
+  "units": "meters",
+  "origin": "glb",
+  "glbUrl": "/assets/modules/lkdv-m07.glb",
+  "texturedSource": true,
+  "boundingBoxM": {
+    "w": 0.2237,
+    "h": 0.32,
+    "d": 0.097
+  },
+  "cotesReferenceMm": {
+    "w": 220,
+    "h": 320,
+    "d": 90
+  },
+  "orientation": {
+    "up": "Y",
+    "front": "+Z",
+    "back": "-Z",
+    "yawDeg": 0
+  },
+  "platine": {
+    "position": [
+      0,
+      0.16,
+      -0.0485
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "textureSize": 512,
+  "reserve": "Filet aux faces et trous géométriques irréguliers.",
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  },
+  "assets": {
+    "web": {
+      "url": "/assets/modules/lkdv-m07.glb",
+      "bytes": 227556,
+      "triangles": 8568,
+      "textureSize": 512
+    },
+    "hd": {
+      "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/module-models/lkdv-m07.hd.glb",
+      "bytes": 4740216,
+      "triangles": 8568,
+      "textureSize": 2048
+    }
+  }
+}

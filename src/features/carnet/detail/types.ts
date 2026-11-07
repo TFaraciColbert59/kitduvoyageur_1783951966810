@@ -254,7 +254,7 @@ export interface CarnetPlace {
   lng: number | null;
 }
 
-export type CarnetViewerRole = 'participant' | 'visitor';
+export type CarnetViewerRole = 'participant' | 'visitor' | 'owner' | 'co_author';
 
 export interface CarnetNightItem {
   id: string;
@@ -293,15 +293,23 @@ export interface CarnetKitVerdictItem {
 export interface CarnetLivePosition {
   lat: number;
   lng: number;
-  accuracyM: number | null;
+  accuracyM?: number | null;
+  altitude?: number | null;
+  accuracy?: number | null;
+  heading?: number | null;
+  speed?: number | null;
   recordedAt: string;
   userId: string;
 }
 
 export interface CarnetPublicZone {
-  zoneLabel: string;
-  latApprox: number | null;
-  lngApprox: number | null;
+  zoneLabel?: string;
+  latApprox?: number | null;
+  lngApprox?: number | null;
+  centerLat?: number;
+  centerLng?: number;
+  radiusMeters?: number;
+  isDelayed?: boolean;
   recordedAt: string;
 }
 
