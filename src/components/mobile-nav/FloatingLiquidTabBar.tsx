@@ -192,7 +192,16 @@ export function FloatingLiquidTabBar() {
     }
   };
 
-  if (hiddenByEvent) return null;
+  if (
+    hiddenByEvent ||
+    pathname === '/kit-studio' ||
+    pathname?.startsWith('/kit-studio/') ||
+    (typeof document !== 'undefined' &&
+      (document.documentElement.getAttribute('data-kit-studio-open') === 'true' ||
+        document.body.getAttribute('data-kit-studio-open') === 'true'))
+  ) {
+    return null;
+  }
 
   return (
     <>

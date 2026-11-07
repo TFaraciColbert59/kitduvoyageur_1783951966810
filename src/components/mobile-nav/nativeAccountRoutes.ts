@@ -6,10 +6,18 @@ export function isProtectedCompasRoute(pathname: string | null | undefined): boo
 }
 
 /** Same full-screen exclusions as MobileNavWrapper's existing web navigation. */
-const NO_NAV_PREFIXES = ['/connexion', '/inscription', '/checkout'] as const;
+const NO_NAV_PREFIXES = ['/connexion', '/inscription', '/checkout', '/kit-studio'] as const;
 
 export function shouldShowNativeGlass(pathname: string | null | undefined): boolean {
   if (!pathname || isProtectedCompasRoute(pathname)) return false;
+  if (
+    typeof document !== 'undefined' &&
+    (document.documentElement.getAttribute('data-kit-studio-open') === 'true' ||
+      document.body.getAttribute('data-kit-studio-open') === 'true' ||
+      Boolean(document.querySelector('.ks-root, [data-studio-scene]')))
+  ) {
+    return false;
+  }
   return !NO_NAV_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'));
 }
 

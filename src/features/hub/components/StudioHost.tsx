@@ -45,43 +45,6 @@ export interface StudioHostProps {
   readonly onExit: () => void;
 }
 
-const exitButtonStyle = {
-  position: 'absolute',
-  top: 'calc(var(--safe-top, 0px) + 12px)',
-  left: 12,
-  zIndex: 70,
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 6,
-  minHeight: 44,
-  minWidth: 44,
-  padding: '0 14px',
-  border: '1px solid var(--lkv-forest-200, rgb(220 228 218))',
-  borderRadius: 999,
-  background: 'var(--lkv-stone-50, rgb(250 249 245))',
-  color: 'var(--lkv-forest-900, rgb(23 43 36))',
-  font: 'inherit',
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: 'pointer',
-  boxShadow: '0 4px 16px rgba(11, 31, 23, 0.14)',
-} as const;
-
-function ExitStudioButton({ onExit }: { onExit: () => void }) {
-  return (
-    <button
-      type="button"
-      data-testid="hub-studio-exit"
-      onClick={onExit}
-      aria-label="Quitter le Kit Studio et revenir au camp"
-      style={exitButtonStyle}
-    >
-      <span aria-hidden="true">←</span>
-      <span>Retour au camp</span>
-    </button>
-  );
-}
-
 /**
  * Aucun état serveur disponible (entrée client sans donnée initiale) : on ne montre
  * jamais la démonstration ; message explicite + sortie.
@@ -135,10 +98,10 @@ export function StudioHost({ state, onExit }: StudioHostProps) {
 
   switch (state.kind) {
     case 'debug':
-      content = <KitStudioClient mode="debug" />;
+      content = <KitStudioClient mode="debug" onExit={onExit} />;
       break;
     case 'studio':
-      content = <KitStudioClient mode="server" initialData={state.data} />;
+      content = <KitStudioClient mode="server" initialData={state.data} onExit={onExit} />;
       break;
     case 'empty':
       content = <StudioEmptyState />;
@@ -196,7 +159,6 @@ export function StudioHost({ state, onExit }: StudioHostProps) {
       style={{ position: 'relative', width: '100%', height: '100dvh', overflow: 'hidden' }}
     >
       {content}
-      <ExitStudioButton onExit={onExit} />
     </div>
   );
 }

@@ -117,6 +117,47 @@ describe('KitStudioClient', () => {
     });
     expect(useUiStore.getState().dockOpen).toBe(false);
   });
+
+  it('masque la bottom bar au montage et la rétablit au démontage', () => {
+    const events: boolean[] = [];
+    const handler = (e: Event) => {
+      events.push((e as CustomEvent<{ hide?: boolean }>).detail?.hide ?? false);
+    };
+    window.addEventListener('lkdv-toggle-bottom-bar', handler);
+
+    const { unmount } = render(<KitStudioClient mode="debug" />);
+    expect(document.documentElement.getAttribute('data-kit-studio-open')).toBe('true');
+    expect(document.body.getAttribute('data-kit-studio-open')).toBe('true');
+    expect(events).toContain(true);
+
+    unmount();
+    expect(document.documentElement.getAttribute('data-kit-studio-open')).toBeNull();
+    expect(document.body.getAttribute('data-kit-studio-open')).toBeNull();
+    expect(events[events.length - 1]).toBe(false);
+
+    window.removeEventListener('lkdv-toggle-bottom-bar', handler);
+  });
+
+  it('un geste de glissement vers la droite déclenche onExit', () => {
+    const onExit = vi.fn();
+    render(<KitStudioClient mode="debug" onExit={onExit} />);
+
+    // Touchstart à gauche
+    window.dispatchEvent(
+      new TouchEvent('touchstart', {
+        touches: [{ clientX: 40, clientY: 100 } as Touch],
+      })
+    );
+
+    // Touchend vers la droite (dx = 120px)
+    window.dispatchEvent(
+      new TouchEvent('touchend', {
+        changedTouches: [{ clientX: 160, clientY: 105 } as Touch],
+      })
+    );
+
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('barre d’état', () => {

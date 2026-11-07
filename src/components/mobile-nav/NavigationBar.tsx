@@ -74,11 +74,18 @@ export default function NavigationBar() {
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ hide?: boolean }>).detail;
-      if (typeof detail?.hide === 'boolean') setHiddenByEvent(detail.hide);
+      if (typeof detail?.hide === 'boolean') {
+        setHiddenByEvent(detail.hide);
+        if (detail.hide && iosNative) {
+          const revision = ++nativeTabBarRevision;
+          revisionRef.current = revision;
+          nativeTabBar.setVisible({ visible: false, revision }).catch(() => {});
+        }
+      }
     };
     window.addEventListener('lkdv-toggle-bottom-bar', handler);
     return () => window.removeEventListener('lkdv-toggle-bottom-bar', handler);
-  }, []);
+  }, [iosNative]);
 
   // Tap feedback and selection are handled synchronously by UIKit.
   // This bridge only changes the Next.js route; never destroy the WebView.
@@ -237,7 +244,7 @@ export default function NavigationBar() {
     };
   }, [iosNative]);
 
-  if (iosNative && hiddenByEvent) return null;
+  if (hiddenByEvent) return null;
   // Avoid flashing the web bar for 1-2 frames at startup.
   // If the plugin is absent/unresponsive, restore it in <= 750ms.
   if (nativeVisible && phase !== 'fallback') {

@@ -1,6 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { cog, cogState } from '../domain/balance';
 import { blockers, readiness } from '../domain/blockers';
@@ -43,9 +44,9 @@ const SHEET_TITLES = {
 export type StudioClientMode = 'debug' | 'server' | 'offline';
 
 export type KitStudioClientProps =
-  | { readonly mode: 'debug' }
-  | { readonly mode: 'server'; readonly initialData: StudioData }
-  | { readonly mode: 'offline'; readonly initialData: StudioData };
+  | { readonly mode: 'debug'; readonly onExit?: () => void }
+  | { readonly mode: 'server'; readonly initialData: StudioData; readonly onExit?: () => void }
+  | { readonly mode: 'offline'; readonly initialData: StudioData; readonly onExit?: () => void };
 
 const bannerStyle = {
   position: 'absolute',
@@ -67,9 +68,18 @@ const bannerStyle = {
 } as const;
 
 /** Écran unique : scène 3D plein écran + pilule du poids + tiroir. */
+function useSafeRouter() {
+  try {
+    return useRouter();
+  } catch {
+    return null;
+  }
+}
+
 export function KitStudioClient(props: KitStudioClientProps) {
-  const mode = props.mode;
+  const { mode, onExit } = props;
   const initialData = props.mode === 'debug' ? null : props.initialData;
+  const router = useSafeRouter();
   const { haptic } = useHapticFeedback();
   const offline = useOffline();
   const dockRef = useRef<HTMLElement | null>(null);
@@ -80,6 +90,101 @@ export function KitStudioClient(props: KitStudioClientProps) {
   const dockOpen = useUiStore((s) => s.dockOpen);
   const view = useUiStore((s) => s.view);
   const sheet = useUiStore((s) => s.sheet);
+
+  const handleExit = useCallback(() => {
+    if (onExit) {
+      onExit();
+    } else if (router) {
+      router.push('/hub');
+    } else if (typeof window !== 'undefined') {
+      window.location.href = '/hub';
+    }
+  }, [onExit, router]);
+
+  // La barre de navigation basse (bottom bar) est formellement interdite sur Kit Studio
+  useEffect(() => {
+    document.documentElement.setAttribute('data-kit-studio-open', 'true');
+    document.body.setAttribute('data-kit-studio-open', 'true');
+    window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
+
+    try {
+      // Masquage proactif de la tab bar native Capacitor iOS
+      const { registerPlugin, Capacitor } = require('@capacitor/core');
+      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
+        const bar = registerPlugin('LKDVAccountTabBar');
+        bar?.setVisible?.({ visible: false, revision: Date.now() })?.catch?.(() => undefined);
+      }
+    } catch (_e) {
+      // Ignore si Capacitor n'est pas présent dans l'environnement courant
+    }
+
+    return () => {
+      document.documentElement.removeAttribute('data-kit-studio-open');
+      document.body.removeAttribute('data-kit-studio-open');
+      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
+    };
+  }, []);
+
+  // Sortie et retour au camp par mouvement de glissement vers la droite (swipe right)
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let tracking = false;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) {
+        tracking = false;
+        return;
+      }
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startTime = performance.now();
+
+      const target = e.target instanceof Element ? e.target : null;
+      const insideSlider = Boolean(target?.closest('input, textarea, select, .ks-card-rail'));
+
+      // Glissement vers la droite admissible depuis :
+      // - le bord gauche (startX <= 140px, standard geste retour)
+      // - la zone haute (startY <= 240px, zone du bandeau / ancien bouton)
+      // - n'importe où hors d'un slider ou élément à défilement horizontal
+      if (!insideSlider && (startX <= 140 || startY <= 240)) {
+        tracking = true;
+      } else {
+        tracking = false;
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!tracking) return;
+      tracking = false;
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      const dt = performance.now() - startTime;
+
+      // Geste vers la droite : dx > 0, trajectoire dominante horizontale
+      const isFlick = dt < 400 && dx >= 45;
+      const isSustained = dx >= 75;
+      const isHorizontal = Math.abs(dx) > Math.abs(dy) * 1.15;
+
+      if ((isFlick || isSustained) && isHorizontal) {
+        haptic('medium');
+        handleExit();
+      }
+    };
+
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [handleExit, haptic]);
 
   useEffect(() => {
     // Bootstrap : la donnée du mode remplace le registre AVANT l'hydratation du store.

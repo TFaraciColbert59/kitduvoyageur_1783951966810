@@ -499,3 +499,17 @@
   flex-direction: column;
   min-height: 0;
 }
+
+/* La bottom bar est formellement interdite sur Kit Studio */
+html[data-kit-studio-open='true'] .lkdv-floating-tabbar,
+body[data-kit-studio-open='true'] .lkdv-floating-tabbar,
+body:has(.ks-root) .lkdv-floating-tabbar,
+body:has([data-testid="hub-studio-host"]) .lkdv-floating-tabbar,
+body:has([data-studio-scene]) .lkdv-floating-tabbar,
+body:has(.ks-root) .lkv-native-community-plateau,
+body:has(.ks-root) nav[aria-label="Navigation principale"],
+html[data-kit-studio-open='true'] nav[aria-label="Navigation principale"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
