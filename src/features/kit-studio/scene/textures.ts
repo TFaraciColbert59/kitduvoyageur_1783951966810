@@ -1,5 +1,10 @@
-// Textures procédurales (maquette l.918-975) : panorama du décor, bois de la table, tissus du sac.
-// Aucune image externe ; toutes les couleurs viennent de domain/palette.scene.ts.
+// Textures du décor et du sac (maquette l.918-975) : panorama, bois de la table, tissus.
+// Le panorama, le bois et les tissus techniques (mesh, rembourrage, sangle, chiné) restent dessinés
+// par code ; toutes leurs couleurs viennent de domain/palette.scene.ts.
+// Les quatre matières que la personne choisit (ripstop, cordura, X-Pac, toile cirée) sont, elles,
+// des relevés de tissu réels (lot D) : une carte de détail neutre et une carte de relief, dans
+// public/assets/materials. Elles se posent sur la texture procédurale une fois chargées, qui reste
+// donc le repli hors ligne. La couleur vient toujours du token, jamais de l'image.
 import { CanvasTexture, ClampToEdgeWrapping, RepeatWrapping, SRGBColorSpace } from 'three';
 import type { Texture } from 'three';
 import {
@@ -16,10 +21,45 @@ export const isFabricKind = (s: string): s is FabricKind => (FABRIC_KINDS as rea
 export interface TextureBank {
   /** Texture de tissu (créée à la première demande, partagée ensuite). Nom inconnu : ripstop. */
   fabric(name: string): Texture;
+  /** Carte de relief du tissu, pour les matières relevées sur du tissu réel. `null` pour les autres. */
+  fabricNormal(name: string): Texture | null;
   panorama(): Texture;
   wood(): Texture;
   /** Libère toutes les textures créées par la banque. */
   dispose(): void;
+}
+
+/** Les quatre matières dont on a un relevé photographique dans public/assets/materials. */
+const PHOTO_FABRICS: ReadonlySet<FabricKind> = new Set<FabricKind>(['ripstop', 'cordura', 'xpac', 'waxed']);
+const MATERIALS_URL = '/assets/materials';
+
+/**
+ * Répétition des relevés photographiques. Chaque image couvre 100 mm de tissu réel ; le corps du sac
+ * fait 0,78 unité de scène pour ~0,34 m : la tuile se répète donc ~3,5 fois sur une face.
+ * Les textures dessinées par code gardent leur propre valeur, calée sur leur motif.
+ */
+const PHOTO_FABRIC_REPEAT = 3.5;
+
+/** Encodage du vecteur (0, 0, 1) : surface plane. Ce n'est pas une couleur de charte. */
+const FLAT_NORMAL = 'rgb(128, 128, 255)';
+
+/**
+ * Pose une image sur une texture déjà créée, sans la remplacer : le dessin procédural reste à l'écran
+ * tant que l'image n'est pas arrivée, et le reste définitivement si elle n'arrive jamais (hors ligne,
+ * asset absent). Rien n'est tenté hors navigateur (tests, rendu serveur).
+ */
+function loadImageInto(texture: Texture, url: string): void {
+  if (typeof window === 'undefined' || typeof window.Image !== 'function') return;
+  const img = new window.Image();
+  img.decoding = 'async';
+  img.onload = () => {
+    texture.image = img;
+    texture.needsUpdate = true;
+  };
+  img.onerror = () => {
+    /* Repli : on garde la texture dessinée par code. */
+  };
+  img.src = url;
 }
 
 type Stops = readonly (readonly [number, string])[];
@@ -249,6 +289,7 @@ const FABRIC: Readonly<Record<FabricKind, { readonly repeat: number; readonly dr
 
 export function createTextureBank(tr: ResourceTracker, maxAnisotropy: number): TextureBank {
   const fabrics = new Map<FabricKind, Texture>();
+  const normals = new Map<FabricKind, Texture>();
   let pano: Texture | null = null;
   let wood: Texture | null = null;
 
@@ -257,14 +298,35 @@ export function createTextureBank(tr: ResourceTracker, maxAnisotropy: number): T
     const hit = fabrics.get(kind);
     if (hit) return hit;
     const spec = FABRIC[kind];
+    const photo = PHOTO_FABRICS.has(kind);
     const { canvas, ctx } = newCanvas(128, 128);
     if (ctx) { ctx.fillStyle = TEX_BASE; ctx.fillRect(0, 0, 128, 128); spec.draw(ctx); }
     const t = tr.texture(new CanvasTexture(canvas));
     t.wrapS = t.wrapT = RepeatWrapping;
-    t.repeat.set(spec.repeat, spec.repeat);
+    const repeat = photo ? PHOTO_FABRIC_REPEAT : spec.repeat;
+    t.repeat.set(repeat, repeat);
     t.colorSpace = SRGBColorSpace;
     t.anisotropy = Math.min(8, maxAnisotropy);
+    if (photo) loadImageInto(t, `${MATERIALS_URL}/${kind}-albedo.png`);
     fabrics.set(kind, t);
+    return t;
+  };
+
+  const fabricNormal = (name: string): Texture | null => {
+    const kind: FabricKind = isFabricKind(name) ? name : 'ripstop';
+    if (!PHOTO_FABRICS.has(kind)) return null;
+    const hit = normals.get(kind);
+    if (hit) return hit;
+    // Base plane : tant que l'image n'est pas là, le tissu s'éclaire comme aujourd'hui.
+    const { canvas, ctx } = newCanvas(4, 4);
+    if (ctx) { ctx.fillStyle = FLAT_NORMAL; ctx.fillRect(0, 0, 4, 4); }
+    const t = tr.texture(new CanvasTexture(canvas));
+    t.wrapS = t.wrapT = RepeatWrapping;
+    t.repeat.set(PHOTO_FABRIC_REPEAT, PHOTO_FABRIC_REPEAT);
+    // Pas de conversion sRGB : une carte de relief porte des vecteurs, pas des couleurs.
+    t.anisotropy = Math.min(8, maxAnisotropy);
+    loadImageInto(t, `${MATERIALS_URL}/${kind}-normal.png`);
+    normals.set(kind, t);
     return t;
   };
 
@@ -308,11 +370,14 @@ export function createTextureBank(tr: ResourceTracker, maxAnisotropy: number): T
 
   return {
     fabric,
+    fabricNormal,
     panorama,
     wood: woodTex,
     dispose() {
       for (const t of fabrics.values()) t.dispose();
       fabrics.clear();
+      for (const t of normals.values()) t.dispose();
+      normals.clear();
       pano?.dispose();
       wood?.dispose();
       pano = null;

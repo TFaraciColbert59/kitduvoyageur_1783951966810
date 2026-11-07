@@ -197,8 +197,9 @@ describe('libération des ressources', () => {
     // Géométries et matériaux : exactement ceux de départ (partagées comptées par référence).
     expect(end.geometries).toBe(start.geometries);
     expect(end.materials).toBe(start.materials);
-    // Textures : banque partagée, bornée (au plus les 9 tissus + panorama + bois), sans croissance au fil des cycles.
-    expect(end.textures).toBeLessThanOrEqual(11);
+    // Textures : banque partagée, bornée (au plus les 9 tissus + les 4 cartes de relief des matières
+    // relevées + panorama + bois), sans croissance au fil des cycles.
+    expect(end.textures).toBeLessThanOrEqual(15);
     expect(Math.max(...texturesSeen)).toBe(end.textures);
     expect(end.renderTargets).toBe(0);
     scene.dispose();

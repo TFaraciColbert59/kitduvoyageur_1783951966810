@@ -150,7 +150,7 @@ function signature(slot: Slot, c: ConfigSet): string {
 
 const hexOf = (key: MaterialKey | undefined): string => (key ? RAW_MATERIALS[key] : LOOK_FALLBACK);
 
-interface Look { readonly col: string; readonly map: Texture | null; readonly r: number; readonly met: number }
+interface Look { readonly col: string; readonly map: Texture | null; readonly nrm: Texture | null; readonly r: number; readonly met: number }
 
 export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: boolean): BagHandle {
   const group = new Group();
@@ -332,22 +332,26 @@ export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: 
       case 'fabric': {
         const mt = MATERIALS[P.mat ?? 'ripstop'];
         const fn = FINISHES[P.fin ?? 'mat'];
+        // La matière choisie n'apparaît que sur le tissu nu : une finition chinée ou un panneau
+        // extensible imposent leur propre trame, donc leur propre relief (aucun).
+        const plain = !fn.noise && !piece.stretch;
         const map = fn.noise ? tex.fabric('heather') : piece.stretch ? tex.fabric('mesh') : tex.fabric(mt.tex);
-        return { col: hexOf(P.col ?? c.body.col), map, r: (fn.r + mt.rough) / 2, met: fn.m };
+        const nrm = plain ? tex.fabricNormal(mt.tex) : null;
+        return { col: hexOf(P.col ?? c.body.col), map, nrm, r: (fn.r + mt.rough) / 2, met: fn.m };
       }
       case 'pad': {
         const fn = FINISHES[P.fin ?? 'mat'];
-        return { col: hexOf(P.col ?? c.body.col), map: fn.noise ? tex.fabric('heather') : tex.fabric('pad'), r: fn.r, met: fn.m };
+        return { col: hexOf(P.col ?? c.body.col), map: fn.noise ? tex.fabric('heather') : tex.fabric('pad'), nrm: null, r: fn.r, met: fn.m };
       }
-      case 'mesh': return { col: hexOf(P.col ?? c.body.col), map: tex.fabric('mesh'), r: 0.9, met: 0 };
+      case 'mesh': return { col: hexOf(P.col ?? c.body.col), map: tex.fabric('mesh'), nrm: null, r: 0.9, met: 0 };
       case 'web': {
         const fn = FINISHES[c.webbing.fin ?? 'mat'];
-        return { col: hexOf(c.webbing.col), map: tex.fabric('web'), r: fn.r, met: fn.m };
+        return { col: hexOf(c.webbing.col), map: tex.fabric('web'), nrm: null, r: fn.r, met: fn.m };
       }
-      case 'accent': return { col: hexOf(c.accent), map: null, r: 0.45, met: 0.1 };
-      case 'cover': return { col: LOOK_COVER, map: null, r: 0.45, met: 0 };
-      case 'reflect': return { col: LOOK_REFLECT, map: null, r: 0.2, met: 0.7 };
-      case 'metal': return { col: LOOK_METAL, map: null, r: 0.25, met: 0.85 };
+      case 'accent': return { col: hexOf(c.accent), map: null, nrm: null, r: 0.45, met: 0.1 };
+      case 'cover': return { col: LOOK_COVER, map: null, nrm: null, r: 0.45, met: 0 };
+      case 'reflect': return { col: LOOK_REFLECT, map: null, nrm: null, r: 0.2, met: 0.7 };
+      case 'metal': return { col: LOOK_METAL, map: null, nrm: null, r: 0.25, met: 0.85 };
     }
   }
 
@@ -359,6 +363,7 @@ export function createBag(tr: ResourceTracker, tex: TextureBank, reducedMotion: 
       p.rTo = L.r;
       mt.metalness = L.met;
       if (mt.map !== L.map) { mt.map = L.map; mt.needsUpdate = true; }
+      if (mt.normalMap !== L.nrm) { mt.normalMap = L.nrm; mt.needsUpdate = true; }
       if (instant || p.fresh) { mt.color.copy(p.colTo); mt.roughness = L.r; p.fresh = false; }
     }
     paint(accentC, hexOf(c.accent));
