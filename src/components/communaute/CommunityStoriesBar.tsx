@@ -137,6 +137,9 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const ownStoryLongPressTimer = useRef<number | null>(null);
+  const ownStoryDidLongPress = useRef(false);
+  const ownStoryStartPos = useRef<{ x: number; y: number } | null>(null);
 
   useImperativeHandle(
     ref,
@@ -765,12 +768,52 @@ export const CommunityStoriesBar = forwardRef<CommunityStoriesBarHandle, Communi
               user.id !== currentUser?.id &&
               user.slides.length > 0 &&
               user.slides.every((s) => Boolean(s.storyId && viewedIds.has(s.storyId)));
+            const isMe = user.id === currentUser?.id;
             return (
               <React.Fragment key={user.id}>
                 <button
                   type="button"
-                  aria-label={`Voir la story de ${user.name}`}
-                  onClick={() => setViewerStart(index)}
+                  aria-label={isMe ? `Votre story (appui long 1s pour créer)` : `Voir la story de ${user.name}`}
+                  onPointerDown={isMe ? (e) => {
+                    ownStoryDidLongPress.current = false;
+                    ownStoryStartPos.current = { x: e.clientX, y: e.clientY };
+                    ownStoryLongPressTimer.current = window.setTimeout(() => {
+                      ownStoryDidLongPress.current = true;
+                      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                        navigator.vibrate(50);
+                      }
+                      if (onCreateStory) onCreateStory();
+                      else fileInputRef.current?.click();
+                    }, 1000);
+                  } : undefined}
+                  onPointerMove={isMe ? (e) => {
+                    if (!ownStoryStartPos.current) return;
+                    if (Math.hypot(e.clientX - ownStoryStartPos.current.x, e.clientY - ownStoryStartPos.current.y) > 10) {
+                      if (ownStoryLongPressTimer.current !== null) {
+                        window.clearTimeout(ownStoryLongPressTimer.current);
+                        ownStoryLongPressTimer.current = null;
+                      }
+                    }
+                  } : undefined}
+                  onPointerUp={isMe ? () => {
+                    if (ownStoryLongPressTimer.current !== null) {
+                      window.clearTimeout(ownStoryLongPressTimer.current);
+                      ownStoryLongPressTimer.current = null;
+                    }
+                  } : undefined}
+                  onPointerCancel={isMe ? () => {
+                    if (ownStoryLongPressTimer.current !== null) {
+                      window.clearTimeout(ownStoryLongPressTimer.current);
+                      ownStoryLongPressTimer.current = null;
+                    }
+                  } : undefined}
+                  onClick={() => {
+                    if (isMe && ownStoryDidLongPress.current) {
+                      ownStoryDidLongPress.current = false;
+                      return;
+                    }
+                    setViewerStart(index);
+                  }}
                   className="flex w-[70px] shrink-0 flex-col items-center gap-[6px] outline-none transition-transform active:scale-[0.96]"
                 >
                   <span

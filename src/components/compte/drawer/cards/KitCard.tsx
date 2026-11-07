@@ -414,7 +414,7 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
     const dy = event.clientY - drag.y;
     if (!drag.active) {
       if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-      if (Math.abs(dy) >= Math.abs(dx)) { dragRef.current = null; return; }
+      if (Math.abs(dy) > Math.abs(dx) * 1.25) { dragRef.current = null; return; }
       drag.active = true;
       setDragging(true);
       try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* optionnel */ }
@@ -428,10 +428,14 @@ export function KitCard({ kit, viewer, payload, expandedHeight }: KitCardProps) 
   const endDrag = (event: React.PointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
     dragRef.current = null;
-    setDragging(false);
     try { event.currentTarget.releasePointerCapture?.(event.pointerId); } catch { /* optionnel */ }
-    if (!drag?.active) { setDragX(0); return; }
+    if (!drag?.active) {
+      setDragging(false);
+      setDragX(0);
+      return;
+    }
     const dx = event.clientX - drag.x;
+    setDragging(false);
     setDragX(0);
     if (dx <= -30) goTo(view + 1);
     else if (dx >= 30) goTo(view - 1);
@@ -964,7 +968,7 @@ export const KIT_CARD_CSS = `
 .lkdv-kit-actions button{width:30px!important;height:30px!important;min-height:30px!important;padding:0!important;border:.5px solid rgba(255,255,255,.75)!important;border-radius:999px!important;background:rgba(255,255,255,.4)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85)!important;color:#17402C!important;display:grid!important;place-items:center!important;cursor:pointer!important;}
 .lkdv-kit-actions button:active{transform:scale(.9)!important;}
 .lkdv-kit-actions button:disabled{opacity:.4!important;cursor:default!important;}
-.lkdv-kit-selector{position:absolute!important;left:auto!important;right:10px!important;bottom:9px!important;z-index:30!important;pointer-events:auto!important;display:grid!important;grid-auto-flow:column!important;grid-auto-columns:32px!important;height:30px!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.65)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(23,43,36,.08)!important;box-sizing:border-box!important;}
+.lkdv-kit-selector{position:absolute!important;left:auto!important;right:14px!important;bottom:14px!important;z-index:20!important;pointer-events:auto!important;display:grid!important;grid-auto-flow:column!important;grid-auto-columns:32px!important;height:30px!important;padding:2px!important;border-radius:999px!important;background:rgba(255,255,255,.65)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important;backdrop-filter:blur(28px) saturate(180%)!important;border:.5px solid rgba(255,255,255,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 4px 14px rgba(23,43,36,.08)!important;box-sizing:border-box!important;}
 .lkdv-kit-lens{position:absolute!important;top:2px!important;bottom:2px!important;left:2px!important;width:32px!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.72))!important;box-shadow:0 2px 8px rgba(23,64,44,.12),inset 0 1px 0 #fff!important;transform:translateX(calc(var(--i,0) * 32px))!important;transition:transform .3s var(--ease-glass)!important;z-index:1!important;pointer-events:none!important;}
 .lkdv-kit-selector button{position:relative!important;z-index:2!important;display:grid!important;place-items:center!important;width:32px!important;height:26px!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#56665D!important;cursor:pointer!important;}
 .lkdv-kit-selector button[aria-selected="true"]{color:#17402C!important;}

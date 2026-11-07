@@ -45,16 +45,16 @@ describe('PostGlassPanel — gestes', () => {
     vi.useRealTimers();
   });
 
-  it('commentaires : glisser vers la droite ramène à la photo', () => {
+  it('commentaires : glisser vers la gauche ramène à la photo', () => {
     const { onClose, swipe } = setup('comments');
-    swipe(80);
+    swipe(-80);
     finishExit();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('commentaires : glisser vers la gauche ne fait rien (bord)', () => {
+  it('commentaires : glisser vers la droite ne fait rien', () => {
     const { onClose, swipe } = setup('comments');
-    swipe(-80);
+    swipe(80);
     expect(onClose).not.toHaveBeenCalled();
   });
 
@@ -67,7 +67,7 @@ describe('PostGlassPanel — gestes', () => {
 
   it('le geste reste dans le panneau : la carte ne le relit pas', () => {
     const { onParentDown, swipe } = setup('comments');
-    swipe(80);
+    swipe(-80);
     expect(onParentDown).not.toHaveBeenCalled();
   });
 
@@ -132,10 +132,10 @@ describe('PostGlassPanel — gestes', () => {
       touch(el, 'touchend', to[0], to[1]);
     };
 
-    it('commentaires : balayage à droite (avec dérive) ramène à la photo', () => {
+    it('commentaires : balayage à gauche (avec dérive) ramène à la photo', () => {
       const onClose = vi.fn();
       const { container } = render(<PostGlassPanel side="comments" onClose={onClose}><div className="lkdv-post-panel-body">contenu</div></PostGlassPanel>);
-      swipe(container.querySelector('.lkdv-post-panel-body') as Element, [100, 200], [300, 205]);
+      swipe(container.querySelector('.lkdv-post-panel-body') as Element, [300, 200], [100, 205]);
       finishExit();
       expect(onClose).toHaveBeenCalledTimes(1);
     });
@@ -148,26 +148,22 @@ describe('PostGlassPanel — gestes', () => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it('le mauvais sens ne fait rien (commentaires : balayage à gauche)', () => {
+    it('le mauvais sens ne fait rien (commentaires : balayage à droite)', () => {
       const onClose = vi.fn();
       const { container } = render(<PostGlassPanel side="comments" onClose={onClose}><div>contenu</div></PostGlassPanel>);
-      swipe(container.querySelector('.lkdv-post-panel-slot > div') as Element, [320, 200], [120, 200]);
+      swipe(container.querySelector('.lkdv-post-panel-slot > div') as Element, [100, 200], [300, 200]);
       finishExit();
       expect(onClose).not.toHaveBeenCalled();
     });
 
-    it('vers le bas ferme quand la liste est en haut, pas quand elle a défilé', () => {
+    it('vers le bas ne ferme plus : la fermeture est exclusivement par balayage à gauche', () => {
       const onClose = vi.fn();
       const { container } = render(<PostGlassPanel side="comments" onClose={onClose}><div className="lkdv-post-panel-body">liste</div></PostGlassPanel>);
       const body = container.querySelector('.lkdv-post-panel-body') as HTMLElement;
-      Object.defineProperty(body, 'scrollTop', { value: 120, configurable: true });
-      swipe(body, [200, 100], [205, 280], 0);
-      finishExit();
-      expect(onClose).not.toHaveBeenCalled();
       Object.defineProperty(body, 'scrollTop', { value: 0, configurable: true });
       swipe(body, [200, 100], [205, 280], 0);
       finishExit();
-      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 

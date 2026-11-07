@@ -30,6 +30,7 @@ function CommunauteFeedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
+  const [createKind, setCreateKind] = useState<CreateKind>('post');
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
   const [storiesRefreshKey, setStoriesRefreshKey] = useState(0);
   const [sectionsOpen, setSectionsOpen] = useState(false);
@@ -94,6 +95,7 @@ function CommunauteFeedContent() {
                 requireAuth();
                 return;
               }
+              setCreateKind('post');
               setCreateOpen(true);
             }}
             onOpenSection={(id) => {
@@ -112,6 +114,14 @@ function CommunauteFeedContent() {
             key={storiesRefreshKey}
             currentUser={user}
             showHeading={false}
+            onCreateStory={() => {
+              if (!user?.id || user.is_anonymous) {
+                requireAuth();
+                return;
+              }
+              setCreateKind('story');
+              setCreateOpen(true);
+            }}
           />
         }
       >
@@ -126,7 +136,13 @@ function CommunauteFeedContent() {
       </CommunityFeedShell>
 
       {(createOpen || createMounted) && (
-        <CreateDrawer open={createOpen} onClose={() => setCreateOpen(false)} user={user} onCreated={handleCreated} />
+        <CreateDrawer
+          open={createOpen}
+          initialKind={createKind}
+          onClose={() => setCreateOpen(false)}
+          user={user}
+          onCreated={handleCreated}
+        />
       )}
 
       {(sectionsOpen || sectionsMounted) && (

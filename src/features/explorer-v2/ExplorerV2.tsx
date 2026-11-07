@@ -137,6 +137,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   const reducedMotion = useReducedMotion();
   const online = useOnline();
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(Boolean(initialScene));
   const [sheetHeight, setSheetHeight] = useState(176);
   const [pendingSport, setPendingSport] = useState<Sport | null>(null);
   const [offlineQueue, setOfflineQueue] = useState(0);
@@ -146,6 +147,18 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     if (process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_EXPLORER_SCENES !== '1' && !initialScene) return;
     (window as unknown as { __xpStore?: unknown }).__xpStore = useExplorerStore;
   }, [initialScene]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (sheetOpen) {
+      document.documentElement.dataset.explorerSheetOpen = 'true';
+    } else {
+      delete document.documentElement.dataset.explorerSheetOpen;
+    }
+    return () => {
+      delete document.documentElement.dataset.explorerSheetOpen;
+    };
+  }, [sheetOpen]);
 
   const theme = state.theme ?? systemTheme;
   // Unités : réglage utilisateur prioritaire, sinon pays (US, Liberia, Myanmar).
@@ -511,6 +524,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   // ── actions ────────────────────────────────────────────────────────────
   const onCountryClick = useCallback(
     (iso: string, name: string, center: [number, number]) => {
+      setSheetOpen(true);
       haptic('level');
       state.openCountry(iso, center, name);
     },
@@ -519,6 +533,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
 
   const onRegionClick = useCallback(
     (group: string, center: [number, number]) => {
+      setSheetOpen(true);
       haptic('level');
       state.openRegion(group, center, group);
     },
@@ -532,10 +547,14 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     useExplorerStore.setState({ camera: { type: 'flyover', routeId: state.selection?.id ?? '' } });
   }, [state.sheet, state.mini, state.selection?.id]);
 
-  const longPress = useLongPress(() => state.setSheet('start', 'low'));
+  const longPress = useLongPress(() => {
+    setSheetOpen(true);
+    state.setSheet('start', 'low');
+  });
 
   const onPinClick = useCallback(
     (pin: MapPin) => {
+      setSheetOpen(true);
       if (pin.kind === 'country') {
         state.openCountry(pin.id.replace('country-', ''), [pin.lon, pin.lat], pin.name);
         return;
@@ -662,6 +681,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       data-theme={theme}
       data-level={state.level}
       data-scene={state.scene ?? ''}
+      data-sheet-open={sheetOpen ? 'true' : 'false'}
       data-countries={countries.length}
       data-reduced-motion={reducedMotion ? 'true' : 'false'}
       data-units={unitsForCountry}
@@ -710,9 +730,15 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       <TopChrome
         breadcrumb={breadcrumb}
         current={current}
-        onSearch={() => state.setSheet('search', 'full')}
+        onSearch={() => {
+          setSheetOpen(true);
+          state.setSheet('search', 'full');
+        }}
         onBack={state.level > 0 ? state.goUp : undefined}
-        onLayers={() => state.setSheet('layers', 'mid')}
+        onLayers={() => {
+          setSheetOpen(true);
+          state.setSheet('layers', 'mid');
+        }}
         offline={!online}
         offlinePending={offlineQueue}
         activity={!!activity}
@@ -804,28 +830,50 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         </button>
       ) : null}
 
-      <ExplorerSheet
-        title={model.title}
-        subtitle={model.subtitle}
-        tabs={model.tabs}
-        tab={state.tab}
-        onTab={(index) => {
-          haptic('tab');
-          state.setTab(index);
-        }}
-        detent={state.detent}
-        onDetent={(detent) => {
-          haptic('sheet-open');
-          state.setDetent(detent);
-        }}
-        onHaptic={(event) => haptic(event)}
-        actions={model.actions}
-        onBack={model.onBack}
-        mini={model.mini}
-        bottomInset={BOTTOM_BAR_SPACE}
-        labelledBy="xp-sheet-title"
-        tabsBottom={model.tabsBottom ?? false}
-      />
+      {sheetOpen ? (
+        <ExplorerSheet
+          title={model.title}
+          subtitle={model.subtitle}
+          tabs={model.tabs}
+          tab={state.tab}
+          onTab={(index) => {
+            haptic('tab');
+            state.setTab(index);
+          }}
+          detent={state.detent}
+          onDetent={(detent) => {
+            haptic('sheet-open');
+            state.setDetent(detent);
+          }}
+          onClose={() => setSheetOpen(false)}
+          onHaptic={(event) => haptic(event)}
+          actions={model.actions}
+          onBack={model.onBack}
+          mini={model.mini}
+          bottomInset={0}
+          labelledBy="xp-sheet-title"
+          tabsBottom={model.tabsBottom ?? false}
+        />
+      ) : null}
+
+      {!sheetOpen && !activity ? (
+        <button
+          type="button"
+          className="xp-sheet-pill-launcher"
+          aria-label="Ouvrir le menu Explorer"
+          onClick={() => {
+            haptic('sheet-open');
+            setSheetOpen(true);
+            state.setSheet('level', 'peek');
+          }}
+        >
+          <span className="xp-pill-dots" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
+      ) : null}
 
       {activity && state.sheet === 'live' ? (
         <ActivityPill

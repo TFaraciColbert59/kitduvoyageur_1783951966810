@@ -41,10 +41,10 @@ describe('fitIntentForMode', () => {
     generatedAt: 'x',
   } as never;
 
-  it('overview ouvre sur la sortie la plus récente', () => {
+  it('overview cadre sur les bornes globales à l’échelle nationale', () => {
     expect(fitIntentForMode('overview', data, null)).toEqual({
-      bounds: [6.8, 45.9, 6.9, 46.0],
-      maxZoom: 13,
+      bounds: [-1, 42, 6.9, 46],
+      maxZoom: 6.2,
     });
   });
 

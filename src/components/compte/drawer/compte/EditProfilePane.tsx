@@ -171,13 +171,15 @@ export function EditProfilePane() {
           {form.coverUrl ? <ActionPill label="Retirer la couverture" icon={<X />} onClick={() => set('coverUrl', '')} /> : null}
         </div>
         <div className="lkdv-compte-edit-preview">
-          <div className="lkdv-compte-edit-avatar">
-            {form.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={form.avatarUrl} alt="" loading="lazy" />
-            ) : (
-              <span aria-hidden="true">{initials(form.name || 'LKDV')}</span>
-            )}
+          <div className="lkdv-compte-edit-avatar-wrapper">
+            <div className="lkdv-compte-edit-avatar">
+              {form.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={form.avatarUrl} alt="" loading="lazy" />
+              ) : (
+                <span aria-hidden="true">{initials(form.name || 'LKDV')}</span>
+              )}
+            </div>
             <PhotoPill
               small
               label={form.avatarUrl ? 'Changer la photo' : 'Choisir une photo'}
@@ -226,120 +228,129 @@ export function EditProfilePane() {
         </section>
       ) : null}
 
-      <section className="lkdv-compte-form">
-        <label>
-          <span>Nom affiché</span>
-          <input
-            value={form.name}
-            onChange={(event) => set('name', event.target.value)}
-            maxLength={80}
-            autoComplete="name"
-            enterKeyHint="next"
-          />
-        </label>
-        <label>
-          <span>Handle</span>
-          <div className="lkdv-compte-prefix">
-            <span aria-hidden="true">@</span>
+      <div className="lkdv-compte-form">
+        <section className="lkdv-compte-form-group">
+          <div className="lkdv-compte-group-title">Identité</div>
+          <label>
+            <span>Nom affiché</span>
             <input
-              value={form.handle}
-              onChange={(event) => set('handle', event.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-              maxLength={24}
-              placeholder="ton_handle"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              aria-invalid={Boolean(handleError)}
+              value={form.name}
+              onChange={(event) => set('name', event.target.value)}
+              maxLength={80}
+              autoComplete="name"
               enterKeyHint="next"
             />
-          </div>
-          {handleError ? <small className="lkdv-compte-field-error" role="alert">{handleError}</small> : null}
-        </label>
-        <label>
-          <span>Bio · {form.bio.length}/160</span>
-          <textarea
-            value={form.bio}
-            onChange={(event) => set('bio', event.target.value)}
-            maxLength={160}
-            rows={3}
-            placeholder="Ton massif, ton style de sortie, ce que tu cherches…"
-          />
-        </label>
-        <label>
-          <span>Massif / région</span>
-          <input value={form.location} onChange={(event) => set('location', event.target.value)} maxLength={80} />
-        </label>
-        <label>
-          <span>Visibilité</span>
-          <select value={form.visibility} onChange={(event) => set('visibility', event.target.value as 'public' | 'prive')}>
-            <option value="public">Public</option>
-            <option value="prive">Privé (sur invitation)</option>
-          </select>
-        </label>
+          </label>
+          <label>
+            <span>Handle</span>
+            <div className="lkdv-compte-prefix">
+              <span aria-hidden="true">@</span>
+              <input
+                value={form.handle}
+                onChange={(event) => set('handle', event.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                maxLength={24}
+                placeholder="ton_handle"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                aria-invalid={Boolean(handleError)}
+                enterKeyHint="next"
+              />
+            </div>
+            {handleError ? <small className="lkdv-compte-field-error" role="alert">{handleError}</small> : null}
+          </label>
+          <label>
+            <span>Bio · {form.bio.length}/160</span>
+            <textarea
+              value={form.bio}
+              onChange={(event) => set('bio', event.target.value)}
+              maxLength={160}
+              rows={3}
+              placeholder="Ton massif, ton style de sortie, ce que tu cherches…"
+            />
+          </label>
+        </section>
 
-        <div className="lkdv-compte-links">
-          <div className="lkdv-compte-links-head">
-            <span>Liens · {form.links.length}/3</span>
-            {form.links.length < 3 ? (
-              <button
-                type="button"
-                className="lkdv-compte-link"
-                onClick={() => set('links', [...form.links, { label: '', url: '' }])}
-              >
-                <Plus size={13} aria-hidden="true" /> Ajouter
-              </button>
-            ) : null}
-          </div>
-          {form.links.length === 0 ? (
-            <p className="lkdv-compte-empty-line">
-              <Link2 size={13} aria-hidden="true" /> Aucun lien : ajoute ton carnet, ton club ou ton site.
-            </p>
-          ) : (
-            form.links.map((link, index) => (
-              <div key={index} className="lkdv-compte-link-row">
-                <input
-                  value={link.label}
-                  onChange={(event) => {
-                    const next = [...form.links];
-                    next[index] = { ...next[index], label: event.target.value };
-                    set('links', next);
-                  }}
-                  placeholder="Libellé"
-                  maxLength={40}
-                  aria-label={`Libellé du lien ${index + 1}`}
-                />
-                <input
-                  value={link.url}
-                  onChange={(event) => {
-                    const next = [...form.links];
-                    next[index] = { ...next[index], url: event.target.value };
-                    set('links', next);
-                  }}
-                  placeholder="https://…"
-                  maxLength={300}
-                  inputMode="url"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  aria-invalid={Boolean(linkErrors[index])}
-                  aria-label={`URL du lien ${index + 1}`}
-                />
+        <section className="lkdv-compte-form-group">
+          <div className="lkdv-compte-group-title">Localisation & Visibilité</div>
+          <label>
+            <span>Massif / région</span>
+            <input value={form.location} onChange={(event) => set('location', event.target.value)} maxLength={80} />
+          </label>
+          <label>
+            <span>Visibilité</span>
+            <select value={form.visibility} onChange={(event) => set('visibility', event.target.value as 'public' | 'prive')}>
+              <option value="public">Public</option>
+              <option value="prive">Privé (sur invitation)</option>
+            </select>
+          </label>
+        </section>
+
+        <section className="lkdv-compte-form-group">
+          <div className="lkdv-compte-links">
+            <div className="lkdv-compte-links-head">
+              <span className="lkdv-compte-group-title" style={{ margin: 0, padding: 0 }}>Liens · {form.links.length}/3</span>
+              {form.links.length < 3 ? (
                 <button
                   type="button"
-                  className="lkdv-compte-link-remove"
-                  onClick={() => set('links', form.links.filter((_, position) => position !== index))}
-                  aria-label={`Supprimer le lien ${index + 1}`}
+                  className="lkdv-compte-link"
+                  onClick={() => set('links', [...form.links, { label: '', url: '' }])}
                 >
-                  <Trash2 size={14} aria-hidden="true" />
+                  <Plus size={13} aria-hidden="true" /> Ajouter
                 </button>
-                {linkErrors[index] ? (
-                  <small className="lkdv-compte-field-error" role="alert">{linkErrors[index]}</small>
-                ) : null}
-              </div>
-            ))
-          )}
-        </div>
-      </section>
+              ) : null}
+            </div>
+            {form.links.length === 0 ? (
+              <p className="lkdv-compte-empty-line">
+                <Link2 size={13} aria-hidden="true" /> Aucun lien : ajoute ton carnet, ton club ou ton site.
+              </p>
+            ) : (
+              form.links.map((link, index) => (
+                <div key={index} className="lkdv-compte-link-row">
+                  <input
+                    value={link.label}
+                    onChange={(event) => {
+                      const next = [...form.links];
+                      next[index] = { ...next[index], label: event.target.value };
+                      set('links', next);
+                    }}
+                    placeholder="Libellé"
+                    maxLength={40}
+                    aria-label={`Libellé du lien ${index + 1}`}
+                  />
+                  <input
+                    value={link.url}
+                    onChange={(event) => {
+                      const next = [...form.links];
+                      next[index] = { ...next[index], url: event.target.value };
+                      set('links', next);
+                    }}
+                    placeholder="https://…"
+                    maxLength={300}
+                    inputMode="url"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    aria-invalid={Boolean(linkErrors[index])}
+                    aria-label={`URL du lien ${index + 1}`}
+                  />
+                  <button
+                    type="button"
+                    className="lkdv-compte-link-remove"
+                    onClick={() => set('links', form.links.filter((_, position) => position !== index))}
+                    aria-label={`Supprimer le lien ${index + 1}`}
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                  </button>
+                  {linkErrors[index] ? (
+                    <small className="lkdv-compte-field-error" role="alert">{linkErrors[index]}</small>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
 
       {message ? (
         <p className={`lkdv-compte-inline-status ${message.tone}`} role="status">

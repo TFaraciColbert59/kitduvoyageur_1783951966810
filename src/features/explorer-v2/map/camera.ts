@@ -76,6 +76,30 @@ export function flyToLevel(
 }
 
 /**
+ * Zoom cinématique au démarrage : depuis la vue Terre entière (globe) vers la
+ * position réelle de l'utilisateur à l'échelle de la ville en <= 2 secondes.
+ */
+export function cinematicStartupZoom(
+  map: MapLibreMap,
+  targetCenter: [number, number],
+  reducedMotion: boolean,
+): void {
+  if (reducedMotion) {
+    map.jumpTo({ center: targetCenter, zoom: 11.8 });
+    return;
+  }
+  map.flyTo({
+    center: targetCenter,
+    zoom: 11.8,
+    pitch: 35,
+    duration: 1700,
+    curve: 1.35,
+    speed: 1.2,
+    essential: true,
+  });
+}
+
+/**
  * Révélation (refuge, eau, danger, ami, bivouac, belvédère, accès) :
  * saut serré (zoom +1,7, pitch 0) puis inclinaison douce à 45°.
  */

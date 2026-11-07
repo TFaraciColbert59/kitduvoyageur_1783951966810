@@ -221,9 +221,11 @@ export const COMPTE_CSS = `
 .lkdv-compte-security-badge.on{background:rgba(61,122,82,.14)!important;color:#2C5E3E!important;}
 .lkdv-compte-security-actions{display:flex!important;gap:6px!important;flex-wrap:wrap!important;}
 .lkdv-compte-btn.danger{background:rgba(179,58,44,.12)!important;color:#9C2F22!important;box-shadow:inset 0 0 0 .5px rgba(179,58,44,.25)!important;}
-.lkdv-compte-edit-preview{display:grid!important;grid-template-columns:52px minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;padding:11px 12px!important;border-radius:18px!important;background:linear-gradient(135deg,rgba(255,255,255,.7),rgba(255,255,255,.42))!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.08)!important;}
-.lkdv-compte-edit-avatar{width:52px!important;height:52px!important;border-radius:50%!important;overflow:hidden!important;display:grid!important;place-items:center!important;background:linear-gradient(155deg,#fff,#DDEBD8)!important;color:#17402C!important;font:700 16px var(--sf)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
-.lkdv-compte-edit-avatar img{width:100%!important;height:100%!important;object-fit:cover!important;}
+.lkdv-compte-edit-preview{display:grid!important;grid-template-columns:56px minmax(0,1fr) auto!important;align-items:center!important;gap:12px!important;padding:12px 14px!important;border-radius:18px!important;background:linear-gradient(135deg,rgba(255,255,255,.7),rgba(255,255,255,.42))!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.08)!important;}
+.lkdv-compte-edit-avatar-wrapper{position:relative!important;width:56px!important;height:56px!important;flex:none!important;}
+.lkdv-compte-edit-avatar{position:relative!important;width:100%!important;height:100%!important;border-radius:50%!important;overflow:hidden!important;display:grid!important;place-items:center!important;background:linear-gradient(155deg,#fff,#DDEBD8)!important;color:#17402C!important;font:700 16px var(--sf)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.12)!important;}
+.lkdv-compte-edit-avatar img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:50%!important;display:block!important;}
+.lkdv-compte-edit-avatar span{width:100%!important;height:100%!important;border-radius:50%!important;display:grid!important;place-items:center!important;}
 .lkdv-compte-edit-preview b{display:block!important;font:650 14px var(--sf)!important;color:var(--label)!important;}
 .lkdv-compte-edit-preview small{display:block!important;font:500 11px var(--sf)!important;color:var(--label2)!important;}
 .lkdv-compte-edit-preview span{display:block!important;font:500 10.5px var(--sf)!important;color:var(--label3)!important;}
@@ -235,7 +237,9 @@ export const COMPTE_CSS = `
 .lkdv-compte-suggestions ul{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:2px!important;}
 .lkdv-compte-suggestions li{font:500 11px var(--sf)!important;color:#8a6418!important;}
 .lkdv-compte-suggestions li::before{content:"· "!important;}
-.lkdv-compte-form{display:flex!important;flex-direction:column!important;gap:10px!important;padding:12px!important;border-radius:18px!important;background:rgba(255,255,255,.52)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.08)!important;}
+.lkdv-compte-form{display:flex!important;flex-direction:column!important;gap:12px!important;padding:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;}
+.lkdv-compte-form-group{display:flex!important;flex-direction:column!important;gap:10px!important;padding:12px 14px!important;border-radius:18px!important;background:rgba(255,255,255,.52)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.08)!important;}
+.lkdv-compte-group-title{font:700 10.5px var(--sf)!important;color:var(--tint,#17402C)!important;text-transform:uppercase!important;letter-spacing:.06em!important;margin-bottom:2px!important;}
 .lkdv-compte-form label{display:flex!important;flex-direction:column!important;gap:4px!important;}
 .lkdv-compte-form label>span{font:600 10px var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.05em!important;}
 .lkdv-compte-form input,.lkdv-compte-form textarea,.lkdv-compte-form select{width:100%!important;box-sizing:border-box!important;border:0!important;border-radius:11px!important;background:rgba(255,255,255,.7)!important;padding:9px 11px!important;font:500 12.5px/1.4 var(--sf)!important;color:var(--label)!important;outline:none!important;box-shadow:inset 0 0 0 .5px rgba(23,43,36,.12)!important;resize:vertical!important;}
@@ -250,24 +254,24 @@ export const COMPTE_CSS = `
 .lkdv-compte-empty-line{display:flex!important;align-items:center!important;gap:5px!important;margin:0!important;font:500 11px var(--sf)!important;color:var(--label3)!important;}
 .lkdv-compte-savebar{position:sticky!important;bottom:0!important;z-index:4!important;display:flex!important;justify-content:flex-end!important;gap:6px!important;padding:8px 0 2px!important;background:linear-gradient(180deg,rgba(248,250,245,0),rgba(248,250,245,.92) 40%)!important;}
 .lkdv-compte-note{display:flex!important;align-items:flex-start!important;gap:5px!important;margin:0!important;font:400 10.5px/1.4 var(--sf)!important;color:var(--label3)!important;}
-.lkdv-compte-share{position:relative!important;}
-.lkdv-compte-share-card{position:relative!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:12px!important;padding:18px 14px 14px!important;border-radius:24px!important;background:linear-gradient(160deg,rgba(255,255,255,.82),rgba(244,248,240,.6))!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1),0 14px 36px rgba(23,43,36,.1)!important;}
+.lkdv-compte-share{position:relative!important;overflow:hidden!important;max-height:100%!important;display:flex!important;flex-direction:column!important;gap:6px!important;margin:0 8px 8px!important;padding:0!important;box-sizing:border-box!important;}
+.lkdv-compte-share-card{position:relative!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:8px!important;padding:10px 12px 10px!important;border-radius:20px!important;background:linear-gradient(160deg,rgba(255,255,255,.82),rgba(244,248,240,.6))!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1),0 10px 24px rgba(23,43,36,.08)!important;flex:1 1 auto!important;min-height:0!important;}
 .lkdv-compte-share-glow{position:absolute!important;width:220px!important;height:220px!important;border-radius:50%!important;background:radial-gradient(circle,rgba(160,205,170,.4),rgba(160,205,170,0) 70%)!important;top:-90px!important;right:-70px!important;pointer-events:none!important;}
 .lkdv-compte-share-head{position:relative!important;display:flex!important;align-items:center!important;gap:10px!important;width:100%!important;}
-.lkdv-compte-share-avatar{width:48px!important;height:48px!important;border-radius:50%!important;overflow:hidden!important;display:grid!important;place-items:center!important;background:linear-gradient(155deg,#fff,#DDEBD8)!important;color:#17402C!important;font:700 15px var(--sf)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.12)!important;}
+.lkdv-compte-share-avatar{width:38px!important;height:38px!important;border-radius:50%!important;overflow:hidden!important;display:grid!important;place-items:center!important;background:linear-gradient(155deg,#fff,#DDEBD8)!important;color:#17402C!important;font:700 13px var(--sf)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.12)!important;}
 .lkdv-compte-share-avatar img{width:100%!important;height:100%!important;object-fit:cover!important;}
-.lkdv-compte-share-head b{display:block!important;font:650 16px var(--sf)!important;color:var(--label)!important;}
-.lkdv-compte-share-head small{display:block!important;font:500 11.5px var(--sf)!important;color:var(--label2)!important;}
-.lkdv-compte-share-head span{display:block!important;font:500 10.5px var(--sf)!important;color:var(--label3)!important;}
-.lkdv-compte-share-qr{position:relative!important;display:grid!important;place-items:center!important;padding:9px!important;border-radius:20px!important;background:rgba(255,255,255,.86)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
-.lkdv-compte-share-qr img{display:block!important;border-radius:10px!important;width:176px!important;height:176px!important;}
-.lkdv-compte-share-seal{position:absolute!important;display:grid!important;place-items:center!important;width:32px!important;height:32px!important;border-radius:50%!important;background:#17402C!important;color:#fff!important;box-shadow:0 0 0 4px #fff!important;}
-.lkdv-compte-share-url{margin:0!important;font:500 10.5px var(--sf)!important;color:var(--label2)!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
+.lkdv-compte-share-head b{display:block!important;font:650 14px var(--sf)!important;color:var(--label)!important;}
+.lkdv-compte-share-head small{display:block!important;font:500 11px var(--sf)!important;color:var(--label2)!important;}
+.lkdv-compte-share-head span{display:block!important;font:500 10px var(--sf)!important;color:var(--label3)!important;}
+.lkdv-compte-share-qr{position:relative!important;display:grid!important;place-items:center!important;padding:6px!important;border-radius:16px!important;background:rgba(255,255,255,.86)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.1)!important;}
+.lkdv-compte-share-qr img{display:block!important;border-radius:10px!important;width:110px!important;height:110px!important;}
+.lkdv-compte-share-seal{position:absolute!important;display:grid!important;place-items:center!important;width:28px!important;height:28px!important;border-radius:50%!important;background:#17402C!important;color:#fff!important;box-shadow:0 0 0 3px #fff!important;}
+.lkdv-compte-share-url{margin:0!important;font:500 10px var(--sf)!important;color:var(--label2)!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
 .lkdv-compte-share-actions{display:flex!important;gap:6px!important;flex-wrap:wrap!important;justify-content:center!important;}
-.lkdv-compte-share-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;}
-.lkdv-compte-share-stats>div{display:flex!important;flex-direction:column!important;gap:2px!important;padding:9px!important;border-radius:14px!important;background:rgba(255,255,255,.52)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.07)!important;text-align:center!important;}
-.lkdv-compte-share-stats small{font:500 9.5px var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
-.lkdv-compte-share-stats b{font:650 16px var(--sf)!important;color:var(--label)!important;}
+.lkdv-compte-share-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;flex:none!important;}
+.lkdv-compte-share-stats>div{display:flex!important;flex-direction:column!important;gap:1px!important;padding:6px 8px!important;border-radius:12px!important;background:rgba(255,255,255,.52)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px rgba(23,43,36,.07)!important;text-align:center!important;}
+.lkdv-compte-share-stats small{font:500 9px var(--sf)!important;color:var(--label2)!important;text-transform:uppercase!important;letter-spacing:.04em!important;}
+.lkdv-compte-share-stats b{font:650 14px var(--sf)!important;color:var(--label)!important;}
 .lkdv-compte-share-note{display:flex!important;flex-direction:column!important;gap:4px!important;padding:11px 12px!important;border-radius:16px!important;background:rgba(61,122,82,.07)!important;box-shadow:inset 0 0 0 .5px rgba(61,122,82,.16)!important;}
 .lkdv-compte-share-note b{display:inline-flex!important;align-items:center!important;gap:5px!important;font:600 11.5px var(--sf)!important;color:#2C5E3E!important;}
 .lkdv-compte-share-note p{margin:0!important;font:400 11px/1.45 var(--sf)!important;color:var(--label2)!important;}

@@ -440,6 +440,7 @@ let _MOCK_HIGHLIGHTS = [
   }
 ];
 let HIGHLIGHTS = JSON.parse(JSON.stringify(_MOCK_HIGHLIGHTS));
+if (typeof window !== "undefined") window.__lkdvHighlights = HIGHLIGHTS;
 
 let STORY_HIGHLIGHTS = [];
 
@@ -2497,10 +2498,10 @@ let act = function(a, v, meta) {
       if (window.__lkdvCompteMap3D) {
         try {
           window.__lkdvCompteMap3D.flyTo({
-            center: [2.5, 46.5], zoom: 1.8, pitch: 0, bearing: 0,
+            center: [2.5, 46.5], zoom: 5.6, pitch: 0, bearing: 0,
             essential: true,
           });
-          island("Mont-Blanc & Alpes IT·FR", "Centré sur ton parcours vivant 3D", false);
+          island("Échelle nationale", "Vue d'ensemble de ton empreinte terrain", false);
         } catch (_) {}
       }
       break;
@@ -3462,9 +3463,19 @@ let bindIgSwipe = function () {
     }
     igSwipe = null;
     const target = e.target;
+    const target = e.target;
+    // Ne pas capturer le swipe de grille si l'utilisateur fait défiler les sorties ou les stories horizontalement
+    if (target && target.closest) {
+      if (target.closest('.st-wrap, .stories-wrap, .ig-stories, .story, .ig-hl-row')) return;
+      if (target.closest('.voyages-carousel') && !target.closest('.ig-swipe-back')) {
+        const topRect = top.getBoundingClientRect();
+        if (e.clientX > topRect.left + SWIPE_EDGE) return;
+      }
+    }
     const view = target && target.closest ? target.closest('.ig-swipe-view') : null;
     if (!view || !top.contains(view)) return;
-    const edge = !!(target.closest && target.closest('.ig-swipe-back'));
+    const topRect = top.getBoundingClientRect();
+    const edge = !!(target.closest && target.closest('.ig-swipe-back')) || (e.clientX <= topRect.left + SWIPE_EDGE);
     igSwipe = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, view: view, id: e.pointerId, tab: S.igTab, active: false, cap: false, edge: edge };
   });
 
@@ -3475,20 +3486,25 @@ let bindIgSwipe = function () {
     igSwipe.dx = dx;
     igSwipe.dy = dy;
     if (!igSwipe.active) {
-      if (Math.abs(dx) <= 10 || Math.abs(dx) <= Math.abs(dy)) return;
+      // Détection de l'axe : le mouvement horizontal doit dominer le scroll vertical
+      if (Math.abs(dx) <= 12 || Math.abs(dx) <= Math.abs(dy) * 1.5) return;
+      // Sur l'onglet 0 (Grille), seul le swipe vers la gauche va vers les sorties
+      if (igSwipe.tab === 0 && dx > 0) return;
+      // Sur l'onglet 1 (Sorties), seul le swipe vers la droite revient vers la grille
+      if (igSwipe.tab === 1 && dx < 0) return;
       igSwipe.active = true;
       igSwipe.view.classList.remove('settle');
       igSwipe.view.classList.add('swiping');
       G.sup = Date.now() + 350;
       G.supEl = igSwipe.view;
     }
-    if (igSwipe.tab === 0 || igSwipe.edge) {
+    if (igSwipe.tab === 0 || igSwipe.tab === 1) {
       if (!igSwipe.cap) {
         igSwipe.cap = true;
         try { igSwipe.view.setPointerCapture(igSwipe.id); } catch (_) {}
       }
       if (e.cancelable) e.preventDefault();
-      if (igSwipe.tab === 0) igSwipe.view.style.transform = 'translateX(' + (dx * 0.45).toFixed(1) + 'px)';
+      igSwipe.view.style.transform = 'translateX(' + (dx * 0.45).toFixed(1) + 'px)';
     }
   }, { passive: false });
 
@@ -3508,8 +3524,15 @@ let bindIgSwipe = function () {
       else settle(st.view);
       return;
     }
-    if (!canceled && ((st.edge && dx < -SWIPE_MIN) || (dx < -SWIPE_STRONG && Math.abs(dy) < SWIPE_MAX_Y))) swipeTo(st.view, 0, 'out-right', 'in-left');
-    else settle(st.view);
+    if (st.tab === 1) {
+      if (!canceled && ((st.edge && dx > SWIPE_MIN) || (dx > SWIPE_STRONG && Math.abs(dy) < SWIPE_MAX_Y))) {
+        swipeTo(st.view, 0, 'out-right', 'in-left');
+      } else {
+        settle(st.view);
+      }
+      return;
+    }
+    settle(st.view);
   };
   top.addEventListener('pointerup', endSwipe);
   top.addEventListener('pointercancel', endSwipe);
@@ -3871,12 +3894,46 @@ const EXK = {
       })
     }]
   }),
-  story_edit_drawer: () => ({
-    title: "Story à la une",
-    peek: "Titre, couverture et stories de la sélection",
-    noFooter: true,
-    flow: [{ l: "Story à la une", r: () => ({ per: [3, 5], title: "Story à la une", rows: [] }) }]
-  }),
+  story_edit_drawer: () => {
+    const curHlId = (S.sh && S.sh.props && S.sh.props.hlId) || 'hl1';
+    const curHl = hlList().find(q => q.id === curHlId) || HIGHLIGHTS[0] || { id: curHlId, title: 'Story à la une', stories: [] };
+    const storiesList = Array.isArray(curHl.stories) ? curHl.stories : [];
+    const coverUrl = curHl.coverImage || (storiesList[0] && storiesList[0].image) || '';
+    return {
+      title: "Story à la une",
+      peek: "Titre, couverture et stories de la sélection",
+      noFooter: true,
+      flow: [{
+        l: "Modifier",
+        r: () => ({
+          per: [3, 5],
+          title: curHl.title || "Story à la une",
+          rows: [
+            `<div class="apple-grouped-card" style="padding:14px;display:flex;align-items:center;gap:12px;">
+              <div style="width:58px;height:58px;border-radius:14px;overflow:hidden;flex:none;background:#17402C;box-shadow:inset 0 1px 0 rgba(255,255,255,0.8);">
+                ${coverUrl ? `<img src="${coverUrl}" style="width:100%;height:100%;object-fit:cover;" alt="Couverture" />` : `<div style="width:100%;height:100%;display:grid;place-items:center;color:#fff;">○</div>`}
+              </div>
+              <div style="flex:1;min-width:0;">
+                <label style="font:600 10px var(--sf);text-transform:uppercase;color:var(--label2);letter-spacing:0.04em;">Titre de la sélection</label>
+                <input id="hl_edit_title" class="apple-input" value="${(curHl.title || '').replace(/"/g, '&quot;')}" style="margin-top:4px;" />
+              </div>
+            </div>`,
+            `<div class="apple-grouped-card" style="padding:12px 14px;">
+              <div class="apple-grouped-title" style="margin-bottom:8px;">Stories incluses (${storiesList.length})</div>
+              ${storiesList.length ? `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+                ${storiesList.map((s, idx) => `
+                  <div style="position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:#0d1e15;">
+                    <img src="${s.image}" style="width:100%;height:100%;object-fit:cover;" alt="" />
+                    ${idx === 0 ? `<span style="position:absolute;top:3px;left:3px;padding:1px 5px;border-radius:6px;background:rgba(23,64,44,0.85);color:#fff;font:600 8.5px var(--sf);">Couv.</span>` : ''}
+                  </div>
+                `).join('')}
+              </div>` : `<div style="font:400 12px var(--sf);color:var(--label2);text-align:center;padding:12px 0;">Aucune story dans cette sélection.</div>`}
+            </div>`
+          ]
+        })
+      }]
+    };
+  },
   account_drawer: () => {
     const tab = clamp(X.drawerTab || 0, 0, 4);
     const P = S.profile || { handle: 'tony_frc' };
@@ -4744,9 +4801,9 @@ var EXA = {
     const map = window.__lkdvCompteMap3D;
     if (preset === 'ORBITE') {
       if (map && typeof map.flyTo === 'function') {
-        map.flyTo({ center: [2.5, 46.5], zoom: 1.6, pitch: 0, bearing: 0, duration: 2000, essential: true });
+        map.flyTo({ center: [2.5, 46.5], zoom: 5.6, pitch: 0, bearing: 0, duration: 2000, essential: true });
       }
-      island('Globe Terrestre', 'Empreinte mondiale @tony_frc · 5 massifs foulés', false);
+      island('Échelle Nationale', 'Empreinte nationale @tony_frc · 5 massifs foulés', false);
     } else if (preset === 'MASSIF') {
       if (map && typeof map.flyTo === 'function') {
         map.flyTo({ center: [6.82, 45.88], zoom: 8.5, pitch: 48, bearing: -25, duration: 2200, essential: true });

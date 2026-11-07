@@ -30,6 +30,7 @@ export interface ExplorerSheetProps {
   labelledBy?: string;
   /** Capsule d'onglets ancrée en bas de la feuille (écran Monde). */
   tabsBottom?: boolean;
+  onClose?: () => void;
 }
 
 const PEEK = 176;
@@ -63,6 +64,7 @@ export function ExplorerSheet({
   children,
   labelledBy,
   tabsBottom = false,
+  onClose,
 }: ExplorerSheetProps) {
   const [viewport, setViewport] = useState(844);
   const [dragHeight, setDragHeight] = useState<number | null>(null);
@@ -97,7 +99,13 @@ export function ExplorerSheet({
       }
       if (velocity > 0.6) {
         const index = DETENTS.indexOf(detent);
+        if (index === 0 && onClose) {
+          return onClose();
+        }
         return onDetent(DETENTS[Math.max(0, index - 1)]);
+      }
+      if (next < heights.peek * 0.65 && onClose) {
+        return onClose();
       }
       let best: Detent = 'peek';
       let bestDelta = Number.POSITIVE_INFINITY;

@@ -32,7 +32,7 @@ describe('Vitrine — Stats', () => {
     expect(within(hero).getByText('20,2 k m')).toBeTruthy();
     expect(within(hero).getByText('10')).toBeTruthy();
     expect(within(hero).getByText('Distance')).toBeTruthy();
-    expect(within(hero).getByText('Dénivelé positif')).toBeTruthy();
+    expect(within(hero).getByText('Dénivelé')).toBeTruthy();
     expect(within(hero).getByText('Sorties')).toBeTruthy();
 
     const tiles = screen.getByRole('list', { name: 'Repères de la vitrine' });

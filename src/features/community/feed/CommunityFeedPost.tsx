@@ -200,47 +200,32 @@ export function CommunityFeedPost({
     return () => document.removeEventListener('keydown', onKey);
   }, [closePanel, menuOpen, panel]);
 
-  /* Verrou du fond (sans lutter contre le clavier virtuel) + remontée du
-     panneau au-dessus du clavier via le visual viewport. Dans la Communauté,
-     la page est déjà figée (seul le fil défile) : rien à verrouiller ni à
-     replacer, ce qui évite les sauts du fil pendant les gestes. */
+  /* Suivi du clavier virtuel / visual viewport pour remonter les champs
+     au-dessus du clavier sans bloquer l'interface ni figer le défilement. */
   useEffect(() => {
     if (!panel || embedded) return;
-    const y = panelScrollRef.current;
     const article = articleRef.current;
-    const pageLocked = document.documentElement.classList.contains('lkdv-no-page-scroll');
-    const previous = document.body.style.overflow;
-    if (!pageLocked) document.body.style.overflow = 'hidden';
-    const restore = () => {
-      const viewport = window.visualViewport;
-      if (viewport && viewport.height < window.innerHeight - 80) return;
-      window.scrollTo(0, y);
-    };
-    const frame = pageLocked ? 0 : window.requestAnimationFrame(restore);
-    const interval = pageLocked ? 0 : window.setInterval(restore, 32);
-    const viewport = window.visualViewport;
+    const viewport = typeof window !== 'undefined' ? window.visualViewport : null;
+    if (!viewport || !article) return;
+
     const updateKeyboard = () => {
-      if (!article || !viewport) return;
       const inset = Math.max(0, window.innerHeight - (viewport.height + viewport.offsetTop));
-      const capped = Math.min(inset, 180);
-      article.style.setProperty('--lkdv-keyboard-offset', `${capped}px`);
-      if (capped > 8) article.dataset.keyboard = 'true';
-      else delete article.dataset.keyboard;
-    };
-    updateKeyboard();
-    viewport?.addEventListener('resize', updateKeyboard);
-    viewport?.addEventListener('scroll', updateKeyboard);
-    return () => {
-      if (!pageLocked) {
-        window.cancelAnimationFrame(frame);
-        window.clearInterval(interval);
-        document.body.style.overflow = previous;
-        window.scrollTo(0, y);
+      article.style.setProperty('--kb-inset', `${inset}px`);
+      if (inset > 20) {
+        article.dataset.keyboard = 'true';
+      } else {
+        delete article.dataset.keyboard;
       }
-      viewport?.removeEventListener('resize', updateKeyboard);
-      viewport?.removeEventListener('scroll', updateKeyboard);
+    };
+
+    updateKeyboard();
+    viewport.addEventListener('resize', updateKeyboard);
+    viewport.addEventListener('scroll', updateKeyboard);
+    return () => {
+      viewport.removeEventListener('resize', updateKeyboard);
+      viewport.removeEventListener('scroll', updateKeyboard);
       if (article) {
-        article.style.removeProperty('--lkdv-keyboard-offset');
+        article.style.removeProperty('--kb-inset');
         delete article.dataset.keyboard;
       }
     };

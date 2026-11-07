@@ -1018,37 +1018,29 @@ function MessageComposerBar({
           }}
           aria-label="Joindre une photo"
         />
-        <button type="button" className="lg gbtn" onClick={() => fileInput.current?.click()} aria-label="Envoyer une photo">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3.2" y="4.6" width="17.6" height="14.8" rx="4" />
-            <circle cx="8.6" cy="9.9" r="1.7" />
-            <path d="M3.4 16.4l4.3-4a2.4 2.4 0 0 1 3.2 0l3.1 2.9" />
-            <path d="M12.6 15.1l2.2-2a2.4 2.4 0 0 1 3.2 0l2.4 2.2" />
-          </svg>
-        </button>
 
-        <div className="mfield-wrap">
+        <div className="mfield-wrap" style={{ flex: 1, minWidth: 0 }}>
           <textarea
             ref={field}
             className="mfield"
             rows={1}
-          value={content}
-          placeholder={compact ? 'Réponse rapide…' : 'Votre message…'}
-          aria-label="Votre message"
-          enterKeyHint="send"
-          onChange={(event) => {
-            setContent(event.target.value);
-            onTyping?.();
-            const node = event.target;
-            node.style.height = 'auto';
-            node.style.height = `${Math.min(Math.max(node.scrollHeight, 36), 110)}px`;
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey && window.matchMedia('(pointer: fine)').matches) {
-              event.preventDefault();
-              void submit();
-            }
-          }}
+            value={content}
+            placeholder={compact ? 'Réponse rapide…' : 'Votre message…'}
+            aria-label="Votre message"
+            enterKeyHint="send"
+            onChange={(event) => {
+              setContent(event.target.value);
+              onTyping?.();
+              const node = event.target;
+              node.style.height = 'auto';
+              node.style.height = `${Math.min(Math.max(node.scrollHeight, 36), 110)}px`;
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey && window.matchMedia('(pointer: fine)').matches) {
+                event.preventDefault();
+                void submit();
+              }
+            }}
           />
 
           <button
@@ -1064,7 +1056,7 @@ function MessageComposerBar({
             </svg>
           </button>
         </div>
-        <button type="button" className="lg gbtn" onClick={() => onOpenShareMenu?.()} aria-label="Partager un GPX, un équipement ou une randonnée">
+        <button type="button" className="lg gbtn" onClick={() => onOpenShareMenu?.()} aria-label="Partager une photo, un GPX ou un équipement">
           <Icon name="ellipsis" className="size-4" aria-hidden="true" />
         </button>
         <button
@@ -1098,18 +1090,38 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const { haptic } = useHapticFeedback();
   const router = useRouter();
   const phone = useRef<HTMLDivElement>(null);
-  // Hauteur de la card des discussions, réglable en tirant la poignée (mémorisée).
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  // Répartition 60 % carte supérieure / 40 % carte inférieure au démarrage.
   const SPLIT_KEY = 'lkdv:messages:split';
-  const SPLIT_DEFAULT = 302;
-  const [split, setSplit] = useState<number>(SPLIT_DEFAULT);
+  const computeDefaultSplit = useCallback(() => {
+    if (typeof window === 'undefined') return 480;
+    const h = phone.current?.getBoundingClientRect().height || window.innerHeight || 800;
+    return Math.round(h * 0.60);
+  }, []);
+  const [split, setSplit] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = Number(window.localStorage.getItem(SPLIT_KEY));
+        if (Number.isFinite(saved) && saved >= 160) return saved;
+      } catch {}
+      return Math.round((window.innerHeight || 800) * 0.60);
+    }
+    return 480;
+  });
   const [splitting, setSplitting] = useState(false);
   const splitDrag = useRef<{ startY: number; startSplit: number } | null>(null);
   useEffect(() => {
     try {
       const saved = Number(window.localStorage.getItem(SPLIT_KEY));
-      if (Number.isFinite(saved) && saved >= 160) setSplit(saved);
-    } catch {}
-  }, []);
+      if (Number.isFinite(saved) && saved >= 160) {
+        setSplit(saved);
+      } else {
+        setSplit(computeDefaultSplit());
+      }
+    } catch {
+      setSplit(computeDefaultSplit());
+    }
+  }, [computeDefaultSplit]);
   const clampSplit = useCallback((value: number) => {
     const total = phone.current?.getBoundingClientRect().height ?? 700;
     return Math.round(Math.min(Math.max(value, 190), Math.max(260, total - 220)));
@@ -1133,6 +1145,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   const [searchPeople, setSearchPeople] = useState<Array<{ id: string; full_name: string; avatar_url?: string | null }>>([]);
   const [optionsConv, setOptionsConv] = useState<Conversation | null>(null);
   const [notifyConv, setNotifyConv] = useState<Conversation | null>(null);
+  const [profileDrawerUser, setProfileDrawerUser] = useState<{ id: string; name: string; avatar?: string | null; username?: string | null } | null>(null);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [attachment, setAttachment] = useState<Message | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
@@ -1583,8 +1596,9 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   setSplitting(false);
                 }}
                 onDoubleClick={() => {
-                  setSplit(SPLIT_DEFAULT);
-                  persistSplit(SPLIT_DEFAULT);
+                  const def = computeDefaultSplit();
+                  setSplit(def);
+                  persistSplit(def);
                 }}
                 onKeyDown={(event) => {
                   if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
@@ -1605,10 +1619,8 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   display: 'flex',
                   flexDirection: 'column',
                   height: '100%',
-                  // Réserve la hauteur réelle de la barre du bas (barre web ou
-                  // barre native iOS, plus haute) : la barre de saisie et ses
-                  // actions restent toujours visibles au-dessus.
-                  paddingBottom: 'calc(max(70px, var(--bottom-nav-height, 70px)) + var(--kb-inset, 0px))',
+                  // Barre de rédaction positionnée juste au-dessus de la bottom bar native ou web.
+                  paddingBottom: 'calc(var(--bottom-nav-height, 49px) + 6px + var(--kb-inset, 0px))',
                 }}>
                 {selected ? (
                   <div className="mpane in" data-conversation={selected.id}>
@@ -1617,7 +1629,16 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                       className="mpill"
                       onClick={() => {
                         haptic('light');
-                        setOptionsConv(selected);
+                        if (selected.type === 'direct' && selected.other_member) {
+                          setProfileDrawerUser({
+                            id: selected.other_member.id,
+                            name: selected.other_member.full_name || conversationTitle(selected),
+                            avatar: selected.other_member.avatar_url || selected.avatar_url,
+                            username: selected.other_member.username,
+                          });
+                        } else {
+                          setOptionsConv(selected);
+                        }
                       }}
                       aria-label={`${conversationTitle(selected)} — ${
                         selected.type === 'group' ? `${members.length || 1} membres` : 'Membre LKDV'
@@ -1677,6 +1698,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 conversation={optionsConv}
                 currentUserId={currentUserId}
                 onRefreshConversations={refreshConversations}
+                onOpenProfile={(u) => setProfileDrawerUser(u)}
                 onReport={(conversation) => {
                   setOptionsConv(null);
                   setReportTarget({
@@ -1710,6 +1732,7 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 isOpen={shareMenuOpen}
                 onClose={() => setShareMenuOpen(false)}
                 currentUserId={currentUserId ?? ''}
+                onPickPhoto={() => photoInputRef.current?.click()}
                 onSendGpx={async (file) => {
                   const url = await messagingService.uploadAttachment(selected.id, file);
                   if (!url) return;
@@ -1734,6 +1757,126 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                 }}
               />
             ) : null}
+
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (file && selected && currentUserId) {
+                  const url = await messagingService.uploadAttachment(selected.id, file);
+                  if (url) {
+                    await messagingService.sendMessage(selected.id, currentUserId, url, 'image');
+                    await refreshConversations();
+                  }
+                }
+                event.target.value = '';
+              }}
+              aria-label="Joindre une photo depuis la galerie"
+            />
+
+            {/* Drawer du profil utilisateur dans la carte supérieure (swipe down pour fermer, sans croix) */}
+            <AccountDrawerHost
+              open={profileDrawerUser !== null}
+              variant="card"
+              title={profileDrawerUser?.name || 'Profil'}
+              subtitle={profileDrawerUser?.username ? `@${profileDrawerUser.username}` : 'Voyageur LKDV'}
+              hideCloseButton={true}
+              onClose={() => setProfileDrawerUser(null)}
+            >
+              <div
+                className="mdrawer-profile"
+                style={{
+                  padding: '16px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 12,
+                  height: '100%',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'relative',
+                    width: 72,
+                    height: 72,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    boxShadow: '0 0 0 2.5px rgba(255, 255, 255, 0.95), 0 6px 18px rgba(23, 43, 36, 0.18)',
+                    flexShrink: 0,
+                  }}
+                >
+                  {profileDrawerUser?.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={profileDrawerUser.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: '#17402C', color: '#fff', font: '700 24px var(--sf)' }}>
+                      {initials(profileDrawerUser?.name || '?')}
+                    </div>
+                  )}
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <b style={{ display: 'block', font: '700 17px/1.2 var(--sf)', color: '#17402C' }}>
+                    {profileDrawerUser?.name}
+                  </b>
+                  {profileDrawerUser?.username ? (
+                    <span style={{ font: '500 12px var(--sf)', color: '#56665D' }}>@{profileDrawerUser.username}</span>
+                  ) : (
+                    <span style={{ font: '500 12px var(--sf)', color: '#56665D' }}>Membre de la communauté</span>
+                  )}
+                </div>
+                <div className="mdrawer-actions" style={{ width: '100%', display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 8 }}>
+                  <button
+                    type="button"
+                    className="mbtn p"
+                    style={{
+                      flex: 1,
+                      height: 38,
+                      borderRadius: 999,
+                      background: 'linear-gradient(180deg, #275d3f, #17402c)',
+                      color: '#fff',
+                      font: '600 12px var(--sf)',
+                      border: 0,
+                      cursor: 'pointer',
+                    }}
+                    onClick={async () => {
+                      if (!profileDrawerUser || !currentUserId) return;
+                      const id = await messagingService.getOrCreateDirectConversation(profileDrawerUser.id, currentUserId);
+                      if (id) {
+                        await refreshConversations();
+                        setSelectedId(id);
+                        setProfileDrawerUser(null);
+                      }
+                    }}
+                  >
+                    Écrire un message
+                  </button>
+                  <button
+                    type="button"
+                    className="mbtn"
+                    style={{
+                      flex: 1,
+                      height: 38,
+                      borderRadius: 999,
+                      background: 'rgba(255, 255, 255, 0.72)',
+                      border: '0.5px solid rgba(255, 255, 255, 0.85)',
+                      font: '600 12px var(--sf)',
+                      color: '#17402C',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      if (!profileDrawerUser) return;
+                      router.push(`/profil/${profileDrawerUser.id}`);
+                    }}
+                  >
+                    Voir le profil
+                  </button>
+                </div>
+              </div>
+            </AccountDrawerHost>
 
             <AccountDrawerHost
               open={notifyConv !== null}

@@ -15,6 +15,7 @@ interface ConversationOptionsSheetProps {
   currentUserId: string;
   onRefreshConversations?: () => void;
   onReport?: (conversation: Conversation) => void;
+  onOpenProfile?: (user: { id: string; name: string; avatar?: string | null; username?: string | null }) => void;
 }
 
 /**
@@ -29,6 +30,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
   currentUserId,
   onRefreshConversations,
   onReport,
+  onOpenProfile,
 }) => {
   const { haptic } = useHapticFeedback();
   const router = useRouter();
@@ -150,7 +152,16 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             onClick={() => {
               haptic('light');
               onClose();
-              router.push(`/profil/${member.id}`);
+              if (onOpenProfile) {
+                onOpenProfile({
+                  id: member.id,
+                  name: member.full_name || 'Voyageur LKDV',
+                  avatar: member.avatar_url,
+                  username: (member as { username?: string | null }).username,
+                });
+              } else {
+                router.push(`/profil/${member.id}`);
+              }
             }}
           >
             Ouvrir

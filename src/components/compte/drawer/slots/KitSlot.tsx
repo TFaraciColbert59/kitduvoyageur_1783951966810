@@ -175,7 +175,7 @@ export function KitSlot({
 
 export const KIT_SLOT_CSS = `
 .lkdv-kit-slot{display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;}
-.lkdv-kit-list{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important;min-width:0!important;}
+.lkdv-kit-list{list-style:none!important;margin:0!important;padding:0 0 52px 0!important;display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important;min-width:0!important;}
 .lkdv-kit-list-item{min-width:0!important;margin:0!important;padding:0!important;}
 `;
 

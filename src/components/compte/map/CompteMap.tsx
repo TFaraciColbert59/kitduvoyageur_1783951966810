@@ -307,7 +307,7 @@ export function CompteMap({
       container: containerRef.current,
       style: createMapStyle('satellite'),
       center: DEFAULT_CENTER,
-      zoom: 4.2,
+      zoom: 5.6,
       minZoom: 1.2,
       maxZoom: 18,
       maxPitch: 70,
@@ -319,6 +319,7 @@ export function CompteMap({
     setMap(instance);
     (window as unknown as { __lkdvCompteMapInstance?: MapLibreMap }).__lkdvCompteMapInstance =
       instance;
+    (window as unknown as { __lkdvCompteMap3D?: MapLibreMap }).__lkdvCompteMap3D = instance;
 
     const observer =
       typeof ResizeObserver !== 'undefined'

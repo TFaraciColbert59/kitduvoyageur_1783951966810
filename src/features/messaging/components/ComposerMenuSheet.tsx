@@ -41,6 +41,7 @@ interface ComposerMenuSheetProps {
   onSendProduct: (meta: ProductMessageMeta) => void;
   onSendTrail: (meta: TrailMessageMeta) => void;
   onSendKit: (meta: KitMessageMeta) => void;
+  onPickPhoto?: () => void;
 }
 
 /** Défilement interne des listes longues : `.sh-b` ne défile pas (overflow hidden). */
@@ -63,6 +64,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
   onSendProduct,
   onSendTrail,
   onSendKit,
+  onPickPhoto,
 }) => {
   const { haptic } = useHapticFeedback();
   const [view, setView] = useState<'menu' | 'gpx' | 'equip' | 'trail' | 'kit'>('menu');
@@ -193,6 +195,29 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
       <div className="msheet-body">
       {view === 'menu' ? (
         <div>
+          {onPickPhoto ? (
+            <div className="li nt">
+              <div>
+                <div className="ttl">Photo</div>
+                <div className="s2">Depuis votre galerie</div>
+              </div>
+              <button
+                type="button"
+                className="mbtn-arrow"
+                aria-label="Envoyer une photo"
+                onClick={() => {
+                  haptic('light');
+                  onClose();
+                  onPickPhoto();
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </button>
+            </div>
+          ) : null}
+
           <div className="li nt">
             <div>
               <div className="ttl">Carte GPX</div>

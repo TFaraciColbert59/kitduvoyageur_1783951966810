@@ -1727,16 +1727,16 @@
   .ig-avi-in { width: 66px !important; height: 66px !important; }
 }
 
-/* 3 — Grille Instagram : 3 colonnes carrées, image + type de post uniquement */
+/* 3 — Grille Instagram : 3 colonnes carrées, remplissage intégral, 2 mm d'espacement régulier */
 .ig-grid-wrap {
-  margin: 3px -14px -13px !important;
-  border-radius: 18px !important;
+  margin: 4px 8px 8px !important;
+  border-radius: 14px !important;
   overflow: hidden !important;
 }
 .ig-grid {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 2px !important;
+  gap: 8px !important;
   width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -1746,10 +1746,21 @@
   width: 100% !important;
   height: auto !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 2px !important;
+  border-radius: 10px !important;
   overflow: hidden !important;
-  background: #17402C !important;
+  background: #0d1e15 !important;
   box-shadow: none !important;
+}
+.ig-tile img.art,
+.ig-tile img {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+.ig-tile .ig-tile-bg {
+  display: none !important;
 }
 .ig-tile .t-top,
 .ig-tile .t-bot,
@@ -1958,22 +1969,30 @@
   flex: none !important;
 }
 
-/* 3 — Grille bord à bord, carrée, sans texte ; carrousel Sorties non rogné */
+/* 3 — Grille carrée, espacement régulier 2 mm ; carrousel Sorties non rogné */
 .ig-grid-wrap {
-  margin: 0 -12px -14px !important;
-  border-radius: 22px !important;
+  margin: 4px 8px 8px !important;
+  border-radius: 14px !important;
   overflow: hidden !important;
 }
 .ig-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 2px !important;
+  gap: 8px !important;
   width: 100% !important;
 }
 .ig-tile {
   width: 100% !important;
   height: auto !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 2px !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+.ig-tile img.art,
+.ig-tile img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
 }
 .ig-voyages-tab { overflow: visible !important; padding-bottom: 2px !important; }
 .voyages-carousel {
