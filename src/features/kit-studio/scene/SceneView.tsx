@@ -4,12 +4,25 @@ import { useKitStore } from '../store/kitStore';
 import { useUiStore } from '../store/uiStore';
 import { S } from '../ui/strings';
 import { createKitScene, type KitScene } from './createScene';
+import type { BagModelRuntimeInfo } from './bag/modelLayer';
 import { setScene } from './sceneRef';
+
+/** Annonce lisible (aria-live) de l'état du sac maillé : jamais de teinte sur un atlas entier. */
+function bagModelNotice(info: BagModelRuntimeInfo): string | null {
+  if (info.status === 'degraded') {
+    return 'Modèle 3D indisponible : le sac est construit par code.';
+  }
+  if (info.status === 'glb' && info.colorCustomization === 'unavailable-no-mask') {
+    return 'Personnalisation de couleur indisponible pour ce sac : son masque de zone tissu manque.';
+  }
+  return null;
+}
 
 /** Canvas plein écran : crée la scène, relaie l'état du store, libère tout au démontage. */
 export default function SceneView() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [failed, setFailed] = useState(false);
+  const [bagModel, setBagModel] = useState<BagModelRuntimeInfo | null>(null);
 
   useEffect(() => {
     const el = canvas.current;
@@ -20,6 +33,7 @@ export default function SceneView() {
         state: useKitStore.getState().kit,
         reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
         onContextChange: setFailed,
+        onBagModel: setBagModel,
       });
     } catch {
       setFailed(true);
@@ -44,6 +58,8 @@ export default function SceneView() {
     };
   }, []);
 
+  const notice = bagModel ? bagModelNotice(bagModel) : null;
+
   return (
     <>
       <canvas ref={canvas} className="ks-canvas" aria-label={S.a11y.bag3d} role="img" tabIndex={0} />
@@ -52,6 +68,36 @@ export default function SceneView() {
           {S.states.error}
         </p>
       )}
+      {/* État du sac maillé annoncé, jamais substitué au procédural par surprise. */}
+      {notice ? (
+        <p
+          role="status"
+          data-testid="ks-bag-model-notice"
+          className="ks-bag-model-notice"
+          style={{
+            position: 'absolute',
+            left: 12,
+            bottom: 'calc(var(--safe-bottom, 0px) + 12px)',
+            zIndex: 30,
+            maxWidth: 260,
+            margin: 0,
+            padding: '6px 10px',
+            borderRadius: 10,
+            background: 'var(--ks-paper, rgb(250 249 245))',
+            color: 'var(--ks-ink-2, rgb(86 102 93))',
+            fontSize: 12,
+            lineHeight: 1.35,
+            pointerEvents: 'none',
+          }}
+        >
+          {notice}
+        </p>
+      ) : null}
+      <p className="sr-only" role="status" aria-live="polite">
+        {bagModel?.status === 'glb'
+          ? `Sac maillé ${bagModel.label ?? bagModel.modelId} : ${bagModel.parts.length} pièces, ${bagModel.anchors.length} ancrages.`
+          : ''}
+      </p>
     </>
   );
 }

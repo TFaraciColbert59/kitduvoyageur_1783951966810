@@ -1,13 +1,14 @@
 'use client';
 import { useState, type CSSProperties } from 'react';
-import { COLORWAYS, MODULE_IDS, ONE, ZONE_NAMES } from '../../domain/catalog';
-import type { CapacityZoneId, ModuleId } from '../../domain/catalog';
+import { MODULE_IDS, ZONE_NAMES } from '../../domain/catalog';
+import type { CapacityZoneId, ColorwayId, ModuleId } from '../../domain/catalog';
+import { studioData } from '../../domain/studioData';
 import { canAddModule, ptsCap, ptsUsed, toggleModule } from '../../domain/attach';
 import type { AttachHost } from '../../domain/attach';
 import { formatEuro, formatLitres, formatWeight } from '../../domain/format';
 import { colorwaySwatch } from '../../domain/palette';
 import { modOn, pieceCw, pieceInfo, pieceState } from '../../domain/parts';
-import { bagWeight, capOf, totalCap, totals } from '../../domain/totals';
+import { bagWeight, capOf, toCents, totalCap, totals } from '../../domain/totals';
 import { currentBag, currentKit } from '../../domain/state';
 import type { KitState, PieceKey } from '../../domain/types';
 import { Pager } from '../Drawer/Pager';
@@ -60,7 +61,7 @@ interface BagSheetProps {
 
 function stateText(state: KitState, key: PieceKey): string {
   const s = pieceState(state, key);
-  return s === 'own' ? TXT.own : s === 'order' ? TXT.preordered : `${TXT.toOrder} · ${formatEuro(pieceInfo(key).eur * 100)}`;
+  return s === 'own' ? TXT.own : s === 'order' ? TXT.preordered : `${TXT.toOrder} · ${formatEuro(toCents(pieceInfo(key).eur))}`;
 }
 
 function Pts({ state, host }: { state: KitState; host: AttachHost }) {
@@ -88,11 +89,12 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
   const kit = currentKit(state);
   const bag = currentBag(state);
   const t = totals(state);
-  const sw = (cw: keyof typeof COLORWAYS) => colorwaySwatch(COLORWAYS[cw]);
+  const sw = (cw: ColorwayId) => colorwaySwatch(studioData().colorways[cw]);
 
   const onToggle = (m: ModuleId, on: boolean) => {
     if (on && !modOn(state, m) && !canAddModule(state, m)) {
-      setRefusal(`${ONE.mods[m].n} : ${TXT.refusal} ${TXT.host[ONE.mods[m].host]}. ${TXT.refusalHint}`);
+      const oneMods = studioData().one.mods;
+      setRefusal(`${oneMods[m].n} : ${TXT.refusal} ${TXT.host[oneMods[m].host]}. ${TXT.refusalHint}`);
       return;
     }
     setRefusal(null);
@@ -100,12 +102,12 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
   };
 
   const modRow = (m: ModuleId) => {
-    const M = ONE.mods[m];
+    const M = studioData().one.mods[m];
     const on = modOn(state, m);
     const blocked = !on && !canAddModule(state, m);
     const key: PieceKey = `mod:${m}`;
     const ps = pieceState(state, key);
-    const price = ps === 'own' ? TXT.own.toLowerCase() : ps === 'order' ? TXT.preordered.toLowerCase() : formatEuro(M.eur * 100);
+    const price = ps === 'own' ? TXT.own.toLowerCase() : ps === 'order' ? TXT.preordered.toLowerCase() : formatEuro(toCents(M.eur));
     return (
       <li className="ks-sh-row" key={m}>
         <span className="ks-sh-rg" data-on={on}>

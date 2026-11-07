@@ -1,10 +1,11 @@
 // Options d'apparence (pures, sans mutation) : forme, module, coloris, matière, finition, accessoire.
 // Reproduit la maquette Kit_Studio_v2.html : catsFor/fixCat l.1627-1628, mutate l.1656-1662, simulate l.1663,
 // optList l.1664-1671, applyOpt l.1689-1706 (gardes « déjà appliqué » et « plus de place »).
-import { ACCESSORIES, BAGS, COLORWAYS, MODULE_IDS, ONE } from '../domain/catalog';
+import { ACCESSORIES, BAGS, MODULE_IDS } from '../domain/catalog';
 import type {
   AccessoryId, BagId, ColorwayId, ConfigSet, MaterialKey, ModuleId, PartNameId,
 } from '../domain/catalog';
+import { studioData } from '../domain/studioData';
 import { ptsUsed } from '../domain/attach';
 import { setBag } from '../domain/packing';
 import { modOn, setMod } from '../domain/parts';
@@ -38,7 +39,8 @@ type Draft = Record<string, Record<string, string | undefined>> & { accent: stri
 
 const FAB_PARTS: readonly NamedPart[] = ['body', 'lid', 'front', 'sides'];
 const FIN_ALL: readonly NamedPart[] = ['body', 'lid', 'front', 'sides', 'hip', 'harness', 'webbing'];
-const CW_IDS: readonly ColorwayId[] = ['foret', 'sauge', 'pierre', 'nuit'];
+/** Coloris du catalogue réel, dans l'ordre. */
+const cwIds = (): readonly ColorwayId[] => Object.keys(studioData().colorways) as ColorwayId[];
 const ROLE: Readonly<Record<NamedPart, Role>> = {
   body: 'body', lid: 'body', front: 'pocket', sides: 'pocket', hip: 'trim', harness: 'trim', webbing: 'trim',
 };
@@ -61,7 +63,7 @@ function mutate(s: KitState, part: PartNameId, cat: OptionCat, id: string): KitS
   const c = structuredClone(currentConfig(s)) as unknown as Draft;
   const done = (): KitState => withConfig(s, c as unknown as ConfigSet);
   if (cat === 'col' && id.startsWith('cw:') && part !== 'all') {
-    const w = COLORWAYS[id.slice(3) as ColorwayId];
+    const w = studioData().colorways[id.slice(3) as ColorwayId];
     if (part === 'harness') {
       c.harness.col = w.trim; c.hip.col = w.trim; c.webbing.col = w.trim;
     } else c[part].col = w[ROLE[part]];
@@ -75,7 +77,7 @@ function mutate(s: KitState, part: PartNameId, cat: OptionCat, id: string): KitS
   }
   if (cat === 'col' && id.startsWith('preset:')) {
     const cw = id.slice(7) as ColorwayId;
-    const w = COLORWAYS[cw];
+    const w = studioData().colorways[cw];
     c.body.col = w.body; c.lid.col = w.body; c.front.col = w.pocket; c.sides.col = w.pocket;
     c.hip.col = w.trim; c.harness.col = w.trim; c.webbing.col = w.trim; c.accent = w.accent;
     // Le coloris du kit suit le dernier preset appliqué (affichage des tuiles) ; la config reste la source.
@@ -105,7 +107,7 @@ export function optionList(s: KitState, part: PartNameId, cat: OptionCat): reado
     const need = ptsUsed(s, 'corps');
     return Object.values(BAGS).map((b) => {
       const cur = k.bag === b.id;
-      const cap = ONE.corps[b.id].pts;
+      const cap = studioData().one.corps[b.id].pts;
       const off = !cur && need > cap;
       return {
         id: b.id, n: b.n, cur, off, bag: b.id,
@@ -114,10 +116,11 @@ export function optionList(s: KitState, part: PartNameId, cat: OptionCat): reado
     });
   }
   if (cat === 'mod') {
-    return MODULE_IDS.filter((m) => part === 'all' || ONE.mods[m].part === part).map((m) => {
-      const M = ONE.mods[m];
+    const one = studioData().one;
+    return MODULE_IDS.filter((m) => part === 'all' || one.mods[m].part === part).map((m) => {
+      const M = one.mods[m];
       const on = modOn(s, m);
-      const free = (M.host === 'chassis' ? ONE.chassis.pts : ONE.corps[k.bag].pts) - ptsUsed(s, M.host);
+      const free = (M.host === 'chassis' ? one.chassis.pts : one.corps[k.bag].pts) - ptsUsed(s, M.host);
       const off = !on && free < M.pts;
       const place = M.host === 'chassis' ? 'châssis' : BAGS[k.bag].n.toLowerCase();
       const alt = M.host === 'corps' && k.bag === 'b28' ? ' ou passe au corps 42 L' : '';
@@ -129,8 +132,8 @@ export function optionList(s: KitState, part: PartNameId, cat: OptionCat): reado
     });
   }
   if (cat === 'col') {
-    return CW_IDS.map((id) => {
-      const w = COLORWAYS[id];
+    return cwIds().map((id) => {
+      const w = studioData().colorways[id];
       if (part === 'all') {
         return { id: `preset:${id}`, n: w.n, cw: id, cur: c.body.col === w.body && c.harness.col === w.trim, off: false, why: '' };
       }
@@ -150,7 +153,7 @@ export function optionList(s: KitState, part: PartNameId, cat: OptionCat): reado
 export function setPartOption(s: KitState, part: PartNameId, cat: OptionCat, value: string): OptionResult {
   const k = currentKit(s);
   let id = value;
-  if (cat === 'col' && (CW_IDS as readonly string[]).includes(id)) id = `${part === 'all' ? 'preset' : 'cw'}:${id}`;
+  if (cat === 'col' && (cwIds() as readonly string[]).includes(id)) id = `${part === 'all' ? 'preset' : 'cw'}:${id}`;
   if (cat === 'shape' || cat === 'mod' || (cat === 'col' && /^(cw|preset):/.test(id))) {
     const o = optionList(s, part, cat).find((x) => x.id === id);
     if (!o) return { state: s, ok: false };

@@ -14,6 +14,10 @@ import { HubResumeBanner } from '@/features/hub/components/HubResumeBanner';
 
 import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
 import { HubCampShell } from '@/features/hub/components/HubCampShell';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { getStudioData } from '@/features/kit-studio/server/getStudioData';
+import { resolveStudioPageState } from '@/features/kit-studio/server/studioMode';
 
 export const metadata = {
   title: 'Hub — Le Kit du Voyageur',
@@ -44,6 +48,32 @@ export default async function HubPage({
   ]);
 
   if (flags.hub_camp_v1) {
+    // P3 : le studio du hub est le studio survivant. Sa donnée réelle est lue ici, côté
+    // serveur (jamais de requête de données dans un Client Component), avec la même règle
+    // de production que /kit-studio : ?debug=1 explicite, sinon session + données réelles.
+    const studioState = await resolveStudioPageState({
+      debug: sp.debug,
+      next: '/hub?studio=1',
+      getUser: async () => {
+        const supabase = await createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        return user ? { id: user.id } : null;
+      },
+      getData: async (userId) => {
+        const supabase = await createClient();
+        return getStudioData(userId, undefined, supabase);
+      },
+    });
+    const studioFlag = Array.isArray(sp.studio) ? sp.studio[0] : sp.studio;
+    const wantsStudio = studioFlag === '1' || studioFlag === 'true';
+    // Entrée directe par /hub?studio=1 sans session : même décision que P1 (redirection
+    // vers la connexion avec retour), jamais de démonstration implicite.
+    if (wantsStudio && studioState.kind === 'login') {
+      redirect(`/connexion?next=${encodeURIComponent(studioState.next)}`);
+    }
+
     return (
       <HubCampShell
         adventure={data.adventure}
@@ -51,6 +81,7 @@ export default async function HubPage({
         hiking={data.hiking}
         counts={buildHubCounts(data)}
         searchParams={sp}
+        studioState={studioState}
       />
     );
   }

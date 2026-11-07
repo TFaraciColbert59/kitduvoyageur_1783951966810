@@ -1,0 +1,295 @@
+469:/* Mode test : hasard reproductible pour des captures identiques d’un rendu à l’a
+473:function fail(){const p=document.createElement('p');p.className='fail';p.textContent='
+475:const T=window.THREE;
+478:/* ───────────── Utilitaires ──────────�
+479:const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+480:const NB='\u00A0';
+493:/* Haptique : Capacitor (natif) → vibrate (Android) → interrupteur iOS 18+ (Safari
+495:function haptic(k){k=k||'sel';const n=performance.now();if(n-hLast<40)return;hLast=n;i
+503:/* ───────────── Pictos ────────────
+504:const GL={
+534:/* ───────────── Données de démonstration (mêmes champs q
+535:const BAGS={
+539:const CW={
+545:/* ───────────── Personnalisation : catalogue des pièces, m
+546:const PART_W={body:.42,lid:.11,front:.06,sides:.03,hip:.15,harness:.23};
+547:const FAB_PARTS=['body','lid','front','sides'];
+548:const PNAME={all:'LKDV ONE',body:'Corps',lid:'Couvercle',front:'Poche avant',sides:'Po
+549:const MATS={
+556:const FIN={mat:{n:'Mat',r:.92,m:0},satin:{n:'Satiné',r:.62,m:.02},gloss:{n:'Enduit',r
+557:const FIND={mat:'Aspect textile, sans reflet.',satin:'Léger lustre qui accroche la lu
+558:const COLS=[['Forêt','#2D482A'],['Mousse','#3D6038'],['Sapin','#1E301C'],['Sauge','#7
+560:const SHAPES={
+568:const ACC={
+578:/* ───────────── LKDV ONE ───────────�
+581:const ONE={
+593:const MODS=Object.keys(ONE.mods);
+594:const CWIDS=['foret','sauge','pierre','nuit'];
+596:function modOn(m){const c=cfg(),M=ONE.mods[m];if(M.acc)return c.acc.includes(M.acc);if
+597:function setMod(m,on){const c=cfg(),M=ONE.mods[m];if(M.acc){const i=c.acc.indexOf(M.ac
+599:function ptsCap(host,bag){return host==='chassis'?ONE.chassis.pts:ONE.corps[bag||kit()
+600:function ptsUsed(host){return MODS.filter(m=>ONE.mods[m].host===host&&modOn(m)).reduce
+601:function cwOf(hex){hex=String(hex).toLowerCase();return CWIDS.find(id=>Object.values(C
+602:function pieceCw(key){const c=cfg();if(key==='chassis')return cwOf(c.harness.col);if(k
+603:function pieces(){const k=kit();return['chassis','corps:'+k.bag].concat(MODS.filter(mo
+604:function pieceInfo(key){if(key==='chassis')return{n:ONE.chassis.n,eur:ONE.chassis.eur,
+605:/* Ce que Tony possède déjà : un ONE 42 L en coloris Forêt avec trois modules */
+606:const OWN=new Map([['chassis','foret'],['corps:b42','foret'],['mod:lid','foret'],['mod
+607:const ORDER=new Map();
+608:function pieceState(key){const cw=pieceCw(key);if(OWN.get(key)===cw)return'own';if(ORD
+609:function toOrder(){return pieces().filter(k=>pieceState(k)==='new');}
+610:function orderTotal(){return toOrder().reduce((a,k)=>a+pieceInfo(k).eur,0);}
+611:const VS={
+646:const CATIC={shape:'<rect x="3.5" y="10" width="10" height="10" rx="2"/><circle cx="15
+647:const CATN={shape:'Corps',mod:'Modules',col:'Coloris',mat:'Matière',fin:'Finition',ac
+649:function preset(cw){const c=CW[cw];return{body:{shape:'classic',mat:'xpac',col:c.body,
+650:const CFG={b42:preset('foret'),b28:preset('foret')};
+651:const DEF={};Object.keys(CFG).forEach(b=>{DEF[b]=JSON.stringify(CFG[b]);});
+653:function effLid(){const c=cfg();return c.body.shape==='roll'?'none':c.lid.shape;}
+654:function shapeOf(p){const c=cfg();if(p==='lid')return SHAPES.lid.find(s=>s.id===effLid
+655:function capOf(z){const k=kit(),b=BAGS[k.bag],r=b.L/48;let v=b.cap[z]||0;for(const p o
+656:function totalCap(){return['lid','main','front','sides','hip','back'].reduce((a,z)=>a+
+657:function partW(p){const k=kit(),b=BAGS[k.bag],c=cfg(),r=b.g/1240,sh=shapeOf(p);if(sh&&
+658:function bagWeight(){const c=cfg();let g=['body','lid','front','sides','hip','harness'
+659:function bodyFront(){return cfg().body.shape==='slim'?.25:.28;}
+660:function frontZ(){const sh=cfg().front.shape,bf=bodyFront();return sh==='none'?bf+.005
+661:const I=(id,n,fam,fn,sh,gl,g,L,c,z,o)=>Object.assign({id,n,fam,fn,sh,gl,g,L,c,z,state:
+662:const INV=[
+703:/* Alternatives : noms issus de shop_products (boutique) ; locations entre membres = e
+704:const ALT={
+717:const ALTMAP=new Map();Object.values(ALT).forEach(a=>a.forEach(x=>ALTMAP.set(x.id,x)))
+718:const KITS=[
+735:const KS=JSON.parse(JSON.stringify(KITS));
+736:const INVMAP=new Map(INV.map(i=>[i.id,i]));
+739:const ZONES=[
+749:const ZI={};ZONES.forEach((z,i)=>ZI[z.id]=i);
+750:const ZIDS=['worn','lid','main','front','sides','hip','back'];
+751:const ZNAME={worn:'Sur toi',lid:'Couvercle',main:'Principal',front:'Extérieur',sides:
+752:const ANCH={bag:[0,0,0],lid:[0,.86,.04],main:[0,.32,.04],front:[0,-.15,.34],sides:[.45
+753:const SLOT={bottom:[0,-.5,0],bottomF:[0,-.5,.13],midBack:[0,.06,-.13],midFront:[0,0,.1
+755:const S={hints:{},cmp:null,preview:null,deck:null,mode:'gestion',part:'all',cat:'col',
+760:/* ───────────── Moteur métier : poids, volume, équilibre,
+761:function effG(it){const k=kit();if(it.g==null)return 0;if(!it.cons)return it.g;if(k.ca
+764:function autoSlot(it){if(it.fn==='sleep'||it.fn==='sleeppad')return'bottom';if(['first
+766:function reindex(){const k=kit();IDX={};for(const z of ZIDS){const arr=k.packed[z]||[]
+767:function packedLocal(id,out){const x=IDX[id];if(!x)return out.set(0,0,0);switch(x.zone
+774:function totals(){const k=kit();const t={base:bagWeight(),cons:0,worn:0,used:0,cap:tot
+780:function cog(){const k=kit(),b=BAGS[k.bag],sc=b.sc,bw=bagWeight();let M=bw,x=0,y=0,z=-
+781:function cogState(c){if(c.z>-.02)return{ok:false,t:'Trop loin du dos',s:'Le lourd est 
+782:function activeGhosts(){const k=kit();return(k.ghosts||[]).filter(g=>!ZIDS.some(z=>(k.
+783:function cabinDims(){const sc=BAGS[kit().bag].sc,c=cfg(),lid=effLid(),back=c.body.shap
+784:function blockers(){const k=kit(),out=[],t=totals();
+793:function readiness(bl,cs){return clamp(100-13*bl.length-(cs.ok?0:7),0,100);}
+794:const ACCESS_FN=['rainshell','light','map','snack','sunscreen','firstaid','insulation'
+795:function tips(){const k=kit(),out=[];for(const id of(k.packed.main||[])){const it=get(
+799:/* ───────────── Scène 3D ───────────
+811:const GROUND_Y=-.8,FLOOR_Y=GROUND_Y-.78;
+813:/* Ciel, montagnes, forêt et prairie peints une fois sur un panorama 360° (aucune im
+814:function panoTex(){const W=2048,H=768,c=document.createElement('canvas');c.width=W;c.h
+832:/* Toile de fond : panorama flou attaché à la caméra, comme une photo de produit pr
+837:const BD={rx:.16,ry:.56,cx:0,cy:0};
+838:function fitBackdrop(){const D=40,hh=2*D*Math.tan(T.MathUtils.degToRad(camera.fov/2)),
+840:function syncBackdrop(){const th=Math.atan2(camera.position.x,camera.position.z);panoT
+841:/* Table en chêne clair : le sac est posé dessus */
+842:function woodTex(){const c=document.createElement('canvas');c.width=512;c.height=256;c
+847:const TABLE={x:-.5,w:4.6,d:2.5};
+853:function fabricTex(){const c=document.createElement('canvas');c.width=c.height=128;con
+857:function mkTex(rep,draw){const c=document.createElement('canvas');c.width=c.height=128
+858:function grain(x,a){const d=x.getImageData(0,0,128,128);for(let i=0;i<d.data.length;i+
+859:function gridL(x,step,alpha){x.strokeStyle=`rgba(0,0,0,${alpha})`;x.lineWidth=1;for(le
+860:const TEX={
+871:const FAB=TEX.ripstop;
+874:/* Boîte arrondie lisse (normales continues) */
+875:function rbox(w,h,d,r,seg){seg=seg||8;r=Math.min(r,w/2,h/2,d/2)*.999;const g=new T.Box
+878:const GEO={};const geo=(k,f)=>GEO[k]||(GEO[k]=f(),GEO[k].userData.shared=true,GEO[k]);
+880:/* Le sac : pièces paramétriques. Une seule scène pour les deux modes. */
+885:const PEX={lid:[0,1,0],front:[0,0,1],sides:[1,0,0],hip:[1,-.3,-.4],harness:[0,0,-1],bo
+887:function addMesh(g,p,role,zone,pos,rot,parent,extra){const m=new T.MeshStandardMateria
+891:function clearPart(p){const g=partG[p];if(!g)return;for(let i=g.children.length-1;i>=0
+892:function initBag(){['body','front','sides','hip','harness','acc'].forEach(p=>{partG[p]
+895:function taper(g,bot){const p=g.attributes.position;for(let i=0;i<p.count;i++){const t
+896:function buildPart(p){clearPart(p);const c=cfg();
+934:function looks(m){const c=cfg(),u=m.userData,P=c[u.part]||{};let col='#888888',map=nul
+945:function applyLook(instant){for(const m of bagParts){const L=looks(m),mt=m.material,u=
+946:function rebuildParts(list){list.forEach(buildPart);applyLook(false);}
+947:function rebuildAll(){['body','lid','front','sides','hip','harness','acc'].forEach(bui
+949:/* Objets 3D (primitives paramétriques par forme) */
+950:function mk(g,m){const o=new T.Mesh(g,m);o.castShadow=true;return o;}
+951:function itemMesh(it){const g=new T.Group();const col=new T.Color(it.c);const dark=col
+979:function ghostMesh(gh){const g=itemMesh({id:'',sh:gh.sh,gl:gh.gl,c:'#C89A3B',L:.9});g.
+980:function haloTex(){const c=document.createElement('canvas');c.width=c.height=128;const
+981:const HALO=haloTex();
+983:/* Centre de gravité + gabarit cabine */
+989:/* Gestion des objets dans la scène */
+991:function anchorW(id,out){if(id==='worn')return out.copy(WORN_C);const a=ANCH[id]||ANCH
+992:const WORN_C=new T.Vector3(-1.3,GROUND_Y+.9,.3);
+993:const WORN_OFF={sunhead:[0,.74,0],sun:[0,.6,.1],baselayer:[0,.3,0],insulation:[0,.33,.
+994:function wornPos(it,out){const o=WORN_OFF[it.fn]||[0,0,0];return out.set(WORN_C.x+o[0]
+995:function addObj(id,from){const it=get(id);const g=itemMesh(it);scene.add(g);const o={i
+998:function disposeG(g){g.traverse(o=>{if(o.isMesh&&o.material!==ghostMat&&o.material.dis
+999:function killObj(id,to,instant){const o=objs.get(id);if(!o)return;objs.delete(id);if(i
+1000:function buildGhosts(){ghosts.forEach(gh=>{scene.remove(gh.g);scene.remove(gh.halo);}
+1004:/* ───────────── Caméra ───────────�
+1007:function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera
+1009:function updateCamera(arcF){bagG.updateMatrixWorld();const n=ZONES.length,s=S.s,i=cla
+1017:/* ───────────── Mise en place des objets (repos / arc de z
+1019:function zoneKeys(z,AG){const k=kit();const ids=(k.packed[z]||[]).slice();AG.forEach(
+1020:function computeArc(z,keys){arcMap.clear();if(!keys.length)return;anchorW(z,_a);const
+1026:function explodePos(z,key,i,n,out){const bs=bagScale;let r,a,y;
+1032:function layout(dt,focusId,arcAmt){RV.setFromMatrixColumn(camera.matrixWorld,0).norma
+1054:/* ───────────── Boucle ───────────�
+1056:function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;tNow+=dt;
+1085:/* ───────────── Interface ──────────�
+1088:function hud(t,s,ms){$('hudT').textContent=t||'';$('hudS').textContent=s||'';hudEl.cl
+1089:function zoneSub(id){const t=totals(),k=kit();if(id==='bag')return kg(t.back)+' sur l
+1090:function hudZone(){const z=ZONES[S.zi];hud(z.n,zoneSub(z.id),1300);}
+1091:function zoneFill(id){const t=totals();if(id==='worn')return 0;if(id==='bag')return t
+1092:function renderDots(show){const lo=S.mode==='custo'?1:0;dotsEl.innerHTML=ZONES.map((z
+1093:function onZone(){if(S.mode==='custo'){haptic('sel');renderDots(true);hidePeek();S.pa
+1094:function goZone(i){i=clamp(i,S.mode==='custo'?1:0,ZONES.length-1);S.sT=i;if(RM)S.s=i;
+1095:function renderIsland(delta){const k=kit(),t=totals(),bl=blockers();$('islandKg').tex
+1101:function showKitName(){$('islandName').textContent=kit().n;island.classList.add('name
+1102:function hintOnce(k,t,sub,ms){if(S.hints[k])return;S.hints[k]=1;try{localStorage.setI
+1103:function after(delta){renderIsland(delta);refreshSheet();if(dotsEl.classList.contains
+1105:/* Rail */
+1106:function tileItem(it,cls,w,tag,kind){const bd=it.state==='lent'?'<i class="bd lent"><
+1108:function altTag(a){return a.src==='shop'?fr(a.eur,0)+NB+'€':fr(a.day,0)+NB+'€/j';
+1109:function candidates(z){const k=kit(),AG=activeGhosts(),want=new Set(AG.map(g=>g.fn));
+1113:function renderRail(flashId){const z=ZONES[S.zi].id,k=kit();let html=[];
+1121:function addTile(){return `<button class="tile add" type="button" role="listitem" dat
+1122:function altsFor(id){const it=get(id);const own=INV.filter(x=>x.fn===it.fn&&x.id!==id
+1124:function addPlanned(a,ref){if(INVMAP.has(a.id))return a.id;const it={id:a.id,n:a.n,fa
+1126:/* Aperçu */
+1127:function hidePeek(){peekEl.classList.remove('on');}
+1128:function peek(b){const k=b.dataset.k,id=b.dataset.id;let t='',s='';
+1134:function addHint(){hud('Ajouter un objet','Scanner le code-barres, photographier ou c
+1136:/* Actions */
+1137:function warnLent(it){hud(it.n,'En prêt chez '+it.lentTo+' jusqu’au '+String(it.un
+1138:function pack(id,zone){const k=kit(),it=get(id);if(!it||isPacked(id))return false;if(
+1148:function unprojectRail(){const r=railEl.getBoundingClientRect();_d.set(0,-(r.top+30)/
+1149:function unpack(id){const k=kit(),z=zoneOf(id);if(!z)return;const it=get(id);k.packed
+1151:function swapItem(oldId,newId){const k=kit(),z=zoneOf(oldId);if(!z)return;const it=ge
+1155:function enterSwap(id){S.swap=id;S.filter=null;const it=get(id);hud('Échanger',it.n,
+1156:function exitSwap(silent){if(!S.swap)return;S.swap=null;if(!silent)renderRail();}
+1157:function ghostFocus(fn){const g=activeGhosts().find(x=>x.fn===fn);if(!g)return;S.filt
+1158:function setBag(id,quiet){const k=kit();if(k.bag===id)return;const w0=bagWeight();k.b
+1159:function autopack(){const k=kit();const had=!!k.slots;k.slots=null;reindex();S.auto=.
+1161:function loadKit(i,instant){S.k=i;const k=kit();S.day=1;S.swap=null;S.filter=null;
+1166:function switchKit(dir){closeSheets(true);loadKit((S.k+dir+KS.length)%KS.length,false
+1168:/* ───────────── Tiroirs ───────────�
+1169:function updDots(p,d){const i=Math.round(p.scrollLeft/Math.max(1,p.clientWidth));[...
+1170:function fillPager(p,d,pages,start,labels){p.innerHTML=pages.map(h=>`<div class="page
+1175:function curPage(p){return Math.round(p.scrollLeft/Math.max(1,p.clientWidth));}
+1176:function openTop(page){closeBot(true);hidePeek();buildBilanInto(page);sheetTop.classL
+1177:function closeTop(silent){if(!sheetTop.classList.contains('open'))return;sheetTop.cla
+1178:function openBot(kind,pages,page,label,tall,labels){closeTop(true);hidePeek();popSub(
+1180:function closeBot(silent){if(!sheetBot.classList.contains('open'))return;sheetBot.cla
+1181:function closeSheets(silent){popSub(true);closeMenu();if(location.hash){try{history.r
+1183:function refreshSheet(){if(S.sheet==='top')buildBilanInto(curPage(pagerTop));else if(
+1185:/* Bilan (tiroir du haut) */
+1186:function balanceHTML(c,cs){const X=z=>58+(z+.36)/.72*124,Y=y=>196-(y+.75)/1.75*178,co
+1199:function dayWeights(){const k=kit(),keep=S.day,arr=[];for(let d=1;d<=k.days;d++){S.da
+1200:function daysHTML(){const k=kit(),w=dayWeights(),mn=Math.min(...w)*.97,mx=Math.max(..
+1208:function readyHTML(bl,t,cs){const pct=readiness(bl,cs),C=2*Math.PI*26,col=pct>=90?'va
+1215:function buildBilanInto(page){const k=kit(),t=totals(),c=cog(),cs=cogState(c),bl=bloc
+1231:/* Fiche objet (tiroir du bas) */
+1232:function openItem(id,page){openItemInto(id,page||0,true);}
+1233:function openItemInto(id,page,fresh){const it=get(id);if(!it)return;S.openItem=id;con
+1250:/* Menu contextuel ancré (équivalent Menu SwiftUI) */
+1252:function closeMenu(){if(menuEl){menuEl.remove();menuEl=null;}}
+1253:function openMenu(anchor,items){closeMenu();const sr=sheetBot.getBoundingClientRect()
+1259:function itemMenu(btn){const id=S.openItem,it=get(id),z=zoneOf(id),go=i=>pagerBot.scr
+1266:/* Sac (appui long sur le sac) */
+1267:function openBag(page,refresh){const k=kit(),b=BAGS[k.bag],t=totals(),c=cfg();const Z
+1278:/* Commander la configuration réelle */
+1280:function renderOrderBtn(){if(!orderBtn)return;const l=toOrder(),t=orderTotal();orderB
+1281:function pieceRow(key){const i=pieceInfo(key),s=pieceState(key),cw=CW[pieceCw(key)];r
+1282:function openOrder(){const l=toOrder(),t=orderTotal(),all=pieces(),k=kit();
+1292:function pushSub(title,html){$('subT').textContent=title;subBody.innerHTML=html;subBo
+1293:function popSub(silent){if(!subEl.classList.contains('on'))return;subEl.classList.rem
+1295:function openPreorder(){const l=toOrder(),t=orderTotal();
+1308:function confirmOrder(){const l=toOrder(),t=orderTotal();l.forEach(key=>ORDER.set(key
+1312:/* Inventaire (poignée vers le haut) */
+1313:function invTile(it){const inK=isPacked(it.id);const bd=it.state==='lent'?'<i class="
+1315:function onePage(){const keys=[...new Set([...OWN.keys(),...ORDER.keys()])];return `<
+1317:function openInv(){const fams=[...new Set(INV.map(i=>i.fam))];const pages=[onePage()]
+1336:/* Glisser pour fermer */
+1337:function sheetDrag(el,dir){let D=null;
+1346:/* ───────────── Gestes sur la scène ───────
+1348:function pick(x,y){const r=canvas.getBoundingClientRect();ndc.set((x-r.left)/r.width*
+1352:function project(v){const p=v.clone().project(camera);return{x:(p.x+1)/2*innerWidth,y
+1354:const STEP=()=>clamp(innerWidth*.36,110,210);
+1381:function topZone(){return(parseFloat(getComputedStyle(document.documentElement).paddi
+1382:function endPtr(e){if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);clearTim
+1395:function tap(g){const pk=g.pk,now=performance.now();
+1409:/* Island : toucher = bilan, glisser ↓ = bilan, glisser ←→ = changer de kit, ap
+1411:function compareStart(){if(S.cmp)return;const k=kit();S.cmp={bag:k.bag,cfg:JSON.strin
+1412:function compareEnd(){if(!S.cmp)return;CFG[S.cmp.bag]=JSON.parse(S.cmp.cfg);S.cmp=nul
+1418:/* Poignée */
+1426:/* Rail : toucher = aperçu, monter = mettre dans le sac */
+1429:function targetZoneFor(b){const k=b.dataset.k,id=b.dataset.id;if(k==='bag')return'bag
+1430:function startFly(b,x,y){fly=document.createElement('div');fly.className='flyer';fly.
+1431:function moveFly(x,y){if(!fly)return;const armed=y<railTop()-36;if(armed!==fly.armed)
+1432:function endFly(b){const f=fly;fly=null;b.classList.remove('lifting');const zone=S.hl
+1436:function tileCommit(b){const k=b.dataset.k,id=b.dataset.id;
+1441:function tileTap(b){const k=b.dataset.k;if(k==='add'||(S.swap&&(k==='own'||k==='alt')
+1451:/* ───────────── Mode Apparence : même scène, autre HUD �
+1453:const STOPPART={bag:'all',lid:'lid',main:'body',front:'front',sides:'sides',hip:'hip'
+1454:const PARTSTOP={all:'bag',lid:'lid',body:'main',front:'front',sides:'sides',hip:'hip'
+1456:function catsFor(p){if(p==='all')return['shape','mod','col'];if(p==='body')return['sh
+1457:function fixCat(){const l=catsFor(S.part);if(!l.includes(S.cat))S.cat=l[0];}
+1458:function moveLens(el,i){requestAnimationFrame(()=>{const b=el.querySelectorAll('butto
+1459:function glassSeg(el){let G=null;
+1472:function renderCats(){const l=catsFor(S.part);catsEl.innerHTML='<span class="lens" ar
+1473:function partSummary(p){const c=cfg(),k=kit();if(p==='all')return'Châssis + '+BAGS[k
+1475:function partColor(){const c=cfg(),p=S.part;return p==='all'?c.body.col:p==='webbing'
+1476:function mutate(p,cat,id){const c=cfg();
+1483:function simulate(p,cat,id){const k=kit();if(cat==='shape'&&(p==='all'||p==='body'))r
+1484:function optList(){const p=S.part,c=cfg(),k=kit(),cat=S.cat,out=[];
+1492:function ctile(o){const col=partColor();let gl;
+1502:function renderCRail(){const l=optList();crail.innerHTML=l.map(ctile).join('');crail.
+1504:function flashPart(p){for(const m of bagParts){const u=m.userData;if(p==='all'||(p===
+1505:function snapshot(){const k=kit();return{k:S.k,bag:k.bag,cfg:JSON.stringify(CFG[k.bag
+1506:function relocate(){const k=kit();let n=0;for(const z of['lid','front','sides','hip']
+1507:function showUndo(n){undoEl.hidden=false;undoEl.setAttribute('aria-label','Annuler : 
+1508:function hideUndo(){undoEl.classList.remove('on');clearTimeout(undoT);setTimeout(()=>
+1509:function syncObjs(){const k=kit(),want=new Set(ZIDS.flatMap(z=>k.packed[z]||[]));[...
+1510:function restoreSnap(s){const k=kit(),w0=bagWeight();k.bag=s.bag;CFG[k.bag]=JSON.pars
+1511:function undo(){const s=undoStack.pop();if(!s||s.k!==S.k){hud('Rien à annuler','',90
+1512:function applyOpt(id,mode){const P=mode==='preview',p=S.part,cat=S.cat,k=kit(),o=optL
+1528:function commitPreview(){if(!S.preview)return;undoStack.push(S.preview.snap);showUndo
+1529:function cancelPreview(){if(!S.preview)return;const s=S.preview.snap;S.preview=null;r
+1530:function peekOpt(id){const o=optList().find(x=>String(x.id)===String(id));if(!o)retur
+1534:function selectPart(part){S.part=part;fixCat();const st=PARTSTOP[part];if(st&&ZI[st]!
+1535:function setMode(m,silent){if(S.mode===m)return;S.mode=m;appEl.classList.toggle('m-cu
+1541:function partKey(p){if(p==='harness'||p==='webbing')return'chassis';if(p==='body')ret
+1542:function stateTxt(key){const s=pieceState(key);return s==='own'?'À toi':s==='order'?
+1543:function ptsHTML(host){const cap=ptsCap(host),u=ptsUsed(host);return `<span class="pt
+1544:function openPart(p,page,refresh){if(p==='all'){openBag(1);return;}const c=cfg(),P=p=
+1558:function modRow(m){const M=ONE.mods[m],on=modOn(m),free=ptsCap(M.host)-ptsUsed(M.host
+1560:function toggleMod(m,on){const M=ONE.mods[m];if(on===modOn(m))return;if(on&&ptsCap(M.
+1563:function resetPart(p){const k=kit(),d=JSON.parse(DEF[k.bag]),c=cfg(),snap=snapshot(),
+1575:/* ───────────── Remplir le sac la veille / débrief après
+1577:const SLOTD={bottom:'au fond',bottomF:'au fond, côté poche',midBack:'au milieu, con
+1578:function fillOrder(){const k=kit(),o=[];(k.packed.back||[]).forEach(id=>o.push(id));[
+1579:function startDeck(kind){closeSheets(true);if(S.mode==='custo')setMode('gestion',true
+1584:function showCard(){const d=S.deck,id=deckCur();dprog.style.width=(d.i/Math.max(1,d.l
+1589:function deckDecide(yes){const d=S.deck,id=deckCur();if(!id)return;(yes?d.yes:d.no).p
+1593:function deckEnd(){const d=S.deck,k=kit();dprog.style.width='100%';let t,s,acts='';
+1602:function quitDeck(){if(!S.deck)return;S.deck=null;appEl.classList.remove('m-deck');de
+1603:function lighten(){const d=S.deck,k=kit();if(!d||!d.cut)return;const snap=snapshot();
+1613:/* ───────────── Sortie par geste ────────�
+1614:function exitStudio(){if(S.exited)return;S.exited=true;closeSheets(true);hidePeek();s
+1616:function enterStudio(){if(!S.exited)return;S.exited=false;homeEl.classList.remove('on
+1619:/* Clavier */
+1630:/* ───────────── Premier lancement : 5 gestes ────�
+1631:const STEPS=['Glisse pour faire le tour du sac','Monte un objet dans le sac','Écarte
+1632:function showStep(){coachEl.className='coach s'+(ci+1);$('coachCap').textContent=STEP
+1633:function nextStep(){ci++;if(ci>=STEPS.length){endCoach();return;}showStep();}
+1634:function endCoach(){clearTimeout(coT);coachEl.hidden=true;try{localStorage.setItem('l
+1635:function startCoach(force){let seen=false;try{seen=localStorage.getItem('lkdv-kit-stu
+1638:/* Thème */
+1639:function applyTheme(){renderer.toneMappingExposure=1.0;cage.material.color.set(0x1740
+1642:/* ───────────── Démarrage ──────────�
+1643:/* Accès de test (parité) : ?debug=1 expose le moteur, sans effet sinon */
+1650:function routeHash(){const h=decodeURIComponent(location.hash.slice(1));if(!h||!INVMA

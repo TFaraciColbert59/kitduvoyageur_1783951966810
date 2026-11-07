@@ -1,11 +1,13 @@
 // Pièces ONE : état des modules, coloris, état de chaque pièce. Pur, sans mutation.
-// Maquette Kit_Studio_v2.html l.700-717, l.756-761.
-import { BAGS, COLORWAYS, MODULE_IDS, ONE } from './catalog';
+// Maquette Kit_Studio_v2.html l.700-717, l.756-761. Catalogue lu dans le registre runtime.
+import { BAGS, MODULE_IDS } from './catalog';
 import type { BagId, ColorwayId, ConfigSet, MaterialKey, ModuleId } from './catalog';
 import { currentConfig, currentKit } from './state';
+import { studioData } from './studioData';
 import type { KitState, PieceKey } from './types';
 
-const CWIDS: readonly ColorwayId[] = ['foret', 'sauge', 'pierre', 'nuit'];
+/** Coloris disponibles, dans l'ordre du catalogue réel. */
+const colorwayIds = (): readonly ColorwayId[] => Object.keys(studioData().colorways) as ColorwayId[];
 
 /** Forme effective du couvercle (maquette effLid, l.759) : un corps « roll » n'a pas de couvercle. */
 export function effLid(s: KitState): string | undefined {
@@ -16,7 +18,7 @@ export function effLid(s: KitState): string | undefined {
 /** Module actif (maquette modOn, l.701). */
 export function modOn(s: KitState, m: ModuleId): boolean {
   const c = currentConfig(s);
-  const M = ONE.mods[m];
+  const M = studioData().one.mods[m];
   if (M.acc) return c.acc.includes(M.acc);
   if (m === 'lid') return effLid(s) !== 'none';
   if (m === 'hipp') return c.hip.shape === 'wide';
@@ -29,7 +31,7 @@ function withShape(c: ConfigSet, part: 'lid' | 'front' | 'sides' | 'hip', shape:
 
 /** Active ou retire un module, sans contrôle de points (maquette setMod, l.702-703). Renvoie un nouvel état. */
 export function setMod(s: KitState, m: ModuleId, on: boolean): KitState {
-  const M = ONE.mods[m];
+  const M = studioData().one.mods[m];
   const bag = currentKit(s).bag;
   let c = currentConfig(s);
   if (M.acc) {
@@ -43,14 +45,16 @@ export function setMod(s: KitState, m: ModuleId, on: boolean): KitState {
   return { ...s, config: { ...s.config, [bag]: c } };
 }
 
-/** Coloris d'une couleur : comparaison des clés matière (maquette cwOf, l.707). Défaut : forêt. */
+/** Coloris d'une couleur : comparaison des clés matière (maquette cwOf, l.707). Défaut : premier coloris. */
 export function cwOf(col: MaterialKey | undefined): ColorwayId {
-  if (col === undefined) return 'foret';
+  const colorways = studioData().colorways;
+  const ids = colorwayIds();
+  if (col === undefined) return ids[0] ?? 'foret';
   return (
-    CWIDS.find((id) => {
-      const w = COLORWAYS[id];
+    ids.find((id) => {
+      const w = colorways[id];
       return w.body === col || w.pocket === col || w.trim === col || w.accent === col;
-    }) ?? 'foret'
+    }) ?? ids[0] ?? 'foret'
   );
 }
 
@@ -59,7 +63,7 @@ export function pieceCw(s: KitState, key: PieceKey): ColorwayId {
   const c = currentConfig(s);
   if (key === 'chassis') return cwOf(c.harness.col);
   if (key.startsWith('corps')) return cwOf(c.body.col);
-  const M = ONE.mods[key.slice(4) as ModuleId];
+  const M = studioData().one.mods[key.slice(4) as ModuleId];
   return cwOf(c[M.part].col);
 }
 
@@ -78,14 +82,15 @@ export interface PieceInfo {
   readonly vs: boolean;
 }
 
-/** Fiche d'une pièce (maquette pieceInfo, l.710). */
+/** Fiche d'une pièce (maquette pieceInfo, l.710). Prix du catalogue réel (centimes ÷ 100). */
 export function pieceInfo(key: PieceKey): PieceInfo {
-  if (key === 'chassis') return { n: ONE.chassis.n, eur: ONE.chassis.eur, gl: ONE.chassis.gl, d: ONE.chassis.d, vs: true };
+  const one = studioData().one;
+  if (key === 'chassis') return { n: one.chassis.n, eur: one.chassis.eur, gl: one.chassis.gl, d: one.chassis.d, vs: true };
   if (key.startsWith('corps')) {
     const b = key.slice(6) as BagId;
-    return { n: BAGS[b].n, eur: ONE.corps[b].eur, gl: 'v_bag', d: ONE.corps[b].d, vs: true };
+    return { n: BAGS[b].n, eur: one.corps[b].eur, gl: 'v_bag', d: one.corps[b].d, vs: true };
   }
-  const M = ONE.mods[key.slice(4) as ModuleId];
+  const M = one.mods[key.slice(4) as ModuleId];
   return { n: M.n, eur: M.eur, gl: M.gl, d: M.d, vs: M.gl.startsWith('v_') };
 }
 

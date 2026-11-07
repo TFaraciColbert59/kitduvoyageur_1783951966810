@@ -12,7 +12,7 @@
 import { BoxGeometry, CylinderGeometry, SphereGeometry } from 'three';
 import { describe, expect, it } from 'vitest';
 import { roundedBox } from '../scene/bagBuilder';
-import { FABRIC_REPEAT, FABRIC_TILE_M } from '../scene/bag/fabricMaps';
+import { FABRIC_REPEAT, FABRIC_TILE_M } from '../scene/textures';
 import { uvMeters } from '../scene/uv';
 
 /** Plus grande étendue d'UV de la géométrie, sur chaque axe. */

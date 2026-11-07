@@ -24,7 +24,8 @@ import {
   type DrawerMachineState,
   type StudioDrawer,
 } from '../state/drawerMachine';
-import { KitStudioView } from '@/features/kit-studio/components/KitStudioView';
+import type { StudioPageState } from '@/features/kit-studio/server/studioMode';
+import { StudioHost } from './StudioHost';
 import {
   HubItineraryDrawer,
   HubGroupeDrawer,
@@ -76,6 +77,11 @@ export interface HubCampShellProps {
   counts?: HubCounters;
   searchParams?: Record<string, string | string[] | undefined>;
   drawerContent?: React.ReactNode;
+  /**
+   * État du studio décidé par la page serveur du hub (`resolveStudioPageState`).
+   * `undefined` = pas de données serveur : le studio n'est jamais montré en démonstration.
+   */
+  studioState?: StudioPageState;
 }
 
 function buildSearchString(params?: Record<string, string | string[] | undefined>): string {
@@ -174,6 +180,7 @@ export function HubCampShell({
   counts,
   searchParams,
   drawerContent,
+  studioState,
 }: HubCampShellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -425,15 +432,6 @@ export function HubCampShell({
     (drawer?: StudioDrawer, kitId?: string | null) => {
       if (!machineRef.current) return;
       machineRef.current.enterStudio(drawer, kitId);
-      pushMachineUrl(machineRef.current.getState());
-    },
-    [pushMachineUrl]
-  );
-
-  const handleSelectStudioDrawer = useCallback(
-    (drawer?: StudioDrawer) => {
-      if (!machineRef.current) return;
-      machineRef.current.setStudioDrawer(drawer);
       pushMachineUrl(machineRef.current.getState());
     },
     [pushMachineUrl]
@@ -920,19 +918,11 @@ export function HubCampShell({
     ]
   );
 
-  // Mode plein écran Kit Studio (?studio=1, zéro nouvelle route Next.js — B-02 / C-04)
+  // Mode plein écran Kit Studio (?studio=1, zéro nouvelle route Next.js — B-02 / C-04).
+  // P3 : c'est le studio SURVIVANT (même `KitStudioClient` que /kit-studio, même scène),
+  // monté en import dynamique pour ne pas peser sur le premier chargement du hub.
   if (navState.type === 'STUDIO') {
-    return (
-      <KitStudioView
-        requestedKitId={navState.kitId}
-        activeDrawer={navState.activeDrawer}
-        subDrawerId={navState.subDrawerId}
-        tripId={trip?.id ?? null}
-        crewId={adventure?.nature === 'collectif' ? adventure.id : null}
-        onSelectDrawer={handleSelectStudioDrawer}
-        onExitStudio={handleExitStudio}
-      />
-    );
+    return <StudioHost state={studioState} onExit={handleExitStudio} />;
   }
 
   return (

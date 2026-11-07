@@ -4,15 +4,14 @@
  *
  * Parses glTF 2.0 binary directly into Three.js scene objects with:
  * - Isolated `THREE.MeshStandardMaterial` per mesh (guarantees D-04 part isolation)
- * - Named `parts: Map<PartId, THREE.Mesh>`
+ * - Named `parts: Map<BagPartId, THREE.Mesh>`
  * - Named `anchors: Map<string, BagAnchorSpec>`
- * - Hinge extraction (`hinges: Map<PartId, BagHingeSpec>`), strictly gated by `manifest.capabilities.openable`
+ * - Hinge extraction (`hinges: Map<BagPartId, BagHingeSpec>`), strictly gated by `manifest.capabilities.openable`
  * - Graceful degradation (`status: 'degraded'`) on missing/corrupt GLB or manifest without throwing
  */
 
 import * as THREE from 'three';
-import type { BagCapabilities, PartId } from '../../state/types';
-import type { Vec3Tuple } from '../camera/intents';
+import type { BagCapabilities, BagPartId, Vec3Tuple } from '../../domain/bagModel';
 import {
   DEGRADED_BAG_CAPABILITIES,
   type BagAnchorSpec,
@@ -37,32 +36,34 @@ const TYPE_COMPONENTS: Record<string, number> = {
   VEC4: 4,
 };
 
-export interface LoadedBagScene {
+import type { AtlasPixelBuffer } from './atlas';
+
+export interface LoadedBagAsset {
   status: 'ready';
   modelId: string;
   manifest: BagManifest;
   capabilities: BagCapabilities;
   root: THREE.Group;
-  parts: Map<PartId, THREE.Mesh>;
+  parts: Map<BagPartId, THREE.Mesh>;
   anchors: Map<string, BagAnchorSpec>;
-  hinges: Map<PartId, BagHingeSpec>;
+  hinges: Map<BagPartId, BagHingeSpec>;
   dispose: () => void;
 }
 
-export interface DegradedBagScene {
+export interface DegradedBagAsset {
   status: 'degraded';
   modelId: string;
   reason: string;
   manifest: BagManifest | null;
   capabilities: BagCapabilities;
   root: null;
-  parts: Map<PartId, THREE.Mesh>;
+  parts: Map<BagPartId, THREE.Mesh>;
   anchors: Map<string, BagAnchorSpec>;
-  hinges: Map<PartId, BagHingeSpec>;
+  hinges: Map<BagPartId, BagHingeSpec>;
   dispose: () => void;
 }
 
-export type BagLoadResult = LoadedBagScene | DegradedBagScene;
+export type BagLoadResult = LoadedBagAsset | DegradedBagAsset;
 
 export interface BagAssetProvider {
   fetchManifest: (modelId: string) => Promise<BagManifest>;
@@ -72,6 +73,10 @@ export interface BagAssetProvider {
    * retombe alors sur le chemin historique. Un fournisseur de test peut l'ignorer.
    */
   fetchGlb: (modelId: string, url?: string) => Promise<ArrayBuffer>;
+  /** Carte de zones à 3 canaux pour les modèles texturés (Avenant § 4). */
+  fetchZonesMap?: (modelId: string) => Promise<AtlasPixelBuffer | null>;
+  /** Albédo délié de la lumière pour les modèles texturés (Avenant § 4). */
+  fetchUnlitAlbedo?: (modelId: string) => Promise<AtlasPixelBuffer | null>;
 }
 
 const defaultBrowserProvider: BagAssetProvider = {
@@ -544,13 +549,13 @@ function createIsolatedMaterial(
   json: GltfJson,
   matIdx: number | undefined,
   textures: Map<number, THREE.Texture> = new Map()
-): THREE.MeshStandardMaterial {
+): THREE.MeshPhysicalMaterial {
   const def = matIdx !== undefined ? json.materials?.[matIdx] : undefined;
   const pbr = def?.pbrMetallicRoughness;
   const base = pbr?.baseColorFactor ?? [0.24, 0.35, 0.29, 1];
   const color = new THREE.Color().setRGB(base[0], base[1], base[2]);
 
-  const material = new THREE.MeshStandardMaterial({
+  const material = new THREE.MeshPhysicalMaterial({
     color,
     roughness: pbr?.roughnessFactor ?? 0.85,
     metalness: pbr?.metallicFactor ?? 0.0,
@@ -645,9 +650,9 @@ export async function loadBagAsset(
     const root = new THREE.Group();
     root.name = `bag-scene:${safeId}`;
 
-    const parts = new Map<PartId, THREE.Mesh>();
+    const parts = new Map<BagPartId, THREE.Mesh>();
     const anchors = new Map<string, BagAnchorSpec>();
-    const hinges = new Map<PartId, BagHingeSpec>();
+    const hinges = new Map<BagPartId, BagHingeSpec>();
     const geometriesToDispose: THREE.BufferGeometry[] = [];
     const materialsToDispose: THREE.Material[] = [];
 
