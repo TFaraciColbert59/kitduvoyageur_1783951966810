@@ -4,8 +4,30 @@ import path from 'node:path';
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CarnetCard } from '../CarnetCard';
+import { CarnetCard as ControlledCarnetCard } from '../CarnetCard';
 import { DETAIL, detail } from './fixtures';
+
+/** Le jour est possédé par l'écran : ce harnais joue son rôle (état local), sauf
+    si le test impose `dayIndex` lui-même (mode contrôlé). */
+type CardProps = Omit<React.ComponentProps<typeof ControlledCarnetCard>, 'dayIndex' | 'onDayChange'> & {
+  dayIndex?: number;
+  onDayChange?: (index: number) => void;
+};
+
+function CarnetCard({ dayIndex, onDayChange, ...rest }: CardProps) {
+  const [local, setLocal] = React.useState(0);
+  const controlled = dayIndex !== undefined;
+  return (
+    <ControlledCarnetCard
+      {...rest}
+      dayIndex={controlled ? dayIndex : local}
+      onDayChange={(next) => {
+        if (!controlled) setLocal(next);
+        onDayChange?.(next);
+      }}
+    />
+  );
+}
 
 afterEach(() => cleanup());
 
@@ -23,7 +45,7 @@ const TRACE = {
   ],
 };
 
-function base(overrides: Partial<React.ComponentProps<typeof CarnetCard>> = {}) {
+function base(overrides: Partial<CardProps> = {}) {
   return {
     detail: detail({
       photoMoments: [
@@ -472,7 +494,7 @@ const DAY_THREE = {
   points: [],
 };
 
-function withDays(overrides: Partial<React.ComponentProps<typeof CarnetCard>> = {}) {
+function withDays(overrides: Partial<CardProps> = {}) {
   return base({
     detail: detail({
       days: [DAY_ONE, DAY_TWO, DAY_THREE],
@@ -651,5 +673,28 @@ describe('CarnetCard — capsule des drawers et mouvement du balayage', () => {
     );
     const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce) {\n  .ckp-day--next'));
     expect(reduced).toMatch(/\.ckp-day--next, \.ckp-day--prev \{ animation: none; \}/);
+  });
+});
+
+describe('CarnetCard — jour contrôlé par l’écran', () => {
+  it('affiche le jour reçu dès le montage (le jour survit au démontage de la carte)', () => {
+    const { container } = render(<CarnetCard {...withDays({ dayIndex: 2 })} />);
+    expect(norm(dayLabel(container))).toBe('27 sept.');
+  });
+
+  it('signale le jour voulu sans le changer lui-même, bornes comprises', () => {
+    const onDayChange = vi.fn();
+    const { container } = render(<CarnetCard {...withDays({ dayIndex: 0, onDayChange })} />);
+    const card = container.querySelector('.ckp-card') as Element;
+    fireEvent.keyDown(card, { key: 'ArrowRight' });
+    expect(onDayChange).toHaveBeenLastCalledWith(1);
+    expect(dayLabel(container)).toBe('Résumé');
+    fireEvent.keyDown(card, { key: 'ArrowLeft' });
+    expect(onDayChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('borne un jour hors limites au dernier jour', () => {
+    const { container } = render(<CarnetCard {...withDays({ dayIndex: 99 })} />);
+    expect(norm(dayLabel(container))).toBe('28 sept.');
   });
 });

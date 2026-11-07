@@ -16,6 +16,7 @@ import type { CarnetPageId } from './CarnetPages';
 import type { CarnetStatsTab } from '@/features/carnet/detail/stats';
 import { CarnetPostSheet } from './CarnetPostSheet';
 import { CarnetMapCard } from './CarnetMapCard';
+import { clampDayPage, dayForPage } from './dayMapFocus';
 import { CarnetMediaViewer } from './CarnetMediaViewer';
 import { CarnetMoreMenu } from './CarnetMoreMenu';
 import { CarnetStatsPane } from './panes/CarnetStatsPane';
@@ -42,6 +43,10 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
   const [statTab, setStatTab] = useState<CarnetStatsTab>('distance');
   /** Page du carrousel média, gardée pendant la session de l'écran. */
   const [page, setPage] = useState<CarnetPageId>('posts');
+  /* Page du balayage de la carte (0 = Résumé, n = jour n) : possédée ici pour
+     survivre au démontage de la carte quand un drawer s'ouvre, et piloter la
+     carte du bas. */
+  const [dayPage, setDayPage] = useState(0);
   const [postIndex, setPostIndex] = useState<number | null>(null);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -92,6 +97,9 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
     }),
     [detail, engagement.favorited, engagement.liked, engagement.likes],
   );
+
+  const dayIndex = clampDayPage(dayPage, detail.days?.length ?? 0);
+  const mapDay = useMemo(() => dayForPage(detail.days, dayIndex), [detail.days, dayIndex]);
 
   const shareUrl = useMemo(
     () => (typeof window === 'undefined' ? '' : `${window.location.origin}/carnets/${detail.id}`),
@@ -223,6 +231,8 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             detail={detailView}
             page={page}
             onPageChange={openPage}
+            dayIndex={dayIndex}
+            onDayChange={setDayPage}
             canWrite={canWrite}
             onRequireAuth={requireAuth}
             onOpenCarnet={openCarnetFromCard}
@@ -259,7 +269,7 @@ export function CarnetScreen({ detail }: CarnetScreenProps) {
             }
           />
         )}
-        <CarnetMapCard detail={detailView} />
+        <CarnetMapCard detail={detailView} day={mapDay} />
       </main>
 
       {/* Le post du moment est une feuille superposée à la carte, exactement

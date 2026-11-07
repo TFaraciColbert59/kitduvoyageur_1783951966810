@@ -2,7 +2,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import type { CarnetDetail } from '@/features/carnet/detail/types';
+import type { CarnetDay, CarnetDetail } from '@/features/carnet/detail/types';
 import type { CarnetPlaceFocus } from './CarnetCard';
 
 /** Carte du monde du Compte, telle quelle : MapLibre 3D, HUD, crédits Esri. */
@@ -18,6 +18,12 @@ export interface CarnetMapCardProps {
   detail: CarnetDetail;
   /** Cible de recentrage demandée depuis la ligne de lieu de la carte. */
   focus?: CarnetPlaceFocus | null;
+  /**
+   * Jour affiché en haut de la fiche : `null` = page Résumé (tracé global),
+   * un jour = ce jour est mis en avant. La carte reste montée et ne bouge pas
+   * de place : seuls les éléments dessinés et le cadrage changent.
+   */
+  day?: CarnetDay | null;
 }
 
 /**
@@ -26,7 +32,7 @@ export interface CarnetMapCardProps {
  * d'une sortie du Compte. Sans trace en base, l'état vide est affiché — jamais
  * l'invitation « connecte-toi » de la carte du compte, qui n'a pas de sens ici.
  */
-export function CarnetMapCard({ detail, focus = null }: CarnetMapCardProps) {
+export function CarnetMapCard({ detail, focus = null, day = null }: CarnetMapCardProps) {
   /* `isOwner` est calculé côté serveur avec les cookies : c'est la seule
      source fiable pour l'état de la carte (le contexte client peut être en
      retard sur la session). */
@@ -41,6 +47,7 @@ export function CarnetMapCard({ detail, focus = null }: CarnetMapCardProps) {
           focus={focus}
           variant="carnet"
           trace={detail.trace}
+          highlight={day ? day.points : null}
           emptyTitle="Aucun tracé enregistré pour ce carnet."
           emptyHint="L’auteur n’a pas joint de trace GPS : rien n’est dessiné plutôt qu’inventé."
         />

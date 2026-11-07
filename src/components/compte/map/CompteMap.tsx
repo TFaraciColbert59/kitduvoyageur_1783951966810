@@ -27,6 +27,8 @@ import type {
   MapTrack,
   TrackPoint,
 } from '@/features/compte/map/types';
+import { dayMapFocus, isDayHighlight } from '@/components/carnet/profile/dayMapFocus';
+import type { CarnetDayPoint } from '@/features/carnet/detail/types';
 import { CompteMapAttribution, CompteMapHud } from './CompteMapHud';
 import { CompteMapCallout } from './CompteMapCallout';
 import { CompteMapFallback } from './CompteMapFallback';
@@ -34,6 +36,17 @@ import { CompteMapState } from './CompteMapState';
 import './compte-map.css';
 
 const DEFAULT_CENTER: [number, number] = [2.5, 46.5];
+
+/* Peintures du tracé de carnet : les valeurs historiques (liseré blanc, halo
+   sauge, ligne forêt), partagées par le tracé global et le tracé du jour. */
+const TRACE_WHITE = '#FFFFFF';
+const TRACE_SAGE = '#5B7F55';
+const TRACE_FOREST = '#17402C';
+const TRACE_OPACITY = { casing: 0.68, glow: 0.35, line: 0.9 } as const;
+/** Part de l'opacité gardée par le tracé global quand un jour est affiché. */
+const TRACE_DIM_FACTOR = 0.3;
+const DAY_FIT_MS = 600;
+const SUMMARY_FIT_MS = 1100;
 
 export type CompteMapAuthState = 'loading' | 'guest' | 'owner' | 'error';
 
@@ -65,6 +78,13 @@ export interface CompteMapProps {
   /** État vide honnête, affiché seulement si le carnet n'a réellement aucune trace. */
   emptyTitle?: string;
   emptyHint?: string;
+  /**
+   * Variant `carnet` seulement. `null`/absent = page Résumé (tracé global tel
+   * quel). Tableau = page d'un jour : tracé global atténué, tracé du jour par
+   * dessus, départ/arrivée, caméra sur les bornes du jour. Tableau vide = jour
+   * sans point : tracé global atténué, caméra globale, rien d'inventé.
+   */
+  highlight?: CarnetDayPoint[] | null;
 }
 
 type Selected =
@@ -134,6 +154,27 @@ function carnetTraceCollection(points: TrackPoint[]) {
               },
             },
           ]
+        : [],
+  };
+}
+
+/** Départ et arrivée réels du jour affiché ; vide si le jour n'a pas de tracé. */
+function dayEndsCollection(start: TrackPoint | null, end: TrackPoint | null) {
+  return {
+    type: 'FeatureCollection' as const,
+    features:
+      start && end
+        ? [
+            { role: 'start', point: start },
+            { role: 'end', point: end },
+          ].map((entry) => ({
+            type: 'Feature' as const,
+            properties: { id: `carnet-day-${entry.role}`, role: entry.role },
+            geometry: {
+              type: 'Point' as const,
+              coordinates: [entry.point.lng, entry.point.lat],
+            },
+          }))
         : [],
   };
 }
@@ -225,6 +266,7 @@ export function CompteMap({
   trace = null,
   emptyTitle,
   emptyHint,
+  highlight = null,
 }: CompteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -250,6 +292,10 @@ export function CompteMap({
     () => (tracePoints.length >= 2 ? boundsOfPoints(tracePoints) : null),
     [tracePoints]
   );
+  /* Page de jour : lue seulement en variant carnet (le Compte ne la passe pas). */
+  const dayPoints = isCarnet ? highlight : null;
+  const dayFocus = useMemo(() => dayMapFocus(dayPoints), [dayPoints]);
+  const dayDimmed = isCarnet && isDayHighlight(dayPoints);
 
   const config = mapModeConfig(context.mode);
   const query = useQuery<CompteMapPayload, Error>({
@@ -514,7 +560,11 @@ export function CompteMap({
         type: 'line',
         source: 'compte-carnet-trace',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#FFFFFF', 'line-width': 6, 'line-opacity': 0.68 },
+        paint: {
+          'line-color': TRACE_WHITE,
+          'line-width': 6,
+          'line-opacity': TRACE_OPACITY.casing,
+        },
       });
     });
     ensureLayer(map, 'compte-carnet-trace-glow', () => {
@@ -524,9 +574,9 @@ export function CompteMap({
         source: 'compte-carnet-trace',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#5B7F55',
+          'line-color': TRACE_SAGE,
           'line-width': 7,
-          'line-opacity': 0.35,
+          'line-opacity': TRACE_OPACITY.glow,
           'line-blur': 4,
         },
       });
@@ -537,7 +587,7 @@ export function CompteMap({
         type: 'line',
         source: 'compte-carnet-trace',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#17402C', 'line-width': 3, 'line-opacity': 0.9 },
+        paint: { 'line-color': TRACE_FOREST, 'line-width': 3, 'line-opacity': TRACE_OPACITY.line },
       });
     });
     const visible = tracePoints.length >= 2 ? 'visible' : 'none';
@@ -550,15 +600,112 @@ export function CompteMap({
     }
   }, [map, ready, isCarnet, tracePoints]);
 
-  /* Cadrage du tracé du carnet : le parcours remplit la bande carte, en 3D
-     (même inclinaison que la carte d'une sortie du Compte). */
+  /* Page de jour : le tracé global reste lisible mais passe au second plan
+     (opacité des calques existants, jamais d'animation de filtre). */
   useEffect(() => {
-    if (!map || !ready || !traceBounds) return;
+    if (!map || !ready || !isCarnet) return;
+    const factor = dayDimmed ? TRACE_DIM_FACTOR : 1;
+    const opacities: Array<[string, number]> = [
+      ['compte-carnet-trace-casing', TRACE_OPACITY.casing],
+      ['compte-carnet-trace-glow', TRACE_OPACITY.glow],
+      ['compte-carnet-trace-line', TRACE_OPACITY.line],
+    ];
+    for (const [layer, base] of opacities) {
+      if (map.getLayer(layer)) map.setPaintProperty(layer, 'line-opacity', base * factor);
+    }
+  }, [map, ready, isCarnet, tracePoints, dayDimmed]);
+
+  /* Tracé du jour par-dessus : même peinture que la ligne du carnet, plus le
+     départ et l'arrivée réels. Sans tracé de jour, les calques sont masqués. */
+  useEffect(() => {
+    if (!map || !ready || !isCarnet) return;
+    ensureSource(
+      map,
+      'compte-carnet-day',
+      carnetTraceCollection(dayFocus?.line ?? []) as ReturnType<typeof tracksCollection>
+    );
+    ensureSource(
+      map,
+      'compte-carnet-day-ends',
+      dayEndsCollection(dayFocus?.start ?? null, dayFocus?.end ?? null) as ReturnType<
+        typeof pointsCollection
+      >
+    );
+    ensureLayer(map, 'compte-carnet-day-casing', () => {
+      map.addLayer({
+        id: 'compte-carnet-day-casing',
+        type: 'line',
+        source: 'compte-carnet-day',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': TRACE_WHITE,
+          'line-width': 6,
+          'line-opacity': TRACE_OPACITY.casing,
+        },
+      });
+    });
+    ensureLayer(map, 'compte-carnet-day-glow', () => {
+      map.addLayer({
+        id: 'compte-carnet-day-glow',
+        type: 'line',
+        source: 'compte-carnet-day',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': TRACE_SAGE,
+          'line-width': 7,
+          'line-opacity': TRACE_OPACITY.glow,
+          'line-blur': 4,
+        },
+      });
+    });
+    ensureLayer(map, 'compte-carnet-day-line', () => {
+      map.addLayer({
+        id: 'compte-carnet-day-line',
+        type: 'line',
+        source: 'compte-carnet-day',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': TRACE_FOREST, 'line-width': 3, 'line-opacity': TRACE_OPACITY.line },
+      });
+    });
+    ensureLayer(map, 'compte-carnet-day-ends-dot', () => {
+      map.addLayer({
+        id: 'compte-carnet-day-ends-dot',
+        type: 'circle',
+        source: 'compte-carnet-day-ends',
+        paint: {
+          'circle-radius': 5.5,
+          'circle-color': ['match', ['get', 'role'], 'end', TRACE_FOREST, TRACE_SAGE],
+          'circle-stroke-color': TRACE_WHITE,
+          'circle-stroke-width': 2,
+        },
+      });
+    });
+    const visible = dayFocus ? 'visible' : 'none';
+    for (const layer of [
+      'compte-carnet-day-casing',
+      'compte-carnet-day-glow',
+      'compte-carnet-day-line',
+      'compte-carnet-day-ends-dot',
+    ]) {
+      if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visible);
+    }
+  }, [map, ready, isCarnet, dayFocus]);
+
+  /* Cadrage du carnet : le parcours remplit la bande carte, en 3D (même
+     inclinaison que la carte d'une sortie du Compte). Page de jour : bornes du
+     jour en ≈ 600 ms ; Résumé ou jour sans tracé : bornes globales. Le premier
+     cadrage garde sa durée d'origine ; prefers-reduced-motion = saut immédiat. */
+  const fitCount = useRef(0);
+  const cameraBounds = dayFocus?.bounds ?? traceBounds;
+  useEffect(() => {
+    if (!map || !ready || !cameraBounds) return;
     const reduced = prefersReducedMotion();
+    const first = fitCount.current === 0;
+    fitCount.current += 1;
     map.fitBounds(
       [
-        [traceBounds[0], traceBounds[1]],
-        [traceBounds[2], traceBounds[3]],
+        [cameraBounds[0], cameraBounds[1]],
+        [cameraBounds[2], cameraBounds[3]],
       ],
       {
         padding: withBarInset(paddingForViewport(map.getContainer().getBoundingClientRect(), {
@@ -568,11 +715,11 @@ export function CompteMap({
         maxZoom: 14,
         pitch: 45,
         bearing: -18,
-        duration: reduced ? 0 : 1100,
+        duration: reduced ? 0 : first ? SUMMARY_FIT_MS : DAY_FIT_MS,
         essential: true,
       }
     );
-  }, [map, ready, traceBounds]);
+  }, [map, ready, cameraBounds]);
 
   useEffect(() => {
     if (!map) return;
