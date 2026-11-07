@@ -49,6 +49,8 @@ describe('Carnet v2 Data Layer', () => {
   it('génère les nuits via le fallback hebergements si carnet_nights est vide', () => {
     const input: BuildCarnetDetailInput = {
       carnet: baseCarnet,
+      author: null,
+      hikeSession: null,
       etapes: [baseEtape],
       moments: [],
       hebergements: [
@@ -82,6 +84,8 @@ describe('Carnet v2 Data Layer', () => {
   it('utilise carnet_nights prioritairement lorsqu’elles sont fournies', () => {
     const input: BuildCarnetDetailInput = {
       carnet: baseCarnet,
+      author: null,
+      hikeSession: null,
       etapes: [baseEtape],
       moments: [],
       hebergements: [],
@@ -115,15 +119,19 @@ describe('Carnet v2 Data Layer', () => {
   it('masque le budget pour les visiteurs et le conserve pour les participants', () => {
     const budgetData = {
       total: 350,
+      totalCents: 35000,
       currency: 'EUR',
+      perPersonCents: null,
       items: [
-        { id: 'b1', label: 'Refuge', amount: 180, category: 'hebergement' },
-        { id: 'b2', label: 'Nourriture', amount: 170, category: 'nourriture' },
+        { id: 'b1', label: 'Refuge', amount: 180, amountCents: 18000, category: 'hebergement', paidByUserId: null, date: null },
+        { id: 'b2', label: 'Nourriture', amount: 170, amountCents: 17000, category: 'nourriture', paidByUserId: null, date: null },
       ],
     };
 
     const inputParticipant: BuildCarnetDetailInput = {
       carnet: baseCarnet,
+      author: null,
+      hikeSession: null,
       etapes: [baseEtape],
       moments: [],
       hebergements: [],
@@ -141,6 +149,8 @@ describe('Carnet v2 Data Layer', () => {
 
     const inputVisitor: BuildCarnetDetailInput = {
       carnet: baseCarnet,
+      author: null,
+      hikeSession: null,
       etapes: [baseEtape],
       moments: [],
       hebergements: [],
@@ -159,6 +169,8 @@ describe('Carnet v2 Data Layer', () => {
   it('associe correctement les verdicts de matériel dans le kit', () => {
     const input: BuildCarnetDetailInput = {
       carnet: baseCarnet,
+      author: null,
+      hikeSession: null,
       etapes: [baseEtape],
       moments: [],
       hebergements: [],
@@ -201,12 +213,18 @@ describe('Carnet v2 Data Layer', () => {
   it('structure les réactions de jour et l’engagement des moments', () => {
     const input: BuildCarnetDetailInput = {
       carnet: baseCarnet,
+      author: null,
+      hikeSession: null,
       etapes: [baseEtape],
       moments: [
         {
           id: 'moment-1',
           jour_numero: 1,
           heure: '14:30',
+          citation: 'Vue splendide',
+          auteur_nom: 'Camille',
+          lieu: 'Désert de Platé',
+          image_url: 'https://example.com/plate.jpg',
           titre: 'Au sommet de Platé',
           legende: 'Vue splendide sur le massif du Mont-Blanc',
           lieu_nom: 'Désert de Platé',

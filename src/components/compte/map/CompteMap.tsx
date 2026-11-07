@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
   Map as MapLibreMap,
@@ -65,6 +66,14 @@ export interface CompteMapProps {
   /** État vide honnête, affiché seulement si le carnet n'a réellement aucune trace. */
   emptyTitle?: string;
   emptyHint?: string;
+  /** Jour actif sur la fiche carnet (filtrage visuel optionnel de la trace). */
+  activeDay?: number | null;
+  /** Position GPS live (participant en partage direct). */
+  livePosition?: { lat: number; lng: number } | null;
+  /** Zone approximative floue (visiteur). */
+  publicZone?: { centerLat: number; centerLng: number; radiusMeters?: number } | null;
+  /** Marqueurs d'étapes, nuits ou moments du carnet. */
+  markers?: Array<{ id: string; lat: number; lng: number; title: string; type?: string }>;
 }
 
 type Selected =
@@ -225,7 +234,12 @@ export function CompteMap({
   trace = null,
   emptyTitle,
   emptyHint,
+  activeDay = null,
+  livePosition = null,
+  publicZone = null,
+  markers = [],
 }: CompteMapProps) {
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRefs = useRef<Marker[]>([]);
@@ -735,6 +749,67 @@ export function CompteMap({
     setTileMode(next);
   }, [map, tileMode]);
 
+  const carnetMarkerRefs = useRef<Marker[]>([]);
+
+  useEffect(() => {
+    if (!map || !ready || !isCarnet) return;
+    for (const m of carnetMarkerRefs.current) m.remove();
+    carnetMarkerRefs.current = [];
+
+    for (const marker of markers) {
+      const el = document.createElement('div');
+      el.className = 'lkdv-carnet-map-marker';
+      el.title = marker.title;
+      el.style.width = '18px';
+      el.style.height = '18px';
+      el.style.borderRadius = '9999px';
+      el.style.background = marker.type === 'bivouac' || marker.type === 'refuge' ? '#5B7F55' : '#17402C';
+      el.style.border = '2px solid #FFFFFF';
+      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+
+      const m = new Marker({ element: el, anchor: 'center' })
+        .setLngLat([marker.lng, marker.lat])
+        .addTo(map);
+      carnetMarkerRefs.current.push(m);
+    }
+
+    if (livePosition) {
+      const el = document.createElement('div');
+      el.className = 'lkdv-carnet-live-marker';
+      el.style.width = '16px';
+      el.style.height = '16px';
+      el.style.borderRadius = '9999px';
+      el.style.background = '#226148';
+      el.style.border = '2.5px solid #FFFFFF';
+      el.style.boxShadow = '0 0 0 4px rgba(34,97,72,0.35)';
+
+      const m = new Marker({ element: el, anchor: 'center' })
+        .setLngLat([livePosition.lng, livePosition.lat])
+        .addTo(map);
+      carnetMarkerRefs.current.push(m);
+    }
+
+    if (publicZone) {
+      const el = document.createElement('div');
+      el.className = 'lkdv-carnet-public-zone';
+      el.style.width = '48px';
+      el.style.height = '48px';
+      el.style.borderRadius = '9999px';
+      el.style.background = 'rgba(91,127,85,0.2)';
+      el.style.border = '1.5px dashed rgba(23,64,44,0.4)';
+
+      const m = new Marker({ element: el, anchor: 'center' })
+        .setLngLat([publicZone.centerLng, publicZone.centerLat])
+        .addTo(map);
+      carnetMarkerRefs.current.push(m);
+    }
+
+    return () => {
+      for (const m of carnetMarkerRefs.current) m.remove();
+      carnetMarkerRefs.current = [];
+    };
+  }, [map, ready, isCarnet, markers, livePosition, publicZone]);
+
   const handleZoomIn = useCallback(() => {
     if (!map) return;
     map.zoomIn({ duration: prefersReducedMotion() ? 0 : 300 });
@@ -747,7 +822,7 @@ export function CompteMap({
 
   const handleOpen = useCallback((kind: Resolved['kind'], id: string) => {
     if (kind === 'carnet') {
-      window.location.assign(`/carnets/${encodeURIComponent(id)}`);
+      router.push(`/carnets/${encodeURIComponent(id)}`);
       return;
     }
     if (kind === 'massif') {
@@ -755,7 +830,7 @@ export function CompteMap({
       return;
     }
     window.__lkdvCompteMapOpenOuting?.(id);
-  }, []);
+  }, [router]);
 
   const showGuest = !isCarnet && (authState === 'guest' || unauthorized);
   const showError =
