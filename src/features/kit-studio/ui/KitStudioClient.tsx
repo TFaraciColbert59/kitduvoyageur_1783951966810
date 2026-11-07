@@ -5,8 +5,12 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { cog, cogState } from '../domain/balance';
 import { blockers, readiness } from '../domain/blockers';
 import { totals } from '../domain/totals';
+import { setStudioData } from '../domain/studioData';
+import type { StudioData } from '../domain/studioData';
 import { useKitStore } from '../store/kitStore';
 import { AUTO_OPEN_MS, useUiStore } from '../store/uiStore';
+import { setStudioSyncHandler } from '../services/studioSync';
+import { createStudioSyncHandler } from './studioSyncClient';
 import { CardsSlot } from './cards/CardsSlot';
 import { SheetHost } from './SheetHost';
 import { getScene } from '../scene/sceneRef';
@@ -28,22 +32,34 @@ const SHEET_TITLES = {
   deck: S.deck.title,
 } as const;
 
+export interface KitStudioClientProps {
+  /** Données réelles lues côté serveur (`getStudioData`). Absent/null = repli local de démonstration. */
+  readonly initialData?: StudioData | null;
+}
+
 /** Écran unique : scène 3D plein écran + pilule du poids + tiroir. */
-export function KitStudioClient() {
+export function KitStudioClient({ initialData = null }: KitStudioClientProps) {
   const { haptic } = useHapticFeedback();
   const offline = useOffline();
   const dockRef = useRef<HTMLElement | null>(null);
   const kit = useKitStore((s) => s.kit);
+  const sync = useKitStore((s) => s.sync);
+  const retry = useKitStore((s) => s.retry);
   const dockOpen = useUiStore((s) => s.dockOpen);
   const view = useUiStore((s) => s.view);
   const sheet = useUiStore((s) => s.sheet);
 
   useEffect(() => {
+    // Bootstrap : la donnée serveur remplace le registre AVANT l'hydratation du store, puis le
+    // handler d'écriture serveur est installé (aucun handler = mode local/hors-ligne, zéro réseau).
+    if (initialData) setStudioData(initialData);
+    setStudioSyncHandler(createStudioSyncHandler());
     void useKitStore.getState().hydrate();
     return () => {
+      setStudioSyncHandler(null);
       void useKitStore.getState().flush();
     };
-  }, []);
+  }, [initialData]);
 
   // Ouverture automatique à 750 ms, sauf si la personne a déjà agi (tout setter de l'UI annule le jeton).
   useEffect(() => {
@@ -107,7 +123,7 @@ export function KitStudioClient() {
 
   return (
     <OfflineContext.Provider value={offline}>
-      <div className="ks-root ks-stage" data-offline={offline || undefined}>
+      <div className="ks-root ks-stage" data-offline={offline || undefined} data-sync={sync}>
         <SceneView />
         <Pill
           kg={kg}
@@ -119,6 +135,32 @@ export function KitStudioClient() {
           label={pillLabel(kg, bl.length)}
           onClick={openBilan}
         />
+        {sync === 'error' ? (
+          <button
+            type="button"
+            onClick={() => void retry()}
+            aria-live="polite"
+            style={{
+              position: 'absolute',
+              top: 'calc(var(--safe-top) + 12px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 80,
+              padding: '8px 14px',
+              minHeight: 44,
+              borderRadius: 999,
+              border: '1px solid var(--lkv-danger)',
+              background: 'var(--lkv-danger-bg)',
+              color: 'var(--lkv-danger-dark)',
+              font: 'inherit',
+              fontSize: 13,
+              letterSpacing: '0.02em',
+              cursor: 'pointer',
+            }}
+          >
+            Non enregistré · réessaie
+          </button>
+        ) : null}
         <Dock open={dockOpen} label={label} onClose={closeDock} dockRef={dockRef}>
           {view === 'cards' ? (
             <CardsSlot

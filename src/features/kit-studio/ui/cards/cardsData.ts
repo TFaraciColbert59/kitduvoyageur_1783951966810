@@ -1,9 +1,10 @@
 // Modèles de cartes (purs) : objets d'une zone (maquette v2 l.1258-1264) et options d'apparence (l.1639-1650).
-import { BAGS, COLORWAYS, MODULE_IDS, ONE } from '../../domain/catalog';
+import { BAGS, MODULE_IDS } from '../../domain/catalog';
 import type { ColorwayId, ConfigSet, Item, MaterialKey, ModuleId, PartNameId, ZoneId } from '../../domain/catalog';
 import { canAddModule, ptsUsed } from '../../domain/attach';
 import { formatEuro, formatLitres, formatWeight } from '../../domain/format';
 import { modOn } from '../../domain/parts';
+import { studioData } from '../../domain/studioData';
 import { candidates } from '../../domain/packing';
 import { currentConfig, currentKit } from '../../domain/state';
 import { effG } from '../../domain/totals';
@@ -70,7 +71,7 @@ export function contentCards(s: KitState, zone: ZoneId, family: string | null, r
   if (zone === 'bag' && !family) {
     const k = currentKit(s);
     const c = currentConfig(s);
-    const cw = COLORWAYS[k.cw];
+    const cw = studioData().colorways[k.cw];
     const colors = { body: c.body.col ?? cw.body, pocket: c.front.col ?? cw.pocket, trim: c.harness.col ?? cw.trim };
     for (const b of Object.values(BAGS)) {
       if (b.id === k.bag) continue;
@@ -96,12 +97,12 @@ const colOf = (c: ConfigSet, part: PartNameId): MaterialKey | undefined =>
 export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readVar?: ReadVar): readonly CardModel[] {
   const k = currentKit(s);
   const c = currentConfig(s);
-  const cw = COLORWAYS[k.cw];
+  const cw = studioData().colorways[k.cw];
   if (cat === 'shape') {
     const colors = { body: c.body.col ?? cw.body, pocket: c.front.col ?? cw.pocket, trim: c.harness.col ?? cw.trim };
     return Object.values(BAGS).map((b) => {
       const cur = k.bag === b.id;
-      const cap = ONE.corps[b.id].pts;
+      const cap = studioData().one.corps[b.id].pts;
       const need = ptsUsed(s, 'corps');
       const off = !cur && need > cap;
       const sub = cur ? 'Actuel' : off ? 'Plus de place' : formatLitres(b.L);
@@ -113,8 +114,9 @@ export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readV
     });
   }
   if (cat === 'mod') {
-    return MODULE_IDS.filter((m) => part === 'all' || ONE.mods[m].part === part).map((m: ModuleId) => {
-      const M = ONE.mods[m];
+    const mods = studioData().one.mods;
+    return MODULE_IDS.filter((m) => part === 'all' || mods[m].part === part).map((m: ModuleId) => {
+      const M = mods[m];
       const on = modOn(s, m);
       const off = !on && !canAddModule(s, m);
       const owned = !!(s.own[`mod:${m}`] || s.order[`mod:${m}`]);
@@ -126,10 +128,11 @@ export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readV
       };
     });
   }
-  const ids = Object.keys(COLORWAYS) as ColorwayId[];
+  const colorways = studioData().colorways;
+  const ids = Object.keys(colorways) as ColorwayId[];
   const cur = colOf(c, part);
   return ids.map((id) => {
-    const w = COLORWAYS[id];
+    const w = colorways[id];
     if (part === 'all') {
       const sel = c.body.col === w.body && c.harness.col === w.trim;
       return { id, kind: 'opt', name: w.n, sub: '', label: `${w.n}${sel ? ', actuel' : ''}`, thumb: colorwayThumb(w, k.bag, readVar), glyph: 'bag', selected: sel, disabled: false };
@@ -143,5 +146,5 @@ export function optionCards(s: KitState, part: PartNameId, cat: OptionCat, readV
 /** Valeur transmise à setPartOption pour une option de coloris. */
 export function colorValue(part: PartNameId, id: string): string {
   if (part === 'all') return id;
-  return COLORWAYS[id as ColorwayId][COLOR_ROLE[part]];
+  return studioData().colorways[id as ColorwayId][COLOR_ROLE[part]];
 }

@@ -1,7 +1,8 @@
 'use client';
 import { useState, type CSSProperties } from 'react';
-import { COLORWAYS, MODULE_IDS, ONE, ZONE_NAMES } from '../../domain/catalog';
-import type { CapacityZoneId, ModuleId } from '../../domain/catalog';
+import { MODULE_IDS, ZONE_NAMES } from '../../domain/catalog';
+import type { CapacityZoneId, ColorwayId, ModuleId } from '../../domain/catalog';
+import { studioData } from '../../domain/studioData';
 import { canAddModule, ptsCap, ptsUsed, toggleModule } from '../../domain/attach';
 import type { AttachHost } from '../../domain/attach';
 import { formatEuro, formatLitres, formatWeight } from '../../domain/format';
@@ -88,11 +89,12 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
   const kit = currentKit(state);
   const bag = currentBag(state);
   const t = totals(state);
-  const sw = (cw: keyof typeof COLORWAYS) => colorwaySwatch(COLORWAYS[cw]);
+  const sw = (cw: ColorwayId) => colorwaySwatch(studioData().colorways[cw]);
 
   const onToggle = (m: ModuleId, on: boolean) => {
     if (on && !modOn(state, m) && !canAddModule(state, m)) {
-      setRefusal(`${ONE.mods[m].n} : ${TXT.refusal} ${TXT.host[ONE.mods[m].host]}. ${TXT.refusalHint}`);
+      const oneMods = studioData().one.mods;
+      setRefusal(`${oneMods[m].n} : ${TXT.refusal} ${TXT.host[oneMods[m].host]}. ${TXT.refusalHint}`);
       return;
     }
     setRefusal(null);
@@ -100,7 +102,7 @@ export function BagSheet({ state, onChange, onOpenOrder, onCustomise, page, onPa
   };
 
   const modRow = (m: ModuleId) => {
-    const M = ONE.mods[m];
+    const M = studioData().one.mods[m];
     const on = modOn(state, m);
     const blocked = !on && !canAddModule(state, m);
     const key: PieceKey = `mod:${m}`;

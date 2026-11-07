@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { COLORWAYS } from '../../domain/catalog';
+import { studioData } from '../../domain/studioData';
 import { formatEuro, formatLitres, formatWeight } from '../../domain/format';
 import { confirmOrder, orderLines, orderTotalCents, toOrder } from '../../domain/order';
 import type { OrderLine } from '../../domain/order';
@@ -60,7 +60,7 @@ interface OrderSheetProps {
 export const ORDER_PAGE_LABELS: readonly string[] = TXT.pages;
 
 function PieceRow({ line }: { line: OrderLine }) {
-  const sw = colorwaySwatch(COLORWAYS[line.colorway]);
+  const sw = colorwaySwatch(studioData().colorways[line.colorway]);
   const tint = line.key === 'chassis' ? sw.trim : line.key.startsWith('corps') ? sw.body : sw.pocket;
   return (
     <li className="ks-sh-row" data-state={line.state}>
