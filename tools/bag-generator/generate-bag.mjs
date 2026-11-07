@@ -79,6 +79,46 @@ const MODELS = {
 // ─────────────────────────────────────────────────────────────────────────
 
 /** Boîte aux arêtes adoucies — un sac n'a pas d'angles vifs. */
+/**
+ * Projette un triangle ou un quadrilatère sur le plan perpendiculaire à l'axe dominant de sa
+ * normale, en MÈTRES. Les coordonnées de texture sont donc à l'échelle réelle de la pièce.
+ */
+function projectMeters(vertices, indices) {
+  const p = indices.map((i) => [vertices[i * 3], vertices[i * 3 + 1], vertices[i * 3 + 2]]);
+  const [a, b, c] = p;
+  const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+  const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+  const ax = Math.abs(uy * vz - uz * vy);
+  const ay = Math.abs(uz * vx - ux * vz);
+  const az = Math.abs(ux * vy - uy * vx);
+  let pick;
+  if (az >= ax && az >= ay) pick = (q) => [q[0], q[1]];      // face avant / arrière → XY
+  else if (ax >= ay) pick = (q) => [q[2], q[1]];             // flanc gauche / droit → ZY
+  else pick = (q) => [q[0], q[2]];                           // dessus / dessous → XZ
+  return p.map((q) => {
+    const [u, v] = pick(q);
+    return new THREE.Vector2(u, v);
+  });
+}
+
+/**
+ * Générateur d'UV en mètres pour les extrusions.
+ *
+ * Le générateur par défaut de three n'est en unités du monde que sur les faces avant et arrière :
+ * ses murs latéraux — c'est-à-dire ici les FLANCS des sacs, pas de fines arêtes — sortent en
+ * coordonnées normalisées 0..1. La trame de tissu s'y retrouvait donc à une échelle qui ne dépendait
+ * pas de la taille de la pièce : dix répétitions sur le flanc d'un sac comme sur celui d'une sangle.
+ * Celui-ci projette tout en mètres, et `scene/bag/fabricMaps.ts` peut répéter à 10 partout.
+ */
+const METERS_UV = {
+  generateTopUV(geometry, vertices, indexA, indexB, indexC) {
+    return projectMeters(vertices, [indexA, indexB, indexC]);
+  },
+  generateSideWallUV(geometry, vertices, indexA, indexB, indexC, indexD) {
+    return projectMeters(vertices, [indexA, indexB, indexC, indexD]);
+  },
+};
+
 function roundedBox(w, h, d, r = 0.03, seg = 3) {
   const shape = new THREE.Shape();
   const rr = Math.min(r, w / 2 - 1e-4, h / 2 - 1e-4);
@@ -96,6 +136,7 @@ function roundedBox(w, h, d, r = 0.03, seg = 3) {
   const g = new THREE.ExtrudeGeometry(shape, {
     depth: d - r * 2, bevelEnabled: true,
     bevelThickness: r, bevelSize: r, bevelSegments: seg, curveSegments: seg * 2,
+    UVGenerator: METERS_UV,
   });
   g.translate(0, 0, -(d - r * 2) / 2);
   g.computeVertexNormals();
@@ -111,6 +152,7 @@ function strap(points, width = 0.05, thickness = 0.012) {
   shape.lineTo(hw, ht); shape.lineTo(-hw, ht); shape.closePath();
   const g = new THREE.ExtrudeGeometry(shape, {
     extrudePath: curve, steps: 28, bevelEnabled: false,
+    UVGenerator: METERS_UV,
   });
   g.computeVertexNormals();
   return g;

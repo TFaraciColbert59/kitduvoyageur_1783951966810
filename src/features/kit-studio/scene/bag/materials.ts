@@ -11,6 +11,7 @@
 
 import * as THREE from 'three';
 import type { PartConfig, PartId } from '../../state/types';
+import type { FabricMapBank } from './fabricMaps';
 
 export interface BagMaterialPreset {
   id: string;
@@ -175,7 +176,8 @@ export function resolveTokenToThreeColor(colorSpec: string | undefined): THREE.C
 export function applyPartCustomization(
   partsMap: ReadonlyMap<PartId, THREE.Mesh>,
   partId: PartId,
-  config: PartConfig | undefined
+  config: PartConfig | undefined,
+  fabricMaps?: FabricMapBank | null
 ): boolean {
   const mesh = partsMap.get(partId);
   if (!mesh || !config) return false;
@@ -189,6 +191,14 @@ export function applyPartCustomization(
       mat.roughness = preset.roughness;
       mat.metalness = preset.metalness;
       mat.userData = { ...mat.userData, materialPresetId: preset.id };
+
+      // La trame du tissu, quand on en a un relevé et que la pièce porte des UV. La couleur reste
+      // celle du token : la carte est neutre et se multiplie par `mat.color`.
+      if (fabricMaps && mesh.geometry.getAttribute('uv')) {
+        const maps = fabricMaps.forPreset(preset.id);
+        mat.map = maps ? maps.albedo : null;
+        mat.normalMap = maps ? maps.normal : null;
+      }
     }
   }
 
@@ -212,11 +222,12 @@ export function applyPartCustomization(
 
 export function applyAllCustomizations(
   partsMap: ReadonlyMap<PartId, THREE.Mesh>,
-  partsConfig: Record<PartId, PartConfig>
+  partsConfig: Record<PartId, PartConfig>,
+  fabricMaps?: FabricMapBank | null
 ): number {
   let count = 0;
   for (const [partId, cfg] of Object.entries(partsConfig)) {
-    if (applyPartCustomization(partsMap, partId, cfg)) {
+    if (applyPartCustomization(partsMap, partId, cfg, fabricMaps)) {
       count += 1;
     }
   }

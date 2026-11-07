@@ -220,6 +220,113 @@ function readAccessorArray(
   throw new Error(`ComponentType glTF non supporté : ${accessor.componentType}`);
 }
 
+type GltfPrimitive = NonNullable<GltfJson['meshes']>[number]['primitives'][number];
+
+/**
+ * Géométrie d'un mesh glTF, toutes primitives confondues.
+ *
+ * Le générateur maison n'émet qu'une primitive par mesh, et ce cas suit exactement le chemin
+ * d'origine : aucune copie, aucun changement pour les 5 sacs existants. Un modèle produit ailleurs
+ * (Meshy) découpe en revanche souvent un objet unique en plusieurs primitives, une par matériau du
+ * fichier — et n'en lire que la première faisait disparaître le reste du sac en silence.
+ *
+ * On les fusionne au lieu d'en faire des sous-maillages : la pièce reste UNE pièce portant UN
+ * matériau isolé (D-04), et la matière vient de notre banque de trames, pas du fichier.
+ */
+function buildPrimitiveGeometry(
+  json: GltfJson,
+  bin: Uint8Array,
+  prims: readonly GltfPrimitive[]
+): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry();
+
+  const usable = prims.filter((p) => p.attributes.POSITION !== undefined);
+  if (usable.length === 0) return geometry;
+
+  if (usable.length === 1) {
+    const prim = usable[0];
+    const pos = readAccessorArray(json, bin, prim.attributes.POSITION);
+    geometry.setAttribute('position', new THREE.BufferAttribute(pos.array, pos.itemSize));
+    if (prim.attributes.NORMAL !== undefined) {
+      const norm = readAccessorArray(json, bin, prim.attributes.NORMAL);
+      geometry.setAttribute('normal', new THREE.BufferAttribute(norm.array, norm.itemSize));
+    } else {
+      geometry.computeVertexNormals();
+    }
+    // Sans TEXCOORD_0, aucune matière ne peut se poser : les anciens GLB n'en avaient pas,
+    // un modèle produit hors du générateur en a toujours.
+    if (prim.attributes.TEXCOORD_0 !== undefined) {
+      const uv = readAccessorArray(json, bin, prim.attributes.TEXCOORD_0);
+      geometry.setAttribute('uv', new THREE.BufferAttribute(uv.array, uv.itemSize));
+    }
+    if (prim.indices !== undefined) {
+      const idx = readAccessorArray(json, bin, prim.indices);
+      geometry.setIndex(new THREE.BufferAttribute(idx.array, 1));
+    }
+    return geometry;
+  }
+
+  // Première passe : compter, pour allouer d'un coup plutôt que de faire croître des tableaux.
+  const read = usable.map((prim) => {
+    const pos = readAccessorArray(json, bin, prim.attributes.POSITION);
+    const vertexCount = pos.array.length / pos.itemSize;
+    return {
+      pos,
+      vertexCount,
+      normal:
+        prim.attributes.NORMAL !== undefined
+          ? readAccessorArray(json, bin, prim.attributes.NORMAL)
+          : null,
+      uv:
+        prim.attributes.TEXCOORD_0 !== undefined
+          ? readAccessorArray(json, bin, prim.attributes.TEXCOORD_0)
+          : null,
+      index: prim.indices !== undefined ? readAccessorArray(json, bin, prim.indices) : null,
+    };
+  });
+
+  const totalVertices = read.reduce((n, r) => n + r.vertexCount, 0);
+  const totalIndices = read.reduce((n, r) => n + (r.index ? r.index.array.length : r.vertexCount), 0);
+  const hasNormals = read.every((r) => r.normal !== null);
+  const hasUvs = read.some((r) => r.uv !== null);
+
+  const positions = new Float32Array(totalVertices * 3);
+  const normals = hasNormals ? new Float32Array(totalVertices * 3) : null;
+  // Une primitive sans UV reçoit des zéros : elle perd sa trame, pas sa géométrie.
+  const uvs = hasUvs ? new Float32Array(totalVertices * 2) : null;
+  const indices =
+    totalVertices > 65535 ? new Uint32Array(totalIndices) : new Uint16Array(totalIndices);
+
+  let vOffset = 0;
+  let iOffset = 0;
+  for (const r of read) {
+    positions.set(r.pos.array as ArrayLike<number>, vOffset * 3);
+    if (normals && r.normal) normals.set(r.normal.array as ArrayLike<number>, vOffset * 3);
+    if (uvs && r.uv) uvs.set(r.uv.array as ArrayLike<number>, vOffset * 2);
+
+    if (r.index) {
+      for (let i = 0; i < r.index.array.length; i++) {
+        indices[iOffset + i] = r.index.array[i] + vOffset;
+      }
+      iOffset += r.index.array.length;
+    } else {
+      // Primitive non indexée : on fabrique sa suite d'indices.
+      for (let i = 0; i < r.vertexCount; i++) indices[iOffset + i] = vOffset + i;
+      iOffset += r.vertexCount;
+    }
+    vOffset += r.vertexCount;
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  if (normals) {
+    geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+  }
+  if (uvs) geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+  if (!normals) geometry.computeVertexNormals();
+  return geometry;
+}
+
 function createIsolatedMaterial(json: GltfJson, matIdx: number | undefined): THREE.MeshStandardMaterial {
   const def = matIdx !== undefined ? json.materials?.[matIdx] : undefined;
   const pbr = def?.pbrMetallicRoughness;
@@ -282,32 +389,10 @@ export async function loadBagAsset(
 
       if (n.mesh !== undefined && json.meshes?.[n.mesh]) {
         const meshDef = json.meshes[n.mesh];
-        const prim = meshDef.primitives[0];
-        const geometry = new THREE.BufferGeometry();
-
-        if (prim.attributes.POSITION !== undefined) {
-          const pos = readAccessorArray(json, bin, prim.attributes.POSITION);
-          geometry.setAttribute('position', new THREE.BufferAttribute(pos.array, pos.itemSize));
-        }
-        if (prim.attributes.NORMAL !== undefined) {
-          const norm = readAccessorArray(json, bin, prim.attributes.NORMAL);
-          geometry.setAttribute('normal', new THREE.BufferAttribute(norm.array, norm.itemSize));
-        } else {
-          geometry.computeVertexNormals();
-        }
-        // Sans TEXCOORD_0, aucune matière ne peut se poser : les anciens GLB n'en avaient pas,
-        // un modèle produit hors du générateur (Meshy) en a toujours.
-        if (prim.attributes.TEXCOORD_0 !== undefined) {
-          const uv = readAccessorArray(json, bin, prim.attributes.TEXCOORD_0);
-          geometry.setAttribute('uv', new THREE.BufferAttribute(uv.array, uv.itemSize));
-        }
-        if (prim.indices !== undefined) {
-          const idx = readAccessorArray(json, bin, prim.indices);
-          geometry.setIndex(new THREE.BufferAttribute(idx.array, 1));
-        }
+        const geometry = buildPrimitiveGeometry(json, bin, meshDef.primitives);
 
         // Chaque pièce reçoit SON propre matériau cloné pour garantir l'isolation D-04
-        const material = createIsolatedMaterial(json, prim.material);
+        const material = createIsolatedMaterial(json, meshDef.primitives[0]?.material);
         geometriesToDispose.push(geometry);
         materialsToDispose.push(material);
 

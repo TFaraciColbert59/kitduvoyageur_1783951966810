@@ -25,6 +25,7 @@ import type {
 } from '../state/types';
 import { loadBagAsset, type LoadedBagScene } from './bag/loader';
 import { applyAllCustomizations, resolveTokenToThreeColor } from './bag/materials';
+import { createFabricMapBank, type FabricMapBank } from './bag/fabricMaps';
 import {
   getPartLabel,
   manifestSlotsToSlotStates,
@@ -79,6 +80,7 @@ export function BagScene({
     Map<PartId, { pos: THREE.Vector3; quat: THREE.Quaternion }>
   >(new Map());
   const overlayGroupRef = useRef<THREE.Group | null>(null);
+  const fabricMapsRef = useRef<FabricMapBank | null>(null);
 
   const cameraMachineRef = useRef<CameraStateMachine | null>(null);
   if (!cameraMachineRef.current) {
@@ -244,6 +246,11 @@ export function BagScene({
       disposeOverlayGroup(overlayGroupRef.current);
       overlayGroupRef.current = null;
 
+      if (fabricMapsRef.current) {
+        fabricMapsRef.current.dispose();
+        fabricMapsRef.current = null;
+      }
+
       if (sceneRef.current) {
         sceneRef.current.clear();
         sceneRef.current = null;
@@ -291,6 +298,11 @@ export function BagScene({
         renderer.setSize(width, height, false);
         renderer.shadowMap.enabled = qualityRef.current.getProfile().shadowsEnabled;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Banque de trames de tissu, liée à ce contexte WebGL : elle meurt avec lui (cleanupRenderer).
+        fabricMapsRef.current = createFabricMapBank(
+          renderer.capabilities.getMaxAnisotropy()
+        );
 
         const canvas = renderer.domElement;
         canvas.style.width = '100%';
@@ -453,7 +465,7 @@ export function BagScene({
       });
       setCameraState(snap.state);
 
-      applyAllCustomizations(result.parts, config.bag.parts);
+      applyAllCustomizations(result.parts, config.bag.parts, fabricMapsRef.current);
       scene!.add(result.root);
       syncCameraToThree();
 
@@ -477,7 +489,7 @@ export function BagScene({
   useEffect(() => {
     const bag = loadedBagRef.current;
     if (!bag) return;
-    applyAllCustomizations(bag.parts, config.bag.parts);
+    applyAllCustomizations(bag.parts, config.bag.parts, fabricMapsRef.current);
   }, [config.bag.parts, canvasEpoch]);
 
   // 6. Rendu 3D des insignes épinglés (trophées métalliques vs patchs textiles, F-09) et objets visuels (C-14)
