@@ -1,11 +1,14 @@
 /**
  * src/features/kit-studio/scene/bag/moduleLoader.ts
  * Chemin complet des modules 3D externes (platine mécanique à 2 pieds, manifeste, chargeur GLB
- * mutualisé et contrôleur d'accroche sur les ancres du sac) — § 4.
+ * mutualisé, constructeur procédural des 5 modules code et contrôleur d'accroche sur les ancres
+ * du sac) — § 4 + Avenant ingestion des modules.
  *
- * Tant que les maillages définitifs des modules sont en production, `AVAILABLE_3D_MODULE_MANIFESTS`
- * reste vide et l'interface annonce proprement cette indisponibilité temporaire. Le chemin de code,
- * lui, est complet et vérifié de bout en bout sur fixture.
+ * Deux origines de modules cohabitent sur les mêmes ancres et la même platine :
+ * - 12 modules maillés `.glb` (`M03, M04, M05, M06, M07, M08, M15, M16, M17, M18, M19, M20`) ;
+ * - 5 modules procéduraux construits par code (`M09, M10, M11, M12, M14`), dont les panneaux
+ *   rigides partagent l'épaisseur `RIGID_PANEL_THICKNESS_MM = 3.5` mm (reprise du socle de la
+ *   platine standard 80 × 54 × 3,5 mm, portée comme convention de projet et non comme mesure).
  */
 
 import * as THREE from 'three';
@@ -29,6 +32,43 @@ export const PLATINE_DIMENSIONS_MM = {
   feetCenterSpacingMm: 48,
 } as const;
 
+/**
+ * Épaisseur commune des panneaux rigides des modules construits par code (M09, M10, M11, M12, M14),
+ * en millimètres. Reprise du socle de la platine standard (80 × 54 × 3,5 mm) et portée comme
+ * convention de projet — jamais comme mesure sur prototype.
+ */
+export const RIGID_PANEL_THICKNESS_MM = PLATINE_DIMENSIONS_MM.plateThicknessMm;
+
+export interface RigidPanelConventionSpec {
+  readonly thicknessMm: 3.5;
+  readonly status: 'convention_projet';
+  readonly measuredOnPrototype: false;
+  readonly source: string;
+}
+
+export const RIGID_PANEL_CONVENTION: RigidPanelConventionSpec = {
+  thicknessMm: RIGID_PANEL_THICKNESS_MM,
+  status: 'convention_projet',
+  measuredOnPrototype: false,
+  source: 'Reprise du socle de la platine standard (80 × 54 × 3,5 mm)',
+};
+
+export type ModuleOrigin = 'glb' | 'procedural';
+
+export interface ModuleOrientationSpec {
+  readonly up: 'Y';
+  readonly front: '+Z';
+  readonly back: '-Z';
+  readonly yawDeg: 0 | 180;
+}
+
+export interface ModuleTierAssetSpec {
+  readonly url: string;
+  readonly bytes: number;
+  readonly triangles: number;
+  readonly textureSize?: number;
+}
+
 /** Spécification de pose de la platine sur un module, dans le repère local du module (en mètres). */
 export interface ModulePlatineSpec {
   /** Point d'appui de la platine sur le module (en mètres). */
@@ -46,19 +86,331 @@ export interface ModulePlatineSpec {
 export interface ModuleManifest {
   readonly schema: number;
   readonly moduleId: string;
+  readonly code?: string;
   readonly label: string;
   readonly units: 'meters';
+  readonly origin?: ModuleOrigin;
   readonly boundingBoxM: BoundingBoxM;
-  readonly glbUrl: string;
+  readonly cotesReferenceMm?: { readonly w: number; readonly h: number; readonly d: number };
+  readonly referenceState?: string;
+  readonly glbUrl?: string;
+  readonly orientation?: ModuleOrientationSpec;
   readonly platine: ModulePlatineSpec;
   readonly texturedSource?: boolean;
+  readonly textureSize?: 512 | 1024;
+  readonly reserve?: string | null;
+  readonly rigidPanelConvention?: RigidPanelConventionSpec;
+  readonly assets?: {
+    readonly web?: ModuleTierAssetSpec;
+    readonly hd?: ModuleTierAssetSpec;
+  };
 }
 
 /**
- * Catalogue des modules 3D livrés en production.
- * Vide tant que les maillages définitifs sont en cours de production (§ 4.3).
+ * Les 12 modules maillés `.glb` livrés par le Lot I-C (paliers web < 400 Ko dans `public/assets/modules/`).
+ * Orientation : Y haut, façade +Z, dos −Z, avec rotation Y de 180° pour M04, M05 et M16 dans les manifestes.
  */
-export const AVAILABLE_3D_MODULE_MANIFESTS: readonly ModuleManifest[] = [];
+export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
+  {
+    schema: 1,
+    moduleId: 'lkdv-m03',
+    code: 'M03',
+    label: 'Poche GPS',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m03.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.0773, h: 0.15, d: 0.0516 },
+    cotesReferenceMm: { w: 80, h: 150, d: 45 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.075, -0.0258], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m04',
+    code: 'M04',
+    label: 'Poche multifonction',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m04.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.1386, h: 0.2, d: 0.0761 },
+    cotesReferenceMm: { w: 120, h: 200, d: 70 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 180 },
+    platine: { position: [0, 0.1, -0.0381], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve:
+      'Mélange recto/verso dans la texture : pictogramme projeté au dos et marquage sombre sur la façade.',
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m05',
+    code: 'M05',
+    label: 'Grande poche cargo',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m05.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.2618, h: 0.38, d: 0.1587 },
+    cotesReferenceMm: { w: 280, h: 380, d: 120 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 180 },
+    platine: { position: [0, 0.19, -0.0794], normal: [0, 0, -1] },
+    textureSize: 1024,
+    reserve: 'Détails de dos (filet et sangles) projetés sur la façade et le dos.',
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m06',
+    code: 'M06',
+    label: 'Poche étanche',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m06.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.1641, h: 0.25, d: 0.0772 },
+    cotesReferenceMm: { w: 180, h: 250, d: 80 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.125, -0.0386], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m07',
+    code: 'M07',
+    label: 'Poche filet',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m07.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.2237, h: 0.32, d: 0.097 },
+    cotesReferenceMm: { w: 220, h: 320, d: 90 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.16, -0.0485], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: 'Filet aux faces et trous géométriques irréguliers.',
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m08',
+    code: 'M08',
+    label: 'Porte-bâtons',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m08.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.0449, h: 0.32, d: 0.0448 },
+    cotesReferenceMm: { w: 60, h: 320, d: 50 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.16, -0.0224], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m15',
+    code: 'M15',
+    label: 'Poche pharmacie',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m15.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.1552, h: 0.11, d: 0.0598 },
+    cotesReferenceMm: { w: 150, h: 110, d: 70 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.055, -0.0299], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: 'Superposition sombre autour de la croix.',
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m16',
+    code: 'M16',
+    label: 'Poche batterie',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m16.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.088, h: 0.165, d: 0.0443 },
+    cotesReferenceMm: { w: 95, h: 165, d: 45 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 180 },
+    platine: { position: [0, 0.0825, -0.0222], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: 'Écusson peu lisible de face.',
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m17',
+    code: 'M17',
+    label: 'Support panneau solaire',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m17.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.2855, h: 0.38, d: 0.0478 },
+    cotesReferenceMm: { w: 280, h: 380, d: 25 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.19, -0.0239], normal: [0, 0, -1] },
+    textureSize: 1024,
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m18',
+    code: 'M18',
+    label: 'Poche photo',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m18.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.1571, h: 0.21, d: 0.1079 },
+    cotesReferenceMm: { w: 160, h: 210, d: 110 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.105, -0.054], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m19',
+    code: 'M19',
+    label: 'Sacoche détachable',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m19.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.2426, h: 0.38, d: 0.1374 },
+    cotesReferenceMm: { w: 280, h: 380, d: 120 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.19, -0.0687], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m20',
+    code: 'M20',
+    label: 'Panneau frontal interchangeable',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m20.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.2663, h: 0.38, d: 0.0404 },
+    cotesReferenceMm: { w: 280, h: 380, d: 15 },
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.19, -0.0202], normal: [0, 0, -1] },
+    textureSize: 1024,
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+] as const;
+
+/**
+ * Les 5 modules construits directement par code (`M09, M10, M11, M12, M14`), qui ne viendront
+ * jamais d'un `.glb` et partagent la convention d'épaisseur `RIGID_PANEL_THICKNESS_MM = 3.5` mm.
+ */
+export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
+  {
+    schema: 1,
+    moduleId: 'lkdv-m09',
+    code: 'M09',
+    label: 'Porte-tente',
+    units: 'meters',
+    origin: 'procedural',
+    boundingBoxM: { w: 0.46, h: 0.16, d: 0.16 },
+    cotesReferenceMm: { w: 460, h: 160, d: 160 },
+    referenceState: 'charge',
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.08, -0.08], normal: [0, 0, -1] },
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m10',
+    code: 'M10',
+    label: 'Porte-matelas',
+    units: 'meters',
+    origin: 'procedural',
+    boundingBoxM: { w: 0.56, h: 0.15, d: 0.15 },
+    cotesReferenceMm: { w: 560, h: 150, d: 150 },
+    referenceState: 'ouvert_sans_matelas',
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.075, -0.075], normal: [0, 0, -1] },
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m11',
+    code: 'M11',
+    label: 'Porte-sac de couchage',
+    units: 'meters',
+    origin: 'procedural',
+    boundingBoxM: { w: 0.42, h: 0.23, d: 0.23 },
+    cotesReferenceMm: { w: 420, h: 230, d: 230 },
+    referenceState: 'ouvert_sans_sac_de_couchage',
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.115, -0.115], normal: [0, 0, -1] },
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m12',
+    code: 'M12',
+    label: 'Porte-casque',
+    units: 'meters',
+    origin: 'procedural',
+    boundingBoxM: { w: 0.28, h: 0.3, d: 0.2 },
+    cotesReferenceMm: { w: 280, h: 300, d: 200 },
+    referenceState: 'filet_concave_sans_casque',
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.15, -0.1], normal: [0, 0, -1] },
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m14',
+    code: 'M14',
+    label: 'Porte-skis (paire, A-frame)',
+    units: 'meters',
+    origin: 'procedural',
+    boundingBoxM: { w: 0.09, h: 1.7, d: 0.09 },
+    cotesReferenceMm: { w: 90, h: 1700, d: 90 },
+    referenceState: 'lame_droite_sans_skis',
+    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    platine: { position: [0, 0.85, -0.045], normal: [0, 0, -1] },
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+] as const;
+
+/**
+ * Catalogue complet des 17 modules 3D livrés en production (12 maillés `.glb` + 5 procéduraux).
+ */
+export const AVAILABLE_3D_MODULE_MANIFESTS: readonly ModuleManifest[] = [
+  ...IMPORTED_GLB_MODULE_MANIFESTS,
+  ...PROCEDURAL_CODE_MODULE_MANIFESTS,
+] as const;
+
+const BUILTIN_MANIFEST_BY_ID: ReadonlyMap<string, ModuleManifest> = new Map(
+  AVAILABLE_3D_MODULE_MANIFESTS.map((m) => [m.moduleId, m]),
+);
 
 export interface ModuleAssetProvider {
   fetchManifest: (moduleId: string) => Promise<unknown>;
@@ -119,6 +471,10 @@ export function validateModuleManifest(raw: unknown, expectedModuleId?: string):
   if (m.units !== 'meters') {
     throw new Error(`Unités invalides : ${String(m.units)}`);
   }
+  const origin: ModuleOrigin = m.origin === 'procedural' ? 'procedural' : 'glb';
+  if (m.origin !== undefined && m.origin !== 'glb' && m.origin !== 'procedural') {
+    throw new Error(`Origine de module invalide : ${String(m.origin)}`);
+  }
   const bbox = m.boundingBoxM as Record<string, unknown> | undefined;
   if (
     !bbox ||
@@ -131,8 +487,20 @@ export function validateModuleManifest(raw: unknown, expectedModuleId?: string):
   ) {
     throw new Error('boundingBoxM invalide');
   }
-  if (typeof m.glbUrl !== 'string' || m.glbUrl.length === 0) {
+  if (origin === 'glb' && (typeof m.glbUrl !== 'string' || m.glbUrl.length === 0)) {
     throw new Error('glbUrl manquant');
+  }
+  if (m.orientation !== undefined) {
+    const ori = m.orientation as Record<string, unknown>;
+    if (
+      !ori ||
+      ori.up !== 'Y' ||
+      ori.front !== '+Z' ||
+      ori.back !== '-Z' ||
+      (ori.yawDeg !== 0 && ori.yawDeg !== 180)
+    ) {
+      throw new Error('orientation invalide');
+    }
   }
   const platine = m.platine as Record<string, unknown> | undefined;
   if (!platine || !isVec3Tuple(platine.position) || !isVec3Tuple(platine.normal)) {
@@ -231,11 +599,296 @@ export function buildPlatineMesh(spec?: ModulePlatineSpec): THREE.Group {
   return group;
 }
 
+/**
+ * Construit un anneau de sangle cylindrique creux (ouvert en son centre) d'axe `X`,
+ * inscrit exactement dans le diamètre extérieur `2 * outerRadius` et de largeur `widthX`.
+ * Utilisé pour M10 (Porte-matelas) et M11 (Porte-sac de couchage) afin qu'ils restent
+ * ouverts au centre (sans cylindre plein ni matelas/sac de couchage modélisé).
+ */
+function buildOpenStrapLoopGeometry(
+  outerRadius: number,
+  thickness: number,
+  widthX: number,
+  segments = 32,
+): THREE.BufferGeometry {
+  const innerRadius = Math.max(0.005, outerRadius - thickness);
+  const shape = new THREE.Shape();
+  shape.absarc(0, 0, outerRadius, 0, Math.PI * 2, false);
+  const hole = new THREE.Path();
+  hole.absarc(0, 0, innerRadius, 0, Math.PI * 2, true);
+  shape.holes.push(hole);
+
+  const geom = new THREE.ExtrudeGeometry(shape, {
+    depth: widthX,
+    bevelEnabled: false,
+    curveSegments: segments,
+  });
+  // Centrer l'extrusion sur Z puis tourner pour que l'axe de l'anneau soit parallèle à X.
+  geom.translate(0, 0, -widthX * 0.5);
+  geom.rotateY(Math.PI * 0.5);
+  return geom;
+}
+
+/**
+ * Construit une nappe de filet concave ouverte (sans casque ni coque pleine) pour M12,
+ * s'appuyant sur le cadre dorsal rigide (`Z = -d/2 + t`) et atteignant `Z = +d/2` au centre.
+ */
+function buildConcaveNetGeometry(
+  w: number,
+  h: number,
+  d: number,
+  panelThicknessM: number,
+  segX = 12,
+  segY = 12,
+): THREE.BufferGeometry {
+  const positions: number[] = [];
+  const indices: number[] = [];
+  const zBack = -d * 0.5 + panelThicknessM;
+  const depthSpan = Math.max(0.005, d - panelThicknessM);
+
+  for (let iy = 0; iy <= segY; iy++) {
+    const v = iy / segY;
+    const y = v * h;
+    for (let ix = 0; ix <= segX; ix++) {
+      const u = ix / segX;
+      const x = (u - 0.5) * w;
+      const dome = Math.sin(Math.PI * u) * Math.sin(Math.PI * v);
+      const z = zBack + depthSpan * dome;
+      positions.push(x, y, z);
+    }
+  }
+
+  const stride = segX + 1;
+  for (let iy = 0; iy < segY; iy++) {
+    for (let ix = 0; ix < segX; ix++) {
+      const a = iy * stride + ix;
+      const b = a + 1;
+      const c = a + stride;
+      const dIdx = c + 1;
+      indices.push(a, b, dIdx, a, dIdx, c);
+    }
+  }
+
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geom.setIndex(indices);
+  geom.computeVertexNormals();
+  return geom;
+}
+
+/**
+ * Construit directement par code le maillage 3D d'un des 5 modules procéduraux
+ * (`M09, M10, M11, M12, M14`).
+ *
+ * Tous les panneaux rigides utilisent la constante partagée `RIGID_PANEL_THICKNESS_MM = 3.5` mm
+ * (`PLATINE_DIMENSIONS_MM.plateThicknessMm`), portée comme convention de projet.
+ * Repère local identique aux modules `.glb` : `Y` haut (`[0, h]`), façade `+Z`, dos `-Z`.
+ */
+export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group {
+  const group = new THREE.Group();
+  group.name = `lkdv-procedural-${manifest.moduleId}`;
+  group.userData.origin = 'procedural';
+  group.userData.rigidPanelConvention = RIGID_PANEL_CONVENTION;
+  group.userData.rigidPanelThicknessMm = RIGID_PANEL_THICKNESS_MM;
+
+  const { w, h, d } = manifest.boundingBoxM;
+  const t = RIGID_PANEL_THICKNESS_MM / 1000; // 0.0035 m (3,5 mm)
+
+  const oliveRigidMat = new THREE.MeshPhysicalMaterial({
+    name: `${manifest.moduleId}-olive-rigid`,
+    color: new THREE.Color(0x3e4d3c),
+    roughness: 0.88,
+    metalness: 0.02,
+  });
+
+  const oliveSoftMat = new THREE.MeshPhysicalMaterial({
+    name: `${manifest.moduleId}-olive-soft`,
+    color: new THREE.Color(0x465643),
+    roughness: 0.9,
+    metalness: 0.01,
+  });
+
+  const blackStrapMat = new THREE.MeshPhysicalMaterial({
+    name: `${manifest.moduleId}-black-webbing`,
+    color: new THREE.Color(0x1b1e1d),
+    roughness: 0.72,
+    metalness: 0.06,
+  });
+
+  const code = (manifest.code ?? manifest.moduleId).toUpperCase();
+
+  if (code.includes('M09')) {
+    // M09 — Porte-tente (460 × 160 × 160 mm, état de référence 'charge')
+    // Équerre rigide fond + dos d'épaisseur t = 3,5 mm (union sans dépassement de la boîte 460×160×160)
+    const fondGeom = new THREE.BoxGeometry(w, t, d);
+    fondGeom.translate(0, t * 0.5, 0);
+    const fondMesh = new THREE.Mesh(fondGeom, oliveRigidMat);
+    fondMesh.name = 'm09-fond-rigide';
+    fondMesh.userData.panelThicknessMm = RIGID_PANEL_THICKNESS_MM;
+    group.add(fondMesh);
+
+    const dosGeom = new THREE.BoxGeometry(w, h - t, t);
+    dosGeom.translate(0, t + (h - t) * 0.5, -d * 0.5 + t * 0.5);
+    const dosMesh = new THREE.Mesh(dosGeom, oliveRigidMat);
+    dosMesh.name = 'm09-dos-rigide';
+    dosMesh.userData.panelThicknessMm = RIGID_PANEL_THICKNESS_MM;
+    group.add(dosMesh);
+
+    // Parois souples latérales et façade en état de service chargé (dans l'enveloppe 460×160×160 mm)
+    const flancGaucheGeom = new THREE.BoxGeometry(t, h - t, d - t);
+    flancGaucheGeom.translate(-w * 0.5 + t * 0.5, t + (h - t) * 0.5, t * 0.5);
+    const flancGauche = new THREE.Mesh(flancGaucheGeom, oliveSoftMat);
+    flancGauche.name = 'm09-flanc-gauche-souple';
+    group.add(flancGauche);
+
+    const flancDroitGeom = new THREE.BoxGeometry(t, h - t, d - t);
+    flancDroitGeom.translate(w * 0.5 - t * 0.5, t + (h - t) * 0.5, t * 0.5);
+    const flancDroit = new THREE.Mesh(flancDroitGeom, oliveSoftMat);
+    flancDroit.name = 'm09-flanc-droit-souple';
+    group.add(flancDroit);
+
+    const facadeGeom = new THREE.BoxGeometry(w - 2 * t, (h - t) * 0.65, t);
+    facadeGeom.translate(0, t + (h - t) * 0.325, d * 0.5 - t * 0.5);
+    const facadeMesh = new THREE.Mesh(facadeGeom, oliveSoftMat);
+    facadeMesh.name = 'm09-facade-souple';
+    group.add(facadeMesh);
+
+    // Deux sangles noires de compression
+    const strapW = 0.025;
+    for (const [offsetX, suffix] of [
+      [-w * 0.28, 'gauche'],
+      [w * 0.28, 'droite'],
+    ] as const) {
+      const strapGeom = new THREE.BoxGeometry(strapW, h - t, t);
+      strapGeom.translate(offsetX, t + (h - t) * 0.5, d * 0.5 - t * 0.5);
+      const strapMesh = new THREE.Mesh(strapGeom, blackStrapMat);
+      strapMesh.name = `m09-sangle-compression-${suffix}`;
+      group.add(strapMesh);
+    }
+  } else if (code.includes('M10') || code.includes('M11')) {
+    // M10 — Porte-matelas (560 × 150 × 150 mm) & M11 — Porte-sac de couchage (420 × 230 × 230 mm)
+    // Deux sangles en boucle ouvertes au centre (aucun cylindre plein ni matelas/sac de couchage)
+    // reliées au dos par une traverse rigide d'épaisseur t = 3,5 mm.
+    const prefix = code.includes('M10') ? 'm10' : 'm11';
+    const strapWidth = code.includes('M10') ? 0.028 : 0.032;
+    const outerRadius = Math.min(h, d) * 0.5;
+
+    const railH = Math.min(h, PLATINE_DIMENSIONS_MM.plateHeightMm / 1000);
+    const railGeom = new THREE.BoxGeometry(w, railH, t);
+    railGeom.translate(0, h * 0.5, -d * 0.5 + t * 0.5);
+    const railMesh = new THREE.Mesh(railGeom, oliveRigidMat);
+    railMesh.name = `${prefix}-rail-dos-rigide`;
+    railMesh.userData.panelThicknessMm = RIGID_PANEL_THICKNESS_MM;
+    group.add(railMesh);
+
+    const loopCenterX = w * 0.5 - strapWidth * 0.5;
+    for (const [cx, side] of [
+      [-loopCenterX, 'gauche'],
+      [loopCenterX, 'droite'],
+    ] as const) {
+      const loopGeom = buildOpenStrapLoopGeometry(outerRadius, t, strapWidth);
+      loopGeom.translate(cx, h * 0.5, 0);
+      const loopMesh = new THREE.Mesh(loopGeom, blackStrapMat);
+      loopMesh.name = `${prefix}-boucle-ouverte-${side}`;
+      loopMesh.userData.openLoop = true;
+      group.add(loopMesh);
+    }
+  } else if (code.includes('M12')) {
+    // M12 — Porte-casque (280 × 300 × 200 mm, filet concave ouvert sans casque)
+    // Cadre dorsal rigide olive (280 × 300 × 3,5 mm) + nappe de filet concave noire + 4 cordons
+    const cadreGeom = new THREE.BoxGeometry(w, h, t);
+    cadreGeom.translate(0, h * 0.5, -d * 0.5 + t * 0.5);
+    const cadreMesh = new THREE.Mesh(cadreGeom, oliveRigidMat);
+    cadreMesh.name = 'm12-cadre-dos-rigide';
+    cadreMesh.userData.panelThicknessMm = RIGID_PANEL_THICKNESS_MM;
+    group.add(cadreMesh);
+
+    const netMat = new THREE.MeshPhysicalMaterial({
+      name: 'm12-filet-noir',
+      color: new THREE.Color(0x1f2321),
+      roughness: 0.82,
+      metalness: 0.04,
+      side: THREE.DoubleSide,
+      wireframe: true,
+    });
+    const netGeom = buildConcaveNetGeometry(w, h, d, t);
+    const netMesh = new THREE.Mesh(netGeom, netMat);
+    netMesh.name = 'm12-nappe-filet-concave';
+    netMesh.userData.isConcaveOpenNet = true;
+    group.add(netMesh);
+
+    const cordT = 0.004;
+    for (const [cx, cy, cornerName] of [
+      [-w * 0.5 + cordT, h - cordT, 'haut-gauche'],
+      [w * 0.5 - cordT, h - cordT, 'haut-droit'],
+      [-w * 0.5 + cordT, cordT, 'bas-gauche'],
+      [w * 0.5 - cordT, cordT, 'bas-droit'],
+    ] as const) {
+      const cordGeom = new THREE.BoxGeometry(cordT, cordT, d * 0.35);
+      cordGeom.translate(cx, cy, -d * 0.5 + t + d * 0.175);
+      const cordMesh = new THREE.Mesh(cordGeom, blackStrapMat);
+      cordMesh.name = `m12-cordon-${cornerName}`;
+      group.add(cordMesh);
+    }
+  } else if (code.includes('M14')) {
+    // M14 — Porte-skis paire A-frame (90 × 1700 × 90 mm, lame droite sans skis)
+    // Lame rigide olive droite de 90 × 1700 × 3,5 mm + bride haute et boucle basse noires
+    const lameGeom = new THREE.BoxGeometry(w, h, t);
+    lameGeom.translate(0, h * 0.5, -d * 0.5 + t * 0.5);
+    const lameMesh = new THREE.Mesh(lameGeom, oliveRigidMat);
+    lameMesh.name = 'm14-lame-rigide-droite';
+    lameMesh.userData.panelThicknessMm = RIGID_PANEL_THICKNESS_MM;
+    lameMesh.userData.aspectRatioHL = h / w;
+    group.add(lameMesh);
+
+    const strapH = 0.028;
+    const brideHauteGeom = new THREE.BoxGeometry(w, strapH, d - t);
+    brideHauteGeom.translate(0, h * 0.82, t * 0.5);
+    const brideHaute = new THREE.Mesh(brideHauteGeom, blackStrapMat);
+    brideHaute.name = 'm14-bride-haute-noire';
+    group.add(brideHaute);
+
+    const boucleBasseGeom = new THREE.BoxGeometry(w, strapH * 1.2, d - t);
+    boucleBasseGeom.translate(0, h * 0.14, t * 0.5);
+    const boucleBasse = new THREE.Mesh(boucleBasseGeom, blackStrapMat);
+    boucleBasse.name = 'm14-boucle-basse-noire';
+    group.add(boucleBasse);
+  } else {
+    // Fallback générique pour tout autre module procédural de test
+    const panelGeom = new THREE.BoxGeometry(w, h, t);
+    panelGeom.translate(0, h * 0.5, -d * 0.5 + t * 0.5);
+    const panelMesh = new THREE.Mesh(panelGeom, oliveRigidMat);
+    panelMesh.name = `${manifest.moduleId}-panneau-rigide`;
+    panelMesh.userData.panelThicknessMm = RIGID_PANEL_THICKNESS_MM;
+    group.add(panelMesh);
+
+    if (d > t) {
+      const bodyGeom = new THREE.BoxGeometry(w, h, d - t);
+      bodyGeom.translate(0, h * 0.5, t * 0.5);
+      const bodyMesh = new THREE.Mesh(bodyGeom, oliveSoftMat);
+      bodyMesh.name = `${manifest.moduleId}-corps-proceduraux`;
+      group.add(bodyMesh);
+    }
+  }
+
+  return group;
+}
+
 const defaultModuleProvider: ModuleAssetProvider = {
   async fetchManifest(moduleId: string): Promise<unknown> {
-    const res = await fetch(`/assets/modules/${encodeURIComponent(moduleId)}.manifest.json`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    const builtin = BUILTIN_MANIFEST_BY_ID.get(moduleId);
+    if (typeof fetch !== 'function') {
+      if (builtin) return builtin;
+      throw new Error('fetch indisponible');
+    }
+    try {
+      const res = await fetch(`/assets/modules/${encodeURIComponent(moduleId)}.manifest.json`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      if (builtin) return builtin;
+      throw err;
+    }
   },
   async fetchGlb(moduleId: string, url?: string): Promise<ArrayBuffer> {
     const target = url ?? `/assets/modules/${encodeURIComponent(moduleId)}.glb`;
@@ -279,9 +932,23 @@ function disposeObject3D(root: THREE.Object3D): void {
   });
 }
 
+function countTrianglesInObject(root: THREE.Object3D): number {
+  let triangleCount = 0;
+  root.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (mesh.isMesh && mesh.geometry) {
+      const idx = mesh.geometry.getIndex();
+      const pos = mesh.geometry.getAttribute('position');
+      triangleCount += idx ? Math.floor(idx.count / 3) : pos ? Math.floor(pos.count / 3) : 0;
+    }
+  });
+  return triangleCount;
+}
+
 /**
- * Charge un module 3D externe et lui greffe sa platine mécanique à deux pieds (§ 4.2).
- * Réutilise `decodeGlbBufferToScene` de `loader.ts` sans aucune duplication de code glTF.
+ * Charge un module 3D externe (maillé `.glb` ou procédural construit par code), applique
+ * l'orientation déclarée dans son manifeste (`orientation.yawDeg` : 0° ou 180° autour de Y)
+ * et lui greffe sa platine mécanique standard à deux pieds (§ 4.2).
  */
 export async function loadModuleAsset(
   moduleId: string,
@@ -309,6 +976,56 @@ export async function loadModuleAsset(
     return degraded('manifest-invalid', (err as Error)?.message);
   }
 
+  const origin: ModuleOrigin = manifest.origin === 'procedural' ? 'procedural' : 'glb';
+  const yawDeg = manifest.orientation?.yawDeg ?? 0;
+
+  if (origin === 'procedural') {
+    const root = new THREE.Group();
+    root.name = `module:${manifest.moduleId}`;
+    root.userData.origin = 'procedural';
+    root.userData.orientation = manifest.orientation ?? {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      yawDeg: 0,
+    };
+    root.userData.reserve = manifest.reserve ?? null;
+    root.userData.rigidPanelConvention =
+      manifest.rigidPanelConvention ?? RIGID_PANEL_CONVENTION;
+
+    const bodyGroup = buildProceduralModuleMesh(manifest);
+    bodyGroup.userData.appliedYawDeg = yawDeg;
+    if (yawDeg !== 0) {
+      bodyGroup.rotation.y = (yawDeg * Math.PI) / 180;
+    }
+    root.add(bodyGroup);
+
+    const platineGroup = buildPlatineMesh(manifest.platine);
+    root.add(platineGroup);
+    root.updateMatrixWorld(true);
+
+    const triangleCount = countTrianglesInObject(bodyGroup);
+    let disposed = false;
+    const dispose = (): void => {
+      if (disposed) return;
+      disposed = true;
+      if (root.parent) {
+        root.parent.remove(root);
+      }
+      disposeObject3D(root);
+    };
+
+    return {
+      status: 'ready',
+      moduleId: manifest.moduleId,
+      manifest,
+      root,
+      platineGroup,
+      triangleCount,
+      dispose,
+    };
+  }
+
   let glbBuffer: ArrayBuffer;
   try {
     glbBuffer = await provider.fetchGlb(moduleId, manifest.glbUrl);
@@ -317,26 +1034,39 @@ export async function loadModuleAsset(
   }
 
   try {
-    const decoded = await decodeGlbBufferToScene(glbBuffer, `module:${manifest.moduleId}`);
-    let triangleCount = 0;
-    decoded.root.traverse((obj) => {
-      const mesh = obj as THREE.Mesh;
-      if (mesh.isMesh && mesh.geometry) {
-        const idx = mesh.geometry.getIndex();
-        const pos = mesh.geometry.getAttribute('position');
-        triangleCount += idx ? Math.floor(idx.count / 3) : pos ? Math.floor(pos.count / 3) : 0;
-      }
-    });
+    const decoded = await decodeGlbBufferToScene(glbBuffer, `module-body:${manifest.moduleId}`);
+    const triangleCount = countTrianglesInObject(decoded.root);
+
+    // Le groupe racine porte d'une part le maillage (tourné selon `manifest.orientation.yawDeg` :
+    // 180° autour de Y pour M04, M05 et M16, 0° pour les autres) et d'autre part la platine au dos (-Z).
+    const root = new THREE.Group();
+    root.name = `module:${manifest.moduleId}`;
+    root.userData.origin = 'glb';
+    root.userData.orientation = manifest.orientation ?? {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      yawDeg: 0,
+    };
+    root.userData.reserve = manifest.reserve ?? null;
+
+    decoded.root.name = 'lkdv-module-body';
+    decoded.root.userData.appliedYawDeg = yawDeg;
+    if (yawDeg !== 0) {
+      decoded.root.rotation.y = (yawDeg * Math.PI) / 180;
+    }
+    root.add(decoded.root);
+
     const platineGroup = buildPlatineMesh(manifest.platine);
-    decoded.root.add(platineGroup);
-    decoded.root.updateMatrixWorld(true);
+    root.add(platineGroup);
+    root.updateMatrixWorld(true);
 
     let disposed = false;
     const dispose = (): void => {
       if (disposed) return;
       disposed = true;
-      if (decoded.root.parent) {
-        decoded.root.parent.remove(decoded.root);
+      if (root.parent) {
+        root.parent.remove(root);
       }
       decoded.dispose();
       disposeObject3D(platineGroup);
@@ -346,7 +1076,7 @@ export async function loadModuleAsset(
       status: 'ready',
       moduleId: manifest.moduleId,
       manifest,
-      root: decoded.root,
+      root,
       platineGroup,
       triangleCount,
       dispose,
