@@ -20,7 +20,14 @@
     "up": "Y",
     "front": "+Z",
     "back": "-Z",
-    "yawDeg": 0
+    "bakedInGlbRoot": true,
+    "rootYawDegInGlb": 0,
+    "loadRotationDeg": [
+      0,
+      0,
+      0
+    ],
+    "loadScale": 1
   },
   "platine": {
     "position": [

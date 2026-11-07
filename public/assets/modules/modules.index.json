@@ -8,15 +8,101 @@
   },
   "modules": [
     {
+      "moduleId": "lkdv-m01",
+      "code": "M01",
+      "label": "Porte-gourde",
+      "origin": "glb",
+      "glbUrl": "/assets/modules/lkdv-m01.glb",
+      "triangles": 11346,
+      "bytes": 286084,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.1098,
+        "h": 0.21,
+        "d": 0.1187
+      },
+      "platine": {
+        "position": [
+          0,
+          0.105,
+          -0.0593
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
+      "moduleId": "lkdv-m02",
+      "code": "M02",
+      "label": "Poche téléphone",
+      "origin": "glb",
+      "glbUrl": "/assets/modules/lkdv-m02.glb",
+      "triangles": 11581,
+      "bytes": 301448,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.0864,
+        "h": 0.17,
+        "d": 0.043
+      },
+      "platine": {
+        "position": [
+          0,
+          0.085,
+          -0.0215
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
       "moduleId": "lkdv-m03",
       "code": "M03",
       "label": "Poche GPS",
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m03.glb",
       "triangles": 11733,
-      "bytes": 290296,
+      "bytes": 297232,
       "textureSize": 512,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.0773,
         "h": 0.15,
@@ -48,9 +134,15 @@
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m04.glb",
       "triangles": 10938,
-      "bytes": 350020,
+      "bytes": 360476,
       "textureSize": 512,
-      "yawDeg": 180,
+      "rootYawDegInGlb": 180,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.1386,
         "h": 0.2,
@@ -82,9 +174,15 @@
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m05.glb",
       "triangles": 11299,
-      "bytes": 376816,
+      "bytes": 389368,
       "textureSize": 1024,
-      "yawDeg": 180,
+      "rootYawDegInGlb": 180,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.2618,
         "h": 0.38,
@@ -116,9 +214,15 @@
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m06.glb",
       "triangles": 11687,
-      "bytes": 221284,
+      "bytes": 225676,
       "textureSize": 512,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.1641,
         "h": 0.25,
@@ -150,9 +254,15 @@
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m07.glb",
       "triangles": 8568,
-      "bytes": 227556,
+      "bytes": 227116,
       "textureSize": 512,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.2237,
         "h": 0.32,
@@ -184,9 +294,15 @@
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m08.glb",
       "triangles": 11632,
-      "bytes": 223676,
+      "bytes": 228700,
       "textureSize": 512,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.0449,
         "h": 0.32,
@@ -212,15 +328,61 @@
       "valid": true
     },
     {
+      "moduleId": "lkdv-m13",
+      "code": "M13",
+      "label": "Porte-piolets",
+      "origin": "glb",
+      "glbUrl": "/assets/modules/lkdv-m13.glb",
+      "triangles": 10231,
+      "bytes": 321544,
+      "textureSize": 512,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
+      "boundingBoxM": {
+        "w": 0.0831,
+        "h": 0.45,
+        "d": 0.0831
+      },
+      "platine": {
+        "position": [
+          0,
+          0.225,
+          -0.0415
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "reserve": null,
+      "tiers": [
+        "web",
+        "hd"
+      ],
+      "valid": true
+    },
+    {
       "moduleId": "lkdv-m15",
       "code": "M15",
       "label": "Poche pharmacie",
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m15.glb",
       "triangles": 11348,
-      "bytes": 339660,
+      "bytes": 349468,
       "textureSize": 512,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.1552,
         "h": 0.11,
@@ -252,9 +414,15 @@
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m16.glb",
       "triangles": 10515,
-      "bytes": 245380,
+      "bytes": 253440,
       "textureSize": 512,
-      "yawDeg": 180,
+      "rootYawDegInGlb": 180,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.088,
         "h": 0.165,
@@ -286,9 +454,15 @@
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m17.glb",
       "triangles": 9739,
-      "bytes": 352872,
+      "bytes": 354016,
       "textureSize": 1024,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.2855,
         "h": 0.38,
@@ -320,9 +494,15 @@
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m18.glb",
       "triangles": 11686,
-      "bytes": 301228,
+      "bytes": 307532,
       "textureSize": 512,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.1571,
         "h": 0.21,
@@ -354,9 +534,15 @@
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m19.glb",
       "triangles": 11292,
-      "bytes": 336644,
+      "bytes": 341756,
       "textureSize": 512,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.2426,
         "h": 0.38,
@@ -388,9 +574,15 @@
       "origin": "glb",
       "glbUrl": "/assets/modules/lkdv-m20.glb",
       "triangles": 10529,
-      "bytes": 360436,
+      "bytes": 366132,
       "textureSize": 1024,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.2663,
         "h": 0.38,
@@ -424,7 +616,13 @@
       "triangles": null,
       "bytes": 0,
       "textureSize": null,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.46,
         "h": 0.16,
@@ -461,7 +659,13 @@
       "triangles": null,
       "bytes": 0,
       "textureSize": null,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.56,
         "h": 0.15,
@@ -498,7 +702,13 @@
       "triangles": null,
       "bytes": 0,
       "textureSize": null,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.42,
         "h": 0.23,
@@ -535,7 +745,13 @@
       "triangles": null,
       "bytes": 0,
       "textureSize": null,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.28,
         "h": 0.3,
@@ -572,7 +788,13 @@
       "triangles": null,
       "bytes": 0,
       "textureSize": null,
-      "yawDeg": 0,
+      "rootYawDegInGlb": 0,
+      "loadRotationDeg": [
+        0,
+        0,
+        0
+      ],
+      "loadScale": 1,
       "boundingBoxM": {
         "w": 0.09,
         "h": 1.7,

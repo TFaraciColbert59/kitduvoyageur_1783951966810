@@ -16,6 +16,9 @@ export function bagModelNotice(
   if (info.status === 'degraded') {
     return 'Modèle 3D indisponible : le sac est construit par code.';
   }
+  if (info.attachmentNotice) {
+    return info.attachmentNotice;
+  }
   if (info.status === 'glb' && info.colorCustomization === 'unavailable-no-mask') {
     return 'Personnalisation de couleur indisponible pour ce sac : son masque de zone tissu manque.';
   }

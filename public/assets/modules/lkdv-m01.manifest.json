@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "moduleId": "lkdv-m01",
+  "code": "M01",
+  "label": "Porte-gourde",
+  "units": "meters",
+  "origin": "glb",
+  "glbUrl": "/assets/modules/lkdv-m01.glb",
+  "texturedSource": true,
+  "boundingBoxM": {
+    "w": 0.1098,
+    "h": 0.21,
+    "d": 0.1187
+  },
+  "cotesReferenceMm": {
+    "w": 95,
+    "h": 210,
+    "d": 95
+  },
+  "orientation": {
+    "up": "Y",
+    "front": "+Z",
+    "back": "-Z",
+    "bakedInGlbRoot": true,
+    "rootYawDegInGlb": 0,
+    "bakedScaleFactor": 0.1106,
+    "loadRotationDeg": [
+      0,
+      0,
+      0
+    ],
+    "loadScale": 1
+  },
+  "platine": {
+    "position": [
+      0,
+      0.105,
+      -0.0593
+    ],
+    "normal": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "textureSize": 512,
+  "reserve": null,
+  "rigidPanelConvention": {
+    "thicknessMm": 3.5,
+    "status": "convention_projet",
+    "measuredOnPrototype": false,
+    "source": "Reprise du socle de la platine standard (80 × 54 × 3,5 mm)"
+  },
+  "assets": {
+    "web": {
+      "url": "/assets/modules/lkdv-m01.glb",
+      "bytes": 286084,
+      "triangles": 11346,
+      "textureSize": 512
+    },
+    "hd": {
+      "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/module-models/lkdv-m01.hd.glb",
+      "bytes": 1011216,
+      "triangles": 11346,
+      "textureSize": 512
+    }
+  }
+}

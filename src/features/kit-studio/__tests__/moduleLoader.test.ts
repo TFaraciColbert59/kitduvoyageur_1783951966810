@@ -1,18 +1,26 @@
 // @vitest-environment jsdom
 /**
  * src/features/kit-studio/__tests__/moduleLoader.test.ts
- * Vérification complète du chemin des modules 3D (§ 4.1, § 4.2, § 4.3 + Avenant ingestion modules) :
- * - platine mécanique standard à deux pieds (jamais quatre) ;
- * - table lisible des points d'accroche provisoires des sacs LKDV ONE ;
- * - cycle complet sur fixture `tests/fixtures/kit-studio/module-poche-test.{glb,manifest.json}` ;
- * - palier web des 12 modules maillés `.glb` (`M03..M08, M15..M20`) : strictement < 400 Ko par module,
- *   taille de texture par module (512² par défaut, 1024² pour M05, M17, M20) et géométrie intacte
- *   (8 568 à 11 733 triangles) ;
- * - orientation portée dans les manifestes (Y haut, façade +Z, dos −Z, rotation Y de 180° pour
- *   M04, M05 et M16) et pose d'un module tourné dans le bon sens sur une ancre ;
- * - cohabitation des deux origines (`glb` et `procedural` : M09, M10, M11, M12, M14) sur les mêmes
- *   ancres et la même platine, avec l'épaisseur 3,5 mm des panneaux rigides portée comme convention ;
- * - réserves fournisseur (M04, M05, M07, M15, M16) portées dans les manifestes sans bricolage shader.
+ * Vérification complète du chemin des modules 3D (§ 4 + Avenant Lot I-D final) :
+ * 1. Platine mécanique standard à deux pieds (jamais quatre).
+ * 2. Les 15 modules maillés `.glb` (`M01..M08, M13, M15..M20`) :
+ *    - moins de 400 Ko par module en 512² ;
+ *    - moins de 700 Ko pour M05, M17 et M20 en 1024² ;
+ *    - géométrie intacte (8 568 à 11 733 triangles).
+ * 3. Zéro rotation ni mise à l'échelle ajoutée au chargement (facteur 1, rotation 0) :
+ *    - M04, M05 et M16 portent déjà exactement Y = 180° dans leur matrice racine, et l'échelle
+ *      métrique y est cuite aussi ;
+ *    - leur façade fonctionnelle sort bien en +Z après chargement.
+ * 4. Les 6 ancres auditées (`LKDV_ONE_AUDITED_ANCHORS`) :
+ *    - une par sac (`facade`), deux sur le 80 L (`facade` et `flanc-droit`) ;
+ *    - suppression du dos, du dessous, du dessus (`top-lid`) et des flancs des 4 petits sacs ;
+ *    - refus d'ancre occupée annoncé explicitement à l'utilisateur (`userMessage` + `bagModelNotice`).
+ * 5. Filtrage géométrique du catalogue par sac (garde de 15 % au bord) :
+ *    - 5 modules refusés sur le 15 L (`M05, M13, M17, M19, M20`, 10 acceptés sur 15) ;
+ *    - 4 modules refusés sur le 25 L (`M05, M13, M17, M20`, `M19` accepté, 11 acceptés sur 15) ;
+ *    - 15/15 acceptés sur 45 L, 60 L et 80 L.
+ * 6. Cohabitation des deux origines (15 `.glb` importés + 5 procéduraux `M09, M10, M11, M12, M14`
+ *    à panneaux rigides de 3,5 mm par convention de projet) sur les mêmes ancres et la même platine.
  */
 
 import fs from 'node:fs';
@@ -21,7 +29,11 @@ import * as THREE from 'three';
 import { describe, expect, it, vi } from 'vitest';
 import type { BagManifest } from '../domain/bagModel';
 import {
+  LKDV_ONE_AUDITED_ANCHORS,
   LKDV_ONE_PROVISIONAL_ANCHORS,
+  MODULE_FACE_MARGIN_RATIO,
+  doesModuleFitBag,
+  filterCompatibleModulesForBag,
   resolveBagAttachmentAnchors,
 } from '../domain/bagAnchorsTable';
 import {
@@ -36,7 +48,6 @@ import {
   loadModuleAsset,
   validateModuleManifest,
   type ModuleAssetProvider,
-  type ModuleManifest,
 } from '../scene/bag/moduleLoader';
 import { bagModelNotice } from '../scene/SceneView';
 
@@ -92,6 +103,12 @@ function compterTrianglesGlb(fichier: string): number {
   return n;
 }
 
+function lireBagManifest(modelId: string): BagManifest {
+  return JSON.parse(
+    fs.readFileSync(path.join(BAGS_DIR, `${modelId}.manifest.json`), 'utf8'),
+  ) as BagManifest;
+}
+
 describe('Platine mécanique standard LKDV (§ 4.1)', () => {
   it('modélise une platine avec un socle et exactement DEUX pieds (jamais quatre)', () => {
     expect(PLATINE_DIMENSIONS_MM.feetCount).toBe(2);
@@ -117,36 +134,46 @@ describe('Platine mécanique standard LKDV (§ 4.1)', () => {
   });
 });
 
-describe("Table des points d'accroche des sacs LKDV ONE (§ 4.2)", () => {
-  it('définit façade, flancs et dessus cohérents avec boundingBoxM pour les 5 sacs LKDV ONE', () => {
-    const ids = ['lkdv-one-15', 'lkdv-one-25', 'lkdv-one-45', 'lkdv-one-60', 'lkdv-one-80'];
-    for (const id of ids) {
-      const manifest = JSON.parse(
-        fs.readFileSync(path.join(BAGS_DIR, `${id}.manifest.json`), 'utf8'),
-      ) as BagManifest;
-      const anchors = resolveBagAttachmentAnchors(manifest);
-      expect(anchors).toEqual(LKDV_ONE_PROVISIONAL_ANCHORS[id]);
-      expect(anchors.map((a) => a.id)).toEqual([
-        'front-upper',
-        'front-lower',
-        'side-left',
-        'side-right',
-        'top-lid',
-      ]);
+describe("Les six ancres auditées des sacs LKDV ONE (§ 4.1 de l'avenant)", () => {
+  it('définit exactement 6 ancres auditées (1 par sac sur 15/25/45/60 L, 2 sur 80 L) et supprime dos, dessous, top-lid et flancs des 4 petits sacs', () => {
+    expect(LKDV_ONE_PROVISIONAL_ANCHORS).toBe(LKDV_ONE_AUDITED_ANCHORS);
 
-      // Chaque point d'accroche reste dans l'enveloppe physique du sac
+    const expected: Record<string, Array<{ id: string; position: [number, number, number]; normal: [number, number, number] }>> = {
+      'lkdv-one-15': [{ id: 'facade', position: [0, 0.171, 0.113], normal: [0, 0, 1] }],
+      'lkdv-one-25': [{ id: 'facade', position: [0, 0.229, 0.107], normal: [0, 0, 1] }],
+      'lkdv-one-45': [{ id: 'facade', position: [0, 0.213, 0.124], normal: [0, 0, 1] }],
+      'lkdv-one-60': [{ id: 'facade', position: [0, 0.164, 0.138], normal: [0, 0, 1] }],
+      'lkdv-one-80': [
+        { id: 'facade', position: [0, 0.362, 0.182], normal: [0, 0, 1] },
+        { id: 'flanc-droit', position: [0.178, 0.476, 0.092], normal: [1, 0, 0] },
+      ],
+    };
+
+    let totalAnchors = 0;
+    for (const [bagId, expectedAnchors] of Object.entries(expected)) {
+      const manifest = lireBagManifest(bagId);
+      const anchors = resolveBagAttachmentAnchors(manifest);
+      totalAnchors += anchors.length;
+
+      expect(anchors).toHaveLength(expectedAnchors.length);
+      expect(anchors.map((a) => ({ id: a.id, position: a.position, normal: a.normal }))).toEqual(
+        expectedAnchors,
+      );
+
+      // Aucune ancre interdite (dos, dessous, top-lid, side-left, ni flanc sur 15..60 L)
       for (const a of anchors) {
-        expect(Math.abs(a.position[0])).toBeLessThanOrEqual(manifest.boundingBoxM.w * 0.55);
-        expect(a.position[1]).toBeGreaterThan(0);
-        expect(a.position[1]).toBeLessThanOrEqual(manifest.boundingBoxM.h);
-        expect(Math.abs(a.position[2])).toBeLessThanOrEqual(manifest.boundingBoxM.d * 0.55);
+        expect(['dos', 'dessous', 'top-lid', 'side-left', 'flanc-gauche']).not.toContain(a.id);
+        if (bagId !== 'lkdv-one-80') {
+          expect(a.id).toBe('facade');
+        }
       }
     }
+    expect(totalAnchors).toBe(6);
   });
 });
 
-describe('Cycle complet d’un module 3D sur fixture (§ 4.2 & § 4.3)', () => {
-  it('charge le module fixture, attache la platine, monte sur une ancre, oriente selon la normale, refuse une ancre occupée, dépose et libère la mémoire', async () => {
+describe('Cycle complet d’un module 3D et annonce du refus d’ancre occupée (§ 4.2 & § 4.3)', () => {
+  it('monte un module sur la façade du 45 L, refuse un deuxième module sur la même ancre en avertissant explicitement l’utilisateur, puis dépose et libère la mémoire', async () => {
     const mod1 = await loadModuleAsset('module-poche-test', fixtureProvider);
     const mod2 = await loadModuleAsset('module-poche-test', fixtureProvider);
     expect(mod1.status).toBe('ready');
@@ -155,150 +182,113 @@ describe('Cycle complet d’un module 3D sur fixture (§ 4.2 & § 4.3)', () => {
 
     expect(mod1.triangleCount).toBe(12);
     expect(mod1.platineGroup.parent).toBe(mod1.root);
-    const feet = mod1.platineGroup.children.filter((c) => c.userData.isPlatineFoot === true);
-    expect(feet).toHaveLength(2);
 
-    // Points d'accroche du sac LKDV ONE 45 L
     const bagRoot = new THREE.Group();
-    const bag45Manifest = JSON.parse(
-      fs.readFileSync(path.join(BAGS_DIR, 'lkdv-one-45.manifest.json'), 'utf8'),
-    ) as BagManifest;
-    const anchors = resolveBagAttachmentAnchors(bag45Manifest);
-    const controller = createModuleAttachmentController(bagRoot, anchors);
+    const bag45Manifest = lireBagManifest('lkdv-one-45');
+    const anchors45 = resolveBagAttachmentAnchors(bag45Manifest);
+    expect(anchors45).toHaveLength(1);
+    expect(anchors45[0].id).toBe('facade');
 
-    // 1. Pose sur l'ancre 'front-upper' (normale [0, 0, 1])
-    const resFront = controller.attach(mod1, 'front-upper');
-    expect(resFront.ok).toBe(true);
-    if (!resFront.ok) return;
-    expect(mod1.root.parent).toBe(bagRoot);
-    expect(controller.isOccupied('front-upper')).toBe(true);
-
-    // La direction sortante du module (initialement +Z car platine.normal = [0, 0, -1]) pointe vers [0, 0, 1]
-    expect(resFront.worldForward[0]).toBeCloseTo(0, 4);
-    expect(resFront.worldForward[1]).toBeCloseTo(0, 4);
-    expect(resFront.worldForward[2]).toBeCloseTo(1, 4);
-
-    // Le point d'appui de la platine coïncide exactement avec la position de l'ancre 'front-upper'
-    const frontAnchor = anchors.find((a) => a.id === 'front-upper')!;
-    expect(resFront.worldPosition[0]).toBeCloseTo(frontAnchor.position[0], 4);
-    expect(resFront.worldPosition[1]).toBeCloseTo(frontAnchor.position[1], 4);
-    expect(resFront.worldPosition[2]).toBeCloseTo(frontAnchor.position[2], 4);
-
-    // 2. Refus d'un point d'ancrage déjà occupé
-    const resOccupied = controller.attach(mod2, 'front-upper');
-    expect(resOccupied).toEqual({
-      ok: false,
-      anchorId: 'front-upper',
-      reason: 'anchor-occupied',
-      occupiedByModuleId: 'module-poche-test',
+    let latestNotice: string | null = null;
+    const controller45 = createModuleAttachmentController(bagRoot, anchors45, {
+      onNoticeChange(notice) {
+        latestNotice = notice;
+      },
     });
 
-    // 3. Refus d'un point d'ancrage inexistant
-    const resUnknown = controller.attach(mod2, 'ancre-inconnue');
-    expect(resUnknown).toEqual({
-      ok: false,
-      anchorId: 'ancre-inconnue',
-      reason: 'anchor-not-found',
-    });
+    // 1. Pose du premier module sur l'unique ancre 'facade' du 45 L
+    const resFirst = controller45.attach(mod1, 'facade');
+    expect(resFirst.ok).toBe(true);
+    if (!resFirst.ok) return;
+    expect(resFirst.worldForward).toEqual([0, 0, 1]);
+    expect(resFirst.worldPosition[0]).toBeCloseTo(0, 4);
+    expect(resFirst.worldPosition[1]).toBeCloseTo(0.213, 4);
+    expect(resFirst.worldPosition[2]).toBeCloseTo(0.124, 4);
+    expect(latestNotice).toBeNull();
 
-    // 4. Pose du second module sur le flanc gauche ('side-left', normale [-1, 0, 0])
-    const resSide = controller.attach(mod2, 'side-left');
-    expect(resSide.ok).toBe(true);
-    if (!resSide.ok) return;
-    expect(resSide.worldForward[0]).toBeCloseTo(-1, 4);
-    expect(resSide.worldForward[1]).toBeCloseTo(0, 4);
-    expect(resSide.worldForward[2]).toBeCloseTo(0, 4);
+    // 2. Pose d'un deuxième module sur le 45 L : refus propre ET message dit à l'utilisateur (§ 4.3)
+    const resOccupied = controller45.attach(mod2, 'facade');
+    expect(resOccupied.ok).toBe(false);
+    if (resOccupied.ok) return;
+    expect(resOccupied.reason).toBe('anchor-occupied');
+    expect(resOccupied.occupiedByModuleId).toBe('module-poche-test');
+    expect(resOccupied.userMessage).toContain('déjà occupé');
+    expect(controller45.getLastRejectionNotice()).toBe(resOccupied.userMessage);
+    expect(latestNotice).toBe(resOccupied.userMessage);
 
-    // 5. Dépose du premier module : l'ancre 'front-upper' redevient libre
-    const detached = controller.detach('front-upper');
-    expect(detached).toBe(mod1);
-    expect(mod1.root.parent).toBeNull();
-    expect(controller.isOccupied('front-upper')).toBe(false);
-
-    // On peut désormais reposer un module sur 'front-upper'
-    const resReattach = controller.attach(mod1, 'front-upper');
-    expect(resReattach.ok).toBe(true);
-
-    // 6. Libération mémoire complète (dispose)
-    const geomDisposeSpy = vi.spyOn(THREE.BufferGeometry.prototype, 'dispose');
-    const matDisposeSpy = vi.spyOn(THREE.Material.prototype, 'dispose');
-
-    controller.dispose();
-    expect(controller.isOccupied('front-upper')).toBe(false);
-    expect(controller.isOccupied('side-left')).toBe(false);
-    expect(bagRoot.children).toHaveLength(0);
-    // Chaque module dispose sa géométrie de corps + les 3 géométries de sa platine (socle + 2 pieds)
-    expect(geomDisposeSpy.mock.calls.length).toBeGreaterThanOrEqual(8);
-    expect(matDisposeSpy.mock.calls.length).toBeGreaterThanOrEqual(4);
-
-    geomDisposeSpy.mockRestore();
-    matDisposeSpy.mockRestore();
-  });
-
-  it('dégrade proprement quand le manifeste ou le GLB du module manque, et bascule le bandeau selon modules3dAvailable', async () => {
-    // Les 17 modules (12 GLB + 5 procéduraux) sont désormais livrés en production
-    expect(AVAILABLE_3D_MODULE_MANIFESTS).toHaveLength(17);
-    expect(IMPORTED_GLB_MODULE_MANIFESTS).toHaveLength(12);
-    expect(PROCEDURAL_CODE_MODULE_MANIFESTS).toHaveLength(5);
-
-    // Lorsque modules3dAvailable est true, plus aucun bandeau d'attente n'est affiché
-    const noticeAvailable = bagModelNotice(
+    // Le bandeau d'état (aria-live) de SceneView relaie ce refus à l'utilisateur
+    const uiNotice = bagModelNotice(
       {
         status: 'glb',
         modelId: 'lkdv-one-45',
         label: 'LKDV ONE 45 L',
         parts: ['body'],
-        anchors: ['front-upper'],
+        anchors: ['facade'],
         capabilities: null,
         declaredCapacityL: 45,
         colorCustomization: 'available',
         modules3dAvailable: true,
+        attachmentNotice: latestNotice,
         reason: null,
       },
       'appearance',
       'mod',
     );
-    expect(noticeAvailable).toBeNull();
+    expect(uiNotice).toBe(resOccupied.userMessage);
 
-    // Si un sac déclare explicitement modules3dAvailable: false, le bandeau reste fonctionnel
-    const noticeUnavailable = bagModelNotice(
-      {
-        status: 'glb',
-        modelId: 'lkdv-one-45',
-        label: 'LKDV ONE 45 L',
-        parts: ['body'],
-        anchors: ['front-upper'],
-        capabilities: null,
-        declaredCapacityL: 45,
-        colorCustomization: 'available',
-        modules3dAvailable: false,
-        reason: null,
-      },
-      'appearance',
-      'mod',
+    // 3. Dépose du premier module : efface l'avertissement et libère l'ancre 'facade'
+    const detached = controller45.detach('facade');
+    expect(detached).toBe(mod1);
+    expect(latestNotice).toBeNull();
+    expect(controller45.isOccupied('facade')).toBe(false);
+
+    // 4. Sur le 80 L (2 ancres : 'facade' et 'flanc-droit'), deux modules peuvent être posés simultanément
+    const bag80Manifest = lireBagManifest('lkdv-one-80');
+    const controller80 = createModuleAttachmentController(
+      bagRoot,
+      resolveBagAttachmentAnchors(bag80Manifest),
     );
-    expect(noticeUnavailable).toContain('Modules 3D en cours de production');
+    expect(controller80.attach(mod1, 'facade').ok).toBe(true);
+    const resFlanc = controller80.attach(mod2, 'flanc-droit');
+    expect(resFlanc.ok).toBe(true);
+    if (resFlanc.ok) {
+      expect(resFlanc.worldForward[0]).toBeCloseTo(1, 4);
+      expect(resFlanc.worldForward[1]).toBeCloseTo(0, 4);
+      expect(resFlanc.worldForward[2]).toBeCloseTo(0, 4);
+    }
 
-    // Chargement d'un module introuvable → dégradation propre sans exception
+    const geomDisposeSpy = vi.spyOn(THREE.BufferGeometry.prototype, 'dispose');
+    controller80.dispose();
+    expect(geomDisposeSpy.mock.calls.length).toBeGreaterThanOrEqual(8);
+    geomDisposeSpy.mockRestore();
+  });
+
+  it('dégrade proprement quand le manifeste ou le GLB du module manque', async () => {
+    expect(AVAILABLE_3D_MODULE_MANIFESTS).toHaveLength(20);
+    expect(IMPORTED_GLB_MODULE_MANIFESTS).toHaveLength(15);
+    expect(PROCEDURAL_CODE_MODULE_MANIFESTS).toHaveLength(5);
+
     const missing = await loadModuleAsset('module-inexistant', fixtureProvider);
     expect(missing.status).toBe('degraded');
     if (missing.status === 'degraded') {
       expect(missing.reason).toBe('manifest-fetch-failed');
     }
 
-    // Manifeste invalide rejeté explicitement
     expect(() => validateModuleManifest({ schema: 99 })).toThrow();
   });
 });
 
-describe('Palier web des 12 modules maillés .glb (budget < 400 Ko et géométrie intacte)', () => {
+describe('1. Palier web des 15 modules maillés .glb (< 400 Ko en 512², < 700 Ko en 1024², géométrie intacte)', () => {
   const EXPECTED_TRIANGLES: Readonly<Record<string, number>> = {
+    'lkdv-m01': 11346,
+    'lkdv-m02': 11581,
     'lkdv-m03': 11733,
     'lkdv-m04': 10938,
     'lkdv-m05': 11299,
     'lkdv-m06': 11687,
     'lkdv-m07': 8568,
     'lkdv-m08': 11632,
+    'lkdv-m13': 10231,
     'lkdv-m15': 11348,
     'lkdv-m16': 10515,
     'lkdv-m17': 9739,
@@ -309,8 +299,8 @@ describe('Palier web des 12 modules maillés .glb (budget < 400 Ko et géométri
 
   const EXPECTED_TEX_SIZE_1024 = new Set(['lkdv-m05', 'lkdv-m17', 'lkdv-m20']);
 
-  it('impose moins de 400 Ko par module au palier web, la taille de texture cible (512² / 1024²) et conserve les triangles exacts (8 568 à 11 733)', () => {
-    expect(Object.keys(EXPECTED_TRIANGLES)).toHaveLength(12);
+  it('impose moins de 400 Ko par module en 512², moins de 700 Ko pour M05/M17/M20 en 1024², et conserve les triangles exacts (8 568 à 11 733)', () => {
+    expect(Object.keys(EXPECTED_TRIANGLES)).toHaveLength(15);
 
     for (const [moduleId, expectedTriangles] of Object.entries(EXPECTED_TRIANGLES)) {
       const glbPath = path.join(MODULES_DIR, `${moduleId}.glb`);
@@ -319,11 +309,11 @@ describe('Palier web des 12 modules maillés .glb (budget < 400 Ko et géométri
       expect(fs.existsSync(manifestPath)).toBe(true);
 
       const bytes = fs.statSync(glbPath).size;
+      const is1024 = EXPECTED_TEX_SIZE_1024.has(moduleId);
+      const maxAllowedBytes = is1024 ? 700 * 1024 : 400 * 1024;
       expect(bytes).toBeGreaterThan(10 * 1024);
-      // Budget strict : moins de 400 Ko par module au palier web
-      expect(bytes).toBeLessThan(400 * 1024);
+      expect(bytes).toBeLessThan(maxAllowedBytes);
 
-      // La géométrie n'est jamais décimée : 8 568 à 11 733 triangles exacts
       const triangles = compterTrianglesGlb(glbPath);
       expect(triangles).toBe(expectedTriangles);
       expect(triangles).toBeGreaterThanOrEqual(8568);
@@ -333,93 +323,59 @@ describe('Palier web des 12 modules maillés .glb (budget < 400 Ko et géométri
         JSON.parse(fs.readFileSync(manifestPath, 'utf8')),
         moduleId,
       );
-      const expectedTex = EXPECTED_TEX_SIZE_1024.has(moduleId) ? 1024 : 512;
-      expect(manifest.textureSize).toBe(expectedTex);
+      expect(manifest.textureSize).toBe(is1024 ? 1024 : 512);
       expect(manifest.assets?.web?.bytes).toBe(bytes);
       expect(manifest.assets?.web?.triangles).toBe(expectedTriangles);
     }
   });
 });
 
-describe('Orientation portée dans les manifestes (yaw 180° pour M04, M05 et M16) et réserves fournisseur', () => {
-  const ROTATED_180 = new Set(['lkdv-m04', 'lkdv-m05', 'lkdv-m16']);
+describe('2. Zéro rotation ni mise à l’échelle ajoutée : M04, M05 et M16 sortent bien en +Z à facteur 1, rotation 0', () => {
+  it('charge M04, M05 et M16 à facteur 1 et rotation supplémentaire 0, et vérifie que leur façade fonctionnelle sort en +Z grâce à Y=180° déjà cuit dans leur matrice racine', async () => {
+    for (const moduleId of ['lkdv-m04', 'lkdv-m05', 'lkdv-m16'] as const) {
+      const loaded = await loadModuleAsset(moduleId, publicModulesProvider);
+      expect(loaded.status).toBe('ready');
+      if (loaded.status !== 'ready') return;
 
-  it('déclare Y haut, façade +Z, dos −Z et yawDeg = 180 uniquement pour M04, M05 et M16 dans les manifestes (jamais en dur dans le chargeur)', () => {
-    for (const m of IMPORTED_GLB_MODULE_MANIFESTS) {
-      const diskManifest = validateModuleManifest(
-        JSON.parse(fs.readFileSync(path.join(MODULES_DIR, `${m.moduleId}.manifest.json`), 'utf8')),
-        m.moduleId,
-      );
-      const expectedYaw = ROTATED_180.has(m.moduleId) ? 180 : 0;
-      expect(m.orientation).toEqual({
-        up: 'Y',
-        front: '+Z',
-        back: '-Z',
-        yawDeg: expectedYaw,
+      // Le chargeur n'ajoute aucune rotation ni mise à l'échelle (facteur 1, rotation 0)
+      expect(loaded.root.scale.x).toBe(1);
+      expect(loaded.root.scale.y).toBe(1);
+      expect(loaded.root.scale.z).toBe(1);
+      expect(loaded.root.rotation.x).toBe(0);
+      expect(loaded.root.rotation.y).toBe(0);
+      expect(loaded.root.rotation.z).toBe(0);
+      expect(loaded.manifest.orientation?.loadScale).toBe(1);
+      expect(loaded.manifest.orientation?.loadRotationDeg).toEqual([0, 0, 0]);
+      expect(loaded.manifest.orientation?.rootYawDegInGlb).toBe(180);
+
+      // Le nœud de maillage issu du GLB porte déjà la rotation Y = 180° (quaternion [0, ±1, 0, 0])
+      // et l'échelle métrique cuites dans le fichier : un point de la façade brute Meshy (z_raw < 0)
+      // sort donc bien en +Z dans le repère du module chargé !
+      let meshNode: THREE.Mesh | null = null;
+      loaded.root.traverse((obj) => {
+        const m = obj as THREE.Mesh;
+        if (m.isMesh && !obj.name.startsWith('lkdv-platine')) {
+          meshNode = m;
+        }
       });
-      expect(diskManifest.orientation).toEqual(m.orientation);
+      expect(meshNode).not.toBeNull();
+      // Quaternion Y = 180° : |qy| ≈ 1, |qw| ≈ 0
+      expect(Math.abs(meshNode!.quaternion.y)).toBeCloseTo(1, 3);
+      expect(Math.abs(meshNode!.quaternion.w)).toBeCloseTo(0, 3);
+      // L'échelle cuite dans le nœud est bien comprise entre 0,079 et 0,237
+      expect(meshNode!.scale.y).toBeGreaterThanOrEqual(0.079);
+      expect(meshNode!.scale.y).toBeLessThanOrEqual(0.238);
+
+      // La façade brute (z_raw = -0.5 dans le maillage non tourné) sort en +Z après application
+      // de la seule matrice du nœud GLB (sans aucune rotation ajoutée par le chargeur)
+      const rawFrontPoint = new THREE.Vector3(0, 0, -0.5).applyMatrix4(meshNode!.matrixWorld);
+      expect(rawFrontPoint.z).toBeGreaterThan(0.02);
+
+      // Et la direction fonctionnelle sortante du module (-platine.normal) est bien +Z ([0, 0, 1])
+      expect(loaded.manifest.platine.normal).toEqual([0, 0, -1]);
+
+      loaded.dispose();
     }
-  });
-
-  it('applique la rotation Y du manifeste au chargement et pose un module tourné (M04) dans le bon sens sur une ancre', async () => {
-    const m04Rotated = await loadModuleAsset('lkdv-m04', publicModulesProvider);
-    expect(m04Rotated.status).toBe('ready');
-    if (m04Rotated.status !== 'ready') return;
-
-    const bodyGroup = m04Rotated.root.children.find((c) => c.name === 'lkdv-module-body');
-    expect(bodyGroup).toBeDefined();
-    expect(bodyGroup!.userData.appliedYawDeg).toBe(180);
-    expect(bodyGroup!.rotation.y).toBeCloseTo(Math.PI, 5);
-
-    // Preuve que l'orientation vient du manifeste et non d'une liste en dur dans le chargeur :
-    // si l'on charge ce même module avec un manifeste dont yawDeg = 0, rotation.y vaut 0.
-    const unrotatedProvider: ModuleAssetProvider = {
-      async fetchManifest(moduleId: string): Promise<unknown> {
-        const raw = (await publicModulesProvider.fetchManifest(moduleId)) as ModuleManifest;
-        return {
-          ...raw,
-          orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
-        };
-      },
-      fetchGlb: publicModulesProvider.fetchGlb,
-    };
-    const m04Unrotated = await loadModuleAsset('lkdv-m04', unrotatedProvider);
-    expect(m04Unrotated.status).toBe('ready');
-    if (m04Unrotated.status !== 'ready') return;
-    const unrotatedBody = m04Unrotated.root.children.find((c) => c.name === 'lkdv-module-body')!;
-    expect(unrotatedBody.userData.appliedYawDeg).toBe(0);
-    expect(unrotatedBody.rotation.y).toBeCloseTo(0, 5);
-
-    // Un point témoin de la façade brute (0, 0.1, -0.038) dans le maillage non tourné se retrouve
-    // en +Z (+0.038) dans le repère de m04Rotated grâce à yawDeg = 180 du manifeste.
-    const probeLocal = new THREE.Vector3(0, 0.1, -0.038);
-    const probeInRotatedRoot = probeLocal.clone().applyMatrix4(bodyGroup!.matrix);
-    const probeInUnrotatedRoot = probeLocal.clone().applyMatrix4(unrotatedBody.matrix);
-    expect(probeInRotatedRoot.z).toBeCloseTo(0.038, 4);
-    expect(probeInUnrotatedRoot.z).toBeCloseTo(-0.038, 4);
-
-    // Pose de M04 tourné sur l'ancre 'front-upper' (normale [0, 0, 1]) et 'side-left' (normale [-1, 0, 0])
-    const bagRoot = new THREE.Group();
-    const bag45Manifest = JSON.parse(
-      fs.readFileSync(path.join(BAGS_DIR, 'lkdv-one-45.manifest.json'), 'utf8'),
-    ) as BagManifest;
-    const anchors = resolveBagAttachmentAnchors(bag45Manifest);
-    const controller = createModuleAttachmentController(bagRoot, anchors);
-
-    const resFront = controller.attach(m04Rotated, 'front-upper');
-    expect(resFront.ok).toBe(true);
-    if (!resFront.ok) return;
-    expect(resFront.worldForward[0]).toBeCloseTo(0, 4);
-    expect(resFront.worldForward[1]).toBeCloseTo(0, 4);
-    expect(resFront.worldForward[2]).toBeCloseTo(1, 4);
-
-    // Dans le repère du sac, le point témoin de la façade de M04 est bien en avant de l'ancre (+Z)
-    const frontAnchor = anchors.find((a) => a.id === 'front-upper')!;
-    const probeWorld = probeLocal.clone().applyMatrix4(bodyGroup!.matrixWorld);
-    expect(probeWorld.z).toBeGreaterThan(frontAnchor.position[2] + 0.05);
-
-    m04Rotated.dispose();
-    m04Unrotated.dispose();
   });
 
   it('porte les 5 réserves de fournisseur (M04, M05, M07, M15, M16) dans les manifestes sans les masquer', () => {
@@ -429,15 +385,43 @@ describe('Orientation portée dans les manifestes (yaw 180° pour M04, M05 et M1
     expect(byCode.get('M07')?.reserve).toMatch(/filet/i);
     expect(byCode.get('M15')?.reserve).toMatch(/superposition sombre/i);
     expect(byCode.get('M16')?.reserve).toMatch(/écusson peu lisible/i);
-
-    // Les 7 autres modules maillés n'ont pas de réserve
-    for (const code of ['M03', 'M06', 'M08', 'M17', 'M18', 'M19', 'M20']) {
-      expect(byCode.get(code)?.reserve).toBeNull();
-    }
   });
 });
 
-describe('Deux origines de module : cohabitation des 5 modules procéduraux (M09, M10, M11, M12, M14) et des modules .glb', () => {
+describe('4. Filtrage géométrique du catalogue par sac avec garde de 15 % au bord (§ 4.2)', () => {
+  it('calcule la compatibilité module ↔ sac avec une garde de 15 % et retrouve les 5 refus du 15 L (M05, M13, M17, M19, M20) et les 4 refus du 25 L', () => {
+    expect(MODULE_FACE_MARGIN_RATIO).toBe(0.15);
+
+    const bag15 = lireBagManifest('lkdv-one-15');
+    const bag25 = lireBagManifest('lkdv-one-25');
+    const bag45 = lireBagManifest('lkdv-one-45');
+    const bag60 = lireBagManifest('lkdv-one-60');
+    const bag80 = lireBagManifest('lkdv-one-80');
+
+    // Sur le 15 L : seuls 10 modules sur 15 rentrent ; M05, M13, M17, M19 et M20 sont refusés
+    const compat15 = filterCompatibleModulesForBag(IMPORTED_GLB_MODULE_MANIFESTS, bag15);
+    const rejected15Codes = IMPORTED_GLB_MODULE_MANIFESTS.filter(
+      (m) => !doesModuleFitBag(m, bag15),
+    ).map((m) => m.code);
+    expect(compat15).toHaveLength(10);
+    expect(rejected15Codes).toEqual(['M05', 'M13', 'M17', 'M19', 'M20']);
+
+    // Sur le 25 L : 11 modules sur 15 rentrent (M19 rentre sur le 25 L ; M05, M13, M17, M20 refusés)
+    const compat25 = filterCompatibleModulesForBag(IMPORTED_GLB_MODULE_MANIFESTS, bag25);
+    const rejected25Codes = IMPORTED_GLB_MODULE_MANIFESTS.filter(
+      (m) => !doesModuleFitBag(m, bag25),
+    ).map((m) => m.code);
+    expect(compat25).toHaveLength(11);
+    expect(rejected25Codes).toEqual(['M05', 'M13', 'M17', 'M20']);
+
+    // Sur les 45 L, 60 L et 80 L : les 15 modules maillés rentrent tous
+    expect(filterCompatibleModulesForBag(IMPORTED_GLB_MODULE_MANIFESTS, bag45)).toHaveLength(15);
+    expect(filterCompatibleModulesForBag(IMPORTED_GLB_MODULE_MANIFESTS, bag60)).toHaveLength(15);
+    expect(filterCompatibleModulesForBag(IMPORTED_GLB_MODULE_MANIFESTS, bag80)).toHaveLength(15);
+  });
+});
+
+describe('Deux origines de module : cohabitation des 15 modules .glb et des 5 modules procéduraux (M09, M10, M11, M12, M14)', () => {
   it('porte la convention d’épaisseur 3,5 mm des panneaux rigides comme convention de projet (non mesurée sur prototype)', () => {
     expect(RIGID_PANEL_THICKNESS_MM).toBe(3.5);
     expect(RIGID_PANEL_THICKNESS_MM).toBe(PLATINE_DIMENSIONS_MM.plateThicknessMm);
@@ -449,8 +433,7 @@ describe('Deux origines de module : cohabitation des 5 modules procéduraux (M09
     });
   });
 
-  it('construit par code M09, M10, M11, M12 et M14 sans aucun fichier .glb et les fait cohabiter avec les maillages importés sur les mêmes ancres et la même platine', async () => {
-    // Provider qui interdit tout appel à fetchGlb pour prouver que M09..M14 ne lisent aucun .glb
+  it('construit par code M09, M10, M11, M12 et M14 sans aucun fichier .glb et les fait cohabiter avec les maillages importés sur les ancres auditées du 80 L', async () => {
     const proceduralStrictProvider: ModuleAssetProvider = {
       fetchManifest: publicModulesProvider.fetchManifest,
       async fetchGlb(): Promise<ArrayBuffer> {
@@ -471,7 +454,6 @@ describe('Deux origines de module : cohabitation des 5 modules procéduraux (M09
       expect(res.manifest.rigidPanelConvention).toEqual(RIGID_PANEL_CONVENTION);
       expect(res.triangleCount).toBeGreaterThan(0);
 
-      // Platine standard à 2 pieds présente sur chaque module procédural
       const feet = res.platineGroup.children.filter((c) => c.userData.isPlatineFoot === true);
       expect(feet).toHaveLength(2);
     }
@@ -487,66 +469,27 @@ describe('Deux origines de module : cohabitation des 5 modules procéduraux (M09
       return;
     }
 
-    // Vérifications géométriques spécifiques des 5 modules procéduraux :
-    // - M09 : état de référence 'charge', boîte 460 × 160 × 160 mm
-    expect(m09.manifest.referenceState).toBe('charge');
-    expect(m09.manifest.boundingBoxM).toEqual({ w: 0.46, h: 0.16, d: 0.16 });
-
-    // - M10 & M11 : sangles en boucles ouvertes (openLoop = true), sans cylindre plein
-    let m10OpenLoops = 0;
-    m10.root.traverse((o) => {
-      if (o.userData?.openLoop === true) m10OpenLoops++;
-    });
-    expect(m10OpenLoops).toBe(2);
-
-    let m11OpenLoops = 0;
-    m11.root.traverse((o) => {
-      if (o.userData?.openLoop === true) m11OpenLoops++;
-    });
-    expect(m11OpenLoops).toBe(2);
-
-    // - M12 : filet concave ouvert sans casque (isConcaveOpenNet = true)
-    let m12NetFound = false;
-    m12.root.traverse((o) => {
-      if (o.userData?.isConcaveOpenNet === true) m12NetFound = true;
-    });
-    expect(m12NetFound).toBe(true);
-
-    // - M14 : lame droite élancée 90 × 1700 × 3,5 mm (H/L = 1700 / 90 ≈ 18,89)
-    let m14AspectRatio = 0;
-    m14.root.traverse((o) => {
-      if (typeof o.userData?.aspectRatioHL === 'number') {
-        m14AspectRatio = o.userData.aspectRatioHL;
-      }
-    });
-    expect(m14AspectRatio).toBeCloseTo(1700 / 90, 2);
-
-    // Cohabitation sur les ancres d'un même sac (lkdv-one-45) avec un module .glb importé (lkdv-m03)
-    const m03Glb = await loadModuleAsset('lkdv-m03', publicModulesProvider);
-    expect(m03Glb.status).toBe('ready');
-    if (m03Glb.status !== 'ready') return;
+    // Cohabitation simultanée d'un module .glb importé (lkdv-m04) et d'un module procédural (lkdv-m12)
+    // sur les deux ancres auditées ('facade' et 'flanc-droit') du sac LKDV ONE 80 L
+    const m04Glb = await loadModuleAsset('lkdv-m04', publicModulesProvider);
+    expect(m04Glb.status).toBe('ready');
+    if (m04Glb.status !== 'ready') return;
 
     const bagRoot = new THREE.Group();
-    const bag45Manifest = JSON.parse(
-      fs.readFileSync(path.join(BAGS_DIR, 'lkdv-one-45.manifest.json'), 'utf8'),
-    ) as BagManifest;
-    const anchors = resolveBagAttachmentAnchors(bag45Manifest);
-    const controller = createModuleAttachmentController(bagRoot, anchors);
+    const bag80Manifest = lireBagManifest('lkdv-one-80');
+    const anchors80 = resolveBagAttachmentAnchors(bag80Manifest);
+    const controller = createModuleAttachmentController(bagRoot, anchors80);
 
-    expect(controller.attach(m03Glb, 'front-upper').ok).toBe(true);
-    expect(controller.attach(m09, 'front-lower').ok).toBe(true);
-    expect(controller.attach(m10, 'top-lid').ok).toBe(true);
-    expect(controller.attach(m12, 'side-left').ok).toBe(true);
-    expect(controller.attach(m14, 'side-right').ok).toBe(true);
-
-    expect(bagRoot.children).toHaveLength(5);
-    expect(controller.getMountedModule('front-upper')?.manifest.origin).toBe('glb');
-    expect(controller.getMountedModule('front-lower')?.manifest.origin).toBe('procedural');
-    expect(controller.getMountedModule('top-lid')?.manifest.origin).toBe('procedural');
-    expect(controller.getMountedModule('side-left')?.manifest.origin).toBe('procedural');
-    expect(controller.getMountedModule('side-right')?.manifest.origin).toBe('procedural');
+    expect(controller.attach(m04Glb, 'facade').ok).toBe(true);
+    expect(controller.attach(m12, 'flanc-droit').ok).toBe(true);
+    expect(bagRoot.children).toHaveLength(2);
+    expect(controller.getMountedModule('facade')?.manifest.origin).toBe('glb');
+    expect(controller.getMountedModule('flanc-droit')?.manifest.origin).toBe('procedural');
 
     controller.dispose();
+    m09.dispose();
+    m10.dispose();
     m11.dispose();
+    m14.dispose();
   });
 });

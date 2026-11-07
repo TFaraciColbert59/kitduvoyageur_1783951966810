@@ -15,13 +15,21 @@
   "cotesReferenceMm": {
     "w": 95,
     "h": 165,
-    "d": 45
+    "d": 40
   },
   "orientation": {
     "up": "Y",
     "front": "+Z",
     "back": "-Z",
-    "yawDeg": 180
+    "bakedInGlbRoot": true,
+    "rootYawDegInGlb": 180,
+    "bakedScaleFactor": 0.0869,
+    "loadRotationDeg": [
+      0,
+      0,
+      0
+    ],
+    "loadScale": 1
   },
   "platine": {
     "position": [
@@ -46,15 +54,15 @@
   "assets": {
     "web": {
       "url": "/assets/modules/lkdv-m16.glb",
-      "bytes": 245380,
+      "bytes": 253440,
       "triangles": 10515,
       "textureSize": 512
     },
     "hd": {
       "url": "https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/module-models/lkdv-m16.hd.glb",
-      "bytes": 5974616,
+      "bytes": 917284,
       "triangles": 10515,
-      "textureSize": 2048
+      "textureSize": 512
     }
   }
 }

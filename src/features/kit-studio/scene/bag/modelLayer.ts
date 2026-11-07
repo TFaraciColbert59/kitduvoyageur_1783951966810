@@ -99,6 +99,8 @@ export interface BagModelRuntimeInfo {
   readonly colorCustomization: BagColorCustomization;
   /** Vrai quand au moins un maillage 3D de module est livré en production (§ 4.3). */
   readonly modules3dAvailable?: boolean;
+  /** Message utilisateur en cas de refus de pose sur un point d'accroche déjà occupé (§ 4.3). */
+  readonly attachmentNotice?: string | null;
   /** Raison de la dégradation, si dégradée. */
   readonly reason: string | null;
 }
@@ -274,7 +276,11 @@ export function createBagModelLayer(deps: BagModelLayerDeps): BagModelLayer {
               normal: a.normal,
             }))
           : provisionalAnchors;
-      attachmentCtrl = createModuleAttachmentController(result.root, allAnchorSpecs);
+      attachmentCtrl = createModuleAttachmentController(result.root, allAnchorSpecs, {
+        onNoticeChange(notice) {
+          emit({ ...info, attachmentNotice: notice });
+        },
+      });
       const anchorIds =
         result.anchors.size > 0
           ? [...result.anchors.keys()]

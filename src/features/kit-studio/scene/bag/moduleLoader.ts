@@ -2,13 +2,20 @@
  * src/features/kit-studio/scene/bag/moduleLoader.ts
  * Chemin complet des modules 3D externes (platine mécanique à 2 pieds, manifeste, chargeur GLB
  * mutualisé, constructeur procédural des 5 modules code et contrôleur d'accroche sur les ancres
- * du sac) — § 4 + Avenant ingestion des modules.
+ * auditées du sac) — § 4 + Avenant Lot I-D final.
  *
- * Deux origines de modules cohabitent sur les mêmes ancres et la même platine :
- * - 12 modules maillés `.glb` (`M03, M04, M05, M06, M07, M08, M15, M16, M17, M18, M19, M20`) ;
- * - 5 modules procéduraux construits par code (`M09, M10, M11, M12, M14`), dont les panneaux
- *   rigides partagent l'épaisseur `RIGID_PANEL_THICKNESS_MM = 3.5` mm (reprise du socle de la
- *   platine standard 80 × 54 × 3,5 mm, portée comme convention de projet et non comme mesure).
+ * Principes verrouillés :
+ * 1. Deux origines de modules cohabitent sur les mêmes ancres et la même platine :
+ *    - 15 modules maillés `.glb` (`M01..M08, M13, M15..M20`), compressés en meshopt + quantification
+ *      + WebP (< 400 Ko en 512², < 700 Ko pour M05, M17 et M20 en 1024²), géométrie intacte ;
+ *    - 5 modules procéduraux construits par code (`M09, M10, M11, M12, M14`), dont les panneaux
+ *      rigides partagent l'épaisseur `RIGID_PANEL_THICKNESS_MM = 3.5` mm (reprise du socle de la
+ *      platine standard 80 × 54 × 3,5 mm, portée comme convention de projet et non comme mesure).
+ * 2. Aucune rotation ni mise à l'échelle n'est appliquée au chargement des `.glb` (facteur 1,
+ *    rotation supplémentaire 0) : `M04`, `M05` et `M16` portent déjà exactement `Y = 180°` dans
+ *    leur matrice racine, et l'échelle métrique (`0,079` à `0,237`) y est déjà cuite.
+ * 3. Avec une seule ancre auditée par sac (`facade`, plus `flanc-droit` sur le 80 L), le refus
+ *    d'ancre occupée produit un message explicite destiné à l'utilisateur (`userMessage`).
  */
 
 import * as THREE from 'three';
@@ -59,7 +66,16 @@ export interface ModuleOrientationSpec {
   readonly up: 'Y';
   readonly front: '+Z';
   readonly back: '-Z';
-  readonly yawDeg: 0 | 180;
+  /** Vrai lorsque l'orientation et l'échelle sont déjà cuites dans la matrice racine du GLB. */
+  readonly bakedInGlbRoot?: boolean;
+  /** Rotation Y déjà présente dans la matrice racine du GLB (180° pour M04, M05, M16 ; 0° sinon). */
+  readonly rootYawDegInGlb?: 0 | 180;
+  /** Facteur d'échelle métrique déjà cuit dans la matrice racine du GLB (0,079 à 0,237). */
+  readonly bakedScaleFactor?: number;
+  /** Rotation supplémentaire à appliquer au chargement : toujours `[0, 0, 0]`. */
+  readonly loadRotationDeg?: readonly [0, 0, 0];
+  /** Facteur d'échelle supplémentaire à appliquer au chargement : toujours `1`. */
+  readonly loadScale?: 1;
 }
 
 export interface ModuleTierAssetSpec {
@@ -107,10 +123,66 @@ export interface ModuleManifest {
 }
 
 /**
- * Les 12 modules maillés `.glb` livrés par le Lot I-C (paliers web < 400 Ko dans `public/assets/modules/`).
- * Orientation : Y haut, façade +Z, dos −Z, avec rotation Y de 180° pour M04, M05 et M16 dans les manifestes.
+ * Les 15 modules maillés `.glb` livrés dans `LKDV-ONE-LOT-I-D-FINAL.zip`
+ * (`M01..M08, M13, M15..M20`).
+ *
+ * Tous ont leur orientation (`Y` haut, façade `+Z`, dos `-Z`, dont `Y = 180°` déjà cuit dans la
+ * matrice racine de `M04`, `M05` et `M16`) et leur échelle métrique déjà cuites dans le GLB :
+ * ils se chargent tous à `loadScale: 1` et `loadRotationDeg: [0, 0, 0]`.
  */
 export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
+  {
+    schema: 1,
+    moduleId: 'lkdv-m01',
+    code: 'M01',
+    label: 'Porte-gourde',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m01.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.1098, h: 0.21, d: 0.1187 },
+    cotesReferenceMm: { w: 95, h: 210, d: 95 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.1106,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
+    platine: { position: [0, 0.105, -0.0594], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m02',
+    code: 'M02',
+    label: 'Poche téléphone',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m02.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.0864, h: 0.17, d: 0.043 },
+    cotesReferenceMm: { w: 90, h: 170, d: 30 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.0895,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
+    platine: { position: [0, 0.085, -0.0215], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
   {
     schema: 1,
     moduleId: 'lkdv-m03',
@@ -121,8 +193,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m03.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.0773, h: 0.15, d: 0.0516 },
-    cotesReferenceMm: { w: 80, h: 150, d: 45 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    cotesReferenceMm: { w: 78, h: 150, d: 38 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.0791,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.075, -0.0258], normal: [0, 0, -1] },
     textureSize: 512,
     reserve: null,
@@ -138,8 +219,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m04.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.1386, h: 0.2, d: 0.0761 },
-    cotesReferenceMm: { w: 120, h: 200, d: 70 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 180 },
+    cotesReferenceMm: { w: 150, h: 200, d: 55 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 180,
+      bakedScaleFactor: 0.1055,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.1, -0.0381], normal: [0, 0, -1] },
     textureSize: 512,
     reserve:
@@ -156,8 +246,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m05.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.2618, h: 0.38, d: 0.1587 },
-    cotesReferenceMm: { w: 280, h: 380, d: 120 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 180 },
+    cotesReferenceMm: { w: 260, h: 380, d: 120 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 180,
+      bakedScaleFactor: 0.2001,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.19, -0.0794], normal: [0, 0, -1] },
     textureSize: 1024,
     reserve: 'Détails de dos (filet et sangles) projetés sur la façade et le dos.',
@@ -173,8 +272,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m06.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.1641, h: 0.25, d: 0.0772 },
-    cotesReferenceMm: { w: 180, h: 250, d: 80 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    cotesReferenceMm: { w: 180, h: 250, d: 70 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.1316,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.125, -0.0386], normal: [0, 0, -1] },
     textureSize: 512,
     reserve: null,
@@ -190,8 +298,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m07.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.2237, h: 0.32, d: 0.097 },
-    cotesReferenceMm: { w: 220, h: 320, d: 90 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    cotesReferenceMm: { w: 240, h: 320, d: 80 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.1688,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.16, -0.0485], normal: [0, 0, -1] },
     textureSize: 512,
     reserve: 'Filet aux faces et trous géométriques irréguliers.',
@@ -207,9 +324,44 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m08.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.0449, h: 0.32, d: 0.0448 },
-    cotesReferenceMm: { w: 60, h: 320, d: 50 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    cotesReferenceMm: { w: 40, h: 320, d: 45 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.1685,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.16, -0.0224], normal: [0, 0, -1] },
+    textureSize: 512,
+    reserve: null,
+    rigidPanelConvention: RIGID_PANEL_CONVENTION,
+  },
+  {
+    schema: 1,
+    moduleId: 'lkdv-m13',
+    code: 'M13',
+    label: 'Porte-piolets',
+    units: 'meters',
+    origin: 'glb',
+    glbUrl: '/assets/modules/lkdv-m13.glb',
+    texturedSource: true,
+    boundingBoxM: { w: 0.0831, h: 0.45, d: 0.0831 },
+    cotesReferenceMm: { w: 60, h: 450, d: 70 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.2375,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
+    platine: { position: [0, 0.225, -0.0416], normal: [0, 0, -1] },
     textureSize: 512,
     reserve: null,
     rigidPanelConvention: RIGID_PANEL_CONVENTION,
@@ -224,8 +376,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m15.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.1552, h: 0.11, d: 0.0598 },
-    cotesReferenceMm: { w: 150, h: 110, d: 70 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    cotesReferenceMm: { w: 150, h: 110, d: 65 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.0816,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.055, -0.0299], normal: [0, 0, -1] },
     textureSize: 512,
     reserve: 'Superposition sombre autour de la croix.',
@@ -241,8 +402,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m16.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.088, h: 0.165, d: 0.0443 },
-    cotesReferenceMm: { w: 95, h: 165, d: 45 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 180 },
+    cotesReferenceMm: { w: 95, h: 165, d: 40 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 180,
+      bakedScaleFactor: 0.0869,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.0825, -0.0222], normal: [0, 0, -1] },
     textureSize: 512,
     reserve: 'Écusson peu lisible de face.',
@@ -258,8 +428,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m17.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.2855, h: 0.38, d: 0.0478 },
-    cotesReferenceMm: { w: 280, h: 380, d: 25 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    cotesReferenceMm: { w: 300, h: 380, d: 25 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.2001,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.19, -0.0239], normal: [0, 0, -1] },
     textureSize: 1024,
     reserve: null,
@@ -275,8 +454,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m18.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.1571, h: 0.21, d: 0.1079 },
-    cotesReferenceMm: { w: 160, h: 210, d: 110 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    cotesReferenceMm: { w: 170, h: 210, d: 115 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.1106,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.105, -0.054], normal: [0, 0, -1] },
     textureSize: 512,
     reserve: null,
@@ -292,8 +480,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m19.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.2426, h: 0.38, d: 0.1374 },
-    cotesReferenceMm: { w: 280, h: 380, d: 120 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    cotesReferenceMm: { w: 250, h: 380, d: 120 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.2003,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.19, -0.0687], normal: [0, 0, -1] },
     textureSize: 512,
     reserve: null,
@@ -309,8 +506,17 @@ export const IMPORTED_GLB_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     glbUrl: '/assets/modules/lkdv-m20.glb',
     texturedSource: true,
     boundingBoxM: { w: 0.2663, h: 0.38, d: 0.0404 },
-    cotesReferenceMm: { w: 280, h: 380, d: 15 },
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    cotesReferenceMm: { w: 300, h: 380, d: 22 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      bakedScaleFactor: 0.2,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.19, -0.0202], normal: [0, 0, -1] },
     textureSize: 1024,
     reserve: null,
@@ -333,7 +539,15 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     boundingBoxM: { w: 0.46, h: 0.16, d: 0.16 },
     cotesReferenceMm: { w: 460, h: 160, d: 160 },
     referenceState: 'charge',
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.08, -0.08], normal: [0, 0, -1] },
     reserve: null,
     rigidPanelConvention: RIGID_PANEL_CONVENTION,
@@ -348,7 +562,15 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     boundingBoxM: { w: 0.56, h: 0.15, d: 0.15 },
     cotesReferenceMm: { w: 560, h: 150, d: 150 },
     referenceState: 'ouvert_sans_matelas',
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.075, -0.075], normal: [0, 0, -1] },
     reserve: null,
     rigidPanelConvention: RIGID_PANEL_CONVENTION,
@@ -363,7 +585,15 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     boundingBoxM: { w: 0.42, h: 0.23, d: 0.23 },
     cotesReferenceMm: { w: 420, h: 230, d: 230 },
     referenceState: 'ouvert_sans_sac_de_couchage',
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.115, -0.115], normal: [0, 0, -1] },
     reserve: null,
     rigidPanelConvention: RIGID_PANEL_CONVENTION,
@@ -378,7 +608,15 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     boundingBoxM: { w: 0.28, h: 0.3, d: 0.2 },
     cotesReferenceMm: { w: 280, h: 300, d: 200 },
     referenceState: 'filet_concave_sans_casque',
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.15, -0.1], normal: [0, 0, -1] },
     reserve: null,
     rigidPanelConvention: RIGID_PANEL_CONVENTION,
@@ -393,7 +631,15 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
     boundingBoxM: { w: 0.09, h: 1.7, d: 0.09 },
     cotesReferenceMm: { w: 90, h: 1700, d: 90 },
     referenceState: 'lame_droite_sans_skis',
-    orientation: { up: 'Y', front: '+Z', back: '-Z', yawDeg: 0 },
+    orientation: {
+      up: 'Y',
+      front: '+Z',
+      back: '-Z',
+      bakedInGlbRoot: true,
+      rootYawDegInGlb: 0,
+      loadRotationDeg: [0, 0, 0],
+      loadScale: 1,
+    },
     platine: { position: [0, 0.85, -0.045], normal: [0, 0, -1] },
     reserve: null,
     rigidPanelConvention: RIGID_PANEL_CONVENTION,
@@ -401,7 +647,7 @@ export const PROCEDURAL_CODE_MODULE_MANIFESTS: readonly ModuleManifest[] = [
 ] as const;
 
 /**
- * Catalogue complet des 17 modules 3D livrés en production (12 maillés `.glb` + 5 procéduraux).
+ * Catalogue complet des 20 modules 3D livrés en production (15 maillés `.glb` + 5 procéduraux).
  */
 export const AVAILABLE_3D_MODULE_MANIFESTS: readonly ModuleManifest[] = [
   ...IMPORTED_GLB_MODULE_MANIFESTS,
@@ -492,13 +738,7 @@ export function validateModuleManifest(raw: unknown, expectedModuleId?: string):
   }
   if (m.orientation !== undefined) {
     const ori = m.orientation as Record<string, unknown>;
-    if (
-      !ori ||
-      ori.up !== 'Y' ||
-      ori.front !== '+Z' ||
-      ori.back !== '-Z' ||
-      (ori.yawDeg !== 0 && ori.yawDeg !== 180)
-    ) {
+    if (!ori || ori.up !== 'Y' || ori.front !== '+Z' || ori.back !== '-Z') {
       throw new Error('orientation invalide');
     }
   }
@@ -623,7 +863,6 @@ function buildOpenStrapLoopGeometry(
     bevelEnabled: false,
     curveSegments: segments,
   });
-  // Centrer l'extrusion sur Z puis tourner pour que l'axe de l'anneau soit parallèle à X.
   geom.translate(0, 0, -widthX * 0.5);
   geom.rotateY(Math.PI * 0.5);
   return geom;
@@ -718,8 +957,6 @@ export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group
   const code = (manifest.code ?? manifest.moduleId).toUpperCase();
 
   if (code.includes('M09')) {
-    // M09 — Porte-tente (460 × 160 × 160 mm, état de référence 'charge')
-    // Équerre rigide fond + dos d'épaisseur t = 3,5 mm (union sans dépassement de la boîte 460×160×160)
     const fondGeom = new THREE.BoxGeometry(w, t, d);
     fondGeom.translate(0, t * 0.5, 0);
     const fondMesh = new THREE.Mesh(fondGeom, oliveRigidMat);
@@ -734,7 +971,6 @@ export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group
     dosMesh.userData.panelThicknessMm = RIGID_PANEL_THICKNESS_MM;
     group.add(dosMesh);
 
-    // Parois souples latérales et façade en état de service chargé (dans l'enveloppe 460×160×160 mm)
     const flancGaucheGeom = new THREE.BoxGeometry(t, h - t, d - t);
     flancGaucheGeom.translate(-w * 0.5 + t * 0.5, t + (h - t) * 0.5, t * 0.5);
     const flancGauche = new THREE.Mesh(flancGaucheGeom, oliveSoftMat);
@@ -753,7 +989,6 @@ export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group
     facadeMesh.name = 'm09-facade-souple';
     group.add(facadeMesh);
 
-    // Deux sangles noires de compression
     const strapW = 0.025;
     for (const [offsetX, suffix] of [
       [-w * 0.28, 'gauche'],
@@ -766,9 +1001,6 @@ export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group
       group.add(strapMesh);
     }
   } else if (code.includes('M10') || code.includes('M11')) {
-    // M10 — Porte-matelas (560 × 150 × 150 mm) & M11 — Porte-sac de couchage (420 × 230 × 230 mm)
-    // Deux sangles en boucle ouvertes au centre (aucun cylindre plein ni matelas/sac de couchage)
-    // reliées au dos par une traverse rigide d'épaisseur t = 3,5 mm.
     const prefix = code.includes('M10') ? 'm10' : 'm11';
     const strapWidth = code.includes('M10') ? 0.028 : 0.032;
     const outerRadius = Math.min(h, d) * 0.5;
@@ -794,8 +1026,6 @@ export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group
       group.add(loopMesh);
     }
   } else if (code.includes('M12')) {
-    // M12 — Porte-casque (280 × 300 × 200 mm, filet concave ouvert sans casque)
-    // Cadre dorsal rigide olive (280 × 300 × 3,5 mm) + nappe de filet concave noire + 4 cordons
     const cadreGeom = new THREE.BoxGeometry(w, h, t);
     cadreGeom.translate(0, h * 0.5, -d * 0.5 + t * 0.5);
     const cadreMesh = new THREE.Mesh(cadreGeom, oliveRigidMat);
@@ -831,8 +1061,6 @@ export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group
       group.add(cordMesh);
     }
   } else if (code.includes('M14')) {
-    // M14 — Porte-skis paire A-frame (90 × 1700 × 90 mm, lame droite sans skis)
-    // Lame rigide olive droite de 90 × 1700 × 3,5 mm + bride haute et boucle basse noires
     const lameGeom = new THREE.BoxGeometry(w, h, t);
     lameGeom.translate(0, h * 0.5, -d * 0.5 + t * 0.5);
     const lameMesh = new THREE.Mesh(lameGeom, oliveRigidMat);
@@ -854,7 +1082,6 @@ export function buildProceduralModuleMesh(manifest: ModuleManifest): THREE.Group
     boucleBasse.name = 'm14-boucle-basse-noire';
     group.add(boucleBasse);
   } else {
-    // Fallback générique pour tout autre module procédural de test
     const panelGeom = new THREE.BoxGeometry(w, h, t);
     panelGeom.translate(0, h * 0.5, -d * 0.5 + t * 0.5);
     const panelMesh = new THREE.Mesh(panelGeom, oliveRigidMat);
@@ -946,9 +1173,9 @@ function countTrianglesInObject(root: THREE.Object3D): number {
 }
 
 /**
- * Charge un module 3D externe (maillé `.glb` ou procédural construit par code), applique
- * l'orientation déclarée dans son manifeste (`orientation.yawDeg` : 0° ou 180° autour de Y)
- * et lui greffe sa platine mécanique standard à deux pieds (§ 4.2).
+ * Charge un module 3D externe (maillé `.glb` ou procédural construit par code) **sans lui appliquer
+ * aucune rotation ni mise à l'échelle supplémentaire** (facteur 1, rotation 0) et lui greffe sa
+ * platine mécanique standard à deux pieds (§ 2 & § 3 de l'avenant).
  */
 export async function loadModuleAsset(
   moduleId: string,
@@ -977,27 +1204,20 @@ export async function loadModuleAsset(
   }
 
   const origin: ModuleOrigin = manifest.origin === 'procedural' ? 'procedural' : 'glb';
-  const yawDeg = manifest.orientation?.yawDeg ?? 0;
 
   if (origin === 'procedural') {
     const root = new THREE.Group();
     root.name = `module:${manifest.moduleId}`;
     root.userData.origin = 'procedural';
-    root.userData.orientation = manifest.orientation ?? {
-      up: 'Y',
-      front: '+Z',
-      back: '-Z',
-      yawDeg: 0,
-    };
+    root.userData.loadScale = 1;
+    root.userData.loadRotationDeg = [0, 0, 0];
     root.userData.reserve = manifest.reserve ?? null;
     root.userData.rigidPanelConvention =
       manifest.rigidPanelConvention ?? RIGID_PANEL_CONVENTION;
 
     const bodyGroup = buildProceduralModuleMesh(manifest);
-    bodyGroup.userData.appliedYawDeg = yawDeg;
-    if (yawDeg !== 0) {
-      bodyGroup.rotation.y = (yawDeg * Math.PI) / 180;
-    }
+    bodyGroup.scale.set(1, 1, 1);
+    bodyGroup.rotation.set(0, 0, 0);
     root.add(bodyGroup);
 
     const platineGroup = buildPlatineMesh(manifest.platine);
@@ -1034,39 +1254,29 @@ export async function loadModuleAsset(
   }
 
   try {
-    const decoded = await decodeGlbBufferToScene(glbBuffer, `module-body:${manifest.moduleId}`);
+    const decoded = await decodeGlbBufferToScene(glbBuffer, `module:${manifest.moduleId}`);
     const triangleCount = countTrianglesInObject(decoded.root);
 
-    // Le groupe racine porte d'une part le maillage (tourné selon `manifest.orientation.yawDeg` :
-    // 180° autour de Y pour M04, M05 et M16, 0° pour les autres) et d'autre part la platine au dos (-Z).
-    const root = new THREE.Group();
-    root.name = `module:${manifest.moduleId}`;
-    root.userData.origin = 'glb';
-    root.userData.orientation = manifest.orientation ?? {
-      up: 'Y',
-      front: '+Z',
-      back: '-Z',
-      yawDeg: 0,
-    };
-    root.userData.reserve = manifest.reserve ?? null;
-
-    decoded.root.name = 'lkdv-module-body';
-    decoded.root.userData.appliedYawDeg = yawDeg;
-    if (yawDeg !== 0) {
-      decoded.root.rotation.y = (yawDeg * Math.PI) / 180;
-    }
-    root.add(decoded.root);
+    // § 2 de l'avenant : N'appliquer AUCUNE rotation ni mise à l'échelle (facteur 1, rotation 0).
+    // M04, M05 et M16 portent déjà exactement Y = 180° dans leur matrice racine, et l'échelle
+    // métrique (0,079 à 0,237) est déjà cuite dans les nœuds du GLB.
+    decoded.root.scale.set(1, 1, 1);
+    decoded.root.rotation.set(0, 0, 0);
+    decoded.root.userData.origin = 'glb';
+    decoded.root.userData.loadScale = 1;
+    decoded.root.userData.loadRotationDeg = [0, 0, 0];
+    decoded.root.userData.reserve = manifest.reserve ?? null;
 
     const platineGroup = buildPlatineMesh(manifest.platine);
-    root.add(platineGroup);
-    root.updateMatrixWorld(true);
+    decoded.root.add(platineGroup);
+    decoded.root.updateMatrixWorld(true);
 
     let disposed = false;
     const dispose = (): void => {
       if (disposed) return;
       disposed = true;
-      if (root.parent) {
-        root.parent.remove(root);
+      if (decoded.root.parent) {
+        decoded.root.parent.remove(decoded.root);
       }
       decoded.dispose();
       disposeObject3D(platineGroup);
@@ -1076,7 +1286,7 @@ export async function loadModuleAsset(
       status: 'ready',
       moduleId: manifest.moduleId,
       manifest,
-      root,
+      root: decoded.root,
       platineGroup,
       triangleCount,
       dispose,
@@ -1101,10 +1311,38 @@ export type AttachModuleResult =
       readonly anchorId: BagAnchorId;
       readonly reason: AttachModuleFailureReason;
       readonly occupiedByModuleId?: string;
+      readonly userMessage: string;
     };
 
+/**
+ * Construit le message lisible destiné à l'utilisateur lorsqu'une pose de module est refusée (§ 4.3).
+ */
+export function formatModuleAttachFailureNotice(
+  failure: {
+    readonly anchorId: BagAnchorId;
+    readonly reason: AttachModuleFailureReason;
+    readonly occupiedByModuleId?: string;
+    readonly occupiedByLabel?: string;
+    readonly anchorLabel?: string;
+  },
+): string {
+  const anchorText = failure.anchorLabel ?? failure.anchorId;
+  if (failure.reason === 'anchor-occupied') {
+    const modText = failure.occupiedByLabel
+      ? `${failure.occupiedByLabel} (${failure.occupiedByModuleId ?? ''})`.trim()
+      : (failure.occupiedByModuleId ?? 'un autre module');
+    return `Point d’accroche « ${anchorText} » déjà occupé par ${modText} : déposez le module en place avant d’en poser un autre.`;
+  }
+  return `Point d’accroche « ${anchorText} » introuvable sur ce sac.`;
+}
+
+export interface ModuleAttachmentControllerOptions {
+  /** Appelé à chaque refus de pose (message utilisateur) ou remise à zéro (`null`). */
+  readonly onNoticeChange?: (notice: string | null) => void;
+}
+
 export interface ModuleAttachmentController {
-  /** Monte un module chargé sur un point d'ancrage du sac. Refuse si l'ancre est occupée. */
+  /** Monte un module chargé sur un point d'ancrage du sac. Refuse et avertit si l'ancre est occupée. */
   attach: (module: LoadedModuleAsset, anchorId: BagAnchorId) => AttachModuleResult;
   /** Dépose le module monté sur `anchorId` (sans le détruire) et libère le point d'ancrage. */
   detach: (anchorId: BagAnchorId) => LoadedModuleAsset | null;
@@ -1112,6 +1350,8 @@ export interface ModuleAttachmentController {
   isOccupied: (anchorId: BagAnchorId) => boolean;
   /** Renvoie le module monté sur `anchorId`, ou `null`. */
   getMountedModule: (anchorId: BagAnchorId) => LoadedModuleAsset | null;
+  /** Dernier message utilisateur de refus d'accroche (ex. ancre occupée sur un sac à 1 ancre). */
+  getLastRejectionNotice: () => string | null;
   /** Liste les identifiants de points d'ancrage connus du contrôleur. */
   listAnchors: () => readonly (BagAnchorSpec | ProvisionalBagAnchor)[];
   /** Dépose tous les modules montés et libère toutes leurs ressources GPU (`dispose()`). */
@@ -1119,40 +1359,55 @@ export interface ModuleAttachmentController {
 }
 
 /**
- * Crée le contrôleur d'accroche des modules sur un sac (§ 4.2).
- *
- * Orientation géométrique lors de la pose :
- * - la direction sortante du module (`-platine.normal`) s'aligne sur la normale locale du point
- *   d'ancrage du sac (`anchor.normal`) ;
- * - la position du groupe racine du module est compensée de `-R * platine.position` pour que le
- *   point d'appui de la platine tombe exactement sur `anchor.position`.
+ * Crée le contrôleur d'accroche des modules sur un sac (§ 4.2 & § 4.3).
  */
 export function createModuleAttachmentController(
   bagRoot: THREE.Object3D,
   anchors: readonly (BagAnchorSpec | ProvisionalBagAnchor)[],
+  options?: ModuleAttachmentControllerOptions,
 ): ModuleAttachmentController {
   const anchorMap = new Map<BagAnchorId, BagAnchorSpec | ProvisionalBagAnchor>();
   for (const a of anchors) {
     anchorMap.set(a.id, a);
   }
   const occupied = new Map<BagAnchorId, LoadedModuleAsset>();
+  let lastRejectionNotice: string | null = null;
+
+  const setNotice = (notice: string | null): void => {
+    lastRejectionNotice = notice;
+    options?.onNoticeChange?.(notice);
+  };
 
   const attach = (module: LoadedModuleAsset, anchorId: BagAnchorId): AttachModuleResult => {
     const anchor = anchorMap.get(anchorId);
     if (!anchor) {
-      return { ok: false, anchorId, reason: 'anchor-not-found' };
+      const userMessage = formatModuleAttachFailureNotice({
+        anchorId,
+        reason: 'anchor-not-found',
+      });
+      setNotice(userMessage);
+      return { ok: false, anchorId, reason: 'anchor-not-found', userMessage };
     }
     const existing = occupied.get(anchorId);
     if (existing) {
+      const anchorLabel = 'label' in anchor && typeof anchor.label === 'string' ? anchor.label : anchor.id;
+      const userMessage = formatModuleAttachFailureNotice({
+        anchorId,
+        anchorLabel,
+        reason: 'anchor-occupied',
+        occupiedByModuleId: existing.moduleId,
+        occupiedByLabel: existing.manifest.label,
+      });
+      setNotice(userMessage);
       return {
         ok: false,
         anchorId,
         reason: 'anchor-occupied',
         occupiedByModuleId: existing.moduleId,
+        userMessage,
       };
     }
 
-    // Si ce même module était déjà posé sur une autre ancre, on libère l'ancienne ancre.
     for (const [otherId, mounted] of occupied.entries()) {
       if (mounted === module) {
         occupied.delete(otherId);
@@ -1190,6 +1445,7 @@ export function createModuleAttachmentController(
 
     bagRoot.add(module.root);
     occupied.set(anchorId, module);
+    setNotice(null);
 
     const forwardVec = new THREE.Vector3(
       moduleOutward[0],
@@ -1219,6 +1475,7 @@ export function createModuleAttachmentController(
     if (mounted.root.parent) {
       mounted.root.parent.remove(mounted.root);
     }
+    setNotice(null);
     return mounted;
   };
 
@@ -1226,6 +1483,8 @@ export function createModuleAttachmentController(
 
   const getMountedModule = (anchorId: BagAnchorId): LoadedModuleAsset | null =>
     occupied.get(anchorId) ?? null;
+
+  const getLastRejectionNotice = (): string | null => lastRejectionNotice;
 
   const listAnchors = (): readonly (BagAnchorSpec | ProvisionalBagAnchor)[] => anchors;
 
@@ -1237,6 +1496,7 @@ export function createModuleAttachmentController(
       }
       mounted.dispose();
     }
+    setNotice(null);
   };
 
   return {
@@ -1244,6 +1504,7 @@ export function createModuleAttachmentController(
     detach,
     isOccupied,
     getMountedModule,
+    getLastRejectionNotice,
     listAnchors,
     dispose,
   };
