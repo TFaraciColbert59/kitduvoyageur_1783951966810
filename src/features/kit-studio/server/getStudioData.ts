@@ -295,7 +295,7 @@ export function itemsFromRows(
       fn: fnId ?? 'other',
       sh: shape,
       gl: shape,
-      g: weightG ?? 0,
+      g: weightG, // règle C-03 : poids inconnu = null, jamais 0
       L,
       color: FAMILY_COLOR[fam] ?? fallbackColor,
       zones: zone ? [zone] : ['main'],

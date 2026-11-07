@@ -71,7 +71,7 @@ const kitRows: (KitRow & { user_id: string; is_trashed: boolean; updated_at: num
 
 const kitItemRows: (KitItemRow & { user_id: string })[] = [
   { id: 'ki-1', user_id: USER, kit_id: KIT_A, product_ownership_id: 'own-1', name: 'Duvet', category: 'couchage', quantity: 1, weight_g: 820, function_id: 'sleep', zone: 'main', slot: 'bottomF', load_order: 0 },
-  { id: 'ki-2', user_id: USER, kit_id: KIT_A, product_ownership_id: null, name: 'Pochette ranger', category: null, quantity: 1, weight_g: 30, function_id: 'organizer', zone: 'lid', slot: null, load_order: 0 },
+  { id: 'ki-2', user_id: USER, kit_id: KIT_A, product_ownership_id: null, name: 'Pochette ranger', category: null, quantity: 1, weight_g: null, function_id: 'organizer', zone: 'lid', slot: null, load_order: 0 },
   { id: 'ki-3', user_id: USER, kit_id: KIT_A, product_ownership_id: 'own-2', name: 'Objet mystère', category: null, quantity: 1, weight_g: null, function_id: null, zone: null, slot: null, load_order: null },
 ];
 
@@ -124,10 +124,11 @@ describe('mapping Supabase → formes du studio', () => {
     });
     // Objet non classé (function_id null) : fn 'other', box, famille « autre », volume 0,6 L.
     const nobody = items.find((i) => String(i.id) === 'own-2')!;
-    expect(nobody).toMatchObject({ fn: 'other', sh: 'box', gl: 'box', fam: 'autre', g: 0, L: DEFAULT_VOLUME_L, state: 'lent', trips: 0 });
+    expect(nobody).toMatchObject({ fn: 'other', sh: 'box', gl: 'box', fam: 'autre', g: null, L: DEFAULT_VOLUME_L, state: 'lent', trips: 0 });
     // Ligne de kit sans product_ownership : devient un objet affichable.
     const kitOnly = items.find((i) => String(i.id) === 'ki-2')!;
-    expect(kitOnly).toMatchObject({ n: 'Pochette ranger', fn: 'organizer', fam: 'portage', zones: ['main'] });
+    // Règle C-03 : la ligne de kit sans weight_g arrive null, jamais 0.
+    expect(kitOnly).toMatchObject({ n: 'Pochette ranger', fn: 'organizer', fam: 'portage', zones: ['main'], g: null });
   });
 
   it('catalogue ONE : prix en centimes ÷ 100, points, glyphes et accessoires par pièce', () => {

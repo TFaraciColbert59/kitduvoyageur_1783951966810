@@ -134,7 +134,7 @@ export async function saveKitItemPlacementFor(
     product_ownership_id: input.itemId,
     name: item.name ?? null,
     category: item.category ?? null,
-    weight_g: item.weight_g ?? 0,
+    weight_g: item.weight_g ?? null, // règle C-03 : non pesé reste non pesé (jamais 0)
     function_id: item.function_id ?? null,
     ...patch,
   }).select('id');

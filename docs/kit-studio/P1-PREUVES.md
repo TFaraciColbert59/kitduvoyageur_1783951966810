@@ -492,15 +492,18 @@ info  - Need to disable some ESLint rules? Learn more here:
 ```
 $ npx vitest run src/features/kit-studio src/features/hub
 
- Test Files  44 passed (44)
-      Tests  452 passed (452)
-   Duration  3.96s
+ Test Files  47 passed (47)
+      Tests  469 passed (469)
+   Duration  4.05s
 
 ```
 
-414 verts au départ (P0) + 38 tests P1 = 452. Aucun test existant modifié, aucun seuil
-forcé, aucun golden régénéré. Détail des 38 tests ajoutés :
-`getStudioData.test.ts` (12), `studioActions.test.ts` (16), `studioSync.test.ts` (10).
+414 verts au départ (P0) + 38 tests P1 de la couche de données + 13 tests du correctif
+« pas de démonstration sur le chemin de production » + 4 tests C-03 = 469. Aucun seuil forcé,
+aucun golden régénéré. Détail des 38 tests de la couche de données :
+`getStudioData.test.ts` (12), `studioActions.test.ts` (16+1 C-03), `studioSync.test.ts` (10) ;
+détail des 13 tests du correctif : `studioMode.test.ts` (8), `studioOffline.test.ts` (4),
+`route.test.tsx` (+1). Une seule adaptation de test existant, expliquée au §10.4.
 
 ### 8.5 `npm run build`
 
@@ -572,3 +575,227 @@ P0, moins la page devenue dynamique).
    `NODE_OPTIONS=--max-old-space-size=4096` suffit et ne modifie aucun fichier.
 8. **Écart de forme des statements enregistrés** : `supabase_migrations.statements` contient
    le texte envoyé (commentaires différents du fichier du dépôt), instructions identiques.
+
+
+---
+
+## 10. Correctif revue Lead — pas de démonstration sur le chemin de production
+
+Défaut signalé : `loadStudioData()` renvoyait `null` sans session, sans kit ou sur erreur base,
+et `KitStudioClient` reprenait alors le jeu de démonstration + `localStorage` : un visiteur
+anonyme (et a fortiori un compte sans kit) voyait des kits/inventaire factices. Corrigé par un
+commit séparé `fix(kit-studio): P1 — pas de démonstration sur le chemin de production`.
+
+### 10.1 Comportement retenu (règle unique, testée)
+
+`resolveStudioPageState()` (`src/features/kit-studio/server/studioMode.ts`, pur, injectable)
+décide de l'état de la page dans cet ordre :
+
+| Requête | État | Donnée affichée |
+| --- | --- | --- |
+| `?debug=1` **explicite** | `debug` | jeu de démonstration + stockage local (comme la maquette), **bandeau permanent « Mode démo · données fictives »** ; session non lue |
+| pas de session (ou session illisible) | `login` | **redirection** `redirect('/connexion?next=%2Fkit-studio')` — convention du dépôt (`/inscription` et `/connexion` lisent `next` via `safeNextPath`) ; aucun studio anonyme |
+| session + 0 kit | `empty` | état vide serveur `StudioEmptyState` : message + CTA « Créer mon premier kit » vers `/hub?studio=1` (seule UI de création de kit existante aujourd'hui, `POST /api/kit-studio/configuration` ; en P3 ce lien pointera vers le studio survivant) ; mention « aucune donnée de démonstration » |
+| session + base indisponible | `unavailable` | état d'erreur serveur `StudioUnavailable` : « Studio indisponible » + « Réessayer » (relance du rendu serveur). Côté client, **repli autorisé uniquement sur le cache serveur réel déjà synchronisé** (`services/studioOffline.ts`, clé `lkdv-kit-studio:server-data:v1`, bandeau « Hors ligne · dernière donnée synchronisée ») ; sans cache valide → erreur, jamais la démo |
+| session + kit(s) | `studio` | données réelles `getStudioData`, écritures synchronisées |
+
+Garde-fous supplémentaires :
+- `KitStudioClient` exige un `mode` explicite (`debug | server | offline`) : plus de valeur par
+  défaut implicite vers la démo.
+- En `server`/`offline`, l'écran **n'est pas monté avant l'hydratation** du store avec la
+  donnée réelle (`aria-busy` shell vide) : aucun rendu intermédiaire de démonstration, y
+  compris au premier paint SSR/client.
+- Le cache de données serveur n'est alimenté qu'en mode `server` (jamais en debug).
+- `?debug=1` est le seul chemin qui appelle encore `setStudioData(null)` (jeu de démo).
+
+### 10.2 Fichiers du correctif
+
+| Fichier | Changement |
+| --- | --- |
+| `src/app/kit-studio/page.tsx` | `searchParams` + `resolveStudioPageState` ; branches debug / redirect connexion / état vide / indisponible / studio |
+| `src/features/kit-studio/server/studioMode.ts` | **nouveau** : `studioModeFromParam` + `resolveStudioPageState` (purs, testables sans navigateur) |
+| `src/features/kit-studio/services/studioOffline.ts` | **nouveau** : cache localStorage de la dernière donnée serveur réelle (validation structurelle, pas de démo) |
+| `src/features/kit-studio/ui/StudioEmptyState.tsx` | **nouveau** : état vide serveur + CTA création de kit |
+| `src/features/kit-studio/ui/StudioUnavailable.tsx` | **nouveau** : « indisponible » + « Réessayer », ou studio hors-ligne si cache réel |
+| `src/features/kit-studio/ui/KitStudioClient.tsx` | mode explicite, bandeaux démo/hors-ligne, gating avant hydratation, cache alimenté en mode serveur |
+| `src/features/kit-studio/__tests__/studioMode.test.ts`, `studioOffline.test.ts` | **nouveaux** tests (12) |
+| `src/features/kit-studio/__tests__/route.test.tsx` | +1 test (gating production) et adaptation des 4 rendus existants (§10.4) |
+| `docs/kit-studio/P1-PREUVES.md` | cette section |
+
+### 10.3 Tests (sorties réelles)
+
+```
+$ npx vitest run src/features/kit-studio/__tests__/studioMode.test.ts
+ ✓ src/features/kit-studio/__tests__/studioMode.test.ts (8 tests)
+
+ 8 tests : seul ?debug=1 ouvre la démo ; undefined/'0'/''/'true'/'2' et paramètres répétés
+ → production ; ?debug=1 ne lit pas la session ; sans session → login avec retour ; session
+ illisible → login (jamais la démo) ; compte avec kit → données réelles ; compte sans kit →
+ état vide ; base indisponible → état unavailable.
+
+$ npx vitest run src/features/kit-studio/__tests__/studioOffline.test.ts
+ ✓ src/features/kit-studio/__tests__/studioOffline.test.ts (4 tests)
+
+ 4 tests : aller-retour avec horodatage ; absence de cache → null ; cache corrompu/incomplet
+ ignoré ; clear.
+
+$ npx vitest run src/features/kit-studio/__tests__/route.test.tsx
+ ✓ src/features/kit-studio/__tests__/route.test.tsx (6 tests)
+
+ +1 test : en mode serveur, chargement local suspendu → aucun scène/bandeau de démo avant
+ l'hydratation réelle (shell `data-mode="server" aria-busy="true"`).
+
+$ npx vitest run src/features/kit-studio src/features/hub
+
+ Test Files  47 passed (47)
+      Tests  469 passed (469)
+   Duration  4.05s
+```
+
+### 10.4 Adaptation d'un test existant (justifiée, sans masquer de régression)
+
+`route.test.tsx` montait `<KitStudioClient />` sans mode. Le composant exige désormais un mode
+explicite ; les 4 rendus existants sont passés à `<KitStudioClient mode="debug" />`, qui est
+**exactement** le comportement antérieur (démo + stockage local) : les assertions (scène,
+ouverture auto, Échap) et le nombre de tests sont inchangés. Aucun autre test existant modifié.
+
+### 10.5 Vérification grep : plus de repli démo hors mode debug/test
+
+```
+$ grep -rn "KitStudioClient" src --include=*.ts --include=*.tsx | grep -v "__tests__"
+src/app/kit-studio/page.tsx:50:      return <KitStudioClient mode="debug" />;
+src/app/kit-studio/page.tsx:58:      return <KitStudioClient mode="server" initialData={state.data} />;
+src/features/kit-studio/ui/StudioUnavailable.tsx:28:    return <KitStudioClient mode="offline" initialData={cached.data} />;
+
+$ grep -rn "createInitialState(" src --include=*.ts --include=*.tsx | grep -v "__tests__"
+src/features/kit-studio/domain/state.ts:36:export function createInitialState(kitId?: KitId): KitState {
+src/features/kit-studio/services/kitRepository.ts:49:    const base = createInitialState();
+src/features/kit-studio/store/kitStore.ts:102:  const initial = createInitialState();
+src/features/kit-studio/store/kitStore.ts:136:      const kit = usable ? saved : createInitialState();
+
+$ grep -rln "DEMO_STUDIO_DATA|ITEMS|KITS|COLORWAYS|DEFAULT_CONFIG|FAMILIES" \
+    src/features/kit-studio --include=*.ts --include=*.tsx \
+  | grep -v "__tests__" | grep -v "domain/catalog.ts" | grep -v "domain/studioData.ts" \
+  | grep -v "components/KitStudioView.tsx" | grep -v "scene/BagScene.tsx"
+src/features/kit-studio/ui/cards/ModeCapsule.tsx   ← faux positif : `const ITEMS` local (libellés
+                                                     des modes Contenu/Apparence, aucune donnée)
+src/features/kit-studio/domain/types.ts            ← faux positif : commentaire de contrat
+```
+
+Lecture : `createInitialState` n'est appelé que (a) à la création du store, (b) par
+`kitRepository.migrate` (état local v0), (c) par `hydrate` ; ces trois chemins ne sont montés
+que par `KitStudioClient`, lui-même rendu uniquement en mode `debug` (démo assumée), `server`
+(registre = données réelles) ou `offline` (registre = cache serveur réel). Aucun autre fichier
+de production ne retombe sur les constantes de démonstration.
+
+### 10.6 Portes après correctif
+
+```
+$ node scripts/verify/hub_no_mockup.mjs
+✓ SUCCÈS : Aucune contamination de maquette dans src/features/hub ou kit-studio.   (exit 0)
+
+$ npx tsc --noEmit -p .
+(exit 0, aucune sortie)
+
+$ npm run lint
+(exit 0 — 582 avertissements, 0 erreur ; identique à P0, aucune nouvelle alerte)
+
+$ npx vitest run src/features/kit-studio src/features/hub
+ Test Files  47 passed (47)
+      Tests  469 passed (469)
+
+$ NODE_OPTIONS=--max-old-space-size=4096 npm run build
+✓ Compiled successfully in 17.2s
+ ✓ Generating static pages (58/58)
+├ ƒ /kit-studio                                 42.5 kB         182 kB
+BUILD_EXIT=0
+```
+
+(Le OOM du build avec le tas par défaut est environnemental et préexistant, démontré au §8.5
+sur le commit de base : aucune régression P1.)
+
+### 10.7 Risques restants du correctif
+
+1. `?debug=1` reste accessible publiquement par construction (c'est le mode demandé, comme la
+   maquette de référence) : il est annoncé par un bandeau permanent et ne lit jamais la
+   session ni la base.
+2. Le cache hors-ligne peut être daté (autre appareil, base indisponible) : bandeau « Hors
+   ligne · dernière donnée synchronisée » ; l'arbitrage horodaté fin local/serveur reste à
+   faire en P3 (§9.2).
+3. La redirection de connexion utilise `?next=` (convention `/connexion` + `safeNextPath`) :
+   un visiteur anonyme quitte le studio, il ne le voit pas en lecture seule.
+
+
+---
+
+## 11. Règle C-03 — poids inconnu = null, JAMAIS 0
+
+### 11.1 Constat (deux violations corrigées)
+
+1. `server/studioService.ts` (insertion d'une ligne de kit) : `weight_g: item.weight_g ?? 0`
+   transformait un objet non pesé en objet à 0 g en base.
+2. `server/getStudioData.ts` (construction des items) : `g: weightG ?? 0` écrasait `null` ;
+   `domain/totals.ts:101` et `:152` testent pourtant `(it.g … ) == null` pour compter les
+   « objets non pesés » (`unknown++`), compteur qui ne pouvait donc jamais se déclencher sur
+   les vraies données.
+
+### 11.2 Corrections
+
+| Fichier | Correction |
+| --- | --- |
+| `server/studioService.ts` | `weight_g: item.weight_g ?? null` à l'insertion (la colonne est nullable ; un non pesé reste non pesé) |
+| `server/getStudioData.ts` | `g: weightG` sans `?? 0` (poids `null` conservé pour l'inventaire **et** pour les lignes de kit sans `product_ownership`) |
+| `domain/catalog.ts` | `Item.g` élargi de `number` à `number \| null` (le domaine gérait déjà `null` à l'exécution ; le type dit désormais la vérité) |
+| `domain/totals.ts` | `effG` restructuré (`const g = item.g ; if (g == null) return 0`) : le poids effectif reste 0 pour les sommes, mais `totals().unknown` continue de compter l'objet à part (jamais « 0 g » silencieux) |
+| `domain/swap.ts` | `addPlanned` conserve `g: a.g` (une alternative non pesée reste `null`, plus de cast `as number`) |
+| `materiel_kit_items` | `KitItemRow.weight_g` est transporté tel quel dans le mapping (aucun `?? 0`) ; un objet de kit non pesé arrive `g: null` |
+
+### 11.3 Tests de non-régression (sorties réelles)
+
+```
+$ npx vitest run src/features/kit-studio/__tests__/studioWeight.test.ts
+ ✓ src/features/kit-studio/__tests__/studioWeight.test.ts (3 tests)
+
+ 3 tests : l’objet non pesé reste null dans le registre/état ; le bilan le compte dans
+ `unknown` (=1) et ne l’additionne pas (`weightByZone.main` = 0 g effectif) ; le même objet
+ pesé à 1 200 g rentre dans la somme et n’est plus « inconnu ».
+
+$ npx vitest run src/features/kit-studio/__tests__/studioActions.test.ts
+ ✓ src/features/kit-studio/__tests__/studioActions.test.ts (17 tests)
+
+ +1 test : insertion d’une ligne de kit pour un objet possédé sans weight_g → `weight_g: null`
+ (et explicitement ≠ 0).
+
+$ npx vitest run src/features/kit-studio/__tests__/getStudioData.test.ts
+ ✓ src/features/kit-studio/__tests__/getStudioData.test.ts (12 tests)
+
+ Fixtures adaptées (pas la logique) : objet possédé sans `weight_g` → `g: null` ; ligne de kit
+ sans `weight_g` → `g: null`.
+
+$ npx vitest run src/features/kit-studio src/features/hub
+ Test Files  47 passed (47)
+      Tests  469 passed (469)
+```
+
+### 11.4 Vérification grep
+
+```
+$ grep -rn "weight_g ?? 0\|weight_g: .*?? 0\|g: .*?? 0" \
+    src/features/kit-studio/server src/features/kit-studio/domain src/features/kit-studio/services
+(srcie vide — aucun poids inconnu converti en 0 restant)
+```
+
+Les seuls `?? 0` restants du mapping concernent des champs non concernés par C-03 (prix,
+points d'attache, quantités), jamais un poids.
+
+### 11.5 Portes après correctif C-03
+
+```
+$ npx tsc --noEmit -p .                     (exit 0, aucune sortie)
+$ npm run lint                              (exit 0 — 582 avertissements, 0 erreur)
+$ npx vitest run src/features/kit-studio src/features/hub
+ Test Files  47 passed (47)
+      Tests  469 passed (469)
+$ NODE_OPTIONS=--max-old-space-size=4096 npm run build
+✓ Compiled successfully in 17.2s · ✓ Generating static pages (58/58) · ƒ /kit-studio 42.5 kB (182 kB First Load) · BUILD_EXIT=0
+```

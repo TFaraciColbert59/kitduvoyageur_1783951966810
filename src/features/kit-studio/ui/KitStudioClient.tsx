@@ -10,6 +10,7 @@ import type { StudioData } from '../domain/studioData';
 import { useKitStore } from '../store/kitStore';
 import { AUTO_OPEN_MS, useUiStore } from '../store/uiStore';
 import { setStudioSyncHandler } from '../services/studioSync';
+import { saveStudioCache } from '../services/studioOffline';
 import { createStudioSyncHandler } from './studioSyncClient';
 import { CardsSlot } from './cards/CardsSlot';
 import { SheetHost } from './SheetHost';
@@ -32,17 +33,48 @@ const SHEET_TITLES = {
   deck: S.deck.title,
 } as const;
 
-export interface KitStudioClientProps {
-  /** Données réelles lues côté serveur (`getStudioData`). Absent/null = repli local de démonstration. */
-  readonly initialData?: StudioData | null;
-}
+/**
+ * Mode d'affichage du studio :
+ * - `debug` : mode démonstration explicite (`?debug=1`), jeu de test + stockage local ;
+ * - `server` : données réelles lues côté serveur, écritures synchronisées ;
+ * - `offline` : dernier cache serveur RÉEL (base indisponible), écritures locales seulement.
+ * Aucun mode ne retombe sur la démonstration par défaut.
+ */
+export type StudioClientMode = 'debug' | 'server' | 'offline';
+
+export type KitStudioClientProps =
+  | { readonly mode: 'debug' }
+  | { readonly mode: 'server'; readonly initialData: StudioData }
+  | { readonly mode: 'offline'; readonly initialData: StudioData };
+
+const bannerStyle = {
+  position: 'absolute',
+  top: 'calc(var(--safe-top) + 12px)',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: 80,
+  padding: '6px 14px',
+  minHeight: 32,
+  borderRadius: 999,
+  border: '1px solid var(--lkv-forest-200)',
+  background: 'var(--lkv-stone-50)',
+  color: 'var(--lkv-forest-900)',
+  font: 'inherit',
+  fontSize: 12,
+  letterSpacing: '0.04em',
+  whiteSpace: 'nowrap',
+  pointerEvents: 'none',
+} as const;
 
 /** Écran unique : scène 3D plein écran + pilule du poids + tiroir. */
-export function KitStudioClient({ initialData = null }: KitStudioClientProps) {
+export function KitStudioClient(props: KitStudioClientProps) {
+  const mode = props.mode;
+  const initialData = props.mode === 'debug' ? null : props.initialData;
   const { haptic } = useHapticFeedback();
   const offline = useOffline();
   const dockRef = useRef<HTMLElement | null>(null);
   const kit = useKitStore((s) => s.kit);
+  const hydrated = useKitStore((s) => s.hydrated);
   const sync = useKitStore((s) => s.sync);
   const retry = useKitStore((s) => s.retry);
   const dockOpen = useUiStore((s) => s.dockOpen);
@@ -50,16 +82,19 @@ export function KitStudioClient({ initialData = null }: KitStudioClientProps) {
   const sheet = useUiStore((s) => s.sheet);
 
   useEffect(() => {
-    // Bootstrap : la donnée serveur remplace le registre AVANT l'hydratation du store, puis le
-    // handler d'écriture serveur est installé (aucun handler = mode local/hors-ligne, zéro réseau).
-    if (initialData) setStudioData(initialData);
-    setStudioSyncHandler(createStudioSyncHandler());
+    // Bootstrap : la donnée du mode remplace le registre AVANT l'hydratation du store.
+    // - debug : jeu de démonstration explicite (aucune donnée réelle) ;
+    // - server/offline : donnée réelle (serveur ou dernier cache synchronisé).
+    setStudioData(mode === 'debug' ? null : initialData);
+    // Le cache local n'est alimenté que par une vraie réponse serveur (jamais en debug).
+    if (mode === 'server' && initialData) saveStudioCache(initialData);
+    setStudioSyncHandler(mode === 'server' ? createStudioSyncHandler() : null);
     void useKitStore.getState().hydrate();
     return () => {
       setStudioSyncHandler(null);
       void useKitStore.getState().flush();
     };
-  }, [initialData]);
+  }, [mode, initialData]);
 
   // Ouverture automatique à 750 ms, sauf si la personne a déjà agi (tout setter de l'UI annule le jeton).
   useEffect(() => {
@@ -115,6 +150,13 @@ export function KitStudioClient({ initialData = null }: KitStudioClientProps) {
     haptic('light');
   };
 
+  // En production (serveur ou cache hors-ligne), l'écran n'est monté qu'une fois le store
+  // hydraté avec les données réelles : aucun rendu intermédiaire avec le jeu de démonstration.
+  // Le mode démo, lui, peut rendre immédiatement (c'est son objet).
+  if (mode !== 'debug' && !hydrated) {
+    return <div className="ks-root ks-stage" aria-busy="true" data-mode={mode} />;
+  }
+
   const bl = blockers(kit);
   // `totals` compte en grammes ; la pilule affiche des kilos (maquette : wt(bagWeight())).
   const kg = totals(kit).onBack / 1000;
@@ -123,7 +165,7 @@ export function KitStudioClient({ initialData = null }: KitStudioClientProps) {
 
   return (
     <OfflineContext.Provider value={offline}>
-      <div className="ks-root ks-stage" data-offline={offline || undefined} data-sync={sync}>
+      <div className="ks-root ks-stage" data-offline={offline || undefined} data-sync={sync} data-mode={mode}>
         <SceneView />
         <Pill
           kg={kg}
@@ -135,27 +177,31 @@ export function KitStudioClient({ initialData = null }: KitStudioClientProps) {
           label={pillLabel(kg, bl.length)}
           onClick={openBilan}
         />
+        {mode === 'debug' ? (
+          <div role="status" data-testid="studio-mode-banner" style={bannerStyle}>
+            Mode démo · données fictives
+          </div>
+        ) : null}
+        {mode === 'offline' ? (
+          <div role="status" data-testid="studio-mode-banner" style={bannerStyle}>
+            Hors ligne · dernière donnée synchronisée
+          </div>
+        ) : null}
         {sync === 'error' ? (
           <button
             type="button"
             onClick={() => void retry()}
             aria-live="polite"
             style={{
-              position: 'absolute',
-              top: 'calc(var(--safe-top) + 12px)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 80,
-              padding: '8px 14px',
+              ...bannerStyle,
+              pointerEvents: 'auto',
+              cursor: 'pointer',
               minHeight: 44,
-              borderRadius: 999,
+              padding: '8px 14px',
+              fontSize: 13,
               border: '1px solid var(--lkv-danger)',
               background: 'var(--lkv-danger-bg)',
               color: 'var(--lkv-danger-dark)',
-              font: 'inherit',
-              fontSize: 13,
-              letterSpacing: '0.02em',
-              cursor: 'pointer',
             }}
           >
             Non enregistré · réessaie
