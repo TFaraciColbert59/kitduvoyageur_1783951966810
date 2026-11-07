@@ -43,7 +43,7 @@ const FOCUSABLE_SELECTOR =
 
 /**
  * Déclencheur à refocaliser après fermeture. L'URL du tiroir est une vraie
- * route Next (`/hub` → `/hub/<segment>`) : le shell est remonté au changement
+ * route Next (racine vers section) : le shell est remonté au changement
  * d'URL, donc la référence DOM du déclencheur ne survit pas. On mémorise son
  * `data-testid` en sessionStorage (survit au remontage et aux chunks de route),
  * puis l'instance rendue sur `/hub` le restitue.
