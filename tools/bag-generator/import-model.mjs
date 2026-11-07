@@ -379,4 +379,10 @@ function main() {
   console.log('puis ajouter l’entrée d’index au tableau "models" de bags.index.json.');
 }
 
-main();
+try {
+  main();
+} catch (err) {
+  // Outil lancé à la main : un message lisible vaut mieux qu'une trace de pile.
+  console.error(`\nÉCHEC : ${err instanceof Error ? err.message : String(err)}`);
+  process.exit(1);
+}
