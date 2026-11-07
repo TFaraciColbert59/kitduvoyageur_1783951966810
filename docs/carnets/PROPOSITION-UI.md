@@ -165,3 +165,9 @@ Ce qui rend la page sûre, accessible et cohérente avec le design système.
 - **Menu ···** : Enregistrer, Partager, Copier le lien, Signaler ; propriétaire : Gérer (rôles, visibilité, export, suppression). La page Gérer et le volet Partage quittent le carrousel.
 - **Visiteur** : un sous-tiroir non autorisé est masqué (pas grisé) ; documents jamais, budget et position privés par défaut.
 - Correspondance avec l'existant : pages du carrousel Posts/Parcours/Étapes/Matériel/Nature/J'aime/Commentaires/Gérer et tiroir Stats/Partage → redistribués dans les 5 tiroirs ci-dessus.
+
+## 6. Suivi (07/11/2026)
+
+- Document de référence partagé : « Refonte page carnet » (Claude Docs) https://claude.ai/artifact/CW7XoRopdHgmno5zHAifeD — tenu à jour au fil des échanges avec Tony.
+- Maquette complète navigable : `docs/carnets/maquette-fiche-carnet.html` (artifact https://claude.ai/artifact/AhWcbN55q3SrK6nEAwDvAb). Jour qui glisse, carte fixe synchronisée, 5 tiroirs / 19 sous-tiroirs filtrés par jour, crayon et mode modification, bascule Participant / Visiteur, visionneuse, profil d'altitude.
+- Question ouverte posée dans le document : Budget dans Chiffres, ou sixième tiroir ?
