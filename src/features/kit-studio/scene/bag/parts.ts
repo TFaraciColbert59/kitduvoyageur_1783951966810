@@ -19,6 +19,8 @@ export type {
   BagSlotId,
   BagSlotKind,
   BagSlotManifestEntry,
+  BagTier,
+  BagTierAsset,
 } from '../../domain/bagModel';
 export {
   BUILTIN_BAG_MODELS,

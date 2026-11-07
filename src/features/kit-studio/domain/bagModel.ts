@@ -77,6 +77,23 @@ export interface BagHingeSpec {
   readonly maxAngleRad: number;
 }
 
+/**
+ * Palier de qualité d'un maillage importé (main, 7 novembre).
+ *
+ * `web` part avec le déploiement : moins de 900 Ko, tout appareil le charge.
+ * `hd` est le master, servi depuis le dépôt distant et réservé aux appareils dont on a la preuve
+ * qu'ils le supportent. Sans preuve, on sert `web` : un sac qui met trente secondes à venir est
+ * pire qu'un sac un peu moins fin.
+ */
+export type BagTier = 'web' | 'hd';
+
+/** Où trouver le maillage d'un palier (absolue pour un master distant, « / » pour le dépôt). */
+export interface BagTierAsset {
+  readonly url: string;
+  readonly bytes: number;
+  readonly triangles: number;
+}
+
 /** Manifeste d'un sac (schéma 1), tel qu'écrit par `tools/bag-generator/`. */
 export interface BagManifest {
   readonly schema: number;
@@ -93,6 +110,13 @@ export interface BagManifest {
   readonly boundingBoxM: BoundingBoxM;
   readonly slots: readonly BagSlotManifestEntry[];
   readonly budget: { readonly triangles: number; readonly fileBytes: number };
+  /**
+   * Où trouver le maillage, par palier. Absent sur les modèles du générateur maison, qui n'ont
+   * qu'un fichier à côté de leur manifeste : le chargeur retombe alors sur le chemin historique.
+   */
+  readonly assets?: Partial<Record<BagTier, BagTierAsset>>;
+  /** Vrai quand le maillage porte son propre atlas : la couleur ne se change pas sans masque. */
+  readonly texturedSource?: boolean;
 }
 
 /** Entrée de `public/assets/bags/bags.index.json`. */
