@@ -76,18 +76,23 @@ export function CarnetPostGrid({
     <div className="lkdv-ig-grid" role="group" aria-label="Moments du carnet">
       {moments.map((moment, idx) => {
         const imageUrl = moment.imageUrl;
-        const typeLabel =
-          moment.type === 'bivouac'
-            ? 'Bivouac'
-            : moment.type === 'refuge'
-              ? 'Refuge'
-              : moment.type === 'point_de_vue'
-                ? 'Vue'
-                : moment.type === 'faune_flore'
-                  ? 'Nature'
-                  : moment.type === 'rencontre'
-                    ? 'Rencontre'
-                    : null;
+        const TYPE_LABELS: Record<string, string> = {
+          bivouac: 'Bivouac',
+          refuge: 'Refuge',
+          point_de_vue: 'Vue',
+          faune_flore: 'Nature',
+          rencontre: 'Rencontre',
+          photo: 'Photo',
+          video: 'Vidéo',
+          voice: 'Note vocale',
+          text: 'Note',
+          meet: 'Rencontre',
+          spend: 'Dépense',
+          kit: 'Kit',
+          species: 'Espèce',
+          inc: 'Incident',
+        };
+        const typeLabel = moment.type ? (TYPE_LABELS[moment.type] ?? null) : null;
 
         return (
           <button
