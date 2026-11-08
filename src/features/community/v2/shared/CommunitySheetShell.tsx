@@ -455,6 +455,7 @@ export function CommunitySheetShell({
                       aria-label={`${detail.title} ${index + 1} sur ${detailCount}`}
                       aria-hidden={index !== detail.index}
                       inert={index !== detail.index}
+                      tabIndex={index === detail.index ? 0 : -1}
                     >
                       {page}
                     </div>
@@ -504,6 +505,7 @@ export function CommunitySheetShell({
                               aria-label={miniItem?.label}
                               aria-hidden={index !== paneIndex}
                               inert={index !== paneIndex}
+                              tabIndex={index === paneIndex ? 0 : -1}
                             >
                               {pane}
                             </div>
