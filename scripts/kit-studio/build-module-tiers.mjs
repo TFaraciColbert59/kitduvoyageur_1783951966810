@@ -31,7 +31,9 @@ const RACINE = process.cwd();
 const SORTIE_WEB = join(RACINE, 'public', 'assets', 'modules');
 const SORTIE_HD = join(RACINE, 'dist', 'module-models-hd');
 const INDEX = join(SORTIE_WEB, 'modules.index.json');
-const BASE_DEFAUT = 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/module-models';
+const BASE_DEFAUT = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/module-models`
+  : '';
 const BUDGET_MAX_512_OCTETS = 400 * 1024;
 const BUDGET_MAX_1024_OCTETS = 700 * 1024;
 

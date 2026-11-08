@@ -76,7 +76,7 @@ export function CarnetTopBarV2({
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
         <button
           type="button"
-          className="lkdv-gbtn"
+          className="lkdv-gbtn transition-colors [transition-duration:var(--dur-fast)]"
           onClick={() => router.back()}
           aria-label="Retour"
         >

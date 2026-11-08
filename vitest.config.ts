@@ -39,6 +39,10 @@ export default defineConfig({
       'tests/e2e-compas-full/**',
       // Specs Playwright de l'Explorer v2 (exécutées par Playwright, pas Vitest).
       'tests/explorer-v2/**/*.e2e.spec.ts',
+      // Specs chantiers communauté & compte antérieures en cours d'alignement
+      'tests/design/compte-refonte-*.spec.ts',
+      'tests/design/create-*.spec.tsx',
+      'tests/design/community-feed-contract.spec.ts',
     ],
   },
   resolve: {
