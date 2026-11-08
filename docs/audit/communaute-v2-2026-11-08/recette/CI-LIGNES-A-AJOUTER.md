@@ -42,15 +42,20 @@ Ajouter juste après l'étape « Conserver le build pour l'E2E du Compas » :
         env:
           CI: true
           NEXT_PUBLIC_COMMUNAUTE_V2: 'true'
-          NEXT_PUBLIC_SUPABASE_URL: https://fixture.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: fixture-anon-key
+          # IMPÉRATIF : même expression que le build Gate 4 (le harnais calcule
+          # le nom du cookie `sb-<ref>-auth-token` depuis cette valeur ; une
+          # valeur différente = session non reconnue = tests invité/écriture KO).
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
 ```
 
 Notes :
 - **ne pas** poser `PW_BASE_URL` dans cette étape : sans lui, le `webServer` du
   config démarre `npm run start` sur 4028 (build de la Gate 4) ;
-- l'URL Supabase fictive est identique à celle du build : le harnais calcule le
-  nom du cookie de session (`sb-fixture-auth-token`) à partir de la variable ;
+- l'URL Supabase doit être **identique à celle du build** : le harnais calcule le
+  nom du cookie de session (`sb-<ref>-auth-token`) à partir de la variable ; le
+  service worker du site est bloqué par le harnais (sinon il court-circuite
+  `page.route`, surtout en WebKit) ;
 - un seul projet mobile suffit en CI pour le quota runner ; `--project=mobile-webkit`
   teste le moteur Safari, `mobile-chromium` est déjà couvert localement (les deux
   sont listés ci-dessus, retirer l'un si le temps de job est trop long).
