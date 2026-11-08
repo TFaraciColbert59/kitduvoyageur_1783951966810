@@ -86,7 +86,7 @@ const config: CapacitorConfig = {
     backgroundColor: "#17402C",
     preferredContentMode: "mobile",
     handleApplicationNotifications: true,
-    scheme: "lkdv",
+    scheme: "App",
   },
   android: {
     backgroundColor: "#17402C",
