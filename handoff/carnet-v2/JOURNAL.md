@@ -77,3 +77,14 @@ Format : Date | Décision | Contexte & Raison | Alternative écartée
   - `eslint` sur les fichiers touchés : **0 erreur**, 8 avertissements pré-existants.
   - Captures : `docs/audit/carnet-v2-2026-11-08/captures/after-{430,768,1440,drawer,peek,display}.png`.
   - Non déployé : l'arbre de travail partagé contient des modifications hors périmètre (messaging/compte) non commitées, dont une erreur de syntaxe dans `ComposerMenuSheet.tsx` qui empêche un build global. Elles ne sont pas de cette reprise et n'ont pas été touchées.
+
+- **2026-11-08 19:55 — Production vérifiée**
+  - **Décision :** `766052f` poussé sur `origin/main`, déploiement
+    `dpl_4hXa8w3kHJgcDPqo56JKGjbRB2Xz` READY, vérifié à
+    `https://kitduvoyageur-1783951966810-ruddy.vercel.app` (compte démo).
+  - **Mesures :** 430 → 430×932, carte 406×542, feuille 406×521.9 ; 768 →
+    colonne 430 centrée ; 1440 → colonne 430 centrée ; `scrollHeight = innerHeight`.
+  - **Note :** `koosmoweb.fr` injoignable depuis la machine (DNS/Zscaler) et
+    l'alias `…-git-main…` n'a pas basculé ; le domaine projet et l'URL de
+    déploiement servent le nouveau build. Erreurs maplibre `appendChild`
+    pré-existantes (identiques sur `c268b3c`).

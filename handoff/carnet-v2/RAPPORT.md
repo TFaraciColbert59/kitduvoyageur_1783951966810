@@ -66,3 +66,23 @@ n'ont pas été modifiés ni commités ici.
 de lecture, micro-animations (morphing titre, lentille chromatique, stagger),
 assainir les jours `J211/J212` de la donnée de démo, déployer quand l'arbre
 partagé sera vert.
+
+### Mise en production vérifiée (8 nov. 2026, 19:55)
+
+- Commit `766052f` poussé sur `origin/main` ; déploiement Vercel production
+  `dpl_4hXa8w3kHJgcDPqo56JKGjbRB2Xz` — **READY**.
+- URL vérifiée à la mesure (domaine projet) :
+  `https://kitduvoyageur-1783951966810-ruddy.vercel.app/carnets/749e9e8c-9540-5a73-8b6c-6ab07264f62f`
+  (compte démo via `/api/demo-login`).
+- Mesures prod : 430 → racine 430×932, carte 406×542 @12,49, feuille 406×521.9
+  @12,48, `scrollHeight = 932` ; 768 → racine 430×1024 centrée (x=169), carte
+  406×606 ; 1440 → racine 430×900 centrée (x=505), carte 406×520. Aucun
+  `error.tsx`, aucun débordement horizontal.
+- Captures : `docs/audit/carnet-v2-2026-11-08/captures/prod-{430,768,1440}.png`,
+  `prod-drawer.png`, `prod-peek.png`.
+- L'alias de branche `…-git-main…` sert encore le build précédent (`c268b3c`) et
+  `koosmoweb.fr` est injoignable depuis cette machine (DNS/Zscaler, déjà noté au
+  journal du 8 nov.) ; le domaine projet et l'URL de déploiement servent bien le
+  commit `766052f`.
+- Erreurs console `appendChild` de maplibre : **présentes à l'identique sur le
+  déploiement précédent** (`c268b3c`), donc pré-existantes, hors périmètre.
