@@ -1,9 +1,11 @@
 # Rapport — fiche carnet v2
+
 Statut : TERMINÉ. Le code est fusionné dans main, déployé en production Vercel, et l'application iOS Capacitor est installée et lancée sur l'iPhone 16 Pro physique de Tony. Les erreurs 404 sur les fiches carnets sont résolues grâce au repli résilient sur les colonnes Supabase.
 
 PR : https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/pull/154 · Commit de fusion initial : 08993b8 · Commit correctif 404 : 49322e6
 Déploiement prod actif : https://kitduvoyageur-1783951966810-63850bp2k.vercel.app (● Ready)
 Aliases de production :
+
 - https://kitduvoyageur-1783951966810-tonyfaracip-3325s-projects.vercel.app
 - https://kitduvoyageur-1783951966810-git-main-tonyfaracip-3325s-projects.vercel.app
 
@@ -12,26 +14,32 @@ Migrations locales préparées : lots A à E (`supabase/migrations/2026110810000
 Sauvegarde : run `db-backup` 42423054190.
 
 Portes qualité & tests :
+
 - `npx tsc --noEmit -p .` : Vert (0 erreur).
 - `npx vitest run src/features/carnet/` : Vert (11 fichiers, 103/103 tests passés).
 - Tests carnet globaux : 26 fichiers, 287/287 tests passés.
 
 Recette A/B/C :
+
 - [x] Aperçu Vercel & Production Vercel : pages carnets répondent avec succès (307 vers `/connexion` sans session au lieu d'un 404, redirection `/carnets/nouveau` vers `/communaute`).
 - [x] Rendu des données : test unitaire et serveur validé sur un carnet réel (`6cd92273-5309-4c12-aee3-f1f3b1ebc46b` - "Via Francigena - 01 part Great Britain").
 - [x] iPhone physique : iPhone 16 Pro (UDID `00008140-000E7D081A0B001C`, iOS 18+). Application `com.lekitduvoyageur.app` compilée et installée avec succès via Xcode, lancée et active (PID en cours d'exécution).
 - [x] Safe areas et navigation : coque Capacitor connectée directement sur l'alias Vercel de production à jour.
 
 Écarts assumés vs maquette / /compte :
+
 - Voir `handoff/carnet-v2/JOURNAL.md` pour le détail de l'isolation des colonnes et des fallbacks base de données.
 
 Décisions prises :
+
 - Voir `handoff/carnet-v2/JOURNAL.md` (sélection du domaine Vercel valide pour Capacitor, fallback `42703` PostgREST, redirection `/carnets/nouveau`).
 
 Retour arrière :
+
 - `git revert 49322e6` puis `git revert 08993b8` sur `main`.
 
 Suites proposées :
+
 - Application des migrations Lot D/E sur la console Supabase de production si l'édition de live-sharing et les verdicts kit par carnet doivent être persistés dans les nouvelles colonnes.
 - Ouverture d'un accès visiteur anonyme en lecture seule sur les carnets publics dans le middleware Next.js.
 
@@ -46,6 +54,7 @@ commitée par cette reprise, dont une erreur de syntaxe dans
 n'ont pas été modifiés ni commités ici.
 
 **Fait :**
+
 - Jetons du socle sur la racine (texte lisible), recette de carte `.cs`, fond photo.
 - Tiroir en feuille **406 × 521.9 @ 12,48**, `r24`, verre `--sheet-*`, capsule 56,
   lentilles 30, focus piégé/Échap/retour focus/scroll lock, `DRAWER_V2_CSS` injecté.
@@ -88,3 +97,13 @@ partagé sera vert.
   commit `766052f`.
 - Erreurs console `appendChild` de maplibre : **présentes à l'identique sur le
   déploiement précédent** (`c268b3c`), donc pré-existantes, hors périmètre.
+
+### Contre-recette du 8 novembre 2026 (soir)
+
+La vérification de la production a trouvé cinq défauts, tous corrigés et testés :
+like du post sans retour visuel (état carnet réel désormais passé au post et au Peek),
+lignes du tiroir en `div onClick` converties en boutons, grille `role=grid` invalide
+remplacée par `role=group`, focus piégé corrigé (les panes `inert` ne sont plus dans
+la liste), `inert`/`aria-hidden` sur le fond et la barre flottante, pluriel « 1 jour ».
+Axe : 0 critical/serious sur page, tiroir et peek ; 25 Tab restent dans le tiroir ;
+like post/peek fonctionnels ; 390/360 sans débordement ; `tsc` ciblé 0 ; 118/118 tests.

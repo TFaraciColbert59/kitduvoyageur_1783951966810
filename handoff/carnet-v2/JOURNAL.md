@@ -39,8 +39,6 @@ Format : Date | Décision | Contexte & Raison | Alternative écartée
 - **2026-11-08 16:26 — Déploiement Vercel Production & relance sur iPhone 16 Pro**
   - **Décision :** Commit `49322e6` poussé sur `origin/main`. Déploiement de production Vercel `dpl_4EvcJVS9tZafBB5eBPmeN6bRTD4i` (`kitduvoyageur-1783951966810-63850bp2k.vercel.app`) passé à l'état Ready. Relance du processus de l'application native sur l'iPhone 16 Pro physique (UDID `00008140-000E7D081A0B001C`).
 
-
-
 ---
 
 ## 2026-11-08 (soir) — Reprise du flambeau : la fiche rentre dans la grammaire /compte
@@ -88,3 +86,15 @@ Format : Date | Décision | Contexte & Raison | Alternative écartée
     l'alias `…-git-main…` n'a pas basculé ; le domaine projet et l'URL de
     déploiement servent le nouveau build. Erreurs maplibre `appendChild`
     pré-existantes (identiques sur `c268b3c`).
+
+- **2026-11-08 20:58 — Contre-recette de la production**
+  - **Défauts trouvés et corrigés :** like du post décorrélé de l'état carnet ; quatre
+    lignes du tiroir en `<div onClick>` ; grille `role=grid` invalide (axe critical) ;
+    focus qui sortait du tiroir après la dernière lentille ; fond non `inert` ;
+    « 1 jours ».
+  - **Décisions :** le like du Peek et du post est le **like carnet** (les tables
+    `carnet_moment_likes/saves` n'existent pas en prod) ; libellé explicite
+    « J'aime le carnet ». Le tiroir garde ses 5 slots et ses 18 lentilles.
+  - **Preuves :** axe 0 critical/serious sur page/tiroir/peek, 25 Tab restent dans le
+    tiroir, like post false→true, peek « Retirer mon j'aime · 6 » → « J'aime le carnet · 5 »,
+    390/360 sans débordement, `tsc` ciblé 0, 118/118 tests.
