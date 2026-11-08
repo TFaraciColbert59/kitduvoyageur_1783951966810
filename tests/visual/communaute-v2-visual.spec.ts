@@ -50,6 +50,16 @@ test.beforeAll(async ({ baseURL, request }) => {
 
 test.beforeEach(async ({ page }) => {
   test.skip(!serverReady, SKIP_SERVER);
+  // Références générées sur macOS (`…-darwin.png`). Playwright indexe ses
+  // snapshots par plateforme : la CI Linux exigerait des `…-linux.png` rendues
+  // sur un runner Linux (polices/antialiasing différents). Tant que ces
+  // références Linux ne sont pas produites/committées, la spec se saute en CI
+  // avec raison explicite — jamais de faux rouge ni de faux vert (PREUVES.md).
+  test.skip(
+    Boolean(process.env.CI) && !process.env.LKDV_V2_VISUAL_LINUX,
+    'Références visuelles v2 générées sur macOS (darwin) : produire les références Linux en CI ' +
+      '(LKDV_V2_VISUAL_LINUX=1 --update-snapshots) ou les committer avant d’activer ce scan.',
+  );
   await page.setViewportSize(VIEWPORT);
 });
 
