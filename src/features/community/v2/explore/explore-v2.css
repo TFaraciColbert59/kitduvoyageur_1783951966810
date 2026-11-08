@@ -988,6 +988,11 @@
 }
 
 .lkdv-cv2x-search-cover {
+  /* Conteneur du repli de couverture (`.lkdv-cv2x-cover-fallback` est en
+     `position:absolute; inset:0`) : sans position, le repli s'échappait de la
+     vignette et s'étirait sur tout le corps du tiroir, masquant les résultats
+     de recherche et interceptant la bascule « Sur la carte ». */
+  position: relative;
   width: 52px;
   height: 48px;
   overflow: hidden;
