@@ -115,14 +115,14 @@ test.describe('a11y — tiroir Explorer @ui-mock', () => {
     await page.getByTestId('cv2-tile-club').first().click();
     await expect(page.getByTestId('cv2-detail')).toBeVisible();
     await expectNoCriticalSerious(page, 'Explorer › détail club');
-    await domClick(page.getByTestId('cv2-back'));
+    await page.getByTestId('cv2-back').click();
 
     // Détail sortie.
     await page.getByRole('tablist', { name: 'Volets de l’explorateur' }).getByRole('tab', { name: 'Sorties' }).click();
     await page.getByTestId('cv2-tile-sortie').first().click();
     await expect(page.getByTestId('cv2-detail')).toBeVisible();
     await expectNoCriticalSerious(page, 'Explorer › détail sortie');
-    await domClick(page.getByTestId('cv2-back'));
+    await page.getByTestId('cv2-back').click();
 
     // Recherche : accueil + résultats.
     await page.getByRole('tablist', { name: 'Volets de l’explorateur' }).getByRole('tab', { name: 'Recherche' }).click();

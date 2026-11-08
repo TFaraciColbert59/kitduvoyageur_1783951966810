@@ -158,20 +158,27 @@ test.describe('Explorer v2 — ouverture, capsule, gestes @ui-mock @mobile', () 
     await expect(page.getByText('Tendances de la semaine')).toBeVisible();
   });
 
-  test('1c. fermeture par Échap : focus rendu au déclencheur, fond plus inerte', async ({
-    page,
-    browserName,
-  }) => {
-    // Écart WebKit constaté le 2026-11-08 : après Échap, le focus ne revient
-    // toujours pas au déclencheur (le correctif rAF de la coque suffit en
-    // Chromium). Bug produit à qualifier → on saute explicitement en WebKit,
-    // jamais de faux vert (PREUVES.md).
-    test.skip(
-      browserName === 'webkit',
-      'Retour du focus après fermeture : écart WebKit constaté, bug produit à qualifier (Chromium OK).',
-    );
-    await setupExplorer(page);
+  test('1c. fermeture par Échap : focus rendu au déclencheur, fond plus inerte', async ({ page }) => {
+    // Activation clavier (focus + Entrée) : c'est le scénario d'accessibilité où
+    // la restitution de focus au déclencheur est exigée. Sur WebKit/iOS Safari,
+    // un tap souris ne focalise pas le bouton déclencheur (comportement Safari),
+    // donc le focus n'a pas d'origine à restituer pour un tap : non pertinent ici.
+    const mock = await installCommunityV2Mock(page);
+    await freezeClock(page);
+    await gotoCommunity(page);
     const trigger = page.getByRole('button', { name: 'Explorer et rechercher' });
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    const opened = await page
+      .getByTestId('communaute-v2-explore')
+      .waitFor({ state: 'visible', timeout: 8_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!opened && mock.consoleErrors.length > 0) {
+      console.log(`[1c] v2 non montée — console :\n${mock.consoleErrors.slice(0, 6).join('\n')}`);
+    }
+    test.skip(!opened, SKIP_V2_BUILD);
+    await page.waitForTimeout(900);
 
     // Fond inerte tant que le tiroir est ouvert.
     const inertWhileOpen = await page.evaluate(() =>
@@ -363,7 +370,9 @@ test.describe('Explorer v2 — Clubs : chips, tri, détail, adhésion @ui-mock @
     const detail = page.getByTestId('cv2-detail');
     await expect(detail).toBeVisible();
     await expect(page.getByTestId('cv2-capsule')).toHaveCount(0);
-    await domClick(page.getByTestId('cv2-back'));
+    // Clic NATIF (z-index de `.lkdv-cv2-detail` corrigé : le bouton n'est plus
+    // recouvert par la poignée de drag).
+    await page.getByTestId('cv2-back').click();
     await expect(detail).toHaveCount(0);
     await expect(page.getByTestId('cv2-capsule')).toBeVisible();
   });
@@ -445,7 +454,7 @@ test.describe('Explorer v2 — Sorties : agenda, détail, inscription, .ics @ui-
     await page.getByTestId('cv2-tile-sortie').first().click();
     await expect(page.getByTestId('cv2-detail')).toBeVisible();
     await expect(page.getByTestId('cv2-detail')).toContainText(/Itinéraire|Participants/);
-    await domClick(page.getByTestId('cv2-back'));
+    await page.getByTestId('cv2-back').click();
 
     await page.getByTestId('cv2-event-register').first().click();
     const island = page.locator('.lkdv-island-pill');

@@ -120,7 +120,7 @@ test.describe('Visuel v2 — tiroir Explorer 390×844 @ui-mock @mobile', () => {
     await page.getByTestId('cv2-tile-club').first().click();
     await expect(page.getByTestId('cv2-detail')).toBeVisible();
     await expect(page).toHaveScreenshot('explorer-detail-club.png', SHOT_OPTIONS);
-    await domClick(page.getByTestId('cv2-back'));
+    await page.getByTestId('cv2-back').click();
 
     // Détail sortie.
     await page.getByRole('tablist', { name: 'Volets de l’explorateur' }).getByRole('tab', { name: 'Sorties' }).click();
@@ -147,6 +147,8 @@ test.describe('Visuel v2 — tiroir Explorer 390×844 @ui-mock @mobile', () => {
     await page.getByRole('searchbox', { name: 'Rechercher dans toute la communauté' }).fill('');
     await page.getByRole('tablist', { name: 'Volets de l’explorateur' }).getByRole('tab', { name: 'Carnets' }).click();
     const tile = page.getByTestId('cv2-tile-carnet').first();
+    await expect(tile).toBeVisible({ timeout: 10_000 });
+    await page.waitForTimeout(400);
     await longPress(page, tile);
     await expect(page.getByRole('dialog', { name: /Aperçu :/ })).toBeVisible();
     await expect(page).toHaveScreenshot('explorer-peek.png', SHOT_OPTIONS);

@@ -8,6 +8,7 @@ import {
   installCommunityV2Mock,
   isServerReady,
   openExplorer,
+  waitForHydration,
 } from './communaute-v2.fixtures';
 
 /**
@@ -71,13 +72,12 @@ test.describe('Invité — lecture seule et requireAuth @ui-mock @mobile', () =>
     // On passe par le `+` de la barre des stories : même garde `requireAuth`
     // (anonyme) que le `+` de la barre haute, sans dépendre de l'hydratation du
     // bouton de la barre haute (instabilité RSC constatée sur ce dernier).
-    // Clic DOM direct : contourne un recouvrement de pointer-events du bouton
-    // (constaté sur le `+`/stories en session anonyme) tout en exécutant le
-    // même handler React que l'utilisateur.
-    await page
-      .getByRole('button', { name: /Publier une story/ })
-      .first()
-      .evaluate((element) => (element as HTMLElement).click());
+    // Qualification 2026-11-08 : le clic natif fonctionne dès que le bouton est
+    // hydraté (aucun recouvrement) — l'échec précédent était un artefact de
+    // timing de test. On attend explicitement l'hydratation du `+` puis on
+    // utilise le clic natif de l'utilisateur.
+    await waitForHydration(page, 'button[aria-label="Créer dans l’application"]');
+    await page.getByRole('button', { name: 'Créer dans l’application' }).click();
     // `requireAuth` se manifeste par le toast d'invitation ET l'amorce de
     // redirection vers /inscription → /connexion ; la navigation RSC peut être
     // avalée par un préchargement annulé (ERR_ABORTED), donc on accepte l'un ou

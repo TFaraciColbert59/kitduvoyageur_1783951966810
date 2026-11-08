@@ -31,8 +31,8 @@ PW_BASE_URL=http://127.0.0.1:4028 npx playwright test \
 
 | Vérification | Résultat observé | Log / artefact |
 |---|---|---|
-| **e2e @ui-mock — mobile-chromium** | **34 ✓ / 0 ✗ / 3 sautés** (explorer 24 + création 5 + invité 5 ; sautés : `6/10` données réelles, `7` clavier iOS, création `6/10`). | `/tmp/cv2-final-chromium.log` |
-| **e2e @ui-mock — mobile-webkit** | **28 ✓ / 0 ✗ / 4 sautés** (explorer 23 + création 5 ; sautés : `7`, `6/10`, `1c` écart focus WebKit documenté, création `6/10`). | `/tmp/cv2-webkit-final2.log`, `/tmp/cv2-final-webkit.log` |
+| **e2e @ui-mock — mobile-chromium** | **34 ✓ / 0 ✗ / 3 sautés** (explorer 24 + création 5 + invité 5 ; sautés : `6/10` données réelles, `7` clavier iOS, création `6/10`). | `/tmp/cv2-final-both.log` |
+| **e2e @ui-mock — mobile-webkit** | **34 ✓ / 0 ✗ / 3 sautés** — **parité Chromium/WebKit** après correctifs coque (focus 1c) et qualification 8c (clic natif). | `/tmp/cv2-final-both.log` |
 | **axe-core a11y** | **4/4 ✓ — 0 violation critical/serious** (Explorer 4 volets, menu tri, détails, Peek, états vide/erreur ; Création 6 types + erreurs + confirmation). | `/tmp/cv2-a11y4.log` |
 | **Visuel 390×844** | **4/4 ✓** (update puis verify), **19 références** générées, tolérance `maxDiffPixelRatio: 0.02`, horloge figée 2026-11-08, animations coupées. ⚠️ références **`-darwin`** (macOS) : la spec se saute en CI tant que des références **Linux** n'ont pas été produites (`LKDV_V2_VISUAL_LINUX=1 --update-snapshots` sur runner) — documenté dans la spec. | `tests/visual/communaute-v2-visual.spec.ts-snapshots/` ; `/tmp/cv2-visual-verify.log` |
 | **Captures de recette** | **19 captures produites, 0 scénario en échec** (`capture-v2.mjs` → harnais d'intégration, données mockées) ; 26 PNG au total dans le dossier (dont 8 `apercu-*` d'un run précédent). | `recette/captures-v2/MANIFEST.json` |
@@ -45,11 +45,11 @@ PW_BASE_URL=http://127.0.0.1:4028 npx playwright test \
 |---|---|---|
 | `1c` retour du focus au déclencheur | Bug produit confirmé : focus appliqué quand le fond était encore `inert` (no-op). Correctif Lead (rAF après nettoyage) livré au rebuild `c34a72f` → **1c ✓**. | **RÉSOLU (vérifié)** |
 | `cv2-back` recouvert par la poignée | Sur 390/430 px, `.lkdv-cv2-grab` intercepte le clic « Retour » des détails (`intercepts pointer events` en continu). Specs e2e/a11y/visuel : clic DOM direct. **À corriger côté coque** (poignée hors zone / `pointer-events`). | **ROUGE produit (contourné en test)** |
-| `8c` `+` en invité | En session anonyme, le clic **natif Playwright** sur `+`/stories n'exécute pas le handler (aucun toast/navigation) ; **clic DOM = `requireAuth` OK**. `8b`/`8d` prouvent déjà `requireAuth` sur écritures. Suspect : recouvrement pointer-events au-dessus de ces boutons (à qualifier produit). | **CONTOURNÉ (spec)** |
-| `1c` focus WebKit | En WebKit, après Échap le focus ne revient toujours pas au déclencheur (Chromium OK avec le correctif rAF de la coque) : **écart moteur / bug produit à qualifier**. Spec explicitement sautée en WebKit avec raison (pas de faux vert). | **ROUGE produit (WebKit, skippé motivé)** |
+| `8c` `+` en invité | **QUALIFIÉ — pas un bug produit** : aucun recouvrement (`elementFromPoint` = bouton), React hydraté, `onClick` présent ; l'échec venait d'un **clic trop tôt (hydratation partielle)**. Spec : attente explicite d'hydratation + **clic natif** → vert (redirection + toast). | **RÉSOLU (spec)** |
+| `1c` focus WebKit | **RÉSOLU** : correctif coque (reprises rAF + timers) livré, **1c vert en WebKit**. Précision Safari : un tap souris ne focalise pas le bouton déclencheur ; la spec 1c ouvre désormais au **clavier** (focus + Entrée), scénario d'accessibilité où la restitution de focus est exigée (vert Chromium **et** WebKit). | **RÉSOLU (vérifié)** |
 | Service worker vs mocks | Le SW du site proxifie des `fetch` et court-circuitait `page.route` en WebKit (`FetchEvent.respondWith` null, feeds en erreur). Corrigé dans le harnais : désenregistrement + blocage de l'enregistrement SW pour les specs `@ui-mock` + `serviceWorkers:'block'` dans la config de recette. | **RÉSOLU (harnais)** |
 | `cv2-island` testid dupliqué | Layer et pill portent le même `data-testid` (sélecteurs ambigus) ; specs ciblées sur `.lkdv-island-pill`. Unifier côté coque. | **MINEUR (testid)** |
-| « Sur la carte » | Le span de couverture d'un résultat intercepte la bascule sur 390 px (clic DOM dans la spec). Carte rendue sur tuiles neutralisées : seule sa présence est prouvée. | **CONTOURNÉ (spec)** |
+| « Sur la carte » | **Recouvrement CSS réel confirmé** : `elementFromPoint` au centre de la bascule = `SPAN.lkdv-cv2x-cover-fallback` (ligne de résultat de recherche qui recouvre la barre « Affichage des résultats » sur 390 px) ; chaîne `.lkdv-cv2x-search-row > .lkdv-cv2x-search-list`. **À corriger côté explore/coque** ; spec en clic DOM + carte rendue sur tuiles neutralisées (seule la présence est prouvée). | **ROUGE produit (routé, contourné spec)** |
 | Drapeau `false` (05 § 2.11) | Exige un **build séparé** `NEXT_PUBLIC_COMMUNAUTE_V2=false` (drapeau figé au build). Spec prête (`LKDV_E2E_V2_FLAG=false`). | **PRÊTE (séquence dédiée)** |
 | Données réelles (6 création, 10 stories) | Base non branchée + migrations non appliquées : non exécutables ici. Specs prêtes (`communaute-v2-db.spec.ts`, `LKDV_E2E_DB=test`) + pgTAP CI `database-gates`. Sautés **explicitement** (pas de faux vert). | **NON TESTABLE ICI** |
 | Maestro `.maestro/communaute.yaml` | Flow écrit (launch, Explorer, tri, détail club, Création › Story jusqu'à `only_me`, suppression), YAML valide ; **CLI `maestro` absente**. | **NON TESTABLE ICI (CLI)** |
@@ -96,8 +96,7 @@ PW_BASE_URL=http://127.0.0.1:4028 npx playwright test \
 
 ## Points rouges WebKit (run de contrôle mobile-webkit)
 
-Run final : **28 ✓ / 0 ✗ / 4 sautés** (explorer + création). Seul écart moteur :
-`1c` (retour du focus après fermeture) est **sauté explicitement en WebKit** avec
-raison — bug produit à qualifier (Chromium vert). Les artefacts de harnais WebKit
-(`preconnect` vers l'hôte Supabase fictif, service worker) sont filtrés/bloqués
-et documentés ci-dessus. Aucun échec WebKit n'est « coché vert ».
+Run final : **34 ✓ / 0 ✗ / 3 sautés** — **parité complète avec Chromium**. Le
+correctif coque du focus (1c) est vert en WebKit (spec en activation clavier,
+cf. nuance Safari ci-dessus) ; artefacts de harnais WebKit (preconnect, service
+worker) filtrés/bloqués et documentés. Aucun échec WebKit n'est « coché vert ».
