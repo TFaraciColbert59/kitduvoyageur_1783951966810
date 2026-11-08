@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { CarnetDay, CarnetMomentItem, CarnetEtapeDay } from '@/features/carnet/detail/types';
 import { CarnetPostGrid } from './CarnetPostGrid';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -33,6 +34,13 @@ export function CarnetDaySwipeView({
   const { haptic } = useHapticFeedback();
   const [dragX, setDragX] = useState(0);
   const [animClass, setAnimClass] = useState<string>('');
+  const [cardHost, setCardHost] = useState<HTMLElement | null>(null);
+
+  // Le sélecteur flotte sur la CARTE (maquette `.ig-tabs-float`), pas dans le
+  // flux du jour : sinon il défile avec la grille et se fait rogner.
+  useEffect(() => {
+    setCardHost(document.getElementById('card'));
+  }, []);
   const startXRef = useRef<number | null>(null);
   const startYRef = useRef<number | null>(null);
   const isSwipingRef = useRef(false);
@@ -152,7 +160,10 @@ export function CarnetDaySwipeView({
               </div>
             ) : null}
             {currentEtape?.note ? (
-              <div className="lkdv-day-banner-text" style={{ marginTop: '2px', fontStyle: 'italic' }}>
+              <div
+                className="lkdv-day-banner-text"
+                style={{ marginTop: '2px', fontStyle: 'italic' }}
+              >
                 « {currentEtape.note} »
               </div>
             ) : null}
@@ -168,44 +179,49 @@ export function CarnetDaySwipeView({
         />
       </div>
 
-      {/* Floating Day Selector (Mini Capsule 30px) */}
-      <div className="lkdv-tabs-float">
-        <div
-          className="lkdv-day-capsule"
-          role="tablist"
-          aria-label="Sélection du jour"
-          style={{ width: `${dayOptions.length * 36 + 6}px` }}
-        >
-          <span
-            className="lkdv-day-capsule-lens"
-            style={{
-              width: `${(dayOptions.length * 36) / dayOptions.length}px`,
-              transform: `translateX(${activeDay * 36}px)`,
-            }}
-          />
-          {dayOptions.map((opt) => {
-            const isSelected = activeDay === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                role="tab"
-                className="lkdv-day-capsule-btn"
-                aria-selected={isSelected}
-                tabIndex={isSelected ? 0 : -1}
-                aria-label={opt.fullLabel}
-                onClick={() => {
-                  if (activeDay !== opt.value) {
-                    changeDayWithAnimation(opt.value, opt.value > activeDay ? 1 : -1);
-                  }
-                }}
+      {/* Floating Day Selector (Mini Capsule 30px), ancré à la carte */}
+      {cardHost
+        ? createPortal(
+            <div className="lkdv-tabs-float">
+              <div
+                className="lkdv-day-capsule"
+                role="tablist"
+                aria-label="Sélection du jour"
+                style={{ width: `${dayOptions.length * 36 + 6}px` }}
               >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+                <span
+                  className="lkdv-day-capsule-lens"
+                  style={{
+                    width: `${(dayOptions.length * 36) / dayOptions.length}px`,
+                    transform: `translateX(${activeDay * 36}px)`,
+                  }}
+                />
+                {dayOptions.map((opt) => {
+                  const isSelected = activeDay === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="tab"
+                      className="lkdv-day-capsule-btn"
+                      aria-selected={isSelected}
+                      tabIndex={isSelected ? 0 : -1}
+                      aria-label={opt.fullLabel}
+                      onClick={() => {
+                        if (activeDay !== opt.value) {
+                          changeDayWithAnimation(opt.value, opt.value > activeDay ? 1 : -1);
+                        }
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>,
+            cardHost
+          )
+        : null}
     </div>
   );
 }

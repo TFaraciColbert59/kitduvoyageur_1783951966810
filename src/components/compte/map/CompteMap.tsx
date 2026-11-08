@@ -218,12 +218,43 @@ function bottomBarOverlap(container: HTMLElement): number {
     barTop = Math.min(barTop, window.innerHeight - nativeHeight);
   }
   if (!Number.isFinite(barTop)) return 0;
+  /* À ≥ 768 la barre flottante n'est pas stylée (dette D-01) : elle est rendue
+     en flux en haut de page et ne recouvre pas la carte. Sans ce garde, son
+     `top` proche de 0 ajoutait toute la hauteur de l'écran au padding de
+     cadrage, et `fitBounds` levait une erreur maplibre sur la fiche carnet. */
+  if (barTop < 80) return 0;
   return Math.max(0, Math.round(mapBottom - barTop) + 8);
 }
 
 /** Ajoute la hauteur recouverte par la barre du bas au bas du cadrage. */
 function withBarInset<T extends { bottom: number }>(padding: T, container: HTMLElement): T {
   return { ...padding, bottom: padding.bottom + bottomBarOverlap(container) };
+}
+
+/**
+ * `fitBounds` tolérant : maplibre lève dans `cameraForBoxAndBearing` quand le
+ * conteneur n'est pas encore mesuré ou quand le padding mange sa taille.
+ * On saute alors le cadrage au lieu de faire tomber l'écran.
+ */
+function fitBoundsSafely(
+  map: MapLibreMap,
+  bounds: [[number, number], [number, number]],
+  options: Parameters<MapLibreMap['fitBounds']>[1]
+) {
+  const rect = map.getContainer().getBoundingClientRect();
+  if (rect.width < 8 || rect.height < 8) return;
+  if (!bounds.every(([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat))) return;
+  const padding = options?.padding;
+  if (padding && typeof padding === 'object') {
+    const horizontal = (padding.left ?? 0) + (padding.right ?? 0);
+    const vertical = (padding.top ?? 0) + (padding.bottom ?? 0);
+    if (rect.width - horizontal < 8 || rect.height - vertical < 8) return;
+  }
+  try {
+    map.fitBounds(bounds, options);
+  } catch {
+    /* Carte non mesurable à cet instant : le prochain rendu recadrera. */
+  }
 }
 
 export function CompteMap({
@@ -570,7 +601,7 @@ export function CompteMap({
   useEffect(() => {
     if (!map || !ready || !traceBounds) return;
     const reduced = prefersReducedMotion();
-    map.fitBounds(
+    fitBoundsSafely(map,
       [
         [traceBounds[0], traceBounds[1]],
         [traceBounds[2], traceBounds[3]],
@@ -639,7 +670,7 @@ export function CompteMap({
     const intent = fitIntentForMode(context.mode, data, context.outingId);
     if (!intent) return;
     const reduced = prefersReducedMotion();
-    map.fitBounds(
+    fitBoundsSafely(map,
       [
         [intent.bounds[0], intent.bounds[1]],
         [intent.bounds[2], intent.bounds[3]],
@@ -712,7 +743,7 @@ export function CompteMap({
   const handleRecenter = useCallback(() => {
     if (!map || !data?.bounds) return;
     const bounds = data.bounds;
-    map.fitBounds(
+    fitBoundsSafely(map,
       [
         [bounds[0], bounds[1]],
         [bounds[2], bounds[3]],

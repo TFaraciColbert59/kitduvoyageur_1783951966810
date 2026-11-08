@@ -22,16 +22,19 @@ export function useCarnetDialog(active: boolean, onClose: () => void) {
 
   useEffect(() => {
     if (!active) return;
-    const container = containerRef.current;
     const opener = document.activeElement as HTMLElement | null;
 
+    /* La feuille peut changer de contenu (fiche empilée, réglages) sans
+       remonter : on relit la référence à chaque frappe plutôt que de figer
+       le conteneur du premier rendu. */
+    const currentContainer = () => containerRef.current;
     const focusables = () =>
-      Array.from(container?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(
+      Array.from(currentContainer()?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(
         (element) => element.offsetWidth > 0 || element.offsetHeight > 0
       );
 
     const first = focusables()[0];
-    (first ?? container)?.focus({ preventScroll: true });
+    (first ?? currentContainer())?.focus({ preventScroll: true });
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -49,12 +52,13 @@ export function useCarnetDialog(active: boolean, onClose: () => void) {
       const firstItem = list[0];
       const lastItem = list[list.length - 1];
       const current = document.activeElement;
+      const node = currentContainer();
       if (event.shiftKey) {
-        if (current === firstItem || !container?.contains(current)) {
+        if (current === firstItem || !node?.contains(current)) {
           event.preventDefault();
           lastItem.focus();
         }
-      } else if (current === lastItem || !container?.contains(current)) {
+      } else if (current === lastItem || !node?.contains(current)) {
         event.preventDefault();
         firstItem.focus();
       }

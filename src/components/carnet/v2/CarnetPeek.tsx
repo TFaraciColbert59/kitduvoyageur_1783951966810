@@ -61,10 +61,12 @@ export function CarnetPeek({
   });
 
   const hasPost = Boolean(moment.imageUrl);
+  const title =
+    moment.place || moment.title || (moment.dayNumber > 0 ? `Jour ${moment.dayNumber}` : 'Moment');
   const meta = [
     moment.dayNumber > 0 ? `Jour ${moment.dayNumber}` : null,
     moment.time,
-    moment.place,
+    moment.place && moment.place !== title ? moment.place : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -92,7 +94,7 @@ export function CarnetPeek({
             <span className="lkdv-peek-fallback">{moment.title || 'Moment'}</span>
           )}
           <div className="lkdv-peek-meta">
-            <b>{moment.place || moment.title || `Jour ${moment.dayNumber}`}</b>
+            <b>{title}</b>
             {meta ? <span>{meta}</span> : null}
           </div>
         </div>

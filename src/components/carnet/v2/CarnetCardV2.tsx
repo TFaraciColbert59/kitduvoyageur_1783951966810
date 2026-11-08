@@ -10,7 +10,10 @@ export interface CarnetCardV2Props {
   detail: CarnetDetail;
   activeDay: number;
   onDayChange: (day: number, dir?: number) => void;
-  onOpenDrawerSlot: (slot: 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage', lensIndex?: number) => void;
+  onOpenDrawerSlot: (
+    slot: 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage',
+    lensIndex?: number
+  ) => void;
   onOpenStories: () => void;
   onSelectMoment: (moment: CarnetMomentItem, index: number) => void;
   onPeekMoment?: (moment: CarnetMomentItem) => void;
@@ -55,11 +58,17 @@ export function CarnetCardV2({
     const now = new Date();
     const dayMs = 86_400_000;
     if (now < start) {
-      return { state: 'upcoming' as const, label: `Départ le ${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}` };
+      return {
+        state: 'upcoming' as const,
+        label: `Départ le ${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`,
+      };
     }
     const finished = end && !Number.isNaN(end.getTime()) ? now > end : false;
     if (finished) return { state: 'done' as const, label: `Terminé · ${daysCount} jours` };
-    const dayNumber = Math.max(1, Math.min(daysCount, Math.floor((now.getTime() - start.getTime()) / dayMs) + 1));
+    const dayNumber = Math.max(
+      1,
+      Math.min(daysCount, Math.floor((now.getTime() - start.getTime()) / dayMs) + 1)
+    );
     return { state: 'live' as const, label: `En route · J${dayNumber} sur ${daysCount}` };
   }, [daysCount, detail.endDate, detail.liveSharing, detail.startDate]);
 
@@ -162,7 +171,11 @@ export function CarnetCardV2({
         <div className="lkdv-ig-bio">
           <span className="lkdv-ig-name">{detail.title}</span>
           <span className="lkdv-ig-handle-sub">
-            {[detail.destination, detail.dateRange, detail.author ? `par ${detail.author.name}` : null]
+            {[
+              detail.destination,
+              detail.dateRange,
+              detail.author ? `par ${detail.author.name}` : null,
+            ]
               .filter(Boolean)
               .join(' · ')}
           </span>

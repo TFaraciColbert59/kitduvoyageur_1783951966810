@@ -38,7 +38,11 @@ export function buildElevationProfile(samples: unknown, maxPoints = 120): Elevat
   for (const raw of samples) {
     if (!raw || typeof raw !== 'object') continue;
     const sample = raw as TimedSample;
-    if (!isFiniteNumber(sample.lat) || !isFiniteNumber(sample.lng) || !isFiniteNumber(sample.elevationM)) {
+    if (
+      !isFiniteNumber(sample.lat) ||
+      !isFiniteNumber(sample.lng) ||
+      !isFiniteNumber(sample.elevationM)
+    ) {
       continue;
     }
     valid.push({ lat: sample.lat, lng: sample.lng, elevationM: sample.elevationM });
@@ -68,7 +72,10 @@ export function buildElevationProfile(samples: unknown, maxPoints = 120): Elevat
  * Comme pour la trace, la sortie la plus récente n'est pas forcément celle qui
  * a des mesures : on ne rend jamais un profil inventé.
  */
-export function pickElevationProfile(sessions: HikeSessionRow[], maxPoints = 120): ElevationPoint[] {
+export function pickElevationProfile(
+  sessions: HikeSessionRow[],
+  maxPoints = 120
+): ElevationPoint[] {
   for (const session of sessions) {
     const profile = buildElevationProfile(session?.positions_timed, maxPoints);
     if (profile.length >= 2) return profile;

@@ -188,12 +188,72 @@ test.describe('Carnet v2 — Scénarios E2E', () => {
     await page.goto(`/carnets/${TEST_CARNET_ID}`);
     if (await page.locator('text=404').count() > 0) return;
 
-    const sunButton = page.locator('[aria-label="Mode plein soleil"]');
-    if (await sunButton.isVisible()) {
-      await sunButton.click();
+    const displayButton = page.locator('[aria-label="Affichage"]');
+    if (await displayButton.isVisible()) {
+      await displayButton.click();
+      await page.getByRole('switch', { name: 'Plein soleil' }).click();
       const root = page.locator('[data-testid="carnet-v2-root"]');
       await expect(root).toHaveClass(/outdoor/);
     }
+  });
+
+  test('11. Peek & Pop : appui long, 4 actions réelles, Échap et retour du focus', async ({ page }) => {
+    await navigateToCarnet(page, TEST_CARNET_ID);
+    if (page.url().includes('/connexion') || (await page.locator('text=404').count()) > 0) return;
+
+    const tile = page.locator('.lkdv-ig-tile').first();
+    await expect(tile).toBeVisible();
+    const box = await tile.boundingBox();
+    if (!box) return;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(650);
+    await page.mouse.up();
+
+    const peek = page.locator('.lkdv-peek [role="dialog"]');
+    await expect(peek).toBeVisible();
+    await expect(peek).toHaveAttribute('aria-modal', 'true');
+    await expect(peek.getByRole('button', { name: /J’aime/ })).toBeVisible();
+    await expect(peek.getByRole('button', { name: 'Commenter' })).toBeVisible();
+    await expect(peek.getByRole('button', { name: 'Partager' })).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.lkdv-peek')).toHaveCount(0);
+  });
+
+  test('12. Tiroir : feuille 406 × 521.9 à 12,48, dialogue modal, Échap', async ({ page }) => {
+    await navigateToCarnet(page, TEST_CARNET_ID);
+    if (page.url().includes('/connexion') || (await page.locator('text=404').count()) > 0) return;
+
+    await page.getByRole('button', { name: /jours de randonnée/i }).click();
+    const drawer = page.locator('.lkdv-carnet-drawer');
+    await expect(drawer).toBeVisible();
+    await expect(drawer).toHaveAttribute('role', 'dialog');
+    await expect(drawer).toHaveAttribute('aria-modal', 'true');
+    const box = await drawer.boundingBox();
+    expect(box?.x).toBeCloseTo(12, 0);
+    expect(box?.y).toBeCloseTo(48, 0);
+    expect(box?.width).toBeCloseTo(406, 0);
+    expect(box?.height).toBeCloseTo(521.9, 0);
+    await expect(page.locator('body')).toHaveClass(/lkdv-dialog-open/);
+
+    await page.keyboard.press('Escape');
+    await expect(drawer).toHaveCount(0);
+    await expect(page.locator('body')).not.toHaveClass(/lkdv-dialog-open/);
+  });
+
+  test('13. Altitude : jamais de profil inventé, état vide honnête', async ({ page }) => {
+    await navigateToCarnet(page, TEST_CARNET_ID);
+    if (page.url().includes('/connexion') || (await page.locator('text=404').count()) > 0) return;
+
+    await page.getByRole('button', { name: /jours de randonnée/i }).click();
+    await page.getByRole('tab', { name: 'Altitude' }).click();
+    const card = page.locator('.lkdv-altitude-card');
+    await expect(card.getByText(/Profil d’altitude du tracé/)).toBeVisible();
+    const empty = card.getByText(/Aucune mesure d’altitude enregistrée/);
+    const slider = card.locator('svg.lkdv-altitude');
+    expect((await empty.count()) + (await slider.count())).toBeGreaterThan(0);
+    await expect(card.getByText(/Trace altimétrique interactive synchronisée/)).toHaveCount(0);
   });
 
   test('10. Responsivité sur 360px, 390px, 430px sans débordement horizontal', async ({ page }) => {

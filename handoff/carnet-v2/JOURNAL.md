@@ -40,3 +40,40 @@ Format : Date | Décision | Contexte & Raison | Alternative écartée
   - **Décision :** Commit `49322e6` poussé sur `origin/main`. Déploiement de production Vercel `dpl_4EvcJVS9tZafBB5eBPmeN6bRTD4i` (`kitduvoyageur-1783951966810-63850bp2k.vercel.app`) passé à l'état Ready. Relance du processus de l'application native sur l'iPhone 16 Pro physique (UDID `00008140-000E7D081A0B001C`).
 
 
+
+---
+
+## 2026-11-08 (soir) — Reprise du flambeau : la fiche rentre dans la grammaire /compte
+
+- **2026-11-08 19:20 — Tokens du socle sur la racine de la fiche**
+  - **Décision :** déclarer `--label`, `--label2`, `--tint`, `--ga`, `--gb`… sur `.lkdv-carnet-v2-root` (source `compte-v8.css` `.phone` L26-34) et remplacer les 18 usages CSS + 50 usages TSX de `--lkv-text-secondary` / `--lkv-primary` par ces jetons.
+  - **Raison :** la fiche ne monte pas `.phone` ; les jetons `--lkv-*` du thème liquide global sont blancs (`rgba(255,255,255,.71)`) et donnaient un texte blanc sur verre clair (contraste ~1,1:1). Mesuré au DOM avant/après.
+  - **Alternative écartée :** forcer `color` par sélecteur d'écran ; cela aurait laissé les 50 styles inline du tiroir sur la mauvaise encre.
+
+- **2026-11-08 19:22 — Tiroir = feuille dans la carte, pas plein écran**
+  - **Décision :** `.lkdv-carnet-drawer` et `.lkdv-stack-sheet` passent à `406 × 521.9 @ 12,48`, `r24`, verre `--sheet-*` ; `role="dialog"`, `aria-modal`, focus piégé/Échap/retour de focus/scroll lock via `useCarnetDialog` ; injection de `DRAWER_V2_CSS` (le `SlotShell` n'a pas de CSS global).
+  - **Raison :** mesure avant : `inset:0`, rayon 32 en haut, capsule de lentilles à `y=1048` (hors feuille). Après : feuille 406 × 521.9, capsule à `y=530`.
+  - **Alternative écartée :** réécrire le tiroir avec Radix ; la primitive `SlotShell` existe et respecte le socle, il manquait sa feuille et sa CSS.
+
+- **2026-11-08 19:24 — Barre haute à 3 boutons, popover Affichage**
+  - **Décision :** retirer le 4ᵉ bouton rond (réglages) ; « Paramètres et partage » entre dans le menu du titre ; le bouton soleil ouvre un popover famille D à deux interrupteurs (`Plein soleil`, `Réduire les animations`). `reduceMotion` est persisté dans `localStorage` (`lkdv:carnet:reduce-motion`) et appliqué par une règle scopée à la fiche.
+  - **Raison :** loi 7 (trois boutons ronds max) + écart maquette #6. Le libellé du bouton devient « Affichage ».
+  - **Alternative écartée :** garder le soleil en toggle direct et supprimer le popover ; on perdait le second réglage.
+
+- **2026-11-08 19:25 — Peek & Pop et altitude réelle**
+  - **Décision :** `CarnetPeek` (famille D, appui long 460 ms) avec 4 actions réelles : J'aime (par moment), Commenter (ouvre le panneau commentaires via `initialPanel`), Ouvrir le moment, Partager. Pas d'« Enregistrer » ni de « Signaler » : aucun backend par moment (le favori est au niveau carnet, `post_reports` attend un post).
+  - **Décision altitude :** `buildElevationProfile` lit `positions_timed[].elevationM`, cumule la distance haversine, ignore les échantillons sans altitude et rend `[]` sous deux mesures. `CarnetAltitude` ne s'affiche qu'avec ≥ 2 points ; le tiroir affiche un état vide honnête au lieu du faux « Trace altimétrique interactive synchronisée ».
+  - **Raison :** loi 10 (zéro mock). En démo, les 326 échantillons de `hike_sessions.positions_timed` ont tous `elevationM: null` : l'accessoire ne doit pas apparaître.
+  - **Alternative écartée :** dessiner une courbe à partir du D+ total ou d'altitudes d'hébergements absents (invention).
+
+- **2026-11-08 19:26 — Responsive et crash desktop**
+  - **Décision :** colonne 430 centrée à ≥768, `100dvh`, `padding:0!important` (le `.lkdv-compte-v8` imposait 16 px), barre flottante retirée quand la fiche est montée, fond de page `#F5F2EC`. `bottomBarOverlap` ignore une barre non flottante (`barTop < 80`) et `fitBoundsSafely` protège les trois `fitBounds`.
+  - **Raison :** à 768/1440 la fiche tombait dans `error.tsx` (`cameraForBoxAndBearing` : padding bottom = hauteur d'écran à cause de la barre D-01) ; la carte faisait 1384 px de large.
+  - **Alternative écartée :** masquer la carte à ≥768 ; la carte est le contenu principal de la fiche.
+
+- **2026-11-08 19:27 — Preuves**
+  - `npx vitest run src/components/carnet/v2 src/features/carnet/detail` : **14 fichiers, 118/118**.
+  - `tsc` ciblé (`tsconfig.carnet-audit.json`, carnet + carte) : **0 erreur** ; le `tsc` global du dépôt dépasse 2 Go de heap (OOM environnemental, pré-existant).
+  - `eslint` sur les fichiers touchés : **0 erreur**, 8 avertissements pré-existants.
+  - Captures : `docs/audit/carnet-v2-2026-11-08/captures/after-{430,768,1440,drawer,peek,display}.png`.
+  - Non déployé : l'arbre de travail partagé contient des modifications hors périmètre (messaging/compte) non commitées, dont une erreur de syntaxe dans `ComposerMenuSheet.tsx` qui empêche un build global. Elles ne sont pas de cette reprise et n'ont pas été touchées.

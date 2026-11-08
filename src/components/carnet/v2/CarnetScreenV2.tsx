@@ -12,8 +12,12 @@ import { CarnetIsland, type CarnetIslandToast } from './CarnetIsland';
 import { CarnetPeek } from './CarnetPeek';
 import { CarnetAltitude } from './CarnetAltitude';
 import { CompteMap } from '@/components/compte/map/CompteMap';
+import { DRAWER_V2_CSS } from '@/components/compte/drawer/SlotShell';
 import { CarnetPostSheet } from '@/components/carnet/profile/CarnetPostSheet';
-import StoriesViewer, { type StoryUser, type StorySlide } from '@/components/communaute/StoriesViewer';
+import StoriesViewer, {
+  type StoryUser,
+  type StorySlide,
+} from '@/components/communaute/StoriesViewer';
 import ReportSheet from '@/components/social/ReportSheet';
 import { useCarnetComments } from '@/features/carnet/detail/useCarnetComments';
 import { useCarnetEngagement } from '@/features/carnet/detail/useCarnetEngagement';
@@ -53,14 +57,25 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
   const [postSheetIndex, setPostSheetIndex] = useState<number | null>(null);
   const [postSheetPanel, setPostSheetPanel] = useState<'comments' | null>(null);
   const [peekMoment, setPeekMoment] = useState<CarnetMomentItem | null>(null);
+  const [scrubPoint, setScrubPoint] = useState<{ elevationM: number; distanceKm: number } | null>(
+    null
+  );
+
+  const elevationProfile = detail.elevationProfile ?? [];
+  const hasElevationProfile = elevationProfile.length >= 2;
   const [storiesOpen, setStoriesOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
 
   // Focus point for Map
-  const [mapFocus, setMapFocus] = useState<{ lat: number; lng: number; zoom?: number } | null>(null);
+  const [mapFocus, setMapFocus] = useState<{ lat: number; lng: number; zoom?: number } | null>(
+    null
+  );
 
   // Dynamic Island Toast State
   const [islandToast, setIslandToast] = useState<CarnetIslandToast | null>(null);
+
+  const overlayOpen =
+    drawerOpen || peekMoment !== null || postSheetIndex !== null || storiesOpen || reportOpen;
 
   const showIsland = useCallback((message: string, undo?: () => void) => {
     setIslandToast({
@@ -141,7 +156,11 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
       setReduceMotion(stored === 'true');
       return;
     }
-    setReduceMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const query =
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+        : null;
+    setReduceMotion(query?.matches ?? false);
   }, []);
 
   useEffect(() => {
@@ -179,7 +198,10 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
 
   // Prepare Stories users grouped by author
   const storyUsers: StoryUser[] = useMemo(() => {
-    const byAuthor = new Map<string, { id: string; name: string; avatarUrl?: string; slides: StorySlide[] }>();
+    const byAuthor = new Map<
+      string,
+      { id: string; name: string; avatarUrl?: string; slides: StorySlide[] }
+    >();
 
     const defaultAuthor = {
       id: detail.author?.id || 'owner',
@@ -265,10 +287,15 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
 
   return (
     <div
-      className={`lkdv-carnet-v2-root lkdv-compte-v8 ${mapBig ? 'mapbig' : ''} ${outdoor ? 'outdoor' : ''}`}
+      className={`lkdv-carnet-v2-root lkdv-compte-v8 ${mapBig ? 'mapbig' : ''} ${outdoor ? 'outdoor' : ''} ${overlayOpen ? 'overlay-open' : ''}`}
       data-testid="carnet-v2-root"
       data-reduce-motion={reduceMotion ? 'true' : 'false'}
     >
+      {/* Coquille des tiroirs : le SlotShell n'a pas de CSS global, le Compte
+          l'injecte lui-même. Sans cette feuille, le tiroir n'a ni position ni
+          capsule de lentille ancrée (les onglets tombaient hors de la feuille). */}
+      <style dangerouslySetInnerHTML={{ __html: DRAWER_V2_CSS }} />
+
       <div className="lkdv-carnet-bg" aria-hidden="true">
         {detail.coverImage ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -345,9 +372,7 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           focus={mapFocus}
           activeDay={activeDay}
           livePosition={
-            live.livePosition
-              ? { lat: live.livePosition.lat, lng: live.livePosition.lng }
-              : null
+            live.livePosition ? { lat: live.livePosition.lat, lng: live.livePosition.lng } : null
           }
           publicZone={
             live.publicZone &&
@@ -382,7 +407,8 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           <button
             type="button"
             onClick={() => {
-              const map3D = (window as unknown as { __lkdvCompteMap3D?: { zoomIn: () => void } }).__lkdvCompteMap3D;
+              const map3D = (window as unknown as { __lkdvCompteMap3D?: { zoomIn: () => void } })
+                .__lkdvCompteMap3D;
               map3D?.zoomIn();
             }}
             aria-label="Zoom avant"
@@ -392,7 +418,8 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           <button
             type="button"
             onClick={() => {
-              const map3D = (window as unknown as { __lkdvCompteMap3D?: { zoomOut: () => void } }).__lkdvCompteMap3D;
+              const map3D = (window as unknown as { __lkdvCompteMap3D?: { zoomOut: () => void } })
+                .__lkdvCompteMap3D;
               map3D?.zoomOut();
             }}
             aria-label="Zoom arrière"
@@ -413,6 +440,41 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           </button>
         </div>
       </section>
+
+      {/* Accessoire altimétrique — seulement avec de vraies mesures */}
+      {hasElevationProfile && !overlayOpen ? (
+        <div className="lkdv-carnet-acc" role="group" aria-label="Profil d’altitude du parcours">
+          <span className="lkdv-acc-badge" aria-hidden="true">
+            D+
+          </span>
+          <span className="lkdv-acc-ro">
+            <b>
+              {scrubPoint
+                ? `${Math.round(scrubPoint.elevationM)} m`
+                : detail.elevationM
+                  ? `+${Math.round(detail.elevationM)} m`
+                  : '—'}
+            </b>
+            <span>
+              {scrubPoint
+                ? `${scrubPoint.distanceKm.toFixed(1)} km`
+                : detail.elevationM
+                  ? 'Dénivelé positif'
+                  : 'Dénivelé non renseigné'}
+            </span>
+          </span>
+          <CarnetAltitude
+            points={elevationProfile}
+            interactive
+            onScrub={(point) =>
+              setScrubPoint(
+                point ? { elevationM: point.elevationM, distanceKm: point.distanceKm } : null
+              )
+            }
+            label="Profil d’altitude du parcours"
+          />
+        </div>
+      ) : null}
 
       {/* 5-Slot Drawer (Fil, Route, Sac, Chiffres, Équipage) */}
       <CarnetDrawerV2

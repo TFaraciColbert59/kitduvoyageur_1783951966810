@@ -141,12 +141,7 @@ export function CarnetTopBarV2({
       </div>
 
       {menuOpen ? (
-        <div
-          ref={menuRef}
-          className="lkdv-menu-popover"
-          role="menu"
-          aria-label="Options du carnet"
-        >
+        <div ref={menuRef} className="lkdv-menu-popover" role="menu" aria-label="Options du carnet">
           {isParticipant ? (
             <>
               {onToggleEdit ? (

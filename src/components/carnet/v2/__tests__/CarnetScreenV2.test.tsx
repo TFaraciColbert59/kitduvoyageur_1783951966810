@@ -257,14 +257,20 @@ describe('CarnetScreenV2 Component', () => {
     expect(screen.getByText('Partager')).toBeTruthy();
   });
 
-  it('bascule en mode plein soleil lorsqu’on clique sur le bouton soleil', () => {
+  it('bascule en mode plein soleil depuis le popover Affichage', () => {
     render(<CarnetScreenV2 detail={mockDetail} />);
 
-    const sunButton = screen.getByLabelText(/Mode plein soleil/i);
-    fireEvent.click(sunButton);
+    fireEvent.click(screen.getByRole('button', { name: 'Affichage' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Plein soleil' }));
 
     const root = screen.getByTestId('carnet-v2-root');
     expect(root.classList.contains('outdoor')).toBe(true);
+  });
+
+  it('ne monte que trois boutons ronds dans la barre haute (loi 7)', () => {
+    render(<CarnetScreenV2 detail={mockDetail} />);
+
+    expect(document.querySelectorAll('.lkdv-carnet-topbar .lkdv-gbtn')).toHaveLength(3);
   });
 
   it('agrandit la carte lorsqu’on actionne la poignée de tirage mgrab', () => {

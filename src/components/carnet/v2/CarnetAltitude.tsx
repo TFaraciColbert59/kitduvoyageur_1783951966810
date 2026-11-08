@@ -40,7 +40,11 @@ export function CarnetAltitude({
       x: (point.distanceKm / total) * 100,
       y: 100 - ((point.elevationM - min) / span) * 100,
     }));
-    const line = coords.map((coord, index) => `${index === 0 ? 'M' : 'L'}${coord.x.toFixed(2)},${coord.y.toFixed(2)}`).join(' ');
+    const line = coords
+      .map(
+        (coord, index) => `${index === 0 ? 'M' : 'L'}${coord.x.toFixed(2)},${coord.y.toFixed(2)}`
+      )
+      .join(' ');
     const area = `${line} L100,100 L0,100 Z`;
     return { total, min, max, coords, line, area };
   }, [points]);
@@ -86,7 +90,7 @@ export function CarnetAltitude({
       aria-label={label}
       aria-valuemin={interactive ? 0 : undefined}
       aria-valuemax={interactive ? points.length - 1 : undefined}
-      aria-valuenow={interactive ? cursor ?? 0 : undefined}
+      aria-valuenow={interactive ? (cursor ?? 0) : undefined}
       aria-valuetext={
         interactive && selectedPoint
           ? `${Math.round(selectedPoint.elevationM)} mètres à ${selectedPoint.distanceKm.toFixed(1)} kilomètres`
@@ -112,7 +116,10 @@ export function CarnetAltitude({
         if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
         event.preventDefault();
         const current = cursor ?? 0;
-        const next = Math.min(points.length - 1, Math.max(0, current + (event.key === 'ArrowRight' ? 1 : -1)));
+        const next = Math.min(
+          points.length - 1,
+          Math.max(0, current + (event.key === 'ArrowRight' ? 1 : -1))
+        );
         setCursor(next);
         onScrub?.(points[next] ?? null);
       }}
@@ -145,7 +152,15 @@ export function CarnetAltitude({
             vectorEffect="non-scaling-stroke"
             opacity="0.55"
           />
-          <circle cx={selected.x} cy={selected.y} r="2.6" fill="var(--tint-ink, #fff)" stroke="var(--tint, #17402c)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+          <circle
+            cx={selected.x}
+            cy={selected.y}
+            r="2.6"
+            fill="var(--tint-ink, #fff)"
+            stroke="var(--tint, #17402c)"
+            strokeWidth="1.4"
+            vectorEffect="non-scaling-stroke"
+          />
         </>
       ) : null}
     </svg>

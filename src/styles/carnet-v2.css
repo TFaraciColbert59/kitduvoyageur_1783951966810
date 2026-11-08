@@ -12,18 +12,18 @@
   display: grid;
   grid-template-rows: calc(69% - 46px) 1fr;
   transition: grid-template-rows 0.55s var(--motion-ease-standard);
-  background: var(--page, #F5F2EC);
-  color: var(--label, #172B24);
+  background: var(--page, #f5f2ec);
+  color: var(--label, #172b24);
   overflow: hidden;
   isolation: isolate;
-  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif);
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif);
 
   /* Jetons du socle /compte — source : compte-v8.css `.phone` (L26-34).
      La fiche ne monte pas `.phone` : elle déclare la même palette pour que
      `--label`, `--label2` et `--tint` soient les encres du verre CLAIR et
      jamais les encres blanches du thème liquide global (`--lkv-*`). */
-  --label: #172B24;
-  --label2: #56665D;
+  --label: #172b24;
+  --label2: #56665d;
   --label3: rgba(23, 43, 36, 0.44);
   --sep: rgba(23, 43, 36, 0.1);
   --fill: rgba(23, 43, 36, 0.09);
@@ -64,7 +64,9 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   opacity: 0;
   pointer-events: none;
   transform: translateY(120%);
-  transition: opacity 0.25s ease, transform 0.35s var(--motion-ease-standard);
+  transition:
+    opacity 0.25s ease,
+    transform 0.35s var(--motion-ease-standard);
 }
 
 /* Réduction des animations demandée depuis le popover Affichage.
@@ -98,10 +100,15 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 }
 
 .lkdv-carnet-bg::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 250, 236, 0.08), rgba(255, 255, 255, 0) 30%, rgba(245, 242, 236, 0.12) 60%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 250, 236, 0.08),
+    rgba(255, 255, 255, 0) 30%,
+    rgba(245, 242, 236, 0.12) 60%
+  );
 }
 
 /* Top Section (69%) */
@@ -142,7 +149,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   gap: 7px;
   border: 0;
   font: 600 13px var(--font-sans, sans-serif);
-  color: var(--tint, #17402C);
+  color: var(--tint, #17402c);
   background: var(--bar-glass-bg, rgba(255, 255, 255, 0.72));
   -webkit-backdrop-filter: var(--bar-glass-blur, blur(16px));
   backdrop-filter: var(--bar-glass-blur, blur(16px));
@@ -165,7 +172,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--good, #3D7A52);
+  background: var(--good, #3d7a52);
   box-shadow: 0 0 0 2px rgba(61, 122, 82, 0.15);
 }
 
@@ -182,18 +189,22 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   display: grid;
   place-items: center;
   flex: none;
-  color: var(--tint, #17402C);
+  color: var(--tint, #17402c);
   position: relative;
   background: rgba(255, 255, 255, 0.65);
   -webkit-backdrop-filter: blur(8px) saturate(1.8);
   backdrop-filter: blur(8px) saturate(1.8);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 8px rgba(23, 43, 36, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 8px rgba(23, 43, 36, 0.08);
   cursor: pointer;
-  transition: transform 0.12s, background 0.2s;
+  transition:
+    transform 0.12s,
+    background 0.2s;
 }
 
 .lkdv-gbtn::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -208,10 +219,12 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   transform: scale(0.94);
 }
 
-.lkdv-gbtn[aria-expanded="true"],
-.lkdv-gbtn[aria-pressed="true"] {
+.lkdv-gbtn[aria-expanded='true'],
+.lkdv-gbtn[aria-pressed='true'] {
   background: rgba(150, 186, 142, 0.35);
-  box-shadow: inset 0 0 0 1px rgba(91, 127, 85, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 0 0 0 1px rgba(91, 127, 85, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 /* Card Shell */
@@ -225,10 +238,19 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   flex-direction: column;
   padding: 0;
   /* Recette `.cs` de /compte (compte-v8.css L77), pas une approximation. */
-  background: linear-gradient(180deg, rgba(255, 255, 255, calc(var(--ga) + 0.3)), rgba(255, 255, 255, calc(var(--ga) + 0.2)));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, calc(var(--ga) + 0.3)),
+    rgba(255, 255, 255, calc(var(--ga) + 0.2))
+  );
   -webkit-backdrop-filter: blur(calc(var(--gb) + 18px)) saturate(1.8) brightness(1.05);
   backdrop-filter: blur(calc(var(--gb) + 18px)) saturate(1.8) brightness(1.05);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), inset 0 0 16px rgba(255, 255, 255, 0.12), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 10px 30px rgba(23, 43, 36, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 0 16px rgba(255, 255, 255, 0.12),
+    0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    0 10px 30px rgba(23, 43, 36, 0.14);
 }
 
 .lkdv-carnet-card-scroll {
@@ -266,8 +288,18 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   border-radius: 50%;
   padding: 3px;
   border: 0;
-  background: conic-gradient(from 140deg, rgba(23, 64, 44, 0.62), rgba(150, 179, 145, 0.55), rgba(255, 255, 255, 0.9), rgba(91, 127, 85, 0.5), rgba(23, 64, 44, 0.62));
-  box-shadow: 0 3px 14px rgba(23, 64, 44, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 1.5px rgba(91, 127, 85, 0.3);
+  background: conic-gradient(
+    from 140deg,
+    rgba(23, 64, 44, 0.62),
+    rgba(150, 179, 145, 0.55),
+    rgba(255, 255, 255, 0.9),
+    rgba(91, 127, 85, 0.5),
+    rgba(23, 64, 44, 0.62)
+  );
+  box-shadow:
+    0 3px 14px rgba(23, 64, 44, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 1.5px rgba(91, 127, 85, 0.3);
   transition: transform 0.15s;
   flex: none;
   display: block;
@@ -279,12 +311,20 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 }
 
 .lkdv-ig-avi-wrap.live {
-  background: conic-gradient(var(--tint, #17402C), var(--accent, #5B7F55), #96B391, #3D7A52, var(--tint, #17402C));
+  background: conic-gradient(
+    var(--tint, #17402c),
+    var(--accent, #5b7f55),
+    #96b391,
+    #3d7a52,
+    var(--tint, #17402c)
+  );
   animation: lkdv-ring 3.4s linear infinite;
 }
 
 @keyframes lkdv-ring {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .lkdv-ig-avi-wrap.live .lkdv-ig-avi {
@@ -297,7 +337,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   height: 100%;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.92);
-  background: #DDEBD8;
+  background: #ddebd8;
   overflow: hidden;
   position: relative;
 }
@@ -317,11 +357,13 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: linear-gradient(155deg, #FFFFFF, #EBF2EC);
-  box-shadow: 0 2px 6px rgba(23, 43, 36, 0.2), 0 0 0 1.5px #FFFFFF;
+  background: linear-gradient(155deg, #ffffff, #ebf2ec);
+  box-shadow:
+    0 2px 6px rgba(23, 43, 36, 0.2),
+    0 0 0 1.5px #ffffff;
   display: grid;
   place-items: center;
-  color: var(--tint, #17402C);
+  color: var(--tint, #17402c);
 }
 
 /* Stats items (Jours, Km, D+) */
@@ -345,7 +387,9 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   align-items: center;
   text-align: center;
   border-radius: 12px;
-  transition: background 0.14s ease, transform 0.12s;
+  transition:
+    background 0.14s ease,
+    transform 0.12s;
   cursor: pointer;
 }
 
@@ -357,14 +401,14 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 .lkdv-ig-stat b {
   font: 700 18px/1.2 var(--font-display, var(--font-sans, sans-serif));
   letter-spacing: -0.02em;
-  color: var(--tint, #17402C);
+  color: var(--tint, #17402c);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .lkdv-ig-stat span {
   font: 500 11.5px/1.2 var(--font-sans, sans-serif);
-  color: var(--label2, #56665D);
+  color: var(--label2, #56665d);
 }
 
 /* Bio info */
@@ -377,13 +421,13 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 
 .lkdv-ig-name {
   font: 700 14px/1.2 var(--font-display, var(--font-sans, sans-serif));
-  color: var(--tint, #17402C);
+  color: var(--tint, #17402c);
   letter-spacing: -0.01em;
 }
 
 .lkdv-ig-handle-sub {
   font: 500 11.5px/1.25 var(--font-sans, sans-serif);
-  color: var(--label2, #56665D);
+  color: var(--label2, #56665d);
 }
 
 /* Highlights ("À la une") */
@@ -415,7 +459,12 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   height: 48px;
   border-radius: 50%;
   padding: 2px;
-  background: conic-gradient(from 140deg, rgba(23, 64, 44, 0.4), rgba(255, 255, 255, 0.8), rgba(91, 127, 85, 0.4));
+  background: conic-gradient(
+    from 140deg,
+    rgba(23, 64, 44, 0.4),
+    rgba(255, 255, 255, 0.8),
+    rgba(91, 127, 85, 0.4)
+  );
   box-shadow: 0 2px 6px rgba(23, 64, 44, 0.08);
 }
 
@@ -424,7 +473,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   height: 100%;
   border-radius: 50%;
   overflow: hidden;
-  background: #DDEBD8;
+  background: #ddebd8;
 }
 
 .lkdv-ig-hl-thumb img {
@@ -435,7 +484,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 
 .lkdv-ig-hl-label {
   font: 500 10.5px/1 var(--font-sans, sans-serif);
-  color: var(--label2, #56665D);
+  color: var(--label2, #56665d);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -466,7 +515,9 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 
 .lkdv-ig-live {
   background: rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 0.5px rgba(23, 43, 36, 0.1);
   min-width: 0;
 }
 
@@ -486,10 +537,22 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 .lkdv-ig-open {
   border: 0;
   cursor: pointer;
-  background: var(--lg-bar-bg, linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)));
+  background: var(
+    --lg-bar-bg,
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.42) 55%,
+      rgba(255, 255, 255, 0.52)
+    )
+  );
   -webkit-backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
   backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
-  box-shadow: var(--lg-bar-shadow, 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12));
+  box-shadow: var(
+    --lg-bar-shadow,
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12)
+  );
   transition: transform 0.12s var(--ease-spring);
 }
 
@@ -525,7 +588,9 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   font: 600 12px var(--font-sans, sans-serif);
   color: var(--label2, #56665d);
   background: rgba(255, 255, 255, 0.42);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 0.5px rgba(23, 43, 36, 0.1);
   cursor: pointer;
 }
 
@@ -569,21 +634,39 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 }
 
 @keyframes lkdv-swipe-out-l {
-  to { opacity: 0; transform: translateX(-40px); }
+  to {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
 }
 
 @keyframes lkdv-swipe-out-r {
-  to { opacity: 0; transform: translateX(40px); }
+  to {
+    opacity: 0;
+    transform: translateX(40px);
+  }
 }
 
 @keyframes lkdv-swipe-in-l {
-  from { opacity: 0; transform: translateX(-40px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes lkdv-swipe-in-r {
-  from { opacity: 0; transform: translateX(40px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Day Overview Narrative Banner */
@@ -604,12 +687,12 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   justify-content: space-between;
   align-items: center;
   font: 600 12px var(--font-sans, sans-serif);
-  color: var(--tint, #17402C);
+  color: var(--tint, #17402c);
 }
 
 .lkdv-day-banner-text {
   font: 400 11.5px/1.35 var(--font-sans, sans-serif);
-  color: var(--label2, #56665D);
+  color: var(--label2, #56665d);
 }
 
 /* 3-Column Media Grid */
@@ -629,7 +712,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   overflow: hidden;
   border: 0;
   padding: 0;
-  background: #DDEBD8;
+  background: #ddebd8;
   cursor: pointer;
   transition: transform 0.12s var(--ease-spring);
 }
@@ -653,7 +736,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   padding: 2px 5px;
   border-radius: 9999px;
   background: rgba(23, 43, 36, 0.72);
-  color: #FFFFFF;
+  color: #ffffff;
   font: 600 9px var(--font-sans, sans-serif);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
@@ -679,11 +762,20 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   display: flex;
   align-items: stretch;
   background: rgba(255, 255, 255, 0.65);
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52));
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72),
+    rgba(255, 255, 255, 0.42) 55%,
+    rgba(255, 255, 255, 0.52)
+  );
   -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
   backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
   border: 0.5px solid rgba(255, 255, 255, 0.8);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12);
 }
 
 .lkdv-day-capsule-lens {
@@ -695,7 +787,10 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   z-index: 0;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.22));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.06);
   transition: transform 0.28s var(--ease-spring);
 }
 
@@ -711,13 +806,13 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   display: grid;
   place-items: center;
   font: 600 11px var(--font-sans, sans-serif);
-  color: var(--label2, #56665D);
+  color: var(--label2, #56665d);
   cursor: pointer;
   padding: 0 4px;
 }
 
-.lkdv-day-capsule-btn[aria-selected="true"] {
-  color: var(--tint, #17402C);
+.lkdv-day-capsule-btn[aria-selected='true'] {
+  color: var(--tint, #17402c);
   font-weight: 700;
 }
 
@@ -770,7 +865,9 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
   backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
   border: 0.5px solid rgba(255, 255, 255, 0.8);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 14px rgba(23, 43, 36, 0.08);
 }
 
 .lkdv-mctl button {
@@ -780,7 +877,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   background: none;
   display: grid;
   place-items: center;
-  color: var(--tint, #17402C);
+  color: var(--tint, #17402c);
   cursor: pointer;
 }
 
@@ -809,6 +906,103 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   -webkit-backdrop-filter: var(--bar-glass-blur, blur(16px));
   backdrop-filter: var(--bar-glass-blur, blur(16px));
   box-shadow: var(--bar-glass-shadow, 0 8px 22px rgba(23, 43, 36, 0.12));
+  transition:
+    opacity 0.25s ease,
+    transform 0.35s var(--motion-ease-standard);
+}
+
+.lkdv-carnet-v2-root.overlay-open .lkdv-carnet-acc {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+}
+
+.lkdv-acc-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  font: 700 10px var(--font-sans, sans-serif);
+  color: var(--tint, #17402c);
+}
+
+.lkdv-acc-ro {
+  flex: none;
+  width: 92px;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.lkdv-acc-ro b {
+  font: 600 13.5px var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lkdv-acc-ro span {
+  font: 400 10.5px var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-altitude {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  display: block;
+  overflow: visible;
+  touch-action: none;
+}
+
+.lkdv-altitude.is-interactive {
+  cursor: ew-resize;
+}
+
+.lkdv-altitude:focus-visible {
+  outline: 2px solid var(--accent, #5b7f55);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Carte du profil dans le tiroir Route > Altitude */
+.lkdv-altitude-card {
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--drawer-card-bg);
+  -webkit-backdrop-filter: var(--drawer-card-blur);
+  backdrop-filter: var(--drawer-card-blur);
+  box-shadow: var(--drawer-card-shadow);
+}
+
+.lkdv-altitude-card b {
+  font: 600 13px var(--font-sans, sans-serif);
+  color: var(--label, #172b24);
+}
+
+.lkdv-altitude-card p {
+  margin: 4px 0 12px;
+  font: 400 12px/1.4 var(--font-sans, sans-serif);
+  color: var(--label2, #56665d);
+}
+
+.lkdv-altitude-empty {
+  display: grid;
+  place-items: center;
+  min-height: 80px;
+  margin: 0 !important;
+  border-radius: 10px;
+  background: var(--fill2, rgba(23, 43, 36, 0.06));
+  color: var(--label2, #56665d) !important;
+  text-align: center;
 }
 
 /* Floating "Reprendre" pill (bottom left on Sac slot & Fiche objet) */
@@ -827,9 +1021,11 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   background: rgba(255, 255, 255, 0.75);
   -webkit-backdrop-filter: blur(20px) saturate(1.8);
   backdrop-filter: blur(20px) saturate(1.8);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 14px rgba(23, 43, 36, 0.1);
   font: 600 12px var(--font-sans, sans-serif);
-  color: var(--tint, #17402C);
+  color: var(--tint, #17402c);
   cursor: pointer;
   transition: transform 0.12s;
 }
@@ -870,22 +1066,44 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 }
 
 @keyframes lkdv-peek-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes lkdv-peek-in {
-  from { opacity: 0; transform: scale(0.92); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .lkdv-peek-preview {
   border-radius: 22px;
   padding: 13px 15px;
-  background: var(--lg-bar-bg, linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)));
+  background: var(
+    --lg-bar-bg,
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.42) 55%,
+      rgba(255, 255, 255, 0.52)
+    )
+  );
   -webkit-backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
   backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
-  box-shadow: var(--lg-bar-shadow, 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12));
+  box-shadow: var(
+    --lg-bar-shadow,
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12)
+  );
 }
 
 .lkdv-peek-preview img,
@@ -923,10 +1141,22 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 .lkdv-peek-menu {
   border-radius: 18px;
   overflow: hidden;
-  background: var(--lg-bar-bg, linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)));
+  background: var(
+    --lg-bar-bg,
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.42) 55%,
+      rgba(255, 255, 255, 0.52)
+    )
+  );
   -webkit-backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
   backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
-  box-shadow: var(--lg-bar-shadow, 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12));
+  box-shadow: var(
+    --lg-bar-shadow,
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12)
+  );
 }
 
 .lkdv-peek-menu button {
@@ -978,7 +1208,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   border-radius: 20px;
   background: #000000;
   z-index: 3100;
-  color: #FFFFFF;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -989,8 +1219,14 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 }
 
 @keyframes lkdv-island-in {
-  from { opacity: 0; transform: translate(-50%, -10px) scale(0.9); }
-  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
 }
 
 .lkdv-carnet-island-text {
@@ -1014,7 +1250,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   border-radius: 9999px;
   border: 0;
   background: rgba(255, 255, 255, 0.2);
-  color: #D8F3DE;
+  color: #d8f3de;
   font: 600 11.5px var(--font-sans, sans-serif);
   cursor: pointer;
 }
@@ -1044,10 +1280,22 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   border-radius: 22px;
   padding: 4px 13px;
   z-index: 34;
-  background: var(--lg-bar-bg, linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)));
+  background: var(
+    --lg-bar-bg,
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.42) 55%,
+      rgba(255, 255, 255, 0.52)
+    )
+  );
   -webkit-backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
   backdrop-filter: var(--lg-bar-blur, blur(7px) saturate(1.9) brightness(1.07));
-  box-shadow: var(--lg-bar-shadow, 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12));
+  box-shadow: var(
+    --lg-bar-shadow,
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12)
+  );
   animation: lkdv-pop-in 0.35s var(--ease-spring);
 }
 
@@ -1093,8 +1341,14 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 }
 
 @keyframes lkdv-pop-in {
-  from { opacity: 0; transform: translateY(-8px) scale(0.95); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .lkdv-menu-item {
@@ -1108,7 +1362,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   border-radius: 12px;
   background: none;
   font: 500 13px var(--font-sans, sans-serif);
-  color: var(--label, #172B24);
+  color: var(--label, #172b24);
   cursor: pointer;
   text-align: left;
 }
@@ -1134,16 +1388,36 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: var(--sheet-bg, linear-gradient(180deg, rgba(245, 242, 236, 0.34), rgba(245, 242, 236, 0.2) 48%, rgba(245, 242, 236, 0.26)));
+  background: var(
+    --sheet-bg,
+    linear-gradient(
+      180deg,
+      rgba(245, 242, 236, 0.34),
+      rgba(245, 242, 236, 0.2) 48%,
+      rgba(245, 242, 236, 0.26)
+    )
+  );
   -webkit-backdrop-filter: var(--sheet-blur, blur(30px) saturate(1.7) brightness(1.04));
   backdrop-filter: var(--sheet-blur, blur(30px) saturate(1.7) brightness(1.04));
-  box-shadow: var(--sheet-shadow, inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 10px 30px rgba(23, 43, 36, 0.14));
+  box-shadow: var(
+    --sheet-shadow,
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.12),
+    0 10px 30px rgba(23, 43, 36, 0.14)
+  );
   animation: lkdv-sheet-up 0.38s var(--motion-ease-standard);
 }
 
 @keyframes lkdv-sheet-up {
-  from { opacity: 0; transform: translateY(22px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Poignée de la feuille : 18 px, barre 38×5 (recette `.grab`, socle §7.1). */
@@ -1178,8 +1452,12 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 }
 
 @keyframes lkdv-sheet-push {
-  from { transform: translateX(100%); }
-  to { transform: none; }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
 }
 
 .lkdv-stack-header {
@@ -1204,7 +1482,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   align-items: center;
   gap: 4px;
   font: 600 12px var(--font-sans, sans-serif);
-  color: var(--tint, #17402C);
+  color: var(--tint, #17402c);
   cursor: pointer;
 }
 
@@ -1216,4 +1494,57 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* =========================================================
+   Responsive — 430 est la vérité ; ≥ 768 se vérifie.
+   La fiche est une colonne de 430 centrée (comme /messagerie), jamais une
+   carte étirée. La barre flottante globale, non stylée ≥ 768 (dette D-01),
+   est retirée quand la fiche est montée.
+   ========================================================= */
+@media (min-width: 768px) {
+  .lkdv-carnet-v2-root {
+    width: min(430px, 100vw);
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 0 !important;
+    box-shadow:
+      0 0 0 0.5px rgba(23, 43, 36, 0.12),
+      0 30px 70px rgba(23, 43, 36, 0.18);
+  }
+
+  body:has(.lkdv-carnet-v2-root) .lkdv-floating-tabbar {
+    display: none !important;
+  }
+}
+
+/* La fiche porte sa propre toile : le calque global sombre est inutile
+   (même motif que `body:has(.lkdv-feed-shell)` pour le fil). */
+body:has(.lkdv-carnet-v2-root) .lkv-app-background {
+  display: none !important;
+}
+
+body:has(.lkdv-carnet-v2-root) {
+  background: var(--page, #f5f2ec);
+}
+
+/* La toile de la fiche est claire (thème du Compte, `--page` #F5F2EC) ;
+   `html` porte le fond sombre global, on le remplace quand la fiche est là. */
+html:has(.lkdv-carnet-v2-root) {
+  background: #f5f2ec !important;
+}
+
+/* Le sélecteur de jour de la carte s'efface quand une feuille est ouverte. */
+.lkdv-carnet-v2-root.overlay-open .lkdv-tabs-float {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* Le contenu du tiroir laisse la place à la mini-capsule des lentilles (30). */
+.lkdv-carnet-drawer .lkdv-lens-pane {
+  padding-bottom: 44px !important;
 }

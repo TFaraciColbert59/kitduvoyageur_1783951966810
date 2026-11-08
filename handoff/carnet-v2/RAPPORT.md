@@ -34,3 +34,35 @@ Retour arrière :
 Suites proposées :
 - Application des migrations Lot D/E sur la console Supabase de production si l'édition de live-sharing et les verdicts kit par carnet doivent être persistés dans les nouvelles colonnes.
 - Ouverture d'un accès visiteur anonyme en lecture seule sur les carnets publics dans le middleware Next.js.
+
+---
+
+## Reprise du 8 novembre 2026 (soir) — conformité grammaire /compte
+
+**Statut : code prêt et prouvé en local, non déployé.** L'arbre de travail
+partagé contient des modifications hors périmètre (messaging, compte) non
+commitée par cette reprise, dont une erreur de syntaxe dans
+`ComposerMenuSheet.tsx` (TS1381) qui empêche un build global. Ces fichiers
+n'ont pas été modifiés ni commités ici.
+
+**Fait :**
+- Jetons du socle sur la racine (texte lisible), recette de carte `.cs`, fond photo.
+- Tiroir en feuille **406 × 521.9 @ 12,48**, `r24`, verre `--sheet-*`, capsule 56,
+  lentilles 30, focus piégé/Échap/retour focus/scroll lock, `DRAWER_V2_CSS` injecté.
+- Barre haute à 3 boutons ; popover « Affichage » (2 interrupteurs, réduction
+  des animations persistée) ; réglages/partage dans le menu du titre.
+- Peek & Pop (appui long 460 ms) : 4 actions réelles, `aria-modal`, Échap, focus.
+- Altitude : profil réel `positions_timed[].elevationM`, accessoire data-gated,
+  état vide honnête dans le tiroir (plus de faux « synchronisée »).
+- Responsive : colonne 430 centrée à ≥768, `100dvh`, barre flottante retirée,
+  fond de page clair ; crash desktop `cameraForBoxAndBearing` corrigé.
+- Sélecteur de jour ancré à la carte, masqué sous une feuille.
+
+**Preuves :** 118/118 tests carnet (`vitest`), `tsc` ciblé 0 erreur, `eslint`
+0 erreur ; captures `docs/audit/carnet-v2-2026-11-08/captures/after-*.png` à
+430/768/1440 + tiroir + peek + affichage.
+
+**Reste :** appliquer les migrations Lot D/E (verdicts), spécifier une reprise
+de lecture, micro-animations (morphing titre, lentille chromatique, stagger),
+assainir les jours `J211/J212` de la donnée de démo, déployer quand l'arbre
+partagé sera vert.
