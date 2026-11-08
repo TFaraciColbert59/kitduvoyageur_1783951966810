@@ -1607,3 +1607,9 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   transform: translateY(120%);
   transition: opacity 0.25s ease, transform 0.35s var(--motion-ease-standard);
 }
+
+/* La carte du carnet reprend la topo claire de la maquette : le fond réel
+   reste MapLibre (ADR-002), seulement désaturé pour laisser le tracé lire. */
+.lkdv-carnet-mapzone .maplibregl-canvas {
+  filter: saturate(0.55) brightness(1.06) contrast(0.96);
+}
