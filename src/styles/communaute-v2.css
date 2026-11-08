@@ -1202,6 +1202,10 @@ select.lkdv-cv2-input {
   aspect-ratio: 9 / 16;
 }
 
+.lkdv-cv2-crop--wide {
+  aspect-ratio: 4 / 3;
+}
+
 .lkdv-cv2-crop > svg.lkdv-cv2-crop-grid {
   position: absolute;
   inset: 0;

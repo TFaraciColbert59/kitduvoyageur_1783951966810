@@ -15,10 +15,12 @@ INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_d
   ('5ea10000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'search_c@test.local', 'x', '{}', '{}', now(), now())
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.user_profiles (id, full_name, email) VALUES
-  ('5ea10000-0000-4000-8000-000000000001', 'Alice Chamonix', 'search_a@test.local'),
-  ('5ea10000-0000-4000-8000-000000000002', 'Bruno Chamonix', 'search_b@test.local'),
-  ('5ea10000-0000-4000-8000-000000000003', 'Chloé Chamonix', 'search_c@test.local')
+-- handle/visibilité/is_demo explicites : la branche « membres » lit la vue
+-- public_profiles (filtrée sur profile_visibility='public' et is_demo=false).
+INSERT INTO public.user_profiles (id, full_name, email, handle, profile_visibility, is_demo) VALUES
+  ('5ea10000-0000-4000-8000-000000000001', 'Alice Chamonix', 'search_a@test.local', 'search_fixture_a', 'public', false),
+  ('5ea10000-0000-4000-8000-000000000002', 'Bruno Chamonix', 'search_b@test.local', 'search_fixture_b', 'public', false),
+  ('5ea10000-0000-4000-8000-000000000003', 'Chloé Chamonix', 'search_c@test.local', 'search_fixture_c', 'public', false)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.carnets (id, author_id, title, destination, visibility, start_geom) VALUES
@@ -37,6 +39,11 @@ INSERT INTO public.clubs (id, slug, name, privacy, created_by, zone_geom) VALUES
    '5ea10000-0000-4000-8000-000000000001', NULL)
 ON CONFLICT (id) DO NOTHING;
 
+-- Le créateur est admin actif de son club secret (RLS : visible par ses membres).
+INSERT INTO public.club_members (club_id, user_id, role, status) VALUES
+  ('5ea30000-0000-4000-8000-000000000002', '5ea10000-0000-4000-8000-000000000001', 'admin', 'active')
+ON CONFLICT (club_id, user_id) DO NOTHING;
+
 INSERT INTO public.events (id, title, event_date, organizer_id, status, location) VALUES
   ('5ea40000-0000-4000-8000-000000000001', 'Traversée Chamonix', CURRENT_DATE + 7,
    '5ea10000-0000-4000-8000-000000000001', 'upcoming', 'Chamonix')
@@ -54,9 +61,19 @@ INSERT INTO public.user_follows (follower_id, following_id)
 VALUES ('5ea10000-0000-4000-8000-000000000003', '5ea10000-0000-4000-8000-000000000001')
 ON CONFLICT DO NOTHING;
 
+-- Diagnostic d'environnement CI (n'affecte pas le plan pgTAP).
+SELECT diag('UP=' || (SELECT count(*)::text FROM public.user_profiles)
+  || ' public=' || (SELECT count(*)::text FROM public.user_profiles WHERE profile_visibility = 'public')
+  || ' demo_false=' || (SELECT count(*)::text FROM public.user_profiles WHERE is_demo = false)
+  || ' view=' || (SELECT count(*)::text FROM public.public_profiles));
+
 -- ── Invité (anon) ──────────────────────────────────────────────────────────
 SET LOCAL ROLE anon;
 SET LOCAL "request.jwt.claim.sub" = '';
+
+SELECT diag('anon view=' || (SELECT count(*)::text FROM public.public_profiles)
+  || ' kinds=' || coalesce((SELECT string_agg(kind || ':' || cnt::text, ',')
+                              FROM (SELECT kind, count(*) AS cnt FROM public.community_search('chamonix') GROUP BY kind) k), 'EMPTY'));
 
 SELECT is(
   (SELECT public.lkdv_norm('  Chamonix,  FRANCE ! ')),
@@ -144,14 +161,14 @@ SELECT is(
 
 SELECT is(
   (SELECT round(distance_km::numeric, 1)
-     FROM public.community_search('chamonix', 'carnets', 5, 0, 6.8694, 45.9237, '{"near":true,"max_km":50}')
+     FROM public.community_search('chamonix', 'carnets', 5, 0, 45.9237, 6.8694, '{"near":true,"max_km":50}')
     LIMIT 1),
   0.0,
   '16. Recherche : distance PostGIS calculée quand lat/lng sont fournis'
 );
 SELECT is(
   (SELECT count(*)::int
-     FROM public.community_search('chamonix', 'sorties', 5, 0, 6.8694, 45.9237, '{"near":true}')),
+     FROM public.community_search('chamonix', 'sorties', 5, 0, 45.9237, 6.8694, '{"near":true}')),
   0,
   '17. Recherche : le filtre near exclut un objet sans géométrie'
 );

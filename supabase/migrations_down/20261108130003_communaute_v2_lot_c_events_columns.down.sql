@@ -9,36 +9,47 @@ drop trigger if exists trg_events_event_date_from_starts_at on public.events;
 drop function if exists public.lkdv_event_date_from_starts_at();
 
 -- ── Contrôles de données ───────────────────────────────────────────────────
+-- Contrôles de données AVANT suppression. Le bloc est rejouable : chaque
+-- colonne n'est contrôlée que si elle existe encore (un second passage ne
+-- casse rien), et le rollback s'arrête si une seule contient des données.
 do $$
+declare
+  v_check record;
+  v_count bigint;
 begin
-  if exists (select 1 from public.events where starts_at is not null or ends_at is not null) then
-    raise exception 'Rollback lot C refusé : events.starts_at / ends_at contiennent des données.';
-  end if;
-  if exists (
-    select 1 from public.events
-     where level is not null
-        or distance_km is not null
-        or elevation_gain_m is not null
-        or meeting_point is not null
-        or safety_notes is not null
-        or recurrence is not null
-        or activity is not null
-        or club_id is not null
-        or kit_id is not null
-  ) then
-    raise exception 'Rollback lot C refusé : les colonnes de métadonnées de sortie contiennent des données.';
-  end if;
-  if exists (select 1 from public.events where waitlist_enabled is true) then
-    raise exception 'Rollback lot C refusé : events.waitlist_enabled a été utilisé (liste d''attente réelle).';
-  end if;
-  if exists (select 1 from public.events where cardinality(coalesce(safety_checklist, '{}'::text[])) > 0) then
-    raise exception 'Rollback lot C refusé : events.safety_checklist contient des données.';
-  end if;
-  if exists (select 1 from public.event_participants where status is distinct from 'confirmed') then
-    raise exception 'Rollback lot C refusé : event_participants.status contient des inscriptions en liste d''attente.';
-  end if;
-end
-$$;
+  for v_check in
+    select * from (values
+    ('events', 'starts_at', 'starts_at is not null'),
+    ('events', 'ends_at', 'ends_at is not null'),
+    ('events', 'level', 'level is not null'),
+    ('events', 'distance_km', 'distance_km is not null'),
+    ('events', 'elevation_gain_m', 'elevation_gain_m is not null'),
+    ('events', 'meeting_point', 'meeting_point is not null'),
+    ('events', 'safety_notes', 'safety_notes is not null'),
+    ('events', 'recurrence', 'recurrence is not null'),
+    ('events', 'activity', 'activity is not null'),
+    ('events', 'club_id', 'club_id is not null'),
+    ('events', 'kit_id', 'kit_id is not null'),
+    ('events', 'waitlist_enabled', 'waitlist_enabled is true'),
+    ('events', 'safety_checklist', 'cardinality(coalesce(safety_checklist, ''{}''::text[])) > 0'),
+    ('event_participants', 'status', 'status is distinct from ''confirmed''')
+    ) as t(table_name, column_name, condition)
+  loop
+    if exists (
+      select 1 from information_schema.columns ic
+       where ic.table_schema = 'public'
+         and ic.table_name = v_check.table_name
+         and ic.column_name = v_check.column_name
+    ) then
+      execute format('select count(*) from public.%I where %s', v_check.table_name, v_check.condition)
+        into v_count;
+      if v_count > 0 then
+        raise exception 'Rollback refusé : public.%.% contient % valeur(s). Ne rien supprimer après le premier usage réel (06 § 3.5).',
+          v_check.table_name, v_check.column_name, v_count;
+      end if;
+    end if;
+  end loop;
+end $$;
 
 -- ── Index puis colonnes ────────────────────────────────────────────────────
 drop index if exists public.idx_event_participants_event_status;

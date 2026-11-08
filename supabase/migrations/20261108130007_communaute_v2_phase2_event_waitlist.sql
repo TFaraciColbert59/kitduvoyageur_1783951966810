@@ -330,3 +330,18 @@ $$;
 
 comment on function public.sync_event_participants_count() is
   'F-008 + A-124 + Communauté v2 : recount des participants CONFIRMÉS (la liste d''attente ne compte pas) ; ne ressuscite jamais past/cancelled.';
+
+-- ── 6. Privilèges (revue statique 2.4 + hygiène des RPC definer) ──────────
+-- Les deux RPC sont des fonctions `security definer` : PUBLIC garde EXECUTE
+-- par défaut en PostgreSQL, on le retire explicitement puis on n'ouvre qu'aux
+-- utilisateurs connectés (l'invité reste refusé). Les trois fonctions de
+-- trigger ne sont jamais appelées par un client : aucun EXECUTE accordé.
+revoke execute on function public.join_event(uuid) from public, anon;
+grant execute on function public.join_event(uuid) to authenticated;
+
+revoke execute on function public.leave_event(uuid) from public, anon;
+grant execute on function public.leave_event(uuid) to authenticated;
+
+revoke execute on function public.guard_event_participant_insert() from public, anon, authenticated;
+revoke execute on function public.guard_event_participant_identity() from public, anon, authenticated;
+revoke execute on function public.sync_event_participants_count() from public, anon, authenticated;

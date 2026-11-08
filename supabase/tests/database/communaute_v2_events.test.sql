@@ -43,8 +43,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Pré-remplissage : la place unique de la sortie auto-promotion est occupée.
 INSERT INTO public.event_participants (event_id, user_id, status) VALUES
   ('e7e20000-0000-4000-8000-000000000002', 'e7e10000-0000-4000-8000-000000000001', 'confirmed'),
-  ('e7e20000-0000-4000-8000-000000000003', 'e7e10000-0000-4000-8000-000000000001', 'confirmed'),
-  ('e7e20000-0000-4000-8000-000000000005', 'e7e10000-0000-4000-8000-000000000001', 'confirmed')
+  ('e7e20000-0000-4000-8000-000000000003', 'e7e10000-0000-4000-8000-000000000001', 'confirmed')
 ON CONFLICT (event_id, user_id) DO NOTHING;
 
 SET LOCAL ROLE authenticated;

@@ -14,10 +14,12 @@ INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_d
   ('fea10000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'feed_c@test.local', 'x', '{}', '{}', now(), now())
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.user_profiles (id, full_name, email) VALUES
-  ('fea10000-0000-4000-8000-000000000001', 'Fanny Auteur', 'feed_a@test.local'),
-  ('fea10000-0000-4000-8000-000000000002', 'Gaspard Suiveur', 'feed_b@test.local'),
-  ('fea10000-0000-4000-8000-000000000003', 'Hugo Attente', 'feed_c@test.local')
+-- handle/visibilité/is_demo explicites : les avatars travelers/friends passent
+-- par la vue public_profiles (filtrée sur profile_visibility='public', is_demo=false).
+INSERT INTO public.user_profiles (id, full_name, email, handle, profile_visibility, is_demo) VALUES
+  ('fea10000-0000-4000-8000-000000000001', 'Fanny Auteur', 'feed_a@test.local', 'feed_fixture_a', 'public', false),
+  ('fea10000-0000-4000-8000-000000000002', 'Gaspard Suiveur', 'feed_b@test.local', 'feed_fixture_b', 'public', false),
+  ('fea10000-0000-4000-8000-000000000003', 'Hugo Attente', 'feed_c@test.local', 'feed_fixture_c', 'public', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- B suit A : avatars « amis » dans les feeds.
@@ -66,10 +68,15 @@ VALUES ('fea30000-0000-4000-8000-000000000002', 'fea10000-0000-4000-8000-0000000
 ON CONFLICT (club_id, user_id) DO NOTHING;
 
 -- Dernier post du club ouvert (B, membre, le voit : audience club).
+-- Le trigger validate_community_post_audience exige author = auth.uid() :
+-- on insère donc en tant que f1, pas en superutilisateur.
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'fea10000-0000-4000-8000-000000000001';
 INSERT INTO public.community_posts (id, author_id, content, audience, post_type, club_id, created_at)
 VALUES ('fea50000-0000-4000-8000-000000000001', 'fea10000-0000-4000-8000-000000000001',
         'Dernière sortie du club', 'club', 'post', 'fea30000-0000-4000-8000-000000000001', now() - interval '2 hours')
 ON CONFLICT (id) DO NOTHING;
+RESET ROLE;
 
 -- Sorties : 2 à venir (dont une au club), 1 passée, 1 annulée.
 INSERT INTO public.events (id, title, event_date, starts_at, organizer_id, status, max_participants, waitlist_enabled, club_id, location_geom) VALUES

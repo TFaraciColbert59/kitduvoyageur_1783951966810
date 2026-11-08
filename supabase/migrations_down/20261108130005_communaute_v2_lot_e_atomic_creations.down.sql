@@ -16,35 +16,41 @@ drop function if exists public.create_club_with_admin(jsonb);
 drop function if exists public.check_club_slug(text);
 
 -- ── Contrôles de données ───────────────────────────────────────────────────
+-- Contrôles de données AVANT suppression. Le bloc est rejouable : chaque
+-- colonne n'est contrôlée que si elle existe encore (un second passage ne
+-- casse rien), et le rollback s'arrête si une seule contient des données.
 do $$
+declare
+  v_check record;
+  v_count bigint;
 begin
-  if exists (select 1 from public.clubs where client_request_id is not null) then
-    raise exception 'Rollback lot E refusé : clubs.client_request_id contient des données.';
-  end if;
-  if exists (select 1 from public.events where client_request_id is not null) then
-    raise exception 'Rollback lot E refusé : events.client_request_id contient des données.';
-  end if;
-  if exists (select 1 from public.materiel_kits where client_request_id is not null) then
-    raise exception 'Rollback lot E refusé : materiel_kits.client_request_id contient des données.';
-  end if;
-  if exists (select 1 from public.carnets where client_request_id is not null) then
-    raise exception 'Rollback lot E refusé : carnets.client_request_id contient des données.';
-  end if;
-
-  if exists (
-    select 1 from public.community_posts
-     where place_label is not null or place_geom is not null
-  ) then
-    raise exception 'Rollback lot E refusé : community_posts.place_label / place_geom contiennent des données.';
-  end if;
-  if exists (select 1 from public.community_posts where cardinality(coalesce(tags, '{}'::text[])) > 0) then
-    raise exception 'Rollback lot E refusé : community_posts.tags contient des données.';
-  end if;
-  if exists (select 1 from public.community_posts where creation_meta is not null) then
-    raise exception 'Rollback lot E refusé : community_posts.creation_meta contient des données.';
-  end if;
-end
-$$;
+  for v_check in
+    select * from (values
+    ('clubs', 'client_request_id', 'client_request_id is not null'),
+    ('events', 'client_request_id', 'client_request_id is not null'),
+    ('materiel_kits', 'client_request_id', 'client_request_id is not null'),
+    ('carnets', 'client_request_id', 'client_request_id is not null'),
+    ('community_posts', 'place_label', 'place_label is not null'),
+    ('community_posts', 'place_geom', 'place_geom is not null'),
+    ('community_posts', 'tags', 'cardinality(coalesce(tags, ''{}''::text[])) > 0'),
+    ('community_posts', 'creation_meta', 'creation_meta is not null')
+    ) as t(table_name, column_name, condition)
+  loop
+    if exists (
+      select 1 from information_schema.columns ic
+       where ic.table_schema = 'public'
+         and ic.table_name = v_check.table_name
+         and ic.column_name = v_check.column_name
+    ) then
+      execute format('select count(*) from public.%I where %s', v_check.table_name, v_check.condition)
+        into v_count;
+      if v_count > 0 then
+        raise exception 'Rollback refusé : public.%.% contient % valeur(s). Ne rien supprimer après le premier usage réel (06 § 3.5).',
+          v_check.table_name, v_check.column_name, v_count;
+      end if;
+    end if;
+  end loop;
+end $$;
 
 -- ── Index uniques d'idempotence ────────────────────────────────────────────
 drop index if exists public.uq_carnets_client_req;
