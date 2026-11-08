@@ -98,3 +98,10 @@ Format : Date | Décision | Contexte & Raison | Alternative écartée
   - **Preuves :** axe 0 critical/serious sur page/tiroir/peek, 25 Tab restent dans le
     tiroir, like post false→true, peek « Retirer mon j'aime · 6 » → « J'aime le carnet · 5 »,
     390/360 sans débordement, `tsc` ciblé 0, 118/118 tests.
+
+- **2026-11-08 21:10 — Vérification finale**
+  - **Preuves :** `tsc -p .` EXIT 0, `npm run build` EXIT 0, `perf:budget` 9/9 ok,
+    `verify:invariants` vert, 118/118 tests carnet, 5/5 design, axe 0 critical/serious
+    (page/tiroir/peek), 25 Tab piégés, prod `411939a` READY et aliasée.
+  - **Reste hors périmètre :** erreurs maplibre `appendChild` pré-existantes, jours
+    de démo J211/J212, migrations likes/commentaires par moment et verdicts.

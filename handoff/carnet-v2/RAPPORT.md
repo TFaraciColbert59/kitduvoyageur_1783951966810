@@ -107,3 +107,17 @@ remplacée par `role=group`, focus piégé corrigé (les panes `inert` ne sont p
 la liste), `inert`/`aria-hidden` sur le fond et la barre flottante, pluriel « 1 jour ».
 Axe : 0 critical/serious sur page, tiroir et peek ; 25 Tab restent dans le tiroir ;
 like post/peek fonctionnels ; 390/360 sans débordement ; `tsc` ciblé 0 ; 118/118 tests.
+
+### Vérification finale (8 nov. 2026, 21 h 10)
+
+- Déploiement production `dpl_5xMm94HWQfZyL6cRMgE1eDhVnu9L` (commit `411939a`) — **READY**,
+  alias `koosmoweb.fr`, `www.koosmoweb.fr`, `kitduvoyageur-1783951966810-ruddy.vercel.app`.
+- `tsc --noEmit -p .` : **EXIT 0**. `npm run build` local : **EXIT 0**.
+  `npm run perf:budget` : **9/9 surfaces sous plafond**. `verify:invariants` : **vert**.
+- Tests carnet : **118/118** ; design unification : 5/5.
+- Axe WCAG 2 A/AA sur la prod : **0 critical/serious** (page, tiroir, peek).
+- Focus piégé : 25 Tab consécutifs restent dans le tiroir ; `inert` sur carte, carte
+  du bas et barre flottante ; like post/peek réel (état carnet) ; 390/360 sans
+  débordement.
+- Erreurs console maplibre `appendChild` : 3, **identiques sur le build précédent**
+  (`c268b3c`), hors périmètre carnet.
