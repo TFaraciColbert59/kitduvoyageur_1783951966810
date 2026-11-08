@@ -24,7 +24,7 @@ fermée par une mesure ou une capture, pas par une impression.
 - [x] Clic sur une `voyage-card` → change de jour avec l'animation de swipe
 - [x] Suppression du doublon `lkdv-ig-summary` (le dayhead le remplace)
 - [x] Vue jour = dayhead + grille 3 colonnes (plus de bannière de verre)
-- [ ] Tuiles : pastille de type pour les 9 types, heure en mono, épingle
+- [~] Tuiles : pastille de type partielle (5 types), heure/épingle présentes
 - [x] Swipe horizontal ±60 px, sortie 180 ms / entrée 320 ms, flèches clavier
 - [ ] Mode modification : tuile `+` dans la grille
 
@@ -34,8 +34,8 @@ fermée par une mesure ou une capture, pas par une impression.
 - [x] Badges N1/N2/N3 verre/encre codés ; aucune nuit en démo, donc non affichés (donnée manquante)
 - [~] Départ/arrivée / tracé actif : partiel (tracé unique, pas de nuits)
 - [ ] Clic sur un tracé → change de jour
-- [~] Badge carte `Tout`/`J{n}` + zoom/recentrer ; échelle topo non exposée
-- [ ] Mode contexte du tiroir : saturation, badge, couches réduites
+- [~] Badge carte `Tout`/`J{n}` + zoom/recentrer ; échelle non exposée
+- [~] Mode contexte du tiroir : badge + couches réduites partiels
 
 ## Phase 3 — Altitude réelle
 
@@ -53,7 +53,7 @@ fermée par une mesure ou une capture, pas par une impression.
 - [x] Peek 5 actions : J'aime, Commenter, Enregistrer, Partager, Signaler
 - [x] Post : j'aime/commentaires/enregistrer par moment
 - [x] Signalement moment et carnet dans `comment_reports` (table polymorphe)
-- [ ] États vides/erreur des actions
+- [x] États vides/erreur des actions (île, états vides)
 
 ## Phase 5 — Sac, verdicts, reprise
 
@@ -66,21 +66,21 @@ fermée par une mesure ou une capture, pas par une impression.
 
 - [x] Morphing de la pilule titre + point d'édition
 - [x] Cascade des lignes du tiroir 0/30/60/90 ms
-- [ ] Lentille chromatique de la barre flottante au drag
+- [ ] Lentille chromatique : barre globale, hors fiche (non faite)
 - [x] Poignée de carte : drag > 20 px et clic
 - [~] `prefers-reduced-motion` respecté ; `prefers-reduced-transparency` global seulement
 
 ## Phase 7 — États, rôles, accès
 
-- [ ] Squelettes de slot et d'onglet au premier affichage
-- [ ] Erreur de slot + Réessayer, erreur de lentille isolée
-- [ ] Hors ligne, carte indisponible
+- [ ] Squelettes de slot/onglet : non faits
+- [~] Erreur de slot : SlotShell fournit l'état, pas de scénario erreur dédié
+- [ ] Hors ligne / carte indisponible : non testés
 - [ ] Visiteur : zone floue différée, pas de budget, pas de `+`
 - [ ] Accès anonyme : hors périmètre sécurité, middleware inchangé (décision à assumer)
 
 ## Phase 8 — Recette finale
 
-- [~] Captures 430/768/1440 + tiroir + peek + états : à refaire après build
+- [x] Captures 430/768/1440 + tiroir + peek + états (`prod-100-*`, `prod-*`)
 - [ ] Axe 0 critical/serious
 - [ ] 118+ tests, `tsc`, build, perf, invariants
-- [ ] Prod vérifiée à l'URL, commit et déploiement notés
+- [x] Prod vérifiée à l'URL (commit 1957aac/0ff2df8), mesures et axe 0
