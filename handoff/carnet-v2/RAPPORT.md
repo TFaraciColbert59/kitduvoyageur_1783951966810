@@ -69,10 +69,12 @@ partagé sera vert.
 
 ### Mise en production vérifiée (8 nov. 2026, 19:55)
 
-- Commit `766052f` poussé sur `origin/main` ; déploiement Vercel production
-  `dpl_4hXa8w3kHJgcDPqo56JKGjbRB2Xz` — **READY**.
+- Commit final `2c7fd90` poussé sur `origin/main` ; déploiement Vercel production
+  `dpl_GcKPwwinN814Yr9fVir75epPp8sm` — **READY**, aliasé `koosmoweb.fr`,
+  `www.koosmoweb.fr` et `kitduvoyageur-1783951966810-ruddy.vercel.app`.
 - URL vérifiée à la mesure (domaine projet) :
   `https://kitduvoyageur-1783951966810-ruddy.vercel.app/carnets/749e9e8c-9540-5a73-8b6c-6ab07264f62f`
+  (alias de `koosmoweb.fr`, injoignable depuis cette machine pour DNS/Zscaler).
   (compte démo via `/api/demo-login`).
 - Mesures prod : 430 → racine 430×932, carte 406×542 @12,49, feuille 406×521.9
   @12,48, `scrollHeight = 932` ; 768 → racine 430×1024 centrée (x=169), carte
