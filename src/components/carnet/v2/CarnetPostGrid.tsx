@@ -73,7 +73,7 @@ export function CarnetPostGrid({
   }
 
   return (
-    <div className="lkdv-ig-grid" role="grid" aria-label="Moments du carnet">
+    <div className="lkdv-ig-grid" role="group" aria-label="Moments du carnet">
       {moments.map((moment, idx) => {
         const imageUrl = moment.imageUrl;
         const typeLabel =
@@ -94,7 +94,6 @@ export function CarnetPostGrid({
             key={moment.id}
             type="button"
             className="lkdv-ig-tile"
-            role="gridcell"
             aria-label={`${moment.title || 'Moment'} ${moment.time || ''}`}
             onPointerDown={(event) => handlePointerDown(event, moment)}
             onPointerUp={() => handlePointerUp(moment, idx)}

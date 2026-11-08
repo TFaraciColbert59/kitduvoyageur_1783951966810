@@ -307,7 +307,12 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
       <CarnetIsland toast={islandToast} onDismiss={dismissIsland} />
 
       {/* Top Section (69%) */}
-      <section className="lkdv-carnet-top" aria-label="Présentation du carnet">
+      <section
+        className="lkdv-carnet-top"
+        aria-label="Présentation du carnet"
+        inert={overlayOpen ? true : undefined}
+        aria-hidden={overlayOpen ? true : undefined}
+      >
         <CarnetTopBarV2
           title={detail.title}
           viewerRole={viewerRole}
@@ -363,7 +368,12 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
       </section>
 
       {/* Bottom Map Section (1fr) */}
-      <section className="lkdv-carnet-mapzone" aria-label="Carte du parcours">
+      <section
+        className="lkdv-carnet-mapzone"
+        aria-label="Carte du parcours"
+        inert={overlayOpen ? true : undefined}
+        aria-hidden={overlayOpen ? true : undefined}
+      >
         <CompteMap
           authState={user ? 'owner' : 'guest'}
           context={{ mode: 'overview' }}
@@ -503,10 +513,12 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
       {/* Peek & Pop d'un moment (appui long 460 ms) */}
       {peekMoment ? (
         <CarnetPeek
-          detail={detail}
           moment={peekMoment}
-          currentUserId={currentUserId}
-          onRequireAuth={requireAuth}
+          liked={engagement.liked}
+          likes={engagement.likes}
+          onToggleLike={() => {
+            void engagement.toggleLike();
+          }}
           onClose={() => setPeekMoment(null)}
           onOpenPost={(mode) => {
             const photoIdx = detail.photoMoments.findIndex((m) => m.id === peekMoment.id);
@@ -523,7 +535,6 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
               showIsland('Lien du carnet copié');
             }
           }}
-          onIsland={showIsland}
         />
       ) : null}
 
@@ -545,6 +556,8 @@ export function CarnetScreenV2({ detail }: CarnetScreenV2Props) {
           onLike={() => {
             void engagement.toggleLike();
           }}
+          liked={engagement.liked}
+          likes={engagement.likes}
           shareUrl={shareUrl}
           onCopied={handleCopyLink}
           saved={engagement.favorited}

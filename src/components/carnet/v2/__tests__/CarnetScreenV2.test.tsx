@@ -240,7 +240,7 @@ describe('CarnetScreenV2 Component', () => {
   it('affiche les 3 boutons de statistiques (jours, km, D+)', () => {
     render(<CarnetScreenV2 detail={mockDetail} />);
 
-    expect(screen.getByText('jours')).toBeTruthy();
+    expect(screen.getByText(/^jours?$/)).toBeTruthy();
     expect(screen.getByText('km')).toBeTruthy();
     expect(screen.getByText('D+ m')).toBeTruthy();
   });

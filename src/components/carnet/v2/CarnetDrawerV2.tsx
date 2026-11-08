@@ -644,14 +644,20 @@ export function CarnetDrawerV2({
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
               {detail.moments.map((m, idx) => (
-                <div
+                <button
                   key={m.id}
+                  type="button"
                   style={{
                     display: 'flex',
                     gap: '10px',
+                    width: '100%',
                     padding: '10px',
+                    border: 0,
                     borderRadius: '16px',
                     background: 'var(--drawer-card-bg)',
+                    color: 'inherit',
+                    font: 'inherit',
+                    textAlign: 'left',
                     cursor: 'pointer',
                   }}
                   onClick={() => onSelectMoment?.(m, idx)}
@@ -710,7 +716,7 @@ export function CarnetDrawerV2({
                       </p>
                     ) : null}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           );
@@ -802,15 +808,21 @@ export function CarnetDrawerV2({
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
               {detail.etapes.map((e) => (
-                <div
+                <button
                   key={e.id}
+                  type="button"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    width: '100%',
                     padding: '12px',
+                    border: 0,
                     borderRadius: '16px',
                     background: 'var(--drawer-card-bg)',
+                    color: 'inherit',
+                    font: 'inherit',
+                    textAlign: 'left',
                     cursor: 'pointer',
                   }}
                   onClick={() => pushStack({ type: 'etape', etape: e })}
@@ -824,7 +836,7 @@ export function CarnetDrawerV2({
                     ) : null}
                   </div>
                   <ChevronRight size={16} color="var(--accent)" />
-                </div>
+                </button>
               ))}
             </div>
           );
@@ -833,15 +845,21 @@ export function CarnetDrawerV2({
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
               {(detail.nights ?? []).map((n) => (
-                <div
+                <button
                   key={n.id}
+                  type="button"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    width: '100%',
                     padding: '12px',
+                    border: 0,
                     borderRadius: '16px',
                     background: 'var(--drawer-card-bg)',
+                    color: 'inherit',
+                    font: 'inherit',
+                    textAlign: 'left',
                     cursor: 'pointer',
                   }}
                   onClick={() => {
@@ -858,7 +876,7 @@ export function CarnetDrawerV2({
                     </p>
                   </div>
                   <ChevronRight size={16} color="var(--accent)" />
-                </div>
+                </button>
               ))}
             </div>
           );
@@ -935,15 +953,21 @@ export function CarnetDrawerV2({
                 </div>
 
                 {detail.kit.items.map((item) => (
-                  <div
+                  <button
                     key={item.id}
+                    type="button"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      width: '100%',
                       padding: '10px 12px',
+                      border: 0,
                       borderRadius: '14px',
                       background: 'var(--drawer-card-bg)',
+                      color: 'inherit',
+                      font: 'inherit',
+                      textAlign: 'left',
                       cursor: 'pointer',
                     }}
                     onClick={() =>
@@ -965,7 +989,7 @@ export function CarnetDrawerV2({
                       ) : null}
                     </div>
                     <ChevronRight size={15} color="var(--accent)" />
-                  </div>
+                  </button>
                 ))}
               </div>
 
@@ -1210,15 +1234,21 @@ export function CarnetDrawerV2({
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
               {detail.participants.map((p) => (
-                <div
+                <button
                   key={p.id}
+                  type="button"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    width: '100%',
                     padding: '10px 12px',
+                    border: 0,
                     borderRadius: '14px',
                     background: 'var(--drawer-card-bg)',
+                    color: 'inherit',
+                    font: 'inherit',
+                    textAlign: 'left',
                     cursor: 'pointer',
                   }}
                   onClick={() => pushStack({ type: 'participant', participant: p })}
@@ -1260,7 +1290,7 @@ export function CarnetDrawerV2({
                     </div>
                   </div>
                   <ChevronRight size={15} color="var(--accent)" />
-                </div>
+                </button>
               ))}
             </div>
           );

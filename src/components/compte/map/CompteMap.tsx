@@ -20,6 +20,7 @@ import {
   type MapScale,
 } from '@/features/compte/map/camera';
 import { filterTracksForMode, mapModeConfig } from '@/features/compte/map/modes';
+import { resolveMapZoomConfig, type MapZoomBand } from '@/features/compte/map/zoomHierarchy';
 import { boundsOf as boundsOfPoints, parsePositions, simplifyTrack } from '@/features/compte/map/geometry';
 import type {
   CompteMapMode,
@@ -288,6 +289,21 @@ export function CompteMap({
   const [tileMode, setTileMode] = useState<'satellite' | 'topo'>('satellite');
   const [online, setOnline] = useState(true);
   const [year, setYear] = useState<number | null>(null);
+  const [zoomBand, setZoomBand] = useState<MapZoomBand>('world');
+
+  useEffect(() => {
+    if (!map) return;
+    const onZoom = () => {
+      const currentZoom = map.getZoom();
+      const nextBand = resolveMapZoomConfig(currentZoom).band;
+      setZoomBand(nextBand);
+    };
+    onZoom();
+    map.on('zoom', onZoom);
+    return () => {
+      map.off('zoom', onZoom);
+    };
+  }, [map]);
 
   /* Fiche carnet : la carte ne montre que le tracé du carnet. */
   const isCarnet = variant === 'carnet';
@@ -722,17 +738,25 @@ export function CompteMap({
       const element = document.createElement('button');
       element.type = 'button';
       element.className = 'lkdv-map-massif';
+      element.dataset.massifId = massif.id;
+      const importance = massif.outings >= 5 ? 'high' : massif.outings >= 2 ? 'medium' : 'low';
+      element.dataset.importance = importance;
+      element.dataset.outings = String(massif.outings);
       element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
       const count = document.createElement('b');
       count.textContent = String(massif.outings);
       element.append(count);
+      const name = document.createElement('span');
+      name.className = 'lkdv-map-massif-name';
+      name.textContent = massif.name;
+      element.append(name);
       element.title = `${massif.name} · ${massif.outings} sorties`;
       element.addEventListener('click', (event) => {
         event.stopPropagation();
         setSelected({ kind: 'massif', id: massif.id });
       });
       markerRefs.current.push(
-        new Marker({ element, anchor: 'bottom' })
+        new Marker({ element, anchor: 'center' })
           .setLngLat([massif.center.lng, massif.center.lat])
           .addTo(map)
       );
@@ -966,6 +990,7 @@ export function CompteMap({
       className="lkdv-map-root"
       role="region"
       aria-label="Carte de tes sorties"
+      data-zoom-band={zoomBand}
       data-map-mode={context.mode}
       data-map-outing={context.outingId ?? ''}
       data-map-ready={ready ? 'true' : 'false'}

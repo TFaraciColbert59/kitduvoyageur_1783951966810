@@ -40,6 +40,9 @@ export interface CarnetPostSheetProps {
   /** Conservé pour compatibilité : le tap sur le média aime, comme dans le fil. */
   onOpenViewer?: (index: number) => void;
   onLike: () => void;
+  /** État réel du j'aime carnet, mis à jour par `useCarnetEngagement`. */
+  liked?: boolean;
+  likes?: number;
   /** Lien réel du carnet, partagé depuis le panneau de partage. */
   shareUrl: string;
   onCopied: () => void;
@@ -67,6 +70,8 @@ export function CarnetPostSheet({
   currentUserId,
   onRequireAuth,
   onLike,
+  liked,
+  likes,
   shareUrl,
   onCopied,
   saved,
@@ -100,7 +105,16 @@ export function CarnetPostSheet({
           }
         : undefined,
     }),
-    [author, createdAt, detail.description, detail.destination, detail.engagement.comments, detail.engagement.likes, detail.id, moment],
+    [
+      author,
+      createdAt,
+      detail.description,
+      detail.destination,
+      detail.engagement.comments,
+      detail.engagement.likes,
+      detail.id,
+      moment,
+    ]
   );
 
   const meta = useMemo(() => {
@@ -109,15 +123,22 @@ export function CarnetPostSheet({
       moment.dayNumber > 0 ? `Jour ${moment.dayNumber}` : null,
       moment.time,
       moment.place,
-      createdAt ? new Date(createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null,
+      createdAt
+        ? new Date(createdAt).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : null,
     ].filter(Boolean);
     return parts.length > 0 ? parts.join(' · ') : null;
   }, [createdAt, moment]);
 
-  const momentEng = moment?.id && detail.momentEngagement ? detail.momentEngagement[moment.id] : null;
-  const isMomentLiked = momentEng ? momentEng.userLiked : detail.engagement.liked;
+  const momentEng =
+    moment?.id && detail.momentEngagement ? detail.momentEngagement[moment.id] : null;
+  const isMomentLiked = liked ?? (momentEng ? momentEng.userLiked : detail.engagement.liked);
   const isMomentSaved = momentEng ? momentEng.userSaved : saved;
-  const momentLikes = momentEng ? momentEng.likesCount : detail.engagement.likes;
+  const momentLikes = likes ?? (momentEng ? momentEng.likesCount : detail.engagement.likes);
   const momentCommentsCount = momentEng ? momentEng.commentsCount : detail.engagement.comments;
 
   const source: PostSource = {
@@ -137,7 +158,10 @@ export function CarnetPostSheet({
       }
     },
     onReport,
-    media: items.length > 0 ? { urls: items.map((item) => item.imageUrl ?? ''), index: safeIndex, onIndexChange } : undefined,
+    media:
+      items.length > 0
+        ? { urls: items.map((item) => item.imageUrl ?? ''), index: safeIndex, onIndexChange }
+        : undefined,
     renderComments: () => (
       <CarnetCommentsPane
         comments={comments.comments}
@@ -149,7 +173,16 @@ export function CarnetPostSheet({
         onRequireAuth={onRequireAuth}
       />
     ),
-    renderShare: ({ onClose: close }) => <CarnetSharePane url={shareUrl} title={detail.title} onCopied={() => { onCopied(); close(); }} />,
+    renderShare: ({ onClose: close }) => (
+      <CarnetSharePane
+        url={shareUrl}
+        title={detail.title}
+        onCopied={() => {
+          onCopied();
+          close();
+        }}
+      />
+    ),
     footer:
       meta || moment?.caption ? (
         <>
@@ -166,7 +199,11 @@ export function CarnetPostSheet({
   };
 
   return (
-    <PostSheet title={author?.name ?? 'Moment du carnet'} onClose={onClose} className="ckp-post-sheet">
+    <PostSheet
+      title={author?.name ?? 'Moment du carnet'}
+      onClose={onClose}
+      className="ckp-post-sheet"
+    >
       <CommunityFeedPost
         embedded
         post={feedPost}

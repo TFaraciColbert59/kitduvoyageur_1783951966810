@@ -43,6 +43,7 @@ export function CarnetCardV2({
   }, [activeDay, detail.moments]);
 
   const daysCount = detail.days.length || detail.etapes.length || 1;
+  const daysLabel = `${daysCount} ${daysCount > 1 ? 'jours' : 'jour'}`;
   const distanceFormatted = detail.distanceKm ? `${Math.round(detail.distanceKm)}` : '—';
   const elevationFormatted = detail.elevationM ? `+${Math.round(detail.elevationM)}` : '—';
 
@@ -64,13 +65,13 @@ export function CarnetCardV2({
       };
     }
     const finished = end && !Number.isNaN(end.getTime()) ? now > end : false;
-    if (finished) return { state: 'done' as const, label: `Terminé · ${daysCount} jours` };
+    if (finished) return { state: 'done' as const, label: `Terminé · ${daysLabel}` };
     const dayNumber = Math.max(
       1,
       Math.min(daysCount, Math.floor((now.getTime() - start.getTime()) / dayMs) + 1)
     );
     return { state: 'live' as const, label: `En route · J${dayNumber} sur ${daysCount}` };
-  }, [daysCount, detail.endDate, detail.liveSharing, detail.startDate]);
+  }, [daysCount, daysLabel, detail.endDate, detail.liveSharing, detail.startDate]);
 
   const summaryLine = [
     detail.distanceKm ? `${distanceFormatted} km` : null,
@@ -137,7 +138,7 @@ export function CarnetCardV2({
               aria-label={`${daysCount} jours de randonnée`}
             >
               <b>{daysCount}</b>
-              <span>jours</span>
+              <span>{daysCount > 1 ? 'jours' : 'jour'}</span>
             </button>
 
             <button
@@ -246,7 +247,7 @@ export function CarnetCardV2({
               Tout
             </button>
             <b>
-              {daysCount} jours · {detail.participants.length || 1} voyageur
+              {daysLabel} · {detail.participants.length || 1} voyageur
               {(detail.participants.length || 1) > 1 ? 's' : ''}
             </b>
           </div>

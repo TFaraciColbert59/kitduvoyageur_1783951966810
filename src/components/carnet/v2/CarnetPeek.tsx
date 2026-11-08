@@ -2,20 +2,20 @@
 
 import React, { useCallback, useState } from 'react';
 import { ArrowUpRight, Heart, MessageCircle, Share2 } from 'lucide-react';
-import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
-import { useMomentEngagement } from '@/features/carnet/detail/useMomentEngagement';
+import type { CarnetMomentItem } from '@/features/carnet/detail/types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useCarnetDialog } from './useCarnetDialog';
 
 export interface CarnetPeekProps {
-  detail: CarnetDetail;
   moment: CarnetMomentItem;
-  currentUserId: string | null;
-  onRequireAuth: () => void;
+  /** J'aime réel disponible : celui du carnet (les likes par moment ne sont
+      pas encore migrés en production). */
+  liked: boolean;
+  likes: number;
+  onToggleLike: () => void;
   onClose: () => void;
   onOpenPost: (mode: 'open' | 'comments') => void;
   onShare: () => void;
-  onIsland: (message: string, undo?: () => void) => void;
 }
 
 /**
@@ -27,14 +27,13 @@ export interface CarnetPeekProps {
  * ni de signaler par moment).
  */
 export function CarnetPeek({
-  detail,
   moment,
-  currentUserId,
-  onRequireAuth,
+  liked,
+  likes,
+  onToggleLike,
   onClose,
   onOpenPost,
   onShare,
-  onIsland,
 }: CarnetPeekProps) {
   const { haptic } = useHapticFeedback();
   const [closing, setClosing] = useState(false);
@@ -48,17 +47,6 @@ export function CarnetPeek({
 
   // Échap et clic extérieur passent par la sortie animée.
   const dialogRef = useCarnetDialog(true, requestClose);
-
-  const initial = detail.momentEngagement?.[moment.id];
-  const engagement = useMomentEngagement({
-    carnetId: detail.id,
-    momentId: moment.id,
-    initialLikes: initial?.likesCount ?? 0,
-    initialLiked: initial?.userLiked ?? false,
-    userId: currentUserId,
-    onRequireAuth,
-    onIsland,
-  });
 
   const hasPost = Boolean(moment.imageUrl);
   const title =
@@ -104,15 +92,15 @@ export function CarnetPeek({
             type="button"
             onClick={() => {
               haptic('light');
-              void engagement.toggleLike();
+              onToggleLike();
             }}
-            aria-pressed={engagement.liked}
+            aria-pressed={liked}
           >
             <span>
-              {engagement.liked ? 'Retirer mon j’aime' : 'J’aime'}
-              {engagement.likesCount > 0 ? ` · ${engagement.likesCount}` : ''}
+              {liked ? 'Retirer mon j’aime' : 'J’aime le carnet'}
+              {likes > 0 ? ` · ${likes}` : ''}
             </span>
-            <Heart size={18} fill={engagement.liked ? 'currentColor' : 'none'} />
+            <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
           </button>
 
           {hasPost ? (

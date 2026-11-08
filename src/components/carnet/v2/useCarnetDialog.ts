@@ -30,7 +30,10 @@ export function useCarnetDialog(active: boolean, onClose: () => void) {
     const currentContainer = () => containerRef.current;
     const focusables = () =>
       Array.from(currentContainer()?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(
-        (element) => element.offsetWidth > 0 || element.offsetHeight > 0
+        (element) =>
+          (element.offsetWidth > 0 || element.offsetHeight > 0) &&
+          !element.closest('[inert]') &&
+          element.tabIndex >= 0
       );
 
     const first = focusables()[0];
@@ -49,19 +52,20 @@ export function useCarnetDialog(active: boolean, onClose: () => void) {
         event.preventDefault();
         return;
       }
-      const firstItem = list[0];
-      const lastItem = list[list.length - 1];
-      const current = document.activeElement;
-      const node = currentContainer();
-      if (event.shiftKey) {
-        if (current === firstItem || !node?.contains(current)) {
-          event.preventDefault();
-          lastItem.focus();
-        }
-      } else if (current === lastItem || !node?.contains(current)) {
-        event.preventDefault();
-        firstItem.focus();
-      }
+      /* Déplacement manuel : les panneaux inactifs du pager restent larges
+         mais `inert` ; s'appuyer sur le dernier élément de la liste laissait
+         le focus sortir vers `body` après la dernière lentille. */
+      const current = document.activeElement as HTMLElement | null;
+      const index = current ? list.indexOf(current) : -1;
+      const nextIndex = event.shiftKey
+        ? index <= 0
+          ? list.length - 1
+          : index - 1
+        : index === -1 || index === list.length - 1
+          ? 0
+          : index + 1;
+      event.preventDefault();
+      list[nextIndex]?.focus();
     };
 
     document.addEventListener('keydown', onKeyDown, true);
@@ -70,6 +74,7 @@ export function useCarnetDialog(active: boolean, onClose: () => void) {
       document.body.style.overflow = 'hidden';
       // La barre flottante se retire pendant une feuille (socle §4.6).
       document.body.classList.add('lkdv-dialog-open');
+      document.querySelector<HTMLElement>('.lkdv-floating-tabbar')?.setAttribute('inert', '');
     }
     scrollLockCount += 1;
 
@@ -79,6 +84,7 @@ export function useCarnetDialog(active: boolean, onClose: () => void) {
       if (scrollLockCount === 0) {
         document.body.style.overflow = previousBodyOverflow;
         document.body.classList.remove('lkdv-dialog-open');
+        document.querySelector<HTMLElement>('.lkdv-floating-tabbar')?.removeAttribute('inert');
       }
       opener?.focus?.({ preventScroll: true });
     };
