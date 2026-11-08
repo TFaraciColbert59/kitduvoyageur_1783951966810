@@ -61,10 +61,6 @@ jobs:
       - name: Verify embedded Capacitor configuration
         run: node scripts/verify/verify_capacitor_server.mjs ios/App/App/capacitor.config.json --config-only
 
-      - name: List Xcode schemes
-        working-directory: ios/App
-        run: xcodebuild -list
-
       - name: Resolve SPM dependencies
         working-directory: ios/App
         run: |
@@ -81,6 +77,10 @@ jobs:
             echo "Resolve failed (attempt $i), waiting 15s before retrying..."
             sleep 15
           done
+
+      - name: List Xcode schemes
+        working-directory: ios/App
+        run: xcodebuild -list
 
       - name: Build unsigned iOS app
         working-directory: ios/App

@@ -15,6 +15,7 @@ export default defineConfig({
   use: {
     baseURL: process.env.PW_BASE_URL || 'http://localhost:4000',
     trace: 'on-first-retry',
+    serviceWorkers: 'block',
   },
   projects: [
     {

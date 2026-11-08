@@ -36,6 +36,13 @@ export async function installCommunityFeedFixture(page: Page) {
   let resolveOrigin!: (origin: string) => void;
   const supabaseOrigin = new Promise<string>((resolve) => { resolveOrigin = resolve; });
   await page.addInitScript(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
     localStorage.setItem('lkdv_cookie_consent', JSON.stringify({
       necessary: true, analytics: false, marketing: false, version: '1',
     }));
@@ -71,7 +78,7 @@ export async function installCommunityFeedFixture(page: Page) {
   // d'abord une pré-vérification CORS (OPTIONS) qu'il faut accepter, sinon la requête
   // réelle échoue avec `net::ERR_FAILED` et le fil affiche « n'a pas pu être chargé ».
   let originResolved = false;
-  await page.route(/.*\/rest\/v1\/.*/, async (route) => {
+  await page.context().route(/.*\/rest\/v1\/.*/, async (route) => {
     if (route.request().method() === 'OPTIONS') {
       await route.fulfill({ status: 204, headers: cors(route) });
       return;
@@ -105,11 +112,11 @@ export async function installCommunityFeedFixture(page: Page) {
     await route.fulfill({ json: data, headers: cors(route) });
   });
   // Authentication is opt-in below. A guest has no session or auth request.
-  await page.route(/.*\/auth\/v1\/.*/, (route) =>
+  await page.context().route(/.*\/auth\/v1\/.*/, (route) =>
     route.request().method() === 'OPTIONS'
       ? route.fulfill({ status: 204, headers: cors(route) })
       : route.fulfill({ headers: cors(route), json: { ...profile, aud: 'authenticated', role: 'authenticated', is_anonymous: false } }));
-  await page.route(/.*\/api\/compte\/.*notifications/, (route) =>
+  await page.context().route(/.*\/api\/compte\/.*notifications/, (route) =>
     route.fulfill({ json: { notifications: [], unread: 0 } }));
 
   return {
