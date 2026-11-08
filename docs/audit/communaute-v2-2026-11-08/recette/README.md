@@ -29,6 +29,7 @@ Retour, erreurs une seule fois, brouillon, confirmation), invité/`requireAuth`,
 | `captures-maquette/` | Référence : 58 captures de la maquette (390×844). |
 | `captures-v2/` | Production du travail : captures des tiroirs réels sur données mockées. À remplir avec `capture-v2.mjs` (aucune capture n'est inventée). |
 | `capture-v2.mjs` | Orchestrateur de capture : vérifie le serveur, lance le harnais d'intégration des fondations (`integration/capture.mjs` : 21 scénarios Explorer + étape 1 des 6 types de création, états vide/erreur/skeleton, île, tri, détail, Peek, brouillon), copie les PNG ici + `MANIFEST.json` ; `--visual` met aussi à jour les références Playwright. |
+| `run-preuves.sh` | Exécute **toutes** les preuves déterministes (e2e @ui-mock ×2 projets, axe, visuel update+verify, captures) et écrit `preuves-run/{RESUME.txt,*.log}` — refuse de tourner si le serveur 4028 ne répond pas. |
 | `playwright.communaute-v2.config.ts` | Config de recette locale pour compter/exécuter les specs v2 **avant** l'ajout au `testMatch` racine. |
 | `CI-LIGNES-A-AJOUTER.md` | Lignes exactes (testMatch, CI jobs, env) à appliquer par le Lead dans les fichiers hors scope. |
 | `PREUVES.md` | Tableau `07 § A/B/C` : commande/spec/preuve ou « non testable ici : raison ». |
@@ -70,6 +71,13 @@ Le drapeau `false` (scénario 11) exige un build séparé :
 ```bash
 node docs/audit/communaute-v2-2026-11-08/recette/capture-v2.mjs            # captures
 node docs/audit/communaute-v2-2026-11-08/recette/capture-v2.mjs --visual   # + références visuelles
+```
+
+### 2 bis. Tout-en-un (preuves + logs)
+
+```bash
+bash docs/audit/communaute-v2-2026-11-08/recette/run-preuves.sh
+# → preuves-run/RESUME.txt + logs e2e/a11y/visuel/captures, à recopier dans PREUVES.md
 ```
 
 Sorties : `captures-v2/*.png` + `captures-v2/MANIFEST.json` (+ horodatage, base,

@@ -12,6 +12,8 @@ export interface CarnetTileV2Props {
   carnet: CarnetCardVM;
   /** Pleine largeur (carnet de la semaine, Carnets#3). */
   wide?: boolean;
+  /** Badge « Carnet de la semaine » (tuile vedette du filtre Découvrir). */
+  week?: boolean;
   /** Distance « Près de moi » affichée dans la méta (Carnets#7). */
   showDistance?: boolean;
   /** Envoi du j'aime en cours : bouton occupé, pas de double envoi. */
@@ -42,6 +44,7 @@ function tracePath(trace: ReadonlyArray<[number, number]>): string {
 export function CarnetTileV2({
   carnet,
   wide = false,
+  week = false,
   showDistance = false,
   likeBusy = false,
   onLike,
@@ -82,7 +85,7 @@ export function CarnetTileV2({
 
   return (
     <article
-      className={`lkdv-cv2-tile lkdv-cv2x-carnet${wide ? ' lkdv-cv2-tile--wide' : ''}`}
+      className={`lkdv-cv2-tile lkdv-cv2x-carnet${wide ? ' lkdv-cv2-tile--wide' : ''}${week ? ' is-week' : ''}`}
       data-testid="cv2-tile-carnet"
       data-id={carnet.id}
       {...longPress}
@@ -93,7 +96,9 @@ export function CarnetTileV2({
         aria-label={ariaLabel}
         data-cv2-testid="carnet-link"
       >
-        <span className="lkdv-cv2-cover lkdv-cv2x-carnet-cover">
+        <span
+          className={`lkdv-cv2-cover lkdv-cv2x-carnet-cover${carnet.coverImage ? ' has-image' : ''}`}
+        >
           {carnet.coverImage ? (
             <AppImage
               src={carnet.coverImage}
@@ -121,6 +126,7 @@ export function CarnetTileV2({
               />
             </svg>
           ) : null}
+          {week ? <span className="lkdv-cv2x-carnet-week">Carnet de la semaine</span> : null}
           {carnet.isLive ? (
             <span className="lkdv-cv2x-live">
               <i aria-hidden="true" />

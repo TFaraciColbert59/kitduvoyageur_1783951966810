@@ -60,6 +60,9 @@ async function setupExplorer(
   await freezeClock(page);
   await gotoCommunity(page);
   const opened = await openExplorer(page, trigger);
+  if (!opened && mock.consoleErrors.length > 0) {
+    console.log(`[openExplorer] v2 non montée — console :\n${mock.consoleErrors.slice(0, 8).join('\n')}`);
+  }
   test.skip(!opened, SKIP_V2_BUILD);
   return mock;
 }
@@ -71,6 +74,17 @@ function tab(page: Page, listName: string, name: string) {
 
 function panelVisibility(page: Page, id: string) {
   return page.getByTestId(`cv2-pane-${id}`);
+}
+
+/**
+ * Vérifie qu'un volet est réellement **dans le viewport** (pas seulement monté) :
+ * la régression de coque du 2026-11-08 empilait les 4 volets verticalement, le
+ * volet actif restant hors écran — `toBeVisible()` seul ne l'aurait pas vu.
+ */
+async function expectPaneInViewport(page: Page, id: string): Promise<void> {
+  const pane = panelVisibility(page, id);
+  await expect(pane).toHaveAttribute('aria-hidden', 'false');
+  await expect(pane).toBeInViewport();
 }
 
 test.describe('Explorer v2 — ouverture, capsule, gestes @ui-mock @mobile', () => {
@@ -90,11 +104,11 @@ test.describe('Explorer v2 — ouverture, capsule, gestes @ui-mock @mobile', () 
       'aria-selected',
       'true',
     );
-    await expect(panelVisibility(page, 'carnets')).toHaveAttribute('aria-hidden', 'false');
+    await expectPaneInViewport(page, 'carnets');
 
     // Changement de volet par la capsule.
     await tab(page, 'Volets de l’explorateur', 'Clubs').click();
-    await expect(panelVisibility(page, 'clubs')).toHaveAttribute('aria-hidden', 'false');
+    await expectPaneInViewport(page, 'clubs');
     await expect(panelVisibility(page, 'carnets')).toHaveAttribute('aria-hidden', 'true');
 
     // Clavier : le focus est dans la capsule, flèches + Home/End avec bouclage.
@@ -176,6 +190,7 @@ test.describe('Explorer v2 — ouverture, capsule, gestes @ui-mock @mobile', () 
     );
 
     // Glisser vers la gauche : filtre suivant (Découvrir → Mes carnets).
+    await expectPaneInViewport(page, 'carnets');
     const pane = panelVisibility(page, 'carnets');
     const box = await pane.boundingBox();
     if (!box) throw new Error('pane Carnets sans boîte visible');
@@ -532,10 +547,7 @@ test.describe('Explorer v2 — 0 erreur console, 0 requête en échec @ui-mock @
       const paneIds: Record<string, string> = { Carnets: 'carnets', Clubs: 'clubs', Sorties: 'sorties' };
       for (const volet of ['Carnets', 'Clubs', 'Sorties']) {
         await tab(page, 'Volets de l’explorateur', volet).click();
-        await expect(page.getByTestId(`cv2-pane-${paneIds[volet]}`)).toHaveAttribute(
-          'aria-hidden',
-          'false',
-        );
+        await expectPaneInViewport(page, paneIds[volet]);
       }
       await closeByEscape(page, 'communaute-v2-explore');
     }

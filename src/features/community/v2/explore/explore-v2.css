@@ -63,6 +63,21 @@
   opacity: 0.7;
 }
 
+/* Sans photo, le filigrane passe en vert forêt : le blanc du composant Trace
+   serait invisible sur le fond clair de repli. */
+.lkdv-cv2x-carnet-cover:not(.has-image) .lkdv-cv2x-cover-trace path {
+  stroke: var(--lkv-forest-900);
+}
+
+.lkdv-cv2x-carnet-cover:not(.has-image) .lkdv-cv2x-cover-trace circle {
+  fill: var(--lkv-forest-900);
+}
+
+.lkdv-cv2x-carnet-cover:not(.has-image) .lkdv-cv2x-cover-trace circle:last-child {
+  fill: none;
+  stroke: var(--lkv-forest-900);
+}
+
 .lkdv-cv2x-carnet-body {
   display: flex;
   flex-direction: column;
@@ -70,8 +85,10 @@
   min-width: 0;
 }
 
-.lkdv-cv2x-carnet-title {
+.lkdv-cv2x-carnet-title,
+.lkdv-cv2x-club-title {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .lkdv-cv2x-tile-foot {
@@ -154,6 +171,25 @@
 }
 
 /* ── Signatures de tuile ───────────────────────────────────────────────── */
+
+.lkdv-cv2x-carnet-week {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  padding: 3px 8px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-forest-900);
+  color: var(--lkv-text-inverted);
+  font: 600 9.5px/1.2 var(--font-sans);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Quand la vedette porte « Carnet de la semaine », la pastille « En route »
+   descend sous le badge au lieu de le chevaucher. */
+.lkdv-cv2x-carnet.is-week .lkdv-cv2x-live {
+  top: 30px;
+}
 
 .lkdv-cv2x-live,
 .lkdv-cv2x-gps {
@@ -286,6 +322,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  min-width: 0;
   min-height: 44px;
   max-width: 100%;
   padding: 0 12px;
@@ -321,6 +358,12 @@
   color: var(--lkv-text-secondary);
 }
 
+.lkdv-cv2x-join > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .lkdv-cv2x-join[disabled] {
   cursor: default;
   opacity: var(--opacity-disabled);
@@ -340,6 +383,16 @@
   to {
     transform: rotate(1turn);
   }
+}
+
+.lkdv-cv2x-club-chips .lkdv-cv2-chip::after,
+.lkdv-cv2x-ctx-chips .lkdv-cv2-chip::after,
+.lkdv-cv2x-suggest-chips .lkdv-cv2-chip::after,
+.lkdv-cv2x-recents .lkdv-cv2-chip::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
 }
 
 .lkdv-cv2x-club-chips {
@@ -488,6 +541,7 @@
 
 .lkdv-cv2x-detail-title {
   margin: 2px 0 0;
+  overflow-wrap: anywhere;
   font: 650 20px/1.2 var(--font-display);
   letter-spacing: -0.02em;
   color: var(--lkv-primary);
@@ -530,6 +584,7 @@
 
 .lkdv-cv2x-club-detail-head h2 {
   margin: 2px 0 0;
+  overflow-wrap: anywhere;
   font: 650 19px/1.2 var(--font-display);
   letter-spacing: -0.02em;
   color: var(--lkv-primary);
@@ -567,6 +622,7 @@
 .lkdv-cv2x-request {
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 8px;
   border-radius: 12px;
@@ -597,9 +653,15 @@
 
 .lkdv-cv2x-request-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 4px;
   flex: none;
+}
+
+.lkdv-cv2x-requests .lkdv-cv2-pill,
+.lkdv-cv2x-detail-actions .lkdv-cv2-pill {
+  min-height: 44px;
 }
 
 .lkdv-cv2x-mini-event {
@@ -619,7 +681,6 @@
   flex: none;
   font: 600 10.5px/1.2 var(--font-sans);
   color: var(--lkv-forest-900);
-  text-transform: capitalize;
 }
 
 .lkdv-cv2x-mini-event-body {
@@ -668,8 +729,13 @@
   padding: 10px;
 }
 
+.lkdv-cv2x-event-head .lkdv-cv2-ticket-body {
+  min-width: 0;
+}
+
 .lkdv-cv2x-event-date {
   font: 650 15px/1.25 var(--font-display);
+  overflow-wrap: anywhere;
   color: var(--lkv-primary);
   text-transform: capitalize;
 }
@@ -1047,7 +1113,7 @@
 
 .lkdv-cv2x-search-geo {
   align-self: center;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 10px;
   border: 0;
   background: none;
@@ -1167,6 +1233,21 @@
 }
 
 /* ── États annexes ─────────────────────────────────────────────────────── */
+
+/* Squelette : la teinte par défaut (6 % d'encre) est presque invisible sur le
+   verre clair du tiroir. On ré-dérive la barre sur la matière claire `--cv2-light-*`
+   (aucun littéral : tokens uniquement). */
+.lkdv-cv2x-pane .lkdv-cv2-skeleton-bar,
+.lkdv-cv2x-pane .lkdv-cv2x-agenda-skeleton span,
+.lkdv-cv2x-pane .lkdv-cv2-map-loading {
+  background: linear-gradient(
+    90deg,
+    var(--cv2-light-surface-muted),
+    var(--cv2-light-glass-strong),
+    var(--cv2-light-surface-muted)
+  );
+  background-size: 220% 100%;
+}
 
 .lkdv-cv2x-skeleton {
   display: flex;

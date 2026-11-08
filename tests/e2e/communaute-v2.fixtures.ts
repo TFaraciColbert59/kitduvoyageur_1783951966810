@@ -146,6 +146,8 @@ export interface CommunityV2MockOptions {
 export interface CommunityV2Mock {
   /** Journal des appels interceptés (ordre chronologique). */
   calls: FixtureCall[];
+  /** Erreurs console/pageerror observées depuis l'installation (diagnostic). */
+  consoleErrors: string[];
   /** Appels qui ne correspondent à aucune fixture connue. */
   unhandled: FixtureCall[];
   /** Change l'état global entre deux assertions. */
@@ -354,6 +356,11 @@ export async function installCommunityV2Mock(
 
   const calls: FixtureCall[] = [];
   const unhandled: FixtureCall[] = [];
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(`console: ${message.text()}`);
+  });
+  page.on('pageerror', (error) => consoleErrors.push(`pageerror: ${error.message}`));
 
   const record = (call: FixtureCall): FixtureCall => {
     calls.push(call);
@@ -364,24 +371,25 @@ export async function installCommunityV2Mock(
     if (latencyMs > 0) await new Promise((resolve) => setTimeout(resolve, latencyMs));
   };
 
-  const outsideOrigin = (url: string): boolean => {
-    try {
-      return new URL(url).origin !== new URL(appOrigin).origin;
-    } catch {
-      return true;
-    }
-  };
+  // 0) Filet de sécurité : aucune origine **externe** ne doit être contactée
+  //    pour de vrai (tuiles, polices, CDN…). Le motif exclut explicitement
+  //    l'origine de l'app par une lookahead : un `**/*` + `route.fallback()`
+  //    empêchait Playwright de charger les scripts Next (page non hydratée,
+  //    aucun handler de clic — régression constatée le 2026-11-08).
+  const appUrl = new URL(appOrigin);
+  const allowedHosts = new Set<string>([appUrl.hostname]);
+  if (appUrl.hostname === 'localhost') allowedHosts.add('127.0.0.1');
+  if (appUrl.hostname === '127.0.0.1') allowedHosts.add('localhost');
+  const escapedHosts = Array.from(allowedHosts)
+    .map((host) => host.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|');
+  const externalPattern = new RegExp(`^https?://(?!(${escapedHosts})(?::\\d+)?(?:[/?#]|$)).+`);
 
-  // 0) Filet de sécurité : aucune origine externe ne doit être contactée pour
-  //    de vrai (tuiles, polices, CDN…). Les routes explicites, enregistrées
-  //    APRÈS, ont la priorité (Playwright : dernier enregistré d'abord).
-  await page.context().route('**/*', async (route) => {
+  // Les routes explicites (RPC, tables, auth, storage, API), enregistrées
+  // APRÈS, ont la priorité (Playwright : dernier enregistré d'abord).
+  await page.context().route(externalPattern, async (route) => {
     const request = route.request();
     const url = request.url();
-    if (!outsideOrigin(url)) {
-      await route.fallback();
-      return;
-    }
     const name = new URL(url).hostname;
     const call = record({ kind: 'external', name, method: request.method() });
     unhandled.push(call);
@@ -524,6 +532,7 @@ export async function installCommunityV2Mock(
   return {
     calls,
     unhandled,
+    consoleErrors,
     setState: (next: FixtureState) => {
       state = next;
     },
@@ -845,9 +854,16 @@ export const SKIP_REAL_DB =
   'Scénario de données réelles : exige la base de test/aperçu migrée. ' +
   'Activer LKDV_E2E_DB=test (locale ou éphémère CI/aperçu) ; jamais la prod.';
 
-/** Fige l'horloge navigateur (dates relatives stables) avant toute navigation. */
+/**
+ * Fige l'horloge navigateur (dates relatives stables) **avant toute navigation**.
+ *
+ * `page.clock.setFixedTime` casse l'hydratation Next/React de cette app (les
+ * scripts de la page ne s'exécutent plus et aucun handler de clic n'est posé :
+ * régression reproduite le 2026-11-08). `clock.install({ time })` fige les
+ * mêmes dates sans casser le démarrage : c'est la variante validée.
+ */
 export async function freezeClock(page: Page): Promise<void> {
-  await page.clock.setFixedTime(new Date(FIXED_NOW));
+  await page.clock.install({ time: new Date(FIXED_NOW) });
 }
 
 /** Vérifie que le serveur répond (avant tout test, dans `beforeAll`). */
@@ -905,43 +921,93 @@ export async function gotoCommunity(page: Page): Promise<void> {
  * Retour `false` si le build n'a pas la v2 (le test appelant se saute alors
  * avec `SKIP_V2_BUILD`) : jamais de faux vert.
  */
+export interface OpenSheetOptions {
+  /** Délai d'attente du montage (le chargement du chunk dynamique peut être lent sous charge). */
+  timeoutMs?: number;
+  /** Nombre de tentatives (un clic peut arriver avant l'hydratation complète). */
+  attempts?: number;
+}
+
 export async function openExplorer(
   page: Page,
   trigger: 'explorer' | 'search' = 'explorer',
+  options: OpenSheetOptions = {},
 ): Promise<boolean> {
+  const attempts = options.attempts ?? 3;
+  const timeoutMs = options.timeoutMs ?? 15_000;
   const button =
     trigger === 'search'
       ? page.getByRole('button', { name: 'Rechercher dans la communauté' })
       : page.getByRole('button', { name: 'Explorer et rechercher' });
-  await button.click();
   const root = page.getByTestId('communaute-v2-explore');
-  try {
-    await root.waitFor({ state: 'visible', timeout: 5_000 });
-    await page.locator('[data-state="open"]').first().waitFor({ state: 'attached', timeout: 5_000 });
-    return true;
-  } catch {
-    return false;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    await button.click();
+    try {
+      await root.waitFor({ state: 'visible', timeout: timeoutMs });
+      await page.locator('[data-state="open"]').first().waitFor({ state: 'attached', timeout: 5_000 });
+      // Entrée de la coque : .72 s `--ease-out` (00 § 3). Cliquer pendant la
+      // translation rend les éléments « instables » : on laisse l'animation finir.
+      await page.waitForTimeout(850);
+      return true;
+    } catch (cause) {
+      if (attempt < attempts) {
+        await page.waitForTimeout(500);
+        continue;
+      }
+      return reportOpenFailure(page, 'openExplorer', cause);
+    }
   }
+  return false;
+}
+
+/** Diagnostic commun d'un montage impossible (jamais de faux vert). */
+async function reportOpenFailure(page: Page, where: string, cause: unknown): Promise<false> {
+  const diagnostics = await page
+    .evaluate(() => ({
+      url: window.location.pathname,
+      dialogs: document.querySelectorAll('[role="dialog"]').length,
+      v2layer: document.querySelectorAll('.lkdv-cv2-layer').length,
+      v1drawer: document.querySelectorAll('.lkdv-drawer, .lkdv-sections-drawer').length,
+    }))
+    .catch(() => null);
+  console.log(`[${where}] montage impossible — diagnostic: ${JSON.stringify(diagnostics)}`);
+  console.log(`[${where}] dernière erreur: ${cause instanceof Error ? cause.message : String(cause)}`);
+  return false;
 }
 
 /**
  * Ouvre le tiroir Création par le `+` de la barre haute (Publication) ou celui
  * des stories (Story). Retour `false` si le build n'est pas v2.
  */
-export async function openCreate(page: Page, kind: 'post' | 'story' = 'post'): Promise<boolean> {
-  if (kind === 'story') {
-    await page.getByRole('button', { name: /Publier une story/ }).first().click();
-  } else {
-    await page.getByRole('button', { name: 'Créer dans l’application' }).click();
-  }
+export async function openCreate(
+  page: Page,
+  kind: 'post' | 'story' = 'post',
+  options: OpenSheetOptions = {},
+): Promise<boolean> {
+  const attempts = options.attempts ?? 3;
+  const timeoutMs = options.timeoutMs ?? 15_000;
   const root = page.getByTestId('communaute-v2-create');
-  try {
-    await root.waitFor({ state: 'visible', timeout: 5_000 });
-    await page.locator('[data-state="open"]').first().waitFor({ state: 'attached', timeout: 5_000 });
-    return true;
-  } catch {
-    return false;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    if (kind === 'story') {
+      await page.getByRole('button', { name: /Publier une story/ }).first().click();
+    } else {
+      await page.getByRole('button', { name: 'Créer dans l’application' }).click();
+    }
+    try {
+      await root.waitFor({ state: 'visible', timeout: timeoutMs });
+      await page.locator('[data-state="open"]').first().waitFor({ state: 'attached', timeout: 5_000 });
+      // Entrée de la coque : .72 s `--ease-out` (00 § 3).
+      await page.waitForTimeout(850);
+      return true;
+    } catch (cause) {
+      if (attempt < attempts) {
+        await page.waitForTimeout(500);
+        continue;
+      }
+      return reportOpenFailure(page, 'openCreate', cause);
+    }
   }
+  return false;
 }
 
 /** Ferme le tiroir par Échap et attend le démontage (sortie .56 s). */

@@ -54,6 +54,62 @@
 
 .lkdv-communaute-v2 {
   color-scheme: light;
+  /* Le reste de l'app porte html[data-liquid-ios27] (matériau sombre global :
+     encres blanches, verres fumés). Le tiroir v2 est la carte clippée CLAIRE
+     du Compte : on ré-applique ici la matière claire, comme `.lkdv-compte-v8`
+     le fait pour son écran. Valeurs : `--cv2-light-*` (tokens.css). */
+  --label: var(--cv2-light-ink);
+  --label2: var(--cv2-light-ink-2);
+  --label3: var(--cv2-light-ink-3);
+  --lkv-text-primary: var(--cv2-light-ink);
+  --lkv-text-secondary: var(--cv2-light-ink-2);
+  --lkv-text-muted: var(--cv2-light-ink-muted);
+  --lkv-text-subtle: var(--cv2-light-ink-2);
+  --lkv-surface: var(--cv2-light-page);
+  --lkv-surface-card: var(--cv2-light-card);
+  --lkv-surface-paper: var(--cv2-light-card);
+  --lkv-surface-elevated: var(--cv2-light-card);
+  --lkv-surface-raised: var(--cv2-light-card);
+  --lkv-surface-muted: var(--cv2-light-surface-muted);
+  --lkv-border: var(--cv2-light-border);
+  --lkv-border-subtle: var(--cv2-light-border-subtle);
+  --lkv-border-strong: var(--cv2-light-border-strong);
+  --lkv-field-border: var(--cv2-light-field-border);
+  --lkv-focus-ring: var(--cv2-light-focus-ring);
+  --lkv-primary: var(--cv2-light-primary);
+  --lkv-primary-subtle: var(--cv2-light-primary-subtle);
+  --lkv-secondary: var(--cv2-light-secondary);
+  --lkv-action: var(--cv2-light-action);
+  --lkv-success: var(--cv2-light-success);
+  --lkv-success-bg: var(--cv2-light-success-bg);
+  --lkv-warning: var(--cv2-light-warning);
+  --lkv-warning-bg: var(--cv2-light-warning-bg);
+  --lkv-warning-dark: var(--cv2-light-warning-dark);
+  --lkv-danger: var(--cv2-light-danger);
+  --lkv-danger-bg: var(--cv2-light-danger-bg);
+  --lkv-danger-dark: var(--cv2-light-danger-dark);
+  --lkv-info: var(--cv2-light-info);
+  --lkv-info-bg: var(--cv2-light-info-bg);
+  --lkv-overlay-scrim: var(--cv2-light-overlay-scrim);
+  --card-tint: var(--cv2-light-glass-medium);
+  --card-tint-strong: var(--cv2-light-glass-strong);
+  --card-content: var(--cv2-light-ink);
+  --glass-bg-light: var(--cv2-light-glass-light);
+  --glass-bg-medium: var(--cv2-light-glass-medium);
+  --glass-bg-strong: var(--cv2-light-glass-strong);
+  --glass-subtle-fill: var(--cv2-light-glass-light);
+  --glass-border: var(--cv2-light-border);
+  --glass-border-color: var(--cv2-light-border);
+  --glass-text: var(--cv2-light-ink);
+  --glass-text-secondary: var(--cv2-light-ink-2);
+  /* Les `--cv2-*` calculés sur :root gardent la valeur sombre : on les
+     ré-dérive sur la couche claire (même valeur, matière claire). */
+  --cv2-tile-border: var(--cv2-light-border);
+  --cv2-menu-bg: var(--cv2-light-glass-medium);
+  --cv2-menu-border: var(--cv2-light-border);
+  --cv2-field-border: var(--cv2-light-field-border);
+  --cv2-list-sep: var(--cv2-light-border-subtle);
+  --cv2-list-sep-strong: var(--cv2-light-border);
   color: var(--lkv-text-primary);
   font-family: var(--font-sans);
   font-size: 14px;

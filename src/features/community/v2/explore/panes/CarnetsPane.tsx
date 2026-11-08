@@ -132,6 +132,7 @@ export function CarnetsPane({
           <CarnetTileV2
             carnet={featured}
             wide
+            week
             showDistance={filter === 'near'}
             likeBusy={likeBusyId === featured.id}
             onLike={onLike}

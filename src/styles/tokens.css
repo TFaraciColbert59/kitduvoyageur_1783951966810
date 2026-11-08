@@ -1209,4 +1209,42 @@ button.g2,
   /* La coque du tiroir v2 est à z 60 (zIndex.modal) : l'île se pose
      au-dessus, sur la couche toast (70), sous les overlays du Compte. */
   --cv2-z-island: 70;
+
+  /* ── Matière CLAIRE de la couche v2 (re-scope local) ───────────────
+     Le reste de l'application porte `html[data-liquid-ios27]` (matériau
+     sombre global : encres blanches, verres fumés). Le tiroir v2 est la
+     carte clippée du Compte, donc clair : comme `.lkdv-compte-v8` /
+     `.lkdv-cd`, la couche `.lkdv-communaute-v2` ré-applique ici les
+     valeurs claires du Compte (compte-v8.css L27-37, HIG L2706-2723).
+     Consommées uniquement par `src/styles/communaute-v2.css`. */
+  --cv2-light-ink: #172B24;
+  --cv2-light-ink-2: #56665D;
+  --cv2-light-ink-3: rgba(23, 43, 36, 0.44);
+  --cv2-light-ink-muted: #46584D;
+  --cv2-light-page: #F5F2EC;
+  --cv2-light-card: #FFFFFF;
+  --cv2-light-surface-muted: #EDF1EA;
+  --cv2-light-border: rgba(23, 43, 36, 0.14);
+  --cv2-light-border-subtle: rgba(23, 43, 36, 0.07);
+  --cv2-light-border-strong: rgba(23, 43, 36, 0.52);
+  --cv2-light-field-border: rgba(23, 43, 36, 0.22);
+  --cv2-light-focus-ring: rgba(34, 97, 72, 0.28);
+  --cv2-light-primary: #17402C;
+  --cv2-light-primary-subtle: #D3EBD9;
+  --cv2-light-secondary: #5B7F55;
+  --cv2-light-action: #226148;
+  --cv2-light-glass-medium: rgb(255 255 255 / 0.94);
+  --cv2-light-glass-strong: rgb(255 255 255 / 0.97);
+  --cv2-light-glass-light: rgb(255 255 255 / 0.88);
+  --cv2-light-success: #3D6038;
+  --cv2-light-success-bg: #E1EBDE;
+  --cv2-light-warning: #C89A3B;
+  --cv2-light-warning-bg: #FBF1DC;
+  --cv2-light-warning-dark: #765014;
+  --cv2-light-danger: #A8443A;
+  --cv2-light-danger-bg: #FDE8E6;
+  --cv2-light-danger-dark: #7E2D25;
+  --cv2-light-info: #4B6B7C;
+  --cv2-light-info-bg: #DDE7EE;
+  --cv2-light-overlay-scrim: rgba(16, 28, 23, 0.45);
 }

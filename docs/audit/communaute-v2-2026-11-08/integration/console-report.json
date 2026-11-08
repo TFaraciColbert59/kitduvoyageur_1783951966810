@@ -1,0 +1,22 @@
+[
+  {
+    "scenario": "explorer-ile",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-ile",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-ile",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-ile",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  }
+]

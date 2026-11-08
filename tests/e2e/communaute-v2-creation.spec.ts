@@ -42,6 +42,9 @@ async function setupCreate(
   await freezeClock(page);
   await gotoCommunity(page);
   const opened = await openCreate(page, kind);
+  if (!opened && mock.consoleErrors.length > 0) {
+    console.log(`[openCreate] v2 non montée — console :\n${mock.consoleErrors.slice(0, 8).join('\n')}`);
+  }
   test.skip(!opened, SKIP_V2_BUILD);
   return mock;
 }

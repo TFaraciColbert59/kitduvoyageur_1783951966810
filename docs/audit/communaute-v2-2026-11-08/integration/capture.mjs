@@ -40,6 +40,7 @@ const VIEWPORT = { width: 390, height: 844 };
 mkdirSync(CAPTURES, { recursive: true });
 
 const consoleEntries = [];
+const failedResponses = [];
 const failures = [];
 
 function slug(name) {
@@ -85,7 +86,7 @@ async function clickAny(page, candidates, label) {
   return target;
 }
 
-async function newPage(browser, mode) {
+async function newPage(browser, mode, initScript) {
   const context = await browser.newContext({
     viewport: VIEWPORT,
     deviceScaleFactor: 1,
@@ -96,7 +97,17 @@ async function newPage(browser, mode) {
     colorScheme: 'light',
   });
   await context.addCookies([sessionCookieFor(BASE_URL)]);
+  if (initScript) await context.addInitScript(initScript);
   const page = await context.newPage();
+  page.on('response', (response) => {
+    if (response.status() >= 400) {
+      failedResponses.push({
+        scenario: page.__scenario ?? 'init',
+        status: response.status(),
+        url: response.url().slice(0, 200),
+      });
+    }
+  });
   page.on('console', (message) => {
     if (message.type() === 'error' || message.type() === 'warning') {
       consoleEntries.push({ scenario: page.__scenario ?? 'init', type: message.type(), text: message.text() });
@@ -202,7 +213,7 @@ async function tryStep(page, label) {
 async function scenario(browser, definition) {
   if (ONLY && !definition.id.startsWith(ONLY)) return;
   console.log(`\n▶ ${definition.id} (mode ${definition.mode ?? 'normal'})`);
-  const { context, page } = await newPage(browser, definition.mode ?? 'normal');
+  const { context, page } = await newPage(browser, definition.mode ?? 'normal', definition.init);
   page.__scenario = definition.id;
   try {
     await gotoCommunaute(page);
@@ -366,24 +377,39 @@ const SCENARIOS = [
   {
     id: 'creation-brouillon',
     open: 'create',
+    // Seed AVANT montage : le moteur restaure le brouillon à l'ouverture.
+    init: () => {
+      const record = {
+        version: 1,
+        kind: 'post',
+        updatedAt: Date.now(),
+        values: {
+          format: 'photo',
+          audience: 'public',
+          clubId: '',
+          media: [],
+          title: 'Traversée du Vercors',
+          content: 'Brouillon de recette restauré après fermeture.',
+          location: '',
+          locationLat: null,
+          locationLng: null,
+          tags: [],
+          mentions: [],
+          clientRequestId: '00000000-0000-4000-8000-00000000draft',
+        },
+      };
+      try {
+        window.localStorage.setItem('lkdv.cv2-draft:post:v1', JSON.stringify(record));
+      } catch {
+        /* stockage indisponible */
+      }
+    },
     prepare: async (page) => {
-      // Un brouillon V2 est restauré depuis le stockage local du moteur :
-      // on réutilise la clé qu'il publie (fallback itératif si le nom change).
-      await page.evaluate(() => {
-        const candidates = Object.keys(localStorage).filter((key) => /draft|brouillon/i.test(key));
-        for (const key of candidates) {
-          try {
-            const parsed = JSON.parse(localStorage.getItem(key) ?? 'null');
-            if (parsed && typeof parsed === 'object') {
-              parsed.restoredAt = new Date().toISOString();
-            }
-          } catch {
-            /* ignore */
-          }
-        }
-      });
-      await openCreate(page);
-      await settle(page, 700);
+      await firstVisible(
+        page,
+        ['.lkdv-cv2-draft', 'text=Brouillon restauré', 'text=Brouillon'],
+        5000,
+      );
     },
   },
 ];
@@ -399,6 +425,7 @@ async function main() {
   await browser.close();
 
   writeFileSync(join(HERE, 'console-report.json'), JSON.stringify(consoleEntries, null, 2), 'utf8');
+  writeFileSync(join(HERE, 'network-report.json'), JSON.stringify(failedResponses, null, 2), 'utf8');
   writeFileSync(join(HERE, '_failures.json'), JSON.stringify(failures, null, 2), 'utf8');
   console.log(`\nCaptures : ${CAPTURES}`);
   console.log(`Erreurs console : ${consoleEntries.length} (console-report.json)`);

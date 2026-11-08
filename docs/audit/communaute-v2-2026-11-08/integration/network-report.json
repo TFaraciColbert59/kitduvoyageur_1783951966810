@@ -1,0 +1,12 @@
+[
+  {
+    "scenario": "explorer-ile",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/compte/compte/notifications"
+  },
+  {
+    "scenario": "explorer-ile",
+    "status": 401,
+    "url": "http://127.0.0.1:4028/api/telemetry/hub"
+  }
+]
