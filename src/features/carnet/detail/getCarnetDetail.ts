@@ -34,7 +34,7 @@ interface SessionParticipantRow {
   created_at: string;
 }
 
-const CARNET_COLUMNS = [
+const CARNET_COLUMNS_WITH_LIVE = [
   'id',
   'author_id',
   'title',
@@ -59,6 +59,30 @@ const CARNET_COLUMNS = [
   'live_sharing',
 ].join(', ');
 
+const CARNET_COLUMNS_BASE = [
+  'id',
+  'author_id',
+  'title',
+  'destination',
+  'description',
+  'cover_image',
+  'cover_image_alt',
+  'start_date',
+  'end_date',
+  'visibility',
+  'verified',
+  'likes_count',
+  'comments_count',
+  'views_count',
+  'distance_km',
+  'denivele_m',
+  'groupe_id',
+  'lieu_depart',
+  'lieu_arrivee',
+  'country_iso',
+  'trip_id',
+].join(', ');
+
 /**
  * Lit un carnet, son auteur, ses étapes, ses moments, son kit et l'engagement
  * du lecteur avec le client serveur (cookies) — la RLS voit donc la session :
@@ -78,13 +102,27 @@ export async function getCarnetDetail(id: string) {
   const { data: authData } = await supabase.auth.getUser();
   const viewerId = authData?.user?.id ?? null;
 
-  const { data: carnetData, error: carnetError } = await supabase
+  let carnetData: unknown = null;
+  const initialResult = await supabase
     .from('carnets')
-    .select(CARNET_COLUMNS)
+    .select(CARNET_COLUMNS_WITH_LIVE)
     .eq('id', id)
     .maybeSingle();
 
-  if (carnetError || !carnetData) return null;
+  if (initialResult.error?.code === '42703') {
+    // Si la colonne live_sharing n'est pas encore appliquée sur la base distante
+    const fallbackResult = await supabase
+      .from('carnets')
+      .select(CARNET_COLUMNS_BASE)
+      .eq('id', id)
+      .maybeSingle();
+    if (fallbackResult.error || !fallbackResult.data) return null;
+    carnetData = fallbackResult.data;
+  } else if (initialResult.error || !initialResult.data) {
+    return null;
+  } else {
+    carnetData = initialResult.data;
+  }
   const carnet = carnetData as unknown as CarnetRow;
 
   /* Tout ce qui ne dépend que du carnet part dans le même `Promise.all` :
@@ -169,7 +207,17 @@ export async function getCarnetDetail(id: string) {
         .from('carnet_kit_items')
         .select('id, nom, detail, poids_g, couleur_tag, sort_order, verdict, verdict_note, jours_utilises')
         .eq('carnet_id', carnet.id)
-        .order('sort_order', { ascending: true }),
+        .order('sort_order', { ascending: true })
+        .then((res) => {
+          if (res.error?.code === '42703') {
+            return supabase
+              .from('carnet_kit_items')
+              .select('id, nom, detail, poids_g, couleur_tag, sort_order')
+              .eq('carnet_id', carnet.id)
+              .order('sort_order', { ascending: true });
+          }
+          return res;
+        }),
       /* Réactions réelles : les 50 dernières lignes, plus le total exact. */
       supabase
         .from('carnet_likes')
