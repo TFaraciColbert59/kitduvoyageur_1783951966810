@@ -1,0 +1,202 @@
+{
+  "generatedAt": "2026-11-08T18:52:47.098Z",
+  "viewport": "390x844",
+  "base": "http://127.0.0.1:4028",
+  "total": 48,
+  "ok": 48,
+  "failed": [],
+  "shots": [
+    {
+      "shot": "explorer-recherche",
+      "ok": true
+    },
+    {
+      "shot": "explorer-recherche-resultats",
+      "ok": true
+    },
+    {
+      "shot": "explorer-recherche-sur-la-carte",
+      "ok": true
+    },
+    {
+      "shot": "explorer-recherche-erreur",
+      "ok": true
+    },
+    {
+      "shot": "explorer-etat-chargement",
+      "ok": true
+    },
+    {
+      "shot": "explorer-etat-vide",
+      "ok": true
+    },
+    {
+      "shot": "explorer-carnets",
+      "ok": true
+    },
+    {
+      "shot": "explorer-carnets-tri-menu",
+      "ok": true
+    },
+    {
+      "shot": "explorer-carnets-peek",
+      "ok": true
+    },
+    {
+      "shot": "explorer-carnets-fiche-existante",
+      "ok": true
+    },
+    {
+      "shot": "explorer-clubs",
+      "ok": true
+    },
+    {
+      "shot": "explorer-clubs-filtre-activite",
+      "ok": true
+    },
+    {
+      "shot": "explorer-clubs-peek",
+      "ok": true
+    },
+    {
+      "shot": "explorer-clubs-detail",
+      "ok": true
+    },
+    {
+      "shot": "explorer-clubs-demandes",
+      "ok": true
+    },
+    {
+      "shot": "explorer-ile",
+      "ok": true
+    },
+    {
+      "shot": "explorer-sorties",
+      "ok": true
+    },
+    {
+      "shot": "explorer-agenda-jour",
+      "ok": true
+    },
+    {
+      "shot": "explorer-sorties-detail",
+      "ok": true
+    },
+    {
+      "shot": "explorer-invite",
+      "ok": true
+    },
+    {
+      "shot": "creation-publication-etape1",
+      "ok": true
+    },
+    {
+      "shot": "creation-publication-etape2",
+      "ok": true
+    },
+    {
+      "shot": "creation-publication-etape3",
+      "ok": true
+    },
+    {
+      "shot": "creation-publication-billet",
+      "ok": true
+    },
+    {
+      "shot": "creation-story-erreur-media",
+      "ok": true
+    },
+    {
+      "shot": "creation-publication-erreurs",
+      "ok": true
+    },
+    {
+      "shot": "creation-fermeture-confirmation",
+      "ok": true
+    },
+    {
+      "shot": "creation-brouillon",
+      "ok": true
+    },
+    {
+      "shot": "creation-succes-ile",
+      "ok": true
+    },
+    {
+      "shot": "creation-story-etape1",
+      "ok": true
+    },
+    {
+      "shot": "creation-story-etape2",
+      "ok": true
+    },
+    {
+      "shot": "creation-story-etape3",
+      "ok": true
+    },
+    {
+      "shot": "creation-carnet-etape1",
+      "ok": true
+    },
+    {
+      "shot": "creation-carnet-etape2",
+      "ok": true
+    },
+    {
+      "shot": "creation-carnet-etape3",
+      "ok": true
+    },
+    {
+      "shot": "creation-carnet-etape4",
+      "ok": true
+    },
+    {
+      "shot": "creation-sortie-etape1",
+      "ok": true
+    },
+    {
+      "shot": "creation-sortie-etape2",
+      "ok": true
+    },
+    {
+      "shot": "creation-sortie-etape3",
+      "ok": true
+    },
+    {
+      "shot": "creation-sortie-etape4",
+      "ok": true
+    },
+    {
+      "shot": "creation-kit-picker",
+      "ok": true
+    },
+    {
+      "shot": "creation-kit-etape1",
+      "ok": true
+    },
+    {
+      "shot": "creation-kit-etape2",
+      "ok": true
+    },
+    {
+      "shot": "creation-kit-etape3",
+      "ok": true
+    },
+    {
+      "shot": "creation-club-etape1",
+      "ok": true
+    },
+    {
+      "shot": "creation-club-etape2",
+      "ok": true
+    },
+    {
+      "shot": "creation-club-etape3",
+      "ok": true
+    },
+    {
+      "shot": "creation-club-etape4",
+      "ok": true
+    }
+  ]
+}

@@ -278,10 +278,21 @@ Toutes dans `handoff/communaute-v2/JOURNAL.md` :
   TestFlight.
 - Appliquer les migrations prod puis la recette B dès que `BACKUP_PASSPHRASE` existe
   (`PROD-APPLICATION.md`), et repasser `NEXT_PUBLIC_COMMUNAUTE_V2=true` en Production.
+- **Corriger en priorité le P1 relevé par l'audit des écarts à la maquette** (`docs/audit/
+  communaute-v2-2026-11-08/ecarts-maquette/ECARTS-MAQUETTE.md`) : l'écran **résultats** de la
+  Recherche est masqué par l'aplat de repli de couverture (`.lkdv-cv2x-search-cover` sans
+  `position: relative` → `.lkdv-cv2x-cover-fallback` s'étire sur tout le corps, `elementFromPoint`
+  mesuré), ce qui intercepte aussi la bascule « Sur la carte ». Correctif d'une ligne
+  (`explore-v2.css` L990) + captures/e2e 5a/5b/5e de contrôle. Les 43 autres écarts P2/P3 non
+  documentés de l'audit sont listés par priorité dans le même dossier.
 
 ## 10. Pièces jointes
 
 - `handoff/communaute-v2/` : mission, spec, design, données, plan, qualité, déploiement,
   recette, journal, contrats RPC, procédure prod.
 - `docs/audit/communaute-v2-2026-11-08/` : `COUVERTURE-200.md`, `integration/` (rapport + 19
-  captures), `recette/` (preuves, captures, fixtures), `DEPLOIEMENT.md` côté `docs/communaute-v2/`.
+  captures), `recette/` (preuves, captures, fixtures), `DEPLOIEMENT.md` côté `docs/communaute-v2/`,
+  et **`ecarts-maquette/`** : **48 captures 390×844** des tiroirs/sous-tiroirs/formulaires +
+  `ECARTS-MAQUETTE.md` (index, gravités, top corrections) + `ECARTS-EXPLORER.md` +
+  `ECARTS-CREATION.md` + `ECARTS-TRANSVERSES.md` (inventaire complet des différences avec la
+  maquette, preuves image par image, harnais `capture-all.spec.ts` rejouable).
