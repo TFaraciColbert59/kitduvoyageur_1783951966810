@@ -1,7 +1,7 @@
 // Décor matériel uniquement : aucun réglage de caméra ou de matière du sac.
 import {
-  BoxGeometry, CanvasTexture, DirectionalLight, HemisphereLight, Mesh, MeshBasicMaterial,
-  MeshStandardMaterial, PlaneGeometry, Scene, SRGBColorSpace,
+  BoxGeometry, CanvasTexture, ExtrudeGeometry, DirectionalLight, HemisphereLight, Mesh, MeshBasicMaterial,
+  MeshStandardMaterial, PlaneGeometry, Scene, Shape, SRGBColorSpace,
 } from 'three';
 import { RAW_MATERIALS } from '../domain/palette';
 import { INK, LIGHT_RIM, LIGHT_SUN, WOOD_TINT, inkA, rgb } from '../domain/palette.scene';
@@ -30,16 +30,35 @@ export function createWorkshop(scene: Scene, tr: ResourceTracker, tex: TextureBa
   scene.add(fill);
 
   const wood = tr.material(new MeshStandardMaterial({ map: tex.wood(), color: makeColor(WOOD_TINT), roughness: 0.94, metalness: 0 }));
-  const top = new Mesh(tr.geometry(new BoxGeometry(TABLE.w, 0.12, TABLE.d)), wood);
+  // Petit chanfrein réel de 8 mm : sa normale accroche la clé à 30° au bord du chant.
+  // Les grandes faces restent planes ; aucune lumière supplémentaire sur le sac.
+  const bevel = 0.008;
+  const profile = new Shape();
+  const halfW = TABLE.w / 2 - bevel;
+  const halfH = 0.06 - bevel;
+  profile.moveTo(-halfW, -halfH);
+  profile.lineTo(halfW, -halfH);
+  profile.lineTo(halfW, halfH);
+  profile.lineTo(-halfW, halfH);
+  profile.closePath();
+  const slab = tr.geometry(new ExtrudeGeometry(profile, {
+    depth: TABLE.d - 2 * bevel, bevelEnabled: true, bevelThickness: bevel,
+    bevelSize: bevel, bevelSegments: 1, steps: 1,
+  }));
+  slab.translate(0, 0, -TABLE.d / 2 + bevel);
+  const edge = tr.material(new MeshStandardMaterial({
+    color: makeColor(RAW_MATERIALS['m-968c81']), roughness: 0.64, metalness: 0,
+  }));
+  const top = new Mesh(slab, [edge, wood]);
   top.name = 'atelier-plateau';
-  top.position.set(TABLE.x, GROUND_Y - 0.06, 0);
+  top.position.set(TABLE.x, GROUND_Y - 0.06, TABLE.z);
   top.receiveShadow = top.castShadow = true;
   scene.add(top);
   // Caisson jusqu'au sol : le chant du plateau reste net, aucune face inférieure suspendue.
   const base = new Mesh(tr.geometry(new BoxGeometry(TABLE.w - 0.12, 1.5, TABLE.d - 0.12)),
-    tr.material(new MeshStandardMaterial({ color: makeColor(RAW_MATERIALS['m-7a7365']), roughness: 1 })));
+    tr.material(new MeshStandardMaterial({ color: makeColor(RAW_MATERIALS['m-2c3530']), roughness: 1 })));
   base.name = 'atelier-caisson';
-  base.position.set(TABLE.x, GROUND_Y - 0.12 - 0.75, 0);
+  base.position.set(TABLE.x, GROUND_Y - 0.12 - 0.75, TABLE.z);
   base.receiveShadow = base.castShadow = true;
   scene.add(base);
 

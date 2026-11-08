@@ -10,3 +10,11 @@ Branche isolée `chantier/scene-atelier`, base `2a97ca6`. Aucune fusion automati
 5. Vérifier tests Kit Studio, pixels atlas, contre-épreuve greffe neutralisée, types et lint des fichiers modifiés. Assembler puis regarder la planche `scene-atelier-avant-apres.png`.
 
 Les apparences du sac, la trame, le sheen, le cadrage, les animations et les vignettes ne sont pas modifiés. Les caméras de gros plan appartiennent au seul script de preuve.
+
+
+## Reprise demandée après contrôle
+
+- Rebase sur origin/main `08993b8` incluant `c9104bf`, sans fusion.
+- Séparation de valeur caisson/chant/dessus ; chanfrein de 8 mm éclairé par la clé conservée.
+- Nouvelle planche comparative à 78 %, avec les captures brutes de la caméra de production séparées : celle-ci coupe encore le bas et relève du troisième agent.
+- Vérifications et contre-épreuve atlas reprises après rebase.

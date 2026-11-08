@@ -1,13 +1,13 @@
 (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
-  - `__dirname` (vitest.config.ts:44:25). Use `import.meta.dirname` instead
+  - `__dirname` (vitest.config.ts:50:25). Use `import.meta.dirname` instead
 Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
 
  RUN  v4.1.11 /Users/fr168256/.codex/worktrees/scene-atelier/lkdv-kit-studio
 
-(node:37785) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(node:53013) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
 (Use `node --trace-warnings ...` to show where the warning was created)
- ❯ src/features/kit-studio/__tests__/atlas.test.ts (9 tests | 1 failed | 8 skipped) 1794ms
-     × teinte uniquement le tissu entre forest et ochre, préserve boucles/sangles/écusson, et garantit le contraste local RMS de la trame au cadrage Studio par défaut 1792ms
+ ❯ src/features/kit-studio/__tests__/atlas.test.ts (9 tests | 1 failed | 8 skipped) 5749ms
+     × teinte uniquement le tissu entre forest et ochre, préserve boucles/sangles/écusson, et garantit le contraste local RMS de la trame au cadrage Studio par défaut 5747ms
 
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
 
@@ -26,5 +26,5 @@ AssertionError: expected 0 to be greater than 53441.299999999996
 
  Test Files  1 failed (1)
       Tests  1 failed | 8 skipped (9)
-   Start at  10:31:22
-   Duration  2.19s (transform 63ms, setup 57ms, import 204ms, tests 1.79s, environment 0ms)
+   Start at  12:49:20
+   Duration  7.50s (transform 240ms, setup 268ms, import 433ms, tests 5.75s, environment 0ms)

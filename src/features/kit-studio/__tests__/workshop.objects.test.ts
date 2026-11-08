@@ -6,7 +6,7 @@ import { createBag } from '../scene/bagBuilder';
 import { createObjectLayer } from '../scene/objects';
 import { ResourceTracker } from '../scene/resources';
 import { createTextureBank } from '../scene/textures';
-import { GROUND_Y } from '../scene/layout';
+import { GROUND_Y, TABLE } from '../scene/layout';
 
 afterEach(() => vi.restoreAllMocks());
 it('pose les objets de « Sur toi » sur le plan, quelle que soit leur forme', () => {
@@ -20,6 +20,13 @@ it('pose les objets de « Sur toi » sur le plan, quelle que soit leur forme', (
   for(let i=0;i<30;i++) layer.step(1/60, {focus:'worn',arcAmt:0,ex:0,pos:0,ghostsOn:false});
   const visible = root.children.filter(n => n instanceof Group && n.visible);
   expect(visible.length).toBeGreaterThan(3);
-  for(const object of visible) expect(new Box3().setFromObject(object).min.y).toBeCloseTo(GROUND_Y, 3);
+  for(const object of visible) {
+    const bounds = new Box3().setFromObject(object);
+    expect(bounds.min.y).toBeCloseTo(GROUND_Y, 3);
+    expect(bounds.max.z).toBeLessThanOrEqual(TABLE.z + TABLE.d / 2);
+    expect(bounds.min.z).toBeGreaterThanOrEqual(TABLE.z - TABLE.d / 2);
+    expect(bounds.max.x).toBeLessThanOrEqual(TABLE.x + TABLE.w / 2);
+    expect(bounds.min.x).toBeGreaterThanOrEqual(TABLE.x - TABLE.w / 2);
+  }
   layer.dispose(); bag.dispose(); tex.dispose(); tr.disposeAll();
 });

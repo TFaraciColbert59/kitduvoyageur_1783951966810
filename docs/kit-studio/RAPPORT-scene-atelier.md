@@ -1,55 +1,62 @@
-# Scène atelier — 8 novembre 2026
+# Scène atelier — reprise après contrôle, 8 novembre 2026
 
-Branche : `chantier/scene-atelier`. Base : `2a97ca6cb07eda6570679385d9519205f4de2960`.
-Worktree : `/Users/fr168256/.codex/worktrees/scene-atelier/lkdv-kit-studio`.
-Aucune fusion, publication ni modification du checkout `main`.
+Branche `chantier/scene-atelier`. Lot initial `4bd0872`, rebasé sur `08993b8` (`origin/main`, incluant le lot caméra `c9104bf`). Le rebase s'est appliqué sans conflit manuel. Aucun changement du checkout `main`, aucune fusion.
 
-## Décor livré
+## Établi
 
-- Mur sans motif ni horizon : gradient vertical entre `LOOK_METAL` et `WOOD_TINT`, couleurs déjà déclarées. Le dessin du ciel, du soleil, des nuages, des crêtes, des sapins et de la prairie est supprimé.
-- Établi mat (`roughness: 0.94`), grain fin déterministe, plateau de 12 cm et caisson continu. Profondeur ramenée à 1,8 unité de scène pour montrer le chant avant avec la caméra existante.
-- Ombre de contact sur le plan : cœur dense, décroissance progressive et transparente ; dimensions liées à l'encombrement du modèle actif. La couleur vient de `INK`. Elle reste visible quand le budget de la scène coupe les ombres dynamiques.
-- Clé de 30° au-dessus de l'horizon, azimut 10°, à `0.8π` avec PMREM ; remplissage doux à l'opposé, hémisphère neutre atténué. `RoomEnvironment` conservé. Choix comparé sur six rendus : élévations 25/30/35° × azimuts 10/35°, puissance constante.
-- Les objets de « Sur toi » reposent sur l'établi : leur élévation est calculée d'après le bas de leur géométrie et leur échelle. Les ancres qui orientent la caméra ne changent pas. Aucun changement des formules d'animation.
+Le caisson utilise désormais l'encre désaturée du catalogue `m-2c3530`, nettement plus sombre que le mur. Le chant utilise `m-968c81`, distinct du dessus clair. Aucune nouvelle couleur littérale.
 
-## Objets signalés sur iPhone
+L'épaisseur du plateau reste de 12 cm, avec un chanfrein géométrique de 8 mm. Cette petite face inclinée reçoit la clé existante à 30° : arête claire, chant plus sombre, puis caisson sombre. Aucune lumière supplémentaire ; pas de changement de teinte, trame ou sheen du sac.
 
-Les objets du catalogue sont construits dans `scene/itemMesh.ts`, puis positionnés par `scene/objects.ts` et `scene/layout.ts`. La disposition héritée `WORN_OFFSETS` les répartissait verticalement autour d'un personnage implicite. La capture supplémentaire `avant-objets.png` reproduit effectivement une casquette et un anneau suspendus ; `apres-objets.png` montre la correction sur le plan.
+Le plateau garde ses dimensions 4,6 × 1,8 ; son bord avant est rapproché du sujet (z = 0,24) pour rester visible en vue serrée. Deux emplacements de rangement sont reculés en conséquence. Le test des objets vérifie désormais aussi que leurs boîtes restent entièrement sur le plateau, en plus du contact vertical.
 
-Les cylindres peuvent être les formes `roll` du duvet, de la tente ou du matelas ; le dôme peut être la casquette (`hat`). Les anneaux existent dans les formes de frontale, lunettes et montre. Ce sont des correspondances de géométrie, **pas une identification certaine des captures de Tony**.
+## Rebase et caméra : distinction nécessaire
 
-Aucun couple de blocs corail ni anneau bleu identiques aux captures signalées n'a été reproduit dans cette base. Les GLB 15/45 ne contiennent que le corps et l'écusson, sans accessoires de décor. Aucune nouvelle couleur de décor n'est introduite. Le catalogue possède déjà une brique `m-a8443a` pour la trousse de secours ; elle n'a pas été modifiée. L'origine exacte des trois formes signalées reste non établie ; Tony ne dispose pas de l'URL ou du kit correspondant.
+Les apports de `c9104bf` survivent dans `createScene.ts` :
 
-## Preuves reproductibles
+- `rig.setWorld(... bounds: world.bagModel.getBounds ...)` ;
+- les bornes composites incluant les modules ;
+- `reducedMotion` transmis à la couche GLB ;
+- l'avancement des modules et `attachMoving` dans le maintien de la boucle.
 
-Depuis ce worktree :
+Le décor et la lumière restent dans `workshop.ts`, le mur dans le banc de textures. `camera.ts`, `bag/modelLayer.ts`, `bag/moduleLoader.ts`, `thumbnails.ts` et `bagAnchorsTable.ts` sont identiques à la base `08993b8`.
+
+**Le contrôle réel a révélé un défaut de la caméra c9104bf :** après convergence du zoom, le point visé reste trop haut et le bas du sac est coupé. La cible mêle encore l'ancre du sac procédural et le centre du GLB. Cette reprise ne corrige pas le code caméra, réservé au troisième agent.
+
+La planche est donc explicitement étiquetée **caméra comparative à 78 %** : elle emploie le vrai décor de production, les GLB, les matériaux, les shaders et le PMREM, avec une caméra de preuve recentrée sur les bornes réelles. FOV, orientation et pose sont identiques avant/après pour chaque produit. Le montage sac + M04 tient à 78 % ; le corps seul y occupe 75,83 %. Les 45 L et 15 L seuls ont une hauteur de bornes projetées de 78,00 %.
+
+Les six fichiers `*-camera-production.png` conservent séparément les rendus **sans correction de caméra de preuve**. Ils permettent au troisième agent de reproduire le défaut. La planche comparative ne doit pas être prise pour une validation du cadrage de production actuel.
+
+## Preuves
+
+`preuves/scene-atelier/scene-atelier-avant-apres.png` a été régénérée et regardée :
+
+- 45 L seul, avant/après ;
+- 45 L + M04 monté et M01 posé sur le plan, présentation validée par Tony ;
+- 15 L seul, avant/après ;
+- gros plan tissu, avant/après.
+
+L'« avant » utilise le décor de `08993b8`, et bénéficie donc lui aussi du lot c9104bf. Les couleurs, modèles, matières et caméras de preuve sont communs. Les poses des caméras sont enregistrées dans `avant-webgl.json` et `apres-webgl.json` ; leur égalité a été vérifiée pour les trois vues.
+
+Le nouveau gros plan mesure un contraste passe-haut RMS de **1,793 avec trame / 0,163 sans trame = ×11,01**. L'ancien lot mesurait ×11,38 ; cette valeur historique n'est pas réutilisée comme mesure de la nouvelle capture. La trame de 4,69 mm, le sheen de 0,35, la clé de 30° à 0,8π, le remplissage et RoomEnvironment sont inchangés. La matrice des six lumières du lot initial est conservée et étiquetée comme historique.
+
+Rendu Chromium WebGL/ANGLE/SwiftShader réel, assemblage des PNG par Sharp, aucune synthèse d'image. Le script réveille la scène après chargement GLB et laisse converger la pose avant de capturer.
 
 ```sh
 node scripts/kit-studio/render-scene-atelier.mjs avant
-node scripts/kit-studio/render-scene-atelier.mjs apres --matrix
+node scripts/kit-studio/render-scene-atelier.mjs apres
 node scripts/kit-studio/assemble-scene-atelier.mjs
 ```
 
-Le rendu appelle `createKitScene` de production, avec un vrai `WebGLRenderer`, les GLB et textures livrés, les shaders et le PMREM réels. Chromium utilise ANGLE/SwiftShader : WebGL logiciel réel, aucune synthèse d'image. Les PNG sont assemblés avec Sharp, sans retouche du rendu.
+Les deux gros plans de contrôle permettent de vérifier le tissu indépendamment du cadrage principal. Les halos ambre hérités des zones restent présents ; ils ne sont pas peints sur le mur. L'origine exacte des blocs corail et de l'anneau bleu signalés sur iPhone reste inconnue, faute de kit ou d'URL permettant de les reproduire.
 
-Le script charge les sources du décor de la base Git pour « avant » ; les modèles, matériaux et caméras sont communs. Pour les gros plans seulement, une caméra de preuve vise une plage textile du sac. La caméra de production n'est pas modifiée.
+## Vérification après rebase
 
-La planche est `preuves/scene-atelier/scene-atelier-avant-apres.png` ; la matrice est `scene-atelier-matrice-lumiere.png`. Les captures et les journaux WebGL restent dans le même dossier.
+- 41 fichiers / **473 tests Kit Studio verts**, avec `--maxWorkers=2`.
+- Contre-épreuve fraîche : neutralisation temporaire de `onBeforeCompile`, échec attendu du test WebGL (aucun pixel de tissu recoloré). Restauration intégrale de `atlas.ts`, puis **9 tests atlas verts**. Seuils inchangés.
+- Typage : `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`.
+- ESLint ciblé et contrôle de syntaxe des scripts de preuve.
+- Vérification des trois poses de caméras avant/après et de l'occupation projetée.
+- Contrôle visuel de la planche avant livraison ; correction du chant après une première capture trop proche du ton du dessus.
 
-**Présentation validée par Tony :** 45 L seul, 45 L avec M04 fixé sur l'unique ancre façade et M01 posé sur le plan, 15 L seul ; chacun avant/après. Aucun second ancrage n'a été inventé.
-
-## Vérification
-
-- Suite Kit Studio : `npx vitest run src/features/kit-studio/__tests__ --maxWorkers=2` : **473 tests verts** (41 fichiers), dont le test WebGL atlas et le nouveau test du contact géométrique des objets. Le test des objets échouait avant correction : bas à −0,6656 au lieu de −0,8.
-- Contre-épreuve : neutralisation temporaire de `onBeforeCompile` dans le worktree, puis exécution du test WebGL. Échec attendu : zéro pixel de tissu changé, contre un minimum attendu de 53 441. Source restaurée intégralement, puis neuf tests atlas verts. Aucun seuil de test n'est modifié.
-- Une relance simultanée aux captures WebGL a eu deux échecs (classification pixel vide et modèle encore en chargement). La relance finale limitée à deux workers passe intégralement ; aucun seuil ni délai de test n’a été changé.
-- Typage du projet : `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`.
-- ESLint ciblé sur les fichiers TypeScript modifiés, et `git diff --check`.
-
-Les fichiers d'apparence du sac (dont `atlas.ts`), les cartes de trame, le sheen, les ancres et modules, les vignettes, les chiffres, la caméra et ses animations sont inchangés. La petite taille du sac dans le cadrage de référence appartient au lot caméra en parallèle.
-
-## Lecture de la planche
-
-La planche et la matrice ont été ouvertes et regardées avant livraison. Le gros plan montre les mailles et leurs reliefs avec un remplissage qui conserve le détail du côté sombre. Sur la plage textile fixe de 210 × 400 pixels, le contraste passe-haut RMS vaut **1,923 avec trame contre 0,169 sans trame**, soit **×11,38** (avant : 2,038 contre 0,514, soit ×3,96). Il s'agit d'une mesure de gros plan, pas d'une garantie de lisibilité au cadrage miniature.
-
-Le sac touche son ombre, le chant avant et le caisson sont visibles, M01 repose sur le plan. Une capture « Sur toi » initiale coupait des objets : leurs positions ont été corrigées et la capture a été refaite. Les petits halos ambre sont les repères de zones hérités, conservés avec le système d'ancres ; ils ne sont pas peints dans le mur.
+La validation du **cadrage de production** demeure à faire lors de la réunion avec le troisième lot. Ni sa caméra, ni les modules, ni les vignettes, ni le tiroir n'ont été modifiés ici.

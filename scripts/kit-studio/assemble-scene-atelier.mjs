@@ -7,8 +7,8 @@ const paper = '#EEEAE4', ink = '#141916';
 const svg = (w,h,text) => Buffer.from(`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><style>text{font-family:Arial,sans-serif;fill:${ink}}</style>${text}</svg>`);
 const layers = [];
 const addText = (text, left, top, width=1860, size=25) => layers.push({input:svg(width,80,`<text x="0" y="32" font-size="${size}">${text}</text>`),left,top});
-addText('KIT STUDIO · SCÈNE ATELIER · AVANT / APRÈS',30,20,1860,34);
-addText('Scène de production · Chromium WebGL / SwiftShader · caméra et matières du sac identiques',30,70,1860,23);
+addText('KIT STUDIO · SCÈNE ATELIER · COMPARAISON À 78 %',30,20,1860,34);
+addText('Décor WebGL réel · caméra comparative à 78 % · caméra de production c9104bf inchangée',30,70,1860,23);
 const cases = [['45-seul','45 L seul'],['45-modules','45 L · M04 monté + M01 sur l’établi'],['15-seul','15 L seul']];
 for(let col=0;col<3;col++) {
  const [file,label]=cases[col]; const left=30+col*630;
@@ -34,6 +34,7 @@ addText(`Contraste local avec / sans trame : ×${c.ratio.toFixed(2)}`,1230,2070,
 addText('Mesure sur une plage textile du gros plan',1230,2120,640,23);
 addText('Ancres du 45 L : une façade auditée',1230,2220,640,25);
 addText('M01 posé sur le plan, M04 fixé au sac',1230,2270,640,25);
+addText('Captures caméra de production fournies à part',1230,2350,660,23);
 await sharp({create:{width:1920,height:2490,channels:3,background:paper}}).composite(layers).png().toFile(path.join(dir,'scene-atelier-avant-apres.png'));
 const matrix=[];
 for(const [row,el] of [25,30,35].entries()) for(const [col,az] of [10,35].entries()) {
@@ -41,6 +42,6 @@ for(const [row,el] of [25,30,35].entries()) for(const [col,az] of [10,35].entrie
  matrix.push({input:svg(500,65,`<text x="15" y="40" font-size="24">Élévation ${el}° · azimut ${az}° · 0,8π</text>`),left,top});
  matrix.push({input:await sharp(path.join(dir,`lumiere-${el}-${az}.png`)).resize(480,570).toBuffer(),left:left+10,top:top+60});
 }
-matrix.push({input:svg(1000,65,'<text x="15" y="40" font-size="28">Matrice de lumière · même tissu, même caméra, même PMREM</text>'),left:0,top:0});
+matrix.push({input:svg(1000,65,'<text x="15" y="40" font-size="28">Matrice du lot initial 4bd0872 · lumière conservée</text>'),left:0,top:0});
 await sharp({create:{width:1000,height:2025,channels:3,background:paper}}).composite(matrix).png().toFile(path.join(dir,'scene-atelier-matrice-lumiere.png'));
 console.log('Assembled scene-atelier-avant-apres.png and scene-atelier-matrice-lumiere.png');
