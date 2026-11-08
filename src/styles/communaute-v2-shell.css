@@ -224,7 +224,11 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   -webkit-backdrop-filter: var(--sheet-blur);
   backdrop-filter: var(--sheet-blur);
   animation: cv2DetailIn 0.42s var(--ease-glass) both;
-  z-index: 12;
+  /* Au-dessus de la poignée (z 15) : sinon la zone de préhension (18 px + son
+     débordement `::after`) recouvre le bouton ‹ Retour et intercepte le tap.
+     Le glissement de fermeture reste possible depuis `.lkdv-cv2-detail-nav`
+     (qui porte aussi `data-cv2-drag`). */
+  z-index: 16;
 }
 .lkdv-cv2-detail-nav {
   flex: none;

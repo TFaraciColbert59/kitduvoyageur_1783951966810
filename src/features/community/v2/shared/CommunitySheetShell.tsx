@@ -177,21 +177,35 @@ export function CommunitySheetShell({
     setState('closing');
     setDragY(0);
     setDragging(false);
+    // Restitution du focus au déclencheur. Le fond n'est rendu focusable qu'APRÈS
+    // le nettoyage de l'effet `inert` (commit React suivant) : un focus synchrone
+    // serait un no-op silencieux. On le diffère d'une frame, puis on réessaie
+    // quelques fois si le navigateur (WebKit) n'a pas encore acheté le commit :
+    // sans ces reprises, le focus restait sur `body` dans Safari iOS.
+    const retryTimers: number[] = [];
+    const restoreOpenerFocus = (attempt: number) => {
+      const opener = openerRef.current;
+      if (!opener || !document.contains(opener)) return;
+      if (document.activeElement === opener) return;
+      opener.focus({ preventScroll: true });
+      if (document.activeElement !== opener && attempt < 4) {
+        retryTimers.push(
+          window.setTimeout(() => restoreOpenerFocus(attempt + 1), 40 * (attempt + 1)),
+        );
+      }
+    };
     const timeout = window.setTimeout(
       () => {
         setMounted(false);
         setState('opening');
-        // Le fond n'est rendu focusable qu'APRÈS le nettoyage de l'effet
-        // `inert` (commit React suivant). Un focus synchrone ici serait un
-        // no-op silencieux ; on le diffère d'une frame.
-        window.requestAnimationFrame(() => {
-          const opener = openerRef.current;
-          if (opener && document.contains(opener)) opener.focus({ preventScroll: true });
-        });
+        window.requestAnimationFrame(() => restoreOpenerFocus(0));
       },
       reducedMotion ? 0 : SHEET_EXIT_MS,
     );
-    return () => window.clearTimeout(timeout);
+    return () => {
+      window.clearTimeout(timeout);
+      retryTimers.forEach((timer) => window.clearTimeout(timer));
+    };
     // `mounted` est volontairement hors dépendances : sinon la sortie se relance.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, reducedMotion]);
