@@ -358,7 +358,12 @@ export function createKitScene(canvas: HTMLCanvasElement, options: KitSceneOptio
       lifecycle.invalidate();
       // Le sac est posé : les vignettes peuvent aller chercher leurs propres maillages. Avant,
       // leurs téléchargements retardaient celui-ci de plus de vingt secondes.
-      void import('./thumbAssets').then((m) => m.ouvrirChargementsVignettes());
+      void import('./thumbAssets').then(
+        (m) => m.ouvrirChargementsVignettes(),
+        () => {
+          // Les vignettes se débloqueront d'elles-mêmes au bout de leur délai de secours.
+        },
+      );
     });
   };
 

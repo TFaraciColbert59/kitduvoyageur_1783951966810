@@ -353,15 +353,20 @@ export function createThumbnailEngine(options: ThumbnailEngineOptions = {}): Thu
   let actifs: typeof import('./thumbAssets') | null = null;
   /** Clé de vignette -> maillages dont elle dépend, relevés pendant sa construction. */
   const dependances = new Map<string, Set<string>>();
-  void import('./thumbAssets').then((mod) => {
-    if (disposed) return;
-    actifs = mod;
-    desabonnerActifs = mod.surActifPret((id) => {
-      for (const [key, ids] of dependances) {
-        if (ids.has(id)) api.invalidate(key);
-      }
-    });
-  });
+  void import('./thumbAssets').then(
+    (mod) => {
+      if (disposed) return;
+      actifs = mod;
+      desabonnerActifs = mod.surActifPret((id) => {
+        for (const [key, ids] of dependances) {
+          if (ids.has(id)) api.invalidate(key);
+        }
+      });
+    },
+    () => {
+      // Sans ce module, les vignettes gardent leur silhouette de repli : pas de quoi échouer.
+    },
+  );
 
   const notify = (key: string, value: ThumbValue): void => {
     const set = listeners.get(key);
