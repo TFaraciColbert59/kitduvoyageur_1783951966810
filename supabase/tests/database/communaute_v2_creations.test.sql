@@ -101,7 +101,7 @@ RESET ROLE;
 SELECT is(
   (SELECT count(*)::int FROM public.clubs),
   2,
-10. create_club_with_admin : l''échec slug_taken n''a rien créé'
+  '10. create_club_with_admin : l''échec slug_taken n''a rien créé'
 );
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'c7e10000-0000-4000-8000-000000000001';
@@ -109,7 +109,7 @@ SELECT throws_ok(
   $$ SELECT public.create_club_with_admin('{"name":"   "}'::jsonb) $$,
   'P0001',
   NULL,
-11. create_club_with_admin : nom vide → validation_failed'
+  '11. create_club_with_admin : nom vide → validation_failed'
 );
 SELECT is(
   (SELECT public.create_club_with_admin($j${
@@ -117,7 +117,7 @@ SELECT is(
     "welcome_post": true, "client_request_id": "creation-club-2"
   }$j$::jsonb) ->> 'post_id') IS NULL,
   true,
-12. create_club_with_admin : aucun post de bienvenue pour un club sur validation'
+  '12. create_club_with_admin : aucun post de bienvenue pour un club sur validation'
 );
 
 -- ── 13-19 : create_event_with_post ────────────────────────────────────────
@@ -132,31 +132,31 @@ SELECT is(
     "client_request_id": "creation-event-1"
   }$j$::jsonb) ->> 'post_id') IS NOT NULL,
   true,
-13. create_event_with_post : sortie + post d''annonce'
+  '13. create_event_with_post : sortie + post d''annonce'
 );
 RESET ROLE;
 SELECT is(
   (SELECT organizer_id FROM public.events WHERE title = 'Sortie v2 création'),
   'c7e10000-0000-4000-8000-000000000001'::uuid,
-14. create_event_with_post : organisateur = appelant'
+  '14. create_event_with_post : organisateur = appelant'
 );
 SELECT is(
   (SELECT event_date FROM public.events WHERE title = 'Sortie v2 création'),
   '2027-06-12'::date,
-15. create_event_with_post : event_date dérivée de starts_at'
+  '15. create_event_with_post : event_date dérivée de starts_at'
 );
 SELECT is(
   (SELECT count(*)::int FROM public.event_participants ep
      JOIN public.events e ON e.id = ep.event_id
     WHERE e.title = 'Sortie v2 création' AND ep.status = 'confirmed'),
   1,
-16. create_event_with_post : organisateur inscrit confirmé'
+  '16. create_event_with_post : organisateur inscrit confirmé'
 );
 SELECT is(
   (SELECT count(*)::int FROM public.community_posts
     WHERE creation_meta ->> 'event_id' = (SELECT id::text FROM public.events WHERE title = 'Sortie v2 création')),
   1,
-17. create_event_with_post : le post d''annonce pointe la sortie'
+  '17. create_event_with_post : le post d''annonce pointe la sortie'
 );
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'c7e10000-0000-4000-8000-000000000001';
@@ -166,7 +166,7 @@ SELECT is(
     "client_request_id": "creation-event-1"
   }$j$::jsonb) ->> 'idempotent'),
   'true',
-18. create_event_with_post : idempotent (même client_request_id)'
+  '18. create_event_with_post : idempotent (même client_request_id)'
 );
 SELECT is(
   (SELECT public.create_event_with_post($j${
@@ -174,13 +174,13 @@ SELECT is(
     "announce": false, "client_request_id": "creation-event-2"
   }$j$::jsonb) ->> 'post_id') IS NULL,
   true,
-19. create_event_with_post : announce=false → aucun post'
+  '19. create_event_with_post : announce=false → aucun post'
 );
 RESET ROLE;
 SELECT is(
   (SELECT count(*)::int FROM public.events WHERE title = 'Sortie v2 création'),
   1,
-20. create_event_with_post : aucun doublon de sortie'
+  '20. create_event_with_post : aucun doublon de sortie'
 );
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'c7e10000-0000-4000-8000-000000000001';
@@ -192,7 +192,7 @@ SELECT throws_ok(
      }$j$::jsonb) $$,
   'P0001',
   NULL,
-21. create_event_with_post : club sans adhésion → club_not_member'
+  '21. create_event_with_post : club sans adhésion → club_not_member'
 );
 SELECT throws_ok(
   $$ SELECT public.create_event_with_post($j${
@@ -201,14 +201,14 @@ SELECT throws_ok(
      }$j$::jsonb) $$,
   'P0001',
   NULL,
-22. create_event_with_post : niveau hors énumération → validation_failed'
+  '22. create_event_with_post : niveau hors énumération → validation_failed'
 );
 RESET ROLE;
 SELECT is(
   (SELECT count(*)::int FROM public.events
     WHERE title IN ('Sortie club interdit', 'Sortie niveau invalide')),
   0,
-23. create_event_with_post : échec de validation → aucune sortie'
+  '23. create_event_with_post : échec de validation → aucune sortie'
 );
 
 -- ── 24-27 : create_kit_with_items ─────────────────────────────────────────
@@ -226,7 +226,7 @@ SELECT is(
     "client_request_id": "creation-kit-1"
   }$j$::jsonb) ->> 'total_weight_g'),
   '700',
-24. create_kit_with_items : poids total calculé en SQL (500 + 2×100)'
+  '24. create_kit_with_items : poids total calculé en SQL (500 + 2×100)'
 );
 RESET ROLE;
 SELECT is(
@@ -234,13 +234,13 @@ SELECT is(
      JOIN public.materiel_kits k ON k.id = i.kit_id
     WHERE k.name = 'Kit v2'),
   2,
-25. create_kit_with_items : deux articles créés'
+  '25. create_kit_with_items : deux articles créés'
 );
 SELECT is(
   (SELECT count(*)::int FROM public.community_posts
     WHERE linked_kit_id = (SELECT id FROM public.materiel_kits WHERE name = 'Kit v2')),
   1,
-26. create_kit_with_items : kit public → un post pont'
+  '26. create_kit_with_items : kit public → un post pont'
 );
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'c7e10000-0000-4000-8000-000000000001';
@@ -251,20 +251,20 @@ SELECT throws_ok(
      }$j$::jsonb) $$,
   'P0001',
   NULL,
-27. create_kit_with_items : article sans nom → validation_failed'
+  '27. create_kit_with_items : article sans nom → validation_failed'
 );
 RESET ROLE;
 SELECT is(
   (SELECT count(*)::int FROM public.materiel_kits WHERE name = 'Kit invalide'),
   0,
-28. create_kit_with_items : échec → aucun kit partiel'
+  '28. create_kit_with_items : échec → aucun kit partiel'
 );
 
 -- ── 29-35 : create_carnet_v2 ──────────────────────────────────────────────
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'c7e10000-0000-4000-8000-000000000001';
 SELECT is(
-  (SELECT (public.create_carnet_v2($j${
+  (SELECT public.create_carnet_v2($j${
     "title": "Carnet v2 privé", "destination": "Chamonix", "visibility": "private",
     "start_lat": 45.9237, "start_lng": 6.8694,
     "moments": [
@@ -283,60 +283,60 @@ SELECT is(
     "client_request_id": "creation-carnet-1"
   }$j$::jsonb) ->> 'moments_count')::int,
   2,
-29. create_carnet_v2 : moments écrits'
+  '29. create_carnet_v2 : moments écrits'
 );
 SELECT is(
-  (SELECT (public.create_carnet_v2($j${
+  (SELECT public.create_carnet_v2($j${
     "title": "Carnet v2 privé", "destination": "Chamonix", "visibility": "private",
     "media": [{"url": "https://cdn.test/3.jpg"}],
     "collaborators": ["c7e10000-0000-4000-8000-000000000003"],
     "client_request_id": "creation-carnet-2"
   }$j$::jsonb) ->> 'media_count')::int,
   1,
-30. create_carnet_v2 : médias écrits'
+  '30. create_carnet_v2 : médias écrits'
 );
 SELECT is(
   (SELECT count(*)::int FROM public.carnet_collaborators
     WHERE user_id = 'c7e10000-0000-4000-8000-000000000003'
       AND carnet_id IN (SELECT id FROM public.carnets WHERE title = 'Carnet v2 privé')),
   2,
-31. create_carnet_v2 : collaborateur invité (un par carnet)'
+  '31. create_carnet_v2 : collaborateur invité (un par carnet)'
 );
 RESET ROLE;
 SELECT is(
   (SELECT count(*)::int FROM public.community_posts
     WHERE (creation_meta ->> 'carnet_id') IN (SELECT id::text FROM public.carnets WHERE title = 'Carnet v2 privé')),
   0,
-32. create_carnet_v2 : un carnet privé ne crée aucun post'
+  '32. create_carnet_v2 : un carnet privé ne crée aucun post'
 );
 SELECT is(
   (SELECT count(*)::int FROM public.carnets
     WHERE title = 'Carnet v2 privé' AND start_geom IS NOT NULL),
   1,
-33. create_carnet_v2 : start_geom renseignée'
+  '33. create_carnet_v2 : start_geom renseignée'
 );
 SELECT ok(
   (SELECT count(*)::int FROM public.carnet_moments
     WHERE carnet_id IN (SELECT id FROM public.carnets WHERE title = 'Carnet v2 privé')) = 2,
-34. create_carnet_v2 : deux moments en base'
+  '34. create_carnet_v2 : deux moments en base'
 );
 SELECT is(
   (SELECT count(*)::int FROM public.carnets WHERE client_request_id = 'creation-carnet-1'),
   1,
-35. create_carnet_v2 : idempotence (un seul carnet pour le même client_request_id)'
+  '35. create_carnet_v2 : idempotence (un seul carnet pour le même client_request_id)'
 );
 
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'c7e10000-0000-4000-8000-000000000001';
 SELECT is(
-  (SELECT (public.create_carnet_v2($j${
+  (SELECT public.create_carnet_v2($j${
     "title": "Carnet v2 public", "destination": "Annecy", "visibility": "public",
     "media": [{"url": "https://cdn.test/4.jpg"}],
     "post": {"enabled": true, "content": "Mon carnet public"},
     "client_request_id": "creation-carnet-3"
   }$j$::jsonb) ->> 'post_id') IS NOT NULL,
   true,
-36. create_carnet_v2 : carnet public → post pont'
+  '36. create_carnet_v2 : carnet public → post pont'
 );
 -- ── 37-45 : create_community_post ─────────────────────────────────────────
 SET LOCAL ROLE authenticated;
@@ -352,26 +352,26 @@ SELECT is(
     "client_request_id": "11111111-2222-3333-4444-555555555555"
   }$j$::jsonb) ->> 'audience'),
   'public',
-37. create_community_post : publication créée'
+  '37. create_community_post : publication créée'
 );
 RESET ROLE;
 SELECT is(
   (SELECT place_label FROM public.community_posts
     WHERE client_request_id = '11111111-2222-3333-4444-555555555555'),
   'Chamonix',
-38. create_community_post : lieu stocké en colonne'
+  '38. create_community_post : lieu stocké en colonne'
 );
 SELECT is(
   (SELECT tags FROM public.community_posts
     WHERE client_request_id = '11111111-2222-3333-4444-555555555555'),
   '{rando,chamonix}'::text[],
-39. create_community_post : tags stockés'
+  '39. create_community_post : tags stockés'
 );
 SELECT is(
   (SELECT creation_meta FROM public.community_posts
     WHERE client_request_id = '11111111-2222-3333-4444-555555555555'),
   '{"media_alts": ["Vue du sommet"]}'::jsonb,
-40. create_community_post : creation_meta conservé'
+  '40. create_community_post : creation_meta conservé'
 );
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'c7e10000-0000-4000-8000-000000000001';
@@ -382,7 +382,7 @@ SELECT is(
     "client_request_id": "11111111-2222-3333-4444-555555555555"
   }$j$::jsonb) ->> 'idempotent'),
   'true',
-41. create_community_post : idempotent (même uuid)'
+  '41. create_community_post : idempotent (même uuid)'
 );
 SELECT throws_ok(
   $$ SELECT public.create_community_post($j${
@@ -391,7 +391,7 @@ SELECT throws_ok(
      }$j$::jsonb) $$,
   'P0001',
   NULL,
-42. create_community_post : audience restreinte + média → validation_failed'
+  '42. create_community_post : audience restreinte + média → validation_failed'
 );
 SELECT throws_ok(
   $$ SELECT public.create_community_post($j${
@@ -400,14 +400,14 @@ SELECT throws_ok(
      }$j$::jsonb) $$,
   'P0001',
   NULL,
-43. create_community_post : audience club sans adhésion → club_not_member'
+  '43. create_community_post : audience club sans adhésion → club_not_member'
 );
 RESET ROLE;
 SELECT is(
   (SELECT count(*)::int FROM public.community_posts
     WHERE client_request_id = '11111111-2222-3333-4444-555555555555'),
   1,
-44. create_community_post : aucun doublon de publication'
+  '44. create_community_post : aucun doublon de publication'
 );
 
 -- ── 46 : invité refusé sur une écriture atomique ─────────────────────────
@@ -417,7 +417,7 @@ SELECT throws_ok(
   $$ SELECT public.create_community_post('{"content":"écriture invitée"}'::jsonb) $$,
   '42501',
   NULL,
-45. create_community_post : invité refusé'
+  '45. create_community_post : invité refusé'
 );
 
 SELECT * FROM finish();

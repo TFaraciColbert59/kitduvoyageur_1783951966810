@@ -860,7 +860,7 @@ grant execute on function public.create_event_with_post(jsonb) to authenticated;
 -- 7. create_kit_with_items
 -- p : {name*, description?, season?, is_public?, cover_image_url?, tags?: string[],
 --      items*: [{name*, category?, weight_g?, quantity?, is_checked?,
---                product_ownership_id?, product_id?, item_key?,
+--                product_ownership_id?, product_id?,
 --                slot_id?, slot_order?}], share_content?,
 --      client_request_id?}
 -- Retour : {id, items_count, total_weight_g, is_public, post_id|null, idempotent}
@@ -1014,9 +1014,11 @@ begin
   )
   returning id into v_kit_id;
 
+  -- `item_key` est une colonne GENERATED ALWAYS (baseline) : ne jamais
+  -- l'insérer, PostgreSQL la calcule depuis product_id / name.
   insert into public.materiel_kit_items (
     kit_id, user_id, name, category, weight_g, quantity, is_checked,
-    product_ownership_id, product_id, item_key, slot_id, slot_order
+    product_ownership_id, product_id, slot_id, slot_order
   )
   select
     v_kit_id,
@@ -1028,7 +1030,6 @@ begin
     public.lkdv_bool(item, 'is_checked'),
     public.lkdv_uuid(item, 'product_ownership_id'),
     public.lkdv_uuid(item, 'product_id'),
-    nullif(btrim(coalesce(item ->> 'item_key', '')), ''),
     nullif(btrim(coalesce(item ->> 'slot_id', '')), ''),
     public.lkdv_int(item, 'slot_order')
   from jsonb_array_elements(v_items) as item;

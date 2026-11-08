@@ -314,8 +314,8 @@ Payload :
     { "name": "string requis ≤120", "category": "string|null",
       "weight_g": "0..50000|null", "quantity": "1..99 (défaut 1)",
       "is_checked": bool, "product_ownership_id": "uuid|null (objet de SON inventaire)",
-      "product_id": "uuid|null", "item_key": "string|null",
-      "slot_id": "string|null", "slot_order": int|null }
+      "product_id": "uuid|null",
+      "slot_id": "string|null", "slot_order": int|null }  // item_key est généré en base, ne pas l'envoyer
   ] (max 100),
   "share_content": "string|null", "client_request_id": "string|null"
 }

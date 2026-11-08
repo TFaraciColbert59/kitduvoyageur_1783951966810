@@ -51,11 +51,11 @@ INSERT INTO public.carnet_likes (carnet_id, user_id) VALUES
 ON CONFLICT DO NOTHING;
 
 -- Clubs : 1 ouvert (B membre), 1 sur validation (B en attente), 1 secret.
-INSERT INTO public.clubs (id, slug, name, privacy, created_by, created_at, zone_geom, activities, members_count) VALUES
-  ('fea30000-0000-4000-8000-000000000001', 'feed-club-ouvert', 'Club ouvert', 'open', 'fea10000-0000-4000-8000-000000000001', now() - interval '1 day',
+INSERT INTO public.clubs (id, slug, name, privacy, created_by, created_at, updated_at, zone_geom, activities, members_count) VALUES
+  ('fea30000-0000-4000-8000-000000000001', 'feed-club-ouvert', 'Club ouvert', 'open', 'fea10000-0000-4000-8000-000000000001', now() - interval '1 day', now() - interval '1 day',
    st_setsrid(st_makepoint(6.8694, 45.9237), 4326)::geography, '{rando,trail}', 2),
-  ('fea30000-0000-4000-8000-000000000002', 'feed-club-validation', 'Club sur validation', 'closed', 'fea10000-0000-4000-8000-000000000001', now() - interval '10 days', NULL, '{rando}', 0),
-  ('fea30000-0000-4000-8000-000000000003', 'feed-club-secret', 'Club secret', 'secret', 'fea10000-0000-4000-8000-000000000001', now() - interval '10 days', NULL, '{}', 1)
+  ('fea30000-0000-4000-8000-000000000002', 'feed-club-validation', 'Club sur validation', 'closed', 'fea10000-0000-4000-8000-000000000001', now() - interval '10 days', now() - interval '10 days', NULL, '{rando}', 0),
+  ('fea30000-0000-4000-8000-000000000003', 'feed-club-secret', 'Club secret', 'secret', 'fea10000-0000-4000-8000-000000000001', now() - interval '10 days', now() - interval '10 days', NULL, '{}', 1)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.club_members (club_id, user_id, role, status) VALUES
@@ -119,7 +119,7 @@ SELECT is(
      FROM public.community_carnets_feed('discover', 'recent', NULL, NULL,
        (SELECT jsonb_build_object('v', sort_key, 'id', id)
           FROM public.community_carnets_feed('discover', 'recent', NULL, NULL, NULL, 2)
-         ORDER BY sort_key DESC, id DESC
+         ORDER BY sort_key ASC, id ASC
          LIMIT 1),
        30)),
   3,
@@ -132,7 +132,7 @@ SELECT is(
      SELECT id FROM public.community_carnets_feed('discover', 'recent', NULL, NULL,
        (SELECT jsonb_build_object('v', sort_key, 'id', id)
           FROM public.community_carnets_feed('discover', 'recent', NULL, NULL, NULL, 2)
-         ORDER BY sort_key DESC, id DESC
+         ORDER BY sort_key ASC, id ASC
          LIMIT 1),
        30)
    ) pages),
@@ -152,7 +152,7 @@ SELECT is(
 );
 SELECT is(
   (SELECT liked_by_me FROM public.community_carnets_feed('discover', 'recent', NULL, NULL, NULL, 30)
-    WHERE id = 'fea20000-0000-4000-8000-000000000002'),
+    WHERE id = 'fea20000-0000-4000-8000-000000000003'),
   false,
   '7. Carnets : liked_by_me faux pour un carnet non aimé'
 );

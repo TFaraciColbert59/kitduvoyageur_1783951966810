@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(24);
+SELECT plan(25);
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- Communauté v2 — lot A : recherche tolérante (20261108130001)
@@ -72,8 +72,16 @@ SET LOCAL ROLE anon;
 SET LOCAL "request.jwt.claim.sub" = '';
 
 SELECT diag('anon view=' || (SELECT count(*)::text FROM public.public_profiles)
+  || ' norms=' || coalesce((SELECT string_agg(public.lkdv_norm(full_name), '|') FROM public.public_profiles), 'EMPTY')
+  || ' direct=' || (SELECT count(*)::text FROM public.public_profiles pp
+                     WHERE public.lkdv_norm(coalesce(pp.full_name, '')) like '%chamonix%')
   || ' kinds=' || coalesce((SELECT string_agg(kind || ':' || cnt::text, ',')
                               FROM (SELECT kind, count(*) AS cnt FROM public.community_search('chamonix') GROUP BY kind) k), 'EMPTY'));
+SELECT is(
+  (SELECT count(*)::int FROM public.community_search('chamonix', 'membres')),
+  3,
+  '1b. Recherche scope membres : les trois profils publics sont trouvés'
+);
 
 SELECT is(
   (SELECT public.lkdv_norm('  Chamonix,  FRANCE ! ')),
