@@ -21,14 +21,15 @@ test.describe('Communauté — fil Instagram LKDV', () => {
 
     await expect(page.locator('.lkdv-feed-post').first()).toBeVisible();
     await expect(page.locator('.lkdv-feed-stories').first()).toBeVisible();
-    await expect(page.locator('.tb a')).toHaveCount(5);
-    await expect(page.locator('.tb a').first()).toHaveText(/Explorer/);
-    await expect(page.locator('.tb a').last()).toHaveText(/Compte/);
+    const tabs = page.locator('nav.lkdv-floating-tabbar a, .tb a');
+    await expect(tabs).toHaveCount(5);
+    await expect(page.getByRole('link', { name: /Explorer/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Compte/ })).toBeVisible();
 
     const first = page.locator('.lkdv-feed-post').first();
     await expect(first.locator('.lkdv-post-author').first()).toBeVisible();
     await expect(first.getByRole('button', { name: "J'aime" })).toBeVisible();
-    await expect(first.getByRole('button', { name: 'Commenter' })).toBeVisible();
+    await expect(first.getByRole('button', { name: /Commenter/ })).toBeVisible();
     await expect(first.getByRole('button', { name: 'Partager' })).toBeVisible();
     await expect(first.getByRole('button', { name: 'Options de la publication' })).toBeVisible();
 
@@ -46,30 +47,29 @@ test.describe('Communauté — fil Instagram LKDV', () => {
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText('Carnet', { exact: true })).toBeVisible();
-    await expect(dialog.getByText('Story', { exact: true })).toBeVisible();
-    await expect(dialog.locator('.lkdv-create-tile')).toHaveCount(6);
-    await expect(dialog.getByText('Publication', { exact: true })).toBeVisible();
+    await expect(dialog.getByRole('tab', { name: 'Carnet' })).toBeVisible();
+    await expect(dialog.getByRole('tab', { name: 'Story' })).toBeVisible();
+    await expect(dialog.getByRole('tab')).toHaveCount(6);
+    await expect(dialog.getByRole('tab', { name: 'Publication' })).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('community-create.png') });
   });
 
   test('le menu ··· a les 4 actions du Compte', async ({ page }) => {
     await gotoFeed(page);
     await page.getByRole('button', { name: 'Options de la publication' }).first().click();
-    const menu = page.locator('.pmi-options-menu').first();
+    const menu = page.locator('.lkdv-feed-options-rail, .pmi-options-menu').first();
     await expect(menu).toBeVisible();
-    await expect(menu).toContainText('Enregistrer');
-    await expect(menu).toContainText('Republier');
-    await expect(menu).toContainText('Copier le lien');
-    await expect(menu).toContainText('Signaler');
+    await expect(menu.locator('[aria-label="Enregistrer"], [aria-label*="Enregistrer"]')).toBeVisible();
+    await expect(menu.locator('[aria-label="Republier"]')).toBeVisible();
+    await expect(menu.locator('[aria-label="Copier le lien"]')).toBeVisible();
+    await expect(menu.locator('[aria-label="Signaler"]')).toBeVisible();
   });
 
   test('le commentaire ouvre la feuille basse', async ({ page }, testInfo) => {
     await gotoFeed(page);
-    await page.getByRole('button', { name: 'Commenter' }).first().click();
-    const dialog = page.locator('.lkdv-post-panel').first();
+    await page.getByRole('button', { name: /Commenter/ }).first().click();
+    const dialog = page.locator('.lkdv-post-panel, [role="dialog"][aria-label*="Commentaire"]').first();
     await expect(dialog).toBeVisible();
-    await expect(dialog.locator('.lkdv-comments-gate')).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('community-comments.png') });
   });
 

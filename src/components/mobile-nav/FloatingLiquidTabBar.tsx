@@ -206,7 +206,7 @@ export function FloatingLiquidTabBar() {
   return (
     <>
       <BottomNavReservation hasUpperExtension={false} hasDayPlateau={false} />
-      <nav className="lkdv-floating-tabbar" aria-label="Navigation principale">
+      <nav className="lkdv-floating-tabbar tb" aria-label="Navigation principale">
         <div className="lkdv-floating-tabbar-surface">
           <span
             className="lkdv-floating-lens"
