@@ -264,7 +264,7 @@
   background: var(--ks-dock-bg);
   -webkit-backdrop-filter: var(--ks-dock-blur);
   backdrop-filter: var(--ks-dock-blur);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 4px 16px var(--ks-ink-22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 4px 16px var(--ks-ink-25);
   cursor: pointer;
   touch-action: manipulation;
   color: var(--ks-on);

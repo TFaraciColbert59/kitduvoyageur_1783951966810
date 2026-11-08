@@ -98,7 +98,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('LensPager — seuil, verrou d’axe et snap', () => {
-  it('ignore un déplacement sous le seuil de 24 px', () => {
+  it('ignore un déplacement sous le seuil de 48 px', () => {
     render(<Harness />);
     swipe(200, 100, 180, 101);
     expect(lensIndex()).toBe('0');
@@ -107,9 +107,9 @@ describe('LensPager — seuil, verrou d’axe et snap', () => {
     );
   });
 
-  it('passe à la lentille suivante au-delà de 24 px et resynchronise .flow', () => {
+  it('passe à la lentille suivante au-delà de 48 px et resynchronise .flow', () => {
     render(<Harness />);
-    swipe(200, 100, 168, 102);
+    swipe(200, 100, 140, 102);
     expect(lensIndex()).toBe('1');
     expect(document.querySelector('.flow [role=tab][aria-selected=true]')?.textContent).toBe(
       'Lentille 1'

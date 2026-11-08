@@ -7,7 +7,6 @@ import {
   FormPreview,
 } from '@/features/community/create/shared/FormPreview';
 import { KitCreateForm } from '@/features/community/create/KitCreateForm';
-import { CarnetCreateForm } from '@/features/community/create/CarnetCreateForm';
 import { StoryCreateForm } from '@/features/community/create/StoryCreateForm';
 import { SortieCreateForm } from '@/features/community/create/SortieCreateForm';
 import { ClubCreateForm } from '@/features/community/create/ClubCreateForm';
@@ -162,20 +161,6 @@ describe('FormPreview — rendu compact', () => {
     expect(within(preview).getByText('Kit')).toBeTruthy();
   });
 
-  it('suit la saisie dans le formulaire Carnet', () => {
-    render(
-      <CarnetCreateForm open onClose={() => {}} user={{ id: 'u' }} onCreated={() => {}} />,
-    );
-
-    fireEvent.change(screen.getByLabelText('Titre'), {
-      target: { value: 'Un carnet en cours' },
-    });
-
-    const preview = screen.getByTestId('form-preview');
-    expect(within(preview).getByText('Un carnet en cours')).toBeTruthy();
-    expect(within(preview).getByText('Carnet')).toBeTruthy();
-  });
-
   it('est monté dans les six formulaires, y compris publication', () => {
     render(<StoryCreateForm open onClose={() => {}} user={{ id: 'u' }} onCreated={() => {}} />);
     expect(screen.getByTestId('form-preview')).toBeTruthy();
@@ -192,7 +177,6 @@ describe('FormPreview — rendu compact', () => {
     const forms: Array<[string, string]> = [
       ['PostCreateForm', 'post'],
       ['StoryCreateForm', 'story'],
-      ['CarnetCreateForm', 'carnet'],
       ['SortieCreateForm', 'sortie'],
       ['KitCreateForm', 'kit'],
       ['ClubCreateForm', 'club'],

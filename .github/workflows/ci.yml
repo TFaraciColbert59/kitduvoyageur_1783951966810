@@ -57,6 +57,8 @@ jobs:
           # remplacé automatiquement par le projet de test si les secrets existent.
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
+          # Chantier Communauté v2 : le build CI couvre le bundle réellement livré.
+          NEXT_PUBLIC_COMMUNAUTE_V2: 'true'
 
       - name: Gate 4b — Budget JS par surface (Mission Fusée, anti-régression)
         run: npm run perf:budget
@@ -78,6 +80,22 @@ jobs:
       # les secrets SUPABASE_TEST_URL / SUPABASE_TEST_ANON_KEY (projet de test).
       # Sans base de test, ces portes échouent par construction : elles restent
       # donc conditionnelles pour garder la CI des invariants de code verte.
+
+      # Communauté v2 — parcours UI déterministes (@ui-mock) : données servies par
+      # `page.route` (aucune base, aucune session réelle, aucun réseau).
+      - name: 'Gate 4c — Communauté v2 : parcours UI @ui-mock (sans base)'
+        # WebKit n'est pas installé par défaut dans quality-gates : la gate
+        # installe elle-même les deux moteurs mobiles qu'elle utilise.
+        run: |
+          npx playwright install --with-deps chromium webkit
+          npx playwright test tests/e2e/communaute-v2-explorer.spec.ts tests/e2e/communaute-v2-creation.spec.ts tests/e2e/communaute-v2-invite.spec.ts --project=mobile-webkit --project=mobile-chromium
+        env:
+          CI: true
+          NEXT_PUBLIC_COMMUNAUTE_V2: 'true'
+          # Doit être IDENTIQUE au build de Gate 4 : le nom du cookie de session
+          # synthétique (sb-<ref>-auth-token) est dérivé de cette URL.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
 
       - name: Install Playwright Browsers
         if: ${{ vars.LKDV_E2E_ENABLED == 'true' }}
@@ -127,6 +145,14 @@ jobs:
           CI: true
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+
+      - name: 'Gate G6.1 — Accessibilité Communauté v2 (@ui-mock, sans base)'
+        run: npx playwright test tests/a11y/e2e/communaute-v2-a11y.spec.ts --project=iphone-14-pro
+        env:
+          CI: true
+          NEXT_PUBLIC_COMMUNAUTE_V2: 'true'
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL || 'https://ci-build-placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
 
     # Gate G5 — Régression visuelle : job séparé, rapport en artefact téléchargeable.
     # Même opt-in que Gate 5/G6 (base de test requise pour rendre les pages).

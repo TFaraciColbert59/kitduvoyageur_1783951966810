@@ -1,0 +1,452 @@
+[
+  {
+    "scenario": "explorer-carnets",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-carnets",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-carnets",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-carnets",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-carnets-tri",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-carnets-tri",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-carnets-tri",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-carnets-tri",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-clubs",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-clubs",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-clubs",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-clubs",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-sorties",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-sorties",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-sorties",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-sorties",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-recherche",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-recherche",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-recherche",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-recherche",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-detail",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-detail",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-detail",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-detail",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-peek",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-peek",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-peek",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-peek",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-etat-vide",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-etat-vide",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-etat-vide",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-etat-vide",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Chargement des stories refusé — fixture:post_stories"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  },
+  {
+    "scenario": "explorer-etat-erreur",
+    "type": "error",
+    "text": "Présence : battement refusé — fixture:user_presence"
+  },
+  {
+    "scenario": "explorer-etat-chargement",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-etat-chargement",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-etat-chargement",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-etat-chargement",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-ile",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-ile",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "explorer-ile",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "explorer-ile",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-publication",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-publication",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-publication",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-publication",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-story",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-story",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-story",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-story",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-carnet",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-carnet",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-carnet",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-carnet",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-sortie",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-sortie",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-sortie",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-sortie",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-sortie",
+    "type": "warning",
+    "text": "[.WebGL-0x10c00457600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+  },
+  {
+    "scenario": "creation-sortie",
+    "type": "warning",
+    "text": "[.WebGL-0x10c00457600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+  },
+  {
+    "scenario": "creation-sortie",
+    "type": "warning",
+    "text": "[.WebGL-0x10c00457600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+  },
+  {
+    "scenario": "creation-sortie",
+    "type": "warning",
+    "text": "[.WebGL-0x10c00457600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  },
+  {
+    "scenario": "creation-kit",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-kit",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-kit",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-kit",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-club",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-club",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-club",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-club",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-erreur",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-erreur",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-erreur",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-brouillon",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-brouillon",
+    "type": "warning",
+    "text": "Service Worker registration blocked by Playwright"
+  },
+  {
+    "scenario": "creation-brouillon",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "scenario": "creation-brouillon",
+    "type": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  }
+]
