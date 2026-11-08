@@ -3,7 +3,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  closeByEscape,
+  dragLensPager,
+  expectNotCovered,
   freezeClock,
   gotoCommunity,
   installCommunityV2Mock,
@@ -11,6 +12,7 @@ import {
   longPress,
   openCreate,
   openExplorer,
+  waitForHydration,
   type CommunityV2Mock,
 } from '../../../../tests/e2e/communaute-v2.fixtures';
 
@@ -43,7 +45,7 @@ test.afterAll(() => {
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
-        viewport: '390x844',
+        viewport: '390x844 (captures suffixées -360 / -430 pour FID-082)',
         base: process.env.PW_BASE_URL ?? 'http://127.0.0.1:4028',
         total: results.length,
         ok: results.filter((r) => r.ok).length,
@@ -156,8 +158,13 @@ test('captures Explorer — recherche (accueil, résultats, carte, erreur, état
   });
 
   await scenario(page, 'explorer-recherche-sur-la-carte', async () => {
-    // Recouvrement CSS connu (.lkdv-cv2x-cover-fallback) : clic DOM forcé.
-    await page.getByRole('button', { name: 'Sur la carte' }).click({ force: true });
+    // FID-001 corrigé : plus de recouvrement, la bascule se clique nativement.
+    // La garde FID-074 le prouve avant le geste.
+    const toggle = page
+      .getByRole('group', { name: 'Affichage des résultats' })
+      .getByRole('button', { name: 'Sur la carte' });
+    await expectNotCovered(page, toggle, { label: 'Bascule « Sur la carte » (capture)' });
+    await toggle.click();
     await page.waitForTimeout(1200);
   });
 });
@@ -365,6 +372,8 @@ test('captures Création — confirmation de fermeture', async ({ page }) => {
     await page.keyboard.press('Escape');
     await page.getByRole('alertdialog', { name: 'Fermer sans publier ?' }).waitFor({ state: 'visible', timeout: 8_000 });
   });
+  // Alias FID-075 : même état, nom attendu par la preuve « Échap hiérarchisé ».
+  await scenario(page, 'creation-echap-confirmation', async () => {});
 });
 
 test('captures Création — brouillon restauré', async ({ page }) => {
@@ -526,4 +535,181 @@ test('captures Création — club étapes 1-4', async ({ page }) => {
     await next(page);
     await page.waitForTimeout(600);
   });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FID-076 — états d'erreur des 3 volets + bandeau hors-ligne
+// ═══════════════════════════════════════════════════════════════════════════
+
+test('captures Explorer — erreurs Carnets, Clubs, Sorties (réseau en échec)', async ({ page }) => {
+  await prepareExplorer(page, { state: 'error' });
+  const volets = [
+    { label: 'Carnets', slug: 'carnets', title: 'Carnets indisponibles' },
+    { label: 'Clubs', slug: 'clubs', title: 'Clubs indisponibles' },
+    { label: 'Sorties', slug: 'sorties', title: 'Sorties indisponibles' },
+  ] as const;
+  for (const volet of volets) {
+    await tab(page, 'Volets de l’explorateur', volet.label).click();
+    await page
+      .getByTestId(`cv2-pane-${volet.slug}`)
+      .locator('.lkdv-cv2-error-state')
+      .waitFor({ state: 'visible', timeout: 15_000 });
+    await scenario(page, `explorer-erreur-${volet.slug}`, async () => {});
+  }
+});
+
+test('captures Explorer — bandeau hors-ligne (dernier contenu conservé)', async ({ page }) => {
+  await prepareExplorer(page);
+  await page.getByTestId('cv2-tile-carnet').first().waitFor({ state: 'visible', timeout: 15_000 });
+  await page.context().setOffline(true);
+  try {
+    await page.locator('.lkdv-cv2-offline').waitFor({ state: 'visible', timeout: 10_000 });
+    await scenario(page, 'explorer-hors-ligne', async () => {});
+  } finally {
+    await page.context().setOffline(false);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FID-075 — Échap hiérarchisé : menu de tri → peek → détail → tiroir
+// (le niveau « confirmation » est capturé dans `creation-echap-confirmation`)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test('captures Explorer — Échap hiérarchisé (tri, peek, détail, tiroir)', async ({ page }) => {
+  await prepareExplorer(page);
+
+  await scenario(page, 'explorer-echap-tri', async () => {
+    await page.getByTestId('cv2-sort-button').click();
+    await page.getByTestId('cv2-sort-menu').waitFor({ state: 'visible', timeout: 8_000 });
+  });
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(500);
+
+  await scenario(page, 'explorer-echap-peek', async () => {
+    await longPress(page, page.getByTestId('cv2-tile-carnet').first());
+    await page.getByRole('dialog', { name: /Aperçu :/ }).waitFor({ state: 'visible', timeout: 8_000 });
+  });
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(500);
+
+  await tab(page, 'Volets de l’explorateur', 'Clubs').click().catch(() => undefined);
+  await page.waitForTimeout(500);
+  await scenario(page, 'explorer-echap-detail', async () => {
+    await page.getByTestId('cv2-tile-club').first().click();
+    await page.getByTestId('cv2-detail').waitFor({ state: 'visible', timeout: 10_000 });
+  });
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(500);
+
+  // Niveau tiroir : la coque est de nouveau seule (capsule + fil).
+  await scenario(page, 'explorer-echap-tiroir', async () => {});
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FID-079 — LensPager : capture du geste en cours (piste translatée)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test('captures Explorer — LensPager en cours de glisser', async ({ page }) => {
+  await prepareExplorer(page);
+  await dragLensPager(page, {
+    dx: -120,
+    moves: 4,
+    beforeRelease: async () => {
+      await shot(page, 'explorer-lenspager-glisser');
+    },
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FID-077 — invité : les 4 actions d'écriture passent par requireAuth
+// (capture de la destination / toast d'invitation, aucune mutation)
+// ═══════════════════════════════════════════════════════════════════════════
+
+test('captures Explorer — invité : like → requireAuth', async ({ page }) => {
+  await prepareExplorer(page, { role: 'anonymous' });
+  await page.getByTestId('cv2-carnet-like').first().click();
+  await page.waitForURL(/\/connexion/, { timeout: 15_000 });
+  await page.getByText(/Créez un compte pour enregistrer/).first().waitFor({ state: 'visible', timeout: 10_000 });
+  await shot(page, 'explorer-invite-like');
+});
+
+test('captures Explorer — invité : rejoindre un club → requireAuth', async ({ page }) => {
+  await prepareExplorer(page, { role: 'anonymous' });
+  await tab(page, 'Volets de l’explorateur', 'Clubs').click();
+  await page
+    .getByTestId('cv2-tile-club')
+    .filter({ hasText: 'Cordée des Écrins' })
+    .first()
+    .getByTestId('cv2-club-join')
+    .click();
+  await page.waitForURL(/\/connexion/, { timeout: 15_000 });
+  await page.getByText(/Créez un compte pour enregistrer/).first().waitFor({ state: 'visible', timeout: 10_000 });
+  await shot(page, 'explorer-invite-rejoindre');
+});
+
+test('captures Explorer — invité : s’inscrire à une sortie → requireAuth', async ({ page }) => {
+  await prepareExplorer(page, { role: 'anonymous' });
+  await tab(page, 'Volets de l’explorateur', 'Sorties').click();
+  const register = page.getByTestId('cv2-event-register').first();
+  await register.waitFor({ state: 'visible', timeout: 15_000 });
+  await register.click();
+  await page.waitForURL(/\/connexion/, { timeout: 15_000 });
+  await page.getByText(/Créez un compte pour enregistrer/).first().waitFor({ state: 'visible', timeout: 10_000 });
+  await shot(page, 'explorer-invite-inscription');
+});
+
+test('captures Explorer — invité : ouvrir Création → requireAuth', async ({ page }) => {
+  await installCommunityV2Mock(page, { role: 'anonymous' });
+  await freezeClock(page);
+  await gotoCommunity(page);
+  await waitForHydration(page, 'button[aria-label="Créer dans l’application"]');
+  await page.getByRole('button', { name: 'Créer dans l’application' }).click();
+  await page.waitForURL(/\/connexion/, { timeout: 15_000 });
+  await page.getByText(/Créez un compte pour enregistrer/).first().waitFor({ state: 'visible', timeout: 10_000 });
+  await shot(page, 'explorer-invite-creation');
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FID-082 — 360 px et 430 px : Explorer 4 volets + Création 6 types étape 1
+// ═══════════════════════════════════════════════════════════════════════════
+
+test('captures Explorer — 360 et 430 px (4 volets)', async ({ page }) => {
+  await prepareExplorer(page);
+  const volets = [
+    ['Carnets', 'carnets'],
+    ['Clubs', 'clubs'],
+    ['Sorties', 'sorties'],
+    ['Recherche', 'recherche'],
+  ] as const;
+  for (const width of [360, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.waitForTimeout(500);
+    for (const [label, slug] of volets) {
+      await tab(page, 'Volets de l’explorateur', label).click();
+      await page.waitForTimeout(500);
+      await shot(page, `explorer-${slug}-${width}`);
+    }
+  }
+});
+
+test('captures Création — 360 et 430 px (6 types étape 1)', async ({ page }) => {
+  await prepareCreate(page);
+  const capsule = page.getByRole('tablist', { name: 'Type de création' });
+  const kinds = [
+    ['Publication', 'publication'],
+    ['Story', 'story'],
+    ['Carnet', 'carnet'],
+    ['Sortie', 'sortie'],
+    ['Kit', 'kit'],
+    ['Club', 'club'],
+  ] as const;
+  for (const width of [360, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.waitForTimeout(500);
+    for (const [label, slug] of kinds) {
+      await capsule.getByRole('tab', { name: label }).click();
+      await page.waitForTimeout(500);
+      await shot(page, `creation-${slug}-etape1-${width}`);
+    }
+  }
 });
