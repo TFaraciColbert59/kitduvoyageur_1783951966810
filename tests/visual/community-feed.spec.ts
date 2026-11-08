@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { installCommunityFeedFixture } from './_helpers/communityFeedFixture';
 
 async function gotoFeed(page: Page) {
   const response = await page.goto('/communaute', { waitUntil: 'domcontentloaded' });
@@ -8,6 +9,12 @@ async function gotoFeed(page: Page) {
 }
 
 test.describe('Communauté — fil Instagram LKDV', () => {
+  let fixture: Awaited<ReturnType<typeof installCommunityFeedFixture>>;
+
+  test.beforeEach(async ({ page }) => {
+    fixture = await installCommunityFeedFixture(page);
+  });
+
   test('le fil affiche les posts carrés, les stories et la barre du Compte', async ({ page }, testInfo) => {
     const response = await gotoFeed(page);
     expect(response?.status()).toBeLessThan(500);
@@ -34,6 +41,8 @@ test.describe('Communauté — fil Instagram LKDV', () => {
 
   test('le + ouvre le drawer de création du Compte (5 lignes)', async ({ page }, testInfo) => {
     await gotoFeed(page);
+    await expect(page.locator('.lkdv-feed-post').first()).toBeVisible();
+    await fixture.signIn();
     await page.getByRole('button', { name: 'Créer dans l’application' }).click();
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible();
