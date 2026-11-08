@@ -37,7 +37,9 @@ const RACINE = process.cwd();
 const SORTIE_WEB = join(RACINE, 'public', 'assets', 'bags');
 const SORTIE_HD = join(RACINE, 'dist', 'bag-models-hd');
 const INDEX = join(SORTIE_WEB, 'bags.index.json');
-const BASE_DEFAUT = 'https://icxyvwzfjbflcbqukpfz.supabase.co/storage/v1/object/public/bag-models';
+const BASE_DEFAUT = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/bag-models`
+  : '';
 
 function arg(nom, defaut = null) {
   const i = process.argv.indexOf(nom);
