@@ -298,13 +298,13 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
 
           {(preview.type === 'trail' || preview.type === 'gpx') && (
             <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 24, background: '#101713' }}>
-              <TraceMap geojson={preview.geojson} height={380} />
-              <div style={{ position: 'absolute', top: 12, left: 14, right: 14, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', pointerEvents: 'none' }}>
-                <div style={{ background: 'rgba(23, 43, 36, 0.85)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', padding: '6px 14px', borderRadius: 999, color: '#ffffff', fontSize: 13, fontWeight: 600, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+              <TraceMap geojson={preview.geojson} height={420} />
+              <div style={{ position: 'absolute', top: 12, left: 54, right: 54, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', pointerEvents: 'none', gap: 8 }}>
+                <div style={{ background: 'rgba(23, 43, 36, 0.85)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', padding: '6px 14px', borderRadius: 999, color: '#ffffff', fontSize: 13, fontWeight: 600, boxShadow: '0 2px 10px rgba(0,0,0,0.2)', maxWidth: '70%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {preview.type === 'gpx' ? preview.file.name : preview.item.name}
                 </div>
                 {preview.type === 'trail' && preview.item.distance_km != null && (
-                  <div style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '4px 10px', borderRadius: 999, color: '#17402C', fontSize: 11.5, fontWeight: 700 }}>
+                  <div style={{ background: 'rgba(255, 255, 255, 0.9)', padding: '4px 10px', borderRadius: 999, color: '#17402C', fontSize: 11.5, fontWeight: 700, flexShrink: 0 }}>
                     {preview.item.distance_km} km
                   </div>
                 )}
@@ -380,8 +380,8 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             className="mbtn p"
             style={{
               position: 'absolute',
-              right: 8,
-              bottom: 8,
+              right: 12,
+              bottom: 12,
               zIndex: 50,
               width: 44,
               height: 44,
@@ -403,7 +403,9 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             </svg>
           </button>
         </div>
-      ) : view === 'menu' ? (
+      ) : (
+        <>
+          {view === 'menu' && (
         <div>
           <div className="li nt">
             <div>
@@ -493,9 +495,9 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             </button>
           </div>
         </div>
-      ) : null}
+      )}
 
-      {view === 'kit' ? (
+      {view === 'kit' && (
         loadingKits ? (
           <div className="msk-list" aria-hidden="true">
             {[0, 1, 2].map((i) => (
@@ -568,9 +570,9 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             ))}
           </div>
         )
-      ) : null}
+      )}
 
-      {view === 'equip' ? (
+      {view === 'equip' && (
         loadingInv ? (
           <div className="msk-list" aria-hidden="true">
             {[0, 1, 2].map((i) => (
@@ -632,9 +634,9 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             ))}
           </div>
         )
-      ) : null}
+      )}
 
-      {view === 'trail' || view === 'gpx' ? (
+      {(view === 'trail' || view === 'gpx') && (
         loadingTrails ? (
           <div className="msk-list" aria-hidden="true">
             {[0, 1, 2].map((i) => (
@@ -716,7 +718,9 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
             ))}
           </div>
         )
-      ) : null}
+      )}
+        </>
+      )}
       </div>
     </AccountDrawerHost>
   );
