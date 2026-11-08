@@ -3,7 +3,19 @@
 import type { MaterialKey } from './palette';
 export type { MaterialKey };
 
-export type BagId = 'b42' | 'b28';
+export const LKDV_ONE_BAG_IDS = [
+  'lkdv-one-15',
+  'lkdv-one-25',
+  'lkdv-one-45',
+  'lkdv-one-60',
+  'lkdv-one-80',
+] as const;
+
+export const LEGACY_BAG_IDS = ['b42', 'b28'] as const;
+
+export type LkdvOneBagId = (typeof LKDV_ONE_BAG_IDS)[number];
+export type LegacyBagId = (typeof LEGACY_BAG_IDS)[number];
+export type BagId = 'b42' | 'b28' | 'lkdv-one-15' | 'lkdv-one-25' | 'lkdv-one-45' | 'lkdv-one-60' | 'lkdv-one-80';
 export type ColorwayId = 'foret' | 'sauge' | 'pierre' | 'nuit';
 export type ModuleId = 'lid' | 'front' | 'sides' | 'tool' | 'hipp' | 'flask';
 export type ZoneId = 'worn' | 'bag' | 'lid' | 'main' | 'front' | 'sides' | 'hip' | 'back';
@@ -21,7 +33,7 @@ export type OptionCategoryId = 'shape' | 'mod' | 'col' | 'mat' | 'fin' | 'acc';
 export type CapacityZoneId = 'lid' | 'main' | 'front' | 'sides' | 'hip' | 'back';
 export type Vec3 = readonly [number, number, number];
 
-export interface Bag { readonly id: BagId; readonly n: string; readonly g: number; readonly L: number; readonly cap: Readonly<Record<CapacityZoneId, number>>; readonly sc: Vec3; }
+export interface Bag { readonly id: BagId; readonly n: string; readonly g: number | null; readonly L: number; readonly cap: Readonly<Record<CapacityZoneId, number>>; readonly sc: Vec3; }
 export interface Colorway { readonly id: ColorwayId; readonly n: string; readonly body: MaterialKey; readonly pocket: MaterialKey; readonly trim: MaterialKey; readonly accent: MaterialKey; }
 export interface Item {
   readonly id: ItemId; readonly n: string; readonly fam: FamilyId; readonly fn: string; readonly sh: string; readonly gl: string;
@@ -46,7 +58,7 @@ export interface ZoneDef { readonly id: string; readonly n: string; }
 export interface ModuleSpec { readonly n: string; readonly eur: number; readonly host: 'corps' | 'chassis'; readonly pts: number; readonly part: PartId; readonly gl: string; readonly d: string; readonly acc?: AccessoryId; }
 export interface OneSpec {
   readonly chassis: { readonly n: string; readonly eur: number; readonly pts: number; readonly gl: string; readonly d: string; readonly mat: string };
-  readonly corps: Readonly<Record<BagId, { readonly eur: number; readonly pts: number; readonly d: string }>>;
+  readonly corps: Readonly<Record<BagId, { readonly eur: number | null; readonly pts: number | null; readonly d: string }>>;
   readonly corpsMat: string;
   readonly mods: Readonly<Record<ModuleId, ModuleSpec>>;
 }
@@ -69,8 +81,88 @@ export interface ConfigSet {
   readonly accent: MaterialKey; readonly acc: readonly AccessoryId[];
 }
 
-// Maquette Kit_Studio_actuel.html, l.535 : const BAGS=
+// Gamme de sacs LKDV ONE (5 corps) + héritage maquette b42/b28 (2 corps)
 export const BAGS: Readonly<Record<BagId, Bag>> = {
+  'lkdv-one-15': {
+    id: 'lkdv-one-15',
+    n: 'LKDV ONE 15 L',
+    g: null,
+    L: 15,
+    // Répartition dérivée au prorata de b42 (lid 4, main 30, front 5, sides 2, hip 1, back 2.5), non relevée.
+    cap: {
+      lid: 1.4,
+      main: 10.7,
+      front: 1.8,
+      sides: 0.7,
+      hip: 0.4,
+      back: 0.9,
+    },
+    sc: [0.656, 0.669, 0.737],
+  },
+  'lkdv-one-25': {
+    id: 'lkdv-one-25',
+    n: 'LKDV ONE 25 L',
+    g: null,
+    L: 25,
+    // Répartition dérivée au prorata de b42 (lid 4, main 30, front 5, sides 2, hip 1, back 2.5), non relevée.
+    cap: {
+      lid: 2.4,
+      main: 17.9,
+      front: 3.0,
+      sides: 1.2,
+      hip: 0.6,
+      back: 1.5,
+    },
+    sc: [0.666, 0.756, 0.69],
+  },
+  'lkdv-one-45': {
+    id: 'lkdv-one-45',
+    n: 'LKDV ONE 45 L',
+    g: null,
+    L: 45,
+    // Répartition dérivée au prorata de b42 (lid 4, main 30, front 5, sides 2, hip 1, back 2.5), non relevée.
+    cap: {
+      lid: 4.3,
+      main: 32.1,
+      front: 5.4,
+      sides: 2.1,
+      hip: 1.1,
+      back: 2.7,
+    },
+    sc: [1, 0.96, 0.97],
+  },
+  'lkdv-one-60': {
+    id: 'lkdv-one-60',
+    n: 'LKDV ONE 60 L',
+    g: null,
+    L: 60,
+    // Répartition dérivée au prorata de b42 (lid 4, main 30, front 5, sides 2, hip 1, back 2.5), non relevée.
+    cap: {
+      lid: 5.7,
+      main: 42.9,
+      front: 7.1,
+      sides: 2.9,
+      hip: 1.4,
+      back: 3.6,
+    },
+    sc: [0.964, 1.076, 1.067],
+  },
+  'lkdv-one-80': {
+    id: 'lkdv-one-80',
+    n: 'LKDV ONE 80 L',
+    g: null,
+    L: 80,
+    // Répartition dérivée au prorata de b42 (lid 4, main 30, front 5, sides 2, hip 1, back 2.5), non relevée.
+    cap: {
+      lid: 7.6,
+      main: 57.1,
+      front: 9.5,
+      sides: 3.8,
+      hip: 1.9,
+      back: 4.8,
+    },
+    sc: [1.258, 1.164, 1.178],
+  },
   b42: {
     id: 'b42',
     n: 'Corps 42 L',
@@ -471,6 +563,31 @@ export const ONE: OneSpec = {
     mat: 'Mesh 3D, mousse EVA, montants alu',
   },
   corps: {
+    'lkdv-one-15': {
+      eur: null,
+      pts: null,
+      d: 'Corps LKDV ONE 15 L ultra-compact.',
+    },
+    'lkdv-one-25': {
+      eur: null,
+      pts: null,
+      d: 'Corps LKDV ONE 25 L pour la journée et la cabine.',
+    },
+    'lkdv-one-45': {
+      eur: null,
+      pts: null,
+      d: 'Corps LKDV ONE 45 L polyvalent pour les treks de plusieurs jours.',
+    },
+    'lkdv-one-60': {
+      eur: null,
+      pts: null,
+      d: 'Corps LKDV ONE 60 L pour les expéditions en autonomie.',
+    },
+    'lkdv-one-80': {
+      eur: null,
+      pts: null,
+      d: 'Corps LKDV ONE 80 L grand volume pour les longues traversées.',
+    },
     b28: {
       eur: 119,
       pts: 6,
@@ -1776,6 +1893,216 @@ export function preset(cw: ColorwayId): ConfigSet {
 
 // Maquette Kit_Studio_actuel.html, l.650 : const CFG=
 export const DEFAULT_CONFIG: Readonly<Record<BagId, ConfigSet>> = {
+  'lkdv-one-15': {
+    body: {
+      shape: 'classic',
+      mat: 'xpac',
+      col: 'm-2d482a',
+      fin: 'mat',
+    },
+    lid: {
+      shape: 'std',
+      mat: 'xpac',
+      col: 'm-2d482a',
+      fin: 'mat',
+    },
+    front: {
+      shape: 'zip',
+      mat: 'xpac',
+      col: 'm-3d6038',
+      fin: 'satin',
+    },
+    sides: {
+      shape: 'std',
+      mat: 'cordura',
+      col: 'm-3d6038',
+      fin: 'satin',
+    },
+    hip: {
+      shape: 'padded',
+      col: 'm-1e301c',
+      fin: 'mat',
+    },
+    harness: {
+      shape: 'std',
+      col: 'm-1e301c',
+      fin: 'mat',
+    },
+    webbing: {
+      col: 'm-1e301c',
+      fin: 'satin',
+    },
+    accent: 'm-9bbda7',
+    acc: [],
+  },
+  'lkdv-one-25': {
+    body: {
+      shape: 'classic',
+      mat: 'xpac',
+      col: 'm-2d482a',
+      fin: 'mat',
+    },
+    lid: {
+      shape: 'std',
+      mat: 'xpac',
+      col: 'm-2d482a',
+      fin: 'mat',
+    },
+    front: {
+      shape: 'zip',
+      mat: 'xpac',
+      col: 'm-3d6038',
+      fin: 'satin',
+    },
+    sides: {
+      shape: 'std',
+      mat: 'cordura',
+      col: 'm-3d6038',
+      fin: 'satin',
+    },
+    hip: {
+      shape: 'padded',
+      col: 'm-1e301c',
+      fin: 'mat',
+    },
+    harness: {
+      shape: 'std',
+      col: 'm-1e301c',
+      fin: 'mat',
+    },
+    webbing: {
+      col: 'm-1e301c',
+      fin: 'satin',
+    },
+    accent: 'm-9bbda7',
+    acc: [],
+  },
+  'lkdv-one-45': {
+    body: {
+      shape: 'classic',
+      mat: 'xpac',
+      col: 'm-2d482a',
+      fin: 'mat',
+    },
+    lid: {
+      shape: 'std',
+      mat: 'xpac',
+      col: 'm-2d482a',
+      fin: 'mat',
+    },
+    front: {
+      shape: 'zip',
+      mat: 'xpac',
+      col: 'm-3d6038',
+      fin: 'satin',
+    },
+    sides: {
+      shape: 'std',
+      mat: 'cordura',
+      col: 'm-3d6038',
+      fin: 'satin',
+    },
+    hip: {
+      shape: 'padded',
+      col: 'm-1e301c',
+      fin: 'mat',
+    },
+    harness: {
+      shape: 'std',
+      col: 'm-1e301c',
+      fin: 'mat',
+    },
+    webbing: {
+      col: 'm-1e301c',
+      fin: 'satin',
+    },
+    accent: 'm-9bbda7',
+    acc: [],
+  },
+  'lkdv-one-60': {
+    body: {
+      shape: 'classic',
+      mat: 'xpac',
+      col: 'm-2d482a',
+      fin: 'mat',
+    },
+    lid: {
+      shape: 'std',
+      mat: 'xpac',
+      col: 'm-2d482a',
+      fin: 'mat',
+    },
+    front: {
+      shape: 'zip',
+      mat: 'xpac',
+      col: 'm-3d6038',
+      fin: 'satin',
+    },
+    sides: {
+      shape: 'std',
+      mat: 'cordura',
+      col: 'm-3d6038',
+      fin: 'satin',
+    },
+    hip: {
+      shape: 'padded',
+      col: 'm-1e301c',
+      fin: 'mat',
+    },
+    harness: {
+      shape: 'std',
+      col: 'm-1e301c',
+      fin: 'mat',
+    },
+    webbing: {
+      col: 'm-1e301c',
+      fin: 'satin',
+    },
+    accent: 'm-9bbda7',
+    acc: [],
+  },
+  'lkdv-one-80': {
+    body: {
+      shape: 'classic',
+      mat: 'xpac',
+      col: 'm-2d482a',
+      fin: 'mat',
+    },
+    lid: {
+      shape: 'std',
+      mat: 'xpac',
+      col: 'm-2d482a',
+      fin: 'mat',
+    },
+    front: {
+      shape: 'zip',
+      mat: 'xpac',
+      col: 'm-3d6038',
+      fin: 'satin',
+    },
+    sides: {
+      shape: 'std',
+      mat: 'cordura',
+      col: 'm-3d6038',
+      fin: 'satin',
+    },
+    hip: {
+      shape: 'padded',
+      col: 'm-1e301c',
+      fin: 'mat',
+    },
+    harness: {
+      shape: 'std',
+      col: 'm-1e301c',
+      fin: 'mat',
+    },
+    webbing: {
+      col: 'm-1e301c',
+      fin: 'satin',
+    },
+    accent: 'm-9bbda7',
+    acc: [],
+  },
   b42: {
     body: {
       shape: 'classic',

@@ -12,7 +12,7 @@ import type { KitState, PieceKey } from './types';
 const tuple = <T extends string>(xs: readonly T[]): [T, ...T[]] => xs as unknown as [T, ...T[]];
 
 const KitIdS = z.enum(tuple<KitId>(['tmb', 'vercors', 'cabine']));
-const BagIdS = z.enum(tuple<BagId>(['b42', 'b28']));
+const BagIdS = z.enum(tuple<BagId>(['b42', 'b28', 'lkdv-one-15', 'lkdv-one-25', 'lkdv-one-45', 'lkdv-one-60', 'lkdv-one-80']));
 const ColorwayS = z.enum(tuple<ColorwayId>(['foret', 'sauge', 'pierre', 'nuit']));
 const MaterialKeyS = z.enum(tuple<MaterialKey>(Object.keys(RAW_MATERIALS) as MaterialKey[]));
 const MaterialIdS = z.enum(tuple<MaterialId>(['ripstop', 'cordura', 'dcf', 'xpac', 'waxed']));
@@ -21,7 +21,15 @@ const AccessoryS = z.enum(tuple<AccessoryId>(['cover', 'reflect', 'daisy', 'axe'
 const ZoneS = z.enum(tuple<ZoneId>(ZONE_IDS));
 const PackZoneS = z.enum(tuple<PackZoneId>(PACK_ZONE_IDS));
 const PieceKeyS = z.enum(tuple<PieceKey>([
-  'chassis', 'corps:b42', 'corps:b28', ...MODULE_IDS.map((m: ModuleId): PieceKey => `mod:${m}`),
+  'chassis',
+  'corps:b42',
+  'corps:b28',
+  'corps:lkdv-one-15',
+  'corps:lkdv-one-25',
+  'corps:lkdv-one-45',
+  'corps:lkdv-one-60',
+  'corps:lkdv-one-80',
+  ...MODULE_IDS.map((m: ModuleId): PieceKey => `mod:${m}`),
 ]));
 
 const PartConfigS = z.object({

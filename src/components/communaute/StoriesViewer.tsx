@@ -620,17 +620,6 @@ export default function StoriesViewer({
                 >
                   <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={16} color={liked ? '#E0245E' : '#17402C'} />
                 </button>
-                <button
-                  type="button"
-                  aria-label="Partager la story"
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void shareStory();
-                  }}
-                >
-                  <Icon name="send" size={16} color="#ffffff" />
-                </button>
               </div>
             ) : null}
           </div>

@@ -56,13 +56,16 @@ export type BagRenderSource =
 
 /**
  * Mapping « corps du studio » → modèle GLB.
- * Rapprochement par capacité (et non correspondance de produit) :
- * - b42 (Corps 42 L) → lkdv-one-45 (+3 L)
- * - b28 (Corps 28 L) → lkdv-one-25 (-3 L)
- * Les trois autres modèles LKDV ONE (15 L, 60 L, 80 L) n'ont pas de corps correspondant
- * dans le catalogue actuel du Studio (qui n'en compte que deux : b42 et b28).
+ * - Correspondance 1:1 pour les cinq sacs de la gamme LKDV ONE.
+ * - Rapprochement par capacité pour les deux corps d'origine en héritage (lecture des kits existants) :
+ *   b42 → lkdv-one-45 (+3 L), b28 → lkdv-one-25 (-3 L).
  */
 export const GLB_MODEL_BY_BAG: Readonly<Record<string, string>> = {
+  'lkdv-one-15': 'lkdv-one-15',
+  'lkdv-one-25': 'lkdv-one-25',
+  'lkdv-one-45': 'lkdv-one-45',
+  'lkdv-one-60': 'lkdv-one-60',
+  'lkdv-one-80': 'lkdv-one-80',
   b42: 'lkdv-one-45',
   b28: 'lkdv-one-25',
 };
