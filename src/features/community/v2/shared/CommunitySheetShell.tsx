@@ -181,7 +181,13 @@ export function CommunitySheetShell({
       () => {
         setMounted(false);
         setState('opening');
-        openerRef.current?.focus?.();
+        // Le fond n'est rendu focusable qu'APRÈS le nettoyage de l'effet
+        // `inert` (commit React suivant). Un focus synchrone ici serait un
+        // no-op silencieux ; on le diffère d'une frame.
+        window.requestAnimationFrame(() => {
+          const opener = openerRef.current;
+          if (opener && document.contains(opener)) opener.focus({ preventScroll: true });
+        });
       },
       reducedMotion ? 0 : SHEET_EXIT_MS,
     );

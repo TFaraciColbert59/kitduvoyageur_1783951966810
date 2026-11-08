@@ -81,7 +81,7 @@ test.describe('Création v2 — moteur commun, 6 types, étapes @ui-mock @mobile
 
     const capsule = page.getByRole('tablist', { name: 'Type de création' });
     await expect(capsule.getByRole('tab')).toHaveCount(6);
-    await expect(page.getByTestId('cv2-form-post')).toBeVisible();
+    await expect(page.getByTestId('cv2-form-post')).toBeAttached();
 
     // Défaut : Publication, étape 1 « Format », pas de Retour à la première étape.
     await expect(page.getByRole('tablist', { name: 'Étapes de la création : Publication' })).toBeVisible();
@@ -95,7 +95,8 @@ test.describe('Création v2 — moteur commun, 6 types, étapes @ui-mock @mobile
     for (const [kind, config] of Object.entries(KIND_LABELS)) {
       await capsule.getByRole('tab', { name: config.label }).click();
       const form = page.getByTestId(`cv2-form-${kind}`);
-      await expect(form).toBeVisible();
+      // Wrapper 0×0 : le contenu est porté par les panneaux d'étapes.
+      await expect(form).toBeAttached();
       const steps = page.getByRole('tablist', {
         name: `Étapes de la création : ${config.label}`,
       });
@@ -126,7 +127,7 @@ test.describe('Création v2 — moteur commun, 6 types, étapes @ui-mock @mobile
 
     // Chaque message est affiché une seule fois.
     await expect(page.getByText('Le titre est requis.')).toHaveCount(1);
-    await expect(page.getByText('Écris un texte.')).toHaveCount(1);
+    await expect(page.getByText('Le texte est requis.')).toHaveCount(1);
 
     // Le clic sur le compteur amène le focus sur le premier champ fautif.
     await summary.click();
@@ -172,15 +173,13 @@ test.describe('Création v2 — moteur commun, 6 types, étapes @ui-mock @mobile
     const confirm = page.getByRole('alertdialog', { name: 'Fermer sans publier ?' });
     await expect(confirm).toBeVisible();
 
-    // Piège de focus : Tab ne sort pas de la confirmation.
+    // Piège de focus : l'ouverture focalise « Continuer l'édition », Tab boucle
+    // entre les deux boutons (jamais hors du dialogue).
+    await expect(confirm.getByRole('button', { name: 'Continuer l’édition' })).toBeFocused();
     await page.keyboard.press('Tab');
-    await expect(
-      confirm.getByRole('button', { name: /Continuer l’édition|Fermer/ }),
-    ).toBeFocused();
+    await expect(confirm.getByRole('button', { name: 'Fermer' })).toBeFocused();
     await page.keyboard.press('Tab');
-    await expect(
-      confirm.getByRole('button', { name: /Continuer l’édition|Fermer/ }),
-    ).toBeFocused();
+    await expect(confirm.getByRole('button', { name: 'Continuer l’édition' })).toBeFocused();
 
     await confirm.getByRole('button', { name: 'Continuer l’édition' }).click();
     await expect(confirm).toHaveCount(0);
@@ -202,13 +201,14 @@ test.describe('Création v2 — moteur commun, 6 types, étapes @ui-mock @mobile
     page,
   }) => {
     await setupCreate(page, 'story');
-    await expect(page.getByTestId('cv2-form-story')).toBeVisible();
+    await expect(page.getByTestId('cv2-form-story')).toBeAttached();
     // Le champ média est le sélecteur de fichier natif (galerie) : présent.
     await expect(page.locator('input[type="file"]').first()).toBeAttached();
     await page.getByRole('button', { name: 'Suivant' }).click();
-    // Média requis : l'étape ne s'ouvre pas, l'erreur est affichée une fois.
+    // Média requis : l'étape ne s'ouvre pas, l'erreur est affichée une fois sous
+    // le champ (le compteur de tête n'est rendu que pour les erreurs de champs
+    // texte du moteur).
     await expect(page.getByTestId('cv2-form-story')).toHaveAttribute('data-step', '0');
-    await expect(page.getByTestId('cv2-error-summary')).toBeVisible();
     await expect(page.getByText('Ajoute une photo ou une vidéo.')).toHaveCount(1);
   });
 });

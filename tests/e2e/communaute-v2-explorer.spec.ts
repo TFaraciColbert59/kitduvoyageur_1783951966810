@@ -318,7 +318,14 @@ test.describe('Explorer v2 — Carnets : tri, j’aime, Peek, état vide @ui-moc
     await empty.getByRole('button', { name: /Créer mon premier carnet/ }).click();
 
     await expect(page.getByTestId('communaute-v2-create')).toBeVisible();
-    await expect(page.getByTestId('cv2-form-carnet')).toBeVisible();
+    // Le moteur porte le contenu dans les panneaux d'étape (`mini.pages`) : le
+    // `<form data-testid="cv2-form-…">` est un wrapper de 0×0, le contenu visible
+    // est le panneau de l'étape 1.
+    await expect(page.getByTestId('cv2-form-carnet')).toBeAttached();
+    await expect(
+      page.getByRole('tablist', { name: 'Étapes de la création : Carnet' }).getByRole('tab', { name: 'Étape 1 : Infos' }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByTestId('cv2-field-title')).toBeVisible();
   });
 });
 

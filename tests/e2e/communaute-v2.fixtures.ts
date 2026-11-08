@@ -433,14 +433,21 @@ export async function installCommunityV2Mock(
       });
       return;
     }
+    const payload = rpcPayload(name, args, state, mutable);
+    if (process.env.CV2_DEBUG_MOCK === '1') {
+      console.log('[mock] rpc', name, JSON.stringify(args).slice(0, 160), '→', Array.isArray(payload) ? `${payload.length} lignes` : JSON.stringify(payload)?.slice(0, 80));
+    }
     await route.fulfill({
       status: 200,
       headers: corsHeaders(route),
-      json: rpcPayload(name, args, state, mutable),
+      json: payload,
     });
   });
 
-  // 2) PostgREST — tables / mutations
+  // 2) PostgREST — tables / mutations.
+  //    Cette route GLOBALE matche aussi `/rest/v1/rpc/...` (priorité LIFO : elle
+  //    est enregistrée après la route RPC). On laisse donc passer les appels
+  //    RPC vers leur handler dédié, sinon les feeds recevaient `[]`.
   await page.context().route('**/rest/v1/**', async (route) => {
     if (isOptions(route)) {
       await route.fulfill({ status: 204, headers: corsHeaders(route) });
@@ -448,6 +455,10 @@ export async function installCommunityV2Mock(
     }
     const request = route.request();
     const url = new URL(request.url());
+    if (url.pathname.includes('/rest/v1/rpc/')) {
+      await route.fallback();
+      return;
+    }
     const table = lastSegment(url.pathname);
     const accept = request.headers()['accept'] ?? '';
     record({ kind: 'table', name: table, method: request.method() });
@@ -894,6 +905,28 @@ export function installConsoleGuard(page: Page): { errors: string[] } {
 }
 
 /**
+ * Attend l'hydratation React d'un élément : React attache ses props sur le nœud
+ * DOM (`__reactProps$…`) seulement après hydratation. Le HTML SSR contient les
+ * boutons avant : cliquer trop tôt ne déclenche aucun handler.
+ */
+export async function waitForHydration(page: Page, selector: string, timeout = 20_000): Promise<boolean> {
+  try {
+    await page.waitForFunction(
+      (sel) => {
+        const element = document.querySelector(sel);
+        if (!element) return false;
+        return Object.keys(element).some((key) => key.startsWith('__reactProps$'));
+      },
+      selector,
+      { timeout },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Va sur /communaute et attend la barre haute du fil (session synthétique déjà
  * posée). Échec explicite si le middleware renvoie vers /connexion : c'est le
  * signe que le nom du cookie ne correspond pas au build (variable
@@ -906,6 +939,13 @@ export async function gotoCommunity(page: Page): Promise<void> {
       state: 'visible',
       timeout: 30_000,
     });
+    // Le HTML SSR contient les boutons AVANT l'hydratation : cliquer trop tôt
+    // ne déclenche rien (et grille une tentative de `openExplorer`). On attend
+    // la fin du chargement des scripts puis un court délai de stabilisation.
+    await page.waitForLoadState('load').catch(() => undefined);
+    // Attente déterministe de l'hydratation du déclencheur : sans elle, le
+    // premier clic peut tomber sur le HTML SSR et ne rien ouvrir.
+    await waitForHydration(page, 'button[aria-label="Explorer et rechercher"]');
   } catch (cause) {
     if (page.url().includes('/connexion')) {
       throw new Error(
@@ -938,7 +978,7 @@ export async function openExplorer(
   options: OpenSheetOptions = {},
 ): Promise<boolean> {
   const attempts = options.attempts ?? 3;
-  const timeoutMs = options.timeoutMs ?? 15_000;
+  const timeoutMs = options.timeoutMs ?? 5_000;
   const button =
     trigger === 'search'
       ? page.getByRole('button', { name: 'Rechercher dans la communauté' })
@@ -989,7 +1029,7 @@ export async function openCreate(
   options: OpenSheetOptions = {},
 ): Promise<boolean> {
   const attempts = options.attempts ?? 3;
-  const timeoutMs = options.timeoutMs ?? 15_000;
+  const timeoutMs = options.timeoutMs ?? 5_000;
   const root = page.getByTestId('communaute-v2-create');
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     if (kind === 'story') {
