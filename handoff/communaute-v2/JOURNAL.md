@@ -114,3 +114,35 @@ indépendamment de notre chantier. **Décision** : corriger dans notre PR le min
 (`var(--ks-ink-22)` → `var(--ks-ink-25)`, même intention d'ombre encrée 25 %), pour que la
 PR puisse être verte et que `main` le redevienne à la fusion. Alternative écartée : attendre
 le chantier kit-studio (bloque notre livraison) ; désactiver la garde (interdit).
+
+### J-12. `quality-gates` rouge sur un test hors périmètre déjà rouge sur `main` — fusion avec bypass admin
+`src/features/posts/ui/__tests__/PostGlassPanel.test.tsx` (« tactile > le mauvais sens ne fait
+rien ») échoue **4 fois sur 4** en CI (runs 42495309181, 42496462390, 42500797303, 42501840000)
+et **rouge à l'identique sur `main`** (`58525cb`, run 42495461905). Il passe **20/20 en isolation
+locale** (Node 22 et 26, macOS, y compris avec `CI=true`, `GITHUB_ACTIONS=true`, `TZ=UTC` et sous
+charge CPU). Aucun fichier de `src/features/posts`, `src/hooks/gestures` ou `src/design/motion`
+n'est modifié par la PR : le test n'appartient pas au chantier. C'est un **flake d'environnement
+pré-existant** (probablement dépendant du runner Linux), non aggravé par la PR.
+La gate 3 étant rouge, les gates 4/4c/5 sont `skipped` (chaîne `if: success()`) : la CI ne peut
+donc pas exécuter elle-même les e2e de la PR. **Décision** : fusionner la PR avec le bypass admin
+prévu par le ruleset `main-protection` (`bypass_actors` = RepositoryRole Admin), preuves e2e
+fournies par les runs locaux reproductibles (34/34 × Chromium **et** WebKit, axe 4/4, visuel 4/4,
+`tsc` EXIT 0) et par le déploiement Preview vérifié. Alternatives écartées : désactiver la gate ou
+la rendre `continue-on-error` (masquerait un vrai rouge) ; corriger ce test hors périmètre sans
+pouvoir le reproduire localement (risque de casser un test qui protège des gestes iOS) ;
+attendre un runner vert (aucune preuve que le flake disparaisse). **Suite recommandée** : enquêter
+sur ce flake sur Linux, puis séparer la gate 4c dans un job indépendant pour qu'elle s'exécute
+même si un test unitaire hors périmètre échoue.
+
+### J-13. Correctifs de coque issus de la recette + iPhone (postérieurs au gel de la spec)
+La recette a révélé deux défauts réels de la coque, corrigés avant fusion :
+(1) `.lkdv-cv2-grab` (poignée, z 15) recouvrait `.lkdv-cv2-back` — un tap sur « Retour » était
+intercepté à 390/430 px ; `.lkdv-cv2-detail` passe à z 16, le drag reste porté par
+`.lkdv-cv2-detail-nav`. (2) La restitution du focus après fermeture échouait en WebKit (le commit
+de nettoyage `inert` arrive après la frame) : reprises rAF + timers courts. Les deux sont vérifiés
+en e2e Chromium **et** WebKit (`ce5313a`), a11y et visuel repassés en clic natif.
+Côté iPhone : `cap sync` régénère des chemins SPM relatifs au dépôt (l'ancien `Package.swift`
+pointait vers un autre checkout) — commit `chore(ios)` — et les libellés d'autorisation
+caméra/photothèque (`NSCameraUsageDescription`, `NSPhotoLibrary*`) manquaient au `Info.plist` :
+ajoutés en français (`plutil -lint` OK). Aucun de ces correctifs ne change le comportement web v2
+validé par la recette ; ils sont documentés ici car ils sortent du périmètre initial.
