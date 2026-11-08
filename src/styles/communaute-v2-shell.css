@@ -387,11 +387,18 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   }
 }
 
-/* Volet actif : conteneur du pager de filtres/étapes (le glisser horizontal
-   change de filtre dans le volet, jamais de volet — `00-MISSION § 3`). */
+/* Volets : les 4 conteneurs cohabitent dans le corps (les inactifs restent dans
+   le DOM pour `aria-hidden`/`inert` mais sont superposés absolument, sinon ils
+   s'empileraient verticalement et pousseraient le volet actif hors du cadre). */
 .lkdv-cv2-pane--volet {
+  position: absolute;
+  inset: 0;
+  height: auto;
   overflow: hidden;
   padding: 0;
+}
+.lkdv-cv2-pane--volet[aria-hidden='true'] {
+  display: none;
 }
 .lkdv-cv2-pane--volet > .lkdv-lens-pager {
   height: 100%;
