@@ -74,3 +74,16 @@ create index if not exists idx_carnet_collaborators_lookup
 
 create index if not exists idx_hike_sessions_carnet_id
   on public.hike_sessions (carnet_id);
+
+-- Hygiène des triggers applicatifs : révoque l'accès anon résiduel sur les triggers récents
+do $$
+begin
+  if exists (
+    select 1 from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'trg_sync_materiel_kits_aliases'
+  ) then
+    revoke all on function public.trg_sync_materiel_kits_aliases() from public, anon;
+    grant execute on function public.trg_sync_materiel_kits_aliases() to authenticated, service_role;
+  end if;
+end $$;

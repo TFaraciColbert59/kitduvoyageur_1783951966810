@@ -61,13 +61,36 @@ jobs:
       - name: Verify embedded Capacitor configuration
         run: node scripts/verify/verify_capacitor_server.mjs ios/App/App/capacitor.config.json --config-only
 
-      - name: List Xcode schemes
-        working-directory: ios/App
-        run: xcodebuild -list
+      - name: Pre-populate SPM binary target cache
+        run: |
+          mkdir -p ~/Library/Caches/org.swift.swiftpm/artifacts
+          curl -sSL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/octet-stream" \
+            https://api.github.com/repos/ionic-team/capacitor-swift-pm/releases/assets/496864201 \
+            -o ~/Library/Caches/org.swift.swiftpm/artifacts/https___github_com_ionic_team_capacitor_swift_pm_releases_download_8_5_0_Capacitor_xcframework_zip || true
+          curl -sSL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/octet-stream" \
+            https://api.github.com/repos/ionic-team/capacitor-swift-pm/releases/assets/496864200 \
+            -o ~/Library/Caches/org.swift.swiftpm/artifacts/https___github_com_ionic_team_capacitor_swift_pm_releases_download_8_5_0_Cordova_xcframework_zip || true
 
       - name: Resolve SPM dependencies
         working-directory: ios/App
-        run: xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App -sdk iphoneos
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "Resolving SPM dependencies (attempt $i)..."
+            if xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App -sdk iphoneos; then
+              echo "SPM dependencies resolved successfully."
+              break
+            fi
+            if [ "$i" -eq 5 ]; then
+              echo "SPM resolve failed after 5 attempts."
+              exit 1
+            fi
+            echo "Resolve failed (attempt $i), waiting 15s before retrying..."
+            sleep 15
+          done
+
+      - name: List Xcode schemes
+        working-directory: ios/App
+        run: xcodebuild -list
 
       - name: Build unsigned iOS app
         working-directory: ios/App

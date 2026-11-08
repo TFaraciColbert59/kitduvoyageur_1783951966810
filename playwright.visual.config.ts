@@ -9,12 +9,13 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: 1,
+  workers: process.env.CI ? 2 : 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   timeout: 60_000,
   use: {
     baseURL: process.env.PW_BASE_URL || 'http://localhost:4000',
     trace: 'on-first-retry',
+    serviceWorkers: 'block',
   },
   projects: [
     {

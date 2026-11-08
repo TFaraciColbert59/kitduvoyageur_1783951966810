@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import CarnetScreen from '@/components/carnet/profile/CarnetScreen';
+import { CarnetScreenV2 } from '@/components/carnet/v2/CarnetScreenV2';
 import { getCarnetDetail } from '@/features/carnet/detail/getCarnetDetail';
 import { buildCarnetJsonLd, serializeJsonLd } from '@/features/carnet/detail/jsonld';
 
@@ -61,6 +62,8 @@ export default async function CarnetDetailPage({ params }: Props) {
   // Vrai 404 : l'ancienne fiche rendait un brouillon local et répondait 200.
   if (!detail) notFound();
 
+  const isV2 = process.env.NEXT_PUBLIC_CARNET_V2 !== 'false';
+
   return (
     <>
       {detail.isPublic ? (
@@ -69,7 +72,7 @@ export default async function CarnetDetailPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildCarnetJsonLd(detail, siteUrl)) }}
         />
       ) : null}
-      <CarnetScreen detail={detail} />
+      {isV2 ? <CarnetScreenV2 detail={detail} /> : <CarnetScreen detail={detail} />}
     </>
   );
 }

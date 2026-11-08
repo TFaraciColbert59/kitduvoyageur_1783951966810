@@ -122,7 +122,7 @@ export function StudioHost({ state, onExit }: StudioHostProps) {
           }}
         >
           <div style={{ display: 'grid', gap: 12, maxWidth: 380, textAlign: 'center' }}>
-            <h1 style={{ margin: 0, fontSize: 22 }}>Connecte-toi pour ouvrir le studio</h1>
+            <h2 style={{ margin: 0, fontSize: 22 }}>Connecte-toi pour ouvrir le studio</h2>
             <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>
               Le Kit Studio montre uniquement les vraies données de ton compte. Aucune donnée
               de démonstration n’est affichée ici.

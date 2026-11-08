@@ -9,6 +9,8 @@ import type {
   CarnetNightItem,
   CarnetParticipant,
   CarnetStatItem,
+  CarnetViewerRole,
+  CarnetKitVerdictItem,
   KitVerdictType,
 } from './types';
 
@@ -67,13 +69,14 @@ export function buildParticipants(input: BuildCarnetDetailInput): CarnetParticip
 
 function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
   const overnightByDay = new Map<number, string>();
-  for (const h of input.hebergements) {
+  for (const h of input.hebergements ?? []) {
     const day = h.apres_jour_numero;
     if (day && h.nom) overnightByDay.set(day, h.nom);
   }
 
-  if (input.etapes.length > 0) {
-    return input.etapes.map((e) => {
+  const rawEtapes = input.etapes ?? [];
+  if (rawEtapes.length > 0) {
+    return rawEtapes.map((e) => {
       const dayNumber = e.jour_numero ?? e.ordre ?? 1;
       const dateLabel = e.date_etape
         ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(
@@ -176,6 +179,23 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
           mapRefugeId: null,
         }));
 
+  const viewerRole: CarnetViewerRole =
+    input.viewerRole ?? (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor');
+  const budget = viewerRole === 'visitor' ? null : (input.budget ?? null);
+
+  const kitVerdicts: Record<string, CarnetKitVerdictItem> = { ...(input.kitVerdicts ?? {}) };
+  for (const k of input.kitItems ?? []) {
+    const verdict = (k.verdict ?? k.verdict_status ?? null) as KitVerdictType | null;
+    if (verdict && !kitVerdicts[k.id]) {
+      kitVerdicts[k.id] = {
+        itemId: k.id,
+        verdict,
+        verdictNote: k.verdict_note ?? k.verdict_notes ?? null,
+        joursUtilises: k.jours_utilises ?? [],
+      };
+    }
+  }
+
   return {
     id: carnet.id,
     title: carnet.title?.trim() || carnet.destination?.trim() || UNTITLED,
@@ -214,14 +234,14 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     summary,
     kit: {
       totalWeightG: kitWeight,
-      items: input.kitItems.map((k) => ({
+      items: (input.kitItems ?? []).map((k) => ({
         id: k.id,
         name: k.nom?.trim() || 'Élément sans nom',
         detail: k.detail?.trim() || null,
         weightG: toNumber(k.poids_g),
         color: k.couleur_tag ?? null,
-        verdict: (k.verdict as KitVerdictType) || null,
-        verdictNote: k.verdict_note ?? null,
+        verdict: ((k.verdict ?? k.verdict_status ?? null) as KitVerdictType) || null,
+        verdictNote: k.verdict_note ?? k.verdict_notes ?? null,
         joursUtilises: k.jours_utilises ?? [],
       })),
     },
@@ -229,14 +249,14 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     place: buildCarnetPlace(carnet, trace),
     distanceKm,
     elevationM,
-    viewerRole: input.viewerRole ?? (input.viewerId && carnet.author_id === input.viewerId ? 'participant' : 'visitor'),
+    viewerRole,
     nights,
     dayReactions: input.dayReactions ?? {},
     momentEngagement: input.momentEngagement ?? {},
-    kitVerdicts: input.kitVerdicts ?? {},
+    kitVerdicts,
     livePosition: input.livePosition ?? null,
     publicZone: input.publicZone ?? null,
-    budget: input.budget ?? null,
+    budget,
     liveSharing: Boolean(carnet.live_sharing),
   };
 }

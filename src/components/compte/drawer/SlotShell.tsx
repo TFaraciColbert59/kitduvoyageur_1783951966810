@@ -15,7 +15,7 @@ export interface SlotLens {
 }
 
 export interface SlotShellProps {
-  slot: SlotId;
+  slot: SlotId | string;
   viewer: Viewer;
   /** Visibilité du profil, reflétée pour le verrou de la tâche 14. */
   visibility?: Visibility;

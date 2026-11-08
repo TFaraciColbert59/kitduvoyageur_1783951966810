@@ -24,7 +24,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, resolve, basename } from 'node:path';
 
-const URL_PROJET = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://icxyvwzfjbflcbqukpfz.supabase.co';
+const URL_PROJET = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const CLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 function arg(nom, defaut = null) {

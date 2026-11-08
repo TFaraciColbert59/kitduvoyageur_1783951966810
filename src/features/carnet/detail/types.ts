@@ -24,6 +24,8 @@ export interface CarnetRow {
   country_iso?: string | null;
   trip_id?: string | null;
   live_sharing?: boolean | null;
+  created_at?: string | null;
+  status?: string | null;
 }
 
 export interface HikeSessionRow {
@@ -57,6 +59,21 @@ export interface EtapeRow {
   temperature_c: number | null;
 }
 
+export interface CarnetStepRow {
+  id: string;
+  carnet_id?: string | null;
+  jour_numero?: number | null;
+  titre?: string | null;
+  description?: string | null;
+  date?: string | null;
+  distance_km?: number | string | null;
+  denivele_positif?: number | string | null;
+  denivele_negatif?: number | string | null;
+  duree_minutes?: number | null;
+  points_passage?: unknown[];
+  created_at?: string | null;
+}
+
 export interface HebergementRow {
   id: string;
   apres_jour_numero: number | null;
@@ -77,18 +94,31 @@ export interface MomentRow {
   auteur_nom: string | null;
   lieu: string | null;
   image_url: string | null;
+  titre?: string | null;
+  legende?: string | null;
+  lieu_nom?: string | null;
+  media_type?: string | null;
+  media_url?: string | null;
+  prive?: boolean | null;
 }
 
 export interface KitItemRow {
   id: string;
   nom: string | null;
-  detail: string | null;
-  poids_g: number | null;
-  couleur_tag: string | null;
-  sort_order: number | null;
+  detail?: string | null;
+  poids_g?: number | null;
+  couleur_tag?: string | null;
+  sort_order?: number | null;
   verdict?: string | null;
   verdict_note?: string | null;
   jours_utilises?: number[] | null;
+  verdict_status?: string | null;
+  verdict_notes?: string | null;
+  verdict_rating?: number | null;
+  rating?: number | null;
+  categorie?: string | null;
+  quantite?: number | null;
+  porteur_label?: string | null;
 }
 
 export interface AuthorRow {
@@ -121,6 +151,9 @@ export interface CarnetMomentItem {
   authorName: string | null;
   place: string | null;
   imageUrl: string | null;
+  title?: string | null;
+  type?: string | null;
+  authorId?: string | null;
 }
 
 /** Un point GPS d'un jour : sa coordonnée réelle et son heure réelle. */
@@ -141,6 +174,7 @@ export interface CarnetDayPoint {
 export interface CarnetDay {
   /** Numéro du jour tel que le carnet le numérote, à partir de 1. */
   index: number;
+  dayNumber?: number;
   /** `YYYY-MM-DD`, ou `null` quand aucune date réelle ne peut être établie. */
   date: string | null;
   /** Longueur haversine des segments du jour, `null` sous deux points. */
@@ -177,7 +211,15 @@ export interface CarnetEtapeDay {
   overnight: string | null;
 }
 
-export type KitVerdictType = 'essentiel' | 'utile' | 'jamais_servi' | 'defaillant' | 'manquait';
+export type KitVerdictType =
+  | 'essentiel'
+  | 'utile'
+  | 'jamais_servi'
+  | 'defaillant'
+  | 'manquait'
+  | 'top'
+  | 'flop'
+  | 'neutre';
 
 export interface CarnetKitItemRow {
   id: string;
@@ -216,11 +258,14 @@ export type CarnetParticipantRole = 'author' | 'collaborator' | 'participant';
  */
 export interface CarnetParticipant {
   userId: string;
+  id?: string;
   name: string | null;
   handle: string | null;
   avatarUrl: string | null;
   role: CarnetParticipantRole;
 }
+
+export type CarnetDayItem = CarnetDay;
 
 /** Ligne de participation telle que lue en base, avec son profil public éventuel. */
 export interface ParticipantRow {
@@ -281,6 +326,7 @@ export interface CarnetMomentEngagementItem {
   commentsCount: number;
   userLiked: boolean;
   userSaved: boolean;
+  savesCount?: number;
 }
 
 export interface CarnetKitVerdictItem {
@@ -294,8 +340,8 @@ export interface CarnetLivePosition {
   lat: number;
   lng: number;
   accuracyM?: number | null;
-  altitude?: number | null;
   accuracy?: number | null;
+  altitude?: number | null;
   heading?: number | null;
   speed?: number | null;
   recordedAt: string;
@@ -309,24 +355,26 @@ export interface CarnetPublicZone {
   centerLat?: number;
   centerLng?: number;
   radiusMeters?: number;
-  isDelayed?: boolean;
   recordedAt: string;
+  isDelayed?: boolean;
 }
 
 export interface CarnetBudgetItem {
   id: string;
   label: string;
-  amountCents: number;
-  currency: string;
-  category: string | null;
-  paidByUserId: string | null;
-  date: string | null;
+  amountCents?: number;
+  amount?: number;
+  currency?: string;
+  category?: string | null;
+  paidByUserId?: string | null;
+  date?: string | null;
 }
 
 export interface CarnetBudget {
-  totalCents: number;
-  currency: string;
-  perPersonCents: number | null;
+  totalCents?: number;
+  total?: number;
+  currency?: string;
+  perPersonCents?: number | null;
   items: CarnetBudgetItem[];
 }
 
@@ -399,8 +447,9 @@ export interface BuildCarnetDetailInput {
    * (`pickCarnetTrace`). Absente, on retombe sur la trace de `hikeSession`.
    */
   trace?: unknown | null;
-  etapes: EtapeRow[];
-  hebergements: HebergementRow[];
+  etapes?: EtapeRow[];
+  steps?: CarnetStepRow[];
+  hebergements?: HebergementRow[];
   moments: MomentRow[];
   kitItems: KitItemRow[];
   viewerId: string | null;

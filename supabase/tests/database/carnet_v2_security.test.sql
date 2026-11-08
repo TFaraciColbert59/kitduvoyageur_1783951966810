@@ -25,12 +25,12 @@ VALUES
   ('c2000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'carnet_blocked@test.local', 'x', '{}', '{}', now(), now())
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.user_profiles (id, username, display_name, created_at)
+INSERT INTO public.user_profiles (id, email, full_name, created_at)
 VALUES
-  ('c2000000-0000-4000-8000-000000000001', 'c_author', 'Auteur Test', now()),
-  ('c2000000-0000-4000-8000-000000000002', 'c_collab', 'Collaborateur Test', now()),
-  ('c2000000-0000-4000-8000-000000000003', 'c_visitor', 'Visiteur Test', now()),
-  ('c2000000-0000-4000-8000-000000000004', 'c_blocked', 'Bloqué Test', now())
+  ('c2000000-0000-4000-8000-000000000001', 'carnet_author@test.local', 'Auteur Test', now()),
+  ('c2000000-0000-4000-8000-000000000002', 'carnet_collab@test.local', 'Collaborateur Test', now()),
+  ('c2000000-0000-4000-8000-000000000003', 'carnet_visitor@test.local', 'Visiteur Test', now()),
+  ('c2000000-0000-4000-8000-000000000004', 'carnet_blocked@test.local', 'Bloqué Test', now())
 ON CONFLICT (id) DO NOTHING;
 
 -- Carnet privé
@@ -76,6 +76,8 @@ VALUES
 -- ----------------------------------------------------------------------------
 -- Test 1 & 2 : Fonctions canoniques sous session auteur / collaborateur / visiteur
 -- ----------------------------------------------------------------------------
+SET LOCAL ROLE authenticated;
+
 -- Sous session auteur
 SET LOCAL "request.jwt.claims" = '{"sub": "c2000000-0000-4000-8000-000000000001", "role": "authenticated"}';
 SELECT is(public.is_carnet_participant('c2100000-0000-4000-8000-000000000001'), true, 'Auteur est participant du carnet privé');
