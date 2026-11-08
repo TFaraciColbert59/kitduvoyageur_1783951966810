@@ -676,3 +676,50 @@ describe('placage des ancres sur la surface du maillage', () => {
     expect(ancre.position).toEqual(depart);
   });
 });
+
+describe('les manifestes publiés concordent avec le catalogue du code', () => {
+  /**
+   * La scène charge le manifeste servi depuis `public/assets/modules/`, pas la constante
+   * TypeScript : celle-ci ne sert que de secours et alimente les tests purs. Les deux peuvent donc
+   * diverger sans que rien ne le signale — c'est arrivé sur la platine de M14, corrigée dans le
+   * code et restée à sa valeur d'origine dans le fichier servi, donc sans effet à l'écran.
+   */
+  it('même platine, mêmes cotes et même origine pour les 20 modules', () => {
+    const ecarts: string[] = [];
+    for (const attendu of AVAILABLE_3D_MODULE_MANIFESTS) {
+      const fichier = path.join(MODULES_DIR, `${attendu.moduleId}.manifest.json`);
+      if (!fs.existsSync(fichier)) {
+        ecarts.push(`${attendu.moduleId} : aucun manifeste servi`);
+        continue;
+      }
+      const servi = JSON.parse(fs.readFileSync(fichier, 'utf8')) as typeof attendu;
+      // Les deux sources sont écrites à la main : un dixième de millimètre d'arrondi n'est pas
+      // une dérive. On compare les nombres à 0,5 mm près, le reste à l'identique.
+      const TOLERANCE_M = 0.0005;
+      const concorde = (a: unknown, b: unknown): boolean => {
+        if (typeof a === 'number' && typeof b === 'number') return Math.abs(a - b) <= TOLERANCE_M;
+        if (Array.isArray(a) && Array.isArray(b)) {
+          return a.length === b.length && a.every((v, i) => concorde(v, b[i]));
+        }
+        if (a && b && typeof a === 'object' && typeof b === 'object') {
+          const ca = a as Record<string, unknown>;
+          const cb = b as Record<string, unknown>;
+          const cles = new Set([...Object.keys(ca), ...Object.keys(cb)]);
+          return [...cles].every((k) => concorde(ca[k], cb[k]));
+        }
+        return a === b;
+      };
+      const compare = (champ: string, a: unknown, b: unknown) => {
+        if (!concorde(a, b)) {
+          ecarts.push(`${attendu.moduleId}.${champ} : servi ${JSON.stringify(a)} vs code ${JSON.stringify(b)}`);
+        }
+      };
+      compare('platine', servi.platine, attendu.platine);
+      compare('boundingBoxM', servi.boundingBoxM, attendu.boundingBoxM);
+      compare('cotesReferenceMm', servi.cotesReferenceMm, attendu.cotesReferenceMm);
+      compare('origin', servi.origin, attendu.origin);
+      compare('fitRule', servi.fitRule, attendu.fitRule);
+    }
+    expect(ecarts).toEqual([]);
+  });
+});
