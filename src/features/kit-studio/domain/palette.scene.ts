@@ -20,45 +20,6 @@ export const LIGHT_HEMI_GROUND = '#7E9A55';
 export const LIGHT_SUN = '#FFF1DA';
 export const LIGHT_RIM = '#E3F0FF';
 
-/* ───────────── Panorama : ciel, soleil, nuages, montagnes, sapins, prairie ───────────── */
-export const SKY_STOPS: readonly (readonly [number, string])[] = [
-  [0, '#3F8ED3'],
-  [0.45, '#7DBBE8'],
-  [0.85, '#CDE7F4'],
-  [1, '#E8F3F2'],
-];
-const SUN_CORE: Rgb = [255, 252, 238];
-const SUN_HALO: Rgb = [255, 248, 222];
-const SUN_GLOW: Rgb = [255, 244, 214];
-export const SUN_STOPS: readonly (readonly [number, string])[] = [
-  [0, rgba(SUN_CORE, 1)],
-  [0.06, rgba(SUN_HALO, 0.9)],
-  [0.3, rgba(SUN_GLOW, 0.28)],
-  [1, rgba(SUN_GLOW, 0)],
-];
-export const CLOUD_CORE = rgba(WHITE, 0.75);
-export const CLOUD_EDGE = rgba(WHITE, 0);
-export const RIDGE_FAR = '#9FB9D2';
-export const RIDGE_MID = '#6F98A6';
-export const RIDGE_NEAR = '#5E8C55';
-export const SNOW = rgba(WHITE, 0.92);
-const HAZE_FAR: Rgb = [220, 236, 244];
-const HAZE_MID: Rgb = [190, 222, 224];
-export const HAZE_FAR_STOPS: readonly (readonly [number, string])[] = [[0, rgba(HAZE_FAR, 0)], [1, rgba(HAZE_FAR, 0.75)]];
-export const HAZE_MID_STOPS: readonly (readonly [number, string])[] = [[0, rgba(HAZE_MID, 0)], [1, rgba(HAZE_MID, 0.55)]];
-export const FIR_DARK = '#2F5A3A';
-export const FIR_LIGHT = '#3B6B40';
-export const MEADOW_STOPS: readonly (readonly [number, string])[] = [
-  [0, '#7DAA55'],
-  [0.5, '#6C9C47'],
-  [1, '#5F8F3F'],
-];
-export const FLOWER_WHITE = rgba(WHITE, 0.8);
-export const FLOWER_YELLOW = rgba([250, 214, 92], 0.85);
-export const FLOWER_PINK = rgba([206, 140, 190], 0.7);
-export const GRASS_DARK = rgba([60, 110, 40], 0.35);
-export const GRASS_LIGHT = rgba([170, 210, 110], 0.35);
-
 /* ───────────── Table en chêne clair ───────────── */
 export const WOOD_PLANKS: readonly Rgb[] = [
   [226, 214, 196],
@@ -133,3 +94,9 @@ export const DRAWER_ART = {
   white12: 'rgba(255,255,255,0.12)',
   ink30: 'rgba(0,0,0,0.3)',
 } as const;
+
+/** Mur de l'atelier : valeurs déjà présentes dans la palette, sans nouvelle teinte. */
+export const WALL_STOPS: readonly (readonly [number, string])[] = [
+  [0, LOOK_METAL],
+  [1, WOOD_TINT],
+];

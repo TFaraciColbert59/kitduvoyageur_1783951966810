@@ -2,12 +2,12 @@
 // (`dynamic(() => import(...), { ssr: false })`), jamais depuis le rendu serveur. Aucun import React, aucun accès au
 // store : l'état courant est passé à createKitScene() puis à update().
 import {
-  ACESFilmicToneMapping, BoxGeometry, DirectionalLight, HemisphereLight, MathUtils, Mesh, MeshBasicMaterial,
-  MeshStandardMaterial, PCFShadowMap, PlaneGeometry, PMREMGenerator, Scene, SRGBColorSpace, WebGLRenderer,
+  ACESFilmicToneMapping, DirectionalLight, MathUtils, Mesh, MeshBasicMaterial,
+  PCFShadowMap, PlaneGeometry, PMREMGenerator, Scene, SRGBColorSpace, WebGLRenderer,
 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { Camera, PerspectiveCamera, ShadowMapType, ToneMapping } from 'three';
-import { LIGHT_HEMI_GROUND, LIGHT_HEMI_SKY, LIGHT_RIM, LIGHT_SUN, WOOD_TINT } from '../domain/palette.scene';
+import { createWorkshop } from './workshop';
 import { currentConfig, currentKit } from '../domain/state';
 import { BAGS } from '../domain/catalog';
 import type { PartNameId, ZoneId } from '../domain/catalog';
@@ -19,12 +19,11 @@ import type { BagModelLayer, BagModelRuntimeInfo } from './bag/modelLayer';
 import type { BagAssetProvider } from './bag/loader';
 import { createCameraRig } from './camera';
 import type { CameraRig } from './camera';
-import { makeColor } from './color';
 import { attachGestures } from './gestures';
 import type { GestureCallbacks, GestureTarget, ScenePick } from './gestures';
 import { createObjectLayer } from './objects';
 import type { ObjectFrame, ObjectLayer } from './objects';
-import { BAG_HALF_HEIGHT, GROUND_Y, TABLE } from './layout';
+import { BAG_HALF_HEIGHT } from './layout';
 import { createFrameMeter, createLifecycle } from './lifecycle';
 import { clamp } from './math';
 import { ResourceTracker } from './resources';
@@ -149,7 +148,6 @@ export interface KitScene {
 }
 
 export const SHADOW_BUDGET_MS = 24;
-const SHADOW_MAP_SIZE = 1024;
 
 /**
  * Hauteur de composition du sac procédural courant, en mètres : sert uniquement à mettre un
@@ -212,24 +210,9 @@ function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop, bagMo
     }
   }
 
-  // Lumières : avec RoomEnvironment PMREM actif, le soleil direct est ramené à 0.8π (contre 1.65π
-  // sans IBL) pour éviter de brûler les hautes lumières du tissu dé-éclairé tout en gardant le
-  // micro-relief rasant de l'armure 2×2 et le reflet net des boucles rigides.
-  scene.add(new HemisphereLight(makeColor(LIGHT_HEMI_SKY), makeColor(LIGHT_HEMI_GROUND), 0.72 * Math.PI));
-  const sun = new DirectionalLight(makeColor(LIGHT_SUN), (envTexture ? 0.8 : 1.65) * Math.PI);
-  sun.position.set(2.6, 4.6, 3.0);
-  sun.castShadow = shadows;
-  sun.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
-  Object.assign(sun.shadow.camera, { left: -3.4, right: 3.4, top: 3.4, bottom: -3.4, near: 0.5, far: 16 });
-  sun.shadow.bias = -0.0004;
-  sun.shadow.normalBias = 0.02;
-  sun.shadow.radius = 4;
-  scene.add(sun);
-  const rim = new DirectionalLight(makeColor(LIGHT_RIM), 0.35 * Math.PI);
-  rim.position.set(-3, 2, -3);
-  scene.add(rim);
+  const { sun, syncContact } = createWorkshop(scene, tr, tex, shadows, Boolean(envTexture));
 
-  // Toile de fond : panorama flou attaché à la caméra ; il défile plus lentement que le sac (paysage lointain).
+  // Mur neutre attaché à la caméra ; le gradient reste continu pendant les orbites.
   const pano = tex.panorama();
   const backdrop = new Mesh(
     tr.geometry(new PlaneGeometry(1, 1)),
@@ -240,22 +223,6 @@ function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop, bagMo
   camera.add(backdrop);
   scene.add(camera);
   const BD = { rx: 0.16, ry: 0.56, cx: 0, cy: 0 };
-
-  // Table en chêne clair : le sac est posé dessus.
-  const woodMat = tr.material(new MeshStandardMaterial({ map: tex.wood(), roughness: 0.6, metalness: 0, color: makeColor(WOOD_TINT) }));
-  const top = new Mesh(tr.geometry(new BoxGeometry(TABLE.w, 0.08, TABLE.d)), woodMat);
-  top.position.set(TABLE.x, GROUND_Y - 0.04, 0);
-  top.receiveShadow = true;
-  top.castShadow = true;
-  scene.add(top);
-  const legGeo = tr.geometry(new BoxGeometry(0.09, 0.7, 0.09));
-  for (const [i, j] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
-    const leg = new Mesh(legGeo, woodMat);
-    leg.position.set(TABLE.x + i * (TABLE.w / 2 - 0.18), GROUND_Y - 0.08 - 0.35, j * (TABLE.d / 2 - 0.18));
-    leg.castShadow = true;
-    leg.receiveShadow = true;
-    scene.add(leg);
-  }
 
   const bag = createBag(tr, tex, reducedMotion);
   scene.add(bag.group);
@@ -294,6 +261,7 @@ function buildWorld({ rig, maxAnisotropy, reducedMotion, shadows, safeTop, bagMo
       BD.cy = (((K - 1) / 2) * BD.ry) / K;
     },
     syncBackdrop() {
+      syncContact(bag.group.scale, bagModel.info());
       const th = Math.atan2(camera.position.x, camera.position.z);
       pano.offset.x = 0.12 - th / (Math.PI * 2) - BD.cx;
       const ph = Math.acos(clamp((camera.position.y - bag.group.position.y) / Math.max(0.1, camera.position.length()), -1, 1));

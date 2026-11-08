@@ -1,0 +1,5 @@
+Commande : npx vitest run src/features/kit-studio/__tests__ --maxWorkers=2
+ Test Files  41 passed (41)
+      Tests  473 passed (473)
+   Start at  10:40:10
+   Duration  50.85s (transform 10.07s, setup 3.91s, import 22.27s, tests 29.37s, environment 26.48s)

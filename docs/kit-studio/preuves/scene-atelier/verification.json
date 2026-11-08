@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-08",
+  "base": "2a97ca6cb07eda6570679385d9519205f4de2960",
+  "branch": "chantier/scene-atelier",
+  "unit": {
+    "files": 41,
+    "passed": 473,
+    "command": "npx vitest run src/features/kit-studio/__tests__ --maxWorkers=2"
+  },
+  "atlasNegativeControl": {
+    "exit": 1,
+    "changedFabricPixels": 0,
+    "expectedMinimum": 53441.3
+  },
+  "atlasRestored": {
+    "passed": 9
+  },
+  "typescript": {
+    "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit",
+    "exit": 0
+  },
+  "eslint": {
+    "scope": "modified TypeScript files",
+    "exit": 0
+  },
+  "visualInspection": [
+    "scene-atelier-avant-apres.png",
+    "scene-atelier-matrice-lumiere.png",
+    "apres-objets.png"
+  ],
+  "protectedSourceFilesUnchanged": [
+    "scene/camera.ts",
+    "scene/bag/atlas.ts",
+    "scene/bag/moduleLoader.ts",
+    "domain/bagAnchorsTable.ts",
+    "scene/thumbnails.ts"
+  ],
+  "merged": false
+}
