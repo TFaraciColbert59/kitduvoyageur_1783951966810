@@ -12,7 +12,7 @@ export type TraceLineString = { type: 'LineString'; coordinates: [number, number
 
 export interface TraceMapProps {
   geojson: TraceLineString | null;
-  height?: number;
+  height?: number | string;
 }
 
 export function TraceMap({ geojson, height = 260 }: TraceMapProps) {
@@ -50,6 +50,8 @@ export function TraceMap({ geojson, height = 260 }: TraceMapProps) {
             new maplibregl.LngLatBounds(coords[0], coords[0]),
           );
           instance.fitBounds(bounds, { padding: 28, duration: 0 });
+          // Ensure proper sizing after layout
+          setTimeout(() => instance.resize(), 50);
         });
       } catch {
         if (!cancelled) setError('Carte indisponible');
@@ -64,5 +66,16 @@ export function TraceMap({ geojson, height = 260 }: TraceMapProps) {
 
   if (error) return <div className="mattach-map-error">{error}</div>;
 
-  return <div className="mattach-map" ref={containerRef} style={{ height }} aria-label="Carte du tracé" />;
+  return (
+    <div
+      className="mattach-map"
+      ref={containerRef}
+      style={{
+        width: '100%',
+        height: typeof height === 'number' ? `${height}px` : height,
+        position: 'relative',
+      }}
+      aria-label="Carte du tracé"
+    />
+  );
 }

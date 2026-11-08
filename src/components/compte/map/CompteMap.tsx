@@ -113,12 +113,16 @@ function tracksCollection(tracks: MapTrack[]) {
 }
 
 function pointsCollection(
-  rows: Array<{ id: string; position: TrackPoint }>
-) {  return {
+  rows: Array<{ id: string; position: TrackPoint; importance?: number }>
+) {
+  return {
     type: 'FeatureCollection' as const,
     features: rows.map((row) => ({
       type: 'Feature' as const,
-      properties: { id: row.id },
+      properties: {
+        id: row.id,
+        importance: row.importance ?? 1,
+      },
       geometry: {
         type: 'Point' as const,
         coordinates: [row.position.lng, row.position.lat],
@@ -440,7 +444,11 @@ export function CompteMap({
       map,
       'compte-track-starts',
       pointsCollection(
-        visibleTracks.map((track) => ({ id: track.id, position: track.start }))
+        visibleTracks.map((track) => ({
+          id: track.id,
+          position: track.start,
+          importance: track.km >= 25 ? 3 : track.km >= 12 ? 2 : 1,
+        }))
       )
     );
     ensureLayer(map, 'compte-track-starts-dot', () => {
@@ -449,10 +457,26 @@ export function CompteMap({
         type: 'circle',
         source: 'compte-track-starts',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3, ['match', ['get', 'importance'], 3, 2.4, 2, 1.9, 1.5],
+            7, ['match', ['get', 'importance'], 3, 3.6, 2, 2.9, 2.3],
+            11, ['match', ['get', 'importance'], 3, 5.2, 2, 4.2, 3.4],
+            15, ['match', ['get', 'importance'], 3, 7.2, 2, 5.8, 4.6],
+          ] as any,
           'circle-color': '#17402C',
-          'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2,
+          'circle-stroke-color': 'rgba(255, 255, 255, 0.95)',
+          'circle-stroke-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3, 0.8,
+            9, 1.2,
+            15, 1.8,
+          ] as any,
+          'circle-opacity': 0.95,
         },
       });
       map.on('click', 'compte-track-starts-dot', (event: MapLayerMouseEvent) => {
@@ -464,7 +488,13 @@ export function CompteMap({
     ensureSource(
       map,
       'compte-track-ends',
-      pointsCollection(visibleTracks.map((track) => ({ id: track.id, position: track.end })))
+      pointsCollection(
+        visibleTracks.map((track) => ({
+          id: track.id,
+          position: track.end,
+          importance: 1,
+        }))
+      )
     );
     ensureLayer(map, 'compte-track-ends-dot', () => {
       map.addLayer({
@@ -472,10 +502,19 @@ export function CompteMap({
         type: 'circle',
         source: 'compte-track-ends',
         paint: {
-          'circle-radius': 4,
-          'circle-color': '#fff',
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3, 1.2,
+            7, 1.8,
+            11, 2.6,
+            15, 3.5,
+          ] as any,
+          'circle-color': '#FFFFFF',
           'circle-stroke-color': '#17402C',
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 1,
+          'circle-opacity': 0.85,
         },
       });
     });
@@ -484,7 +523,11 @@ export function CompteMap({
       map,
       'compte-carnets',
       pointsCollection(
-        data.carnets.map((carnet) => ({ id: carnet.id, position: carnet.position }))
+        data.carnets.map((carnet) => ({
+          id: carnet.id,
+          position: carnet.position,
+          importance: 2,
+        }))
       )
     );
     ensureLayer(map, 'compte-carnets-dot', () => {
@@ -493,10 +536,26 @@ export function CompteMap({
         type: 'circle',
         source: 'compte-carnets',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3, 1.8,
+            7, 2.7,
+            11, 4.0,
+            15, 5.5,
+          ] as any,
           'circle-color': '#C89A3B',
-          'circle-stroke-color': '#fff',
-          'circle-stroke-width': 2,
+          'circle-stroke-color': '#FFFFFF',
+          'circle-stroke-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3, 0.8,
+            9, 1.2,
+            15, 1.6,
+          ] as any,
+          'circle-opacity': 0.95,
         },
       });
       map.on('click', 'compte-carnets-dot', (event: MapLayerMouseEvent) => {
@@ -508,7 +567,13 @@ export function CompteMap({
     ensureSource(
       map,
       'compte-pois',
-      pointsCollection(data.pois.map((poi) => ({ id: poi.id, position: poi.position })))
+      pointsCollection(
+        data.pois.map((poi) => ({
+          id: poi.id,
+          position: poi.position,
+          importance: poi.day ? 2 : 1,
+        }))
+      )
     );
     ensureLayer(map, 'compte-pois-dot', () => {
       map.addLayer({
@@ -516,10 +581,19 @@ export function CompteMap({
         type: 'circle',
         source: 'compte-pois',
         paint: {
-          'circle-radius': 3.5,
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3, 1.2,
+            7, 1.8,
+            11, 2.6,
+            15, 3.8,
+          ] as any,
           'circle-color': '#4B6B7C',
-          'circle-stroke-color': '#fff',
-          'circle-stroke-width': 1.5,
+          'circle-stroke-color': 'rgba(255, 255, 255, 0.85)',
+          'circle-stroke-width': 0.8,
+          'circle-opacity': 0.85,
         },
       });
       map.on('click', 'compte-pois-dot', (event: MapLayerMouseEvent) => {

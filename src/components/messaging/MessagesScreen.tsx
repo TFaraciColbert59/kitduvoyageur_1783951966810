@@ -39,6 +39,7 @@ import { SharedPostEmbed } from '@/features/messaging/components/SharedPostEmbed
 import { AttachmentDrawer } from '@/features/messaging/components/AttachmentDrawer';
 import { GpxThumb } from '@/features/messaging/components/GpxThumb';
 import { TraceMap } from '@/features/messaging/components/TraceMap';
+import { resolveTrailCoordinates } from '@/features/messaging/data/realTrailsData';
 import { AudioPlayerBubble } from '@/features/messaging/components/AudioPlayerBubble';
 import { useKeyboardInset } from '@/features/messaging/hooks/useKeyboardInset';
 import { parseMessageDeepLink, resolveHandleToUserId } from '@/features/messaging/lib/deepLinks';
@@ -514,6 +515,13 @@ function MessageThread({
           const showDay = !previous || dayKey(previous.created_at) !== dayKey(message.created_at);
           const reactions = message.reactions ?? [];
           const reads = readBy(message);
+          const isAttachment =
+            message.message_type === 'image' ||
+            message.message_type === 'product' ||
+            message.message_type === 'trail' ||
+            message.message_type === 'gpx' ||
+            message.message_type === 'kit' ||
+            message.message_type === 'post';
 
           if (message.message_type === 'system') {
             return (
@@ -544,7 +552,7 @@ function MessageThread({
 
                   <button
                     type="button"
-                    className={`bub ${mine ? 'mine' : 'other'}${sameAsPrev && sameAsNext ? ' mid' : ''} tap`}
+                    className={`bub ${mine ? 'mine' : 'other'}${sameAsPrev && sameAsNext ? ' mid' : ''}${isAttachment ? ' bub-attachment' : ''} tap`}
                     onPointerDown={(event) => {
                       pressStart.current = { x: event.clientX, y: event.clientY };
                       if (pressTimer.current) clearTimeout(pressTimer.current);
@@ -626,57 +634,53 @@ function MessageThread({
                         </span>
                       </span>
                     ) : message.message_type === 'trail' || message.message_type === 'gpx' ? (
-                      <div
-                        className="mbub-map"
-                        style={{
-                          width: '100%',
-                          maxWidth: 260,
-                          height: 180,
-                          borderRadius: 18,
-                          overflow: 'hidden',
-                          position: 'relative',
-                          cursor: 'pointer',
-                          boxShadow: '0 4px 14px rgba(23, 43, 36, 0.12)',
-                        }}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onOpenAttachment?.(message);
-                        }}
-                      >
-                        <TraceMap
-                          geojson={{
-                            type: 'LineString',
-                            coordinates: [
-                              [5.852, 45.301],
-                              [5.859, 45.312],
-                              [5.871, 45.325],
-                              [5.885, 45.318],
-                              [5.878, 45.305],
-                              [5.852, 45.301],
-                            ],
-                          }}
-                          height={180}
-                        />
-                        <div
-                          style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            padding: '8px 10px',
-                            background: 'linear-gradient(180deg, transparent, rgba(23, 43, 36, 0.85))',
-                            color: '#fff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <b style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {message.message_type === 'trail' ? message.content : 'Tracé GPX'}
-                          </b>
-                          <span style={{ fontSize: 10, opacity: 0.85 }}>Voir</span>
-                        </div>
-                      </div>
+                      (() => {
+                        const trailGeojson =
+                          (message.metadata?.geojson as any) ??
+                          (Array.isArray(message.metadata?.coordinates) && (message.metadata.coordinates as any[]).length > 1
+                            ? { type: 'LineString' as const, coordinates: message.metadata.coordinates as [number, number][] }
+                            : null) ??
+                          resolveTrailCoordinates(
+                            (message.metadata?.name as string) ||
+                            (message.metadata?.id as string) ||
+                            message.content
+                          );
+                        return (
+                          <div
+                            className="mbub-map"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onOpenAttachment?.(message);
+                            }}
+                          >
+                            <TraceMap
+                              geojson={trailGeojson}
+                              height={160}
+                            />
+                            <div
+                              style={{
+                                position: 'absolute',
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                padding: '8px 10px',
+                                background: 'linear-gradient(180deg, transparent, rgba(23, 43, 36, 0.92))',
+                                color: '#fff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                pointerEvents: 'none',
+                                zIndex: 10,
+                              }}
+                            >
+                              <b style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '75%' }}>
+                                {message.message_type === 'trail' ? message.content : (message.metadata?.file_name as string) || 'Tracé GPX'}
+                              </b>
+                              <span style={{ fontSize: 10, fontWeight: 600, background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: 999 }}>Voir</span>
+                            </div>
+                          </div>
+                        );
+                      })()
                     ) : message.message_type === 'kit' ? (
                       <span
                         className="mcard mcard-kit"
@@ -1837,10 +1841,16 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                   }
                   setShareMenuOpen(false);
                 }}
-                onSendGpx={async (file) => {
+                onSendGpx={async (file, geojson) => {
                   const url = await messagingService.uploadAttachment(selected.id, file);
                   if (!url) return;
-                  await messagingService.sendMessage(selected.id, currentUserId as string, url, 'gpx');
+                  await messagingService.sendMessage(selected.id, currentUserId as string, url, 'gpx', undefined, {
+                    file_name: file.name,
+                    file_size: file.size,
+                    url,
+                    geojson: geojson ?? null,
+                    coordinates: geojson?.coordinates ?? null,
+                  });
                   await refreshConversations();
                   setShareMenuOpen(false);
                 }}

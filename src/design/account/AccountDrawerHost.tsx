@@ -77,6 +77,21 @@ export function AccountDrawerHost({
     setIsDragging(true);
   };
 
+  const onSheetPointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    if (target.closest('button, input, textarea, a, select, [role="button"], [data-no-drag]')) {
+      return;
+    }
+    const shB = sheetRef.current?.querySelector('.sh-b');
+    if (shB && shB.scrollTop > 2) return;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+    dragStart.current = { y: e.clientY, time: performance.now() };
+    setIsDragging(true);
+  };
+
   const onGrabPointerMove = (e: React.PointerEvent) => {
     if (!dragStart.current) return;
     const raw = Math.max(0, e.clientY - dragStart.current.y);
@@ -93,9 +108,12 @@ export function AccountDrawerHost({
     dragStart.current = null;
     setIsDragging(false);
 
-    if (dy > 65 || velocity > 0.35) {
-      setDragY(0);
-      onClose();
+    if (dy > 55 || velocity > 0.28) {
+      setDragY(280);
+      setTimeout(() => {
+        setDragY(0);
+        onClose();
+      }, 160);
     } else {
       setDragY(0);
     }
@@ -192,11 +210,19 @@ export function AccountDrawerHost({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
+        onPointerDown={onSheetPointerDown}
+        onPointerMove={onGrabPointerMove}
+        onPointerUp={onGrabPointerUp}
+        onPointerCancel={() => {
+          dragStart.current = null;
+          setIsDragging(false);
+          setDragY(0);
+        }}
         style={{
           inset: 0,
           borderRadius: isCard ? 26 : 24,
           transform: dragY > 0 ? `translate3d(0, ${dragY}px, 0)` : undefined,
-          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+          transition: isDragging ? 'none' : 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
         }}
       >
         <span
