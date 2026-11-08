@@ -88,16 +88,6 @@ async function expectPaneInViewport(page: Page, id: string): Promise<void> {
   await expect(pane).toBeInViewport();
 }
 
-/**
- * Clic DOM direct (élément `.click()`), pour les cas où un recouvrement de
- * layout empêche le clic natif Playwright d'atteindre le bouton alors que
- * l'utilisateur, lui, déclenche bien l'action (recouvrements à qualifier dans le
- * rapport : barre de retour du détail, bascule « Sur la carte »).
- */
-async function domClick(locator: import('@playwright/test').Locator): Promise<void> {
-  await locator.evaluate((element) => (element as HTMLElement).click());
-}
-
 test.describe('Explorer v2 — ouverture, capsule, gestes @ui-mock @mobile', () => {
   test('1a. ouverture par le bouton Explorer, capsule 4 volets et clavier ←/→/Home/End', async ({
     page,
@@ -499,6 +489,26 @@ test.describe('Explorer v2 — Recherche : accents, ponctuation, erreur, clavier
     await expect(page.getByTestId('cv2-tile-carnet').first()).toBeVisible({ timeout: 10_000 });
     await expect(page.getByTestId('cv2-tile-carnet').first()).toContainText('Écrins');
     expect(await page.locator('mark').count()).toBeGreaterThan(0);
+
+    // Garde-fou FID-001 : le repli de couverture (`.lkdv-cv2x-cover-fallback`,
+    // positionné en absolu) doit rester DANS sa vignette 52×48. Sans
+    // `position: relative` sur `.lkdv-cv2x-search-cover`, il s'étirait sur tout
+    // le corps et masquait les résultats sans que `toBeVisible()` ne le voie.
+    const fallbackBoxes = await page
+      .locator('.lkdv-cv2x-cover-fallback')
+      .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect()).map((r) => ({ w: r.width, h: r.height })));
+    for (const box of fallbackBoxes) {
+      expect(box.w, 'repli de couverture échappé de sa vignette (largeur)').toBeLessThanOrEqual(60);
+      expect(box.h, 'repli de couverture échappé de sa vignette (hauteur)').toBeLessThanOrEqual(56);
+    }
+    const covering = await page.evaluate(() => {
+      const row = document.querySelector('.lkdv-cv2x-search-row');
+      if (!row) return null;
+      const r = row.getBoundingClientRect();
+      const top = document.elementFromPoint(r.left + r.width / 2, r.top + Math.min(20, r.height / 2));
+      return { tag: top?.tagName ?? null, cls: (top as HTMLElement | null)?.className ?? null, inRow: row.contains(top) };
+    });
+    expect(covering?.inRow, `résultat recouvert par ${covering?.tag}.${covering?.cls}`).toBe(true);
   });
 
   test('5b. ponctuation « vercors, alpin » ne casse pas la recherche', async ({ page }) => {
@@ -538,11 +548,12 @@ test.describe('Explorer v2 — Recherche : accents, ponctuation, erreur, clavier
     await input.fill('vercors');
     await expect(page.getByTestId('cv2-tile-carnet').first()).toBeVisible({ timeout: 10_000 });
 
-    await domClick(
-      page
-        .getByRole('group', { name: 'Affichage des résultats' })
-        .getByRole('button', { name: 'Sur la carte' }),
-    );
+    // Clic natif : la bascule n'est plus interceptée par le repli de couverture
+    // (FID-001). Plus de clic DOM de contournement.
+    await page
+      .getByRole('group', { name: 'Affichage des résultats' })
+      .getByRole('button', { name: 'Sur la carte' })
+      .click();
     await expect(page.locator('.lkdv-cv2x-search-map, canvas').first()).toBeVisible({ timeout: 15_000 });
   });
 });
