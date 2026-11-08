@@ -46,6 +46,9 @@ export default defineConfig({
     'tests/e2e/compte-map-zoom.spec.ts',
     // Carnet v2 : spécification E2E (05-QUALITE-ET-TESTS.md § 2)
     'tests/e2e/carnet-v2*.spec.ts',
+    // Communauté v2 (05-QUALITE-ET-TESTS.md § 2) : Explorer, Création, invité,
+    // drapeau. Les specs de données réelles se sautent sans LKDV_E2E_DB=test.
+    'tests/e2e/communaute-v2*.spec.ts',
     // Explorer v2 (08_TESTS.md) : specs dédiées, taguées @explorer-v2.
     'tests/explorer-v2/*.e2e.spec.ts',
   ],

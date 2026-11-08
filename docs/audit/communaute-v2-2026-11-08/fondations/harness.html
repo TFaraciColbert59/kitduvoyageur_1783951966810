@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=390, initial-scale=1, viewport-fit=cover" />
+<title>Fondations Communauté v2 — harnais 390×844</title>
+    <link rel="stylesheet" href="../../../../src/styles/tokens.css" />
+    <link rel="stylesheet" href="../../../../src/styles/liquid-glass.css" />
+    <link rel="stylesheet" href="../../../../src/styles/liquid-capsules.css" />
+    <link rel="stylesheet" href="../../../../src/styles/liquid-selectors.css" />
+    <link rel="stylesheet" href="../../../../src/styles/drawer-selectors-tabbar.css" />
+    <link rel="stylesheet" href="../../../../src/styles/communaute-v2-shell.css" />
+    <link rel="stylesheet" href="../../../../src/styles/communaute-v2.css" />
+    <link rel="stylesheet" href="./primitives.css" />
+    <style>
+      /* Harnais uniquement : la page /communaute fournit ces trois vars via le
+         thème du Compte (--sf, --label2, --page ne sont pas globales). */
+      :root {
+        --sf: var(--font-sans);
+        --label2: var(--lkv-text-secondary);
+        --page: var(--lkv-surface);
+      }
+      [hidden] { display: none !important; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        background: linear-gradient(180deg, var(--lkv-surface) 0%, var(--sage-100) 100%);
+        color: var(--lkv-text-primary);
+        font-family: var(--font-sans);
+      }
+      .composants-page {
+        min-height: 100%; padding: 18px 14px 40px;
+        display: flex; flex-direction: column; gap: 14px;
+        background: linear-gradient(180deg, var(--lkv-surface), var(--sage-100));
+      }
+      .composants-panel {
+        background: var(--drawer-card-bg);
+        box-shadow: var(--drawer-card-shadow);
+        border-radius: 20px; padding: 14px;
+        display: flex; flex-direction: column; gap: 10px;
+      }
+      .composants-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+      .composants-label { font: 600 10px/1.2 var(--font-sans); letter-spacing: .06em; text-transform: uppercase; color: var(--lkv-text-secondary); }
+      .harnais-title {
+        position: fixed; left: 10px; bottom: 8px; z-index: 200;
+        font: 600 9px/1.2 var(--mono, monospace);
+        letter-spacing: .08em; text-transform: uppercase;
+        color: var(--lkv-text-secondary); opacity: .8; pointer-events: none;
+      }
+      .demo-stack { display: flex; flex-direction: column; gap: 10px; }
+      .demo-cover {
+        background:
+          radial-gradient(120% 80% at 20% 0%, var(--sage-300), transparent 60%),
+          linear-gradient(160deg, var(--lkv-forest-700), var(--lkv-forest-900));
+      }
+      .demo-cover--alt {
+        background:
+          radial-gradient(120% 80% at 80% 10%, var(--sage-200), transparent 55%),
+          linear-gradient(200deg, var(--sage-600), var(--lkv-forest-800));
+      }
+      .demo-crop-grid line { stroke: rgba(255,255,255,.55); }
+      @media (prefers-reduced-motion: reduce) { .harnais-title { display: none; } }
+    </style>
+</head>
+<body>
+<div class="lkdv-communaute-v2 lkdv-cv2-layer" data-state="open" style="--cv2-layer-z: 60">
+  <div class="lkdv-cv2-wrap" data-det="card" data-state="open">
+    <div class="lkdv-cv2-sheet" role="dialog" aria-modal="true" aria-label="Explorer la communauté">
+      <div class="lkdv-cv2-grab" aria-hidden="true"><span></span></div>
+
+      <div class="lkdv-cv2-topnav">
+        <div class="segc lg-tabs lens-on lkdv-capsule lkdv-cv2-capsule" role="tablist" aria-label="Volets" style="--n:4">
+          <span class="sel-lens" aria-hidden="true" style="--i:1"></span>
+          <button type="button" role="tab" aria-selected="false" aria-label="Recherche"><span class="ic s">⌕</span></button>
+          <button type="button" role="tab" aria-selected="true" aria-label="Carnets"><span class="ic s">▤</span></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Clubs"><span class="ic s">◈</span></button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Sorties"><span class="ic s">▦</span></button>
+        </div>
+      </div>
+
+      <div class="lkdv-cv2-body">
+        <div class="lkdv-cv2-pane">
+          <div class="demo-stack" style="padding-top: 4px">
+
+            <div class="lkdv-cv2-group">
+              <div class="lkdv-cv2-group-head">
+                <span class="lkdv-cv2-eyebrow">Carnets <b>24</b></span>
+                <a href="#">Tout voir</a>
+              </div>
+
+              <a class="lkdv-cv2-tile lkdv-cv2-tile--wide" href="#" aria-label="Traversée du Vercors, 4 jours">
+                <span class="lkdv-cv2-cover demo-cover">
+                  <svg class="lkdv-cv2-trace" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M6 48 L24 34 L38 42 L54 20 L70 28 L94 12" />
+                    <circle cx="6" cy="48" r="1.8" />
+                    <circle cx="94" cy="12" r="1.8" />
+                  </svg>
+                  <span class="lkdv-cv2-visa" aria-hidden="true"><b>FR</b><i>4 J · 62 KM</i></span>
+                </span>
+                <span class="lkdv-cv2-title">Traversée du Vercors</span>
+                <span class="lkdv-cv2-meta">Vercors · 4 j · 62,4 km · à 12 km</span>
+                <span class="lkdv-cv2-type" data-type="carnet">Carnet</span>
+              </a>
+
+              <article class="lkdv-cv2-tile">
+                <div class="lkdv-cv2-tile-head">
+                  <svg class="lkdv-crest" width="44" height="51" viewBox="0 0 40 46" data-tone="1" aria-hidden="true">
+                    <path class="lkdv-crest-shield" d="M20 2 37 8v14c0 10-7 16-17 22C10 38 3 32 3 22V8z" />
+                    <path class="lkdv-crest-pattern" d="M4 22 20 14 36 22V30L20 22 4 30z" />
+                    <path class="lkdv-crest-inner" d="M20 5 34 10v12c0 8-6 13-14 18C12 35 6 30 6 22V10z" />
+                    <g class="lkdv-crest-icon" transform="translate(14 8) scale(.5)"><path d="M3 19.5 9.5 7l4 7.5 2-3 5.5 8z" /></g>
+                    <text class="lkdv-crest-initial" x="20" y="34" text-anchor="middle">V</text>
+                  </svg>
+                  <span style="min-width:0; display:flex; flex-direction:column; gap:2px">
+                    <span class="lkdv-cv2-title lkdv-cv2-title--clamp1">Vercors Alpin</span>
+                    <span class="lkdv-cv2-meta">Randonnée · Grenoble · 128 membres</span>
+                  </span>
+                  <span class="lkdv-cv2-badge" data-tone="accent">Membre</span>
+                </div>
+              </article>
+
+              <div class="lkdv-cv2-chip-list" style="display:flex; flex-wrap:wrap; gap:6px">
+                <button type="button" class="lkdv-cv2-chip" aria-pressed="true">Découvrir</button>
+                <button type="button" class="lkdv-cv2-chip">Mes carnets</button>
+                <button type="button" class="lkdv-cv2-chip lkdv-cv2-chip--sm">Suivis</button>
+              </div>
+            </div>
+
+            <div class="lkdv-cv2-group">
+              <div class="lkdv-cv2-group-head">
+                <span class="lkdv-cv2-eyebrow">Sorties <b>6</b></span>
+              </div>
+              <div class="lkdv-cv2-agenda" role="group" aria-label="Agenda des prochains jours">
+                <button type="button" class="lkdv-cv2-agenda-day is-today" aria-pressed="false" aria-label="Jour 8">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">08</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 9">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">09</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 10">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">10</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 11">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">11</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 12">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">12</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"><u></u></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 13">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">13</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day is-active is-weekend" aria-pressed="true" aria-label="Jour 14">
+                    <i aria-hidden="true">sam.</i><b aria-hidden="true">14</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"><u></u><u></u><u></u></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day is-weekend" aria-pressed="false" aria-label="Jour 15">
+                    <i aria-hidden="true">sam.</i><b aria-hidden="true">15</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 16">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">16</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 17">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">17</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 18">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">18</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 19">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">19</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 20">
+                    <i aria-hidden="true">lun.</i><b aria-hidden="true">20</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button><button type="button" class="lkdv-cv2-agenda-day is-weekend" aria-pressed="false" aria-label="Jour 21">
+                    <i aria-hidden="true">sam.</i><b aria-hidden="true">21</b>
+                    <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+                  </button>
+              </div>
+
+              <a class="lkdv-cv2-ticket" href="#" aria-label="Traversée du Vercors">
+                <span class="lkdv-cv2-ticket-main">
+                  <span class="lkdv-cv2-ticket-stub" aria-hidden="true">
+                    <i class="lkdv-cv2-ticket-wd">sam.</i>
+                    <b class="lkdv-cv2-ticket-day">14</b>
+                    <i class="lkdv-cv2-ticket-mo">NOV</i>
+                    <span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--top"></span>
+                    <span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--bottom"></span>
+                  </span>
+                  <span class="lkdv-cv2-ticket-body">
+                    <span class="lkdv-cv2-ticket-title">Traversée du Vercors</span>
+                    <span class="lkdv-cv2-ticket-chips"><i>moyen</i><i>18,4 km</i><i>+950 m</i><i>5 h</i></span>
+                    <span class="lkdv-cv2-ticket-meta">08:00 · Vercors</span>
+                  </span>
+                </span>
+                <span class="lkdv-cv2-ticket-foot">
+                  <span class="lkdv-cv2-capacity">
+                    <span class="lkdv-cv2-capacity-track" role="progressbar" aria-valuemin="0" aria-valuemax="12" aria-valuenow="9">
+                      <span class="lkdv-cv2-capacity-fill" style="width:75%"></span>
+                    </span>
+                    <span class="lkdv-cv2-capacity-label">9/12</span>
+                  </span>
+                  <span class="lkdv-cv2-capacity-label">3 places restantes</span>
+                </span>
+              </a>
+
+              <a class="lkdv-cv2-ticket" data-state="past" href="#" aria-label="Sortie passéé">
+                <span class="lkdv-cv2-ticket-main">
+                  <span class="lkdv-cv2-ticket-stub" aria-hidden="true">
+                    <i class="lkdv-cv2-ticket-wd">dim.</i>
+                    <b class="lkdv-cv2-ticket-day">02</b>
+                    <i class="lkdv-cv2-ticket-mo">NOV</i>
+                    <span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--top"></span>
+                    <span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--bottom"></span>
+                  </span>
+                  <span class="lkdv-cv2-ticket-body">
+                    <span class="lkdv-cv2-ticket-title">Crête des Trois Becs</span>
+                    <span class="lkdv-cv2-ticket-chips"><i>facile</i><i>9 km</i><i>+420 m</i></span>
+                    <span class="lkdv-cv2-ticket-meta">09:30 · Drôme</span>
+                  </span>
+                </span>
+                <span class="lkdv-cv2-ticket-foot">
+                  <span class="lkdv-cv2-capacity-label">7 participants</span>
+                  <span class="lkdv-cv2-badge">Terminée</span>
+                </span>
+              </a>
+            </div>
+
+            <div class="lkdv-cv2-group">
+              <div class="lkdv-cv2-group-head"><span class="lkdv-cv2-eyebrow">Champ de recherche</span></div>
+              <div class="lkdv-cv2-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4.5-4.5" /></svg>
+                <input type="search" placeholder="Rechercher un carnet, un club, un membre" aria-label="Rechercher" />
+                <button type="button" class="lkdv-cv2-round" aria-label="Effacer">×</button>
+              </div>
+            </div>
+
+            <div class="lkdv-cv2-group">
+              <div class="lkdv-cv2-group-head"><span class="lkdv-cv2-eyebrow">Formulaire</span></div>
+              <label class="lkdv-cv2-field">
+                <span class="lkdv-cv2-field-label">Titre de la sortie</span>
+                <input class="lkdv-cv2-input" value="Traversée du Vercors" />
+              </label>
+              <label class="lkdv-cv2-field">
+                <span class="lkdv-cv2-field-label">Lieu de rendez-vous</span>
+                <input class="lkdv-cv2-input" placeholder="Col du Rousset" aria-invalid="true" aria-describedby="err1" />
+                <span class="lkdv-cv2-field-hint">Visible par les membres inscrits.</span>
+                <span class="lkdv-cv2-field-error" id="err1">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v6M12 17h.01" /></svg>
+                  Indique un lieu de rendez-vous.
+                </span>
+              </label>
+              <label class="lkdv-cv2-field">
+                <span class="lkdv-cv2-field-label">Récit</span>
+                <textarea class="lkdv-cv2-input" rows="3" placeholder="Deux ou trois phrases sur cette sortie…"></textarea>
+                <span class="lkdv-cv2-counter" data-near="true">268/300</span>
+              </label>
+              <label class="lkdv-cv2-field">
+                <span class="lkdv-cv2-field-label">Niveau</span>
+                <select class="lkdv-cv2-input"><option>Facile</option><option selected>Moyen</option><option>Difficile</option></select>
+              </label>
+
+              <div class="lkdv-cv2-seg" role="group" aria-label="Visibilité">
+                <button type="button" aria-pressed="true">Public</button>
+                <button type="button" aria-pressed="false">Amis</button>
+                <button type="button" aria-pressed="false">Privé</button>
+              </div>
+
+              <div class="lkdv-cv2-chips">
+                <button type="button" class="lkdv-cv2-chip" aria-pressed="true">Rando</button>
+                <button type="button" class="lkdv-cv2-chip">Trail</button>
+                <button type="button" class="lkdv-cv2-chip">Ski de rando</button>
+                <button type="button" class="lkdv-cv2-chip">Vélo</button>
+              </div>
+
+              <div class="lkdv-cv2-stepper">
+                <button type="button" aria-label="Retirer un participant">−</button>
+                <output>12</output>
+                <button type="button" aria-label="Ajouter un participant">+</button>
+              </div>
+
+              <div class="lkdv-cv2-gauge">
+                <span class="lkdv-cv2-gauge-track"><span class="lkdv-cv2-gauge-fill" style="width:75%"></span></span>
+                <span class="lkdv-cv2-capacity-label">9/12 places</span>
+              </div>
+
+              <div class="lkdv-cv2-error-summary">
+                <span aria-hidden="true">!</span>
+                2 champs à corriger
+              </div>
+
+              <div class="lkdv-cv2-draft">
+                Brouillon restauré
+                <button type="button">Effacer</button>
+              </div>
+
+              <div class="lkdv-cv2-media-grid">
+                <span class="lkdv-cv2-media-item is-cover demo-cover">
+                  <button type="button" class="lkdv-cv2-media-handle" aria-label="Déplacer le média 1">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M9 12h.01M9 18h.01M15 6h.01M15 12h.01M15 18h.01" /></svg>
+                  </button>
+                  <button type="button" class="lkdv-cv2-media-remove" aria-label="Supprimer le média 1">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                  </button>
+                </span>
+                <span class="lkdv-cv2-media-item demo-cover--alt">
+                  <span class="lkdv-cv2-media-progress"><i style="width:62%"></i></span>
+                </span>
+                <span class="lkdv-cv2-media-item demo-cover">
+                  <span class="lkdv-cv2-media-progress"><i style="width:100%"></i></span>
+                </span>
+              </div>
+
+              <div class="lkdv-cv2-crop demo-cover" style="max-width: 180px">
+                <svg class="lkdv-cv2-crop-grid" viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">
+                  <line x1="33" y1="0" x2="33" y2="125" />
+                  <line x1="66" y1="0" x2="66" y2="125" />
+                  <line x1="0" y1="33" x2="100" y2="33" />
+                  <line x1="0" y1="66" x2="100" y2="66" />
+                </svg>
+              </div>
+            </div>
+
+            <div class="lkdv-cv2-group">
+              <div class="lkdv-cv2-group-head"><span class="lkdv-cv2-eyebrow">États</span></div>
+              <div class="lkdv-cv2-skeleton" aria-busy="true">
+                <span class="lkdv-cv2-skeleton-bar lkdv-cv2-skeleton-bar--tile"></span>
+                <span class="lkdv-cv2-skeleton-bar"></span>
+                <span class="lkdv-cv2-skeleton-bar lkdv-cv2-skeleton-bar--sm"></span>
+              </div>
+              <div class="lkdv-cv2-empty">
+                <span class="lkdv-cv2-empty-ico" aria-hidden="true">○</span>
+                <b>Aucun carnet pour le moment</b>
+                <p>Crée ton premier carnet et partage ton itinéraire avec ta cordée.</p>
+                <button type="button" class="lkdv-cv2-pill lkdv-cv2-pill--primary">Créer mon premier carnet</button>
+              </div>
+              <div class="lkdv-cv2-error-state" role="alert">
+                <span class="lkdv-cv2-error-state-ico" aria-hidden="true">!</span>
+                <b>Carnets indisponibles</b>
+                <p>Vérifie ta connexion, puis réessaie.</p>
+                <button type="button" class="lkdv-cv2-pill lkdv-cv2-pill--secondary">Réessayer</button>
+              </div>
+              <div class="lkdv-cv2-offline">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M8.5 8.5A9 9 0 0112 8c2.4 0 4.6.9 6.3 2.4M5.6 12.4A9 9 0 0112 10c.9 0 1.8.1 2.6.4M12 18h.01" /></svg>
+                Hors ligne · dernier contenu chargé
+              </div>
+            </div>
+
+            <div class="lkdv-cv2-group">
+              <div class="lkdv-cv2-group-head"><span class="lkdv-cv2-eyebrow">Pilules, badges, avatars</span></div>
+              <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center">
+                <button type="button" class="lkdv-cv2-pill lkdv-cv2-pill--primary">Rejoindre</button>
+                <button type="button" class="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2-pill--sm">Voir la page</button>
+                <button type="button" class="lkdv-cv2-pill lkdv-cv2-pill--danger lkdv-cv2-pill--sm">Quitter</button>
+                <span class="lkdv-cv2-badge" data-tone="success">Inscrit</span>
+                <span class="lkdv-cv2-badge">Complet</span>
+                <span class="lkdv-cv2-badge" data-tone="accent">Liste d’attente</span>
+                <span class="lkdv-cv2-avatars">
+                  <span class="lkdv-cv2-avatar">LM</span>
+                  <span class="lkdv-cv2-avatar">TB</span>
+                  <span class="lkdv-cv2-avatar lkdv-cv2-avatar--more">+4</span>
+                </span>
+                <span class="lkdv-cv2-type" data-type="sortie">Sortie</span>
+                <span class="lkdv-cv2-type" data-type="club">Club</span>
+                <span class="lkdv-cv2-type" data-type="membre">Membre</span>
+              </div>
+              <div class="lkdv-cv2-form-footer">
+                <button type="button" class="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2-pill--sm">Retour</button>
+                <button type="button" class="lkdv-cv2-pill lkdv-cv2-pill--primary">Suivant</button>
+              </div>
+              <div class="lkdv-cv2-send-fail">
+                <b>Envoi impossible</b>
+                <span>Ta sortie n'a pas été publiée. Ton brouillon est conservé.</span>
+                <div class="lkdv-cv2-send-fail-actions">
+                  <button type="button" class="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2-pill--sm">Réessayer</button>
+                  <button type="button" class="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2-pill--sm">Garder le brouillon</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="lkdv-cv2-group">
+              <div class="lkdv-cv2-group-head"><span class="lkdv-cv2-eyebrow">Média, aperçu vivant</span></div>
+              <div class="lkdv-cv2-ticket is-preview" aria-label="Aperçu">
+                <span class="lkdv-cv2-ticket-main">
+                  <span class="lkdv-cv2-ticket-stub" aria-hidden="true">
+                    <i class="lkdv-cv2-ticket-wd">sam.</i>
+                    <b class="lkdv-cv2-ticket-day">14</b>
+                    <i class="lkdv-cv2-ticket-mo">NOV</i>
+                  </span>
+                  <span class="lkdv-cv2-ticket-body">
+                    <span class="lkdv-cv2-ticket-title">Aperçu de la sortie en cours de saisie</span>
+                    <span class="lkdv-cv2-ticket-chips"><i>moyen</i><i>18,4 km</i></span>
+                    <span class="lkdv-cv2-ticket-meta">08:00 · Vercors</span>
+                  </span>
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="lkdv-cv2-mini-slot has-sort">
+        <div class="lkdv-lens-float lkdv-cv2-mini" role="tablist" aria-label="Filtres" style="--n:3">
+          <span class="ig-th lens" aria-hidden="true" style="--i:0"></span>
+          <button type="button" role="tab" aria-selected="true" aria-label="Découvrir">◉</button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Mes carnets">▢</button>
+          <button type="button" role="tab" aria-selected="false" aria-label="Suivis">◇</button>
+        </div>
+        <div class="lkdv-sort-anchor">
+          <button type="button" class="lkdv-sort-btn is-on" data-modified="true" aria-haspopup="menu" aria-expanded="false" aria-label="Trier">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3" /></svg>
+          </button>
+          <div class="lkdv-sort-menu" role="menu" aria-label="Trier" hidden>
+            <span class="lkdv-sort-menu-title" aria-hidden="true">Trier par</span>
+            <button type="button" class="lkdv-sort-item" role="menuitemradio" aria-checked="false"><span class="lkdv-sort-item-label">Récents</span></button>
+            <button type="button" class="lkdv-sort-item" role="menuitemradio" aria-checked="true"><span class="lkdv-sort-item-label">Populaires</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></button>
+            <button type="button" class="lkdv-sort-item" role="menuitemradio" aria-checked="false"><span class="lkdv-sort-item-label">Proches</span></button>
+            <button type="button" class="lkdv-sort-item" role="menuitemradio" aria-checked="false"><span class="lkdv-sort-item-label">Durée</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="lkdv-cv2-peek" hidden>
+        <div class="lkdv-cv2-peek-box">
+          <span class="lkdv-cv2-title">Traversée du Vercors</span>
+          <span class="lkdv-cv2-meta">Vercors · 4 j · 62,4 km</span>
+          <div class="lkdv-cv2-peek-actions">
+            <button type="button" class="lkdv-cv2-peek-action">Lire le carnet</button>
+            <button type="button" class="lkdv-cv2-peek-action">Enregistrer</button>
+            <button type="button" class="lkdv-cv2-peek-action" data-tone="danger">Signaler</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="lkdv-island-host" hidden>
+    <div class="lkdv-island-pill" role="status" aria-live="polite">
+      <span class="lkdv-island-text">
+        <b class="lkdv-island-title">Club rejoint</b>
+        <span class="lkdv-island-sub">Vercors Alpin · bienvenue</span>
+      </span>
+      <span class="lkdv-island-actions">
+        <button type="button" class="lkdv-island-btn">Annuler</button>
+        <button type="button" class="lkdv-island-btn is-primary">Voir</button>
+      </span>
+    </div>
+  </div>
+</div>
+
+<section class="composants-page" id="composants" hidden>
+  <div class="composants-panel">
+    <span class="composants-label">ClubCrest — 28 / 44 / 72, 5 teintes</span>
+    <div class="composants-row">
+      <svg class="lkdv-crest" width="44" height="51" viewBox="0 0 40 46" data-tone="0" aria-hidden="true"><path class="lkdv-crest-shield" d="M20 2 37 8v14c0 10-7 16-17 22C10 38 3 32 3 22V8z"/><path class="lkdv-crest-pattern" d="M4 22 20 14 36 22V30L20 22 4 30z"/><path class="lkdv-crest-inner" d="M20 5 34 10v12c0 8-6 13-14 18C12 35 6 30 6 22V10z"/><g class="lkdv-crest-icon" transform="translate(14 8) scale(.5)"><path d="M3 19.5 9.5 7l4 7.5 2-3 5.5 8z"/></g><text class="lkdv-crest-initial" x="20" y="34" text-anchor="middle">V</text></svg>
+      <svg class="lkdv-crest" width="44" height="51" viewBox="0 0 40 46" data-tone="1" aria-hidden="true"><path class="lkdv-crest-shield" d="M20 2 37 8v14c0 10-7 16-17 22C10 38 3 32 3 22V8z"/><path class="lkdv-crest-pattern" d="M4 18h32v6H4z"/><path class="lkdv-crest-inner" d="M20 5 34 10v12c0 8-6 13-14 18C12 35 6 30 6 22V10z"/><g class="lkdv-crest-icon" transform="translate(14 8) scale(.5)"><path d="M12 3v18M4.8 7.2l14.4 9.6M19.2 7.2 4.8 16.8"/></g><text class="lkdv-crest-initial" x="20" y="34" text-anchor="middle">S</text></svg>
+      <svg class="lkdv-crest" width="44" height="51" viewBox="0 0 40 46" data-tone="2" aria-hidden="true"><path class="lkdv-crest-shield" d="M20 2 37 8v14c0 10-7 16-17 22C10 38 3 32 3 22V8z"/><path class="lkdv-crest-pattern" d="M20 4 36 9v13c0 2 0 3-1 5L20 14 5 27c-1-2-1-3-1-5V9z"/><path class="lkdv-crest-inner" d="M20 5 34 10v12c0 8-6 13-14 18C12 35 6 30 6 22V10z"/><g class="lkdv-crest-icon" transform="translate(14 8) scale(.5)"><path d="M5.5 17.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM18.5 17.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM8.5 14l3-5.5h3.5M12 14l3.5 3.5"/></g><text class="lkdv-crest-initial" x="20" y="34" text-anchor="middle">C</text></svg>
+      <svg class="lkdv-crest" width="44" height="51" viewBox="0 0 40 46" data-tone="3" aria-hidden="true"><path class="lkdv-crest-shield" d="M20 2 37 8v14c0 10-7 16-17 22C10 38 3 32 3 22V8z"/><path class="lkdv-crest-pattern" d="M4 22 20 14 36 22V30L20 22 4 30z"/><path class="lkdv-crest-inner" d="M20 5 34 10v12c0 8-6 13-14 18C12 35 6 30 6 22V10z"/><g class="lkdv-crest-icon" transform="translate(14 8) scale(.5)"><path d="M3 20l6-11 4 7 2-3 6 7M15 4v4M15 4l4 1.6L15 8"/></g><text class="lkdv-crest-initial" x="20" y="34" text-anchor="middle">E</text></svg>
+      <svg class="lkdv-crest" width="44" height="51" viewBox="0 0 40 46" data-tone="4" aria-hidden="true"><path class="lkdv-crest-shield" d="M20 2 37 8v14c0 10-7 16-17 22C10 38 3 32 3 22V8z"/><path class="lkdv-crest-pattern" d="M4 18h32v6H4z"/><path class="lkdv-crest-inner" d="M20 5 34 10v12c0 8-6 13-14 18C12 35 6 30 6 22V10z"/><g class="lkdv-crest-icon" transform="translate(14 8) scale(.5)"><path d="M3 18c3 0 4.5-2 7.5-2s4.5 2 7.5 1.5M6 7h2M11 7h2M16 7h2M6 11h2M11 11h2"/></g><text class="lkdv-crest-initial" x="20" y="34" text-anchor="middle">T</text></svg>
+      <svg class="lkdv-crest" width="28" height="32" viewBox="0 0 40 46" data-tone="2" aria-hidden="true"><path class="lkdv-crest-shield" d="M20 2 37 8v14c0 10-7 16-17 22C10 38 3 32 3 22V8z"/><path class="lkdv-crest-pattern" d="M4 18h32v6H4z"/><path class="lkdv-crest-inner" d="M20 5 34 10v12c0 8-6 13-14 18C12 35 6 30 6 22V10z"/><g class="lkdv-crest-icon" transform="translate(14 8) scale(.5)"><path d="M3 19.5 9.5 7l4 7.5 2-3 5.5 8z"/></g><text class="lkdv-crest-initial" x="20" y="34" text-anchor="middle">R</text></svg>
+      <svg class="lkdv-crest" width="72" height="83" viewBox="0 0 40 46" data-tone="4" aria-hidden="true"><path class="lkdv-crest-shield" d="M20 2 37 8v14c0 10-7 16-17 22C10 38 3 32 3 22V8z"/><path class="lkdv-crest-pattern" d="M20 4 36 9v13c0 2 0 3-1 5L20 14 5 27c-1-2-1-3-1-5V9z"/><path class="lkdv-crest-inner" d="M20 5 34 10v12c0 8-6 13-14 18C12 35 6 30 6 22V10z"/><g class="lkdv-crest-icon" transform="translate(14 8) scale(.5)"><path d="M3 20l6-11 4 7 2-3 6 7M15 4v4M15 4l4 1.6L15 8"/></g><text class="lkdv-crest-initial" x="20" y="34" text-anchor="middle">A</text></svg>
+    </div>
+  </div>
+
+  <div class="composants-panel">
+    <span class="composants-label">EventTicket — état ouvert, complet, liste d’attente, passé, aperçu</span>
+    <div style="display:flex; flex-direction:column; gap:10px">
+      <a class="lkdv-cv2-ticket" href="#" aria-label="Sortie ouverte">
+        <span class="lkdv-cv2-ticket-main">
+          <span class="lkdv-cv2-ticket-stub" aria-hidden="true"><i class="lkdv-cv2-ticket-wd">sam.</i><b class="lkdv-cv2-ticket-day">14</b><i class="lkdv-cv2-ticket-mo">NOV</i><span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--top"></span><span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--bottom"></span></span>
+          <span class="lkdv-cv2-ticket-body"><span class="lkdv-cv2-ticket-title">Traversée du Vercors</span><span class="lkdv-cv2-ticket-chips"><i>moyen</i><i>18,4 km</i><i>+950 m</i><i>5 h</i></span><span class="lkdv-cv2-ticket-meta">08:00 · Vercors · à 12 km</span></span>
+        </span>
+        <span class="lkdv-cv2-ticket-foot"><span class="lkdv-cv2-capacity"><span class="lkdv-cv2-capacity-track" role="progressbar" aria-valuemin="0" aria-valuemax="12" aria-valuenow="9"><span class="lkdv-cv2-capacity-fill" style="width:75%"></span></span><span class="lkdv-cv2-capacity-label">9/12</span></span><span class="lkdv-cv2-capacity-label">3 places restantes</span></span>
+      </a>
+      <div class="lkdv-cv2-ticket" data-state="full">
+        <span class="lkdv-cv2-ticket-main">
+          <span class="lkdv-cv2-ticket-stub" aria-hidden="true"><i class="lkdv-cv2-ticket-wd">dim.</i><b class="lkdv-cv2-ticket-day">15</b><i class="lkdv-cv2-ticket-mo">NOV</i><span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--top"></span><span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--bottom"></span></span>
+          <span class="lkdv-cv2-ticket-body"><span class="lkdv-cv2-ticket-title">Boucle du Vercors complet</span><span class="lkdv-cv2-ticket-chips"><i>difficile</i><i>24 km</i><i>+1400 m</i></span><span class="lkdv-cv2-ticket-meta">07:30 · Grenoble</span></span>
+        </span>
+        <span class="lkdv-cv2-ticket-foot"><span class="lkdv-cv2-capacity" data-state="full"><span class="lkdv-cv2-capacity-track" role="progressbar" aria-valuemin="0" aria-valuemax="12" aria-valuenow="12"><span class="lkdv-cv2-capacity-fill" style="width:100%"></span></span><span class="lkdv-cv2-capacity-label">12/12</span></span><span class="lkdv-cv2-badge">Complet</span></span>
+      </div>
+      <div class="lkdv-cv2-ticket" data-state="waitlist">
+        <span class="lkdv-cv2-ticket-main">
+          <span class="lkdv-cv2-ticket-stub" aria-hidden="true"><i class="lkdv-cv2-ticket-wd">sam.</i><b class="lkdv-cv2-ticket-day">21</b><i class="lkdv-cv2-ticket-mo">NOV</i><span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--top"></span><span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--bottom"></span></span>
+          <span class="lkdv-cv2-ticket-body"><span class="lkdv-cv2-ticket-title">Crête des Trois Becs</span><span class="lkdv-cv2-ticket-chips"><i>facile</i><i>9 km</i><i>+420 m</i></span><span class="lkdv-cv2-ticket-meta">09:30 · Drôme</span></span>
+        </span>
+        <span class="lkdv-cv2-ticket-foot"><span class="lkdv-cv2-capacity" data-state="waitlist"><span class="lkdv-cv2-capacity-track" role="progressbar" aria-valuemin="0" aria-valuemax="8" aria-valuenow="8"><span class="lkdv-cv2-capacity-fill" style="width:100%"></span></span><span class="lkdv-cv2-capacity-label">8/8</span></span><span class="lkdv-cv2-badge" data-tone="accent">Liste d’attente</span></span>
+      </div>
+      <div class="lkdv-cv2-ticket" data-state="past">
+        <span class="lkdv-cv2-ticket-main">
+          <span class="lkdv-cv2-ticket-stub" aria-hidden="true"><i class="lkdv-cv2-ticket-wd">dim.</i><b class="lkdv-cv2-ticket-day">02</b><i class="lkdv-cv2-ticket-mo">NOV</i><span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--top"></span><span class="lkdv-cv2-ticket-notch lkdv-cv2-ticket-notch--bottom"></span></span>
+          <span class="lkdv-cv2-ticket-body"><span class="lkdv-cv2-ticket-title">Sortie passée terminée</span><span class="lkdv-cv2-ticket-chips"><i>facile</i><i>9 km</i></span><span class="lkdv-cv2-ticket-meta">09:30 · Drôme</span></span>
+        </span>
+        <span class="lkdv-cv2-ticket-foot"><span class="lkdv-cv2-capacity-label">7 participants</span><span class="lkdv-cv2-badge">Terminée</span></span>
+      </div>
+      <div class="lkdv-cv2-ticket is-preview">
+        <span class="lkdv-cv2-ticket-main">
+          <span class="lkdv-cv2-ticket-stub" aria-hidden="true"><i class="lkdv-cv2-ticket-wd">sam.</i><b class="lkdv-cv2-ticket-day">14</b><i class="lkdv-cv2-ticket-mo">NOV</i></span>
+          <span class="lkdv-cv2-ticket-body"><span class="lkdv-cv2-ticket-title">Aperçu vivant du formulaire Sortie</span><span class="lkdv-cv2-ticket-chips"><i>moyen</i><i>18,4 km</i></span><span class="lkdv-cv2-ticket-meta">08:00 · Vercors</span></span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="composants-panel">
+    <span class="composants-label">AgendaStrip — 14 jours, compteurs, aujourd’hui, week-end, actif</span>
+    <div class="lkdv-cv2-agenda" role="group" aria-label="Agenda des prochains jours">
+      <button type="button" class="lkdv-cv2-agenda-day is-today" aria-pressed="false" aria-label="Jour 8">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">08</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 9">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">09</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 10">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">10</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 11">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">11</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 12">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">12</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"><u></u></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 13">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">13</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day is-active is-weekend" aria-pressed="true" aria-label="Jour 14">
+          <i aria-hidden="true">sam.</i><b aria-hidden="true">14</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"><u></u><u></u><u></u></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day is-weekend" aria-pressed="false" aria-label="Jour 15">
+          <i aria-hidden="true">sam.</i><b aria-hidden="true">15</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 16">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">16</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 17">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">17</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 18">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">18</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"><u></u></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 19">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">19</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day" aria-pressed="false" aria-label="Jour 20">
+          <i aria-hidden="true">lun.</i><b aria-hidden="true">20</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button><button type="button" class="lkdv-cv2-agenda-day is-weekend" aria-pressed="false" aria-label="Jour 21">
+          <i aria-hidden="true">sam.</i><b aria-hidden="true">21</b>
+          <span class="lkdv-cv2-agenda-dots" aria-hidden="true"></span>
+        </button>
+    </div>
+  </div>
+</section>
+
+<div class="harnais-title">Fondations Communauté v2 · 390×844</div>
+
+<script>
+  // États de capture :
+  //   défaut            → fondations (tuiles, billets, formulaire, états)
+  //   ?state=menu       → menu de tri ouvert
+  //   ?state=island     → île dynamique active
+  //   ?state=peek       → peek & pop
+  //   ?state=components → ClubCrest / EventTicket / AgendaStrip isolés
+  const state = new URLSearchParams(location.search).get('state');
+  if (state === 'menu') {
+    document.querySelector('.lkdv-sort-menu').hidden = false;
+    const sortButton = document.querySelector('.lkdv-sort-btn');
+    sortButton.setAttribute('aria-expanded', 'true');
+  }
+  if (state === 'island') {
+    document.querySelector('.lkdv-island-host').hidden = false;
+  }
+  if (state === 'peek') {
+    document.querySelector('.lkdv-cv2-peek').hidden = false;
+  }
+  if (state === 'components') {
+    document.querySelector('.lkdv-cv2-layer').hidden = true;
+    document.querySelector('.harnais-title').textContent = 'Fondations Communauté v2 · composants isolés';
+    document.getElementById('composants').hidden = false;
+  }
+</script>
+</body>
+</html>
