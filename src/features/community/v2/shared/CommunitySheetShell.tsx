@@ -84,6 +84,8 @@ export interface CommunitySheetShellProps {
   className?: string;
   /** Île de confirmation/annulation rendue hors du tiroir (au-dessus). */
   island?: ReactNode;
+  /** Nature du tiroir : pose `data-testid="communaute-v2-<kind>"` sur la couche. */
+  kind?: 'explore' | 'create';
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -122,6 +124,7 @@ export function CommunitySheetShell({
   resetKey,
   className,
   island = null,
+  kind,
 }: CommunitySheetShellProps) {
   const { haptic } = useHapticFeedback();
   const [mounted, setMounted] = useState(open);
@@ -356,11 +359,14 @@ export function CommunitySheetShell({
       className={cx('lkdv-communaute-v2', 'lkdv-cv2-layer', className)}
       style={{ '--cv2-layer-z': zIndex.modal } as CSSProperties}
       data-state={state}
+      data-cv2-kind={kind}
+      data-testid={kind ? `communaute-v2-${kind}` : 'communaute-v2-sheet'}
     >
       <div className="lkdv-cv2-wrap" data-det="card" data-state={state}>
         <div
           ref={sheetRef}
           className="lkdv-cv2-sheet"
+          data-testid="cv2-sheet"
           role="dialog"
           aria-modal={state === 'closing' ? undefined : 'true'}
           aria-label={label}
@@ -380,7 +386,12 @@ export function CommunitySheetShell({
           </div>
 
           {showCapsule ? (
-            <div className="lkdv-cv2-topnav" data-cv2-drag onPointerDown={onDragStart}>
+            <div
+              className="lkdv-cv2-topnav"
+              data-testid="cv2-capsule"
+              data-cv2-drag
+              onPointerDown={onDragStart}
+            >
               <CapsuleTabs
                 items={capsuleItems}
                 activeIndex={capsule.active}
@@ -394,11 +405,12 @@ export function CommunitySheetShell({
           ) : null}
 
           {detail ? (
-            <div className="lkdv-cv2-detail" data-state={state}>
+            <div className="lkdv-cv2-detail" data-state={state} data-testid="cv2-detail">
               <div className="lkdv-cv2-detail-nav" data-cv2-drag onPointerDown={onDragStart}>
                 <button
                   type="button"
                   className="lkdv-cv2-back"
+                  data-testid="cv2-back"
                   onClick={() => {
                     haptic('light');
                     detail.onBack();
@@ -424,6 +436,7 @@ export function CommunitySheetShell({
                     <div
                       key={index}
                       className="lkdv-cv2-pane lkdv-cv2-detail-pane"
+                      data-testid={`cv2-detail-pane-${index}`}
                       role="group"
                       aria-label={`${detail.title} ${index + 1} sur ${detailCount}`}
                       aria-hidden={index !== detail.index}
@@ -452,6 +465,7 @@ export function CommunitySheetShell({
                       key={item?.id ?? index}
                       id={item ? paneId(item.id) : undefined}
                       className="lkdv-cv2-pane"
+                      data-testid={item ? `cv2-pane-${item.id}` : `cv2-pane-${index}`}
                       role="tabpanel"
                       aria-label={item?.label}
                       aria-hidden={index !== capsule.active}
@@ -474,6 +488,7 @@ export function CommunitySheetShell({
                 Boolean(footer) && 'has-footer',
                 Boolean(mini.sort) && 'has-sort',
               )}
+              data-testid="cv2-mini-capsule"
             >
               <CapsuleTabs
                 items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
