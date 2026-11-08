@@ -67,7 +67,20 @@ jobs:
 
       - name: Resolve SPM dependencies
         working-directory: ios/App
-        run: xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App -sdk iphoneos
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "Resolving SPM dependencies (attempt $i)..."
+            if xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App -sdk iphoneos; then
+              echo "SPM dependencies resolved successfully."
+              break
+            fi
+            if [ "$i" -eq 5 ]; then
+              echo "SPM resolve failed after 5 attempts."
+              exit 1
+            fi
+            echo "Resolve failed (attempt $i), waiting 15s before retrying..."
+            sleep 15
+          done
 
       - name: Build unsigned iOS app
         working-directory: ios/App

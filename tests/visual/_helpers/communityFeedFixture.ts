@@ -2,11 +2,19 @@ import { expect, type Page } from '@playwright/test';
 
 /** En-têtes CORS permissifs pour les réponses simulées (origine de la page reprise telle quelle). */
 export const cors = (route: { request: () => { headers: () => Record<string, string> } }) => {
-  const origin = route.request().headers()['origin'] ?? '*';
+  const h = route.request().headers();
+  const origin =
+    h['origin'] ||
+    h['Origin'] ||
+    (typeof process !== 'undefined' && process.env.PW_BASE_URL) ||
+    'http://localhost:4028';
+  const allowHeaders =
+    h['access-control-request-headers'] ||
+    'authorization, x-client-info, apikey, content-type';
   return {
     'access-control-allow-origin': origin,
     'access-control-allow-credentials': 'true',
-    'access-control-allow-headers': '*',
+    'access-control-allow-headers': allowHeaders,
     'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
     'access-control-expose-headers': '*',
   };
@@ -62,16 +70,20 @@ export async function installCommunityFeedFixture(page: Page) {
   // Les requêtes authentifiées portent `authorization`/`apikey` : le navigateur envoie
   // d'abord une pré-vérification CORS (OPTIONS) qu'il faut accepter, sinon la requête
   // réelle échoue avec `net::ERR_FAILED` et le fil affiche « n'a pas pu être chargé ».
-  await page.route('**/rest/v1/**', async (route) => {
+  let originResolved = false;
+  await page.route(/.*\/rest\/v1\/.*/, async (route) => {
     if (route.request().method() === 'OPTIONS') {
       await route.fulfill({ status: 204, headers: cors(route) });
       return;
     }
     const url = new URL(route.request().url());
-    const table = url.pathname.split('/').at(-1);
+    if (!originResolved) {
+      originResolved = true;
+      resolveOrigin(url.origin);
+    }
+    const table = url.pathname.replace(/\/+$/, '').split('/').at(-1);
     let data: unknown = [];
     if (table === 'community_posts') {
-      resolveOrigin(url.origin);
       data = [{
         id: '00000000-0000-4000-8000-000000000201',
         author_id: AUTHOR_ID,
@@ -93,11 +105,11 @@ export async function installCommunityFeedFixture(page: Page) {
     await route.fulfill({ json: data, headers: cors(route) });
   });
   // Authentication is opt-in below. A guest has no session or auth request.
-  await page.route('**/auth/v1/**', (route) =>
+  await page.route(/.*\/auth\/v1\/.*/, (route) =>
     route.request().method() === 'OPTIONS'
       ? route.fulfill({ status: 204, headers: cors(route) })
       : route.fulfill({ headers: cors(route), json: { ...profile, aud: 'authenticated', role: 'authenticated', is_anonymous: false } }));
-  await page.route('**/api/compte/compte/notifications', (route) =>
+  await page.route(/.*\/api\/compte\/.*notifications/, (route) =>
     route.fulfill({ json: { notifications: [], unread: 0 } }));
 
   return {
